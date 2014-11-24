@@ -1167,22 +1167,22 @@ object AtomicExpansion {
       ExistsRightRule(duproof, aux.formula, prin.formula, sub)
 
     //equality and definitions
-    case EquationLeft1Rule(uproof1, uproof2, root, aux1, aux2, prin) =>
+    case EquationLeft1Rule(uproof1, uproof2, root, aux1, aux2,_, prin) =>
       val duproof1 = expandProof(uproof1)
       val duproof2 = expandProof(uproof2)
-      EquationLeft1Rule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
-    case EquationLeft2Rule(uproof1, uproof2, root, aux1, aux2, prin) =>
+      EquationLeftRule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
+    case EquationLeft2Rule(uproof1, uproof2, root, aux1, aux2,_, prin) =>
       val duproof1 = expandProof(uproof1)
       val duproof2 = expandProof(uproof2)
       EquationLeft2Rule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
-    case EquationRight1Rule(uproof1, uproof2, root, aux1, aux2, prin) =>
+    case EquationRight1Rule(uproof1, uproof2, root, aux1, aux2,_, prin) =>
       val duproof1 = expandProof(uproof1)
       val duproof2 = expandProof(uproof2)
-      EquationRight1Rule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
-    case EquationRight2Rule(uproof1, uproof2, root, aux1, aux2, prin) =>
+      EquationRightRule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
+    case EquationRight2Rule(uproof1, uproof2, root, aux1, aux2,_, prin) =>
       val duproof1 = expandProof(uproof1)
       val duproof2 = expandProof(uproof2)
-      EquationRight2Rule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
+      EquationRightRule(duproof1, duproof2, aux1.formula, aux2.formula, prin.formula)
 
     case DefinitionLeftRule(uproof, root, aux, prin) =>
       val duproof = expandProof(uproof)

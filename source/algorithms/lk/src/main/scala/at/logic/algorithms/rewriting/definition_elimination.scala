@@ -246,18 +246,18 @@ class DefinitionElimination {
         handleWeakQuantifierRule(rewrite, uproof, root, aux, prim, substituted_term, ExistsRightRule.apply)
 
       //equational rules
-      case EquationLeft1Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
+      case EquationLeft1Rule(uproof1, uproof2, root, aux1, aux2, _, prim) =>
         debug("Equation Left 1")
-        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationLeft1Rule.apply)
-      case EquationLeft2Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
+        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationLeftBulkRule.apply)
+      case EquationLeft2Rule(uproof1, uproof2, root, aux1, aux2, _, prim) =>
         debug("Equation Left 2")
-        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationLeft2Rule.apply)
-      case EquationRight1Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
+        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationLeftBulkRule.apply)
+      case EquationRight1Rule(uproof1, uproof2, root, aux1, aux2, _, prim) =>
         debug("Equation Right 1")
-        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationRight1Rule.apply)
-      case EquationRight2Rule(uproof1, uproof2, root, aux1, aux2, prim) =>
+        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationRightBulkRule.apply)
+      case EquationRight2Rule(uproof1, uproof2, root, aux1, aux2, _, prim) =>
         debug("Equation Right 2")
-        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationRight2Rule.apply)
+        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationRightBulkRule.apply)
 
       //definition rules
       case DefinitionLeftRule(uproof, root, aux, prin) =>

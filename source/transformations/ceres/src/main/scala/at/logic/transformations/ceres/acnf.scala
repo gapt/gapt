@@ -37,25 +37,25 @@ object ACNF {
             p.root.succedent.map(fo => fo.formula).intersect(succedent.map(fo => fo.formula)).nonEmpty)
           set.head
 
-        case EquationLeft1Rule(p1,p2, root, occ1, occ2, main) =>
+        case EquationLeft1Rule(p1,p2, root, occ1, occ2,_, main) =>
           val pr1 = plugProjections(p1, groun_proj_set, end_seq)
           val pr2 = plugProjections(p2, groun_proj_set, end_seq)
-          EquationLeft1Rule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
+          EquationLeftRule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
 
-        case EquationLeft2Rule(p1,p2, root, occ1, occ2, main) =>
+        case EquationLeft2Rule(p1,p2, root, occ1, occ2,_, main) =>
           val pr1 = plugProjections(p1, groun_proj_set, end_seq)
           val pr2 = plugProjections(p2, groun_proj_set, end_seq)
-          EquationLeft2Rule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
+          EquationLeftRule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
 
-        case EquationRight1Rule(p1,p2, root, occ1, occ2, main) =>
+        case EquationRight1Rule(p1,p2, root, occ1, occ2,_, main) =>
           val pr1 = plugProjections(p1, groun_proj_set, end_seq)
           val pr2 = plugProjections(p2, groun_proj_set, end_seq)
-          EquationRight1Rule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
+          EquationRightRule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
 
-        case EquationRight2Rule(p1,p2, root, occ1, occ2, main) =>
+        case EquationRight2Rule(p1,p2, root, occ1, occ2,_, main) =>
           val pr1 = plugProjections(p1, groun_proj_set, end_seq)
           val pr2 = plugProjections(p2, groun_proj_set, end_seq)
-          EquationRight2Rule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
+          EquationRightRule(pr1, pr2, occ1.formula, occ2.formula, main.formula)
 
 
         case CutRule(up1, up2, _, a1, a2) => {

@@ -11,7 +11,12 @@ import at.logic.language.hol._
 import at.logic.utils.ds.trees._
 import base._
 import at.logic.language.lambda.{ rename => renameLambda, freeVariables => freeVariablesLambda, Substitution => SubstitutionLambda, _}
+import at.logic.utils.logging._
+import org.slf4j.LoggerFactory
 
+trait EquationRuleLogger extends Logger {
+  override protected val log = LoggerFactory.getLogger("EquationRuleLogger")
+}
 
 // Equational rules
 case object EquationLeft1RuleType extends BinaryRuleTypeA
@@ -45,7 +50,7 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
     }
 
     def checkReplacement(s : LambdaExpression, t : LambdaExpression, e1 : LambdaExpression, e2 : LambdaExpression) : ReplacementResult = {
-      //println("matching "+e1+" against "+e2+" for "+s+" -> "+t)
+      //trace("matching "+e1+" against "+e2+" for "+s+" -> "+t)
       (e1,e2) match {
         case _ if e1 == e2 => Equal
         case _ if (e1 == s) && (e2 == t) => EqualModuloEquality(Nil)
@@ -72,12 +77,12 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
   }
 
   // TODO: implement verification of the rule
-  object EquationLeft1Rule {
+  object EquationLeft1Rule extends EquationRuleLogger {
     /** <pre>Constructs a proof ending with a EqLeft rule.
       * In it, a formula A (marked by term2oc) is replaced by formula main.
       *
-      * This rule does not check for the correct use of the =-symbol.
-      * The burden of correct usage is on the programmer!
+      * This method tests whether the proposed auxiliary and main formulas differ in exactly one place.
+      * If so, it calls the next one with that position.
       * 
       * The rule: 
       * (rest of s1)       (rest of s2)
@@ -97,41 +102,54 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
       * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
       * @return An LK Proof ending with the new inference.
       */ 
-    def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
+    def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula):
+      BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
       val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
-      val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc :: auxocc :: Nil)
+      val aux = auxocc.formula
+      val eq = eqocc.formula
 
-      val ant1 = createContext(s1.root.antecedent)
-      val ant2 = createContext(s2.root.antecedent.filterNot(_ == auxocc))
-      val antecedent = ant1 ++ ant2 :+ prinFormula
-      val suc1 = createContext(s1.root.succedent.filterNot(_ == eqocc))
-      val suc2 = createContext(s2.root.succedent)
-      val succedent = suc1 ++ suc2
+      eq match {
+        case Equation(s, t) =>
+          trace("Equation: " +s+" = "+t+".")
+          val sAux = aux.find(s)
+          val sMain = main.find(s)
 
-      new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
-        with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-        def rule = EquationLeft1RuleType
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Term "+s+" not found in formula "+aux+".")
 
-        def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+          trace("Positions of s = "+s+" in aux = "+aux+": "+sAux+".")
+          trace("Positions of s = "+s+" in main = "+main+": "+sMain+".")
+          val posList = sAux.diff(sMain)
+          trace("posList = "+posList)
 
-        def prin = prinFormula :: Nil
+          if (posList.length == 1) {
+            val p = posList.head
+            val mainNew = HOLPosition.replace(aux, p, t)
+            if (mainNew == main){
+              apply(s1, s2, term1oc, term2oc, p)
+            }
+            else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+t+") should yield "+main+" but is "+mainNew+".")
+          }
+          else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
 
-        override def name = "e:l1"
+        case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
       }
     }
 
-    def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition) = {
+    def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
+      BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
       val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
       val eq = eqocc.formula
 
       eq match {
         case Equation(s,t) =>
+          trace("Equation: " +s+" = "+t+".")
           val aux = auxocc.formula
           val term = aux.get(pos)
 
           term match {
             case Some(`s`) =>
-              val prin = aux //TODO: Dummy code. Actual replacement code should be here.
+              val prin = HOLPosition.replace(aux, pos, t).asInstanceOf[HOLFormula]
               val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
               val ant1 = createContext(s1.root.antecedent)
               val ant2 = createContext(s2.root.antecedent.filterNot(_ == auxocc))
@@ -154,14 +172,14 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
               }
 
             case Some(x) =>
-              throw new Exception("Wrong term in auxiliary formula "+aux+" at position "+pos+".")
+              throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
 
             case None =>
-              throw new Exception("Position "+pos+" is not well-defined for formula "+aux+".")
+              throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
           }
 
         case _ =>
-          throw new Exception("Formula occurrence "+eqocc+" is not an equation.")
+          throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
       }
     }
 
@@ -191,19 +209,72 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
     * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
     * @return The sequent (sL, A[T1/b], tL |- sR, tR).
     */ 
-  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula): Sequent = {
     val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
-    val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
+    val aux = auxocc.formula
+    val eq = eqocc.formula
 
-    val ant1 = createContext(s1.antecedent)
-    val ant2 = createContext(s2.antecedent.filterNot(_ == auxocc))
-    val antecedent = ant1 ++ ant2 :+ prinFormula
-    val suc1 = createContext(s1.succedent.filterNot(_ == eqocc))
-    val suc2 = createContext(s2.succedent)
-    val succedent = suc1 ++ suc2
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val sAux = aux.find(s)
+        val sMain = main.find(s)
 
-    Sequent(antecedent, succedent)
+        if (sAux.isEmpty)
+          throw new LKRuleCreationException("Term "+s+" not found in formula "+aux+".")
+
+        trace("Positions of s = "+s+" in aux = "+aux+": "+sAux+".")
+        trace("Positions of s = "+s+" in main = "+main+": "+sMain+".")
+        val posList = sAux.diff(sMain)
+        trace("posList = "+posList)
+
+        if (posList.length == 1) {
+          val p = posList.head
+          val mainNew = HOLPosition.replace(aux, p, t)
+          if (mainNew == main){
+            apply(s1, s2, term1oc, term2oc, p)
+          }
+          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+t+") should yield "+main+" but is "+mainNew+".")
+        }
+        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+      case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
+    }
   }
+
+    def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):Sequent = {
+      val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
+      val eq = eqocc.formula
+
+      eq match {
+        case Equation(s, t) =>
+          trace("Equation: " +s+" = "+t+".")
+          val aux = auxocc.formula
+          val term = aux.get(pos)
+
+          term match {
+            case Some(`s`) =>
+              val prin = HOLPosition.replace(aux, pos, t).asInstanceOf[HOLFormula]
+              val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
+              val ant1 = createContext(s1.antecedent)
+              val ant2 = createContext(s2.antecedent.filterNot(_ == auxocc))
+              val antecedent = ant1 ++ ant2 :+ prinOcc
+              val suc1 = createContext(s1.succedent.filterNot(_ == eqocc))
+              val suc2 = createContext(s2.succedent)
+              val succedent = suc1 ++ suc2
+
+              Sequent(antecedent, succedent)
+            case Some(x) =>
+              throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+
+            case None =>
+              throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+          }
+
+        case _ =>
+          throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
+      }
+    }
 
   /** <pre>Constructs a proof ending with a EqLeft rule.
     * In it, a formula term2 of the form A[T1/a] is replaced by formula main.
@@ -232,14 +303,14 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
   def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     (s1.root.succedent.filter(x => x.formula == term1).toList, s2.root.antecedent.filter(x => x.formula == term2).toList) match {
       case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-      case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+      case _ => throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
     }
   }
 
   private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.antecedent.find(_ == term2oc)
-    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
     else {
       val eqocc = term1op.get
       val auxocc = term2op.get
@@ -248,16 +319,16 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
   }
 
   def unapply(proof: LKProof) = if (proof.rule == EquationLeft1RuleType) {
-      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions]
       val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
-      Some((r.uProof1, r.uProof2, r.root, eqocc, auxocc, p1))
+      Some((r.uProof1, r.uProof2, r.root, eqocc, auxocc, r.termPos, p1))
     }
     else None
 }
 
 // TODO: implement verification of the rule
-object EquationLeft2Rule {
+object EquationLeft2Rule extends EquationRuleLogger {
   /** <pre>See EquationLeft1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
     *
     * (rest of s1)       (rest of s2)
@@ -266,23 +337,85 @@ object EquationLeft2Rule {
     *      sL, A[T1/a], tL |- sR, tR
     * </pre>
     */
-  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula):
+  BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions= {
+    //trace("s1: "+s1+", s2: "+s2+", term1oc: "+term1oc+", term2oc: "+term2oc+", main: "+main)
     val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
-    val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
+    val aux = auxocc.formula
+    val eq = eqocc.formula
 
-    val ant1 = createContext(s1.root.antecedent)
-    val ant2 = createContext(s2.root.antecedent.filterNot(_ == auxocc))
-    val antecedent = ant1 ++ ant2 :+ prinFormula
-    val suc1 = createContext(s1.root.succedent.filterNot(_ == eqocc))
-    val suc2 = createContext(s2.root.succedent)
-    val succedent = suc1 ++ suc2
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val tAux = aux.find(t)
+        val tMain = main.find(t)
 
-    new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2 )
-    with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-      def rule = EquationLeft2RuleType
-      def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
-      def prin = prinFormula::Nil
-      override def name = "e:l2"
+        if (tAux.isEmpty)
+          throw new LKRuleCreationException("Term "+t+" not found in formula "+aux+".")
+
+        trace("Positions of t = "+t+" in aux = "+aux+": "+tAux+".")
+        trace("Positions of t = "+t+" in main = "+main+": "+tMain+".")
+        val posList = tAux.diff(tMain)
+        trace("posList = "+posList)
+
+        if (posList.length == 1) {
+          val p = posList.head
+          val mainNew = HOLPosition.replace(aux, p, s)
+          if (mainNew == main){
+            apply(s1, s2, term1oc, term2oc, p)
+          }
+          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+s+") should yield "+main+" but is "+mainNew+".")
+        }
+        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+      case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
+    }
+  }
+
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
+  BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation(s,t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val aux = auxocc.formula
+        val term = aux.get(pos)
+
+        term match {
+          case Some(`t`) =>
+            val prin = HOLPosition.replace(aux, pos, s).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
+            val ant1 = createContext(s1.root.antecedent)
+            val ant2 = createContext(s2.root.antecedent.filterNot(_ == auxocc))
+            val antecedent = ant1 ++ ant2 :+ prinOcc
+            val suc1 = createContext(s1.root.succedent.filterNot(_ == eqocc))
+            val suc2 = createContext(s2.root.succedent)
+            val succedent = suc1 ++ suc2
+
+            new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
+              with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
+              def rule = EquationLeft2RuleType
+
+              def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+
+              def prin = prinOcc :: Nil
+
+              def termPos = List(pos)
+
+              override def name = "e:l2"
+            }
+
+          case Some(x) =>
+            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+
+          case None =>
+            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+        }
+
+      case _ =>
+        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
     }
   }
 
@@ -294,18 +427,71 @@ object EquationLeft2Rule {
     *      sL, A[T1/a], tL |- sR, tR
     * </pre>
     */
-  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula): Sequent = {
     val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
-    val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
+    val aux = auxocc.formula
+    val eq = eqocc.formula
 
-    val ant1 = createContext(s1.antecedent)
-    val ant2 = createContext(s2.antecedent.filterNot(_ == auxocc))
-    val antecedent = ant1 ++ ant2 :+ prinFormula
-    val suc1 = createContext(s1.succedent.filterNot(_ == eqocc))
-    val suc2 = createContext(s2.succedent)
-    val succedent = suc1 ++ suc2
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val tAux = aux.find(t)
+        val tMain = main.find(t)
 
-    Sequent(antecedent, succedent)
+        if (tAux.isEmpty)
+          throw new LKRuleCreationException("Term "+t+" not found in formula "+aux+".")
+
+        trace("Positions of t = "+t+" in aux = "+aux+": "+tAux+".")
+        trace("Positions of t = "+t+" in main = "+main+": "+tMain+".")
+        val posList = tAux.diff(tMain)
+        trace("posList = "+posList)
+
+        if (posList.length == 1) {
+          val p = posList.head
+          val mainNew = HOLPosition.replace(aux, p, s)
+          if (mainNew == main){
+            apply(s1, s2, term1oc, term2oc, p)
+          }
+          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+s+") should yield "+main+" but is "+mainNew+".")
+        }
+        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+      case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
+    }
+  }
+
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition): Sequent = {
+    val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val aux = auxocc.formula
+        val term = aux.get(pos)
+
+        term match {
+          case Some(`t`) =>
+            val prin = HOLPosition.replace(aux, pos, s).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
+            val ant1 = createContext(s1.antecedent)
+            val ant2 = createContext(s2.antecedent.filterNot(_ == auxocc))
+            val antecedent = ant1 ++ ant2 :+ prinOcc
+            val suc1 = createContext(s1.succedent.filterNot(_ == eqocc))
+            val suc2 = createContext(s2.succedent)
+            val succedent = suc1 ++ suc2
+
+            Sequent(antecedent, succedent)
+          case Some(x) =>
+            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+
+          case None =>
+            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+        }
+
+      case _ =>
+        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
+    }
   }
 
   /** <pre>See EquationLeft1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
@@ -319,13 +505,13 @@ object EquationLeft2Rule {
   def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     (s1.root.succedent.filter(x => x.formula == term1).toList, s2.root.antecedent.filter(x => x.formula == term2).toList) match {
     case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-    case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+    case _ => throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
   }
 
   private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.antecedent.find(_ == term2oc)
-    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
     else {
       val eqocc = term1op.get
       val auxocc = term2op.get
@@ -334,16 +520,16 @@ object EquationLeft2Rule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == EquationLeft2RuleType) {
-      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions]
       val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
-      Some((r.uProof1, r.uProof2, r.root, eqocc, auxocc, p1))
+      Some((r.uProof1, r.uProof2, r.root, eqocc, auxocc, r.termPos, p1))
     }
     else None
 }
 
 // TODO: implement verification of the rule
-object EquationRight1Rule {
+object EquationRight1Rule extends EquationRuleLogger {
 
   /** <pre>Constructs a proof ending with a EqRight rule.
     * In it, a formula A (marked by term2oc) is replaced by formula main.
@@ -368,26 +554,89 @@ object EquationRight1Rule {
     * @param term2oc The occurrence of A[T1/a] in s2.
     * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
     * @return An LK Proof ending with the new inference.
-    */ 
-  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
+    */
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula):
+  BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    //trace("s1: "+s1+", s2: "+s2+", term1oc: "+term1oc+", term2oc: "+term2oc+", main: "+main)
     val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
-    val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
+    val aux = auxocc.formula
+    val eq = eqocc.formula
 
-    val ant1 = createContext(s1.root.antecedent)
-    val ant2 = createContext(s2.root.antecedent)
-    val antecedent = ant1 ++ ant2
-    val suc1 = createContext(s1.root.succedent.filterNot(_ == eqocc))
-    val suc2 = createContext(s2.root.succedent.filterNot(_ == auxocc))
-    val succedent = suc1 ++ suc2 :+ prinFormula
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val sAux = aux.find(s)
+        val sMain = main.find(s)
 
-    new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2 )
-    with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-      def rule = EquationRight1RuleType
-      def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
-      def prin = prinFormula::Nil
-      override def name = "e:r1"
+        if (sAux.isEmpty)
+          throw new LKRuleCreationException("Term "+s+" not found in formula "+aux+".")
+
+        trace("Positions of s = "+s+" in aux = "+aux+": "+sAux+".")
+        trace("Positions of s = "+s+" in main = "+main+": "+sMain+".")
+        val posList = sAux.diff(sMain)
+        trace("posList = "+posList)
+
+        if (posList.length == 1) {
+          val p = posList.head
+          val mainNew = HOLPosition.replace(aux, p, t)
+          if (mainNew == main){
+            apply(s1, s2, term1oc, term2oc, p)
+          }
+          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+t+") should yield "+main+" but is "+mainNew+".")
+        }
+        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+      case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
     }
   }
+
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
+  BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation(s,t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val aux = auxocc.formula
+        val term = aux.get(pos)
+
+        term match {
+          case Some(`s`) =>
+            val prin = HOLPosition.replace(aux, pos, t).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
+            val ant1 = createContext(s1.root.antecedent)
+            val ant2 = createContext(s2.root.antecedent)
+            val antecedent = ant1 ++ ant2
+            val suc1 = createContext(s1.root.succedent.filterNot(_ == eqocc))
+            val suc2 = createContext(s2.root.succedent.filterNot(_ == auxocc))
+            val succedent = suc1 ++ suc2 :+ prinOcc
+
+            new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
+              with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
+              def rule = EquationRight1RuleType
+
+              def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+
+              def prin = prinOcc :: Nil
+
+              def termPos = List(pos)
+
+              override def name = "e:r1"
+            }
+
+          case Some(x) =>
+            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+
+          case None =>
+            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+        }
+
+      case _ =>
+        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
+    }
+  }
+
 
   /** <pre>Constructs a proof ending with a EqLeft rule.
     * In it, a formula A (marked by term2oc) is replaced by formula main.
@@ -413,19 +662,72 @@ object EquationRight1Rule {
     * @param term2oc The occurrence of A[T1/a] in s2.
     * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
     * @return The sequent (sL, A[T1/b], tL |- sR, tR).
-    */ 
-  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
+    */
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula): Sequent = {
     val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
-    val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
+    val aux = auxocc.formula
+    val eq = eqocc.formula
 
-    val ant1 = createContext(s1.antecedent)
-    val ant2 = createContext(s2.antecedent)
-    val antecedent = ant1 ++ ant2
-    val suc1 = createContext(s1.succedent.filterNot(_ == eqocc))
-    val suc2 = createContext(s2.succedent.filterNot(_ == auxocc))
-    val succedent = suc1 ++ suc2 :+ prinFormula
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val sAux = aux.find(s)
+        val sMain = main.find(s)
 
-    Sequent(antecedent, succedent)
+        if (sAux.isEmpty)
+          throw new LKRuleCreationException("Term "+s+" not found in formula "+aux+".")
+
+        trace("Positions of s = "+s+" in aux = "+aux+": "+sAux+".")
+        trace("Positions of s = "+s+" in main = "+main+": "+sMain+".")
+        val posList = sAux.diff(sMain)
+        trace("posList = "+posList)
+
+        if (posList.length == 1) {
+          val p = posList.head
+          val mainNew = HOLPosition.replace(aux, p, t)
+          if (mainNew == main){
+            apply(s1, s2, term1oc, term2oc, p)
+          }
+          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+t+") should yield "+main+" but is "+mainNew+".")
+        }
+        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+      case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
+    }
+  }
+
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition): Sequent = {
+    val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val aux = auxocc.formula
+        val term = aux.get(pos)
+
+        term match {
+          case Some(`s`) =>
+            val prin = HOLPosition.replace(aux, pos, t).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
+            val ant1 = createContext(s1.antecedent)
+            val ant2 = createContext(s2.antecedent)
+            val antecedent = ant1 ++ ant2
+            val suc1 = createContext(s1.succedent.filterNot(_ == eqocc))
+            val suc2 = createContext(s2.succedent.filterNot(_ == auxocc))
+            val succedent = suc1 ++ suc2 :+ prinOcc
+
+            Sequent(antecedent, succedent)
+          case Some(x) =>
+            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+
+          case None =>
+            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+        }
+
+      case _ =>
+        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
+    }
   }
 
   /** <pre>Constructs a proof ending with a EqRight rule.
@@ -455,13 +757,13 @@ object EquationRight1Rule {
   def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     (s1.root.succedent.filter(x => x.formula == term1).toList, s2.root.succedent.filter(x => x.formula == term2).toList) match {
     case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-    case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+    case _ => throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
   }
 
   private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.succedent.find(_ == term2oc)
-    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
     else {
       val eqocc = term1op.get
       val auxocc = term2op.get
@@ -470,16 +772,16 @@ object EquationRight1Rule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == EquationRight1RuleType) {
-      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions]
       val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
-      Some((r.uProof1, r.uProof2, r.root, eqocc, auxocc, p1))
+      Some((r.uProof1, r.uProof2, r.root, eqocc, auxocc, r.termPos, p1))
     }
     else None
 }
 
 // TODO: implement verification of the rule
-object EquationRight2Rule {
+object EquationRight2Rule extends EquationRuleLogger {
 
   /** <pre>See EquationRight1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
     *
@@ -489,23 +791,85 @@ object EquationRight2Rule {
     *      sL, tL |- sR, tR, A[T1/a]
     * </pre>
     */
-  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula):
+  BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    //trace("s1: "+s1+", s2: "+s2+", term1oc: "+term1oc+", term2oc: "+term2oc+", main: "+main)
     val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
-    val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
+    val aux = auxocc.formula
+    val eq = eqocc.formula
 
-    val ant1 = createContext(s1.root.antecedent)
-    val ant2 = createContext(s2.root.antecedent)
-    val antecedent = ant1 ++ ant2
-    val suc1 = createContext(s1.root.succedent.filterNot(_ == eqocc))
-    val suc2 = createContext(s2.root.succedent.filterNot(_ == auxocc))
-    val succedent = suc1 ++ suc2 :+ prinFormula
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val tAux = aux.find(t)
+        val tMain = main.find(t)
 
-    new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2 )
-    with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas {
-      def rule = EquationRight2RuleType
-      def aux = (eqocc::Nil)::(auxocc::Nil)::Nil
-      def prin = prinFormula::Nil
-      override def name = "e:r2"
+        if (tAux.isEmpty)
+          throw new LKRuleCreationException("Term "+t+" not found in formula "+aux+".")
+
+        trace("Positions of t = "+t+" in aux = "+aux+": "+tAux+".")
+        trace("Positions of t = "+t+" in main = "+main+": "+tMain+".")
+        val posList = tAux.diff(tMain)
+        trace("posList = "+posList)
+
+        if (posList.length == 1) {
+          val p = posList.head
+          val mainNew = HOLPosition.replace(aux, p, s)
+          if (mainNew == main){
+            apply(s1, s2, term1oc, term2oc, p)
+          }
+          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+s+") should yield "+main+" but is "+mainNew+".")
+        }
+        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+      case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
+    }
+  }
+
+  def apply(s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
+  BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val (eqocc, auxocc) = getTerms(s1.root, s2.root, term1oc, term2oc)
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation(s,t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val aux = auxocc.formula
+        val term = aux.get(pos)
+
+        term match {
+          case Some(`t`) =>
+            val prin = HOLPosition.replace(aux, pos, s).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
+            val ant1 = createContext(s1.root.antecedent)
+            val ant2 = createContext(s2.root.antecedent)
+            val antecedent = ant1 ++ ant2
+            val suc1 = createContext(s1.root.succedent.filterNot(_ == eqocc))
+            val suc2 = createContext(s2.root.succedent.filterNot(_ == auxocc))
+            val succedent = suc1 ++ suc2 :+ prinOcc
+
+            new BinaryTree[Sequent](Sequent(antecedent, succedent), s1, s2)
+              with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
+              def rule = EquationRight1RuleType
+
+              def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+
+              def prin = prinOcc :: Nil
+
+              def termPos = List(pos)
+
+              override def name = "e:r2"
+            }
+
+          case Some(x) =>
+            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+
+          case None =>
+            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+        }
+
+      case _ =>
+        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
     }
   }
 
@@ -517,19 +881,73 @@ object EquationRight2Rule {
     *      sL, tL |- sR, tR, A[T1/a]
     * </pre>
     */
-  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula) = {
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula): Sequent = {
     val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
-    val prinFormula = eqocc.factory.createFormulaOccurrence(main, eqocc::auxocc::Nil)
+    val aux = auxocc.formula
+    val eq = eqocc.formula
 
-    val ant1 = createContext(s1.antecedent)
-    val ant2 = createContext(s2.antecedent)
-    val antecedent = ant1 ++ ant2
-    val suc1 = createContext(s1.succedent.filterNot(_ == eqocc))
-    val suc2 = createContext(s2.succedent.filterNot(_ == auxocc))
-    val succedent = suc1 ++ suc2 :+ prinFormula
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val tAux = aux.find(t)
+        val tMain = main.find(t)
 
-    Sequent(antecedent, succedent)
+        if (tAux.isEmpty)
+          throw new LKRuleCreationException("Term "+t+" not found in formula "+aux+".")
+
+        trace("Positions of t = "+t+" in aux = "+aux+": "+tAux+".")
+        trace("Positions of t = "+t+" in main = "+main+": "+tMain+".")
+        val posList = tAux.diff(tMain)
+        trace("posList = "+posList)
+
+        if (posList.length == 1) {
+          val p = posList.head
+          val mainNew = HOLPosition.replace(aux, p, s)
+          if (mainNew == main){
+            apply(s1, s2, term1oc, term2oc, p)
+          }
+          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+s+") should yield "+main+" but is "+mainNew+".")
+        }
+        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+      case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
+    }
   }
+
+  def apply(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition): Sequent = {
+    val (eqocc, auxocc) = getTerms(s1, s2, term1oc, term2oc)
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation(s, t) =>
+        trace("Equation: " +s+" = "+t+".")
+        val aux = auxocc.formula
+        val term = aux.get(pos)
+
+        term match {
+          case Some(`t`) =>
+            val prin = HOLPosition.replace(aux, pos, s).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
+            val ant1 = createContext(s1.antecedent)
+            val ant2 = createContext(s2.antecedent)
+            val antecedent = ant1 ++ ant2
+            val suc1 = createContext(s1.succedent.filterNot(_ == eqocc))
+            val suc2 = createContext(s2.succedent.filterNot(_ == auxocc))
+            val succedent = suc1 ++ suc2 :+ prinOcc
+
+            Sequent(antecedent, succedent)
+          case Some(x) =>
+            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+
+          case None =>
+            throw new Exception("Position "+pos+" is not well-defined for formula "+aux+".")
+        }
+
+      case _ =>
+        throw new Exception("Formula occurrence "+eqocc+" is not an equation.")
+    }
+  }
+
 
   /** <pre>See EquationRight1Rule. Performs the same as EquationLeft1Rule.apply, but a and b are switched in the rule:
     *
@@ -542,13 +960,13 @@ object EquationRight2Rule {
   def apply(s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     (s1.root.succedent.filter(x => x.formula == term1).toList, s2.root.succedent.filter(x => x.formula == term2).toList) match {
     case ((x::_),(y::_)) => apply(s1, s2, x, y, main)
-    case _ => throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
+    case _ => throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
   }
 
   private def getTerms(s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.succedent.find(_ == term1oc)
     val term2op = s2.succedent.find(_ == term2oc)
-    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")
+    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxiliary formulas are not contained in the right part of the sequent")
     else {
       val eqocc = term1op.get
       val auxocc = term2op.get
@@ -557,10 +975,10 @@ object EquationRight2Rule {
   }
 
   def unapply(proof: LKProof) = if (proof.rule == EquationRight2RuleType) {
-      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions]
       val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
       val (p1::Nil) = r.prin
-      Some((r.uProof1, r.uProof2, r.root, eqocc, auxocc, p1))
+      Some((r.uProof1, r.uProof2, r.root, eqocc, auxocc, r.termPos, p1))
     }
     else None
 }

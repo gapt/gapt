@@ -267,13 +267,13 @@ class HybridLatexExporter(val expandTex : Boolean) {
     case ExistsRightRule(p1,root, aux, main, term) =>
       generateProof(p1, "\\EXR{"+ getFormulaString(term,true, escape_latex) + "}" +fsequentString(root.toFSequent, escape_latex)+"\n"+s, escape_latex)
     //equality rules
-    case EquationLeft1Rule(p1,p2, root, _,_,_) =>
+    case EquationLeft1Rule(p1,p2, root, _,_,_,_) =>
       generateProof(p1, generateProof(p2, "\\EQL"+fsequentString(root.toFSequent, escape_latex)+"\n"+s, escape_latex), escape_latex)
-    case EquationLeft2Rule(p1,p2, root, _,_,_) =>
+    case EquationLeft2Rule(p1,p2, root, _,_,_,_) =>
       generateProof(p1, generateProof(p2, "\\EQL"+fsequentString(root.toFSequent, escape_latex)+"\n"+s, escape_latex), escape_latex)
-    case EquationRight1Rule(p1,p2, root, _,_,_) =>
+    case EquationRight1Rule(p1,p2, root, _,_,_,_) =>
       generateProof(p1, generateProof(p2, "\\EQR"+fsequentString(root.toFSequent, escape_latex)+"\n"+s, escape_latex), escape_latex)
-    case EquationRight2Rule(p1,p2, root, _,_,_) =>
+    case EquationRight2Rule(p1,p2, root, _,_,_,_) =>
       generateProof(p1, generateProof(p2, "\\EQR"+fsequentString(root.toFSequent, escape_latex)+"\n"+s, escape_latex), escape_latex)
     //definition rules
     case DefinitionLeftRule(p1,root, _,_ ) =>

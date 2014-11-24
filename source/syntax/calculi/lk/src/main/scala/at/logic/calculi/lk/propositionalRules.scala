@@ -267,7 +267,8 @@ object ContractionLeftRule {
   private def getTerms(s1: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence) = {
     val term1op = s1.antecedent.find(_ == term1oc)
     val term2op = s1.antecedent.find(_ == term2oc)
-    if (term1op == None || term2op == None) throw new LKRuleCreationException("Auxialiary formulas are not contained in the left part of the sequent")
+    if (term1op == None) throw new LKRuleCreationException("Auxiliary formula "+term1oc+" not contained in antecedent "+s1.antecedent+".")
+    else if (term2op == None) throw new LKRuleCreationException("Auxiliary formula "+term2oc+" not contained in antecedent "+s1.antecedent+".")
     else {
       val term1 = term1op.get
       val term2 = term2op.get

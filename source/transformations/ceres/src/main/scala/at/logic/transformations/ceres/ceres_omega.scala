@@ -102,7 +102,7 @@ class ceres_omega {
       val (lkparent2, clause2) = ceres_omega(projections, parent2, es, struct)
         val eqn: FormulaOccurrence = findAuxByFormulaAndLabel(p1occ, clause1.l_succedent, Nil)
         val modulant: FormulaOccurrence = findAuxByFormulaAndLabel(p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_antecedent, Nil)
-        val rule = if (!flipped) EquationLeft1Rule(lkparent1, lkparent2, eqn, modulant, principial.formula) else EquationLeft2Rule(lkparent1, lkparent2, eqn, modulant, principial.formula)
+        val rule = EquationLeftBulkRule(lkparent1, lkparent2, eqn, modulant, principial.formula)
         val crule = contractEndsequent(rule, es)
         val nclauses = filterByAncestor(crule.root, clause1 compose clause2)
         (crule, nclauses)
@@ -113,7 +113,7 @@ class ceres_omega {
       try {
       val eqn : FormulaOccurrence = findAuxByFormulaAndLabel(p1occ, clause1.l_succedent, Nil)
       val modulant : FormulaOccurrence = findAuxByFormulaAndLabel(p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_succedent, Nil)
-      val rule = if (!flipped) EquationRight1Rule(lkparent1, lkparent2, eqn, modulant, principial.formula) else EquationRight2Rule(lkparent1, lkparent2, eqn, modulant, principial.formula)
+      val rule = EquationRightBulkRule(lkparent1, lkparent2, eqn, modulant, principial.formula)
       val nclauses = filterByAncestor(rule.root, clause1 compose clause2)
       (rule, nclauses)
   } catch {

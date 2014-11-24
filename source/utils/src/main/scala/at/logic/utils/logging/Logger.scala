@@ -4,7 +4,7 @@ import org.slf4j.LoggerFactory
 
 trait Logger {
 
-  private val log = LoggerFactory.getLogger(getClass)
+  protected val log = LoggerFactory.getLogger(getClass)
 
   // Ordered by level of importance.
   // E.g. if the logging level is chosen to be info, info, warn and error

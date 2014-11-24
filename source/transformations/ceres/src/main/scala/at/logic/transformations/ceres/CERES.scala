@@ -135,22 +135,22 @@ class CERES {
       val rp1 = CERES(endsequent, projections, p1)
       WeakeningRightRule(rp1,aux1.formula)
 
-    case EquationLeft1Rule(p1,p2,root,aux1,aux2,main) =>
+    case EquationLeft1Rule(p1,p2,root,aux1,aux2,_,main) =>
       val rp1 = CERES(endsequent, projections, p1)
       val rp2 = CERES(endsequent, projections, p2)
-      contractEndsequent(EquationLeft1Rule(rp1,rp2,aux1.formula,aux2.formula,main.formula), endsequent)
-    case EquationLeft2Rule(p1,p2,root,aux1,aux2,main) =>
+      contractEndsequent(EquationLeftRule(rp1,rp2,aux1.formula,aux2.formula,main.formula), endsequent)
+    case EquationLeft2Rule(p1,p2,root,aux1,aux2,_,main) =>
       val rp1 = CERES(endsequent, projections, p1)
       val rp2 = CERES(endsequent, projections, p2)
-      contractEndsequent(EquationLeft2Rule(rp1,rp2,aux1.formula,aux2.formula,main.formula), endsequent)
-    case EquationRight1Rule(p1,p2,root,aux1,aux2,main) =>
+      contractEndsequent(EquationLeftRule(rp1,rp2,aux1.formula,aux2.formula,main.formula), endsequent)
+    case EquationRight1Rule(p1,p2,root,aux1,aux2,_,main) =>
       val rp1 = CERES(endsequent, projections, p1)
       val rp2 = CERES(endsequent, projections, p2)
-      contractEndsequent(EquationRight1Rule(rp1,rp2,aux1.formula,aux2.formula,main.formula), endsequent)
-    case EquationRight2Rule(p1,p2,root,aux1,aux2,main) =>
+      contractEndsequent(EquationRightRule(rp1,rp2,aux1.formula,aux2.formula,main.formula), endsequent)
+    case EquationRight2Rule(p1,p2,root,aux1,aux2,_,main) =>
       val rp1 = CERES(endsequent, projections, p1)
       val rp2 = CERES(endsequent, projections, p2)
-      contractEndsequent(EquationRight2Rule(rp1,rp2,aux1.formula,aux2.formula,main.formula), endsequent)
+      contractEndsequent(EquationRightRule(rp1,rp2,aux1.formula,aux2.formula,main.formula), endsequent)
 
     case _ =>
       throw new Exception("Refutation is expected to contain only cut, contraction and equality rules!")

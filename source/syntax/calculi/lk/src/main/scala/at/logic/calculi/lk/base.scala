@@ -213,11 +213,16 @@ class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
 trait LKProof extends TreeProof[Sequent] with Tree[Sequent] {
   def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
-    (root.antecedent ++ root.succedent).filter(x => x.ancestors.contains(fo)) match {
-      case x::Nil => Some(x)
+    (root.antecedent ++ root.succedent).filter(_.isDescendantOf(fo)) match {
+      case x :: Nil => Some(x)
       case Nil => None
       case _ => throw new LKRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")
     }
+  }
+
+  def containsDescendantOf(fo: FormulaOccurrence): Boolean = getDescendantInLowerSequent(fo) match {
+    case Some(_) => true
+    case None => false
   }
 }
 trait NullaryLKProof extends LeafTree[Sequent] with LKProof with NullaryTreeProof[Sequent]

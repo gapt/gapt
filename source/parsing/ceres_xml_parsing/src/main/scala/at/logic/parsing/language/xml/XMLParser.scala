@@ -198,8 +198,7 @@ object XMLParser {
      * This function is based on the constructor of the MVector class in
      * C++ CERES.
      *
-     * @param perm The permutation in string format.
-     * @param size The size of the permutation.
+     * @param cyc The permutation in string format.
      * @return     The permutation as an Array of Ints.
      */
     def cycleStringToArray( cyc: String ) = cyc.split(' ').map( s => s.toInt - 1 )
@@ -214,7 +213,7 @@ object XMLParser {
      * This function was ported from the Permutation::cycles2Vector method in
      * C++ CERES.
      *
-     * @param perm The permutation in string format.
+     * @param cycles The permutation in string format.
      * @param size The size of the permutation.
      * @return     The permutation as an Array of Ints.
      */
@@ -563,7 +562,7 @@ object XMLParser {
 
     private def mapToDesc( r: LKProof )( o : FormulaOccurrence ) = r.getDescendantInLowerSequent( o ) match {
       case Some( d ) => d
-      case None => throw new Exception("Expected to find formula occurrence descendant, but didn't!")
+      case None => throw new Exception("Expected to find formula occurrence descendant for "+o+" in "+r.root+", but didn't!")
     }
 
     private def createRule( rt : String, conc: FSequent, prems: List[LKProof],
@@ -965,11 +964,11 @@ object XMLParser {
             val auxf_r = r_perm_l.head
             val mainf = antecedent.head
             // TODO: parse and pass parameter
-            val rule = EquationLeft1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            val rule = EquationLeftBulkRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
-              ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
-              r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
-              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              (List(mapToDesc(rule)(auxf_r)) ++ l_perm_l.map( mapToDesc( rule ) )  ++
+              r_perm_l.tail.map( mapToDesc( rule ) )).toArray,
+              ( l_perm_r.init.map( mapToDesc( rule ) ) ++
               r_perm_r.map( mapToDesc( rule ) ) ).toArray )
           }
           case "eql2" => {
@@ -985,11 +984,11 @@ object XMLParser {
             val auxf_r = r_perm_l.head
             val mainf = antecedent.head
             // TODO: parse and pass parameter
-            val rule = EquationLeft2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            val rule = EquationLeftBulkRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
-              ( List( rule.prin.head ) ++ (l_perm_l.map( mapToDesc( rule ) ) ) ++ 
-              r_perm_l.drop( 1 ).map( mapToDesc( rule ) ) ).toArray,
-              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              (List(mapToDesc(rule)(auxf_r)) ++ l_perm_l.map( mapToDesc( rule ) )  ++
+              r_perm_l.tail.map( mapToDesc( rule ) )).toArray,
+              ( l_perm_r.init.map( mapToDesc( rule ) ) ++
               r_perm_r.map( mapToDesc( rule ) ) ).toArray )
           }
           case "eqr1" => {
@@ -1005,11 +1004,11 @@ object XMLParser {
             val auxf_r = r_perm_r.last
             val mainf = succedent.last
             // TODO: parse and pass parameter
-            val rule = EquationRight1Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            val rule = EquationRightBulkRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
               ( l_perm_l.map( mapToDesc( rule ) ) ++ 
               r_perm_l.map( mapToDesc( rule ) ) ).toArray,
-              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              ( l_perm_r.init.map( mapToDesc( rule ) ) ++
               r_perm_r.map( mapToDesc( rule ) ) ).toArray )
           }
           case "eqr2" => {
@@ -1025,11 +1024,11 @@ object XMLParser {
             val auxf_r = r_perm_r.last
             val mainf = succedent.last
             // TODO: parse and pass parameter
-            val rule = EquationRight2Rule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            val rule = EquationRightBulkRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
               ( l_perm_l.map( mapToDesc( rule ) ) ++ 
               r_perm_l.map( mapToDesc( rule ) ) ).toArray,
-              ( l_perm_r.take( l_perm_r.length - 1 ).map( mapToDesc( rule ) ) ++ 
+              ( l_perm_r.init.map( mapToDesc( rule ) ) ++
               r_perm_r.map( mapToDesc( rule ) ) ).toArray )
           }
           case _ => throw new ParsingException("Unknown rule type: " + rt)

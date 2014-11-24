@@ -155,20 +155,20 @@ object applyReplacement {
         val new_proof = DefinitionLeftRule( new_parent._1, new_parent._2( a ), TermReplacement(m.formula.asInstanceOf[FOLFormula], repl) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
-      case EquationLeft1Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationLeft1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+      case EquationLeft1Rule( p1, p2, s, a1, a2, _, m ) =>
+        handleEquationRule( EquationLeftRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           TermReplacement(m.formula.asInstanceOf[FOLFormula], repl) )
-      case EquationLeft2Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationLeft2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+      case EquationLeft2Rule( p1, p2, s, a1, a2, _, m ) =>
+        handleEquationRule( EquationLeftRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           TermReplacement(m.formula.asInstanceOf[FOLFormula], repl) )
-      case EquationRight1Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationRight1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+      case EquationRight1Rule( p1, p2, s, a1, a2, _, m ) =>
+        handleEquationRule( EquationRightRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           TermReplacement(m.formula.asInstanceOf[FOLFormula], repl) )
-      case EquationRight2Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationRight2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+      case EquationRight2Rule( p1, p2, s, a1, a2, _, m ) =>
+        handleEquationRule( EquationRightRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           TermReplacement(m.formula.asInstanceOf[FOLFormula], repl) )
       case ForallLeftRule( p, s, a, m, t ) => {

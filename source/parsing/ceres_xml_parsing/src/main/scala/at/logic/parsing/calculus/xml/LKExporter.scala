@@ -79,10 +79,10 @@ trait LKExporter extends HOLTermExporter {
     case AndRightRule(p1, p2, seq, _, _, _) => exportBinaryRule(p1, p2, seq, "andr")
     case OrLeftRule(p1, p2, seq, _, _, _) => exportBinaryRule(p1, p2, seq, "orl")
     case ImpLeftRule(p1, p2, seq, _, _, _) => exportBinaryRule(p1, p2, seq, "impll")
-    case EquationLeft1Rule(p1, p2, seq, _, _, _) => exportBinaryRule(p1, p2, seq, "eql1")
-    case EquationLeft2Rule(p1, p2, seq, _, _, _) => exportBinaryRule(p1, p2, seq, "eql2")
-    case EquationRight1Rule(p1, p2, seq, _, _, _) => exportBinaryRule(p1, p2, seq, "eqr1")
-    case EquationRight2Rule(p1, p2, seq, _, _, _) => exportBinaryRule(p1, p2, seq, "eqr2")
+    case EquationLeft1Rule(p1, p2, seq, _, _, _, _) => exportBinaryRule(p1, p2, seq, "eql1")
+    case EquationLeft2Rule(p1, p2, seq, _, _, _, _) => exportBinaryRule(p1, p2, seq, "eql2")
+    case EquationRight1Rule(p1, p2, seq, _, _, _, _) => exportBinaryRule(p1, p2, seq, "eqr1")
+    case EquationRight2Rule(p1, p2, seq, _, _, _, _) => exportBinaryRule(p1, p2, seq, "eqr2")
   }
 
   def exportUnaryRule( parent: LKProof, conc: Sequent, rt: String ) =

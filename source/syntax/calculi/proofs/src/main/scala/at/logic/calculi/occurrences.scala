@@ -29,9 +29,18 @@ package occurrences {
     /**
      * Recursively checks whether the argument is an ancestor of this occurrence.
      */
-    def isAncestor(o: FormulaOccurrence): Boolean =
+    def isDescendantOf(o: FormulaOccurrence): Boolean =
       if (this == o) true
-      else ancestors.exists(_.isAncestor(o))
+      else ancestors.exists(_.isDescendantOf(o))
+
+    /**
+     *
+     * @return The transitive closure of the ancestor relation starting with this.
+     */
+    def ancestorsTransitive: Seq[FormulaOccurrence] = {
+      val tmp = ancestors flatMap {fo => fo.ancestorsTransitive}
+      ancestors ++ tmp
+    }
   }
 
 //FO = FormulaOccurrence

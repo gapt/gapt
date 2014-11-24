@@ -6,10 +6,8 @@ import at.logic.calculi.lk.base.{FSequent, LKProof, Sequent}
 import at.logic.utils.logging.Logger
 import scala.collection.mutable.{Map,HashMap}
 import at.logic.calculi.lksk._
-import at.logic.calculi.lk.{Axiom => LKAxiom}
+import at.logic.calculi.lk.{Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, WeakeningRightRule => LKWeakeningRightRule, _}
 import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.{ImpLeftRule, AndRightRule, OrRight1Rule, ImpRightRule, WeakeningLeftRule => LKWeakeningLeftRule, OrRight2Rule, ContractionRightRule, ContractionLeftRule, WeakeningRightRule => LKWeakeningRightRule, OrLeftRule, CutRule, AndLeft1Rule, AndLeft2Rule,NegRightRule,NegLeftRule, ForallLeftRule, ForallRightRule, ExistsLeftRule, ExistsRightRule}
-import at.logic.calculi.lk.{DefinitionLeftRule, DefinitionRightRule, EquationLeft1Rule, EquationLeft2Rule, EquationRight1Rule, EquationRight2Rule}
 import at.logic.language.hol._
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.lk.getCutAncestors
@@ -305,17 +303,17 @@ object LKtoLKskc extends Logger {
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
       (sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
     }
-    case EquationLeft1Rule( p1, p2, s, a1, a2, m ) =>
-      handleEquationRule( EquationLeft1Rule.apply, p1, p2, s, a1, a2,
+    case EquationLeft1Rule( p1, p2, s, a1, a2, _, m ) =>
+      handleEquationRule( EquationLeftRule.apply, p1, p2, s, a1, a2,
         m.formula, proof, subst_terms, cut_occs )
-    case EquationLeft2Rule( p1, p2, s, a1, a2, m ) =>
-      handleEquationRule( EquationLeft2Rule.apply, p1, p2, s, a1, a2, 
+    case EquationLeft2Rule( p1, p2, s, a1, a2, _, m ) =>
+      handleEquationRule( EquationLeftRule.apply, p1, p2, s, a1, a2,
         m.formula, proof, subst_terms, cut_occs )
-    case EquationRight1Rule( p1, p2, s, a1, a2, m ) =>
-      handleEquationRule( EquationRight1Rule.apply, p1, p2, s, a1, a2, 
+    case EquationRight1Rule( p1, p2, s, a1, a2, _, m ) =>
+      handleEquationRule( EquationRightRule.apply, p1, p2, s, a1, a2,
         m.formula, proof, subst_terms, cut_occs )
-    case EquationRight2Rule( p1, p2, s, a1, a2, m ) =>
-      handleEquationRule( EquationRight2Rule.apply, p1, p2, s, a1, a2, 
+    case EquationRight2Rule( p1, p2, s, a1, a2, _, m ) =>
+      handleEquationRule( EquationRightRule.apply, p1, p2, s, a1, a2,
         m.formula, proof, subst_terms, cut_occs )
   }
 

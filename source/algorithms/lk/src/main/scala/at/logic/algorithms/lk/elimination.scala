@@ -379,7 +379,7 @@ object CleanStructuralRules {
       }))
    
     // Equation rules (all binary):
-    case EquationLeft1Rule(p1, p2, _, a1, a2, m) =>
+    case EquationLeft1Rule(p1, p2, _, a1, a2,_, m) =>
       tailcall (cleanStructuralRules(p1, { (proof1, wsl) =>
 	cleanStructuralRules(p2, { (proof2, wsr) =>
           (wsl._2.contains(a1.formula), wsr._1.contains(a2.formula)) match {
@@ -393,21 +393,21 @@ object CleanStructuralRules {
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2.diff(List(a1.formula)) ++ wsr._2
               val p = WeakeningRightRule(proof1, a1.formula)
-              tailcall (fun (EquationLeft1Rule(p, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationLeftRule(p, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
             case (false, true) =>
               val ws_1 = wsl._1 ++ wsr._1.diff(List(a2.formula))
               val ws_2 = wsl._2 ++ wsr._2
               val p = WeakeningLeftRule(proof2, a2.formula)
-              tailcall (fun (EquationLeft1Rule(proof1, p, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationLeftRule(proof1, p, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
             case (false, false) =>
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2 ++ wsr._2
-              tailcall (fun (EquationLeft1Rule(proof1, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationLeftRule(proof1, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
           }
 	})
       }))
 
-    case EquationLeft2Rule(p1, p2, _, a1, a2, m) =>
+    case EquationLeft2Rule(p1, p2, _, a1, a2,_, m) =>
       tailcall (cleanStructuralRules(p1, { (proof1, wsl) =>
 	cleanStructuralRules(p2, { (proof2, wsr) =>
           (wsl._2.contains(a1.formula), wsr._1.contains(a2.formula)) match {
@@ -421,21 +421,21 @@ object CleanStructuralRules {
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2.diff(List(a1.formula)) ++ wsr._2
               val p = WeakeningRightRule(proof1, a1.formula)
-              tailcall (fun (EquationLeft2Rule(p, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationLeftRule(p, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
             case (false, true) =>
               val ws_1 = wsl._1 ++ wsr._1.diff(List(a2.formula))
               val ws_2 = wsl._2 ++ wsr._2
               val p = WeakeningLeftRule(proof2, a2.formula)
-              tailcall (fun (EquationLeft2Rule(proof1, p, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationLeftRule(proof1, p, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
             case (false, false) =>
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2 ++ wsr._2
-              tailcall (fun (EquationLeft2Rule(proof1, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationLeftRule(proof1, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
           }
 	})
       }))
 
-    case EquationRight1Rule(p1, p2, _, a1, a2, m) =>
+    case EquationRight1Rule(p1, p2, _, a1, a2,_, m) =>
       tailcall (cleanStructuralRules(p1, { (proof1, wsl) =>
 	cleanStructuralRules(p2, { (proof2, wsr) =>
           (wsl._2.contains(a1.formula), wsr._2.contains(a2.formula)) match {
@@ -449,21 +449,21 @@ object CleanStructuralRules {
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2.diff(List(a1.formula)) ++ wsr._2
               val p = WeakeningRightRule(proof1, a1.formula)
-              tailcall (fun (EquationRight1Rule(p, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationRightRule(p, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
             case (false, true) =>
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2 ++ wsr._2.diff(List(a2.formula))
               val p = WeakeningRightRule(proof2, a2.formula)
-              tailcall (fun (EquationRight1Rule(proof1, p, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationRightRule(proof1, p, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
             case (false, false) =>
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2 ++ wsr._2
-              tailcall (fun (EquationRight1Rule(proof1, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationRightRule(proof1, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
           }
 	})
       }))
 
-    case EquationRight2Rule(p1, p2, _, a1, a2, m) =>
+    case EquationRight2Rule(p1, p2, _, a1, a2,_, m) =>
       tailcall (cleanStructuralRules(p1, { (proof1, wsl) =>
 	cleanStructuralRules(p2, { (proof2, wsr) =>
           (wsl._2.contains(a1.formula), wsr._2.contains(a2.formula)) match {
@@ -477,16 +477,16 @@ object CleanStructuralRules {
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2.diff(List(a1.formula)) ++ wsr._2
               val p = WeakeningRightRule(proof1, a1.formula)
-              tailcall (fun (EquationRight2Rule(p, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationRightRule(p, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
             case (false, true) =>
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2 ++ wsr._2.diff(List(a2.formula))
               val p = WeakeningRightRule(proof2, a2.formula)
-              tailcall (fun (EquationRight2Rule(proof1, p, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationRightRule(proof1, p, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
             case (false, false) =>
               val ws_1 = wsl._1 ++ wsr._1
               val ws_2 = wsl._2 ++ wsr._2
-              tailcall (fun (EquationRight2Rule(proof1, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
+              tailcall (fun (EquationRightRule(proof1, proof2, a1.formula, a2.formula, m.formula), (ws_1, ws_2)))
           }
 	})
       }))

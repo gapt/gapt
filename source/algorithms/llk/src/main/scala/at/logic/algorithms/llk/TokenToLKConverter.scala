@@ -615,7 +615,7 @@ trait TokenToLKConverter {
             //we check if we can paramodulate s=t ...
             checkReplacement(s, t, f, main) match {
               case EqualModuloEquality(_) =>
-                val rule = EquationLeft1Rule(leftproof, rightproof, eq, f, main)
+                val rule = EquationLeftRule(leftproof, rightproof, eq, f, main)
                 try {
                   contract(rule,fs)::Nil
                 } catch {
@@ -629,7 +629,7 @@ trait TokenToLKConverter {
             //if not we try t=s....
             checkReplacement(t, s, f, main) match {
               case EqualModuloEquality(_) =>
-                val rule = EquationLeft2Rule(leftproof, rightproof, eq, f, main)
+                val rule = EquationLeftRule(leftproof, rightproof, eq, f, main)
                 try {
                   contract(rule,fs)::Nil
                 } catch {
@@ -674,7 +674,7 @@ trait TokenToLKConverter {
             checkReplacement(s, t, f, main) match {
               case EqualModuloEquality(_) =>
                 //println("found!")
-                val rule = EquationRight1Rule(leftproof, rightproof, eq, f, main)
+                val rule = EquationRightRule(leftproof, rightproof, eq, f, main)
                 try {
                   contract(rule,fs)::Nil
                 } catch {
@@ -691,7 +691,7 @@ trait TokenToLKConverter {
             checkReplacement(t, s, f, main) match {
               case EqualModuloEquality(_) =>
                 //println("found!")
-                val rule = EquationRight2Rule(leftproof, rightproof, eq, f, main)
+                val rule = EquationRightRule(leftproof, rightproof, eq, f, main)
                 try {
                   contract(rule,fs)::Nil
                 } catch {

@@ -106,10 +106,10 @@ object Projections extends at.logic.utils.logging.Logger {
       case WeakeningRightRule(p,_, m) => handleWeakeningRule( proof, p, m, WeakeningRightRule.apply , pred)
       case DefinitionLeftRule( p,_, a, m ) => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply , pred)
       case DefinitionRightRule( p,_, a, m ) => handleDefRule( proof, p, a, m, DefinitionRightRule.apply , pred)
-      case EquationLeft1Rule( p1, p2,_, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationLeft1Rule.apply , pred)
-      case EquationLeft2Rule( p1, p2,_, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationLeft2Rule.apply , pred)
-      case EquationRight1Rule( p1, p2,_, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationRight1Rule.apply , pred)
-      case EquationRight2Rule( p1, p2,_, e, a, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationRight2Rule.apply , pred)
+      case EquationLeft1Rule( p1, p2,_, e, a,_, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationLeftBulkRule.apply , pred)
+      case EquationLeft2Rule( p1, p2,_, e, a,_, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationLeftBulkRule.apply , pred)
+      case EquationRight1Rule( p1, p2,_, e, a,_, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationRightBulkRule.apply , pred)
+      case EquationRight2Rule( p1, p2,_, e, a,_, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationRightBulkRule.apply , pred)
       case CutRule( p1, p2,_, a1, a2 ) =>
       if (pred(a1.formula)) {
         val new_cut_ancs = copySetToAncestor( cut_ancs )

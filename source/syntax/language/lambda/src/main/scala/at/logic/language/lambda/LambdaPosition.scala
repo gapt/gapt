@@ -40,8 +40,12 @@ object LambdaPosition {
   def differingPositions(exp1: LambdaExpression, exp2: LambdaExpression): List[LambdaPosition] = (exp1, exp2) match {
     case (Var(n1, t1), Var(n2, t2)) if n1 == n2 && t1 == t2 => Nil
     case (Const(n1, t1), Const(n2, t2)) if n1 == n2 && t1 == t2 => Nil
-    case (App(f1, arg1), App(f2, arg2)) => differingPositions(f1, f2) ++ differingPositions(arg1, arg2)
-    case (Abs(v1, term1), Abs(v2, term2)) => differingPositions(v1, v2) ++ differingPositions(term1, term2)
+    case (App(f1, arg1), App(f2, arg2)) =>
+      val list1 = differingPositions(f1, f2) map { p => LambdaPosition(1 :: p) }
+      val list2 = differingPositions(arg1, arg2) map { p => LambdaPosition(2 :: p) }
+      list1 ++ list2
+    case (Abs(v1, term1), Abs(v2, term2)) if v1 == v2 =>
+     differingPositions(term1, term2) map { p => LambdaPosition(1 :: p) }
     case _ => List(Nil)
   }
 
@@ -88,4 +92,5 @@ class LambdaPosition(val list: List[Int]) {
     case _ => false
   }
 
+  override def hashCode() = list.hashCode()
 }

@@ -127,28 +127,28 @@ object CloneLKProof {
         ImpRightRule(new_p, a1.formula, a2.formula)
       }
 
-      case EquationLeft1Rule(up1, up2, _, eqocc, auxocc, prin) => {
+      case EquationLeft1Rule(up1, up2, _, eqocc, auxocc,_, prin) => {
         val new_p1 = apply(up1)
         val new_p2 = apply(up2)
-        EquationLeft1Rule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
+        EquationLeftRule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
       }
 
-      case EquationLeft2Rule(up1, up2, _, eqocc, auxocc, prin) => {
+      case EquationLeft2Rule(up1, up2, _, eqocc, auxocc,_, prin) => {
         val new_p1 = apply(up1)
         val new_p2 = apply(up2)
-        EquationLeft2Rule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
+        EquationLeftRule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
       }
 
-      case EquationRight1Rule(up1, up2, _, eqocc, auxocc, prin) => {
+      case EquationRight1Rule(up1, up2, _, eqocc, auxocc,_, prin) => {
         val new_p1 = apply(up1)
         val new_p2 = apply(up2)
-        EquationRight1Rule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
+        EquationRightRule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
       }
 
-      case EquationRight2Rule(up1, up2, _, eqocc, auxocc, prin) => {
+      case EquationRight2Rule(up1, up2, _, eqocc, auxocc,_, prin) => {
         val new_p1 = apply(up1)
         val new_p2 = apply(up2)
-        EquationRight2Rule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
+        EquationRightRule(new_p1, new_p2, eqocc.formula, auxocc.formula, prin.formula)
       }
 
       case DefinitionLeftRule(up, _, aux, prin) => {

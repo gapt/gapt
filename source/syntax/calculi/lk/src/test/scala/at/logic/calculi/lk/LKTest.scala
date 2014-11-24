@@ -490,4 +490,220 @@ class LKTest extends SpecificationWithJUnit {
     }
 
   }
+
+  "Equality rules" should {
+    val (s, t) = (HOLConst("s", Ti), HOLConst("t", Ti))
+    val P = HOLConst("P", Ti -> To)
+    val Q = HOLConst("Q", Ti -> (Ti -> To))
+    val est = Equation(s, t)
+    val Ps = Atom(P, List(s))
+    val Pt = Atom (P, List(t))
+
+    val Qss = Atom(Q, List(s,s))
+    val Qst = Atom(Q, List(s,t))
+    val Qts = Atom(Q, List(t,s))
+    val Qtt = Atom(Q, List(t,t))
+
+    val ax1 = Axiom(List(est), List(est))
+    val ax2 = Axiom(List(Ps), List(Ps))
+    val ax3 = Axiom(List(Pt), List(Pt))
+    val ax4 = Axiom(List(Qss), List(Qss))
+    val ax5 = Axiom(List(Qtt), List(Qtt))
+
+    "refuse first auxiliary formulas that are not equations" in {
+      EquationLeft1Rule(ax3, ax2, ax3.root.succedent.head, ax2.root.antecedent.head, HOLPosition(2)) must throwAn[LKRuleCreationException]
+      EquationLeft2Rule(ax3, ax2, ax3.root.succedent.head, ax2.root.antecedent.head, HOLPosition(2)) must throwAn[LKRuleCreationException]
+      EquationRight1Rule(ax3, ax2, ax3.root.succedent.head, ax2.root.succedent.head, HOLPosition(2)) must throwAn[LKRuleCreationException]
+      EquationRight2Rule(ax3, ax2, ax3.root.succedent.head, ax2.root.succedent.head, HOLPosition(2)) must throwAn[LKRuleCreationException]
+    }
+
+    "refuse when the wrong term is at the target position" in {
+      EquationLeft1Rule(ax1, ax3, ax1.root.succedent.head, ax3.root.antecedent.head, HOLPosition(2)) must throwAn[LKRuleCreationException]
+      EquationLeft2Rule(ax1, ax2, ax1.root.succedent.head, ax2.root.antecedent.head, HOLPosition(2)) must throwAn[LKRuleCreationException]
+      EquationRight1Rule(ax1, ax3, ax1.root.succedent.head, ax3.root.succedent.head, HOLPosition(2)) must throwAn[LKRuleCreationException]
+      EquationRight2Rule(ax1, ax2, ax1.root.succedent.head, ax2.root.succedent.head, HOLPosition(2)) must throwAn[LKRuleCreationException]
+    }
+
+    "refuse when auxiliary formula cannot be transformed to main formula in one step" in {
+      EquationLeft1Rule(ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, Qtt) must throwAn[LKRuleCreationException]
+      EquationLeft2Rule(ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, Qss) must throwAn[LKRuleCreationException]
+      EquationRight1Rule(ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, Qtt) must throwAn[LKRuleCreationException]
+      EquationRight2Rule(ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, Qss) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly perform replacements" in {
+
+      val sequent1 = FSequent(List(est, Qst), List(Qss))
+      val sequent2 = FSequent(List(est, Qts), List(Qss))
+
+      val sequent3 = FSequent(List(est, Qts), List(Qtt))
+      val sequent4 = FSequent(List(est, Qst), List(Qtt))
+
+      val sequent5 = FSequent(List(est, Qss), List(Qst))
+      val sequent6 = FSequent(List(est, Qss), List(Qts))
+
+      val sequent7 = FSequent(List(est, Qtt), List(Qts))
+      val sequent8 = FSequent(List(est, Qtt), List(Qst))
+
+      EquationLeft1Rule(ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, HOLPosition(2)).root.toFSequent must beEqualTo(sequent1)
+      EquationLeft1Rule(ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, Qts).root.toFSequent must beEqualTo(sequent2)
+
+      EquationLeft2Rule(ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, HOLPosition(2)).root.toFSequent must beEqualTo(sequent3)
+      EquationLeft2Rule(ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, Qst).root.toFSequent must beEqualTo(sequent4)
+
+      EquationRight1Rule(ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, HOLPosition(2)).root.toFSequent must beEqualTo(sequent5)
+      EquationRight1Rule(ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, Qts).root.toFSequent must beEqualTo(sequent6)
+
+      EquationRight2Rule(ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, HOLPosition(2)).root.toFSequent must beEqualTo(sequent7)
+      EquationRight2Rule(ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, Qst).root.toFSequent must beEqualTo(sequent8)
+    }
+  }
+
+  "Weakening macro rules" should {
+    val x = FOLVar("x")
+    val y = FOLVar("y")
+
+    val Px = FOLAtom("P", List(x))
+    val Py = FOLAtom("P", List(y))
+
+    val ax = Axiom(List(Px), List(Px))
+    "refuse to perform zero weakenings" in {
+
+      WeakeningLeftBulkRule(ax, Nil)  must throwAn[LKRuleCreationException]
+      WeakeningRightBulkRule(ax, Nil) must throwAn[LKRuleCreationException]
+      WeakeningBulkRule(ax, Nil, Nil) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly perform multiple weakenings" in {
+      val proof  = WeakeningRightRule(WeakeningLeftRule(WeakeningLeftRule(ax, Py), Neg(Py)), Py)
+
+      WeakeningBulkRule(ax, List(Neg(Py),Py), List(Py)).root.toFSequent must beEqualTo(proof.root.toFSequent)
+    }
+  }
+
+  "Contraction macro rules" should {
+    val x = FOLVar("x")
+    val y = FOLVar("y")
+
+    val Px = FOLAtom("P", List(x))
+    val Py = FOLAtom("P", List(y))
+
+    val ax = Axiom(List(Px), List(Px))
+
+    "refuse to perform zero contractions" in {
+      ContractionLeftBulkRule(ax, Nil) must throwAn[LKRuleCreationException]
+      ContractionLeftBulkRule(ax, List(ax.root.antecedent.head)) must throwAn[LKRuleCreationException]
+      ContractionRightBulkRule(ax, Nil) must throwAn[LKRuleCreationException]
+      ContractionRightBulkRule(ax, List(ax.root.succedent.head)) must throwAn[LKRuleCreationException]
+    }
+
+    "return the original proof if there is nothing to do" in {
+      ContractionLeftBulkRule(ax, Px).root.toFSequent must beEqualTo(ax.root.toFSequent)
+      ContractionLeftBulkRule(ax, Py).root.toFSequent must beEqualTo(ax.root.toFSequent)
+      ContractionRightBulkRule(ax, Px).root.toFSequent must beEqualTo(ax.root.toFSequent)
+      ContractionRightBulkRule(ax, Py).root.toFSequent must beEqualTo(ax.root.toFSequent)
+    }
+
+    "correctly perform multiple contractions" in {
+      val ax2 = Axiom(List(Px, Px, Py, Px), List(Px, Neg(Px), Neg(Px)))
+
+      val sequent1 = FSequent(List(Py, Px), List(Px, Neg(Px), Neg(Px)))
+      val sequent2 = FSequent(List(Px, Px, Py, Px), List(Px, Neg(Px)))
+      ContractionLeftBulkRule(ax2, Px).root.toFSequent must beEqualTo(sequent1)
+      ContractionRightBulkRule(ax2, Neg(Px)).root.toFSequent must beEqualTo(sequent2)
+    }
+  }
+
+  "Equality macro rules" should {
+    val (s, t) = (HOLConst("s", Ti), HOLConst("t", Ti))
+    val P = HOLConst("P", Ti -> To)
+    val Q = HOLConst("Q", Ti -> (Ti -> To))
+    val est = Equation(s, t)
+    val Ps = Atom(P, List(s))
+    val Pt = Atom (P, List(t))
+
+    val Qss = Atom(Q, List(s,s))
+    val Qst = Atom(Q, List(s,t))
+    val Qts = Atom(Q, List(t,s))
+    val Qtt = Atom(Q, List(t,t))
+
+    val ax1 = Axiom(List(est), List(est))
+    val ax2 = Axiom(List(Ps), List(Ps))
+    val ax3 = Axiom(List(Pt), List(Pt))
+    val ax4 = Axiom(List(Qss), List(Qss))
+    val ax5 = Axiom(List(Qtt), List(Qtt))
+
+    val eq = ax1.root.succedent.head
+
+    "choose the right rule to use" in {
+      val sequent1 = FSequent(List(est, Ps), List(Pt))
+      val sequent2 = FSequent(List(est, Pt), List(Ps))
+
+      EquationLeftRule(ax1, ax3, eq, ax3.root.antecedent.head, Ps).root.toFSequent must beEqualTo(sequent1)
+      EquationLeftRule(ax1, ax2, eq, ax2.root.antecedent.head, Pt).root.toFSequent must beEqualTo(sequent2)
+
+      EquationRightRule(ax1, ax2, eq, ax2.root.succedent.head, Pt).root.toFSequent must beEqualTo(sequent1)
+      EquationRightRule(ax1, ax3, eq, ax3.root.succedent.head, Ps).root.toFSequent must beEqualTo(sequent2)
+
+      EquationLeftRule(ax1, ax3, eq, ax3.root.antecedent.head, HOLPosition(2)).root.toFSequent must beEqualTo(sequent1)
+      EquationLeftRule(ax1, ax2, eq, ax2.root.antecedent.head, HOLPosition(2)).root.toFSequent must beEqualTo(sequent2)
+
+      EquationRightRule(ax1, ax2, eq, ax2.root.succedent.head, HOLPosition(2)).root.toFSequent must beEqualTo(sequent1)
+      EquationRightRule(ax1, ax3, eq, ax3.root.succedent.head, HOLPosition(2)).root.toFSequent must beEqualTo(sequent2)
+    }
+
+    "perform correctly if there is only one replacement to be made" in {
+
+      val sequent1 = FSequent(List(est, Qst), List(Qss))
+      val sequent2 = FSequent(List(est, Qts), List(Qss))
+
+      val sequent3 = FSequent(List(est, Qts), List(Qtt))
+      val sequent4 = FSequent(List(est, Qst), List(Qtt))
+
+      val sequent5 = FSequent(List(est, Qss), List(Qst))
+      val sequent6 = FSequent(List(est, Qss), List(Qts))
+
+      val sequent7 = FSequent(List(est, Qtt), List(Qts))
+      val sequent8 = FSequent(List(est, Qtt), List(Qst))
+
+      val proof1 = EquationLeftBulkRule(ax1, ax4, eq, ax4.root.antecedent.head, Nil, List(HOLPosition(2)))
+      val proof2 = EquationLeftBulkRule(ax1, ax4, eq, ax4.root.antecedent.head, Qts)
+      val proof3 = EquationLeftBulkRule(ax1, ax5, eq, ax5.root.antecedent.head, List(HOLPosition(2)), Nil)
+      val proof4 = EquationLeftBulkRule(ax1, ax5, eq, ax5.root.antecedent.head, Qst)
+      val proof5 = EquationRightBulkRule(ax1, ax4, eq, ax4.root.succedent.head, Nil, List(HOLPosition(2)))
+      val proof6 = EquationRightBulkRule(ax1, ax4, eq, ax4.root.succedent.head, Qts)
+      val proof7 = EquationRightBulkRule(ax1, ax5, eq, ax5.root.succedent.head, List(HOLPosition(2)), Nil)
+      val proof8 = EquationRightBulkRule(ax1, ax5, eq, ax5.root.succedent.head, Qst)
+
+      proof1.root.toFSequent must beEqualTo(sequent1)
+      proof2.root.toFSequent must beEqualTo(sequent2)
+
+      proof3.root.toFSequent must beEqualTo(sequent3)
+      proof4.root.toFSequent must beEqualTo(sequent4)
+
+      proof5.root.toFSequent must beEqualTo(sequent5)
+      proof6.root.toFSequent must beEqualTo(sequent6)
+
+      proof7.root.toFSequent must beEqualTo(sequent7)
+      proof8.root.toFSequent must beEqualTo(sequent8)
+    }
+
+    "perform correctly when several replacements are made" in {
+      val sequent1 = FSequent(List(est, Qtt), List(Qss))
+      val sequent2 = FSequent(List(est, Qss), List(Qtt))
+
+      val proof1 = EquationLeftBulkRule(ax1, ax4, eq, ax4.root.antecedent.head, Qtt)
+      val proof2 = EquationLeftBulkRule(ax1, ax5, eq, ax5.root.antecedent.head, Qss)
+      val proof3 = EquationRightBulkRule(ax1, ax4, eq, ax4.root.succedent.head, Qtt)
+      val proof4 = EquationRightBulkRule(ax1, ax5, eq, ax5.root.succedent.head, Qss)
+
+      proof1.root.toFSequent must beEqualTo(sequent1)
+      proof2.root.toFSequent must beEqualTo(sequent2)
+      proof3.root.toFSequent must beEqualTo(sequent2)
+      proof4.root.toFSequent must beEqualTo(sequent1)
+
+    }
+  }
+
 }
+

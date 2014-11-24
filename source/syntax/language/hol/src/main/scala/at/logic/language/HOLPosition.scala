@@ -241,6 +241,8 @@ class HOLPosition(val list: List[Int]){
     case p: HOLPosition => p.list == list
     case _ => false
   }
+
+  override def hashCode() = list.hashCode()
 }
 
 object BinaryConnective {

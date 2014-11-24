@@ -96,10 +96,10 @@ class extractExpansionTrees {
       case ImpLeftRule(_, _, _, _, _, _) => ImpTree(map(a1), map(a2))
       case OrLeftRule(_, _, _, _, _, _) => OrTree(map(a1), map(a2))
       case AndRightRule(_, _, _, _, _, _) => AndTree(map(a1), map(a2))
-      case EquationLeft1Rule(_, _, _, _, _, _) => map(a2)
-      case EquationLeft2Rule(_, _, _, _, _, _) => map(a2)
-      case EquationRight1Rule(_, _, _, _, _, _) => map(a2)
-      case EquationRight2Rule(_, _, _, _, _, _) => map(a2)
+      case EquationLeft1Rule(_, _, _, _, _, _, _) => map(a2)
+      case EquationLeft2Rule(_, _, _, _, _, _, _) => map(a2)
+      case EquationRight1Rule(_, _, _, _, _, _, _) => map(a2)
+      case EquationRight2Rule(_, _, _, _, _, _, _) => map(a2)
     })
   }
 

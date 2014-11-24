@@ -142,17 +142,17 @@ object eliminateDefinitions {
       case r @ ImpLeftRule( p1, p2, _, a1, a2, _ ) => {
         handleBinaryProp( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, ImpLeftRule.apply )
       }
-      case r @ EquationLeft1Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationLeft1Rule.apply )
+      case r @ EquationLeft1Rule( p1, p2, _, a1, a2,_, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationLeftRule.apply )
       }
-      case r @ EquationLeft2Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationLeft2Rule.apply )
+      case r @ EquationLeft2Rule( p1, p2, _, a1, a2,_, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationLeftRule.apply )
       }
-      case r @ EquationRight1Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationRight1Rule.apply )
+      case r @ EquationRight1Rule( p1, p2, _, a1, a2,_, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationRightRule.apply )
       }
-      case r @ EquationRight2Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationRight2Rule.apply )
+      case r @ EquationRight2Rule( p1, p2, _, a1, a2,_, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, EquationRightRule.apply )
       }
       case Axiom(so) => {
         val ant_occs = so.antecedent.toList
@@ -335,17 +335,17 @@ object regularize {
       case r @ ImpLeftRule( p1, p2, _, a1, a2, _ ) => {
         handleBinaryProp( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, vars, ImpLeftRule.apply )
       }
-      case r @ EquationLeft1Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationLeft1Rule.apply )
+      case r @ EquationLeft1Rule( p1, p2, _, a1, a2,_, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationLeftRule.apply )
       }
-      case r @ EquationLeft2Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationLeft2Rule.apply )
+      case r @ EquationLeft2Rule( p1, p2, _, a1, a2,_, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationLeftRule.apply )
       }
-      case r @ EquationRight1Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationRight1Rule.apply )
+      case r @ EquationRight1Rule( p1, p2, _, a1, a2,_, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationRightRule.apply )
       }
-      case r @ EquationRight2Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationRight2Rule.apply )
+      case r @ EquationRight2Rule( p1, p2, _, a1, a2,_, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1, a2, m.formula, vars, EquationRightRule.apply )
       }
       case Axiom(so) => {
         val ant_occs = so.antecedent
@@ -573,18 +573,18 @@ object replaceSubproof {
       case ExistsRightRule(up, _, aux, prin, term) => ExistsRightRule(replace(up, subproof, newSubproof), aux.formula, prin.formula, term)
       case DefinitionLeftRule(up, _, aux, prin) => DefinitionLeftRule(replace(up, subproof, newSubproof), aux.formula, prin.formula)
       case DefinitionRightRule(up, _, aux, prin) => DefinitionRightRule(replace(up, subproof, newSubproof), aux.formula, prin.formula)
-      case EquationLeft1Rule(up1, up2, _, aux1, aux2, prin) =>
-        if (up1.contains(subproof)) EquationLeft1Rule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
-        else EquationLeft1Rule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
-      case EquationLeft2Rule(up1, up2, _, aux1, aux2, prin) =>
-        if (up1.contains(subproof)) EquationLeft2Rule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
-        else EquationLeft2Rule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
-      case EquationRight1Rule(up1, up2, _, aux1, aux2, prin) =>
-        if (up1.contains(subproof)) EquationRight1Rule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
-        else EquationRight1Rule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
-      case EquationRight2Rule(up1, up2, _, aux1, aux2, prin) =>
-        if (up1.contains(subproof)) EquationRight2Rule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
-        else EquationRight2Rule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
+      case EquationLeft1Rule(up1, up2, _, aux1, aux2,_, prin) =>
+        if (up1.contains(subproof)) EquationLeftRule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
+        else EquationLeftRule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
+      case EquationLeft2Rule(up1, up2, _, aux1, aux2,_, prin) =>
+        if (up1.contains(subproof)) EquationLeftRule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
+        else EquationLeftRule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
+      case EquationRight1Rule(up1, up2, _, aux1, aux2,_, prin) =>
+        if (up1.contains(subproof)) EquationRightRule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
+        else EquationRightRule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
+      case EquationRight2Rule(up1, up2, _, aux1, aux2,_, prin) =>
+        if (up1.contains(subproof)) EquationRightRule(replace(up1, subproof, newSubproof), up2, aux1.formula, aux2.formula, prin.formula)
+        else EquationRightRule(up1, replace(up2, subproof, newSubproof), aux1.formula, aux2.formula, prin.formula)
       case CutRule(up1, up2, _, aux1, aux2) =>
         if (up1.contains(subproof)) CutRule(replace(up1, subproof, newSubproof), up2, aux1.formula)
         else CutRule(up1, replace(up2, subproof, newSubproof), aux1.formula)
@@ -840,10 +840,10 @@ object containsEqualityReasoning {
   def apply( p: LKProof ): Boolean = p match {
     case Axiom( seq ) => seq.isReflexivity
     // equational rules
-    case EquationLeft1Rule( _, _, _, _, _, _ ) => true
-    case EquationLeft2Rule( _, _, _, _, _, _ ) => true
-    case EquationRight1Rule( _, _, _, _, _, _ ) => true
-    case EquationRight2Rule( _, _, _, _, _, _ ) => true
+    case EquationLeft1Rule( _, _, _, _, _, _, _ ) => true
+    case EquationLeft2Rule( _, _, _, _, _, _, _ ) => true
+    case EquationRight1Rule( _, _, _, _, _, _, _ ) => true
+    case EquationRight2Rule( _, _, _, _, _, _, _ ) => true
     // other rules
     case UnaryLKProof( _, p1, _, _, _ ) => apply( p1 )
     case BinaryLKProof( _, p1, p2, _, _, _, _ ) => apply( p1 ) || apply( p2 )

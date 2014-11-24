@@ -38,10 +38,10 @@ object BinaryLKProof {
     case AndRightRule(up1, up2, r, a1, a2, p) => Some((AndRightRuleType, up1, up2, r, a1, a2, Some(p)))
     case OrLeftRule(up1, up2, r, a1, a2, p) => Some((OrLeftRuleType, up1, up2, r, a1, a2, Some(p)))
     case ImpLeftRule(up1, up2, r, a1, a2, p) => Some((ImpLeftRuleType, up1, up2, r, a1, a2, Some(p)))
-    case EquationLeft1Rule(up1, up2, r, a1, a2, p) => Some((EquationLeft1RuleType, up1, up2, r, a1, a2, Some(p)))
-    case EquationLeft2Rule(up1, up2, r, a1, a2, p) => Some((EquationLeft2RuleType, up1, up2, r, a1, a2, Some(p)))
-    case EquationRight1Rule(up1, up2, r, a1, a2, p) => Some((EquationRight1RuleType, up1, up2, r, a1, a2, Some(p)))
-    case EquationRight2Rule(up1, up2, r, a1, a2, p) => Some((EquationRight2RuleType, up1, up2, r, a1, a2, Some(p)))
+    case EquationLeft1Rule(up1, up2, r, a1, a2,_, p) => Some((EquationLeft1RuleType, up1, up2, r, a1, a2, Some(p)))
+    case EquationLeft2Rule(up1, up2, r, a1, a2,_, p) => Some((EquationLeft2RuleType, up1, up2, r, a1, a2, Some(p)))
+    case EquationRight1Rule(up1, up2, r, a1, a2,_, p) => Some((EquationRight1RuleType, up1, up2, r, a1, a2, Some(p)))
+    case EquationRight2Rule(up1, up2, r, a1, a2,_, p) => Some((EquationRight2RuleType, up1, up2, r, a1, a2, Some(p)))
     case _ => None
   }
 }

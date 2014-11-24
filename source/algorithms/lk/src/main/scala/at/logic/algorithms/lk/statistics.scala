@@ -105,10 +105,10 @@ object getTypeInformation {
       case OrLeftEquivalenceRule3(p, _, _, _) => apply(p)
       case OrRightEquivalenceRule3(p, _, _, _) => apply(p)     
       // Equality rules
-      case EquationLeft1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft1Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft2Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight1Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight2Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
       // Definition rules
       case DefinitionLeftRule(p, _, _, _) => apply(p)
       case DefinitionRightRule(p, _, _, _) => apply(p)
@@ -149,10 +149,10 @@ object getTypeInformation {
       case OrLeftEquivalenceRule3(p, _, _, _) => apply(p)
       case OrRightEquivalenceRule3(p, _, _, _) => apply(p)       
       // Equality rules
-      case EquationLeft1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft1Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft2Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight1Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight2Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
       // Definition rules
       case DefinitionLeftRule(p, _, _, _) => apply(p)
       case DefinitionRightRule(p, _, _, _) => apply(p)
@@ -194,10 +194,10 @@ object getTypeInformation {
       case OrLeftEquivalenceRule3(p, _, _, _) => apply(p)
       case OrRightEquivalenceRule3(p, _, _, _) => apply(p)     
       // Equality rules
-      case EquationLeft1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft1Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft2Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight1Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight2Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
       
       case _ => throw new Exception("ERROR: Unexpected rule while computing the number of quantifier rules of a proof.")
     }
@@ -236,10 +236,10 @@ object getTypeInformation {
       case OrLeftEquivalenceRule3(p, _, _, _) => apply(p)
       case OrRightEquivalenceRule3(p, _, _, _) => apply(p)     
       // Equality rules
-      case EquationLeft1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationLeft2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationRight1Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
-      case EquationRight2Rule(p1, p2, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft1Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationLeft2Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight1Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
+      case EquationRight2Rule(p1, p2, _, _, _, _, _) => apply(p1) + apply(p2)
       
       case _ => throw new Exception("ERROR: Unexpected rule while computing the number of quantifier rules of a proof.")
     }

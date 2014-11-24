@@ -144,20 +144,20 @@ object applySubstitution {
         val new_proof = DefinitionLeftRule( new_parent._1, new_parent._2( a ), betaNormalize(subst( m.formula )) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
-      case EquationLeft1Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationLeft1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+      case EquationLeft1Rule( p1, p2, s, a1, a2, _, m ) =>
+        handleEquationRule( EquationLeftBulkRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           betaNormalize(subst( m.formula )) )
-      case EquationLeft2Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationLeft2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+      case EquationLeft2Rule( p1, p2, s, a1, a2, _, m ) =>
+        handleEquationRule( EquationLeftBulkRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           betaNormalize(subst( m.formula )) )
-      case EquationRight1Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationRight1Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+      case EquationRight1Rule( p1, p2, s, a1, a2, _, m ) =>
+        handleEquationRule( EquationRightBulkRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           betaNormalize(subst( m.formula )) )
-      case EquationRight2Rule( p1, p2, s, a1, a2, m ) =>
-        handleEquationRule( EquationRight2Rule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+      case EquationRight2Rule( p1, p2, s, a1, a2, _, m ) =>
+        handleEquationRule( EquationRightBulkRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           betaNormalize(subst( m.formula )) )
       case ForallLeftRule( p, s, a, m, t ) => {

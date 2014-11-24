@@ -39,17 +39,17 @@ object eliminateDefinitions {
       case r @ ImpLeftRule( p1, p2, _, a1, a2, _ ) => {
         handleBinaryProp( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], ImpLeftRule.apply )
       }
-      case r @ EquationLeft1Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], m.formula, EquationLeft1Rule.apply )
+      case r @ EquationLeft1Rule( p1, p2, _, a1, a2, _, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], m.formula, EquationLeftRule.apply )
       }
-      case r @ EquationLeft2Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], m.formula, EquationLeft2Rule.apply )
+      case r @ EquationLeft2Rule( p1, p2, _, a1, a2, _, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], m.formula, EquationLeftRule.apply )
       }
-      case r @ EquationRight1Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], m.formula, EquationRight1Rule.apply )
+      case r @ EquationRight1Rule( p1, p2, _, a1, a2, _, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], m.formula, EquationRightRule.apply )
       }
-      case r @ EquationRight2Rule( p1, p2, _, a1, a2, m ) => {
-        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], m.formula, EquationRight2Rule.apply )
+      case r @ EquationRight2Rule( p1, p2, _, a1, a2, _, m ) => {
+        handleEquational( r.asInstanceOf[BinaryLKProof with AuxiliaryFormulas], p1, p2, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], m.formula, EquationRightRule.apply )
       }
       case Axiom(so) => {
         val ls = toLabelledSequent(so)
