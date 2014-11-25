@@ -418,8 +418,5 @@ class DefinitionElimination {
   //switches arguments such that the apply methods of AndL1,2 and OrL1,2 have the same signature
   def switchargs[A,B,C,D](f : (A, B, C) => D) : ((A, C ,B) => D) = ((a:A, c:C ,b:B) => f(a,b,c))
 
-
-
-
 }
 

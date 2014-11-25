@@ -1,5 +1,6 @@
 package at.logic.algorithms.llk
 
+import at.logic.calculi.lksk.{LabelledFormulaOccurrence, LabelledSequent}
 import at.logic.parsing.language.hlk.{ast, DeclarationParser, HLKHOLParser}
 import at.logic.parsing.language.hlk.ast.LambdaAST
 import at.logic.language.lambda.types.{To, TA}
@@ -17,11 +18,36 @@ import at.logic.algorithms.lk.addWeakenings.weaken
 import at.logic.algorithms.hlk._
 import at.logic.calculi.lk.EquationVerifier.EqualModuloEquality
 
+object LLKFormatter {
+  /* formats a sequent */
+  def f(fs:FSequent) : String = {
+    " "+(fs.antecedent.map(HybridLatexExporter.getFormulaString(_,true, false)).mkString(", ")) + " :- " +
+      (fs.succedent.map(HybridLatexExporter.getFormulaString(_,true,false)).mkString(", "))+" "
+  }
+
+  def f(s:Substitution) : String = {
+    s.holmap.map( x => f(x._1)  + " -> " + f(x._2)  ).mkString("{",",","}")
+  }
+
+  def f(fs:Sequent) : String = f(fs.toFSequent)
+  def f(lfo: LabelledFormulaOccurrence) : String =
+    f(lfo.formula) +lfo.skolem_label.map(f).mkString("[label: ",", ","]")
+
+  def f(ls : LabelledSequent) : String = {
+    ls.l_antecedent.map(f).mkString("",", "," :- ") +
+    ls.l_succedent.map(f).mkString("",", ","")
+  }
+  def f(e:HOLExpression) : String = " "+HybridLatexExporter.getFormulaString(e,true,false)+" "
+}
+
+
 /** This implements the second parsing pass, converting hlk Tokens to an LK Proof. HybridLatexParser inherits from
   * TokenToLKConverter to have a common interface, but the code here is only dependent on the AST. It uses the ASTtoHOL
   * object to create HOLExpressions from hol ASTs.
   */
 trait TokenToLKConverter {
+  import LLKFormatter._
+
   /* Extracts type declarations from the tokens and creates a function to create atomic terms by name */
   def createNaming(r : List[Token]) : (String => HOLExpression) = {
     val ctypes : List[(String,TA)] = r.flatMap(_ match {
@@ -151,7 +177,7 @@ trait TokenToLKConverter {
         case "AX" =>
           proofstack = Axiom(ant, suc) :: proofstack
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "TAUTCOMPLETION" =>
           require(ant.size == 1, "Tautological Axiom Completion needs exactly one formula in the antecedent, not "+ant.mkString(","))
           require(suc.size == 1, "Tautological Axiom Completion needs exactly one formula in the succedent, not "+suc.mkString(","))
@@ -159,13 +185,13 @@ trait TokenToLKConverter {
           val rule = AtomicExpansion(FSequent(ant,suc))
           proofstack = rule :: proofstack
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "AUTOPROP" =>
           try {
             val Some(rule) = solve.solvePropositional(FSequent(ant, suc), true, true)
             proofstack = rule :: proofstack
             require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-              "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+              "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
           } catch {
             case e : Exception =>
               throw new HybridLatexParserException("Autopropositional failed with the message: "+e.getMessage+"\nStack Trace:\n"+
@@ -175,107 +201,107 @@ trait TokenToLKConverter {
         case "ALLL" =>
           proofstack = handleWeakQuantifier(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "EXR" =>
           proofstack = handleWeakQuantifier(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "ALLR" =>
           proofstack = handleStrongQuantifier(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "EXL" =>
           proofstack = handleStrongQuantifier(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "ANDR" =>
           proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "ORL" =>
           proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "IMPL" =>
           proofstack = handleBinaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         // --- unary rules ---
         case "ORR" =>
           proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "ANDL" =>
           proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "IMPR" =>
           proofstack = handleUnaryLogicalOperator(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         // --- negation rules ---
         case "NEGL" =>
           proofstack = handleNegation(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "NEGR" =>
           proofstack = handleNegation(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
 
         // --- equational rules ---
         case "EQL" =>
           proofstack = handleEquality(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "EQR" =>
           proofstack = handleEquality(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
 
         // --- definition rules ---
         case "DEF" =>
           proofstack = handleDefinitions(proofstack, name, fs, auxterm, naming, rt)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
 
         // --- structural rules ---
         case "CONTRL" =>
           proofstack = handleContraction(proofstack, name, fs, auxterm, naming, rt )
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "CONTRR" =>
           proofstack = handleContraction(proofstack, name, fs, auxterm, naming, rt )
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "WEAKL" =>
           proofstack = handleWeakening(proofstack, name, fs, auxterm, naming, rt )
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "WEAKR" =>
           proofstack = handleWeakening(proofstack, name, fs, auxterm, naming, rt )
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "CUT" =>
           proofstack = handleCut(proofstack, name, fs, auxterm, naming, rt )
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
 
         // --- macro rules ---
         case "EQAXIOM" =>
           proofstack = handleEQAxiom(proofstack, name, fs, auxterm, sub, naming, rt, axioms, definitions)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
 
         case "INSTAXIOM" =>
           proofstack = handleInstAxiom(proofstack, name, fs, auxterm, sub, naming, rt, axioms, definitions)
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
 
         case "CONTINUEFROM" =>
           proofstack = handleLink(proofs, proofstack, name, fs, auxterm, naming, rt )
           require(proofstack.nonEmpty && proofstack(0).root.toFSequent.multiSetEquals(fs),
-            "Error creating rule! Expected sequent: "+ this.f(fs) +" got "+this.f(proofstack(0).root.toFSequent) +" instead!")
+            "Error creating rule! Expected sequent: "+ f(fs) +" got "+f(proofstack(0).root.toFSequent) +" instead!")
         case "CONTINUEWITH" => ;
         case "COMMENT" => ;
         case _ => throw new HybridLatexParserException("Rule type "+name+" not yet implemented!")
@@ -301,18 +327,18 @@ trait TokenToLKConverter {
       case "EXR"  => (mainsequent.succedent(0), auxsequent.succedent(0))
     }
 
-    def inferTerm(x: HOLVar, f:HOLFormula): HOLExpression = {
-      NaiveIncompleteMatchingAlgorithm.holMatch(f, aux)(Nil) match {
+    def inferTerm(x: HOLVar, holf:HOLFormula): HOLExpression = {
+      NaiveIncompleteMatchingAlgorithm.holMatch(holf, aux)(Nil) match {
         case Some(sub) =>
           val s: HOLExpression = sub.holmap.getOrElse(x,x) //in case the variable was projected away, we use the identity function
           if (auxterm.nonEmpty) {
             //try to use user provided term
             val t: HOLExpression = HLKHOLParser.ASTtoHOL(naming, auxterm.get)
             if (s == t) {
-              //              println("Remark: automatically inferred the auxiliaray term " + this.f(t) + " in formula "+this.f(f))
+              //              println("Remark: automatically inferred the auxiliaray term " + f(t) + " in formula "+f(f))
               t
             } else {
-              println("Preferring user specified term " + this.f(t) + " over inferred term " + this.f(s) + ".")
+              println("Preferring user specified term " + f(t) + " over inferred term " + f(s) + ".")
               t
             }
           } else {
@@ -606,7 +632,7 @@ trait TokenToLKConverter {
         yield { (s,t,e,f,main)}
 
         require(candidates.nonEmpty,"For an eq:l rule, could not find a possible replacement of an equation from "
-          +lefteqs.map(this.f(_)).mkString("(",",",")")+" in "+fs.antecedent.map(this.f(_)).mkString("(",",",")")  )
+          +lefteqs.map(f(_)).mkString("(",",",")")+" in "+fs.antecedent.map(f(_)).mkString("(",",",")")  )
 
         //now we try to create an inference from each candidate
         val inferences : Seq[LKProof] = candidates.flatMap( args => {
@@ -642,8 +668,8 @@ trait TokenToLKConverter {
           l1 ++ l2
         })
 
-        require(inferences.nonEmpty, "Could not infer an eq:l rule from left parent "+this.f(leftproof.root)
-          +" and "+this.f(rightproof.root)+" to infer "+this.f(fs))
+        require(inferences.nonEmpty, "Could not infer an eq:l rule from left parent "+f(leftproof.root)
+          +" and "+f(rightproof.root)+" to infer "+f(fs))
         if (inferences.size > 1)
           println("WARNING: Inference to create eq:l rule is not uniquely specified from left parent "
             +leftproof.root+" and "+rightproof.root+" to infer "+fs)
@@ -662,14 +688,14 @@ trait TokenToLKConverter {
         yield { (s,t,e,f,main)}
 
         require(candidates.nonEmpty,"For an eq:r rule, could not find a possible replacement of an equation from "
-          +lefteqs.map(this.f(_)).mkString("(",",",")")+" in "+fs.succedent.map(this.f(_)).mkString("(",",",")") )
+          +lefteqs.map(f(_)).mkString("(",",",")")+" in "+fs.succedent.map(f(_)).mkString("(",",",")") )
 
         //now we try to create an inference from each candidate
         val inferences : Seq[LKProof] = candidates.flatMap( args => {
           val (s,t,eq,f,main) = args
 
           val l1 = {
-            //print("Trying"+this.f(s)+"="+this.f(t)+" in "+this.f(main))
+            //print("Trying"+f(s)+"="+f(t)+" in "+f(main))
             //we check if we can paramodulate s=t ...
             checkReplacement(s, t, f, main) match {
               case EqualModuloEquality(_) =>
@@ -687,7 +713,7 @@ trait TokenToLKConverter {
 
           val l2 = {
             //if not, we try t=s....
-            //print("Trying"+this.f(t)+"="+this.f(s)+" in "+this.f(main))
+            //print("Trying"+f(t)+"="+f(s)+" in "+f(main))
             checkReplacement(t, s, f, main) match {
               case EqualModuloEquality(_) =>
                 //println("found!")
@@ -706,8 +732,8 @@ trait TokenToLKConverter {
           l1++l2
         })
 
-        require(inferences.nonEmpty, "Could not infer an eq:r rule from left parent "+this.f(leftproof.root)
-          +" and "+this.f(rightproof.root)+" to infer "+this.f(fs))
+        require(inferences.nonEmpty, "Could not infer an eq:r rule from left parent "+f(leftproof.root)
+          +" and "+f(rightproof.root)+" to infer "+f(fs))
         if (inferences.size > 1)
           println("WARNING: Inference to create eq:r rule is not uniquely specified from left parent "
             +leftproof.root+" and "+rightproof.root+" to infer "+fs)
@@ -785,7 +811,7 @@ trait TokenToLKConverter {
     )
 
     require(ps.nonEmpty, "None of the proofs in "+proofs.keys.mkString("(",",",")")+" matches proof link "+link  )
-    require(ps(0).root.toFSequent.multiSetEquals(fs), "LINK to "+this.f(link)+" must give "+this.f(fs)+" but gives "+this.f(ps(0).root))
+    require(ps(0).root.toFSequent.multiSetEquals(fs), "LINK to "+f(link)+" must give "+f(fs)+" but gives "+f(ps(0).root))
 
     ps(0) :: current_proof
 
@@ -820,7 +846,7 @@ trait TokenToLKConverter {
       val (name, ax1) = s
       val (_,ax2) = stripUniversalQuantifiers(ax1)
       val ax=  normalize(sub(ax2))
-      //println("Trying:"+this.f(ax)+" against "+this.f(auxf))
+      //println("Trying:"+f(ax)+" against "+f(auxf))
       val r1 = NaiveIncompleteMatchingAlgorithm.holMatch(ax, auxf)(Nil) match {
         case Some(sub) if sub(ax) syntaxEquals(auxf) => (name,ax1,sub)::Nil
         case Some(sub) =>
@@ -840,7 +866,7 @@ trait TokenToLKConverter {
 
     require(candidates.size > 0, "Could not find equational axiom for "+f(auxf))
     if(candidates.size > 1)
-      println("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> this.f(x._1)+" "+x._2).mkString(","))
+      println("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
     val (name, axiom, sub2) = candidates(0)
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c(definitions(axformula))
@@ -854,29 +880,29 @@ trait TokenToLKConverter {
     require(mainsequent.formulas.size == 1, "Exactly one main formula required, not "+f(mainsequent))
     require(auxsequent.formulas.size == 1, "Excatly one auxiliary formula needed in parent, not "+f(auxsequent))
     val newproof = auxsequent match {
-      case FSequent(Nil, List(f)) =>
+      case FSequent(Nil, List(formula)) =>
         require(mainsequent.antecedent.size == 0 && mainsequent.succedent.size == 1,
           "Auxformula and main formula in eqaxiom rule need to be on the same side of the sequent, not "
-            +this.f(mainsequent)+" and "+this.f(auxsequent))
+            +f(mainsequent)+" and "+f(auxsequent))
         val FSequent(Nil,List(main)) = mainsequent
-        (checkReplacement(s,t,f,main), checkReplacement(t,s,f,main)) match {
+        (checkReplacement(s,t,formula,main), checkReplacement(t,s,formula,main)) match {
           case (EqualModuloEquality(_), _) =>
-            EquationRight1Rule(axrule, oldproof, auxf, f, main)
+            EquationRight1Rule(axrule, oldproof, auxf, formula, main)
           case (_,EqualModuloEquality(_)) =>
-            EquationRight2Rule(axrule, oldproof, auxf, f, main)
-          case _ => throw new Exception("Could not find replacement of equational axiom "+this.f(auxf)+" in "+this.f(main))
+            EquationRight2Rule(axrule, oldproof, auxf, formula, main)
+          case _ => throw new Exception("Could not find replacement of equational axiom "+f(auxf)+" in "+f(main))
         }
 
-      case FSequent(List(f), Nil) =>
+      case FSequent(List(formula), Nil) =>
         require(mainsequent.antecedent.size == 1 && mainsequent.succedent.size == 0,
           "Auxformula and main formula in eqaxiom rule need to be on the same side of the sequent, not "
-            +this.f(mainsequent)+" and "+this.f(auxsequent))
+            +f(mainsequent)+" and "+f(auxsequent))
         val FSequent(List(main), Nil) = mainsequent
-        (checkReplacement(s,t,f,main), checkReplacement(t,s,f,main)) match {
+        (checkReplacement(s,t,formula,main), checkReplacement(t,s,formula,main)) match {
           case (EqualModuloEquality(_), _) =>
-            EquationLeft1Rule(axrule, oldproof, auxf, f, main)
+            EquationLeft1Rule(axrule, oldproof, auxf, formula, main)
           case (_,EqualModuloEquality(_)) =>
-            EquationLeft2Rule(axrule, oldproof, auxf, f, main)
+            EquationLeft2Rule(axrule, oldproof, auxf, formula, main)
           case _ => throw new Exception("Could not find replacement of equational axiom "+auxf+" in "+main)
         }
     }
@@ -904,10 +930,10 @@ trait TokenToLKConverter {
     val FSequent(List(auxf_), Nil) = auxsequent
     val auxf = c(betaNormalize(auxf_)(StrategyOuterInner.Outermost).asInstanceOf[HOLExpression])
 
-    //println("auxf="+this.f(auxf))
+    //println("auxf="+f(auxf))
 
     val sub = createSubstitution(naming, subterm)
-    //println("sub="+this.f(sub))
+    //println("sub="+f(sub))
     //println(sub)
 
     val axs = axioms.toList
@@ -915,7 +941,7 @@ trait TokenToLKConverter {
       val (name, ax1) = s
       val (_,ax2) = stripUniversalQuantifiers(ax1)
       val ax=  betaNormalize(sub(ax2))(StrategyOuterInner.Outermost).asInstanceOf[HOLExpression]
-      //println("Trying: "+ this.f(ax))
+      //println("Trying: "+ f(ax))
       val r1 = NaiveIncompleteMatchingAlgorithm.holMatch(ax, auxf)(Nil) match {
         case Some(sub) if sub(ax) syntaxEquals(auxf) => (name,ax1,sub)::Nil
         case Some(sub2)  =>
@@ -939,7 +965,7 @@ trait TokenToLKConverter {
 
     require(candidates.size > 0, "Could not find instance axiom for "+f(auxf))
     if(candidates.size > 1)
-      println("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> this.f(x._1)+" "+x._2).mkString(","))
+      println("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
     val (name, axiom, sub2) = candidates(0)
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c(definitions(axformula))
@@ -1163,20 +1189,6 @@ trait TokenToLKConverter {
   private def c(e:HOLExpression) : HOLFormula =
     if (e.isInstanceOf[HOLFormula]) e.asInstanceOf[HOLFormula] else
       throw new Exception("Could not convert "+e+" to a HOL Formula!")
-
-  /* formats a sequent */
-  private def f(fs:FSequent) : String = {
-    " "+(fs.antecedent.map(HybridLatexExporter.getFormulaString(_,true, false)).mkString(", ")) + " :- " +
-      (fs.succedent.map(HybridLatexExporter.getFormulaString(_,true,false)).mkString(", "))+" "
-  }
-
-  private def f(s:Substitution) : String = {
-    s.holmap.map( x => f(x._1)  + " -> " + f(x._2)  ).mkString("{",",","}")
-  }
-
-  private def f(fs:Sequent) : String = f(fs.toFSequent)
-  private def f(e:HOLExpression) : String = " "+HybridLatexExporter.getFormulaString(e,true,false)+" "
-
 
   def getAxiomLookupProof(name : HOLFormula, axiom : HOLFormula, instance: HOLFormula,
                           axiomconj : HOLFormula, axiomproof : LKProof, sub: Substitution) : (HOLFormula,LKProof) = {

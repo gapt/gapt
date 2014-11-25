@@ -17,13 +17,15 @@ import at.logic.language.lambda.{Substitution => LambdaSubstitution, Var, Factor
  */
 
 object RobinsonToRal extends RobinsonToRal {
-  override def convert_formula(e:HOLFormula) : HOLFormula = recreateWithFactory(e,HOLFactory).asInstanceOf[HOLFormula]
+  override def convert_formula(e:HOLFormula) : HOLFormula =
+    recreateWithFactory(e,HOLFactory).asInstanceOf[HOLFormula]
   override def convert_substitution(s:Substitution) : Substitution = {
     recreateWithFactory(s, HOLFactory, convert_map).asInstanceOf[Substitution]
   }
 
   //TODO: this is somehow dirty....
-  def convert_map(m : Map[Var,LambdaExpression]) : LambdaSubstitution = Substitution(m.asInstanceOf[Map[HOLVar,HOLExpression]])
+  def convert_map(m : Map[Var,LambdaExpression]) : LambdaSubstitution =
+    Substitution(m.asInstanceOf[Map[HOLVar,HOLExpression]])
 }
 
 case class RalException[V <: LabelledSequent](val message : String, val rp : List[RobinsonResolutionProof], val ralp : List[RalResolutionProof[V]], val exp : List[HOLExpression]) extends Exception(message);
@@ -49,7 +51,6 @@ abstract class RobinsonToRal {
         val rule = InitialSequent(convert_sequent(fc), (fc.antecedent.toList.map(x => EmptyLabel()), fc.succedent.toList.map(x => EmptyLabel())))
         require(rule.root.toFSequent  multiSetEquals clause.toFSequent, "Error in initial translation, translated root: "+rule.root.toFSequent+" is not original root "+clause.toFSequent)
         require(! rule.root.toFSequent.formulas.contains((x:HOLFormula) => x.isInstanceOf[FOLFormula]), "Formulas contain fol content!")
-
 
         (emptyTranslationMap, rule)
 

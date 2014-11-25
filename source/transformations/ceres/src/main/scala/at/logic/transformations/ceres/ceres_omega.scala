@@ -3,8 +3,9 @@ package at.logic.transformations.ceres
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.calculi.lk._
+import at.logic.calculi.lksk.TypeSynonyms.Label
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.language.hol.Equation
+import at.logic.language.hol.{HOLFormula, Equation}
 import at.logic.language.lambda.types.Ti
 import at.logic.transformations.ceres.struct.Struct
 import at.logic.utils.dssupport.ListSupport._
@@ -18,6 +19,8 @@ import at.logic.calculi.resolution.ral._
  */
 object ceres_omega extends ceres_omega
 class ceres_omega {
+  import at.logic.algorithms.llk.LLKFormatter._
+
   /**
     * Applies the CERES_omega method to a proof.
     * @param projections This is the set of projections to use. A projection to reflexvity is generated if needed.
@@ -35,7 +38,7 @@ class ceres_omega {
       val reflexivity_occ = rule.root.succedent(0).asInstanceOf[LabelledFormulaOccurrence]
       val weakened_left = es.l_antecedent.foldLeft(rule)( (r, fo) => lksk.WeakeningLeftRule(r, fo.formula, fo.skolem_label))
       val weakened_right = es.l_antecedent.foldLeft(weakened_left)( (r, fo) => lksk.WeakeningRightRule(r, fo.formula, fo.skolem_label))
-      val reflexivity_successor = pickFOWithAncestor(sequentToLabelledSequent(rule.root).l_antecedent, reflexivity_occ)
+      val reflexivity_successor = pickFOWithAncestor(sequentToLabelledSequent(rule.root).l_succedent, reflexivity_occ)
 
       (weakened_right, LabelledSequent(Nil, List(reflexivity_successor)) )
 
@@ -56,7 +59,7 @@ class ceres_omega {
           require(subproof.root.syntacticMultisetEquals(clause compose es), "The root "+subproof.root+" must consist of the clause "+clause+" plus the end-sequent "+es)
           (subproof, clause)
         case Nil =>
-          throw new Exception("Could not find a projection for the clause "+root+" in "+projections.map(x => filterEndsequent(sequentToLabelledSequent(x.root), es, struct)).mkString("\n"))
+          throw new Exception("Could not find a projection for the clause "+f(root)+" in "+projections.map(x => filterEndsequent(sequentToLabelledSequent(x.root), es, struct)).map(f(_)).mkString("\n"))
       }
 
     case Cut(root, parent1, parent2, p1occs, p2occs) =>
@@ -72,12 +75,13 @@ class ceres_omega {
 
       val cleft = caux1.foldLeft(lkparent1)((proof, occ) =>
         ContractionRightRule(proof, pickFOWithAncestor(proof.root.succedent,c1), pickFOWithAncestor(proof.root.succedent, occ )) )
-      val cright = caux1.foldLeft(lkparent2)((proof, occ) =>
+      val cright = caux2.foldLeft(lkparent2)((proof, occ) =>
         ContractionLeftRule(proof, pickFOWithAncestor(proof.root.antecedent,c2), pickFOWithAncestor(proof.root.antecedent, occ )) )
 
       val rule = CutRule(cleft, cright, pickFOWithAncestor(cleft.root.succedent, c1), pickFOWithAncestor(cright.root.antecedent, c2))
       val crule = contractEndsequent(rule, es)
       val nclauses = filterByAncestor(crule.root, clause1 compose clause2)
+      require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: "+f(nclauses)+"\n real clause: "+f(root))
       (crule, nclauses)
 
     case AFactorF(root, parent, contr, aux, _) =>
@@ -86,6 +90,7 @@ class ceres_omega {
       val c2 = findAuxByFormulaAndLabel(contr, clause1.l_antecedent, c1::Nil)
       val rule = ContractionLeftRule(lkparent, c1, c2)
       val nclauses = filterByAncestor(rule.root, clause1)
+      require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: "+f(nclauses)+"\n real clause: "+f(root))
       (rule, nclauses)
 
     case AFactorT(root, parent, contr, aux, _) =>
@@ -94,6 +99,7 @@ class ceres_omega {
       val c2 = findAuxByFormulaAndLabel(contr, clause1.l_succedent, c1::Nil)
       val rule = ContractionRightRule(lkparent, c1, c2)
       val nclauses = filterByAncestor(rule.root, clause1)
+      require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: "+f(nclauses)+"\n real clause: "+f(root))
       (rule, nclauses)
 
 
@@ -105,6 +111,7 @@ class ceres_omega {
         val rule = EquationLeftBulkRule(lkparent1, lkparent2, eqn, modulant, principial.formula)
         val crule = contractEndsequent(rule, es)
         val nclauses = filterByAncestor(crule.root, clause1 compose clause2)
+        require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: "+f(nclauses)+"\n real clause: "+f(root))
         (crule, nclauses)
 
     case ParaT(root, parent1, parent2, p1occ, p2occ, principial, flipped) =>
@@ -115,18 +122,40 @@ class ceres_omega {
       val modulant : FormulaOccurrence = findAuxByFormulaAndLabel(p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_succedent, Nil)
       val rule = EquationRightBulkRule(lkparent1, lkparent2, eqn, modulant, principial.formula)
       val nclauses = filterByAncestor(rule.root, clause1 compose clause2)
+      require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: "+f(nclauses)+"\n real clause: "+f(root))
       (rule, nclauses)
   } catch {
     case e:Exception =>
-      println("clause1" + clause1)
-      println("clause2" + clause2)
+      println("clause1" + f(clause1))
+      println("clause2" + f(clause2))
+      println(lkparent2.rule)
+      println(f(lkparent2.root))
+      println(f(parent2.root))
       throw e
   }
 
     case Sub(root, parent, sub) =>
-      val (lkparent, clause1) = ceres_omega(projections, parent, es, struct)
+      val (lkparent, _) = ceres_omega(projections, parent, es, struct)
       val rule = applySubstitution(lkparent, sub)._1
-      val nclauses = filterByAncestor(rule.root, clause1)
+
+      val axiomformulas = rule.leaves.flatMap(_.vertex.occurrences)
+      val lruleroot =  sequentToLabelledSequent(rule.root)
+      /* find the sub-sequent of the substiuted proof which was introduced only by axioms */
+      val axiomancestoroccs_a = lruleroot.l_antecedent.filter(x => firstAncestors(x).forall(y => axiomformulas.contains(y)))
+      val axiomancestoroccs_s = lruleroot.l_succedent.filter(x => firstAncestors(x).forall(y => axiomformulas.contains(y))  )
+
+
+      /* for each element in the root, find a matching literal with axiom ancestor in the derived end-sequent */
+      val nclauses_a =  root.l_antecedent.foldLeft[List[LabelledFormulaOccurrence]](List())((list, fo ) => {
+        findAuxByFormulaAndLabel(fo.formula, fo.skolem_label,axiomancestoroccs_a, list) :: list
+      })
+      val nclauses_s = root.l_succedent.foldLeft[List[LabelledFormulaOccurrence]](List())((list, fo ) => {
+        findAuxByFormulaAndLabel(fo.formula, fo.skolem_label, axiomancestoroccs_s, list) :: list
+      })
+
+      val nclauses = LabelledSequent(nclauses_a.reverse, nclauses_s.reverse)
+
+      require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: "+f(nclauses)+"\n real clause: "+f(root))
       (rule, nclauses)
 
     case _ => throw new Exception("Unhandled case: "+ralproof)
@@ -146,13 +175,48 @@ class ceres_omega {
     }
   }
 
-  def findAuxByFormulaAndLabel(aux : LabelledFormulaOccurrence, candidates : Seq[LabelledFormulaOccurrence], exclusion_list : Seq[LabelledFormulaOccurrence]) =
-    findAux(aux, candidates, x => x.skolem_label == aux.skolem_label && x.formula == aux.formula, exclusion_list)
+  /**
+   * Finds an occurrence in candidates - exclusion_list, which has the same formula and label as aux.
+   * @return the first occurrence in candidates which matches
+   */
+  def findAuxByFormulaAndLabel(aux : LabelledFormulaOccurrence,
+                               candidates : Seq[LabelledFormulaOccurrence],
+                               exclusion_list : Seq[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence = try {
+    findAux(candidates, x => x.skolem_label == aux.skolem_label && x.formula == aux.formula, exclusion_list)
+  } catch {
+    case e: IllegalArgumentException =>
+      throw new Exception("Could not find a candidate for "+aux+" in "+candidates.mkString("[",", ","]")+exclusion_list.mkString(" ignoring: ",", ","."))
+  }
 
-  def findAux(aux : LabelledFormulaOccurrence, candidates : Seq[LabelledFormulaOccurrence], pred : LabelledFormulaOccurrence => Boolean, exclusion_list : Seq[LabelledFormulaOccurrence]) =
+  /**
+   * Finds an occurrence in candidates - exclusion_list, which has the same formula and label as aux.
+   * @return the first occurrence in candidates which matches
+   */
+  def findAuxByFormulaAndLabel(formula : HOLFormula,
+                               skolem_label : Label,
+                               candidates : Seq[LabelledFormulaOccurrence],
+                               exclusion_list : Seq[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence = try {
+    findAux(candidates, x => x.skolem_label == skolem_label && x.formula == formula, exclusion_list)
+  } catch {
+    case e: IllegalArgumentException =>
+      throw new Exception("Could not find a candidate for "+formula+" with label " + skolem_label+" in "+candidates.mkString("[",", ","]")+exclusion_list.mkString(" ignoring: ",", ","."))
+  }
+
+  /**
+   * Finds the first element in candidates - exclucsion_list fulfilling the predicate pred. Throws an IllegalArgumentException,
+   * if none is found.
+   * @param candidates the list of candidates to choose from
+   * @param pred a predicate on formula occurrences
+   * @param exclusion_list no candidate in exclusion_list will match
+   * @throws IllegalArgumentException if no candidate fulfills pred.
+   * @return the first element of candidates which fulfills the criteria
+   */
+  def findAux(candidates : Seq[LabelledFormulaOccurrence],
+              pred : LabelledFormulaOccurrence => Boolean,
+              exclusion_list : Seq[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence =
   candidates.diff(exclusion_list).find(pred) match {
     case Some(fo) => fo
-    case None => throw new Exception("Could not find a candidate for "+aux+" in "+candidates.mkString("[",", ","]")+exclusion_list.mkString(" ignoring: ",", ","."))
+    case None => throw new IllegalArgumentException("Could not find matching aux formula!")
   }
 
   /**
@@ -209,12 +273,48 @@ class ceres_omega {
       removeFirstWhere(list, (x:LabelledFormulaOccurrence) => fo.formula == x.formula)  )
   )
 
+  /**
+   * Computes the reflexive, transitive closure of the ancestor relation, ie. all ancestors.
+   * @param fo a formula occurrence
+   * @return the list of all ancestors
+   */
   def tranAncestors(fo : FormulaOccurrence) : List[FormulaOccurrence] = {
     fo :: fo.ancestors.toList.flatMap(x => tranAncestors(x))
   }
 
+  /**
+   * Computes the reflexive, transitive closure of the ancestor relation, ie. all ancestors.
+   * @param fo a formula occurrence
+   * @return the list of all ancestors
+   */
   def tranAncestors(fo : LabelledFormulaOccurrence) : List[LabelledFormulaOccurrence] = {
     fo :: fo.ancestors.flatMap(x => tranAncestors(x))
+  }
+
+  /**
+   * Computes the list of earliest ancestors of the formula occurrence. I.e. we calculate
+   * the least elements of all ancestors of the occurrence with regard to the ancestorship relation.
+   * @param fo a formula occurrence
+   * @return the list of first ancestors
+   */
+  def firstAncestors(fo : FormulaOccurrence) : List[FormulaOccurrence] = {
+    if (fo.ancestors.isEmpty)
+      List(fo)
+    else
+      fo.ancestors.toList.flatMap(x => firstAncestors(x))
+  }
+
+  /**
+   * Computes the list of earliest ancestors of the formula occurrence. I.e. we calculate
+   * the least elements of all ancestors of the occurrence with regard to the ancestorship relation.
+   * @param fo a formula occurrence
+   * @return the list of first ancestors
+   */
+  def firstAncestors(fo : LabelledFormulaOccurrence) : List[LabelledFormulaOccurrence] = {
+    if (fo.ancestors.isEmpty)
+      List(fo)
+    else
+      fo.ancestors.toList.flatMap(x => firstAncestors(x))
   }
 
 

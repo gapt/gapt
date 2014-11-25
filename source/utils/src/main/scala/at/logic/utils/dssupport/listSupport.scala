@@ -5,7 +5,7 @@
 
 package at.logic.utils.dssupport
 
-import scala.actors._
+//import scala.actors._
 
 object ListSupport {
 

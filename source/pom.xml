@@ -42,26 +42,26 @@
 
 		<!-- having dependencies on variable versions is deprecated <prooftool.version>1.4</prooftool.version> 
 			<cli.version>1.4</cli.version> -->
-		<maven.compiler.source>1.6</maven.compiler.source>
-		<maven.compiler.target>1.6</maven.compiler.target>
+		<maven.compiler.source>1.7</maven.compiler.source>
+		<maven.compiler.target>1.7</maven.compiler.target>
 
 		<encoding>UTF-8</encoding>
 		<scala.version>2.11</scala.version>
-		<scala-minor.version>1</scala-minor.version>
+		<scala-minor.version>4</scala-minor.version>
 		<slf4j.version>1.6.6</slf4j.version>
 		<junit.version>4.10</junit.version>
-		<specs2.version>2.3.13</specs2.version>
+		<specs2.version>2.4.12</specs2.version>
 		<scalatest.version>2.1.3</scalatest.version>
-		<mockito.version>1.9.0</mockito.version>
-		<scalacheck.version>1.10.1</scalacheck.version>
+		<mockito.version>1.10.8</mockito.version>
+		<scalacheck.version>1.11.6</scalacheck.version>
 		<sbt.version>0.13.2</sbt.version>
 
-		<maven-compiler-plugin.version>3.0</maven-compiler-plugin.version>
-		<maven-assembly-plugin.version>2.4</maven-assembly-plugin.version>
-		<maven-jar-plugin.version>2.4</maven-jar-plugin.version>
+		<maven-compiler-plugin.version>3.2</maven-compiler-plugin.version>
+		<maven-assembly-plugin.version>2.5.2</maven-assembly-plugin.version>
+		<maven-jar-plugin.version>2.5</maven-jar-plugin.version>
 		<scala-maven-plugin.version>3.2.0</scala-maven-plugin.version>
-		<maven-surefire-plugin.version>2.15</maven-surefire-plugin.version>
-		<maven-release-plugin.version>2.4</maven-release-plugin.version>
+		<maven-surefire-plugin.version>2.18</maven-surefire-plugin.version>
+		<maven-release-plugin.version>2.5.1</maven-release-plugin.version>
 	</properties>
 
 
@@ -92,12 +92,12 @@
 		<dependency>
 			<groupId>org.scala-lang.modules</groupId>
 			<artifactId>scala-parser-combinators_${scala.version}</artifactId>
-			<version>1.0.1</version>
+			<version>1.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang.modules</groupId>
 			<artifactId>scala-xml_${scala.version}</artifactId>
-			<version>1.0.1</version>
+			<version>1.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -106,14 +106,31 @@
 		</dependency>
 		<dependency>
 			<groupId>org.specs2</groupId>
-			<artifactId>specs2_${scala.version}</artifactId>
+			<artifactId>specs2-core_${scala.version}</artifactId>
 			<version>${specs2.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>org.specs2</groupId>
+            <artifactId>specs2-matcher_${scala.version}</artifactId>
+            <version>${specs2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.specs2</groupId>
+            <artifactId>specs2-mock_${scala.version}</artifactId>
+            <version>${specs2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.specs2</groupId>
+            <artifactId>specs2-junit_${scala.version}</artifactId>
+            <version>${specs2.version}</version>
+        </dependency>
+        <!--
 		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.version}</artifactId>
 			<version>${scalatest.version}</version>
 		</dependency>
+        -->
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-all</artifactId>
@@ -163,7 +180,7 @@
 				<version>${scala-maven-plugin.version}</version>
 				<configuration>
 				  <recompileMode>incremental</recompileMode>
-          <checkMultipleScalaVersions>off</checkMultipleScalaVersions>
+          <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
           <useZincServer>true</useZincServer>
           <args>
             <arg>-unchecked</arg>

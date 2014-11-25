@@ -5,6 +5,7 @@
 
 package at.logic.transformations.ceres.clauseSets
 
+import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.transformations.ceres.struct._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lksk._
@@ -16,11 +17,23 @@ import scala.annotation.tailrec
 import scala.util.control.TailCalls._
 
 
+object SimpleStandardClauseSet extends AlternativeStandardClauseSet( (x,y) => (x,y) )
+object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
+  (set1, set2) => {
+    val set1_ = set1.filterNot(s1 => set2.exists(s2 => StillmanSubsumptionAlgorithmHOL.subsumes(s2, s1)))
+    val set2_ = set2.filterNot(s2 => set1_.exists(s1 => StillmanSubsumptionAlgorithmHOL.subsumes(s1, s2)))
+    println("Set1: "+set1.size+" - "+(set1.size-set1_.size))
+    println("Set2: "+set2.size+" - "+(set2.size-set2_.size))
+    (set1_,set2_)
+  }
+
+)
+
 /**
  * Should calculate the same clause set as [[StandardClauseSet]], but without the intermediate representation of a
  * normalized struct.
  */
-object AlternativeStandardClauseSet {
+class AlternativeStandardClauseSet(val optimze_plus : (Set[FSequent], Set[FSequent]) => (Set[FSequent], Set[FSequent]) ) {
   def apply(struct:Struct) : Set[FSequent] = struct match {
     case A(fo) => Set(FSequent(Nil, List(fo.formula)))
     case Dual(A(fo)) => Set(FSequent(List(fo.formula), Nil))
@@ -28,15 +41,27 @@ object AlternativeStandardClauseSet {
     case EmptyTimesJunction() => Set(FSequent(Nil,Nil))
     case Plus(EmptyPlusJunction(), x) => apply(x)
     case Plus(x, EmptyPlusJunction()) => apply(x)
-    case Plus(x,y) => apply(x) ++ apply(y)
+    case Plus(A(f1), Dual(A(f2))) if f1.formula == f2.formula =>
+      Set()
+    case Plus(Dual(A(f2)), A(f1)) if f1.formula == f2.formula =>
+      Set()
+    case Plus(x,y) =>
+      val (x_, y_) = optimze_plus(apply(x), apply(y))
+      x_ ++ y_
     case Times(EmptyTimesJunction(), x, _) => apply(x)
     case Times(x, EmptyTimesJunction(), _) => apply(x)
     case Times(x,y, _) =>
       val xs = apply(x)
       val ys = apply(y)
-      for( x1 <- xs; y1 <- ys) yield { x1 compose y1 }
+      xs.flatMap(x1 => ys.flatMap(y1 => Set(delta_compose(x1,  y1))))
     case _ => throw new Exception("Unhandled case: "+struct)
   }
+
+  /* Like compose, but does not duplicate common terms */
+  private def delta_compose(fs1 : FSequent, fs2 :FSequent) = FSequent(
+      fs1.antecedent ++ fs2.antecedent.diff(fs1.antecedent),
+      fs1.succedent ++ fs2.succedent.diff(fs1.succedent)
+    )
 }
 
 /**
