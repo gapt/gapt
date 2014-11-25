@@ -21,54 +21,39 @@ import Deltas._
 
 /** Creates a grammar from a decomposition (u,S).
   */
-class Grammar(u0: List[FOLTerm], s0: types.S, ev: String) {
+class Grammar(u0: List[FOLTerm], slist0: List[(List[FOLVar], Set[List[FOLTerm]])]) {
 
   val u = u0
-  val s = s0
-  val eigenvariable = ev
+  val slist = slist0
 
   // Is this the best solution?
   var terms: TermSet = null
 
   /** Returns the size of the grammar, i.e. |u| + |s| */
-  def size = u.size + s.size
+  def size = u.size + slist.foldLeft(0) ((acc, s) => acc + s._2.size)
 
-  /** Returns the set of eigenvariables that occur in u. */
-  def eigenvariables = u.flatMap(f => collectVariables(f)).filter(isEigenvariable(_:FOLVar, ev)).distinct
+  /** Returns the set of eigenvariables that occur in the grammar. */
+  def eigenvariables = slist.flatMap(s => s._1).distinct
 
-  /** Returns the number of eigenvariables that occur in this grammar. Equals this.eigenvariables.length. */
-  def numVars = if (s.isEmpty) 0 else s.head.length
-
-/*
-  def strictSuperGrammarOf(g : Grammar) = 
-    // U o S \supset U' o S'
-    // U \supset U' and S \supset S'
-    g.u.forall(e => u.contains(e)) && g.s.forall(e => s.contains(e)) &&
-    // |U| > |U'| or |S| > |S'|
-    (u.size > g.u.size || s.size > g.s.size)
-*/
+  /** Returns the number of eigenvariables that occur in this grammar. */
+  def numVars = eigenvariables.length
 
   override def toString() : String = {
-    "{ " + u.mkString(",") + " } o { " + s.mkString(",") + " }"
+    "{ " + u.mkString(",") + " } " + slist.foldLeft("") ((acc, s) => "o(" + s._1.mkString(",") + ") { " + s._2.mkString(",") + " } ")
   }
 }
 
 /** Takes a set of terms and, using DeltaG, computes the set of smallest grammars that generate it.
   */
-object ComputeGrammars extends Logger {
-  // Uses findValidGrammar2.
+object ComputeGrammars {
+  
   def apply(terms: TermSet, delta: DeltaVector) : List[Grammar] = apply(terms.set, delta).map{ case g => g.terms = terms; g }
 
   def apply(terms: List[FOLTerm], delta: DeltaVector) : List[Grammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = "α"
-    
-    //debug( "3rd version - computing delta-table" )
     val deltatable = new DeltaTable(terms, eigenvariable, delta)
-    //debug( "done computing delta-table" )
-    //deltatable.printStats( { s => trace( "  " + s ) } )
-
-    //debug( "reading off grammars from delta-table" )
+    
     findValidGrammars(terms, deltatable, eigenvariable).sortWith((g1, g2) => g1.size < g2.size )
   }
 
@@ -83,14 +68,9 @@ object ComputeGrammars extends Logger {
     
     //Helper functions for grammars
 
-    //The number of variables in a decomposition
-    //def numVars(s: types.S) = s.size
-    //The size of s.
-    //def ssize(s: types.S) = safeHead(s, Nil).length
     //The number of terms this grammar compresses (grammars that "compress" only one term are useless and
     //hence discarded here.)
     def numTerms(s: types.S, t: List[FOLTerm]) = if (s.size != 0) s.size else t.size
-
 
     // This gets decremented as iterating through the delta table reveals
     // smaller and smaller grammars. The initial value is the size of the trivial decomposition
@@ -106,12 +86,6 @@ object ComputeGrammars extends Logger {
       // We only need to consider subsets of size |smallestGrammar| - |S| or less
       val maxSubsetSize = smallestGrammarSize - s.size
 
-      trace("[smallestCoverExact] terms: " + terms)
-      trace("[smallestCoverExact] maxSubsetSize: " + maxSubsetSize)
-
-      // Trying a lazy list so that not all subsets are computed at once. 
-      // BUT not sure if I am getting the behavior I expect...
-
       //val subsets = all subsets pairs of size (1..maxSubsetSize)
       lazy val subsets = (1 to maxSubsetSize).toList.foldLeft(Iterator[Set[(types.U, List[FOLTerm])]]()) {
         case (acc, i) => pairs.toSet.subsets(i) ++ acc
@@ -126,27 +100,18 @@ object ComputeGrammars extends Logger {
       def getSmallestSubsets(subsets: Iterator[Set[(types.U, List[FOLTerm])]]) : List[List[FOLTerm]] = {
         if(subsets.hasNext) {
 
-          trace("[smallestCoverExact]    hasNext!")
-
           val set = subsets.next()
 
-          trace("[smallestCoverExact]    set=" + set)
-
           if(set.size <= coverSize) {
-            trace("[smallestCoverExact]    set.size < coverSize!")
             //Create the union of the pairs in the subset and check whether it amounts to <terms>
             val (u, t) = set.foldLeft( ( List[types.U](), List[FOLTerm]() ) ) { case (acc, (u, t)) => 
               ( u :: acc._1, tailRecUnion(t, acc._2) )
             }
 
-            trace("[smallestCoverExact]    (u,t)=(" + u + ", " + t + ")")
             val difference = terms.diff(t)
-            trace("[smallestCoverExact]    difference=" + difference)
 
             //Union(T1,...,Tn) = terms => we are finished
             if(difference.size == 0) {
-              trace("[smallestCoverExact]    OUTCOME: no difference!")
-              trace("[smallestCoverExact]             coversize=" + set.size)
               coverSize = set.size
               u :: getSmallestSubsets(subsets) 
             } 
@@ -156,35 +121,20 @@ object ComputeGrammars extends Logger {
               (u ++ difference) :: getSmallestSubsets(subsets) 
             } 
             else {
-              trace("[smallestCoverExact]    OUTCOME: difference too large!")
-              trace("[smallestCoverExact]       u.size=" + u.size + ", difference.size=" + difference.size + ", coverSize=" + coverSize)
               getSmallestSubsets(subsets)
             }
          
           } else {
-            trace("[smallestCoverExact]    NOT set.size < coverSize!")
             List()
           }
         } else List()
       }
 
       val coverings = getSmallestSubsets(subsets)
-
-      trace("[smallestCoverExact] coverSize: " + coverSize)
-
       smallestGrammarSize = s.size + coverSize
-
-      trace("[smallestCoverExact] new smallestGrammarSize: " + smallestGrammarSize)
+      
       coverings
     }
-
-    trace("STARTING FOLDING")
-    trace("smallestGrammarSize= " + smallestGrammarSize)
-
-    trace("---------------------------------------------")
-    trace("DTG Contents: ")
-    trace(deltatable.table.toString)
-    trace("---------------------------------------------")
 
     //Go through the rows of the delta table and find the smallest
     //covering in each row.
@@ -192,37 +142,24 @@ object ComputeGrammars extends Logger {
 
       // Ignoring entries where s.size == 1 because they are trivial
       // grammars with the function symbol on the right.
-      trace("[folding DTG] checking grammar: " + s)
-
       if(numTerms(s, safeHead(pairs, (null, Nil))._2) > 1) {
-
-        trace("[folding DTG] - passed size check")
 
         // Add the trivial decomposition {alpha_0} o s if s only has one vector
         val ev = FOLVar(eigenvariable + "_0")
         val newpairs = if(s.size == 1 && s.head.forall(e => terms.contains(e)) ) { (ev, s.head) :: pairs } else pairs
 
-        trace("    | newpairs:")
-        trace(newpairs.toString())
-
         // Whenever we find a smaller S-vector,
         // we add the grammars in its row to the list of returned ones.
         if(s.size < smallestGrammarSize) {      
 
-          trace("[folding DTG] - passed s.size with s.size=" + s.size + ", smallestGrammarSize=" + smallestGrammarSize)              
           val coverings = smallestCoverExact(s, newpairs)
 
-          trace("[folding DTG] coverings: " + coverings)
-
           coverings.foldLeft(grammars) { case (acc, u) =>
-            trace("[folding DTG] adding new grammar to coverings(u,s): (" + u + ", " + s + ")" )
-            (new Grammar(u, s, eigenvariable) ) :: acc                   
+            (new Grammar(u, (ev::Nil, s)::Nil) ) :: acc
           }                                                   
         } else grammars                                       
                                                                                                                             
       } else {
-        trace("[folding DTG] +++FAILED SIZE CHECK+++ s     =" + s)
-        trace("                                      pairs =" + pairs)
         grammars
       }
     }

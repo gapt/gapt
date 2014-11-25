@@ -46,7 +46,7 @@ object TreeGrammarDecomposition {
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return a list of grammars
    */
-  def apply(termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : List[Grammar] = {
+  def apply(termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Grammar = {
 
     method match {
       case MCSMethod.MaxSAT => {
@@ -74,11 +74,10 @@ object TreeGrammarDecomposition {
       val interpretation = (new MaxSAT(satsolver)).solvePWM(f, g)
       val rules = decomp.getRules(interpretation)
       // transform the rules to a Grammar
-      val grammars = decomp.getGrammars(rules)
-      return grammars
+      val grammar = decomp.getGrammar(rules)
+      return grammar
     }
     else{
-      error("Unsupported TreeGrammarDecomposition method.")
       return null
     }
   }
@@ -96,11 +95,11 @@ object TreeGrammarDecomposition {
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return (list of grammars, status, log)
    */
-  def applyStat(termset: List[FOLTerm], n:Int, method: MCSMethod=MCSMethod.MaxSAT, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Option[List[Grammar]] = {
+  def applyStat(termset: List[FOLTerm], n:Int, method: MCSMethod=MCSMethod.MaxSAT, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Option[Grammar] = {
 
     var phase = "TGD"
 
-    var grammars = List[Grammar]()
+    var grammar : Option[Grammar] = None
 
     method match {
       case MCSMethod.MaxSAT => {
@@ -138,12 +137,12 @@ object TreeGrammarDecomposition {
       val rules = decomp.getRules(interpretation)
 
       // transform the rules to a Grammar
-      grammars = decomp.getGrammars(rules)
+      grammar = Some(decomp.getGrammar(rules))
     }
     else {
       throw new TreeGrammarDecompositionException("Unsupported TreeGrammarDecomposition method")
     }
-    Some(grammars)
+    grammar
   }
 }
 
@@ -363,8 +362,9 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
    * @param rules a set of of tuples of the form {(<non-terminal-index>, <FOLTerm>}
    * @return grammars representing provided rules
    */
-  def getGrammars(rules: Set[Tuple2[Int,FOLTerm]]) : List[Grammar] = {
-    var grammars = MutableList[Grammar]()
+  def getGrammar(rules: Set[Tuple2[Int,FOLTerm]]) : Grammar = {
+    
+    val slist = mutable.MutableList[(List[FOLVar],Set[List[FOLTerm]])]()
 
     // get all nonterminals in rules
     val evs = rules.foldLeft(List[String]())( (acc,r) => getNonterminals(r._2, nonterminal_a+"_") ::: acc).distinct.sorted
@@ -380,16 +380,20 @@ abstract class TreeGrammarDecomposition(val termset: List[FOLTerm], val n: Int) 
     for(i <- indexes){
       if(i != 0) {
         val s = decomps(i)
-        grammars += new Grammar(u, s, nonterminal_a+"_" + i)
+        val quantifiedVars = List(FOLVar(nonterminal_a+"_"+i))
+        slist += Tuple2(quantifiedVars,s)
 
-        val subs = s.foldLeft(List[Substitution]())((acc2,s0) => {
+        // TODO: (X) this part denoted the substitutions which have to be 
+	// performed on U for each rule \alpha_i => S_i. This should possibly 
+	// be part of computeCanonicalSolutions
+        /*val subs = s.foldLeft(List[Substitution]())((acc2,s0) => {
           Substitution(s0.map( s1 => (FOLVar(nonterminal_a+"_"+ i), s1))) :: acc2
         })
 
-        u = u.foldLeft(List[FOLTerm]())((acc, u0) => subs.map(sub => sub(u0)) ::: acc)
+        u = u.foldLeft(List[FOLTerm]())((acc, u0) => subs.map(sub => sub(u0)) ::: acc)*/
       }
     }
-    return grammars.toList
+    return new Grammar(u, slist.toList)
   }
 
   /**

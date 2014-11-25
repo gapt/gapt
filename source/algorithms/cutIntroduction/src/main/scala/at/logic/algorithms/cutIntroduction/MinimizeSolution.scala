@@ -232,11 +232,13 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     */
   def isValidWith(ehs: ExtendedHerbrandSequent, prover: Prover, f: FOLFormula) : Boolean = {
 
+    assert (ehs.grammar.slist.size == 1, "isValidWith: only simple grammars supported.")
+    
     //Instantiate with the eigenvariables.
     val body = ehs.grammar.eigenvariables.foldLeft(f)((f,ev) => instantiate(f, ev))
 
     //Instantiate with all the values in s.
-    val as = ehs.grammar.s.toList.foldLeft(List[FOLFormula]()) {case (acc, t) =>
+    val as = ehs.grammar.slist(0)._2.toList.foldLeft(List[FOLFormula]()) {case (acc, t) =>
       (t.foldLeft(f){case (f, sval) => instantiate(f, sval)}) :: acc
     }
 

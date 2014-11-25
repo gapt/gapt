@@ -343,7 +343,7 @@ object CutIntroduction {
   }
 
   private def execute(proof: LKProof, n: Int, timeout: Int, verbose: Boolean) :
-  (Option[List[FOLFormula]], String, LogTuple, Option[Throwable]) = {
+  (Option[Grammar], String, LogTuple, Option[Throwable]) = {
 
     val clean_proof = CleanStructuralRules(proof)
     val num_rules = rulesNumber(clean_proof)
@@ -353,7 +353,7 @@ object CutIntroduction {
   }
 
   private def execute(ep: ExpansionSequent, hasEquality: Boolean, num_lk_rules: Int, n: Int, timeout: Int, verbose: Boolean) : 
-  (Option[List[FOLFormula]], String, LogTuple, Option[Throwable]) = {
+  (Option[Grammar], String, LogTuple, Option[Throwable]) = {
     
     val prover = hasEquality match {
       case true => new EquationalProver()
@@ -397,27 +397,23 @@ object CutIntroduction {
       if (verbose) println( "Size of term set: " + termset.set.size )
 
       /********** Grammar finding **********/
-      val gs = TreeGrammarDecomposition.applyStat(termset.set, n, MCSMethod.MaxSAT, maxsatsolver)
-      var grammars = gs match {
-	case Some(grammar_list) => grammar_list.map { case g => g.terms = termset; g }
+      val small_grammar = TreeGrammarDecomposition.applyStat(termset.set, n, MCSMethod.MaxSAT, maxsatsolver)
+      val grammar = small_grammar match {
+	case Some(g) => g.terms = termset; g
         case None =>
           throw new TreeGrammarDecompositionException("Unable to complete TreeGrammarDecomposition")
       }
 
-      if (grammars.length == 0) {
+      if (grammar.size == 0) {
         throw new CutIntroUncompressibleException("\nNo grammars found. The proof cannot be compressed.")
       }
 
       /********** Proof Construction **********/ // TODO
-      val smallest = grammars(0).u.size + (grammars.foldLeft(0) ((acc, g) => acc + g.s.size))
 
-      minimalGrammarSize = smallest
-      if (verbose) println( "Smallest grammar-size: " + smallest )
+      minimalGrammarSize = grammar.size
+      if (verbose) println( "Smallest grammar-size: " + grammar.size )
       
-      phase = "computeCanonicalSolution"
-      val solutions = grammars.map(g => computeCanonicalSolution(endSequent, g))
-
-      (Some(solutions), None)
+      (Some(grammar), None)
     } } catch {
       case e: TimeOutException =>
         status = phase + "_timeout"
@@ -466,6 +462,8 @@ object CutIntroduction {
     */
   def computeCanonicalSolution(seq: Sequent, g: Grammar) : FOLFormula = {
 
+    assert (g.slist.size == 1, "computeCanonicalSolution: only simple grammars supported.")
+
     val terms = g.terms
     val varName = "x"
 
@@ -482,12 +480,10 @@ object CutIntroduction {
         val xterms = set.map(t => {
           val vars = createFOLVars(varName, g.eigenvariables.length+1)
           val allEV = g.eigenvariables.zip(vars)
-          val occurringEV = collectVariables(t).filter(isEigenvariable(_:FOLVar, g.eigenvariable)).distinct
+          val occurringEV = collectVariables(t).filter(v => g.eigenvariables.contains(v)).distinct
 
-          val res = allEV.filter(e => occurringEV.contains(e._1)).foldLeft(t)((t,e) => Substitution(e._1, e._2).apply(t))
-
-          //edge case: The current term is constant. In this case, we don't instantiate the variables inside, but leave it as is.
-          if (collectVariables(t).filter(isEigenvariable(_:FOLVar, g.eigenvariable)).isEmpty) { t } else { res }
+	  // If the term is a constant, this should return t itself
+          allEV.filter(e => occurringEV.contains(e._1)).foldLeft(t)((t,e) => Substitution(e._1, e._2).apply(t))
         })
 
         instantiateAll(f, xterms) :: acc
@@ -511,6 +507,8 @@ object CutIntroduction {
     val grammar = ehs.grammar
     val terms = grammar.terms
     
+    assert (grammar.slist.size == 1, "buildProofWithCut: only simple grammars supported.")
+    
     //Instantiate the cut formula with α_0,...,α_n-1, where n is the number of alphas in the ehs's grammar.
     //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
     //whole initial quantifier block instantiated to α_0,...,α_n-1.
@@ -520,7 +518,7 @@ object CutIntroduction {
     val cutLeft = instantiateAll(cutFormula, alphas)
 
     //Fully instantiate the cut formula with s[j=1...n][i] for all i.
-    val cutRight = grammar.s.toList.foldRight(List[FOLFormula]()) { case (t, acc) =>
+    val cutRight = grammar.slist(0)._2.toList.foldRight(List[FOLFormula]()) { case (t, acc) =>
       t.foldLeft(cutFormula) { case (f, sval) => instantiate(f, sval)} :: acc
     }
 
@@ -531,7 +529,6 @@ object CutIntroduction {
 
     val seq = FSequent(ehs.antecedent ++ ehs.antecedent_alpha, cutLeft +: (ehs.succedent ++ ehs.succedent_alpha))
 
-
     val proofLeft = prover.getLKProof(seq)
     val leftBranch = proofLeft match {
       case Some(proofLeft1) => 
@@ -540,13 +537,13 @@ object CutIntroduction {
         //Add sequents to all-quantify the cut formula in the right part of s1
         ForallRightBlock(s1, cutFormula, alphas)
 
-      case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable.")
+      case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + seq)
     }
 
     val seq2 = FSequent(cutRight ++ ehs.antecedent, ehs.succedent)
     val proofRight = prover.getLKProof(seq2)
     val rightBranch = proofRight match {
-      case Some(proofRight1) => sPart(cutFormula, grammar.s, proofRight1)
+      case Some(proofRight1) => sPart(cutFormula, grammar.slist(0)._2, proofRight1)
       case None => throw new CutIntroEHSUnprovableException("ERROR: propositional part is not provable: " + seq2)
     }
     //trace( "done calling solvePropositional" )
