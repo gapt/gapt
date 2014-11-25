@@ -214,9 +214,12 @@ class ceres_omega {
   def findAux(candidates : Seq[LabelledFormulaOccurrence],
               pred : LabelledFormulaOccurrence => Boolean,
               exclusion_list : Seq[LabelledFormulaOccurrence]) : LabelledFormulaOccurrence =
-  candidates.diff(exclusion_list).find(pred) match {
-    case Some(fo) => fo
-    case None => throw new IllegalArgumentException("Could not find matching aux formula!")
+  candidates.diff(exclusion_list).filter(pred).toList match {
+    case List(fo) => fo
+    case l@(fo::_) =>
+      println("warning: multiple matching formulas"+ l.mkString(": ",", ","." ))
+      fo
+    case Nil => throw new IllegalArgumentException("Could not find matching aux formula!")
   }
 
   /**
@@ -228,10 +231,10 @@ class ceres_omega {
    */
   def contractEndsequent(p : LKProof, es : LabelledSequent) : LKProof = {
     val contr_left = es.l_antecedent.foldLeft(p)( (rp, fo) => {
-      rp.root.asInstanceOf[LabelledSequent].l_antecedent.find(x =>
+      sequentToLabelledSequent(rp.root).l_antecedent.find(x =>
         x.formula == fo.formula && x.skolem_label == fo.skolem_label) match {
         case Some(occ1) =>
-          rp.root.asInstanceOf[LabelledSequent].l_antecedent.find(x =>
+          sequentToLabelledSequent(rp.root).l_antecedent.find(x =>
             occ1 != x && x.formula == fo.formula && x.skolem_label == fo.skolem_label) match {
             case Some(occ2) =>
               ContractionLeftRule(rp, occ1, occ2)
@@ -243,20 +246,20 @@ class ceres_omega {
           throw new Exception("During contraction of the end-sequent, could not find an antecedent occurrence of "+fo+" in "+rp.root)
       }
     })
-    val contr_right = es.l_antecedent.foldLeft(contr_left)( (rp, fo) => {
-      rp.root.asInstanceOf[LabelledSequent].l_succedent.find(x =>
+    val contr_right = es.l_succedent.foldLeft(contr_left)( (rp, fo) => {
+      sequentToLabelledSequent(rp.root).l_succedent.find(x =>
         x.formula == fo.formula && x.skolem_label == fo.skolem_label) match {
         case Some(occ1) =>
-          rp.root.asInstanceOf[LabelledSequent].l_succedent.find(x =>
+          sequentToLabelledSequent(rp.root).l_succedent.find(x =>
             occ1 != x && x.formula == fo.formula && x.skolem_label == fo.skolem_label) match {
             case Some(occ2) =>
               ContractionRightRule(rp, occ1, occ2)
             case None =>
-              throw new Exception("During contraction of the end-sequent, could not find a second succeedejt occurrence of "+fo+" in "+rp.root)
+              throw new Exception("During contraction of the end-sequent, could not find a second succeedent occurrence of "+fo+" in "+rp.root)
           }
 
         case None =>
-          throw new Exception("During contraction of the end-sequent, could not find an succedent occurrence of "+fo+" in "+rp.root)
+          throw new Exception("During contraction of the end-sequent, could not find a succedent occurrence of "+fo+" in "+rp.root)
       }
     })
 
@@ -318,15 +321,21 @@ class ceres_omega {
   }
 
 
-  def pickFOWithAncestor(l : Seq[FormulaOccurrence], anc : FormulaOccurrence) = l.find(x => tranAncestors(x).contains(anc)) match {
-    case Some(a) => a
-    case None => throw new Exception("Could not find any occurrence with ancestor "+anc+" in "+l)
+  def pickFOWithAncestor(l : Seq[FormulaOccurrence], anc : FormulaOccurrence) = l.filter(x => tranAncestors(x).contains(anc)).toList match {
+    case List(a) => a
+    case l@(a::_) =>
+      println("warning: multiple matching formulas for "+anc+ l.mkString(": ",", ","." ))
+      a
+    case Nil => throw new Exception("Could not find any occurrence with ancestor "+anc+" in "+l)
   }
 
 
-  def pickFOWithAncestor(l : Seq[LabelledFormulaOccurrence], anc : LabelledFormulaOccurrence) = l.find(x => tranAncestors(x).contains(anc)) match {
-    case Some(a) => a
-    case None => throw new Exception("Could not find any occurrence with ancestor "+anc+" in "+l)
+  def pickFOWithAncestor(l : Seq[LabelledFormulaOccurrence], anc : LabelledFormulaOccurrence) = l.filter(x => tranAncestors(x).contains(anc)).toList match {
+    case List(a) => a
+    case l@(a::_) =>
+      println("warning: multiple matching formulas for "+anc+ l.mkString(": ",", ","." ))
+      a
+    case Nil => throw new Exception("Could not find any occurrence with ancestor "+anc+" in "+l)
   }
 
 
