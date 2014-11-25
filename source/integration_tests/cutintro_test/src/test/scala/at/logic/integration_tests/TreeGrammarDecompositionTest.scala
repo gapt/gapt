@@ -44,17 +44,16 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
     testlanguage
   }
 
-  private def reconstructLanguage(grammars: List[Grammar]): List[FOLTerm] = {
-    if (grammars.size > 0) {
-      val substitutions = grammars.foldRight(List[Set[Substitution]]())((g: Grammar, acc) => {
-        val evs = g.eigenvariables.sortBy(_.toString)
-        val substitutionSet = g.s.map(termVector => Substitution(evs.zip(termVector))
-        )
+  private def reconstructLanguage(grammar: Grammar): List[FOLTerm] = {
+    if (grammar.size > 0) {
+      val substitutions = grammar.slist.foldRight(List[Set[Substitution]]())((stuple, acc) => {
+        val evs = stuple._1
+        val substitutionSet = stuple._2.map(termVector => Substitution(evs.zip(termVector)))
         substitutionSet :: acc
       })
       //println("Substitutions: \n" + substitutions)
       // substitute everything
-      substitutions.foldLeft(grammars(0).u)((u, subs) => {
+      substitutions.foldLeft(grammar.u)((u, subs) => {
         u.map(uterm => subs.map(sub => sub(uterm)).toList.distinct).toList.flatten.distinct
       })
     }
@@ -70,13 +69,13 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
       val proof = LinearExampleProof(0, 8)
       val proofLanguage = toTerms(proof)
 
-      val grammars = TreeGrammarDecomposition(proofLanguage, 1, MCSMethod.MaxSAT)
+      val grammar = TreeGrammarDecomposition(proofLanguage, 1, MCSMethod.MaxSAT)
 
       // check size
-      grammars should have size 1
+      grammar.slist.size shouldEqual 1
 
       // check validity
-      val grammarLanguage = reconstructLanguage(grammars)
+      val grammarLanguage = reconstructLanguage(grammar)
 
       proofLanguage diff grammarLanguage must beEmpty
     }
@@ -87,13 +86,13 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
       val proof = LinearExampleProof(0, 18)
       val proofLanguage = toTerms(proof)
 
-      val grammars = TreeGrammarDecomposition(proofLanguage, 2, MCSMethod.MaxSAT)
+      val grammar = TreeGrammarDecomposition(proofLanguage, 2, MCSMethod.MaxSAT)
 
       // check size
-      grammars should have size 2
+      grammar.slist.size shouldEqual 2
 
       // check validity
-      val grammarLanguage = reconstructLanguage(grammars)
+      val grammarLanguage = reconstructLanguage(grammar)
 
       proofLanguage diff grammarLanguage must beEmpty
     }

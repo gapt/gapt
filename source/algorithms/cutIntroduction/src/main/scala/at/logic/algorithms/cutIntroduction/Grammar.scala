@@ -19,8 +19,11 @@ import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.{DFS, BFS, setSearch}
 import Deltas._
 
-/** Creates a grammar from a decomposition (u,S).
-  */
+/**
+ * Creates a grammar from a decomposition {U o,,a1,...,am1,, S,,1,, o,,b1,...,bm2,, ... o,,z1,...,zmn,, S,,n,,}
+ * @param u0 set U
+ * @param slist0 list of non-terminals and their corresponding sets (((a1,...,am1), S,,1,,), ..., (z1,...,zmn, S,,n,,))
+ */
 class Grammar(u0: List[FOLTerm], slist0: List[(List[FOLVar], Set[List[FOLTerm]])]) {
 
   val u = u0
