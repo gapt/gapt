@@ -23,11 +23,7 @@ object FOLMatchingAlgorithm {
     return l.map(a => (s(a._1), s(a._2)))
   
   def createSubstFromListOfPairs(l: List[(FOLExpression, FOLExpression)]) : Substitution = {
-    var sub = Substitution()
-    for(x <- l) {
-      sub = Substitution( sub.folmap + ( (x._1.asInstanceOf[FOLVar], x._2) ))
-    }
-    return sub
+    Substitution(l.map(x => (x._1.asInstanceOf[FOLVar], x._2)))
   }
 
 
@@ -73,11 +69,14 @@ object FOLMatchingAlgorithm {
       matchSetOfTuples(moduloVarList, lst1, (x,v)::lst2)
 
     case (((x : FOLVar,v)::s), s2) if !freeVariables(v).contains(x) && moduloVarList.contains(x)  =>
-      {        
-        if(createSubstFromListOfPairs(s2).apply(v) != createSubstFromListOfPairs(s2).map.get(x))
-            return None
-        return matchSetOfTuples(moduloVarList, s, s2)
-      }
+        val subst = createSubstFromListOfPairs(s2)
+        //TODO: check if this is what we want. I'm not sure if we should not compare subst(v) with subst(x) instead of checking if x is assigned
+        subst.map.get(x) match {
+          case Some(term) if term == subst(v) =>
+            matchSetOfTuples(moduloVarList, s, s2)
+          case _ => // either the term does match subst(v) or x is not contained in the map
+            None
+        }
 
 
     case (((FOLConst (name1), x : FOLVar)::s), s2)  => None
