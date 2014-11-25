@@ -78,7 +78,16 @@ class ceres_omega {
       val cright = caux2.foldLeft(lkparent2)((proof, occ) =>
         ContractionLeftRule(proof, pickFOWithAncestor(proof.root.antecedent,c2), pickFOWithAncestor(proof.root.antecedent, occ )) )
 
-      val rule = CutRule(cleft, cright, pickFOWithAncestor(cleft.root.succedent, c1), pickFOWithAncestor(cright.root.antecedent, c2))
+      val cutfleft = pickFOWithAncestor(cleft.root.succedent, c1).asInstanceOf[LabelledFormulaOccurrence]
+      val cutfright = pickFOWithAncestor(cright.root.antecedent, c2).asInstanceOf[LabelledFormulaOccurrence]
+
+      require(cutfleft.formula == cutfright.formula,
+        "Found the wrong cut formulas:\n"+cutfleft.formula+"\n and\n"+cutfright.formula)
+//      require(cutfleft.formula syntaxEquals  cutfright.formula,
+//        "Cut formulas are alpha equal, but not syntax:\n"+cutfleft.formula+"\n and\n"+cutfright.formula)
+      require(cutfleft.skolem_label == cutfright.skolem_label,
+        "Found the wroing cut labels:\n"+cutfleft.skolem_label+"\n and\n"+cutfright.skolem_label)
+      val rule = CutRule(cleft, cright, cutfleft, cutfright)
       val crule = contractEndsequent(rule, es)
       val nclauses = filterByAncestor(crule.root, clause1 compose clause2)
       require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: "+f(nclauses)+"\n real clause: "+f(root))

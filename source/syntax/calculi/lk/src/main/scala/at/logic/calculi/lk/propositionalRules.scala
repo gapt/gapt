@@ -512,7 +512,9 @@ object CutRule {
     else {
       val term1 = term1op.get
       val term2 = term2op.get
-      if (!term1.formula.syntaxEquals(term2.formula)) throw new LKRuleCreationException("Formulas to be cut are not identical")
+//      if (!term1.formula.syntaxEquals(term2.formula)) throw new LKRuleCreationException("Formulas to be cut are not identical")
+      //TODO: check if any algorithm depends on the syntactical equality
+      if (term1.formula != term2.formula) throw new LKRuleCreationException("Formulas to be cut are not identical")
       else {
         (term1, term2)
       }
