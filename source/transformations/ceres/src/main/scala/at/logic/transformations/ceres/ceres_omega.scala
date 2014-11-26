@@ -37,7 +37,7 @@ class ceres_omega {
       val rule = LKSKAxiom(s.toFSequent, (List(), List(label)))
       val reflexivity_occ = rule.root.succedent(0).asInstanceOf[LabelledFormulaOccurrence]
       val weakened_left = es.l_antecedent.foldLeft(rule)( (r, fo) => lksk.WeakeningLeftRule(r, fo.formula, fo.skolem_label))
-      val weakened_right = es.l_antecedent.foldLeft(weakened_left)( (r, fo) => lksk.WeakeningRightRule(r, fo.formula, fo.skolem_label))
+      val weakened_right = es.l_succedent.foldLeft(weakened_left)( (r, fo) => lksk.WeakeningRightRule(r, fo.formula, fo.skolem_label))
       val reflexivity_successor = pickFOWithAncestor(sequentToLabelledSequent(rule.root).l_succedent, reflexivity_occ)
 
       (weakened_right, LabelledSequent(Nil, List(reflexivity_successor)) )
@@ -126,22 +126,13 @@ class ceres_omega {
     case ParaT(root, parent1, parent2, p1occ, p2occ, principial, flipped) =>
       val (lkparent1, clause1) = ceres_omega(projections, parent1, es, struct)
       val (lkparent2, clause2) = ceres_omega(projections, parent2, es, struct)
-      try {
       val eqn : FormulaOccurrence = findAuxByFormulaAndLabel(p1occ, clause1.l_succedent, Nil)
       val modulant : FormulaOccurrence = findAuxByFormulaAndLabel(p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_succedent, Nil)
       val rule = EquationRightBulkRule(lkparent1, lkparent2, eqn, modulant, principial.formula)
-      val nclauses = filterByAncestor(rule.root, clause1 compose clause2)
+      val crule = contractEndsequent(rule, es)
+      val nclauses = filterByAncestor(crule.root, clause1 compose clause2)
       require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: "+f(nclauses)+"\n real clause: "+f(root))
-      (rule, nclauses)
-  } catch {
-    case e:Exception =>
-      println("clause1" + f(clause1))
-      println("clause2" + f(clause2))
-      println(lkparent2.rule)
-      println(f(lkparent2.root))
-      println(f(parent2.root))
-      throw e
-  }
+      (crule, nclauses)
 
     case Sub(root, parent, sub) =>
       val (lkparent, _) = ceres_omega(projections, parent, es, struct)
@@ -226,7 +217,7 @@ class ceres_omega {
   candidates.diff(exclusion_list).filter(pred).toList match {
     case List(fo) => fo
     case l@(fo::_) =>
-      println("warning: multiple matching formulas"+ l.mkString(": ",", ","." ))
+      //println("warning: multiple matching formulas"+ l.mkString(": ",", ","." ))
       fo
     case Nil => throw new IllegalArgumentException("Could not find matching aux formula!")
   }
@@ -248,7 +239,9 @@ class ceres_omega {
             case Some(occ2) =>
               ContractionLeftRule(rp, occ1, occ2)
             case None =>
-              throw new Exception("During contraction of the end-sequent, could not find a second antecedent occurrence of "+fo+" in "+rp.root)
+              println("Warning: During contraction of the end-sequent, could not find a second antecedent occurrence of "+fo+" in "+rp.root)
+              rp
+
           }
 
         case None =>
@@ -264,7 +257,8 @@ class ceres_omega {
             case Some(occ2) =>
               ContractionRightRule(rp, occ1, occ2)
             case None =>
-              throw new Exception("During contraction of the end-sequent, could not find a second succeedent occurrence of "+fo+" in "+rp.root)
+              println("Warning: During contraction of the end-sequent, could not find a second succeedent occurrence of "+fo+" in "+rp.root)
+              rp
           }
 
         case None =>
@@ -333,7 +327,7 @@ class ceres_omega {
   def pickFOWithAncestor(l : Seq[FormulaOccurrence], anc : FormulaOccurrence) = l.filter(x => tranAncestors(x).contains(anc)).toList match {
     case List(a) => a
     case l@(a::_) =>
-      println("warning: multiple matching formulas for "+anc+ l.mkString(": ",", ","." ))
+      //println("warning: multiple matching formulas for "+anc+ l.mkString(": ",", ","." ))
       a
     case Nil => throw new Exception("Could not find any occurrence with ancestor "+anc+" in "+l)
   }
@@ -342,7 +336,7 @@ class ceres_omega {
   def pickFOWithAncestor(l : Seq[LabelledFormulaOccurrence], anc : LabelledFormulaOccurrence) = l.filter(x => tranAncestors(x).contains(anc)).toList match {
     case List(a) => a
     case l@(a::_) =>
-      println("warning: multiple matching formulas for "+anc+ l.mkString(": ",", ","." ))
+      //println("warning: multiple matching formulas for "+anc+ l.mkString(": ",", ","." ))
       a
     case Nil => throw new Exception("Could not find any occurrence with ancestor "+anc+" in "+l)
   }

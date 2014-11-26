@@ -283,7 +283,7 @@ For a proper first-order formula consider for example:
 scala> val G = parseFOL( "Forall x Imp P(x,f(x)) Exists y P(x,y)" )
 \end{lstlisting}
 %
-Also prover9 syntax is supported: %TODO: add citation
+Also prover9 syntax\cite{Prover9Input} is supported: 
 %
 \begin{lstlisting}
 scala> val H = parseProver9( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )

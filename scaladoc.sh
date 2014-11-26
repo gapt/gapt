@@ -11,7 +11,5 @@ if [ -d scaladoc ]; then
 	rm -rf scaladoc
 fi
 mkdir scaladoc
-if [ -d  ~/.m2/repository/at/logic ]; then
-	rm -rf ~/.m2/repository/at/logic
-fi
-JAVA_OPTS="-Xmx3g" scaladoc -d scaladoc -classpath $(find ~/.m2/repository/ -iname *.jar|xargs| tr ' ' ':') $(find source -regextype posix-extended -regex '.*\.(scala|java)$'|grep -v Test|grep -v gui/treeviz)
+rm -rf ~/.m2/repository/at/logic
+JAVA_OPTS="-Xmx3g" scaladoc -d scaladoc -classpath $(find ~/.m2/repository/ -iname *.jar|xargs| tr ' ' ':') $(find source -regextype posix-extended -regex '.*\.(scala|java)$'|grep -v Test | grep -v treeviz)

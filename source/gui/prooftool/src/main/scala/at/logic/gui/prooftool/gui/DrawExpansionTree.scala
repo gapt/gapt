@@ -7,11 +7,16 @@ package at.logic.gui.prooftool.gui
 * Time: 12:51 PM
 */
 
+import at.logic.language.hol.And
+import at.logic.language.hol.Imp
+import at.logic.language.hol.Neg
+import at.logic.language.hol.Or
+
 import swing._
 import scala.swing.event.{MouseExited, MouseEntered, MouseClicked}
 import java.awt.{Font, Color}
 import java.awt.event.MouseEvent
-import at.logic.calculi.expansionTrees.{MultiExpansionTree, MWeakQuantifier, MStrongQuantifier, MAnd, MOr, MImp, MNeg, MAtom}
+import at.logic.calculi.expansionTrees.{MAnd, MAtom, MOr, MImp, MNeg, MWeakQuantifier, MSkolemQuantifier, MStrongQuantifier, MultiExpansionTree}
 import org.scilab.forge.jlatexmath.{TeXConstants, TeXFormula}
 import java.awt.image.BufferedImage
 import at.logic.language.hol._
@@ -233,6 +238,50 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
           if (state.get(formula) == Some(Open)) contents += drawTerms(terms)
           contents += drawFormula(subF)
         }
+
+
+      case MSkolemQuantifier(formula, vars, sel) => // This case is identical to strong quantifier handling
+        val terms = List(vars.toList)
+        val subtrees = List(sel)
+        val quantifiers = quantifierBlock(expTree)
+
+        if (state.get(formula) == Some(Expand)) {
+          if (subtrees != Nil) {
+            val lbl = LatexLabel(ft, getMatrixSymbol(formula))
+            lbl.reactions += {
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close(formula)
+              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+                PopupMenu(DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y)
+            }
+            contents += lbl
+            contents += drawMatrix(subtrees)
+          }
+          else {
+            state -= formula
+            contents += drawFormula(sel.toShallow)
+          }
+        }
+        else {
+          val lbl = LatexLabel(ft, quantifiers)
+          val subF = expTree.getSubformula
+
+          if (allow) lbl.reactions += {
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+              PopupMenu(DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y)
+            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
+              if (state.get(formula) == Some(Open)) expand(formula)
+              else open(formula)
+          }
+          else {
+            lbl.deafTo(lbl.mouse.clicks)
+            lbl.tooltip = "First expand all the quantifiers till the root!" // alternative message "The block of quantifiers is locked!"
+          }
+
+          contents += lbl
+          if (state.get(formula) == Some(Open)) contents += drawTerms(terms)
+          contents += drawFormula(subF)
+        }
+
     }
   }
 
@@ -247,7 +296,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
    * @return A string containing the quantifier block represented by this quantifier node.
    */
   def quantifierBlock(et: MultiExpansionTree): String = et match {
-    case MStrongQuantifier(_, _, _) | MWeakQuantifier(_, _) =>
+    case MStrongQuantifier(_, _, _) | MWeakQuantifier(_, _) | MSkolemQuantifier(_,_,_) =>
       val vars = et.getVars
       val f = et.toShallow
       f match {

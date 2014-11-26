@@ -751,10 +751,16 @@ object merge extends at.logic.utils.logging.Logger {
       case (StrongQuantifier(f1, v1, sel1), StrongQuantifier(f2, v2, sel2)) if f1 == f2 =>
         trace("encountered strong quantifier "+f1+"; renaming "+v2+" to "+v1)
         return (Some(Substitution(v2, v1)), StrongQuantifier(f1, v1, MergeNode(sel1, sel2) ))
+
       case (SkolemQuantifier(f1, s1, sel1), SkolemQuantifier(f2, s2, sel2)) if f1 == f2 =>
-        require(s1 == s2, "Can only merge Skolem Quantifier Nodes, if the skolem constants "+s1+" and "+s2+" are the same!")
+        if (s1 != s2) {
+          //TODO: we need to replace s2 by s1 in sel2, otherwise the merge operation fails
+          //println(, "Can only merge Skolem Quantifier Nodes, if the skolem constants "+s1+" and "+s2+" are the same!")
+          println("Warning: merged skolem quantifiers are not equal - deep formula only valid modulo the equality "+s1+" = "+s2)
+        }
         //trace("encountered skolem quantifier "+f1+"; renaming "+v2+" to "+v1)
         return (None, SkolemQuantifier(f1, s1, MergeNode(sel1, sel2) ))
+
       case (WeakQuantifier(f1, children1), WeakQuantifier(f2, children2)) if f1 == f2 => {
         val newTree = WeakQuantifier(f1, substitute.mergeWeakQuantifiers(None, children1 ++ children2))
         // merging might have caused merge-nodes and regular nodes, hence switch to detect-method
@@ -783,6 +789,14 @@ object merge extends at.logic.utils.logging.Logger {
       }
       case _ => throw new IllegalArgumentException("Bug in merge in extractExpansionTrees. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2)
     }
+  }
+}
+
+
+object replace {
+  //TODO: add code for constant replacement in subtrees
+  def replace(what : HOLConst, by : HOLConst) = {
+
   }
 }
 

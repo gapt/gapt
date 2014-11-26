@@ -40,9 +40,11 @@ class extractExpansionTrees {
     }
 
     if (axiomCandidates.isEmpty) {
-      def allAtoms(l : Seq[FormulaOccurrence]) = l.forall(  o => isAtom( o.formula ))
       if (allAtoms( r.antecedent ) && allAtoms( r.succedent ) ) {
-        println("Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: "+r)
+        if (!((r.antecedent.isEmpty) && (r.succedent.size == 1) && (isReflexivity(r.succedent(0).formula)))) {
+          //only print the warning for non reflexivity atoms
+          println("Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: " + r)
+        }
         Map(r.antecedent.map(fo => (fo, AtomTree(fo.formula) )) ++
           r.succedent.map(fo => (fo, AtomTree(fo.formula) )): _*)
       } else {
@@ -59,6 +61,11 @@ class extractExpansionTrees {
         r.succedent.map(fo => (fo, AtomTree(if (fo syntaxEquals axiomFormula) fo.formula else BottomC) )): _*)
     }
   }
+
+  //occurs in handleAxiom
+  private def allAtoms(l : Seq[FormulaOccurrence]) = l.forall(  o => isAtom( o.formula ))
+  private def isReflexivity(f : HOLFormula) = f match { case Equation(s,t) if s ==t => true; case _ => false }
+
 
   def handleUnary(r : Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map) + Tuple2(p, proof match {

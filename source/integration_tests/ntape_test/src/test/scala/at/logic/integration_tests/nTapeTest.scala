@@ -102,10 +102,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           val proofformulas = selp.nodes.flatMap(_.asInstanceOf[LKProof].root.toFSequent.formulas  ).toList.distinct
 
           show("Extracting signature from "+proofformulas.size+ " formulas")
-          val (sigc, sigv_) = undoHol2Fol.getSignature( proofformulas )
-
-          //adding variables geenrated by prover9 / prooftrans
-          val sigv = sigv_
+          val (sigc, sigv) = undoHol2Fol.getSignature( proofformulas )
 
           show("Converting to Ral")
 
