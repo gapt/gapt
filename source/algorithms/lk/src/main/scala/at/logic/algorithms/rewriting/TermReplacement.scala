@@ -14,63 +14,78 @@ import NameReplacement.find_matching
    replaces all occurences of term "what" by term "by" in term "term" -- be careful with replacing variables,
    there is no scope checking
 
-   usable on subclasses of lambda expressions, fsequents and resolution proofs
+   usable on subclasses of lambda expressions and fsequents
  */
-
 object TermReplacement extends Logger {
+  //TODO: this should go into the language layer (blocked because of the dependency on name replacement)
 
-  def apply(term : HOLExpression, what : HOLExpression, by : HOLExpression) : HOLExpression = {
+  def apply(term: HOLExpression, what: HOLExpression, by: HOLExpression): HOLExpression = {
     require(what.exptype == by.exptype)
-    rename_term(term, what,by)
+    rename_term(term, what, by)
   }
 
-  def apply(f : HOLFormula, what : HOLExpression, by : HOLExpression) : HOLFormula = {
+  def apply(f: HOLFormula, what: HOLExpression, by: HOLExpression): HOLFormula = {
     require(what.exptype == by.exptype)
-    rename_term(f.asInstanceOf[HOLExpression], what,by).asInstanceOf[HOLFormula]
+    rename_term(f.asInstanceOf[HOLExpression], what, by).asInstanceOf[HOLFormula]
   }
 
-  def apply(term : HOLFormula, p : Map[HOLExpression,HOLExpression]) : HOLFormula =
+  def apply(term: HOLFormula, p: Map[HOLExpression, HOLExpression]): HOLFormula =
     apply(term.asInstanceOf[HOLExpression], p).asInstanceOf[HOLFormula]
 
-  def apply(term : HOLExpression, p : Map[HOLExpression,HOLExpression]) : HOLExpression =
-    p.foldLeft(term)((t, x) => { /*debug(1,"looking for "+x+" in "+t);*/ apply(t,x._1, x._2) })
+  def apply(term: HOLExpression, p: Map[HOLExpression, HOLExpression]): HOLExpression =
+    p.foldLeft(term)((t, x) => {
+      /*debug(1,"looking for "+x+" in "+t);*/ apply(t, x._1, x._2)
+    })
 
-  def apply(term : FOLExpression, p : Map[FOLExpression,FOLExpression]) : FOLExpression =
-    p.foldLeft(term)((t, x) => { /*debug(1,"looking for "+x+" in "+t);*/ apply(t,x._1, x._2).asInstanceOf[FOLExpression] })
-  
-  def apply( t: FOLTerm, map: Map[FOLTerm, FOLTerm] ) : FOLTerm =
+  def apply(term: FOLExpression, p: Map[FOLExpression, FOLExpression]): FOLExpression =
+    p.foldLeft(term)((t, x) => {
+      /*debug(1,"looking for "+x+" in "+t);*/ apply(t, x._1, x._2).asInstanceOf[FOLExpression]
+    })
+
+  def apply(t: FOLTerm, map: Map[FOLTerm, FOLTerm]): FOLTerm =
     apply(t.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]]).asInstanceOf[FOLTerm]
 
-  def apply( f: FOLFormula, map: Map[FOLTerm, FOLTerm] ) : FOLFormula =
-    apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLFormula]
+  def apply(f: FOLFormula, map: Map[FOLTerm, FOLTerm]): FOLFormula =
+    apply(f.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]]).asInstanceOf[FOLFormula]
 
-  def rename_fsequent[T <: HOLExpression](fs : FSequent, what : T, by :T  ) : FSequent =
-    FSequent(fs.antecedent.map(apply(what,by,_).asInstanceOf[HOLFormula]),
-             fs.succedent.map( apply(what,by,_).asInstanceOf[HOLFormula]))
+  def rename_fsequent[T <: HOLExpression](fs: FSequent, what: T, by: T): FSequent =
+    FSequent(fs.antecedent.map(apply(what, by, _).asInstanceOf[HOLFormula]),
+      fs.succedent.map(apply(what, by, _).asInstanceOf[HOLFormula]))
 
-  def rename_fsequent[T <: HOLExpression](fs : FSequent, p : Map[T,T]  ) : FSequent = {
-    val m = p.asInstanceOf[Map[HOLExpression,HOLExpression]] // need to cast, maps are not covariant
-    FSequent(fs.antecedent.map(apply(_,m).asInstanceOf[HOLFormula]),
-      fs.succedent.map( apply(_,m).asInstanceOf[HOLFormula]))
+  def rename_fsequent[T <: HOLExpression](fs: FSequent, p: Map[T, T]): FSequent = {
+    val m = p.asInstanceOf[Map[HOLExpression, HOLExpression]] // need to cast, maps are not covariant
+    FSequent(fs.antecedent.map(apply(_, m).asInstanceOf[HOLFormula]),
+      fs.succedent.map(apply(_, m).asInstanceOf[HOLFormula]))
   }
 
 
-  def rename_term[T <: LambdaExpression](term : T, what : T, by : T) : T = {
-    if (term == what) by else
-    term match {
-      case Var(s, t) =>
-        if (what == term) by else term
-      case Const(s, t) =>
-        if (what == term) by else term
-      case App(s,t) =>
-        val s_ = rename_term(s, what, by)
-        val t_ = rename_term(t, what, by)
-        what.factory.createApp(s_, t_).asInstanceOf[T]
-      case Abs(x,t) =>
-        val t_ = rename_term(t, what, by)
-        what.factory.createAbs(x, t_).asInstanceOf[T]
-    }
+  def rename_term[T <: LambdaExpression](term: T, what: T, by: T): T = {
+    if (term == what) by
+    else
+      term match {
+        case Var(s, t) =>
+          if (what == term) by else term
+        case Const(s, t) =>
+          if (what == term) by else term
+        case App(s, t) =>
+          val s_ = rename_term(s, what, by)
+          val t_ = rename_term(t, what, by)
+          what.factory.createApp(s_, t_).asInstanceOf[T]
+        case Abs(x, t) =>
+          val t_ = rename_term(t, what, by)
+          what.factory.createAbs(x, t_).asInstanceOf[T]
+      }
   }
+}
+
+/******* Term Replacement **********
+   replaces all occurences of term "what" by term "by" in term "term" -- be careful with replacing variables,
+   there is no scope checking
+
+   usable on resolution proofs
+  */
+object RenameResproof extends Logger {
+  import TermReplacement._
 
 
   // map from sumbol name to pair of Arity and replacement symbol name
@@ -120,7 +135,7 @@ object TermReplacement extends Logger {
           val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val nsmap : Map[FOLVar, FOLExpression] = sub.folmap map(x => (x._1, apply(x._2, smap)) )
           val nsub = Substitution(nsmap)
-          var inference :RobinsonResolutionProof = Variant(rparent1, nsub)
+          val inference :RobinsonResolutionProof = Variant(rparent1, nsub)
 
           def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
             val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
@@ -137,7 +152,7 @@ object TermReplacement extends Logger {
         case Factor(clause, parent1, aux, sub) =>
           val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val nsub = Substitution(sub.folmap map (x => (x._1, apply(x._2, smap)) ))
-          var inference :RobinsonResolutionProof = aux match {
+          val inference :RobinsonResolutionProof = aux match {
             case lit1 :: Nil =>
               Factor(rparent1, rmap(lit1.head), lit1.tail map rmap, nsub)
             case lit1::lit2::Nil =>
@@ -160,7 +175,7 @@ object TermReplacement extends Logger {
         case Instance(clause, parent1, sub) =>
           val (rpmap, rmap, rparent1) = if (pmap contains parent1) add_pmap(pmap, parent1) else rename_resproof(parent1, irules, smap, pmap)
           val nsub = Substitution(sub.folmap map (x => (x._1, apply(x._2, smap)) ))
-          var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
+          val inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
           trace("sub="+sub)
           trace("nsub="+nsub)
           trace("inference: "+clause)

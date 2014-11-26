@@ -5,6 +5,7 @@ import at.logic.utils.ds.trees._
 import at.logic.language.hol.logicSymbols._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences._
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import at.logic.algorithms.matching.NaiveIncompleteMatchingAlgorithm
 import scala.collection.immutable.HashMap
@@ -544,7 +545,7 @@ object substitute extends at.logic.utils.logging.Logger {
     case StrongQuantifier(f, v, selection) =>
       StrongQuantifier(s(f), s(v).asInstanceOf[HOLVar], doApplySubstitution(s, selection))
     case SkolemQuantifier(f, v, selection) =>
-      SkolemQuantifier(s(f), s(v).asInstanceOf[HOLVar], doApplySubstitution(s, selection))
+      SkolemQuantifier(s(f), s(v), doApplySubstitution(s, selection))
     case WeakQuantifier(f, instances) =>
       WeakQuantifier(s(f), mergeWeakQuantifiers(Some(s), instances) )
     case MergeNode(t1, t2) => MergeNode(doApplySubstitution(s, t1), doApplySubstitution(s, t2))
@@ -753,13 +754,20 @@ object merge extends at.logic.utils.logging.Logger {
         return (Some(Substitution(v2, v1)), StrongQuantifier(f1, v1, MergeNode(sel1, sel2) ))
 
       case (SkolemQuantifier(f1, s1, sel1), SkolemQuantifier(f2, s2, sel2)) if f1 == f2 =>
-        if (s1 != s2) {
+        val sel2_ = if (s1 != s2) {
           //TODO: we need to replace s2 by s1 in sel2, otherwise the merge operation fails
           //println(, "Can only merge Skolem Quantifier Nodes, if the skolem constants "+s1+" and "+s2+" are the same!")
           println("Warning: merged skolem quantifiers are not equal - deep formula only valid modulo the equality "+s1+" = "+s2)
-        }
+          (s1, s2) match {
+            case (c:HOLConst, d:HOLConst) =>
+              replace(d,c,sel2)
+            case _ =>
+              throw new Exception("I have skolem terms "+s1+" and "+s2+" which are no consts and don't know what to do now.")
+          }
+
+        } else sel2
         //trace("encountered skolem quantifier "+f1+"; renaming "+v2+" to "+v1)
-        return (None, SkolemQuantifier(f1, s1, MergeNode(sel1, sel2) ))
+        return (Some(Substitution()), SkolemQuantifier(f1, s1, MergeNode(sel1, sel2_) ))
 
       case (WeakQuantifier(f1, children1), WeakQuantifier(f2, children2)) if f1 == f2 => {
         val newTree = WeakQuantifier(f1, substitute.mergeWeakQuantifiers(None, children1 ++ children2))
@@ -794,10 +802,93 @@ object merge extends at.logic.utils.logging.Logger {
 
 
 object replace {
-  //TODO: add code for constant replacement in subtrees
-  def replace(what : HOLConst, by : HOLConst) = {
-
+  /**
+   * Replaces all occurrences of the constants what by constants by in the expression where.
+   * @param what what to replace
+   * @param by what the insert instead
+   * @param where in which expression
+   * @return the resulting expression
+   */
+  def replaceAll(what : HOLConst, by : HOLConst, where : HOLFormula) : HOLFormula = {
+    replaceAll(what, by, where.asInstanceOf[HOLExpression]).asInstanceOf[HOLFormula]
   }
+
+  /**
+   * Replaces all occurrences of the constants what by constants by in the expression where.
+   * @param what what to replace
+   * @param by what the insert instead
+   * @param where in which expression
+   * @return the resulting expression
+   */
+  def replaceAll(what : HOLConst, by : HOLConst, where : HOLExpression) : HOLExpression = {
+    require(what.factory == by.factory, "The replacement constant "+by+
+      " must be from the same layer (factory) as the original term "+what)
+
+    if (what != by) //prevent cycles in replaceAllRec
+      replaceAllRec(what, by, where)
+    else
+      where
+  }
+  @tailrec
+  private def replaceAllRec(what : HOLConst, by : HOLConst, where : HOLExpression) : HOLExpression = {
+    HOLPosition.getPositions(where, _ == what) match {
+      case Nil => where
+      case p::_ =>
+        replaceAllRec(what, by, HOLPosition.replace(where, p, by))
+    }
+  }
+
+  /**
+   * Duplicates the behaviour for Expansion Tress without merges
+   * (the constructor is overloaded, so we need to make sure it is called with the correct type)
+   * @param what constant name to replace
+   * @param by constant to insert
+   * @param where expansion tree where to replace
+   * @return an et with all constants what replaced by constants by
+   */
+  def apply(what : HOLConst, by : HOLConst, where : ExpansionTree) : ExpansionTree = where match {
+    case Atom(f) => Atom(replaceAll(what, by, f))
+    case Neg(l) => Neg(apply(what, by, l))
+    case And(l,r) => And(apply(what, by, l), apply(what,by,r))
+    case Or(l,r) => Or(apply(what, by, l), apply(what,by,r))
+    case Imp(l,r) => Imp(apply(what, by, l), apply(what,by,r))
+    case WeakQuantifier(f, instances) =>
+      val children = instances.map(x =>
+        (apply(what, by, x._1), replaceAll(what, by, x._2))
+      )
+      WeakQuantifier.applyWithoutMerge(replaceAll(what,by,f),children.asInstanceOf[Seq[(ExpansionTree, HOLExpression)]] )
+    case StrongQuantifier(f,v,tree) =>
+      StrongQuantifier(replaceAll(what,by,f), v, apply(what,by,tree))
+    case SkolemQuantifier(f,sk,tree) =>
+      SkolemQuantifier(replaceAll(what,by,f), replaceAll(what,by,sk), apply(what,by,tree))
+  }
+
+  /**
+   * Replaces all occurrences of what by by in where.
+   * @param what constant name to replace
+   * @param by constant to insert
+   * @param where expansion tree where to replace
+   * @return an et with all constants what replaced by constants by
+   */
+  def apply(what : HOLConst, by : HOLConst, where : ExpansionTreeWithMerges) : ExpansionTreeWithMerges = where match {
+    case Atom(f) => Atom(replaceAll(what, by, f))
+    case Neg(l) => Neg(apply(what, by, l))
+    case And(l,r) => And(apply(what, by, l), apply(what,by,r))
+    case Or(l,r) => Or(apply(what, by, l), apply(what,by,r))
+    case Imp(l,r) => Imp(apply(what, by, l), apply(what,by,r))
+    case WeakQuantifier(f, instances) =>
+      val children = instances.map(x =>
+        (apply(what, by, x._1), replaceAll(what, by, x._2))
+      )
+      WeakQuantifier(replaceAll(what,by,f),children)
+    case StrongQuantifier(f,v,tree) =>
+      StrongQuantifier(replaceAll(what,by,f), v, apply(what,by,tree))
+    case SkolemQuantifier(f,sk,tree) =>
+      SkolemQuantifier(replaceAll(what,by,f), replaceAll(what,by,sk), apply(what,by,tree))
+    case MergeNode(l,r) =>
+      MergeNode(apply(what,by,l), apply(what,by,r))
+  }
+
 }
 
 /**

@@ -8,6 +8,7 @@ import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk.{AtomicExpansion, regularize}
 import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
+import at.logic.calculi.lk.ContractionLeftRule
 import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.lksk.sequentToLabelledSequent
 import at.logic.language.fol.{FOLVar, FOLFormula, FOLExpression}
@@ -110,6 +111,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           val ralp = myconverter(rp)
           show("Creating acnf")
           val (acnf, endclause) = ceres_omega(proj, ralp, sequentToLabelledSequent(selp.root), struct)
+
           show("Compute expansion tree")
           val et = extractLKSKExpansionTrees(acnf)
           show(" HOORAY! ")
