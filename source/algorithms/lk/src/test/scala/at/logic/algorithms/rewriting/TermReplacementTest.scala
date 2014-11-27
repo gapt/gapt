@@ -108,9 +108,9 @@ class TermReplacementTest extends SpecificationWithJUnit {
       val t1 = Function("replacement", FOLVar("x0") :: FOLVar("y0") :: Nil)
       val t2 = Function("really", FOLVar("x1") :: Nil)
       
-      val map : TermReplacement.SymbolMap = TermReplacement.emptySymbolMap ++ List((a,t1), (hc,t2))
+      val map : RenameResproof.SymbolMap = RenameResproof.emptySymbolMap ++ List((a,t1), (hc,t2))
 
-      val initial = TermReplacement.rename_resproof(proof4.q0, Set[RobinsonResolutionProof](), map)
+      val initial = RenameResproof.rename_resproof(proof4.q0, Set[RobinsonResolutionProof](), map)
 
       val r1 = Atom("R", Function("f", t1::Nil)::Nil)
       val r2 = Atom("R", Function("f", FOLVar("x")::Nil)::Nil)
@@ -118,7 +118,7 @@ class TermReplacementTest extends SpecificationWithJUnit {
 
       initial.root.occurrences.toList.map(_.formula) must_== (List(r1, r2, r3))
 
-      val more = TermReplacement.rename_resproof(proof4.q6, Set[RobinsonResolutionProof](), map)
+      val more = RenameResproof.rename_resproof(proof4.q6, Set[RobinsonResolutionProof](), map)
 
       true must beTrue
     }

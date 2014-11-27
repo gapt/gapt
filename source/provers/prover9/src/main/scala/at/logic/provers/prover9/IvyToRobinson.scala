@@ -6,7 +6,7 @@ import at.logic.language.fol._
 import at.logic.calculi.resolution.robinson.{Instance => RInstantiate}
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.resolution.{FClause, Clause}
-import at.logic.algorithms.rewriting.TermReplacement
+import at.logic.algorithms.rewriting.RenameResproof
 import at.logic.calculi.lk.base.FSequent
 
 /**
@@ -26,7 +26,7 @@ object IvyToRobinson {
         case _ => set} )
 
     //println("mapping: "+mapping)
-    val trproof = TermReplacement.rename_resproof(proof, newsymbol_rules, TermReplacement.emptySymbolMap ++ mapping)
+    val trproof = RenameResproof.rename_resproof(proof, newsymbol_rules, RenameResproof.emptySymbolMap ++ mapping)
     trproof
   }
 
