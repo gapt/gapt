@@ -170,10 +170,10 @@ object NameReplacement {
       var inference :RobinsonResolutionProof = Variant(rparent1, nsub)
 
       def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
-        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.parents.map(rmap)
         t.formula == apply(o.formula.asInstanceOf[FOLFormula], smap) &&
-          anc_correspondences.diff(t.ancestors).isEmpty &&
-          t.ancestors.diff(anc_correspondences).isEmpty
+          anc_correspondences.diff(t.parents).isEmpty &&
+          t.parents.diff(anc_correspondences).isEmpty
       }
 
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
@@ -194,10 +194,10 @@ object NameReplacement {
       }
 
       def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
-        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.parents.map(rmap)
         t.formula == apply(o.formula.asInstanceOf[FOLFormula], smap) &&
-          anc_correspondences.diff(t.ancestors).isEmpty &&
-          t.ancestors.diff(anc_correspondences).isEmpty
+          anc_correspondences.diff(t.parents).isEmpty &&
+          t.parents.diff(anc_correspondences).isEmpty
       }
 
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
@@ -211,10 +211,10 @@ object NameReplacement {
       var inference :RobinsonResolutionProof =  Instance(rparent1, nsub)
 
       def matcher(o : FormulaOccurrence, t : FormulaOccurrence) : Boolean = {
-        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.parents.map(rmap)
         t.formula == apply(o.formula.asInstanceOf[FOLFormula], smap) &&
-          anc_correspondences.diff(t.ancestors).isEmpty &&
-          t.ancestors.diff(anc_correspondences).isEmpty
+          anc_correspondences.diff(t.parents).isEmpty &&
+          t.parents.diff(anc_correspondences).isEmpty
       }
 
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
@@ -234,11 +234,11 @@ object NameReplacement {
         //println("anc matcher")
         //println(o); println(o.ancestors)
         //println(t); println(t.ancestors)
-        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.parents.map(rmap)
         //println(anc_correspondences)
         t.formula == apply(o.formula.asInstanceOf[FOLFormula], smap) &&
-        anc_correspondences.diff(t.ancestors).isEmpty &&
-        t.ancestors.diff(anc_correspondences).isEmpty
+        anc_correspondences.diff(t.parents).isEmpty &&
+        t.parents.diff(anc_correspondences).isEmpty
       }
 
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++
@@ -254,7 +254,7 @@ object NameReplacement {
 
       val nsub = Substitution(sub.folmap map (x => (x._1, apply(x._2, smap)) ))
 
-      val Some(prim) = clause.literals.map(_._1).find( occ => occ.ancestors == List(lit1,lit2) || occ.ancestors == List(lit2,lit1) )
+      val Some(prim) = clause.literals.map(_._1).find( occ => occ.parents == List(lit1,lit2) || occ.parents == List(lit2,lit1) )
       val nformula = apply(prim.formula.asInstanceOf[FOLFormula], smap)
 
       val inference = Paramodulation(rparent1, rparent2, rmap1(lit1), rmap2(lit2), nformula, nsub)
@@ -264,11 +264,11 @@ object NameReplacement {
         //println("anc matcher")
         //println(o); println(o.ancestors)
         //println(t); println(t.ancestors)
-        val anc_correspondences : Seq[FormulaOccurrence] = o.ancestors.map(rmap)
+        val anc_correspondences : Seq[FormulaOccurrence] = o.parents.map(rmap)
         //println(anc_correspondences)
         t.formula == apply(o.formula.asInstanceOf[FOLFormula], smap) &&
-          anc_correspondences.diff(t.ancestors).isEmpty &&
-          t.ancestors.diff(anc_correspondences).isEmpty
+          anc_correspondences.diff(t.parents).isEmpty &&
+          t.parents.diff(anc_correspondences).isEmpty
       }
 
       val rsmap = find_matching(clause.negative.toList, inference.root.negative.toList, matcher) ++

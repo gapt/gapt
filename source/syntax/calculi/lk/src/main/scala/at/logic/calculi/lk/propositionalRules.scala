@@ -57,9 +57,9 @@ object Axiom {
     * @return The LKProof consisting of s1 as its axiom.
   */
   def apply(seq: Sequent) : LeafTree[Sequent] with NullaryLKProof = {
-    if (seq.antecedent.exists((fo:FormulaOccurrence) => (fo.ancestors.size > 0) ))
+    if (seq.antecedent.exists((fo:FormulaOccurrence) => (fo.parents.size > 0) ))
       throw new LKRuleCreationException("Ancestor of an occurence in antecedent of Axiom rule is nonempty!")
-    if (seq.succedent.exists((fo:FormulaOccurrence) => (fo.ancestors.size > 0) ))
+    if (seq.succedent.exists((fo:FormulaOccurrence) => (fo.parents.size > 0) ))
       throw new LKRuleCreationException("Ancestor of an occurence in succedent of Axiom rule is nonempty!")
 
     new LeafTree[Sequent](seq) with NullaryLKProof {def rule = InitialRuleType}

@@ -79,7 +79,7 @@ object ResolutionSubstitution {
           val (np2, pmap2) = ResolutionSubstitution(p2, sub.asInstanceOf[Substitution], pmap1)
           val nlit1 = find_sublit(np1.root.succedent, lit1, sub)
           val nlit2 = find_sublit(np2.root.antecedent, lit2, sub)
-          val Some(newlit) = p2.root.occurrences.find(occ => occ.ancestors.contains(lit1) && occ.ancestors.contains(lit2))
+          val Some(newlit) = p2.root.occurrences.find(occ => occ.parents.contains(lit1) && occ.parents.contains(lit2))
           val np = Paramodulation(np1,np2,nlit1,nlit2, sub(newlit.formula).asInstanceOf[FOLFormula], subst)
           extend_pmap(pmap2, p, sub, np)
       }
@@ -95,7 +95,7 @@ object ResolutionSubstitution {
 
   def substitute_focc( occ:FormulaOccurrence, sub : Substitution) : FormulaOccurrence = {
     val subf = sub(occ.formula).asInstanceOf[FOLFormula]
-    val nanc = occ.ancestors map (substitute_focc(_, sub))
+    val nanc = occ.parents map (substitute_focc(_, sub))
     occ.factory.createFormulaOccurrence(subf, nanc)
   }
 
@@ -159,7 +159,7 @@ object InstantiateElimination {
   /* find successor of occurrence pocc in clause */
   def successor(pocc : FormulaOccurrence, clause : Clause) : FormulaOccurrence = {
     val s = List(pocc)
-    clause.occurrences.find( _.ancestors.toList == s ) match {
+    clause.occurrences.find( _.parents.toList == s ) match {
       case Some(x) => x
       case _ => throw new Exception("Could not find successor of "+pocc.toString+" in "+clause.toString)
     }
@@ -168,7 +168,7 @@ object InstantiateElimination {
   /* find successor of of list of occurrences poccs in clause */
   def successor(poccs : List[FormulaOccurrence], clause : Clause) : FormulaOccurrence = {
     clause.occurrences.find(x =>
-      (x.ancestors.toList diff poccs).isEmpty && (poccs diff x.ancestors.toList).isEmpty )
+      (x.parents.toList diff poccs).isEmpty && (poccs diff x.parents.toList).isEmpty )
     match {
       case Some(x) => x
       case _ => throw new Exception("Could not find successor of "+poccs.toString+" in "+clause.toString)
@@ -182,9 +182,9 @@ object InstantiateElimination {
     val ooccs = original_clause.occurrences
     val noccs = new_clause.occurrences
     m.foldLeft(emptyOccMap)((itmap, pair) => {
-      ooccs find (_.ancestors sameElements List(pair._1)) match {
+      ooccs find (_.parents sameElements List(pair._1)) match {
         case Some(poocc) =>
-          noccs find (_.ancestors sameElements List(pair._2)) match {
+          noccs find (_.parents sameElements List(pair._2)) match {
             case Some(pnocc) =>
               itmap +((poocc, pnocc))
             case _ =>
@@ -492,21 +492,21 @@ object InstantiateElimination {
 
   //true iff the set of ancestors x is translated to the set of ancestors of y
   def occmatcher(x: FormulaOccurrence, y:FormulaOccurrence, occmap : OccMap) : Boolean = {
-    val xyanc = x.ancestors.map(occmap)
-    val yanc = y.ancestors
+    val xyanc = x.parents.map(occmap)
+    val yanc = y.parents
     (xyanc diff yanc).isEmpty && (yanc diff xyanc).isEmpty
   }
 
   //true iff the set of ancestors of the ancestors of x is translated to the set of ancestors of y
   def ancoccmatcher(x: FormulaOccurrence, y:FormulaOccurrence, occmap : OccMap) : Boolean = {
-    val xyanc = x.ancestors.map(_.ancestors).flatten
-    val yanc = y.ancestors
+    val xyanc = x.parents.map(_.parents).flatten
+    val yanc = y.parents
     (xyanc diff yanc).isEmpty && (yanc diff xyanc).isEmpty
   }
   //true iff the set of ancestors x is translated to the set of ancestors of y
   def occancmatcher(x: FormulaOccurrence, y:FormulaOccurrence, occmap : OccMap) : Boolean = {
-    val xyanc = y.ancestors.map(_.ancestors).flatten
-    val yanc = x.ancestors
+    val xyanc = y.parents.map(_.parents).flatten
+    val yanc = x.parents
     (xyanc diff yanc).isEmpty && (yanc diff xyanc).isEmpty
   }
 
@@ -626,7 +626,7 @@ object InstantiateElimination {
         if (rpmap2 contains p) return extend_to_quadruple(rpmap2(p), rpmap2)
         require(rpmap1.size <= rpmap2.size, "proof map may not decrease in size!")
 
-        val primary_candidates = clause.occurrences.filter((fo:FormulaOccurrence) => {fo.ancestors.size == 2 && fo.ancestors.contains(occ1) && fo.ancestors.contains(occ2) })
+        val primary_candidates = clause.occurrences.filter((fo:FormulaOccurrence) => {fo.parents.size == 2 && fo.parents.contains(occ1) && fo.parents.contains(occ2) })
         if (primary_candidates.isEmpty) throw new Exception("Could not find primary formula during handling of Paramodulation in instantiation merge!")
         val primary = primary_candidates.head.formula.asInstanceOf[FOLFormula]
 

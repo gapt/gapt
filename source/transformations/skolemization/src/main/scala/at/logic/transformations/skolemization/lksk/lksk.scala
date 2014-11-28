@@ -385,8 +385,8 @@ object LKtoLKskc extends Logger {
 
   def copyMapFromAncestor( fos: Seq[FormulaOccurrence], map: Map[FormulaOccurrence, Label] ) :
     Map[FormulaOccurrence, Label] = map ++ 
-                                    fos.map( fo => Tuple2(fo.ancestors.head, map( fo ) ) ) ++
-                                    fos.map( fo => Tuple2(fo.ancestors.last, map( fo ) ) )
+                                    fos.map( fo => Tuple2(fo.parents.head, map( fo ) ) ) ++
+                                    fos.map( fo => Tuple2(fo.parents.last, map( fo ) ) )
 
   // TODO: implement this in a reasonable way!
   // Tomer suggested a skolem symbol trait to distinguish skolem symbols from normal symbols

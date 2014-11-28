@@ -196,8 +196,8 @@ object eliminateDefinitions {
     val map = new mutable.HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
     val ls = toLabelledSequent(r.root)
 
-    ls.l_antecedent.foreach( fo => {println(fo); println(fo.ancestors.head); map.update( fo , premiseMap(fo.ancestors.head) )} )
-    ls.l_succedent.foreach( fo => map.update( fo , premiseMap(fo.ancestors.head) ) )
+    ls.l_antecedent.foreach( fo => {println(fo); println(fo.parents.head); map.update( fo , premiseMap(fo.parents.head) )} )
+    ls.l_succedent.foreach( fo => map.update( fo , premiseMap(fo.parents.head) ) )
     println("map")
     map.foreach( pair => println(pair) )
     (newProof, map)

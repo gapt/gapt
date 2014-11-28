@@ -194,8 +194,8 @@ abstract class RobinsonToRal {
 
     val nmap1 = root1.occurrences.foldLeft(map)( (recmap, fo) => {
       nroot.occurrences.find(x => {
-        require(x.ancestors.size == 1, "Ancestors of "+x+" must be exactly 1 (Substitution)")
-        val newanc = x.ancestors(0).ancestors
+        require(x.parents.size == 1, "Ancestors of "+x+" must be exactly 1 (Substitution)")
+        val newanc = x.parents(0).parents
         val oldanc = newanc.map(y => {
           map.filterKeys(_ == y).toList match {
             case x::Nil =>
@@ -229,7 +229,7 @@ abstract class RobinsonToRal {
   def getOccFromAncestor(ralp : RalResolutionProof[LabelledSequent], map : TranslationMap, occ : FormulaOccurrence, side : Boolean) = {
     val occurrences = if (side == false) ralp.root.l_antecedent else ralp.root.l_succedent
     val ancocc = occurrences.find(x => {
-      x.ancestors match {
+      x.parents match {
         case List(pocc) if map(occ) == pocc => true
         case _ => false
       }

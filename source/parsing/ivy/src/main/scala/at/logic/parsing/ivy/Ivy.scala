@@ -149,13 +149,13 @@ object IvyParser {
             case FSequent(x::xs, ys ) =>
               val pos1 = c1.antecedent indexWhere (_.formula == x)
               if (pos1 >= 0) {
-                val focc = c1.antecedent(pos1).factory.createFormulaOccurrence(x, c1.antecedent(pos1).ancestors  )
+                val focc = c1.antecedent(pos1).factory.createFormulaOccurrence(x, c1.antecedent(pos1).parents  )
                 val rec = connect(Clause(c1.antecedent.filterNot(_ == c1.antecedent(pos1)), c1.succedent), c2, FSequent(xs,ys))
                 Clause(focc :: rec.antecedent.toList, rec.succedent)
               } else {
                 val pos2 = c2.antecedent indexWhere (_.formula == x)
                 if (pos2 >= 0) {
-                  val focc =  c2.antecedent(pos2).factory.createFormulaOccurrence(x, c2.antecedent(pos2).ancestors )
+                  val focc =  c2.antecedent(pos2).factory.createFormulaOccurrence(x, c2.antecedent(pos2).parents )
                   val rec = connect(c1, Clause(c2.antecedent.filterNot(_ == c2.antecedent(pos2)), c2.succedent), FSequent(xs,ys))
                   Clause(focc :: rec.antecedent.toList, rec.succedent)
                 } else throw new Exception("Error in parsing resolution inference: resolved literal "+x+" not found!")
@@ -164,13 +164,13 @@ object IvyParser {
             case FSequent(Nil, y::ys ) =>
               val pos1 = c1.succedent indexWhere (_.formula == y)
               if (pos1 >= 0) {
-                val focc = c1.succedent(pos1).factory.createFormulaOccurrence(y, c1.succedent(pos1).ancestors )
+                val focc = c1.succedent(pos1).factory.createFormulaOccurrence(y, c1.succedent(pos1).parents )
                 val rec = connect(Clause(c1.antecedent, c1.succedent.filterNot(_ == c1.succedent(pos1))), c2, FSequent(Nil,ys))
                 Clause(rec.antecedent, focc :: rec.succedent.toList)
               } else {
                 val pos2 = c2.succedent indexWhere (_.formula == y)
                 if (pos2 >= 0) {
-                  val focc = c2.succedent(pos2).factory.createFormulaOccurrence(y, c2.succedent(pos2).ancestors  )
+                  val focc = c2.succedent(pos2).factory.createFormulaOccurrence(y, c2.succedent(pos2).parents  )
                   val rec = connect(c1, Clause(c2.antecedent, c2.succedent.filterNot(_ == c2.succedent(pos2))), FSequent(Nil,ys))
                   Clause(rec.antecedent, focc :: rec.succedent.toList)
                 } else throw new Exception("Error in parsing resolution inference: resolved literal "+y+" not found!")
@@ -392,7 +392,7 @@ object IvyParser {
            : List[FormulaOccurrence] = targets match {
           case x::xs =>
             if (missing.formula == x.formula)
-              List(x.factory.createFormulaOccurrence(x.formula, List(missing) ++ x.ancestors)) ++ xs
+              List(x.factory.createFormulaOccurrence(x.formula, List(missing) ++ x.parents)) ++ xs
             else
               List(x) ++ connect_missing_(xs, missing)
           case Nil =>

@@ -124,7 +124,7 @@ object IvyToRobinson {
         def connect(ivy : List[FormulaOccurrence], robinson : Seq[FormulaOccurrence])
         : List[FormulaOccurrence] = ivy match {
           case x::xs =>
-            val (rancs, rem) = remove_firsts(x.ancestors.toList, robinson)
+            val (rancs, rem) = remove_firsts(x.parents.toList, robinson)
             new FormulaOccurrence(x.formula, rancs, x.factory) :: connect(xs, rem)
 
           case Nil => Nil
@@ -143,9 +143,9 @@ object IvyToRobinson {
           case None =>
 
             val (rparent, parentmap) = convert(parent, map)
-            val contracted  = (clause.occurrences) filter (_.ancestors.size >1)
+            val contracted  = (clause.occurrences) filter (_.parents.size >1)
             require(contracted.size == 1, "Error: only one aux formula may have been factored!")
-            val ianc = contracted(0).ancestors
+            val ianc = contracted(0).parents
             val aux::deleted = find_matching(ianc.toList, (rparent.root.occurrences).toList)
             val rproof = RFactor(rparent, aux, deleted, Substitution())
             require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating propoistional rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
@@ -173,7 +173,7 @@ object IvyToRobinson {
             //require((rparent.root.antecedent ++ rparent.root.succedent) contains (flipped.ancestors(0)),
             //  "Error translating flip rule: "+flipped+" anc: "+flipped.ancestors(0) + " not contained in "+ ((rparent.root.antecedent ++ rparent.root.succedent) map (_.id)) )
 
-            val flippend_ancestor = flipped.ancestors(0).formula
+            val flippend_ancestor = flipped.parents(0).formula
             val rflipped = (rparent.root.occurrences) find (_.formula == flippend_ancestor)
             require(rflipped.nonEmpty, "Error: cannot find flipped formula in translation of parent proof!")
 
@@ -185,10 +185,10 @@ object IvyToRobinson {
                 *             :- t=s x C :- D
                 * */
 
-                debug("flipping: "+flipped.ancestors(0)+" transformed flipped "+rflipped.get)
+                debug("flipping: "+flipped.parents(0)+" transformed flipped "+rflipped.get)
 
                 val rproof = RParamodulation(rparent, ss, rflipped.get, ss.root.positive(0),  flipped.formula.asInstanceOf[FOLFormula], Substitution())
-                debug("from: "+flipped.ancestors(0)+" tfrom to "+rflipped.get )
+                debug("from: "+flipped.parents(0)+" tfrom to "+rflipped.get )
                 debug("flipped formula: "+flipped.formula)
                 require((rproof.root.occurrences).map(_.formula).contains(flipped.formula), "flipped formula must occur in translated clause "+rproof.root)
                 require(rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating flip rule, expected: "+clause.toFSequent+" result:"+rproof.root.toFSequent)
@@ -225,12 +225,12 @@ object IvyToRobinson {
             val (rparent1, parentmap1) = convert(parent1, map)
             val (rparent2, parentmap2) = convert(parent2, parentmap1)
             debug("translating inference "+id+ " from "+parent1.id+" and "+parent2.id)
-            require(lit.ancestors.length == 2, "Error in converting a paramodulation inference: need two ancestors")
-            require(parent1.root.occurrences contains lit.ancestors(0), "First parent must contain first ancestor occurrence!")
-            require(parent2.root.occurrences contains lit.ancestors(1), "Second parent must contain second ancestor occurrence!")
+            require(lit.parents.length == 2, "Error in converting a paramodulation inference: need two ancestors")
+            require(parent1.root.occurrences contains lit.parents(0), "First parent must contain first ancestor occurrence!")
+            require(parent2.root.occurrences contains lit.parents(1), "Second parent must contain second ancestor occurrence!")
 
-            val anc1 = lit.ancestors(0)
-            val anc2 = lit.ancestors(1)
+            val anc1 = lit.parents(0)
+            val anc2 = lit.parents(1)
             val Some(anc1occ) = if (parent1.root.antecedent contains (anc1)) {
               rparent1.root.antecedent.find(x => x.formula == anc1.formula )
             } else {
@@ -250,7 +250,7 @@ object IvyToRobinson {
             debug("tparent 1: "+rparent1.root.occurrences)
             debug("parent  2: "+parent2.root.occurrences)
             debug("tparent 2: "+rparent2.root.occurrences)
-            debug("lit ancestors: "+lit.ancestors)
+            debug("lit ancestors: "+lit.parents)
             debug("a1: "+anc1occ)
             debug("a2: "+anc2occ)
 

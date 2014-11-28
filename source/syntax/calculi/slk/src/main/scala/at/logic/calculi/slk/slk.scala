@@ -1166,7 +1166,7 @@ object ForallHyperLeftRule {
   private def getTerms(s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, term: SchemaExpression) = {
     val term1op = s1.antecedent.find(_ == term1oc)
     if (term1op == None) {
-      def o2s(occ:FormulaOccurrence) = occ +" formula="+occ.formula+ " ancestors="+occ.ancestors
+      def o2s(occ:FormulaOccurrence) = occ +" formula="+occ.formula+ " ancestors="+occ.parents
       println(o2s(term1oc.asInstanceOf[FormulaOccurrence]))
       //s1.antecedent.head.ancestors foreach ( (x:FormulaOccurrence) => println(o2s(x)))
       throw new LKRuleCreationException("Auxialiary formulas are not contained in the right part of the sequent")

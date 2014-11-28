@@ -22,12 +22,12 @@ object TypeSynonyms {
 import TypeSynonyms._
 
 class LabelledFormulaOccurrence (override val formula: HOLFormula,
-                                 override val ancestors: List[LabelledFormulaOccurrence],
-                                 val skolem_label: Label) extends FormulaOccurrence( formula, ancestors, LKskFOFactory ) {
+                                 override val parents: List[LabelledFormulaOccurrence],
+                                 val skolem_label: Label) extends FormulaOccurrence( formula, parents, LKskFOFactory ) {
   override def toString: String = formula.toString + " [label: " + skolem_label.toString + "]"
 }
 object LabelledFormulaOccurrence {
-  def unapply(fo : LabelledFormulaOccurrence) = Some(fo.formula, fo.ancestors, fo.skolem_label)
+  def unapply(fo : LabelledFormulaOccurrence) = Some(fo.formula, fo.parents, fo.skolem_label)
 }
 
 object LKskFOFactory extends FOFactory {

@@ -113,8 +113,8 @@ class extractExpansionTrees {
   // the set of formula occurrences given to method must not contain any principal formula
   private[herbrandExtraction] def getMapOfContext(s: Set[FormulaOccurrence], map: Map[FormulaOccurrence,ExpansionTreeWithMerges]): Map[FormulaOccurrence,ExpansionTreeWithMerges] =
     Map(s.toList.map(fo => (fo, {
-      require(fo.ancestors.size == 1)
-      map(fo.ancestors.head)
+      require(fo.parents.size == 1)
+      map(fo.parents.head)
     })): _*)
 
 

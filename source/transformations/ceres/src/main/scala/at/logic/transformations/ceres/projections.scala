@@ -529,7 +529,7 @@ object Projections extends at.logic.utils.logging.Logger {
     }
   }
 
-  def copySetToAncestor( set: Set[FormulaOccurrence] ) = set.foldLeft( new HashSet[FormulaOccurrence] )( (s, fo) => s ++ fo.ancestors )
+  def copySetToAncestor( set: Set[FormulaOccurrence] ) = set.foldLeft( new HashSet[FormulaOccurrence] )( (s, fo) => s ++ fo.parents )
 }
 
 object DeleteTautology {

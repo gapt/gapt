@@ -285,7 +285,7 @@ class ceres_omega {
    * @return the list of all ancestors
    */
   def tranAncestors(fo : FormulaOccurrence) : List[FormulaOccurrence] = {
-    fo :: fo.ancestors.toList.flatMap(x => tranAncestors(x))
+    fo :: fo.parents.toList.flatMap(x => tranAncestors(x))
   }
 
   /**
@@ -294,7 +294,7 @@ class ceres_omega {
    * @return the list of all ancestors
    */
   def tranAncestors(fo : LabelledFormulaOccurrence) : List[LabelledFormulaOccurrence] = {
-    fo :: fo.ancestors.flatMap(x => tranAncestors(x))
+    fo :: fo.parents.flatMap(x => tranAncestors(x))
   }
 
   /**
@@ -304,10 +304,10 @@ class ceres_omega {
    * @return the list of first ancestors
    */
   def firstAncestors(fo : FormulaOccurrence) : List[FormulaOccurrence] = {
-    if (fo.ancestors.isEmpty)
+    if (fo.parents.isEmpty)
       List(fo)
     else
-      fo.ancestors.toList.flatMap(x => firstAncestors(x))
+      fo.parents.toList.flatMap(x => firstAncestors(x))
   }
 
   /**
@@ -317,10 +317,10 @@ class ceres_omega {
    * @return the list of first ancestors
    */
   def firstAncestors(fo : LabelledFormulaOccurrence) : List[LabelledFormulaOccurrence] = {
-    if (fo.ancestors.isEmpty)
+    if (fo.parents.isEmpty)
       List(fo)
     else
-      fo.ancestors.toList.flatMap(x => firstAncestors(x))
+      fo.parents.toList.flatMap(x => firstAncestors(x))
   }
 
 

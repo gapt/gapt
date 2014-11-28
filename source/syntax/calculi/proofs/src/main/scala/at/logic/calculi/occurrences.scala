@@ -9,11 +9,11 @@ package occurrences {
    * multiple occurrences of the same formula (e.g. introduced by contraction) have a different [[FormulaOccurrence]].
    *
    * @param formula  The formula of which this is an occurrence.
-   * @param ancestors  What occurrences caused this occurrence, i.e. if this occurrence is introduced by or-right, then
+   * @param parents  What occurrences caused this occurrence, i.e. if this occurrence is introduced by or-right, then
    *                   this will include the disjunction is occurrence.
    * @param factory  The formula occurrence factory [[FOFactory]] used to construct this occurrence.
    */
-  class FormulaOccurrence(val formula: HOLFormula, val ancestors: Seq[FormulaOccurrence], val factory : FOFactory) {
+  class FormulaOccurrence(val formula: HOLFormula, val parents: Seq[FormulaOccurrence], val factory : FOFactory) {
     /**
      * Auto-incremented integer identifying this occurrence.
      */
@@ -26,20 +26,36 @@ package occurrences {
       super.clone()
     }
 
-    /**
-     * Recursively checks whether the argument is an ancestor of this occurrence.
+    /** Tests whether this is a descendant of that.
+     * 
+     * @param that A formula occurrence.
+     * @param reflexive Whether this should count as a descendant of itself.
+     * @return
      */
-    def isDescendantOf(o: FormulaOccurrence): Boolean =
-      if (this == o) true
-      else ancestors.exists(_.isDescendantOf(o))
+    def isDescendantOf(that: FormulaOccurrence, reflexive: Boolean): Boolean =
+      if (reflexive && this == that)
+        true
+      else if (parents.contains(that))
+        true
+      else
+        parents.exists(_.isDescendantOf(that, reflexive = false))
+
+    /** Tests whether this is an ancestor of that.
+     * 
+     * @param that A formula occurrence.
+     * @param reflexive Whether this should count as an ancestor of itself.
+     * @return
+     */
+    def isAncestorOf(that: FormulaOccurrence, reflexive: Boolean): Boolean = that.isDescendantOf(this, reflexive)
+
 
     /**
      *
-     * @return The transitive closure of the ancestor relation starting with this.
+     * @return The ancestors of this, i.e. its parents and the ancestors of its parents.
      */
-    def ancestorsTransitive: Seq[FormulaOccurrence] = {
-      val tmp = ancestors flatMap {fo => fo.ancestorsTransitive}
-      ancestors ++ tmp
+    def ancestors: Seq[FormulaOccurrence] = {
+      val tmp = parents flatMap {_.ancestors}
+      parents ++ tmp
     }
   }
 

@@ -127,8 +127,8 @@ object RobinsonToLK {
           val s1 = s(s0.asInstanceOf[FOLExpression]).asInstanceOf[FOLTerm]
 
           // locate principal formula
-          val lo = r.antecedent.find(_.ancestors.contains(a2))
-          val ro = r.succedent.find(_.ancestors.contains(a2))
+          val lo = r.antecedent.find(_.parents.contains(a2))
+          val ro = r.succedent.find(_.parents.contains(a2))
           // left rule
           val retProof = if (ro == None) {
             val lof = lo.get.formula.asInstanceOf[FOLFormula]

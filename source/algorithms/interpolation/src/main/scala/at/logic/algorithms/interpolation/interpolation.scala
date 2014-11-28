@@ -214,15 +214,15 @@ object Interpolate
   }
 
   private def applyUpUnary( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = {
-    val up_npart = npart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.ancestors )
-    val up_ppart = ppart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.ancestors )
+    val up_npart = npart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.parents )
+    val up_ppart = ppart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.parents )
     apply( p, up_npart, up_ppart )
   }
 
   // TODO - is there a better way to get the ancestors of a set in the left or right subproof respectively?
   private def applyUpBinaryLeft( p1: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = {
-      val up_npart = npart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.ancestors )
-      val up_ppart = ppart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.ancestors )
+      val up_npart = npart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.parents )
+      val up_ppart = ppart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.parents )
       val up1_npart = up_npart.filter( o => p1.root.antecedent.contains( o ) || p1.root.succedent.contains( o ) )
       val up1_ppart = up_ppart.filter( o => p1.root.antecedent.contains( o ) || p1.root.succedent.contains( o ) )
 
@@ -230,8 +230,8 @@ object Interpolate
   }
 
   private def applyUpBinaryRight( p2: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = {
-      val up_npart = npart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.ancestors )
-      val up_ppart = ppart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.ancestors )
+      val up_npart = npart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.parents )
+      val up_ppart = ppart.foldLeft(Set[FormulaOccurrence]())( (s, o) => s ++ o.parents )
       val up2_npart = up_npart.filter( o => p2.root.antecedent.contains( o ) || p2.root.succedent.contains( o ) )
       val up2_ppart = up_ppart.filter( o => p2.root.antecedent.contains( o ) || p2.root.succedent.contains( o ) )
 

@@ -149,7 +149,7 @@ class Sequent(val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formula
   /**
    * Finds the first occurrence in this sequent having the given ancestor.
    */
-  def getChildOf(ancestor: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.ancestors.contains(ancestor))
+  def getChildOf(ancestor: FormulaOccurrence): Option[FormulaOccurrence] = (antecedent ++ succedent).find(_.parents.contains(ancestor))
 
   /**
    * Converts to an [[FSequent]], ignoring where the formulas occur.
@@ -213,7 +213,7 @@ class FormulaNotExistsException(msg: String) extends LKRuleException(msg)
 
 trait LKProof extends TreeProof[Sequent] with Tree[Sequent] {
   def getDescendantInLowerSequent(fo: FormulaOccurrence): Option[FormulaOccurrence] = {
-    (root.antecedent ++ root.succedent).filter(_.isDescendantOf(fo)) match {
+    (root.antecedent ++ root.succedent).filter(_.isDescendantOf(fo, reflexive = true)) match {
       case x :: Nil => Some(x)
       case Nil => None
       case _ => throw new LKRuleException("Illegal lower sequent in rule in application of getDescendantInLowerSequent: More than one such formula exists")

@@ -24,9 +24,9 @@ object getListOfFOccsInStruct {
 
 //gets from the axioms those formula occurrences which are ancestors of fo
 object getAncAx {
-  def apply(fo: FormulaOccurrence, p: LKProof): List[FormulaOccurrence] = fo.ancestors match {
+  def apply(fo: FormulaOccurrence, p: LKProof): List[FormulaOccurrence] = fo.parents match {
     case List() if getAllAxioms.isFOccInAxiom(fo, getAllAxioms.apply(p)) => fo::Nil
-    case _ => fo.ancestors.foldLeft(List[FormulaOccurrence]())((x,y) => x:::apply(y,p))
+    case _ => fo.parents.foldLeft(List[FormulaOccurrence]())((x,y) => x:::apply(y,p))
   }
 }
 

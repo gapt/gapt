@@ -392,9 +392,9 @@ object skolemize extends Logger {
   }
 
   def copyMapToAncestor[A]( map: Map[FormulaOccurrence, A] ) =
-    map.foldLeft(Map[FormulaOccurrence, A]())( (m, p) => m ++ p._1.ancestors.map( a => (a, p._2) ) )
+    map.foldLeft(Map[FormulaOccurrence, A]())( (m, p) => m ++ p._1.parents.map( a => (a, p._2) ) )
  
-  def copySetToAncestor( set: Set[FormulaOccurrence] ) = set.foldLeft( new HashSet[FormulaOccurrence] )( (s, fo) => s ++ fo.ancestors )
+  def copySetToAncestor( set: Set[FormulaOccurrence] ) = set.foldLeft( new HashSet[FormulaOccurrence] )( (s, fo) => s ++ fo.parents )
 
   def copyMapToDescendant( old_p: LKProof, new_p: LKProof, 
                            map: Map[FormulaOccurrence, FormulaOccurrence] ) =

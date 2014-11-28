@@ -79,7 +79,7 @@ object getCutAncestors {
 
 object getAncestors {
   def apply( o: FormulaOccurrence ) : Set[FormulaOccurrence] =
-    o.ancestors.flatMap( a => getAncestors( a ) ).toSet ++ Set( o )
+    o.parents.flatMap( a => getAncestors( a ) ).toSet ++ Set( o )
 
   def apply( o: Set[FormulaOccurrence] ) : Set[FormulaOccurrence] =
     o.foldLeft( new HashSet[FormulaOccurrence] )( (res, o) => res ++ apply( o ) )
@@ -258,8 +258,8 @@ object eliminateDefinitions {
     val premiseMap = new_parent._2
     premiseMap.map(kv => {println(kv._1 + "  --->  " + kv._2)})
     val emptymap = Map[FormulaOccurrence, FormulaOccurrence]()
-    val antonlymap =  r.root.antecedent.foldLeft(emptymap)((m, fo) => m + ((fo , premiseMap(fo.ancestors.head))))
-    val fullmap = r.root.succedent.foldLeft(antonlymap)((m, fo) => m + ((fo , premiseMap(fo.ancestors.head))))
+    val antonlymap =  r.root.antecedent.foldLeft(emptymap)((m, fo) => m + ((fo , premiseMap(fo.parents.head))))
+    val fullmap = r.root.succedent.foldLeft(antonlymap)((m, fo) => m + ((fo , premiseMap(fo.parents.head))))
 
     fullmap.foreach( pair => println(pair) )
     (newProof, fullmap)
