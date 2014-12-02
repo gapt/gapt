@@ -465,7 +465,7 @@ object Main extends SimpleSwingApplication {
 
   def expansionTree() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val et = extractExpansionTrees(body.getContent.getData.get._2.asInstanceOf[LKProof])
+    val et = extractExpansionTrees(body.getContent.getData.get._2.asInstanceOf[LKProof], false)
     updateLauncher("Expansion Tree",et, 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {

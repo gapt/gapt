@@ -80,7 +80,6 @@ import at.logic.transformations.ceres.ceres_omega
 import at.logic.transformations.ceres.clauseSets.SimplifyStruct
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct._
-import at.logic.transformations.herbrandExtraction.{extractExpansionTrees => extractET}
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.{CERES, CERESR2LK}
@@ -425,7 +424,7 @@ object extractInterpolant {
 }
 
 object extractExpansionSequent {
-  def apply(proof: LKProof): ExpansionSequent = herbrandExtraction.extractExpansionTrees(proof)
+  def apply(proof: LKProof): ExpansionSequent = herbrandExtraction.extractExpansionTrees(proof, true)
 }
 
 object compressExpansionTree {
@@ -1298,7 +1297,7 @@ object findDefinitions {
 
 object extractLKSKExpansionSequent {
   def apply(proof: LKProof): ExpansionSequent =
-    herbrandExtraction.lksk.extractLKSKExpansionTrees(proof)
+    herbrandExtraction.lksk.extractLKSKExpansionTrees(proof, true)
 }
 
 object definitionElimination {

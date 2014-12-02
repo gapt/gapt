@@ -113,7 +113,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           val (acnf, endclause) = ceres_omega(proj, ralp, sequentToLabelledSequent(selp.root), struct)
 
           show("Compute expansion tree")
-          val et = extractLKSKExpansionTrees(acnf)
+          val et = extractLKSKExpansionTrees(acnf, false)
           show(" HOORAY! ")
           //println(et)
 

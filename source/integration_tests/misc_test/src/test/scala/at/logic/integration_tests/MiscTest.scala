@@ -216,7 +216,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
         val (resProof, seq, _) = Prover9.parse_prover9(testFilePath)
         val lkProof = new Prover9Prover().getLKProof(seq).get
 
-        val expansionSequent = extractExpansionTrees(lkProof)
+        val expansionSequent = extractExpansionTrees(lkProof, false)
 
         val seqToProve = ETtoDeep(expansionSequent)
 
@@ -240,7 +240,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       val reg = regularize(elp)
       val lksk_proof = LKtoLKskc(reg)
       // TODO
-      val et = extractExpansionTrees(reg)  // must throwA[IllegalArgumentException] // currently contains problematic definitions
+      val et = extractExpansionTrees(reg, false)  // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
     }
 
@@ -256,7 +256,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
         val p2 = ForallLeftRule(p1, Py, AllxPx, y)
         val p3 = ForallRightRule(p2, Py, AllxPx, y)
 
-        val etSeq = extractExpansionTrees(p3)
+        val etSeq = extractExpansionTrees(p3, false)
 
         val proof = solve.expansionProofToLKProof(p3.root.toFSequent, etSeq)
         proof.isDefined must beTrue
@@ -266,7 +266,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
       val proof = LinearExampleProof(0, 4)
 
-      val proofPrime = solve.expansionProofToLKProof(proof.root.toFSequent, extractExpansionTrees(proof))
+      val proofPrime = solve.expansionProofToLKProof(proof.root.toFSequent, extractExpansionTrees(proof, false))
       proofPrime.isDefined must beTrue
     }
   }

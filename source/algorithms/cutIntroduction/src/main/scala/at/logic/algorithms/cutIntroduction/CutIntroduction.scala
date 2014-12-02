@@ -168,7 +168,7 @@ object CutIntroduction {
 
     val clean_proof = CleanStructuralRules(proof)
     val num_rules = rulesNumber(clean_proof)
-    val ep = extractExpansionTrees(clean_proof)
+    val ep = extractExpansionTrees(clean_proof, false)
     val hasEquality = containsEqualityReasoning(clean_proof)
     execute(ep, hasEquality, manyQuantifiers, num_rules, timeout, verbose)
   }
@@ -347,7 +347,7 @@ object CutIntroduction {
 
     val clean_proof = CleanStructuralRules(proof)
     val num_rules = rulesNumber(clean_proof)
-    val ep = extractExpansionTrees(clean_proof)
+    val ep = extractExpansionTrees(clean_proof, false)
     val hasEquality = containsEqualityReasoning(clean_proof)
     execute(ep, hasEquality, num_rules, n, timeout, verbose)
   }

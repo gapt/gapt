@@ -9,39 +9,39 @@ import at.logic.calculi.occurrences._
 object extractExpansionTrees extends extractExpansionTrees
 class extractExpansionTrees {
 
-  def apply(proof: LKProof): ExpansionSequent = {
-    val map = extract(proof)
+  def apply(proof: LKProof, verbose: Boolean): ExpansionSequent = {
+    val map = extract(proof, verbose)
     mergeTree( (proof.root.antecedent.map(fo => map(fo)), proof.root.succedent.map(fo => map(fo))) )
   }
 
-  private def extract(proof: LKProof): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
+  private def extract(proof: LKProof, verbose: Boolean): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
     case Axiom(r) =>
-      handleAxiom(r)
+      handleAxiom(r, verbose)
     case UnaryLKProof(_,up,r,_,p) =>
-      val map = extract(up)
+      val map = extract(up, verbose)
       handleUnary(r, p, map, proof)
 
-    case CutRule(up1,up2,r,_,_) => getMapOfContext((r.antecedent ++ r.succedent).toSet, extract(up1) ++ extract(up2))
+    case CutRule(up1,up2,r,_,_) => getMapOfContext((r.antecedent ++ r.succedent).toSet, extract(up1, verbose) ++ extract(up2, verbose))
     case BinaryLKProof(_,up1,up2,r,a1,a2,Some(p)) =>
-      val map = extract(up1) ++ extract(up2)
+      val map = extract(up1, verbose) ++ extract(up2, verbose)
       handleBinary(r, map, proof, a1, a2, p)
 
     case _ => throw new IllegalArgumentException("unsupported proof rule: " + proof)
   }
 
 
-  def handleAxiom(r:Sequent) : Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
+  def handleAxiom(r:Sequent, verbose: Boolean) : Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     // guess the axiom: must be an atom and appear left as well as right
     // can't use set intersection, but lists are small enough to do it manually
     val axiomCandidates = r.antecedent.filter(elem => r.succedent.exists(elem2 => elem syntaxEquals elem2)).filter(o => isAtom( o.formula ))
 
-    if (axiomCandidates.size > 1) {
+    if (axiomCandidates.size > 1 && verbose) {
       println("Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: "+axiomCandidates)
     }
 
     if (axiomCandidates.isEmpty) {
       if (allAtoms( r.antecedent ) && allAtoms( r.succedent ) ) {
-        if (!((r.antecedent.isEmpty) && (r.succedent.size == 1) && (isReflexivity(r.succedent(0).formula)))) {
+        if (!((r.antecedent.isEmpty) && (r.succedent.size == 1) && (isReflexivity(r.succedent(0).formula))) && verbose) {
           //only print the warning for non reflexivity atoms
           println("Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: " + r)
         }

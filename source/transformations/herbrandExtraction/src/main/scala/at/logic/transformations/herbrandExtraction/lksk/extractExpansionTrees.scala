@@ -15,50 +15,50 @@ import at.logic.calculi.lk.{BinaryLKProof, CutRule, UnaryLKProof}
  */
 object extractLKSKExpansionTrees extends extractLKSKExpansionTrees;
 class extractLKSKExpansionTrees  extends extractExpansionTrees {
-  override def apply(proof: LKProof): ExpansionSequent = {
-    val map = extract(proof)
+  override def apply(proof: LKProof, verbose: Boolean): ExpansionSequent = {
+    val map = extract(proof, verbose)
     mergeTree( (proof.root.antecedent.map(fo => map(fo)), proof.root.succedent.map(fo => map(fo))) )
   }
 
-  def extract(proof: LKProof): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
+  def extract(proof: LKProof, verbose: Boolean): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
     case Axiom(r) =>
-      handleAxiom(r)
+      handleAxiom(r, verbose)
 
     case WeakeningRightRule(parent, r, p) =>
-      val map = extract(parent)
+      val map = extract(parent, verbose)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
       contextmap + ((p, AtomTree(BottomC)))
     case WeakeningLeftRule(parent, r, p) =>
-      val map = extract(parent)
+      val map = extract(parent, verbose)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
       contextmap + ((p, AtomTree(TopC)))
     case ForallSkLeftRule(parent, r, a, p, t) =>
-      val map = extract(parent)
+      val map = extract(parent, verbose)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
       contextmap + ((p, WeakQuantifier(p.formula, List(Tuple2(map(a), t)))))
     case ExistsSkRightRule(parent, r, a, p, t) =>
-      val map = extract(parent)
+      val map = extract(parent, verbose)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
       contextmap + ((p, WeakQuantifier(p.formula, List(Tuple2(map(a), t)))))
     case ForallSkRightRule(parent, r, a, p, skt) =>
-      val map = extract(parent)
+      val map = extract(parent, verbose)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
       contextmap + ((p, SkolemQuantifier(p.formula,  skt, map(a) )))
     case ExistsSkLeftRule(parent, r, a, p, skt) =>
-      val map = extract(parent)
+      val map = extract(parent, verbose)
       val contextmap = getMapOfContext((r.antecedent ++ r.succedent).toSet - p, map)
       contextmap + ((p, SkolemQuantifier(p.formula,  skt, map(a) )))
 
 
     case UnaryLKProof(_,up,r,_,p) =>
-      val map = extract(up)
+      val map = extract(up, verbose)
       handleUnary(r, p, map, proof)
 
     case CutRule(up1,up2,r,_,_) =>
-      getMapOfContext((r.antecedent ++ r.succedent).toSet, extract(up1) ++ extract(up2))
+      getMapOfContext((r.antecedent ++ r.succedent).toSet, extract(up1, verbose) ++ extract(up2, verbose))
 
     case BinaryLKProof(_,up1,up2,r,a1,a2,Some(p)) =>
-      val map = extract(up1) ++ extract(up2)
+      val map = extract(up1, verbose) ++ extract(up2, verbose)
       handleBinary(r, map, proof, a1, a2, p)
 
   }
