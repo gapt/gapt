@@ -7,9 +7,10 @@ import at.logic.calculi.resolution.robinson._
 import at.logic.language.fol._
 import at.logic.calculi.resolution.{FClause, Clause}
 import at.logic.algorithms.lk.{applySubstitution => applySub, addWeakenings, CleanStructuralRules, CloneLKProof}
+import at.logic.utils.logging.Logger
 
 
-object RobinsonToLK {
+object RobinsonToLK extends Logger {
   type mapT = scala.collection.mutable.Map[FClause,LKProof]
 
   //encapsulates a memo table s.t. subsequent runs of PCNF are not computed multiple times for the same c
@@ -35,7 +36,7 @@ object RobinsonToLK {
   def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof = {
     val memotable = new PCNFMemoTable(s)
     val p = addWeakenings.weaken(introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), memotable.getPCNF),s), s)
-    println("Memoization saved "+memotable.getHits()+" calls!")
+    info("Memoization saved "+memotable.getHits()+" calls!")
     p
   }
 
@@ -43,7 +44,7 @@ object RobinsonToLK {
   def apply(resproof: RobinsonResolutionProof, s: FSequent, map: mapT): LKProof = {
     val memotable = new PCNFMemoTable(s)
     val p = addWeakenings.weaken(introduceContractions(recConvert(resproof, s, map, memotable.getPCNF),s), s)
-    println("Memoization saved "+memotable.getHits()+" calls!")
+    info("Memoization saved "+memotable.getHits()+" calls!")
     p
   }
 
@@ -136,9 +137,9 @@ object RobinsonToLK {
             val aux1 = u1.root.succedent.find(_.formula == s(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
             val aux2 = u2.root.antecedent.find(_.formula == s(a2.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
             // rule 1
-            if (isRule1(lof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationLeft1Rule(u1, u2, aux1, aux2, lof)
+            if (isRule1(lof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationLeftRule(u1, u2, aux1, aux2, lof)
             // rule 2
-            else EquationLeft2Rule(u1, u2, aux1, aux2, lof)
+            else EquationLeftRule(u1, u2, aux1, aux2, lof)
           }
           // right rule
           else {
@@ -148,17 +149,17 @@ object RobinsonToLK {
             val aux1 = u1.root.succedent.find(_.formula == s(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
             val aux2 = u2.root.succedent.find(_.formula == s(a2.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
             // rule 1
-            if (isRule1(rof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationRight1Rule(u1, u2, aux1, aux2, rof)
+            if (isRule1(rof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationRightRule(u1, u2, aux1, aux2, rof)
             // rule 2
-            else EquationRight2Rule(u1, u2, aux1, aux2, rof)
+            else EquationRightRule(u1, u2, aux1, aux2, rof)
           }
           introduceContractions(retProof, seq)
         }
         // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
         case Instance(root,p,s) =>
-          println("applying sub "+s+" to "+root)
+          debug("applying sub "+s+" to "+root)
           val rp = recConvert(p, seq,map,createAxiom)
-          println("lk proof root is "+rp.root)
+          debug("lk proof root is "+rp.root)
           try {
             applySub(rp, s)._1
           } catch {

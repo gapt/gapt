@@ -85,7 +85,14 @@ class LambdaPosition(val list: List[Int]) {
   def head = list.head
   def tail = list.tail
   def isEmpty = list.isEmpty
-  override def toString = list.toString()
+  override def toString = "["+toString_(list)
+
+  private def toString_(xs: List[Int]): String = xs match {
+    case Nil => "]"
+    case x :: Nil =>
+      x.toString +"]"
+    case x :: ys => x.toString+", "+toString_(ys)
+  }
 
   override def equals(that: Any) = that match {
     case p: LambdaPosition => p.list == list

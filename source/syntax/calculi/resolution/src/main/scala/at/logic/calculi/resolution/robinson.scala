@@ -22,6 +22,12 @@ import at.logic.calculi.lksk.UnaryLKskProof
 
 package robinson {
 
+import at.logic.utils.logging.Logger
+import org.slf4j.LoggerFactory
+
+trait RobinsonLogger extends Logger {
+  override protected val log = LoggerFactory.getLogger("RobinsonLogger")
+  }
 
 /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
@@ -123,7 +129,7 @@ object createContext {
 */
   }
 
-  object Paramodulation {
+  object Paramodulation extends RobinsonLogger {
     def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: FOLFormula, a2: FOLFormula, newLiteral: FOLFormula, sub: Substitution, pos: Boolean): RobinsonResolutionProof  = {
       val a1occ = p1.root.succedent.find( _.formula == a1 ).get
       val list2 = if (pos) p2.root.succedent else p2.root.antecedent
@@ -145,8 +151,8 @@ object createContext {
             case Equation(s, t) =>
               (EquationVerifier(s, t, sub(term2.formula), sub(newLiteral)), EquationVerifier(t, s, sub(term2.formula), sub(newLiteral))) match {
                 case (Different, Different) =>
-                  if (s==t) println(s+"=="+t)
-                  if (sub(term2.formula)==newLiteral) println(sub(term2.formula)+"=="+newLiteral) else println(sub(term2.formula)+"!="+newLiteral)
+                  if (s==t) debug(s+"=="+t)
+                  if (sub(term2.formula)==newLiteral) debug(sub(term2.formula)+"=="+newLiteral) else println(sub(term2.formula)+"!="+newLiteral)
                   throw new LKRuleCreationException("Could not check replacement of " + s + " by " + t + " in " + sub(term2.formula) + " equals " + prinFormula.formula)
                 case _ =>
                 //check is ok

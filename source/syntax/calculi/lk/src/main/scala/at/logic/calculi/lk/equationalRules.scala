@@ -111,27 +111,48 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
       eq match {
         case Equation(s, t) =>
           trace("Equation: " +s+" = "+t+".")
-          val sAux = aux.find(s)
-          val sMain = main.find(s)
 
-          if (sAux.isEmpty)
-            throw new LKRuleCreationException("Term "+s+" not found in formula "+aux+".")
+          if (main == aux && s == t) {
+            warn("aux and main formula are equal.")
 
-          trace("Positions of s = "+s+" in aux = "+aux+": "+sAux+".")
-          trace("Positions of s = "+s+" in main = "+main+": "+sMain+".")
-          val posList = sAux.diff(sMain)
-          trace("posList = "+posList)
+            val sAux = aux.find(s)
 
-          if (posList.length == 1) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace(aux, p, t)
-            if (mainNew == main){
-              apply(s1, s2, term1oc, term2oc, p)
-            }
-            else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+t+") should yield "+main+" but is "+mainNew+".")
+            if (sAux.isEmpty)
+              throw new LKRuleCreationException("Equation is trivial, but term "+s+" does not occur in "+aux+".")
+
+            apply(s1, s2, term1oc, term2oc, sAux.head)
           }
-          else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
 
+          else if ((s == t) && (main != aux)) {
+            throw new LKRuleCreationException("Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ.")
+          }
+
+          else if (s != t && aux == main) {
+            throw new LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
+          }
+
+          else {
+            val sAux = aux.find(s)
+            val tMain = main.find(t)
+
+            if (sAux.isEmpty)
+              throw new LKRuleCreationException("Term " + s + " not found in formula " + aux + ".")
+
+            trace("Positions of s = " + s + " in aux = " + aux + ": " + sAux + ".")
+            trace("Positions of t = " + t + " in main = " + main + ": " + tMain + ".")
+            val posList = sAux intersect tMain
+            trace("posList = " + posList)
+
+            if (posList.length == 1) {
+              val p = posList.head
+              val mainNew = HOLPosition.replace(aux, p, t)
+              if (mainNew == main) {
+                apply(s1, s2, term1oc, term2oc, p)
+              }
+              else throw new LKRuleCreationException("Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + ".")
+            }
+            else throw new LKRuleCreationException("Position list " + posList + " is not valid.")
+          }
         case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
       }
     }
@@ -217,27 +238,48 @@ case object EquationRight2RuleType extends BinaryRuleTypeA
     eq match {
       case Equation(s, t) =>
         trace("Equation: " +s+" = "+t+".")
-        val sAux = aux.find(s)
-        val sMain = main.find(s)
 
-        if (sAux.isEmpty)
-          throw new LKRuleCreationException("Term "+s+" not found in formula "+aux+".")
+        if (main == aux && s == t) {
+          warn("aux and main formula are equal.")
 
-        trace("Positions of s = "+s+" in aux = "+aux+": "+sAux+".")
-        trace("Positions of s = "+s+" in main = "+main+": "+sMain+".")
-        val posList = sAux.diff(sMain)
-        trace("posList = "+posList)
+          val sAux = aux.find(s)
 
-        if (posList.length == 1) {
-          val p = posList.head
-          val mainNew = HOLPosition.replace(aux, p, t)
-          if (mainNew == main){
-            apply(s1, s2, term1oc, term2oc, p)
-          }
-          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+t+") should yield "+main+" but is "+mainNew+".")
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Equation is trivial, but term "+s+" does not occur in "+aux+".")
+
+          apply(s1, s2, term1oc, term2oc, sAux.head)
         }
-        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
 
+        else if (s == t && main != aux) {
+          throw new LKRuleCreationException("Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ.")
+        }
+
+        else if (s != t && aux == main) {
+          throw new LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
+        }
+
+        else {
+          val sAux = aux.find(s)
+          val tMain = main.find(t)
+
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Term " + s + " not found in formula " + aux + ".")
+
+          trace("Positions of s = " + s + " in aux = " + aux + ": " + sAux + ".")
+          trace("Positions of t = " + t + " in main = " + main + ": " + tMain + ".")
+          val posList = sAux intersect tMain
+          trace("posList = " + posList)
+
+          if (posList.length == 1) {
+            val p = posList.head
+            val mainNew = HOLPosition.replace(aux, p, t)
+            if (mainNew == main) {
+              apply(s1, s2, term1oc, term2oc, p)
+            }
+            else throw new LKRuleCreationException("Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + ".")
+          }
+          else throw new LKRuleCreationException("Position list " + posList + " is not valid.")
+        }
       case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
     }
   }
@@ -347,26 +389,48 @@ object EquationLeft2Rule extends EquationRuleLogger {
     eq match {
       case Equation(s, t) =>
         trace("Equation: " +s+" = "+t+".")
-        val tAux = aux.find(t)
-        val tMain = main.find(t)
 
-        if (tAux.isEmpty)
-          throw new LKRuleCreationException("Term "+t+" not found in formula "+aux+".")
+        if (main == aux && s == t) {
+          warn("aux and main formula are equal.")
 
-        trace("Positions of t = "+t+" in aux = "+aux+": "+tAux+".")
-        trace("Positions of t = "+t+" in main = "+main+": "+tMain+".")
-        val posList = tAux.diff(tMain)
-        trace("posList = "+posList)
+          val sAux = aux.find(s)
 
-        if (posList.length == 1) {
-          val p = posList.head
-          val mainNew = HOLPosition.replace(aux, p, s)
-          if (mainNew == main){
-            apply(s1, s2, term1oc, term2oc, p)
-          }
-          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+s+") should yield "+main+" but is "+mainNew+".")
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Equation is trivial, but term "+s+" does not occur in "+aux+".")
+
+          apply(s1, s2, term1oc, term2oc, sAux.head)
         }
-        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+        else if (s == t && main != aux) {
+          throw new LKRuleCreationException("Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ.")
+        }
+
+        else if (s != t && aux == main) {
+          throw new LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
+        }
+
+        else {
+          val tAux = aux.find(t)
+          val sMain = main.find(s)
+
+          if (tAux.isEmpty)
+            throw new LKRuleCreationException("Term " + t + " not found in formula " + aux + ".")
+
+          trace("Positions of t = " + t + " in aux = " + aux + ": " + tAux + ".")
+          trace("Positions of s = " + s + " in main = " + main + ": " + sMain + ".")
+          val posList = tAux intersect sMain
+          trace("posList = " + posList)
+
+          if (posList.length == 1) {
+            val p = posList.head
+            val mainNew = HOLPosition.replace(aux, p, s)
+            if (mainNew == main) {
+              apply(s1, s2, term1oc, term2oc, p)
+            }
+            else throw new LKRuleCreationException("Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + ".")
+          }
+          else throw new LKRuleCreationException("Position list " + posList + " is not valid.")
+        }
 
       case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
     }
@@ -435,26 +499,48 @@ object EquationLeft2Rule extends EquationRuleLogger {
     eq match {
       case Equation(s, t) =>
         trace("Equation: " +s+" = "+t+".")
-        val tAux = aux.find(t)
-        val tMain = main.find(t)
 
-        if (tAux.isEmpty)
-          throw new LKRuleCreationException("Term "+t+" not found in formula "+aux+".")
+        if (main == aux && s == t) {
+          warn("aux and main formula are equal.")
 
-        trace("Positions of t = "+t+" in aux = "+aux+": "+tAux+".")
-        trace("Positions of t = "+t+" in main = "+main+": "+tMain+".")
-        val posList = tAux.diff(tMain)
-        trace("posList = "+posList)
+          val sAux = aux.find(s)
 
-        if (posList.length == 1) {
-          val p = posList.head
-          val mainNew = HOLPosition.replace(aux, p, s)
-          if (mainNew == main){
-            apply(s1, s2, term1oc, term2oc, p)
-          }
-          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+s+") should yield "+main+" but is "+mainNew+".")
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Equation is trivial, but term "+s+" does not occur in "+aux+".")
+
+          apply(s1, s2, term1oc, term2oc, sAux.head)
         }
-        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+        else if (s == t && main != aux) {
+          throw new LKRuleCreationException("Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ.")
+        }
+
+        else if (s != t && aux == main) {
+          throw new LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
+        }
+
+        else {
+          val tAux = aux.find(t)
+          val sMain = main.find(s)
+
+          if (tAux.isEmpty)
+            throw new LKRuleCreationException("Term " + t + " not found in formula " + aux + ".")
+
+          trace("Positions of t = " + t + " in aux = " + aux + ": " + tAux + ".")
+          trace("Positions of s = " + s + " in main = " + main + ": " + sMain + ".")
+          val posList = tAux intersect sMain
+          trace("posList = " + posList)
+
+          if (posList.length == 1) {
+            val p = posList.head
+            val mainNew = HOLPosition.replace(aux, p, s)
+            if (mainNew == main) {
+              apply(s1, s2, term1oc, term2oc, p)
+            }
+            else throw new LKRuleCreationException("Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + ".")
+          }
+          else throw new LKRuleCreationException("Position list " + posList + " is not valid.")
+        }
 
       case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
     }
@@ -565,26 +651,48 @@ object EquationRight1Rule extends EquationRuleLogger {
     eq match {
       case Equation(s, t) =>
         trace("Equation: " +s+" = "+t+".")
-        val sAux = aux.find(s)
-        val sMain = main.find(s)
 
-        if (sAux.isEmpty)
-          throw new LKRuleCreationException("Term "+s+" not found in formula "+aux+".")
+        if (main == aux && s == t) {
+          warn("aux and main formula are equal.")
 
-        trace("Positions of s = "+s+" in aux = "+aux+": "+sAux+".")
-        trace("Positions of s = "+s+" in main = "+main+": "+sMain+".")
-        val posList = sAux.diff(sMain)
-        trace("posList = "+posList)
+          val sAux = aux.find(s)
 
-        if (posList.length == 1) {
-          val p = posList.head
-          val mainNew = HOLPosition.replace(aux, p, t)
-          if (mainNew == main){
-            apply(s1, s2, term1oc, term2oc, p)
-          }
-          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+t+") should yield "+main+" but is "+mainNew+".")
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Equation is trivial, but term "+s+" does not occur in "+aux+".")
+
+          apply(s1, s2, term1oc, term2oc, sAux.head)
         }
-        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+        else if ((s == t) && (main != aux)) {
+          throw new LKRuleCreationException("Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ.")
+        }
+
+        else if (s != t && aux == main) {
+          throw new LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
+        }
+
+        else {
+          val sAux = aux.find(s)
+          val tMain = main.find(t)
+
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Term " + s + " not found in formula " + aux + ".")
+
+          trace("Positions of s = " + s + " in aux = " + aux + ": " + sAux + ".")
+          trace("Positions of t = " + t + " in main = " + main + ": " + tMain + ".")
+          val posList = sAux intersect tMain
+          trace("posList = " + posList)
+
+          if (posList.length == 1) {
+            val p = posList.head
+            val mainNew = HOLPosition.replace(aux, p, t)
+            if (mainNew == main) {
+              apply(s1, s2, term1oc, term2oc, p)
+            }
+            else throw new LKRuleCreationException("Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + ".")
+          }
+          else throw new LKRuleCreationException("Position list " + posList + " is not valid.")
+        }
 
       case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
     }
@@ -671,26 +779,48 @@ object EquationRight1Rule extends EquationRuleLogger {
     eq match {
       case Equation(s, t) =>
         trace("Equation: " +s+" = "+t+".")
-        val sAux = aux.find(s)
-        val sMain = main.find(s)
 
-        if (sAux.isEmpty)
-          throw new LKRuleCreationException("Term "+s+" not found in formula "+aux+".")
+        if (main == aux && s == t) {
+          warn("aux and main formula are equal.")
 
-        trace("Positions of s = "+s+" in aux = "+aux+": "+sAux+".")
-        trace("Positions of s = "+s+" in main = "+main+": "+sMain+".")
-        val posList = sAux.diff(sMain)
-        trace("posList = "+posList)
+          val sAux = aux.find(s)
 
-        if (posList.length == 1) {
-          val p = posList.head
-          val mainNew = HOLPosition.replace(aux, p, t)
-          if (mainNew == main){
-            apply(s1, s2, term1oc, term2oc, p)
-          }
-          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+t+") should yield "+main+" but is "+mainNew+".")
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Equation is trivial, but term "+s+" does not occur in "+aux+".")
+
+          apply(s1, s2, term1oc, term2oc, sAux.head)
         }
-        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+        else if ((s == t) && (main != aux)) {
+          throw new LKRuleCreationException("Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ.")
+        }
+
+        else if (s != t && aux == main) {
+          throw new LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
+        }
+
+        else {
+          val sAux = aux.find(s)
+          val tMain = main.find(t)
+
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Term " + s + " not found in formula " + aux + ".")
+
+          trace("Positions of s = " + s + " in aux = " + aux + ": " + sAux + ".")
+          trace("Positions of t = " + t + " in main = " + main + ": " + tMain + ".")
+          val posList = sAux intersect tMain
+          trace("posList = " + posList)
+
+          if (posList.length == 1) {
+            val p = posList.head
+            val mainNew = HOLPosition.replace(aux, p, t)
+            if (mainNew == main) {
+              apply(s1, s2, term1oc, term2oc, p)
+            }
+            else throw new LKRuleCreationException("Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + ".")
+          }
+          else throw new LKRuleCreationException("Position list " + posList + " is not valid.")
+        }
 
       case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
     }
@@ -801,26 +931,48 @@ object EquationRight2Rule extends EquationRuleLogger {
     eq match {
       case Equation(s, t) =>
         trace("Equation: " +s+" = "+t+".")
-        val tAux = aux.find(t)
-        val tMain = main.find(t)
 
-        if (tAux.isEmpty)
-          throw new LKRuleCreationException("Term "+t+" not found in formula "+aux+".")
+        if (main == aux && s == t) {
+          warn("aux and main formula are equal.")
 
-        trace("Positions of t = "+t+" in aux = "+aux+": "+tAux+".")
-        trace("Positions of t = "+t+" in main = "+main+": "+tMain+".")
-        val posList = tAux.diff(tMain)
-        trace("posList = "+posList)
+          val sAux = aux.find(s)
 
-        if (posList.length == 1) {
-          val p = posList.head
-          val mainNew = HOLPosition.replace(aux, p, s)
-          if (mainNew == main){
-            apply(s1, s2, term1oc, term2oc, p)
-          }
-          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+s+") should yield "+main+" but is "+mainNew+".")
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Equation is trivial, but term "+s+" does not occur in "+aux+".")
+
+          apply(s1, s2, term1oc, term2oc, sAux.head)
         }
-        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+        else if ((s == t) && (main != aux)) {
+          throw new LKRuleCreationException("Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ.")
+        }
+
+        else if (s != t && aux == main) {
+          throw new LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
+        }
+
+        else {
+          val tAux = aux.find(t)
+          val sMain = main.find(s)
+
+          if (tAux.isEmpty)
+            throw new LKRuleCreationException("Term " + t + " not found in formula " + aux + ".")
+
+          trace("Positions of t = " + t + " in aux = " + aux + ": " + tAux + ".")
+          trace("Positions of s = " + s + " in main = " + main + ": " + sMain + ".")
+          val posList = tAux intersect sMain
+          trace("posList = " + posList)
+
+          if (posList.length == 1) {
+            val p = posList.head
+            val mainNew = HOLPosition.replace(aux, p, s)
+            if (mainNew == main) {
+              apply(s1, s2, term1oc, term2oc, p)
+            }
+            else throw new LKRuleCreationException("Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + ".")
+          }
+          else throw new LKRuleCreationException("Position list " + posList + " is not valid.")
+        }
 
       case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
     }
@@ -889,26 +1041,48 @@ object EquationRight2Rule extends EquationRuleLogger {
     eq match {
       case Equation(s, t) =>
         trace("Equation: " +s+" = "+t+".")
-        val tAux = aux.find(t)
-        val tMain = main.find(t)
 
-        if (tAux.isEmpty)
-          throw new LKRuleCreationException("Term "+t+" not found in formula "+aux+".")
+        if (main == aux && s == t) {
+          warn("aux and main formula are equal.")
 
-        trace("Positions of t = "+t+" in aux = "+aux+": "+tAux+".")
-        trace("Positions of t = "+t+" in main = "+main+": "+tMain+".")
-        val posList = tAux.diff(tMain)
-        trace("posList = "+posList)
+          val sAux = aux.find(s)
 
-        if (posList.length == 1) {
-          val p = posList.head
-          val mainNew = HOLPosition.replace(aux, p, s)
-          if (mainNew == main){
-            apply(s1, s2, term1oc, term2oc, p)
-          }
-          else throw new LKRuleCreationException("Replacement ("+aux+", "+p+", "+s+") should yield "+main+" but is "+mainNew+".")
+          if (sAux.isEmpty)
+            throw new LKRuleCreationException("Equation is trivial, but term "+s+" does not occur in "+aux+".")
+
+          apply(s1, s2, term1oc, term2oc, sAux.head)
         }
-        else throw new LKRuleCreationException("Position list " +posList+ " is not valid.")
+
+        else if ((s == t) && (main != aux)) {
+          throw new LKRuleCreationException("Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ.")
+        }
+
+        else if (s != t && aux == main) {
+          throw new LKRuleCreationException("Nontrivial equation, but aux and main formula are equal.")
+        }
+
+        else {
+          val tAux = aux.find(t)
+          val sMain = main.find(s)
+
+          if (tAux.isEmpty)
+            throw new LKRuleCreationException("Term " + t + " not found in formula " + aux + ".")
+
+          trace("Positions of t = " + t + " in aux = " + aux + ": " + tAux + ".")
+          trace("Positions of s = " + s + " in main = " + main + ": " + sMain + ".")
+          val posList = tAux intersect sMain
+          trace("posList = " + posList)
+
+          if (posList.length == 1) {
+            val p = posList.head
+            val mainNew = HOLPosition.replace(aux, p, s)
+            if (mainNew == main) {
+              apply(s1, s2, term1oc, term2oc, p)
+            }
+            else throw new LKRuleCreationException("Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + ".")
+          }
+          else throw new LKRuleCreationException("Position list " + posList + " is not valid.")
+        }
 
       case _ => throw new LKRuleCreationException("Formula "+eq+" is not an equation.")
     }
