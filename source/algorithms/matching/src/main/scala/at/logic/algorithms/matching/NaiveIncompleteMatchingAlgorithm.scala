@@ -23,7 +23,7 @@ object NaiveIncompleteMatchingAlgorithm {
       case ( v1 : HOLVar, v2 : HOLVar ) if v1 == v2 => Some(Substitution())
       case ( v1 : HOLVar, v2 : HOLVar ) if v1 != v2 =>  None
       case ( c1 : HOLConst, c2 : HOLConst ) if c1 == c2 => Some(Substitution())
-      case ( HOLAbs(v1, e1), HOLAbs(v2, e2) ) => holMatch( e1, e2 )
+      case ( HOLAbs(v1, e1), HOLAbs(v2, e2) ) => holMatch( e1, e2 )  //TODO: add sub v2 <- v1 on e2 and check
       case _ => None
     }
 

@@ -19,7 +19,7 @@
 \CONSTDEC{C, MONstep}{o}
 \CONSTDEC{IF0, IF1}{i>i>o}
 \CONSTDEC{MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}}{o}
-\CONSTDEC{NOCCstep, NOCCstep_{a}, NOCCstep_{b}, OLDTAPE, OLDTAPE2, TAPEPROOF, \pi_1}{o}
+\CONSTDEC{NOCCstep, NOCCstep_{a}, NOCCstep_{b}, OLDTAPE, INFTAPE, TAPEPROOF, \pi_1}{o}
 \CONSTDEC{BASE, STEP, MAIN, \rho}{i>o}
 
 % definitions  %
@@ -107,7 +107,7 @@
 
 % ===== START OF PROOF ===== %
 
-\CONTINUEFROM{OLDTAPE2}{AX,T}{I(0),I(1)}
+\CONTINUEFROM{INFTAPE}{AX,T}{I(0),I(1)}
 
 \CONTINUEFROM{MAIN(0)}{AX, I(0)}{C}
 
@@ -694,6 +694,8 @@
 
   \AX{j<(n+1)+1}{j<(n+1)+1}
 
+
+
   \AX{i<j}{i<j}
   \AX{j<n+1}{j<n+1}
   \ANDR{i<j, j<n+1}{i<j & j<n+1}
@@ -752,7 +754,7 @@
   \ALLR{}{AX,T}{( all x  exists y ((x<y) & f(y)=1)),( all x  exists y ((x<y) & f(y)=0))}
   \DEF{AX,T}{( all x  exists y ((x<y) & f(y)=1)),I(0)}
   \DEF{AX,T}{I(1),I(0)}
-  \CONTINUEWITH{OLDTAPE2}
+  \CONTINUEWITH{INFTAPE}
 
 % ===== END OF PROOF ===== %
 

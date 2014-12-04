@@ -104,6 +104,7 @@ object Cut {
           with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
           def rule = CutRalType
           def aux = (term1s)::(term2s)::Nil
+          override def name = "Cut"
         }
       }
     }
@@ -131,6 +132,7 @@ object ForallT {
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
           def subst = v
+          override def name = "\u2200 T"
         }
     }
   }
@@ -160,6 +162,7 @@ object ForallF {
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
           def subst = skt
+          override def name = "\u2200 F"
         }
 
     }
@@ -188,6 +191,7 @@ object ExistsF {
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
           def subst = v
+          override def name = "\u2203 F"
         }
     }
   }
@@ -217,6 +221,7 @@ object ExistsT {
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
           def subst = skt
+          override def name = "\u2203 T"
         }
     }
   }
@@ -236,7 +241,11 @@ object Sub {
       p.root.antecedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x::Nil, sub)),
       p.root.succedent.map(x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x::Nil, sub))),
       p)
-      with RalResolutionProof[V] with UnaryResolutionProof[V] with AppliedSubstitution {def rule = SubType; def substitution = sub}
+      with RalResolutionProof[V] with UnaryResolutionProof[V] with AppliedSubstitution {
+      def rule = SubType;
+      def substitution = sub
+      override def name = "Sub"
+    }
 
   def unapply[V <: LabelledSequent](proof: ResolutionProof[V] with AppliedSubstitution) = if (proof.rule == SubType) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AppliedSubstitution]
@@ -260,6 +269,7 @@ object NegF {
           def rule = NegFRalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "\u00ac F"
         }
     }
   }
@@ -286,6 +296,7 @@ object NegT {
           def rule = NegTRalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "\u00ac T"
         }
     }
   }
@@ -313,6 +324,7 @@ object AndT1 {
           def rule = AndT1RalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "\u2227 T1"
         }
     }
   }
@@ -339,6 +351,7 @@ object AndT2 {
           def rule = AndT1RalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "\u2227 T2"
         }
     }
   }
@@ -365,6 +378,7 @@ object OrF1 {
           def rule = OrF1RalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "\u2228 F1"
         }
     }
   }
@@ -391,6 +405,7 @@ object OrF2 {
           def rule = OrF2RalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "\u2228 F2"
         }
     }
   }
@@ -417,6 +432,7 @@ object ImpF1 {
           def rule = ImpF1RalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula::Nil
+          override def name = "\u2283 F"
         }
     }
   }
@@ -470,6 +486,7 @@ object AndF {
           def rule = AndFRalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula1::prinFormula2::Nil
+          override def name = "\u2227 F"
         }
     }
   }
@@ -497,6 +514,7 @@ object OrT {
           def rule = OrTRalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula1::prinFormula2::Nil
+          override def name = "\u2228 T"
         }
     }
   }
@@ -526,6 +544,7 @@ object ImpT {
           def rule = ImpTRalType
           def aux = (term1::Nil)::Nil
           def prin = prinFormula1::prinFormula2::Nil
+          override def name = "\u2283 T"
         }
     }
   }
@@ -563,6 +582,7 @@ object AFactorT {
           def rule = AFactorTType
           def aux = (term1 :: terms)::Nil
           def prin = prinFormula1::Nil
+          override def name = "c T"
         }
     }
   }
@@ -599,6 +619,7 @@ object AFactorF {
           def rule = AFactorFType
           def aux = (term1 :: terms)::Nil
           def prin = prinFormula1::Nil
+          override def name = "c F"
         }
     }
   }
@@ -648,6 +669,7 @@ object ParaT {
           def aux = List(term1oc, term2oc)::Nil
           val flipped = flip
           def prin = List(para_occ)
+          override def name = "= T"
 
         }
 
@@ -700,6 +722,7 @@ object ParaF {
           def aux = List(term1oc, term2oc)::Nil
           def prin = List(para_occ)
           val flipped = flip
+          override def name = "= F"
         }
 
 
