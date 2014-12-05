@@ -49,7 +49,8 @@ object solve extends at.logic.utils.logging.Logger {
     prove(seq_norm, strategy) match {
       case Some(p) => {
         debug("finished proof successfully")
-        val pWithWeakening = addWeakenings(p, seq)
+        //val pWithWeakening = addWeakenings(p, seq)
+        val pWithWeakening = WeakeningMacroRule(p, seq)
         Some(if (cleanStructuralRules) CleanStructuralRules(pWithWeakening) else pWithWeakening)
       }
       case None => {
@@ -74,7 +75,8 @@ object solve extends at.logic.utils.logging.Logger {
 
     if (SolveUtils.isAxiom(seq)) {
       val (f, rest) = SolveUtils.getAxiomfromSeq(seq)
-      val p = addWeakenings(Axiom(f::Nil, f::Nil), seq)
+      //val p = addWeakenings(Axiom(f::Nil, f::Nil), seq)
+      val p = WeakeningMacroRule(Axiom(f::Nil, f::Nil), seq)
       Some(p)
     } else if (SolveUtils.findNonschematicAxiom(seq).isDefined) {
       val Some((f,g)) = SolveUtils.findNonschematicAxiom(seq)
@@ -216,7 +218,7 @@ object solve extends at.logic.utils.logging.Logger {
             case Some(p1) => prove(premise2, nextProofStrategies(1)) match {
               case Some(p2) =>
                 val p = ImpLeftRule(p1, p2, f1, f2)
-                val p_contr = addContractions(p, seq)
+                val p_contr = ContractionMacroRule(p, seq, strict = false)
                 Some(p_contr)
               case None => None
             }
@@ -238,7 +240,7 @@ object solve extends at.logic.utils.logging.Logger {
             case Some(p2) => prove(premise1, nextProofStrategies(1)) match {
               case Some(p1) =>
                 val p = OrLeftRule(p1, p2, f1, f2)
-                val p_contr = addContractions(p, seq)
+                val p_contr = ContractionMacroRule(p, seq, strict = false)
                 Some(p_contr)
               case None => None
             }
@@ -314,7 +316,7 @@ object solve extends at.logic.utils.logging.Logger {
                 val proof3 = OrLeftRule(proof1, proof2, BigOr(i, iter, from, Pred(to)), subst(iter))
                 val or = OrSchema(BigOr(i, iter, from, Pred(to)), subst(iter))
                 val proof4 = OrLeftEquivalenceRule1(proof3, or, BigOr(i, iter, from, to))
-                val proof5 = addContractions(proof4, seq)
+                val proof5 = ContractionMacroRule(proof4, seq, strict = false)
                 Some(proof5)
               case None => None
             }
@@ -441,7 +443,7 @@ object solve extends at.logic.utils.logging.Logger {
             case Some(p2) => prove(premise1, nextProofStrategies(1)) match {
               case Some(p1) =>
                 val p = AndRightRule(p1, p2, f1, f2)
-                val p_contr = addContractions(p, seq)
+                val p_contr = ContractionMacroRule(p, seq, strict = false)
                 Some(p_contr)
               case None => None
             }
@@ -515,7 +517,7 @@ object solve extends at.logic.utils.logging.Logger {
                 val proof3 = AndRightRule(proof1, proof2, BigAnd(i, iter, from, Pred(to)), subst(iter))
                 val and = AndSchema(BigAnd(i, iter, from, Pred(to)), subst(iter))
                 val proof4 = AndRightEquivalenceRule1(proof3, and, BigAnd(i, iter, from, to))
-                val proof5 = addContractions(proof4, seq)
+                val proof5 = ContractionMacroRule(proof4, seq, strict = false)
                 Some(proof5)
               case None => None
             }
@@ -1013,7 +1015,8 @@ object AtomicExpansion {
 
     val atomic_proof = atomicExpansion_(f1,f2)
 
-    addWeakenings(atomic_proof, fs)
+    //addWeakenings(atomic_proof, fs)
+    WeakeningMacroRule(atomic_proof, fs)
   }
 
   // assumes f1 == f2

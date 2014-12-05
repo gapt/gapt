@@ -1,10 +1,12 @@
 import java.io.{FileWriter, File}
 import at.logic.calculi.lk.base.LKRuleCreationException
 import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
-
+import at.logic.utils.executionModels.timeout._
 
 object runOnProver9Proofs {
   val basePath = "../testing/TSTP/prover9/"
+  val logDirPath = "../testing/logs"
+  val timeOut = 60
 
   def getFileList(path: String = "") = getFileListRec(basePath + path) sortBy {
     p => new File(p).length()
@@ -25,7 +27,7 @@ object runOnProver9Proofs {
   def apply(f: (String) => Unit)(path: String = ""): Unit = {
     val files = getFileList(path)
 
-    val logDir = new File("logs")
+    val logDir = new File(logDirPath)
 
     if (logDir.exists()) {
       val logs = logDir.listFiles()
@@ -39,30 +41,32 @@ object runOnProver9Proofs {
 
   def testImport(path: String): Unit = {
 
-    val dir =  {
+    val currentDir =  {
       val tmp = new File(path)
       tmp.getParentFile.getParentFile.getName
     }
 
-    val logDir = new File("logs")
+    val logDir = new File(logDirPath)
 
     if (!logDir.exists())
       logDir.mkdir()
 
+    println(path)
     try {
-      loadProver9LKProof(path)
+      withTimeout(1000 * timeOut)
+      {loadProver9LKProof(path)}
     }
 
     catch {
       case e: LKRuleCreationException =>
-        val logFileName = "./logs/" + dir + ".txt"
+        val logFileName = logDirPath + currentDir + ".txt"
         println(logFileName)
         val writer = new FileWriter(logFileName, true)
         writer.append(path+"\n")
         writer.append(e.toString+"\n\n")
         writer.close()
 
-      case _ =>
+      case _: Throwable =>
     }
   }
   //println("Proof successfully imported.")

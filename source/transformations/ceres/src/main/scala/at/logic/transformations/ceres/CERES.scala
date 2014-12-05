@@ -11,7 +11,7 @@ import at.logic.calculi.lk._
 import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
 
 import at.logic.algorithms.resolution.RobinsonToLK
-import at.logic.algorithms.lk.{addWeakenings, applySubstitution}
+import at.logic.algorithms.lk.applySubstitution
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.provers.prover9.Prover9
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
@@ -176,7 +176,8 @@ class CERES {
     require(es.formulas.nonEmpty, "Can not project reflexivity to an empty end-sequent!")
     val x = es.formulas(0).factory.createVar(StringSymbol("x"), Ti).asInstanceOf[HOLVar]
     val axiomseq = FSequent(Nil, List(Equation(x,x)))
-    addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
+    //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
+    WeakeningMacroRule(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
   }
 
   def contractEndsequent(p : LKProof, es : FSequent) = {

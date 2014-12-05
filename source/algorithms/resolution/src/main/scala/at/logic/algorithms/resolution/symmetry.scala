@@ -6,7 +6,7 @@ import at.logic.calculi.lk.base._
 import at.logic.calculi.resolution.robinson._
 import at.logic.language.fol.{Equation => FOLEquation, FOLTerm, FOLFormula, FOLExpression, Substitution}
 import at.logic.calculi.resolution.{FClause, Clause}
-import at.logic.algorithms.lk.{applySubstitution => applySub, addWeakenings, CleanStructuralRules, CloneLKProof}
+import at.logic.algorithms.lk.{applySubstitution => applySub, CleanStructuralRules, CloneLKProof}
 
 
 /**

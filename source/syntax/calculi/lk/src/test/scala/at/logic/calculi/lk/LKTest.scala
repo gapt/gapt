@@ -567,17 +567,17 @@ class LKTest extends SpecificationWithJUnit {
     val Py = FOLAtom("P", List(y))
 
     val ax = Axiom(List(Px), List(Px))
-    "refuse to perform zero weakenings" in {
+    "perform zero weakenings" in {
 
-      WeakeningLeftBulkRule(ax, Nil)  must throwAn[LKRuleCreationException]
-      WeakeningRightBulkRule(ax, Nil) must throwAn[LKRuleCreationException]
-      WeakeningBulkRule(ax, Nil, Nil) must throwAn[LKRuleCreationException]
+      WeakeningLeftMacroRule(ax, Nil)  must beEqualTo(ax)
+      WeakeningRightMacroRule(ax, Nil) must beEqualTo(ax)
+      WeakeningMacroRule(ax, Nil, Nil) must beEqualTo(ax)
     }
 
     "correctly perform multiple weakenings" in {
       val proof  = WeakeningRightRule(WeakeningLeftRule(WeakeningLeftRule(ax, Py), Neg(Py)), Py)
 
-      WeakeningBulkRule(ax, List(Neg(Py),Py), List(Py)).root.toFSequent must beEqualTo(proof.root.toFSequent)
+      WeakeningMacroRule(ax, List(Neg(Py),Py), List(Py)).root.toFSequent.multiSetEquals(proof.root.toFSequent) must beTrue
     }
   }
 
@@ -590,18 +590,18 @@ class LKTest extends SpecificationWithJUnit {
 
     val ax = Axiom(List(Px), List(Px))
 
-    "refuse to perform zero contractions" in {
-      ContractionLeftBulkRule(ax, Nil) must throwAn[LKRuleCreationException]
-      ContractionLeftBulkRule(ax, List(ax.root.antecedent.head)) must throwAn[LKRuleCreationException]
-      ContractionRightBulkRule(ax, Nil) must throwAn[LKRuleCreationException]
-      ContractionRightBulkRule(ax, List(ax.root.succedent.head)) must throwAn[LKRuleCreationException]
+    "perform zero contractions" in {
+      ContractionLeftMacroRule(ax, Nil) must beEqualTo(ax)
+      ContractionLeftMacroRule(ax, List(ax.root.antecedent.head)) must beEqualTo(ax)
+      ContractionRightMacroRule(ax, Nil) must beEqualTo(ax)
+      ContractionRightMacroRule(ax, List(ax.root.succedent.head)) must beEqualTo(ax)
     }
 
     "return the original proof if there is nothing to do" in {
-      ContractionLeftBulkRule(ax, Px).root.toFSequent must beEqualTo(ax.root.toFSequent)
-      ContractionLeftBulkRule(ax, Py).root.toFSequent must beEqualTo(ax.root.toFSequent)
-      ContractionRightBulkRule(ax, Px).root.toFSequent must beEqualTo(ax.root.toFSequent)
-      ContractionRightBulkRule(ax, Py).root.toFSequent must beEqualTo(ax.root.toFSequent)
+      ContractionLeftMacroRule(ax, Px).root.toFSequent must beEqualTo(ax.root.toFSequent)
+      ContractionLeftMacroRule(ax, Py).root.toFSequent must beEqualTo(ax.root.toFSequent)
+      ContractionRightMacroRule(ax, Px).root.toFSequent must beEqualTo(ax.root.toFSequent)
+      ContractionRightMacroRule(ax, Py).root.toFSequent must beEqualTo(ax.root.toFSequent)
     }
 
     "correctly perform multiple contractions" in {
@@ -609,8 +609,8 @@ class LKTest extends SpecificationWithJUnit {
 
       val sequent1 = FSequent(List(Py, Px), List(Px, Neg(Px), Neg(Px)))
       val sequent2 = FSequent(List(Px, Px, Py, Px), List(Px, Neg(Px)))
-      ContractionLeftBulkRule(ax2, Px).root.toFSequent must beEqualTo(sequent1)
-      ContractionRightBulkRule(ax2, Neg(Px)).root.toFSequent must beEqualTo(sequent2)
+      ContractionLeftMacroRule(ax2, Px).root.toFSequent must beEqualTo(sequent1)
+      ContractionRightMacroRule(ax2, Neg(Px)).root.toFSequent must beEqualTo(sequent2)
     }
   }
 
@@ -666,14 +666,14 @@ class LKTest extends SpecificationWithJUnit {
       val sequent7 = FSequent(List(est, Qtt), List(Qts))
       val sequent8 = FSequent(List(est, Qtt), List(Qst))
 
-      val proof1 = EquationLeftBulkRule(ax1, ax4, eq, ax4.root.antecedent.head, Nil, List(HOLPosition(2)))
-      val proof2 = EquationLeftBulkRule(ax1, ax4, eq, ax4.root.antecedent.head, Qts)
-      val proof3 = EquationLeftBulkRule(ax1, ax5, eq, ax5.root.antecedent.head, List(HOLPosition(2)), Nil)
-      val proof4 = EquationLeftBulkRule(ax1, ax5, eq, ax5.root.antecedent.head, Qst)
-      val proof5 = EquationRightBulkRule(ax1, ax4, eq, ax4.root.succedent.head, Nil, List(HOLPosition(2)))
-      val proof6 = EquationRightBulkRule(ax1, ax4, eq, ax4.root.succedent.head, Qts)
-      val proof7 = EquationRightBulkRule(ax1, ax5, eq, ax5.root.succedent.head, List(HOLPosition(2)), Nil)
-      val proof8 = EquationRightBulkRule(ax1, ax5, eq, ax5.root.succedent.head, Qst)
+      val proof1 = EquationLeftMacroRule(ax1, ax4, eq, ax4.root.antecedent.head, Nil, List(HOLPosition(2)))
+      val proof2 = EquationLeftMacroRule(ax1, ax4, eq, ax4.root.antecedent.head, Qts)
+      val proof3 = EquationLeftMacroRule(ax1, ax5, eq, ax5.root.antecedent.head, List(HOLPosition(2)), Nil)
+      val proof4 = EquationLeftMacroRule(ax1, ax5, eq, ax5.root.antecedent.head, Qst)
+      val proof5 = EquationRightMacroRule(ax1, ax4, eq, ax4.root.succedent.head, Nil, List(HOLPosition(2)))
+      val proof6 = EquationRightMacroRule(ax1, ax4, eq, ax4.root.succedent.head, Qts)
+      val proof7 = EquationRightMacroRule(ax1, ax5, eq, ax5.root.succedent.head, List(HOLPosition(2)), Nil)
+      val proof8 = EquationRightMacroRule(ax1, ax5, eq, ax5.root.succedent.head, Qst)
 
       proof1.root.toFSequent must beEqualTo(sequent1)
       proof2.root.toFSequent must beEqualTo(sequent2)
@@ -692,10 +692,10 @@ class LKTest extends SpecificationWithJUnit {
       val sequent1 = FSequent(List(est, Qtt), List(Qss))
       val sequent2 = FSequent(List(est, Qss), List(Qtt))
 
-      val proof1 = EquationLeftBulkRule(ax1, ax4, eq, ax4.root.antecedent.head, Qtt)
-      val proof2 = EquationLeftBulkRule(ax1, ax5, eq, ax5.root.antecedent.head, Qss)
-      val proof3 = EquationRightBulkRule(ax1, ax4, eq, ax4.root.succedent.head, Qtt)
-      val proof4 = EquationRightBulkRule(ax1, ax5, eq, ax5.root.succedent.head, Qss)
+      val proof1 = EquationLeftMacroRule(ax1, ax4, eq, ax4.root.antecedent.head, Qtt)
+      val proof2 = EquationLeftMacroRule(ax1, ax5, eq, ax5.root.antecedent.head, Qss)
+      val proof3 = EquationRightMacroRule(ax1, ax4, eq, ax4.root.succedent.head, Qtt)
+      val proof4 = EquationRightMacroRule(ax1, ax5, eq, ax5.root.succedent.head, Qss)
 
       proof1.root.toFSequent must beEqualTo(sequent1)
       proof2.root.toFSequent must beEqualTo(sequent2)

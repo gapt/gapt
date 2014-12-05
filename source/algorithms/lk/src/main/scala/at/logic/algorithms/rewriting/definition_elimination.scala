@@ -248,16 +248,16 @@ class DefinitionElimination {
       //equational rules
       case EquationLeft1Rule(uproof1, uproof2, root, aux1, aux2, _, prim) =>
         debug("Equation Left 1")
-        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationLeftBulkRule.apply)
+        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationLeftMacroRule.apply)
       case EquationLeft2Rule(uproof1, uproof2, root, aux1, aux2, _, prim) =>
         debug("Equation Left 2")
-        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationLeftBulkRule.apply)
+        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationLeftMacroRule.apply)
       case EquationRight1Rule(uproof1, uproof2, root, aux1, aux2, _, prim) =>
         debug("Equation Right 1")
-        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationRightBulkRule.apply)
+        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationRightMacroRule.apply)
       case EquationRight2Rule(uproof1, uproof2, root, aux1, aux2, _, prim) =>
         debug("Equation Right 2")
-        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationRightBulkRule.apply)
+        handleEquationalRule(rewrite, uproof1, uproof2, root, aux1, aux2, prim, EquationRightMacroRule.apply)
 
       //definition rules
       case DefinitionLeftRule(uproof, root, aux, prin) =>

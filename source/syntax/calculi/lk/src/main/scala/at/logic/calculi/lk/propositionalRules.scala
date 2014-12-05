@@ -78,11 +78,14 @@ object Axiom {
     * @param suc The succedent of the axiom.
     * @return The LKProof consisting of (ant |- suc) as its axiom.
     */
-  def apply[T](ant: Seq[Formula], suc: Seq[Formula]) (implicit factory: FOFactory) = {
+  def apply[T](ant: Seq[Formula], suc: Seq[Formula]) (implicit factory: FOFactory): LeafTree[Sequent] with NullaryLKProof = {
     val left: Seq[FormulaOccurrence] = ant.map(x => factory.createFormulaOccurrence(x.asInstanceOf[HOLFormula], Nil))
     val right: Seq[FormulaOccurrence] = suc.map(x => factory.createFormulaOccurrence(x.asInstanceOf[HOLFormula], Nil))
     new LeafTree[Sequent](Sequent(left, right)) with NullaryLKProof {def rule = InitialRuleType}
   }
+
+  def apply(seq: FSequent)(implicit factory: FOFactory): LeafTree[Sequent] with NullaryLKProof = apply(seq.antecedent, seq.succedent)
+
   def unapply(proof: LKProof) = if (proof.rule == InitialRuleType) Some((proof.root)) else None
 }
 
@@ -362,11 +365,14 @@ object ContractionRightRule {
     * @return An LK Proof ending with the new inference.
     */ 
     def apply(s1: LKProof, term1: HOLFormula): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas  = {
-      (s1.root.succedent.filter(x => x.formula == term1)).toList match {
-        case (x::y::_) => apply(s1, x, y)
-        case _ => //throw new LKRuleCreationException("No matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
-          //" for application of the rule c:l with the given formula: " + term1)
+    val occurrences = s1.root.succedent.filter(x => x.formula == term1).toList
+      occurrences match {
+        case (x::y::_) =>
+          apply(s1, x, y)
+        case _ =>
           throw new LKUnaryRuleCreationException("c:r", s1, term1::Nil)
+        //throw new LKRuleCreationException("No matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
+          //" for application of the rule c:l with the given formula: " + term1)
       }
     }
 

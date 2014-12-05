@@ -6,7 +6,8 @@ import at.logic.calculi.lk._
 import at.logic.calculi.resolution.robinson._
 import at.logic.language.fol._
 import at.logic.calculi.resolution.{FClause, Clause}
-import at.logic.algorithms.lk.{applySubstitution => applySub, addWeakenings, CleanStructuralRules, CloneLKProof}
+import at.logic.algorithms.lk.{applySubstitution => applySub, CleanStructuralRules, CloneLKProof}
+import at.logic.language.hol.HOLFormula
 import at.logic.utils.logging.Logger
 
 
@@ -35,7 +36,8 @@ object RobinsonToLK extends Logger {
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply(resproof: RobinsonResolutionProof, s: FSequent): LKProof = {
     val memotable = new PCNFMemoTable(s)
-    val p = addWeakenings.weaken(introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), memotable.getPCNF),s), s)
+    //val p = addWeakenings.weaken(ContractionMacroRule(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), memotable.getPCNF),s, strict = false), s)
+    val p = WeakeningContractionMacroRule(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), memotable.getPCNF),s, strict = true)
     info("Memoization saved "+memotable.getHits()+" calls!")
     p
   }
@@ -43,7 +45,7 @@ object RobinsonToLK extends Logger {
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply(resproof: RobinsonResolutionProof, s: FSequent, map: mapT): LKProof = {
     val memotable = new PCNFMemoTable(s)
-    val p = addWeakenings.weaken(introduceContractions(recConvert(resproof, s, map, memotable.getPCNF),s), s)
+    val p = WeakeningContractionMacroRule(recConvert(resproof, s, map, memotable.getPCNF),s, strict = false)
     info("Memoization saved "+memotable.getHits()+" calls!")
     p
   }
@@ -53,23 +55,8 @@ object RobinsonToLK extends Logger {
 
   // this contructor allows passing your own axiom creator e.g. for ceres projections
   def apply(resproof: RobinsonResolutionProof, s: FSequent, createAxiom : FClause => LKProof): LKProof =
-    addWeakenings.weaken(introduceContractions(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), createAxiom),s), s)
-
-
-  /**
-   * apply contractions so, when considering the literals of both s and the end sequent of resp as multisets,  s is a sub-multiset of the
-   * end sequent
-   */
-  def introduceContractions(resp: LKProof, s: FSequent): LKProof= {
-    // for each formula F in s, count its occurrences in s and resp and apply contractions on resp until we reach the same number
-    val p1 = s.antecedent.toSet.foldLeft(resp)((p,f) =>
-      ((1).to(p.root.antecedent.filter(_.formula == f).size - s.antecedent.filter(_ == f).size)).foldLeft(p)((q,n) =>
-        ContractionLeftRule(q,f) ))
-    val p2 = s.succedent.toSet.foldLeft(p1)((p,f) =>
-      ((1).to(p.root.succedent.filter(_.formula == f).size - s.succedent.filter(_ == f).size)).foldLeft(p)((q,n) =>
-        ContractionRightRule(q,f) ))
-    p2
-  }
+    //addWeakenings.weaken(ContractionMacroRule(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), createAxiom),s, strict = false), s)
+    WeakeningContractionMacroRule(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), createAxiom),s, strict = true)
 
   private def recConvert(proof: RobinsonResolutionProof, seq: FSequent, map: mapT, createAxiom : FClause => LKProof): LKProof = {
     if (map.contains(proof.root.toFClause)) {
@@ -117,7 +104,7 @@ object RobinsonToLK extends Logger {
         case Resolution(r, p1, p2, a1, a2, s) => {
           val u1 = applySub(recConvert(p1, seq,map,createAxiom),s)._1
           val u2 = applySub(recConvert(p2, seq,map,createAxiom),s)._1
-          introduceContractions(CutRule(u1, u2, s(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula]),seq)
+          ContractionMacroRule(CutRule(u1, u2, s(a1.formula.asInstanceOf[FOLFormula]).asInstanceOf[FOLFormula]),seq, strict = false)
         }
         case Paramodulation(r, p1, p2, a1, a2, _, s) => {
 
@@ -136,10 +123,15 @@ object RobinsonToLK extends Logger {
             // locate aux formulae
             val aux1 = u1.root.succedent.find(_.formula == s(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
             val aux2 = u2.root.antecedent.find(_.formula == s(a2.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
-            // rule 1
-            if (isRule1(lof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationLeftRule(u1, u2, aux1, aux2, lof)
-            // rule 2
-            else EquationLeftRule(u1, u2, aux1, aux2, lof)
+
+            if(isTrivial(aux1.formula, aux2.formula, lof)) {
+              val newEndSequent = FSequent(u1.root.antecedent.map(_.formula) ++ u2.root.antecedent.map(_.formula),
+                                           u1.root.succedent.filterNot(_ == aux1).map(_.formula) ++ u2.root.succedent.map(_.formula))
+              println("This paramodulation is trivial.")
+              WeakeningMacroRule(u2, newEndSequent)
+            }
+            else
+              EquationLeftRule(u1, u2, aux1, aux2, lof)
           }
           // right rule
           else {
@@ -148,12 +140,17 @@ object RobinsonToLK extends Logger {
 
             val aux1 = u1.root.succedent.find(_.formula == s(a1.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
             val aux2 = u2.root.succedent.find(_.formula == s(a2.formula.asInstanceOf[FOLExpression]).asInstanceOf[FOLFormula]).get
-            // rule 1
-            if (isRule1(rof, aux2.formula.asInstanceOf[FOLFormula], s1)) EquationRightRule(u1, u2, aux1, aux2, rof)
-            // rule 2
-            else EquationRightRule(u1, u2, aux1, aux2, rof)
+
+            if(isTrivial(aux1.formula, aux2.formula, rof)) {
+              val newEndSequent = FSequent(u1.root.antecedent.map(_.formula) ++ u2.root.antecedent.map(_.formula),
+                                           u1.root.succedent.filterNot(_ == aux1).map(_.formula) ++ u2.root.succedent.map(_.formula))
+              println("This paramodulation is trivial.")
+              WeakeningMacroRule(u2, newEndSequent)
+            }
+            else
+            EquationRightRule(u1, u2, aux1, aux2, rof)
           }
-          introduceContractions(retProof, seq)
+          ContractionMacroRule(retProof, seq, strict = false)
         }
         // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
         case Instance(root,p,s) =>
@@ -174,16 +171,22 @@ object RobinsonToLK extends Logger {
     }
   }
 
-  // in order to distinguish between rule 1 and rule 2 in equation rules we search for the substituted formula in the obtained one
-  // if f2 contains more occurrences of the sub term than f1 then it means that this subterm was replaced by something else
-  private def isRule1(f1: FOLFormula, f2: FOLFormula, t: FOLTerm): Boolean = (countSB(f2, t) > countSB(f1, t))
+  /** Tests whether constructing an equality rule with a given equation, auxiliary formula and main formula would be superfluous.
+   *
+   * @param equation An Equation.
+   * @param aux A HOLFormula.
+   * @param main A HOLFormula.
+   * @return True iff 1.) equation is of the form s = s 2,) main and aux coincide and 3.) s occurs in aux.
+   */
+  private def isTrivial(equation: HOLFormula, aux: HOLFormula, main: HOLFormula): Boolean = equation match {
+    case Equation(s, t) =>
+      if (s != t || aux != main)
+        false
+      else if (aux.find(s).isEmpty)
+        throw new Exception("Bad paramodulation: equation "+equation+", aux formula "+aux+", main formula"+main)
+      else
+        true
+    case _ => throw new Exception(equation+" is not an equation.")
+  }
 
-  private def countSB(t1: FOLExpression, t2: FOLExpression): Int =
-    if (t1 == t2) 1
-    else t1 match {
-      case FOLVar(_) => 0
-      case FOLConst(_) => 0
-      case Atom(_, args) => args.foldLeft(0)((n, arg) => n + countSB(arg, t2))
-      case Function(_, args) => args.foldLeft(0)((n, arg) => n + countSB(arg, t2))
-    }
 }

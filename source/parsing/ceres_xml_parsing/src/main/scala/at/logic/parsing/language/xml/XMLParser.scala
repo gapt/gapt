@@ -964,7 +964,7 @@ object XMLParser {
             val auxf_r = r_perm_l.head
             val mainf = antecedent.head
             // TODO: parse and pass parameter
-            val rule = EquationLeftBulkRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            val rule = EquationLeftMacroRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
               (List(mapToDesc(rule)(auxf_r)) ++ l_perm_l.map( mapToDesc( rule ) )  ++
               r_perm_l.tail.map( mapToDesc( rule ) )).toArray,
@@ -984,7 +984,7 @@ object XMLParser {
             val auxf_r = r_perm_l.head
             val mainf = antecedent.head
             // TODO: parse and pass parameter
-            val rule = EquationLeftBulkRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            val rule = EquationLeftMacroRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
               (List(mapToDesc(rule)(auxf_r)) ++ l_perm_l.map( mapToDesc( rule ) )  ++
               r_perm_l.tail.map( mapToDesc( rule ) )).toArray,
@@ -1004,7 +1004,7 @@ object XMLParser {
             val auxf_r = r_perm_r.last
             val mainf = succedent.last
             // TODO: parse and pass parameter
-            val rule = EquationRightBulkRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            val rule = EquationRightMacroRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
               ( l_perm_l.map( mapToDesc( rule ) ) ++ 
               r_perm_l.map( mapToDesc( rule ) ) ).toArray,
@@ -1024,7 +1024,7 @@ object XMLParser {
             val auxf_r = r_perm_r.last
             val mainf = succedent.last
             // TODO: parse and pass parameter
-            val rule = EquationRightBulkRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
+            val rule = EquationRightMacroRule( l_prem, r_prem, auxf_l, auxf_r, mainf )
             ( rule,
               ( l_perm_l.map( mapToDesc( rule ) ) ++ 
               r_perm_l.map( mapToDesc( rule ) ) ).toArray,

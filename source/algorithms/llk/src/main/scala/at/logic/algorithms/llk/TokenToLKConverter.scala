@@ -13,8 +13,6 @@ import at.logic.language.lambda.Var
 import at.logic.calculi.lk.EquationVerifier._
 import at.logic.language.lambda.BetaReduction._
 import scala.annotation.tailrec
-import at.logic.algorithms.lk.addContractions.contract
-import at.logic.algorithms.lk.addWeakenings.weaken
 import at.logic.algorithms.hlk._
 import at.logic.calculi.lk.EquationVerifier.EqualModuloEquality
 
@@ -439,7 +437,7 @@ trait TokenToLKConverter {
               require(leftproof.root.toFSequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
               require(rightproof.root.toFSequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
               val inf = AndRightRule(leftproof, rightproof, l,r)
-              val contr = contract(inf, fs)
+              val contr = ContractionMacroRule(inf, fs)
               contr :: stack
             case _ => throw new HybridLatexParserException("Main formula of a conjunction right rule must have conjuntion as outermost operator!")
           }
@@ -452,7 +450,7 @@ trait TokenToLKConverter {
               require(leftproof.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
               require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
               val inf = OrLeftRule(leftproof, rightproof, l,r)
-              val contr = contract(inf, fs)
+              val contr = ContractionMacroRule(inf, fs)
               contr :: stack
             case _ => throw new HybridLatexParserException("Main formula of a disjunction left rule must have disjunction as outermost operator!")
           }
@@ -465,7 +463,7 @@ trait TokenToLKConverter {
               require(leftproof.root.toFSequent.succedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+leftproof.root)
               require(rightproof.root.toFSequent.antecedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+rightproof.root)
               val inf = ImpLeftRule(leftproof, rightproof, l,r)
-              val contr = contract(inf, fs)
+              val contr = ContractionMacroRule(inf, fs)
               contr :: stack
             case _ => throw new HybridLatexParserException("Main formula of a implication left rule must have implication as outermost operator!")
           }
@@ -490,7 +488,7 @@ trait TokenToLKConverter {
             //try out which of the 3 variants of the rule it is
             val inf1 = try {
               val inf = OrRight1Rule(top, l,r)
-              val contr = contract(inf, fs)
+              val contr = ContractionMacroRule(inf, fs, strict = true)
               Some(contr)
             } catch {
               case e:Exception => None
@@ -498,7 +496,7 @@ trait TokenToLKConverter {
 
             val inf2 = try {
               val inf = OrRight2Rule(top, l,r)
-              val contr = contract(inf, fs)
+              val contr = ContractionMacroRule(inf, fs, strict = true)
               Some(contr)
             } catch {
               case e:Exception => None
@@ -507,7 +505,7 @@ trait TokenToLKConverter {
             val inf3 = try {
               val inf = OrRight1Rule(top, l,r)
               val inf_ = OrRight2Rule(inf, l,r)
-              val contr = contract(inf_, fs)
+              val contr = ContractionMacroRule(inf_, fs, strict = true)
               Some(contr)
             } catch {
               case e:Exception => None
@@ -517,7 +515,7 @@ trait TokenToLKConverter {
             require(worked.nonEmpty, "Could not infer or right rule "+fs+" from "+top.root)
 
             worked(0).get :: stack
-          case _ => throw new HybridLatexParserException("Main formula of a disjunction right rule must have conjuntion as outermost operator!")
+          case _ => throw new HybridLatexParserException("Main formula of a disjunction right rule must have conjunction as outermost operator!")
         }
 
       case "ANDL"  =>
@@ -528,7 +526,7 @@ trait TokenToLKConverter {
             //try out which of the 3 variants of the rule it is
             val inf1 = try {
               val inf = AndLeft1Rule(top, l,r)
-              val contr = contract(inf, fs)
+              val contr = ContractionMacroRule(inf, fs)
               Some(contr)
             } catch {
               case e:Exception => None
@@ -536,7 +534,7 @@ trait TokenToLKConverter {
 
             val inf2 = try {
               val inf = AndLeft2Rule(top, l,r)
-              val contr = contract(inf, fs)
+              val contr = ContractionMacroRule(inf, fs)
               Some(contr)
             } catch {
               case e:Exception => None
@@ -545,7 +543,7 @@ trait TokenToLKConverter {
             val inf3 = try {
               val inf = AndLeft1Rule(top, l,r)
               val inf_ = AndLeft2Rule(inf, l,r)
-              val contr = contract(inf_, fs)
+              val contr = ContractionMacroRule(inf_, fs)
               Some(contr)
             } catch {
               case e:Exception => None
@@ -566,7 +564,7 @@ trait TokenToLKConverter {
             require(top.root.toFSequent.antecedent.contains(l), "Left branch formula "+l+" not found in auxiliary formulas "+top.root)
             require(top.root.toFSequent.succedent.contains(r), "Right branch formula "+r+" not found in auxiliary formulas!"+top.root)
             val inf = ImpRightRule(top, l,r)
-            val contr = contract(inf, fs)
+            val contr = ContractionMacroRule(inf, fs)
             contr :: stack
           case _ => throw new HybridLatexParserException("Main formula of a implication right rule must have implication as outermost operator!")
         }
@@ -597,7 +595,7 @@ trait TokenToLKConverter {
     }
     )
 
-    val contr = contract(right, fs)
+    val contr = ContractionMacroRule(right, fs, strict = false)
 
     require(contr.root.toFSequent multiSetEquals fs,"Could not create target sequent "+fs+" by a series of negations from "+top.root+" but got "+contr.root+" instead!" )
     contr :: stack
@@ -643,7 +641,7 @@ trait TokenToLKConverter {
               case EqualModuloEquality(_) =>
                 val rule = EquationLeftRule(leftproof, rightproof, eq, f, main)
                 try {
-                  contract(rule,fs)::Nil
+                  ContractionMacroRule(rule,fs)::Nil
                 } catch {
                   case e:Exception => Nil
                 }
@@ -657,7 +655,7 @@ trait TokenToLKConverter {
               case EqualModuloEquality(_) =>
                 val rule = EquationLeftRule(leftproof, rightproof, eq, f, main)
                 try {
-                  contract(rule,fs)::Nil
+                  ContractionMacroRule(rule,fs, strict = false)::Nil
                 } catch {
                   case e:Exception => Nil
                 }
@@ -702,7 +700,7 @@ trait TokenToLKConverter {
                 //println("found!")
                 val rule = EquationRightRule(leftproof, rightproof, eq, f, main)
                 try {
-                  contract(rule,fs)::Nil
+                  ContractionMacroRule(rule,fs, strict = false)::Nil
                 } catch {
                   case e:Exception => Nil
                 }
@@ -719,7 +717,7 @@ trait TokenToLKConverter {
                 //println("found!")
                 val rule = EquationRightRule(leftproof, rightproof, eq, f, main)
                 try {
-                  contract(rule,fs)::Nil
+                  ContractionMacroRule(rule,fs, strict = false)::Nil
                 } catch {
                   case e:Exception => Nil
                 }
@@ -770,14 +768,15 @@ trait TokenToLKConverter {
   def handleContraction(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val parentproof::stack = current_proof
-    val inf = contract(parentproof, fs)
+    val inf = ContractionMacroRule(parentproof, fs, strict = false)
     inf :: stack
   }
 
   def handleWeakening(current_proof: List[LKProof], ruletype:String, fs: FSequent, auxterm: Option[LambdaAST], naming: (String) => HOLExpression, rt: RToken): List[LKProof] = {
     require(current_proof.size > 0, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs)
     val parentproof::stack = current_proof
-    val inf = weaken(parentproof, fs)
+    //val inf = weaken(parentproof, fs)
+    val inf = WeakeningMacroRule(parentproof, fs)
     inf :: stack
   }
 
@@ -907,7 +906,7 @@ trait TokenToLKConverter {
         }
     }
 
-    val cproof = contract(newproof, fs)
+    val cproof = ContractionMacroRule(newproof, fs, strict = false)
 
     cproof::rest
   }
@@ -971,13 +970,13 @@ trait TokenToLKConverter {
     val axiomconjunction = c(definitions(axformula))
     val (_,axproof) = getAxiomLookupProof(name, axiom, auxf, axiomconjunction, oldproof, sub2)
     val axrule = DefinitionLeftRule(axproof, axiomconjunction, axformula)
-    contract(axrule,fs)::rest
+    ContractionMacroRule(axrule,fs, strict = false)::rest
 
     /*
     require(auxsequent.formulas.size == 1, "Excatly one auxiliary formula needed in parent, not "+f(auxsequent))
     val newproof = auxsequent match {
       case FSequent(List(f), Nil) =>
-        contract(CutRule(axrule, oldproof, auxf), fs)
+        ContractionMacroRule(CutRule(axrule, oldproof, auxf), fs)
     }
 
     newproof::rest

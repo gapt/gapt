@@ -71,6 +71,50 @@ class FSequent(val antecedent : Seq[HOLFormula], val succedent : Seq[HOLFormula]
    * @return A copy of this sequent where the two sides are sorted.
    */
   def sorted = FSequent(_1.sorted(HOLOrdering), _2.sorted(HOLOrdering))
+
+  /** Computes the intersection of two sequents.
+   *
+   * @param other
+   * @return
+   */
+  def intersect(other: FSequent) = FSequent(antecedent intersect other.antecedent, succedent intersect other.succedent)
+
+  /** Computes the union of two sequents.
+   *
+   * @param other
+   * @return
+   */
+  def union(other: FSequent) = FSequent(antecedent union other.antecedent, succedent union other.succedent)
+
+  /** Removes duplicate formulas from both cedents.
+   *
+   * @return
+   */
+  def distinct = FSequent(antecedent.distinct, succedent.distinct)
+
+  /**
+   *
+   * @param other Another FSequent
+   * @return True iff this contains other as a pair of multisets.
+   */
+  def superMultiSet(other: FSequent) = other subMultiSet this
+
+  /**
+   *
+   * @param other Another FSequent.
+   * @return True iff this contains other as a pair of sets.
+   */
+  def superSet(other:FSequent) = other subSet this
+
+  def subMultiSet(other: FSequent) = (this diff other).isEmpty
+
+  def subSet(other: FSequent) = (this.distinct diff other.distinct).isEmpty
+
+  /**
+   *
+   * @return The sequent in tuple form.
+   */
+  def toTuple = (antecedent, succedent)
 }
 
 object FSequent {

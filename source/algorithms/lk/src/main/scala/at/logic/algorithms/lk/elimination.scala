@@ -30,7 +30,8 @@ object CleanStructuralRules {
 
   def apply(p: LKProof) : LKProof = {
     cleanStructuralRules(p, {
-      (proof, ws) => done (addWeakenings (proof, p.root.toFSequent)) 
+      //(proof, ws) => done (addWeakenings (proof, p.root.toFSequent))
+      (proof, ws) => done (WeakeningMacroRule(proof, p.root.toFSequent))
     }).result
   }
 

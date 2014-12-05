@@ -4,7 +4,7 @@ import at.logic.calculi.lk.base.{FSequent, LKProof}
 import at.logic.calculi.lk._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.hol._
-import at.logic.algorithms.lk.{applySubstitution => applySub, addContractions, addWeakenings}
+import at.logic.algorithms.lk.{applySubstitution => applySub}
 import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
 import at.logic.utils.dssupport.ListSupport.removeFirst
 
@@ -73,11 +73,11 @@ object PCNF {
 
     //val missing_literals = s diff p.root.toFSequent
     val p1 = if (inAntecedent) {
-      addWeakenings.weaken(p, FSequent(sub(f).asInstanceOf[HOLFormula]::Nil, Nil) compose a.toFSequent)
+      WeakeningMacroRule(p, FSequent(sub(f)::Nil, Nil) compose a.toFSequent)
     } else {
-      addWeakenings.weaken(p, FSequent(Nil,sub(f).asInstanceOf[HOLFormula]::Nil) compose a.toFSequent)
+      WeakeningMacroRule(p, FSequent(Nil,sub(f)::Nil) compose a.toFSequent)
     }
-    val p2 = addContractions.contract(p1, s compose a.toFSequent)
+    val p2 = ContractionMacroRule(p1, s compose a.toFSequent, strict = false)
     p2
 
     // apply contractions on the formulas of a, since we duplicate the context on every binary rule
@@ -101,7 +101,7 @@ object PCNF {
   }
 
   /**
-   * assuming a in CNF^-(f) we give a proof of a o |- f
+   * assuming a in CNF^-^(f) we give a proof of a o |- f
    * @param f
    * @param a
    * @return
@@ -128,7 +128,7 @@ object PCNF {
   }
 
   /**
-   * assuming a in CNF^+(f) we give a proof of a o f |-
+   * assuming a in CNF^+^(f) we give a proof of a o f |-
    * @param f
    * @param a
    * @return

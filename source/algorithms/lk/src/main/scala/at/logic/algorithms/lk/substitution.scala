@@ -145,19 +145,19 @@ object applySubstitution {
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case EquationLeft1Rule( p1, p2, s, a1, a2, _, m ) =>
-        handleEquationRule( EquationLeftBulkRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+        handleEquationRule( EquationLeftMacroRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           betaNormalize(subst( m.formula )) )
       case EquationLeft2Rule( p1, p2, s, a1, a2, _, m ) =>
-        handleEquationRule( EquationLeftBulkRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+        handleEquationRule( EquationLeftMacroRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           betaNormalize(subst( m.formula )) )
       case EquationRight1Rule( p1, p2, s, a1, a2, _, m ) =>
-        handleEquationRule( EquationRightBulkRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+        handleEquationRule( EquationRightMacroRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           betaNormalize(subst( m.formula )) )
       case EquationRight2Rule( p1, p2, s, a1, a2, _, m ) =>
-        handleEquationRule( EquationRightBulkRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
+        handleEquationRule( EquationRightMacroRule.apply, p1, p2, proof, new_parents.head, new_parents.last, s,
           new_parents.head._2( a1 ), new_parents.last._2( a2 ),
           betaNormalize(subst( m.formula )) )
       case ForallLeftRule( p, s, a, m, t ) => {
