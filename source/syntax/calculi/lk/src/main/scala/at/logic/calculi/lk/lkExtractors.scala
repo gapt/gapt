@@ -28,6 +28,10 @@ object UnaryLKProof {
     case ExistsLeftRule(up, r, a, p, _) => Some((ExistsLeftRuleType, up, r, a::Nil, p))
     case DefinitionLeftRule(up, r, a, p) => Some((DefinitionLeftRuleType, up, r, a::Nil, p))
     case DefinitionRightRule(up, r, a, p) => Some((DefinitionRightRuleType, up, r, a::Nil, p))
+    case UnaryEquationLeft1Rule(up, r, a1, a2,_, p) => Some((UnaryEquationLeft1RuleType, up, r, a1::a2 ::Nil, p))
+    case UnaryEquationLeft2Rule(up, r, a1, a2,_, p) => Some((UnaryEquationLeft2RuleType, up, r, a1::a2 ::Nil, p))
+    case UnaryEquationRight1Rule(up, r, a1, a2,_, p) => Some((UnaryEquationRight1RuleType, up, r, a1::a2 ::Nil, p))
+    case UnaryEquationRight2Rule(up, r, a1, a2,_, p) => Some((UnaryEquationRight2RuleType, up, r, a1::a2 ::Nil, p))
     case _ => None
   }
 }

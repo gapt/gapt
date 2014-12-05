@@ -1340,3 +1340,225 @@ object WeakeningContractionMacroRule extends MacroRuleLogger {
     apply(s1, antList, sucList, strict)
   }
 }
+
+/** Maybe there is a better place for this?
+ *
+ */
+object applyRecursive {
+
+  /** Recursively applies a function f to a proof.
+    *
+    * In the case of an axiom p, the result is just f(p).
+    *
+    * In the case of a unary proof p with subproof u, this means that it recursively applies f to u, giving u', and then computes f(p(u')).
+    * Binary proofs work analogously.
+    *
+    * Caveat: It might mess up the ancestor relation on formula occurrences, so be careful.
+    *
+   * @param f A function of type LKProof => LKProof
+   * @param proof An LKProof
+   * @return
+   */
+  def apply (f: LKProof => LKProof)(proof: LKProof): LKProof = proof match {
+
+    case Axiom(_) => f(proof)
+
+    // Unary rules
+    case WeakeningLeftRule(up,_,p1) =>
+      f(WeakeningLeftRule(applyRecursive(f)(up), p1.formula))
+
+    case WeakeningRightRule(up, r, p1) =>
+      f(WeakeningRightRule(applyRecursive(f)(up), p1.formula))
+
+    case ContractionLeftRule(up, r, a1, a2, p1) =>
+      val subProof = applyRecursive(f)(up)
+      val (a1New, a2New) = (subProof.root.antecedent.find(_ =^= a1), subProof.root.antecedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+" in sequent "+subProof.root+".")
+      f(ContractionLeftRule(subProof, a1New.get, a2New.get))
+
+    case ContractionRightRule(up, r, a1, a2, p1) =>
+      val subProof = applyRecursive(f)(up)
+      val (a1New, a2New) = (subProof.root.succedent.find(_=^= a1), subProof.root.succedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+" in sequent "+subProof.root+".")
+      f(ContractionRightRule(subProof, a1New.get, a2New.get))
+
+    case AndLeft1Rule(up,_, a, p) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.antecedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(AndLeft1Rule(subProof, aNew.get, p.formula))
+
+    case AndLeft2Rule(up,_, a, p) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.antecedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(AndLeft2Rule(subProof, p.formula, aNew.get))
+
+    case OrRight1Rule(up, r, a, p) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.succedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(OrRight1Rule(subProof, aNew.get, p.formula))
+
+    case OrRight2Rule(up, r, a, p) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.succedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(OrRight2Rule(subProof, p.formula, aNew.get))
+
+    case ImpRightRule(up,_, a1, a2,_) =>
+      val subProof = applyRecursive(f)(up)
+      val (a1New, a2New) = (subProof.root.antecedent.find(_ =^= a1), subProof.root.succedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+" in sequent "+subProof.root+".")
+      f(ImpRightRule(subProof, a1New.get, a2New.get))
+
+    case NegLeftRule(up,_, a, p) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.succedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(NegLeftRule(subProof, aNew.get))
+
+    case NegRightRule(up,_, a, p) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.antecedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(NegRightRule(subProof, aNew.get))
+
+    case ForallLeftRule(up,_, a, p, t) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.antecedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(ForallLeftRule(subProof, aNew.get, p.formula, t))
+
+    case ExistsRightRule(up,_, a, p, t) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.succedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(ExistsRightRule(subProof, aNew.get, p.formula, t))
+
+    case ForallRightRule(up,_, a, p, v) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.succedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(ForallRightRule(subProof, aNew.get, p.formula, v))
+
+    case ExistsLeftRule(up, r, a, p, v) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.antecedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(ExistsLeftRule(subProof, aNew.get, p.formula, v))
+
+    case DefinitionLeftRule(up,_, a, p) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.antecedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(DefinitionLeftRule(subProof, aNew.get, p.formula))
+
+    case DefinitionRightRule(up,_, a, p) =>
+      val subProof = applyRecursive(f)(up)
+      val aNew = subProof.root.succedent.find(_ =^= a)
+      if (aNew.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
+      f(DefinitionRightRule(subProof, aNew.get, p.formula))
+
+    case UnaryEquationLeft1Rule(up,_, a1, a2, posList,_) =>
+      val subProof = applyRecursive(f)(up)
+      val (a1New, a2New) = (subProof.root.antecedent.find(_ =^= a1), subProof.root.antecedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+" in sequent "+subProof.root+".")
+      f(UnaryEquationLeft1Rule(subProof, a1New.get, a2New.get, posList(0)))
+
+    case UnaryEquationLeft2Rule(up,_, a1, a2, posList,_) =>
+      val subProof = applyRecursive(f)(up)
+      val (a1New, a2New) = (subProof.root.antecedent.find(_ =^= a1), subProof.root.antecedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+" in sequent "+subProof.root+".")
+      f(UnaryEquationLeft2Rule(subProof, a1New.get, a2New.get, posList(0)))
+
+    case UnaryEquationRight1Rule(up,_, a1, a2, posList,_) =>
+      val subProof = applyRecursive(f)(up)
+      val (a1New, a2New) = (subProof.root.antecedent.find(_ =^= a1), subProof.root.succedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+" in sequent "+subProof.root+".")
+      f(UnaryEquationRight1Rule(subProof, a1New.get, a2New.get, posList(0)))
+
+    case UnaryEquationRight2Rule(up,_, a1, a2, posList,_) =>
+      val subProof = applyRecursive(f)(up)
+      val (a1New, a2New) = (subProof.root.antecedent.find(_ =^= a1), subProof.root.succedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+" in sequent "+subProof.root+".")
+      f(UnaryEquationRight2Rule(subProof, a1New.get, a2New.get, posList(0)))
+
+    // Binary rules
+    case CutRule(up1, up2,_, a1, a2) =>
+      val (subProof1, subProof2) = (apply(f)(up1), apply(f)(up2))
+      val (a1New, a2New) = (subProof1.root.succedent.find(_ =^= a1), subProof2.root.antecedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+".")
+      f(CutRule(subProof1, subProof2, a1New.get, a2New.get))
+
+    case AndRightRule(up1, up2,_, a1, a2,_) =>
+      val (subProof1, subProof2) = (apply(f)(up1), apply(f)(up2))
+      val (a1New, a2New) = (subProof1.root.succedent.find(_ =^= a1), subProof2.root.succedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+".")
+      f(AndRightRule(subProof1, subProof2, a1New.get, a2New.get))
+
+    case OrLeftRule(up1, up2, r, a1, a2, p) =>
+      val (subProof1, subProof2) = (apply(f)(up1), apply(f)(up2))
+      val (a1New, a2New) = (subProof1.root.antecedent.find(_ =^= a1), subProof2.root.antecedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+".")
+      f(OrLeftRule(subProof1, subProof2, a1New.get, a2New.get))
+
+    case ImpLeftRule(up1, up2, r, a1, a2, p) =>
+      val (subProof1, subProof2) = (apply(f)(up1), apply(f)(up2))
+      val (a1New, a2New) = (subProof1.root.succedent.find(_ =^= a1), subProof2.root.antecedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+".")
+      f(ImpLeftRule(subProof1, subProof2, a1New.get, a2New.get))
+
+    case EquationLeft1Rule(up1, up2,_, a1, a2, pos,_) =>
+      val (subProof1, subProof2) = (apply(f)(up1), apply(f)(up2))
+      val (a1New, a2New) = (subProof1.root.succedent.find(_ =^= a1), subProof2.root.antecedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+".")
+      f(EquationLeft1Rule(subProof1, subProof2, a1New.get, a2New.get, pos(0)))
+
+    case EquationLeft2Rule(up1, up2,_, a1, a2, pos,_) =>
+      val (subProof1, subProof2) = (apply(f)(up1), apply(f)(up2))
+      val (a1New, a2New) = (subProof1.root.succedent.find(_ =^= a1), subProof2.root.antecedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+".")
+      f(EquationLeft2Rule(subProof1, subProof2, a1New.get, a2New.get, pos(0)))
+
+    case EquationRight1Rule(up1, up2,_, a1, a2, pos,_) =>
+      val (subProof1, subProof2) = (apply(f)(up1), apply(f)(up2))
+      val (a1New, a2New) = (subProof1.root.succedent.find(_ =^= a1), subProof2.root.succedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+".")
+      f(EquationRight1Rule(subProof1, subProof2, a1New.get, a2New.get, pos(0)))
+
+    case EquationRight2Rule(up1, up2,_, a1, a2, pos,_) =>
+      val (subProof1, subProof2) = (apply(f)(up1), apply(f)(up2))
+      val (a1New, a2New) = (subProof1.root.succedent.find(_ =^= a1), subProof2.root.succedent.find(_ =^= a2))
+      if (a1New.isEmpty || a2New.isEmpty)
+        throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+".")
+      f(EquationRight2Rule(subProof1, subProof2, a1New.get, a2New.get, pos(0)))
+
+  }
+}

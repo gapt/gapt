@@ -705,5 +705,76 @@ class LKTest extends SpecificationWithJUnit {
     }
   }
 
+  "Unary equality rules" should {
+    val (s, t) = (HOLConst("s", Ti), HOLConst("t", Ti))
+    val P = HOLConst("P", Ti -> To)
+    val Q = HOLConst("Q", Ti -> (Ti -> To))
+    val est = Equation(s, t)
+    val Ps = Atom(P, List(s))
+    val Pt = Atom (P, List(t))
+
+    val Qss = Atom(Q, List(s,s))
+    val Qst = Atom(Q, List(s,t))
+    val Qts = Atom(Q, List(t,s))
+    val Qtt = Atom(Q, List(t,t))
+
+    val ax1 = Axiom(List(est), List(est))
+    val ax2 = Axiom(List(Ps), List(Ps))
+    val ax3 = Axiom(List(Pt), List(Pt))
+    val ax4 = Axiom(List(Qss), List(Qss))
+    val ax5 = Axiom(List(Qtt), List(Qtt))
+
+    val eq = ax1.root.succedent.head
+
+    "work correctly in simple cases" in {
+      val seq1 = FSequent(List(est, Pt), List(Ps))
+      val seq2 = FSequent(List(est, Ps), List(Pt))
+
+      val subProof1 = WeakeningLeftRule(ax2, est)
+      val proof1 = UnaryEquationLeft1Rule(subProof1, subProof1.prin(0), subProof1.root.antecedent(0), HOLPosition(2))
+
+      (proof1.root.toFSequent multiSetEquals seq1) must beTrue
+
+      val subProof2 = WeakeningLeftRule(ax3, est)
+      val proof2 = UnaryEquationLeft2Rule(subProof2, subProof2.prin(0), subProof2.root.antecedent(0), HOLPosition(2))
+
+      (proof2.root.toFSequent multiSetEquals seq2) must beTrue
+
+      val subProof3 = WeakeningLeftRule(ax2, est)
+      val proof3 = UnaryEquationRight1Rule(subProof3, subProof3.prin(0), subProof3.root.succedent(0), HOLPosition(2))
+
+      (proof3.root.toFSequent multiSetEquals seq2) must beTrue
+
+      val subProof4 = WeakeningLeftRule(ax3, est)
+      val proof4 = UnaryEquationRight2Rule(subProof4, subProof4.prin(0), subProof4.root.succedent(0), HOLPosition(2))
+
+      (proof4.root.toFSequent multiSetEquals seq1) must beTrue
+    }
+
+    "be correctly converted to binary rules" in {
+      val subProof1 = WeakeningLeftRule(ax2, est)
+      val proof1 = UnaryEquationLeft1Rule(subProof1, subProof1.prin(0), subProof1.root.antecedent(0), HOLPosition(2))
+
+     EquationRuleConverter.toBinary(proof1)
+
+      val subProof2 = WeakeningLeftRule(ax3, est)
+      val proof2 = UnaryEquationLeft2Rule(subProof2, subProof2.prin(0), subProof2.root.antecedent(0), HOLPosition(2))
+
+      EquationRuleConverter.toBinary(proof2)
+
+      val subProof3 = WeakeningLeftRule(ax2, est)
+      val proof3 = UnaryEquationRight1Rule(subProof3, subProof3.prin(0), subProof3.root.succedent(0), HOLPosition(2))
+
+      EquationRuleConverter.toBinary(proof3)
+
+      val subProof4 = WeakeningLeftRule(ax3, est)
+      val proof4 = UnaryEquationRight2Rule(subProof4, subProof4.prin(0), subProof4.root.succedent(0), HOLPosition(2))
+
+      EquationRuleConverter.toBinary(proof4)
+
+      ok
+    }
+  }
+
 }
 

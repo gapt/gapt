@@ -57,6 +57,13 @@ package occurrences {
       val tmp = parents flatMap {_.ancestors}
       parents ++ tmp
     }
+
+    /** Tests equality of formulas.
+     *
+     * @param that Another FormulaOccurrence.
+     * @return true iff this and that are occurrences of the same formula.
+     */
+    def =^=(that: FormulaOccurrence) = this.formula == that.formula
   }
 
 //FO = FormulaOccurrence
