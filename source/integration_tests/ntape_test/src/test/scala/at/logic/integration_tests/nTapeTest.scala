@@ -35,14 +35,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
   def show(s:String) = println("+++++++++ "+s+" ++++++++++")
 
-
-  object Robinson2RalAndUndoHOL2Fol {
-    def apply(sig_vars : Map[String, List[HOLVar]],
-              sig_consts : Map[String, List[HOLConst]],
-              cmap : replaceAbstractions.ConstantsMap) =
-      new Robinson2RalAndUndoHOL2Fol(sig_vars, sig_consts, cmap)
-  }
-
+  //sequential //skolemization is not thread safe - it shouldnt't make problems here, but in case there are issues, please uncomment
 
   class Robinson2RalAndUndoHOL2Fol(sig_vars : Map[String, List[HOLVar]],
                                    sig_consts : Map[String, List[HOLConst]],
@@ -52,14 +45,17 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
     override def convert_formula(e:HOLFormula) : HOLFormula = {
       require(e.isInstanceOf[FOLFormula])
-      recreateWithFactory(undoHol2Fol.backtranslate(e.asInstanceOf[FOLFormula], sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]
+
+      BetaReduction.betaNormalize(
+        recreateWithFactory( undoHol2Fol.backtranslate(e.asInstanceOf[FOLFormula], sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]
+      )
     }
 
     override def convert_substitution(s:Substitution) : Substitution = {
       val mapping = s.map.toList.map(x =>
         (
-          recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLVar],
-          recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[FOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]
+          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]).asInstanceOf[HOLVar],
+          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[FOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression])
           )
       )
 
@@ -67,9 +63,18 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
   }
 
+  object Robinson2RalAndUndoHOL2Fol {
+    def apply(sig_vars : Map[String, List[HOLVar]],
+              sig_consts : Map[String, List[HOLConst]],
+              cmap : replaceAbstractions.ConstantsMap) =
+      new Robinson2RalAndUndoHOL2Fol(sig_vars, sig_consts, cmap)
+  }
+
+
 
   "The higher-order tape proof" should {
-    "extract a struct from the preprocessed proof" in {
+    "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
+      //skipped("works but takes a bit time")
       checkForProverOrSkip
       show("Loading file")
       val tokens = HybridLatexParser.parseFile(tempCopyOfClasspathFile("tape3.llk"))
@@ -121,6 +126,60 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       }
 
     }
+
+    "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
+      checkForProverOrSkip
+      show("Loading file")
+      val tokens = HybridLatexParser.parseFile(tempCopyOfClasspathFile("tape3ex.llk"))
+      val pdb = HybridLatexParser.createLKProof(tokens)
+      show("Eliminating definitions, expanding tautological axioms")
+      val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("TAPEPROOF"))))
+      show("Skolemizing")
+      val selp = LKtoLKskc(elp)
+
+      show("Extracting struct")
+      val struct = StructCreators.extract(selp, x => containsQuantifier(x) || freeHOVariables(x).nonEmpty)
+      show("Computing projections")
+      val proj = Projections(selp, x => containsQuantifier(x) || freeHOVariables(x).nonEmpty)
+
+      show("Computing clause set")
+      val cl = AlternativeStandardClauseSet(struct)
+      show("Exporting to prover 9")
+      val (cmap, folcl_) = replaceAbstractions(cl.toList)
+      println("Calculated cmap: ")
+      cmap.map(x => println(x._1+" := "+x._2))
+
+      val folcl = reduceHolToFol(folcl_)
+      folcl.map(println(_))
+
+      show("Refuting clause set")
+      Prover9.refute(folcl) match {
+        case None =>
+          ko("could not refute clause set")
+        case Some(rp) =>
+          show("Getting formulas")
+          val proofformulas = selp.nodes.flatMap(_.asInstanceOf[LKProof].root.toFSequent.formulas  ).toList.distinct
+
+          show("Extracting signature from "+proofformulas.size+ " formulas")
+          val (sigc, sigv) = undoHol2Fol.getSignature( proofformulas )
+
+          show("Converting to Ral")
+
+          val myconverter = Robinson2RalAndUndoHOL2Fol(sigv.map(x => (x._1, x._2.toList)), sigc.map(x => (x._1, x._2.toList)), cmap)
+          val ralp = myconverter(rp)
+          show("Creating acnf")
+          val (acnf, endclause) = ceres_omega(proj, ralp, sequentToLabelledSequent(selp.root), struct)
+
+          show("Compute expansion tree")
+          val et = extractLKSKExpansionTrees(acnf, false)
+          show(" HOORAY! ")
+          //println(et)
+
+          ok
+      }
+
+    }
+
   }
 
 }

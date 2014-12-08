@@ -236,17 +236,28 @@ object Function {
     case HOLApp(c: HOLConst,_) if isLogicalSymbol(c) => None
     case HOLApp(HOLApp(c: HOLConst,_),_) if isLogicalSymbol(c) => None
     case HOLApp(_,_) if (expression.exptype != To) => 
-      val t = unapply_(expression) 
-      Some( (t._1, t._2, expression.exptype) )
+      unapply_(expression) match {
+        case Some(t) =>
+          Some( (t._1, t._2, expression.exptype) )
+        case None => None
+      }
+
     case _ => None
   }
   // Recursive unapply to get the head and args
-  private def unapply_(e: HOLExpression) : (HOLExpression, List[HOLExpression]) = e match {
-    case v: HOLVar => (v, Nil)
-    case c: HOLConst => (c, Nil)
+  private def unapply_(e: HOLExpression) : Option[(HOLExpression, List[HOLExpression])] = e match {
+    case v: HOLVar => Some( (v, Nil) )
+    case c: HOLConst => Some( (c, Nil) )
     case HOLApp(e1, e2) => 
-      val t = unapply_(e1)
-      (t._1, t._2 :+ e2)
+      unapply_(e1) match {
+        case Some((x,y)) =>
+          Some( (x, y :+ e2) )
+        case None =>
+          None
+      }
+
+    case HOLAbs(_,_) =>
+      None
   }
 }
 

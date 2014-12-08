@@ -77,7 +77,8 @@ object undoHol2Fol {
       // --------------- term structure ------------------------
       //cases for term replacement
       case HOLConst(name, _) if abssymbol_map.contains(name) =>
-        val qterm = recreateWithFactory(abssymbol_map(name), factory).asInstanceOf[HOLExpression] //unsafe cast
+        val qterm_ = recreateWithFactory(abssymbol_map(name), factory).asInstanceOf[HOLExpression] //unsafe cast
+        val qterm : HOLExpression = freeVariables(qterm_).foldRight(qterm_)((v,term) => HOLAbs(v,term))
         expected_type match {
           case Some(expt) =>
             require(qterm.exptype == expt, "We did a replacement of the symbol "+name+" by "+qterm+" but the type "+qterm.exptype+" is not the expected type "+expected_type)
@@ -87,15 +88,16 @@ object undoHol2Fol {
         }
 
       case Function(HOLConst(name, _), args, _) if abssymbol_map.contains(name) =>
-        val qterm = recreateWithFactory(abssymbol_map(name), factory).asInstanceOf[HOLExpression] //unsafe cast
-      val btargs = args.map(x => backtranslate(x.asInstanceOf[FOLExpression],sig_vars, sig_consts, abssymbol_map, None)(factory))
+        val qterm_ = recreateWithFactory(abssymbol_map(name), factory).asInstanceOf[HOLExpression] //unsafe cast
+        val qterm : HOLExpression = freeVariables(qterm_).foldRight(qterm_)((v,term) => HOLAbs(v,term))
+        val btargs = args.map(x => backtranslate(x.asInstanceOf[FOLExpression],sig_vars, sig_consts, abssymbol_map, None)(factory))
         val r = btargs.foldLeft(qterm)((term, nextarg) => HOLApp(term, nextarg))
         expected_type match {
           case Some(expt) =>
             require(qterm.exptype == expt, "We did a replacement of the symbol "+name+" by "+qterm+" but the type "+qterm.exptype+" is not the expected type "+expected_type)
-            qterm
+            r
           case None =>
-            qterm
+            r
         }
 
       //normal ones
