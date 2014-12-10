@@ -1163,6 +1163,9 @@ object EquationRight2Rule extends EquationRuleLogger {
     else None
 }
 
+
+/*
+
 object UnaryEquationLeft1Rule extends EquationRuleLogger {
   def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
   UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
@@ -1410,6 +1413,9 @@ object UnaryEquationRight2Rule extends EquationRuleLogger {
     else None
   }
 }
+*/
+
+/*
 
 object EquationRuleConverter {
 
@@ -1466,3 +1472,4 @@ object EquationRuleConverter {
   }
 
 }
+*/

@@ -704,6 +704,7 @@ class LKTest extends SpecificationWithJUnit {
 
     }
   }
+/*
 
   "Unary equality rules" should {
     val (s, t) = (HOLConst("s", Ti), HOLConst("t", Ti))
@@ -775,6 +776,7 @@ class LKTest extends SpecificationWithJUnit {
       ok
     }
   }
+*/
 
 }
 

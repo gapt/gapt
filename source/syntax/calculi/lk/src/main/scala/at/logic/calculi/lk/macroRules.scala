@@ -1475,7 +1475,7 @@ object applyRecursive {
         throw new LKRuleCreationException("Couldn't find descendant of "+a+" in sequent "+subProof.root+".")
       f(DefinitionRightRule(subProof, aNew.get, p.formula))
 
-    case UnaryEquationLeft1Rule(up,_, a1, a2, posList,_) =>
+    /*case UnaryEquationLeft1Rule(up,_, a1, a2, posList,_) =>
       val subProof = applyRecursive(f)(up)
       val (a1New, a2New) = (subProof.root.antecedent.find(_ =^= a1), subProof.root.antecedent.find(_ =^= a2))
       if (a1New.isEmpty || a2New.isEmpty)
@@ -1501,7 +1501,7 @@ object applyRecursive {
       val (a1New, a2New) = (subProof.root.antecedent.find(_ =^= a1), subProof.root.succedent.find(_ =^= a2))
       if (a1New.isEmpty || a2New.isEmpty)
         throw new LKRuleCreationException("Couldn't find descendants of "+a1+" and "+a2+" in sequent "+subProof.root+".")
-      f(UnaryEquationRight2Rule(subProof, a1New.get, a2New.get, posList(0)))
+      f(UnaryEquationRight2Rule(subProof, a1New.get, a2New.get, posList(0)))*/
 
     // Binary rules
     case CutRule(up1, up2,_, a1, a2) =>
