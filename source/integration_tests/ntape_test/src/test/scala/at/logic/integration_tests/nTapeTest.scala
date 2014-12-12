@@ -6,13 +6,14 @@ import at.logic.algorithms.fol.hol2fol.{undoHol2Fol, replaceAbstractions, reduce
 import at.logic.algorithms.fol.recreateWithFactory
 import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk.{AtomicExpansion, regularize}
+import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
-import at.logic.calculi.lk.ContractionLeftRule
 import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.lksk.sequentToLabelledSequent
 import at.logic.language.fol.{FOLVar, FOLFormula, FOLExpression}
 import at.logic.language.hol._
+import at.logic.language.lambda.symbols.{StringSymbol, SymbolA}
 
 import at.logic.provers.prover9._
 import at.logic.transformations.ceres.clauseSets.AlternativeStandardClauseSet
@@ -23,6 +24,7 @@ import at.logic.transformations.ceres.ceres_omega
 import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionTrees
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.utils.testing.ClasspathFileCopier
+import at.logic.calculi.expansionTrees.{And => ETAnd, Imp => ETImp, Or => ETOr, Neg => ETNEg, WeakQuantifier, StrongQuantifier, SkolemQuantifier, ExpansionTree, toDeep, ExpansionSequent}
 
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
@@ -34,6 +36,8 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
   def checkForProverOrSkip = Prover9.refute(box) must not(throwA[IOException]).orSkip
 
   def show(s:String) = println("+++++++++ "+s+" ++++++++++")
+
+  def f(e:HOLExpression) : String = HybridLatexExporter.getFormulaString(e, true, false)
 
   //sequential //skolemization is not thread safe - it shouldnt't make problems here, but in case there are issues, please uncomment
 
@@ -70,7 +74,66 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       new Robinson2RalAndUndoHOL2Fol(sig_vars, sig_consts, cmap)
   }
 
+  def decompose(et : ExpansionTree) : List[ExpansionTree] = et match {
+    case ETAnd(x,y) => decompose(x) ++ decompose(y);
+    case _ => List(et)
+  }
 
+  def printStatistics(et : ExpansionSequent) = {
+    val indet = decompose((et.antecedent(3)))(2)
+    val List(ind1, ind2) : List[ExpansionTree] = indet match {
+      case WeakQuantifier(_, List(
+      (inst1, et1),
+      (inst2, et2)
+      ))
+      =>
+        List(inst1,inst2)
+    }
+
+    val (ind1base, ind1step) = ind1 match {
+      case ETImp(ETAnd(
+      WeakQuantifier(_, List((_,base))),
+      SkolemQuantifier(_,_,
+                      ETImp(_, WeakQuantifier(f, List((inst,step))))
+                      )
+      ) ,_ ) =>
+        (base, step)
+    }
+
+    val (ind2base,ind2step) = ind1 match {
+      case ETImp(ETAnd(
+        WeakQuantifier(_, List((_,base))),
+        SkolemQuantifier(_,_,
+               ETImp(_,WeakQuantifier(f, List((inst,step))))
+        )) ,_ ) =>
+        (base, step)
+    }
+
+    (ind1base, ind1step, ind2base, ind2step) match {
+      case (HOLAbs(xb,sb), HOLAbs(xs,ss), HOLAbs(yb,tb), HOLAbs(ys,ts)) =>
+        val map = Map[HOLExpression, StringSymbol]()
+        val counter = new {private var state = 0; def nextId = { state = state +1; state}}
+
+        val (map1, sb1) = replaceAbstractions(sb, map, counter)
+        val (map2, ss1) = replaceAbstractions(ss, map1, counter)
+        val (map3, tb1) = replaceAbstractions(tb, map2, counter)
+        val (map4, ts1) = replaceAbstractions(ts, map3, counter)
+
+        println("base 1 simplified: "+ f(HOLAbs(xb,sb1)))
+        println("base 2 simplified: "+ f(HOLAbs(yb,tb1)))
+        println("step 1 simplified: "+ f(HOLAbs(xs,ss1)))
+        println("step 2 simplified: "+ f(HOLAbs(ys,ts1)))
+
+        println("With shortcuts:")
+        for ((term, sym) <- map4) {
+          println("Symbol: "+sym)
+          println("Term:   "+f(term))
+        }
+    }
+
+  }
+
+  sequential
 
   "The higher-order tape proof" should {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
@@ -120,7 +183,9 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           show("Compute expansion tree")
           val et = extractLKSKExpansionTrees(acnf, false)
           show(" HOORAY! ")
-          //println(et)
+
+
+          printStatistics(et)
 
           ok
       }
@@ -173,7 +238,8 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           show("Compute expansion tree")
           val et = extractLKSKExpansionTrees(acnf, false)
           show(" HOORAY! ")
-          //println(et)
+
+          printStatistics(et)
 
           ok
       }
