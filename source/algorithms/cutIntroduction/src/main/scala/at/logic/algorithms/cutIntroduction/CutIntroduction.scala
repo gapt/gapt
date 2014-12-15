@@ -181,7 +181,7 @@ object CutIntroduction {
       case false => new DefaultProver()
     }
 
-    var phase = "termex"
+    var phase = ""
     var time = System.currentTimeMillis
 
     // The following information is returned (String, Tuple) by this method
@@ -213,6 +213,8 @@ object CutIntroduction {
       if (verbose) println("\nEnd sequent: " + endSequent)
     
       /********** Term set Extraction **********/ 
+      phase = "termex"
+
       val termset = TermsExtraction(ep)
       
       termsetExtractionTime = System.currentTimeMillis - time
@@ -361,7 +363,7 @@ object CutIntroduction {
     }
     val maxsatsolver = MaxSATSolver.QMaxSAT
 
-    var phase = "termex"
+    var phase = ""
     var time = System.currentTimeMillis
 
     // The following information is returned (String, Tuple) by this method
@@ -389,6 +391,8 @@ object CutIntroduction {
       if (verbose) println("\nEnd sequent: " + endSequent)
 
       /********** Terms Extraction **********/
+      phase = "termex"
+
       val termset = TermsExtraction(ep)
       
       termsetExtractionTime = System.currentTimeMillis - time
@@ -397,6 +401,8 @@ object CutIntroduction {
       if (verbose) println( "Size of term set: " + termset.set.size )
 
       /********** Grammar finding **********/
+      phase = "grammar_finding"
+
       val small_grammar = TreeGrammarDecomposition.applyStat(termset.set, n, MCSMethod.MaxSAT, maxsatsolver)
       val grammar = small_grammar match {
 	case Some(g) => g.terms = termset; g
@@ -409,6 +415,7 @@ object CutIntroduction {
       }
 
       /********** Proof Construction **********/ // TODO
+      phase = "prcons"
 
       minimalGrammarSize = grammar.size
       if (verbose) println( "Smallest grammar-size: " + grammar.size )
