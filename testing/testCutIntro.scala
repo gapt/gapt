@@ -123,9 +123,11 @@ object testCutIntro {
       }
       val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
       CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
+      cut_intro_status.split ("_").last
     case _ =>
       // Failed already during parsing, logging
       CutIntroDataLogger.trace(name + "," + status + ", , , , , , , , , , , , , , , " )
+      status.split ("_").last
   }
 
   def compressExpansionProof (ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String) = 
@@ -309,49 +311,76 @@ object testCutIntro {
 
   def compressProofSequences (timeout: Int, method: Int) = {
 
-    for ( i <- 1 to 15 ) {
+    var i = 0
+    var status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "LinearExampleProof(" + i + ")"
-      compressLKProof (Some (LinearExampleProof (i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (LinearExampleProof (i)), timeout, method, pn, "ok")
     }
 
-    for ( i <- 1 to 16 ) {
+    i = 0
+    status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "SquareDiagonalExampleProof(" + i + ")"
-      compressLKProof (Some (SquareDiagonalExampleProof (i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (SquareDiagonalExampleProof (i)), timeout, method, pn, "ok")
     }
 
-    for ( i <- 1 to 12 ) {
+    i = 0
+    status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "SquareEdgesExampleProof(" + i + ")"
-      compressLKProof (Some (SquareEdgesExampleProof (i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (SquareEdgesExampleProof (i)), timeout, method, pn, "ok")
     }
 
-    for ( i <- 1 to 16 ) {
+    i = 0
+    status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "SquareEdges2DimExampleProof(" + i + ")"
-      compressLKProof (Some (SquareEdges2DimExampleProof(i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (SquareEdges2DimExampleProof(i)), timeout, method, pn, "ok")
     }
 
-    for ( i <- 1 to 15 ) {
+    i = 0
+    status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "LinearEqExampleProof(" + i + ")"
-      compressLKProof (Some (LinearEqExampleProof(i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (LinearEqExampleProof(i)), timeout, method, pn, "ok")
     }
 
-    for ( i <- 1 to 8 ) {
+    i = 0
+    status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "SumOfOnesF2ExampleProof(" + i + ")"
-      compressLKProof (Some (SumOfOnesF2ExampleProof(i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (SumOfOnesF2ExampleProof(i)), timeout, method, pn, "ok")
     }
 
-    for ( i <- 1 to 8 ) {
+    i = 0
+    status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "SumOfOnesFExampleProof(" + i + ")"
-      compressLKProof (Some (SumOfOnesFExampleProof(i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (SumOfOnesFExampleProof(i)), timeout, method, pn, "ok")
     }
 
-    for ( i <- 1 to 10 ) {
+    i = 0
+    status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "SumOfOnesExampleProof(" + i + ")"
-      compressLKProof (Some (SumOfOnesExampleProof(i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (SumOfOnesExampleProof(i)), timeout, method, pn, "ok")
     }
 
-    for ( i <- 1 to 4 ) {
+    i = 0
+    status = ""
+    while ( status != "timeout" ) {
+      i = i + 1
       val pn = "UniformAssociativity3ExampleProof(" + i + ")"
-      compressLKProof (Some (UniformAssociativity3ExampleProof(i)), timeout, method, pn, "ok")
+      status = compressLKProof (Some (UniformAssociativity3ExampleProof(i)), timeout, method, pn, "ok")
     }
   }
 
