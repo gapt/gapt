@@ -117,9 +117,9 @@ object testCutIntro {
   status match {
     case "ok" =>
       val (cut_intro_status, info_tuple) = method match {
-        case 0 => CutIntroduction.one_cut_one_quantifier_stat (proof.get)
-        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (proof.get)
-        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (proof.get)
+        case 0 => CutIntroduction.one_cut_one_quantifier_stat (proof.get, timeout)
+        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (proof.get, timeout)
+        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (proof.get, timeout)
       }
       val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
       CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
@@ -132,9 +132,9 @@ object testCutIntro {
   status match {
     case "ok" =>
       val (cut_intro_status, info_tuple) = method match {
-        case 0 => CutIntroduction.one_cut_one_quantifier_stat (ep.get, hasEquality)
-        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (ep.get, hasEquality)
-        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (ep.get, hasEquality)
+        case 0 => CutIntroduction.one_cut_one_quantifier_stat (ep.get, hasEquality, timeout)
+        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (ep.get, hasEquality, timeout)
+        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (ep.get, hasEquality, timeout)
       }
       val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
       CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )

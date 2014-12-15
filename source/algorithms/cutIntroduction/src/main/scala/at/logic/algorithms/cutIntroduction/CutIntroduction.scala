@@ -129,22 +129,28 @@ object CutIntroduction {
   } 
 
   // Methods to be called for the experiments, only return status and log information
-  def one_cut_one_quantifier_stat (proof: LKProof) = execute(proof, false, 3600, false) match {
+  def one_cut_one_quantifier_stat (proof: LKProof, timeout: Int) = 
+  execute(proof, false, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
-  def one_cut_one_quantifier_stat (es: ExpansionSequent, hasEquality: Boolean) = execute(es, hasEquality, false, -1, 3600, false) match {
+  def one_cut_one_quantifier_stat (es: ExpansionSequent, hasEquality: Boolean, timeout: Int) = 
+  execute(es, hasEquality, false, -1, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
-  def one_cut_many_quantifiers_stat (proof: LKProof) = execute(proof, true, 3600, false) match {
+  def one_cut_many_quantifiers_stat (proof: LKProof, timeout: Int) = 
+  execute(proof, true, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
-  def one_cut_many_quantifiers_stat (es: ExpansionSequent, hasEquality: Boolean) = execute(es, hasEquality, true, -1, 3600, false) match {
+  def one_cut_many_quantifiers_stat (es: ExpansionSequent, hasEquality: Boolean, timeout: Int) = 
+  execute(es, hasEquality, true, -1, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
-  def many_cuts_one_quantifier_stat (proof: LKProof) = execute(proof, 2, 3600, false) match {
+  def many_cuts_one_quantifier_stat (proof: LKProof, timeout: Int) = 
+  execute(proof, 2, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
-  def many_cuts_one_quantifier_stat (es: ExpansionSequent, hasEquality: Boolean) = execute(es, hasEquality, -1, 2, 3600, false) match {
+  def many_cuts_one_quantifier_stat (es: ExpansionSequent, hasEquality: Boolean, timeout: Int) = 
+  execute(es, hasEquality, -1, 2, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
 
