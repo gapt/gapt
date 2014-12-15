@@ -39,39 +39,6 @@ object LinearExampleProof {
   }
 }
 
-
-// Functions to construct cut-free FOL LK proofs of the sequents
-//
-// P(0), \ALL x . P(x) -> P(s(x)), P(s^n(0)) -> P(1) :- P(s^n(1))
-//
-// where n is an Integer parameter >= 0.
-object LinearExampleProof {
-  val s = "s"
-  val p = "P"
-  val c = "0"
-
-  def apply( n: Int ) = proof( 0, n )
-
-  // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
-  def proof( k: Int, n: Int )  : LKProof =
-  {
-    val x = FOLVar( "x" )
-    val ass = AllVar( x, Imp( Atom( p, x::Nil ), Atom( p, Function( s, x::Nil )::Nil ) ) )
-    if ( k == n ) // leaf proof
-    {
-      val a = Atom( p,  Utils.numeral( n )::Nil )
-      WeakeningLeftRule( Axiom( a::Nil, a::Nil ), ass )
-    }
-    else
-    {
-      val p1 = Atom( p, Utils.numeral( k )::Nil )
-      val p2 = Atom( p, Utils.numeral( k + 1 )::Nil )
-      val aux = Imp( p1, p2 )
-      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1::Nil, p1::Nil ), proof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
-    }
-  }
-}
-
 // Functions to construct cut-free FOL LK proofs of the sequents
 //
 // P(0,0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
