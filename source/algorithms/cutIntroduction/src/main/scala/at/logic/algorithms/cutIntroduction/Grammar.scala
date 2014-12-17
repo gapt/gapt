@@ -42,7 +42,7 @@ class Grammar(u0: List[FOLTerm], slist0: List[(List[FOLVar], Set[List[FOLTerm]])
   def numVars = eigenvariables.length
 
   override def toString() : String = {
-    "{ " + u.mkString(",") + " } " + slist.foldLeft("") ((acc, s) => "o(" + s._1.mkString(",") + ") { " + s._2.mkString(",") + " } ")
+    "{ " + u.mkString(",") + " } " + slist.foldLeft("") ((acc, s) => acc ++ "o(" + s._1.mkString(",") + ") { " + s._2.mkString(",") + " } ")
   }
 }
 
