@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable.ListBuffer
 
 trait MacroRuleLogger extends Logger {
-  override protected val log = LoggerFactory.getLogger("MacroRuleLogger")
+  override def loggerName = "MacroRuleLogger"
 }
 
 object AndLeftRule {

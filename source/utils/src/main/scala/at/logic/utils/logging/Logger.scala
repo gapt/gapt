@@ -3,8 +3,8 @@ package at.logic.utils.logging
 import org.slf4j.LoggerFactory
 
 trait Logger {
-
-  protected val log = LoggerFactory.getLogger(getClass)
+  protected def loggerName = getClass.getName
+  protected val log = LoggerFactory.getLogger(loggerName)
 
   // Ordered by level of importance.
   // E.g. if the logging level is chosen to be info, info, warn and error

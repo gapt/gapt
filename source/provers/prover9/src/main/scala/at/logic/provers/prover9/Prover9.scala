@@ -23,6 +23,9 @@ import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.provers.Prover
 import at.logic.provers.prover9.commands.InferenceExtractor
 import java.io._
+import at.logic.utils.logging.Logger
+import org.slf4j.LoggerFactory
+
 import scala.sys.process._
 import scala.collection.immutable.HashMap
 import scala.io.Source

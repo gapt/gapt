@@ -25,10 +25,6 @@ package robinson {
 import at.logic.utils.logging.Logger
 import org.slf4j.LoggerFactory
 
-trait RobinsonLogger extends Logger {
-  override protected val log = LoggerFactory.getLogger("RobinsonLogger")
-  }
-
 /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
 object createContext {
@@ -129,7 +125,9 @@ object createContext {
 */
   }
 
-  object Paramodulation extends RobinsonLogger {
+  object Paramodulation extends Logger {
+    override def loggerName = "RobinsonLogger"
+
     def apply(p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: FOLFormula, a2: FOLFormula, newLiteral: FOLFormula, sub: Substitution, pos: Boolean): RobinsonResolutionProof  = {
       val a1occ = p1.root.succedent.find( _.formula == a1 ).get
       val list2 = if (pos) p2.root.succedent else p2.root.antecedent

@@ -6,6 +6,8 @@ import at.logic.language.hol._
 import at.logic.language.lambda.FactoryA
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types.{Ti, TA, To}
+import at.logic.utils.logging.Logger
+import org.slf4j.LoggerFactory
 
 
 /**
@@ -17,7 +19,9 @@ import at.logic.language.lambda.types.{Ti, TA, To}
  * To extract a signature, use the [[undoHol2Fol.getSignature]], to to the back translation use
  * [[undoHol2Fol.backtranslate]].
  */
-object undoHol2Fol {
+object undoHol2Fol extends Logger {
+  override def loggerName = "HOL2FOLLogger"
+
   /**
    * Translate the fol formula e to a hol formula over the given signature for constants and variables.
    * @param e the fol formula.
@@ -115,7 +119,7 @@ object undoHol2Fol {
         head
 
       case fol.FOLVar(ivy_varname(name) ) =>
-        println("Guessing that the variable "+name+" comes from ivy, assigning type i.")
+        info("Guessing that the variable "+name+" comes from ivy, assigning type i.")
         factory.createVar(StringSymbol(name), Ti).asInstanceOf[HOLVar]
 
       case fol.FOLVar(name) =>

@@ -11,6 +11,7 @@ import at.logic.language.hol.And
 import at.logic.language.hol.Imp
 import at.logic.language.hol.Neg
 import at.logic.language.hol.Or
+import at.logic.utils.logging.Logger
 
 import swing._
 import scala.swing.event.{MouseExited, MouseEntered, MouseClicked}
@@ -26,15 +27,15 @@ object ExpansionTreeState extends Enumeration {
   val Close, Open, Expand = Value
 }
 
-class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: Font) extends BoxPanel(Orientation.Horizontal) {
+class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: Font) extends BoxPanel(Orientation.Horizontal) with Logger {
 
   import ExpansionTreeState._
+  override def loggerName = "DrawExpTreeLogger"
 
   background = new Color(255, 255, 255)
   yLayoutAlignment = 0.5
   xLayoutAlignment = 0
   private val state = scala.collection.mutable.Map.empty[HOLFormula, ExpansionTreeState.Value]
-  val logger = LoggerFactory.getLogger("drawExpTreeLogger")
   val highlightColor = Color.red
   initialize
 
@@ -377,7 +378,7 @@ class DrawExpansionTree(val expansionTree: MultiExpansionTree, private val ft: F
 
 
   def drawFormula(formula: HOLFormula): BoxPanel = new BoxPanel(Orientation.Horizontal) {
-    logger.trace("drawFormula called on formula " + formula)
+    trace("drawFormula called on formula " + formula)
     background = new Color(255, 255, 255)
     yLayoutAlignment = 0.5
     opaque = false

@@ -17,6 +17,7 @@ import at.logic.provers.atp.commands.replay.ReplayCommand
 import at.logic.provers.atp.commands.robinson.{ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand}
 import at.logic.provers.atp.commands.sequents.{RefutationReachedCommand, fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand}
 import at.logic.provers.prover9.Prover9Exception
+import at.logic.utils.logging.Logger
 
 import collection.mutable.{ListBuffer, Map}
 import java.io._
@@ -65,7 +66,9 @@ Secondary Steps (each assumes a working clause, which is either the result of a 
     xx(b) -- the second literal has been removed because it was an instance of x!=x.
  */
 
-case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends SetSequentsCommand[Clause](clauses) {
+case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends SetSequentsCommand[Clause](clauses) with Logger {
+  override def loggerName = "Prover9Logger"
+
   def apply(state: State, data: Any) = {
 
     // execute prover9 and obtain the xml
@@ -134,9 +137,9 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
     tptpIS.close()
 
     val l = List((state, cmnds ++ List(RefutationReachedCommand[Clause]) ))
-    println("Parsed proof to:")
+    info("Parsed proof to:")
     for (cmd <- l(0)._2) {
-      println("  cmd  : "+cmd)
+      info("  cmd: "+cmd)
     }
     l
   }

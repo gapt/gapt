@@ -12,6 +12,8 @@ import at.logic.algorithms.lk.{solve, AtomicExpansion, applySubstitution}
 import at.logic.language.lambda.Var
 import at.logic.calculi.lk.EquationVerifier._
 import at.logic.language.lambda.BetaReduction._
+import at.logic.utils.logging.Logger
+import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import at.logic.algorithms.hlk._
 import at.logic.calculi.lk.EquationVerifier.EqualModuloEquality
@@ -43,7 +45,8 @@ object LLKFormatter {
   * TokenToLKConverter to have a common interface, but the code here is only dependent on the AST. It uses the ASTtoHOL
   * object to create HOLExpressions from hol ASTs.
   */
-trait TokenToLKConverter {
+trait TokenToLKConverter extends Logger {
+  override def loggerName = "LLKLogger"
   import LLKFormatter._
 
   /* Extracts type declarations from the tokens and creates a function to create atomic terms by name */
@@ -336,7 +339,7 @@ trait TokenToLKConverter {
               //              println("Remark: automatically inferred the auxiliaray term " + f(t) + " in formula "+f(f))
               t
             } else {
-              println("Preferring user specified term " + f(t) + " over inferred term " + f(s) + ".")
+              info("Preferring user specified term " + f(t) + " over inferred term " + f(s) + ".")
               t
             }
           } else {
@@ -387,7 +390,7 @@ trait TokenToLKConverter {
               require(t.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
               t
             } else {
-              println("Preferring user specified term " + t + " over inferred term " + s + ".")
+              info("Preferring user specified term " + t + " over inferred term " + s + ".")
               require(t.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
               t
             }
@@ -399,7 +402,7 @@ trait TokenToLKConverter {
 
         case None =>
           //automatic mode failed
-          println("Remark: Could not infer substitution term, using user specified one!")
+          info("Remark: Could not infer substitution term, using user specified one!")
           val t = HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new HybridLatexParserException("No substitution term found, please specify! " + rt)))
           require(t.isInstanceOf[Var],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
           t
@@ -669,7 +672,7 @@ trait TokenToLKConverter {
         require(inferences.nonEmpty, "Could not infer an eq:l rule from left parent "+f(leftproof.root)
           +" and "+f(rightproof.root)+" to infer "+f(fs))
         if (inferences.size > 1)
-          println("WARNING: Inference to create eq:l rule is not uniquely specified from left parent "
+          warn("WARNING: Inference to create eq:l rule is not uniquely specified from left parent "
             +leftproof.root+" and "+rightproof.root+" to infer "+fs)
 
         inferences(0)::stack
@@ -733,7 +736,7 @@ trait TokenToLKConverter {
         require(inferences.nonEmpty, "Could not infer an eq:r rule from left parent "+f(leftproof.root)
           +" and "+f(rightproof.root)+" to infer "+f(fs))
         if (inferences.size > 1)
-          println("WARNING: Inference to create eq:r rule is not uniquely specified from left parent "
+          warn("WARNING: Inference to create eq:r rule is not uniquely specified from left parent "
             +leftproof.root+" and "+rightproof.root+" to infer "+fs)
 
         inferences(0)::stack
@@ -858,14 +861,14 @@ trait TokenToLKConverter {
       }
 
       if (sub(ax) syntaxEquals(auxf)) {
-        println("User specified sub works!"+f(sub))
+        info("User specified sub works!"+f(sub))
         (name,ax1,sub)::r1
       } else r1
     })
 
     require(candidates.size > 0, "Could not find equational axiom for "+f(auxf))
     if(candidates.size > 1)
-      println("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
+      warn("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
     val (name, axiom, sub2) = candidates(0)
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c(definitions(axformula))
@@ -948,7 +951,7 @@ trait TokenToLKConverter {
           if (sub(ax) syntaxEquals(auxf) ) {
             (name,ax1,sub)::Nil
           } else {
-            println("wrong sub found!"+f(sub(ax))+" for "+f(auxf)+" sub="+f(sub)+" ax="+f(ax))
+            info("wrong sub found!"+f(sub(ax))+" for "+f(auxf)+" sub="+f(sub)+" ax="+f(ax))
             Nil
           };
 
@@ -956,7 +959,7 @@ trait TokenToLKConverter {
         case None => Nil
       }
       if (sub(ax) syntaxEquals(auxf)) {
-        println("User specified sub works!"+f(sub))
+        info("User specified sub works!"+f(sub))
         (name,ax1,sub)::r1
       } else r1
 
@@ -964,7 +967,7 @@ trait TokenToLKConverter {
 
     require(candidates.size > 0, "Could not find instance axiom for "+f(auxf))
     if(candidates.size > 1)
-      println("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
+      warn("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
     val (name, axiom, sub2) = candidates(0)
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c(definitions(axformula))

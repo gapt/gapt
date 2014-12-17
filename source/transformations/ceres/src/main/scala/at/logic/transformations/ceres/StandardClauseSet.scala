@@ -13,6 +13,7 @@ import at.logic.calculi.occurrences._
 import at.logic.language.schema.IndexedPredicate
 import at.logic.language.lambda.types.{To, Tindex}
 import at.logic.language.hol.{HOLExpression, HOLApp, HOLConst, HOLFormula}
+import at.logic.utils.logging.Logger
 import scala.annotation.tailrec
 import scala.util.control.TailCalls._
 
@@ -22,8 +23,8 @@ object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
   (set1, set2) => {
     val set1_ = set1.filterNot(s1 => set2.exists(s2 => StillmanSubsumptionAlgorithmHOL.subsumes(s2, s1)))
     val set2_ = set2.filterNot(s2 => set1_.exists(s1 => StillmanSubsumptionAlgorithmHOL.subsumes(s1, s2)))
-    println("Set1: "+set1.size+" - "+(set1.size-set1_.size))
-    println("Set2: "+set2.size+" - "+(set2.size-set2_.size))
+    //println("Set1: "+set1.size+" - "+(set1.size-set1_.size))
+    //println("Set2: "+set2.size+" - "+(set2.size-set2_.size))
     (set1_,set2_)
   }
 
@@ -33,7 +34,7 @@ object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
  * Should calculate the same clause set as [[StandardClauseSet]], but without the intermediate representation of a
  * normalized struct.
  */
-class AlternativeStandardClauseSet(val optimze_plus : (Set[FSequent], Set[FSequent]) => (Set[FSequent], Set[FSequent]) ) {
+class AlternativeStandardClauseSet(val optimize_plus : (Set[FSequent], Set[FSequent]) => (Set[FSequent], Set[FSequent]) ) {
   def apply(struct:Struct) : Set[FSequent] = struct match {
     case A(fo) => Set(FSequent(Nil, List(fo.formula)))
     case Dual(A(fo)) => Set(FSequent(List(fo.formula), Nil))
@@ -46,7 +47,7 @@ class AlternativeStandardClauseSet(val optimze_plus : (Set[FSequent], Set[FSeque
     case Plus(Dual(A(f2)), A(f1)) if f1.formula == f2.formula =>
       Set()
     case Plus(x,y) =>
-      val (x_, y_) = optimze_plus(apply(x), apply(y))
+      val (x_, y_) = optimize_plus(apply(x), apply(y))
       x_ ++ y_
     case Times(EmptyTimesJunction(), x, _) => apply(x)
     case Times(x, EmptyTimesJunction(), _) => apply(x)
@@ -70,7 +71,9 @@ class AlternativeStandardClauseSet(val optimze_plus : (Set[FSequent], Set[FSeque
  * functions run out of stack. The [[AlternativeStandardClauseSet]] performs a direct conversion, which can handle bigger
  * sizes.
  */
-object StandardClauseSet {
+object StandardClauseSet extends Logger {
+  override def loggerName = "CeresLogger"
+
   def normalize(struct:Struct):Struct = struct match {
     case s: A => s
     case s: Dual => s
@@ -101,10 +104,10 @@ object StandardClauseSet {
   }
 
   private def merge(s1:Struct, s2:Struct, aux: List[FormulaOccurrence]):Struct = {
-    println("merge on sizes "+s1.size+" and "+s2.size)
+    info("merge on sizes "+s1.size+" and "+s2.size)
     val (list1,list2) = (getTimesJunctions(s1),getTimesJunctions(s2))
     val cartesianProduct = for (i <- list1; j <- list2) yield (i,j)
-    println("done: "+s1.size+" and "+s2.size)
+    info("done: "+s1.size+" and "+s2.size)
     transformCartesianProductToStruct(cartesianProduct, aux, Nil)
   }
 

@@ -23,6 +23,8 @@ import at.logic.provers.atp.commands.robinson._
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.provers.atp.commands.refinements.base.SequentsMacroCommand
 import at.logic.provers.atp.commands.refinements.simple.SimpleRefinementGetCommand
+import at.logic.utils.logging.Logger
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -40,21 +42,25 @@ case class SetTargetClause2[V <: Sequent](val clause: Clause) extends DataComman
   def apply(state: State, data: Any) = List((state += new Tuple2("targetClause", clause.toFSequent), data))
 }
 
-case object PrintStateCommand extends DataCommand[Clause] {
+case object PrintStateCommand extends DataCommand[Clause] with Logger {
+  override def loggerName = "ReplayLogger"
+
   def apply(state: State, data: Any) : Iterable[(State,Any)] = {
-    println("state: "+state)
-    println("data:"+data)
+    info("state: "+state)
+    info("data:"+data)
     List((state,data))
   }
 }
 
 
-case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] {
+case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent) extends DataCommand[Clause] with Logger {
+  override def loggerName = "ReplayLogger"
+
   def apply(state: State, data: Any) = {
     import Stream.cons
-    println("\nReplayCommand")
+    info("\nReplayCommand")
     //get guided clauses mapping from id to resolution proof of id
-    println("\nTarget clause :"+id+"\nfrom "+parentIds.toList)
+    info("\nTarget clause :"+id+"\nfrom "+parentIds.toList)
     val gmap = state("gmap").asInstanceOf[MMap[String,ResolutionProof[Clause]]]
     //println("\nData="+data)
     //println("\nTarget clause="+cls)
@@ -64,7 +70,7 @@ case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent)
 
     //val target : Clause = if (id == "-1") Clause(Nil,Nil) else Clause(cls.antecedent, cls.succedent)
     //println("\nTrying to prove  "+cls+"  from :")
-    gproofs map (x => println(x.root))
+    gproofs map (x => info(x.root.toString))
 
 
     //initialize new prover to spawn -- same as proveFOL in cli

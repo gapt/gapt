@@ -2,6 +2,8 @@ package at.logic.gui.prooftool.gui
 
 // The code in this file displays expansion sequents.
 
+import at.logic.utils.logging.Logger
+
 import swing._
 import java.awt.{Dimension, Font, Color}
 import java.awt.Font._
@@ -11,6 +13,10 @@ import java.awt.event.MouseEvent
 import at.logic.calculi.expansionTrees.MultiExpansionTree
 import at.logic.algorithms.expansionTrees.compressQuantifiers
 import org.slf4j.LoggerFactory
+
+trait DrawExpSeqLogger extends Logger{
+  override def loggerName = "DrawExpSeqLogger"
+}
 
 /**
  * These events are used to tell a CedentPanel that two expansion trees should be switched, necessitating a redraw.
@@ -24,7 +30,7 @@ private[gui] class SwitchEvent(val from: Int, val to: Int) extends Event
  * @param expSequent The expansion sequent to be displayed
  * @param fSize The font size.
  */
-class DrawExpansionSequent(val expSequent: ExpansionSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) {
+class DrawExpansionSequent(val expSequent: ExpansionSequent, private val fSize: Int) extends SplitPane(Orientation.Vertical) with DrawExpSeqLogger {
 
   //Code for window geometry and appearance
   background = new Color(255,255,255)
@@ -54,7 +60,6 @@ class DrawExpansionSequent(val expSequent: ExpansionSequent, private val fSize: 
   }
 
   //Code for contents
-  val logger = LoggerFactory.getLogger("drawExpSeqLogger")
   val mExpSequent = compressQuantifiers(expSequent) //The input sequent is converted to MultiExpansionTrees
   val antecedentPanel: CedentPanel = new CedentPanel(mExpSequent.antecedent, "Antecedent", ft)
   val succedentPanel: CedentPanel = new CedentPanel(mExpSequent.succedent, "Succedent", ft)
@@ -68,8 +73,7 @@ class DrawExpansionSequent(val expSequent: ExpansionSequent, private val fSize: 
  * @param title The title to be displayed at the top
  * @param ft The font to be used
  */
-class CedentPanel(val cedent: Seq[MultiExpansionTree], val title: String, val ft: Font) extends BoxPanel(Orientation.Vertical) {
-  val logger = LoggerFactory.getLogger("drawExpSeqLogger")
+class CedentPanel(val cedent: Seq[MultiExpansionTree], val title: String, val ft: Font) extends BoxPanel(Orientation.Vertical) with DrawExpSeqLogger {
 
   //Code for the title label
   val titleLabel = new Label(title) {
@@ -104,8 +108,7 @@ class CedentPanel(val cedent: Seq[MultiExpansionTree], val title: String, val ft
  * @param trees The list of trees to be displayed
  * @param ft The font
  */
-class TreeListPanel(trees: Seq[MultiExpansionTree], ft: Font) extends BoxPanel(Orientation.Vertical) {
-  val logger = LoggerFactory.getLogger("drawExpSeqLogger")
+class TreeListPanel(trees: Seq[MultiExpansionTree], ft: Font) extends BoxPanel(Orientation.Vertical) with DrawExpSeqLogger {
   background = new Color(255, 255, 255)
 
   val n = trees.length

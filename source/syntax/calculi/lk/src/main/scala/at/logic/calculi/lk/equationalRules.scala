@@ -15,7 +15,7 @@ import at.logic.utils.logging._
 import org.slf4j.LoggerFactory
 
 trait EquationRuleLogger extends Logger {
-  override protected val log = LoggerFactory.getLogger("EquationRuleLogger")
+  override def loggerName = "EquationRuleLogger"
 }
 
 // Equational rules
