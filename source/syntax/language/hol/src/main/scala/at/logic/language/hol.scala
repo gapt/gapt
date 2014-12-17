@@ -354,3 +354,77 @@ object AllVar {
     case _ => None
   }
 }
+
+/** A block of existential quantifiers.
+ *
+ */
+object ExVarBlock {
+
+  /**
+   *
+   * @param vars A list of HOL variables v,,1,,, …, v,,n,,.
+   * @param sub The formula F to be quantified over.
+   * @return ∃v,,1,,…∃v,,n,,F
+   */
+  def apply(vars: List[HOLVar], sub: HOLFormula): HOLFormula = vars match {
+    case Nil => sub
+    case v :: vs => ExVar(v, ExVarBlock(vs, sub))
+  }
+
+  /**
+   *
+   * @param expression A HOLExpression
+   * @return If expression begins with an ∃-block: a pair consisting of the variables of the block and the quantified subformula.
+   */
+  def unapply(expression: HOLExpression) = expression match {
+    case f: HOLFormula =>
+      val (vars, sub) = unapplyHelper(f)
+      if (vars.nonEmpty) Some((vars, sub))
+      else None
+    case _ => None
+  }
+
+  private def unapplyHelper(f: HOLFormula): (List[HOLVar], HOLFormula) = f match {
+    case ExVar(v, sub) =>
+      val (subVars, subF) = unapplyHelper(sub)
+      (v :: subVars, subF)
+    case _ => (Nil, f)
+  }
+}
+
+/** A block of universal quantifiers.
+  *
+  */
+object AllVarBlock {
+
+  /**
+   *
+   * @param vars A list of HOL variables v,,1,,, …, v,,n,,.
+   * @param sub The formula F to be quantified over.
+   * @return ∀v,,1,,…∀v,,n,,F
+   */
+  def apply(vars: List[HOLVar], sub: HOLFormula): HOLFormula = vars match {
+    case Nil => sub
+    case v :: vs => AllVar(v, AllVarBlock(vs, sub))
+  }
+
+  /**
+   *
+   * @param expression A HOLExpression
+   * @return If expression begins with an ∀-block: a pair consisting of the variables of the block and the quantified subformula.
+   */
+  def unapply(expression: HOLExpression) = expression match {
+    case f: HOLFormula =>
+      val (vars, sub) = unapplyHelper(f)
+      if (vars.nonEmpty) Some((vars, sub))
+      else None
+    case _ => None
+  }
+
+  private def unapplyHelper(f: HOLFormula): (List[HOLVar], HOLFormula) = f match {
+    case AllVar(v, sub) =>
+      val (subVars, subF) = unapplyHelper(sub)
+      (v :: subVars, subF)
+    case _ => (Nil, f)
+  }
+}

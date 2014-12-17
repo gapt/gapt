@@ -232,4 +232,63 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       }
     }
   }
+
+  "Quantifier blocks" should {
+    val x = HOLVar("x", Ti)
+    val y = HOLVar("y", Ti)
+    val z = HOLVar("z", Ti)
+
+    val Pxyz = Atom(HOLConst("P", ->(Ti,->(Ti,(->(Ti,To))))), List(x,y,z))
+    val allP = AllVar(x, AllVar(y, AllVar(z, Pxyz)))
+    val exP = ExVar(x, ExVar(y, ExVar(z, Pxyz)))
+
+    "Correctly introduce one quantifier" in {
+      AllVarBlock(List(x), Pxyz) must beEqualTo(AllVar(x, Pxyz))
+      ExVarBlock(List(x), Pxyz) must beEqualTo(ExVar(x, Pxyz))
+    }
+
+    "Correctly introduce multiple quantifiers" in {
+      AllVarBlock(List(x,y,z), Pxyz) must beEqualTo(allP)
+      ExVarBlock(List(x,y,z), Pxyz) must beEqualTo(exP)
+    }
+
+    "Correctly match quantified formulas" in {
+
+      val match1 = allP match {
+        case AllVarBlock(vars, f) =>
+          vars == List(x,y,z)
+          f == Pxyz
+        case _ => false
+      }
+
+      val match2 = exP match {
+        case ExVarBlock(vars, f) =>
+          vars == List(x,y,z)
+          f == Pxyz
+        case _ => false
+      }
+
+      match1 must beTrue
+      match2 must beTrue
+    }
+
+    "Fail to match other formulas" in {
+      exP match {
+        case AllVarBlock(_,_) => failure
+        case _ =>
+      }
+
+      allP match {
+        case ExVarBlock(_,_) => failure
+        case _ =>
+      }
+
+      Pxyz match {
+        case AllVarBlock(_,_) | ExVarBlock(_,_) => failure
+        case _ =>
+      }
+
+      success
+    }
+  }
 }
