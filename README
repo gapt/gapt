@@ -11,25 +11,21 @@ and automated proof theory in particular.
  Contact: gapt@logic.at
 
 Requirements:
-* Unix-compatible environment (Linux, MacOsX[2])
-* Java 1.7 or later (tested with Oracle's JVM)
+* Unix-compatible environment
+* Java 1.7 or later
 * Prover9 (the binaries prover9, prooftrans and 
    tptp_to_ladr must be present in the path [1])
   available at: http://www.cs.unm.edu/~mccune/mace4/download 
 * MiniSAT (the binary minisat mist be present in the path)
   available at: http://minisat.se/MiniSat.html
+* Several MaxSAT solvers[3] (optional)
+
+Compilation:
+* sbt assembly
 
 Running:
-* The scripts cli.sh and prooftool.sh look for 
-  their respective jar files in the path and the current
-  directory and set Java's memory limits to something
-  we found useful over time.
-
-* Alternatively, you can run the jar files directly by calling
-  'java -Xss2m -Xmx2g -jar gapt-cli-1.9.jar'
-  and 
-  'java -Xss2m -Xmx2g -jar prooftool-1.9.jar'
-
+* The scripts cli.sh, gui.sh, atp.sh look for the assembled jar and set Java's
+  memory limits to something we found useful over time.
 
 License: GAPT is free software licensed under the GNU General
 Public  License Version 3. See the file COPYING for details.
@@ -38,7 +34,7 @@ Instructions on downloading the sources can be found at:
   http://code.google.com/p/gapt/source/checkout
 
 Compilation Instructions can be found at:
-  http://code.google.com/p/gapt/wiki/Installation
+  https://code.google.com/p/gapt/wiki/CompilingAndRunningFromSource
 
 Notes:
 
@@ -46,4 +42,4 @@ Notes:
     please also install the ladr4-apps package
 [2] On some MacOS X installation there might be some additional configuration done, 
     details are at https://code.google.com/p/gapt/wiki/Installation#MacOS_X_Specifics
-    
+[3] https://code.google.com/p/gapt/wiki/MaxSATSolvers
