@@ -14,7 +14,6 @@ import org.specs2.runner.JUnitRunner
 import trees._
 import graphs._
 import TreeImplicitConverters._
-import org.jgrapht.graph.DefaultEdge
 
 @RunWith(classOf[JUnitRunner])
 class TreesTest extends SpecificationWithJUnit {

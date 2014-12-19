@@ -26,26 +26,25 @@ test in assembly := {} // don't execute test when assembling jar
 // Dependencies
 
 libraryDependencies ++= Seq(
-  "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.2",
-  "org.scala-lang.modules" %% "scala-xml" % "1.0.2",
-  "org.apache.commons" % "commons-lang3" % "3.0",
-  "org.slf4j" % "slf4j-api" % "1.6.6",
-  "org.slf4j" % "slf4j-log4j12" % "1.6.6")
+  "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3",
+  "org.scala-lang.modules" %% "scala-xml" % "1.0.3",
+  "org.apache.commons" % "commons-lang3" % "3.3.2",
+  "org.slf4j" % "slf4j-api" % "1.7.9",
+  "org.slf4j" % "slf4j-log4j12" % "1.7.9")
 
 // UI
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-compiler" % scalaVersion.value,
   "jline" % "jline" % "2.12",
   "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
-  "org.jgrapht" % "jgrapht-jdk1.5" % "0.7.3",
-  "com.itextpdf" % "itextpdf" % "5.1.3",
+  "com.itextpdf" % "itextpdf" % "5.5.4",
   "org.scilab.forge" % "jlatexmath" % "1.0.2")
 
 // Tests
 libraryDependencies ++= Seq(
-  "junit" % "junit" % "4.10",
-  "org.specs2" %% "specs2-core" % "2.4.12",
-  "org.specs2" %% "specs2-matcher" % "2.4.12",
-  "org.specs2" %% "specs2-mock" % "2.4.12",
-  "org.specs2" %% "specs2-junit" % "2.4.12",
-  "org.scalacheck" %% "scalacheck" % "1.11.6") map(_ % Test)
+  "junit" % "junit" % "4.12",
+  "org.specs2" %% "specs2-core" % "2.4.15",
+  "org.specs2" %% "specs2-matcher" % "2.4.15",
+  "org.specs2" %% "specs2-mock" % "2.4.15",
+  "org.specs2" %% "specs2-junit" % "2.4.15",
+  "org.scalacheck" %% "scalacheck" % "1.12.1") map(_ % Test)
