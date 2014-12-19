@@ -43,8 +43,8 @@ libraryDependencies ++= Seq(
 // Tests
 libraryDependencies ++= Seq(
   "junit" % "junit" % "4.12",
-  "org.specs2" %% "specs2-core" % "2.4.15",
-  "org.specs2" %% "specs2-matcher" % "2.4.15",
-  "org.specs2" %% "specs2-mock" % "2.4.15",
-  "org.specs2" %% "specs2-junit" % "2.4.15",
+  "org.specs2" %% "specs2-core" % "2.4.12",
+  "org.specs2" %% "specs2-matcher" % "2.4.12",
+  "org.specs2" %% "specs2-mock" % "2.4.12",
+  "org.specs2" %% "specs2-junit" % "2.4.12",
   "org.scalacheck" %% "scalacheck" % "1.12.1") map(_ % Test)
