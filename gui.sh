@@ -7,4 +7,4 @@ if ! test -f "$JARFILE"; then
   exit 1
 fi
 
-java -Xss20m -Xmx2g -cp "$JARFILE" at.logic.gui.prooftool.gui.Main "$@"
+java -Xss20m -Xmx2g -cp ".:$JARFILE" at.logic.gui.prooftool.gui.Main "$@"
