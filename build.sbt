@@ -11,6 +11,27 @@ scalaVersion := "2.11.4"
 mainClass := Some("at.logic.cli.CLIMain")
 test in assembly := {} // don't execute test when assembling jar
 
+// Release zip task
+val releaseZip = TaskKey[File]("release-zip", "Creates the release zip file.")
+releaseZip <<= (sbtassembly.AssemblyKeys.assembly, Keys.baseDirectory, Keys.target, Keys.version) map {
+    (assemblyJar: File, baseDirectory: File, target: File, version: String) =>
+  val zipFile = target / s"gapt-$version.zip"
+
+  def recursiveListFiles(f: File): List[File] =
+    if (f.isDirectory)
+      IO.listFiles(f).toList.flatMap(recursiveListFiles)
+    else
+      List(f)
+
+  val filesToIncludeAsIs = List("README", "COPYING", "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples")
+  val entries = List((assemblyJar, s"gapt-$version.jar")) ++
+    filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDirectory / fn)}
+      .map{f => (f, baseDirectory.toPath.relativize(f.toPath))}
+
+  IO.zip(entries.map{ case (file, pathInZip) => (file, s"gapt-$version/$pathInZip") }, zipFile)
+  zipFile
+}
+
 // Start each test class in a separate JVM, otherwise resolutionSchemaParserTest and nTapeTest fail.
 {
   def oneJvmPerTest(tests: Seq[TestDefinition]) =

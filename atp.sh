@@ -1,10 +1,5 @@
-#!/bin/sh
-JARFILE="$(dirname $0)/target/scala-2.11/gapt-assembly-1.9.jar"
+#!/bin/bash
+basedir="$(dirname "$0")"
+. "$basedir/include.sh"
 
-if ! test -f "$JARFILE"; then
-  echo Jar not found at "$JARFILE"
-  echo Run sbt assembly!
-  exit 1
-fi
-
-java -Xss10m -Xmx2g -cp "$JARFILE" at.logic.provers.atp.Main "$@"
+run_gapt at.logic.provers.atp.Main "$@"

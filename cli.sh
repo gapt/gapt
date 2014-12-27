@@ -1,10 +1,19 @@
-#!/bin/sh
-JARFILE="$(dirname $0)/target/scala-2.11/gapt-assembly-1.9.jar"
+#!/bin/bash
+basedir="$(dirname "$0")"
+. "$basedir/include.sh"
 
-if ! test -f "$JARFILE"; then
-  echo Jar not found at "$JARFILE"
-  echo Run sbt assembly!
-  exit 1
-fi
+while getopts "hm:" FLAG; do
+  case $FLAG in
+    m) heap_size="$OPTARG" ;;
+    *)
+      echo "GAPT Command Line Interface"
+      echo ""
+      echo "usage: cli.sh [-h] [-m MEM]"
+      echo ""
+      echo "   -m : give MEM amount of memory to the java virtual machine (default: 2g)"
+      exit 1
+      ;;
+  esac
+done
 
-java -Xss10m -Xmx2g -jar "$JARFILE" "$@"
+run_gapt at.logic.cli.CLIMain "$@"
