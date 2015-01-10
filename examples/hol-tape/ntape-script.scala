@@ -9,7 +9,9 @@
  * *************************************************************************** */
 
 /* adjust filename to load a different example */
-val filename = "./algorithms/llk/src/test/resources/tape3.llk"  
+//val filename = "./algorithms/llk/src/test/resources/tape3.llk"  
+val filename = "./algorithms/llk/src/test/resources/tape3ex.llk"  
+//val filename = "tape3old.llk"  
 
 /* begin of proof script  */
 
@@ -37,7 +39,7 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 
 
-  case class Robinson2RalAndUndoHOL2Fol(sig_vars : Map[String, List[HOLVar]],
+ class Robinson2RalAndUndoHOL2Fol(sig_vars : Map[String, List[HOLVar]],
                                    sig_consts : Map[String, List[HOLConst]],
                                    cmap : replaceAbstractions.ConstantsMap) extends RobinsonToRal {
     val absmap = Map[String, HOLExpression]() ++ (cmap.toList.map(x => (x._2.toString, x._1)))
@@ -45,14 +47,17 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
     override def convert_formula(e:HOLFormula) : HOLFormula = {
       require(e.isInstanceOf[FOLFormula])
-      recreateWithFactory(undoHol2Fol.backtranslate(e.asInstanceOf[FOLFormula], sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]
+
+      BetaReduction.betaNormalize(
+        recreateWithFactory( undoHol2Fol.backtranslate(e.asInstanceOf[FOLFormula], sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]  
+    )
     }
 
     override def convert_substitution(s:Substitution) : Substitution = {
       val mapping = s.map.toList.map(x =>
         (
-          recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLVar],
-          recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[FOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]
+          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]).asInstanceOf[HOLVar],
+          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[FOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression])
           )
       )
 
@@ -60,6 +65,12 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
     }
   }
 
+ object Robinson2RalAndUndoHOL2Fol {
+    def apply(sig_vars : Map[String, List[HOLVar]],
+              sig_consts : Map[String, List[HOLConst]],
+              cmap : replaceAbstractions.ConstantsMap) =
+      new Robinson2RalAndUndoHOL2Fol(sig_vars, sig_consts, cmap)
+  }
 
       show("Loading file")
       val pdb = loadLLK(filename)
