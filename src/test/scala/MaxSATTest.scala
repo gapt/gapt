@@ -2,8 +2,6 @@
  * Tests for the MaxSAT interface.
 **/
 
-DELETE THIS IF YOU WANT TO BUILD
-
 package at.logic.provers.maxsat
 
 
