@@ -51,6 +51,16 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= testDependencies map(_ % Test)
   )
 
+lazy val testing = (project in file("testing")).
+  dependsOn(root).
+  settings(commonSettings: _*).
+  settings(
+    name := "gapt-testing",
+    description := "gapt extended regression tests",
+    sourcesInBase := false,
+    libraryDependencies ++= testDependencies map(_ % Test)
+  )
+
 lazy val releaseZip = TaskKey[File]("release-zip", "Creates the release zip file.")
 
 lazy val testDependencies = Seq(
