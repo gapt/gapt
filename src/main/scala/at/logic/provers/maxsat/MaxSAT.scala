@@ -319,7 +319,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     }
 
     debug("Command: "+command)
-    val process = Process(command)
+    println(command)
     var output = new StringBuilder()
     var error = new StringBuilder()
     val processIO = new ProcessIO(
@@ -327,12 +327,12 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
       stdout => scala.io.Source.fromInputStream(stdout, "ISO-8859-1").getLines.foreach(s => output.append(s+"\n")),
       stderr => scala.io.Source.fromInputStream(stderr, "ISO-8859-1").getLines.foreach(s => error.append(s+"\n")))
 
-    var proc:Process = null;
-    var value = -666:Int;
+    val proc = Process(command) run processIO
+    var value: Int = -1
 
     try {
       // run MaxSATSOlver process
-      proc = process.run(processIO);
+      value = proc exitValue
     }catch{
       // catch ThreadDeath if the procedure is interrupted by a Timeout
       // and kill the external MaxSATSolver process
@@ -341,10 +341,6 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
         proc.destroy();
         throw tde;
       }
-    }
-    finally{
-      // this line is crucial => in order to proceed we have to read the exitValue of the process
-      value = proc.exitValue();
     }
 
     debug("Exit Value = " + value)
