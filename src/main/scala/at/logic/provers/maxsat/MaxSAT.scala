@@ -319,7 +319,6 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
     }
 
     debug("Command: "+command)
-    println(command)
     var output = new StringBuilder()
     var error = new StringBuilder()
     val processIO = new ProcessIO(
