@@ -5,11 +5,14 @@ lazy val commonSettings = Seq(
   startYear := Some(2008),
   version := "1.9",
 
-  scalaVersion := "2.11.4"
+  scalaVersion := "2.11.4",
+  testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
+  libraryDependencies ++= testDependencies map(_ % Test)
 )
 
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
+  disablePlugins(JUnitXmlReportPlugin).
   settings(
     name := "gapt",
     description := "General Architecture for Proofs",
@@ -47,18 +50,17 @@ lazy val root = (project in file(".")).
       "org.scilab.forge" % "jlatexmath" % "1.0.2"),
 
     // Start each test class in a separate JVM, otherwise resolutionSchemaParserTest and nTapeTest fail.
-    testGrouping in Test <<= definedTests in Test map oneJvmPerTest,
-    libraryDependencies ++= testDependencies map(_ % Test)
+    testGrouping in Test <<= definedTests in Test map oneJvmPerTest
   )
 
 lazy val testing = (project in file("testing")).
   dependsOn(root).
   settings(commonSettings: _*).
+  disablePlugins(JUnitXmlReportPlugin).
   settings(
     name := "gapt-testing",
     description := "gapt extended regression tests",
-    sourcesInBase := false,
-    libraryDependencies ++= testDependencies map(_ % Test)
+    sourcesInBase := false
   )
 
 lazy val releaseZip = TaskKey[File]("release-zip", "Creates the release zip file.")
