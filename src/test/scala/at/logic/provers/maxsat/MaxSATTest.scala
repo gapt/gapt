@@ -4,13 +4,12 @@
 
 package at.logic.provers.maxsat
 
-
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import at.logic.language.fol._
 import at.logic.calculi.resolution._
+import at.logic.language.fol._
 
 @RunWith(classOf[JUnitRunner])
 class MaxSATTest extends SpecificationWithJUnit {

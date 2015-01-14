@@ -5,12 +5,11 @@ import java.io._
 import at.logic.algorithms.resolution.{CNFp, TseitinCNF}
 import at.logic.calculi.resolution._
 import at.logic.language.fol._
-import at.logic.language.hol.HOLVar
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.logging.Stopwatch
+
 import scala.collection.immutable.Map
 import scala.collection.mutable
-import scala.io.Source
 import scala.sys.process.{Process, ProcessIO}
 
 // This is also occuring in the minisat package
