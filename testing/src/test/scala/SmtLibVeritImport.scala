@@ -8,7 +8,7 @@ import org.specs2.mutable._
 
 class SmtLibVeritImport extends Specification {
   "SMT-LIB VeriT proof import" should {
-    for (file <- recursiveListFiles(new File("testing/veriT-SMT-LIB")).take(5) if file.getName.endsWith(".proof_flat")) {
+    for (file <- recursiveListFiles(new File("testing/veriT-SMT-LIB")) if file.getName.endsWith(".proof_flat")) {
       file.getName in {
         withTimeout(60 * 1000) {
           VeriTParser.getExpansionProof(file.getAbsolutePath)
