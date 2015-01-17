@@ -215,7 +215,7 @@ an object representing a proof within the system. The string is the name of the
 proof defined on the xml file. For example:
 %
 \begin{lstlisting}
-scala> val proofs = loadProofs( "../examples/simple/fol1.xml.gz" )
+scala> val proofs = loadProofs( "examples/simple/fol1.xml.gz" )
 \end{lstlisting}
 %
 returns a list of length 1 as shown by entering
@@ -248,13 +248,7 @@ In the folder \cli{../examples/simple} you can find a number of further simple
 examples that illustrate different aspects of GAPT.
 
 
-
-
-%\paragraph{\textbf{loadProofDB: String $\rightarrow$ ProofDatabase}}
-%{\color{red}TODO}
-
-The command \texttt{exportXML: List[Proof], List[String], String $\rightarrow$ Unit}
-Exports several proofs to an XML file. The first argument is the list of proofs,
+The command \texttt{exportXML} Exports several proofs to an XML file. The first argument is the list of proofs,
 the second is the list of the names of the proofs and the third is the name of
 the file that will be written. The file path can also be specified and it's
 relative to where the program is being executed.
@@ -295,9 +289,8 @@ The prover9 syntax was also extended to higher-order logic, where type declarati
 scala> val I = parseLLKFormula ( "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))" )
 \end{lstlisting}
 
-
 \begin{meta}
-TODO: add the other parsers, describe syntax in detail
+TODO: add the other parsers
 \end{meta}
 
 A collection of formula sequences can be found in the file \cli{../examples/FormulaSequence.scala}.
@@ -305,7 +298,7 @@ Have a look at this code to see how to compose formulas without the parser. This
 a scala script that can be loaded into the CLI by entering
 %
 \begin{lstlisting}
-scala> :load ../examples/FormulaSequences.scala
+scala> :load examples/FormulaSequences.scala
 \end{lstlisting}
 %
 Then you can generate instances of these formula sequences by entering e.g.
@@ -329,7 +322,7 @@ is no hole containing two pigeons. This is satisfiable iff $m\leq n$. Make sure
 that the pigeon hole principle is available in your current CLI session 
 by entering
 \begin{lstlisting}
-scala> :load ../examples/FormulaSequences.scala
+scala> :load examples/FormulaSequences.scala
 \end{lstlisting}
 if you have not done so already. Then
 \begin{lstlisting}
@@ -348,31 +341,16 @@ scala> val m = miniSATsolve(Neg(PigeonHolePrinciple(3, 3))).get
 \end{lstlisting}
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
 \begin{lstlisting}
-scala> val p1 = at.logic.testing.PigeonHolePrinciple.atom(1, 1)
-p1: at.logic.language.fol.FOLFormula = R(p_1, h_1)
-
-scala> val p2 = at.logic.testing.PigeonHolePrinciple.atom(2, 1)
-p2: at.logic.language.fol.FOLFormula = R(p_2, h_1)
-
-scala> val p3 = at.logic.testing.PigeonHolePrinciple.atom(3, 1)
-p3: at.logic.language.fol.FOLFormula = R(p_3, h_1)
-
+scala> val p1 = PigeonHolePrinciple.atom(1, 1)
+scala> val p2 = PigeonHolePrinciple.atom(2, 1)
+scala> val p3 = PigeonHolePrinciple.atom(3, 1)
 scala> m.interpret(p1) // Is pigeon 1 in hole 1?
-res14: Boolean = false
-
 scala> m.interpret(p2) // Is pigeon 2 in hole 1?
-res15: Boolean = true
-
 scala> m.interpret(p3) // Is pigeon 3 in hole 1?
-res16: Boolean = false
 \end{lstlisting}
 We can also interpret quantifier-free formulas:
 \begin{lstlisting}
-cala> m.interpret( And(p1, p2) )
-res17: Boolean = false
-
-scala> m.interpret( Neg(notvalid) )
-res18: Boolean = true
+scala> m.interpret( And(p1, p2) )
 \end{lstlisting}
 
 \subsection{SMT Solving using VeriT}
@@ -396,7 +374,7 @@ which can be called with the command \texttt{proveProp}, for example as in:
 scala> proveProp( parse.fol( "Imp A Imp B And A B" ))
 \end{lstlisting}
 
-\section{Entering Proofs}
+\section{Entering Proofs}\label{sec:entering_proofs}
 
 There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
@@ -405,26 +383,16 @@ Section~\ref{sec.entering_formulas}, suppose that we want to enter a
 proof of \texttt{F}. It is convenient to prepare the subformulas first.
 \begin{lstlisting}
 scala> val F1 = parse.fol( "Imp B And A B" )
-F1: at.logic.language.fol.FOLFormula = (B$\supset$(A$\land$B))
-
 scala> val F2 = parse.fol( "And A B" )
-F2: at.logic.language.fol.FOLFormula = (A$\land$B)
-
 scala> val A = parse.fol( "A" )
-A: at.logic.language.fol.FOLFormula = A
-
 scala> val B = parse.fol( "B" )
-B: at.logic.language.fol.FOLFormula = B
 \end{lstlisting}
 %
 We start with the axioms:
 %
 \begin{lstlisting}
 scala> val p1 = Axiom( A::Nil, A::Nil )
-p1: at.logic.utils.ds.trees.LeafTree[at.logic.calculi.lk.base.Sequent] with at.logic.calculi.lk.base.NullaryLKProof{def rule: at.logic.calculi.lk.propositionalRules.InitialRuleType.type} = InitialRuleType(A :- A)
-
 scala> val p2 = Axiom( B::Nil, B::Nil )
-p2: at.logic.utils.ds.trees.LeafTree[at.logic.calculi.lk.base.Sequent] with at.logic.calculi.lk.base.NullaryLKProof{def rule: at.logic.calculi.lk.propositionalRules.InitialRuleType.type} = InitialRuleType(B :- B)
 \end{lstlisting}
 %
 These are joined by an $\land:\mathrm{right}$-inference. See Appendix~\ref{app:sequent_calculus}
@@ -432,17 +400,13 @@ for the formal definition of the sequent calculus used in GAPT.
 %
 \begin{lstlisting}
 scala> val p3 = AndRightRule( p1, p2, A, B )
-p3: at.logic.calculi.lk.base.BinaryLKProof with at.logic.calculi.lk.base.BinaryLKProof with at.logic.calculi.lk.base.AuxiliaryFormulas with at.logic.calculi.lk.base.PrincipalFormulas = AndRightRuleType(A, B :- (A∧B), InitialRuleType(A :- A), InitialRuleType(B :- B))
 \end{lstlisting}
 %
 To finish the proof it remains to apply two $\impl:\mathrm{right}$-inferences:
 %
 \begin{lstlisting}
 scala> val p4 = ImpRightRule( p3, B, F2 )
-p4: at.logic.utils.ds.trees.UnaryTree[at.logic.calculi.lk.base.Sequent] with at.logic.calculi.lk.base.UnaryLKProof with at.logic.calculi.lk.base.AuxiliaryFormulas with at.logic.calculi.lk.base.PrincipalFormulas = ImpRightRuleType(A :- (B⊃(A∧B)), AndRightRuleType(A, B :- (A∧B), InitialRuleType(A :- A), InitialRuleType(B :- B)))
-
 scala> val p5 = ImpRightRule( p4, A, F1 )
-p5: at.logic.utils.ds.trees.UnaryTree[at.logic.calculi.lk.base.Sequent] with at.logic.calculi.lk.base.UnaryLKProof with at.logic.calculi.lk.base.AuxiliaryFormulas with at.logic.calculi.lk.base.PrincipalFormulas = ImpRightRuleType( :- (A⊃(B⊃(A∧B))), ImpRightRuleType(A :- (B⊃(A∧B)), AndRightRuleType(A, B :- (A∧B), InitialRuleType(A :- A), InitialRuleType(B :- B))))
 \end{lstlisting}
 %
 You can now view this proof by typing:
@@ -451,11 +415,11 @@ scala> prooftool( p5 )
 \end{lstlisting}
 
 The system comes with a collection of example proof sequences in the file
-\cli{../examples/ProofSequences.scala} which are generated in the above style.
+\cli{examples/ProofSequences.scala} which are generated in the above style.
 Have a look at this code for more complicated proof constructions. In order
 to load these proof sequences into the CLI, enter:
 \begin{lstlisting}
-scala> :load ../examples/ProofSequences.scala
+scala> :load examples/ProofSequences.scala
 \end{lstlisting}
 
 \begin{meta}
@@ -472,7 +436,7 @@ The GAPT-system contains an implementation of reductive cut-elimination
 with cuts (as in Section~\ref{sec.fileio}).
 %
 \begin{lstlisting}
-scala> val p = loadProofs( "../examples/simple/fol1.xml.gz" )(0)._2
+scala> val p = loadProofs( "examples/simple/fol1.xml.gz" )(0)._2
 \end{lstlisting}
 %
 and then call the cut-elimination procedure:
@@ -488,7 +452,7 @@ by new function symbols thus obtaining a validity-equivalent sequent. In the GAP
 is implemented for proofs and can be used, e.g.~as follows:
 %
 \begin{lstlisting}
-scala> val proofs = loadProofs( "../examples/prime/ceres_xml/prime1-1.xml.gz" )
+scala> val proofs = loadProofs( "examples/prime/ceres_xml/prime1-1.xml.gz" )
 scala> val p = proofs(0)._2
 scala> val q = skolemize( p )
 \end{lstlisting}
@@ -503,19 +467,13 @@ a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of 
 It returns a formula $I$ s.t.\ $\Gamma_1\seq\Delta_1, I$ and $I,\Gamma_2\seq\Delta_2$
 are provable and $I$ contains only such predicate symbols that appear in both, $\Gamma_1\seq\Delta_1$
 and $\Gamma_2\seq\Delta_2$. For example, suppose pr is a proof of $p \lor q \seq p, q$
-by a single $\lor$-left inference, then you can compute an interpolant as follows:
+by a single $\lor$-left inference (see Section~\ref{sec:entering_proofs} for how to construct
+such a proof), then you can compute an interpolant as follows:
 \begin{lstlisting}
 scala> val s = pr.root
-s: at.logic.calculi.lk.base.Sequent = (p:o $\lor$ q:o) :- p:o, q:o
-
 scala> val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
-npart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurrence] = Set((p:o $\lor$ q:o)[10005], p:o[10006])
-
 scala> val ppart = Set( s.succedent( 1 ) )
-ppart: scala.collection.immutable.Set[at.logic.calculi.occurrences.FormulaOccurrence] = Set(q:o[10007])
-
 scala> val I = extractInterpolant( pr, npart, ppart )
-I: at.logic.language.hol.HOLFormula = ($\bot$:o $\lor$ q:o)
 \end{lstlisting}
 
 \subsection{Expansion Trees}
@@ -562,19 +520,18 @@ session using extractStruct, structToClausesList, prover9 etc.
 
 \section{Cut-Introduction}
 
-The cut-introduction algorithm as described in \cite{HetzlXXAlgorithmic} is
+The cut-introduction algorithm as described in~\cite{Hetzl2012,Hetzl14Algorithmic,Hetzl14Introducing} is
 implemented in GAPT for introducing a single $\Pi_1$-cut into a sequent calculus
 proof. In this section we show the commands, step by step, that need to be
 executed for this algorithm. We will use as input one of the proofs generated by
-the system, namely, \texttt{LinearExampleProof(9)}. But the
-user can also, for example, write his own proofs in
-\texttt{hlk}\footnote{\url{http://www.logic.at/hlk/}} and input these files to
-the system. 
+the system, namely, \texttt{LinearExampleProof(9)}. But the user can also
+write his own proofs (see Section~\ref{sec:entering_proofs})
+and input them files to the cut-introduction algorithm.
 
 Make sure that the example proof sequences are available in the current CLI
 session if you have not done so already by entering
 \begin{lstlisting}
-scala> :load ../examples/ProofSequences.scala
+scala> :load examples/ProofSequences.scala
 \end{lstlisting}
 %
 First of all, we instantiate the desired proof and store this in a variable:
@@ -622,7 +579,7 @@ Given the end-sequent of the proof and a grammar, the extended Herbrand sequent 
 \begin{lstlisting}
 scala> val ehs = generateExtendedHerbrandSequent(p.root, g)
 \end{lstlisting}
-As it was shown in \cite{HetzlXXAlgorithmic}, the cut-introduction problem has a
+As it was shown in~\cite{Hetzl2012}, the cut-introduction problem has a
 canonical solution:
 \begin{lstlisting}
 scala> val cs = computeCanonicalSolution(p.root, g)
@@ -634,7 +591,7 @@ scala> minimizeSolution(ehs)
 \end{lstlisting}
 Finally, the proof with cut is constructed:
 \begin{lstlisting}
-scala> val fp = buildProofWithCut(ehs)
+scala> val fp = buildProofWithCut(ehs).get
 \end{lstlisting}
 In order to compare this with the initial proof, one can again count
 the number of rules:
@@ -650,13 +607,15 @@ Quantifier complexity: 6
 We showed how to run the cut-introduction algorithm step by step. There is,
 though, a command comprising all these steps:
 \begin{lstlisting}
-scala> val fp2 = cutIntro( p, NoConstraint )
+scala> val fp2 = cutIntro.one_cut_one_quantifier( p )
 \end{lstlisting}
 Regarding the choice of the grammar, this command will compute the proofs with
 all minimal grammars and choose the smallest one (with respect to the number of rules).
-The second parameter, \texttt{NoConstraint}, indicates that the quantifier
-block in the cut to be generated may be of arbitrary length, an alternative is
-e.g.~\texttt{UpperBound(2)} to limit the length of the block to 2 quantifiers.
+
+The method \texttt{cutIntro.one\_cut\_many\_quantifiers} will proceed as above but will
+compute a single cut with a block of quantifiers. The method \texttt{cutIntro.many\_cuts\_one\_quantifier}
+uses a reduction to a MaxSAT problem and an external MaxSAT-solver for finding a
+minimal grammar corresponding to a proof with an arbitrary number of cuts with one quantifier each.
 
 \section{Miscellaneous}
 
