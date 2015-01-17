@@ -339,7 +339,7 @@ trait TokenToLKConverter extends Logger {
               //              println("Remark: automatically inferred the auxiliaray term " + f(t) + " in formula "+f(f))
               t
             } else {
-              info("Preferring user specified term " + f(t) + " over inferred term " + f(s) + ".")
+              debug("Preferring user specified term " + f(t) + " over inferred term " + f(s) + ".")
               t
             }
           } else {
@@ -390,7 +390,7 @@ trait TokenToLKConverter extends Logger {
               require(t.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
               t
             } else {
-              info("Preferring user specified term " + t + " over inferred term " + s + ".")
+              debug("Preferring user specified term " + t + " over inferred term " + s + ".")
               require(t.isInstanceOf[HOLVar],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
               t
             }
@@ -402,7 +402,7 @@ trait TokenToLKConverter extends Logger {
 
         case None =>
           //automatic mode failed
-          info("Remark: Could not infer substitution term, using user specified one!")
+          debug("Remark: Could not infer substitution term, using user specified one!")
           val t = HLKHOLParser.ASTtoHOL(naming, auxterm.getOrElse(throw new HybridLatexParserException("No substitution term found, please specify! " + rt)))
           require(t.isInstanceOf[Var],  "Strong quantifier rule needs an eigenvariable as argument, but "+t+" is not!")
           t
@@ -672,7 +672,7 @@ trait TokenToLKConverter extends Logger {
         require(inferences.nonEmpty, "Could not infer an eq:l rule from left parent "+f(leftproof.root)
           +" and "+f(rightproof.root)+" to infer "+f(fs))
         if (inferences.size > 1)
-          warn("WARNING: Inference to create eq:l rule is not uniquely specified from left parent "
+          debug("WARNING: Inference to create eq:l rule is not uniquely specified from left parent "
             +leftproof.root+" and "+rightproof.root+" to infer "+fs)
 
         inferences(0)::stack
@@ -736,7 +736,7 @@ trait TokenToLKConverter extends Logger {
         require(inferences.nonEmpty, "Could not infer an eq:r rule from left parent "+f(leftproof.root)
           +" and "+f(rightproof.root)+" to infer "+f(fs))
         if (inferences.size > 1)
-          warn("WARNING: Inference to create eq:r rule is not uniquely specified from left parent "
+          debug("WARNING: Inference to create eq:r rule is not uniquely specified from left parent "
             +leftproof.root+" and "+rightproof.root+" to infer "+fs)
 
         inferences(0)::stack
@@ -861,14 +861,14 @@ trait TokenToLKConverter extends Logger {
       }
 
       if (sub(ax) syntaxEquals(auxf)) {
-        info("User specified sub works!"+f(sub))
+        debug("User specified sub works!"+f(sub))
         (name,ax1,sub)::r1
       } else r1
     })
 
     require(candidates.size > 0, "Could not find equational axiom for "+f(auxf))
     if(candidates.size > 1)
-      warn("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
+      debug("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
     val (name, axiom, sub2) = candidates(0)
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c(definitions(axformula))
@@ -967,7 +967,7 @@ trait TokenToLKConverter extends Logger {
 
     require(candidates.size > 0, "Could not find instance axiom for "+f(auxf))
     if(candidates.size > 1)
-      warn("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
+      debug("Warning: Axiom not uniquely specified, possible candidates: "+candidates.map(x=> f(x._1)+" "+x._2).mkString(","))
     val (name, axiom, sub2) = candidates(0)
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c(definitions(axformula))

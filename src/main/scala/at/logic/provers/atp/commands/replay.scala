@@ -46,8 +46,8 @@ case object PrintStateCommand extends DataCommand[Clause] with Logger {
   override def loggerName = "ReplayLogger"
 
   def apply(state: State, data: Any) : Iterable[(State,Any)] = {
-    info("state: "+state)
-    info("data:"+data)
+    debug("state: "+state)
+    debug("data:"+data)
     List((state,data))
   }
 }
@@ -58,9 +58,9 @@ case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent)
 
   def apply(state: State, data: Any) = {
     import Stream.cons
-    info("\nReplayCommand")
+    debug("\nReplayCommand")
     //get guided clauses mapping from id to resolution proof of id
-    info("\nTarget clause :"+id+"\nfrom "+parentIds.toList)
+    debug("\nTarget clause :"+id+"\nfrom "+parentIds.toList)
     val gmap = state("gmap").asInstanceOf[MMap[String,ResolutionProof[Clause]]]
     //println("\nData="+data)
     //println("\nTarget clause="+cls)
@@ -70,7 +70,7 @@ case class ReplayCommand(parentIds: Iterable[String], id: String, cls: FSequent)
 
     //val target : Clause = if (id == "-1") Clause(Nil,Nil) else Clause(cls.antecedent, cls.succedent)
     //println("\nTrying to prove  "+cls+"  from :")
-    gproofs map (x => info(x.root.toString))
+    gproofs map (x => debug(x.root.toString))
 
 
     //initialize new prover to spawn -- same as proveFOL in cli

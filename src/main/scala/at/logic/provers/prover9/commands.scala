@@ -137,9 +137,9 @@ case class Prover9InitCommand(override val clauses: Iterable[FSequent]) extends 
     tptpIS.close()
 
     val l = List((state, cmnds ++ List(RefutationReachedCommand[Clause]) ))
-    info("Parsed proof to:")
+    debug("Parsed proof to:")
     for (cmd <- l(0)._2) {
-      info("  cmd: "+cmd)
+      debug("  cmd: "+cmd)
     }
     l
   }

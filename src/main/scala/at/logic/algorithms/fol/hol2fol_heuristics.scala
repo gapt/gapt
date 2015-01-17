@@ -119,7 +119,7 @@ object undoHol2Fol extends Logger {
         head
 
       case fol.FOLVar(ivy_varname(name) ) =>
-        info("Guessing that the variable "+name+" comes from ivy, assigning type i.")
+        trace("Guessing that the variable "+name+" comes from ivy, assigning type i.")
         factory.createVar(StringSymbol(name), Ti).asInstanceOf[HOLVar]
 
       case fol.FOLVar(name) =>

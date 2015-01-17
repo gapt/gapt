@@ -11,6 +11,7 @@ import org.xml.sax.helpers.DefaultHandler
 import org.xml.sax.InputSource
 import javax.xml.parsers.SAXParserFactory
 import org.xml.sax.ext.EntityResolver2
+import at.logic.utils.logging.Logger
 
 object XMLReaders {
   abstract class NodeReader(n: Node) extends XMLNodeParser {
@@ -32,7 +33,7 @@ object XMLReaders {
     }
   }
 
-  object LogicAtHandler extends DefaultHandler with EntityResolver2  {
+  object LogicAtHandler extends DefaultHandler with EntityResolver2 with Logger {
     override def  resolveEntity  (publicId: String, systemId : String) : InputSource = {
       //println("resolving entity:"+publicId+" "+systemId)
       try {
@@ -59,7 +60,7 @@ object XMLReaders {
           case  _ => throw e
         }
 
-        case _: Throwable => println("other error"); null
+        case _: Throwable => error("other error"); null
       }
     }
 

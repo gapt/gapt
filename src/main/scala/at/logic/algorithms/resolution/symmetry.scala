@@ -99,8 +99,8 @@ object fixSymmetry extends at.logic.utils.logging.Logger {
   private def handleInitialClause( cls: FClause, cs: Seq[FSequent] ) =
     cs.find( c => canDeriveBySymmetry( cls, c ) ) match {
       case None => {
-        warn("Could not find a clause which is equal to this clause modulo symmetry: " + cls)
-        warn("Clause set: " + cs)
+        trace("Could not find a clause which is equal to this clause modulo symmetry: " + cls)
+        trace("Clause set: " + cs)
         InitialClause(cls)
       }
       case Some( c ) => {

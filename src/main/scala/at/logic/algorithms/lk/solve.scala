@@ -67,7 +67,7 @@ object solve extends at.logic.utils.logging.Logger {
     val ant_set = seq.antecedent.toSet
     val suc_set = seq.succedent.toSet
     if (( ant_set.size != seq.antecedent.size ) || ( suc_set.size != seq.succedent.size )) {
-      warn( "proving a sequent which is not set-normalized" )
+      debug( "proving a sequent which is not set-normalized" )
     }
 
     trace("proving: "+seq)

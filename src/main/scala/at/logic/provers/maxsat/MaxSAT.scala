@@ -336,7 +336,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
       // catch ThreadDeath if the procedure is interrupted by a Timeout
       // and kill the external MaxSATSolver process
       case tde:ThreadDeath => {
-        log.error("Process interrupted by timeout: Killing MaxSATSolver process");
+        debug("Process interrupted by timeout: Killing MaxSATSolver process");
         proc.destroy();
         throw tde;
       }

@@ -38,7 +38,7 @@ object RobinsonToLK extends Logger {
     val memotable = new PCNFMemoTable(s)
     //val p = addWeakenings.weaken(ContractionMacroRule(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), memotable.getPCNF),s, strict = false), s)
     val p = WeakeningContractionMacroRule(recConvert(resproof, s, scala.collection.mutable.Map[FClause,LKProof](), memotable.getPCNF),s, strict = true)
-    info("Memoization saved "+memotable.getHits()+" calls!")
+    debug("Memoization saved "+memotable.getHits()+" calls!")
     p
   }
 
@@ -46,7 +46,7 @@ object RobinsonToLK extends Logger {
   def apply(resproof: RobinsonResolutionProof, s: FSequent, map: mapT): LKProof = {
     val memotable = new PCNFMemoTable(s)
     val p = WeakeningContractionMacroRule(recConvert(resproof, s, map, memotable.getPCNF),s, strict = false)
-    info("Memoization saved "+memotable.getHits()+" calls!")
+    debug("Memoization saved "+memotable.getHits()+" calls!")
     p
   }
 

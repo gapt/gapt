@@ -119,7 +119,7 @@ case object UnaryEquationRight2RuleType extends UnaryRuleTypeA
           trace("Equation: " +s+" = "+t+".")
 
           if (main == aux && s == t) {
-            warn("aux and main formula are equal.")
+            debug("aux and main formula are equal.")
 
             val sAux = aux.find(s)
 
@@ -246,7 +246,7 @@ case object UnaryEquationRight2RuleType extends UnaryRuleTypeA
         trace("Equation: " +s+" = "+t+".")
 
         if (main == aux && s == t) {
-          warn("aux and main formula are equal.")
+          debug("aux and main formula are equal.")
 
           val sAux = aux.find(s)
 
@@ -397,7 +397,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (main == aux && s == t) {
-          warn("aux and main formula are equal.")
+          debug("aux and main formula are equal.")
 
           val sAux = aux.find(s)
 
@@ -507,7 +507,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (main == aux && s == t) {
-          warn("aux and main formula are equal.")
+          debug("aux and main formula are equal.")
 
           val sAux = aux.find(s)
 
@@ -659,7 +659,7 @@ object EquationRight1Rule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (main == aux && s == t) {
-          warn("aux and main formula are equal.")
+          debug("aux and main formula are equal.")
 
           val sAux = aux.find(s)
 
@@ -787,7 +787,7 @@ object EquationRight1Rule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (main == aux && s == t) {
-          warn("aux and main formula are equal.")
+          debug("aux and main formula are equal.")
 
           val sAux = aux.find(s)
 
@@ -939,7 +939,7 @@ object EquationRight2Rule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (main == aux && s == t) {
-          warn("aux and main formula are equal.")
+          debug("aux and main formula are equal.")
 
           val sAux = aux.find(s)
 
@@ -1049,7 +1049,7 @@ object EquationRight2Rule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (main == aux && s == t) {
-          warn("aux and main formula are equal.")
+          debug("aux and main formula are equal.")
 
           val sAux = aux.find(s)
 

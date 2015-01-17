@@ -574,7 +574,7 @@ object Utils extends Logger {
       case FOLVar(x) => FOLVar(x.replace(prefix1,prefix2))
       case FOLConst(c) => FOLConst(c)
       case Function(f,l) => Function(f,l.map(p => replaceAllVars(p, prefix1, prefix2)))
-      case _ => {warn("An unexpected case happened. Maleformed FOLTerm."); t }
+      case _ => throw new Exception("Unexpected case. Malformed FOLTerm.")
     }
   }
 
@@ -608,8 +608,7 @@ object Utils extends Logger {
       case FOLVar(x) => FOLVar(x)
       case FOLConst(c) => FOLConst(c)
       case Function(f,l) => Function(f,l.map(p => incrementAllVars(p, prefix)))
-      case _ => {warn("An unexpected case happened. Maleformed FOLTerm.");
-        t}
+      case _ => throw new Exception("Unexpected case. Malformed FOLTerm.")
     }
   }
 

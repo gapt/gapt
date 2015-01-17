@@ -80,7 +80,7 @@ object LKtoLKskc extends Logger {
         m.formula match {
           case AllVar(HOLVar(_,alpha), _) =>
             val f = HOLConst(getFreshSkolemFunctionSymbol, FunctionType(alpha, args.map(_.exptype)))
-            info( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
+            debug( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
             val s = Function( f, args )
             val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
@@ -112,7 +112,7 @@ object LKtoLKskc extends Logger {
         m.formula match {
           case ExVar(HOLVar(_,alpha), _) =>
             val f = HOLConst(getFreshSkolemFunctionSymbol, FunctionType(alpha, args.map(_.exptype)))
-            info( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
+            debug( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
             val s = Function( f, args )
             val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )

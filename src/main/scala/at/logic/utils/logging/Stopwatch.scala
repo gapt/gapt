@@ -48,7 +48,7 @@ class Stopwatch() extends Logger {
   def lap(msg: String) : Long = {
     if(status == STOPPED)
     {
-      warn("Stopwatch has not been started. Can not measure time.")
+      debug("Stopwatch has not been started. Can not measure time.")
       return 0
     }
     val now = System.currentTimeMillis()
@@ -67,7 +67,7 @@ class Stopwatch() extends Logger {
   def save(msg: String) : Long = {
     if(status == STOPPED)
     {
-      warn("Stopwatch has not been started. Can not measure time.")
+      debug("Stopwatch has not been started. Can not measure time.")
       return 0
     }
     val now = System.currentTimeMillis()
@@ -86,7 +86,7 @@ class Stopwatch() extends Logger {
    */
   def stop(msg: String) : Long = {
     if(status == STOPPED){
-      info("Stopwatch is not running. Nothing to do here.")
+      debug("Stopwatch is not running. Nothing to do here.")
       return 0
     }
     val now = System.currentTimeMillis()

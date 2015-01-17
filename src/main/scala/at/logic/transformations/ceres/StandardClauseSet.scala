@@ -104,10 +104,10 @@ object StandardClauseSet extends Logger {
   }
 
   private def merge(s1:Struct, s2:Struct, aux: List[FormulaOccurrence]):Struct = {
-    info("merge on sizes "+s1.size+" and "+s2.size)
+    trace("merge on sizes "+s1.size+" and "+s2.size)
     val (list1,list2) = (getTimesJunctions(s1),getTimesJunctions(s2))
     val cartesianProduct = for (i <- list1; j <- list2) yield (i,j)
-    info("done: "+s1.size+" and "+s2.size)
+    trace("done: "+s1.size+" and "+s2.size)
     transformCartesianProductToStruct(cartesianProduct, aux, Nil)
   }
 

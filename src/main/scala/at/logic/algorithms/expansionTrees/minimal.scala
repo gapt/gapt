@@ -53,19 +53,19 @@ private[expansionTrees] class minimalExpansionSequents (val sequent: MultiExpans
     }
     
     while (stack.nonEmpty) {
-      info("Retrieving sequent from stack")
+      debug("Retrieving sequent from stack")
       val (current) = stack.pop() // Topmost element of stack is retrieved. We already know it is tautological; only need to consider its successors.
-      debug("Retrieved sequent " + current + ".")
+      trace("Retrieved sequent " + current + ".")
       val n = maxRemovedInstance(current)
-      info("Generating successors")
+      trace("Generating successors")
       val newSequents = generateSuccessors(current) // All successor expansion sequents are generated.
       val m = newSequents.length
-      info(m + " successors generated")
+      trace(m + " successors generated")
       var minimal = true // We assume that the current sequent is minimal unless we find a counterexample.
       
       for (i <- 1 to m) { // Iterate over the generated successors
         val s = newSequents(i-1)
-        debug("Testing validity ["+i+"/"+m+"] ...")
+        trace("Testing validity ["+i+"/"+m+"] ...")
         if (prover.isValid(s.toDeep)) {
           if (i >= n) // This is the core of the optimization: Avoid pushing sequents on the stack multiple times.
             stack.push(s) // Push valid sequents on the stack
@@ -75,11 +75,11 @@ private[expansionTrees] class minimalExpansionSequents (val sequent: MultiExpans
       }
       
       if (minimal) {
-        info("Sequent is minimal.")
+        debug("Sequent is minimal.")
         result += current // If the current sequent is minimal, we add it to the results.
       }
       else {
-        info("Sequent is not minimal.")
+        debug("Sequent is not minimal.")
       }
     }
     
@@ -99,10 +99,10 @@ private[expansionTrees] class minimalExpansionSequents (val sequent: MultiExpans
 
       // Loop over the antecedent.
       var n = ant.length
-      info("Generating successor trees for antecedent ...")
+      trace("Generating successor trees for antecedent ...")
       for (j <- 1 to n) {
         val (tree, fst, snd) = zipper(ant, j) //We iteratively focus each expansion tree in the antecedent of S.
-        info("["+j+"/"+n+"]")
+        trace("["+j+"/"+n+"]")
         val newTrees = generateSuccessorTrees(tree) // We generate all successor trees of the current tree.
 
         if (newTrees.isEmpty) { // This can happen for two reasons: the current tree contains no weak quantifiers or all its weak quantifier nodes have only one instance.
@@ -135,10 +135,10 @@ private[expansionTrees] class minimalExpansionSequents (val sequent: MultiExpans
 
       // Loop over the succedent, analogous to the one over the antecedent.
       n = suc.length
-      info("Generating successor trees for succedent ...")
+      trace("Generating successor trees for succedent ...")
       for (j <- 1 to n) {
         val (tree, fst, snd) = zipper(suc, j)
-        info("["+j+"/"+n+"]")
+        trace("["+j+"/"+n+"]")
         val newTrees = generateSuccessorTrees(tree)
 
         if (newTrees.isEmpty) {

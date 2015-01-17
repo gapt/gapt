@@ -230,7 +230,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
           Some(ret)
         } catch {
           case e : Exception =>
-            warn("Warning: Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
+            debug("Prover9 run successfully but conversion to resolution proof failed! " + e.getMessage)
             val stackelements = e.getStackTrace
             for (ste <- stackelements)
               trace(ste.getFileName + ":"+ ste.getLineNumber +" " + ste.getClassName+"."+ste.getMethodName)

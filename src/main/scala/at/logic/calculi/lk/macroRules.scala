@@ -304,7 +304,7 @@ object EquationLeftRule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (s == t && aux == main) {
-          warn("Producing equation rule with trivial equation.")
+          debug("Producing equation rule with trivial equation.")
           EquationLeft1Rule(s1, s2, term1oc, term2oc, main)
         }
 
@@ -378,7 +378,7 @@ object EquationLeftRule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (s == t && aux == main) {
-          warn("Producing equation rule with trivial equation.")
+          debug("Producing equation rule with trivial equation.")
           EquationLeft1Rule(s1, s2, term1oc, term2oc, main)
         }
 
@@ -561,7 +561,7 @@ object EquationRightRule extends EquationRuleLogger {
         trace("Equation: " + s + " = " + t + ".")
 
         if (s == t && aux == main) {
-          warn("Producing equation rule with trivial equation.")
+          debug("Producing equation rule with trivial equation.")
           EquationRight1Rule(s1, s2, term1oc, term2oc, main)
         }
 
@@ -636,7 +636,7 @@ object EquationRightRule extends EquationRuleLogger {
         trace("Equation: " + s + " = " + t + ".")
 
         if (s == t && aux == main) {
-          warn("Producing equation rule with trivial equation.")
+          debug("Producing equation rule with trivial equation.")
           EquationRight1Rule(s1, s2, term1oc, term2oc, main)
         }
 
@@ -879,7 +879,7 @@ object EquationLeftMacroRule extends EquationRuleLogger {
         trace("Equation: " + s + " = " + t + ".")
 
         if (s == t && aux == main) {
-          warn("Producing equation rule with trivial equation.")
+          debug("Producing equation rule with trivial equation.")
           EquationLeft1Rule(s1, s2, term1oc, term2oc, main)
         }
 
@@ -1017,7 +1017,7 @@ object EquationRightMacroRule extends EquationRuleLogger {
         trace("Equation: " +s+" = "+t+".")
 
         if (s == t && aux == main) {
-          warn("Producing equation rule with trivial equation.")
+          debug("Producing equation rule with trivial equation.")
           EquationRight1Rule(s1, s2, term1oc, term2oc, main)
         }
 
