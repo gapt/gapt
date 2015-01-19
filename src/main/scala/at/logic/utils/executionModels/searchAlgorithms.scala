@@ -11,7 +11,6 @@ package at.logic.utils.executionModels
 import collection.mutable.{Queue => MQueue}
 import collection.immutable.Queue
 import scala.math.Ordering.Implicits._
-import at.logic.utils.logging.Logger
 
 package searchAlgorithms {
   trait SearchAlgorithm {
@@ -107,7 +106,7 @@ package searchAlgorithms {
   }
 
 
-  object SearchAlgorithms extends Logger {
+  object SearchAlgorithms {
 
 
     /** Performs a parameterizable search with with a custom collection and successor function.
@@ -217,15 +216,12 @@ package searchAlgorithms {
         (elemFilter:(NodeType, (ElemType,Int)) => Boolean, nodeFilter: NodeType => Boolean, node:NodeType):List[NodeType] = {
         //Generate candidate successors
 
-        trace("   setSearch: node.largerElements = " + node.largerElements.toList.toString)
         val candidateAdditions = node.largerElements.filter(e => {
             val (elem,index) = e
             !node.includedElements.contains(index) &&
             (node.includedElements.length == 0 || index > node.includedElements.head._2) &&
             elemFilter(node,e)
           })
-
-        trace("              passed filter: " + candidateAdditions.length)
 
         //Create the successor nodes
         //asInstanceOf: ugly hack, but it wouldn't typecheck otherwise

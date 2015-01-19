@@ -5,7 +5,6 @@
 
 
 package at.logic.utils.ds
-import at.logic.utils.logging.Logger
 
 import acyclicGraphs._
 import graphs._
@@ -111,7 +110,7 @@ package trees {
     def fold[T](leafF: V => T)(unaryF: (T, V) => T)(binaryF: (T,T,V)=> T): T = throw new UnsupportedOperationException("fold is not implemented for ArbitraryTrees")
   }
 
-  object ArbitraryTree extends Logger {
+  object ArbitraryTree {
     def apply[V](vertex: V, parents: Tree[V]*) = {val ls = parents.toList; ls match {
       case Nil => LeafTree[V](vertex)
       case t::Nil => UnaryTree[V](vertex, t)
@@ -119,7 +118,7 @@ package trees {
       case t::tls => applyRec[V](vertex, tls, ls, EdgeGraph[V](t.vertex, vertex, VertexGraph[V](vertex, t)))
     }}
     def applyRec[V](vertex: V, trees: List[Tree[V]], allParents: List[Tree[V]], graph: Graph[V]): ArbitraryTree[V] = trees match {
-      case Nil => error("The recursive call in arbitrary tree is always called on at least two arguments as the other cases are being handled by unary and binary trees", new AssertionError())
+      case Nil => throw new AssertionError("The recursive call in arbitrary tree is always called on at least two arguments as the other cases are being handled by unary and binary trees")
       case t::Nil => new ArbitraryTree[V](vertex, allParents.head, allParents.tail, graph)
       case t::tls => applyRec[V](vertex, tls, allParents, EdgeGraph[V](t.vertex, vertex, UnionGraph[V](graph, t)))
     }

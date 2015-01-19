@@ -8,7 +8,6 @@
 package at.logic.utils.ds
 
 import at.logic.utils.ds.graphs._
-import at.logic.utils.logging.Logger
 import scala.collection.immutable.{HashSet, HashMap}
 
 // it should be called conntected acyclic graphs as it always generates connected components
@@ -115,7 +114,7 @@ trait AGraph[+V] extends Graph[V] {
     def contains[T >: AGraph[V]](sub: T) = this == sub || lastParent.contains(sub) || restParents.exists(x => x.contains(sub))
   }
 
-  object ArbitraryAGraph extends Logger {
+  object ArbitraryAGraph {
     def apply[V](vertex: V, parents: AGraph[V]*) = {val ls = parents.toList; ls match {
       case Nil => LeafAGraph[V](vertex)
       case t::Nil => UnaryAGraph[V](vertex, t)
@@ -123,7 +122,7 @@ trait AGraph[+V] extends Graph[V] {
       case t::tls => applyRec[V](vertex, tls, ls, EdgeGraph[V](t.vertex, vertex, VertexGraph[V](vertex, t)))
     }}
     def applyRec[V](vertex: V, AGraphs: List[AGraph[V]], allParents: List[AGraph[V]], graph: Graph[V]): ArbitraryAGraph[V] = AGraphs match {
-      case Nil => error("The recursive call in arbitrary AGraph is always called on at least two arguments as the other cases are being handled by unary and binary AGraphs", new AssertionError())
+      case Nil => throw new AssertionError("The recursive call in arbitrary AGraph is always called on at least two arguments as the other cases are being handled by unary and binary AGraphs")
       case t::Nil => new ArbitraryAGraph[V](vertex, allParents.head, allParents.tail, graph)
       case t::tls => applyRec[V](vertex, tls, allParents, EdgeGraph[V](t.vertex, vertex, UnionGraph[V](graph, t)))
     }
