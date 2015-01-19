@@ -53,7 +53,7 @@ object Deltas extends Logger {
     *
     * The variable in the returned decomposition -- if it occurrs -- will be named [eigenvariable]_0.
     */
-  class OneVariableDelta extends DeltaVector with Logger {
+  class OneVariableDelta extends DeltaVector {
     // There must be a better way...
     // TODO: this should go somewhere else?
     def listEquals(lst1: List[FOLTerm], lst2: List[FOLTerm]) : Boolean = (lst1, lst2) match {
@@ -155,7 +155,7 @@ object Deltas extends Logger {
     *
     * For details, see doc/deltavector.tex, Section "bounded generalized Delta-Vector".
     */
-  class ManyVariableDelta(numVars: Int) extends DeltaVector with Logger {
+  class ManyVariableDelta(numVars: Int) extends DeltaVector {
     val upperBound = numVars
 
     def computeDelta(terms: List[FOLTerm], eigenvariable: String) : Set[types.Decomposition] = {

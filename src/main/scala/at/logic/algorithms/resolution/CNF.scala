@@ -4,7 +4,6 @@ import at.logic.language.fol.{FOLFormula, And => FAnd, Imp => FImp, Or => FOr, N
 import at.logic.language.hol._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{StringSymbol, SymbolA}
-import at.logic.utils.logging.Logger
 
 import scala.collection.mutable
 
@@ -73,7 +72,7 @@ object TseitinCNF {
   }
 }
 
-class TseitinCNF extends Logger {
+class TseitinCNF {
 
   // add already known subformulas
   val subformulaMap = mutable.Map[FOLFormula, FOLFormula]()

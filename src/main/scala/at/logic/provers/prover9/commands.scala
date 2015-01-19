@@ -233,7 +233,6 @@ case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
 
 //TODO: refactor shared code with Prover9Init
 object InferenceExtractor {
-  private def debug(s:String) : Unit = { }
 
   def viaLADR(fn : String) : FSequent = {
     import scala.io.Source

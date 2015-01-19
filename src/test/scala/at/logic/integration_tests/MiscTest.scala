@@ -36,17 +36,14 @@ import java.util.zip.GZIPInputStream
 import java.io.File.separator
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import at.logic.calculi.occurrences._
-import at.logic.utils.logging.Logger
 import at.logic.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
-import org.slf4j.LoggerFactory
 import org.specs2.execute.Success
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier with Logger {
-  override def loggerName = "MiscTestLogger"
+class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
   private def LinearExampleProof( k : Int, n : Int ) : LKProof = {

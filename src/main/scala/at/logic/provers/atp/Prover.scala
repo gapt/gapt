@@ -65,7 +65,7 @@ object Main {
 
 class ProverException(msg: String) extends Exception(msg)
 
-trait Prover[V <: Sequent] extends at.logic.utils.logging.Logger {
+trait Prover[V <: Sequent] {
   
   def refute(commands: Stream[Command[V]]) : NDStream[ResolutionProof[V]] = {
     //println("\nrefute")

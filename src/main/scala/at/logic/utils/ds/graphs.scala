@@ -12,7 +12,6 @@ package at.logic.utils.ds
 package graphs {
 
 import scala.collection.JavaConversions._
-import at.logic.utils.logging.Logger
 
 trait Graph[+V] {
   // this value is computed when needed from the structure of the inductive graph

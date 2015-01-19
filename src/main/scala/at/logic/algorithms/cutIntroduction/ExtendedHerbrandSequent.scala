@@ -14,7 +14,6 @@ import at.logic.calculi.lk.base._
 import at.logic.language.fol._
 import at.logic.algorithms.resolution._
 import at.logic.calculi.resolution.FClause
-import at.logic.utils.logging.Logger
 import scala.collection.immutable.Stack
 import at.logic.algorithms.cutIntroduction.MinimizeSolution.MyFClause
 import at.logic.utils.dssupport.ListSupport.mapAccumL
@@ -26,7 +25,7 @@ import at.logic.provers.minisat.MiniSAT
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) extends Logger {
+class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: FOLFormula = null) {
  
   val endSequent = seq
   val terms = g.terms

@@ -14,7 +14,6 @@ import at.logic.language.fol.Utils._
 import at.logic.calculi.occurrences._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
-import at.logic.utils.logging.Logger
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.{DFS, BFS, setSearch}
 import Deltas._
