@@ -12,20 +12,20 @@ import at.logic.provers._
 import at.logic.transformations.herbrandExtraction.extractExpansionTrees
 
 // for testCutIntro.compressProofSequences
-:load ../examples/ProofSequences.scala
+:load examples/ProofSequences.scala
 
 /**********
  * test script for the cut-introduction algorithm on output proofs from prover9,
  * veriT and example proof sequences.
  * usage example from CLI:
  *
- * scala> :load ../testing/testCutIntro.scala
+ * scala> :load testing/testCutIntro.scala
  *
- * scala> testCutIntro.findNonTrivialTSTPExamples( "../testing/TSTP/prover9/", 60 )
+ * scala> testCutIntro.findNonTrivialTSTPExamples( "testing/TSTP/prover9/", 60 )
  *
  * test the tests by
- * scala> testCutIntro.compressTSTP ("../testing/resultsCutIntro/tstp_minitest.csv", timeout: Int, method: Int)
- * scala> testCutIntro.compressVeriT ("../testing/veriT-SMT-LIB/QF_UF/eq_diamond/", timeout: Int, method: Int)
+ * scala> testCutIntro.compressTSTP ("testing/resultsCutIntro/tstp_minitest.csv", timeout: Int, method: Int)
+ * scala> testCutIntro.compressVeriT ("testing/veriT-SMT-LIB/QF_UF/eq_diamond/", timeout: Int, method: Int)
  * scala> testCutIntro.compressProofSequences (timeout: Int, method: Int)
  * Where method is:
  * 0: introduce one cut with one quantifier
