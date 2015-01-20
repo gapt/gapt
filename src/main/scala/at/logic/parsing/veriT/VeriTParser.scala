@@ -5,9 +5,8 @@ import at.logic.language.fol._
 import at.logic.language.lambda.BetaReduction._
 import at.logic.calculi.expansionTrees.{ExpansionTree, WeakQuantifier, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree}
 import java.io.{Reader, FileReader}
-import at.logic.utils.logging.Logger
 
-object VeriTParser extends RegexParsers with Logger {
+object VeriTParser extends RegexParsers {
 
   type Instances = (FOLFormula, List[FOLFormula])
 
@@ -142,22 +141,16 @@ object VeriTParser extends RegexParsers with Logger {
             f3 :: unfoldChain_(l.tail, newc)
 
           case Neg(Atom(eq1, List(x2, x3))) =>
-            val msg = "ERROR: the conclusion of the previous terms have" +
+            throw new Exception("ERROR: the conclusion of the previous terms have" +
               " no literal in common with the next one. Are the literals out of order?" +
-              "\nconclusion: " + c + "\nsecond literal: " + l.head
-            error(msg)
-            throw new Exception(msg)
+              "\nconclusion: " + c + "\nsecond literal: " + l.head)
 
           case _ =>
-            val msg = "ERROR: wrong format for negated equality: " + c
-            error(msg)
-            throw new Exception(msg)
+            throw new Exception("ERROR: wrong format for negated equality: " + c)
         }
 
         case Neg(Atom(eq0, List(x0, x1))) if eq0.toString != eq =>
-          val msg = "ERROR: Predicate " + eq0 + " in eq_transitive is not equality."
-          error(msg)
-          throw new Exception(msg)
+          throw new Exception("ERROR: Predicate " + eq0 + " in eq_transitive is not equality.")
 
         // When reaching the final literal, check if they are the same.
         case Atom(eq0, List(x0, x1)) if eq0.toString == eq => c match {
@@ -165,27 +158,19 @@ object VeriTParser extends RegexParsers with Logger {
           case Neg(Atom(eq1, List(x2, x3))) if x1 == x2 && x0 == x3 => Nil
 
           case Neg(Atom(eq1, List(x2, x3))) =>
-            val msg = "ERROR: the conclusion of the previous terms" +
-              " have no literal in common with the conclusion of the chain. Are the literals out of order? Is the conclusion" +
-              " not the last one?"
-            error(msg)
-            throw new Exception(msg)
+            throw new Exception("ERROR: the conclusion of the previous terms" +
+              " have no literal in common with the conclusion of the chain. Are the literals out of order?" +
+              " Is the conclusion not the last one?")
 
           case _ =>
-            val msg = "ERROR: wrong format for negated equality: " + c
-            error(msg)
-            throw new Exception(msg)
+            throw new Exception("ERROR: wrong format for negated equality: " + c)
         }
 
         case Atom(eq0, List(x0, x1)) if eq0.toString != eq =>
-          val msg = "ERROR: Predicate " + eq0 + " in eq_transitive is not equality."
-          error(msg)
-          throw new Exception(msg)
+          throw new Exception("ERROR: Predicate " + eq0 + " in eq_transitive is not equality.")
 
         case _ =>
-          val msg = "Unmatched list head: "+l.head
-            error(msg)
-            throw new Exception(msg)
+          throw new Exception("Unmatched list head: "+l.head)
     }
 
     val instances = unfoldChain(l)
@@ -306,30 +291,16 @@ object VeriTParser extends RegexParsers with Logger {
   }
 
   def getExpansionProof(filename: String): Option[ExpansionSequent] = {
-    trace("FILE: " + filename)
     getExpansionProof(new FileReader(filename))
   }
 
   def getExpansionProof(reader: Reader): Option[ExpansionSequent] = {
-    try {
-      parseAll(proof, reader) match {
-        case Success(r, _) => r
-        case Failure(msg, next) => 
-          val msg0 = "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column
-          error(msg0)
-          throw new Exception(msg0)
-        case Error(msg, next) => 
-          val msg0 = "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column
-          error(msg0)
-          throw new Exception(msg0)
-      }
-    } catch {
-      case e : OutOfMemoryError => 
-        error(s"Out of memory during parsing: $e")
-        throw e
-      case e : Throwable =>
-        error(s"Unknown error during parsing: $e")
-        throw e
+    parseAll(proof, reader) match {
+      case Success(r, _) => r
+      case Failure(msg, next) => 
+        throw new Exception("VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
+      case Error(msg, next) => 
+        throw new Exception("VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
     }
   }
 
@@ -337,11 +308,9 @@ object VeriTParser extends RegexParsers with Logger {
     parseAll(parseUnsat, new FileReader(filename)) match {
       case Success(r, _) => r
       case Failure(msg, next) => 
-        val msg0 = "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column
-        throw new Exception(msg0)
+        throw new Exception("VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
       case Error(msg, next) => 
-        val msg0 = "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column
-        throw new Exception(msg0)
+        throw new Exception("VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column)
     }   
   }
 
