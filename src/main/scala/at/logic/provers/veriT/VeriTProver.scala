@@ -14,10 +14,11 @@ class VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
   override def isValid(s: FSequent) : Boolean = {
 
     // Generate the input file for veriT
-    val in_file = VeriTExporter(s, "toProve.smt")
+    val filename = "toProve" + System.currentTimeMillis + ".smt"
+    val in_file = VeriTExporter(s, filename)
 
     // Execute the system command and get the result as a string.
-    val result = try { "veriT toProve.smt".!! }
+    val result = try { ("veriT " + filename).!! }
     catch {
       case e: IOException => throw new Exception("Error while executing VeriT.")
     }
@@ -27,7 +28,7 @@ class VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
       case false => throw new Exception("Error deleting smt file.")
     }
 
-    val out_file = new File("proof.smt")
+    val out_file = new File("proof" + System.currentTimeMillis + ".smt")
     val pw = new PrintWriter(out_file)
     pw.write(result)
     pw.close()

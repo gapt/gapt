@@ -86,13 +86,13 @@ object testCutIntro {
   def compressAll (timeout: Int) = {
     // note: the "now starting" - lines are logged in the data file so that it can be separated into the particular test runs later
 
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/1 cut, 1 quantifier" )
+    /*CutIntroDataLogger.trace( "---------- now starting ProofSeq/1 cut, 1 quantifier" )
     compressProofSequences (timeout, 0)
     CutIntroDataLogger.trace( "---------- now starting ProofSeq/1 cut, many quantifiers" )
     compressProofSequences (timeout, 1)
     CutIntroDataLogger.trace( "---------- now starting ProofSeq/many cuts, 1 quantifier" )
     compressProofSequences (timeout, 2)
-
+*/
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/1 cut, 1 quantifier" )
     compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 0)
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/1 cut, many quantifiers" )
@@ -224,10 +224,11 @@ object testCutIntro {
   // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
   def compressTSTP (str: String, timeout: Int, method: Int) = {
     
-    // Process each file
+    // Process each file in parallel
     val lines = Source.fromFile(str).getLines().toList
-    lines.foreach{ case l =>
+    lines.par.foreach { case l =>
       val data = l.split(",")
+      println ("*** Prover9 file: " + data(0))
       compressTSTPProof (data(0), timeout, method)
     }
   }
@@ -262,21 +263,28 @@ object testCutIntro {
 
   /****************************** VeriT SMT-LIB ******************************/
 
-  /// compress all veriT-proof found recursively in the directory str
-  def compressVeriT (str: String, timeout: Int, method: Int) = recCompressVeriT (str, timeout, method)
-
-  def recCompressVeriT (str: String, timeout: Int, method: Int): Unit = {
-    val file = new File (str)
-    if (file.isDirectory) {
-      val children = file.listFiles
-      children.foreach (f => recCompressVeriT (f.getPath, timeout, method))
-    }
-    else if (file.getName.endsWith(".proof_flat")) {
-      compressVeriTProof (file.getPath, timeout, method)
+  // Compress all veriT-proofs found in the directory str and beyond
+  def compressVeriT (str: String, timeout: Int, method: Int) = {
+    val proofs = getVeriTProofs (str)
+    proofs.par.foreach { case p => 
+      println ("*** VeriT file: " + p)
+      compressVeriTProof (p, timeout, method)
     }
   }
 
-  /// compress the veriT-proof str
+  def getVeriTProofs (str: String): List[String] = {
+    val file = new File (str)
+    if (file.isDirectory) {
+      val children = file.listFiles
+      children.foldLeft(List[String]()) ((acc, f) => acc ::: getVeriTProofs (f.getPath))
+    }
+    else if (file.getName.endsWith(".proof_flat")) {
+      List(file.getPath)
+    }
+    else List()
+  }
+
+  // Compress the veriT-proof in file str
   def compressVeriTProof (str: String, timeout: Int, method: Int) {
     var status = "ok"
 
