@@ -3,7 +3,7 @@
    cut normal form by applying the CERES_omega method.                          
    Usage:                                                                       
      (start cli in gapt/source directory or adjust the filename variable below command)     
-     :load ../examples/hol-tape/ntape-script.scala                               
+     :load examples/hol-tape/ntape-script.scala                               
      prooftool(acnf)                                                            
                                                                                 
  * *************************************************************************** */

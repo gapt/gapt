@@ -1,7 +1,7 @@
 /**********
  * some test scripts for experimenting with cut-introduction
  *
- * scala> :load ../testing/CutIntroToolBox.scala
+ * scala> :load testing/CutIntroToolBox.scala
  **********/
 
 import at.logic.algorithms.cutIntroduction._

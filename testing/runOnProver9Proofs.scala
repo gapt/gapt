@@ -7,12 +7,12 @@ object runOnProver9Proofs {
   /** The base prover9 path.
    *
    */
-  val basePath = "../testing/TSTP/prover9/"
+  val basePath = "testing/TSTP/prover9/"
 
   /** Where log files will be stored.
    *
    */
-  val logDirPath = "../testing/logs"
+  val logDirPath = "testing/logs"
 
   /** The maximum time (in seconds) a test is allowed to take.
    *

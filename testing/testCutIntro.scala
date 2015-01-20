@@ -37,7 +37,7 @@ import at.logic.transformations.herbrandExtraction.extractExpansionTrees
  * see compressAll for how to call specific tests
  **********/
 
-val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger$")
+val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger")
 
 /*
  * Each log line is a tuple consisting in the following values in this order:
@@ -70,7 +70,7 @@ val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger$")
  *   </layout>
  * </appender>
  *
- * <logger name="CutIntroDataLogger$">
+ * <logger name="CutIntroDataLogger">
  *   <level value="trace"/>
  *   <appender-ref ref="CutIntroDataLogFile"/>
  * </logger>
@@ -94,18 +94,18 @@ object testCutIntro {
     compressProofSequences (timeout, 2)
 
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/1 cut, 1 quantifier" )
-    compressTSTP ("../testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 0)
+    compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 0)
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/1 cut, many quantifiers" )
-    compressTSTP ("../testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 1)
+    compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 1)
     CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/many cuts, 1 quantifier" )
-    compressTSTP ("../testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 2)
+    compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 2)
     
     CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/1 cut, 1 quantifier" )
-    compressVeriT ("../testing/veriT-SMT-LIB/QF_UF/", timeout, 0)
+    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 0)
     CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/1 cut, many quantifiers" )
-    compressVeriT ("../testing/veriT-SMT-LIB/QF_UF/", timeout, 1)
+    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 1)
     CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/many cuts, 1 quantifier" )
-    compressVeriT ("../testing/veriT-SMT-LIB/QF_UF/", timeout, 2)
+    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 2)
   }
 
   /*
@@ -157,8 +157,8 @@ object testCutIntro {
   def findNonTrivialTSTPExamples ( str : String, timeout : Int ) = {
     
     nonTrivialTermset(str, timeout)
-    val file = new File("../testing/resultsCutIntro/tstp_non_trivial_termset.csv")
-    val summary = new File("../testing/resultsCutIntro/tstp_non_trivial_summary.txt")
+    val file = new File("testing/resultsCutIntro/tstp_non_trivial_termset.csv")
+    val summary = new File("testing/resultsCutIntro/tstp_non_trivial_summary.txt")
     file.createNewFile()
     summary.createNewFile()
     val fw = new FileWriter(file.getAbsoluteFile)
@@ -398,7 +398,7 @@ object testCutIntro {
   }
 
   def removeEqAxioms( eseq: ExpansionSequent ) = {
-   // removes all equality axioms that appear in ../examples/ProofSequences.scala
+   // removes all equality axioms that appear in examples/ProofSequences.scala
    val R = parse.fol( "Forall x =(x,x)" )
    val S = parse.fol( "Forall x Forall y Imp =(x,y) =(y,x)" )
    val T = parse.fol( "Forall x Forall y Forall z Imp And =(x,y) =(y,z) =(x,z)" )

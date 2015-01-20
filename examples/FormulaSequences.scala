@@ -1,7 +1,7 @@
 /**********
  * Example formula sequences, usage example from CLI:
  *
- * scala> :load ../examples/FormulaSequences.scala
+ * scala> :load examples/FormulaSequences.scala
  * scala> val f = PigeonHolePrinciple( 4, 3 )
  **********/
 

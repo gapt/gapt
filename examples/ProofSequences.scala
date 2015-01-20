@@ -1,7 +1,7 @@
 /**********
  * Example proof sequences, usage example from CLI:
  *
- * scala> :load ../examples/ProofSequences.scala
+ * scala> :load examples/ProofSequences.scala
  * scala> val p = LinearExampleProof( 5 )
  **********/
 
