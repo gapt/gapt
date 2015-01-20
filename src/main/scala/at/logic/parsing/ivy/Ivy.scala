@@ -9,6 +9,7 @@ import at.logic.calculi.lk.base.FSequent
 import at.logic.calculi.occurrences.FormulaOccurrence
 import at.logic.calculi.occurrences
 import at.logic.language.lambda.types.Ti
+import at.logic.utils.logging.Logger
 
 /**
  * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ into Ivy's Resolution calculus.
@@ -16,7 +17,9 @@ import at.logic.language.lambda.types.Ti
 
 
 /* Constructor object, takes a filename and tries to parse as a lisp_file  */
-object IvyParser {
+object IvyParser extends Logger {
+  override def loggerName = "IvyParserLogger"
+
   //easy parametrization to choose naming conventions (there is no information about this in the ivy format)
   sealed abstract class VariableNamingConvention;
   case object PrologStyleVariables extends VariableNamingConvention;
@@ -35,28 +38,10 @@ object IvyParser {
   //calls the sexpression parser on the given file and parses it, needs a naming convention
   def apply_(fn : String, is_variable_symbol : (String => Boolean) ): IvyResolutionProof = {
     val exp = SExpressionParser(fn)
-    require(exp.length >= 1, "An ivy proof must contain at least one proof object, not "+exp.length+"! "+exp)
-    if (exp.length >1) println("WARNING: Ivy proof in "+fn+" contains more than one proof, taking the first one.")
+    require(exp.length >= 1, "An ivy proof must contain at least one proof object, not "+exp.length+"! ")
+    if (exp.length >1) warn ("WARNING: Ivy proof in "+fn+" contains more than one proof, taking the first one.")
     parse(exp(0), is_variable_symbol)
   }
-
-  /*
-  case class Position(path:List[Int]) { }
-
-  class Hole[T <: LambdaExpression](val exp : T, val pos : Position) {
-    def term_in_hole : T = term_in_hole(exp,pos.path)
-    def term_in_hole(exp : T, pos : List[Int]) : T = pos match {
-      case Nil => exp
-      case p::ps => exp match {
-        case AppN(f, args) if ((p>0) && (p <= args.size)  ) => term_in_hole(args(p-1), ps)
-      }
-
-    }
-
-  } */
-
-  var debug : Boolean = false
-  private def debug(a:Any) : Unit = if (debug) { println("Debug: "+a.toString) }
 
   // the type synoyms should make the parsing functions more readable
   type ProofId = String
@@ -91,7 +76,7 @@ object IvyParser {
   /* parses an inference step and updates the proof map  */
   def parse_step(exp : SExpression, found_steps : ProofMap, is_variable_symbol : String => Boolean) : (ProofId, ProofMap) = {
     exp match {
-      case LispList(LispAtom(id) :: _) => () //debug("processing inference "+id)
+      case LispList(LispAtom(id) :: _) => () 
       case _ => ()
     }
     exp match {
@@ -137,7 +122,6 @@ object IvyParser {
         val parent_proof2 = found_steps(parent_id2)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
 
-        try {
         val (occ1, polarity1, _) = get_literal_by_position(parent_proof1.vertex, position1, parent_proof1.clause_exp, is_variable_symbol)
         val (occ2, polarity2, _) = get_literal_by_position(parent_proof2.vertex, position2, parent_proof2.clause_exp, is_variable_symbol)
 
@@ -201,17 +185,6 @@ object IvyParser {
           case _ =>
             throw new Exception("Error parsing resolution inference: must resolve over a positive and a negative literal!")
         }
-
-        } catch {
-          case e : Exception =>
-            debug("Exception in id "+id)
-            debug(parent_proof1)
-            debug(parent_proof2)
-            debug(position1)
-            debug(position2)
-          throw e
-        }
-
       }
 
       /* ================== Flip ========================== */
@@ -219,7 +192,6 @@ object IvyParser {
         val parent_proof = found_steps(parent_id)
         val fclause = parse_clause(clause, is_variable_symbol)
         val (occ, polarity, _) = get_literal_by_position(parent_proof.root, position, parent_proof.clause_exp, is_variable_symbol)
-        //require(polarity == true, "Flipped literals must be positive!"+parent_proof.clause_exp+" -> "+clause)
 
         occ.formula match {
           case Equation(left,right) =>
@@ -236,7 +208,6 @@ object IvyParser {
                 require(fclause setEquals inference.root.toFSequent,
                   "Error parsing flip rule: inferred clause "+inference.root.toFSequent +
                     " is not the same as given clause "+ fclause)
-                //println("new Flip rule: "+id+ " : "+inference)
                 (id, found_steps + ((id, inference)))
 
               case false =>
@@ -248,7 +219,6 @@ object IvyParser {
                 require(fclause setEquals inference.root.toFSequent,
                   "Error parsing flip rule: inferred clause "+inference.root.toFSequent +
                     " is not the same as given clause "+ fclause)
-                //println("new Flip rule: "+id+ " : "+inference)
                 (id, found_steps + ((id, inference)))
             }
 
@@ -268,15 +238,12 @@ object IvyParser {
         require(direction == List(1) || direction == List(2), "Must indicate if paramod or demod!")
         val orientation = if (direction.head == 1) true else false //true = paramod (left to right), false = demod (right to left)
 
-        debug("found occurrence of equation: "+mocc+" at pos "+mposition)
         require(mpolarity == true, "Paramodulated literal must be positive!")
         val (pocc, polarity, int_position) = get_literal_by_position(parent_proof.root, pposition, parent_proof.clause_exp, is_variable_symbol)
-        debug("found occurrence of target formula:"+pocc+" at pos "+pposition)
 
         mocc.formula match {
           case Equation(left,right) =>
             def connect_directly(x:FormulaOccurrence) = x.factory.createFormulaOccurrence(x.formula, x::Nil)
-            debug(polarity)
             polarity match {
               case true =>
                 val neglits = parent_proof.root.negative map connect_directly
@@ -284,26 +251,17 @@ object IvyParser {
                 val (pos1, pos2) = parent_proof.root.positive.splitAt( parent_proof.root.positive.indexOf(pocc))
                 val (pos1_, pos2_) = (pos1 map connect_directly, pos2 map  connect_directly)
 
-                debug("remaining position: "+int_position+ " full position "+pposition)
-                debug("replace: "+left+" by "+right+" in "+pocc.formula)
                 val paraformula = if (orientation)
                                     replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
                                   else
                                     replaceTerm_by_in_at(right, left, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
                 val para = pocc.factory.createFormulaOccurrence(paraformula,  mocc::pocc::Nil)
-                /*debug("Context is:" +ppos)
-                debug("Context is:" +pos1_)
-                debug("Context is:" +pos2_)
-                debug("Together:"+ (ppos ++ pos1_  ++ pos2_.tail)) */
 
                 val inferred_clause = Clause(pneg ++ neglits, ppos ++ pos1_ ++ List(para) ++ pos2_.tail)
-                debug("inferred clause: " + inferred_clause)
 
                 val inference = Paramodulation(id, clause, int_position, para, orientation, inferred_clause, modulant_proof, parent_proof)
-                debug("paramod root:    "+ inference.root)
                 require(inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result="+fclause+" but got: "+inference.root)
 
-                //debug("new Paramod rule: "+id+ " : "+inference)
                 (id, found_steps + ((id, inference)))
 
               case false =>
@@ -312,8 +270,6 @@ object IvyParser {
                 val (neg1, neg2) = parent_proof.root.negative.splitAt( parent_proof.root.negative.indexOf(pocc))
                 val (neg1_, neg2_) = (neg1 map connect_directly, neg2 map  connect_directly)
 
-                debug("remaining position: "+int_position+ " full position "+pposition)
-                debug("replace: "+left+" by "+right+" in "+pocc.formula)
                 val paraformula = if (orientation)
                   replaceTerm_by_in_at(left, right, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
                 else
@@ -325,7 +281,6 @@ object IvyParser {
                 val inference = Paramodulation(id, clause, int_position, para, orientation, inferred_clause, modulant_proof, parent_proof)
 
                 require(inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result="+fclause+" but got: "+inference.root)
-                //debug("new Paramod rule: "+id+ " : "+inference)
                 (id, found_steps + ((id, inference)))
             }
 
@@ -350,12 +305,9 @@ object IvyParser {
         def connect(ancestors: List[FormulaOccurrence], formulas: List[HOLFormula]) :
           List[FormulaOccurrence] = {
           //find ancestor for every formula in conclusion clause
-          debug("connecting "+formulas+" to ancestors "+ancestors)
           val (occs, rem) = connect_(ancestors, formulas)
-          debug("connected  "+occs+" remaining: "+rem)
           //now connect the contracted formulas
           val connected : List[FormulaOccurrence] = connect_missing(occs, rem)
-          debug("connected2 "+connected)
           connected
         }
 
@@ -380,7 +332,6 @@ object IvyParser {
         def connect_missing(targets : List[FormulaOccurrence], missing : List[FormulaOccurrence])
            : List[FormulaOccurrence] = missing match {
           case x::xs =>
-            debug("trying to append "+x+" to possibilities "+targets)
             val targets_ = connect_missing_(targets, x)
             connect_missing(targets_, xs)
           case Nil =>
@@ -399,7 +350,6 @@ object IvyParser {
             throw new Exception("Error connecting factorized literal, no suitable successor found!")
         }
 
-        debug("propositional inference: "+parent_proof)
         val inference = Propositional(id,clause,
           Clause(connect(parent_proof.vertex.antecedent.toList, fclause.antecedent.toList),
             connect(parent_proof.vertex.succedent.toList, fclause.succedent.toList)), parent_proof)
@@ -417,8 +367,6 @@ object IvyParser {
 
         val parent_proof = found_steps(parent_id)
         val fclause : FSequent = parse_clause(clause, is_variable_symbol)
-        //println("New Symbol Rule: "+fclause)
-        //println("Parent Rule:     "+parent_proof.root)
         require(fclause.antecedent.isEmpty, "Expecting only positive equations in parsing of new_symbol rule "+id)
         require(fclause.succedent.size == 1, "Expecting exactly one positive equation in parsing of new_symbol rule "+id)
 
@@ -430,7 +378,6 @@ object IvyParser {
           case _ => throw new Exception("Expecting right hand side of new_symbol equation to be the introduced symbol!")
         }
 
-        //println("const symbol="+const + " replaced by="+l)
         val inference = NewSymbol(id, clause, nclause.succedent(0), const, l, nclause, parent_proof )
 
         (id, found_steps +((id,inference)))
@@ -491,7 +438,6 @@ object IvyParser {
 
       case Nil =>
         if (exp == what) by else throw new Exception("Error in parsing replacement: (sub)term "+exp+ " is not the expected term "+what)
-      //throw new Exception("Error in parsing replacement: cannot replace at formula level!")
     }
 
 
@@ -639,7 +585,6 @@ object IvyParser {
 
 
     case LispList( LispAtom("not") :: LispList( LispAtom(name) :: args) :: Nil ) =>
-      //Neg(parse_clause(formula, is_variable_symbol) )
       Neg(parse_atom(name, args, is_variable_symbol)) ::Nil
 
     case LispList( LispAtom(name) :: args) =>
