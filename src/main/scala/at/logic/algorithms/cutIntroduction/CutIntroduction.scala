@@ -109,7 +109,7 @@ object CutIntroduction {
     case (Some(p), _, _, None) => p
     case (None, _, _, Some(e)) => throw e
     case _ => throw new CutIntroException("Wrong return value in cut introduction.")
-  } 
+  }
   /** Tries to introduce many cuts with one quantifier each to the proof
     * represented by the ExpansionSequent.
     *
@@ -168,7 +168,25 @@ object CutIntroduction {
    */
 
   type LogTuple = (Int, Int, Int, Int, Int, Int, Int, Int, Int, Long, Long, Long, Long, Long, Long)
+  def print_log_tuple (log: LogTuple) = {
+    println("Total inferences in the input proof: " + log._1);
+    println("Quantifier inferences in the input proof: " + log._2);
+    println("Total inferences in the proof with cut(s): " + (if (log._3 == -1) "n/a" else log._3));
+    println("Quantifier inferences in the proof with cut(s): " + (if (log._4 == -1) "n/a" else log._4));
+    println("Size of the term set: " + log._5);
+    println("Size of the minimal grammar: " + log._6);
+    println("Number of minimal grammars: " + (if (log._7 == -1) "n/a" else log._7));
+    println("Size of the canonical solution: " + (if (log._8 == -1) "n/a" else log._8));
+    println("Size of the minimized solution: " + (if (log._9 == -1) "n/a" else log._9));
+    println("Time for extracting the term set: " + log._10);
+    println("Time for generating the delta-table: " + (if (log._11 == -1) "n/a" else log._11));
+    println("Time for finding the grammar: " + log._12);
+    println("Time for improving the solution: " + (if (log._13 == -1) "n/a" else log._13));
+    println("Time for building the final proof: " + (if (log._14 == -1) "n/a" else log._14));
+    println("Time for cleaning the structural rules of the final proof: " + (if (log._15 == -1) "n/a" else log._15));
+  }
 
+  // Delta-table methods
   private def execute(proof: LKProof, manyQuantifiers: Boolean, timeout: Int, verbose: Boolean) :
   (Option[LKProof], String, LogTuple, Option[Throwable]) = {
 
@@ -181,7 +199,7 @@ object CutIntroduction {
 
   private def execute(ep: ExpansionSequent, hasEquality: Boolean, manyQuantifiers: Boolean, num_lk_rules: Int, timeout: Int, verbose: Boolean) : 
   (Option[LKProof], String, LogTuple, Option[Throwable]) = {
-    
+   
     val prover = hasEquality match {
       case true => new EquationalProver()
       case false => new DefaultProver()
@@ -247,7 +265,7 @@ object CutIntroduction {
       val gs = ComputeGrammars.findValidGrammars(termset.set, deltatable, eigenvariable)
       val grammars = gs.map{ case g => g.terms = termset; g }.sortWith((g1, g2) => g1.size < g2.size )
 
-      // Adding up the generation of the delta-table so it is comparable with the other method.
+      // Adding up the generation of the delta-table so it is comparable to the other method.
       grammarFindingTime =  deltaTableGenerationTime + System.currentTimeMillis - time
       time = System.currentTimeMillis
       if (verbose) println( "\nNumber of grammars: " + grammars.length )
@@ -347,9 +365,15 @@ object CutIntroduction {
                  buildProofTime, 
                  cleanStructuralRulesTime)
 
+    if (verbose && error == None) {
+      println ("Status: " + status);
+      print_log_tuple (tuple);
+    }
+
     (proof, status, tuple, error)
   }
 
+  // MaxSat methods
   private def execute(proof: LKProof, n: Int, timeout: Int, verbose: Boolean) :
   (Option[Grammar], String, LogTuple, Option[Throwable]) = {
 
@@ -415,6 +439,8 @@ object CutIntroduction {
         case None =>
           throw new TreeGrammarDecompositionException("Unable to complete TreeGrammarDecomposition")
       }
+      grammarFindingTime = System.currentTimeMillis - time
+      time = System.currentTimeMillis
 
       if (grammar.size == 0) {
         throw new CutIntroUncompressibleException("\nNo grammars found. The proof cannot be compressed.")
@@ -466,6 +492,11 @@ object CutIntroduction {
                  improvingSolutionTime, 
                  buildProofTime, 
                  cleanStructuralRulesTime)
+
+    if (verbose && error == None) {
+      println ("Status: " + status);
+      print_log_tuple (tuple);
+    }
 
     (cut_formulas, status, tuple, error)
   }
