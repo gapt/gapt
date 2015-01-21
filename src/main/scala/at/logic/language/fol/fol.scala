@@ -31,7 +31,7 @@ trait FOLExpression extends HOLExpression {
    @return A String which contains the defined symbols in language/hol/logicSymbols.scala.
    *
    */
-  override def toString = this match {
+  override def toString : String = this match {
     case FOLVar(x) => x.toString
     case FOLConst(x) => x.toString
     case FOLLambdaConst(x, t) => x + ": " + t.toString
