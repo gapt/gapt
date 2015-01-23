@@ -3,7 +3,7 @@ package at.logic.parsing.language.tptp
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.calculi.lk.base.{FSequent, LKProof}
-import at.logic.language.hol.logicSymbols.LogicalSymbolA
+import at.logic.language.hol.logicSymbols.{EqSymbol, LogicalSymbolA}
 
 /**
  * Created by marty on 12/10/13.
@@ -24,8 +24,7 @@ class TPTPHOLExporter {
 
     val vdecs = vdecs_.foldLeft("")(_ ++ _)
 
-
-    val cdecs_ = for (c <- cs) yield {
+    val cdecs_ = for (c <- cs if c.sym != EqSymbol) yield {  //need to exclude the predefined constant =
       index = index +1
       thf_type_dec(index, c, cnames) + "\n"
     }
@@ -70,7 +69,7 @@ class TPTPHOLExporter {
     }
 
     val cunchanged = for ((c,s) <- cnames; if (c.sym.toString == s)) yield { s }
-    if (cunchanged.nonEmpty) println("% Unhanged constants: "+cunchanged.mkString(","))
+    if (cunchanged.nonEmpty) println("% Unchanged constants: "+cunchanged.mkString(","))
 
     println("% ")
 
@@ -87,7 +86,7 @@ class TPTPHOLExporter {
     }
 
     val vunchanged = for ((c,s) <- vnames; if (c.sym.toString == s)) yield { s }
-    if (vunchanged.nonEmpty) println("% Unhanged variables: "+vunchanged.mkString(","))
+    if (vunchanged.nonEmpty) println("% Unchanged variables: "+vunchanged.mkString(","))
 
   }
 

@@ -10,6 +10,7 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.parsing.language.tptp.TPTPFOLExporter
+import at.logic.provers.minisat.MiniSATProver
 
 import org.junit.runner.RunWith
 import org.specs2.mutable._
@@ -48,6 +49,7 @@ class CutIntroTest extends SpecificationWithJUnit {
 
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
+      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
       val proof = LinearExampleProof( 0, 4 )
 
       val termset = TermsExtraction (proof)

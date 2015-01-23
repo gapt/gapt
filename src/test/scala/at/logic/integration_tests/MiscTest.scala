@@ -172,6 +172,8 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 */
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
+      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
+
       val p = LinearExampleProof( 0, 4 )
       val pi = CutIntroduction.one_cut_one_quantifier(p, false)
       val pe = ReductiveCutElim.eliminateAllByUppermost(pi, steps = false)
