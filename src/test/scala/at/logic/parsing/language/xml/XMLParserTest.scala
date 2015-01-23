@@ -1,30 +1,27 @@
-/** 
- * Description: 
-**/
 
 package at.logic.parsing.language.xml
 
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import scala.xml._
+import at.logic.calculi.lk._
+import at.logic.calculi.lk.base.{Sequent,FSequent,beSyntacticMultisetEqual}
+import at.logic.calculi.occurrences.factory
+import at.logic.language.hol._
+import at.logic.language.lambda.types._
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
-import at.logic.language.hol._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences.factory
-import at.logic.calculi.lk.base.FSequent
-import java.io.{FileInputStream, InputStreamReader}
+import com.sun.org.apache.xml.internal.resolver.CatalogManager
+import com.sun.org.apache.xml.internal.resolver.tools.CatalogResolver
 import java.io.File.separator
+import java.io.{FileInputStream,InputStreamReader,ByteArrayInputStream}
 import java.util.zip.GZIPInputStream
-import org.specs2.matcher.Matcher
+import org.junit.runner.RunWith
 import org.specs2.matcher.Expectable
-import at.logic.language.lambda.types._
-
-case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
-  def apply[S <: Array[T]](v: Expectable[S]) = result( v.value.deep.equals(a.deep), "successful deepEquals", v.value.deep.toString + " not deepEquals " + a.deep.toString,v )
-}
+import org.specs2.matcher.Matcher
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
+import org.xml.sax.ErrorHandler
+import org.xml.sax.helpers.XMLReaderFactory
+import scala.io.{BufferedSource,Source}
+import scala.xml.SAXParseException
 
 @RunWith(classOf[JUnitRunner])
 class XMLParserTest extends SpecificationWithJUnit {
@@ -42,10 +39,7 @@ class XMLParserTest extends SpecificationWithJUnit {
         )
     }
     "parse correctly a constant c from a StringReader" in {
-      (new XMLReader(
-        new java.io.StringReader("<constant symbol=\"c\"/>")) with XMLTermParser).getTerm() must beEqualTo(
-          HOLConst("c", Ti)
-        )
+      (new XMLReader (new BufferedSource (new ByteArrayInputStream("<constant symbol=\"c\"/>".getBytes("UTF8"))).reader) with XMLTermParser).getTerm() must beEqualTo (HOLConst("c", "i"))
     }
     "parse correctly a term g(c)" in {
       (new NodeReader(<function symbol="g">
@@ -421,7 +415,8 @@ class XMLParserTest extends SpecificationWithJUnit {
                     Sequent(Nil, pc("B")::fo2occ(Or(pcf("A"), pcf("C")))::Nil))
     }
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
-      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("xml" + separator + "test3.xml"))) with XMLProofDatabaseParser).getProofDatabase().proofs
+      val proofs =  (new XMLReader(Source.fromURL(getClass.getResource("/xml/test3.xml")).reader) with XMLProofDatabaseParser).getProofDatabase().proofs
+
       proofs.size must beEqualTo(1)
       proofs.head._2.root must beSyntacticMultisetEqual(
         Sequent(Nil, pc("A")::pc("C")::pc("F")::
@@ -429,14 +424,16 @@ class XMLParserTest extends SpecificationWithJUnit {
                      fo2occ(Or(pcf("D"), pcf("G")))::Nil))
     }
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
-      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("xml" + separator + "test2.xml"))) with XMLProofDatabaseParser).getProofDatabase().proofs
+      val proofs =  (new XMLReader(Source.fromURL(getClass.getResource("/xml/test2.xml")).reader) with XMLProofDatabaseParser).getProofDatabase().proofs
+
       proofs.size must beEqualTo(1)
       proofs.head._2.root must beSyntacticMultisetEqual(
                         Sequent(Nil, fo2occ(Or(pcf("A"), pcf("C")))::
                         fo2occ(Or(pcf("B"), pcf("D")))::Nil))
     }
     "parse correctly an involved proof from a file" in {
-      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("xml" + separator + "test1.xml"))) with XMLProofDatabaseParser).getProofDatabase().proofs
+      val proofs =  (new XMLReader(Source.fromURL(getClass.getResource("/xml/test1.xml")).reader) with XMLProofDatabaseParser).getProofDatabase().proofs
+
       val X = HOLVar( "X" , Ti -> To )
       val t = HOLConst( "t" , Ti)
       val s = HOLConst( "s" , Ti)
@@ -462,5 +459,32 @@ class XMLParserTest extends SpecificationWithJUnit {
 
       proofdb.Definitions.size must beEqualTo(21)
     }
+    "validate and detect bogus XML document using local DTD" in {
+      val reader = XMLReaderFactory.createXMLReader()
+      reader.setEntityResolver(new CatalogResolver(new CatalogManager()))
+      reader.setFeature("http://xml.org/sax/features/validation", true)
+      reader.setErrorHandler(new DemoErrorHandler())
+      //reader.parse("target" + separator + "test-classes" + separator + "xml" + separator + "bogus.xml") must throwA[SAXParseException]
+      reader.parse(getClass.getResource("/xml/bogus.xml").toString) must throwA[SAXParseException]
+    }
+    "validate XML document using local DTD" in {
+      val reader = XMLReaderFactory.createXMLReader()
+      reader.setEntityResolver(new CatalogResolver(new CatalogManager()))
+      reader.setFeature("http://xml.org/sax/features/validation", true)
+      reader.setErrorHandler(new DemoErrorHandler())
+      //reader.parse("target" + separator + "test-classes" + separator + "xml" + separator + "test1.xml") must not (throwA[SAXParseException])
+      reader.parse(getClass.getResource("/xml/test1.xml").toString) must not (throwA[SAXParseException])
+    }
   }
 }
+
+case class beDeeplyEqual[T](a: Array[T]) extends Matcher[Array[T]]() {
+  def apply[S <: Array[T]](v: Expectable[S]) = result( v.value.deep.equals(a.deep), "successful deepEquals", v.value.deep.toString + " not deepEquals " + a.deep.toString,v )
+}
+
+class DemoErrorHandler extends ErrorHandler {
+    override def warning(ex: SAXParseException): Unit = { }
+    override def error(ex: SAXParseException): Unit = { println("Error", ex); throw (ex)}
+    override def fatalError(ex: SAXParseException): Unit = println("Fatal Error", ex)
+}
+
