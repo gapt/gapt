@@ -35,8 +35,10 @@ package occurrences {
     def isDescendantOf(that: FormulaOccurrence, reflexive: Boolean): Boolean =
       if (reflexive && this == that)
         true
+      else if (parents.contains(that))
+        true
       else
-        ancestors.contains(that)
+        parents.exists(_.isDescendantOf(that, reflexive = false))
 
     /** Tests whether this is an ancestor of that.
      * 
@@ -51,7 +53,10 @@ package occurrences {
      *
      * @return The ancestors of this, i.e. its parents and the ancestors of its parents.
      */
-    lazy val ancestors: Set[FormulaOccurrence] = parents.toSet.flatMap((x: FormulaOccurrence) => x.ancestors) ++ parents
+    def ancestors: Seq[FormulaOccurrence] = {
+      val tmp = parents flatMap {_.ancestors}
+      parents ++ tmp
+    }
 
     /** Tests equality of formulas.
      *
