@@ -26,5 +26,5 @@ if [[ -z "$gapt_jar" ]]; then
 fi
 
 run_gapt() {
-    "$java" -Xmx"$heap_size" -Xss"$stack_size" -cp "$gapt_jar:." "$@"
+    "$java" -Xmx"$heap_size" -Xss"$stack_size" -cp ".:$gapt_jar" "$@"
 }
