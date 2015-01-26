@@ -646,7 +646,7 @@ object help {
         | Cut-Introduction:
         |   cutIntro.one_cut_one_quantifier (LKProof) => LKProof - Introduces one cut with one quantifier to an LK proof.
         |   cutIntro.one_cut_many_quantifiers (LKProof) => LKProof - Introduces one cut with an arbitrary number of quantifiers to an LKProof.
-        |   cutIntro.many_cuts_one_quantifier (LKProof, Int) => List[FOLFormula] - Introduces many (bounded by the second parameter) cuts with one quantifier each to an LKProof. Returns the cut-formulas.
+        |   cutIntro.many_cuts_one_quantifier (LKProof, Int) => Grammar - Introduces many (bounded by the second parameter) cuts with one quantifier each to an LKProof. Returns the grammar.
         |   ncutIntro: (LKProof,Int,[MaxSATSolver]) => Option[List[FOLFormula]] - performs cut introduction for a maximum of n (Int) cuts. (optional: MaxSATSolver {QMaxSAT, ToySAT, ToySolver}")"
         |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
         |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
