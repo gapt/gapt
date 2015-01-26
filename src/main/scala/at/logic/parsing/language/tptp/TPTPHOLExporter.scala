@@ -37,12 +37,19 @@ class TPTPHOLExporter {
 //    val sdecs = sdecs_.foldLeft("")(_ ++ _)
     val negClauses = Neg(conj(l.map(closedFormula)))
     index = index +1
-    val sdecs = thf_formula_dec(index, negClauses, vnames, cnames)
+//    val sdecs = List(thf_formula_dec(index, negClauses, vnames, cnames))
+    /* we cannot export negated conjectures, since leo 2 needs at least one positive conjecture -
+       therefore we put the negation in manually */
+    val sdecs = l.map(x => {
+        index = index + 1
+        thf_formula_dec(index, Neg(closedFormula(x)), vnames, cnames)
+    } )
+
 
 
     //"% variable type declarations\n" + vdecs +
       "% constant type declarations\n" + cdecs +
-      "% sequents\n" + sdecs
+      "% sequents\n" + sdecs.foldLeft("")((s,x) => s + x + "\n")
   }
 
   def printStatistics(vnames : NameMap, cnames : CNameMap) : Unit = {
@@ -149,25 +156,26 @@ class TPTPHOLExporter {
   }
 
   def thf_formula_dec(i:Int, f:HOLFormula, vmap : NameMap, cmap : CNameMap) = {
-    "thf("+i+", conjecture, "+ thf_formula(f,vmap,cmap) +" )."
+    "thf("+i+", conjecture, "+ thf_formula(f,vmap,cmap, true) +" )."
   }
 
   def thf_negformula_dec(i:Int, f:HOLFormula, vmap : NameMap, cmap : CNameMap) = {
-    "thf("+i+", negative_conjecture, "+ thf_formula(f,vmap,cmap) +" )."
+    "thf("+i+", negated_conjecture, "+ thf_formula(f,vmap,cmap,true) +" )."
   }
 
 
-  def thf_formula(f:HOLExpression, vmap : NameMap, cmap : CNameMap) : String = {
+  private def addparens(str:String, cond : Boolean) = if (cond) "("+str+")" else str
+  def thf_formula(f:HOLExpression, vmap : NameMap, cmap : CNameMap, outermost : Boolean = false) : String = {
     f match {
-      case Neg(x) => " ~("+thf_formula(x, vmap, cmap) +")"
-      case And(x,y) => "("+thf_formula(x, vmap, cmap) +") & (" +thf_formula(y, vmap, cmap)+")"
-      case Or(x,y) => "("+thf_formula(x, vmap, cmap) +") | (" +thf_formula(y, vmap, cmap)+")"
-      case Imp(x,y) => "("+thf_formula(x, vmap, cmap) +") => (" +thf_formula(y, vmap, cmap)+")"
-      case AllVar(x,t) => "!["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")"
-      case ExVar(x,t) => "?["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")"
-      case Equation(x,y) => "(" + thf_formula(x, vmap,cmap) +") = (" + thf_formula(y, vmap,cmap) +")"
-      case HOLAbs(x,t) => "^["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")"
-      case HOLApp(s,t) => "(" + thf_formula(s, vmap, cmap) + ") @ (" +thf_formula(t, vmap,cmap) +")"
+      case Neg(x) => addparens(" ~"+thf_formula(x, vmap, cmap), !outermost)
+      case And(x,y) => addparens(thf_formula(x, vmap, cmap) +" & " +thf_formula(y, vmap, cmap), !outermost)
+      case Or(x,y) => addparens(thf_formula(x, vmap, cmap) +" | " +thf_formula(y, vmap, cmap), !outermost)
+      case Imp(x,y) => addparens(thf_formula(x, vmap, cmap) +" => " +thf_formula(y, vmap, cmap), !outermost)
+      case AllVar(x,t) => addparens("!["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")", !outermost)
+      case ExVar(x,t) => addparens("?["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")", !outermost)
+      case Equation(x,y) => addparens(thf_formula(x, vmap,cmap) +" = " + thf_formula(y, vmap,cmap), !outermost)
+      case HOLAbs(x,t) => addparens( "^["+ vmap(x) +" : "+getTypeString(x.exptype)+"] : ("+ thf_formula(t,vmap,cmap)+")", !outermost)
+      case HOLApp(s,t) => addparens(thf_formula(s, vmap, cmap) + " @ " +thf_formula(t, vmap,cmap), !outermost)
       case HOLVar(_,_) => vmap(f.asInstanceOf[HOLVar])
       case HOLConst(_,_) => cmap(f.asInstanceOf[HOLConst])
       case _ => throw new Exception("TPTP export does not support outermost connective of "+f)

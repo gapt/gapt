@@ -17,8 +17,19 @@ import at.logic.utils.logging.Logger
 import scala.annotation.tailrec
 import scala.util.control.TailCalls._
 
-
+/**
+ * This implements the clause set transformation of the original CERES method. Does not work for Schema, for CERESomega
+ * only if all labels are empty.
+ */
 object SimpleStandardClauseSet extends AlternativeStandardClauseSet( (x,y) => (x,y) )
+
+/**
+ * The idea here is that we use subsumption during clause set generation
+ * But take care, this clause set generation is incomplete!
+ * Take e.g. S1 = :- F(x) < :-F(a) and S2 = :- G(x) < :- G(b) but
+ * S1 x S2 = :- F(x), G(x) does not subsume :- F(a), G(b).
+ * TODO: make a safe version (e.g. disjoint variables are safe)
+ * */
 object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
   (set1, set2) => {
     val set1_ = set1.filterNot(s1 => set2.exists(s2 => StillmanSubsumptionAlgorithmHOL.subsumes(s2, s1)))
@@ -27,12 +38,12 @@ object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
     //println("Set2: "+set2.size+" - "+(set2.size-set2_.size))
     (set1_,set2_)
   }
-
 )
 
 /**
  * Should calculate the same clause set as [[StandardClauseSet]], but without the intermediate representation of a
- * normalized struct.
+ * normalized struct. Does not work for Schema, for CERESomega only if all labels are empty (clauses are correct,
+ * but labels forgotten).
  */
 class AlternativeStandardClauseSet(val optimize_plus : (Set[FSequent], Set[FSequent]) => (Set[FSequent], Set[FSequent]) ) {
   def apply(struct:Struct) : Set[FSequent] = struct match {
