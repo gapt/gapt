@@ -99,13 +99,14 @@ object CutIntroduction {
   /** Tries to introduce many cuts with one quantifier each to the LKProof. 
     *
     * @param proof The proof for introducing a cut.
+    * @param numcuts The (maximum) number of cuts to be introduced
     * @param verbose Whether information about the cut-introduction process 
     *        should be printed on screen.
     * @return A list of cut-formulas.
     * @throws An exception when the cut-formulas are not found.
     */
-  def many_cuts_one_quantifier (proof: LKProof, verbose: Boolean) = 
-  execute(proof, 2, 3600, verbose) match {
+  def many_cuts_one_quantifier (proof: LKProof, numcuts: Int, verbose: Boolean) = 
+  execute(proof, numcuts, 3600, verbose) match {
     case (Some(p), _, _, None) => p
     case (None, _, _, Some(e)) => throw e
     case _ => throw new CutIntroException("Wrong return value in cut introduction.")
@@ -114,6 +115,7 @@ object CutIntroduction {
     * represented by the ExpansionSequent.
     *
     * @param es The expansion sequent representing a proof for introducing a cut.
+    * @param numcuts The (maximum) number of cuts to be introduced
     * @param hasEquality True if the proof represented by es is in a theory
     *        modulo equality, false otherwise.
     * @param verbose Whether information about the cut-introduction process 
@@ -121,8 +123,8 @@ object CutIntroduction {
     * @return A list of cut-formulas.
     * @throws An exception when the proof is not found.
     */
-  def many_cuts_one_quantifier (es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean) = 
-  execute(es, hasEquality, -1, 2, 3600, verbose) match {
+  def many_cuts_one_quantifier (es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, verbose: Boolean) = 
+  execute(es, hasEquality, -1, numcuts, 3600, verbose) match {
     case (Some(p), _, _, None) => p
     case (None, _, _, Some(e)) => throw e
     case _ => throw new CutIntroException("Wrong return value in cut introduction.")
@@ -145,12 +147,12 @@ object CutIntroduction {
   execute(es, hasEquality, true, -1, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
-  def many_cuts_one_quantifier_stat (proof: LKProof, timeout: Int) = 
-  execute(proof, 2, timeout, false) match {
+  def many_cuts_one_quantifier_stat (proof: LKProof, numcuts: Int, timeout: Int) = 
+  execute(proof, numcuts, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
-  def many_cuts_one_quantifier_stat (es: ExpansionSequent, hasEquality: Boolean, timeout: Int) = 
-  execute(es, hasEquality, -1, 2, timeout, false) match {
+  def many_cuts_one_quantifier_stat (es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, timeout: Int) = 
+  execute(es, hasEquality, -1, numcuts, timeout, false) match {
     case (_, status, log, _) => (status, log)
   } 
 
