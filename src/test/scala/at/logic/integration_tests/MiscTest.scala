@@ -5,8 +5,9 @@ import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
+import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.DefinitionElimination
-import at.logic.calculi.expansionTrees.{toDeep => ETtoDeep}
+import at.logic.calculi.expansionTrees.{toDeep => ETtoDeep,toShallow => ETtoShallow}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences._
@@ -28,7 +29,7 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.clauseSets.profile._
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct.StructCreators
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
@@ -201,7 +202,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       ok
     }
 
-    "Load Prover9 proofs, extract their expansion tree an test the validity of its deep formula using veriT" in {
+    "load Prover9 proof, extract expansion tree and check that deep formula is quasi-tautology using veriT" in {
       skipped("VeriT fails to proof this (at least on some systems)")
 
       val veriT = new VeriTProver()
@@ -216,7 +217,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
         val (resProof, seq, _) = Prover9.parse_prover9(testFilePath)
         val lkProof = new Prover9Prover().getLKProof(seq).get
 
-        val expansionSequent = extractExpansionTrees(lkProof, false)
+        val expansionSequent = extractExpansionSequent(lkProof, false)
 
         val seqToProve = ETtoDeep(expansionSequent)
 
@@ -230,7 +231,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       ok
     }
 
-    "Extract expansion tree from tape proof" in {
+    "extract expansion tree from tape proof" in {
       val tokens = HybridLatexParser.parseFile(tempCopyOfClasspathFile("tape3.llk"))
       val db = HybridLatexParser.createLKProof(tokens)
       // I have no idea why, but this makes the code get the correct proof
@@ -240,34 +241,57 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       val reg = regularize(elp)
       val lksk_proof = LKtoLKskc(reg)
       // TODO
-      val et = extractExpansionTrees(reg, false)  // must throwA[IllegalArgumentException] // currently contains problematic definitions
+      val et = extractExpansionSequent(reg, false)  // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
     }
 
-    "Construct proof with expansion sequent extracted from proof 1/2" in {
-        val y = FOLVar("y")
-        val x = FOLVar("x")
-        val Py = Atom("P", y :: Nil)
-        val Px = Atom("P", x :: Nil)
-        val AllxPx = AllVar(x, Px)
+    "construct proof with expansion sequent extracted from proof 1/2" in {
+      val y = FOLVar("y")
+      val x = FOLVar("x")
+      val Py = Atom("P", y :: Nil)
+      val Px = Atom("P", x :: Nil)
+      val AllxPx = AllVar(x, Px)
 
-        // test with 1 weak & 1 strong
-        val p1 = Axiom(Py :: Nil, Py :: Nil)
-        val p2 = ForallLeftRule(p1, Py, AllxPx, y)
-        val p3 = ForallRightRule(p2, Py, AllxPx, y)
+      // test with 1 weak & 1 strong
+      val p1 = Axiom(Py :: Nil, Py :: Nil)
+      val p2 = ForallLeftRule(p1, Py, AllxPx, y)
+      val p3 = ForallRightRule(p2, Py, AllxPx, y)
 
-        val etSeq = extractExpansionTrees(p3, false)
+      val etSeq = extractExpansionSequent(p3, false)
 
-        val proof = solve.expansionProofToLKProof(p3.root.toFSequent, etSeq)
-        proof.isDefined must beTrue
-      }
+      val proof = solve.expansionProofToLKProof(p3.root.toFSequent, etSeq)
+      proof.isDefined must beTrue
+    }
 
-    "Construct proof with expansion sequent extracted from proof 2/2" in {
+    "construct proof with expansion sequent extracted from proof 2/2" in {
 
       val proof = LinearExampleProof(0, 4)
 
-      val proofPrime = solve.expansionProofToLKProof(proof.root.toFSequent, extractExpansionTrees(proof, false))
+      val proofPrime = solve.expansionProofToLKProof(proof.root.toFSequent, extractExpansionSequent(proof, false))
       proofPrime.isDefined must beTrue
+    }
+
+    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E with minisat" in {
+      for (testBaseName <- "PUZ002-1.out" :: Nil) {
+        val (resproof, endsequent, _) = Prover9.parse_prover9( tempCopyOfClasspathFile( testBaseName ))
+
+        val closure = FSequent(endsequent.antecedent.map(x => univclosure(x.asInstanceOf[FOLFormula])),
+          endsequent.succedent.map(x => existsclosure(x.asInstanceOf[FOLFormula])))
+        val clause_set = CNFn(endsequent.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]),
+          c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList
+
+        val lkproof1 = RobinsonToLK( fixSymmetry( resproof, clause_set ), closure )
+
+        val expseq = extractExpansionSequent( lkproof1, false )
+
+        val deep = ETtoDeep( expseq ).toFormula
+
+        (new at.logic.provers.minisat.MiniSATProver).isValid( deep ) must beTrue
+
+        // the next line should work but does not (see issue 279)
+        // val lkproof2 = solve.expansionProofToLKProof( ETtoShallow( expseq ), expseq )
+      }
+      ok
     }
   }
 }

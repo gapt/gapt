@@ -1,0 +1,155 @@
+%------------------------------------------------------------------------------
+File       : Prover9---1109a
+Problem    : PUZ002-1 : TPTP v5.3.0. Released v1.0.0.
+Transform  : none
+Format     : tptp:raw
+Command    : run_prover9 %d %s
+
+Computer   : manassas.cs.miami.edu
+Model      : x86_64 x86_64
+CPU        : Intel(R) Core(TM)2 CPU          6600  @ 2.40GHz @ 2400MHz
+Memory     : 1003MB
+OS         : Linux 2.6.32.26-175.fc12.x86_64
+CPULimit   : 300s
+DateTime   : Thu Jun 14 03:45:07 EDT 2012
+
+Result     : Unsatisfiable 0.25s
+Output     : Refutation 0.25s
+Verified   : 
+Statistics : -
+
+Comments   : 
+%------------------------------------------------------------------------------
+%----ERROR: Could not form TPTP format derivation
+%------------------------------------------------------------------------------
+%----ORIGINAL SYSTEM OUTPUT
+============================== Prover9 ===============================
+Prover9 (32) version 2009-11A, November 2009.
+Process 22269 was started by tptp on manassas.cs.miami.edu,
+Thu Jun 14 03:45:08 2012
+The command was "/home/graph/tptp/Systems/Prover9---1109a/prover9 -t 300 -f /tmp/Prover9_22235_manassas.cs.miami.edu".
+============================== end of head ===========================
+============================== INPUT =================================
+% Reading from file /tmp/Prover9_22235_manassas.cs.miami.edu
+set(prolog_style_variables).
+set(auto2).
+    % set(auto2) -> set(auto).
+    % set(auto) -> set(auto_inference).
+    % set(auto) -> set(auto_setup).
+    % set(auto_setup) -> set(predicate_elim).
+    % set(auto_setup) -> assign(eq_defs, unfold).
+    % set(auto) -> set(auto_limits).
+    % set(auto_limits) -> assign(max_weight, "100.000").
+    % set(auto_limits) -> assign(sos_limit, 20000).
+    % set(auto) -> set(auto_denials).
+    % set(auto) -> set(auto_process).
+    % set(auto2) -> assign(new_constants, 1).
+    % set(auto2) -> assign(fold_denial_max, 3).
+    % set(auto2) -> assign(max_weight, "200.000").
+    % set(auto2) -> assign(max_hours, 1).
+    % assign(max_hours, 1) -> assign(max_seconds, 3600).
+    % set(auto2) -> assign(max_seconds, 0).
+    % set(auto2) -> assign(max_minutes, 5).
+    % assign(max_minutes, 5) -> assign(max_seconds, 300).
+    % set(auto2) -> set(sort_initial_sos).
+    % set(auto2) -> assign(sos_limit, -1).
+    % set(auto2) -> assign(lrs_ticks, 3000).
+    % set(auto2) -> assign(max_megs, 400).
+    % set(auto2) -> assign(stats, some).
+    % set(auto2) -> clear(echo_input).
+    % set(auto2) -> set(quiet).
+    % set(auto2) -> clear(print_initial_clauses).
+    % set(auto2) -> clear(print_given).
+assign(lrs_ticks,-1).
+assign(sos_limit,10000).
+assign(order,kbo).
+set(lex_order_vars).
+clear(print_given).
+% formulas(sos).  % not echoed (12 formulas)
+============================== end of input ==========================
+% From the command line: assign(max_seconds, 300).
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+% Formulas that are not ordinary clauses:
+============================== end of process non-clausal formulas ===
+============================== PROCESS INITIAL CLAUSES ===============
+============================== PREDICATE ELIMINATION =================
+1 -kangaroo(A) | -suitable_pet(A) # label(_16159) # label(_16163).  [assumption].
+2 kangaroo(the_kangaroo) # label(_16277) # label(_16281).  [assumption].
+Derived: -suitable_pet(the_kangaroo).  [resolve(1,a,2,a)].
+3 -takes_to_me(A) | in_house(A) # label(_16128) # label(_16132).  [assumption].
+4 takes_to_me(A) | detested(A) # label(_16221) # label(_16225).  [assumption].
+Derived: in_house(A) | detested(A).  [resolve(3,a,4,a)].
+5 -detested(A) | avoided(A) # label(_16035) # label(_16039).  [assumption].
+6 -avoided(the_kangaroo) # label(_16302) # label(_16306).  [assumption].
+Derived: -detested(the_kangaroo).  [resolve(5,b,6,a)].
+7 in_house(A) | detested(A).  [resolve(3,a,4,a)].
+8 -in_house(A) | cat(A) # label(_15973) # label(_15977).  [assumption].
+Derived: detested(A) | cat(A).  [resolve(7,a,8,a)].
+9 -prowler(A) | gazer(A) # label(_16252) # label(_16256).  [assumption].
+10 -gazer(A) | suitable_pet(A) # label(_16004) # label(_16008).  [assumption].
+Derived: -prowler(A) | suitable_pet(A).  [resolve(9,b,10,a)].
+11 -mouse_killer(A) | carnivore(A) # label(_16190) # label(_16194).  [assumption].
+12 -carnivore(A) | prowler(A) # label(_16066) # label(_16070).  [assumption].
+Derived: -mouse_killer(A) | prowler(A).  [resolve(11,b,12,a)].
+13 detested(A) | cat(A).  [resolve(7,a,8,a)].
+14 -cat(A) | mouse_killer(A) # label(_16097) # label(_16101).  [assumption].
+Derived: detested(A) | mouse_killer(A).  [resolve(13,b,14,a)].
+15 -prowler(A) | suitable_pet(A).  [resolve(9,b,10,a)].
+16 -suitable_pet(the_kangaroo).  [resolve(1,a,2,a)].
+Derived: -prowler(the_kangaroo).  [resolve(15,b,16,a)].
+17 detested(A) | mouse_killer(A).  [resolve(13,b,14,a)].
+18 -detested(the_kangaroo).  [resolve(5,b,6,a)].
+Derived: mouse_killer(the_kangaroo).  [resolve(17,a,18,a)].
+19 mouse_killer(the_kangaroo).  [resolve(17,a,18,a)].
+20 -mouse_killer(A) | prowler(A).  [resolve(11,b,12,a)].
+Derived: prowler(the_kangaroo).  [resolve(19,a,20,a)].
+21 prowler(the_kangaroo).  [resolve(19,a,20,a)].
+22 -prowler(the_kangaroo).  [resolve(15,b,16,a)].
+Derived: $F.  [resolve(21,a,22,a)].
+============================== end predicate elimination =============
+Auto_denials:  (no changes).
+Term ordering decisions:
+Function symbol KB weights: 
+============================== PROOF =================================
+% Proof 1 at 0.00 (+ 0.00) seconds.
+% Length of proof is 23.
+% Level of proof is 6.
+% Maximum clause weight is 0.000.
+% Given clauses 0.
+1 -kangaroo(A) | -suitable_pet(A) # label(_16159) # label(_16163).  [assumption].
+2 kangaroo(the_kangaroo) # label(_16277) # label(_16281).  [assumption].
+3 -takes_to_me(A) | in_house(A) # label(_16128) # label(_16132).  [assumption].
+4 takes_to_me(A) | detested(A) # label(_16221) # label(_16225).  [assumption].
+5 -detested(A) | avoided(A) # label(_16035) # label(_16039).  [assumption].
+6 -avoided(the_kangaroo) # label(_16302) # label(_16306).  [assumption].
+7 in_house(A) | detested(A).  [resolve(3,a,4,a)].
+8 -in_house(A) | cat(A) # label(_15973) # label(_15977).  [assumption].
+9 -prowler(A) | gazer(A) # label(_16252) # label(_16256).  [assumption].
+10 -gazer(A) | suitable_pet(A) # label(_16004) # label(_16008).  [assumption].
+11 -mouse_killer(A) | carnivore(A) # label(_16190) # label(_16194).  [assumption].
+12 -carnivore(A) | prowler(A) # label(_16066) # label(_16070).  [assumption].
+13 detested(A) | cat(A).  [resolve(7,a,8,a)].
+14 -cat(A) | mouse_killer(A) # label(_16097) # label(_16101).  [assumption].
+15 -prowler(A) | suitable_pet(A).  [resolve(9,b,10,a)].
+16 -suitable_pet(the_kangaroo).  [resolve(1,a,2,a)].
+17 detested(A) | mouse_killer(A).  [resolve(13,b,14,a)].
+18 -detested(the_kangaroo).  [resolve(5,b,6,a)].
+19 mouse_killer(the_kangaroo).  [resolve(17,a,18,a)].
+20 -mouse_killer(A) | prowler(A).  [resolve(11,b,12,a)].
+21 prowler(the_kangaroo).  [resolve(19,a,20,a)].
+22 -prowler(the_kangaroo).  [resolve(15,b,16,a)].
+23 $F.  [resolve(21,a,22,a)].
+============================== end of proof ==========================
+============================== STATISTICS ============================
+Given=0. Generated=1. Kept=0. proofs=1.
+Usable=0. Sos=0. Demods=0. Limbo=0, Disabled=23. Hints=0.
+Megabytes=0.02.
+User_CPU=0.00, System_CPU=0.00, Wall_clock=0.
+============================== end of statistics =====================
+============================== end of search =========================
+THEOREM PROVED
+Exiting with 1 proof.
+Process 22269 exit (max_proofs) Thu Jun 14 03:45:08 2012
+Prover9 interrupted
+
+%------------------------------------------------------------------------------

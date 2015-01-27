@@ -4,7 +4,7 @@ import at.logic.algorithms.cutIntroduction._
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base.LKProof
 import at.logic.language.fol._
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.provers.maxsat.{MaxSAT, MaxSATSolver}
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -38,7 +38,7 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
   }
 
   private def toTerms(p: LKProof): List[FOLTerm] = {
-    val testtree = extractExpansionTrees(p, false)
+    val testtree = extractExpansionSequent(p, false)
     val testterms = TermsExtraction(testtree)
     val testlanguage = testterms.set
     testlanguage

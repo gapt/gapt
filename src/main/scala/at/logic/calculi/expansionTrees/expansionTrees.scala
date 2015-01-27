@@ -403,19 +403,22 @@ object toDeep {
   }
 }
 
-// Daniel: shouldn't this rather be called toShallow to keep in line
-// with expansion tree terminology? toFormula is IMHO confusing since
-// there are two formulas (Deep and Shallow) associated to ever 
-// expansion tree.
-object toFormula {
+object toShallow {
   def apply(tree: ExpansionTreeWithMerges): HOLFormula = tree match {
     case Atom(f) => f
-    case Neg(t1) => NegHOL(toFormula(t1))
-    case And(t1,t2) => AndHOL(toFormula(t1), toFormula(t2))
-    case Or(t1,t2) => OrHOL(toFormula(t1), toFormula(t2))
-    case Imp(t1,t2) => ImpHOL(toFormula(t1), toFormula(t2))
+    case Neg(t1) => NegHOL(toShallow(t1))
+    case And(t1,t2) => AndHOL(toShallow(t1), toShallow(t2))
+    case Or(t1,t2) => OrHOL(toShallow(t1), toShallow(t2))
+    case Imp(t1,t2) => ImpHOL(toShallow(t1), toShallow(t2))
     case WeakQuantifier(f,_) => f
     case StrongQuantifier(f,_,_) => f
+  }
+
+  def apply(ep: ExpansionSequent): FSequent = {
+    val ant = ep.antecedent.map( et => toShallow( et ))
+    val succ = ep.succedent.map( et => toShallow( et ))
+
+    FSequent( ant, succ )
   }
 }
 
@@ -423,13 +426,14 @@ object toFormula {
 object toSequent {
   def apply(ep: ExpansionSequent): Sequent = {
     // TODO: there MUST be an easier way...
-    val ant = ep.antecedent.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toFormula(et), Nil) )
-    val cons = ep.succedent.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toFormula(et), Nil) )
+    // FIXME: does it really make sense to generate formula occurrences from an expansion tree ?
+    //        These formulas do no longer occur in an LK-proof once they are in the expansion tree.
+    val ant = ep.antecedent.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toShallow(et), Nil) )
+    val cons = ep.succedent.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence(toShallow(et), Nil) )
 
     Sequent(ant, cons)
   }
 }
-
 
 object getETOfFormula {
   def apply(etSeq: ExpansionSequent, f: HOLFormula, isAntecedent: Boolean): Option[ExpansionTree] = {
@@ -437,7 +441,7 @@ object getETOfFormula {
   }
   def getFromExpansionTreeList(ets: Seq[ExpansionTree], f: HOLFormula) : Option[ExpansionTree] = ets match {
     case head :: tail =>
-      if (toFormula(head) syntaxEquals f) Some(head)
+      if (toShallow(head) syntaxEquals f) Some(head)
       else getFromExpansionTreeList(tail, f)
     case Nil => None
   }
@@ -511,8 +515,8 @@ object removeFromExpansionSequent {
    *             expansion trees are removed if Sh(e) \in seq (using default equality, which is alpha equality)
    */
   def apply(etSeq: ExpansionSequent, seq: FSequent) :  ExpansionSequent = {
-    val ante = etSeq.antecedent.filter( et => ! seq._1.contains( toFormula(et) ) )
-    val cons = etSeq.succedent.filter( et => ! seq._2.contains( toFormula(et) ) )
+    val ante = etSeq.antecedent.filter( et => ! seq._1.contains( toShallow(et) ) )
+    val cons = etSeq.succedent.filter( et => ! seq._2.contains( toShallow(et) ) )
     new ExpansionSequent(ante, cons)
   }
 }
@@ -795,7 +799,7 @@ object merge extends at.logic.utils.logging.Logger {
           case None => doApplyMerge(tree1, res, polarity)
         }
       }
-      case _ => throw new IllegalArgumentException("Bug in merge in extractExpansionTrees. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2)
+      case _ => throw new IllegalArgumentException("Bug in merge in extractExpansionSequent. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2)
     }
   }
 }

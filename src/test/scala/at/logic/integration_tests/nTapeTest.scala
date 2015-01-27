@@ -21,7 +21,7 @@ import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct.StructCreators
 
 import at.logic.transformations.ceres.ceres_omega
-import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionTrees
+import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.utils.testing.ClasspathFileCopier
 import at.logic.calculi.expansionTrees.{And => ETAnd, Imp => ETImp, Or => ETOr, Neg => ETNEg, WeakQuantifier, StrongQuantifier, SkolemQuantifier, ExpansionTree, toDeep, ExpansionSequent}
@@ -181,7 +181,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           val (acnf, endclause) = ceres_omega(proj, ralp, sequentToLabelledSequent(selp.root), struct)
 
           show("Compute expansion tree")
-          val et = extractLKSKExpansionTrees(acnf, false)
+          val et = extractLKSKExpansionSequent(acnf, false)
           show(" HOORAY! ")
 
 
@@ -236,7 +236,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           val (acnf, endclause) = ceres_omega(proj, ralp, sequentToLabelledSequent(selp.root), struct)
 
           show("Compute expansion tree")
-          val et = extractLKSKExpansionTrees(acnf, false)
+          val et = extractLKSKExpansionSequent(acnf, false)
           show(" HOORAY! ")
 
           printStatistics(et)

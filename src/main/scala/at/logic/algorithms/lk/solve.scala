@@ -1,7 +1,7 @@
 package at.logic.algorithms.lk
 
 import at.logic.algorithms.lk.ExpansionTreeProofStrategy.ExpansionTreeAction
-import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, BinaryExpansionTree, getETOfFormula, StrongQuantifier, WeakQuantifier, toFormula, UnaryExpansionTree, Atom => AtomET}
+import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, BinaryExpansionTree, getETOfFormula, StrongQuantifier, WeakQuantifier, toShallow, UnaryExpansionTree, Atom => AtomET}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.slk._
@@ -39,7 +39,7 @@ object solve extends at.logic.utils.logging.Logger {
    */
   def expansionProofToLKProof(seq: FSequent, expansionSequent: ExpansionSequent, cleanStructuralRules: Boolean = true, throwOnError: Boolean = false): Option[LKProof] = {
     debug( "\nrunning expansionProofToLKProof" )
-    startProving(seq,  new ExpansionTreeProofStrategy(expansionSequent), cleanStructuralRules, throwOnError)
+    startProving(seq, new ExpansionTreeProofStrategy(expansionSequent), cleanStructuralRules, throwOnError)
   }
 
   // internal interface method
@@ -751,7 +751,7 @@ class ExpansionTreeProofStrategy(val expansionSequent: ExpansionSequent) extends
     val anteResult = expansionSequent.antecedent.collectFirst({
       case et@StrongQuantifier(formula, variable, selection) =>
         val newEtSeq = expansionSequent.replaceInAntecedent(et, selection.asInstanceOf[ExpansionTree])
-        new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Antecedent, Some(variable),
+        new ExpansionTreeProofStrategy.ExpansionTreeAction(toShallow(et), FormulaLocation.Antecedent, Some(variable),
           List(new ExpansionTreeProofStrategy(newEtSeq)))
     })
 
@@ -759,7 +759,7 @@ class ExpansionTreeProofStrategy(val expansionSequent: ExpansionSequent) extends
       expansionSequent.succedent.collectFirst({
         case et@StrongQuantifier(formula, variable, selection) =>
           val newEtSeq = expansionSequent.replaceInSuccedent(et, selection.asInstanceOf[ExpansionTree])
-          new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Succedent, Some(variable),
+          new ExpansionTreeProofStrategy.ExpansionTreeAction(toShallow(et), FormulaLocation.Succedent, Some(variable),
             List(new ExpansionTreeProofStrategy(newEtSeq)))
       })
     )
@@ -818,7 +818,7 @@ class ExpansionTreeProofStrategy(val expansionSequent: ExpansionSequent) extends
                 if (newInstances.isEmpty) {expansionSequent.removeFromAntecedent(et)}
                 else {expansionSequent.replaceInAntecedent(et, WeakQuantifier.applyWithoutMerge(formula, newInstances))}
               val newEtSeq = newEtSeq0.addToAntecedent(instancePicked._1)
-              new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Antecedent, Some(instancePicked._2),
+              new ExpansionTreeProofStrategy.ExpansionTreeAction(toShallow(et), FormulaLocation.Antecedent, Some(instancePicked._2),
                 List(new ExpansionTreeProofStrategy(newEtSeq)))
             })
           case _ => None
@@ -842,7 +842,7 @@ class ExpansionTreeProofStrategy(val expansionSequent: ExpansionSequent) extends
                   if (newInstances.isEmpty) {expansionSequent.removeFromSuccedent(et)}
                   else {expansionSequent.replaceInSuccedent(et, WeakQuantifier.applyWithoutMerge(formula, newInstances))}
                 val newEtSeq = newEtSeq0.addToSuccedent(instancePicked._1)
-                new ExpansionTreeProofStrategy.ExpansionTreeAction(toFormula(et), FormulaLocation.Succedent, Some(instancePicked._2),
+                new ExpansionTreeProofStrategy.ExpansionTreeAction(toShallow(et), FormulaLocation.Succedent, Some(instancePicked._2),
                   List(new ExpansionTreeProofStrategy(newEtSeq)))
               })
             case _ => None

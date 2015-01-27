@@ -6,8 +6,8 @@ import at.logic.language.hol._
 import at.logic.calculi.expansionTrees.{WeakQuantifier => WQTree, StrongQuantifier => SQTree, And => AndTree, Or => OrTree, Imp => ImpTree, Neg => NotTree, Atom => AtomTree, MergeNode => MergeNodeTree, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree}
 import at.logic.calculi.occurrences._
 
-object extractExpansionTrees extends extractExpansionTrees
-class extractExpansionTrees {
+object extractExpansionSequent extends extractExpansionSequent
+class extractExpansionSequent {
 
   def apply(proof: LKProof, verbose: Boolean): ExpansionSequent = {
     val map = extract(proof, verbose)

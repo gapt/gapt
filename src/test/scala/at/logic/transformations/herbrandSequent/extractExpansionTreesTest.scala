@@ -35,7 +35,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
   "The expansion tree extraction" should {
 
     "handle successive contractions " in {
-      val etSeq = extractExpansionTrees(LinearExampleProof(0, 2), false)
+      val etSeq = extractExpansionSequent(LinearExampleProof(0, 2), false)
 
       val p = "P"
       val x = FOLVar("x")
@@ -91,7 +91,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val p4 = ExistsLeftRule(p3, Atom(P, beta::Nil), ExVar(x, Atom(P, x::Nil)), beta)
       val p5 = ContractionLeftRule(p4, ExVar(x, Atom(P, x::Nil)))
 
-      val (ante, succ) = extractExpansionTrees( p5, false ).toTuple()
+      val (ante, succ) = extractExpansionSequent( p5, false ).toTuple()
 
       ante mustEqual( List(StrongQuantifierET( ExVar(x, Atom(P, x::Nil)), alpha, AtomET(Atom(P, alpha::Nil)))) )
       // this assumes that the first variable wins, f(beta) would also be valid
@@ -114,7 +114,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val p3 = WeakeningLeftRule(p2, BottomC) // weakened, hence top on left side
       val p4 = ContractionLeftRule(p3, BottomC) // negative polarity, bottom must win
 
-      val (ante, succ) = extractExpansionTrees(p4, false).toTuple()
+      val (ante, succ) = extractExpansionSequent(p4, false).toTuple()
       ante mustEqual AtomET(BottomC)::Nil
       succ mustEqual AtomET(TopC)::Nil
     }
@@ -136,7 +136,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val p1 = AndRightRule(p0_0, p0_2, FOLAtom(p, c::Nil), FOLAtom(p, d::Nil))
       val p2 = ContractionLeftRule(p1, f)
 
-      val etSeq = extractExpansionTrees(p2, false)
+      val etSeq = extractExpansionSequent(p2, false)
 
       etSeq.antecedent.count(_.isInstanceOf[WeakQuantifierET]) mustEqual 1
       etSeq.antecedent.count(_.isInstanceOf[AtomET]) mustEqual 1

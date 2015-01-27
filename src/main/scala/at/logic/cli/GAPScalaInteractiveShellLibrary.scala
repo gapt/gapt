@@ -204,8 +204,8 @@ object loadProver9LKProof {
       //println("End-sequent does not contain strong quantifiers!.")
       val closure = FSequent(endsequent.antecedent map (x => univclosure(x.asInstanceOf[FOLFormula])),
         endsequent.succedent map (x => existsclosure(x.asInstanceOf[FOLFormula])))
-
-      Robinson2LK(at.logic.algorithms.resolution.fixSymmetry(proof, CNFn(endsequent.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]), c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList), closure)
+      val clause_set = CNFn(endsequent.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]), c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList
+      Robinson2LK( fixSymmetry( proof, clause_set ), closure)
     } else {
       //if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
       //else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
@@ -424,7 +424,7 @@ object extractInterpolant {
 }
 
 object extractExpansionSequent {
-  def apply(proof: LKProof): ExpansionSequent = herbrandExtraction.extractExpansionTrees(proof, true)
+  def apply(proof: LKProof): ExpansionSequent = herbrandExtraction.extractExpansionSequent(proof, true)
 }
 
 object compressExpansionTree {
@@ -1303,7 +1303,7 @@ object findDefinitions {
 
 object extractLKSKExpansionSequent {
   def apply(proof: LKProof): ExpansionSequent =
-    herbrandExtraction.lksk.extractLKSKExpansionTrees(proof, true)
+    herbrandExtraction.lksk.extractLKSKExpansionSequent(proof, true)
 }
 
 object definitionElimination {

@@ -17,7 +17,7 @@ import at.logic.provers.eqProver._
 import at.logic.provers.Prover
 import at.logic.provers.maxsat.MaxSATSolver
 import at.logic.provers.minisat.MiniSATProver
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
 
 class CutIntroException(msg: String) extends Exception(msg)
@@ -194,7 +194,7 @@ object CutIntroduction {
 
     val clean_proof = CleanStructuralRules(proof)
     val num_rules = rulesNumber(clean_proof)
-    val ep = extractExpansionTrees(clean_proof, false)
+    val ep = extractExpansionSequent(clean_proof, false)
     val hasEquality = containsEqualityReasoning(clean_proof)
     execute(ep, hasEquality, manyQuantifiers, num_rules, timeout, verbose)
   }
@@ -381,7 +381,7 @@ object CutIntroduction {
 
     val clean_proof = CleanStructuralRules(proof)
     val num_rules = rulesNumber(clean_proof)
-    val ep = extractExpansionTrees(clean_proof, false)
+    val ep = extractExpansionSequent(clean_proof, false)
     val hasEquality = containsEqualityReasoning(clean_proof)
     execute(ep, hasEquality, num_rules, n, timeout, verbose)
   }

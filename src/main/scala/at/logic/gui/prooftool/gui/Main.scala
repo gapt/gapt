@@ -33,7 +33,7 @@ import at.logic.transformations.ceres.projections.{Projections, DeleteTautology,
 import at.logic.transformations.ceres.{UnfoldProjectionTerm, ProjectionTermCreators}
 import at.logic.algorithms.shlk.{applySchemaSubstitution2, applySchemaSubstitution}
 import at.logic.utils.ds.trees.Tree
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.clauseSchema.{resolutionProofSchemaDB, InstantiateResSchema}
 import at.logic.transformations.ceres.ACNF.ACNF
@@ -465,7 +465,7 @@ object Main extends SimpleSwingApplication {
 
   def expansionTree() { try {
     body.cursor = new java.awt.Cursor(java.awt.Cursor.WAIT_CURSOR)
-    val et = extractExpansionTrees(body.getContent.getData.get._2.asInstanceOf[LKProof], false)
+    val et = extractExpansionSequent(body.getContent.getData.get._2.asInstanceOf[LKProof], false)
     updateLauncher("Expansion Tree",et, 14)
     body.cursor = java.awt.Cursor.getDefaultCursor
   } catch {

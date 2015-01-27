@@ -1,6 +1,6 @@
 package at.logic.transformations.herbrandExtraction.lksk
 
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.calculi.lk.base.LKProof
 import at.logic.calculi.expansionTrees.{merge => mergeTree, Atom => AtomTree, _}
 import at.logic.calculi.occurrences.FormulaOccurrence
@@ -13,8 +13,8 @@ import at.logic.calculi.lk.{BinaryLKProof, CutRule, UnaryLKProof}
 /**
  * Extends expansion tree extraction to lksk.
  */
-object extractLKSKExpansionTrees extends extractLKSKExpansionTrees;
-class extractLKSKExpansionTrees  extends extractExpansionTrees {
+object extractLKSKExpansionSequent extends extractLKSKExpansionSequent;
+class extractLKSKExpansionSequent  extends extractExpansionSequent {
   override def apply(proof: LKProof, verbose: Boolean): ExpansionSequent = {
     val map = extract(proof, verbose)
     mergeTree( (proof.root.antecedent.map(fo => map(fo)), proof.root.succedent.map(fo => map(fo))) )

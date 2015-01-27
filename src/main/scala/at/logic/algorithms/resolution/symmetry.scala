@@ -100,11 +100,16 @@ object fixSymmetry {
       }
     }
 
+  /**
+   * Transform the resolution refutation p to a resolution refutation of cs by applying 
+   * symmetry to the initial clauses. If p has initial clauses which cannot be derived
+   * from cs by symmetry, returns a resolution refutation with these initial clauses unchanged.
+   **/
   def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ) : RobinsonResolutionProof = {
     rec(p)(cs)
   }
 
-  def rec( p: RobinsonResolutionProof)(implicit cs: Seq[FSequent] ) : RobinsonResolutionProof = {
+  private def rec( p: RobinsonResolutionProof)(implicit cs: Seq[FSequent] ) : RobinsonResolutionProof = {
     var fac = false
     val res = p match {
       case InitialClause(cls) => handleInitialClause( cls.toFClause, cs )

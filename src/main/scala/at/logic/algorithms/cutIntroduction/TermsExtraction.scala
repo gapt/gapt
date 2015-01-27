@@ -41,7 +41,7 @@ class TermsExtractionException(msg: String) extends Exception(msg)
 
 object TermsExtraction {
 
-  def apply(proof: LKProof) : TermSet = apply(extractExpansionTrees(proof, false))
+  def apply(proof: LKProof) : TermSet = apply(extractExpansionSequent(proof, false))
 
   def apply(expProof: ExpansionSequent) : TermSet = {
     

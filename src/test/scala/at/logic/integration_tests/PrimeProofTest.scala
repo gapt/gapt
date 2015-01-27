@@ -27,7 +27,7 @@ import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.clauseSets.profile._
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
-import at.logic.transformations.herbrandExtraction.extractExpansionTrees
+import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
 
@@ -163,7 +163,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
         if (veriT.isInstalled()) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
           val definitionFreeProof = eliminateDefinitions(proof) // can't extract ETs in the presence of definitions currently
-          val etSeq = extractExpansionTrees(definitionFreeProof, false)
+          val etSeq = extractExpansionSequent(definitionFreeProof, false)
           val fSequent = toDeep(etSeq)
           veriT.isValid(fSequent) must beTrue
         }

@@ -151,7 +151,7 @@ class SolveTest extends SpecificationWithJUnit {
       (fssymbols diff psymbols) must beEmpty */
     }
 
-    // tests of expansionProofToLKProof also in MiscTest, such that it can be used in combination with extractExpansionTrees
+    // tests of expansionProofToLKProof also in MiscTest, such that it can be used in combination with extractExpansionSequent
 
     "prove sequent where quantifier order matters" in {
       // example from Chaudhuri et.al.: A multi-focused proof system ...

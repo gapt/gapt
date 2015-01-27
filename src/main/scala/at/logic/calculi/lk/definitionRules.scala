@@ -24,7 +24,7 @@ object DefinitionLeftRule {
     *
     * This rule does not check for contradictory definitions elsewhere in s1, and thus
     * the burden of correct usage is on the programmer!
-    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionTrees.
+    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionSequent.
     * 
     * The rule: 
     *   (rest of s1)
@@ -61,7 +61,7 @@ object DefinitionLeftRule {
     *
     * This rule does not check for contradictory definitions elsewhere in s1, and thus
     * the burden of correct usage is on the programmer!
-    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionTrees.
+    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionSequent.
     * 
     * The rule: 
     *   (rest of s1)
@@ -100,7 +100,7 @@ object DefinitionLeftRule {
     *
     * This rule does not check for contradictory definitions elsewhere in s1, and thus
     * the burden of correct usage is on the programmer!
-    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionTrees.
+    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionSequent.
     * 
     * The rule: 
     *  (rest of s1)
@@ -138,7 +138,7 @@ object DefinitionRightRule {
     *
     * This rule does not check for contradictory definitions elsewhere in s1, and thus
     * the burden of correct usage is on the programmer!
-    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionTrees.
+    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionSequent.
     * 
     * The rule: 
     *   (rest of s1)
@@ -175,7 +175,7 @@ object DefinitionRightRule {
     *
     * This rule does not check for contradictory definitions elsewhere in s1, and thus
     * the burden of correct usage is on the programmer!
-    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionTrees.
+    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionSequent.
     * 
     * The rule: 
     *   (rest of s1)
@@ -214,7 +214,7 @@ object DefinitionRightRule {
     *
     * This rule does not check for contradictory definitions elsewhere in s1, and thus
     * the burden of correct usage is on the programmer!
-    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionTrees.
+    * Being a nonstandard rule, this is also incompatible with methods like extractExpansionSequent.
     * 
     * The rule: 
     *  (rest of s1)
