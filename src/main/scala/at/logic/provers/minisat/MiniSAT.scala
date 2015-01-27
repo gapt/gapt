@@ -68,15 +68,15 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
   
   // Returns a model of the set of clauses obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
-  def solve( problem: Set[FClause] ) : Option[Interpretation] =
+  def solve( problem: List[FClause] ) : Option[Interpretation] =
     getFromMiniSAT(problem) match {
       case Some(model) => Some(new MapBasedInterpretation(model))
       case None => None
     }
 
-  private def updateAtoms( clauses : Set[FClause] ) =
+  private def updateAtoms( clauses : List[FClause] ) =
   {
-    val atoms = clauses.flatMap( c => c.neg ++ c.pos );
+    val atoms = clauses.flatMap( c => c.neg ++ c.pos ).distinct;
     atom_map = atoms.zip(1 to atoms.size).toMap
   }
   
@@ -105,7 +105,7 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
     sb.toString()
   }
   
-  private def getFromMiniSAT( clauses : Set[FClause] ) :  Option[Map[HOLFormula, Boolean]] =
+  private def getFromMiniSAT( clauses : List[FClause] ) :  Option[Map[HOLFormula, Boolean]] =
   {
     updateAtoms(clauses)
     val sb = new StringBuilder()
@@ -188,7 +188,7 @@ class MiniSATProver extends Prover with at.logic.utils.logging.Logger with at.lo
 
   def isInstalled(): Boolean =
     try {
-      val box : Set[FClause] = Set.empty
+      val box : List[FClause] = List()
       (new MiniSAT).solve(box)
       true
     } catch  {

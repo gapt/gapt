@@ -13,7 +13,7 @@ import at.logic.language.fol._
 
 @RunWith(classOf[JUnitRunner])
 class MaxSATTest extends SpecificationWithJUnit {
-  val box: Set[FClause] = Set()
+  val box: List[FClause] = List()
 
   /*
    * Simple instance for testing wether weighted partial MaxSAT
@@ -46,8 +46,8 @@ class MaxSATTest extends SpecificationWithJUnit {
 
     def apply() = {
 
-      val hard = Set(h1, h2, h3)
-      val soft = Set(s1, s2, s3)
+      val hard = List(h1, h2, h3)
+      val soft = List(s1, s2, s3)
 
       (hard, soft)
     }

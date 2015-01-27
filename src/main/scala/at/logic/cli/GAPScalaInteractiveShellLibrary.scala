@@ -400,7 +400,7 @@ object miniSATprove {
 }
 
 object MaxSATsolve {
-  def apply(hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula,Int]], maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT) = (new MaxSAT(maxsatsolver)).solvePWM(hard, soft)
+  def apply(hard: List[FOLFormula], soft: List[Tuple2[FOLFormula,Int]], maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT) = (new MaxSAT(maxsatsolver)).solvePWM(hard, soft)
 }
 
 /*******************************************************************************

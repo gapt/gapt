@@ -67,9 +67,9 @@ object TreeGrammarDecomposition {
       decomp.suffKeys()
       val endTimeSuffKeys = System.currentTimeMillis()
       // Generating the MinCostSAT formulation for QMaxSAT
-      val f = decomp.MCS().asInstanceOf[Set[FOLFormula]]
+      val f = decomp.MCS().asInstanceOf[List[FOLFormula]]
       // Generating the soft constraints for QMaxSAT to minimize the amount of rules
-      val g = decomp.softConstraints().asInstanceOf[Set[Tuple2[FOLFormula,Int]]]
+      val g = decomp.softConstraints().asInstanceOf[List[Tuple2[FOLFormula,Int]]]
       // Retrieving a model from a MaxSAT solver and extract the rules
       val interpretation = (new MaxSAT(satsolver)).solvePWM(f, g)
       val rules = decomp.getRules(interpretation)
@@ -124,9 +124,9 @@ object TreeGrammarDecomposition {
       phase = "MCS"
 
       // Generating the MinCostSAT formulation for QMaxSAT
-      val f = decomp.MCS().asInstanceOf[Set[FOLFormula]]
+      val f = decomp.MCS().asInstanceOf[List[FOLFormula]]
       // Generating the soft constraints for QMaxSAT to minimize the amount of rules
-      val g = decomp.softConstraints().asInstanceOf[Set[Tuple2[FOLFormula, Int]]]
+      val g = decomp.softConstraints().asInstanceOf[List[Tuple2[FOLFormula, Int]]]
 
       phase = "CNF/MaxSAT"
 
@@ -481,8 +481,8 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
    * @return G formula for QMaxSAT
    */
 
-  override def softConstraints() : Set[Tuple2[FOLFormula,Int]] = {
-    propRules.foldLeft(Set[Tuple2[FOLFormula,Int]]())((acc,x) => acc + Tuple2(Neg(x._1),1))
+  override def softConstraints() : List[Tuple2[FOLFormula,Int]] = {
+    propRules.foldLeft(List[Tuple2[FOLFormula,Int]]())((acc,x) => acc :+ Tuple2(Neg(x._1),1))
   }
 
 
@@ -492,11 +492,11 @@ class TreeGrammarDecompositionPWM(override val termset: List[FOLTerm], override 
    *
    * @return MinCostSAT formulation of the problem for applying it to the QMaxSAT solver
    */
-  override def MCS() : Set[FOLFormula] = {
-    val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc)
+  override def MCS() : List[FOLFormula] = {
+    val f = termset.foldLeft(List[FOLFormula]())((acc,q) => C(q) :: acc).distinct
     // update the reverse term map
     reverseTermMap = mutable.Map(termMap.toList.map(x => x.swap).toSeq:_*)
-   return f.toSet
+   return f
   }
 
   /**

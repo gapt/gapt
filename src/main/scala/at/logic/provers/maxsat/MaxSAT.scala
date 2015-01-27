@@ -86,7 +86,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
   def isInstalled() : Boolean = {
     try {
       val clause = FClause(List(), List(Atom("P")))
-      solve(Set(clause), Set(clause -> 1)) match {
+      solve(List(clause), List(clause -> 1)) match {
         case Some(_) => true
         case None => throw new IOException()
       }
@@ -112,13 +112,13 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @param soft soft constraints, which come with individual weights and can be violated. Sum of weights of satisfied formulas is maximized.
    * @return tuple where 1st is None if UNSAT, otherwise Some(minimal model) and 2nd is a map of runtimes
    */
-  def solvePWM( hard: Set[FOLFormula], soft: Set[Tuple2[FOLFormula, Int]], watch: Stopwatch = new Stopwatch() ) : Option[MapBasedInterpretation] = {
+  def solvePWM( hard: List[FOLFormula], soft: List[Tuple2[FOLFormula, Int]], watch: Stopwatch = new Stopwatch() ) : Option[MapBasedInterpretation] = {
 
     debug("Generating clauses...")
 
     // Hard CNF transformation
     watch.start()
-    val hardCNF = TseitinCNF(And(hard.toList))._1
+    val hardCNF = TseitinCNF(And(hard))._1
     val hardCNFTime = watch.lap("hardCNF")
     logTime("[Runtime]<hard CNF-Generation> ",hardCNFTime)
     trace("produced hard cnf: " + hardCNF)
@@ -144,7 +144,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @param softCNF soft constraints in CNF, which come with individual weights and can be violated. Sum of weights of satisfied formulas is maximized.
    * @return None if UNSAT, otherwise Some(minimal model)
    */
-  def solve( hardCNF: Set[FClause], softCNF: Set[Tuple2[FClause,Int]] ) : Option[MapBasedInterpretation] =
+  def solve( hardCNF: List[FClause], softCNF: List[Tuple2[FClause,Int]] ) : Option[MapBasedInterpretation] =
     getFromMaxSAT(hardCNF, softCNF) match {
       case Some(model) => Some(new MapBasedInterpretation(model))
       case None => None
@@ -154,9 +154,9 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * Updates atom_map according to the set of clauses
    * @param clauses set of clauses to provide in atom_map
    */
-  private def updateAtoms( clauses : Set[FClause] ) =
+  private def updateAtoms( clauses : List[FClause] ) =
   {
-    val atoms = clauses.flatMap( c => c.neg.asInstanceOf[Seq[FOLFormula]] ++ c.pos.asInstanceOf[Seq[FOLFormula]] );
+    val atoms = clauses.flatMap( c => c.neg.asInstanceOf[Seq[FOLFormula]] ++ c.pos.asInstanceOf[Seq[FOLFormula]] ).distinct;
     atom_map = atoms.zip(1 to atoms.size).toMap
   }
 
@@ -236,11 +236,11 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
    * @param soft clause set (+ weights) of soft constraints
    * @return None if UNSAT, Some(minimal model) otherwise
    */
-  private def getFromMaxSAT( hard: Set[FClause], soft: Set[Tuple2[FClause,Int]] ) :  Option[Map[FOLFormula, Boolean]] =
+  private def getFromMaxSAT( hard: List[FClause], soft: List[Tuple2[FClause,Int]] ) :  Option[Map[FOLFormula, Boolean]] =
   {
     debug("Generating wcnf file...")
     val startTimeGenerate = System.currentTimeMillis()
-    val clauses = soft.foldLeft(hard)((acc,c) => acc + c._1)
+    val clauses = soft.foldLeft(hard)((acc,c) => acc :+ c._1).distinct
     updateAtoms(clauses)
     val sb = new StringBuilder()
 

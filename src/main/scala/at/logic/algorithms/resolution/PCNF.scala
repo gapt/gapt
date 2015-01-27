@@ -84,7 +84,7 @@ object PCNF {
     //introduceContractions(p_,a)
   }
 
-  def containsMatchingClause(what : FClause, where : Set[FClause]) : Boolean = {
+  def containsMatchingClause(what : FClause, where : List[FClause]) : Boolean = {
     //TODO: check for symmetry applications during prover9's cnf construction
     where.find(_ equals what).isDefined
   }
@@ -186,7 +186,7 @@ object PCNF {
     pwr(lst, (Nil,lst) :: Nil)
   }
 
-  def containsSubsequent(set : Set[FClause], fc : FClause) : Boolean = {
+  def containsSubsequent(set : List[FClause], fc : FClause) : Boolean = {
     val fs = fc.toFSequent
     //println("Checking "+fs)
     val r = set.filter( x => {/*println("... with "+x);*/ (x.toFSequent diff fs).isEmpty })

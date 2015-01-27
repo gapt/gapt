@@ -299,7 +299,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     clauses.foldLeft(List[FOLFormula]())( (list, c1) =>
       list ::: clauses.dropWhile( _ != c1).foldLeft(List[FOLFormula]())( (list2, c2) =>
         if (resolvable(c1, c2))
-          CNFtoFormula( (clauses.filterNot(c => c == c1 || c == c2 ) + resolve(c1, c2)).toList )::list2
+          CNFtoFormula( (clauses.filterNot(c => c == c1 || c == c2 ) :+ resolve(c1, c2)) )::list2
         else
           list2
       )
@@ -318,17 +318,17 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   }
 
   // Implements forgetful paramodulation.
-  def ForgetfulParamodulateCNF(f: FOLFormula) : List[Set[MyFClause[FOLFormula]]] =
+  def ForgetfulParamodulateCNF(f: FOLFormula) : List[List[MyFClause[FOLFormula]]] =
     ForgetfulParamodulateCNF( CNFp(f).map(c => toMyFClause(c)) )
 
   // Implements forgetful paramodulation.
-  def ForgetfulParamodulateCNF(clauses: Set[MyFClause[FOLFormula]]) : List[Set[MyFClause[FOLFormula]]] =
+  def ForgetfulParamodulateCNF(clauses: List[MyFClause[FOLFormula]]) : List[List[MyFClause[FOLFormula]]] =
   {
-    clauses.foldLeft(List[Set[MyFClause[FOLFormula]]]())( (list, c1) =>
-      list ::: clauses.dropWhile( _ != c1).foldLeft(List[Set[MyFClause[FOLFormula]]]())( (list2, c2) =>
+    clauses.foldLeft(List[List[MyFClause[FOLFormula]]]())( (list, c1) =>
+      list ::: clauses.dropWhile( _ != c1).foldLeft(List[List[MyFClause[FOLFormula]]]())( (list2, c2) =>
         if ( c1 != c2 ) {  // do not paramodulate a clause into itself
           val paras = Paramodulants( c1, c2 )
-          paras.map( p => (clauses.filterNot(c => c == c1 || c == c2 ) + p)).toList ++ list2
+          paras.map( p => (clauses.filterNot(c => c == c1 || c == c2 ) :+ p)).toList ++ list2
         } else
           list2
       )

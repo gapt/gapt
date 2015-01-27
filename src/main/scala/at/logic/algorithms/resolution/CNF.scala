@@ -15,13 +15,15 @@ object CNFp {
   /**
    * @param f a HOLFormula which is regular and does not contain strong quantifiers
    */
-  def apply(f: HOLFormula): Set[FClause] = f match {
-    case Atom(_,_) => Set(FClause(List(), List(f)))
-    case Neg(f2) => CNFn(f2)
-    case And(f1,f2) => CNFp(f1) union CNFp(f2)
-    case Or(f1,f2) => times(CNFp(f1),CNFp(f2))
-    case Imp(f1,f2) => times(CNFn(f1),CNFp(f2))
-    case AllVar(_,f2) => CNFp(f2)
+  def apply (f: HOLFormula): List[FClause] = transform(f).distinct
+
+  def transform (f: HOLFormula): List[FClause] = f match {
+    case Atom(_,_) => List(FClause(List(), List(f)))
+    case Neg(f2) => CNFn.transform(f2)
+    case And(f1,f2) => CNFp.transform(f1) ++ CNFp.transform(f2)
+    case Or(f1,f2) => times (CNFp.transform(f1), CNFp.transform(f2))
+    case Imp(f1,f2) => times (CNFn.transform(f1), CNFp.transform(f2))
+    case AllVar(_,f2) => CNFp.transform(f2)
     case _ => throw new IllegalArgumentException("unknown head of formula: " + f.toString)
   }
 }
@@ -34,19 +36,21 @@ object CNFn {
   /**
    * @param f a HOLFormula which is regular and does not contain strong quantifiers
    */
-  def apply(f: HOLFormula): Set[FClause] = f match {
-    case Atom(_,_) => Set(FClause(List(f), List()))
-    case Neg(f2) => CNFp(f2)
-    case And(f1,f2) => times(CNFn(f1),CNFn(f2))
-    case Or(f1,f2) => CNFn(f1) union CNFn(f2)
-    case Imp(f1,f2) => CNFp(f1) union CNFn(f2)
-    case ExVar(_,f2) => CNFn(f2)
+  def apply (f: HOLFormula): List[FClause] = transform(f).distinct
+
+  def transform (f: HOLFormula): List[FClause] = f match {
+    case Atom(_,_) => List(FClause(List(f), List()))
+    case Neg(f2) => CNFp.transform(f2)
+    case And(f1,f2) => times (CNFn.transform(f1), CNFn.transform(f2))
+    case Or(f1,f2) => CNFn.transform(f1) ++ CNFn.transform(f2)
+    case Imp(f1,f2) => CNFp.transform(f1) ++ CNFn.transform(f2)
+    case ExVar(_,f2) => CNFn.transform(f2)
     case _ => throw new IllegalArgumentException("unknown head of formula: " + f.toString)
   }
 }
 
 private object times {
-  def apply(s1: Set[FClause], s2: Set[FClause]): Set[FClause] = {
+  def apply(s1: List[FClause], s2: List[FClause]): List[FClause] = {
     s1.flatMap(c1 => s2.map(c2 => c1 compose c2))
   }
 }
@@ -58,7 +62,7 @@ object TseitinCNF {
    * @param tseitinInstance a previously called TseitinCNF instance, which provides dependencies for future computations
    * @return triple where 1st are clauses equivalent to f in CNF, 2nd is the subformulaMap and 3rd is an atomBlacklist for eventual further TseitinCNF computations
    */
-  def apply(f: FOLFormula, tseitinInstance: TseitinCNF = null): (Set[FClause], TseitinCNF) = {
+  def apply(f: FOLFormula, tseitinInstance: TseitinCNF = null): (List[FClause], TseitinCNF) = {
 
     val tseitin = tseitinInstance match {
       case null => new TseitinCNF()
@@ -71,7 +75,7 @@ object TseitinCNF {
       }
     }
 
-    (tseitin.transform(f).toSet, tseitin)
+    (tseitin.transform(f), tseitin)
   }
 }
 

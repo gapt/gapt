@@ -54,7 +54,7 @@ class MiniSATTest extends SpecificationWithJUnit {
     "find a model for an atom" in {
       val clause = FClause(Nil, pc::Nil)
      
-      (new MiniSAT).solve( (clause::Nil).toSet ) must beLike {
+      (new MiniSAT).solve( (clause::Nil) ) must beLike {
         case Some(model) => ok
         case None => ko
       }
@@ -64,7 +64,7 @@ class MiniSATTest extends SpecificationWithJUnit {
       val c1 = FClause(Nil, pc::Nil)
       val c2 = FClause(pc::Nil, Nil)
       
-      (new MiniSAT).solve( (c1::c2::Nil).toSet ) must beLike {
+      (new MiniSAT).solve( (c1::c2::Nil) ) must beLike {
         case Some(_) => ko
         case None => ok
       }
@@ -84,7 +84,7 @@ class MiniSATTest extends SpecificationWithJUnit {
       val c2 = FClause(pc::Nil, pd::Nil)
       val c3 = FClause(pd::pe::Nil, Nil)
       
-      (new MiniSAT).solve( (c1::c2::c3::Nil).toSet ) must beLike {
+      (new MiniSAT).solve( (c1::c2::c3::Nil) ) must beLike {
         case Some(model) => if (model.interpret(pe) == false) ok else ko
         case None => ko
       }
