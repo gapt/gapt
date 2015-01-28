@@ -40,7 +40,7 @@ object CutIntroduction {
     * @param verbose Whether information about the cut-introduction process 
     *        should be printed on screen.
     * @return A proof with one quantified cut.
-    * @throws An exception when the proof is not found.
+    * @throws CutIntroException when the proof is not found.
     */
   def one_cut_one_quantifier (proof: LKProof, verbose: Boolean) = 
   execute(proof, false, 3600, verbose) match {
@@ -57,7 +57,7 @@ object CutIntroduction {
     * @param verbose Whether information about the cut-introduction process 
     *        should be printed on screen.
     * @return A proof with one quantified cut.
-    * @throws An exception when the proof is not found.
+    * @throws CutIntroException when the proof is not found.
     */
   def one_cut_one_quantifier (es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean) = 
   execute(es, hasEquality, false, -1, 3600, verbose) match {
@@ -71,7 +71,7 @@ object CutIntroduction {
     * @param verbose Whether information about the cut-introduction process 
     *        should be printed on screen.
     * @return A proof with one quantified cut.
-    * @throws An exception when the proof is not found.
+    * @throws CutIntroException when the proof is not found.
     */
   def one_cut_many_quantifiers (proof: LKProof, verbose: Boolean) = 
   execute(proof, true, 3600, verbose) match {
@@ -88,7 +88,7 @@ object CutIntroduction {
     * @param verbose Whether information about the cut-introduction process 
     *        should be printed on screen.
     * @return A proof with one quantified cut.
-    * @throws An exception when the proof is not found.
+    * @throws CutIntroException when the proof is not found.
     */
   def one_cut_many_quantifiers (es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean) = 
   execute(es, hasEquality, true, -1, 3600, verbose) match {
@@ -103,7 +103,7 @@ object CutIntroduction {
     * @param verbose Whether information about the cut-introduction process 
     *        should be printed on screen.
     * @return A list of cut-formulas.
-    * @throws An exception when the cut-formulas are not found.
+    * @throws CutIntroException when the cut-formulas are not found.
     */
   def many_cuts_one_quantifier (proof: LKProof, numcuts: Int, verbose: Boolean) = 
   execute(proof, numcuts, 3600, verbose) match {
@@ -121,7 +121,7 @@ object CutIntroduction {
     * @param verbose Whether information about the cut-introduction process 
     *        should be printed on screen.
     * @return A list of cut-formulas.
-    * @throws An exception when the proof is not found.
+    * @throws CutIntroException when the proof is not found.
     */
   def many_cuts_one_quantifier (es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, verbose: Boolean) = 
   execute(es, hasEquality, -1, numcuts, 3600, verbose) match {
@@ -437,13 +437,16 @@ object CutIntroduction {
 
       val small_grammar = TreeGrammarDecomposition.applyStat(termset.set, n, MCSMethod.MaxSAT, maxsatsolver)
       val grammar = small_grammar match {
-	case Some(g) => g.terms = termset; g
+	      case Some(g) => g.terms = termset; g
         case None =>
-          throw new TreeGrammarDecompositionException("Unable to complete TreeGrammarDecomposition")
+          throw new CutIntroUncompressibleException("\nNo grammars found. The proof cannot be compressed.")
       }
       grammarFindingTime = System.currentTimeMillis - time
       time = System.currentTimeMillis
 
+      // Although this shouldn't be the case, because of the grammar returned by
+      // TreeGrammarDecomposition should either be None or some grammar with size > 0
+      // we leave it here just to be sure
       if (grammar.size == 0) {
         throw new CutIntroUncompressibleException("\nNo grammars found. The proof cannot be compressed.")
       }

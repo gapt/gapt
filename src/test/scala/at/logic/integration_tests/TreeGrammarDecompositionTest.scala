@@ -72,10 +72,10 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
       val grammar = TreeGrammarDecomposition(proofLanguage, 1, MCSMethod.MaxSAT)
 
       // check size
-      grammar.slist.size shouldEqual 1
+      grammar.get.slist.size shouldEqual 1
 
       // check validity
-      val grammarLanguage = reconstructLanguage(grammar)
+      val grammarLanguage = reconstructLanguage(grammar.get)
 
       proofLanguage diff grammarLanguage must beEmpty
     }
@@ -89,10 +89,10 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
       val grammar = TreeGrammarDecomposition(proofLanguage, 2, MCSMethod.MaxSAT)
 
       // check size
-      grammar.slist.size shouldEqual 2
+      grammar.get.slist.size shouldEqual 2
 
       // check validity
-      val grammarLanguage = reconstructLanguage(grammar)
+      val grammarLanguage = reconstructLanguage(grammar.get)
 
       proofLanguage diff grammarLanguage must beEmpty
     }

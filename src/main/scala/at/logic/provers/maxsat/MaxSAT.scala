@@ -338,6 +338,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
       case tde:ThreadDeath => {
         debug("Process interrupted by timeout: Killing MaxSATSolver process");
         proc.destroy();
+        value = proc.exitValue();
         throw tde;
       }
     }
@@ -369,6 +370,7 @@ class MaxSAT(solver: MaxSATSolver) extends at.logic.utils.logging.Logger {
       case MaxSATSolver.QMaxSAT => {
         multiVLineOutputToInterpretation(in)
       }
+
       case MaxSATSolver.ToySAT => {
         toysatOutputToInterpretation(in)
       }

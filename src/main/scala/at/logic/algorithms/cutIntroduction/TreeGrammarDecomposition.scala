@@ -46,7 +46,7 @@ object TreeGrammarDecomposition {
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return a list of grammars
    */
-  def apply(termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Grammar = {
+  def apply(termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver=MaxSATSolver.QMaxSAT) : Option[Grammar] = {
 
     method match {
       case MCSMethod.MaxSAT => {
@@ -72,13 +72,18 @@ object TreeGrammarDecomposition {
       val g = decomp.softConstraints().asInstanceOf[List[Tuple2[FOLFormula,Int]]]
       // Retrieving a model from a MaxSAT solver and extract the rules
       val interpretation = (new MaxSAT(satsolver)).solvePWM(f, g)
-      val rules = decomp.getRules(interpretation)
-      // transform the rules to a Grammar
-      val grammar = decomp.getGrammar(rules)
-      return grammar
+      interpretation match {
+        case Some(interp) => {
+          val rules = decomp.getRules(interpretation)
+          // transform the rules to a Grammar
+          val grammar = decomp.getGrammar(rules)
+          return Some(grammar)
+        }
+        case None => return None
+      }
     }
     else{
-      return null
+      return None
     }
   }
 
@@ -133,16 +138,21 @@ object TreeGrammarDecomposition {
       // Retrieving a model from a MaxSAT solver and extract the rules
       val interpretation = (new MaxSAT(satsolver)).solvePWM(f, g)
 
-      phase = "interpret"
-      val rules = decomp.getRules(interpretation)
-
-      // transform the rules to a Grammar
-      grammar = Some(decomp.getGrammar(rules))
+      interpretation match {
+        case Some(interp) => {
+          phase = "interpret"
+          val rules = decomp.getRules(interpretation)
+          // transform the rules to a Grammar
+          val grammar = decomp.getGrammar(rules)
+          return Some(grammar)
+        }
+        case None => return None
+      }
     }
     else {
       throw new TreeGrammarDecompositionException("Unsupported TreeGrammarDecomposition method")
     }
-    grammar
+    return None
   }
 }
 
