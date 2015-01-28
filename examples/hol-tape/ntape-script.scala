@@ -9,8 +9,9 @@
  * *************************************************************************** */
 
 /* adjust filename to load a different example */
-//val filename = "./algorithms/llk/src/test/resources/tape3.llk"  
-val filename = "./algorithms/llk/src/test/resources/tape3ex.llk"  
+val filename = "./examples/hol-tape/ntape-small.llk"  
+
+//val filename = "./examples/hol-tape/ntape.llk"  
 //val filename = "tape3old.llk"  
 
 /* begin of proof script  */
@@ -27,12 +28,12 @@ import at.logic.calculi.lksk.sequentToLabelledSequent
 
 
 import at.logic.provers.prover9._
-import at.logic.transformations.ceres.clauseSets.AlternativeStandardClauseSet
+import at.logic.transformations.ceres.clauseSets._
 import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct.StructCreators
 
 import at.logic.transformations.ceres.ceres_omega
-import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionTrees
+import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
  def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
@@ -88,7 +89,7 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
       val proj = Projections(selp, x => containsQuantifier(x) || freeHOVariables(x).nonEmpty)
 
       show("Computing clause set")
-      val cl = AlternativeStandardClauseSet(struct)
+      val cl = SimpleStandardClauseSet(struct)
 
       show("Exporting to prover 9")
       val (cmap, folcl_) = replaceAbstractions(cl.toList)
@@ -110,5 +111,5 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
       show("Creating acnf")
       val (acnf, endclause) = ceres_omega(proj, ralp, sequentToLabelledSequent(selp.root), struct)
       show("Compute expansion tree")
-      val et = extractLKSKExpansionTrees(acnf, false)
+      val et = extractLKSKExpansionSequent(acnf, false)
       show(" End of script ")

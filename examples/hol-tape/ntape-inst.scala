@@ -31,7 +31,7 @@ import at.logic.transformations.ceres.projections.Projections
 import at.logic.transformations.ceres.struct.StructCreators
 
 import at.logic.transformations.ceres.ceres_omega
-import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionTrees
+import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
  def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
