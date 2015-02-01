@@ -8,7 +8,6 @@ package at.logic.cli.GAPScalaInteractiveShellLibrary
 import java.io.{FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter}
 import java.util.zip.GZIPInputStream
 
-import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.expansionTrees.{compressQuantifiers, minimalExpansionSequents => minimalExpSeq}
 import at.logic.algorithms.fol.hol2fol._
@@ -520,7 +519,7 @@ object extractTerms {
 
 object computeGrammars {
   def apply(terms: TermSet) = {
-    val g = ComputeGrammars(terms, new UnboundedVariableDelta())
+    val g = ComputeGrammars(terms, new Deltas.UnboundedVariableDelta())
     g.size match {
       case 0 => throw new Exception("No grammars found for this list of terms.")
       case n => println(n + " grammars found.\n"); g
