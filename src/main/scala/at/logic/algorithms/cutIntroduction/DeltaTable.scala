@@ -32,7 +32,6 @@ import at.logic.language.fol.Utils._
 import at.logic.calculi.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.utils.dssupport.ListSupport._
-import at.logic.utils.logging.Logger
 import at.logic.algorithms.cutIntroduction.Deltas._
 
 //package-global definitions
@@ -70,33 +69,20 @@ class DeltaTableException(msg: String) extends Exception(msg)
   * @param terms The terms occurring in an LK proof.
   * @param eigenvariable The name of eigenvariable that should be introduced in the decompositions.
   */
-class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector) extends Logger {
+class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector) {
   var termsAdded : Int = 0
    
   var table = new HashMap[types.S, List[(types.U, List[FOLTerm])]] 
   val trivialEv = FOLVar(eigenvariable + "_0")
 
-  // Fills the delta table with some terms
-
   // Initialize with empty decomposition
-  trace( "initializing generalized delta-table (set-based)" )
   add(Set(), null, Nil)
 
-
   for (n <- 1 until terms.length+1) {
-    trace( "adding simple grammars for " + n + " terms to generalized delta-table" )
 
     // Take only the simple grammars of term sets of size (n-1) from the current delta table
     // Filter the keys (S) according to size
     val one_less = table.filter( e => e._1.size == n - 1)
-
-    trace("_____________________________________________________")
-    trace("DT contains " + table.size + " elements. Filtered to " + one_less.size)
-    trace("previously (for n=" + (n-1) + "), " + termsAdded + "entries were added")
-    trace("one_less (n=" + n + "): ")
-    trace(one_less.toString())
-    trace("_____________________________________________________")
-
 
     termsAdded = 0
 
@@ -110,22 +96,10 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector
         val maxIdx = terms.lastIndexWhere(e => ti.contains(e))
         val termsToAdd = terms.slice(maxIdx + 1, (terms.size + 1))
 
-        trace("termsToAdd with n     = " + n)
-        trace("                maxIdx= " + maxIdx)
-        trace("                ti    = " + ti)
-        trace("termsToAdd (" + termsToAdd.size + ": ")
-        trace(termsToAdd.toString())
-
         // Compute delta of the incremented list
         termsToAdd.foreach {case e =>
           val incrementedtermset = ti :+ e
           val p = delta.computeDelta(incrementedtermset, eigenvariable)
-
-          trace("---------------------------------------------------------")
-          trace("Computed deltaG of " + incrementedtermset)
-          trace("Result:")
-          trace(p.toString())
-          trace("---------------------------------------------------------")
 
           termsAdded = termsAdded + 1
 
@@ -157,11 +131,6 @@ class DeltaTable(terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector
     * a decomposition of T.
     * If the key already exists, (u,T) is appended the list of existing values */
   def add(s: types.S, u: types.U, t: List[FOLTerm]) {
-    trace("-------------ADD:")
-    trace("s: " + s)
-    trace("t: " + t)
-    trace("u: " + u)
-
     if(table.contains(s)) {
       val lst = table(s)
       table += (s -> ((u, t) :: lst) )
