@@ -176,23 +176,11 @@ object PCNF {
     case _ => throw new Exception()
   }
 
-  // we need to compute (Not anymore)) the power set of the literals of the clause in order to find the right division of them in and right and or left
-  def power[A](lst: List[A]): List[Tuple2[List[A],List[A]]] = {
-    @annotation.tailrec
-    def pwr(s: List[A], acc: List[Tuple2[List[A],List[A]]]): List[Tuple2[List[A],List[A]]] = s match {
-      case Nil     => acc
-      case a :: as => pwr(as, acc ::: (acc map (x => (a :: x._1,removeFirst(x._2,a).toList))))
-    }
-    pwr(lst, (Nil,lst) :: Nil)
-  }
-
   def containsSubsequent(set : List[FClause], fc : FClause) : Boolean = {
     val fs = fc.toFSequent
-    //println("Checking "+fs)
-    val r = set.filter( x => {/*println("... with "+x);*/ (x.toFSequent diff fs).isEmpty })
+    val r = set.filter( x => (x.toFSequent diff fs).isEmpty )
     r.nonEmpty
   }
-
 
   // applying sub to a clause
   def as(a: FClause, sub: Substitution): FClause = FClause(a.neg.map(f => sub(f)), a.pos.map(f => sub(f)))
