@@ -83,33 +83,20 @@ object testCutIntro {
   }
 
   def compressAll (timeout: Int) = {
-    // note: the "now starting" - lines are logged in the data file so that it can be separated into the particular test runs later
 
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/1 cut, 1 quantifier" )
     compressProofSequences (timeout, 0)
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/1 cut, many quantifiers" )
     compressProofSequences (timeout, 1)
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/many cuts (1), 1 quantifier" )
     compressProofSequences (timeout, 2)
-    CutIntroDataLogger.trace( "---------- now starting ProofSeq/many cuts (2), 1 quantifier" )
     compressProofSequences (timeout, 3)
 
-    CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/1 cut, 1 quantifier" )
     compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 0)
-    CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/1 cut, many quantifiers" )
     compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 1)
-    CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/many cuts (1), 1 quantifier" )
     compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 2)
-    CutIntroDataLogger.trace( "---------- now starting TSTP-Prover9/many cuts (2), 1 quantifier" )
     compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 3)
     
-    CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/1 cut, 1 quantifier" )
     compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 0)
-    CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/1 cut, many quantifiers" )
     compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 1)
-    CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/many cuts (1), 1 quantifier" )
     compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 2)
-    CutIntroDataLogger.trace( "---------- now starting SMT-LIB-QF_UF-veriT/many cuts (2), 1 quantifier" )
     compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 3)
   }
 
@@ -118,22 +105,29 @@ object testCutIntro {
    * All calls to cut-introduction and logging are done exclusively here
    *
    */
-  def compressLKProof (proof: Option[LKProof], timeout: Int, method: Int, name: String, status: String) =
-  status match {
-    case "ok" =>
-      val (cut_intro_status, info_tuple) = method match {
-        case 0 => CutIntroduction.one_cut_one_quantifier_stat (proof.get, timeout)
-        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (proof.get, timeout)
-        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (proof.get, 1, timeout)
-        case 3 => CutIntroduction.many_cuts_one_quantifier_stat (proof.get, 2, timeout)
-      }
-      val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
-      CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
-      cut_intro_status.split ("_").last
-    case _ =>
-      // Failed already during parsing, logging
-      CutIntroDataLogger.trace(name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
-      status.split ("_").last
+  def compressLKProof (proof: Option[LKProof], timeout: Int, method: Int, name: String, status: String) = {
+    val method_name = method match {
+      case 0 => "one_cut_one_quant"
+      case 1 => "one_cut_many_quant"
+      case 2 => "many_cuts_one_quant_1"
+      case 3 => "many_cuts_one_quant_2"
+    }
+    status match {
+      case "ok" =>
+	val (cut_intro_status, info_tuple) = method match {
+	  case 0 => CutIntroduction.one_cut_one_quantifier_stat (proof.get, timeout)
+	  case 1 => CutIntroduction.one_cut_many_quantifiers_stat (proof.get, timeout)
+	  case 2 => CutIntroduction.many_cuts_one_quantifier_stat (proof.get, 1, timeout)
+	  case 3 => CutIntroduction.many_cuts_one_quantifier_stat (proof.get, 2, timeout)
+	}
+	val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)
+	CutIntroDataLogger.trace(method_name + "," + name + "," + cut_intro_status + log_string )
+	cut_intro_status.split ("_").last
+      case _ =>
+	// Failed already during parsing, logging
+	CutIntroDataLogger.trace(method_name + "," + name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
+	status.split ("_").last
+    }
   }
 
   def compressExpansionProof (ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String) = 
