@@ -230,7 +230,6 @@ object testCutIntro {
     //lines.par.foreach { case l =>
     lines.foreach { case l =>
       val data = l.split(",")
-      println ("*** Prover9 file: " + data(0))
       compressTSTPProof (data(0), timeout, method)
     }
   }
@@ -270,7 +269,6 @@ object testCutIntro {
     val proofs = getVeriTProofs (str)
     //proofs.par.foreach { case p => 
     proofs.foreach { case p => 
-      println ("*** VeriT file: " + p)
       compressVeriTProof (p, timeout, method)
     }
   }
