@@ -552,7 +552,7 @@ object computeCanonicalSolution {
 object minimizeSolution {
   def apply(ehs: ExtendedHerbrandSequent) = {
     println("Previous solution: " + ehs.cutFormula)
-    val new_ehs = MinimizeSolution(ehs, new at.logic.algorithms.cutIntroduction.DefaultProver())
+    val new_ehs = MinimizeSolution(ehs, new at.logic.provers.basicProver.BasicProver())
     println("Improved solution: " + new_ehs.cutFormula)
     new_ehs
   }
@@ -560,7 +560,7 @@ object minimizeSolution {
 
 object buildProofWithCut {
   def apply(ehs: ExtendedHerbrandSequent) = {
-    val p = CutIntroduction.buildProofWithCut(ehs, new at.logic.algorithms.cutIntroduction.DefaultProver())
+    val p = CutIntroduction.buildProofWithCut(ehs, new at.logic.provers.basicProver.BasicProver())
     p.flatMap(x => Some(CleanStructuralRules(x)))
   }
 }
