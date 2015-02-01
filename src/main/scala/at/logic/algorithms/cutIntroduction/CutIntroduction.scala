@@ -169,23 +169,24 @@ object CutIntroduction {
    *
    */
 
-  type LogTuple = (Int, Int, Int, Int, Int, Int, Int, Int, Int, Long, Long, Long, Long, Long, Long)
+  type LogTuple = (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Long, Long, Long, Long, Long, Long)
   def print_log_tuple (log: LogTuple) = {
     println("Total inferences in the input proof: " + log._1);
     println("Quantifier inferences in the input proof: " + log._2);
-    println("Total inferences in the proof with cut(s): " + (if (log._3 == -1) "n/a" else log._3));
-    println("Quantifier inferences in the proof with cut(s): " + (if (log._4 == -1) "n/a" else log._4));
-    println("Size of the term set: " + log._5);
-    println("Size of the minimal grammar: " + log._6);
-    println("Number of minimal grammars: " + (if (log._7 == -1) "n/a" else log._7));
-    println("Size of the canonical solution: " + (if (log._8 == -1) "n/a" else log._8));
-    println("Size of the minimized solution: " + (if (log._9 == -1) "n/a" else log._9));
-    println("Time for extracting the term set: " + log._10);
-    println("Time for generating the delta-table: " + (if (log._11 == -1) "n/a" else log._11));
-    println("Time for finding the grammar: " + log._12);
-    println("Time for improving the solution: " + (if (log._13 == -1) "n/a" else log._13));
-    println("Time for building the final proof: " + (if (log._14 == -1) "n/a" else log._14));
-    println("Time for cleaning the structural rules of the final proof: " + (if (log._15 == -1) "n/a" else log._15));
+    println("Number of cuts introduced: " + log._3);
+    println("Total inferences in the proof with cut(s): " + (if (log._4 == -1) "n/a" else log._4));
+    println("Quantifier inferences in the proof with cut(s): " + (if (log._5 == -1) "n/a" else log._5));
+    println("Size of the term set: " + log._6);
+    println("Size of the minimal grammar: " + log._7);
+    println("Number of minimal grammars: " + (if (log._8 == -1) "n/a" else log._8));
+    println("Size of the canonical solution: " + (if (log._9 == -1) "n/a" else log._9));
+    println("Size of the minimized solution: " + (if (log._10 == -1) "n/a" else log._10));
+    println("Time for extracting the term set: " + log._11);
+    println("Time for generating the delta-table: " + (if (log._12 == -1) "n/a" else log._12));
+    println("Time for finding the grammar: " + log._13);
+    println("Time for improving the solution: " + (if (log._14 == -1) "n/a" else log._14));
+    println("Time for building the final proof: " + (if (log._15 == -1) "n/a" else log._15));
+    println("Time for cleaning the structural rules of the final proof: " + (if (log._16 == -1) "n/a" else log._16));
   }
 
   // Delta-table methods
@@ -215,6 +216,7 @@ object CutIntroduction {
     
     val rulesLKProof = num_lk_rules
     val quantRules = quantRulesNumberET(ep)
+    var numCuts = -1
     var rulesLKProofWithCut = -1
     var quantRulesWithCut = -1
     var termsetSize = -1
@@ -323,6 +325,7 @@ object CutIntroduction {
       val smallestProof = sorted.head._1
       val ehs = sorted.head._2
 
+      numCuts = getStatistics(smallestProof).cuts 
       canonicalSolutionSize = sorted.head._3
       minimizedSolutionSize = sorted.head._4
       rulesLKProofWithCut = rulesNumber (smallestProof)
@@ -352,7 +355,8 @@ object CutIntroduction {
     }
 
     val tuple = (rulesLKProof, 
-                 quantRules, 
+                 quantRules,
+		 numCuts,
                  rulesLKProofWithCut, 
                  quantRulesWithCut, 
                  termsetSize, 
@@ -403,6 +407,7 @@ object CutIntroduction {
     
     val rulesLKProof = num_lk_rules
     val quantRules = quantRulesNumberET(ep)
+    var numCuts = -1
     var rulesLKProofWithCut = -1
     var quantRulesWithCut = -1
     var termsetSize = -1
@@ -454,6 +459,10 @@ object CutIntroduction {
       /********** Proof Construction **********/ // TODO
       phase = "prcons"
 
+      // For the maxsat method, the number of eigenvariables in the grammar is
+      // equivalent to the number of cuts in the final proof, since each cut has
+      // only one quantifier.
+      numCuts = grammar.numVars 
       minimalGrammarSize = grammar.size
       if (verbose) println( "Smallest grammar-size: " + grammar.size )
       
@@ -484,6 +493,7 @@ object CutIntroduction {
     
     val tuple = (rulesLKProof, 
                  quantRules, 
+		 numCuts,
                  rulesLKProofWithCut, 
                  quantRulesWithCut, 
                  termsetSize, 
