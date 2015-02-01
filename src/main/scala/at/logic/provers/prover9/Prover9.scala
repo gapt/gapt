@@ -341,8 +341,6 @@ object Prover9 extends at.logic.utils.logging.Logger {
     val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
     p9_to_ivy(pt_file.getCanonicalPath, ivy_file.getCanonicalPath)
 
-    def debugline(s:String) = { debug(s); true}
-
     val iproof = IvyParser(ivy_file.getCanonicalPath, IvyStyleVariables)
     val rproof = IvyToRobinson(iproof)
 

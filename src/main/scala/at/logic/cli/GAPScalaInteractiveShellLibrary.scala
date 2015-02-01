@@ -193,21 +193,27 @@ object loadProver9Proof {
 }
 
 object loadProver9LKProof {
+
   def apply(filename: String, forceSkolemization: Boolean = false): LKProof = {
+
     val (proof, endsequent, clauses) = Prover9.parse_prover9(filename)
-    //println("skolemizing endsequent: "+endsequent)
     //val sendsequent = skolemize(endsequent)
     //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
-    //println("done: "+folsendsequent)
+    
     if (!forceSkolemization && !containsStrongQuantifiers(endsequent)) {
-      //println("End-sequent does not contain strong quantifiers!.")
-      val closure = FSequent(endsequent.antecedent map (x => univclosure(x.asInstanceOf[FOLFormula])),
-        endsequent.succedent map (x => existsclosure(x.asInstanceOf[FOLFormula])))
-      val clause_set = CNFn(endsequent.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]), c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList
-      Robinson2LK( fixSymmetry( proof, clause_set ), closure)
+      
+      val ant = endsequent.antecedent.map (x => univclosure(x.asInstanceOf[FOLFormula]))
+      val suc = endsequent.succedent.map (x => existsclosure(x.asInstanceOf[FOLFormula]))
+      val closure = FSequent (ant, suc)
+
+      val clause_set = CNFn(endsequent.toFormula).map(c => 
+	FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]), c.pos.map(f => f.asInstanceOf[FOLFormula])))
+
+      val res_proof = fixSymmetry (proof, clause_set)
+      
+      Robinson2LK (res_proof, closure)
+
     } else {
-      //if (forceSkolemization) println("Using initial clauses although end-sequent is skolemized")
-      //else println("End-sequent does contain strong quantifiers, using initial clauses instead.")
 
       val fclauses: Set[FClause] = proof.nodes.map {
         case InitialClause(clause) => clause.toFClause
@@ -216,7 +222,9 @@ object loadProver9LKProof {
         case FClause(Nil, Nil) => false;
         case _ => true
       })
-      val clauses = fclauses.map(c => univclosure(FOLOr(c.neg.map(f => FOLNeg(f.asInstanceOf[FOLFormula])).toList ++ c.pos.map(f => f.asInstanceOf[FOLFormula]).toList)))
+      val clauses = fclauses.map(c => univclosure(FOLOr(
+	c.neg.map(f => FOLNeg(f.asInstanceOf[FOLFormula])).toList ++ 
+	c.pos.map(f => f.asInstanceOf[FOLFormula]).toList)))
       val clauses_ = clauses.partition(_ match {
         case FOLNeg(_) => false;
         case _ => true
@@ -225,9 +233,8 @@ object loadProver9LKProof {
       val cendsequent2 = FSequent(clauses_._1.toList, clauses_._2.map(_ match {
         case FOLNeg(x) => x
       }).toList)
-      //println("new endsequent: "+cendsequent2)
 
-      Robinson2LK(proof, cendsequent2)
+      Robinson2LK (proof, cendsequent2)
 
     }
   }

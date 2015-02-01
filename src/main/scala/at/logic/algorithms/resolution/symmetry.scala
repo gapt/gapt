@@ -90,20 +90,28 @@ object fixSymmetry {
     })
   }
 
-  private def handleInitialClause( cls: FClause, cs: Seq[FSequent] ) =
-    cs.find( c => canDeriveBySymmetry( cls, c ) ) match {
-      case None => {
-        InitialClause(cls)
-      }
-      case Some( c ) => {
-        deriveBySymmetry( cls, c )
+  // NOTE: What if the symmetric clause found is a tautology?
+  private def handleInitialClause( cls: FClause, cs: Seq[FSequent] ) = {
+    // If cls is in cs, do nothing
+    val cls_sequent = FSequent(
+      cls.neg.map (f => f.asInstanceOf[FOLFormula]), 
+      cls.pos.map (f => f.asInstanceOf[FOLFormula]))
+
+    if (cs.contains(cls_sequent)) InitialClause(cls)
+    else {
+      cs.find( c => canDeriveBySymmetry( cls, c ) ) match {
+        case None => InitialClause(cls)
+        case Some( c ) => deriveBySymmetry( cls, c )
       }
     }
+  }
 
   /**
    * Transform the resolution refutation p to a resolution refutation of cs by applying 
    * symmetry to the initial clauses. If p has initial clauses which cannot be derived
    * from cs by symmetry, returns a resolution refutation with these initial clauses unchanged.
+   *
+   * NOTE: this method is sensitive to the order of the clauses in cs
    **/
   def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ) : RobinsonResolutionProof = {
     rec(p)(cs)
