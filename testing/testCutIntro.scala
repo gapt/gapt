@@ -132,7 +132,7 @@ object testCutIntro {
       cut_intro_status.split ("_").last
     case _ =>
       // Failed already during parsing, logging
-      CutIntroDataLogger.trace(name + "," + status + ", , , , , , , , , , , , , , , " )
+      CutIntroDataLogger.trace(name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
       status.split ("_").last
   }
 
