@@ -350,6 +350,9 @@ object CutIntroduction {
       case e: CutIntroEHSUnprovableException =>
         status = "cutintro_ehs_unprovable"
 	(None, Some(e))
+      case e: LKRuleCreationException =>
+	status = "lk_rule_creation_exception"
+	(None, Some(e))
       case e: Exception =>
         status = "cutintro_other_exception"
 	(None, Some(e))

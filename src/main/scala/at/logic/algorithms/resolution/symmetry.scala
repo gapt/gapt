@@ -34,7 +34,7 @@ object fixSymmetry {
           map 
         }}
       )
-  }
+    }
 
     val avail_pos = from.succedent.map( f => f.asInstanceOf[FOLFormula] )
     val avail_neg = from.antecedent.map( f => f.asInstanceOf[FOLFormula] )
