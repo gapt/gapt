@@ -31,15 +31,15 @@ License: GAPT is free software licensed under the GNU General
 Public  License Version 3. See the file COPYING for details.
 
 Instructions on downloading the sources can be found at:
-  http://code.google.com/p/gapt/source/checkout
+  https://github.com/gapt/gapt
 
 Compilation Instructions can be found at:
-  https://code.google.com/p/gapt/wiki/CompilingAndRunningFromSource
+  https://github.com/gapt/gapt/wiki/CompilingAndRunningFromSource
 
 Notes:
 
 [1] Ubuntu Linux' prover9 package does not contain tptp_to_ladr,
     please also install the ladr4-apps package
 [2] On some MacOS X installation there might be some additional configuration done, 
-    details are at https://code.google.com/p/gapt/wiki/Installation#MacOS_X_Specifics
-[3] https://code.google.com/p/gapt/wiki/MaxSATSolvers
+    details are at https://github.com/gapt/gapt/wiki/CompilingAndRunningFromSource
+[3] https://github.com/gapt/gapt/wiki/MaxSATSolvers

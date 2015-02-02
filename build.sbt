@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
-  organizationHomepage := Some(url("https://code.google.com/p/gapt/")),
+  organizationHomepage := Some(url("https://gapt.github.io/")),
   licenses += ("GNU GPL v3", url("http://www.gnu.org/licenses/gpl.html")),
   startYear := Some(2008),
   version := "1.9",
