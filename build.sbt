@@ -5,7 +5,7 @@ lazy val commonSettings = Seq(
   startYear := Some(2008),
   version := "1.9",
 
-  scalaVersion := "2.11.4",
+  scalaVersion := "2.11.5",
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test)
 )
@@ -38,8 +38,8 @@ lazy val root = (project in file(".")).
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.3",
       "org.apache.commons" % "commons-lang3" % "3.3.2",
-      "org.slf4j" % "slf4j-api" % "1.7.9",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.9",
+      "org.slf4j" % "slf4j-api" % "1.7.10",
+      "org.slf4j" % "slf4j-log4j12" % "1.7.10",
       "xml-resolver" % "xml-resolver" % "1.2"),
 
     // UI
@@ -68,10 +68,10 @@ lazy val releaseZip = TaskKey[File]("release-zip", "Creates the release zip file
 
 lazy val testDependencies = Seq(
   "junit" % "junit" % "4.12",
-  "org.specs2" %% "specs2-core" % "2.4.12",
-  "org.specs2" %% "specs2-matcher" % "2.4.12",
-  "org.specs2" %% "specs2-mock" % "2.4.12",
-  "org.specs2" %% "specs2-junit" % "2.4.12",
+  "org.specs2" %% "specs2-core" % "2.4.16",
+  "org.specs2" %% "specs2-matcher" % "2.4.16",
+  "org.specs2" %% "specs2-mock" % "2.4.16",
+  "org.specs2" %% "specs2-junit" % "2.4.16",
   "org.scalacheck" %% "scalacheck" % "1.12.1")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =
