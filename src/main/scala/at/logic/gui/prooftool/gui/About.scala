@@ -43,7 +43,7 @@ object About {
         }
       }
 
-      val uri = "http://code.google.com/p/gapt/"
+      val uri = "https://gapt.github.io/"
 
       border = Swing.EmptyBorder(10, 10, 10, 10)
       val c = new Constraints
