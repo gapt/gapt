@@ -1,10 +1,26 @@
+# sbt
 target
+
+# proof tarballs
 testing/TSTP/prover9
 testing/TSTP/leanCoP
 testing/veriT-SMT-LIB/QF_UF
+
+# latex
 doc/*.aux
 doc/*.bbl
 doc/*.blg
 doc/*.log
 doc/*.pdf
 doc/*.toc
+
+# vim
+.*.sw?
+
+# idea
+.idea
+
+# eclipse
+.project
+.classpath
+.cache
