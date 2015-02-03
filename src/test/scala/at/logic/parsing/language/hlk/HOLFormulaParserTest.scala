@@ -25,15 +25,9 @@ import java.io.File.separator
 
 @RunWith(classOf[JUnitRunner])
 class HOLASTParserTest extends SpecificationWithJUnit {
-  def debug(l:Int, str:String) = {
-    //if ((l & 1) == 1) println(str)
-    if ((l & 3) == 3) println(str)
-    if ((l & 7) == 7) println(str)
-  }
 
   "The HOL AST Parser parser" should {
     "handle conjunctions and atoms" in {
-      //skipped("not working yet")
       val cases = List(
         "p(X)", "A", "-p(y)", "-p(Y)",
         "P(X)", "a", "-P(y)", "-P(Y)",
@@ -44,25 +38,18 @@ class HOLASTParserTest extends SpecificationWithJUnit {
       var good: List[ast.LambdaAST] = List[ast.LambdaAST]()
       var bad: List[(String, Position)] = List[(String, Position)]()
       for (s <- cases) {
-        debug(1,"trying to parse "+s)
         HOLASTParser.parseAll(HOLASTParser.formula, s) match {
           case HOLASTParser.Success(result, _) =>
-            debug(1,"got ast: "+result)
             good = result :: good
           case HOLASTParser.Failure(msg, input) =>
             //s must beEqualTo("Failure:"+input.pos.toString + ": " +  msg)
-            debug(1,"Failure at "+input.pos+ " : "+msg)
-
             bad = (msg, input.pos) :: bad
           case HOLASTParser.Error(msg, input) =>
             //s must beEqualTo("Error:"+input.pos.toString + ": " +  msg)
-            debug(1,"Failure at "+input.pos+ " : "+msg)
             bad = (msg, input.pos) :: bad
-
         }
       }
-      //debug(1,"===============")
-      bad map println
+
       bad must beEmpty
     }
 
@@ -88,7 +75,6 @@ class HOLASTParserTest extends SpecificationWithJUnit {
       cases map ((s: String) =>
         HOLASTParser.parseAll(HOLASTParser.formula, s) match {
           case HOLASTParser.Success(result, _) =>
-            //debug(1,result)
             true must beEqualTo(true)
           case HOLASTParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
@@ -106,19 +92,15 @@ class HOLASTParserTest extends SpecificationWithJUnit {
         "(\\\\X=>\\X)", "(\\\\X=>\\X(\\X))"
       )
 
-      debug(1,"lambdas")
       cases map ((s: String) =>
         HOLASTParser.parseAll(HOLASTParser.formula, s) match {
           case HOLASTParser.Success(result, _) =>
-            debug(1,"got ast: "+result+ " for "+s)
             true must beEqualTo(true)
           case HOLASTParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
         })
-      debug(1,"")
       ok
     }
-
 
     "handle applications" in {
       val cases = List(
@@ -128,7 +110,6 @@ class HOLASTParserTest extends SpecificationWithJUnit {
       cases map ((s: String) =>
         HOLASTParser.parseAll(HOLASTParser.formula, s) match {
           case HOLASTParser.Success(result, _) =>
-            debug(1,"got ast: "+result+ " for "+s)
             true must beEqualTo(true)
           case HOLASTParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
@@ -149,7 +130,6 @@ class HOLASTParserTest extends SpecificationWithJUnit {
       cases map ((s: String) =>
         HOLASTParser.parseAll(HOLASTParser.formula, s) match {
           case HOLASTParser.Success(result, _) =>
-            //debug(1,result)
             true must beEqualTo(true)
           case HOLASTParser.NoSuccess(msg, input) =>
             s must beEqualTo(input.pos.toString + ": " + msg)
@@ -188,8 +168,6 @@ class HOLASTParserTest extends SpecificationWithJUnit {
     "(x+x) is a pformula" in {
       HOLASTParser.parseAll(HOLASTParser.pformula, "(x+x)") match {
         case HOLASTParser.Success(result, _) =>
-          debug(1,"got ast: "+result)
-          //debug(1,result)
           ok
         case HOLASTParser.NoSuccess(msg, input) =>
           ko(input.pos.toString + ": " + msg)
@@ -209,16 +187,10 @@ class HOLASTParserTest extends SpecificationWithJUnit {
       val res : List[(String,String)] = terms.map((s: String) =>
         HOLASTParser.parseAll(HOLASTParser.formula, s) match {
           case HOLASTParser.Success(result, _) =>
-            debug(1,"got ast: "+result+ " for "+s)
-            //debug(1,result)
             (s,"")
           case HOLASTParser.NoSuccess(msg, input) =>
             (s, (input.pos.toString + ": " + msg+"\nproblem is:"+s))
         }).filterNot(_._2 == "")
-
-      println(""+res.length+" errors:")
-      res.map((x:(String,String)) => println(x._1) )
-      println()
 
       res.map((x:(String,String)) =>"" mustEqual(x._2) )
       ok
@@ -229,7 +201,6 @@ class HOLASTParserTest extends SpecificationWithJUnit {
 -neq(V,nil) | (all Y (ssList(Y) -> app(W,Y) != X | -totalorderedP(W) | (exists Z (ssItem(Z) & (exists X1 (ssList(X1) &
 app(cons(Z,nil),X1) = Y & (exists X2 (ssItem(X2) & (exists X3 (ssList(X3) & app(X3,cons(X2,nil)) = W &
 leq(X2,Z))))))))))) | nil != X & nil = W | neq(U,nil) & frontsegP(V,U)))))))))"""
-      debug(1,"parsing large example 1")
       HOLASTParser.parseAll(HOLASTParser.formula, str) match {
         case HOLASTParser.Success(result, _) =>
           "success" must beEqualTo("success")
@@ -278,7 +249,6 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
 (p111(Y) | -p112(Y)) & (p110(Y) | -p111(Y)) & (p109(Y) | -p110(Y)) & (p108(Y) | -p109(Y)) & (p107(Y) | -p108(Y)) &
 (p106(Y) | -p107(Y)) & (p105(Y) | -p106(Y)) & (p104(Y) | -p105(Y)) & (p103(Y) | -p104(Y)) & (p102(Y) | -p103(Y)) &
 (p101(Y) | -p102(Y)) & (p100(Y) | -p101(Y)))) & -p101(X) & p100(X))))"""
-      debug(1,"parsing large example 2")
       HOLASTParser.parseAll(HOLASTParser.formula, str) match {
         case HOLASTParser.Success(result, _) =>
           "success" must beEqualTo("success")
@@ -299,7 +269,6 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
         val f = HLKHOLParser.parseFormula(x)
         f match {
           case AllVar(x, Imp(Atom(p, px::Nil), ExVar(y, Atom(q, List(qx,qy))) )) =>
-            println(f)
             "success" mustEqual("success")
           case _ =>
             f mustEqual("(fails)")
