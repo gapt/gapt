@@ -11,7 +11,9 @@ class extractExpansionSequent {
 
   def apply(proof: LKProof, verbose: Boolean): ExpansionSequent = {
     val map = extract(proof, verbose)
-    mergeTree( (proof.root.antecedent.map(fo => map(fo)), proof.root.succedent.map(fo => map(fo))) )
+    val clean_ant = proof.root.antecedent.filter (f =>  map(f) != AtomTree(TopC))
+    val clean_suc = proof.root.succedent.filter (f => map(f) != AtomTree(BottomC))
+    mergeTree( (clean_ant.map(fo => map(fo)), clean_suc.map(fo => map(fo))) )
   }
 
   private def extract(proof: LKProof, verbose: Boolean): Map[FormulaOccurrence,ExpansionTreeWithMerges] = proof match {
