@@ -20,15 +20,15 @@ object fixSymmetry {
     var err = false
 
     def createMap( from: Seq[FOLFormula], to: Seq[FOLFormula] ) = {
-      to.foldLeft( HashMap[FOLFormula, FOLFormula]() )( (map, to_f) => {
-        val from_f = from.find( from_f => (from_f == to_f) || ( (from_f, to_f) match
+      from.foldLeft( HashMap[FOLFormula, FOLFormula]() )( (map, from_f) => {
+        val to_f = to.find( to_f => (from_f == to_f) || ( (from_f, to_f) match
         {
           case (FOLEquation(from_l, from_r), FOLEquation(to_l, to_r)) if from_l == to_r && from_r == to_l => true
           case _ => false
         }))
 
-        if ( from_f != None )
-          map + (( from_f.get, to_f ))
+        if ( to_f != None )
+          map + (( from_f, to_f.get ))
         else {
           err = true
           map 
@@ -48,7 +48,7 @@ object fixSymmetry {
       Some((neg_map, pos_map))
   }
 
-  private def canDeriveBySymmetry( to: FClause, from: FSequent ) = getSymmetryMap( to, from ) match {
+  def canDeriveBySymmetry( to: FClause, from: FSequent ) = getSymmetryMap( to, from ) match {
     case Some(_) => true
     case None => false
   }
