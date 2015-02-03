@@ -100,7 +100,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
         (base, step)
     }
 
-    val (ind2base,ind2step) = ind1 match {
+    val (ind2base,ind2step) = ind2 match {
       case ETImp(ETAnd(
         WeakQuantifier(_, List((_,base))),
         SkolemQuantifier(_,_,

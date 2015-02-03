@@ -272,6 +272,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E with minisat" in {
+      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
       for (testBaseName <- "PUZ002-1.out" :: Nil) {
         val (resproof, endsequent, _) = Prover9.parse_prover9( tempCopyOfClasspathFile( testBaseName ))
 
