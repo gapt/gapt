@@ -94,10 +94,10 @@ object testCutIntro {
     compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 2)
     compressTSTP ("testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 3)
     
-    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 0)
-    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 1)
-    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 2)
-    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout, 3)
+    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout*5, 0)
+    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout*5, 1)
+    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout*5, 2)
+    compressVeriT ("testing/veriT-SMT-LIB/QF_UF/", timeout*5, 3)
   }
 
   /*
