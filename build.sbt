@@ -6,6 +6,7 @@ lazy val commonSettings = Seq(
   version := "1.9",
 
   scalaVersion := "2.11.5",
+  scalacOptions in (Compile, doc) ++= Seq("-diagrams","-implicits"),
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test)
 )
