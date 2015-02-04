@@ -25,7 +25,12 @@ lazy val root = (project in file(".")).
         (assemblyJar: File, baseDirectory: File, target: File, version: String) =>
       val zipFile = target / s"gapt-$version.zip"
 
-      val filesToIncludeAsIs = List("README", "COPYING", "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples")
+      Process(List("latexmk", "-pdf", "user_manual.tex"), baseDirectory / "doc") !
+
+      val filesToIncludeAsIs = List(
+        "README", "COPYING",
+        "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples",
+        "doc/user_manual.pdf")
       val entries = List((assemblyJar, s"gapt-$version.jar")) ++
         filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDirectory / fn)}
           .map{f => (f, baseDirectory.toPath.relativize(f.toPath))}

@@ -13,6 +13,8 @@ doc/*.blg
 doc/*.log
 doc/*.pdf
 doc/*.toc
+doc/*.fdb_latexmk
+doc/*.fls
 
 # vim
 .*.sw?
