@@ -8,7 +8,9 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.11.5",
   scalacOptions in (Compile, doc) ++= Seq("-diagrams","-implicits"),
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
-  libraryDependencies ++= testDependencies map(_ % Test)
+  libraryDependencies ++= testDependencies map(_ % Test),
+
+  sourcesInBase := false // people like to keep scripts lying around
 )
 
 lazy val root = (project in file(".")).
@@ -66,8 +68,7 @@ lazy val testing = (project in file("testing")).
   disablePlugins(JUnitXmlReportPlugin).
   settings(
     name := "gapt-testing",
-    description := "gapt extended regression tests",
-    sourcesInBase := false
+    description := "gapt extended regression tests"
   )
 
 lazy val releaseZip = TaskKey[File]("release-zip", "Creates the release zip file.")
