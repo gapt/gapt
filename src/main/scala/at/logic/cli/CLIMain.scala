@@ -53,7 +53,11 @@ object CLIMain {
     val repl = new ILoop {
       override def printWelcome = {
         println(welcomeMessage)
-        intp.beQuietDuring { processLine(imports) }
+        intp.beQuietDuring {
+          print("Importing gapt... ")
+          processLine(imports)
+          println("done.")
+        }
 
         // If invoked as ./cli.sh script.scala,
         // then load script.scala and exit.
