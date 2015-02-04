@@ -174,14 +174,14 @@ itself. You can see it's name and type before the description, like this:
 With a variable name:
 
 \begin{lstlisting}
-scala> var i = 12
+gapt> var i = 12
 i: Int = 12
 \end{lstlisting}
 
 Without a variable name (in this case, the system created the variable \texttt{res12}):
 
 \begin{lstlisting}
-scala> 12
+gapt> 12
 res12: Int = 12
 \end{lstlisting}
 
@@ -215,33 +215,33 @@ an object representing a proof within the system. The string is the name of the
 proof defined on the xml file. For example:
 %
 \begin{lstlisting}
-scala> val proofs = loadProofs( "examples/simple/fol1.xml.gz" )
+gapt> val proofs = loadProofs( "examples/simple/fol1.xml.gz" )
 \end{lstlisting}
 %
 returns a list of length 1 as shown by entering
 %
 \begin{lstlisting}
-scala> proofs.length
+gapt> proofs.length
 \end{lstlisting}
 %
 Its only element is \cli{proofs(0)}, the name of this proof can be obtained by
 entering
 %
 \begin{lstlisting}
-scala> proofs(0)._1
+gapt> proofs(0)._1
 \end{lstlisting}
 %
 and the proof itself by
 %
 \begin{lstlisting}
-scala> val proof = proofs(0)._2
+gapt> val proof = proofs(0)._2
 \end{lstlisting}
 %
 You can then view this proof in the graphical user interface prooftool by 
 entering
 %
 \begin{lstlisting}
-scala> prooftool( proof )
+gapt> prooftool( proof )
 \end{lstlisting}
 %
 In the folder \cli{../examples/simple} you can find a number of further simple
@@ -257,7 +257,7 @@ The code below exports the proofs in the variables $p1$ and $p2$ to the file
 \texttt{result.xml} with names ``First proof'' and ``Second proof'',
 respectively.
 \begin{lstlisting}
-scala> exportXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
+gapt> exportXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
 \end{lstlisting}
 
 %\paragraph{\textbf{exportTPTP: List[Proof], List[String], String $\rightarrow$ Unit}}
@@ -268,25 +268,25 @@ scala> exportXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
 Formulas can be entered as strings which are parsed as follows:
 %
 \begin{lstlisting}
-scala> val F = parseFOL( "Imp A Imp B And A B" )
+gapt> val F = parseFOL( "Imp A Imp B And A B" )
 \end{lstlisting}
 %
 For a proper first-order formula consider for example:
 %
 \begin{lstlisting}
-scala> val G = parseFOL( "Forall x Imp P(x,f(x)) Exists y P(x,y)" )
+gapt> val G = parseFOL( "Forall x Imp P(x,f(x)) Exists y P(x,y)" )
 \end{lstlisting}
 %
 Also prover9 syntax\cite{Prover9Input} is supported: 
 %
 \begin{lstlisting}
-scala> val H = parseProver9( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
+gapt> val H = parseProver9( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
 \end{lstlisting}
 %
 The prover9 syntax was also extended to higher-order logic, where type declarations are added:
 %
 \begin{lstlisting}
-scala> val I = parseLLKFormula ( "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))" )
+gapt> val I = parseLLKFormula ( "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))" )
 \end{lstlisting}
 
 \begin{meta}
@@ -298,13 +298,13 @@ Have a look at this code to see how to compose formulas without the parser. This
 a scala script that can be loaded into the CLI by entering
 %
 \begin{lstlisting}
-scala> :load examples/FormulaSequences.scala
+gapt> :load examples/FormulaSequences.scala
 \end{lstlisting}
 %
 Then you can generate instances of these formula sequences by entering e.g.
 %
 \begin{lstlisting}
-scala> val f = BussTautology( 5 )
+gapt> val f = BussTautology( 5 )
 \end{lstlisting}
 
 
@@ -322,35 +322,35 @@ is no hole containing two pigeons. This is satisfiable iff $m\leq n$. Make sure
 that the pigeon hole principle is available in your current CLI session 
 by entering
 \begin{lstlisting}
-scala> :load examples/FormulaSequences.scala
+gapt> :load examples/FormulaSequences.scala
 \end{lstlisting}
 if you have not done so already. Then
 \begin{lstlisting}
-scala> miniSATprove(PigeonHolePrinciple(3, 2))
+gapt> miniSATprove(PigeonHolePrinciple(3, 2))
 res12: Boolean = true
 \end{lstlisting}
 shows that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{lstlisting}
-scala> miniSATprove(PigeonHolePrinciple(3, 3))
+gapt> miniSATprove(PigeonHolePrinciple(3, 3))
 res13: Boolean = false
 \end{lstlisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
 \begin{lstlisting}
-scala> val m = miniSATsolve(Neg(PigeonHolePrinciple(3, 3))).get
+gapt> val m = miniSATsolve(Neg(PigeonHolePrinciple(3, 3))).get
 \end{lstlisting}
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
 \begin{lstlisting}
-scala> val p1 = PigeonHolePrinciple.atom(1, 1)
-scala> val p2 = PigeonHolePrinciple.atom(2, 1)
-scala> val p3 = PigeonHolePrinciple.atom(3, 1)
-scala> m.interpret(p1) // Is pigeon 1 in hole 1?
-scala> m.interpret(p2) // Is pigeon 2 in hole 1?
-scala> m.interpret(p3) // Is pigeon 3 in hole 1?
+gapt> val p1 = PigeonHolePrinciple.atom(1, 1)
+gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
+gapt> val p3 = PigeonHolePrinciple.atom(3, 1)
+gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
+gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
+gapt> m.interpret(p3) // Is pigeon 3 in hole 1?
 \end{lstlisting}
 We can also interpret quantifier-free formulas:
 \begin{lstlisting}
-scala> m.interpret( And(p1, p2) )
+gapt> m.interpret( And(p1, p2) )
 \end{lstlisting}
 
 \subsection{SMT Solving using VeriT}
@@ -371,7 +371,7 @@ for interactive mode.
 GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{proveProp}, for example as in:
 \begin{lstlisting}
-scala> proveProp( parse.fol( "Imp A Imp B And A B" ))
+gapt> proveProp( parse.fol( "Imp A Imp B And A B" ))
 \end{lstlisting}
 
 \section{Entering Proofs}\label{sec:entering_proofs}
@@ -382,36 +382,36 @@ of the inference rules. For example, continuing in the environment of
 Section~\ref{sec.entering_formulas}, suppose that we want to enter a
 proof of \texttt{F}. It is convenient to prepare the subformulas first.
 \begin{lstlisting}
-scala> val F1 = parse.fol( "Imp B And A B" )
-scala> val F2 = parse.fol( "And A B" )
-scala> val A = parse.fol( "A" )
-scala> val B = parse.fol( "B" )
+gapt> val F1 = parse.fol( "Imp B And A B" )
+gapt> val F2 = parse.fol( "And A B" )
+gapt> val A = parse.fol( "A" )
+gapt> val B = parse.fol( "B" )
 \end{lstlisting}
 %
 We start with the axioms:
 %
 \begin{lstlisting}
-scala> val p1 = Axiom( A::Nil, A::Nil )
-scala> val p2 = Axiom( B::Nil, B::Nil )
+gapt> val p1 = Axiom( A::Nil, A::Nil )
+gapt> val p2 = Axiom( B::Nil, B::Nil )
 \end{lstlisting}
 %
 These are joined by an $\land:\mathrm{right}$-inference. See Appendix~\ref{app:sequent_calculus}
 for the formal definition of the sequent calculus used in GAPT.
 %
 \begin{lstlisting}
-scala> val p3 = AndRightRule( p1, p2, A, B )
+gapt> val p3 = AndRightRule( p1, p2, A, B )
 \end{lstlisting}
 %
 To finish the proof it remains to apply two $\impl:\mathrm{right}$-inferences:
 %
 \begin{lstlisting}
-scala> val p4 = ImpRightRule( p3, B, F2 )
-scala> val p5 = ImpRightRule( p4, A, F1 )
+gapt> val p4 = ImpRightRule( p3, B, F2 )
+gapt> val p5 = ImpRightRule( p4, A, F1 )
 \end{lstlisting}
 %
 You can now view this proof by typing:
 \begin{lstlisting}
-scala> prooftool( p5 )
+gapt> prooftool( p5 )
 \end{lstlisting}
 
 The system comes with a collection of example proof sequences in the file
@@ -419,7 +419,7 @@ The system comes with a collection of example proof sequences in the file
 Have a look at this code for more complicated proof constructions. In order
 to load these proof sequences into the CLI, enter:
 \begin{lstlisting}
-scala> :load examples/ProofSequences.scala
+gapt> :load examples/ProofSequences.scala
 \end{lstlisting}
 
 \begin{meta}
@@ -436,12 +436,12 @@ The GAPT-system contains an implementation of reductive cut-elimination
 with cuts (as in Section~\ref{sec.fileio}).
 %
 \begin{lstlisting}
-scala> val p = loadProofs( "examples/simple/fol1.xml.gz" )(0)._2
+gapt> val p = loadProofs( "examples/simple/fol1.xml.gz" )(0)._2
 \end{lstlisting}
 %
 and then call the cut-elimination procedure:
 \begin{lstlisting}
-scala> val q = eliminateCuts( p )
+gapt> val q = eliminateCuts( p )
 \end{lstlisting}
 
 
@@ -452,9 +452,9 @@ by new function symbols thus obtaining a validity-equivalent sequent. In the GAP
 is implemented for proofs and can be used, e.g.~as follows:
 %
 \begin{lstlisting}
-scala> val proofs = loadProofs( "examples/prime/ceres_xml/prime1-1.xml.gz" )
-scala> val p = proofs(0)._2
-scala> val q = skolemize( p )
+gapt> val proofs = loadProofs( "examples/prime/ceres_xml/prime1-1.xml.gz" )
+gapt> val p = proofs(0)._2
+gapt> val q = skolemize( p )
 \end{lstlisting}
 
 
@@ -470,10 +470,10 @@ and $\Gamma_2\seq\Delta_2$. For example, suppose pr is a proof of $p \lor q \seq
 by a single $\lor$-left inference (see Section~\ref{sec:entering_proofs} for how to construct
 such a proof), then you can compute an interpolant as follows:
 \begin{lstlisting}
-scala> val s = pr.root
-scala> val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
-scala> val ppart = Set( s.succedent( 1 ) )
-scala> val I = extractInterpolant( pr, npart, ppart )
+gapt> val s = pr.root
+gapt> val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
+gapt> val ppart = Set( s.succedent( 1 ) )
+gapt> val I = extractInterpolant( pr, npart, ppart )
 \end{lstlisting}
 
 \subsection{Expansion Trees}
@@ -490,11 +490,11 @@ to represent an LK-proof we use {\em expansion sequents}, i.e.~sequents of expan
 Suppose we are in the command-line interface and have a value \cli{p} which is a cut-free \cli{LKProof}.
 We can then extract the expansion sequent of \cli{p} by:
 \begin{lstlisting}
-scala> val E = extractExpansionSequent( p )
+gapt> val E = extractExpansionSequent( p )
 \end{lstlisting}
 This expansion sequent can then be viewed in the graphical user interface by simply calling:
 \begin{lstlisting}
-scala> prooftool( E )
+gapt> prooftool( E )
 \end{lstlisting}
 Prooftool is then intialized with displaying the end-sequent of \cli{p}, i.e.\ the shallow sequent
 of \cli{E}. The user can then selectively expand quantifiers by clicking on them, see~\cite{Hetzl13Understanding}
@@ -531,19 +531,19 @@ and input them files to the cut-introduction algorithm.
 Make sure that the example proof sequences are available in the current CLI
 session if you have not done so already by entering
 \begin{lstlisting}
-scala> :load examples/ProofSequences.scala
+gapt> :load examples/ProofSequences.scala
 \end{lstlisting}
 %
 First of all, we instantiate the desired proof and store this in a variable:
 \begin{lstlisting}
-scala> val p = LinearExampleProof(9)
+gapt> val p = LinearExampleProof(9)
 \end{lstlisting}
 
 You will see that a big string representing the proof is printed. If desired,
 you can view this proof using \texttt{prooftool}. 
 It is possible to see some information about a proof on the command line by calling:
 \begin{lstlisting}
-scala> printProofStats(p)
+gapt> printProofStats(p)
 ------------- Statistics ---------------
 Cuts: 0
 Number of quantifier rules: 9
@@ -555,48 +555,48 @@ Now we need to
 extract the terms used to instantiate the $\forall$ quantifiers of the
 end-sequent:
 \begin{lstlisting}
-scala> val ts = extractTerms(p)
+gapt> val ts = extractTerms(p)
 \end{lstlisting}
 The system indicates how many terms were extracted, which is nine for this case,
 as expected. The next step consists in computing grammars that generate this
 term set:
 \begin{lstlisting}
-scala> val grms = computeGrammars(ts)
+gapt> val grms = computeGrammars(ts)
 \end{lstlisting}
 The number of grammars found is shown, 26 in this case. This list of grammars is guaranteed
 to contain all grammars of minimal size (but not all grammars as the algorithm
 will not generate grammars larger than others already generated).
 The grammars are ordered by size, and one can see the first ones by calling:
 \begin{lstlisting}
-scala> seeNFirstGrammars(grms, 5)
+gapt> seeNFirstGrammars(grms, 5)
 \end{lstlisting}
 This will print on the screen the first 5 grammars, and we can choose which one
 to use for compressing the proof, in this case we take the second one:
 \begin{lstlisting}
-scala> val g = grms(1)
+gapt> val g = grms(1)
 \end{lstlisting}
 Given the end-sequent of the proof and a grammar, the extended Herbrand sequent can be computed:
 \begin{lstlisting}
-scala> val ehs = generateExtendedHerbrandSequent(p.root, g)
+gapt> val ehs = generateExtendedHerbrandSequent(p.root, g)
 \end{lstlisting}
 As it was shown in~\cite{Hetzl2012}, the cut-introduction problem has a
 canonical solution:
 \begin{lstlisting}
-scala> val cs = computeCanonicalSolution(g)
+gapt> val cs = computeCanonicalSolution(g)
 \end{lstlisting}
 The extended Herbrand sequent generated previously has the canonical solution as
 default, but this solution can be improved.. 
 \begin{lstlisting}
-scala> minimizeSolution(ehs)
+gapt> minimizeSolution(ehs)
 \end{lstlisting}
 Finally, the proof with cut is constructed:
 \begin{lstlisting}
-scala> val fp = buildProofWithCut(ehs).get
+gapt> val fp = buildProofWithCut(ehs).get
 \end{lstlisting}
 In order to compare this with the initial proof, one can again count
 the number of rules:
 \begin{lstlisting}
-scala> printProofStats(fp)
+gapt> printProofStats(fp)
 ------------- Statistics ---------------
 Cuts: 1
 Number of quantifier rules: 7
@@ -607,7 +607,7 @@ Quantifier complexity: 6
 We showed how to run the cut-introduction algorithm step by step. There is,
 though, a command comprising all these steps:
 \begin{lstlisting}
-scala> val fp2 = cutIntro.one_cut_one_quantifier( p )
+gapt> val fp2 = cutIntro.one_cut_one_quantifier( p )
 \end{lstlisting}
 Regarding the choice of the grammar, this command will compute the proofs with
 all minimal grammars and choose the smallest one (with respect to the number of rules).
@@ -624,7 +624,7 @@ takes a proof and prints some statistics about it. It is helpful
 for getting a first impression of a proof; use it for example as:
 
 \begin{lstlisting}
-scala> printPoofStats( p )
+gapt> printPoofStats( p )
 ------------- Statistics ---------------
 Cuts: 1
 Number of quantifier inferences: 8
