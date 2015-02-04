@@ -3,7 +3,7 @@ lazy val commonSettings = Seq(
   organizationHomepage := Some(url("https://gapt.github.io/")),
   licenses += ("GNU GPL v3", url("http://www.gnu.org/licenses/gpl.html")),
   startYear := Some(2008),
-  version := "1.9",
+  version := "1.10-SNAPSHOT",
 
   scalaVersion := "2.11.5",
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
