@@ -8,6 +8,6 @@
 package at.logic.parsing
 
 trait OutputExporter {
-  def getOutput : java.io.Writer
+  def getOutput: java.io.Writer
   def close = getOutput.close
 }

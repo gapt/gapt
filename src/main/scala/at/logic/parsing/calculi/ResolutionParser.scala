@@ -10,16 +10,13 @@ import at.logic.calculi.lk.base._
 import at.logic.parsing.InputParser
 
 trait ResolutionParser extends InputParser {
-    def clauseList : Parser[List[FSequent]]
-    def getClauseList(): List[FSequent] = {
-        val reader = getInput()
-        try
-        {
-          parseAll(clauseList, reader).get
-        }
-        finally
-        {
-          reader.close();
-        }
+  def clauseList: Parser[List[FSequent]]
+  def getClauseList(): List[FSequent] = {
+    val reader = getInput()
+    try {
+      parseAll( clauseList, reader ).get
+    } finally {
+      reader.close();
     }
+  }
 }

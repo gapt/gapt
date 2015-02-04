@@ -7,15 +7,14 @@
 
 package at.logic.utils.labeling
 
-import reflect.{ClassManifest, Manifest}
- /*
+import reflect.{ ClassManifest, Manifest }
+/*
 trait Labeled[T] {
   def label: T
 } */
 // this erasure is really disturbing! */
 
-trait Labeled
-{
+trait Labeled {
   type T
   def label: T
   /*def om: Manifest[T]

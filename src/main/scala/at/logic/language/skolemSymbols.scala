@@ -33,8 +33,8 @@ package skolemSymbols {
    */
 
   object SkolemSymbolFactory {
-    private def skolem_symbol_stream_from(n: Int): Stream[SkolemSymbol] =
-      Stream.cons(new StringSymbol( "s_{" + n + "}" ) with TSkolemSymbol, skolem_symbol_stream_from( n + 1 ) )
+    private def skolem_symbol_stream_from( n: Int ): Stream[SkolemSymbol] =
+      Stream.cons( new StringSymbol( "s_{" + n + "}" ) with TSkolemSymbol, skolem_symbol_stream_from( n + 1 ) )
 
     private var skolem_symbol_stream = skolem_symbol_stream_from( 0 )
 

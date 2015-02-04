@@ -15,13 +15,13 @@ class EquationalProver extends Prover {
 
   // Use prover9 to get LK proof and veriT for validity check.
 
-  override def isValid(s: FSequent) : Boolean = {
+  override def isValid( s: FSequent ): Boolean = {
     val p = new VeriTProver()
-    p.isValid(s) 
+    p.isValid( s )
   }
-  
-  override def getLKProof(s: FSequent) = {
+
+  override def getLKProof( s: FSequent ) = {
     val p = new Prover9Prover()
-    p.getLKProof(s) 
+    p.getLKProof( s )
   }
 }

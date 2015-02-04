@@ -8,45 +8,45 @@ package at.logic.gui.prooftool.gui
  */
 
 import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.lk.base.{Sequent, BinaryLKProof, UnaryLKProof, NullaryLKProof}
-import at.logic.calculi.proofs.{BinaryProof, UnaryProof, Proof, NullaryProof, TreeProof}
+import at.logic.calculi.lk.base.{ Sequent, BinaryLKProof, UnaryLKProof, NullaryLKProof }
+import at.logic.calculi.proofs.{ BinaryProof, UnaryProof, Proof, NullaryProof, TreeProof }
 
 object Search {
 
-  def inTreeProof(str: String, proof: TreeProof[_]): Set[FormulaOccurrence] = proof match {
+  def inTreeProof( str: String, proof: TreeProof[_] ): Set[FormulaOccurrence] = proof match {
     case p: NullaryLKProof =>
-      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-        p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
+      ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
+        p.root.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
     case p: UnaryLKProof =>
-      inTreeProof(str, p.uProof.asInstanceOf[TreeProof[_]]) ++
-        ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-          p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
+      inTreeProof( str, p.uProof.asInstanceOf[TreeProof[_]] ) ++
+        ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
+          p.root.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
     case p: BinaryLKProof =>
-      inTreeProof(str, p.uProof1.asInstanceOf[TreeProof[_]]) ++
-      inTreeProof(str, p.uProof2.asInstanceOf[TreeProof[_]]) ++
-        ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-          p.root.succedent.filter( fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ).toSet
-    case _ => throw new Exception("Cannot search in this object!")
+      inTreeProof( str, p.uProof1.asInstanceOf[TreeProof[_]] ) ++
+        inTreeProof( str, p.uProof2.asInstanceOf[TreeProof[_]] ) ++
+        ( p.root.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
+          p.root.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
+    case _ => throw new Exception( "Cannot search in this object!" )
   }
 
-  def inResolutionProof(str: String, tree: Proof[_]): Set[FormulaOccurrence] = tree match {
+  def inResolutionProof( str: String, tree: Proof[_] ): Set[FormulaOccurrence] = tree match {
     case p: NullaryProof[_] => p.root match {
       case s: Sequent =>
-        (s.antecedent.filter (fo => DrawSequent.formulaToLatexString (fo.formula).contains (str) ) ++
-         s.succedent.filter  (fo => DrawSequent.formulaToLatexString (fo.formula).contains (str) ) ).toSet
+        ( s.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
+          s.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
     }
     case p: UnaryProof[_] => p.root match {
       case s: Sequent =>
-        inResolutionProof(str, p.uProof) ++
-          (s.antecedent.filter (fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-           s.succedent.filter  (fo => DrawSequent.formulaToLatexString(fo.formula).contains(str))).toSet
+        inResolutionProof( str, p.uProof ) ++
+          ( s.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
+            s.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
     }
     case p: BinaryProof[_] => p.root match {
       case s: Sequent =>
-        inResolutionProof(str, p.uProof1) ++ inResolutionProof(str, p.uProof2) ++
-          (s.antecedent.filter (fo => DrawSequent.formulaToLatexString(fo.formula).contains(str)) ++
-           s.succedent.filter  (fo => DrawSequent.formulaToLatexString(fo.formula).contains(str))).toSet
+        inResolutionProof( str, p.uProof1 ) ++ inResolutionProof( str, p.uProof2 ) ++
+          ( s.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
+            s.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
     }
-    case _ => throw new Exception("Cannot search in this object!")
+    case _ => throw new Exception( "Cannot search in this object!" )
   }
 }

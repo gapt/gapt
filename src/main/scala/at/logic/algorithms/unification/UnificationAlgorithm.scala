@@ -19,7 +19,7 @@ trait FinitaryUnification {
    * @param term2 one of the terms to unify. formulas are also allowed, so we accept FOL expressions
    * @return a list of mgus
    */
-  def unify(term1:FOLExpression, term2:FOLExpression) : List[Substitution]
+  def unify( term1: FOLExpression, term2: FOLExpression ): List[Substitution]
 }
 
 trait UnificationAlgorithm extends FinitaryUnification

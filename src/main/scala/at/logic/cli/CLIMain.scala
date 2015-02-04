@@ -43,27 +43,27 @@ object CLIMain {
   import at.logic.cli.GPL.{apply => copying, printLicense => license}
   """
 
-  def main(args: Array[String]) {
+  def main( args: Array[String] ) {
     val settings = new Settings
     settings.Yreplsync.value = true
     settings.usejavacp.value = true
 
-    new SystemProperties += ("scala.shell.prompt" -> "\ngapt> ")
+    new SystemProperties += ( "scala.shell.prompt" -> "\ngapt> " )
 
     val repl = new ILoop {
       override def printWelcome = {
-        println(welcomeMessage)
+        println( welcomeMessage )
         intp.beQuietDuring {
-          print("Importing gapt... ")
-          processLine(imports)
-          println("done.")
+          print( "Importing gapt... " )
+          processLine( imports )
+          println( "done." )
         }
 
         // If invoked as ./cli.sh script.scala,
         // then load script.scala and exit.
-        if (args.length >= 1) {
-          withFile(args(0)) { f => interpretAllFrom(f) }
-          sys.exit(0)
+        if ( args.length >= 1 ) {
+          withFile( args( 0 ) ) { f => interpretAllFrom( f ) }
+          sys.exit( 0 )
         }
       }
     }

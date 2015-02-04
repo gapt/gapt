@@ -9,7 +9,7 @@ package at.logic.calculi.proofs
 import at.logic.utils.ds.acyclicGraphs._
 
 // exceptions
-class RuleException(msg: String) extends Exception(msg)
+class RuleException( msg: String ) extends Exception( msg )
 
 // acyclic graphs like proofs
 abstract class RuleTypeA
@@ -23,7 +23,7 @@ trait Proof[+V] extends AGraph[V] { //change AGraph to tree
   override def toString = rule + "(" + root.toString + ")"
 }
 trait NullaryProof[+V] extends LeafAGraph[V] with Proof[V] {
-  override def toString = rule + "(" + root.toString + ")"          
+  override def toString = rule + "(" + root.toString + ")"
 }
 trait UnaryProof[+V] extends UnaryAGraph[V] with Proof[V] {
   def uProof = t.asInstanceOf[Proof[V]]

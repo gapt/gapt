@@ -1,19 +1,19 @@
 
 package at.logic.parsing.readers
 
-import scala.xml.{Elem,Node}
+import scala.xml.{ Elem, Node }
 import scala.xml.factory.XMLLoader
 import at.logic.parsing.language.xml.XMLParser.XMLNodeParser
-import javax.xml.parsers.{SAXParser, SAXParserFactory}
+import javax.xml.parsers.{ SAXParser, SAXParserFactory }
 
 object XMLReaders {
-  abstract class NodeReader(n: Node) extends XMLNodeParser {
+  abstract class NodeReader( n: Node ) extends XMLNodeParser {
     def getInput(): Node = n
   }
 
-  abstract class XMLReader (r: java.io.InputStreamReader) extends XMLNodeParser {
+  abstract class XMLReader( r: java.io.InputStreamReader ) extends XMLNodeParser {
     val reader = OfflineXMLWithoutCatalog.parser.getXMLReader()
-    def getInput(): Node = scala.xml.Utility.trim (OfflineXMLWithoutCatalog.load(r))
+    def getInput(): Node = scala.xml.Utility.trim( OfflineXMLWithoutCatalog.load( r ) )
   }
 
   //https://issues.scala-lang.org/browse/SI-2725
@@ -22,11 +22,11 @@ object XMLReaders {
   object OfflineXMLWithoutCatalog extends XMLLoader[Elem] {
     override def parser: SAXParser = {
       val f = SAXParserFactory.newInstance()
-      f.setNamespaceAware(false)
-      f.setValidating(false)
+      f.setNamespaceAware( false )
+      f.setValidating( false )
       val result = f.newSAXParser()
       val reader = result.getXMLReader
-      reader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+      reader.setFeature( "http://apache.org/xml/features/nonvalidating/load-external-dtd", false )
       result
     }
   }

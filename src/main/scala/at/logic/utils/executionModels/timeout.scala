@@ -18,10 +18,10 @@ package timeout {
    *   case e: TimeOutException ...
    *   case ... other exception
    * }
-   **/
+   */
   object withTimeout {
-    def apply[T]( to: Long )( f: => T ) : T = {
-      var result:Either[Throwable,T] = Left(new TimeOutException())
+    def apply[T]( to: Long )( f: => T ): T = {
+      var result: Either[Throwable, T] = Left( new TimeOutException() )
 
       val r = new Runnable {
         def run() {
@@ -29,7 +29,7 @@ package timeout {
             result = Right( f )
           } catch {
             case e: Exception =>
-              result = Left(e)
+              result = Left( e )
           }
         }
       }

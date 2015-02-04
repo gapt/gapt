@@ -8,12 +8,12 @@ package at.logic.language.hol.logicSymbols
 import at.logic.language.lambda.symbols._
 
 abstract class LogicalSymbolA extends SymbolA {
-  def unique : String
+  def unique: String
 }
 object LogicalSymbolA {
-  def unapply(s: SymbolA): Option[String] = s match {
-    case ls: LogicalSymbolA => Some(ls.unique); 
-    case _ => None
+  def unapply( s: SymbolA ): Option[String] = s match {
+    case ls: LogicalSymbolA => Some( ls.unique );
+    case _                  => None
   }
 }
 

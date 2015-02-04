@@ -9,7 +9,7 @@ import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.readers.StringReader
 
 import java.io.File.separator
-import java.io.{FileReader, FileInputStream, InputStreamReader}
+import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
 /* FIXME: Huet's algorithm is not yet adapted to the new lambda calculus

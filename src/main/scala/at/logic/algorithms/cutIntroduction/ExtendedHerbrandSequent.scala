@@ -22,53 +22,54 @@ import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearc
 import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.provers.minisat.MiniSAT
 
-
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent(seq: Sequent, g: Grammar, cf: List[FOLFormula] = Nil) {
- 
+class ExtendedHerbrandSequent( seq: Sequent, g: Grammar, cf: List[FOLFormula] = Nil ) {
+
   val endSequent = seq
   val terms = g.terms
   val grammar = g
 
   // From ".map" on are lots of castings just to make the data structure right :-|
   // FormulaOccurrence to HOLFormula to FOLFormula and Seq to List...
-  
+
   // Propositional formulas on the left
-  val prop_l : List[FOLFormula] = seq.antecedent.filter(x => !containsQuantifier(x.formula.asInstanceOf[FOLFormula])).map(x => x.formula.asInstanceOf[FOLFormula]).toList
+  val prop_l: List[FOLFormula] = seq.antecedent.filter( x => !containsQuantifier( x.formula.asInstanceOf[FOLFormula] ) ).map( x => x.formula.asInstanceOf[FOLFormula] ).toList
   // Propositional formulas on the right
-  val prop_r : List[FOLFormula] = seq.succedent.filter(x => !containsQuantifier(x.formula.asInstanceOf[FOLFormula])).map(x => x.formula.asInstanceOf[FOLFormula]).toList
-  
+  val prop_r: List[FOLFormula] = seq.succedent.filter( x => !containsQuantifier( x.formula.asInstanceOf[FOLFormula] ) ).map( x => x.formula.asInstanceOf[FOLFormula] ).toList
+
   // Instanciated (previously univ. quantified) formulas on the left
-  val inst_l : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
-    val set = terms.getTermTuple(term)
-    val f = terms.getFormula(term)
-    f match {
-      case AllVar(_, _) => instantiateAll(f, set) :: acc
-      case _ => acc
-    }
+  val inst_l: List[FOLFormula] = grammar.u.foldRight( List[FOLFormula]() ) {
+    case ( term, acc ) =>
+      val set = terms.getTermTuple( term )
+      val f = terms.getFormula( term )
+      f match {
+        case AllVar( _, _ ) => instantiateAll( f, set ) :: acc
+        case _              => acc
+      }
   }
   // Instantiated (previously ex. quantified) formulas on the right
-  val inst_r : List[FOLFormula] = grammar.u.foldRight(List[FOLFormula]()) { case (term, acc) =>
-    val set = terms.getTermTuple(term)
-    val f = terms.getFormula(term)
-    f match {
-      case ExVar(_, _) => instantiateAll(f, set) :: acc
-      case _ => acc
-    }
+  val inst_r: List[FOLFormula] = grammar.u.foldRight( List[FOLFormula]() ) {
+    case ( term, acc ) =>
+      val set = terms.getTermTuple( term )
+      val f = terms.getFormula( term )
+      f match {
+        case ExVar( _, _ ) => instantiateAll( f, set ) :: acc
+        case _             => acc
+      }
   }
 
   // Separating the formulas that contain/don't contain eigenvariables
-  def varFree(f : FOLFormula) = freeVariables(f).intersect(g.eigenvariables).isEmpty
-  val antecedent = prop_l ++ inst_l.filter(varFree)
-  val antecedent_alpha = inst_l.filter(x => !varFree(x))
-  val succedent = prop_r ++ inst_r.filter(varFree)
-  val succedent_alpha = inst_r.filter(x => !varFree(x))
+  def varFree( f: FOLFormula ) = freeVariables( f ).intersect( g.eigenvariables ).isEmpty
+  val antecedent = prop_l ++ inst_l.filter( varFree )
+  val antecedent_alpha = inst_l.filter( x => !varFree( x ) )
+  val succedent = prop_r ++ inst_r.filter( varFree )
+  val succedent_alpha = inst_r.filter( x => !varFree( x ) )
 
   var cutFormulas = {
-    if(cf == Nil){
-      CutIntroduction.computeCanonicalSolution(g)
-    } else{
+    if ( cf == Nil ) {
+      CutIntroduction.computeCanonicalSolution( g )
+    } else {
       cf
     }
   }

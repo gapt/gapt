@@ -3,7 +3,7 @@ package at.logic.utils.logging
 import at.logic.utils.dssupport.ListSupport
 
 import scala.collection.mutable
-import at.logic.utils.logging.StopwatchStatus.{STOPPED, RUNNING}
+import at.logic.utils.logging.StopwatchStatus.{ STOPPED, RUNNING }
 
 /**
  * Stopwatch Status
@@ -23,7 +23,7 @@ class Stopwatch() extends Logger {
 
   var status = STOPPED
   var startTime = System.currentTimeMillis()
-  var times = mutable.MutableList[(String, Long)]()
+  var times = mutable.MutableList[( String, Long )]()
 
   var errorStatus = "OK"
 
@@ -31,9 +31,8 @@ class Stopwatch() extends Logger {
    * Starts the stopwatch
    */
   def start() = {
-    if(status == RUNNING)
-    {
-      debug("Stopwatch is already running. Resetting it.")
+    if ( status == RUNNING ) {
+      debug( "Stopwatch is already running. Resetting it." )
     }
     status = RUNNING
     startTime = System.currentTimeMillis()
@@ -45,15 +44,14 @@ class Stopwatch() extends Logger {
    * @param msg
    * @return time in milliseconds since last start/lap
    */
-  def lap(msg: String) : Long = {
-    if(status == STOPPED)
-    {
-      debug("Stopwatch has not been started. Can not measure time.")
+  def lap( msg: String ): Long = {
+    if ( status == STOPPED ) {
+      debug( "Stopwatch has not been started. Can not measure time." )
       return 0
     }
     val now = System.currentTimeMillis()
-    val diff = (now - startTime)
-    times += Tuple2(msg, diff)
+    val diff = ( now - startTime )
+    times += Tuple2( msg, diff )
     startTime = System.currentTimeMillis()
     diff
   }
@@ -64,15 +62,14 @@ class Stopwatch() extends Logger {
    * @param msg
    * @return time in milliseconds since last start/lap
    */
-  def save(msg: String) : Long = {
-    if(status == STOPPED)
-    {
-      debug("Stopwatch has not been started. Can not measure time.")
+  def save( msg: String ): Long = {
+    if ( status == STOPPED ) {
+      debug( "Stopwatch has not been started. Can not measure time." )
       return 0
     }
     val now = System.currentTimeMillis()
-    val diff = (now - startTime)
-    times += Tuple2(msg, diff)
+    val diff = ( now - startTime )
+    times += Tuple2( msg, diff )
     diff
   }
 
@@ -84,14 +81,14 @@ class Stopwatch() extends Logger {
    * @param msg
    * @return time in milliseconds since last start()
    */
-  def stop(msg: String) : Long = {
-    if(status == STOPPED){
-      debug("Stopwatch is not running. Nothing to do here.")
+  def stop( msg: String ): Long = {
+    if ( status == STOPPED ) {
+      debug( "Stopwatch is not running. Nothing to do here." )
       return 0
     }
     val now = System.currentTimeMillis()
-    val diff = (now - startTime)
-    times += Tuple2(msg, diff)
+    val diff = ( now - startTime )
+    times += Tuple2( msg, diff )
     diff
   }
 
@@ -99,59 +96,57 @@ class Stopwatch() extends Logger {
    * Returns the all previously stops/laps in milliseconds
    * @return all times as string
    */
-  override def toString() : String = {
-    times.toList.foldLeft("")((acc,t) => acc + "\n"+t._1+" @ "+t._2)
+  override def toString(): String = {
+    times.toList.foldLeft( "" )( ( acc, t ) => acc + "\n" + t._1 + " @ " + t._2 )
   }
 
   /**
    * Returns the all previously stops/laps as <hours>h <minutes>min <seconds>sec <milliseconds>msec
    * @return all times as string
    */
-  def toFormattedString() : String = {
-    times.toList.foldLeft("")((acc,t) => acc + "\n"+t._1+" @ "+getHours(t._2)+"h "+getMin(t._2)+"min "+getSec(t._2)+"sec "+getMSec(t._2)+"msec")
+  def toFormattedString(): String = {
+    times.toList.foldLeft( "" )( ( acc, t ) => acc + "\n" + t._1 + " @ " + getHours( t._2 ) + "h " + getMin( t._2 ) + "min " + getSec( t._2 ) + "sec " + getMSec( t._2 ) + "msec" )
   }
 
   /**
    * Returns the status of the stopwatch
    * @return current status
    */
-  def getStatus() : String = {
-    if(status == STOPPED){
+  def getStatus(): String = {
+    if ( status == STOPPED ) {
       return "stopped"
-    }
-    else
-    {
+    } else {
       return "running"
     }
   }
 
-  def getMSec(millisec: Long) : Int = {
-    return (millisec % 1000).toInt
+  def getMSec( millisec: Long ): Int = {
+    return ( millisec % 1000 ).toInt
   }
 
-  def getSec(millisec: Long) : Int = {
-    return ((millisec / 1000) % 60).toInt
+  def getSec( millisec: Long ): Int = {
+    return ( ( millisec / 1000 ) % 60 ).toInt
   }
 
-  def getMin(millisec: Long) : Int = {
-    return (((millisec / 1000) / 60) % 60).toInt
+  def getMin( millisec: Long ): Int = {
+    return ( ( ( millisec / 1000 ) / 60 ) % 60 ).toInt
   }
 
-  def getHours(millisec: Long) : Int = {
-    return (((millisec / 1000) / 60) / 60).toInt
+  def getHours( millisec: Long ): Int = {
+    return ( ( ( millisec / 1000 ) / 60 ) / 60 ).toInt
   }
 
   /**
    * Returns the all previously stops/laps in xml format
    * @return all times in .xml
    */
-  def toXML() : String = {
-    times.toList.foldLeft("<times>")((acc,t) => "\n<time name='"+t._1+"'>" +
-        "<hours>"+getHours(t._2)+"</hours>"+
-        "<minutes>"+getMin(t._2)+"</minutes>"+
-        "<seconds>"+getSec(t._2)+"</seconds>"+
-        "<milliseconds>"+getMSec(t._2)+"</milliseconds>"+
-        "</time>")+
+  def toXML(): String = {
+    times.toList.foldLeft( "<times>" )( ( acc, t ) => "\n<time name='" + t._1 + "'>" +
+      "<hours>" + getHours( t._2 ) + "</hours>" +
+      "<minutes>" + getMin( t._2 ) + "</minutes>" +
+      "<seconds>" + getSec( t._2 ) + "</seconds>" +
+      "<milliseconds>" + getMSec( t._2 ) + "</milliseconds>" +
+      "</time>" ) +
       "</times>"
   }
 
@@ -159,8 +154,8 @@ class Stopwatch() extends Logger {
    * Returns the all previously stops/laps in csv format
    * @return all times in .csv
    */
-  def toCSV() : String = {
-    times.toList.foldLeft("")((acc,t) => "\n"+t._1+";"+t._2+";")
+  def toCSV(): String = {
+    times.toList.foldLeft( "" )( ( acc, t ) => "\n" + t._1 + ";" + t._2 + ";" )
   }
 
 }

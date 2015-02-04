@@ -5,7 +5,7 @@
 
 package at.logic.parsing.calculi.simple
 
-import at.logic.language.hol.{Neg, HOLFormula}
+import at.logic.language.hol.{ Neg, HOLFormula }
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
@@ -24,30 +24,30 @@ import at.logic.calculi.lk.base.FSequent
 trait SimpleResolutionParserFOL extends SimpleResolutionParser with SimpleFOLParser {
   override def formula = formula2
   override def neg = neg2
-  def clause: Parser[FSequent] = repsep(formula,"|") ~ "." ^^ {
-      case ls ~ "." => FSequent(
-            (ls.filter(filterPosFormulas).map(stripNeg)),
-            (ls.filter(x => !filterPosFormulas(x)))
-       ) }
+  def clause: Parser[FSequent] = repsep( formula, "|" ) ~ "." ^^ {
+    case ls ~ "." => FSequent(
+      ( ls.filter( filterPosFormulas ).map( stripNeg ) ),
+      ( ls.filter( x => !filterPosFormulas( x ) ) ) )
+  }
 }
 
 trait SimpleResolutionParser extends ResolutionParser {
   // used instead of inheritence so it can be combined with subclass of HOL (like FOL)
   this: SimpleHOLParser =>
-  
-  def clauseList: Parser[List[FSequent]] = rep(clause)
+
+  def clauseList: Parser[List[FSequent]] = rep( clause )
   protected def clause: Parser[FSequent]
 
-  protected def formula2: Parser[HOLFormula] = (neg | atom)
-  protected def neg2: Parser[HOLFormula] = "-" ~ atom ^^ {case "-" ~ x => Neg(x)}
-  
-  protected def filterPosFormulas(f: HOLFormula): Boolean = f match {
-    case Neg(x) => true
-    case _ => false
+  protected def formula2: Parser[HOLFormula] = ( neg | atom )
+  protected def neg2: Parser[HOLFormula] = "-" ~ atom ^^ { case "-" ~ x => Neg( x ) }
+
+  protected def filterPosFormulas( f: HOLFormula ): Boolean = f match {
+    case Neg( x ) => true
+    case _        => false
   }
-  protected def stripNeg(f: HOLFormula): HOLFormula = f match {
-    case Neg(x) => x
-    case _ => f
+  protected def stripNeg( f: HOLFormula ): HOLFormula = f match {
+    case Neg( x ) => x
+    case _        => f
   }
 }
 
