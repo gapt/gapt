@@ -597,7 +597,6 @@ object CutIntroduction {
    */
   def computeCanonicalSolution( g: Grammar ): List[FOLFormula] = {
 
-    println( "The grammar: " + g )
     // generating all (U,,i,,,eigenvariables)
     def getUEvsTuples( u: List[FOLTerm], slist: List[( List[FOLVar], Set[List[FOLTerm]] )] ): List[Tuple2[List[FOLTerm], List[FOLVar]]] = {
       // propagate all terms to obtain Ui
