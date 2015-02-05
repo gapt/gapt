@@ -254,11 +254,11 @@ object InferenceExtractor {
         case rgoal( id, formula )       => if ( within_proof != 1 ) m else ( as, parser.parseFormula( formula ) :: gs )
         case variablestyle_matcher( _ ) =>
           parser = Prover9TermParser; m
-        case proof_start( _ )           =>
+        case proof_start( _ ) =>
           within_proof = 1; m
-        case proof_end( _ )             =>
+        case proof_end( _ ) =>
           within_proof = 2; m
-        case _                          => m
+        case _ => m
       }
     } )
 

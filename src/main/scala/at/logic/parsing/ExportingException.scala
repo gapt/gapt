@@ -7,4 +7,4 @@
 
 package at.logic.parsing
 
-class ExportingException(msg: String) extends RuntimeException(msg)
+class ExportingException( msg: String ) extends RuntimeException( msg )

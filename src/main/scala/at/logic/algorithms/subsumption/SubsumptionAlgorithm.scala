@@ -14,5 +14,5 @@ trait SubsumptionAlgorithm {
    * @param s2 a clause
    * @return true iff s1 subsumes s2
    */
-  def subsumes(s1: FSequent, s2: FSequent): Boolean
+  def subsumes( s1: FSequent, s2: FSequent ): Boolean
 }

@@ -90,17 +90,17 @@ object PopupMenu {
   }
 
   def expandRecursive( det: DrawExpansionTree, f: HOLFormula ): Unit = f match {
-    case Atom( _, _ )   =>
-    case And( l, r )    =>
+    case Atom( _, _ ) =>
+    case And( l, r ) =>
       expandRecursive( det, l ); expandRecursive( det, r )
-    case Imp( l, r )    =>
+    case Imp( l, r ) =>
       expandRecursive( det, l ); expandRecursive( det, r )
-    case Or( l, r )     =>
+    case Or( l, r ) =>
       expandRecursive( det, l ); expandRecursive( det, r )
-    case Neg( l )       => expandRecursive( det, l )
+    case Neg( l ) => expandRecursive( det, l )
     case AllVar( _, l ) =>
       det.expand( f ); expandRecursive( det, l )
-    case ExVar( _, l )  => det.expand( f ); expandRecursive( det, l )
+    case ExVar( _, l ) => det.expand( f ); expandRecursive( det, l )
   }
 }
 

@@ -5,4 +5,4 @@
 
 package at.logic.algorithms.unification
 
-class UnificationException(msg: String) extends Exception(msg)
+class UnificationException( msg: String ) extends Exception( msg )

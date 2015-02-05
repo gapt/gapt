@@ -50,7 +50,7 @@ object getTypeInformation {
     map.toMap //create an immutable map from the mutable one
   }
   private def mapValues( map: mutable.Map[HOLExpression, TA], f: HOLExpression ): Unit = f match {
-    case c: HOLConst    => map.getOrElseUpdate( c, c.exptype )
+    case c: HOLConst => map.getOrElseUpdate( c, c.exptype )
     case HOLApp( a, b ) =>
       mapValues( map, a ); mapValues( map, b )
     case HOLAbs( _, b ) => mapValues( map, b )

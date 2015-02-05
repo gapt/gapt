@@ -9,7 +9,7 @@ package at.logic.parsing.writers
 
 import at.logic.parsing.OutputExporter
 
-abstract class FileWriter(fileName: String) extends OutputExporter {
-  val writer = new java.io.FileWriter(fileName)
+abstract class FileWriter( fileName: String ) extends OutputExporter {
+  val writer = new java.io.FileWriter( fileName )
   def getOutput = writer
 }
