@@ -156,10 +156,10 @@ object fixDerivation extends at.logic.utils.logging.Logger {
 
     if ( cs.contains( cls_sequent ) || isReflexivity( cls ) || isTautology( cls ) ) InitialClause( cls )
     else
-      cs.find( c => canDeriveBySymmetry( cls, c ) ) match {
-        case Some( c ) => deriveBySymmetry( cls, c )
-        case None => cs.find( c => canDeriveByFactor( cls, c ) ) match {
-          case Some( c ) => deriveByFactor( cls, c )
+      cs.find( c => canDeriveByFactor( cls, c ) ) match {
+        case Some( c ) => deriveByFactor( cls, c )
+        case None => cs.find( c => canDeriveBySymmetry( cls, c ) ) match {
+          case Some( c ) => deriveBySymmetry( cls, c )
           case None => SearchDerivation( cs, cls_sequent, true ) match {
             case Some( d ) => {
               val ret = d.asInstanceOf[RobinsonResolutionProof]
