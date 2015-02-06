@@ -2,11 +2,11 @@
 package at.logic.algorithms.lk
 
 import at.logic.language.hol._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.slk._
-import at.logic.calculi.lksk.UnaryLKskProof
-import at.logic.calculi.occurrences._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.slk._
+import at.logic.proofs.lksk.UnaryLKskProof
+import at.logic.proofs.occurrences._
 import scala.collection.immutable.HashSet
 import ProofTransformationUtils.computeMap
 

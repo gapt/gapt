@@ -5,9 +5,9 @@
 
 package at.logic.parsing.calculi.latex
 
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lksk._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lksk._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._

@@ -9,10 +9,10 @@ package at.logic.provers.prover9
 import at.logic.algorithms.lk.applyReplacement
 import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.NameReplacement
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.{ CutRule, Axiom }
-import at.logic.calculi.resolution._
-import at.logic.calculi.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk.{ CutRule, Axiom }
+import at.logic.proofs.resolution.{ FClause, Clause }
+import at.logic.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.language.fol._
 import at.logic.language.hol.containsStrongQuantifier
 import at.logic.parsing.ivy.IvyParser

@@ -12,8 +12,8 @@ import scala.xml._
 
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.language.hol._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 
 @RunWith(classOf[JUnitRunner])
 class SimpleXMLParserTest extends SpecificationWithJUnit {

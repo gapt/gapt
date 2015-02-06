@@ -5,9 +5,9 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.types.To
 import at.logic.language.fol.{Equation => FOLEquation, And, Or, Neg, Atom, FOLConst, Imp, FOLVar, Substitution}
-import at.logic.calculi.resolution._
-import at.logic.calculi.resolution.robinson._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.resolution._
+import at.logic.proofs.resolution.robinson._
+import at.logic.proofs.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
 class FixDerivationTest extends SpecificationWithJUnit {

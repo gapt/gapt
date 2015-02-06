@@ -1,13 +1,13 @@
 package at.logic.algorithms.resolution
 
 import at.logic.algorithms.fol.{ recreateWithFactory, fol2hol }
-import at.logic.calculi.lk.base.{ LKUnaryRuleCreationException, FSequent }
-import at.logic.calculi.lksk.TypeSynonyms.{ EmptyLabel, Label }
-import at.logic.calculi.resolution.Clause
-import at.logic.calculi.resolution.robinson._
-import at.logic.calculi.resolution.ral._
-import at.logic.calculi.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base.{ LKUnaryRuleCreationException, FSequent }
+import at.logic.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
+import at.logic.proofs.resolution.Clause
+import at.logic.proofs.resolution.robinson._
+import at.logic.proofs.resolution.ral._
+import at.logic.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
+import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.fol.{ FOLExpression, FOLFormula, Substitution => FOLSubstitution }
 import at.logic.language.hol._
 import at.logic.language.lambda.{ Substitution => LambdaSubstitution, Var, FactoryA, LambdaExpression }

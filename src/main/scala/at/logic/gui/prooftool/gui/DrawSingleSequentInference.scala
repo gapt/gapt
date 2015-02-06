@@ -1,9 +1,9 @@
 package at.logic.gui.prooftool.gui
 
 import scala.swing._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk.base._
 import java.awt.Color
-import at.logic.calculi.lk.{ ExistsRightRule, ForallLeftRule }
+import at.logic.proofs.lk.{ ExistsRightRule, ForallLeftRule }
 
 /**
  *

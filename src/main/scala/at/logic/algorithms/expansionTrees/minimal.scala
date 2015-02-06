@@ -2,9 +2,9 @@ package at.logic.algorithms.expansionTrees
 
 import at.logic.provers.Prover
 import scala.collection.mutable.{ ListBuffer, HashMap => mMap }
-import at.logic.calculi.expansionTrees.{ MultiExpansionSequent, MultiExpansionTree, MAnd, MAtom, MOr, MImp, MNeg, MWeakQuantifier, MSkolemQuantifier, MStrongQuantifier }
+import at.logic.proofs.expansionTrees.{ MultiExpansionSequent, MultiExpansionTree, MAnd, MAtom, MOr, MImp, MNeg, MWeakQuantifier, MSkolemQuantifier, MStrongQuantifier }
 import at.logic.utils.dssupport.ListSupport.{ listComplements, zipper }
-import at.logic.calculi.expansionTrees.ExpansionSequent
+import at.logic.proofs.expansionTrees.ExpansionSequent
 import at.logic.utils.logging.Logger
 
 /**

@@ -6,11 +6,11 @@ package at.logic.provers.atp.commands.replay
 import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import at.logic.calculi.resolution.{ ResolutionProof, Clause }
-import at.logic.calculi.resolution.robinson.{ RobinsonResolutionProof }
-import at.logic.calculi.lk.base.{ Sequent, FSequent }
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.robinson.InitialClause._
+import at.logic.proofs.resolution.{ ResolutionProof, Clause }
+import at.logic.proofs.resolution.robinson.{ RobinsonResolutionProof }
+import at.logic.proofs.lk.base.{ Sequent, FSequent }
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.resolution.robinson.InitialClause._
 import at.logic.language.fol.{ FOLVar, FOLExpression, FOLFormula }
 import at.logic.provers.atp.Definitions._
 import at.logic.provers.atp.Prover

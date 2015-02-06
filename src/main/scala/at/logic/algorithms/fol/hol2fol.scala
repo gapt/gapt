@@ -1,6 +1,6 @@
 package at.logic.algorithms.fol.hol2fol
 
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.fol.{ Substitution => FOLSubstitution, _ }
 import at.logic.language.hol
 import at.logic.language.hol.logicSymbols._
@@ -253,7 +253,7 @@ object replaceAbstractions extends replaceAbstractions
 /**
  * Replace lambda-abstractions by constants.
  *
- * Each abstraction in an [[at.logic.calculi.lk.base.FSequent]] is replaced by a separate constant symbol; the used
+ * Each abstraction in an [[at.logic.proofs.lk.base.FSequent]] is replaced by a separate constant symbol; the used
  * constants are returned in a Map.
  */
 class replaceAbstractions {

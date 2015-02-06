@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
 import at.logic.language.fol._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
 class VampireTest extends SpecificationWithJUnit {

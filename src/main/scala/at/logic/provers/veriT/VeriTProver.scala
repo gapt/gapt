@@ -1,13 +1,13 @@
 
 package at.logic.provers.veriT
 
-import at.logic.calculi.expansionTrees.ExpansionSequent
+import at.logic.proofs.expansionTrees.ExpansionSequent
 import scala.sys.process._
 import java.io._
 import at.logic.provers.Prover
 import at.logic.parsing.veriT._
 import at.logic.language.hol.HOLFormula
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 class VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
 

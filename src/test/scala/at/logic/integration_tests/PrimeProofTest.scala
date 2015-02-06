@@ -6,9 +6,9 @@ import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.eliminateDefinitions
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.subsumption._
-import at.logic.calculi.expansionTrees.{toDeep, ExpansionSequent}
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.expansionTrees.{toDeep, ExpansionSequent}
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._

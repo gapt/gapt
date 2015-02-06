@@ -7,9 +7,9 @@ package at.logic.gui.prooftool.gui
  * Time: 12:41 PM
  */
 
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.lk.base.{ Sequent, BinaryLKProof, UnaryLKProof, NullaryLKProof }
-import at.logic.calculi.proofs.{ BinaryProof, UnaryProof, Proof, NullaryProof, TreeProof }
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base.{ Sequent, BinaryLKProof, UnaryLKProof, NullaryLKProof }
+import at.logic.proofs.proofs.{ BinaryProof, UnaryProof, Proof, NullaryProof, TreeProof }
 
 object Search {
 

@@ -1,13 +1,13 @@
 package at.logic.parsing.ivy.conversion
 
 import at.logic.parsing.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
-import at.logic.calculi.resolution.robinson.{ InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof }
+import at.logic.proofs.resolution.robinson.{ InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof }
 import at.logic.language.fol._
-import at.logic.calculi.resolution.robinson.{ Instance => RInstantiate }
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.{ FClause, Clause }
+import at.logic.proofs.resolution.robinson.{ Instance => RInstantiate }
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.resolution.{ FClause, Clause }
 import at.logic.algorithms.rewriting.RenameResproof
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 /**
  * Converts Ivy Proofs into Robinson Resolution Proofs

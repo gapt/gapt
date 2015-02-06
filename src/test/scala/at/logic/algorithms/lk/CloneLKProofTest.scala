@@ -1,6 +1,6 @@
 package at.logic.algorithms.lk
 
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
 import at.logic.language.fol._
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit

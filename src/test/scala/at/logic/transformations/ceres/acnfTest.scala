@@ -2,10 +2,10 @@ package at.logic.transformations.ceres.ACNF
 
 import at.logic.algorithms.resolution.RobinsonToLK
 import at.logic.algorithms.shlk._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.{LKProof, Sequent}
-import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.calculi.slk.SchemaProofDB
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.{LKProof, Sequent}
+import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
+import at.logic.proofs.slk.SchemaProofDB
 import at.logic.language.fol.{Substitution => FOLSubstitution, FOLExpression, AllVar, FOLConst, FOLVar}
 import at.logic.language.hol.{HOLFormula, HOLVar, HOLAbs, HOLExpression}
 import at.logic.language.lambda.types._

@@ -5,10 +5,10 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.language.fol._
 import at.logic.language.lambda.symbols.{StringSymbol}
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
 import at.logic.language.hol.HOLExpression
-import at.logic.calculi.lk.base.{beSyntacticFSequentEqual, FSequent, Sequent, LKProof}
-import at.logic.calculi.proofs.NullaryProof
+import at.logic.proofs.lk.base.{beSyntacticFSequentEqual, FSequent, Sequent, LKProof}
+import at.logic.proofs.proofs.NullaryProof
 
 @RunWith(classOf[JUnitRunner])
 class definition_eliminationTest extends SpecificationWithJUnit {

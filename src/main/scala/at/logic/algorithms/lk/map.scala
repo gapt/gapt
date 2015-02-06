@@ -7,9 +7,9 @@
 
 package at.logic.algorithms.lk
 
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.occurrences._
 import at.logic.language.hol._
 
 object map_proof extends map_proof

@@ -1,5 +1,5 @@
 import java.io.{FileWriter, File}
-import at.logic.calculi.lk.base.LKRuleCreationException
+import at.logic.proofs.lk.base.LKRuleCreationException
 import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.utils.executionModels.timeout._
 

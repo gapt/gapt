@@ -10,8 +10,8 @@ package at.logic.gui.prooftool.gui
 import swing.SequentialContainer.Wrapper
 import javax.swing.JPopupMenu
 import swing._
-import at.logic.calculi.proofs.TreeProof
-import at.logic.calculi.lk.base.LKProof
+import at.logic.proofs.proofs.TreeProof
+import at.logic.proofs.lk.base.LKProof
 import at.logic.gui.prooftool.parser.{ ProofDbChanged, ProofToolPublisher, ShowProof, HideProof }
 import at.logic.language.hol.{ HOLFormula, Neg, And, Imp, Or, ExVar, AllVar, Atom }
 

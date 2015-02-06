@@ -11,7 +11,7 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 
 import at.logic.utils.ds.mutable.trees._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.algorithms.subsumption._
 import at.logic.language.fol._
 

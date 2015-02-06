@@ -1,12 +1,12 @@
 package at.logic.algorithms.rewriting
 
-import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base._
+import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols.{ SymbolA, StringSymbol }
 import at.logic.algorithms.matching.NaiveIncompleteMatchingAlgorithm
 import at.logic.language.fol.FOLFormula
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
 import at.logic.algorithms.lk.AtomicExpansion
 import Util._
 import at.logic.language.hol.BetaReduction

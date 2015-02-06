@@ -9,16 +9,16 @@ package at.logic.transformations.skolemization.lksk
 
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
-import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.base.{LKProof, Sequent}
-import at.logic.calculi.lk.{OrLeftRule, Axiom => LKAxiom}
-import at.logic.calculi.lk.{ForallLeftRule, ForallRightRule, ExistsLeftRule, ExistsRightRule}
-import at.logic.calculi.lksk._
+import at.logic.proofs.occurrences._
+import at.logic.proofs.lk.base.{LKProof, Sequent}
+import at.logic.proofs.lk.{OrLeftRule, Axiom => LKAxiom}
+import at.logic.proofs.lk.{ForallLeftRule, ForallRightRule, ExistsLeftRule, ExistsRightRule}
+import at.logic.proofs.lksk._
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.types._
-import at.logic.calculi.lksk.TypeSynonyms.EmptyLabel
+import at.logic.proofs.lksk.TypeSynonyms.EmptyLabel
 
 @RunWith(classOf[JUnitRunner])
 class LKskcTest extends SpecificationWithJUnit {

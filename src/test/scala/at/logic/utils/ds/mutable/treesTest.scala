@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
 import at.logic.utils.ds.mutable.trees._
-//import at.logic.calculi.lk.base._
+//import at.logic.proofs.lk.base._
 //import at.logic.language.hol._
 import scala.util.parsing.combinator._
 

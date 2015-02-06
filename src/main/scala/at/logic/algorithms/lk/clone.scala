@@ -1,12 +1,12 @@
 package at.logic.algorithms.lk
 
-import at.logic.calculi.lk.base.{ Sequent, LKProof }
-import at.logic.calculi.lk._
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.slk._
+import at.logic.proofs.lk.base.{ Sequent, LKProof }
+import at.logic.proofs.lk._
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.slk._
 import at.logic.language.schema.SchemaFormula
 import at.logic.language.hol._
-import at.logic.calculi.occurrences._
+import at.logic.proofs.occurrences._
 
 import scala.collection.immutable.HashMap
 import scala.collection.mutable

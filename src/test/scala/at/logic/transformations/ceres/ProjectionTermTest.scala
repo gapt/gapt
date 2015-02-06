@@ -2,10 +2,10 @@ package at.logic.transformations.ceres
 
 import at.logic.algorithms.lk.{getCutAncestors, getAncestors}
 import at.logic.algorithms.shlk._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.{Sequent, LKProof}
-import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.calculi.slk.{SchemaProof, SchemaProofDB}
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.{Sequent, LKProof}
+import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
+import at.logic.proofs.slk.{SchemaProof, SchemaProofDB}
 import at.logic.language.schema._
 import at.logic.parsing.shlk_parsing.{SHLK, sFOParser}
 import at.logic.utils.ds.trees.BinaryTree

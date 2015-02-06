@@ -11,10 +11,10 @@ import scala.xml.dtd._
 
 import at.logic.language.hol._
 import at.logic.parsing.ExportingException
-import at.logic.calculi.lk.base.{ FSequent, Sequent, LKProof }
+import at.logic.proofs.lk.base.{ FSequent, Sequent, LKProof }
 import at.logic.parsing.language.xml.HOLTermExporter
-import at.logic.calculi.lksk.{ Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule, ForallSkLeftRule, ForallSkRightRule, ExistsSkLeftRule, ExistsSkRightRule }
-import at.logic.calculi.lk._
+import at.logic.proofs.lksk.{ Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule, ForallSkLeftRule, ForallSkRightRule, ExistsSkLeftRule, ExistsSkRightRule }
+import at.logic.proofs.lk._
 
 trait LKExporter extends HOLTermExporter {
   //def exportSequent(seq : Sequent) = exportSequent(FSequent(seq))

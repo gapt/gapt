@@ -3,10 +3,10 @@ package at.logic.algorithms.rewriting
 
 import at.logic.language.lambda.{ Abs, App, Var, Const, LambdaExpression }
 import at.logic.language.hol.{ HOLVar, HOLFormula, HOLExpression }
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.resolution.robinson._
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.resolution.robinson._
 import at.logic.language.fol.{ FOLVar, FOLExpression, FOLFormula, Substitution, FOLTerm }
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.utils.logging.Logger
 import NameReplacement.find_matching
 

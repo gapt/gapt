@@ -14,8 +14,8 @@ import org.specs2.runner.JUnitRunner
 import scala.xml._
 
 import at.logic.language.hol._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
 import java.io.File.separator

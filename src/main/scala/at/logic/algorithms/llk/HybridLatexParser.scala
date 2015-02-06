@@ -7,7 +7,7 @@ import scala.collection.immutable.PagedSeq
 import java.io.FileReader
 import at.logic.language.lambda.types.TA
 import at.logic.language.hol._
-import at.logic.calculi.lk.base.{ FSequent, LKProof }
+import at.logic.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.algorithms.llk.TokenToLKConverter
 

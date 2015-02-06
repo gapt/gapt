@@ -5,7 +5,7 @@
 
 package at.logic.parsing.shlk_parsing
 
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
 import at.logic.language.lambda.types._
 import at.logic.language.schema._
 import java.io.File.separator

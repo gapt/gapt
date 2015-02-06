@@ -6,7 +6,7 @@
  */
 
 package at.logic.parsing.calculi
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk.base._
 import at.logic.parsing.InputParser
 
 trait ResolutionParser extends InputParser {

@@ -8,8 +8,8 @@
 package at.logic.algorithms.cutIntroduction
 
 import at.logic.algorithms.resolution._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.resolution.FClause
+import at.logic.proofs.lk.base._
+import at.logic.proofs.resolution.FClause
 import at.logic.language.fol.Utils._
 import at.logic.language.fol._
 import at.logic.provers.Prover

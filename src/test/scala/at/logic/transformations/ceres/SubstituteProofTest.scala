@@ -3,12 +3,12 @@ package at.logic.transformations.ceres.ACNF
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
-import at.logic.calculi.lk.base.{FSequent, LKProof}
+import at.logic.proofs.lk.base.{FSequent, LKProof}
 import at.logic.algorithms.hlk.HybridLatexParser
 import java.io.File.separator
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk.base._
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
 

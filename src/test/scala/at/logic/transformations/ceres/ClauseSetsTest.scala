@@ -2,9 +2,9 @@
 package at.logic.transformations.ceres.clauseSets
 
 import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
-import at.logic.calculi.lk.base.Sequent
-import at.logic.calculi.occurrences._
-import at.logic.calculi.slk.SchemaProofDB
+import at.logic.proofs.lk.base.Sequent
+import at.logic.proofs.occurrences._
+import at.logic.proofs.slk.SchemaProofDB
 import at.logic.language.hol.{Substitution => HOLSubstitution, Atom => HOLAtom, _}
 import at.logic.language.schema.{Substitution => SchemaSubstitution, _}
 import at.logic.language.lambda.types._

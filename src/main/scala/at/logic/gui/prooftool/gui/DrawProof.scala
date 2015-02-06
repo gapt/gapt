@@ -11,14 +11,14 @@ import scala.swing._
 import BorderPanel._
 import event._
 import java.awt.Font._
-import at.logic.calculi.proofs._
+import at.logic.proofs.proofs._
 import java.awt.event.{ MouseMotionListener, MouseEvent }
-import at.logic.calculi.slk.SchemaProofLinkRule
-import at.logic.calculi.lk.base.Sequent
+import at.logic.proofs.slk.SchemaProofLinkRule
+import at.logic.proofs.lk.base.Sequent
 import java.awt.RenderingHints
 import at.logic.gui.prooftool.parser._
-import at.logic.calculi.lk._
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk._
+import at.logic.proofs.occurrences.FormulaOccurrence
 
 class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var visible_occurrences: Option[Set[FormulaOccurrence]], private var str: String )
     extends BorderPanel with MouseMotionListener {

@@ -12,11 +12,11 @@ import BorderPanel._
 import event._
 import java.awt.Font._
 import java.awt.event.{ MouseMotionListener, MouseEvent }
-import at.logic.calculi.lk.base.Sequent
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base.Sequent
+import at.logic.proofs.occurrences.FormulaOccurrence
 import java.awt.RenderingHints
 import at.logic.gui.prooftool.parser._
-import at.logic.calculi.proofs.{ NullaryProof, BinaryProof, UnaryProof, Proof }
+import at.logic.proofs.proofs.{ NullaryProof, BinaryProof, UnaryProof, Proof }
 
 class DrawResolutionProof( val proof: Proof[_], private val fSize: Int, private var visible_occurrences: Option[Set[FormulaOccurrence]], private var str: String )
     extends BorderPanel with MouseMotionListener {

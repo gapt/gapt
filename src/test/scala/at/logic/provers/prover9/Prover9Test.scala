@@ -4,9 +4,9 @@
 
 package at.logic.provers.prover9
 
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.occurrences.factory
-import at.logic.calculi.resolution.robinson.{Formatter, RobinsonResolutionProof}
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.occurrences.factory
+import at.logic.proofs.resolution.robinson.{Formatter, RobinsonResolutionProof}
 import at.logic.language.fol._
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.parsing.readers.StringReader

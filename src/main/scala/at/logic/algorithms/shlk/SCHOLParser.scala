@@ -4,11 +4,11 @@ package at.logic.algorithms.shlk
  * Please move this file to parsing!
  */
 
-//import at.logic.calculi.lk.macroRules._
+//import at.logic.proofs.lk.macroRules._
 import at.logic.algorithms.lk._
-import at.logic.calculi.slk._
-import at.logic.calculi.lk.base.{ Sequent, LKProof }
-import at.logic.calculi.lk._
+import at.logic.proofs.slk._
+import at.logic.proofs.lk.base.{ Sequent, LKProof }
+import at.logic.proofs.lk._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 //import at.logic.language.hol._
@@ -18,7 +18,7 @@ import collection.mutable.{ Map => MMap }
 import at.logic.language.lambda.types._
 import java.io.InputStreamReader
 import at.logic.language.lambda.symbols._
-//import at.logic.calculi.lk.quantificationRules._
+//import at.logic.proofs.lk.quantificationRules._
 //import at.logic.language.hol.And
 //import at.logic.language.hol.Or
 //import at.logic.language.hol.logicSymbols.StringSymbol

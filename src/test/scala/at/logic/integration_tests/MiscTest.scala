@@ -7,10 +7,10 @@ import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.DefinitionElimination
-import at.logic.calculi.expansionTrees.{toDeep => ETtoDeep,toShallow => ETtoShallow}
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences._
+import at.logic.proofs.expansionTrees.{toDeep => ETtoDeep,toShallow => ETtoShallow}
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.occurrences._
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.{And => AndHOL, Imp => ImpHOL, Or => OrHOL}
@@ -36,7 +36,7 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import java.util.zip.GZIPInputStream
 import java.io.File.separator
 import java.io.{FileReader, FileInputStream, InputStreamReader}
-import at.logic.calculi.occurrences._
+import at.logic.proofs.occurrences._
 import at.logic.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
 import org.specs2.execute.Success

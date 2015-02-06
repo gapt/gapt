@@ -9,7 +9,7 @@ package at.logic.provers.atp.commands
  */
 
 package ui {
-  import _root_.at.logic.calculi.lk.base.Sequent
+  import _root_.at.logic.proofs.lk.base.Sequent
   import _root_.at.logic.provers.atp.commands.base.InitialCommand
   import at.logic.provers.atp.Definitions._
   import scala.io.StdIn

@@ -1,14 +1,14 @@
 package at.logic.transformations.herbrandExtraction.lksk
 
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
-import at.logic.calculi.lk.base.LKProof
-import at.logic.calculi.expansionTrees.{ merge => mergeTree, Atom => AtomTree, _ }
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base.LKProof
+import at.logic.proofs.expansionTrees.{ merge => mergeTree, Atom => AtomTree, _ }
+import at.logic.proofs.occurrences.FormulaOccurrence
 
-import at.logic.calculi.lksk._
+import at.logic.proofs.lksk._
 import scala.Tuple2
 import at.logic.language.hol.{ TopC, BottomC }
-import at.logic.calculi.lk.{ BinaryLKProof, CutRule, UnaryLKProof }
+import at.logic.proofs.lk.{ BinaryLKProof, CutRule, UnaryLKProof }
 
 /**
  * Extends expansion tree extraction to lksk.

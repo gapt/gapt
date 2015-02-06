@@ -5,7 +5,7 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import org.specs2._
 import at.logic.language.fol._
-import at.logic.calculi.resolution.robinson._
+import at.logic.proofs.resolution.robinson._
 
 /**
  * Test for replacment of constant symbols by terms

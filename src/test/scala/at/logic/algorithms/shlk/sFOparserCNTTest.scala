@@ -6,9 +6,9 @@
 package at.logic.parsing.shlk_parsing
 
 import at.logic.algorithms.lk.{getCutAncestors, getAncestors}
-import at.logic.calculi.lk._
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.slk.{TermEquivalenceRule1, TermRightEquivalenceRule1}
+import at.logic.proofs.lk._
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.slk.{TermEquivalenceRule1, TermRightEquivalenceRule1}
 import at.logic.language.lambda.types._
 import at.logic.language.schema._
 import java.io.File.separator

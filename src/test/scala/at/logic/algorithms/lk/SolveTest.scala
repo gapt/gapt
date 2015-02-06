@@ -1,8 +1,8 @@
 package at.logic.algorithms.lk
 
-import at.logic.calculi.lk.base.{LKUnaryRuleCreationException, LKProof, FSequent, beSyntacticFSequentEqual}
-import at.logic.calculi.lk.{Axiom, NegLeftRule}
-import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
+import at.logic.proofs.lk.base.{LKUnaryRuleCreationException, LKProof, FSequent, beSyntacticFSequentEqual}
+import at.logic.proofs.lk.{Axiom, NegLeftRule}
+import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols.{LogicalSymbolA}
 import at.logic.language.lambda.symbols.StringSymbol
@@ -15,7 +15,7 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 import at.logic.language.lambda.types.{To, Ti}
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, Atom => AtomET, Neg => NegET, Or => OrET, WeakQuantifier => WeakQuantifierET, StrongQuantifier => StrongQuantifierET, toFSequent}
+import at.logic.proofs.expansionTrees.{ExpansionTree, ExpansionSequent, Atom => AtomET, Neg => NegET, Or => OrET, WeakQuantifier => WeakQuantifierET, StrongQuantifier => StrongQuantifierET, toFSequent}
 
 @RunWith(classOf[JUnitRunner])
 class SolveTest extends SpecificationWithJUnit {

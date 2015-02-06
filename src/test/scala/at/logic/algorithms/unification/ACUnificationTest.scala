@@ -3,7 +3,7 @@
 package at.logic.algorithms.unification
 
 import at.logic.algorithms.diophantine.Vector
-import at.logic.calculi.lk.base.{Sequent, FSequent}
+import at.logic.proofs.lk.base.{Sequent, FSequent}
 import at.logic.language.hol.HOLFormula
 //import at.logic.parsing.language.simple.SimpleFOLParser
 //import at.logic.parsing.readers.StringReader

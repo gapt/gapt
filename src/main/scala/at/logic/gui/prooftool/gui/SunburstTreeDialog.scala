@@ -8,9 +8,9 @@ package at.logic.gui.prooftool.gui
  */
 
 import scala.swing._
-import at.logic.calculi.proofs.TreeProof
+import at.logic.proofs.proofs.TreeProof
 import scala.swing.event._
-import at.logic.calculi.lk.base.LKProof
+import at.logic.proofs.lk.base.LKProof
 import at.logic.gui.prooftool.parser._
 import java.awt.Color
 import at.logic.gui.prooftool.parser.ChangeSequentColor

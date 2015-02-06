@@ -1,6 +1,6 @@
 package at.logic.language.hoare
 
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.fol._
 import at.logic.language.fol.Utils.numeral
 

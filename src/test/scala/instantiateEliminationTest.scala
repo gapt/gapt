@@ -5,8 +5,8 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 
 import at.logic.language.fol._
-import at.logic.calculi.resolution.robinson.{Resolution, RobinsonResolutionProof, Paramodulation, InitialClause, Instance}
-import at.logic.calculi.lk.base.{AuxiliaryFormulas, beSyntacticMultisetEqual}
+import at.logic.proofs.resolution.robinson.{Resolution, RobinsonResolutionProof, Paramodulation, InitialClause, Instance}
+import at.logic.proofs.lk.base.{AuxiliaryFormulas, beSyntacticMultisetEqual}
 
 @RunWith(classOf[JUnitRunner])
 class instantiateEliminationTest extends SpecificationWithJUnit {

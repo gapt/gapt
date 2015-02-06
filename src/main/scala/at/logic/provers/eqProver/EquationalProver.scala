@@ -9,7 +9,7 @@ import at.logic.provers.Prover
 import at.logic.provers.prover9._
 import at.logic.provers.veriT._
 import at.logic.language.hol.HOLFormula
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 class EquationalProver extends Prover {
 

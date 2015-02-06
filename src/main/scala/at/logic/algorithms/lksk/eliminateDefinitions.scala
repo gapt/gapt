@@ -1,9 +1,9 @@
 package at.logic.algorithms.lksk
 
 import at.logic.language.hol._
-import at.logic.calculi.lk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _ }
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lksk._
+import at.logic.proofs.lk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _ }
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lksk._
 
 import scala.collection.mutable
 

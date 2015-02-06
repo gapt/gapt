@@ -1,8 +1,8 @@
 package at.logic.integration_tests
 
 import at.logic.algorithms.cutIntroduction._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.LKProof
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.LKProof
 import at.logic.language.fol._
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.provers.maxsat.{MaxSAT, MaxSATSolver}

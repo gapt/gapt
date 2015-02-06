@@ -1,10 +1,10 @@
 package at.logic.algorithms.lk
 
 import at.logic.algorithms.lk.ExpansionTreeProofStrategy.ExpansionTreeAction
-import at.logic.calculi.expansionTrees.{ ExpansionTree, ExpansionSequent, BinaryExpansionTree, getETOfFormula, StrongQuantifier, WeakQuantifier, toShallow, UnaryExpansionTree, Atom => AtomET }
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.slk._
+import at.logic.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, BinaryExpansionTree, getETOfFormula, StrongQuantifier, WeakQuantifier, toShallow, UnaryExpansionTree, Atom => AtomET }
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.slk._
 import at.logic.language.hol.{ Substitution => SubstitutionHOL, _ }
 import at.logic.language.lambda.types.{ Ti, Tindex }
 import at.logic.language.schema.{ Substitution => SubstitutionSchema, SchemaVar, SchemaExpression, SchemaFormula, BigAnd, BigOr, IntVar, Pred, Or => OrSchema, And => AndSchema }

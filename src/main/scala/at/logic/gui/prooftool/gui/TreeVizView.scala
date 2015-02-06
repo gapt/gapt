@@ -1,16 +1,16 @@
 package at.logic.gui.prooftool.gui
 
 import scala.swing.{ Action, BorderPanel }
-import at.logic.calculi.proofs.TreeProof
+import at.logic.proofs.proofs.TreeProof
 import ch.randelshofer.tree._
 import at.logic.utils.ds.trees.{ BinaryTree, UnaryTree, LeafTree }
 import javax.swing.event.ChangeListener
 import java.awt.Color
 import at.logic.algorithms.llk.HybridLatexExporter.fsequentString
-import at.logic.calculi.lksk.{ ExistsSkLeftRuleType, ForallSkRightRuleType, ExistsSkRightRuleType, ForallSkLeftRuleType }
-import at.logic.calculi.lk._
+import at.logic.proofs.lksk.{ ExistsSkLeftRuleType, ForallSkRightRuleType, ExistsSkRightRuleType, ForallSkLeftRuleType }
+import at.logic.proofs.lk._
 import at.logic.parsing.calculi.xml.{ BinaryRuleType, UnaryRuleType, NullaryRuleType }
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk.base._
 import at.logic.gui.prooftool.parser.{ ChangeSequentColor, ProofToolPublisher }
 
 /**

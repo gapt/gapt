@@ -4,7 +4,7 @@
 
 package at.logic.language.hol
 
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk.base._
 import at.logic.language.hol.replacements.{ getAllPositions2, getAllPositions }
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }

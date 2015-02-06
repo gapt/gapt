@@ -3,8 +3,8 @@
 package at.logic.transformations.ceres.clauseSchema
 
 import at.logic.algorithms.shlk.StepMinusOne
-import at.logic.calculi.lk.base.{ Sequent, LKProof }
-import at.logic.calculi.slk._
+import at.logic.proofs.lk.base.{ Sequent, LKProof }
+import at.logic.proofs.slk._
 import at.logic.language.lambda.types._
 import at.logic.language.schema._
 import collection.mutable.Map

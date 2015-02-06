@@ -1,8 +1,8 @@
 
 package at.logic.provers.atp.commands.refinements.simple
 
-import at.logic.calculi.lk.base.Sequent
-import at.logic.calculi.resolution.ResolutionProof
+import at.logic.proofs.lk.base.Sequent
+import at.logic.proofs.resolution.ResolutionProof
 import at.logic.provers.atp.commands.base.InitialCommand
 import at.logic.provers.atp.commands.refinements.base.{ Refinement, RefinementID }
 import at.logic.provers.atp.Definitions._

@@ -7,7 +7,7 @@ package at.logic.algorithms.subsumption.managers
 
 import at.logic.utils.patterns.listeners.ListenerManager
 import at.logic.algorithms.subsumption._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 class SimpleManager( listener: ListenerManager[SubsumptionDSEvent],
                      sbsmpAlg: SubsumptionAlgorithm,

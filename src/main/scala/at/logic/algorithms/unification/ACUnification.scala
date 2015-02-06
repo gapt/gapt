@@ -6,20 +6,20 @@ it out for now. [Giselle]
 
 package at.logic.algorithms.unification
 
-import at.logic.calculi.lk.base.types.FSequent
+import at.logic.proofs.lk.base.types.FSequent
 import at.logic.language.hol.{HOLFormula}
 import at.logic.language.lambda.symbols.{VariableStringSymbol, VariableSymbolA}
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.parsing.readers.StringReader
 import at.logic.algorithms.diophantine.{LankfordSolver, Vector}
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.language.fol._
 import at.logic.language.fol.{Equation => FOLEquation}
 import at.logic.language.lambda.substitutions.Substitution
 
 import collection.immutable.Stream.Cons
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.lambda.typedLambdaCalculus.Normalization
 import scala.collection.mutable
 

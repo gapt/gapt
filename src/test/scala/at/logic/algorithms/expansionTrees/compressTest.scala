@@ -2,8 +2,8 @@ package at.logic.algorithms.expansionTrees
 
 import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, _}
 import at.logic.language.lambda.types.{Ti => i, To => o, ->}
-import at.logic.calculi.expansionTrees._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.expansionTrees._
+import at.logic.proofs.lk.base.FSequent
 import at.logic.algorithms.expansionTrees._
 import at.logic.provers.minisat.MiniSATProver
 import org.specs2.mutable._

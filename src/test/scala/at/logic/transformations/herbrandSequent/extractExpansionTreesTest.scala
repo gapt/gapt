@@ -5,10 +5,10 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
 import at.logic.transformations.herbrandExtraction._
-import at.logic.calculi.expansionTrees.{StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET, Atom => AtomET, Imp => ImpET}
-import at.logic.calculi.lk.base.LKProof
+import at.logic.proofs.expansionTrees.{StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET, Atom => AtomET, Imp => ImpET}
+import at.logic.proofs.lk.base.LKProof
 import at.logic.language.fol.{Atom => FOLAtom, Function => FOLFunction, FOLConst, FOLVar, Utils}
 
 @RunWith(classOf[JUnitRunner])

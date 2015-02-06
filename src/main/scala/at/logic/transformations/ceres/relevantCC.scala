@@ -2,10 +2,10 @@ package at.logic.transformations.ceres
 
 import at.logic.algorithms.lk.{ getAncestors, getCutAncestors }
 import at.logic.algorithms.shlk._
-import at.logic.calculi.lk.base.{ LKProof, Sequent }
-import at.logic.calculi.lk._
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.slk._
+import at.logic.proofs.lk.base.{ LKProof, Sequent }
+import at.logic.proofs.lk._
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.slk._
 import at.logic.language.fol.Utils
 import at.logic.language.schema.{ Substitution => SchemaSubstitution, SchemaVar, SchemaFormula, IndexedPredicate, IntVar, IntZero, IntegerTerm, Succ }
 import at.logic.utils.ds.Multisets

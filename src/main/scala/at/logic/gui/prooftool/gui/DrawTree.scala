@@ -18,7 +18,7 @@ import DrawSequent._
 import at.logic.gui.prooftool.parser.{ StructPublisher, ShowLeaf, HideLeaf, HideTree }
 import at.logic.transformations.ceres.struct.structToExpressionTree.{ TimesC, PlusC }
 import at.logic.transformations.ceres.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
-import at.logic.calculi.lk.base.Sequent
+import at.logic.proofs.lk.base.Sequent
 import java.awt.event.{ MouseMotionListener, MouseEvent }
 
 class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: String ) extends BorderPanel with MouseMotionListener {

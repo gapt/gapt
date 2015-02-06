@@ -1,10 +1,10 @@
 package at.logic.transformations.herbrandExtraction
 
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk._
 import at.logic.language.hol._
-import at.logic.calculi.expansionTrees.{ WeakQuantifier => WQTree, StrongQuantifier => SQTree, And => AndTree, Or => OrTree, Imp => ImpTree, Neg => NotTree, Atom => AtomTree, MergeNode => MergeNodeTree, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
-import at.logic.calculi.occurrences._
+import at.logic.proofs.expansionTrees.{ WeakQuantifier => WQTree, StrongQuantifier => SQTree, And => AndTree, Or => OrTree, Imp => ImpTree, Neg => NotTree, Atom => AtomTree, MergeNode => MergeNodeTree, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
+import at.logic.proofs.occurrences._
 
 object extractExpansionSequent extends extractExpansionSequent
 class extractExpansionSequent {

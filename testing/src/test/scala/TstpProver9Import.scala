@@ -1,7 +1,7 @@
 package at.logic.testing.tstp
 
 import at.logic.algorithms.lk._
-import at.logic.calculi.expansionTrees._
+import at.logic.proofs.expansionTrees._
 import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.provers.minisat._
 import at.logic.provers.veriT._

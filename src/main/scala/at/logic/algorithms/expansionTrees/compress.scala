@@ -1,8 +1,8 @@
 
 package at.logic.algorithms.expansionTrees
 
-import at.logic.calculi.expansionTrees._
-import at.logic.calculi.expansionTrees.{ MWeakQuantifier, MStrongQuantifier, MAnd, MOr, MImp, MNeg, MAtom, MSkolemQuantifier, MultiExpansionTree, MultiExpansionSequent }
+import at.logic.proofs.expansionTrees._
+import at.logic.proofs.expansionTrees.{ MWeakQuantifier, MStrongQuantifier, MAnd, MOr, MImp, MNeg, MAtom, MSkolemQuantifier, MultiExpansionTree, MultiExpansionSequent }
 import at.logic.language.hol.{ HOLExpression, HOLVar, ExVar, AllVar, HOLFormula, instantiate }
 import at.logic.utils.dssupport.ListSupport.groupSeq
 

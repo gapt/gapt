@@ -2,9 +2,9 @@
 package at.logic.algorithms.interpolation
 
 import at.logic.language.hol._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk._
-import at.logic.calculi.occurrences._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk._
+import at.logic.proofs.occurrences._
 
 class InterpolationException( msg: String ) extends Exception( msg )
 

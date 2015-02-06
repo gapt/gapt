@@ -7,7 +7,7 @@
 package at.logic.algorithms.subsumption.managers
 
 import at.logic.utils.ds.mutable.trees._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.algorithms.subsumption._
 
 trait VectorTreeManager extends SubsumptionAlgorithm  {

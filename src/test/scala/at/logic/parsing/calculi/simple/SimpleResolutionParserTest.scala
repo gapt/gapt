@@ -7,15 +7,15 @@
 
 package at.logic.parsing.calculi.simple
 
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.language.hol._
 import at.logic.language.fol.{FOLVar, FOLConst, Atom => FOLAtom, Function => FOLFunction}
 import at.logic.parsing.readers.StringReader
-import at.logic.calculi.resolution._
-import at.logic.calculi.resolution.robinson._
+import at.logic.proofs.resolution._
+import at.logic.proofs.resolution.robinson._
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types._
 

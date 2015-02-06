@@ -1,9 +1,9 @@
 
 package at.logic.parsing.language.xml
 
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.{Sequent,FSequent,beSyntacticMultisetEqual}
-import at.logic.calculi.occurrences.factory
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.{Sequent,FSequent,beSyntacticMultisetEqual}
+import at.logic.proofs.occurrences.factory
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.parsing.language.xml.XMLParser._

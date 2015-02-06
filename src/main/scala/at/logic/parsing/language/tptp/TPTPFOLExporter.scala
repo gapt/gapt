@@ -8,7 +8,7 @@ package at.logic.parsing.language.tptp
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.fol._
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import scala.collection.immutable.HashMap
 import at.logic.language.hol.HOLFormula
 import at.logic.language.hol

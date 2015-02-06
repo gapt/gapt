@@ -1,12 +1,12 @@
 
 package at.logic.algorithms.lk.statistics
 
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.{ LKProof, Sequent }
-import at.logic.calculi.slk._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.{ LKProof, Sequent }
+import at.logic.proofs.slk._
 import at.logic.language.lambda.types.TA
 import at.logic.language.hol.{ HOLExpression, HOLApp, HOLAbs, HOLConst }
-import at.logic.calculi.lksk.{ UnaryLKskProof }
+import at.logic.proofs.lksk.{ UnaryLKskProof }
 import scala.collection.mutable
 
 object getStatistics {

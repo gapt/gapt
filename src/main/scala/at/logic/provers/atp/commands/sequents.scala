@@ -4,8 +4,8 @@ package at.logic.provers.atp.commands.sequents
 import at.logic.algorithms.subsumption.managers._
 import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.algorithms.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
-import at.logic.calculi.lk.base.{ FSequent, Sequent }
-import at.logic.calculi.resolution.{ ResolutionProof, Clause }
+import at.logic.proofs.lk.base.{ FSequent, Sequent }
+import at.logic.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.language.lambda.types.->
 import at.logic.language.hol.{ HOLFormula, HOLExpression, HOLVar, subTerms, Substitution }
 import at.logic.language.fol.{ Equation, FOLExpression }

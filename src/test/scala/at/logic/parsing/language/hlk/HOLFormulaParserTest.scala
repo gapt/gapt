@@ -3,18 +3,18 @@ package at.logic.parsing.language.hlk
 /**
  * Tests for HOLFormulaParser
  */
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mock.Mockito
 import org.mockito.Matchers._
 import java.io.IOException
-import at.logic.calculi.resolution.robinson.Formatter
-import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
-import at.logic.calculi.resolution.robinson.{ Formatter, RobinsonResolutionProof }
+import at.logic.proofs.resolution.robinson.Formatter
+import at.logic.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.proofs.resolution.robinson.{ Formatter, RobinsonResolutionProof }
 
-import at.logic.calculi.occurrences.factory
+import at.logic.proofs.occurrences.factory
 import util.parsing.input.Position
 import org.specs2.execute.Success
 

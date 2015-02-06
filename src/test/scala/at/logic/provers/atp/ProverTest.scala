@@ -12,14 +12,14 @@ import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.provers.atp.commands.base.{BranchCommand, Command}
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.provers.atp.commands.refinements.simple._
 import at.logic.provers.atp.commands.refinements.base._
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.robinson._
 import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import at.logic.parsing.readers.StringReader
-import at.logic.calculi.resolution._
+import at.logic.proofs.resolution._
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL

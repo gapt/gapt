@@ -4,15 +4,15 @@ import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import java.io.InputStreamReader
 import at.logic.language.schema._
-import at.logic.calculi.lk.base.{ FSequent, Sequent, LKProof }
+import at.logic.proofs.lk.base.{ FSequent, Sequent, LKProof }
 import collection.mutable.{ Map => MMap }
-import at.logic.calculi.slk._
+import at.logic.proofs.slk._
 import scala.Tuple4
 import at.logic.language.schema.IntZero
 import scala.Tuple2
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types.{ To, FunctionType, Tindex, Ti }
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
 import at.logic.algorithms.lk.solve
 
 object sFOParser {

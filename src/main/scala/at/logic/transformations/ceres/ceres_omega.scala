@@ -2,17 +2,17 @@ package at.logic.transformations.ceres
 
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
-import at.logic.calculi.lk._
-import at.logic.calculi.lksk.TypeSynonyms.Label
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk._
+import at.logic.proofs.lksk.TypeSynonyms.Label
+import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.hol.{ HOLFormula, Equation }
 import at.logic.language.lambda.types.Ti
 import at.logic.transformations.ceres.struct.Struct
 import at.logic.utils.dssupport.ListSupport._
-import at.logic.calculi.lk.base.{ Sequent, LKProof }
-import at.logic.calculi.lksk
-import at.logic.calculi.lksk.{ Axiom => LKSKAxiom, _ }
-import at.logic.calculi.resolution.ral._
+import at.logic.proofs.lk.base.{ Sequent, LKProof }
+import at.logic.proofs.lksk
+import at.logic.proofs.lksk.{ Axiom => LKSKAxiom, _ }
+import at.logic.proofs.resolution.ral._
 
 /**
  * Created by marty on 10/6/14.

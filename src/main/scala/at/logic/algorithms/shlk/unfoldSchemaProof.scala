@@ -3,11 +3,11 @@
 package at.logic.algorithms.shlk
 
 import at.logic.language.schema._
-import at.logic.calculi.occurrences._
-import at.logic.calculi.slk._
-import at.logic.calculi.lksk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _ }
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.occurrences._
+import at.logic.proofs.slk._
+import at.logic.proofs.lksk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _ }
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import at.logic.algorithms.lk.{ UnfoldException, CloneLKProof }
 
 //import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}

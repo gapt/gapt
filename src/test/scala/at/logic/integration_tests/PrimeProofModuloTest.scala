@@ -9,8 +9,8 @@ import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.subsumption._
 //import at.logic.algorithms.unification.{ACUEquality, MulACUEquality}
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import at.logic.language.fol.{FOLExpression, FOLFormula}
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._

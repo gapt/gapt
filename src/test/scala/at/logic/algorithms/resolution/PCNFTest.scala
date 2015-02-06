@@ -5,9 +5,9 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 
 import at.logic.language.fol._
-import at.logic.calculi.resolution.FClause
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.resolution.FClause
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.FSequent
 
 
 // we compare toStrings as proofs have only pointer equality. This needs to be changed by allowing syntaxEquals in graphs and vertices should
