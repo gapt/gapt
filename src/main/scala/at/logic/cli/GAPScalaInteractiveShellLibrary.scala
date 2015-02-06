@@ -22,7 +22,7 @@ import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import at.logic.proofs.expansionTrees.algorithms.{compressQuantifiers, minimalExpansionSequents => minimalExpSeq}
+import at.logic.proofs.expansionTrees.algorithms.{ compressQuantifiers, minimalExpansionSequents => minimalExpSeq }
 import at.logic.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
 import at.logic.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
 import at.logic.proofs.lk._
