@@ -84,6 +84,8 @@ trait FClause {
     sb.toString
   }
 
+  def isSubClauseOf( c: FClause ) = neg.diff( c.neg ).isEmpty && pos.diff( c.pos ).isEmpty
+
   def toFSequent = FSequent( neg.map( _.asInstanceOf[HOLFormula] ), pos.map( _.asInstanceOf[HOLFormula] ) )
 
   /*

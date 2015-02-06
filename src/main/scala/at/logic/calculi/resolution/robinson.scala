@@ -54,7 +54,7 @@ package robinson {
       val right: Seq[FormulaOccurrence] = suc.map( factory.createFormulaOccurrence( _, Nil ) )
       new LeafAGraph[Clause]( Clause( left, right ) ) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
         def rule = InitialType
-        override def name = ""
+        override def name = "initial"
         def getAccumulatedSubstitution = Substitution()
       }
     }
@@ -63,7 +63,7 @@ package robinson {
       else ( factory.createFormulaOccurrence( l, Nil ), true ) )
       new LeafAGraph[Clause]( Clause( lits ) ) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
         def rule = InitialType
-        override def name = ""
+        override def name = "initial"
         def getAccumulatedSubstitution = Substitution()
       }
     }

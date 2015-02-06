@@ -31,6 +31,7 @@ object RobinsonToLK {
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply( resproof: RobinsonResolutionProof, s: FSequent ): LKProof = {
+    assert( resproof.root.toFSequent == FSequent( Nil, Nil ) )
     val memotable = new PCNFMemoTable( s )
     WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[FClause, LKProof](), memotable.getPCNF ), s, strict = true )
   }
@@ -44,7 +45,11 @@ object RobinsonToLK {
   def apply( resproof: RobinsonResolutionProof ): LKProof =
     recConvert( resproof, FSequent( List(), List() ), scala.collection.mutable.Map[FClause, LKProof](), x => Axiom( x.neg, x.pos ) )
 
-  // this contructor allows passing your own axiom creator e.g. for ceres projections
+  /**
+   * This method converts a RobinsonResolutionProof resproof, which is assumed to have the empty clause
+   * as end-clause, into an LKProof of a sequent s. To do this, the provided createAxiom method is assumed
+   * to return, on input c, an LKProof with end-sequent "s' merge c", where s' is a sub-sequent of s.
+   */
   def apply( resproof: RobinsonResolutionProof, s: FSequent, createAxiom: FClause => LKProof ): LKProof =
     WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[FClause, LKProof](), createAxiom ), s, strict = true )
 
