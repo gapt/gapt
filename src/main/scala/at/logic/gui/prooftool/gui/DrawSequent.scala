@@ -7,9 +7,9 @@ package at.logic.gui.prooftool.gui
  * Time: 4:25 PM
  */
 
-import at.logic.calculi.lk.base.{ FSequent, Sequent }
+import at.logic.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.language.hol._
-import at.logic.calculi.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
+import at.logic.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.language.schema.{ BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, indexedOmegaVar, IntegerTerm, IntVar, IntConst, Succ }
 import at.logic.transformations.ceres.struct.ClauseSetSymbol
 import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol

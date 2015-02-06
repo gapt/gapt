@@ -1,10 +1,10 @@
 package at.logic.algorithms.rewriting
 
 import at.logic.language.lambda.types._
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.resolution.robinson._
-import at.logic.calculi.resolution.Clause
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.resolution.robinson._
+import at.logic.proofs.resolution.Clause
+import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.hol.{ HOLVar, HOLConst, Atom, Function, And, Equation, Or, Imp, Neg, ExVar, AllVar, HOLExpression, HOLFormula }
 import at.logic.language.fol.{ FOLVar, FOLConst, Atom => FOLAtom, Function => FOLFunction, And => FOLAnd, Equation => FOLEquation, Or => FOLOr, Imp => FOLImp, Neg => FOLNeg, ExVar => FOLExVar, AllVar => FOLAllVar, FOLExpression, FOLTerm, FOLFormula, Substitution }
 import at.logic.language.lambda.symbols.StringSymbol

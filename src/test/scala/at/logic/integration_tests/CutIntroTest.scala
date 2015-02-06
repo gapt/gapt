@@ -2,9 +2,9 @@ package at.logic.integration_tests
 
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.lk._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk._
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.symbols._

@@ -6,7 +6,7 @@ import at.logic.language.lambda.symbols._
 import at.logic.utils.latex._
 import java.io._
 import org.apache.commons.lang3.StringEscapeUtils
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.lambda.types.{ Ti, To }
 
 object VeriTExporter {

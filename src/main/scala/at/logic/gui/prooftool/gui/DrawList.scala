@@ -9,7 +9,7 @@ package at.logic.gui.prooftool.gui
 
 import java.awt.{ Font, Color }
 import Font._
-import at.logic.calculi.lk.base.{ Sequent, FSequent }
+import at.logic.proofs.lk.base.{ Sequent, FSequent }
 import at.logic.language.hol.HOLExpression
 import swing.{ FlowPanel, GridPanel, Label }
 

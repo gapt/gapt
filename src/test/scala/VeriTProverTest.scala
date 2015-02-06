@@ -4,7 +4,7 @@
 
 package at.logic.provers.veriT
 
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.fol._
 
 import org.specs2.mutable._

@@ -2,12 +2,12 @@ package at.logic.transformations.ceres.clauseSchema
 
 import at.logic.algorithms.lk.getAncestors
 import at.logic.algorithms.shlk._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.{ UnaryLKProof, BinaryLKProof }
-import at.logic.calculi.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
-import at.logic.calculi.slk.AndEquivalenceRule1._
-import at.logic.calculi.slk._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk.{ UnaryLKProof, BinaryLKProof }
+import at.logic.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
+import at.logic.proofs.slk.AndEquivalenceRule1._
+import at.logic.proofs.slk._
 import at.logic.language.lambda.types._
 import at.logic.language.schema.{ Substitution => SchemaSubstitution, _ }
 import at.logic.language.schema.BetaReduction._

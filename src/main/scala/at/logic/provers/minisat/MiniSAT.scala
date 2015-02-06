@@ -7,13 +7,13 @@ package at.logic.provers.minisat
 
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol._
-import at.logic.calculi.resolution._
+import at.logic.proofs.resolution._
 import at.logic.algorithms.resolution.{ CNFp, TseitinCNF }
 
 import java.io._
 import java.lang.StringBuilder
 
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 import at.logic.provers.Prover
 
@@ -172,7 +172,7 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
 }
 
 class MiniSATProver extends Prover with at.logic.utils.logging.Logger with at.logic.utils.traits.ExternalProgram {
-  def getLKProof( seq: FSequent ): Option[at.logic.calculi.lk.base.LKProof] =
+  def getLKProof( seq: FSequent ): Option[at.logic.proofs.lk.base.LKProof] =
     throw new Exception( "MiniSAT does not produce proofs!" )
 
   override def isValid( f: HOLFormula ): Boolean = {

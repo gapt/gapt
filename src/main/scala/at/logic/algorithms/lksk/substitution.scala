@@ -1,9 +1,9 @@
 package at.logic.algorithms.lksk
 
-import at.logic.calculi.lksk._
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.{ UnaryLKProof, BinaryLKProof }
+import at.logic.proofs.lksk._
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk.{ UnaryLKProof, BinaryLKProof }
 import at.logic.language.hol._
 import at.logic.algorithms.lk.{ applySubstitution => LKapplySubstitution, ProofTransformationUtils }
 import BetaReduction.{ betaNormalize => normalize }

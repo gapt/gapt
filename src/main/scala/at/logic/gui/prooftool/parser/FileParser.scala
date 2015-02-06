@@ -15,8 +15,8 @@ import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.language.xml.ProofDatabase
 import at.logic.parsing.calculi.xml.SimpleXMLProofParser
 import at.logic.parsing.ParsingException
-import at.logic.calculi.proofs.TreeProof
-import at.logic.calculi.lk.base.{ LKProof, FSequent }
+import at.logic.proofs.proofs.TreeProof
+import at.logic.proofs.lk.base.{ LKProof, FSequent }
 import at.logic.parsing.shlk_parsing.sFOParser
 import at.logic.utils.ds.trees.{ LeafTree, BinaryTree, Tree }
 import at.logic.language.hol.HOLExpression
@@ -25,8 +25,8 @@ import at.logic.parsing.ivy.IvyParser
 import at.logic.parsing.ivy.conversion.IvyToRobinson
 import at.logic.language.schema.dbTRS
 import at.logic.transformations.ceres.clauseSchema._
-import at.logic.calculi.slk.SchemaProofDB
-import at.logic.calculi.proofs.Proof
+import at.logic.proofs.slk.SchemaProofDB
+import at.logic.proofs.proofs.Proof
 import at.logic.algorithms.shlk.SCHOLParser
 import at.logic.algorithms.hlk.HybridLatexParser
 

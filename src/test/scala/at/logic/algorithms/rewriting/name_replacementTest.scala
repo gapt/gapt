@@ -6,8 +6,8 @@ import org.specs2.runner.JUnitRunner
 import at.logic.language.fol._
 import at.logic.language.hol.{HOLConst, HOLVar, Atom => HOLAtom, Function => HOLFunction, And => HOLAnd, Or => HOLOr, Neg => HOLNeg}
 import at.logic.language.lambda.types._
-import at.logic.calculi.resolution.robinson._
-import at.logic.calculi.resolution._
+import at.logic.proofs.resolution.robinson._
+import at.logic.proofs.resolution._
 import at.logic.utils.ds.acyclicGraphs.{BinaryAGraph, UnaryAGraph, LeafAGraph, AGraph}
 
 /**

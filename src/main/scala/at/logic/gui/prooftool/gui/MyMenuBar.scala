@@ -3,9 +3,9 @@ package at.logic.gui.prooftool.gui
 import java.awt.Color
 
 import at.logic.algorithms.lk.getCutsAsProofs
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.LKProof
-import at.logic.calculi.proofs.TreeProof
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.LKProof
+import at.logic.proofs.proofs.TreeProof
 import at.logic.gui.prooftool.parser._
 import at.logic.language.hol._
 import at.logic.language.lambda.types.{ To, Ti }

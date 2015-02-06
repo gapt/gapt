@@ -2,10 +2,10 @@
 package at.logic.provers.atp.commands.robinson
 
 import at.logic.algorithms.unification.UnificationAlgorithm
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.resolution.robinson._
-import at.logic.calculi.resolution.Clause
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.resolution.robinson._
+import at.logic.proofs.resolution.Clause
+import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.fol.{ FOLExpression, Equation, FOLFormula, Substitution }
 import at.logic.language.hol.replacements._
 import at.logic.provers.atp.ProverException

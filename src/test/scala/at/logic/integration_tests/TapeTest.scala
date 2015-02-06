@@ -1,14 +1,14 @@
 package at.logic.integration_tests
 
 import at.logic.language.hol._
-import at.logic.calculi.resolution.{Clause, ResolutionProof}
-import at.logic.calculi.lk._
+import at.logic.proofs.resolution.{Clause, ResolutionProof}
+import at.logic.proofs.lk._
 
 
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.algorithms.lk._
 
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk.base._
 import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.parsing.language.xml.XMLParser._

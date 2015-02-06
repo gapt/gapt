@@ -30,9 +30,9 @@
 package at.logic.algorithms.cutIntroduction
 
 import at.logic.algorithms.expansionTrees._
-import at.logic.calculi.expansionTrees._
-import at.logic.calculi.expansionTrees.{ MWeakQuantifier, MStrongQuantifier }
-import at.logic.calculi.lk.base._
+import at.logic.proofs.expansionTrees._
+import at.logic.proofs.expansionTrees.{ MWeakQuantifier, MStrongQuantifier }
+import at.logic.proofs.lk.base._
 import at.logic.language.fol._
 import at.logic.transformations.herbrandExtraction._
 import scala.collection.immutable.HashMap

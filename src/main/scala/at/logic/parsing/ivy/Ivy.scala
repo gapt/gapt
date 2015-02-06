@@ -4,10 +4,10 @@ package at.logic.parsing.ivy
 import at.logic.parsing.lisp.{ List => LispList, Atom => LispAtom, Cons => LispCons, SExpression, SExpressionParser }
 import at.logic.language.hol.HOLFormula
 import at.logic.language.fol._
-import at.logic.calculi.resolution.Clause
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.occurrences
+import at.logic.proofs.resolution.Clause
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.occurrences
 import at.logic.language.lambda.types.Ti
 import at.logic.utils.logging.Logger
 

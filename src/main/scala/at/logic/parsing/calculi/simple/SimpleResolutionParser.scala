@@ -9,7 +9,7 @@ import at.logic.language.hol.{ Neg, HOLFormula }
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 /*
  * In order to allow a complex inheritence structure where the resolutionParser trait is mixed

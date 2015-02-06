@@ -1,9 +1,9 @@
 package at.logic.algorithms.lksk
 
-import at.logic.calculi.lk.base.{ NullaryLKProof, LKProof }
-import at.logic.calculi.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
-import at.logic.calculi.proofs.RuleTypeA
-import at.logic.calculi.lksk.UnaryLKskProof
+import at.logic.proofs.lk.base.{ NullaryLKProof, LKProof }
+import at.logic.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
+import at.logic.proofs.proofs.RuleTypeA
+import at.logic.proofs.lksk.UnaryLKskProof
 
 /**
  * Created by marty on 8/25/14.

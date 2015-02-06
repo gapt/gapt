@@ -1,10 +1,10 @@
 package at.logic.algorithms.shlk
 
-import at.logic.calculi.slk._
+import at.logic.proofs.slk._
 import at.logic.language.schema._
-import at.logic.calculi.occurrences._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.occurrences._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import scala.Predef._
 import at.logic.language.schema.{ lessThan, sims, leq }
 import at.logic.language.lambda.types.{ ->, Ti, Tindex, FunctionType }

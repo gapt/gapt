@@ -5,10 +5,10 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 
 import at.logic.language.fol._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk._
-import at.logic.calculi.resolution.robinson._
-import at.logic.calculi.resolution.FClause
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk._
+import at.logic.proofs.resolution.robinson._
+import at.logic.proofs.resolution.FClause
 import at.logic.algorithms.lk.applySubstitution
 import collection.immutable.Map.{Map1, Map2}
 

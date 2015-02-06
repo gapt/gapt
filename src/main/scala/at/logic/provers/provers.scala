@@ -1,7 +1,7 @@
 package at.logic.provers
 
 import at.logic.language.hol.HOLFormula
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk.base._
 
 /**
  * A prover that is able to refute HOL sequents/formulas (or subsets

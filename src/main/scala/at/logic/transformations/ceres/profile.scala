@@ -2,10 +2,10 @@
 package at.logic.transformations.ceres.clauseSets.profile
 
 import at.logic.algorithms.lk.getCutAncestors
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk._
-import at.logic.calculi.lksk.{ LabelledSequent, LabelledFormulaOccurrence, UnaryLKskProof }
-import at.logic.calculi.occurrences._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk._
+import at.logic.proofs.lksk.{ LabelledSequent, LabelledFormulaOccurrence, UnaryLKskProof }
+import at.logic.proofs.occurrences._
 import at.logic.language.hol._
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet._
 import at.logic.transformations.ceres.struct._

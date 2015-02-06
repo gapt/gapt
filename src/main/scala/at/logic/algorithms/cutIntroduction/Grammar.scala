@@ -11,7 +11,7 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
-import at.logic.calculi.occurrences._
+import at.logic.proofs.occurrences._
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.dssupport.MapSupport._
 import at.logic.utils.executionModels.searchAlgorithms.SetNode

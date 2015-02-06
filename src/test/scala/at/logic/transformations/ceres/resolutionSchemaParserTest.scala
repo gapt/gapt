@@ -1,6 +1,6 @@
 package at.logic.transformations.ceres.clauseSchema
 
-import at.logic.calculi.slk.SchemaProofDB
+import at.logic.proofs.slk.SchemaProofDB
 import at.logic.language.schema._
 import at.logic.language.lambda.types._
 import java.io.File.separator

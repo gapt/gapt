@@ -6,9 +6,9 @@ import org.specs2.runner.JUnitRunner
 
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
-import at.logic.calculi.lk.base.{BinaryLKProof, LKProof, Sequent}
-import at.logic.calculi.lk.{Axiom, CutRule}
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base.{BinaryLKProof, LKProof, Sequent}
+import at.logic.proofs.lk.{Axiom, CutRule}
+import at.logic.proofs.occurrences.FormulaOccurrence
 
 @RunWith(classOf[JUnitRunner])
 class CutFormulaExtractionTest extends SpecificationWithJUnit {

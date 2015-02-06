@@ -6,7 +6,7 @@
 
 package at.logic.provers.vampire
 
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 
 import java.io._

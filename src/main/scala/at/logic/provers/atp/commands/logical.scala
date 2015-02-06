@@ -1,8 +1,8 @@
 
 package at.logic.provers.atp.commands.logical
 
-import at.logic.calculi.lk.base.Sequent
-import at.logic.calculi.resolution.ResolutionProof
+import at.logic.proofs.lk.base.Sequent
+import at.logic.proofs.resolution.ResolutionProof
 import at.logic.provers.atp.commands.base.{ Command, ResultCommand, InitialCommand, DataCommand }
 import at.logic.provers.atp.Definitions._
 

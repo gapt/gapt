@@ -1,11 +1,11 @@
 package at.logic.algorithms.lk
 
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk._
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk._
+import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.hol._
 import at.logic.language.schema.{ And => AndS, Or => OrS, SchemaFormula }
-import at.logic.calculi.slk._
+import at.logic.proofs.slk._
 import scala.util.control.TailCalls._
 
 /**

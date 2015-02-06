@@ -1,13 +1,13 @@
 package at.logic.parsing.ivy
 
-import at.logic.calculi.proofs.{ BinaryRuleTypeA, UnaryRuleTypeA, NullaryRuleTypeA }
-import at.logic.calculi.proofs.{ NullaryAGraphProof, UnaryAGraphProof, BinaryAGraphProof, AGraphProof }
+import at.logic.proofs.proofs.{ BinaryRuleTypeA, UnaryRuleTypeA, NullaryRuleTypeA }
+import at.logic.proofs.proofs.{ NullaryAGraphProof, UnaryAGraphProof, BinaryAGraphProof, AGraphProof }
 import at.logic.utils.ds.acyclicGraphs.{ LeafAGraph, UnaryAGraph, BinaryAGraph }
 import at.logic.parsing.lisp.SExpression
 import at.logic.language.fol.Substitution
 import at.logic.language.fol.{ FOLConst, FOLTerm }
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.Clause
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.resolution.Clause
 
 /**
  * ** Implementation of Ivy's Resolution Calculus ***

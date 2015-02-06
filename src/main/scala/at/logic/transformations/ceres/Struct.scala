@@ -7,11 +7,11 @@ package at.logic.transformations.ceres.struct
 
 import at.logic.algorithms.lk.{ getAncestors, getCutAncestors }
 import at.logic.algorithms.shlk._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lksk.{ LabelledSequent, UnaryLKskProof, LabelledFormulaOccurrence }
-import at.logic.calculi.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
-import at.logic.calculi.slk._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lksk.{ LabelledSequent, UnaryLKskProof, LabelledFormulaOccurrence }
+import at.logic.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
+import at.logic.proofs.slk._
 import at.logic.language.hol.{ Substitution => HOLSubstitution, _ }
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._

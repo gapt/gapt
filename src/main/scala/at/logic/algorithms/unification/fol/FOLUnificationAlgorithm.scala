@@ -7,7 +7,7 @@ package at.logic.algorithms.unification.fol
 
 import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.fol._
-import at.logic.calculi.lk.base.{ Sequent, FSequent }
+import at.logic.proofs.lk.base.{ Sequent, FSequent }
 
 object FOLUnificationAlgorithm extends UnificationAlgorithm {
 

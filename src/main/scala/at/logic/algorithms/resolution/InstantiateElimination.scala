@@ -1,10 +1,10 @@
 package at.logic.algorithms.resolution
 
 import at.logic.algorithms.rewriting.NameReplacement
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.robinson.{ InitialClause, Factor, Resolution, Variant, Paramodulation, Instance, RobinsonResolutionProof }
-import at.logic.calculi.resolution.Clause
-import at.logic.calculi.lk.base.Sequent
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.resolution.robinson.{ InitialClause, Factor, Resolution, Variant, Paramodulation, Instance, RobinsonResolutionProof }
+import at.logic.proofs.resolution.Clause
+import at.logic.proofs.lk.base.Sequent
 import at.logic.language.lambda.types.Ti
 import at.logic.language.fol._
 

@@ -1,14 +1,14 @@
 package at.logic.transformations.ceres
 
-import at.logic.calculi.resolution.FClause
+import at.logic.proofs.resolution.FClause
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol._
 
-import at.logic.calculi.lk.base.LKProof
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.lk._
-import at.logic.calculi.resolution.robinson.RobinsonResolutionProof
+import at.logic.proofs.lk.base.LKProof
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.lk._
+import at.logic.proofs.resolution.robinson.RobinsonResolutionProof
 
 import at.logic.algorithms.resolution.RobinsonToLK
 import at.logic.algorithms.lk.applySubstitution

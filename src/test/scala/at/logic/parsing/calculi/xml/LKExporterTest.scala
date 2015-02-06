@@ -11,8 +11,8 @@ import org.specs2.runner.JUnitRunner
 import scala.xml.Utility.trim
 
 import at.logic.language.hol._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import at.logic.parsing.calculus.xml._
 import at.logic.parsing.language.xml.HOLTermExporter
 import at.logic.language.lambda.symbols.StringSymbol

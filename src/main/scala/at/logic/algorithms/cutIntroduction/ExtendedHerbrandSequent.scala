@@ -8,12 +8,12 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.calculi.occurrences._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.occurrences._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import at.logic.language.fol._
 import at.logic.algorithms.resolution._
-import at.logic.calculi.resolution.FClause
+import at.logic.proofs.resolution.FClause
 import scala.collection.immutable.Stack
 import at.logic.algorithms.cutIntroduction.MinimizeSolution.MyFClause
 import at.logic.utils.dssupport.ListSupport.mapAccumL

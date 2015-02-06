@@ -7,9 +7,9 @@ package at.logic.transformations.ceres.clauseSets
 
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.transformations.ceres.struct._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lksk._
-import at.logic.calculi.occurrences._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lksk._
+import at.logic.proofs.occurrences._
 import at.logic.language.schema.IndexedPredicate
 import at.logic.language.lambda.types.{ To, Tindex }
 import at.logic.language.hol.{ HOLExpression, HOLApp, HOLConst, HOLFormula }

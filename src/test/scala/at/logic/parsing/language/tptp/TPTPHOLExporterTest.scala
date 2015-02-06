@@ -6,7 +6,7 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.execute.Success
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 class TPTPHOLExporterTest extends SpecificationWithJUnit {
   "Export to TPTP thf" should {

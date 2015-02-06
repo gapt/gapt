@@ -6,7 +6,7 @@
 package at.logic.parsing.shlk_parsing
 
 import at.logic.language.schema._
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
 import at.logic.language.lambda.types.To
 
 import org.specs2.mutable._

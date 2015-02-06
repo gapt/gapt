@@ -5,8 +5,8 @@
 
 package at.logic.parsing.calculi.xml
 
-import at.logic.calculi.proofs.{ NullaryRuleTypeA, UnaryRuleTypeA, BinaryRuleTypeA }
-import at.logic.calculi.proofs._
+import at.logic.proofs.proofs.{ NullaryRuleTypeA, UnaryRuleTypeA, BinaryRuleTypeA }
+import at.logic.proofs.proofs._
 import at.logic.utils.ds.trees.{ LeafTree, UnaryTree, BinaryTree }
 import at.logic.parsing.language.xml.XMLParser.XMLNodeParser
 import at.logic.parsing.ParsingException

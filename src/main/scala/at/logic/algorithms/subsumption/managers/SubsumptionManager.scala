@@ -10,7 +10,7 @@ package at.logic.algorithms.subsumption.managers
 
 import at.logic.utils.patterns.listeners._
 import at.logic.algorithms.subsumption._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 // this is used in order to make the manager listen for changes on data structures using the manager, so it will be updated accordingly
 case class SubsumptionDSEvent( ar: SAddRemove, elem: FSequent )

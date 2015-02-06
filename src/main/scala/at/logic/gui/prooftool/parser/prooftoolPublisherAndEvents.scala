@@ -9,9 +9,9 @@ package at.logic.gui.prooftool.parser
 
 import scala.swing.{ Color, Publisher }
 import scala.swing.event.Event
-import at.logic.calculi.proofs.TreeProof
-import at.logic.calculi.lk.base.Sequent
-import at.logic.calculi.occurrences.FormulaOccurrence
+import at.logic.proofs.proofs.TreeProof
+import at.logic.proofs.lk.base.Sequent
+import at.logic.proofs.occurrences.FormulaOccurrence
 
 object ProofToolPublisher extends Publisher
 object StructPublisher extends Publisher

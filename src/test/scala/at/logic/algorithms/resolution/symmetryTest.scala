@@ -5,8 +5,8 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.types.To
 import at.logic.language.fol.{Equation => FOLEquation, And, Or, Neg, Atom, FOLConst, Imp}
-import at.logic.calculi.resolution.FClause
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.resolution.FClause
+import at.logic.proofs.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
 class SymmetryTest extends SpecificationWithJUnit {

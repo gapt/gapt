@@ -8,9 +8,9 @@ import org.specs2.mutable._
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
-import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk._
+import at.logic.proofs.occurrences._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk._
 
 @RunWith(classOf[JUnitRunner])
 class interpolationTest extends SpecificationWithJUnit {

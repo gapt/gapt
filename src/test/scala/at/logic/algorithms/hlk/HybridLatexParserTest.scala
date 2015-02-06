@@ -10,7 +10,7 @@ import at.logic.parsing.language.hlk.ast.LambdaAST
 import java.io.File.separator
 import at.logic.language.lambda.types.{To, Ti, TA}
 import at.logic.language.hol._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.lambda.types.Ti
 import at.logic.language.lambda.types.To
 import at.logic.language.lambda.App
@@ -98,7 +98,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCop
     }
 
     "correctly infer replacement terms in equalities" in {
-      import at.logic.calculi.lk.EquationVerifier.{Equal, Different, EqualModuloEquality, checkReplacement}
+      import at.logic.proofs.lk.EquationVerifier.{Equal, Different, EqualModuloEquality, checkReplacement}
       val List(a) = List("a") map (x => HOLConst(x, Ti))
       val List(f,g) = List("f","g") map (x => HOLConst(x, Ti -> Ti))
       val List(p) = List("p") map (x => HOLConst(x, Ti -> (Ti -> (Ti -> To)) ))

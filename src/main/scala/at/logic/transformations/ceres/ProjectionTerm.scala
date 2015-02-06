@@ -3,10 +3,10 @@ package at.logic.transformations.ceres
 
 import at.logic.algorithms.lk.{ getAncestors, getCutAncestors }
 import at.logic.algorithms.shlk._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.{ FSequent, LKProof, Sequent }
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.slk._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.{ FSequent, LKProof, Sequent }
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.slk._
 import at.logic.language.fol.Utils.{ removeDoubles, removeDoubles3 }
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols.LogicalSymbolA

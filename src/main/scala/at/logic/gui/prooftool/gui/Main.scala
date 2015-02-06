@@ -16,8 +16,8 @@ import javax.swing.filechooser.FileFilter
 import javax.swing.SwingUtilities
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lksk.eliminateDefinitions
-import at.logic.calculi.lk.base._
-import at.logic.calculi.proofs.TreeProof
+import at.logic.proofs.lk.base._
+import at.logic.proofs.proofs.TreeProof
 import at.logic.gui.prooftool.parser._
 import at.logic.language.hol._
 import at.logic.language.schema.IntVar
@@ -37,8 +37,8 @@ import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
 import at.logic.transformations.ceres.ACNF.ACNF
-import at.logic.calculi.slk.SchemaProofDB
-import at.logic.calculi.proofs.Proof
+import at.logic.proofs.slk.SchemaProofDB
+import at.logic.proofs.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color

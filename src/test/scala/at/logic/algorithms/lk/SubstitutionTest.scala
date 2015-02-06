@@ -2,8 +2,8 @@
 package at.logic.algorithms.lk
 
 import at.logic.language.hol._
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.lk._
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.lk._
 import at.logic.language.lambda.types._
 
 import org.junit.runner.RunWith

@@ -11,7 +11,7 @@
 
 package at.logic.parsing.language.xml
 
-import at.logic.calculi.lk.base._
+import at.logic.proofs.lk.base._
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import scala.xml._
@@ -19,9 +19,9 @@ import scala.xml.Utility.trim
 import at.logic.parsing.ParsingException
 import at.logic.parsing.readers.XMLReaders.NodeReader
 import at.logic.language.lambda.types._
-import at.logic.calculi.lk._
-import at.logic.calculi.occurrences._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk._
+import at.logic.proofs.occurrences._
+import at.logic.proofs.lk.base.FSequent
 
 import scala.Predef._
 

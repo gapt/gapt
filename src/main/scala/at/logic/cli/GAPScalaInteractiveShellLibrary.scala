@@ -23,14 +23,14 @@ import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import at.logic.calculi.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
-import at.logic.calculi.expansionTrees.{ ExpansionSequent, ExpansionTree }
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
-import at.logic.calculi.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.calculi.resolution._
-import at.logic.calculi.resolution.robinson._
+import at.logic.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
+import at.logic.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
+import at.logic.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
+import at.logic.proofs.resolution._
+import at.logic.proofs.resolution.robinson._
 import at.logic.gui.prooftool.gui.Main
 import at.logic.language.fol.{ AllVar => FOLAllVar, And => FOLAnd, Atom => FOLAtom, ExVar => FOLExVar, Imp => FOLImp, Neg => FOLNeg, Or => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _ }
 import at.logic.language.hoare.Program

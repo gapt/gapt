@@ -8,9 +8,9 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.expansionTrees.{ ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
+import at.logic.proofs.expansionTrees.{ ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import at.logic.language.fol._
 import at.logic.language.hol.HOLFormula
 import at.logic.provers.basicProver._

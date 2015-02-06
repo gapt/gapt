@@ -1,9 +1,9 @@
 package at.logic.transformations.ceres.clauseSchema
 
 import at.logic.algorithms.shlk._
-import at.logic.calculi.lk.base.{LKProof, FSequent}
-import at.logic.calculi.lk._
-import at.logic.calculi.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
+import at.logic.proofs.lk.base.{LKProof, FSequent}
+import at.logic.proofs.lk._
+import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.schema._
 import at.logic.language.lambda.types._
 import java.io.File.separator

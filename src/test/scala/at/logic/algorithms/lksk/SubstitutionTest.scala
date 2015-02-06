@@ -6,9 +6,9 @@ import org.specs2.runner.JUnitRunner
 
 import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
-import at.logic.calculi.lk.base.{Sequent, FSequent}
-import at.logic.calculi.lksk._
-import at.logic.calculi.lksk.TypeSynonyms._
+import at.logic.proofs.lk.base.{Sequent, FSequent}
+import at.logic.proofs.lksk._
+import at.logic.proofs.lksk.TypeSynonyms._
 import at.logic.language.lambda.types._
 
 @RunWith(classOf[JUnitRunner])

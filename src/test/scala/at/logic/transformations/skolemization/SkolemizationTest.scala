@@ -7,10 +7,10 @@
 
 package at.logic.transformations.skolemization
 
-import at.logic.calculi.lk.base.{beSyntacticMultisetEqual, LKProof, Sequent}
+import at.logic.proofs.lk.base.{beSyntacticMultisetEqual, LKProof, Sequent}
 
 import at.logic.language.hol._
-import at.logic.calculi.lk._
+import at.logic.proofs.lk._
 import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import skolemize._
 import org.junit.runner.RunWith

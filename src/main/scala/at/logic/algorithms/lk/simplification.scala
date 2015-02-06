@@ -3,7 +3,7 @@ package at.logic.algorithms.lk
 
 import at.logic.algorithms.subsumption._
 import at.logic.algorithms.matching._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.hol._
 
 object deleteTautologies {

@@ -10,10 +10,10 @@ import at.logic.algorithms.lk.applyReplacement
 import at.logic.algorithms.resolution.InstantiateElimination
 import at.logic.algorithms.resolution.{ RobinsonToLK, fixSymmetry, CNFn }
 import at.logic.algorithms.rewriting.NameReplacement
-import at.logic.calculi.lk.base._
-import at.logic.calculi.lk.{ CutRule, Axiom }
-import at.logic.calculi.resolution.Clause
-import at.logic.calculi.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk.{ CutRule, Axiom }
+import at.logic.proofs.resolution.Clause
+import at.logic.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.language.fol._
 import at.logic.parsing.ivy.IvyParser
 import at.logic.parsing.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }

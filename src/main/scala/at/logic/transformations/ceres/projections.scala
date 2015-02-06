@@ -5,16 +5,16 @@
 
 package at.logic.transformations.ceres.projections
 
-import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.occurrences._
 import at.logic.language.hol._
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base.{ LKProof, Sequent, PrincipalFormulas }
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.{ LKProof, Sequent, PrincipalFormulas }
 import scala.collection.immutable.HashSet
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.{ rename, freeVariables }
-import at.logic.calculi.lksk.{
+import at.logic.proofs.lksk.{
   ExistsSkLeftRule,
   ForallSkRightRule,
   ExistsSkRightRule,
@@ -24,7 +24,7 @@ import at.logic.calculi.lksk.{
   Axiom => AxiomSk,
   LabelledFormulaOccurrence
 }
-import at.logic.calculi.lksk.TypeSynonyms._
+import at.logic.proofs.lksk.TypeSynonyms._
 
 case class ProjectionException( message: String, original_proof: LKProof, new_proofs: List[LKProof], nested: Exception )
   extends Exception( message, nested ) {}

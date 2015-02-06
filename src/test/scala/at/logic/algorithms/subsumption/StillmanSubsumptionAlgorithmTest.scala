@@ -8,7 +8,7 @@ package at.logic.algorithms.subsumption
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
 class StillmanSubsumptionAlgorithmFOLTest extends SpecificationWithJUnit {

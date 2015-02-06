@@ -3,7 +3,7 @@ package at.logic.algorithms.fol
 import at.logic.language.fol.{ FOLVar, FOLFormula, FOLExpression, Substitution => FOLSubstitution }
 import at.logic.language.hol.{ Substitution => HOLSubstitution, _ }
 import at.logic.language.lambda._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 /**
  * Converts objects from the FOL layer to the HOL layer.

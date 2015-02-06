@@ -5,7 +5,7 @@
 
 package at.logic.algorithms.subsumption
 
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 trait SubsumptionAlgorithm {
   /**

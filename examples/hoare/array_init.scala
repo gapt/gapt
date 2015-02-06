@@ -1,4 +1,4 @@
-import at.logic.calculi.expansionTrees.MWeakQuantifier
+import at.logic.proofs.expansionTrees.MWeakQuantifier
 import at.logic.cli.GAPScalaInteractiveShellLibrary._
 import at.logic.language.hol.Neg
 import at.logic.language.hoare.{ForLoop, SimpleLoopProblem}

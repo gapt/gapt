@@ -22,7 +22,7 @@ import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk.{AtomicExpansion, regularize,subsumedClausesRemovalHOL}
 import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
-import at.logic.calculi.lksk.sequentToLabelledSequent
+import at.logic.proofs.lksk.sequentToLabelledSequent
 
 
 import at.logic.provers.prover9._

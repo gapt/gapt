@@ -3,8 +3,8 @@ package at.logic.provers.atp.commands.refinements.base
 
 import at.logic.provers.atp.commands.base.{ InitialCommand, DataCommand, ResultCommand }
 import at.logic.provers.atp.commands.logical.DeterministicMacroCommand
-import at.logic.calculi.lk.base.Sequent
-import at.logic.calculi.resolution.ResolutionProof
+import at.logic.proofs.lk.base.Sequent
+import at.logic.proofs.resolution.ResolutionProof
 import at.logic.utils.ds.{ PublishingBuffer, PublishingBufferEvent, Remove, Add }
 import at.logic.provers.atp.Definitions._
 

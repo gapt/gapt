@@ -3,13 +3,13 @@ package at.logic.provers.atp
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.provers.atp.commands.robinson.ParamodulationCommand
 import org.specs2.mutable._
-import at.logic.calculi.resolution.robinson._
+import at.logic.proofs.resolution.robinson._
 import at.logic.language.fol.FOLFormula
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.parsing.language.prover9.Prover9TermParser.parseFormula
-import at.logic.calculi.resolution.{ResolutionProof, Clause}
+import at.logic.proofs.resolution.{ResolutionProof, Clause}
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.base._
 

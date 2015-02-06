@@ -2,9 +2,9 @@
 package at.logic.provers.prover9.commands
 
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.occurrences.FormulaOccurrence
-import at.logic.calculi.resolution.{ ResolutionProof, Clause }
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.language.fol._
 import at.logic.language.hol.replacements.getAtPosition
 import at.logic.parsing.language.prover9.{ Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle }

@@ -1,12 +1,12 @@
 package at.logic.algorithms.llk
 
-import at.logic.calculi.lk.base.{ FSequent, LKProof }
+import at.logic.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.language.lambda._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
-import at.logic.calculi.lk._
-import at.logic.calculi.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule }
+import at.logic.proofs.lk._
+import at.logic.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule }
 import at.logic.algorithms.hlk.ExtendedProofDatabase
 import at.logic.language.hol.logicSymbols.{ EqSymbol, LogicalSymbolA }
 import at.logic.algorithms.hlk.ExtendedProofDatabase

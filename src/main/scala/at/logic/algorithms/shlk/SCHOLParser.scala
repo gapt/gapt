@@ -6,9 +6,9 @@ package at.logic.algorithms.shlk
 
 //import at.logic.calculi.lk.macroRules._
 import at.logic.algorithms.lk._
-import at.logic.calculi.slk._
-import at.logic.calculi.lk.base.{ Sequent, LKProof }
-import at.logic.calculi.lk._
+import at.logic.proofs.slk._
+import at.logic.proofs.lk.base.{ Sequent, LKProof }
+import at.logic.proofs.lk._
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 //import at.logic.language.hol._

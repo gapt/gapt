@@ -17,7 +17,7 @@ import swing._
 import scala.swing.event.{ MouseExited, MouseEntered, MouseClicked }
 import java.awt.{ Font, Color }
 import java.awt.event.MouseEvent
-import at.logic.calculi.expansionTrees.{ MAnd, MAtom, MOr, MImp, MNeg, MWeakQuantifier, MSkolemQuantifier, MStrongQuantifier, MultiExpansionTree }
+import at.logic.proofs.expansionTrees.{ MAnd, MAtom, MOr, MImp, MNeg, MWeakQuantifier, MSkolemQuantifier, MStrongQuantifier, MultiExpansionTree }
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
 import at.logic.language.hol._

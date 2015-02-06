@@ -4,7 +4,7 @@ import scala.collection.immutable.HashMap
 import org.slf4j.LoggerFactory
 
 import at.logic.utils.executionModels.timeout._
-import at.logic.calculi.expansionTrees.{ExpansionTree,ExpansionSequent,removeFromExpansionSequent}
+import at.logic.proofs.expansionTrees.{ExpansionTree,ExpansionSequent,removeFromExpansionSequent}
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.lk._
 import at.logic.provers.eqProver._

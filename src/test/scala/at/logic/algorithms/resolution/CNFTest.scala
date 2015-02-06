@@ -6,7 +6,7 @@ import org.specs2.runner.JUnitRunner
 import at.logic.language.hol.{Atom => HOLAtom, HOLConst}
 import at.logic.language.lambda.types.To
 import at.logic.language.fol.{And, Or, Neg, Atom, FOLConst, Imp}
-import at.logic.calculi.resolution.FClause
+import at.logic.proofs.resolution.FClause
 
 @RunWith(classOf[JUnitRunner])
 class CNFTest extends SpecificationWithJUnit {

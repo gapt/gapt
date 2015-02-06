@@ -5,10 +5,10 @@ import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.resolution._
-import at.logic.calculi.expansionTrees.{ ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
-import at.logic.calculi.lk._
-import at.logic.calculi.lk.base._
-import at.logic.calculi.occurrences._
+import at.logic.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.occurrences._
 import at.logic.language.fol.Utils._
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._

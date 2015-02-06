@@ -3,7 +3,7 @@ package at.logic.parsing.language.prover9
 import util.parsing.combinator.JavaTokenParsers
 import at.logic.language.fol
 import fol._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 import at.logic.language.hol.HOLFormula
 import scala.util.parsing.combinator.PackratParsers
 import scala.collection.immutable.HashSet

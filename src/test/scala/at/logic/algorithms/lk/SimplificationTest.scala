@@ -9,7 +9,7 @@ import at.logic.language.fol.{FOLFormula, FOLExpression}
 import at.logic.language.hol._
 import at.logic.language.fol.{Function => FOLFunction, Atom => FOLAtom, FOLVar, FOLConst}
 import at.logic.language.lambda.types._
-import at.logic.calculi.lk.base.FSequent
+import at.logic.proofs.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
 class SimplificationTest extends SpecificationWithJUnit {

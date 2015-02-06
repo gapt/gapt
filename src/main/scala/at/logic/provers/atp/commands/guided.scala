@@ -5,10 +5,10 @@ package at.logic.provers.atp.commands.guided
  * this file contains command for a guided search using ids for clauses,as for example when parsing the output of theorem provers and using the rules from there
  */
 
-import at.logic.calculi.resolution.{ ResolutionProof, Clause }
-import at.logic.calculi.resolution.robinson.{ InitialClause }
-import at.logic.calculi.lk.base.FSequent
-import at.logic.calculi.occurrences._
+import at.logic.proofs.resolution.{ ResolutionProof, Clause }
+import at.logic.proofs.resolution.robinson.{ InitialClause }
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.occurrences._
 import at.logic.language.fol.FOLFormula
 import at.logic.provers.atp.Definitions._
 import at.logic.provers.atp.commands.base.DataCommand
