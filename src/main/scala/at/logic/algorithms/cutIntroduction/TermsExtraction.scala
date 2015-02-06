@@ -29,8 +29,8 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.algorithms.expansionTrees._
 import at.logic.proofs.expansionTrees._
+import at.logic.proofs.expansionTrees.algorithms.compressQuantifiers
 import at.logic.proofs.expansionTrees.{ MWeakQuantifier, MStrongQuantifier }
 import at.logic.proofs.lk.base._
 import at.logic.language.fol._
