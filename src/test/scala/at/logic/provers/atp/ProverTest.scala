@@ -154,15 +154,30 @@ class ProverTest extends SpecificationWithJUnit {
         val fun1 = Function("f", var1::Nil)
         val lit1 = Atom("P",var1::Nil)
         val lit2 = Atom("P",fun1::Nil)
-        getRefutationd("-P(x) | -P(y) | P(f(x)). P(x).",FSequent(List(lit1),List(lit2))) must beTrue
+        val init = new MyParser("-P(x) | -P(y) | P(f(x)). P(x).").getClauseList
+        val target = FSequent(List(lit1),List(lit2))
+        SearchDerivation(init, target) must beLike {
+          case Some(_) => ok
+          case _ => ko
+        }
       }
       "P(f(a)) from -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a)." in {
         val pfa = parse("P(f(a))")
-        getRefutationd(" -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a).",FSequent(List(),List(pfa))) must beTrue
+        val init = new MyParser(" -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a).").getClauseList
+        val target = FSequent(List(),List(pfa))
+        SearchDerivation(init, target) must beLike {
+          case Some(_) => ok
+          case _ => ko
+        }
       }
       "-P(f(a)) from -=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x)." in {
         val pfa = parse("P(f(a))")
-        getRefutationd("-=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x).",FSequent(List(pfa),List())) must beTrue
+        val init = new MyParser("-=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x).").getClauseList
+        val target = FSequent(List(pfa),List())
+        SearchDerivation(init, target) must beLike {
+          case Some(_) => ok
+          case _ => ko
+        }
       }
     }
     /*"When there is a refutation the proof should be correct (clauses from the set as initials and using only the rules in a correct way" in {

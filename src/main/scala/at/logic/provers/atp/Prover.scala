@@ -62,6 +62,30 @@ object Main {
 
 }
 
+/**
+ * This object instantiates ATP to search for a Robinson resolution derivation
+ *   of a given clause from a given set of clauses.
+ *
+ *   TODO: At the moment, the ATP configuration is taken from a test due to Tomer.
+ *         It does not find some derivations, e.g. of P(x) from P(x) | P(y). It should
+ *         be fixed such that it returns a derivation of a clause subsuming the given
+ *         clause, if such a refutation exists.
+ */
+
+object SearchDerivation {
+  def stream1d: Stream[Command[Clause]] = Stream.cons( SimpleRefinementGetCommand[Clause],
+    Stream.cons( VariantsCommand,
+      Stream.cons( DeterministicAndCommand[Clause]( (
+        List( ClauseFactorCommand( FOLUnificationAlgorithm ), ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ) ),
+        List( ParamodulationCommand( FOLUnificationAlgorithm ) ) ) ),
+        Stream.cons( InsertResolventCommand[Clause],
+          Stream.cons( RefutationReachedCommand[Clause], stream1d ) ) ) ) )
+  def streamd( f: FSequent ): Stream[Command[Clause]] = Stream.cons( SetTargetClause( f ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1d ) )
+  object MyProver extends Prover[Clause]
+  def apply( initial_clauses: Seq[FSequent], target: FSequent ) =
+    MyProver.refute( Stream.cons( SetClausesCommand( initial_clauses ), streamd( target ) ) ).next
+}
+
 class ProverException( msg: String ) extends Exception( msg )
 
 trait Prover[V <: Sequent] {
