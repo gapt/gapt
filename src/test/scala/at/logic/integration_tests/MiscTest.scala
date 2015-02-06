@@ -281,7 +281,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
         val clause_set = CNFn(endsequent.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]),
           c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList
 
-        val lkproof1 = RobinsonToLK( fixSymmetry( resproof, clause_set ), closure )
+        val lkproof1 = RobinsonToLK( fixDerivation( resproof, clause_set ), closure )
 
         val expseq = extractExpansionSequent( lkproof1, false )
 

@@ -9,15 +9,15 @@ import at.logic.calculi.resolution.FClause
 import at.logic.calculi.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
-class SymmetryTest extends SpecificationWithJUnit {
-  "fixSymmetry" should {
+class FixDerivationTest extends SpecificationWithJUnit {
+  "fixDerivation" should {
     "not say that p :- is derivable from p :- p, r by symmetry" in {
       val p = Atom( "p", Nil )
       val r = Atom( "r", Nil )
       val to = FClause( p::Nil, Nil )
       val from = FSequent( p::Nil, p::r::Nil )
 
-      fixSymmetry.canDeriveBySymmetry( to, from ) must beFalse
+      fixDerivation.canDeriveBySymmetry( to, from ) must beFalse
     }
 
     "say that a=b, b=c :- c=d is derivable from c=b, a=b :- d=c" in {
@@ -33,7 +33,7 @@ class SymmetryTest extends SpecificationWithJUnit {
       val from = FSequent( ab::bc::Nil, cd::Nil )
       val to = FClause( cb::ab::Nil, dc::Nil )
 
-      fixSymmetry.canDeriveBySymmetry( to, from ) must beTrue
+      fixDerivation.canDeriveBySymmetry( to, from ) must beTrue
     }
   }
 }

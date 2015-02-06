@@ -210,7 +210,7 @@ object loadProver9LKProof {
       val clause_set = CNFn( endsequent.toFormula ).map( c =>
         FSequent( c.neg.map( f => f.asInstanceOf[FOLFormula] ), c.pos.map( f => f.asInstanceOf[FOLFormula] ) ) )
 
-      val res_proof = fixSymmetry( proof, clause_set )
+      val res_proof = fixDerivation( proof, clause_set )
 
       Robinson2LK( res_proof, closure )
 

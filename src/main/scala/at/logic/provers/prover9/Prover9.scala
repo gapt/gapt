@@ -8,7 +8,7 @@ package at.logic.provers.prover9
 
 import at.logic.algorithms.lk.applyReplacement
 import at.logic.algorithms.resolution.InstantiateElimination
-import at.logic.algorithms.resolution.{ RobinsonToLK, fixSymmetry, CNFn }
+import at.logic.algorithms.resolution.{ RobinsonToLK, fixDerivation, CNFn }
 import at.logic.algorithms.rewriting.NameReplacement
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.{ CutRule, Axiom }
@@ -225,7 +225,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
             trace( "Checking cs formula " + f )
             require( f.isInstanceOf[FOLFormula], "Formula " + f + " in " + fs + " is not a FOL formula!" )
           }
-          val ret = if ( clauses != None ) fixSymmetry( tp9proof, clauses.get ) else tp9proof
+          val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
           //println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
 
           Some( ret )
@@ -255,7 +255,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
           val tp9proof = NameReplacement( p9proof._1, symbol_map )
 
           trace( "done doing name replacement" )
-          val ret = if ( clauses != None ) fixSymmetry( tp9proof, clauses.get ) else tp9proof
+          val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
           trace( "done fixing symmetry" )
           Some( ret )
         } catch {
