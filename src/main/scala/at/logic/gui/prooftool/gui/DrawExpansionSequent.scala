@@ -2,6 +2,7 @@ package at.logic.gui.prooftool.gui
 
 // The code in this file displays expansion sequents.
 
+import at.logic.proofs.expansionTrees.algorithms.compressQuantifiers
 import at.logic.utils.logging.Logger
 
 import swing._
@@ -11,7 +12,6 @@ import scala.swing.event.{ MouseExited, MouseEntered, UIElementResized, MouseCli
 import at.logic.proofs.expansionTrees._
 import java.awt.event.MouseEvent
 import at.logic.proofs.expansionTrees.MultiExpansionTree
-import at.logic.algorithms.expansionTrees.compressQuantifiers
 import org.slf4j.LoggerFactory
 
 trait DrawExpSeqLogger extends Logger {

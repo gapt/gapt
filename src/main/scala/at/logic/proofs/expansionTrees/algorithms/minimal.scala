@@ -1,11 +1,11 @@
-package at.logic.algorithms.expansionTrees
+package at.logic.proofs.expansionTrees.algorithms
 
+import at.logic.proofs.expansionTrees.{ExpansionSequent, MAnd, MAtom, MImp, MNeg, MOr, MSkolemQuantifier, MStrongQuantifier, MWeakQuantifier, MultiExpansionSequent, MultiExpansionTree}
 import at.logic.provers.Prover
-import scala.collection.mutable.{ ListBuffer, HashMap => mMap }
-import at.logic.proofs.expansionTrees.{ MultiExpansionSequent, MultiExpansionTree, MAnd, MAtom, MOr, MImp, MNeg, MWeakQuantifier, MSkolemQuantifier, MStrongQuantifier }
-import at.logic.utils.dssupport.ListSupport.{ listComplements, zipper }
-import at.logic.proofs.expansionTrees.ExpansionSequent
+import at.logic.utils.dssupport.ListSupport.{listComplements, zipper}
 import at.logic.utils.logging.Logger
+
+import scala.collection.mutable.{ListBuffer, HashMap => mMap}
 
 /**
  * Given an expansion sequent S, this algorithm computes the list of expansion sequents below S that are valid and minimal.
