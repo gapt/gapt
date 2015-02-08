@@ -46,6 +46,8 @@ import at.logic.gui.prooftool.parser.ChangeFormulaColor
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.parsing.language.tptp.TPTPFOLExporter
+import com.itextpdf.awt.PdfGraphics2D
+import com.itextpdf.awt.DefaultFontMapper
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane
@@ -245,7 +247,7 @@ object Main extends SimpleSwingApplication {
           document.open()
           val content = writer.getDirectContent
           val template = content.createTemplate( width, height )
-          val g2 = template.createGraphicsShapes( width, height )
+          val g2 = new PdfGraphics2D( template, width, height, true )
           component.paint( g2 )
           g2.dispose()
           content.addTemplate( template, 0, 10 )
