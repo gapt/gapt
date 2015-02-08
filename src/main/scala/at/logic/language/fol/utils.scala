@@ -99,54 +99,6 @@ object fromFuncArgs {
   def apply( t: FOLTerm ) = t match { case Function( _, a ) => a }
 }
 
-object replaceLeftmostBoundOccurenceOf {
-  def apply( variable: FOLVar, by: FOLVar, formula: FOLFormula ): ( Boolean, FOLFormula ) = {
-    formula match {
-      case Atom( _, _ ) => ( false, formula )
-
-      case Neg( f ) =>
-        val r = replaceLeftmostBoundOccurenceOf( variable, by, f )
-        ( r._1, Neg( r._2 ) )
-
-      case And( f1, f2 ) =>
-        val r1 = replaceLeftmostBoundOccurenceOf( variable, by, f1 )
-        if ( r1._1 == true )
-          ( true, And( r1._2, f2 ) )
-        else {
-          val r2 = replaceLeftmostBoundOccurenceOf( variable, by, f2 )
-          ( r2._1, And( f1, r2._2 ) )
-        }
-
-      case Or( f1, f2 ) =>
-        val r1 = replaceLeftmostBoundOccurenceOf( variable, by, f1 )
-        if ( r1._1 == true )
-          ( true, Or( r1._2, f2 ) )
-        else {
-          val r2 = replaceLeftmostBoundOccurenceOf( variable, by, f2 )
-          ( r2._1, Or( f1, r2._2 ) )
-        }
-
-      case ExVar( v, f ) =>
-        val r = replaceLeftmostBoundOccurenceOf( variable, by, f )
-        ( r._1, ExVar( v, r._2 ) )
-
-      case AllVar( v, f ) =>
-        if ( ( v == variable ) && ( v != variable ) ) {
-          println( "Warning: comparing two variables, which have the same syntactic representation but differ on other things (probably different binding context)" )
-        }
-
-        if ( v == variable ) {
-          ( true, AllVar( by, Substitution( variable, by ).apply( f ) ) )
-        } else {
-          val r = replaceLeftmostBoundOccurenceOf( variable, by, f )
-          ( r._1, AllVar( v, r._2 ) )
-        }
-
-      case _ => throw new Exception( "Unknown operator encountered during renaming of outermost bound variable. Formula is: " + formula )
-    }
-  }
-}
-
 // Instantiates all quantifiers of the formula with the terms in lst.
 // OBS: the number of quantifiers in the formula must greater or equal than the
 // number of terms in lst.
