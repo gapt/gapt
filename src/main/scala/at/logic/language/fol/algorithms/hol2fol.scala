@@ -1,6 +1,5 @@
-package at.logic.algorithms.fol.hol2fol
+package at.logic.language.fol.algorithms
 
-import at.logic.proofs.lk.base.FSequent
 import at.logic.language.fol.{ Substitution => FOLSubstitution, _ }
 import at.logic.language.hol
 import at.logic.language.hol.logicSymbols._
@@ -9,8 +8,7 @@ import at.logic.language.hol.{ AllVar => HOLAllVar, And => HOLAnd, Atom => HOLAt
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.language.lambda.types.{ FunctionType, TA, Ti, To }
 import at.logic.language.schema.{ IntZero, IntegerTerm, Succ, foConst, foVar, indexedFOVar }
-
-import scala.collection.mutable
+import at.logic.proofs.lk.base.FSequent
 
 object reduceHolToFol extends reduceHolToFol
 /**
@@ -347,7 +345,7 @@ object undoReplaceAbstractions extends undoReplaceAbstractions
  * Replaces the constants introduced by [[replaceAbstractions]] with the original lambda-abstractions.
  */
 class undoReplaceAbstractions {
-  import replaceAbstractions.ConstantsMap
+  import at.logic.language.fol.algorithms.replaceAbstractions.ConstantsMap
 
   def apply( fs: FSequent, map: ConstantsMap ): FSequent = FSequent(
     fs.antecedent.map( apply( _, map ) ),

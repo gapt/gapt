@@ -1,6 +1,6 @@
 package at.logic.algorithms.resolution
 
-import at.logic.algorithms.fol.{ recreateWithFactory, fol2hol }
+import at.logic.language.fol.algorithms.recreateWithFactory
 import at.logic.proofs.lk.base.{ LKUnaryRuleCreationException, FSequent }
 import at.logic.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
 import at.logic.proofs.resolution.Clause

@@ -1,6 +1,6 @@
 package at.logic.algorithms.lk
 
-import at.logic.algorithms.fol.hol2fol.convertHolToFol
+import at.logic.language.fol.algorithms.convertHolToFol
 import at.logic.proofs.lk._
 import at.logic.language.fol.FOLFormula
 import org.junit.runner.RunWith

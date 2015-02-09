@@ -1,6 +1,6 @@
-package at.logic.algorithms.fol
+package at.logic.language.fol.algorithms
 
-import at.logic.language.fol.{ FOLVar, FOLFormula, FOLExpression, Substitution => FOLSubstitution }
+import at.logic.language.fol.{ FOLExpression, FOLFormula, Substitution => FOLSubstitution }
 import at.logic.language.hol.{ Substitution => HOLSubstitution, _ }
 import at.logic.language.lambda._
 import at.logic.proofs.lk.base.FSequent

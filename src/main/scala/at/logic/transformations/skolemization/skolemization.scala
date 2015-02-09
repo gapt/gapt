@@ -2,7 +2,7 @@ package at.logic.transformations.skolemization
 
 // This package implements formula and proof Skolemization.
 
-import at.logic.algorithms.fol.hol2fol.convertHolToFol
+import at.logic.language.fol.algorithms.convertHolToFol
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
 import scala.collection.immutable.{ HashMap, HashSet }

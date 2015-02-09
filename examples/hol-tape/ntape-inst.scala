@@ -14,10 +14,10 @@ val filename = "tape3-4c.llk"
 
 /* begin of proof script  */
 
+import at.logic.language.fol.algorithms.recreateWithFactory
 import at.logic.language.hol._
 
-import at.logic.algorithms.fol.hol2fol.{undoHol2Fol, replaceAbstractions, reduceHolToFol}
-import at.logic.algorithms.fol.recreateWithFactory
+import at.logic.algorithms.fol.hol2fol.undoHol2Fol
 import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk.{AtomicExpansion, regularize,subsumedClausesRemovalHOL}
 import at.logic.algorithms.resolution.RobinsonToRal

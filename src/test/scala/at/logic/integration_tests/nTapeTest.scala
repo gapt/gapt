@@ -2,13 +2,12 @@ package at.logic.integration_tests
 
 import java.io.{ IOException}
 
-import at.logic.algorithms.fol.hol2fol.{undoHol2Fol, replaceAbstractions, reduceHolToFol}
-import at.logic.algorithms.fol.recreateWithFactory
 import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk.{AtomicExpansion, regularize}
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
+import at.logic.language.fol.algorithms.{undoHol2Fol, replaceAbstractions, reduceHolToFol, recreateWithFactory}
 import at.logic.proofs.lk.base.LKProof
 import at.logic.proofs.lksk.sequentToLabelledSequent
 import at.logic.language.fol.{FOLVar, FOLFormula, FOLExpression}
