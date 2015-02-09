@@ -1,9 +1,9 @@
 
 package at.logic.transformations.ceres
 
-import at.logic.algorithms.lk.{ getAncestors, getCutAncestors }
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{ getAncestors, getCutAncestors }
 import at.logic.proofs.lk.base.{ FSequent, LKProof, Sequent }
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.proofs.slk._

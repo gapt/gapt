@@ -1,7 +1,7 @@
 
 package at.logic.transformations.ceres.clauseSets
 
-import at.logic.algorithms.lk.{getAncestors, getCutAncestors}
+import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base.Sequent
 import at.logic.proofs.occurrences._
 import at.logic.proofs.slk.SchemaProofDB

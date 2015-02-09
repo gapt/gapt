@@ -7,6 +7,8 @@ package at.logic.gui.prooftool.gui
  * Time: 12:08:33 PM
  */
 
+import at.logic.proofs.lk.algorithms._
+
 import scala.swing._
 import BorderPanel._
 import swing.Dialog.Message
@@ -14,7 +16,6 @@ import swing.Swing.EmptyIcon
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 import javax.swing.filechooser.FileFilter
 import javax.swing.SwingUtilities
-import at.logic.algorithms.lk._
 import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.proofs.lk.base._
 import at.logic.proofs.proofs.TreeProof

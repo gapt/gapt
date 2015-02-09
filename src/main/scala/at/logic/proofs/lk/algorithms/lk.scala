@@ -1,14 +1,15 @@
 
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
 import at.logic.language.hol._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.ProofTransformationUtils.computeMap
 import at.logic.proofs.lk.base._
-import at.logic.proofs.slk._
 import at.logic.proofs.lksk.UnaryLKskProof
 import at.logic.proofs.occurrences._
+import at.logic.proofs.slk._
+
 import scala.collection.immutable.HashSet
-import ProofTransformationUtils.computeMap
 
 object ProofTransformationUtils {
   // FIXME: adapted from LKtoLKskc!

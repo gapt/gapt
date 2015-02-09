@@ -1,6 +1,7 @@
 
 package at.logic.algorithms.lk
 
+import at.logic.proofs.lk.algorithms.{subsumedClausesRemoval, subsumedClausesRemovalHOL, setNormalize, deleteTautologies}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

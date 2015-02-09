@@ -5,7 +5,6 @@
 
 package at.logic.parsing.shlk_parsing
 
-import at.logic.algorithms.lk.{getCutAncestors, getAncestors}
 import at.logic.proofs.lk._
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.proofs.slk.{TermEquivalenceRule1, TermRightEquivalenceRule1}

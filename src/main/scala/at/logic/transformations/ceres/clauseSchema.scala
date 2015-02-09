@@ -1,8 +1,8 @@
 package at.logic.transformations.ceres.clauseSchema
 
-import at.logic.algorithms.lk.getAncestors
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.getAncestors
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk.{ UnaryLKProof, BinaryLKProof }
 import at.logic.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }

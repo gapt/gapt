@@ -19,9 +19,10 @@ import at.logic.language.hol._
 
 import at.logic.algorithms.fol.hol2fol.undoHol2Fol
 import at.logic.algorithms.hlk.HybridLatexParser
-import at.logic.algorithms.lk.{AtomicExpansion, regularize,subsumedClausesRemovalHOL}
+import at.logic.algorithms.lk.AtomicExpansion
 import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
+import at.logic.proofs.lk.algorithms.{AtomicExpansion, subsumedClausesRemovalHOL, regularize}
 import at.logic.proofs.lksk.sequentToLabelledSequent
 
 

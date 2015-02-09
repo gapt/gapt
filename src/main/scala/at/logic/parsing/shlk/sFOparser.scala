@@ -1,5 +1,7 @@
 package at.logic.parsing.shlk_parsing
 
+import at.logic.proofs.lk.algorithms.solve
+
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import java.io.InputStreamReader
@@ -13,7 +15,6 @@ import scala.Tuple2
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types.{ To, FunctionType, Tindex, Ti }
 import at.logic.proofs.lk._
-import at.logic.algorithms.lk.solve
 
 object sFOParser {
 

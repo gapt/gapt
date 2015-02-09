@@ -5,9 +5,9 @@
 
 package at.logic.transformations.ceres.struct
 
-import at.logic.algorithms.lk.{ getAncestors, getCutAncestors }
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{ getAncestors, getCutAncestors }
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lksk.{ LabelledSequent, UnaryLKskProof, LabelledFormulaOccurrence }
 import at.logic.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }

@@ -1,7 +1,7 @@
 
 package at.logic.provers.basicProver
 
-import at.logic.algorithms.lk.LKProver
+import at.logic.proofs.lk.algorithms.LKProver
 import at.logic.provers.Prover
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.language.hol.HOLFormula

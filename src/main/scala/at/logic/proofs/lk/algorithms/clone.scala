@@ -1,15 +1,13 @@
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
-import at.logic.proofs.lk.base.{ Sequent, LKProof }
-import at.logic.proofs.lk._
-import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.proofs.slk._
-import at.logic.language.schema.SchemaFormula
 import at.logic.language.hol._
-import at.logic.proofs.occurrences._
+import at.logic.language.schema.SchemaFormula
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.{ LKProof, Sequent }
+import at.logic.proofs.occurrences.{ FormulaOccurrence, _ }
+import at.logic.proofs.slk._
 
 import scala.collection.immutable.HashMap
-import scala.collection.mutable
 
 //creates a copy of an existing LK proof (used for unfolding, not to have cycles in the tree having the base proof several times)
 object CloneLKProof {

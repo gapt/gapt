@@ -6,9 +6,9 @@
 
 package at.logic.provers.prover9
 
-import at.logic.algorithms.lk.applyReplacement
 import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.NameReplacement
+import at.logic.proofs.lk.algorithms.applyReplacement
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk.{ CutRule, Axiom }
 import at.logic.proofs.resolution.{ FClause, Clause }

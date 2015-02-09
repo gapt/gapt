@@ -2,9 +2,9 @@ package at.logic.algorithms.resolution
 
 import at.logic.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{ applySubstitution => applySub }
 import at.logic.proofs.resolution.FClause
 import at.logic.language.hol._
-import at.logic.algorithms.lk.{ applySubstitution => applySub }
 import at.logic.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.utils.dssupport.ListSupport.removeFirst
 

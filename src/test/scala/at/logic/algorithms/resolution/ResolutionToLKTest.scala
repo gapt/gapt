@@ -1,5 +1,6 @@
 package at.logic.algorithms.resolution
 
+import at.logic.proofs.lk.algorithms.applySubstitution
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
@@ -9,7 +10,6 @@ import at.logic.proofs.lk.base._
 import at.logic.proofs.lk._
 import at.logic.proofs.resolution.robinson._
 import at.logic.proofs.resolution.FClause
-import at.logic.algorithms.lk.applySubstitution
 import collection.immutable.Map.{Map1, Map2}
 
 // we compare toStrings as proofs have only pointer equality. This needs to be changed by allowing syntaxEquals in graphs and vertices should

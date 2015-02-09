@@ -1,10 +1,10 @@
 
 package at.logic.transformations.ceres.ACNF
 
-import at.logic.algorithms.lk.getCutAncestors
 import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.proofs.resolution.Clause

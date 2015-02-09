@@ -1,7 +1,7 @@
 
 package at.logic.transformations.ceres.clauseSets.profile
 
-import at.logic.algorithms.lk.getCutAncestors
+import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk._
 import at.logic.proofs.lksk.{ LabelledSequent, LabelledFormulaOccurrence, UnaryLKskProof }

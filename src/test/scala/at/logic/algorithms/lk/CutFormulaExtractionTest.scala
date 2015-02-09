@@ -1,5 +1,6 @@
 package at.logic.algorithms.lk
 
+import at.logic.proofs.lk.algorithms.{cutformulaExtraction, getCutsAsProofs}
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner

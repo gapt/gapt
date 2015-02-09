@@ -5,18 +5,18 @@
 // Only works for FOL at the moment (since this is simple -
 // there is no reason in principle for this not to work for HOL).
 
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
 import at.logic.algorithms.rewriting.TermReplacement
+import at.logic.language.fol._
+import at.logic.language.hol.HOLFormula
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences._
-import at.logic.language.fol._
-import at.logic.language.hol.HOLFormula
 
 object applyReplacement {
   //TODO: replace by map_proof(... (m) => TermReplacement(m, repl)) -- the code in here is now superfluous
-  import ProofTransformationUtils.computeMap
+  import at.logic.proofs.lk.algorithms.ProofTransformationUtils.computeMap
 
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
   def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
