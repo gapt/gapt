@@ -6,7 +6,7 @@ package at.logic.provers.atp
 
 import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
-import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.language.fol.algorithms.FOLUnificationAlgorithm
 import at.logic.proofs.resolution.{ Clause, ResolutionProof }
 import at.logic.proofs.lk.base._
 import at.logic.language.fol.FOLExpression

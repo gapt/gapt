@@ -1,7 +1,7 @@
 
 package at.logic.provers.atp.commands.robinson
 
-import at.logic.algorithms.unification.UnificationAlgorithm
+import at.logic.language.fol.algorithms.UnificationAlgorithm
 import at.logic.proofs.lk.base.FSequent
 import at.logic.proofs.resolution.robinson._
 import at.logic.proofs.resolution.Clause

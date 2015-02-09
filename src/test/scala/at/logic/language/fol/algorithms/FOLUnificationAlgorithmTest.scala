@@ -3,14 +3,12 @@
  *
  */
 
-package at.logic.algorithms.unification.fol
+package at.logic.language.fol.algorithms
 
-
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import at.logic.algorithms.unification.fol._
 import at.logic.language.fol._
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class FOLUnificationAlgorithmTest extends SpecificationWithJUnit {

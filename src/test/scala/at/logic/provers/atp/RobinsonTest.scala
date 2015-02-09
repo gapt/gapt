@@ -1,6 +1,6 @@
 package at.logic.provers.atp
 
-import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.language.fol.algorithms.FOLUnificationAlgorithm
 import at.logic.provers.atp.commands.robinson.ParamodulationCommand
 import org.specs2.mutable._
 import at.logic.proofs.resolution.robinson._

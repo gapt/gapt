@@ -5,7 +5,7 @@ package at.logic.provers.atp.commands.replay
  */
 import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
-import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.language.fol.algorithms.FOLUnificationAlgorithm
 import at.logic.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.proofs.resolution.robinson.{ RobinsonResolutionProof }
 import at.logic.proofs.lk.base.{ Sequent, FSequent }

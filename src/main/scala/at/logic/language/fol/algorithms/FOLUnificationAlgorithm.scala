@@ -1,14 +1,11 @@
-/*
- * FOLUnificationAlgorithm.scala
- *
- */
+package at.logic.language.fol.algorithms
 
-package at.logic.algorithms.unification.fol
-
-import at.logic.algorithms.unification.UnificationAlgorithm
 import at.logic.language.fol._
-import at.logic.proofs.lk.base.{ Sequent, FSequent }
+import at.logic.proofs.lk.base.FSequent
 
+/**
+ * Created by sebastian on 2/9/15.
+ */
 object FOLUnificationAlgorithm extends UnificationAlgorithm {
 
   def unify( seq1: FSequent, seq2: FSequent ): List[Substitution] = {
