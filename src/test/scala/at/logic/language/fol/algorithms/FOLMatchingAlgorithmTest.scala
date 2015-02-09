@@ -3,12 +3,12 @@
  *
  */
 
-package at.logic.algorithms.matching
+package at.logic.language.fol.algorithms
 
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.language.fol._
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {

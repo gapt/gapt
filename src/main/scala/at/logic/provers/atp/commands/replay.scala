@@ -3,9 +3,8 @@ package at.logic.provers.atp.commands.replay
 /**
  * this file contains command for a guided search using ids for clauses,as for example when parsing the output of theorem provers and using the rules from there
  */
-import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
-import at.logic.language.fol.algorithms.FOLUnificationAlgorithm
+import at.logic.language.fol.algorithms.{ FOLMatchingAlgorithm, FOLUnificationAlgorithm }
 import at.logic.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.proofs.resolution.robinson.{ RobinsonResolutionProof }
 import at.logic.proofs.lk.base.{ Sequent, FSequent }

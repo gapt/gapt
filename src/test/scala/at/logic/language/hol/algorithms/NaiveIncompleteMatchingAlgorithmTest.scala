@@ -3,14 +3,13 @@
  *
  */
 
-package at.logic.algorithms.matching
-
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+package at.logic.language.hol.algorithms
 
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
