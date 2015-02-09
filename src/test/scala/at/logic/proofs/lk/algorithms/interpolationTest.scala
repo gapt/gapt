@@ -1,16 +1,14 @@
 
-package at.logic.algorithms.interpolation
-
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable._
+package at.logic.proofs.lk.algorithms
 
 import at.logic.language.hol._
-import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
-import at.logic.proofs.occurrences._
-import at.logic.proofs.lk.base._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
+import at.logic.proofs.occurrences._
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class interpolationTest extends SpecificationWithJUnit {
