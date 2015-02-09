@@ -7,6 +7,7 @@
 
 package at.logic.proofs.resolution.ral
 
+import at.logic.language.hol.TypeSynonyms.SkolemSymbol
 import at.logic.proofs.lk.EquationVerifier
 import at.logic.proofs.lk.EquationVerifier.{ Different, EqualModuloEquality }
 import at.logic.proofs.resolution._
@@ -18,7 +19,6 @@ import at.logic.proofs.lk.base._
 import at.logic.proofs.resolution.createContext
 import at.logic.language.hol._
 import at.logic.language.hol.BetaReduction._
-import at.logic.language.hol.skolemSymbols.TypeSynonyms.SkolemSymbol
 import at.logic.language.lambda.types._
 import at.logic.utils.ds.acyclicGraphs._
 import at.logic.utils.ds.trees.LeafTree

@@ -6,6 +6,15 @@ package at.logic.algorithms.cutIntroduction
  */
 
 import at.logic.algorithms.cutIntroduction.MCSMethod.MCSMethod
+import at.logic.language.fol.AllVar
+import at.logic.language.fol.And
+import at.logic.language.fol.Equation
+import at.logic.language.fol.ExVar
+import at.logic.language.fol.Function
+import at.logic.language.fol.Imp
+import at.logic.language.fol.Neg
+import at.logic.language.fol.Or
+import at.logic.language.fol.Substitution
 import at.logic.language.fol._
 import at.logic.language.fol.Atom
 import at.logic.algorithms.cutIntroduction.Deltas._

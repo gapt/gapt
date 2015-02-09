@@ -8,7 +8,7 @@ import at.logic.language.fol.replacements.getAllPositionsFOL
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols.getRenaming
 import at.logic.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
-import at.logic.language.hol.{ isPrenex => isPrenexHOL, containsQuantifier => containsQuantifierHOL, getMatrix => getMatrixHOL, lcomp => lcompHOL }
+import at.logic.language.hol.{ isPrenex => isPrenexHOL, containsQuantifier => containsQuantifierHOL, getMatrix => getMatrixHOL, lcomp => lcompHOL, _ }
 import at.logic.language.hol.logicSymbols._
 import at.logic.utils.logging.Logger
 import scala.Some

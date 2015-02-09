@@ -5,7 +5,7 @@
 
 package at.logic.language.hol
 
-import at.logic.language.lambda.{ Substitution => SubstitutionLambda, LambdaExpression, Var }
+import at.logic.language.lambda.{ LambdaExpression, Var, Substitution => SubstitutionLambda }
 
 class Substitution( val holmap: Map[HOLVar, HOLExpression] ) extends SubstitutionLambda( holmap.asInstanceOf[Map[Var, LambdaExpression]] ) {
   def apply( t: HOLExpression ): HOLExpression = {

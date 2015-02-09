@@ -1,7 +1,7 @@
 
 package at.logic.language.schema.logicSymbols
 
-import at.logic.language.hol.logicSymbols._
+import at.logic.language.hol.logicSymbols.LogicalSymbolA
 import at.logic.language.lambda.symbols._
 
 case object BigAndSymbol extends LogicalSymbolA {

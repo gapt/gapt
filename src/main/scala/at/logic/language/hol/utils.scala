@@ -5,11 +5,10 @@
 
 package at.logic.language.hol
 
-import at.logic.language.hol.replacements.{ getAllPositions2, getAllPositions }
-import at.logic.language.lambda.symbols.StringSymbol
-import at.logic.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.lambda.types.{ Ti, TA }
+import at.logic.language.lambda.symbols.StringSymbol
+import at.logic.language.lambda.types.{ TA, Ti }
+import at.logic.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
 
 object freeVariables {
   /**

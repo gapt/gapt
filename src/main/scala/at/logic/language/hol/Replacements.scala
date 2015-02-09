@@ -3,9 +3,7 @@
  *
  */
 
-package at.logic.language.hol.replacements
-
-import at.logic.language.hol._
+package at.logic.language.hol
 
 /**
  * Replacement represents the rewriting notion of a hole at a certain position. We expect that

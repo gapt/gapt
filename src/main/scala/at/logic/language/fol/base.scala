@@ -9,7 +9,7 @@ package at.logic.language.fol
 import at.logic.language.lambda.{ LambdaExpression, Var, Const, App, Abs, FactoryA }
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
-import at.logic.language.hol.{ HOLVar, HOLConst, HOLApp, HOLAbs }
+import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 
 class FOLVar( sym: SymbolA ) extends HOLVar( sym, Ti ) with FOLTerm

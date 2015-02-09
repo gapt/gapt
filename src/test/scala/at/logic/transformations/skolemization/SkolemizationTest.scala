@@ -11,7 +11,6 @@ import at.logic.proofs.lk.base.{beSyntacticMultisetEqual, LKProof, Sequent}
 
 import at.logic.language.hol._
 import at.logic.proofs.lk._
-import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import skolemize._
 import org.junit.runner.RunWith
 import org.specs2.mutable._

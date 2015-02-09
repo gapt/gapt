@@ -1,7 +1,6 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.algorithms.interpolation._
 import at.logic.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._

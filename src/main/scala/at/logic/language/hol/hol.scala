@@ -4,10 +4,10 @@
 
 package at.logic.language.hol
 
+import at.logic.language.hol.HOLPosition._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.types._
-import at.logic.language.lambda.{ LambdaExpression, FactoryA }
-import at.logic.language.hol.HOLPosition._
+import at.logic.language.lambda.{ FactoryA, LambdaExpression }
 
 import scala.collection.mutable
 

@@ -14,7 +14,6 @@ import at.logic.language.hol._
 import at.logic.language.hol
 import at.logic.language.fol.FOLFormula
 import at.logic.language.lambda.types._
-import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import at.logic.utils.ds.streams.Definitions._
 import at.logic.proofs.slk.{ trsArrowLeftRule, SchemaProofLinkRule }
 import at.logic.proofs.lk.base._
