@@ -5,7 +5,7 @@
 
 package at.logic.transformations.ceres.clauseSets
 
-import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
+import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.transformations.ceres.struct._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lksk._

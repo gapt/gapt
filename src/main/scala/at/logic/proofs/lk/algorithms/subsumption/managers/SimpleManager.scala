@@ -3,10 +3,10 @@
  *
  */
 
-package at.logic.algorithms.subsumption.managers
+package at.logic.proofs.lk.algorithms.subsumption.managers
 
 import at.logic.utils.patterns.listeners.ListenerManager
-import at.logic.algorithms.subsumption._
+import at.logic.proofs.lk.algorithms.subsumption._
 import at.logic.proofs.lk.base.FSequent
 
 class SimpleManager( listener: ListenerManager[SubsumptionDSEvent],

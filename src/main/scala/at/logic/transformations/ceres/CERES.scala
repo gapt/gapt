@@ -11,7 +11,7 @@ import at.logic.proofs.lk.base.FSequent
 import at.logic.proofs.lk._
 import at.logic.proofs.resolution.algorithms.RobinsonToLK
 import at.logic.proofs.resolution.robinson.RobinsonResolutionProof
-import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
+import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.provers.prover9.Prover9
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 

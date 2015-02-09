@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.algorithms.subsumption
+package at.logic.proofs.lk.algorithms.subsumption
 
 import at.logic.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm

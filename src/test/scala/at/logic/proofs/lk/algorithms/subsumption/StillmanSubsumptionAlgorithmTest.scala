@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.algorithms.subsumption
+package at.logic.proofs.lk.algorithms.subsumption
 
 import org.junit.runner.RunWith
 import org.specs2.mutable._

@@ -1,6 +1,6 @@
 package at.logic.transformations.ceres
 
-import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
+import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.proofs.lk._
 import at.logic.proofs.lksk.TypeSynonyms.Label
 import at.logic.proofs.lksk.algorithms.applySubstitution

@@ -13,7 +13,7 @@ import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.algorithms.shlk._
-import at.logic.algorithms.subsumption._
+import at.logic.proofs.lk.algorithms.subsumption._
 import at.logic.language.fol.algorithms._
 import at.logic.proofs.expansionTrees.algorithms.{ compressQuantifiers, minimalExpansionSequents => minimalExpSeq }
 import at.logic.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }

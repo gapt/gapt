@@ -4,7 +4,7 @@
 
 package at.logic.provers.atp
 
-import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
+import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.language.fol.algorithms.{ FOLMatchingAlgorithm, FOLUnificationAlgorithm }
 import at.logic.proofs.resolution.{ Clause, ResolutionProof }
 import at.logic.proofs.lk.base._

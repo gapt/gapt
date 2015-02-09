@@ -4,11 +4,11 @@
  */
 
 /* Never used
-package at.logic.algorithms.subsumption.managers
+package at.logic.proofs.lk.algorithms.subsumption.managers
 
 import at.logic.utils.ds.mutable.trees._
 import at.logic.calculi.lk.base.FSequent
-import at.logic.algorithms.subsumption._
+import at.logic.proofs.lk.algorithms.subsumption._
 
 trait VectorTreeManager extends SubsumptionAlgorithm  {
 

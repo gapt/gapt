@@ -4,7 +4,7 @@
  */
 
 /* 
-package at.logic.algorithms.subsumption.managers
+package at.logic.proofs.lk.algorithms.subsumption.managers
 
 import org.junit.runner.RunWith
 import org.specs2.mutable._
@@ -12,7 +12,7 @@ import org.specs2.runner.JUnitRunner
 
 import at.logic.utils.ds.mutable.trees._
 import at.logic.calculi.lk.base.FSequent
-import at.logic.algorithms.subsumption._
+import at.logic.proofs.lk.algorithms.subsumption._
 import at.logic.language.fol._
 
 @RunWith(classOf[JUnitRunner])
