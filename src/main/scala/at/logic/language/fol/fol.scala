@@ -210,7 +210,7 @@ private class ExQ extends FOLLambdaConst( ExistsSymbol, ->( ->( Ti, To ), To ) )
 private object ExQ {
   def apply() = new ExQ
   def unapply( v: FOLLambdaConst ) = v match {
-    case vo: ExQ => Some()
+    case vo: ExQ => Some( () )
     case _       => None
   }
 }
@@ -219,7 +219,7 @@ private class AllQ extends FOLLambdaConst( ForallSymbol, ->( ->( Ti, To ), To ) 
 private object AllQ {
   def apply() = new AllQ
   def unapply( v: FOLLambdaConst ) = v match {
-    case vo: AllQ => Some()
+    case vo: AllQ => Some( () )
     case _        => None
   }
 }
