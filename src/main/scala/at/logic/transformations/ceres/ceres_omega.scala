@@ -1,9 +1,9 @@
 package at.logic.transformations.ceres
 
-import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.proofs.lk._
 import at.logic.proofs.lksk.TypeSynonyms.Label
+import at.logic.proofs.lksk.algorithms.applySubstitution
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.hol.{ HOLFormula, Equation }
 import at.logic.language.lambda.types.Ti

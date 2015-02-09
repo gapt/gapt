@@ -4,13 +4,13 @@ package at.logic.transformations.skolemization.lksk
 
 import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base.{ FSequent, LKProof, Sequent }
+import at.logic.proofs.lksk.algorithms.applySubstitution
 import at.logic.utils.logging.Logger
 import scala.collection.mutable.{ Map, HashMap }
 import at.logic.proofs.lksk._
 import at.logic.proofs.lk.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, WeakeningRightRule => LKWeakeningRightRule, _ }
 import at.logic.proofs.occurrences._
 import at.logic.language.hol._
-import at.logic.algorithms.lksk.applySubstitution
 import at.logic.proofs.lk.base.FSequent
 import at.logic.proofs.occurrences.factory
 import at.logic.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }

@@ -10,7 +10,6 @@ import java.util.zip.GZIPInputStream
 
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
-import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.algorithms.shlk._
@@ -23,6 +22,7 @@ import at.logic.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.{ deleteTautologies => deleteTaut, _ }
 import at.logic.proofs.lk.base._
+import at.logic.proofs.lksk.algorithms.applySubstitution
 import at.logic.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
 import at.logic.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.proofs.resolution._
@@ -80,7 +80,6 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.{ CERES, CERESR2LK }
 import at.logic.transformations.{ ReductiveCutElim, herbrandExtraction }
-import at.logic.algorithms.lksk.{ rule_isomorphic => LKSKrule_isomorphic }
 import at.logic.utils.logging.Stopwatch
 
 import scala.collection.mutable.{ Map => MMap }
@@ -800,7 +799,7 @@ object GenerateRobinson2Ral {
 
 object applyFactoring extends factoring
 
-object rule_isomorphic extends LKSKrule_isomorphic //this subsumes the LK version
+object rule_isomorphic extends rule_isomorphic //this subsumes the LK version
 
 object exportLatex {
   def apply( list: List[FSequent], fn: String ) = {
