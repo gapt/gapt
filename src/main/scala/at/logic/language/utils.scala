@@ -1,10 +1,10 @@
 /*
- * Simple functions that operate on HOL-expressions
- *
+ * Simple functions that operate on HOLExpressions, HOLFormulas and sequents.
  */
 
 package at.logic.language.hol
 
+import at.logic.calculi.lk.base._
 import at.logic.language.hol.replacements.{ getAllPositions2, getAllPositions }
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
@@ -75,6 +75,23 @@ object containsQuantifier {
     case HOLApp( l, r )     => containsQuantifier( l ) || containsQuantifier( r )
     case _                  => throw new Exception( "Unrecognized symbol." )
   }
+}
+
+object containsStrongQuantifier {
+  def apply( f: HOLFormula, pol: Boolean ): Boolean = f match {
+    case Atom( _, _ )   => false
+    case And( s, t )    => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
+    case Or( s, t )     => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
+    case Imp( s, t )    => containsStrongQuantifier( s, !pol ) || containsStrongQuantifier( t, pol )
+    case Neg( s )       => containsStrongQuantifier( s, !pol )
+    case AllVar( x, s ) => if ( pol == true ) true else containsStrongQuantifier( s, pol )
+    case ExVar( x, s )  => if ( pol == false ) true else containsStrongQuantifier( s, pol )
+    case _              => throw new Exception( "Unhandled case!" )
+  }
+
+  def apply( s: FSequent ): Boolean =
+    s.antecedent.exists( x => containsStrongQuantifier( x, false ) ) ||
+      s.succedent.exists( x => containsStrongQuantifier( x, true ) )
 }
 
 object isPrenex {

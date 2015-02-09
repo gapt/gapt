@@ -194,68 +194,7 @@ object loadProver9Proof {
 }
 
 object loadProver9LKProof {
-
-  def apply( filename: String, forceSkolemization: Boolean = false ): LKProof = {
-
-    val ( proof, endsequent, clauses ) = Prover9.parse_prover9( filename )
-    //val sendsequent = skolemize(endsequent)
-    //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
-
-    if ( !forceSkolemization && !containsStrongQuantifiers( endsequent ) ) {
-
-      val ant = endsequent.antecedent.map( x => univclosure( x.asInstanceOf[FOLFormula] ) )
-      val suc = endsequent.succedent.map( x => existsclosure( x.asInstanceOf[FOLFormula] ) )
-      val closure = FSequent( ant, suc )
-
-      val clause_set = CNFn( endsequent.toFormula ).map( c =>
-        FSequent( c.neg.map( f => f.asInstanceOf[FOLFormula] ), c.pos.map( f => f.asInstanceOf[FOLFormula] ) ) )
-
-      val res_proof = fixDerivation( proof, clause_set )
-
-      Robinson2LK( res_proof, closure )
-
-    } else {
-
-      val fclauses: Set[FClause] = proof.nodes.map {
-        case InitialClause( clause ) => clause.toFClause
-        case _                       => FClause( Nil, Nil )
-      }.filter( ( x: FClause ) => x match {
-        case FClause( Nil, Nil ) => false;
-        case _                   => true
-      } )
-      val clauses = fclauses.map( c => univclosure( FOLOr(
-        c.neg.map( f => FOLNeg( f.asInstanceOf[FOLFormula] ) ).toList ++
-          c.pos.map( f => f.asInstanceOf[FOLFormula] ).toList ) ) )
-      val clauses_ = clauses.partition( _ match {
-        case FOLNeg( _ ) => false;
-        case _           => true
-      } )
-      //val cendsequent = FSequent(clauses.toList, Nil)
-      val cendsequent2 = FSequent( clauses_._1.toList, clauses_._2.map( _ match {
-        case FOLNeg( x ) => x
-      } ).toList )
-
-      Robinson2LK( proof, cendsequent2 )
-
-    }
-  }
-
-  // What is this doing here?? C'mon people!!! FIXME: move this to an appropriate place!
-  def containsStrongQuantifiers( fs: FSequent ): Boolean =
-    fs.antecedent.exists( x => containsStrongQuantifiers( x.asInstanceOf[FOLFormula], false ) ) ||
-      fs.succedent.exists( x => containsStrongQuantifiers( x.asInstanceOf[FOLFormula], true ) )
-
-  def containsStrongQuantifiers( f: FOLFormula, pol: Boolean ): Boolean = f match {
-    case FOLAtom( _, _ )   => false
-    case FOLAnd( s, t )    => containsStrongQuantifiers( s, pol ) || containsStrongQuantifiers( t, pol )
-    case FOLOr( s, t )     => containsStrongQuantifiers( s, pol ) || containsStrongQuantifiers( t, pol )
-    case FOLImp( s, t )    => containsStrongQuantifiers( s, !pol ) || containsStrongQuantifiers( t, pol )
-    case FOLNeg( s )       => containsStrongQuantifiers( s, !pol )
-    case FOLAllVar( x, s ) => if ( pol == true ) true else containsStrongQuantifiers( s, pol )
-    case FOLExVar( x, s )  => if ( pol == false ) true else containsStrongQuantifiers( s, pol )
-    case _                 => throw new Exception( "Unhandled case!" )
-  }
-
+  def apply( filename: String, forceSkolemization: Boolean = false ) = Prover9.parse_prover9LK( filename, forceSkolemization )
 }
 
 object loadLLK {

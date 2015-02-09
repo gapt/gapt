@@ -7,14 +7,14 @@
 package at.logic.provers.prover9
 
 import at.logic.algorithms.lk.applyReplacement
-import at.logic.algorithms.resolution.InstantiateElimination
-import at.logic.algorithms.resolution.{ RobinsonToLK, fixDerivation, CNFn }
+import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.NameReplacement
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk.{ CutRule, Axiom }
-import at.logic.calculi.resolution.Clause
+import at.logic.calculi.resolution._
 import at.logic.calculi.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.language.fol._
+import at.logic.language.hol.containsStrongQuantifier
 import at.logic.parsing.ivy.IvyParser
 import at.logic.parsing.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }
 import at.logic.parsing.ivy.conversion.IvyToRobinson
@@ -357,6 +357,51 @@ object Prover9 extends at.logic.utils.logging.Logger {
     val clauses = InferenceExtractor.clausesViaLADR( p9_file )
     //println("extracted formula: "+fs)
     ( mproof, fs, clauses )
+  }
+
+  def parse_prover9LK( p9_file: String, forceSkolemization: Boolean = false ): LKProof = {
+
+    val ( proof, endsequent, clauses ) = Prover9.parse_prover9( p9_file )
+    //val sendsequent = skolemize(endsequent)
+    //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
+
+    if ( !forceSkolemization && !containsStrongQuantifier( endsequent ) ) {
+
+      val ant = endsequent.antecedent.map( x => univclosure( x.asInstanceOf[FOLFormula] ) )
+      val suc = endsequent.succedent.map( x => existsclosure( x.asInstanceOf[FOLFormula] ) )
+      val closure = FSequent( ant, suc )
+
+      val clause_set = CNFn( endsequent.toFormula ).map( c =>
+        FSequent( c.neg.map( f => f.asInstanceOf[FOLFormula] ), c.pos.map( f => f.asInstanceOf[FOLFormula] ) ) )
+
+      val res_proof = fixDerivation( proof, clause_set )
+
+      RobinsonToLK( res_proof, closure )
+
+    } else {
+
+      val fclauses: Set[FClause] = proof.nodes.map {
+        case InitialClause( clause ) => clause.toFClause
+        case _                       => FClause( Nil, Nil )
+      }.filter( ( x: FClause ) => x match {
+        case FClause( Nil, Nil ) => false;
+        case _                   => true
+      } )
+      val clauses = fclauses.map( c => univclosure( Or(
+        c.neg.map( f => Neg( f.asInstanceOf[FOLFormula] ) ).toList ++
+          c.pos.map( f => f.asInstanceOf[FOLFormula] ).toList ) ) )
+      val clauses_ = clauses.partition( _ match {
+        case Neg( _ ) => false;
+        case _        => true
+      } )
+      //val cendsequent = FSequent(clauses.toList, Nil)
+      val cendsequent2 = FSequent( clauses_._1.toList, clauses_._2.map( _ match {
+        case Neg( x ) => x
+      } ).toList )
+
+      RobinsonToLK( proof, cendsequent2 )
+
+    }
   }
 
   def isInstalled(): Boolean = {
