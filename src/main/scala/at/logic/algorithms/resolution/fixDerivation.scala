@@ -1,5 +1,7 @@
 package at.logic.algorithms.resolution
 
+import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
+
 import scala.collection.immutable.HashMap
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._
@@ -7,7 +9,6 @@ import at.logic.proofs.resolution.robinson._
 import at.logic.language.fol.{ Equation => FOLEquation, FOLTerm, FOLFormula, FOLExpression, Substitution }
 import at.logic.proofs.resolution.{ FClause, Clause }
 import at.logic.provers.atp.SearchDerivation
-import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 
 /**
  *  Sometimes, we have a resolution refutation R of a set of clauses C

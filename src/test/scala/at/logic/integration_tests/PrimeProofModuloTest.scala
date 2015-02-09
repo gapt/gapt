@@ -5,7 +5,7 @@
 package at.logic.integration_tests
 
 import at.logic.algorithms.fol.hol2fol._
-import at.logic.algorithms.subsumption._
+import at.logic.proofs.lk.algorithms.subsumption._
 //import at.logic.algorithms.unification.{ACUEquality, MulACUEquality}
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._

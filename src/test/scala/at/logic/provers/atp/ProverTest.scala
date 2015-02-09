@@ -20,7 +20,7 @@ import at.logic.provers.atp.commands.robinson._
 import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
 import at.logic.parsing.readers.StringReader
 import at.logic.proofs.resolution._
-import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
+import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 
 private class MyParser(str: String) extends StringReader(str) with SimpleResolutionParserFOL
 private object MyProver extends Prover[Clause]
@@ -205,9 +205,9 @@ class ProverTest extends SpecificationWithJUnit {
 
   import at.logic.utils.ds.PublishingBuffer
   
-  def createSubsum(pb: PublishingBuffer[Clause]): at.logic.algorithms.subsumption.managers.SubsumptionManager =
-    new at.logic.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
-                        new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm[at.logic.language.fol.FOLExpression] {val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
+  def createSubsum(pb: PublishingBuffer[Clause]): at.logic.proofs.lk.algorithms.subsumption.managers.SubsumptionManager =
+    new at.logic.proofs.lk.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
+                        new at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithm[at.logic.language.fol.FOLExpression] {val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
 
   def autoStream(cl: String, createRef: (PublishingBuffer[Clause] => at.logic.provers.atp.refinements.Refinement[Clause])) = {
     val cls = new MyParser(cl).getClauseList

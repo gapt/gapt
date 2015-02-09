@@ -1,7 +1,7 @@
 
 package at.logic.integration_tests
 
-import at.logic.algorithms.subsumption._
+import at.logic.proofs.lk.algorithms.subsumption._
 import at.logic.proofs.expansionTrees.{toDeep, ExpansionSequent}
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.{getStatistics, deleteTautologies, eliminateDefinitions}
@@ -114,8 +114,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
 //      val pb = new at.logic.utils.ds.PublishingBuffer[Clause]
 //      pb.insertAll(0,cssv.map(x => at.logic.calculi.resolution.base.Clause(x.antecedent.asInstanceOf[List[HOLFormula]], x.succedent.asInstanceOf[List[HOLFormula]])))
 //      val ref = new at.logic.provers.atp.refinements.UnitRefinement(pb)
-//      val subsumMng = new at.logic.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
-//        new at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
+//      val subsumMng = new at.logic.proofs.lk.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
+//        new at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.algorithms.matching.fol.FOLMatchingAlgorithm})
 //        AutomatedFOLStream(-1, new at.logic.provers.atp.refinements.UnitRefinement(pb), subsumMng)
 //      val res = new Prover{}.refute(AutomatedFOLStream(-1, new at.logic.provers.atp.refinements.UnitRefinement(pb), subsumMng))
 //      Console.println("has a refutation? " + (!res.isEmpty))

@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.algorithms.subsumption
+package at.logic.proofs.lk.algorithms.subsumption
 
 import at.logic.proofs.lk.base.FSequent
 

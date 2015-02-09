@@ -1,8 +1,8 @@
 
 package at.logic.provers.atp.commands.sequents
 
-import at.logic.algorithms.subsumption.managers._
-import at.logic.algorithms.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
+import at.logic.proofs.lk.algorithms.subsumption.managers._
+import at.logic.proofs.lk.algorithms.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
 import at.logic.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.proofs.resolution.{ ResolutionProof, Clause }
