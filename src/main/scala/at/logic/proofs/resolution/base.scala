@@ -5,13 +5,13 @@
 
 package at.logic.proofs.resolution
 
+import at.logic.language.hol.TypeSynonyms.SkolemSymbol
 import at.logic.proofs.occurrences._
 import at.logic.proofs.proofs._
 import at.logic.proofs.lk.base.{ Sequent, FSequent, createContext => lkCreateContext }
 import at.logic.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.proofs.lksk.TypeSynonyms.Label
 import at.logic.language.hol._
-import at.logic.language.hol.skolemSymbols.TypeSynonyms.SkolemSymbol
 import at.logic.language.lambda.types.{ TA, FunctionType }
 import at.logic.utils.ds.acyclicGraphs._
 

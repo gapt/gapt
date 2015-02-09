@@ -3,7 +3,7 @@ package at.logic.parsing.language.tptp
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.proofs.lk.base.{ FSequent, LKProof }
-import at.logic.language.hol.logicSymbols.{ EqSymbol, LogicalSymbolA }
+import at.logic.language.hol.logicSymbols._
 
 /**
  * Created by marty on 12/10/13.

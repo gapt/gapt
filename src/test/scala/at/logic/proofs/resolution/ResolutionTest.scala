@@ -16,8 +16,6 @@ import at.logic.language.hol.{Atom => HOLAtom, Function => HOLFunction, AllVar =
 import at.logic.language.lambda.types._
 import at.logic.proofs.lk.base._
 
-import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
-
 @RunWith(classOf[JUnitRunner])
 class ResolutionTest extends SpecificationWithJUnit {
   

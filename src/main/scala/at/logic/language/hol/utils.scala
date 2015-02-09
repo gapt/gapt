@@ -4,12 +4,11 @@
 
 package at.logic.language.hol
 
-import at.logic.proofs.lk.base._
-import at.logic.language.hol.replacements.{ getAllPositions2, getAllPositions }
-import at.logic.language.lambda.symbols.StringSymbol
-import at.logic.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.lambda.types.{ Ti, TA }
+import at.logic.language.lambda.symbols.StringSymbol
+import at.logic.language.lambda.types.{ TA, Ti }
+import at.logic.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
+import at.logic.proofs.lk.base.FSequent
 
 object freeVariables {
   /**
@@ -263,7 +262,7 @@ object toAbbreviatedString {
   /**
    * This function takes a HOL construction and converts it to a abbreviated string version. The abbreviated string version is made
    * by replacing the code construction for logic symbols by string versions in the file language/hol/logicSymbols.scala.
-   * Several recursive function calls will be transformed into an abbreviated form (e.g. f(f(f(x))) => f^3(x)).
+   * Several recursive function calls will be transformed into an abbreviated form (e.g. f(f(f(x))) => f^3^(x)).
    * Terms are also handled by the this function.
    * @param  e  The method has no parameters other then the object which is to be written as a string
    * @throws Exception This occurs when an unknown subformula is found when parsing the HOL construction

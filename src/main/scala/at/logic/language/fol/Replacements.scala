@@ -2,7 +2,7 @@ package at.logic.language.fol.replacements
 
 import at.logic.language.hol
 import at.logic.language.fol.FOLExpression
-import at.logic.language.hol.HOLExpression
+import at.logic.language.hol.{ getAtPosition, getAllPositions2, Replacement => HOLReplacement, HOLExpression }
 
 /**
  * Created by cthulhu on 18.06.14.
@@ -20,7 +20,7 @@ object getAtPositionFOL {
    * @param pos A path of branchings in the term tree. Nil is the root position, 1 is the first argument  etc.
    * @return The subterm, if it exists.
    */
-  def apply( expression: FOLExpression, pos: List[Int] ): FOLExpression = hol.replacements.getAtPosition( expression, pos ).asInstanceOf[FOLExpression]
+  def apply( expression: FOLExpression, pos: List[Int] ): FOLExpression = getAtPosition( expression, pos ).asInstanceOf[FOLExpression]
 }
 
 /**
@@ -34,7 +34,7 @@ object getAllPositionsFOL {
    * @param expression an arbitrary hol epxression
    * @return a list of pairs (position, subterm)
    */
-  def apply( expression: FOLExpression ): List[Tuple2[List[Int], FOLExpression]] = hol.replacements.getAllPositions2( expression.asInstanceOf[hol.HOLExpression] ).asInstanceOf[List[Tuple2[List[Int], FOLExpression]]]
+  def apply( expression: FOLExpression ): List[Tuple2[List[Int], FOLExpression]] = getAllPositions2( expression.asInstanceOf[hol.HOLExpression] ).asInstanceOf[List[Tuple2[List[Int], FOLExpression]]]
 }
 
 /**
@@ -52,6 +52,6 @@ object getAllPositionsFOL {
  * @param position A path of branchings in the term tree. Nil is the root position, 1 is the first argument  etc.
  * @param expression The term which will be inserted.
  */
-class Replacement( position: List[Int], expression: FOLExpression ) extends hol.replacements.Replacement( position, expression ) {
+class Replacement( position: List[Int], expression: FOLExpression ) extends HOLReplacement( position, expression ) {
   def apply( exp: FOLExpression ): FOLExpression = super.apply( exp.asInstanceOf[HOLExpression] ).asInstanceOf[FOLExpression]
 }

@@ -8,7 +8,7 @@ import at.logic.language.hol._
 import at.logic.proofs.lk._
 import at.logic.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule }
 import at.logic.algorithms.hlk.ExtendedProofDatabase
-import at.logic.language.hol.logicSymbols.{ EqSymbol, LogicalSymbolA }
+import at.logic.language.hol.logicSymbols.{ LogicalSymbolA, EqSymbol }
 import at.logic.algorithms.hlk.ExtendedProofDatabase
 
 object LatexProofExporter extends HybridLatexExporter( true )

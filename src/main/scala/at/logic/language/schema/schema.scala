@@ -9,7 +9,7 @@ package at.logic.language.schema
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.FactoryA
 import at.logic.language.lambda.symbols._
-import at.logic.language.hol.{ HOLFormula, HOLExpression, isLogicalSymbol }
+import at.logic.language.hol._
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.schema.logicSymbols._
 

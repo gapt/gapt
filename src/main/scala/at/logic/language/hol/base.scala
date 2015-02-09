@@ -7,10 +7,10 @@
 package at.logic.language.hol
 
 import at.logic.language.hol.HOLPosition._
-import at.logic.language.lambda.{ LambdaExpression, Var, Const, App, Abs, FactoryA }
+import at.logic.language.hol.logicSymbols._
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
-import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.{ Abs, App, Const, FactoryA, LambdaExpression, Var }
 
 class HOLVar protected[hol] ( sym: SymbolA, exptype: TA ) extends Var( sym, exptype ) with HOLExpression {
 

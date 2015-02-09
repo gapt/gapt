@@ -5,8 +5,8 @@
 
 package at.logic.language.hol
 
-import at.logic.language.lambda.{ BetaReduction => BetaReductionLambda }
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
+import at.logic.language.lambda.{ BetaReduction => BetaReductionLambda }
 
 object BetaReduction {
 

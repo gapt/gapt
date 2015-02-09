@@ -7,12 +7,12 @@
 
 package at.logic.proofs.resolution.andrews
 
+import at.logic.language.hol.TypeSynonyms.SkolemSymbol
 import at.logic.proofs.resolution._
 import at.logic.proofs.occurrences._
 import at.logic.proofs.proofs._
 import at.logic.language.hol._
 import at.logic.language.hol.BetaReduction._
-import at.logic.language.hol.skolemSymbols.TypeSynonyms.SkolemSymbol
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.utils.ds.acyclicGraphs._

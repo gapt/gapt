@@ -10,8 +10,6 @@ import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.types._
 import at.logic.language.lambda._
 import at.logic.language.lambda.symbols._
-import logicSymbols._
-import skolemSymbols._
 import at.logic.language.hol.BetaReduction._
 
 @RunWith(classOf[JUnitRunner])
