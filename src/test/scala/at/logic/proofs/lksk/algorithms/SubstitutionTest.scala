@@ -1,15 +1,13 @@
-package at.logic.algorithms.lksk
-
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+package at.logic.proofs.lksk.algorithms
 
 import at.logic.language.hol._
-import at.logic.language.hol.logicSymbols._
-import at.logic.proofs.lk.base.{Sequent, FSequent}
-import at.logic.proofs.lksk._
-import at.logic.proofs.lksk.TypeSynonyms._
 import at.logic.language.lambda.types._
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.lksk.TypeSynonyms._
+import at.logic.proofs.lksk._
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class SubstitutionTest extends SpecificationWithJUnit {

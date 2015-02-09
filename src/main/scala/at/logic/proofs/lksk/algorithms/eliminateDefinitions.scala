@@ -1,8 +1,8 @@
-package at.logic.algorithms.lksk
+package at.logic.proofs.lksk.algorithms
 
 import at.logic.language.hol._
-import at.logic.proofs.lk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _ }
 import at.logic.proofs.lk.base._
+import at.logic.proofs.lk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _ }
 import at.logic.proofs.lksk._
 
 import scala.collection.mutable

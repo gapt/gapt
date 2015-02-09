@@ -1,15 +1,15 @@
-package at.logic.algorithms.lksk
+package at.logic.proofs.lksk.algorithms
 
+import at.logic.language.hol.BetaReduction.{ betaNormalize => normalize }
+import at.logic.language.hol._
 import at.logic.proofs.lk.algorithms.{ ProofTransformationUtils, applySubstitution => LKapplySubstitution }
+import at.logic.proofs.lk.base._
+import at.logic.proofs.lk.{ BinaryLKProof, UnaryLKProof }
 import at.logic.proofs.lksk._
 import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.proofs.lk.base._
-import at.logic.proofs.lk.{ UnaryLKProof, BinaryLKProof }
-import at.logic.language.hol._
-import BetaReduction.{ betaNormalize => normalize }
 
 object applySubstitution extends at.logic.utils.logging.Logger {
-  import ProofTransformationUtils.computeMap
+  import at.logic.proofs.lk.algorithms.ProofTransformationUtils.computeMap
 
   def toLabelledSequent( so: Sequent ) = new LabelledSequent( so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
     so.succedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ) )

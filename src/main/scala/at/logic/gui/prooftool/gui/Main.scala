@@ -8,6 +8,7 @@ package at.logic.gui.prooftool.gui
  */
 
 import at.logic.proofs.lk.algorithms._
+import at.logic.proofs.lksk.algorithms.eliminateDefinitions
 
 import scala.swing._
 import BorderPanel._
@@ -16,7 +17,6 @@ import swing.Swing.EmptyIcon
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 import javax.swing.filechooser.FileFilter
 import javax.swing.SwingUtilities
-import at.logic.algorithms.lksk.eliminateDefinitions
 import at.logic.proofs.lk.base._
 import at.logic.proofs.proofs.TreeProof
 import at.logic.gui.prooftool.parser._
