@@ -6,10 +6,10 @@
 package at.logic.algorithms.cutIntroduction
 
 import at.logic.algorithms.cutIntroduction.Deltas._
-import at.logic.algorithms.lk._
-import at.logic.algorithms.lk.statistics._
 import at.logic.proofs.expansionTrees.{ ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.proofs.lk
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{ quantRulesNumber, _ }
 import at.logic.proofs.lk.base._
 import at.logic.language.fol._
 import at.logic.language.hol.HOLFormula
@@ -520,7 +520,7 @@ object CutIntroduction {
           canonicalSolutionSize = lcomp( cutFormulas( 0 ) )
           minimizedSolutionSize = lcomp( ehs.cutFormulas( 0 ) )
           rulesLKProofWithCut = rulesNumber( prunedProof )
-          quantRulesWithCut = quantRulesNumber( prunedProof )
+          quantRulesWithCut = lk.algorithms.quantRulesNumber( prunedProof )
           if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas( 0 ) + "\n" )
 
           if ( verbose ) println( "Smallest grammar-size: " + grammar.size )

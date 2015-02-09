@@ -11,8 +11,6 @@ import java.util.zip.GZIPInputStream
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.algorithms.interpolation._
-import at.logic.algorithms.lk.statistics._
-import at.logic.algorithms.lk.{ deleteTautologies => deleteTaut, _ }
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.resolution._
@@ -25,6 +23,7 @@ import at.logic.proofs.expansionTrees.algorithms.{ compressQuantifiers, minimalE
 import at.logic.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
 import at.logic.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{ deleteTautologies => deleteTaut, _ }
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
 import at.logic.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
@@ -82,7 +81,6 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.ceres.{ CERES, CERESR2LK }
 import at.logic.transformations.{ ReductiveCutElim, herbrandExtraction }
-import at.logic.algorithms.lk.{ rule_isomorphic => LKrule_isomorphic }
 import at.logic.algorithms.lksk.{ rule_isomorphic => LKSKrule_isomorphic }
 import at.logic.utils.logging.Stopwatch
 
@@ -1107,7 +1105,7 @@ object ntape {
     val ax1 = FSequent( Nil, List( parse hlkformula "var x:i; const < : i>i>o; const 1 : i; const + : i>i>i; x<x+1" ) )
     val ax2 = FSequent( Nil, List( parse hlkformula "var x,y,z:i; const + : i>i>i; x+(y+z)=(x+y)+z" ) )
     val removed = subsumedClausesRemovalHOL( deleteTautologies( applyFactoring( ax1 :: ax2 :: full ) ) )
-    val ( cm, qhol ) = algorithms.replaceAbstractions( removed )
+    val ( cm, qhol ) = replaceAbstractions( removed )
     cm.toList map ( x =>
       println( x._2 + " & " + HybridLatexExporter.getFormulaString( x._1.asInstanceOf[HOLExpression], true, true ) + "\\\\" ) )
 

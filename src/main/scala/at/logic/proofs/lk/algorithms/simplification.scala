@@ -1,10 +1,10 @@
 
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
-import at.logic.algorithms.subsumption._
 import at.logic.algorithms.matching._
-import at.logic.proofs.lk.base.FSequent
+import at.logic.algorithms.subsumption._
 import at.logic.language.hol._
+import at.logic.proofs.lk.base.FSequent
 
 object deleteTautologies {
   def apply( sequents: List[FSequent] ): List[FSequent] =

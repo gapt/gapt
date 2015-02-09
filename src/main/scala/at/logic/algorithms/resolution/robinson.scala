@@ -1,12 +1,12 @@
 
 package at.logic.algorithms.resolution
 
+import at.logic.proofs.lk.algorithms.{ CloneLKProof, applySubstitution => applySub }
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk._
 import at.logic.proofs.resolution.robinson._
 import at.logic.language.fol._
 import at.logic.proofs.resolution.{ FClause, Clause }
-import at.logic.algorithms.lk.{ applySubstitution => applySub, CleanStructuralRules, CloneLKProof }
 import at.logic.language.hol.HOLFormula
 
 object RobinsonToLK {

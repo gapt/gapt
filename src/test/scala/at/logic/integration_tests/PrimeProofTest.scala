@@ -3,11 +3,10 @@ package at.logic.integration_tests
 
 import at.logic.algorithms.fol.hol2fol._
 import at.logic.algorithms.lk._
-import at.logic.algorithms.lk.eliminateDefinitions
-import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.subsumption._
 import at.logic.proofs.expansionTrees.{toDeep, ExpansionSequent}
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{getStatistics, deleteTautologies, eliminateDefinitions}
 import at.logic.proofs.lk.base._
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol._

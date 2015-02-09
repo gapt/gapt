@@ -5,16 +5,16 @@
 // Only works for FOL at the moment (since this is simple -
 // there is no reason in principle for this not to work for HOL).
 
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
+import at.logic.language.hol._
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences._
-import at.logic.language.hol._
 
 object map_proof extends map_proof
 class map_proof {
-  import ProofTransformationUtils.computeMap
+  import at.logic.proofs.lk.algorithms.ProofTransformationUtils.computeMap
   def apply( proof: LKProof, fun: HOLExpression => HOLExpression ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) =
     proof match {
       case Axiom( _ ) =>

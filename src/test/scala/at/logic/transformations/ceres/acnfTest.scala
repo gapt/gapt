@@ -3,6 +3,7 @@ package at.logic.transformations.ceres.ACNF
 import at.logic.algorithms.resolution.RobinsonToLK
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.applySubstitution
 import at.logic.proofs.lk.base.{LKProof, Sequent}
 import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.proofs.slk.SchemaProofDB
@@ -23,7 +24,6 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import scala.io._
-import at.logic.algorithms.lk.applySubstitution
 
 @RunWith(classOf[JUnitRunner])
 class acnfTest extends SpecificationWithJUnit {

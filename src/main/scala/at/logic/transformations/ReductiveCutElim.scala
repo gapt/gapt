@@ -9,11 +9,11 @@ package at.logic.transformations
 
 import java.lang.Exception
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{ applySubstitution, regularize, CleanStructuralRules }
 import at.logic.proofs.lk.base._
 import at.logic.language.hol._
 import at.logic.proofs.occurrences._
 import at.logic.language.hol.Substitution
-import at.logic.algorithms.lk.{ CleanStructuralRules, regularize, applySubstitution }
 
 class ReductiveCutElimException( msg: String ) extends Exception( msg )
 

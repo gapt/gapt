@@ -4,8 +4,8 @@
 package at.logic.integration_tests
 
 import at.logic.algorithms.lk._
-import at.logic.algorithms.lk.statistics._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{getStatistics, deleteTautologies}
 import at.logic.proofs.lk.base._
 import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.language.tptp.TPTPFOLExporter

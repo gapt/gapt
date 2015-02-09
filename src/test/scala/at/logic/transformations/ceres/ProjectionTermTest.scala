@@ -1,8 +1,8 @@
 package at.logic.transformations.ceres
 
-import at.logic.algorithms.lk.{getCutAncestors, getAncestors}
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base.{Sequent, LKProof}
 import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.proofs.slk.{SchemaProof, SchemaProofDB}

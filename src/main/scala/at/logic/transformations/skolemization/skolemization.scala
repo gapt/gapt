@@ -5,6 +5,7 @@ package at.logic.transformations.skolemization
 import at.logic.language.fol.algorithms.convertHolToFol
 import at.logic.language.lambda.BetaReduction._
 import at.logic.language.lambda.BetaReduction.ImplicitStandardStrategy._
+import at.logic.proofs.lk.algorithms.{ applySubstitution, getCutAncestors }
 import scala.collection.immutable.{ HashMap, HashSet }
 import scala.collection.immutable.Stream.Empty
 import at.logic.proofs.occurrences._
@@ -13,8 +14,6 @@ import at.logic.language.hol._
 import at.logic.language.hol
 import at.logic.language.fol.FOLFormula
 import at.logic.language.lambda.types._
-import at.logic.algorithms.lk.getCutAncestors
-import at.logic.algorithms.lk.applySubstitution
 import at.logic.language.hol.skolemSymbols.SkolemSymbolFactory
 import at.logic.utils.ds.streams.Definitions._
 import at.logic.proofs.slk.{ trsArrowLeftRule, SchemaProofLinkRule }

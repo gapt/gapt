@@ -4,11 +4,11 @@ package at.logic.integration_tests
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk._
-import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.proofs.expansionTrees.{toDeep => ETtoDeep,toShallow => ETtoShallow}
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{AtomicExpansion, solve, deleteTautologies, regularize}
 import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences._
 import at.logic.language.fol._

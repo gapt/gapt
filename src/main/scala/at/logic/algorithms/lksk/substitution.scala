@@ -1,11 +1,11 @@
 package at.logic.algorithms.lksk
 
+import at.logic.proofs.lk.algorithms.{ ProofTransformationUtils, applySubstitution => LKapplySubstitution }
 import at.logic.proofs.lksk._
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk.{ UnaryLKProof, BinaryLKProof }
 import at.logic.language.hol._
-import at.logic.algorithms.lk.{ applySubstitution => LKapplySubstitution, ProofTransformationUtils }
 import BetaReduction.{ betaNormalize => normalize }
 
 object applySubstitution extends at.logic.utils.logging.Logger {

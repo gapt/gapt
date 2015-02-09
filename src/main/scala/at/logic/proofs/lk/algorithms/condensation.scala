@@ -1,4 +1,4 @@
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
 import at.logic.language.hol.HOLFormula
 import at.logic.proofs.lk.base.FSequent

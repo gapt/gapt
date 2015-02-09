@@ -2,6 +2,7 @@
 package at.logic.algorithms.lk
 
 import at.logic.language.hol._
+import at.logic.proofs.lk.algorithms.applySubstitution
 import at.logic.proofs.lk.base.FSequent
 import at.logic.proofs.lk._
 import at.logic.language.lambda.types._

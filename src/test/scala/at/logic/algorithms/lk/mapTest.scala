@@ -3,6 +3,7 @@ package at.logic.algorithms.lk
 import at.logic.language.fol.algorithms.convertHolToFol
 import at.logic.proofs.lk._
 import at.logic.language.fol.FOLFormula
+import at.logic.proofs.lk.algorithms.{solve, map_proof}
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner

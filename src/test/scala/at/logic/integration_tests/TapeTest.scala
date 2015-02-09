@@ -2,6 +2,7 @@ package at.logic.integration_tests
 
 import at.logic.language.fol.algorithms.convertHolToFol
 import at.logic.language.hol._
+import at.logic.proofs.lk.algorithms.{AtomicExpansion, deleteTautologies, map_proof, regularize}
 import at.logic.proofs.resolution.{Clause, ResolutionProof}
 import at.logic.proofs.lk._
 

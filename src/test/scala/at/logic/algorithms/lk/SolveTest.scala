@@ -1,5 +1,6 @@
 package at.logic.algorithms.lk
 
+import at.logic.proofs.lk.algorithms.{AtomicExpansion, solve}
 import at.logic.proofs.lk.base.{LKUnaryRuleCreationException, LKProof, FSequent, beSyntacticFSequentEqual}
 import at.logic.proofs.lk.{Axiom, NegLeftRule}
 import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
@@ -14,7 +15,6 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 import at.logic.language.lambda.types.{To, Ti}
-import at.logic.algorithms.lk.statistics._
 import at.logic.proofs.expansionTrees.{ExpansionTree, ExpansionSequent, Atom => AtomET, Neg => NegET, Or => OrET, WeakQuantifier => WeakQuantifierET, StrongQuantifier => StrongQuantifierET, toSequent}
 
 @RunWith(classOf[JUnitRunner])

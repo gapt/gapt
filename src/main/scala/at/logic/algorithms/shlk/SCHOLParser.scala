@@ -5,7 +5,7 @@ package at.logic.algorithms.shlk
  */
 
 //import at.logic.calculi.lk.macroRules._
-import at.logic.algorithms.lk._
+import at.logic.proofs.lk.algorithms.solve
 import at.logic.proofs.slk._
 import at.logic.proofs.lk.base.{ Sequent, LKProof }
 import at.logic.proofs.lk._

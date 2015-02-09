@@ -1,5 +1,6 @@
 package at.logic.transformations.ceres
 
+import at.logic.proofs.lk.algorithms.applySubstitution
 import at.logic.proofs.resolution.FClause
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.symbols._
@@ -11,7 +12,6 @@ import at.logic.proofs.lk._
 import at.logic.proofs.resolution.robinson.RobinsonResolutionProof
 
 import at.logic.algorithms.resolution.RobinsonToLK
-import at.logic.algorithms.lk.applySubstitution
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.provers.prover9.Prover9
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet

@@ -1,7 +1,7 @@
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
-import at.logic.proofs.lk.base.{ NullaryLKProof, LKProof }
-import at.logic.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
+import at.logic.proofs.lk.base.{ LKProof, NullaryLKProof }
+import at.logic.proofs.lk.{ BinaryLKProof, UnaryLKProof }
 import at.logic.proofs.proofs.RuleTypeA
 
 /**
