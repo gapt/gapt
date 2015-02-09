@@ -1,5 +1,6 @@
 package at.logic.algorithms.llk
 
+import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.proofs.lk.algorithms.{ applySubstitution, AtomicExpansion, solve }
 import at.logic.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
 import at.logic.parsing.language.hlk.{ ast, DeclarationParser, HLKHOLParser }
@@ -8,7 +9,6 @@ import at.logic.language.lambda.types.{ To, TA }
 import at.logic.language.hol._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk._
-import at.logic.algorithms.matching.NaiveIncompleteMatchingAlgorithm
 import at.logic.language.lambda.Var
 import at.logic.proofs.lk.EquationVerifier._
 import at.logic.language.lambda.BetaReduction._

@@ -1,5 +1,6 @@
 package at.logic.proofs.expansionTrees
 
+import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.language.hol.{ Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL, AllVar => AllVarHOL, ExVar => ExVarHOL, _ }
 import at.logic.utils.ds.trees._
 import at.logic.language.hol.logicSymbols._
@@ -7,7 +8,6 @@ import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences._
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
-import at.logic.algorithms.matching.NaiveIncompleteMatchingAlgorithm
 import scala.collection.immutable.HashMap
 
 /**

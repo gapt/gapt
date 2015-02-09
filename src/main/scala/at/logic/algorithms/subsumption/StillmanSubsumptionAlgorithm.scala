@@ -5,7 +5,8 @@
 
 package at.logic.algorithms.subsumption
 
-import at.logic.algorithms.matching._
+import at.logic.language.fol.algorithms.FOLMatchingAlgorithm
+import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.language.hol.{ HOLExpression, Substitution => SubstitutionHOL, Neg => NegHOL, HOLVar, freeVariables => freeVariablesHOL, rename => renameHOL }
 import at.logic.language.fol.{ FOLFormula, FOLExpression, Substitution => SubstitutionFOL, Neg => NegFOL, FOLVar, freeVariables => freeVariablesFOL, rename => renameFOL }
 import at.logic.proofs.lk.base.FSequent

@@ -1,8 +1,8 @@
 
 package at.logic.transformations.ceres.ACNF
 
-import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.algorithms.shlk._
+import at.logic.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base._

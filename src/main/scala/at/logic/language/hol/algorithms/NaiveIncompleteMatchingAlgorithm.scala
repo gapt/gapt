@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.algorithms.matching
+package at.logic.language.hol.algorithms
 
 import at.logic.language.hol._
 

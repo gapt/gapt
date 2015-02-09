@@ -2,7 +2,7 @@
  * FOLMatchingAlgorithm.scala
  *
  */
-package at.logic.algorithms.matching
+package at.logic.language.fol.algorithms
 
 import at.logic.language.fol._
 

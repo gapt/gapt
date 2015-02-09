@@ -1,9 +1,9 @@
 
 package at.logic.proofs.lk.algorithms
 
-import at.logic.algorithms.matching._
 import at.logic.algorithms.subsumption._
 import at.logic.language.hol._
+import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.proofs.lk.base.FSequent
 
 object deleteTautologies {
