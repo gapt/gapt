@@ -1,8 +1,11 @@
 package at.logic.utils.executionModels
 
-package timeout {
+import scala.concurrent._
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import ExecutionContext.Implicits.global
 
-  class TimeOutException extends Exception
+package timeout {
 
   /**
    * runs f with timeout to
@@ -20,29 +23,8 @@ package timeout {
    * }
    */
   object withTimeout {
-    def apply[T]( to: Long )( f: => T ): T = {
-      var result: Either[Throwable, T] = Left( new TimeOutException() )
-
-      val r = new Runnable {
-        def run() {
-          try {
-            result = Right( f )
-          } catch {
-            case e: Exception =>
-              result = Left( e )
-          }
-        }
-      }
-
-      val t = new Thread( r )
-      t.start()
-      t.join( to )
-      if ( t.isAlive() ) {
-        t.stop()
-      }
-
-      if ( result.isLeft ) throw result.left.get
-      else result.right.get
+    def apply[T]( to: Duration )( f: => T ): T = {
+      Await.result( Future { f }, to )
     }
   }
 
