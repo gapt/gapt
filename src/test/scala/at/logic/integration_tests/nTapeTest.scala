@@ -4,7 +4,6 @@ import java.io.IOException
 
 import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.llk.HybridLatexExporter
-import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.language.fol.algorithms.{undoHol2Fol, replaceAbstractions, reduceHolToFol, recreateWithFactory}
 import at.logic.proofs.lk.algorithms.{AtomicExpansion, regularize}
@@ -13,6 +12,7 @@ import at.logic.proofs.lksk.sequentToLabelledSequent
 import at.logic.language.fol.{FOLVar, FOLFormula, FOLExpression}
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols.{StringSymbol, SymbolA}
+import at.logic.proofs.resolution.algorithms.RobinsonToRal
 
 import at.logic.provers.prover9._
 import at.logic.transformations.ceres.clauseSets.AlternativeStandardClauseSet

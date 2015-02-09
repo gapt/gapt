@@ -10,7 +10,6 @@ import org.specs2.execute.Success
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.proofs.lk.base.FSequent
-import at.logic.algorithms.lk._
 
 // Seems like this is testing auto-propositional for HOL... why is it here?
 @RunWith(classOf[JUnitRunner])

@@ -33,10 +33,8 @@ object CLIMain {
   import at.logic.language.hol.logicSymbols._
   import at.logic.language.hoare._
   import at.logic.transformations.skolemization.skolemize
-  import at.logic.algorithms.lk.regularize
   import at.logic.proofs.occurrences.FormulaOccurrence
   import at.logic.algorithms.cutIntroduction.Deltas._
-  import at.logic.algorithms.lk.statistics._
   import at.logic.provers.minisat.MiniSATProver
   import at.logic.gui.prooftool.gui.{Main => PT}
   import help.{apply => help}

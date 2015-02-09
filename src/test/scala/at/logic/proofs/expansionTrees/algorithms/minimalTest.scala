@@ -1,14 +1,11 @@
-package at.logic.algorithms.expansionTrees
+package at.logic.proofs.expansionTrees.algorithms
 
-import at.logic.language.hol.{Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, _}
-import at.logic.language.lambda.types.{Ti => i, To => o, ->}
+import at.logic.language.hol.{And => AndHOL, Atom => AtomHOL, Imp => ImpHOL, Or => OrHOL, _}
+import at.logic.language.lambda.types.{Ti => i, To => o}
 import at.logic.proofs.expansionTrees._
-import at.logic.proofs.expansionTrees.algorithms.{minimalExpansionSequents, compressQuantifiers}
-import at.logic.proofs.lk.base.FSequent
-import at.logic.algorithms.expansionTrees._
 import at.logic.provers.minisat.MiniSATProver
-import org.specs2.mutable._
 import org.junit.runner.RunWith
+import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])

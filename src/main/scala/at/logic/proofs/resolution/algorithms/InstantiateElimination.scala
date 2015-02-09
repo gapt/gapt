@@ -1,12 +1,11 @@
-package at.logic.algorithms.resolution
+package at.logic.proofs.resolution.algorithms
 
 import at.logic.algorithms.rewriting.NameReplacement
-import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.proofs.resolution.robinson.{ InitialClause, Factor, Resolution, Variant, Paramodulation, Instance, RobinsonResolutionProof }
-import at.logic.proofs.resolution.Clause
-import at.logic.proofs.lk.base.Sequent
-import at.logic.language.lambda.types.Ti
 import at.logic.language.fol._
+import at.logic.proofs.lk.base.Sequent
+import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.resolution.Clause
+import at.logic.proofs.resolution.robinson.{ Factor, InitialClause, Instance, Paramodulation, Resolution, RobinsonResolutionProof, Variant }
 
 /**
  * Eliminates the insantiate rule from a RobinsonResolutionProof

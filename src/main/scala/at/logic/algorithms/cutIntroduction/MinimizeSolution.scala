@@ -7,11 +7,11 @@
 
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.algorithms.resolution._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.resolution.FClause
 import at.logic.language.fol.Utils._
 import at.logic.language.fol._
+import at.logic.proofs.resolution.algorithms.CNFp
 import at.logic.provers.Prover
 import at.logic.provers.minisat.MiniSAT
 import at.logic.utils.dssupport.ListSupport.mapAccumL

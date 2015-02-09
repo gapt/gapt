@@ -1,14 +1,11 @@
-package at.logic.algorithms.fol
+package at.logic.language.fol.algorithms
 
-import at.logic.language.fol.algorithms.{recreateWithFactory, fol2hol}
-import org.specs2.mutable._
+import at.logic.language.{fol, hol}
+import at.logic.language.hol.HOLConst
+import at.logic.language.lambda.types.{Ti, To}
 import org.junit.runner.RunWith
+import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-
-import at.logic.language.fol
-import at.logic.language.hol
-import at.logic.language.lambda.types.{To, Ti}
-import at.logic.language.hol.{HOLConst, HOLFactory}
 
 /**
  * Created by marty on 3/10/14.

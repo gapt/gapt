@@ -1,21 +1,15 @@
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
-import at.logic.proofs.lk.algorithms.{AtomicExpansion, solve}
-import at.logic.proofs.lk.base.{LKUnaryRuleCreationException, LKProof, FSequent, beSyntacticFSequentEqual}
-import at.logic.proofs.lk.{Axiom, NegLeftRule}
-import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.language.hol._
-import at.logic.language.hol.logicSymbols.{LogicalSymbolA}
 import at.logic.language.lambda.symbols.StringSymbol
-import at.logic.language.schema.{IntVar, Succ, IndexedPredicate, IntZero, Or => OrS, SchemaFormula, BigAnd, BigOr}
-import java.io.File.separator
-import scala.io._
-import org.specs2.mutable._
+import at.logic.language.lambda.types.{Ti, To}
+import at.logic.language.schema.{BigAnd, BigOr, IndexedPredicate, IntVar, IntZero, SchemaFormula, Succ, Or => OrS}
+import at.logic.proofs.expansionTrees.{ExpansionSequent, toFSequent, Atom => AtomET, Neg => NegET, Or => OrET, StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET}
+import at.logic.proofs.lk.base.{FSequent, beSyntacticFSequentEqual}
+import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import org.junit.runner.RunWith
+import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import org.specs2.execute.Success
-import at.logic.language.lambda.types.{To, Ti}
-import at.logic.proofs.expansionTrees.{ExpansionTree, ExpansionSequent, Atom => AtomET, Neg => NegET, Or => OrET, WeakQuantifier => WeakQuantifierET, StrongQuantifier => StrongQuantifierET, toFSequent}
 
 @RunWith(classOf[JUnitRunner])
 class SolveTest extends SpecificationWithJUnit {

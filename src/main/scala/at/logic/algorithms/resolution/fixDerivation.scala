@@ -6,7 +6,6 @@ import at.logic.proofs.lk.base._
 import at.logic.proofs.resolution.robinson._
 import at.logic.language.fol.{ Equation => FOLEquation, FOLTerm, FOLFormula, FOLExpression, Substitution }
 import at.logic.proofs.resolution.{ FClause, Clause }
-import at.logic.algorithms.lk.{ applySubstitution => applySub, CleanStructuralRules, CloneLKProof }
 import at.logic.provers.atp.SearchDerivation
 import at.logic.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 

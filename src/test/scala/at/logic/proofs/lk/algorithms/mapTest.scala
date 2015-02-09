@@ -1,16 +1,14 @@
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
-import at.logic.language.fol.algorithms.convertHolToFol
-import at.logic.proofs.lk._
 import at.logic.language.fol.FOLFormula
-import at.logic.proofs.lk.algorithms.{solve, map_proof}
+import at.logic.language.fol.algorithms.convertHolToFol
+import at.logic.language.hol._
+import at.logic.language.lambda.types._
+import at.logic.proofs.lk._
+import at.logic.proofs.lk.base._
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
-
-import at.logic.proofs.lk.base._
-import at.logic.language.hol._
-import at.logic.language.lambda.types._
 
 
 /**

@@ -1,12 +1,11 @@
-package at.logic.algorithms.resolution
+package at.logic.proofs.resolution.algorithms
 
-import at.logic.proofs.lk.base.{ FSequent, LKProof }
+import at.logic.language.hol._
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.{ applySubstitution => applySub }
+import at.logic.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.proofs.resolution.FClause
-import at.logic.language.hol._
 import at.logic.proofs.resolution.robinson.RobinsonResolutionProof
-import at.logic.utils.dssupport.ListSupport.removeFirst
 
 /**
  * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)

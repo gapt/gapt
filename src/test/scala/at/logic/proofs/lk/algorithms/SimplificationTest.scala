@@ -1,16 +1,13 @@
 
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
-import at.logic.proofs.lk.algorithms.{subsumedClausesRemoval, subsumedClausesRemovalHOL, setNormalize, deleteTautologies}
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-
-import at.logic.language.fol.{FOLFormula, FOLExpression}
+import at.logic.language.fol.{FOLConst, FOLVar, Atom => FOLAtom, Function => FOLFunction}
 import at.logic.language.hol._
-import at.logic.language.fol.{Function => FOLFunction, Atom => FOLAtom, FOLVar, FOLConst}
 import at.logic.language.lambda.types._
 import at.logic.proofs.lk.base.FSequent
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class SimplificationTest extends SpecificationWithJUnit {

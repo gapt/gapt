@@ -1,15 +1,13 @@
-package at.logic.algorithms.lk
-
-import at.logic.proofs.lk.algorithms.{cutformulaExtraction, getCutsAsProofs}
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+package at.logic.proofs.lk.algorithms
 
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
-import at.logic.proofs.lk.base.{BinaryLKProof, LKProof, Sequent}
+import at.logic.proofs.lk.base.{BinaryLKProof, Sequent}
 import at.logic.proofs.lk.{Axiom, CutRule}
 import at.logic.proofs.occurrences.FormulaOccurrence
+import org.junit.runner.RunWith
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class CutFormulaExtractionTest extends SpecificationWithJUnit {

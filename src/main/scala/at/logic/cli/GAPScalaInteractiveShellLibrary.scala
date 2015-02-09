@@ -13,7 +13,6 @@ import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.llk.HybridLatexExporter
-import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.subsumption._
@@ -28,6 +27,7 @@ import at.logic.proofs.lk.base._
 import at.logic.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
 import at.logic.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.proofs.resolution._
+import at.logic.proofs.resolution.algorithms._
 import at.logic.proofs.resolution.robinson._
 import at.logic.gui.prooftool.gui.Main
 import at.logic.language.fol.{ AllVar => FOLAllVar, And => FOLAnd, Atom => FOLAtom, ExVar => FOLExVar, Imp => FOLImp, Neg => FOLNeg, Or => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _ }

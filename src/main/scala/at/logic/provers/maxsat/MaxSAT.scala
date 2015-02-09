@@ -2,9 +2,9 @@ package at.logic.provers.maxsat
 
 import java.io._
 
-import at.logic.algorithms.resolution.{ CNFp, TseitinCNF }
 import at.logic.proofs.resolution._
 import at.logic.language.fol._
+import at.logic.proofs.resolution.algorithms.{ TseitinCNF, CNFp }
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.logging.Stopwatch
 

@@ -1,6 +1,5 @@
 package at.logic.testing.tstp
 
-import at.logic.algorithms.lk._
 import at.logic.proofs.expansionTrees._
 import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.proofs.lk.algorithms.containsEqualityReasoning

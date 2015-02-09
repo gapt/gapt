@@ -17,13 +17,11 @@ val filename = "tape3-4c.llk"
 import at.logic.language.fol.algorithms.recreateWithFactory
 import at.logic.language.hol._
 
-import at.logic.algorithms.fol.hol2fol.undoHol2Fol
 import at.logic.algorithms.hlk.HybridLatexParser
-import at.logic.algorithms.lk.AtomicExpansion
-import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.proofs.lk.algorithms.{AtomicExpansion, subsumedClausesRemovalHOL, regularize}
 import at.logic.proofs.lksk.sequentToLabelledSequent
+import at.logic.proofs.resolution.algorithms.RobinsonToRal
 
 
 import at.logic.provers.prover9._

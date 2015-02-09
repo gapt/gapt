@@ -1,5 +1,6 @@
 package at.logic.algorithms.resolution
 
+import at.logic.proofs.resolution.algorithms.InstantiateElimination
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner

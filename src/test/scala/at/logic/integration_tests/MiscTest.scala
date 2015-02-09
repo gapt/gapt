@@ -3,7 +3,6 @@ package at.logic.integration_tests
 
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.HybridLatexParser
-import at.logic.algorithms.lk._
 import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.proofs.expansionTrees.{toDeep => ETtoDeep,toShallow => ETtoShallow}
@@ -21,6 +20,7 @@ import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.veriT.VeriTParser
+import at.logic.proofs.resolution.algorithms.{fixSymmetry, RobinsonToLK, CNFn}
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.provers.prover9.{Prover9, Prover9Prover}
 import at.logic.provers.veriT.VeriTProver
