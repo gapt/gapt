@@ -1,12 +1,6 @@
-/*
- * UnificationAlgorithm.scala
- *
- */
+package at.logic.language.fol.algorithms
 
-package at.logic.algorithms.unification
-
-import at.logic.language.fol.FOLExpression
-import at.logic.language.fol.Substitution
+import at.logic.language.fol.{ FOLExpression, Substitution }
 
 /**
  * The interface for an unification algorithm of finitary type, i.e.
@@ -21,5 +15,3 @@ trait FinitaryUnification {
    */
   def unify( term1: FOLExpression, term2: FOLExpression ): List[Substitution]
 }
-
-trait UnificationAlgorithm extends FinitaryUnification

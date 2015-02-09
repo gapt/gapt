@@ -3,6 +3,7 @@
 
 package at.logic.provers.atp
 
+import at.logic.language.fol.algorithms.FOLUnificationAlgorithm
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -11,7 +12,6 @@ import at.logic.language.fol._
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.provers.atp.commands.base.{BranchCommand, Command}
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand
-import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
 import at.logic.proofs.lk.base.FSequent
 import at.logic.provers.atp.commands.refinements.simple._
 import at.logic.provers.atp.commands.refinements.base._

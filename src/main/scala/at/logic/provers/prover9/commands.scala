@@ -1,7 +1,7 @@
 
 package at.logic.provers.prover9.commands
 
-import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.language.fol.algorithms.FOLUnificationAlgorithm
 import at.logic.proofs.lk.base.FSequent
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.proofs.resolution.{ ResolutionProof, Clause }
