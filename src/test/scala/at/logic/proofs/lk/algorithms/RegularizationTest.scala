@@ -1,15 +1,13 @@
 
-package at.logic.algorithms.lk
-
-import at.logic.proofs.lk.algorithms.regularize
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+package at.logic.proofs.lk.algorithms
 
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
-import at.logic.proofs.lk.base.{Sequent, FSequent}
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.FSequent
+import org.junit.runner.RunWith
+import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class RegularizationTest extends SpecificationWithJUnit {

@@ -1,12 +1,11 @@
-package at.logic.algorithms.resolution
+package at.logic.proofs.resolution.algorithms
 
+import at.logic.language.fol.{And, Atom, FOLConst, Imp, Neg, Or}
+import at.logic.language.hol.{Atom => HOLAtom}
+import at.logic.proofs.resolution.FClause
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
-import at.logic.language.hol.{Atom => HOLAtom, HOLConst}
-import at.logic.language.lambda.types.To
-import at.logic.language.fol.{And, Or, Neg, Atom, FOLConst, Imp}
-import at.logic.proofs.resolution.FClause
 
 @RunWith(classOf[JUnitRunner])
 class CNFTest extends SpecificationWithJUnit {

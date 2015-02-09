@@ -8,12 +8,12 @@ package at.logic.provers.minisat
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol._
 import at.logic.proofs.resolution._
-import at.logic.algorithms.resolution.{ CNFp, TseitinCNF }
 
 import java.io._
 import java.lang.StringBuilder
 
 import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.resolution.algorithms.{ TseitinCNF, CNFp }
 
 import at.logic.provers.Prover
 

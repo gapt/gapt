@@ -2,25 +2,19 @@
  * hol2folTest.scala
  */
 
-package at.logic.algorithms.fol.hol2fol
-
-import at.logic.language.fol.algorithms.{changeTypeIn, convertHolToFol, reduceHolToFol, fol2hol}
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+package at.logic.language.fol.algorithms
 
 import at.logic.language.fol
-import at.logic.language.fol._
-import at.logic.language.hol.{Neg => HOLNeg, And => HOLAnd, Or => HOLOr, Imp => HOLImp, Function => HOLFunction, Atom => HOLAtom, ExVar => HOLExVar, AllVar => HOLAllVar, HOLApp, HOLVar, HOLConst, HOLExpression}
-import at.logic.language.lambda.types._
-
-import scala.collection.mutable
-import at.logic.language.fol.FOLVar
-import at.logic.language.lambda.symbols.StringSymbol
+import at.logic.language.fol.{FOLVar, _}
 import at.logic.language.hol.logicSymbols.ImpSymbol
-import at.logic.language.lambda.LambdaExpression
+import at.logic.language.hol.{HOLConst, HOLExpression, HOLVar, AllVar => HOLAllVar, And => HOLAnd, Atom => HOLAtom, ExVar => HOLExVar, Function => HOLFunction, Imp => HOLImp, Neg => HOLNeg, Or => HOLOr}
+import at.logic.language.lambda.symbols.StringSymbol
+import at.logic.language.lambda.types._
 import at.logic.parsing.language.simple.{SimpleFOLParser, SimpleHOLParser}
 import at.logic.parsing.readers.StringReader
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class hol2folTest extends SpecificationWithJUnit {

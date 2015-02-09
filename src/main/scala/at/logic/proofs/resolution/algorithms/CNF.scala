@@ -1,9 +1,9 @@
-package at.logic.algorithms.resolution
+package at.logic.proofs.resolution.algorithms
 
-import at.logic.language.fol.{ FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom }
+import at.logic.language.fol.{ FOLFormula, AllVar => FAllVar, And => FAnd, Atom => FAtom, ExVar => FExVar, Imp => FImp, Neg => FNeg, Or => FOr }
 import at.logic.language.hol._
-import at.logic.proofs.resolution.FClause
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
+import at.logic.proofs.resolution.FClause
 
 import scala.collection.mutable
 

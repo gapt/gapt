@@ -6,13 +6,12 @@
 
 package at.logic.provers.prover9
 
-import at.logic.algorithms.resolution.InstantiateElimination
-import at.logic.algorithms.resolution.{ RobinsonToLK, fixSymmetry, CNFn }
 import at.logic.algorithms.rewriting.NameReplacement
 import at.logic.proofs.lk.algorithms.applyReplacement
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk.{ CutRule, Axiom }
 import at.logic.proofs.resolution.Clause
+import at.logic.proofs.resolution.algorithms.{ fixSymmetry, RobinsonToLK, CNFn, InstantiateElimination }
 import at.logic.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.language.fol._
 import at.logic.parsing.ivy.IvyParser

@@ -1,8 +1,7 @@
-package at.logic.algorithms.lk
+package at.logic.proofs.lk.algorithms
 
-import at.logic.proofs.lk._
 import at.logic.language.fol._
-import at.logic.proofs.lk.algorithms.CloneLKProof
+import at.logic.proofs.lk._
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner

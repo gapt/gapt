@@ -1,16 +1,16 @@
-package at.logic.algorithms.resolution
+package at.logic.proofs.resolution.algorithms
 
 import at.logic.language.fol.algorithms.recreateWithFactory
-import at.logic.proofs.lk.base.{ LKUnaryRuleCreationException, FSequent }
-import at.logic.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
-import at.logic.proofs.resolution.Clause
-import at.logic.proofs.resolution.robinson._
-import at.logic.proofs.resolution.ral._
+import at.logic.language.fol.{ FOLFormula, Substitution => FOLSubstitution }
+import at.logic.language.hol._
+import at.logic.language.lambda.{ FactoryA, LambdaExpression, Var, Substitution => LambdaSubstitution }
+import at.logic.proofs.lk.base.FSequent
+import at.logic.proofs.lksk.TypeSynonyms.EmptyLabel
 import at.logic.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
 import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.language.fol.{ FOLExpression, FOLFormula, Substitution => FOLSubstitution }
-import at.logic.language.hol._
-import at.logic.language.lambda.{ Substitution => LambdaSubstitution, Var, FactoryA, LambdaExpression }
+import at.logic.proofs.resolution.Clause
+import at.logic.proofs.resolution.ral._
+import at.logic.proofs.resolution.robinson._
 
 /**
  * Created by marty on 9/9/14.

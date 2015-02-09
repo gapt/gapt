@@ -1,13 +1,13 @@
 
-package at.logic.algorithms.resolution
+package at.logic.proofs.resolution.algorithms
 
+import at.logic.language.fol._
+import at.logic.language.hol.HOLFormula
+import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.{ CloneLKProof, applySubstitution => applySub }
 import at.logic.proofs.lk.base._
-import at.logic.proofs.lk._
+import at.logic.proofs.resolution.FClause
 import at.logic.proofs.resolution.robinson._
-import at.logic.language.fol._
-import at.logic.proofs.resolution.{ FClause, Clause }
-import at.logic.language.hol.HOLFormula
 
 object RobinsonToLK {
   type mapT = scala.collection.mutable.Map[FClause, LKProof]

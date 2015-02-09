@@ -3,12 +3,10 @@ package at.logic.integration_tests
 import at.logic.language.fol.algorithms.convertHolToFol
 import at.logic.language.hol._
 import at.logic.proofs.lk.algorithms.{AtomicExpansion, deleteTautologies, map_proof, regularize}
+import at.logic.proofs.resolution.algorithms.RobinsonToLK
 import at.logic.proofs.resolution.{Clause, ResolutionProof}
 import at.logic.proofs.lk._
 
-
-import at.logic.algorithms.fol.hol2fol._
-import at.logic.algorithms.lk._
 
 import at.logic.proofs.lk.base._
 import at.logic.parsing.calculus.xml.saveXML
@@ -32,7 +30,6 @@ import at.logic.transformations.skolemization.skolemize
 
 import commands.Prover9InitCommand
 import at.logic.algorithms.rewriting.DefinitionElimination
-import at.logic.algorithms.resolution.RobinsonToLK
 
 import java.io.File.separator
 import java.io.{IOException, FileInputStream, InputStreamReader}

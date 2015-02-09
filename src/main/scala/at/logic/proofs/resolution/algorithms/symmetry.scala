@@ -1,11 +1,11 @@
-package at.logic.algorithms.resolution
+package at.logic.proofs.resolution.algorithms
+
+import at.logic.language.fol.{ FOLFormula, Substitution, Equation => FOLEquation }
+import at.logic.proofs.lk.base._
+import at.logic.proofs.resolution.FClause
+import at.logic.proofs.resolution.robinson._
 
 import scala.collection.immutable.HashMap
-import at.logic.proofs.lk._
-import at.logic.proofs.lk.base._
-import at.logic.proofs.resolution.robinson._
-import at.logic.language.fol.{ Equation => FOLEquation, FOLTerm, FOLFormula, FOLExpression, Substitution }
-import at.logic.proofs.resolution.{ FClause, Clause }
 
 /**
  * Sometimes, we have a resolution refutation of a set of clauses C
