@@ -10,7 +10,6 @@ import java.util.zip.GZIPInputStream
 
 import at.logic.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
-import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lksk.applySubstitution
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
