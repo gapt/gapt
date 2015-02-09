@@ -4,6 +4,7 @@
 
 package at.logic.algorithms.fol.hol2fol
 
+import at.logic.language.fol.algorithms.{changeTypeIn, convertHolToFol, reduceHolToFol, fol2hol}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -17,7 +18,6 @@ import scala.collection.mutable
 import at.logic.language.fol.FOLVar
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.hol.logicSymbols.ImpSymbol
-import at.logic.algorithms.fol.fol2hol
 import at.logic.language.lambda.LambdaExpression
 import at.logic.parsing.language.simple.{SimpleFOLParser, SimpleHOLParser}
 import at.logic.parsing.readers.StringReader

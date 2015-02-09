@@ -5,8 +5,8 @@
 
 package at.logic.parsing.language.tptp
 
-import at.logic.algorithms.fol.hol2fol._
 import at.logic.language.fol._
+import at.logic.language.fol.algorithms.{ convertHolToFol, reduceHolToFol }
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.proofs.lk.base.FSequent
 import scala.collection.immutable.HashMap

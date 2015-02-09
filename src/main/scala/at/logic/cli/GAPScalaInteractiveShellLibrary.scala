@@ -9,8 +9,6 @@ import java.io.{ FileInputStream, IOException, InputStreamReader, BufferedWriter
 import java.util.zip.GZIPInputStream
 
 import at.logic.algorithms.cutIntroduction._
-import at.logic.algorithms.fol.hol2fol._
-import at.logic.algorithms.fol.recreateWithFactory
 import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lk.statistics._
@@ -22,6 +20,7 @@ import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.algorithms.shlk._
 import at.logic.algorithms.subsumption._
 import at.logic.algorithms.unification.fol.FOLUnificationAlgorithm
+import at.logic.language.fol.algorithms._
 import at.logic.proofs.expansionTrees.algorithms.{ compressQuantifiers, minimalExpansionSequents => minimalExpSeq }
 import at.logic.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
 import at.logic.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
@@ -1108,7 +1107,7 @@ object ntape {
     val ax1 = FSequent( Nil, List( parse hlkformula "var x:i; const < : i>i>o; const 1 : i; const + : i>i>i; x<x+1" ) )
     val ax2 = FSequent( Nil, List( parse hlkformula "var x,y,z:i; const + : i>i>i; x+(y+z)=(x+y)+z" ) )
     val removed = subsumedClausesRemovalHOL( deleteTautologies( applyFactoring( ax1 :: ax2 :: full ) ) )
-    val ( cm, qhol ) = replaceAbstractions( removed )
+    val ( cm, qhol ) = algorithms.replaceAbstractions( removed )
     cm.toList map ( x =>
       println( x._2 + " & " + HybridLatexExporter.getFormulaString( x._1.asInstanceOf[HOLExpression], true, true ) + "\\\\" ) )
 

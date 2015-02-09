@@ -1,5 +1,6 @@
 package at.logic.algorithms.fol
 
+import at.logic.language.fol.algorithms.{recreateWithFactory, fol2hol}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

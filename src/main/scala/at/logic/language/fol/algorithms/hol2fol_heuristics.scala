@@ -1,13 +1,11 @@
-package at.logic.algorithms.fol.hol2fol
+package at.logic.language.fol.algorithms
 
-import at.logic.algorithms.fol.recreateWithFactory
 import at.logic.language.fol.{ FOLExpression, FOLFormula }
 import at.logic.language.hol._
 import at.logic.language.lambda.FactoryA
 import at.logic.language.lambda.symbols.StringSymbol
-import at.logic.language.lambda.types.{ Ti, TA, To }
+import at.logic.language.lambda.types.{ TA, Ti, To }
 import at.logic.utils.logging.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * This is implements some heuristics to convert a fol formula obtained by

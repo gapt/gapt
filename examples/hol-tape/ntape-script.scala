@@ -16,10 +16,10 @@ val filename = "./examples/hol-tape/ntape-small.llk"
 
 /* begin of proof script  */
 
+import at.logic.language.fol.algorithms.{undoHol2Fol, replaceAbstractions, reduceHolToFol, recreateWithFactory}
 import at.logic.language.hol._
 
-import at.logic.algorithms.fol.hol2fol.{undoHol2Fol, replaceAbstractions, reduceHolToFol}
-import at.logic.algorithms.fol.recreateWithFactory
+import at.logic.algorithms.fol.hol2fol.undoHol2Fol
 import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.lk.{AtomicExpansion, regularize}
 import at.logic.algorithms.resolution.RobinsonToRal
