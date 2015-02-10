@@ -22,6 +22,7 @@ import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
 
 class CutIntroException( msg: String ) extends Exception( msg )
+class CutIntroIncompleteException( msg: String ) extends Exception( msg )
 class CutIntroUncompressibleException( msg: String ) extends CutIntroException( msg )
 
 /**
@@ -115,6 +116,7 @@ object CutIntroduction {
     execute( proof, numcuts, 3600, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
+      case ( None, _, _, None )      => throw new CutIntroIncompleteException( "Incomplete method. Proof not computed." )
       case _                         => throw new CutIntroException( "Wrong return value in cut introduction." )
     }
   /**
@@ -134,6 +136,7 @@ object CutIntroduction {
     execute( es, hasEquality, -1, numcuts, 3600, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
+      case ( None, _, _, None )      => throw new CutIntroIncompleteException( "Incomplete method. Proof not computed." )
       case _                         => throw new CutIntroException( "Wrong return value in cut introduction." )
     }
 
@@ -393,7 +396,7 @@ object CutIntroduction {
   }
 
   // MaxSat methods
-  private def execute( proof: LKProof, n: Int, timeout: Int, verbose: Boolean ): ( Option[List[FOLFormula]], String, LogTuple, Option[Throwable] ) = {
+  private def execute( proof: LKProof, n: Int, timeout: Int, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
 
     val clean_proof = CleanStructuralRules( proof )
     val num_rules = rulesNumber( clean_proof )
@@ -402,7 +405,7 @@ object CutIntroduction {
     execute( ep, hasEquality, num_rules, n, timeout, verbose )
   }
 
-  private def execute( ep: ExpansionSequent, hasEquality: Boolean, num_lk_rules: Int, n: Int, timeout: Int, verbose: Boolean ): ( Option[List[FOLFormula]], String, LogTuple, Option[Throwable] ) = {
+  private def execute( ep: ExpansionSequent, hasEquality: Boolean, num_lk_rules: Int, n: Int, timeout: Int, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
 
     val prover = hasEquality match {
       case true  => new EquationalProver()
@@ -433,7 +436,7 @@ object CutIntroduction {
     var buildProofTime: Long = -1
     var cleanStructuralRulesTime: Long = -1
 
-    val ( cut_formulas, error ) = try {
+    val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
         val endSequent = toSequent( ep )
@@ -469,8 +472,7 @@ object CutIntroduction {
           throw new CutIntroUncompressibleException( "\nNo grammars found. The proof cannot be compressed." )
         }
 
-        /********** Proof Construction **********/ // TODO
-        phase = "prcons"
+        /********** Proof Construction **********/
 
         // For the maxsat method, the number of eigenvariables in the grammar is
         // equivalent to the number of cuts in the final proof, since each cut has
@@ -487,7 +489,31 @@ object CutIntroduction {
           cutFormulas.foreach( f => println( f ) )
         }
 
-        ( Some( cutFormulas ), None )
+        // Build the proof only if introducing one cut
+        // TODO: implement proof construction for multiple cuts
+        if ( cutFormulas.length == 1 ) {
+
+          val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
+          time = System.currentTimeMillis
+
+          phase = "prcons" // proof construction
+
+          val proof = buildProofWithCut( ehs, prover )
+
+          buildProofTime += System.currentTimeMillis - time
+          time = System.currentTimeMillis
+
+          val pruned_proof = CleanStructuralRules( proof.get )
+
+          cleanStructuralRulesTime += System.currentTimeMillis - time
+          rulesLKProofWithCut = rulesNumber( pruned_proof )
+          quantRulesWithCut = quantRulesNumber( pruned_proof )
+
+          ( Some( pruned_proof ), None )
+        } else {
+          status = "incomplete"
+          ( None, None )
+        }
       }
     } catch {
       case e: TimeOutException =>
@@ -535,7 +561,7 @@ object CutIntroduction {
       print_log_tuple( tuple );
     }
 
-    ( cut_formulas, status, tuple, error )
+    ( proof, status, tuple, error )
   }
 
   /**
