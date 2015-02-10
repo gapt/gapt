@@ -23,12 +23,12 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val minSol = improveSolution( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, minSol )
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
   }
 
   def applyEq( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val minSol = improveSolutionEq( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, minSol )
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation.
@@ -39,8 +39,10 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   // and forgetful paramodulation (i.e. from the forgetful equality consequence generator).
 
   private def improveSolutionEq( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
+    assert( ehs.cutFormulas.length == 1, "Solution minimization only implemented for one cut formula." )
+
     trace( "entering improveSolutionEq" )
-    val cutFormula = ehs.cutFormula
+    val cutFormula = ehs.cutFormulas.head
 
     // Remove quantifier 
     val ( xs, f ) = removeQuantifiers( cutFormula )
@@ -124,7 +126,9 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
    * @return The list of minimal-size solutions (=the set of end nodes as described in 4.2).
    */
   private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
-    val ( xs, form2 ) = removeQuantifiers( ehs.cutFormula )
+    assert( ehs.cutFormulas.length == 1, "Solution minimization only implemented for one cut formula." )
+
+    val ( xs, form2 ) = removeQuantifiers( ehs.cutFormulas.head )
 
     if ( xs.length == 0 ) { throw new CutIntroException( "ERROR: Canonical solution is not quantified." ) }
 

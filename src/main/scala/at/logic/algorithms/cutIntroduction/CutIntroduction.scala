@@ -303,8 +303,10 @@ object CutIntroduction {
             phase = "sol" // solving phase
             time = System.currentTimeMillis
 
-            val cutFormula0 = computeCanonicalSolution( endSequent, grammar )
-            val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormula0 )
+            val cutFormulas = computeCanonicalSolutions( endSequent, grammar )
+            assert( cutFormulas.length == 1, "This method should introduce one cut." )
+
+            val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
             val ehs1 = hasEquality match {
               case true  => MinimizeSolution.applyEq( ehs, prover )
               case false => MinimizeSolution.apply( ehs, prover )
@@ -324,7 +326,7 @@ object CutIntroduction {
 
             cleanStructuralRulesTime += System.currentTimeMillis - time
 
-            ( pruned_proof, ehs1, lcomp( cutFormula0 ), lcomp( ehs1.cutFormula ) )
+            ( pruned_proof, ehs1, lcomp( cutFormulas.head ), lcomp( ehs1.cutFormulas.head ) )
         }
 
         // Sort the list by size of proofs
@@ -337,7 +339,7 @@ object CutIntroduction {
         minimizedSolutionSize = sorted.head._4
         rulesLKProofWithCut = rulesNumber( smallestProof )
         quantRulesWithCut = quantRulesNumber( smallestProof )
-        if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormula + "\n" )
+        if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas.head + "\n" )
 
         ( Some( smallestProof ), None )
       }
@@ -531,28 +533,29 @@ object CutIntroduction {
   /**
    * Computes the canonical solution with multiple quantifiers from a generalized grammar.
    */
-  def computeCanonicalSolution( seq: Sequent, g: Grammar ): FOLFormula = {
+  def computeCanonicalSolutions( seq: Sequent, g: Grammar ): List[FOLFormula] = {
 
     assert( g.slist.size == 1, "computeCanonicalSolution: only simple grammars supported." )
 
     val terms = g.terms
     val varName = "x"
+    val variables = g.slist.head._1
 
     val xFormulas = g.u.foldRight( List[FOLFormula]() ) {
       case ( term, acc ) =>
         val freeVars = freeVariables( term )
 
         // Taking only the terms that contain alpha
-        if ( freeVars.intersect( g.eigenvariables ).nonEmpty ) {
+        if ( freeVars.intersect( variables ).nonEmpty ) {
           val set = terms.getTermTuple( term )
           val f = terms.getFormula( term )
 
           //Some subset of g's eigenvariables occurs in every term. This generates
           //substitutions to replace each occurring EV a_i with a quantified variables x_i.
           val xterms = set.map( t => {
-            val vars = createFOLVars( varName, g.eigenvariables.length + 1 )
-            val allEV = g.eigenvariables.zip( vars )
-            val occurringEV = collectVariables( t ).filter( v => g.eigenvariables.contains( v ) ).distinct
+            val vars = createFOLVars( varName, variables.length )
+            val allEV = variables.zip( vars )
+            val occurringEV = collectVariables( t ).filter( v => variables.contains( v ) ).distinct
 
             // If the term is a constant, this should return t itself
             allEV.filter( e => occurringEV.contains( e._1 ) ).foldLeft( t )( ( t, e ) => Substitution( e._1, e._2 ).apply( t ) )
@@ -562,7 +565,24 @@ object CutIntroduction {
         } else acc
     }
 
-    ( 0 to ( g.eigenvariables.size - 1 ) ).reverse.toList.foldLeft( And( xFormulas ) ) { ( f, n ) => AllVar( FOLVar( varName + "_" + n ), f ) }
+    val c1 = ( 0 to ( variables.size - 1 ) ).reverse.toList.foldLeft( And( xFormulas ) ) { ( f, n ) => AllVar( FOLVar( varName + "_" + n ), f ) }
+
+    // Introducing one cut
+    if ( g.slist.length == 1 ) List( c1 )
+    // Introducing many cuts
+    else {
+      g.slist.foldLeft( List( c1 ) ) {
+        case ( cut_formulas, ( variables, termset ) ) =>
+          val ci = cut_formulas.head
+          val forms = termset.foldLeft( List[FOLFormula]() ) {
+            case ( acc, terms ) =>
+              assert( variables.length == terms.length, "Number of eigenvariables different from number of terms in computation of canonical solution" )
+              val subst = Substitution( variables.zip( terms ) )
+              subst( ci ) :: acc
+          }
+          And( forms ) :: cut_formulas
+      }
+    }
   }
 
   /**
@@ -573,11 +593,11 @@ object CutIntroduction {
   def buildProofWithCut( ehs: ExtendedHerbrandSequent, prover: Prover ): Option[LKProof] = {
 
     val endSequent = ehs.endSequent
-    val cutFormula = ehs.cutFormula
+    val cutFormula = ehs.cutFormulas.head
     val grammar = ehs.grammar
     val terms = grammar.terms
 
-    assert( grammar.slist.size == 1, "buildProofWithCut: only simple grammars supported." )
+    assert( ehs.cutFormulas.length == 1, "buildProofWithCut: only one cut supported." )
 
     //Instantiate the cut formula with α_0,...,α_n-1, where n is the number of alphas in the ehs's grammar.
     //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
