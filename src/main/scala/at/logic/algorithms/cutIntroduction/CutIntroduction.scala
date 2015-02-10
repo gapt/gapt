@@ -393,7 +393,7 @@ object CutIntroduction {
   }
 
   // MaxSat methods
-  private def execute( proof: LKProof, n: Int, timeout: Int, verbose: Boolean ): ( Option[Grammar], String, LogTuple, Option[Throwable] ) = {
+  private def execute( proof: LKProof, n: Int, timeout: Int, verbose: Boolean ): ( Option[List[FOLFormula]], String, LogTuple, Option[Throwable] ) = {
 
     val clean_proof = CleanStructuralRules( proof )
     val num_rules = rulesNumber( clean_proof )
@@ -402,7 +402,7 @@ object CutIntroduction {
     execute( ep, hasEquality, num_rules, n, timeout, verbose )
   }
 
-  private def execute( ep: ExpansionSequent, hasEquality: Boolean, num_lk_rules: Int, n: Int, timeout: Int, verbose: Boolean ): ( Option[Grammar], String, LogTuple, Option[Throwable] ) = {
+  private def execute( ep: ExpansionSequent, hasEquality: Boolean, num_lk_rules: Int, n: Int, timeout: Int, verbose: Boolean ): ( Option[List[FOLFormula]], String, LogTuple, Option[Throwable] ) = {
 
     val prover = hasEquality match {
       case true  => new EquationalProver()
@@ -479,7 +479,15 @@ object CutIntroduction {
         minimalGrammarSize = grammar.size
         if ( verbose ) println( "Smallest grammar-size: " + grammar.size )
 
-        ( Some( grammar ), None )
+        val cutFormulas = computeCanonicalSolutions( endSequent, grammar )
+        // Average size of the cut-formula
+        canonicalSolutionSize = ( cutFormulas.foldLeft( 0 )( ( acc, f ) => lcomp( f ) + acc ) ) / cutFormulas.length
+        if ( verbose ) {
+          println( "Cut formulas found: " )
+          cutFormulas.foreach( f => println( f ) )
+        }
+
+        ( Some( cutFormulas ), None )
       }
     } catch {
       case e: TimeOutException =>
@@ -534,8 +542,6 @@ object CutIntroduction {
    * Computes the canonical solution with multiple quantifiers from a generalized grammar.
    */
   def computeCanonicalSolutions( seq: Sequent, g: Grammar ): List[FOLFormula] = {
-
-    assert( g.slist.size == 1, "computeCanonicalSolution: only simple grammars supported." )
 
     val terms = g.terms
     val varName = "x"
