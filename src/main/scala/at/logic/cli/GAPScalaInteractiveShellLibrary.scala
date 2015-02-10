@@ -494,23 +494,18 @@ object generateExtendedHerbrandSequent {
 }
 
 object computeCanonicalSolution {
-  def apply( g: Grammar ) = {
+  def apply( s: Sequent, g: Grammar ) = {
     println( "Note that the clauses that do not contain the eigenvariable were already removed." );
-    CutIntroduction.computeCanonicalSolution( g )
+    CutIntroduction.computeCanonicalSolution( s, g )
   }
 }
 
 object minimizeSolution {
   def apply( ehs: ExtendedHerbrandSequent ) = {
-    //TODO: implement solution minimizing with > 1 cuts
-    if ( ehs.cutFormulas.size == 1 ) {
-      println( "Previous solution: " + ehs.cutFormulas( 0 ) )
-      val new_ehs = MinimizeSolution( ehs, new at.logic.provers.basicProver.BasicProver() )
-      println( "Improved solution: " + new_ehs.cutFormulas( 0 ) )
-      new_ehs
-    }
-    println( "Improving solution not yet implemented for > 1 cuts" )
-    ehs
+    println( "Previous solution: " + ehs.cutFormula )
+    val new_ehs = MinimizeSolution( ehs, new at.logic.provers.basicProver.BasicProver() )
+    println( "Improved solution: " + new_ehs.cutFormula )
+    new_ehs
   }
 }
 

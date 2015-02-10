@@ -24,7 +24,7 @@ import at.logic.provers.minisat.MiniSAT
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent( seq: Sequent, g: Grammar, cf: List[FOLFormula] = Nil ) {
+class ExtendedHerbrandSequent( seq: Sequent, g: Grammar, cf: FOLFormula = null ) {
 
   val endSequent = seq
   val terms = g.terms
@@ -66,13 +66,7 @@ class ExtendedHerbrandSequent( seq: Sequent, g: Grammar, cf: List[FOLFormula] = 
   val succedent = prop_r ++ inst_r.filter( varFree )
   val succedent_alpha = inst_r.filter( x => !varFree( x ) )
 
-  var cutFormulas = {
-    if ( cf == Nil ) {
-      CutIntroduction.computeCanonicalSolution( g )
-    } else {
-      cf
-    }
-  }
+  var cutFormula = if ( cf == null ) CutIntroduction.computeCanonicalSolution( seq, g ) else cf
 
   override def toString = {
 

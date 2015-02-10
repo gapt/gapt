@@ -23,12 +23,12 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val minSol = improveSolution( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, minSol )
   }
 
   def applyEq( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val minSol = improveSolutionEq( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, minSol )
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation.
@@ -40,36 +40,31 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   private def improveSolutionEq( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
     trace( "entering improveSolutionEq" )
-    //TODO: implement solution improvement with > 1 cuts
-    if ( ehs.cutFormulas.size == 1 ) {
-      val cutFormula = ehs.cutFormulas( 0 )
+    val cutFormula = ehs.cutFormula
 
-      // Remove quantifier
-      val ( xs, f ) = removeQuantifiers( cutFormula )
+    // Remove quantifier 
+    val ( xs, f ) = removeQuantifiers( cutFormula )
 
-      // Transform to conjunctive normal form
-      trace( "starting CNF-Transformation" )
-      val cnf = toCNF( f )
-      trace( "finished CNF-Transformation" )
+    // Transform to conjunctive normal form
+    trace( "starting CNF-Transformation" )
+    val cnf = toCNF( f )
+    trace( "finished CNF-Transformation" )
 
-      // Exhaustive search over the resolvents (depth-first search),
-      // returns the list of all solutions found.
-      var count = 0
+    // Exhaustive search over the resolvents (depth-first search),
+    // returns the list of all solutions found.
+    var count = 0
 
-      def searchSolution( f: FOLFormula ): List[FOLFormula] =
-        f :: oneStepEqualityImprovement( f ).foldRight( List[FOLFormula]() )( ( r, acc ) =>
-          if ( isValidWith( ehs, prover, addQuantifiers( r, xs ) ) ) {
-            count = count + 1
-            searchSolution( r ) ::: acc
-          } else {
-            count = count + 1
-            acc
-          } )
+    def searchSolution( f: FOLFormula ): List[FOLFormula] =
+      f :: oneStepEqualityImprovement( f ).foldRight( List[FOLFormula]() )( ( r, acc ) =>
+        if ( isValidWith( ehs, prover, addQuantifiers( r, xs ) ) ) {
+          count = count + 1
+          searchSolution( r ) ::: acc
+        } else {
+          count = count + 1
+          acc
+        } )
 
-      searchSolution( cnf ).map( s => addQuantifiers( s, xs ) )
-    }
-    // if solution with > 1 cuts return original solution
-    ehs.cutFormulas
+    searchSolution( cnf ).map( s => addQuantifiers( s, xs ) )
   }
 
   //---------------------------------------------------------------------------
@@ -125,125 +120,111 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
    * Due to the ordering of the pairs, no node will have descendants in which lower elements entered its R and each set of resolvents will
    * only be generated once.
    *
-   * @param ehs extended Herbrand Sequent to be improved
-   * @param prover prover to be used
+   * @param form The canonical solution to be improved (doesn't have to be in CNF).
    * @return The list of minimal-size solutions (=the set of end nodes as described in 4.2).
    */
   private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
-    //TODO: implement solution improvement with > 1 cuts
-    if ( ehs.cutFormulas.size == 1 ) {
-      val ( xs, form2 ) = removeQuantifiers( ehs.cutFormulas( 0 ) )
+    val ( xs, form2 ) = removeQuantifiers( ehs.cutFormula )
 
-      if ( xs.length == 0 ) {
-        throw new CutIntroException( "ERROR: Canonical solution is not quantified." )
-      }
+    if ( xs.length == 0 ) { throw new CutIntroException( "ERROR: Canonical solution is not quantified." ) }
 
-      //0. Convert to a clause set where each clause is a list of positive and negative atoms.
-      //1. assign a number to every atom in F.
-      val fNumbered = numberAtoms( CNFp( toCNF( form2 ) ).map( c => toMyFClause( c ) ).toList )
+    //0. Convert to a clause set where each clause is a list of positive and negative atoms.
+    //1. assign a number to every atom in F.
+    val fNumbered = numberAtoms( CNFp( toCNF( form2 ) ).map( c => toMyFClause( c ) ).toList )
 
-      //2. gather the positive and negative occurrences o every variable v into sets v+ and v-.
-      val posNegSets = fNumbered.foldLeft( Map[FOLFormula, ( Set[Int], Set[Int] )]() ) { ( m, clause ) =>
-        val neg = clause.neg
-        val pos = clause.pos
+    //2. gather the positive and negative occurrences o every variable v into sets v+ and v-.
+    val posNegSets = fNumbered.foldLeft( Map[FOLFormula, ( Set[Int], Set[Int] )]() ) { ( m, clause ) =>
+      val neg = clause.neg
+      val pos = clause.pos
 
-        //Add the negative atoms of the clause to the negative set.
-        val m2 = neg.foldLeft( m ) { ( m, pair ) =>
-          {
-            val ( k, v ) = pair
-            val ( neg, pos ) = m.get( k ) match {
-              case None      => ( Set[Int](), Set[Int]() )
-              case Some( p ) => p
-            }
-            m + Tuple2( k, Tuple2( neg + v, pos ) )
+      //Add the negative atoms of the clause to the negative set.
+      val m2 = neg.foldLeft( m ) { ( m, pair ) =>
+        {
+          val ( k, v ) = pair
+          val ( neg, pos ) = m.get( k ) match {
+            case None      => ( Set[Int](), Set[Int]() )
+            case Some( p ) => p
           }
+          m + Tuple2( k, Tuple2( neg + v, pos ) )
         }
+      }
 
-        //Add the positive atoms to the positive set.
-        pos.foldLeft( m2 ) { ( m, pair ) =>
-          {
-            val ( k, v ) = pair
-            val ( neg, pos ) = m.get( k ) match {
-              case None      => ( Set[Int](), Set[Int]() )
-              case Some( p ) => p
-            }
-            m + Tuple2( k, Tuple2( neg, pos + v ) )
+      //Add the positive atoms to the positive set.
+      pos.foldLeft( m2 ) { ( m, pair ) =>
+        {
+          val ( k, v ) = pair
+          val ( neg, pos ) = m.get( k ) match {
+            case None      => ( Set[Int](), Set[Int]() )
+            case Some( p ) => p
           }
+          m + Tuple2( k, Tuple2( neg, pos + v ) )
         }
       }
-
-      //3. for every variable v, generate every (v1 in v+, v2 in v-) and number all of the resultant pairs.
-      val pairs = posNegSets.map( ( v ) => {
-        val ( _, ( n, p ) ) = v; cartesianProduct( n.toList, p.toList )
-      } ).flatten.zipWithIndex.toList
-
-      //-----------------------------------------------------------------------
-      //DFS starts here
-      //-----------------------------------------------------------------------
-
-      // 4) let each node of the DFS be (R,V, F'), where R is the set of resolved pairs, V is the set of resolved atoms, and F' the resulting formula.
-      class ResNode( val appliedPairs: List[( ( Int, Int ), Int )],
-                     val remainingPairs: List[( ( Int, Int ), Int )],
-                     val resolvedVars: Set[Int],
-                     val currentFormula: List[MyFClause[( FOLFormula, Int )]] ) extends SetNode[( Int, Int )] {
-
-        def includedElements: List[( ( Int, Int ), Int )] = appliedPairs
-
-        def remainingElements: List[( ( Int, Int ), Int )] = remainingPairs
-
-        def largerElements: List[( ( Int, Int ), Int )] = {
-          if ( appliedPairs.size == 0 ) {
-            remainingPairs
-          } else {
-            val maxIncluded = appliedPairs.map( p => p._2 ).max
-            remainingPairs.filter( p => p._2 > maxIncluded )
-          }
-        }
-
-        override def addElem( p: ( ( Int, Int ), Int ) ): ResNode = {
-          val ( pair, index ) = p
-          new ResNode( p :: appliedPairs, remainingPairs.filter( x => x._2 != index ),
-            resolvedVars + ( pair._1, pair._2 ), forgetfulResolve( currentFormula, pair ) )
-        }
-      }
-
-      // 4.1) let the root be ({},{},F).
-      val rootNode = new ResNode( List[( ( Int, Int ), Int )](), pairs, Set[Int](), fNumbered )
-
-      var satCount = 0
-
-      // 4.2) let the successor function be succ((R,V,F)) = {(R U r,V,F'') | r in (PAIRS - R),
-      //                                                                     r intersect V =  {},
-      //                                                                     r > max{R}, F'' = r applied to F',
-      //                                                                     F'' is still valid}
-      //      (if a node has no valid successors, it is considered an end node and added to the list of solutions.)
-      def elemFilter( node: ResNode, elem: ( ( Int, Int ), Int ) ): Boolean = {
-        //trace("elemfilter: node.appliedPairs:   " + node.appliedPairs)
-        //trace("            node.remainingPairs: " + node.remainingPairs)
-        //trace("            node.resolvedVars:   " + node.resolvedVars)
-        //trace("            node.largerElements: " + node.largerElements)
-
-        val ret = ( !node.resolvedVars.contains( elem._1._1 ) && !node.resolvedVars.contains( elem._1._2 ) )
-        //trace("            RETURN: " + ret)
-        ret
-      }
-
-      //node-filter which checks for validity using miniSAT
-      def nodeFilter( node: ResNode ): Boolean = {
-        satCount = satCount + 1
-        isValidWith( ehs, prover, addQuantifiers( NumberedCNFtoFormula( node.currentFormula ), xs ) )
-      }
-
-      //Perform the DFS
-      val solutions = DFS[ResNode]( rootNode, ( setSearch[( Int, Int ), ResNode]( elemFilter, nodeFilter, _: ResNode ) ) )
-
-      //All-quantify the found solutions.
-      //debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
-      solutions.map( n => NumberedCNFtoFormula( n.currentFormula ) ).map( s => addQuantifiers( s, xs ) )
     }
 
-    // if > 1 cuts return original solution
-    ehs.cutFormulas
+    //3. for every variable v, generate every (v1 in v+, v2 in v-) and number all of the resultant pairs.
+    val pairs = posNegSets.map( ( v ) => { val ( _, ( n, p ) ) = v; cartesianProduct( n.toList, p.toList ) } ).flatten.zipWithIndex.toList
+
+    //-----------------------------------------------------------------------
+    //DFS starts here
+    //-----------------------------------------------------------------------
+
+    // 4) let each node of the DFS be (R,V, F'), where R is the set of resolved pairs, V is the set of resolved atoms, and F' the resulting formula.
+    class ResNode( val appliedPairs: List[( ( Int, Int ), Int )],
+                   val remainingPairs: List[( ( Int, Int ), Int )],
+                   val resolvedVars: Set[Int],
+                   val currentFormula: List[MyFClause[( FOLFormula, Int )]] ) extends SetNode[( Int, Int )] {
+
+      def includedElements: List[( ( Int, Int ), Int )] = appliedPairs
+      def remainingElements: List[( ( Int, Int ), Int )] = remainingPairs
+      def largerElements: List[( ( Int, Int ), Int )] = {
+        if ( appliedPairs.size == 0 ) { remainingPairs }
+        else {
+          val maxIncluded = appliedPairs.map( p => p._2 ).max
+          remainingPairs.filter( p => p._2 > maxIncluded )
+        }
+      }
+
+      override def addElem( p: ( ( Int, Int ), Int ) ): ResNode = {
+        val ( pair, index ) = p
+        new ResNode( p :: appliedPairs, remainingPairs.filter( x => x._2 != index ),
+          resolvedVars + ( pair._1, pair._2 ), forgetfulResolve( currentFormula, pair ) )
+      }
+    }
+
+    // 4.1) let the root be ({},{},F).
+    val rootNode = new ResNode( List[( ( Int, Int ), Int )](), pairs, Set[Int](), fNumbered )
+
+    var satCount = 0
+
+    // 4.2) let the successor function be succ((R,V,F)) = {(R U r,V,F'') | r in (PAIRS - R),
+    //                                                                     r intersect V =  {},
+    //                                                                     r > max{R}, F'' = r applied to F',
+    //                                                                     F'' is still valid}
+    //      (if a node has no valid successors, it is considered an end node and added to the list of solutions.)
+    def elemFilter( node: ResNode, elem: ( ( Int, Int ), Int ) ): Boolean = {
+      //trace("elemfilter: node.appliedPairs:   " + node.appliedPairs)
+      //trace("            node.remainingPairs: " + node.remainingPairs)
+      //trace("            node.resolvedVars:   " + node.resolvedVars)
+      //trace("            node.largerElements: " + node.largerElements)
+
+      val ret = ( !node.resolvedVars.contains( elem._1._1 ) && !node.resolvedVars.contains( elem._1._2 ) )
+      //trace("            RETURN: " + ret)
+      ret
+    }
+
+    //node-filter which checks for validity using miniSAT
+    def nodeFilter( node: ResNode ): Boolean = {
+      satCount = satCount + 1
+      isValidWith( ehs, prover, addQuantifiers( NumberedCNFtoFormula( node.currentFormula ), xs ) )
+    }
+
+    //Perform the DFS
+    val solutions = DFS[ResNode]( rootNode, ( setSearch[( Int, Int ), ResNode]( elemFilter, nodeFilter, _: ResNode ) ) )
+
+    //All-quantify the found solutions.
+    //debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
+    solutions.map( n => NumberedCNFtoFormula( n.currentFormula ) ).map( s => addQuantifiers( s, xs ) )
   }
 
   /**
