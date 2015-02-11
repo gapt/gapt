@@ -1,0 +1,126 @@
+%------------------------------------------------------------------------------
+File       : Prover9---1109a
+Problem    : ALG004-1 : TPTP v5.3.0. Released v2.2.0.
+Transform  : none
+Format     : tptp:raw
+Command    : run_prover9 %d %s
+
+Computer   : gettysburg.cs.miami.edu
+Model      : x86_64 x86_64
+CPU        : Intel(R) Core(TM)2 CPU          6600  @ 2.40GHz @ 2400MHz
+Memory     : 1003MB
+OS         : Linux 2.6.32.26-175.fc12.x86_64
+CPULimit   : 300s
+DateTime   : Wed Jun 13 11:05:56 EDT 2012
+
+Result     : Unsatisfiable 2.69s
+Output     : Refutation 2.69s
+Verified   : 
+Statistics : -
+
+Comments   : 
+%------------------------------------------------------------------------------
+%----ERROR: Could not form TPTP format derivation
+%------------------------------------------------------------------------------
+%----ORIGINAL SYSTEM OUTPUT
+============================== Prover9 ===============================
+Prover9 (32) version 2009-11A, November 2009.
+Process 7551 was started by tptp on gettysburg.cs.miami.edu,
+Wed Jun 13 11:05:57 2012
+The command was "/home/graph/tptp/Systems/Prover9---1109a/prover9 -t 300 -f /tmp/Prover9_7517_gettysburg.cs.miami.edu".
+============================== end of head ===========================
+============================== INPUT =================================
+% Reading from file /tmp/Prover9_7517_gettysburg.cs.miami.edu
+set(prolog_style_variables).
+set(auto2).
+    % set(auto2) -> set(auto).
+    % set(auto) -> set(auto_inference).
+    % set(auto) -> set(auto_setup).
+    % set(auto_setup) -> set(predicate_elim).
+    % set(auto_setup) -> assign(eq_defs, unfold).
+    % set(auto) -> set(auto_limits).
+    % set(auto_limits) -> assign(max_weight, "100.000").
+    % set(auto_limits) -> assign(sos_limit, 20000).
+    % set(auto) -> set(auto_denials).
+    % set(auto) -> set(auto_process).
+    % set(auto2) -> assign(new_constants, 1).
+    % set(auto2) -> assign(fold_denial_max, 3).
+    % set(auto2) -> assign(max_weight, "200.000").
+    % set(auto2) -> assign(max_hours, 1).
+    % assign(max_hours, 1) -> assign(max_seconds, 3600).
+    % set(auto2) -> assign(max_seconds, 0).
+    % set(auto2) -> assign(max_minutes, 5).
+    % assign(max_minutes, 5) -> assign(max_seconds, 300).
+    % set(auto2) -> set(sort_initial_sos).
+    % set(auto2) -> assign(sos_limit, -1).
+    % set(auto2) -> assign(lrs_ticks, 3000).
+    % set(auto2) -> assign(max_megs, 400).
+    % set(auto2) -> assign(stats, some).
+    % set(auto2) -> clear(echo_input).
+    % set(auto2) -> set(quiet).
+    % set(auto2) -> clear(print_initial_clauses).
+    % set(auto2) -> clear(print_given).
+assign(lrs_ticks,-1).
+assign(sos_limit,10000).
+assign(order,kbo).
+set(lex_order_vars).
+clear(print_given).
+% formulas(sos).  % not echoed (7 formulas)
+============================== end of input ==========================
+% From the command line: assign(max_seconds, 300).
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+% Formulas that are not ordinary clauses:
+============================== end of process non-clausal formulas ===
+============================== PROCESS INITIAL CLAUSES ===============
+============================== PREDICATE ELIMINATION =================
+============================== end predicate elimination =============
+Auto_denials:
+  % copying label _13858 to answer in negative clause
+Term ordering decisions:
+Function symbol KB weights:  a=1. a0=1. b=1. b0=1. c=1. c0=1. d=1. d0=1. multiply=1.
+============================== end of process initial clauses ========
+============================== CLAUSES FOR SEARCH ====================
+============================== end of clauses for search =============
+============================== SEARCH ================================
+% Starting search at 0.00 seconds.
+============================== PROOF =================================
+% Proof 1 at 2.44 (+ 0.03) seconds: _13858.
+% Length of proof is 21.
+% Level of proof is 6.
+% Maximum clause weight is 29.000.
+% Given clauses 108.
+1 multiply(b,b0) = multiply(a,a0) # label(_13764) # label(_13768).  [assumption].
+2 multiply(d,b0) = multiply(c,a0) # label(_13794) # label(_13798).  [assumption].
+3 multiply(b,d0) = multiply(a,c0) # label(_13824) # label(_13828).  [assumption].
+4 multiply(multiply(A,B),multiply(C,D)) = multiply(multiply(A,C),multiply(B,D)) # label(_13734) # label(_13738).  [assumption].
+5 multiply(d,d0) != multiply(c,c0) # label(_13858) # label(_13862) # answer(_13858).  [assumption].
+6 multiply(A,B) != C | multiply(D,B) != C | A = D # label(_13644) # label(_13648).  [assumption].
+7 multiply(A,B) != C | multiply(A,D) != C | B = D # label(_13704) # label(_13708).  [assumption].
+8 multiply(d,d0) = c_0.  [new_symbol(5)].
+9 multiply(c,c0) != c_0 # answer(_13858).  [back_rewrite(5),rewrite([8(3)]),flip(a)].
+10 multiply(multiply(a,a0),multiply(A,B)) = multiply(multiply(b,A),multiply(b0,B)).  [para(1(a,1),4(a,1,1))].
+12 multiply(multiply(c,a0),multiply(A,B)) = multiply(multiply(d,A),multiply(b0,B)).  [para(2(a,1),4(a,1,1))].
+27 multiply(multiply(A,d),multiply(B,d0)) = multiply(multiply(A,B),c_0).  [para(8(a,1),4(a,1,2)),flip(a)].
+30 multiply(A,multiply(c,c0)) != multiply(A,c_0) # answer(_13858).  [ur(7,b,xx,c,9,a)].
+44 multiply(multiply(A,multiply(b,B)),multiply(C,multiply(b0,D))) = multiply(multiply(A,C),multiply(multiply(a,a0),multiply(B,D))).  [para(10(a,2),4(a,1,2)),flip(a)].
+51 multiply(multiply(A,B),multiply(multiply(c,c0),C)) != multiply(multiply(A,c_0),multiply(B,C)) # answer(_13858).  [ur(6,a,4,a,c,30,a),flip(a)].
+137 multiply(multiply(d,A),multiply(b0,B)) = multiply(multiply(c,A),multiply(a0,B)).  [para(12(a,1),4(a,1))].
+179 multiply(multiply(A,d),multiply(a,c0)) = multiply(multiply(A,b),c_0).  [para(3(a,1),27(a,1,2))].
+245 multiply(multiply(multiply(A,B),multiply(C,D)),multiply(multiply(c,c0),E)) != multiply(multiply(multiply(A,C),c_0),multiply(multiply(B,D),E)) # answer(_13858).  [para(4(a,1),51(a,1,1))].
+275 multiply(multiply(A,a),multiply(d,c0)) = multiply(multiply(A,b),c_0).  [para(179(a,1),4(a,1)),flip(a)].
+4177 multiply(multiply(multiply(A,a),multiply(b,B)),multiply(multiply(c,c0),multiply(a0,C))) = multiply(multiply(multiply(A,b),c_0),multiply(multiply(a,a0),multiply(B,C))).  [para(275(a,1),44(a,2,1)),rewrite([137(11)])].
+4178 $F # answer(_13858).  [resolve(4177,a,245,a)].
+============================== end of proof ==========================
+============================== STATISTICS ============================
+Given=108. Generated=20726. Kept=4177. proofs=1.
+Usable=97. Sos=3005. Demods=80. Limbo=420, Disabled=661. Hints=0.
+Megabytes=5.11.
+User_CPU=2.44, System_CPU=0.03, Wall_clock=2.
+============================== end of statistics =====================
+============================== end of search =========================
+THEOREM PROVED
+Exiting with 1 proof.
+Process 7551 exit (max_proofs) Wed Jun 13 11:05:59 2012
+Prover9 interrupted
+
+%------------------------------------------------------------------------------
