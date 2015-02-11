@@ -37,6 +37,10 @@ class ExtendedHerbrandSequent( seq: Sequent, g: Grammar, cf: List[FOLFormula] = 
   val prop_l: List[FOLFormula] = seq.antecedent.filter( x => !containsQuantifier( x.formula.asInstanceOf[FOLFormula] ) ).map( x => x.formula.asInstanceOf[FOLFormula] ).toList
   // Propositional formulas on the right
   val prop_r: List[FOLFormula] = seq.succedent.filter( x => !containsQuantifier( x.formula.asInstanceOf[FOLFormula] ) ).map( x => x.formula.asInstanceOf[FOLFormula] ).toList
+  //Quantified formulas on the left
+  val quant_l: List[FOLFormula] = seq.antecedent.filter( x => containsQuantifier( x.formula.asInstanceOf[FOLFormula] ) ).map( x => x.formula.asInstanceOf[FOLFormula] ).toList
+  //Quantified formulas on the right
+  val quant_r: List[FOLFormula] = seq.succedent.filter( x => containsQuantifier( x.formula.asInstanceOf[FOLFormula] ) ).map( x => x.formula.asInstanceOf[FOLFormula] ).toList
 
   // Instanciated (previously univ. quantified) formulas on the left
   val inst_l: List[FOLFormula] = grammar.u.foldRight( List[FOLFormula]() ) {

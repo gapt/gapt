@@ -32,7 +32,7 @@ class CutIntroUncompressibleException( msg: String ) extends CutIntroException( 
  */
 class CutIntroEHSUnprovableException( msg: String ) extends CutIntroException( msg )
 
-object CutIntroduction {
+object CutIntroduction extends at.logic.utils.logging.Logger {
 
   // Public methods: timeout of one hour
 
@@ -491,29 +491,29 @@ object CutIntroduction {
 
         // Build the proof only if introducing one cut
         // TODO: implement proof construction for multiple cuts
-        if ( cutFormulas.length == 1 ) {
+        //        if ( cutFormulas.length == 1 ) {
 
-          val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
-          time = System.currentTimeMillis
+        val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
+        time = System.currentTimeMillis
 
-          phase = "prcons" // proof construction
+        phase = "prcons" // proof construction
 
-          val proof = buildProofWithCut( ehs, prover )
+        val proof = buildProofWithCut( ehs, prover )
 
-          buildProofTime += System.currentTimeMillis - time
-          time = System.currentTimeMillis
+        buildProofTime += System.currentTimeMillis - time
+        time = System.currentTimeMillis
 
-          val pruned_proof = CleanStructuralRules( proof.get )
+        val pruned_proof = CleanStructuralRules( proof.get )
 
-          cleanStructuralRulesTime += System.currentTimeMillis - time
-          rulesLKProofWithCut = rulesNumber( pruned_proof )
-          quantRulesWithCut = quantRulesNumber( pruned_proof )
+        cleanStructuralRulesTime += System.currentTimeMillis - time
+        rulesLKProofWithCut = rulesNumber( pruned_proof )
+        quantRulesWithCut = quantRulesNumber( pruned_proof )
 
-          ( Some( pruned_proof ), None )
-        } else {
+        ( Some( pruned_proof ), None )
+        /*        } else {
           status = "incomplete"
           ( None, None )
-        }
+        }*/
       }
     } catch {
       case e: TimeOutException =>
@@ -624,81 +624,146 @@ object CutIntroduction {
    */
   def buildProofWithCut( ehs: ExtendedHerbrandSequent, prover: Prover ): Option[LKProof] = {
 
-    val endSequent = ehs.endSequent
-    val cutFormula = ehs.cutFormulas.head
+    val endSequent = ehs.endSequent.toFSequent
+    //    val cutFormula = ehs.cutFormulas.head
+    val cutFormulas = ehs.cutFormulas
     val grammar = ehs.grammar
     val terms = grammar.terms
 
-    assert( ehs.cutFormulas.length == 1, "buildProofWithCut: only one cut supported." )
+    //assert( ehs.cutFormulas.length == 1, "buildProofWithCut: only one cut supported." )
 
-    //Instantiate the cut formula with α_0,...,α_n-1, where n is the number of alphas in the ehs's grammar.
-    //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
-    //whole initial quantifier block instantiated to α_0,...,α_n-1.
-    val alphas = ehs.grammar.eigenvariables
+    trace( "grammar: " + grammar )
+    trace( "cutFormulas: " + cutFormulas )
 
-    //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
-    val cutLeft = instantiateAll( cutFormula, alphas )
+    val alphas = grammar.eigenvariables
 
-    //Fully instantiate the cut formula with s[j=1...n][i] for all i.
-    val cutRight = grammar.slist( 0 )._2.toList.foldRight( List[FOLFormula]() ) {
-      case ( t, acc ) =>
-        t.foldLeft( cutFormula ) { case ( f, sval ) => instantiate( f, sval ) } :: acc
+    val quantPart = FSequent( endSequent.antecedent.filter {
+      case AllVar( _ ) => true
+      case _           => false
+    }.map( _.asInstanceOf[FOLFormula] ),
+      endSequent.succedent.filter {
+        case ExVar( _ ) => true
+        case _          => false
+      }.map( _.asInstanceOf[FOLFormula] ) )
+
+    // define the U_i from the paper
+    val U = ( 0 to alphas.size ).map( i => grammar.u.map( uterm => terms.getTermTuple( uterm ) ).filter( utuple => utuple.flatMap( freeVariables( _ ) ).intersect( alphas.take( i ) ).isEmpty ) )
+    trace( "U : " + U )
+
+    // define the A_i
+    val A = ( cutFormulas zip alphas ).map {
+      case ( cf, ev ) => {
+        trace( "computing A" )
+        trace( "instantiating " + cf + " with " + ev )
+        instantiateAll( cf, ev :: Nil )
+      }
+    }
+    trace( "A: " + A )
+
+    // define L_1
+    val L1 = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, A ++ ehs.succedent ++ ehs.succedent_alpha )
+    trace( "L1: " + L1 )
+
+    // define F[x \ U_i] (we are more general here and define a sequent)
+    val FU = ( 0 to alphas.size ).map( i => FSequent( ehs.quant_l.flatMap( f =>
+      U( i ).map( u => instantiateAll( f.asInstanceOf[FOLFormula], u ) ) ),
+      ehs.quant_r.flatMap( f =>
+        U( i ).map( u => instantiateAll( f.asInstanceOf[FOLFormula], u ) ) ) ) )
+    trace( "FU: " + FU )
+
+    // define A_i[x \ S_i]
+    val AS = ( 0 to alphas.size - 1 ).map( i => grammar.slist( i )._2.map( s => instantiateAll( cutFormulas( i ), s ) ) )
+    // define the R_i
+    val R = ( 0 to alphas.size - 1 ).map( i => FSequent( AS( i ).toSeq ++ ehs.prop_l, A.drop( i + 1 ) ++ ehs.prop_r ).compose( FU( i + 1 ) ) )
+    trace( "R: " + R )
+
+    val Lproof = prover.getLKProof( L1 )
+
+    val Rproofs = R.map( s => prover.getLKProof( s ) )
+
+    ( ( Rproofs :+ Lproof ) zip ( R :+ L1 ) ).foreach {
+      case ( None, seq ) => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )
+      case _             => {}
     }
 
-    //leftBranch and rightBranch correspond to the left and right branches of the proof in the middle of
-    //p. 5; untilCut merges these together with a cut.
+    // To keep a nice induction invariant, we introduce the quantified part of the end-sequent
+    // via weakening.
+    val Lproof_ = WeakeningRightMacroRule( WeakeningLeftMacroRule( Lproof.get, quantPart.antecedent ), quantPart.succedent )
 
-    //solvePropositional need only be called with the non-instantiated cutLeft (with the quantifier block in front)
+    // As above, we introduce the quantified cut-formula via weakening for keeping the invariant
+    val Rproofs_ = ( Rproofs zip cutFormulas ).map { case ( p, cf ) => WeakeningLeftRule( p.get, cf ) }
 
-    val seq = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, cutLeft +: ( ehs.succedent ++ ehs.succedent_alpha ) )
+    val proof = ( 0 to alphas.size - 1 ).foldLeft( Lproof_ )( ( lproof, i ) => {
+      val left = buildLeftPart( i, quantPart, A, U, alphas, cutFormulas( i ), lproof )
+      trace( " Rproofs_( " + i + " ): " + Rproofs_( i ) )
+      val right = buildRightPart( Rproofs_( i ), cutFormulas( i ), grammar.slist( i )._2.map( _.head ).toList )
+      trace( "right part ES: " + right.root )
+      val cut = CutRule( left, right, cutFormulas( i ) )
+      val cont1 = ContractionMacroRule( cut, FU( i ), false )
+      ContractionMacroRule( cont1, FSequent( ehs.prop_l, ehs.prop_r ), false )
+    } )
 
-    val proofLeft = prover.getLKProof( seq )
-    val leftBranch = proofLeft match {
-      case Some( proofLeft1 ) =>
-        val s1 = uPart( grammar.u.filter( t => freeVariables( t ).intersect( grammar.eigenvariables ).nonEmpty ), proofLeft1, terms )
+    val proof_ = ( quantPart.antecedent ++ quantPart.succedent ).foldLeft( proof )( ( proof, f ) => genWeakQuantRules( f.asInstanceOf[FOLFormula], U( alphas.size ), proof ) )
 
-        //Add sequents to all-quantify the cut formula in the right part of s1
-        ForallRightBlock( s1, cutFormula, alphas )
+    trace( "proof_.root: " + proof_.root )
 
-      case None => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )
-    }
-
-    val seq2 = FSequent( cutRight ++ ehs.antecedent, ehs.succedent )
-    val proofRight = prover.getLKProof( seq2 )
-    val rightBranch = proofRight match {
-      case Some( proofRight1 ) => sPart( cutFormula, grammar.slist( 0 )._2, proofRight1 )
-      case None                => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq2 )
-    }
-    //trace( "done calling solvePropositional" )
-
-    //Merge the left and right branches with a cut.
-    val untilCut = CutRule( leftBranch, rightBranch, cutFormula )
-
-    // Contracting the formulas that go to both branches of the cut
-    val contractAnt = ehs.antecedent.foldRight( untilCut.asInstanceOf[LKProof] ) { case ( f, premise ) => ContractionLeftRule( premise, f ) }
-    val contractSucc = ehs.succedent.foldRight( contractAnt.asInstanceOf[LKProof] ) { case ( f, premise ) => ContractionRightRule( premise, f ) }
-
-    // Instantiating constant terms from U
-    Some( uPart( grammar.u.filter( t => freeVariables( t ).intersect( grammar.eigenvariables ).isEmpty ), contractSucc, terms ) )
+    Some( proof_ )
   }
 
-  // Both methods bellow are responsible for generating the instances of 
+  /**
+   * Construct the proof
+   *
+   * \forall G, G[U_i] :- D[U_i], \exists D, A_{i}[alpha_{i}], ..., A_n
+   * ----------------------------------------------------------------------- \forall_l, \exists_r, c_l, c_r
+   * \forall G, G[U_{i+1}] :- D[U_{i+1}], \exists D, A_{i}, ..., A_n
+   * ----------------------------------------------------------------------------- \forall_r
+   * \forall G, G[U_{i+1}] :- D[U_{i+1}], \exists D, (\forall x) A_{i}[x], ..., A_n
+   */
+  private def buildLeftPart( i: Int, es: FSequent, A: Seq[FOLFormula], U: Seq[Seq[Seq[FOLTerm]]], alphas: Seq[FOLVar], cf: FOLFormula, proof: LKProof ) =
+    {
+      val p1 = ( es.antecedent ++ es.succedent ).foldLeft( proof )( ( proof, f ) => genWeakQuantRules( f.asInstanceOf[FOLFormula], U( i ) diff U( i + 1 ), proof ) )
+      ForallRightRule( p1, A( i ), cf, alphas( i ) )
+    }
+
+  /**
+   * Construct the proof
+   *
+   * A_i[S_i], G[U_i] :- D[U_i], A_{i+1}, ..., A_n
+   * --------------------------------------------- \forall_l
+   * (\forall x) A_i[x], G[U_i] :- D[U_i], A_{i+1}, ..., A_n
+   *
+   * (to be used to cut against the result of buildLeftPart)
+   */
+  private def buildRightPart( proof: LKProof, a: FOLFormula, s: Seq[FOLTerm] ) =
+    {
+      trace( "calling buildRightPart" )
+      trace( "a: " + a )
+      trace( "s: " + s )
+      genWeakQuantRules( a, s.map( _ :: Nil ), proof )
+    }
+
+  // Both methods below are responsible for generating the instances of 
   // end-sequent ancestors with the terms from the set U
-  def genWeakQuantRules( f: FOLFormula, lst: List[FOLTerm], ax: LKProof ): LKProof = ( f, lst ) match {
-    case ( _, Nil ) => ax
-    case ( AllVar( _, _ ), h :: t ) =>
-      val newForm = instantiate( f, h )
-      ForallLeftRule( genWeakQuantRules( newForm, t, ax ), newForm, f, h )
-    case ( ExVar( _, _ ), h :: t ) =>
-      val newForm = instantiate( f, h )
-      ExistsRightRule( genWeakQuantRules( newForm, t, ax ), newForm, f, h )
+  def genWeakQuantRules( f: FOLFormula, lst: Seq[Seq[FOLTerm]], ax: LKProof ): LKProof = {
+    trace( "calling genWeakQuantRules" )
+    trace( "f: " + f )
+    trace( "lst: " + lst )
+    ( f, lst ) match {
+      case ( _, Nil ) => ax
+      case ( AllVar( _, _ ), h :: t ) =>
+        val newForm = instantiateAll( f, h )
+        ContractionLeftRule( ForallLeftBlock( genWeakQuantRules( f, t, ax ), f, h ), f )
+      case ( ExVar( _, _ ), h :: t ) =>
+        val newForm = instantiateAll( f, h )
+        ContractionRightRule( ExistsRightBlock( genWeakQuantRules( f, t, ax ), f, h ), f )
+    }
   }
 
   /**
    * Proves the u-part of a grammar.
    *
    */
-  private def uPart( us: List[types.U], ax: LKProof, terms: TermSet ): LKProof = {
+  /*  private def uPart( us: List[types.U], ax: LKProof, terms: TermSet ): LKProof = {
     us.foldLeft( ax ) {
       case ( ax, term ) =>
         //Get the arguments of a single u
@@ -722,7 +787,7 @@ object CutIntroduction {
             }
         }
     }
-  }
+  }*/
 
   private def sPart( cf: FOLFormula, s: types.S, p: LKProof ): LKProof = {
     var first = true

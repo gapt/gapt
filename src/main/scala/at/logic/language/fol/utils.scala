@@ -103,7 +103,7 @@ object fromFuncArgs {
 // OBS: the number of quantifiers in the formula must greater or equal than the
 // number of terms in lst.
 object instantiateAll {
-  def apply( f: FOLFormula, lst: List[FOLTerm] ): FOLFormula = lst match {
+  def apply( f: FOLFormula, lst: Seq[FOLTerm] ): FOLFormula = lst match {
     case Nil    => f
     case h :: t => instantiateAll( instantiate( f, h ), t )
   }
