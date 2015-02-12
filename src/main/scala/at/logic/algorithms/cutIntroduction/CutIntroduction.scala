@@ -580,12 +580,12 @@ object CutIntroduction {
         if ( freeVars.intersect( variables ).nonEmpty ) {
           val terms = termset.getTermTuple( term )
           val f = termset.getFormula( term )
-	  instantiateAll( f, terms ) :: acc
+          instantiateAll( f, terms ) :: acc
         } else acc
     }
 
     val c1 = And( instantiated_f )
-      
+
     g.slist.foldLeft( List( c1 ) ) {
       case ( cut_formulas, ( variables, termset ) ) =>
         val ci = cut_formulas.head
@@ -597,7 +597,7 @@ object CutIntroduction {
         }
         val ci_quant = variables.foldLeft( ci ) { ( f, v ) => AllVar( v, f ) }
         And( forms ) :: ci_quant :: cut_formulas.tail
-    // The last term set contains only constants, so we drop the formula generated with it.
+      // The last term set contains only constants, so we drop the formula generated with it.
     }.tail.reverse
   }
 
