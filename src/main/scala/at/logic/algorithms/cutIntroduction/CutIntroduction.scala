@@ -486,7 +486,7 @@ object CutIntroduction {
         canonicalSolutionSize = ( cutFormulas.foldLeft( 0 )( ( acc, f ) => lcomp( f ) + acc ) ) / cutFormulas.length
         if ( verbose ) {
           println( "Cut formulas found: " )
-          cutFormulas.foreach( f => println( f ) )
+          cutFormulas.foreach( f => println( f + "\n" ) )
         }
 
         // Build the proof only if introducing one cut
@@ -584,24 +584,21 @@ object CutIntroduction {
         } else acc
     }
 
-    val c1 = variables.foldLeft( And( instantiated_f ) ) { ( f, v ) => AllVar( v, f ) }
-
-    // Introducing one cut
-    if ( g.slist.length == 1 ) List( c1 )
-    // Introducing many cuts
-    else {
-      g.slist.foldLeft( List( c1 ) ) {
-        case ( cut_formulas, ( variables, termset ) ) =>
-          val ci = cut_formulas.head
-          val forms = termset.foldLeft( List[FOLFormula]() ) {
-            case ( acc, terms ) =>
-              assert( variables.length == terms.length, "Number of eigenvariables different from number of terms in computation of canonical solution" )
-              val subst = Substitution( variables.zip( terms ) )
-              subst( ci ) :: acc
-          }
-          And( forms ) :: cut_formulas
-      }
-    }
+    val c1 = And( instantiated_f )
+      
+    g.slist.foldLeft( List( c1 ) ) {
+      case ( cut_formulas, ( variables, termset ) ) =>
+        val ci = cut_formulas.head
+        val forms = termset.foldLeft( List[FOLFormula]() ) {
+          case ( acc, terms ) =>
+            assert( variables.length == terms.length, "Number of eigenvariables different from number of terms in computation of canonical solution" )
+            val subst = Substitution( variables.zip( terms ) )
+            subst( ci ) :: acc
+        }
+        val ci_quant = variables.foldLeft( ci ) { ( f, v ) => AllVar( v, f ) }
+        And( forms ) :: ci_quant :: cut_formulas.tail
+    // The last term set contains only constants, so we drop the formula generated with it.
+    }.tail.reverse
   }
 
   /**
