@@ -625,30 +625,50 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
   def buildProofWithCut( ehs: ExtendedHerbrandSequent, prover: Prover ): Option[LKProof] = {
 
     val endSequent = ehs.endSequent.toFSequent
-    //    val cutFormula = ehs.cutFormulas.head
     val cutFormulas = ehs.cutFormulas
     val grammar = ehs.grammar
     val terms = grammar.terms
-
-    //assert( ehs.cutFormulas.length == 1, "buildProofWithCut: only one cut supported." )
 
     trace( "grammar: " + grammar )
     trace( "cutFormulas: " + cutFormulas )
 
     val alphas = grammar.eigenvariables
 
+    // As an efficiency improvement, we treat the non-quantified part of the end-sequent
+    // separately (since it never needs to be instantiated).
     val quantPart = FSequent( endSequent.antecedent.filter {
       case AllVar( _ ) => true
       case _           => false
-    }.map( _.asInstanceOf[FOLFormula] ),
+    },
       endSequent.succedent.filter {
         case ExVar( _ ) => true
         case _          => false
-      }.map( _.asInstanceOf[FOLFormula] ) )
+      } )
 
-    // define the U_i from the paper
-    val U = ( 0 to alphas.size ).map( i => grammar.u.map( uterm => terms.getTermTuple( uterm ) ).filter( utuple => utuple.flatMap( freeVariables( _ ) ).intersect( alphas.take( i ) ).isEmpty ) )
-    trace( "U : " + U )
+    // In our setting, we work with a sequent instead of a formula F as in the paper.
+    // The following sequent corresponds to that formula.
+    val F = FSequent( ehs.quant_l, ehs.quant_r )
+
+    // Define the U_i from the paper. Since our F is more general, also U is more general:
+    // instead of a list of lists of terms (corresponding to the term instances of the quantifiers
+    // in the formula F), we have two lists Uleft and Uright. The intended semantics is that
+    // Uleft(i) corresponds to U_i from the paper for the left part of the sequent, and analogously
+    // for URight(i).
+    //
+    // More precisely: Uleft(i)(j)(k)(l) is the k'th U_i-instance of the l'th quantifier of the j'th formula
+    // in the antecedent. Similarily for Uright.
+
+    def getUs( fs: Seq[FOLFormula] ): Seq[Seq[Seq[Seq[FOLTerm]]]] =
+      ( 0 to alphas.size ).map( i => fs.map( f =>
+        grammar.u.filter(
+          uterm => terms.getFormula( uterm ) == f && freeVariables( uterm ).intersect( alphas.take( i ) ).isEmpty ).map(
+            uterm => terms.getTermTuple( uterm ) ) ) )
+
+    val Uleft = getUs( F.antecedent.asInstanceOf[Seq[FOLFormula]] )
+    val Uright = getUs( F.succedent.asInstanceOf[Seq[FOLFormula]] )
+
+    trace( "Uleft : " + Uleft )
+    trace( "Uright : " + Uright )
 
     // define the A_i
     val A = ( cutFormulas zip alphas ).map {
@@ -658,27 +678,37 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         instantiateAll( cf, ev :: Nil )
       }
     }
+
     trace( "A: " + A )
 
     // define L_1
     val L1 = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, A ++ ehs.succedent ++ ehs.succedent_alpha )
+
     trace( "L1: " + L1 )
 
-    // define F[x \ U_i] (we are more general here and define a sequent)
-    val FU = ( 0 to alphas.size ).map( i => FSequent( ehs.quant_l.flatMap( f =>
-      U( i ).map( u => instantiateAll( f.asInstanceOf[FOLFormula], u ) ) ),
-      ehs.quant_r.flatMap( f =>
-        U( i ).map( u => instantiateAll( f.asInstanceOf[FOLFormula], u ) ) ) ) )
+    // define the sequent corresponding to F[x \ U_i]
+    val FU = ( 0 to alphas.size ).map( i => FSequent(
+      ( F.antecedent zip Uleft( i ) ).flatMap { case ( f, terms ) => instantiateAll( f.asInstanceOf[FOLFormula], terms ) },
+      ( F.succedent zip Uright( i ) ).flatMap { case ( f, terms ) => instantiateAll( f.asInstanceOf[FOLFormula], terms ) } ) )
+
     trace( "FU: " + FU )
 
     // define A_i[x \ S_i]
     val AS = ( 0 to alphas.size - 1 ).map( i => grammar.slist( i )._2.map( s => instantiateAll( cutFormulas( i ), s ) ) )
+
+    trace( "AS: " + AS )
+
     // define the R_i
-    val R = ( 0 to alphas.size - 1 ).map( i => FSequent( AS( i ).toSeq ++ ehs.prop_l, A.drop( i + 1 ) ++ ehs.prop_r ).compose( FU( i + 1 ) ) )
+    val R = ( 0 to alphas.size - 1 ).map( i =>
+      FSequent( AS( i ).toSeq ++ ehs.prop_l, A.drop( i + 1 ) ++ ehs.prop_r ).compose(
+        FU( i + 1 ) ) )
+
     trace( "R: " + R )
 
+    // we need a proof of L_1
     val Lproof = prover.getLKProof( L1 )
 
+    // we need proofs of R_1, ..., R_n
     val Rproofs = R.map( s => prover.getLKProof( s ) )
 
     ( ( Rproofs :+ Lproof ) zip ( R :+ L1 ) ).foreach {
@@ -687,14 +717,16 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     }
 
     // To keep a nice induction invariant, we introduce the quantified part of the end-sequent
-    // via weakening.
+    // via weakening (so that we can always contract later on).
     val Lproof_ = WeakeningRightMacroRule( WeakeningLeftMacroRule( Lproof.get, quantPart.antecedent ), quantPart.succedent )
 
     // As above, we introduce the quantified cut-formula via weakening for keeping the invariant
     val Rproofs_ = ( Rproofs zip cutFormulas ).map { case ( p, cf ) => WeakeningLeftRule( p.get, cf ) }
 
+    // This is the recursive construction obtaining the final proof by combining the proofs
+    // of L_1, R_1, ..., R_n with appropriate inference rules as in the paper.
     val proof = ( 0 to alphas.size - 1 ).foldLeft( Lproof_ )( ( lproof, i ) => {
-      val left = buildLeftPart( i, quantPart, A, U, alphas, cutFormulas( i ), lproof )
+      val left = buildLeftPart( i, quantPart, A, Uleft, Uright, alphas, cutFormulas( i ), lproof )
       trace( " Rproofs_( " + i + " ): " + Rproofs_( i ) )
       val right = buildRightPart( Rproofs_( i ), cutFormulas( i ), grammar.slist( i )._2.map( _.head ).toList )
       trace( "right part ES: " + right.root )
@@ -703,11 +735,15 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
       ContractionMacroRule( cont1, FSequent( ehs.prop_l, ehs.prop_r ), false )
     } )
 
-    val proof_ = ( quantPart.antecedent ++ quantPart.succedent ).foldLeft( proof )( ( proof, f ) => genWeakQuantRules( f.asInstanceOf[FOLFormula], U( alphas.size ), proof ) )
+    def finish( p: LKProof, fs: Seq[FOLFormula], instances: Seq[Seq[Seq[FOLTerm]]] ) =
+      ( fs zip instances ).foldLeft( p ) { case ( proof, ( f, is ) ) => genWeakQuantRules( f, is, proof ) }
 
-    trace( "proof_.root: " + proof_.root )
+    val proof_ = finish( proof, quantPart.antecedent.asInstanceOf[Seq[FOLFormula]], Uleft( alphas.size ) )
+    val proof__ = finish( proof_, quantPart.succedent.asInstanceOf[Seq[FOLFormula]], Uright( alphas.size ) )
 
-    Some( proof_ )
+    trace( "proof__.root: " + proof__.root )
+
+    Some( proof__ )
   }
 
   /**
@@ -719,10 +755,15 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
    * ----------------------------------------------------------------------------- \forall_r
    * \forall G, G[U_{i+1}] :- D[U_{i+1}], \exists D, (\forall x) A_{i}[x], ..., A_n
    */
-  private def buildLeftPart( i: Int, es: FSequent, A: Seq[FOLFormula], U: Seq[Seq[Seq[FOLTerm]]], alphas: Seq[FOLVar], cf: FOLFormula, proof: LKProof ) =
+  private def buildLeftPart( i: Int, es: FSequent, A: Seq[FOLFormula], Uleft: Seq[Seq[Seq[Seq[FOLTerm]]]], Uright: Seq[Seq[Seq[Seq[FOLTerm]]]], alphas: Seq[FOLVar], cf: FOLFormula, proof: LKProof ) =
     {
-      val p1 = ( es.antecedent ++ es.succedent ).foldLeft( proof )( ( proof, f ) => genWeakQuantRules( f.asInstanceOf[FOLFormula], U( i ) diff U( i + 1 ), proof ) )
-      ForallRightRule( p1, A( i ), cf, alphas( i ) )
+      def myWeakQuantRules( proof: LKProof, fs: Seq[FOLFormula], instances: Seq[Pair[Seq[Seq[FOLTerm]], Seq[Seq[FOLTerm]]]] ) =
+        ( fs zip instances ).foldLeft( proof ) { case ( proof, ( f, ( ui, uip ) ) ) => genWeakQuantRules( f, ui diff uip, proof ) }
+
+      val p1 = myWeakQuantRules( proof, es.antecedent.asInstanceOf[Seq[FOLFormula]], Uleft( i ) zip Uleft( i + 1 ) )
+      val p2 = myWeakQuantRules( p1, es.succedent.asInstanceOf[Seq[FOLFormula]], Uright( i ) zip Uright( i + 1 ) )
+
+      ForallRightRule( p2, A( i ), cf, alphas( i ) )
     }
 
   /**
@@ -756,61 +797,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
       case ( ExVar( _, _ ), h :: t ) =>
         val newForm = instantiateAll( f, h )
         ContractionRightRule( ExistsRightBlock( genWeakQuantRules( f, t, ax ), f, h ), f )
-    }
-  }
-
-  /**
-   * Proves the u-part of a grammar.
-   *
-   */
-  /*  private def uPart( us: List[types.U], ax: LKProof, terms: TermSet ): LKProof = {
-    us.foldLeft( ax ) {
-      case ( ax, term ) =>
-        //Get the arguments of a single u
-        val set = terms.getTermTuple( term )
-        val f = terms.getFormula( term )
-
-        f match {
-          case AllVar( _, _ ) =>
-            try {
-              ContractionLeftRule( genWeakQuantRules( f, set, ax ), f )
-            } catch {
-              // Not able to contract the formula because it was the last
-              // substitution
-              case e: LKRuleCreationException => genWeakQuantRules( f, set, ax )
-            }
-          case ExVar( _, _ ) =>
-            try {
-              ContractionRightRule( genWeakQuantRules( f, set, ax ), f )
-            } catch {
-              case e: LKRuleCreationException => genWeakQuantRules( f, set, ax )
-            }
-        }
-    }
-  }*/
-
-  private def sPart( cf: FOLFormula, s: types.S, p: LKProof ): LKProof = {
-    var first = true
-
-    s.toList.foldLeft( p ) {
-      case ( p, t ) =>
-
-        //1. Partially instantiate the cut formula.
-        //val pcf = (0 to t.length).toList.reverse.map(n => instantiateFirstN(cf,t,n)).toList
-
-        //2. Starting from p, in which pcf[0] occurs, work down, adding quantifiers, until we get 
-        //   the fully quantified cf back.
-        val newP = ForallLeftBlock( p, cf, t )
-
-        //3. If this is not the first time we build cf, 
-        //   cf is already present in p and we can do away with its second,
-        //   newly generated instance through a contraction rule.
-        if ( first ) {
-          first = false
-          newP
-        } else {
-          ContractionLeftRule( newP, cf )
-        }
     }
   }
 }
