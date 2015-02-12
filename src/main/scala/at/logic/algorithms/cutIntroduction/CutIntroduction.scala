@@ -569,35 +569,22 @@ object CutIntroduction {
    */
   def computeCanonicalSolutions( seq: Sequent, g: Grammar ): List[FOLFormula] = {
 
-    val terms = g.terms
-    val varName = "x"
+    val termset = g.terms
     val variables = g.slist.head._1
 
-    val xFormulas = g.u.foldRight( List[FOLFormula]() ) {
+    val instantiated_f = g.u.foldRight( List[FOLFormula]() ) {
       case ( term, acc ) =>
         val freeVars = freeVariables( term )
 
         // Taking only the terms that contain alpha
         if ( freeVars.intersect( variables ).nonEmpty ) {
-          val set = terms.getTermTuple( term )
-          val f = terms.getFormula( term )
-
-          //Some subset of g's eigenvariables occurs in every term. This generates
-          //substitutions to replace each occurring EV a_i with a quantified variables x_i.
-          val xterms = set.map( t => {
-            val vars = createFOLVars( varName, variables.length )
-            val allEV = variables.zip( vars )
-            val occurringEV = collectVariables( t ).filter( v => variables.contains( v ) ).distinct
-
-            // If the term is a constant, this should return t itself
-            allEV.filter( e => occurringEV.contains( e._1 ) ).foldLeft( t )( ( t, e ) => Substitution( e._1, e._2 ).apply( t ) )
-          } )
-
-          instantiateAll( f, xterms ) :: acc
+          val terms = termset.getTermTuple( term )
+          val f = termset.getFormula( term )
+	  instantiateAll( f, terms ) :: acc
         } else acc
     }
 
-    val c1 = ( 0 to ( variables.size - 1 ) ).reverse.toList.foldLeft( And( xFormulas ) ) { ( f, n ) => AllVar( FOLVar( varName + "_" + n ), f ) }
+    val c1 = variables.foldLeft( And( instantiated_f ) ) { ( f, v ) => AllVar( v, f ) }
 
     // Introducing one cut
     if ( g.slist.length == 1 ) List( c1 )
