@@ -205,7 +205,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
       val lkproof1 = Prover9.parse_prover9LK( testFilePath )
       val expseq = extractExpansionSequent( lkproof1, false )
-      val deep = ETtoDeep( expseq ).toFormula
+      val deep = ETtoDeep( expseq )
 
       minisat.isValid( deep ) must beTrue
 
