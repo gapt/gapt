@@ -731,8 +731,9 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
       val right = buildRightPart( Rproofs_( i ), cutFormulas( i ), grammar.slist( i )._2.map( _.head ).toList )
       trace( "right part ES: " + right.root )
       val cut = CutRule( left, right, cutFormulas( i ) )
-      val cont1 = ContractionMacroRule( cut, FU( i ), false )
-      ContractionMacroRule( cont1, FSequent( ehs.prop_l, ehs.prop_r ), false )
+      val cont1 = ContractionMacroRule( cut, FU( i + 1 ), false )
+      val cont2 = ContractionMacroRule( cont1, FSequent( ehs.prop_l, ehs.prop_r ), false )
+      ContractionMacroRule( cont2, FSequent( Nil, A.drop( i + 1 ) ), false )
     } )
 
     def finish( p: LKProof, fs: Seq[FOLFormula], instances: Seq[Seq[Seq[FOLTerm]]] ) =
