@@ -3,7 +3,7 @@
 *
 */
 
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith

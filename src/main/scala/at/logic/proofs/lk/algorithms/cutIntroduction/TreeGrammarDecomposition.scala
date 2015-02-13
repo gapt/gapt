@@ -1,11 +1,11 @@
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 /**
  * Implements the method mentioned in Eberhard, Hetzl [2014]
  * for decomposing trat-n grammars
  */
 
-import at.logic.algorithms.cutIntroduction.MCSMethod.MCSMethod
+import at.logic.proofs.lk.algorithms.cutIntroduction.MCSMethod.MCSMethod
 import at.logic.language.fol.AllVar
 import at.logic.language.fol.And
 import at.logic.language.fol.Equation
@@ -17,7 +17,7 @@ import at.logic.language.fol.Or
 import at.logic.language.fol.Substitution
 import at.logic.language.fol._
 import at.logic.language.fol.Atom
-import at.logic.algorithms.cutIntroduction.Deltas._
+import at.logic.proofs.lk.algorithms.cutIntroduction.Deltas._
 import at.logic.language.hol.logicSymbols._
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.utils.dssupport.ListSupport

@@ -25,14 +25,14 @@
  *
  * */
 
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._
 import at.logic.proofs.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.utils.dssupport.ListSupport._
-import at.logic.algorithms.cutIntroduction.Deltas._
+import at.logic.proofs.lk.algorithms.cutIntroduction.Deltas._
 
 //package-global definitions
 package object types {

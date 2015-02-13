@@ -1,6 +1,6 @@
 package at.logic.integration_tests
 
-import at.logic.algorithms.cutIntroduction._
+import at.logic.proofs.lk.algorithms.cutIntroduction._
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk._

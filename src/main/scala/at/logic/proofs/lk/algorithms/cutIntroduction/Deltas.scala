@@ -1,5 +1,5 @@
 
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, toFSequent, quantRulesNumber => quantRulesNumberET }
 import at.logic.proofs.lk._

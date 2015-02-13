@@ -6,7 +6,7 @@
  *
  */
 
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.proofs.occurrences._
 import at.logic.proofs.lk._
@@ -14,7 +14,7 @@ import at.logic.proofs.lk.base._
 import at.logic.language.fol._
 import at.logic.proofs.resolution.FClause
 import scala.collection.immutable.Stack
-import at.logic.algorithms.cutIntroduction.MinimizeSolution.MyFClause
+import at.logic.proofs.lk.algorithms.cutIntroduction.MinimizeSolution.MyFClause
 import at.logic.utils.dssupport.ListSupport.mapAccumL
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch

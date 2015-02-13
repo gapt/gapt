@@ -1,7 +1,7 @@
 
 package at.logic.integration_tests
 
-import at.logic.algorithms.cutIntroduction._
+import at.logic.proofs.lk.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.DefinitionElimination

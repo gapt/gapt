@@ -7,7 +7,7 @@
  * P = { τ -> u | u in U} union { α -> s | s in S } 
  */
 
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.language.fol._
 import at.logic.language.fol.Utils._

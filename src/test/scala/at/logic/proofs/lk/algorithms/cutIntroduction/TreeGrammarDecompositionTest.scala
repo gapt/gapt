@@ -1,4 +1,4 @@
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.language.fol.{FOLVar, Function, FOLConst, FOLTerm}
 import org.junit.runner.RunWith
