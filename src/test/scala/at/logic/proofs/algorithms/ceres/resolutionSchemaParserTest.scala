@@ -1,4 +1,4 @@
-package at.logic.transformations.ceres.clauseSchema
+package at.logic.proofs.algorithms.ceres.clauseSchema
 
 import at.logic.proofs.slk.SchemaProofDB
 import at.logic.language.schema._

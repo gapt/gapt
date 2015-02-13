@@ -1,4 +1,4 @@
-package at.logic.transformations.ceres
+package at.logic.proofs.algorithms.ceres
 
 import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.proofs.lk._
@@ -7,7 +7,7 @@ import at.logic.proofs.lksk.algorithms.applySubstitution
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.hol.{ HOLFormula, Equation }
 import at.logic.language.lambda.types.Ti
-import at.logic.transformations.ceres.struct.Struct
+import at.logic.proofs.algorithms.ceres.struct.Struct
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.proofs.lk.base.{ Sequent, LKProof }
 import at.logic.proofs.lksk

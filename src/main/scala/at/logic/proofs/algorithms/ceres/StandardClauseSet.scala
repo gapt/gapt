@@ -3,10 +3,10 @@
  *
  */
 
-package at.logic.transformations.ceres.clauseSets
+package at.logic.proofs.algorithms.ceres.clauseSets
 
 import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
-import at.logic.transformations.ceres.struct._
+import at.logic.proofs.algorithms.ceres.struct._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lksk._
 import at.logic.proofs.occurrences._

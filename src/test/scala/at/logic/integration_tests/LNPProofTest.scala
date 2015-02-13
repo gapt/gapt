@@ -9,8 +9,8 @@ import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.writers.FileWriter
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
+import at.logic.proofs.algorithms.ceres.struct.StructCreators
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream

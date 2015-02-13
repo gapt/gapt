@@ -11,8 +11,8 @@ import at.logic.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.language.hol._
 import at.logic.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.language.schema.{ BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, indexedOmegaVar, IntegerTerm, IntVar, IntConst, Succ }
-import at.logic.transformations.ceres.struct.ClauseSetSymbol
-import at.logic.transformations.ceres.PStructToExpressionTree.ProjectionSetSymbol
+import at.logic.proofs.algorithms.ceres.struct.ClauseSetSymbol
+import at.logic.proofs.algorithms.ceres.PStructToExpressionTree.ProjectionSetSymbol
 import org.scilab.forge.jlatexmath.{ TeXIcon, TeXConstants, TeXFormula }
 import java.awt.{ Color, Font }
 import java.awt.image.BufferedImage

@@ -1,4 +1,4 @@
-package at.logic.transformations.ceres.ACNF
+package at.logic.proofs.algorithms.ceres.ACNF
 
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
@@ -13,10 +13,10 @@ import at.logic.language.lambda.types._
 import at.logic.parsing.language.prover9.Prover9TermParserLadrStyle
 import at.logic.parsing.shlk_parsing.sFOParser
 import at.logic.provers.prover9.Prover9
-import at.logic.transformations.ceres.clauseSchema._
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-import at.logic.transformations.ceres.projections.Projections
-import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.proofs.algorithms.ceres.clauseSchema._
+import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
+import at.logic.proofs.algorithms.ceres.projections.Projections
+import at.logic.proofs.algorithms.ceres.struct.StructCreators
 import java.io.File.separator
 import java.io.{FileInputStream, InputStreamReader}
 import org.junit.runner.RunWith
@@ -34,7 +34,7 @@ class acnfTest extends SpecificationWithJUnit {
   sequential
   "ACNFTest" should {
     "should create correctly the ACNF for journal_example.lks" in {
-      skipped("Error at: at.logic.transformations.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)")
+      skipped("Error at: at.logic.proofs.algorithms.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)")
 
       val s1 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("ceres-journal_example.lks"))
       val s2 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema1.rs"))
@@ -59,7 +59,7 @@ class acnfTest extends SpecificationWithJUnit {
 //    }
 
     "should create correctly the ACNF for sEXP.lks" in {
-      skipped("Error at: at.logic.transformations.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)")
+      skipped("Error at: at.logic.proofs.algorithms.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)")
 
       val s1 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sEXP.lks"))
       val s2 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema_sEXP.rs"))

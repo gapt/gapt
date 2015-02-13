@@ -1,4 +1,4 @@
-package at.logic.transformations.ceres
+package at.logic.proofs.algorithms.ceres
 
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._

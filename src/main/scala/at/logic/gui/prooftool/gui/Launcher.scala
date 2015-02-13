@@ -17,7 +17,7 @@ import at.logic.proofs.proofs.TreeProof
 import at.logic.proofs.expansionTrees.ExpansionSequent
 import at.logic.language.hol.HOLFormula
 import at.logic.proofs.proofs.Proof
-import at.logic.transformations.ceres.struct.{ structToExpressionTree, Struct }
+import at.logic.proofs.algorithms.ceres.struct.{ structToExpressionTree, Struct }
 
 class Launcher( private val option: Option[( String, AnyRef )], private val fSize: Int ) extends GridBagPanel with MouseMotionListener {
   option match {

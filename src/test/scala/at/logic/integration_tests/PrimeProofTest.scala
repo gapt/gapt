@@ -20,10 +20,10 @@ import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.writers.FileWriter
 import at.logic.provers.prover9._
 import at.logic.provers.veriT.VeriTProver
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-import at.logic.transformations.ceres.clauseSets.profile._
-import at.logic.transformations.ceres.projections.Projections
-import at.logic.transformations.ceres.struct.{StructCreators, structToExpressionTree}
+import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
+import at.logic.proofs.algorithms.ceres.clauseSets.profile._
+import at.logic.proofs.algorithms.ceres.projections.Projections
+import at.logic.proofs.algorithms.ceres.struct.{StructCreators, structToExpressionTree}
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize

@@ -29,11 +29,11 @@ import at.logic.proofs.resolution.algorithms.RobinsonToRal
 
 
 import at.logic.provers.prover9._
-import at.logic.transformations.ceres.clauseSets._
-import at.logic.transformations.ceres.projections.Projections
-import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.proofs.algorithms.ceres.clauseSets._
+import at.logic.proofs.algorithms.ceres.projections.Projections
+import at.logic.proofs.algorithms.ceres.struct.StructCreators
 
-import at.logic.transformations.ceres.ceres_omega
+import at.logic.proofs.algorithms.ceres.ceres_omega
 import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 

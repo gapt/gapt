@@ -1,5 +1,5 @@
 
-package at.logic.transformations.ceres.clauseSets
+package at.logic.proofs.algorithms.ceres.clauseSets
 
 import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base.Sequent
@@ -9,8 +9,8 @@ import at.logic.language.hol.{Substitution => HOLSubstitution, Atom => HOLAtom, 
 import at.logic.language.schema.{Substitution => SchemaSubstitution, _}
 import at.logic.language.lambda.types._
 import at.logic.parsing.shlk_parsing.sFOParser
-import at.logic.transformations.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
-import at.logic.transformations.ceres.struct._
+import at.logic.proofs.algorithms.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
+import at.logic.proofs.algorithms.ceres.struct._
 import java.io.File.separator
 import java.io.{FileInputStream, InputStreamReader}
 import org.junit.runner.RunWith
