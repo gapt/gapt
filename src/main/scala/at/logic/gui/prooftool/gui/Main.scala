@@ -26,7 +26,6 @@ import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.xml.{ ProofDatabase, XMLExporter }
 import at.logic.parsing.writers.FileWriter
-import at.logic.transformations.ReductiveCutElim
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.ceres.clauseSets.{ renameCLsymbols, StandardClauseSet }
 import at.logic.transformations.ceres.struct.{ structToExpressionTree, StructCreators }

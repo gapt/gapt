@@ -5,15 +5,12 @@
  * and open the template in the editor.
  */
 
-package at.logic.transformations
+package at.logic.proofs.lk.algorithms
 
-import java.lang.Exception
+import at.logic.language.hol.{ Substitution, _ }
 import at.logic.proofs.lk._
-import at.logic.proofs.lk.algorithms.{ applySubstitution, regularize, CleanStructuralRules }
 import at.logic.proofs.lk.base._
-import at.logic.language.hol._
 import at.logic.proofs.occurrences._
-import at.logic.language.hol.Substitution
 
 class ReductiveCutElimException( msg: String ) extends Exception( msg )
 
