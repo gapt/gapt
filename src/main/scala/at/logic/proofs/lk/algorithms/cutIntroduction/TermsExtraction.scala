@@ -27,7 +27,7 @@
  *
  */
 
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.proofs.expansionTrees._
 import at.logic.proofs.expansionTrees.algorithms.compressQuantifiers

@@ -35,7 +35,7 @@ object CLIMain {
   import at.logic.transformations.skolemization.skolemize
   import at.logic.algorithms.lk.regularize
   import at.logic.calculi.occurrences.FormulaOccurrence
-  import at.logic.algorithms.cutIntroduction.Deltas._
+  import at.logic.proofs.lk.algorithms.cutIntroduction.Deltas._
   import at.logic.algorithms.lk.statistics._
   import at.logic.provers.minisat.MiniSATProver
   import at.logic.gui.prooftool.gui.{Main => PT}

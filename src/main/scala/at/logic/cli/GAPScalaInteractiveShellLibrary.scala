@@ -8,7 +8,7 @@ package at.logic.cli.GAPScalaInteractiveShellLibrary
 import java.io.{ FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 import java.util.zip.GZIPInputStream
 
-import at.logic.algorithms.cutIntroduction._
+import at.logic.proofs.lk.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }

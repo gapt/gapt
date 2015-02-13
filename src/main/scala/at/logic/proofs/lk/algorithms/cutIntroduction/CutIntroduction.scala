@@ -3,9 +3,9 @@
  *
  *
  */
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
-import at.logic.algorithms.cutIntroduction.Deltas._
+import at.logic.proofs.lk.algorithms.cutIntroduction.Deltas._
 import at.logic.proofs.expansionTrees.{ ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
 import at.logic.proofs.lk
 import at.logic.proofs.lk._

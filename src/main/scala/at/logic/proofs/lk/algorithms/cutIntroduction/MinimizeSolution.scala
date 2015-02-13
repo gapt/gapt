@@ -5,7 +5,7 @@
  * Takes an extended Herbrand sequent with an associated solution and returns another one with an improved solution.
  */
 
-package at.logic.algorithms.cutIntroduction
+package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.proofs.lk.base._
 import at.logic.proofs.resolution.FClause
