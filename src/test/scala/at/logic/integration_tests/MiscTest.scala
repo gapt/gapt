@@ -7,7 +7,7 @@ import at.logic.algorithms.resolution._
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.proofs.expansionTrees.{toDeep => ETtoDeep,toShallow => ETtoShallow}
 import at.logic.proofs.lk._
-import at.logic.proofs.lk.algorithms.{AtomicExpansion, solve, deleteTautologies, regularize}
+import at.logic.proofs.lk.algorithms._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences._
 import at.logic.language.fol._
@@ -24,7 +24,6 @@ import at.logic.proofs.resolution.algorithms.{fixSymmetry, RobinsonToLK, CNFn}
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.provers.prover9.{Prover9, Prover9Prover}
 import at.logic.provers.veriT.VeriTProver
-import at.logic.transformations.ReductiveCutElim
 import at.logic.transformations.ceres.clauseSets.StandardClauseSet
 import at.logic.transformations.ceres.clauseSets.profile._
 import at.logic.transformations.ceres.projections.Projections
