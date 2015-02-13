@@ -8,6 +8,11 @@ package at.logic.cli.GAPScalaInteractiveShellLibrary
 import java.io.{ FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 import java.util.zip.GZIPInputStream
 
+import at.logic.proofs.algorithms.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
+import at.logic.proofs.algorithms.ceres.{ CERES, CERESR2LK, ceres_omega }
+import at.logic.proofs.algorithms.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
+import at.logic.proofs.algorithms.ceres.projections.Projections
+import at.logic.proofs.algorithms.ceres.struct.{ Struct, StructCreators }
 import at.logic.proofs.lk.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.algorithms.llk.HybridLatexExporter
@@ -70,14 +75,8 @@ import at.logic.provers.maxsat.MaxSATSolver._
 import at.logic.provers.minisat.MiniSAT
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
-import at.logic.transformations.ceres.ACNF._
-import at.logic.transformations.ceres.ceres_omega
-import at.logic.transformations.ceres.clauseSets.SimplifyStruct
-import at.logic.transformations.ceres.projections.Projections
-import at.logic.transformations.ceres.struct._
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.{ CERES, CERESR2LK }
 import at.logic.transformations.herbrandExtraction
 import at.logic.utils.logging.Stopwatch
 
@@ -398,11 +397,11 @@ object extractStruct {
 }
 
 object structToClausesList {
-  def apply( s: Struct ) = at.logic.transformations.ceres.clauseSets.StandardClauseSet.transformStructToClauseSet( s )
+  def apply( s: Struct ) = StandardClauseSet.transformStructToClauseSet( s )
 }
 
 object structToLabelledClausesList {
-  def apply( s: Struct ) = at.logic.transformations.ceres.clauseSets.StandardClauseSet.transformStructToClauseSet( s )
+  def apply( s: Struct ) = StandardClauseSet.transformStructToClauseSet( s )
 }
 
 /**

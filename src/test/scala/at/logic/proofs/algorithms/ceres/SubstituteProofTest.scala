@@ -1,4 +1,4 @@
-package at.logic.transformations.ceres.ACNF
+package at.logic.proofs.algorithms.ceres.ACNF
 
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

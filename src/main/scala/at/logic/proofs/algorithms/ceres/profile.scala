@@ -1,5 +1,5 @@
 
-package at.logic.transformations.ceres.clauseSets.profile
+package at.logic.proofs.algorithms.ceres.clauseSets.profile
 
 import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base._
@@ -7,8 +7,8 @@ import at.logic.proofs.lk._
 import at.logic.proofs.lksk.{ LabelledSequent, LabelledFormulaOccurrence, UnaryLKskProof }
 import at.logic.proofs.occurrences._
 import at.logic.language.hol._
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet._
-import at.logic.transformations.ceres.struct._
+import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet._
+import at.logic.proofs.algorithms.ceres.struct._
 
 object getListOfFOccsInStruct {
   def apply( s: Struct ): List[FormulaOccurrence] = s match {

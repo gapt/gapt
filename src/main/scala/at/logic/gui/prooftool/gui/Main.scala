@@ -27,16 +27,16 @@ import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.xml.{ ProofDatabase, XMLExporter }
 import at.logic.parsing.writers.FileWriter
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import at.logic.transformations.ceres.clauseSets.{ renameCLsymbols, StandardClauseSet }
-import at.logic.transformations.ceres.struct.{ structToExpressionTree, StructCreators }
-import at.logic.transformations.ceres.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
-import at.logic.transformations.ceres.{ UnfoldProjectionTerm, ProjectionTermCreators }
+import at.logic.proofs.algorithms.ceres.clauseSets.{ renameCLsymbols, StandardClauseSet }
+import at.logic.proofs.algorithms.ceres.struct.{ structToExpressionTree, StructCreators }
+import at.logic.proofs.algorithms.ceres.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
+import at.logic.proofs.algorithms.ceres.{ UnfoldProjectionTerm, ProjectionTermCreators }
 import at.logic.algorithms.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
 import at.logic.utils.ds.trees.Tree
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
-import at.logic.transformations.ceres.ACNF.ACNF
+import at.logic.proofs.algorithms.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
+import at.logic.proofs.algorithms.ceres.ACNF.ACNF
 import at.logic.proofs.slk.SchemaProofDB
 import at.logic.proofs.proofs.Proof
 import java.awt.image.BufferedImage

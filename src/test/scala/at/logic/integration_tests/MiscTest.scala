@@ -24,10 +24,10 @@ import at.logic.proofs.resolution.algorithms.{fixSymmetry, RobinsonToLK, CNFn}
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.provers.prover9.{Prover9, Prover9Prover}
 import at.logic.provers.veriT.VeriTProver
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
-import at.logic.transformations.ceres.clauseSets.profile._
-import at.logic.transformations.ceres.projections.Projections
-import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
+import at.logic.proofs.algorithms.ceres.clauseSets.profile._
+import at.logic.proofs.algorithms.ceres.projections.Projections
+import at.logic.proofs.algorithms.ceres.struct.StructCreators
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.transformations.skolemization.skolemize
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
@@ -121,7 +121,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
-      val s = at.logic.transformations.ceres.struct.StructCreators.extract( proof )
+      val s = StructCreators.extract( proof )
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
       val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
       val path = "target" + separator + "test1p-out.xml"

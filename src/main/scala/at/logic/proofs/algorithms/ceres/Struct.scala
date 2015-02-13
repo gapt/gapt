@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.transformations.ceres.struct
+package at.logic.proofs.algorithms.ceres.struct
 
 import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
@@ -20,8 +20,8 @@ import at.logic.language.schema.{ Substitution => SchemaSubstitution, SchemaForm
 import at.logic.utils.ds.Multisets.Multiset
 import at.logic.utils.ds.Multisets._
 import at.logic.utils.ds.trees._
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet._
-import at.logic.transformations.ceres.RelevantCC
+import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet._
+import at.logic.proofs.algorithms.ceres.RelevantCC
 import scala.collection.immutable.HashSet
 import scala.math.max
 

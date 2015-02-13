@@ -1,6 +1,6 @@
 // TODO: shouldn't this go to parsing?
 
-package at.logic.transformations.ceres.clauseSchema
+package at.logic.proofs.algorithms.ceres.clauseSchema
 
 import at.logic.algorithms.shlk.StepMinusOne
 import at.logic.proofs.lk.base.{ Sequent, LKProof }

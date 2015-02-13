@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.transformations.ceres.projections
+package at.logic.proofs.algorithms.ceres.projections
 
 import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences._

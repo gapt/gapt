@@ -1,4 +1,4 @@
-package at.logic.transformations.ceres
+package at.logic.proofs.algorithms.ceres
 
 import at.logic.proofs.lk.algorithms.applySubstitution
 import at.logic.proofs.resolution.FClause
@@ -13,10 +13,10 @@ import at.logic.proofs.resolution.algorithms.RobinsonToLK
 import at.logic.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.provers.prover9.Prover9
-import at.logic.transformations.ceres.clauseSets.StandardClauseSet
+import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 
-import at.logic.transformations.ceres.projections.Projections
-import at.logic.transformations.ceres.struct.StructCreators
+import at.logic.proofs.algorithms.ceres.projections.Projections
+import at.logic.proofs.algorithms.ceres.struct.StructCreators
 
 /**
  * Two implementations of first-order CERES, one (CERES) grounding the proof before the transformation, the other (CERESR2LK)

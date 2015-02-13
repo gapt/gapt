@@ -24,7 +24,7 @@ import at.logic.gui.prooftool.gui.{ DrawSequent, Main }
 import at.logic.parsing.ivy.IvyParser
 import at.logic.parsing.ivy.conversion.IvyToRobinson
 import at.logic.language.schema.dbTRS
-import at.logic.transformations.ceres.clauseSchema._
+import at.logic.proofs.algorithms.ceres.clauseSchema._
 import at.logic.proofs.slk.SchemaProofDB
 import at.logic.proofs.proofs.Proof
 import at.logic.algorithms.shlk.SCHOLParser
