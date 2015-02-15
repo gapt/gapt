@@ -143,7 +143,7 @@ object testCutIntro {
       CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
     case _ =>
       // Failed already during parsing, logging
-      CutIntroDataLogger.trace(name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
+      CutIntroDataLogger.trace(method_name + "," + name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
   }
 
   /************** finding non-trival prover9-TSTP proofs **********************/
