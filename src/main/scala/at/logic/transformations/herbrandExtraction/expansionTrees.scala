@@ -65,7 +65,7 @@ class extractExpansionSequent {
 
   //occurs in handleAxiom
   private def allAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isAtom( o.formula ) )
-  private def isReflexivity( f: HOLFormula ) = f match { case Equation( s, t ) if s == t => true; case _ => false }
+  private def isReflexivity( f: HOLFormula ) = f match { case HOLEquation( s, t ) if s == t => true; case _ => false }
 
   def handleUnary( r: Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
@@ -78,16 +78,16 @@ class extractExpansionSequent {
       case ContractionLeftRule( _, _, a1, a2, _ )  => MergeNodeTree( map( a1 ), map( a2 ) )
       case ContractionRightRule( _, _, a1, a2, _ ) => MergeNodeTree( map( a1 ), map( a2 ) )
       case AndLeft1Rule( _, _, a, _ ) =>
-        val And( _, f2 ) = p.formula
+        val HOLAnd( _, f2 ) = p.formula
         AndTree( map( a ), AtomTree( TopC ) )
       case AndLeft2Rule( _, _, a, _ ) =>
-        val And( f1, _ ) = p.formula
+        val HOLAnd( f1, _ ) = p.formula
         AndTree( AtomTree( TopC ), map( a ) )
       case OrRight1Rule( _, _, a, _ ) =>
-        val Or( _, f2 ) = p.formula
+        val HOLOr( _, f2 ) = p.formula
         OrTree( map( a ), AtomTree( BottomC ) )
       case OrRight2Rule( _, _, a, _ ) =>
-        val Or( f1, _ ) = p.formula
+        val HOLOr( f1, _ ) = p.formula
         OrTree( AtomTree( BottomC ), map( a ) )
       case ImpRightRule( _, _, a1, a2, _ ) =>
         ImpTree( map( a1 ), map( a2 ) )

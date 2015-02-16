@@ -12,7 +12,7 @@ import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences._
 import at.logic.language.fol._
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.{And => AndHOL, Imp => ImpHOL, Or => OrHOL}
+import at.logic.language.hol.{HOLAnd => AndHOL, HOLImp => ImpHOL, HOLOr => OrHOL}
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.parsing.calculus.xml.saveXML

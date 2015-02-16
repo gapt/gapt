@@ -19,14 +19,14 @@ class BussGeneratorAutoPropTest extends SpecificationWithJUnit {
 
       val a = HOLConst("a", Ti)
 
-      val Pc1 = Atom(HOLConst("Pc1", Ti -> To), a::Nil)
-      val Pc2 = Atom(HOLConst("Pc2", Ti -> To), a::Nil)
-      val Pd1 = Atom(HOLConst("Pd1", Ti -> To), a::Nil)
-      val Pd2 = Atom(HOLConst("Pd2", Ti -> To), a::Nil)
-      val Pc1_or_Pd1 = Or(Pc1, Pd1)
-      val imp_Pc1_or_Pd1_Pc2 = Imp(Pc1_or_Pd1, Pc2)
-      val imp_Pc1_or_Pd1_Pd2 = Imp(Pc1_or_Pd1, Pd2)
-      val imp_Pc1_or_Pd1_Pc2__or__imp_Pc1_or_Pd1_Pd2 = at.logic.language.hol.Or(imp_Pc1_or_Pd1_Pc2, imp_Pc1_or_Pd1_Pd2)
+      val Pc1 = HOLAtom(HOLConst("Pc1", Ti -> To), a::Nil)
+      val Pc2 = HOLAtom(HOLConst("Pc2", Ti -> To), a::Nil)
+      val Pd1 = HOLAtom(HOLConst("Pd1", Ti -> To), a::Nil)
+      val Pd2 = HOLAtom(HOLConst("Pd2", Ti -> To), a::Nil)
+      val Pc1_or_Pd1 = HOLOr(Pc1, Pd1)
+      val imp_Pc1_or_Pd1_Pc2 = HOLImp(Pc1_or_Pd1, Pc2)
+      val imp_Pc1_or_Pd1_Pd2 = HOLImp(Pc1_or_Pd1, Pd2)
+      val imp_Pc1_or_Pd1_Pc2__or__imp_Pc1_or_Pd1_Pd2 = at.logic.language.hol.HOLOr(imp_Pc1_or_Pd1_Pc2, imp_Pc1_or_Pd1_Pd2)
 //      val fs = FSequent(imp_Pc1_or_Pd1_Pc2__or__imp_Pc1_or_Pd1_Pd2 :: Pc1_or_Pd1 :: Nil , Pc2::Pd2::Nil)
       val fs = BussTautology(2)
       val bussGen = solve.solvePropositional(fs)
@@ -41,17 +41,17 @@ object BussTautology {
 
   val a = HOLConst("a", Ti)
 
-  def c( i: Int ) = Atom( HOLConst("c_" + i, Ti -> To), a::Nil )
-  def d( i: Int ) = Atom( HOLConst("d_" + i, Ti -> To), a::Nil )
+  def c( i: Int ) = HOLAtom( HOLConst("c_" + i, Ti -> To), a::Nil )
+  def d( i: Int ) = HOLAtom( HOLConst("d_" + i, Ti -> To), a::Nil )
   def F( i: Int ) : HOLFormula =  if ( i == 1 )
-                                      Or( c( 1 ), d( 1 ) )
+                                      HOLOr( c( 1 ), d( 1 ) )
                                   else
-                                      And( F( i - 1 ), Or( c( i ), d( i ) ) )
+                                      HOLAnd( F( i - 1 ), HOLOr( c( i ), d( i ) ) )
   def A( i: Int ) = if ( i == 1 )  c( 1 )
-                    else Imp( F( i - 1 ), c( i ) )
+                    else HOLImp( F( i - 1 ), c( i ) )
   def B( i: Int ) = if ( i == 1 )  d( 1 )
-                    else Imp( F( i - 1 ), d( i ) )
+                    else HOLImp( F( i - 1 ), d( i ) )
 
   // the antecedens of the final sequent
-  def Ant( i: Int ) : List[HOLFormula] = if ( i == 0 ) Nil else Or( A( i ), B( i ))::Ant( i - 1 )
+  def Ant( i: Int ) : List[HOLFormula] = if ( i == 0 ) Nil else HOLOr( A( i ), B( i ))::Ant( i - 1 )
 }

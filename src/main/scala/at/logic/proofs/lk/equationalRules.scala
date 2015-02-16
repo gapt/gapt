@@ -42,7 +42,7 @@ object EquationVerifier {
   def apply( eq: HOLFormula, e1: HOLFormula, e2: HOLFormula ): Option[List[Int]] = {
     //println("try "+eq+" "+e1+" "+e2)
     eq match {
-      case Equation( s, t ) => apply( s, t, e1, e2 ) match {
+      case HOLEquation( s, t ) => apply( s, t, e1, e2 ) match {
         case EqualModuloEquality( path ) =>
           //println("result:"+path)
           Some( path )
@@ -114,7 +114,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
@@ -159,7 +159,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -231,7 +231,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
@@ -276,7 +276,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -374,7 +374,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
@@ -420,7 +420,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -475,7 +475,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
@@ -521,7 +521,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -619,7 +619,7 @@ object EquationRight1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
@@ -665,7 +665,7 @@ object EquationRight1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -737,7 +737,7 @@ object EquationRight1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
@@ -783,7 +783,7 @@ object EquationRight1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -881,7 +881,7 @@ object EquationRight2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
@@ -927,7 +927,7 @@ object EquationRight2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -982,7 +982,7 @@ object EquationRight2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
@@ -1028,7 +1028,7 @@ object EquationRight2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )

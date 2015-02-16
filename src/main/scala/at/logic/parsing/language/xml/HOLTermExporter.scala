@@ -11,53 +11,53 @@ import at.logic.language.lambda.types.{ FunctionType, Ti, ->, To }
 
 trait HOLTermExporter {
   def exportTerm( term: HOLExpression ): scala.xml.Elem = term match {
-    case Atom( c: HOLConst, args ) =>
+    case HOLAtom( c: HOLConst, args ) =>
       <constantatomformula symbol={ c.name.toString }>
         { exportList( args ) }
       </constantatomformula>
-    case Atom( c: HOLVar, args ) =>
+    case HOLAtom( c: HOLVar, args ) =>
       <variableatomformula>
         { exportList( c :: args ) }
       </variableatomformula>
     //defined sets need to be matched before general functions
-    case Function( HOLConst( a, FunctionType( To, ls ) ), args, rtype ) if ( ls.last == Ti ) =>
+    case HOLFunction( HOLConst( a, FunctionType( To, ls ) ), args, rtype ) if ( ls.last == Ti ) =>
       <definedset definition={ a } symbol={ a }>
         { exportList( args ) }
       </definedset>
     // TODO Function with HOLVar
-    case Function( f: HOLConst, args, _ ) =>
+    case HOLFunction( f: HOLConst, args, _ ) =>
       <function symbol={ f.name.toString }>
         { exportList( args ) }
       </function>
-    case And( left, right ) =>
+    case HOLAnd( left, right ) =>
       <conjunctiveformula type="and">
         { exportList( left :: right :: Nil ) }
       </conjunctiveformula>
-    case Or( left, right ) =>
+    case HOLOr( left, right ) =>
       <conjunctiveformula type="or">
         { exportList( left :: right :: Nil ) }
       </conjunctiveformula>
-    case Imp( left, right ) =>
+    case HOLImp( left, right ) =>
       <conjunctiveformula type="impl">
         { exportList( left :: right :: Nil ) }
       </conjunctiveformula>
-    case Neg( f ) =>
+    case HOLNeg( f ) =>
       <conjunctiveformula type="neg">
         { exportTerm( f ) }
       </conjunctiveformula>
-    case AllVar( vr @ HOLVar( _, Ti ), f ) =>
+    case HOLAllVar( vr @ HOLVar( _, Ti ), f ) =>
       <quantifiedformula type="all">
         { exportList( vr :: f :: Nil ) }
       </quantifiedformula>
-    case ExVar( vr @ HOLVar( _, Ti ), f ) =>
+    case HOLExVar( vr @ HOLVar( _, Ti ), f ) =>
       <quantifiedformula type="exists">
         { exportList( vr :: f :: Nil ) }
       </quantifiedformula>
-    case AllVar( vr @ HOLVar( _, ->( Ti, To ) ), f ) =>
+    case HOLAllVar( vr @ HOLVar( _, ->( Ti, To ) ), f ) =>
       <secondorderquantifiedformula type="all">
         { exportList( vr :: f :: Nil ) }
       </secondorderquantifiedformula>
-    case ExVar( vr @ HOLVar( _, ->( Ti, To ) ), f ) =>
+    case HOLExVar( vr @ HOLVar( _, ->( Ti, To ) ), f ) =>
       <secondorderquantifiedformula type="exists">
         { exportList( vr :: f :: Nil ) }
       </secondorderquantifiedformula>

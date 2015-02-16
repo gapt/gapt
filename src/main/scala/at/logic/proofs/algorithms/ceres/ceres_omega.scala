@@ -5,7 +5,7 @@ import at.logic.proofs.lk._
 import at.logic.proofs.lksk.TypeSynonyms.Label
 import at.logic.proofs.lksk.algorithms.applySubstitution
 import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.language.hol.{ HOLFormula, Equation }
+import at.logic.language.hol.{ HOLFormula, HOLEquation }
 import at.logic.language.lambda.types.Ti
 import at.logic.proofs.algorithms.ceres.struct.Struct
 import at.logic.utils.dssupport.ListSupport._
@@ -31,7 +31,7 @@ class ceres_omega {
    */
   def apply( projections: Set[LKProof], ralproof: RalResolutionProof[LabelledSequent], es: LabelledSequent, struct: Struct ): ( LKProof, LabelledSequent ) = ralproof match {
     //reflexivity as initial rule
-    case InitialSequent( s @ LabelledSequent( Nil, List( LabelledFormulaOccurrence( Equation( x, y ), anc, label ) ) ) ) if ( x == y ) && ( x.exptype == Ti ) =>
+    case InitialSequent( s @ LabelledSequent( Nil, List( LabelledFormulaOccurrence( HOLEquation( x, y ), anc, label ) ) ) ) if ( x == y ) && ( x.exptype == Ti ) =>
 
       val rule = LKSKAxiom( s.toFSequent, ( List(), List( label ) ) )
       val reflexivity_occ = rule.root.succedent( 0 ).asInstanceOf[LabelledFormulaOccurrence]

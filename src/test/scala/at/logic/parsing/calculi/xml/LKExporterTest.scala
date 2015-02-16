@@ -24,7 +24,7 @@ class LkExporterTest extends SpecificationWithJUnit {
 
   val exporter = new LKExporter{}
 // helper to create 0-ary predicate constants
-  def pc( sym: String ) = Atom( HOLConst(StringSymbol( sym ), To), List() )
+  def pc( sym: String ) = HOLAtom( HOLConst(StringSymbol( sym ), To), List() )
   
   "LKExporter" should {
     "export correctly a sequent A, B :- C, D" in {

@@ -322,8 +322,8 @@ object StructCreators {
   def extractFormula( name: String, fresh_param: IntVar ): HOLFormula =
     {
       val cs_0_f = SchemaProofDB.foldLeft[HOLFormula]( TopC )( ( f, ps ) =>
-        And( cutConfigurations( ps._2.base ).foldLeft[HOLFormula]( TopC )( ( f2, cc ) =>
-          And( Imp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero() :: Nil ) ),
+        HOLAnd( cutConfigurations( ps._2.base ).foldLeft[HOLFormula]( TopC )( ( f2, cc ) =>
+          HOLAnd( HOLImp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero() :: Nil ) ),
             IntZero() :: Nil ),
             toFormula( extractBaseWithCutConfig( ps._2, cc ) ) ), f2 ) ),
           f ) )
@@ -332,20 +332,20 @@ object StructCreators {
       // same running variable "k".
       val k = IntVar( "k" )
       val cs_1_f = SchemaProofDB.foldLeft[HOLFormula]( TopC )( ( f, ps ) =>
-        And( cutConfigurations( ps._2.rec ).foldLeft[HOLFormula]( TopC )( ( f2, cc ) =>
-          And( Imp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ( k ) :: Nil ) ),
+        HOLAnd( cutConfigurations( ps._2.rec ).foldLeft[HOLFormula]( TopC )( ( f2, cc ) =>
+          HOLAnd( HOLImp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ( k ) :: Nil ) ),
             Succ( k ) :: Nil ),
             toFormula( extractStepWithCutConfig( ps._2, cc ) ) ), f2 ) ),
           f ) )
 
       val cl_n = IndexedPredicate( new ClauseSetSymbol( name, ( HashMultiset[HOLFormula], HashMultiset[HOLFormula] ) ),
         fresh_param :: Nil )
-      And( cl_n, And( cs_0_f, BigAnd( k, cs_1_f.asInstanceOf[SchemaFormula], IntZero(), fresh_param ) ) )
+      HOLAnd( cl_n, HOLAnd( cs_0_f, BigAnd( k, cs_1_f.asInstanceOf[SchemaFormula], IntZero(), fresh_param ) ) )
     }
 
   def toFormula( s: Struct ): HOLFormula =
     transformStructToClauseSet( s ).foldLeft[HOLFormula]( TopC )( ( f, c ) =>
-      And( f, toFormula( c ) ) )
+      HOLAnd( f, toFormula( c ) ) )
 
   // FIXME: this method should not exist.
   // it's a workaround necessary since so far, the logical
@@ -353,7 +353,7 @@ object StructCreators {
   // do not work across language-levels, but the constants
   // are neede to transform a sequent to a formula in general.
   def toFormula( s: Sequent ): HOLFormula =
-    Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[HOLFormula] ) ).toList ++ ( s.succedent map ( _.formula.asInstanceOf[HOLFormula] ) ) )
+    HOLOr( s.antecedent.map( f => HOLNeg( f.formula.asInstanceOf[HOLFormula] ) ).toList ++ ( s.succedent map ( _.formula.asInstanceOf[HOLFormula] ) ) )
 
   def extractRelevantStruct( name: String, fresh_param: IntVar ): Tuple2[List[( String, Struct, Set[FormulaOccurrence] )], List[( String, Struct, Set[FormulaOccurrence] )]] = {
     val rcc = RelevantCC( name )._1.flatten

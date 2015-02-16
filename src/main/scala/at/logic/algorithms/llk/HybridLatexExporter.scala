@@ -148,30 +148,30 @@ class HybridLatexExporter( val expandTex: Boolean ) {
   }
 
   def getFormulaString( f: HOLExpression, outermost: Boolean = true, escape_latex: Boolean ): String = f match {
-    case AllVar( x, t ) =>
+    case HOLAllVar( x, t ) =>
       val op = if ( escape_latex ) "\\forall" else "all"
       "(" + op + " " + getFormulaString( x.asInstanceOf[HOLVar], false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
-    case ExVar( x, t ) =>
+    case HOLExVar( x, t ) =>
       val op = if ( escape_latex ) "\\exists" else "exists"
       "(" + op + " " + getFormulaString( x.asInstanceOf[HOLVar], false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
-    case Neg( t1 ) =>
+    case HOLNeg( t1 ) =>
       val op = if ( escape_latex ) "\\neg" else "-"
       val str = " " + op + " " + getFormulaString( t1, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
-    case And( t1, t2 ) =>
+    case HOLAnd( t1, t2 ) =>
       val op = if ( escape_latex ) "\\land" else "&"
       val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " + getFormulaString( t2, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
-    case Or( t1, t2 ) =>
+    case HOLOr( t1, t2 ) =>
       val op = if ( escape_latex ) "\\lor" else "|"
       val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " + getFormulaString( t2, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
-    case Imp( t1, t2 ) =>
+    case HOLImp( t1, t2 ) =>
       val op = if ( escape_latex ) "\\impl" else "->"
       val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " + getFormulaString( t2, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
 
-    case Atom( f, args ) =>
+    case HOLAtom( f, args ) =>
       val sym = f match {
         case HOLConst( x, _ ) => x
         case HOLVar( x, _ )   => x
@@ -184,7 +184,7 @@ class HybridLatexExporter( val expandTex: Boolean ) {
           nameToLatexString( sym.toString ) + ( if ( args.isEmpty ) " " else args.map( getFormulaString( _, false, escape_latex ) ).mkString( "(", ", ", ")" ) )
       //if (outermost) str else "(" + str + ")"
       str
-    case Function( f, args, _ ) =>
+    case HOLFunction( f, args, _ ) =>
       val sym = f match {
         case HOLConst( x, _ ) => x
         case HOLVar( x, _ )   => x

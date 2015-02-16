@@ -30,7 +30,7 @@ class XMLParserTest extends SpecificationWithJUnit {
   implicit def fseq2seq(s : FSequent) = Sequent(s._1 map fo2occ, s._2 map fo2occ  )
   // helper to create 0-ary predicate constants
   def pc( sym: String ) = fo2occ(pcf(sym))
-  def pcf( sym: String ) = Atom( HOLConst( sym, To ), List() )
+  def pcf( sym: String ) = HOLAtom( HOLConst( sym, To ), List() )
 
   "XMLParser" should {
     "parse correctly a constant c" in {
@@ -67,7 +67,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                         <variable symbol="x"/>
                         <constant symbol="c"/>
                       </function>) with XMLTermParser).getTerm() must beEqualTo (
-                    Function(HOLConst("f", Ti -> (Ti -> Ti)),
+                    HOLFunction(HOLConst("f", Ti -> (Ti -> Ti)),
                          HOLVar("x", Ti)::HOLConst("c", Ti)::Nil)
                 )
     }
@@ -79,8 +79,8 @@ class XMLParserTest extends SpecificationWithJUnit {
                         </function>
                         <variable symbol="y"/>
                       </constantatomformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                      Atom(HOLConst("P", Ti -> (Ti -> To)),
-                        Function(HOLConst("f", Ti -> (Ti -> Ti)),
+                      HOLAtom(HOLConst("P", Ti -> (Ti -> To)),
+                        HOLFunction(HOLConst("f", Ti -> (Ti -> Ti)),
                            HOLVar("x", Ti)::HOLConst("c", Ti)::Nil)
                          ::HOLVar("y", Ti)::Nil))
 
@@ -90,7 +90,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                         <constantatomformula symbol="P"/>
                         <constantatomformula symbol="Q"/>
                       </conjunctiveformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    And(pcf("P"), pcf("Q")))
+                    HOLAnd(pcf("P"), pcf("Q")))
     }
     "parse correctly a quantified formula (exists x) x = x" in {
       (new NodeReader(<quantifiedformula type="exists">
@@ -100,8 +100,8 @@ class XMLParserTest extends SpecificationWithJUnit {
                           <variable symbol="x"/>
                         </constantatomformula>
                       </quantifiedformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    ExVar(HOLVar("x", Ti),
-                      Equation(HOLVar("x", Ti), HOLVar("x", Ti)))
+                    HOLExVar(HOLVar("x", Ti),
+                      HOLEquation(HOLVar("x", Ti), HOLVar("x", Ti)))
                 )
     }
     "parse correctly a second-order variable X" in {
@@ -113,7 +113,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                         <secondordervariable symbol="X"/>
                         <constant symbol="c"/>
                       </variableatomformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    Atom(HOLVar("X", Ti -> To),
+                    HOLAtom(HOLVar("X", Ti -> To),
                          HOLConst("c", Ti)::Nil)
                   )
     }
@@ -125,8 +125,8 @@ class XMLParserTest extends SpecificationWithJUnit {
                           <constant symbol="c"/>
                         </variableatomformula>
                       </secondorderquantifiedformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    AllVar(HOLVar("Z", Ti -> To),
-                      Atom(HOLVar("Z", Ti -> To),
+                    HOLAllVar(HOLVar("Z", Ti -> To),
+                      HOLAtom(HOLVar("Z", Ti -> To),
                            HOLConst("c", Ti)::Nil))
                   )
     }
@@ -139,7 +139,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                           <variable symbol="x"/>
                         </constantatomformula>
                       </lambdasubstitution>) with XMLSetTermParser).getSetTerm() must beEqualTo(
-                  HOLAbs(HOLVar("x", Ti), Atom(HOLConst("P", Ti -> To), HOLVar("x", Ti)::Nil)))
+                  HOLAbs(HOLVar("x", Ti), HOLAtom(HOLConst("P", Ti -> To), HOLVar("x", Ti)::Nil)))
     }
     "parse correctly a LambdaExpression lambda x,y. R(x,y)" in {
       (new NodeReader(<lambdasubstitution>
@@ -154,7 +154,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                       </lambdasubstitution>) with XMLSetTermParser).getSetTerm() must beEqualTo(
                     HOLAbs(HOLVar("x", Ti),
                       HOLAbs(HOLVar("y", Ti),
-                         Atom(HOLConst("R", Ti -> (Ti -> To)), HOLVar("x", Ti)::HOLVar("y", Ti)::Nil)))
+                         HOLAtom(HOLConst("R", Ti -> (Ti -> To)), HOLVar("x", Ti)::HOLVar("y", Ti)::Nil)))
       )
     }
     "parse correctly a defined set \\cap(X, Y)" in {
@@ -162,7 +162,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                         <secondordervariable symbol="X"/>
                         <secondordervariable symbol="Y"/>
                       </definedset>) with XMLSetTermParser).getSetTerm() must beEqualTo(
-                    Function( HOLConst( "\\cap",
+                    HOLFunction( HOLConst( "\\cap",
                                     (Ti -> To) -> ((Ti -> To) -> (Ti -> To))),
                           HOLVar( "X", Ti -> To )::
                           HOLVar( "Y", Ti -> To )::Nil)
@@ -176,7 +176,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                         </definedset>
                         <constant symbol="c"/>
                       </definedsetformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    HOLApp(Function( HOLConst( "\\cup",
+                    HOLApp(HOLFunction( HOLConst( "\\cup",
                                         (Ti -> To) -> ((Ti -> To) -> (Ti -> To))),
                                HOLVar( "X", Ti -> To )::
                                HOLVar( "Y", Ti -> To )::Nil),
@@ -205,11 +205,11 @@ class XMLParserTest extends SpecificationWithJUnit {
                           </quantifiedformula>
                         </secondorderquantifiedformula>
                       </secondorderquantifiedformula>) with XMLFormulaParser).getFormula() must beEqualTo(
-                    AllVar( HOLVar( "X", Ti -> To ),
-                      AllVar( HOLVar( "Y", Ti -> To),
-                        AllVar( HOLVar( "z", Ti),
-                          Imp( Atom( HOLVar("X", Ti -> To), HOLVar( "z", Ti )::Nil ),
-                            (HOLApp(Function( HOLConst( "\\cup",
+                    HOLAllVar( HOLVar( "X", Ti -> To ),
+                      HOLAllVar( HOLVar( "Y", Ti -> To),
+                        HOLAllVar( HOLVar( "z", Ti),
+                          HOLImp( HOLAtom( HOLVar("X", Ti -> To), HOLVar( "z", Ti )::Nil ),
+                            (HOLApp(HOLFunction( HOLConst( "\\cup",
                                                (Ti -> To) -> ((Ti -> To) -> (Ti -> To))),
                                        HOLVar( "X", Ti -> To )::
                                        HOLVar( "Y", Ti -> To )::Nil),
@@ -377,7 +377,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                           </rule>
                         </rule>
                       </proof>) with XMLProofParser).getProof().root must beSyntacticMultisetEqual(
-                      Sequent(pc("A")::pc("A")::Nil, fo2occ(And(pcf("A"), pcf("A")))::Nil))
+                      Sequent(pc("A")::pc("A")::Nil, fo2occ(HOLAnd(pcf("A"), pcf("A")))::Nil))
     }
     "parse correctly a proof with one orr1 rule and one permr rule" in {
       (new NodeReader(<proof symbol="p" calculus="LK">
@@ -412,7 +412,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                           </rule>
                         </rule>
                       </proof>) with XMLProofParser).getProof().root must beSyntacticMultisetEqual(
-                    Sequent(Nil, pc("B")::fo2occ(Or(pcf("A"), pcf("C")))::Nil))
+                    Sequent(Nil, pc("B")::fo2occ(HOLOr(pcf("A"), pcf("C")))::Nil))
     }
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
       val proofs =  (new XMLReader(Source.fromURL(getClass.getResource("/xml/test3.xml")).reader) with XMLProofDatabaseParser).getProofDatabase().proofs
@@ -420,16 +420,16 @@ class XMLParserTest extends SpecificationWithJUnit {
       proofs.size must beEqualTo(1)
       proofs.head._2.root must beSyntacticMultisetEqual(
         Sequent(Nil, pc("A")::pc("C")::pc("F")::
-                     fo2occ(And(pcf("B"), pcf("E")))::
-                     fo2occ(Or(pcf("D"), pcf("G")))::Nil))
+                     fo2occ(HOLAnd(pcf("B"), pcf("E")))::
+                     fo2occ(HOLOr(pcf("D"), pcf("G")))::Nil))
     }
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
       val proofs =  (new XMLReader(Source.fromURL(getClass.getResource("/xml/test2.xml")).reader) with XMLProofDatabaseParser).getProofDatabase().proofs
 
       proofs.size must beEqualTo(1)
       proofs.head._2.root must beSyntacticMultisetEqual(
-                        Sequent(Nil, fo2occ(Or(pcf("A"), pcf("C")))::
-                        fo2occ(Or(pcf("B"), pcf("D")))::Nil))
+                        Sequent(Nil, fo2occ(HOLOr(pcf("A"), pcf("C")))::
+                        fo2occ(HOLOr(pcf("B"), pcf("D")))::Nil))
     }
     "parse correctly an involved proof from a file" in {
       val proofs =  (new XMLReader(Source.fromURL(getClass.getResource("/xml/test1.xml")).reader) with XMLProofDatabaseParser).getProofDatabase().proofs
@@ -441,9 +441,9 @@ class XMLParserTest extends SpecificationWithJUnit {
       val f = HOLConst( "f" , Ti -> Ti)
       val x = HOLVar( "x" , Ti )
       val Rs = HOLConst( "R", Ti -> (Ti -> To) )
-      val f1 = AllVar( X, And( Atom( X, t::Nil ), Neg( Atom( X, s::Nil ) ) ) )
-      val f2 = And( Imp( Atom( Rs, r::t::Nil ), Atom( Rs, r::HOLApp( f, t )::Nil ) ),
-                    ExVar( x, And( Atom( Rs, x::s::Nil ), Neg( Atom( Rs, x::HOLApp( f, s )::Nil ) ) ) ) )
+      val f1 = HOLAllVar( X, HOLAnd( HOLAtom( X, t::Nil ), HOLNeg( HOLAtom( X, s::Nil ) ) ) )
+      val f2 = HOLAnd( HOLImp( HOLAtom( Rs, r::t::Nil ), HOLAtom( Rs, r::HOLApp( f, t )::Nil ) ),
+                    HOLExVar( x, HOLAnd( HOLAtom( Rs, x::s::Nil ), HOLNeg( HOLAtom( Rs, x::HOLApp( f, s )::Nil ) ) ) ) )
 
       proofs.size must beEqualTo(1)
       proofs.head._2.root must beSyntacticMultisetEqual( Sequent( f1::Nil, f2::Nil ) )

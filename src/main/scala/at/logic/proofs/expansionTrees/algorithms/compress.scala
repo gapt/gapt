@@ -1,7 +1,7 @@
 
 package at.logic.proofs.expansionTrees.algorithms
 
-import at.logic.language.hol.{ AllVar, ExVar, HOLExpression, HOLFormula, HOLVar, instantiate }
+import at.logic.language.hol.{ HOLAllVar, HOLExVar, HOLExpression, HOLFormula, HOLVar, instantiate }
 import at.logic.proofs.expansionTrees.{ MAnd, MAtom, MImp, MNeg, MOr, MSkolemQuantifier, MStrongQuantifier, MWeakQuantifier, MultiExpansionSequent, MultiExpansionTree, _ }
 import at.logic.utils.dssupport.ListSupport.groupSeq
 
@@ -95,17 +95,17 @@ object decompressQuantifiers {
   def apply( sequent: MultiExpansionSequent ): ExpansionSequent = ExpansionSequent( sequent.antecedent.map( this.apply ), sequent.succedent.map( this.apply ) )
 
   private def decompressStrong( f: HOLFormula, eig: Seq[HOLVar], sel: ExpansionTree ): ExpansionTree = f match {
-    case AllVar( _, _ ) | ExVar( _, _ ) => StrongQuantifier( f, eig.head, decompressStrong( instantiate( f, eig.head ), eig.tail, sel ) )
-    case _                              => sel
+    case HOLAllVar( _, _ ) | HOLExVar( _, _ ) => StrongQuantifier( f, eig.head, decompressStrong( instantiate( f, eig.head ), eig.tail, sel ) )
+    case _                                    => sel
   }
 
   private def decompressSkolem( f: HOLFormula, exp: Seq[HOLExpression], sel: ExpansionTree ): ExpansionTree = f match {
-    case AllVar( _, _ ) | ExVar( _, _ ) => SkolemQuantifier( f, exp.head, decompressSkolem( instantiate( f, exp.head ), exp.tail, sel ) )
-    case _                              => sel
+    case HOLAllVar( _, _ ) | HOLExVar( _, _ ) => SkolemQuantifier( f, exp.head, decompressSkolem( instantiate( f, exp.head ), exp.tail, sel ) )
+    case _                                    => sel
   }
 
   private def decompressWeak( f: HOLFormula, instances: Seq[( ExpansionTree, Seq[HOLExpression] )] ): ExpansionTree = f match {
-    case ExVar( _, _ ) | AllVar( _, _ ) =>
+    case HOLExVar( _, _ ) | HOLAllVar( _, _ ) =>
       val groupedInstances = groupSeq( instances.map( p => ( p._2.head, p._1, p._2.tail ) ), ( t: ( HOLExpression, ExpansionTree, Seq[HOLExpression] ) ) => t._1 ).map( l => ( l.head._1, l.map( t => ( t._2, t._3 ) ) ) ) // Result: groupedInstances is a list of elements of the form (t, [(E_1, s_1),..,(E_n, s_n)]).
       val newInstances = groupedInstances.map( p => ( p._1, decompressWeak( instantiate( f, p._1 ), p._2 ) ) ) // Result: newInstances is a list of elements of the form (t, E)
       merge( WeakQuantifier( f, newInstances.map( p => ( p._2, p._1 ) ) ) )

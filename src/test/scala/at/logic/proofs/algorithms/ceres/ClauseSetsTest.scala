@@ -5,7 +5,7 @@ import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base.Sequent
 import at.logic.proofs.occurrences._
 import at.logic.proofs.slk.SchemaProofDB
-import at.logic.language.hol.{Substitution => HOLSubstitution, Atom => HOLAtom, _}
+import at.logic.language.hol.{Substitution => HOLSubstitution, HOLAtom => HOLAtom, _}
 import at.logic.language.schema.{Substitution => SchemaSubstitution, _}
 import at.logic.language.lambda.types._
 import at.logic.parsing.shlk_parsing.sFOParser

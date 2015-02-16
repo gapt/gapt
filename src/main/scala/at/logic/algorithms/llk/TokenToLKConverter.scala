@@ -350,13 +350,13 @@ trait TokenToLKConverter extends Logger {
     }
 
     main match {
-      case AllVar( x, f ) =>
+      case HOLAllVar( x, f ) =>
         require( ruletype == "ALLL", "Main formula " + main + " can not be used in a forall left rule!" )
         val term = inferTerm( x, f )
         val rule = ForallLeftRule( oldproof, aux, main, term )
         rule :: rest
 
-      case ExVar( x, f ) =>
+      case HOLExVar( x, f ) =>
         inferTerm( x, f )
         require( ruletype == "EXR", "Main formula " + main + " can not be used in a exists right rule!" )
         val term = inferTerm( x, f )
@@ -407,13 +407,13 @@ trait TokenToLKConverter extends Logger {
     }
 
     main match {
-      case AllVar( x, f ) =>
+      case HOLAllVar( x, f ) =>
         require( ruletype == "ALLR", "Main formula " + main + " can not be used in a forall right rule!" )
         val term: HOLVar = inferTerm( x, f ).asInstanceOf[HOLVar]
         val rule = ForallRightRule( oldproof, aux, main, term )
         rule :: current_proof.tail
 
-      case ExVar( x, f ) =>
+      case HOLExVar( x, f ) =>
         inferTerm( x, f )
         require( ruletype == "EXL", "Main formula " + main + " can not be used in a exists left rule!" )
         val term: HOLVar = inferTerm( x, f ).asInstanceOf[HOLVar]
@@ -432,7 +432,7 @@ trait TokenToLKConverter extends Logger {
       ruletype match {
         case "ANDR" =>
           mainsequent.succedent( 0 ) match {
-            case And( l, r ) =>
+            case HOLAnd( l, r ) =>
               require( auxsequent.succedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas" + f( auxsequent ) )
               require( auxsequent.succedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
               require( leftproof.root.toFSequent.succedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.root )
@@ -445,7 +445,7 @@ trait TokenToLKConverter extends Logger {
 
         case "ORL" =>
           mainsequent.antecedent( 0 ) match {
-            case Or( l, r ) =>
+            case HOLOr( l, r ) =>
               require( auxsequent.antecedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
               require( auxsequent.antecedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
               require( leftproof.root.toFSequent.antecedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.root )
@@ -458,7 +458,7 @@ trait TokenToLKConverter extends Logger {
 
         case "IMPL" =>
           mainsequent.antecedent( 0 ) match {
-            case Imp( l, r ) =>
+            case HOLImp( l, r ) =>
               require( auxsequent.succedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
               require( auxsequent.antecedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
               require( leftproof.root.toFSequent.succedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.root )
@@ -483,7 +483,7 @@ trait TokenToLKConverter extends Logger {
     ruletype match {
       case "ORR" =>
         mainsequent.succedent( 0 ) match {
-          case Or( l, r ) =>
+          case HOLOr( l, r ) =>
             require( top.root.toFSequent.succedent.contains( l ) | top.root.toFSequent.succedent.contains( r ), "Neither " + l + " nor " + r + " found in auxiliary formulas" + f( auxsequent ) )
 
             //try out which of the 3 variants of the rule it is
@@ -521,7 +521,7 @@ trait TokenToLKConverter extends Logger {
 
       case "ANDL" =>
         mainsequent.antecedent( 0 ) match {
-          case And( l, r ) =>
+          case HOLAnd( l, r ) =>
             require( top.root.toFSequent.antecedent.contains( l ) | top.root.toFSequent.antecedent.contains( r ), "Neither " + l + " nor " + r + " found in auxiliary formulas" + f( auxsequent ) )
 
             //try out which of the 3 variants of the rule it is
@@ -559,7 +559,7 @@ trait TokenToLKConverter extends Logger {
 
       case "IMPR" =>
         mainsequent.succedent( 0 ) match {
-          case Imp( l, r ) =>
+          case HOLImp( l, r ) =>
             require( auxsequent.antecedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
             require( auxsequent.succedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
             require( top.root.toFSequent.antecedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + top.root )
@@ -579,7 +579,7 @@ trait TokenToLKConverter extends Logger {
 
     val left = main.antecedent.foldLeft( top )( ( intermediate, f ) => {
       f match {
-        case Neg( g ) =>
+        case HOLNeg( g ) =>
           NegLeftRule( intermediate, g )
         case _ =>
           throw new HybridLatexParserException( "Trying to apply the negation rule on formula " + f + " without negation as outermost symbol on " + top.root + " to get " + fs )
@@ -587,7 +587,7 @@ trait TokenToLKConverter extends Logger {
     } )
     val right = main.succedent.foldLeft( left )( ( intermediate, f ) => {
       f match {
-        case Neg( g ) =>
+        case HOLNeg( g ) =>
           NegRightRule( intermediate, g )
         case _ =>
           throw new HybridLatexParserException( "Trying to apply the negation rule on formula " + f + " without negation as outermost symbol on " + top.root + " to get " + fs )
@@ -606,7 +606,7 @@ trait TokenToLKConverter extends Logger {
 
     //In the case the main formula is the same as an auxiliariy formula, filterContext cannot infer the main formula
     //we doe this now by hand
-    def eqfilter( x: HOLFormula ): Boolean = x match { case Equation( s, t ) => true; case _ => false }
+    def eqfilter( x: HOLFormula ): Boolean = x match { case HOLEquation( s, t ) => true; case _ => false }
     def canReplace( s: HOLExpression, t: HOLExpression, exp1: HOLExpression, exp2: HOLExpression ): Boolean = {
       ( checkReplacement( s, t, exp1, exp2 ), checkReplacement( t, s, exp1, exp2 ) ) match {
         case ( EqualModuloEquality( _ ), _ ) => true
@@ -623,7 +623,7 @@ trait TokenToLKConverter extends Logger {
         // f[t] = main[s]
         val righteqsante = rightproof.root.toFSequent.antecedent
         val candidates = for (
-          e @ Equation( s, t ) <- lefteqs;
+          e @ HOLEquation( s, t ) <- lefteqs;
           f <- righteqsante;
           main <- fs.antecedent;
           if canReplace( s, t, f, main )
@@ -679,7 +679,7 @@ trait TokenToLKConverter extends Logger {
         // from the right parent together with possible main formulas in the conclusion
         val righteqssucc = rightproof.root.toFSequent.succedent
         val candidates = for (
-          e @ Equation( s, t ) <- lefteqs;
+          e @ HOLEquation( s, t ) <- lefteqs;
           f <- righteqssucc;
           main <- fs.succedent;
           if canReplace( s, t, f, main )
@@ -814,7 +814,7 @@ trait TokenToLKConverter extends Logger {
 
   }
 
-  val axformula = Atom( HOLConst( "AX", To ), Nil )
+  val axformula = HOLAtom( HOLConst( "AX", To ), Nil )
 
   def createSubstitution( naming: String => HOLExpression, astlist: List[( ast.Var, LambdaAST )] ): Substitution = {
     val terms: List[( HOLVar, HOLExpression )] = astlist.foldLeft( List[( HOLVar, HOLExpression )]() )( ( list, p ) => {
@@ -825,7 +825,7 @@ trait TokenToLKConverter extends Logger {
 
   /* =============== Macro Rules ============================ */
 
-  val axioms_prove_sequent = FSequent( List( Atom( HOLConst( "AX", To ), Nil ) ), Nil )
+  val axioms_prove_sequent = FSequent( List( HOLAtom( HOLConst( "AX", To ), Nil ) ), Nil )
   def normalize( exp: HOLExpression ) = betaNormalize( exp )( StrategyOuterInner.Outermost ).asInstanceOf[HOLExpression]
 
   def handleEQAxiom( current_proof: List[LKProof], ruletype: String, fs: FSequent, auxterm: Option[LambdaAST],
@@ -870,7 +870,7 @@ trait TokenToLKConverter extends Logger {
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, Axiom( auxf :: Nil, auxf :: Nil ), sub2 )
     val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
 
-    val Equation( s, t ) = auxf
+    val HOLEquation( s, t ) = auxf
 
     val auxsequent = oldproof.root.toFSequent diff fs
     val mainsequent = fs diff ( oldproof.root.toFSequent compose axioms_prove_sequent )
@@ -1083,19 +1083,19 @@ trait TokenToLKConverter extends Logger {
   }
   /* for a list of formulas of length n return a list of formulas And(i_1.i_2), etc of size n/2 */
   def createConjunctions_( l: List[HOLFormula] ): List[HOLFormula] = l match {
-    case x :: y :: rest => And( x, y ) :: createConjunctions_( rest )
+    case x :: y :: rest => HOLAnd( x, y ) :: createConjunctions_( rest )
     case _              => l
   }
 
   /* Checks if what is contained as formula inside a nesting of neg, and, or, imp. Used for a lookup in an
     axiom conjunction */
   private def formula_contains_atom( f: HOLFormula, what: HOLFormula ): Boolean = f match {
-    case Atom( _, _ ) => f == what
-    case Neg( x )     => formula_contains_atom( x, what )
-    case And( x, y )  => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
-    case Imp( x, y )  => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
-    case Or( x, y )   => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
-    case _            => f == what
+    case HOLAtom( _, _ ) => f == what
+    case HOLNeg( x )     => formula_contains_atom( x, what )
+    case HOLAnd( x, y )  => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
+    case HOLImp( x, y )  => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
+    case HOLOr( x, y )   => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
+    case _               => f == what
   }
 
   /* Creates the definition map from a list of ATokens. Also adds a defintion for all the axioms. */
@@ -1111,7 +1111,7 @@ trait TokenToLKConverter extends Logger {
       val rformula = c( HLKHOLParser.ASTtoHOL( naming, right ) )
 
       lformula match {
-        case Atom( _, _ ) =>
+        case HOLAtom( _, _ ) =>
           require( freeVariables( lformula ).toSet == freeVariables( rformula ).toSet,
             "Definition formulas " + lformula + " and " + rformula + " do not have the same set of free variables!" +
               "\n" + freeVariables( lformula ) + "\n" + freeVariables( rformula ) )
@@ -1132,7 +1132,7 @@ trait TokenToLKConverter extends Logger {
       val rexpression = HLKHOLParser.ASTtoHOL( naming, right )
 
       ( lexpression, rexpression ) match {
-        case ( Function( _, _, exptype1 ), Function( _, _, exptype2 ) ) =>
+        case ( HOLFunction( _, _, exptype1 ), HOLFunction( _, _, exptype2 ) ) =>
           require( exptype1 == exptype2,
             "The types of defined formulas and definition must match, but are: " + exptype1 + " and " + exptype2 )
           require( freeVariables( lexpression ).toSet == freeVariables( rexpression ).toSet,
@@ -1166,8 +1166,8 @@ trait TokenToLKConverter extends Logger {
   def stripUniversalQuantifiers( f: HOLFormula ): ( List[HOLVar], HOLFormula ) = stripUniversalQuantifiers( f, Nil )
   @tailrec
   private def stripUniversalQuantifiers( f: HOLFormula, acc: List[HOLVar] ): ( List[HOLVar], HOLFormula ) = f match {
-    case AllVar( x, f_ ) => stripUniversalQuantifiers( f_, x.asInstanceOf[HOLVar] :: acc )
-    case _               => ( acc.reverse, f )
+    case HOLAllVar( x, f_ ) => stripUniversalQuantifiers( f_, x.asInstanceOf[HOLVar] :: acc )
+    case _                  => ( acc.reverse, f )
   }
 
   /* Checked cast of HOLExpression to HOLFormula which gives a nicer error message */
@@ -1182,11 +1182,11 @@ trait TokenToLKConverter extends Logger {
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
         ( axiomconj, DefinitionLeftRule( pi, axiom, name ) )
 
-      case And( x, y ) if formula_contains_atom( x, name ) =>
+      case HOLAnd( x, y ) if formula_contains_atom( x, name ) =>
         val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, x, axiomproof, sub )
         ( axiomconj, AndLeft1Rule( uproof, aux, y ) )
 
-      case And( x, y ) if formula_contains_atom( y, name ) =>
+      case HOLAnd( x, y ) if formula_contains_atom( y, name ) =>
         val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, y, axiomproof, sub )
         ( axiomconj, AndLeft2Rule( uproof, x, aux ) )
 
@@ -1209,7 +1209,7 @@ trait TokenToLKConverter extends Logger {
   def proveInstance_( axiom: HOLFormula, instance: HOLFormula, sub: Substitution, axiomproof: LKProof ): ( HOLFormula, LKProof ) = {
     //    println("Prove instance with sub "+f(sub))
     axiom match {
-      case AllVar( v, s ) =>
+      case HOLAllVar( v, s ) =>
         val ( aux, uproof ) = proveInstance_( s, instance, sub, axiomproof )
         ( c( sub( axiom ) ), ForallLeftRule( uproof, aux, c( sub( axiom ) ), sub.holmap( v ) ) )
       case f if normalize( sub( f ) ) syntaxEquals instance =>
@@ -1218,6 +1218,6 @@ trait TokenToLKConverter extends Logger {
     }
   }
 
-  def univclosure( f: HOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => AllVar( v.asInstanceOf[HOLVar], g ) )
+  def univclosure( f: HOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => HOLAllVar( v.asInstanceOf[HOLVar], g ) )
 
 }

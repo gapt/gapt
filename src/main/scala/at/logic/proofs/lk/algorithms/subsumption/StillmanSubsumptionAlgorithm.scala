@@ -7,7 +7,7 @@ package at.logic.proofs.lk.algorithms.subsumption
 
 import at.logic.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.language.hol.{ HOLExpression, Substitution => SubstitutionHOL, Neg => NegHOL, HOLVar, freeVariables => freeVariablesHOL, rename => renameHOL }
+import at.logic.language.hol.{ HOLExpression, Substitution => SubstitutionHOL, HOLNeg => NegHOL, HOLVar, freeVariables => freeVariablesHOL, rename => renameHOL }
 import at.logic.language.fol.{ FOLFormula, FOLExpression, Substitution => SubstitutionFOL, Neg => NegFOL, FOLVar, freeVariables => freeVariablesFOL, rename => renameFOL }
 import at.logic.proofs.lk.base.FSequent
 import at.logic.utils.dssupport.ListSupport.remove_doubles

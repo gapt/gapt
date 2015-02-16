@@ -29,21 +29,21 @@ trait BinaryResolutionProof[V <: Sequent] extends BinaryAGraphProof[V] with Reso
 trait CNF extends Sequent {
   require( ( antecedent ++ succedent ).forall( x =>
     x.formula match {
-      case Atom( _, _ ) => true;
-      case _            => false
+      case HOLAtom( _, _ ) => true;
+      case _               => false
     } ) )
 }
 
 object IsNeg {
   def apply( formula: HOLFormula ) = formula match {
-    case Neg( _ ) => true
-    case _        => false
+    case HOLNeg( _ ) => true
+    case _           => false
   }
 }
 object StripNeg {
   def apply( formula: HOLFormula ) = formula match {
-    case Neg( f ) => f
-    case _        => formula
+    case HOLNeg( f ) => f
+    case _           => formula
   }
 }
 
@@ -162,13 +162,13 @@ object computeSkolemTerm {
   def apply( sk: SkolemSymbol, t: TA, sub: HOLExpression ) = {
     val fv = freeVariables( sub )
     val tp = FunctionType( t, fv.map( v => v.exptype ) )
-    Function( HOLConst( sk, tp ), fv )
+    HOLFunction( HOLConst( sk, tp ), fv )
   }
 
   // used in ral
   def apply( sk: SkolemSymbol, t: TA, label: Label ) = {
     val tp = FunctionType( t, label.toList.map( v => v.exptype ) )
-    Function( HOLConst( sk, tp ), label.toList )
+    HOLFunction( HOLConst( sk, tp ), label.toList )
   }
 }
 

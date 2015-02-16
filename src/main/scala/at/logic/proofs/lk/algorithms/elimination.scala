@@ -123,7 +123,7 @@ object CleanStructuralRules {
           ws._1.contains( a.formula ) match {
             case true => tailcall( fun( proof, ( ws._1.diff( List( a.formula ) ) :+ m.formula, ws._2 ) ) )
             case false =>
-              val And( _, a2 ) = m.formula
+              val HOLAnd( _, a2 ) = m.formula
               tailcall( fun( AndLeft1Rule( proof, a.formula, a2 ), ws ) )
           }
         } ) )
@@ -133,7 +133,7 @@ object CleanStructuralRules {
           ws._1.contains( a.formula ) match {
             case true => tailcall( fun( proof, ( ws._1.diff( List( a.formula ) ) :+ m.formula, ws._2 ) ) )
             case false =>
-              val And( a1, _ ) = m.formula
+              val HOLAnd( a1, _ ) = m.formula
               tailcall( fun( AndLeft2Rule( proof, a1, a.formula ), ws ) )
           }
         } ) )
@@ -143,7 +143,7 @@ object CleanStructuralRules {
           ws._2.contains( a.formula ) match {
             case true => tailcall( fun( proof, ( ws._1, ws._2.diff( List( a.formula ) ) :+ m.formula ) ) )
             case false =>
-              val Or( _, a2 ) = m.formula
+              val HOLOr( _, a2 ) = m.formula
               tailcall( fun( OrRight1Rule( proof, a.formula, a2 ), ws ) )
           }
         } ) )
@@ -153,7 +153,7 @@ object CleanStructuralRules {
           ws._2.contains( a.formula ) match {
             case true => tailcall( fun( proof, ( ws._1, ws._2.diff( List( a.formula ) ) :+ m.formula ) ) )
             case false =>
-              val Or( a1, _ ) = m.formula
+              val HOLOr( a1, _ ) = m.formula
               tailcall( fun( OrRight2Rule( proof, a1, a.formula ), ws ) )
           }
         } ) )

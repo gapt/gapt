@@ -698,25 +698,25 @@ object ProjectionTermToSetOfProofs {
           case "\u2283:r" => set.map( p => ImpRightRule( p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.last.asInstanceOf[HOLFormula] ) )
           case "\u2227:l1" => {
             val a = unary.auxl.last match {
-              case And( f1, f2 ) => f1.asInstanceOf[HOLFormula]
+              case HOLAnd( f1, f2 ) => f1.asInstanceOf[HOLFormula]
             }
             set.map( p => AndLeft1Rule( p, a, unary.auxl.head.asInstanceOf[HOLFormula] ) )
           }
           case "\u2227:l2" => {
             val a = unary.auxl.last match {
-              case And( f1, f2 ) => f2.asInstanceOf[HOLFormula]
+              case HOLAnd( f1, f2 ) => f2.asInstanceOf[HOLFormula]
             }
             set.map( p => AndLeft2Rule( p, a, unary.auxl.head.asInstanceOf[HOLFormula] ) )
           }
           case "\u2228:r1" => {
             val a = unary.auxl.last match {
-              case Or( f1, f2 ) => f1.asInstanceOf[HOLFormula]
+              case HOLOr( f1, f2 ) => f1.asInstanceOf[HOLFormula]
             }
             set.map( p => OrRight1Rule( p, a, unary.auxl.head.asInstanceOf[HOLFormula] ) )
           }
           case "\u2228:r2" => {
             val a = unary.auxl.last match {
-              case Or( f1, f2 ) => f2.asInstanceOf[HOLFormula]
+              case HOLOr( f1, f2 ) => f2.asInstanceOf[HOLFormula]
             }
             set.map( p => OrRight2Rule( p, a, unary.auxl.head.asInstanceOf[HOLFormula] ) )
           }

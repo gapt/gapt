@@ -29,7 +29,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
   
   val exporter = new HOLTermExporter{}
   // helper to create 0-ary predicate constants
-  def pc( sym: String ) = Atom( HOLConst( sym, To ) )
+  def pc( sym: String ) = HOLAtom( HOLConst( sym, To ) )
   
   "HOLExpressionExporter" should {
     "export correctly a constant c" in {
@@ -43,14 +43,14 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
     }
     "export correctly a term f(x,c)" in {
       trim(exporter.exportTerm(
-        Function(HOLConst("f", Ti -> (Ti -> Ti)),
+        HOLFunction(HOLConst("f", Ti -> (Ti -> Ti)),
           List(HOLVar(StringSymbol("x"), Ti), HOLConst("c", Ti))))) must beEqualTo (
         <function symbol="f"><variable symbol="x"/><constant symbol="c"/></function>
       )
     }
     "export correctly an atom formula P(f(x,c),y)" in {
-      trim(exporter.exportTerm(Atom(HOLConst("P",Ti -> (Ti -> To)), List(
-        Function(HOLConst("f", Ti -> (Ti -> Ti)),
+      trim(exporter.exportTerm(HOLAtom(HOLConst("P",Ti -> (Ti -> To)), List(
+        HOLFunction(HOLConst("f", Ti -> (Ti -> Ti)),
           List(HOLVar("x", Ti), HOLConst("c", Ti))),
         HOLVar("y", Ti))))) must beEqualTo (trim(
         <constantatomformula symbol="P">
@@ -63,7 +63,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
       ))
     }
     "export correctly a conjunction of atoms P and Q" in {
-      trim(exporter.exportTerm(And(pc("P"), pc("Q")))) must beEqualTo (trim(
+      trim(exporter.exportTerm(HOLAnd(pc("P"), pc("Q")))) must beEqualTo (trim(
         <conjunctiveformula type="and">
          <constantatomformula symbol="P"/>
          <constantatomformula symbol="Q"/>
@@ -71,7 +71,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
       ))
     }
     "export correctly a quantified formula (exists x) x = x" in {
-      trim(exporter.exportTerm(ExVar(HOLVar("x", Ti), Equation(HOLVar("x", Ti), HOLVar("x", Ti))))) must beEqualTo (trim(
+      trim(exporter.exportTerm(HOLExVar(HOLVar("x", Ti), HOLEquation(HOLVar("x", Ti), HOLVar("x", Ti))))) must beEqualTo (trim(
         <quantifiedformula type="exists">
           <variable symbol="x"/>
           <constantatomformula symbol="=">
@@ -87,7 +87,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
       ))
     }
     "export correctly a variable atom formula X(c)" in {
-      trim(exporter.exportTerm(Atom(HOLVar("X",Ti -> To), HOLConst("c", Ti)::Nil))) must beEqualTo (trim(
+      trim(exporter.exportTerm(HOLAtom(HOLVar("X",Ti -> To), HOLConst("c", Ti)::Nil))) must beEqualTo (trim(
         <variableatomformula>
           <secondordervariable symbol="X"/>
           <constant symbol="c"/>
@@ -95,7 +95,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
       ))
     }
     "export correctly a second-order quantified formula (all Z)Z(c)" in {
-      trim(exporter.exportTerm(AllVar(HOLVar("Z", Ti -> To), Atom(HOLVar("Z", Ti -> To), HOLConst("c", "i")::Nil)))) must beEqualTo (trim(
+      trim(exporter.exportTerm(HOLAllVar(HOLVar("Z", Ti -> To), HOLAtom(HOLVar("Z", Ti -> To), HOLConst("c", "i")::Nil)))) must beEqualTo (trim(
         <secondorderquantifiedformula type="all">
           <secondordervariable symbol="Z"/>
           <variableatomformula>
@@ -106,7 +106,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
       ))
     }
     "export correctly a LambdaExpression lambda x . P(x)" in {
-      trim(exporter.exportTerm(HOLAbs(HOLVar("x", Ti), Atom(HOLConst("P", Ti -> To), HOLVar("x", Ti)::Nil)))) must beEqualTo (trim(
+      trim(exporter.exportTerm(HOLAbs(HOLVar("x", Ti), HOLAtom(HOLConst("P", Ti -> To), HOLVar("x", Ti)::Nil)))) must beEqualTo (trim(
         <lambdasubstitution>
           <variablelist>
             <variable symbol="x"/>
@@ -119,7 +119,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
     }
     "export correctly a LambdaExpression lambda x,y. R(x,y)" in {
       trim(exporter.exportTerm(HOLAbs(HOLVar("x", Ti), HOLAbs(HOLVar("y", Ti),
-        Atom(HOLConst("R", Ti -> (Ti -> To)), List(HOLVar("x", Ti), HOLVar("y", Ti))))))) must beEqualTo (trim(
+        HOLAtom(HOLConst("R", Ti -> (Ti -> To)), List(HOLVar("x", Ti), HOLVar("y", Ti))))))) must beEqualTo (trim(
         <lambdasubstitution>
           <variablelist>
             <variable symbol="x"/>

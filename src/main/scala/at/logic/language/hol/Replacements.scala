@@ -32,32 +32,32 @@ case class Replacement( position: List[Int], expression: HOLExpression ) {
 
   private def replace( pos: List[Int], exp: HOLExpression ): HOLExpression = {
     ( pos, exp ) match {
-      case ( 1 :: rest, And( m, n ) )      => And( replace( rest, m ), n )
-      case ( 2 :: rest, And( m, n ) )      => And( m, replace( rest, n ) )
-      case ( 1 :: rest, Or( m, n ) )       => Or( replace( rest, m ), n )
-      case ( 2 :: rest, Or( m, n ) )       => Or( m, replace( rest, n ) )
-      case ( 1 :: rest, Imp( m, n ) )      => Imp( replace( rest, m ), n )
-      case ( 2 :: rest, Imp( m, n ) )      => Imp( m, replace( rest, n ) )
-      case ( 1 :: rest, Neg( m ) )         => Neg( replace( rest, m ) )
-      case ( 1 :: rest, ExVar( v, m ) )    => ExVar( v, replace( rest, m ) )
-      case ( 1 :: rest, AllVar( v, m ) )   => AllVar( v, replace( rest, m ) )
-      case ( 1 :: rest, Equation( m, n ) ) => Equation( replace( rest, m ), n )
-      case ( 2 :: rest, Equation( m, n ) ) => Equation( m, replace( rest, n ) )
-      case ( n :: rest, Atom( p: HOLConst, args ) ) => {
+      case ( 1 :: rest, HOLAnd( m, n ) )      => HOLAnd( replace( rest, m ), n )
+      case ( 2 :: rest, HOLAnd( m, n ) )      => HOLAnd( m, replace( rest, n ) )
+      case ( 1 :: rest, HOLOr( m, n ) )       => HOLOr( replace( rest, m ), n )
+      case ( 2 :: rest, HOLOr( m, n ) )       => HOLOr( m, replace( rest, n ) )
+      case ( 1 :: rest, HOLImp( m, n ) )      => HOLImp( replace( rest, m ), n )
+      case ( 2 :: rest, HOLImp( m, n ) )      => HOLImp( m, replace( rest, n ) )
+      case ( 1 :: rest, HOLNeg( m ) )         => HOLNeg( replace( rest, m ) )
+      case ( 1 :: rest, HOLExVar( v, m ) )    => HOLExVar( v, replace( rest, m ) )
+      case ( 1 :: rest, HOLAllVar( v, m ) )   => HOLAllVar( v, replace( rest, m ) )
+      case ( 1 :: rest, HOLEquation( m, n ) ) => HOLEquation( replace( rest, m ), n )
+      case ( 2 :: rest, HOLEquation( m, n ) ) => HOLEquation( m, replace( rest, n ) )
+      case ( n :: rest, HOLAtom( p: HOLConst, args ) ) => {
         val ( firstArgs, arg :: remainingArgs ) = args.splitAt( n - 1 )
-        Atom( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
+        HOLAtom( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
       }
-      case ( n :: rest, Atom( p: HOLVar, args ) ) => {
+      case ( n :: rest, HOLAtom( p: HOLVar, args ) ) => {
         val ( firstArgs, arg :: remainingArgs ) = args.splitAt( n - 1 )
-        Atom( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
+        HOLAtom( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
       }
-      case ( n :: rest, Function( p: HOLConst, args, t ) ) => {
+      case ( n :: rest, HOLFunction( p: HOLConst, args, t ) ) => {
         val ( firstArgs, arg :: remainingArgs ) = args.splitAt( n - 1 )
-        Function( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
+        HOLFunction( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
       }
-      case ( n :: rest, Function( p: HOLVar, args, t ) ) => {
+      case ( n :: rest, HOLFunction( p: HOLVar, args, t ) ) => {
         val ( firstArgs, arg :: remainingArgs ) = args.splitAt( n - 1 )
-        Function( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
+        HOLFunction( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
       }
       case ( Nil, _ ) => expression
       case _          => throw new IllegalArgumentException( "Position (" + pos + ") does not exist in the expression (" + exp + ")" )
@@ -94,19 +94,19 @@ object getAllPositions2 {
    */
   def apply( expression: HOLExpression ): List[Tuple2[List[Int], HOLExpression]] = recApply( expression, List() )
   private def recApply( t: HOLExpression, curPos: List[Int] ): List[( List[Int], HOLExpression )] = t match {
-    case HOLVar( _, _ )   => ( curPos, t ) :: Nil
-    case HOLConst( _, _ ) => ( curPos, t ) :: Nil
-    case ExVar( _, exp )  => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
-    case AllVar( _, exp ) => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
-    case Atom( _, args ) => ( curPos, t ) :: args.zipWithIndex.flatMap( el =>
+    case HOLVar( _, _ )      => ( curPos, t ) :: Nil
+    case HOLConst( _, _ )    => ( curPos, t ) :: Nil
+    case HOLExVar( _, exp )  => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
+    case HOLAllVar( _, exp ) => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
+    case HOLAtom( _, args ) => ( curPos, t ) :: args.zipWithIndex.flatMap( el =>
       recApply( el._1.asInstanceOf[HOLExpression], curPos ::: List( el._2 + 1 ) ) )
-    case Function( _, args, _ ) => ( curPos, t ) :: args.zipWithIndex.flatMap( el =>
+    case HOLFunction( _, args, _ ) => ( curPos, t ) :: args.zipWithIndex.flatMap( el =>
       recApply( el._1.asInstanceOf[HOLExpression], curPos ::: List( el._2 + 1 ) ) )
     case HOLAbs( _, exp ) => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
-    case Neg( f )         => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) )
-    case Or( f, g )       => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
-    case And( f, g )      => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
-    case Imp( f, g )      => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
+    case HOLNeg( f )      => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) )
+    case HOLOr( f, g )    => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
+    case HOLAnd( f, g )   => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
+    case HOLImp( f, g )   => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
     case HOLApp( s, t ) =>
       throw new Exception( "Application of " + s + " to " + t + " is unhandled (no logical operator, no Atom, no Function)!" )
     case _ =>
@@ -125,15 +125,15 @@ object getAtPosition {
    * @return The subterm, if it exists.
    */
   def apply( expression: HOLExpression, pos: List[Int] ): HOLExpression = ( expression, pos ) match {
-    case ( t, Nil )                            => t
-    case ( HOLVar( _, _ ), n )                 => throw new IllegalArgumentException( "trying to obtain a subterm of a variable at position: " + n )
-    case ( HOLConst( _, _ ), n )               => throw new IllegalArgumentException( "trying to obtain a subterm of a constant at position: " + n )
-    case ( AllVar( _, exp ), 1 :: rest )       => getAtPosition( exp, rest )
-    case ( ExVar( _, exp ), 1 :: rest )        => getAtPosition( exp, rest )
-    case ( Atom( _, args ), n :: rest )        => getAtPosition( args( n - 1 ).asInstanceOf[HOLExpression], rest )
-    case ( Function( _, args, _ ), n :: rest ) => getAtPosition( args( n - 1 ).asInstanceOf[HOLExpression], rest )
-    case ( HOLAbs( _, exp ), 1 :: rest )       => getAtPosition( exp, rest )
-    case ( _, n :: rest )                      => throw new IllegalArgumentException( "trying to obtain a subterm of " + expression + " at position: " + n )
+    case ( t, Nil )                               => t
+    case ( HOLVar( _, _ ), n )                    => throw new IllegalArgumentException( "trying to obtain a subterm of a variable at position: " + n )
+    case ( HOLConst( _, _ ), n )                  => throw new IllegalArgumentException( "trying to obtain a subterm of a constant at position: " + n )
+    case ( HOLAllVar( _, exp ), 1 :: rest )       => getAtPosition( exp, rest )
+    case ( HOLExVar( _, exp ), 1 :: rest )        => getAtPosition( exp, rest )
+    case ( HOLAtom( _, args ), n :: rest )        => getAtPosition( args( n - 1 ).asInstanceOf[HOLExpression], rest )
+    case ( HOLFunction( _, args, _ ), n :: rest ) => getAtPosition( args( n - 1 ).asInstanceOf[HOLExpression], rest )
+    case ( HOLAbs( _, exp ), 1 :: rest )          => getAtPosition( exp, rest )
+    case ( _, n :: rest )                         => throw new IllegalArgumentException( "trying to obtain a subterm of " + expression + " at position: " + n )
   }
 }
 

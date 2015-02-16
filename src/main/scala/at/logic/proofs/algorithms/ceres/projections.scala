@@ -42,7 +42,7 @@ object Projections extends at.logic.utils.logging.Logger {
 
     var count = 0
     val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList ).asInstanceOf[HOLVar]
-    val ax: LKProof = Axiom( Nil, List( Equation( x_, x_ ) ) )
+    val ax: LKProof = Axiom( Nil, List( HOLEquation( x_, x_ ) ) )
     val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningLeftRule( p, f ) )
     val right = es.succedent.foldLeft( left )( ( p, f ) => WeakeningRightRule( p, f ) )
     right
@@ -60,7 +60,7 @@ object Projections extends at.logic.utils.logging.Logger {
     var count = 0
     val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList ).asInstanceOf[HOLVar]
     val ( ax, _ ) = AxiomSk.createDefault(
-      FSequent( Nil, List( Equation( x_, x_ ) ) ),
+      FSequent( Nil, List( HOLEquation( x_, x_ ) ) ),
       ( List(), List( EmptyLabel() ) ) )
     require( ax.root.occurrences.size == 1, "Couldn't create reflexivity!" )
     val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningSkLeftRule.createDefault( p, f, EmptyLabel() ) )
@@ -100,13 +100,13 @@ object Projections extends at.logic.utils.logging.Logger {
         case ContractionLeftRule( p, _, a1, a2, m )  => handleContractionRule( proof, p, a1, a2, m, ContractionLeftRule.apply, pred )
         case ContractionRightRule( p, _, a1, a2, m ) => handleContractionRule( proof, p, a1, a2, m, ContractionRightRule.apply, pred )
         case OrRight1Rule( p, _, a, m ) => handleUnaryRule( proof, p, a,
-          m.formula match { case Or( _, w ) => w }, m, OrRight1Rule.apply, pred )
+          m.formula match { case HOLOr( _, w ) => w }, m, OrRight1Rule.apply, pred )
         case OrRight2Rule( p, _, a, m ) => handleUnaryRule( proof, p,
-          a, m.formula match { case Or( w, _ ) => w }, m, flipargs( OrRight2Rule.apply ), pred )
+          a, m.formula match { case HOLOr( w, _ ) => w }, m, flipargs( OrRight2Rule.apply ), pred )
         case AndLeft1Rule( p, _, a, m ) => handleUnaryRule( proof, p, a,
-          m.formula match { case And( _, w ) => w }, m, AndLeft1Rule.apply, pred )
+          m.formula match { case HOLAnd( _, w ) => w }, m, AndLeft1Rule.apply, pred )
         case AndLeft2Rule( p, _, a, m ) => handleUnaryRule( proof, p,
-          a, m.formula match { case And( w, _ ) => w }, m, flipargs( AndLeft2Rule.apply ), pred )
+          a, m.formula match { case HOLAnd( w, _ ) => w }, m, flipargs( AndLeft2Rule.apply ), pred )
         case ImpRightRule( p, _, a1, a2, m )             => handleUnaryImpRule( proof, p, a1, a2, m, ImpRightRule.apply, pred )
         case WeakeningLeftRule( p, _, m )                => handleWeakeningRule( proof, p, m, WeakeningLeftRule.apply, pred )
         case WeakeningRightRule( p, _, m )               => handleWeakeningRule( proof, p, m, WeakeningRightRule.apply, pred )

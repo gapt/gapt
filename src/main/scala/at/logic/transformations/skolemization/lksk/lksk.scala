@@ -76,10 +76,10 @@ object LKtoLKskc extends Logger {
         val newaux = r._2( a )
         val args = newaux.skolem_label.toList
         m.formula match {
-          case AllVar( HOLVar( _, alpha ), _ ) =>
+          case HOLAllVar( HOLVar( _, alpha ), _ ) =>
             val f = HOLConst( getFreshSkolemFunctionSymbol, FunctionType( alpha, args.map( _.exptype ) ) )
             debug( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
-            val s = Function( f, args )
+            val s = HOLFunction( f, args )
             val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ForallSkRightRule( new_parent._1, new_parent._2( newaux ), m.formula, s )
@@ -105,10 +105,10 @@ object LKtoLKskc extends Logger {
         val newaux = r._2( a )
         val args = newaux.skolem_label.toList
         m.formula match {
-          case ExVar( HOLVar( _, alpha ), _ ) =>
+          case HOLExVar( HOLVar( _, alpha ), _ ) =>
             val f = HOLConst( getFreshSkolemFunctionSymbol, FunctionType( alpha, args.map( _.exptype ) ) )
             debug( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
-            val s = Function( f, args )
+            val s = HOLFunction( f, args )
             val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2( newaux ), m.formula, s )
@@ -180,7 +180,7 @@ object LKtoLKskc extends Logger {
         computeMap( p2.root.antecedent ++ p2.root.succedent, proof, sk_proof, r2._2 ) )
     }
     case AndLeft1Rule( p, s, a, m ) => {
-      val weak = m.formula match { case And( _, w ) => w }
+      val weak = m.formula match { case HOLAnd( _, w ) => w }
       val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
       val r = rec( p, new_label_map, cut_occs )
       //assert( r._1.root.isInstanceOf[LabelledSequent] )
@@ -189,7 +189,7 @@ object LKtoLKskc extends Logger {
       ( sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
     }
     case AndLeft2Rule( p, s, a, m ) => {
-      val weak = m.formula match { case And( w, _ ) => w }
+      val weak = m.formula match { case HOLAnd( w, _ ) => w }
       val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
       val r = rec( p, new_label_map, cut_occs )
       //assert( r._1.root.isInstanceOf[LabelledSequent] )
@@ -214,7 +214,7 @@ object LKtoLKskc extends Logger {
       ( sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
     }
     case OrRight1Rule( p, s, a, m ) => {
-      val weak = m.formula match { case Or( _, w ) => w }
+      val weak = m.formula match { case HOLOr( _, w ) => w }
       val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
       val r = rec( p, new_label_map, cut_occs )
       //assert( r._1.root.isInstanceOf[LabelledSequent] )
@@ -223,7 +223,7 @@ object LKtoLKskc extends Logger {
       ( sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
     }
     case OrRight2Rule( p, s, a, m ) => {
-      val weak = m.formula match { case Or( w, _ ) => w }
+      val weak = m.formula match { case HOLOr( w, _ ) => w }
       val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
       val r = rec( p, new_label_map, cut_occs )
       val sk_proof = OrRight2Rule( r._1, weak, r._2( a ) )

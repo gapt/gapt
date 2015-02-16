@@ -268,7 +268,7 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
       str map { x =>
         val f = HLKHOLParser.parseFormula(x)
         f match {
-          case AllVar(x, Imp(Atom(p, px::Nil), ExVar(y, Atom(q, List(qx,qy))) )) =>
+          case HOLAllVar(x, HOLImp(HOLAtom(p, px::Nil), HOLExVar(y, HOLAtom(q, List(qx,qy))) )) =>
             "success" mustEqual("success")
           case _ =>
             f mustEqual("(fails)")

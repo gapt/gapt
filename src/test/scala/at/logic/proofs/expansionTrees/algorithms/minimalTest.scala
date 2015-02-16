@@ -1,6 +1,6 @@
 package at.logic.proofs.expansionTrees.algorithms
 
-import at.logic.language.hol.{And => AndHOL, Atom => AtomHOL, Imp => ImpHOL, Or => OrHOL, _}
+import at.logic.language.hol.{HOLAnd => AndHOL, HOLAtom => AtomHOL, HOLImp => ImpHOL, HOLOr => OrHOL, _}
 import at.logic.language.lambda.types.{Ti => i, To => o}
 import at.logic.proofs.expansionTrees._
 import at.logic.provers.minisat.MiniSATProver
@@ -18,14 +18,14 @@ class minimalExpansionSequentTest extends SpecificationWithJUnit {
   
   val et1: ExpansionTree = merge(
     WeakQuantifier(
-      AllVar(x, AtomHOL(P,x::Nil)),
+      HOLAllVar(x, AtomHOL(P,x::Nil)),
       List((Atom(AtomHOL(P,c::Nil)),c),(Atom(AtomHOL(P,d::Nil)),d))
       )
   )
 
   val et2: ExpansionTree = merge(
     WeakQuantifier(
-      ExVar(x, AtomHOL(P, x::Nil)),
+      HOLExVar(x, AtomHOL(P, x::Nil)),
       List((Atom(AtomHOL(P, c::Nil)),c),(Atom(AtomHOL(P,d::Nil)),d))
      )
   )
@@ -35,23 +35,23 @@ class minimalExpansionSequentTest extends SpecificationWithJUnit {
   val minESeq = List(
     ExpansionSequent(List(merge(
     WeakQuantifier(
-      AllVar(x, AtomHOL(P,x::Nil)),
+      HOLAllVar(x, AtomHOL(P,x::Nil)),
       List((Atom(AtomHOL(P,c::Nil)),c))
     )
   )), List(merge(
     WeakQuantifier(
-      ExVar(x, AtomHOL(P, x::Nil)),
+      HOLExVar(x, AtomHOL(P, x::Nil)),
       List((Atom(AtomHOL(P, c::Nil)),c))
     )
   ))),
     ExpansionSequent(List(merge(
     WeakQuantifier(
-      AllVar(x, AtomHOL(P,x::Nil)),
+      HOLAllVar(x, AtomHOL(P,x::Nil)),
       List((Atom(AtomHOL(P,d::Nil)),d))
     )
   )), List(merge(
     WeakQuantifier(
-      ExVar(x, AtomHOL(P, x::Nil)),
+      HOLExVar(x, AtomHOL(P, x::Nil)),
       List((Atom(AtomHOL(P, d::Nil)),d))
     )
   )))

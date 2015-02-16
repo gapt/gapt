@@ -1,7 +1,7 @@
 package at.logic.proofs.expansionTrees
 
 import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.language.hol.{ Atom => AtomHOL, And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL, AllVar => AllVarHOL, ExVar => ExVarHOL, _ }
+import at.logic.language.hol.{ HOLAtom => AtomHOL, HOLAnd => AndHOL, HOLOr => OrHOL, HOLImp => ImpHOL, HOLNeg => NegHOL, HOLAllVar => AllVarHOL, HOLExVar => ExVarHOL, _ }
 import at.logic.utils.ds.trees._
 import at.logic.language.hol.logicSymbols._
 import at.logic.proofs.lk.base._

@@ -57,11 +57,11 @@ class SolveTest extends SpecificationWithJUnit {
       val p = solve.solvePropositional(fseq)
 
       // TODO: something with these...
-      solve.solvePropositional(FSequent(Neg(And(Neg(A), Neg(B))) :: Nil, Or(A , B) :: Nil))
-      solve.solvePropositional(FSequent(Or(Or(A, B), C) :: Nil, A :: B :: C :: Nil))
-      solve.solvePropositional(FSequent(And(A , B) :: Nil, Neg(Or(Neg(A), Neg(B))) :: Nil))
+      solve.solvePropositional(FSequent(HOLNeg(HOLAnd(HOLNeg(A), HOLNeg(B))) :: Nil, HOLOr(A , B) :: Nil))
+      solve.solvePropositional(FSequent(HOLOr(HOLOr(A, B), C) :: Nil, A :: B :: C :: Nil))
+      solve.solvePropositional(FSequent(HOLAnd(A , B) :: Nil, HOLNeg(HOLOr(HOLNeg(A), HOLNeg(B))) :: Nil))
       solve.solvePropositional(FSequent(A0 :: A1 :: A2 :: Nil, biga2 :: Nil))
-      solve.solvePropositional(FSequent(A :: B :: C :: Nil, And(And(A, B), C) :: Nil))
+      solve.solvePropositional(FSequent(A :: B :: C :: Nil, HOLAnd(HOLAnd(A, B), C) :: Nil))
       solve.solvePropositional(FSequent(bigo2 :: Nil, A0 :: A1 :: A2 :: Nil))
       
       val c2 = HOLConst(new StringSymbol("c"), Ti)
@@ -70,13 +70,13 @@ class SolveTest extends SpecificationWithJUnit {
         
       val P = HOLConst(new StringSymbol("P"), Ti -> To)      
 
-      val Pc2 = Atom(P, c2::Nil)
-      val Pd2 = Atom(P, d2::Nil)
-      val Pe2 = Atom(P, e2::Nil)
-      val andPc2Pd2 = And(Pc2, Pd2)
-      val impPc2Pd2 = Imp(Pc2, Pd2)
-      val imp_andPc2Pd2_Pe2 = Imp(andPc2Pd2, Pe2)
-      val orPc2Pd2 = Or(Pc2, Pd2)
+      val Pc2 = HOLAtom(P, c2::Nil)
+      val Pd2 = HOLAtom(P, d2::Nil)
+      val Pe2 = HOLAtom(P, e2::Nil)
+      val andPc2Pd2 = HOLAnd(Pc2, Pd2)
+      val impPc2Pd2 = HOLImp(Pc2, Pd2)
+      val imp_andPc2Pd2_Pe2 = HOLImp(andPc2Pd2, Pe2)
+      val orPc2Pd2 = HOLOr(Pc2, Pd2)
       val seq11 = FSequent(Pc2::Nil, Pc2::Nil)
       val seq12 = FSequent(andPc2Pd2::Nil, Pc2::Nil)
       val seq13 = FSequent(Pc2::Nil, orPc2Pd2::Nil)
@@ -97,11 +97,11 @@ class SolveTest extends SpecificationWithJUnit {
       val List(_Xsym,_Ysym)    = List("X","Y") map (x => StringSymbol(x))
       val List(_X,_Y)    = List(_Xsym,_Ysym) map (x => HOLVar(x, Ti -> To))
 
-      val xzero = Atom(_X,List(zero))
-      val xx = Atom(_X,List(x))
-      val xsx = Atom(_X,List(Function(s,List(x))))
+      val xzero = HOLAtom(_X,List(zero))
+      val xx = HOLAtom(_X,List(x))
+      val xsx = HOLAtom(_X,List(HOLFunction(s,List(x))))
 
-      val ind = AllVar(_X, Imp(And(xzero, AllVar(x, Imp(xx,xsx) )), AllVar(x, xx) ))
+      val ind = HOLAllVar(_X, HOLImp(HOLAnd(xzero, HOLAllVar(x, HOLImp(xx,xsx) )), HOLAllVar(x, xx) ))
       val fs = FSequent(ind::Nil,ind::Nil)
       val proof = AtomicExpansion(fs)
       //check if the derived end-sequent is correct
@@ -129,10 +129,10 @@ class SolveTest extends SpecificationWithJUnit {
 
       val Q = HOLConst(qsym, Ti -> (Ti -> To) )
       val P = HOLConst(qsym, Ti -> To)
-      val xzero = Atom(Q,List(y, Function(s,List(x))))
+      val xzero = HOLAtom(Q,List(y, HOLFunction(s,List(x))))
 
-      val formula = AllVar(x, Neg(ExVar(y, xzero)))
-      val fs = FSequent(List(Atom(P,x::Nil), formula),List(formula, Atom(P,y::Nil)))
+      val formula = HOLAllVar(x, HOLNeg(HOLExVar(y, xzero)))
+      val fs = FSequent(List(HOLAtom(P,x::Nil), formula),List(formula, HOLAtom(P,y::Nil)))
       val proof = AtomicExpansion(fs)
       //check if the derived end-sequent is correct
       proof.root.toFSequent must beSyntacticFSequentEqual (fs)
@@ -154,16 +154,16 @@ class SolveTest extends SpecificationWithJUnit {
       val d = HOLConst(StringSymbol("d"), Ti -> To)
 
 
-      val formula = ExVar(x, Or( Neg( Atom(d, x::Nil) ), AllVar(y, Atom(d, y::Nil)))) // exists x (-d(x) or forall y d(y))
+      val formula = HOLExVar(x, HOLOr( HOLNeg( HOLAtom(d, x::Nil) ), HOLAllVar(y, HOLAtom(d, y::Nil)))) // exists x (-d(x) or forall y d(y))
 
       val inst1 = OrET(
-        NegET( AtomET( Atom(d, u::Nil))), // -d(u)
-        StrongQuantifierET( AllVar(y, Atom(d, y::Nil)), v, AtomET(Atom(d, v::Nil))) // forall y d(y) +^v d(v)
+        NegET( AtomET( HOLAtom(d, u::Nil))), // -d(u)
+        StrongQuantifierET( HOLAllVar(y, HOLAtom(d, y::Nil)), v, AtomET(HOLAtom(d, v::Nil))) // forall y d(y) +^v d(v)
       )
 
       val inst2 = OrET(
-        NegET( AtomET( Atom(d, c::Nil))), // -d(c)
-        StrongQuantifierET( AllVar(y, Atom(d, y::Nil)), u, AtomET(Atom(d, u::Nil))) // forall y d(y) +^u d(u)
+        NegET( AtomET( HOLAtom(d, c::Nil))), // -d(c)
+        StrongQuantifierET( HOLAllVar(y, HOLAtom(d, y::Nil)), u, AtomET(HOLAtom(d, u::Nil))) // forall y d(y) +^u d(u)
       )
 
       // here, the second tree, containing c, must be expanded before u, as u is used as eigenvar in the c branch

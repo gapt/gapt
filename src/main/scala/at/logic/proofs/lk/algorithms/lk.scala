@@ -182,25 +182,25 @@ object eliminateDefinitions {
           handleContraction( ( new_parent._1, new_parent._2 ), p, proof, a1, a2, ContractionRightRule.apply )
         }
         case AndLeft1Rule( p, s, a, m ) => {
-          val f = m.formula match { case And( _, w ) => w }
+          val f = m.formula match { case HOLAnd( _, w ) => w }
           val new_parent = rec( p )
           val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), f )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
         }
         case AndLeft2Rule( p, s, a, m ) => {
-          val f = m.formula match { case And( w, _ ) => w }
+          val f = m.formula match { case HOLAnd( w, _ ) => w }
           val new_parent = rec( p )
           val new_proof = AndLeft2Rule( new_parent._1, f, new_parent._2( a ) )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
         }
         case OrRight1Rule( p, s, a, m ) => {
-          val f = m.formula match { case Or( _, w ) => w }
+          val f = m.formula match { case HOLOr( _, w ) => w }
           val new_parent = rec( p )
           val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), f )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
         }
         case OrRight2Rule( p, s, a, m ) => {
-          val f = m.formula match { case Or( w, _ ) => w }
+          val f = m.formula match { case HOLOr( w, _ ) => w }
           val new_parent = rec( p )
           val new_proof = OrRight2Rule( new_parent._1, f, new_parent._2( a ) )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
@@ -375,25 +375,25 @@ object regularize {
           handleContraction( ( new_parent._1, new_parent._3 ), p, proof, a1, a2, new_parent._2, ContractionRightRule.apply )
         }
         case AndLeft1Rule( p, s, a, m ) => {
-          val f = m.formula match { case And( _, w ) => w }
+          val f = m.formula match { case HOLAnd( _, w ) => w }
           val new_parent = recApply( p, vars )
           val new_proof = AndLeft1Rule( new_parent._1, new_parent._3( a ), f )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
         }
         case AndLeft2Rule( p, s, a, m ) => {
-          val f = m.formula match { case And( w, _ ) => w }
+          val f = m.formula match { case HOLAnd( w, _ ) => w }
           val new_parent = recApply( p, vars )
           val new_proof = AndLeft2Rule( new_parent._1, f, new_parent._3( a ) )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
         }
         case OrRight1Rule( p, s, a, m ) => {
-          val f = m.formula match { case Or( _, w ) => w }
+          val f = m.formula match { case HOLOr( _, w ) => w }
           val new_parent = recApply( p, vars )
           val new_proof = OrRight1Rule( new_parent._1, new_parent._3( a ), f )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
         }
         case OrRight2Rule( p, s, a, m ) => {
-          val f = m.formula match { case Or( w, _ ) => w }
+          val f = m.formula match { case HOLOr( w, _ ) => w }
           val new_parent = recApply( p, vars )
           val new_proof = OrRight2Rule( new_parent._1, f, new_parent._3( a ) )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
@@ -544,19 +544,19 @@ object replaceSubproof {
         if ( up1.contains( subproof ) ) AndRightRule( replace( up1, subproof, newSubproof ), up2, aux1.formula, aux2.formula )
         else AndRightRule( up1, replace( up2, subproof, newSubproof ), aux1.formula, aux2.formula )
       case AndLeft1Rule( up, _, aux, prin ) => prin.formula match {
-        case And( aux.formula, f ) => AndLeft1Rule( replace( up, subproof, newSubproof ), aux.formula, f )
+        case HOLAnd( aux.formula, f ) => AndLeft1Rule( replace( up, subproof, newSubproof ), aux.formula, f )
       }
       case AndLeft2Rule( up, _, aux, prin ) => prin.formula match {
-        case And( f, aux.formula ) => AndLeft2Rule( replace( up, subproof, newSubproof ), f, aux.formula )
+        case HOLAnd( f, aux.formula ) => AndLeft2Rule( replace( up, subproof, newSubproof ), f, aux.formula )
       }
       case OrLeftRule( up1, up2, _, aux1, aux2, _ ) =>
         if ( up1.contains( subproof ) ) OrLeftRule( replace( up1, subproof, newSubproof ), up2, aux1.formula, aux2.formula )
         else OrLeftRule( up1, replace( up2, subproof, newSubproof ), aux1.formula, aux2.formula )
       case OrRight1Rule( up, _, aux, prin ) => prin.formula match {
-        case Or( aux.formula, f ) => OrRight1Rule( replace( up, subproof, newSubproof ), aux.formula, f )
+        case HOLOr( aux.formula, f ) => OrRight1Rule( replace( up, subproof, newSubproof ), aux.formula, f )
       }
       case OrRight2Rule( up, _, aux, prin ) => prin.formula match {
-        case Or( f, aux.formula ) => OrRight2Rule( replace( up, subproof, newSubproof ), f, aux.formula )
+        case HOLOr( f, aux.formula ) => OrRight2Rule( replace( up, subproof, newSubproof ), f, aux.formula )
       }
       case ImpLeftRule( up1, up2, _, aux1, aux2, _ ) =>
         if ( up1.contains( subproof ) ) ImpLeftRule( replace( up1, subproof, newSubproof ), up2, aux1.formula, aux2.formula )

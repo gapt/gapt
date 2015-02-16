@@ -269,7 +269,7 @@ object EquationLeftRule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -306,7 +306,7 @@ object EquationLeftRule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( s == t && aux == main ) {
@@ -370,7 +370,7 @@ object EquationLeftRule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( s == t && aux == main ) {
@@ -434,7 +434,7 @@ object EquationLeftRule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -505,7 +505,7 @@ object EquationRightRule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -542,7 +542,7 @@ object EquationRightRule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( s == t && aux == main ) {
@@ -606,7 +606,7 @@ object EquationRightRule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( s == t && aux == main ) {
@@ -669,7 +669,7 @@ object EquationRightRule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
@@ -746,7 +746,7 @@ object EquationLeftMacroRule extends EquationRuleLogger {
     trace( "EquationLeftMacroRule called with equation " + term1oc + ", aux formula " + term2oc + ", s positions " + sPos + " and t positions " + tPos )
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         // Filter out those positions where no terms need to be replaced.
@@ -839,7 +839,7 @@ object EquationLeftMacroRule extends EquationRuleLogger {
     trace( "EquationLeftMacroRule called with equation " + term1oc + ", aux formula " + term2oc + " and main formula " + main )
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
 
         trace( "Equation: " + s + " = " + t + "." )
 
@@ -897,7 +897,7 @@ object EquationRightMacroRule extends EquationRuleLogger {
     trace( "EquationRightMacroRule called with equation " + term1oc + ", aux formula " + term2oc + ", s positions " + sPos + " and t positions " + tPos )
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
         val ( sPosActive, tPosActive ) = ( sPos filter { aux.get( _ ) match { case Some( `t` ) => true; case _ => false } },
           tPos filter { aux.get( _ ) match { case Some( `s` ) => true; case _ => false } } )
@@ -972,7 +972,7 @@ object EquationRightMacroRule extends EquationRuleLogger {
     trace( "EquationRightMacroRule called with equation " + term1oc + ", aux formula " + term2oc + " and main formula " + main )
 
     eq match {
-      case Equation( s, t ) =>
+      case HOLEquation( s, t ) =>
         trace( "Equation: " + s + " = " + t + "." )
 
         if ( s == t && aux == main ) {

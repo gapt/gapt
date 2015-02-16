@@ -1,7 +1,7 @@
 
 package at.logic.proofs.expansionTrees
 
-import at.logic.language.hol.{ And => AndHOL, Or => OrHOL, Imp => ImpHOL, Neg => NegHOL, _ }
+import at.logic.language.hol.{ HOLAnd => AndHOL, HOLOr => OrHOL, HOLImp => ImpHOL, HOLNeg => NegHOL, _ }
 import at.logic.utils.ds.trees._
 import at.logic.proofs.lk.base.FSequent
 import Utility._
@@ -24,8 +24,8 @@ object Utility {
    * @return
    */
   def getVarsEx( formula: HOLFormula ): List[HOLVar] = formula match {
-    case ExVar( v, f ) => v +: getVarsEx( f )
-    case _             => Nil
+    case HOLExVar( v, f ) => v +: getVarsEx( f )
+    case _                => Nil
   }
 
   /**
@@ -35,8 +35,8 @@ object Utility {
    * @return
    */
   def getVarsAll( formula: HOLFormula ): List[HOLVar] = formula match {
-    case AllVar( v, f ) => v +: getVarsAll( f )
-    case _              => Nil
+    case HOLAllVar( v, f ) => v +: getVarsAll( f )
+    case _                 => Nil
   }
 
   /**
@@ -51,9 +51,9 @@ object Utility {
     if ( n == 0 )
       formula
     else formula match {
-      case AllVar( _, f ) => removeQuantifiers( f, n - 1 )
-      case ExVar( _, f )  => removeQuantifiers( f, n - 1 )
-      case _              => throw new Exception( "Trying to remove too many quantifiers!" )
+      case HOLAllVar( _, f ) => removeQuantifiers( f, n - 1 )
+      case HOLExVar( _, f )  => removeQuantifiers( f, n - 1 )
+      case _                 => throw new Exception( "Trying to remove too many quantifiers!" )
     }
 }
 
@@ -136,8 +136,8 @@ case class MWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
   override def numberOfInstances = instances.foldLeft( 0 )( ( acc, inst ) => acc + inst._1.numberOfInstances )
 
   override def getVars = formula match {
-    case ExVar( v, subF )  => v +: getVarsEx( subF )
-    case AllVar( v, subF ) => v +: getVarsAll( subF )
+    case HOLExVar( v, subF )  => v +: getVarsEx( subF )
+    case HOLAllVar( v, subF ) => v +: getVarsAll( subF )
   }
 
   override def getSubformula = {
@@ -169,8 +169,8 @@ case class MStrongQuantifier( formula: HOLFormula, variables: Seq[HOLVar], selec
   override def numberOfInstances = selection.numberOfInstances
 
   override def getVars = formula match {
-    case ExVar( v, subF )  => v +: getVarsEx( subF )
-    case AllVar( v, subF ) => v +: getVarsAll( subF )
+    case HOLExVar( v, subF )  => v +: getVarsEx( subF )
+    case HOLAllVar( v, subF ) => v +: getVarsAll( subF )
   }
 
   override def getSubformula = {
@@ -200,8 +200,8 @@ case class MSkolemQuantifier( formula: HOLFormula, skolemSymbols: Seq[HOLExpress
   override def numberOfInstances = selection.numberOfInstances
 
   override def getVars = formula match {
-    case ExVar( v, subF )  => v +: getVarsEx( subF )
-    case AllVar( v, subF ) => v +: getVarsAll( subF )
+    case HOLExVar( v, subF )  => v +: getVarsEx( subF )
+    case HOLAllVar( v, subF ) => v +: getVarsAll( subF )
   }
 
   override def getSubformula = {

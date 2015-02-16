@@ -419,7 +419,7 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
       case None => throw new LKRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( aux_fo ) =>
         main match {
-          case AllVar( x, sub ) =>
+          case HOLAllVar( x, sub ) =>
             // eigenvar condition
             assert( ( s1.antecedent ++ ( s1.succedent.filterNot( _ == aux_fo ) ) ).forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
               "Eigenvariable " + eigen_var + " occurs in context " + s1 )
@@ -433,7 +433,7 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
             assert( betaNormalize( back_substitiution( sub ) ) == aux_fo.formula, "assert 2 in getTerms of String Quantifier Rule fails!\n" + betaNormalize( HOLApp( sub, eigen_var ) ) + " != " + aux_fo.formula )
             aux_fo
 
-          case ExVar( x, sub ) =>
+          case HOLExVar( x, sub ) =>
             // eigenvar condition
             assert( ( ( s1.antecedent.filterNot( _ == aux_fo ) ) ++ s1.succedent ).forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
               "Eigenvariable " + eigen_var + " occurs in context " + s1 )
@@ -455,10 +455,10 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
 
 class WeakRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polarity ) {
   def computeAux( main: HOLFormula, term: HOLExpression ) = main match {
-    case AllVar( v, sub ) =>
+    case HOLAllVar( v, sub ) =>
       val s = Substitution( v, term )
       ( v, betaNormalize( s( sub ) ) )
-    case ExVar( v, sub ) =>
+    case HOLExVar( v, sub ) =>
       val s = Substitution( v, term )
       ( v, betaNormalize( s( sub ) ) )
     case _ => throw new LKRuleCreationException( "Main formula of a quantifier rule must start with a strong quantfier." )

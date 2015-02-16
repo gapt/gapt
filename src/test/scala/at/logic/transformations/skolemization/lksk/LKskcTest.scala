@@ -30,11 +30,11 @@ class LKskcTest extends SpecificationWithJUnit {
     val r = HOLConst("R", Ti -> (Ti -> To))
 
     "work for a small proof with only weak quantifiers" in {
-      val Rcc = Atom(r, c::c::Nil)
-      val Rcx = Atom(r, c::x::Nil)
-      val Ryx = Atom(r, y::x::Nil)
-      val allxRcx = AllVar( x, Rcx )
-      val allyallxRyx = AllVar( y, AllVar( x, Ryx ) )
+      val Rcc = HOLAtom(r, c::c::Nil)
+      val Rcx = HOLAtom(r, c::x::Nil)
+      val Ryx = HOLAtom(r, y::x::Nil)
+      val allxRcx = HOLAllVar( x, Rcx )
+      val allyallxRyx = HOLAllVar( y, HOLAllVar( x, Ryx ) )
       val proof = ForallLeftRule( 
                     ForallLeftRule( 
                       LKAxiom( Rcc::Nil, Nil ),
@@ -51,9 +51,9 @@ class LKskcTest extends SpecificationWithJUnit {
     "work for a cut-free proof" in {
       val a = HOLVar("a", Ti)
       val b = HOLVar("b", Ti)
-      val Rab = Atom( r, a::b::Nil )
-      val exyRay = ExVar( y, Atom( r, a::y::Nil ) )
-      val allxexyRxy = AllVar( x, ExVar( y, Atom( r, x::y::Nil ) ) )
+      val Rab = HOLAtom( r, a::b::Nil )
+      val exyRay = HOLExVar( y, HOLAtom( r, a::y::Nil ) )
+      val allxexyRxy = HOLAllVar( x, HOLExVar( y, HOLAtom( r, x::y::Nil ) ) )
       val ax = LKAxiom( Rab::Nil, Rab::Nil  )
       val r1 = ExistsRightRule( ax, Rab, exyRay, b )
       val r2 = ExistsLeftRule( r1, Rab, exyRay, b )
