@@ -18,7 +18,7 @@ class ProgramParserTest extends SpecificationWithJUnit {
     }
     "parse an if-then-else" in {
       parseProgram("if P() then skip else x := a fi") must beEqualTo(
-        IfElse(Atom("P"), Skip(), Assign("x", parseTerm("a"))))
+        IfElse(FOLAtom("P"), Skip(), Assign("x", parseTerm("a"))))
     }
     "parse a sequence" in {
       parseProgram("x := a; skip") must beEqualTo(Sequence(Assign("x", parseTerm("a")), Skip()))

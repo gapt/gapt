@@ -6,7 +6,7 @@ import at.logic.parsing.ExportingException
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk._
 import at.logic.language.hol._
-import at.logic.language.fol.{ Atom => FOLAtom }
+import at.logic.language.fol.{ FOLAtom => FOLAtom }
 import at.logic.language.lambda.types.Ti
 
 object XMLExporter {

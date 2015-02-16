@@ -18,8 +18,8 @@ class FOLUnificationAlgorithmTest extends SpecificationWithJUnit {
       val x = FOLVar("x")
       val a = FOLConst("a")
       val b = FOLConst("b")
-      val term = Function("f", x::x::Nil)
-      val posInstance = Function("f", a::b::Nil)
+      val term = FOLFunction("f", x::x::Nil)
+      val posInstance = FOLFunction("f", a::b::Nil)
 
       val sub = FOLUnificationAlgorithm.unify(term,posInstance)
       sub must beEqualTo (Nil)

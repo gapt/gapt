@@ -21,12 +21,12 @@ class SimpleLoopProblem( val loop: ForLoop, val gamma: Seq[FOLFormula], val prec
   def stateFunctionSymbol( programVariable: FOLVar ): String = programVariable match { case FOLVar( sym ) => s"sigma_$sym" }
 
   def varsAtTime( i: Int ): List[( FOLVar, FOLTerm )] =
-    programVariables map { v => v -> Function( stateFunctionSymbol( v ), List( numeral( i ) ) ) }
+    programVariables map { v => v -> FOLFunction( stateFunctionSymbol( v ), List( numeral( i ) ) ) }
 
   def pi( i: Int ): FOLFormula =
     Substitution( varsAtTime( i ) :+ ( loop.indexVar -> numeral( i ) ) )(
       weakestPrecondition( loop.body,
-        And( varsAtTime( i + 1 ) map { case ( v, s ) => Equation( s, v ) } ) ) )
+        FOLAnd( varsAtTime( i + 1 ) map { case ( v, s ) => FOLEquation( s, v ) } ) ) )
 
   def instanceSequent( n: Int ) = FSequent( gamma
     ++ ( ( 0 until n ) map pi map Substitution( loop.limit, numeral( n ) ).apply )

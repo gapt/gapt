@@ -616,7 +616,7 @@ object CutIntroduction {
     } else {
       return Cs.sliding( 2 ). // generate lists [C1,C2],[C2,C3],...,[Cn-1,Cn]
         foldLeft( List[FOLFormula]( Cs( 0 ) ) )( ( solution, C ) => {
-          solution :+ Imp( C( 0 ), C( 1 ) )
+          solution :+ FOLImp( C( 0 ), C( 1 ) )
         } )
     }
   }
@@ -680,7 +680,7 @@ object CutIntroduction {
 
         } else acc
     }
-    ( 0 to ( eigenvariables.size - 1 ) ).reverse.toList.foldLeft( And( xFormulas ) ) { ( f, n ) => AllVar( FOLVar( varName + "_" + n ), f ) }
+    ( 0 to ( eigenvariables.size - 1 ) ).reverse.toList.foldLeft( FOLAnd( xFormulas ) ) { ( f, n ) => FOLAllVar( FOLVar( varName + "_" + n ), f ) }
   }
 
   /**
@@ -756,10 +756,10 @@ object CutIntroduction {
   // end-sequent ancestors with the terms from the set U
   def genWeakQuantRules( f: FOLFormula, lst: List[FOLTerm], ax: LKProof ): LKProof = ( f, lst ) match {
     case ( _, Nil ) => ax
-    case ( AllVar( _, _ ), h :: t ) =>
+    case ( FOLAllVar( _, _ ), h :: t ) =>
       val newForm = instantiate( f, h )
       ForallLeftRule( genWeakQuantRules( newForm, t, ax ), newForm, f, h )
-    case ( ExVar( _, _ ), h :: t ) =>
+    case ( FOLExVar( _, _ ), h :: t ) =>
       val newForm = instantiate( f, h )
       ExistsRightRule( genWeakQuantRules( newForm, t, ax ), newForm, f, h )
   }
@@ -776,7 +776,7 @@ object CutIntroduction {
         val f = terms.getFormula( term )
 
         f match {
-          case AllVar( _, _ ) =>
+          case FOLAllVar( _, _ ) =>
             try {
               ContractionLeftRule( genWeakQuantRules( f, set, ax ), f )
             } catch {
@@ -784,7 +784,7 @@ object CutIntroduction {
               // substitution
               case e: LKRuleCreationException => genWeakQuantRules( f, set, ax )
             }
-          case ExVar( _, _ ) =>
+          case FOLExVar( _, _ ) =>
             try {
               ContractionRightRule( genWeakQuantRules( f, set, ax ), f )
             } catch {

@@ -8,7 +8,7 @@ import at.logic.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.language.lambda.types.->
 import at.logic.language.hol.{ HOLFormula, HOLExpression, HOLVar, subTerms, Substitution }
-import at.logic.language.fol.{ Equation, FOLExpression }
+import at.logic.language.fol.{ FOLEquation, FOLExpression }
 import at.logic.provers.atp.commands.base.{ ResultCommand, DataCommand }
 import at.logic.provers.atp.Definitions._
 import at.logic.utils.ds.{ Add, Remove, PublishingBufferEvent, PublishingBuffer }
@@ -99,9 +99,9 @@ object fvarInvariantMSEqualityEQ {
     if ( f2.succedent.length == 0 )
       return false
     f2.succedent.head match {
-      case Equation( a, b ) => {
+      case FOLEquation( a, b ) => {
         println( "\n\nVutre sum !\n\n" )
-        val f3 = FSequent( f2.antecedent, Equation( b, a ) +: f2.succedent.tail )
+        val f3 = FSequent( f2.antecedent, FOLEquation( b, a ) +: f2.succedent.tail )
         return fvarInvariantMSEquality( c1, f3 )
       }
       case _ => return false

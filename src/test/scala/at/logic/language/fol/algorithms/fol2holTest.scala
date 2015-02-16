@@ -14,7 +14,7 @@ import org.specs2.runner.JUnitRunner
 class fol2holTest extends SpecificationWithJUnit {
   "Conversion from fol to hol" should {
     "work for some simple terms" in {
-      val fterm = fol.Function("f", List(
+      val fterm = fol.FOLFunction("f", List(
                     fol.FOLConst("q1"),
                     fol.FOLVar("x")))
       val hterm = fol2hol(fterm)

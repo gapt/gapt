@@ -22,7 +22,7 @@ class VampireTest extends SpecificationWithJUnit {
       //checks, if the execution of vampire works, o.w. skip test
       Vampire.refute(box ) must not(throwA[VampireException]).orSkip
 
-      val p = Atom("P", Nil)
+      val p = FOLAtom("P", Nil)
       val s1 = FSequent(Nil, p::Nil)
       val s2 = FSequent(p::Nil, Nil)
       val result : Boolean = Vampire.refute( s1::s2::Nil )
@@ -41,21 +41,21 @@ class VampireTest extends SpecificationWithJUnit {
       val a = FOLConst("a")
       val b = FOLConst("b")
       val c = FOLConst("c")
-      val fax = Function("f", a::x::Nil)
-      val fbx = Function("f", b::x::Nil)
-      val fcx = Function("f", c::x::Nil)
-      val fffbxyz = Function("f", Function("f", fbx::y::Nil)::z::Nil)
-      val fxz = Function("f", x::z::Nil)
-      val fyz = Function("f", y::z::Nil)
-      val ffxzfyz = Function("f", fxz::fyz::Nil)
-      val ffcxy = Function("f", fcx::y::Nil)
-      val fbc = Function("f", b::c::Nil)
-      val fffbccx = Function("f", Function("f", fbc::c::Nil)::x::Nil)
+      val fax = FOLFunction("f", a::x::Nil)
+      val fbx = FOLFunction("f", b::x::Nil)
+      val fcx = FOLFunction("f", c::x::Nil)
+      val fffbxyz = FOLFunction("f", FOLFunction("f", fbx::y::Nil)::z::Nil)
+      val fxz = FOLFunction("f", x::z::Nil)
+      val fyz = FOLFunction("f", y::z::Nil)
+      val ffxzfyz = FOLFunction("f", fxz::fyz::Nil)
+      val ffcxy = FOLFunction("f", fcx::y::Nil)
+      val fbc = FOLFunction("f", b::c::Nil)
+      val fffbccx = FOLFunction("f", FOLFunction("f", fbc::c::Nil)::x::Nil)
 
-      val i = Equation(fax, x)
-      val s = Equation(fffbxyz, ffxzfyz)
-      val k = Equation(ffcxy, x)
-      val skk_i = Equation(fffbccx, fax)
+      val i = FOLEquation(fax, x)
+      val s = FOLEquation(fffbxyz, ffxzfyz)
+      val k = FOLEquation(ffcxy, x)
+      val skk_i = FOLEquation(fffbccx, fax)
 
       val s1 = FSequent(Nil, List(i))
       val s2 = FSequent(Nil, List(k))
@@ -71,8 +71,8 @@ class VampireTest extends SpecificationWithJUnit {
       //checks, if the execution of vampire works, o.w. skip test
       Vampire.refute(box ) must not(throwA[VampireException]).orSkip
 
-      val s1 = FSequent(Nil, List(Atom("P", Nil)))
-      val t1 = FSequent(List(Atom("Q", Nil)),Nil)
+      val s1 = FSequent(Nil, List(FOLAtom("P", Nil)))
+      val t1 = FSequent(List(FOLAtom("Q", Nil)),Nil)
       val result : Boolean = Vampire.refute( List(s1,t1) )
       result must beEqualTo( false )
     }

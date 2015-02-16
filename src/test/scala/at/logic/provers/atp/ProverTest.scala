@@ -151,9 +151,9 @@ class ProverTest extends SpecificationWithJUnit {
     "obtain the conclusion from premises" in {
       "-P(x) | P(f(x)) from -P(x) | -P(y) | P(f(x)). P(x). " in {
         val var1 = FOLVar("x")
-        val fun1 = Function("f", var1::Nil)
-        val lit1 = Atom("P",var1::Nil)
-        val lit2 = Atom("P",fun1::Nil)
+        val fun1 = FOLFunction("f", var1::Nil)
+        val lit1 = FOLAtom("P",var1::Nil)
+        val lit2 = FOLAtom("P",fun1::Nil)
         getRefutationd("-P(x) | -P(y) | P(f(x)). P(x).",FSequent(List(lit1),List(lit2))) must beTrue
       }
       "P(f(a)) from -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a)." in {

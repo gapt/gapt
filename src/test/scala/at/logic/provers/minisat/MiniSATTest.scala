@@ -27,15 +27,15 @@ class MiniSATTest extends SpecificationWithJUnit {
 
     def apply( ps: Int, hs: Int ) = {
       assert( ps > 1 )
-      Imp( And( (1 to ps).map( p =>
-              Or( (1 to hs).map( h => atom(p, h) ).toList ) ).toList ),
-            Or( (1 to hs).map ( h =>
-              Or( (2 to ps).map( p =>
-                Or( ((1 to p - 1)).map( pp =>
-                  And(atom(p, h),atom(pp,h))).toList)).toList)).toList))
+      FOLImp( FOLAnd( (1 to ps).map( p =>
+              FOLOr( (1 to hs).map( h => atom(p, h) ).toList ) ).toList ),
+            FOLOr( (1 to hs).map ( h =>
+              FOLOr( (2 to ps).map( p =>
+                FOLOr( ((1 to p - 1)).map( pp =>
+                  FOLAnd(atom(p, h),atom(pp,h))).toList)).toList)).toList))
     }
 
-    def atom( p: Int, h: Int ) = Atom(rel, pigeon(p)::hole(h)::Nil)
+    def atom( p: Int, h: Int ) = FOLAtom(rel, pigeon(p)::hole(h)::Nil)
 
     def pigeon(i: Int) = FOLConst("p_" + i)
 
@@ -47,9 +47,9 @@ class MiniSATTest extends SpecificationWithJUnit {
     val c = FOLConst("c")
     val d = FOLConst("d")
     val e = FOLConst("e")
-    val pc = Atom("P", c::Nil)
-    val pd = Atom("P", d::Nil)
-    val pe = Atom("P", e::Nil)
+    val pc = FOLAtom("P", c::Nil)
+    val pd = FOLAtom("P", d::Nil)
+    val pe = FOLAtom("P", e::Nil)
       
     "find a model for an atom" in {
       val clause = FClause(Nil, pc::Nil)
@@ -71,8 +71,8 @@ class MiniSATTest extends SpecificationWithJUnit {
     }
     
     "see that Pc or -Pc is valid" in {
-      (new MiniSAT).isValid( Or(pc, Neg(pc) ) ) must beTrue
-      (new MiniSATProver).isValid( new FSequent( Nil, Or(pc, Neg(pc) )::Nil) ) must beTrue
+      (new MiniSAT).isValid( FOLOr(pc, FOLNeg(pc) ) ) must beTrue
+      (new MiniSATProver).isValid( new FSequent( Nil, FOLOr(pc, FOLNeg(pc) )::Nil) ) must beTrue
     }
     
     "see that Pc is not valid" in {

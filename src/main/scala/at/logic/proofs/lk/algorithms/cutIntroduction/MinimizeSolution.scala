@@ -268,16 +268,16 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
         ( t.foldLeft( f ) { case ( f, sval ) => instantiate( f, sval ) } ) :: acc
     }
 
-    val head = And( as )
+    val head = FOLAnd( as )
 
-    val impl = Imp( body, head )
+    val impl = FOLImp( body, head )
 
     val antecedent = ehs.prop_l ++ ehs.inst_l :+ impl
     val succedent = ehs.prop_r ++ ehs.inst_r
 
     //isTautology(FSequent(antecedent, succedent))
     //trace( "calling SAT-solver" )
-    val r = prover.isValid( Imp( And( antecedent ), Or( succedent ) ) )
+    val r = prover.isValid( FOLImp( FOLAnd( antecedent ), FOLOr( succedent ) ) )
     //trace( "finished call to SAT-solver" )
 
     r
@@ -363,9 +363,9 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   // Computes ground paramodulants including the trivial one
   def Paramodulants( s: FOLTerm, t: FOLTerm, r: FOLTerm ): Set[FOLTerm] = r match {
     case _ if r == s => Set( t ) ++ Set( r )
-    case Function( f, args ) => {
+    case FOLFunction( f, args ) => {
       val margs = args.map( a => Paramodulants( s, t, a ) )
-      getArgs( margs ).map( args => Function( f, args ) )
+      getArgs( margs ).map( args => FOLFunction( f, args ) )
     }
     case _ => Set( r )
   }
@@ -373,9 +373,9 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   // Computes ground paramodulants without the trivial one
   def Paramodulants( s: FOLTerm, t: FOLTerm, f: FOLFormula ): Set[FOLFormula] = {
     val res = f match {
-      case Atom( x, args ) => {
+      case FOLAtom( x, args ) => {
         val margs = args.map( a => Paramodulants( s, t, a ) )
-        getArgs( margs ).map( args => Atom( x, args ) ) - f
+        getArgs( margs ).map( args => FOLAtom( x, args ) ) - f
       }
     }
     trace( "paramodulants for " + s + " = " + t + " into " + f + " : " + res )
@@ -395,7 +395,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   def myParamodulants( left: MyFClause[FOLFormula], right: MyFClause[FOLFormula] ): Set[MyFClause[FOLFormula]] =
     left.pos.foldLeft( Set[MyFClause[FOLFormula]]() )( ( res, eq ) =>
       res ++ ( eq match {
-        case Equation( s, t ) => right.neg.flatMap( aux => ( Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux ) ).map( para =>
+        case FOLEquation( s, t ) => right.neg.flatMap( aux => ( Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux ) ).map( para =>
           getParaLeft( eq, aux, para, left, right ) ) ) ++
           right.pos.flatMap( aux => ( Paramodulants( s, t, aux ) ++ Paramodulants( t, s, aux ) ).map( para =>
             getParaRight( eq, aux, para, left, right ) ) ).toSet
@@ -410,7 +410,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
       val nonEmptyClauses = cls.filter( c => c.neg.length > 0 || c.pos.length > 0 ).toList
 
       if ( nonEmptyClauses.length == 0 ) { TopC }
-      else { And( nonEmptyClauses.map( c => Or( c.pos ++ c.neg.map( l => Neg( l ) ) ) ) ) }
+      else { FOLAnd( nonEmptyClauses.map( c => FOLOr( c.pos ++ c.neg.map( l => FOLNeg( l ) ) ) ) ) }
     }
 
   /**
@@ -420,7 +420,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val nonEmptyClauses = cls.filter( c => c.neg.length > 0 || c.pos.length > 0 ).toList
 
     if ( nonEmptyClauses.length == 0 ) { TopC }
-    else { And( nonEmptyClauses.map( c => Or( c.pos.map( l => l._1 ) ++ c.neg.map( l => Neg( l._1 ) ) ) ) ) }
+    else { FOLAnd( nonEmptyClauses.map( c => FOLOr( c.pos.map( l => l._1 ) ++ c.neg.map( l => FOLNeg( l._1 ) ) ) ) ) }
   }
 
   // Checks if complementary literals exist, and if

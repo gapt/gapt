@@ -1,6 +1,6 @@
 package at.logic.proofs.resolution.algorithms
 
-import at.logic.language.fol.{ FOLFormula, AllVar => FAllVar, And => FAnd, Atom => FAtom, ExVar => FExVar, Imp => FImp, Neg => FNeg, Or => FOr }
+import at.logic.language.fol.{ FOLFormula, FOLAllVar => FAllVar, FOLAnd => FAnd, FOLAtom => FAtom, FOLExVar => FExVar, FOLImp => FImp, FOLNeg => FNeg, FOLOr => FOr }
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.proofs.resolution.FClause

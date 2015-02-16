@@ -9,7 +9,7 @@ import at.logic.proofs.lk._
 import at.logic.transformations.herbrandExtraction._
 import at.logic.proofs.expansionTrees.{StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET, Atom => AtomET, Imp => ImpET}
 import at.logic.proofs.lk.base.LKProof
-import at.logic.language.fol.{Atom => FOLAtom, Function => FOLFunction, FOLConst, FOLVar, Utils}
+import at.logic.language.fol.{FOLAtom => FOLAtom, FOLFunction => FOLFunction, FOLConst, FOLVar, Utils}
 
 @RunWith(classOf[JUnitRunner])
 class ExtractExpansionTreesTest extends SpecificationWithJUnit {

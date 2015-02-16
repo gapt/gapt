@@ -1,6 +1,6 @@
 package at.logic.proofs.resolution.algorithms
 
-import at.logic.language.fol.{And, Atom, FOLConst, Imp, Neg, Or}
+import at.logic.language.fol.{FOLAnd, FOLAtom, FOLConst, FOLImp, FOLNeg, FOLOr}
 import at.logic.language.hol.{HOLAtom => HOLAtom}
 import at.logic.proofs.resolution.FClause
 import org.junit.runner.RunWith
@@ -11,28 +11,28 @@ import org.specs2.runner.JUnitRunner
 class CNFTest extends SpecificationWithJUnit {
   "the computation of CNFp(f)" should {
     "be {|- Pa,Qa, Qa|-} for f = (Pa ∨ Qa) ∧ ¬Qa" in {
-      val Pa = Atom("P", FOLConst("a")::Nil)
-      val Qa = Atom("Q", FOLConst("a")::Nil)
-      val nQa = Neg(Qa)
-      val PavQa = Or(Pa,Qa)
-      val f = And(PavQa, nQa)
+      val Pa = FOLAtom("P", FOLConst("a")::Nil)
+      val Qa = FOLAtom("Q", FOLConst("a")::Nil)
+      val nQa = FOLNeg(Qa)
+      val PavQa = FOLOr(Pa,Qa)
+      val f = FOLAnd(PavQa, nQa)
       CNFp(f).toSet must beEqualTo(Set(FClause(List(),List(Pa,Qa)),FClause(List(Qa),List())))
     }
   }
 
   "the computation of TseitinCNF(f)" should {
     "should be right, where f = ((P ∨ Q) ∧ R ) -> ¬S" in {
-      val p = Atom("P", Nil)
-      val q = Atom("Q", Nil)
-      val r = Atom("R", Nil)
-      val s = Atom("S", Nil)
+      val p = FOLAtom("P", Nil)
+      val q = FOLAtom("Q", Nil)
+      val r = FOLAtom("R", Nil)
+      val s = FOLAtom("S", Nil)
 
-      val f = Imp(And(Or(p, q), r), Neg(s))
+      val f = FOLImp(FOLAnd(FOLOr(p, q), r), FOLNeg(s))
 
-      val x =  Atom("x", Nil)
-      val x0 = Atom("x0", Nil)
-      val x1 = Atom("x1", Nil)
-      val x2 = Atom("x2", Nil)
+      val x =  FOLAtom("x", Nil)
+      val x0 = FOLAtom("x0", Nil)
+      val x1 = FOLAtom("x1", Nil)
+      val x2 = FOLAtom("x2", Nil)
 
       val cnf = TseitinCNF(f)
       val expected = Set(

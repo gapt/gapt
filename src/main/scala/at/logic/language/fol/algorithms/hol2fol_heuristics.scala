@@ -47,16 +47,16 @@ object undoHol2Fol extends Logger {
 
     e match {
       // --------------- logical structure ------------------------
-      case fol.Atom( name, args ) if sig_consts contains name.toString =>
+      case fol.FOLAtom( name, args ) if sig_consts contains name.toString =>
         val args_ = args.map( backtranslate( _, sig_vars, sig_consts, abssymbol_map, None )( factory ) )
         val head = sig_consts( name.toString )( 0 )
         HOLAtom( head, args_ )
 
-      case fol.Neg( f )    => HOLNeg( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ) )
-      case fol.And( f, g ) => HOLAnd( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
-      case fol.Or( f, g )  => HOLOr( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
-      case fol.Imp( f, g ) => HOLImp( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
-      case fol.AllVar( x, f ) =>
+      case fol.FOLNeg( f )    => HOLNeg( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ) )
+      case fol.FOLAnd( f, g ) => HOLAnd( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
+      case fol.FOLOr( f, g )  => HOLOr( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
+      case fol.FOLImp( f, g ) => HOLImp( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
+      case fol.FOLAllVar( x, f ) =>
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory )
         val xcandidates = freeVariables( f_ ).filter( _.name == x.name )
         xcandidates match {
@@ -65,7 +65,7 @@ object undoHol2Fol extends Logger {
           case _          => throw new Exception( "We have not more than one free variable with name " + x.name + xcandidates.mkString( ": (", ", ", ")" ) )
         }
 
-      case fol.ExVar( x, f ) =>
+      case fol.FOLExVar( x, f ) =>
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory )
         val xcandidates = freeVariables( f_ ).filter( _.name == x.name )
         xcandidates match {

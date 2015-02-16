@@ -68,40 +68,40 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   //precedence 800
   lazy val implication: PackratParser[FOLFormula] = ( dis_or_con ~ ( "<->" | "->" | "<-" ) ~ dis_or_con ) ^^ {
     _ match {
-      case f ~ "->" ~ g  => fol.Imp( f, g )
-      case f ~ "<-" ~ g  => fol.Imp( g, f )
-      case f ~ "<->" ~ g => fol.And( fol.Imp( f, g ), fol.Imp( g, f ) )
+      case f ~ "->" ~ g  => fol.FOLImp( f, g )
+      case f ~ "<-" ~ g  => fol.FOLImp( g, f )
+      case f ~ "<->" ~ g => fol.FOLAnd( fol.FOLImp( f, g ), fol.FOLImp( g, f ) )
     }
   } | dis_or_con
 
   lazy val dis_or_con: PackratParser[FOLFormula] = ( disjunction | conlit )
   //precedence 790
-  lazy val disjunction: PackratParser[FOLFormula] = ( conlit ~ ( "|" ~> disjunction ) ^^ { case f ~ g => fol.Or( f, g ) } ) | conlit
+  lazy val disjunction: PackratParser[FOLFormula] = ( conlit ~ ( "|" ~> disjunction ) ^^ { case f ~ g => fol.FOLOr( f, g ) } ) | conlit
   //precedence 780
   lazy val conlit: PackratParser[FOLFormula] = ( conjunction | qliteral )
-  lazy val conjunction: PackratParser[FOLFormula] = ( qliteral ~ ( "&" ~> conjunction ) ^^ { case f ~ g => fol.And( f, g ) } ) | qliteral
+  lazy val conjunction: PackratParser[FOLFormula] = ( qliteral ~ ( "&" ~> conjunction ) ^^ { case f ~ g => fol.FOLAnd( f, g ) } ) | qliteral
   //precedence 750
   lazy val qliteral: PackratParser[FOLFormula] = allformula | exformula | literal2
   lazy val allformula: PackratParser[FOLFormula] = parens( allformula_ )
   lazy val exformula: PackratParser[FOLFormula] = parens( exformula_ )
-  lazy val allformula_ : PackratParser[FOLFormula] = ( "all" ~> variable ~ ( allformula_ | exformula_ | literal2 ) ) ^^ { case v ~ f => fol.AllVar( v, f ) }
-  lazy val exformula_ : PackratParser[FOLFormula] = ( "exists" ~> variable ~ ( allformula_ | exformula_ | literal2 ) ) ^^ { case v ~ f => fol.ExVar( v, f ) }
+  lazy val allformula_ : PackratParser[FOLFormula] = ( "all" ~> variable ~ ( allformula_ | exformula_ | literal2 ) ) ^^ { case v ~ f => fol.FOLAllVar( v, f ) }
+  lazy val exformula_ : PackratParser[FOLFormula] = ( "exists" ~> variable ~ ( allformula_ | exformula_ | literal2 ) ) ^^ { case v ~ f => fol.FOLExVar( v, f ) }
 
   //precedence 300
   lazy val literal2: PackratParser[FOLFormula] = pformula | atomWeq | negation
-  lazy val negation: PackratParser[FOLFormula] = "-" ~> ( pformula | negation | atomWeq ) ^^ { x => fol.Neg( x ) }
+  lazy val negation: PackratParser[FOLFormula] = "-" ~> ( pformula | negation | atomWeq ) ^^ { x => fol.FOLNeg( x ) }
 
   def parens[T]( p: Parser[T] ): Parser[T] = "(" ~> p <~ ")"
 
   lazy val literal: PackratParser[FOLFormula] = iatom | negatom | posatom
   lazy val posatom: PackratParser[FOLFormula] = atom
-  lazy val negatom: PackratParser[FOLFormula] = "-" ~ atom ^^ { case "-" ~ a => Neg( a ) }
+  lazy val negatom: PackratParser[FOLFormula] = "-" ~ atom ^^ { case "-" ~ a => FOLNeg( a ) }
   lazy val atomWeq: PackratParser[FOLFormula] = iatom | atom
   lazy val atom: PackratParser[FOLFormula] = atom1 | atom2 | topbottom
   lazy val atom1: PackratParser[FOLFormula] = atomsymb ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
-    case x ~ "(" ~ params ~ ")" => Atom( x, params.asInstanceOf[List[FOLTerm]] )
+    case x ~ "(" ~ params ~ ")" => FOLAtom( x, params.asInstanceOf[List[FOLTerm]] )
   }
-  lazy val atom2: PackratParser[FOLFormula] = atomsymb ^^ { case x => Atom( x, Nil ) }
+  lazy val atom2: PackratParser[FOLFormula] = atomsymb ^^ { case x => FOLAtom( x, Nil ) }
 
   val plus_sym = StringSymbol( "+" )
   val times_sym = StringSymbol( "*" )
@@ -117,13 +117,13 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   //infixatom
   lazy val iatom: PackratParser[FOLFormula] = term ~ """((<|>)=?)|(!?=)|[+\-*]""".r ~ term ^^ {
     _ match {
-      case t1 ~ "=" ~ t2  => Equation( t1, t2 )
-      case t1 ~ "!=" ~ t2 => Neg( Equation( t1, t2 ) )
-      case t1 ~ "<" ~ t2  => Atom( less_sym, List( t1, t2 ) )
-      case t1 ~ ">" ~ t2  => Atom( greater_sym, List( t1, t2 ) )
-      case t1 ~ "<=" ~ t2 => Atom( lesseq_sym, List( t1, t2 ) )
-      case t1 ~ ">=" ~ t2 => Atom( greatereq_sym, List( t1, t2 ) )
-      case t1 ~ sym ~ t2  => fol.Atom( sym, List( t1, t2 ) )
+      case t1 ~ "=" ~ t2  => FOLEquation( t1, t2 )
+      case t1 ~ "!=" ~ t2 => FOLNeg( FOLEquation( t1, t2 ) )
+      case t1 ~ "<" ~ t2  => FOLAtom( less_sym, List( t1, t2 ) )
+      case t1 ~ ">" ~ t2  => FOLAtom( greater_sym, List( t1, t2 ) )
+      case t1 ~ "<=" ~ t2 => FOLAtom( lesseq_sym, List( t1, t2 ) )
+      case t1 ~ ">=" ~ t2 => FOLAtom( greatereq_sym, List( t1, t2 ) )
+      case t1 ~ sym ~ t2  => fol.FOLAtom( sym, List( t1, t2 ) )
     }
   }
   /*
@@ -137,16 +137,16 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   lazy val noniterm: PackratParser[FOLTerm] = function | constant | variable
   lazy val ifunction: PackratParser[FOLTerm] = ( noniterm | parens( ifunction ) ) ~ """[+\-*/^]""".r ~ ( noniterm | parens( ifunction ) ) ^^ {
     _ match {
-      case t1 ~ "+" ~ t2 => fol.Function( plus_sym, List( t1, t2 ) )
-      case t1 ~ "-" ~ t2 => fol.Function( minus_sym, List( t1, t2 ) )
-      case t1 ~ "*" ~ t2 => fol.Function( times_sym, List( t1, t2 ) )
-      case t1 ~ "/" ~ t2 => fol.Function( div_sym, List( t1, t2 ) )
-      case t1 ~ "^" ~ t2 => fol.Function( wedge_sym, List( t1, t2 ) )
-      case t1 ~ sym ~ t2 => fol.Function( sym, List( t1, t2 ) )
+      case t1 ~ "+" ~ t2 => fol.FOLFunction( plus_sym, List( t1, t2 ) )
+      case t1 ~ "-" ~ t2 => fol.FOLFunction( minus_sym, List( t1, t2 ) )
+      case t1 ~ "*" ~ t2 => fol.FOLFunction( times_sym, List( t1, t2 ) )
+      case t1 ~ "/" ~ t2 => fol.FOLFunction( div_sym, List( t1, t2 ) )
+      case t1 ~ "^" ~ t2 => fol.FOLFunction( wedge_sym, List( t1, t2 ) )
+      case t1 ~ sym ~ t2 => fol.FOLFunction( sym, List( t1, t2 ) )
     }
   }
   lazy val function: PackratParser[FOLTerm] = conssymb ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
-    case x ~ "(" ~ params ~ ")" => Function( x, params.asInstanceOf[List[FOLTerm]] )
+    case x ~ "(" ~ params ~ ")" => FOLFunction( x, params.asInstanceOf[List[FOLTerm]] )
   }
   lazy val constant: PackratParser[FOLConst] = conssymb ^^ {
     case x => FOLConst( x )
@@ -155,8 +155,8 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   lazy val topbottom: PackratParser[FOLFormula] = "$" ~> ( "T" ^^ ( x => topformula ) | "F" ^^ ( x => bottomformula ) )
 
   //we don't have top and bottom in the algorithms, so we simulate it
-  val topformula = { fol.And( fol.TopC, fol.Neg( fol.TopC ) ) }
-  val bottomformula = { fol.Or( fol.BottomC, fol.Neg( fol.BottomC ) ) }
+  val topformula = { fol.FOLAnd( fol.TopC, fol.FOLNeg( fol.TopC ) ) }
+  val bottomformula = { fol.FOLOr( fol.BottomC, fol.FOLNeg( fol.BottomC ) ) }
 
   def createNOp( fs: List[FOLFormula], constructor: ( FOLFormula, FOLFormula ) => FOLFormula ): FOLFormula = {
     //if (fs.size < 2) failure("Binary operator needs to occur at least once!") else

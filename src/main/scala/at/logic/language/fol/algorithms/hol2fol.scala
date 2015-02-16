@@ -152,27 +152,27 @@ class reduceHolToFol {
       case foc: foConst              => FOLConst( foc.name )
       case HOLVar( n, _ )            => FOLVar( n )
       case HOLConst( n, _ )          => FOLConst( n )
-      case HOLNeg( n )               => Neg( apply_( n ) )
-      case HOLAnd( n1, n2 )          => And( apply_( n1 ), apply_( n2 ) )
-      case HOLOr( n1, n2 )           => Or( apply_( n1 ), apply_( n2 ) )
-      case HOLImp( n1, n2 )          => Imp( apply_( n1 ), apply_( n2 ) )
-      case HOLAllVar( v: HOLVar, n ) => AllVar( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
-      case HOLExVar( v: HOLVar, n )  => ExVar( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
+      case HOLNeg( n )               => FOLNeg( apply_( n ) )
+      case HOLAnd( n1, n2 )          => FOLAnd( apply_( n1 ), apply_( n2 ) )
+      case HOLOr( n1, n2 )           => FOLOr( apply_( n1 ), apply_( n2 ) )
+      case HOLImp( n1, n2 )          => FOLImp( apply_( n1 ), apply_( n2 ) )
+      case HOLAllVar( v: HOLVar, n ) => FOLAllVar( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
+      case HOLExVar( v: HOLVar, n )  => FOLExVar( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
       case HOLAtom( HOLConst( n, _ ), ls ) =>
-        Atom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
+        FOLAtom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
       case HOLAtom( HOLVar( n, _ ), ls ) =>
-        Atom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
+        FOLAtom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
       case HOLFunction( HOLConst( n, _ ), ls, _ ) =>
-        Function( n, ls.map( x => folexp2term( apply_( x ) ) ) )
+        FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
       case HOLFunction( HOLVar( n, _ ), ls, _ ) =>
-        Function( n, ls.map( x => folexp2term( apply_( x ) ) ) )
+        FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
 
       //this case is added for schema
       case HOLApp( func, arg ) => {
         func match {
           case HOLVar( sym, _ ) =>
             val new_arg = apply_( arg ).asInstanceOf[FOLTerm]
-            return Function( sym, new_arg :: Nil )
+            return FOLFunction( sym, new_arg :: Nil )
 
           case _ =>
             println( "WARNING: FO schema term: " + term )
@@ -193,18 +193,18 @@ class reduceHolToFol {
       case HOLVar( n, _ )   => FOLVar( n )
       case HOLConst( n, _ ) => FOLConst( n )
       //we cannot use the logical symbols directly because they are treated differently by the Function matcher
-      case HOLNeg( n )      => Function( NegSymbol.toString, List( apply_termlevel( n ) ) )
-      case HOLAnd( n1, n2 ) => Function( AndSymbol.toString, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case HOLOr( n1, n2 )  => Function( OrSymbol.toString, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case HOLImp( n1, n2 ) => Function( ImpSymbol.toString, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
+      case HOLNeg( n )      => FOLFunction( NegSymbol.toString, List( apply_termlevel( n ) ) )
+      case HOLAnd( n1, n2 ) => FOLFunction( AndSymbol.toString, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
+      case HOLOr( n1, n2 )  => FOLFunction( OrSymbol.toString, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
+      case HOLImp( n1, n2 ) => FOLFunction( ImpSymbol.toString, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
       case HOLAllVar( v: HOLVar, n ) =>
-        Function( ForallSymbol.toString, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
+        FOLFunction( ForallSymbol.toString, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
       case HOLExVar( v: HOLVar, n ) =>
-        Function( ExistsSymbol.toString, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
+        FOLFunction( ExistsSymbol.toString, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
       case HOLAtom( n: SymbolA, ls ) =>
-        Function( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
+        FOLFunction( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
       case HOLFunction( HOLConst( name, _ ), ls, _ ) =>
-        Function( name, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
+        FOLFunction( name, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
 
       //this case is added for schema
       /*
@@ -379,14 +379,14 @@ class convertHolToFol {
 
   def convertFormula( e: HOLFormula ): FOLFormula = e match {
     case HOLAtom( HOLConst( sym, exptype ), args ) if ( args.filterNot( _.exptype == Ti ).isEmpty ) =>
-      Atom( sym, args map convertTerm )
+      FOLAtom( sym, args map convertTerm )
 
-    case HOLNeg( x )                         => Neg( convertFormula( x ) )
-    case HOLAnd( x, y )                      => And( convertFormula( x ), convertFormula( y ) )
-    case HOLOr( x, y )                       => Or( convertFormula( x ), convertFormula( y ) )
-    case HOLImp( x, y )                      => Imp( convertFormula( x ), convertFormula( y ) )
-    case HOLAllVar( x @ HOLVar( _, Ti ), t ) => AllVar( convertTerm( x ).asInstanceOf[FOLVar], convertFormula( t ) )
-    case HOLExVar( x @ HOLVar( _, Ti ), t )  => ExVar( convertTerm( x ).asInstanceOf[FOLVar], convertFormula( t ) )
+    case HOLNeg( x )                         => FOLNeg( convertFormula( x ) )
+    case HOLAnd( x, y )                      => FOLAnd( convertFormula( x ), convertFormula( y ) )
+    case HOLOr( x, y )                       => FOLOr( convertFormula( x ), convertFormula( y ) )
+    case HOLImp( x, y )                      => FOLImp( convertFormula( x ), convertFormula( y ) )
+    case HOLAllVar( x @ HOLVar( _, Ti ), t ) => FOLAllVar( convertTerm( x ).asInstanceOf[FOLVar], convertFormula( t ) )
+    case HOLExVar( x @ HOLVar( _, Ti ), t )  => FOLExVar( convertTerm( x ).asInstanceOf[FOLVar], convertFormula( t ) )
     case _                                   => throw new Exception( "Could not convert term " + e + " to first order!" )
   }
 
@@ -394,7 +394,7 @@ class convertHolToFol {
     case HOLVar( x, Ti )   => FOLVar( x )
     case HOLConst( x, Ti ) => FOLConst( x )
     case HOLFunction( HOLConst( f, FunctionType( Ti, _ ) ), args, Ti ) if ( args.filterNot( _.exptype == Ti ).isEmpty ) =>
-      Function( f, args map convertTerm )
+      FOLFunction( f, args map convertTerm )
     case _ => throw new Exception( "Could not convert term " + e + " to first order!" )
   }
 

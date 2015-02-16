@@ -72,9 +72,9 @@ object TPTPFOLExporter extends at.logic.utils.logging.Logger {
   // the parsing of clauses (i.e. they assume associativity of |
   // and dislike parentheses), we only export clauses at the moment.
   def tptp( f: FOLFormula )( implicit s_map: Map[FOLVar, String] ): String = f match {
-    case Atom( x, args ) => handleAtom( x, args )
-    case Or( x, y )      => tptp( x ) + " | " + tptp( y )
-    case Neg( x )        => "~" + tptp( x )
+    case FOLAtom( x, args ) => handleAtom( x, args )
+    case FOLOr( x, y )      => tptp( x ) + " | " + tptp( y )
+    case FOLNeg( x )        => "~" + tptp( x )
   }
 
   private def addToMap( v: FOLVar )( implicit s_map: Map[FOLVar, String] ) = {
@@ -83,16 +83,16 @@ object TPTPFOLExporter extends at.logic.utils.logging.Logger {
 
   // Exports a full formula in TPTP format.
   def tptpFormula( f: FOLFormula )( implicit s_map: Map[FOLVar, String] ): String = f match {
-    case Atom( x, args ) => handleAtom( x, args )
-    case Or( x, y )      => "( " + tptpFormula( x ) + " | " + tptpFormula( y ) + " )"
-    case Neg( x )        => "( ~" + tptpFormula( x ) + ")"
-    case And( x, y )     => "( " + tptpFormula( x ) + " & " + tptpFormula( y ) + " )"
-    case Imp( x, y )     => "( " + tptpFormula( x ) + " => " + tptpFormula( y ) + " )"
-    case AllVar( v, f ) => {
+    case FOLAtom( x, args ) => handleAtom( x, args )
+    case FOLOr( x, y )      => "( " + tptpFormula( x ) + " | " + tptpFormula( y ) + " )"
+    case FOLNeg( x )        => "( ~" + tptpFormula( x ) + ")"
+    case FOLAnd( x, y )     => "( " + tptpFormula( x ) + " & " + tptpFormula( y ) + " )"
+    case FOLImp( x, y )     => "( " + tptpFormula( x ) + " => " + tptpFormula( y ) + " )"
+    case FOLAllVar( v, f ) => {
       val new_map = addToMap( v )
       "(! [" + tptp( v )( new_map ) + "] : " + tptpFormula( f )( new_map ) + ")"
     }
-    case ExVar( v, f ) =>
+    case FOLExVar( v, f ) =>
       {
         val new_map = addToMap( v )
         "(? [" + tptp( v )( new_map ) + "] : " + tptpFormula( f )( new_map ) + ")"
@@ -100,9 +100,9 @@ object TPTPFOLExporter extends at.logic.utils.logging.Logger {
   }
 
   def tptp( t: FOLTerm )( implicit s_map: Map[FOLVar, String] ): String = t match {
-    case FOLConst( c )       => single_quote( c.toString )
-    case x: FOLVar           => s_map( x )
-    case Function( x, args ) => handleAtom( x, args )
+    case FOLConst( c )          => single_quote( c.toString )
+    case x: FOLVar              => s_map( x )
+    case FOLFunction( x, args ) => handleAtom( x, args )
   }
 
   def handleAtom( x: SymbolA, args: List[FOLTerm] )( implicit s_map: Map[FOLVar, String] ) =

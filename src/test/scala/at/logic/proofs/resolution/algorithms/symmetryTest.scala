@@ -1,6 +1,6 @@
 package at.logic.proofs.resolution.algorithms
 
-import at.logic.language.fol.{Atom, FOLConst, Equation => FOLEquation}
+import at.logic.language.fol.{FOLAtom, FOLConst, FOLEquation => FOLEquation}
 import at.logic.proofs.lk.base.FSequent
 import at.logic.proofs.resolution.FClause
 import org.junit.runner.RunWith
@@ -11,8 +11,8 @@ import org.specs2.runner.JUnitRunner
 class SymmetryTest extends SpecificationWithJUnit {
   "fixSymmetry" should {
     "not say that p :- is derivable from p :- p, r by symmetry" in {
-      val p = Atom( "p", Nil )
-      val r = Atom( "r", Nil )
+      val p = FOLAtom( "p", Nil )
+      val r = FOLAtom( "r", Nil )
       val to = FClause( p::Nil, Nil )
       val from = FSequent( p::Nil, p::r::Nil )
 

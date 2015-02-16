@@ -19,11 +19,11 @@ trait Interpretation {
 
   // Interpret an arbitrary formula.
   def interpret( f: FOLFormula ): Boolean = f match {
-    case And( f1, f2 ) => interpret( f1 ) && interpret( f2 )
-    case Or( f1, f2 )  => interpret( f1 ) || interpret( f2 )
-    case Imp( f1, f2 ) => !interpret( f1 ) || interpret( f2 )
-    case Neg( f1 )     => !interpret( f1 )
-    case Atom( _, _ )  => interpretAtom( f )
+    case FOLAnd( f1, f2 ) => interpret( f1 ) && interpret( f2 )
+    case FOLOr( f1, f2 )  => interpret( f1 ) || interpret( f2 )
+    case FOLImp( f1, f2 ) => !interpret( f1 ) || interpret( f2 )
+    case FOLNeg( f1 )     => !interpret( f1 )
+    case FOLAtom( _, _ )  => interpretAtom( f )
   }
 
 }
@@ -84,7 +84,7 @@ class MaxSAT( solver: MaxSATSolver ) extends at.logic.utils.logging.Logger {
    */
   def isInstalled(): Boolean = {
     try {
-      val clause = FClause( List(), List( Atom( "P" ) ) )
+      val clause = FClause( List(), List( FOLAtom( "P" ) ) )
       solve( List( clause ), List( clause -> 1 ) ) match {
         case Some( _ ) => true
         case None      => throw new IOException()
@@ -117,7 +117,7 @@ class MaxSAT( solver: MaxSATSolver ) extends at.logic.utils.logging.Logger {
 
     // Hard CNF transformation
     watch.start()
-    val hardCNF = TseitinCNF( And( hard ) )._1
+    val hardCNF = TseitinCNF( FOLAnd( hard ) )._1
     val hardCNFTime = watch.lap( "hardCNF" )
     logTime( "[Runtime]<hard CNF-Generation> ", hardCNFTime )
     trace( "produced hard cnf: " + hardCNF )

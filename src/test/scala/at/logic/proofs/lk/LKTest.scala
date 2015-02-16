@@ -13,7 +13,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
 import base._
-import at.logic.language.fol.{Atom => FOLAtom, AllVar => FOLAllVar, ExVar => FOLExVar, FOLFormula, FOLConst, FOLVar}
+import at.logic.language.fol.{FOLAtom => FOLAtom, FOLAllVar => FOLAllVar, FOLExVar => FOLExVar, FOLFormula, FOLConst, FOLVar}
 
 /**
 * The following properties of each rule are tested:

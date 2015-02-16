@@ -101,8 +101,8 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
 
         val X = FOLVar( "X" )
         val Y = FOLVar( "Y" )
-        val eq1 = Neg( Equation( X, Y ) )
-        val eq2 = Equation( Y, X )
+        val eq1 = FOLNeg( FOLEquation( X, Y ) )
+        val eq2 = FOLEquation( Y, X )
         cmnds = cmnds ++ assumption( "999999", eq1 :: eq2 :: Nil ) // symmetry
         //          val lit1 = MyParser.parseAll(MyParser.literal, "-X=Y").get
         //          val lit2 = MyParser.parseAll(MyParser.literal, "Y=X").get
@@ -152,15 +152,15 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
 
   private def literals2FSequent( lits: Seq[FOLFormula] ): FSequent = {
     FSequent( lits.filter( l => l match {
-      case Neg( _ ) => true
-      case _        => false
+      case FOLNeg( _ ) => true
+      case _           => false
     } )
       .map( l => l match {
-        case Neg( f ) => f
+        case FOLNeg( f ) => f
       } ),
       lits.filter( l => l match {
-        case Neg( _ ) => false
-        case _        => true
+        case FOLNeg( _ ) => false
+        case _           => true
       } ) )
   }
   val INTq_CHAR = 97
@@ -359,7 +359,7 @@ object InferenceExtractor {
       val ( positive_goals, negated_goals ): ( List[FOLFormula], List[FOLFormula] ) = goals.foldLeft( ( List[FOLFormula](), List[FOLFormula]() ) )( ( pair, f ) => {
         val ( pg, ng ) = pair
         f match {
-          case Neg( x ) =>
+          case FOLNeg( x ) =>
             ( pg, x :: ng )
           case _ =>
             ( f :: pg, ng )
@@ -391,18 +391,18 @@ object InferenceExtractor {
   }
 
   def implications( f: FOLFormula ): FSequent = f match {
-    case Imp( f1, f2 ) => FSequent( conjunctions( f1 ), disjunctions( f2 ) )
-    case _             => FSequent( Nil, f :: Nil )
+    case FOLImp( f1, f2 ) => FSequent( conjunctions( f1 ), disjunctions( f2 ) )
+    case _                => FSequent( Nil, f :: Nil )
   }
 
   def disjunctions( f: FOLFormula ): List[FOLFormula] = f match {
-    case Or( f1, f2 ) => disjunctions( f1 ) ++ disjunctions( f2 )
-    case _            => List[FOLFormula]( f )
+    case FOLOr( f1, f2 ) => disjunctions( f1 ) ++ disjunctions( f2 )
+    case _               => List[FOLFormula]( f )
   }
 
   def conjunctions( f: FOLFormula ): List[FOLFormula] = f match {
-    case And( f1, f2 ) => disjunctions( f1 ) ++ disjunctions( f2 )
-    case _             => List[FOLFormula]( f )
+    case FOLAnd( f1, f2 ) => disjunctions( f1 ) ++ disjunctions( f2 )
+    case _                => List[FOLFormula]( f )
   }
 
 }

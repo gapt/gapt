@@ -33,7 +33,7 @@ import at.logic.proofs.resolution._
 import at.logic.proofs.resolution.algorithms._
 import at.logic.proofs.resolution.robinson._
 import at.logic.gui.prooftool.gui.Main
-import at.logic.language.fol.{ AllVar => FOLAllVar, And => FOLAnd, Atom => FOLAtom, ExVar => FOLExVar, Imp => FOLImp, Neg => FOLNeg, Or => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _ }
+import at.logic.language.fol.{ FOLAllVar => FOLAllVar, FOLAnd => FOLAnd, FOLAtom => FOLAtom, FOLExVar => FOLExVar, FOLImp => FOLImp, FOLNeg => FOLNeg, FOLOr => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _ }
 import at.logic.language.hoare.Program
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.{ BetaReduction => HOLBetaReduction, Substitution => HOLSubstitution, containsQuantifier => containsQuantifierHOL, _ }

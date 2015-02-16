@@ -219,7 +219,7 @@ class ReplayTest extends SpecificationWithJUnit {
       //checks, if the execution of prover9 works, o.w. skip test
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
 
-      val p = Atom("P", Nil)
+      val p = FOLAtom("P", Nil)
       val s1 = FSequent(Nil, p::Nil)
       val s2 = FSequent(p::Nil, Nil)
       val result : Option[RobinsonResolutionProof] = Prover9.refute( s1::s2::Nil )

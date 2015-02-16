@@ -61,7 +61,7 @@ object PCNF {
             // check for reflexivity
             a.pos.find( f => f match {
               case HOLEquation( a, b ) if a == b => true
-              case at.logic.language.fol.Equation( a, b ) if a == b => true // TOFIX: remove when bug 224 is solved
+              case at.logic.language.fol.FOLEquation( a, b ) if a == b => true // TOFIX: remove when bug 224 is solved
               case _ => false
             } ) match {
               case Some( f ) => ( Axiom( List(), List( f ) ), f.asInstanceOf[HOLFormula], false )

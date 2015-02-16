@@ -31,17 +31,17 @@ class CutIntroTest extends SpecificationWithJUnit {
     val p = "P"
 
     val x = FOLVar( "x" )
-    val ass = AllVar( x, Imp( Atom( p, x::Nil ), Atom( p, Function( s, x::Nil )::Nil ) ) )
+    val ass = FOLAllVar( x, FOLImp( FOLAtom( p, x::Nil ), FOLAtom( p, FOLFunction( s, x::Nil )::Nil ) ) )
     if ( k == n ) // leaf proof
     {
-      val a = Atom( p,  Utils.numeral( n )::Nil )
+      val a = FOLAtom( p,  Utils.numeral( n )::Nil )
       WeakeningLeftRule( Axiom( a::Nil, a::Nil ), ass )
     }
     else
     {
-      val p1 = Atom( p, Utils.numeral( k )::Nil )
-      val p2 = Atom( p, Utils.numeral( k + 1 )::Nil )
-      val aux = Imp( p1, p2 )
+      val p1 = FOLAtom( p, Utils.numeral( k )::Nil )
+      val p2 = FOLAtom( p, Utils.numeral( k + 1 )::Nil )
+      val aux = FOLImp( p1, p2 )
       ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1::Nil, p1::Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
     }
   }

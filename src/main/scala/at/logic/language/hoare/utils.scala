@@ -49,7 +49,7 @@ object LoopFree {
 object weakestPrecondition {
   def apply( p: Program, f: FOLFormula ): FOLFormula = p match {
     case Assign( x, t )    => Substitution( x, t )( f )
-    case IfElse( c, a, b ) => And( Imp( c, weakestPrecondition( a, f ) ), Imp( Neg( c ), weakestPrecondition( b, f ) ) )
+    case IfElse( c, a, b ) => FOLAnd( FOLImp( c, weakestPrecondition( a, f ) ), FOLImp( FOLNeg( c ), weakestPrecondition( b, f ) ) )
     case Skip()            => f
     case Sequence( a, b )  => weakestPrecondition( a, weakestPrecondition( b, f ) )
   }

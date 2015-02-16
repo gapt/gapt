@@ -7,7 +7,7 @@ package at.logic.proofs.lk
 import at.logic.proofs.occurrences._
 import at.logic.proofs.proofs._
 import at.logic.language.hol._
-import at.logic.language.fol.{ Neg => FOLNeg, Or => FOLOr, And => FOLAnd, Imp => FOLImp, Atom => FOLAtom, AllVar => FOLAllVar, Equation => FOLEquation, instantiateAll }
+import at.logic.language.fol.{ FOLNeg => FOLNeg, FOLOr => FOLOr, FOLAnd => FOLAnd, FOLImp => FOLImp, FOLAtom => FOLAtom, FOLAllVar => FOLAllVar, FOLEquation => FOLEquation, instantiateAll }
 import at.logic.language.fol.{ FOLVar, FOLTerm, FOLFormula }
 import at.logic.language.lambda.symbols._
 import at.logic.language.hol.logicSymbols._

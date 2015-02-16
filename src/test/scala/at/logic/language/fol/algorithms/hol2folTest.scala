@@ -35,13 +35,13 @@ class hol2folTest extends SpecificationWithJUnit {
     "be correctly reduced into FOL terms for" in {
       "Atom - A(x:(i->i), a:o->i)" in {
         val hol = HOLAtom(HOLConst("A", (Ti -> Ti) -> ((To -> Ti) -> To)), hx::ha::Nil)
-        val fol = Atom("A", fx::fa::Nil)
+        val fol = FOLAtom("A", fx::fa::Nil)
         reduceHolToFol(hol) must beEqualTo (fol)
         convertHolToFol(new MyParserHOL("A(x:i, a:i)").getTerm()) must beEqualTo (new MyParserFOL("A(x, a)").getTerm())
       }
       "Function - f(x:(i->i), a:(o->i)):(o->o)" in {
         val hol = HOLFunction(HOLConst("f", (Ti -> Ti) -> ((To -> Ti) -> (To -> To))), hx::ha::Nil)
-        val fol = Function("f", fx::fa::Nil)
+        val fol = FOLFunction("f", fx::fa::Nil)
         reduceHolToFol(hol) must beEqualTo (fol)
         convertHolToFol.convertTerm(new MyParserHOL("f(x:i, a:i):i").getTerm()) must beEqualTo (new MyParserFOL("f(x, a)").getTerm())
       }
@@ -49,9 +49,9 @@ class hol2folTest extends SpecificationWithJUnit {
         val hA = HOLAtom(HOLConst("A", (Ti -> Ti) -> ((To -> Ti) -> To)), hx::ha::Nil)
         val hB = HOLAtom(HOLConst("B", (Ti -> Ti) -> ((To -> Ti) -> To)), hx::hb::Nil)
         val hol = HOLAnd(hA, hB)
-        val fA = Atom("A", fx::fa::Nil)
-        val fB = Atom("B", fx::fb::Nil)
-        val fol = And(fA, fB)
+        val fA = FOLAtom("A", fx::fa::Nil)
+        val fB = FOLAtom("B", fx::fb::Nil)
+        val fol = FOLAnd(fA, fB)
         reduceHolToFol(hol) must beEqualTo (fol)
         convertHolToFol(new MyParserHOL("And A(x:i, a:i) B(x:i, b:i)").getTerm()) must beEqualTo (new MyParserFOL("And A(x, a) B(x, b)").getTerm())
       }
@@ -80,7 +80,7 @@ class hol2folTest extends SpecificationWithJUnit {
         val List(sp,sq) = List("P","Q")
         val List(x,y) = List("x","y").map(x => HOLAtom(HOLVar(x,To), List()))
         val f1 = HOLAtom(HOLConst(sp, To -> To),List(HOLImp(x,y)))
-        val f2 = fol.Atom(sp, List(fol.Function(ImpSymbol.toString,
+        val f2 = fol.FOLAtom(sp, List(fol.FOLFunction(ImpSymbol.toString,
           List(fol.FOLVar("x"),
                fol.FOLVar("y")))))
 
@@ -93,12 +93,12 @@ class hol2folTest extends SpecificationWithJUnit {
   "Type replacement" should {
     "work for simple terms" in {
       skipped("TODO: fix this!")
-      val fterm1 = fol.Function("f", List(
+      val fterm1 = fol.FOLFunction("f", List(
         fol.FOLConst("q_1"),
         fol.FOLConst("c")))
 
-      val fterm2 = fol.AllVar(fol.FOLVar("x"),
-                              fol.Atom("P",
+      val fterm2 = fol.FOLAllVar(fol.FOLVar("x"),
+                              fol.FOLAtom("P",
                                        List(fol.FOLVar("q_1"),
                                             fol.FOLConst("q_1")) ))
 
