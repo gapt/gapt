@@ -26,7 +26,7 @@ import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
 import at.logic.parsing.language.xml.{ ProofDatabase, XMLExporter }
 import at.logic.parsing.writers.FileWriter
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.proofs.algorithms.ceres.clauseSets.{ renameCLsymbols, StandardClauseSet }
 import at.logic.proofs.algorithms.ceres.struct.{ structToExpressionTree, StructCreators }
 import at.logic.proofs.algorithms.ceres.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
@@ -34,7 +34,7 @@ import at.logic.proofs.algorithms.ceres.{ UnfoldProjectionTerm, ProjectionTermCr
 import at.logic.algorithms.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
 import at.logic.utils.ds.trees.Tree
 import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
-import at.logic.transformations.skolemization.skolemize
+import at.logic.proofs.algorithms.skolemization.skolemize
 import at.logic.proofs.algorithms.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
 import at.logic.proofs.algorithms.ceres.ACNF.ACNF
 import at.logic.proofs.slk.SchemaProofDB

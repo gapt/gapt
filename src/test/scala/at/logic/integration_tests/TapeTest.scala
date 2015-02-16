@@ -25,8 +25,8 @@ import at.logic.proofs.algorithms.ceres.projections.Projections
 import at.logic.proofs.algorithms.ceres.struct.StructCreators
 import at.logic.proofs.algorithms.ceres.{CERES, CERESR2LK}
 
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import at.logic.transformations.skolemization.skolemize
+import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
+import at.logic.proofs.algorithms.skolemization.skolemize
 
 import commands.Prover9InitCommand
 import at.logic.algorithms.rewriting.DefinitionElimination

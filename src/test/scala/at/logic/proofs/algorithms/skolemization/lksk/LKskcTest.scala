@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.transformations.skolemization.lksk
+package at.logic.proofs.algorithms.skolemization.lksk
 
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols._
