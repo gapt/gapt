@@ -1,7 +1,7 @@
 import at.logic.proofs.expansionTrees.MWeakQuantifier
 import at.logic.cli.GAPScalaInteractiveShellLibrary._
 import at.logic.language.hol.HOLNeg
-import at.logic.language.hoare.{ForLoop, SimpleLoopProblem}
+import at.logic.proofs.hoare.{ForLoop, SimpleLoopProblem}
 
 val p = parse.program("for y < z do x := set(x, s(y), get(x, y)) od")
 val f = parse.fol("Imp Leq(k, z) =(get(x,k), get(x,o))")
