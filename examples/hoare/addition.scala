@@ -12,11 +12,11 @@ val g = List(g_p0, g_ps)
 
 val f = parse.p9("k + y = x")
 
-val slp = new SimpleLoopProblem(p.asInstanceOf[ForLoop], g, A, B)
+val slp = SimpleLoopProblem(p.asInstanceOf[ForLoop], g, A, B)
 
 println(slp.loop.body)
 println(slp.programVariables)
-println(slp.pi(0))
+println(slp.pi)
 
 val instanceSeq = slp.instanceSequent(2)
 println(instanceSeq)

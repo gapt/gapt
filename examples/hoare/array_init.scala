@@ -15,11 +15,11 @@ val g_ge = parse.p9("(all x (all y (all z (get(set(x,y,z),y) = z))))")
 val g_gn = parse.p9("(all x (all y (all z (all w (w != y -> get(set(x,y,z),w) = get(x,w))))))")
 val g = List(g_s, g_lr, g_0l, g_l0, g_sl, g_ls, g_ge, g_gn)
 
-val slp = new SimpleLoopProblem(p.asInstanceOf[ForLoop], g, parse.fol("T()"), f)
+val slp = SimpleLoopProblem(p.asInstanceOf[ForLoop], g, parse.fol("T()"), f)
 
 println(slp.loop.body)
 println(slp.programVariables)
-println(slp.pi(0))
+println(slp.pi)
 
 val instanceSeq = slp.instanceSequent(1)
 println(instanceSeq)
