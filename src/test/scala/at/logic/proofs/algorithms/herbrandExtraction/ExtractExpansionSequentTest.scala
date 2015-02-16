@@ -1,4 +1,4 @@
-package at.logic.transformations.herbrandSequent
+package at.logic.proofs.algorithms.herbrandExtraction
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith
@@ -6,13 +6,13 @@ import org.specs2.runner.JUnitRunner
 import at.logic.language.lambda.types._
 import at.logic.language.hol._
 import at.logic.proofs.lk._
-import at.logic.transformations.herbrandExtraction._
+import at.logic.proofs.algorithms.herbrandExtraction._
 import at.logic.proofs.expansionTrees.{StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET, Atom => AtomET, Imp => ImpET}
 import at.logic.proofs.lk.base.LKProof
 import at.logic.language.fol.{FOLAtom => FOLAtom, FOLFunction => FOLFunction, FOLConst, FOLVar, Utils}
 
 @RunWith(classOf[JUnitRunner])
-class ExtractExpansionTreesTest extends SpecificationWithJUnit {
+class ExtractExpansionSequentTest extends SpecificationWithJUnit {
 
   def LinearExampleProof(k: Int, n: Int): LKProof = {
     val s = "s"

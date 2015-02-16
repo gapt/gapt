@@ -18,7 +18,7 @@ import at.logic.provers.eqProver._
 import at.logic.provers.Prover
 import at.logic.provers.maxsat.MaxSATSolver
 import at.logic.provers.minisat.MiniSATProver
-import at.logic.transformations.herbrandExtraction.extractExpansionSequent
+import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
 
 class CutIntroException( msg: String ) extends Exception( msg )

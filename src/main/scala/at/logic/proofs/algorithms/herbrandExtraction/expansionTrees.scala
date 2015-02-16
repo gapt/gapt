@@ -1,4 +1,4 @@
-package at.logic.transformations.herbrandExtraction
+package at.logic.proofs.algorithms.herbrandExtraction
 
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk._

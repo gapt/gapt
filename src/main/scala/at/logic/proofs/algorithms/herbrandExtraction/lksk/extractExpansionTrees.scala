@@ -1,6 +1,6 @@
-package at.logic.transformations.herbrandExtraction.lksk
+package at.logic.proofs.algorithms.herbrandExtraction.lksk
 
-import at.logic.transformations.herbrandExtraction.extractExpansionSequent
+import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.proofs.lk.base.LKProof
 import at.logic.proofs.expansionTrees.{ merge => mergeTree, Atom => AtomTree, _ }
 import at.logic.proofs.occurrences.FormulaOccurrence
