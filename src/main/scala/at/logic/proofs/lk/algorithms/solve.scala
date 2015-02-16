@@ -5,7 +5,7 @@ import at.logic.language.schema.{ BigAnd, BigOr, IntVar, Pred, SchemaExpression,
 import at.logic.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET }
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 import at.logic.provers.Prover
 
 /**

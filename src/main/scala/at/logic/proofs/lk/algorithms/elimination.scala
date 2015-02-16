@@ -4,7 +4,7 @@ import at.logic.language.hol._
 import at.logic.language.schema.{ SchemaFormula, And => AndS, Or => OrS }
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 
 import scala.util.control.TailCalls._
 

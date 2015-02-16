@@ -1,4 +1,4 @@
-package at.logic.proofs.slk
+package at.logic.proofs.shlk
 
 import at.logic.proofs.lk.base.{ LKRuleCreationException, LKProof }
 import at.logic.proofs.occurrences.FormulaOccurrence

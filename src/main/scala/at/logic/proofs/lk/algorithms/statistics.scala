@@ -6,7 +6,7 @@ import at.logic.language.lambda.types.TA
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.proofs.lksk.UnaryLKskProof
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 
 import scala.collection.mutable
 

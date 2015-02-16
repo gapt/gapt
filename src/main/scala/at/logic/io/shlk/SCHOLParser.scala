@@ -1,24 +1,28 @@
-package at.logic.algorithms.shlk
+package at.logic.io.shlk
 
 /**
  * Please move this file to parsing!
  */
 
 //import at.logic.calculi.lk.macroRules._
-import at.logic.proofs.lk.algorithms.solve
-import at.logic.proofs.slk._
-import at.logic.proofs.lk.base.{ Sequent, LKProof }
 import at.logic.proofs.lk._
-import scala.util.parsing.combinator._
+import at.logic.proofs.lk.algorithms.solve
+import at.logic.proofs.lk.base.{ LKProof, Sequent }
+import at.logic.proofs.shlk._
+import at.logic.proofs.shlk.algorithms.getName
+
 import scala.util.matching.Regex
+import scala.util.parsing.combinator._
 //import at.logic.language.hol._
 import at.logic.language.schema._
 //import at.logic.language.lambda.typedLambdaCalculus._
-import collection.mutable.{ Map => MMap }
-import at.logic.language.lambda.types._
 import java.io.InputStreamReader
+
 import at.logic.language.lambda.symbols._
-//import at.logic.proofs.lk.quantificationRules._
+import at.logic.language.lambda.types._
+
+import scala.collection.mutable.{ Map => MMap }
+//import at.logic.calculi.lk.quantificationRules._
 //import at.logic.language.hol.And
 //import at.logic.language.hol.Or
 //import at.logic.language.hol.logicSymbols.StringSymbol

@@ -13,7 +13,7 @@ import event._
 import java.awt.Font._
 import at.logic.proofs.proofs._
 import java.awt.event.{ MouseMotionListener, MouseEvent }
-import at.logic.proofs.slk.SchemaProofLinkRule
+import at.logic.proofs.shlk.SchemaProofLinkRule
 import at.logic.proofs.lk.base.Sequent
 import java.awt.RenderingHints
 import at.logic.gui.prooftool.parser._

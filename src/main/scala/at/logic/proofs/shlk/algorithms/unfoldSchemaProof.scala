@@ -1,14 +1,14 @@
 // --------------------- substitution begin
 
-package at.logic.algorithms.shlk
+package at.logic.proofs.shlk.algorithms
 
 import at.logic.language.schema._
-import at.logic.proofs.lk.algorithms.{ UnfoldException, CloneLKProof }
-import at.logic.proofs.occurrences._
-import at.logic.proofs.slk._
-import at.logic.proofs.lksk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _ }
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.{ CloneLKProof, UnfoldException }
 import at.logic.proofs.lk.base._
+import at.logic.proofs.lksk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _ }
+import at.logic.proofs.occurrences._
+import at.logic.proofs.shlk._
 
 //import at.logic.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
 

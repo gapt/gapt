@@ -1,7 +1,6 @@
 
 package at.logic.proofs.algorithms.ceres.ACNF
 
-import at.logic.algorithms.shlk._
 import at.logic.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.getCutAncestors
@@ -9,7 +8,7 @@ import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.proofs.resolution.Clause
 import at.logic.proofs.resolution.robinson._
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.schema.{ Substitution => SchemaSubstitution, SchemaExpression, IntVar, fo2Var, foConst, SchemaAbs, SchemaVar, unfoldSFormula, indexedFOVar, Succ, sTerm, IntZero, SchemaFormula, toIntegerTerm }

@@ -3,20 +3,18 @@
 *
 */
 
-package at.logic.io.shlk_parsing
+package at.logic.proofs.shlk.algorithms
 
+import java.io.InputStreamReader
+
+import at.logic.io.shlk_parsing.sFOParserCNT
+import at.logic.language.schema._
 import at.logic.proofs.lk._
 import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.proofs.slk.{TermEquivalenceRule1, TermRightEquivalenceRule1}
-import at.logic.language.lambda.types._
-import at.logic.language.schema._
-import java.io.File.separator
-import java.io.{FileInputStream, InputStreamReader}
 import org.junit.runner.RunWith
 import org.specs2.execute.Success
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import scala.io._
 
 
 @RunWith(classOf[JUnitRunner])

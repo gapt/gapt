@@ -3,20 +3,18 @@
  *
  */
 
-package at.logic.io.shlk_parsing
+package at.logic.proofs.shlk.algorithms
 
+import java.io.InputStreamReader
+
+import at.logic.io.shlk_parsing.SHLK
+import at.logic.language.lambda.types.To
 import at.logic.language.schema._
 import at.logic.proofs.lk._
-import at.logic.language.lambda.types.To
-
-import org.specs2.mutable._
 import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import scala.io._
-import java.io.File.separator
-import java.io.{FileInputStream, InputStreamReader}
 import org.specs2.execute.Success
-import at.logic.language.schema._
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class SimpleSLKParserTest extends SpecificationWithJUnit {

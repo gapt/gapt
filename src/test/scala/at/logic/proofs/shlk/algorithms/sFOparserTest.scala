@@ -3,18 +3,18 @@
  *
  */
 
-package at.logic.io.shlk_parsing
+package at.logic.proofs.shlk.algorithms
 
-import at.logic.proofs.lk._
+import java.io.InputStreamReader
+
+import at.logic.io.shlk_parsing.sFOParser
 import at.logic.language.lambda.types._
 import at.logic.language.schema._
-import java.io.File.separator
-import java.io.{FileInputStream, InputStreamReader}
+import at.logic.proofs.lk._
 import org.junit.runner.RunWith
 import org.specs2.execute.Success
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import scala.io._
 
 @RunWith(classOf[JUnitRunner])
 class sFOparserTest extends SpecificationWithJUnit {

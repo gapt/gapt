@@ -2,11 +2,11 @@
 
 package at.logic.proofs.algorithms.ceres.clauseSchema
 
-import at.logic.algorithms.shlk.StepMinusOne
 import at.logic.proofs.lk.base.{ Sequent, LKProof }
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 import at.logic.language.lambda.types._
 import at.logic.language.schema._
+import at.logic.proofs.shlk.algorithms.StepMinusOne
 import collection.mutable.Map
 import java.io.InputStreamReader
 import scala.util.matching.Regex

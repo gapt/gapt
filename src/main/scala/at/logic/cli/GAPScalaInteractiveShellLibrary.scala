@@ -17,7 +17,6 @@ import at.logic.proofs.lk.algorithms.cutIntroduction._
 import at.logic.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
-import at.logic.algorithms.shlk._
 import at.logic.proofs.lk.algorithms.subsumption._
 import at.logic.language.fol.algorithms._
 import at.logic.proofs.expansionTrees.algorithms.{ compressQuantifiers, minimalExpansionSequents => minimalExpSeq }
@@ -57,10 +56,11 @@ import at.logic.io.language.xml.XMLParser._
 import at.logic.io.lisp.SExpressionParser
 import at.logic.io.readers.StringReader
 import at.logic.io.readers.XMLReaders._
-import at.logic.io.shlk.SchemaFormulaParser
+import at.logic.io.shlk.{ SCHOLParser, SchemaFormulaParser }
 import at.logic.io.shlk_parsing.{ sFOParser, sFOParserCNT }
 import at.logic.io.veriT._
 import at.logic.io.writers.FileWriter
+import at.logic.proofs.shlk.algorithms.applySchemaSubstitution2
 import at.logic.provers.atp.Prover
 import at.logic.provers.atp.commands.base._
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand

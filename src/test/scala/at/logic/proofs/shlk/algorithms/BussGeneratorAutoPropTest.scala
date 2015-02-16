@@ -1,15 +1,14 @@
 
-package at.logic.algorithms.shlk
-
-import at.logic.proofs.lk.algorithms.solve
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.execute.Success
+package at.logic.proofs.shlk.algorithms
 
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
+import at.logic.proofs.lk.algorithms.solve
 import at.logic.proofs.lk.base.FSequent
+import org.junit.runner.RunWith
+import org.specs2.execute.Success
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 // Seems like this is testing auto-propositional for HOL... why is it here?
 @RunWith(classOf[JUnitRunner])

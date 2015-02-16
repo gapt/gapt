@@ -1,18 +1,18 @@
 
 package at.logic.proofs.algorithms.ceres
 
-import at.logic.algorithms.shlk._
 import at.logic.language.hol.logicSymbols.LogicalSymbolA
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.{ getAncestors, getCutAncestors }
 import at.logic.proofs.lk.base.{ FSequent, LKProof, Sequent }
 import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 import at.logic.language.fol.Utils.{ removeDoubles, removeDoubles3 }
 import at.logic.language.hol._
 import at.logic.language.lambda.symbols.SymbolA
 import at.logic.language.lambda.types._
 import at.logic.language.schema.{ Substitution => SchemaSubstitution, SchemaFormula, IntegerTerm, SchemaVar, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
+import at.logic.proofs.shlk.algorithms.{ StepMinusOne, printSchemaProof }
 import at.logic.utils.ds.Multisets
 import at.logic.utils.ds.Multisets.Multiset
 import at.logic.utils.ds.trees.BinaryTree

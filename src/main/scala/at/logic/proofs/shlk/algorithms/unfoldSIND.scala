@@ -1,14 +1,14 @@
-package at.logic.algorithms.shlk
+package at.logic.proofs.shlk.algorithms
 
-import at.logic.proofs.slk._
-import at.logic.language.schema._
-import at.logic.proofs.occurrences._
+import at.logic.io.shlk.{ backToInt, maketogether }
+import at.logic.language.lambda.types.{ ->, FunctionType, Ti, Tindex }
+import at.logic.language.schema.{ leq, lessThan, sims, _ }
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._
+import at.logic.proofs.occurrences._
+import at.logic.proofs.shlk._
+
 import scala.Predef._
-import at.logic.language.schema.{ lessThan, sims, leq }
-import at.logic.language.lambda.types.{ ->, Ti, Tindex, FunctionType }
-import at.logic.language.lambda.symbols._
 
 object applySchemaSubstitution2 {
   def apply( proof_name: String, number: Int, ProofLinkPassing: List[Tuple2[SchemaExpression, SchemaExpression]] ): LKProof = {

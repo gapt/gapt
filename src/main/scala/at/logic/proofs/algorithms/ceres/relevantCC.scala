@@ -1,13 +1,13 @@
 package at.logic.proofs.algorithms.ceres
 
-import at.logic.algorithms.shlk._
 import at.logic.proofs.lk.algorithms.{ getAncestors, getCutAncestors }
 import at.logic.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.proofs.lk._
 import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 import at.logic.language.fol.Utils
 import at.logic.language.schema.{ Substitution => SchemaSubstitution, SchemaVar, SchemaFormula, IndexedPredicate, IntVar, IntZero, IntegerTerm, Succ }
+import at.logic.proofs.shlk.algorithms.StepMinusOne
 import at.logic.utils.ds.Multisets
 import at.logic.utils.ds.Multisets.Multiset
 import at.logic.utils.ds.trees.BinaryTree

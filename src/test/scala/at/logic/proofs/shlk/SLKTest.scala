@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.proofs.slk
+package at.logic.proofs.shlk
 
 import org.junit.runner.RunWith
 import org.specs2.mutable._

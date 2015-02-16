@@ -7,6 +7,8 @@ package at.logic.gui.prooftool.parser
  * Time: 4:42 PM
  */
 
+import at.logic.io.shlk.SCHOLParser
+
 import scala.swing.Dialog
 import java.io.{ FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
@@ -25,9 +27,8 @@ import at.logic.io.ivy.IvyParser
 import at.logic.io.ivy.conversion.IvyToRobinson
 import at.logic.language.schema.dbTRS
 import at.logic.proofs.algorithms.ceres.clauseSchema._
-import at.logic.proofs.slk.SchemaProofDB
+import at.logic.proofs.shlk.SchemaProofDB
 import at.logic.proofs.proofs.Proof
-import at.logic.algorithms.shlk.SCHOLParser
 import at.logic.algorithms.hlk.HybridLatexParser
 
 class FileParser {
