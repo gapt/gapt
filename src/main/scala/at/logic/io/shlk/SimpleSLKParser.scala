@@ -6,7 +6,7 @@ import java.io.InputStreamReader
 import at.logic.language.schema._
 import at.logic.proofs.lk.base.{ FSequent, Sequent, LKProof }
 import collection.mutable.{ Map => MMap }
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 import scala.Tuple4
 import at.logic.language.schema.IntZero
 import scala.Tuple2

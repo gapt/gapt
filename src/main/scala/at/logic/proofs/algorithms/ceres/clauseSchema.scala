@@ -1,16 +1,16 @@
 package at.logic.proofs.algorithms.ceres.clauseSchema
 
-import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.getAncestors
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk.{ UnaryLKProof, BinaryLKProof }
 import at.logic.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
-import at.logic.proofs.slk.AndEquivalenceRule1._
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk.AndEquivalenceRule1._
+import at.logic.proofs.shlk._
 import at.logic.language.lambda.types._
 import at.logic.language.schema.{ Substitution => SchemaSubstitution, _ }
 import at.logic.language.schema.BetaReduction._
+import at.logic.proofs.shlk.algorithms.printSchemaProof
 
 abstract class sResolutionTerm {}
 abstract class sClauseTerm extends sResolutionTerm {}

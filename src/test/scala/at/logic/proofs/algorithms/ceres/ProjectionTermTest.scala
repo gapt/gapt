@@ -1,11 +1,10 @@
 package at.logic.proofs.algorithms.ceres
 
-import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base.{Sequent, LKProof}
 import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
-import at.logic.proofs.slk.{SchemaProof, SchemaProofDB}
+import at.logic.proofs.shlk.{SchemaProof, SchemaProofDB}
 import at.logic.language.schema._
 import at.logic.io.shlk_parsing.{SHLK, sFOParser}
 import at.logic.utils.ds.trees.BinaryTree

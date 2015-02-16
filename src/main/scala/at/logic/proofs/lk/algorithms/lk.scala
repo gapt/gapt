@@ -7,7 +7,7 @@ import at.logic.proofs.lk.algorithms.ProofTransformationUtils.computeMap
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lksk.UnaryLKskProof
 import at.logic.proofs.occurrences._
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 
 import scala.collection.immutable.HashSet
 

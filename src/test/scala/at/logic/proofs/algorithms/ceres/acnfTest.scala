@@ -1,12 +1,11 @@
 package at.logic.proofs.algorithms.ceres.ACNF
 
-import at.logic.algorithms.shlk._
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.applySubstitution
 import at.logic.proofs.lk.base.{LKProof, Sequent}
 import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.proofs.resolution.algorithms.RobinsonToLK
-import at.logic.proofs.slk.SchemaProofDB
+import at.logic.proofs.shlk.SchemaProofDB
 import at.logic.language.fol.{Substitution => FOLSubstitution, FOLExpression, FOLAllVar, FOLConst, FOLVar}
 import at.logic.language.hol.{HOLFormula, HOLVar, HOLAbs, HOLExpression}
 import at.logic.language.lambda.types._

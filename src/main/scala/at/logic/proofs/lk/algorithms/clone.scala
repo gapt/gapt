@@ -5,7 +5,7 @@ import at.logic.language.schema.SchemaFormula
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.proofs.occurrences.{ FormulaOccurrence, _ }
-import at.logic.proofs.slk._
+import at.logic.proofs.shlk._
 
 import scala.collection.immutable.HashMap
 

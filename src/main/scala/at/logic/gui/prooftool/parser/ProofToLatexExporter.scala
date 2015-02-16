@@ -11,7 +11,7 @@ import at.logic.proofs.lk.base.{ NullaryLKProof, BinaryLKProof, UnaryLKProof, LK
 import at.logic.proofs.proofs.RuleTypeA
 import at.logic.gui.prooftool.gui.DrawSequent
 import at.logic.proofs.lk._
-import at.logic.proofs.slk.SchemaProofLinkRule
+import at.logic.proofs.shlk.SchemaProofLinkRule
 //import at.logic.calculi.lk.quantificationRules.{ForallRightRuleType, ForallLeftRuleType, ExistsRightRuleType, ExistsLeftRuleType}
 //import at.logic.calculi.lk.definitionRules.{DefinitionRightRuleType, DefinitionLeftRuleType}
 //import at.logic.calculi.lk.equationalRules.{EquationRight2RuleType, EquationRight1RuleType, EquationLeft2RuleType, EquationLeft1RuleType}

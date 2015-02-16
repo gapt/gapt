@@ -1,4 +1,4 @@
-package at.logic.proofs.slk
+package at.logic.proofs.shlk
 
 import at.logic.proofs.occurrences._
 import at.logic.proofs.proofs._

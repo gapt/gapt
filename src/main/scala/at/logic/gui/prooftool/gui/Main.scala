@@ -9,6 +9,7 @@ package at.logic.gui.prooftool.gui
 
 import at.logic.proofs.lk.algorithms._
 import at.logic.proofs.lksk.algorithms.eliminateDefinitions
+import at.logic.proofs.shlk.algorithms.{ applySchemaSubstitution2, applySchemaSubstitution }
 
 import scala.swing._
 import BorderPanel._
@@ -31,13 +32,12 @@ import at.logic.proofs.algorithms.ceres.clauseSets.{ renameCLsymbols, StandardCl
 import at.logic.proofs.algorithms.ceres.struct.{ structToExpressionTree, StructCreators }
 import at.logic.proofs.algorithms.ceres.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
 import at.logic.proofs.algorithms.ceres.{ UnfoldProjectionTerm, ProjectionTermCreators }
-import at.logic.algorithms.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
 import at.logic.utils.ds.trees.Tree
 import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.proofs.algorithms.skolemization.skolemize
 import at.logic.proofs.algorithms.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
 import at.logic.proofs.algorithms.ceres.ACNF.ACNF
-import at.logic.proofs.slk.SchemaProofDB
+import at.logic.proofs.shlk.SchemaProofDB
 import at.logic.proofs.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO

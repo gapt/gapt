@@ -1,6 +1,5 @@
 package at.logic.proofs.algorithms.ceres.clauseSchema
 
-import at.logic.algorithms.shlk._
 import at.logic.proofs.lk.base.{LKProof, FSequent}
 import at.logic.proofs.lk._
 import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}

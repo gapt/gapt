@@ -1,9 +1,8 @@
-package at.logic.algorithms.shlk
+package at.logic.proofs.shlk.algorithms
 
-import at.logic.language.schema._
 import at.logic.proofs.lk.base.{ LKProof, Sequent }
-import at.logic.proofs.lk.{ BinaryLKProof, UnaryLKProof, Axiom }
-import at.logic.proofs.slk._
+import at.logic.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
+import at.logic.proofs.shlk._
 
 object printSchemaProof {
 

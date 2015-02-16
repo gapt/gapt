@@ -4,7 +4,7 @@ package at.logic.proofs.algorithms.ceres.clauseSets
 import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base.Sequent
 import at.logic.proofs.occurrences._
-import at.logic.proofs.slk.SchemaProofDB
+import at.logic.proofs.shlk.SchemaProofDB
 import at.logic.language.hol.{Substitution => HOLSubstitution, HOLAtom => HOLAtom, _}
 import at.logic.language.schema.{Substitution => SchemaSubstitution, _}
 import at.logic.language.lambda.types._
