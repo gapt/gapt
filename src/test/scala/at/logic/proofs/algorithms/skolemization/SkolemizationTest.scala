@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.transformations.skolemization
+package at.logic.proofs.algorithms.skolemization
 
 import at.logic.proofs.lk.base.{beSyntacticMultisetEqual, LKProof, Sequent}
 

@@ -1,6 +1,6 @@
 // This package implements the higher-order analogue to Skolemization:
 // a transformation from LK to LK_skc
-package at.logic.transformations.skolemization.lksk
+package at.logic.proofs.algorithms.skolemization.lksk
 
 import at.logic.proofs.lk.algorithms.getCutAncestors
 import at.logic.proofs.lk.base.{ FSequent, LKProof, Sequent }

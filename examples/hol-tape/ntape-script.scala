@@ -35,7 +35,7 @@ import at.logic.proofs.algorithms.ceres.struct.StructCreators
 
 import at.logic.proofs.algorithms.ceres.ceres_omega
 import at.logic.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
 
  def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
 

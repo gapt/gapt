@@ -1,4 +1,4 @@
-package at.logic.transformations.skolemization
+package at.logic.proofs.algorithms.skolemization
 
 // This package implements formula and proof Skolemization.
 

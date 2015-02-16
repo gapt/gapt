@@ -8,10 +8,9 @@ import at.logic.language.hol._
 import at.logic.proofs.lk.base.{FSequent, Sequent}
 import at.logic.language.lambda.types.{Ti, To}
 import at.logic.proofs.lksk
-import at.logic.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.proofs.expansionTrees.{Atom => AtomTree, Neg => NegTree, SkolemQuantifier, ExpansionTree, ExpansionSequent, WeakQuantifier, Imp => ImpTree}
 import at.logic.proofs.lksk.LabelledFormulaOccurrence
-import at.logic.transformations.skolemization.lksk.{LKtoLKskc => skolemize }
+import at.logic.proofs.algorithms.skolemization.lksk.{LKtoLKskc => skolemize }
 
 /**
  * Created by marty on 8/7/14.

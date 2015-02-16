@@ -75,8 +75,8 @@ import at.logic.provers.maxsat.MaxSATSolver._
 import at.logic.provers.minisat.MiniSAT
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import at.logic.transformations.skolemization.skolemize
+import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
+import at.logic.proofs.algorithms.skolemization.skolemize
 import at.logic.proofs.algorithms.herbrandExtraction
 import at.logic.utils.logging.Stopwatch
 
@@ -1081,9 +1081,9 @@ object rename {
 
 //TODO: find a better name for all this stuff
 object ntape {
-  val p = loadLLK( "algorithms/llk/src/test/resources/tape3.llk" );
-  val elp = regularize( definitionElimination( p, "TAPEPROOF" ) );
-  val selp = at.logic.transformations.skolemization.lksk.LKtoLKskc( elp );
+  val p = loadLLK( "algorithms/llk/src/test/resources/tape3.llk" )
+  val elp = regularize( definitionElimination( p, "TAPEPROOF" ) )
+  val selp = LKtoLKskc( elp )
 
   //val (rp,es) = loadProver9Proof("ntape.out")
 

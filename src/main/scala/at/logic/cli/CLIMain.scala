@@ -32,7 +32,7 @@ object CLIMain {
   import at.logic.language.lambda.symbols._
   import at.logic.language.hol.logicSymbols._
   import at.logic.proofs.hoare._
-  import at.logic.transformations.skolemization.skolemize
+  import at.logic.proofs.algorithms.skolemization.skolemize
   import at.logic.algorithms.lk.regularize
   import at.logic.calculi.occurrences.FormulaOccurrence
   import at.logic.proofs.lk.algorithms.cutIntroduction.Deltas._

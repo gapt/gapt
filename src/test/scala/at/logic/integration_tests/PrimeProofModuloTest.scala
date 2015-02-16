@@ -27,8 +27,8 @@ import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.proofs.algorithms.ceres.clauseSets.profile._
 import at.logic.proofs.algorithms.ceres.projections.Projections
 import at.logic.proofs.algorithms.ceres.struct.{StructCreators, structToExpressionTree}
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
-import at.logic.transformations.skolemization.skolemize
+import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
+import at.logic.proofs.algorithms.skolemization.skolemize
 
 import java.io.File.separator
 import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}

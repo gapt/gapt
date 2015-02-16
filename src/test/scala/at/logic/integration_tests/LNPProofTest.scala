@@ -11,7 +11,7 @@ import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.writers.FileWriter
 import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.proofs.algorithms.ceres.struct.StructCreators
-import at.logic.transformations.skolemization.lksk.LKtoLKskc
+import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
 import java.io.{FileReader, FileInputStream, InputStreamReader}
