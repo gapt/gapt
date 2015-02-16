@@ -33,7 +33,7 @@ import at.logic.proofs.algorithms.ceres.projections.{ Projections, DeleteTautolo
 import at.logic.proofs.algorithms.ceres.{ UnfoldProjectionTerm, ProjectionTermCreators }
 import at.logic.algorithms.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
 import at.logic.utils.ds.trees.Tree
-import at.logic.transformations.herbrandExtraction.extractExpansionSequent
+import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.transformations.skolemization.skolemize
 import at.logic.proofs.algorithms.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
 import at.logic.proofs.algorithms.ceres.ACNF.ACNF

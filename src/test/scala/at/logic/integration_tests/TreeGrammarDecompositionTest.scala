@@ -4,7 +4,7 @@ import at.logic.proofs.lk.algorithms.cutIntroduction._
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base.LKProof
 import at.logic.language.fol._
-import at.logic.transformations.herbrandExtraction.extractExpansionSequent
+import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.provers.maxsat.{MaxSAT, MaxSATSolver}
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

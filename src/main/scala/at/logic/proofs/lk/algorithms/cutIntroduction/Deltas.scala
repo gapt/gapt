@@ -12,7 +12,7 @@ import at.logic.provers.Prover
 import at.logic.provers.eqProver.EquationalProver
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.provers.prover9.Prover9Prover
-import at.logic.transformations.herbrandExtraction.extractExpansionSequent
+import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.dssupport.ListSupport._
 import at.logic.utils.executionModels.timeout._
 

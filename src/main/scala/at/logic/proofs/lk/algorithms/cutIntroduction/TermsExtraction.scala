@@ -34,7 +34,7 @@ import at.logic.proofs.expansionTrees.algorithms.compressQuantifiers
 import at.logic.proofs.expansionTrees.{ MWeakQuantifier, MStrongQuantifier }
 import at.logic.proofs.lk.base._
 import at.logic.language.fol._
-import at.logic.transformations.herbrandExtraction._
+import at.logic.proofs.algorithms.herbrandExtraction._
 import scala.collection.immutable.HashMap
 
 class TermsExtractionException( msg: String ) extends Exception( msg )

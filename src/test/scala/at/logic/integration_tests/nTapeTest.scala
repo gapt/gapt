@@ -20,7 +20,7 @@ import at.logic.proofs.algorithms.ceres.projections.Projections
 import at.logic.proofs.algorithms.ceres.struct.StructCreators
 
 import at.logic.proofs.algorithms.ceres.ceres_omega
-import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionSequent
+import at.logic.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.utils.testing.ClasspathFileCopier
 import at.logic.proofs.expansionTrees.{And => ETAnd, Imp => ETImp, Or => ETOr, Neg => ETNEg, WeakQuantifier, StrongQuantifier, SkolemQuantifier, ExpansionTree, toDeep, ExpansionSequent}

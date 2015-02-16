@@ -77,7 +77,7 @@ import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
 import at.logic.transformations.skolemization.lksk.LKtoLKskc
 import at.logic.transformations.skolemization.skolemize
-import at.logic.transformations.herbrandExtraction
+import at.logic.proofs.algorithms.herbrandExtraction
 import at.logic.utils.logging.Stopwatch
 
 import scala.collection.mutable.{ Map => MMap }

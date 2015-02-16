@@ -1,4 +1,4 @@
-package at.logic.transformations.herbrandSequent.lksk
+package at.logic.proofs.algorithms.herbrandExtraction.lksk
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith
@@ -8,7 +8,7 @@ import at.logic.language.hol._
 import at.logic.proofs.lk.base.{FSequent, Sequent}
 import at.logic.language.lambda.types.{Ti, To}
 import at.logic.proofs.lksk
-import at.logic.transformations.herbrandExtraction.lksk.extractLKSKExpansionSequent
+import at.logic.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.proofs.expansionTrees.{Atom => AtomTree, Neg => NegTree, SkolemQuantifier, ExpansionTree, ExpansionSequent, WeakQuantifier, Imp => ImpTree}
 import at.logic.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.transformations.skolemization.lksk.{LKtoLKskc => skolemize }
