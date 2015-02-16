@@ -1,12 +1,12 @@
 package at.logic.testing.tstp
 
+import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.proofs.expansionTrees._
 import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.proofs.lk.algorithms.containsEqualityReasoning
 import at.logic.provers.minisat._
 import at.logic.provers.veriT._
 import at.logic.testing.{skipIfRunsLongerThan, recursiveListFiles}
-import at.logic.transformations.herbrandExtraction._
 import org.specs2.mutable._
 
 class TstpProver9Import extends Specification {

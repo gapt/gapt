@@ -1,6 +1,6 @@
 package at.logic.proofs.expansionTrees.algorithms
 
-import at.logic.proofs.expansionTrees.{ ExpansionSequent, MAnd, MAtom, MImp, MNeg, MOr, MSkolemQuantifier, MStrongQuantifier, MWeakQuantifier, MultiExpansionSequent, MultiExpansionTree }
+import at.logic.proofs.expansionTrees.{ ExpansionSequent, METAnd, METAtom, METImp, METNeg, METOr, METSkolemQuantifier, METStrongQuantifier, METWeakQuantifier, MultiExpansionSequent, MultiExpansionTree }
 import at.logic.provers.Prover
 import at.logic.utils.dssupport.ListSupport.{ listComplements, zipper }
 import at.logic.utils.logging.Logger
@@ -175,29 +175,29 @@ private[expansionTrees] class minimalExpansionSequents( val sequent: MultiExpans
    * @return All trees that have exactly one fewer instance than the input.
    */
   def generateSuccessorTrees( tree: MultiExpansionTree ): Seq[MultiExpansionTree] = tree match {
-    case MAtom( f ) => Nil
-    case MNeg( s )  => generateSuccessorTrees( s ).map( MNeg.apply )
-    case MAnd( left, right ) =>
+    case METAtom( f ) => Nil
+    case METNeg( s )  => generateSuccessorTrees( s ).map( METNeg.apply )
+    case METAnd( left, right ) =>
       val sLeft = generateSuccessorTrees( left )
       val sRight = generateSuccessorTrees( right )
-      sLeft.map( t => MAnd( t, right ) ) ++ sRight.map( t => MAnd( left, t ) )
-    case MOr( left, right ) =>
+      sLeft.map( t => METAnd( t, right ) ) ++ sRight.map( t => METAnd( left, t ) )
+    case METOr( left, right ) =>
       val sLeft = generateSuccessorTrees( left )
       val sRight = generateSuccessorTrees( right )
-      sLeft.map( t => MOr( t, right ) ) ++ sRight.map( t => MOr( left, t ) )
-    case MImp( left, right ) =>
+      sLeft.map( t => METOr( t, right ) ) ++ sRight.map( t => METOr( left, t ) )
+    case METImp( left, right ) =>
       val sLeft = generateSuccessorTrees( left )
       val sRight = generateSuccessorTrees( right )
-      sLeft.map( t => MImp( t, right ) ) ++ sRight.map( t => MImp( left, t ) )
+      sLeft.map( t => METImp( t, right ) ) ++ sRight.map( t => METImp( left, t ) )
 
-    case MStrongQuantifier( f, vars, sel ) => generateSuccessorTrees( sel ).map( MStrongQuantifier.apply( f, vars, _ ) )
-    case MSkolemQuantifier( f, vars, sel ) => generateSuccessorTrees( sel ).map( MSkolemQuantifier.apply( f, vars, _ ) )
+    case METStrongQuantifier( f, vars, sel ) => generateSuccessorTrees( sel ).map( METStrongQuantifier.apply( f, vars, _ ) )
+    case METSkolemQuantifier( f, vars, sel ) => generateSuccessorTrees( sel ).map( METSkolemQuantifier.apply( f, vars, _ ) )
 
-    case MWeakQuantifier( f, inst ) =>
+    case METWeakQuantifier( f, inst ) =>
       if ( !inst.head._1.containsWeakQuantifiers ) { //In this case we are in a bottommost weak quantifier node, which means that we will actually remove instances.
         if ( inst.length > 1 ) {
           val instances = listComplements( inst ) //These two lines generate all expansion trees that result from removing an instance from tree.
-          instances.map( i => MWeakQuantifier( f, i ) )
+          instances.map( i => METWeakQuantifier( f, i ) )
         } else Nil
       } else inst.map( p => generateSuccessorTrees( p._1 ) ).flatten
   }

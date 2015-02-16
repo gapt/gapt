@@ -4,7 +4,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types.{Ti, To}
 import at.logic.language.schema.{BigAnd, BigOr, IndexedPredicate, IntVar, IntZero, SchemaFormula, Succ, Or => OrS}
-import at.logic.proofs.expansionTrees.{ExpansionSequent, toFSequent, Atom => AtomET, Neg => NegET, Or => OrET, StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET}
+import at.logic.proofs.expansionTrees.{ExpansionSequent, toFSequent, ETAtom => AtomET, ETNeg => NegET, ETOr => OrET, ETStrongQuantifier => StrongQuantifierET, ETWeakQuantifier => WeakQuantifierET}
 import at.logic.proofs.lk.base.{FSequent, beSyntacticFSequentEqual}
 import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import org.junit.runner.RunWith

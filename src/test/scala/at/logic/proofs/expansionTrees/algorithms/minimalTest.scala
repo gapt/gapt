@@ -17,16 +17,16 @@ class minimalExpansionSequentTest extends SpecificationWithJUnit {
   val P = HOLConst("P", i -> o)
   
   val et1: ExpansionTree = merge(
-    WeakQuantifier(
+    ETWeakQuantifier(
       HOLAllVar(x, AtomHOL(P,x::Nil)),
-      List((Atom(AtomHOL(P,c::Nil)),c),(Atom(AtomHOL(P,d::Nil)),d))
+      List((ETAtom(AtomHOL(P,c::Nil)),c),(ETAtom(AtomHOL(P,d::Nil)),d))
       )
   )
 
   val et2: ExpansionTree = merge(
-    WeakQuantifier(
+    ETWeakQuantifier(
       HOLExVar(x, AtomHOL(P, x::Nil)),
-      List((Atom(AtomHOL(P, c::Nil)),c),(Atom(AtomHOL(P,d::Nil)),d))
+      List((ETAtom(AtomHOL(P, c::Nil)),c),(ETAtom(AtomHOL(P,d::Nil)),d))
      )
   )
   
@@ -34,25 +34,25 @@ class minimalExpansionSequentTest extends SpecificationWithJUnit {
   
   val minESeq = List(
     ExpansionSequent(List(merge(
-    WeakQuantifier(
+    ETWeakQuantifier(
       HOLAllVar(x, AtomHOL(P,x::Nil)),
-      List((Atom(AtomHOL(P,c::Nil)),c))
+      List((ETAtom(AtomHOL(P,c::Nil)),c))
     )
   )), List(merge(
-    WeakQuantifier(
+    ETWeakQuantifier(
       HOLExVar(x, AtomHOL(P, x::Nil)),
-      List((Atom(AtomHOL(P, c::Nil)),c))
+      List((ETAtom(AtomHOL(P, c::Nil)),c))
     )
   ))),
     ExpansionSequent(List(merge(
-    WeakQuantifier(
+    ETWeakQuantifier(
       HOLAllVar(x, AtomHOL(P,x::Nil)),
-      List((Atom(AtomHOL(P,d::Nil)),d))
+      List((ETAtom(AtomHOL(P,d::Nil)),d))
     )
   )), List(merge(
-    WeakQuantifier(
+    ETWeakQuantifier(
       HOLExVar(x, AtomHOL(P, x::Nil)),
-      List((Atom(AtomHOL(P, d::Nil)),d))
+      List((ETAtom(AtomHOL(P, d::Nil)),d))
     )
   )))
   ).map(compressQuantifiers.apply)

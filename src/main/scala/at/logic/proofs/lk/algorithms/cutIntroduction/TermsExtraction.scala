@@ -31,7 +31,7 @@ package at.logic.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.proofs.expansionTrees._
 import at.logic.proofs.expansionTrees.algorithms.compressQuantifiers
-import at.logic.proofs.expansionTrees.{ MWeakQuantifier, MStrongQuantifier }
+import at.logic.proofs.expansionTrees.{ METWeakQuantifier, METStrongQuantifier }
 import at.logic.proofs.lk.base._
 import at.logic.language.fol._
 import at.logic.proofs.algorithms.herbrandExtraction._
@@ -51,15 +51,15 @@ object TermsExtraction {
       case ( mTree, map ) =>
         if ( isPrenex( mTree.toShallow.asInstanceOf[FOLFormula] ) ) {
           mTree match {
-            case MWeakQuantifier( form, children ) =>
+            case METWeakQuantifier( form, children ) =>
               val f = form.asInstanceOf[FOLFormula]
               val terms = children.map { case ( tree, termsSeq ) => termsSeq.map( t => t.asInstanceOf[FOLTerm] ).toList }.toList
               if ( map.contains( f ) ) {
                 val t = map( f )
                 map + ( f -> ( t ++ terms ) )
               } else map + ( f -> terms )
-            case MStrongQuantifier( _, _, _ ) => throw new TermsExtractionException( "ERROR: Found strong quantifier while extracting terms." )
-            case _                            => map
+            case METStrongQuantifier( _, _, _ ) => throw new TermsExtractionException( "ERROR: Found strong quantifier while extracting terms." )
+            case _                              => map
           }
         } else throw new TermsExtractionException( "ERROR: Trying to extract the terms of an expansion proof with non-prenex formulas." )
     }
