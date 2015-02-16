@@ -411,13 +411,13 @@ class MyMenubar extends MenuBar {
       val b = HOLVar( "b", Ti )
       val q = HOLVar( "q", Ti -> To )
       val x = HOLVar( "x", Ti )
-      val px = Atom( p, x :: Nil ) // p(x)
-      val pa = Atom( p, a :: Nil ) // p(a)
-      val pb = Atom( p, b :: Nil ) // p(b)
-      val qa = Atom( q, a :: Nil ) // q(a)
+      val px = HOLAtom( p, x :: Nil ) // p(x)
+      val pa = HOLAtom( p, a :: Nil ) // p(a)
+      val pb = HOLAtom( p, b :: Nil ) // p(b)
+      val qa = HOLAtom( q, a :: Nil ) // q(a)
       val substa = a // x -> a
       val substb = b // x -> b
-      val all_px = AllVar( x, px ) // forall x. p(x)
+      val all_px = HOLAllVar( x, px ) // forall x. p(x)
 
       val axm1 = Axiom( pa :: Nil, pa :: Nil )
       val axm2 = Axiom( pb :: Nil, pb :: Nil )
@@ -437,14 +437,14 @@ class MyMenubar extends MenuBar {
       val q = HOLVar( "q", Ti -> To )
       val x = HOLVar( "x", Ti )
       val y = HOLVar( "y", Ti )
-      val px = Atom( p, x :: Nil ) // p(x)
-      val pa = Atom( p, a :: Nil ) // p(a)
-      val pb = Atom( p, b :: Nil ) // p(b)
-      val qy = Atom( q, y :: Nil ) // q(a)
+      val px = HOLAtom( p, x :: Nil ) // p(x)
+      val pa = HOLAtom( p, a :: Nil ) // p(a)
+      val pb = HOLAtom( p, b :: Nil ) // p(b)
+      val qy = HOLAtom( q, y :: Nil ) // q(a)
       val substa = a // x -> a
       val substb = b // x -> b
-      val ex_px = ExVar( x, px ) // exists x. p(x)
-      val ex_qy = ExVar( y, qy )
+      val ex_px = HOLExVar( x, px ) // exists x. p(x)
+      val ex_qy = HOLExVar( y, qy )
 
       val axm1 = Axiom( pa :: Nil, pa :: Nil )
       val axm2 = Axiom( pb :: Nil, pb :: Nil )
@@ -464,14 +464,14 @@ class MyMenubar extends MenuBar {
       val q = HOLVar( "q", Ti -> To )
       val x = HOLVar( "x", Ti )
       val y = HOLVar( "y", Ti )
-      val px = Atom( p, x :: Nil ) // p(x)
-      val pa = Atom( p, a :: Nil ) // p(a)
-      val pb = Atom( p, b :: Nil ) // p(b)
-      val qa = Atom( q, a :: Nil ) // q(a)
-      val qy = Atom( q, y :: Nil ) // q(a)
+      val px = HOLAtom( p, x :: Nil ) // p(x)
+      val pa = HOLAtom( p, a :: Nil ) // p(a)
+      val pb = HOLAtom( p, b :: Nil ) // p(b)
+      val qa = HOLAtom( q, a :: Nil ) // q(a)
+      val qy = HOLAtom( q, y :: Nil ) // q(a)
       val substa = a // x -> a
       val substb = b // x -> b
-      val all_px = AllVar( x, px ) // forall x. p(x)
+      val all_px = HOLAllVar( x, px ) // forall x. p(x)
 
       val axm1 = Axiom( pa :: Nil, pa :: Nil )
       val axm2 = Axiom( pb :: Nil, pb :: Nil )
@@ -480,7 +480,7 @@ class MyMenubar extends MenuBar {
       val andrght = AndRightRule( all1, all2, pa, pb )
       val contr = ContractionLeftRule( andrght, all_px )
       val andlft = AndLeft1Rule( contr, all_px, qa )
-      val all3 = ForallLeftRule( andlft, And( all_px, qa ), AllVar( y, And( all_px, qy ) ), a )
+      val all3 = ForallLeftRule( andlft, HOLAnd( all_px, qa ), HOLAllVar( y, HOLAnd( all_px, qy ) ), a )
 
       Main.updateLauncher( "Proof", all3, Main.defaultFontSize )
       ProofToolPublisher.publish( EnableMenus )

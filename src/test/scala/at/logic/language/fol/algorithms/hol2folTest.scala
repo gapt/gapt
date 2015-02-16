@@ -7,7 +7,7 @@ package at.logic.language.fol.algorithms
 import at.logic.language.fol
 import at.logic.language.fol.{FOLVar, _}
 import at.logic.language.hol.logicSymbols.ImpSymbol
-import at.logic.language.hol.{HOLConst, HOLExpression, HOLVar, AllVar => HOLAllVar, And => HOLAnd, Atom => HOLAtom, ExVar => HOLExVar, Function => HOLFunction, Imp => HOLImp, Neg => HOLNeg, Or => HOLOr}
+import at.logic.language.hol.{HOLConst, HOLExpression, HOLVar, HOLAllVar => HOLAllVar, HOLAnd => HOLAnd, HOLAtom => HOLAtom, HOLExVar => HOLExVar, HOLFunction => HOLFunction, HOLImp => HOLImp, HOLNeg => HOLNeg, HOLOr => HOLOr}
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types._
 import at.logic.parsing.language.simple.{SimpleFOLParser, SimpleHOLParser}

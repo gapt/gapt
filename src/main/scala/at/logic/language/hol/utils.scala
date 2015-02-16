@@ -48,10 +48,10 @@ object rename {
 // Instantiates a term in a quantified formula (using the first quantifier).
 object instantiate {
   def apply( f: HOLFormula, t: HOLExpression ): HOLFormula = f match {
-    case AllVar( v, form ) =>
+    case HOLAllVar( v, form ) =>
       val sub = Substitution( v, t )
       sub( form )
-    case ExVar( v, form ) =>
+    case HOLExVar( v, form ) =>
       val sub = Substitution( v, t )
       sub( form )
     case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
@@ -62,13 +62,13 @@ object containsQuantifier {
   def apply( e: HOLExpression ): Boolean = e match {
     case HOLVar( x, tpe )   => false
     case HOLConst( x, tpe ) => false
-    case Atom( x, args )    => false
-    case And( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
-    case Or( x, y )         => containsQuantifier( x ) || containsQuantifier( y )
-    case Imp( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
-    case Neg( x )           => containsQuantifier( x )
-    case ExVar( x, f )      => true
-    case AllVar( x, f )     => true
+    case HOLAtom( x, args ) => false
+    case HOLAnd( x, y )     => containsQuantifier( x ) || containsQuantifier( y )
+    case HOLOr( x, y )      => containsQuantifier( x ) || containsQuantifier( y )
+    case HOLImp( x, y )     => containsQuantifier( x ) || containsQuantifier( y )
+    case HOLNeg( x )        => containsQuantifier( x )
+    case HOLExVar( x, f )   => true
+    case HOLAllVar( x, f )  => true
     // Is this really necessary?
     case HOLAbs( v, exp )   => containsQuantifier( exp )
     case HOLApp( l, r )     => containsQuantifier( l ) || containsQuantifier( r )
@@ -78,14 +78,14 @@ object containsQuantifier {
 
 object containsStrongQuantifier {
   def apply( f: HOLFormula, pol: Boolean ): Boolean = f match {
-    case Atom( _, _ )   => false
-    case And( s, t )    => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
-    case Or( s, t )     => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
-    case Imp( s, t )    => containsStrongQuantifier( s, !pol ) || containsStrongQuantifier( t, pol )
-    case Neg( s )       => containsStrongQuantifier( s, !pol )
-    case AllVar( x, s ) => if ( pol == true ) true else containsStrongQuantifier( s, pol )
-    case ExVar( x, s )  => if ( pol == false ) true else containsStrongQuantifier( s, pol )
-    case _              => throw new Exception( "Unhandled case!" )
+    case HOLAtom( _, _ )   => false
+    case HOLAnd( s, t )    => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
+    case HOLOr( s, t )     => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
+    case HOLImp( s, t )    => containsStrongQuantifier( s, !pol ) || containsStrongQuantifier( t, pol )
+    case HOLNeg( s )       => containsStrongQuantifier( s, !pol )
+    case HOLAllVar( x, s ) => if ( pol == true ) true else containsStrongQuantifier( s, pol )
+    case HOLExVar( x, s )  => if ( pol == false ) true else containsStrongQuantifier( s, pol )
+    case _                 => throw new Exception( "Unhandled case!" )
   }
 
   def apply( s: FSequent ): Boolean =
@@ -95,41 +95,41 @@ object containsStrongQuantifier {
 
 object isPrenex {
   def apply( e: HOLExpression ): Boolean = e match {
-    case HOLVar( _, _ )   => true
-    case HOLConst( _, _ ) => true
-    case Atom( _, _ )     => true
-    case Neg( f )         => !containsQuantifier( f )
-    case And( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Or( f1, f2 )     => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Imp( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case ExVar( v, f )    => isPrenex( f )
-    case AllVar( v, f )   => isPrenex( f )
-    case _                => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
+    case HOLVar( _, _ )    => true
+    case HOLConst( _, _ )  => true
+    case HOLAtom( _, _ )   => true
+    case HOLNeg( f )       => !containsQuantifier( f )
+    case HOLAnd( f1, f2 )  => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case HOLOr( f1, f2 )   => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case HOLImp( f1, f2 )  => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case HOLExVar( v, f )  => isPrenex( f )
+    case HOLAllVar( v, f ) => isPrenex( f )
+    case _                 => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
   }
 }
 
 object isAtom {
   def apply( e: HOLExpression ): Boolean = e match {
-    case Atom( _, _ ) => true
-    case _            => false
+    case HOLAtom( _, _ ) => true
+    case _               => false
   }
 }
 
 object subTerms {
   def apply( e: HOLExpression ): List[HOLExpression] = e match {
-    case HOLVar( _, _ )         => List( e )
-    case HOLConst( _, _ )       => List( e )
-    case Atom( _, args )        => e +: args.flatMap( a => subTerms( a ) )
-    case Function( _, args, _ ) => e +: args.flatMap( a => subTerms( a ) )
-    case And( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
-    case Or( x, y )             => e +: ( subTerms( x ) ++ subTerms( y ) )
-    case Imp( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
-    case Neg( x )               => e +: subTerms( x )
-    case AllVar( _, x )         => e +: subTerms( x )
-    case ExVar( _, x )          => e +: subTerms( x )
-    case HOLAbs( _, x )         => e +: subTerms( x )
-    case HOLApp( x, y )         => e +: ( subTerms( x ) ++ subTerms( y ) )
-    case _                      => throw new Exception( "Unrecognized symbol." )
+    case HOLVar( _, _ )            => List( e )
+    case HOLConst( _, _ )          => List( e )
+    case HOLAtom( _, args )        => e +: args.flatMap( a => subTerms( a ) )
+    case HOLFunction( _, args, _ ) => e +: args.flatMap( a => subTerms( a ) )
+    case HOLAnd( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
+    case HOLOr( x, y )             => e +: ( subTerms( x ) ++ subTerms( y ) )
+    case HOLImp( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
+    case HOLNeg( x )               => e +: subTerms( x )
+    case HOLAllVar( _, x )         => e +: subTerms( x )
+    case HOLExVar( _, x )          => e +: subTerms( x )
+    case HOLAbs( _, x )            => e +: subTerms( x )
+    case HOLApp( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
+    case _                         => throw new Exception( "Unrecognized symbol." )
   }
 }
 
@@ -146,13 +146,13 @@ object isLogicalSymbol {
  */
 object lcomp {
   def apply( formula: HOLFormula ): Int = formula match {
-    case Atom( _, _ )   => 1
-    case Neg( f )       => lcomp( f ) + 1
-    case And( f, g )    => lcomp( f ) + lcomp( g ) + 1
-    case Or( f, g )     => lcomp( f ) + lcomp( g ) + 1
-    case Imp( f, g )    => lcomp( f ) + lcomp( g ) + 1
-    case ExVar( x, f )  => lcomp( f ) + 1
-    case AllVar( x, f ) => lcomp( f ) + 1
+    case HOLAtom( _, _ )   => 1
+    case HOLNeg( f )       => lcomp( f ) + 1
+    case HOLAnd( f, g )    => lcomp( f ) + lcomp( g ) + 1
+    case HOLOr( f, g )     => lcomp( f ) + lcomp( g ) + 1
+    case HOLImp( f, g )    => lcomp( f ) + lcomp( g ) + 1
+    case HOLExVar( x, f )  => lcomp( f ) + 1
+    case HOLAllVar( x, f ) => lcomp( f ) + 1
   }
 }
 
@@ -171,14 +171,14 @@ object getMatrix {
     f match {
       case HOLVar( _, _ ) |
         HOLConst( _, _ ) |
-        Atom( _, _ ) |
-        Imp( _, _ ) |
-        And( _, _ ) |
-        Or( _, _ ) |
-        Neg( _ ) => f
-      case ExVar( x, f0 )  => getMatrix( f0 )
-      case AllVar( x, f0 ) => getMatrix( f0 )
-      case _               => throw new Exception( "ERROR: Unexpected case while extracting the matrix of a formula." )
+        HOLAtom( _, _ ) |
+        HOLImp( _, _ ) |
+        HOLAnd( _, _ ) |
+        HOLOr( _, _ ) |
+        HOLNeg( _ ) => f
+      case HOLExVar( x, f0 )  => getMatrix( f0 )
+      case HOLAllVar( x, f0 ) => getMatrix( f0 )
+      case _                  => throw new Exception( "ERROR: Unexpected case while extracting the matrix of a formula." )
     }
   }
 }
@@ -206,9 +206,9 @@ object normalizeFreeVariables {
     var i = 0
     //generate a blacklist that prevents renaming of bound variables
     val blacklist = getAllPositions2( f ).flatMap( _._2 match {
-      case AllVar( x, _ ) => List( x.sym.toString )
-      case ExVar( x, _ )  => List( x.sym.toString )
-      case _              => Nil
+      case HOLAllVar( x, _ ) => List( x.sym.toString )
+      case HOLExVar( x, _ )  => List( x.sym.toString )
+      case _                 => Nil
     } )
 
     apply( f, () => {
@@ -274,7 +274,7 @@ object toAbbreviatedString {
     val p = pretty( e )
 
     val r: String = e match {
-      case Function( x, args, tpe ) => {
+      case HOLFunction( x, args, tpe ) => {
         if ( p._1 != p._2 && p._2 != "tuple1" )
           if ( p._3 > 0 )
             return p._2 + "^" + ( p._3 + 1 ) + "(" + p._1 + ") : " + tpe.toString()
@@ -294,13 +294,13 @@ object toAbbreviatedString {
     val s: ( String, String, Int ) = exp match {
       case null           => ( "null", "null", -2 )
       case HOLVar( x, t ) => ( x.toString() + " : " + t.toString(), x.toString(), 0 )
-      case Atom( x, args ) => {
+      case HOLAtom( x, args ) => {
         ( x.toString() + "(" + ( args.foldRight( "" ) {
           case ( x, "" )  => "" + toAbbreviatedString( x )
           case ( x, str ) => toAbbreviatedString( x ) + ", " + str
         } ) + ")" + " : o", x.toString(), 0 )
       }
-      case Function( x, args, t ) => {
+      case HOLFunction( x, args, t ) => {
         // if only 1 argument is provided
         // check if abbreviating of recursive function calls is possible
         if ( args.length == 1 ) {
@@ -329,13 +329,13 @@ object toAbbreviatedString {
         }
 
       }
-      case And( x, y )            => ( "(" + toAbbreviatedString( x ) + " " + AndSymbol + " " + toAbbreviatedString( y ) + ")", AndSymbol.toString(), 0 )
-      case Equation( x, y )       => ( "(" + toAbbreviatedString( x ) + " " + EqSymbol + " " + toAbbreviatedString( y ) + ")", EqSymbol.toString(), 0 )
-      case Or( x, y )             => ( "(" + toAbbreviatedString( x ) + " " + OrSymbol + " " + toAbbreviatedString( y ) + ")", OrSymbol.toString(), 0 )
-      case Imp( x, y )            => ( "(" + toAbbreviatedString( x ) + " " + ImpSymbol + " " + toAbbreviatedString( y ) + ")", ImpSymbol.toString(), 0 )
-      case Neg( x )               => ( NegSymbol + toAbbreviatedString( x ), NegSymbol.toString(), 0 )
-      case ExVar( x, f )          => ( ExistsSymbol + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ExistsSymbol.toString(), 0 )
-      case AllVar( x, f )         => ( ForallSymbol + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ForallSymbol.toString(), 0 )
+      case HOLAnd( x, y )         => ( "(" + toAbbreviatedString( x ) + " " + AndSymbol + " " + toAbbreviatedString( y ) + ")", AndSymbol.toString(), 0 )
+      case HOLEquation( x, y )    => ( "(" + toAbbreviatedString( x ) + " " + EqSymbol + " " + toAbbreviatedString( y ) + ")", EqSymbol.toString(), 0 )
+      case HOLOr( x, y )          => ( "(" + toAbbreviatedString( x ) + " " + OrSymbol + " " + toAbbreviatedString( y ) + ")", OrSymbol.toString(), 0 )
+      case HOLImp( x, y )         => ( "(" + toAbbreviatedString( x ) + " " + ImpSymbol + " " + toAbbreviatedString( y ) + ")", ImpSymbol.toString(), 0 )
+      case HOLNeg( x )            => ( NegSymbol + toAbbreviatedString( x ), NegSymbol.toString(), 0 )
+      case HOLExVar( x, f )       => ( ExistsSymbol + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ExistsSymbol.toString(), 0 )
+      case HOLAllVar( x, f )      => ( ForallSymbol + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ForallSymbol.toString(), 0 )
       case HOLAbs( v, exp )       => ( "(λ" + toAbbreviatedString( v ) + "." + toAbbreviatedString( exp ) + ")", "λ", 0 )
       case HOLApp( l, r )         => ( "(" + toAbbreviatedString( l ) + ")(" + toAbbreviatedString( r ) + ")", "()()", 0 )
       case HOLConst( x, exptype ) => ( x.toString(), x.toString(), 0 )

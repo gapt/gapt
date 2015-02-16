@@ -104,7 +104,7 @@ object ForallSkLeftRule {
   // removeFromLabel indicates whether to remove the term subst from the label of the main formula.
   def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: HOLExpression, removeFromLabel: Boolean ) = {
     main match {
-      case AllVar( x, sub ) => {
+      case HOLAllVar( x, sub ) => {
         // TODO: comment in to check validity of the rule.
         // commented out at the moment because we don't know the subst term
         // in the XML parser. We need first-order unification for that.
@@ -140,7 +140,7 @@ object ForallSkLeftRule {
 object ExistsSkRightRule {
   def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: HOLExpression, removeFromLabel: Boolean ) = {
     main match {
-      case ExVar( x, sub ) => {
+      case HOLExVar( x, sub ) => {
         //assert( betaNormalize( App( sub, subst_t ) ) == aux ) //needs to change because we changed the All matchen to AllVar
         if ( !s1.root.succedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException( "Premise does not contain the given formula occurrence.", s1, auxf.formula :: Nil )
@@ -172,7 +172,7 @@ object ExistsSkRightRule {
 object ForallSkRightRule {
   def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: HOLExpression ) = {
     main match {
-      case AllVar( x, sub ) => {
+      case HOLAllVar( x, sub ) => {
         // TODO: check Skolem term
         if ( !s1.root.succedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException( "Premise does not contain the given formula occurrence.", s1, auxf.formula :: Nil )
@@ -202,7 +202,7 @@ object ForallSkRightRule {
 object ExistsSkLeftRule {
   def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: HOLExpression ) = {
     main match {
-      case ExVar( x, sub ) => {
+      case HOLExVar( x, sub ) => {
         // TODO: check Skolem term
         if ( !s1.root.antecedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException( "Premise does not contain the given formula occurrence.", s1, auxf.formula :: Nil )

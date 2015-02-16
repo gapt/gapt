@@ -76,36 +76,36 @@ object XMLExporter {
     </sequent>
 
   def exportFormula( formula: HOLFormula ): Node = formula match {
-    case Equation( term1, term2 ) =>
+    case HOLEquation( term1, term2 ) =>
       println( "Equation: " + term1.toString + ", " + term2.toString )
       <constantatomformula type="or">
         { exportTerm( term1 ) }
         { exportTerm( term2 ) }
       </constantatomformula>
-    case Neg( f ) =>
+    case HOLNeg( f ) =>
       println( "Neg: " + f.toString )
       <conjunctiveformula type="neg">
         { exportFormula( f ) }
       </conjunctiveformula>
-    case And( f1, f2 ) =>
+    case HOLAnd( f1, f2 ) =>
       println( "And: " + f1.toString + ", " + f2.toString )
       <conjunctiveformula type="and">
         { exportFormula( f1 ) }
         { exportFormula( f2 ) }
       </conjunctiveformula>
-    case Or( f1, f2 ) =>
+    case HOLOr( f1, f2 ) =>
       println( "Or: " + f1.toString + ", " + f2.toString )
       <conjunctiveformula type="or">
         { exportFormula( f1 ) }
         { exportFormula( f2 ) }
       </conjunctiveformula>
-    case Imp( f1, f2 ) =>
+    case HOLImp( f1, f2 ) =>
       println( "Impl: " + f1.toString + ", " + f2.toString )
       <conjunctiveformula type="impl">
         { exportFormula( f1 ) }
         { exportFormula( f2 ) }
       </conjunctiveformula>
-    case ExVar( x, f ) => x.exptype match {
+    case HOLExVar( x, f ) => x.exptype match {
       case Ti =>
         <quantifiedformula type="exists">
           <variable symbol={ x.name.toString }/>
@@ -117,7 +117,7 @@ object XMLExporter {
           { exportFormula( f ) }
         </secondorderquantifiedformula>
     }
-    case AllVar( x, f ) => x.exptype match {
+    case HOLAllVar( x, f ) => x.exptype match {
       case Ti =>
         <quantifiedformula type="all">
           <variable symbol={ x.name.toString }/>
@@ -129,13 +129,13 @@ object XMLExporter {
           { exportFormula( f ) }
         </secondorderquantifiedformula>
     }
-    case Atom( name: HOLConst, args ) =>
+    case HOLAtom( name: HOLConst, args ) =>
       println( "FOLAtom: " + name.toString )
       if ( args.isEmpty ) <constantatomformula symbol={ name.toString }/>
       else <constantatomformula symbol={ name.toString }>
              { args.map( x => exportTerm( x ) ) }
            </constantatomformula>
-    case Atom( name: HOLVar, args ) =>
+    case HOLAtom( name: HOLVar, args ) =>
       println( "Atom: " + name.toString )
       <variableatomformula>
         <secondordervariable symbol={ name.toString }/>
@@ -150,7 +150,7 @@ object XMLExporter {
       case _  => <secondordervariable symbol={ name.toString }/>
     }
     case HOLConst( name, _ ) => <constant symbol={ name.toString }/>
-    case Function( name, args, _ ) =>
+    case HOLFunction( name, args, _ ) =>
       <function symbol={ name.toString }>
         { args.map( x => exportTerm( x ) ) }
       </function>
@@ -196,25 +196,25 @@ object XMLExporter {
     case NegRightRuleType         => "negr"
 
     case ForallLeftRuleType => ForallLeftRule.unapply( proof ).get._4.formula match {
-      case AllVar( x, f ) => x.exptype match {
+      case HOLAllVar( x, f ) => x.exptype match {
         case Ti => "foralll"
         case _  => "foralll2"
       }
     }
     case ForallRightRuleType => ForallRightRule.unapply( proof ).get._4.formula match {
-      case AllVar( x, f ) => x.exptype match {
+      case HOLAllVar( x, f ) => x.exptype match {
         case Ti => "forallr"
         case _  => "forallr2"
       }
     }
     case ExistsLeftRuleType => ExistsLeftRule.unapply( proof ).get._4.formula match {
-      case ExVar( x, f ) => x.exptype match {
+      case HOLExVar( x, f ) => x.exptype match {
         case Ti => "existsl"
         case _  => "existsl2"
       }
     }
     case ExistsRightRuleType => ExistsRightRule.unapply( proof ).get._4.formula match {
-      case ExVar( x, f ) => x.exptype match {
+      case HOLExVar( x, f ) => x.exptype match {
         case Ti => "existsr"
         case _  => "existsr2"
       }

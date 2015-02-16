@@ -552,14 +552,14 @@ object AndRightRule {
    * @param main A formula of the form l And r
    * @return l.
    */
-  def computeLeftAux( main: HOLFormula ) = main match { case And( l, _ ) => l }
+  def computeLeftAux( main: HOLFormula ) = main match { case HOLAnd( l, _ ) => l }
 
   /**
    * Returns the right subformula.
    * @param main A formula of the form l And r
    * @return r.
    */
-  def computeRightAux( main: HOLFormula ) = main match { case And( _, r ) => r }
+  def computeRightAux( main: HOLFormula ) = main match { case HOLAnd( _, r ) => r }
 
   /**
    * <pre>Merges two formulas A & B (marked by term1oc & term2oc in the
@@ -662,7 +662,7 @@ object AndRightRule {
   private def getPrinFormula( term1: FormulaOccurrence, term2: FormulaOccurrence ) = {
     val holterm1 = term1.formula
     val holterm2 = term2.formula
-    val form = And( holterm1, holterm2 )
+    val form = HOLAnd( holterm1, holterm2 )
     term1.factory.createFormulaOccurrence( form, term1 :: term2 :: Nil )
   }
 
@@ -691,7 +691,7 @@ object AndLeft1Rule {
    * @param main A formula of the form l And r
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case And( l, _ ) => l }
+  def computeAux( main: HOLFormula ) = main match { case HOLAnd( l, _ ) => l }
 
   /**
    * <pre>Replaces a formula F (marked by term1oc) with the conjunction
@@ -773,7 +773,7 @@ object AndLeft1Rule {
   }
   private def getPrinFormula( term1: FormulaOccurrence, term2: HOLFormula ) = {
     val holterm1 = term1.formula
-    val form = And( holterm1, term2 )
+    val form = HOLAnd( holterm1, term2 )
     term1.factory.createFormulaOccurrence( form, term1 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -796,7 +796,7 @@ object AndLeft2Rule {
    * @param main A formula of the form l And r
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case And( _, r ) => r }
+  def computeAux( main: HOLFormula ) = main match { case HOLAnd( _, r ) => r }
 
   /**
    * <pre>Replaces a formula F (marked by term2oc) with the conjunction
@@ -879,7 +879,7 @@ object AndLeft2Rule {
 
   private def getPrinFormula( term1: HOLFormula, term2: FormulaOccurrence ) = {
     val holterm2 = term2.formula
-    val form = And( term1, holterm2 )
+    val form = HOLAnd( term1, holterm2 )
     term2.factory.createFormulaOccurrence( form, term2 :: Nil )
   }
 
@@ -903,14 +903,14 @@ object OrLeftRule {
    * @param main A formula of the form l Or r
    * @return l.
    */
-  def computeLeftAux( main: HOLFormula ) = main match { case Or( l, _ ) => l }
+  def computeLeftAux( main: HOLFormula ) = main match { case HOLOr( l, _ ) => l }
 
   /**
    * Returns the left subformula.
    * @param main A formula of the form l Or r
    * @return r.
    */
-  def computeRightAux( main: HOLFormula ) = main match { case Or( _, r ) => r }
+  def computeRightAux( main: HOLFormula ) = main match { case HOLOr( _, r ) => r }
 
   /**
    * <pre>Merges two formulas A & B (marked by term1oc & term2oc in the
@@ -1005,7 +1005,7 @@ object OrLeftRule {
   private def getPrinFormula( term1: FormulaOccurrence, term2: FormulaOccurrence ) = {
     val holterm1 = term1.formula
     val holterm2 = term2.formula
-    val form = Or( holterm1, holterm2 )
+    val form = HOLOr( holterm1, holterm2 )
     term1.factory.createFormulaOccurrence( form, term1 :: term2 :: Nil )
   }
 
@@ -1031,7 +1031,7 @@ object OrRight1Rule {
    * @param main A formula of the form l Or r
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case Or( l, _ ) => l }
+  def computeAux( main: HOLFormula ) = main match { case HOLOr( l, _ ) => l }
 
   /**
    * <pre>Replaces a formula F (marked by term1oc) with the disjunction
@@ -1112,7 +1112,7 @@ object OrRight1Rule {
   }
   private def getPrinFormula( term1: FormulaOccurrence, term2: HOLFormula ) = {
     val holterm1 = term1.formula
-    val form = Or( holterm1, term2 )
+    val form = HOLOr( holterm1, term2 )
     term1.factory.createFormulaOccurrence( form, term1 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1135,7 +1135,7 @@ object OrRight2Rule {
    * @param main A formula of the form l Or r
    * @return r.
    */
-  def computeAux( main: HOLFormula ) = main match { case Or( _, r ) => r }
+  def computeAux( main: HOLFormula ) = main match { case HOLOr( _, r ) => r }
 
   /**
    * <pre>Replaces a formula F (marked by term2oc) with the disjunction
@@ -1216,7 +1216,7 @@ object OrRight2Rule {
   }
   private def getPrinFormula( term1: HOLFormula, term2: FormulaOccurrence ) = {
     val holterm2 = term2.formula
-    val form = Or( term1, holterm2 )
+    val form = HOLOr( term1, holterm2 )
     term2.factory.createFormulaOccurrence( form, term2 :: Nil )
   }
   private def getSequent( s1: Sequent, term2: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1239,14 +1239,14 @@ object ImpLeftRule {
    * @param main A formula of the form l Imp r
    * @return l.
    */
-  def computeLeftAux( main: HOLFormula ) = main match { case Imp( l, _ ) => l }
+  def computeLeftAux( main: HOLFormula ) = main match { case HOLImp( l, _ ) => l }
 
   /**
    * Returns the right subformula.
    * @param main A formula of the form l Imp r
    * @return r.
    */
-  def computeRightAux( main: HOLFormula ) = main match { case Imp( _, r ) => r }
+  def computeRightAux( main: HOLFormula ) = main match { case HOLImp( _, r ) => r }
 
   /**
    * <pre>Introduces an implication A -> B,
@@ -1351,7 +1351,7 @@ object ImpLeftRule {
   private def getPrinFormula( term1: FormulaOccurrence, term2: FormulaOccurrence ) = {
     val holterm1 = term1.formula
     val holterm2 = term2.formula
-    val form = Imp( holterm1, holterm2 )
+    val form = HOLImp( holterm1, holterm2 )
     term1.factory.createFormulaOccurrence( form, term1 :: term2 :: Nil )
   }
   private def getSequent( s1: Sequent, s2: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1467,7 +1467,7 @@ object ImpRightRule {
   private def getPrinFormula( term1: FormulaOccurrence, term2: FormulaOccurrence ) = {
     val holterm1 = term1.formula
     val holterm2 = term2.formula
-    val form = Imp( holterm1, holterm2 )
+    val form = HOLImp( holterm1, holterm2 )
     term1.factory.createFormulaOccurrence( form, term1 :: term2 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1491,7 +1491,7 @@ object NegLeftRule {
    * @param main A formula of the Not l
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case Neg( s ) => s }
+  def computeAux( main: HOLFormula ) = main match { case HOLNeg( s ) => s }
 
   /**
    * <pre>Replaces a formula F (marked by term1oc) in the succedent of
@@ -1571,7 +1571,7 @@ object NegLeftRule {
   }
   private def getPrinFormula( term1: FormulaOccurrence ) = {
     val holterm1 = term1.formula
-    val form = Neg( holterm1 )
+    val form = HOLNeg( holterm1 )
     term1.factory.createFormulaOccurrence( form, term1 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1594,7 +1594,7 @@ object NegRightRule {
    * @param main A formula of the Not l
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case Neg( s ) => s }
+  def computeAux( main: HOLFormula ) = main match { case HOLNeg( s ) => s }
 
   /**
    * <pre>Replaces a formula F (marked by term1oc) in the antecedent of
@@ -1676,7 +1676,7 @@ object NegRightRule {
   }
   private def getPrinFormula( term1: FormulaOccurrence ) = {
     val holterm1 = term1.formula
-    val form = Neg( holterm1 )
+    val form = HOLNeg( holterm1 )
     term1.factory.createFormulaOccurrence( form, term1 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {

@@ -124,15 +124,15 @@ object skolemize extends Logger {
       case ContractionLeftRule( p, _, a1, a2, _ )  => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply )
       case ContractionRightRule( p, _, a1, a2, _ ) => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply )
       case AndRightRule( p1, p2, _, a1, a2, m )    => handleBinaryRule( proof, p1, p2, a1, a2, m, AndRightRule.computeLeftAux, AndRightRule.computeRightAux, AndRightRule.apply )
-      case AndLeft1Rule( p, _, a, m )              => handleUnary1Rule( proof, p, a, m, 1, And.unapply, AndLeft1Rule.computeAux, AndLeft1Rule.apply )
-      case AndLeft2Rule( p, _, a, m )              => handleUnary2Rule( proof, p, a, m, 1, And.unapply, AndLeft2Rule.computeAux, AndLeft2Rule.apply )
+      case AndLeft1Rule( p, _, a, m )              => handleUnary1Rule( proof, p, a, m, 1, HOLAnd.unapply, AndLeft1Rule.computeAux, AndLeft1Rule.apply )
+      case AndLeft2Rule( p, _, a, m )              => handleUnary2Rule( proof, p, a, m, 1, HOLAnd.unapply, AndLeft2Rule.computeAux, AndLeft2Rule.apply )
       case OrLeftRule( p1, p2, _, a1, a2, m )      => handleBinaryRule( proof, p1, p2, a1, a2, m, OrLeftRule.computeLeftAux, OrLeftRule.computeRightAux, OrLeftRule.apply )
-      case OrRight1Rule( p, _, a, m )              => handleUnary1Rule( proof, p, a, m, 0, Or.unapply, OrRight1Rule.computeAux, OrRight1Rule.apply )
-      case OrRight2Rule( p, _, a, m )              => handleUnary2Rule( proof, p, a, m, 0, Or.unapply, OrRight2Rule.computeAux, OrRight2Rule.apply )
+      case OrRight1Rule( p, _, a, m )              => handleUnary1Rule( proof, p, a, m, 0, HOLOr.unapply, OrRight1Rule.computeAux, OrRight1Rule.apply )
+      case OrRight2Rule( p, _, a, m )              => handleUnary2Rule( proof, p, a, m, 0, HOLOr.unapply, OrRight2Rule.computeAux, OrRight2Rule.apply )
       case ImpLeftRule( p1, p2, _, a1, a2, m )     => handleBinaryRule( proof, p1, p2, a1, a2, m, ImpLeftRule.computeLeftAux, ImpLeftRule.computeRightAux, ImpLeftRule.apply )
       case ImpRightRule( p, _, a1, a2, m ) => {
         val new_main = if ( cut_ancs.contains( m ) ) m.formula else sk( m.formula, 0, inst_map( m ), symbol_map( m ) )
-        val ( na1, na2 ) = new_main match { case Imp( l, r ) => ( l, r ) }
+        val ( na1, na2 ) = new_main match { case HOLImp( l, r ) => ( l, r ) }
         val new_proof = skolemize( p,
           copyMapToAncestor( symbol_map ).updated( a1, even( symbol_map( m ) ) ).updated( a2, odd( symbol_map( m ) ) ),
           copyMapToAncestor( inst_map ),
@@ -322,7 +322,7 @@ object skolemize extends Logger {
       val sym_stream = symbol_map( m )
       val sym = HOLConst( sym_stream.head, FunctionType( v.exptype, inst_map( m ).map( _.exptype ) ) )
       //println("skolem symbol: " + sym)
-      val skolem_term = Function( sym, inst_map( m ) )
+      val skolem_term = HOLFunction( sym, inst_map( m ) )
       val sub = Substitution( v, skolem_term )
       val sub_proof = applySubstitution( p, sub )
       //println("old es: " + p.root)
@@ -379,15 +379,15 @@ object skolemize extends Logger {
   def skolemize( f: HOLFormula, pol: Int, symbols: Stream[SymbolA] ) = sk( f, pol, Nil, symbols )
 
   def sk( f: HOLFormula, pol: Int, terms: List[HOLExpression], symbols: Stream[SymbolA] ): HOLFormula = f match {
-    case And( l, r ) => And( sk( l, pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
-    case Or( l, r )  => Or( sk( l, pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
-    case Imp( l, r ) => Imp( sk( l, invert( pol ), terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
-    case Neg( f )    => Neg( sk( f, invert( pol ), terms, symbols ) )
-    case ExVar( x, f ) =>
+    case HOLAnd( l, r ) => HOLAnd( sk( l, pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case HOLOr( l, r )  => HOLOr( sk( l, pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case HOLImp( l, r ) => HOLImp( sk( l, invert( pol ), terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case HOLNeg( f )    => HOLNeg( sk( f, invert( pol ), terms, symbols ) )
+    case HOLExVar( x, f ) =>
       if ( pol == 1 ) {
         trace( "skolemizing AllQ" )
         val sym = HOLConst( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
-        val sf = Function( sym, terms )
+        val sf = HOLFunction( sym, terms )
 
         val sub = Substitution( x, sf )
         trace( "substitution: " + sub )
@@ -397,12 +397,12 @@ object skolemize extends Logger {
         trace( "result of skolemization: " + res )
         res
       } else
-        ExVar( x, sk( f, pol, terms :+ x, symbols ) )
-    case AllVar( x, f ) =>
+        HOLExVar( x, sk( f, pol, terms :+ x, symbols ) )
+    case HOLAllVar( x, f ) =>
       if ( pol == 0 ) {
         trace( "skolemizing AllQ" )
         val sym = HOLConst( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
-        val sf = Function( sym, terms )
+        val sf = HOLFunction( sym, terms )
 
         val sub = Substitution( x, sf )
         trace( "substitution: " + sub )
@@ -412,8 +412,8 @@ object skolemize extends Logger {
         trace( "result of skolemization: " + res )
         res
       } else
-        AllVar( x, sk( f, pol, terms :+ x, symbols ) )
-    case Atom( _, _ ) => f
+        HOLAllVar( x, sk( f, pol, terms :+ x, symbols ) )
+    case HOLAtom( _, _ ) => f
   }
 }
 

@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.language.fol._
-import at.logic.language.hol.{HOLConst, HOLVar, Atom => HOLAtom, Function => HOLFunction, And => HOLAnd, Or => HOLOr, Neg => HOLNeg}
+import at.logic.language.hol.{HOLConst, HOLVar, HOLAtom => HOLAtom, HOLFunction => HOLFunction, HOLAnd => HOLAnd, HOLOr => HOLOr, HOLNeg => HOLNeg}
 import at.logic.language.lambda.types._
 import at.logic.proofs.resolution.robinson._
 import at.logic.proofs.resolution._

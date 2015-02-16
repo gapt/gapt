@@ -212,10 +212,10 @@ class HLKHOLParser {
   // and returns the matching hol expression
   def ASTtoHOL( create: String => HOLExpression, exp: ast.LambdaAST ): HOLExpression = exp match {
     case ast.Abs( ast.Var( x ), t )    => HOLAbs( v( create( x ) ), ASTtoHOL( create, t ) )
-    case ast.All( ast.Var( x ), t )    => AllVar( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
-    case ast.Exists( ast.Var( x ), t ) => ExVar( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
+    case ast.All( ast.Var( x ), t )    => HOLAllVar( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
+    case ast.Exists( ast.Var( x ), t ) => HOLExVar( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
 
-    case ast.Neg( l )                  => Neg( f( ASTtoHOL( create, l ) ) )
+    case ast.Neg( l )                  => HOLNeg( f( ASTtoHOL( create, l ) ) )
 
     case ast.App( Nil )                => throw new Exception( "Empty applications are not accepted!" )
     case ast.App( first :: Nil )       => ASTtoHOL( create, first )
@@ -223,15 +223,15 @@ class HLKHOLParser {
       //require(! rest.isEmpty, "Empty applications are not accepted!");
       rest.foldLeft( ASTtoHOL( create, first ) )( ( exp, a ) => HOLApp( exp, ASTtoHOL( create, a ) ) )
 
-    case ast.And( l, r ) => And( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
-    case ast.Or( l, r )  => Or( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
-    case ast.Imp( l, r ) => Imp( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
+    case ast.And( l, r ) => HOLAnd( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
+    case ast.Or( l, r )  => HOLOr( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
+    case ast.Imp( l, r ) => HOLImp( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
 
-    case ast.Eq( l, r )  => Equation( ASTtoHOL( create, l ), ASTtoHOL( create, r ) )
+    case ast.Eq( l, r )  => HOLEquation( ASTtoHOL( create, l ), ASTtoHOL( create, r ) )
 
     case ast.Var( x )    => create( x )
-    case ast.Top()       => Atom( TopC, Nil )
-    case ast.Bottom()    => Atom( BottomC, Nil )
+    case ast.Top()       => HOLAtom( TopC, Nil )
+    case ast.Bottom()    => HOLAtom( BottomC, Nil )
   }
 
   def parse( create: String => HOLVar, s: CharSequence ): HOLExpression = {

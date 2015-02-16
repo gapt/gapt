@@ -339,8 +339,8 @@ object XMLParser {
     def getProofDatabase(): ProofDatabase = getProofDatabase( getInput() )
     def getProofDatabase( pdb: Node ): ProofDatabase =
       new ProofDatabase( ( pdb \ "definitionlist" \ "termdef" ).map( n => ( new NodeReader( n ) with XMLDefinitionParser ).getNameTermDefinition() ).toList.map(
-        c => ( Atom( HOLConst( c._1, FunctionType( To, ( c._2 )._1.map( _.exptype ) ) ), ( c._2 )._1 ), ( c._2 )._2 ) ).toMap ++ ( pdb \ "definitionlist" \ "formuladef" ).map( n => ( new NodeReader( n ) with XMLDefinitionParser ).getNameFormulaDefinition() ).toList.map(
-          c => ( Atom( HOLConst( c._1, FunctionType( To, ( c._2 )._1.map( _.exptype ) ) ), ( c._2 )._1 ), ( c._2 )._2 ) ).toMap ++ ( pdb \ "definitionlist" \ "indirecttermdef" ).map( n => ( new NodeReader( n ) with XMLDefinitionParser ).getIndirectDefinition() ).toMap,
+        c => ( HOLAtom( HOLConst( c._1, FunctionType( To, ( c._2 )._1.map( _.exptype ) ) ), ( c._2 )._1 ), ( c._2 )._2 ) ).toMap ++ ( pdb \ "definitionlist" \ "formuladef" ).map( n => ( new NodeReader( n ) with XMLDefinitionParser ).getNameFormulaDefinition() ).toList.map(
+          c => ( HOLAtom( HOLConst( c._1, FunctionType( To, ( c._2 )._1.map( _.exptype ) ) ), ( c._2 )._1 ), ( c._2 )._2 ) ).toMap ++ ( pdb \ "definitionlist" \ "indirecttermdef" ).map( n => ( new NodeReader( n ) with XMLDefinitionParser ).getIndirectDefinition() ).toMap,
         ( pdb \ "proof" ).map( n => ( new NodeReader( n ) with XMLProofParser ).getNamedProof() ).toList,
         ( new NodeReader( ( pdb \ "axiomset" ).head ) with XMLSequentParser ).getAxiomSet(),
         ( pdb \ "sequentlist" ).map( n => ( new NodeReader( n ) with XMLSequentParser ).getNamedSequentList() ).toList )
@@ -366,7 +366,7 @@ object XMLParser {
         map(
           c => {
             val args = XMLUtils.nodesToAbstractTerms( c.child.toList )
-            Atom( HOLConst( c.attribute( "symbol" ).get.head.text, FunctionType( To, args.map( _.exptype ) ) ), args )
+            HOLAtom( HOLConst( c.attribute( "symbol" ).get.head.text, FunctionType( To, args.map( _.exptype ) ) ), args )
           } ).head )
     def getNameFormulaDefinition(): ( String, ( List[HOLVar], HOLFormula ) ) = getNameFormulaDefinition( getInput() )
     def getNameFormulaDefinition( n: Node ): ( String, ( List[HOLVar], HOLFormula ) ) = ( n.attribute( "symbol" ).get.head.text, getFormulaDefinitionRec( n ) )
@@ -725,8 +725,8 @@ object XMLParser {
           val auxf = r_perm.last
           val mainf = succedent.last
           val rule = mainf match {
-            case Or( _, weakf ) => OrRight1Rule( prem, auxf, weakf )
-            case _              => throw new ParsingException( "Rule type is orr1, but main formula is not a disjunction." )
+            case HOLOr( _, weakf ) => OrRight1Rule( prem, auxf, weakf )
+            case _                 => throw new ParsingException( "Rule type is orr1, but main formula is not a disjunction." )
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
@@ -737,8 +737,8 @@ object XMLParser {
           val auxf = r_perm.last
           val mainf = succedent.last
           val rule = mainf match {
-            case Or( weakf, _ ) => OrRight2Rule( prem, weakf, auxf )
-            case _              => throw new ParsingException( "Rule type is orr2, but main formula is not a disjunction." )
+            case HOLOr( weakf, _ ) => OrRight2Rule( prem, weakf, auxf )
+            case _                 => throw new ParsingException( "Rule type is orr2, but main formula is not a disjunction." )
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
@@ -749,8 +749,8 @@ object XMLParser {
           val auxf = l_perm.head
           val mainf = antecedent.head
           val rule = mainf match {
-            case And( _, weakf ) => AndLeft1Rule( prem, auxf, weakf )
-            case _               => throw new ParsingException( "Rule type is andl1, but main formula is not a conjunction." )
+            case HOLAnd( _, weakf ) => AndLeft1Rule( prem, auxf, weakf )
+            case _                  => throw new ParsingException( "Rule type is andl1, but main formula is not a conjunction." )
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
@@ -761,8 +761,8 @@ object XMLParser {
           val auxf = l_perm.head
           val mainf = antecedent.head
           val rule = mainf match {
-            case And( weakf, _ ) => AndLeft2Rule( prem, weakf, auxf )
-            case _               => throw new ParsingException( "Rule type is andl2, but main formula is not a conjunction." )
+            case HOLAnd( weakf, _ ) => AndLeft2Rule( prem, weakf, auxf )
+            case _                  => throw new ParsingException( "Rule type is andl2, but main formula is not a conjunction." )
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
@@ -773,7 +773,7 @@ object XMLParser {
           val auxf = l_perm.head
           val mainf = antecedent.head
           val rule = mainf match {
-            case AllVar( v, subsub ) => {
+            case HOLAllVar( v, subsub ) => {
               val subst = Match( subsub, auxf.formula )
               if ( subst == None ) {
                 throw new TestException( ( subsub, auxf.formula ) )
@@ -797,8 +797,8 @@ object XMLParser {
           val mainf = antecedent.head
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
-            case AllVar( _, _ ) => ForallLeftRule( prem, auxf.formula, mainf, subst.get )
-            case _              => throw new ParsingException( "Rule type is foralll2, but main formula is not all-quantified." )
+            case HOLAllVar( _, _ ) => ForallLeftRule( prem, auxf.formula, mainf, subst.get )
+            case _                 => throw new ParsingException( "Rule type is foralll2, but main formula is not all-quantified." )
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
@@ -809,7 +809,7 @@ object XMLParser {
           val auxf = l_perm.head
           val mainf = antecedent.head
           val rule = mainf match {
-            case ExVar( v, subsub ) => {
+            case HOLExVar( v, subsub ) => {
               val subst = Match( subsub, auxf.formula )
               assert( subst != None )
               val subst_ = subst.get
@@ -830,7 +830,7 @@ object XMLParser {
           val auxf = l_perm.head
           val mainf = antecedent.head
           val rule = mainf match {
-            case ExVar( v, subsub ) => {
+            case HOLExVar( v, subsub ) => {
               val subst = Match( subsub, auxf.formula )
               assert( subst != None )
               val subst_ = subst.get
@@ -851,7 +851,7 @@ object XMLParser {
           val auxf = r_perm.last
           val mainf = succedent.last
           val rule = mainf match {
-            case AllVar( v, subsub ) => {
+            case HOLAllVar( v, subsub ) => {
               val subst = Match( subsub, auxf.formula )
               assert( subst != None )
               val subst_ = subst.get
@@ -872,7 +872,7 @@ object XMLParser {
           val auxf = r_perm.last
           val mainf = succedent.last
           val rule = mainf match {
-            case AllVar( v, subsub ) => {
+            case HOLAllVar( v, subsub ) => {
               val subst = Match( subsub, auxf.formula )
               assert( subst != None, "matching failed for " + subsub.toString + " and " + auxf.formula.toString )
               val subst_ = subst.get
@@ -893,7 +893,7 @@ object XMLParser {
           val auxf = r_perm.last
           val mainf = succedent.last
           val rule = mainf match {
-            case ExVar( v, subsub ) => {
+            case HOLExVar( v, subsub ) => {
               val subst = Match( subsub, auxf.formula )
               assert( subst != None )
               val subst_ = subst.get
@@ -914,8 +914,8 @@ object XMLParser {
           val mainf = succedent.last
           val rule = mainf match {
             // TODO: give auxf instead of auxf.formula
-            case ExVar( _, _ ) => ExistsRightRule( prem, auxf.formula, mainf, subst.get )
-            case _             => throw new ParsingException( "Rule type is existsr, but main formula is not ex-quantified." )
+            case HOLExVar( _, _ ) => ExistsRightRule( prem, auxf.formula, mainf, subst.get )
+            case _                => throw new ParsingException( "Rule type is existsr, but main formula is not ex-quantified." )
           }
           ( rule, l_perm.map( mapToDesc( rule ) ), r_perm.map( mapToDesc( rule ) ) )
         }
@@ -1067,15 +1067,15 @@ object XMLParser {
           case Some( seq ) =>
             //println(seq.head.text)
             val args = XMLUtils.nodesToAbstractTerms( ns.toList )
-            Atom( HOLConst( n.attribute( "symbol" ).get.head.text, FunctionType( To, args.map( _.exptype ) ) ),
+            HOLAtom( HOLConst( n.attribute( "symbol" ).get.head.text, FunctionType( To, args.map( _.exptype ) ) ),
               args )
 
           case _ =>
             val args = XMLUtils.nodesToAbstractTerms( ns.toList )
-            Atom( HOLConst( n.attribute( "symbol" ).get.head.text, FunctionType( To, args.map( _.exptype ) ) ),
+            HOLAtom( HOLConst( n.attribute( "symbol" ).get.head.text, FunctionType( To, args.map( _.exptype ) ) ),
               args )
         }
-        case <variableatomformula>{ ns @ _* }</variableatomformula> => Atom( ( new NodeReader( ns.head ) with XMLSetTermParser ).getSetTerm().asInstanceOf[HOLVar],
+        case <variableatomformula>{ ns @ _* }</variableatomformula> => HOLAtom( ( new NodeReader( ns.head ) with XMLSetTermParser ).getSetTerm().asInstanceOf[HOLVar],
           XMLUtils.nodesToAbstractTerms( ns.toList.tail ) )
         case <definedsetformula>{ ns @ _* }</definedsetformula> => HOLApp( ( new NodeReader( ns.head ) with XMLSetTermParser ).getSetTerm().asInstanceOf[HOLExpression],
           XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[HOLFormula]
@@ -1102,20 +1102,20 @@ object XMLParser {
     private def createConjunctiveFormula( sym: String, formulas: List[HOLFormula] ): HOLFormula =
       {
         sym match {
-          case "and"  => And( formulas.head, formulas.last )
-          case "or"   => Or( formulas.head, formulas.last )
-          case "impl" => Imp( formulas.head, formulas.last )
-          case "neg"  => Neg( formulas.head )
+          case "and"  => HOLAnd( formulas.head, formulas.last )
+          case "or"   => HOLOr( formulas.head, formulas.last )
+          case "impl" => HOLImp( formulas.head, formulas.last )
+          case "neg"  => HOLNeg( formulas.head )
           case _      => throw new ParsingException( "Could not parse conjunctiveformula type: " + sym )
         }
       }
 
     private def createQuantifiedFormula( sym: String, variable: HOLVar, formula: HOLFormula ): HOLFormula =
       sym match {
-        case "all"     => AllVar( variable, formula )
-        case "exists"  => ExVar( variable, formula )
-        case "all2"    => AllVar( variable, formula )
-        case "exists2" => ExVar( variable, formula )
+        case "all"     => HOLAllVar( variable, formula )
+        case "exists"  => HOLExVar( variable, formula )
+        case "all2"    => HOLAllVar( variable, formula )
+        case "exists2" => HOLExVar( variable, formula )
         case _         => throw new ParsingException( "Could not parse quantifiedformula type: " + sym )
       }
   }
@@ -1208,7 +1208,7 @@ object XMLParser {
         case _ => throw new ParsingException( "Could not parse XML: " + n.toString )
       }
     private def createFunction( sym: String, args: List[HOLExpression] ): HOLExpression =
-      Function( HOLConst( sym, FunctionType( Ti, args.map( a => a.exptype ) ) ), args )
+      HOLFunction( HOLConst( sym, FunctionType( Ti, args.map( a => a.exptype ) ) ), args )
   }
 
   /**
@@ -1255,7 +1255,7 @@ object XMLParser {
         case <definedset>{ ns @ _* }</definedset> =>
           {
             val args = XMLUtils.nodesToAbstractTerms( ns.toList )
-            Function( HOLConst( n.attribute( "symbol" ).get.head.text, FunctionType( Ti -> To, args.map( t => t.exptype ) ) ),
+            HOLFunction( HOLConst( n.attribute( "symbol" ).get.head.text, FunctionType( Ti -> To, args.map( t => t.exptype ) ) ),
               args )
           }
         case _ => throw new ParsingException( "Could not parse XML: " + n.toString )

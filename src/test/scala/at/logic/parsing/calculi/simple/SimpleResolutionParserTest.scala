@@ -24,10 +24,10 @@ class SimpleResolutionParserTest extends SpecificationWithJUnit {
 //  private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserHOL
   private class MyParser2(input: String) extends StringReader(input) with SimpleResolutionParserFOL
 
-  val pa = Atom(HOLConst(StringSymbol("p"), Ti -> To),HOLConst(StringSymbol("a"), Ti)::Nil)
-  val pfx = Atom(HOLConst(StringSymbol("p"), Ti->To),Function(HOLConst(StringSymbol("f"), Ti -> Ti), HOLVar(StringSymbol("x"), Ti)::Nil)::Nil)
-  val px = Atom(HOLConst(StringSymbol("p"), Ti->To), HOLVar(StringSymbol("x"), Ti)::Nil)
-  val pffa = Atom(HOLConst(StringSymbol("p"), Ti -> To),Function(HOLConst(StringSymbol("f"),Ti->Ti),Function(HOLConst(StringSymbol("f"), Ti->Ti), HOLConst(StringSymbol("a"), Ti)::Nil)::Nil)::Nil)
+  val pa = HOLAtom(HOLConst(StringSymbol("p"), Ti -> To),HOLConst(StringSymbol("a"), Ti)::Nil)
+  val pfx = HOLAtom(HOLConst(StringSymbol("p"), Ti->To),HOLFunction(HOLConst(StringSymbol("f"), Ti -> Ti), HOLVar(StringSymbol("x"), Ti)::Nil)::Nil)
+  val px = HOLAtom(HOLConst(StringSymbol("p"), Ti->To), HOLVar(StringSymbol("x"), Ti)::Nil)
+  val pffa = HOLAtom(HOLConst(StringSymbol("p"), Ti -> To),HOLFunction(HOLConst(StringSymbol("f"),Ti->Ti),HOLFunction(HOLConst(StringSymbol("f"), Ti->Ti), HOLConst(StringSymbol("a"), Ti)::Nil)::Nil)::Nil)
 
   val pa_fol = FOLAtom(StringSymbol("P"),FOLConst(StringSymbol("a"))::Nil)
   val pfx_fol = FOLAtom(StringSymbol("P"),FOLFunction("f", FOLVar(StringSymbol("x"))::Nil)::Nil)

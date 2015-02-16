@@ -732,9 +732,9 @@ object deleteEquationalTautologies {
 
   def apply( ls: List[FSequent] ) = ls.filterNot( _._2 exists ( ( f: HOLFormula ) =>
     f match {
-      case Atom( c: HOLConst, List( x, y ) ) => c.sym == "=" && x == y
-      case Atom( c: HOLVar, List( x, y ) )   => c.sym == "=" && x == y
-      case _                                 => false
+      case HOLAtom( c: HOLConst, List( x, y ) ) => c.sym == "=" && x == y
+      case HOLAtom( c: HOLVar, List( x, y ) )   => c.sym == "=" && x == y
+      case _                                    => false
     } ) )
 
   /* FIXME: depends on EequalityA which is not adapted to the new lambda calculus
@@ -1145,9 +1145,9 @@ object proofs {
     val y = HOLVar( "y", Ti )
     val a = HOLVar( "a", Ti )
     val b = HOLVar( "b", Ti )
-    val Rab = Atom( HOLConst( "R", Ti -> ( Ti -> To ) ), a :: b :: Nil )
-    val exyRay = ExVar( y, Atom( HOLConst( "R", Ti -> ( Ti -> To ) ), a :: y :: Nil ) )
-    val allxexyRxy = AllVar( x, ExVar( y, Atom( HOLConst( "R", Ti -> ( Ti -> To ) ), x :: y :: Nil ) ) )
+    val Rab = HOLAtom( HOLConst( "R", Ti -> ( Ti -> To ) ), a :: b :: Nil )
+    val exyRay = HOLExVar( y, HOLAtom( HOLConst( "R", Ti -> ( Ti -> To ) ), a :: y :: Nil ) )
+    val allxexyRxy = HOLAllVar( x, HOLExVar( y, HOLAtom( HOLConst( "R", Ti -> ( Ti -> To ) ), x :: y :: Nil ) ) )
     val ax = Axiom( Rab :: Nil, Rab :: Nil )
     val r1 = ExistsRightRule( ax, ax.root.succedent( 0 ), exyRay, b )
     val r2 = ExistsLeftRule( r1, r1.root.antecedent( 0 ), exyRay, b )

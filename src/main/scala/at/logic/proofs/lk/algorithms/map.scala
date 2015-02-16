@@ -58,13 +58,13 @@ class map_proof {
       case AndRightRule( p1, p2, s, a1, a2, m ) =>
         handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, AndRightRule.apply )
       case AndLeft1Rule( p, s, a, m ) => {
-        val f = m.formula match { case And( _, w ) => w }
+        val f = m.formula match { case HOLAnd( _, w ) => w }
         val new_parent = new_parents.head
         val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), wfun( f ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case AndLeft2Rule( p, s, a, m ) => {
-        val f = m.formula match { case And( w, _ ) => w }
+        val f = m.formula match { case HOLAnd( w, _ ) => w }
         val new_parent = new_parents.head
         val new_proof = AndLeft2Rule( new_parent._1, wfun( f ), new_parent._2( a ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
@@ -72,13 +72,13 @@ class map_proof {
       case OrLeftRule( p1, p2, s, a1, a2, m ) =>
         handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, OrLeftRule.apply )
       case OrRight1Rule( p, s, a, m ) => {
-        val f = m.formula match { case Or( _, w ) => w }
+        val f = m.formula match { case HOLOr( _, w ) => w }
         val new_parent = new_parents.head
         val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), wfun( f ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case OrRight2Rule( p, s, a, m ) => {
-        val f = m.formula match { case Or( w, _ ) => w }
+        val f = m.formula match { case HOLOr( w, _ ) => w }
         val new_parent = new_parents.head
         val new_proof = OrRight2Rule( new_parent._1, wfun( f ), new_parent._2( a ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )

@@ -78,28 +78,28 @@ object eliminateDefinitions {
           handleContraction( ( new_parent._1, new_parent._2 ), p, proof, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], ContractionRightRule.apply )
         }
         case AndLeft1Rule( p, s, a, m ) => {
-          val f = m.formula match { case And( _, w ) => w }
+          val f = m.formula match { case HOLAnd( _, w ) => w }
           val new_parent = rec( p )
           val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ), f )
           val ls = toLabelledSequent( p.root )
           ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
         }
         case AndLeft2Rule( p, s, a, m ) => {
-          val f = m.formula match { case And( w, _ ) => w }
+          val f = m.formula match { case HOLAnd( w, _ ) => w }
           val new_parent = rec( p )
           val new_proof = AndLeft2Rule( new_parent._1, f, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ) )
           val ls = toLabelledSequent( p.root )
           ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
         }
         case OrRight1Rule( p, s, a, m ) => {
-          val f = m.formula match { case Or( _, w ) => w }
+          val f = m.formula match { case HOLOr( _, w ) => w }
           val new_parent = rec( p )
           val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ), f )
           val ls = toLabelledSequent( p.root )
           ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
         }
         case OrRight2Rule( p, s, a, m ) => {
-          val f = m.formula match { case Or( w, _ ) => w }
+          val f = m.formula match { case HOLOr( w, _ ) => w }
           val new_parent = rec( p )
           val new_proof = OrRight2Rule( new_parent._1, f, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ) )
           val ls = toLabelledSequent( p.root )

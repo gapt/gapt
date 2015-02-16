@@ -174,7 +174,7 @@ class CERES {
   def refProjection( es: FSequent ): LKProof = {
     require( es.formulas.nonEmpty, "Can not project reflexivity to an empty end-sequent!" )
     val x = es.formulas( 0 ).factory.createVar( StringSymbol( "x" ), Ti ).asInstanceOf[HOLVar]
-    val axiomseq = FSequent( Nil, List( Equation( x, x ) ) )
+    val axiomseq = FSequent( Nil, List( HOLEquation( x, x ) ) )
     //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
     WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq compose es )
   }

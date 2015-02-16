@@ -182,24 +182,24 @@ object renameVar {
       case sTerm( f, i, args ) => {
         sTerm( f, i, args.map( x => apply( x, pair ).asInstanceOf[SchemaExpression] ) )
       }
-      case Function( name, args, typ ) if args.size > 0 => {
+      case HOLFunction( name, args, typ ) if args.size > 0 => {
         val func = HOLConst( name.toString(), Ti -> Ti )
-        Function( func, args.map( f => apply( f, pair ) ) )
+        HOLFunction( func, args.map( f => apply( f, pair ) ) )
       }
       case _ => exp
     }
   }
   def apply( f: HOLFormula, pair: Tuple2[HOLVar, HOLExpression] ): HOLFormula = {
     f match {
-      case Atom( name, args ) => {
+      case HOLAtom( name, args ) => {
         val new_args = args.map( f => apply( f, pair ) )
-        Atom( HOLConst( name.toString(), FunctionType( To, new_args.map( _.exptype ) ) ), new_args )
+        HOLAtom( HOLConst( name.toString(), FunctionType( To, new_args.map( _.exptype ) ) ), new_args )
       }
-      case Neg( form )         => Neg( apply( form, pair ) )
-      case Imp( form1, form2 ) => Imp( apply( form1, pair ), apply( form2, pair ) )
-      case And( form1, form2 ) => And( apply( form1, pair ), apply( form2, pair ) )
-      case Or( form1, form2 )  => Or( apply( form1, pair ), apply( form2, pair ) )
-      case _                   => f
+      case HOLNeg( form )         => HOLNeg( apply( form, pair ) )
+      case HOLImp( form1, form2 ) => HOLImp( apply( form1, pair ), apply( form2, pair ) )
+      case HOLAnd( form1, form2 ) => HOLAnd( apply( form1, pair ), apply( form2, pair ) )
+      case HOLOr( form1, form2 )  => HOLOr( apply( form1, pair ), apply( form2, pair ) )
+      case _                      => f
     }
   }
 }

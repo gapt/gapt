@@ -31,7 +31,7 @@ class fol2holTest extends SpecificationWithJUnit {
       val x = hol.HOLVar("x", Ti)
       val y = hol.HOLVar("y", Ti)
 
-      val hterm = hol.Atom(HOLConst("P", Ti -> ((Ti -> Ti) -> To)),List(y, hol.HOLAbs(x,x)))
+      val hterm = hol.HOLAtom(HOLConst("P", Ti -> ((Ti -> Ti) -> To)),List(y, hol.HOLAbs(x,x)))
 
       val fterm = fol.FOLConst("c")
 

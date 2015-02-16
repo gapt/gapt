@@ -58,7 +58,7 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
   /**
    * Interpretation of the sequent as a formula.
    */
-  def toFormula: HOLFormula = Or( antecedent.toList.map( f => Neg( f ) ) ++ succedent )
+  def toFormula: HOLFormula = HOLOr( antecedent.toList.map( f => HOLNeg( f ) ) ++ succedent )
 
   /**
    * Are both sides of the sequent empty?
@@ -217,8 +217,8 @@ class Sequent( val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formul
    */
   def isReflexivity = antecedent.size == 0 && succedent.size == 1 && (
     succedent.head.formula match {
-      case Equation( s, t ) => ( s == t )
-      case _                => false
+      case HOLEquation( s, t ) => ( s == t )
+      case _                   => false
     } )
 
   /**

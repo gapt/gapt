@@ -20,22 +20,22 @@ trait HOLExpression extends LambdaExpression {
   override def toString = this match {
     case HOLVar( x, tpe )   => x.toString + ":" + tpe.toString
     case HOLConst( x, tpe ) => x.toString + ":" + tpe.toString
-    case Atom( x, args ) => x + "(" +
+    case HOLAtom( x, args ) => x + "(" +
       ( if ( args.size > 1 ) args.head.toString + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toString )
       else args.foldLeft( "" )( ( s, a ) => s + a.toString ) ) + "): o"
-    case Function( x, args, tpe ) => x + "(" +
+    case HOLFunction( x, args, tpe ) => x + "(" +
       ( if ( args.size > 1 ) args.head.toString + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toString )
       else args.foldLeft( "" )( ( s, a ) => s + a.toString ) ) + "):" + tpe.toString
-    case And( x, y )      => "(" + x.toString + AndSymbol + y.toString + ")"
-    case Equation( x, y ) => "(" + x.toString + EqSymbol + y.toString + ")"
-    case Or( x, y )       => "(" + x.toString + OrSymbol + y.toString + ")"
-    case Imp( x, y )      => "(" + x.toString + ImpSymbol + y.toString + ")"
-    case Neg( x )         => NegSymbol + x.toString
-    case ExVar( x, f )    => ExistsSymbol + x.toString + "." + f.toString
-    case AllVar( x, f )   => ForallSymbol + x.toString + "." + f.toString
-    case HOLAbs( v, exp ) => "(λ" + v.toString + "." + exp.toString + ")"
-    case HOLApp( l, r )   => "(" + l.toString + ")" + "(" + r.toString + ")"
-    case _                => throw new Exception( "Unrecognized symbol." )
+    case HOLAnd( x, y )      => "(" + x.toString + AndSymbol + y.toString + ")"
+    case HOLEquation( x, y ) => "(" + x.toString + EqSymbol + y.toString + ")"
+    case HOLOr( x, y )       => "(" + x.toString + OrSymbol + y.toString + ")"
+    case HOLImp( x, y )      => "(" + x.toString + ImpSymbol + y.toString + ")"
+    case HOLNeg( x )         => NegSymbol + x.toString
+    case HOLExVar( x, f )    => ExistsSymbol + x.toString + "." + f.toString
+    case HOLAllVar( x, f )   => ForallSymbol + x.toString + "." + f.toString
+    case HOLAbs( v, exp )    => "(λ" + v.toString + "." + exp.toString + ")"
+    case HOLApp( l, r )      => "(" + l.toString + ")" + "(" + r.toString + ")"
+    case _                   => throw new Exception( "Unrecognized symbol." )
   }
 
   //outer pretty printing, has no parenthesis around
@@ -43,59 +43,59 @@ trait HOLExpression extends LambdaExpression {
   def toPrettyString: String = this match {
     case HOLVar( x, tpe )   => x.toString
     case HOLConst( x, tpe ) => x.toString
-    case Atom( c: HOLConst, List( left, right ) ) if c.sym == EqSymbol =>
+    case HOLAtom( c: HOLConst, List( left, right ) ) if c.sym == EqSymbol =>
       left.toPrettyString_ + " " + EqSymbol + " " + right.toPrettyString_
-    case Atom( x, args ) =>
+    case HOLAtom( x, args ) =>
       x + "(" +
         ( if ( args.size > 1 ) args.head.toPrettyString_ + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toPrettyString_ )
         else args.foldLeft( "" )( ( s, a ) => s + a.toPrettyString_ ) ) + ")"
-    case Function( x, args, tpe ) => x + "(" +
+    case HOLFunction( x, args, tpe ) => x + "(" +
       ( if ( args.size > 1 ) args.head.toString + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toPrettyString_ )
       else args.foldLeft( "" )( ( s, a ) => s + a.toPrettyString_ ) ) + ")"
-    case And( x, y )      => x.toPrettyString_ + AndSymbol + y.toPrettyString_
-    case Equation( x, y ) => x.toPrettyString_ + EqSymbol + y.toPrettyString_
-    case Or( x, y )       => x.toPrettyString_ + OrSymbol + y.toPrettyString_
-    case Imp( x, y )      => x.toPrettyString_ + ImpSymbol + y.toPrettyString_
-    case Neg( x )         => NegSymbol + x.toPrettyString_
-    case ExVar( x, f )    => ExistsSymbol + x.toString + "." + f.toPrettyString_
-    case AllVar( x, f )   => ForallSymbol + x.toString + "." + f.toPrettyString_
-    case HOLAbs( v, exp ) => "λ" + v.toString + "." + exp.toString
-    case HOLApp( l, r )   => "(" + l.toString + ")" + "(" + r.toString + ")"
-    case _                => throw new Exception( "Unrecognized symbol." )
+    case HOLAnd( x, y )      => x.toPrettyString_ + AndSymbol + y.toPrettyString_
+    case HOLEquation( x, y ) => x.toPrettyString_ + EqSymbol + y.toPrettyString_
+    case HOLOr( x, y )       => x.toPrettyString_ + OrSymbol + y.toPrettyString_
+    case HOLImp( x, y )      => x.toPrettyString_ + ImpSymbol + y.toPrettyString_
+    case HOLNeg( x )         => NegSymbol + x.toPrettyString_
+    case HOLExVar( x, f )    => ExistsSymbol + x.toString + "." + f.toPrettyString_
+    case HOLAllVar( x, f )   => ForallSymbol + x.toString + "." + f.toPrettyString_
+    case HOLAbs( v, exp )    => "λ" + v.toString + "." + exp.toString
+    case HOLApp( l, r )      => "(" + l.toString + ")" + "(" + r.toString + ")"
+    case _                   => throw new Exception( "Unrecognized symbol." )
   }
 
   //inner pretty printing, has parenthesis around
   def toPrettyString_ : String = this match {
     case HOLVar( x, tpe )   => x.toString
     case HOLConst( x, tpe ) => x.toString
-    case Atom( c: HOLConst, List( left, right ) ) if c.sym == EqSymbol =>
+    case HOLAtom( c: HOLConst, List( left, right ) ) if c.sym == EqSymbol =>
       left.toPrettyString_ + " = " + right.toPrettyString_
-    case Atom( x, args ) => x + "(" +
+    case HOLAtom( x, args ) => x + "(" +
       ( if ( args.size > 1 ) args.head.toPrettyString_ + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toPrettyString_ )
       else args.foldLeft( "" )( ( s, a ) => s + a.toPrettyString_ ) ) + ")"
-    case Function( x, args, tpe ) => x + "(" +
+    case HOLFunction( x, args, tpe ) => x + "(" +
       ( if ( args.size > 1 ) args.head.toString + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toPrettyString_ )
       else args.foldLeft( "" )( ( s, a ) => s + a.toPrettyString_ ) ) + ")"
-    case And( x, y )      => "(" + x.toPrettyString_ + AndSymbol + y.toPrettyString_ + ")"
-    case Equation( x, y ) => "(" + x.toPrettyString_ + EqSymbol + y.toPrettyString_ + ")"
-    case Or( x, y )       => "(" + x.toPrettyString_ + OrSymbol + y.toPrettyString_ + ")"
-    case Imp( x, y )      => "(" + x.toPrettyString_ + ImpSymbol + y.toPrettyString_ + ")"
-    case Neg( x )         => NegSymbol + x.toPrettyString_
-    case ExVar( x, f )    => ExistsSymbol + x.toString + "." + f.toPrettyString_
-    case AllVar( x, f )   => ForallSymbol + x.toString + "." + f.toPrettyString_
-    case HOLAbs( v, exp ) => "(λ" + v.toString + "." + exp.toString + ")"
-    case HOLApp( l, r )   => "(" + l.toString + ")" + "(" + r.toString + ")"
-    case _                => throw new Exception( "Unrecognized symbol." )
+    case HOLAnd( x, y )      => "(" + x.toPrettyString_ + AndSymbol + y.toPrettyString_ + ")"
+    case HOLEquation( x, y ) => "(" + x.toPrettyString_ + EqSymbol + y.toPrettyString_ + ")"
+    case HOLOr( x, y )       => "(" + x.toPrettyString_ + OrSymbol + y.toPrettyString_ + ")"
+    case HOLImp( x, y )      => "(" + x.toPrettyString_ + ImpSymbol + y.toPrettyString_ + ")"
+    case HOLNeg( x )         => NegSymbol + x.toPrettyString_
+    case HOLExVar( x, f )    => ExistsSymbol + x.toString + "." + f.toPrettyString_
+    case HOLAllVar( x, f )   => ForallSymbol + x.toString + "." + f.toPrettyString_
+    case HOLAbs( v, exp )    => "(λ" + v.toString + "." + exp.toString + ")"
+    case HOLApp( l, r )      => "(" + l.toString + ")" + "(" + r.toString + ")"
+    case _                   => throw new Exception( "Unrecognized symbol." )
   }
 
   def arity: Int = this match {
-    case HOLVar( _, _ ) | HOLConst( _, _ )         => 0
-    case Neg( _ ) | AllVar( _, _ ) | ExVar( _, _ ) => 1
-    case BinaryConnective( _, _ )                  => 2
-    case Atom( _, args )                           => args.length
-    case Function( _, args, _ )                    => args.length
-    case HOLAbs( _, _ )                            => 1
-    case _                                         => throw new Exception( "Unhandled HOLExpression " + this + "." )
+    case HOLVar( _, _ ) | HOLConst( _, _ ) => 0
+    case HOLNeg( _ ) | HOLAllVar( _, _ ) | HOLExVar( _, _ ) => 1
+    case BinaryConnective( _, _ ) => 2
+    case HOLAtom( _, args ) => args.length
+    case HOLFunction( _, args, _ ) => args.length
+    case HOLAbs( _, _ ) => 1
+    case _ => throw new Exception( "Unhandled HOLExpression " + this + "." )
   }
   /**
    * Retrieves this expression's subexpression at a given position.
@@ -159,7 +159,7 @@ object EqC {
 }
 
 // We do in all of them additional casting into Formula as Formula is a static type and the only way to dynamically express it is via casting.
-object Neg {
+object HOLNeg {
   def apply( sub: HOLFormula ) = {
     val neg = sub.factory.createConnective( NegSymbol ).asInstanceOf[HOLConst]
     HOLApp( neg, sub ).asInstanceOf[HOLFormula]
@@ -170,10 +170,10 @@ object Neg {
   }
 }
 
-object And {
+object HOLAnd {
   def apply( fs: List[HOLFormula] ): HOLFormula = fs match {
     case Nil     => TopC // No way to define from which layer this TopC comes from...
-    case f :: fs => fs.foldLeft( f )( ( d, f ) => And( d, f ) )
+    case f :: fs => fs.foldLeft( f )( ( d, f ) => HOLAnd( d, f ) )
 
   }
   def apply( left: HOLFormula, right: HOLFormula ) = {
@@ -186,10 +186,10 @@ object And {
   }
 }
 
-object Or {
+object HOLOr {
   def apply( fs: List[HOLFormula] ): HOLFormula = fs match {
     case Nil     => BottomC // No way to define from which layer this BottomC comes from...
-    case f :: fs => fs.foldLeft( f )( ( d, f ) => Or( d, f ) )
+    case f :: fs => fs.foldLeft( f )( ( d, f ) => HOLOr( d, f ) )
   }
   def apply( left: HOLFormula, right: HOLFormula ): HOLFormula = {
     val or = left.factory.createConnective( OrSymbol ).asInstanceOf[HOLConst]
@@ -201,7 +201,7 @@ object Or {
   }
 }
 
-object Imp {
+object HOLImp {
   def apply( left: HOLFormula, right: HOLFormula ) = {
     val imp = left.factory.createConnective( ImpSymbol ).asInstanceOf[HOLConst]
     HOLApp( HOLApp( imp, left ), right ).asInstanceOf[HOLFormula]
@@ -212,7 +212,7 @@ object Imp {
   }
 }
 
-object Equation {
+object HOLEquation {
   def apply( left: HOLExpression, right: HOLExpression ) = {
     require( left.exptype == right.exptype )
     val eq = left.factory.createConnective( EqSymbol, left.exptype ).asInstanceOf[HOLConst]
@@ -224,7 +224,7 @@ object Equation {
   }
 }
 
-object Function {
+object HOLFunction {
   def apply( head: HOLVar, args: List[HOLExpression] ): HOLExpression = apply_( head, args )
   def apply( head: HOLConst, args: List[HOLExpression] ): HOLExpression = apply_( head, args )
 
@@ -263,7 +263,7 @@ object Function {
 }
 
 // HOL formulas of the form P(t_1,...,t_n)
-object Atom {
+object HOLAtom {
   def apply( head: HOLVar, args: List[HOLExpression] ): HOLFormula = apply_( head, args ).asInstanceOf[HOLFormula]
   def apply( head: HOLVar ): HOLFormula = head.asInstanceOf[HOLFormula]
   def apply( head: HOLConst, args: List[HOLExpression] ): HOLFormula = apply_( head, args ).asInstanceOf[HOLFormula]
@@ -340,7 +340,7 @@ private object All {
   }
 }
 
-object ExVar {
+object HOLExVar {
   def apply( variable: HOLVar, sub: HOLFormula ) = Ex( HOLAbs( variable, sub ) )
   def unapply( expression: HOLExpression ) = expression match {
     case Ex( HOLAbs( variable, sub ), _ ) => Some( ( variable, sub.asInstanceOf[HOLFormula] ) )
@@ -348,7 +348,7 @@ object ExVar {
   }
 }
 
-object AllVar {
+object HOLAllVar {
   def apply( variable: HOLVar, sub: HOLFormula ) = All( HOLAbs( variable, sub ) )
   def unapply( expression: HOLExpression ) = expression match {
     case All( HOLAbs( variable, sub ), _ ) => Some( ( variable, sub.asInstanceOf[HOLFormula] ) )
@@ -360,7 +360,7 @@ object AllVar {
  * A block of existential quantifiers.
  *
  */
-object ExVarBlock {
+object HOLExVarBlock {
 
   /**
    *
@@ -370,7 +370,7 @@ object ExVarBlock {
    */
   def apply( vars: List[HOLVar], sub: HOLFormula ): HOLFormula = vars match {
     case Nil     => sub
-    case v :: vs => ExVar( v, ExVarBlock( vs, sub ) )
+    case v :: vs => HOLExVar( v, HOLExVarBlock( vs, sub ) )
   }
 
   /**
@@ -387,7 +387,7 @@ object ExVarBlock {
   }
 
   private def unapplyHelper( f: HOLFormula ): ( List[HOLVar], HOLFormula ) = f match {
-    case ExVar( v, sub ) =>
+    case HOLExVar( v, sub ) =>
       val ( subVars, subF ) = unapplyHelper( sub )
       ( v :: subVars, subF )
     case _ => ( Nil, f )
@@ -398,7 +398,7 @@ object ExVarBlock {
  * A block of universal quantifiers.
  *
  */
-object AllVarBlock {
+object HOLAllVarBlock {
 
   /**
    *
@@ -408,7 +408,7 @@ object AllVarBlock {
    */
   def apply( vars: List[HOLVar], sub: HOLFormula ): HOLFormula = vars match {
     case Nil     => sub
-    case v :: vs => AllVar( v, AllVarBlock( vs, sub ) )
+    case v :: vs => HOLAllVar( v, HOLAllVarBlock( vs, sub ) )
   }
 
   /**
@@ -425,7 +425,7 @@ object AllVarBlock {
   }
 
   private def unapplyHelper( f: HOLFormula ): ( List[HOLVar], HOLFormula ) = f match {
-    case AllVar( v, sub ) =>
+    case HOLAllVar( v, sub ) =>
       val ( subVars, subF ) = unapplyHelper( sub )
       ( v :: subVars, subF )
     case _ => ( Nil, f )

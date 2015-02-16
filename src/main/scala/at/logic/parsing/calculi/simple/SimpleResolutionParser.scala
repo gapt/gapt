@@ -5,7 +5,7 @@
 
 package at.logic.parsing.calculi.simple
 
-import at.logic.language.hol.{ Neg, HOLFormula }
+import at.logic.language.hol.{ HOLNeg, HOLFormula }
 import at.logic.parsing.calculi.ResolutionParser
 import at.logic.parsing.language.simple.SimpleHOLParser
 import at.logic.parsing.language.simple.SimpleFOLParser
@@ -39,15 +39,15 @@ trait SimpleResolutionParser extends ResolutionParser {
   protected def clause: Parser[FSequent]
 
   protected def formula2: Parser[HOLFormula] = ( neg | atom )
-  protected def neg2: Parser[HOLFormula] = "-" ~ atom ^^ { case "-" ~ x => Neg( x ) }
+  protected def neg2: Parser[HOLFormula] = "-" ~ atom ^^ { case "-" ~ x => HOLNeg( x ) }
 
   protected def filterPosFormulas( f: HOLFormula ): Boolean = f match {
-    case Neg( x ) => true
-    case _        => false
+    case HOLNeg( x ) => true
+    case _           => false
   }
   protected def stripNeg( f: HOLFormula ): HOLFormula = f match {
-    case Neg( x ) => x
-    case _        => f
+    case HOLNeg( x ) => x
+    case _           => f
   }
 }
 

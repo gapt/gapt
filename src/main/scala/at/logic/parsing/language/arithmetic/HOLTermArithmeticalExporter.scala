@@ -22,13 +22,13 @@ trait HOLTermArithmeticalExporter extends OutputExporter with HOLTermExporter {
   def exportFunction( t: HOLExpression ): Unit = t match {
     case TopC => getOutput.write( "\\top" )
     case BottomC => getOutput.write( "\\bot" )
-    case Function( HOLConst( "+", _ ), x :: y :: Nil, _ ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( " + " ); exportTerm( y ); getOutput.write( ")" ) }
-    case Function( HOLConst( "-", _ ), x :: y :: Nil, _ ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( " - " ); exportTerm( y ); getOutput.write( ")" ) }
-    case Function( HOLConst( "*", _ ), x :: y :: Nil, _ ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( " * " ); exportTerm( y ); getOutput.write( ")" ) }
-    case Function( HOLConst( """/""", _ ), x :: y :: Nil, _ ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( """ / """ ); exportTerm( y ); getOutput.write( ")" ) }
-    case Atom( HOLConst( "<", _ ), x :: y :: Nil ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( """ < """ ); exportTerm( y ); getOutput.write( ")" ) }
-    case Atom( HOLConst( ">", _ ), x :: y :: Nil ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( """ > """ ); exportTerm( y ); getOutput.write( ")" ) }
-    case Atom( HOLConst( "=", _ ), x :: y :: Nil ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( """ = """ ); exportTerm( y ); getOutput.write( ")" ) }
+    case HOLFunction( HOLConst( "+", _ ), x :: y :: Nil, _ ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( " + " ); exportTerm( y ); getOutput.write( ")" ) }
+    case HOLFunction( HOLConst( "-", _ ), x :: y :: Nil, _ ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( " - " ); exportTerm( y ); getOutput.write( ")" ) }
+    case HOLFunction( HOLConst( "*", _ ), x :: y :: Nil, _ ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( " * " ); exportTerm( y ); getOutput.write( ")" ) }
+    case HOLFunction( HOLConst( """/""", _ ), x :: y :: Nil, _ ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( """ / """ ); exportTerm( y ); getOutput.write( ")" ) }
+    case HOLAtom( HOLConst( "<", _ ), x :: y :: Nil ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( """ < """ ); exportTerm( y ); getOutput.write( ")" ) }
+    case HOLAtom( HOLConst( ">", _ ), x :: y :: Nil ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( """ > """ ); exportTerm( y ); getOutput.write( ")" ) }
+    case HOLAtom( HOLConst( "=", _ ), x :: y :: Nil ) => { getOutput.write( "(" ); exportTerm( x ); getOutput.write( """ = """ ); exportTerm( y ); getOutput.write( ")" ) }
     case BigAnd( v, f, s, e ) =>
       getOutput.write( "(" )
       getOutput.write( """\bigwedge_{""" )
@@ -53,14 +53,14 @@ trait HOLTermArithmeticalExporter extends OutputExporter with HOLTermExporter {
       exportTerm( f )
       getOutput.write( ")" )
 
-    case Function( VarOrConst( name, _ ), args, _ ) => {
+    case HOLFunction( VarOrConst( name, _ ), args, _ ) => {
       getOutput.write( name )
       getOutput.write( "(" )
       if ( args.size > 0 ) exportTerm( args.head )
       if ( args.size > 1 ) args.tail.foreach( x => { getOutput.write( "," ); exportTerm( x ) } )
       getOutput.write( ")" )
     }
-    case Atom( c, args ) => {
+    case HOLAtom( c, args ) => {
       val sym = c match {
         case h @ HOLConst( _, _ ) => h.asInstanceOf[HOLConst].sym
         case h @ HOLConst( _, _ ) => h.asInstanceOf[HOLVar].sym

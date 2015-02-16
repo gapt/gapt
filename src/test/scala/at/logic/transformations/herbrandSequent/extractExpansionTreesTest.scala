@@ -19,14 +19,14 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
     val p = "P"
 
     val x = FOLVar("x")
-    val ass = AllVar(x, Imp(FOLAtom(p, x :: Nil), FOLAtom(p, FOLFunction(s, x :: Nil) :: Nil)))
+    val ass = HOLAllVar(x, HOLImp(FOLAtom(p, x :: Nil), FOLAtom(p, FOLFunction(s, x :: Nil) :: Nil)))
     if (k == n) {
       val a = FOLAtom(p, Utils.numeral(n) :: Nil)
       WeakeningLeftRule(Axiom(a :: Nil, a :: Nil), ass)
     } else {
       val p1 = FOLAtom(p, Utils.numeral(k) :: Nil)
       val p2 = FOLAtom(p, Utils.numeral(k + 1) :: Nil)
-      val aux = Imp(p1, p2)
+      val aux = HOLImp(p1, p2)
       ContractionLeftRule(ForallLeftRule(ImpLeftRule(Axiom(p1 :: Nil, p1 :: Nil), LinearExampleProof(k + 1, n), p1, p2), aux, ass, Utils.numeral(k)), ass)
     }
   }
@@ -41,7 +41,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val x = FOLVar("x")
       val s = "s"
 
-      val ass = AllVar(x, Imp(FOLAtom(p, x :: Nil), FOLAtom(p, FOLFunction(s, x :: Nil) :: Nil)))
+      val ass = HOLAllVar(x, HOLImp(FOLAtom(p, x :: Nil), FOLAtom(p, FOLFunction(s, x :: Nil) :: Nil)))
 
       val equal_permut_1 = etSeq.antecedent equals List(
         AtomET(FOLAtom(p, Utils.numeral(0)::Nil)),
@@ -77,30 +77,30 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val P = HOLConst("P", Ti->To)
       val Q = HOLConst("Q", Ti->(Ti->To))
 
-      val p0 = Axiom(List(Atom(P, alpha::Nil), Atom(P, beta::Nil)), // P(a), P(b)
-                     List(Atom(Q, Function(f, alpha::Nil)::c::Nil), Atom(Q, Function(f, beta::Nil)::d::Nil))) // Q(f(a), c), Q(f(b), d)
-      val p1 = ExistsRightRule(p0, Atom(Q, Function(f, alpha::Nil)::c::Nil), ExVar(z, Atom(Q, Function(f, alpha::Nil)::z::Nil)), c)
-      val p2 = ExistsRightRule(p1, Atom(Q, Function(f, beta::Nil)::d::Nil), ExVar(z, Atom(Q, Function(f, beta::Nil)::z::Nil)), d)
+      val p0 = Axiom(List(HOLAtom(P, alpha::Nil), HOLAtom(P, beta::Nil)), // P(a), P(b)
+                     List(HOLAtom(Q, HOLFunction(f, alpha::Nil)::c::Nil), HOLAtom(Q, HOLFunction(f, beta::Nil)::d::Nil))) // Q(f(a), c), Q(f(b), d)
+      val p1 = ExistsRightRule(p0, HOLAtom(Q, HOLFunction(f, alpha::Nil)::c::Nil), HOLExVar(z, HOLAtom(Q, HOLFunction(f, alpha::Nil)::z::Nil)), c)
+      val p2 = ExistsRightRule(p1, HOLAtom(Q, HOLFunction(f, beta::Nil)::d::Nil), HOLExVar(z, HOLAtom(Q, HOLFunction(f, beta::Nil)::z::Nil)), d)
 
-      val p2_1 = ExistsRightRule(p2, ExVar(z, Atom(Q, Function(f, alpha::Nil)::z::Nil)), ExVar(y, ExVar(z, Atom(Q, y::z::Nil))), Function(f, alpha::Nil))
-      val p2_2 = ExistsRightRule(p2_1, ExVar(z, Atom(Q, Function(f, beta::Nil)::z::Nil)), ExVar(y, ExVar(z, Atom(Q, y::z::Nil))), Function(f, beta::Nil))
+      val p2_1 = ExistsRightRule(p2, HOLExVar(z, HOLAtom(Q, HOLFunction(f, alpha::Nil)::z::Nil)), HOLExVar(y, HOLExVar(z, HOLAtom(Q, y::z::Nil))), HOLFunction(f, alpha::Nil))
+      val p2_2 = ExistsRightRule(p2_1, HOLExVar(z, HOLAtom(Q, HOLFunction(f, beta::Nil)::z::Nil)), HOLExVar(y, HOLExVar(z, HOLAtom(Q, y::z::Nil))), HOLFunction(f, beta::Nil))
 
-      val p2_3 = ContractionRightRule(p2_2, ExVar(y, ExVar(z, Atom(Q, y::z::Nil))))
+      val p2_3 = ContractionRightRule(p2_2, HOLExVar(y, HOLExVar(z, HOLAtom(Q, y::z::Nil))))
 
-      val p3 = ExistsLeftRule(p2_3, Atom(P, alpha::Nil), ExVar(x, Atom(P, x::Nil)), alpha)
-      val p4 = ExistsLeftRule(p3, Atom(P, beta::Nil), ExVar(x, Atom(P, x::Nil)), beta)
-      val p5 = ContractionLeftRule(p4, ExVar(x, Atom(P, x::Nil)))
+      val p3 = ExistsLeftRule(p2_3, HOLAtom(P, alpha::Nil), HOLExVar(x, HOLAtom(P, x::Nil)), alpha)
+      val p4 = ExistsLeftRule(p3, HOLAtom(P, beta::Nil), HOLExVar(x, HOLAtom(P, x::Nil)), beta)
+      val p5 = ContractionLeftRule(p4, HOLExVar(x, HOLAtom(P, x::Nil)))
 
       val (ante, succ) = extractExpansionSequent( p5, false ).toTuple()
 
-      ante mustEqual( List(StrongQuantifierET( ExVar(x, Atom(P, x::Nil)), alpha, AtomET(Atom(P, alpha::Nil)))) )
+      ante mustEqual( List(StrongQuantifierET( HOLExVar(x, HOLAtom(P, x::Nil)), alpha, AtomET(HOLAtom(P, alpha::Nil)))) )
       // this assumes that the first variable wins, f(beta) would also be valid
-      val f_alpha = Function(f, alpha::Nil)
-      succ mustEqual( List(WeakQuantifierET(  ExVar(y, ExVar(z, Atom(Q, y::z::Nil)) ),
+      val f_alpha = HOLFunction(f, alpha::Nil)
+      succ mustEqual( List(WeakQuantifierET(  HOLExVar(y, HOLExVar(z, HOLAtom(Q, y::z::Nil)) ),
                             List(
-                               (WeakQuantifierET( ExVar(z, Atom(Q, f_alpha::z::Nil)),
-                                    List( (AtomET(Atom(Q, f_alpha::c::Nil)), c),
-                                          (AtomET(Atom(Q, f_alpha::d::Nil)), d))),
+                               (WeakQuantifierET( HOLExVar(z, HOLAtom(Q, f_alpha::z::Nil)),
+                                    List( (AtomET(HOLAtom(Q, f_alpha::c::Nil)), c),
+                                          (AtomET(HOLAtom(Q, f_alpha::d::Nil)), d))),
                                f_alpha)
                             )
       )))
@@ -126,7 +126,7 @@ class ExtractExpansionTreesTest extends SpecificationWithJUnit {
       val x = FOLVar("x")
       val p = "P"
 
-      val f = AllVar(x, FOLAtom(p, x::Nil))
+      val f = HOLAllVar(x, FOLAtom(p, x::Nil))
 
       val p0_0 = Axiom(FOLAtom(p, c::Nil)::f::Nil, FOLAtom(p, c::Nil)::Nil)
 

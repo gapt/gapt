@@ -25,7 +25,7 @@ class SkolemizationTest extends SpecificationWithJUnit {
   "Skolemization" should {
       val x = HOLVar("x", Ti)
       val y = HOLVar("y", Ti)
-      val f = AllVar( x, Atom(HOLConst("P", Ti -> To), x::Nil ) )
+      val f = HOLAllVar( x, HOLAtom(HOLConst("P", Ti -> To), x::Nil ) )
       val s0 = StringSymbol( "s_{0}" )
       val s1 = StringSymbol( "s_{2}" )
       val s2 = StringSymbol( "s_{4}" )
@@ -41,28 +41,28 @@ class SkolemizationTest extends SpecificationWithJUnit {
 
     "introduce correctly a Skolem constant" in {
       val skfun = HOLConst( stream.head, Ti )
-      val skf = Atom( p, skfun::Nil )
+      val skf = HOLAtom( p, skfun::Nil )
       skolemize( f, 0, stream ) must beEqualTo( skf )
     }
 
     "handle a binary formula correctly" in {
       val y = HOLVar(StringSymbol("y"), Ti)
-      val rxy = Atom( r, x::y::Nil )
-      val f2 = Imp(f, AllVar( x, ExVar( y, rxy ) ) )
+      val rxy = HOLAtom( r, x::y::Nil )
+      val f2 = HOLImp(f, HOLAllVar( x, HOLExVar( y, rxy ) ) )
 
       val skfun0 = HOLConst( stream.head, Ti )
-      val skfun1 = Function( HOLConst(stream.tail.head, Ti->Ti), x::Nil )
-      val skf1 = Atom( p, skfun0::Nil )
-      val skf2 = Atom( r, x::skfun1::Nil )
+      val skfun1 = HOLFunction( HOLConst(stream.tail.head, Ti->Ti), x::Nil )
+      val skf1 = HOLAtom( p, skfun0::Nil )
+      val skf2 = HOLAtom( r, x::skfun1::Nil )
 
-      val skf = Imp( skf1, AllVar( x, skf2 ) )
+      val skf = HOLImp( skf1, HOLAllVar( x, skf2 ) )
       skolemize( f2, 1, stream ) must beEqualTo( skf )
 
       // now we skolemize the skolemize formula, with opposite polarity
       val skfun2 = HOLConst( stream.tail.tail.head, Ti )
-      val skfun3 = Function( HOLConst(stream.tail.head, Ti->Ti), skfun2::Nil )
-      val skf3 = Atom( r, skfun2::skfun3::Nil )
-      val skf4 = Imp( skf1, skf3 )
+      val skfun3 = HOLFunction( HOLConst(stream.tail.head, Ti->Ti), skfun2::Nil )
+      val skf3 = HOLAtom( r, skfun2::skfun3::Nil )
+      val skf4 = HOLImp( skf1, skf3 )
       skolemize( skolemize( f2, 1, stream ), 0, stream.tail ) must beEqualTo( skf4 )
     }
 
@@ -70,9 +70,9 @@ class SkolemizationTest extends SpecificationWithJUnit {
       val s5 = StringSymbol( "s_{5}" )
       val cs5 = HOLConst( s5, Ti )
       val alpha = HOLVar( StringSymbol( "α" ), Ti )
-      val Palpha = Atom( p, alpha::Nil )
-      val Ps0 = Atom( p, cs5::Nil )
-      val allxPx = AllVar( x, Atom( p, x::Nil ) )
+      val Palpha = HOLAtom( p, alpha::Nil )
+      val Ps0 = HOLAtom( p, cs5::Nil )
+      val allxPx = HOLAllVar( x, HOLAtom( p, x::Nil ) )
       val ax = Axiom( Palpha::Nil, Palpha::Nil  )
       val proof = ForallRightRule(
                     ForallLeftRule( ax,
@@ -108,9 +108,9 @@ class SkolemizationTest extends SpecificationWithJUnit {
 
       val a = HOLVar("a", Ti)
       val b = HOLVar("b", Ti)
-      val Rab = Atom( r, a::b::Nil )
-      val exyRay = ExVar( y, Atom( r, a::y::Nil ) )
-      val allxexyRxy = AllVar( x, ExVar( y, Atom( r, x::y::Nil ) ) )
+      val Rab = HOLAtom( r, a::b::Nil )
+      val exyRay = HOLExVar( y, HOLAtom( r, a::y::Nil ) )
+      val allxexyRxy = HOLAllVar( x, HOLExVar( y, HOLAtom( r, x::y::Nil ) ) )
       val ax = Axiom( Rab::Nil, Rab::Nil )
       val r1 = ExistsRightRule( ax, ax.root.succedent(0), exyRay, b )
       val r2 = ExistsLeftRule( r1, r1.root.antecedent(0) , exyRay, b )
@@ -120,14 +120,14 @@ class SkolemizationTest extends SpecificationWithJUnit {
       val fs0 = HOLConst( StringSymbol("s_{0}"), Ti -> Ti )
       val s1c = HOLConst( StringSymbol("s_{2}"), Ti)
       val s0s1 = HOLApp( fs0,  s1c)
-      val sR = Atom( r, List(s1c,s0s1) )
+      val sR = HOLAtom( r, List(s1c,s0s1) )
       val sax = Axiom( List(sR), List(sR) )
 
-      val exyRs1y = ExVar( y, Atom( r, List(s1c, y )))
+      val exyRs1y = HOLExVar( y, HOLAtom( r, List(s1c, y )))
 //      val exyRs1s0s1 = ExVar( y, Atom( r, List(a,y) ) )
       val sr1 = ExistsRightRule( sax, sax.root.succedent(0), exyRs1y, s0s1 )
 
-      val allxRxs0x = AllVar( x, Atom( r, List(x, HOLApp(fs0, x)) ))
+      val allxRxs0x = HOLAllVar( x, HOLAtom( r, List(x, HOLApp(fs0, x)) ))
       val sr2 = ForallLeftRule( sr1, sr1.root.antecedent(0) , allxRxs0x, s1c )
       val proof_sk = sr2
 

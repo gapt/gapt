@@ -18,13 +18,13 @@ object CNFp {
   def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
   def transform( f: HOLFormula ): List[FClause] = f match {
-    case Atom( _, _ )    => List( FClause( List(), List( f ) ) )
-    case Neg( f2 )       => CNFn.transform( f2 )
-    case And( f1, f2 )   => CNFp.transform( f1 ) ++ CNFp.transform( f2 )
-    case Or( f1, f2 )    => times( CNFp.transform( f1 ), CNFp.transform( f2 ) )
-    case Imp( f1, f2 )   => times( CNFn.transform( f1 ), CNFp.transform( f2 ) )
-    case AllVar( _, f2 ) => CNFp.transform( f2 )
-    case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
+    case HOLAtom( _, _ )    => List( FClause( List(), List( f ) ) )
+    case HOLNeg( f2 )       => CNFn.transform( f2 )
+    case HOLAnd( f1, f2 )   => CNFp.transform( f1 ) ++ CNFp.transform( f2 )
+    case HOLOr( f1, f2 )    => times( CNFp.transform( f1 ), CNFp.transform( f2 ) )
+    case HOLImp( f1, f2 )   => times( CNFn.transform( f1 ), CNFp.transform( f2 ) )
+    case HOLAllVar( _, f2 ) => CNFp.transform( f2 )
+    case _                  => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 }
 
@@ -39,13 +39,13 @@ object CNFn {
   def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
   def transform( f: HOLFormula ): List[FClause] = f match {
-    case Atom( _, _ )   => List( FClause( List( f ), List() ) )
-    case Neg( f2 )      => CNFp.transform( f2 )
-    case And( f1, f2 )  => times( CNFn.transform( f1 ), CNFn.transform( f2 ) )
-    case Or( f1, f2 )   => CNFn.transform( f1 ) ++ CNFn.transform( f2 )
-    case Imp( f1, f2 )  => CNFp.transform( f1 ) ++ CNFn.transform( f2 )
-    case ExVar( _, f2 ) => CNFn.transform( f2 )
-    case _              => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
+    case HOLAtom( _, _ )   => List( FClause( List( f ), List() ) )
+    case HOLNeg( f2 )      => CNFp.transform( f2 )
+    case HOLAnd( f1, f2 )  => times( CNFn.transform( f1 ), CNFn.transform( f2 ) )
+    case HOLOr( f1, f2 )   => CNFn.transform( f1 ) ++ CNFn.transform( f2 )
+    case HOLImp( f1, f2 )  => CNFp.transform( f1 ) ++ CNFn.transform( f2 )
+    case HOLExVar( _, f2 ) => CNFn.transform( f2 )
+    case _                 => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 }
 
@@ -122,7 +122,7 @@ class TseitinCNF {
    * @return an atom either representing the subformula or f if f is already an atom
    */
   def addIfNotExists( f: FOLFormula ): FOLFormula = f match {
-    case Atom( h, args ) => f
+    case HOLAtom( h, args ) => f
     case _ =>
       if ( subformulaMap.isDefinedAt( f ) ) {
         subformulaMap( f )

@@ -5,7 +5,7 @@ import at.logic.proofs.lk.base.FSequent
 import at.logic.proofs.resolution.robinson._
 import at.logic.proofs.resolution.Clause
 import at.logic.proofs.occurrences.FormulaOccurrence
-import at.logic.language.hol.{ HOLVar, HOLConst, Atom, Function, And, Equation, Or, Imp, Neg, ExVar, AllVar, HOLExpression, HOLFormula }
+import at.logic.language.hol.{ HOLVar, HOLConst, HOLAtom, HOLFunction, HOLAnd, HOLEquation, HOLOr, HOLImp, HOLNeg, HOLExVar, HOLAllVar, HOLExpression, HOLFormula }
 import at.logic.language.fol.{ FOLVar, FOLConst, Atom => FOLAtom, Function => FOLFunction, And => FOLAnd, Equation => FOLEquation, Or => FOLOr, Imp => FOLImp, Neg => FOLNeg, ExVar => FOLExVar, AllVar => FOLAllVar, FOLExpression, FOLTerm, FOLFormula, Substitution }
 import at.logic.language.lambda.symbols.StringSymbol
 
@@ -50,18 +50,18 @@ object NameReplacement {
       case None => exp
     }
 
-    case Atom( x: HOLVar, args )          => Atom( x, args.map( a => rename_symbols( a, map ) ) )
-    case Atom( x: HOLConst, args )        => Atom( rename_symbols( x, map ).asInstanceOf[HOLConst], args.map( a => rename_symbols( a, map ) ) )
-    case Function( x: HOLVar, args, _ )   => Function( x, args.map( a => rename_symbols( a, map ) ) )
-    case Function( x: HOLConst, args, _ ) => Function( rename_symbols( x, map ).asInstanceOf[HOLConst], args.map( a => rename_symbols( a, map ) ) )
-    case And( x, y )                      => And( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case Equation( x, y )                 => Equation( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case Or( x, y )                       => Or( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case Imp( x, y )                      => Imp( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case Neg( x )                         => Neg( rename_symbols( x, map ) )
+    case HOLAtom( x: HOLVar, args )          => HOLAtom( x, args.map( a => rename_symbols( a, map ) ) )
+    case HOLAtom( x: HOLConst, args )        => HOLAtom( rename_symbols( x, map ).asInstanceOf[HOLConst], args.map( a => rename_symbols( a, map ) ) )
+    case HOLFunction( x: HOLVar, args, _ )   => HOLFunction( x, args.map( a => rename_symbols( a, map ) ) )
+    case HOLFunction( x: HOLConst, args, _ ) => HOLFunction( rename_symbols( x, map ).asInstanceOf[HOLConst], args.map( a => rename_symbols( a, map ) ) )
+    case HOLAnd( x, y )                      => HOLAnd( rename_symbols( x, map ), rename_symbols( y, map ) )
+    case HOLEquation( x, y )                 => HOLEquation( rename_symbols( x, map ), rename_symbols( y, map ) )
+    case HOLOr( x, y )                       => HOLOr( rename_symbols( x, map ), rename_symbols( y, map ) )
+    case HOLImp( x, y )                      => HOLImp( rename_symbols( x, map ), rename_symbols( y, map ) )
+    case HOLNeg( x )                         => HOLNeg( rename_symbols( x, map ) )
     // Variables are not renamed
-    case ExVar( x, f )                    => ExVar( x, rename_symbols( f, map ) )
-    case AllVar( x, f )                   => AllVar( x, rename_symbols( f, map ) )
+    case HOLExVar( x, f )                    => HOLExVar( x, rename_symbols( f, map ) )
+    case HOLAllVar( x, f )                   => HOLAllVar( x, rename_symbols( f, map ) )
   }
 
   def rename_symbols( exp: FOLExpression, map: SymbolMap ): FOLExpression = exp match {

@@ -66,23 +66,23 @@ object HOLPosition {
     else {
       val rest = pos.tail
       ( pos.head, exp ) match {
-        case ( 1, Neg( subExp ) ) =>
+        case ( 1, HOLNeg( subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
             case Some( subPos ) => Some( 2 :: subPos )
             case None           => None
           }
 
-        case ( _, Neg( _ ) ) => None
+        case ( _, HOLNeg( _ ) ) => None
 
-        case ( 1, ExVar( _, subExp ) ) =>
+        case ( 1, HOLExVar( _, subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
             case Some( subPos ) => Some( 2 :: 1 :: subPos )
             case None           => None
           }
 
-        case ( _, ExVar( _, _ ) ) => None
+        case ( _, HOLExVar( _, _ ) ) => None
 
-        case ( 1, AllVar( _, subExp ) ) =>
+        case ( 1, HOLAllVar( _, subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
             case Some( subPos ) => Some( 2 :: 1 :: subPos )
             case None           => None
@@ -135,7 +135,7 @@ object HOLPosition {
     else {
       val rest = pos.tail
       exp match {
-        case Neg( subExp ) =>
+        case HOLNeg( subExp ) =>
           if ( pos.head == 2 )
             1 :: toHOLPosition( subExp )( rest )
           else
@@ -148,12 +148,12 @@ object HOLPosition {
             2 :: toHOLPosition( right )( rest )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
-        case ExVar( _, subExp ) =>
+        case HOLExVar( _, subExp ) =>
           if ( pos.head == 2 && rest.headOption == Some( 1 ) )
             1 :: toHOLPosition( subExp )( rest.tail )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
-        case AllVar( _, subExp ) =>
+        case HOLAllVar( _, subExp ) =>
           if ( pos.head == 2 && rest.headOption == Some( 1 ) )
             1 :: toHOLPosition( subExp )( rest.tail )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
@@ -187,7 +187,7 @@ object HOLPosition {
     else {
       val rest = pos.tail
       exp match {
-        case Neg( subExp ) =>
+        case HOLNeg( subExp ) =>
           if ( pos.head == 2 )
             definesHOLPosition( subExp )( rest )
           else
@@ -200,12 +200,12 @@ object HOLPosition {
             definesHOLPosition( right )( rest )
           else false
 
-        case ExVar( _, subExp ) =>
+        case HOLExVar( _, subExp ) =>
           if ( pos.head == 2 && rest.headOption == Some( 1 ) )
             definesHOLPosition( subExp )( rest.tail )
           else false
 
-        case AllVar( _, subExp ) =>
+        case HOLAllVar( _, subExp ) =>
           if ( pos.head == 2 && rest.headOption == Some( 1 ) )
             definesHOLPosition( subExp )( rest.tail )
           else false
@@ -258,10 +258,10 @@ class HOLPosition( val list: List[Int] ) {
 
 object BinaryConnective {
   def unapply( exp: HOLExpression ) = exp match {
-    case And( l, r )      => Some( l, r )
-    case Or( l, r )       => Some( l, r )
-    case Imp( l, r )      => Some( l, r )
-    case Equation( l, r ) => Some( l, r )
-    case _                => None
+    case HOLAnd( l, r )      => Some( l, r )
+    case HOLOr( l, r )       => Some( l, r )
+    case HOLImp( l, r )      => Some( l, r )
+    case HOLEquation( l, r ) => Some( l, r )
+    case _                   => None
   }
 }

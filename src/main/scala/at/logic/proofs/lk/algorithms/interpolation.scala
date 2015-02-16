@@ -41,7 +41,7 @@ object Interpolate {
 
       if ( npart.contains( oant ) && npart.contains( osuc ) ) ( WeakeningRightRule( p, BottomC ), Axiom( BottomC :: Nil, Nil ), BottomC )
       else if ( npart.contains( oant ) && ppart.contains( osuc ) ) ( p, p, form )
-      else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), Neg( form ) )
+      else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), HOLNeg( form ) )
       else if ( ppart.contains( oant ) && ppart.contains( osuc ) ) ( Axiom( Nil, TopC :: Nil ), WeakeningLeftRule( p, TopC ), TopC )
       else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
     }
@@ -87,13 +87,13 @@ object Interpolate {
       val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
 
       if ( npart.contains( m ) ) {
-        val ipl = Or( up1_I, up2_I )
+        val ipl = HOLOr( up1_I, up2_I )
         val np = OrRightRule( AndRightRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
         val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
 
         ( np, pp, ipl )
       } else if ( ppart.contains( m ) ) {
-        val ipl = And( up1_I, up2_I )
+        val ipl = HOLAnd( up1_I, up2_I )
         val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
         val pp = AndLeftRule( AndRightRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 
@@ -105,7 +105,7 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       m.formula match {
-        case And( l, r ) => // TODO - is this possible in a less ugly way, i.e. without matching? -- analogously below
+        case HOLAnd( l, r ) => // TODO - is this possible in a less ugly way, i.e. without matching? -- analogously below
           if ( npart.contains( m ) ) ( AndLeft1Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, AndLeft1Rule( up_pproof, l, r ), up_I )
           else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
@@ -116,7 +116,7 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       m.formula match {
-        case And( l, r ) =>
+        case HOLAnd( l, r ) =>
           if ( npart.contains( m ) ) ( AndLeft2Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, AndLeft2Rule( up_pproof, l, r ), up_I )
           else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
@@ -128,13 +128,13 @@ object Interpolate {
       val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
 
       if ( npart.contains( m ) ) {
-        val ipl = Or( up1_I, up2_I )
+        val ipl = HOLOr( up1_I, up2_I )
         val np = OrRightRule( OrLeftRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
         val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
 
         ( np, pp, ipl )
       } else if ( ppart.contains( m ) ) {
-        val ipl = And( up1_I, up2_I )
+        val ipl = HOLAnd( up1_I, up2_I )
         val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
         val pp = AndLeftRule( OrLeftRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 
@@ -146,7 +146,7 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       m.formula match {
-        case Or( l, r ) =>
+        case HOLOr( l, r ) =>
           if ( npart.contains( m ) ) ( OrRight1Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, OrRight1Rule( up_pproof, l, r ), up_I )
           else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
@@ -157,7 +157,7 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       m.formula match {
-        case Or( l, r ) =>
+        case HOLOr( l, r ) =>
           if ( npart.contains( m ) ) ( OrRight2Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, OrRight2Rule( up_pproof, l, r ), up_I )
           else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
@@ -185,13 +185,13 @@ object Interpolate {
       val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
 
       if ( npart.contains( m ) ) {
-        val ipl = Or( up1_I, up2_I )
+        val ipl = HOLOr( up1_I, up2_I )
         val np = OrRightRule( ImpLeftRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
         val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
 
         ( np, pp, ipl )
       } else if ( ppart.contains( m ) ) {
-        val ipl = And( up1_I, up2_I )
+        val ipl = HOLAnd( up1_I, up2_I )
         val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
         val pp = AndLeftRule( ImpLeftRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 

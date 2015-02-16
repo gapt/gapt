@@ -98,29 +98,29 @@ object DrawSequent {
   }
 
   def formulaToLatexString( t: HOLExpression, outermost: Boolean = true ): String = t match {
-    case Neg( f ) => """\neg """ + formulaToLatexString( f, outermost = false )
-    case And( f1, f2 ) =>
+    case HOLNeg( f ) => """\neg """ + formulaToLatexString( f, outermost = false )
+    case HOLAnd( f1, f2 ) =>
       if ( outermost )
         formulaToLatexString( f1, outermost = false ) + """ \wedge """ + formulaToLatexString( f2, outermost = false )
       else
         "(" + formulaToLatexString( f1, outermost = false ) + """ \wedge """ + formulaToLatexString( f2, outermost = false ) + ")"
-    case Or( f1, f2 ) =>
+    case HOLOr( f1, f2 ) =>
       if ( outermost )
         formulaToLatexString( f1, outermost = false ) + """ \vee """ + formulaToLatexString( f2, outermost = false )
       else
         "(" + formulaToLatexString( f1, outermost = false ) + """ \vee """ + formulaToLatexString( f2, outermost = false ) + ")"
 
-    case Imp( f1, f2 ) =>
+    case HOLImp( f1, f2 ) =>
       if ( outermost )
         formulaToLatexString( f1, outermost = false ) + """ \supset """ + formulaToLatexString( f2, outermost = false )
       else
         "(" + formulaToLatexString( f1, outermost = false ) + """ \supset """ + formulaToLatexString( f2, outermost = false ) + ")"
-    case ExVar( v, f ) =>
+    case HOLExVar( v, f ) =>
       if ( v.exptype == Tindex -> Tindex )
         "(" + """\exists^{hyp} """ + formulaToLatexString( v, outermost = false ) + """)""" + formulaToLatexString( f, outermost = false )
       else
         "(" + """\exists """ + formulaToLatexString( v, outermost = false ) + """)""" + formulaToLatexString( f, outermost = false )
-    case AllVar( v, f ) =>
+    case HOLAllVar( v, f ) =>
       if ( v.exptype == Tindex -> Tindex )
         "(" + """\forall^{hyp} """ + formulaToLatexString( v, outermost = false ) + """)""" + formulaToLatexString( f, outermost = false )
       else
@@ -144,7 +144,7 @@ object DrawSequent {
         else nameToLatexString( constant.name.toString )
       } + { if ( indices.isEmpty ) "" else indices.map( x => formulaToLatexString( x ) ).mkString( "_{", ",", "}" ) }
     case t: IntegerTerm => parseIntegerTerm( t, 0 )
-    case Atom( pred, args ) =>
+    case HOLAtom( pred, args ) =>
       val name = pred match {
         case HOLConst( n, _ ) => n
         case HOLVar( n, _ )   => n
@@ -173,7 +173,7 @@ object DrawSequent {
       "\\textbf {" + name.toString + "}"
     case HOLVar( name, _ )   => name
     case HOLConst( name, _ ) => name
-    case Function( f, args, _ ) =>
+    case HOLFunction( f, args, _ ) =>
       val name = f match {
         case HOLConst( n, _ ) => n
         case HOLVar( n, _ )   => n
@@ -204,7 +204,7 @@ object DrawSequent {
   }
 
   def parseNestedUnaryFunction( parent_name: String, t: HOLExpression, n: Int ): String = t match {
-    case Function( name, args, _ ) =>
+    case HOLFunction( name, args, _ ) =>
       if ( args.size == 1 && name.toString == parent_name ) parseNestedUnaryFunction( parent_name, args.head, n + 1 )
       else parent_name + { if ( n > 1 ) "^{" + n.toString + "}" else "" } + "(" + formulaToLatexString( t ) + ")"
     case _ => parent_name + { if ( n > 1 ) "^{" + n.toString + "}" else "" } + "(" + formulaToLatexString( t ) + ")"

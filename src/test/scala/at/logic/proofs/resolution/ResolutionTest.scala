@@ -12,7 +12,7 @@ import org.specs2.runner.JUnitRunner
 import at.logic.proofs.resolution.robinson._
 import at.logic.proofs.occurrences._
 import at.logic.language.fol._
-import at.logic.language.hol.{Atom => HOLAtom, Function => HOLFunction, AllVar => HOLAllVar, Or => HOLOr, Neg => HOLNeg, Substitution => HOLSubstitution, HOLConst, HOLVar}
+import at.logic.language.hol.{HOLAtom => HOLAtom, HOLFunction => HOLFunction, HOLAllVar => HOLAllVar, HOLOr => HOLOr, HOLNeg => HOLNeg, Substitution => HOLSubstitution, HOLConst, HOLVar}
 import at.logic.language.lambda.types._
 import at.logic.proofs.lk.base._
 

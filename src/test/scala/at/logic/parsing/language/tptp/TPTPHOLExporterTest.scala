@@ -15,8 +15,8 @@ class TPTPHOLExporterTest extends SpecificationWithJUnit {
       val y = HOLVar("y", To)
       val c = HOLConst("c", Ti)
 
-      val ax = Atom(x, List(c))
-      val ay = Atom(y)
+      val ax = HOLAtom(x, List(c))
+      val ay = HOLAtom(y)
 
       println(TPTPHOLExporter(List(FSequent(Nil, List(ax,ay)))))
 

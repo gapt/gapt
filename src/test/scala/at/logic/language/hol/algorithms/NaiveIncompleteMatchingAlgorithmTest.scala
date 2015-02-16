@@ -67,8 +67,8 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
       val a = HOLConst("a", Ti)
       val p = HOLConst("p", Ti->Ti)
       val x = HOLVar("x", Ti)
-      val px = Function(p, x::Nil)
-      val at = Function(lt, a::px::Nil)
+      val px = HOLFunction(p, x::Nil)
+      val at = HOLFunction(lt, a::px::Nil)
       val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(at, at)
       subst must beEqualTo (Some(Substitution()))
     }
@@ -78,9 +78,9 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
       val a = HOLConst("a", Ti)
       val p = HOLConst("p", Ti->Ti)
       val x = HOLVar("x", Ti)
-      val px = Function(p, x::Nil)
-      val at = Function(lt, a::px::Nil)
-      val at2 = Function(lt, a::px::Nil) // Is this a copy?
+      val px = HOLFunction(p, x::Nil)
+      val at = HOLFunction(lt, a::px::Nil)
+      val at2 = HOLFunction(lt, a::px::Nil) // Is this a copy?
       val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(at, at2)
       subst must beEqualTo (Some(Substitution()))
     }

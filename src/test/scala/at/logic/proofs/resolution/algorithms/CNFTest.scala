@@ -1,7 +1,7 @@
 package at.logic.proofs.resolution.algorithms
 
 import at.logic.language.fol.{And, Atom, FOLConst, Imp, Neg, Or}
-import at.logic.language.hol.{Atom => HOLAtom}
+import at.logic.language.hol.{HOLAtom => HOLAtom}
 import at.logic.proofs.resolution.FClause
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit

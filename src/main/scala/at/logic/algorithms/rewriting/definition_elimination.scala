@@ -49,14 +49,14 @@ class DefinitionElimination extends at.logic.utils.logging.Logger {
   def replaceAll_informula( dmap: DefinitionsMap, e: HOLFormula ): HOLFormula = c( replaceAll_in( dmap, e ) )
   def replaceAll_in( dmap: DefinitionsMap, e: HOLExpression ): HOLExpression = {
     e match {
-      case HOLConst( _, _ ) => try_to_match( dmap, e )
-      case HOLVar( _, _ )   => try_to_match( dmap, e )
-      case Neg( s )         => Neg( replaceAll_informula( dmap, s ) )
-      case And( s, t )      => And( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case Or( s, t )       => Or( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case Imp( s, t )      => Imp( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case AllVar( x, t )   => AllVar( x, replaceAll_informula( dmap, t ) )
-      case ExVar( x, t )    => ExVar( x, replaceAll_informula( dmap, t ) )
+      case HOLConst( _, _ )  => try_to_match( dmap, e )
+      case HOLVar( _, _ )    => try_to_match( dmap, e )
+      case HOLNeg( s )       => HOLNeg( replaceAll_informula( dmap, s ) )
+      case HOLAnd( s, t )    => HOLAnd( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
+      case HOLOr( s, t )     => HOLOr( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
+      case HOLImp( s, t )    => HOLImp( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
+      case HOLAllVar( x, t ) => HOLAllVar( x, replaceAll_informula( dmap, t ) )
+      case HOLExVar( x, t )  => HOLExVar( x, replaceAll_informula( dmap, t ) )
       case HOLApp( s, t ) =>
         val fullmatch = try_to_match( dmap, e )
         if ( fullmatch == e )
@@ -93,7 +93,7 @@ class DefinitionElimination extends at.logic.utils.logging.Logger {
 
   private def eliminate_from_( defs: ProcessedDefinitionsMap, f: HOLFormula ): HOLFormula = {
     f match {
-      case Atom( e, args ) => {
+      case HOLAtom( e, args ) => {
         val sym = e match {
           case v: HOLVar   => v.sym
           case c: HOLConst => c.sym
@@ -117,13 +117,13 @@ class DefinitionElimination extends at.logic.utils.logging.Logger {
           case _ => f
         }
       }
-      case Neg( f1 )       => Neg( eliminate_from_( defs, f1 ) )
-      case AllVar( q, f1 ) => AllVar( q, eliminate_from_( defs, f1 ) )
-      case ExVar( q, f1 )  => ExVar( q, eliminate_from_( defs, f1 ) )
-      case And( f1, f2 )   => And( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case Imp( f1, f2 )   => Imp( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case Or( f1, f2 )    => Or( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case _               => println( "Warning: unhandled case in definition elimination!" ); f
+      case HOLNeg( f1 )       => HOLNeg( eliminate_from_( defs, f1 ) )
+      case HOLAllVar( q, f1 ) => HOLAllVar( q, eliminate_from_( defs, f1 ) )
+      case HOLExVar( q, f1 )  => HOLExVar( q, eliminate_from_( defs, f1 ) )
+      case HOLAnd( f1, f2 )   => HOLAnd( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
+      case HOLImp( f1, f2 )   => HOLImp( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
+      case HOLOr( f1, f2 )    => HOLOr( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
+      case _                  => println( "Warning: unhandled case in definition elimination!" ); f
     }
   }
 
@@ -190,12 +190,12 @@ class DefinitionElimination extends at.logic.utils.logging.Logger {
 
       case AndLeft1Rule( uproof, root, aux, prin ) =>
         debug( "And 1 Left!" )
-        val vf = prin.formula match { case And( _, x ) => x }
+        val vf = prin.formula match { case HOLAnd( _, x ) => x }
         handleUnaryLogicalRule( rewrite, uproof, root, aux, vf, AndLeft1Rule.apply )
 
       case AndLeft2Rule( uproof, root, aux, prin ) =>
         debug( "And 2 Left!" )
-        val vf = prin.formula match { case And( x, _ ) => x }
+        val vf = prin.formula match { case HOLAnd( x, _ ) => x }
         handleUnaryLogicalRule( rewrite, uproof, root, aux, vf, switchargs( AndLeft2Rule.apply ) )
 
       case AndRightRule( uproof1, uproof2, root, aux1, aux2, prin ) =>
@@ -204,12 +204,12 @@ class DefinitionElimination extends at.logic.utils.logging.Logger {
 
       case OrRight1Rule( uproof, root, aux, prin ) =>
         debug( "Or 1 Right" )
-        val vf = prin.formula match { case Or( _, x ) => x }
+        val vf = prin.formula match { case HOLOr( _, x ) => x }
         handleUnaryLogicalRule( rewrite, uproof, root, aux, vf, OrRight1Rule.apply )
 
       case OrRight2Rule( uproof, root, aux, prin ) =>
         debug( "Or 2 Right" )
-        val vf = prin.formula match { case Or( x, _ ) => x }
+        val vf = prin.formula match { case HOLOr( x, _ ) => x }
         handleUnaryLogicalRule( rewrite, uproof, root, aux, vf, switchargs( OrRight2Rule.apply ) )
 
       case OrLeftRule( uproof1, uproof2, root, aux1, aux2, prin ) =>

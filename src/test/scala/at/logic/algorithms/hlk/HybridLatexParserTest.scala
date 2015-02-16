@@ -118,7 +118,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCop
       checkReplacement(fa,ga,t1,t1) match {
         case Equal => ok
         case Different => ko("Terms "+t1+" and t2 considered as (completely) different, but they are equal!")
-        case EqualModuloEquality(path) => ko("Found an equality modulo "+Equation(fa.asInstanceOf[HOLExpression],ga.asInstanceOf[HOLExpression])+" but should be equal!")
+        case EqualModuloEquality(path) => ko("Found an equality modulo "+HOLEquation(fa.asInstanceOf[HOLExpression],ga.asInstanceOf[HOLExpression])+" but should be equal!")
       }
       ok
     }
@@ -169,7 +169,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCop
                                                                        HOLConst(x,cmap(x)) }
       val axiom =  HLKHOLParser.ASTtoHOL( naming, HybridLatexParser.parseFormula("(all x all y all z (x+(y+z)=(x+y)+z))"))
       val instance = HLKHOLParser.ASTtoHOL( naming, HybridLatexParser.parseFormula("a+((1+x)+y)=(a+(1+x))+y"))
-      val t1 = Function(HOLConst("+",Ti -> (Ti -> Ti)),List(
+      val t1 = HOLFunction(HOLConst("+",Ti -> (Ti -> Ti)),List(
                           HOLConst("1", Ti),
                           HOLVar("x",Ti)))
       val t2 = HOLConst("a", Ti)

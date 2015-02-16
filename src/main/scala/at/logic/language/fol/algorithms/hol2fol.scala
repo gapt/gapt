@@ -3,7 +3,7 @@ package at.logic.language.fol.algorithms
 import at.logic.language.fol.{ Substitution => FOLSubstitution, _ }
 import at.logic.language.hol
 import at.logic.language.hol.logicSymbols._
-import at.logic.language.hol.{ AllVar => HOLAllVar, And => HOLAnd, Atom => HOLAtom, ExVar => HOLExVar, Function => HOLFunction, Imp => HOLImp, Neg => HOLNeg, Or => HOLOr, Substitution => HOLSubstitution, _ }
+import at.logic.language.hol.{ HOLAllVar => HOLAllVar, HOLAnd => HOLAnd, HOLAtom => HOLAtom, HOLExVar => HOLExVar, HOLFunction => HOLFunction, HOLImp => HOLImp, HOLNeg => HOLNeg, HOLOr => HOLOr, Substitution => HOLSubstitution, _ }
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.language.lambda.types.{ FunctionType, TA, Ti, To }
 import at.logic.language.schema.{ IntZero, IntegerTerm, Succ, foConst, foVar, indexedFOVar }

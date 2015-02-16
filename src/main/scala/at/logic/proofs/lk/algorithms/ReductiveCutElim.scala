@@ -136,17 +136,17 @@ object ReductiveCutElim {
     case ContractionRightRule( up, _, aux, _, _ )   => ContractionRightRule( cutElim( up ), aux.formula )
     case AndRightRule( up1, up2, _, aux1, aux2, _ ) => AndRightRule( cutElim( up1 ), cutElim( up2 ), aux1.formula, aux2.formula )
     case AndLeft1Rule( up, _, aux, prin ) => prin.formula match {
-      case And( aux.formula, f ) => AndLeft1Rule( cutElim( up ), aux.formula, f )
+      case HOLAnd( aux.formula, f ) => AndLeft1Rule( cutElim( up ), aux.formula, f )
     }
     case AndLeft2Rule( up, _, aux, prin ) => prin.formula match {
-      case And( f, aux.formula ) => AndLeft2Rule( cutElim( up ), f, aux.formula )
+      case HOLAnd( f, aux.formula ) => AndLeft2Rule( cutElim( up ), f, aux.formula )
     }
     case OrLeftRule( up1, up2, _, aux1, aux2, _ ) => OrLeftRule( cutElim( up1 ), cutElim( up2 ), aux1.formula, aux2.formula )
     case OrRight1Rule( up, _, aux, prin ) => prin.formula match {
-      case Or( aux.formula, f ) => OrRight1Rule( cutElim( up ), aux.formula, f )
+      case HOLOr( aux.formula, f ) => OrRight1Rule( cutElim( up ), aux.formula, f )
     }
     case OrRight2Rule( up, _, aux, prin ) => prin.formula match {
-      case Or( f, aux.formula ) => OrRight2Rule( cutElim( up ), f, aux.formula )
+      case HOLOr( f, aux.formula ) => OrRight2Rule( cutElim( up ), f, aux.formula )
     }
     case ImpLeftRule( up1, up2, _, aux1, aux2, _ )     => ImpLeftRule( cutElim( up1 ), cutElim( up2 ), aux1.formula, aux2.formula )
     case ImpRightRule( up, _, aux1, aux2, _ )          => ImpRightRule( cutElim( up ), aux1.formula, aux2.formula )
@@ -307,16 +307,16 @@ object ReductiveCutElim {
     case DefinitionRightRule( up, _, aux, prin ) if ( prin.formula != cutFormula ) =>
       DefinitionRightRule( CutRule( up, proof, cutFormula ), aux.formula, prin.formula )
     case AndLeft1Rule( up, _, aux, prin ) => prin.formula match {
-      case And( aux.formula, f ) => AndLeft1Rule( CutRule( up, proof, cutFormula ), aux.formula, f )
+      case HOLAnd( aux.formula, f ) => AndLeft1Rule( CutRule( up, proof, cutFormula ), aux.formula, f )
     }
     case AndLeft2Rule( up, _, aux, prin ) => prin.formula match {
-      case And( f, aux.formula ) => AndLeft2Rule( CutRule( up, proof, cutFormula ), f, aux.formula )
+      case HOLAnd( f, aux.formula ) => AndLeft2Rule( CutRule( up, proof, cutFormula ), f, aux.formula )
     }
     case OrRight1Rule( up, _, aux, prin ) if prin.formula != cutFormula => prin.formula match {
-      case Or( aux.formula, f ) => OrRight1Rule( CutRule( up, proof, cutFormula ), aux.formula, f )
+      case HOLOr( aux.formula, f ) => OrRight1Rule( CutRule( up, proof, cutFormula ), aux.formula, f )
     }
     case OrRight2Rule( up, _, aux, prin ) if prin.formula != cutFormula => prin.formula match {
-      case Or( f, aux.formula ) => OrRight2Rule( CutRule( up, proof, cutFormula ), f, aux.formula )
+      case HOLOr( f, aux.formula ) => OrRight2Rule( CutRule( up, proof, cutFormula ), f, aux.formula )
     }
     case ImpRightRule( up, _, aux1, aux2, prin ) if prin.formula != cutFormula =>
       ImpRightRule( CutRule( up, proof, cutFormula ), aux1.formula, aux2.formula )
@@ -348,16 +348,16 @@ object ReductiveCutElim {
     case DefinitionRightRule( up, _, aux, prin ) =>
       DefinitionRightRule( CutRule( proof, up, cutFormula ), aux.formula, prin.formula )
     case AndLeft1Rule( up, _, aux, prin ) if prin.formula != cutFormula => prin.formula match {
-      case And( aux.formula, f ) => AndLeft1Rule( CutRule( proof, up, cutFormula ), aux.formula, f )
+      case HOLAnd( aux.formula, f ) => AndLeft1Rule( CutRule( proof, up, cutFormula ), aux.formula, f )
     }
     case AndLeft2Rule( up, _, aux, prin ) if prin.formula != cutFormula => prin.formula match {
-      case And( f, aux.formula ) => AndLeft2Rule( CutRule( proof, up, cutFormula ), f, aux.formula )
+      case HOLAnd( f, aux.formula ) => AndLeft2Rule( CutRule( proof, up, cutFormula ), f, aux.formula )
     }
     case OrRight1Rule( up, _, aux, prin ) => prin.formula match {
-      case Or( aux.formula, f ) => OrRight1Rule( CutRule( proof, up, cutFormula ), aux.formula, f )
+      case HOLOr( aux.formula, f ) => OrRight1Rule( CutRule( proof, up, cutFormula ), aux.formula, f )
     }
     case OrRight2Rule( up, _, aux, prin ) => prin.formula match {
-      case Or( f, aux.formula ) => OrRight2Rule( CutRule( proof, up, cutFormula ), f, aux.formula )
+      case HOLOr( f, aux.formula ) => OrRight2Rule( CutRule( proof, up, cutFormula ), f, aux.formula )
     }
     case ImpRightRule( up, _, aux1, aux2, prin ) =>
       ImpRightRule( CutRule( proof, up, cutFormula ), aux1.formula, aux2.formula )

@@ -25,11 +25,11 @@ trait Interpretation {
 
   // Interpret an arbitrary formula.
   def interpret( f: HOLFormula ): Boolean = f match {
-    case And( f1, f2 ) => interpret( f1 ) && interpret( f2 )
-    case Or( f1, f2 )  => interpret( f1 ) || interpret( f2 )
-    case Imp( f1, f2 ) => !interpret( f1 ) || interpret( f2 )
-    case Neg( f1 )     => !interpret( f1 )
-    case Atom( _, _ )  => interpretAtom( f )
+    case HOLAnd( f1, f2 ) => interpret( f1 ) && interpret( f2 )
+    case HOLOr( f1, f2 )  => interpret( f1 ) || interpret( f2 )
+    case HOLImp( f1, f2 ) => !interpret( f1 ) || interpret( f2 )
+    case HOLNeg( f1 )     => !interpret( f1 )
+    case HOLAtom( _, _ )  => interpretAtom( f )
   }
 
 }
@@ -47,7 +47,7 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
   var atom_map: Map[HOLFormula, Int] = new HashMap[HOLFormula, Int]
 
   // Checks if f is valid using MiniSAT.
-  def isValid( f: HOLFormula ) = solve( Neg( f ) ) match {
+  def isValid( f: HOLFormula ) = solve( HOLNeg( f ) ) match {
     case Some( _ ) => false
     case None      => true
   }
@@ -182,8 +182,8 @@ class MiniSATProver extends Prover with at.logic.utils.logging.Logger with at.lo
 
   override def isValid( seq: FSequent ): Boolean = {
     val sat = new MiniSAT()
-    trace( "calling MiniSAT.isValid( " + Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) + ")" )
-    sat.isValid( Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) )
+    trace( "calling MiniSAT.isValid( " + HOLImp( HOLAnd( seq.antecedent.toList ), HOLOr( seq.succedent.toList ) ) + ")" )
+    sat.isValid( HOLImp( HOLAnd( seq.antecedent.toList ), HOLOr( seq.succedent.toList ) ) )
   }
 
   def isInstalled(): Boolean =

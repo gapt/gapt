@@ -31,13 +31,13 @@ class LKTest extends SpecificationWithJUnit {
 
   val c1 = HOLVar("a", Ti->To)
   val v1 = HOLVar("x", Ti)
-  val f1 = Atom(c1,v1::Nil)
+  val f1 = HOLAtom(c1,v1::Nil)
   val ax = Axiom(f1::Nil, f1::Nil)
   val a1 = ax // Axiom return a pair of the proof and a mapping and we want only the proof here
   val c2 = HOLVar("b", Ti->To)
   val v2 = HOLVar("c", Ti)
-  val f2 = Atom(c1,v1::Nil)
-  val f3 = Atom(HOLVar("e", To))
+  val f2 = HOLAtom(c1,v1::Nil)
+  val f3 = HOLAtom(HOLVar("e", To))
   val a2 = Axiom(f2::f3::Nil, f2::f3::Nil)
   val a3 = Axiom(f2::f2::f3::Nil, f2::f2::f3::Nil)
   val ap = Axiom(f1::f1::Nil, Nil)
@@ -143,7 +143,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = AndRightRule(a1, a2, f1, f2)
       val (up1, up2, Sequent(x,y), aux1, aux2, prin1) = AndRightRule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (And(f1,f2))
+        (prin1.formula) must beEqualTo (HOLAnd(f1,f2))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (y) must contain(prin1)
@@ -154,7 +154,7 @@ class LKTest extends SpecificationWithJUnit {
       }
       "- Context should stay unchanged with regard to multiset equality" in {
         (x.toList.map(x => x.formula)) must beEqualTo ((up1.root.antecedent.toList ++ up2.root.antecedent.toList).map(x => x.formula))
-        ((y.toList.map(x => x.formula).filterNot(x => x == And(f1,f2)))) must beEqualTo (((up1.root.succedent.filterNot(_ == aux1)).toList ++ (up2.root.succedent.filterNot(_ ==  aux2)).toList).map(x => x.formula))
+        ((y.toList.map(x => x.formula).filterNot(x => x == HOLAnd(f1,f2)))) must beEqualTo (((up1.root.succedent.filterNot(_ == aux1)).toList ++ (up2.root.succedent.filterNot(_ ==  aux2)).toList).map(x => x.formula))
       }
     }
 
@@ -162,7 +162,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = AndLeft1Rule(a2, f2, f1)
       val (up1,  Sequent(x,y), aux1, prin1) = AndLeft1Rule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (And(f2,f1))
+        (prin1.formula) must beEqualTo (HOLAnd(f2,f1))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (x) must contain(prin1)
@@ -180,7 +180,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = AndLeft2Rule(a2, f1, f2)
       val (up1,  Sequent(x,y), aux1, prin1) = AndLeft2Rule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (And(f1,f2))
+        (prin1.formula) must beEqualTo (HOLAnd(f1,f2))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (x) must contain(prin1)
@@ -197,7 +197,7 @@ class LKTest extends SpecificationWithJUnit {
     "work for AndLeftRule" in {
       val a = AndLeftRule(a2, f1, f3)
       "- Principal formula is created correctly" in {
-        (a.prin.head.formula) must beEqualTo (And(f1,f3))
+        (a.prin.head.formula) must beEqualTo (HOLAnd(f1,f3))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (a.root.antecedent) must contain(a.prin.head)
@@ -209,7 +209,7 @@ class LKTest extends SpecificationWithJUnit {
       }
 
       "- Principal formula is created correctly when auxiliary formulas are equal" in {
-        (pr3.prin.head.formula) must beEqualTo (And(f1,f1))
+        (pr3.prin.head.formula) must beEqualTo (HOLAnd(f1,f1))
       }
 
       "- Lower sequent must not contain the auxiliary formulas when auxiliary formulas are equal" in {
@@ -221,7 +221,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = OrLeftRule(a1, a2, f1, f2)
       val (up1, up2, Sequent(x,y), aux1, aux2, prin1) = OrLeftRule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (Or(f1,f2))
+        (prin1.formula) must beEqualTo (HOLOr(f1,f2))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (x) must contain(prin1)
@@ -239,7 +239,7 @@ class LKTest extends SpecificationWithJUnit {
         "(1)" in {
           // get descendant of occurrence of left auxiliary formula
           a.getDescendantInLowerSequent(a1.root.antecedent(0)) must beLike {
-            case Some(x) => x.formula == Or(f1, f2) must_== true
+            case Some(x) => x.formula == HOLOr(f1, f2) must_== true
             case None => ko
           }
         }
@@ -255,7 +255,7 @@ class LKTest extends SpecificationWithJUnit {
 
     "work for OrRightRule" in {
       "- Principal formula is created correctly when auxiliary formulas are equal" in {
-        (pr1.prin.head.formula) must beEqualTo (Or(f1,f1))
+        (pr1.prin.head.formula) must beEqualTo (HOLOr(f1,f1))
       }
 
       "- Lower sequent must not contain the auxiliary formulas when auxiliary formulas are equal" in {
@@ -267,7 +267,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = OrRight1Rule(a2, f2, f1)
       val (up1,  Sequent(x,y), aux1, prin1) = OrRight1Rule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (Or(f2,f1))
+        (prin1.formula) must beEqualTo (HOLOr(f2,f1))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (y) must contain(prin1)
@@ -285,7 +285,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = OrRight2Rule(a2, f1, f2)
       val (up1,  Sequent(x,y), aux1, prin1) = OrRight2Rule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (Or(f1,f2))
+        (prin1.formula) must beEqualTo (HOLOr(f1,f2))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (y) must contain(prin1)
@@ -303,7 +303,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = ImpLeftRule(a1, a2, f1, f2)
       val (up1, up2, Sequent(x,y), aux1, aux2, prin1) = ImpLeftRule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (Imp(f1,f2))
+        (prin1.formula) must beEqualTo (HOLImp(f1,f2))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (x) must contain(prin1)
@@ -322,7 +322,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = ImpRightRule(a2, f2, f2)
       val (up1,  Sequent(x,y), aux1, aux2, prin1) = ImpRightRule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (Imp(f2,f2))
+        (prin1.formula) must beEqualTo (HOLImp(f2,f2))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (y) must contain(prin1)
@@ -341,7 +341,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = NegRightRule(a2, f2)
       val (up1,  Sequent(x,y), aux1, prin1) = NegRightRule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (Neg(f2))
+        (prin1.formula) must beEqualTo (HOLNeg(f2))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (y) must contain(prin1)
@@ -359,7 +359,7 @@ class LKTest extends SpecificationWithJUnit {
       val a = NegLeftRule(a2, f2)
       val (up1, Sequent(x,y), aux1, prin1) = NegLeftRule.unapply(a).get
       "- Principal formula is created correctly" in {
-        (prin1.formula) must beEqualTo (Neg(f2))
+        (prin1.formula) must beEqualTo (HOLNeg(f2))
       }
       "- Principal formula must be contained in the right part of the sequent" in {
         (x) must contain(prin1)
@@ -379,13 +379,13 @@ class LKTest extends SpecificationWithJUnit {
       val subst = HOLAbs( x, HOLApp( q, x ) ) // lambda x. q(x)
       val p = HOLVar( "p", (Ti -> To) -> To )
       val a = HOLVar( "a", Ti )
-      val qa = Atom( q, a::Nil )
-      val pl = Atom( p, subst::Nil )
-      val aux = Or( pl, qa )                  // p(lambda x. q(x)) or q(a)
+      val qa = HOLAtom( q, a::Nil )
+      val pl = HOLAtom( p, subst::Nil )
+      val aux = HOLOr( pl, qa )                  // p(lambda x. q(x)) or q(a)
       val z = HOLVar( "Z", Ti -> To )
-      val pz = Atom( p, z::Nil )
-      val za = Atom( z, a::Nil )
-      val main = AllVar( z, Or( pz, za ) )    // forall lambda z. p(z) or z(a)
+      val pz = HOLAtom( p, z::Nil )
+      val za = HOLAtom( z, a::Nil )
+      val main = HOLAllVar( z, HOLOr( pz, za ) )    // forall lambda z. p(z) or z(a)
       val ax = Axiom(aux::Nil, Nil)
       val rule = ForallLeftRule(ax, aux, main, subst)
       val (up1,  Sequent(ant,succ), aux1, prin1, term) = ForallLeftRule.unapply(rule).get
@@ -404,13 +404,13 @@ class LKTest extends SpecificationWithJUnit {
       val x = HOLVar( "X", Ti -> To)            // eigenvar
       val p = HOLVar( "p", (Ti -> To) -> To )
       val a = HOLVar( "a", Ti )
-      val xa = Atom( x, a::Nil )
-      val px = Atom( p, x::Nil )
-      val aux = Or( px, xa )                  // p(x) or x(a)
+      val xa = HOLAtom( x, a::Nil )
+      val px = HOLAtom( p, x::Nil )
+      val aux = HOLOr( px, xa )                  // p(x) or x(a)
       val z = HOLVar( "Z", Ti -> To )
-      val pz = Atom( p, z::Nil )
-      val za = Atom( z, a::Nil )
-      val main = AllVar( z, Or( pz, za ) )    // forall lambda z. p(z) or z(a)
+      val pz = HOLAtom( p, z::Nil )
+      val za = HOLAtom( z, a::Nil )
+      val main = HOLAllVar( z, HOLOr( pz, za ) )    // forall lambda z. p(z) or z(a)
       val ax = Axiom(Nil, aux::Nil )
       val rule = ForallRightRule(ax, aux, main, x)
       val (up1,  Sequent(ant,succ), aux1, prin1, ev) = ForallRightRule.unapply(rule).get
@@ -430,10 +430,10 @@ class LKTest extends SpecificationWithJUnit {
       val List(p,a,b) = List(("P", (Ti->Ti) -> ((Ti->Ti) -> ((Ti->Ti) -> To))),
                              ("a", Ti->Ti) ,
                              ("b", Ti->Ti)) map (u => HOLConst(u._1,u._2))
-      val paba = Atom(p,List(a,b,a))
-      val pxba = Atom(p,List(x,b,a))
-      val expxba = ExVar(x,pxba)
-      val allpxba = AllVar(x,pxba)
+      val paba = HOLAtom(p,List(a,b,a))
+      val pxba = HOLAtom(p,List(x,b,a))
+      val expxba = HOLExVar(x,pxba)
+      val allpxba = HOLAllVar(x,pxba)
 
       val ax1 = Axiom(paba::Nil, Nil)
       ForallLeftRule(ax1, ax1.root.occurrences(0), allpxba, a).root.occurrences(0).formula must_==(allpxba)
@@ -495,14 +495,14 @@ class LKTest extends SpecificationWithJUnit {
     val (s, t) = (HOLConst("s", Ti), HOLConst("t", Ti))
     val P = HOLConst("P", Ti -> To)
     val Q = HOLConst("Q", Ti -> (Ti -> To))
-    val est = Equation(s, t)
-    val Ps = Atom(P, List(s))
-    val Pt = Atom (P, List(t))
+    val est = HOLEquation(s, t)
+    val Ps = HOLAtom(P, List(s))
+    val Pt = HOLAtom (P, List(t))
 
-    val Qss = Atom(Q, List(s,s))
-    val Qst = Atom(Q, List(s,t))
-    val Qts = Atom(Q, List(t,s))
-    val Qtt = Atom(Q, List(t,t))
+    val Qss = HOLAtom(Q, List(s,s))
+    val Qst = HOLAtom(Q, List(s,t))
+    val Qts = HOLAtom(Q, List(t,s))
+    val Qtt = HOLAtom(Q, List(t,t))
 
     val ax1 = Axiom(List(est), List(est))
     val ax2 = Axiom(List(Ps), List(Ps))
@@ -575,9 +575,9 @@ class LKTest extends SpecificationWithJUnit {
     }
 
     "correctly perform multiple weakenings" in {
-      val proof  = WeakeningRightRule(WeakeningLeftRule(WeakeningLeftRule(ax, Py), Neg(Py)), Py)
+      val proof  = WeakeningRightRule(WeakeningLeftRule(WeakeningLeftRule(ax, Py), HOLNeg(Py)), Py)
 
-      WeakeningMacroRule(ax, List(Neg(Py),Py), List(Py)).root.toFSequent.multiSetEquals(proof.root.toFSequent) must beTrue
+      WeakeningMacroRule(ax, List(HOLNeg(Py),Py), List(Py)).root.toFSequent.multiSetEquals(proof.root.toFSequent) must beTrue
     }
   }
 
@@ -605,12 +605,12 @@ class LKTest extends SpecificationWithJUnit {
     }
 
     "correctly perform multiple contractions" in {
-      val ax2 = Axiom(List(Px, Px, Py, Px), List(Px, Neg(Px), Neg(Px)))
+      val ax2 = Axiom(List(Px, Px, Py, Px), List(Px, HOLNeg(Px), HOLNeg(Px)))
 
-      val sequent1 = FSequent(List(Py, Px), List(Px, Neg(Px), Neg(Px)))
-      val sequent2 = FSequent(List(Px, Px, Py, Px), List(Px, Neg(Px)))
+      val sequent1 = FSequent(List(Py, Px), List(Px, HOLNeg(Px), HOLNeg(Px)))
+      val sequent2 = FSequent(List(Px, Px, Py, Px), List(Px, HOLNeg(Px)))
       ContractionLeftMacroRule(ax2, Px).root.toFSequent must beEqualTo(sequent1)
-      ContractionRightMacroRule(ax2, Neg(Px)).root.toFSequent must beEqualTo(sequent2)
+      ContractionRightMacroRule(ax2, HOLNeg(Px)).root.toFSequent must beEqualTo(sequent2)
     }
   }
 
@@ -618,14 +618,14 @@ class LKTest extends SpecificationWithJUnit {
     val (s, t) = (HOLConst("s", Ti), HOLConst("t", Ti))
     val P = HOLConst("P", Ti -> To)
     val Q = HOLConst("Q", Ti -> (Ti -> To))
-    val est = Equation(s, t)
-    val Ps = Atom(P, List(s))
-    val Pt = Atom (P, List(t))
+    val est = HOLEquation(s, t)
+    val Ps = HOLAtom(P, List(s))
+    val Pt = HOLAtom (P, List(t))
 
-    val Qss = Atom(Q, List(s,s))
-    val Qst = Atom(Q, List(s,t))
-    val Qts = Atom(Q, List(t,s))
-    val Qtt = Atom(Q, List(t,t))
+    val Qss = HOLAtom(Q, List(s,s))
+    val Qst = HOLAtom(Q, List(s,t))
+    val Qts = HOLAtom(Q, List(t,s))
+    val Qtt = HOLAtom(Q, List(t,t))
 
     val ax1 = Axiom(List(est), List(est))
     val ax2 = Axiom(List(Ps), List(Ps))

@@ -14,7 +14,7 @@ class CutFormulaExtractionTest extends SpecificationWithJUnit {
   "Substitutions" should {
     val x = HOLVar("x", Ti)
     val P = HOLConst("P", Ti -> To)
-    val px = Atom(P, List(x))
+    val px = HOLAtom(P, List(x))
     val ax1 = Axiom( List(px), List(px) )
     val ax2 = Axiom( List(px), List(px) )
     val proof = CutRule( ax1, ax2, ax1.root.succedent.toList.head, ax2.root.antecedent.toList.head )

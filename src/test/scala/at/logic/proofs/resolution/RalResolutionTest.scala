@@ -17,14 +17,14 @@ class RalResolutionTest extends SpecificationWithJUnit{
   "Ral resolution" should {
     "work on simple proofs" in {
       val x = HOLVar("X", To)
-      val p = Atom(HOLConst("P", To), Nil)
-      val exx = ExVar(x,x.asInstanceOf[HOLFormula])
+      val p = HOLAtom(HOLConst("P", To), Nil)
+      val exx = HOLExVar(x,x.asInstanceOf[HOLFormula])
       val root = FSequent(Nil,List(exx))
       val labels : (List[Label],List[Label]) = (List[Label](),List[Label](EmptyLabel()))
 
       val i1 = InitialSequent(root, labels)
       val i2 = ForallT(i1, i1.root.l_succedent(0), x)
-      val i3 = Sub(i2, Substitution(x, And(p, Neg(p))))
+      val i3 = Sub(i2, Substitution(x, HOLAnd(p, HOLNeg(p))))
       val i4 = AndT1(i3, i3.root.l_succedent(0))
       val i5 = AndT2(i3, i3.root.l_succedent(0))
       val i6 = NegT(i5, i5.root.l_succedent(0))
@@ -36,9 +36,9 @@ class RalResolutionTest extends SpecificationWithJUnit{
 
     "work on non-idempotent substitutions" in {
       val x = HOLVar("x", Ti)
-      val fx = Function(HOLConst("f", Ti -> Ti), x::Nil)
-      val px = Atom(HOLConst("P", Ti->To), List(x))
-      val pfx = Atom(HOLConst("P", Ti->To), List(fx))
+      val fx = HOLFunction(HOLConst("f", Ti -> Ti), x::Nil)
+      val px = HOLAtom(HOLConst("P", Ti->To), List(x))
+      val pfx = HOLAtom(HOLConst("P", Ti->To), List(fx))
 
       val sub = Substitution(x, fx)
 
