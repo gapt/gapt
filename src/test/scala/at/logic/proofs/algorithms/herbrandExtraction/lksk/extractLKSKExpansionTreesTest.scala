@@ -8,7 +8,7 @@ import at.logic.language.hol._
 import at.logic.proofs.lk.base.{FSequent, Sequent}
 import at.logic.language.lambda.types.{Ti, To}
 import at.logic.proofs.lksk
-import at.logic.proofs.expansionTrees.{Atom => AtomTree, Neg => NegTree, SkolemQuantifier, ExpansionTree, ExpansionSequent, WeakQuantifier, Imp => ImpTree}
+import at.logic.proofs.expansionTrees.{ETAtom => AtomTree, ETNeg => NegTree, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp => ImpTree}
 import at.logic.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.proofs.algorithms.skolemization.lksk.{LKtoLKskc => skolemize }
 
@@ -128,7 +128,7 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
 
       val inst1 : (ExpansionTree, HOLFormula) = (AtomTree(simpleHOLProof.p), simpleHOLProof.p)
       val inst2 : (ExpansionTree, HOLFormula) = (NegTree(AtomTree(simpleHOLProof.p)), HOLNeg(simpleHOLProof.p))
-      val cet : ExpansionTree = WeakQuantifier(simpleHOLProof.existsx, List(inst1, inst2)).asInstanceOf[ExpansionTree] //TODO: this cast is ugly
+      val cet : ExpansionTree = ETWeakQuantifier(simpleHOLProof.existsx, List(inst1, inst2)).asInstanceOf[ExpansionTree] //TODO: this cast is ugly
 
       val control = ExpansionSequent(Nil, List(cet))
 
@@ -139,7 +139,7 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
       val ExpansionSequent((Nil, List(et))) = extractLKSKExpansionSequent(simpleHOLProof.proof, false)
 
       val r = et match {
-        case WeakQuantifier(_, Seq(
+        case ETWeakQuantifier(_, Seq(
         (AtomTree(_),_),
         (NegTree(AtomTree(_)),_))
         ) =>
@@ -155,7 +155,7 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
       val ExpansionSequent((Nil, List(et))) = extractLKSKExpansionSequent(simpleLKSKProof.i4, false)
 
       val r = et match {
-        case WeakQuantifier(_, Seq(
+        case ETWeakQuantifier(_, Seq(
         (AtomTree(_),_),
         (NegTree(AtomTree(_)),_))
         ) =>
@@ -171,8 +171,8 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
       val ExpansionSequent((Nil, List(et))) = extractLKSKExpansionSequent(simpleHOLProof2.proof, false)
 
       val r = et match {
-        case SkolemQuantifier(_,sk,
-          WeakQuantifier(_, Seq(
+        case ETSkolemQuantifier(_,sk,
+          ETWeakQuantifier(_, Seq(
             (AtomTree(_),_),
             (NegTree(AtomTree(_)),_))
         )) =>
@@ -188,9 +188,9 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
       val ExpansionSequent((Nil, List(et))) = extractLKSKExpansionSequent(simpleHOLProof3.proof, false)
 
       val r = et match {
-        case WeakQuantifier(_, Seq(
-              (SkolemQuantifier(_,sk1,AtomTree(_)),_),
-              (NegTree( WeakQuantifier(_,Seq((AtomTree(_), sk2)))  ), _)
+        case ETWeakQuantifier(_, Seq(
+              (ETSkolemQuantifier(_,sk1,AtomTree(_)),_),
+              (NegTree( ETWeakQuantifier(_,Seq((AtomTree(_), sk2)))  ), _)
             )) =>
           ""
         case _ =>
@@ -204,9 +204,9 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
       val ExpansionSequent((Nil, List(et))) = extractLKSKExpansionSequent(simpleHOLProof4.proof, false)
 
       val r = et match {
-        case WeakQuantifier(_, Seq(
-        (SkolemQuantifier(_,sk1,AtomTree(_)),_),
-        (ImpTree(AtomTree(_), NegTree( WeakQuantifier(_,Seq((AtomTree(_), sk2)))  )), _)
+        case ETWeakQuantifier(_, Seq(
+        (ETSkolemQuantifier(_,sk1,AtomTree(_)),_),
+        (ImpTree(AtomTree(_), NegTree( ETWeakQuantifier(_,Seq((AtomTree(_), sk2)))  )), _)
         )) =>
           ""
         case _ =>

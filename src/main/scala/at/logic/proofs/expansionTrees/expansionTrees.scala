@@ -14,15 +14,15 @@ import scala.collection.immutable.HashMap
  * General class for expansion trees with pseudo case classes including for MergeNodes, which only occur during merging/substituting
  */
 trait ExpansionTreeWithMerges extends TreeA[Option[HOLFormula], Option[HOLExpression]] {
-  override def toString() = this match {
-    case Atom( f ) => "Atom(" + f.toString + ")"
-    case Neg( t1 ) => NegSymbol + t1.toString
-    case And( t1, t2 ) => t1.toString + AndSymbol + t2.toString
-    case Or( t1, t2 ) => t1.toString + OrSymbol + t2.toString
-    case Imp( t1, t2 ) => t1.toString + ImpSymbol + t2.toString
-    case WeakQuantifier( formula, children ) => "WeakQuantifier(" + formula + ", " + children + ")"
-    case StrongQuantifier( formula, variable, selection ) => "StrongQuantifier(" + formula + ", " + variable + ", " + selection + ")"
-    case SkolemQuantifier( formula, sk, selection ) => "SkolemQuantifier(" + formula + ", " + sk + ", " + selection + ")"
+  override def toString = this match {
+    case ETAtom( f ) => "Atom(" + f.toString + ")"
+    case ETNeg( t1 ) => NegSymbol + t1.toString
+    case ETAnd( t1, t2 ) => t1.toString + AndSymbol + t2.toString
+    case ETOr( t1, t2 ) => t1.toString + OrSymbol + t2.toString
+    case ETImp( t1, t2 ) => t1.toString + ImpSymbol + t2.toString
+    case ETWeakQuantifier( formula, children ) => "WeakQuantifier(" + formula + ", " + children + ")"
+    case ETStrongQuantifier( formula, variable, selection ) => "StrongQuantifier(" + formula + ", " + variable + ", " + selection + ")"
+    case ETSkolemQuantifier( formula, sk, selection ) => "SkolemQuantifier(" + formula + ", " + sk + ", " + selection + ")"
     case MergeNode( left, right ) => "MergeNode(" + left + ", " + right + ")"
     case _ => throw new Exception( "Unhandled case in ExpansionTreeWithMerges.toString" )
   }
@@ -34,19 +34,19 @@ trait ExpansionTreeWithMerges extends TreeA[Option[HOLFormula], Option[HOLExpres
     if ( visited contains this )
       visited
     else this match {
-      case Atom( v ) => visited + ( ( this, 1 ) )
-      case Neg( child ) =>
+      case ETAtom( v ) => visited + ( ( this, 1 ) )
+      case ETNeg( child ) =>
         val nvisited = child.size( visited )
         nvisited + ( ( this, nvisited( child ) + 1 ) )
-      case And( child1, child2 ) =>
+      case ETAnd( child1, child2 ) =>
         val nvisited1 = child1.size( visited )
         val nvisited2 = child2.size( nvisited1 )
         nvisited2 + ( ( this, nvisited2( child1 ) + nvisited2( child2 ) + 1 ) )
-      case Or( child1, child2 ) =>
+      case ETOr( child1, child2 ) =>
         val nvisited1 = child1.size( visited )
         val nvisited2 = child2.size( nvisited1 )
         nvisited2 + ( ( this, nvisited2( child1 ) + nvisited2( child2 ) + 1 ) )
-      case Imp( child1, child2 ) =>
+      case ETImp( child1, child2 ) =>
         val nvisited1 = child1.size( visited )
         val nvisited2 = child2.size( nvisited1 )
         nvisited2 + ( ( this, nvisited2( child1 ) + nvisited2( child2 ) + 1 ) )
@@ -54,14 +54,14 @@ trait ExpansionTreeWithMerges extends TreeA[Option[HOLFormula], Option[HOLExpres
         val nvisited1 = child1.size( visited )
         val nvisited2 = child2.size( nvisited1 )
         nvisited2 + ( ( this, nvisited2( child1 ) + nvisited2( child2 ) + 1 ) )
-      case WeakQuantifier( _, children ) =>
+      case ETWeakQuantifier( _, children ) =>
         val nvisited = children.foldLeft( visited )( ( vs, child ) => child._1.size( vs ) )
         val nsize = children.foldLeft( 1 )( ( s, child ) => s + nvisited( child._1 ) )
         nvisited + ( ( this, nsize ) )
-      case StrongQuantifier( f, v, child ) =>
+      case ETStrongQuantifier( f, v, child ) =>
         val nvisited = child.size( visited )
         nvisited + ( ( this, nvisited( child ) + 1 ) )
-      case SkolemQuantifier( f, v, child ) =>
+      case ETSkolemQuantifier( f, v, child ) =>
         val nvisited = child.size( visited )
         nvisited + ( ( this, nvisited( child ) + 1 ) )
       case _ => throw new IllegalArgumentException( "Unhandled case in expansion tree size calculation: " + this )
@@ -119,26 +119,26 @@ object UnaryExpansionTree {
  * @param formula A
  * @param instances [ (E_1, u_1), ... , (E_n, u_1)
  */
-class WeakQuantifier( val formula: HOLFormula, val instances: Seq[( ExpansionTreeWithMerges, HOLExpression )] )
+class ETWeakQuantifier( val formula: HOLFormula, val instances: Seq[( ExpansionTreeWithMerges, HOLExpression )] )
     extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula], Option[HOLExpression]] {
   lazy val node = Some( formula )
   lazy val children = instances.map( x => ( x._1, Some( x._2 ) ) )
 
 }
-object WeakQuantifier {
+object ETWeakQuantifier {
   // can't have another apply for ExpansionTree as type info gets lost with type erasure
   def apply( formula: HOLFormula, instances: Seq[( ExpansionTreeWithMerges, HOLExpression )] ) =
-    if ( instances.forall( { case ( et, _ ) => et.isInstanceOf[ExpansionTree] } ) ) new WeakQuantifier( formula, instances ) with ExpansionTree
-    else new WeakQuantifier( formula, instances )
+    if ( instances.forall( { case ( et, _ ) => et.isInstanceOf[ExpansionTree] } ) ) new ETWeakQuantifier( formula, instances ) with ExpansionTree
+    else new ETWeakQuantifier( formula, instances )
   // user of this functions must take care that no merges are passed here
-  def applyWithoutMerge( formula: HOLFormula, instances: Seq[( ExpansionTree, HOLExpression )] ) = new WeakQuantifier( formula, instances ) with ExpansionTree
+  def applyWithoutMerge( formula: HOLFormula, instances: Seq[( ExpansionTree, HOLExpression )] ) = new ETWeakQuantifier( formula, instances ) with ExpansionTree
   def unapply( et: ExpansionTreeWithMerges ) = et match {
-    case weakQuantifier: WeakQuantifier => Some( ( weakQuantifier.formula, weakQuantifier.instances ) )
-    case _                              => None
+    case weakQuantifier: ETWeakQuantifier => Some( ( weakQuantifier.formula, weakQuantifier.instances ) )
+    case _                                => None
   }
   def unapply( et: ExpansionTree ): Option[( HOLFormula, Seq[( ExpansionTree, HOLExpression )] )] = et match {
-    case weakQuantifier: WeakQuantifier => Some( ( weakQuantifier.formula, weakQuantifier.instances.asInstanceOf[Seq[( ExpansionTree, HOLExpression )]] ) )
-    case _                              => None
+    case weakQuantifier: ETWeakQuantifier => Some( ( weakQuantifier.formula, weakQuantifier.instances.asInstanceOf[Seq[( ExpansionTree, HOLExpression )]] ) )
+    case _                                => None
   }
 }
 
@@ -148,26 +148,26 @@ object WeakQuantifier {
  * @param variable u
  * @param selection E
  */
-class StrongQuantifier( val formula: HOLFormula, val variable: HOLVar, val selection: ExpansionTreeWithMerges )
+class ETStrongQuantifier( val formula: HOLFormula, val variable: HOLVar, val selection: ExpansionTreeWithMerges )
     extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula], Option[HOLExpression]] {
   lazy val node = Some( formula )
   lazy val children = List( Tuple2( selection, Some( variable ) ) )
 }
-object StrongQuantifier {
+object ETStrongQuantifier {
   def apply( formula: HOLFormula, variable: HOLVar, selection: ExpansionTree ): ExpansionTree =
     // NOTE: this statement must not occur again in the other apply as it creates an own, distinct class, which scala treats as not equal even though it is exactly the same
-    new StrongQuantifier( formula, variable, selection ) with ExpansionTree
+    new ETStrongQuantifier( formula, variable, selection ) with ExpansionTree
   def apply( formula: HOLFormula, variable: HOLVar, selection: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = selection match {
-    case selectionET: ExpansionTree => StrongQuantifier( formula, variable, selectionET )
-    case _                          => new StrongQuantifier( formula, variable, selection )
+    case selectionET: ExpansionTree => ETStrongQuantifier( formula, variable, selectionET )
+    case _                          => new ETStrongQuantifier( formula, variable, selection )
   }
   def unapply( et: ExpansionTree ) = et match {
-    case strongQuantifier: StrongQuantifier => Some( ( strongQuantifier.formula, strongQuantifier.variable, strongQuantifier.selection.asInstanceOf[ExpansionTree] ) )
-    case _                                  => None
+    case strongQuantifier: ETStrongQuantifier => Some( ( strongQuantifier.formula, strongQuantifier.variable, strongQuantifier.selection.asInstanceOf[ExpansionTree] ) )
+    case _                                    => None
   }
   def unapply( et: ExpansionTreeWithMerges ) = et match {
-    case strongQuantifier: StrongQuantifier => Some( ( strongQuantifier.formula, strongQuantifier.variable, strongQuantifier.selection ) )
-    case _                                  => None
+    case strongQuantifier: ETStrongQuantifier => Some( ( strongQuantifier.formula, strongQuantifier.variable, strongQuantifier.selection ) )
+    case _                                    => None
   }
 }
 
@@ -177,26 +177,26 @@ object StrongQuantifier {
  * @param skolem_constant u
  * @param selection E
  */
-class SkolemQuantifier( val formula: HOLFormula, val skolem_constant: HOLExpression, val selection: ExpansionTreeWithMerges )
+class ETSkolemQuantifier( val formula: HOLFormula, val skolem_constant: HOLExpression, val selection: ExpansionTreeWithMerges )
     extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula], Option[HOLExpression]] {
   lazy val node = Some( formula )
   lazy val children = List( Tuple2( selection, Some( skolem_constant ) ) )
 }
-object SkolemQuantifier {
+object ETSkolemQuantifier {
   def apply( formula: HOLFormula, skolem_constant: HOLExpression, selection: ExpansionTree ): ExpansionTree =
     // NOTE: this statement must not occur again in the other apply as it creates an own, distinct class, which scala treats as not equal even though it is exactly the same
-    new SkolemQuantifier( formula, skolem_constant, selection ) with ExpansionTree
+    new ETSkolemQuantifier( formula, skolem_constant, selection ) with ExpansionTree
   def apply( formula: HOLFormula, skolem_constant: HOLExpression, selection: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = selection match {
-    case selectionET: ExpansionTree => SkolemQuantifier( formula, skolem_constant, selectionET )
-    case _                          => new SkolemQuantifier( formula, skolem_constant, selection )
+    case selectionET: ExpansionTree => ETSkolemQuantifier( formula, skolem_constant, selectionET )
+    case _                          => new ETSkolemQuantifier( formula, skolem_constant, selection )
   }
   def unapply( et: ExpansionTree ) = et match {
-    case sq: SkolemQuantifier => Some( ( sq.formula, sq.skolem_constant, sq.selection.asInstanceOf[ExpansionTree] ) )
-    case _                    => None
+    case sq: ETSkolemQuantifier => Some( ( sq.formula, sq.skolem_constant, sq.selection.asInstanceOf[ExpansionTree] ) )
+    case _                      => None
   }
   def unapply( et: ExpansionTreeWithMerges ) = et match {
-    case sq: SkolemQuantifier => Some( ( sq.formula, sq.skolem_constant, sq.selection ) )
-    case _                    => None
+    case sq: ETSkolemQuantifier => Some( ( sq.formula, sq.skolem_constant, sq.selection ) )
+    case _                      => None
   }
 }
 
@@ -205,87 +205,87 @@ case class MergeNode( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMer
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 }
 
-protected[expansionTrees] class And( val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
+protected[expansionTrees] class ETAnd( val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 }
-object And {
-  def apply( left: ExpansionTree, right: ExpansionTree ) = new And( left, right ) with ExpansionTree
+object ETAnd {
+  def apply( left: ExpansionTree, right: ExpansionTree ) = new ETAnd( left, right ) with ExpansionTree
   def apply( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = ( left, right ) match {
-    case ( leftET: ExpansionTree, rightET: ExpansionTree ) => And( leftET, rightET )
-    case _ => new And( left, right )
+    case ( leftET: ExpansionTree, rightET: ExpansionTree ) => ETAnd( leftET, rightET )
+    case _ => new ETAnd( left, right )
   }
   def unapply( et: ExpansionTree ) = et match {
-    case and: And => Some( ( and.left.asInstanceOf[ExpansionTree], and.right.asInstanceOf[ExpansionTree] ) )
+    case and: ETAnd => Some( ( and.left.asInstanceOf[ExpansionTree], and.right.asInstanceOf[ExpansionTree] ) )
+    case _          => None
+  }
+  def unapply( et: ExpansionTreeWithMerges ) = et match {
+    case and: ETAnd => Some( ( and.left, and.right ) )
+    case _          => None
+  }
+}
+
+protected[expansionTrees] class ETOr( val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
+  val node = None
+  lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
+}
+object ETOr {
+  def apply( left: ExpansionTree, right: ExpansionTree ) = new ETOr( left, right ) with ExpansionTree
+  def apply( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = ( left, right ) match {
+    case ( leftET: ExpansionTree, rightET: ExpansionTree ) => ETOr( leftET, rightET )
+    case _ => new ETOr( left, right )
+  }
+  def unapply( et: ExpansionTree ) = et match {
+    case or: ETOr => Some( ( or.left.asInstanceOf[ExpansionTree], or.right.asInstanceOf[ExpansionTree] ) )
     case _        => None
   }
   def unapply( et: ExpansionTreeWithMerges ) = et match {
-    case and: And => Some( ( and.left, and.right ) )
+    case or: ETOr => Some( ( or.left, or.right ) )
     case _        => None
   }
 }
 
-protected[expansionTrees] class Or( val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
+protected[expansionTrees] class ETImp( val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 }
-object Or {
-  def apply( left: ExpansionTree, right: ExpansionTree ) = new Or( left, right ) with ExpansionTree
+object ETImp {
+  def apply( left: ExpansionTree, right: ExpansionTree ) = new ETImp( left, right ) with ExpansionTree
   def apply( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = ( left, right ) match {
-    case ( leftET: ExpansionTree, rightET: ExpansionTree ) => Or( leftET, rightET )
-    case _ => new Or( left, right )
+    case ( leftET: ExpansionTree, rightET: ExpansionTree ) => ETImp( leftET, rightET )
+    case _ => new ETImp( left, right )
   }
   def unapply( et: ExpansionTree ) = et match {
-    case or: Or => Some( ( or.left.asInstanceOf[ExpansionTree], or.right.asInstanceOf[ExpansionTree] ) )
-    case _      => None
+    case imp: ETImp => Some( ( imp.left.asInstanceOf[ExpansionTree], imp.right.asInstanceOf[ExpansionTree] ) )
+    case _          => None
   }
   def unapply( et: ExpansionTreeWithMerges ) = et match {
-    case or: Or => Some( ( or.left, or.right ) )
-    case _      => None
+    case imp: ETImp => Some( ( imp.left, imp.right ) )
+    case _          => None
   }
 }
 
-protected[expansionTrees] class Imp( val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
-  val node = None
-  lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
-}
-object Imp {
-  def apply( left: ExpansionTree, right: ExpansionTree ) = new Imp( left, right ) with ExpansionTree
-  def apply( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = ( left, right ) match {
-    case ( leftET: ExpansionTree, rightET: ExpansionTree ) => Imp( leftET, rightET )
-    case _ => new Imp( left, right )
-  }
-  def unapply( et: ExpansionTree ) = et match {
-    case imp: Imp => Some( ( imp.left.asInstanceOf[ExpansionTree], imp.right.asInstanceOf[ExpansionTree] ) )
-    case _        => None
-  }
-  def unapply( et: ExpansionTreeWithMerges ) = et match {
-    case imp: Imp => Some( ( imp.left, imp.right ) )
-    case _        => None
-  }
-}
-
-protected[expansionTrees] class Neg( val tree: ExpansionTreeWithMerges ) extends UnaryExpansionTree {
+protected[expansionTrees] class ETNeg( val tree: ExpansionTreeWithMerges ) extends UnaryExpansionTree {
   val node = None
   lazy val children = List( Tuple2( tree, None ) )
 }
-object Neg {
-  def apply( tree: ExpansionTree ) = new Neg( tree ) with ExpansionTree
+object ETNeg {
+  def apply( tree: ExpansionTree ) = new ETNeg( tree ) with ExpansionTree
   def apply( tree: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = tree match {
-    case treeET: ExpansionTree => Neg( treeET )
-    case _                     => new Neg( tree )
+    case treeET: ExpansionTree => ETNeg( treeET )
+    case _                     => new ETNeg( tree )
   }
   def unapply( et: ExpansionTree ) = et match {
-    case neg: Neg => Some( ( neg.tree ).asInstanceOf[ExpansionTree] )
-    case _        => None
+    case neg: ETNeg => Some( ( neg.tree ).asInstanceOf[ExpansionTree] )
+    case _          => None
   }
   def unapply( et: ExpansionTreeWithMerges ) = et match {
-    case neg: Neg => Some( ( neg.tree ) )
-    case _        => None
+    case neg: ETNeg => Some( ( neg.tree ) )
+    case _          => None
   }
 }
 
-case class Atom( formula: HOLFormula ) extends ExpansionTree with TerminalNodeAWithEquality[Option[HOLFormula], Option[HOLExpression]] {
+case class ETAtom( formula: HOLFormula ) extends ExpansionTree with TerminalNodeAWithEquality[Option[HOLFormula], Option[HOLExpression]] {
   lazy val node = Some( formula )
 }
 
@@ -294,16 +294,16 @@ case class Atom( formula: HOLFormula ) extends ExpansionTree with TerminalNodeAW
  */
 object quantRulesNumber {
   def apply( tree: ExpansionTreeWithMerges ): Int = tree match {
-    case Atom( f )     => 0
-    case Neg( t1 )     => quantRulesNumber( t1 )
-    case And( t1, t2 ) => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
-    case Or( t1, t2 )  => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
-    case Imp( t1, t2 ) => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
-    case WeakQuantifier( _, children ) => children.foldRight( 0 ) {
+    case ETAtom( f )     => 0
+    case ETNeg( t1 )     => quantRulesNumber( t1 )
+    case ETAnd( t1, t2 ) => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
+    case ETOr( t1, t2 )  => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
+    case ETImp( t1, t2 ) => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
+    case ETWeakQuantifier( _, children ) => children.foldRight( 0 ) {
       case ( ( et, _ ), sum ) => quantRulesNumber( et ) + 1 + sum
     }
-    case StrongQuantifier( _, _, et ) => quantRulesNumber( et ) + 1
-    case SkolemQuantifier( _, _, et ) => quantRulesNumber( et ) + 1
+    case ETStrongQuantifier( _, _, et ) => quantRulesNumber( et ) + 1
+    case ETSkolemQuantifier( _, _, et ) => quantRulesNumber( et ) + 1
   }
 
   def apply( ep: ExpansionSequent ): Int = {
@@ -374,19 +374,19 @@ object ExpansionSequent {
 
 object toDeep {
   def apply( tree: ExpansionTreeWithMerges, pol: Int = 1 ): HOLFormula = tree match {
-    case Atom( f )     => f
-    case Neg( t1 )     => NegHOL( toDeep( t1, -pol ) )
-    case And( t1, t2 ) => AndHOL( toDeep( t1, pol ), toDeep( t2, pol ) )
-    case Or( t1, t2 )  => OrHOL( toDeep( t1, pol ), toDeep( t2, pol ) )
-    case Imp( t1, t2 ) => ImpHOL( toDeep( t1, -pol ), toDeep( t2, pol ) )
-    case WeakQuantifier( _, cs ) => {
+    case ETAtom( f )     => f
+    case ETNeg( t1 )     => NegHOL( toDeep( t1, -pol ) )
+    case ETAnd( t1, t2 ) => AndHOL( toDeep( t1, pol ), toDeep( t2, pol ) )
+    case ETOr( t1, t2 )  => OrHOL( toDeep( t1, pol ), toDeep( t2, pol ) )
+    case ETImp( t1, t2 ) => ImpHOL( toDeep( t1, -pol ), toDeep( t2, pol ) )
+    case ETWeakQuantifier( _, cs ) => {
       if ( pol > 0 )
         OrHOL( cs.map( t => toDeep( t._1, pol ) ).toList )
       else
         AndHOL( cs.map( t => toDeep( t._1, pol ) ).toList )
     }
-    case StrongQuantifier( _, _, t ) => toDeep( t, pol )
-    case SkolemQuantifier( _, _, t ) => toDeep( t, pol ) //TODO: check if this is correct
+    case ETStrongQuantifier( _, _, t ) => toDeep( t, pol )
+    case ETSkolemQuantifier( _, _, t ) => toDeep( t, pol ) //TODO: check if this is correct
   }
 
   def apply( expansionSequent: ExpansionSequent ): FSequent = {
@@ -396,13 +396,13 @@ object toDeep {
 
 object toShallow {
   def apply( tree: ExpansionTreeWithMerges ): HOLFormula = tree match {
-    case Atom( f )                   => f
-    case Neg( t1 )                   => NegHOL( toShallow( t1 ) )
-    case And( t1, t2 )               => AndHOL( toShallow( t1 ), toShallow( t2 ) )
-    case Or( t1, t2 )                => OrHOL( toShallow( t1 ), toShallow( t2 ) )
-    case Imp( t1, t2 )               => ImpHOL( toShallow( t1 ), toShallow( t2 ) )
-    case WeakQuantifier( f, _ )      => f
-    case StrongQuantifier( f, _, _ ) => f
+    case ETAtom( f )                   => f
+    case ETNeg( t1 )                   => NegHOL( toShallow( t1 ) )
+    case ETAnd( t1, t2 )               => AndHOL( toShallow( t1 ), toShallow( t2 ) )
+    case ETOr( t1, t2 )                => OrHOL( toShallow( t1 ), toShallow( t2 ) )
+    case ETImp( t1, t2 )               => ImpHOL( toShallow( t1 ), toShallow( t2 ) )
+    case ETWeakQuantifier( f, _ )      => f
+    case ETStrongQuantifier( f, _, _ ) => f
   }
 
   def apply( ep: ExpansionSequent ): FSequent = {
@@ -440,11 +440,11 @@ object getETOfFormula {
 // Builds an expansion tree given a quantifier free formula
 object qFreeToExpansionTree {
   def apply( f: HOLFormula ): ExpansionTree = f match {
-    case AtomHOL( _, _ )  => Atom( f )
-    case NegHOL( f )      => Neg( qFreeToExpansionTree( f ) ).asInstanceOf[ExpansionTree]
-    case AndHOL( f1, f2 ) => And( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
-    case OrHOL( f1, f2 )  => Or( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
-    case ImpHOL( f1, f2 ) => Imp( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
+    case AtomHOL( _, _ )  => ETAtom( f )
+    case NegHOL( f )      => ETNeg( qFreeToExpansionTree( f ) ).asInstanceOf[ExpansionTree]
+    case AndHOL( f1, f2 ) => ETAnd( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
+    case OrHOL( f1, f2 )  => ETOr( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
+    case ImpHOL( f1, f2 ) => ETImp( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
     case _                => throw new Exception( "Error transforming a quantifier-free formula into an expansion tree: " + f )
   }
 }
@@ -470,13 +470,13 @@ object prenexToExpansionTree {
             "Matrix: " + fMatrix + "\nInstance: " + instance )
         }
         expTree match {
-          case WeakQuantifier( _, lst ) => lst.toList ++ acc
-          case _                        => throw new Exception( "ERROR: Quantifier-free formula?" )
+          case ETWeakQuantifier( _, lst ) => lst.toList ++ acc
+          case _                          => throw new Exception( "ERROR: Quantifier-free formula?" )
         }
     }
 
     // TODO: merge edges with the same term.
-    WeakQuantifier( f, children ).asInstanceOf[ExpansionTree] // can't contain merges currently, c.f. TODO above
+    ETWeakQuantifier( f, children ).asInstanceOf[ExpansionTree] // can't contain merges currently, c.f. TODO above
   }
 
   def apply_( f: HOLFormula, sub: Substitution ): ExpansionTreeWithMerges = f match {
@@ -485,13 +485,13 @@ object prenexToExpansionTree {
       val one_sub = Substitution( v, t )
       val newf = one_sub( form )
       //val newf = f.instantiate(t.asInstanceOf[FOLTerm])
-      WeakQuantifier( f, List( Tuple2( apply_( newf, sub ), t ) ) )
+      ETWeakQuantifier( f, List( Tuple2( apply_( newf, sub ), t ) ) )
     case ExVarHOL( v, form ) =>
       val t = sub( v )
       val one_sub = Substitution( v, t )
       val newf = one_sub( form ).asInstanceOf[HOLFormula]
       //val newf = f.instantiate(t.asInstanceOf[FOLTerm])
-      WeakQuantifier( f, List( Tuple2( apply_( newf, sub ), t ) ) )
+      ETWeakQuantifier( f, List( Tuple2( apply_( newf, sub ), t ) ) )
     case _ => qFreeToExpansionTree( f )
   }
 
@@ -531,17 +531,17 @@ object substitute extends at.logic.utils.logging.Logger {
   }
 
   private[expansionTrees] def doApplySubstitution( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = et match {
-    case Atom( f )     => Atom( s.apply( f ) )
-    case Neg( t1 )     => Neg( doApplySubstitution( s, t1 ) )
-    case And( t1, t2 ) => And( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
-    case Or( t1, t2 )  => Or( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
-    case Imp( t1, t2 ) => Imp( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
-    case StrongQuantifier( f, v, selection ) =>
-      StrongQuantifier( s( f ), s( v ).asInstanceOf[HOLVar], doApplySubstitution( s, selection ) )
-    case SkolemQuantifier( f, v, selection ) =>
-      SkolemQuantifier( s( f ), s( v ), doApplySubstitution( s, selection ) )
-    case WeakQuantifier( f, instances ) =>
-      WeakQuantifier( s( f ), mergeWeakQuantifiers( Some( s ), instances ) )
+    case ETAtom( f )     => ETAtom( s.apply( f ) )
+    case ETNeg( t1 )     => ETNeg( doApplySubstitution( s, t1 ) )
+    case ETAnd( t1, t2 ) => ETAnd( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
+    case ETOr( t1, t2 )  => ETOr( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
+    case ETImp( t1, t2 ) => ETImp( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
+    case ETStrongQuantifier( f, v, selection ) =>
+      ETStrongQuantifier( s( f ), s( v ).asInstanceOf[HOLVar], doApplySubstitution( s, selection ) )
+    case ETSkolemQuantifier( f, v, selection ) =>
+      ETSkolemQuantifier( s( f ), s( v ), doApplySubstitution( s, selection ) )
+    case ETWeakQuantifier( f, instances ) =>
+      ETWeakQuantifier( s( f ), mergeWeakQuantifiers( Some( s ), instances ) )
     case MergeNode( t1, t2 ) => MergeNode( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
   }
 
@@ -665,13 +665,13 @@ object merge extends at.logic.utils.logging.Logger {
     }
 
     tree match {
-      case StrongQuantifier( f, v, sel ) =>
+      case ETStrongQuantifier( f, v, sel ) =>
         val ( subst, res ) = detectAndMergeMergeNodes( sel, polarity )
-        ( subst, StrongQuantifier( f, v, res ) )
-      case SkolemQuantifier( f, sk, sel ) =>
+        ( subst, ETStrongQuantifier( f, v, res ) )
+      case ETSkolemQuantifier( f, sk, sel ) =>
         val ( subst, res ) = detectAndMergeMergeNodes( sel, polarity )
-        ( subst, SkolemQuantifier( f, sk, res ) )
-      case WeakQuantifier( f, instances ) => {
+        ( subst, ETSkolemQuantifier( f, sk, res ) )
+      case ETWeakQuantifier( f, instances ) => {
         var instancesPrime = new ListBuffer[( ExpansionTreeWithMerges, HOLExpression )]
         // try to call merge on all instances
         // this is somewhat iterative in itself (stop on first substitution since we can't handle multiple substitutions at the same time)
@@ -681,22 +681,22 @@ object merge extends at.logic.utils.logging.Logger {
           instancesPrime += Tuple2( res, expr )
           subst match {
             case Some( s: Substitution ) => {
-              return ( Some( s ), WeakQuantifier( f, instancesPrime ++ instances.drop( instancesPrime.length ) ) )
+              return ( Some( s ), ETWeakQuantifier( f, instancesPrime ++ instances.drop( instancesPrime.length ) ) )
             }
             case None =>
           }
         }
         // all instances done without substitution
-        ( None, WeakQuantifier( f, instancesPrime.toList ) )
+        ( None, ETWeakQuantifier( f, instancesPrime.toList ) )
       }
-      case Atom( f ) => ( None, Atom( f ) )
-      case Neg( s1 ) => {
+      case ETAtom( f ) => ( None, ETAtom( f ) )
+      case ETNeg( s1 ) => {
         val ( subst, res ) = detectAndMergeMergeNodes( s1, !polarity ) // changes polarity
-        ( subst, Neg( res ) )
+        ( subst, ETNeg( res ) )
       }
-      case And( t1, t2 )       => start_op2( t1, t2, And( _, _ ), leftPolarity = polarity )
-      case Or( t1, t2 )        => start_op2( t1, t2, Or( _, _ ), leftPolarity = polarity )
-      case Imp( t1, t2 )       => start_op2( t1, t2, Imp( _, _ ), leftPolarity = !polarity ) // changes polarity
+      case ETAnd( t1, t2 )     => start_op2( t1, t2, ETAnd( _, _ ), leftPolarity = polarity )
+      case ETOr( t1, t2 )      => start_op2( t1, t2, ETOr( _, _ ), leftPolarity = polarity )
+      case ETImp( t1, t2 )     => start_op2( t1, t2, ETImp( _, _ ), leftPolarity = !polarity ) // changes polarity
       case MergeNode( t1, t2 ) => doApplyMerge( t1, t2, polarity )
     }
   }
@@ -726,20 +726,20 @@ object merge extends at.logic.utils.logging.Logger {
       // top/bottom merging:
       // top [merge] A = A if !polarity
       // bottom [merge] A = A if polarity
-      case ( Atom( TopC ), _ ) if !polarity             => detectAndMergeMergeNodes( tree2, polarity )
-      case ( _, Atom( TopC ) ) if !polarity             => detectAndMergeMergeNodes( tree1, polarity )
+      case ( ETAtom( TopC ), _ ) if !polarity               => detectAndMergeMergeNodes( tree2, polarity )
+      case ( _, ETAtom( TopC ) ) if !polarity               => detectAndMergeMergeNodes( tree1, polarity )
 
-      case ( Atom( BottomC ), _ ) if polarity           => detectAndMergeMergeNodes( tree2, polarity )
-      case ( _, Atom( BottomC ) ) if polarity           => detectAndMergeMergeNodes( tree1, polarity )
+      case ( ETAtom( BottomC ), _ ) if polarity             => detectAndMergeMergeNodes( tree2, polarity )
+      case ( _, ETAtom( BottomC ) ) if polarity             => detectAndMergeMergeNodes( tree1, polarity )
 
       //TODO: the f1 == f2 check is too strong if the proof contains contractions on paramodulated formulas. Find a better replacement.
-      case ( Atom( f1 ), Atom( f2 ) ) /* if f1 == f2 */ => ( None, Atom( f1 ) )
+      case ( ETAtom( f1 ), ETAtom( f2 ) ) /* if f1 == f2 */ => ( None, ETAtom( f1 ) )
 
-      case ( StrongQuantifier( f1, v1, sel1 ), StrongQuantifier( f2, v2, sel2 ) ) if f1 == f2 =>
+      case ( ETStrongQuantifier( f1, v1, sel1 ), ETStrongQuantifier( f2, v2, sel2 ) ) if f1 == f2 =>
         trace( "encountered strong quantifier " + f1 + "; renaming " + v2 + " to " + v1 )
-        return ( Some( Substitution( v2, v1 ) ), StrongQuantifier( f1, v1, MergeNode( sel1, sel2 ) ) )
+        return ( Some( Substitution( v2, v1 ) ), ETStrongQuantifier( f1, v1, MergeNode( sel1, sel2 ) ) )
 
-      case ( SkolemQuantifier( f1, s1, sel1 ), SkolemQuantifier( f2, s2, sel2 ) ) if f1 == f2 =>
+      case ( ETSkolemQuantifier( f1, s1, sel1 ), ETSkolemQuantifier( f2, s2, sel2 ) ) if f1 == f2 =>
         val sel2_ = if ( s1 != s2 ) {
           //TODO: we need to replace s2 by s1 in sel2, otherwise the merge operation fails
           //println(, "Can only merge Skolem Quantifier Nodes, if the skolem constants "+s1+" and "+s2+" are the same!")
@@ -753,20 +753,20 @@ object merge extends at.logic.utils.logging.Logger {
 
         } else sel2
         //trace("encountered skolem quantifier "+f1+"; renaming "+v2+" to "+v1)
-        return ( Some( Substitution() ), SkolemQuantifier( f1, s1, MergeNode( sel1, sel2_ ) ) )
+        return ( Some( Substitution() ), ETSkolemQuantifier( f1, s1, MergeNode( sel1, sel2_ ) ) )
 
-      case ( WeakQuantifier( f1, children1 ), WeakQuantifier( f2, children2 ) ) if f1 == f2 => {
-        val newTree = WeakQuantifier( f1, substitute.mergeWeakQuantifiers( None, children1 ++ children2 ) )
+      case ( ETWeakQuantifier( f1, children1 ), ETWeakQuantifier( f2, children2 ) ) if f1 == f2 => {
+        val newTree = ETWeakQuantifier( f1, substitute.mergeWeakQuantifiers( None, children1 ++ children2 ) )
         // merging might have caused merge-nodes and regular nodes, hence switch to detect-method
         detectAndMergeMergeNodes( newTree, polarity )
       }
-      case ( Neg( s1 ), Neg( s2 ) ) => {
+      case ( ETNeg( s1 ), ETNeg( s2 ) ) => {
         val ( subst, res ) = doApplyMerge( s1, s2, !polarity ) // changes polarity
-        ( subst, Neg( res ) )
+        ( subst, ETNeg( res ) )
       }
-      case ( And( s1, t1 ), And( s2, t2 ) ) => start_op2( s1, t1, s2, t2, And( _, _ ), leftPolarity = polarity )
-      case ( Or( s1, t1 ), Or( s2, t2 ) )   => start_op2( s1, t1, s2, t2, Or( _, _ ), leftPolarity = polarity )
-      case ( Imp( s1, t1 ), Imp( s2, t2 ) ) => start_op2( s1, t1, s2, t2, Imp( _, _ ), leftPolarity = !polarity ) //changes polarity
+      case ( ETAnd( s1, t1 ), ETAnd( s2, t2 ) ) => start_op2( s1, t1, s2, t2, ETAnd( _, _ ), leftPolarity = polarity )
+      case ( ETOr( s1, t1 ), ETOr( s2, t2 ) )   => start_op2( s1, t1, s2, t2, ETOr( _, _ ), leftPolarity = polarity )
+      case ( ETImp( s1, t1 ), ETImp( s2, t2 ) ) => start_op2( s1, t1, s2, t2, ETImp( _, _ ), leftPolarity = !polarity ) //changes polarity
       case ( MergeNode( n1, n2 ), _ ) => { // we proceed top-bottom. Sometimes we need to propagate a merge below another merge, in which case the lower merge has to be resolved first
         val ( subst, res ) = doApplyMerge( n1, n2, polarity )
         subst match {
@@ -832,19 +832,19 @@ object replace {
    * @return an et with all constants what replaced by constants by
    */
   def apply( what: HOLConst, by: HOLConst, where: ExpansionTree ): ExpansionTree = where match {
-    case Atom( f )   => Atom( replaceAll( what, by, f ) )
-    case Neg( l )    => Neg( apply( what, by, l ) )
-    case And( l, r ) => And( apply( what, by, l ), apply( what, by, r ) )
-    case Or( l, r )  => Or( apply( what, by, l ), apply( what, by, r ) )
-    case Imp( l, r ) => Imp( apply( what, by, l ), apply( what, by, r ) )
-    case WeakQuantifier( f, instances ) =>
+    case ETAtom( f )   => ETAtom( replaceAll( what, by, f ) )
+    case ETNeg( l )    => ETNeg( apply( what, by, l ) )
+    case ETAnd( l, r ) => ETAnd( apply( what, by, l ), apply( what, by, r ) )
+    case ETOr( l, r )  => ETOr( apply( what, by, l ), apply( what, by, r ) )
+    case ETImp( l, r ) => ETImp( apply( what, by, l ), apply( what, by, r ) )
+    case ETWeakQuantifier( f, instances ) =>
       val children = instances.map( x =>
         ( apply( what, by, x._1 ), replaceAll( what, by, x._2 ) ) )
-      WeakQuantifier.applyWithoutMerge( replaceAll( what, by, f ), children.asInstanceOf[Seq[( ExpansionTree, HOLExpression )]] )
-    case StrongQuantifier( f, v, tree ) =>
-      StrongQuantifier( replaceAll( what, by, f ), v, apply( what, by, tree ) )
-    case SkolemQuantifier( f, sk, tree ) =>
-      SkolemQuantifier( replaceAll( what, by, f ), replaceAll( what, by, sk ), apply( what, by, tree ) )
+      ETWeakQuantifier.applyWithoutMerge( replaceAll( what, by, f ), children.asInstanceOf[Seq[( ExpansionTree, HOLExpression )]] )
+    case ETStrongQuantifier( f, v, tree ) =>
+      ETStrongQuantifier( replaceAll( what, by, f ), v, apply( what, by, tree ) )
+    case ETSkolemQuantifier( f, sk, tree ) =>
+      ETSkolemQuantifier( replaceAll( what, by, f ), replaceAll( what, by, sk ), apply( what, by, tree ) )
   }
 
   /**
@@ -855,19 +855,19 @@ object replace {
    * @return an et with all constants what replaced by constants by
    */
   def apply( what: HOLConst, by: HOLConst, where: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = where match {
-    case Atom( f )   => Atom( replaceAll( what, by, f ) )
-    case Neg( l )    => Neg( apply( what, by, l ) )
-    case And( l, r ) => And( apply( what, by, l ), apply( what, by, r ) )
-    case Or( l, r )  => Or( apply( what, by, l ), apply( what, by, r ) )
-    case Imp( l, r ) => Imp( apply( what, by, l ), apply( what, by, r ) )
-    case WeakQuantifier( f, instances ) =>
+    case ETAtom( f )   => ETAtom( replaceAll( what, by, f ) )
+    case ETNeg( l )    => ETNeg( apply( what, by, l ) )
+    case ETAnd( l, r ) => ETAnd( apply( what, by, l ), apply( what, by, r ) )
+    case ETOr( l, r )  => ETOr( apply( what, by, l ), apply( what, by, r ) )
+    case ETImp( l, r ) => ETImp( apply( what, by, l ), apply( what, by, r ) )
+    case ETWeakQuantifier( f, instances ) =>
       val children = instances.map( x =>
         ( apply( what, by, x._1 ), replaceAll( what, by, x._2 ) ) )
-      WeakQuantifier( replaceAll( what, by, f ), children )
-    case StrongQuantifier( f, v, tree ) =>
-      StrongQuantifier( replaceAll( what, by, f ), v, apply( what, by, tree ) )
-    case SkolemQuantifier( f, sk, tree ) =>
-      SkolemQuantifier( replaceAll( what, by, f ), replaceAll( what, by, sk ), apply( what, by, tree ) )
+      ETWeakQuantifier( replaceAll( what, by, f ), children )
+    case ETStrongQuantifier( f, v, tree ) =>
+      ETStrongQuantifier( replaceAll( what, by, f ), v, apply( what, by, tree ) )
+    case ETSkolemQuantifier( f, sk, tree ) =>
+      ETSkolemQuantifier( replaceAll( what, by, f ), replaceAll( what, by, sk ), apply( what, by, tree ) )
     case MergeNode( l, r ) =>
       MergeNode( apply( what, by, l ), apply( what, by, r ) )
   }

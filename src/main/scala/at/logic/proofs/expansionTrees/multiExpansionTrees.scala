@@ -118,7 +118,7 @@ trait MultiExpansionTree extends TreeA[Option[HOLFormula], Option[Seq[HOLExpress
  * @param formula The formula expanded by this tree.
  * @param instances The instance blocks used for the weak quantifiers.
  */
-case class MWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
+case class METWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
     extends MultiExpansionTree with T1 {
   lazy val node = Some( formula )
   lazy val children = instances.map( x => ( x._1, Some( x._2 ) ) )
@@ -156,7 +156,7 @@ case class MWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
  * @param variables The vector '''α''' of eigenvariables used for the quantifiers.
  * @param selection The expansion tree E.
  */
-case class MStrongQuantifier( formula: HOLFormula, variables: Seq[HOLVar], selection: MultiExpansionTree )
+case class METStrongQuantifier( formula: HOLFormula, variables: Seq[HOLVar], selection: MultiExpansionTree )
     extends MultiExpansionTree with T1 {
   lazy val node = Some( formula )
   lazy val children = List( ( selection, Some( variables ) ) )
@@ -188,7 +188,7 @@ case class MStrongQuantifier( formula: HOLFormula, variables: Seq[HOLVar], selec
  * @param skolemSymbols The vector '''c''' of skolem symbols used for the quantifiers.
  * @param selection The expansion tree E.
  */
-case class MSkolemQuantifier( formula: HOLFormula, skolemSymbols: Seq[HOLExpression], selection: MultiExpansionTree )
+case class METSkolemQuantifier( formula: HOLFormula, skolemSymbols: Seq[HOLExpression], selection: MultiExpansionTree )
     extends MultiExpansionTree with T1 {
   lazy val node = Some( formula )
   lazy val children = List( ( selection, Some( skolemSymbols ) ) )
@@ -219,7 +219,7 @@ case class MSkolemQuantifier( formula: HOLFormula, skolemSymbols: Seq[HOLExpress
  * @param left The tree E,,1,,.
  * @param right The tree E,,2,,.
  */
-case class MAnd( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
+case class METAnd( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 
@@ -248,7 +248,7 @@ case class MAnd( left: MultiExpansionTree, right: MultiExpansionTree ) extends M
  * @param left The tree E,,1,,.
  * @param right The tree E,,2,,.
  */
-case class MOr( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
+case class METOr( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
   override def toDeep( pol: Int ): HOLFormula = OrHOL( left.toDeep( pol ), right.toDeep( pol ) )
@@ -275,7 +275,7 @@ case class MOr( left: MultiExpansionTree, right: MultiExpansionTree ) extends Mu
  * @param left The tree E,,1,,.
  * @param right The tree E,,2,,.
  */
-case class MImp( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
+case class METImp( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
   override def toDeep( pol: Int ): HOLFormula = ImpHOL( left.toDeep( -pol ), right.toDeep( pol ) )
@@ -302,7 +302,7 @@ case class MImp( left: MultiExpansionTree, right: MultiExpansionTree ) extends M
  * ¬ E
  * @param tree The tree E.
  */
-case class MNeg( tree: MultiExpansionTree ) extends MultiExpansionTree with T1 {
+case class METNeg( tree: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( tree, None ) )
   override def toDeep( pol: Int ): HOLFormula = NegHOL( tree.toDeep( -pol ) )
@@ -329,7 +329,7 @@ case class MNeg( tree: MultiExpansionTree ) extends MultiExpansionTree with T1 {
  * Atom(f)
  * @param formula The formula f.
  */
-case class MAtom( formula: HOLFormula ) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula], Option[Seq[HOLExpression]]] {
+case class METAtom( formula: HOLFormula ) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula], Option[Seq[HOLExpression]]] {
   lazy val node = Some( formula )
   override def toDeep( pol: Int ): HOLFormula = formula
   override def toShallow = formula

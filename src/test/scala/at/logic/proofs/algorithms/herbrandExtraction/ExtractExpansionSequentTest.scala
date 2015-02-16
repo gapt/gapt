@@ -7,7 +7,7 @@ import at.logic.language.lambda.types._
 import at.logic.language.hol._
 import at.logic.proofs.lk._
 import at.logic.proofs.algorithms.herbrandExtraction._
-import at.logic.proofs.expansionTrees.{StrongQuantifier => StrongQuantifierET, WeakQuantifier => WeakQuantifierET, Atom => AtomET, Imp => ImpET}
+import at.logic.proofs.expansionTrees.{ETStrongQuantifier => StrongQuantifierET, ETWeakQuantifier => WeakQuantifierET, ETAtom => AtomET, ETImp => ImpET}
 import at.logic.proofs.lk.base.LKProof
 import at.logic.language.fol.{FOLAtom => FOLAtom, FOLFunction => FOLFunction, FOLConst, FOLVar, Utils}
 

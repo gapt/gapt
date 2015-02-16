@@ -1,4 +1,4 @@
-import at.logic.proofs.expansionTrees.MWeakQuantifier
+import at.logic.proofs.expansionTrees.METWeakQuantifier
 import at.logic.cli.GAPScalaInteractiveShellLibrary._
 import at.logic.language.hol.HOLNeg
 import at.logic.proofs.hoare.{ForLoop, SimpleLoopProblem}
@@ -27,7 +27,7 @@ val proof = prover9.getProof(instanceSeq).get
 
 val expansionSequent = compressExpansionSequent(extractExpansionSequent(proof))
 expansionSequent.antecedent.foreach {
-  case MWeakQuantifier(formula, instances) =>
+  case METWeakQuantifier(formula, instances) =>
     println(s"$formula:")
     instances.foreach { case (inst, terms) => println(s"  $terms ($inst)") }
   case _ => Nil

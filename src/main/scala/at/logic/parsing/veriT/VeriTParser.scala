@@ -3,7 +3,7 @@ package at.logic.parsing.veriT
 import scala.util.parsing.combinator._
 import at.logic.language.fol._
 import at.logic.language.lambda.BetaReduction._
-import at.logic.proofs.expansionTrees.{ ExpansionTree, WeakQuantifier, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree }
+import at.logic.proofs.expansionTrees.{ ExpansionTree, ETWeakQuantifier, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree }
 import java.io.{ Reader, FileReader }
 
 object VeriTParser extends RegexParsers {

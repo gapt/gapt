@@ -2,7 +2,7 @@ package at.logic.proofs.algorithms.herbrandExtraction.lksk
 
 import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.proofs.lk.base.LKProof
-import at.logic.proofs.expansionTrees.{ merge => mergeTree, Atom => AtomTree, _ }
+import at.logic.proofs.expansionTrees.{ merge => mergeTree, ETAtom => AtomTree, _ }
 import at.logic.proofs.occurrences.FormulaOccurrence
 
 import at.logic.proofs.lksk._
@@ -35,19 +35,19 @@ class extractLKSKExpansionSequent extends extractExpansionSequent {
     case ForallSkLeftRule( parent, r, a, p, t ) =>
       val map = extract( parent, verbose )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, WeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) ) ) )
+      contextmap + ( ( p, ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) ) ) )
     case ExistsSkRightRule( parent, r, a, p, t ) =>
       val map = extract( parent, verbose )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, WeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) ) ) )
+      contextmap + ( ( p, ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) ) ) )
     case ForallSkRightRule( parent, r, a, p, skt ) =>
       val map = extract( parent, verbose )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, SkolemQuantifier( p.formula, skt, map( a ) ) ) )
+      contextmap + ( ( p, ETSkolemQuantifier( p.formula, skt, map( a ) ) ) )
     case ExistsSkLeftRule( parent, r, a, p, skt ) =>
       val map = extract( parent, verbose )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, SkolemQuantifier( p.formula, skt, map( a ) ) ) )
+      contextmap + ( ( p, ETSkolemQuantifier( p.formula, skt, map( a ) ) ) )
 
     case UnaryLKProof( _, up, r, _, p ) =>
       val map = extract( up, verbose )

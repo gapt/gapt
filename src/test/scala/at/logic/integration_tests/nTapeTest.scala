@@ -23,7 +23,7 @@ import at.logic.proofs.algorithms.ceres.ceres_omega
 import at.logic.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.utils.testing.ClasspathFileCopier
-import at.logic.proofs.expansionTrees.{And => ETAnd, Imp => ETImp, Or => ETOr, Neg => ETNEg, WeakQuantifier, StrongQuantifier, SkolemQuantifier, ExpansionTree, toDeep, ExpansionSequent}
+import at.logic.proofs.expansionTrees.{ETAnd => ETAnd, ETImp => ETImp, ETOr => ETOr, ETNeg => ETNEg, ETWeakQuantifier, ETStrongQuantifier, ETSkolemQuantifier, ExpansionTree, toDeep, ExpansionSequent}
 
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
@@ -81,7 +81,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
   def printStatistics(et : ExpansionSequent) = {
     val indet = decompose((et.antecedent(3)))(2)
     val List(ind1, ind2) : List[ExpansionTree] = indet match {
-      case WeakQuantifier(_, List(
+      case ETWeakQuantifier(_, List(
       (inst1, et1),
       (inst2, et2)
       ))
@@ -91,9 +91,9 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
     val (ind1base, ind1step) = ind1 match {
       case ETImp(ETAnd(
-      WeakQuantifier(_, List((_,base))),
-      SkolemQuantifier(_,_,
-                      ETImp(_, WeakQuantifier(f, List((inst,step))))
+      ETWeakQuantifier(_, List((_,base))),
+      ETSkolemQuantifier(_,_,
+                      ETImp(_, ETWeakQuantifier(f, List((inst,step))))
                       )
       ) ,_ ) =>
         (base, step)
@@ -101,9 +101,9 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
     val (ind2base,ind2step) = ind2 match {
       case ETImp(ETAnd(
-        WeakQuantifier(_, List((_,base))),
-        SkolemQuantifier(_,_,
-               ETImp(_,WeakQuantifier(f, List((inst,step))))
+        ETWeakQuantifier(_, List((_,base))),
+        ETSkolemQuantifier(_,_,
+               ETImp(_,ETWeakQuantifier(f, List((inst,step))))
         )) ,_ ) =>
         (base, step)
     }
