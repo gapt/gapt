@@ -1,7 +1,7 @@
 package at.logic.testing.verit
 
 import at.logic.proofs.expansionTrees._
-import at.logic.parsing.veriT.VeriTParser
+import at.logic.io.veriT.VeriTParser
 import at.logic.provers.minisat._
 import at.logic.testing.{skipIfRunsLongerThan, recursiveListFiles}
 

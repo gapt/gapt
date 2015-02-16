@@ -1,6 +1,6 @@
-package at.logic.parsing.ivy.conversion
+package at.logic.io.ivy.conversion
 
-import at.logic.parsing.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
+import at.logic.io.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
 import at.logic.proofs.resolution.robinson.{ InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof }
 import at.logic.language.fol._
 import at.logic.proofs.resolution.robinson.{ Instance => RInstantiate }

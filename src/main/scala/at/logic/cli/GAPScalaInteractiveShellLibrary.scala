@@ -41,26 +41,26 @@ import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.{ LambdaExpression, Var, Substitution => LambdaSubstitution }
 import at.logic.language.lambda.types._
 import at.logic.language.schema.{ AllVar => SchemaAllVar, Atom => SchemaAtom, ExVar => SchemaExVar, _ }
-import at.logic.parsing.calculi.latex._
-import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-import at.logic.parsing.calculus.xml._
-import at.logic.parsing.hoare.ProgramParser
-import at.logic.parsing.ivy.conversion.IvyToRobinson
-import at.logic.parsing.ivy.{ IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution }
-import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
-import at.logic.parsing.language.hlk.HLKHOLParser
-import at.logic.parsing.language.prover9._
-import at.logic.parsing.language.simple._
-import at.logic.parsing.language.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
-import at.logic.parsing.language.xml.ProofDatabase
-import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.lisp.SExpressionParser
-import at.logic.parsing.readers.StringReader
-import at.logic.parsing.readers.XMLReaders._
-import at.logic.parsing.shlk.SchemaFormulaParser
-import at.logic.parsing.shlk_parsing.{ sFOParser, sFOParserCNT }
-import at.logic.parsing.veriT._
-import at.logic.parsing.writers.FileWriter
+import at.logic.io.calculi.latex._
+import at.logic.io.calculi.simple.SimpleResolutionParserFOL
+import at.logic.io.calculus.xml._
+import at.logic.io.hoare.ProgramParser
+import at.logic.io.ivy.conversion.IvyToRobinson
+import at.logic.io.ivy.{ IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution }
+import at.logic.io.language.arithmetic.HOLTermArithmeticalExporter
+import at.logic.io.language.hlk.HLKHOLParser
+import at.logic.io.language.prover9._
+import at.logic.io.language.simple._
+import at.logic.io.language.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
+import at.logic.io.language.xml.ProofDatabase
+import at.logic.io.language.xml.XMLParser._
+import at.logic.io.lisp.SExpressionParser
+import at.logic.io.readers.StringReader
+import at.logic.io.readers.XMLReaders._
+import at.logic.io.shlk.SchemaFormulaParser
+import at.logic.io.shlk_parsing.{ sFOParser, sFOParserCNT }
+import at.logic.io.veriT._
+import at.logic.io.writers.FileWriter
 import at.logic.provers.atp.Prover
 import at.logic.provers.atp.commands.base._
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand

@@ -6,10 +6,10 @@ package at.logic.integration_tests
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.{getStatistics, deleteTautologies}
 import at.logic.proofs.lk.base._
-import at.logic.parsing.calculus.xml.saveXML
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.readers.XMLReaders._
+import at.logic.io.calculus.xml.saveXML
+import at.logic.io.language.tptp.TPTPFOLExporter
+import at.logic.io.language.xml.XMLParser._
+import at.logic.io.readers.XMLReaders._
 import at.logic.provers.prover9._
 import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.proofs.algorithms.ceres.clauseSets.profile._

@@ -1,14 +1,14 @@
 package at.logic.algorithms.hlk
 
-import at.logic.parsing.language.hlk.{ ast, DeclarationParser }
-import at.logic.parsing.language.hlk.ast.LambdaAST
+import at.logic.io.language.hlk.{ ast, DeclarationParser }
+import at.logic.io.language.hlk.ast.LambdaAST
 import scala.util.parsing.input.PagedSeqReader
 import scala.collection.immutable.PagedSeq
 import java.io.FileReader
 import at.logic.language.lambda.types.TA
 import at.logic.language.hol._
 import at.logic.proofs.lk.base.{ FSequent, LKProof }
-import at.logic.parsing.language.xml.ProofDatabase
+import at.logic.io.language.xml.ProofDatabase
 import at.logic.algorithms.llk.TokenToLKConverter
 
 /**

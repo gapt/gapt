@@ -3,12 +3,12 @@ package at.logic.integration_tests
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.algorithms.{getStatistics, deleteTautologies}
 import at.logic.proofs.lk.base._
-import at.logic.parsing.calculi.latex.SequentsListLatexExporter
-import at.logic.parsing.calculus.xml.saveXML
-import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
-import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.readers.XMLReaders._
-import at.logic.parsing.writers.FileWriter
+import at.logic.io.calculi.latex.SequentsListLatexExporter
+import at.logic.io.calculus.xml.saveXML
+import at.logic.io.language.arithmetic.HOLTermArithmeticalExporter
+import at.logic.io.language.xml.XMLParser._
+import at.logic.io.readers.XMLReaders._
+import at.logic.io.writers.FileWriter
 import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.proofs.algorithms.ceres.struct.StructCreators
 import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc

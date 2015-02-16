@@ -9,8 +9,8 @@ import at.logic.language.fol.algorithms.{ UnificationAlgorithm, FOLMatchingAlgor
 import at.logic.proofs.resolution.{ Clause, ResolutionProof }
 import at.logic.proofs.lk.base._
 import at.logic.language.fol.FOLExpression
-import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-import at.logic.parsing.readers.FileReader
+import at.logic.io.calculi.simple.SimpleResolutionParserFOL
+import at.logic.io.readers.FileReader
 import at.logic.provers.atp.commands.base._
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.provers.atp.commands.logical.DeterministicMacroCommand

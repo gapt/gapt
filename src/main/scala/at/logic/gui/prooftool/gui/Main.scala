@@ -9,6 +9,7 @@ package at.logic.gui.prooftool.gui
 
 import at.logic.proofs.lk.algorithms._
 import at.logic.proofs.lksk.algorithms.eliminateDefinitions
+import com.itextpdf.awt.PdfGraphics2D
 
 import scala.swing._
 import BorderPanel._
@@ -22,10 +23,10 @@ import at.logic.proofs.proofs.TreeProof
 import at.logic.gui.prooftool.parser._
 import at.logic.language.hol._
 import at.logic.language.schema.IntVar
-import at.logic.parsing.calculi.latex.SequentsListLatexExporter
-import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
-import at.logic.parsing.language.xml.{ ProofDatabase, XMLExporter }
-import at.logic.parsing.writers.FileWriter
+import at.logic.io.calculi.latex.SequentsListLatexExporter
+import at.logic.io.language.arithmetic.HOLTermArithmeticalExporter
+import at.logic.io.language.xml.{ ProofDatabase, XMLExporter }
+import at.logic.io.writers.FileWriter
 import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.proofs.algorithms.ceres.clauseSets.{ renameCLsymbols, StandardClauseSet }
 import at.logic.proofs.algorithms.ceres.struct.{ structToExpressionTree, StructCreators }
@@ -45,9 +46,7 @@ import java.awt.Color
 import at.logic.gui.prooftool.parser.ChangeFormulaColor
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.algorithms.llk.HybridLatexExporter
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-import com.itextpdf.awt.PdfGraphics2D
-import com.itextpdf.awt.DefaultFontMapper
+import at.logic.io.language.tptp.TPTPFOLExporter
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane

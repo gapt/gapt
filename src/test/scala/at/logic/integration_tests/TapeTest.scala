@@ -9,10 +9,10 @@ import at.logic.proofs.lk._
 
 
 import at.logic.proofs.lk.base._
-import at.logic.parsing.calculus.xml.saveXML
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.readers.XMLReaders._
+import at.logic.io.calculus.xml.saveXML
+import at.logic.io.language.tptp.TPTPFOLExporter
+import at.logic.io.language.xml.XMLParser._
+import at.logic.io.readers.XMLReaders._
 
 import at.logic.provers.atp.Prover
 import at.logic.provers.atp.commands.base.SetStreamCommand

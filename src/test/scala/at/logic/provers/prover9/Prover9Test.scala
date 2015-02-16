@@ -8,8 +8,8 @@ import at.logic.proofs.lk.base.FSequent
 import at.logic.proofs.occurrences.factory
 import at.logic.proofs.resolution.robinson.{Formatter, RobinsonResolutionProof}
 import at.logic.language.fol._
-import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.parsing.readers.StringReader
+import at.logic.io.language.simple.SimpleFOLParser
+import at.logic.io.readers.StringReader
 import java.io.File.separator
 import java.io.IOException
 

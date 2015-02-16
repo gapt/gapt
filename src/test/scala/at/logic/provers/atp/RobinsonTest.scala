@@ -8,7 +8,7 @@ import at.logic.language.fol.FOLFormula
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.proofs.lk.base.FSequent
-import at.logic.parsing.language.prover9.Prover9TermParser.parseFormula
+import at.logic.io.language.prover9.Prover9TermParser.parseFormula
 import at.logic.proofs.resolution.{ResolutionProof, Clause}
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.base._

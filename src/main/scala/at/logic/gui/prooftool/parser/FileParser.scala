@@ -10,19 +10,19 @@ package at.logic.gui.prooftool.parser
 import scala.swing.Dialog
 import java.io.{ FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
-import at.logic.parsing.language.xml.XMLParser.XMLProofDatabaseParser
-import at.logic.parsing.readers.XMLReaders._
-import at.logic.parsing.language.xml.ProofDatabase
-import at.logic.parsing.calculi.xml.SimpleXMLProofParser
-import at.logic.parsing.ParsingException
+import at.logic.io.language.xml.XMLParser.XMLProofDatabaseParser
+import at.logic.io.readers.XMLReaders._
+import at.logic.io.language.xml.ProofDatabase
+import at.logic.io.calculi.xml.SimpleXMLProofParser
+import at.logic.io.ParsingException
 import at.logic.proofs.proofs.TreeProof
 import at.logic.proofs.lk.base.{ LKProof, FSequent }
-import at.logic.parsing.shlk_parsing.sFOParser
+import at.logic.io.shlk_parsing.sFOParser
 import at.logic.utils.ds.trees.{ LeafTree, BinaryTree, Tree }
 import at.logic.language.hol.HOLExpression
 import at.logic.gui.prooftool.gui.{ DrawSequent, Main }
-import at.logic.parsing.ivy.IvyParser
-import at.logic.parsing.ivy.conversion.IvyToRobinson
+import at.logic.io.ivy.IvyParser
+import at.logic.io.ivy.conversion.IvyToRobinson
 import at.logic.language.schema.dbTRS
 import at.logic.proofs.algorithms.ceres.clauseSchema._
 import at.logic.proofs.slk.SchemaProofDB

@@ -10,8 +10,8 @@ import at.logic.proofs.slk.SchemaProofDB
 import at.logic.language.fol.{Substitution => FOLSubstitution, FOLExpression, FOLAllVar, FOLConst, FOLVar}
 import at.logic.language.hol.{HOLFormula, HOLVar, HOLAbs, HOLExpression}
 import at.logic.language.lambda.types._
-import at.logic.parsing.language.prover9.Prover9TermParserLadrStyle
-import at.logic.parsing.shlk_parsing.sFOParser
+import at.logic.io.language.prover9.Prover9TermParserLadrStyle
+import at.logic.io.shlk_parsing.sFOParser
 import at.logic.provers.prover9.Prover9
 import at.logic.proofs.algorithms.ceres.clauseSchema._
 import at.logic.proofs.algorithms.ceres.clauseSets.StandardClauseSet

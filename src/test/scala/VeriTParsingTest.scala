@@ -1,4 +1,4 @@
-package at.logic.parsing.veriT
+package at.logic.io.veriT
 
 import at.logic.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith

@@ -11,10 +11,10 @@ import at.logic.proofs.resolution.ResolutionProof
 import at.logic.proofs.resolution.robinson.{Formatter, RobinsonResolutionProof}
 import at.logic.language.fol._
 import at.logic.language.lambda.symbols._
-import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-import at.logic.parsing.readers.StringReader
+import at.logic.io.calculi.simple.SimpleResolutionParserFOL
+import at.logic.io.language.simple.SimpleFOLParser
+import at.logic.io.language.tptp.TPTPFOLExporter
+import at.logic.io.readers.StringReader
 import at.logic.provers.atp.Prover
 import at.logic.provers.atp.commands.base.{SetStreamCommand, PrependCommand}
 import at.logic.provers.atp.commands.sequents.SetTargetClause
@@ -27,7 +27,7 @@ import org.mockito.Matchers._
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import at.logic.parsing.language.prover9.Prover9TermParser.parseFormula
+import at.logic.io.language.prover9.Prover9TermParser.parseFormula
 import at.logic.provers.prover9.commands.Prover9InitCommand
 import scala.Some
 import at.logic.provers.atp.commands.sequents.SetTargetClause

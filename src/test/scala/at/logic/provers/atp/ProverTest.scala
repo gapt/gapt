@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
 import at.logic.language.fol._
-import at.logic.parsing.language.simple.SimpleFOLParser
+import at.logic.io.language.simple.SimpleFOLParser
 import at.logic.provers.atp.commands.base.{BranchCommand, Command}
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.proofs.lk.base.FSequent
@@ -17,8 +17,8 @@ import at.logic.provers.atp.commands.refinements.simple._
 import at.logic.provers.atp.commands.refinements.base._
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.robinson._
-import at.logic.parsing.calculi.simple.SimpleResolutionParserFOL
-import at.logic.parsing.readers.StringReader
+import at.logic.io.calculi.simple.SimpleResolutionParserFOL
+import at.logic.io.readers.StringReader
 import at.logic.proofs.resolution._
 import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 

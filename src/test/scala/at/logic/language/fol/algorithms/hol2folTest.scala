@@ -10,8 +10,8 @@ import at.logic.language.hol.logicSymbols.ImpSymbol
 import at.logic.language.hol.{HOLConst, HOLExpression, HOLVar, HOLAllVar => HOLAllVar, HOLAnd => HOLAnd, HOLAtom => HOLAtom, HOLExVar => HOLExVar, HOLFunction => HOLFunction, HOLImp => HOLImp, HOLNeg => HOLNeg, HOLOr => HOLOr}
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types._
-import at.logic.parsing.language.simple.{SimpleFOLParser, SimpleHOLParser}
-import at.logic.parsing.readers.StringReader
+import at.logic.io.language.simple.{SimpleFOLParser, SimpleHOLParser}
+import at.logic.io.readers.StringReader
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner

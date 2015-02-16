@@ -1,11 +1,11 @@
-package at.logic.parsing.ivy
+package at.logic.io.ivy
 
 import at.logic.utils.testing.ClasspathFileCopier
 import conversion.IvyToRobinson
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
-import at.logic.parsing.lisp
+import at.logic.io.lisp
 import java.io.File.separator
 import util.parsing.input.Reader
 import lisp.{SExpressionParser}
