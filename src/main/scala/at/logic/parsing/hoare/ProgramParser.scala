@@ -1,7 +1,7 @@
 package at.logic.parsing.hoare
 
 import at.logic.language.fol.{ FOLFormula, FOLTerm, FOLVar }
-import at.logic.language.hoare._
+import at.logic.proofs.hoare._
 import at.logic.parsing.language.prover9.{ Prover9TermParserLadrStyle, Prover9TermParserA }
 import scala.util.parsing.combinator.PackratParsers
 

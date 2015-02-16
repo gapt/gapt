@@ -1,4 +1,4 @@
-package at.logic.language.hoare
+package at.logic.proofs.hoare
 
 import at.logic.parsing.hoare.ProgramParser
 import org.junit.runner.RunWith

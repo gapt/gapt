@@ -1,7 +1,7 @@
 package at.logic.parsing.hoare
 
 import at.logic.language.fol._
-import at.logic.language.hoare._
+import at.logic.proofs.hoare._
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner

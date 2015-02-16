@@ -1,4 +1,4 @@
-package at.logic.language.hoare
+package at.logic.proofs.hoare
 
 import at.logic.language.fol._
 
