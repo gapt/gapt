@@ -5,8 +5,8 @@
 
 package at.logic.applet
 
-import at.logic.parsing.language.simple.SimpleHOLParser
-import at.logic.parsing.readers.StringReader
+import at.logic.io.language.simple.SimpleHOLParser
+import at.logic.io.readers.StringReader
 
 import java.io.File.separator
 import java.io.{ FileReader, FileInputStream, InputStreamReader }

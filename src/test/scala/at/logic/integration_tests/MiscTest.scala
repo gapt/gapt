@@ -15,11 +15,11 @@ import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.{HOLAnd => AndHOL, HOLImp => ImpHOL, HOLOr => OrHOL}
 import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
-import at.logic.parsing.calculus.xml.saveXML
-import at.logic.parsing.language.tptp.TPTPFOLExporter
-import at.logic.parsing.language.xml.XMLParser._
-import at.logic.parsing.readers.XMLReaders._
-import at.logic.parsing.veriT.VeriTParser
+import at.logic.io.calculus.xml.saveXML
+import at.logic.io.language.tptp.TPTPFOLExporter
+import at.logic.io.language.xml.XMLParser._
+import at.logic.io.readers.XMLReaders._
+import at.logic.io.veriT.VeriTParser
 import at.logic.proofs.resolution.algorithms.{fixSymmetry, RobinsonToLK, CNFn}
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.provers.prover9.{Prover9, Prover9Prover}

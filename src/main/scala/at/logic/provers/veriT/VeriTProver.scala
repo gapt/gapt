@@ -5,7 +5,7 @@ import at.logic.proofs.expansionTrees.ExpansionSequent
 import scala.sys.process._
 import java.io._
 import at.logic.provers.Prover
-import at.logic.parsing.veriT._
+import at.logic.io.veriT._
 import at.logic.language.hol.HOLFormula
 import at.logic.proofs.lk.base.FSequent
 

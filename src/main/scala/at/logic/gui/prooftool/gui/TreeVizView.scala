@@ -9,7 +9,7 @@ import java.awt.Color
 import at.logic.algorithms.llk.HybridLatexExporter.fsequentString
 import at.logic.proofs.lksk.{ ExistsSkLeftRuleType, ForallSkRightRuleType, ExistsSkRightRuleType, ForallSkLeftRuleType }
 import at.logic.proofs.lk._
-import at.logic.parsing.calculi.xml.{ BinaryRuleType, UnaryRuleType, NullaryRuleType }
+import at.logic.io.calculi.xml.{ BinaryRuleType, UnaryRuleType, NullaryRuleType }
 import at.logic.proofs.lk.base._
 import at.logic.gui.prooftool.parser.{ ChangeSequentColor, ProofToolPublisher }
 

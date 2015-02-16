@@ -7,7 +7,7 @@ import at.logic.proofs.lk.base.{Sequent, LKProof}
 import at.logic.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import at.logic.proofs.slk.{SchemaProof, SchemaProofDB}
 import at.logic.language.schema._
-import at.logic.parsing.shlk_parsing.{SHLK, sFOParser}
+import at.logic.io.shlk_parsing.{SHLK, sFOParser}
 import at.logic.utils.ds.trees.BinaryTree
 import at.logic.utils.testing.ClasspathFileCopier
 import clauseSchema.ParseResSchema._

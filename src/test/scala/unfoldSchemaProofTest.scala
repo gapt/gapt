@@ -2,7 +2,7 @@
 package at.logic.integration_tests
 
 import at.logic.language.schema._
-import at.logic.parsing.shlk_parsing.SHLK
+import at.logic.io.shlk_parsing.SHLK
 
 import java.io.{FileInputStream, InputStreamReader}
 import java.io.File.separator

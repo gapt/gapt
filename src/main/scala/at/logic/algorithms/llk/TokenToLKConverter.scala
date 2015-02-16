@@ -3,8 +3,8 @@ package at.logic.algorithms.llk
 import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.proofs.lk.algorithms.{ applySubstitution, AtomicExpansion, solve }
 import at.logic.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
-import at.logic.parsing.language.hlk.{ ast, DeclarationParser, HLKHOLParser }
-import at.logic.parsing.language.hlk.ast.LambdaAST
+import at.logic.io.language.hlk.{ ast, DeclarationParser, HLKHOLParser }
+import at.logic.io.language.hlk.ast.LambdaAST
 import at.logic.language.lambda.types.{ To, TA }
 import at.logic.language.hol._
 import at.logic.proofs.lk.base._

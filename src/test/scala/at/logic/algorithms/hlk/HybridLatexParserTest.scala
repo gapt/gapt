@@ -5,8 +5,8 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.execute.Success
-import at.logic.parsing.language.hlk.{HOLASTParser, HLKHOLParser, ast}
-import at.logic.parsing.language.hlk.ast.LambdaAST
+import at.logic.io.language.hlk.{HOLASTParser, HLKHOLParser, ast}
+import at.logic.io.language.hlk.ast.LambdaAST
 import java.io.File.separator
 import at.logic.language.lambda.types.{To, Ti, TA}
 import at.logic.language.hol._

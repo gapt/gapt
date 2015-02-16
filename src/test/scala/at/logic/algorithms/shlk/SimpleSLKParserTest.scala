@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.parsing.shlk_parsing
+package at.logic.io.shlk_parsing
 
 import at.logic.language.schema._
 import at.logic.proofs.lk._

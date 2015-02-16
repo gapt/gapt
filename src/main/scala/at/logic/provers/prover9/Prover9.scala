@@ -14,11 +14,11 @@ import at.logic.proofs.resolution.Clause
 import at.logic.proofs.resolution.algorithms.{ fixSymmetry, RobinsonToLK, CNFn, InstantiateElimination }
 import at.logic.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.language.fol._
-import at.logic.parsing.ivy.IvyParser
-import at.logic.parsing.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }
-import at.logic.parsing.ivy.conversion.IvyToRobinson
-import at.logic.parsing.language.prover9._
-import at.logic.parsing.language.tptp.TPTPFOLExporter
+import at.logic.io.ivy.IvyParser
+import at.logic.io.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }
+import at.logic.io.ivy.conversion.IvyToRobinson
+import at.logic.io.language.prover9._
+import at.logic.io.language.tptp.TPTPFOLExporter
 import at.logic.provers.Prover
 import at.logic.provers.prover9.commands.InferenceExtractor
 import java.io._
