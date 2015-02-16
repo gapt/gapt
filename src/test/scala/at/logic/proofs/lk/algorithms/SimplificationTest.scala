@@ -1,7 +1,7 @@
 
 package at.logic.proofs.lk.algorithms
 
-import at.logic.language.fol.{FOLConst, FOLVar, Atom => FOLAtom, Function => FOLFunction}
+import at.logic.language.fol.{FOLConst, FOLVar, FOLAtom => FOLAtom, FOLFunction => FOLFunction}
 import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.proofs.lk.base.FSequent

@@ -43,8 +43,8 @@ class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] =
       val set = terms.getTermTuple( term )
       val f = terms.getFormula( term )
       f match {
-        case AllVar( _, _ ) => instantiateAll( f, set ) :: acc
-        case _              => acc
+        case FOLAllVar( _, _ ) => instantiateAll( f, set ) :: acc
+        case _                 => acc
       }
   }
   // Instantiated (previously ex. quantified) formulas on the right
@@ -53,8 +53,8 @@ class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] =
       val set = terms.getTermTuple( term )
       val f = terms.getFormula( term )
       f match {
-        case ExVar( _, _ ) => instantiateAll( f, set ) :: acc
-        case _             => acc
+        case FOLExVar( _, _ ) => instantiateAll( f, set ) :: acc
+        case _                => acc
       }
   }
 

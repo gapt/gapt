@@ -21,14 +21,14 @@ class VeriTProverTest extends SpecificationWithJUnit {
   "VeriT" should {
     "prove a v not a" in {
       //skipped("--proof-version in isValid is only supported on Giselle's machine")
-      val a = Atom("a", Nil)
-      val f = Or(a, Neg(a))
+      val a = FOLAtom("a", Nil)
+      val f = FOLOr(a, FOLNeg(a))
 
       veriT.isValid(f) must beEqualTo(true)
     }
 
     "parse the proof of a |- a" in {
-      val a = Atom("a")
+      val a = FOLAtom("a")
       val s = FSequent(List(a), List(a))
 
       veriT.getExpansionSequent(s) must not be None

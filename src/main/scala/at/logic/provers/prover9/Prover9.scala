@@ -364,16 +364,16 @@ object Prover9 extends at.logic.utils.logging.Logger {
         case FClause( Nil, Nil ) => false;
         case _                   => true
       } )
-      val clauses = fclauses.map( c => univclosure( Or(
-        c.neg.map( f => Neg( f.asInstanceOf[FOLFormula] ) ).toList ++
+      val clauses = fclauses.map( c => univclosure( FOLOr(
+        c.neg.map( f => FOLNeg( f.asInstanceOf[FOLFormula] ) ).toList ++
           c.pos.map( f => f.asInstanceOf[FOLFormula] ).toList ) ) )
       val clauses_ = clauses.partition( _ match {
-        case Neg( _ ) => false;
-        case _        => true
+        case FOLNeg( _ ) => false;
+        case _           => true
       } )
       //val cendsequent = FSequent(clauses.toList, Nil)
       val cendsequent2 = FSequent( clauses_._1.toList, clauses_._2.map( _ match {
-        case Neg( x ) => x
+        case FOLNeg( x ) => x
       } ).toList )
 
       RobinsonToLK( proof, cendsequent2 )

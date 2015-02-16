@@ -584,7 +584,7 @@ object CutIntroduction {
         } else acc
     }
 
-    val c1 = And( instantiated_f )
+    val c1 = FOLAnd( instantiated_f )
 
     g.slist.foldLeft( List( c1 ) ) {
       case ( cut_formulas, ( variables, termset ) ) =>
@@ -595,8 +595,8 @@ object CutIntroduction {
             val subst = Substitution( variables.zip( terms ) )
             subst( ci ) :: acc
         }
-        val ci_quant = variables.foldLeft( ci ) { ( f, v ) => AllVar( v, f ) }
-        And( forms ) :: ci_quant :: cut_formulas.tail
+        val ci_quant = variables.foldLeft( ci ) { ( f, v ) => FOLAllVar( v, f ) }
+        FOLAnd( forms ) :: ci_quant :: cut_formulas.tail
       // The last term set contains only constants, so we drop the formula generated with it.
     }.tail.reverse
   }
@@ -670,10 +670,10 @@ object CutIntroduction {
   // end-sequent ancestors with the terms from the set U
   def genWeakQuantRules( f: FOLFormula, lst: List[FOLTerm], ax: LKProof ): LKProof = ( f, lst ) match {
     case ( _, Nil ) => ax
-    case ( AllVar( _, _ ), h :: t ) =>
+    case ( FOLAllVar( _, _ ), h :: t ) =>
       val newForm = instantiate( f, h )
       ForallLeftRule( genWeakQuantRules( newForm, t, ax ), newForm, f, h )
-    case ( ExVar( _, _ ), h :: t ) =>
+    case ( FOLExVar( _, _ ), h :: t ) =>
       val newForm = instantiate( f, h )
       ExistsRightRule( genWeakQuantRules( newForm, t, ax ), newForm, f, h )
   }
@@ -690,7 +690,7 @@ object CutIntroduction {
         val f = terms.getFormula( term )
 
         f match {
-          case AllVar( _, _ ) =>
+          case FOLAllVar( _, _ ) =>
             try {
               ContractionLeftRule( genWeakQuantRules( f, set, ax ), f )
             } catch {
@@ -698,7 +698,7 @@ object CutIntroduction {
               // substitution
               case e: LKRuleCreationException => genWeakQuantRules( f, set, ax )
             }
-          case ExVar( _, _ ) =>
+          case FOLExVar( _, _ ) =>
             try {
               ContractionRightRule( genWeakQuantRules( f, set, ax ), f )
             } catch {

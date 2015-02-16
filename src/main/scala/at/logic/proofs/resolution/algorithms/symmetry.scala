@@ -1,6 +1,6 @@
 package at.logic.proofs.resolution.algorithms
 
-import at.logic.language.fol.{ FOLFormula, Substitution, Equation => FOLEquation }
+import at.logic.language.fol.{ FOLFormula, Substitution, FOLEquation => FOLEquation }
 import at.logic.proofs.lk.base._
 import at.logic.proofs.resolution.FClause
 import at.logic.proofs.resolution.robinson._

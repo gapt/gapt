@@ -78,18 +78,18 @@ class TermSet( terms: Map[FOLFormula, List[List[FOLTerm]]] ) {
       val functionSymbol = new TupleFunction
       formulaFunction += ( functionSymbol.name -> f )
       set = lst.foldRight( set ) {
-        case ( tuple, acc ) => Function( functionSymbol.name, tuple ) :: acc
+        case ( tuple, acc ) => FOLFunction( functionSymbol.name, tuple ) :: acc
       }
   }
 
   def getFormula( t: FOLTerm ) = t match {
-    case Function( symbol, _ ) => formulaFunction( symbol.toString )
-    case _                     => throw new TermsExtractionException( "Term is not a function: " + t )
+    case FOLFunction( symbol, _ ) => formulaFunction( symbol.toString )
+    case _                        => throw new TermsExtractionException( "Term is not a function: " + t )
   }
 
   def getTermTuple( t: FOLTerm ) = t match {
-    case Function( _, tuple ) => tuple
-    case _                    => throw new TermsExtractionException( "Term is not a function: " + t )
+    case FOLFunction( _, tuple ) => tuple
+    case _                       => throw new TermsExtractionException( "Term is not a function: " + t )
   }
 
   object TupleFunction {

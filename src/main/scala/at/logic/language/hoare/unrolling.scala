@@ -27,16 +27,16 @@ case class SimpleLoopProblem( val loop: ForLoop, val gamma: Seq[FOLFormula], val
   def stateFunctionSymbol( programVariable: FOLVar ): String = programVariable match { case FOLVar( sym ) => s"sigma_$sym" }
 
   def varsAtTime( i: FOLTerm ): List[( FOLVar, FOLTerm )] =
-    programVariables map { v => v -> Function( stateFunctionSymbol( v ), List( i ) ) }
+    programVariables map { v => v -> FOLFunction( stateFunctionSymbol( v ), List( i ) ) }
 
   def pi: FOLFormula =
     Substitution( varsAtTime( loop.indexVar ) )(
       weakestPrecondition( loop.body,
-        And( varsAtTime( Function( "s", List( loop.indexVar ) ) ) map {
-          case ( v, s ) => Equation( s, v )
+        FOLAnd( varsAtTime( FOLFunction( "s", List( loop.indexVar ) ) ) map {
+          case ( v, s ) => FOLEquation( s, v )
         } ) ) )
 
-  def Pi: FOLFormula = AllVar( loop.indexVar, pi )
+  def Pi: FOLFormula = FOLAllVar( loop.indexVar, pi )
 
   def A: FOLFormula = Substitution( varsAtTime( numeral( 0 ) ) )( precondition )
   def B: FOLFormula = Substitution( varsAtTime( loop.limit ) )( postcondition )

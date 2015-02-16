@@ -1,6 +1,6 @@
 package at.logic.proofs.lk.algorithms.cutIntroduction
 
-import at.logic.language.fol.{FOLVar, Function, FOLConst, FOLTerm}
+import at.logic.language.fol.{FOLVar, FOLFunction, FOLConst, FOLTerm}
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
@@ -18,7 +18,7 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
    */
   def s(n:Int, t: FOLTerm=FOLConst("0")) : FOLTerm = n match {
     case 0 => t
-    case i => Function("s", List(s(i-1, t)))
+    case i => FOLFunction("s", List(s(i-1, t)))
   }
 
   /**

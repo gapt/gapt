@@ -17,26 +17,26 @@ class definition_eliminationTest extends SpecificationWithJUnit {
     val List(p,q,a,b,tsym) = List("P","Q","A","B","t")
     val List(t) = List(tsym) map (FOLConst.apply)
     val List(alpha,beta,x,y) = List(alphasym, betasym, xsym, ysym).map(FOLVar.apply)
-    val qa = Atom(q, alpha::Nil)
-    val qx = Atom(q, x::Nil)
-    val pab = Atom(p, List(alpha,beta))
-    val pay = Atom(p, List(alpha,y))
-    val pty = Atom(p, List(t,y))
-    val pxy = Atom(p, List(x,y))
-    val ax =  Atom(a,x::Nil)
-    val at =  Atom(a,t::Nil)
-    val aa =  Atom(a,alpha::Nil)
-    val bx = Atom(b,x::Nil)
-    val eqxt = Equation(x,t)
-    val allypay = AllVar(y,pay)
-    val allypty = AllVar(y,pty)
-    val allypxy = AllVar(y, pxy)
-    val allxypxy = AllVar(x, allypxy )
-    val allxax = AllVar(x, ax)
-    val exformula = ExVar(x, And(qx, ax))
+    val qa = FOLAtom(q, alpha::Nil)
+    val qx = FOLAtom(q, x::Nil)
+    val pab = FOLAtom(p, List(alpha,beta))
+    val pay = FOLAtom(p, List(alpha,y))
+    val pty = FOLAtom(p, List(t,y))
+    val pxy = FOLAtom(p, List(x,y))
+    val ax =  FOLAtom(a,x::Nil)
+    val at =  FOLAtom(a,t::Nil)
+    val aa =  FOLAtom(a,alpha::Nil)
+    val bx = FOLAtom(b,x::Nil)
+    val eqxt = FOLEquation(x,t)
+    val allypay = FOLAllVar(y,pay)
+    val allypty = FOLAllVar(y,pty)
+    val allypxy = FOLAllVar(y, pxy)
+    val allxypxy = FOLAllVar(x, allypxy )
+    val allxax = FOLAllVar(x, ax)
+    val exformula = FOLExVar(x, FOLAnd(qx, ax))
 
     val i1 = Axiom(List(qa), List(qa))
-    val i2 = ForallLeftRule(i1, i1.root.antecedent(0), AllVar(x,qx), alpha)
+    val i2 = ForallLeftRule(i1, i1.root.antecedent(0), FOLAllVar(x,qx), alpha)
 
     val i3 = Axiom(List(pab),List(pab))
     val i4 = ForallLeftRule(i3, i3.root.antecedent(0), allypay, beta)
@@ -46,15 +46,15 @@ class definition_eliminationTest extends SpecificationWithJUnit {
     val i8 = DefinitionLeftRule(i7, i7.root.antecedent(0), allxax )
     val i9 = AndRightRule(i2, i8, i2.root.succedent(0), i8.root.succedent(0))
     val i10 = ExistsRightRule(i9, i9.root.succedent(0), exformula , alpha)
-    val i11 = DefinitionRightRule(i10, i10.root.succedent(0), ExVar(x, bx))
+    val i11 = DefinitionRightRule(i10, i10.root.succedent(0), FOLExVar(x, bx))
     val i12 = AndLeft2Rule(i11, ax, i11.root.antecedent(0))
 
     val i13 = Axiom(eqxt::Nil, eqxt::Nil)
-    val i14 = EquationLeft1Rule(i13,i12,i13.root.succedent(0), i12.root.antecedent(1), And(at, AllVar(x, qx)) )
+    val i14 = EquationLeft1Rule(i13,i12,i13.root.succedent(0), i12.root.antecedent(1), FOLAnd(at, FOLAllVar(x, qx)) )
     getoccids(i14, Nil) map println
 
-    val def1 = (ax, AllVar(y, pxy))
-    val def2 = (bx, And(qx,ax))
+    val def1 = (ax, FOLAllVar(y, pxy))
+    val def2 = (bx, FOLAnd(qx,ax))
     val dmap = Map[HOLExpression, HOLExpression]() + def1 +def2
 
     def getoccids(p:LKProof, l : List[String]) : List[String] = p match {
@@ -95,10 +95,10 @@ class definition_eliminationTest extends SpecificationWithJUnit {
   "Definition elimination" should {
     "work on formulas" in {
       skipped("Failing on HOL matching")
-      val f = And(proof1.ax,Or(Atom(proof1.a,proof1.t::Nil), proof1.bx))
+      val f = FOLAnd(proof1.ax,FOLOr(FOLAtom(proof1.a,proof1.t::Nil), proof1.bx))
       val f_ = DefinitionElimination(proof1.dmap,f)
       println(f_)
-      val correct_f = And(proof1.allypxy,Or(proof1.allypty, And(proof1.qx, proof1.allypxy)))
+      val correct_f = FOLAnd(proof1.allypxy,FOLOr(proof1.allypty, FOLAnd(proof1.qx, proof1.allypxy)))
       f_ mustEqual(correct_f)
     }
 
@@ -107,7 +107,7 @@ class definition_eliminationTest extends SpecificationWithJUnit {
       import proof1._
       val elp = DefinitionElimination( dmap, i12 )
       println(elp)
-      val expected = FSequent(List(AllVar(x,AllVar(y, pxy)), And(AllVar(y,pxy), AllVar(x,qx))), List(ExVar(x, And(qx, AllVar(y,pxy)))))
+      val expected = FSequent(List(FOLAllVar(x,FOLAllVar(y, pxy)), FOLAnd(FOLAllVar(y,pxy), FOLAllVar(x,qx))), List(FOLExVar(x, FOLAnd(qx, FOLAllVar(y,pxy)))))
       expected must beSyntacticFSequentEqual(elp.root.toFSequent)
     }
 

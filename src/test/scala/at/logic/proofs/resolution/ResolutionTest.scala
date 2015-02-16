@@ -21,19 +21,19 @@ class ResolutionTest extends SpecificationWithJUnit {
   
   "Paramodulation rule in Robinson Resolution" should {
     "be created correctly" in {
-      val cl1 = InitialClause(Nil, Atom("=", Function("+", FOLVar("x")::FOLVar("x")::Nil)::FOLVar("x")::Nil)::Nil)
-      val cl2 = InitialClause(Nil, Atom("=", Function("+", FOLVar("y")::FOLVar("y")::Nil)::FOLVar("y")::Nil)::Nil)
-      val param = Paramodulation(cl1, cl2, cl1.root.succedent(0), cl2.root.succedent(0), Atom("=", FOLVar("y")::FOLVar("y")::Nil), Substitution(List((FOLVar("x"), FOLVar("y")))))
-      val sq =  Seq(Atom("=", FOLVar("y")::FOLVar("y")::Nil))
+      val cl1 = InitialClause(Nil, FOLAtom("=", FOLFunction("+", FOLVar("x")::FOLVar("x")::Nil)::FOLVar("x")::Nil)::Nil)
+      val cl2 = InitialClause(Nil, FOLAtom("=", FOLFunction("+", FOLVar("y")::FOLVar("y")::Nil)::FOLVar("y")::Nil)::Nil)
+      val param = Paramodulation(cl1, cl2, cl1.root.succedent(0), cl2.root.succedent(0), FOLAtom("=", FOLVar("y")::FOLVar("y")::Nil), Substitution(List((FOLVar("x"), FOLVar("y")))))
+      val sq =  Seq(FOLAtom("=", FOLVar("y")::FOLVar("y")::Nil))
       
       param.root.positive.map(_.formula) must beEqualTo (sq)
     }
 
     "be created correctly -- this test relies on the fact that sub is applied to the inferred formula" in {
-      val cl1 = InitialClause(Nil, Atom("=", Function("+", FOLVar("x")::FOLVar("x")::Nil)::FOLVar("x")::Nil)::Nil)
-      val cl2 = InitialClause(Nil, Atom("=", Function("+", FOLVar("y")::FOLVar("y")::Nil)::FOLVar("y")::Nil)::Nil)
-      val param = Paramodulation(cl1, cl2, cl1.root.succedent(0), cl2.root.succedent(0), Atom("=", FOLVar("y")::FOLVar("x")::Nil), Substitution(List((FOLVar("x"), FOLVar("y")))))
-      val sq =  Seq(Atom("=", FOLVar("y")::FOLVar("y")::Nil))
+      val cl1 = InitialClause(Nil, FOLAtom("=", FOLFunction("+", FOLVar("x")::FOLVar("x")::Nil)::FOLVar("x")::Nil)::Nil)
+      val cl2 = InitialClause(Nil, FOLAtom("=", FOLFunction("+", FOLVar("y")::FOLVar("y")::Nil)::FOLVar("y")::Nil)::Nil)
+      val param = Paramodulation(cl1, cl2, cl1.root.succedent(0), cl2.root.succedent(0), FOLAtom("=", FOLVar("y")::FOLVar("x")::Nil), Substitution(List((FOLVar("x"), FOLVar("y")))))
+      val sq =  Seq(FOLAtom("=", FOLVar("y")::FOLVar("y")::Nil))
 
       param.root.positive.map(_.formula) must beEqualTo (sq)
     }
@@ -41,7 +41,7 @@ class ResolutionTest extends SpecificationWithJUnit {
     "correctly keep the context of demodulated formulas " in {
       val P = "P"
       val List(a,b,c,d,e,f) = List("a","b","c","d","e","f") map (x => FOLConst(x).asInstanceOf[FOLTerm])
-      val List(e1,e2,e3,p,q) = List(Equation(a,b), Equation(c,d), Equation(e,f), Atom(P,a::Nil), Atom(P,b::Nil)  )
+      val List(e1,e2,e3,p,q) = List(FOLEquation(a,b), FOLEquation(c,d), FOLEquation(e,f), FOLAtom(P,a::Nil), FOLAtom(P,b::Nil)  )
       val p1 = InitialClause(Nil, List(e1, e2 ))
       val p2 = InitialClause(Nil, List(e3, p))
       val p3 = Paramodulation(p1,p2, p1.root.succedent(0), p2.root.succedent(1), q, Substitution())
@@ -54,9 +54,9 @@ class ResolutionTest extends SpecificationWithJUnit {
   "extrator on Resolution rule" should {
     "work properly" in {
       val x = FOLVar("x")
-      val fa = Function("f", List(FOLConst("a")))
-      val Pfa = Atom("P", List(fa))
-      val Px = Atom("P", List(x))
+      val fa = FOLFunction("f", List(FOLConst("a")))
+      val Pfa = FOLAtom("P", List(fa))
+      val Px = FOLAtom("P", List(x))
       val cl1 = InitialClause(List(), List(Px))
       val cl2 = InitialClause(List(Pfa), List())
       val res = Resolution(cl1, cl2, cl1.root.succedent(0), cl2.root.antecedent(0), Substitution(List((x,fa))))

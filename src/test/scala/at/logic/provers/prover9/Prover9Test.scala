@@ -49,7 +49,7 @@ class Prover9Test extends SpecificationWithJUnit with ClasspathFileCopier {
 
       val p = new Prover9Prover()
 
-      val s = FSequent(Nil,List(AllVar(FOLVar("x"), parse("=(x,x)"))))
+      val s = FSequent(Nil,List(FOLAllVar(FOLVar("x"), parse("=(x,x)"))))
 
 
       p.isValid(s) must beTrue
@@ -65,7 +65,7 @@ class Prover9Test extends SpecificationWithJUnit with ClasspathFileCopier {
       Prover9.refute(box ) must not(throwA[IOException]).orSkip
 
       val p = new Prover9Prover()
-      val s = FSequent(List(Or(parse("A"), parse("B"))), List(Neg(And(Neg(parse("A")), Neg(parse("B"))))))
+      val s = FSequent(List(FOLOr(parse("A"), parse("B"))), List(FOLNeg(FOLAnd(FOLNeg(parse("A")), FOLNeg(parse("B"))))))
 
       p.isValid(s) must beTrue
       p.getRobinsonProof (s) must beLike {

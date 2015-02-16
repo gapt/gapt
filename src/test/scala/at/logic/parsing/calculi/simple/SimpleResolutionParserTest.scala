@@ -12,7 +12,7 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.language.hol._
-import at.logic.language.fol.{FOLVar, FOLConst, Atom => FOLAtom, Function => FOLFunction}
+import at.logic.language.fol.{FOLVar, FOLConst, FOLAtom => FOLAtom, FOLFunction => FOLFunction}
 import at.logic.parsing.readers.StringReader
 import at.logic.proofs.resolution._
 import at.logic.proofs.resolution.robinson._

@@ -21,10 +21,10 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
       val a = FOLConst("a")
       val b = FOLConst("b")
       val fs = "f"
-      val faa = Function(fs, a::a::Nil)
+      val faa = FOLFunction(fs, a::a::Nil)
 
-      val realab = Set( Function( fs, a::a::Nil ), Function( fs, a::b::Nil ), Function( fs, b::a::Nil ), Function( fs, b::b::Nil ) )
-      val realba = Set( Function( fs, a::a::Nil ) )
+      val realab = Set( FOLFunction( fs, a::a::Nil ), FOLFunction( fs, a::b::Nil ), FOLFunction( fs, b::a::Nil ), FOLFunction( fs, b::b::Nil ) )
+      val realba = Set( FOLFunction( fs, a::a::Nil ) )
      
       val parasab = Paramodulants(a, b, faa)
       val parasba = Paramodulants(b, a, faa)
@@ -37,11 +37,11 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
       val a = FOLConst("a")
       val b = FOLConst("b")
       val ps = "P"
-      val paa = Atom(ps, a::a::Nil)
-      val pab = Atom(ps, a::b::Nil)
-      val pba = Atom(ps, b::a::Nil)
-      val pbb = Atom(ps, b::b::Nil)
-      val q = Atom("Q", Nil )
+      val paa = FOLAtom(ps, a::a::Nil)
+      val pab = FOLAtom(ps, a::b::Nil)
+      val pba = FOLAtom(ps, b::a::Nil)
+      val pbb = FOLAtom(ps, b::b::Nil)
+      val q = FOLAtom("Q", Nil )
       val cq = new MyFClause( Nil, q::Nil )
       val cpaa = new MyFClause( Nil, paa::Nil )
       val cpab = new MyFClause( Nil, pab::Nil )
@@ -53,7 +53,7 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
       val r3 = Set(cpbb, cq)
       val real = Set(r1, r2, r3)
 
-      val res = ForgetfulParamodulateCNF( And( Equation( a, b)::paa::q::Nil ) )
+      val res = ForgetfulParamodulateCNF( FOLAnd( FOLEquation( a, b)::paa::q::Nil ) )
 
       val setres = res.map( cnf => cnf.toSet ).toSet
 
@@ -79,13 +79,13 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
   "Forgetful Resolution Should" should {
 
     "compute a single resolvent successfully" in {
-      val a = Atom("A")
-      val b = Atom("B")
-      val c = Atom("C")
-      val d = Atom("D")
-      val e = Atom("E")
+      val a = FOLAtom("A")
+      val b = FOLAtom("B")
+      val c = FOLAtom("C")
+      val d = FOLAtom("D")
+      val e = FOLAtom("E")
 
-      val f = And(And(Or(a,Or(b,c)), Or(Neg(b), d)), e)
+      val f = FOLAnd(FOLAnd(FOLOr(a,FOLOr(b,c)), FOLOr(FOLNeg(b), d)), e)
 
       val res = ForgetfulResolve(f)
 

@@ -23,16 +23,16 @@ class SimpleFOLParserTest extends SpecificationWithJUnit {
   val var1 = FOLVar(new StringSymbol("x1"))
   val const1 = FOLConst(new StringSymbol("c1"))
   val var2 = FOLVar(new StringSymbol("x2"))
-  val atom1 = Atom(new StringSymbol("A"),var1::var2::const1::Nil)
-  val var3 = Atom(new StringSymbol("X3"), Nil)
-  val func1 = Function(new StringSymbol("f"), var1::var2::const1::Nil)
-  val and1 = And(atom1, var3)
-  val or1 = Or(atom1, var3)
-  val imp1 = Imp(atom1, var3)
-  val neg1 = Neg(atom1)
-  val ex1 = ExVar(var1,atom1)
-  val all1 = AllVar(var1,atom1)
-  val npx = Neg(Atom(new StringSymbol("p"), FOLVar(new StringSymbol("x"))::Nil))
+  val atom1 = FOLAtom(new StringSymbol("A"),var1::var2::const1::Nil)
+  val var3 = FOLAtom(new StringSymbol("X3"), Nil)
+  val func1 = FOLFunction(new StringSymbol("f"), var1::var2::const1::Nil)
+  val and1 = FOLAnd(atom1, var3)
+  val or1 = FOLOr(atom1, var3)
+  val imp1 = FOLImp(atom1, var3)
+  val neg1 = FOLNeg(atom1)
+  val ex1 = FOLExVar(var1,atom1)
+  val all1 = FOLAllVar(var1,atom1)
+  val npx = FOLNeg(FOLAtom(new StringSymbol("p"), FOLVar(new StringSymbol("x"))::Nil))
 
   "SimpleFOLParser" should {
     "parse correctly a variable" in {
@@ -49,7 +49,7 @@ class SimpleFOLParserTest extends SpecificationWithJUnit {
         (new MyParser("X3").getTerm()) must beEqualTo (var3)
     }
     "parse correctly a function 1" in {
-      (new MyParser("f(x1)").getTerm()) must beEqualTo (Function(StringSymbol("f"), var1::Nil))
+      (new MyParser("f(x1)").getTerm()) must beEqualTo (FOLFunction(StringSymbol("f"), var1::Nil))
     }
     "parse correctly a function 2" in {
         (new MyParser("f(x1, x2, c1)").getTerm()) must beEqualTo (func1)

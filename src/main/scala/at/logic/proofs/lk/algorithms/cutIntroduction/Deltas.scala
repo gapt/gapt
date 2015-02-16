@@ -81,18 +81,18 @@ object Deltas {
           else { return ( eigenvariable, terms ) }
 
         // If the terms are functions
-        case Function( h, args ) =>
+        case FOLFunction( h, args ) =>
           // If all heads are the same
           if ( terms.forall( t => t match {
-            case Function( h1, _ ) if h1 == h => true
-            case _                            => false
+            case FOLFunction( h1, _ ) if h1 == h => true
+            case _                               => false
           } ) ) {
             // call delta recursively for every argument of every term
 
             // Compute a list of list of arguments
             val allargs = terms.foldRight( List[List[FOLTerm]]() )( ( t, acc ) => t match {
-              case Function( x, args ) => args :: acc
-              case _                   => throw new DeltaTableException( "ERROR: Mal-formed terms list." )
+              case FOLFunction( x, args ) => args :: acc
+              case _                      => throw new DeltaTableException( "ERROR: Mal-formed terms list." )
             } )
 
             // The list above is a list of lists of arguments. Assume that each list
@@ -116,7 +116,7 @@ object Deltas {
             // If all the sets are empty
             if ( nonempty.length == 0 ) {
               val newargs = deltaOfArgs.foldRight( List[FOLTerm]() )( ( x, acc ) => x._1 :: acc )
-              val u = Function( h, newargs )
+              val u = FOLFunction( h, newargs )
               ( u, Nil )
             } else {
               // Check if they are the same
@@ -124,7 +124,7 @@ object Deltas {
               if ( nonempty.forall( l => listEquals( l, first ) ) ) {
                 // All terms are the same
                 val newargs = deltaOfArgs.foldRight( List[FOLTerm]() )( ( x, acc ) => x._1 :: acc )
-                val u = Function( h, newargs )
+                val u = FOLFunction( h, newargs )
                 ( u, first )
               } // The terms returned from the arguments are different
               else {
@@ -202,7 +202,7 @@ object Deltas {
           //Apply nub to each result
           val nubbedResults = filteredResults.map {
             case ( uParts, rawS, ind ) =>
-              val rawU = Function( fromFunc( terms.head ), uParts )
+              val rawU = FOLFunction( fromFunc( terms.head ), uParts )
 
               val ( u, s ) = nub( smallestVarInU( eigenvariable, rawU ), eigenvariable, rawU, rawS )
 
@@ -293,7 +293,7 @@ object Deltas {
         val ( rawUParts, s, newInd ) = terms.map( t => fromFuncArgs( t ) ).transpose.foldLeft( ( Nil: List[types.U], Nil: types.RawS, curInd ) )( computePart )
 
         //Reapply the function head to the pieces
-        val u = Function( fromFunc( terms.head ), rawUParts )
+        val u = FOLFunction( fromFunc( terms.head ), rawUParts )
 
         //val (u,s) = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
 

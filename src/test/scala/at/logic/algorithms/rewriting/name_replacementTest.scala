@@ -16,21 +16,21 @@ import at.logic.utils.ds.acyclicGraphs.{BinaryAGraph, UnaryAGraph, LeafAGraph, A
 @RunWith(classOf[JUnitRunner])
 class name_replacementTest extends SpecificationWithJUnit {
 
-  val c1 = Atom("P", Function("g", FOLConst("a")::Nil)::Nil)
-  val c2 = Atom("P", Function("g", FOLVar("x")::Nil)::Nil)
-  val c3 = Atom("Q", Function("f", FOLConst("ladr0")::Nil)::Nil)
-  val c4 = Atom("Q", FOLVar("x")::Nil)
+  val c1 = FOLAtom("P", FOLFunction("g", FOLConst("a")::Nil)::Nil)
+  val c2 = FOLAtom("P", FOLFunction("g", FOLVar("x")::Nil)::Nil)
+  val c3 = FOLAtom("Q", FOLFunction("f", FOLConst("ladr0")::Nil)::Nil)
+  val c4 = FOLAtom("Q", FOLVar("x")::Nil)
 
   val x = FOLVar("x")
   val a = FOLConst("a")
-  val fl = Function("f", FOLConst("ladr0")::Nil)
+  val fl = FOLFunction("f", FOLConst("ladr0")::Nil)
 
-  val d1 = Atom("R", Function("f", FOLConst("a")::Nil)::Nil)
-  val d2 = Atom("R", Function("f", FOLVar("x")::Nil)::Nil)
-  val d3 = Atom("Q", Function("h", FOLConst("c0")::Nil)::Nil)
-  val d4 = Atom("Q", FOLVar("x")::Nil)
+  val d1 = FOLAtom("R", FOLFunction("f", FOLConst("a")::Nil)::Nil)
+  val d2 = FOLAtom("R", FOLFunction("f", FOLVar("x")::Nil)::Nil)
+  val d3 = FOLAtom("Q", FOLFunction("h", FOLConst("c0")::Nil)::Nil)
+  val d4 = FOLAtom("Q", FOLVar("x")::Nil)
 
-  val hc = Function("h", FOLConst("c0")::Nil)
+  val hc = FOLFunction("h", FOLConst("c0")::Nil)
 
   object proof1 {
     val s1 = Substitution(Map(x -> a))
@@ -113,16 +113,16 @@ class name_replacementTest extends SpecificationWithJUnit {
 
   "The renaming interface " should {
     "rewrite fol formulas" in {
-      val p_ladr_fladr = Atom("P", FOLConst("ladr0")::Function("f", FOLConst("ladr0")::Nil)::Nil)
-      val p_a_ladr = Atom("P", FOLConst("a")::FOLConst("ladr0")::Nil)
-      val q_gx = Atom("Q", Function("g", FOLVar("x")::Nil)::Nil)
+      val p_ladr_fladr = FOLAtom("P", FOLConst("ladr0")::FOLFunction("f", FOLConst("ladr0")::Nil)::Nil)
+      val p_a_ladr = FOLAtom("P", FOLConst("a")::FOLConst("ladr0")::Nil)
+      val q_gx = FOLAtom("Q", FOLFunction("g", FOLVar("x")::Nil)::Nil)
 
-      val fol1 = And(p_ladr_fladr, Or(Neg(p_a_ladr), q_gx))
+      val fol1 = FOLAnd(p_ladr_fladr, FOLOr(FOLNeg(p_a_ladr), q_gx))
 
-      val r_c_hc = Atom("R", FOLConst("c0")::Function("h", FOLConst("c0")::Nil)::Nil)
-      val r_a_c = Atom("R", FOLConst("a")::FOLConst("c0")::Nil)
+      val r_c_hc = FOLAtom("R", FOLConst("c0")::FOLFunction("h", FOLConst("c0")::Nil)::Nil)
+      val r_a_c = FOLAtom("R", FOLConst("a")::FOLConst("c0")::Nil)
 
-      val fol1_ = And(r_c_hc, Or(Neg(r_a_c), q_gx))
+      val fol1_ = FOLAnd(r_c_hc, FOLOr(FOLNeg(r_a_c), q_gx))
 
       fol1_ must beEqualTo( NameReplacement(fol1, map ))
     }

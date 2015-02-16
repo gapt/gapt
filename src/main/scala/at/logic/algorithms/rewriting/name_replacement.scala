@@ -6,7 +6,7 @@ import at.logic.proofs.resolution.robinson._
 import at.logic.proofs.resolution.Clause
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.hol.{ HOLVar, HOLConst, HOLAtom, HOLFunction, HOLAnd, HOLEquation, HOLOr, HOLImp, HOLNeg, HOLExVar, HOLAllVar, HOLExpression, HOLFormula }
-import at.logic.language.fol.{ FOLVar, FOLConst, Atom => FOLAtom, Function => FOLFunction, And => FOLAnd, Equation => FOLEquation, Or => FOLOr, Imp => FOLImp, Neg => FOLNeg, ExVar => FOLExVar, AllVar => FOLAllVar, FOLExpression, FOLTerm, FOLFormula, Substitution }
+import at.logic.language.fol.{ FOLVar, FOLConst, FOLAtom => FOLAtom, FOLFunction => FOLFunction, FOLAnd => FOLAnd, FOLEquation => FOLEquation, FOLOr => FOLOr, FOLImp => FOLImp, FOLNeg => FOLNeg, FOLExVar => FOLExVar, FOLAllVar => FOLAllVar, FOLExpression, FOLTerm, FOLFormula, Substitution }
 import at.logic.language.lambda.symbols.StringSymbol
 
 /**

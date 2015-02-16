@@ -142,7 +142,7 @@ package robinson {
         case ( Some( term1 ), Some( term2 ), _ ) =>
           val prinFormula = term2.factory.createFormulaOccurrence( sub( newLiteral ), term1 :: term2 :: Nil )
           sub( term1.formula ) match {
-            case Equation( s, t ) =>
+            case FOLEquation( s, t ) =>
               ( EquationVerifier( s, t, sub( term2.formula ), sub( newLiteral ) ), EquationVerifier( t, s, sub( term2.formula ), sub( newLiteral ) ) ) match {
                 case ( Different, Different ) =>
                   if ( s == t ) debug( s + "==" + t )
@@ -169,7 +169,7 @@ package robinson {
           val term2 = term2opSuc.get
           val prinFormula = term2.factory.createFormulaOccurrence( sub( newLiteral ), term1 :: term2 :: Nil )
           sub( term1.formula ) match {
-            case Equation( s, t ) =>
+            case FOLEquation( s, t ) =>
               ( EquationVerifier( s, t, sub( term2.formula ), sub( newLiteral ) ), EquationVerifier( t, s, sub( term2.formula ), sub( newLiteral ) ) ) match {
                 case ( Different, Different ) =>
                   if ( s == t ) println( s + "==" + t )
