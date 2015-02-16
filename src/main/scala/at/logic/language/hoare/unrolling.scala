@@ -2,6 +2,7 @@ package at.logic.language.hoare
 
 import at.logic.calculi.lk.base.FSequent
 import at.logic.language.fol._
+import at.logic.language.fol.Utils.numeral
 
 object unrollLoop {
   def apply( p: Program, actualN: Int ): Program = p match {
@@ -9,10 +10,6 @@ object unrollLoop {
       ( 0 until actualN ).map( actualI =>
         substVariables( b, Map( i -> numeral( actualI ), n -> numeral( actualN ) ) ) ) )
   }
-}
-
-object numeral {
-  def apply( k: Int ) = Utils.iterateTerm( FOLConst( "o" ), "s", k )
 }
 
 class SimpleLoopProblem( val loop: ForLoop, val gamma: Seq[FOLFormula], val precondition: FOLFormula, val postcondition: FOLFormula ) {
