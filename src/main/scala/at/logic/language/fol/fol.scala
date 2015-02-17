@@ -54,10 +54,55 @@ trait FOLExpression extends HOLExpression {
       throw new Exception( "toString: expression is not FOL: " + r )
   }
 
+  override def renameSymbols( map: SymbolMap ): FOLExpression = this match {
+
+    case FOLVar( _ ) => this
+
+    case FOLConst( name ) => map.get( name ) match {
+      case Some( ( rArity, rName ) ) =>
+        if ( Arity( this.exptype ) == rArity ) {
+          FOLConst( StringSymbol( rName ) )
+        } else {
+          this
+        }
+      case None => this
+    }
+
+    case FOLAtom( x, args ) => map.get( x.toString ) match {
+      case Some( ( rArity, rName ) ) =>
+        if ( args.length == rArity ) {
+          FOLAtom( StringSymbol( rName ), args.map( _.renameSymbols( map ).asInstanceOf[FOLTerm] ) )
+        } else {
+          FOLAtom( x, args.map( _.renameSymbols( map ).asInstanceOf[FOLTerm] ) )
+        }
+      case None => FOLAtom( x, args.map( _.renameSymbols( map ).asInstanceOf[FOLTerm] ) )
+    }
+
+    case FOLFunction( x, args ) => map.get( x.toString ) match {
+      case Some( ( rarity, rname ) ) =>
+        if ( args.length == rarity ) {
+          FOLFunction( StringSymbol( rname ), args.map( _.renameSymbols( map ).asInstanceOf[FOLTerm] ) )
+        } else {
+          FOLFunction( x, args.map( _.renameSymbols( map ).asInstanceOf[FOLTerm] ) )
+        }
+      case None => FOLFunction( x, args.map( _.renameSymbols( map ).asInstanceOf[FOLTerm] ) )
+    }
+    case FOLAnd( x, y )      => FOLAnd( x.renameSymbols( map ), y.renameSymbols( map ) )
+    case FOLEquation( x, y ) => FOLEquation( x.renameSymbols( map ).asInstanceOf[FOLTerm], y.renameSymbols( map ).asInstanceOf[FOLTerm] )
+    case FOLOr( x, y )       => FOLOr( x.renameSymbols( map ), y.renameSymbols( map ) )
+    case FOLImp( x, y )      => FOLImp( x.renameSymbols( map ), y.renameSymbols( map ) )
+    case FOLNeg( x )         => FOLNeg( x.renameSymbols( map ) )
+    // Variables are not renamed
+    case FOLExVar( x, f )    => FOLExVar( x, f.renameSymbols( map ) )
+    case FOLAllVar( x, f )   => FOLAllVar( x, f.renameSymbols( map ) )
+  }
+
   override def factory: FactoryA = FOLFactory
 }
 
-trait FOLFormula extends FOLExpression with HOLFormula
+trait FOLFormula extends FOLExpression with HOLFormula {
+  override def renameSymbols( map: SymbolMap ) = super.renameSymbols( map ).asInstanceOf[FOLFormula]
+}
 
 trait FOLTerm extends FOLExpression { require( exptype == Ti ) }
 

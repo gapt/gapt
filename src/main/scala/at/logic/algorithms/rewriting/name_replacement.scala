@@ -14,12 +14,12 @@ import at.logic.language.lambda.symbols.StringSymbol
  */
 object NameReplacement {
 
-  def apply( exp: HOLExpression, map: SymbolMap ): HOLExpression = rename_symbols( exp, map )
-  def apply( exp: FOLExpression, map: SymbolMap ): FOLExpression = rename_symbols( exp, map )
-  def apply( exp: HOLFormula, map: SymbolMap ): HOLFormula = rename_symbols( exp, map )
-  def apply( exp: FOLFormula, map: SymbolMap ): FOLFormula = rename_symbols( exp, map )
+  def apply( exp: HOLExpression, map: SymbolMap ): HOLExpression = renameSymbols( exp, map )
+  def apply( exp: FOLExpression, map: SymbolMap ): FOLExpression = renameSymbols( exp, map )
+  def apply( exp: HOLFormula, map: SymbolMap ): HOLFormula = renameSymbols( exp, map )
+  def apply( exp: FOLFormula, map: SymbolMap ): FOLFormula = renameSymbols( exp, map )
 
-  def apply( fs: FSequent, map: SymbolMap ) = rename_fsequent( fs, map )
+  def apply( fs: FSequent, map: SymbolMap ) = renameFSequent( fs, map )
   def apply( p: RobinsonResolutionProof, map: SymbolMap ): RobinsonResolutionProof = {
     //don't process the proof if there is nothing to do
     if ( map.isEmpty ) p else rename_resproof( p, map )._2
@@ -36,7 +36,7 @@ object NameReplacement {
   // It seems this is used only for FOL though...
   // TODO: think of a way to implement this and remove the duplication.
 
-  def rename_symbols( exp: HOLExpression, map: SymbolMap ): HOLExpression = exp match {
+  def renameSymbols( exp: HOLExpression, map: SymbolMap ): HOLExpression = exp match {
 
     case HOLVar( _, _ ) => exp
 
@@ -50,21 +50,21 @@ object NameReplacement {
       case None => exp
     }
 
-    case HOLAtom( x: HOLVar, args )          => HOLAtom( x, args.map( a => rename_symbols( a, map ) ) )
-    case HOLAtom( x: HOLConst, args )        => HOLAtom( rename_symbols( x, map ).asInstanceOf[HOLConst], args.map( a => rename_symbols( a, map ) ) )
-    case HOLFunction( x: HOLVar, args, _ )   => HOLFunction( x, args.map( a => rename_symbols( a, map ) ) )
-    case HOLFunction( x: HOLConst, args, _ ) => HOLFunction( rename_symbols( x, map ).asInstanceOf[HOLConst], args.map( a => rename_symbols( a, map ) ) )
-    case HOLAnd( x, y )                      => HOLAnd( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case HOLEquation( x, y )                 => HOLEquation( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case HOLOr( x, y )                       => HOLOr( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case HOLImp( x, y )                      => HOLImp( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case HOLNeg( x )                         => HOLNeg( rename_symbols( x, map ) )
+    case HOLAtom( x: HOLVar, args )          => HOLAtom( x, args.map( a => renameSymbols( a, map ) ) )
+    case HOLAtom( x: HOLConst, args )        => HOLAtom( renameSymbols( x, map ).asInstanceOf[HOLConst], args.map( a => renameSymbols( a, map ) ) )
+    case HOLFunction( x: HOLVar, args, _ )   => HOLFunction( x, args.map( a => renameSymbols( a, map ) ) )
+    case HOLFunction( x: HOLConst, args, _ ) => HOLFunction( renameSymbols( x, map ).asInstanceOf[HOLConst], args.map( a => renameSymbols( a, map ) ) )
+    case HOLAnd( x, y )                      => HOLAnd( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case HOLEquation( x, y )                 => HOLEquation( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case HOLOr( x, y )                       => HOLOr( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case HOLImp( x, y )                      => HOLImp( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case HOLNeg( x )                         => HOLNeg( renameSymbols( x, map ) )
     // Variables are not renamed
-    case HOLExVar( x, f )                    => HOLExVar( x, rename_symbols( f, map ) )
-    case HOLAllVar( x, f )                   => HOLAllVar( x, rename_symbols( f, map ) )
+    case HOLExVar( x, f )                    => HOLExVar( x, renameSymbols( f, map ) )
+    case HOLAllVar( x, f )                   => HOLAllVar( x, renameSymbols( f, map ) )
   }
 
-  def rename_symbols( exp: FOLExpression, map: SymbolMap ): FOLExpression = exp match {
+  def renameSymbols( exp: FOLExpression, map: SymbolMap ): FOLExpression = exp match {
 
     case FOLVar( _ ) => exp
 
@@ -81,46 +81,46 @@ object NameReplacement {
     case FOLAtom( x, args ) => map.get( x.toString ) match {
       case Some( ( rarity, rname ) ) =>
         if ( args.length == rarity ) {
-          FOLAtom( StringSymbol( rname ), args.map( a => rename_symbols( a, map ).asInstanceOf[FOLTerm] ) )
+          FOLAtom( StringSymbol( rname ), args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
         } else {
-          FOLAtom( x, args.map( a => rename_symbols( a, map ).asInstanceOf[FOLTerm] ) )
+          FOLAtom( x, args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
         }
-      case None => FOLAtom( x, args.map( a => rename_symbols( a, map ).asInstanceOf[FOLTerm] ) )
+      case None => FOLAtom( x, args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
     }
 
     case FOLFunction( x, args ) => map.get( x.toString ) match {
       case Some( ( rarity, rname ) ) =>
         if ( args.length == rarity ) {
-          FOLFunction( StringSymbol( rname ), args.map( a => rename_symbols( a, map ).asInstanceOf[FOLTerm] ) )
+          FOLFunction( StringSymbol( rname ), args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
         } else {
-          FOLFunction( x, args.map( a => rename_symbols( a, map ).asInstanceOf[FOLTerm] ) )
+          FOLFunction( x, args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
         }
-      case None => FOLFunction( x, args.map( a => rename_symbols( a, map ).asInstanceOf[FOLTerm] ) )
+      case None => FOLFunction( x, args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
     }
-    case FOLAnd( x, y )      => FOLAnd( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case FOLEquation( x, y ) => FOLEquation( rename_symbols( x, map ).asInstanceOf[FOLTerm], rename_symbols( y, map ).asInstanceOf[FOLTerm] )
-    case FOLOr( x, y )       => FOLOr( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case FOLImp( x, y )      => FOLImp( rename_symbols( x, map ), rename_symbols( y, map ) )
-    case FOLNeg( x )         => FOLNeg( rename_symbols( x, map ) )
+    case FOLAnd( x, y )      => FOLAnd( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case FOLEquation( x, y ) => FOLEquation( renameSymbols( x, map ).asInstanceOf[FOLTerm], renameSymbols( y, map ).asInstanceOf[FOLTerm] )
+    case FOLOr( x, y )       => FOLOr( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case FOLImp( x, y )      => FOLImp( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case FOLNeg( x )         => FOLNeg( renameSymbols( x, map ) )
     // Variables are not renamed
-    case FOLExVar( x, f )    => FOLExVar( x, rename_symbols( f, map ) )
-    case FOLAllVar( x, f )   => FOLAllVar( x, rename_symbols( f, map ) )
+    case FOLExVar( x, f )    => FOLExVar( x, renameSymbols( f, map ) )
+    case FOLAllVar( x, f )   => FOLAllVar( x, renameSymbols( f, map ) )
   }
 
-  def rename_symbols( exp: HOLFormula, map: SymbolMap ): HOLFormula =
-    rename_symbols( exp.asInstanceOf[HOLExpression], map ).asInstanceOf[HOLFormula]
+  def renameSymbols( exp: HOLFormula, map: SymbolMap ): HOLFormula =
+    renameSymbols( exp.asInstanceOf[HOLExpression], map ).asInstanceOf[HOLFormula]
 
-  def rename_symbols( exp: FOLFormula, map: SymbolMap ): FOLFormula =
-    rename_symbols( exp.asInstanceOf[FOLExpression], map ).asInstanceOf[FOLFormula]
+  def renameSymbols( exp: FOLFormula, map: SymbolMap ): FOLFormula =
+    renameSymbols( exp.asInstanceOf[FOLExpression], map ).asInstanceOf[FOLFormula]
 
   // Yes, this sucks. But it was the easiest and fastest way to deal with 
   // FSequents which are supposed to have FOLFormulas instead of HOLFormulas.
   def rename_symbols_bla( f: HOLFormula, map: SymbolMap ) = f.isInstanceOf[FOLFormula] match {
-    case true  => rename_symbols( f.asInstanceOf[FOLFormula], map )
-    case false => rename_symbols( f, map )
+    case true  => renameSymbols( f.asInstanceOf[FOLFormula], map )
+    case false => renameSymbols( f, map )
   }
 
-  def rename_fsequent( fs: FSequent, map: SymbolMap ) =
+  def renameFSequent( fs: FSequent, map: SymbolMap ) =
     FSequent( fs.antecedent map ( rename_symbols_bla( _, map ) ), fs.succedent map ( rename_symbols_bla( _, map ) ) )
 
   //def rename_substitution(sub : Substitution, map : SymbolMap) : Substitution = {
@@ -141,8 +141,8 @@ object NameReplacement {
       p match {
         case InitialClause( clause ) =>
           //rename literals
-          val negp: List[FOLFormula] = clause.negative.toList map ( ( fo: FormulaOccurrence ) => apply( fo.formula.asInstanceOf[FOLFormula], smap ) )
-          val posp: List[FOLFormula] = clause.positive.toList map ( ( fo: FormulaOccurrence ) => apply( fo.formula.asInstanceOf[FOLFormula], smap ) )
+          val negp: List[FOLFormula] = clause.negative.toList map ( _.formula.asInstanceOf[FOLFormula].renameSymbols( smap ) )
+          val posp: List[FOLFormula] = clause.positive.toList map ( _.formula.asInstanceOf[FOLFormula].renameSymbols( smap ) )
           val inference = InitialClause( negp, posp )
           //create map form original iteral occs to renamed literal occs
           val negm: Map[FormulaOccurrence, FOLFormula] = Map[FormulaOccurrence, FOLFormula]() ++ ( clause.negative zip negp )
@@ -160,12 +160,12 @@ object NameReplacement {
 
         case Variant( clause, parent1, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
+          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
           var inference: RobinsonResolutionProof = Variant( rparent1, nsub )
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
-            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
+            t.formula == o.formula.asInstanceOf[FOLFormula].renameSymbols( smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }
@@ -177,7 +177,7 @@ object NameReplacement {
 
         case Factor( clause, parent1, aux, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
+          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
           var inference: RobinsonResolutionProof = aux match {
             case lit1 :: Nil =>
               Factor( rparent1, rmap( lit1.head ), lit1.tail map rmap, nsub )
@@ -188,7 +188,7 @@ object NameReplacement {
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
-            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
+            t.formula == o.formula.asInstanceOf[FOLFormula].renameSymbols( smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }
@@ -200,12 +200,12 @@ object NameReplacement {
 
         case Instance( clause, parent1, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
+          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
           var inference: RobinsonResolutionProof = Instance( rparent1, nsub )
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
-            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
+            t.formula == o.formula.asInstanceOf[FOLFormula].renameSymbols( smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }
@@ -218,7 +218,7 @@ object NameReplacement {
         case Resolution( clause, parent1, parent2, lit1, lit2, sub ) =>
           val ( rpmap1, rmap1, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
           val ( rpmap2, rmap2, rparent2 ) = if ( pmap contains parent2 ) add_pmap( pmap, parent2 ) else rename_resproof( parent2, smap, rpmap1 )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
+          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
           val inference = Resolution( rparent1, rparent2, rmap1( lit1 ), rmap2( lit2 ), nsub )
           val rmap = rmap1 ++ rmap2
 
@@ -228,7 +228,7 @@ object NameReplacement {
             //println(t); println(t.ancestors)
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
             //println(anc_correspondences)
-            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
+            t.formula == o.formula.asInstanceOf[FOLFormula].renameSymbols( smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }
@@ -242,10 +242,10 @@ object NameReplacement {
           val ( rpmap1, rmap1, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
           val ( rpmap2, rmap2, rparent2 ) = if ( pmap contains parent2 ) add_pmap( pmap, parent2 ) else rename_resproof( parent2, smap, rpmap1 )
 
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
+          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
 
           val Some( prim ) = clause.literals.map( _._1 ).find( occ => occ.parents == List( lit1, lit2 ) || occ.parents == List( lit2, lit1 ) )
-          val nformula = apply( prim.formula.asInstanceOf[FOLFormula], smap )
+          val nformula = prim.formula.asInstanceOf[FOLFormula].renameSymbols( smap )
 
           val inference = Paramodulation( rparent1, rparent2, rmap1( lit1 ), rmap2( lit2 ), nformula, nsub )
           val rmap = rmap1 ++ rmap2
@@ -256,7 +256,7 @@ object NameReplacement {
             //println(t); println(t.ancestors)
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
             //println(anc_correspondences)
-            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
+            t.formula == o.formula.asInstanceOf[FOLFormula].renameSymbols( smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }

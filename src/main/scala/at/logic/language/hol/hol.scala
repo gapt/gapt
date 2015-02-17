@@ -6,12 +6,17 @@ package at.logic.language.hol
 
 import at.logic.language.hol.HOLPosition._
 import at.logic.language.hol.logicSymbols._
+import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types._
 import at.logic.language.lambda.{ FactoryA, LambdaExpression }
 
 import scala.collection.mutable
 
 trait HOLExpression extends LambdaExpression {
+
+  // map from symbol name to pair of Arity and replacement symbol name
+  type SymbolMap = Map[String, ( Int, String )]
+  val emptySymbolMap = Map[String, ( Int, String )]()
 
   // Factory for App, Abs and Var
   override def factory: FactoryA = HOLFactory
@@ -135,11 +140,40 @@ trait HOLExpression extends LambdaExpression {
    */
   def find( exp: HOLExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
+  def renameSymbols( map: SymbolMap ): HOLExpression = this match {
+
+    case HOLVar( _, _ ) => this
+
+    case HOLConst( name, exptype ) => map.get( name ) match {
+      case Some( ( rArity, rName ) ) =>
+        if ( Arity( exptype ) == rArity ) {
+          HOLConst( StringSymbol( rName ), exptype )
+        } else {
+          this
+        }
+      case None => this
+    }
+
+    case HOLAtom( x: HOLVar, args )          => HOLAtom( x, args.map( _.renameSymbols( map ) ) )
+    case HOLAtom( x: HOLConst, args )        => HOLAtom( x.renameSymbols( map ).asInstanceOf[HOLConst], args.map( _.renameSymbols( map ) ) )
+    case HOLFunction( x: HOLVar, args, _ )   => HOLFunction( x, args.map( _.renameSymbols( map ) ) )
+    case HOLFunction( x: HOLConst, args, _ ) => HOLFunction( x.renameSymbols( map ).asInstanceOf[HOLConst], args.map( _.renameSymbols( map ) ) )
+    case HOLAnd( x, y )                      => HOLAnd( x.renameSymbols( map ), y.renameSymbols( map ) )
+    case HOLEquation( x, y )                 => HOLEquation( x.renameSymbols( map ), y.renameSymbols( map ) )
+    case HOLOr( x, y )                       => HOLOr( x.renameSymbols( map ), y.renameSymbols( map ) )
+    case HOLImp( x, y )                      => HOLImp( x.renameSymbols( map ), y.renameSymbols( map ) )
+    case HOLNeg( x )                         => HOLNeg( x.renameSymbols( map ) )
+    // Variables are not renamed
+    case HOLExVar( x, f )                    => HOLExVar( x, f.renameSymbols( map ) )
+    case HOLAllVar( x, f )                   => HOLAllVar( x, f.renameSymbols( map ) )
+  }
 }
 // Should this be here?
 trait Formula extends LambdaExpression { require( exptype == To ) }
 
-trait HOLFormula extends HOLExpression with Formula
+trait HOLFormula extends HOLExpression with Formula {
+  override def renameSymbols( map: SymbolMap ) = super.renameSymbols( map ).asInstanceOf[HOLFormula]
+}
 
 case object BottomC extends HOLConst( BottomSymbol, Type( "o" ) ) with HOLFormula
 case object TopC extends HOLConst( TopSymbol, Type( "o" ) ) with HOLFormula
@@ -165,7 +199,7 @@ object HOLNeg {
     HOLApp( neg, sub ).asInstanceOf[HOLFormula]
   }
   def unapply( expression: HOLExpression ) = expression match {
-    case HOLApp( NegC, sub ) => Some( ( sub.asInstanceOf[HOLFormula] ) )
+    case HOLApp( NegC, sub ) => Some( sub.asInstanceOf[HOLFormula] )
     case _                   => None
   }
 }

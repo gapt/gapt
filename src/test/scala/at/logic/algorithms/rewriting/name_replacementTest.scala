@@ -124,7 +124,7 @@ class name_replacementTest extends SpecificationWithJUnit {
 
       val fol1_ = FOLAnd(r_c_hc, FOLOr(FOLNeg(r_a_c), q_gx))
 
-      fol1_ must beEqualTo( NameReplacement(fol1, map ))
+      fol1_ must beEqualTo( fol1.renameSymbols( map ))
     }
 
     "rewrite hol formulas" in {
@@ -149,7 +149,7 @@ class name_replacementTest extends SpecificationWithJUnit {
 
       val fol1_ = HOLAnd(r_c_hc, HOLOr(HOLNeg(r_a_c), q_gx))
 
-      fol1_ must beEqualTo( NameReplacement(fol1, map ))
+      fol1_ must beEqualTo( fol1.renameSymbols( map ))
     }
 
     "rewrite of resolution proofs must work" in {
