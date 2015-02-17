@@ -15,7 +15,7 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 import at.logic.language.lambda.types.{To, Ti}
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, Atom => AtomET, Neg => NegET, Or => OrET, WeakQuantifier => WeakQuantifierET, StrongQuantifier => StrongQuantifierET, toSequent}
+import at.logic.calculi.expansionTrees.{ExpansionTree, ExpansionSequent, Atom => AtomET, Neg => NegET, Or => OrET, WeakQuantifier => WeakQuantifierET, StrongQuantifier => StrongQuantifierET, toFSequent}
 
 @RunWith(classOf[JUnitRunner])
 class SolveTest extends SpecificationWithJUnit {
@@ -176,7 +176,7 @@ class SolveTest extends SpecificationWithJUnit {
       val et = WeakQuantifierET.applyWithoutMerge(formula, List( (inst1, u), (inst2, c)))
       val etSeq = new ExpansionSequent(Nil, et::Nil)
 
-      val lkProof = solve.expansionProofToLKProof(toSequent(etSeq).toFSequent, etSeq)
+      val lkProof = solve.expansionProofToLKProof(toFSequent(etSeq), etSeq)
       lkProof.isDefined must beTrue
     }
 

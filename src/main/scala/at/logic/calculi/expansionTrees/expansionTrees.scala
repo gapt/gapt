@@ -414,15 +414,12 @@ object toShallow {
 }
 
 // Returns the end-sequent of the proof represented by this expansion tree
-object toSequent {
-  def apply( ep: ExpansionSequent ): Sequent = {
-    // TODO: there MUST be an easier way...
-    // FIXME: does it really make sense to generate formula occurrences from an expansion tree ?
-    //        These formulas do no longer occur in an LK-proof once they are in the expansion tree.
-    val ant = ep.antecedent.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence( toShallow( et ), Nil ) )
-    val cons = ep.succedent.map( et => defaultFormulaOccurrenceFactory.createFormulaOccurrence( toShallow( et ), Nil ) )
-
-    Sequent( ant, cons )
+object toFSequent {
+  def apply( ep: ExpansionSequent ): FSequent = {
+    val ant = ep.antecedent.map( et => toShallow( et ) )
+    val cons = ep.succedent.map( et => toShallow( et ) )
+  
+    FSequent( ant, cons )
   }
 }
 

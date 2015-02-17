@@ -24,7 +24,7 @@ import at.logic.provers.minisat.MiniSAT
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent( seq: Sequent, g: Grammar, cf: List[FOLFormula] = Nil ) {
+class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] = Nil ) {
 
   val endSequent = seq
   val terms = g.terms
@@ -34,9 +34,9 @@ class ExtendedHerbrandSequent( seq: Sequent, g: Grammar, cf: List[FOLFormula] = 
   // FormulaOccurrence to HOLFormula to FOLFormula and Seq to List...
 
   // Propositional formulas on the left
-  val prop_l: List[FOLFormula] = seq.antecedent.filter( x => !containsQuantifier( x.formula.asInstanceOf[FOLFormula] ) ).map( x => x.formula.asInstanceOf[FOLFormula] ).toList
+  val prop_l: List[FOLFormula] = seq.antecedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
   // Propositional formulas on the right
-  val prop_r: List[FOLFormula] = seq.succedent.filter( x => !containsQuantifier( x.formula.asInstanceOf[FOLFormula] ) ).map( x => x.formula.asInstanceOf[FOLFormula] ).toList
+  val prop_r: List[FOLFormula] = seq.succedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
 
   // Instanciated (previously univ. quantified) formulas on the left
   val inst_l: List[FOLFormula] = grammar.u.foldRight( List[FOLFormula]() ) {

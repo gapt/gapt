@@ -8,7 +8,7 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.expansionTrees.{ ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.calculi.expansionTrees.{quantRulesNumber => quantRulesNumberET, toFSequent, ExpansionSequent}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.language.fol._
@@ -246,7 +246,7 @@ object CutIntroduction {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toSequent( ep )
+        val endSequent = toFSequent( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Term set Extraction **********/
@@ -439,7 +439,7 @@ object CutIntroduction {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toSequent( ep )
+        val endSequent = toFSequent( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Terms Extraction **********/
@@ -567,7 +567,7 @@ object CutIntroduction {
   /**
    * Computes the canonical solution with multiple quantifiers from a generalized grammar.
    */
-  def computeCanonicalSolutions( seq: Sequent, g: Grammar ): List[FOLFormula] = {
+  def computeCanonicalSolutions( seq: FSequent, g: Grammar ): List[FOLFormula] = {
 
     val termset = g.terms
     val variables = g.slist.head._1
