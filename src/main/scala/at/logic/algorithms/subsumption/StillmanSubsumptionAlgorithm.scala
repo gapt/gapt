@@ -39,7 +39,7 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
     val sub = SubstitutionHOL( renames zip newnames )
     val rsub = SubstitutionHOL( newnames zip renames )
 
-    ST( left, right.map( f => sub( f ) ), SubstitutionHOL(), newnames ) match {
+    ST( left, right.map( f => sub( f ) ), SubstitutionHOL(), newnames ++ rv.filter( x => !lv.contains( x ) ) ) match {
       case None          => None
       case Some( subst ) => Some( SubstitutionHOL( subst.holmap.map( x => ( x._1, rsub( x._2 ) ) ) ) )
     }
@@ -82,7 +82,7 @@ object StillmanSubsumptionAlgorithmFOL extends SubsumptionAlgorithm {
     val sub = SubstitutionFOL( renames zip newnames )
     val rsub = SubstitutionFOL( newnames zip renames )
 
-    ST( left, right.map( f => sub( f ) ), SubstitutionFOL(), newnames ) match {
+    ST( left, right.map( f => sub( f ) ), SubstitutionFOL(), newnames ++ rv.filter( x => !lv.contains( x ) ) ) match {
       case None          => None
       case Some( subst ) => Some( SubstitutionFOL( subst.folmap.map( x => ( x._1, rsub( x._2 ) ) ) ) )
     }
