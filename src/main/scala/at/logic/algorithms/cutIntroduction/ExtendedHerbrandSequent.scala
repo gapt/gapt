@@ -88,6 +88,6 @@ class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] =
       
     (str1 + str0 + implication + " :- " + str3 + str2 + " where " + X + " = " + str4)*/
 
-    ""
+    antecedent.mkString( "", ", ", "" ) + ", " + antecedent_alpha.mkString( "", ", ", "" ) + " ⊦ " + succedent.mkString( "", ", ", "" ) + ", " + succedent_alpha.mkString( "", ", ", "" )
   }
 }

@@ -8,7 +8,7 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.expansionTrees.{quantRulesNumber => quantRulesNumberET, toFSequent, ExpansionSequent}
+import at.logic.calculi.expansionTrees.{ quantRulesNumber => quantRulesNumberET, toFSequent, ExpansionSequent }
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.language.fol._

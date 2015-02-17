@@ -10,12 +10,13 @@ import at.logic.language.hol.logicSymbols.{ EqSymbol, LogicalSymbolA }
  */
 object TPTPHOLExporter extends TPTPHOLExporter
 class TPTPHOLExporter {
-  /** Exports the given FSequent list to the THF fragment of TPTP. The default behavior of the exporter
-    * expects a sequent list in a negative context, i.e. it will encode the refutation of the arguments.
-    *
-    * @note In contrast to prover9, for multiple conjectures, each of them has to be proved.
-    * */
-  def apply( l: List[FSequent], positive : Boolean = false ): String = {
+  /**
+   * Exports the given FSequent list to the THF fragment of TPTP. The default behavior of the exporter
+   * expects a sequent list in a negative context, i.e. it will encode the refutation of the arguments.
+   *
+   * @note In contrast to prover9, for multiple conjectures, each of them has to be proved.
+   */
+  def apply( l: List[FSequent], positive: Boolean = false ): String = {
     require( l.nonEmpty, "Cannot export an empty sequent list!" )
     val ( vs, vnames, cs, cnames ) = createNamesFromSequent( l )
 
@@ -37,10 +38,10 @@ class TPTPHOLExporter {
 
     val sdecs = positive match {
       case true =>
-          for (fs <- l) yield {
-            index = index +1
-            thf_sequent_dec(index, fs, vnames, cnames) + "\n"
-          }
+        for ( fs <- l ) yield {
+          index = index + 1
+          thf_sequent_dec( index, fs, vnames, cnames ) + "\n"
+        }
       case false =>
         val negClauses = Neg( And( l.map( closedFormula ) ) )
         index = index + 1

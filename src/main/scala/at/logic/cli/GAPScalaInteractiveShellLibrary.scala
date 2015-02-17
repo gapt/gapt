@@ -490,16 +490,16 @@ object seeNFirstGrammars {
 }
 
 object generateExtendedHerbrandSequent {
-  def apply( es: FSequent, g: Grammar ) : ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
-  def apply( es: Sequent, g: Grammar ) : ExtendedHerbrandSequent = apply(es.toFSequent, g)
+  def apply( es: FSequent, g: Grammar ): ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
+  def apply( es: Sequent, g: Grammar ): ExtendedHerbrandSequent = apply( es.toFSequent, g )
 }
 
 object computeCanonicalSolutions {
-  def apply( s: FSequent, g: Grammar ) : List[FOLFormula] = {
+  def apply( s: FSequent, g: Grammar ): List[FOLFormula] = {
     println( "Note that the clauses that do not contain the eigenvariable were already removed." );
     CutIntroduction.computeCanonicalSolutions( s, g )
   }
-  def apply( es: Sequent, g: Grammar ) : List[FOLFormula] = apply(es.toFSequent, g)
+  def apply( es: Sequent, g: Grammar ): List[FOLFormula] = apply( es.toFSequent, g )
 }
 
 object minimizeSolution {

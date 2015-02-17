@@ -418,7 +418,7 @@ object toFSequent {
   def apply( ep: ExpansionSequent ): FSequent = {
     val ant = ep.antecedent.map( et => toShallow( et ) )
     val cons = ep.succedent.map( et => toShallow( et ) )
-  
+
     FSequent( ant, cons )
   }
 }
