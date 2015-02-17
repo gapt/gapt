@@ -1,7 +1,7 @@
 package at.logic.algorithms.rewriting
 
 import at.logic.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.proofs.lk.algorithms.AtomicExpansion
+import at.logic.proofs.lk.algorithms.{ Util, AtomicExpansion }
 import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences.FormulaOccurrence
 import at.logic.language.hol._

@@ -1,17 +1,15 @@
-/* Rewriting on Formulas on Sequent Calclus Proofs */
+/* Rewriting on Formulas on Sequent Calculus Proofs */
 
-package at.logic.algorithms.rewriting
+package at.logic.proofs.lk.algorithms
 
-import at.logic.proofs.lk.base.FSequent
-import at.logic.proofs.lk.base.{ PrincipalFormulas, BinaryLKProof, Sequent, LKProof }
-import at.logic.proofs.lk.{ DefinitionRightRule, DefinitionLeftRule, EquationRight2Rule, EquationRight1Rule, EquationLeft2Rule, EquationLeft1Rule, ExistsRightRule, ExistsLeftRule, ForallRightRule, ForallLeftRule }
-import at.logic.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.language.hol._
+import at.logic.proofs.lk.base.{ FSequent, LKProof, Sequent }
+import at.logic.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 
 object Util {
   class ElimEx( val uproofs: List[LKProof], val aux: List[FormulaOccurrence], val prim: HOLFormula, val defs: Option[Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
-    override def getMessage() = {
-      var s = ( "proofs:\n\n" )
+    override def getMessage = {
+      var s = "proofs:\n\n"
       for ( p <- uproofs )
         s = s + p.toString() + "\n"
       s = s + "\nauxiliary formulas:\n\n"
@@ -30,7 +28,7 @@ object Util {
     print( s.antecedent map ( ( x: FormulaOccurrence ) => x.id ) )
     print( " :- " )
     print( s.succedent map ( ( x: FormulaOccurrence ) => x.id ) )
-    println
+    println()
   }
 
   def print_hashcodes( msg: String, m: Map[FormulaOccurrence, FormulaOccurrence] ) = {
