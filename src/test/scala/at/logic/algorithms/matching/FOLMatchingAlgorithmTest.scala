@@ -26,7 +26,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val term = Function("f", x::x::Nil)
       val posInstance = Function("f", a::b::Nil)
       val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
-      sub must beEqualTo (sub)
+      sub must beEqualTo (None)
     }
 
 

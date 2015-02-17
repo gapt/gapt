@@ -13,7 +13,7 @@ import at.logic.language.hol._
 import at.logic.language.lambda.types._
 import at.logic.language.hol.logicSymbols._
 import base._
-import at.logic.language.fol.{Atom => FOLAtom, AllVar => FOLAllVar, ExVar => FOLExVar, FOLFormula, FOLConst, FOLVar}
+import at.logic.language.fol.{Atom => FOLAtom, AllVar => FOLAllVar, ExVar => FOLExVar, FOLFormula, FOLConst, FOLVar, Function => FOLFunction}
 
 /**
 * The following properties of each rule are tested:
@@ -702,6 +702,73 @@ class LKTest extends SpecificationWithJUnit {
       proof3.root.toFSequent must beEqualTo(sequent2)
       proof4.root.toFSequent must beEqualTo(sequent1)
 
+    }
+  }
+
+  "The induction rule" should {
+    val zero = FOLConst("0")
+    val x = FOLVar("x")
+    val y = FOLVar("y")
+    val Sx = FOLFunction("S", List(x))
+
+    val P0y = FOLAtom("P", List(zero,y))
+    val Pxy = FOLAtom("P", List(x,y))
+    val PSxy = FOLAtom("P", List(Sx, y))
+
+
+    "correctly construct a small induction proof" in {
+      val ax1 = Axiom(List(P0y), List(P0y))
+      val occZero = ax1.root.succedent.head
+
+      val ax2 = Axiom(List(Pxy), List(PSxy))
+      val occX = ax2.root.antecedent.head
+      val occSx = ax2.root.succedent.head
+
+      InductionRule(ax1, ax2, occZero, occX, occSx)
+
+      success
+    }
+
+    "fail if S does not occur in the right place" in {
+      val Tx = FOLFunction("T", List(x))
+      val PTxy = FOLAtom("P", List(Tx, y))
+
+      val ax1 = Axiom(List(P0y), List(P0y))
+      val occZero = ax1.root.succedent.head
+
+      val ax2 = Axiom(List(Pxy), List(PTxy))
+      val occX = ax2.root.antecedent.head
+      val occSx = ax2.root.succedent.head
+
+      InductionRule(ax1, ax2, occZero, occX, occSx) must throwAn[LKRuleCreationException]
+    }
+
+    "fail if more than one variable needs to be substituted" in {
+      val z = FOLVar("z")
+      val P0z = FOLAtom("P", List(zero,z))
+
+      val ax1 = Axiom(List(P0z), List(P0z))
+      val occZero = ax1.root.succedent.head
+
+      val ax2 = Axiom(List(Pxy), List(PSxy))
+      val occX = ax2.root.antecedent.head
+      val occSx = ax2.root.succedent.head
+
+      InductionRule(ax1, ax2, occZero, occX, occSx) must throwAn[LKRuleCreationException]
+    }
+
+    "fail if different variables need to be substituted" in {
+      val Sy = FOLFunction("S", List(y))
+      val PxSy = FOLAtom("P", List(x, Sy))
+
+      val ax1 = Axiom(List(P0y), List(P0y))
+      val occZero = ax1.root.succedent.head
+
+      val ax2 = Axiom(List(Pxy), List(PxSy))
+      val occX = ax2.root.antecedent.head
+      val occSx = ax2.root.succedent.head
+
+      InductionRule(ax1, ax2, occZero, occX, occSx) must throwAn[LKRuleCreationException]
     }
   }
 /*
