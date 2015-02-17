@@ -9,25 +9,26 @@ import at.logic.language.lambda.symbols.{ SymbolA, StringSymbol }
 import at.logic.language.fol.FOLFormula
 import at.logic.proofs.lk._
 import Util._
+import at.logic.language.hol.BetaReduction
 
 object DefinitionElimination extends DefinitionElimination
-class DefinitionElimination {
+class DefinitionElimination extends at.logic.utils.logging.Logger {
   type DefinitionsMap = Map[HOLExpression, HOLExpression]
   type ProcessedDefinitionsMap = Map[SymbolA, ( List[HOLVar], HOLFormula )]
 
   def apply( dmap: DefinitionsMap, f: HOLFormula ): HOLFormula = {
     val edmap = expand_dmap( dmap )
-    replaceAll_informula( edmap, f )
+    BetaReduction.betaNormalize( replaceAll_informula( edmap, f ) )
   }
 
   def apply( dmap: DefinitionsMap, f: HOLExpression ): HOLExpression = {
     val edmap = expand_dmap( dmap )
-    replaceAll_in( edmap, f )
+    BetaReduction.betaNormalize( replaceAll_in( edmap, f ) )
   }
 
   def apply( dmap: DefinitionsMap, p: LKProof ): LKProof = {
     val edmap = expand_dmap( dmap )
-    eliminate_in_proof( replaceAll_in( edmap, _ ), p )
+    eliminate_in_proof( x => BetaReduction.betaNormalize( replaceAll_in( edmap, x ) ), p )
   }
 
   def fixedpoint_val[A]( f: ( A => A ), l: A ): A = {
@@ -127,7 +128,6 @@ class DefinitionElimination {
   }
 
   private val emptymap = Map[FormulaOccurrence, FormulaOccurrence]() //this will be passed to some functions
-  private def debug( s: String ) = {}
 
   def eliminate_in_proof( rewrite: ( HOLExpression => HOLExpression ), proof: LKProof ): LKProof =
     eliminate_in_proof_( rewrite, proof )._2
@@ -143,7 +143,7 @@ class DefinitionElimination {
         val succd = succedent.map( ( x: FormulaOccurrence ) => c( rewrite( x.formula ) ) ) //recursive_elimination_from(defs,succedent.map((x:FormulaOccurrence) => x.formula))
         //val dproof = Axiom(antd, succd)
         val dproof = Axiom( antd, succd )
-        val correspondences = calculateCorrespondences( Sequent( antecedent, succedent ), dproof )
+        val correspondences = calculateCorrespondences( Sequent( antecedent, succedent ), dproof, rewrite )
 
         check_map( correspondences, proof, dproof )
 
@@ -160,7 +160,7 @@ class DefinitionElimination {
         debug( "daux: " + dmap1( aux1 ) + " and " + dmap2( aux2 ) )
 
         val dproof = CutRule( duproof1, duproof2, dmap1( aux1 ), dmap2( aux2 ) )
-        val correspondences = calculateCorrespondences( root, dproof )
+        val correspondences = calculateCorrespondences( root, dproof, rewrite )
         ( correspondences, dproof )
 
       case WeakeningLeftRule( uproof, root, prin ) =>
@@ -224,7 +224,7 @@ class DefinitionElimination {
         debug( "Imp Right" )
         val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
         val dproof = ImpRightRule( duproof, dmap( aux1 ), dmap( aux2 ) )
-        val correspondences = calculateCorrespondences( root, dproof )
+        val correspondences = calculateCorrespondences( root, dproof, rewrite )
         ( correspondences, dproof )
 
       //quantfication rules
@@ -275,7 +275,7 @@ class DefinitionElimination {
                            createRule: ( LKProof, HOLFormula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, c( rewrite( prin.formula ) ) )
-    val correspondences = calculateCorrespondences( root, dproof )
+    val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
@@ -290,7 +290,7 @@ class DefinitionElimination {
 
     try {
       val dproof = createRule( duproof, dmap( aux1 ), dmap( aux2 ) )
-      val correspondences = calculateCorrespondences( root, dproof )
+      val correspondences = calculateCorrespondences( root, dproof, rewrite )
       ( correspondences, dproof )
     } catch {
       case e: Exception =>
@@ -303,7 +303,7 @@ class DefinitionElimination {
                           createRule: ( LKProof, FormulaOccurrence ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, dmap( aux ) )
-    val correspondences = calculateCorrespondences( root, dproof )
+    val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
@@ -313,7 +313,7 @@ class DefinitionElimination {
                               createRule: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, dmap( aux ), c( rewrite( weakened_formula ) ) )
-    val correspondences = calculateCorrespondences( root, dproof )
+    val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
@@ -325,7 +325,7 @@ class DefinitionElimination {
     val ( dmap2, duproof2 ) = eliminate_in_proof_( rewrite, uproof2 )
 
     val dproof = createRule( duproof1, duproof2, dmap1( aux1 ), dmap2( aux2 ) )
-    val correspondences = calculateCorrespondences( root, dproof )
+    val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
@@ -334,7 +334,7 @@ class DefinitionElimination {
                                 createRule: ( LKProof, FormulaOccurrence, HOLFormula, HOLExpression ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, dmap( aux ), c( rewrite( prin.formula ) ), rewrite( substituted_term ) )
-    val correspondences = calculateCorrespondences( root, dproof )
+    val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
@@ -348,7 +348,7 @@ class DefinitionElimination {
     debug( "mocc=  " + dmap.keys.toList.map( _.id ) )
     debug( "aux =  " + aux.id + " " + dmap( aux ).id )
     val dproof = createRule( duproof, dmap( aux ), c( rewrite( prin.formula ) ), eigenvar )
-    val correspondences = calculateCorrespondences( root, dproof )
+    val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
@@ -359,7 +359,7 @@ class DefinitionElimination {
     val ( dmap1, duproof1 ) = eliminate_in_proof_( rewrite, uproof1 )
     val ( dmap2, duproof2 ) = eliminate_in_proof_( rewrite, uproof2 )
     val dproof = createRule( duproof1, duproof2, dmap1( aux1 ), dmap2( aux2 ), c( rewrite( prin.formula ) ) )
-    val correspondences = calculateCorrespondences( root, dproof )
+    val correspondences = calculateCorrespondences( root, dproof, rewrite )
 
     ( correspondences, dproof )
   }
@@ -384,14 +384,21 @@ class DefinitionElimination {
     ( dmapnew, duproof )
   }
 
-  /* calculates the correspondences between occurences of the formulas in the original end-sequent and those in the
-*  definition free one. in binary rules, ancestors may occur in both branches, so we also pass a map with previously
-*  calculated correspondences and add the new ones */
-  private def calculateCorrespondences( //defs: definitions.DefinitionsMap,
-    root: Sequent, duproof: LKProof ): Map[FormulaOccurrence, FormulaOccurrence] = {
-    val r = emptymap ++ ( root.antecedent zip duproof.root.antecedent ) ++ ( root.succedent zip duproof.root.succedent )
-    //print_hashcodes("DEBUG: Correspondences", r)
-    r
+  // calculates the correspondences between occurences of the formulas in the original end-sequent and those in the
+  // definition free one.  
+  private def calculateCorrespondences( root: Sequent, duproof: LKProof, rewrite: ( HOLExpression => HOLExpression ) ): Map[FormulaOccurrence, FormulaOccurrence] = {
+
+    val rr = duproof.root.antecedent.foldLeft( emptymap )( ( map, occ ) => {
+      val corr = root.antecedent.find( o => occ.formula == rewrite( o.formula ) && !map.contains( o ) )
+      map + ( ( corr.get, occ ) )
+    } )
+
+    val rrr = duproof.root.succedent.foldLeft( rr )( ( map, occ ) => {
+      val corr = root.succedent.find( o => occ.formula == rewrite( o.formula ) && !map.contains( o ) )
+      map + ( ( corr.get, occ ) )
+    } )
+
+    rrr
   }
 
   //switches arguments such that the apply methods of AndL1,2 and OrL1,2 have the same signature

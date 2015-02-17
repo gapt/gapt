@@ -582,7 +582,7 @@ gapt> val ehs = generateExtendedHerbrandSequent(p.root, g)
 As it was shown in~\cite{Hetzl2012}, the cut-introduction problem has a
 canonical solution:
 \begin{lstlisting}
-gapt> val cs = computeCanonicalSolution(g)
+gapt> val cs = computeCanonicalSolution(p.root, g)
 \end{lstlisting}
 The extended Herbrand sequent generated previously has the canonical solution as
 default, but this solution can be improved.. 

@@ -5,10 +5,10 @@
  */
 package at.logic.proofs.lk.algorithms.cutIntroduction
 
-import at.logic.proofs.lk.algorithms.cutIntroduction.Deltas._
-import at.logic.proofs.expansionTrees.{ ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.proofs.expansionTrees.{ ExpansionSequent, toFSequent, quantRulesNumber => quantRulesNumberET }
 import at.logic.proofs.lk
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.algorithms.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
 import at.logic.proofs.lk.algorithms.{ quantRulesNumber, _ }
 import at.logic.proofs.lk.base._
 import at.logic.language.fol._
@@ -22,8 +22,8 @@ import at.logic.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
 
 class CutIntroException( msg: String ) extends Exception( msg )
+class CutIntroIncompleteException( msg: String ) extends Exception( msg )
 class CutIntroUncompressibleException( msg: String ) extends CutIntroException( msg )
-class CutIntroNotYetImplementedException( msg: String ) extends CutIntroException( msg )
 
 /**
  * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.
@@ -116,7 +116,7 @@ object CutIntroduction {
     execute( proof, numcuts, 3600, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
-      case ( None, _, _, None )      => throw new CutIntroNotYetImplementedException( "Proof construction for n>1 cuts not yet implemented" )
+      case ( None, _, _, None )      => throw new CutIntroIncompleteException( "Incomplete method. Proof not computed." )
       case _                         => throw new CutIntroException( "Wrong return value in cut introduction." )
     }
   /**
@@ -136,6 +136,7 @@ object CutIntroduction {
     execute( es, hasEquality, -1, numcuts, 3600, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
+      case ( None, _, _, None )      => throw new CutIntroIncompleteException( "Incomplete method. Proof not computed." )
       case _                         => throw new CutIntroException( "Wrong return value in cut introduction." )
     }
 
@@ -245,7 +246,7 @@ object CutIntroduction {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toSequent( ep )
+        val endSequent = toFSequent( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Term set Extraction **********/
@@ -305,7 +306,8 @@ object CutIntroduction {
             phase = "sol" // solving phase
             time = System.currentTimeMillis
 
-            val cutFormulas = computeCanonicalSolution( grammar )
+            val cutFormulas = computeCanonicalSolutions( endSequent, grammar )
+            assert( cutFormulas.length == 1, "This method should introduce one cut." )
 
             val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
             val ehs1 = hasEquality match {
@@ -327,7 +329,7 @@ object CutIntroduction {
 
             cleanStructuralRulesTime += System.currentTimeMillis - time
 
-            ( pruned_proof, ehs1, lcomp( cutFormulas( 0 ) ), lcomp( ehs1.cutFormulas( 0 ) ) )
+            ( pruned_proof, ehs1, lcomp( cutFormulas.head ), lcomp( ehs1.cutFormulas.head ) )
         }
 
         // Sort the list by size of proofs
@@ -340,7 +342,7 @@ object CutIntroduction {
         minimizedSolutionSize = sorted.head._4
         rulesLKProofWithCut = rulesNumber( smallestProof )
         quantRulesWithCut = quantRulesNumber( smallestProof )
-        if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas( 0 ) + "\n" )
+        if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas.head + "\n" )
 
         ( Some( smallestProof ), None )
       }
@@ -437,7 +439,7 @@ object CutIntroduction {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toSequent( ep )
+        val endSequent = toFSequent( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Terms Extraction **********/
@@ -470,40 +472,29 @@ object CutIntroduction {
           throw new CutIntroUncompressibleException( "\nNo grammars found. The proof cannot be compressed." )
         }
 
-        // TODO: fix this when proof generation and ExtendedHerbrandSequent are capable of solutions > 1 cuts
-        // Note that to this point ExtHSeq for 1 cut, many quantifiers
-        //                         minimizing solution for 1 cut, many quantifiers
-        //                         proof construction for 1 cut, many quantifiers
-        // is implemented
-        /********** Canonical Solution **********/
-        improvingSolutionTime = 0
-        phase = "sol" // solving phase
-        time = System.currentTimeMillis
+        /********** Proof Construction **********/
 
-        val cutFormulas = computeCanonicalSolution( grammar )
+        // For the maxsat method, the number of eigenvariables in the grammar is
+        // equivalent to the number of cuts in the final proof, since each cut has
+        // only one quantifier.
+        numCuts = grammar.numVars
+        minimalGrammarSize = grammar.size
+        if ( verbose ) println( "Smallest grammar-size: " + grammar.size )
 
-        var ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
-        // improve solution in case of 1 cut
-        if ( ehs.cutFormulas.size == 1 ) {
-          // TODO: this is only executed when dealing with proofs having 1 cut
-          ehs = hasEquality match {
-            case true  => MinimizeSolution.applyEq( ehs, prover )
-            case false => MinimizeSolution.apply( ehs, prover )
-          }
+        val cutFormulas = computeCanonicalSolutions( endSequent, grammar )
+        // Average size of the cut-formula
+        canonicalSolutionSize = ( cutFormulas.foldLeft( 0 )( ( acc, f ) => lcomp( f ) + acc ) ) / cutFormulas.length
+        if ( verbose ) {
+          println( "Cut formulas found: " )
+          cutFormulas.foreach( f => println( f + "\n" ) )
+        }
 
-          improvingSolutionTime += System.currentTimeMillis - time
+        // Build the proof only if introducing one cut
+        // TODO: implement proof construction for multiple cuts
+        if ( cutFormulas.length == 1 ) {
+
+          val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
           time = System.currentTimeMillis
-          /********** Proof Construction **********/
-          phase = "prcons"
-
-          // For the maxsat method, the number of eigenvariables in the grammar is
-          // equivalent to the number of cuts in the final proof, since each cut has
-          // only one quantifier.
-          numCuts = grammar.numVars
-          minimalGrammarSize = grammar.size
-
-          buildProofTime = 0
-          cleanStructuralRulesTime = 0
 
           phase = "prcons" // proof construction
 
@@ -512,31 +503,15 @@ object CutIntroduction {
           buildProofTime += System.currentTimeMillis - time
           time = System.currentTimeMillis
 
-          val prunedProof = CleanStructuralRules( proof.get )
+          val pruned_proof = CleanStructuralRules( proof.get )
 
           cleanStructuralRulesTime += System.currentTimeMillis - time
+          rulesLKProofWithCut = rulesNumber( pruned_proof )
+          quantRulesWithCut = quantRulesNumber( pruned_proof )
 
-          numCuts = getStatistics( prunedProof ).cuts
-          canonicalSolutionSize = lcomp( cutFormulas( 0 ) )
-          minimizedSolutionSize = lcomp( ehs.cutFormulas( 0 ) )
-          rulesLKProofWithCut = rulesNumber( prunedProof )
-          quantRulesWithCut = lk.algorithms.quantRulesNumber( prunedProof )
-          if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas( 0 ) + "\n" )
-
-          if ( verbose ) println( "Smallest grammar-size: " + grammar.size )
-
-          ( Some( prunedProof ), None )
+          ( Some( pruned_proof ), None )
         } else {
-          // returning None proof, since proof building for > 1 cuts is not yet implemented
-          improvingSolutionTime = 0
-          numCuts = ehs.cutFormulas.size
-          minimalGrammarSize = grammar.size
-          buildProofTime = 0
-          cleanStructuralRulesTime = 0
-          canonicalSolutionSize = lcomp( cutFormulas( 0 ) )
-          minimizedSolutionSize = lcomp( ehs.cutFormulas( 0 ) )
-          rulesLKProofWithCut = 0
-          quantRulesWithCut = 0
+          status = "incomplete"
           ( None, None )
         }
       }
@@ -558,9 +533,6 @@ object CutIntroduction {
         ( None, Some( e ) )
       case e: CutIntroUncompressibleException =>
         status = "cutintro_uncompressible"
-        ( None, Some( e ) )
-      case e: CutIntroNotYetImplementedException =>
-        status = "cutintro_not_yet_implemented"
         ( None, Some( e ) )
       case e: Exception =>
         status = "cutintro_other_exception"
@@ -585,8 +557,8 @@ object CutIntroduction {
       cleanStructuralRulesTime )
 
     if ( verbose && error == None ) {
-      println( "Status: " + status )
-      print_log_tuple( tuple )
+      println( "Status: " + status );
+      print_log_tuple( tuple );
     }
 
     ( proof, status, tuple, error )
@@ -595,92 +567,37 @@ object CutIntroduction {
   /**
    * Computes the canonical solution with multiple quantifiers from a generalized grammar.
    */
-  def computeCanonicalSolution( g: Grammar ): List[FOLFormula] = {
+  def computeCanonicalSolutions( seq: FSequent, g: Grammar ): List[FOLFormula] = {
 
-    // generating all (U,,i,,,eigenvariables)
-    def getUEvsTuples( u: List[FOLTerm], slist: List[( List[FOLVar], Set[List[FOLTerm]] )] ): List[Tuple2[List[FOLTerm], List[FOLVar]]] = {
-      // propagate all terms to obtain Ui
-      return slist match {
-        case Nil => Nil
-        case _ => {
-          val nextU = propagateTerms( u, slist( 0 )._2, slist( 0 )._1 )
-          ( u, slist( 0 )._1 ) :: getUEvsTuples( nextU, slist.drop( 1 ) )
-        }
-      }
-    }
-    val uevstuples = getUEvsTuples( g.u, g.slist )
-    // generate a solution of the form C,,1,, , C,,1,, \supset C,,2,, , ..., C,,n-1,, \supset C,,n,,
-    val Cs = uevstuples.map( tuple => computeCanonicalSolutionComponent( tuple._1, tuple._2, g.terms ) )
-    if ( Cs.size == 1 ) {
-      return Cs
-    } else {
-      return Cs.sliding( 2 ). // generate lists [C1,C2],[C2,C3],...,[Cn-1,Cn]
-        foldLeft( List[FOLFormula]( Cs( 0 ) ) )( ( solution, C ) => {
-          solution :+ FOLImp( C( 0 ), C( 1 ) )
-        } )
-    }
-  }
+    val termset = g.terms
+    val variables = g.slist.head._1
 
-  /**
-   * Takes a grammar U o,,x,,1,,,..., x,,m,,,, S,,1,, o ... o S,,n,, and returns a list of terms
-   * U,,1,, = U[x,,1,,\S,,1,1,,]...[x,,m,,\S,,1,m,,], where every occurrence of x,,i,,
-   * in every term in U gets substituted by every term in S,,1,,
-   * @param u U
-   * @param s1 S,,1,,
-   * @param eigenvariables the eigenvariables o,,\alpha_1,...,\alpha_n,,
-   * @return the produced list of terms U,,1,,
-   */
-  def propagateTerms( u: List[FOLTerm], s1: Set[List[FOLTerm]], eigenvariables: List[FOLVar] ): List[FOLTerm] = {
-
-    val subs = s1.map( sterm => Substitution( eigenvariables.zip( sterm ) ) ).toList
-    val u1 = u.foldLeft( List[FOLTerm]() )( ( acc, u0 ) => subs.map( sub => sub( u0 ) ) ::: acc )
-    u1
-  }
-
-  /**
-   * Takes a list of folterms U,,i,, (in case U,,0,, = U), a list of eigenvariables
-   * which are treated in this solution component and all terms produced by the underlying grammar (i.e. g.terms)
-   * an produces a formulas C,,i+1,, which appears in a canonical solution of the form
-   * C,,1,,,C,,1,, \supset C,,2,,, C,,2,, \supset C,,3,,, ..., C,,n,, \supset C,,n+1,,
-   * @param Ui termset (U,,0,, = U, U,,i,, = U\sigma,,1,,...\sigma,,i,,)
-   * @param eigenvariables list of variables treated as eigenvariables (e.g. o,,\alpha,,1,,,\alpha,,2,,,,)
-   * @param allterms all terms produced by the underlying grammar (i.e. g.terms)
-   * @return C,,i+1,,
-   */
-  def computeCanonicalSolutionComponent( Ui: List[FOLTerm], eigenvariables: List[FOLVar], allterms: TermSet ): FOLFormula = {
-
-    //assert (g.slist.size == 1, "computeCanonicalSolution: only simple grammars supported.")
-
-    val terms = allterms
-    val varName = "x"
-
-    val xFormulas = Ui.foldRight( List[FOLFormula]() ) {
+    val instantiated_f = g.u.foldRight( List[FOLFormula]() ) {
       case ( term, acc ) =>
         val freeVars = freeVariables( term )
 
         // Taking only the terms that contain alpha
-        if ( freeVars.intersect( eigenvariables ).nonEmpty ) {
-          val set = terms.getTermTuple( term )
-          val f = terms.getFormula( term )
-
-          //Some subset of g's eigenvariables occurs in every term. This generates
-          //substitutions to replace each occurring EV a_i with a quantified variables x_i.
-          val xterms = set.map( t => {
-            val vars = createFOLVars( varName, eigenvariables.length + 1 )
-            val allEV = eigenvariables.zip( vars )
-            val occurringEV = collectVariables( t ).filter( v => eigenvariables.contains( v ) ).distinct
-
-            // If the term is a constant, this should return t itself
-            val t1 = allEV.filter( e => occurringEV.contains( e._1 ) ).foldLeft( t )( ( t, e ) => Substitution( e._1, e._2 ).apply( t ) )
-            t1
-          } )
-
-          val inst = instantiateAll( f, xterms )
-          inst :: acc
-
+        if ( freeVars.intersect( variables ).nonEmpty ) {
+          val terms = termset.getTermTuple( term )
+          val f = termset.getFormula( term )
+          instantiateAll( f, terms ) :: acc
         } else acc
     }
-    ( 0 to ( eigenvariables.size - 1 ) ).reverse.toList.foldLeft( FOLAnd( xFormulas ) ) { ( f, n ) => FOLAllVar( FOLVar( varName + "_" + n ), f ) }
+    val c1 = FOLAnd( instantiated_f )
+
+    g.slist.foldLeft( List( c1 ) ) {
+      case ( cut_formulas, ( variables, termset ) ) =>
+        val ci = cut_formulas.head
+        val forms = termset.foldLeft( List[FOLFormula]() ) {
+          case ( acc, terms ) =>
+            assert( variables.length == terms.length, "Number of eigenvariables different from number of terms in computation of canonical solution" )
+            val subst = Substitution( variables.zip( terms ) )
+            subst( ci ) :: acc
+        }
+        val ci_quant = variables.foldLeft( ci ) { ( f, v ) => FOLAllVar( v, f ) }
+        FOLAnd( forms ) :: ci_quant :: cut_formulas.tail
+      // The last term set contains only constants, so we drop the formula generated with it.
+    }.tail.reverse
   }
 
   /**
@@ -691,65 +608,61 @@ object CutIntroduction {
   def buildProofWithCut( ehs: ExtendedHerbrandSequent, prover: Prover ): Option[LKProof] = {
 
     val endSequent = ehs.endSequent
-    //TODO: begin here to implement proof building with > 1 cuts
-    if ( ehs.cutFormulas.size == 1 ) {
-      val cutFormula = ehs.cutFormulas( 0 )
-      val grammar = ehs.grammar
-      val terms = grammar.terms
+    val cutFormula = ehs.cutFormulas.head
+    val grammar = ehs.grammar
+    val terms = grammar.terms
 
-      assert( grammar.slist.size == 1, "buildProofWithCut: only simple grammars supported." )
+    assert( ehs.cutFormulas.length == 1, "buildProofWithCut: only one cut supported." )
 
-      //Instantiate the cut formula with α_0,...,α_n-1, where n is the number of alphas in the ehs's grammar.
-      //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
-      //whole initial quantifier block instantiated to α_0,...,α_n-1.
-      val alphas = ehs.grammar.eigenvariables
+    //Instantiate the cut formula with α_0,...,α_n-1, where n is the number of alphas in the ehs's grammar.
+    //partialCutLeft.last ist the all-quantified cut formula, partialCutLeft.head ist the cut formula, with its
+    //whole initial quantifier block instantiated to α_0,...,α_n-1.
+    val alphas = ehs.grammar.eigenvariables
 
-      //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
-      val cutLeft = instantiateAll( cutFormula, alphas )
+    //val partialCutLeft = (0 to alphas.length).toList.reverse.map(n => instantiateFirstN(cutFormula,alphas,n)).toList
+    val cutLeft = instantiateAll( cutFormula, alphas )
 
-      //Fully instantiate the cut formula with s[j=1...n][i] for all i.
-      val cutRight = grammar.slist( 0 )._2.toList.foldRight( List[FOLFormula]() ) {
-        case ( t, acc ) =>
-          t.foldLeft( cutFormula ) { case ( f, sval ) => instantiate( f, sval ) } :: acc
-      }
-
-      //leftBranch and rightBranch correspond to the left and right branches of the proof in the middle of
-      //p. 5; untilCut merges these together with a cut.
-
-      //solvePropositional need only be called with the non-instantiated cutLeft (with the quantifier block in front)
-
-      val seq = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, cutLeft +: ( ehs.succedent ++ ehs.succedent_alpha ) )
-
-      val proofLeft = prover.getLKProof( seq )
-      val leftBranch = proofLeft match {
-        case Some( proofLeft1 ) =>
-          val s1 = uPart( grammar.u.filter( t => freeVariables( t ).intersect( grammar.eigenvariables ).nonEmpty ), proofLeft1, terms )
-
-          //Add sequents to all-quantify the cut formula in the right part of s1
-          ForallRightBlock( s1, cutFormula, alphas )
-
-        case None => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )
-      }
-
-      val seq2 = FSequent( cutRight ++ ehs.antecedent, ehs.succedent )
-      val proofRight = prover.getLKProof( seq2 )
-      val rightBranch = proofRight match {
-        case Some( proofRight1 ) => sPart( cutFormula, grammar.slist( 0 )._2, proofRight1 )
-        case None                => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq2 )
-      }
-      //trace( "done calling solvePropositional" )
-
-      //Merge the left and right branches with a cut.
-      val untilCut = CutRule( leftBranch, rightBranch, cutFormula )
-
-      // Contracting the formulas that go to both branches of the cut
-      val contractAnt = ehs.antecedent.foldRight( untilCut.asInstanceOf[LKProof] ) { case ( f, premise ) => ContractionLeftRule( premise, f ) }
-      val contractSucc = ehs.succedent.foldRight( contractAnt.asInstanceOf[LKProof] ) { case ( f, premise ) => ContractionRightRule( premise, f ) }
-
-      // Instantiating constant terms from U
-      return Some( uPart( grammar.u.filter( t => freeVariables( t ).intersect( grammar.eigenvariables ).isEmpty ), contractSucc, terms ) )
+    //Fully instantiate the cut formula with s[j=1...n][i] for all i.
+    val cutRight = grammar.slist( 0 )._2.toList.foldRight( List[FOLFormula]() ) {
+      case ( t, acc ) =>
+        t.foldLeft( cutFormula ) { case ( f, sval ) => instantiate( f, sval ) } :: acc
     }
-    throw new CutIntroNotYetImplementedException( "Trying to build a proof from an extended Herbrand Sequent with > 1 cuts. Not yet implemented." )
+
+    //leftBranch and rightBranch correspond to the left and right branches of the proof in the middle of
+    //p. 5; untilCut merges these together with a cut.
+
+    //solvePropositional need only be called with the non-instantiated cutLeft (with the quantifier block in front)
+
+    val seq = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, cutLeft +: ( ehs.succedent ++ ehs.succedent_alpha ) )
+
+    val proofLeft = prover.getLKProof( seq )
+    val leftBranch = proofLeft match {
+      case Some( proofLeft1 ) =>
+        val s1 = uPart( grammar.u.filter( t => freeVariables( t ).intersect( grammar.eigenvariables ).nonEmpty ), proofLeft1, terms )
+
+        //Add sequents to all-quantify the cut formula in the right part of s1
+        ForallRightBlock( s1, cutFormula, alphas )
+
+      case None => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )
+    }
+
+    val seq2 = FSequent( cutRight ++ ehs.antecedent, ehs.succedent )
+    val proofRight = prover.getLKProof( seq2 )
+    val rightBranch = proofRight match {
+      case Some( proofRight1 ) => sPart( cutFormula, grammar.slist( 0 )._2, proofRight1 )
+      case None                => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq2 )
+    }
+    //trace( "done calling solvePropositional" )
+
+    //Merge the left and right branches with a cut.
+    val untilCut = CutRule( leftBranch, rightBranch, cutFormula )
+
+    // Contracting the formulas that go to both branches of the cut
+    val contractAnt = ehs.antecedent.foldRight( untilCut.asInstanceOf[LKProof] ) { case ( f, premise ) => ContractionLeftRule( premise, f ) }
+    val contractSucc = ehs.succedent.foldRight( contractAnt.asInstanceOf[LKProof] ) { case ( f, premise ) => ContractionRightRule( premise, f ) }
+
+    // Instantiating constant terms from U
+    Some( uPart( grammar.u.filter( t => freeVariables( t ).intersect( grammar.eigenvariables ).isEmpty ), contractSucc, terms ) )
   }
 
   // Both methods bellow are responsible for generating the instances of 

@@ -5,7 +5,7 @@
 package at.logic.provers.atp
 
 import at.logic.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
-import at.logic.language.fol.algorithms.{ FOLMatchingAlgorithm, FOLUnificationAlgorithm }
+import at.logic.language.fol.algorithms.{ UnificationAlgorithm, FOLMatchingAlgorithm, FOLUnificationAlgorithm }
 import at.logic.proofs.resolution.{ Clause, ResolutionProof }
 import at.logic.proofs.lk.base._
 import at.logic.language.fol.FOLExpression
@@ -14,6 +14,7 @@ import at.logic.io.readers.FileReader
 import at.logic.provers.atp.commands.base._
 import at.logic.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.provers.atp.commands.logical.DeterministicMacroCommand
+import at.logic.provers.atp.commands.refinements.base.SequentsMacroCommand
 import at.logic.utils.executionModels.ndStream.{ Configuration, NDStream }
 import at.logic.utils.executionModels.searchAlgorithms.BFSAlgorithm
 
@@ -59,6 +60,46 @@ object Main {
       |usage: java -Xss2m -Xmx2g -cp $PATH_TO_JAR -jar atp-1.0-SNAPSHOT-main.jar filename
     """.stripMargin
 
+}
+
+/**
+ * Given a clause c and a set of clauses C, this algorithm instantiates ATP to search for
+ *    a Robinson resolution derivation (either propositional or first-order) of a clause c'
+ *    such that c' subsumes c.
+ *
+ *   TODO: At the moment, the ATP configuration is taken from a test due to Tomer.
+ *         It does not find some derivations, e.g. of P from P | P. It should
+ *         be fixed such that it returns a derivation of a clause subsuming the given
+ *         clause, if such a refutation exists.
+ */
+
+object SearchDerivation extends at.logic.utils.logging.Logger {
+
+  // to force ATP to do propositional resolution, we use a "unification algorithm"
+  // that only finds a unifier for identical formulas.
+  val triv_unification = new UnificationAlgorithm {
+    def unify( term1: FOLExpression, term2: FOLExpression ) =
+      FOLUnificationAlgorithm.unify( term1, term2 ) match {
+        case s :: _ if ( s.isIdentity ) => s :: Nil
+        case _                          => Nil
+      }
+  }
+
+  def stream1( alg: UnificationAlgorithm ): Stream[Command[Clause]] = Stream.cons( SequentsMacroCommand[Clause](
+    SimpleRefinementGetCommand[Clause],
+    List( ClauseFactorCommand( alg ), ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( alg ),
+      InsertResolventCommand[Clause] ),
+    SubsumedTargedReachedCommand[Clause] ), stream1( alg ) )
+  def stream( f: FSequent, alg: UnificationAlgorithm ): Stream[Command[Clause]] = Stream.cons( SetTargetClause( f ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1( alg ) ) )
+
+  object MyProver extends Prover[Clause]
+
+  def apply( initial_clauses: Seq[FSequent], target: FSequent, propositional: Boolean = false ) = {
+    val alg = if ( propositional ) triv_unification else FOLUnificationAlgorithm
+    val msg = if ( propositional ) "propositional" else "first-order"
+    trace( "Looking for a " + msg + " resolution derivation of " + target + " from " + initial_clauses + "." )
+    MyProver.refute( Stream.cons( SetClausesCommand( initial_clauses ), stream( target, alg ) ) ).next
+  }
 }
 
 class ProverException( msg: String ) extends Exception( msg )

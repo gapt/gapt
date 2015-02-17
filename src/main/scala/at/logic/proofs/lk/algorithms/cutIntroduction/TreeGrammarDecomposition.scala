@@ -151,13 +151,6 @@ object TreeGrammarDecomposition {
           val rules = decomp.getRules( interpretation )
           // transform the rules to a Grammar
           val grammar = decomp.getGrammar( rules )
-
-          // TODO: test this
-          // check for triviality
-          if ( grammar.isTrivial ) {
-            return None
-          }
-
           return Some( grammar )
         }
         case None => return None

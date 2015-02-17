@@ -9,7 +9,7 @@ import at.logic.proofs.lk.base._
 import at.logic.proofs.resolution.FClause
 import at.logic.proofs.resolution.robinson._
 
-object RobinsonToLK {
+object RobinsonToLK extends at.logic.utils.logging.Logger {
   type mapT = scala.collection.mutable.Map[FClause, LKProof]
 
   //encapsulates a memo table s.t. subsequent runs of PCNF are not computed multiple times for the same c
@@ -31,6 +31,7 @@ object RobinsonToLK {
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
   def apply( resproof: RobinsonResolutionProof, s: FSequent ): LKProof = {
+    assert( resproof.root.toFSequent == FSequent( Nil, Nil ) )
     val memotable = new PCNFMemoTable( s )
     WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[FClause, LKProof](), memotable.getPCNF ), s, strict = true )
   }
@@ -44,10 +45,34 @@ object RobinsonToLK {
   def apply( resproof: RobinsonResolutionProof ): LKProof =
     recConvert( resproof, FSequent( List(), List() ), scala.collection.mutable.Map[FClause, LKProof](), x => Axiom( x.neg, x.pos ) )
 
-  // this contructor allows passing your own axiom creator e.g. for ceres projections
+  /**
+   * This method converts a RobinsonResolutionProof resproof, which is assumed to have the empty clause
+   * as end-clause, into an LKProof of a sequent s. To do this, the provided createAxiom method is assumed
+   * to return, on input c, an LKProof with end-sequent "s' merge c", where s' is a sub-sequent of s.
+   */
   def apply( resproof: RobinsonResolutionProof, s: FSequent, createAxiom: FClause => LKProof ): LKProof =
     WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[FClause, LKProof](), createAxiom ), s, strict = true )
 
+  // Enforce the inductive invariant by contracting superfluous material.
+  private def contractDownTo( proof: LKProof, s: FSequent, c: FClause ) =
+    {
+      val es_l = proof.root.antecedent.map( _.formula ).toSet
+
+      val p_l = es_l.foldLeft( proof )( ( p, f ) => {
+        val max = s.antecedent.count( _ == f ) + c.neg.count( _ == f )
+        ContractionLeftMacroRule( p, f, max )
+      } )
+
+      val es_r = proof.root.succedent.map( _.formula ).toSet
+      es_r.foldLeft( p_l )( ( p, f ) => {
+        val max = s.succedent.count( _ == f ) + c.pos.count( _ == f )
+        ContractionRightMacroRule( p, f, max )
+      } )
+    }
+
+  // Inductive invariant of this method:
+  // returns an LKProof of "s' merge c", where s' is a sub-sequent of seq, and
+  // c is the end-clause of proof.
   private def recConvert( proof: RobinsonResolutionProof, seq: FSequent, map: mapT, createAxiom: FClause => LKProof ): LKProof = {
     if ( map.contains( proof.root.toFClause ) ) {
       CloneLKProof( map( proof.root.toFClause ) )
@@ -69,6 +94,10 @@ object RobinsonToLK {
           // obtain upper proof recursively and apply the current substitution to the resulted LK proof
           var res = applySub( recConvert( p, seq, map, createAxiom ), s )._1
 
+          //trace("leftContracted: " + leftContracted)
+          //trace("p.root: " + p.root)
+          //trace("proof.root: " + proof.root)
+
           // create a contraction for each side, for each contracted formula with a._1 and a._2 (if exists)
           // note that sub must be applied to all formulas in the lk proof
           if ( !leftContracted.isEmpty ) {
@@ -86,7 +115,14 @@ object RobinsonToLK {
         case Resolution( r, p1, p2, a1, a2, s ) => {
           val u1 = applySub( recConvert( p1, seq, map, createAxiom ), s )._1
           val u2 = applySub( recConvert( p2, seq, map, createAxiom ), s )._1
-          ContractionMacroRule( CutRule( u1, u2, s( a1.formula.asInstanceOf[FOLFormula] ).asInstanceOf[FOLFormula] ), seq, strict = false )
+          //trace("resolution rule with conc: " + proof.root)
+          //trace("p1: " + p1.root)
+          //trace("p2: " + p2.root)
+          //trace("u1: " + u1.root)
+          //trace("u2: " + u2.root)
+
+          val cut = CutRule( u1, u2, s( a1.formula.asInstanceOf[FOLFormula] ).asInstanceOf[FOLFormula] )
+          contractDownTo( cut, seq, proof.root.toFClause )
         }
         case Paramodulation( r, p1, p2, a1, a2, _, s ) => {
 
@@ -127,7 +163,7 @@ object RobinsonToLK {
             } else
               EquationRightRule( u1, u2, aux1, aux2, rof )
           }
-          ContractionMacroRule( retProof, seq, strict = false )
+          contractDownTo( retProof, seq, proof.root.toFClause )
         }
         // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
         case Instance( root, p, s ) =>
@@ -142,6 +178,12 @@ object RobinsonToLK {
           }
       }
       map( proof.root.toFClause ) = ret
+
+      //trace( "proof.root: " + proof.root )
+      //trace( "ret.root: " + ret.root )
+      //trace( "ret.name: " + ret.name ) 
+      //trace( "proof.name: " + proof.name ) 
+
       ret
     }
   }

@@ -143,7 +143,7 @@ object testCutIntro {
       CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
     case _ =>
       // Failed already during parsing, logging
-      CutIntroDataLogger.trace(name + "," + status + ", , , , , , , , , , , , , , , " )
+      CutIntroDataLogger.trace(method_name + "," + name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
   }
 
   /************** finding non-trival prover9-TSTP proofs **********************/
@@ -230,7 +230,6 @@ object testCutIntro {
     //lines.par.foreach { case l =>
     lines.foreach { case l =>
       val data = l.split(",")
-      println ("*** Prover9 file: " + data(0))
       compressTSTPProof (data(0), timeout, method)
     }
   }
@@ -270,7 +269,6 @@ object testCutIntro {
     val proofs = getVeriTProofs (str)
     //proofs.par.foreach { case p => 
     proofs.foreach { case p => 
-      println ("*** VeriT file: " + p)
       compressVeriTProof (p, timeout, method)
     }
   }

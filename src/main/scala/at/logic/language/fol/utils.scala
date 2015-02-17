@@ -99,54 +99,6 @@ object fromFuncArgs {
   def apply( t: FOLTerm ) = t match { case FOLFunction( _, a ) => a }
 }
 
-object replaceLeftmostBoundOccurenceOf {
-  def apply( variable: FOLVar, by: FOLVar, formula: FOLFormula ): ( Boolean, FOLFormula ) = {
-    formula match {
-      case FOLAtom( _, _ ) => ( false, formula )
-
-      case FOLNeg( f ) =>
-        val r = replaceLeftmostBoundOccurenceOf( variable, by, f )
-        ( r._1, FOLNeg( r._2 ) )
-
-      case FOLAnd( f1, f2 ) =>
-        val r1 = replaceLeftmostBoundOccurenceOf( variable, by, f1 )
-        if ( r1._1 == true )
-          ( true, FOLAnd( r1._2, f2 ) )
-        else {
-          val r2 = replaceLeftmostBoundOccurenceOf( variable, by, f2 )
-          ( r2._1, FOLAnd( f1, r2._2 ) )
-        }
-
-      case FOLOr( f1, f2 ) =>
-        val r1 = replaceLeftmostBoundOccurenceOf( variable, by, f1 )
-        if ( r1._1 == true )
-          ( true, FOLOr( r1._2, f2 ) )
-        else {
-          val r2 = replaceLeftmostBoundOccurenceOf( variable, by, f2 )
-          ( r2._1, FOLOr( f1, r2._2 ) )
-        }
-
-      case FOLExVar( v, f ) =>
-        val r = replaceLeftmostBoundOccurenceOf( variable, by, f )
-        ( r._1, FOLExVar( v, r._2 ) )
-
-      case FOLAllVar( v, f ) =>
-        if ( ( v == variable ) && ( v != variable ) ) {
-          println( "Warning: comparing two variables, which have the same syntactic representation but differ on other things (probably different binding context)" )
-        }
-
-        if ( v == variable ) {
-          ( true, FOLAllVar( by, Substitution( variable, by ).apply( f ) ) )
-        } else {
-          val r = replaceLeftmostBoundOccurenceOf( variable, by, f )
-          ( r._1, FOLAllVar( v, r._2 ) )
-        }
-
-      case _ => throw new Exception( "Unknown operator encountered during renaming of outermost bound variable. Formula is: " + formula )
-    }
-  }
-}
-
 // Instantiates all quantifiers of the formula with the terms in lst.
 // OBS: the number of quantifiers in the formula must greater or equal than the
 // number of terms in lst.
@@ -689,7 +641,7 @@ object toAbbreviatedString {
   /**
    * This function takes a FOL construction and converts it to a abbreviated string version. The abbreviated string version is made
    * by replacing the code construction for logic symbols by string versions in the file language/hol/logicSymbols.scala.
-   * Several recursive function calls will be transformed into an abbreviated form (e.g. f(f(f(x))) => f^3(x)).
+   * Several recursive function calls will be transformed into an abbreviated form (e.g. f(f(f(x))) => f^3^(x)).
    * Terms are also handled by the this function.
    *
    * @param  e  The method has no parameters other then the object which is to be written as a string

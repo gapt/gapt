@@ -108,7 +108,6 @@ class Prover9Test extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "successfully load a proof with new_symbol" in {
-      skipped("doesnt work with the old implementation, new one is not ready yet")
         val p = Prover9.parse_prover9(tempCopyOfClasspathFile("ALG138+1.out"))
         Formatter.asHumanReadableString(p._1)
       ok
@@ -118,7 +117,6 @@ class Prover9Test extends SpecificationWithJUnit with ClasspathFileCopier {
 
   "The Prover9 interface" should {
     "load a Prover9 proof and verify the validity of the sequent" in {
-      skipped("TPTPFOLExporter bug (c.f. FIXME above in line 277, probably same error)")
       for (testfilename <- "PUZ047+1.out"::"ALG138+1.out"::"cade13example.out"::Nil) {
          val (robResProof, seq, _) = Prover9.parse_prover9(tempCopyOfClasspathFile(testfilename))
         (new Prover9Prover).isValid(seq) must beTrue

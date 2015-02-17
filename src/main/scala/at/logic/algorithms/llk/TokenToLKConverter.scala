@@ -953,7 +953,7 @@ trait TokenToLKConverter extends Logger {
         case None => Nil
       }
       if ( sub( ax ) syntaxEquals ( auxf ) ) {
-        info( "User specified sub works!" + f( sub ) )
+        debug( "User specified sub works!" + f( sub ) )
         ( name, ax1, sub ) :: r1
       } else r1
 

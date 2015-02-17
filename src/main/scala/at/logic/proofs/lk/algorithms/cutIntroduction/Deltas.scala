@@ -1,7 +1,6 @@
-
 package at.logic.proofs.lk.algorithms.cutIntroduction
 
-import at.logic.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, toFSequent, quantRulesNumber => quantRulesNumberET }
 import at.logic.proofs.lk._
 import at.logic.proofs.lk.base._
 import at.logic.proofs.occurrences._

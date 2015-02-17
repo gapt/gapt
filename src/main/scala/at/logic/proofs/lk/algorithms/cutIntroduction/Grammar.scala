@@ -40,14 +40,6 @@ class Grammar( u0: List[FOLTerm], slist0: List[( List[FOLVar], Set[List[FOLTerm]
   /** Returns the number of eigenvariables that occur in this grammar. */
   def numVars = eigenvariables.length
 
-  /**
-   * Checks if the underlying grammar is trivial
-   * @return true if the grammar is trivial, otherwise false
-   */
-  def isTrivial: Boolean = {
-    return slist.size == 0
-  }
-
   override def toString(): String = {
     "{ " + u.mkString( "," ) + " } " + slist.foldLeft( "" )( ( acc, s ) => acc ++ "o(" + s._1.mkString( "," ) + ") { " + s._2.mkString( "," ) + " } " )
   }

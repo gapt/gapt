@@ -20,7 +20,7 @@ import at.logic.io.language.tptp.TPTPFOLExporter
 import at.logic.io.language.xml.XMLParser._
 import at.logic.io.readers.XMLReaders._
 import at.logic.io.veriT.VeriTParser
-import at.logic.proofs.resolution.algorithms.{fixSymmetry, RobinsonToLK, CNFn}
+import at.logic.proofs.resolution.algorithms.{RobinsonToLK, CNFn}
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.provers.prover9.{Prover9, Prover9Prover}
 import at.logic.provers.veriT.VeriTProver
@@ -67,7 +67,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
   }
 
-
   sequential
   "The system" should {
     /*
@@ -98,8 +97,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
-      //println("skolemized proof:")
-      //println(proof_sk)
       Success()
     }
 
@@ -108,8 +105,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
-      //println("skolemized proof:")
-      //println(proof_sk)
       Success()
     }
 
@@ -118,8 +113,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       proofdb.proofs.size must beEqualTo(1)
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
-      //println("skolemized proof:")
-      //println(proof_sk)
       Success()
     }
 
@@ -138,39 +131,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       Success()
     }
 
-/*
-    //Cvetan
-    "extract the profile of Bruno's thesis" in {
-      println("\n\n\n")
-      val A: HOLFormula = Atom(new ConstantStringSymbol("A"), List())
-      val B: HOLFormula = Atom(new ConstantStringSymbol("B"), List())
-      val C: HOLFormula = Atom(new ConstantStringSymbol("C"), List())
-
-
-      val ax1 = Axiom(A::Nil, A::Nil)
-      val ax2 = Axiom(B::Nil, B::Nil)
-      val ax3 = Axiom(B::Nil, B::Nil)
-      val ax4 = Axiom(A::Nil, A::Nil)
-      val ax5 = Axiom(C::Nil, C::Nil)
-//      val ax6 = Axiom(Sequent(C::Nil, C::Nil))(PointerFOFactoryInstance)ExactBound(1)
-      val r1 = AndRightRule(ax1,ax2,A,B)//.asInstanceOf[LKProof]
-      var r2 = AndLeftRule(r1,A,B)
-      val r3 = AndRightRule(ax3,ax4,B,A)
-      var r4 = AndLeftRule(r3,A,B)
-      val r5 = CutRule(r2,r4, And(A,B))
-      val r6 = ax5//CutRule(ax5,ax6, C)
-      val proof = OrLeftRule(r5,r6, And(A,B), C)
-
-      val s = StructCreators.extract( proof )
-      val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
-
-      // specs2 require a least one Result, see org.specs2.specification.Example 
-      Success()
-      // TODO: check if profile is really as expected.
-    }
-*/
-
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
 
@@ -181,53 +141,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       ReductiveCutElim.isCutFree(p)  must beEqualTo( true )
       ReductiveCutElim.isCutFree(pi) must beEqualTo( false )
       ReductiveCutElim.isCutFree(pe) must beEqualTo( true )
-    }
-
-
-    "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT" in {
-
-      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
-
-      for (i <- List(0,1,3)) { // Tests 2 and 4 take comparatively long.
-        val p = VeriTParser.getExpansionProof(tempCopyOfClasspathFile(s"test${i}.verit")).get
-        val seq = ETtoDeep(p)
-
-        /*
-        println("file: " +testfilename)
-        println("formula: " +seq)
-        */
-        (new at.logic.provers.minisat.MiniSATProver).isValid(seq) must beTrue
-      }
-      ok
-    }
-
-    "load Prover9 proof, extract expansion tree and check that deep formula is quasi-tautology using veriT" in {
-      skipped("VeriT fails to proof this (at least on some systems)")
-
-      val veriT = new VeriTProver()
-
-      if (!veriT.isInstalled()) skipped("VeriT is not installed")
-
-      for (testBaseName <- "ALG138+1.out" :: Nil) {
-        // TODO: add cade13example.out once tptpfolexporter issues are sorted out
-
-        val testFilePath = "target" + separator + testBaseName
-
-        val (resProof, seq, _) = Prover9.parse_prover9(testFilePath)
-        val lkProof = new Prover9Prover().getLKProof(seq).get
-
-        val expansionSequent = extractExpansionSequent(lkProof, false)
-
-        val seqToProve = ETtoDeep(expansionSequent)
-
-        /*
-        println("file: " +testfilename)
-        println("formula: " +seq)
-        */
-
-        veriT.isValid(seqToProve) must beEqualTo (true)
-      }
-      ok
     }
 
     "extract expansion tree from tape proof" in {
@@ -263,35 +176,54 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "construct proof with expansion sequent extracted from proof 2/2" in {
-
       val proof = LinearExampleProof(0, 4)
 
       val proofPrime = solve.expansionProofToLKProof(proof.root.toFSequent, extractExpansionSequent(proof, false))
       proofPrime.isDefined must beTrue
     }
 
-    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E with minisat" in {
-      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
-      for (testBaseName <- "PUZ002-1.out" :: Nil) {
-        val (resproof, endsequent, _) = Prover9.parse_prover9( tempCopyOfClasspathFile( testBaseName ))
+    "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT" in {
+      val minisat = new MiniSATProver()
+      if (!minisat.isInstalled()) skipped("MiniSAT is not installed")
 
-        val closure = FSequent(endsequent.antecedent.map(x => univclosure(x.asInstanceOf[FOLFormula])),
-          endsequent.succedent.map(x => existsclosure(x.asInstanceOf[FOLFormula])))
-        val clause_set = CNFn(endsequent.toFormula).map(c => FSequent(c.neg.map(f => f.asInstanceOf[FOLFormula]),
-          c.pos.map(f => f.asInstanceOf[FOLFormula]))).toList
+      for (i <- List(0,1,3)) { // Tests 2 and 4 take comparatively long.
+        val p = VeriTParser.getExpansionProof(tempCopyOfClasspathFile(s"test${i}.verit")).get
+        val seq = ETtoDeep(p)
 
-        val lkproof1 = RobinsonToLK( fixSymmetry( resproof, clause_set ), closure )
-
-        val expseq = extractExpansionSequent( lkproof1, false )
-
-        val deep = ETtoDeep( expseq ).toFormula
-
-        (new at.logic.provers.minisat.MiniSATProver).isValid( deep ) must beTrue
-
-        // the next line should work but does not (see issue 279)
-        // val lkproof2 = solve.expansionProofToLKProof( ETtoShallow( expseq ), expseq )
+        minisat.isValid(seq) must beTrue
       }
       ok
+    }
+
+    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using minisat" in {
+      val minisat = new MiniSATProver()
+      if (!minisat.isInstalled()) skipped("MiniSAT is not installed")
+      if (!Prover9.isInstalled()) skipped("Prover9 is not installed")
+
+      val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
+
+      val lkproof1 = Prover9.parse_prover9LK( testFilePath )
+      val expseq = extractExpansionSequent( lkproof1, false )
+      val deep = ETtoDeep( expseq )
+
+      minisat.isValid( deep ) must beTrue
+
+      // the next line should work but does not (see issue 279)
+      // val lkproof2 = solve.expansionProofToLKProof( ETtoShallow( expseq ), expseq )
+    }
+
+    "load Prover9 proof with equality reasoning, extract expansion tree E, verify deep formula of E using veriT" in {
+      val veriT = new VeriTProver()
+      if (!veriT.isInstalled()) skipped("VeriT is not installed")
+      if (!Prover9.isInstalled()) skipped("Prover9 is not installed")
+
+      val testFilePath = tempCopyOfClasspathFile( "ALG004-1.out" )
+
+      val lkProof = Prover9.parse_prover9LK( testFilePath )
+      val expansionSequent = extractExpansionSequent(lkProof, false)
+      val deep = ETtoDeep(expansionSequent)
+
+      veriT.isValid(deep) must beTrue
     }
   }
 }

@@ -7,11 +7,12 @@
 package at.logic.provers.prover9
 
 import at.logic.algorithms.rewriting.NameReplacement
+import at.logic.language.hol.containsStrongQuantifier
 import at.logic.proofs.lk.algorithms.applyReplacement
 import at.logic.proofs.lk.base._
 import at.logic.proofs.lk.{ CutRule, Axiom }
-import at.logic.proofs.resolution.Clause
-import at.logic.proofs.resolution.algorithms.{ fixSymmetry, RobinsonToLK, CNFn, InstantiateElimination }
+import at.logic.proofs.resolution.{ FClause, Clause }
+import at.logic.proofs.resolution.algorithms._
 import at.logic.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.language.fol._
 import at.logic.io.ivy.IvyParser
@@ -224,7 +225,8 @@ object Prover9 extends at.logic.utils.logging.Logger {
             trace( "Checking cs formula " + f )
             require( f.isInstanceOf[FOLFormula], "Formula " + f + " in " + fs + " is not a FOL formula!" )
           }
-          val ret = if ( clauses != None ) fixSymmetry( tp9proof, clauses.get ) else tp9proof
+          //val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
+          val ret = tp9proof
           //println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
 
           Some( ret )
@@ -254,7 +256,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
           val tp9proof = NameReplacement( p9proof._1, symbol_map )
 
           trace( "done doing name replacement" )
-          val ret = if ( clauses != None ) fixSymmetry( tp9proof, clauses.get ) else tp9proof
+          val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
           trace( "done fixing symmetry" )
           Some( ret )
         } catch {
@@ -355,6 +357,51 @@ object Prover9 extends at.logic.utils.logging.Logger {
     val clauses = InferenceExtractor.clausesViaLADR( p9_file )
     //println("extracted formula: "+fs)
     ( mproof, fs, clauses )
+  }
+
+  def parse_prover9LK( p9_file: String, forceSkolemization: Boolean = false ): LKProof = {
+
+    val ( proof, endsequent, clauses ) = Prover9.parse_prover9( p9_file )
+    //val sendsequent = skolemize(endsequent)
+    //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
+
+    if ( !forceSkolemization && !containsStrongQuantifier( endsequent ) ) {
+
+      val ant = endsequent.antecedent.map( x => univclosure( x.asInstanceOf[FOLFormula] ) )
+      val suc = endsequent.succedent.map( x => existsclosure( x.asInstanceOf[FOLFormula] ) )
+      val closure = FSequent( ant, suc )
+
+      val clause_set = CNFn( endsequent.toFormula ).map( c =>
+        FSequent( c.neg.map( f => f.asInstanceOf[FOLFormula] ), c.pos.map( f => f.asInstanceOf[FOLFormula] ) ) )
+
+      val res_proof = fixDerivation( proof, clause_set )
+
+      RobinsonToLK( res_proof, closure )
+
+    } else {
+
+      val fclauses: Set[FClause] = proof.nodes.map {
+        case InitialClause( clause ) => clause.toFClause
+        case _                       => FClause( Nil, Nil )
+      }.filter( ( x: FClause ) => x match {
+        case FClause( Nil, Nil ) => false;
+        case _                   => true
+      } )
+      val clauses = fclauses.map( c => univclosure( FOLOr(
+        c.neg.map( f => FOLNeg( f.asInstanceOf[FOLFormula] ) ).toList ++
+          c.pos.map( f => f.asInstanceOf[FOLFormula] ).toList ) ) )
+      val clauses_ = clauses.partition( _ match {
+        case FOLNeg( _ ) => false;
+        case _           => true
+      } )
+      //val cendsequent = FSequent(clauses.toList, Nil)
+      val cendsequent2 = FSequent( clauses_._1.toList, clauses_._2.map( _ match {
+        case FOLNeg( x ) => x
+      } ).toList )
+
+      RobinsonToLK( proof, cendsequent2 )
+
+    }
   }
 
   def isInstalled(): Boolean = {

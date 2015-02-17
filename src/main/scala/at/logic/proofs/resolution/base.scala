@@ -63,7 +63,7 @@ trait FClause {
     case s: FClause => multisetEquals( this, s )
     case _          => false
   }
-  override def hashCode = neg.size + pos.size
+  override def hashCode = neg.map( _.hashCode ).sum + 31 * pos.map( _.hashCode ).sum
   override def toString = {
     var sb = new scala.StringBuilder()
     var first = true
@@ -83,6 +83,8 @@ trait FClause {
     }
     sb.toString
   }
+
+  def isSubClauseOf( c: FClause ) = neg.diff( c.neg ).isEmpty && pos.diff( c.pos ).isEmpty
 
   def toFSequent = FSequent( neg.map( _.asInstanceOf[HOLFormula] ), pos.map( _.asInstanceOf[HOLFormula] ) )
 
