@@ -781,7 +781,7 @@ object escape_underscore {
 
     val mapping = NameReplacement.emptySymbolMap ++ ( pairs )
 
-    ( NameReplacement( r, mapping ), fs.map( f => NameReplacement( f, mapping ) ) )
+    ( NameReplacement( r, mapping ), fs.map( _.renameSymbols( mapping ) ) )
   }
 
 }

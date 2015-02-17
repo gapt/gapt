@@ -12,6 +12,9 @@ import at.logic.utils.ds.trees._
  * @param succedent The formulas on the right side of the sequent.
  */
 class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] ) {
+
+  type SymbolMap = Map[String, ( Int, String )]
+
   val _1 = antecedent
   val _2 = succedent
 
@@ -118,6 +121,9 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
    * @return The sequent in tuple form.
    */
   def toTuple = ( antecedent, succedent )
+
+  def renameSymbols( map: SymbolMap ) =
+    FSequent( antecedent map ( _.renameSymbols( map ) ), succedent map ( _.renameSymbols( map ) ) )
 }
 
 object FSequent {
