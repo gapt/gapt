@@ -25,7 +25,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
     "match correctly the lambda expressions f(x, x) and f(a,b)" in {
       val term = Function("f", x::x::Nil)
       val posInstance = Function("f", a::b::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub must beEqualTo (sub)
     }
 
@@ -33,7 +33,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
     "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {
       val term = Function("f", x1::x2::c::Nil)
       val posInstance = Function("f", a::b::c::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub.get(term) must beEqualTo (posInstance)
     }
 
@@ -41,35 +41,35 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
     "not match the lambda expressions f(x1, d, c) and f(a,b,c)" in {
       val term = Function("f", x1::d::c::Nil)
       val posInstance = Function("f", a::b::c::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub must beEqualTo (None)
     }
 
     "match the lambda expressions f(x1, x2, c) and f(x1,b,c)" in {
       val term = Function("f", x1::x2::c::Nil)
       val posInstance = Function("f", x1::b::c::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub.get(term) must beEqualTo (posInstance)
     }
 
     "not match the lambda expressions f(x1, x2, c, d) and f(x1,b,c)" in {
       val term = Function("f", x1::x2::c::d::Nil)
       val posInstance = Function("f", x1::b::c::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub must beEqualTo (None)
     }
 
     "match the lambda expressions f(x1, x2, c) and f(x3,b,c)" in {
       val term = Function("f", x1::x2::c::Nil)
       val posInstance = Function("f", x3::b::c::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub.get(term) must beEqualTo (posInstance)
     }
 
     "match the lambda expressions f(x1, x2, x3) and f(x3,b,x3)" in {
       val term = Function("f", x1::x2::x3::Nil)
       val posInstance = Function("f", x3::b::x3::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub.get(term) must beEqualTo (posInstance)
     }
 
@@ -77,7 +77,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val term = Function("f", x1::x1::x3::Nil)
       val gd = Function("g", d::Nil)
       val posInstance = Function("f", x3::b::gd::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub must beEqualTo (None)
     }
 
@@ -88,7 +88,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val term2 = Function("f", c::gx1a::x3::Nil)
       val P1 = AllVar(x1, Atom("P", x1::term1::Nil))
       val P2 = AllVar(x1, Atom("P", c::term2::Nil))
-      val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2, freeVariables(P2))
+      val sub1 = FOLMatchingAlgorithm.matchTerms(P1, P2, freeVariables(P2))
       // ??
       0 must beEqualTo (0)
     }
@@ -100,7 +100,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val term2 = Function("f", c::gx1a::x3::Nil)
       val P1 = And(Atom("P", x1::term1::Nil), Atom("Q", x1::Nil))
       val P2 = And(Atom("P", c::term2::Nil), Atom("Q", c::Nil))
-      val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2, freeVariables(P2))
+      val sub1 = FOLMatchingAlgorithm.matchTerms(P1, P2, freeVariables(P2))
       sub1 must beEqualTo (None)
     }
 
@@ -111,7 +111,7 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val term2 = Function("f", c::gax1::x1::Nil)
       val P1 = And(Atom("P", term1::Nil), Atom("Q", c::Nil))
       val P2 = And(Atom("P", term2::Nil), Atom("Q", c::Nil))
-      val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2, freeVariables(P2))
+      val sub1 = FOLMatchingAlgorithm.matchTerms(P1, P2, freeVariables(P2))
       sub1 must beEqualTo (None)
     }
     
@@ -122,14 +122,14 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val term2 = Function("f", c::gcx1::x2::Nil)
       val P1 = And(Atom("P", term1::Nil), Atom("Q", x2::Nil))
       val P2 = And(Atom("P", term2::Nil), Atom("Q", c::Nil))
-      val sub1 = FOLMatchingAlgorithm.matchTerm(P1, P2, freeVariables(P2))
+      val sub1 = FOLMatchingAlgorithm.matchTerms(P1, P2, freeVariables(P2))
       sub1 must beEqualTo (None)
     }
 
     "not match the lambda expressions f(x, b) and f(a,b)" in {
       val term = Function("f", x::b::Nil)
       val posInstance = Function("f", a::b::Nil)
-      val sub = FOLMatchingAlgorithm.matchTerm(term, posInstance, freeVariables(posInstance))
+      val sub = FOLMatchingAlgorithm.matchTerms(term, posInstance, freeVariables(posInstance))
       sub.get(term) must beEqualTo (posInstance)
     }
   }

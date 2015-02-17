@@ -93,7 +93,7 @@ object StillmanSubsumptionAlgorithmFOL extends SubsumptionAlgorithm {
     case x :: ls =>
       val sx = sub( x );
       val nsubs = ls2.flatMap( t =>
-        matchAlg.matchTerm( sx, sub( t ), restrictedDomain ) match {
+        matchAlg.matchTerms( sx, sub( t ), restrictedDomain ) match {
           case Some( sub2 ) =>
             val nsub = sub2.compose( sub )
             val st = ST( ls, ls2, nsub, restrictedDomain ++ nsub.folmap.flatMap( s => freeVariablesFOL( s._2 ) ) )

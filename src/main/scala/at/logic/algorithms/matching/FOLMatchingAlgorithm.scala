@@ -5,75 +5,84 @@
 package at.logic.algorithms.matching
 
 import at.logic.language.fol._
+import at.logic.language.hol.HOLExpression
 
 object FOLMatchingAlgorithm {
 
-  def matchTerm( term1: FOLExpression, term2: FOLExpression, restrictedDomain: List[FOLVar] ): Option[Substitution] =
-    matchSetOfTuples( restrictedDomain, ( term1, term2 ) :: Nil, Nil ) match {
-      case Some( ( Nil, ls ) ) => Some( Substitution( ls.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) ) )
-      case _                   => None
-    }
+  /**
+   * Computes a substitution that turns term from into term to, if one exists.
+   *
+   * @param from A HOLExpression.
+   * @param to A HOLExpression.
+   * @param forbiddenVars A list of variables that cannot be in the domain of the substitution. Defaults to Nil.
+   * @return If there is a variable substitution that turns from into to and doesn't contain any elements of forbiddenVars, it is returned. Otherwise None.
+   */
+  def matchTerms( from: FOLExpression, to: FOLExpression, forbiddenVars: List[FOLVar] = Nil ): Option[Substitution] = computeSubstitution( List( ( from, to ) ), forbiddenVars )
 
-  def restrictSubstitution( delvars: List[FOLVar], sub: Substitution ): Substitution = {
-    Substitution( sub.folmap.filter( pair => !delvars.contains( pair._1 ) ) )
-  }
+  /**
+   * Recursively looks for a substitution σ such that for each (a, b) ∈ pairs, σ(a) = b.
+   *
+   * @param pairs A list of pairs of HOLExpressions.
+   * @param forbiddenVars A list of variables that cannot be in the domain of the substitution.
+   * @return
+   */
+  def computeSubstitution( pairs: List[( HOLExpression, HOLExpression )], forbiddenVars: List[FOLVar] ): Option[Substitution] = pairs match {
+    case Nil => Some( Substitution() )
+    case first :: rest =>
+      first match {
+        case ( a1, a2 ) if a1 == a2 => computeSubstitution( rest, forbiddenVars )
 
-  def applySubToListOfPairs( l: List[( FOLExpression, FOLExpression )], s: Substitution ): List[( FOLExpression, FOLExpression )] =
-    return l.map( a => ( s( a._1 ), s( a._2 ) ) )
-
-  def createSubstFromListOfPairs( l: List[( FOLExpression, FOLExpression )] ): Substitution = {
-    Substitution( l.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) )
-  }
-
-  def matchSetOfTuples( moduloVarList: List[FOLVar], s1: List[( FOLExpression, FOLExpression )], s2: List[( FOLExpression, FOLExpression )] ): Option[( List[( FOLExpression, FOLExpression )], List[( FOLExpression, FOLExpression )] )] = ( s1, s2 ) match {
-    case ( ( ( a1, a2 ) :: s ), s2 ) if a1 == a2                                 => matchSetOfTuples( moduloVarList, s, s2 )
-
-    case ( ( FOLConst( name1 ), FOLConst( name2 ) ) :: s, s2 ) if name1 != name2 => None
-    case ( ( ( Function( f1, args1 ), Function( f2, args2 ) ) :: s ), s2 ) if args1.length == args2.length && f1 == f2 => {
-      return matchSetOfTuples( moduloVarList, args1.zip( args2 ) ::: s, s2 )
-    }
-    case ( ( Atom( f1, args1 ), Atom( f2, args2 ) ) :: s, s2 ) if args1.length == args2.length && f1 == f2 => {
-      return matchSetOfTuples( moduloVarList, args1.zip( args2 ) ::: s, s2 )
-    }
-    case _ => matchSetOfTuples1( moduloVarList, s1, s2 )
-  }
-
-  def matchSetOfTuples1( moduloVarList: List[FOLVar], s1: List[( FOLExpression, FOLExpression )], s2: List[( FOLExpression, FOLExpression )] ): Option[( List[( FOLExpression, FOLExpression )], List[( FOLExpression, FOLExpression )] )] = ( s1, s2 ) match {
-    case ( ( And( left1, right1 ), And( left2, right2 ) ) :: s, s2 ) => matchSetOfTuples( moduloVarList, ( left1, left2 ) :: ( right1, right2 ) :: s, s2 )
-    case ( ( Or( left1, right1 ), Or( left2, right2 ) ) :: s, s2 ) => matchSetOfTuples( moduloVarList, ( left1, left2 ) :: ( right1, right2 ) :: s, s2 )
-    case ( ( Imp( left1, right1 ), Imp( left2, right2 ) ) :: s, s2 ) => matchSetOfTuples( moduloVarList, ( left1, left2 ) :: ( right1, right2 ) :: s, s2 )
-    case _ => matchSetOfTuples2( moduloVarList, s1, s2 )
-  }
-
-  def matchSetOfTuples2( moduloVarList: List[FOLVar], s1: List[( FOLExpression, FOLExpression )], s2: List[( FOLExpression, FOLExpression )] ): Option[( List[( FOLExpression, FOLExpression )], List[( FOLExpression, FOLExpression )] )] = ( s1, s2 ) match {
-    case ( ( Neg( sub1 ), Neg( sub2 ) ) :: s, s2 ) => matchSetOfTuples( moduloVarList, ( sub1, sub2 ) :: s, s2 )
-    case ( ( AllVar( var1, sub1 ), AllVar( var2, sub2 ) ) :: s, s2 ) => matchSetOfTuples( var1 :: var2 :: moduloVarList, ( sub1, sub2 ) :: s, s2 )
-    case ( ( ExVar( var1, sub1 ), ExVar( var2, sub2 ) ) :: s, s2 ) => matchSetOfTuples( var1 :: var2 :: moduloVarList, ( sub1, sub2 ) :: s, s2 )
-    case _ => matchSetOfTuples3( moduloVarList, s1, s2 )
-  }
-
-  def matchSetOfTuples3( moduloVarList: List[FOLVar], s1: List[( FOLExpression, FOLExpression )], s2: List[( FOLExpression, FOLExpression )] ): Option[( List[( FOLExpression, FOLExpression )], List[( FOLExpression, FOLExpression )] )] =
-    ( s1, s2 ) match {
-      case ( ( ( x: FOLVar, v ) :: s ), s2 ) if !freeVariables( v ).contains( x ) && !moduloVarList.contains( x ) =>
-        val lst1 = applySubToListOfPairs( s, restrictSubstitution( moduloVarList, Substitution( Substitution( x, v ).folmap ) ) )
-        val lst2 = applySubToListOfPairs( s2, restrictSubstitution( moduloVarList, Substitution( Substitution( x, v ).folmap ) ) )
-        matchSetOfTuples( moduloVarList, lst1, ( x, v ) :: lst2 )
-
-      case ( ( ( x: FOLVar, v ) :: s ), s2 ) if !freeVariables( v ).contains( x ) && moduloVarList.contains( x ) =>
-        val subst = createSubstFromListOfPairs( s2 )
-        //TODO: check if this is what we want. I'm not sure if we should not compare subst(v) with subst(x) instead of checking if x is assigned
-        subst.map.get( x ) match {
-          case Some( term ) if term == subst( v ) =>
-            matchSetOfTuples( moduloVarList, s, s2 )
-          case _ => // either the term does match subst(v) or x is not contained in the map
+        case ( FOLConst( c1 ), FOLConst( c2 ) ) =>
+          if ( c1 == c2 )
+            computeSubstitution( rest, forbiddenVars )
+          else
             None
-        }
 
-      case ( ( ( FOLConst( name1 ), x: FOLVar ) :: s ), s2 ) => None
+        case ( Function( f1, args1 ), Function( f2, args2 ) ) if f1 == f2 && args1.length == args2.length =>
+          computeSubstitution( ( args1 zip args2 ) ++ rest, forbiddenVars )
 
-      case ( ( ( y: FOLVar, x: FOLVar ) :: s ), s2 ) if x != y => None
+        case ( Atom( f1, args1 ), Atom( f2, args2 ) ) if f1 == f2 && args1.length == args2.length =>
+          computeSubstitution( ( args1 zip args2 ) ++ rest, forbiddenVars )
 
-      case ( Nil, s2 ) => Some( ( Nil, s2 ) )
-      case _ => None
-    }
+        case ( And( a, b ), And( c, d ) ) =>
+          computeSubstitution( ( a, c ) :: ( b, d ) :: rest, forbiddenVars )
+
+        case ( Or( a, b ), Or( c, d ) ) =>
+          computeSubstitution( ( a, c ) :: ( b, d ) :: rest, forbiddenVars )
+
+        case ( Imp( a, b ), Imp( c, d ) ) =>
+          computeSubstitution( ( a, c ) :: ( b, d ) :: rest, forbiddenVars )
+
+        case ( Neg( a ), Neg( b ) ) =>
+          computeSubstitution( ( a, b ) :: rest, forbiddenVars )
+
+        case ( ExVar( v1, f1 ), ExVar( v2, f2 ) ) =>
+          computeSubstitution( ( f1, f2 ) :: rest, v1 :: v2 :: forbiddenVars )
+
+        case ( AllVar( v1, f1 ), AllVar( v2, f2 ) ) =>
+          computeSubstitution( ( f1, f2 ) :: rest, v1 :: v2 :: forbiddenVars )
+
+        case ( v: FOLVar, exp: FOLExpression ) =>
+          if ( forbiddenVars contains v )
+            None
+          else {
+            val sub = Substitution( v, exp )
+            val restNew = rest map ( ( p: ( HOLExpression, HOLExpression ) ) => ( sub( p._1 ), sub( p._2 ) ) )
+            val subRest = computeSubstitution( restNew, v :: forbiddenVars )
+
+            subRest match {
+              case None => None
+              case Some( s ) =>
+                if ( !s.folmap.contains( v ) )
+                  Some( Substitution( s.folmap + ( v -> exp ) ) )
+                else if ( s( v ) == exp )
+                  subRest
+                else
+                  None
+            }
+          }
+
+        case _ => None
+      }
+  }
 }
