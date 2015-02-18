@@ -69,6 +69,7 @@ object InductionRule {
 
       def aux = List( occZero ) :: List( occX, occSx ) :: Nil
       def prin = List( prinOcc )
+      override def name = "ind"
     }
   }
 
