@@ -1,13 +1,13 @@
 package at.logic.testing.tstp
 
-import at.logic.proofs.lk.algorithms
-import at.logic.proofs.expansionTrees._
-import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
-import at.logic.proofs.lk.algorithms.containsEqualityReasoning
-import at.logic.provers.minisat._
-import at.logic.provers.veriT._
+import at.logic.gapt.proofs.lk.algorithms
+import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
+import at.logic.gapt.proofs.lk.algorithms.containsEqualityReasoning
+import at.logic.gapt.provers.minisat._
+import at.logic.gapt.provers.veriT._
 import at.logic.testing.{skipIfRunsLongerThan, recursiveListFiles}
-import at.logic.proofs.algorithms.herbrandExtraction._
+import at.logic.gapt.proofs.algorithms.herbrandExtraction._
 import org.specs2.mutable._
 
 class TstpProver9Import extends Specification {

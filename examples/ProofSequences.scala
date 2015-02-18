@@ -5,7 +5,7 @@
  * scala> val p = LinearExampleProof( 5 )
  **********/
 
-import at.logic.language.fol.Substitution
+import at.logic.gapt.language.fol.Substitution
 
 // Functions to construct cut-free FOL LK proofs of the sequents
 //
