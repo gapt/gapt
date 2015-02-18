@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,7 +12,6 @@ import javax.swing.JPopupMenu
 import swing._
 import at.logic.proofs.proofs.TreeProof
 import at.logic.proofs.lk.base.LKProof
-import at.logic.gui.prooftool.parser.{ ProofDbChanged, ProofToolPublisher, ShowProof, HideProof }
 import at.logic.language.hol.{ HOLFormula, HOLNeg, HOLAnd, HOLImp, HOLOr, HOLExVar, HOLAllVar, HOLAtom }
 
 class PopupMenu extends Component with Wrapper {

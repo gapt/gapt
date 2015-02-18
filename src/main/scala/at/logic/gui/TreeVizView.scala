@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 import scala.swing.{ Action, BorderPanel }
 import at.logic.proofs.proofs.TreeProof
@@ -11,7 +11,6 @@ import at.logic.proofs.lksk.{ ExistsSkLeftRuleType, ForallSkRightRuleType, Exist
 import at.logic.proofs.lk._
 import at.logic.io.calculi.xml.{ BinaryRuleType, UnaryRuleType, NullaryRuleType }
 import at.logic.proofs.lk.base._
-import at.logic.gui.prooftool.parser.{ ChangeSequentColor, ProofToolPublisher }
 
 /**
  *

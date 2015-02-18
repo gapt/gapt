@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,7 +15,6 @@ import java.awt.{ RenderingHints, BasicStroke }
 import at.logic.utils.ds.trees._
 import at.logic.language.hol.HOLExpression
 import DrawSequent._
-import at.logic.gui.prooftool.parser.{ StructPublisher, ShowLeaf, HideLeaf, HideTree }
 import at.logic.proofs.algorithms.ceres.struct.structToExpressionTree.{ TimesC, PlusC }
 import at.logic.proofs.algorithms.ceres.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
 import at.logic.proofs.lk.base.Sequent

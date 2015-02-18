@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.parser
+package at.logic.gui
 
 /**
  * Created by IntelliJ IDEA.
@@ -7,11 +7,12 @@ package at.logic.gui.prooftool.parser
  * Time: 3:00:53 PM
  */
 
-import scala.swing.{ Color, Publisher }
-import scala.swing.event.Event
-import at.logic.proofs.proofs.TreeProof
 import at.logic.proofs.lk.base.Sequent
 import at.logic.proofs.occurrences.FormulaOccurrence
+import at.logic.proofs.proofs.TreeProof
+
+import scala.swing.event.Event
+import scala.swing.{ Color, Publisher }
 
 object ProofToolPublisher extends Publisher
 object StructPublisher extends Publisher

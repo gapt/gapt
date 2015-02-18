@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.parser
+package at.logic.gui
 
 /**
  * Created by IntelliJ IDEA.
@@ -7,29 +7,28 @@ package at.logic.gui.prooftool.parser
  * Time: 4:42 PM
  */
 
-import at.logic.io.shlk.SCHOLParser
-
-import scala.swing.Dialog
 import java.io.{ FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
-import at.logic.io.language.xml.XMLParser.XMLProofDatabaseParser
-import at.logic.io.readers.XMLReaders._
-import at.logic.io.language.xml.ProofDatabase
-import at.logic.io.calculi.xml.SimpleXMLProofParser
+
+import at.logic.algorithms.hlk.HybridLatexParser
 import at.logic.io.ParsingException
-import at.logic.proofs.proofs.TreeProof
-import at.logic.proofs.lk.base.{ LKProof, FSequent }
-import at.logic.io.shlk_parsing.sFOParser
-import at.logic.utils.ds.trees.{ LeafTree, BinaryTree, Tree }
-import at.logic.language.hol.HOLExpression
-import at.logic.gui.prooftool.gui.{ DrawSequent, Main }
+import at.logic.io.calculi.xml.SimpleXMLProofParser
 import at.logic.io.ivy.IvyParser
 import at.logic.io.ivy.conversion.IvyToRobinson
+import at.logic.io.language.xml.ProofDatabase
+import at.logic.io.language.xml.XMLParser.XMLProofDatabaseParser
+import at.logic.io.readers.XMLReaders._
+import at.logic.io.shlk.SCHOLParser
+import at.logic.io.shlk_parsing.sFOParser
+import at.logic.language.hol.HOLExpression
 import at.logic.language.schema.dbTRS
 import at.logic.proofs.algorithms.ceres.clauseSchema._
+import at.logic.proofs.lk.base.{ FSequent, LKProof }
+import at.logic.proofs.proofs.{ Proof, TreeProof }
 import at.logic.proofs.shlk.SchemaProofDB
-import at.logic.proofs.proofs.Proof
-import at.logic.algorithms.hlk.HybridLatexParser
+import at.logic.utils.ds.trees.{ BinaryTree, LeafTree, Tree }
+
+import scala.swing.Dialog
 
 class FileParser {
 

@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 import scala.swing._
 import at.logic.proofs.lk.base._

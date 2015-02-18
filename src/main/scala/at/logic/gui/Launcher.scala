@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,7 +11,6 @@ import java.awt.Font._
 import java.awt.event.{ MouseEvent, MouseMotionListener }
 import scala.swing._
 import event.{ MouseWheelMoved, MouseReleased, MouseDragged }
-import at.logic.gui.prooftool.parser.{ UnLoaded, Loaded, ProofToolPublisher, StructPublisher }
 import at.logic.utils.ds.trees.Tree
 import at.logic.proofs.proofs.TreeProof
 import at.logic.proofs.expansionTrees.ExpansionSequent
