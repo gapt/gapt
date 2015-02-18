@@ -51,7 +51,11 @@ object InductionRule {
     if ( sub2 != Substitution( x, sX ) )
       throw new LKRuleCreationException( sub2 + " doesn't replace " + x + " by " + sX + "." )
 
-    //Construct the primary formula occurrence
+    // Test the eigenvariable condition
+    if ( ( s2.root.antecedent.filterNot( _ == occX ) ++ s2.root.succedent.filterNot( _ == occSx ) ) map ( _.formula.asInstanceOf[FOLFormula] ) flatMap freeVariables.apply contains x )
+      throw new LKRuleCreationException( "Eigenvariable condition not satisified for sequent " + s2.root + " and variable " + x + "." )
+
+    // Construct the primary formula occurrence
     val prinOcc = occX.factory.createFormulaOccurrence( aX, List( occZero, occX, occSx ) )
 
     // Construct the new sequent

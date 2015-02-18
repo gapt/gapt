@@ -770,6 +770,24 @@ class LKTest extends SpecificationWithJUnit {
 
       InductionRule(ax1, ax2, occZero, occX, occSx) must throwAn[LKRuleCreationException]
     }
+
+    "fail if the eigenvariable condition is not satisfied" in {
+      val Qx = FOLAtom("Q", List(x))
+      val ax1 = Axiom(List(P0y), List(P0y))
+      val occZero = ax1.root.succedent.head
+
+      val ax2 = Axiom(List(Pxy, Qx), List(PSxy))
+      val occX = ax2.root.antecedent.head
+      val occSx = ax2.root.succedent.head
+
+      InductionRule(ax1, ax2, occZero, occX, occSx) must throwAn[LKRuleCreationException]
+
+      val ax2_ = Axiom(List(Pxy), List(PSxy, Qx))
+      val occX_ = ax2_.root.antecedent.head
+      val occSx_ = ax2_.root.succedent.head
+
+      InductionRule(ax1, ax2, occZero, occX, occSx) must throwAn[LKRuleCreationException]
+    }
   }
 /*
 
