@@ -2,7 +2,7 @@ package at.logic.testing
 
 import java.io.File
 
-import at.logic.utils.executionModels.timeout.{TimeOutException, withTimeout}
+import at.logic.gapt.utils.executionModels.timeout.{TimeOutException, withTimeout}
 import org.specs2.execute.AsResult
 import org.specs2.matcher.ThrownExpectations
 import org.specs2.time.Duration

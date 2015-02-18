@@ -1,7 +1,7 @@
-import at.logic.proofs.expansionTrees.MWeakQuantifier
-import at.logic.cli.GAPScalaInteractiveShellLibrary._
-import at.logic.language.hol.Neg
-import at.logic.language.hoare.{ForLoop, SimpleLoopProblem}
+import at.logic.calculi.expansionTrees.MWeakQuantifier
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
+import at.logic.gapt.language.hol.Neg
+import at.logic.gapt.language.hoare.{ForLoop, SimpleLoopProblem}
 
 val p = parse.program("for y < z do x := s(x) od")
 val A = parse.p9("x = k")

@@ -16,7 +16,7 @@ Giselle:
 ./gui/prooftool/src/main/scala/at/logic/gui/prooftool/gui/DrawSequent.scala:182:    case AbsInScope(v, s) => "(" + """ \lambda """ + formulaToLatexString(v) + """.""" + formulaToLatexString(s) + ")"
 ./syntax/language/fol/src/main/scala/at/logic/language/fol/fol.scala:380:    case Ex(AbsInScope(variable: FOLVar, sub: FOLFormula), _) => Some( (variable, sub) )
 ./syntax/language/fol/src/main/scala/at/logic/language/fol/fol.scala:388:    case All(AbsInScope(variable: FOLVar, sub: FOLFormula), _) => Some( (variable, sub) )
-./syntax/language/fol/src/main/scala/at/logic/language/fol/utils.scala:13:import _root_.at.logic.language.lambda.typedLambdaCalculus.{AbsInScope, App, Var, LambdaExpression}
+./syntax/language/fol/src/main/scala/at/logic/language/fol/utils.scala:13:import _root_.at.logic.gapt.language.lambda.typedLambdaCalculus.{AbsInScope, App, Var, LambdaExpression}
 ./syntax/language/fol/src/main/scala/at/logic/language/fol/utils.scala:35:    case AbsInScope(v, exp) => {
 ./syntax/language/hol/src/main/scala/at/logic/language/hol.scala:44:      case AbsInScope(v, exp) => "(λ" + v.toString + "." + exp.toString + ")"
 ./syntax/language/hol/src/main/scala/at/logic/language/hol.scala:69:      case AbsInScope(v, exp) => "λ" + v.toString + "." + exp.toString

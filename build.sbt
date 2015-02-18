@@ -22,7 +22,7 @@ lazy val root = (project in file(".")).
     name := "gapt",
     description := "General Architecture for Proofs",
 
-    mainClass := Some("at.logic.cli.CLIMain"),
+    mainClass := Some("at.logic.gapt.cli.CLIMain"),
 
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar

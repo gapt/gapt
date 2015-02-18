@@ -16,24 +16,26 @@ val filename = "./examples/hol-tape/ntape-small.llk"
 
 /* begin of proof script  */
 
-import at.logic.language.fol.algorithms.{undoHol2Fol, replaceAbstractions, reduceHolToFol, recreateWithFactory}
-import at.logic.language.hol._
+import at.logic.gapt.language.fol.algorithms.{undoHol2Fol, replaceAbstractions, reduceHolToFol, recreateWithFactory}
+import at.logic.gapt.language.hol._
 
-import at.logic.algorithms.hlk.HybridLatexParser
-import at.logic.algorithms.rewriting.DefinitionElimination
-import at.logic.proofs.lk.algorithms.{AtomicExpansion, regularize}
-import at.logic.proofs.lksk.sequentToLabelledSequent
-import at.logic.proofs.resolution.algorithms.RobinsonToRal
+import at.logic.gapt.algorithms.fol.hol2fol.undoHol2Fol
+import at.logic.gapt.algorithms.hlk.HybridLatexParser
+import at.logic.gapt.algorithms.lk.AtomicExpansion
+import at.logic.gapt.algorithms.rewriting.DefinitionElimination
+import at.logic.gapt.proofs.lk.algorithms.{AtomicExpansion, regularize}
+import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
+import at.logic.gapt.proofs.resolution.algorithms.RobinsonToRal
 
 
-import at.logic.provers.prover9._
-import at.logic.proofs.algorithms.ceres.clauseSets._
-import at.logic.proofs.algorithms.ceres.projections.Projections
-import at.logic.proofs.algorithms.ceres.struct.StructCreators
+import at.logic.gapt.provers.prover9._
+import at.logic.gapt.proofs.algorithms.ceres.clauseSets._
+import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
+import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
 
-import at.logic.proofs.algorithms.ceres.ceres_omega
-import at.logic.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
-import at.logic.proofs.algorithms.skolemization.lksk.LKtoLKskc
+import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
+import at.logic.gapt.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
+import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 
  def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
 
