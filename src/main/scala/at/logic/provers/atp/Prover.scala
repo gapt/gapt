@@ -57,10 +57,7 @@ object Main {
     prover.refute( Stream.cons( SetClausesCommand( ( new FileReader( args( 0 ) ) with SimpleResolutionParserFOL ).getClauseList ), stream ) ).next
   }
 
-  val helpmsg =
-    """
-      |usage: java -Xss2m -Xmx2g -cp $PATH_TO_JAR -jar atp-1.0-SNAPSHOT-main.jar filename
-    """.stripMargin
+  val helpmsg = "usage: ./atp.sh filename"
 
 }
 
