@@ -1,3 +1,5 @@
+import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
+
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
   organizationHomepage := Some(url("https://gapt.github.io/")),
@@ -24,9 +26,9 @@ lazy val root = (project in file(".")).
 
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
-    releaseZip <<= (sbtassembly.AssemblyKeys.assembly, Keys.baseDirectory, Keys.target, Keys.version) map {
+    releaseDist <<= (sbtassembly.AssemblyKeys.assembly, Keys.baseDirectory, Keys.target, Keys.version) map {
         (assemblyJar: File, baseDirectory: File, target: File, version: String) =>
-      val zipFile = target / s"gapt-$version.zip"
+      val archiveFile = target / s"gapt-$version.tar.gz"
 
       Process(List("latexmk", "-pdf", "user_manual.tex"), baseDirectory / "doc") !
 
@@ -38,8 +40,23 @@ lazy val root = (project in file(".")).
         filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDirectory / fn)}
           .map{f => (f, baseDirectory.toPath.relativize(f.toPath))}
 
-      IO.zip(entries.map{ case (file, pathInZip) => (file, s"gapt-$version/$pathInZip") }, zipFile)
-      zipFile
+      val archiveStem = s"gapt-$version"
+
+      IO.gzipFileOut(archiveFile) { gzipOut =>
+        val tarOut = new TarArchiveOutputStream(gzipOut)
+
+        entries.foreach { case (file, pathInArchive) =>
+          val tarEntry = new TarArchiveEntry(file, s"$archiveStem/$pathInArchive")
+          if (file.canExecute) tarEntry.setMode(BigInt("755", 8).toInt)
+          tarOut.putArchiveEntry(tarEntry)
+          IO.transfer(file, tarOut)
+          tarOut.closeArchiveEntry()
+        }
+
+        tarOut.close()
+      }
+
+      archiveFile
     },
 
     libraryDependencies ++= Seq(
@@ -71,7 +88,7 @@ lazy val testing = (project in file("testing")).
     description := "gapt extended regression tests"
   )
 
-lazy val releaseZip = TaskKey[File]("release-zip", "Creates the release zip file.")
+lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
 
 lazy val testDependencies = Seq(
   "junit" % "junit" % "4.12",
