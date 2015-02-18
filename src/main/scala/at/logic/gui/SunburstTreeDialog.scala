@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,9 +11,7 @@ import scala.swing._
 import at.logic.proofs.proofs.TreeProof
 import scala.swing.event._
 import at.logic.proofs.lk.base.LKProof
-import at.logic.gui.prooftool.parser._
 import java.awt.Color
-import at.logic.gui.prooftool.parser.ChangeSequentColor
 
 class SunburstTreeDialog[T]( name: String, proof: TreeProof[T] ) extends Frame {
   title = "Sunburst view of " + name

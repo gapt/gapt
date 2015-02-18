@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +22,6 @@ import java.awt.event.MouseEvent
 import at.logic.language.schema.IntZero
 import at.logic.utils.latex.nameToLatexString
 import collection.mutable
-import at.logic.gui.prooftool.parser.{ ChangeFormulaColor, ChangeSequentColor, ProofToolPublisher }
 import at.logic.language.lambda.types.Tindex
 
 object DrawSequent {

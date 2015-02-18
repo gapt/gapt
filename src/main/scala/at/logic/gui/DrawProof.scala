@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +16,6 @@ import java.awt.event.{ MouseMotionListener, MouseEvent }
 import at.logic.proofs.shlk.SchemaProofLinkRule
 import at.logic.proofs.lk.base.Sequent
 import java.awt.RenderingHints
-import at.logic.gui.prooftool.parser._
 import at.logic.proofs.lk._
 import at.logic.proofs.occurrences.FormulaOccurrence
 

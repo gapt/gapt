@@ -5,7 +5,7 @@
  * http://tips4java.wordpress.com/2009/02/01/menu-scroller/
  *
  */
-package at.logic.gui.prooftool.gui;
+package at.logic.gui;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;

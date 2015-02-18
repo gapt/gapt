@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.parser
+package at.logic.io.language.latex
 
 /**
  * Created with IntelliJ IDEA.
@@ -7,10 +7,10 @@ package at.logic.gui.prooftool.parser
  * Time: 21:49
  */
 
-import at.logic.proofs.lk.base.{ NullaryLKProof, BinaryLKProof, UnaryLKProof, LKProof }
-import at.logic.proofs.proofs.RuleTypeA
-import at.logic.gui.prooftool.gui.DrawSequent
+import at.logic.gui.DrawSequent
 import at.logic.proofs.lk._
+import at.logic.proofs.lk.base.{ BinaryLKProof, LKProof, NullaryLKProof, UnaryLKProof }
+import at.logic.proofs.proofs.RuleTypeA
 import at.logic.proofs.shlk.SchemaProofLinkRule
 //import at.logic.calculi.lk.quantificationRules.{ForallRightRuleType, ForallLeftRuleType, ExistsRightRuleType, ExistsLeftRuleType}
 //import at.logic.calculi.lk.definitionRules.{DefinitionRightRuleType, DefinitionLeftRuleType}

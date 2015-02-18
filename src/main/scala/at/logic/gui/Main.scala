@@ -1,4 +1,4 @@
-package at.logic.gui.prooftool.gui
+package at.logic.gui
 
 /**
  * Created by IntelliJ IDEA.
@@ -7,6 +7,7 @@ package at.logic.gui.prooftool.gui
  * Time: 12:08:33 PM
  */
 
+import at.logic.io.language.latex.ProofToLatexExporter
 import at.logic.proofs.lk.algorithms._
 import at.logic.proofs.lksk.algorithms.eliminateDefinitions
 import at.logic.proofs.shlk.algorithms.{ applySchemaSubstitution2, applySchemaSubstitution }
@@ -21,7 +22,6 @@ import javax.swing.filechooser.FileFilter
 import javax.swing.SwingUtilities
 import at.logic.proofs.lk.base._
 import at.logic.proofs.proofs.TreeProof
-import at.logic.gui.prooftool.parser._
 import at.logic.language.hol._
 import at.logic.language.schema.IntVar
 import at.logic.io.calculi.latex.SequentsListLatexExporter
@@ -43,7 +43,6 @@ import at.logic.proofs.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
-import at.logic.gui.prooftool.parser.ChangeFormulaColor
 import at.logic.algorithms.rewriting.DefinitionElimination
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.io.language.tptp.TPTPFOLExporter
