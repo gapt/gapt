@@ -5,7 +5,6 @@
 package at.logic.algorithms.matching
 
 import at.logic.language.fol._
-import at.logic.language.hol.HOLExpression
 
 object FOLMatchingAlgorithm {
 
@@ -22,11 +21,11 @@ object FOLMatchingAlgorithm {
   /**
    * Recursively looks for a substitution σ such that for each (a, b) ∈ pairs, σ(a) = b.
    *
-   * @param pairs A list of pairs of HOLExpressions.
+   * @param pairs A list of pairs of FOLExpressions.
    * @param forbiddenVars A list of variables that cannot be in the domain of the substitution.
    * @return
    */
-  def computeSubstitution( pairs: List[( HOLExpression, HOLExpression )], forbiddenVars: List[FOLVar] ): Option[Substitution] = pairs match {
+  private def computeSubstitution( pairs: List[( FOLExpression, FOLExpression )], forbiddenVars: List[FOLVar] ): Option[Substitution] = pairs match {
     case Nil => Some( Substitution() )
     case first :: rest =>
       first match {
@@ -67,7 +66,7 @@ object FOLMatchingAlgorithm {
             None
           else {
             val sub = Substitution( v, exp )
-            val restNew = rest map ( ( p: ( HOLExpression, HOLExpression ) ) => ( sub( p._1 ), sub( p._2 ) ) )
+            val restNew = rest map ( ( p: ( FOLExpression, FOLExpression ) ) => ( sub( p._1 ), p._2 ) )
             val subRest = computeSubstitution( restNew, v :: forbiddenVars )
 
             subRest match {
