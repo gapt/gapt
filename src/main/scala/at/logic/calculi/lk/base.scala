@@ -2,7 +2,7 @@ package at.logic.calculi.lk.base
 
 import at.logic.calculi.occurrences._
 import at.logic.calculi.proofs._
-import at.logic.language.hol._
+import at.logic.language.hol.{ freeVariables => freeVariablesHOL, _ }
 import at.logic.utils.ds.trees._
 
 /**
@@ -228,6 +228,8 @@ class Sequent( val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formul
   def compose( that: Sequent ) = Sequent( this.antecedent ++ that.antecedent, this.succedent ++ that.antecedent )
 
   override def toString: String = toFSequent toString
+
+  def freeVariables: List[HOLVar] = ( ( antecedent ++ succedent ) flatMap ( ( fo: FormulaOccurrence ) => freeVariablesHOL( fo.formula ) ) ).toList
 }
 
 object Sequent {
