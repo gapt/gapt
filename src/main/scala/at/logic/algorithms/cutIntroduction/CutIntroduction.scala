@@ -727,7 +727,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     // of L_1, R_1, ..., R_n with appropriate inference rules as in the paper.
     val proof = ( 0 to alphas.size - 1 ).foldLeft( Lproof_ )( ( lproof, i ) => {
       val left = buildLeftPart( i, quantPart, A, Uleft, Uright, alphas, cutFormulas( i ), lproof )
-      trace( " Rproofs_( " + i + " ): " + Rproofs_( i ) )
+      trace( " Rproofs_( " + i + " ).root: " + Rproofs_( i ).root )
       val right = buildRightPart( Rproofs_( i ), cutFormulas( i ), grammar.slist( i )._2.map( _.head ).toList )
       trace( "right part ES: " + right.root )
       val cut = CutRule( left, right, cutFormulas( i ) )
