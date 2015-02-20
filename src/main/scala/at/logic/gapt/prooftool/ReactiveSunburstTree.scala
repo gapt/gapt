@@ -1,4 +1,4 @@
-package at.logic.gapt.gui
+package at.logic.gapt.prooftool
 
 import ch.randelshofer.tree.sunburst.{ SunburstNode, SunburstTree, SunburstView, SunburstModel }
 import ch.randelshofer.tree.{ NodeInfo, TreeNode }

@@ -1,4 +1,4 @@
-package at.logic.gapt.gui
+package at.logic.gapt.prooftool
 
 import scala.swing._
 import at.logic.gapt.proofs.lk.base._

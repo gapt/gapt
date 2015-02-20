@@ -1,4 +1,4 @@
-package at.logic.gapt.gui
+package at.logic.gapt.prooftool
 
 /**
  * Created with IntelliJ IDEA.
