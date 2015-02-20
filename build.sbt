@@ -70,9 +70,9 @@ lazy val root = (project in file(".")).
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "jline" % "jline" % "2.12",
+      "jline" % "jline" % "2.12.1",
       "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
-      "com.itextpdf" % "itextpdf" % "5.5.4",
+      "com.itextpdf" % "itextpdf" % "5.5.5",
       "org.scilab.forge" % "jlatexmath" % "1.0.2"),
 
     // Start each test class in a separate JVM, otherwise resolutionSchemaParserTest and nTapeTest fail.
@@ -96,7 +96,7 @@ lazy val testDependencies = Seq(
   "org.specs2" %% "specs2-matcher" % "2.4.16",
   "org.specs2" %% "specs2-mock" % "2.4.16",
   "org.specs2" %% "specs2-junit" % "2.4.16",
-  "org.scalacheck" %% "scalacheck" % "1.12.1")
+  "org.scalacheck" %% "scalacheck" % "1.12.2")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =
   tests map { test =>
