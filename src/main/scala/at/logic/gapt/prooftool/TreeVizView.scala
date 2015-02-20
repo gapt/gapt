@@ -1,4 +1,4 @@
-package at.logic.gapt.gui
+package at.logic.gapt.prooftool
 
 import scala.swing.{ Action, BorderPanel }
 import at.logic.gapt.proofs.proofs.TreeProof

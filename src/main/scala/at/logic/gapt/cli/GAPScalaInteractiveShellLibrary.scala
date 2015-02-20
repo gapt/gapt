@@ -31,7 +31,7 @@ import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccur
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.algorithms._
 import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.gui.Main
+import at.logic.gapt.prooftool.Main
 import at.logic.gapt.language.fol.{ FOLAllVar => FOLAllVar, FOLAnd => FOLAnd, FOLAtom => FOLAtom, FOLExVar => FOLExVar, FOLImp => FOLImp, FOLNeg => FOLNeg, FOLOr => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _ }
 import at.logic.gapt.proofs.hoare.Program
 import at.logic.gapt.language.hol.logicSymbols._

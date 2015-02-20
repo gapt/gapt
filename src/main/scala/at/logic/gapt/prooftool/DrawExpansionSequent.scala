@@ -1,4 +1,4 @@
-package at.logic.gapt.gui
+package at.logic.gapt.prooftool
 
 // The code in this file displays expansion sequents.
 
@@ -23,7 +23,7 @@ trait DrawExpSeqLogger extends Logger {
  * @param from Number of the first tree to be switched
  * @param to Number of the second tree to be switched
  */
-private[gui] class SwitchEvent( val from: Int, val to: Int ) extends Event
+private[prooftool] class SwitchEvent( val from: Int, val to: Int ) extends Event
 
 /**
  * This class takes care of drawing an ExpansionSequent.

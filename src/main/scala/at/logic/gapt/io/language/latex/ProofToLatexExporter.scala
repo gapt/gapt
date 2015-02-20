@@ -7,7 +7,7 @@ package at.logic.gapt.io.language.latex
  * Time: 21:49
  */
 
-import at.logic.gapt.gui.DrawSequent
+import at.logic.gapt.prooftool.DrawSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ BinaryLKProof, LKProof, NullaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.proofs.RuleTypeA
