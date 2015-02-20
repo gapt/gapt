@@ -202,33 +202,9 @@ object Prover9 extends at.logic.utils.logging.Logger {
     ret match {
       case 0 =>
         try {
-          trace( "parsing prover9 to robinson" )
           val p9proof = parse_prover9( output_file )
-          trace( "done parsing prover9 to robinson" )
-          trace( "doing name replacement" )
           val tp9proof = NameReplacement( p9proof._1, symbol_map )
-          trace( "done doing name replacement" )
-          /*
-          trace("Proof size: "+tp9proof.size)
-          for (fs <- tp9proof.nodes.map(_.vertex.asInstanceOf[Clause].toFSequent);
-               f <- fs.formulas) {
-            trace("Checking proof formula "+f)
-            require(f.isInstanceOf[FOLFormula], "Formula "+f+" in "+fs+" is not a FOL formula!")
-          }
-          */
-
-          trace( "CS size: " + clauses.getOrElse( Seq() ).size )
-          for (
-            fs <- clauses.getOrElse( Seq() );
-            f <- fs.formulas
-          ) {
-            trace( "Checking cs formula " + f )
-            require( f.isInstanceOf[FOLFormula], "Formula " + f + " in " + fs + " is not a FOL formula!" )
-          }
-          //val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
-          val ret = tp9proof
-          //println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
-
+          val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
           Some( ret )
         } catch {
           case e: Exception =>
