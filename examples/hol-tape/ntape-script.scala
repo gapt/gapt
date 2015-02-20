@@ -47,10 +47,10 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
     val cache = Map[HOLExpression, HOLExpression]()
 
     override def convert_formula(e:HOLFormula) : HOLFormula = {
-      require(e.isInstanceOf[FOLFormula])
+//      require(e.isInstanceOf[FOLFormula], "The formula "+e +" is, against our expectations, not from the fol layer." )
 
       BetaReduction.betaNormalize(
-        recreateWithFactory( undoHol2Fol.backtranslate(e.asInstanceOf[FOLFormula], sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]  
+        recreateWithFactory( undoHol2Fol.backtranslate(e, sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]  
     )
     }
 
@@ -96,7 +96,7 @@ import at.logic.transformations.skolemization.lksk.LKtoLKskc
       val folcl = reduceHolToFol(folcl_)
 
       show("Refuting clause set")
-      val Some(rp) = Prover9.refute(folcl) 
+      val Some(rp) = Prover9.refute(folcl, true) 
 
       show("Getting formulas")
       val proofformulas = selp.nodes.flatMap(_.asInstanceOf[LKProof].root.toFSequent.formulas  ).toList.distinct

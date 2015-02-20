@@ -84,7 +84,7 @@ class ceres_omega {
       //      require(cutfleft.formula syntaxEquals  cutfright.formula,
       //        "Cut formulas are alpha equal, but not syntax:\n"+cutfleft.formula+"\n and\n"+cutfright.formula)
       require( cutfleft.skolem_label == cutfright.skolem_label,
-        "Found the wroing cut labels:\n" + cutfleft.skolem_label + "\n and\n" + cutfright.skolem_label )
+        "Found the wrong cut labels:\n" + cutfleft.skolem_label + "\n and\n" + cutfright.skolem_label )
       val rule = CutRule( cleft, cright, cutfleft, cutfright )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
@@ -93,21 +93,32 @@ class ceres_omega {
 
     case AFactorF( root, parent, contr, aux, _ ) =>
       val ( lkparent, clause1 ) = ceres_omega( projections, parent, es, struct )
-      val c1 = findAuxByFormulaAndLabel( contr, clause1.l_antecedent, Nil )
-      val c2 = findAuxByFormulaAndLabel( contr, clause1.l_antecedent, c1 :: Nil )
-      val rule = ContractionLeftRule( lkparent, c1, c2 )
-      val nclauses = filterByAncestor( rule.root, clause1 )
-      require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
-      ( rule, nclauses )
+      aux.length match {
+        case 0 => (lkparent, clause1) //trivial, skipping factor inference
+        case 1 =>
+          val c1 = findAuxByFormulaAndLabel( contr, clause1.l_antecedent, Nil )
+          val c2 = findAuxByFormulaAndLabel( contr, clause1.l_antecedent, c1 :: Nil )
+          val rule = ContractionLeftRule( lkparent, c1, c2 )
+          val nclauses = filterByAncestor( rule.root, clause1 )
+          require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+          ( rule, nclauses )
+        case _ => throw new Exception("Factor of more than two literals not supported yet!")
+      }
 
     case AFactorT( root, parent, contr, aux, _ ) =>
       val ( lkparent, clause1 ) = ceres_omega( projections, parent, es, struct )
-      val c1 = findAuxByFormulaAndLabel( contr, clause1.l_succedent, Nil )
-      val c2 = findAuxByFormulaAndLabel( contr, clause1.l_succedent, c1 :: Nil )
-      val rule = ContractionRightRule( lkparent, c1, c2 )
-      val nclauses = filterByAncestor( rule.root, clause1 )
-      require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
-      ( rule, nclauses )
+      aux.length match {
+//        case 0 => throw new Exception("At least one auxiliary formula is necessary for a factor rule!")
+        case 1 =>
+          val c1 = findAuxByFormulaAndLabel(contr, clause1.l_succedent, Nil)
+          val c2 = findAuxByFormulaAndLabel(contr, clause1.l_succedent, c1 :: Nil)
+          val rule = ContractionRightRule(lkparent, c1, c2)
+          val nclauses = filterByAncestor(rule.root, clause1)
+          require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f(nclauses) + "\n real clause: " + f(root))
+          (rule, nclauses)
+        case 0 => (lkparent, clause1) //trivial, skipping factor inference
+        case _ => throw new Exception("Factor of more than two literals not supported yet!")
+      }
 
     case ParaF( root, parent1, parent2, p1occ, p2occ, principial, flipped ) =>
       val ( lkparent1, clause1 ) = ceres_omega( projections, parent1, es, struct )

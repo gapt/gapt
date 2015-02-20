@@ -48,18 +48,18 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
     val cache = Map[HOLExpression, HOLExpression]()
 
     override def convert_formula(e:HOLFormula) : HOLFormula = {
-      require(e.isInstanceOf[FOLFormula])
+      //require(e.isInstanceOf[FOLFormula], "Expecting prover 9 formula "+e+" to be from the FOL layer, but it is not.")
 
       BetaReduction.betaNormalize(
-        recreateWithFactory( undoHol2Fol.backtranslate(e.asInstanceOf[FOLFormula], sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]
+        recreateWithFactory( undoHol2Fol.backtranslate(e, sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]
       )
     }
 
     override def convert_substitution(s:Substitution) : Substitution = {
       val mapping = s.map.toList.map(x =>
         (
-          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]).asInstanceOf[HOLVar],
-          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[FOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression])
+          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[HOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]).asInstanceOf[HOLVar],
+          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[HOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression])
           )
       )
 
@@ -163,7 +163,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       folcl.map(println(_))
 
       show("Refuting clause set")
-      Prover9.refute(folcl, false) match {
+      Prover9.refute(folcl, true) match {
         case None =>
           ko("could not refute clause set")
         case Some(rp) =>
@@ -218,7 +218,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       folcl.map(println(_))
 
       show("Refuting clause set")
-      Prover9.refute(folcl, false) match {
+      Prover9.refute(folcl, true) match {
         case None =>
           ko("could not refute clause set")
         case Some(rp) =>
