@@ -10,6 +10,9 @@ import at.logic.algorithms.lk._
 import at.logic.provers.eqProver._
 import at.logic.provers._
 
+import scala.concurrent.duration._
+import java.util.concurrent.TimeoutException
+
 // for testCutIntro.compressProofSequences
 :load examples/ProofSequences.scala
 
@@ -20,19 +23,19 @@ import at.logic.provers._
  *
  * scala> :load testing/testCutIntro.scala
  *
- * scala> testCutIntro.findNonTrivialTSTPExamples( "testing/TSTP/prover9/", 60 )
+ * scala> testCutIntro.findNonTrivialTSTPExamples( "testing/TSTP/prover9/", 60 seconds)
  *
  * test the tests by
- * scala> testCutIntro.compressTSTP ("testing/resultsCutIntro/tstp_minitest.csv", timeout: Int, method: Int)
- * scala> testCutIntro.compressVeriT ("testing/veriT-SMT-LIB/QF_UF/eq_diamond/", timeout: Int, method: Int)
- * scala> testCutIntro.compressProofSequences (timeout: Int, method: Int)
+ * scala> testCutIntro.compressTSTP ("testing/resultsCutIntro/tstp_minitest.csv", timeout: Duration, method: Int)
+ * scala> testCutIntro.compressVeriT ("testing/veriT-SMT-LIB/QF_UF/eq_diamond/", timeout: Duration, method: Int)
+ * scala> testCutIntro.compressProofSequences (timeout: Duration, method: Int)
  * Where method is:
  * 0: introduce one cut with one quantifier
  * 1: introduce one cut with as many quantifiers as possible
  * 2: introduce many cuts with one quantifier each
  *
  * run the tests by
- * scala> testCutIntro.compressAll(timeout: Int)
+ * scala> testCutIntro.compressAll(timeout: Duration)
  * see compressAll for how to call specific tests
  **********/
 
@@ -82,7 +85,7 @@ object testCutIntro {
     println("Usage: for example calls please see the implementation of testCutIntro.compressAll()")
   }
 
-  def compressAll (timeout: Int) = {
+  def compressAll (timeout: Duration) = {
 
     compressProofSequences (timeout, 0)
     compressProofSequences (timeout, 1)
@@ -105,7 +108,7 @@ object testCutIntro {
    * All calls to cut-introduction and logging are done exclusively here
    *
    */
-  def compressLKProof (proof: Option[LKProof], timeout: Int, method: Int, name: String, status: String) = {
+  def compressLKProof (proof: Option[LKProof], timeout: Duration, method: Int, name: String, status: String) = {
     val method_name = method match {
       case 0 => "one_cut_one_quant"
       case 1 => "one_cut_many_quant"
@@ -130,7 +133,7 @@ object testCutIntro {
     }
   }
 
-  def compressExpansionProof (ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String) = 
+  def compressExpansionProof (ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Duration, method: Int, name: String, status: String) =
   status match {
     case "ok" =>
       val (cut_intro_status, info_tuple) = method match {
@@ -155,7 +158,7 @@ object testCutIntro {
   // Hashmap containing proofs with non-trivial termsets
   var termsets = HashMap[String, TermSet]()
 
-  def findNonTrivialTSTPExamples ( str : String, timeout : Int ) = {
+  def findNonTrivialTSTPExamples ( str : String, timeout : Duration ) = {
     
     nonTrivialTermset(str, timeout)
     val file = new File("testing/resultsCutIntro/tstp_non_trivial_termset.csv")
@@ -194,7 +197,7 @@ object testCutIntro {
     bw_s.close()
 
   }
-  def nonTrivialTermset(str : String, timeout : Int) : Unit = {
+  def nonTrivialTermset(str : String, timeout : Duration) : Unit = {
     val file = new File(str)
     if (file.isDirectory) {
       val children = file.listFiles
@@ -202,8 +205,8 @@ object testCutIntro {
     }
     else if (file.getName.endsWith(".out")) {
       total += 1
-      try { withTimeout(timeout * 1000) { loadProver9LKProof(file.getAbsolutePath) match {
-        case p: LKProof => try { withTimeout(timeout * 1000) { 
+      try { withTimeout(timeout) { loadProver9LKProof(file.getAbsolutePath) match {
+        case p: LKProof => try { withTimeout(timeout) {
           val ts = extractTerms(p)
           val tssize = ts.set.size
           val n_functions = ts.formulaFunction.size
@@ -223,7 +226,7 @@ object testCutIntro {
   }
 
   // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
-  def compressTSTP (str: String, timeout: Int, method: Int) = {
+  def compressTSTP (str: String, timeout: Duration, method: Int) = {
     
     // Process each file in parallel
     val lines = Source.fromFile(str).getLines().toList
@@ -235,16 +238,16 @@ object testCutIntro {
   }
 
   /// compress the prover9-TSTP proof found in file fn
-  def compressTSTPProof (fn: String, timeout: Int, method: Int) = {
+  def compressTSTPProof (fn: String, timeout: Duration, method: Int) = {
     var status = "ok"
 
     val file = new File (fn)
     if (file.getName.endsWith(".out")) {
-      val proof = try { withTimeout( timeout * 1000 ) {
+      val proof = try { withTimeout( timeout ) {
         val p = loadProver9LKProof( file.getAbsolutePath )
         Some (p)
       } } catch {
-        case e: TimeOutException =>
+        case e: TimeoutException =>
           status = "parsing_timeout"
           None
         case e: OutOfMemoryError =>
@@ -265,7 +268,7 @@ object testCutIntro {
   /****************************** VeriT SMT-LIB ******************************/
 
   // Compress all veriT-proofs found in the directory str and beyond
-  def compressVeriT (str: String, timeout: Int, method: Int) = {
+  def compressVeriT (str: String, timeout: Duration, method: Int) = {
     val proofs = getVeriTProofs (str)
     //proofs.par.foreach { case p => 
     proofs.foreach { case p => 
@@ -286,10 +289,10 @@ object testCutIntro {
   }
 
   // Compress the veriT-proof in file str
-  def compressVeriTProof (str: String, timeout: Int, method: Int) {
+  def compressVeriTProof (str: String, timeout: Duration, method: Int) {
     var status = "ok"
 
-    val expproof = try { withTimeout( timeout * 1000 ) {
+    val expproof = try { withTimeout( timeout ) {
       val ep = loadVeriTProof (str)
 
       if ( ep.isEmpty ) {
@@ -298,7 +301,7 @@ object testCutIntro {
 
       ep
     } } catch {
-      case e: TimeOutException =>
+      case e: TimeoutException =>
         status = "parsing_timeout"
         None
       case e: OutOfMemoryError =>
@@ -318,7 +321,7 @@ object testCutIntro {
 
   /***************************** Proof Sequences ******************************/
 
-  def compressProofSequences (timeout: Int, method: Int) = {
+  def compressProofSequences (timeout: Duration, method: Int) = {
 
     var i = 0
     var status = ""

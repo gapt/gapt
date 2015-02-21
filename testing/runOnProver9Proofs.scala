@@ -2,6 +2,7 @@ import java.io.{FileWriter, File}
 import at.logic.calculi.lk.base.LKRuleCreationException
 import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.utils.executionModels.timeout._
+import scala.concurrent.duration._
 
 object runOnProver9Proofs {
   /** The base prover9 path.
@@ -17,7 +18,7 @@ object runOnProver9Proofs {
   /** The maximum time (in seconds) a test is allowed to take.
    *
    */
-  val timeOut = 60
+  val timeOut = 60 second
 
   /** Returns a list of files, sorted by file size in ascending order.
    *
@@ -90,7 +91,7 @@ object runOnProver9Proofs {
 
     // Try importing the given file for at most timeOut seconds
     try {
-      withTimeout(1000 * timeOut)
+      withTimeout(timeOut)
       {loadProver9LKProof(path)}
     }
 

@@ -20,6 +20,8 @@ import at.logic.provers.maxsat.MaxSATSolver
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
+import java.util.concurrent.TimeoutException
+import scala.concurrent.duration._
 
 class CutIntroException( msg: String ) extends Exception( msg )
 class CutIntroIncompleteException( msg: String ) extends Exception( msg )
@@ -46,7 +48,7 @@ object CutIntroduction {
    * @throws CutIntroException when the proof is not found.
    */
   def one_cut_one_quantifier( proof: LKProof, verbose: Boolean ) =
-    execute( proof, false, 3600, verbose ) match {
+    execute( proof, false, 1 hour, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
       case _                         => throw new CutIntroException( "Wrong return value in cut introduction." )
@@ -64,7 +66,7 @@ object CutIntroduction {
    * @throws CutIntroException when the proof is not found.
    */
   def one_cut_one_quantifier( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, false, -1, 3600, verbose ) match {
+    execute( es, hasEquality, false, -1, 1 hour, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
       case _                         => throw new CutIntroException( "Wrong return value in cut introduction." )
@@ -79,7 +81,7 @@ object CutIntroduction {
    * @throws CutIntroException when the proof is not found.
    */
   def one_cut_many_quantifiers( proof: LKProof, verbose: Boolean ) =
-    execute( proof, true, 3600, verbose ) match {
+    execute( proof, true, 1 hour, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
       case _                         => throw new CutIntroException( "Wrong return value in cut introduction." )
@@ -97,7 +99,7 @@ object CutIntroduction {
    * @throws CutIntroException when the proof is not found.
    */
   def one_cut_many_quantifiers( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, true, -1, 3600, verbose ) match {
+    execute( es, hasEquality, true, -1, 1 hour, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
       case _                         => throw new CutIntroException( "Wrong return value in cut introduction." )
@@ -113,7 +115,7 @@ object CutIntroduction {
    * @throws CutIntroException when the cut-formulas are not found.
    */
   def many_cuts_one_quantifier( proof: LKProof, numcuts: Int, verbose: Boolean ) =
-    execute( proof, numcuts, 3600, verbose ) match {
+    execute( proof, numcuts, 1 hour, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
       case ( None, _, _, None )      => throw new CutIntroIncompleteException( "Incomplete method. Proof not computed." )
@@ -133,7 +135,7 @@ object CutIntroduction {
    * @throws CutIntroException when the proof is not found.
    */
   def many_cuts_one_quantifier( es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, -1, numcuts, 3600, verbose ) match {
+    execute( es, hasEquality, -1, numcuts, 1 hour, verbose ) match {
       case ( Some( p ), _, _, None ) => p
       case ( None, _, _, Some( e ) ) => throw e
       case ( None, _, _, None )      => throw new CutIntroIncompleteException( "Incomplete method. Proof not computed." )
@@ -141,27 +143,27 @@ object CutIntroduction {
     }
 
   // Methods to be called for the experiments, only return status and log information
-  def one_cut_one_quantifier_stat( proof: LKProof, timeout: Int ) =
+  def one_cut_one_quantifier_stat( proof: LKProof, timeout: Duration ) =
     execute( proof, false, timeout, false ) match {
       case ( _, status, log, _ ) => ( status, log )
     }
-  def one_cut_one_quantifier_stat( es: ExpansionSequent, hasEquality: Boolean, timeout: Int ) =
+  def one_cut_one_quantifier_stat( es: ExpansionSequent, hasEquality: Boolean, timeout: Duration ) =
     execute( es, hasEquality, false, -1, timeout, false ) match {
       case ( _, status, log, _ ) => ( status, log )
     }
-  def one_cut_many_quantifiers_stat( proof: LKProof, timeout: Int ) =
+  def one_cut_many_quantifiers_stat( proof: LKProof, timeout: Duration ) =
     execute( proof, true, timeout, false ) match {
       case ( _, status, log, _ ) => ( status, log )
     }
-  def one_cut_many_quantifiers_stat( es: ExpansionSequent, hasEquality: Boolean, timeout: Int ) =
+  def one_cut_many_quantifiers_stat( es: ExpansionSequent, hasEquality: Boolean, timeout: Duration ) =
     execute( es, hasEquality, true, -1, timeout, false ) match {
       case ( _, status, log, _ ) => ( status, log )
     }
-  def many_cuts_one_quantifier_stat( proof: LKProof, numcuts: Int, timeout: Int ) =
+  def many_cuts_one_quantifier_stat( proof: LKProof, numcuts: Int, timeout: Duration ) =
     execute( proof, numcuts, timeout, false ) match {
       case ( _, status, log, _ ) => ( status, log )
     }
-  def many_cuts_one_quantifier_stat( es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, timeout: Int ) =
+  def many_cuts_one_quantifier_stat( es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, timeout: Duration ) =
     execute( es, hasEquality, -1, numcuts, timeout, false ) match {
       case ( _, status, log, _ ) => ( status, log )
     }
@@ -200,7 +202,7 @@ object CutIntroduction {
   }
 
   // Delta-table methods
-  private def execute( proof: LKProof, manyQuantifiers: Boolean, timeout: Int, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
+  private def execute( proof: LKProof, manyQuantifiers: Boolean, timeout: Duration, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
 
     val clean_proof = CleanStructuralRules( proof )
     val num_rules = rulesNumber( clean_proof )
@@ -209,7 +211,7 @@ object CutIntroduction {
     execute( ep, hasEquality, manyQuantifiers, num_rules, timeout, verbose )
   }
 
-  private def execute( ep: ExpansionSequent, hasEquality: Boolean, manyQuantifiers: Boolean, num_lk_rules: Int, timeout: Int, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
+  private def execute( ep: ExpansionSequent, hasEquality: Boolean, manyQuantifiers: Boolean, num_lk_rules: Int, timeout: Duration, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
 
     val prover = hasEquality match {
       case true  => new EquationalProver()
@@ -347,7 +349,7 @@ object CutIntroduction {
         ( Some( smallestProof ), None )
       }
     } catch {
-      case e: TimeOutException =>
+      case e: TimeoutException =>
         status = phase + "_timeout"
         ( None, Some( e ) )
       case e: OutOfMemoryError =>
@@ -396,7 +398,7 @@ object CutIntroduction {
   }
 
   // MaxSat methods
-  private def execute( proof: LKProof, n: Int, timeout: Int, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
+  private def execute( proof: LKProof, n: Int, timeout: Duration, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
 
     val clean_proof = CleanStructuralRules( proof )
     val num_rules = rulesNumber( clean_proof )
@@ -405,7 +407,7 @@ object CutIntroduction {
     execute( ep, hasEquality, num_rules, n, timeout, verbose )
   }
 
-  private def execute( ep: ExpansionSequent, hasEquality: Boolean, num_lk_rules: Int, n: Int, timeout: Int, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
+  private def execute( ep: ExpansionSequent, hasEquality: Boolean, num_lk_rules: Int, n: Int, timeout: Duration, verbose: Boolean ): ( Option[LKProof], String, LogTuple, Option[Throwable] ) = {
 
     val prover = hasEquality match {
       case true  => new EquationalProver()
@@ -516,7 +518,7 @@ object CutIntroduction {
         }
       }
     } catch {
-      case e: TimeOutException =>
+      case e: TimeoutException =>
         status = phase + "_timeout"
         ( None, Some( e ) )
       case e: OutOfMemoryError =>
