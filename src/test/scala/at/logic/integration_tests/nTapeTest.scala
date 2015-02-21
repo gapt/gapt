@@ -163,7 +163,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       folcl.map(println(_))
 
       show("Refuting clause set")
-      Prover9.refute(folcl, true) match {
+      Prover9.refute(folcl) match {
         case None =>
           ko("could not refute clause set")
         case Some(rp) =>
@@ -218,7 +218,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       folcl.map(println(_))
 
       show("Refuting clause set")
-      Prover9.refute(folcl, true) match {
+      Prover9.refute(folcl) match {
         case None =>
           ko("could not refute clause set")
         case Some(rp) =>

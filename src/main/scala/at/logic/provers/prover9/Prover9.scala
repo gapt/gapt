@@ -168,7 +168,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
       runP9OnLADR( input_file, output_file, cs )
     }
 
-  private def refuteNamed( named_sequents: List[Tuple2[String, FSequent]], input_file: String, output_file: String, runFixDerivations: Boolean = true ): Option[RobinsonResolutionProof] =
+  private def refuteNamed( named_sequents: List[Tuple2[String, FSequent]], input_file: String, output_file: String ): Option[RobinsonResolutionProof] =
     {
       val tmp_file = File.createTempFile( "gapt-prover9-ref", ".tptp", null )
       trace( "writing refutational problem" )
@@ -176,10 +176,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
       trace( "converting tptp to ladr" )
       tptpToLadr( tmp_file.getAbsolutePath, input_file )
       tmp_file.delete
-      runP9OnLADR( input_file, output_file, Some( named_sequents.map( p => p._2 ) ), runFixDerivations )
+      runP9OnLADR( input_file, output_file, Some( named_sequents.map( p => p._2 ) ) )
     }
 
-  private def runP9OnLADR( input_file: String, output_file: String, clauses: Option[Seq[FSequent]] = None, runFixDerivations: Boolean = true ): Option[RobinsonResolutionProof] = {
+  private def runP9OnLADR( input_file: String, output_file: String, clauses: Option[Seq[FSequent]] = None ): Option[RobinsonResolutionProof] = {
     // find out which symbols have been renamed
     // this information should eventually be used when
     // parsing the prover9 proof
@@ -204,7 +204,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
         try {
           val p9proof = parse_prover9( output_file )
           val tp9proof = NameReplacement( p9proof._1, symbol_map )
-          val ret = if ( runFixDerivations && clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
+          val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
           Some( ret )
         } catch {
           case e: Exception =>
@@ -264,8 +264,8 @@ object Prover9 extends at.logic.utils.logging.Logger {
     }
   }
 
-  private def refuteHelper( sequents: List[FSequent], input_file: String, output_file: String, runFixDerivations: Boolean = true ): Option[RobinsonResolutionProof] =
-    refuteNamed( sequents.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ), input_file, output_file, runFixDerivations )
+  private def refute( sequents: List[FSequent], input_file: String, output_file: String ): Option[RobinsonResolutionProof] =
+    refuteNamed( sequents.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ), input_file, output_file )
 
   /**
    * Proves a sequent through Prover9 (which refutes the corresponding set of clauses).
@@ -286,10 +286,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
   /**
    * Refutes a set of clauses, given as a List[FSequent].
    */
-  def refute( sequents: List[FSequent], runFixDerivations: Boolean = true ): Option[RobinsonResolutionProof] = {
+  def refute( sequents: List[FSequent] ): Option[RobinsonResolutionProof] = {
     val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
-    val ret = refuteHelper( sequents, in_file.getAbsolutePath, out_file.getAbsolutePath, runFixDerivations )
+    val ret = refute( sequents, in_file.getAbsolutePath, out_file.getAbsolutePath )
     in_file.delete
     out_file.delete
     ret
