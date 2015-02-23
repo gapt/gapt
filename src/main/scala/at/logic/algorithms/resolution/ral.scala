@@ -61,8 +61,8 @@ abstract class RobinsonToRal {
         val ( rmap2, rp2 ) = apply( p2, rmap1 )
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
         val sub2 = if ( sub.isIdentity ) rp2 else Sub( rp2, sub )
-        val rule = Cut( sub1, sub2, List( pickFOsucc(  sub( convert_formula(  aux1.formula ) ), sub1.root, Nil ) ),
-          List( pickFOant(  sub( convert_formula(  aux2.formula ) ), sub2.root, Nil ) ) )
+        val rule = Cut( sub1, sub2, List( pickFOsucc( sub( convert_formula( aux1.formula ) ), sub1.root, Nil ) ),
+          List( pickFOant( sub( convert_formula( aux2.formula ) ), sub2.root, Nil ) ) )
         my_require( rule.root.toFSequent, clause.toFSequent, "Error in resolution translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
 
         ( rmap2, rule )
@@ -72,7 +72,7 @@ abstract class RobinsonToRal {
         val sub = convert_substitution( sub_ )
         val ( rmap1, rp1 ) = apply( parent, map )
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
-        val ( a :: aux ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant( sub(convert_formula(  x.formula ) ), sub1.root, list ) :: list ).reverse
+        val ( a :: aux ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant( sub( convert_formula( x.formula ) ), sub1.root, list ) :: list ).reverse
         val rule = AFactorF( sub1, a, aux )
         my_require( rule.root.toFSequent, clause.toFSequent, "Error in factor translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
 
@@ -83,7 +83,7 @@ abstract class RobinsonToRal {
         val sub = convert_substitution( sub_ )
         val ( rmap1, rp1 ) = apply( parent, map )
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
-        val ( a :: aux ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc( sub( convert_formula(  x.formula ) ), sub1.root, list ) :: list ).reverse
+        val ( a :: aux ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc( sub( convert_formula( x.formula ) ), sub1.root, list ) :: list ).reverse
         val rule = AFactorT( sub1, a, aux )
         my_require( rule.root.toFSequent, clause.toFSequent, "Error in factor translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
         ( rmap1, rule )
@@ -94,7 +94,7 @@ abstract class RobinsonToRal {
         val ( rmap2, rp2 ) = apply( parent, rmap1 )
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
         val sub2 = if ( sub.isIdentity ) rp2 else Sub( rp2, sub )
-        val rule = ParaF( sub1, sub2, pickFOsucc(  sub( convert_formula(  equation.formula ) ), sub1.root, List() ), pickFOant(  sub( convert_formula(  modulant.formula ) ), sub2.root, List() ), convert_formula( primary.formula ) )
+        val rule = ParaF( sub1, sub2, pickFOsucc( sub( convert_formula( equation.formula ) ), sub1.root, List() ), pickFOant( sub( convert_formula( modulant.formula ) ), sub2.root, List() ), convert_formula( primary.formula ) )
         my_require( rule.root.toFSequent, clause.toFSequent, "Error in para translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
         ( rmap2, rule )
 
@@ -105,9 +105,9 @@ abstract class RobinsonToRal {
         val ( rmap2, rp2 ) = apply( parent, rmap1 )
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
         val sub2 = if ( sub.isIdentity ) rp2 else Sub( rp2, sub )
-        val rule = ParaT( sub1, sub2, pickFOsucc(  sub( convert_formula(  equation.formula ) ), sub1.root, List() ),
-                                      pickFOsucc(  sub( convert_formula(  modulant.formula ) ), sub2.root, List() ),
-                           convert_formula( primary.formula ) )
+        val rule = ParaT( sub1, sub2, pickFOsucc( sub( convert_formula( equation.formula ) ), sub1.root, List() ),
+          pickFOsucc( sub( convert_formula( modulant.formula ) ), sub2.root, List() ),
+          convert_formula( primary.formula ) )
         my_require( rule.root.toFSequent, clause.toFSequent, "Error in para translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
         ( rmap2, rule )
 
@@ -140,18 +140,18 @@ abstract class RobinsonToRal {
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
 
         val rule1 = if ( aux1.forall( parent.root.antecedent.contains( _ ) ) ) {
-          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant(  sub( convert_formula(  x.formula ) ), rp1.root, list ) :: list ).reverse
+          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant( sub( convert_formula( x.formula ) ), rp1.root, list ) :: list ).reverse
           AFactorF( rp1, a1, auxs1 )
         } else if ( aux1.forall( parent.root.succedent.contains( _ ) ) ) {
-          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc(  sub( convert_formula(  x.formula ) ), rp1.root, list ) :: list ).reverse
+          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc( sub( convert_formula( x.formula ) ), rp1.root, list ) :: list ).reverse
           AFactorT( rp1, a1, auxs1 )
         } else throw new Exception( "Could not find all auxiliary occurrences of a factor rule!" )
 
         val rule2 = if ( aux2.forall( parent.root.antecedent.contains( _ ) ) ) {
-          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant(  sub( convert_formula(  x.formula ) ), rule1.root, list ) :: list ).reverse
+          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant( sub( convert_formula( x.formula ) ), rule1.root, list ) :: list ).reverse
           AFactorF( rule1, a1, auxs1 )
         } else if ( aux1.forall( parent.root.succedent.contains( _ ) ) ) {
-          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc(  sub( convert_formula(  x.formula ) ), rule1.root, list ) :: list ).reverse
+          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc( sub( convert_formula( x.formula ) ), rule1.root, list ) :: list ).reverse
           AFactorT( rule1, a1, auxs1 )
         } else throw new Exception( "Could not find all auxiliary occurrences of a factor rule!" )
 

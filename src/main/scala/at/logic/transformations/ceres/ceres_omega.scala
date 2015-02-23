@@ -94,7 +94,7 @@ class ceres_omega {
     case AFactorF( root, parent, contr, aux, _ ) =>
       val ( lkparent, clause1 ) = ceres_omega( projections, parent, es, struct )
       aux.length match {
-        case 0 => (lkparent, clause1) //trivial, skipping factor inference
+        case 0 => ( lkparent, clause1 ) //trivial, skipping factor inference
         case 1 =>
           val c1 = findAuxByFormulaAndLabel( contr, clause1.l_antecedent, Nil )
           val c2 = findAuxByFormulaAndLabel( contr, clause1.l_antecedent, c1 :: Nil )
@@ -102,22 +102,22 @@ class ceres_omega {
           val nclauses = filterByAncestor( rule.root, clause1 )
           require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
           ( rule, nclauses )
-        case _ => throw new Exception("Factor of more than two literals not supported yet!")
+        case _ => throw new Exception( "Factor of more than two literals not supported yet!" )
       }
 
     case AFactorT( root, parent, contr, aux, _ ) =>
       val ( lkparent, clause1 ) = ceres_omega( projections, parent, es, struct )
       aux.length match {
-//        case 0 => throw new Exception("At least one auxiliary formula is necessary for a factor rule!")
+        //        case 0 => throw new Exception("At least one auxiliary formula is necessary for a factor rule!")
         case 1 =>
-          val c1 = findAuxByFormulaAndLabel(contr, clause1.l_succedent, Nil)
-          val c2 = findAuxByFormulaAndLabel(contr, clause1.l_succedent, c1 :: Nil)
-          val rule = ContractionRightRule(lkparent, c1, c2)
-          val nclauses = filterByAncestor(rule.root, clause1)
-          require(nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f(nclauses) + "\n real clause: " + f(root))
-          (rule, nclauses)
-        case 0 => (lkparent, clause1) //trivial, skipping factor inference
-        case _ => throw new Exception("Factor of more than two literals not supported yet!")
+          val c1 = findAuxByFormulaAndLabel( contr, clause1.l_succedent, Nil )
+          val c2 = findAuxByFormulaAndLabel( contr, clause1.l_succedent, c1 :: Nil )
+          val rule = ContractionRightRule( lkparent, c1, c2 )
+          val nclauses = filterByAncestor( rule.root, clause1 )
+          require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+          ( rule, nclauses )
+        case 0 => ( lkparent, clause1 ) //trivial, skipping factor inference
+        case _ => throw new Exception( "Factor of more than two literals not supported yet!" )
       }
 
     case ParaF( root, parent1, parent2, p1occ, p2occ, principial, flipped ) =>

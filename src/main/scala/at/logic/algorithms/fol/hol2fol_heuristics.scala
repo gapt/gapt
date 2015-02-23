@@ -46,12 +46,12 @@ object undoHol2Fol extends Logger {
                      expected_type: Option[TA] )( factory: FactoryA ): HOLExpression = {
     e match {
       // --------------- logical structure ------------------------
-      case Atom( HOLConst(name,_), args ) if sig_consts contains name.toString =>
+      case Atom( HOLConst( name, _ ), args ) if sig_consts contains name.toString =>
         val args_ = args.map( backtranslate( _, sig_vars, sig_consts, abssymbol_map, None )( factory ) )
         val head = sig_consts( name.toString )( 0 )
         Atom( head, args_ )
 
-/*      case Equation(s, t) =>
+      /*      case Equation(s, t) =>
         Equation(backtranslate( s, sig_vars, sig_consts, abssymbol_map, None )( factory ) ,
                  backtranslate( t, sig_vars, sig_consts, abssymbol_map, None )( factory ) )
                  */
