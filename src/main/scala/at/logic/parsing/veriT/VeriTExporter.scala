@@ -11,8 +11,13 @@ import at.logic.language.lambda.types.{ Ti, To }
 
 object VeriTExporter {
 
-  // Takes a sequent and generates the input for VeriT as a string.
-  def apply( s: FSequent, fileName: String ): File = {
+  /**
+   *  Takes a sequent and generates the input for VeriT as a string.
+   *
+   * @param s Sequent to export.
+   * @return VeriT input.
+   */
+  def apply( s: FSequent ): String = {
     // Define the logic
     val logic = "(set-logic QF_UF)\n"
     // Declare the function and predicate symbols with arity
@@ -22,11 +27,21 @@ object VeriTExporter {
     // Generate the check_sat formula
     val check_sat = "(check-sat)"
 
-    // Writing to a file
+    logic + symbols + asserts + check_sat
+  }
+
+  /**
+   * Takes a sequent and generates the input for VeriT as a file
+   *
+   * @param s Sequent to export.
+   * @param fileName  Output file name.
+   * @return File pointing to fileName.
+   */
+  def apply( s: FSequent, fileName: String ): File = {
     val file = new File( fileName )
     val fw = new FileWriter( file.getAbsoluteFile )
     val bw = new BufferedWriter( fw )
-    bw.write( logic + symbols + asserts + check_sat )
+    bw.write( VeriTExporter( s ) )
     bw.close()
 
     file

@@ -14,41 +14,19 @@ class VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
   override def isValid( s: FSequent ): Boolean = {
 
     // Generate the input file for veriT
-    val filename = "toProve" + System.currentTimeMillis + ".smt"
-    val in_file = VeriTExporter( s, filename )
+    val veritInput = VeriTExporter( s )
 
-    // Execute the system command and get the result as a string.
-    val result = try { ( "veriT " + filename ).!! }
-    catch {
-      case e: IOException => throw new Exception( "Error while executing VeriT." )
-    }
-
-    in_file.delete() match {
-      case true  => ()
-      case false => throw new Exception( "Error deleting smt file." )
-    }
-
-    val out_file = new File( "proof" + System.currentTimeMillis + ".smt" )
-    val pw = new PrintWriter( out_file )
-    pw.write( result )
-    pw.close()
+    val veritOutput = "veriT" #< new ByteArrayInputStream( veritInput.getBytes ) !!
 
     // Parse the output
-    val unsat = VeriTParser.isUnsat( out_file.getAbsolutePath() )
-    out_file.delete() match {
-      case true  => ()
-      case false => throw new Exception( "Error deleting verit file." )
-    }
-    unsat
+    VeriTParser.isUnsat( new StringReader( veritOutput ) )
   }
 
   def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] = {
-    val smtBenchmark = File.createTempFile( "verit_input", ".smt" )
-    smtBenchmark.deleteOnExit()
+    val smtBenchmark = VeriTExporter( s )
 
-    VeriTExporter( s, smtBenchmark.getAbsolutePath )
+    val output = "veriT --proof=- --proof-version=1" #< new ByteArrayInputStream( smtBenchmark.getBytes ) !!
 
-    val output = s"veriT --proof=- --proof-version=1 $smtBenchmark".!!
     VeriTParser.getExpansionProof( new StringReader( output ) )
   }
 
