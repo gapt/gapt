@@ -55,7 +55,6 @@ object inductionExamples {
     )
 
   val inductionBase =
-  ContractionMacroRule(
     EquationRightRule(
       inductionBaseL,
       inductionBaseR,
@@ -68,6 +67,19 @@ object inductionExamples {
         plus(plus(x,y), zero),
         plus(x,plus(y,zero))
       )
+    )
+
+  val inductionStepDummy =
+    Axiom(List(assocXYZ), List(assocXYSZ))
+
+  val inductionProof =
+  ContractionMacroRule(
+    InductionRule(
+      inductionBase,
+      inductionStepDummy,
+      assocXY0,
+      assocXYZ,
+      assocXYSZ
     )
   )
 }

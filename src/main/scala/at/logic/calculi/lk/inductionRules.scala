@@ -73,6 +73,25 @@ object InductionRule {
     }
   }
 
+  def apply( s1: LKProof, s2: LKProof, inductionBase: FOLFormula, inductionHypo: FOLFormula, inductionStep: FOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+    val term1oc = s1.root.succedent find ( _.formula == inductionBase ) match {
+      case None      => throw new LKRuleCreationException( "Formula " + inductionBase + " not found in " + s1.root.succedent + "." )
+      case Some( o ) => o
+    }
+
+    val term2oc = s2.root.antecedent find ( _.formula == inductionHypo ) match {
+      case None      => throw new LKRuleCreationException( "Formula " + inductionHypo + " not found in " + s2.root.antecedent + "." )
+      case Some( o ) => o
+    }
+
+    val term3oc = s2.root.succedent find ( _.formula == inductionStep ) match {
+      case None      => throw new LKRuleCreationException( "Formula " + inductionStep + " not found in " + s2.root.succedent + "." )
+      case Some( o ) => o
+    }
+
+    apply( s1, s2, term1oc, term2oc, term3oc )
+  }
+
   def getTerms( s1: LKProof, s2: LKProof, occ1: FormulaOccurrence, occ2: FormulaOccurrence, occ3: FormulaOccurrence ): ( FormulaOccurrence, FormulaOccurrence, FormulaOccurrence ) = {
     val occZero = s1.root.succedent.find( _ == occ1 ) match {
       case None      => throw new LKRuleCreationException( "Occurrence " + occ1 + " could not be found in " + s1.root.succedent + "." )
