@@ -1,4 +1,4 @@
-package at.logic.gapt.algorithms.diophantine
+package at.logic.gapt.algorithms.unification
 
 /* A vector implementation with addition, scalar product etc. */
 object Vector {

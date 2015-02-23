@@ -1,13 +1,15 @@
-package at.logic.gapt.algorithms.diophantine
+package at.logic.gapt.algorithms.unification
 
 /* Solves diophantine equations via Lankford's Algorithm as described in
  * "Non-negative Integer Basis Algorithms for Linear Equations with Integer Coefficients",
  *  D.Lankford, J. of Automated Reasoning 5 (1989)" */
 
-import collection.mutable.{ HashSet => MHashSet }
+import at.logic.gapt.algorithms.unification
+
+import scala.collection.mutable.{ HashSet => MHashSet }
 
 trait DiophantineSolver[Data] {
-  def solve( coeff_lhs: Vector, coeff_rhs: Vector ): List[Vector]
+  def solve( coeff_lhs: unification.Vector, coeff_rhs: unification.Vector ): List[unification.Vector]
 }
 
 object LankfordSolver {
@@ -17,20 +19,20 @@ object LankfordSolver {
     solver.solve.toList
   }*/
 
-  def solve( coeff_lhs: Vector, coeff_rhs: Vector ): List[Vector] = {
+  def solve( coeff_lhs: unification.Vector, coeff_rhs: unification.Vector ): List[unification.Vector] = {
     val solver = new LankfordSolverInstance( coeff_lhs, coeff_rhs )
     solver.solve.toList
   }
 }
 
-case class LankfordSolverInstance( val a: Vector, val b: Vector ) {
-  val ab = Vector( a.vector ::: ( b * -1 ).vector )
+case class LankfordSolverInstance( val a: unification.Vector, val b: unification.Vector ) {
+  val ab = unification.Vector( a.vector ::: ( b * -1 ).vector )
   val alength = a.length
   val blength = b.length
   val ablength = alength + blength
 
   /* the norm is defined as theinner product - see p.30 */
-  def norm( v: Vector ) = ab * v
+  def norm( v: unification.Vector ) = ab * v
 
   /* follows the inductive definition on p.31 of the paper:
    * while P_k and N_k are nonempty:
@@ -42,19 +44,19 @@ case class LankfordSolverInstance( val a: Vector, val b: Vector ) {
   def solve = {
     val im = MathHelperFunctions.createIdentityMatrix( ablength )
     val sim = im splitAt alength
-    val a = new MHashSet[Vector]
-    val b = new MHashSet[Vector]
+    val a = new MHashSet[unification.Vector]
+    val b = new MHashSet[unification.Vector]
 
     for ( i <- sim._1 )
-      a += new Vector( i )
+      a += new unification.Vector( i )
     for ( i <- sim._2 )
-      b += new Vector( i )
+      b += new unification.Vector( i )
 
-    val positive: MHashSet[Vector] = new MHashSet[Vector]
-    val negative: MHashSet[Vector] = new MHashSet[Vector]
-    val zero: MHashSet[Vector] = new MHashSet[Vector]
-    var x: MHashSet[Vector] = new MHashSet[Vector]
-    var zero_new: MHashSet[Vector] = null
+    val positive: MHashSet[unification.Vector] = new MHashSet[unification.Vector]
+    val negative: MHashSet[unification.Vector] = new MHashSet[unification.Vector]
+    val zero: MHashSet[unification.Vector] = new MHashSet[unification.Vector]
+    var x: MHashSet[unification.Vector] = new MHashSet[unification.Vector]
+    var zero_new: MHashSet[unification.Vector] = null
     var stage = 1
 
     positive ++= a
@@ -70,7 +72,7 @@ case class LankfordSolverInstance( val a: Vector, val b: Vector ) {
       positive.clear
       negative.clear
 
-      zero_new = new MHashSet[Vector]
+      zero_new = new MHashSet[unification.Vector]
       for ( s <- x ) {
         val ns = norm( s )
         //println("looking at: "+s+" with norm="+ns)
@@ -93,7 +95,7 @@ case class LankfordSolverInstance( val a: Vector, val b: Vector ) {
     zero
   }
 
-  def reduceVector( v: Vector, zero: List[Vector] ) = {
+  def reduceVector( v: unification.Vector, zero: List[unification.Vector] ) = {
     var w = v
     var temp = v.zero
     for ( i <- zero ) {
@@ -112,7 +114,7 @@ case class LankfordSolverInstance( val a: Vector, val b: Vector ) {
      -- corr. typo in the paper: x should be z */
   /* addition: therefore s is irreducible relative to Z_k iff there is no
    * z in Z_k s.t. each coordinate of z is >= to the corresponding coordinate of s*/
-  def z_irreducible( s: Vector, zero: Iterable[Vector] ): Boolean = {
+  def z_irreducible( s: unification.Vector, zero: Iterable[unification.Vector] ): Boolean = {
     var r = true
     for ( z <- zero )
       if ( s >= z )
