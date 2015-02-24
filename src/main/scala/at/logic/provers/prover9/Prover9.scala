@@ -382,21 +382,26 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
   def isInstalled(): Boolean = {
     if ( !isLadrToTptpInstalled() ) {
-      println( "ladr_to_tptp not found!" )
+      warn( "ladr_to_tptp not found!" )
       return false
     }
     if ( !isProver9Installed() ) {
-      println( "prover9 not found!" )
+      warn( "prover9 not found!" )
       return false
     }
     if ( !isProoftransInstalled() ) {
-      println( "prooftrans not found!" )
+      warn( "prooftrans not found!" )
+      return false
+    }
+    if ( !isTptpToLadrInstalled() ) {
+      warn( "tptp_to_ladr not found!" )
       return false
     }
     true
   }
 
   private def isLadrToTptpInstalled(): Boolean = callBinary( "ladr_to_tptp" ) == 1
+  private def isTptpToLadrInstalled(): Boolean = callBinary( "tptp_to_ladr" ) == 0
   private def isProver9Installed(): Boolean = callBinary( "prover9" ) == 2
   private def isProoftransInstalled(): Boolean = callBinary( "prooftrans" ) == 1
 
