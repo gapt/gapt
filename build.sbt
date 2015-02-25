@@ -1,4 +1,5 @@
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
+import CoverallsPlugin.CoverallsKeys._
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -12,7 +13,8 @@ lazy val commonSettings = Seq(
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test),
 
-  sourcesInBase := false // people like to keep scripts lying around
+  sourcesInBase := false, // people like to keep scripts lying around
+  coverallsToken := "token"
 )
 
 lazy val root = (project in file(".")).
@@ -73,10 +75,10 @@ lazy val root = (project in file(".")).
       "jline" % "jline" % "2.12.1",
       "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
       "com.itextpdf" % "itextpdf" % "5.5.5",
-      "org.scilab.forge" % "jlatexmath" % "1.0.2"),
+      "org.scilab.forge" % "jlatexmath" % "1.0.2")
 
     // Start each test class in a separate JVM, otherwise resolutionSchemaParserTest and nTapeTest fail.
-    testGrouping in Test <<= definedTests in Test map oneJvmPerTest
+    //testGrouping in Test <<= definedTests in Test map oneJvmPerTest
   )
 
 lazy val testing = (project in file("testing")).

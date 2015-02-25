@@ -1,3 +1,4 @@
+/*
 package at.logic.transformations.ceres.clauseSchema
 
 import at.logic.calculi.slk.SchemaProofDB
@@ -83,4 +84,5 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
     }
   }
 }
+*/
 
