@@ -12,7 +12,6 @@ import at.logic.gapt.proofs.lk.algorithms._
 import at.logic.gapt.proofs.lksk.algorithms.eliminateDefinitions
 import at.logic.gapt.proofs.shlk.algorithms.{ applySchemaSubstitution2, applySchemaSubstitution }
 import com.itextpdf.awt.PdfGraphics2D
-
 import scala.swing._
 import BorderPanel._
 import swing.Dialog.Message

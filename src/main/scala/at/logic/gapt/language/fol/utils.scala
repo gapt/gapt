@@ -641,7 +641,7 @@ object toAbbreviatedString {
   /**
    * This function takes a FOL construction and converts it to a abbreviated string version. The abbreviated string version is made
    * by replacing the code construction for logic symbols by string versions in the file language/hol/logicSymbols.scala.
-   * Several recursive function calls will be transformed into an abbreviated form (e.g. f(f(f(x))) => f^3(x)).
+   * Several recursive function calls will be transformed into an abbreviated form (e.g. f(f(f(x))) => f^3^(x)).
    * Terms are also handled by the this function.
    *
    * @param  e  The method has no parameters other then the object which is to be written as a string

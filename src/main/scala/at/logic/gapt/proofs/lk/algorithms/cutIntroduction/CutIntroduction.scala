@@ -583,7 +583,6 @@ object CutIntroduction {
           instantiateAll( f, terms ) :: acc
         } else acc
     }
-
     val c1 = FOLAnd( instantiated_f )
 
     g.slist.foldLeft( List( c1 ) ) {

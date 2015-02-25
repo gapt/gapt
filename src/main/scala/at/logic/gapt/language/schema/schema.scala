@@ -546,6 +546,7 @@ object SchemaSubTerms {
     case SchemaFunction( _, args, _ ) => {
       List( f ).toSeq
     }
+
     case SchemaAnd( x, y ) => apply( x.asInstanceOf[SchemaExpression] ) ++ apply( y.asInstanceOf[HOLExpression] )
     case SchemaOr( x, y )  => apply( x.asInstanceOf[SchemaExpression] ) ++ apply( y.asInstanceOf[HOLExpression] )
     case SchemaImp( x, y ) => apply( x.asInstanceOf[SchemaExpression] ) ++ apply( y.asInstanceOf[HOLExpression] )

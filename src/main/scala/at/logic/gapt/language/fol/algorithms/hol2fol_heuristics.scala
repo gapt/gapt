@@ -9,7 +9,7 @@ import at.logic.gapt.utils.logging.Logger
 
 /**
  * This is implements some heuristics to convert a fol formula obtained by
- * [[at.logic.language.fol.algorithms.replaceAbstractions]] and [[at.logic.language.fol.algorithms.reduceHolToFol]] back to its original signature.
+ * [[at.logic.gapt.language.fol.algorithms.replaceAbstractions]] and [[at.logic.gapt.language.fol.algorithms.reduceHolToFol]] back to its original signature.
  * Sometimes, types have to be guessed and the code is poorly tested, so it is unclear
  * how general it is. It works (and is necessary) during the acnf creation of the n-tape proof.
  *
@@ -83,6 +83,7 @@ object undoHol2Fol extends Logger {
           case None =>
             qterm
         }
+
       case HOLFunction( HOLConst( name, _ ), args, _ ) if abssymbol_map.contains( name ) =>
         val qterm_ = recreateWithFactory( abssymbol_map( name ), factory ).asInstanceOf[HOLExpression] //unsafe cast
         val qterm: HOLExpression = freeVariables( qterm_ ).foldRight( qterm_ )( ( v, term ) => HOLAbs( v, term ) )
