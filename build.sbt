@@ -1,5 +1,4 @@
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
-import CoverallsPlugin.CoverallsKeys._
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -13,8 +12,7 @@ lazy val commonSettings = Seq(
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test),
 
-  sourcesInBase := false, // people like to keep scripts lying around
-  coverallsToken := "token"
+  sourcesInBase := false // people like to keep scripts lying around
 )
 
 lazy val root = (project in file(".")).
