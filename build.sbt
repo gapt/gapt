@@ -35,12 +35,12 @@ lazy val root = (project in file(".")).
       Process(List("latexmk", "-pdf", "user_manual.tex"), baseDirectory / "doc") !
 
       val filesToIncludeAsIs = List(
-        "README", "COPYING",
-        "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples",
-        "doc/user_manual.pdf")
+        "COPYING", "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples")
       val entries = List((assemblyJar, s"gapt-$version.jar")) ++
         filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDirectory / fn)}
-          .map{f => (f, baseDirectory.toPath.relativize(f.toPath))}
+          .map{f => (f, baseDirectory.toPath.relativize(f.toPath))} ++
+        List((baseDirectory / "doc/README.dist", "README"),
+             (baseDirectory / "doc/user_manual.pdf", "user_manual.pdf"))
 
       val archiveStem = s"gapt-$version"
 
