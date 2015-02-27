@@ -168,7 +168,7 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       val g = Var("g", Ti)
       val result = try { LambdaSubstitution(f, g); false } catch {
         case ex: IllegalArgumentException => true
-        case _ => false
+        case _: Throwable => false
       }
 
       result must beTrue
@@ -178,7 +178,7 @@ class SubstitutionsTest extends SpecificationWithJUnit {
       val c = Var("c", Ti)
       val result = try { LambdaSubstitution(x, c); false } catch {
         case ex: IllegalArgumentException => true
-        case _ => false
+        case _: Throwable => false
       }
 
       result must beTrue

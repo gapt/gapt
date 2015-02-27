@@ -1,9 +1,9 @@
 package at.logic.gapt.language.fol.algorithms
 
-import at.logic.gapt.language.fol.{ FOLSubstitution => FOLSubstitution, _ }
+import at.logic.gapt.language.fol._
 import at.logic.gapt.language.hol
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.hol.{ HOLAllVar => HOLAllVar, HOLAnd => HOLAnd, HOLAtom => HOLAtom, HOLExVar => HOLExVar, HOLFunction => HOLFunction, HOLImp => HOLImp, HOLNeg => HOLNeg, HOLOr => HOLOr, HOLSubstitution => HOLSubstitution, _ }
+import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.gapt.language.lambda.types.{ FunctionType, TA, Ti, To }
 import at.logic.gapt.language.schema.{ IntZero, IntegerTerm, Succ, foConst, foVar, indexedFOVar }

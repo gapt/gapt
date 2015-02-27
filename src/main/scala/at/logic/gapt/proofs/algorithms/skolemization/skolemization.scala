@@ -229,7 +229,7 @@ object skolemize extends Logger {
                                                                                               inst_map: Map[FormulaOccurrence, List[HOLExpression]],
                                                                                               cut_ancs: Set[FormulaOccurrence] ) = {
     val new_main = if ( cut_ancs.contains( m ) ) m.formula else sk( m.formula, pol, inst_map( m ), symbol_map( m ) )
-    val weak = mainConn( new_main ) match { case Some( ( _, w ) ) => w }
+    val weak = mainConn( new_main ) match { case Some( ( _, w ) ) => w; case None => throw new Exception( "Unexpected None." ) }
     handleUnaryRule( proof, p, a, weak, m, computeAux, constructor, even )
   }
 
@@ -244,7 +244,7 @@ object skolemize extends Logger {
                                                                                               inst_map: Map[FormulaOccurrence, List[HOLExpression]],
                                                                                               cut_ancs: Set[FormulaOccurrence] ) = {
     val new_main = if ( cut_ancs.contains( m ) ) m.formula else sk( m.formula, pol, inst_map( m ), symbol_map( m ) )
-    val weak = mainConn( new_main ) match { case Some( ( w, _ ) ) => w }
+    val weak = mainConn( new_main ) match { case Some( ( w, _ ) ) => w; case None => throw new Exception( "Unexpected None." ) }
     handleUnaryRule( proof, p, a, weak, m, computeAux,
       ( p, fo, f ) => constructor( p, f, fo ), odd )
   }

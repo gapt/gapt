@@ -52,11 +52,13 @@ object proofProfile {
   }
 
   private def transformProfiledCartesianProductToStruct( cp: List[( Struct, Struct )] ): Struct = cp match {
+    case Nil              => throw new Exception( "Pattern matching failed unexpectedly: List is empty." )
     case ( i, j ) :: Nil  => Times( i, j, List[FormulaOccurrence]() )
     case ( i, j ) :: rest => Plus( Times( i, j, List[FormulaOccurrence]() ), transformProfiledCartesianProductToStruct( rest ) )
   }
 
   private def transformNotProfiledCartesianProductToStruct( cp: List[Struct] ): Struct = cp match {
+    case Nil       => throw new Exception( "Pattern matching failed unexpectedly: List is empty." )
     case i :: Nil  => i
     case i :: rest => Plus( i, transformNotProfiledCartesianProductToStruct( rest ) )
   }

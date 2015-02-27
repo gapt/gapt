@@ -567,6 +567,7 @@ object sAtom {
 
   def unapply( s: SchemaExpression ) = s match {
     case SchemaApp( func: SchemaConst, i ) if i.exptype == Tindex => Some( ( func, i ) )
+    case _ => None
   }
 
   def apply( head: SchemaVar, args: List[SchemaExpression] ): SchemaFormula = {

@@ -5,16 +5,13 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.fol.{ FOLNeg => FOLNeg, FOLOr => FOLOr, FOLAnd => FOLAnd, FOLImp => FOLImp, FOLAtom => FOLAtom, FOLAllVar => FOLAllVar, FOLEquation => FOLEquation, instantiateAll }
+import at.logic.gapt.language.fol.{ FOLAnd, FOLImp, FOLAllVar, FOLEquation, instantiateAll }
 import at.logic.gapt.language.fol.{ FOLVar, FOLTerm, FOLFormula }
 import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.utils.logging.Logger
-import org.slf4j.LoggerFactory
 import scala.collection.mutable.ListBuffer
 
 trait MacroRuleLogger extends Logger {
