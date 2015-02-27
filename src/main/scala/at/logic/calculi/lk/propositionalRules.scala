@@ -87,6 +87,15 @@ object Axiom {
 
   def apply( seq: FSequent )( implicit factory: FOFactory ): LeafTree[Sequent] with NullaryLKProof = apply( seq.antecedent, seq.succedent )
 
+  /**
+   * Convenience constructor for creating axioms of the form A |- A.
+   *
+   * @param f The formula on both sides of the sequent.
+   * @param factory
+   * @return
+   */
+  def apply( f: HOLFormula )( implicit factory: FOFactory ): LeafTree[Sequent] with NullaryLKProof = apply( List( f ), List( f ) )
+
   def unapply( proof: LKProof ) = if ( proof.rule == InitialRuleType ) Some( ( proof.root ) ) else None
 }
 
