@@ -5,7 +5,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.lambda.types.To
-import at.logic.gapt.language.fol.{FOLEquation, FOLAnd, FOLOr, FOLNeg, FOLAtom, FOLConst, FOLImp, FOLVar, Substitution}
+import at.logic.gapt.language.fol.{FOLEquation, FOLAnd, FOLOr, FOLNeg, FOLAtom, FOLConst, FOLImp, FOLVar, FOLSubstitution}
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.lk.base.FSequent
@@ -62,7 +62,7 @@ class FixDerivationTest extends SpecificationWithJUnit {
       val q = FOLAtom("q")
       val r = FOLAtom("r")
 
-      val der = Resolution(InitialClause(Nil, q::r::Nil), InitialClause(q::Nil, p::Nil), q, q, Substitution())
+      val der = Resolution(InitialClause(Nil, q::r::Nil), InitialClause(q::Nil, p::Nil), q, q, FOLSubstitution())
       val cq = FSequent(Nil, q::Nil)
       val cqp = FSequent(q::Nil, p::Nil)
 
@@ -79,8 +79,8 @@ class FixDerivationTest extends SpecificationWithJUnit {
       val der = Resolution(InitialClause(Nil, q::r::Nil), 
         Factor(
           InitialClause(q::Nil, p::p::Nil),
-        p, 2, true, Substitution()),
-      q, q, Substitution())
+        p, 2, true, FOLSubstitution()),
+      q, q, FOLSubstitution())
       val cq = FSequent(Nil, q::Nil)
       val cqp = FSequent(q::Nil, p::Nil)
 

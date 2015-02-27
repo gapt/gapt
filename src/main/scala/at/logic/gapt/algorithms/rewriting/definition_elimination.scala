@@ -109,7 +109,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
               //the casting is needed since we cannot make a map covariant
               //val pairs = (definition_args zip args)  filter ((x:(HOLExpression, HOLExpression) ) => x._1.isInstanceOf[HOLVar])
               val pairs = definition_args zip args
-              val sub = Substitution( pairs )
+              val sub = HOLSubstitution( pairs )
               println( "Substitution:" )
               println( sub )
               sub.apply( defined_formula ).asInstanceOf[HOLFormula]

@@ -442,7 +442,7 @@ object regularize {
           {
             val new_var0 = HOLVar( v.name.toString.replaceAll( "_.*$", "" ), v.exptype ) // FIXME: this should use HOLVar.rename
             val new_var = rename( new_var0, blacklist )
-            val new_new_parent = applySubstitution( nparent, Substitution( v, new_var ) )
+            val new_new_parent = applySubstitution( nparent, HOLSubstitution( v, new_var ) )
             val new_map = table.transform( ( k, v ) => new_new_parent._2( v ) ) // compose maps
             ( ExistsLeftRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist :+ new_var, new_map )
           } else {
@@ -457,7 +457,7 @@ object regularize {
           {
             val new_var0 = HOLVar( v.name.toString.replaceAll( "_.*$", "" ), v.exptype ) // FIXME: this should use HOLVar.rename
             val new_var = rename( new_var0, blacklist )
-            val new_new_parent = applySubstitution( nparent, Substitution( v, new_var ) )
+            val new_new_parent = applySubstitution( nparent, HOLSubstitution( v, new_var ) )
             val new_map = table.transform( ( k, v ) => new_new_parent._2( v ) ) // compose maps
             ( ForallRightRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist :+ new_var, new_map )
           } else

@@ -105,7 +105,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       val t = HOLAbs( z, Pz )
       val pft = HOLApp( p, HOLApp( f, t ))
 
-      val sigma = Substitution( x, t )
+      val sigma = HOLSubstitution( x, t )
 
       betaNormalize( sigma( xfx ) ) must beEqualTo( pft )
     }
@@ -121,7 +121,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       val t = HOLAbs( z, Pz )
       val pft = HOLAtom( p, HOLFunction( f, t::Nil )::Nil )
 
-      val sigma = Substitution( x, t )
+      val sigma = HOLSubstitution( x, t )
       val xfx_sigma = betaNormalize( sigma( xfx ) )
 
       xfx_sigma must beEqualTo( pft )
@@ -182,7 +182,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       q_form match {
         case HOLAllVar(x, f) => {
           val a = HOLConst("a", x.exptype)
-          val sub = Substitution( x, a )
+          val sub = HOLSubstitution( x, a )
           val P3 = HOLAtom(HOLVar("P", ->(sCTn.exptype, ->(a.exptype, To))), sCTn::a::Nil)
           val s = sub( f )
           val result = s match {

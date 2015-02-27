@@ -25,7 +25,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
       val fb= HOLApp(f,b)
       val Pafb = HOLApp(Pa,fb)
       val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pax,Pafb)
-      val subst1 = Substitution(x,fb)
+      val subst1 = HOLSubstitution(x,fb)
       subst must beEqualTo (Some(subst1))
     }
 
@@ -42,7 +42,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
       val Pfb = HOLApp(P,fb)
       val Pfbfb = HOLApp(Pfb,fb)
       val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbfb)
-      val subst1 = Substitution(Map((x, fb), (z, fb)))
+      val subst1 = HOLSubstitution(Map((x, fb), (z, fb)))
       subst must beEqualTo (Some(subst1))
     }
 
@@ -58,7 +58,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
       val Pfb = HOLApp(P,fb)
       val Pfbz = HOLApp(Pfb,z)
       val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(Pzx,Pfbz)
-      val subst1 = Substitution( Map((z,fb), (x,z)) )
+      val subst1 = HOLSubstitution( Map((z,fb), (x,z)) )
       subst must beEqualTo (None)         // correct !!!
     }
 
@@ -70,7 +70,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
       val px = HOLFunction(p, x::Nil)
       val at = HOLFunction(lt, a::px::Nil)
       val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(at, at)
-      subst must beEqualTo (Some(Substitution()))
+      subst must beEqualTo (Some(HOLSubstitution()))
     }
 
     "match correctly the HOL expression a < p(x) with another copy of itself" in {
@@ -82,7 +82,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
       val at = HOLFunction(lt, a::px::Nil)
       val at2 = HOLFunction(lt, a::px::Nil) // Is this a copy?
       val subst = NaiveIncompleteMatchingAlgorithm.matchTerm(at, at2)
-      subst must beEqualTo (Some(Substitution()))
+      subst must beEqualTo (Some(HOLSubstitution()))
     }
   }
 }

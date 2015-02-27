@@ -54,7 +54,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       )
     }
 
-    override def convert_substitution(s:Substitution) : Substitution = {
+    override def convert_substitution(s:HOLSubstitution) : HOLSubstitution = {
       val mapping = s.map.toList.map(x =>
         (
           BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[HOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]).asInstanceOf[HOLVar],
@@ -62,7 +62,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           )
       )
 
-      Substitution(mapping)
+      HOLSubstitution(mapping)
     }
   }
 

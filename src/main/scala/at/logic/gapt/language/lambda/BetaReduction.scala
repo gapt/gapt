@@ -46,10 +46,10 @@ object BetaReduction {
       // If it is outermost strategy, we first reduce the current redex by applying sigma,
       // and then we call betaNormalize recursively on the result.
       case StrategyOuterInner.Outermost =>
-        val sigma = Substitution( x, arg )
+        val sigma = LambdaSubstitution( x, arg )
         betaNormalize( sigma( body ) )
       case StrategyOuterInner.Innermost =>
-        val sigma = Substitution( x, betaNormalize( arg ) )
+        val sigma = LambdaSubstitution( x, betaNormalize( arg ) )
         sigma( betaNormalize( body ) )
     }
     case App( m, n ) =>
@@ -68,7 +68,7 @@ object BetaReduction {
     case App( Abs( x, t ), arg ) => strategyOI match {
 
       case StrategyOuterInner.Outermost =>
-        val sigma = Substitution( x, arg )
+        val sigma = LambdaSubstitution( x, arg )
         sigma( t )
 
       case StrategyOuterInner.Innermost => strategyLR match {
@@ -80,7 +80,7 @@ object BetaReduction {
             val bodyr = betaReduce( t )( strategyOI, strategyLR )
             if ( bodyr != t ) App( Abs( x, bodyr ), arg ) // If it succeeds, great!
             else {
-              val sigma = Substitution( x, arg )
+              val sigma = LambdaSubstitution( x, arg )
               sigma( t )
             }
           }
@@ -92,7 +92,7 @@ object BetaReduction {
             val argr = betaReduce( arg )( strategyOI, strategyLR )
             if ( argr != arg ) App( Abs( x, t ), argr )
             else {
-              val sigma = Substitution( x, arg )
+              val sigma = LambdaSubstitution( x, arg )
               sigma( t )
             }
           }

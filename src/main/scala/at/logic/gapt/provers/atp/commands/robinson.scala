@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.language.fol.{ FOLExpression, FOLEquation, FOLFormula, Substitution }
+import at.logic.gapt.language.fol.{ FOLExpression, FOLEquation, FOLFormula, FOLSubstitution }
 import at.logic.gapt.provers.atp.ProverException
 import at.logic.gapt.provers.atp.commands.base.DataCommand
 import at.logic.gapt.provers.atp.commands.sequents.SetSequentsCommand
@@ -55,7 +55,7 @@ case class ResolveCommand( alg: UnificationAlgorithm ) extends DataCommand[Claus
     val ( ( p1, ( lit1, b1 ) ) :: ( p2, ( lit2, b2 ) ) :: Nil ) = data.asInstanceOf[Iterable[Tuple2[RobinsonResolutionProof, Tuple2[FormulaOccurrence, Boolean]]]].toList
     val mgus = alg.unify( lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression] )
     require( mgus.size < 2 ) // as it is first order it must have at most one mgu
-    mgus.map( x => ( state, Resolution( p1, p2, lit1, lit2, x.asInstanceOf[Substitution] ) ) )
+    mgus.map( x => ( state, Resolution( p1, p2, lit1, lit2, x.asInstanceOf[FOLSubstitution] ) ) )
   }
 
   override def toString = "ResolveCommand(" + alg.getClass + ")"
@@ -69,7 +69,7 @@ case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[
     case x :: Nil => List( List( x ), List() )
     case x :: rs  => sb( rs ).flatMap( r => List( x :: r, r ) )
   }
-  private def unify( ls: List[FOLFormula], s: Substitution ): Option[Substitution] = ls match {
+  private def unify( ls: List[FOLFormula], s: FOLSubstitution ): Option[FOLSubstitution] = ls match {
     case x :: y :: rs => unify( y :: rs, s ) match {
       case Some( s2 ) => {
         val mgu = alg.unify( s2( x ), s2( y ) )
@@ -83,7 +83,7 @@ case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[
     on the input of a set of literals (antecedents or succedents) it returns all possible subsets of literals which can be made equal with
     the substitution that makes them equal.
    */
-  def factor( ls: Seq[FormulaOccurrence], s: Substitution ): List[Tuple2[List[FormulaOccurrence], Substitution]] = {
+  def factor( ls: Seq[FormulaOccurrence], s: FOLSubstitution ): List[Tuple2[List[FormulaOccurrence], FOLSubstitution]] = {
     val subs = sb( ls.toList ).filter( _.size > 1 )
     subs.zip( subs.map( sub => unify( sub.map( _.formula.asInstanceOf[FOLFormula] ), s ) ) ).filterNot( _._2 == None ).map( p => ( p._1, p._2.get ) )
   }
@@ -93,14 +93,14 @@ case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[
     // now we get all factors for antecedent and for each use the sub to compute the factors of the succedent
     // we match on the subset of literals fro each side in order to build the right proof.
     // for each suitable subset, we choose one literal to remain after the factorization.
-    val fac1 = ( factor( p._1.root.antecedent, Substitution() ) :+ ( List[FormulaOccurrence](), Substitution() ) )
+    val fac1 = ( factor( p._1.root.antecedent, FOLSubstitution() ) :+ ( List[FormulaOccurrence](), FOLSubstitution() ) )
       .flatMap( v => ( factor( p._1.root.succedent, v._2 ) :+ ( List[FormulaOccurrence](), v._2 ) ).map( u => ( v._1, u._1, u._2 ) ) )
       .flatMap( t => ( t._1, t._2 ) match {
         case ( Nil, t2 ) => for { b <- t2 } yield ( Factor( p._1, b, t2.filterNot( _ == b ), t._3 ) )
         case ( t2, Nil ) => for { b <- t2 } yield ( Factor( p._1, b, t2.filterNot( _ == b ), t._3 ) )
         case _           => for { a <- t._1; b <- t._2 } yield ( Factor( p._1, a, t._1.filterNot( _ == a ), b, t._2.filterNot( _ == b ), t._3 ) )
       } ) :+ p._1
-    val fac2 = ( factor( p._2.root.antecedent, Substitution() ) :+ ( List[FormulaOccurrence](), Substitution() ) )
+    val fac2 = ( factor( p._2.root.antecedent, FOLSubstitution() ) :+ ( List[FormulaOccurrence](), FOLSubstitution() ) )
       .flatMap( v => ( factor( p._2.root.succedent, v._2 ) :+ ( List[FormulaOccurrence](), v._2 ) ).map( u => ( v._1, u._1, u._2 ) ) )
       .flatMap( t => ( t._1, t._2 ) match {
         case ( Nil, t2 ) => for { b <- t2 } yield ( Factor( p._2, b, t2.filterNot( _ == b ), t._3 ) )
@@ -119,20 +119,20 @@ case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[
 case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] {
   def apply( state: State, data: Any ) = {
     val res @ Resolution( cls, pr1, pr2, occ1, occ2, sub ) = data.asInstanceOf[RobinsonResolutionProof]
-    val factors1 = computeFactors( alg, pr1.root.succedent, pr1.root.succedent.filterNot( _ == occ1 ).toList, occ1, Substitution() /*sub.asInstanceOf[Substitution]*/ , Nil )
-    val factors2 = computeFactors( alg, pr2.root.antecedent, pr2.root.antecedent.filterNot( _ == occ2 ).toList, occ2, Substitution() /*sub.asInstanceOf[Substitution]*/ , Nil )
+    val factors1 = computeFactors( alg, pr1.root.succedent, pr1.root.succedent.filterNot( _ == occ1 ).toList, occ1, FOLSubstitution() /*sub.asInstanceOf[Substitution]*/ , Nil )
+    val factors2 = computeFactors( alg, pr2.root.antecedent, pr2.root.antecedent.filterNot( _ == occ2 ).toList, occ2, FOLSubstitution() /*sub.asInstanceOf[Substitution]*/ , Nil )
     ( state, res ) :: ( for {
-      ( ls1, sub1 ) <- ( Nil, Substitution() ) :: factors1
-      ( ls2, sub2 ) <- ( Nil, Substitution() ) :: factors2
+      ( ls1, sub1 ) <- ( Nil, FOLSubstitution() ) :: factors1
+      ( ls2, sub2 ) <- ( Nil, FOLSubstitution() ) :: factors2
       if !( ls1.isEmpty && ls2.isEmpty )
     } yield {
       // we need to get the new occurrences from factor to be used in Resolution
       val ( pr11, occ11 ) = if ( ls1.isEmpty ) ( pr1, occ1 ) else {
-        val factor1 = Factor( pr1, occ1, ls1, sub1.asInstanceOf[Substitution] )
+        val factor1 = Factor( pr1, occ1, ls1, sub1.asInstanceOf[FOLSubstitution] )
         ( factor1, factor1.root.getChildOf( occ1 ).get )
       }
       val ( pr21, occ21 ) = if ( ls2.isEmpty ) ( pr2, occ2 ) else {
-        val factor2 = Factor( pr2, occ2, ls2, sub2.asInstanceOf[Substitution] )
+        val factor2 = Factor( pr2, occ2, ls2, sub2.asInstanceOf[FOLSubstitution] )
         ( factor2, factor2.root.getChildOf( occ2 ).get )
       }
       List( ( pr11, ( occ11, true ) ), ( pr21, ( occ21, false ) ) )
@@ -143,21 +143,21 @@ case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause
   // computes factors, calling recursively to smaller sets
   // it is assumed in each call that the sub from the previous round is already applied to the formulas
   private def computeFactors( alg: UnificationAlgorithm, lits: Seq[FormulaOccurrence], indices: List[FormulaOccurrence], formOcc: FormulaOccurrence,
-                              sub: Substitution, usedOccurrences: List[FormulaOccurrence] ): List[Tuple2[List[FormulaOccurrence], Substitution]] =
+                              sub: FOLSubstitution, usedOccurrences: List[FormulaOccurrence] ): List[Tuple2[List[FormulaOccurrence], FOLSubstitution]] =
     indices match {
       case Nil => Nil
       case x :: Nil =>
         val mgus = alg.unify( sub( x.formula.asInstanceOf[FOLExpression] ), sub( formOcc.formula.asInstanceOf[FOLExpression] ) )
         mgus match {
           case Nil => Nil
-          case List( sub2: Substitution ) => {
-            val subst: Substitution = ( sub2 compose sub )
+          case List( sub2: FOLSubstitution ) => {
+            val subst: FOLSubstitution = ( sub2 compose sub )
             List( ( x :: usedOccurrences, subst ) )
           }
         }
       case x :: ls => {
         val facts = computeFactors( alg, lits, ls, formOcc, sub, usedOccurrences )
-        facts.foldLeft( Nil: List[Tuple2[List[FormulaOccurrence], Substitution]] )( ( ls, a ) => ls
+        facts.foldLeft( Nil: List[Tuple2[List[FormulaOccurrence], FOLSubstitution]] )( ( ls, a ) => ls
           ++ computeFactors( alg, lits, x :: Nil, formOcc, a._2, a._1 ) ) ++ facts ++ computeFactors( alg, lits, x :: Nil, formOcc, sub, usedOccurrences )
       }
     }

@@ -37,12 +37,12 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
     val c3 = FOLEquation(m2a01, am02m12)
 
-    val sub = Substitution(Map((v0,v2), (v1, add01)))
+    val sub = FOLSubstitution(Map((v0,v2), (v1, add01)))
 
     val p1 = InitialClause(Nil, c1::Nil)
     val p2 = Instance(p1,sub )
     val p3 = InitialClause(Nil, c2::Nil)
-    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution())
+    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, FOLSubstitution())
 
   }
   object UNSproofFreshvars {
@@ -68,12 +68,12 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
     val c3 = FOLEquation(m2a01, am02m12)
 
-    val sub = Substitution(Map((v0,v2), (v1, add01)))
+    val sub = FOLSubstitution(Map((v0,v2), (v1, add01)))
 
     val p1 = InitialClause(Nil, c1::Nil)
     val p2 = Instance(p1,sub )
     val p3 = InitialClause(Nil, c2::Nil)
-    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution())
+    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, FOLSubstitution())
 
   }
   object UNSproofVariant {
@@ -99,14 +99,14 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
     val c3 = FOLEquation(m2a01, am02m12)
 
-    val sub1 = Substitution(Map((v0,v0u), (v1, v1u)))
-    val sub2 = Substitution(Map((v0u,v2), (v1u, add01)))
+    val sub1 = FOLSubstitution(Map((v0,v0u), (v1, v1u)))
+    val sub2 = FOLSubstitution(Map((v0u,v2), (v1u, add01)))
 
     val p1 = InitialClause(Nil, c1::Nil)
     val p1_ = Variant(p1,sub1 )
     val p2 = Instance(p1,sub2 )
     val p3 = InitialClause(Nil, c2::Nil)
-    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution())
+    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, FOLSubstitution())
 
   }
 
@@ -129,7 +129,7 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val Px = FOLAtom("P", x::Nil)
 
         val p1 = InitialClause(Pfa :: Px :: Pfy :: List.empty, List.empty)
-        val resProof = Factor(p1, p1.root.negative(1), List(p1.root.negative(0), p1.root.negative(2)), Substitution(new Map2(x, fa, y, a)))
+        val resProof = Factor(p1, p1.root.negative(1), List(p1.root.negative(0), p1.root.negative(2)), FOLSubstitution(new Map2(x, fa, y, a)))
 
         val l1 = Axiom(List(Pfa, Pfa, Pfa), List())
         val l2 = ContractionLeftRule(l1, l1.root.antecedent(1), l1.root.antecedent(0))
@@ -143,7 +143,7 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val Py = FOLAtom("P", y::Nil)
 
         val p1 = InitialClause(List(Px), List.empty)
-        val resProof = Variant(p1, Substitution(new Map1(x, y)))
+        val resProof = Variant(p1, FOLSubstitution(new Map1(x, y)))
 
         val lkProof = Axiom(List(Py), List())
         RobinsonToLK(resProof).toString must beEqualTo(lkProof.toString)
@@ -161,7 +161,7 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
 
         val p1 = InitialClause(List(Px), List(Pfx))
         val p2 = InitialClause(List(Pffa), List(Pfa))
-        val resProof = Resolution(p2, p1, p2.root.positive(0), p1.root.negative(0), Substitution(new Map1(x, fa)))
+        val resProof = Resolution(p2, p1, p2.root.positive(0), p1.root.negative(0), FOLSubstitution(new Map1(x, fa)))
 
         val l1 = Axiom(List(Pfa), List(Pffa))
         val l2 = Axiom(List(Pffa), List(Pfa))
@@ -179,7 +179,7 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
 
         val p1 = InitialClause(List(), List(exb))
         val p2 = InitialClause(List(Pfa), List())
-        val resProof = Paramodulation(p1, p2, p1.root.positive(0), p2.root.negative(0), Pfb, Substitution(new Map1(x, a)))
+        val resProof = Paramodulation(p1, p2, p1.root.positive(0), p2.root.negative(0), Pfb, FOLSubstitution(new Map1(x, a)))
 
         val l1 = Axiom(List(), List(eab))
         val l2 = Axiom(List(Pfa), List())
@@ -197,7 +197,7 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
 
         val p1 = InitialClause(List(), List(ebx))
         val p2 = InitialClause(List(Pfa), List())
-        val resProof = Paramodulation(p1, p2, p1.root.positive(0), p2.root.negative(0), Pfb, Substitution(new Map1(x, a)))
+        val resProof = Paramodulation(p1, p2, p1.root.positive(0), p2.root.negative(0), Pfb, FOLSubstitution(new Map1(x, a)))
 
         val l1 = Axiom(List(), List(eba))
         val l2 = Axiom(List(Pfa), List())
@@ -217,8 +217,8 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val seq = FSequent(List(f1),List(Pa))
         val p1 = InitialClause(List(), List(Px))
         val p2 = InitialClause(List(Pa), List())
-        val v1 = Variant(p1, Substitution(new Map1(x, y)))
-        val resProof = Resolution(v1,p2,v1.root.positive(0), p2.root.negative(0), Substitution(new Map1(y, a)))
+        val v1 = Variant(p1, FOLSubstitution(new Map1(x, y)))
+        val resProof = Resolution(v1,p2,v1.root.positive(0), p2.root.negative(0), FOLSubstitution(new Map1(y, a)))
         RobinsonToLK(resProof, seq).root.toFSequent.toString must beEqualTo(FSequent(List(f1),List(Pa)).toString)
       }
       "transform the original subproof of the UNS example" in {

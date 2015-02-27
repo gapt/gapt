@@ -591,7 +591,7 @@ object CutIntroduction {
         val forms = termset.foldLeft( List[FOLFormula]() ) {
           case ( acc, terms ) =>
             assert( variables.length == terms.length, "Number of eigenvariables different from number of terms in computation of canonical solution" )
-            val subst = Substitution( variables.zip( terms ) )
+            val subst = FOLSubstitution( variables.zip( terms ) )
             subst( ci ) :: acc
         }
         val ci_quant = variables.foldLeft( ci ) { ( f, v ) => FOLAllVar( v, f ) }

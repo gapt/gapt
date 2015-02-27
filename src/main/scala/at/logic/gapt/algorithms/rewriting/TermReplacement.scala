@@ -5,7 +5,7 @@ import at.logic.gapt.language.lambda.{ Abs, App, Var, Const, LambdaExpression }
 import at.logic.gapt.language.hol.{ HOLVar, HOLFormula, HOLExpression }
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.language.fol.{ FOLVar, FOLExpression, FOLFormula, Substitution, FOLTerm }
+import at.logic.gapt.language.fol.{ FOLVar, FOLExpression, FOLFormula, FOLSubstitution, FOLTerm }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.utils.logging.Logger
 import NameReplacement.find_matching
@@ -133,7 +133,7 @@ object RenameResproof extends Logger {
         case Variant( clause, parent1, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, irules, smap, pmap )
           val nsmap: Map[FOLVar, FOLExpression] = sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) )
-          val nsub = Substitution( nsmap )
+          val nsub = FOLSubstitution( nsmap )
           val inference: RobinsonResolutionProof = Variant( rparent1, nsub )
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
@@ -150,7 +150,7 @@ object RenameResproof extends Logger {
 
         case Factor( clause, parent1, aux, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, irules, smap, pmap )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
+          val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
           val inference: RobinsonResolutionProof = aux match {
             case lit1 :: Nil =>
               Factor( rparent1, rmap( lit1.head ), lit1.tail map rmap, nsub )
@@ -173,7 +173,7 @@ object RenameResproof extends Logger {
 
         case Instance( clause, parent1, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, irules, smap, pmap )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
+          val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
           val inference: RobinsonResolutionProof = Instance( rparent1, nsub )
           trace( "sub=" + sub )
           trace( "nsub=" + nsub )
@@ -199,7 +199,7 @@ object RenameResproof extends Logger {
         case Resolution( clause, parent1, parent2, lit1, lit2, sub ) =>
           val ( rpmap1, rmap1, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, irules, smap, pmap )
           val ( rpmap2, rmap2, rparent2 ) = if ( pmap contains parent2 ) add_pmap( pmap, parent2 ) else rename_resproof( parent2, irules, smap, rpmap1 )
-          val nsub = Substitution( sub.folmap map ( x => {
+          val nsub = FOLSubstitution( sub.folmap map ( x => {
             val repl = apply( x._2, smap )
             ( x._1, repl )
           } ) )
@@ -223,7 +223,7 @@ object RenameResproof extends Logger {
           val ( rpmap1, rmap1, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, irules, smap, pmap )
           val ( rpmap2, rmap2, rparent2 ) = if ( pmap contains parent2 ) add_pmap( pmap, parent2 ) else rename_resproof( parent2, irules, smap, rpmap1 )
 
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
+          val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
 
           val Some( prim ) = clause.literals.map( _._1 ).find( occ => occ.parents == List( lit1, lit2 ) || occ.parents == List( lit2, lit1 ) )
           val nformula = apply( prim.formula.asInstanceOf[FOLExpression], smap ).asInstanceOf[FOLFormula]

@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.language.lambda.Substitution
+import at.logic.gapt.language.lambda.LambdaSubstitution
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

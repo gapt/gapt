@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol.{ FOLFormula, Substitution, FOLEquation }
+import at.logic.gapt.language.fol.{ FOLFormula, FOLSubstitution, FOLEquation }
 import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.FClause
@@ -74,7 +74,7 @@ object fixDerivation extends at.logic.gapt.utils.logging.Logger {
       }
       val newe = FOLEquation( right, left )
       val refl = FOLEquation( left, left )
-      val s = Substitution()
+      val s = FOLSubstitution()
 
       if ( pos ) {
         val irefl = InitialClause( Nil, refl :: Nil )
@@ -130,11 +130,11 @@ object fixDerivation extends at.logic.gapt.utils.logging.Logger {
         Factor( from, from_c.succedent.head, 1, true, s )
       val proof = from_s.neg.toSet.foldLeft( first )( ( proof, atom ) => {
         val cnt = from_s.neg.count( _ == atom ) - to.neg.count( _ == atom ) + 1
-        Factor( proof, atom, cnt, false, Substitution() )
+        Factor( proof, atom, cnt, false, FOLSubstitution() )
       } )
       from_s.pos.toSet.foldLeft( proof )( ( proof, atom ) => {
         val cnt = from_s.pos.count( _ == atom ) - to.pos.count( _ == atom ) + 1
-        Factor( proof, atom, cnt, true, Substitution() )
+        Factor( proof, atom, cnt, true, FOLSubstitution() )
       } )
 
     }

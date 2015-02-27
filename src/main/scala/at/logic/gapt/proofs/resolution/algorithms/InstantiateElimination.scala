@@ -12,13 +12,13 @@ import at.logic.gapt.proofs.resolution.robinson.{ Factor, InitialClause, Instanc
  */
 
 object ResolutionSubstitution {
-  type ProofMap = Map[( RobinsonResolutionProof, Substitution ), RobinsonResolutionProof]
-  val emptyProofMap = Map[( RobinsonResolutionProof, Substitution ), RobinsonResolutionProof]()
+  type ProofMap = Map[( RobinsonResolutionProof, FOLSubstitution ), RobinsonResolutionProof]
+  val emptyProofMap = Map[( RobinsonResolutionProof, FOLSubstitution ), RobinsonResolutionProof]()
 
   def extend_pmap( pm: ProofMap, p: RobinsonResolutionProof,
-                   sub: Substitution, value: RobinsonResolutionProof ) = ( p, pm + ( ( ( p, sub ), value ) ) )
+                   sub: FOLSubstitution, value: RobinsonResolutionProof ) = ( p, pm + ( ( ( p, sub ), value ) ) )
 
-  def apply[T]( p: RobinsonResolutionProof, sub: Substitution, pmap: ProofMap ): ( RobinsonResolutionProof, ProofMap ) = {
+  def apply[T]( p: RobinsonResolutionProof, sub: FOLSubstitution, pmap: ProofMap ): ( RobinsonResolutionProof, ProofMap ) = {
     if ( pmap contains ( ( p, sub ) ) )
       ( pmap( p, sub ), pmap )
     else
@@ -31,7 +31,7 @@ object ResolutionSubstitution {
 
         case Factor( clause, p1, List( as ), subst ) =>
           require( subst.isIdentity == true, "we require all substitutions to be in instance rules!" )
-          val ( np1, pmap1 ) = ResolutionSubstitution( p1, sub.asInstanceOf[Substitution], pmap )
+          val ( np1, pmap1 ) = ResolutionSubstitution( p1, sub.asInstanceOf[FOLSubstitution], pmap )
           var ant_or_succ1 = clause.antecedent
           clause.literals.find( _._1 == as.head ) match {
             case Some( ( _, true ) )  => ant_or_succ1 = p1.root.succedent
@@ -44,7 +44,7 @@ object ResolutionSubstitution {
 
         case Factor( clause, p1, List( as, bs ), subst ) =>
           require( subst.isIdentity == true, "we require all substitutions to be in instance rules!" )
-          val ( np1, pmap1 ) = ResolutionSubstitution( p1, sub.asInstanceOf[Substitution], pmap )
+          val ( np1, pmap1 ) = ResolutionSubstitution( p1, sub.asInstanceOf[FOLSubstitution], pmap )
           var ant_or_succ1 = clause.antecedent
           clause.literals.find( _._1 == as.head ) match {
             case Some( ( _, true ) )  => ant_or_succ1 = p1.root.succedent
@@ -64,8 +64,8 @@ object ResolutionSubstitution {
 
         case Resolution( clause, p1, p2, lit1, lit2, subst ) =>
           require( subst.isIdentity == true, "we require all substitutions to be in instance rules!" )
-          val ( np1, pmap1 ) = ResolutionSubstitution( p1, sub.asInstanceOf[Substitution], pmap )
-          val ( np2, pmap2 ) = ResolutionSubstitution( p2, sub.asInstanceOf[Substitution], pmap1 )
+          val ( np1, pmap1 ) = ResolutionSubstitution( p1, sub.asInstanceOf[FOLSubstitution], pmap )
+          val ( np2, pmap2 ) = ResolutionSubstitution( p2, sub.asInstanceOf[FOLSubstitution], pmap1 )
           val nlit1 = find_sublit( np1.root.succedent, lit1, sub )
           val nlit2 = find_sublit( np2.root.antecedent, lit2, sub )
           val np = Resolution( np1, np2, nlit1, nlit2, subst )
@@ -73,8 +73,8 @@ object ResolutionSubstitution {
 
         case Paramodulation( clause, p1, p2, lit1, lit2, _, subst ) =>
           require( subst.isIdentity == true, "we require all substitutions to be in instance rules!" )
-          val ( np1, pmap1 ) = ResolutionSubstitution( p1, sub.asInstanceOf[Substitution], pmap )
-          val ( np2, pmap2 ) = ResolutionSubstitution( p2, sub.asInstanceOf[Substitution], pmap1 )
+          val ( np1, pmap1 ) = ResolutionSubstitution( p1, sub.asInstanceOf[FOLSubstitution], pmap )
+          val ( np2, pmap2 ) = ResolutionSubstitution( p2, sub.asInstanceOf[FOLSubstitution], pmap1 )
           val nlit1 = find_sublit( np1.root.succedent, lit1, sub )
           val nlit2 = find_sublit( np2.root.antecedent, lit2, sub )
           val Some( newlit ) = p2.root.occurrences.find( occ => occ.parents.contains( lit1 ) && occ.parents.contains( lit2 ) )
@@ -84,20 +84,20 @@ object ResolutionSubstitution {
 
   }
 
-  def find_sublit( oldoccs: Seq[FormulaOccurrence], newocc: FormulaOccurrence, sub: Substitution ): FormulaOccurrence = {
+  def find_sublit( oldoccs: Seq[FormulaOccurrence], newocc: FormulaOccurrence, sub: FOLSubstitution ): FormulaOccurrence = {
     oldoccs.find( x => sub( x.formula ) == newocc.formula ) match {
       case Some( result ) => result
       case None           => throw new Exception( "Could not find match for " + newocc + " in " + oldoccs + " with substitution " + sub )
     }
   }
 
-  def substitute_focc( occ: FormulaOccurrence, sub: Substitution ): FormulaOccurrence = {
+  def substitute_focc( occ: FormulaOccurrence, sub: FOLSubstitution ): FormulaOccurrence = {
     val subf = sub( occ.formula ).asInstanceOf[FOLFormula]
     val nanc = occ.parents map ( substitute_focc( _, sub ) )
     occ.factory.createFormulaOccurrence( subf, nanc )
   }
 
-  def substitute_clause( c: Clause, sub: Substitution ): Clause = {
+  def substitute_clause( c: Clause, sub: FOLSubstitution ): Clause = {
     val nlits = c.literals map ( x => ( substitute_focc( x._1, sub ), x._2 ) )
     Clause( nlits )
   }
@@ -131,7 +131,7 @@ object InstantiateElimination {
 
   /* for a given substitution s, create a new substitution t from fresh variables. return a pair (r,t) where r
    * is the renaming from old vars to new vars */
-  def extract_renaming( s: Substitution, forbidden: VarSet ): ( Substitution, Substitution, VarSet ) = {
+  def extract_renaming( s: FOLSubstitution, forbidden: VarSet ): ( FOLSubstitution, FOLSubstitution, VarSet ) = {
     val vars = s.folmap.keys
     val olds = vars.toList
     val news = vars.foldLeft( List[FOLVar]() ) {
@@ -141,8 +141,8 @@ object InstantiateElimination {
     }
 
     val olds_new = olds zip news.asInstanceOf[List[FOLExpression]]
-    val r = Substitution( olds_new )
-    val t = Substitution( s.folmap.map( el => ( r( el._1 ).asInstanceOf[FOLVar], el._2 ) ) )
+    val r = FOLSubstitution( olds_new )
+    val t = FOLSubstitution( s.folmap.map( el => ( r( el._1 ).asInstanceOf[FOLVar], el._2 ) ) )
 
     ( r, t, news.toSet )
   }
@@ -627,7 +627,7 @@ object InstantiateElimination {
     }
   }
 
-  def commonvars( s1: Substitution, s2: Substitution ): Set[FOLVar] = {
+  def commonvars( s1: FOLSubstitution, s2: FOLSubstitution ): Set[FOLVar] = {
     val k1 = s1.folmap.keySet
     val k2 = s2.folmap.keySet
     k1.filter( k2.contains ) //++ k2.filter(k1.contains)

@@ -42,10 +42,10 @@ object containsQuantifier {
 object instantiate {
   def apply( f: FOLFormula, t: FOLTerm ): FOLFormula = f match {
     case FOLAllVar( v, form ) =>
-      val sub = Substitution( v, t )
+      val sub = FOLSubstitution( v, t )
       sub( form )
     case FOLExVar( v, form ) =>
-      val sub = Substitution( v, t )
+      val sub = FOLSubstitution( v, t )
       sub( form )
     case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
   }
@@ -206,7 +206,7 @@ object replaceFreeOccurenceOf {
    */
   def apply( variable: FOLVar, by: FOLVar, formula: FOLFormula ): FOLFormula = {
     formula match {
-      case FOLAtom( _, args ) => Substitution( variable, by ).apply( formula )
+      case FOLAtom( _, args ) => FOLSubstitution( variable, by ).apply( formula )
 
       case FOLNeg( f ) =>
         FOLNeg( replaceFreeOccurenceOf( variable, by, f ) )

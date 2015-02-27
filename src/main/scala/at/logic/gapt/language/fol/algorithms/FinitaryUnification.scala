@@ -1,6 +1,6 @@
 package at.logic.gapt.language.fol.algorithms
 
-import at.logic.gapt.language.fol.{ FOLExpression, Substitution }
+import at.logic.gapt.language.fol.{ FOLExpression, FOLSubstitution }
 
 /**
  * The interface for an unification algorithm of finitary type, i.e.
@@ -13,5 +13,5 @@ trait FinitaryUnification {
    * @param term2 one of the terms to unify. formulas are also allowed, so we accept FOL expressions
    * @return a list of mgus, the empty list means that term1 and term2 are not unifiable.
    */
-  def unify( term1: FOLExpression, term2: FOLExpression ): List[Substitution]
+  def unify( term1: FOLExpression, term2: FOLExpression ): List[FOLSubstitution]
 }

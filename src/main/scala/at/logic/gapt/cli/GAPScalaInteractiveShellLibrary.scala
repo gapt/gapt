@@ -32,12 +32,12 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.algorithms._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.prooftool.Main
-import at.logic.gapt.language.fol.{ FOLAllVar => FOLAllVar, FOLAnd => FOLAnd, FOLAtom => FOLAtom, FOLExVar => FOLExVar, FOLImp => FOLImp, FOLNeg => FOLNeg, FOLOr => FOLOr, Substitution => FOLSubstitution, freeVariables => FOLfreeVariables, _ }
+import at.logic.gapt.language.fol.{ FOLAllVar, FOLAnd, FOLAtom, FOLExVar, FOLImp, FOLNeg, FOLOr, FOLSubstitution, freeVariables => FOLfreeVariables, _ }
 import at.logic.gapt.proofs.hoare.Program
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.hol.{ BetaReduction => HOLBetaReduction, Substitution => HOLSubstitution, containsQuantifier => containsQuantifierHOL, _ }
+import at.logic.gapt.language.hol.{ BetaReduction => HOLBetaReduction, HOLSubstitution, containsQuantifier => containsQuantifierHOL, _ }
 import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.{ LambdaExpression, Var, Substitution => LambdaSubstitution }
+import at.logic.gapt.language.lambda.{ LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
 import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.language.schema.{ SchemaAllVar => SchemaAllVar, SchemaAtom => SchemaAtom, SchemaExVar => SchemaExVar, _ }
 import at.logic.gapt.io.calculi.latex._

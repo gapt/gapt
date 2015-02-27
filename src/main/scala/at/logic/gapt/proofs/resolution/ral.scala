@@ -220,7 +220,7 @@ object ExistsT {
 }
 
 object Sub {
-  def apply[V <: LabelledSequent]( p: RalResolutionProof[V], sub: Substitution ) =
+  def apply[V <: LabelledSequent]( p: RalResolutionProof[V], sub: HOLSubstitution ) =
     new UnaryAGraph[LabelledSequent]( new LabelledSequent(
       p.root.antecedent.map( x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x :: Nil, sub ) ),
       p.root.succedent.map( x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x :: Nil, sub ) ) ),

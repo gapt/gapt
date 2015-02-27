@@ -49,10 +49,10 @@ object rename {
 object instantiate {
   def apply( f: HOLFormula, t: HOLExpression ): HOLFormula = f match {
     case HOLAllVar( v, form ) =>
-      val sub = Substitution( v, t )
+      val sub = HOLSubstitution( v, t )
       sub( form )
     case HOLExVar( v, form ) =>
-      val sub = Substitution( v, t )
+      val sub = HOLSubstitution( v, t )
       sub( form )
     case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
   }
@@ -192,7 +192,7 @@ object normalizeFreeVariables {
    * @param f the formula to be normalized
    * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
    */
-  def apply( f: HOLFormula ): ( HOLFormula, Substitution ) = apply( f.asInstanceOf[HOLExpression] ).asInstanceOf[( HOLFormula, Substitution )]
+  def apply( f: HOLFormula ): ( HOLFormula, HOLSubstitution ) = apply( f.asInstanceOf[HOLExpression] ).asInstanceOf[( HOLFormula, HOLSubstitution )]
 
   /**
    * Systematically renames the free variables by their left-to-right occurence in a HOL Expression f to x_{i} where all
@@ -202,7 +202,7 @@ object normalizeFreeVariables {
    * @param f the expression to be normalized
    * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
    */
-  def apply( f: HOLExpression ): ( HOLExpression, Substitution ) = {
+  def apply( f: HOLExpression ): ( HOLExpression, HOLSubstitution ) = {
     var i = 0
     //generate a blacklist that prevents renaming of bound variables
     val blacklist = getAllPositions2( f ).flatMap( _._2 match {
@@ -231,8 +231,8 @@ object normalizeFreeVariables {
    * @param freshName a function which generates a fresh name every call.
    * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
    */
-  def apply( f: HOLFormula, freshName: () => String ): ( HOLFormula, Substitution ) =
-    apply( f.asInstanceOf[HOLExpression], freshName ).asInstanceOf[( HOLFormula, Substitution )]
+  def apply( f: HOLFormula, freshName: () => String ): ( HOLFormula, HOLSubstitution ) =
+    apply( f.asInstanceOf[HOLExpression], freshName ).asInstanceOf[( HOLFormula, HOLSubstitution )]
 
   /**
    * Works exactly like normalizeFreeVaribles(f:HOLExpression) but allows the specification of your own name generator.
@@ -244,7 +244,7 @@ object normalizeFreeVariables {
    * @param freshName a function which generates a fresh name every call.
    * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
    */
-  def apply( f: HOLExpression, freshName: () => String ): ( HOLExpression, Substitution ) = {
+  def apply( f: HOLExpression, freshName: () => String ): ( HOLExpression, HOLSubstitution ) = {
     val vs = freeVariables( f )
     val map = vs.foldLeft( Map[HOLVar, HOLVar]() )( ( map, v ) => {
       if ( map.contains( v ) ) map else {
@@ -253,7 +253,7 @@ object normalizeFreeVariables {
       }
     } )
 
-    val sub = Substitution( map )
+    val sub = HOLSubstitution( map )
     ( sub( f ), sub )
   }
 }

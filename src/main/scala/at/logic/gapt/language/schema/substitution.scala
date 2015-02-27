@@ -5,7 +5,7 @@
 
 package at.logic.gapt.language.schema
 
-import at.logic.gapt.language.hol.{ Substitution => SubstitutionHOL, HOLExpression, HOLVar }
+import at.logic.gapt.language.hol.{ HOLSubstitution => SubstitutionHOL, HOLExpression, HOLVar }
 
 class Substitution( val schemamap: Map[SchemaVar, SchemaExpression] ) extends SubstitutionHOL( schemamap.asInstanceOf[Map[HOLVar, HOLExpression]] ) {
   def apply( t: SchemaExpression ): SchemaExpression = {

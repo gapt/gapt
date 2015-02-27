@@ -43,8 +43,8 @@ class mapTest extends SpecificationWithJUnit {
     }
 
     "be able to convert a proof with a quantified cut" in {
-      val sub = Substitution(z,a)
-      val sub2 = Substitution(z,u)
+      val sub = HOLSubstitution(z,a)
+      val sub2 = HOLSubstitution(z,u)
       val zdeMorgan = HOLAllVar(u, sub2(deMorgan))
       val zdeMorgan1 = HOLAllVar(u, sub2(deMorgan1))
       val Some(proof) = solve.solvePropositional(FSequent(List(deMorgan), List(deMorgan1)))

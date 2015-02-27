@@ -7,7 +7,7 @@ import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.gapt.language.lambda.types.->
-import at.logic.gapt.language.hol.{ HOLFormula, HOLExpression, HOLVar, subTerms, Substitution }
+import at.logic.gapt.language.hol.{ HOLFormula, HOLExpression, HOLVar, subTerms, HOLSubstitution }
 import at.logic.gapt.language.fol.{ FOLEquation, FOLExpression }
 import at.logic.gapt.provers.atp.commands.base.{ ResultCommand, DataCommand }
 import at.logic.gapt.provers.atp.Definitions._
@@ -120,7 +120,7 @@ object fvarInvariantMSEquality {
     val set2 = ( f2._1 ++ f2._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: HOLVar => true; case _ => false } ).toSet
     if ( set1.size != set2.size ) List[FSequent]() // they cannot be equal
     // create all possible substitutions
-    ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => Substitution( x.asInstanceOf[List[Tuple2[HOLVar, HOLExpression]]] ) ) )
+    ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => HOLSubstitution( x.asInstanceOf[List[Tuple2[HOLVar, HOLExpression]]] ) ) )
       yield ( f1._1.map( s( _ ).asInstanceOf[HOLFormula] ), f1._2.map( s( _ ).asInstanceOf[HOLFormula] ) ) ).toList.exists( cls => {
       neg.diff( cls._1 ).isEmpty && pos.diff( cls._2 ).isEmpty && cls._1.diff( neg ).isEmpty && cls._2.diff( pos ).isEmpty
     } )

@@ -5,7 +5,7 @@
  * scala> val p = LinearExampleProof( 5 )
  **********/
 
-import at.logic.gapt.language.fol.Substitution
+import at.logic.gapt.language.fol.FOLSubstitution
 
 // Functions to construct cut-free FOL LK proofs of the sequents
 //
@@ -739,7 +739,7 @@ class AllQuantifiedConditionalAxiomHelper(variables: List[FOLVar], conditions: L
     var instantiated_conditions = conditions
     var instantiated_consequence = consequence
     for (i <- 0 to variables.length - 1) {
-      val substitute = (x: FOLFormula) => Substitution(variables(i), expressions(i))(x)
+      val substitute = (x: FOLFormula) => FOLSubstitution(variables(i), expressions(i))(x)
       instantiated_conditions = instantiated_conditions.map(substitute)
       instantiated_consequence = substitute(instantiated_consequence)
     }

@@ -15,7 +15,7 @@ import at.logic.gapt.algorithms.diophantine.{LankfordSolver, Vector}
 import at.logic.calculi.lk.base.FSequent
 import at.logic.gapt.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.fol.{Equation => FOLEquation}
+import at.logic.gapt.language.fol.FOLEquation
 import at.logic.gapt.language.lambda.substitutions.Substitution
 
 import collection.immutable.Stream.Cons

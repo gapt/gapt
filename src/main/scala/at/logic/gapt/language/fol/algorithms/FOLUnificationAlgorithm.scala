@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lk.base.FSequent
  */
 object FOLUnificationAlgorithm extends UnificationAlgorithm {
 
-  def unify( seq1: FSequent, seq2: FSequent ): List[Substitution] = {
+  def unify( seq1: FSequent, seq2: FSequent ): List[FOLSubstitution] = {
     require( ( seq1._1 ++ seq1._2 ++ seq2._1 ++ seq2._2 ).forall( _.isInstanceOf[FOLFormula] ) )
 
     val formseq1 = FOLOr( ( seq1._1.map( x => FOLNeg( x.asInstanceOf[FOLFormula] ) ) ++ seq1._2.map( x => x.asInstanceOf[FOLFormula] ) ).toList )
@@ -17,13 +17,13 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
     unify( formseq1, formseq2 )
   }
 
-  def unify( term1: FOLExpression, term2: FOLExpression ): List[Substitution] =
+  def unify( term1: FOLExpression, term2: FOLExpression ): List[FOLSubstitution] =
     unifySetOfTuples( Tuple2( term1.asInstanceOf[FOLExpression], term2.asInstanceOf[FOLExpression] ) :: Nil, Nil ) match {
-      case Some( ( Nil, ls ) ) => List( Substitution( ls.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) ) )
+      case Some( ( Nil, ls ) ) => List( FOLSubstitution( ls.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) ) )
       case _                   => Nil
     }
 
-  def applySubToListOfPairs( l: List[Tuple2[FOLExpression, FOLExpression]], s: Substitution ): List[Tuple2[FOLExpression, FOLExpression]] = {
+  def applySubToListOfPairs( l: List[Tuple2[FOLExpression, FOLExpression]], s: FOLSubstitution ): List[Tuple2[FOLExpression, FOLExpression]] = {
     return l.map( a => ( s.apply( a._1 ), s.apply( a._2 ) ) )
   }
 
@@ -58,12 +58,12 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
       case ( ( ( FOLNeg( f1 ), FOLNeg( f2 ) ) :: s ), s2 ) => unifySetOfTuples( ( f1, f2 ) :: s, s2 )
 
       case ( ( ( x: FOLVar, v ) :: s ), s2 ) if !getVars( v ).contains( x ) => {
-        val sub = Substitution( x, v )
+        val sub = FOLSubstitution( x, v )
         unifySetOfTuples( applySubToListOfPairs( s, sub ), ( x, v ) :: applySubToListOfPairs( s2, sub ) )
       }
 
       case ( ( ( v, x: FOLVar ) :: s ), s2 ) if !getVars( v ).contains( x ) => {
-        val sub = Substitution( x, v )
+        val sub = FOLSubstitution( x, v )
         unifySetOfTuples( applySubToListOfPairs( s, sub ), ( x, v ) :: applySubToListOfPairs( s2, sub ) )
       }
 

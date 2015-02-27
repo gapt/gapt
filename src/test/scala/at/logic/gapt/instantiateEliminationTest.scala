@@ -35,16 +35,16 @@ class instantiateEliminationTest extends SpecificationWithJUnit {
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
     val c3 = FOLEquation(m2a01, am02m12)
 
-    val sub1 = Substitution(Map((v0,v2)))
-    val sub2 = Substitution(Map((v1, add01)))
-    val sub3 = Substitution(Map((v0,a), (v1,b),(v2,c)))
-    val sub4 = Substitution(Map((v0,c), (v1,a),(v2,b)))
+    val sub1 = FOLSubstitution(Map((v0,v2)))
+    val sub2 = FOLSubstitution(Map((v1, add01)))
+    val sub3 = FOLSubstitution(Map((v0,a), (v1,b),(v2,c)))
+    val sub4 = FOLSubstitution(Map((v0,c), (v1,a),(v2,b)))
 
     val p1 = InitialClause(Nil, c1::Nil)
     val p2a = Instance(p1,sub1 )
     val p2 = Instance(p2a,sub2 )
     val p3 = InitialClause(Nil, c2::Nil)
-    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution())
+    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, FOLSubstitution())
     val p5 = Instance(p4, sub3)
     val p6 = InitialClause(c3::Nil, Nil)
     val p7 = Resolution(p5,p6,p5.root.succedent(0), p6.root.antecedent(0), sub3)
@@ -71,12 +71,12 @@ class instantiateEliminationTest extends SpecificationWithJUnit {
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
     val c3 = FOLEquation(m2a01, am02m12)
 
-    val sub1 = Substitution(Map((v0,v2), (v1, add01)))
+    val sub1 = FOLSubstitution(Map((v0,v2), (v1, add01)))
 
     val p1 = InitialClause(Nil, c1::Nil)
     val p2 = Instance(p1,sub1 )
     val p3 = InitialClause(Nil, c2::Nil)
-    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, Substitution())
+    val p4 = Paramodulation(p2, p3, p2.root.succedent(0), p3.root.succedent(0), c3, FOLSubstitution())
   }
 
   "The instance elimination algorithm " should {

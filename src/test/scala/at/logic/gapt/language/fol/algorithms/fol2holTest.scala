@@ -35,7 +35,7 @@ class fol2holTest extends SpecificationWithJUnit {
 
       val fterm = fol.FOLConst("c")
 
-      val fsub = hol.Substitution(fol.FOLVar("y"), fterm)
+      val fsub = hol.HOLSubstitution(fol.FOLVar("y"), fterm)
 
 
       /*TODO: Martin expected this to fail, but it doesn't (app takes the factory of the first parameter, which is fol

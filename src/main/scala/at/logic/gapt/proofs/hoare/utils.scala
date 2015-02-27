@@ -33,7 +33,7 @@ object substVariables {
   def apply( t: FOLFormula, f: FOLVar => FOLExpression ): FOLFormula = makeSubstitution( t, f )( t )
 
   private def makeSubstitution( t: FOLExpression, f: FOLVar => FOLExpression ) =
-    Substitution( freeVariables( t ) map ( ( x: FOLVar ) => x -> f( x ) ) )
+    FOLSubstitution( freeVariables( t ) map ( ( x: FOLVar ) => x -> f( x ) ) )
 }
 
 object LoopFree {
@@ -48,7 +48,7 @@ object LoopFree {
 
 object weakestPrecondition {
   def apply( p: Program, f: FOLFormula ): FOLFormula = p match {
-    case Assign( x, t )    => Substitution( x, t )( f )
+    case Assign( x, t )    => FOLSubstitution( x, t )( f )
     case IfElse( c, a, b ) => FOLAnd( FOLImp( c, weakestPrecondition( a, f ) ), FOLImp( FOLNeg( c ), weakestPrecondition( b, f ) ) )
     case Skip()            => f
     case Sequence( a, b )  => weakestPrecondition( a, weakestPrecondition( b, f ) )

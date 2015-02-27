@@ -46,9 +46,9 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
 
   private def reconstructLanguage(grammar: Grammar): List[FOLTerm] = {
     if (grammar.size > 0) {
-      val substitutions = grammar.slist.foldRight(List[Set[Substitution]]())((stuple, acc) => {
+      val substitutions = grammar.slist.foldRight(List[Set[FOLSubstitution]]())((stuple, acc) => {
         val evs = stuple._1
-        val substitutionSet = stuple._2.map(termVector => Substitution(evs.zip(termVector)))
+        val substitutionSet = stuple._2.map(termVector => FOLSubstitution(evs.zip(termVector)))
         substitutionSet :: acc
       })
       //println("Substitutions: \n" + substitutions)

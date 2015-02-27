@@ -8,21 +8,21 @@ import at.logic.gapt.language.fol._
 
 object FOLMatchingAlgorithm {
 
-  def matchTerm( term1: FOLExpression, term2: FOLExpression, restrictedDomain: List[FOLVar] ): Option[Substitution] =
+  def matchTerm( term1: FOLExpression, term2: FOLExpression, restrictedDomain: List[FOLVar] ): Option[FOLSubstitution] =
     matchSetOfTuples( restrictedDomain, ( term1, term2 ) :: Nil, Nil ) match {
-      case Some( ( Nil, ls ) ) => Some( Substitution( ls.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) ) )
+      case Some( ( Nil, ls ) ) => Some( FOLSubstitution( ls.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) ) )
       case _                   => None
     }
 
-  def restrictSubstitution( delvars: List[FOLVar], sub: Substitution ): Substitution = {
-    Substitution( sub.folmap.filter( pair => !delvars.contains( pair._1 ) ) )
+  def restrictSubstitution( delvars: List[FOLVar], sub: FOLSubstitution ): FOLSubstitution = {
+    FOLSubstitution( sub.folmap.filter( pair => !delvars.contains( pair._1 ) ) )
   }
 
-  def applySubToListOfPairs( l: List[( FOLExpression, FOLExpression )], s: Substitution ): List[( FOLExpression, FOLExpression )] =
+  def applySubToListOfPairs( l: List[( FOLExpression, FOLExpression )], s: FOLSubstitution ): List[( FOLExpression, FOLExpression )] =
     return l.map( a => ( s( a._1 ), s( a._2 ) ) )
 
-  def createSubstFromListOfPairs( l: List[( FOLExpression, FOLExpression )] ): Substitution = {
-    Substitution( l.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) )
+  def createSubstFromListOfPairs( l: List[( FOLExpression, FOLExpression )] ): FOLSubstitution = {
+    FOLSubstitution( l.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) )
   }
 
   def matchSetOfTuples( moduloVarList: List[FOLVar], s1: List[( FOLExpression, FOLExpression )], s2: List[( FOLExpression, FOLExpression )] ): Option[( List[( FOLExpression, FOLExpression )], List[( FOLExpression, FOLExpression )] )] = ( s1, s2 ) match {
@@ -55,8 +55,8 @@ object FOLMatchingAlgorithm {
   def matchSetOfTuples3( moduloVarList: List[FOLVar], s1: List[( FOLExpression, FOLExpression )], s2: List[( FOLExpression, FOLExpression )] ): Option[( List[( FOLExpression, FOLExpression )], List[( FOLExpression, FOLExpression )] )] =
     ( s1, s2 ) match {
       case ( ( ( x: FOLVar, v ) :: s ), s2 ) if !freeVariables( v ).contains( x ) && !moduloVarList.contains( x ) =>
-        val lst1 = applySubToListOfPairs( s, restrictSubstitution( moduloVarList, Substitution( Substitution( x, v ).folmap ) ) )
-        val lst2 = applySubToListOfPairs( s2, restrictSubstitution( moduloVarList, Substitution( Substitution( x, v ).folmap ) ) )
+        val lst1 = applySubToListOfPairs( s, restrictSubstitution( moduloVarList, FOLSubstitution( FOLSubstitution( x, v ).folmap ) ) )
+        val lst2 = applySubToListOfPairs( s2, restrictSubstitution( moduloVarList, FOLSubstitution( FOLSubstitution( x, v ).folmap ) ) )
         matchSetOfTuples( moduloVarList, lst1, ( x, v ) :: lst2 )
 
       case ( ( ( x: FOLVar, v ) :: s ), s2 ) if !freeVariables( v ).contains( x ) && moduloVarList.contains( x ) =>

@@ -30,8 +30,8 @@ class TermReplacementTest extends SpecificationWithJUnit {
   val hc = FOLFunction("h", FOLConst("c0")::Nil)
 
   object proof1 {
-    val s1 = Substitution(Map(x -> a))
-    val s2 = Substitution(Map(x -> fl))
+    val s1 = FOLSubstitution(Map(x -> a))
+    val s2 = FOLSubstitution(Map(x -> fl))
     val p1 = InitialClause(List(c1,c1), List(c3))
     val p2 = InitialClause(Nil, List(c2))
     val p3 = InitialClause(List(c4), Nil)
@@ -41,8 +41,8 @@ class TermReplacementTest extends SpecificationWithJUnit {
   }
 
   object proof2 {
-    val r1 = Substitution(Map(x -> a))
-    val r2 = Substitution(Map(x -> hc))
+    val r1 = FOLSubstitution(Map(x -> a))
+    val r2 = FOLSubstitution(Map(x -> hc))
     val q1 = InitialClause(List(d1,d1), List(d3))
     val q2 = InitialClause(Nil, List(d2))
     val q3 = InitialClause(List(d4), Nil)
@@ -52,10 +52,10 @@ class TermReplacementTest extends SpecificationWithJUnit {
   }
 
   object proof3 {
-    val s1 = Substitution(Map(x -> a))
-    val s2 = Substitution(Map(x -> fl))
+    val s1 = FOLSubstitution(Map(x -> a))
+    val s2 = FOLSubstitution(Map(x -> fl))
     val p0 = InitialClause(List(c1,c2), List(c3))
-    val p1 = Factor(p0, p0.root.negative(1), p0.root.negative(0)::Nil, Substitution())
+    val p1 = Factor(p0, p0.root.negative(1), p0.root.negative(0)::Nil, FOLSubstitution())
     val p2 = InitialClause(Nil, List(c2))
     val p3 = InitialClause(List(c4), Nil)
     val p5 = Resolution(p2, p1, p2.root.positive(0), p1.root.negative(0), s1)
@@ -63,9 +63,9 @@ class TermReplacementTest extends SpecificationWithJUnit {
   }
 
   object proof4 {
-    val r1 = Substitution(Map(x -> a))
-    val r2 = Substitution(Map(x -> hc))
-    val r3 = Substitution()
+    val r1 = FOLSubstitution(Map(x -> a))
+    val r2 = FOLSubstitution(Map(x -> hc))
+    val r3 = FOLSubstitution()
     val q0 = InitialClause(List(d1,d2), List(d3))
     val q1 = Factor(q0, q0.root.negative(0), q0.root.negative(1)::Nil, r2)
     val q2 = InitialClause(Nil, List(d2))

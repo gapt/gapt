@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.language.hol.{ HOLVar, HOLConst, HOLAtom, HOLFunction, HOLAnd, HOLEquation, HOLOr, HOLImp, HOLNeg, HOLExVar, HOLAllVar, HOLExpression, HOLFormula }
-import at.logic.gapt.language.fol.{ FOLVar, FOLConst, FOLAtom => FOLAtom, FOLFunction => FOLFunction, FOLAnd => FOLAnd, FOLEquation => FOLEquation, FOLOr => FOLOr, FOLImp => FOLImp, FOLNeg => FOLNeg, FOLExVar => FOLExVar, FOLAllVar => FOLAllVar, FOLExpression, FOLTerm, FOLFormula, Substitution }
+import at.logic.gapt.language.fol.{ FOLVar, FOLConst, FOLAtom, FOLFunction, FOLAnd, FOLEquation, FOLOr, FOLImp, FOLNeg, FOLExVar, FOLAllVar, FOLExpression, FOLTerm, FOLFormula, FOLSubstitution }
 import at.logic.gapt.language.lambda.symbols.StringSymbol
 
 /**
@@ -160,7 +160,7 @@ object NameReplacement {
 
         case Variant( clause, parent1, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
+          val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
           var inference: RobinsonResolutionProof = Variant( rparent1, nsub )
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
@@ -177,7 +177,7 @@ object NameReplacement {
 
         case Factor( clause, parent1, aux, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
+          val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
           var inference: RobinsonResolutionProof = aux match {
             case lit1 :: Nil =>
               Factor( rparent1, rmap( lit1.head ), lit1.tail map rmap, nsub )
@@ -200,7 +200,7 @@ object NameReplacement {
 
         case Instance( clause, parent1, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
+          val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
           var inference: RobinsonResolutionProof = Instance( rparent1, nsub )
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
@@ -218,7 +218,7 @@ object NameReplacement {
         case Resolution( clause, parent1, parent2, lit1, lit2, sub ) =>
           val ( rpmap1, rmap1, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
           val ( rpmap2, rmap2, rparent2 ) = if ( pmap contains parent2 ) add_pmap( pmap, parent2 ) else rename_resproof( parent2, smap, rpmap1 )
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
+          val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
           val inference = Resolution( rparent1, rparent2, rmap1( lit1 ), rmap2( lit2 ), nsub )
           val rmap = rmap1 ++ rmap2
 
@@ -242,7 +242,7 @@ object NameReplacement {
           val ( rpmap1, rmap1, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, smap, pmap )
           val ( rpmap2, rmap2, rparent2 ) = if ( pmap contains parent2 ) add_pmap( pmap, parent2 ) else rename_resproof( parent2, smap, rpmap1 )
 
-          val nsub = Substitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
+          val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, x._2.renameSymbols( smap ) ) ) )
 
           val Some( prim ) = clause.literals.map( _._1 ).find( occ => occ.parents == List( lit1, lit2 ) || occ.parents == List( lit2, lit1 ) )
           val nformula = prim.formula.asInstanceOf[FOLFormula].renameSymbols( smap )

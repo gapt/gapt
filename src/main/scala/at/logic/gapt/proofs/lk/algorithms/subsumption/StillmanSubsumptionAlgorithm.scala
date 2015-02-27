@@ -7,8 +7,8 @@ package at.logic.gapt.proofs.lk.algorithms.subsumption
 
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.language.hol.{ HOLExpression, Substitution => SubstitutionHOL, HOLNeg => NegHOL, HOLVar, freeVariables => freeVariablesHOL, rename => renameHOL }
-import at.logic.gapt.language.fol.{ FOLFormula, FOLExpression, Substitution => SubstitutionFOL, FOLNeg => NegFOL, FOLVar, freeVariables => freeVariablesFOL, rename => renameFOL }
+import at.logic.gapt.language.hol.{ HOLExpression, HOLSubstitution, HOLNeg, HOLVar, freeVariables => freeVariablesHOL, rename => renameHOL }
+import at.logic.gapt.language.fol.{ FOLFormula, FOLExpression, FOLSubstitution, FOLNeg, FOLVar, freeVariables => freeVariablesFOL, rename => renameFOL }
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.utils.dssupport.ListSupport.remove_doubles
 
@@ -25,9 +25,9 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
    * @param s2 a clause
    * @return if s1 subsumes s2, the substitution necessary. None otherwise.
    */
-  def subsumes_by( s1: FSequent, s2: FSequent ): Option[SubstitutionHOL] = {
-    val left = s1._1.map( x => NegHOL( x ) ) ++ s1._2.map( x => x )
-    val right = s2._1.map( x => NegHOL( x ) ) ++ s2._2.map( x => x )
+  def subsumes_by( s1: FSequent, s2: FSequent ): Option[HOLSubstitution] = {
+    val left = s1._1.map( x => HOLNeg( x ) ) ++ s1._2.map( x => x )
+    val right = s2._1.map( x => HOLNeg( x ) ) ++ s2._2.map( x => x )
     val lv = remove_doubles( left.foldLeft( List[HOLVar]() )( ( l, f ) => freeVariablesHOL( f ) ++ l ) )
     val rv = remove_doubles( right.foldLeft( List[HOLVar]() )( ( l, f ) => freeVariablesHOL( f ) ++ l ) )
     val renames = rv.filter( x => lv.contains( x ) )
@@ -37,16 +37,16 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
       ( v :: pair._1, v :: pair._2 )
     } )
 
-    val sub = SubstitutionHOL( renames zip newnames )
-    val rsub = SubstitutionHOL( newnames zip renames )
+    val sub = HOLSubstitution( renames zip newnames )
+    val rsub = HOLSubstitution( newnames zip renames )
 
-    ST( left, right.map( f => sub( f ) ), SubstitutionHOL(), newnames ++ rv.filter( x => !lv.contains( x ) ) ) match {
+    ST( left, right.map( f => sub( f ) ), HOLSubstitution(), newnames ++ rv.filter( x => !lv.contains( x ) ) ) match {
       case None          => None
-      case Some( subst ) => Some( SubstitutionHOL( subst.holmap.map( x => ( x._1, rsub( x._2 ) ) ) ) )
+      case Some( subst ) => Some( HOLSubstitution( subst.holmap.map( x => ( x._1, rsub( x._2 ) ) ) ) )
     }
   }
 
-  def ST( ls1: Seq[HOLExpression], ls2: Seq[HOLExpression], sub: SubstitutionHOL, restrictedDomain: List[HOLVar] ): Option[SubstitutionHOL] =
+  def ST( ls1: Seq[HOLExpression], ls2: Seq[HOLExpression], sub: HOLSubstitution, restrictedDomain: List[HOLVar] ): Option[HOLSubstitution] =
     ls1 match {
       case Nil => Some( sub ) // first list is exhausted
       case x :: ls =>
@@ -69,9 +69,9 @@ object StillmanSubsumptionAlgorithmFOL extends SubsumptionAlgorithm {
 
   def subsumes( s1: FSequent, s2: FSequent ): Boolean = subsumes_by( s1, s2 ).nonEmpty
 
-  def subsumes_by( s1: FSequent, s2: FSequent ): Option[SubstitutionFOL] = {
-    val left = s1._1.map( x => NegFOL( x.asInstanceOf[FOLFormula] ) ) ++ s1._2.map( x => x.asInstanceOf[FOLFormula] )
-    val right = s2._1.map( x => NegFOL( x.asInstanceOf[FOLFormula] ) ) ++ s2._2.map( x => x.asInstanceOf[FOLFormula] )
+  def subsumes_by( s1: FSequent, s2: FSequent ): Option[FOLSubstitution] = {
+    val left = s1._1.map( x => FOLNeg( x.asInstanceOf[FOLFormula] ) ) ++ s1._2.map( x => x.asInstanceOf[FOLFormula] )
+    val right = s2._1.map( x => FOLNeg( x.asInstanceOf[FOLFormula] ) ) ++ s2._2.map( x => x.asInstanceOf[FOLFormula] )
     val lv = remove_doubles( left.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariablesFOL( f ) ++ l ) )
     val rv = remove_doubles( right.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariablesFOL( f ) ++ l ) )
     val renames = rv.filter( x => lv.contains( x ) )
@@ -80,16 +80,16 @@ object StillmanSubsumptionAlgorithmFOL extends SubsumptionAlgorithm {
       ( v :: pair._1, v :: pair._2 )
     } )
 
-    val sub = SubstitutionFOL( renames zip newnames )
-    val rsub = SubstitutionFOL( newnames zip renames )
+    val sub = FOLSubstitution( renames zip newnames )
+    val rsub = FOLSubstitution( newnames zip renames )
 
-    ST( left, right.map( f => sub( f ) ), SubstitutionFOL(), newnames ++ rv.filter( x => !lv.contains( x ) ) ) match {
+    ST( left, right.map( f => sub( f ) ), FOLSubstitution(), newnames ++ rv.filter( x => !lv.contains( x ) ) ) match {
       case None          => None
-      case Some( subst ) => Some( SubstitutionFOL( subst.folmap.map( x => ( x._1, rsub( x._2 ) ) ) ) )
+      case Some( subst ) => Some( FOLSubstitution( subst.folmap.map( x => ( x._1, rsub( x._2 ) ) ) ) )
     }
   }
 
-  def ST( ls1: Seq[FOLExpression], ls2: Seq[FOLExpression], sub: SubstitutionFOL, restrictedDomain: List[FOLVar] ): Option[SubstitutionFOL] = ls1 match {
+  def ST( ls1: Seq[FOLExpression], ls2: Seq[FOLExpression], sub: FOLSubstitution, restrictedDomain: List[FOLVar] ): Option[FOLSubstitution] = ls1 match {
     case Nil => Some( sub ) // first list is exhausted
     case x :: ls =>
       val sx = sub( x );

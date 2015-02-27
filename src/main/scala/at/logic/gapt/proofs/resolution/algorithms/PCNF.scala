@@ -34,8 +34,8 @@ object PCNF {
 
     // compute CNF and confirm a <- CNF(-s) up to variable renaming
     val cnf = CNFp( form )
-    var sub = Substitution()
-    var subi = Substitution()
+    var sub = HOLSubstitution()
+    var subi = HOLSubstitution()
     val op = cnf.find( y => getVariableRenaming( y, a ) match {
       case Some( s ) => { sub = s; subi = getVariableRenaming( a, y ).get; true }
       case _         => false
@@ -105,7 +105,7 @@ object PCNF {
    * @param a
    * @return
    */
-  private def PCNFn( f: HOLFormula, a: FClause, sub: Substitution ): LKProof = f match {
+  private def PCNFn( f: HOLFormula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
     case HOLAtom( _, _ ) => Axiom( List( f ), List( f ) )
     case HOLNeg( f2 )    => NegRightRule( PCNFp( f2, a, sub ), f2 )
     case HOLAnd( f1, f2 ) => {
@@ -132,7 +132,7 @@ object PCNF {
    * @param a
    * @return
    */
-  private def PCNFp( f: HOLFormula, a: FClause, sub: Substitution ): LKProof = f match {
+  private def PCNFp( f: HOLFormula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
     case HOLAtom( _, _ ) => Axiom( List( f ), List( f ) )
     case HOLNeg( f2 )    => NegLeftRule( PCNFn( f2, a, sub ), f2 )
     case HOLAnd( f1, f2 ) =>
@@ -150,28 +150,28 @@ object PCNF {
     case _                  => throw new IllegalArgumentException( "unknown head of formula: " + a.toString )
   }
 
-  def getVariableRenaming( f1: FClause, f2: FClause ): Option[Substitution] = {
+  def getVariableRenaming( f1: FClause, f2: FClause ): Option[HOLSubstitution] = {
     if ( f1.neg.size != f2.neg.size || f1.pos.size != f2.pos.size ) None
     else {
       val pairs = ( f1.neg.asInstanceOf[Seq[HOLExpression]].zip( f2.neg.asInstanceOf[Seq[HOLExpression]] )
         ++ f1.pos.asInstanceOf[Seq[HOLExpression]].zip( f2.pos.asInstanceOf[Seq[HOLExpression]] ) )
       try {
-        val sub = pairs.foldLeft( Substitution() )( ( sb, p ) => Substitution( sb.holmap ++ computeSub( p ).holmap ) )
+        val sub = pairs.foldLeft( HOLSubstitution() )( ( sb, p ) => HOLSubstitution( sb.holmap ++ computeSub( p ).holmap ) )
         if ( pairs.forall( p => sub( p._1 ) == p._2 ) ) Some( sub ) else None
       } catch {
         case e: Exception => None
       }
     }
   }
-  def computeSub( p: ( HOLExpression, HOLExpression ) ): Substitution = ( p._1, p._2 ) match {
-    case ( HOLVar( a, _ ), HOLVar( b, _ ) ) if a == b => Substitution()
-    case ( v1: HOLVar, v2: HOLVar )                   => Substitution( v1, v2 )
-    case ( c1: HOLConst, c2: HOLConst )               => Substitution()
+  def computeSub( p: ( HOLExpression, HOLExpression ) ): HOLSubstitution = ( p._1, p._2 ) match {
+    case ( HOLVar( a, _ ), HOLVar( b, _ ) ) if a == b => HOLSubstitution()
+    case ( v1: HOLVar, v2: HOLVar )                   => HOLSubstitution( v1, v2 )
+    case ( c1: HOLConst, c2: HOLConst )               => HOLSubstitution()
     case ( HOLApp( a1, b1 ), HOLApp( a2, b2 ) ) =>
       val s1 = computeSub( a1, a2 )
       val s2 = computeSub( b1, b2 )
-      Substitution( s1.holmap ++ s2.holmap )
-    case ( HOLAbs( v1, a1 ), HOLAbs( v2, a2 ) ) => Substitution( computeSub( a1, a2 ).holmap - v1 )
+      HOLSubstitution( s1.holmap ++ s2.holmap )
+    case ( HOLAbs( v1, a1 ), HOLAbs( v2, a2 ) ) => HOLSubstitution( computeSub( a1, a2 ).holmap - v1 )
     case _                                      => throw new Exception()
   }
 
@@ -182,6 +182,6 @@ object PCNF {
   }
 
   // applying sub to a clause
-  def as( a: FClause, sub: Substitution ): FClause = FClause( a.neg.map( f => sub( f ) ), a.pos.map( f => sub( f ) ) )
+  def as( a: FClause, sub: HOLSubstitution ): FClause = FClause( a.neg.map( f => sub( f ) ), a.pos.map( f => sub( f ) ) )
 }
 

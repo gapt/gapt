@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk.{ LabelledSequent, UnaryLKskProof, LabelledFormulaOccurrence }
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.language.hol.{ Substitution => HOLSubstitution, _ }
+import at.logic.gapt.language.hol.{ HOLSubstitution => HOLSubstitution, _ }
 import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.language.lambda.symbols.SymbolA

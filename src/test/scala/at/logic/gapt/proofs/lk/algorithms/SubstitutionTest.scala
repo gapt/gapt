@@ -22,7 +22,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val a = HOLConst("a", Ti)
       val f = HOLConst("f", Ti -> Ti)
       val fa = HOLApp(f, a)
-      val subst = Substitution( x, fa )
+      val subst = HOLSubstitution( x, fa )
     }
 
     object proof2 {
@@ -38,8 +38,8 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val a = HOLConst("a", Ti)
       val f = HOLConst("f", Ti -> Ti)
       val fa = HOLApp(f, a)
-      val subst = Substitution( y, fa )
-      val subst2 = Substitution( y, x ) //test for overbinding
+      val subst = HOLSubstitution( y, fa )
+      val subst2 = HOLSubstitution( y, x ) //test for overbinding
     }
 
     "apply correctly to a simple proof" in {

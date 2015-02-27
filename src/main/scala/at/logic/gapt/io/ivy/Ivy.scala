@@ -92,7 +92,7 @@ object IvyParser extends Logger {
       /* ================== Instance ========================== */
       case LispList( LispAtom( id ) :: LispList( LispAtom( "instantiate" ) :: LispAtom( parent_id ) :: subst_exp :: Nil ) :: clause :: rest ) => {
         val parent_proof = found_steps( parent_id )
-        val sub: Substitution = parse_substitution( subst_exp, is_variable_symbol )
+        val sub: FOLSubstitution = parse_substitution( subst_exp, is_variable_symbol )
         val fclause: FSequent = parse_clause( clause, is_variable_symbol )
 
         def connect( ancestors: Seq[FormulaOccurrence], formulas: Seq[HOLFormula] ): Seq[FormulaOccurrence] =
@@ -437,9 +437,9 @@ object IvyParser extends Logger {
     case _      => throw new Exception( "Error parsing position: unexpected expression " + l )
   }
 
-  def parse_substitution( exp: SExpression, is_variable_symbol: String => Boolean ): Substitution = exp match {
+  def parse_substitution( exp: SExpression, is_variable_symbol: String => Boolean ): FOLSubstitution = exp match {
     case LispList( list ) =>
-      Substitution( parse_substitution_( list, is_variable_symbol ) )
+      FOLSubstitution( parse_substitution_( list, is_variable_symbol ) )
     case _ => throw new Exception( "Error parsing substitution expression " + exp + " (not a list)" )
   }
 

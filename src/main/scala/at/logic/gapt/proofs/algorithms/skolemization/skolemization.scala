@@ -323,7 +323,7 @@ object skolemize extends Logger {
       val sym = HOLConst( sym_stream.head, FunctionType( v.exptype, inst_map( m ).map( _.exptype ) ) )
       //println("skolem symbol: " + sym)
       val skolem_term = HOLFunction( sym, inst_map( m ) )
-      val sub = Substitution( v, skolem_term )
+      val sub = HOLSubstitution( v, skolem_term )
       val sub_proof = applySubstitution( p, sub )
       //println("old es: " + p.root)
       //sub.map map (( x : (Var,HOLExpression) ) => println("sub: " + x._1 + " -> " + x._2.toStringSimple))
@@ -389,7 +389,7 @@ object skolemize extends Logger {
         val sym = HOLConst( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
         val sf = HOLFunction( sym, terms )
 
-        val sub = Substitution( x, sf )
+        val sub = HOLSubstitution( x, sf )
         trace( "substitution: " + sub )
         trace( "before: " + f )
         trace( "after: " + sub( f ) )
@@ -404,7 +404,7 @@ object skolemize extends Logger {
         val sym = HOLConst( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
         val sf = HOLFunction( sym, terms )
 
-        val sub = Substitution( x, sf )
+        val sub = HOLSubstitution( x, sf )
         trace( "substitution: " + sub )
         trace( f.toString )
         trace( sub( f ).toString )

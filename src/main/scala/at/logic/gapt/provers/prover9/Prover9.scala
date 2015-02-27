@@ -461,7 +461,7 @@ class Prover9Prover extends Prover with at.logic.gapt.utils.logging.Logger {
     trace( "grounding map in prover9: " )
     trace( map.toString )
     // FIXME: cast of formula of sequent!
-    val subst = Substitution( map )
+    val subst = FOLSubstitution( map )
     val ret = FSequent( seq.antecedent.map( f => subst( f.asInstanceOf[FOLFormula] ) ),
       seq.succedent.map( f => subst( f.asInstanceOf[FOLFormula] ) ) )
     ( ret, map )

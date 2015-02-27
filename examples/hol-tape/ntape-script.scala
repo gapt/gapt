@@ -55,7 +55,7 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
     )
     }
 
-    override def convert_substitution(s:Substitution) : Substitution = {
+    override def convert_substitution(s:HOLSubstitution) : HOLSubstitution = {
       val mapping = s.map.toList.map(x =>
         (
           BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]).asInstanceOf[HOLVar],
@@ -63,7 +63,7 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
           )
       )
 
-      Substitution(mapping)
+      HOLSubstitution(mapping)
     }
   }
 

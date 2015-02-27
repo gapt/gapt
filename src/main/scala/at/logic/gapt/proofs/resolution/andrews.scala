@@ -438,7 +438,7 @@ object ExistsT {
 }
 
 object Sub {
-  def apply[V <: Sequent]( p: ResolutionProof[V], sub: Substitution ) =
+  def apply[V <: Sequent]( p: ResolutionProof[V], sub: HOLSubstitution ) =
     new UnaryAGraph[Sequent]( Sequent(
       p.root.antecedent.map( x => x.factory.createFormulaOccurrence( betaNormalize( sub( x.formula ) ), x :: Nil ) ),
       p.root.succedent.map( x => x.factory.createFormulaOccurrence( betaNormalize( sub( x.formula ) ), x :: Nil ) ) ),

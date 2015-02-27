@@ -4,7 +4,7 @@ import at.logic.gapt.proofs.proofs.{ BinaryRuleTypeA, UnaryRuleTypeA, NullaryRul
 import at.logic.gapt.proofs.proofs.{ NullaryAGraphProof, UnaryAGraphProof, BinaryAGraphProof, AGraphProof }
 import at.logic.gapt.utils.ds.acyclicGraphs.{ LeafAGraph, UnaryAGraph, BinaryAGraph }
 import at.logic.gapt.io.lisp.SExpression
-import at.logic.gapt.language.fol.Substitution
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.language.fol.{ FOLConst, FOLTerm }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.Clause
@@ -94,7 +94,7 @@ case class InitialClause( id: String,
 
 case class Instantiate( id: String,
                         clause_exp: SExpression,
-                        substitution: Substitution,
+                        substitution: FOLSubstitution,
                         override val vertex: Clause, override val t: IvyResolutionProof )
     extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[Clause] with IvyResolutionProof {
   def rule = InstantiateType

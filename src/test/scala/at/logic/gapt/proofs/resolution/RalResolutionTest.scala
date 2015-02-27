@@ -24,7 +24,7 @@ class RalResolutionTest extends SpecificationWithJUnit{
 
       val i1 = InitialSequent(root, labels)
       val i2 = ForallT(i1, i1.root.l_succedent(0), x)
-      val i3 = Sub(i2, Substitution(x, HOLAnd(p, HOLNeg(p))))
+      val i3 = Sub(i2, HOLSubstitution(x, HOLAnd(p, HOLNeg(p))))
       val i4 = AndT1(i3, i3.root.l_succedent(0))
       val i5 = AndT2(i3, i3.root.l_succedent(0))
       val i6 = NegT(i5, i5.root.l_succedent(0))
@@ -40,7 +40,7 @@ class RalResolutionTest extends SpecificationWithJUnit{
       val px = HOLAtom(HOLConst("P", Ti->To), List(x))
       val pfx = HOLAtom(HOLConst("P", Ti->To), List(fx))
 
-      val sub = Substitution(x, fx)
+      val sub = HOLSubstitution(x, fx)
 
       val root = FSequent(Nil,List(px))
       val labels : (List[Label],List[Label]) = (List[Label](),List[Label](EmptyLabel()))

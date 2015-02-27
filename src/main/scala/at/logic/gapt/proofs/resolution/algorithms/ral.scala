@@ -1,9 +1,9 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
 import at.logic.gapt.language.fol.algorithms.recreateWithFactory
-import at.logic.gapt.language.fol.{ FOLFormula, Substitution => FOLSubstitution }
+import at.logic.gapt.language.fol.{ FOLFormula, FOLSubstitution }
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.{ FactoryA, LambdaExpression, Var, Substitution => LambdaSubstitution }
+import at.logic.gapt.language.lambda.{ FactoryA, LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
@@ -19,13 +19,13 @@ import at.logic.gapt.proofs.resolution.robinson._
 object RobinsonToRal extends RobinsonToRal {
   override def convert_formula( e: HOLFormula ): HOLFormula =
     recreateWithFactory( e, HOLFactory ).asInstanceOf[HOLFormula]
-  override def convert_substitution( s: Substitution ): Substitution = {
-    recreateWithFactory( s, HOLFactory, convert_map ).asInstanceOf[Substitution]
+  override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = {
+    recreateWithFactory( s, HOLFactory, convert_map ).asInstanceOf[HOLSubstitution]
   }
 
   //TODO: this is somehow dirty....
   def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution =
-    Substitution( m.asInstanceOf[Map[HOLVar, HOLExpression]] )
+    HOLSubstitution( m.asInstanceOf[Map[HOLVar, HOLExpression]] )
 }
 
 case class RalException[V <: LabelledSequent]( val message: String, val rp: List[RobinsonResolutionProof], val ralp: List[RalResolutionProof[V]], val exp: List[HOLExpression] ) extends Exception( message );
@@ -38,7 +38,7 @@ abstract class RobinsonToRal {
   def convert_formula( e: HOLFormula ): HOLFormula;
 
   /* convert subsitution will be called on any substitution before translation */
-  def convert_substitution( s: Substitution ): Substitution;
+  def convert_substitution( s: HOLSubstitution ): HOLSubstitution;
 
   def convert_sequent( fs: FSequent ): FSequent = FSequent( fs.antecedent.map( convert_formula ), fs.succedent.map( convert_formula ) )
 

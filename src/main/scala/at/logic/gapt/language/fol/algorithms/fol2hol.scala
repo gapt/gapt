@@ -1,7 +1,7 @@
 package at.logic.gapt.language.fol.algorithms
 
-import at.logic.gapt.language.fol.{ FOLExpression, FOLFormula, Substitution => FOLSubstitution }
-import at.logic.gapt.language.hol.{ Substitution => HOLSubstitution, _ }
+import at.logic.gapt.language.fol.{ FOLExpression, FOLFormula, FOLSubstitution => FOLSubstitution }
+import at.logic.gapt.language.hol.{ HOLSubstitution => HOLSubstitution, _ }
 import at.logic.gapt.language.lambda._
 import at.logic.gapt.proofs.lk.base.FSequent
 
@@ -45,7 +45,7 @@ object recreateWithFactory {
     f.antecedent.map( x => toHOLF( recreateWithFactory( x, factory ) ) ),
     f.succedent.map( x => toHOLF( recreateWithFactory( x, factory ) ) ) )
 
-  def apply[T <: LambdaExpression]( sub: Substitution, factory: FactoryA, substitution_constructor: Map[Var, LambdaExpression] => Substitution ): Substitution =
+  def apply[T <: LambdaExpression]( sub: LambdaSubstitution, factory: FactoryA, substitution_constructor: Map[Var, LambdaExpression] => LambdaSubstitution ): LambdaSubstitution =
     substitution_constructor(
       sub.map.map( x =>
         ( toT[Var]( recreateWithFactory( x._1, factory ) ), toT[T]( recreateWithFactory( x._2, factory ) ) ) ) )

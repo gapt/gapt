@@ -35,7 +35,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val Pc = HOLAtom(P, c::Nil)
 
       val a = Axiom.createDefault(new FSequent( Px::Nil, Px::Nil ), Tuple2( (EmptyLabel() + x)::Nil, (EmptyLabel() + y)::Nil ) )
-      val subst = Substitution(x, c)
+      val subst = HOLSubstitution(x, c)
       val r = applySubstitution(a._1, subst)
       r._1.root.succedent.toList.head must beLike {case o : LabelledFormulaOccurrence => o.skolem_label == (EmptyLabel() + y) && o.formula == Pc must_== true }
       r._1.root.antecedent.toList.head must beLike {case o : LabelledFormulaOccurrence => o.skolem_label == (EmptyLabel() + c) && o.formula == Pc must_== true }
@@ -49,7 +49,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val R = HOLConst("R", Ti -> (Ti -> To))
       val Rgcfgc = HOLAtom(R, gc::fgc::Nil )
       val exyRgcy = HOLExVar(y, HOLAtom(R, gc::y::Nil ) )
-      val subst = Substitution( a, gc ) // a <- g(c)
+      val subst = HOLSubstitution( a, gc ) // a <- g(c)
 
       val p_s = applySubstitution( r2, subst )
       p_s._1.root.antecedent.toList.head must beLike{ case o : LabelledFormulaOccurrence => o.skolem_label == EmptyLabel() && o.formula == allxexy must_== true }

@@ -14,7 +14,7 @@ import at.logic.gapt.language.fol.FOLFunction
 import at.logic.gapt.language.fol.FOLImp
 import at.logic.gapt.language.fol.FOLNeg
 import at.logic.gapt.language.fol.FOLOr
-import at.logic.gapt.language.fol.Substitution
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.language.fol._
 import at.logic.gapt.language.fol.FOLAtom
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.Deltas._
@@ -293,7 +293,7 @@ abstract class TreeGrammarDecomposition( val termset: List[FOLTerm], val n: Int 
     // to generate real rests out of them
     val nonterminals = getNonterminals( k, nonterminal_b ).distinct.sorted
     val evs = nonterminals.map( x => FOLVar( x ) )
-    val subs = decomposition._2.map( x => Substitution( evs.zip( x ) ) )
+    val subs = decomposition._2.map( x => FOLSubstitution( evs.zip( x ) ) )
 
     // get all subsets of charPartitions of size at most n
     // and permute them
@@ -413,7 +413,7 @@ abstract class TreeGrammarDecomposition( val termset: List[FOLTerm], val n: Int 
    */
   def isRest( t: FOLTerm, k: FOLTerm, r: List[FOLTerm] ): Boolean = {
     val evs = getNonterminals( k, nonterminal_a ).sorted.map( x => FOLVar( x ) )
-    val sub = Substitution( evs.zip( r ) )
+    val sub = FOLSubstitution( evs.zip( r ) )
     return t == sub( k )
   }
 

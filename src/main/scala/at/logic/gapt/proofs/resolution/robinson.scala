@@ -28,9 +28,9 @@ package robinson {
   /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
   object createContext {
-    def apply( set: Seq[FormulaOccurrence], sub: Substitution ): Seq[FormulaOccurrence] =
+    def apply( set: Seq[FormulaOccurrence], sub: FOLSubstitution ): Seq[FormulaOccurrence] =
       apply( set, sub, Map[FormulaOccurrence, List[FormulaOccurrence]]() )
-    def apply( set: Seq[FormulaOccurrence], sub: Substitution, additional_context: Map[FormulaOccurrence, Seq[FormulaOccurrence]] ): Seq[FormulaOccurrence] =
+    def apply( set: Seq[FormulaOccurrence], sub: FOLSubstitution, additional_context: Map[FormulaOccurrence, Seq[FormulaOccurrence]] ): Seq[FormulaOccurrence] =
       set.map( x =>
         x.factory.createFormulaOccurrence( sub( x.formula.asInstanceOf[FOLFormula] ).asInstanceOf[HOLFormula],
           x :: additional_context.getOrElse( x, Nil ).toList ) )
@@ -42,7 +42,7 @@ package robinson {
   case object ParamodulationType extends BinaryRuleTypeA
 
   trait RobinsonResolutionProof extends ResolutionProof[Clause] {
-    def getAccumulatedSubstitution: Substitution
+    def getAccumulatedSubstitution: FOLSubstitution
   }
 
   object InitialClause {
@@ -55,7 +55,7 @@ package robinson {
       new LeafAGraph[Clause]( Clause( left, right ) ) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
         def rule = InitialType
         override def name = "initial"
-        def getAccumulatedSubstitution = Substitution()
+        def getAccumulatedSubstitution = FOLSubstitution()
       }
     }
     def apply( literals: Seq[FOLFormula] )( implicit factory: FOFactory ): RobinsonResolutionProof = {
@@ -64,7 +64,7 @@ package robinson {
       new LeafAGraph[Clause]( Clause( lits ) ) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
         def rule = InitialType
         override def name = "initial"
-        def getAccumulatedSubstitution = Substitution()
+        def getAccumulatedSubstitution = FOLSubstitution()
       }
     }
     def unapply( proof: ResolutionProof[Clause] ) = if ( proof.rule == InitialType ) Some( ( proof.root ) ) else None
@@ -74,14 +74,14 @@ package robinson {
   object Resolution {
 
     def apply( p1: RobinsonResolutionProof, p2: RobinsonResolutionProof,
-               a1: FOLFormula, a2: FOLFormula, sub: Substitution ): RobinsonResolutionProof = {
+               a1: FOLFormula, a2: FOLFormula, sub: FOLSubstitution ): RobinsonResolutionProof = {
       val a1occ = p1.root.succedent.find( _.formula == a1 ).get
       val a2occ = p2.root.antecedent.find( _.formula == a2 ).get
       apply( p1, p2, a1occ, a2occ, sub )
     }
 
     def apply( p1: RobinsonResolutionProof, p2: RobinsonResolutionProof,
-               a1: FormulaOccurrence, a2: FormulaOccurrence, sub: Substitution ): RobinsonResolutionProof = {
+               a1: FormulaOccurrence, a2: FormulaOccurrence, sub: FOLSubstitution ): RobinsonResolutionProof = {
       val term1op = p1.root.succedent.find( _ == a1 )
       val term2op = p2.root.antecedent.find( _ == a2 )
 
@@ -109,7 +109,7 @@ package robinson {
     def unapply( proof: ResolutionProof[Clause] with AppliedSubstitution ) = if ( proof.rule == ResolutionType ) {
       val pr = proof.asInstanceOf[BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas]
       Some( ( pr.root, pr.uProof1.asInstanceOf[RobinsonResolutionProof], pr.uProof2.asInstanceOf[RobinsonResolutionProof],
-        pr.aux.head.head, pr.aux.tail.head.head, pr.substitution.asInstanceOf[Substitution] ) )
+        pr.aux.head.head, pr.aux.tail.head.head, pr.substitution.asInstanceOf[FOLSubstitution] ) )
     } else None
     /*
     def apply(p1: ResolutionProof[Clause], p2: ResolutionProof[Clause], a1: FormulaOccurrence, a2: FormulaOccurrence ): ResolutionProof[Clause] = {
@@ -124,14 +124,14 @@ package robinson {
   object Paramodulation extends Logger {
     override def loggerName = "RobinsonLogger"
 
-    def apply( p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: FOLFormula, a2: FOLFormula, newLiteral: FOLFormula, sub: Substitution, pos: Boolean ): RobinsonResolutionProof = {
+    def apply( p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: FOLFormula, a2: FOLFormula, newLiteral: FOLFormula, sub: FOLSubstitution, pos: Boolean ): RobinsonResolutionProof = {
       val a1occ = p1.root.succedent.find( _.formula == a1 ).get
       val list2 = if ( pos ) p2.root.succedent else p2.root.antecedent
       val a2occ = list2.find( _.formula == a2 ).get
       apply( p1, p2, a1occ, a2occ, newLiteral, sub )
     }
 
-    def apply( p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: FormulaOccurrence, a2: FormulaOccurrence, newLiteral: FOLFormula, sub: Substitution ): RobinsonResolutionProof = {
+    def apply( p1: RobinsonResolutionProof, p2: RobinsonResolutionProof, a1: FormulaOccurrence, a2: FormulaOccurrence, newLiteral: FOLFormula, sub: FOLSubstitution ): RobinsonResolutionProof = {
       val term1op = p1.root.succedent.find( _ == a1 )
       val term2opAnt = p2.root.antecedent.find( _ == a2 )
       val term2opSuc = p2.root.succedent.find( _ == a2 )
@@ -204,12 +204,12 @@ package robinson {
       if ( p.aux( 1 ).size != 1 ) throw new Exception( "Unexpected number of auxiliary clauses during Paramodulation matching (aux(1).size != 1)!" )
 
       Some( ( p.root, p.uProof1.asInstanceOf[RobinsonResolutionProof], p.uProof2.asInstanceOf[RobinsonResolutionProof],
-        p.aux( 0 )( 0 ), p.aux( 1 )( 0 ), p.prin( 0 ), p.substitution.asInstanceOf[Substitution] ) )
+        p.aux( 0 )( 0 ), p.aux( 1 )( 0 ), p.prin( 0 ), p.substitution.asInstanceOf[FOLSubstitution] ) )
     } else None
   }
 
   object Variant {
-    def apply( p: RobinsonResolutionProof, sub: Substitution ): RobinsonResolutionProof = {
+    def apply( p: RobinsonResolutionProof, sub: FOLSubstitution ): RobinsonResolutionProof = {
       require( sub.isRenaming )
       val newCl = Clause( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
       new UnaryAGraph[Clause]( newCl, p ) with UnaryResolutionProof[Clause] with AppliedSubstitution with RobinsonResolutionProof {
@@ -227,12 +227,12 @@ package robinson {
       // TODO: should not be necessary to pass argument Ti() here.
       // we return an actual variant only if there are free variables, otherwise we return the parent proof as it does not change
       if ( vars.isEmpty ) p
-      else apply( p, Substitution( rename( vars, vars ) ) )
+      else apply( p, FOLSubstitution( rename( vars, vars ) ) )
     }
 
     def unapply( proof: ResolutionProof[Clause] with AppliedSubstitution ) = if ( proof.rule == VariantType ) {
       val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution]
-      Some( ( pr.root, pr.uProof.asInstanceOf[RobinsonResolutionProof], pr.substitution.asInstanceOf[Substitution] ) )
+      Some( ( pr.root, pr.uProof.asInstanceOf[RobinsonResolutionProof], pr.substitution.asInstanceOf[FOLSubstitution] ) )
     } else None
   }
 
@@ -248,7 +248,7 @@ package robinson {
     /* creates a factorization of a single formula */
     def apply( p: RobinsonResolutionProof,
                a: FormulaOccurrence, occurrencesToRemove: Seq[FormulaOccurrence],
-               sub: Substitution ): RobinsonResolutionProof = {
+               sub: FOLSubstitution ): RobinsonResolutionProof = {
       assert( !occurrencesToRemove.contains( a ) )
       val r = p.root.removeFormulasAtOccurrences( occurrencesToRemove )
       val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() + ( ( a, occurrencesToRemove ) )
@@ -265,7 +265,7 @@ package robinson {
 
     /* factors cnt occurrences of a literal into 1.*/
     def apply( p: RobinsonResolutionProof,
-               a: Formula, cnt: Int, pos: Boolean, sub: Substitution ): RobinsonResolutionProof = {
+               a: Formula, cnt: Int, pos: Boolean, sub: FOLSubstitution ): RobinsonResolutionProof = {
       val list = if ( pos ) p.root.positive else p.root.negative
       val occ = list.find( fo => fo.formula == a ).get
       val occs = list.filter( _ != occ ).foldLeft( List[FormulaOccurrence]() )( ( res, fo ) => if ( res.size < cnt - 1 && fo.formula == a )
@@ -279,7 +279,7 @@ package robinson {
     def apply( p: RobinsonResolutionProof,
                a: FormulaOccurrence, oc1: Seq[FormulaOccurrence],
                b: FormulaOccurrence, oc2: Seq[FormulaOccurrence],
-               sub: Substitution ): RobinsonResolutionProof = {
+               sub: FOLSubstitution ): RobinsonResolutionProof = {
       val r = p.root.removeFormulasAtOccurrences( oc1 ++ oc2 )
       val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() ++ List( ( a, oc1 ), ( b, oc2 ) )
       val newCl = Clause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ) )
@@ -297,7 +297,7 @@ package robinson {
      into 1.*/
     def apply( p: RobinsonResolutionProof,
                a: Formula, a_cnt: Int, b: Formula, b_cnt: Int,
-               sub: Substitution ): RobinsonResolutionProof = {
+               sub: FOLSubstitution ): RobinsonResolutionProof = {
       val a_occ = p.root.negative.find( fo => fo.formula == a ).get
       val b_occ = p.root.positive.find( fo => fo.formula == b ).get
       val oc1 = p.root.negative.foldLeft( List[FormulaOccurrence]() )( ( res, fo ) => if ( res.size < a_cnt - 1 && fo.formula == a )
@@ -316,7 +316,7 @@ package robinson {
      * (i.e. aux.size is either 1 or 2, each contained list has size >=1).  */
     def unapply( proof: ResolutionProof[Clause] with AppliedSubstitution ) = if ( proof.rule == FactorType ) {
       val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas]
-      Some( ( pr.root, pr.uProof.asInstanceOf[RobinsonResolutionProof], pr.aux, pr.substitution.asInstanceOf[Substitution] ) )
+      Some( ( pr.root, pr.uProof.asInstanceOf[RobinsonResolutionProof], pr.aux, pr.substitution.asInstanceOf[FOLSubstitution] ) )
     } else None
   }
 

@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.utils.ds.trees._
 import base._
-import at.logic.gapt.language.lambda.{ rename => renameLambda, freeVariables => freeVariablesLambda, Substitution => SubstitutionLambda, _ }
+import at.logic.gapt.language.lambda.{ rename => renameLambda, freeVariables => freeVariablesLambda, LambdaSubstitution => SubstitutionLambda, _ }
 import at.logic.gapt.utils.logging._
 import org.slf4j.LoggerFactory
 

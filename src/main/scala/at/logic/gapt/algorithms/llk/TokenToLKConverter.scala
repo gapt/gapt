@@ -25,7 +25,7 @@ object LLKFormatter {
       ( fs.succedent.map( HybridLatexExporter.getFormulaString( _, true, false ) ).mkString( ", " ) ) + " "
   }
 
-  def f( s: Substitution ): String = {
+  def f( s: HOLSubstitution ): String = {
     s.holmap.map( x => f( x._1 ) + " -> " + f( x._2 ) ).mkString( "{", ",", "}" )
   }
 
@@ -816,11 +816,11 @@ trait TokenToLKConverter extends Logger {
 
   val axformula = HOLAtom( HOLConst( "AX", To ), Nil )
 
-  def createSubstitution( naming: String => HOLExpression, astlist: List[( ast.Var, LambdaAST )] ): Substitution = {
+  def createSubstitution( naming: String => HOLExpression, astlist: List[( ast.Var, LambdaAST )] ): HOLSubstitution = {
     val terms: List[( HOLVar, HOLExpression )] = astlist.foldLeft( List[( HOLVar, HOLExpression )]() )( ( list, p ) => {
       ( HLKHOLParser.ASTtoHOL( naming, p._1 ).asInstanceOf[HOLVar], HLKHOLParser.ASTtoHOL( naming, p._2 ) ) :: list
     } )
-    Substitution( terms.reverse )
+    HOLSubstitution( terms.reverse )
   }
 
   /* =============== Macro Rules ============================ */
@@ -847,7 +847,7 @@ trait TokenToLKConverter extends Logger {
       val r1 = NaiveIncompleteMatchingAlgorithm.holMatch( ax, auxf )( Nil ) match {
         case Some( sub ) if sub( ax ) syntaxEquals ( auxf ) => ( name, ax1, sub ) :: Nil
         case Some( sub ) =>
-          val sub2 = Substitution( sub.holmap.filter( x => x._1 != x._2 ) )
+          val sub2 = HOLSubstitution( sub.holmap.filter( x => x._1 != x._2 ) )
           if ( sub2( ax ) syntaxEquals ( auxf ) )
             ( name, ax1, sub2 ) :: Nil
           else
@@ -941,7 +941,7 @@ trait TokenToLKConverter extends Logger {
       val r1 = NaiveIncompleteMatchingAlgorithm.holMatch( ax, auxf )( Nil ) match {
         case Some( sub ) if sub( ax ) syntaxEquals ( auxf ) => ( name, ax1, sub ) :: Nil
         case Some( sub2 ) =>
-          val sub = Substitution( sub2.holmap.filterNot( x => x._1 == x._2 ) )
+          val sub = HOLSubstitution( sub2.holmap.filterNot( x => x._1 == x._2 ) )
           if ( sub( ax ) syntaxEquals ( auxf ) ) {
             ( name, ax1, sub ) :: Nil
           } else {
@@ -1176,7 +1176,7 @@ trait TokenToLKConverter extends Logger {
       throw new Exception( "Could not convert " + e + " to a HOL Formula!" )
 
   def getAxiomLookupProof( name: HOLFormula, axiom: HOLFormula, instance: HOLFormula,
-                           axiomconj: HOLFormula, axiomproof: LKProof, sub: Substitution ): ( HOLFormula, LKProof ) = {
+                           axiomconj: HOLFormula, axiomproof: LKProof, sub: HOLSubstitution ): ( HOLFormula, LKProof ) = {
     axiomconj match {
       case x if x syntaxEquals ( name ) =>
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
@@ -1197,16 +1197,16 @@ trait TokenToLKConverter extends Logger {
   }
 
   //TODO:move this code to an appropriate place
-  def proveInstance( axiom: HOLFormula, instance: HOLFormula, sub: Substitution ): LKProof = {
+  def proveInstance( axiom: HOLFormula, instance: HOLFormula, sub: HOLSubstitution ): LKProof = {
     //val (qs,body) = stripUniversalQuantifiers(axiom)
     proveInstance_( axiom, instance, sub, Axiom( List( instance ), List( instance ) ) )._2
   }
 
-  def proveInstanceFrom( axiom: HOLFormula, instance: HOLFormula, sub: Substitution, uproof: LKProof ): LKProof = {
+  def proveInstanceFrom( axiom: HOLFormula, instance: HOLFormula, sub: HOLSubstitution, uproof: LKProof ): LKProof = {
     //val (qs,body) = stripUniversalQuantifiers(axiom)
     proveInstance_( axiom, instance, sub, uproof )._2
   }
-  def proveInstance_( axiom: HOLFormula, instance: HOLFormula, sub: Substitution, axiomproof: LKProof ): ( HOLFormula, LKProof ) = {
+  def proveInstance_( axiom: HOLFormula, instance: HOLFormula, sub: HOLSubstitution, axiomproof: LKProof ): ( HOLFormula, LKProof ) = {
     //    println("Prove instance with sub "+f(sub))
     axiom match {
       case HOLAllVar( v, s ) =>
