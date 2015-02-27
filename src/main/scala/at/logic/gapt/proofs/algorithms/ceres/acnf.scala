@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.schema.{ Substitution => SchemaSubstitution, SchemaExpression, IntVar, fo2Var, foConst, SchemaAbs, SchemaVar, unfoldSFormula, indexedFOVar, Succ, sTerm, IntZero, SchemaFormula, toIntegerTerm }
+import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaExpression, IntVar, fo2Var, foConst, SchemaAbs, SchemaVar, unfoldSFormula, indexedFOVar, Succ, sTerm, IntZero, SchemaFormula, toIntegerTerm }
 import at.logic.gapt.proofs.algorithms.ceres.UnfoldProjectionTerm._
 import at.logic.gapt.proofs.algorithms.ceres._
 import clauseSchema._

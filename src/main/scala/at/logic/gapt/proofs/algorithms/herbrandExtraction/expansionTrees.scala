@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.algorithms.herbrandExtraction
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.language.hol._
-import at.logic.gapt.proofs.expansionTrees.{ ETWeakQuantifier => WQTree, ETStrongQuantifier => SQTree, ETAnd => AndTree, ETOr => OrTree, ETImp => ImpTree, ETNeg => NotTree, ETAtom => AtomTree, MergeNode => MergeNodeTree, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
+import at.logic.gapt.proofs.expansionTrees.{ ETWeakQuantifier, ETStrongQuantifier, ETAnd, ETOr, ETImp, ETNeg, ETAtom, ETMerge, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
 import at.logic.gapt.proofs.occurrences._
 
 object extractExpansionSequent extends extractExpansionSequent
@@ -11,8 +11,8 @@ class extractExpansionSequent {
 
   def apply( proof: LKProof, verbose: Boolean ): ExpansionSequent = {
     val map = extract( proof, verbose )
-    val clean_ant = proof.root.antecedent.filter( f => map( f ) != AtomTree( HOLTopC ) )
-    val clean_suc = proof.root.succedent.filter( f => map( f ) != AtomTree( HOLBottomC ) )
+    val clean_ant = proof.root.antecedent.filter( f => map( f ) != ETAtom( HOLTopC ) )
+    val clean_suc = proof.root.succedent.filter( f => map( f ) != ETAtom( HOLBottomC ) )
     mergeTree( ( clean_ant.map( fo => map( fo ) ), clean_suc.map( fo => map( fo ) ) ) )
   }
 
@@ -46,20 +46,20 @@ class extractExpansionSequent {
           //only print the warning for non reflexivity atoms
           println( "Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: " + r )
         }
-        Map( r.antecedent.map( fo => ( fo, AtomTree( fo.formula ) ) ) ++
-          r.succedent.map( fo => ( fo, AtomTree( fo.formula ) ) ): _* )
+        Map( r.antecedent.map( fo => ( fo, ETAtom( fo.formula ) ) ) ++
+          r.succedent.map( fo => ( fo, ETAtom( fo.formula ) ) ): _* )
       } else {
         throw new IllegalArgumentException( "Error: Axiom sequent in expansion tree extraction contains no atom A on left and right side and contains non-atomic formulas: " + r )
       }
 
       // this behaviour is convenient for development, as it allows to work reasonably with invalid axioms
-      Map( r.antecedent.map( fo => ( fo, AtomTree( fo.formula ) ) ) ++
-        r.succedent.map( fo => ( fo, AtomTree( fo.formula ) ) ): _* )
+      Map( r.antecedent.map( fo => ( fo, ETAtom( fo.formula ) ) ) ++
+        r.succedent.map( fo => ( fo, ETAtom( fo.formula ) ) ): _* )
     } else {
       val axiomFormula = axiomCandidates( 0 )
 
-      Map( r.antecedent.map( fo => ( fo, AtomTree( if ( fo syntaxEquals axiomFormula ) fo.formula else HOLTopC ) ) ) ++
-        r.succedent.map( fo => ( fo, AtomTree( if ( fo syntaxEquals axiomFormula ) fo.formula else HOLBottomC ) ) ): _* )
+      Map( r.antecedent.map( fo => ( fo, ETAtom( if ( fo syntaxEquals axiomFormula ) fo.formula else HOLTopC ) ) ) ++
+        r.succedent.map( fo => ( fo, ETAtom( if ( fo syntaxEquals axiomFormula ) fo.formula else HOLBottomC ) ) ): _* )
     }
   }
 
@@ -69,30 +69,30 @@ class extractExpansionSequent {
 
   def handleUnary( r: Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
-      case WeakeningRightRule( _, _, _ )           => AtomTree( HOLBottomC )
-      case WeakeningLeftRule( _, _, _ )            => AtomTree( HOLTopC )
-      case ForallLeftRule( _, _, a, _, t )         => WQTree( p.formula, List( Tuple2( map( a ), t ) ) )
-      case ExistsRightRule( _, _, a, _, t )        => WQTree( p.formula, List( Tuple2( map( a ), t ) ) )
-      case ForallRightRule( _, _, a, _, v )        => SQTree( p.formula, v, map( a ) )
-      case ExistsLeftRule( _, _, a, _, v )         => SQTree( p.formula, v, map( a ) )
-      case ContractionLeftRule( _, _, a1, a2, _ )  => MergeNodeTree( map( a1 ), map( a2 ) )
-      case ContractionRightRule( _, _, a1, a2, _ ) => MergeNodeTree( map( a1 ), map( a2 ) )
+      case WeakeningRightRule( _, _, _ )           => ETAtom( HOLBottomC )
+      case WeakeningLeftRule( _, _, _ )            => ETAtom( HOLTopC )
+      case ForallLeftRule( _, _, a, _, t )         => ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) )
+      case ExistsRightRule( _, _, a, _, t )        => ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) )
+      case ForallRightRule( _, _, a, _, v )        => ETStrongQuantifier( p.formula, v, map( a ) )
+      case ExistsLeftRule( _, _, a, _, v )         => ETStrongQuantifier( p.formula, v, map( a ) )
+      case ContractionLeftRule( _, _, a1, a2, _ )  => ETMerge( map( a1 ), map( a2 ) )
+      case ContractionRightRule( _, _, a1, a2, _ ) => ETMerge( map( a1 ), map( a2 ) )
       case AndLeft1Rule( _, _, a, _ ) =>
         val HOLAnd( _, f2 ) = p.formula
-        AndTree( map( a ), AtomTree( HOLTopC ) )
+        ETAnd( map( a ), ETAtom( HOLTopC ) )
       case AndLeft2Rule( _, _, a, _ ) =>
         val HOLAnd( f1, _ ) = p.formula
-        AndTree( AtomTree( HOLTopC ), map( a ) )
+        ETAnd( ETAtom( HOLTopC ), map( a ) )
       case OrRight1Rule( _, _, a, _ ) =>
         val HOLOr( _, f2 ) = p.formula
-        OrTree( map( a ), AtomTree( HOLBottomC ) )
+        ETOr( map( a ), ETAtom( HOLBottomC ) )
       case OrRight2Rule( _, _, a, _ ) =>
         val HOLOr( f1, _ ) = p.formula
-        OrTree( AtomTree( HOLBottomC ), map( a ) )
+        ETOr( ETAtom( HOLBottomC ), map( a ) )
       case ImpRightRule( _, _, a1, a2, _ ) =>
-        ImpTree( map( a1 ), map( a2 ) )
-      case NegLeftRule( _, _, a, _ )         => NotTree( map( a ) )
-      case NegRightRule( _, _, a, _ )        => NotTree( map( a ) )
+        ETImp( map( a1 ), map( a2 ) )
+      case NegLeftRule( _, _, a, _ )         => ETNeg( map( a ) )
+      case NegRightRule( _, _, a, _ )        => ETNeg( map( a ) )
       case DefinitionLeftRule( _, _, a, _ )  => map( a )
       case DefinitionRightRule( _, _, a, _ ) => map( a )
     } )
@@ -100,9 +100,9 @@ class extractExpansionSequent {
 
   def handleBinary( r: Sequent, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, p: FormulaOccurrence ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
-      case ImpLeftRule( _, _, _, _, _, _ )           => ImpTree( map( a1 ), map( a2 ) )
-      case OrLeftRule( _, _, _, _, _, _ )            => OrTree( map( a1 ), map( a2 ) )
-      case AndRightRule( _, _, _, _, _, _ )          => AndTree( map( a1 ), map( a2 ) )
+      case ImpLeftRule( _, _, _, _, _, _ )           => ETImp( map( a1 ), map( a2 ) )
+      case OrLeftRule( _, _, _, _, _, _ )            => ETOr( map( a1 ), map( a2 ) )
+      case AndRightRule( _, _, _, _, _, _ )          => ETAnd( map( a1 ), map( a2 ) )
       case EquationLeft1Rule( _, _, _, _, _, _, _ )  => map( a2 )
       case EquationLeft2Rule( _, _, _, _, _, _, _ )  => map( a2 )
       case EquationRight1Rule( _, _, _, _, _, _, _ ) => map( a2 )

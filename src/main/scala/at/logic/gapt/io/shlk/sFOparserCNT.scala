@@ -770,7 +770,7 @@ object RW {
           val from = IndexedPredicate( ipred.name, Succ( k ) )
           val to = map.get( from ).get
           val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Pred( l.head.asInstanceOf[IntegerTerm] ) )
-          val subst = Substitution( new_map ) //this was once a SchemaSubstitutionCNF, the normal substitution could make trouble here
+          val subst = SchemaSubstitution( new_map ) //this was once a SchemaSubstitutionCNF, the normal substitution could make trouble here
           return rewriteGroundFla( subst( to ), map )
         }
       }

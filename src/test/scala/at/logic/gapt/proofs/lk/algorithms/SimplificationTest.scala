@@ -1,7 +1,7 @@
 
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.fol.{FOLConst, FOLVar, FOLAtom => FOLAtom, FOLFunction => FOLFunction}
+import at.logic.gapt.language.fol.{FOLConst, FOLVar,FOLAtom, FOLFunction}
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.proofs.lk.base.FSequent

@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, Formu
 import at.logic.gapt.proofs.shlk.AndEquivalenceRule1._
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.schema.{ Substitution => SchemaSubstitution, _ }
+import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, _ }
 import at.logic.gapt.language.schema.BetaReduction._
 import at.logic.gapt.proofs.shlk.algorithms.printSchemaProof
 

@@ -95,7 +95,7 @@ class ProjectionTermTest extends SpecificationWithJUnit with ClasspathFileCopier
 
       val pterm = ProjectionTermCreators.extract(p1, Set.empty[FormulaOccurrence], getCutAncestors(p1))
       val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), Succ(Succ(IntZero())).asInstanceOf[IntegerTerm])
-      var sub = Substitution(new_map)
+      var sub = SchemaSubstitution(new_map)
       val t = PStructToExpressionTree.applyConsole(pterm)
 
       val ground = GroundingProjectionTerm(pterm, sub)
@@ -127,7 +127,7 @@ class ProjectionTermTest extends SpecificationWithJUnit with ClasspathFileCopier
 
       val pterm = ProjectionTermCreators.extract(p1, Set.empty[FormulaOccurrence], getCutAncestors(p1))
       val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2(IntVar("k"), Succ(Succ(IntZero())).asInstanceOf[IntegerTerm])
-      var sub = Substitution(new_map)
+      var sub = SchemaSubstitution(new_map)
 
       val t = PStructToExpressionTree.applyConsole(pterm)
 

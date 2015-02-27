@@ -20,7 +20,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
       ParseResSchema(s)
       val k = IntVar("k")
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, Succ(IntZero()))
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
 
       val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
@@ -40,7 +40,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
       ParseResSchema(s)
       val k = IntVar("k")
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, Succ(IntZero()))
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
 
       val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
@@ -55,7 +55,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
       ParseResSchema(s)
       val k = IntVar("k")
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, Succ(IntZero()))
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
       val rho1 = resolutionProofSchemaDB.map.get("\\rho1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
 
@@ -75,7 +75,7 @@ class resolutionSchemaParserTest extends SpecificationWithJUnit {
 
       val k = IntVar("k")
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, Succ(IntZero()))
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
       val rho1 = resolutionProofSchemaDB.map.get("\\rho_1").get._2._1
       val rho1step1 = IntVarSubstitution(rho1, subst)
 

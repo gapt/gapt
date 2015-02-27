@@ -11,7 +11,7 @@ import at.logic.gapt.language.fol.Utils.{ removeDoubles, removeDoubles3 }
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.symbols.SymbolA
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.schema.{ Substitution => SchemaSubstitution, SchemaFormula, IntegerTerm, SchemaVar, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
+import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, SchemaVar, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
 import at.logic.gapt.proofs.shlk.algorithms.{ StepMinusOne, printSchemaProof }
 import at.logic.gapt.utils.ds.Multisets
 import at.logic.gapt.utils.ds.Multisets.Multiset

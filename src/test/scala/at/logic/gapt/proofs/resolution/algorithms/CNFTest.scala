@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
 import at.logic.gapt.language.fol.{FOLAnd, FOLAtom, FOLConst, FOLImp, FOLNeg, FOLOr}
-import at.logic.gapt.language.hol.{HOLAtom => HOLAtom}
 import at.logic.gapt.proofs.resolution.FClause
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit

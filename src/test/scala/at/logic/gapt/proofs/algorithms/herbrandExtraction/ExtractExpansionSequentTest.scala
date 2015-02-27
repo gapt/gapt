@@ -6,10 +6,9 @@ import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.algorithms.herbrandExtraction._
-import at.logic.gapt.proofs.expansionTrees.{ETStrongQuantifier => StrongQuantifierET, ETWeakQuantifier => WeakQuantifierET, ETAtom => AtomET, ETImp => ImpET}
+import at.logic.gapt.proofs.expansionTrees.{ETStrongQuantifier, ETWeakQuantifier, ETAtom, ETImp}
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.language.fol.{FOLAtom => FOLAtom, FOLFunction => FOLFunction, FOLConst, FOLVar, Utils}
+import at.logic.gapt.language.fol.{FOLAtom, FOLFunction, FOLConst, FOLVar, Utils}
 
 @RunWith(classOf[JUnitRunner])
 class ExtractExpansionSequentTest extends SpecificationWithJUnit {
@@ -44,24 +43,24 @@ class ExtractExpansionSequentTest extends SpecificationWithJUnit {
       val ass = HOLAllVar(x, HOLImp(FOLAtom(p, x :: Nil), FOLAtom(p, FOLFunction(s, x :: Nil) :: Nil)))
 
       val equal_permut_1 = etSeq.antecedent equals List(
-        AtomET(FOLAtom(p, Utils.numeral(0)::Nil)),
-        WeakQuantifierET( ass, List(
-          (ImpET( AtomET( FOLAtom(p, Utils.numeral(0)::Nil)), AtomET( FOLAtom(p, Utils.numeral(1)::Nil) ) ), Utils.numeral(0)),
-          (ImpET( AtomET( FOLAtom(p, Utils.numeral(1)::Nil)), AtomET( FOLAtom(p, Utils.numeral(2)::Nil) ) ), Utils.numeral(1)))
+        ETAtom(FOLAtom(p, Utils.numeral(0)::Nil)),
+        ETWeakQuantifier( ass, List(
+          (ETImp( ETAtom( FOLAtom(p, Utils.numeral(0)::Nil)), ETAtom( FOLAtom(p, Utils.numeral(1)::Nil) ) ), Utils.numeral(0)),
+          (ETImp( ETAtom( FOLAtom(p, Utils.numeral(1)::Nil)), ETAtom( FOLAtom(p, Utils.numeral(2)::Nil) ) ), Utils.numeral(1)))
         )
       )
 
       val equal_permut_2 = etSeq.antecedent equals List(
-        AtomET(FOLAtom(p, Utils.numeral(0)::Nil)),
-        WeakQuantifierET( ass, List(
-          (ImpET( AtomET( FOLAtom(p, Utils.numeral(1)::Nil)), AtomET( FOLAtom(p, Utils.numeral(2)::Nil) ) ), Utils.numeral(1)),
-          (ImpET( AtomET( FOLAtom(p, Utils.numeral(0)::Nil)), AtomET( FOLAtom(p, Utils.numeral(1)::Nil) ) ), Utils.numeral(0)))
+        ETAtom(FOLAtom(p, Utils.numeral(0)::Nil)),
+        ETWeakQuantifier( ass, List(
+          (ETImp( ETAtom( FOLAtom(p, Utils.numeral(1)::Nil)), ETAtom( FOLAtom(p, Utils.numeral(2)::Nil) ) ), Utils.numeral(1)),
+          (ETImp( ETAtom( FOLAtom(p, Utils.numeral(0)::Nil)), ETAtom( FOLAtom(p, Utils.numeral(1)::Nil) ) ), Utils.numeral(0)))
         )
       )
 
       (equal_permut_1 || equal_permut_2) must beTrue
 
-      etSeq.succedent mustEqual( List( AtomET( FOLAtom(p, Utils.numeral(2)::Nil) ) ) )
+      etSeq.succedent mustEqual( List( ETAtom( FOLAtom(p, Utils.numeral(2)::Nil) ) ) )
     }
 
     "do merge triggering a substitution triggering a merge" in {
@@ -93,14 +92,14 @@ class ExtractExpansionSequentTest extends SpecificationWithJUnit {
 
       val (ante, succ) = extractExpansionSequent( p5, false ).toTuple()
 
-      ante mustEqual( List(StrongQuantifierET( HOLExVar(x, HOLAtom(P, x::Nil)), alpha, AtomET(HOLAtom(P, alpha::Nil)))) )
+      ante mustEqual( List(ETStrongQuantifier( HOLExVar(x, HOLAtom(P, x::Nil)), alpha, ETAtom(HOLAtom(P, alpha::Nil)))) )
       // this assumes that the first variable wins, f(beta) would also be valid
       val f_alpha = HOLFunction(f, alpha::Nil)
-      succ mustEqual( List(WeakQuantifierET(  HOLExVar(y, HOLExVar(z, HOLAtom(Q, y::z::Nil)) ),
+      succ mustEqual( List(ETWeakQuantifier(  HOLExVar(y, HOLExVar(z, HOLAtom(Q, y::z::Nil)) ),
                             List(
-                               (WeakQuantifierET( HOLExVar(z, HOLAtom(Q, f_alpha::z::Nil)),
-                                    List( (AtomET(HOLAtom(Q, f_alpha::c::Nil)), c),
-                                          (AtomET(HOLAtom(Q, f_alpha::d::Nil)), d))),
+                               (ETWeakQuantifier( HOLExVar(z, HOLAtom(Q, f_alpha::z::Nil)),
+                                    List( (ETAtom(HOLAtom(Q, f_alpha::c::Nil)), c),
+                                          (ETAtom(HOLAtom(Q, f_alpha::d::Nil)), d))),
                                f_alpha)
                             )
       )))
@@ -115,8 +114,8 @@ class ExtractExpansionSequentTest extends SpecificationWithJUnit {
       val p4 = ContractionLeftRule(p3, HOLBottomC) // negative polarity, bottom must win
 
       val (ante, succ) = extractExpansionSequent(p4, false).toTuple()
-      ante mustEqual AtomET(HOLBottomC)::Nil
-      succ mustEqual AtomET(HOLTopC)::Nil
+      ante mustEqual ETAtom(HOLBottomC)::Nil
+      succ mustEqual ETAtom(HOLTopC)::Nil
     }
 
     "handle multiple formulas in axiom" in {
@@ -138,8 +137,8 @@ class ExtractExpansionSequentTest extends SpecificationWithJUnit {
 
       val etSeq = extractExpansionSequent(p2, false)
 
-      etSeq.antecedent.count(_.isInstanceOf[WeakQuantifierET]) mustEqual 1
-      etSeq.antecedent.count(_.isInstanceOf[AtomET]) mustEqual 1
+      etSeq.antecedent.count(_.isInstanceOf[ETWeakQuantifier]) mustEqual 1
+      etSeq.antecedent.count(_.isInstanceOf[ETAtom]) mustEqual 1
 
     }
   }

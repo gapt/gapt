@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.language.hol.{ HOLSubstitution => SubstitutionHOL, _ }
-import at.logic.gapt.language.schema.{ BigAnd, BigOr, IntVar, Pred, SchemaExpression, SchemaFormula, SchemaVar, SchemaAnd => AndSchema, SchemaOr => OrSchema, Substitution => SubstitutionSchema }
+import at.logic.gapt.language.schema.{ BigAnd, BigOr, IntVar, Pred, SchemaExpression, SchemaFormula, SchemaVar, SchemaAnd => AndSchema, SchemaOr => OrSchema, SchemaSubstitution => SubstitutionSchema }
 import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._

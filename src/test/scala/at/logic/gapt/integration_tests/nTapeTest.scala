@@ -9,7 +9,6 @@ import at.logic.gapt.language.fol.algorithms.{undoHol2Fol, replaceAbstractions, 
 import at.logic.gapt.proofs.lk.algorithms.{AtomicExpansion, regularize}
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.language.fol.{FOLVar, FOLFormula, FOLExpression}
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.symbols.{StringSymbol, SymbolA}
 import at.logic.gapt.proofs.resolution.algorithms.RobinsonToRal
@@ -23,7 +22,7 @@ import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
 import at.logic.gapt.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
 import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.gapt.utils.testing.ClasspathFileCopier
-import at.logic.gapt.proofs.expansionTrees.{ETAnd => ETAnd, ETImp => ETImp, ETOr => ETOr, ETNeg => ETNEg, ETWeakQuantifier, ETStrongQuantifier, ETSkolemQuantifier, ExpansionTree, toDeep, ExpansionSequent}
+import at.logic.gapt.proofs.expansionTrees.{ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent}
 
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit

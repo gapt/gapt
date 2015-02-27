@@ -14,7 +14,7 @@ import at.logic.gapt.proofs.shlk._
 
 object applySchemaSubstitution {
   def handleSchemaEquivalenceRule( new_parent: LKProof,
-                                   subst: Substitution,
+                                   subst: SchemaSubstitution,
                                    old_parent: LKProof,
                                    old_proof: LKProof,
                                    constructor: ( LKProof, SchemaFormula ) => LKProof with PrincipalFormulas,
@@ -25,7 +25,7 @@ object applySchemaSubstitution {
 
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
   def handleWeakening( new_parent: LKProof,
-                       subst: Substitution,
+                       subst: SchemaSubstitution,
                        old_parent: LKProof,
                        old_proof: LKProof,
                        constructor: ( LKProof, SchemaFormula ) => LKProof with PrincipalFormulas,
@@ -34,7 +34,7 @@ object applySchemaSubstitution {
     new_proof
   }
   def handleContraction( new_parent: LKProof,
-                         subst: Substitution,
+                         subst: SchemaSubstitution,
                          old_parent: LKProof,
                          old_proof: LKProof,
                          a1: FormulaOccurrence,
@@ -45,7 +45,7 @@ object applySchemaSubstitution {
   }
   def handleBinaryProp( new_parent_1: LKProof,
                         new_parent_2: LKProof,
-                        subst: Substitution,
+                        subst: SchemaSubstitution,
                         a1: FormulaOccurrence,
                         a2: FormulaOccurrence,
                         old_parent_1: LKProof,
@@ -56,7 +56,7 @@ object applySchemaSubstitution {
     constructor( new_parent_1, new_parent_2, subst( a1.formula.asInstanceOf[SchemaFormula] ), subst( a2.formula.asInstanceOf[SchemaFormula] ) )
   }
 
-  def handleRule( proof: LKProof, new_parents: List[LKProof], subst: Substitution ): LKProof = {
+  def handleRule( proof: LKProof, new_parents: List[LKProof], subst: SchemaSubstitution ): LKProof = {
     implicit val factory = defaultFormulaOccurrenceFactory
     proof match {
 
@@ -118,12 +118,12 @@ object applySchemaSubstitution {
       RemoveEqRulesFromGroundSchemaProof( SchemaProofDB.get( proof_name ).base )
     else {
       val k = IntVar( "k" )
-      val subst = Substitution( ( k.asInstanceOf[SchemaVar], toIntegerTerm( number - 1 ) ) :: Nil )
+      val subst = SchemaSubstitution( ( k.asInstanceOf[SchemaVar], toIntegerTerm( number - 1 ) ) :: Nil )
       RemoveEqRulesFromGroundSchemaProof( apply( SchemaProofDB.get( proof_name ).rec, subst, number ) )
     }
   }
 
-  def apply( proof: LKProof, subst: Substitution, cnt: Int ): LKProof = {
+  def apply( proof: LKProof, subst: SchemaSubstitution, cnt: Int ): LKProof = {
 
     proof match {
       case SchemaProofLinkRule( seq, link, ind :: _ ) => {
@@ -144,7 +144,7 @@ object applySchemaSubstitution {
             apply( SchemaProofDB.get( link ).rec, subst, cnt )
           } else {
             val new_map = ( subst.schemamap - subst.schemamap.head._1 ) + Tuple2( subst.schemamap.head._1, Pred( new_ind.asInstanceOf[IntegerTerm] ) )
-            val new_subst = Substitution( new_map )
+            val new_subst = SchemaSubstitution( new_map )
             apply( SchemaProofDB.get( link ).rec, new_subst, cnt - 1 )
           }
 
@@ -195,7 +195,7 @@ object checkProofLinks1 {
     case UnarySchemaProof( _, upperProof, _, _, _ ) => checkProofLinks1( upperProof )
     case SchemaProofLinkRule( so, name, indices ) => {
       val ps = SchemaProofDB.get( name )
-      val sub = Substitution( ( ps.vars.head, indices.head ) :: Nil )
+      val sub = SchemaSubstitution( ( ps.vars.head, indices.head ) :: Nil )
       // Apply substitution to the whole sequent
       val sub_ant = ps.seq.antecedent.map( f => sub( f.asInstanceOf[SchemaFormula] ) )
       val sub_suc = ps.seq.succedent.map( f => sub( f.asInstanceOf[SchemaFormula] ) )

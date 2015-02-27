@@ -3,26 +3,18 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
-import at.logic.gapt.algorithms.resolution._
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.expansionTrees.{toDeep => ETtoDeep,toShallow => ETtoShallow}
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.hol.{HOLAnd => AndHOL, HOLImp => ImpHOL, HOLOr => OrHOL}
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.io.calculus.xml.saveXML
-import at.logic.gapt.io.language.tptp.TPTPFOLExporter
 import at.logic.gapt.io.language.xml.XMLParser._
 import at.logic.gapt.io.readers.XMLReaders._
 import at.logic.gapt.io.veriT.VeriTParser
-import at.logic.gapt.proofs.resolution.algorithms.{RobinsonToLK, CNFn}
 import at.logic.gapt.provers.minisat.MiniSATProver
-import at.logic.gapt.provers.prover9.{Prover9, Prover9Prover}
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile._

@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol.{HOLConst, HOLVar, HOLAtom => HOLAtom, HOLFunction => HOLFunction, HOLAnd => HOLAnd, HOLOr => HOLOr, HOLNeg => HOLNeg}
+import at.logic.gapt.language.hol.{HOLConst, HOLVar, HOLAtom, HOLFunction, HOLAnd, HOLOr, HOLNeg}
 import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution._

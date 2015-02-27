@@ -7,7 +7,7 @@ package at.logic.gapt.language.schema
 
 import at.logic.gapt.language.hol.{ HOLSubstitution => SubstitutionHOL, HOLExpression, HOLVar }
 
-class Substitution( val schemamap: Map[SchemaVar, SchemaExpression] ) extends SubstitutionHOL( schemamap.asInstanceOf[Map[HOLVar, HOLExpression]] ) {
+class SchemaSubstitution( val schemamap: Map[SchemaVar, SchemaExpression] ) extends SubstitutionHOL( schemamap.asInstanceOf[Map[HOLVar, HOLExpression]] ) {
   def apply( t: SchemaExpression ): SchemaExpression = {
     val s = SubstitutionHOL( map.asInstanceOf[Map[HOLVar, HOLExpression]] )
     s( t ).asInstanceOf[SchemaExpression]
@@ -17,10 +17,10 @@ class Substitution( val schemamap: Map[SchemaVar, SchemaExpression] ) extends Su
     s( t ).asInstanceOf[SchemaFormula]
   }
 }
-object Substitution {
-  def apply( subs: List[( SchemaVar, SchemaExpression )] ): Substitution = new Substitution( Map() ++ subs )
-  def apply( variable: SchemaVar, expression: SchemaExpression ): Substitution = new Substitution( Map( variable -> expression ) )
-  def apply( map: Map[SchemaVar, SchemaExpression] ): Substitution = new Substitution( map )
-  def apply() = new Substitution( Map() )
+object SchemaSubstitution {
+  def apply( subs: List[( SchemaVar, SchemaExpression )] ): SchemaSubstitution = new SchemaSubstitution( Map() ++ subs )
+  def apply( variable: SchemaVar, expression: SchemaExpression ): SchemaSubstitution = new SchemaSubstitution( Map( variable -> expression ) )
+  def apply( map: Map[SchemaVar, SchemaExpression] ): SchemaSubstitution = new SchemaSubstitution( map )
+  def apply() = new SchemaSubstitution( Map() )
 }
 

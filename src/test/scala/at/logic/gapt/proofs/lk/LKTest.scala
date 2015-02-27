@@ -13,7 +13,7 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.language.hol.logicSymbols._
 import base._
-import at.logic.gapt.language.fol.{FOLAtom => FOLAtom, FOLAllVar => FOLAllVar, FOLExVar => FOLExVar, FOLFormula, FOLConst, FOLVar}
+import at.logic.gapt.language.fol.{FOLAtom, FOLAllVar, FOLExVar, FOLFormula, FOLConst, FOLVar}
 
 /**
 * The following properties of each rule are tested:

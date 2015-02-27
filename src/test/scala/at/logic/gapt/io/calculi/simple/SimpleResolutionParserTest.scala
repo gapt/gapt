@@ -12,10 +12,9 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.fol.{FOLVar, FOLConst, FOLAtom => FOLAtom, FOLFunction => FOLFunction}
+import at.logic.gapt.language.fol.{FOLVar, FOLConst, FOLAtom, FOLFunction}
 import at.logic.gapt.io.readers.StringReader
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.language.lambda.symbols.StringSymbol
 import at.logic.gapt.language.lambda.types._
 

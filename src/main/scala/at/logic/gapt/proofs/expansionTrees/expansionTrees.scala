@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.language.hol.{ HOLAtom => AtomHOL, HOLAnd => AndHOL, HOLOr => OrHOL, HOLImp => ImpHOL, HOLNeg => NegHOL, HOLAllVar => AllVarHOL, HOLExVar => ExVarHOL, _ }
+import at.logic.gapt.language.hol._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.proofs.lk.base._
@@ -23,7 +23,7 @@ trait ExpansionTreeWithMerges extends TreeA[Option[HOLFormula], Option[HOLExpres
     case ETWeakQuantifier( formula, children ) => "WeakQuantifier(" + formula + ", " + children + ")"
     case ETStrongQuantifier( formula, variable, selection ) => "StrongQuantifier(" + formula + ", " + variable + ", " + selection + ")"
     case ETSkolemQuantifier( formula, sk, selection ) => "SkolemQuantifier(" + formula + ", " + sk + ", " + selection + ")"
-    case MergeNode( left, right ) => "MergeNode(" + left + ", " + right + ")"
+    case ETMerge( left, right ) => "MergeNode(" + left + ", " + right + ")"
     case _ => throw new Exception( "Unhandled case in ExpansionTreeWithMerges.toString" )
   }
 
@@ -50,7 +50,7 @@ trait ExpansionTreeWithMerges extends TreeA[Option[HOLFormula], Option[HOLExpres
         val nvisited1 = child1.size( visited )
         val nvisited2 = child2.size( nvisited1 )
         nvisited2 + ( ( this, nvisited2( child1 ) + nvisited2( child2 ) + 1 ) )
-      case MergeNode( child1, child2 ) =>
+      case ETMerge( child1, child2 ) =>
         val nvisited1 = child1.size( visited )
         val nvisited2 = child2.size( nvisited1 )
         nvisited2 + ( ( this, nvisited2( child1 ) + nvisited2( child2 ) + 1 ) )
@@ -200,7 +200,7 @@ object ETSkolemQuantifier {
   }
 }
 
-case class MergeNode( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
+case class ETMerge( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 }
@@ -375,15 +375,15 @@ object ExpansionSequent {
 object toDeep {
   def apply( tree: ExpansionTreeWithMerges, pol: Int = 1 ): HOLFormula = tree match {
     case ETAtom( f )     => f
-    case ETNeg( t1 )     => NegHOL( toDeep( t1, -pol ) )
-    case ETAnd( t1, t2 ) => AndHOL( toDeep( t1, pol ), toDeep( t2, pol ) )
-    case ETOr( t1, t2 )  => OrHOL( toDeep( t1, pol ), toDeep( t2, pol ) )
-    case ETImp( t1, t2 ) => ImpHOL( toDeep( t1, -pol ), toDeep( t2, pol ) )
+    case ETNeg( t1 )     => HOLNeg( toDeep( t1, -pol ) )
+    case ETAnd( t1, t2 ) => HOLAnd( toDeep( t1, pol ), toDeep( t2, pol ) )
+    case ETOr( t1, t2 )  => HOLOr( toDeep( t1, pol ), toDeep( t2, pol ) )
+    case ETImp( t1, t2 ) => HOLImp( toDeep( t1, -pol ), toDeep( t2, pol ) )
     case ETWeakQuantifier( _, cs ) => {
       if ( pol > 0 )
-        OrHOL( cs.map( t => toDeep( t._1, pol ) ).toList )
+        HOLOr( cs.map( t => toDeep( t._1, pol ) ).toList )
       else
-        AndHOL( cs.map( t => toDeep( t._1, pol ) ).toList )
+        HOLAnd( cs.map( t => toDeep( t._1, pol ) ).toList )
     }
     case ETStrongQuantifier( _, _, t ) => toDeep( t, pol )
     case ETSkolemQuantifier( _, _, t ) => toDeep( t, pol ) //TODO: check if this is correct
@@ -397,10 +397,10 @@ object toDeep {
 object toShallow {
   def apply( tree: ExpansionTreeWithMerges ): HOLFormula = tree match {
     case ETAtom( f )                   => f
-    case ETNeg( t1 )                   => NegHOL( toShallow( t1 ) )
-    case ETAnd( t1, t2 )               => AndHOL( toShallow( t1 ), toShallow( t2 ) )
-    case ETOr( t1, t2 )                => OrHOL( toShallow( t1 ), toShallow( t2 ) )
-    case ETImp( t1, t2 )               => ImpHOL( toShallow( t1 ), toShallow( t2 ) )
+    case ETNeg( t1 )                   => HOLNeg( toShallow( t1 ) )
+    case ETAnd( t1, t2 )               => HOLAnd( toShallow( t1 ), toShallow( t2 ) )
+    case ETOr( t1, t2 )                => HOLOr( toShallow( t1 ), toShallow( t2 ) )
+    case ETImp( t1, t2 )               => HOLImp( toShallow( t1 ), toShallow( t2 ) )
     case ETWeakQuantifier( f, _ )      => f
     case ETStrongQuantifier( f, _, _ ) => f
   }
@@ -437,11 +437,11 @@ object getETOfFormula {
 // Builds an expansion tree given a quantifier free formula
 object qFreeToExpansionTree {
   def apply( f: HOLFormula ): ExpansionTree = f match {
-    case AtomHOL( _, _ )  => ETAtom( f )
-    case NegHOL( f )      => ETNeg( qFreeToExpansionTree( f ) ).asInstanceOf[ExpansionTree]
-    case AndHOL( f1, f2 ) => ETAnd( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
-    case OrHOL( f1, f2 )  => ETOr( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
-    case ImpHOL( f1, f2 ) => ETImp( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
+    case HOLAtom( _, _ )  => ETAtom( f )
+    case HOLNeg( f )      => ETNeg( qFreeToExpansionTree( f ) ).asInstanceOf[ExpansionTree]
+    case HOLAnd( f1, f2 ) => ETAnd( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
+    case HOLOr( f1, f2 )  => ETOr( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
+    case HOLImp( f1, f2 ) => ETImp( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
     case _                => throw new Exception( "Error transforming a quantifier-free formula into an expansion tree: " + f )
   }
 }
@@ -477,13 +477,13 @@ object prenexToExpansionTree {
   }
 
   def apply_( f: HOLFormula, sub: HOLSubstitution ): ExpansionTreeWithMerges = f match {
-    case AllVarHOL( v, form ) =>
+    case HOLAllVar( v, form ) =>
       val t = sub( v )
       val one_sub = HOLSubstitution( v, t )
       val newf = one_sub( form )
       //val newf = f.instantiate(t.asInstanceOf[FOLTerm])
       ETWeakQuantifier( f, List( Tuple2( apply_( newf, sub ), t ) ) )
-    case ExVarHOL( v, form ) =>
+    case HOLExVar( v, form ) =>
       val t = sub( v )
       val one_sub = HOLSubstitution( v, t )
       val newf = one_sub( form ).asInstanceOf[HOLFormula]
@@ -539,7 +539,7 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
       ETSkolemQuantifier( s( f ), s( v ), doApplySubstitution( s, selection ) )
     case ETWeakQuantifier( f, instances ) =>
       ETWeakQuantifier( s( f ), mergeWeakQuantifiers( Some( s ), instances ) )
-    case MergeNode( t1, t2 ) => MergeNode( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
+    case ETMerge( t1, t2 ) => ETMerge( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
   }
 
   /**
@@ -558,7 +558,7 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
     }
 
     def createMergeNode( ets: Iterable[ExpansionTreeWithMerges] ): ExpansionTreeWithMerges = {
-      ets.reduce( ( tree1, tree2 ) => MergeNode( tree1, tree2 ) )
+      ets.reduce( ( tree1, tree2 ) => ETMerge( tree1, tree2 ) )
     }
 
     newInstances.map( instance => ( createMergeNode( instance._2 ), instance._1 ) ).toList
@@ -691,10 +691,10 @@ object merge extends at.logic.gapt.utils.logging.Logger {
         val ( subst, res ) = detectAndMergeMergeNodes( s1, !polarity ) // changes polarity
         ( subst, ETNeg( res ) )
       }
-      case ETAnd( t1, t2 )     => start_op2( t1, t2, ETAnd( _, _ ), leftPolarity = polarity )
-      case ETOr( t1, t2 )      => start_op2( t1, t2, ETOr( _, _ ), leftPolarity = polarity )
-      case ETImp( t1, t2 )     => start_op2( t1, t2, ETImp( _, _ ), leftPolarity = !polarity ) // changes polarity
-      case MergeNode( t1, t2 ) => doApplyMerge( t1, t2, polarity )
+      case ETAnd( t1, t2 )   => start_op2( t1, t2, ETAnd( _, _ ), leftPolarity = polarity )
+      case ETOr( t1, t2 )    => start_op2( t1, t2, ETOr( _, _ ), leftPolarity = polarity )
+      case ETImp( t1, t2 )   => start_op2( t1, t2, ETImp( _, _ ), leftPolarity = !polarity ) // changes polarity
+      case ETMerge( t1, t2 ) => doApplyMerge( t1, t2, polarity )
     }
   }
 
@@ -712,7 +712,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
                    leftPolarity: Boolean ): ( Option[HOLSubstitution], ExpansionTreeWithMerges ) = {
       val ( subst1, res1 ) = doApplyMerge( s1, s2, leftPolarity )
       subst1 match {
-        case Some( s: HOLSubstitution ) => ( Some( s ), OpFactory( res1, MergeNode( t1, t2 ) ) )
+        case Some( s: HOLSubstitution ) => ( Some( s ), OpFactory( res1, ETMerge( t1, t2 ) ) )
         case None =>
           val ( subst2, res2 ) = doApplyMerge( t1, t2, polarity )
           ( subst2, OpFactory( res1, res2 ) ) // might be Some(subst) or None
@@ -734,7 +734,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
 
       case ( ETStrongQuantifier( f1, v1, sel1 ), ETStrongQuantifier( f2, v2, sel2 ) ) if f1 == f2 =>
         trace( "encountered strong quantifier " + f1 + "; renaming " + v2 + " to " + v1 )
-        return ( Some( HOLSubstitution( v2, v1 ) ), ETStrongQuantifier( f1, v1, MergeNode( sel1, sel2 ) ) )
+        return ( Some( HOLSubstitution( v2, v1 ) ), ETStrongQuantifier( f1, v1, ETMerge( sel1, sel2 ) ) )
 
       case ( ETSkolemQuantifier( f1, s1, sel1 ), ETSkolemQuantifier( f2, s2, sel2 ) ) if f1 == f2 =>
         val sel2_ = if ( s1 != s2 ) {
@@ -750,7 +750,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
 
         } else sel2
         //trace("encountered skolem quantifier "+f1+"; renaming "+v2+" to "+v1)
-        return ( Some( HOLSubstitution() ), ETSkolemQuantifier( f1, s1, MergeNode( sel1, sel2_ ) ) )
+        return ( Some( HOLSubstitution() ), ETSkolemQuantifier( f1, s1, ETMerge( sel1, sel2_ ) ) )
 
       case ( ETWeakQuantifier( f1, children1 ), ETWeakQuantifier( f2, children2 ) ) if f1 == f2 => {
         val newTree = ETWeakQuantifier( f1, substitute.mergeWeakQuantifiers( None, children1 ++ children2 ) )
@@ -764,17 +764,17 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       case ( ETAnd( s1, t1 ), ETAnd( s2, t2 ) ) => start_op2( s1, t1, s2, t2, ETAnd( _, _ ), leftPolarity = polarity )
       case ( ETOr( s1, t1 ), ETOr( s2, t2 ) )   => start_op2( s1, t1, s2, t2, ETOr( _, _ ), leftPolarity = polarity )
       case ( ETImp( s1, t1 ), ETImp( s2, t2 ) ) => start_op2( s1, t1, s2, t2, ETImp( _, _ ), leftPolarity = !polarity ) //changes polarity
-      case ( MergeNode( n1, n2 ), _ ) => { // we proceed top-bottom. Sometimes we need to propagate a merge below another merge, in which case the lower merge has to be resolved first
+      case ( ETMerge( n1, n2 ), _ ) => { // we proceed top-bottom. Sometimes we need to propagate a merge below another merge, in which case the lower merge has to be resolved first
         val ( subst, res ) = doApplyMerge( n1, n2, polarity )
         subst match {
-          case Some( s: HOLSubstitution ) => ( Some( s ), MergeNode( res, tree2 ) )
+          case Some( s: HOLSubstitution ) => ( Some( s ), ETMerge( res, tree2 ) )
           case None                       => doApplyMerge( res, tree2, polarity )
         }
       }
-      case ( _, MergeNode( n1, n2 ) ) => { // see above
+      case ( _, ETMerge( n1, n2 ) ) => { // see above
         val ( subst, res ) = doApplyMerge( n1, n2, polarity )
         subst match {
-          case Some( s: HOLSubstitution ) => ( Some( s ), MergeNode( res, tree2 ) )
+          case Some( s: HOLSubstitution ) => ( Some( s ), ETMerge( res, tree2 ) )
           case None                       => doApplyMerge( tree1, res, polarity )
         }
       }
@@ -865,8 +865,8 @@ object replace {
       ETStrongQuantifier( replaceAll( what, by, f ), v, apply( what, by, tree ) )
     case ETSkolemQuantifier( f, sk, tree ) =>
       ETSkolemQuantifier( replaceAll( what, by, f ), replaceAll( what, by, sk ), apply( what, by, tree ) )
-    case MergeNode( l, r ) =>
-      MergeNode( apply( what, by, l ), apply( what, by, r ) )
+    case ETMerge( l, r ) =>
+      ETMerge( apply( what, by, l ), apply( what, by, r ) )
   }
 
 }
@@ -882,22 +882,22 @@ object coerceFormulaToET {
    */
   def apply(f: HOLFormula, isAntecedent: Boolean): ExpansionTree = {
     f match {
-      case AllVarHOL(v, formula) =>
+      case HOLAllVar(v, formula) =>
         if (isAntecedent) {
           StrongQuantifier(f, null, Atom(BottomC)) // TODO: better variable than null here?
         } else {
           WeakQuantifier(f, Nil).asInstanceOf[ExpansionTree] // contains no merges
         }
-      case ExVarHOL(v, formula) =>
+      case HOLExVar(v, formula) =>
         if (isAntecedent) {
           WeakQuantifier(f, Nil).asInstanceOf[ExpansionTree] // contains no merges
         } else {
           StrongQuantifier(f, null, Atom(TopC))
         }
-      case AndHOL(l, r) => And(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
-      case OrHOL(l, r) => Or(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
-      case ImpHOL(l, r) => Imp(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
-      case AtomHOL(_, _) => Atom(f)
+      case HOLAnd(l, r) => And(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
+      case HOLOr(l, r) => Or(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
+      case HOLImp(l, r) => Imp(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
+      case HOLAtom(_, _) => Atom(f)
     }
   }
 }

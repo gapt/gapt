@@ -1,7 +1,7 @@
 
 package at.logic.gapt.proofs.expansionTrees
 
-import at.logic.gapt.language.hol.{ HOLAnd => AndHOL, HOLOr => OrHOL, HOLImp => ImpHOL, HOLNeg => NegHOL, _ }
+import at.logic.gapt.language.hol._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base.FSequent
 import Utility._
@@ -125,9 +125,9 @@ case class METWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
 
   override def toDeep( pol: Int ): HOLFormula = {
     if ( pol > 0 )
-      OrHOL( instances.map( t => t._1.toDeep( pol ) ).toList )
+      HOLOr( instances.map( t => t._1.toDeep( pol ) ).toList )
     else
-      AndHOL( instances.map( t => t._1.toDeep( pol ) ).toList )
+      HOLAnd( instances.map( t => t._1.toDeep( pol ) ).toList )
   }
   override def toShallow = formula
 
@@ -223,8 +223,8 @@ case class METAnd( left: MultiExpansionTree, right: MultiExpansionTree ) extends
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 
-  override def toDeep( pol: Int ): HOLFormula = AndHOL( left.toDeep( pol ), right.toDeep( pol ) )
-  override def toShallow = AndHOL( left.toShallow, right.toShallow )
+  override def toDeep( pol: Int ): HOLFormula = HOLAnd( left.toDeep( pol ), right.toDeep( pol ) )
+  override def toShallow = HOLAnd( left.toShallow, right.toShallow )
 
   override def containsWeakQuantifiers = left.containsWeakQuantifiers || right.containsWeakQuantifiers
 
@@ -251,8 +251,8 @@ case class METAnd( left: MultiExpansionTree, right: MultiExpansionTree ) extends
 case class METOr( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
-  override def toDeep( pol: Int ): HOLFormula = OrHOL( left.toDeep( pol ), right.toDeep( pol ) )
-  override def toShallow = OrHOL( left.toShallow, right.toShallow )
+  override def toDeep( pol: Int ): HOLFormula = HOLOr( left.toDeep( pol ), right.toDeep( pol ) )
+  override def toShallow = HOLOr( left.toShallow, right.toShallow )
 
   override def containsWeakQuantifiers = left.containsWeakQuantifiers || right.containsWeakQuantifiers
 
@@ -278,8 +278,8 @@ case class METOr( left: MultiExpansionTree, right: MultiExpansionTree ) extends 
 case class METImp( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
-  override def toDeep( pol: Int ): HOLFormula = ImpHOL( left.toDeep( -pol ), right.toDeep( pol ) )
-  override def toShallow = ImpHOL( left.toShallow, right.toShallow )
+  override def toDeep( pol: Int ): HOLFormula = HOLImp( left.toDeep( -pol ), right.toDeep( pol ) )
+  override def toShallow = HOLImp( left.toShallow, right.toShallow )
 
   override def containsWeakQuantifiers = left.containsWeakQuantifiers || right.containsWeakQuantifiers
 
@@ -305,8 +305,8 @@ case class METImp( left: MultiExpansionTree, right: MultiExpansionTree ) extends
 case class METNeg( tree: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( tree, None ) )
-  override def toDeep( pol: Int ): HOLFormula = NegHOL( tree.toDeep( -pol ) )
-  override def toShallow = NegHOL( tree.toShallow )
+  override def toDeep( pol: Int ): HOLFormula = HOLNeg( tree.toDeep( -pol ) )
+  override def toShallow = HOLNeg( tree.toShallow )
 
   override def containsWeakQuantifiers = tree.containsWeakQuantifiers
 

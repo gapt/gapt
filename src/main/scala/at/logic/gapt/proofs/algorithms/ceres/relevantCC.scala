@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.fol.Utils
-import at.logic.gapt.language.schema.{ Substitution => SchemaSubstitution, SchemaVar, SchemaFormula, IndexedPredicate, IntVar, IntZero, IntegerTerm, Succ }
+import at.logic.gapt.language.schema.{ SchemaSubstitution, SchemaVar, SchemaFormula, IndexedPredicate, IntVar, IntZero, IntegerTerm, Succ }
 import at.logic.gapt.proofs.shlk.algorithms.StepMinusOne
 import at.logic.gapt.utils.ds.Multisets
 import at.logic.gapt.utils.ds.Multisets.Multiset

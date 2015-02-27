@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.expansionTrees.algorithms
 
-import at.logic.gapt.language.hol.{HOLAnd => AndHOL, HOLAtom => AtomHOL, HOLImp => ImpHOL, HOLOr => OrHOL, _}
+import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.types.{Ti => i, To => o}
 import at.logic.gapt.proofs.expansionTrees._
 import org.junit.runner.RunWith
@@ -11,22 +11,22 @@ import org.specs2.runner.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class compressTest extends SpecificationWithJUnit {
 
-  val x = HOLVar(("x" ), i)
-  val c = HOLConst(("c" ), i)
-  val d = HOLConst(("d" ), i)
+  val x = HOLVar("x" , i)
+  val c = HOLConst("c" , i)
+  val d = HOLConst("d" , i)
   val P = HOLConst("P", i -> o)
   
   val et1: ExpansionTree = merge(
     ETWeakQuantifier(
-      HOLAllVar(x, AtomHOL(P,x::Nil)),
-      List((ETAtom(AtomHOL(P,c::Nil)),c),(ETAtom(AtomHOL(P,d::Nil)),d))
+      HOLAllVar(x, HOLAtom(P,x::Nil)),
+      List((ETAtom(HOLAtom(P,c::Nil)),c),(ETAtom(HOLAtom(P,d::Nil)),d))
       )
   )
 
   val et2: ExpansionTree = merge(
     ETWeakQuantifier(
-      HOLExVar(x, AtomHOL(P, x::Nil)),
-      List((ETAtom(AtomHOL(P, c::Nil)),c),(ETAtom(AtomHOL(P,d::Nil)),d))
+      HOLExVar(x, HOLAtom(P, x::Nil)),
+      List((ETAtom(HOLAtom(P, c::Nil)),c),(ETAtom(HOLAtom(P,d::Nil)),d))
      )
   )
   

@@ -26,7 +26,7 @@ class UnfoldSchemaProofTest extends SpecificationWithJUnit {
         val An3 = IndexedPredicate("A", n3)
         val An1 = IndexedPredicate("A", n1)
         val b = BigAnd(i, A, zero, n3)
-        val subst = Substitution((k, two)::Nil)
+        val subst = SchemaSubstitution((k, two)::Nil)
 
         Success()
       }

@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.resolution.algorithms
 import at.logic.gapt.language.fol.algorithms.recreateWithFactory
 import at.logic.gapt.language.fol.{ FOLFormula, FOLSubstitution }
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.{ FactoryA, LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
+import at.logic.gapt.language.lambda.{ FactoryA, LambdaExpression, Var, LambdaSubstitution }
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }

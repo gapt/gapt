@@ -32,8 +32,8 @@ case object ExistsHyperRightRuleType extends UnaryRuleTypeA
 // rec should have end-sequent seq where vars <- vars + 1
 
 class SchemaProof( val name: String, val vars: List[IntVar], val seq: FSequent, val base: LKProof, val rec: LKProof ) {
-  val r_sub = Substitution( vars.map( v => ( v, Succ( v ) ) ) )
-  val b_sub = Substitution( vars.map( v => ( v, IntZero() ) ) )
+  val r_sub = SchemaSubstitution( vars.map( v => ( v, Succ( v ) ) ) )
+  val b_sub = SchemaSubstitution( vars.map( v => ( v, IntZero() ) ) )
   val r_res = FSequent( seq._1.map( f => r_sub( f.asInstanceOf[SchemaFormula] ) ), seq._2.map( f => r_sub( f.asInstanceOf[SchemaFormula] ) ) )
   val b_res = FSequent( seq._1.map( f => b_sub( f.asInstanceOf[SchemaFormula] ) ), seq._2.map( f => b_sub( f.asInstanceOf[SchemaFormula] ) ) )
 }
@@ -966,7 +966,7 @@ object checkProofLinks {
     case UnarySchemaProof( _, upperProof, _, _, _ ) => checkProofLinks( upperProof )
     case SchemaProofLinkRule( so, name, indices ) => {
       val ps = SchemaProofDB.get( name )
-      val sub = Substitution( ps.vars.zip( indices ) )
+      val sub = SchemaSubstitution( ps.vars.zip( indices ) )
       require( ps.seq equals FSequent( so.toFSequent._1.map( f => sub( f.asInstanceOf[SchemaFormula] ) ), so.toFSequent._2.map( f => sub( f.asInstanceOf[SchemaFormula] ) ) ) )
     }
   }

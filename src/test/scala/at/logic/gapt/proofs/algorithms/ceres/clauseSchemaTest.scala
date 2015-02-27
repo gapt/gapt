@@ -83,7 +83,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       // ----------
 
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, two) + Tuple2(l, three)
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
 
       val sig = subst(trsSigma.map.get("σ").get._2._1)
       val sigma3 = unfoldSTermN(sig, trsSigma)
@@ -155,7 +155,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       trsSCLterm.add("d2", pair2base, pair2step)
 
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, two)
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
       val d1step_ground = applySubToSclauseOrSclauseTerm(subst, d1step)
 
       val mapX = Map[sClauseVar, sClause]() + Tuple2(X.asInstanceOf[sClauseVar], nonVarSclause(Nil, Nil))
@@ -213,7 +213,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       // ----------
 
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, two) + Tuple2(l, three)
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
 
       val sig = subst(trsSigma.map.get("σ").get._2._1)
       val sigma3 = unfoldSTermN(sig, trsSigma)
@@ -274,7 +274,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       trsSCLterm.add("d2", pair2base, pair2step)
 
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, two) + Tuple2(l, three)
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
 
       val clause3 = applySubToSclauseOrSclauseTerm(subst, trsClauseSch.map.get("c").get._2._1).asInstanceOf[sClause]
       val rwclause3 = unfoldSchemaClause(clause3, trsClauseSch, trsSigma, subst)
@@ -325,7 +325,7 @@ class clauseSchemaTest extends SpecificationWithJUnit {
       val trsClauseSch = dbTRSclauseSchema("c", Tuple2(c0, clauseSchBase), Tuple2(ck, clauseSchRec))
 
       val map = Map[SchemaVar, SchemaExpression]() + Tuple2(k, two) + Tuple2(l, three)
-      val subst = Substitution(map)
+      val subst = SchemaSubstitution(map)
 
       val sig1 = subst(trsSigma.map.get("σ'").get._2._1)
       val sigma13 = unfoldSTermN(sig1, trsSigma)

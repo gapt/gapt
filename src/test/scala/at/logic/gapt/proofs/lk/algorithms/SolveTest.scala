@@ -3,8 +3,8 @@ package at.logic.gapt.proofs.lk.algorithms
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.symbols.StringSymbol
 import at.logic.gapt.language.lambda.types.{Ti, To}
-import at.logic.gapt.language.schema.{SchemaOr => OrS, _}
-import at.logic.gapt.proofs.expansionTrees.{ExpansionSequent, toFSequent, ETAtom => AtomET, ETNeg => NegET, ETOr => OrET, ETStrongQuantifier => StrongQuantifierET, ETWeakQuantifier => WeakQuantifierET}
+import at.logic.gapt.language.schema._
+import at.logic.gapt.proofs.expansionTrees.{ExpansionSequent, toFSequent, ETAtom, ETNeg, ETOr, ETStrongQuantifier, ETWeakQuantifier}
 import at.logic.gapt.proofs.lk.base.{FSequent, beSyntacticFSequentEqual}
 import at.logic.gapt.proofs.occurrences.{FormulaOccurrence, defaultFormulaOccurrenceFactory}
 import org.junit.runner.RunWith
@@ -39,7 +39,7 @@ class SolveTest extends SpecificationWithJUnit {
       val Ak = IndexedPredicate("A", k)
       val Ai = IndexedPredicate("A", i)
       val Ai1 = IndexedPredicate("A", Succ(i))
-      val orneg = OrS(SchemaNeg(Ai).asInstanceOf[SchemaFormula], Ai1.asInstanceOf[SchemaFormula]).asInstanceOf[SchemaFormula]
+      val orneg = SchemaOr(SchemaNeg(Ai).asInstanceOf[SchemaFormula], Ai1.asInstanceOf[SchemaFormula]).asInstanceOf[SchemaFormula]
 
       val Ak1 = IndexedPredicate("A", Succ(k))
       val An = IndexedPredicate("A", k)
@@ -156,18 +156,18 @@ class SolveTest extends SpecificationWithJUnit {
 
       val formula = HOLExVar(x, HOLOr( HOLNeg( HOLAtom(d, x::Nil) ), HOLAllVar(y, HOLAtom(d, y::Nil)))) // exists x (-d(x) or forall y d(y))
 
-      val inst1 = OrET(
-        NegET( AtomET( HOLAtom(d, u::Nil))), // -d(u)
-        StrongQuantifierET( HOLAllVar(y, HOLAtom(d, y::Nil)), v, AtomET(HOLAtom(d, v::Nil))) // forall y d(y) +^v d(v)
+      val inst1 = ETOr(
+        ETNeg( ETAtom( HOLAtom(d, u::Nil))), // -d(u)
+        ETStrongQuantifier( HOLAllVar(y, HOLAtom(d, y::Nil)), v, ETAtom(HOLAtom(d, v::Nil))) // forall y d(y) +^v d(v)
       )
 
-      val inst2 = OrET(
-        NegET( AtomET( HOLAtom(d, c::Nil))), // -d(c)
-        StrongQuantifierET( HOLAllVar(y, HOLAtom(d, y::Nil)), u, AtomET(HOLAtom(d, u::Nil))) // forall y d(y) +^u d(u)
+      val inst2 = ETOr(
+        ETNeg( ETAtom( HOLAtom(d, c::Nil))), // -d(c)
+        ETStrongQuantifier( HOLAllVar(y, HOLAtom(d, y::Nil)), u, ETAtom(HOLAtom(d, u::Nil))) // forall y d(y) +^u d(u)
       )
 
       // here, the second tree, containing c, must be expanded before u, as u is used as eigenvar in the c branch
-      val et = WeakQuantifierET.applyWithoutMerge(formula, List( (inst1, u), (inst2, c)))
+      val et = ETWeakQuantifier.applyWithoutMerge(formula, List( (inst1, u), (inst2, c)))
       val etSeq = new ExpansionSequent(Nil, et::Nil)
 
       val lkProof = solve.expansionProofToLKProof(toFSequent(etSeq), etSeq)

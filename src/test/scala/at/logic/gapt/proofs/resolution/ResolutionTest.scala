@@ -12,8 +12,6 @@ import org.specs2.runner.JUnitRunner
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol.{HOLAtom => HOLAtom, HOLFunction => HOLFunction, HOLAllVar => HOLAllVar, HOLOr => HOLOr, HOLNeg => HOLNeg, HOLSubstitution => HOLSubstitution, HOLConst, HOLVar}
-import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.proofs.lk.base._
 
 @RunWith(classOf[JUnitRunner])

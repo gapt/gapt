@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol.{ FOLFormula, FOLAllVar => FAllVar, FOLAnd => FAnd, FOLAtom => FAtom, FOLExVar => FExVar, FOLImp => FImp, FOLNeg => FNeg, FOLOr => FOr }
+import at.logic.gapt.language.fol.{ FOLFormula, FOLAllVar, FOLAnd, FOLAtom, FOLExVar, FOLImp, FOLNeg, FOLOr }
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.resolution.FClause
@@ -66,13 +66,12 @@ object TseitinCNF {
 
     val tseitin = tseitinInstance match {
       case null => new TseitinCNF()
-      case _ => {
+      case _ =>
         val t = new TseitinCNF()
         t.subformulaMap ++= tseitinInstance.subformulaMap
         t.auxsyms ++= tseitinInstance.auxsyms
         t.fsyms ++= tseitinInstance.fsyms
         t
-      }
     }
 
     ( tseitin.transform( f ), tseitin )
@@ -93,14 +92,14 @@ class TseitinCNF {
    * @return List of all atom symbols used in f
    */
   def getAtomSymbols( f: FOLFormula ): List[SymbolA] = f match {
-    case FAtom( h, args ) => List( h )
-    case FNeg( f2 )       => getAtomSymbols( f2 )
-    case FAnd( f1, f2 )   => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
-    case FOr( f1, f2 )    => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
-    case FImp( f1, f2 )   => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
-    case FExVar( _, f2 )  => getAtomSymbols( f2 )
-    case FAllVar( _, f2 ) => getAtomSymbols( f2 )
-    case _                => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
+    case FOLAtom( h, args ) => List( h )
+    case FOLNeg( f2 )       => getAtomSymbols( f2 )
+    case FOLAnd( f1, f2 )   => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
+    case FOLOr( f1, f2 )    => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
+    case FOLImp( f1, f2 )   => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
+    case FOLExVar( _, f2 )  => getAtomSymbols( f2 )
+    case FOLAllVar( _, f2 ) => getAtomSymbols( f2 )
+    case _                  => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 
   def transform( f: FOLFormula ): List[FClause] = {
@@ -129,7 +128,7 @@ class TseitinCNF {
       } else {
         // generate new atom symbol
         val sym = at.logic.gapt.language.lambda.rename( hc, fsyms ::: auxsyms.toList )
-        val auxAtom = FAtom( sym, Nil )
+        val auxAtom = FOLAtom( sym, Nil )
         auxsyms += sym
         subformulaMap( f ) = auxAtom
         auxAtom
@@ -143,9 +142,9 @@ class TseitinCNF {
    * @return a Tuple2, where 1st is the prop. variable representing the formula in 2nd
    */
   def parseFormula( f: FOLFormula ): Tuple2[FOLFormula, List[FClause]] = f match {
-    case FAtom( _, _ ) => ( f, List() )
+    case FOLAtom( _, _ ) => ( f, List() )
 
-    case FNeg( f2 ) =>
+    case FOLNeg( f2 ) =>
       val pf = parseFormula( f2 )
       val x = addIfNotExists( f )
       val x1 = pf._1
@@ -153,7 +152,7 @@ class TseitinCNF {
       val c2 = FClause( List(), List( x, x1 ) )
       ( x, pf._2 ++ List( c1, c2 ) )
 
-    case FAnd( f1, f2 ) =>
+    case FOLAnd( f1, f2 ) =>
       val pf1 = parseFormula( f1 )
       val pf2 = parseFormula( f2 )
       val x = addIfNotExists( f )
@@ -164,7 +163,7 @@ class TseitinCNF {
       val c3 = FClause( List( x1, x2 ), List( x ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
-    case FOr( f1, f2 ) =>
+    case FOLOr( f1, f2 ) =>
       val pf1 = parseFormula( f1 )
       val pf2 = parseFormula( f2 )
       val x = addIfNotExists( f )
@@ -175,7 +174,7 @@ class TseitinCNF {
       val c3 = FClause( List( x ), List( x1, x2 ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
-    case FImp( f1, f2 ) =>
+    case FOLImp( f1, f2 ) =>
       val pf1 = parseFormula( f1 )
       val pf2 = parseFormula( f2 )
       val x = addIfNotExists( f )

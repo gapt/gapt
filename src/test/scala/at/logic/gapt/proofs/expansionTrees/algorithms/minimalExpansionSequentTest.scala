@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.expansionTrees.algorithms
 
-import at.logic.gapt.language.hol.{HOLAnd => AndHOL, HOLAtom => AtomHOL, HOLImp => ImpHOL, HOLOr => OrHOL, _}
+import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.types.{Ti => i, To => o}
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.provers.minisat.MiniSATProver
@@ -18,15 +18,15 @@ class minimalExpansionSequentTest extends SpecificationWithJUnit {
   
   val et1: ExpansionTree = merge(
     ETWeakQuantifier(
-      HOLAllVar(x, AtomHOL(P,x::Nil)),
-      List((ETAtom(AtomHOL(P,c::Nil)),c),(ETAtom(AtomHOL(P,d::Nil)),d))
+      HOLAllVar(x, HOLAtom(P,x::Nil)),
+      List((ETAtom(HOLAtom(P,c::Nil)),c),(ETAtom(HOLAtom(P,d::Nil)),d))
       )
   )
 
   val et2: ExpansionTree = merge(
     ETWeakQuantifier(
-      HOLExVar(x, AtomHOL(P, x::Nil)),
-      List((ETAtom(AtomHOL(P, c::Nil)),c),(ETAtom(AtomHOL(P,d::Nil)),d))
+      HOLExVar(x, HOLAtom(P, x::Nil)),
+      List((ETAtom(HOLAtom(P, c::Nil)),c),(ETAtom(HOLAtom(P,d::Nil)),d))
      )
   )
   
@@ -35,24 +35,24 @@ class minimalExpansionSequentTest extends SpecificationWithJUnit {
   val minESeq = List(
     ExpansionSequent(List(merge(
     ETWeakQuantifier(
-      HOLAllVar(x, AtomHOL(P,x::Nil)),
-      List((ETAtom(AtomHOL(P,c::Nil)),c))
+      HOLAllVar(x, HOLAtom(P,x::Nil)),
+      List((ETAtom(HOLAtom(P,c::Nil)),c))
     )
   )), List(merge(
     ETWeakQuantifier(
-      HOLExVar(x, AtomHOL(P, x::Nil)),
-      List((ETAtom(AtomHOL(P, c::Nil)),c))
+      HOLExVar(x, HOLAtom(P, x::Nil)),
+      List((ETAtom(HOLAtom(P, c::Nil)),c))
     )
   ))),
     ExpansionSequent(List(merge(
     ETWeakQuantifier(
-      HOLAllVar(x, AtomHOL(P,x::Nil)),
-      List((ETAtom(AtomHOL(P,d::Nil)),d))
+      HOLAllVar(x, HOLAtom(P,x::Nil)),
+      List((ETAtom(HOLAtom(P,d::Nil)),d))
     )
   )), List(merge(
     ETWeakQuantifier(
-      HOLExVar(x, AtomHOL(P, x::Nil)),
-      List((ETAtom(AtomHOL(P, d::Nil)),d))
+      HOLExVar(x, HOLAtom(P, x::Nil)),
+      List((ETAtom(HOLAtom(P, d::Nil)),d))
     )
   )))
   ).map(compressQuantifiers.apply)
