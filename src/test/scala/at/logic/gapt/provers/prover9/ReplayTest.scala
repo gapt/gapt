@@ -11,9 +11,8 @@ import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.resolution.robinson.{Formatter, RobinsonResolutionProof}
 import at.logic.gapt.language.fol._
 import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.io.calculi.simple.SimpleResolutionParserFOL
-import at.logic.gapt.io.language.simple.SimpleFOLParser
-import at.logic.gapt.io.language.tptp.TPTPFOLExporter
+import at.logic.gapt.io.simple.{SimpleFOLParser, SimpleResolutionParserFOL}
+import at.logic.gapt.io.tptp.TPTPFOLExporter
 import at.logic.gapt.io.readers.StringReader
 import at.logic.gapt.provers.atp.Prover
 import at.logic.gapt.provers.atp.commands.base.{SetStreamCommand, PrependCommand}
@@ -27,7 +26,7 @@ import org.mockito.Matchers._
 import org.specs2.mock.Mockito
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-import at.logic.gapt.io.language.prover9.Prover9TermParser.parseFormula
+import at.logic.gapt.io.prover9.Prover9TermParser.parseFormula
 import at.logic.gapt.provers.prover9.commands.Prover9InitCommand
 import scala.Some
 import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause

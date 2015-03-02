@@ -18,8 +18,8 @@ import at.logic.gapt.language.fol._
 import at.logic.gapt.io.ivy.IvyParser
 import at.logic.gapt.io.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }
 import at.logic.gapt.io.ivy.conversion.IvyToRobinson
-import at.logic.gapt.io.language.prover9._
-import at.logic.gapt.io.language.tptp.TPTPFOLExporter
+import at.logic.gapt.io.prover9._
+import at.logic.gapt.io.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
 import java.io._

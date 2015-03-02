@@ -7,6 +7,7 @@
 
 package at.logic.gapt.io.language.xml
 
+import at.logic.gapt.io.xml.HOLTermXMLExporter
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -27,7 +28,7 @@ import at.logic.gapt.language.lambda.symbols.StringSymbol
 @RunWith(classOf[JUnitRunner])
 class HOLTermExporterTest extends SpecificationWithJUnit {
   
-  val exporter = new HOLTermExporter{}
+  val exporter = new HOLTermXMLExporter{}
   // helper to create 0-ary predicate constants
   def pc( sym: String ) = HOLAtom( HOLConst( sym, To ) )
   

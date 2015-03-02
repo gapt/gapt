@@ -7,7 +7,7 @@
 package at.logic.gapt.provers.vampire
 
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.io.language.tptp.TPTPFOLExporter
+import at.logic.gapt.io.tptp.TPTPFOLExporter
 
 import java.io._
 import scala.io.Source

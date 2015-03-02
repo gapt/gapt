@@ -7,8 +7,8 @@ import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.gapt.language.fol._
-import at.logic.gapt.io.language.prover9.{ Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle }
-import at.logic.gapt.io.language.tptp.TPTPFOLExporter
+import at.logic.gapt.io.prover9.{ Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle }
+import at.logic.gapt.io.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.provers.atp.commands.base._
 import at.logic.gapt.provers.atp.commands.guided.GetGuidedClausesCommand._

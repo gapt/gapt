@@ -4,6 +4,7 @@
 
 package at.logic.gapt.io.calculi.xml
 
+import at.logic.gapt.io.simple.SimpleXMLProofParser
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

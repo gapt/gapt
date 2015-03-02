@@ -2,7 +2,7 @@ package at.logic.gapt.io.hoare
 
 import at.logic.gapt.language.fol.{ FOLFormula, FOLTerm, FOLVar }
 import at.logic.gapt.proofs.hoare._
-import at.logic.gapt.io.language.prover9.{ Prover9TermParserLadrStyle, Prover9TermParserA }
+import at.logic.gapt.io.prover9.{ Prover9TermParserLadrStyle, Prover9TermParserA }
 import scala.util.parsing.combinator.PackratParsers
 
 trait ProgramParserA extends Prover9TermParserA {

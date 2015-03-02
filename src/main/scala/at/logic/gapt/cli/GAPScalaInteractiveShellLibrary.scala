@@ -8,6 +8,7 @@ package at.logic.gapt.cli.GAPScalaInteractiveShellLibrary
 import java.io.{ FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 import java.util.zip.GZIPInputStream
 
+import at.logic.gapt.io.xml.{ XMLParser, ProofDatabase, LKExporter }
 import at.logic.gapt.proofs.algorithms.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
 import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK, ceres_omega }
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
@@ -39,19 +40,16 @@ import at.logic.gapt.language.hol.{ BetaReduction => HOLBetaReduction, HOLSubsti
 import at.logic.gapt.language.lambda.symbols.StringSymbol
 import at.logic.gapt.language.lambda.{ LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.io.calculi.latex._
-import at.logic.gapt.io.calculi.simple.SimpleResolutionParserFOL
-import at.logic.gapt.io.calculus.xml._
+import at.logic.gapt.io.latex._
+import at.logic.gapt.io.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }
 import at.logic.gapt.io.hoare.ProgramParser
 import at.logic.gapt.io.ivy.conversion.IvyToRobinson
 import at.logic.gapt.io.ivy.{ IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution }
-import at.logic.gapt.io.language.arithmetic.HOLTermArithmeticalExporter
-import at.logic.gapt.io.language.hlk.HLKHOLParser
-import at.logic.gapt.io.language.prover9._
-import at.logic.gapt.io.language.simple._
-import at.logic.gapt.io.language.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
-import at.logic.gapt.io.language.xml.ProofDatabase
-import at.logic.gapt.io.language.xml.XMLParser._
+import at.logic.gapt.io.arithmetic.HOLTermArithmeticalExporter
+import at.logic.gapt.io.hlk.HLKHOLParser
+import at.logic.gapt.io.prover9._
+import at.logic.gapt.io.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
+import XMLParser._
 import at.logic.gapt.io.lisp.SExpressionParser
 import at.logic.gapt.io.readers.StringReader
 import at.logic.gapt.io.readers.XMLReaders._

@@ -3,8 +3,8 @@ package at.logic.gapt.algorithms.llk
 import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.lk.algorithms.{ applySubstitution, AtomicExpansion, solve }
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
-import at.logic.gapt.io.language.hlk.{ ast, DeclarationParser, HLKHOLParser }
-import at.logic.gapt.io.language.hlk.ast.LambdaAST
+import at.logic.gapt.io.hlk.{ ast, DeclarationParser, HLKHOLParser }
+import at.logic.gapt.io.hlk.ast.LambdaAST
 import at.logic.gapt.language.lambda.types.{ To, TA }
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base._

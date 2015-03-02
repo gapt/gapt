@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.language.fol.{FOLSubstitution, FOLExpression, FOLAllVar, FOLConst, FOLVar}
 import at.logic.gapt.language.hol.{HOLFormula, HOLVar, HOLAbs, HOLExpression}
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.io.language.prover9.Prover9TermParserLadrStyle
+import at.logic.gapt.io.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.io.shlk_parsing.sFOParser
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.proofs.algorithms.ceres.clauseSchema._

@@ -12,14 +12,15 @@ import java.util.zip.GZIPInputStream
 
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.io.ParsingException
-import at.logic.gapt.io.calculi.xml.SimpleXMLProofParser
 import at.logic.gapt.io.ivy.IvyParser
 import at.logic.gapt.io.ivy.conversion.IvyToRobinson
-import at.logic.gapt.io.language.xml.ProofDatabase
-import at.logic.gapt.io.language.xml.XMLParser.XMLProofDatabaseParser
+import at.logic.gapt.io.simple.SimpleXMLProofParser
+import at.logic.gapt.io.xml.{ XMLParser, ProofDatabase }
+import XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.io.readers.XMLReaders._
 import at.logic.gapt.io.shlk.SCHOLParser
 import at.logic.gapt.io.shlk_parsing.sFOParser
+import at.logic.gapt.io.xml.ProofDatabase
 import at.logic.gapt.language.hol.HOLExpression
 import at.logic.gapt.language.schema.dbTRS
 import at.logic.gapt.proofs.algorithms.ceres.clauseSchema._

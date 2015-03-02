@@ -1,9 +1,9 @@
 package at.logic.gapt.io.shlk
 
+import at.logic.gapt.io.HOLParser
 import at.logic.gapt.language.hol.{ Formula, HOLVar, HOLFormula, HOLExpression }
 import at.logic.gapt.language.lambda.types.{ To, FunctionType, Tindex }
 import at.logic.gapt.language.schema._
-import at.logic.gapt.io.language.HOLParser
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.Parsers

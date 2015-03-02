@@ -1,6 +1,7 @@
 
 package at.logic.gapt.integration_tests
 
+import at.logic.gapt.io.xml.{XMLParser, saveXML}
 import at.logic.gapt.proofs.lk.algorithms.subsumption._
 import at.logic.gapt.proofs.expansionTrees.{toDeep, ExpansionSequent}
 import at.logic.gapt.proofs.lk._
@@ -11,11 +12,10 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.language.lambda.symbols._
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.io.calculi.latex.SequentsListLatexExporter
-import at.logic.gapt.io.calculus.xml.saveXML
-import at.logic.gapt.io.language.arithmetic.HOLTermArithmeticalExporter
-import at.logic.gapt.io.language.tptp.TPTPFOLExporter
-import at.logic.gapt.io.language.xml.XMLParser._
+import at.logic.gapt.io.latex.SequentsListLatexExporter
+import at.logic.gapt.io.arithmetic.HOLTermArithmeticalExporter
+import at.logic.gapt.io.tptp.TPTPFOLExporter
+import XMLParser._
 import at.logic.gapt.io.readers.XMLReaders._
 import at.logic.gapt.io.writers.FileWriter
 import at.logic.gapt.provers.prover9._

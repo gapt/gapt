@@ -7,6 +7,7 @@
 
 package at.logic.gapt.io.language.simple
 
+import at.logic.gapt.io.simple.SimpleHOLParser
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner

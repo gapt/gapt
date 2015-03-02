@@ -4,6 +4,7 @@
 
 package at.logic.gapt.io.calculi.xml
 
+import at.logic.gapt.io.xml.{HOLTermXMLExporter, LKExporter}
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -13,8 +14,6 @@ import scala.xml.Utility.trim
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.io.calculus.xml._
-import at.logic.gapt.io.language.xml.HOLTermExporter
 import at.logic.gapt.language.lambda.symbols.StringSymbol
 import at.logic.gapt.language.lambda.types.To
 

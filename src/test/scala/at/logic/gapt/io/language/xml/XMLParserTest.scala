@@ -1,12 +1,13 @@
 
 package at.logic.gapt.io.language.xml
 
+import at.logic.gapt.io.xml.XMLParser
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{Sequent,FSequent,beSyntacticMultisetEqual}
 import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.io.language.xml.XMLParser._
+import XMLParser._
 import at.logic.gapt.io.readers.XMLReaders._
 import com.sun.org.apache.xml.internal.resolver.CatalogManager
 import com.sun.org.apache.xml.internal.resolver.tools.CatalogResolver

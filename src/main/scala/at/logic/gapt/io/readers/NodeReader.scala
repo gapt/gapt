@@ -1,9 +1,11 @@
 
 package at.logic.gapt.io.readers
 
+import at.logic.gapt.io.xml.XMLParser
+
 import scala.xml.{ Elem, Node }
 import scala.xml.factory.XMLLoader
-import at.logic.gapt.io.language.xml.XMLParser.XMLNodeParser
+import XMLParser.XMLNodeParser
 import javax.xml.parsers.{ SAXParser, SAXParserFactory }
 
 object XMLReaders {

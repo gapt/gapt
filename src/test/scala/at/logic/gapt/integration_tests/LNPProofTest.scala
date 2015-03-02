@@ -1,12 +1,12 @@
 package at.logic.gapt.integration_tests
 
+import at.logic.gapt.io.xml.{XMLParser, saveXML}
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.{getStatistics, deleteTautologies}
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.io.calculi.latex.SequentsListLatexExporter
-import at.logic.gapt.io.calculus.xml.saveXML
-import at.logic.gapt.io.language.arithmetic.HOLTermArithmeticalExporter
-import at.logic.gapt.io.language.xml.XMLParser._
+import at.logic.gapt.io.latex.SequentsListLatexExporter
+import at.logic.gapt.io.arithmetic.HOLTermArithmeticalExporter
+import XMLParser._
 import at.logic.gapt.io.readers.XMLReaders._
 import at.logic.gapt.io.writers.FileWriter
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
