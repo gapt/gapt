@@ -68,6 +68,11 @@ object TermsExtraction {
   }
 }
 
+// Given a map with keys (F => { t_1, ..., t_n } ), where the t_i are lists of terms,
+// this represents a set of terms containing, for every such key, the terms g_F( t_1 ), ..., g_F( t_n ),
+// where g_F is a function symbol associated with the formula F. Functions to go back and forth
+// between the input map and the representation are provided.
+
 class TermSet( terms: Map[FOLFormula, List[List[FOLTerm]]] ) {
 
   var formulaFunction = new HashMap[String, FOLFormula]
@@ -82,11 +87,13 @@ class TermSet( terms: Map[FOLFormula, List[List[FOLTerm]]] ) {
       }
   }
 
+  // Given g_F( t_i ) as above, return F.
   def getFormula( t: FOLTerm ) = t match {
     case Function( symbol, _ ) => formulaFunction( symbol.toString )
     case _                     => throw new TermsExtractionException( "Term is not a function: " + t )
   }
 
+  // Given g_F( t_i ) as above, return t_i.
   def getTermTuple( t: FOLTerm ) = t match {
     case Function( _, tuple ) => tuple
     case _                    => throw new TermsExtractionException( "Term is not a function: " + t )

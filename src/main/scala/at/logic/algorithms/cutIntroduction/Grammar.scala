@@ -45,6 +45,25 @@ class Grammar( u0: List[FOLTerm], slist0: List[( List[FOLVar], Set[List[FOLTerm]
   }
 }
 
+// For cut-introduction, we consider sequents
+// \forall x_1 F_1(x_1), ..., \forall x_n F_n(x_n) :- \exists x_{n+1} F_{n+1}(x_{n+1}), ..., \exists x_m F(x_m)
+// where the x_i, y_i are lists of variables.
+//
+// Hence we will consider grammars of the form (U_1,...,U_m) \circ S_1 ... \circ S_n
+// where the U_i are sets of lists of terms corresponding to the instances of the x_i,
+// and the S_i are sets of terms.
+//
+// On the other hand, our Grammar class implements grammars of the form U \circ S_1 ... \circ S_n.
+// This class provides the glue between the more general grammars and those provided by
+// the grammar class.
+//
+class GrammarForCutintro( ts: TermSet, g: Grammar ) {
+  // if f is the formula F_i, this returns the set U_i
+  def getU( f: FOLFormula ) = {
+    
+  }
+}
+
 /**
  * Takes a set of terms and, using DeltaG, computes the set of smallest grammars that generate it.
  */
