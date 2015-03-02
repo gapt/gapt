@@ -16,7 +16,7 @@ import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ Struct, StructCreators }
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
-import at.logic.gapt.algorithms.llk.HybridLatexExporter
+import at.logic.gapt.io.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.gapt.proofs.lk.algorithms.subsumption._
 import at.logic.gapt.language.fol.algorithms._

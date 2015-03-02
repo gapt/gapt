@@ -1,4 +1,4 @@
-package at.logic.gapt.algorithms.llk
+package at.logic.gapt.io.llk
 
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.language.lambda._

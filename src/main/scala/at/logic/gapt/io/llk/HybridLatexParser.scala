@@ -9,7 +9,7 @@ import java.io.FileReader
 import at.logic.gapt.language.lambda.types.TA
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
-import at.logic.gapt.algorithms.llk.TokenToLKConverter
+import at.logic.gapt.io.llk.TokenToLKConverter
 
 /**
  *  An extended proof database allows to label subproofs by formulas. It provides mappings from formulas to proofs

@@ -8,7 +8,7 @@ import ch.randelshofer.tree._
 import at.logic.gapt.utils.ds.trees.{ BinaryTree, UnaryTree, LeafTree }
 import javax.swing.event.ChangeListener
 import java.awt.Color
-import at.logic.gapt.algorithms.llk.HybridLatexExporter.fsequentString
+import at.logic.gapt.io.llk.HybridLatexExporter.fsequentString
 import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRuleType, ForallSkRightRuleType, ExistsSkRightRuleType, ForallSkLeftRuleType }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._

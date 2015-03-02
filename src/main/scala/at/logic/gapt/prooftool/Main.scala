@@ -42,7 +42,7 @@ import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
-import at.logic.gapt.algorithms.llk.HybridLatexExporter
+import at.logic.gapt.io.llk.HybridLatexExporter
 import at.logic.gapt.io.tptp.TPTPFOLExporter
 
 object Main extends SimpleSwingApplication {
