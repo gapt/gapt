@@ -1091,9 +1091,8 @@ object EquationRight2Rule extends EquationRuleLogger {
   } else None
 }
 
-/*
-
 object UnaryEquationLeft1Rule extends EquationRuleLogger {
+
   def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
   UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val eqoccOpt: Option[FormulaOccurrence] = s1.root.antecedent.find(_ == term1oc)
@@ -1156,6 +1155,7 @@ object UnaryEquationLeft1Rule extends EquationRuleLogger {
 }
 
 object UnaryEquationLeft2Rule extends EquationRuleLogger {
+
   def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
   UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val eqoccOpt = s1.root.antecedent.find(_ == term1oc)
@@ -1218,6 +1218,7 @@ object UnaryEquationLeft2Rule extends EquationRuleLogger {
 }
 
 object UnaryEquationRight1Rule extends EquationRuleLogger {
+
   def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
   UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val eqoccOpt = s1.root.antecedent.find(_ == term1oc)
@@ -1280,6 +1281,7 @@ object UnaryEquationRight1Rule extends EquationRuleLogger {
 }
 
 object UnaryEquationRight2Rule extends EquationRuleLogger {
+
   def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
   UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val eqoccOpt = s1.root.antecedent.find(_ == term1oc)
@@ -1340,9 +1342,6 @@ object UnaryEquationRight2Rule extends EquationRuleLogger {
     else None
   }
 }
-*/
-
-/*
 
 object EquationRuleConverter {
 
@@ -1399,4 +1398,3 @@ object EquationRuleConverter {
   }
 
 }
-*/

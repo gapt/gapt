@@ -1002,6 +1002,86 @@ object EquationRightMacroRule extends EquationRuleLogger {
   }
 }
 
+object UnaryEquationLeftRule extends MacroRuleLogger {
+
+  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
+  UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqocc = s1.root.antecedent find (_ == term1oc) match {
+      case Some(e) => e
+      case None => throw new LKRuleCreationException("Formula occurrence "+term1oc+" is not contained in "+s1.root.antecedent+".")
+    }
+
+    val auxocc = s1.root.antecedent find (_ == term2oc) match {
+      case Some(a) => a
+      case None => throw new LKRuleCreationException("Formula occurrence "+term2oc+" is not contained in "+s1.root.antecedent+".")
+    }
+
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation( s, t ) =>
+        trace( "Equation: " + s + " = " + t + "." )
+        val aux = auxocc.formula
+        val term = aux.get( pos )
+
+        term match {
+          case Some( `s` ) => UnaryEquationLeft1Rule( s1, term1oc, term2oc, pos )
+
+          case Some( `t` ) => UnaryEquationLeft2Rule( s1, term1oc, term2oc, pos )
+
+          case Some( x ) =>
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+
+          case None =>
+            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+        }
+
+      case _ =>
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
+    }
+  }
+}
+
+object UnaryEquationRightRule extends MacroRuleLogger {
+
+  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
+  UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqocc = s1.root.antecedent find (_ == term1oc) match {
+      case Some(e) => e
+      case None => throw new LKRuleCreationException("Formula occurrence "+term1oc+" is not contained in "+s1.root.antecedent+".")
+    }
+
+    val auxocc = s1.root.succedent find (_ == term2oc) match {
+      case Some(a) => a
+      case None => throw new LKRuleCreationException("Formula occurrence "+term2oc+" is not contained in "+s1.root.succedent+".")
+    }
+
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation( s, t ) =>
+        trace( "Equation: " + s + " = " + t + "." )
+        val aux = auxocc.formula
+        val term = aux.get( pos )
+
+        term match {
+          case Some( `s` ) => UnaryEquationRight1Rule( s1, term1oc, term2oc, pos )
+
+          case Some( `t` ) => UnaryEquationRight2Rule( s1, term1oc, term2oc, pos )
+
+          case Some( x ) =>
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+
+          case None =>
+            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+        }
+
+      case _ =>
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
+    }
+  }
+}
+
 /**
  * This macro rule simulates a series of contractions in the antecedent.
  *
