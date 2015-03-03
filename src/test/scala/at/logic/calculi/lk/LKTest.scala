@@ -729,6 +729,19 @@ class LKTest extends SpecificationWithJUnit {
       success
     }
 
+    "correctly construct a small induction proof if only the main formula is given" in {
+      val ax1 = Axiom(List(P0y), List(P0y))
+      val occZero = ax1.root.succedent.head
+
+      val ax2 = Axiom(List(Pxy), List(PSxy))
+      val occX = ax2.root.antecedent.head
+      val occSx = ax2.root.succedent.head
+
+      InductionRule(ax1, ax2, Pxy)
+
+      success
+    }
+
     "fail if S does not occur in the right place" in {
       val Tx = FOLFunction("T", List(x))
       val PTxy = FOLAtom("P", List(Tx, y))

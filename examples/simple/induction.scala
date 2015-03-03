@@ -79,7 +79,7 @@ object inductionExamples {
   val inductionStepDummy =
     Axiom(List(assocXYZ), List(assocXYSZ))
 
-  val inductionProof =
+  /*val inductionProof =
   ForallRightBlock(
     InductionRule(
       inductionBase,
@@ -91,5 +91,16 @@ object inductionExamples {
     assoc,
     List(a,b,c)
   )
+*/
+  val inductionProof =
+    ForallRightBlock(
+      InductionRule(
+        inductionBase,
+        inductionStepDummy,
+        assocXYZ
+      ),
+      assoc,
+      List(a,b,c)
+    )
 
 }
