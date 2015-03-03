@@ -1004,16 +1004,15 @@ object EquationRightMacroRule extends EquationRuleLogger {
 
 object UnaryEquationLeftRule extends MacroRuleLogger {
 
-  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
-  UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
-    val eqocc = s1.root.antecedent find (_ == term1oc) match {
-      case Some(e) => e
-      case None => throw new LKRuleCreationException("Formula occurrence "+term1oc+" is not contained in "+s1.root.antecedent+".")
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqocc = s1.root.antecedent find ( _ == term1oc ) match {
+      case Some( e ) => e
+      case None      => throw new LKRuleCreationException( "Formula occurrence " + term1oc + " is not contained in " + s1.root.antecedent + "." )
     }
 
-    val auxocc = s1.root.antecedent find (_ == term2oc) match {
-      case Some(a) => a
-      case None => throw new LKRuleCreationException("Formula occurrence "+term2oc+" is not contained in "+s1.root.antecedent+".")
+    val auxocc = s1.root.antecedent find ( _ == term2oc ) match {
+      case Some( a ) => a
+      case None      => throw new LKRuleCreationException( "Formula occurrence " + term2oc + " is not contained in " + s1.root.antecedent + "." )
     }
 
     val eq = eqocc.formula
@@ -1040,20 +1039,83 @@ object UnaryEquationLeftRule extends MacroRuleLogger {
         throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
     }
   }
+
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqocc = s1.root.antecedent find ( _ == term1oc ) match {
+      case Some( e ) => e
+      case None      => throw new LKRuleCreationException( "Formula occurrence " + term1oc + " is not contained in " + s1.root.antecedent + "." )
+    }
+
+    val auxocc = s1.root.antecedent find ( _ == term2oc ) match {
+      case Some( a ) => a
+      case None      => throw new LKRuleCreationException( "Formula occurrence " + term2oc + " is not contained in " + s1.root.antecedent + "." )
+    }
+
+    val aux = auxocc.formula
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation( s, t ) =>
+        trace( "Equation: " + s + " = " + t + "." )
+
+        if ( s == t && aux == main ) {
+          debug( "Producing equation rule with trivial equation." )
+          UnaryEquationLeft1Rule( s1, term1oc, term2oc, Nil )
+        } else if ( s == t && aux != main ) {
+          throw new LKRuleCreationException( "Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+        } else if ( s != t && aux == main ) {
+          throw new LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
+        } else {
+          val sAux = aux.find( s )
+          val sMain = main.find( s )
+
+          val tAux = aux.find( t )
+          val tMain = main.find( t )
+
+          if ( sAux.isEmpty && tAux.isEmpty )
+            throw new LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + aux + "." )
+
+          trace( "Positions of s = " + s + " in aux = " + aux + ": " + sAux + "." )
+          trace( "Positions of s = " + s + " in main = " + main + ": " + sMain + "." )
+
+          trace( "Positions of t = " + t + " in aux = " + aux + ": " + tAux + "." )
+          trace( "Positions of t = " + t + " in main = " + main + ": " + tMain + "." )
+
+          val tToS = sMain intersect tAux
+          val sToT = tMain intersect sAux
+          trace( "tToS = " + tToS )
+          trace( "sToT = " + sToT )
+
+          if ( sToT.length == 1 && tToS.length == 0 ) {
+            val p = sToT.head
+            val mainNew = HOLPosition.replace( aux, p, t )
+            if ( mainNew == main ) {
+              UnaryEquationLeft1Rule( s1, term1oc, term2oc, p )
+            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
+          } else if ( tToS.length == 1 && sToT.length == 0 ) {
+            val p = tToS.head
+            val mainNew = HOLPosition.replace( aux, p, s )
+            if ( mainNew == main ) {
+              UnaryEquationLeft2Rule( s1, term1oc, term2oc, p )
+            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
+          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position.\n Equation: " + eqocc.formula )
+        }
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
+    }
+  }
 }
 
 object UnaryEquationRightRule extends MacroRuleLogger {
 
-  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
-  UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
-    val eqocc = s1.root.antecedent find (_ == term1oc) match {
-      case Some(e) => e
-      case None => throw new LKRuleCreationException("Formula occurrence "+term1oc+" is not contained in "+s1.root.antecedent+".")
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqocc = s1.root.antecedent find ( _ == term1oc ) match {
+      case Some( e ) => e
+      case None      => throw new LKRuleCreationException( "Formula occurrence " + term1oc + " is not contained in " + s1.root.antecedent + "." )
     }
 
-    val auxocc = s1.root.succedent find (_ == term2oc) match {
-      case Some(a) => a
-      case None => throw new LKRuleCreationException("Formula occurrence "+term2oc+" is not contained in "+s1.root.succedent+".")
+    val auxocc = s1.root.succedent find ( _ == term2oc ) match {
+      case Some( a ) => a
+      case None      => throw new LKRuleCreationException( "Formula occurrence " + term2oc + " is not contained in " + s1.root.succedent + "." )
     }
 
     val eq = eqocc.formula
@@ -1078,6 +1140,70 @@ object UnaryEquationRightRule extends MacroRuleLogger {
 
       case _ =>
         throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
+    }
+  }
+
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqocc = s1.root.antecedent find ( _ == term1oc ) match {
+      case Some( e ) => e
+      case None      => throw new LKRuleCreationException( "Formula occurrence " + term1oc + " is not contained in " + s1.root.antecedent + "." )
+    }
+
+    val auxocc = s1.root.succedent find ( _ == term2oc ) match {
+      case Some( a ) => a
+      case None      => throw new LKRuleCreationException( "Formula occurrence " + term2oc + " is not contained in " + s1.root.succedent + "." )
+    }
+
+    val aux = auxocc.formula
+    val eq = eqocc.formula
+
+    eq match {
+      case Equation( s, t ) =>
+        trace( "Equation: " + s + " = " + t + "." )
+
+        if ( s == t && aux == main ) {
+          debug( "Producing equation rule with trivial equation." )
+          UnaryEquationRight1Rule( s1, term1oc, term2oc, Nil )
+        } else if ( s == t && aux != main ) {
+          throw new LKRuleCreationException( "Equation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+        } else if ( s != t && aux == main ) {
+          throw new LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
+        } else {
+          val sAux = aux.find( s )
+          val sMain = main.find( s )
+
+          val tAux = aux.find( t )
+          val tMain = main.find( t )
+
+          if ( sAux.isEmpty && tAux.isEmpty )
+            throw new LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + aux + "." )
+
+          trace( "Positions of s = " + s + " in aux = " + aux + ": " + sAux + "." )
+          trace( "Positions of s = " + s + " in main = " + main + ": " + sMain + "." )
+
+          trace( "Positions of t = " + t + " in aux = " + aux + ": " + tAux + "." )
+          trace( "Positions of t = " + t + " in main = " + main + ": " + tMain + "." )
+
+          val tToS = sMain intersect tAux
+          val sToT = tMain intersect sAux
+          trace( "tToS = " + tToS )
+          trace( "sToT = " + sToT )
+
+          if ( sToT.length == 1 && tToS.length == 0 ) {
+            val p = sToT.head
+            val mainNew = HOLPosition.replace( aux, p, t )
+            if ( mainNew == main ) {
+              UnaryEquationRight1Rule( s1, term1oc, term2oc, p )
+            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
+          } else if ( tToS.length == 1 && sToT.length == 0 ) {
+            val p = tToS.head
+            val mainNew = HOLPosition.replace( aux, p, s )
+            if ( mainNew == main ) {
+              UnaryEquationRight2Rule( s1, term1oc, term2oc, p )
+            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
+          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position.\n Equation: " + eqocc.formula )
+        }
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
     }
   }
 }

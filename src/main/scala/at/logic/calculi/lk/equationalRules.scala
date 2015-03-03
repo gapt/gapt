@@ -1093,306 +1093,294 @@ object EquationRight2Rule extends EquationRuleLogger {
 
 object UnaryEquationLeft1Rule extends EquationRuleLogger {
 
-  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
-  UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
-    val eqoccOpt: Option[FormulaOccurrence] = s1.root.antecedent.find(_ == term1oc)
-    val auxoccOpt: Option[FormulaOccurrence] = s1.root.antecedent.find(_ == term2oc)
-    
-    val (eqocc: FormulaOccurrence, auxocc: FormulaOccurrence) = if (eqoccOpt == None)
-      throw new LKRuleCreationException("Equation "+eqoccOpt+" is not contained in antecedent of "+s1.root+".")
-    else if (auxoccOpt == None)
-      throw new LKRuleCreationException("Auxiliary formula "+auxoccOpt+" is not contained in antecedent of "+s1.root+".")
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqoccOpt: Option[FormulaOccurrence] = s1.root.antecedent.find( _ == term1oc )
+    val auxoccOpt: Option[FormulaOccurrence] = s1.root.antecedent.find( _ == term2oc )
+
+    val ( eqocc: FormulaOccurrence, auxocc: FormulaOccurrence ) = if ( eqoccOpt == None )
+      throw new LKRuleCreationException( "Equation " + eqoccOpt + " is not contained in antecedent of " + s1.root + "." )
+    else if ( auxoccOpt == None )
+      throw new LKRuleCreationException( "Auxiliary formula " + auxoccOpt + " is not contained in antecedent of " + s1.root + "." )
     else
-      (eqoccOpt.get, auxoccOpt.get)
-    val (eq, aux) = (eqocc.formula, auxocc.formula)
-    
+      ( eqoccOpt.get, auxoccOpt.get )
+    val ( eq, aux ) = ( eqocc.formula, auxocc.formula )
+
     eq match {
-      case Equation(s,t) =>
-        trace("Equation: " +s+" = "+t+".")
-        val term = aux.get(pos)
+      case Equation( s, t ) =>
+        trace( "Equation: " + s + " = " + t + "." )
+        val term = aux.get( pos )
 
         term match {
-          case Some(`s`) =>
-            val prin = HOLPosition.replace(aux, pos, t).asInstanceOf[HOLFormula]
-            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
-            val antecedent = createContext(s1.root.antecedent filterNot (_ == auxocc)) :+ prinOcc
-            val succedent = createContext(s1.root.succedent)
+          case Some( `s` ) =>
+            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
+            val antecedent = createContext( s1.root.antecedent filterNot ( _ == auxocc ) ) :+ prinOcc
+            val succedent = createContext( s1.root.succedent )
 
-            new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
-              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
+            new UnaryTree[Sequent]( Sequent( antecedent, succedent ), s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
               def rule = UnaryEquationLeft1RuleType
 
-              def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+              def aux = ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil
 
               def prin = prinOcc :: Nil
 
-              def termPos = List(pos)
+              def termPos = List( pos )
 
-              override def name = "e':l1"
+              override def name = "e\':l1"
             }
 
-          case Some(x) =>
-            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+          case Some( x ) =>
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
 
           case None =>
-            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
-        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
     }
   }
 
-  def unapply(proof: LKProof) = {
-    if (proof.rule == UnaryEquationLeft1RuleType) {
+  def unapply( proof: LKProof ) = {
+    if ( proof.rule == UnaryEquationLeft1RuleType ) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions]
-      val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
-      val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, eqocc, auxocc, r.termPos, p1))
-    }
-    else None
+      val ( ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil ) = r.aux
+      val ( p1 :: Nil ) = r.prin
+      Some( ( r.uProof, r.root, eqocc, auxocc, r.termPos, p1 ) )
+    } else None
   }
 }
 
 object UnaryEquationLeft2Rule extends EquationRuleLogger {
 
-  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
-  UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
-    val eqoccOpt = s1.root.antecedent.find(_ == term1oc)
-    val auxoccOpt = s1.root.antecedent.find(_ == term2oc)
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqoccOpt = s1.root.antecedent.find( _ == term1oc )
+    val auxoccOpt = s1.root.antecedent.find( _ == term2oc )
 
-    val (eqocc: FormulaOccurrence, auxocc: FormulaOccurrence) = if (eqoccOpt == None)
-      throw new LKRuleCreationException("Equation "+eqoccOpt+" is not contained in antecedent of "+s1.root+".")
-    else if (auxoccOpt == None)
-      throw new LKRuleCreationException("Auxiliary formula "+auxoccOpt+" is not contained in antecedent of "+s1.root+".")
+    val ( eqocc: FormulaOccurrence, auxocc: FormulaOccurrence ) = if ( eqoccOpt == None )
+      throw new LKRuleCreationException( "Equation " + eqoccOpt + " is not contained in antecedent of " + s1.root + "." )
+    else if ( auxoccOpt == None )
+      throw new LKRuleCreationException( "Auxiliary formula " + auxoccOpt + " is not contained in antecedent of " + s1.root + "." )
     else
-      (eqoccOpt.get, auxoccOpt.get)
-    val (eq, aux) = (eqocc.formula, auxocc.formula)
+      ( eqoccOpt.get, auxoccOpt.get )
+    val ( eq, aux ) = ( eqocc.formula, auxocc.formula )
 
     eq match {
-      case Equation(s,t) =>
-        trace("Equation: " +s+" = "+t+".")
-        val term = aux.get(pos)
+      case Equation( s, t ) =>
+        trace( "Equation: " + s + " = " + t + "." )
+        val term = aux.get( pos )
 
         term match {
-          case Some(`t`) =>
-            val prin = HOLPosition.replace(aux, pos, s).asInstanceOf[HOLFormula]
-            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
-            val antecedent = createContext(s1.root.antecedent filterNot (_ == auxocc)) :+ prinOcc
-            val succedent = createContext(s1.root.succedent)
+          case Some( `t` ) =>
+            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
+            val antecedent = createContext( s1.root.antecedent filterNot ( _ == auxocc ) ) :+ prinOcc
+            val succedent = createContext( s1.root.succedent )
 
-            new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
-              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
+            new UnaryTree[Sequent]( Sequent( antecedent, succedent ), s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
               def rule = UnaryEquationLeft2RuleType
 
-              def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+              def aux = ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil
 
               def prin = prinOcc :: Nil
 
-              def termPos = List(pos)
+              def termPos = List( pos )
 
-              override def name = "e':l2"
+              override def name = "e\':l2"
             }
 
-          case Some(x) =>
-            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+          case Some( x ) =>
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
 
           case None =>
-            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
-        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
     }
   }
 
-  def unapply(proof: LKProof) = {
-    if (proof.rule == UnaryEquationLeft2RuleType) {
+  def unapply( proof: LKProof ) = {
+    if ( proof.rule == UnaryEquationLeft2RuleType ) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions]
-      val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
-      val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, eqocc, auxocc, r.termPos, p1))
-    }
-    else None
+      val ( ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil ) = r.aux
+      val ( p1 :: Nil ) = r.prin
+      Some( ( r.uProof, r.root, eqocc, auxocc, r.termPos, p1 ) )
+    } else None
   }
 }
 
 object UnaryEquationRight1Rule extends EquationRuleLogger {
 
-  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
-  UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
-    val eqoccOpt = s1.root.antecedent.find(_ == term1oc)
-    val auxoccOpt = s1.root.succedent.find(_ == term2oc)
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqoccOpt = s1.root.antecedent.find( _ == term1oc )
+    val auxoccOpt = s1.root.succedent.find( _ == term2oc )
 
-    val (eqocc: FormulaOccurrence, auxocc: FormulaOccurrence) = if (eqoccOpt == None)
-      throw new LKRuleCreationException("Equation "+eqoccOpt+" is not contained in antecedent of "+s1.root+".")
-    else if (auxoccOpt == None)
-      throw new LKRuleCreationException("Auxiliary formula "+auxoccOpt+" is not contained in succedent of "+s1.root+".")
+    val ( eqocc: FormulaOccurrence, auxocc: FormulaOccurrence ) = if ( eqoccOpt == None )
+      throw new LKRuleCreationException( "Equation " + eqoccOpt + " is not contained in antecedent of " + s1.root + "." )
+    else if ( auxoccOpt == None )
+      throw new LKRuleCreationException( "Auxiliary formula " + auxoccOpt + " is not contained in succedent of " + s1.root + "." )
     else
-      (eqoccOpt.get, auxoccOpt.get)
-    val (eq, aux) = (eqocc.formula, auxocc.formula)
+      ( eqoccOpt.get, auxoccOpt.get )
+    val ( eq, aux ) = ( eqocc.formula, auxocc.formula )
 
     eq match {
-      case Equation(s,t) =>
-        trace("Equation: " +s+" = "+t+".")
-        val term = aux.get(pos)
+      case Equation( s, t ) =>
+        trace( "Equation: " + s + " = " + t + "." )
+        val term = aux.get( pos )
 
         term match {
-          case Some(`s`) =>
-            val prin = HOLPosition.replace(aux, pos, t).asInstanceOf[HOLFormula]
-            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
-            val antecedent = createContext(s1.root.antecedent)
-            val succedent = createContext(s1.root.succedent filterNot (_ == auxocc)) :+ prinOcc
+          case Some( `s` ) =>
+            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
+            val antecedent = createContext( s1.root.antecedent )
+            val succedent = createContext( s1.root.succedent filterNot ( _ == auxocc ) ) :+ prinOcc
 
-            new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
-              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
+            new UnaryTree[Sequent]( Sequent( antecedent, succedent ), s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
               def rule = UnaryEquationRight1RuleType
 
-              def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+              def aux = ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil
 
               def prin = prinOcc :: Nil
 
-              def termPos = List(pos)
+              def termPos = List( pos )
 
-              override def name = "e':r1"
+              override def name = "e\':r1"
             }
 
-          case Some(x) =>
-            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+          case Some( x ) =>
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
 
           case None =>
-            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
-        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
     }
   }
-  def unapply(proof: LKProof) = {
-    if (proof.rule == UnaryEquationRight1RuleType) {
+  def unapply( proof: LKProof ) = {
+    if ( proof.rule == UnaryEquationRight1RuleType ) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions]
-      val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
-      val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, eqocc, auxocc, r.termPos, p1))
-    }
-    else None
+      val ( ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil ) = r.aux
+      val ( p1 :: Nil ) = r.prin
+      Some( ( r.uProof, r.root, eqocc, auxocc, r.termPos, p1 ) )
+    } else None
   }
 
 }
 
 object UnaryEquationRight2Rule extends EquationRuleLogger {
 
-  def apply(s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition):
-  UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
-    val eqoccOpt = s1.root.antecedent.find(_ == term1oc)
-    val auxoccOpt = s1.root.succedent.find(_ == term2oc)
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+    val eqoccOpt = s1.root.antecedent.find( _ == term1oc )
+    val auxoccOpt = s1.root.succedent.find( _ == term2oc )
 
-    val (eqocc: FormulaOccurrence, auxocc: FormulaOccurrence) = if (eqoccOpt == None)
-      throw new LKRuleCreationException("Equation "+eqoccOpt+" is not contained in antecedent of "+s1.root+".")
-    else if (auxoccOpt == None)
-      throw new LKRuleCreationException("Auxiliary formula "+auxoccOpt+" is not contained in succedent of "+s1.root+".")
+    val ( eqocc: FormulaOccurrence, auxocc: FormulaOccurrence ) = if ( eqoccOpt == None )
+      throw new LKRuleCreationException( "Equation " + eqoccOpt + " is not contained in antecedent of " + s1.root + "." )
+    else if ( auxoccOpt == None )
+      throw new LKRuleCreationException( "Auxiliary formula " + auxoccOpt + " is not contained in succedent of " + s1.root + "." )
     else
-      (eqoccOpt.get, auxoccOpt.get)
-    val (eq, aux) = (eqocc.formula, auxocc.formula)
+      ( eqoccOpt.get, auxoccOpt.get )
+    val ( eq, aux ) = ( eqocc.formula, auxocc.formula )
 
     eq match {
-      case Equation(s,t) =>
-        trace("Equation: " +s+" = "+t+".")
-        val term = aux.get(pos)
+      case Equation( s, t ) =>
+        trace( "Equation: " + s + " = " + t + "." )
+        val term = aux.get( pos )
 
         term match {
-          case Some(`t`) =>
-            val prin = HOLPosition.replace(aux, pos, s).asInstanceOf[HOLFormula]
-            val prinOcc = eqocc.factory.createFormulaOccurrence(prin, List(eqocc, auxocc))
-            val antecedent = createContext(s1.root.antecedent)
-            val succedent = createContext(s1.root.succedent filterNot (_ == auxocc)) :+ prinOcc
+          case Some( `t` ) =>
+            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[HOLFormula]
+            val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
+            val antecedent = createContext( s1.root.antecedent )
+            val succedent = createContext( s1.root.succedent filterNot ( _ == auxocc ) ) :+ prinOcc
 
-            new UnaryTree[Sequent](Sequent(antecedent, succedent), s1)
-              with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
+            new UnaryTree[Sequent]( Sequent( antecedent, succedent ), s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
               def rule = UnaryEquationRight2RuleType
 
-              def aux = (eqocc :: Nil) :: (auxocc :: Nil) :: Nil
+              def aux = ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil
 
               def prin = prinOcc :: Nil
 
-              def termPos = List(pos)
+              def termPos = List( pos )
 
-              override def name = "e':r2"
+              override def name = "e\':r2"
             }
 
-          case Some(x) =>
-            throw new LKRuleCreationException("Wrong term "+x+" in auxiliary formula "+aux+" at position "+pos+".")
+          case Some( x ) =>
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
 
           case None =>
-            throw new LKRuleCreationException("Position "+pos+" is not well-defined for formula "+aux+".")
+            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
-        throw new LKRuleCreationException("Formula occurrence "+eqocc+" is not an equation.")
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
     }
   }
 
-  def unapply(proof: LKProof) = {
-    if (proof.rule == UnaryEquationRight2RuleType) {
+  def unapply( proof: LKProof ) = {
+    if ( proof.rule == UnaryEquationRight2RuleType ) {
       val r = proof.asInstanceOf[UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions]
-      val ((eqocc::Nil)::(auxocc::Nil)::Nil) = r.aux
-      val (p1::Nil) = r.prin
-      Some((r.uProof, r.root, eqocc, auxocc, r.termPos, p1))
-    }
-    else None
+      val ( ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil ) = r.aux
+      val ( p1 :: Nil ) = r.prin
+      Some( ( r.uProof, r.root, eqocc, auxocc, r.termPos, p1 ) )
+    } else None
   }
 }
 
 object EquationRuleConverter {
 
-  def toUnary(proof: LKProof): LKProof = applyRecursive(toUnaryHelper)(proof)
+  def toUnary( proof: LKProof ): LKProof = applyRecursive( toUnaryHelper )( proof )
 
-  def toBinary(proof:LKProof): LKProof = applyRecursive(toBinaryHelper)(proof)
+  def toBinary( proof: LKProof ): LKProof = applyRecursive( toBinaryHelper )( proof )
 
-  def toUnaryHelper(p: LKProof): LKProof = p match {
-    case EquationLeft1Rule(u1, u2, _, term1oc, term2oc, posList, _) =>
-      val subProof1 = WeakeningLeftRule(u2, term1oc.formula)
-      val subProof2 = UnaryEquationLeft1Rule(subProof1, subProof1.prin(0), term2oc, posList(0))
-      CutRule(u1, subProof2, term1oc, subProof2.aux(0)(0))
+  def toUnaryHelper( p: LKProof ): LKProof = p match {
+    case EquationLeft1Rule( u1, u2, _, term1oc, term2oc, posList, _ ) =>
+      val subProof1 = WeakeningLeftRule( u2, term1oc.formula )
+      val subProof2 = UnaryEquationLeft1Rule( subProof1, subProof1.prin( 0 ), term2oc, posList( 0 ) )
+      CutRule( u1, subProof2, term1oc, subProof2.aux( 0 )( 0 ) )
 
-    case EquationLeft2Rule(u1, u2, _, term1oc, term2oc, posList, _) =>
-      val subProof1 = WeakeningLeftRule(u2, term1oc.formula)
-      val subProof2 = UnaryEquationLeft2Rule(subProof1, subProof1.prin(0), term2oc, posList(0))
-      CutRule(u1, subProof2, term1oc, subProof2.aux(0)(0))
+    case EquationLeft2Rule( u1, u2, _, term1oc, term2oc, posList, _ ) =>
+      val subProof1 = WeakeningLeftRule( u2, term1oc.formula )
+      val subProof2 = UnaryEquationLeft2Rule( subProof1, subProof1.prin( 0 ), term2oc, posList( 0 ) )
+      CutRule( u1, subProof2, term1oc, subProof2.aux( 0 )( 0 ) )
 
-    case EquationRight1Rule(u1, u2, _, term1oc, term2oc, posList, _) =>
-      val subProof1 = WeakeningLeftRule(u2, term1oc.formula)
-      val subProof2 = UnaryEquationRight1Rule(subProof1, subProof1.prin(0), term2oc, posList(0))
-      CutRule(u1, subProof2, term1oc, subProof2.aux(0)(0))
+    case EquationRight1Rule( u1, u2, _, term1oc, term2oc, posList, _ ) =>
+      val subProof1 = WeakeningLeftRule( u2, term1oc.formula )
+      val subProof2 = UnaryEquationRight1Rule( subProof1, subProof1.prin( 0 ), term2oc, posList( 0 ) )
+      CutRule( u1, subProof2, term1oc, subProof2.aux( 0 )( 0 ) )
 
-    case EquationRight2Rule(u1, u2, _, term1oc, term2oc, posList, _) =>
-      val subProof1 = WeakeningLeftRule(u2, term1oc.formula)
-      val subProof2 = UnaryEquationRight2Rule(subProof1, subProof1.prin(0), term2oc, posList(0))
-      CutRule(u1, subProof2, term1oc, subProof2.aux(0)(0))
+    case EquationRight2Rule( u1, u2, _, term1oc, term2oc, posList, _ ) =>
+      val subProof1 = WeakeningLeftRule( u2, term1oc.formula )
+      val subProof2 = UnaryEquationRight2Rule( subProof1, subProof1.prin( 0 ), term2oc, posList( 0 ) )
+      CutRule( u1, subProof2, term1oc, subProof2.aux( 0 )( 0 ) )
 
     case _ => p
   }
 
-  def toBinaryHelper(p: LKProof): LKProof = p match {
-    case UnaryEquationLeft1Rule(u1,_, term1oc, term2oc, posList,_) =>
+  def toBinaryHelper( p: LKProof ): LKProof = p match {
+    case UnaryEquationLeft1Rule( u1, _, term1oc, term2oc, posList, _ ) =>
       val eq = term1oc.formula
-      val ax = Axiom(List(eq), List(eq))
-      ContractionLeftRule(EquationLeft1Rule(ax, u1, ax.root.succedent(0), term2oc, posList(0)), eq)
+      val ax = Axiom( List( eq ), List( eq ) )
+      ContractionLeftRule( EquationLeft1Rule( ax, u1, ax.root.succedent( 0 ), term2oc, posList( 0 ) ), eq )
 
-    case UnaryEquationLeft2Rule(u1,_, term1oc, term2oc, posList,_) =>
+    case UnaryEquationLeft2Rule( u1, _, term1oc, term2oc, posList, _ ) =>
       val eq = term1oc.formula
-      val ax = Axiom(List(eq), List(eq))
-      ContractionLeftRule(EquationLeft2Rule(ax, u1, ax.root.succedent(0), term2oc, posList(0)), eq)
+      val ax = Axiom( List( eq ), List( eq ) )
+      ContractionLeftRule( EquationLeft2Rule( ax, u1, ax.root.succedent( 0 ), term2oc, posList( 0 ) ), eq )
 
-    case UnaryEquationRight1Rule(u1,_, term1oc, term2oc, posList,_) =>
+    case UnaryEquationRight1Rule( u1, _, term1oc, term2oc, posList, _ ) =>
       val eq = term1oc.formula
-      val ax = Axiom(List(eq), List(eq))
-      ContractionLeftRule(EquationRight1Rule(ax, u1, ax.root.succedent(0), term2oc, posList(0)), eq)
+      val ax = Axiom( List( eq ), List( eq ) )
+      ContractionLeftRule( EquationRight1Rule( ax, u1, ax.root.succedent( 0 ), term2oc, posList( 0 ) ), eq )
 
-    case UnaryEquationRight2Rule(u1,_, term1oc, term2oc, posList,_) =>
+    case UnaryEquationRight2Rule( u1, _, term1oc, term2oc, posList, _ ) =>
       val eq = term1oc.formula
-      val ax = Axiom(List(eq), List(eq))
-      ContractionLeftRule(EquationRight2Rule(ax, u1, ax.root.succedent(0), term2oc, posList(0)), eq)
+      val ax = Axiom( List( eq ), List( eq ) )
+      ContractionLeftRule( EquationRight2Rule( ax, u1, ax.root.succedent( 0 ), term2oc, posList( 0 ) ), eq )
 
     case _ => p
   }
