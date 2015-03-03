@@ -313,6 +313,19 @@ object quantRulesNumber {
   }
 }
 
+object isQuantified {
+  def apply( tree: ExpansionTreeWithMerges ): Boolean = tree match {
+    case Atom( _ )                   => false
+    case Neg( _ )                    => false
+    case And( _, _ )                 => false
+    case Or( _, _ )                  => false
+    case Imp( _, _ )                 => false
+    case WeakQuantifier( _, _ )      => true
+    case StrongQuantifier( _, _, _ ) => true
+    case SkolemQuantifier( _, _, _ ) => true
+  }
+}
+
 class ExpansionSequent( val antecedent: Seq[ExpansionTree], val succedent: Seq[ExpansionTree] ) {
   def toTuple(): ( Seq[ExpansionTree], Seq[ExpansionTree] ) = {
     ( antecedent, succedent )
