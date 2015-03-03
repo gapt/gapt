@@ -92,7 +92,16 @@ object InductionRule {
     apply( s1, s2, term1oc, term2oc, term3oc )
   }
 
-  def getTerms( s1: LKProof, s2: LKProof, occ1: FormulaOccurrence, occ2: FormulaOccurrence, occ3: FormulaOccurrence ): ( FormulaOccurrence, FormulaOccurrence, FormulaOccurrence ) = {
+  def unapply( proof: LKProof ) = {
+    if ( proof.rule == InductionRuleType ) {
+      val r = proof.asInstanceOf[BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas]
+      val ( ( base :: Nil ) :: ( step1 :: step2 :: Nil ) :: Nil ) = r.aux
+      val ( p1 :: Nil ) = r.prin
+      Some( ( r.uProof1, r.uProof2, r.root, base, step1, step2, p1 ) )
+    } else None
+  }
+
+  private def getTerms( s1: LKProof, s2: LKProof, occ1: FormulaOccurrence, occ2: FormulaOccurrence, occ3: FormulaOccurrence ): ( FormulaOccurrence, FormulaOccurrence, FormulaOccurrence ) = {
     val occZero = s1.root.succedent.find( _ == occ1 ) match {
       case None      => throw new LKRuleCreationException( "Occurrence " + occ1 + " could not be found in " + s1.root.succedent + "." )
       case Some( o ) => o
