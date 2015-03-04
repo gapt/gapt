@@ -1,5 +1,7 @@
 import scalariform.formatter.preferences._
 
+addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat")
+
 defaultScalariformSettings
 
 ScalariformKeys.preferences := FormattingPreferences()
