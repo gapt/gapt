@@ -316,10 +316,10 @@ object quantRulesNumber {
 object isQuantified {
   def apply( tree: ExpansionTreeWithMerges ): Boolean = tree match {
     case Atom( _ )                   => false
-    case Neg( _ )                    => false
-    case And( _, _ )                 => false
-    case Or( _, _ )                  => false
-    case Imp( _, _ )                 => false
+    case Neg( t )                    => isQuantified( t )
+    case And( t1, t2 )               => isQuantified( t1 ) || isQuantified( t2 )
+    case Or( t1, t2 )                => isQuantified( t1 ) || isQuantified( t2 )
+    case Imp( t1, t2 )               => isQuantified( t1 ) || isQuantified( t2 )
     case WeakQuantifier( _, _ )      => true
     case StrongQuantifier( _, _, _ ) => true
     case SkolemQuantifier( _, _, _ ) => true
