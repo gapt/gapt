@@ -77,10 +77,16 @@ lazy val root = (project in file(".")).
       "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
       "com.itextpdf" % "itextpdf" % "5.5.5",
       "org.scilab.forge" % "jlatexmath" % "1.0.2")
-
-    // Start each test class in a separate JVM, otherwise resolutionSchemaParserTest and nTapeTest fail.
-    //testGrouping in Test <<= definedTests in Test map oneJvmPerTest
   )
+
+import scalariform.formatter.preferences._
+addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat")
+defaultScalariformSettings
+ScalariformKeys.preferences := FormattingPreferences()
+  .setPreference(AlignParameters, true)
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(DoubleIndentClassDeclaration, true)
+  .setPreference(SpaceInsideParentheses, true)
 
 lazy val testing = (project in file("testing")).
   dependsOn(root).
