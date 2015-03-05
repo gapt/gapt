@@ -33,8 +33,6 @@ class TreeGrammarDecompositionException( msg: String ) extends Exception( msg )
 
 object TreeGrammarDecomposition {
 
-  var decomp: TreeGrammarDecomposition = _
-
   /**
    * Provided a termset/language, an integer n (representing the maximum number of non-terminals) and a method
    * (e.g. MCSMethod.QMaxSAT, MCSMethod.Simplex) the TreeGrammarDecomposition algorithm described in
@@ -51,54 +49,49 @@ object TreeGrammarDecomposition {
 
     var phase = "TGD"
 
-    var grammar: Option[Grammar] = None
-
-    method match {
+    val decomp = method match {
       case MCSMethod.MaxSAT => {
         // instantiate TreeGrammarDecomposition object with the termset and n
-        decomp = new TreeGrammarDecompositionPWM( termset, n )
+        new TreeGrammarDecompositionPWM( termset, n )
 
       }
       case MCSMethod.Simplex => {
         // instantiate TreeGrammarDecomposition object with the termset and n
-        //val decomp = new TreeGrammarDecompositionSimplex(termset, n)
-        return null
+        //new TreeGrammarDecompositionSimplex(termset, n)
+	throw new TreeGrammarDecompositionException( "Unsupported TreeGrammarDecomposition method" )
       }
     }
 
-    if ( decomp != null ) {
+    phase = "suffKeys"
 
-      phase = "suffKeys"
+    // generating the sufficient set of keys
+    decomp.suffKeys()
 
-      // generating the sufficient set of keys
-      decomp.suffKeys()
+    phase = "MCS"
 
-      phase = "MCS"
+    // Generating the MinCostSAT formulation for QMaxSAT
+    val f = decomp.MCS().asInstanceOf[List[FOLFormula]]
+    // Generating the soft constraints for QMaxSAT to minimize the amount of rules
+    val g = decomp.softConstraints().asInstanceOf[List[Tuple2[FOLFormula, Int]]]
 
-      // Generating the MinCostSAT formulation for QMaxSAT
-      val f = decomp.MCS().asInstanceOf[List[FOLFormula]]
-      // Generating the soft constraints for QMaxSAT to minimize the amount of rules
-      val g = decomp.softConstraints().asInstanceOf[List[Tuple2[FOLFormula, Int]]]
+    phase = "CNF/MaxSAT"
 
-      phase = "CNF/MaxSAT"
+    // Retrieving a model from a MaxSAT solver and extract the rules
+    val interpretation = ( new MaxSAT( satsolver ) ).solvePWM( f, g )
 
-      // Retrieving a model from a MaxSAT solver and extract the rules
-      val interpretation = ( new MaxSAT( satsolver ) ).solvePWM( f, g )
+    interpretation match {
+      case Some( interp ) => {
+        phase = "interpret"
+        val rules = decomp.getRules( interpretation )
+        // transform the rules to a Grammar
+        val grammar = decomp.getGrammar( rules )
 
-      interpretation match {
-        case Some( interp ) => {
-          phase = "interpret"
-          val rules = decomp.getRules( interpretation )
-          // transform the rules to a Grammar
-          val grammar = decomp.getGrammar( rules )
-          return Some( grammar )
-        }
-        case None => return None
+        // If the grammar has only U terms, it is trivial
+        if (grammar.slist.size == 0) return None
+        else return Some( grammar )
       }
-    } else {
-      throw new TreeGrammarDecompositionException( "Unsupported TreeGrammarDecomposition method" )
+      case None => return None
     }
-    return None
   }
 }
 
