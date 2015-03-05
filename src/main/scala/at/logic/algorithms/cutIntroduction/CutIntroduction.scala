@@ -455,7 +455,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         /********** Grammar finding **********/
         phase = "grammar_finding"
 
-        val small_grammar = TreeGrammarDecomposition.applyStat( termset.set, n, MCSMethod.MaxSAT, maxsatsolver )
+        val small_grammar = TreeGrammarDecomposition( termset.set, n, MCSMethod.MaxSAT, maxsatsolver )
         val grammar = small_grammar match {
           case Some( g ) =>
             g.terms = termset; g
@@ -464,6 +464,8 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         }
         grammarFindingTime = System.currentTimeMillis - time
         time = System.currentTimeMillis
+
+	println ("Grammar\n" + grammar)
 
         // Although this shouldn't be the case, because of the grammar returned by
         // TreeGrammarDecomposition should either be None or some grammar with size > 0
