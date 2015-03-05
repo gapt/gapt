@@ -221,7 +221,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       val f = And( Atom( HOLVar( "P", To ), Nil ), Atom( HOLVar( "P", To ), Nil ) )
 
       f must beLike {
-        case Atom( _, _ )        =>
+        case Atom( _, _ ) =>
           println( "Is an atom" ); ko
         case Function( _, _, _ ) => ko
         case AllVar( _, _ )      => ko
