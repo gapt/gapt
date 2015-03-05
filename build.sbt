@@ -7,10 +7,13 @@ lazy val commonSettings = Seq(
   startYear := Some(2008),
   version := "1.10-SNAPSHOT",
 
-  scalaVersion := "2.11.5",
+  scalaVersion := "2.11.6",
   scalacOptions in (Compile, doc) ++= Seq("-diagrams","-implicits"),
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test),
+
+  // scalaz-stream is not on maven.org
+  resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
   sourcesInBase := false // people like to keep scripts lying around
 )
@@ -92,10 +95,10 @@ lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ba
 
 lazy val testDependencies = Seq(
   "junit" % "junit" % "4.12",
-  "org.specs2" %% "specs2-core" % "2.4.16",
-  "org.specs2" %% "specs2-matcher" % "2.4.16",
-  "org.specs2" %% "specs2-mock" % "2.4.16",
-  "org.specs2" %% "specs2-junit" % "2.4.16",
+  "org.specs2" %% "specs2-core" % "3.0",
+  "org.specs2" %% "specs2-matcher" % "3.0",
+  "org.specs2" %% "specs2-mock" % "3.0",
+  "org.specs2" %% "specs2-junit" % "3.0",
   "org.scalacheck" %% "scalacheck" % "1.12.2")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =
