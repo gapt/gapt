@@ -285,7 +285,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
         if ( grammars.length == 0 ) {
           throw new CutIntroUncompressibleException( "\nNo grammars found." +
-            " The proof cannot be compressed using a cut with one universal quantifier.\n" )
+            " The proof cannot be compressed using one cut.\n" )
         }
 
         /********** Proof Construction **********/
