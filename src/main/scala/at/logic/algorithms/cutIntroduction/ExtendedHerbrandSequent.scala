@@ -24,10 +24,9 @@ import at.logic.provers.minisat.MiniSAT
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] = Nil ) {
+class ExtendedHerbrandSequent( seq: FSequent, g: MultiGrammar, cf: List[FOLFormula] = Nil ) {
 
   val endSequent = seq
-  val terms = g.terms
   val grammar = g
 
   // From ".map" on are lots of castings just to make the data structure right :-|
@@ -42,21 +41,17 @@ class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] =
   //Quantified formulas on the right
   val quant_r: List[FOLFormula] = seq.succedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
 
-  // Instanciated (previously univ. quantified) formulas on the left
-  val inst_l: List[FOLFormula] = grammar.u.foldRight( List[FOLFormula]() ) {
-    case ( term, acc ) =>
-      val set = terms.getTermTuple( term )
-      val f = terms.getFormula( term )
+  // Instantiated (previously univ. quantified) formulas on the left
+  val inst_l: List[FOLFormula] = grammar.us.foldRight( List[FOLFormula]() ) {
+    case ( acc, ( f, set ) ) =>
       f match {
         case AllVar( _, _ ) => instantiateAll( f, set ) :: acc
         case _              => acc
       }
   }
   // Instantiated (previously ex. quantified) formulas on the right
-  val inst_r: List[FOLFormula] = grammar.u.foldRight( List[FOLFormula]() ) {
-    case ( term, acc ) =>
-      val set = terms.getTermTuple( term )
-      val f = terms.getFormula( term )
+  val inst_r: List[FOLFormula] = grammar.us.foldRight( List[FOLFormula]() ) {
+    case ( acc, (f, set) ) =>
       f match {
         case ExVar( _, _ ) => instantiateAll( f, set ) :: acc
         case _             => acc

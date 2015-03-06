@@ -455,10 +455,9 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         /********** Grammar finding **********/
         phase = "grammar_finding"
 
-        val small_grammar = TreeGrammarDecomposition( termset.set, n, MCSMethod.MaxSAT, maxsatsolver )
+        val small_grammar = TreeGrammarDecomposition( termset, n, MCSMethod.MaxSAT, maxsatsolver )
         val grammar = small_grammar match {
-          case Some( g ) =>
-            g.terms = termset; g
+          case Some( g ) => g
           case None =>
             throw new CutIntroUncompressibleException( "\nNo grammars found. The proof cannot be compressed." )
         }
@@ -570,12 +569,12 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
    * Computes the canonical solution with multiple quantifiers from a MultiGrammar,
    * i.e. the list \forall x_1...x_n C_1, ...., \forall x_1 C_n.
    */
-  def computeCanonicalSolutions( seq: Sequent, g: MultiGrammar ): List[FOLFormula] = {
+  def computeCanonicalSolutions( seq: FSequent, g: MultiGrammar ): List[FOLFormula] = {
 
-    val termset = g.terms
-    val variables = g.slist.head._1
+    //val termset = g.terms
+    val variables = g.ss.head._1
 
-    val instantiated_f = g.u.foldRight( List[FOLFormula]() ) {
+    val instantiated_f = g.us.foldRight( List[FOLFormula]() ) {
       case ( term, acc ) =>
         val freeVars = freeVariables( term )
 

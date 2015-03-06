@@ -93,6 +93,14 @@ object TreeGrammarDecomposition {
       case None => return None
     }
   }
+
+  def apply( termset: TermSet, n: Int, method: MCSMethod = MCSMethod.MaxSAT, satsolver: MaxSATSolver = MaxSATSolver.QMaxSAT ): Option[MultiGrammar] = {
+    val og = apply( termset.set, n, method, satsolver )
+    og match {
+      case Some(g) => Some( simpleToMultiGrammar( termset, g ) )
+      case None => None
+    }
+  }
 }
 
 abstract class TreeGrammarDecomposition( val termset: List[FOLTerm], val n: Int ) {
