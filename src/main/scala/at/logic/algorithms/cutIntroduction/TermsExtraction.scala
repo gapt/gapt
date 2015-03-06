@@ -87,6 +87,8 @@ class TermSet( terms: Map[FOLFormula, List[List[FOLTerm]]] ) {
       }
   }
 
+  def formulas = terms.keys
+
   // Given g_F( t_i ) as above, return F.
   def getFormula( t: FOLTerm ) = t match {
     case Function( symbol, _ ) => formulaFunction( symbol.toString )

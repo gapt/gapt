@@ -275,8 +275,8 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         /********** Grammar finding **********/
         phase = "grammar_finding"
 
-        val gs = ComputeGrammars.findValidGrammars( termset.set, deltatable, eigenvariable )
-        val grammars = gs.map { case g => g.terms = termset; g }.sortWith( ( g1, g2 ) => g1.size < g2.size )
+        val gs = ComputeGrammars.findValidGrammars( termset, deltatable, eigenvariable )
+        val grammars = gs.sortWith( ( g1, g2 ) => g1.size < g2.size )
 
         // Adding up the generation of the delta-table so it is comparable to the other method.
         grammarFindingTime = deltaTableGenerationTime + System.currentTimeMillis - time
@@ -567,9 +567,10 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
   }
 
   /**
-   * Computes the canonical solution with multiple quantifiers from a generalized grammar.
+   * Computes the canonical solution with multiple quantifiers from a MultiGrammar,
+   * i.e. the list \forall x_1...x_n C_1, ...., \forall x_1 C_n.
    */
-  def computeCanonicalSolutions( seq: FSequent, g: Grammar ): List[FOLFormula] = {
+  def computeCanonicalSolutions( seq: Sequent, g: MultiGrammar ): List[FOLFormula] = {
 
     val termset = g.terms
     val variables = g.slist.head._1

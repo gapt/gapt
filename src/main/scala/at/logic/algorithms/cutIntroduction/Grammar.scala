@@ -47,21 +47,15 @@ class Grammar( u0: List[FOLTerm], slist0: List[( List[FOLVar], Set[List[FOLTerm]
 
 // For cut-introduction, we consider sequents
 // \forall x_1 F_1(x_1), ..., \forall x_n F_n(x_n) :- \exists x_{n+1} F_{n+1}(x_{n+1}), ..., \exists x_m F(x_m)
-// where the x_i, y_i are lists of variables.
+// where the x_i are lists of variables.
 //
 // Hence we will consider grammars of the form (U_1,...,U_m) \circ S_1 ... \circ S_n
 // where the U_i are sets of lists of terms corresponding to the instances of the x_i,
-// and the S_i are sets of terms.
-//
-// On the other hand, our Grammar class implements grammars of the form U \circ S_1 ... \circ S_n.
-// This class provides the glue between the more general grammars and those provided by
-// the grammar class.
-//
-class GrammarForCutintro( ts: TermSet, g: Grammar ) {
-  // if f is the formula F_i, this returns the set U_i
-  def getU( f: FOLFormula ) = {
-    
-  }
+// and the S_i are sets of lists of terms.
+class MultiGrammar( us: Map[FOLFormula, List[List[FOLTerm]]], ss: List[( List[FOLVar], Set[List[FOLTerm]])] ) {
+  def size = u_size + s_size
+  private def u_size = us.foldLeft( 0 ){ case (acc, (_, list)) => acc + list.size }
+  private def s_size = ss.foldLeft( 0 ){ case (acc, (_, set)) => acc + set.size }
 }
 
 /**
@@ -77,6 +71,27 @@ object ComputeGrammars {
     val deltatable = new DeltaTable( terms, eigenvariable, delta )
 
     findValidGrammars( terms, deltatable, eigenvariable ).sortWith( ( g1, g2 ) => g1.size < g2.size )
+  }
+  /**
+   * Finds valid, minimum-size MultiGrammars based on a TermSet and a generalized delta table.
+   *
+   *
+   * @param terms The TermSet to be compressed.
+   * @param deltatable A generalized delta table for terms.
+   * @param eigenvariable The name of eigenvariables to introduce.
+   */
+  def findValidGrammars( terms: TermSet, deltatable: DeltaTable, eigenvariable: String ) : List[MultiGrammar] = {
+    val gs = findValidGrammars( terms.set, deltatable, eigenvariable )
+    gs.map( g => simpleToMult( terms, g ) )
+  }
+
+  private def simpleToMult( terms: TermSet, g: Grammar ) : MultiGrammar = {
+    val us = g.u0.foldLeft( new Map[FOLFormula, List[List[FOLTerm]]]() )( (acc, t) => {
+      val f = terms.getFormula( t )
+      val old = acc.getOrElse( f, new List[List[FOLTerm]] )
+      acc + (f, ( old + terms.getTermTuple( t ) ) )
+    })
+    new MultiGrammar( us, g.slist0 )
   }
 
   /**
