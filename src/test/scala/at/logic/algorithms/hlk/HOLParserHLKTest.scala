@@ -8,8 +8,8 @@ import org.specs2.execute.Success
 /**
  * Test files for the hol parser
  */
-@RunWith(classOf[JUnitRunner])
-class HOLParserTest  extends SpecificationWithJUnit {
+@RunWith( classOf[JUnitRunner] )
+class HOLParserTest extends SpecificationWithJUnit {
   "HLK HOL Parser" should {
     "Parse atoms" in {
       /*

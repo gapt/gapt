@@ -18,17 +18,16 @@ import at.logic.parsing.language.xml.HOLTermExporter
 import at.logic.language.lambda.symbols.StringSymbol
 import at.logic.language.lambda.types.To
 
-@RunWith(classOf[JUnitRunner])
+@RunWith( classOf[JUnitRunner] )
 class LkExporterTest extends SpecificationWithJUnit {
 
+  val exporter = new LKExporter {}
+  // helper to create 0-ary predicate constants
+  def pc( sym: String ) = Atom( HOLConst( StringSymbol( sym ), To ), List() )
 
-  val exporter = new LKExporter{}
-// helper to create 0-ary predicate constants
-  def pc( sym: String ) = Atom( HOLConst(StringSymbol( sym ), To), List() )
-  
   "LKExporter" should {
     "export correctly a sequent A, B :- C, D" in {
-      trim(exporter.exportSequent( FSequent(List("A","B") map (pc), List("C","D") map (pc)))) must beEqualTo (trim(
+      trim( exporter.exportSequent( FSequent( List( "A", "B" ) map ( pc ), List( "C", "D" ) map ( pc ) ) ) ) must beEqualTo( trim(
         <sequent>
           <formulalist>
             <constantatomformula symbol="A"/>
@@ -38,36 +37,34 @@ class LkExporterTest extends SpecificationWithJUnit {
             <constantatomformula symbol="C"/>
             <constantatomformula symbol="D"/>
           </formulalist>
-        </sequent>
-      ))
+        </sequent> ) )
     }
   }
   "export correctly a sequent list {A1, B1 :- C1, D1, A2, B2 :- C2, D2}" in {
-    trim(exporter.exportSequentList( "testlist",List( FSequent(List("A1","B1") map (pc), List("C1","D1") map (pc)),
-                                                     FSequent(List("A2","B2") map (pc), List("C2","D2") map (pc))))) must beEqualTo (trim(
-        <sequentlist symbol="testlist">
-          <sequent>
-            <formulalist>
-              <constantatomformula symbol="A1"/>
-              <constantatomformula symbol="B1"/>
-            </formulalist>
-            <formulalist>
-              <constantatomformula symbol="C1"/>
-              <constantatomformula symbol="D1"/>
-            </formulalist>
-          </sequent>
-          <sequent>
-            <formulalist>
-              <constantatomformula symbol="A2"/>
-              <constantatomformula symbol="B2"/>
-            </formulalist>
-            <formulalist>
-              <constantatomformula symbol="C2"/>
-              <constantatomformula symbol="D2"/>
-            </formulalist>
-          </sequent>
-        </sequentlist>
-      ))
+    trim( exporter.exportSequentList( "testlist", List( FSequent( List( "A1", "B1" ) map ( pc ), List( "C1", "D1" ) map ( pc ) ),
+      FSequent( List( "A2", "B2" ) map ( pc ), List( "C2", "D2" ) map ( pc ) ) ) ) ) must beEqualTo( trim(
+      <sequentlist symbol="testlist">
+        <sequent>
+          <formulalist>
+            <constantatomformula symbol="A1"/>
+            <constantatomformula symbol="B1"/>
+          </formulalist>
+          <formulalist>
+            <constantatomformula symbol="C1"/>
+            <constantatomformula symbol="D1"/>
+          </formulalist>
+        </sequent>
+        <sequent>
+          <formulalist>
+            <constantatomformula symbol="A2"/>
+            <constantatomformula symbol="B2"/>
+          </formulalist>
+          <formulalist>
+            <constantatomformula symbol="C2"/>
+            <constantatomformula symbol="D2"/>
+          </formulalist>
+        </sequent>
+      </sequentlist> ) )
   }
 }
 

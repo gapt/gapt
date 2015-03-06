@@ -16,7 +16,7 @@ import at.logic.utils.ds.mutable.trees._
 //import at.logic.language.hol._
 import scala.util.parsing.combinator._
 
-@RunWith(classOf[JUnitRunner])
+@RunWith( classOf[JUnitRunner] )
 class treesTest extends SpecificationWithJUnit {
 
   "tree.scala" should {
@@ -27,18 +27,16 @@ class treesTest extends SpecificationWithJUnit {
       val seq3 = "-p(a)|p(b)"
       val seq4 = "p(X)|p(f(f(b)))"
 
-      var l = seq1::seq2::seq3::seq4::Nil
-    //  val root = new TreeNode[String](seq1::Nil)
-      var root = new TreeNode[String](l)
-      val f: (String) => Int = { x => x.split("a").size - 1}
-//      val t = new MyTree[String](root, f::Nil)
-//      t.createTree(root)
-//      t.print
-      val l1 = 1::2::3::Nil
-      
+      var l = seq1 :: seq2 :: seq3 :: seq4 :: Nil
+      //  val root = new TreeNode[String](seq1::Nil)
+      var root = new TreeNode[String]( l )
+      val f: ( String ) => Int = { x => x.split( "a" ).size - 1 }
+      //      val t = new MyTree[String](root, f::Nil)
+      //      t.createTree(root)
+      //      t.print
+      val l1 = 1 :: 2 :: 3 :: Nil
 
-      0 must beEqualTo (0)
-
+      0 must beEqualTo( 0 )
 
       /*
       val a = HOLConst(new ConstantSymbolA("a"), i)

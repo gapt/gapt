@@ -1,7 +1,7 @@
 
 package at.logic.provers.veriT
 
-import at.logic.calculi.expansionTrees.ExpansionSequent
+import at.logic.calculi.expansionTrees.{ ExpansionSequent, isQuantified, qFreeToExpansionTree }
 import scala.sys.process._
 import java.io._
 import at.logic.provers.Prover
@@ -14,42 +14,40 @@ class VeriTProver extends Prover with at.logic.utils.traits.ExternalProgram {
   override def isValid( s: FSequent ): Boolean = {
 
     // Generate the input file for veriT
-    val filename = "toProve" + System.currentTimeMillis + ".smt"
-    val in_file = VeriTExporter( s, filename )
+    val veritInput = VeriTExporter( s )
 
-    // Execute the system command and get the result as a string.
-    val result = try { ( "veriT " + filename ).!! }
-    catch {
-      case e: IOException => throw new Exception( "Error while executing VeriT." )
-    }
-
-    in_file.delete() match {
-      case true  => ()
-      case false => throw new Exception( "Error deleting smt file." )
-    }
-
-    val out_file = new File( "proof" + System.currentTimeMillis + ".smt" )
-    val pw = new PrintWriter( out_file )
-    pw.write( result )
-    pw.close()
+    val veritOutput = "veriT" #< new ByteArrayInputStream( veritInput.getBytes ) !!
 
     // Parse the output
-    val unsat = VeriTParser.isUnsat( out_file.getAbsolutePath() )
-    out_file.delete() match {
-      case true  => ()
-      case false => throw new Exception( "Error deleting verit file." )
-    }
-    unsat
+    VeriTParser.isUnsat( new StringReader( veritOutput ) )
   }
 
+  /*
+   * Given a sequent A1, ..., An |- B1, ..., Bm, veriT's proof is actually of
+   * the sequent A1, ..., An, not B1, ..., not Bm |-.
+   * Currently there is no way to recover the antecedent/succedent formulas from
+   * veriT's output, so in this method we re-build the expansion sequent by
+   * taking the quantified equality axioms from the proof returned by veriT and
+   * merging them with the original end-sequent.
+   */
   def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] = {
-    val smtBenchmark = File.createTempFile( "verit_input", ".smt" )
-    smtBenchmark.deleteOnExit()
+    val smtBenchmark = VeriTExporter( s )
 
-    VeriTExporter( s, smtBenchmark.getAbsolutePath )
+    val output = "veriT --proof=- --proof-version=1" #< new ByteArrayInputStream( smtBenchmark.getBytes ) !!
 
-    val output = s"veriT --proof=- --proof-version=1 $smtBenchmark".!!
-    VeriTParser.getExpansionProof( new StringReader( output ) )
+    VeriTParser.getExpansionProof( new StringReader( output ) ) match {
+      case Some( exp_seq ) =>
+        val exp_seq_quant = new ExpansionSequent(
+          exp_seq.antecedent.filter( f => isQuantified( f ) ),
+          exp_seq.succedent.filter( f => isQuantified( f ) ) )
+
+        val ant_prop = s.antecedent.map( f => qFreeToExpansionTree( f ) )
+        val suc_prop = s.succedent.map( f => qFreeToExpansionTree( f ) )
+
+        Some( new ExpansionSequent( exp_seq_quant.antecedent ++ ant_prop, exp_seq_quant.succedent ++ suc_prop ) )
+
+      case None => None
+    }
   }
 
   // VeriT proofs are parsed as Expansion Trees.

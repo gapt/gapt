@@ -550,8 +550,8 @@ object SchemaSubTerms {
     case Or( x, y )        => ( apply( x.asInstanceOf[SchemaExpression] ) ++ apply( y.asInstanceOf[HOLExpression] ) )
     case Imp( x, y )       => ( apply( x.asInstanceOf[SchemaExpression] ) ++ apply( y.asInstanceOf[HOLExpression] ) )
     case Neg( x )          => apply( x.asInstanceOf[SchemaExpression] )
-    case Ex( x )           => apply( x.asInstanceOf[SchemaExpression] )
-    case All( x )          => apply( x.asInstanceOf[SchemaExpression] )
+    case Ex( x, _ )        => apply( x.asInstanceOf[SchemaExpression] )
+    case All( x, _ )       => apply( x.asInstanceOf[SchemaExpression] )
 
     case SchemaAbs( _, x ) => apply( x.asInstanceOf[SchemaExpression] )
     case SchemaApp( x, y ) => List( f ).toSeq

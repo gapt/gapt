@@ -3,7 +3,7 @@ package at.logic.transformations.ceres.ACNF
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
-import at.logic.calculi.lk.base.{FSequent, LKProof}
+import at.logic.calculi.lk.base.{ FSequent, LKProof }
 import at.logic.algorithms.hlk.HybridLatexParser
 import java.io.File.separator
 import at.logic.language.hol._
@@ -61,4 +61,4 @@ class SubstituteProofTest extends SpecificationWithJUnit {
   }
 
 }
-*/
+*/ 

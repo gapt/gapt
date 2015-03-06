@@ -5,7 +5,7 @@ import at.logic.algorithms.interpolation._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
 import at.logic.algorithms.resolution._
-import at.logic.calculi.expansionTrees.{ ExpansionTree, ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.calculi.expansionTrees.{ ExpansionTree, ExpansionSequent, toFSequent, quantRulesNumber => quantRulesNumberET }
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.occurrences._

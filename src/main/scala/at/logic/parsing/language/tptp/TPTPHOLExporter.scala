@@ -10,7 +10,13 @@ import at.logic.language.hol.logicSymbols.{ EqSymbol, LogicalSymbolA }
  */
 object TPTPHOLExporter extends TPTPHOLExporter
 class TPTPHOLExporter {
-  def apply( l: List[FSequent] ): String = {
+  /**
+   * Exports the given FSequent list to the THF fragment of TPTP. The default behavior of the exporter
+   * expects a sequent list in a negative context, i.e. it will encode the refutation of the arguments.
+   *
+   * @note In contrast to prover9, for multiple conjectures, each of them has to be proved.
+   */
+  def apply( l: List[FSequent], positive: Boolean = false ): String = {
     require( l.nonEmpty, "Cannot export an empty sequent list!" )
     val ( vs, vnames, cs, cnames ) = createNamesFromSequent( l )
 
@@ -30,24 +36,24 @@ class TPTPHOLExporter {
     }
     val cdecs = cdecs_.foldLeft( "" )( _ ++ _ )
 
-    //    val sdecs_ = for (fs <- l) yield {
-    //      index = index +1
-    //      thf_sequent_dec(index, fs, vnames, cnames) + "\n"
-    //    }
-    //    val sdecs = sdecs_.foldLeft("")(_ ++ _)
-    val negClauses = Neg( conj( l.map( closedFormula ) ) )
-    index = index + 1
-    //    val sdecs = List(thf_formula_dec(index, negClauses, vnames, cnames))
-    /* we cannot export negated conjectures, since leo 2 needs at least one positive conjecture -
-       therefore we put the negation in manually */
-    val sdecs = l.map( x => {
-      index = index + 1
-      thf_formula_dec( index, Neg( closedFormula( x ) ), vnames, cnames )
-    } )
+    val sdecs = positive match {
+      case true =>
+        for ( fs <- l ) yield {
+          index = index + 1
+          thf_sequent_dec( index, fs, vnames, cnames ) + "\n"
+        }
+      case false =>
+        val negClauses = Neg( And( l.map( closedFormula ) ) )
+        index = index + 1
+        // since in thf conjectures are seen as conjunction. the negated cnf is one big formula
+        List( thf_formula_dec( index, negClauses, vnames, cnames ) )
+
+    }
 
     //"% variable type declarations\n" + vdecs +
     "% constant type declarations\n" + cdecs +
       "% sequents\n" + sdecs.foldLeft( "" )( ( s, x ) => s + x + "\n" )
+
   }
 
   def printStatistics( vnames: NameMap, cnames: CNameMap ): Unit = {
@@ -122,15 +128,6 @@ class TPTPHOLExporter {
   def closedFormula( fs: FSequent ): HOLFormula = {
     val f = fs.toFormula
     freeVariables( f ).foldRight( f )( ( v, g ) => AllVar( v, g ) )
-  }
-
-  def conj( l: List[HOLFormula] ): HOLFormula = l match {
-    case Nil =>
-      throw new Exception( "Empty sequent list given to export!" )
-    case x :: Nil =>
-      x
-    case x :: xs =>
-      And( x, conj( xs ) )
   }
 
   def createNamesFromConst( l: List[HOLConst] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {

@@ -1,7 +1,6 @@
 package at.logic.algorithms.fol.hol2fol
 
 import at.logic.algorithms.fol.recreateWithFactory
-import at.logic.language.fol.{ FOLExpression, FOLFormula }
 import at.logic.language.hol._
 import at.logic.language.lambda.FactoryA
 import at.logic.language.lambda.symbols.StringSymbol
@@ -30,35 +29,38 @@ object undoHol2Fol extends Logger {
    * @param factory the factory used for the return formula
    * @return the changed formula
    */
-  def backtranslate( e: FOLFormula,
+  def backtranslate( e: HOLFormula,
                      sig_vars: Map[String, List[HOLVar]],
                      sig_consts: Map[String, List[HOLConst]],
                      abssymbol_map: Map[String, HOLExpression] )( factory: FactoryA ): HOLFormula =
-    backtranslate( e.asInstanceOf[FOLExpression], sig_vars, sig_consts, abssymbol_map, Some( To ) )( factory ).asInstanceOf[HOLFormula]
+    backtranslate( e.asInstanceOf[HOLExpression], sig_vars, sig_consts, abssymbol_map, Some( To ) )( factory ).asInstanceOf[HOLFormula]
 
   /**
    * We do some dirty stuff in here to translate a prover9 term back to the richer type signature of hol proofs, undoing
    * replace abstractions at the same time.
    */
-  def backtranslate( e: FOLExpression,
+  def backtranslate( e: HOLExpression,
                      sig_vars: Map[String, List[HOLVar]],
                      sig_consts: Map[String, List[HOLConst]],
                      abssymbol_map: Map[String, HOLExpression],
                      expected_type: Option[TA] )( factory: FactoryA ): HOLExpression = {
-    import at.logic.language.fol
-
     e match {
       // --------------- logical structure ------------------------
-      case fol.Atom( name, args ) if sig_consts contains name.toString =>
+      case Atom( HOLConst( name, _ ), args ) if sig_consts contains name.toString =>
         val args_ = args.map( backtranslate( _, sig_vars, sig_consts, abssymbol_map, None )( factory ) )
         val head = sig_consts( name.toString )( 0 )
         Atom( head, args_ )
 
-      case fol.Neg( f )    => Neg( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ) )
-      case fol.And( f, g ) => And( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
-      case fol.Or( f, g )  => Or( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
-      case fol.Imp( f, g ) => Imp( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
-      case fol.AllVar( x, f ) =>
+      /*      case Equation(s, t) =>
+        Equation(backtranslate( s, sig_vars, sig_consts, abssymbol_map, None )( factory ) ,
+                 backtranslate( t, sig_vars, sig_consts, abssymbol_map, None )( factory ) )
+                 */
+
+      case Neg( f )    => Neg( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ) )
+      case And( f, g ) => And( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
+      case Or( f, g )  => Or( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
+      case Imp( f, g ) => Imp( backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory ), backtranslate( g, sig_vars, sig_consts, abssymbol_map )( factory ) )
+      case AllVar( x, f ) =>
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory )
         val xcandidates = freeVariables( f_ ).filter( _.name == x.name )
         xcandidates match {
@@ -67,7 +69,7 @@ object undoHol2Fol extends Logger {
           case _          => throw new Exception( "We have not more than one free variable with name " + x.name + xcandidates.mkString( ": (", ", ", ")" ) )
         }
 
-      case fol.ExVar( x, f ) =>
+      case ExVar( x, f ) =>
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )( factory )
         val xcandidates = freeVariables( f_ ).filter( _.name == x.name )
         xcandidates match {
@@ -92,7 +94,7 @@ object undoHol2Fol extends Logger {
       case Function( HOLConst( name, _ ), args, _ ) if abssymbol_map.contains( name ) =>
         val qterm_ = recreateWithFactory( abssymbol_map( name ), factory ).asInstanceOf[HOLExpression] //unsafe cast
         val qterm: HOLExpression = freeVariables( qterm_ ).foldRight( qterm_ )( ( v, term ) => HOLAbs( v, term ) )
-        val btargs = args.map( x => backtranslate( x.asInstanceOf[FOLExpression], sig_vars, sig_consts, abssymbol_map, None )( factory ) )
+        val btargs = args.map( x => backtranslate( x.asInstanceOf[HOLExpression], sig_vars, sig_consts, abssymbol_map, None )( factory ) )
         val r = btargs.foldLeft( qterm )( ( term, nextarg ) => HOLApp( term, nextarg ) )
         expected_type match {
           case Some( expt ) =>
@@ -104,26 +106,26 @@ object undoHol2Fol extends Logger {
 
       //normal ones
       case Function( HOLConst( name, _ ), args, _ ) if sig_consts contains name =>
-        val btargs = args.map( x => backtranslate( x.asInstanceOf[FOLExpression], sig_vars, sig_consts, abssymbol_map, None )( factory ) )
+        val btargs = args.map( x => backtranslate( x.asInstanceOf[HOLExpression], sig_vars, sig_consts, abssymbol_map, None )( factory ) )
         val head = sig_consts( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         Function( head, btargs )
 
-      case fol.FOLVar( name ) if sig_vars contains name =>
+      case HOLVar( name, Ti ) if sig_vars contains name =>
         val head = sig_vars( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         head
 
-      case fol.FOLConst( name ) if sig_consts contains name =>
+      case HOLConst( name, Ti ) if sig_consts contains name =>
         val head = sig_consts( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         head
 
-      case fol.FOLVar( ivy_varname( name ) ) =>
+      case HOLVar( ivy_varname( name ), Ti ) =>
         trace( "Guessing that the variable " + name + " comes from ivy, assigning type i." )
         factory.createVar( StringSymbol( name ), Ti ).asInstanceOf[HOLVar]
 
-      case fol.FOLVar( name ) =>
+      case HOLVar( name, Ti ) =>
         throw new Exception( "No signature information for variable " + e )
 
-      case fol.FOLConst( name ) =>
+      case HOLConst( name, _ ) =>
         throw new Exception( "No signature information for const " + e )
 
       case _ =>

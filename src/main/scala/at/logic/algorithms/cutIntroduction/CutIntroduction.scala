@@ -8,7 +8,7 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.algorithms.lk._
 import at.logic.algorithms.lk.statistics._
-import at.logic.calculi.expansionTrees.{ ExpansionSequent, toSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.calculi.expansionTrees.{ quantRulesNumber => quantRulesNumberET, toFSequent, ExpansionSequent }
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.language.fol._
@@ -246,7 +246,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toSequent( ep )
+        val endSequent = toFSequent( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Term set Extraction **********/
@@ -285,7 +285,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
         if ( grammars.length == 0 ) {
           throw new CutIntroUncompressibleException( "\nNo grammars found." +
-            " The proof cannot be compressed using a cut with one universal quantifier.\n" )
+            " The proof cannot be compressed using one cut.\n" )
         }
 
         /********** Proof Construction **********/
@@ -439,7 +439,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toSequent( ep )
+        val endSequent = toFSequent( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Terms Extraction **********/
@@ -455,7 +455,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         /********** Grammar finding **********/
         phase = "grammar_finding"
 
-        val small_grammar = TreeGrammarDecomposition.applyStat( termset.set, n, MCSMethod.MaxSAT, maxsatsolver )
+        val small_grammar = TreeGrammarDecomposition( termset.set, n, MCSMethod.MaxSAT, maxsatsolver )
         val grammar = small_grammar match {
           case Some( g ) =>
             g.terms = termset; g
@@ -464,6 +464,8 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         }
         grammarFindingTime = System.currentTimeMillis - time
         time = System.currentTimeMillis
+
+	println ("Grammar\n" + grammar)
 
         // Although this shouldn't be the case, because of the grammar returned by
         // TreeGrammarDecomposition should either be None or some grammar with size > 0
@@ -486,7 +488,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         canonicalSolutionSize = ( cutFormulas.foldLeft( 0 )( ( acc, f ) => lcomp( f ) + acc ) ) / cutFormulas.length
         if ( verbose ) {
           println( "Cut formulas found: " )
-          cutFormulas.foreach( f => println( f ) )
+          cutFormulas.foreach( f => println( f + "\n" ) )
         }
 
         // Build the proof only if introducing one cut
@@ -567,54 +569,38 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
   /**
    * Computes the canonical solution with multiple quantifiers from a generalized grammar.
    */
-  def computeCanonicalSolutions( seq: Sequent, g: Grammar ): List[FOLFormula] = {
+  def computeCanonicalSolutions( seq: FSequent, g: Grammar ): List[FOLFormula] = {
 
-    val terms = g.terms
-    val varName = "x"
+    val termset = g.terms
     val variables = g.slist.head._1
 
-    val xFormulas = g.u.foldRight( List[FOLFormula]() ) {
+    val instantiated_f = g.u.foldRight( List[FOLFormula]() ) {
       case ( term, acc ) =>
         val freeVars = freeVariables( term )
 
         // Taking only the terms that contain alpha
         if ( freeVars.intersect( variables ).nonEmpty ) {
-          val set = terms.getTermTuple( term )
-          val f = terms.getFormula( term )
-
-          //Some subset of g's eigenvariables occurs in every term. This generates
-          //substitutions to replace each occurring EV a_i with a quantified variables x_i.
-          val xterms = set.map( t => {
-            val vars = createFOLVars( varName, variables.length )
-            val allEV = variables.zip( vars )
-            val occurringEV = collectVariables( t ).filter( v => variables.contains( v ) ).distinct
-
-            // If the term is a constant, this should return t itself
-            allEV.filter( e => occurringEV.contains( e._1 ) ).foldLeft( t )( ( t, e ) => Substitution( e._1, e._2 ).apply( t ) )
-          } )
-
-          instantiateAll( f, xterms ) :: acc
+          val terms = termset.getTermTuple( term )
+          val f = termset.getFormula( term )
+          instantiateAll( f, terms ) :: acc
         } else acc
     }
 
-    val c1 = ( 0 to ( variables.size - 1 ) ).reverse.toList.foldLeft( And( xFormulas ) ) { ( f, n ) => AllVar( FOLVar( varName + "_" + n ), f ) }
+    val c1 = And( instantiated_f )
 
-    // Introducing one cut
-    if ( g.slist.length == 1 ) List( c1 )
-    // Introducing many cuts
-    else {
-      g.slist.foldLeft( List( c1 ) ) {
-        case ( cut_formulas, ( variables, termset ) ) =>
-          val ci = cut_formulas.head
-          val forms = termset.foldLeft( List[FOLFormula]() ) {
-            case ( acc, terms ) =>
-              assert( variables.length == terms.length, "Number of eigenvariables different from number of terms in computation of canonical solution" )
-              val subst = Substitution( variables.zip( terms ) )
-              subst( ci ) :: acc
-          }
-          And( forms ) :: cut_formulas
-      }
-    }
+    g.slist.foldLeft( List( c1 ) ) {
+      case ( cut_formulas, ( variables, termset ) ) =>
+        val ci = cut_formulas.head
+        val forms = termset.foldLeft( List[FOLFormula]() ) {
+          case ( acc, terms ) =>
+            assert( variables.length == terms.length, "Number of eigenvariables different from number of terms in computation of canonical solution" )
+            val subst = Substitution( variables.zip( terms ) )
+            subst( ci ) :: acc
+        }
+        val ci_quant = variables.foldLeft( ci ) { ( f, v ) => AllVar( v, f ) }
+        And( forms ) :: ci_quant :: cut_formulas.tail
+      // The last term set contains only constants, so we drop the formula generated with it.
+    }.tail.reverse
   }
 
   /**
@@ -624,7 +610,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
    */
   def buildProofWithCut( ehs: ExtendedHerbrandSequent, prover: Prover ): Option[LKProof] = {
 
-    val endSequent = ehs.endSequent.toFSequent
+    val endSequent = ehs.endSequent
     val cutFormulas = ehs.cutFormulas
     val grammar = ehs.grammar
     val terms = grammar.terms

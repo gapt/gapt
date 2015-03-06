@@ -202,33 +202,9 @@ object Prover9 extends at.logic.utils.logging.Logger {
     ret match {
       case 0 =>
         try {
-          trace( "parsing prover9 to robinson" )
           val p9proof = parse_prover9( output_file )
-          trace( "done parsing prover9 to robinson" )
-          trace( "doing name replacement" )
           val tp9proof = NameReplacement( p9proof._1, symbol_map )
-          trace( "done doing name replacement" )
-          /*
-          trace("Proof size: "+tp9proof.size)
-          for (fs <- tp9proof.nodes.map(_.vertex.asInstanceOf[Clause].toFSequent);
-               f <- fs.formulas) {
-            trace("Checking proof formula "+f)
-            require(f.isInstanceOf[FOLFormula], "Formula "+f+" in "+fs+" is not a FOL formula!")
-          }
-          */
-
-          trace( "CS size: " + clauses.getOrElse( Seq() ).size )
-          for (
-            fs <- clauses.getOrElse( Seq() );
-            f <- fs.formulas
-          ) {
-            trace( "Checking cs formula " + f )
-            require( f.isInstanceOf[FOLFormula], "Formula " + f + " in " + fs + " is not a FOL formula!" )
-          }
-          //val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
-          val ret = tp9proof
-          //println("applied symbol map: "+symbol_map+" to get endsequent "+tp9proof.root)
-
+          val ret = if ( clauses != None ) fixDerivation( tp9proof, clauses.get ) else tp9proof
           Some( ret )
         } catch {
           case e: Exception =>
@@ -406,21 +382,26 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
   def isInstalled(): Boolean = {
     if ( !isLadrToTptpInstalled() ) {
-      println( "ladr_to_tptp not found!" )
+      warn( "ladr_to_tptp not found!" )
       return false
     }
     if ( !isProver9Installed() ) {
-      println( "prover9 not found!" )
+      warn( "prover9 not found!" )
       return false
     }
     if ( !isProoftransInstalled() ) {
-      println( "prooftrans not found!" )
+      warn( "prooftrans not found!" )
+      return false
+    }
+    if ( !isTptpToLadrInstalled() ) {
+      warn( "tptp_to_ladr not found!" )
       return false
     }
     true
   }
 
   private def isLadrToTptpInstalled(): Boolean = callBinary( "ladr_to_tptp" ) == 1
+  private def isTptpToLadrInstalled(): Boolean = callBinary( "tptp_to_ladr" ) == 0
   private def isProver9Installed(): Boolean = callBinary( "prover9" ) == 2
   private def isProoftransInstalled(): Boolean = callBinary( "prooftrans" ) == 1
 

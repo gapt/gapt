@@ -15,52 +15,52 @@ import trees._
 import graphs._
 import TreeImplicitConverters._
 
-@RunWith(classOf[JUnitRunner])
+@RunWith( classOf[JUnitRunner] )
 class TreesTest extends SpecificationWithJUnit {
   "Tree" should {
     "pattern match as graphs and recursively" in {
-      val lt = BinaryTree("y", LeafTree("a"), LeafTree("b"))
-      ((lt) match {
-          case EmptyGraph() => false
-          case UnionGraph(x1, x2) => false
-          case VertexGraph("y", _) => false
-          case UnaryTree(_,_) => false
-          case EdgeGraph(_, "y", UnionGraph(EdgeGraph(_, _, _),_)) => true
-          case _ => false
-      }) must beEqualTo (true)
+      val lt = BinaryTree( "y", LeafTree( "a" ), LeafTree( "b" ) )
+      ( ( lt ) match {
+        case EmptyGraph() => false
+        case UnionGraph( x1, x2 ) => false
+        case VertexGraph( "y", _ ) => false
+        case UnaryTree( _, _ ) => false
+        case EdgeGraph( _, "y", UnionGraph( EdgeGraph( _, _, _ ), _ ) ) => true
+        case _ => false
+      } ) must beEqualTo( true )
     }
     "not be created if diamoned shaped (an acyclic graph but not a tree)" in {
       "1" in {
-        val t1 = UnaryTree("3", UnaryTree("2", "1"))
-        val t2 = UnaryTree("4", "0")
-        val t3 = BinaryTree("5", t1,t2)
-        (BinaryTree("-1", t3,t1)) must throwA[IllegalArgumentException]
+        val t1 = UnaryTree( "3", UnaryTree( "2", "1" ) )
+        val t2 = UnaryTree( "4", "0" )
+        val t3 = BinaryTree( "5", t1, t2 )
+        ( BinaryTree( "-1", t3, t1 ) ) must throwA[IllegalArgumentException]
       }
-// commented out since the test should fail with our current semantics
-// on trees: vertices (i.e. labels) may be equal even though the nodes
-// themselves are different.
-//
-//      "2" in {
-//        val t1 = UnaryTree("3", UnaryTree("2", "1"))
-//        val t2 = UnaryTree("4", "0")
-//        val t3 = BinaryTree("5", t1,t2)
-//        val t4 = LeafTree("1")
-//        (BinaryTree("-1", t3,t4)) must throwA[IllegalArgumentException]
-//      }
+      // commented out since the test should fail with our current semantics
+      // on trees: vertices (i.e. labels) may be equal even though the nodes
+      // themselves are different.
+      //
+      //      "2" in {
+      //        val t1 = UnaryTree("3", UnaryTree("2", "1"))
+      //        val t2 = UnaryTree("4", "0")
+      //        val t3 = BinaryTree("5", t1,t2)
+      //        val t4 = LeafTree("1")
+      //        (BinaryTree("-1", t3,t4)) must throwA[IllegalArgumentException]
+      //      }
       "3 (pointers equality)" in {
-        val t1 = UnaryTree(new AnyRef{}, UnaryTree(new AnyRef{}, new AnyRef{}))
-        val t2 = UnaryTree(new AnyRef{}, new AnyRef{})
-        val t3 = BinaryTree(new AnyRef{}, t1,t2)
-        (BinaryTree(new AnyRef{}, t3,t1)) must throwA[IllegalArgumentException]  
+        val t1 = UnaryTree( new AnyRef {}, UnaryTree( new AnyRef {}, new AnyRef {} ) )
+        val t2 = UnaryTree( new AnyRef {}, new AnyRef {} )
+        val t3 = BinaryTree( new AnyRef {}, t1, t2 )
+        ( BinaryTree( new AnyRef {}, t3, t1 ) ) must throwA[IllegalArgumentException]
       }
     }
 
     "be created if not diamoned shaped (pointers equality)" in {
-      val t1 = UnaryTree(new AnyRef{}, UnaryTree(new AnyRef{}, new AnyRef{}))
-      val t2 = UnaryTree(new AnyRef{}, new AnyRef{})
-      val t3 = BinaryTree(new AnyRef{}, t1,t2)
-      val t4 = LeafTree(new AnyRef{})
-      (BinaryTree(new AnyRef{}, t3,t4)) must not (throwA[IllegalArgumentException])
+      val t1 = UnaryTree( new AnyRef {}, UnaryTree( new AnyRef {}, new AnyRef {} ) )
+      val t2 = UnaryTree( new AnyRef {}, new AnyRef {} )
+      val t3 = BinaryTree( new AnyRef {}, t1, t2 )
+      val t4 = LeafTree( new AnyRef {} )
+      ( BinaryTree( new AnyRef {}, t3, t4 ) ) must not( throwA[IllegalArgumentException] )
     }
     /*"be backed up by a correctly-constructed graph" in {
       val t1 = UnaryTree("d",UnaryTree("c",UnaryTree("b","a")))

@@ -1,3 +1,5 @@
+import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
+
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
   organizationHomepage := Some(url("https://gapt.github.io/")),
@@ -5,10 +7,13 @@ lazy val commonSettings = Seq(
   startYear := Some(2008),
   version := "1.10-SNAPSHOT",
 
-  scalaVersion := "2.11.5",
+  scalaVersion := "2.11.6",
   scalacOptions in (Compile, doc) ++= Seq("-diagrams","-implicits"),
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test),
+
+  // scalaz-stream is not on maven.org
+  resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
   sourcesInBase := false // people like to keep scripts lying around
 )
@@ -24,22 +29,37 @@ lazy val root = (project in file(".")).
 
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
-    releaseZip <<= (sbtassembly.AssemblyKeys.assembly, Keys.baseDirectory, Keys.target, Keys.version) map {
+    releaseDist <<= (sbtassembly.AssemblyKeys.assembly, Keys.baseDirectory, Keys.target, Keys.version) map {
         (assemblyJar: File, baseDirectory: File, target: File, version: String) =>
-      val zipFile = target / s"gapt-$version.zip"
+      val archiveFile = target / s"gapt-$version.tar.gz"
 
       Process(List("latexmk", "-pdf", "user_manual.tex"), baseDirectory / "doc") !
 
       val filesToIncludeAsIs = List(
-        "README", "COPYING",
-        "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples",
-        "doc/user_manual.pdf")
+        "COPYING", "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples")
       val entries = List((assemblyJar, s"gapt-$version.jar")) ++
         filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDirectory / fn)}
-          .map{f => (f, baseDirectory.toPath.relativize(f.toPath))}
+          .map{f => (f, baseDirectory.toPath.relativize(f.toPath))} ++
+        List((baseDirectory / "doc/README.dist", "README"),
+             (baseDirectory / "doc/user_manual.pdf", "user_manual.pdf"))
 
-      IO.zip(entries.map{ case (file, pathInZip) => (file, s"gapt-$version/$pathInZip") }, zipFile)
-      zipFile
+      val archiveStem = s"gapt-$version"
+
+      IO.gzipFileOut(archiveFile) { gzipOut =>
+        val tarOut = new TarArchiveOutputStream(gzipOut)
+
+        entries.foreach { case (file, pathInArchive) =>
+          val tarEntry = new TarArchiveEntry(file, s"$archiveStem/$pathInArchive")
+          if (file.canExecute) tarEntry.setMode(BigInt("755", 8).toInt)
+          tarOut.putArchiveEntry(tarEntry)
+          IO.transfer(file, tarOut)
+          tarOut.closeArchiveEntry()
+        }
+
+        tarOut.close()
+      }
+
+      archiveFile
     },
 
     libraryDependencies ++= Seq(
@@ -53,14 +73,20 @@ lazy val root = (project in file(".")).
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "jline" % "jline" % "2.12",
+      "jline" % "jline" % "2.12.1",
       "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
-      "com.itextpdf" % "itextpdf" % "5.5.4",
-      "org.scilab.forge" % "jlatexmath" % "1.0.2"),
-
-    // Start each test class in a separate JVM, otherwise resolutionSchemaParserTest and nTapeTest fail.
-    testGrouping in Test <<= definedTests in Test map oneJvmPerTest
+      "com.itextpdf" % "itextpdf" % "5.5.5",
+      "org.scilab.forge" % "jlatexmath" % "1.0.2")
   )
+
+import scalariform.formatter.preferences._
+addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat")
+defaultScalariformSettings
+ScalariformKeys.preferences := FormattingPreferences()
+  .setPreference(AlignParameters, true)
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(DoubleIndentClassDeclaration, true)
+  .setPreference(SpaceInsideParentheses, true)
 
 lazy val testing = (project in file("testing")).
   dependsOn(root).
@@ -71,15 +97,15 @@ lazy val testing = (project in file("testing")).
     description := "gapt extended regression tests"
   )
 
-lazy val releaseZip = TaskKey[File]("release-zip", "Creates the release zip file.")
+lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
 
 lazy val testDependencies = Seq(
   "junit" % "junit" % "4.12",
-  "org.specs2" %% "specs2-core" % "2.4.16",
-  "org.specs2" %% "specs2-matcher" % "2.4.16",
-  "org.specs2" %% "specs2-mock" % "2.4.16",
-  "org.specs2" %% "specs2-junit" % "2.4.16",
-  "org.scalacheck" %% "scalacheck" % "1.12.1")
+  "org.specs2" %% "specs2-core" % "3.0",
+  "org.specs2" %% "specs2-matcher" % "3.0",
+  "org.specs2" %% "specs2-mock" % "3.0",
+  "org.specs2" %% "specs2-junit" % "3.0",
+  "org.scalacheck" %% "scalacheck" % "1.12.2")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =
   tests map { test =>

@@ -249,6 +249,7 @@ package robinson {
     def apply( p: RobinsonResolutionProof,
                a: FormulaOccurrence, occurrencesToRemove: Seq[FormulaOccurrence],
                sub: Substitution ): RobinsonResolutionProof = {
+      assert( !occurrencesToRemove.contains( a ) )
       val r = p.root.removeFormulasAtOccurrences( occurrencesToRemove )
       val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() + ( ( a, occurrencesToRemove ) )
       val newCl = Clause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ) )
@@ -267,7 +268,7 @@ package robinson {
                a: Formula, cnt: Int, pos: Boolean, sub: Substitution ): RobinsonResolutionProof = {
       val list = if ( pos ) p.root.positive else p.root.negative
       val occ = list.find( fo => fo.formula == a ).get
-      val occs = list.foldLeft( List[FormulaOccurrence]() )( ( res, fo ) => if ( res.size < cnt - 1 && fo.formula == a )
+      val occs = list.filter( _ != occ ).foldLeft( List[FormulaOccurrence]() )( ( res, fo ) => if ( res.size < cnt - 1 && fo.formula == a )
         fo :: res
       else
         res )

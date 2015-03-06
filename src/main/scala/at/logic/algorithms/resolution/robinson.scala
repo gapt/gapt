@@ -56,22 +56,18 @@ object RobinsonToLK extends at.logic.utils.logging.Logger {
   // Enforce the inductive invariant by contracting superfluous material.
   private def contractDownTo( proof: LKProof, s: FSequent, c: FClause ) =
     {
-      var res = proof
-
       val es_l = proof.root.antecedent.map( _.formula ).toSet
 
-      es_l.foreach( f => {
+      val p_l = es_l.foldLeft( proof )( ( p, f ) => {
         val max = s.antecedent.count( _ == f ) + c.neg.count( _ == f )
-        ContractionLeftMacroRule( res, f, max )
+        ContractionLeftMacroRule( p, f, max )
       } )
 
       val es_r = proof.root.succedent.map( _.formula ).toSet
-      es_r.foreach( f => {
+      es_r.foldLeft( p_l )( ( p, f ) => {
         val max = s.succedent.count( _ == f ) + c.pos.count( _ == f )
-        ContractionRightMacroRule( res, f, max )
+        ContractionRightMacroRule( p, f, max )
       } )
-
-      res
     }
 
   // Inductive invariant of this method:

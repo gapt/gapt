@@ -302,8 +302,10 @@ object VeriTParser extends RegexParsers {
     }
   }
 
-  def isUnsat( filename: String ): Boolean = {
-    parseAll( parseUnsat, new FileReader( filename ) ) match {
+  def isUnsat( filename: String ): Boolean = isUnsat( new FileReader( filename ) )
+
+  def isUnsat( reader: Reader ): Boolean = {
+    parseAll( parseUnsat, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
         throw new Exception( "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )

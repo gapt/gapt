@@ -18,15 +18,14 @@ Requirements:
 
  See https://github.com/gapt/gapt/wiki/External-software for details.
 
-Compilation and running:
- * sbt assembly
- * The scripts cli.sh, gui.sh, atp.sh look for the assembled jar and start the
-   respective interface of gapt.
+Starting GAPT:
+ The scripts cli.sh, gui.sh, and atp.sh start the command-line interface of
+ GAPT, the graphical interface of GAPT and the automated theorem prover
+ respectively.
 
- See https://github.com/gapt/gapt/wiki/Compiling-and-running-from-source for
- details.
+Using GAPT:
+ Please see the file user_manual.pdf in this distribution for details.
 
 License:
  GAPT is free software licensed under the GNU General Public License Version 3.
-
  See the file COPYING for details.
