@@ -447,7 +447,10 @@ object getETOfFormula {
     case Nil => None
   }
 }
-// Builds an expansion tree given a quantifier free formula
+
+/**
+ * Builds an expansion tree from a quantifier free formula.
+ */
 object qFreeToExpansionTree {
   def apply( f: HOLFormula ): ExpansionTree = f match {
     case AtomHOL( _, _ )  => Atom( f )
@@ -459,12 +462,14 @@ object qFreeToExpansionTree {
   }
 }
 
-// Builds an expansion tree given a *prenex* formula and
-// its instances (or substitutions) using only weak quantifiers. 
-//
-// NOTE: initially, this could be implemented for non-prenex formulas. 
-// What needs to be implemented is a method to remove the quantifiers of a
-// non-prenex formula (taking care about the renaming of variables).
+/**
+ * Builds an expansion tree given a *prenex* formula and
+ * its instances (or substitutions) using only weak quantifiers.
+ *
+ * NOTE: in principle, this could be implemented for non-prenex formulas.
+ * What needs to be implemented is a method to remove the quantifiers of a
+ * non-prenex formula (taking care about the renaming of variables).
+ */
 object prenexToExpansionTree {
   def apply( f: HOLFormula, lst: List[HOLFormula] ): ExpansionTree = {
     val fMatrix = getMatrix( f )
