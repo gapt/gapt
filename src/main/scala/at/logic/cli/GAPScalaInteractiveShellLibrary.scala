@@ -362,16 +362,20 @@ object lkTolksk {
   def apply( p: LKProof ) = LKtoLKskc( p )
 }
 
+object extractExpansionSequent {
+  def apply( proof: LKProof ): ExpansionSequent = herbrandExtraction.extractExpansionSequent( proof, true )
+}
+
+object ExpansionProofToLKProof {
+  def apply( ep: ExpansionSequent ): Option[LKProof] = solve.expansionProofToLKProof( ep )
+}
+
 object eliminateCuts {
   def apply( proof: LKProof ): LKProof = ReductiveCutElim( proof )
 }
 
 object extractInterpolant {
   def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = ExtractInterpolant( p, npart, ppart )
-}
-
-object extractExpansionSequent {
-  def apply( proof: LKProof ): ExpansionSequent = herbrandExtraction.extractExpansionSequent( proof, true )
 }
 
 object compressExpansionTree {
@@ -585,9 +589,10 @@ object help {
         |   regularize: LKProof => LKProof - regularize the given LK proof
         |   skolemize: LKProof => LKProof - skolemize the input proof
         |   lkTolksk: LKProof => LKProof
+        |   extractExpansionSequent: LKProof => ExpansionSequent - extract expansion sequent from LKProof
+        |   ExpansionProofToLKProof: ExpansionSequent => Option[LKProof]
         |   eliminateCuts: LKProof => LKProof - eliminate cuts by Gentzen's method
         |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
-        |   extractExpansionSequent: LKProof => ExpansionSequent - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
         |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
         |   compressExpansionSequent: ExpansionSequent => MultiExpansionSequent - compress the quantifiers in the trees of the sequent using vectors for the terms.
         |   minimalExpansionSequents: ( ExpansionSequent, Prover ) => List[ExpansionSequent] - find all minimal expansion sequents below the given one that are still valid according to the prover.
