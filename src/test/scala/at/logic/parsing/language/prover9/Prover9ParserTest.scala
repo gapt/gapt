@@ -5,6 +5,7 @@ package at.logic.parsing.language.prover9
  */
 
 import at.logic.calculi.lk.base.FSequent
+import at.logic.language.fol._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -209,6 +210,10 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
           throw new Exception( "Could not parse endsequent! " + msg + " " + input.pos )
       }
 
+    }
+
+    "parse infix v" in {
+      Prover9TermParser.parseTerm("a v b") must beEqualTo(Function("v", List(FOLConst("a"), FOLConst("b"))))
     }
 
   }
