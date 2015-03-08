@@ -224,5 +224,18 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
       veriT.isValid( deep ) must beTrue
     }
+
+    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using solvePropositional" in {
+      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+
+      val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
+
+      val lkproof1 = Prover9.parse_prover9LK( testFilePath )
+      val expseq = extractExpansionSequent( lkproof1, false )
+      val deep = ETtoDeep( expseq )
+
+      solve.solvePropositional( deep ).isDefined must beTrue
+    }
+
   }
 }
