@@ -58,7 +58,7 @@ object TreeGrammarDecomposition {
       case MCSMethod.Simplex => {
         // instantiate TreeGrammarDecomposition object with the termset and n
         //new TreeGrammarDecompositionSimplex(termset, n)
-	throw new TreeGrammarDecompositionException( "Unsupported TreeGrammarDecomposition method" )
+        throw new TreeGrammarDecompositionException( "Unsupported TreeGrammarDecomposition method" )
       }
     }
 
@@ -87,7 +87,7 @@ object TreeGrammarDecomposition {
         val grammar = decomp.getGrammar( rules )
 
         // If the grammar has only U terms, it is trivial
-        if (grammar.slist.size == 0) return None
+        if ( grammar.slist.size == 0 ) return None
         else return Some( grammar )
       }
       case None => return None
