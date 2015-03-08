@@ -213,7 +213,7 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
     }
 
     "parse infix v" in {
-      Prover9TermParser.parseTerm("a v b") must beEqualTo(Function("v", List(FOLConst("a"), FOLConst("b"))))
+      Prover9TermParser.parseTerm( "a v b" ) must beEqualTo( Function( "v", List( FOLConst( "a" ), FOLConst( "b" ) ) ) )
     }
 
   }
