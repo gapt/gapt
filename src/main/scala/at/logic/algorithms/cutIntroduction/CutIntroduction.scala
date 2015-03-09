@@ -467,8 +467,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         grammarFindingTime = System.currentTimeMillis - time
         time = System.currentTimeMillis
 
-        println( "Grammar\n" + grammar )
-
         // Although this shouldn't be the case, because of the grammar returned by
         // TreeGrammarDecomposition should either be None or some grammar with size > 0
         // we leave it here just to be sure
