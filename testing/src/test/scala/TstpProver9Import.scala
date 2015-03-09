@@ -78,7 +78,7 @@ class TstpProver9ImportVeritValidation extends Specification {
 }
 
 class TstpProver9ImportSolvePropValidation extends Specification {
-  "Prover9 import and minisat validaton" should {
+  "Prover9 import and solvePropositional validaton" should {
     for (file <- recursiveListFiles("testing/TSTP/prover9") if file.getName.endsWith(".out")) {
       s"work for ${file.getParentFile.getName}/${file.getName}" in {
         skipIfRunsLongerThan(2 minute) {
