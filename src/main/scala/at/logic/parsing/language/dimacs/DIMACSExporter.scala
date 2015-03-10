@@ -34,7 +34,7 @@ class DIMACSExporter( val clauses: List[FClause] ) {
       sb.toString()
     }
 
-  def getDIMACSString() : String = {
+  def getDIMACSString(): String = {
     val sb = new StringBuilder()
 
     sb.append( "p cnf " + atom_map.size + " " + clauses.size + nl )
@@ -50,30 +50,30 @@ class DIMACSExporter( val clauses: List[FClause] ) {
     sb.toString()
   }
 
-  def getInterpretation( dimacs_out : String ) = {
-    val lines = dimacs_out.split(nl)
-    val res =  if ( lines(0).equals( "SAT" ) ) {
-        Some( lines(1).split( " " ).
-          filter( lit => !lit.equals( "" ) && !lit.charAt( 0 ).equals( '0' ) ).
-          map( lit =>
-            if ( lit.charAt( 0 ) == '-' ) {
-              // negative literal
-              ( getAtom( lit.substring( 1 ).toInt ).get, false )
-            } else {
-              // positive literal
-              ( getAtom( lit.toInt ).get, true )
-            } )
-          .toSet.toMap )
-      } else {
-        // unsatisfiable
-        None
-      }
+  def getInterpretation( dimacs_out: String ) = {
+    val lines = dimacs_out.split( nl )
+    val res = if ( lines( 0 ).equals( "SAT" ) ) {
+      Some( lines( 1 ).split( " " ).
+        filter( lit => !lit.equals( "" ) && !lit.charAt( 0 ).equals( '0' ) ).
+        map( lit =>
+          if ( lit.charAt( 0 ) == '-' ) {
+            // negative literal
+            ( getAtom( lit.substring( 1 ).toInt ).get, false )
+          } else {
+            // positive literal
+            ( getAtom( lit.toInt ).get, true )
+          } )
+        .toSet.toMap )
+    } else {
+      // unsatisfiable
+      None
+    }
 
-      res match {
+    res match {
       case Some( model ) => Some( new MapBasedInterpretation( model ) )
       case None          => None
     }
 
-    }
-
   }
+
+}
