@@ -17,32 +17,15 @@ import at.logic.calculi.lk.base.FSequent
 
 import at.logic.provers.Prover
 
+import at.logic.models._
+
+import at.logic.parsing.language.dimacs.DIMACSExporter
+
 import scala.collection.immutable.HashMap
 
-trait Interpretation {
-  // Interpret an atom.
-  def interpretAtom( atom: HOLFormula ): Boolean
-
-  // Interpret an arbitrary formula.
-  def interpret( f: HOLFormula ): Boolean = f match {
-    case And( f1, f2 ) => interpret( f1 ) && interpret( f2 )
-    case Or( f1, f2 )  => interpret( f1 ) || interpret( f2 )
-    case Imp( f1, f2 ) => !interpret( f1 ) || interpret( f2 )
-    case Neg( f1 )     => !interpret( f1 )
-    case Atom( _, _ )  => interpretAtom( f )
-  }
-
-}
 
 // Call MiniSAT to solve quantifier-free HOLFormulas.
 class MiniSAT extends at.logic.utils.logging.Stopwatch {
-
-  class MapBasedInterpretation( val model: Map[HOLFormula, Boolean] ) extends Interpretation {
-    def interpretAtom( atom: HOLFormula ) = model.get( atom ) match {
-      case Some( b ) => b
-      case None      => false
-    }
-  }
 
   var atom_map: Map[HOLFormula, Int] = new HashMap[HOLFormula, Int]
 
@@ -68,59 +51,13 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
 
   // Returns a model of the set of clauses obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
-  def solve( problem: List[FClause] ): Option[Interpretation] =
-    getFromMiniSAT( problem ) match {
-      case Some( model ) => Some( new MapBasedInterpretation( model ) )
-      case None          => None
-    }
-
-  private def updateAtoms( clauses: List[FClause] ) =
+  def solve( clauses: List[FClause] ): Option[Interpretation] =
     {
-      val atoms = clauses.flatMap( c => c.neg ++ c.pos ).distinct;
-      atom_map = atoms.zip( 1 to atoms.size ).toMap
-    }
+      val dimacs = new DIMACSExporter( clauses )
 
-  private def getAtom( i: Int ) = {
-    atom_map.find( p => i == p._2 ) match {
-      case Some( ( a, n ) ) => Some( a )
-      case _                => None
-    }
-  }
-
-  private def getMiniSATString( atom: HOLFormula, pos: Boolean ): String =
-    if ( pos ) atom_map.get( atom ).get.toString else "-" + atom_map.get( atom ).get
-
-  private def getMiniSATString( clause: FClause ): String =
-    {
-      val sb = new StringBuilder()
-
-      def atoms_to_str( as: Seq[HOLFormula], pol: Boolean ) = as.foreach( a => {
-        sb.append( getMiniSATString( a, pol ) );
-        sb.append( " " );
-      } )
-
-      atoms_to_str( clause.pos, true )
-      atoms_to_str( clause.neg, false )
-
-      sb.toString()
-    }
-
-  private def getFromMiniSAT( clauses: List[FClause] ): Option[Map[HOLFormula, Boolean]] =
-    {
-      updateAtoms( clauses )
-      val sb = new StringBuilder()
-
-      val nl = System.getProperty( "line.separator" )
-
-      sb.append( "p cnf " + atom_map.size + " " + clauses.size + nl )
-
-      // construct minisat text input
-      clauses.foreach( c =>
-        {
-          sb.append( getMiniSATString( c ) )
-          sb.append( " 0" )
-          sb.append( nl )
-        } )
+      val minisat_in = dimacs.getDIMACSString()
+      trace( "Generated MiniSAT input: " )
+      trace( minisat_in );
 
       val temp_in = File.createTempFile( "agito_minisat_in", ".sat" )
       temp_in.deleteOnExit()
@@ -129,11 +66,8 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
       temp_out.deleteOnExit()
 
       val out = new BufferedWriter( new FileWriter( temp_in ) )
-      out.append( sb.toString() )
+      out.append( minisat_in )
       out.close()
-
-      trace( "Generated MiniSAT input: " )
-      trace( sb.toString() );
 
       // run minisat
 
@@ -145,29 +79,11 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
       debug( "minisat finished." );
 
       // parse minisat output and construct map
-      val in = new BufferedReader( new InputStreamReader(
-        new FileInputStream( temp_out ) ) );
-
-      val sat = in.readLine();
+      val sat = scala.io.Source.fromFile( temp_out ).mkString;
 
       trace( "MiniSAT result: " + sat )
 
-      if ( sat.equals( "SAT" ) ) {
-        Some( in.readLine().split( " " ).
-          filter( lit => !lit.equals( "" ) && !lit.charAt( 0 ).equals( '0' ) ).
-          map( lit =>
-            if ( lit.charAt( 0 ) == '-' ) {
-              // negative literal
-              ( getAtom( lit.substring( 1 ).toInt ).get, false )
-            } else {
-              // positive literal
-              ( getAtom( lit.toInt ).get, true )
-            } )
-          .toSet.toMap )
-      } else {
-        // unsatisfiable
-        None
-      }
+      dimacs.getInterpretation( sat )
     }
 }
 
