@@ -22,7 +22,7 @@ import at.logic.utils.executionModels.searchAlgorithms.SetNode
 object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = improveSolution( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
+    val minSol = improveSolution1( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
     new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
   }
 
@@ -31,13 +31,14 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
   }
 
+  // new version for multiple cuts. TODO: implement
   private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ) : List[FOLFormula] = {
-    val n = ehs.grammar.slist.size
+    val n = ehs.grammar.ss.size
     Nil
   }
 
   private def getIntermediarySolution( k: Int, base: ExtendedHerbrandSequent, cfs: List[FOLFormula] ) = {
-    val n = base.grammar.slist.size
+    val n = base.grammar.ss.size
     val alphas = base.grammar.eigenvariables
     val l = n - k + 1
 
@@ -47,9 +48,10 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     // since our end-sequents are more general, T_l is here not a list of terms, but rather
     // a list of list of lists of terms: tleft(i)(j)(k) is the k'th T_l-instance of the j'th quantifier of the i'th formula
     // in the antecedent.
-    val tleft = (0 to l - 2).foldLeft( base.grammar.u ) ( (acc, i) => {
-      substAll( acc, alphas( i ), base.grammar.slist( i ) )
-    } )
+//    val tleft = (0 to l - 2).foldLeft( base.grammar.u ) ( (acc, i) => {
+//      substAll( acc, alphas( i ), base.grammar.slist( i ) )
+//    } )
+// TODO: continue here
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
@@ -264,13 +266,13 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
    */
   def isValidWith( ehs: ExtendedHerbrandSequent, prover: Prover, f: FOLFormula ): Boolean = {
 
-    assert( ehs.grammar.slist.size == 1, "isValidWith: only simple grammars supported." )
+    assert( ehs.grammar.ss.size == 1, "isValidWith: only simple grammars supported." )
 
     //Instantiate with the eigenvariables.
     val body = ehs.grammar.eigenvariables.foldLeft( f )( ( f, ev ) => instantiate( f, ev ) )
 
     //Instantiate with all the values in s.
-    val as = ehs.grammar.slist( 0 )._2.toList.foldLeft( List[FOLFormula]() ) {
+    val as = ehs.grammar.ss( 0 )._2.toList.foldLeft( List[FOLFormula]() ) {
       case ( acc, t ) =>
         ( t.foldLeft( f ) { case ( f, sval ) => instantiate( f, sval ) } ) :: acc
     }

@@ -18,6 +18,8 @@ import at.logic.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.utils.executionModels.searchAlgorithms.SearchAlgorithms.{ DFS, BFS, setSearch }
 import Deltas._
 
+import scala.collection.immutable.HashMap
+
 /**
  * Creates a grammar from a decomposition {U o,,a1,...,am1,, S,,1,, o,,b1,...,bm2,, ... o,,z1,...,zmn,, S,,n,,}
  * @param u set U
@@ -66,12 +68,12 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
 
 object simpleToMultiGrammar {
   def apply( terms: TermSet, g: Grammar ) : MultiGrammar = {
-    val us = g.u0.foldLeft( new Map[FOLFormula, List[List[FOLTerm]]]() )( (acc, t) => {
+    val us = g.u.foldLeft( HashMap[FOLFormula, List[List[FOLTerm]]]() )( (acc, t) => {
       val f = terms.getFormula( t )
-      val old = acc.getOrElse( f, new List[List[FOLTerm]] )
-      acc + (f, ( old + terms.getTermTuple( t ) ) )
+      val old : List[List[FOLTerm]] = acc.getOrElse( f, List[List[FOLTerm]]() )
+      acc + ( (f, ( old :+ terms.getTermTuple( t ) ) ) )
     })
-    new MultiGrammar( us, g.slist0 )
+    new MultiGrammar( us, g.slist )
   }
 }
 

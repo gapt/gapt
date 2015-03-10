@@ -42,18 +42,18 @@ class ExtendedHerbrandSequent( seq: FSequent, g: MultiGrammar, cf: List[FOLFormu
   val quant_r: List[FOLFormula] = seq.succedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
 
   // Instantiated (previously univ. quantified) formulas on the left
-  val inst_l: List[FOLFormula] = grammar.us.foldRight( List[FOLFormula]() ) {
-    case ( acc, ( f, set ) ) =>
+  val inst_l: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
+    case ( f, acc ) =>
       f match {
-        case AllVar( _, _ ) => instantiateAll( f, set ) :: acc
+        case AllVar( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
         case _              => acc
       }
   }
   // Instantiated (previously ex. quantified) formulas on the right
-  val inst_r: List[FOLFormula] = grammar.us.foldRight( List[FOLFormula]() ) {
-    case ( acc, (f, set) ) =>
+  val inst_r: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
+    case ( f, acc ) =>
       f match {
-        case ExVar( _, _ ) => instantiateAll( f, set ) :: acc
+        case ExVar( _, _ ) => instantiateAll( f, grammar.us( f )  ).toList ++ acc
         case _             => acc
       }
   }
@@ -65,7 +65,7 @@ class ExtendedHerbrandSequent( seq: FSequent, g: MultiGrammar, cf: List[FOLFormu
   val succedent = prop_r ++ inst_r.filter( varFree )
   val succedent_alpha = inst_r.filter( x => !varFree( x ) )
 
-  var cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( seq, g ) else cf
+  var cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( g ) else cf
 
   override def toString = {
 

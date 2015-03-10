@@ -21,6 +21,8 @@ import at.logic.provers.minisat.MiniSATProver
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
 
+import scala.collection.immutable.HashSet
+
 class CutIntroException( msg: String ) extends Exception( msg )
 class CutIntroIncompleteException( msg: String ) extends Exception( msg )
 class CutIntroUncompressibleException( msg: String ) extends CutIntroException( msg )
@@ -306,7 +308,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
             phase = "sol" // solving phase
             time = System.currentTimeMillis
 
-            val cutFormulas = computeCanonicalSolutions( endSequent, grammar )
+            val cutFormulas = computeCanonicalSolutions( grammar )
             assert( cutFormulas.length == 1, "This method should introduce one cut." )
 
             val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
@@ -482,7 +484,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         minimalGrammarSize = grammar.size
         if ( verbose ) println( "Smallest grammar-size: " + grammar.size )
 
-        val cutFormulas = computeCanonicalSolutions( endSequent, grammar )
+        val cutFormulas = computeCanonicalSolutions( grammar )
         // Average size of the cut-formula
         canonicalSolutionSize = ( cutFormulas.foldLeft( 0 )( ( acc, f ) => lcomp( f ) + acc ) ) / cutFormulas.length
         if ( verbose ) {
@@ -569,26 +571,33 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
    * Computes the canonical solution with multiple quantifiers from a MultiGrammar,
    * i.e. the list \forall x_1...x_n C_1, ...., \forall x_1 C_n.
    */
-  def computeCanonicalSolutions( seq: FSequent, g: MultiGrammar ): List[FOLFormula] = {
+  def computeCanonicalSolutions( g: MultiGrammar ): List[FOLFormula] = {
+
 
     //val termset = g.terms
     val variables = g.ss.head._1
 
-    val instantiated_f = g.us.foldRight( List[FOLFormula]() ) {
-      case ( term, acc ) =>
-        val freeVars = freeVariables( term )
+    val instantiated_f = g.us.keys.foldRight( List[FOLFormula]() ) {
+      case ( formula , acc ) => {
+        val termlistlist = g.us( formula )
+        acc ++ termlistlist.foldLeft(List[FOLFormula]()){ case (acc, termlist) => {
+          val freeVars = freeVariables( termlist )
 
-        // Taking only the terms that contain alpha
-        if ( freeVars.intersect( variables ).nonEmpty ) {
-          val terms = termset.getTermTuple( term )
-          val f = termset.getFormula( term )
-          instantiateAll( f, terms ) :: acc
-        } else acc
+          if ( freeVars.intersect( variables ).nonEmpty ) {
+            val i_f = instantiateAll( formula, termlist ) 
+            val f = formula match {
+              case ExVar(_) => Neg( i_f )
+              case AllVar(_) => i_f
+            }
+            f  :: acc
+          } else acc
+      } }
+      }
     }
 
     val c1 = And( instantiated_f )
 
-    g.slist.foldLeft( List( c1 ) ) {
+    g.ss.foldLeft( List( c1 ) ) {
       case ( cut_formulas, ( variables, termset ) ) =>
         val ci = cut_formulas.head
         val forms = termset.foldLeft( List[FOLFormula]() ) {
@@ -613,7 +622,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     val endSequent = ehs.endSequent
     val cutFormulas = ehs.cutFormulas
     val grammar = ehs.grammar
-    val terms = grammar.terms
 
     trace( "grammar: " + grammar )
     trace( "cutFormulas: " + cutFormulas )
@@ -645,10 +653,10 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     // in the antecedent. Similarily for Uright.
 
     def getUs( fs: Seq[FOLFormula] ): Seq[Seq[Seq[Seq[FOLTerm]]]] =
-      ( 0 to alphas.size ).map( i => fs.map( f =>
-        grammar.u.filter(
-          uterm => terms.getFormula( uterm ) == f && freeVariables( uterm ).intersect( alphas.take( i ) ).isEmpty ).map(
-            uterm => terms.getTermTuple( uterm ) ) ) )
+      ( 0 to alphas.size ).map( i => fs.map( f => {
+        val termlistlist = grammar.us( f )
+        termlistlist.filter( termlist => freeVariables( termlist ).intersect( alphas.take( i ) ).isEmpty )
+      } ) )
 
     val Uleft = getUs( F.antecedent.asInstanceOf[Seq[FOLFormula]] )
     val Uright = getUs( F.succedent.asInstanceOf[Seq[FOLFormula]] )
@@ -680,7 +688,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     trace( "FU: " + FU )
 
     // define A_i[x \ S_i]
-    val AS = ( 0 to alphas.size - 1 ).map( i => grammar.slist( i )._2.map( s => instantiateAll( cutFormulas( i ), s ) ) )
+    val AS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiateAll( cutFormulas( i ), s ) ) )
 
     trace( "AS: " + AS )
 
@@ -714,7 +722,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     val proof = ( 0 to alphas.size - 1 ).foldLeft( Lproof_ )( ( lproof, i ) => {
       val left = buildLeftPart( i, quantPart, A, Uleft, Uright, alphas, cutFormulas( i ), lproof )
       trace( " Rproofs_( " + i + " ).root: " + Rproofs_( i ).root )
-      val right = buildRightPart( Rproofs_( i ), cutFormulas( i ), grammar.slist( i )._2.map( _.head ).toList )
+      val right = buildRightPart( Rproofs_( i ), cutFormulas( i ), grammar.ss( i )._2.map( _.head ).toList )
       trace( "right part ES: " + right.root )
       val cut = CutRule( left, right, cutFormulas( i ) )
       val cont1 = ContractionMacroRule( cut, FU( i + 1 ), false )
