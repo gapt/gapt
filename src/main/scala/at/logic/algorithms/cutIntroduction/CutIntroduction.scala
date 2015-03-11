@@ -340,8 +340,8 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         numCuts = getStatistics( smallestProof ).cuts
         canonicalSolutionSize = sorted.head._3
         minimizedSolutionSize = sorted.head._4
-	improvingSolutionTime = sorted.head._5
-	buildProofTime = sorted.head._6
+        improvingSolutionTime = sorted.head._5
+        buildProofTime = sorted.head._6
         rulesLKProofWithCut = rulesNumber( smallestProof )
         quantRulesWithCut = quantRulesNumber( smallestProof )
         if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas.head + "\n" )

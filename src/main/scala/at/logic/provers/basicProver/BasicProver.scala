@@ -3,9 +3,9 @@ package at.logic.provers.basicProver
 
 import at.logic.algorithms.lk.LKProver
 import at.logic.provers.Prover
-import at.logic.provers.minisat.MiniSATProver
 import at.logic.language.hol.HOLFormula
 import at.logic.calculi.lk.base.{ FSequent, LKProof }
+import at.logic.provers.FailSafeProver
 
 class BasicProver extends Prover {
 
@@ -16,9 +16,9 @@ class BasicProver extends Prover {
     new LKProver( cleanStructuralRules = false ).getLKProof( seq )
 
   override def isValid( seq: FSequent ): Boolean =
-    new MiniSATProver().isValid( seq )
+    FailSafeProver.getProver().isValid( seq )
 
   override def isValid( f: HOLFormula ): Boolean = {
-    new MiniSATProver().isValid( f )
+    FailSafeProver.getProver().isValid( f )
   }
 }

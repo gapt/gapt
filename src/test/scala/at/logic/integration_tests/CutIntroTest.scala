@@ -47,7 +47,6 @@ class CutIntroTest extends SpecificationWithJUnit {
 
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
-      if ( !( new MiniSATProver ).isInstalled() ) skipped( "MiniSAT is not installed" )
       val proof = LinearExampleProof( 0, 4 )
 
       val termset = TermsExtraction( proof )
