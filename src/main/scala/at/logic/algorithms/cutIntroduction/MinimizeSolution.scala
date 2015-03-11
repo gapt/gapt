@@ -38,20 +38,35 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   }
 
   private def getIntermediarySolution( k: Int, base: ExtendedHerbrandSequent, cfs: List[FOLFormula] ) = {
-    val n = base.grammar.ss.size
+    val grammar = base.grammar
+    val n = grammar.ss.size
     val alphas = base.grammar.eigenvariables
     val l = n - k + 1
 
     // compute ts[ a / ss ]
-    def substAll( ts: List[FOLTerm], a: FOLVar, ss: List[FOLTerm] ) = ts.flatMap( t => ss.map( s => Substitution(a, s)(t) ) )
+    def substAll( termlistlist: List[List[FOLTerm]], a: FOLVar, ss: List[FOLTerm] ) : List[List[FOLTerm]] = 
+      termlistlist.flatMap( termlist => ss.flatMap( s => termlist.map( t => Substitution(a, s)(t) ) ) )
+    // TODO: continue thinking about line above
+
 
     // since our end-sequents are more general, T_l is here not a list of terms, but rather
     // a list of list of lists of terms: tleft(i)(j)(k) is the k'th T_l-instance of the j'th quantifier of the i'th formula
     // in the antecedent.
-//    val tleft = (0 to l - 2).foldLeft( base.grammar.u ) ( (acc, i) => {
-//      substAll( acc, alphas( i ), base.grammar.slist( i ) )
-//    } )
-// TODO: continue here
+
+    def formsToT( fs: List[FOLFormula] ) =
+      fs.map( formula => {
+        val termlistlist = grammar.us( formula.asInstanceOf[FOLFormula] )
+        (0 to l - 2).foldLeft[List[List[FOLTerm]]]( termlistlist ){ case (acc, i) => {
+          // we assume that cut-formulas have only one quantifier by doing
+          // _.head
+          substAll( acc, alphas( i ), grammar.ss( i )._2.map( _.head ).toList )
+        } }
+      } )
+
+    val tleft = formsToT( base.endSequent.antecedent )
+    val tright = formsToT( base.endSequent.succedent )
+
+
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
