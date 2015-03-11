@@ -23,7 +23,6 @@ import at.logic.parsing.language.dimacs.DIMACSExporter
 
 import scala.collection.immutable.HashMap
 
-
 // Call MiniSAT to solve quantifier-free HOLFormulas.
 class MiniSAT extends at.logic.utils.logging.Stopwatch {
 

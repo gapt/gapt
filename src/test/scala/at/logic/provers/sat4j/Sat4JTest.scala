@@ -53,9 +53,8 @@ class Sat4JTest extends SpecificationWithJUnit {
     }
 
     "deal correctly with the pigeonhole problem" in {
-      val sol_a = SATProblems.getProblem6a().map( (new Sat4j).isValid(_) )
-      val sol_b = SATProblems.getProblem6b().map( (new Sat4j).isValid(_) )
-
+      val sol_a = SATProblems.getProblem6a().map( ( new Sat4j ).isValid( _ ) )
+      val sol_b = SATProblems.getProblem6b().map( ( new Sat4j ).isValid( _ ) )
 
       sol_a must_== sol_a.map( x => false )
       sol_b must_== sol_b.map( x => true )

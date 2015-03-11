@@ -45,11 +45,11 @@ object SATProblems {
   val pd = Atom( "P", d :: Nil )
   val pe = Atom( "P", e :: Nil )
 
-  def getProblem1() = FClause( Nil, pc :: Nil )::Nil
+  def getProblem1() = FClause( Nil, pc :: Nil ) :: Nil
   def getProblem2() = {
-      val c1 = FClause( Nil, pc :: Nil )
-      val c2 = FClause( pc :: Nil, Nil )
-      c1::c2::Nil
+    val c1 = FClause( Nil, pc :: Nil )
+    val c2 = FClause( pc :: Nil, Nil )
+    c1 :: c2 :: Nil
   }
   def getProblem3a() = Or( pc, Neg( pc ) )
   def getProblem3b() = new FSequent( Nil, Or( pc, Neg( pc ) ) :: Nil )
@@ -58,19 +58,18 @@ object SATProblems {
     val c1 = FClause( Nil, pc :: Nil )
     val c2 = FClause( pc :: Nil, pd :: Nil )
     val c3 = FClause( pd :: pe :: Nil, Nil )
-    c1::c2::c3::Nil
+    c1 :: c2 :: c3 :: Nil
   }
   def checkSolution5( model: Interpretation ) = model.interpret( pe ) == false
 
-  private def problem6( pair: (Int, Int ) ) = PigeonHolePrinciple( pair._1, pair._2 )
+  private def problem6( pair: ( Int, Int ) ) = PigeonHolePrinciple( pair._1, pair._2 )
 
-  
-  def getProblem6a() : List[FOLFormula] = {
+  def getProblem6a(): List[FOLFormula] = {
     val fparams = List( ( 2, 2 ), ( 3, 3 ), ( 4, 4 ) )
     fparams.map( problem6 )
   }
 
-  def getProblem6b() : List[FOLFormula] = {
+  def getProblem6b(): List[FOLFormula] = {
     val tparams = List( ( 2, 1 ), ( 3, 2 ), ( 4, 3 ), ( 4, 1 ) )
     tparams.map( problem6 )
   }
@@ -113,9 +112,8 @@ class MiniSATTest extends SpecificationWithJUnit {
     }
 
     "deal correctly with the pigeonhole problem" in {
-      val sol_a = SATProblems.getProblem6a().map( (new MiniSAT).isValid(_) )
-      val sol_b = SATProblems.getProblem6b().map( (new MiniSAT).isValid(_) )
-
+      val sol_a = SATProblems.getProblem6a().map( ( new MiniSAT ).isValid( _ ) )
+      val sol_b = SATProblems.getProblem6b().map( ( new MiniSAT ).isValid( _ ) )
 
       sol_a must_== sol_a.map( x => false )
       sol_b must_== sol_b.map( x => true )
