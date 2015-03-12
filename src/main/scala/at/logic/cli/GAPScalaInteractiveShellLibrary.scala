@@ -494,16 +494,15 @@ object seeNFirstGrammars {
 }
 
 object generateExtendedHerbrandSequent {
-  def apply( es: FSequent, g: Grammar ): ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
-  def apply( es: Sequent, g: Grammar ): ExtendedHerbrandSequent = apply( es.toFSequent, g )
+  def apply( es: FSequent, g: MultiGrammar ): ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
+  def apply( es: Sequent, g: MultiGrammar ): ExtendedHerbrandSequent = apply( es.toFSequent, g )
 }
 
 object computeCanonicalSolutions {
-  def apply( s: FSequent, g: Grammar ): List[FOLFormula] = {
+  def apply( g: MultiGrammar ): List[FOLFormula] = {
     println( "Note that the clauses that do not contain the eigenvariable were already removed." );
-    CutIntroduction.computeCanonicalSolutions( s, g )
+    CutIntroduction.computeCanonicalSolutions( g )
   }
-  def apply( es: Sequent, g: Grammar ): List[FOLFormula] = apply( es.toFSequent, g )
 }
 
 object minimizeSolution {
@@ -615,7 +614,7 @@ object help {
         |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
         |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
         |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
-        |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
+        |   computeCanonicalSolution: MultiGrammar => FOLFormula - computes the canonical solution for the cut-introduction problem
         |   minimizeSolution: ExtendedHerbrandSequent => ExtendedHerbrandSequent - minimizes the solution associated with the extended Herbrand sequent returning another Herbrand sequent with this minimal solution
         |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent
         |

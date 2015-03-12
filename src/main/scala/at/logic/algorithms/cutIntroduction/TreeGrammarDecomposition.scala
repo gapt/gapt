@@ -45,7 +45,7 @@ object TreeGrammarDecomposition {
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return (list of grammars, status, log)
    */
-  def apply( termset: List[FOLTerm], n: Int, method: MCSMethod = MCSMethod.MaxSAT, satsolver: MaxSATSolver = MaxSATSolver.QMaxSAT ): Option[Grammar] = {
+  def apply( termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver ): Option[Grammar] = {
 
     var phase = "TGD"
 
@@ -91,6 +91,14 @@ object TreeGrammarDecomposition {
         else return Some( grammar )
       }
       case None => return None
+    }
+  }
+
+  def apply( termset: TermSet, n: Int, method: MCSMethod = MCSMethod.MaxSAT, satsolver: MaxSATSolver = MaxSATSolver.QMaxSAT ): Option[MultiGrammar] = {
+    val og = apply( termset.set, n, method, satsolver )
+    og match {
+      case Some( g ) => Some( simpleToMultiGrammar( termset, g ) )
+      case None      => None
     }
   }
 }

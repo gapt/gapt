@@ -19,6 +19,7 @@ import scala.collection.mutable
 // There is no guarantee on the ordering of the list.
 object freeVariables {
   def apply( e: FOLExpression ): List[FOLVar] = freeVariablesLambda( e ).asInstanceOf[List[FOLVar]]
+  def apply( es: List[FOLExpression] ): List[FOLVar] = es.flatMap( apply( _ ) )
 }
 
 // matches for consts and vars, but nothing else

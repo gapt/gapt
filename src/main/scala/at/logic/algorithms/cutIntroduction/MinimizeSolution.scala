@@ -22,26 +22,50 @@ import at.logic.utils.executionModels.searchAlgorithms.SetNode
 object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = improveSolution( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
+    val minSol = improveSolution1( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
     new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
   }
 
   def applyEq( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = improveSolutionEq( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
+    val minSol = improveSolutionEq1( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
     new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
   }
 
-  // This algorithm improves the solution using forgetful resolution and forgetful paramodulation.
+  // new version for multiple cuts. TODO: implement
+  private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
+    val n = ehs.grammar.ss.size
+    Nil
+  }
+
+  private def getIntermediarySolution( k: Int, base: ExtendedHerbrandSequent, cfs: List[FOLFormula] ) = {
+    val n = base.grammar.ss.size
+    val alphas = base.grammar.eigenvariables
+    val l = n - k + 1
+
+    // compute ts[ a / ss ]
+    def substAll( ts: List[FOLTerm], a: FOLVar, ss: List[FOLTerm] ) = ts.flatMap( t => ss.map( s => Substitution( a, s )( t ) ) )
+
+    // since our end-sequents are more general, T_l is here not a list of terms, but rather
+    // a list of list of lists of terms: tleft(i)(j)(k) is the k'th T_l-instance of the j'th quantifier of the i'th formula
+    // in the antecedent.
+    //    val tleft = (0 to l - 2).foldLeft( base.grammar.u ) ( (acc, i) => {
+    //      substAll( acc, alphas( i ), base.grammar.slist( i ) )
+    //    } )
+    // TODO: continue here
+  }
+
+  // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
+  // for one cut.
   // The algorithm does naive search and is very redundant. An improved algorithm is not yet implemented,
   // but should be (e.g. analogously to improveSolution2)
   //
   // returns the list of improved solutions found by the forgetful resolution
   // and forgetful paramodulation (i.e. from the forgetful equality consequence generator).
 
-  private def improveSolutionEq( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
+  private def improveSolutionEq1( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
     assert( ehs.cutFormulas.length == 1, "Solution minimization only implemented for one cut formula." )
 
-    trace( "entering improveSolutionEq" )
+    trace( "entering improveSolutionEq1" )
     val cutFormula = ehs.cutFormulas.head
 
     // Remove quantifier 
@@ -94,7 +118,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
       0, formula )._2
 
   /**
-   * Tries to minimize the canonical solution by removing as many atoms as
+   * Tries to minimize the canonical solution for one cut by removing as many atoms as
    * as possible through forgetful resolution.
    *
    * The original variant did a DFS, with the successor-nodes of a formula being
@@ -125,7 +149,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
    * @param form The canonical solution to be improved (doesn't have to be in CNF).
    * @return The list of minimal-size solutions (=the set of end nodes as described in 4.2).
    */
-  private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
+  private def improveSolution1( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
     assert( ehs.cutFormulas.length == 1, "Solution minimization only implemented for one cut formula." )
 
     val ( xs, form2 ) = removeQuantifiers( ehs.cutFormulas.head )
@@ -242,13 +266,13 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
    */
   def isValidWith( ehs: ExtendedHerbrandSequent, prover: Prover, f: FOLFormula ): Boolean = {
 
-    assert( ehs.grammar.slist.size == 1, "isValidWith: only simple grammars supported." )
+    assert( ehs.grammar.ss.size == 1, "isValidWith: only simple grammars supported." )
 
     //Instantiate with the eigenvariables.
     val body = ehs.grammar.eigenvariables.foldLeft( f )( ( f, ev ) => instantiate( f, ev ) )
 
     //Instantiate with all the values in s.
-    val as = ehs.grammar.slist( 0 )._2.toList.foldLeft( List[FOLFormula]() ) {
+    val as = ehs.grammar.ss( 0 )._2.toList.foldLeft( List[FOLFormula]() ) {
       case ( acc, t ) =>
         ( t.foldLeft( f ) { case ( f, sval ) => instantiate( f, sval ) } ) :: acc
     }
