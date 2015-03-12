@@ -94,9 +94,6 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val n = grammar.ss.size
     val alphas = grammar.eigenvariables
     val l = n - k + 1
-
-    
-
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
