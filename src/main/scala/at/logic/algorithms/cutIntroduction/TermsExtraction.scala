@@ -90,13 +90,13 @@ class TermSet( terms: Map[FOLFormula, List[List[FOLTerm]]] ) {
   def formulas = terms.keys
 
   // Given g_F( t_i ) as above, return F.
-  def getFormula( t: FOLTerm ) : FOLFormula = t match {
+  def getFormula( t: FOLTerm ): FOLFormula = t match {
     case Function( symbol, _ ) => formulaFunction( symbol.toString )
     case _                     => throw new TermsExtractionException( "Term is not a function: " + t )
   }
 
   // Given g_F( t_i ) as above, return t_i.
-  def getTermTuple( t: FOLTerm ) : List[FOLTerm] = t match {
+  def getTermTuple( t: FOLTerm ): List[FOLTerm] = t match {
     case Function( _, tuple ) => tuple
     case _                    => throw new TermsExtractionException( "Term is not a function: " + t )
   }

@@ -53,7 +53,7 @@ class ExtendedHerbrandSequent( seq: FSequent, g: MultiGrammar, cf: List[FOLFormu
   val inst_r: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
     case ( f, acc ) =>
       f match {
-        case ExVar( _, _ ) => instantiateAll( f, grammar.us( f )  ).toList ++ acc
+        case ExVar( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
         case _             => acc
       }
   }

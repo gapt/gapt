@@ -32,7 +32,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   }
 
   // new version for multiple cuts. TODO: implement
-  private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ) : List[FOLFormula] = {
+  private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
     val n = ehs.grammar.ss.size
     Nil
   }
@@ -43,15 +43,15 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val l = n - k + 1
 
     // compute ts[ a / ss ]
-    def substAll( ts: List[FOLTerm], a: FOLVar, ss: List[FOLTerm] ) = ts.flatMap( t => ss.map( s => Substitution(a, s)(t) ) )
+    def substAll( ts: List[FOLTerm], a: FOLVar, ss: List[FOLTerm] ) = ts.flatMap( t => ss.map( s => Substitution( a, s )( t ) ) )
 
     // since our end-sequents are more general, T_l is here not a list of terms, but rather
     // a list of list of lists of terms: tleft(i)(j)(k) is the k'th T_l-instance of the j'th quantifier of the i'th formula
     // in the antecedent.
-//    val tleft = (0 to l - 2).foldLeft( base.grammar.u ) ( (acc, i) => {
-//      substAll( acc, alphas( i ), base.grammar.slist( i ) )
-//    } )
-// TODO: continue here
+    //    val tleft = (0 to l - 2).foldLeft( base.grammar.u ) ( (acc, i) => {
+    //      substAll( acc, alphas( i ), base.grammar.slist( i ) )
+    //    } )
+    // TODO: continue here
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation

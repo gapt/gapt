@@ -51,12 +51,12 @@ class Grammar( val u: List[FOLTerm], val slist: List[( List[FOLVar], Set[List[FO
 // Hence we will consider grammars of the form (U_1,...,U_m) \circ S_1 ... \circ S_n
 // where the U_i are sets of lists of terms corresponding to the instances of the x_i,
 // and the S_i are sets of lists of terms.
-class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[( List[FOLVar], Set[List[FOLTerm]])] ) {
+class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[( List[FOLVar], Set[List[FOLTerm]] )] ) {
 
   /** Returns the size of the grammar, i.e. |u| + |s| */
   def size = u_size + s_size
-  private def u_size = us.foldLeft( 0 ){ case (acc, (_, list)) => acc + list.size }
-  private def s_size = ss.foldLeft( 0 ){ case (acc, (_, set)) => acc + set.size }
+  private def u_size = us.foldLeft( 0 ) { case ( acc, ( _, list ) ) => acc + list.size }
+  private def s_size = ss.foldLeft( 0 ) { case ( acc, ( _, set ) ) => acc + set.size }
 
   /** Returns the set of eigenvariables that occur in the grammar. */
   def eigenvariables = ss.flatMap( s => s._1 ).distinct
@@ -67,12 +67,12 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
 }
 
 object simpleToMultiGrammar {
-  def apply( terms: TermSet, g: Grammar ) : MultiGrammar = {
-    val us = g.u.foldLeft( HashMap[FOLFormula, List[List[FOLTerm]]]() )( (acc, t) => {
+  def apply( terms: TermSet, g: Grammar ): MultiGrammar = {
+    val us = g.u.foldLeft( HashMap[FOLFormula, List[List[FOLTerm]]]() )( ( acc, t ) => {
       val f = terms.getFormula( t )
-      val old : List[List[FOLTerm]] = acc.getOrElse( f, List[List[FOLTerm]]() )
-      acc + ( (f, ( old :+ terms.getTermTuple( t ) ) ) )
-    })
+      val old: List[List[FOLTerm]] = acc.getOrElse( f, List[List[FOLTerm]]() )
+      acc + ( ( f, ( old :+ terms.getTermTuple( t ) ) ) )
+    } )
     new MultiGrammar( us, g.slist )
   }
 }
@@ -99,12 +99,10 @@ object ComputeGrammars {
    * @param deltatable A generalized delta table for terms.
    * @param eigenvariable The name of eigenvariables to introduce.
    */
-  def findValidGrammars( terms: TermSet, deltatable: DeltaTable, eigenvariable: String ) : List[MultiGrammar] = {
+  def findValidGrammars( terms: TermSet, deltatable: DeltaTable, eigenvariable: String ): List[MultiGrammar] = {
     val gs = findValidGrammars( terms.set, deltatable, eigenvariable )
     gs.map( g => simpleToMultiGrammar( terms, g ) )
   }
-
-
 
   /**
    * Finds valid, minimum-size grammars based on a list of terms and a generalized delta table.
