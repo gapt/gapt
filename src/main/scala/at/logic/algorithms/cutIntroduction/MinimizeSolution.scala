@@ -37,21 +37,66 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     Nil
   }
 
-  private def getIntermediarySolution( k: Int, base: ExtendedHerbrandSequent, cfs: List[FOLFormula] ) = {
-    val n = base.grammar.ss.size
-    val alphas = base.grammar.eigenvariables
+  // compute ts[ a / ss ]
+  private def substAll( termlistlist: List[List[FOLTerm]], a: FOLVar, ss: List[FOLTerm] ) =
+    termlistlist.flatMap( termlist => ss.map( s => termlist.map( t => Substitution( a, s )( t ) ) ) )
+
+  // Computes T_l as in the definition of intermediary solution
+  private def getT( l: Int, grammar: MultiGrammar ) : Map[FOLFormula, List[List[FOLTerm]]] = {
+    grammar.us.keys.map( formula => {
+        val termlistlist = grammar.us( formula.asInstanceOf[FOLFormula] )
+        val terms = ( 0 to l - 3 ).foldLeft[List[List[FOLTerm]]]( termlistlist ) {
+          case ( acc, i ) => {
+            // we assume that cut-formulas have only one quantifier by doing
+            // _.head
+            substAll( acc, grammar.eigenvariables( i ), grammar.ss( i )._2.map( _.head ).toList )
+          }
+        }
+        (formula, terms)
+      } ).toMap
+  }
+
+  // computes D as in the proof of Lemma 11
+  // cfs is the list F_n, ..., F_l
+  private def getD( grammar: MultiGrammar, cfs: List[FOLFormula] ) : MultiGrammar = {
+    val n = grammar.ss.size
+    val k = cfs.size
     val l = n - k + 1
 
-    // compute ts[ a / ss ]
-    def substAll( ts: List[FOLTerm], a: FOLVar, ss: List[FOLTerm] ) = ts.flatMap( t => ss.map( s => Substitution( a, s )( t ) ) )
+    val myss = grammar.ss.reverse.take( n - l + 1 )
+    val us : Map[FOLFormula, List[List[FOLTerm]]] = (cfs zip myss.map(_._2.toList)).toMap ++ getT( l - 1, grammar )
+    val p : Pair[List[FOLVar], Set[List[FOLTerm]]] = grammar.ss( l - 2 )
+    val ss : List[Pair[List[FOLVar], Set[List[FOLTerm]]]] = p::Nil
+    new MultiGrammar( us, ss )
+  }
 
-    // since our end-sequents are more general, T_l is here not a list of terms, but rather
-    // a list of list of lists of terms: tleft(i)(j)(k) is the k'th T_l-instance of the j'th quantifier of the i'th formula
-    // in the antecedent.
-    //    val tleft = (0 to l - 2).foldLeft( base.grammar.u ) ( (acc, i) => {
-    //      substAll( acc, alphas( i ), base.grammar.slist( i ) )
-    //    } )
-    // TODO: continue here
+  // cfs is the list F_n, ..., F_l
+  private def getIntermediaryContext( grammar: MultiGrammar, cfs: List[FOLFormula] ) : List[FOLFormula] = {
+    val n = grammar.ss.size
+    val k = cfs.size
+    val l = n - k + 1
+
+    val reversess = grammar.ss.reverse.take( n - l + 1 )
+
+    (cfs zip reversess).map{ case (cf, (alpha, termlistlist) ) => {
+      val ant = instantiateAll( cf, alpha )
+      val succ = And( termlistlist.map( termlist => instantiateAll( cf, termlist ) ).toList )
+      Imp( ant, succ )
+    } }
+
+  }
+
+  // Computes the intermediary solution, which is an extended herbrand sequent with a MultiGrammar
+  // for one cut, incorporating previous cut-formulas (in cfs) into the base sequent.
+  private def getIntermediarySolution( base: ExtendedHerbrandSequent, cfs: List[FOLFormula] ) = {
+    val k = cfs.size
+    val grammar = base.grammar
+    val n = grammar.ss.size
+    val alphas = grammar.eigenvariables
+    val l = n - k + 1
+
+    
+
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
