@@ -27,7 +27,10 @@ object BussTautology {
 }
 
 /*
- * Constructs a formula representing the pigeon hole principle.
+ * Constructs a formula representing the pigeon hole principle. More precisely:
+ * PigeonHolePrinciple( p, h ) states that if p pigeons are put into h holes
+ * then there is a hole which contains two pigeons. PigeonHolePrinciple( p, h )
+ * is a tautology iff p > h.
  *
  * Since we want to avoid empty disjunctions, we assume > 1 pigeons.
  *
@@ -36,6 +39,10 @@ object PigeonHolePrinciple {
   // The binary relation symbol.
   val rel = "R"
 
+  /*
+   * @param ps the number of pigeons
+   * @param hs the number of holes
+   **/
   def apply( ps: Int, hs: Int ) = {
     assert( ps > 1 )
     Imp( And( (1 to ps).map( p =>
