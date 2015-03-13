@@ -5,22 +5,16 @@
 
 package at.logic.provers.minisat
 
+import at.logic.algorithms.resolution.{ CNFp, TseitinCNF }
+import at.logic.calculi.lk.base.FSequent
+import at.logic.calculi.resolution._
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol._
-import at.logic.calculi.resolution._
-import at.logic.algorithms.resolution.{ CNFp, TseitinCNF }
-
+import at.logic.models._
+import at.logic.parsing.language.dimacs.DIMACSExporter
+import at.logic.provers.Prover
 import java.io._
 import java.lang.StringBuilder
-
-import at.logic.calculi.lk.base.FSequent
-
-import at.logic.provers.Prover
-
-import at.logic.models._
-
-import at.logic.parsing.language.dimacs.DIMACSExporter
-
 import scala.collection.immutable.HashMap
 
 // Call MiniSAT to solve quantifier-free HOLFormulas.
@@ -39,9 +33,16 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
   def solve( f: HOLFormula ): Option[Interpretation] = {
     start()
     val cnf = f match {
-      case f1: FOLFormula => TseitinCNF( f1 )._1
-      case _              => CNFp( f )
+      case f1: FOLFormula => {
+        debug( "starting Tseitin CNF-transformation..." )
+        TseitinCNF( f1 )._1
+      }
+      case _ => {
+        debug( "starting naive CNF-transformation..." )
+        CNFp( f )
+      }
     }
+    debug( "CNF-transformation finished." )
     lap( "CNF done" )
     val int = solve( cnf )
     lap( "Solving done" )
