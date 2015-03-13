@@ -131,6 +131,7 @@ private[expansionTrees] class Minimizer( val sequent: MultiExpansionSequent, val
    * @return a minimal expansion sequent.
    */
   private def computeAMinimal_( mes: MultiExpansionSequent ): MultiExpansionSequent = {
+    debug( "Minimizing a MultiExpansionSequent with " + getStatistics( mes ).total + " instances..." )
     val suc_opt = generateSuccessors( mes ).find( { s => prover.isValid( s.toDeep ) } )
     if ( suc_opt.isDefined )
       computeAMinimal_( suc_opt.get )

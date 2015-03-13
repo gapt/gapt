@@ -20,6 +20,16 @@ object getStatistics {
 
       as + ss
     }
+
+    /**
+     * total number of instances
+     */
+    def total = {
+      val at = _1.foldLeft( 0 )( ( n, pair ) => n + pair._2 )
+      val st = _2.foldLeft( 0 )( ( n, pair ) => n + pair._2 )
+
+      at + st
+    }
   }
 
   def apply( mes: MultiExpansionSequent ) = {
