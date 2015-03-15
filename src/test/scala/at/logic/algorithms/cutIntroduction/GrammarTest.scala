@@ -589,57 +589,56 @@ class GrammarTest extends SpecificationWithJUnit {
   }
 
   "MultiGrammar" should {
-      "compute the language in a simple case" in {
+    "compute the language in a simple case" in {
 
-        val x = FOLVar( "x" )
-        val y = FOLVar( "y" )
-        val form = AllVar( x, AllVar( y, Atom( "P", x::y::Nil ) ) )
+      val x = FOLVar( "x" )
+      val y = FOLVar( "y" )
+      val form = AllVar( x, AllVar( y, Atom( "P", x :: y :: Nil ) ) )
 
-        val f = "f"
-        val a = FOLConst("a")
-        val b = FOLConst("b")
+      val f = "f"
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
 
-        val alpha1 = FOLVar( "α1" )
-        val alpha2 = FOLVar( "α2" )
-        val alpha3 = FOLVar( "α3" )
-        val alpha4 = FOLVar( "α4" )
+      val alpha1 = FOLVar( "α1" )
+      val alpha2 = FOLVar( "α2" )
+      val alpha3 = FOLVar( "α3" )
+      val alpha4 = FOLVar( "α4" )
 
-        val u1 = Function( f, alpha1::Nil )
-        val u2 = Function( f, alpha2::Nil )
-        val u3 = Function( f, alpha3::Nil )
-        val u4 = Function( f, alpha4::Nil )
+      val u1 = Function( f, alpha1 :: Nil )
+      val u2 = Function( f, alpha2 :: Nil )
+      val u3 = Function( f, alpha3 :: Nil )
+      val u4 = Function( f, alpha4 :: Nil )
 
-        val us = ((form, (u1::u2::Nil)::(u3::u4::Nil)::Nil )::Nil).toMap
+      val us = ( ( form, ( u1 :: u2 :: Nil ) :: ( u3 :: u4 :: Nil ) :: Nil ) :: Nil ).toMap
 
-        val s11 = Function( f, alpha3::Nil )
-        val s12 = Function( f, alpha4::Nil )
-        val s13 = Function( f, a::Nil )
-        val s14 = Function( f, b::Nil )
+      val s11 = Function( f, alpha3 :: Nil )
+      val s12 = Function( f, alpha4 :: Nil )
+      val s13 = Function( f, a :: Nil )
+      val s14 = Function( f, b :: Nil )
 
-        val s21 = a
-        val s22 = b
-        val s23 = Function( f, a::Nil )
-        val s24 = Function( f, b::Nil )
-        
-        val ss =  (alpha1::alpha2::Nil, (s11::s12::Nil)::(s13::s14::Nil)::Nil)::
-                   ( (alpha3::alpha4::Nil), (s21::s22::Nil)::(s23::s24::Nil)::Nil )::Nil
+      val s21 = a
+      val s22 = b
+      val s23 = Function( f, a :: Nil )
+      val s24 = Function( f, b :: Nil )
 
-        val grammar = new MultiGrammar( us, ss )
+      val ss = ( alpha1 :: alpha2 :: Nil, ( s11 :: s12 :: Nil ) :: ( s13 :: s14 :: Nil ) :: Nil ) ::
+        ( ( alpha3 :: alpha4 :: Nil ), ( s21 :: s22 :: Nil ) :: ( s23 :: s24 :: Nil ) :: Nil ) :: Nil
 
-        val r1 = Function( f, a::Nil ) 
-        val r2 = Function( f, b::Nil ) 
-        val r3 = Function( f, Function( f, a::Nil )::Nil )
-        val r4 = Function( f, Function( f, b::Nil )::Nil )
-        val r5 = Function( f, Function( f, Function( f, a::Nil )::Nil )::Nil )
-        val r6 = Function( f, Function( f, Function( f, b::Nil )::Nil )::Nil )
+      val grammar = new MultiGrammar( us, ss )
 
+      val r1 = Function( f, a :: Nil )
+      val r2 = Function( f, b :: Nil )
+      val r3 = Function( f, Function( f, a :: Nil ) :: Nil )
+      val r4 = Function( f, Function( f, b :: Nil ) :: Nil )
+      val r5 = Function( f, Function( f, Function( f, a :: Nil ) :: Nil ) :: Nil )
+      val r6 = Function( f, Function( f, Function( f, b :: Nil ) :: Nil ) :: Nil )
 
-        val result = ((form, (r1::r2::Nil)::(r3::r4::Nil)::(r5::r6::Nil)::Nil)::Nil).toMap
+      val result = ( ( form, ( r1 :: r2 :: Nil ) :: ( r3 :: r4 :: Nil ) :: ( r5 :: r6 :: Nil ) :: Nil ) :: Nil ).toMap
 
-        def asSets( m: Map[FOLFormula, List[List[FOLTerm]]] ) : Map[FOLFormula, Set[List[FOLTerm]]] = m.map{ case (f, ts) => (f, ts.toSet) }
+      def asSets( m: Map[FOLFormula, List[List[FOLTerm]]] ): Map[FOLFormula, Set[List[FOLTerm]]] = m.map { case ( f, ts ) => ( f, ts.toSet ) }
 
-        asSets( grammar.language ) must beEqualTo( asSets ( result ) )
-      }
+      asSets( grammar.language ) must beEqualTo( asSets( result ) )
+    }
   }
 
   /*

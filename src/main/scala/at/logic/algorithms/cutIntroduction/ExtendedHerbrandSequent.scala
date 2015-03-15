@@ -64,7 +64,6 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
   val succedent = prop_r ++ inst_r.filter( varFree )
   val succedent_alpha = inst_r.filter( x => !varFree( x ) )
 
-
   override def toString = {
 
     // For printing Xα -> ^ Xsi

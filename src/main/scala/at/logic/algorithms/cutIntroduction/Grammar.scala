@@ -74,8 +74,8 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
     val terms = ss.foldLeft[List[List[FOLTerm]]]( termlistlist ) {
       case ( acc, ( vars, termlists ) ) => substAll( acc, vars, termlists )
     }
-    (formula, terms.distinct)
-    } ).toMap
+    ( formula, terms.distinct )
+  } ).toMap
 }
 
 object simpleToMultiGrammar {
@@ -85,7 +85,7 @@ object simpleToMultiGrammar {
       val old: List[List[FOLTerm]] = acc.getOrElse( f, List[List[FOLTerm]]() )
       acc + ( ( f, ( old :+ terms.getTermTuple( t ) ) ) )
     } )
-    new MultiGrammar( us, g.slist.map{ case (left, right) => (left, right.toList) } )
+    new MultiGrammar( us, g.slist.map { case ( left, right ) => ( left, right.toList ) } )
   }
 }
 

@@ -32,22 +32,24 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   }
 
   def applyNew( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val improvedSol = improveSolution( ehs, prover ) 
+    val improvedSol = improveSolution( ehs, prover )
     new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
   }
 
-  private def chooseSolution( list : List[FOLFormula] ) = list.sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
+  private def chooseSolution( list: List[FOLFormula] ) = list.sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
 
   // new version for multiple cuts.
   // returns the list of cut-formulas of the improved solution.
   private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
     val grammar = ehs.grammar
     val n = grammar.ss.size
-    ( 0 to n ).foldLeft[List[FOLFormula]]( Nil : List[FOLFormula] ){ case (acc, k) => {
-      val is = getIntermediarySolution( ehs, acc )
-      val cf = chooseSolution( improveSolution1( is, prover ) )
-      acc :+ cf
-    } }
+    ( 0 to n ).foldLeft[List[FOLFormula]]( Nil: List[FOLFormula] ) {
+      case ( acc, k ) => {
+        val is = getIntermediarySolution( ehs, acc )
+        val cf = chooseSolution( improveSolution1( is, prover ) )
+        acc :+ cf
+      }
+    }
   }
 
   // constructs the grammar U \circ_{alpha_1} S_1 ... \circ_{alpha_{l-1}} S_{l-1}
@@ -58,47 +60,49 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   }
 
   // Computes T_l as in the definition of intermediary solution
-  private def getT( l: Int, grammar: MultiGrammar ) : Map[FOLFormula, List[List[FOLTerm]]] = 
+  private def getT( l: Int, grammar: MultiGrammar ): Map[FOLFormula, List[List[FOLTerm]]] =
     getIntermediaryGrammar( l, grammar ).language
 
   // computes D as in the proof of Lemma 11
   // cfs is the list F_n, ..., F_l
-  private def getD( grammar: MultiGrammar, cfs: List[FOLFormula] ) : MultiGrammar = {
+  private def getD( grammar: MultiGrammar, cfs: List[FOLFormula] ): MultiGrammar = {
     val n = grammar.ss.size
     val k = cfs.size
     val l = n - k + 1
 
     val myss = grammar.ss.reverse.take( n - l + 1 )
-    val us = (cfs zip myss.map(_._2.toList)).toMap ++ getT( l - 1, grammar )
-    val p  = grammar.ss( l - 2 )
-    val ss = p::Nil
+    val us = ( cfs zip myss.map( _._2.toList ) ).toMap ++ getT( l - 1, grammar )
+    val p = grammar.ss( l - 2 )
+    val ss = p :: Nil
     new MultiGrammar( us, ss )
   }
 
   // cfs is the list F_n, ..., F_l
-  private def getIntermediaryContext( grammar: MultiGrammar, cfs: List[FOLFormula] ) : List[FOLFormula] = {
+  private def getIntermediaryContext( grammar: MultiGrammar, cfs: List[FOLFormula] ): List[FOLFormula] = {
     val n = grammar.ss.size
     val k = cfs.size
     val l = n - k + 1
 
     val reversess = grammar.ss.reverse.take( n - l + 1 )
 
-    (cfs zip reversess).map{ case (cf, (alpha, termlistlist) ) => {
-      val ant = instantiateAll( cf, alpha )
-      val succ = And( termlistlist.map( termlist => instantiateAll( cf, termlist ) ).toList )
-      Imp( ant, succ )
-    } }
+    ( cfs zip reversess ).map {
+      case ( cf, ( alpha, termlistlist ) ) => {
+        val ant = instantiateAll( cf, alpha )
+        val succ = And( termlistlist.map( termlist => instantiateAll( cf, termlist ) ).toList )
+        Imp( ant, succ )
+      }
+    }
   }
 
   private def instantiateSequent( seq: FSequent, map: Map[FOLFormula, List[List[FOLTerm]]] ) = {
     def fun( l: Seq[FOLFormula] ) = l.flatMap( f =>
-        map.get(f) match {
-          case None => f::Nil
-          case Some( termlistlist ) => instantiateAll( f, termlistlist )
-        } )
+      map.get( f ) match {
+        case None                 => f :: Nil
+        case Some( termlistlist ) => instantiateAll( f, termlistlist )
+      } )
 
-      new FSequent( fun( seq.antecedent.asInstanceOf[List[FOLFormula]] ), fun( seq.succedent.asInstanceOf[List[FOLFormula]] ) )
-    }
+    new FSequent( fun( seq.antecedent.asInstanceOf[List[FOLFormula]] ), fun( seq.succedent.asInstanceOf[List[FOLFormula]] ) )
+  }
 
   // Computes the intermediary solution, which is an extended herbrand sequent with a MultiGrammar
   // for one cut, incorporating previous cut-formulas (in cfs) into the base sequent.
