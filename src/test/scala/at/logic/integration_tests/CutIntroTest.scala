@@ -11,6 +11,7 @@ import at.logic.language.lambda.symbols._
 import at.logic.language.lambda.types._
 import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.provers.minisat.MiniSATProver
+import at.logic.provers.basicProver._
 
 import org.junit.runner.RunWith
 import org.specs2.mutable._
@@ -47,7 +48,6 @@ class CutIntroTest extends SpecificationWithJUnit {
 
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
-      if ( !( new MiniSATProver ).isInstalled() ) skipped( "MiniSAT is not installed" )
       val proof = LinearExampleProof( 0, 4 )
 
       val termset = TermsExtraction( proof )
@@ -56,6 +56,39 @@ class CutIntroTest extends SpecificationWithJUnit {
       CutIntroduction.one_cut_one_quantifier( proof, false )
 
       set must contain( exactly( LinearExampleTermset( 4 ): _* ) )
+    }
+
+    "introduce two cuts into linear example proof (n = 8)" in {
+      def fun( n: Int, t: FOLTerm ): FOLTerm = if ( n == 0 ) t else Function( "s", fun( n - 1, t ) :: Nil )
+      val proof = LinearExampleProof( 0, 8 )
+      val f = proof.root.antecedent.tail.head.formula.asInstanceOf[FOLFormula]
+      val a1 = FOLVar( "α_1" )
+      val a2 = FOLVar( "α_2" )
+      val zero = FOLConst( "0" )
+
+      val u1 = a1
+      val u2 = fun( 1, a1 )
+      val us = ( ( f, ( u1 :: Nil ) :: ( u2 :: Nil ) :: Nil ) :: Nil ).toMap
+      val s11 = a2
+      val s12 = fun( 2, a2 )
+      val s21 = zero
+      val s22 = fun( 4, zero )
+
+      val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
+      val grammar = new MultiGrammar( us, ss )
+      val endSequent = proof.root.toFSequent
+      val ehs = new ExtendedHerbrandSequent( endSequent, grammar )
+      val prover = new BasicProver()
+      val result_new = MinimizeSolution.applyNew( ehs, prover )
+      val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
+
+      // expected result
+      val cf1 = AllVar( a1, Or( Atom( "P", fun( 2, a1 ) :: Nil ), Neg( Atom( "P", a1 :: Nil ) ) ) )
+      val cf2 = AllVar( a2, Or( Atom( "P", fun( 4, a2 ) :: Nil ), Neg( Atom( "P", a2 :: Nil ) ) ) )
+
+      result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
+
+      at.logic.algorithms.lk.statistics.quantRulesNumber( r_proof.get ) must beEqualTo( grammar.size + ss.size )
     }
   }
 }
