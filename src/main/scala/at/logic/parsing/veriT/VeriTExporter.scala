@@ -123,8 +123,8 @@ object VeriTExporter {
     "declare-sort",
     "declare-fun",
     "assert",
-    "not", "and", "or",
-    "as",
+    "not", "and", "or", "xor",
+    "as", "push",
     "true", "false" )
 
   // Transforms the string into ASCII and checks if 
