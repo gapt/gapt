@@ -46,7 +46,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
     trace( "improving solution for n = " + n )
 
-    ( 1 to n ).foldLeft( Nil: List[FOLFormula] ) {
+    val list = ( 1 to n ).foldLeft( Nil: List[FOLFormula] ) {
       case ( cfs, k ) => {
         trace( "k: " + k )
         trace( "current cut-formulas: " + cfs )
@@ -58,6 +58,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
         cfs :+ cf
       }
     }
+    list.reverse
   }
 
   // constructs the grammar U \circ_{alpha_1} S_1 ... \circ_{alpha_{l-1}} S_{l-1}
