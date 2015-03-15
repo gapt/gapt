@@ -88,7 +88,17 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val us = ( cfs zip myss.map( _._2.toList ) ).toMap ++ getT( l, grammar )
     val p = grammar.ss( l - 1 )
     val ss = p :: Nil
-    new MultiGrammar( us, ss )
+    val res = new MultiGrammar( us, ss )
+
+    assert( res.language == us ++ getT( l + 1, grammar ) )
+
+    res
+  }
+
+  private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
+    val ant = instantiateAll( cf, alpha )
+    val succ = And( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    Imp( ant, succ )
   }
 
   // cfs is the list F_n, ..., F_l
@@ -97,14 +107,10 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val k = cfs.size + 1
     val l = n - k + 1
 
-    val reversess = grammar.ss.reverse.take( n - l )
+    val myss = grammar.ss.reverse.take( n - l )
 
-    ( cfs zip reversess ).map {
-      case ( cf, ( alpha, termlistlist ) ) => {
-        val ant = instantiateAll( cf, alpha )
-        val succ = And( termlistlist.map( termlist => instantiateAll( cf, termlist ) ).toList )
-        Imp( ant, succ )
-      }
+    ( cfs zip myss ).map {
+      case ( cf, ( alpha, termlistlist ) ) => getCutImpl( cf, alpha, termlistlist )
     }
   }
 
