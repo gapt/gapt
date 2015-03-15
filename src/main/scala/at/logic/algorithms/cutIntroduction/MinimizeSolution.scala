@@ -22,39 +22,44 @@ import at.logic.utils.executionModels.searchAlgorithms.SetNode
 object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = improveSolution1( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
+    val minSol = chooseSolution( improveSolution1( ehs, prover ) )
     new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
   }
 
   def applyEq( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = improveSolutionEq1( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
+    val minSol = chooseSolution( improveSolutionEq1( ehs, prover ) )
     new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
   }
 
-  // new version for multiple cuts. TODO: implement
-  private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
-    val n = ehs.grammar.ss.size
-    Nil
+  def applyNew( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
+    val improvedSol = improveSolution( ehs, prover ) 
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
   }
 
-  // compute ts[ a / ss ]
-  private def substAll( termlistlist: List[List[FOLTerm]], a: FOLVar, ss: List[FOLTerm] ) =
-    termlistlist.flatMap( termlist => ss.map( s => termlist.map( t => Substitution( a, s )( t ) ) ) )
+  private def chooseSolution( list : List[FOLFormula] ) = list.sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
+
+  // new version for multiple cuts.
+  // returns the list of cut-formulas of the improved solution.
+  private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
+    val grammar = ehs.grammar
+    val n = grammar.ss.size
+    ( 0 to n ).foldLeft[List[FOLFormula]]( Nil : List[FOLFormula] ){ case (acc, k) => {
+      val is = getIntermediarySolution( ehs, acc )
+      val cf = chooseSolution( improveSolution1( is, prover ) )
+      acc :+ cf
+    } }
+  }
+
+  // constructs the grammar U \circ_{alpha_1} S_1 ... \circ_{alpha_{l-1}} S_{l-1}
+  private def getIntermediaryGrammar( l: Int, grammar: MultiGrammar ) = {
+    val us = grammar.us
+    val ss = grammar.ss.take( l - 1 )
+    new MultiGrammar( us, ss )
+  }
 
   // Computes T_l as in the definition of intermediary solution
-  private def getT( l: Int, grammar: MultiGrammar ) : Map[FOLFormula, List[List[FOLTerm]]] = {
-    grammar.us.keys.map( formula => {
-        val termlistlist = grammar.us( formula.asInstanceOf[FOLFormula] )
-        val terms = ( 0 to l - 3 ).foldLeft[List[List[FOLTerm]]]( termlistlist ) {
-          case ( acc, i ) => {
-            // we assume that cut-formulas have only one quantifier by doing
-            // _.head
-            substAll( acc, grammar.eigenvariables( i ), grammar.ss( i )._2.map( _.head ).toList )
-          }
-        }
-        (formula, terms)
-      } ).toMap
-  }
+  private def getT( l: Int, grammar: MultiGrammar ) : Map[FOLFormula, List[List[FOLTerm]]] = 
+    getIntermediaryGrammar( l, grammar ).language
 
   // computes D as in the proof of Lemma 11
   // cfs is the list F_n, ..., F_l
@@ -64,9 +69,9 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val l = n - k + 1
 
     val myss = grammar.ss.reverse.take( n - l + 1 )
-    val us : Map[FOLFormula, List[List[FOLTerm]]] = (cfs zip myss.map(_._2.toList)).toMap ++ getT( l - 1, grammar )
-    val p : Pair[List[FOLVar], Set[List[FOLTerm]]] = grammar.ss( l - 2 )
-    val ss : List[Pair[List[FOLVar], Set[List[FOLTerm]]]] = p::Nil
+    val us = (cfs zip myss.map(_._2.toList)).toMap ++ getT( l - 1, grammar )
+    val p  = grammar.ss( l - 2 )
+    val ss = p::Nil
     new MultiGrammar( us, ss )
   }
 
@@ -83,8 +88,17 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
       val succ = And( termlistlist.map( termlist => instantiateAll( cf, termlist ) ).toList )
       Imp( ant, succ )
     } }
-
   }
+
+  private def instantiateSequent( seq: FSequent, map: Map[FOLFormula, List[List[FOLTerm]]] ) = {
+    def fun( l: Seq[FOLFormula] ) = l.flatMap( f =>
+        map.get(f) match {
+          case None => f::Nil
+          case Some( termlistlist ) => instantiateAll( f, termlistlist )
+        } )
+
+      new FSequent( fun( seq.antecedent.asInstanceOf[List[FOLFormula]] ), fun( seq.succedent.asInstanceOf[List[FOLFormula]] ) )
+    }
 
   // Computes the intermediary solution, which is an extended herbrand sequent with a MultiGrammar
   // for one cut, incorporating previous cut-formulas (in cfs) into the base sequent.
@@ -94,6 +108,14 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val n = grammar.ss.size
     val alphas = grammar.eigenvariables
     val l = n - k + 1
+    val orig_es = base.endSequent
+
+    val es1 = new FSequent( getIntermediaryContext( grammar, cfs ), Nil )
+    val es2 = instantiateSequent( orig_es, getT( l, grammar ) )
+
+    val d = getD( grammar, cfs )
+
+    new ExtendedHerbrandSequent( es1 compose es2, d, CutIntroduction.computeCanonicalSolutions( d ) )
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
