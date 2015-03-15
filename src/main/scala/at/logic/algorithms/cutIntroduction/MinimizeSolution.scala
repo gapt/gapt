@@ -43,11 +43,19 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
     val grammar = ehs.grammar
     val n = grammar.ss.size
-    ( 0 to n ).foldLeft[List[FOLFormula]]( Nil: List[FOLFormula] ) {
-      case ( acc, k ) => {
-        val is = getIntermediarySolution( ehs, acc )
+
+    trace( "improving solution for n = " + n )
+
+    ( 0 to n - 1 ).foldLeft( Nil: List[FOLFormula] ) {
+      case ( cfs, k ) => {
+        trace( "k: " + k )
+        trace( "current cut-formulas: " + cfs )
+        trace( "getting intermediary solution" )
+        val is = getIntermediarySolution( ehs, cfs )
+        trace( "improving intermediary solution" )
         val cf = chooseSolution( improveSolution1( is, prover ) )
-        acc :+ cf
+        trace( "got improved cut-formula: " + cf )
+        cfs :+ cf
       }
     }
   }
@@ -69,6 +77,8 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val n = grammar.ss.size
     val k = cfs.size
     val l = n - k + 1
+
+    trace( "computing D for l = " + l )
 
     val myss = grammar.ss.reverse.take( n - l + 1 )
     val us = ( cfs zip myss.map( _._2.toList ) ).toMap ++ getT( l - 1, grammar )
@@ -114,8 +124,12 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     val l = n - k + 1
     val orig_es = base.endSequent
 
+    trace( "computing context of intermediary solution" )
     val es1 = new FSequent( getIntermediaryContext( grammar, cfs ), Nil )
+    trace( "computed context: " + es1 )
+    trace( "computing ES-part of intermediary solution" )
     val es2 = instantiateSequent( orig_es, getT( l, grammar ) )
+    trace( "ES-part: " + es2 )
 
     val d = getD( grammar, cfs )
 
