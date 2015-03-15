@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ "$1" = "" ]; then
   echo "Please use './get-proofs leanCoP' or './get-proofs prover9'."
