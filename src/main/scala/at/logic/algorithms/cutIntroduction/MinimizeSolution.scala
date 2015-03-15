@@ -46,7 +46,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
     trace( "improving solution for n = " + n )
 
-    ( 0 to n - 1 ).foldLeft( Nil: List[FOLFormula] ) {
+    ( 1 to n ).foldLeft( Nil: List[FOLFormula] ) {
       case ( cfs, k ) => {
         trace( "k: " + k )
         trace( "current cut-formulas: " + cfs )
@@ -69,20 +69,23 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   // Computes T_l as in the definition of intermediary solution
   private def getT( l: Int, grammar: MultiGrammar ): Map[FOLFormula, List[List[FOLTerm]]] =
-    getIntermediaryGrammar( l, grammar ).language
+    if ( l == 0 )
+      grammar.us
+    else
+      getIntermediaryGrammar( l, grammar ).language
 
   // computes D as in the proof of Lemma 11
   // cfs is the list F_n, ..., F_l
   private def getD( grammar: MultiGrammar, cfs: List[FOLFormula] ): MultiGrammar = {
     val n = grammar.ss.size
-    val k = cfs.size
+    val k = cfs.size + 1
     val l = n - k + 1
 
     trace( "computing D for l = " + l )
 
-    val myss = grammar.ss.reverse.take( n - l + 1 )
-    val us = ( cfs zip myss.map( _._2.toList ) ).toMap ++ getT( l - 1, grammar )
-    val p = grammar.ss( l - 2 )
+    val myss = grammar.ss.reverse.take( n - l )
+    val us = ( cfs zip myss.map( _._2.toList ) ).toMap ++ getT( l, grammar )
+    val p = grammar.ss( l - 1 )
     val ss = p :: Nil
     new MultiGrammar( us, ss )
   }
@@ -90,10 +93,10 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   // cfs is the list F_n, ..., F_l
   private def getIntermediaryContext( grammar: MultiGrammar, cfs: List[FOLFormula] ): List[FOLFormula] = {
     val n = grammar.ss.size
-    val k = cfs.size
+    val k = cfs.size + 1
     val l = n - k + 1
 
-    val reversess = grammar.ss.reverse.take( n - l + 1 )
+    val reversess = grammar.ss.reverse.take( n - l )
 
     ( cfs zip reversess ).map {
       case ( cf, ( alpha, termlistlist ) ) => {
@@ -117,7 +120,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   // Computes the intermediary solution, which is an extended herbrand sequent with a MultiGrammar
   // for one cut, incorporating previous cut-formulas (in cfs) into the base sequent.
   private def getIntermediarySolution( base: ExtendedHerbrandSequent, cfs: List[FOLFormula] ) = {
-    val k = cfs.size
+    val k = cfs.size + 1
     val grammar = base.grammar
     val n = grammar.ss.size
     val alphas = grammar.eigenvariables
