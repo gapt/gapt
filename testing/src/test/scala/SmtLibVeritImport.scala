@@ -6,10 +6,16 @@ import at.logic.provers.minisat._
 import at.logic.testing.{skipIfRunsLongerThan, recursiveListFiles}
 
 import org.specs2.mutable._
+import org.specs2.specification.core.Fragment
+import scala.concurrent.duration._
 
-class SmtLibVeritImport extends Specification {
+trait SmtLibVeritSpec {
+  def veritProofs = recursiveListFiles("testing/veriT-SMT-LIB").filter(_.getName.endsWith(".proof_flat"))
+}
+
+class SmtLibVeritImport extends Specification with SmtLibVeritSpec {
   "SMT-LIB VeriT proof import" should {
-    for (file <- recursiveListFiles("testing/veriT-SMT-LIB") if file.getName.endsWith(".proof_flat")) {
+    Fragment.foreach(veritProofs) { file =>
       file.getName in {
         skipIfRunsLongerThan(1 minute) {
           VeriTParser.getExpansionProof(file.getAbsolutePath)
@@ -20,9 +26,9 @@ class SmtLibVeritImport extends Specification {
   }
 }
 
-class SmtLibVeritImportValidation extends Specification {
+class SmtLibVeritImportValidation extends Specification with SmtLibVeritSpec {
   "SMT-LIB VeriT proof import and validation" should {
-    for (file <- recursiveListFiles("testing/veriT-SMT-LIB") if file.getName.endsWith(".proof_flat")) {
+    Fragment.foreach(veritProofs) { file =>
       file.getName in {
         skipIfRunsLongerThan(2 minute) {
           val E = VeriTParser.getExpansionProof(file.getAbsolutePath)
