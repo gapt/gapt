@@ -20,6 +20,7 @@ import at.logic.provers.maxsat.MaxSATSolver
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
+import at.logic.algorithms.interpolation.ExtractInterpolant
 
 import scala.collection.immutable.HashSet
 
@@ -613,6 +614,62 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     }.tail.reverse
   }
 
+  private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
+    val ant = instantiateAll( cf, alpha )
+    val succ = And( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    Imp( ant, succ )
+  }
+
+  // TODO: put this somewhere else, define on HOLFormula.
+  private def simplify( f: FOLFormula ): FOLFormula = f match {
+    case And( TopC, r )    => simplify( r )
+    case And( r, TopC )    => simplify( r )
+    case Or( TopC, _ )     => TopC
+    case Or( _, TopC )     => TopC
+    case Imp( TopC, r )    => simplify( r )
+    case Imp( r, TopC )    => TopC
+    case And( BottomC, _ ) => BottomC
+    case And( _, BottomC ) => BottomC
+    case Or( BottomC, r )  => simplify( r )
+    case Or( r, BottomC )  => simplify( r )
+    case Imp( BottomC, r ) => TopC
+    case Imp( r, BottomC ) => simplify( Neg( r ) )
+    case Neg( TopC )       => BottomC
+    case Neg( BottomC )    => TopC
+    case And( l, r ) => {
+      val resl = simplify( l )
+      val resr = simplify( r )
+      if ( l == resl && r == resr )
+        f
+      else
+        simplify( And( resl, resr ) )
+    }
+    case Or( l, r ) => {
+      val resl = simplify( l )
+      val resr = simplify( r )
+      if ( l == resl && r == resr )
+        f
+      else
+        simplify( Or( resl, resr ) )
+    }
+    case Imp( l, r ) => {
+      val resl = simplify( l )
+      val resr = simplify( r )
+      if ( l == resl && r == resr )
+        f
+      else
+        simplify( Imp( resl, resr ) )
+    }
+    case Neg( s ) => {
+      val res = simplify( s )
+      if ( res == s )
+        f
+      else
+        simplify( Neg( res ) )
+    }
+    case _ => f
+  }
+
   /**
    * Builds the final proof out of an extended Herbrand sequent.
    *
@@ -678,11 +735,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
     trace( "A: " + A )
 
-    // define L_1
-    val L1 = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, A ++ ehs.succedent ++ ehs.succedent_alpha )
-
-    trace( "L1: " + L1 )
-
     // define the sequent corresponding to F[x \ U_i]
     val FU = ( 0 to alphas.size ).map( i => FSequent(
       ( F.antecedent zip Uleft( i ) ).flatMap { case ( f, terms ) => instantiateAll( f.asInstanceOf[FOLFormula], terms ) },
@@ -695,21 +747,62 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
     trace( "AS: " + AS )
 
+    // define the CI_i
+    val cutImplications = ( 0 to alphas.size - 1 ).map( i => getCutImpl( cutFormulas( i ), alphas( i ) :: Nil, grammar.ss( i )._2 ) )
+
+    // compute the A_i' via interpolation
+    // TODO: increase performance by feeding existing proofs to the
+    // interpolation algorithm?
+    val Aprime = ( 1 to alphas.size ).reverse.foldLeft( Nil: List[FOLFormula] ) {
+      case ( acc, i ) => {
+        val allf = FU( 0 ) compose ( new FSequent( ehs.prop_l, ehs.prop_r ) )
+        val posf = FU( i - 1 ) compose ( new FSequent( ehs.prop_l, ehs.prop_r ) )
+        val negf = allf diff posf
+        val neg = negf compose ( new FSequent( cutImplications.take( i - 1 ), Nil ) )
+        val pos = posf compose ( new FSequent( AS( i - 1 ), acc ) )
+        val interpolant = ExtractInterpolant( neg, pos, prover )
+        val res = And( A( i - 1 ), interpolant )
+        println( "res: " + res )
+        val res2 = simplify( res )
+        println( "simplified res: " + res2 )
+        acc :+ res2
+      }
+    }.reverse
+
+    println( "Aprime: " + Aprime )
+
+    val cutFormulasPrime = ( Aprime zip Aprime.indices ).map { case ( a, i ) => AllVar( alphas( i ), a ) }
+
+    println( "cutFormulasPrime: " + cutFormulasPrime )
+
+    // define A'_i[x \ S_i]
+    val AprimeS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiateAll( cutFormulasPrime( i ), s ) ) )
+
+    // define L_1
+    val L1 = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, Aprime ++ ehs.succedent ++ ehs.succedent_alpha )
+
+    trace( "L1: " + L1 )
+
     // define the R_i
     val R = ( 0 to alphas.size - 1 ).map( i =>
-      FSequent( AS( i ).toSeq ++ ehs.prop_l, A.drop( i + 1 ) ++ ehs.prop_r ).compose(
-        FU( i + 1 ) ) )
+      FSequent( AprimeS( i ).toSeq ++ ehs.prop_l, Aprime.drop( i ) ++ ehs.prop_r ).compose(
+        FU( i ) ) )
 
     trace( "R: " + R )
 
     // we need a proof of L_1
     val Lproof = prover.getLKProof( L1 )
+    if ( Lproof.isDefined )
+      println( "Lprovable" )
+    else
+      println( "Lnonprovable" )
 
     // we need proofs of R_1, ..., R_n
     val Rproofs = R.map( s => prover.getLKProof( s ) )
-  }
-
-
+    Rproofs.indices.foreach( i => if ( Rproofs( i ).isDefined )
+      println( "Rprovable( " + i + " ) " )
+    else
+      println( "Rnonprovable( " + i + " ) " ) )
 
     ( ( Rproofs :+ Lproof ) zip ( R :+ L1 ) ).foreach {
       case ( None, seq ) => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )
@@ -721,19 +814,19 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     val Lproof_ = WeakeningRightMacroRule( WeakeningLeftMacroRule( Lproof.get, quantPart.antecedent ), quantPart.succedent )
 
     // As above, we introduce the quantified cut-formula via weakening for keeping the invariant
-    val Rproofs_ = ( Rproofs zip cutFormulas ).map { case ( p, cf ) => WeakeningLeftRule( p.get, cf ) }
+    val Rproofs_ = ( Rproofs zip cutFormulasPrime ).map { case ( p, cf ) => WeakeningLeftRule( p.get, cf ) }
 
     // This is the recursive construction obtaining the final proof by combining the proofs
     // of L_1, R_1, ..., R_n with appropriate inference rules as in the paper.
     val proof = ( 0 to alphas.size - 1 ).foldLeft( Lproof_ )( ( lproof, i ) => {
-      val left = buildLeftPart( i, quantPart, A, Uleft, Uright, alphas, cutFormulas( i ), lproof )
+      val left = buildLeftPart( i, quantPart, Aprime, Uleft, Uright, alphas, cutFormulasPrime( i ), lproof )
       trace( " Rproofs_( " + i + " ).root: " + Rproofs_( i ).root )
-      val right = buildRightPart( Rproofs_( i ), cutFormulas( i ), grammar.ss( i )._2.map( _.head ).toList )
+      val right = buildRightPart( Rproofs_( i ), cutFormulasPrime( i ), grammar.ss( i )._2.map( _.head ).toList )
       trace( "right part ES: " + right.root )
-      val cut = CutRule( left, right, cutFormulas( i ) )
+      val cut = CutRule( left, right, cutFormulasPrime( i ) )
       val cont1 = ContractionMacroRule( cut, FU( i + 1 ), false )
       val cont2 = ContractionMacroRule( cont1, FSequent( ehs.prop_l, ehs.prop_r ), false )
-      ContractionMacroRule( cont2, FSequent( Nil, A.drop( i + 1 ) ), false )
+      ContractionMacroRule( cont2, FSequent( Nil, Aprime.drop( i + 1 ) ), false )
     } )
 
     def finish( p: LKProof, fs: Seq[FOLFormula], instances: Seq[Seq[Seq[FOLTerm]]] ) =
@@ -763,6 +856,11 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
       val p1 = myWeakQuantRules( proof, es.antecedent.asInstanceOf[Seq[FOLFormula]], Uleft( i ) zip Uleft( i + 1 ) )
       val p2 = myWeakQuantRules( p1, es.succedent.asInstanceOf[Seq[FOLFormula]], Uright( i ) zip Uright( i + 1 ) )
+
+      println( "calling ForallRightRule" )
+      println( "p2.root: " + p2.root )
+      println( "A( " + i + " ): " + A( i ) )
+      println( "cf: " + cf )
 
       ForallRightRule( p2, A( i ), cf, alphas( i ) )
     }
