@@ -5,14 +5,47 @@ import at.logic.language.hol._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk._
 import at.logic.calculi.occurrences._
+import at.logic.provers.Prover
+import at.logic.algorithms.fol.hol2fol._
+import at.logic.language.fol.FOLFormula
+import at.logic.language.lambda.types.To
 
 class InterpolationException( msg: String ) extends Exception( msg )
 
 object ExtractInterpolant {
   def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = Interpolate( p, npart, ppart )._3
+
+  /**
+   * Given sequents negative: \Gamma |- \Delta and positive: \Pi |- \Lambda,
+   * compute a proof of \Gamma, \Pi |- \Delta, \Lambda and from that proof,
+   * extract an interpolant I such that \Gamma |- \Delta, I and I, \Pi |- \Lambda
+   * are valid.
+   *
+   * TODO: at the moment, we run hol2fol for technical reasons (\top, \bot are introduced in the algorithm)
+   */
+  def apply( negative: FSequent, positive: FSequent, prover: Prover ): FOLFormula = {
+    val seq = negative compose positive
+    println( "computing interpolant for " + seq )
+    val p = prover.getLKProof( seq ).get
+    val es = p.root
+    val npart = es.antecedent.filter( fo => negative.antecedent.contains( fo.formula ) ) ++
+      es.succedent.filter( fo => negative.succedent.contains( fo.formula ) )
+    val ppart = es.antecedent.filter( fo => positive.antecedent.contains( fo.formula ) ) ++
+      es.succedent.filter( fo => positive.succedent.contains( fo.formula ) )
+    val res = apply( p, npart.toSet, ppart.toSet )
+    val res2 = reduceHolToFol( res )
+    println( "computed interpolant: " + res2 )
+    res2
+  }
 }
 
 object Interpolate {
+
+  // TODO: hack to make Top work correctly with other code
+  //  val p = HOLConst( "P", To )
+  //  val TopC = Or( Atom( p, Nil ), Neg( Atom( p, Nil ) ) )
+  //  val BottomC= Neg( TopC )
+
   /**
    * This method computes interpolating proofs from a cut-free propositional
    * LK-proof. As arguments it expects a proof p and a partition of its
