@@ -256,6 +256,11 @@ object ExVar {
 
 object AllVar {
   def apply( variable: FOLVar, sub: FOLFormula ) = All( FOLAbs( variable, sub ) )
+  def apply( vars: List[FOLVar], sub: FOLFormula ): FOLFormula = vars match {
+    case Nil       => sub
+    case v :: tail => apply( v, apply( tail, sub ) )
+  }
+
   def unapply( expression: FOLExpression ) = expression match {
     case All( FOLAbs( variable: FOLVar, sub: FOLFormula ) ) => Some( ( variable, sub ) )
     case _ => None
