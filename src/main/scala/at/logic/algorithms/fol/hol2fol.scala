@@ -5,7 +5,7 @@ import at.logic.language.fol.{ Substitution => FOLSubstitution, _ }
 import at.logic.language.hol
 import at.logic.language.hol.logicSymbols._
 import at.logic.language.hol.replacements.{ Replacement, getAllPositions2 }
-import at.logic.language.hol.{ AllVar => HOLAllVar, And => HOLAnd, Atom => HOLAtom, ExVar => HOLExVar, Function => HOLFunction, Imp => HOLImp, Neg => HOLNeg, Or => HOLOr, Substitution => HOLSubstitution, _ }
+import at.logic.language.hol.{ AllVar => HOLAllVar, And => HOLAnd, Atom => HOLAtom, ExVar => HOLExVar, Function => HOLFunction, Imp => HOLImp, Neg => HOLNeg, Or => HOLOr, Substitution => HOLSubstitution, TopC => HOLTopC, BottomC => HOLBottomC, _ }
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.language.lambda.types.{ FunctionType, TA, Ti, To }
 import at.logic.language.schema.{ IntZero, IntegerTerm, Succ, foConst, foVar, indexedFOVar }
@@ -153,6 +153,9 @@ class reduceHolToFol {
       case z: indexedFOVar           => FOLVar( z.name.toString ++ intTermLength( z.index.asInstanceOf[IntegerTerm] ).toString )
       case fov: foVar                => FOLVar( fov.name )
       case foc: foConst              => FOLConst( foc.name )
+      case HOLConst( n, To )         => Atom( n, Nil )
+      case HOLTopC                   => TopC
+      case HOLBottomC                => BottomC
       case HOLVar( n, _ )            => FOLVar( n )
       case HOLConst( n, _ )          => FOLConst( n )
       case HOLNeg( n )               => Neg( apply_( n ) )
