@@ -64,6 +64,18 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
   val succedent = prop_r ++ inst_r.filter( varFree )
   val succedent_alpha = inst_r.filter( x => !varFree( x ) )
 
+  private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
+    val ant = instantiateAll( cf, alpha )
+    val succ = And( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    Imp( ant, succ )
+  }
+
+  def getDeep: FSequent = {
+    val s1 = new FSequent( prop_l ++ inst_l, prop_r ++ inst_r )
+    val s2 = new FSequent( ( cutFormulas zip grammar.ss ).map { case ( cf, ( alpha, ts ) ) => getCutImpl( cf, alpha, ts ) }, Nil )
+    s1 compose s2
+  }
+
   override def toString = {
 
     // For printing Xα -> ^ Xsi
