@@ -5,7 +5,7 @@ import at.logic.calculi.expansionTrees._
 import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.provers.minisat._
 import at.logic.provers.veriT._
-import at.logic.testing.{skipIfRunsLongerThan, recursiveListFiles}
+import at.logic.testing.{ skipIfRunsLongerThan, recursiveListFiles }
 import at.logic.transformations.herbrandExtraction._
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
@@ -34,19 +34,19 @@ class TstpProver9ImportMinisatValidation extends Specification with Prover9TstpS
       s"work for ${file.getParentFile.getName}/${file.getName}" in {
         skipIfRunsLongerThan(2 minute) {
           val p_opt = try {
-            Some( loadProver9LKProof( file.getAbsolutePath ))
+            Some(loadProver9LKProof(file.getAbsolutePath))
           } catch {
-            case e: Exception => { 
-              skipped( "prover9 import has thrown exception." )
+            case e: Exception => {
+              skipped("prover9 import has thrown exception.")
               None
             }
           }
-          if ( containsEqualityReasoning( p_opt.get ))
-            skipped( "proof contains equality reasoning." )
+          if (containsEqualityReasoning(p_opt.get))
+            skipped("proof contains equality reasoning.")
           else {
-            val E = extractExpansionSequent( p_opt.get, false )
-            val deep = toDeep( E )
-            (new MiniSATProver).isValid( deep ) must beTrue
+            val E = extractExpansionSequent(p_opt.get, false)
+            val deep = toDeep(E)
+            (new MiniSATProver).isValid(deep) must beTrue
           }
           ok
         }
@@ -61,19 +61,19 @@ class TstpProver9ImportVeritValidation extends Specification with Prover9TstpSpe
       s"work for ${file.getParentFile.getName}/${file.getName}" in {
         skipIfRunsLongerThan(2 minute) {
           val p_opt = try {
-            Some( loadProver9LKProof( file.getAbsolutePath ))
+            Some(loadProver9LKProof(file.getAbsolutePath))
           } catch {
-            case e: Exception => {  
-              skipped( "prover9 import has thrown exception." )
+            case e: Exception => {
+              skipped("prover9 import has thrown exception.")
               None
             }
           }
-          if ( !containsEqualityReasoning( p_opt.get ))
-            skipped( "proof does not contain equality reasoning." )
+          if (!containsEqualityReasoning(p_opt.get))
+            skipped("proof does not contain equality reasoning.")
           else {
-            val E = extractExpansionSequent( p_opt.get, false )
-            val deep = toDeep( E )
-            (new VeriTProver).isValid( deep ) must beTrue
+            val E = extractExpansionSequent(p_opt.get, false)
+            val deep = toDeep(E)
+            (new VeriTProver).isValid(deep) must beTrue
           }
           ok
         }
@@ -88,19 +88,19 @@ class TstpProver9ImportSolvePropValidation extends Specification with Prover9Tst
       s"work for ${file.getParentFile.getName}/${file.getName}" in {
         skipIfRunsLongerThan(2 minute) {
           val p_opt = try {
-            Some( loadProver9LKProof( file.getAbsolutePath ))
+            Some(loadProver9LKProof(file.getAbsolutePath))
           } catch {
-            case e: Exception => {  
-              skipped( "prover9 import has thrown exception." )
+            case e: Exception => {
+              skipped("prover9 import has thrown exception.")
               None
             }
           }
-          if ( containsEqualityReasoning( p_opt.get ))
-            skipped( "proof contains equality reasoning." )
+          if (containsEqualityReasoning(p_opt.get))
+            skipped("proof contains equality reasoning.")
           else {
-            val E = extractExpansionSequent( p_opt.get, false )
-            val deep = toDeep( E )
-            solve.solvePropositional( deep ).isDefined must beTrue
+            val E = extractExpansionSequent(p_opt.get, false)
+            val deep = toDeep(E)
+            solve.solvePropositional(deep).isDefined must beTrue
           }
           ok
         }

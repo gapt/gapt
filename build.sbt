@@ -16,7 +16,7 @@ lazy val commonSettings = Seq(
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
   sourcesInBase := false // people like to keep scripts lying around
-)
+) ++ defaultScalariformSettings
 
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
@@ -81,8 +81,7 @@ lazy val root = (project in file(".")).
   )
 
 import scalariform.formatter.preferences._
-addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat")
-defaultScalariformSettings
+addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/test:scalariformFormat")
 ScalariformKeys.preferences := FormattingPreferences()
   .setPreference(AlignParameters, true)
   .setPreference(AlignSingleLineCaseStatements, true)

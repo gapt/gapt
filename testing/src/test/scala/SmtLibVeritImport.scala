@@ -3,7 +3,7 @@ package at.logic.testing.verit
 import at.logic.calculi.expansionTrees._
 import at.logic.parsing.veriT.VeriTParser
 import at.logic.provers.minisat._
-import at.logic.testing.{skipIfRunsLongerThan, recursiveListFiles}
+import at.logic.testing.{ skipIfRunsLongerThan, recursiveListFiles }
 
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
@@ -33,10 +33,10 @@ class SmtLibVeritImportValidation extends Specification with SmtLibVeritSpec {
         skipIfRunsLongerThan(2 minute) {
           val E = VeriTParser.getExpansionProof(file.getAbsolutePath)
           E.isDefined must beTrue
-          val deep = toDeep( E.get ).toFormula
-          (new MiniSATProver).isValid( deep ) must beTrue
+          val deep = toDeep(E.get).toFormula
+          (new MiniSATProver).isValid(deep) must beTrue
           ok
-        }  
+        }
       }
     }
   }
