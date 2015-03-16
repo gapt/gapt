@@ -704,19 +704,9 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
     // we need a proof of L_1
     val Lproof = prover.getLKProof( L1 )
-    if (Lproof.isDefined)
-      println("GOT Lproof")
-    else
-      println("NO Lproof")
 
     // we need proofs of R_1, ..., R_n
-    println("Rs: ")
-    R.foreach( s => println( s ) )
     val Rproofs = R.map( s => prover.getLKProof( s ) )
-    (Rproofs zip Rproofs.indices).foreach{ case (p, i) => if (p.isDefined)
-      println("GOT Rproof( " + i + " )")
-      else
-      println("NO Rproof( " + i + " )")
   }
 
 

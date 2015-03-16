@@ -34,8 +34,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   def applyNew( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val improvedSol = improveSolution( ehs, prover )
     val res = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
-    assert( prover.isValid( res.getDeep ) )
-    println("asserted")
+    // assert( prover.isValid( res.getDeep ) )
     res
   }
 
@@ -56,7 +55,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
         trace( "getting intermediary solution" )
         val is = getIntermediarySolution( ehs, cfs )
 
-        assert( prover.isValid( is.getDeep ) )
+        //assert( prover.isValid( is.getDeep ) )
 
         trace( "improving intermediary solution" )
         val cf = chooseSolution( improveSolution1( is, prover ) )
