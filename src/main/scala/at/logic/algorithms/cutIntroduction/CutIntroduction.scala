@@ -653,6 +653,8 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     // More precisely: Uleft(i)(j)(k)(l) is the k'th U_i-instance of the l'th quantifier of the j'th formula
     // in the antecedent. Similarily for Uright.
 
+    // TODO: rewrite this to have getUs return a Seq[Map[FOLFormula, Seq[Seq[FOLTerm]]]]
+
     def getUs( fs: Seq[FOLFormula] ): Seq[Seq[Seq[Seq[FOLTerm]]]] =
       ( 0 to alphas.size ).map( i => fs.map( f => {
         val termlistlist = grammar.us( f )
@@ -702,9 +704,22 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
     // we need a proof of L_1
     val Lproof = prover.getLKProof( L1 )
+    if (Lproof.isDefined)
+      println("GOT Lproof")
+    else
+      println("NO Lproof")
 
     // we need proofs of R_1, ..., R_n
+    println("Rs: ")
+    R.foreach( s => println( s ) )
     val Rproofs = R.map( s => prover.getLKProof( s ) )
+    (Rproofs zip Rproofs.indices).foreach{ case (p, i) => if (p.isDefined)
+      println("GOT Rproof( " + i + " )")
+      else
+      println("NO Rproof( " + i + " )")
+  }
+
+
 
     ( ( Rproofs :+ Lproof ) zip ( R :+ L1 ) ).foreach {
       case ( None, seq ) => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )

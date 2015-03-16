@@ -33,7 +33,10 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
   def applyNew( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val improvedSol = improveSolution( ehs, prover )
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
+    val res = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
+    assert( prover.isValid( res.getDeep ) )
+    println("asserted")
+    res
   }
 
   private def chooseSolution( list: List[FOLFormula] ) = list.sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
@@ -52,6 +55,9 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
         trace( "current cut-formulas: " + cfs )
         trace( "getting intermediary solution" )
         val is = getIntermediarySolution( ehs, cfs )
+
+        assert( prover.isValid( is.getDeep ) )
+
         trace( "improving intermediary solution" )
         val cf = chooseSolution( improveSolution1( is, prover ) )
         trace( "got improved cut-formula: " + cf )
