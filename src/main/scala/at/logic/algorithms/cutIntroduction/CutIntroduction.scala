@@ -21,6 +21,7 @@ import at.logic.provers.minisat.MiniSATProver
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
 import at.logic.algorithms.interpolation.ExtractInterpolant
+import at.logic.algorithms.fol.simplify.simplify
 
 import scala.collection.immutable.HashSet
 
@@ -620,55 +621,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     Imp( ant, succ )
   }
 
-  // TODO: put this somewhere else, define on HOLFormula.
-  private def simplify( f: FOLFormula ): FOLFormula = f match {
-    case And( TopC, r )    => simplify( r )
-    case And( r, TopC )    => simplify( r )
-    case Or( TopC, _ )     => TopC
-    case Or( _, TopC )     => TopC
-    case Imp( TopC, r )    => simplify( r )
-    case Imp( r, TopC )    => TopC
-    case And( BottomC, _ ) => BottomC
-    case And( _, BottomC ) => BottomC
-    case Or( BottomC, r )  => simplify( r )
-    case Or( r, BottomC )  => simplify( r )
-    case Imp( BottomC, r ) => TopC
-    case Imp( r, BottomC ) => simplify( Neg( r ) )
-    case Neg( TopC )       => BottomC
-    case Neg( BottomC )    => TopC
-    case And( l, r ) => {
-      val resl = simplify( l )
-      val resr = simplify( r )
-      if ( l == resl && r == resr )
-        f
-      else
-        simplify( And( resl, resr ) )
-    }
-    case Or( l, r ) => {
-      val resl = simplify( l )
-      val resr = simplify( r )
-      if ( l == resl && r == resr )
-        f
-      else
-        simplify( Or( resl, resr ) )
-    }
-    case Imp( l, r ) => {
-      val resl = simplify( l )
-      val resr = simplify( r )
-      if ( l == resl && r == resr )
-        f
-      else
-        simplify( Imp( resl, resr ) )
-    }
-    case Neg( s ) => {
-      val res = simplify( s )
-      if ( res == s )
-        f
-      else
-        simplify( Neg( res ) )
-    }
-    case _ => f
-  }
 
   /**
    * Builds the final proof out of an extended Herbrand sequent.
