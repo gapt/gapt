@@ -21,13 +21,18 @@ object ceres_omega extends ceres_omega
 class ceres_omega {
   import at.logic.algorithms.llk.LLKFormatter._
 
+  private def check_es(s : LabelledSequent, c : LabelledSequent, es : LabelledSequent) : LabelledSequent = {
+
+    s
+  }
+
   /**
    * Applies the CERES_omega method to a proof.
    * @param projections This is the set of projections to use. A projection to reflexvity is generated if needed.
    * @param ralproof The R_al proof to use as skeleton.
    * @param es The end-sequent of the original proof.
    * @param struct The struct of the original proof. (unused at the moment)
-   * @return an LKProof with atomic cuts only
+   * @return a pair of an LKProof with atomic cuts only and of the subsequent of its root which corresponds the Ral sequent
    */
   def apply( projections: Set[LKProof], ralproof: RalResolutionProof[LabelledSequent], es: LabelledSequent, struct: Struct ): ( LKProof, LabelledSequent ) = ralproof match {
     //reflexivity as initial rule
@@ -37,9 +42,13 @@ class ceres_omega {
       val reflexivity_occ = rule.root.succedent( 0 ).asInstanceOf[LabelledFormulaOccurrence]
       val weakened_left = es.l_antecedent.foldLeft( rule )( ( r, fo ) => lksk.WeakeningLeftRule( r, fo.formula, fo.skolem_label ) )
       val weakened_right = es.l_succedent.foldLeft( weakened_left )( ( r, fo ) => lksk.WeakeningRightRule( r, fo.formula, fo.skolem_label ) )
-      val reflexivity_successor = pickFOWithAncestor( sequentToLabelledSequent( rule.root ).l_succedent, reflexivity_occ )
+      val reflexivity_successor = pickFOWithAncestor( sequentToLabelledSequent( weakened_right.root ).l_succedent, reflexivity_occ )
+      val clause = LabelledSequent( Nil, List( reflexivity_successor ) )
 
-      ( weakened_right, LabelledSequent( Nil, List( reflexivity_successor ) ) )
+      require(weakened_right.root.occurrences.size == es.occurrences.size + clause.occurrences.size, "The size of the generated end-sequent "+rule.root+" is not the size of the end-sequent "+es+" + the size of the clause "+clause )
+      require((clause.occurrences diff weakened_right.root.occurrences).isEmpty )
+
+      ( weakened_right, clause )
 
     case InitialSequent( root ) =>
       val candidates = projections.toList.flatMap( x => {
@@ -54,8 +63,32 @@ class ceres_omega {
         case ( proof, sub ) :: _ =>
           val subproof = applySubstitution( proof, sub )._1
           val clause = filterEndsequent( sequentToLabelledSequent( subproof.root ), es, struct )
-          require( subproof.root.syntacticMultisetEquals( clause compose es ), "The root " + subproof.root + " must consist of the clause " + clause + " plus the end-sequent " + es )
-          ( subproof, clause )
+          val tocontract = LabelledSequent(
+            diffModuloOccurrence(clause.l_antecedent, root.l_antecedent),
+            diffModuloOccurrence(clause.l_succedent, root.l_succedent))
+          val acontr = tocontract.l_antecedent.foldLeft(subproof)((p,occ) =>
+            p.root.antecedent.find(x => x!= occ && x.formula == occ.formula && x.asInstanceOf[LabelledFormulaOccurrence].skolem_label == occ.skolem_label ) match {
+              case Some(c) =>
+                ContractionLeftRule(p, occ, c)
+              case None => throw new Exception("Could not find an element to contract for "+f(occ)+" in "+f(root))
+            }
+
+          )
+          val scontr = tocontract.l_succedent.foldLeft(acontr)((p,occ) =>
+            p.root.succedent.find(x => x!= occ && x.formula == occ.formula && x.asInstanceOf[LabelledFormulaOccurrence].skolem_label == occ.skolem_label ) match {
+              case Some(c) =>
+                ContractionRightRule(p, occ, c)
+              case None => throw new Exception("Could not find an element to contract for "+f(occ)+" in "+f(root))
+            }
+
+          )
+          val nclause = filterEndsequent( sequentToLabelledSequent( scontr.root ), es, struct )
+
+          require(scontr.root.syntacticMultisetEquals( nclause compose es ), "The root " + f(scontr.root) + " must consist of the clause " + f(nclause) + " plus the end-sequent " + f(es) )
+          require(scontr.root.occurrences.size == es.occurrences.size + nclause.occurrences.size, "The size of the generated end-sequent "+f(root)+" is not the size of the end-sequent "+f(es)+" + the size of the clause "+nclause )
+
+          require((nclause.occurrences diff scontr.root.occurrences).isEmpty )
+          ( scontr, nclause )
         case Nil =>
           throw new Exception( "Could not find a projection for the clause " + f( root ) + " in " + projections.map( x => filterEndsequent( sequentToLabelledSequent( x.root ), es, struct ) ).map( f( _ ) ).mkString( "\n" ) )
       }
@@ -63,6 +96,8 @@ class ceres_omega {
     case Cut( root, parent1, parent2, p1occs, p2occs ) =>
       val ( lkparent1, clause1 ) = ceres_omega( projections, parent1, es, struct )
       val ( lkparent2, clause2 ) = ceres_omega( projections, parent2, es, struct )
+      require((clause1.occurrences diff lkparent1.root.occurrences).isEmpty )
+      require((clause2.occurrences diff lkparent2.root.occurrences).isEmpty )
       val leftcutformulas = p1occs.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, fo ) => findAuxByFormulaAndLabel( fo.asInstanceOf[LabelledFormulaOccurrence], clause1.l_succedent, list ) :: list ).reverse
       val rightcutformulas = p2occs.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, fo ) => findAuxByFormulaAndLabel( fo.asInstanceOf[LabelledFormulaOccurrence], clause2.l_antecedent, list ) :: list ).reverse
       val ( c1, caux1, c2, caux2 ) = ( leftcutformulas, rightcutformulas ) match {
@@ -89,10 +124,12 @@ class ceres_omega {
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
       require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+      require(crule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent "+rule.root+" is not the size of the end-sequent "+es+" + the size of the clause "+nclauses )
       ( crule, nclauses )
 
     case AFactorF( root, parent, contr, aux, _ ) =>
       val ( lkparent, clause1 ) = ceres_omega( projections, parent, es, struct )
+      require((clause1.occurrences diff lkparent.root.occurrences).isEmpty )
       aux.length match {
         case 0 => ( lkparent, clause1 ) //trivial, skipping factor inference
         case 1 =>
@@ -101,12 +138,14 @@ class ceres_omega {
           val rule = ContractionLeftRule( lkparent, c1, c2 )
           val nclauses = filterByAncestor( rule.root, clause1 )
           require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+          require(rule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent "+rule.root+" is not the size of the end-sequent "+es+" + the size of the clause "+nclauses )
           ( rule, nclauses )
         case _ => throw new Exception( "Factor of more than two literals not supported yet!" )
       }
 
     case AFactorT( root, parent, contr, aux, _ ) =>
       val ( lkparent, clause1 ) = ceres_omega( projections, parent, es, struct )
+      require((clause1.occurrences diff lkparent.root.occurrences).isEmpty )
       aux.length match {
         //        case 0 => throw new Exception("At least one auxiliary formula is necessary for a factor rule!")
         case 1 =>
@@ -115,6 +154,7 @@ class ceres_omega {
           val rule = ContractionRightRule( lkparent, c1, c2 )
           val nclauses = filterByAncestor( rule.root, clause1 )
           require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+          require(rule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent "+root+" is not the size of the end-sequent "+es+" + the size of the clause "+nclauses )
           ( rule, nclauses )
         case 0 => ( lkparent, clause1 ) //trivial, skipping factor inference
         case _ => throw new Exception( "Factor of more than two literals not supported yet!" )
@@ -123,46 +163,67 @@ class ceres_omega {
     case ParaF( root, parent1, parent2, p1occ, p2occ, principial, flipped ) =>
       val ( lkparent1, clause1 ) = ceres_omega( projections, parent1, es, struct )
       val ( lkparent2, clause2 ) = ceres_omega( projections, parent2, es, struct )
+      require((clause1.occurrences diff lkparent1.root.occurrences).isEmpty )
+      require((clause2.occurrences diff lkparent2.root.occurrences).isEmpty )
       val eqn: FormulaOccurrence = findAuxByFormulaAndLabel( p1occ, clause1.l_succedent, Nil )
       val modulant: FormulaOccurrence = findAuxByFormulaAndLabel( p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_antecedent, Nil )
       val rule = EquationLeftMacroRule( lkparent1, lkparent2, eqn, modulant, principial.formula )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
       require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+      require(crule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent "+rule.root+" is not the size of the end-sequent "+es+" + the size of the clause "+nclauses )
       ( crule, nclauses )
 
     case ParaT( root, parent1, parent2, p1occ, p2occ, principial, flipped ) =>
       val ( lkparent1, clause1 ) = ceres_omega( projections, parent1, es, struct )
       val ( lkparent2, clause2 ) = ceres_omega( projections, parent2, es, struct )
+      require((clause1.occurrences diff lkparent1.root.occurrences).isEmpty )
+      require((clause2.occurrences diff lkparent2.root.occurrences).isEmpty )
       val eqn: FormulaOccurrence = findAuxByFormulaAndLabel( p1occ, clause1.l_succedent, Nil )
       val modulant: FormulaOccurrence = findAuxByFormulaAndLabel( p2occ.asInstanceOf[LabelledFormulaOccurrence], clause2.l_succedent, Nil )
       val rule = EquationRightMacroRule( lkparent1, lkparent2, eqn, modulant, principial.formula )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
       require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+      require(crule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent "+rule.root+" is not the size of the end-sequent "+es+" + the size of the clause "+nclauses )
       ( crule, nclauses )
 
     case Sub( root, parent, sub ) =>
-      val ( lkparent, _ ) = ceres_omega( projections, parent, es, struct )
-      val rule = applySubstitution( lkparent, sub )._1
+      val ( lkparent, clauses ) = ceres_omega( projections, parent, es, struct )
+      require((clauses.occurrences diff lkparent.root.occurrences).isEmpty )
+      val (rule, mapping) = applySubstitution( lkparent, sub )
 
-      val axiomformulas = rule.leaves.flatMap( _.vertex.occurrences )
+
+      //val axiomformulas = rule.leaves.flatMap( _.vertex.occurrences )
       val lruleroot = sequentToLabelledSequent( rule.root )
-      /* find the sub-sequent of the substiuted proof which was introduced only by axioms */
-      val axiomancestoroccs_a = lruleroot.l_antecedent.filter( x => firstAncestors( x ).forall( y => axiomformulas.contains( y ) ) )
-      val axiomancestoroccs_s = lruleroot.l_succedent.filter( x => firstAncestors( x ).forall( y => axiomformulas.contains( y ) ) )
+
+      /* find the sub-sequent of the substituted proof which was introduced only by axioms */
+      //val axiomancestoroccs_a = lruleroot.l_antecedent.filter( x => firstAncestors( x ).forall( y => axiomformulas.contains( y ) ) )
+      //val axiomancestoroccs_s = lruleroot.l_succedent.filter( x => firstAncestors( x ).forall( y => axiomformulas.contains( y ) ) )
 
       /* for each element in the root, find a matching literal with axiom ancestor in the derived end-sequent */
-      val nclauses_a = root.l_antecedent.foldLeft[List[LabelledFormulaOccurrence]]( List() )( ( list, fo ) => {
-        findAuxByFormulaAndLabel( fo.formula, fo.skolem_label, axiomancestoroccs_a, list ) :: list
-      } )
-      val nclauses_s = root.l_succedent.foldLeft[List[LabelledFormulaOccurrence]]( List() )( ( list, fo ) => {
-        findAuxByFormulaAndLabel( fo.formula, fo.skolem_label, axiomancestoroccs_s, list ) :: list
-      } )
+      //val nclauses_a = root.l_antecedent.foldLeft[List[LabelledFormulaOccurrence]]( List() )( ( list, fo ) => {
+      //  findAuxByFormulaAndLabel( fo.formula, fo.skolem_label, axiomancestoroccs_a, list ) :: list
+      //} )
+      //val nclauses_s = root.l_succedent.foldLeft[List[LabelledFormulaOccurrence]]( List() )( ( list, fo ) => {
+      //  findAuxByFormulaAndLabel( fo.formula, fo.skolem_label, axiomancestoroccs_s, list ) :: list
+      //} )
 
-      val nclauses = LabelledSequent( nclauses_a.reverse, nclauses_s.reverse )
 
-      require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+      require( clauses.l_antecedent.filterNot(mapping.contains).isEmpty, "Could not find a mapping for: "+clauses.l_antecedent.filterNot(mapping.contains)+" in "+lruleroot.l_antecedent)
+      require( clauses.l_succedent.filterNot(mapping.contains).isEmpty, "Could not find a mapping for: "+clauses.l_succedent.filterNot(mapping.contains)+" in "+lruleroot.l_succedent)
+      val nclauses = LabelledSequent(clauses.l_antecedent.map( mapping ), clauses.l_succedent.map( mapping ))
+
+      //val nclauses = LabelledSequent( nclauses_a.reverse, nclauses_s.reverse )
+
+      require( nclauses.toFSequent multiSetEquals root.toFSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) +" parent rule "+parent.rule )
+
+      val rootsize = rule.root.occurrences.size
+      val essize = es.occurrences.size
+      val nclausessize = nclauses.occurrences.size
+      require(rootsize == essize + nclausessize, "The size of the generated end-sequent "+root+" is not the size of the end-sequent "+
+        es+" + the size of the clause "+nclauses + "(" +rootsize + " != " + essize +"+"+ nclausessize +")" )
+
       ( rule, nclauses )
 
     case _ => throw new Exception( "Unhandled case: " + ralproof )
@@ -341,6 +402,14 @@ class ceres_omega {
       //println("warning: multiple matching formulas for "+anc+ l.mkString(": ",", ","." ))
       a
     case Nil => throw new Exception( "Could not find any occurrence with ancestor " + anc + " in " + l )
+  }
+
+
+  //def pickFOwhere( l : Seq[LabelledFormulaOccurrence], prop : LabelledFormulaOccurrence => Boolean, blacklist : List[LabelledFormulaOccurrence]) =
+
+
+  def diffModuloOccurrence(from : Seq[LabelledFormulaOccurrence], what : Seq[LabelledFormulaOccurrence]) = {
+    what.foldLeft(from.toList)((l,occ) => removeFirstWhere(l, (x : LabelledFormulaOccurrence) => x.formula == occ.formula && x.skolem_label == occ.skolem_label))
   }
 
 }
