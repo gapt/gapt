@@ -34,7 +34,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   def applyNew( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val improvedSol = improveSolution( ehs, prover )
     val res = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
-    // assert( prover.isValid( res.getDeep ) )
+//    assert( prover.isValid( res.getDeep ) )
     res
   }
 
@@ -55,11 +55,18 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
         trace( "getting intermediary solution" )
         val is = getIntermediarySolution( ehs, cfs )
 
-        //assert( prover.isValid( is.getDeep ) )
+        trace("I_" + k + ": " + is )
+        assert( prover.isValid( is.getDeep ) )
+        trace("I_" + k + " is valid." )
 
         trace( "improving intermediary solution" )
         val cf = chooseSolution( improveSolution1( is, prover ) )
         trace( "got improved cut-formula: " + cf )
+
+        val test_ehs = new ExtendedHerbrandSequent( is.endSequent, is.grammar, cf::Nil )
+        assert( prover.isValid( test_ehs.getDeep ) )
+        trace("I_2 with cf: " + test_ehs.getDeep )
+
         cfs :+ cf
       }
     }
@@ -90,7 +97,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     trace( "computing D for l = " + l )
 
     val myss = grammar.ss.reverse.take( n - l )
-    val us = ( cfs zip myss.map( _._2.toList ) ).toMap ++ getT( l, grammar )
+    val us = getT( l, grammar )
     val p = grammar.ss( l - 1 )
     val ss = p :: Nil
     val res = new MultiGrammar( us, ss )
@@ -141,14 +148,19 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
     trace( "computing context of intermediary solution" )
     val es1 = new FSequent( getIntermediaryContext( grammar, cfs ), Nil )
-    trace( "computed context: " + es1 )
-    trace( "computing ES-part of intermediary solution" )
-    val es2 = instantiateSequent( orig_es, getT( l, grammar ) )
-    trace( "ES-part: " + es2 )
+    trace( "computed context (es1): " + es1 )
+//    trace( "computing ES-part of intermediary solution" )
+//    val es2 = instantiateSequent( orig_es, getT( l, grammar ) )
+//    trace( "ES-part (es2): " + es2 )
+
+//    trace("es1 compose es2: " + (es1 compose es2))
 
     val d = getD( grammar, cfs )
+    trace("d.us:" + d.us)
+    trace("d.ss:" + d.ss)
+    trace("canon. sol. based on d: " + CutIntroduction.computeCanonicalSolutions( d ) )
 
-    new ExtendedHerbrandSequent( es1 compose es2, d, CutIntroduction.computeCanonicalSolutions( d ) )
+    new ExtendedHerbrandSequent( es1 compose orig_es, d, CutIntroduction.computeCanonicalSolutions( d ) )
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
@@ -365,28 +377,8 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
     assert( ehs.grammar.ss.size == 1, "isValidWith: only simple grammars supported." )
 
-    //Instantiate with the eigenvariables.
-    val body = ehs.grammar.eigenvariables.foldLeft( f )( ( f, ev ) => instantiate( f, ev ) )
-
-    //Instantiate with all the values in s.
-    val as = ehs.grammar.ss( 0 )._2.toList.foldLeft( List[FOLFormula]() ) {
-      case ( acc, t ) =>
-        ( t.foldLeft( f ) { case ( f, sval ) => instantiate( f, sval ) } ) :: acc
-    }
-
-    val head = And( as )
-
-    val impl = Imp( body, head )
-
-    val antecedent = ehs.prop_l ++ ehs.inst_l :+ impl
-    val succedent = ehs.prop_r ++ ehs.inst_r
-
-    //isTautology(FSequent(antecedent, succedent))
-    //trace( "calling SAT-solver" )
-    val r = prover.isValid( Imp( And( antecedent ), Or( succedent ) ) )
-    //trace( "finished call to SAT-solver" )
-
-    r
+    val test_ehs = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, f::Nil )
+    prover.isValid( test_ehs.getDeep )
   }
 
   //------------------------ FORGETFUL RESOLUTION -------------------------//
