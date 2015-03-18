@@ -25,7 +25,7 @@ class Substitution( val folmap: Map[FOLVar, FOLExpression] ) extends Substitutio
 }
 object Substitution {
   def apply( subs: Seq[( FOLVar, FOLExpression )] ): Substitution = new Substitution( Map() ++ subs )
-  def apply( subs: ( FOLVar, FOLExpression )* ): Substitution = new Substitution( Map( subs: _* ) )
+  def apply( sub: ( FOLVar, FOLExpression ), subs: ( FOLVar, FOLExpression )* ): Substitution = new Substitution( Map( sub ) ++ subs )
   def apply( variable: FOLVar, expression: FOLExpression ): Substitution = new Substitution( Map( variable -> expression ) )
   def apply( map: Map[FOLVar, FOLExpression] ): Substitution = new Substitution( map )
   def apply() = new Substitution( Map() )
