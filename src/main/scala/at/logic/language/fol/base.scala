@@ -83,10 +83,7 @@ object FOLFactory extends FactoryA {
     case at.logic.language.hol.EqC( Ti )  => EqC
     case at.logic.language.hol.AllQ( Ti ) => AllQ()
     case at.logic.language.hol.ExQ( Ti )  => ExQ()
-    case _                                => {
-      println("switching " + c)
-      c.asInstanceOf[FOLExpression]
-    }
+    case _                                => c.asInstanceOf[FOLExpression]
   }
 
   def createVar( sym: SymbolA, exptype: TA ): FOLVar = exptype match {
