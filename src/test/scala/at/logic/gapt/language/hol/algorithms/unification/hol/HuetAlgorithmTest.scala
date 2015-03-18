@@ -4,10 +4,10 @@
  */
 
 /*
-package at.logic.gapt.algorithms.unification.hol
+package at.logic.gapt.language.hol.algorithms.unification.hol
 
 
-import at.logic.gapt.algorithms.unification.hol.huet._
+import at.logic.gapt.language.hol.algorithms.unification.hol.huet._
 import at.logic.gapt.language.lambda.BetaReduction
 import at.logic.gapt.language.lambda.BetaReduction._
 import scala.collection.immutable.HashMap
@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleFOLParser
-import at.logic.gapt.algorithms.unification.hol._
+import at.logic.gapt.language.hol.algorithms.unification.hol._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.symbols._
 import logicSymbols._

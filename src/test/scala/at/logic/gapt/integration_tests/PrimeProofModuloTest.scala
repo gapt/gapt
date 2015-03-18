@@ -8,7 +8,7 @@ import at.logic.gapt.algorithms.fol.hol2fol._
 import at.logic.gapt.algorithms.lk._
 import at.logic.gapt.algorithms.lk.statistics._
 import at.logic.gapt.proofs.lk.algorithms.subsumption._
-//import at.logic.gapt.algorithms.unification.{ACUEquality, MulACUEquality}
+//import at.logic.gapt.language.hol.algorithms.unification.{ACUEquality, MulACUEquality}
 import at.logic.calculi.lk._
 import at.logic.calculi.lk.base._
 import at.logic.gapt.language.fol.{FOLExpression, FOLFormula}

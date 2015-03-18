@@ -1,14 +1,12 @@
-package at.logic.gapt.algorithms.resolution
+package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.proofs.resolution.algorithms.fixDerivation
+import at.logic.gapt.language.fol.{FOLAtom, FOLConst, FOLEquation, FOLSubstitution, FOLVar}
+import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolution.robinson._
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
-import at.logic.gapt.language.lambda.types.To
-import at.logic.gapt.language.fol.{FOLEquation, FOLAnd, FOLOr, FOLNeg, FOLAtom, FOLConst, FOLImp, FOLVar, FOLSubstitution}
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.proofs.lk.base.FSequent
 
 @RunWith(classOf[JUnitRunner])
 class FixDerivationTest extends SpecificationWithJUnit {

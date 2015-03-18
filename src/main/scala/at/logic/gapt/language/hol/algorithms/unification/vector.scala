@@ -1,4 +1,4 @@
-package at.logic.gapt.algorithms.unification
+package at.logic.gapt.language.hol.algorithms.unification
 
 /* A vector implementation with addition, scalar product etc. */
 object Vector {

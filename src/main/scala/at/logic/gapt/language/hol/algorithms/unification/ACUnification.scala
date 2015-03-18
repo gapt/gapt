@@ -4,7 +4,7 @@ Fixing this seems to require a better understanding of the algorithm due to the
 extensive use of symbols. Since it is not being used anywhere, I am commenting
 it out for now. [Giselle]
 
-package at.logic.gapt.algorithms.unification
+package at.logic.gapt.language.hol.algorithms.unification
 
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.gapt.language.hol.{HOLFormula}

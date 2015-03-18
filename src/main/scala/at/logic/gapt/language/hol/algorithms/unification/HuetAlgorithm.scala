@@ -3,7 +3,7 @@ Fixing this seems to require a better understanding of the algorithm due to the
 extensive use of AppN (which no longer exists). Since it is not being used anywhere, I am commenting
 it out for now. [Giselle]
 
-package at.logic.gapt.algorithms.unification.hol
+package at.logic.gapt.language.hol.algorithms.unification.hol
 
 package huet {
 
@@ -13,7 +13,7 @@ import at.logic.gapt.utils.executionModels.searchAlgorithms.BFSAlgorithm
 import at.logic.gapt.language.lambda.types. {->, Ti, TA, FunctionType}
 import at.logic.gapt.language.lambda.symbols.VariableStringSymbol
 import at.logic.gapt.language.lambda.typedLambdaCalculus._
-import at.logic.gapt.algorithms.unification.UnificationAlgorithm
+import at.logic.gapt.language.hol.algorithms.unification.UnificationAlgorithm
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.HOLExpression
 import at.logic.gapt.language.hol.logicSymbols._

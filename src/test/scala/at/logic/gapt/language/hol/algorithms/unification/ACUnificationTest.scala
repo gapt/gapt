@@ -1,8 +1,8 @@
 
 /*
-package at.logic.gapt.algorithms.unification
+package at.logic.gapt.language.hol.algorithms.unification
 
-import at.logic.gapt.algorithms.unification.Vector
+import at.logic.gapt.language.hol.algorithms.unification.Vector
 import at.logic.calculi.lk.base.{Sequent, FSequent}
 import at.logic.gapt.language.hol.HOLFormula
 //import at.logic.parsing.language.simple.SimpleFOLParser

@@ -1,19 +1,14 @@
-package at.logic.gapt.algorithms.hlk
+package at.logic.gapt.formats.hlk
 
+import at.logic.gapt.algorithms.hlk._
+import at.logic.gapt.formats.hlk.ast.LambdaAST
+import at.logic.gapt.language.hol._
+import at.logic.gapt.language.lambda.App
+import at.logic.gapt.language.lambda.types.{TA, Ti, To}
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.execute.Success
-import at.logic.gapt.formats.hlk.{HOLASTParser, HLKHOLParser, ast}
-import at.logic.gapt.formats.hlk.ast.LambdaAST
-import java.io.File.separator
-import at.logic.gapt.language.lambda.types.{To, Ti, TA}
-import at.logic.gapt.language.hol._
-import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.language.lambda.types.Ti
-import at.logic.gapt.language.lambda.types.To
-import at.logic.gapt.language.lambda.App
+import org.specs2.runner.JUnitRunner
 
 
 /**
@@ -98,7 +93,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCop
     }
 
     "correctly infer replacement terms in equalities" in {
-      import at.logic.gapt.proofs.lk.EquationVerifier.{Equal, Different, EqualModuloEquality, checkReplacement}
+      import at.logic.gapt.proofs.lk.EquationVerifier.{Different, Equal, EqualModuloEquality, checkReplacement}
       val List(a) = List("a") map (x => HOLConst(x, Ti))
       val List(f,g) = List("f","g") map (x => HOLConst(x, Ti -> Ti))
       val List(p) = List("p") map (x => HOLConst(x, Ti -> (Ti -> (Ti -> To)) ))

@@ -1,15 +1,15 @@
-package at.logic.gapt.algorithms.unification
+package at.logic.gapt.language.hol.algorithms.unification
 
 /* Solves diophantine equations via Lankford's Algorithm as described in
  * "Non-negative Integer Basis Algorithms for Linear Equations with Integer Coefficients",
  *  D.Lankford, J. of Automated Reasoning 5 (1989)" */
 
-import at.logic.gapt.algorithms.unification
+import at.logic.gapt.language.hol.algorithms.unification
 
 import scala.collection.mutable.{ HashSet => MHashSet }
 
 trait DiophantineSolver[Data] {
-  def solve( coeff_lhs: unification.Vector, coeff_rhs: unification.Vector ): List[unification.Vector]
+  def solve( coeff_lhs: at.logic.gapt.language.hol.algorithms.unification.Vector, coeff_rhs: at.logic.gapt.language.hol.algorithms.unification.Vector ): List[at.logic.gapt.language.hol.algorithms.unification.Vector]
 }
 
 object LankfordSolver {
@@ -19,20 +19,20 @@ object LankfordSolver {
     solver.solve.toList
   }*/
 
-  def solve( coeff_lhs: unification.Vector, coeff_rhs: unification.Vector ): List[unification.Vector] = {
+  def solve( coeff_lhs: at.logic.gapt.language.hol.algorithms.unification.Vector, coeff_rhs: at.logic.gapt.language.hol.algorithms.unification.Vector ): List[at.logic.gapt.language.hol.algorithms.unification.Vector] = {
     val solver = new LankfordSolverInstance( coeff_lhs, coeff_rhs )
     solver.solve.toList
   }
 }
 
-case class LankfordSolverInstance( val a: unification.Vector, val b: unification.Vector ) {
+case class LankfordSolverInstance( val a: at.logic.gapt.language.hol.algorithms.unification.Vector, val b: at.logic.gapt.language.hol.algorithms.unification.Vector ) {
   val ab = unification.Vector( a.vector ::: ( b * -1 ).vector )
   val alength = a.length
   val blength = b.length
   val ablength = alength + blength
 
   /* the norm is defined as theinner product - see p.30 */
-  def norm( v: unification.Vector ) = ab * v
+  def norm( v: at.logic.gapt.language.hol.algorithms.unification.Vector ) = ab * v
 
   /* follows the inductive definition on p.31 of the paper:
    * while P_k and N_k are nonempty:
@@ -44,19 +44,19 @@ case class LankfordSolverInstance( val a: unification.Vector, val b: unification
   def solve = {
     val im = MathHelperFunctions.createIdentityMatrix( ablength )
     val sim = im splitAt alength
-    val a = new MHashSet[unification.Vector]
-    val b = new MHashSet[unification.Vector]
+    val a = new MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector]
+    val b = new MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector]
 
     for ( i <- sim._1 )
-      a += new unification.Vector( i )
+      a += new at.logic.gapt.language.hol.algorithms.unification.Vector( i )
     for ( i <- sim._2 )
-      b += new unification.Vector( i )
+      b += new at.logic.gapt.language.hol.algorithms.unification.Vector( i )
 
-    val positive: MHashSet[unification.Vector] = new MHashSet[unification.Vector]
-    val negative: MHashSet[unification.Vector] = new MHashSet[unification.Vector]
-    val zero: MHashSet[unification.Vector] = new MHashSet[unification.Vector]
-    var x: MHashSet[unification.Vector] = new MHashSet[unification.Vector]
-    var zero_new: MHashSet[unification.Vector] = null
+    val positive: MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector] = new MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector]
+    val negative: MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector] = new MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector]
+    val zero: MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector] = new MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector]
+    var x: MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector] = new MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector]
+    var zero_new: MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector] = null
     var stage = 1
 
     positive ++= a
@@ -72,7 +72,7 @@ case class LankfordSolverInstance( val a: unification.Vector, val b: unification
       positive.clear
       negative.clear
 
-      zero_new = new MHashSet[unification.Vector]
+      zero_new = new MHashSet[at.logic.gapt.language.hol.algorithms.unification.Vector]
       for ( s <- x ) {
         val ns = norm( s )
         //println("looking at: "+s+" with norm="+ns)
@@ -95,7 +95,7 @@ case class LankfordSolverInstance( val a: unification.Vector, val b: unification
     zero
   }
 
-  def reduceVector( v: unification.Vector, zero: List[unification.Vector] ) = {
+  def reduceVector( v: at.logic.gapt.language.hol.algorithms.unification.Vector, zero: List[at.logic.gapt.language.hol.algorithms.unification.Vector] ) = {
     var w = v
     var temp = v.zero
     for ( i <- zero ) {
@@ -114,7 +114,7 @@ case class LankfordSolverInstance( val a: unification.Vector, val b: unification
      -- corr. typo in the paper: x should be z */
   /* addition: therefore s is irreducible relative to Z_k iff there is no
    * z in Z_k s.t. each coordinate of z is >= to the corresponding coordinate of s*/
-  def z_irreducible( s: unification.Vector, zero: Iterable[unification.Vector] ): Boolean = {
+  def z_irreducible( s: at.logic.gapt.language.hol.algorithms.unification.Vector, zero: Iterable[at.logic.gapt.language.hol.algorithms.unification.Vector] ): Boolean = {
     var r = true
     for ( z <- zero )
       if ( s >= z )
