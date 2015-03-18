@@ -109,3 +109,29 @@ class TstpProver9ImportSolvePropValidation extends Specification with Prover9Tst
   }
 }
 
+class TstpProver9ImportExpProofToLKProofValidation extends Specification with Prover9TstpSpec {
+  "Prover9 import and ExpansionProofToLKProof validaton" should {
+    Fragment.foreach(prover9Proofs) { file =>
+      s"work for ${file.getParentFile.getName}/${file.getName}" in {
+        skipIfRunsLongerThan(2 minute) {
+          val p_opt = try {
+            Some(loadProver9LKProof(file.getAbsolutePath))
+          } catch {
+            case e: Exception => {
+              skipped("prover9 import has thrown exception.")
+              None
+            }
+          }
+          if (containsEqualityReasoning(p_opt.get))
+            skipped("proof contains equality reasoning.")
+          else {
+            val E = extractExpansionSequent(p_opt.get, false)
+            solve.expansionProofToLKProof(E).isDefined must beTrue
+          }
+          ok
+        }
+      }
+    }
+  }
+}
+
