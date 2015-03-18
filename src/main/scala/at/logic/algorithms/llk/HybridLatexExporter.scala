@@ -180,10 +180,9 @@ class HybridLatexExporter( val expandTex: Boolean ) {
         if ( args.length == 2 && sym.toString.matches( """(<|>|\\leq|\\geq|=|>=|<=)""" ) ) {
           val str = getFormulaString( args( 0 ), false, escape_latex ) + " " + nameToLatexString( sym.toString ) + " " +
             getFormulaString( args( 1 ), false, escape_latex )
-          if (outermost) str else "(" + str + ")"
+          if ( outermost ) str else "(" + str + ")"
 
-        }
-        else
+        } else
           nameToLatexString( sym.toString ) + ( if ( args.isEmpty ) " " else args.map( getFormulaString( _, false, escape_latex ) ).mkString( "(", ", ", ")" ) )
       //if (outermost) str else "(" + str + ")"
       str
