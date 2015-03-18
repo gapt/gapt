@@ -1,13 +1,11 @@
 
 package at.logic.algorithms.interpolation
 
-import at.logic.language.hol._
+import at.logic.language.fol._
 import at.logic.calculi.lk.base._
 import at.logic.calculi.lk._
 import at.logic.calculi.occurrences._
 import at.logic.provers.Prover
-import at.logic.algorithms.fol.hol2fol._
-import at.logic.language.fol.FOLFormula
 import at.logic.language.lambda.types.To
 
 class InterpolationException( msg: String ) extends Exception( msg )
@@ -33,19 +31,12 @@ object ExtractInterpolant {
     val ppart = es.antecedent.filter( fo => positive.antecedent.contains( fo.formula ) ) ++
       es.succedent.filter( fo => positive.succedent.contains( fo.formula ) )
     val res = apply( p, npart.toSet, ppart.toSet )
-    val res2 = reduceHolToFol( res )
-    println( "computed interpolant: " + res2 )
-    res2
+    println( "computed interpolant: " + res )
+    res
   }
 }
 
 object Interpolate {
-
-  // TODO: hack to make Top work correctly with other code
-  //  val p = HOLConst( "P", To )
-  //  val TopC = Or( Atom( p, Nil ), Neg( Atom( p, Nil ) ) )
-  //  val BottomC= Neg( TopC )
-
   /**
    * This method computes interpolating proofs from a cut-free propositional
    * LK-proof. As arguments it expects a proof p and a partition of its
@@ -58,12 +49,12 @@ object Interpolate {
    * @param npart the negative part of the partition of the end-sequent of p
    * @param ppart the positive part of the partition of the end-sequent of p
    * @return      a triple consisting of ( a proof of \Gamma |- \Delta, I,
-   *              a proof of I, \Pi |- \Lambda, the HOLFormula I )
+   *              a proof of I, \Pi |- \Lambda, the FOLFormula I )
    * @throws InterpolationException if the input proof is not propositional
    *         and cut-free or if (npart,ppart) is not a partition of its
    *         end-sequent.
    */
-  def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ): ( LKProof, LKProof, HOLFormula ) = p match {
+  def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ): ( LKProof, LKProof, FOLFormula ) = p match {
 
     case Axiom( s ) => {
       // we assume here that s has exactly one formula in the antecedent and exactly one in the succedent
@@ -73,8 +64,8 @@ object Interpolate {
       val form = oant.formula
 
       if ( npart.contains( oant ) && npart.contains( osuc ) ) ( WeakeningRightRule( p, BottomC ), Axiom( BottomC :: Nil, Nil ), BottomC )
-      else if ( npart.contains( oant ) && ppart.contains( osuc ) ) ( p, p, form )
-      else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), Neg( form ) )
+      else if ( npart.contains( oant ) && ppart.contains( osuc ) ) ( p, p, form.asInstanceOf[FOLFormula] )
+      else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), Neg( form.asInstanceOf[FOLFormula] ) )
       else if ( ppart.contains( oant ) && ppart.contains( osuc ) ) ( Axiom( Nil, TopC :: Nil ), WeakeningLeftRule( p, TopC ), TopC )
       else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
     }
