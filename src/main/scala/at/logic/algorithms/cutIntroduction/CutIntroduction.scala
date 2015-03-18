@@ -714,18 +714,12 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         val pos = posf compose ( new FSequent( AS( i - 1 ), acc ) )
         val interpolant = ExtractInterpolant( neg, pos, prover )
         val res = And( A( i - 1 ), interpolant )
-        println( "res: " + res )
         val res2 = simplify( res )
-        println( "simplified res: " + res2 )
         acc :+ res2
       }
     }.reverse
 
-    println( "Aprime: " + Aprime )
-
     val cutFormulasPrime = ( Aprime zip Aprime.indices ).map { case ( a, i ) => AllVar( alphas( i ), a ) }
-
-    println( "cutFormulasPrime: " + cutFormulasPrime )
 
     // define A'_i[x \ S_i]
     val AprimeS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiateAll( cutFormulasPrime( i ), s ) ) )
@@ -744,17 +738,9 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
     // we need a proof of L_1
     val Lproof = prover.getLKProof( L1 )
-    if ( Lproof.isDefined )
-      println( "Lprovable" )
-    else
-      println( "Lnonprovable" )
 
     // we need proofs of R_1, ..., R_n
     val Rproofs = R.map( s => prover.getLKProof( s ) )
-    Rproofs.indices.foreach( i => if ( Rproofs( i ).isDefined )
-      println( "Rprovable( " + i + " ) " )
-    else
-      println( "Rnonprovable( " + i + " ) " ) )
 
     ( ( Rproofs :+ Lproof ) zip ( R :+ L1 ) ).foreach {
       case ( None, seq ) => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )
@@ -808,11 +794,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
       val p1 = myWeakQuantRules( proof, es.antecedent.asInstanceOf[Seq[FOLFormula]], Uleft( i ) zip Uleft( i + 1 ) )
       val p2 = myWeakQuantRules( p1, es.succedent.asInstanceOf[Seq[FOLFormula]], Uright( i ) zip Uright( i + 1 ) )
-
-      println( "calling ForallRightRule" )
-      println( "p2.root: " + p2.root )
-      println( "A( " + i + " ): " + A( i ) )
-      println( "cf: " + cf )
 
       ForallRightRule( p2, A( i ), cf, alphas( i ) )
     }
