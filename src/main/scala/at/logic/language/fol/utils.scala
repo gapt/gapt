@@ -461,6 +461,12 @@ object Utils extends Logger {
     subterms
   }
 
+  def subterms( term: FOLTerm ) = {
+    val subterms = mutable.Set[FOLTerm]()
+    st( term, subterms )
+    subterms toSet
+  }
+
   /**
    * Generating all subterms of a language of FOLTerms
    *
