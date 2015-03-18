@@ -15,6 +15,7 @@ object simplify {
         case (r, TopC) => r
         case (BottomC, _) => BottomC
         case (_, BottomC) => BottomC
+        case (l, r) if l == r => l
         case (l, r) => And( l, r )
       }
     case Or( l, r ) => (simplify( l ), simplify( r )) match {
@@ -22,6 +23,7 @@ object simplify {
         case (_, TopC) => TopC
         case (BottomC, r) => r
         case (r, BottomC) => r
+        case (l, r) if l == r => l
         case (l, r) => Or( l, r )
       }
     case Imp( l, r ) => (simplify( l ), simplify( r )) match {
@@ -29,6 +31,7 @@ object simplify {
         case (_, TopC) => TopC
         case (BottomC, _) => TopC
         case (r, BottomC) => simplify( Neg( r ) )
+        case (l, r) if l == r => TopC
         case (l, r) => Imp( l, r )
       }
     case Neg( s ) => simplify(s) match {
