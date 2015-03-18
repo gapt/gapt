@@ -1,6 +1,6 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.io.simple.{ BinaryRuleType, UnaryRuleType, NullaryRuleType }
+import at.logic.gapt.formats.simple.{ BinaryRuleType, UnaryRuleType, NullaryRuleType }
 
 import scala.swing.{ Action, BorderPanel }
 import at.logic.gapt.proofs.proofs.TreeProof
@@ -8,7 +8,7 @@ import ch.randelshofer.tree._
 import at.logic.gapt.utils.ds.trees.{ BinaryTree, UnaryTree, LeafTree }
 import javax.swing.event.ChangeListener
 import java.awt.Color
-import at.logic.gapt.io.llk.HybridLatexExporter.fsequentString
+import at.logic.gapt.formats.llk.HybridLatexExporter.fsequentString
 import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRuleType, ForallSkRightRuleType, ExistsSkRightRuleType, ForallSkLeftRuleType }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._

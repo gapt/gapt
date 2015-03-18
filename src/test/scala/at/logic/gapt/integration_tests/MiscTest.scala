@@ -1,7 +1,7 @@
 
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.io.xml.{XMLParser, saveXML}
+import at.logic.gapt.formats.xml.{XMLParser, saveXML}
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
@@ -11,8 +11,8 @@ import at.logic.gapt.proofs.lk.algorithms._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.language.fol._
 import XMLParser._
-import at.logic.gapt.io.readers.XMLReaders._
-import at.logic.gapt.io.veriT.VeriTParser
+import at.logic.gapt.formats.readers.XMLReaders._
+import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.veriT.VeriTProver

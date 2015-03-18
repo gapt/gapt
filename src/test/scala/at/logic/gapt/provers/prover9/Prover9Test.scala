@@ -4,12 +4,12 @@
 
 package at.logic.gapt.provers.prover9
 
-import at.logic.gapt.io.simple.SimpleFOLParser
+import at.logic.gapt.formats.simple.SimpleFOLParser
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.proofs.resolution.robinson.{Formatter, RobinsonResolutionProof}
 import at.logic.gapt.language.fol._
-import at.logic.gapt.io.readers.StringReader
+import at.logic.gapt.formats.readers.StringReader
 import java.io.File.separator
 import java.io.IOException
 

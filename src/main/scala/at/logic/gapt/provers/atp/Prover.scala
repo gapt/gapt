@@ -9,8 +9,8 @@ import at.logic.gapt.language.fol.algorithms.{ UnificationAlgorithm, FOLMatching
 import at.logic.gapt.proofs.resolution.{ Clause, ResolutionProof }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.language.fol.FOLExpression
-import at.logic.gapt.io.simple.SimpleResolutionParserFOL
-import at.logic.gapt.io.readers.FileReader
+import at.logic.gapt.formats.simple.SimpleResolutionParserFOL
+import at.logic.gapt.formats.readers.FileReader
 import at.logic.gapt.provers.atp.commands.base._
 import at.logic.gapt.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.gapt.provers.atp.commands.logical.DeterministicMacroCommand

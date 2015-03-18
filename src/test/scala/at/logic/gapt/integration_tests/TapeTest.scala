@@ -1,6 +1,6 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.io.xml.{XMLParser, saveXML}
+import at.logic.gapt.formats.xml.{XMLParser, saveXML}
 import at.logic.gapt.language.fol.algorithms.convertHolToFol
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.algorithms.{AtomicExpansion, deleteTautologies, map_proof, regularize}
@@ -10,9 +10,9 @@ import at.logic.gapt.proofs.lk._
 
 
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.io.tptp.TPTPFOLExporter
+import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
-import at.logic.gapt.io.readers.XMLReaders._
+import at.logic.gapt.formats.readers.XMLReaders._
 
 import at.logic.gapt.provers.atp.Prover
 import at.logic.gapt.provers.atp.commands.base.SetStreamCommand

@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.io.shlk_parsing.sFOParser
+import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.proofs.algorithms.ceres.projections.{DeleteTautology, DeleteRedundantSequents}
 import at.logic.gapt.proofs.algorithms.ceres.struct._
 import java.io.File.separator

@@ -3,7 +3,7 @@ package at.logic.gapt
 
 import java.io.InputStreamReader
 
-import at.logic.gapt.io.shlk_parsing.SHLK
+import at.logic.gapt.formats.shlk_parsing.SHLK
 import at.logic.gapt.language.schema._
 import org.junit.runner.RunWith
 import org.specs2.execute.Success

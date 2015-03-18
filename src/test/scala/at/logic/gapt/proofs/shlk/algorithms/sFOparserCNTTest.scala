@@ -7,7 +7,7 @@ package at.logic.gapt.proofs.shlk.algorithms
 
 import java.io.InputStreamReader
 
-import at.logic.gapt.io.shlk_parsing.sFOParserCNT
+import at.logic.gapt.formats.shlk_parsing.sFOParserCNT
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence

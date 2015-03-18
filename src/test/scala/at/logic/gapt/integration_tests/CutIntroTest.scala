@@ -8,7 +8,7 @@ import at.logic.gapt.language.fol._
 import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.language.lambda.symbols._
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.io.tptp.TPTPFOLExporter
+import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.minisat.MiniSATProver
 
 import org.junit.runner.RunWith

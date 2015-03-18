@@ -1,6 +1,6 @@
 package at.logic.gapt
 
-import at.logic.gapt.io.veriT.VeriTParser
+import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit

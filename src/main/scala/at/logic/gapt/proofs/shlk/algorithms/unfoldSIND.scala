@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.shlk.algorithms
 
-import at.logic.gapt.io.shlk.{ backToInt, maketogether }
+import at.logic.gapt.formats.shlk.{ backToInt, maketogether }
 import at.logic.gapt.language.lambda.types.{ ->, FunctionType, Ti, Tindex }
 import at.logic.gapt.language.schema.{ leq, lessThan, sims, _ }
 import at.logic.gapt.proofs.lk._

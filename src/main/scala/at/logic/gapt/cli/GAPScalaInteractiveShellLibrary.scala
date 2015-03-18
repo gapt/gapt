@@ -8,7 +8,7 @@ package at.logic.gapt.cli.GAPScalaInteractiveShellLibrary
 import java.io.{ FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 import java.util.zip.GZIPInputStream
 
-import at.logic.gapt.io.xml.{ XMLParser, ProofDatabase, LKExporter }
+import at.logic.gapt.formats.xml.{ XMLParser, ProofDatabase, LKExporter }
 import at.logic.gapt.proofs.algorithms.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
 import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK, ceres_omega }
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
@@ -16,7 +16,7 @@ import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ Struct, StructCreators }
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
-import at.logic.gapt.io.llk.HybridLatexExporter
+import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.gapt.proofs.lk.algorithms.subsumption._
 import at.logic.gapt.language.fol.algorithms._
@@ -40,23 +40,23 @@ import at.logic.gapt.language.hol.{ BetaReduction => HOLBetaReduction, HOLSubsti
 import at.logic.gapt.language.lambda.symbols.StringSymbol
 import at.logic.gapt.language.lambda.{ LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
 import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.io.latex._
-import at.logic.gapt.io.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }
-import at.logic.gapt.io.hoare.ProgramParser
-import at.logic.gapt.io.ivy.conversion.IvyToRobinson
-import at.logic.gapt.io.ivy.{ IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution }
-import at.logic.gapt.io.arithmetic.HOLTermArithmeticalExporter
-import at.logic.gapt.io.hlk.HLKHOLParser
-import at.logic.gapt.io.prover9._
-import at.logic.gapt.io.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
+import at.logic.gapt.formats.latex._
+import at.logic.gapt.formats.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }
+import at.logic.gapt.formats.hoare.ProgramParser
+import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.formats.ivy.{ IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution }
+import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
+import at.logic.gapt.formats.hlk.HLKHOLParser
+import at.logic.gapt.formats.prover9._
+import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
 import XMLParser._
-import at.logic.gapt.io.lisp.SExpressionParser
-import at.logic.gapt.io.readers.StringReader
-import at.logic.gapt.io.readers.XMLReaders._
-import at.logic.gapt.io.shlk.{ SCHOLParser, SchemaFormulaParser }
-import at.logic.gapt.io.shlk_parsing.{ sFOParser, sFOParserCNT }
-import at.logic.gapt.io.veriT._
-import at.logic.gapt.io.writers.FileWriter
+import at.logic.gapt.formats.lisp.SExpressionParser
+import at.logic.gapt.formats.readers.StringReader
+import at.logic.gapt.formats.readers.XMLReaders._
+import at.logic.gapt.formats.shlk.{ SCHOLParser, SchemaFormulaParser }
+import at.logic.gapt.formats.shlk_parsing.{ sFOParser, sFOParserCNT }
+import at.logic.gapt.formats.veriT._
+import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.shlk.algorithms.applySchemaSubstitution2
 import at.logic.gapt.provers.atp.Prover
 import at.logic.gapt.provers.atp.commands.base._

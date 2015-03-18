@@ -1,7 +1,7 @@
 package at.logic.testing.verit
 
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.io.veriT.VeriTParser
+import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.provers.minisat._
 import at.logic.testing.{skipIfRunsLongerThan, recursiveListFiles}
 

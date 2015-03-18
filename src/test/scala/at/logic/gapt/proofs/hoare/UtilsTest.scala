@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.hoare
 
-import at.logic.gapt.io.hoare.ProgramParser
+import at.logic.gapt.formats.hoare.ProgramParser
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner

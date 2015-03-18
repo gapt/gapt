@@ -7,7 +7,7 @@ package at.logic.gapt.prooftool
  * Time: 12:08:33 PM
  */
 
-import at.logic.gapt.io.xml.{ ProofDatabase, XMLExporter }
+import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs.lk.algorithms._
 import at.logic.gapt.proofs.lksk.algorithms.eliminateDefinitions
 import at.logic.gapt.proofs.shlk.algorithms.{ applySchemaSubstitution2, applySchemaSubstitution }
@@ -23,9 +23,9 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.proofs.TreeProof
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.schema.IntVar
-import at.logic.gapt.io.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
-import at.logic.gapt.io.arithmetic.HOLTermArithmeticalExporter
-import at.logic.gapt.io.writers.FileWriter
+import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
+import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
+import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ renameCLsymbols, StandardClauseSet }
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ structToExpressionTree, StructCreators }
@@ -42,8 +42,8 @@ import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
-import at.logic.gapt.io.llk.HybridLatexExporter
-import at.logic.gapt.io.tptp.TPTPFOLExporter
+import at.logic.gapt.formats.llk.HybridLatexExporter
+import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
 object Main extends SimpleSwingApplication {
   val body = new MyScrollPane

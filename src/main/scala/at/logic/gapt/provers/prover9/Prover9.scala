@@ -15,11 +15,11 @@ import at.logic.gapt.proofs.resolution.{ FClause, Clause }
 import at.logic.gapt.proofs.resolution.algorithms._
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.gapt.language.fol._
-import at.logic.gapt.io.ivy.IvyParser
-import at.logic.gapt.io.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }
-import at.logic.gapt.io.ivy.conversion.IvyToRobinson
-import at.logic.gapt.io.prover9._
-import at.logic.gapt.io.tptp.TPTPFOLExporter
+import at.logic.gapt.formats.ivy.IvyParser
+import at.logic.gapt.formats.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }
+import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.formats.prover9._
+import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
 import java.io._

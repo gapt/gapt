@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import scala.sys.process._
 import java.io._
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.io.veriT._
+import at.logic.gapt.formats.veriT._
 import at.logic.gapt.language.hol.HOLFormula
 import at.logic.gapt.proofs.lk.base.FSequent
 

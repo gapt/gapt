@@ -1,11 +1,11 @@
-package at.logic.gapt.io.ivy
+package at.logic.gapt.formats.ivy
 
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import conversion.IvyToRobinson
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
-import at.logic.gapt.io.lisp
+import at.logic.gapt.formats.lisp
 import java.io.File.separator
 import util.parsing.input.Reader
 import lisp.{SExpressionParser}

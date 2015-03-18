@@ -5,13 +5,13 @@
 
 package at.logic.applet
 
-import at.logic.gapt.io.readers.StringReader
+import at.logic.gapt.formats.readers.StringReader
 
 import java.io.File.separator
 import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
-import at.logic.gapt.io.simple.SimpleHOLParser
+import at.logic.gapt.formats.simple.SimpleHOLParser
 
 /* FIXME: Huet's algorithm is not yet adapted to the new lambda calculus
 class AppletMain extends java.applet.Applet {

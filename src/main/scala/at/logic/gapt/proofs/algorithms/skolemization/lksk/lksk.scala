@@ -16,7 +16,7 @@ import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
 import at.logic.gapt.language.lambda.symbols.StringSymbol
 import at.logic.gapt.language.lambda.types.FunctionType
-import at.logic.gapt.io.llk.HybridLatexExporter
+import at.logic.gapt.formats.llk.HybridLatexExporter
 
 object LKtoLKskc extends Logger {
   def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Nil )

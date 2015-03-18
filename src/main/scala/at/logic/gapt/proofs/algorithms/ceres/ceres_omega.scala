@@ -19,7 +19,7 @@ import at.logic.gapt.proofs.resolution.ral._
  */
 object ceres_omega extends ceres_omega
 class ceres_omega {
-  import at.logic.gapt.io.llk.LLKFormatter._
+  import at.logic.gapt.formats.llk.LLKFormatter._
 
   /**
    * Applies the CERES_omega method to a proof.

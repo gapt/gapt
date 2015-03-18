@@ -17,8 +17,8 @@ import at.logic.gapt.provers.atp.commands.refinements.simple._
 import at.logic.gapt.provers.atp.commands.refinements.base._
 import at.logic.gapt.provers.atp.commands.sequents._
 import at.logic.gapt.provers.atp.commands.robinson._
-import at.logic.gapt.io.simple.{SimpleFOLParser, SimpleResolutionParserFOL}
-import at.logic.gapt.io.readers.StringReader
+import at.logic.gapt.formats.simple.{SimpleFOLParser, SimpleResolutionParserFOL}
+import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 
