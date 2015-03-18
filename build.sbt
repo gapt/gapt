@@ -1,4 +1,5 @@
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
+import scalariform.formatter.preferences._
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -16,7 +17,13 @@ lazy val commonSettings = Seq(
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
   sourcesInBase := false // people like to keep scripts lying around
-) ++ defaultScalariformSettings
+
+) ++ defaultScalariformSettings :+
+  (ScalariformKeys.preferences := FormattingPreferences()
+    .setPreference(AlignParameters, true)
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(DoubleIndentClassDeclaration, true)
+    .setPreference(SpaceInsideParentheses, true))
 
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
@@ -80,13 +87,7 @@ lazy val root = (project in file(".")).
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5")
   )
 
-import scalariform.formatter.preferences._
 addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/test:scalariformFormat")
-ScalariformKeys.preferences := FormattingPreferences()
-  .setPreference(AlignParameters, true)
-  .setPreference(AlignSingleLineCaseStatements, true)
-  .setPreference(DoubleIndentClassDeclaration, true)
-  .setPreference(SpaceInsideParentheses, true)
 
 lazy val testing = (project in file("testing")).
   dependsOn(root).
