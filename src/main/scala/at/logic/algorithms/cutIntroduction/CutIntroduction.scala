@@ -621,7 +621,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     Imp( ant, succ )
   }
 
-
   /**
    * Builds the final proof out of an extended Herbrand sequent.
    *
@@ -775,7 +774,9 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
     trace( "proof__.root: " + proof__.root )
 
-    Some( proof__ )
+    val pruned_proof = CleanStructuralRules( proof__ )
+
+    Some( pruned_proof )
   }
 
   /**
