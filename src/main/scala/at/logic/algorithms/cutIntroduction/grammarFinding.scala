@@ -18,7 +18,7 @@ object TratGrammar {
 case class TratGrammar( axiom: FOLVar, productions: Seq[TratGrammar.Production] ) {
   val nonTerminals = productions map ( _._1 ) distinct
 
-  def productions( nonTerminal: FOLVar ) = productions filter ( _._1 == nonTerminal )
+  def productions( nonTerminal: FOLVar ): Seq[TratGrammar.Production] = productions filter ( _._1 == nonTerminal )
   def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
 
   override def toString = s"($axiom, {${productions map { case ( d, t ) => s"$d -> $t" } mkString ", "}})"

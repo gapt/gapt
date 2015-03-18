@@ -6,13 +6,13 @@ import at.logic.language.fol._
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )
 
-  def tau = FOLVar( "τ" )
-  def beta = FOLVar( "β" )
-  def gamma = FOLVar( "γ" )
-  def gammaEnd = FOLVar( "γ_end" )
+  val tau = FOLVar( "τ" )
+  val beta = FOLVar( "β" )
+  val gamma = FOLVar( "γ" )
+  val gammaEnd = FOLVar( "γ_end" )
 
-  def alpha = FOLVar( "α" )
-  def nu = FOLVar( "ν" )
+  val alpha = FOLVar( "α" )
+  val nu = FOLVar( "ν" )
 
   def gamma_i( i: Int ) = FOLVar( s"γ_$i" )
 
