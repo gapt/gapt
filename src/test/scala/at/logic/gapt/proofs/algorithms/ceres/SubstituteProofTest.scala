@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.algorithms.ceres.ACNF
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
-import at.logic.gapt.proofs.lk.base.{FSequent, LKProof}
+import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import java.io.File.separator
 import at.logic.gapt.language.hol._
@@ -61,4 +61,4 @@ class SubstituteProofTest extends SpecificationWithJUnit {
   }
 
 }
-*/
+*/ 

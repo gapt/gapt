@@ -16,47 +16,45 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import scala.collection.immutable.HashSet
 
-@RunWith(classOf[JUnitRunner])
+@RunWith( classOf[JUnitRunner] )
 class CutIntroTest extends SpecificationWithJUnit {
-  private def LinearExampleTermset( n : Int ) : List[FOLTerm] =
+  private def LinearExampleTermset( n: Int ): List[FOLTerm] =
     if ( n == 0 )
       List[FOLTerm]()
     else
-      Utils.numeral( n - 1 ) :: LinearExampleTermset( n - 1)
+      Utils.numeral( n - 1 ) :: LinearExampleTermset( n - 1 )
 
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
-  private def LinearExampleProof( k : Int, n : Int ) : LKProof = {
+  private def LinearExampleProof( k: Int, n: Int ): LKProof = {
     val s = "s"
     val c = "0"
     val p = "P"
 
     val x = FOLVar( "x" )
-    val ass = FOLAllVar( x, FOLImp( FOLAtom( p, x::Nil ), FOLAtom( p, FOLFunction( s, x::Nil )::Nil ) ) )
+    val ass = FOLAllVar( x, FOLImp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
     if ( k == n ) // leaf proof
     {
-      val a = FOLAtom( p,  Utils.numeral( n )::Nil )
-      WeakeningLeftRule( Axiom( a::Nil, a::Nil ), ass )
-    }
-    else
-    {
-      val p1 = FOLAtom( p, Utils.numeral( k )::Nil )
-      val p2 = FOLAtom( p, Utils.numeral( k + 1 )::Nil )
+      val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
+      WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
+    } else {
+      val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
+      val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
       val aux = FOLImp( p1, p2 )
-      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1::Nil, p1::Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
+      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
     }
   }
 
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
-      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
+      if ( !( new MiniSATProver ).isInstalled() ) skipped( "MiniSAT is not installed" )
       val proof = LinearExampleProof( 0, 4 )
 
-      val termset = TermsExtraction (proof)
-      val set = termset.set.foldRight (List[FOLTerm]()) ( (t, acc) => termset.getTermTuple (t) ++ acc)
+      val termset = TermsExtraction( proof )
+      val set = termset.set.foldRight( List[FOLTerm]() )( ( t, acc ) => termset.getTermTuple( t ) ++ acc )
 
-      CutIntroduction.one_cut_one_quantifier (proof, false)
+      CutIntroduction.one_cut_one_quantifier( proof, false )
 
-      set must contain (exactly ( LinearExampleTermset( 4 ):_* ))
+      set must contain( exactly( LinearExampleTermset( 4 ): _* ) )
     }
   }
 }

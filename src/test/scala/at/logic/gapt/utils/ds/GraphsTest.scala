@@ -14,23 +14,23 @@ import org.specs2.runner.JUnitRunner
 import graphs._
 import GraphImplicitConverters._
 
-@RunWith(classOf[JUnitRunner])
+@RunWith( classOf[JUnitRunner] )
 class GraphsTest extends SpecificationWithJUnit {
   "Graph" should {
     val g1: EmptyGraph[String] = ()
-    val g2: VertexGraph[String] = ("a", g1)
-    val g21: VertexGraph[String] = ("b", g2)
-    val g3: EdgeGraph[String] = ("a", "b", g21)
-    val g4: EdgeGraph[String] = ("a", "c", EdgeGraph("b", "c", VertexGraph("c", g3)))
-    val g5 = EdgeGraph("e", "f", VertexGraph("f", VertexGraph("e", EmptyGraph[String])))
-    val g6: UnionGraph[String] = UnionGraph(g4, g5)
+    val g2: VertexGraph[String] = ( "a", g1 )
+    val g21: VertexGraph[String] = ( "b", g2 )
+    val g3: EdgeGraph[String] = ( "a", "b", g21 )
+    val g4: EdgeGraph[String] = ( "a", "c", EdgeGraph( "b", "c", VertexGraph( "c", g3 ) ) )
+    val g5 = EdgeGraph( "e", "f", VertexGraph( "f", VertexGraph( "e", EmptyGraph[String] ) ) )
+    val g6: UnionGraph[String] = UnionGraph( g4, g5 )
     "check extractors" in {
-      (g2 match {
-        case EmptyGraph() => false
-        case UnionGraph(x1, x2) => false
-        case VertexGraph("a", x2) => true
-        case _ => false
-      }) must beEqualTo (true)
+      ( g2 match {
+        case EmptyGraph()           => false
+        case UnionGraph( x1, x2 )   => false
+        case VertexGraph( "a", x2 ) => true
+        case _                      => false
+      } ) must beEqualTo( true )
     }
 
     /*"maintain subgraph property with vertices" in {
@@ -57,10 +57,10 @@ class GraphsTest extends SpecificationWithJUnit {
       (g4.graph.edgeSet.size()) must beEqualTo (3)
     }*/
     "work correctly on vertices which have the same content but different equality method" in {
-      class TestA(a: String)
+      class TestA( a: String )
       val gn1 = EmptyGraph[TestA]()
-      val gn2 = VertexGraph(new TestA("t1"), gn1)
-      val gn3 = VertexGraph(new TestA("t1"), gn2)
+      val gn2 = VertexGraph( new TestA( "t1" ), gn1 )
+      val gn3 = VertexGraph( new TestA( "t1" ), gn2 )
       true
     }
   }

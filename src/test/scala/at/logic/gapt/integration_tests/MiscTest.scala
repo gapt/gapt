@@ -1,11 +1,11 @@
 
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.formats.xml.{XMLParser, saveXML}
+import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
-import at.logic.gapt.proofs.expansionTrees.{toDeep => ETtoDeep,toShallow => ETtoShallow}
+import at.logic.gapt.proofs.expansionTrees.{ toDeep => ETtoDeep, toShallow => ETtoShallow }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms._
 import at.logic.gapt.proofs.lk.base._
@@ -26,7 +26,7 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
 import java.io.File.separator
-import java.io.{FileReader, FileInputStream, InputStreamReader}
+import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
@@ -34,28 +34,26 @@ import org.specs2.execute.Success
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
+@RunWith( classOf[JUnitRunner] )
 class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
-  private def LinearExampleProof( k : Int, n : Int ) : LKProof = {
+  private def LinearExampleProof( k: Int, n: Int ): LKProof = {
     val s = "s"
     val c = "0"
     val p = "P"
 
-    val x = FOLVar("x")
-    val ass = FOLAllVar( x, FOLImp( FOLAtom( p, x::Nil ), FOLAtom( p, FOLFunction( s, x::Nil )::Nil ) ) )
+    val x = FOLVar( "x" )
+    val ass = FOLAllVar( x, FOLImp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
     if ( k == n ) // leaf proof
     {
-      val a = FOLAtom( p,  Utils.numeral( n )::Nil )
-      WeakeningLeftRule( Axiom( a::Nil, a::Nil ), ass )
-    }
-    else
-    {
-      val p1 = FOLAtom( p, Utils.numeral( k )::Nil )
-      val p2 = FOLAtom( p, Utils.numeral( k + 1 )::Nil )
+      val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
+      WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
+    } else {
+      val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
+      val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
       val aux = FOLImp( p1, p2 )
-      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1::Nil, p1::Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
+      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
     }
   }
 
@@ -78,119 +76,119 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 //    */
 
     "perform cut introduction on an example proof" in {
-      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
-      val p = LinearExampleProof(0, 7)
-      CutIntroduction.one_cut_one_quantifier(p, false)
+      if ( !( new MiniSATProver ).isInstalled() ) skipped( "MiniSAT is not installed" )
+      val p = LinearExampleProof( 0, 7 )
+      CutIntroduction.one_cut_one_quantifier( p, false )
       Success()
     }
 
     "skolemize a simple proof" in {
-      val proofdb = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sk2.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-      proofdb.proofs.size must beEqualTo(1)
+      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "sk2.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
       Success()
     }
 
     "skolemize a proof with a simple definition" in {
-      val proofdb = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sk3.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-      proofdb.proofs.size must beEqualTo(1)
+      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "sk3.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
       Success()
     }
 
     "skolemize a proof with a complex definition" in {
-      val proofdb = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("sk4.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-      proofdb.proofs.size must beEqualTo(1)
+      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "sk4.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
       Success()
     }
 
     "extract projections and clause set from a skolemized proof" in {
-      val proofdb = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("test1p.xml"))) with XMLProofDatabaseParser).getProofDatabase()
-      proofdb.proofs.size must beEqualTo(1)
+      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "test1p.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
       val s = StructCreators.extract( proof )
       val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
-      val prf = deleteTautologies(proofProfile(s, proof).map( _.toFSequent ))
+      val prf = deleteTautologies( proofProfile( s, proof ).map( _.toFSequent ) )
       val path = "target" + separator + "test1p-out.xml"
       saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
         projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Tuple2("cs", cs)::Tuple2("prf", prf)::Nil, path )
+        Tuple2( "cs", cs ) :: Tuple2( "prf", prf ) :: Nil, path )
       Success()
     }
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
-      if (!(new MiniSATProver).isInstalled()) skipped("MiniSAT is not installed")
+      if ( !( new MiniSATProver ).isInstalled() ) skipped( "MiniSAT is not installed" )
 
       val p = LinearExampleProof( 0, 4 )
-      val pi = CutIntroduction.one_cut_one_quantifier(p, false)
-      val pe = ReductiveCutElim.eliminateAllByUppermost(pi, steps = false)
+      val pi = CutIntroduction.one_cut_one_quantifier( p, false )
+      val pe = ReductiveCutElim.eliminateAllByUppermost( pi, steps = false )
 
-      ReductiveCutElim.isCutFree(p)  must beEqualTo( true )
-      ReductiveCutElim.isCutFree(pi) must beEqualTo( false )
-      ReductiveCutElim.isCutFree(pe) must beEqualTo( true )
+      ReductiveCutElim.isCutFree( p ) must beEqualTo( true )
+      ReductiveCutElim.isCutFree( pi ) must beEqualTo( false )
+      ReductiveCutElim.isCutFree( pe ) must beEqualTo( true )
     }
 
     "extract expansion tree from tape proof" in {
-      val tokens = HybridLatexParser.parseFile(tempCopyOfClasspathFile("tape3.llk"))
-      val db = HybridLatexParser.createLKProof(tokens)
+      val tokens = HybridLatexParser.parseFile( tempCopyOfClasspathFile( "tape3.llk" ) )
+      val db = HybridLatexParser.createLKProof( tokens )
       // I have no idea why, but this makes the code get the correct proof
-      val proofs = db.proofs.filter(_._1.toString == "TAPEPROOF")
-      val (_,p)::_ = proofs
-      val elp = AtomicExpansion(DefinitionElimination(db.Definitions,p))
-      val reg = regularize(elp)
-      val lksk_proof = LKtoLKskc(reg)
+      val proofs = db.proofs.filter( _._1.toString == "TAPEPROOF" )
+      val ( _, p ) :: _ = proofs
+      val elp = AtomicExpansion( DefinitionElimination( db.Definitions, p ) )
+      val reg = regularize( elp )
+      val lksk_proof = LKtoLKskc( reg )
       // TODO
-      val et = extractExpansionSequent(reg, false)  // must throwA[IllegalArgumentException] // currently contains problematic definitions
+      val et = extractExpansionSequent( reg, false ) // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
     }
 
     "construct proof with expansion sequent extracted from proof 1/2" in {
-      val y = FOLVar("y")
-      val x = FOLVar("x")
-      val Py = FOLAtom("P", y :: Nil)
-      val Px = FOLAtom("P", x :: Nil)
-      val AllxPx = FOLAllVar(x, Px)
+      val y = FOLVar( "y" )
+      val x = FOLVar( "x" )
+      val Py = FOLAtom( "P", y :: Nil )
+      val Px = FOLAtom( "P", x :: Nil )
+      val AllxPx = FOLAllVar( x, Px )
 
       // test with 1 weak & 1 strong
-      val p1 = Axiom(Py :: Nil, Py :: Nil)
-      val p2 = ForallLeftRule(p1, Py, AllxPx, y)
-      val p3 = ForallRightRule(p2, Py, AllxPx, y)
+      val p1 = Axiom( Py :: Nil, Py :: Nil )
+      val p2 = ForallLeftRule( p1, Py, AllxPx, y )
+      val p3 = ForallRightRule( p2, Py, AllxPx, y )
 
-      val etSeq = extractExpansionSequent(p3, false)
+      val etSeq = extractExpansionSequent( p3, false )
 
-      val proof = solve.expansionProofToLKProof(p3.root.toFSequent, etSeq)
+      val proof = solve.expansionProofToLKProof( p3.root.toFSequent, etSeq )
       proof.isDefined must beTrue
     }
 
     "construct proof with expansion sequent extracted from proof 2/2" in {
-      val proof = LinearExampleProof(0, 4)
+      val proof = LinearExampleProof( 0, 4 )
 
-      val proofPrime = solve.expansionProofToLKProof(proof.root.toFSequent, extractExpansionSequent(proof, false))
+      val proofPrime = solve.expansionProofToLKProof( proof.root.toFSequent, extractExpansionSequent( proof, false ) )
       proofPrime.isDefined must beTrue
     }
 
     "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT" in {
       val minisat = new MiniSATProver()
-      if (!minisat.isInstalled()) skipped("MiniSAT is not installed")
+      if ( !minisat.isInstalled() ) skipped( "MiniSAT is not installed" )
 
-      for (i <- List(0,1,3)) { // Tests 2 and 4 take comparatively long.
-        val p = VeriTParser.getExpansionProof(tempCopyOfClasspathFile(s"test${i}.verit")).get
-        val seq = ETtoDeep(p)
+      for ( i <- List( 0, 1, 3 ) ) { // Tests 2 and 4 take comparatively long.
+        val p = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( s"test${i}.verit" ) ).get
+        val seq = ETtoDeep( p )
 
-        minisat.isValid(seq) must beTrue
+        minisat.isValid( seq ) must beTrue
       }
       ok
     }
 
     "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using minisat" in {
       val minisat = new MiniSATProver()
-      if (!minisat.isInstalled()) skipped("MiniSAT is not installed")
-      if (!Prover9.isInstalled()) skipped("Prover9 is not installed")
+      if ( !minisat.isInstalled() ) skipped( "MiniSAT is not installed" )
+      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
@@ -206,16 +204,16 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
     "load Prover9 proof with equality reasoning, extract expansion tree E, verify deep formula of E using veriT" in {
       val veriT = new VeriTProver()
-      if (!veriT.isInstalled()) skipped("VeriT is not installed")
-      if (!Prover9.isInstalled()) skipped("Prover9 is not installed")
+      if ( !veriT.isInstalled() ) skipped( "VeriT is not installed" )
+      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "ALG004-1.out" )
 
       val lkProof = Prover9.parse_prover9LK( testFilePath )
-      val expansionSequent = extractExpansionSequent(lkProof, false)
-      val deep = ETtoDeep(expansionSequent)
+      val expansionSequent = extractExpansionSequent( lkProof, false )
+      val deep = ETtoDeep( expansionSequent )
 
-      veriT.isValid(deep) must beTrue
+      veriT.isValid( deep ) must beTrue
     }
   }
 }

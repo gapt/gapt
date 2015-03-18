@@ -21,7 +21,7 @@ import at.logic.gapt.language.fol._
 import at.logic.gapt.language.hol.logicSymbols._
 import java.io.File.separator
 
-@RunWith(classOf[JUnitRunner])
+@RunWith( classOf[JUnitRunner] )
 class Prover9ParserTest extends SpecificationWithJUnit {
   "The Prover9 language parser" should {
     "handle conjunctions and atoms" in {
@@ -31,23 +31,23 @@ class Prover9ParserTest extends SpecificationWithJUnit {
         "P(X)", "a", "-P(y)", "-P(Y)",
         "P(x) & P(b)", "q(x) &q(x) & p(y)", "A&B", "X&Y&Z",
         "(P(x) & P(b))", "(q(x) &q(x) & p(y))", "(A&B)", "(X&Y&Z)",
-        "q(x) &(q(x) & p(y))", "(X&Y)&Z")
+        "q(x) &(q(x) & p(y))", "(X&Y)&Z" )
 
       var good: List[FOLFormula] = List[FOLFormula]()
-      var bad: List[(String, Position)] = List[(String, Position)]()
-      for (s <- cases) {
-        Prover9TermParser.parseAll(Prover9TermParser.formula, s) match {
-          case Prover9TermParser.Success(result, _) =>
+      var bad: List[( String, Position )] = List[( String, Position )]()
+      for ( s <- cases ) {
+        Prover9TermParser.parseAll( Prover9TermParser.formula, s ) match {
+          case Prover9TermParser.Success( result, _ ) =>
             //println(result)
             good = result :: good
-          case Prover9TermParser.Failure(msg, input) =>
+          case Prover9TermParser.Failure( msg, input ) =>
             //s must beEqualTo("Failure:"+input.pos.toString + ": " +  msg)
             //println("Failure!")
-            bad = (msg, input.pos) :: bad
-          case Prover9TermParser.Error(msg, input) =>
+            bad = ( msg, input.pos ) :: bad
+          case Prover9TermParser.Error( msg, input ) =>
             //s must beEqualTo("Error:"+input.pos.toString + ": " +  msg)
             //println("Error!")
-            bad = (msg, input.pos) :: bad
+            bad = ( msg, input.pos ) :: bad
 
         }
       }
@@ -73,16 +73,16 @@ class Prover9ParserTest extends SpecificationWithJUnit {
         "q(x) &(q(x) & p(y))", "(X&Y)&Z",
         "(all X p(X))", "(exists X p(X))",
         "-(all X p(X))", "-(exists X p(X))",
-        "-(all X --p(X))", "--(exists X p(X))")
+        "-(all X --p(X))", "--(exists X p(X))" )
 
-      cases map ((s: String) =>
-        Prover9TermParser.parseAll(Prover9TermParser.formula, s) match {
-          case Prover9TermParser.Success(result, _) =>
+      cases map ( ( s: String ) =>
+        Prover9TermParser.parseAll( Prover9TermParser.formula, s ) match {
+          case Prover9TermParser.Success( result, _ ) =>
             //println(result)
-            true must beEqualTo(true)
-          case Prover9TermParser.NoSuccess(msg, input) =>
-            s must beEqualTo(input.pos.toString + ": " + msg)
-        })
+            true must beEqualTo( true )
+          case Prover9TermParser.NoSuccess( msg, input ) =>
+            s must beEqualTo( input.pos.toString + ": " + msg )
+        } )
       ok
     }
 
@@ -93,16 +93,16 @@ class Prover9ParserTest extends SpecificationWithJUnit {
         "(all X (P(X) | Q(X)))", "(all X (P(X) | Q(X) | R(X,X)))",
         "(exists X (P(X) | Q(X)))", "(exists X (P(X) | Q(X) | R(X,X)))",
         //"(all x (q(x,f(x)) | q(x,g(x))))",
-        "(all X (q(X,f(X)) | q(X,g(X))))")
+        "(all X (q(X,f(X)) | q(X,g(X))))" )
 
-      cases map ((s: String) =>
-        Prover9TermParser.parseAll(Prover9TermParser.formula, s) match {
-          case Prover9TermParser.Success(result, _) =>
+      cases map ( ( s: String ) =>
+        Prover9TermParser.parseAll( Prover9TermParser.formula, s ) match {
+          case Prover9TermParser.Success( result, _ ) =>
             //println(result)
-            true must beEqualTo(true)
-          case Prover9TermParser.NoSuccess(msg, input) =>
-            s must beEqualTo(input.pos.toString + ": " + msg)
-        })
+            true must beEqualTo( true )
+          case Prover9TermParser.NoSuccess( msg, input ) =>
+            s must beEqualTo( input.pos.toString + ": " + msg )
+        } )
       ok
     }
 
@@ -125,25 +125,25 @@ class Prover9ParserTest extends SpecificationWithJUnit {
           | (all V1 (p(north,south,north,north,V1) -> p(south,south,north,south,take_cabbage(V1)))) ->
           | (exists Z p(north,north,north,north,Z))""".stripMargin
 
-      Prover9TermParser.parseAll(Prover9TermParser.formula, oendsequent) match {
-        case Prover9TermParser.Success(result, _) =>
-          "success" must beEqualTo("success")
-        case Prover9TermParser.NoSuccess(msg, input) =>
-          throw new Exception("Could not parse endsequent! " + msg + " " + input.pos)
+      Prover9TermParser.parseAll( Prover9TermParser.formula, oendsequent ) match {
+        case Prover9TermParser.Success( result, _ ) =>
+          "success" must beEqualTo( "success" )
+        case Prover9TermParser.NoSuccess( msg, input ) =>
+          throw new Exception( "Could not parse endsequent! " + msg + " " + input.pos )
       }
     }
 
     "parse infix formulas" in {
-      val terms = List("a = b", "P(1+(X*2))", "f(1+X)= (X*0)+X",
-        "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)")
-      terms map ((s: String) =>
-        Prover9TermParser.parseAll(Prover9TermParser.formula, s) match {
-          case Prover9TermParser.Success(result, _) =>
+      val terms = List( "a = b", "P(1+(X*2))", "f(1+X)= (X*0)+X",
+        "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)" )
+      terms map ( ( s: String ) =>
+        Prover9TermParser.parseAll( Prover9TermParser.formula, s ) match {
+          case Prover9TermParser.Success( result, _ ) =>
             //println(result)
-            true must beEqualTo(true)
-          case Prover9TermParser.NoSuccess(msg, input) =>
-            s must beEqualTo(input.pos.toString + ": " + msg)
-        })
+            true must beEqualTo( true )
+          case Prover9TermParser.NoSuccess( msg, input ) =>
+            s must beEqualTo( input.pos.toString + ": " + msg )
+        } )
       ok
     }
 
@@ -152,12 +152,12 @@ class Prover9ParserTest extends SpecificationWithJUnit {
 -neq(V,nil) | (all Y (ssList(Y) -> app(W,Y) != X | -totalorderedP(W) | (exists Z (ssItem(Z) & (exists X1 (ssList(X1) &
 app(cons(Z,nil),X1) = Y & (exists X2 (ssItem(X2) & (exists X3 (ssList(X3) & app(X3,cons(X2,nil)) = W &
 leq(X2,Z))))))))))) | nil != X & nil = W | neq(U,nil) & frontsegP(V,U)))))))))"""
-      println("parsing large example 1")
-      Prover9TermParser.parseAll(Prover9TermParser.formula, str) match {
-        case Prover9TermParser.Success(result, _) =>
-          "success" must beEqualTo("success")
-        case Prover9TermParser.NoSuccess(msg, input) =>
-          throw new Exception("Could not parse endsequent! " + msg + " " + input.pos)
+      println( "parsing large example 1" )
+      Prover9TermParser.parseAll( Prover9TermParser.formula, str ) match {
+        case Prover9TermParser.Success( result, _ ) =>
+          "success" must beEqualTo( "success" )
+        case Prover9TermParser.NoSuccess( msg, input ) =>
+          throw new Exception( "Could not parse endsequent! " + msg + " " + input.pos )
       }
 
     }
@@ -201,12 +201,12 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
 (p111(Y) | -p112(Y)) & (p110(Y) | -p111(Y)) & (p109(Y) | -p110(Y)) & (p108(Y) | -p109(Y)) & (p107(Y) | -p108(Y)) &
 (p106(Y) | -p107(Y)) & (p105(Y) | -p106(Y)) & (p104(Y) | -p105(Y)) & (p103(Y) | -p104(Y)) & (p102(Y) | -p103(Y)) &
 (p101(Y) | -p102(Y)) & (p100(Y) | -p101(Y)))) & -p101(X) & p100(X))))"""
-      println("parsing large example 2")
-      Prover9TermParser.parseAll(Prover9TermParser.formula, str) match {
-        case Prover9TermParser.Success(result, _) =>
-          "success" must beEqualTo("success")
-        case Prover9TermParser.NoSuccess(msg, input) =>
-          throw new Exception("Could not parse endsequent! " + msg + " " + input.pos)
+      println( "parsing large example 2" )
+      Prover9TermParser.parseAll( Prover9TermParser.formula, str ) match {
+        case Prover9TermParser.Success( result, _ ) =>
+          "success" must beEqualTo( "success" )
+        case Prover9TermParser.NoSuccess( msg, input ) =>
+          throw new Exception( "Could not parse endsequent! " + msg + " " + input.pos )
       }
 
     }
