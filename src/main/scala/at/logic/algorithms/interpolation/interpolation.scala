@@ -23,16 +23,13 @@ object ExtractInterpolant {
    */
   def apply( negative: FSequent, positive: FSequent, prover: Prover ): FOLFormula = {
     val seq = negative compose positive
-    println( "computing interpolant for " + seq )
     val p = prover.getLKProof( seq ).get
     val es = p.root
     val npart = es.antecedent.filter( fo => negative.antecedent.contains( fo.formula ) ) ++
       es.succedent.filter( fo => negative.succedent.contains( fo.formula ) )
     val ppart = es.antecedent.filter( fo => positive.antecedent.contains( fo.formula ) ) ++
       es.succedent.filter( fo => positive.succedent.contains( fo.formula ) )
-    val res = apply( p, npart.toSet, ppart.toSet )
-    println( "computed interpolant: " + res )
-    res
+    apply( p, npart.toSet, ppart.toSet )
   }
 }
 
