@@ -179,17 +179,17 @@ object And {
   def apply( left: HOLFormula, right: HOLFormula ) = {
     val f_left = left.factory
     val f_right = right.factory
-    val factory = 
-    if (f_left == f_right)
-      f_left
-    else {
-      // We are in a bit of a pickle here. Solve with a hack until discussed
-      // in GAPT meeting.
-      if (f_left != HOLFactory)
+    val factory =
+      if ( f_left == f_right )
         f_left
-      else
-        f_right
-    }
+      else {
+        // We are in a bit of a pickle here. Solve with a hack until discussed
+        // in GAPT meeting.
+        if ( f_left != HOLFactory )
+          f_left
+        else
+          f_right
+      }
     val and = factory.createConnective( AndSymbol ).asInstanceOf[HOLConst]
     HOLApp( HOLApp( and, left ), right ).asInstanceOf[HOLFormula]
   }
@@ -207,17 +207,17 @@ object Or {
   def apply( left: HOLFormula, right: HOLFormula ): HOLFormula = {
     val f_left = left.factory
     val f_right = right.factory
-    val factory = 
-    if (f_left == f_right)
-      f_left
-    else {
-      // We are in a bit of a pickle here. Solve with a hack until discussed
-      // in GAPT meeting.
-      if (f_left != HOLFactory)
+    val factory =
+      if ( f_left == f_right )
         f_left
-      else
-        f_right
-    }
+      else {
+        // We are in a bit of a pickle here. Solve with a hack until discussed
+        // in GAPT meeting.
+        if ( f_left != HOLFactory )
+          f_left
+        else
+          f_right
+      }
 
     val or = factory.createConnective( OrSymbol ).asInstanceOf[HOLConst]
     HOLApp( HOLApp( or, left ), right ).asInstanceOf[HOLFormula]

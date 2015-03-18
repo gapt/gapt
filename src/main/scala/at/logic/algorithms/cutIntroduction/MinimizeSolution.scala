@@ -34,7 +34,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
   def applyNew( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val improvedSol = improveSolution( ehs, prover )
     val res = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
-//    assert( prover.isValid( res.getDeep ) )
+    //    assert( prover.isValid( res.getDeep ) )
     res
   }
 
@@ -55,17 +55,17 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
         trace( "getting intermediary solution" )
         val is = getIntermediarySolution( ehs, cfs )
 
-        trace("I_" + k + ": " + is )
+        trace( "I_" + k + ": " + is )
         assert( prover.isValid( is.getDeep ) )
-        trace("I_" + k + " is valid." )
+        trace( "I_" + k + " is valid." )
 
         trace( "improving intermediary solution" )
         val cf = chooseSolution( improveSolution1( is, prover ) )
         trace( "got improved cut-formula: " + cf )
 
-        val test_ehs = new ExtendedHerbrandSequent( is.endSequent, is.grammar, cf::Nil )
+        val test_ehs = new ExtendedHerbrandSequent( is.endSequent, is.grammar, cf :: Nil )
         assert( prover.isValid( test_ehs.getDeep ) )
-        trace("I_2 with cf: " + test_ehs.getDeep )
+        trace( "I_2 with cf: " + test_ehs.getDeep )
 
         cfs :+ cf
       }
@@ -149,16 +149,16 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
     trace( "computing context of intermediary solution" )
     val es1 = new FSequent( getIntermediaryContext( grammar, cfs ), Nil )
     trace( "computed context (es1): " + es1 )
-//    trace( "computing ES-part of intermediary solution" )
-//    val es2 = instantiateSequent( orig_es, getT( l, grammar ) )
-//    trace( "ES-part (es2): " + es2 )
+    //    trace( "computing ES-part of intermediary solution" )
+    //    val es2 = instantiateSequent( orig_es, getT( l, grammar ) )
+    //    trace( "ES-part (es2): " + es2 )
 
-//    trace("es1 compose es2: " + (es1 compose es2))
+    //    trace("es1 compose es2: " + (es1 compose es2))
 
     val d = getD( grammar, cfs )
-    trace("d.us:" + d.us)
-    trace("d.ss:" + d.ss)
-    trace("canon. sol. based on d: " + CutIntroduction.computeCanonicalSolutions( d ) )
+    trace( "d.us:" + d.us )
+    trace( "d.ss:" + d.ss )
+    trace( "canon. sol. based on d: " + CutIntroduction.computeCanonicalSolutions( d ) )
 
     new ExtendedHerbrandSequent( es1 compose orig_es, d, CutIntroduction.computeCanonicalSolutions( d ) )
   }
@@ -377,7 +377,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
 
     assert( ehs.grammar.ss.size == 1, "isValidWith: only simple grammars supported." )
 
-    val test_ehs = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, f::Nil )
+    val test_ehs = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, f :: Nil )
     prover.isValid( test_ehs.getDeep )
   }
 
