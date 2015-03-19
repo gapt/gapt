@@ -79,7 +79,7 @@ class CutIntroTest extends SpecificationWithJUnit {
       val endSequent = proof.root.toFSequent
       val ehs = new ExtendedHerbrandSequent( endSequent, grammar )
       val prover = new BasicProver()
-      val result_new = MinimizeSolution.applyNew( ehs, prover )
+      val result_new = MinimizeSolution( ehs, prover )
       val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
 
       // expected result

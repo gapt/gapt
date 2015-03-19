@@ -21,28 +21,23 @@ import at.logic.utils.executionModels.searchAlgorithms.SetNode
 
 object MinimizeSolution extends at.logic.utils.logging.Logger {
 
-  def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = chooseSolution( improveSolution1( ehs, prover ) )
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
-  }
-
+  // Solution simplification for n == 1 cuts, with equality.
   def applyEq( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = chooseSolution( improveSolutionEq1( ehs, prover ) )
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
+    val improvedSol = improveSolutionGen( ehs, prover, improveSolutionEq1 )
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
   }
 
-  def applyNew( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val improvedSol = improveSolution( ehs, prover )
-    val res = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
-    //    assert( prover.isValid( res.getDeep ) )
-    res
+  // Solution simplification for n >= 1 cuts, without equality.
+  def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
+    val improvedSol = improveSolutionGen( ehs, prover, improveSolution1 )
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
   }
 
   private def chooseSolution( list: List[FOLFormula] ) = list.sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
 
-  // new version for multiple cuts.
+  // Solution simplification for n >= 1 cuts, without equality.
   // returns the list of cut-formulas of the improved solution.
-  private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
+  private def improveSolutionGen( ehs: ExtendedHerbrandSequent, prover: Prover, improve1: ( ExtendedHerbrandSequent, Prover ) => List[FOLFormula] ): List[FOLFormula] = {
     val grammar = ehs.grammar
     val n = grammar.ss.size
 
@@ -60,7 +55,7 @@ object MinimizeSolution extends at.logic.utils.logging.Logger {
         trace( "I_" + k + " is valid." )
 
         trace( "improving intermediary solution" )
-        val cf = chooseSolution( improveSolution1( is, prover ) )
+        val cf = chooseSolution( improve1( is, prover ) )
         trace( "got improved cut-formula: " + cf )
 
         val test_ehs = new ExtendedHerbrandSequent( is.endSequent, is.grammar, cf :: Nil )

@@ -774,9 +774,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
 
     trace( "proof__.root: " + proof__.root )
 
-    val pruned_proof = CleanStructuralRules( proof__ )
-
-    Some( pruned_proof )
+    Some( proof__ )
   }
 
   /**
@@ -790,22 +788,24 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
    */
   private def buildLeftPart( i: Int, es: FSequent, A: Seq[FOLFormula], Uleft: Seq[Seq[Seq[Seq[FOLTerm]]]], Uright: Seq[Seq[Seq[Seq[FOLTerm]]]], alphas: Seq[FOLVar], cf: FOLFormula, proof: LKProof ) =
     {
-      trace("in buildLeftPart")
-      trace("Uleft( " + i + " ): " + Uleft(i))
-      trace("Uleft( " + (i + 1) + " ): " + Uleft(i+1))
-      trace("es: " + proof.root )
+      trace( "in buildLeftPart" )
+      trace( "Uleft( " + i + " ): " + Uleft( i ) )
+      trace( "Uleft( " + ( i + 1 ) + " ): " + Uleft( i + 1 ) )
+      trace( "es: " + proof.root )
       def myWeakQuantRules( proof: LKProof, fs: Seq[FOLFormula], instances: Seq[Pair[Seq[Seq[FOLTerm]], Seq[Seq[FOLTerm]]]] ) =
-        ( fs zip instances ).foldLeft( proof ) { case ( proof, ( f, ( ui, uip ) ) ) => {
-        trace("in myWeakQuantRules")
-        trace("ui: " + ui)
-        trace("uip: " + uip)
-        trace("ui diff uip: " + (ui diff uip) )
-        genWeakQuantRules( f, ui diff uip, proof ) }
-      }
+        ( fs zip instances ).foldLeft( proof ) {
+          case ( proof, ( f, ( ui, uip ) ) ) => {
+            trace( "in myWeakQuantRules" )
+            trace( "ui: " + ui )
+            trace( "uip: " + uip )
+            trace( "ui diff uip: " + ( ui diff uip ) )
+            genWeakQuantRules( f, ui diff uip, proof )
+          }
+        }
 
       val p1 = myWeakQuantRules( proof, es.antecedent.asInstanceOf[Seq[FOLFormula]], Uleft( i ) zip Uleft( i + 1 ) )
       val p2 = myWeakQuantRules( p1, es.succedent.asInstanceOf[Seq[FOLFormula]], Uright( i ) zip Uright( i + 1 ) )
-      trace("es after myWeakQuantRules: " + p2.root )
+      trace( "es after myWeakQuantRules: " + p2.root )
 
       ForallRightRule( p2, A( i ), cf, alphas( i ) )
     }
