@@ -319,21 +319,21 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
               case false => MinimizeSolution.apply( ehs, prover )
             }
 
-            improvingSolutionTime += System.currentTimeMillis - time
+            val improvingSolutionTime_local = System.currentTimeMillis - time
             time = System.currentTimeMillis
 
             phase = "prcons" // proof construction
 
             val proof = buildProofWithCut( ehs1, prover )
 
-            buildProofTime += System.currentTimeMillis - time
+            val buildProofTime_local = System.currentTimeMillis - time
             time = System.currentTimeMillis
 
             val pruned_proof = CleanStructuralRules( proof.get )
 
             cleanStructuralRulesTime += System.currentTimeMillis - time
 
-            ( pruned_proof, ehs1, lcomp( cutFormulas.head ), lcomp( ehs1.cutFormulas.head ) )
+            ( pruned_proof, ehs1, lcomp( cutFormulas.head ), lcomp( ehs1.cutFormulas.head ), improvingSolutionTime_local, buildProofTime_local )
         }
 
         // Sort the list by size of proofs
@@ -344,6 +344,8 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         numCuts = getStatistics( smallestProof ).cuts
         canonicalSolutionSize = sorted.head._3
         minimizedSolutionSize = sorted.head._4
+        improvingSolutionTime = sorted.head._5
+        buildProofTime = sorted.head._6
         rulesLKProofWithCut = rulesNumber( smallestProof )
         quantRulesWithCut = quantRulesNumber( smallestProof )
         if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas.head + "\n" )
@@ -467,8 +469,6 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
         }
         grammarFindingTime = System.currentTimeMillis - time
         time = System.currentTimeMillis
-
-        println( "Grammar\n" + grammar )
 
         // Although this shouldn't be the case, because of the grammar returned by
         // TreeGrammarDecomposition should either be None or some grammar with size > 0

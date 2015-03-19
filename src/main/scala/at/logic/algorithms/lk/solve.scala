@@ -34,6 +34,13 @@ object solve extends at.logic.utils.logging.Logger {
   }
 
   /**
+   * Transform expansion proof to LK proof (assumes that deep formula of expansionSequent is a tautology)
+   */
+  def expansionProofToLKProof( expansionSequent: ExpansionSequent ): Option[LKProof] = {
+    expansionProofToLKProof( toShallow( expansionSequent ), expansionSequent )
+  }
+
+  /**
    * "Solving" for FOL: Use instances from expansion sequent to create LK proof for a sequent
    */
   def expansionProofToLKProof( seq: FSequent, expansionSequent: ExpansionSequent, cleanStructuralRules: Boolean = true, throwOnError: Boolean = false ): Option[LKProof] = {

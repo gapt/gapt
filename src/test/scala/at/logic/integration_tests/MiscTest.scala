@@ -21,7 +21,7 @@ import at.logic.parsing.language.tptp.TPTPFOLExporter
 import at.logic.parsing.language.xml.XMLParser._
 import at.logic.parsing.readers.XMLReaders._
 import at.logic.parsing.veriT.VeriTParser
-import at.logic.provers.minisat.MiniSATProver
+import at.logic.provers.FailSafeProver
 import at.logic.provers.prover9.{ Prover9, Prover9Prover }
 import at.logic.provers.veriT.VeriTProver
 import at.logic.transformations.ReductiveCutElim
@@ -85,7 +85,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 //    */
 
     "perform cut introduction on an example proof" in {
-      if ( !( new MiniSATProver ).isInstalled() ) skipped( "MiniSAT is not installed" )
       val p = LinearExampleProof( 0, 7 )
       CutIntroduction.one_cut_one_quantifier( p, false )
       Success()
@@ -131,8 +130,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
-      if ( !( new MiniSATProver ).isInstalled() ) skipped( "MiniSAT is not installed" )
-
       val p = LinearExampleProof( 0, 4 )
       val pi = CutIntroduction.one_cut_one_quantifier( p, false )
       val pe = ReductiveCutElim.eliminateAllByUppermost( pi, steps = false )
@@ -181,10 +178,8 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       proofPrime.isDefined must beTrue
     }
 
-    "load veriT proofs pi and verify the validity of Deep(pi) using MiniSAT" in {
-      val minisat = new MiniSATProver()
-      if ( !minisat.isInstalled() ) skipped( "MiniSAT is not installed" )
-
+    "load veriT proofs pi and verify the validity of Deep(pi) using minisat or sat4j" in {
+      val minisat = FailSafeProver.getProver()
       for ( i <- List( 0, 1, 3 ) ) { // Tests 2 and 4 take comparatively long.
         val p = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( s"test${i}.verit" ) ).get
         val seq = ETtoDeep( p )
@@ -194,9 +189,8 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       ok
     }
 
-    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using minisat" in {
-      val minisat = new MiniSATProver()
-      if ( !minisat.isInstalled() ) skipped( "MiniSAT is not installed" )
+    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using minisat or sat4j" in {
+      val minisat = FailSafeProver.getProver()
       if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
@@ -224,5 +218,18 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
       veriT.isValid( deep ) must beTrue
     }
+
+    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using solvePropositional" in {
+      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+
+      val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
+
+      val lkproof1 = Prover9.parse_prover9LK( testFilePath )
+      val expseq = extractExpansionSequent( lkproof1, false )
+      val deep = ETtoDeep( expseq )
+
+      solve.solvePropositional( deep ).isDefined must beTrue
+    }
+
   }
 }

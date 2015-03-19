@@ -135,7 +135,7 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   lazy val atomsymb: Parser[String] = """[a-zA-Z][a-zA-Z0-9_]*""".r
   lazy val term: PackratParser[FOLTerm] = ifunction | noniterm
   lazy val noniterm: PackratParser[FOLTerm] = function | constant | variable
-  lazy val ifunction: PackratParser[FOLTerm] = ( noniterm | parens( ifunction ) ) ~ """[+\-*/^]""".r ~ ( noniterm | parens( ifunction ) ) ^^ {
+  lazy val ifunction: PackratParser[FOLTerm] = ( noniterm | parens( ifunction ) ) ~ """[+\-*/^v]""".r ~ ( noniterm | parens( ifunction ) ) ^^ {
     _ match {
       case t1 ~ "+" ~ t2 => fol.Function( plus_sym, List( t1, t2 ) )
       case t1 ~ "-" ~ t2 => fol.Function( minus_sym, List( t1, t2 ) )
