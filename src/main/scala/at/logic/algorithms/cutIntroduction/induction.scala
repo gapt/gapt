@@ -2,6 +2,7 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol.Utils.numeral
 import at.logic.language.fol._
+import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
 
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )
@@ -31,7 +32,13 @@ object SipGrammar {
 }
 
 case class SipGrammar( productions: Seq[SipGrammar.Production] ) {
+  import SipGrammar._
+
   override def toString = s"{${productions map { case ( d, t ) => s"$d -> $t" } mkString ", "}}"
+
+  def instanceGrammar( n: Int ) = {
+    TratGrammar( tau, productions flatMap { p => instantiate( p, n ) } distinct )
+  }
 }
 
 object normalFormsSipGrammar {
@@ -55,5 +62,42 @@ object normalFormsSipGrammar {
     }
 
     SipGrammar( prods result )
+  }
+}
+
+// TODO: only supports one instance language at the moment
+case class SipGrammarMinimizationFormula( g: SipGrammar ) {
+  def productionIsIncluded( p: SipGrammar.Production ) = Atom( s"sp,$p" )
+
+  def coversLanguageFamily( langs: Seq[normalFormsSipGrammar.InstanceLanguage] ) = {
+    val cs = Seq.newBuilder[FOLFormula]
+    langs foreach {
+      case ( n, lang ) =>
+        val tratMinForm = GrammarMinimizationFormula( g.instanceGrammar( n ) )
+        cs += tratMinForm.coversLanguage( lang )
+        for ( p <- g.productions; instP <- SipGrammar.instantiate( p, n ) )
+          cs += Imp( tratMinForm.productionIsIncluded( instP ), productionIsIncluded( p ) )
+    }
+    And( cs.result toList )
+  }
+}
+
+object minimizeSipGrammar {
+  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage] ): SipGrammar = {
+    val formula = SipGrammarMinimizationFormula( g )
+    val hard = formula.coversLanguageFamily( langs )
+    val soft = g.productions map { p => Neg( formula.productionIsIncluded( p ) ) -> 1 }
+    new MaxSAT( MaxSATSolver.ToySolver ).solvePWM( List( hard ), soft toList ) match {
+      case Some( interp ) => SipGrammar(
+        g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )
+      case None => throw new TreeGrammarDecompositionException( "Grammar does not cover language." )
+    }
+  }
+}
+
+object findMinimalSipGrammar {
+  def apply( langs: Seq[normalFormsSipGrammar.InstanceLanguage] ) = {
+    val polynomialSizedCoveringGrammar = normalFormsSipGrammar( langs )
+    minimizeSipGrammar( polynomialSizedCoveringGrammar, langs )
   }
 }

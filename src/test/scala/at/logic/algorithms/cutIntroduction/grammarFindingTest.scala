@@ -2,7 +2,7 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol.{ BottomC, And, FOLVar, Neg }
 import at.logic.parsing.language.prover9.Prover9TermParserLadrStyle.parseTerm
-import at.logic.provers.maxsat.{MaxSATSolver, MaxSAT}
+import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
 import at.logic.provers.minisat.MiniSAT
 import at.logic.provers.sat4j.Sat4j
 import org.specs2.mutable._
