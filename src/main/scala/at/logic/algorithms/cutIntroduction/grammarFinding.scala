@@ -66,8 +66,9 @@ case class GrammarMinimizationFormula( g: TratGrammar ) {
 
 object normalFormsTratGrammar {
   def apply( lang: Seq[FOLTerm], n: Int ) = {
-    val nonTerminals = ( 0 until n ) map { i => FOLVar( s"α_$i" ) }
-    val nfs = normalFormsWrtSubsets( lang, nonTerminals )
+    val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
+    val nfs = normalFormsWrtSubsets( lang, rhsNonTerminals )
+    val nonTerminals = FOLVar( "τ" ) +: rhsNonTerminals
     TratGrammar( nonTerminals( 0 ), nfs flatMap { nf =>
       freeVariables( nf ) match {
         case Nil => nonTerminals map { v => v -> nf }

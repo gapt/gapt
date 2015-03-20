@@ -52,10 +52,10 @@ class GrammarFindingTest extends Specification {
 
   "findMinimalGrammar" should {
     "find covering grammar" in {
-      val l = Seq( "f(c,c)", "f(d,d)" ) map parseTerm
+      val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" ) map parseTerm
       val g = findMinimalGrammar( l, 2 )
-
       new Sat4j().solve( GrammarMinimizationFormula( g ).coversLanguage( l ) ) must beSome
+      g.productions.size must beEqualTo( 2 + 3 )
     }
   }
 }
