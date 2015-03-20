@@ -2,6 +2,7 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol.{ BottomC, And, FOLVar, Neg }
 import at.logic.parsing.language.prover9.Prover9TermParserLadrStyle.parseTerm
+import at.logic.provers.maxsat.{MaxSATSolver, MaxSAT}
 import at.logic.provers.minisat.MiniSAT
 import at.logic.provers.sat4j.Sat4j
 import org.specs2.mutable._
@@ -54,6 +55,8 @@ class GrammarFindingTest extends Specification {
 
   "minimizeGrammar" should {
     "remove redundant productions" in {
+      if ( !new MaxSAT( MaxSATSolver.ToySolver ).isInstalled ) skipped( "toysolver not installed" )
+
       val g = TratGrammar( x, Seq( x -> parseTerm( "c" ), x -> parseTerm( "d" ) ) )
       val minG = minimizeGrammar( g, Seq( parseTerm( "c" ) ) )
       minG.productions must beEqualTo( Seq( x -> parseTerm( "c" ) ) )
@@ -62,6 +65,8 @@ class GrammarFindingTest extends Specification {
 
   "findMinimalGrammar" should {
     "find covering grammar" in {
+      if ( !new MaxSAT( MaxSATSolver.ToySolver ).isInstalled ) skipped( "toysolver not installed" )
+
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" ) map parseTerm
       val g = findMinimalGrammar( l, 1 )
       new Sat4j().solve( GrammarMinimizationFormula( g ).coversLanguage( l ) ) must beSome
