@@ -118,8 +118,16 @@ class MiniSATTest extends SpecificationWithJUnit {
       sol_b must_== sol_b.map( x => true )
     }
 
-    "say bottom is invalid as well" in {
+    "say bottom is unsatisfiable" in {
       new MiniSAT().solve( BottomC ) must beNone
     }
+
+    "say top is satisfiable" in {
+      new MiniSAT().solve( TopC ) must beLike {
+        case Some( _ ) => ok
+        case None      => ko
+      }
+    }
+
   }
 }

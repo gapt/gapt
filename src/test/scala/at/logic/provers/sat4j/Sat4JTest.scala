@@ -60,8 +60,15 @@ class Sat4JTest extends SpecificationWithJUnit {
       sol_b must_== sol_b.map( x => true )
     }
 
-    "say bottom is invalid as well" in {
+    "say bottom is unsatisfiable" in {
       new Sat4j().solve( BottomC ) must beNone
+    }
+
+    "say top is satisfiable" in {
+      new Sat4j().solve( TopC ) must beLike {
+        case Some( _ ) => ok
+        case None      => ko
+      }
     }
   }
 }
