@@ -1,6 +1,6 @@
 package at.logic.algorithms.resolution
 
-import at.logic.language.fol.{ FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom }
+import at.logic.language.fol.{ FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom, BottomC => FBottomC, TopC => FTopC }
 import at.logic.language.hol._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
@@ -123,7 +123,7 @@ class TseitinCNF {
     ( pf._2 ++ extraDefs ) :+ FClause( List(), List( pf._1 ) )
   }
 
-  private def getConstantDefs() = FClause( List(), List( TopC ) ) :: FClause( List( BottomC ), List() ) :: Nil
+  private def getConstantDefs() = FClause( List(), List( FTopC ) ) :: FClause( List( FBottomC ), List() ) :: Nil
 
   /**
    * Adds a FOLFormula to fol.Atom map to the subFormulas HashMap, iff
