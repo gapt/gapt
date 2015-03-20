@@ -41,7 +41,7 @@ object normalFormsSipGrammar {
 
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
     import SipGrammar._
-    val nfs = normalForms( instanceLanguages flatMap ( _._2 ), Seq( gamma, alpha, nu ) )
+    val nfs = normalFormsWrtSubsets( instanceLanguages flatMap ( _._2 ), Seq( gamma, alpha, nu ) )
 
     val prods = Seq.newBuilder[Production]
 

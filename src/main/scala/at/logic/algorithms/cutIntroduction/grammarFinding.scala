@@ -2,13 +2,14 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.language.fol._
+import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
 
-object normalForms {
+object normalFormsWrtSubsets {
   def apply( terms: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
     val tgd = new TreeGrammarDecompositionPWM( terms toList, nonTerminals.length )
     tgd.suffKeys()
     val renameToOurNonTerminals = Substitution( tgd.nonTerminals zip nonTerminals )
-    tgd.keyList map { k => renameToOurNonTerminals( k ) } toSeq
+    ( tgd.keyList map { k => renameToOurNonTerminals( k ) } toSeq ) ++ Utils.subterms( terms toList )
   }
 }
 
@@ -29,41 +30,71 @@ case class GrammarMinimizationFormula( g: TratGrammar ) {
   import TratGrammar._
 
   def productionIsIncluded( p: Production ) = Atom( s"p,$p" )
-
-  def termUsesProduction( t: FOLTerm, p: Production ) = Atom( s"tp,$t,$p" )
-  def restForTerm( t: FOLTerm, n: FOLVar, rest: FOLTerm ) = Atom( s"r,$t,$n=$rest" )
+  def valueOfNonTerminal( t: FOLTerm, n: FOLVar, rest: FOLTerm ) = Atom( s"v,$t,$n=$rest" )
 
   def generatesTerm( t: FOLTerm ) = {
     val cs = List.newBuilder[FOLFormula]
 
-    cs += restForTerm( t, g.axiom, t )
+    cs += valueOfNonTerminal( t, g.axiom, t )
 
-    Utils.subterms( t ) foreach { rest =>
-      g.productions foreach {
-        case p @ ( d, rhs ) =>
-          FOLMatchingAlgorithm.matchTerm( rest, rhs, freeVariables( rhs ) ) match {
-            case Some( matching ) =>
-              cs += Imp( And( restForTerm( t, d, rest ), termUsesProduction( t, p ) ),
-                And( matching.folmap map {
-                  case ( v, smallerRest ) =>
-                    restForTerm( t, v, smallerRest.asInstanceOf[FOLTerm] )
-                } toList ) )
-            case None => ()
-          }
-      }
-    }
+    // possible values must decompose correctly
+    val possibleValues = Utils.subterms( t )
+    for ( value <- possibleValues; nt <- g nonTerminals )
+      cs += Imp( valueOfNonTerminal( t, nt, value ),
+        Or( g.productions( nt ) map {
+          case p @ ( _, rhs ) =>
+            FOLMatchingAlgorithm.matchTerm( rhs, value, List() ) match {
+              case Some( matching ) =>
+                And( productionIsIncluded( p ),
+                  And( matching.folmap map {
+                    case ( v, smallerRest ) =>
+                      valueOfNonTerminal( t, v, smallerRest.asInstanceOf[FOLTerm] )
+                  } toList ) )
+              case None => BottomC
+            }
+        } toList ) )
 
-    g.nonTerminals foreach { d =>
-      val prods = g.productions( d )
-      cs += Or( prods map { p => termUsesProduction( t, p ) } toList )
-
-      for ( p <- prods ) cs += Imp( termUsesProduction( t, p ), productionIsIncluded( p ) )
-
-      for ( p <- prods; q <- prods ) cs += Or( Neg( termUsesProduction( t, p ) ), Neg( termUsesProduction( t, q ) ) )
-    }
+    // values are unique
+    for ( d <- g nonTerminals; v1 <- possibleValues; v2 <- possibleValues if v1 != v2 )
+      cs += Or( Neg( valueOfNonTerminal( t, d, v1 ) ), Neg( valueOfNonTerminal( t, d, v2 ) ) )
 
     And( cs result )
   }
 
   def coversLanguage( lang: Seq[FOLTerm] ) = And( lang map generatesTerm toList )
+}
+
+object normalFormsTratGrammar {
+  def apply( lang: Seq[FOLTerm], n: Int ) = {
+    val nonTerminals = ( 0 until n ) map { i => FOLVar( s"α_$i" ) }
+    val nfs = normalFormsWrtSubsets( lang, nonTerminals )
+    TratGrammar( nonTerminals( 0 ), nfs flatMap { nf =>
+      freeVariables( nf ) match {
+        case Nil => nonTerminals map { v => v -> nf }
+        case fvs =>
+          val lowestIndex = fvs.map( nonTerminals.indexOf( _ ) ).min
+          ( 0 until lowestIndex ) map { v => nonTerminals( v ) -> nf }
+      }
+    } )
+  }
+}
+
+object minimizeGrammar {
+  def apply( g: TratGrammar, lang: Seq[FOLTerm] ): TratGrammar = {
+    val formula = GrammarMinimizationFormula( g )
+    val hard = formula.coversLanguage( lang )
+    val soft = g.productions map { p => Neg( formula.productionIsIncluded( p ) ) -> 1 }
+    new MaxSAT( MaxSATSolver.ToySolver ).solvePWM( List( hard ), soft toList ) match {
+      case Some( interp ) => TratGrammar( g.axiom,
+        g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )
+      case None => throw new TreeGrammarDecompositionException( "Grammar does not cover language." )
+    }
+  }
+}
+
+object findMinimalGrammar {
+  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int ) = {
+    val polynomialSizedCoveringGrammar = normalFormsTratGrammar( lang, numberOfNonTerminals )
+    minimizeGrammar( polynomialSizedCoveringGrammar, lang )
+  }
 }
