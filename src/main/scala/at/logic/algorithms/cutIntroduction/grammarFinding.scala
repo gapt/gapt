@@ -2,14 +2,75 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.language.fol._
+import at.logic.language.fol.replacements.{ Replacement, getAllPositionsFOL }
+import at.logic.language.hol.HOLPosition
+import at.logic.language.lambda.symbols.SymbolA
 import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
+import at.logic.utils.dssupport.ListSupport
 
-object normalFormsWrtSubsets {
+object FunctionOrConstant {
+  def unapply( term: FOLTerm ): Option[( SymbolA, List[FOLTerm] )] = term match {
+    case Function( s, args ) => Some( ( s, args ) )
+    case c: FOLConst         => Some( ( c.sym, Nil ) )
+  }
+}
+
+object SameRootSymbol {
+  def unapply( terms: Seq[FOLTerm] ): Option[( SymbolA, List[List[FOLTerm]] )] =
+    unapply( terms toList )
+
+  def unapply( terms: List[FOLTerm] ): Option[( SymbolA, List[List[FOLTerm]] )] = terms match {
+    case FunctionOrConstant( s, as ) :: Nil => Some( ( s, as map ( List( _ ) ) ) )
+    case FunctionOrConstant( s, as ) :: SameRootSymbol( t, bs ) if s == t =>
+      Some( ( s, ( as, bs ).zipped map ( _ :: _ ) ) )
+    case _ => None
+  }
+}
+
+object antiUnificator {
+  def apply( terms: Seq[FOLTerm] ): FOLTerm = terms match {
+    case SameRootSymbol( s, as ) => Function( s, as map apply )
+    case _                       => FOLVar( s"β[${terms mkString ","}]" )
+  }
+}
+
+object characteristicPartition {
+  def apply( term: FOLTerm ): List[List[List[Int]]] = {
+    getAllPositionsFOL( term ).groupBy( _._2 ).values.map( _.map( _._1 ) ).toList
+  }
+}
+
+object normalForms {
+  def apply( lang: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
+    val nfs = Set.newBuilder[FOLTerm]
+    ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ) foreach { subset =>
+      val au = antiUnificator( subset )
+      val charP = characteristicPartition( au )
+      val possibleSubsts = nonTerminals.foldLeft[List[List[( FOLVar, List[List[Int]] )]]]( List( Nil ) ) {
+        case ( substs, nonTerminal ) =>
+          substs flatMap { subst =>
+            subst :: ( charP map ( setOfPos => ( nonTerminal, setOfPos ) :: subst ) )
+          }
+      }
+      possibleSubsts foreach { subst =>
+        var nf = au
+        subst foreach {
+          case ( v, setOfPos ) =>
+            setOfPos foreach { pos =>
+              if ( nf.isDefinedAt( HOLPosition( pos ) ) )
+                nf = new Replacement( pos, v )( nf ).asInstanceOf[FOLTerm]
+            }
+        }
+        if ( freeVariables( nf ).forall( nonTerminals.contains( _ ) ) ) nfs += nf
+      }
+    }
+    nfs.result.toList
+  }
+}
+
+object tratNormalForms {
   def apply( terms: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
-    val tgd = new TreeGrammarDecompositionPWM( terms toList, nonTerminals.length )
-    tgd.suffKeys()
-    val renameToOurNonTerminals = Substitution( tgd.nonTerminals zip nonTerminals )
-    ( tgd.keyList map { k => renameToOurNonTerminals( k ) } toSeq ) ++ Utils.subterms( terms toList )
+    normalForms( Utils.subterms( terms toList ) toSeq, nonTerminals )
   }
 }
 
@@ -67,7 +128,7 @@ case class GrammarMinimizationFormula( g: TratGrammar ) {
 object normalFormsTratGrammar {
   def apply( lang: Seq[FOLTerm], n: Int ) = {
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
-    val nfs = normalFormsWrtSubsets( lang, rhsNonTerminals )
+    val nfs = tratNormalForms( lang, rhsNonTerminals )
     val nonTerminals = FOLVar( "τ" ) +: rhsNonTerminals
     TratGrammar( nonTerminals( 0 ), nfs flatMap { nf =>
       freeVariables( nf ) match {

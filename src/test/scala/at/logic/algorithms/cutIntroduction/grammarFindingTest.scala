@@ -12,11 +12,21 @@ class GrammarFindingTest extends Specification {
 
   "normalForms" should {
     "find strong normal forms" in {
-      val nfs = normalFormsWrtSubsets( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( x ) )
+      val nfs = normalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( x ) )
+      nfs.toSet must beEqualTo( Set( "f(c)", "f(d)", "f(x)", "x" ) map parseTerm )
+    }
+    "not introduce equations between non-terminals" in {
+      val nfs = normalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( x ) )
+      nfs.toSet must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x" ) map parseTerm )
+    }
+  }
+  "tratNormalForms" should {
+    "find strong normal forms" in {
+      val nfs = tratNormalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( x ) )
       nfs.toSet must beEqualTo( Set( "c", "d", "f(c)", "f(d)", "f(x)", "x" ) map parseTerm )
     }
     "not introduce equations between non-terminals" in {
-      val nfs = normalFormsWrtSubsets( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( x ) )
+      val nfs = tratNormalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( x ) )
       nfs.toSet must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x", "c", "d" ) map parseTerm )
     }
   }
@@ -53,7 +63,7 @@ class GrammarFindingTest extends Specification {
   "findMinimalGrammar" should {
     "find covering grammar" in {
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" ) map parseTerm
-      val g = findMinimalGrammar( l, 2 )
+      val g = findMinimalGrammar( l, 1 )
       new Sat4j().solve( GrammarMinimizationFormula( g ).coversLanguage( l ) ) must beSome
       g.productions.size must beEqualTo( 2 + 3 )
     }
