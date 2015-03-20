@@ -4,6 +4,7 @@ import at.logic.language.fol.{ FOLFormula, And => FAnd, Imp => FImp, Or => FOr, 
 import at.logic.language.hol._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
+import at.logic.language.hol.logicSymbols.{ TopSymbol, BottomSymbol }
 
 import scala.collection.mutable
 
@@ -18,6 +19,8 @@ object CNFp {
   def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
   def transform( f: HOLFormula ): List[FClause] = f match {
+    case BottomC         => List( FClause( List(), List() ) )
+    case TopC            => List()
     case Atom( _, _ )    => List( FClause( List(), List( f ) ) )
     case Neg( f2 )       => CNFn.transform( f2 )
     case And( f1, f2 )   => CNFp.transform( f1 ) ++ CNFp.transform( f2 )
@@ -39,6 +42,8 @@ object CNFn {
   def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
   def transform( f: HOLFormula ): List[FClause] = f match {
+    case BottomC        => List()
+    case TopC           => List( FClause( List(), List() ) )
     case Atom( _, _ )   => List( FClause( List( f ), List() ) )
     case Neg( f2 )      => CNFp.transform( f2 )
     case And( f1, f2 )  => times( CNFn.transform( f1 ), CNFn.transform( f2 ) )
@@ -110,8 +115,15 @@ class TseitinCNF {
 
     // parseFormula and transform it via Tseitin-Transformation
     val pf = parseFormula( f )
-    pf._2 :+ FClause( List(), List( pf._1 ) )
+    val extraDefs =
+      if ( fsyms.contains( TopSymbol ) || fsyms.contains( BottomSymbol ) )
+        getConstantDefs()
+      else
+        Nil
+    ( pf._2 ++ extraDefs ) :+ FClause( List(), List( pf._1 ) )
   }
+
+  private def getConstantDefs() = FClause( List(), List( TopC ) ) :: FClause( List( BottomC ), List() ) :: Nil
 
   /**
    * Adds a FOLFormula to fol.Atom map to the subFormulas HashMap, iff
@@ -143,6 +155,7 @@ class TseitinCNF {
    * @return a Tuple2, where 1st is the prop. variable representing the formula in 2nd
    */
   def parseFormula( f: FOLFormula ): Tuple2[FOLFormula, List[FClause]] = f match {
+
     case FAtom( _, _ ) => ( f, List() )
 
     case FNeg( f2 ) =>

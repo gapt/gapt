@@ -108,7 +108,6 @@ class MiniSATTest extends SpecificationWithJUnit {
         case Some( model ) => if ( SATProblems.checkSolution5( model ) ) ok else ko
         case None          => ko
       }
-
     }
 
     "deal correctly with the pigeonhole problem" in {
@@ -117,6 +116,10 @@ class MiniSATTest extends SpecificationWithJUnit {
 
       sol_a must_== sol_a.map( x => false )
       sol_b must_== sol_b.map( x => true )
+    }
+
+    "say bottom is invalid as well" in {
+      new MiniSAT().solve( BottomC ) must beNone
     }
   }
 }
