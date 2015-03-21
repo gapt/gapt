@@ -6,6 +6,7 @@ import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.language.hol.logicSymbols.{ TopSymbol, BottomSymbol }
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 /**
@@ -90,7 +91,7 @@ class TseitinCNF {
   val subformulaMap = mutable.Map[FOLFormula, FOLFormula]()
 
   val hc = StringSymbol( "x" )
-  var fsyms = List[SymbolA]()
+  var fsyms = Set[SymbolA]()
   var auxsyms = mutable.MutableList[SymbolA]()
   /**
    * Get a list of all Atoms symbols used in f
@@ -111,7 +112,7 @@ class TseitinCNF {
   def transform( f: FOLFormula ): List[FClause] = {
     // take an arbitrary atom symbol and rename it
     // s.t. it does not occur anywhere in f
-    fsyms = getAtomSymbols( f )
+    fsyms = getAtomSymbols( f ) toSet
 
     // parseFormula and transform it via Tseitin-Transformation
     val pf = parseFormula( f )
@@ -133,18 +134,24 @@ class TseitinCNF {
    * @param f subformula to possibly be added to subformulas HashMap
    * @return an atom either representing the subformula or f if f is already an atom
    */
-  def addIfNotExists( f: FOLFormula ): FOLFormula = f match {
+  private var auxCounter: Int = 0
+  @tailrec
+  private def addIfNotExists( f: FOLFormula ): FOLFormula = f match {
     case Atom( h, args ) => f
     case _ =>
       if ( subformulaMap.isDefinedAt( f ) ) {
         subformulaMap( f )
       } else {
-        // generate new atom symbol
-        val sym = at.logic.language.lambda.rename( hc, fsyms ::: auxsyms.toList )
-        val auxAtom = FAtom( sym, Nil )
-        auxsyms += sym
-        subformulaMap( f ) = auxAtom
-        auxAtom
+        auxCounter += 1
+        var auxsym = StringSymbol( s"$hc$auxCounter" )
+        if ( fsyms.contains( auxsym ) ) {
+          addIfNotExists( f )
+        } else {
+          auxsyms += auxsym
+          val auxAtom = FAtom( auxsym )
+          subformulaMap( f ) = auxAtom
+          auxAtom
+        }
       }
   }
 
