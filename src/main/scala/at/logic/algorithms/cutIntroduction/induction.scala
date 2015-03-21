@@ -76,8 +76,11 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
       case ( n, lang ) =>
         val tratMinForm = GrammarMinimizationFormula( g.instanceGrammar( n ) )
         cs += tratMinForm.coversLanguage( lang )
-        for ( p <- g.productions; instP <- SipGrammar.instantiate( p, n ) )
-          cs += Imp( tratMinForm.productionIsIncluded( instP ), productionIsIncluded( p ) )
+
+        ( for ( p <- g.productions; instP <- SipGrammar.instantiate( p, n ) )
+          yield instP -> p ).groupBy( _._1 ).values foreach { l =>
+          cs += Imp( tratMinForm.productionIsIncluded( l.head._1 ), Or( l map ( _._2 ) map ( productionIsIncluded ) toList ) )
+        }
     }
     And( cs.result toList )
   }
