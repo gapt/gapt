@@ -10,7 +10,7 @@ import org.specs2.mutable._
 class SipTests extends Specification {
   "SipGrammar" should {
     "produce instance grammars" in {
-      if ( !new MaxSAT( MaxSATSolver.ToySolver ).isInstalled ) skipped( "toysolver not installed" )
+      if ( !new MaxSAT( MaxSATSolver.ToySAT ).isInstalled ) skipped( "ToySAT is not installed" )
 
       val g = SipGrammar( Seq( tau -> Function( "r", List( nu ) ) ) )
       g.instanceGrammar( 2 ).productions.toSet must beEqualTo( Set( tau -> parseTerm( "r(0)" ), tau -> parseTerm( "r(s(0))" ) ) )
@@ -19,10 +19,12 @@ class SipTests extends Specification {
 
   "findMinimalSipGrammar" should {
     "find a grammar" in {
-      if ( !new MaxSAT( MaxSATSolver.ToySolver ).isInstalled ) skipped( "toysolver not installed" )
+      if ( !new MaxSAT( MaxSATSolver.ToySAT ).isInstalled ) skipped( "ToySAT is not installed" )
 
-      val lang = Seq( "r(0)", "r(s(0))" ) map parseTerm
-      val g = findMinimalSipGrammar( Seq( ( 2, lang ) ) )
+      val n = 5
+      // r(0), ..., r(s^n(0))
+      val lang = ( 0 until n ) map { i => Function( "r", List( Utils.numeral( i ) ) ) }
+      val g = findMinimalSipGrammar( Seq( ( n, lang ) ) )
       g.productions.toSet must beEqualTo( Set(
         tau -> Function( "r", List( gamma ) ),
         gamma -> Function( "s", List( gamma ) ),

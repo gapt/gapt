@@ -2,6 +2,7 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol.Utils.numeral
 import at.logic.language.fol._
+import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
 
 object SipGrammar {
@@ -83,11 +84,11 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
 }
 
 object minimizeSipGrammar {
-  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage] ): SipGrammar = {
+  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = MaxSATSolver.ToySAT ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
     val soft = g.productions map { p => Neg( formula.productionIsIncluded( p ) ) -> 1 }
-    new MaxSAT( MaxSATSolver.ToySolver ).solvePWM( List( hard ), soft toList ) match {
+    new MaxSAT( maxSATSolver ).solvePWM( List( hard ), soft toList ) match {
       case Some( interp ) => SipGrammar(
         g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )
       case None => throw new TreeGrammarDecompositionException( "Grammar does not cover language." )

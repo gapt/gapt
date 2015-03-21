@@ -5,6 +5,7 @@ import at.logic.language.fol._
 import at.logic.language.fol.replacements.{ Replacement, getAllPositionsFOL }
 import at.logic.language.hol.HOLPosition
 import at.logic.language.lambda.symbols.SymbolA
+import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
 import at.logic.utils.dssupport.ListSupport
 
@@ -142,11 +143,11 @@ object normalFormsTratGrammar {
 }
 
 object minimizeGrammar {
-  def apply( g: TratGrammar, lang: Seq[FOLTerm] ): TratGrammar = {
+  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = MaxSATSolver.ToySAT ): TratGrammar = {
     val formula = GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val soft = g.productions map { p => Neg( formula.productionIsIncluded( p ) ) -> 1 }
-    new MaxSAT( MaxSATSolver.ToySolver ).solvePWM( List( hard ), soft toList ) match {
+    new MaxSAT( maxSATSolver ).solvePWM( List( hard ), soft toList ) match {
       case Some( interp ) => TratGrammar( g.axiom,
         g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )
       case None => throw new TreeGrammarDecompositionException( "Grammar does not cover language." )
