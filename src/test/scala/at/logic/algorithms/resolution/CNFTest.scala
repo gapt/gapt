@@ -30,10 +30,10 @@ class CNFTest extends SpecificationWithJUnit {
 
       val f = Imp( And( Or( p, q ), r ), Neg( s ) )
 
-      val x = Atom( "x", Nil )
-      val x0 = Atom( "x0", Nil )
-      val x1 = Atom( "x1", Nil )
-      val x2 = Atom( "x2", Nil )
+      val x = Atom( "x1", Nil )
+      val x0 = Atom( "x2", Nil )
+      val x1 = Atom( "x3", Nil )
+      val x2 = Atom( "x4", Nil )
 
       val cnf = TseitinCNF( f )
       val expected = Set(
