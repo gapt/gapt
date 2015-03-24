@@ -6,6 +6,24 @@
  **********/
 
 /*
+ * Creates the n-th formula of a sequence where distributivity-based
+ * algorithm produces only exponential CNFs.
+ *
+ */
+object PQPairs {
+  def apply( n: Int ): FOLFormula = {
+    assert( n >= 1 )
+    if ( n == 1 )
+      And( p( 1 ), q( 1 ))
+    else
+      Or( apply( n - 1 ), And( p( n ), q( n )))
+  }
+
+  def p( i: Int ) = Atom( "p_" + i, Nil )
+  def q( i: Int ) = Atom( "q_" + i, Nil )
+}
+
+/*
  * Creates the n-th tautology of a sequence that has only exponential-size cut-free proofs
  *
  * This sequence is taken from: S. Buss. "Weak Formal Systems and Connections to
