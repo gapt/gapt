@@ -146,6 +146,38 @@ object toNNF {
   }
 }
 
+object removeTopAndBottom {
+  def apply(f:FOLFormula): FOLFormula = f match {
+    case And(x_, y_) => (apply(x_), apply(y_)) match {
+      case (TopC, y) => y
+      case (x, TopC) => x
+      case (BottomC, _) => BottomC
+      case (_, BottomC) => BottomC
+      case (x,y) => And(x,y)
+    }
+    case Or(x_, y_) => (apply(x_), apply(y_)) match {
+      case (TopC, _) => TopC
+      case (_, TopC) => TopC
+      case (BottomC, y) => y
+      case (x, BottomC) => x
+      case (x,y) => Or(x,y)
+    }
+    case Imp(x_, y_) => (apply(x_), apply(y_)) match {
+      case (TopC, y) => y
+      case (_, TopC) => TopC
+      case (BottomC, _) => TopC
+      case (x, BottomC) => x
+      case (x,y) => Imp(x,y)
+    }
+    case Neg(x_) => apply(x_) match {
+      case BottomC => TopC
+      case TopC => BottomC
+      case x => Neg(x)
+    }
+    case x => x
+  }
+}
+
 // Distribute Ors over Ands
 object distribute {
   def apply( f: FOLFormula ): FOLFormula = f match {

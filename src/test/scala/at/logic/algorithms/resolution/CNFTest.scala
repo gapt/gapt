@@ -35,7 +35,6 @@ class CNFTest extends SpecificationWithJUnit {
       val x1 = Atom( "x3", Nil )
       val x2 = Atom( "x4", Nil )
 
-      val cnf = TseitinCNF( f )
       val expected = Set(
         FClause( List(), List( x2 ) ),
         FClause( List( x1 ), List( x2 ) ),
@@ -49,7 +48,7 @@ class CNFTest extends SpecificationWithJUnit {
         FClause( List( x2, x0 ), List( x1 ) ),
         FClause( List( x, r ), List( x0 ) ),
         FClause( List( x ), List( p, q ) ) )
-      expected.subsetOf( cnf._1.toSet ) must beTrue
+      expected.subsetOf( new TseitinCNF().transform(f) toSet ) must beTrue
     }
   }
 }

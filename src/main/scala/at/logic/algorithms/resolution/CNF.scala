@@ -1,6 +1,6 @@
 package at.logic.algorithms.resolution
 
-import at.logic.language.fol.{ FOLFormula, And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom, BottomC => FBottomC, TopC => FTopC }
+import at.logic.language.fol.{And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom, BottomC => FBottomC, TopC => FTopC, toNNF, removeTopAndBottom, FOLFormula}
 import at.logic.language.hol._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
@@ -65,23 +65,18 @@ object TseitinCNF {
   /**
    * Generates from a formula f a Set of FClauses in CNF by using Tseitin's Transformation
    * @param f formula which should be transformed
-   * @param tseitinInstance a previously called TseitinCNF instance, which provides dependencies for future computations
    * @return triple where 1st are clauses equivalent to f in CNF, 2nd is the subformulaMap and 3rd is an atomBlacklist for eventual further TseitinCNF computations
    */
-  def apply( f: FOLFormula, tseitinInstance: TseitinCNF = null ): ( List[FClause], TseitinCNF ) = {
+  def apply( f: FOLFormula): ( List[FClause], TseitinCNF ) = {
+    val tseitin = new TseitinCNF()
 
-    val tseitin = tseitinInstance match {
-      case null => new TseitinCNF()
-      case _ => {
-        val t = new TseitinCNF()
-        t.subformulaMap ++= tseitinInstance.subformulaMap
-        t.auxsyms ++= tseitinInstance.auxsyms
-        t.fsyms ++= tseitinInstance.fsyms
-        t
-      }
-    }
+    val clauses = getConjuncts(removeTopAndBottom(toNNF(f))) flatMap { c => tseitin.transform(c) }
+    ( clauses toList, tseitin )
+  }
 
-    ( tseitin.transform( f ), tseitin )
+  private def getConjuncts(f:FOLFormula): Set[FOLFormula] = f match {
+    case FAnd(x,y) => getConjuncts(x) union getConjuncts(y)
+    case x => Set(x)
   }
 }
 
