@@ -47,7 +47,7 @@ object normalFormsSipGrammar {
   type InstanceLanguage = ( Int, Seq[FOLTerm] )
 
   // TODO: better convention
-  private def isFormulaSymbol(sym: SymbolA) = sym.toString.startsWith("tuple")
+  private def isFormulaSymbol( sym: SymbolA ) = sym.toString.startsWith( "tuple" )
 
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
     import SipGrammar._
@@ -59,7 +59,7 @@ object normalFormsSipGrammar {
       val fv = freeVariables( nf )
 
       nf match {
-        case FunctionOrConstant(f, _) if isFormulaSymbol(f) =>
+        case FunctionOrConstant( f, _ ) if isFormulaSymbol( f ) =>
           if ( !fv.contains( nu ) ) prods += tau -> Substitution( gamma -> beta )( nf )
           prods += tau -> nf
 
