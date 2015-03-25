@@ -3,3 +3,5 @@ This folder is the central repository for all example proofs, proof sequences,
 formula sequences, etc. Authoritative versions should be here, copies are put
 in various resources-directories or other test scripts.
 
+The files in the lib directory are already compiled as part of gapt---they are
+included here as well so that you can adapt them for your own examples.
