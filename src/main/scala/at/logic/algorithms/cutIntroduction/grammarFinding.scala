@@ -58,8 +58,13 @@ object normalForms {
         subst foreach {
           case ( v, setOfPos ) =>
             setOfPos foreach { pos =>
-              if ( nf.isDefinedAt( HOLPosition( pos ) ) )
-                nf = new Replacement( pos, v )( nf ).asInstanceOf[FOLTerm]
+              try {
+                if (nf.isDefinedAt(HOLPosition(pos)))
+                  nf = new Replacement(pos, v)(nf).asInstanceOf[FOLTerm]
+              } catch {
+                // FIXME: Replacements are buggy...
+                case _: IllegalArgumentException => ()
+              }
             }
         }
         if ( freeVariables( nf ).forall( nonTerminals.contains( _ ) ) ) nfs += nf
