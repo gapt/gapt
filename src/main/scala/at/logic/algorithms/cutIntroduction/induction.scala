@@ -2,6 +2,7 @@ package at.logic.algorithms.cutIntroduction
 
 import at.logic.language.fol.Utils.numeral
 import at.logic.language.fol._
+import at.logic.language.lambda.symbols.SymbolA
 import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
 
@@ -45,7 +46,8 @@ case class SipGrammar( productions: Seq[SipGrammar.Production] ) {
 object normalFormsSipGrammar {
   type InstanceLanguage = ( Int, Seq[FOLTerm] )
 
-  // TODO: make sure we don't have productions of the form τ -> f(...) or γ -> r_i(...)
+  // TODO: better convention
+  private def isFormulaSymbol(sym: SymbolA) = sym.toString.startsWith("tuple")
 
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
     import SipGrammar._
@@ -56,10 +58,15 @@ object normalFormsSipGrammar {
     for ( nf <- nfs ) {
       val fv = freeVariables( nf )
 
-      if ( !fv.contains( nu ) ) prods += tau -> Substitution( gamma -> beta )( nf )
-      prods += tau -> nf
-      prods += gamma -> nf
-      if ( !fv.contains( nu ) && !fv.contains( gamma ) ) prods += gammaEnd -> nf
+      nf match {
+        case FunctionOrConstant(f, _) if isFormulaSymbol(f) =>
+          if ( !fv.contains( nu ) ) prods += tau -> Substitution( gamma -> beta )( nf )
+          prods += tau -> nf
+
+        case _ =>
+          prods += gamma -> nf
+          if ( !fv.contains( nu ) && !fv.contains( gamma ) ) prods += gammaEnd -> nf
+      }
     }
 
     SipGrammar( prods result )

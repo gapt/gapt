@@ -13,6 +13,7 @@ object FunctionOrConstant {
   def unapply( term: FOLTerm ): Option[( SymbolA, List[FOLTerm] )] = term match {
     case Function( s, args ) => Some( ( s, args ) )
     case c: FOLConst         => Some( ( c.sym, Nil ) )
+    case _ => None
   }
 }
 
