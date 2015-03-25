@@ -1,9 +1,6 @@
-/**********
- * Example formula sequences, usage example from CLI:
- *
- * scala> :load examples/FormulaSequences.scala
- * scala> val f = PigeonHolePrinciple( 4, 3 )
- **********/
+package at.logic.examples
+import at.logic.language.fol._
+import at.logic.calculi.lk.base._
 
 /*
  * Creates the n-th formula of a sequence where distributivity-based

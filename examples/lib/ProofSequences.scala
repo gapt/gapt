@@ -1,11 +1,8 @@
-/**********
- * Example proof sequences, usage example from CLI:
- *
- * scala> :load examples/ProofSequences.scala
- * scala> val p = LinearExampleProof( 5 )
- **********/
-
-import at.logic.language.fol.Substitution
+package at.logic.examples
+import at.logic.cli.GAPScalaInteractiveShellLibrary.parse
+import at.logic.language.fol._
+import at.logic.calculi.lk.base._
+import at.logic.calculi.lk._
 
 // Functions to construct cut-free FOL LK proofs of the sequents
 //
