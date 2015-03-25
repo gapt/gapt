@@ -152,7 +152,8 @@ object minimizeGrammar {
   def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = MaxSATSolver.ToySAT ): TratGrammar = {
     val formula = GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
-    val soft = g.productions map { p => Neg( formula.productionIsIncluded( p ) ) -> 1 }
+    val atomsInHard = atoms(hard)
+    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map (Neg(_) -> 1)
     new MaxSAT( maxSATSolver ).solvePWM( List( hard ), soft toList ) match {
       case Some( interp ) => TratGrammar( g.axiom,
         g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )
