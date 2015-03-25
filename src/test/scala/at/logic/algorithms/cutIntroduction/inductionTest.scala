@@ -23,10 +23,10 @@ class SipTests extends Specification {
 
       val n = 5
       // r(0), ..., r(s^n(0))
-      val lang = ( 0 until n ) map { i => Function( "r", List( Utils.numeral( i ) ) ) }
+      val lang = ( 0 until n ) map { i => Function( "tuple1", List( Utils.numeral( i ) ) ) }
       val g = findMinimalSipGrammar( Seq( ( n, lang ) ) )
       g.productions must beEqualTo( Seq(
-        tau -> Function( "r", List( nu ) ) ) )
+        tau -> Function( "tuple1", List( nu ) ) ) )
     }
   }
 }
