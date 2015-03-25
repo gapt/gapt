@@ -39,7 +39,6 @@ object CLIMain {
   import at.logic.algorithms.lk.statistics._
   import at.logic.provers.minisat.MiniSATProver
   import at.logic.gui.prooftool.gui.{Main => PT}
-  import at.logic.examples._
   import help.{apply => help}
   import at.logic.cli.GPL.{apply => copying, printLicense => license}
   """

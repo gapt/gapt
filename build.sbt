@@ -34,7 +34,8 @@ lazy val root = (project in file(".")).
 
     mainClass := Some("at.logic.cli.CLIMain"),
 
-    unmanagedSourceDirectories in Compile += baseDirectory.value / "examples" / "lib",
+    unmanagedSources in Compile ++= Seq("ProofSequences.scala", "FormulaSequences.scala")
+      map { fn => baseDirectory.value / "examples" / fn },
 
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
