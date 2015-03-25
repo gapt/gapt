@@ -59,8 +59,8 @@ object normalForms {
           case ( v, setOfPos ) =>
             setOfPos foreach { pos =>
               try {
-                if (nf.isDefinedAt(HOLPosition(pos)))
-                  nf = new Replacement(pos, v)(nf).asInstanceOf[FOLTerm]
+                if ( nf.isDefinedAt( HOLPosition( pos ) ) )
+                  nf = new Replacement( pos, v )( nf ).asInstanceOf[FOLTerm]
               } catch {
                 // FIXME: Replacements are buggy...
                 case _: IllegalArgumentException => ()

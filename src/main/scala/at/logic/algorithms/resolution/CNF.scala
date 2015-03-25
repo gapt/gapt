@@ -1,6 +1,6 @@
 package at.logic.algorithms.resolution
 
-import at.logic.language.fol.{And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom, BottomC => FBottomC, TopC => FTopC, toNNF, removeTopAndBottom, FOLFormula}
+import at.logic.language.fol.{ And => FAnd, Imp => FImp, Or => FOr, Neg => FNeg, AllVar => FAllVar, ExVar => FExVar, Atom => FAtom, BottomC => FBottomC, TopC => FTopC, toNNF, removeTopAndBottom, FOLFormula }
 import at.logic.language.hol._
 import at.logic.calculi.resolution.FClause
 import at.logic.language.lambda.symbols.{ StringSymbol, SymbolA }
@@ -67,16 +67,16 @@ object TseitinCNF {
    * @param f formula which should be transformed
    * @return triple where 1st are clauses equivalent to f in CNF, 2nd is the subformulaMap and 3rd is an atomBlacklist for eventual further TseitinCNF computations
    */
-  def apply( f: FOLFormula): ( List[FClause], TseitinCNF ) = {
+  def apply( f: FOLFormula ): ( List[FClause], TseitinCNF ) = {
     val tseitin = new TseitinCNF()
 
-    val clauses = getConjuncts(removeTopAndBottom(toNNF(f))) flatMap { c => tseitin.transform(c) }
+    val clauses = getConjuncts( removeTopAndBottom( toNNF( f ) ) ) flatMap { c => tseitin.transform( c ) }
     ( clauses toList, tseitin )
   }
 
-  private def getConjuncts(f:FOLFormula): Set[FOLFormula] = f match {
-    case FAnd(x,y) => getConjuncts(x) union getConjuncts(y)
-    case x => Set(x)
+  private def getConjuncts( f: FOLFormula ): Set[FOLFormula] = f match {
+    case FAnd( x, y ) => getConjuncts( x ) union getConjuncts( y )
+    case x            => Set( x )
   }
 }
 
