@@ -50,6 +50,7 @@ import com.itextpdf.awt.PdfGraphics2D
 import com.itextpdf.awt.DefaultFontMapper
 
 object Main extends SimpleSwingApplication {
+  var DEBUG = false
   val body = new MyScrollPane
   val db = new FileParser
   val defaultFontSize = 12
