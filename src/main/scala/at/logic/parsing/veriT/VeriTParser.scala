@@ -44,6 +44,7 @@ object VeriTParser extends RegexParsers {
     val imp = Imp( eq1, eq2 )
     val eq_symm = AllVar( x, AllVar( y, imp ) )
 
+    // TODO: can we generate only one direction of the symmetry axiom?
     val i1 = instantiate( instantiate( eq_symm, a ), b )
     val i2 = instantiate( instantiate( eq_symm, b ), a )
 
@@ -288,6 +289,19 @@ object VeriTParser extends RegexParsers {
     ( eq_congr_pred, List( instance ) ) :: symm
   }
 
+  /* 
+   * Given a quantifier free formula f, returns all pairs of terms which occur
+   * in the same equality predicate.
+   */
+  def getEqualityPairs( f: FOLFormula ): List[( FOLTerm, FOLTerm )] = f match {
+    case Atom( eq, List( t1, t2 ) ) if eq.toString == "=" => List( ( t1, t2 ) )
+    case Atom( p, _ ) if p.toString != "="                => List()
+    case Neg( f1 )                                        => getEqualityPairs( f1 )
+    case And( f1, f2 )                                    => getEqualityPairs( f1 ) ++ getEqualityPairs( f2 )
+    case Or( f1, f2 )                                     => getEqualityPairs( f1 ) ++ getEqualityPairs( f2 )
+    case Imp( f1, f2 )                                    => getEqualityPairs( f1 ) ++ getEqualityPairs( f2 )
+  }
+
   def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
     getExpansionProof( new FileReader( filename ) )
   }
@@ -333,7 +347,13 @@ object VeriTParser extends RegexParsers {
             acc ++ p._2
           } else acc
       }
-      val axioms = r.foldLeft( List[Instances]() )( ( acc, p ) => acc ++ p._2 )
+
+      // Generating symmetry clauses for the equalities occurring in the formula
+      // to be proved
+      val inputEqPairs = input.flatMap( f => getEqualityPairs( f ) )
+      val inputSymm = inputEqPairs.map( p => getSymmInstances( p._1, p._2 ) )
+
+      val axioms = r.foldLeft( inputSymm )( ( acc, p ) => acc ++ p._2 )
 
       // Join the instances of the same quantified formula
       val keys = axioms.map( p => p._1 ).distinct
@@ -343,6 +363,7 @@ object VeriTParser extends RegexParsers {
           val allInst = keyf.foldLeft( List[FOLFormula]() )( ( acc, p ) => p._2 ++ acc )
           ( f, allInst.distinct ) :: acc
       }
+
       // Transform all pairs into expansion trees
       val inputET = input.map( p => qFreeToExpansionTree( p ) )
       val axiomET = joinedInst.map( p => prenexToExpansionTree( p._1, p._2 ) )
@@ -417,7 +438,7 @@ object VeriTParser extends RegexParsers {
   def conclusion: Parser[List[FOLFormula]] = ":conclusion (" ~> rep( expression ) <~ ")"
 
   def expression: Parser[FOLFormula] = formula | let
-  def formula: Parser[FOLFormula] = andFormula | orFormula | notFormula | pred
+  def formula: Parser[FOLFormula] = andFormula | orFormula | notFormula | implFormula | pred
 
   def term: Parser[FOLTerm] = constant | function
   def constant: Parser[FOLTerm] = name ^^ { case n => FOLConst( n ) }

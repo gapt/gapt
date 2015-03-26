@@ -1,9 +1,23 @@
-/**********
- * Example formula sequences, usage example from CLI:
+import at.logic.language.fol._
+import at.logic.calculi.lk.base._
+
+/*
+ * Creates the n-th formula of a sequence where distributivity-based
+ * algorithm produces only exponential CNFs.
  *
- * scala> :load examples/FormulaSequences.scala
- * scala> val f = PigeonHolePrinciple( 4, 3 )
- **********/
+ */
+object PQPairs {
+  def apply( n: Int ): FOLFormula = {
+    assert( n >= 1 )
+    if ( n == 1 )
+      And( p( 1 ), q( 1 ))
+    else
+      Or( apply( n - 1 ), And( p( n ), q( n )))
+  }
+
+  def p( i: Int ) = Atom( "p_" + i, Nil )
+  def q( i: Int ) = Atom( "q_" + i, Nil )
+}
 
 /*
  * Creates the n-th tautology of a sequence that has only exponential-size cut-free proofs
@@ -27,7 +41,10 @@ object BussTautology {
 }
 
 /*
- * Constructs a formula representing the pigeon hole principle.
+ * Constructs a formula representing the pigeon hole principle. More precisely:
+ * PigeonHolePrinciple( p, h ) states that if p pigeons are put into h holes
+ * then there is a hole which contains two pigeons. PigeonHolePrinciple( p, h )
+ * is a tautology iff p > h.
  *
  * Since we want to avoid empty disjunctions, we assume > 1 pigeons.
  *
@@ -36,6 +53,10 @@ object PigeonHolePrinciple {
   // The binary relation symbol.
   val rel = "R"
 
+  /*
+   * @param ps the number of pigeons
+   * @param hs the number of holes
+   **/
   def apply( ps: Int, hs: Int ) = {
     assert( ps > 1 )
     Imp( And( (1 to ps).map( p =>

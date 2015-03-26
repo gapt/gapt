@@ -1,4 +1,5 @@
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
+import scalariform.formatter.preferences._
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -16,7 +17,13 @@ lazy val commonSettings = Seq(
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
   sourcesInBase := false // people like to keep scripts lying around
-)
+
+) ++ defaultScalariformSettings :+
+  (ScalariformKeys.preferences := FormattingPreferences()
+    .setPreference(AlignParameters, true)
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(DoubleIndentClassDeclaration, true)
+    .setPreference(SpaceInsideParentheses, true))
 
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
@@ -26,6 +33,9 @@ lazy val root = (project in file(".")).
     description := "General Architecture for Proofs",
 
     mainClass := Some("at.logic.cli.CLIMain"),
+
+    unmanagedSources in Compile ++= Seq("ProofSequences.scala", "FormulaSequences.scala")
+      map { fn => baseDirectory.value / "examples" / fn },
 
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
@@ -80,14 +90,7 @@ lazy val root = (project in file(".")).
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5")
   )
 
-import scalariform.formatter.preferences._
-addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat")
-defaultScalariformSettings
-ScalariformKeys.preferences := FormattingPreferences()
-  .setPreference(AlignParameters, true)
-  .setPreference(AlignSingleLineCaseStatements, true)
-  .setPreference(DoubleIndentClassDeclaration, true)
-  .setPreference(SpaceInsideParentheses, true)
+addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/test:scalariformFormat")
 
 lazy val testing = (project in file("testing")).
   dependsOn(root).
@@ -102,10 +105,10 @@ lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ba
 
 lazy val testDependencies = Seq(
   "junit" % "junit" % "4.12",
-  "org.specs2" %% "specs2-core" % "2.4.17",
-  "org.specs2" %% "specs2-matcher" % "2.4.17",
-  "org.specs2" %% "specs2-mock" % "2.4.17",
-  "org.specs2" %% "specs2-junit" % "2.4.17",
+  "org.specs2" %% "specs2-core" % "3.0.1",
+  "org.specs2" %% "specs2-matcher" % "3.0.1",
+  "org.specs2" %% "specs2-mock" % "3.0.1",
+  "org.specs2" %% "specs2-junit" % "3.0.1",
   "org.scalacheck" %% "scalacheck" % "1.12.2")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =

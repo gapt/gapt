@@ -390,6 +390,21 @@ object minimalExpansionSequents {
   def apply( sequent: ExpansionSequent, prover: abstractProver ): List[ExpansionSequent] = minimalExpSeq( sequent, prover ).toList
 }
 
+object printProofStats {
+  def apply( p: LKProof ) = {
+    val stats = getStatistics( p )
+    val total = rulesNumber( p )
+    val quant = quantRulesNumber( p )
+    val weakQuant = weakQuantRulesNumber( p )
+    println( "------------- Statistics ---------------" )
+    println( "Cuts: " + stats.cuts )
+    println( "Number of quantifier inferences: " + quant )
+    println( "Number of inferences: " + total )
+    println( "Quantifier complexity: " + weakQuant )
+    println( "----------------------------------------" )
+  }
+}
+
 /**
  * *****************************************************************************
  * Cut-Elimination by Resolution
@@ -524,19 +539,24 @@ object buildProofWithCut {
 
 /**
  * *****************************************************************************
- * Visualization
+ * Miscellaneous
  * ****************************************************************************
  */
+
+object time {
+  def apply[T]( f: => T ): T = {
+    val start = java.lang.System.currentTimeMillis()
+    val r = f
+    println( "\ntime: " + ( java.lang.System.currentTimeMillis() - start ) + " ms\n" )
+    r
+  }
+}
 
 object prooftool {
   def apply( x: AnyRef ) = Main.display( "From CLI", x )
 }
 
-/**
- * *****************************************************************************
- * General
- * ****************************************************************************
- */
+// copying/license call taken from imports
 
 object help {
   def apply() = {
@@ -618,20 +638,17 @@ object help {
         |   minimizeSolution: ExtendedHerbrandSequent => ExtendedHerbrandSequent - minimizes the solution associated with the extended Herbrand sequent returning another Herbrand sequent with this minimal solution
         |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent
         |
-        | Visualization:
-        |   prooftool: LKProof => Unit - visualize proof in prooftool
-        |
-        | General:
-        |   help    : this help text
-        |   copying : print redistribution conditions
-        |   license : print the text of GNU General Public License
+        | Miscellaneous:
+        |   prooftool: visualize argument in prooftool
+        |   time: display time used for executing code given as argument
+        |   copying: print redistribution conditions
+        |   license: print the text of GNU General Public License
+        |   help: this help text
       """.stripMargin
 
     println( msg )
   }
 }
-
-// copying/license call taken from imports
 
 /**
  * *****************************************************************************
@@ -642,21 +659,6 @@ object help {
  *
  * ****************************************************************************
  */
-
-object printProofStats {
-  def apply( p: LKProof ) = {
-    val stats = getStatistics( p )
-    val total = rulesNumber( p )
-    val quant = quantRulesNumber( p )
-    val weakQuant = weakQuantRulesNumber( p )
-    println( "------------- Statistics ---------------" )
-    println( "Cuts: " + stats.cuts )
-    println( "Number of quantifier inferences: " + quant )
-    println( "Number of inferences: " + total )
-    println( "Quantifier complexity: " + weakQuant )
-    println( "----------------------------------------" )
-  }
-}
 
 /** ****************** CERES operations *************************/
 
@@ -818,9 +820,9 @@ object exportLatex {
 }
 
 object exportTHF {
-  def apply( ls: List[FSequent], filename: String ) = {
+  def apply( ls: List[FSequent], filename: String, positive: Boolean = false ) = {
     val file = new JBufferedWriter( new JFileWriter( filename ) )
-    file.write( TPTPHOLExporter( ls ) )
+    file.write( TPTPHOLExporter( ls, positive ) )
     file.close
   }
 }

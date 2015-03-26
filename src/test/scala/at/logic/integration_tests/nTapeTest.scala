@@ -9,7 +9,7 @@ import at.logic.algorithms.lk.{ AtomicExpansion, regularize }
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
-import at.logic.calculi.lk.base.LKProof
+import at.logic.calculi.lk.base.{ FSequent, LKProof }
 import at.logic.calculi.lksk.sequentToLabelledSequent
 import at.logic.language.fol.{ FOLVar, FOLFormula, FOLExpression }
 import at.logic.language.hol._
@@ -77,7 +77,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
   }
 
   def printStatistics( et: ExpansionSequent ) = {
-    val indet = decompose( ( et.antecedent( 3 ) ) )( 2 )
+    val indet = decompose( ( et.antecedent( 1 ) ) )( 2 )
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
       case WeakQuantifier( _, List(
         ( inst1, et1 ),
@@ -187,7 +187,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
     }
 
-    "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
+    "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
       checkForProverOrSkip
       show( "Loading file" )
       val tokens = HybridLatexParser.parseFile( tempCopyOfClasspathFile( "tape3ex.llk" ) )

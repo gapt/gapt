@@ -27,9 +27,6 @@ import scala.collection.immutable.HashMap
  */
 class Grammar( val u: List[FOLTerm], val slist: List[( List[FOLVar], Set[List[FOLTerm]] )] ) {
 
-  // Is this the best solution?
-  var terms: TermSet = null
-
   /** Returns the size of the grammar, i.e. |u| + |s| */
   def size = u.size + slist.foldLeft( 0 )( ( acc, s ) => acc + s._2.size )
 
@@ -94,7 +91,7 @@ object simpleToMultiGrammar {
  */
 object ComputeGrammars {
 
-  def apply( terms: TermSet, delta: DeltaVector ): List[Grammar] = apply( terms.set, delta ).map { case g => g.terms = terms; g }
+  def apply( terms: TermSet, delta: DeltaVector ): List[Grammar] = ComputeGrammars( terms.set, delta )
 
   def apply( terms: List[FOLTerm], delta: DeltaVector ): List[Grammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.

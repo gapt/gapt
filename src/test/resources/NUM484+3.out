@@ -1,0 +1,140 @@
+%------------------------------------------------------------------------------
+File       : Prover9---1109a
+Problem    : NUM484+3 : TPTP v5.3.0. Released v4.0.0.
+Transform  : none
+Format     : tptp:raw
+Command    : run_prover9 %d %s
+
+Computer   : shiloh.cs.miami.edu
+Model      : x86_64 x86_64
+CPU        : Intel(R) Core(TM)2 CPU          6600  @ 2.40GHz @ 2400MHz
+Memory     : 1003MB
+OS         : Linux 2.6.32.26-175.fc12.x86_64
+CPULimit   : 300s
+DateTime   : Thu Jun 14 02:36:04 EDT 2012
+
+Result     : Theorem 0.35s
+Output     : Refutation 0.35s
+Verified   : 
+Statistics : -
+
+Comments   : 
+%------------------------------------------------------------------------------
+%----ERROR: Could not form TPTP format derivation
+%------------------------------------------------------------------------------
+%----ORIGINAL SYSTEM OUTPUT
+============================== Prover9 ===============================
+Prover9 (32) version 2009-11A, November 2009.
+Process 9371 was started by tptp on shiloh.cs.miami.edu,
+Thu Jun 14 02:36:05 2012
+The command was "/home/graph/tptp/Systems/Prover9---1109a/prover9 -t 300 -f /tmp/Prover9_9337_shiloh.cs.miami.edu".
+============================== end of head ===========================
+============================== INPUT =================================
+% Reading from file /tmp/Prover9_9337_shiloh.cs.miami.edu
+set(prolog_style_variables).
+set(auto2).
+    % set(auto2) -> set(auto).
+    % set(auto) -> set(auto_inference).
+    % set(auto) -> set(auto_setup).
+    % set(auto_setup) -> set(predicate_elim).
+    % set(auto_setup) -> assign(eq_defs, unfold).
+    % set(auto) -> set(auto_limits).
+    % set(auto_limits) -> assign(max_weight, "100.000").
+    % set(auto_limits) -> assign(sos_limit, 20000).
+    % set(auto) -> set(auto_denials).
+    % set(auto) -> set(auto_process).
+    % set(auto2) -> assign(new_constants, 1).
+    % set(auto2) -> assign(fold_denial_max, 3).
+    % set(auto2) -> assign(max_weight, "200.000").
+    % set(auto2) -> assign(max_hours, 1).
+    % assign(max_hours, 1) -> assign(max_seconds, 3600).
+    % set(auto2) -> assign(max_seconds, 0).
+    % set(auto2) -> assign(max_minutes, 5).
+    % assign(max_minutes, 5) -> assign(max_seconds, 300).
+    % set(auto2) -> set(sort_initial_sos).
+    % set(auto2) -> assign(sos_limit, -1).
+    % set(auto2) -> assign(lrs_ticks, 3000).
+    % set(auto2) -> assign(max_megs, 400).
+    % set(auto2) -> assign(stats, some).
+    % set(auto2) -> clear(echo_input).
+    % set(auto2) -> set(quiet).
+    % set(auto2) -> clear(print_initial_clauses).
+    % set(auto2) -> clear(print_given).
+assign(lrs_ticks,-1).
+assign(sos_limit,10000).
+assign(order,kbo).
+set(lex_order_vars).
+clear(print_given).
+% formulas(sos).  % not echoed (45 formulas)
+============================== end of input ==========================
+% From the command line: assign(max_seconds, 300).
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+% Formulas that are not ordinary clauses:
+1 (all W0 (aNaturalNumber0(W0) -> $T)) # label(mNatSort) # label(axiom) # label(non_clause).  [assumption].
+2 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> aNaturalNumber0(sdtpldt0(W0,W1)))) # label(mSortsB) # label(axiom) # label(non_clause).  [assumption].
+3 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> aNaturalNumber0(sdtasdt0(W0,W1)))) # label(mSortsB_02) # label(axiom) # label(non_clause).  [assumption].
+4 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> sdtpldt0(W0,W1) = sdtpldt0(W1,W0))) # label(mAddComm) # label(axiom) # label(non_clause).  [assumption].
+5 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> sdtpldt0(sdtpldt0(W0,W1),W2) = sdtpldt0(W0,sdtpldt0(W1,W2)))) # label(mAddAsso) # label(axiom) # label(non_clause).  [assumption].
+6 (all W0 (aNaturalNumber0(W0) -> sdtpldt0(W0,sz00) = W0 & W0 = sdtpldt0(sz00,W0))) # label(m_AddZero) # label(axiom) # label(non_clause).  [assumption].
+7 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> sdtasdt0(W0,W1) = sdtasdt0(W1,W0))) # label(mMulComm) # label(axiom) # label(non_clause).  [assumption].
+8 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> sdtasdt0(sdtasdt0(W0,W1),W2) = sdtasdt0(W0,sdtasdt0(W1,W2)))) # label(mMulAsso) # label(axiom) # label(non_clause).  [assumption].
+9 (all W0 (aNaturalNumber0(W0) -> sdtasdt0(W0,sz10) = W0 & W0 = sdtasdt0(sz10,W0))) # label(m_MulUnit) # label(axiom) # label(non_clause).  [assumption].
+10 (all W0 (aNaturalNumber0(W0) -> sdtasdt0(W0,sz00) = sz00 & sz00 = sdtasdt0(sz00,W0))) # label(m_MulZero) # label(axiom) # label(non_clause).  [assumption].
+11 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> sdtasdt0(W0,sdtpldt0(W1,W2)) = sdtpldt0(sdtasdt0(W0,W1),sdtasdt0(W0,W2)) & sdtasdt0(sdtpldt0(W1,W2),W0) = sdtpldt0(sdtasdt0(W1,W0),sdtasdt0(W2,W0)))) # label(mAMDistr) # label(axiom) # label(non_clause).  [assumption].
+12 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> (sdtpldt0(W0,W1) = sdtpldt0(W0,W2) | sdtpldt0(W1,W0) = sdtpldt0(W2,W0) -> W1 = W2))) # label(mAddCanc) # label(axiom) # label(non_clause).  [assumption].
+13 (all W0 (aNaturalNumber0(W0) -> (W0 != sz00 -> (all W1 all W2 (aNaturalNumber0(W1) & aNaturalNumber0(W2) -> (sdtasdt0(W0,W1) = sdtasdt0(W0,W2) | sdtasdt0(W1,W0) = sdtasdt0(W2,W0) -> W1 = W2)))))) # label(mMulCanc) # label(axiom) # label(non_clause).  [assumption].
+14 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (sdtpldt0(W0,W1) = sz00 -> W0 = sz00 & W1 = sz00))) # label(mZeroAdd) # label(axiom) # label(non_clause).  [assumption].
+15 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (sdtasdt0(W0,W1) = sz00 -> W0 = sz00 | W1 = sz00))) # label(mZeroMul) # label(axiom) # label(non_clause).  [assumption].
+16 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (sdtlseqdt0(W0,W1) <-> (exists W2 (aNaturalNumber0(W2) & sdtpldt0(W0,W2) = W1))))) # label(mDefLE) # label(definition) # label(non_clause).  [assumption].
+17 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (sdtlseqdt0(W0,W1) -> (all W2 (W2 = sdtmndt0(W1,W0) <-> aNaturalNumber0(W2) & sdtpldt0(W0,W2) = W1))))) # label(mDefDiff) # label(definition) # label(non_clause).  [assumption].
+18 (all W0 (aNaturalNumber0(W0) -> sdtlseqdt0(W0,W0))) # label(mLERefl) # label(axiom) # label(non_clause).  [assumption].
+19 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (sdtlseqdt0(W0,W1) & sdtlseqdt0(W1,W0) -> W0 = W1))) # label(mLEAsym) # label(axiom) # label(non_clause).  [assumption].
+20 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> (sdtlseqdt0(W0,W1) & sdtlseqdt0(W1,W2) -> sdtlseqdt0(W0,W2)))) # label(mLETran) # label(axiom) # label(non_clause).  [assumption].
+21 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> sdtlseqdt0(W0,W1) | W1 != W0 & sdtlseqdt0(W1,W0))) # label(mLETotal) # label(axiom) # label(non_clause).  [assumption].
+22 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (W0 != W1 & sdtlseqdt0(W0,W1) -> (all W2 (aNaturalNumber0(W2) -> sdtpldt0(W2,W0) != sdtpldt0(W2,W1) & sdtlseqdt0(sdtpldt0(W2,W0),sdtpldt0(W2,W1)) & sdtpldt0(W0,W2) != sdtpldt0(W1,W2) & sdtlseqdt0(sdtpldt0(W0,W2),sdtpldt0(W1,W2))))))) # label(mMonAdd) # label(axiom) # label(non_clause).  [assumption].
+23 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> (W0 != sz00 & W1 != W2 & sdtlseqdt0(W1,W2) -> sdtasdt0(W0,W1) != sdtasdt0(W0,W2) & sdtlseqdt0(sdtasdt0(W0,W1),sdtasdt0(W0,W2)) & sdtasdt0(W1,W0) != sdtasdt0(W2,W0) & sdtlseqdt0(sdtasdt0(W1,W0),sdtasdt0(W2,W0))))) # label(mMonMul) # label(axiom) # label(non_clause).  [assumption].
+24 (all W0 (aNaturalNumber0(W0) -> W0 = sz00 | W0 = sz10 | sz10 != W0 & sdtlseqdt0(sz10,W0))) # label(mLENTr) # label(axiom) # label(non_clause).  [assumption].
+25 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (W0 != sz00 -> sdtlseqdt0(W1,sdtasdt0(W1,W0))))) # label(mMonMul2) # label(axiom) # label(non_clause).  [assumption].
+26 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (iLess0(W0,W1) -> $T))) # label(mIH) # label(axiom) # label(non_clause).  [assumption].
+27 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (W0 != W1 & sdtlseqdt0(W0,W1) -> iLess0(W0,W1)))) # label(mIH_03) # label(axiom) # label(non_clause).  [assumption].
+28 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (doDivides0(W0,W1) <-> (exists W2 (aNaturalNumber0(W2) & W1 = sdtasdt0(W0,W2)))))) # label(mDefDiv) # label(definition) # label(non_clause).  [assumption].
+29 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (W0 != sz00 & doDivides0(W0,W1) -> (all W2 (W2 = sdtsldt0(W1,W0) <-> aNaturalNumber0(W2) & W1 = sdtasdt0(W0,W2)))))) # label(mDefQuot) # label(definition) # label(non_clause).  [assumption].
+30 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> (doDivides0(W0,W1) & doDivides0(W1,W2) -> doDivides0(W0,W2)))) # label(mDivTrans) # label(axiom) # label(non_clause).  [assumption].
+31 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> (doDivides0(W0,W1) & doDivides0(W0,W2) -> doDivides0(W0,sdtpldt0(W1,W2))))) # label(mDivSum) # label(axiom) # label(non_clause).  [assumption].
+32 (all W0 all W1 all W2 (aNaturalNumber0(W0) & aNaturalNumber0(W1) & aNaturalNumber0(W2) -> (doDivides0(W0,W1) & doDivides0(W0,sdtpldt0(W1,W2)) -> doDivides0(W0,W2)))) # label(mDivMin) # label(axiom) # label(non_clause).  [assumption].
+33 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (doDivides0(W0,W1) & W1 != sz00 -> sdtlseqdt0(W0,W1)))) # label(mDivLE) # label(axiom) # label(non_clause).  [assumption].
+34 (all W0 all W1 (aNaturalNumber0(W0) & aNaturalNumber0(W1) -> (W0 != sz00 & doDivides0(W0,W1) -> (all W2 (aNaturalNumber0(W2) -> sdtasdt0(W2,sdtsldt0(W1,W0)) = sdtsldt0(sdtasdt0(W2,W1),W0)))))) # label(mDivAsso) # label(axiom) # label(non_clause).  [assumption].
+35 (all W0 (aNaturalNumber0(W0) -> (isPrime0(W0) <-> W0 != sz00 & W0 != sz10 & (all W1 (aNaturalNumber0(W1) & doDivides0(W1,W0) -> W1 = sz10 | W1 = W0))))) # label(mDefPrime) # label(definition) # label(non_clause).  [assumption].
+36 (all W0 (aNaturalNumber0(W0) & W0 != sz00 & W0 != sz10 -> (iLess0(W0,xk) -> (exists W1 (aNaturalNumber0(W1) & (exists W2 (aNaturalNumber0(W2) & W0 = sdtasdt0(W1,W2))) & doDivides0(W1,W0) & W1 != sz00 & W1 != sz10 & (all W2 (aNaturalNumber0(W2) & ((exists W3 (aNaturalNumber0(W3) & W1 = sdtasdt0(W2,W3))) | doDivides0(W2,W1)) -> W2 = sz10 | W2 = W1)) & isPrime0(W1)))))) # label(m__1700) # label(hypothesis) # label(non_clause).  [assumption].
+37 -((all W0 (aNaturalNumber0(W0) & (exists W1 (aNaturalNumber0(W1) & xk = sdtasdt0(W0,W1))) & doDivides0(W0,xk) -> W0 = sz10 | W0 = xk)) | isPrime0(xk)) # label(m__1725) # label(hypothesis) # label(non_clause).  [assumption].
+38 --$F # label(m__1737) # label(hypothesis) # label(non_clause).  [assumption].
+39 -(exists W0 (aNaturalNumber0(W0) & ((exists W1 (aNaturalNumber0(W1) & xk = sdtasdt0(W0,W1))) | doDivides0(W0,xk)) & (W0 != sz00 & W0 != sz10 & (all W1 (aNaturalNumber0(W1) & (exists W2 (aNaturalNumber0(W2) & W0 = sdtasdt0(W1,W2))) & doDivides0(W1,W0) -> W1 = sz10 | W1 = W0)) | isPrime0(W0)))) # label(m__) # label(negated_conjecture) # label(non_clause).  [assumption].
+============================== end of process non-clausal formulas ===
+============================== PROCESS INITIAL CLAUSES ===============
+============================== PREDICATE ELIMINATION =================
+============================== end predicate elimination =============
+Auto_denials:  (non-Horn, no changes).
+Term ordering decisions:
+Function symbol KB weights:  sz00=1. sz10=1. xk=1. c1=1. c2=1. sdtasdt0=1. sdtpldt0=1. sdtsldt0=1. sdtmndt0=1. f1=1. f2=1. f3=1. f4=1. f5=1. f6=1. f7=1.
+============================== PROOF =================================
+% Proof 1 at 0.01 (+ 0.00) seconds.
+% Length of proof is 2.
+% Level of proof is 1.
+% Maximum clause weight is 0.000.
+% Given clauses 0.
+38 --$F # label(m__1737) # label(hypothesis) # label(non_clause).  [assumption].
+40 $F # label(m__1737) # label(hypothesis).  [clausify(38)].
+============================== end of proof ==========================
+============================== STATISTICS ============================
+Given=0. Generated=1. Kept=0. proofs=1.
+Usable=0. Sos=0. Demods=0. Limbo=0, Disabled=1. Hints=0.
+Megabytes=0.13.
+User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+============================== end of statistics =====================
+============================== end of search =========================
+THEOREM PROVED
+Exiting with 1 proof.
+Process 9371 exit (max_proofs) Thu Jun 14 02:36:05 2012
+Prover9 interrupted
+
+%------------------------------------------------------------------------------

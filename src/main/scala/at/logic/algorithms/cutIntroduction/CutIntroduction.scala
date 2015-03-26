@@ -530,14 +530,14 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
       case e: StackOverflowError =>
         status = "cutintro_stack_overflow"
         ( None, Some( e ) )
-      case e: Exception =>
-        status = "cutintro_other_exception"
-        ( None, Some( e ) )
       case e: TreeGrammarDecompositionException =>
         status = "tgd_failed"
         ( None, Some( e ) )
       case e: CutIntroUncompressibleException =>
         status = "cutintro_uncompressible"
+        ( None, Some( e ) )
+      case e: CutIntroEHSUnprovableException =>
+        status = "cutintro_ehs_unprovable"
         ( None, Some( e ) )
       case e: Exception =>
         status = "cutintro_other_exception"

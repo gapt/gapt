@@ -26,6 +26,7 @@ trait BinaryResolutionProof[V <: Sequent] extends BinaryAGraphProof[V] with Reso
   override def uProof2 = t2.asInstanceOf[ResolutionProof[V]]
 }
 
+// FIXME: this should not be called 'CNF'. It does not describe a CNF but a clause.
 trait CNF extends Sequent {
   require( ( antecedent ++ succedent ).forall( x =>
     x.formula match {

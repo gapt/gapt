@@ -1,6 +1,7 @@
 package at.logic.models
 
 import at.logic.language.hol._
+
 /* A trait describing propositional interpretations */
 trait Interpretation {
   // Interpret an atom.
@@ -21,5 +22,9 @@ class MapBasedInterpretation( val model: Map[HOLFormula, Boolean] ) extends Inte
   def interpretAtom( atom: HOLFormula ) = model.get( atom ) match {
     case Some( b ) => b
     case None      => false
+  }
+
+  override def toString = {
+    model.foldLeft( "" ) { case ( s, ( atom, value ) ) => s + atom + " -> " + value + "\n" }
   }
 }
