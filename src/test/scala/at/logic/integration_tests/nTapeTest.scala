@@ -235,7 +235,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
           show( " HOORAY! " )
 
           printStatistics( et )
-          
+
           ok
       }
 

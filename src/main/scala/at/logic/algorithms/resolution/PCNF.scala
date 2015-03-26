@@ -10,7 +10,7 @@ import at.logic.utils.dssupport.ListSupport.removeFirst
 
 /**
  * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)
- * Note about checking containmenet up to variables renaming:
+ * Note about checking containment up to variables renaming:
  * we compute the variable renaming from the lk proof to the resolution proof for a specific clause. We cannot apply it to the formula in s
  * as it might be quantified over this variables so we apply it to the resulted lk proof. We must apply it as otherwise the substitution in
  * the resolution to lk transformation will not be applied to these clauses. In the weakenings application at the end of this method we try
@@ -107,6 +107,7 @@ object PCNF {
    * @return
    */
   private def PCNFn( f: HOLFormula, a: FClause, sub: Substitution ): LKProof = f match {
+    case TopC => Axiom(Nil, List(f))
     case Atom( _, _ ) => Axiom( List( f ), List( f ) )
     case Neg( f2 )    => NegRightRule( PCNFp( f2, a, sub ), f2 )
     case And( f1, f2 ) => {
@@ -134,6 +135,7 @@ object PCNF {
    * @return
    */
   private def PCNFp( f: HOLFormula, a: FClause, sub: Substitution ): LKProof = f match {
+    case BottomC => Axiom(List(f), Nil)
     case Atom( _, _ ) => Axiom( List( f ), List( f ) )
     case Neg( f2 )    => NegLeftRule( PCNFn( f2, a, sub ), f2 )
     case And( f1, f2 ) =>
