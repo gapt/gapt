@@ -284,7 +284,7 @@ class HybridLatexExporter( val expandTex: Boolean ) {
       generateProof( p1, "\\EXSKR{" + getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
     case ForallSkLeftRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\ALLSKL{" + getFormulaString( term, true, escape_latex ) + "}
+      generateProof( p1, "\\ALLSKL{" + getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
     case ForallSkRightRule( p1, root, aux, main, term ) =>
       generateProof( p1, "\\ALLSKR{" + getFormulaString( term, true, escape_latex ) + "}"
