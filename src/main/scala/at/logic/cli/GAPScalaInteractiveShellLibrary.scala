@@ -820,7 +820,7 @@ object exportLatex {
 }
 
 object exportTHF {
-  def apply( ls: List[FSequent], filename: String, positive : Boolean = false ) = {
+  def apply( ls: List[FSequent], filename: String, positive: Boolean = false ) = {
     val file = new JBufferedWriter( new JFileWriter( filename ) )
     file.write( TPTPHOLExporter( ls, positive ) )
     file.close

@@ -107,7 +107,7 @@ object PCNF {
    * @return
    */
   private def PCNFn( f: HOLFormula, a: FClause, sub: Substitution ): LKProof = f match {
-    case TopC => Axiom(Nil, List(f))
+    case TopC         => Axiom( Nil, List( f ) )
     case Atom( _, _ ) => Axiom( List( f ), List( f ) )
     case Neg( f2 )    => NegRightRule( PCNFp( f2, a, sub ), f2 )
     case And( f1, f2 ) => {
@@ -135,7 +135,7 @@ object PCNF {
    * @return
    */
   private def PCNFp( f: HOLFormula, a: FClause, sub: Substitution ): LKProof = f match {
-    case BottomC => Axiom(List(f), Nil)
+    case BottomC      => Axiom( List( f ), Nil )
     case Atom( _, _ ) => Axiom( List( f ), List( f ) )
     case Neg( f2 )    => NegLeftRule( PCNFn( f2, a, sub ), f2 )
     case And( f1, f2 ) =>

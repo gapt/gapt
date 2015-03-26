@@ -41,7 +41,7 @@ class TPTPHOLExporter {
         for ( fs <- l ) yield {
           index = index + 1
           //thf_sequent_dec( index, fs, vnames, cnames ) + "\n" //leo doesn't support sequents?
-          thf_formula_dec(index, fs.toFormula, vnames, cnames) +"\n"
+          thf_formula_dec( index, fs.toFormula, vnames, cnames ) + "\n"
         }
       case false =>
         val negClauses = Neg( And( l.map( closedFormula ) ) )
