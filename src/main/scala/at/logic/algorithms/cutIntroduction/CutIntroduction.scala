@@ -706,15 +706,26 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
     // interpolation algorithm?
     val Aprime = ( 1 to alphas.size ).reverse.foldLeft( Nil: List[FOLFormula] ) {
       case ( acc, i ) => {
-        val allf = FU( 0 ) compose ( new FSequent( ehs.prop_l, ehs.prop_r ) )
-        val posf = FU( i - 1 ) compose ( new FSequent( ehs.prop_l, ehs.prop_r ) )
-        val negf = allf diff posf
-        val neg = negf compose ( new FSequent( cutImplications.take( i - 1 ), Nil ) )
-        val pos = posf compose ( new FSequent( AS( i - 1 ), acc ) )
-        val interpolant = ExtractInterpolant( neg, pos, prover )
-        val res = And( A( i - 1 ), interpolant )
-        val res2 = simplify( res )
-        acc :+ res2
+        trace( "A_" + i + ": " + A( i - 1 ) )
+        trace( "freeVariables( A( " + i + "  ) ): " + freeVariables( A( i - 1 ) ) )
+        trace( "alphas.drop( " + i + " ): " + alphas.drop( i - 1 ) )
+        // if A_i fulfills the variable condition, set A_i':= A_i
+        if ( freeVariables( A( i - 1 ) ).toSet subsetOf alphas.drop( i - 1 ).toSet ) {
+          trace( "fulfills the variable condition" )
+          acc :+ A( i - 1 )
+        } else // otherwise, compute interpolant I and set A_':= And( A_i, I )
+        {
+          trace( "does not fulfill the variable condition" )
+          val allf = FU( 0 ) compose ( new FSequent( ehs.prop_l, ehs.prop_r ) )
+          val posf = FU( i - 1 ) compose ( new FSequent( ehs.prop_l, ehs.prop_r ) )
+          val negf = allf diff posf
+          val neg = negf compose ( new FSequent( cutImplications.take( i - 1 ), Nil ) )
+          val pos = posf compose ( new FSequent( AS( i - 1 ), acc ) )
+          val interpolant = ExtractInterpolant( neg, pos, prover )
+          val res = And( A( i - 1 ), interpolant )
+          val res2 = simplify( res )
+          acc :+ res2
+        }
       }
     }.reverse
 
