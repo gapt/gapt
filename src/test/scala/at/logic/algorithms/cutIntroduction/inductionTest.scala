@@ -28,5 +28,21 @@ class SipTests extends Specification {
       g.productions must beEqualTo( Seq(
         tau -> Function( "tuple1", List( nu ) ) ) )
     }
+
+    "find a grammar covering multiple instance languages" in {
+      if ( !new MaxSAT( MaxSATSolver.ToySAT ).isInstalled ) skipped( "ToySAT is not installed" )
+
+      val n = 4
+      // i |-> {r(0), ..., r(s^i(0))}
+      val langs = ( 0 until n ) map { i =>
+        ( i, ( 0 until i ) map { j =>
+          Function( "tuple1", List( Utils.numeral( j ) ) )
+        } )
+      }
+      val g = findMinimalSipGrammar( langs )
+      g.productions must beEqualTo( Seq(
+        tau -> Function( "tuple1", List( nu ) ) ) )
+    }
+
   }
 }

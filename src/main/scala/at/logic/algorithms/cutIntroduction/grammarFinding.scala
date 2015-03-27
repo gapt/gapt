@@ -94,7 +94,7 @@ case class TratGrammar( axiom: FOLVar, productions: Seq[TratGrammar.Production] 
   override def toString = s"($axiom, {${productions map { case ( d, t ) => s"$d -> $t" } mkString ", "}})"
 }
 
-case class GrammarMinimizationFormula( g: TratGrammar ) {
+class GrammarMinimizationFormula( g: TratGrammar ) {
   import TratGrammar._
 
   def productionIsIncluded( p: Production ) = Atom( s"p,$p" )
@@ -132,6 +132,12 @@ case class GrammarMinimizationFormula( g: TratGrammar ) {
   def coversLanguage( lang: Seq[FOLTerm] ) = And( lang map generatesTerm toList )
 }
 
+object GrammarMinimizationFormula {
+  def apply( g: TratGrammar ): GrammarMinimizationFormula = new GrammarMinimizationFormula( g )
+  def apply( g: TratGrammar, t: FOLTerm ): FOLFormula = apply( g ).generatesTerm( t )
+  def apply( g: TratGrammar, l: Seq[FOLTerm] ): FOLFormula = apply( g ).coversLanguage( l )
+}
+
 object normalFormsTratGrammar {
   def apply( lang: Seq[FOLTerm], n: Int ) = {
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
@@ -152,8 +158,8 @@ object minimizeGrammar {
   def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = MaxSATSolver.ToySAT ): TratGrammar = {
     val formula = GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
-    val atomsInHard = atoms(hard)
-    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map (Neg(_) -> 1)
+    val atomsInHard = atoms( hard )
+    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     new MaxSAT( maxSATSolver ).solvePWM( List( hard ), soft toList ) match {
       case Some( interp ) => TratGrammar( g.axiom,
         g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )

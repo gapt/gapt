@@ -53,7 +53,7 @@ object normalFormsSipGrammar {
     import SipGrammar._
     val nfs = tratNormalForms( instanceLanguages flatMap ( _._2 ), Seq( gamma, alpha, nu ) )
 
-    val prods = Seq.newBuilder[Production]
+    val prods = Set.newBuilder[Production]
 
     for ( nf <- nfs ) {
       val fv = freeVariables( nf )
@@ -69,7 +69,7 @@ object normalFormsSipGrammar {
       }
     }
 
-    SipGrammar( prods result )
+    SipGrammar( prods.result.toSeq )
   }
 }
 
@@ -94,7 +94,10 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
     val cs = Seq.newBuilder[FOLFormula]
     langs foreach {
       case ( n, lang ) =>
-        val tratMinForm = GrammarMinimizationFormula( g.instanceGrammar( n ) )
+        val tratMinForm = new GrammarMinimizationFormula( g.instanceGrammar( n ) ) {
+          override def productionIsIncluded( p: TratGrammar.Production ) = Atom( s"p,$n,$p" )
+          override def valueOfNonTerminal( t: FOLTerm, a: FOLVar, rest: FOLTerm ) = Atom( s"v,$n,$t,$a=$rest" )
+        }
         val instanceCovForm = tratMinForm.coversLanguage( lang )
         cs += instanceCovForm
 

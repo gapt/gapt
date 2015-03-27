@@ -35,7 +35,7 @@ class GrammarFindingTest extends Specification {
   "GrammarMinimizationFormula" should {
     "generate term with 2 productions" in {
       val g = TratGrammar( x, Seq( x -> parseTerm( "f(y)" ), y -> parseTerm( "c" ) ) )
-      val formula = GrammarMinimizationFormula( g ).generatesTerm( parseTerm( "f(c)" ) )
+      val formula = GrammarMinimizationFormula( g, parseTerm( "f(c)" ) )
       new Sat4j().solve( formula ) must beSome
       ok
     }
@@ -47,8 +47,8 @@ class GrammarFindingTest extends Specification {
     }
     "Lang((x, {x -> c, y -> d})) = {c}" in {
       val g = TratGrammar( x, Seq( x -> parseTerm( "c" ), y -> parseTerm( "d" ) ) )
-      new Sat4j().solve( GrammarMinimizationFormula( g ).generatesTerm( parseTerm( "c" ) ) ) must beSome
-      new Sat4j().solve( GrammarMinimizationFormula( g ).generatesTerm( parseTerm( "d" ) ) ) must beNone
+      new Sat4j().solve( GrammarMinimizationFormula( g, parseTerm( "c" ) ) ) must beSome
+      new Sat4j().solve( GrammarMinimizationFormula( g, parseTerm( "d" ) ) ) must beNone
       ok
     }
   }
@@ -69,7 +69,7 @@ class GrammarFindingTest extends Specification {
 
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" ) map parseTerm
       val g = findMinimalGrammar( l, 1 )
-      new Sat4j().solve( GrammarMinimizationFormula( g ).coversLanguage( l ) ) must beSome
+      new Sat4j().solve( GrammarMinimizationFormula( g, l ) ) must beSome
       g.productions.size must beEqualTo( 2 + 3 )
     }
   }
