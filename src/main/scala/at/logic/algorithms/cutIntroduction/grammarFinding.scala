@@ -9,6 +9,8 @@ import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
 import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
 import at.logic.utils.dssupport.ListSupport
 
+import scala.collection.mutable
+
 object FunctionOrConstant {
   def unapply( term: FOLTerm ): Option[( SymbolA, List[FOLTerm] )] = term match {
     case Function( s, args ) => Some( ( s, args ) )
@@ -112,27 +114,36 @@ class GrammarMinimizationFormula( g: TratGrammar ) {
   def generatesTerm( t: FOLTerm ) = {
     val cs = List.newBuilder[FOLFormula]
 
+    // value of axiom must be t
     cs += valueOfNonTerminal( t, g.axiom, t )
 
     // possible values must decompose correctly
-    val possibleValues = Utils.subterms( t )
-    for ( value <- possibleValues; nt <- g nonTerminals )
-      cs += Imp( valueOfNonTerminal( t, nt, value ),
-        Or( g.productions( nt ) map {
-          case p @ ( _, rhs ) =>
-            FOLMatchingAlgorithm.matchTerm( rhs, value, List() ) match {
-              case Some( matching ) =>
-                And( productionIsIncluded( p ),
-                  And( matching.folmap map {
-                    case ( v, smallerRest ) =>
-                      valueOfNonTerminal( t, v, smallerRest.asInstanceOf[FOLTerm] )
-                  } toList ) )
-              case None => BottomC
-            }
-        } toList ) )
+    val assignmentsToHandle = mutable.Queue( g.axiom -> t )
+    var possibleAssignments = Set[(FOLVar, FOLTerm)]()
+    assignmentsToHandle.dequeueAll { case assignment@(nt, value) =>
+      if ( !( possibleAssignments contains assignment ) )
+          cs += Imp( valueOfNonTerminal( t, nt, value ),
+            Or( g.productions( nt ) map {
+              case p @ ( _, rhs ) =>
+                FOLMatchingAlgorithm.matchTerm( rhs, value, List() ) match {
+                  case Some( matching ) =>
+                    And( productionIsIncluded( p ),
+                      And( matching.folmap map {
+                        case ( v, smallerValue: FOLTerm ) =>
+                          assignmentsToHandle enqueue (v -> smallerValue)
+                          valueOfNonTerminal( t, v, smallerValue )
+                      } toList ) )
+                  case None => BottomC
+                }
+            } toList ) )
+
+      possibleAssignments += assignment
+
+      true // remove this value from the queue
+    }
 
     // values are unique
-    for ( d <- g nonTerminals; v1 <- possibleValues; v2 <- possibleValues if v1 != v2 )
+    for ( (d, v1) <- possibleAssignments; (d2, v2) <- possibleAssignments if d == d2 && v1 != v2 )
       cs += Or( Neg( valueOfNonTerminal( t, d, v1 ) ), Neg( valueOfNonTerminal( t, d, v2 ) ) )
 
     And( cs result )
