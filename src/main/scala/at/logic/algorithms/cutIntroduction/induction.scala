@@ -74,15 +74,15 @@ object normalFormsSipGrammar {
 }
 
 object atoms {
-  def apply(f:FOLFormula): Set[FOLFormula] = f match {
-    case Atom(_) => Set(f)
-    case And(x,y) => apply(x) union apply(y)
-    case Or(x,y) => apply(x) union apply(y)
-    case Imp(x,y) => apply(x) union apply(y)
-    case Neg(x) => apply(x)
+  def apply( f: FOLFormula ): Set[FOLFormula] = f match {
+    case Atom( _ )      => Set( f )
+    case And( x, y )    => apply( x ) union apply( y )
+    case Or( x, y )     => apply( x ) union apply( y )
+    case Imp( x, y )    => apply( x ) union apply( y )
+    case Neg( x )       => apply( x )
     case TopC | BottomC => Set()
-    case ExVar(x,y) => apply(y)
-    case AllVar(x,y) => apply(y)
+    case ExVar( x, y )  => apply( y )
+    case AllVar( x, y ) => apply( y )
   }
 }
 
@@ -98,12 +98,12 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
         val instanceCovForm = tratMinForm.coversLanguage( lang )
         cs += instanceCovForm
 
-        val atomsInInstForm = atoms(instanceCovForm)
+        val atomsInInstForm = atoms( instanceCovForm )
 
         ( for ( p <- g.productions; instP <- SipGrammar.instantiate( p, n ) )
           yield instP -> p ).groupBy( _._1 ).values foreach { l =>
-          val tratProdInc = tratMinForm.productionIsIncluded(l.head._1)
-          if (atomsInInstForm contains tratProdInc)
+          val tratProdInc = tratMinForm.productionIsIncluded( l.head._1 )
+          if ( atomsInInstForm contains tratProdInc )
             cs += Imp( tratProdInc, Or( l map ( _._2 ) map productionIsIncluded toList ) )
         }
     }
@@ -115,8 +115,8 @@ object minimizeSipGrammar {
   def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = MaxSATSolver.ToySAT ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
-    val atomsInHard = atoms(hard)
-    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map (Neg(_) -> 1)
+    val atomsInHard = atoms( hard )
+    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     new MaxSAT( maxSATSolver ).solvePWM( List( hard ), soft toList ) match {
       case Some( interp ) => SipGrammar(
         g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )
