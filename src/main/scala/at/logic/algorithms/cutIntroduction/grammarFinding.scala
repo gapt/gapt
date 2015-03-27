@@ -36,6 +36,14 @@ object antiUnificator {
   }
 }
 
+object normalizeNonTerminals {
+  def apply( term: FOLTerm ): FOLTerm = {
+    val renaming: Seq[( FOLVar, FOLExpression )] =
+      freeVariables( term ).distinct.zipWithIndex map { case ( v, i ) => v -> FOLVar( s"β$i" ) }
+    Substitution( renaming )( term )
+  }
+}
+
 object characteristicPartition {
   def apply( term: FOLTerm ): List[List[List[Int]]] = {
     getAllPositionsFOL( term ).groupBy( _._2 ).values.map( _.map( _._1 ) ).toList
@@ -44,9 +52,10 @@ object characteristicPartition {
 
 object normalForms {
   def apply( lang: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
+    val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 )
+      .map( terms => normalizeNonTerminals( antiUnificator( terms ) ) ).toSet
     val nfs = Set.newBuilder[FOLTerm]
-    ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ) foreach { subset =>
-      val au = antiUnificator( subset )
+    antiUnifiers foreach { au =>
       val charP = characteristicPartition( au )
       val possibleSubsts = nonTerminals.foldLeft[List[List[( FOLVar, List[List[Int]] )]]]( List( Nil ) ) {
         case ( substs, nonTerminal ) =>
