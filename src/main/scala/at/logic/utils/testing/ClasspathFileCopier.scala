@@ -24,6 +24,7 @@ trait ClasspathFileCopier {
       case _                                 => ( "copyFileFromBasename", "tmp" )
     }
     val tempFile = File.createTempFile( basename, ext )
+    tempFile.deleteOnExit()
     Files.copy( getClass.getClassLoader.getResourceAsStream( path ), tempFile.toPath, REPLACE_EXISTING )
     tempFile.getPath
   }
