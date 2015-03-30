@@ -46,6 +46,7 @@ import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
 object Main extends SimpleSwingApplication {
+  var DEBUG = false
   val body = new MyScrollPane
   val db = new FileParser
   val defaultFontSize = 12

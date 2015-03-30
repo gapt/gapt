@@ -1,10 +1,11 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol.{ FOLFormula, FOLAllVar, FOLAnd, FOLAtom, FOLExVar, FOLImp, FOLNeg, FOLOr }
+import at.logic.gapt.language.fol._
 import at.logic.gapt.language.hol._
+import at.logic.gapt.language.hol.logicSymbols.{ TopSymbol, BottomSymbol }
 import at.logic.gapt.language.lambda.symbols.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.resolution.FClause
-
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 /**
@@ -18,6 +19,8 @@ object CNFp {
   def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
   def transform( f: HOLFormula ): List[FClause] = f match {
+    case HOLBottomC         => List( FClause( List(), List() ) )
+    case HOLTopC            => List()
     case HOLAtom( _, _ )    => List( FClause( List(), List( f ) ) )
     case HOLNeg( f2 )       => CNFn.transform( f2 )
     case HOLAnd( f1, f2 )   => CNFp.transform( f1 ) ++ CNFp.transform( f2 )
@@ -39,6 +42,8 @@ object CNFn {
   def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
   def transform( f: HOLFormula ): List[FClause] = f match {
+    case HOLBottomC        => List()
+    case HOLTopC           => List( FClause( List(), List() ) )
     case HOLAtom( _, _ )   => List( FClause( List( f ), List() ) )
     case HOLNeg( f2 )      => CNFp.transform( f2 )
     case HOLAnd( f1, f2 )  => times( CNFn.transform( f1 ), CNFn.transform( f2 ) )
@@ -84,7 +89,7 @@ class TseitinCNF {
   val subformulaMap = mutable.Map[FOLFormula, FOLFormula]()
 
   val hc = StringSymbol( "x" )
-  var fsyms = List[SymbolA]()
+  var fsyms = Set[SymbolA]()
   var auxsyms = mutable.MutableList[SymbolA]()
   /**
    * Get a list of all Atoms symbols used in f
@@ -105,12 +110,19 @@ class TseitinCNF {
   def transform( f: FOLFormula ): List[FClause] = {
     // take an arbitrary atom symbol and rename it
     // s.t. it does not occur anywhere in f
-    fsyms = getAtomSymbols( f )
+    fsyms = getAtomSymbols( f ) toSet
 
     // parseFormula and transform it via Tseitin-Transformation
     val pf = parseFormula( f )
-    pf._2 :+ FClause( List(), List( pf._1 ) )
+    val extraDefs =
+      if ( fsyms.contains( TopSymbol ) || fsyms.contains( BottomSymbol ) )
+        getConstantDefs()
+      else
+        Nil
+    ( pf._2 ++ extraDefs ) :+ FClause( List(), List( pf._1 ) )
   }
+
+  private def getConstantDefs() = FClause( List(), List( FOLTopC ) ) :: FClause( List( FOLBottomC ), List() ) :: Nil
 
   /**
    * Adds a FOLFormula to fol.Atom map to the subFormulas HashMap, iff
@@ -120,18 +132,24 @@ class TseitinCNF {
    * @param f subformula to possibly be added to subformulas HashMap
    * @return an atom either representing the subformula or f if f is already an atom
    */
-  def addIfNotExists( f: FOLFormula ): FOLFormula = f match {
-    case HOLAtom( h, args ) => f
+  private var auxCounter: Int = 0
+  @tailrec
+  private def addIfNotExists( f: FOLFormula ): FOLFormula = f match {
+    case FOLAtom( h, args ) => f
     case _ =>
       if ( subformulaMap.isDefinedAt( f ) ) {
         subformulaMap( f )
       } else {
-        // generate new atom symbol
-        val sym = at.logic.gapt.language.lambda.rename( hc, fsyms ::: auxsyms.toList )
-        val auxAtom = FOLAtom( sym, Nil )
-        auxsyms += sym
-        subformulaMap( f ) = auxAtom
-        auxAtom
+        auxCounter += 1
+        var auxsym = StringSymbol( s"$hc$auxCounter" )
+        if ( fsyms.contains( auxsym ) ) {
+          addIfNotExists( f )
+        } else {
+          auxsyms += auxsym
+          val auxAtom = FOLAtom( auxsym )
+          subformulaMap( f ) = auxAtom
+          auxAtom
+        }
       }
   }
 
@@ -143,7 +161,6 @@ class TseitinCNF {
    */
   def parseFormula( f: FOLFormula ): Tuple2[FOLFormula, List[FClause]] = f match {
     case FOLAtom( _, _ ) => ( f, List() )
-
     case FOLNeg( f2 ) =>
       val pf = parseFormula( f2 )
       val x = addIfNotExists( f )

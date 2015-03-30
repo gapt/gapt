@@ -66,7 +66,7 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
       val proof = LinearExampleProof( 0, 8 )
       val proofLanguage = toTerms( proof )
 
-      val grammar = TreeGrammarDecomposition( proofLanguage, 1, MCSMethod.MaxSAT )
+      val grammar = TreeGrammarDecomposition( proofLanguage, 1, MCSMethod.MaxSAT, MaxSATSolver.QMaxSAT )
 
       // check size
       grammar.get.slist.size shouldEqual 1
@@ -83,7 +83,7 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
       val proof = LinearExampleProof( 0, 18 )
       val proofLanguage = toTerms( proof )
 
-      val grammar = TreeGrammarDecomposition( proofLanguage, 2, MCSMethod.MaxSAT )
+      val grammar = TreeGrammarDecomposition( proofLanguage, 2, MCSMethod.MaxSAT, MaxSATSolver.QMaxSAT )
 
       // check size
       grammar.get.slist.size shouldEqual 2

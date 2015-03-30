@@ -2,11 +2,10 @@
  * Tests for verit's interface.
 **/
 
-package at.logic.gapt
+package at.logic.gapt.provers.veriT
 
 import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.provers.veriT.VeriTProver
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner

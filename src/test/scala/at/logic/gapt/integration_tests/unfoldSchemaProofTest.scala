@@ -1,9 +1,9 @@
 
-package at.logic.gapt
+package at.logic.gapt.integration_tests
 
 import java.io.InputStreamReader
 
-import at.logic.gapt.formats.shlk_parsing.SHLK
+import at.logic.gapt.formats.shlk_parsing.SHLK.parseProof
 import at.logic.gapt.language.schema._
 import org.junit.runner.RunWith
 import org.specs2.execute.Success
@@ -18,8 +18,8 @@ class UnfoldSchemaProofTest extends SpecificationWithJUnit {
     "unfold the adder.slk" in {
       val zero = IntZero(); val one = Succ( IntZero() ); val two = Succ( Succ( IntZero() ) ); val three = Succ( Succ( Succ( IntZero() ) ) )
       val str = new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "schema-adder.lks" ) )
-      val map = SHLK.parseProof( str )
-      val n = IntVar( "n" ); val n1 = Succ( n ); val n2 = Succ( n1 ); val n3 = Succ( n2 );
+      val map = parseProof( str )
+      val n = IntVar( "n" ); val n1 = Succ( n ); val n2 = Succ( n1 ); val n3 = Succ( n2 )
       val k = IntVar( "k" ); val i = IntVar( "i" )
       val A3 = IndexedPredicate( "A", three )
       val A = IndexedPredicate( "A", i )

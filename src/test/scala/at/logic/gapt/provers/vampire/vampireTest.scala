@@ -14,14 +14,10 @@ import at.logic.gapt.proofs.lk.base.FSequent
 @RunWith( classOf[JUnitRunner] )
 class VampireTest extends SpecificationWithJUnit {
 
-  val box = List()
-  def checkForVampireOrSkip = Vampire.refute( box ) must not( throwA[VampireException] ).orSkip
+  args( skipAll = !Vampire.isInstalled() )
 
   "The Vampire interface" should {
     "refute { :- P; P :- }" in {
-      //checks, if the execution of vampire works, o.w. skip test
-      Vampire.refute( box ) must not( throwA[VampireException] ).orSkip
-
       val p = FOLAtom( "P", Nil )
       val s1 = FSequent( Nil, p :: Nil )
       val s2 = FSequent( p :: Nil, Nil )
@@ -32,9 +28,6 @@ class VampireTest extends SpecificationWithJUnit {
 
   "The Vampire interface" should {
     "prove SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
-      //checks, if the execution of vampire works, o.w. skip test
-      Vampire.refute( box ) must not( throwA[VampireException] ).orSkip
-
       val x = FOLVar( "x" )
       val y = FOLVar( "y" )
       val z = FOLVar( "z" )
@@ -68,9 +61,6 @@ class VampireTest extends SpecificationWithJUnit {
 
   "The Vampire interface" should {
     "not refute { :- P; Q :- }" in {
-      //checks, if the execution of vampire works, o.w. skip test
-      Vampire.refute( box ) must not( throwA[VampireException] ).orSkip
-
       val s1 = FSequent( Nil, List( FOLAtom( "P", Nil ) ) )
       val t1 = FSequent( List( FOLAtom( "Q", Nil ) ), Nil )
       val result: Boolean = Vampire.refute( List( s1, t1 ) )

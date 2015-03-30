@@ -352,16 +352,20 @@ object lkTolksk {
   def apply( p: LKProof ) = LKtoLKskc( p )
 }
 
+object extractExpansionSequent {
+  def apply( proof: LKProof ): ExpansionSequent = herbrandExtraction.extractExpansionSequent( proof, true )
+}
+
+object ExpansionProofToLKProof {
+  def apply( ep: ExpansionSequent ): Option[LKProof] = solve.expansionProofToLKProof( ep )
+}
+
 object eliminateCuts {
   def apply( proof: LKProof ): LKProof = ReductiveCutElim( proof )
 }
 
 object extractInterpolant {
   def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = ExtractInterpolant( p, npart, ppart )
-}
-
-object extractExpansionSequent {
-  def apply( proof: LKProof ): ExpansionSequent = herbrandExtraction.extractExpansionSequent( proof, true )
 }
 
 object compressExpansionTree {
@@ -374,6 +378,21 @@ object compressExpansionSequent {
 
 object minimalExpansionSequents {
   def apply( sequent: ExpansionSequent, prover: abstractProver ): List[ExpansionSequent] = minimalExpSeq( sequent, prover ).toList
+}
+
+object printProofStats {
+  def apply( p: LKProof ) = {
+    val stats = getStatistics( p )
+    val total = rulesNumber( p )
+    val quant = quantRulesNumber( p )
+    val weakQuant = weakQuantRulesNumber( p )
+    println( "------------- Statistics ---------------" )
+    println( "Cuts: " + stats.cuts )
+    println( "Number of quantifier inferences: " + quant )
+    println( "Number of inferences: " + total )
+    println( "Quantifier complexity: " + weakQuant )
+    println( "----------------------------------------" )
+  }
 }
 
 /**
@@ -480,16 +499,15 @@ object seeNFirstGrammars {
 }
 
 object generateExtendedHerbrandSequent {
-  def apply( es: FSequent, g: Grammar ): ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
-  def apply( es: Sequent, g: Grammar ): ExtendedHerbrandSequent = apply( es.toFSequent, g )
+  def apply( es: FSequent, g: MultiGrammar ): ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
+  def apply( es: Sequent, g: MultiGrammar ): ExtendedHerbrandSequent = apply( es.toFSequent, g )
 }
 
 object computeCanonicalSolutions {
-  def apply( s: FSequent, g: Grammar ): List[FOLFormula] = {
+  def apply( g: MultiGrammar ): List[FOLFormula] = {
     println( "Note that the clauses that do not contain the eigenvariable were already removed." );
-    CutIntroduction.computeCanonicalSolutions( s, g )
+    CutIntroduction.computeCanonicalSolutions( g )
   }
-  def apply( es: Sequent, g: Grammar ): List[FOLFormula] = apply( es.toFSequent, g )
 }
 
 object minimizeSolution {
@@ -511,19 +529,24 @@ object buildProofWithCut {
 
 /**
  * *****************************************************************************
- * Visualization
+ * Miscellaneous
  * ****************************************************************************
  */
+
+object time {
+  def apply[T]( f: => T ): T = {
+    val start = java.lang.System.currentTimeMillis()
+    val r = f
+    println( "\ntime: " + ( java.lang.System.currentTimeMillis() - start ) + " ms\n" )
+    r
+  }
+}
 
 object prooftool {
   def apply( x: AnyRef ) = Main.display( "From CLI", x )
 }
 
-/**
- * *****************************************************************************
- * General
- * ****************************************************************************
- */
+// copying/license call taken from imports
 
 object help {
   def apply() = {
@@ -575,9 +598,10 @@ object help {
         |   regularize: LKProof => LKProof - regularize the given LK proof
         |   skolemize: LKProof => LKProof - skolemize the input proof
         |   lkTolksk: LKProof => LKProof
+        |   extractExpansionSequent: LKProof => ExpansionSequent - extract expansion sequent from LKProof
+        |   ExpansionProofToLKProof: ExpansionSequent => Option[LKProof]
         |   eliminateCuts: LKProof => LKProof - eliminate cuts by Gentzen's method
         |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
-        |   extractExpansionSequent: LKProof => ExpansionSequent - extract the expansion trees of all formulas in the end sequent from a skolemized proof.
         |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
         |   compressExpansionSequent: ExpansionSequent => MultiExpansionSequent - compress the quantifiers in the trees of the sequent using vectors for the terms.
         |   minimalExpansionSequents: ( ExpansionSequent, Prover ) => List[ExpansionSequent] - find all minimal expansion sequents below the given one that are still valid according to the prover.
@@ -600,24 +624,21 @@ object help {
         |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
         |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
         |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
-        |   computeCanonicalSolution: Sequent, Grammar => FOLFormula - computes the canonical solution for the cut-introduction problem
+        |   computeCanonicalSolution: MultiGrammar => FOLFormula - computes the canonical solution for the cut-introduction problem
         |   minimizeSolution: ExtendedHerbrandSequent => ExtendedHerbrandSequent - minimizes the solution associated with the extended Herbrand sequent returning another Herbrand sequent with this minimal solution
         |   buildProofWithCut: ExtendedHerbrandSequent => LKProof - builds a proof with one cut based on the extended Herbrand sequent
         |
-        | Visualization:
-        |   prooftool: LKProof => Unit - visualize proof in prooftool
-        |
-        | General:
-        |   help    : this help text
-        |   copying : print redistribution conditions
-        |   license : print the text of GNU General Public License
+        | Miscellaneous:
+        |   prooftool: visualize argument in prooftool
+        |   time: display time used for executing code given as argument
+        |   copying: print redistribution conditions
+        |   license: print the text of GNU General Public License
+        |   help: this help text
       """.stripMargin
 
     println( msg )
   }
 }
-
-// copying/license call taken from imports
 
 /**
  * *****************************************************************************
@@ -628,21 +649,6 @@ object help {
  *
  * ****************************************************************************
  */
-
-object printProofStats {
-  def apply( p: LKProof ) = {
-    val stats = getStatistics( p )
-    val total = rulesNumber( p )
-    val quant = quantRulesNumber( p )
-    val weakQuant = weakQuantRulesNumber( p )
-    println( "------------- Statistics ---------------" )
-    println( "Cuts: " + stats.cuts )
-    println( "Number of quantifier inferences: " + quant )
-    println( "Number of inferences: " + total )
-    println( "Quantifier complexity: " + weakQuant )
-    println( "----------------------------------------" )
-  }
-}
 
 /** ****************** CERES operations *************************/
 
@@ -804,9 +810,9 @@ object exportLatex {
 }
 
 object exportTHF {
-  def apply( ls: List[FSequent], filename: String ) = {
+  def apply( ls: List[FSequent], filename: String, positive: Boolean = false ) = {
     val file = new JBufferedWriter( new JFileWriter( filename ) )
-    file.write( TPTPHOLExporter( ls ) )
+    file.write( TPTPHOLExporter( ls, positive ) )
     file.close
   }
 }

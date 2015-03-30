@@ -224,9 +224,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val c = FOLConst( "c" )
 
         val gc = FOLFunction( g, c :: Nil )
-        val ggc = FOLFunction( g, ( FOLFunction( g, c :: Nil ) ) :: Nil )
-        val hgc = FOLFunction( h, ( FOLFunction( g, c :: Nil ) ) :: Nil )
-        val hggc = FOLFunction( h, ( FOLFunction( g, ( FOLFunction( g, c :: Nil ) ) :: Nil ) ) :: Nil )
+        val ggc = FOLFunction( g, FOLFunction( g, c :: Nil ) :: Nil )
+        val hgc = FOLFunction( h, FOLFunction( g, c :: Nil ) :: Nil )
+        val hggc = FOLFunction( h, FOLFunction( g, FOLFunction( g, c :: Nil ) :: Nil ) :: Nil )
 
         val f1 = FOLFunction( f, hggc :: ggc :: Nil )
         val f2 = FOLFunction( f, hgc :: gc :: Nil )
@@ -239,7 +239,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val dec = delta.computeDelta( f1 :: f2 :: Nil, "α" )
         val s = Set( ( ( gc :: c :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( common, s ) ) )
+        dec must beEqualTo( Set[Decomposition]( ( common, s ) ) )
       }
 
       "trivial decomposition" in {
@@ -254,9 +254,9 @@ class GrammarTest extends SpecificationWithJUnit {
         val a = FOLConst( "a" )
 
         val gb = FOLFunction( g, b :: Nil )
-        val gga = FOLFunction( g, ( FOLFunction( g, a :: Nil ) ) :: Nil )
-        val hgc = FOLFunction( h, ( FOLFunction( g, c :: Nil ) ) :: Nil )
-        val hggc = FOLFunction( h, ( FOLFunction( g, ( FOLFunction( g, c :: Nil ) ) :: Nil ) ) :: Nil )
+        val gga = FOLFunction( g, FOLFunction( g, a :: Nil ) :: Nil )
+        val hgc = FOLFunction( h, FOLFunction( g, c :: Nil ) :: Nil )
+        val hggc = FOLFunction( h, FOLFunction( g, ( FOLFunction( g, c :: Nil ) ) :: Nil ) :: Nil )
 
         val f1 = FOLFunction( f, hggc :: gga :: Nil )
         val f2 = FOLFunction( f, hgc :: gb :: Nil )
@@ -266,7 +266,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val dec = delta.computeDelta( f1 :: f2 :: Nil, "α" )
         val s = Set( ( ( f1 :: f2 :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( alpha, s ) ) )
+        dec must beEqualTo( Set[Decomposition]( ( alpha, s ) ) )
 
       }
 
@@ -282,8 +282,8 @@ class GrammarTest extends SpecificationWithJUnit {
 
         val ga = FOLFunction( g, a :: Nil )
         val gc = FOLFunction( g, c :: Nil )
-        val hgc = FOLFunction( h, ( FOLFunction( g, c :: Nil ) ) :: Nil )
-        val hggc = FOLFunction( h, ( FOLFunction( g, ( FOLFunction( g, c :: Nil ) ) :: Nil ) ) :: Nil )
+        val hgc = FOLFunction( h, FOLFunction( g, c :: Nil ) :: Nil )
+        val hggc = FOLFunction( h, FOLFunction( g, ( FOLFunction( g, c :: Nil ) ) :: Nil ) :: Nil )
 
         val f1 = FOLFunction( f, hggc :: ga :: Nil )
         val f2 = FOLFunction( f, hgc :: ga :: Nil )
@@ -296,7 +296,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val dec = delta.computeDelta( f1 :: f2 :: Nil, "α" )
         val s = Set( ( ( gc :: c :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( common, s ) ) )
+        dec must beEqualTo( Set[Decomposition]( ( common, s ) ) )
 
       }
 
@@ -308,8 +308,8 @@ class GrammarTest extends SpecificationWithJUnit {
         val a = FOLConst( "a" )
 
         val fa = FOLFunction( f, a :: Nil )
-        val f2a = FOLFunction( f, ( FOLFunction( f, a :: Nil ) ) :: Nil )
-        val f3a = FOLFunction( f, ( FOLFunction( f, ( FOLFunction( f, a :: Nil ) ) :: Nil ) ) :: Nil )
+        val f2a = FOLFunction( f, FOLFunction( f, a :: Nil ) :: Nil )
+        val f3a = FOLFunction( f, FOLFunction( f, FOLFunction( f, a :: Nil ) :: Nil ) :: Nil )
 
         val alpha = FOLVar( "α_0" )
         val falpha = FOLFunction( f, alpha :: Nil )
@@ -317,7 +317,7 @@ class GrammarTest extends SpecificationWithJUnit {
         val dec = delta.computeDelta( fa :: f2a :: f3a :: Nil, "α" )
         val s = Set( ( ( a :: fa :: f2a :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( falpha, s ) ) )
+        dec must beEqualTo( Set[Decomposition]( ( falpha, s ) ) )
       }
     }
 

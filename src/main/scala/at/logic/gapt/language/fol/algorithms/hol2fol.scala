@@ -152,6 +152,8 @@ class reduceHolToFol {
       case foc: foConst              => FOLConst( foc.name )
       case HOLVar( n, _ )            => FOLVar( n )
       case HOLConst( n, _ )          => FOLConst( n )
+      case HOLTopC                   => FOLTopC
+      case HOLBottomC                => FOLBottomC
       case HOLNeg( n )               => FOLNeg( apply_( n ) )
       case HOLAnd( n1, n2 )          => FOLAnd( apply_( n1 ), apply_( n2 ) )
       case HOLOr( n1, n2 )           => FOLOr( apply_( n1 ), apply_( n2 ) )

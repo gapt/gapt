@@ -1,9 +1,8 @@
-package at.logic.gapt
+package at.logic.gapt.proofs.resolution.algorithms
 
 import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.lk.base.beSyntacticMultisetEqual
-import at.logic.gapt.proofs.resolution.algorithms.InstantiateElimination
-import at.logic.gapt.proofs.resolution.robinson.{ InitialClause, Instance, Paramodulation, Resolution }
+import at.logic.gapt.proofs.resolution.robinson.{ Resolution, Paramodulation, Instance, InitialClause }
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner

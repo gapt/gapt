@@ -154,6 +154,8 @@ object lcomp {
     case HOLExVar( x, f )  => lcomp( f ) + 1
     case HOLAllVar( x, f ) => lcomp( f ) + 1
   }
+
+  def apply( seq: FSequent ): Int = seq.antecedent.foldLeft( 0 )( _ + lcomp( _ ) ) + seq.succedent.foldLeft( 0 )( _ + lcomp( _ ) )
 }
 
 /**

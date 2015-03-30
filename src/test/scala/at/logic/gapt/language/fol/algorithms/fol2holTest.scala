@@ -1,7 +1,7 @@
 package at.logic.gapt.language.fol.algorithms
 
-import at.logic.gapt.language.{ fol, hol }
-import at.logic.gapt.language.hol.HOLConst
+import at.logic.gapt.language.fol._
+import at.logic.gapt.language.hol._
 import at.logic.gapt.language.lambda.types.{ Ti, To }
 import org.junit.runner.RunWith
 import org.specs2.mutable._
@@ -14,28 +14,28 @@ import org.specs2.runner.JUnitRunner
 class fol2holTest extends SpecificationWithJUnit {
   "Conversion from fol to hol" should {
     "work for some simple terms" in {
-      val fterm = fol.FOLFunction( "f", List(
-        fol.FOLConst( "q1" ),
-        fol.FOLVar( "x" ) ) )
+      val fterm = FOLFunction( "f", List(
+        FOLConst( "q1" ),
+        FOLVar( "x" ) ) )
       val hterm = fol2hol( fterm )
       hterm must beEqualTo( fterm )
-      hterm.factory must beEqualTo( hol.HOLFactory )
+      hterm.factory must beEqualTo( HOLFactory )
 
-      val rterm = recreateWithFactory( fterm, hol.HOLFactory )
+      val rterm = recreateWithFactory( fterm, HOLFactory )
       rterm must beEqualTo( fterm )
-      rterm.factory must beEqualTo( hol.HOLFactory )
+      rterm.factory must beEqualTo( HOLFactory )
     }
 
     "allow substitution of a fol term into a hol term" in {
-      val p = hol.HOLConst( "P", Ti -> ( ( Ti -> Ti ) -> To ) )
-      val x = hol.HOLVar( "x", Ti )
-      val y = hol.HOLVar( "y", Ti )
+      val p = HOLConst( "P", Ti -> ( ( Ti -> Ti ) -> To ) )
+      val x = HOLVar( "x", Ti )
+      val y = HOLVar( "y", Ti )
 
-      val hterm = hol.HOLAtom( HOLConst( "P", Ti -> ( ( Ti -> Ti ) -> To ) ), List( y, hol.HOLAbs( x, x ) ) )
+      val hterm = HOLAtom( HOLConst( "P", Ti -> ( ( Ti -> Ti ) -> To ) ), List( y, HOLAbs( x, x ) ) )
 
-      val fterm = fol.FOLConst( "c" )
+      val fterm = FOLConst( "c" )
 
-      val fsub = hol.HOLSubstitution( fol.FOLVar( "y" ), fterm )
+      val fsub = HOLSubstitution( FOLVar( "y" ), fterm )
 
       /*TODO: Martin expected this to fail, but it doesn't (app takes the factory of the first parameter, which is fol
         after the substitution, so the lambda x.x should be created by the fol factory and fail).

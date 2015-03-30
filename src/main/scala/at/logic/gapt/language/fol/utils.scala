@@ -19,6 +19,7 @@ import scala.collection.mutable
 // There is no guarantee on the ordering of the list.
 object freeVariables {
   def apply( e: FOLExpression ): List[FOLVar] = freeVariablesLambda( e ).asInstanceOf[List[FOLVar]]
+  def apply( es: List[FOLExpression] ): List[FOLVar] = es.flatMap( apply( _ ) )
 }
 
 // matches for consts and vars, but nothing else
@@ -100,13 +101,21 @@ object fromFuncArgs {
 }
 
 // Instantiates all quantifiers of the formula with the terms in lst.
-// OBS: the number of quantifiers in the formula must greater or equal than the
+// OBS: the number of quantifiers in the formula must be greater or equal than the
 // number of terms in lst.
 object instantiateAll {
-  def apply( f: FOLFormula, lst: List[FOLTerm] ): FOLFormula = lst match {
+  def apply( f: FOLFormula, lst: Seq[FOLTerm] ): FOLFormula = lst match {
     case Nil    => f
     case h :: t => instantiateAll( instantiate( f, h ), t )
   }
+
+  /**
+   * If f is a formula \forall x_1 ... x_n G, and lst is a list of lists of terms
+   *   such that each list has length <= n, this function returns the list
+   *   of instances of f obtained by calling instantiateAll on each list of terms.
+   */
+  def apply( f: FOLFormula, lst: Seq[Seq[FOLTerm]] ): Seq[FOLFormula] =
+    lst.map( terms => instantiateAll( f, terms ) )
 }
 
 // TODO: some of the methods below should work for FOL and HOL...

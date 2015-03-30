@@ -5,12 +5,12 @@
 
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
-import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
+import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.MinimizeSolution._
 
 import at.logic.gapt.language.fol._
-import MinimizeSolution._
+import org.junit.runner.RunWith
+import org.specs2.mutable._
+import org.specs2.runner.JUnitRunner
 
 @RunWith( classOf[JUnitRunner] )
 class ForgetfulResolutionTest extends SpecificationWithJUnit {

@@ -28,9 +28,7 @@ import scala.io._
 class acnfTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
 
-  args( skipAll = !Prover9.isInstalled() );
-
-  sequential
+  args( sequential = true, skipAll = !Prover9.isInstalled() )
   "ACNFTest" should {
     "should create correctly the ACNF for journal_example.lks" in {
       skipped( "Error at: at.logic.gapt.proofs.algorithms.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)" )

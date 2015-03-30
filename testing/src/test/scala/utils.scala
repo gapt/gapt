@@ -5,12 +5,13 @@ import java.io.File
 import at.logic.gapt.utils.executionModels.timeout.{ TimeOutException, withTimeout }
 import org.specs2.execute.AsResult
 import org.specs2.matcher.ThrownExpectations
-import org.specs2.time.Duration
+
+import scala.concurrent.duration.Duration
 
 object skipIfRunsLongerThan extends ThrownExpectations {
   def apply[T: AsResult]( timeout: Duration )( f: => T ) =
     try {
-      val result = withTimeout( timeout.inMilliseconds )( f )
+      val result = withTimeout( timeout toMillis )( f )
       AsResult( result )
     } catch {
       case ex: TimeOutException => skipped( s"Runtime exceeded ${timeout}." )

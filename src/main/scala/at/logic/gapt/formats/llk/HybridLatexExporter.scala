@@ -177,10 +177,12 @@ class HybridLatexExporter( val expandTex: Boolean ) {
         case HOLVar( x, _ )   => x
       }
       val str: String =
-        if ( args.length == 2 && sym.toString.matches( """(<|>|\\leq|\\geq|=|>=|<=)""" ) )
-          "(" + getFormulaString( args( 0 ), false, escape_latex ) + " " + nameToLatexString( sym.toString ) + " " +
-            getFormulaString( args( 1 ), false, escape_latex ) + ")"
-        else
+        if ( args.length == 2 && sym.toString.matches( """(<|>|\\leq|\\geq|=|>=|<=)""" ) ) {
+          val str = getFormulaString( args( 0 ), false, escape_latex ) + " " + nameToLatexString( sym.toString ) + " " +
+            getFormulaString( args( 1 ), false, escape_latex )
+          if ( outermost ) str else "(" + str + ")"
+
+        } else
           nameToLatexString( sym.toString ) + ( if ( args.isEmpty ) " " else args.map( getFormulaString( _, false, escape_latex ) ).mkString( "(", ", ", ")" ) )
       //if (outermost) str else "(" + str + ")"
       str
@@ -276,16 +278,16 @@ class HybridLatexExporter( val expandTex: Boolean ) {
 
     //TODO: this is only a way to write out the proof, but it cannot be read back in (labels are not handled by llk so far)
     case ExistsSkLeftRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\EXSKL{" + getFormulaString( term, true, escape_latex ) + "}{" /*+ getFormulaString(aux.formula, true, escape_latex) + "}{"*/
+      generateProof( p1, "\\EXSKL{" + getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
     case ExistsSkRightRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\EXSKR{" + getFormulaString( term, true, escape_latex ) + "}{" /*+ getFormulaString(aux.formula, true, escape_latex) + "}{"*/
+      generateProof( p1, "\\EXSKR{" + getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
     case ForallSkLeftRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\ALLSKL{" + getFormulaString( term, true, escape_latex ) + "}{" /*+ getFormulaString(aux.formula, true, escape_latex) + "}{"*/
+      generateProof( p1, "\\ALLSKL{" + getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
     case ForallSkRightRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\ALLSKR{" + getFormulaString( term, true, escape_latex ) + "}{" /*+ getFormulaString(aux.formula, true, escape_latex) + "}{"*/
+      generateProof( p1, "\\ALLSKR{" + getFormulaString( term, true, escape_latex ) + "}"
         + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
 
   }

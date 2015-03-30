@@ -12,7 +12,8 @@ import scala.collection.immutable.Map
 import scala.collection.mutable
 import scala.sys.process.{ Process, ProcessIO }
 
-// This is also occuring in the minisat package
+// This is also occuring in the at.logic.gapt.models package,
+// but with HOLFormula instead of FOLFormula.
 trait Interpretation {
   // Interpret an atom.
   def interpretAtom( atom: FOLFormula ): Boolean

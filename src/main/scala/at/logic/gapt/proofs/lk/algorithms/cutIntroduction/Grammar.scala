@@ -18,18 +18,14 @@ import at.logic.gapt.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.{ DFS, BFS, setSearch }
 import Deltas._
 
+import scala.collection.immutable.HashMap
+
 /**
  * Creates a grammar from a decomposition {U o,,a1,...,am1,, S,,1,, o,,b1,...,bm2,, ... o,,z1,...,zmn,, S,,n,,}
- * @param u0 set U
- * @param slist0 list of non-terminals and their corresponding sets (((a1,...,am1), S,,1,,), ..., (z1,...,zmn, S,,n,,))
+ * @param u set U
+ * @param slist list of non-terminals and their corresponding sets (((a1,...,am1), S,,1,,), ..., (z1,...,zmn, S,,n,,))
  */
-class Grammar( u0: List[FOLTerm], slist0: List[( List[FOLVar], Set[List[FOLTerm]] )] ) {
-
-  val u = u0
-  val slist = slist0
-
-  // Is this the best solution?
-  var terms: TermSet = null
+class Grammar( val u: List[FOLTerm], val slist: List[( List[FOLVar], Set[List[FOLTerm]] )] ) {
 
   /** Returns the size of the grammar, i.e. |u| + |s| */
   def size = u.size + slist.foldLeft( 0 )( ( acc, s ) => acc + s._2.size )
@@ -45,12 +41,45 @@ class Grammar( u0: List[FOLTerm], slist0: List[( List[FOLVar], Set[List[FOLTerm]
   }
 }
 
+// For cut-introduction, we consider sequents
+// \forall x_1 F_1(x_1), ..., \forall x_n F_n(x_n) :- \exists x_{n+1} F_{n+1}(x_{n+1}), ..., \exists x_m F(x_m)
+// where the x_i are lists of variables.
+//
+// Hence we will consider grammars of the form (U_1,...,U_m) \circ S_1 ... \circ S_n
+// where the U_i are sets of lists of terms corresponding to the instances of the x_i,
+// and the S_i are sets of lists of terms.
+class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[( List[FOLVar], Set[List[FOLTerm]] )] ) {
+
+  /** Returns the size of the grammar, i.e. |u| + |s| */
+  def size = u_size + s_size
+  private def u_size = us.foldLeft( 0 ) { case ( acc, ( _, list ) ) => acc + list.size }
+  private def s_size = ss.foldLeft( 0 ) { case ( acc, ( _, set ) ) => acc + set.size }
+
+  /** Returns the set of eigenvariables that occur in the grammar. */
+  def eigenvariables = ss.flatMap( s => s._1 ).distinct
+
+  /** Returns the number of eigenvariables that occur in this grammar. */
+  def numVars = eigenvariables.length
+
+}
+
+object simpleToMultiGrammar {
+  def apply( terms: TermSet, g: Grammar ): MultiGrammar = {
+    val us = g.u.foldLeft( HashMap[FOLFormula, List[List[FOLTerm]]]() )( ( acc, t ) => {
+      val f = terms.getFormula( t )
+      val old: List[List[FOLTerm]] = acc.getOrElse( f, List[List[FOLTerm]]() )
+      acc + ( ( f, ( old :+ terms.getTermTuple( t ) ) ) )
+    } )
+    new MultiGrammar( us, g.slist )
+  }
+}
+
 /**
  * Takes a set of terms and, using DeltaG, computes the set of smallest grammars that generate it.
  */
 object ComputeGrammars {
 
-  def apply( terms: TermSet, delta: DeltaVector ): List[Grammar] = apply( terms.set, delta ).map { case g => g.terms = terms; g }
+  def apply( terms: TermSet, delta: DeltaVector ): List[Grammar] = ComputeGrammars( terms.set, delta )
 
   def apply( terms: List[FOLTerm], delta: DeltaVector ): List[Grammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.
@@ -58,6 +87,18 @@ object ComputeGrammars {
     val deltatable = new DeltaTable( terms, eigenvariable, delta )
 
     findValidGrammars( terms, deltatable, eigenvariable ).sortWith( ( g1, g2 ) => g1.size < g2.size )
+  }
+  /**
+   * Finds valid, minimum-size MultiGrammars based on a TermSet and a generalized delta table.
+   *
+   *
+   * @param terms The TermSet to be compressed.
+   * @param deltatable A generalized delta table for terms.
+   * @param eigenvariable The name of eigenvariables to introduce.
+   */
+  def findValidGrammars( terms: TermSet, deltatable: DeltaTable, eigenvariable: String ): List[MultiGrammar] = {
+    val gs = findValidGrammars( terms.set, deltatable, eigenvariable )
+    gs.map( g => simpleToMultiGrammar( terms, g ) )
   }
 
   /**

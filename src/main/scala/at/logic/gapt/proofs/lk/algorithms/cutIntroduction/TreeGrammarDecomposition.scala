@@ -42,59 +42,6 @@ class TreeGrammarDecompositionException( msg: String ) extends Exception( msg )
 
 object TreeGrammarDecomposition {
 
-  var decomp: TreeGrammarDecomposition = _
-
-  /**
-   * Provided a termset/language, an integer n (representing the maximum number of non-terminals) and a method
-   * (e.g. MCSMethod.QMaxSAT, MCSMethod.Simplex) the TreeGrammarDecomposition algorithm described in
-   * Eberhard, Hetzl [2014] will be executed, resulting in a List of Grammars, which are minimal w.r.t. the
-   * number of rules.
-   *
-   * @param termset language on which the TGD algorithm will operate on
-   * @param n maximum number of non-terminals
-   * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
-   * @return a list of grammars
-   */
-  def apply( termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver = MaxSATSolver.QMaxSAT ): Option[Grammar] = {
-
-    method match {
-      case MCSMethod.MaxSAT => {
-        // instantiate TreeGrammarDecomposition object with the termset and n
-        decomp = new TreeGrammarDecompositionPWM( termset, n )
-
-      }
-      case MCSMethod.Simplex => {
-        // instantiate TreeGrammarDecomposition object with the termset and n
-        //val decomp = new TreeGrammarDecompositionSimplex(termset, n)
-        return null
-      }
-    }
-
-    if ( decomp != null ) {
-      // generating the sufficient set of keys
-      val startTimeSuffKeys = System.currentTimeMillis()
-      decomp.suffKeys()
-      val endTimeSuffKeys = System.currentTimeMillis()
-      // Generating the MinCostSAT formulation for QMaxSAT
-      val f = decomp.MCS().asInstanceOf[List[FOLFormula]]
-      // Generating the soft constraints for QMaxSAT to minimize the amount of rules
-      val g = decomp.softConstraints().asInstanceOf[List[Tuple2[FOLFormula, Int]]]
-      // Retrieving a model from a MaxSAT solver and extract the rules
-      val interpretation = ( new MaxSAT( satsolver ) ).solvePWM( f, g )
-      interpretation match {
-        case Some( interp ) => {
-          val rules = decomp.getRules( interpretation )
-          // transform the rules to a Grammar
-          val grammar = decomp.getGrammar( rules )
-          return Some( grammar )
-        }
-        case None => return None
-      }
-    } else {
-      return None
-    }
-  }
-
   /**
    * Provided a termset/language, an integer n (representing the maximum number of non-terminals) and a method
    * (e.g. MCSMethod.QMaxSAT, MCSMethod.Simplex) the TreeGrammarDecomposition algorithm described in
@@ -107,58 +54,61 @@ object TreeGrammarDecomposition {
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return (list of grammars, status, log)
    */
-  def applyStat( termset: List[FOLTerm], n: Int, method: MCSMethod = MCSMethod.MaxSAT, satsolver: MaxSATSolver = MaxSATSolver.QMaxSAT ): Option[Grammar] = {
+  def apply( termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver ): Option[Grammar] = {
 
     var phase = "TGD"
 
-    var grammar: Option[Grammar] = None
-
-    method match {
+    val decomp = method match {
       case MCSMethod.MaxSAT => {
         // instantiate TreeGrammarDecomposition object with the termset and n
-        decomp = new TreeGrammarDecompositionPWM( termset, n )
+        new TreeGrammarDecompositionPWM( termset, n )
 
       }
       case MCSMethod.Simplex => {
         // instantiate TreeGrammarDecomposition object with the termset and n
-        //val decomp = new TreeGrammarDecompositionSimplex(termset, n)
-        return null
+        //new TreeGrammarDecompositionSimplex(termset, n)
+        throw new TreeGrammarDecompositionException( "Unsupported TreeGrammarDecomposition method" )
       }
     }
 
-    if ( decomp != null ) {
+    phase = "suffKeys"
 
-      phase = "suffKeys"
+    // generating the sufficient set of keys
+    decomp.suffKeys()
 
-      // generating the sufficient set of keys
-      decomp.suffKeys()
+    phase = "MCS"
 
-      phase = "MCS"
+    // Generating the MinCostSAT formulation for QMaxSAT
+    val f = decomp.MCS().asInstanceOf[List[FOLFormula]]
+    // Generating the soft constraints for QMaxSAT to minimize the amount of rules
+    val g = decomp.softConstraints().asInstanceOf[List[Tuple2[FOLFormula, Int]]]
 
-      // Generating the MinCostSAT formulation for QMaxSAT
-      val f = decomp.MCS().asInstanceOf[List[FOLFormula]]
-      // Generating the soft constraints for QMaxSAT to minimize the amount of rules
-      val g = decomp.softConstraints().asInstanceOf[List[Tuple2[FOLFormula, Int]]]
+    phase = "CNF/MaxSAT"
 
-      phase = "CNF/MaxSAT"
+    // Retrieving a model from a MaxSAT solver and extract the rules
+    val interpretation = ( new MaxSAT( satsolver ) ).solvePWM( f, g )
 
-      // Retrieving a model from a MaxSAT solver and extract the rules
-      val interpretation = ( new MaxSAT( satsolver ) ).solvePWM( f, g )
+    interpretation match {
+      case Some( interp ) => {
+        phase = "interpret"
+        val rules = decomp.getRules( interpretation )
+        // transform the rules to a Grammar
+        val grammar = decomp.getGrammar( rules )
 
-      interpretation match {
-        case Some( interp ) => {
-          phase = "interpret"
-          val rules = decomp.getRules( interpretation )
-          // transform the rules to a Grammar
-          val grammar = decomp.getGrammar( rules )
-          return Some( grammar )
-        }
-        case None => return None
+        // If the grammar has only U terms, it is trivial
+        if ( grammar.slist.size == 0 ) return None
+        else return Some( grammar )
       }
-    } else {
-      throw new TreeGrammarDecompositionException( "Unsupported TreeGrammarDecomposition method" )
+      case None => return None
     }
-    return None
+  }
+
+  def apply( termset: TermSet, n: Int, method: MCSMethod = MCSMethod.MaxSAT, satsolver: MaxSATSolver = MaxSATSolver.QMaxSAT ): Option[MultiGrammar] = {
+    val og = apply( termset.set, n, method, satsolver )
+    og match {
+      case Some( g ) => Some( simpleToMultiGrammar( termset, g ) )
+      case None      => None
+    }
   }
 }
 

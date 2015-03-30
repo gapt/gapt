@@ -8,7 +8,8 @@ import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable.{ ListBuffer, HashMap => mMap }
 
 /**
- * Given an expansion sequent S, this algorithm computes the list of expansion sequents below S that are valid and minimal.
+ * Given an expansion sequent S, this algorithm computes the list of expansion
+ * sequents below S that are valid and minimal.
  */
 object minimalExpansionSequents {
   /**
@@ -18,7 +19,7 @@ object minimalExpansionSequents {
    * @return A sequence of minimal expansion sequents.
    */
   def apply( sequent: MultiExpansionSequent, prover: Prover ): Seq[MultiExpansionSequent] =
-    new minimalExpansionSequents( sequent, prover ).compute()
+    new Minimizer( sequent, prover ).computeAllMinimal()
 
   /**
    * Applies the algorithm to an ExpansionSequent by compressing and decompressing.
@@ -26,23 +27,49 @@ object minimalExpansionSequents {
    * @param prover The prover used for the evaluation.
    * @return A sequence of minimal expansion sequents.
    */
-  def apply( sequent: ExpansionSequent, prover: Prover ): Seq[ExpansionSequent] = minimalExpansionSequents( compressQuantifiers( sequent ), prover ).map( decompressQuantifiers.apply )
+  def apply( sequent: ExpansionSequent, prover: Prover ): Seq[ExpansionSequent] =
+    apply( compressQuantifiers( sequent ), prover ).map( decompressQuantifiers.apply )
 }
 
 /**
- * Given an expansion sequent S, this algorithm computes the list of expansion sequents below S that are valid and minimal.
+ * Given an expansion sequent S, this algorithm computes a single expansion
+ * sequents below S that is valid and minimal. This algorithm is considerably
+ * faster than the one implemented in minimalExpansionSequents.
+ */
+object minimalExpansionSequent {
+  /**
+   * Applies the algorithm to a MultiExpansionSequent.
+   * @param sequent The MultiExpansionSequent to be evaluated.
+   * @param prover The prover used for the evaluation.
+   * @return A sequence of minimal expansion sequents.
+   */
+  def apply( sequent: MultiExpansionSequent, prover: Prover ): Option[MultiExpansionSequent] =
+    new Minimizer( sequent, prover ).computeAMinimal()
+
+  /**
+   * Applies the algorithm to an ExpansionSequent by compressing and decompressing.
+   * @param sequent The ExpansionSequent to be evaluated.
+   * @param prover The prover used for the evaluation.
+   * @return A sequence of minimal expansion sequents.
+   */
+  def apply( sequent: ExpansionSequent, prover: Prover ): Option[ExpansionSequent] =
+    apply( compressQuantifiers( sequent ), prover ).map( decompressQuantifiers.apply )
+}
+
+/**
+ * Class for computing expansion sequents below S that are valid and minimal.
  * @param sequent The MultiExpansionSequent to be evaluated.
  * @param prover The prover used for the evaluation.
  */
-private[expansionTrees] class minimalExpansionSequents( val sequent: MultiExpansionSequent, val prover: Prover ) extends Logger {
+private[expansionTrees] class Minimizer( val sequent: MultiExpansionSequent, val prover: Prover ) extends Logger {
 
   val maxRemovedInstance = new mMap[MultiExpansionSequent, Int] // This assigns to each MultiExpansionSequent S the maximum of all numbers n with the following property: S can be obtained from a MultiExpansionSequent S' by removing the nth instance of S'.
 
   /**
-   * This function simply performs the algorithm.
+   * Compute the list of all minimal expansion sequents below sequent.
    * @return A sequence of minimal expansion sequents.
    */
-  def compute(): Seq[MultiExpansionSequent] = {
+  def computeAllMinimal(): Seq[MultiExpansionSequent] = {
     val result = new ListBuffer[MultiExpansionSequent] // The list of minimal expansion proofs will be constructed iteratively.
     val stack = new scala.collection.mutable.Stack[MultiExpansionSequent] // Invariant: the stack only contains valid expansion sequents.
 
@@ -83,6 +110,33 @@ private[expansionTrees] class minimalExpansionSequents( val sequent: MultiExpans
     }
 
     result.toSeq
+  }
+
+  /**
+   * Compute a single minimal expansion sequent below sequent.
+   * @return a minimal expansion sequent, or None if sequent is not valid.
+   */
+  def computeAMinimal(): Option[MultiExpansionSequent] = {
+    if ( prover.isValid( sequent.toDeep ) )
+      Some( computeAMinimal_( sequent ) )
+    else
+      None
+  }
+
+  /**
+   * Compute a single minimal expansion sequent below mes. Assumes that
+   * mes.toDeep is valid.
+   *
+   * @param mes the MultiExpansionSequent to be evaluated.
+   * @return a minimal expansion sequent.
+   */
+  private def computeAMinimal_( mes: MultiExpansionSequent ): MultiExpansionSequent = {
+    debug( "Minimizing a MultiExpansionSequent with " + getStatistics( mes ).total + " instances..." )
+    val suc_opt = generateSuccessors( mes ).find( { s => prover.isValid( s.toDeep ) } )
+    if ( suc_opt.isDefined )
+      computeAMinimal_( suc_opt.get )
+    else
+      mes
   }
 
   /**

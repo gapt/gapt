@@ -6,6 +6,7 @@ import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.FClause
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.provers.atp.SearchDerivation
+import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.immutable.HashMap
 
@@ -29,44 +30,40 @@ import scala.collection.immutable.HashMap
  *  is a derivation of a subclause of c.
  */
 
-object fixDerivation extends at.logic.gapt.utils.logging.Logger {
-
-  private def getSymmetryMap( to: FClause, from: FSequent ) = {
+object fixDerivation extends Logger {
+  private def getSymmetryMap( to: Pair[Seq[FOLFormula], Seq[FOLFormula]], from: Pair[Seq[FOLFormula], Seq[FOLFormula]] ) = {
     var err = false
-
     def createMap( from: Seq[FOLFormula], to: Seq[FOLFormula] ) = {
-      from.foldLeft( HashMap[FOLFormula, FOLFormula]() )( ( map, from_f ) => {
-        val to_f = to.find( to_f => ( from_f == to_f ) || ( ( from_f, to_f ) match {
-          case ( FOLEquation( from_l, from_r ), FOLEquation( to_l, to_r ) ) if from_l == to_r && from_r == to_l => true
-          case _ => false
-        } ) )
-
-        if ( to_f != None )
-          map + ( ( from_f, to_f.get ) )
-        else {
-          err = true
-          map
+      ( from zip from.indices ).foldLeft( HashMap[Int, Int]() ) {
+        case ( map, ( from_f, from_i ) ) => {
+          val to_i = to.indexWhere( to_f => ( from_f == to_f ) || ( ( from_f, to_f ) match {
+            case ( FOLEquation( from_l, from_r ), FOLEquation( to_l, to_r ) ) if from_l == to_r && from_r == to_l => true
+            case _ => false
+          } ) )
+          if ( to_i != -1 )
+            map + ( ( from_i, to_i ) )
+          else {
+            err = true
+            map
+          }
         }
-      } )
+      }
     }
-
-    val avail_pos = from.succedent.map( f => f.asInstanceOf[FOLFormula] )
-    val avail_neg = from.antecedent.map( f => f.asInstanceOf[FOLFormula] )
-
-    val neg_map = createMap( avail_neg, to.neg.map( _.asInstanceOf[FOLFormula] ) )
-    val pos_map = createMap( avail_pos, to.pos.map( _.asInstanceOf[FOLFormula] ) )
-
+    val neg_map = createMap( from._1, to._1 )
+    val pos_map = createMap( from._2, to._2 )
     if ( err )
       None
     else
       Some( ( neg_map, pos_map ) )
   }
-
-  def canDeriveBySymmetry( to: FClause, from: FSequent ) = getSymmetryMap( to, from ) match {
+  private def convertSequent( seq: FSequent ) =
+    ( seq.antecedent.map( f => f.asInstanceOf[FOLFormula] ), seq.succedent.map( f => f.asInstanceOf[FOLFormula] ) )
+  def canDeriveBySymmetry( to: FClause, from: FSequent ): Boolean =
+    canDeriveBySymmetry( convertSequent( to.toFSequent ), convertSequent( from ) )
+  def canDeriveBySymmetry( to: Pair[Seq[FOLFormula], Seq[FOLFormula]], from: Pair[Seq[FOLFormula], Seq[FOLFormula]] ): Boolean = getSymmetryMap( to, from ) match {
     case Some( _ ) => true
     case None      => false
   }
-
   private def applySymm( p: RobinsonResolutionProof, f: FOLFormula, pos: Boolean ) =
     {
       val ( left, right ) = f match {
@@ -75,7 +72,6 @@ object fixDerivation extends at.logic.gapt.utils.logging.Logger {
       val newe = FOLEquation( right, left )
       val refl = FOLEquation( left, left )
       val s = FOLSubstitution()
-
       if ( pos ) {
         val irefl = InitialClause( Nil, refl :: Nil )
         Paramodulation( p, irefl, f, refl, newe, s, pos )
@@ -87,43 +83,70 @@ object fixDerivation extends at.logic.gapt.utils.logging.Logger {
         Factor( eq2, newe, 3, pos, s )
       }
     }
-
   private def deriveBySymmetry( to: FClause, from: FSequent ) = {
     trace( "deriving " + to + " from " + from + " by symmetry" )
-
-    val ( neg_map, pos_map ) = getSymmetryMap( to, from ).get
-
+    val my_to = convertSequent( to.toFSequent )
+    val my_from = convertSequent( from )
+    val ( neg_map, pos_map ) = getSymmetryMap( my_to, my_from ).get
     val init = InitialClause( from.antecedent.map( _.asInstanceOf[FOLFormula] ), from.succedent.map( _.asInstanceOf[FOLFormula] ) )
-    val s_neg = neg_map.keySet.foldLeft( init )( ( p, f ) => f match {
-      case FOLEquation( _, _ ) if neg_map( f ) != f => applySymm( p, f, false )
-      case _                                        => p
+    // contract some formulas if the maps are not injective
+    // create contracted end-clause
+    var my_from_c = ( List[FOLFormula](), List[FOLFormula]() )
+    val c_neg = neg_map.values.toSeq.distinct.foldLeft( init )( ( p, i ) => {
+      val indices = neg_map.filterKeys( k => neg_map( k ) == i ).keySet
+      val form = my_from._1( neg_map( indices.head ) )
+      my_from_c = ( my_from_c._1 :+ form, my_from_c._2 )
+      if ( indices.size > 1 )
+        Factor( p, form, indices.size, false, FOLSubstitution() )
+      else
+        p
     } )
-
-    pos_map.keySet.foldLeft( s_neg )( ( p, f ) => f match {
-      case FOLEquation( _, _ ) if pos_map( f ) != f => applySymm( p, f, true )
-      case _                                        => p
+    val c_pos = pos_map.values.toSeq.distinct.foldLeft( c_neg )( ( p, i ) => {
+      val indices = pos_map.filterKeys( k => pos_map( k ) == i ).keySet
+      val form = my_from._2( pos_map( indices.head ) )
+      my_from_c = ( my_from_c._1, my_from_c._2 :+ form )
+      if ( indices.size > 1 )
+        Factor( p, form, indices.size, true, FOLSubstitution() )
+      else
+        p
+    } )
+    // update maps since we contracted
+    val ( neg_map_c, pos_map_c ) = getSymmetryMap( my_to, my_from_c ).get
+    def isInjective[A, B]( m: Map[A, B] ) = m.values.forall( v => m.filterKeys( k => m( k ) == v ).size == 1 )
+    assert( isInjective( neg_map_c ) )
+    assert( isInjective( pos_map_c ) )
+    // add symmetry derivations
+    val s_neg = neg_map_c.keySet.foldLeft( c_pos )( ( p, i ) => {
+      val f = my_from_c._1( i )
+      f match {
+        case FOLEquation( _, _ ) if my_to._1( neg_map_c( i ) ) != f => applySymm( p, f, false )
+        case _ => p
+      }
+    } )
+    pos_map_c.keySet.foldLeft( s_neg )( ( p, i ) => {
+      val f = my_from_c._2( i )
+      f match {
+        case FOLEquation( _, _ ) if my_to._2( pos_map_c( i ) ) != f => applySymm( p, f, true )
+        case _ => p
+      }
     } )
   }
-
   private val subsumption_alg = StillmanSubsumptionAlgorithmFOL
-
   def canDeriveByFactor( to: FClause, from: FSequent ) =
     subsumption_alg.subsumes( from, to.toFSequent )
-
   def deriveByFactor( to: FClause, from: FSequent ): RobinsonResolutionProof =
     {
       trace( "deriving " + to + " from " + from + " by factoring" )
       val init = InitialClause( from.antecedent.map( _.asInstanceOf[FOLFormula] ), from.succedent.map( _.asInstanceOf[FOLFormula] ) )
       deriveByFactor( to, init )
     }
-
   def deriveByFactor( to: FClause, from: RobinsonResolutionProof ): RobinsonResolutionProof =
     {
       val from_c = FSequent( from.root.antecedent.map( _.formula ), from.root.succedent.map( _.formula ) )
       val s = subsumption_alg.subsumes_by( from_c, to.toFSequent ).get
       val from_s = FClause( from_c.antecedent.map( s( _ ) ), from_c.succedent.map( s( _ ) ) )
       // make a first Factor inference that does not contract, but applies
-      // the substitution
+      // the FOLSubstitution
       val first = if ( !from_c.antecedent.isEmpty )
         Factor( from, from_c.antecedent.head, 1, false, s )
       else
@@ -136,23 +159,18 @@ object fixDerivation extends at.logic.gapt.utils.logging.Logger {
         val cnt = from_s.pos.count( _ == atom ) - to.pos.count( _ == atom ) + 1
         Factor( proof, atom, cnt, true, FOLSubstitution() )
       } )
-
     }
-
   private def isReflexivity( c: FClause ) =
     c.pos.exists( a => a match {
       case FOLEquation( x, y ) if x == y => true
       case _                             => false
     } )
-
   private def isTautology( c: FClause ) = c.pos.exists( a => c.neg.exists( b => a == b ) )
-
   // NOTE: What if the symmetric clause found is a tautology?
   private def handleInitialClause( cls: FClause, cs: Seq[FSequent] ) = {
     val cls_sequent = FSequent(
       cls.neg.map( f => f.asInstanceOf[FOLFormula] ),
       cls.pos.map( f => f.asInstanceOf[FOLFormula] ) )
-
     if ( cs.contains( cls_sequent ) || isReflexivity( cls ) || isTautology( cls ) ) InitialClause( cls )
     else
       cs.find( c => canDeriveByFactor( cls, c ) ) match {
@@ -178,11 +196,9 @@ object fixDerivation extends at.logic.gapt.utils.logging.Logger {
         }
       }
   }
-
   def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ): RobinsonResolutionProof = {
     rec( p )( cs )
   }
-
   // The inductive invariant is that if we had previously a derivation of a clause c,
   // we will now have a derivation of a subclause of c. Hence we have to drop some parts
   // of the derivation.
@@ -190,20 +206,15 @@ object fixDerivation extends at.logic.gapt.utils.logging.Logger {
     var fac = false
     val res = p match {
       case InitialClause( cls ) => handleInitialClause( cls.toFClause, cs )
-
       case Factor( r, par, a, s ) => {
         fac = true
         a match {
           case lit1 :: Nil => {
-
             val rp = rec( par )
             val form = lit1.head.formula
-
             val pos = par.root.succedent.contains( lit1.head )
-
             val cnt_ = if ( pos ) rp.root.succedent.filter( _.formula == form ).size - p.root.succedent.filter( _.formula == form ).size + 1
             else rp.root.antecedent.filter( _.formula == form ).size - p.root.antecedent.filter( _.formula == form ).size + 1
-
             val cnt = if ( cnt_ > 0 ) cnt_ else 0
             if ( cnt == 0 )
               rp
@@ -253,7 +264,7 @@ object fixDerivation extends at.logic.gapt.utils.logging.Logger {
       // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
       case Instance( _, p, s ) => Instance( rec( p ), s )
     }
-    assert( res.root.toFClause.isSubClauseOf( p.root.toFClause ) )
+    assert( res.root.toFClause.isSubClauseOf( p.root.toFClause ), "res.root.toFClause: " + res.root.toFClause + "\np.root.toFClause: " + p.root.toFClause + "\np.rule: " + p.rule )
     res
   }
 }

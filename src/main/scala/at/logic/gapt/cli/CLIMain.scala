@@ -26,15 +26,15 @@ object CLIMain {
   import at.logic.gapt.language._
   import at.logic.gapt.language.hol._
   import at.logic.gapt.language.fol._
-  import at.logic.calculi.lk._
-  import at.logic.calculi.lk.base._
-  import at.logic.calculi.lksk
+  import at.logic.gapt.proofs.lk._
+  import at.logic.gapt.proofs.lk.base._
+  import at.logic.gapt.proofs.lksk
   import at.logic.gapt.language.lambda.symbols._
   import at.logic.gapt.language.hol.logicSymbols._
   import at.logic.gapt.proofs.hoare._
   import at.logic.gapt.proofs.algorithms.skolemization.skolemize
   import at.logic.gapt.algorithms.lk.regularize
-  import at.logic.calculi.occurrences.FormulaOccurrence
+  import at.logic.gapt.proofs.occurrences.FormulaOccurrence
   import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.Deltas._
   import at.logic.gapt.algorithms.lk.statistics._
   import at.logic.gapt.provers.minisat.MiniSATProver

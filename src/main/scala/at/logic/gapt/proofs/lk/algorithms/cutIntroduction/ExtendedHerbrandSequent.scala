@@ -23,10 +23,9 @@ import at.logic.gapt.provers.minisat.MiniSAT
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] = Nil ) {
+class ExtendedHerbrandSequent( seq: FSequent, g: MultiGrammar, cf: List[FOLFormula] = Nil ) {
 
   val endSequent = seq
-  val terms = g.terms
   val grammar = g
 
   // From ".map" on are lots of castings just to make the data structure right :-|
@@ -36,24 +35,24 @@ class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] =
   val prop_l: List[FOLFormula] = seq.antecedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
   // Propositional formulas on the right
   val prop_r: List[FOLFormula] = seq.succedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
+  //Quantified formulas on the left
+  val quant_l: List[FOLFormula] = seq.antecedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
+  //Quantified formulas on the right
+  val quant_r: List[FOLFormula] = seq.succedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
 
-  // Instanciated (previously univ. quantified) formulas on the left
-  val inst_l: List[FOLFormula] = grammar.u.foldRight( List[FOLFormula]() ) {
-    case ( term, acc ) =>
-      val set = terms.getTermTuple( term )
-      val f = terms.getFormula( term )
+  // Instantiated (previously univ. quantified) formulas on the left
+  val inst_l: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
+    case ( f, acc ) =>
       f match {
-        case FOLAllVar( _, _ ) => instantiateAll( f, set ) :: acc
+        case FOLAllVar( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
         case _                 => acc
       }
   }
   // Instantiated (previously ex. quantified) formulas on the right
-  val inst_r: List[FOLFormula] = grammar.u.foldRight( List[FOLFormula]() ) {
-    case ( term, acc ) =>
-      val set = terms.getTermTuple( term )
-      val f = terms.getFormula( term )
+  val inst_r: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
+    case ( f, acc ) =>
       f match {
-        case FOLExVar( _, _ ) => instantiateAll( f, set ) :: acc
+        case FOLExVar( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
         case _                => acc
       }
   }
@@ -65,7 +64,7 @@ class ExtendedHerbrandSequent( seq: FSequent, g: Grammar, cf: List[FOLFormula] =
   val succedent = prop_r ++ inst_r.filter( varFree )
   val succedent_alpha = inst_r.filter( x => !varFree( x ) )
 
-  var cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( seq, g ) else cf
+  var cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( g ) else cf
 
   override def toString = {
 

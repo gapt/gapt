@@ -5,6 +5,7 @@
 package at.logic.gapt.language.lambda.symbols
 
 abstract class SymbolA {
+  override def hashCode = toString hashCode
   override def equals( v: Any ) = v match {
     case v: SymbolA => v.toString == this.toString
     case _          => false

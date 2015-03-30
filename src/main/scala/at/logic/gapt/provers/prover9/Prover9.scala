@@ -338,6 +338,7 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
   def parse_prover9LK( p9_file: String, forceSkolemization: Boolean = false ): LKProof = {
 
     val ( proof, endsequent, clauses ) = Prover9.parse_prover9( p9_file )
+    println( endsequent )
     //val sendsequent = skolemize(endsequent)
     //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
 
@@ -351,6 +352,7 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
         FSequent( c.neg.map( f => f.asInstanceOf[FOLFormula] ), c.pos.map( f => f.asInstanceOf[FOLFormula] ) ) )
 
       val res_proof = fixDerivation( proof, clause_set )
+      //println("res_proof: "+res_proof)
 
       RobinsonToLK( res_proof, closure )
 
@@ -359,7 +361,7 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
       val fclauses: Set[FClause] = proof.nodes.map {
         case InitialClause( clause ) => clause.toFClause
         case _                       => FClause( Nil, Nil )
-      }.filter( ( x: FClause ) => x match {
+      } filter ( ( x: FClause ) => x match {
         case FClause( Nil, Nil ) => false;
         case _                   => true
       } )
@@ -382,21 +384,26 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
 
   def isInstalled(): Boolean = {
     if ( !isLadrToTptpInstalled() ) {
-      println( "ladr_to_tptp not found!" )
+      warn( "ladr_to_tptp not found!" )
       return false
     }
     if ( !isProver9Installed() ) {
-      println( "prover9 not found!" )
+      warn( "prover9 not found!" )
       return false
     }
     if ( !isProoftransInstalled() ) {
-      println( "prooftrans not found!" )
+      warn( "prooftrans not found!" )
+      return false
+    }
+    if ( !isTptpToLadrInstalled() ) {
+      warn( "tptp_to_ladr not found!" )
       return false
     }
     true
   }
 
   private def isLadrToTptpInstalled(): Boolean = callBinary( "ladr_to_tptp" ) == 1
+  private def isTptpToLadrInstalled(): Boolean = callBinary( "tptp_to_ladr" ) == 0
   private def isProver9Installed(): Boolean = callBinary( "prover9" ) == 2
   private def isProoftransInstalled(): Boolean = callBinary( "prooftrans" ) == 1
 

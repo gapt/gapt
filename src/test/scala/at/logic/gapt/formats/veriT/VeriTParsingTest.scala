@@ -1,6 +1,5 @@
-package at.logic.gapt
+package at.logic.gapt.formats.veriT
 
-import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
@@ -12,7 +11,7 @@ class VeriTParsingTest extends SpecificationWithJUnit with ClasspathFileCopier {
   "The veriT parser" should {
     "parse correctly the simplest proof of the database" in {
       val formulas = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( "test0.verit" ) )
-      formulas.get.antecedent must haveSize( 2 )
+      formulas.get.antecedent must haveSize( 3 )
     }
 
     "parse correctly a more complicated example" in {

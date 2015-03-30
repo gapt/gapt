@@ -97,7 +97,7 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
       val folcl = reduceHolToFol(folcl_)
 
       show("Refuting clause set")
-      val Some(rp) = Prover9.refute(folcl, true) 
+      val Some(rp) = Prover9.refute(folcl)
 
       show("Getting formulas")
       val proofformulas = selp.nodes.flatMap(_.asInstanceOf[LKProof].root.toFSequent.formulas  ).toList.distinct

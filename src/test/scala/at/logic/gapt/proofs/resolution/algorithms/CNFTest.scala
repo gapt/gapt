@@ -24,16 +24,16 @@ class CNFTest extends SpecificationWithJUnit {
       val p = FOLAtom( "P", Nil )
       val q = FOLAtom( "Q", Nil )
       val r = FOLAtom( "R", Nil )
+
       val s = FOLAtom( "S", Nil )
 
       val f = FOLImp( FOLAnd( FOLOr( p, q ), r ), FOLNeg( s ) )
-
-      val x = FOLAtom( "x", Nil )
-      val x0 = FOLAtom( "x0", Nil )
-      val x1 = FOLAtom( "x1", Nil )
-      val x2 = FOLAtom( "x2", Nil )
-
+      val x = FOLAtom( "x1", Nil )
+      val x0 = FOLAtom( "x2", Nil )
+      val x1 = FOLAtom( "x3", Nil )
+      val x2 = FOLAtom( "x4", Nil )
       val cnf = TseitinCNF( f )
+
       val expected = Set(
         FClause( List(), List( x2 ) ),
         FClause( List( x1 ), List( x2 ) ),
@@ -47,7 +47,7 @@ class CNFTest extends SpecificationWithJUnit {
         FClause( List( x2, x0 ), List( x1 ) ),
         FClause( List( x, r ), List( x0 ) ),
         FClause( List( x ), List( p, q ) ) )
-      cnf._1.toSet must beEqualTo( expected )
+      expected.subsetOf( cnf._1.toSet ) must beTrue
     }
   }
 }
