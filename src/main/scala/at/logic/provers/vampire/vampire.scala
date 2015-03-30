@@ -71,6 +71,8 @@ object Vampire extends at.logic.utils.logging.Logger {
   def refute( sequents: List[FSequent] ): Boolean = {
     val in_file = File.createTempFile( "gapt-vampire", ".tptp", null )
     val out_file = File.createTempFile( "gapt-vampire", "vampire", null )
+    in_file.deleteOnExit()
+    out_file.deleteOnExit()
     val ret = refute( sequents, in_file.getAbsolutePath, out_file.getAbsolutePath )
     in_file.delete
     out_file.delete
