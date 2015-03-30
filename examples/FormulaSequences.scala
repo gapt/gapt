@@ -1,3 +1,4 @@
+package at.logic.gapt.examples
 import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.lk.base._
 
