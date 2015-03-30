@@ -231,5 +231,15 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       solve.solvePropositional( deep ).isDefined must beTrue
     }
 
+    "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {
+      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+
+      val testFilePath = tempCopyOfClasspathFile( "NUM484+3.out" )
+
+      val lkproof1 = Prover9.parse_prover9LK( testFilePath )
+      val expseq = extractExpansionSequent( lkproof1, false )
+      val deep = ETtoDeep( expseq )
+      success( "everything worked fine" )
+    }
   }
 }

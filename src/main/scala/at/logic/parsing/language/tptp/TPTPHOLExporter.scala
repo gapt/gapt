@@ -40,7 +40,8 @@ class TPTPHOLExporter {
       case true =>
         for ( fs <- l ) yield {
           index = index + 1
-          thf_sequent_dec( index, fs, vnames, cnames ) + "\n"
+          //thf_sequent_dec( index, fs, vnames, cnames ) + "\n" //leo doesn't support sequents?
+          thf_formula_dec( index, fs.toFormula, vnames, cnames ) + "\n"
         }
       case false =>
         val negClauses = Neg( And( l.map( closedFormula ) ) )
@@ -158,6 +159,8 @@ class TPTPHOLExporter {
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
   def thf_formula( f: HOLExpression, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
     f match {
+      case TopC             => "$true"
+      case BottomC          => "$false"
       case Neg( x )         => addparens( " ~" + thf_formula( x, vmap, cmap ), !outermost )
       case And( x, y )      => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
       case Or( x, y )       => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )

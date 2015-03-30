@@ -94,6 +94,8 @@ object Prover9 extends at.logic.utils.logging.Logger {
   def isValid( seq: FSequent ): Boolean = {
     val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
+    in_file.deleteOnExit()
+    out_file.deleteOnExit()
     val ret = isValid( seq, in_file.getAbsolutePath, out_file.getAbsolutePath )
     in_file.delete
     out_file.delete
@@ -102,6 +104,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
   private def isValid( seq: FSequent, input_file: String, output_file: String ): Boolean = {
     val tmp_file = File.createTempFile( "gapt-prover9-proof", ".tptp", null )
+    tmp_file.deleteOnExit()
     writeProofProblem( seq, tmp_file )
 
     tptpToLadr( tmp_file.getAbsolutePath, input_file )
@@ -156,6 +159,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
   private def prove( seq: FSequent, input_file: String, output_file: String ): Option[RobinsonResolutionProof] =
     {
       val tmp_file = File.createTempFile( "gapt-prover9-proof", ".tptp", null )
+      tmp_file.deleteOnExit()
       writeProofProblem( seq, tmp_file )
 
       tptpToLadr( tmp_file.getAbsolutePath, input_file )
@@ -171,6 +175,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
   private def refuteNamed( named_sequents: List[Tuple2[String, FSequent]], input_file: String, output_file: String ): Option[RobinsonResolutionProof] =
     {
       val tmp_file = File.createTempFile( "gapt-prover9-ref", ".tptp", null )
+      tmp_file.deleteOnExit()
       trace( "writing refutational problem" )
       writeRefutationProblem( named_sequents, tmp_file )
       trace( "converting tptp to ladr" )
@@ -274,6 +279,8 @@ object Prover9 extends at.logic.utils.logging.Logger {
     //val (gseq, map) = ground(seq)
     val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
+    in_file.deleteOnExit()
+    out_file.deleteOnExit()
     val ret = prove( seq, in_file.getAbsolutePath, out_file.getAbsolutePath )
     //val ret = prove( gseq, in_file.getAbsolutePath, out_file.getAbsolutePath )
     //val ret2 = unground( ret.get, map )
@@ -289,6 +296,8 @@ object Prover9 extends at.logic.utils.logging.Logger {
   def refute( sequents: List[FSequent] ): Option[RobinsonResolutionProof] = {
     val in_file = File.createTempFile( "gapt-prover9", ".ladr", null )
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
+    in_file.deleteOnExit()
+    out_file.deleteOnExit()
     val ret = refute( sequents, in_file.getAbsolutePath, out_file.getAbsolutePath )
     in_file.delete
     out_file.delete
@@ -297,6 +306,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
   def refute( filename: String ): Option[RobinsonResolutionProof] = {
     val out_file = File.createTempFile( "gapt-prover9", "prover9", null )
+    out_file.deleteOnExit()
     val ret = runP9OnLADR( new File( filename ).getAbsolutePath, out_file.getAbsolutePath )
     out_file.delete
     ret
@@ -304,6 +314,7 @@ object Prover9 extends at.logic.utils.logging.Logger {
 
   def refuteTPTP( fn: String ): Option[RobinsonResolutionProof] = {
     val out_file = File.createTempFile( "gapt-prover9", ".ladr", null )
+    out_file.deleteOnExit()
     tptpToLadr( fn, out_file.getAbsolutePath )
     val proof = refute( out_file.getAbsolutePath )
     out_file.delete
@@ -314,8 +325,10 @@ object Prover9 extends at.logic.utils.logging.Logger {
   def parse_prover9( p9_file: String ): ( RobinsonResolutionProof, FSequent, FSequent ) = {
 
     val pt_file = File.createTempFile( "gapt-prover9", ".pt", null )
+    pt_file.deleteOnExit()
     p9_to_p9( p9_file, pt_file.getCanonicalPath )
     val ivy_file = File.createTempFile( "gapt-prover9", ".ivy", null )
+    ivy_file.deleteOnExit()
     p9_to_ivy( pt_file.getCanonicalPath, ivy_file.getCanonicalPath )
 
     val iproof = IvyParser( ivy_file.getCanonicalPath, IvyStyleVariables )

@@ -1,4 +1,3 @@
-package at.logic.examples
 import at.logic.language.fol._
 import at.logic.calculi.lk.base._
 

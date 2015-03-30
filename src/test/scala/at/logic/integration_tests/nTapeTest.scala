@@ -9,7 +9,7 @@ import at.logic.algorithms.lk.{ AtomicExpansion, regularize }
 import at.logic.algorithms.llk.HybridLatexExporter
 import at.logic.algorithms.resolution.RobinsonToRal
 import at.logic.algorithms.rewriting.DefinitionElimination
-import at.logic.calculi.lk.base.LKProof
+import at.logic.calculi.lk.base.{ FSequent, LKProof }
 import at.logic.calculi.lksk.sequentToLabelledSequent
 import at.logic.language.fol.{ FOLVar, FOLFormula, FOLExpression }
 import at.logic.language.hol._

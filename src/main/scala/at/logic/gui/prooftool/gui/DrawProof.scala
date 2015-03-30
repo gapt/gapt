@@ -29,9 +29,9 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
   background = white
   opaque = false
 
+  private val labelFont = new Font( SERIF, ITALIC, fSize - 2 )
   private val bd = Swing.EmptyBorder( 0, fSize * 2, 0, fSize * 2 )
   private val ft = new Font( SERIF, PLAIN, fSize )
-  private val labelFont = new Font( SERIF, ITALIC, fSize - 2 )
   private var drawLines = true
   // The following is a hack to be able to apply searching to the end-sequent. Think about better solution.
   // The problem is that I need to "recalculate" end-sequent and need def for this reason.
@@ -175,6 +175,14 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
         val leftSeqLength = left.getSequentWidth( g )
         val rightSeqLength = right.getSequentWidth( g )
         val lineLength = right.location.x + ( rightWidth + rightSeqLength ) / 2
+
+        if ( Main.DEBUG ) { // draw bounding box around children for debugging
+          g.setColor( new Color( 200, 200, 50 ) )
+          g.drawRect( left.location.x, left.location.y, left.size.width - 1, left.size.height )
+          g.setColor( new Color( 200, 50, 200 ) )
+          g.drawRect( right.location.x, right.location.y, right.size.width, right.size.height )
+          g.setColor( new Color( 0, 0, 0 ) )
+        }
 
         g.drawLine( ( leftWidth - leftSeqLength ) / 2, height, lineLength, height )
         g.drawString( p.name, lineLength + fSize / 4, height + metrics.getMaxDescent )
