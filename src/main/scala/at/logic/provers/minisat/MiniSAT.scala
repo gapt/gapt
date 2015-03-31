@@ -59,10 +59,10 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
       trace( "Generated MiniSAT input: " )
       trace( minisat_in );
 
-      val temp_in = File.createTempFile( "agito_minisat_in", ".sat" )
+      val temp_in = File.createTempFile( "gapt_minisat_in", ".sat" )
       temp_in.deleteOnExit()
 
-      val temp_out = File.createTempFile( "agito_minisat_out", ".sat" )
+      val temp_out = File.createTempFile( "gapt_minisat_out", ".sat" )
       temp_out.deleteOnExit()
 
       val out = new BufferedWriter( new FileWriter( temp_in ) )
