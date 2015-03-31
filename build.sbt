@@ -87,7 +87,8 @@ lazy val root = (project in file(".")).
       "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
       "com.itextpdf" % "itextpdf" % "5.5.5",
       "org.scilab.forge" % "jlatexmath" % "1.0.2",
-      "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5")
+      "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5")
   )
 
 addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/test:scalariformFormat")

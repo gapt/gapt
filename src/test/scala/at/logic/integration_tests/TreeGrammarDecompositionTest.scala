@@ -5,7 +5,7 @@ import at.logic.calculi.lk._
 import at.logic.calculi.lk.base.LKProof
 import at.logic.language.fol._
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
-import at.logic.provers.maxsat.{ MaxSAT, MaxSATSolver }
+import at.logic.provers.maxsat.{ MaxSat4j, QMaxSAT, MaxSATSolver }
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
@@ -61,12 +61,10 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
 
   "TreeGrammarDecomposition" should {
     "extract and decompose the termset of the linear example proof of 8 (n = 1)" in {
-      if ( !( new MaxSAT( MaxSATSolver.QMaxSAT ) ).isInstalled() ) skipped( "MaxSAT is not installed" )
-
       val proof = LinearExampleProof( 0, 8 )
       val proofLanguage = toTerms( proof )
 
-      val grammar = TreeGrammarDecomposition( proofLanguage, 1, MCSMethod.MaxSAT, MaxSATSolver.QMaxSAT )
+      val grammar = TreeGrammarDecomposition( proofLanguage, 1, MCSMethod.MaxSAT, new MaxSat4j() )
 
       // check size
       grammar.get.slist.size shouldEqual 1
@@ -78,12 +76,11 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
     }
 
     "extract and decompose the termset of the linear example proof of 18 (n = 2)" in {
-      if ( !( new MaxSAT( MaxSATSolver.QMaxSAT ) ).isInstalled() ) skipped( "MaxSAT is not installed" )
       skipped( "this takes too long" )
       val proof = LinearExampleProof( 0, 18 )
       val proofLanguage = toTerms( proof )
 
-      val grammar = TreeGrammarDecomposition( proofLanguage, 2, MCSMethod.MaxSAT, MaxSATSolver.QMaxSAT )
+      val grammar = TreeGrammarDecomposition( proofLanguage, 2, MCSMethod.MaxSAT, new MaxSat4j() )
 
       // check size
       grammar.get.slist.size shouldEqual 2

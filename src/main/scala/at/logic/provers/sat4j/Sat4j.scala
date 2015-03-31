@@ -9,41 +9,61 @@ import at.logic.language.hol._
 import at.logic.calculi.resolution._
 import at.logic.algorithms.resolution.{ CNFp, TseitinCNF }
 
-import java.io._
-import java.lang.StringBuilder
-
 import at.logic.calculi.lk.base.FSequent
+import at.logic.parsing.language.dimacs.{ readDIMACS, writeDIMACS, DIMACSHelper }
 
 import at.logic.provers.Prover
 
 import at.logic.models._
+import at.logic.provers.maxsat.{ WDIMACSHelper, MaxSATSolver }
 
-import at.logic.parsing.language.dimacs.DIMACSExporter
-
-import scala.collection.immutable.HashMap
-
-import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.FileWriter
-import java.io.IOException
-import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 
-import org.sat4j.minisat.SolverFactory
 import org.sat4j.reader.DimacsReader
 import org.sat4j.reader.Reader
 import org.sat4j.specs.ContradictionException
 import org.sat4j.specs.IProblem
 import org.sat4j.specs.ISolver
 
+object readSat4j extends at.logic.utils.logging.Logger {
+  def apply( problem: IProblem, helper: DIMACSHelper ) = {
+    val temp_out = File.createTempFile( "gapt_sat4j_out", ".sat" )
+    temp_out.deleteOnExit()
+
+    val writer = new BufferedWriter( new OutputStreamWriter(
+      new FileOutputStream( temp_out ), "UTF-8" ) )
+
+    if ( problem.isSatisfiable() ) {
+      writer.write( "SAT\n" )
+      val model = problem.model()
+      val sb = new StringBuffer()
+      for ( i <- 0 until model.length ) {
+        sb.append( model( i ) )
+        sb.append( " " );
+      }
+      sb.append( "0\n" );
+      writer.write( sb.toString )
+    } else {
+      writer.write( "UNSAT\n" )
+    }
+    writer.close()
+
+    debug( "Sat4j finished." )
+    // parse sat4j output and construct map
+    val sat = scala.io.Source.fromFile( temp_out ).mkString;
+
+    trace( "Sat4j result: " + sat )
+
+    readDIMACS( sat, helper )
+  }
+}
+
 // Call Sat4j to solve quantifier-free HOLFormulas.
 class Sat4j extends at.logic.utils.logging.Stopwatch {
-
-  var atom_map: Map[HOLFormula, Int] = new HashMap[HOLFormula, Int]
-
   // Checks if f is valid using Sat4j.
   def isValid( f: HOLFormula ) = solve( Neg( f ) ) match {
     case Some( _ ) => false
@@ -68,17 +88,14 @@ class Sat4j extends at.logic.utils.logging.Stopwatch {
   // Returns None if unsatisfiable.
   def solve( clauses: List[FClause] ): Option[Interpretation] =
     {
-      val dimacs = new DIMACSExporter( clauses )
+      val helper = new DIMACSHelper( clauses )
 
-      val sat4j_in = dimacs.getDIMACSString()
+      val sat4j_in = writeDIMACS( helper )
       trace( "Generated Sat4j input: " )
       trace( sat4j_in );
 
-      val temp_in = File.createTempFile( "agito_sat4j_in", ".sat" )
+      val temp_in = File.createTempFile( "gapt_sat4j_in", ".sat" )
       temp_in.deleteOnExit()
-
-      val temp_out = File.createTempFile( "agito_sat4j_out", ".sat" )
-      temp_out.deleteOnExit()
 
       val out = new BufferedWriter( new FileWriter( temp_in ) )
       out.append( sat4j_in )
@@ -86,43 +103,19 @@ class Sat4j extends at.logic.utils.logging.Stopwatch {
 
       // run Sat4j
 
-      debug( "Starting sat4j..." );
-      val sat4jSolver: ISolver = SolverFactory.newDefault()
-      val reader: Reader = new DimacsReader( sat4jSolver )
-      val writer = new BufferedWriter( new OutputStreamWriter(
-        new FileOutputStream( temp_out ), "UTF-8" ) )
-      try {
-        val problem: IProblem = reader.parseInstance( temp_in.getAbsolutePath() )
-        if ( problem.isSatisfiable() ) {
-          writer.write( "SAT\n" )
-          val model = problem.model()
-          val sb = new StringBuffer()
-          for ( i <- 0 until model.length ) {
-            sb.append( model( i ) )
-            sb.append( " " );
-          }
-          sb.append( "0\n" );
-          writer.write( sb.toString )
-        } else {
-          writer.write( "UNSAT\n" )
+      debug( "Starting sat4j..." )
+      val solver = org.sat4j.minisat.SolverFactory.newDefault()
+      val res =
+        try {
+          val problem = new DimacsReader( solver ).parseInstance( temp_in.getAbsolutePath )
+          readSat4j( problem, helper )
+        } catch {
+          case e: ContradictionException => None
+        } finally {
+          solver.reset
         }
-      } catch {
-        case e: ContradictionException => {
-          writer.write( "UNSAT\n" )
-        }
-      } finally {
-        writer.close()
-        sat4jSolver.reset
-      }
-      debug( "Sat4j finished." )
-      // parse sat4j output and construct map
-      val sat = scala.io.Source.fromFile( temp_out ).mkString;
-
-      trace( "Sat4j result: " + sat )
-
-      dimacs.getInterpretation( sat )
+      res
     }
-
 }
 
 class Sat4jProver extends Prover with at.logic.utils.logging.Logger {
