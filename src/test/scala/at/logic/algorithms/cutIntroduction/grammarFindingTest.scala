@@ -1,6 +1,6 @@
 package at.logic.algorithms.cutIntroduction
 
-import at.logic.language.fol.{ BottomC, And, FOLVar, Neg }
+import at.logic.language.fol._
 import at.logic.parsing.language.prover9.Prover9TermParserLadrStyle.parseTerm
 import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
 import at.logic.provers.minisat.MiniSAT
@@ -29,6 +29,48 @@ class GrammarFindingTest extends Specification {
     "not introduce equations between non-terminals" in {
       val nfs = tratNormalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( x ) )
       nfs.toSet must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x", "c", "d" ) map parseTerm )
+    }
+  }
+
+  "VectGrammarMinimizationFormula" should {
+    def vtg( nts: Seq[String], prods: Seq[String]* ) =
+      VectTratGrammar( FOLVar( "x" ), nts map { nt => nt.split( "," ).map( FOLVar( _ ) ).toList },
+        prods map { vect =>
+          vect.map( p => FOLVar( p.split( "->" )( 0 ) ) ).toList -> vect.map( p => parseTerm( p.split( "->" )( 1 ) ) ).toList
+        } toList )
+
+    def covers( g: VectTratGrammar, terms: String* ) = terms foreach { term =>
+      new Sat4j().solve( new VectGrammarMinimizationFormula( g ).generatesTerm( parseTerm( term ) ) ) aka s"$g covers $term" must beSome
+    }
+
+    def doesNotCover( g: VectTratGrammar, terms: String* ) =
+      terms foreach { term =>
+        new Sat4j().solve( new VectGrammarMinimizationFormula( g ).generatesTerm( parseTerm( term ) ) ) aka s"$g does NOT generate $term" must beNone
+      }
+
+    "simple" in {
+      val g = vtg( Seq( "x", "y1,y2" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      covers( g, "r(c,d)", "r(d,c)" )
+      doesNotCover( g, "r(c,c)", "r(d,d)" )
+      ok
+    }
+
+    "undefined values" in {
+      val g = vtg( Seq( "x", "y1,y2,y3" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d", "y3->d" ), Seq( "y1->d", "y2->c", "y3->e" ) )
+      covers( g, "r(c,d)", "r(d,c)" )
+      doesNotCover( g, "r(c,c)", "r(d,d)" )
+      ok
+    }
+
+    "not require unnecessary productions" in {
+      val g = vtg( Seq( "x", "y", "z" ),
+        Seq( "x->r(y)" ), Seq( "x->r(z)" ), Seq( "y->c" ), Seq( "z->d" ) )
+      val p = g.productions( 3 ) // z->d
+
+      val f = new VectGrammarMinimizationFormula( g )
+      new Sat4j().solve( And( f.generatesTerm( parseTerm( "r(c)" ) ), Neg( f.vectProductionIsIncluded( p ) ) ) ) must beSome
     }
   }
 

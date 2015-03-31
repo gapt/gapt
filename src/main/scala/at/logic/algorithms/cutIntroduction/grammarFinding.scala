@@ -92,64 +92,113 @@ object tratNormalForms {
   }
 }
 
+object VectTratGrammar {
+  type NonTerminalVect = List[FOLVar]
+  type Production = ( NonTerminalVect, List[FOLTerm] )
+}
+
+case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.NonTerminalVect], productions: Seq[VectTratGrammar.Production] ) {
+  def productions( nonTerminalVect: List[FOLVar] ): Seq[VectTratGrammar.Production] = productions filter ( _._1 == nonTerminalVect )
+  //  def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
+}
+
 object TratGrammar {
   type Production = ( FOLVar, FOLTerm )
+
+  def asVectTratGrammarProduction( p: Production ): VectTratGrammar.Production =
+    List( p._1 ) -> List( p._2 )
 }
 
 case class TratGrammar( axiom: FOLVar, productions: Seq[TratGrammar.Production] ) {
-  val nonTerminals = productions map ( _._1 ) distinct
+  import TratGrammar._
 
-  def productions( nonTerminal: FOLVar ): Seq[TratGrammar.Production] = productions filter ( _._1 == nonTerminal )
+  val nonTerminals = productions flatMap { p => p._1 :: freeVariables(p._2) } distinct
+
+  def productions( nonTerminal: FOLVar ): Seq[Production] = productions filter ( _._1 == nonTerminal )
   def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
 
   override def toString = s"($axiom, {${productions map { case ( d, t ) => s"$d -> $t" } mkString ", "}})"
+
+  def toVectTratGrammar: VectTratGrammar = VectTratGrammar(
+    axiom, nonTerminals map ( List( _ ) ),
+    productions map asVectTratGrammarProduction )
 }
 
-class GrammarMinimizationFormula( g: TratGrammar ) {
-  import TratGrammar._
+class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
+  import VectTratGrammar._
 
-  def productionIsIncluded( p: Production ) = Atom( s"p,$p" )
+  def vectProductionIsIncluded( p: Production ) = Atom( s"p,$p" )
   def valueOfNonTerminal( t: FOLTerm, n: FOLVar, rest: FOLTerm ) = Atom( s"v,$t,$n=$rest" )
 
   def generatesTerm( t: FOLTerm ) = {
     val cs = List.newBuilder[FOLFormula]
 
+    // TODO: assert that Omega does not occur in g or t
+    val Omega = FOLConst( "Ω" )
+
     // value of axiom must be t
     cs += valueOfNonTerminal( t, g.axiom, t )
 
     // possible values must decompose correctly
-    val assignmentsToHandle = mutable.Queue( g.axiom -> t )
-    var possibleAssignments = Set[(FOLVar, FOLTerm)]()
-    assignmentsToHandle.dequeueAll { case assignment@(nt, value) =>
-      if ( !( possibleAssignments contains assignment ) )
-          cs += Imp( valueOfNonTerminal( t, nt, value ),
-            Or( g.productions( nt ) map {
-              case p @ ( _, rhs ) =>
-                FOLMatchingAlgorithm.matchTerm( rhs, value, List() ) match {
-                  case Some( matching ) =>
-                    And( productionIsIncluded( p ),
-                      And( matching.folmap map {
-                        case ( v, smallerValue: FOLTerm ) =>
-                          assignmentsToHandle enqueue (v -> smallerValue)
-                          valueOfNonTerminal( t, v, smallerValue )
-                      } toList ) )
-                  case None => BottomC
-                }
-            } toList ) )
+    val singleVariableAssignmentsToHandle = mutable.Queue( g.axiom -> t )
+    g.nonTerminals foreach { ntVect =>
+      if ( ntVect.size > 1 ) ntVect foreach { nt => singleVariableAssignmentsToHandle.enqueue( nt -> Omega ) }
+    }
 
-      possibleAssignments += assignment
+    var possibleSingleVariableAssignments = Map[FOLVar, Set[FOLTerm]]().withDefaultValue( Set() )
+    var alreadyHandledAssignments = Set[( NonTerminalVect, List[FOLTerm] )]()
+    singleVariableAssignmentsToHandle.dequeueAll {
+      case ( newNT, newValue ) =>
+        val containingNonTerminalVect = g.nonTerminals.find( _.contains( newNT ) ).get
+        val possibleAssignments = containingNonTerminalVect.foldRight( List[List[FOLTerm]]( Nil ) ) {
+          case ( nt, assgs ) if nt == newNT => assgs.map( newValue :: _ )
+          case ( nt, assgs )                => assgs flatMap { assg => possibleSingleVariableAssignments( nt ) map ( _ :: assg ) }
+        }
+        possibleAssignments foreach { assignment =>
+          if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) ) )
+            cs += Imp( And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( t, nt, value ) } ),
+              Or( g.productions( containingNonTerminalVect ) map {
+                case p @ ( _, rhss ) =>
+                  And( containingNonTerminalVect.zip( assignment ).zip( rhss ) map {
+                    case ( ( nt, value ), rhs ) if value == Omega => TopC
+                    case ( ( nt, value ), rhs ) =>
+                      FOLMatchingAlgorithm.matchTerm( rhs, value, List() ) match {
+                        case Some( matching ) =>
+                          And( vectProductionIsIncluded( p ),
+                            And( matching.folmap map {
+                              case ( v, smallerValue: FOLTerm ) =>
+                                singleVariableAssignmentsToHandle enqueue ( v -> smallerValue )
+                                valueOfNonTerminal( t, v, smallerValue )
+                            } toList ) )
+                        case None => BottomC
+                      }
+                  } )
+              } toList ) )
 
-      true // remove this value from the queue
+          alreadyHandledAssignments += containingNonTerminalVect -> assignment
+        }
+        possibleSingleVariableAssignments = possibleSingleVariableAssignments.updated( newNT, possibleSingleVariableAssignments( newNT ) + newValue )
+
+        true // remove this value from the queue
     }
 
     // values are unique
-    for ( (d, v1) <- possibleAssignments; (d2, v2) <- possibleAssignments if d == d2 && v1 != v2 )
+    for ( ( d, v1s ) <- possibleSingleVariableAssignments; ( d2, v2s ) <- possibleSingleVariableAssignments; v1 <- v1s; v2 <- v2s if d == d2 && v1 != v2 )
       cs += Or( Neg( valueOfNonTerminal( t, d, v1 ) ), Neg( valueOfNonTerminal( t, d, v2 ) ) )
+
+    // values exist
+    for ( ( d, vs ) <- possibleSingleVariableAssignments if vs contains Omega )
+      cs += Or( vs map ( valueOfNonTerminal( t, d, _ ) ) toList )
 
     And( cs result )
   }
 
   def coversLanguage( lang: Seq[FOLTerm] ) = And( lang map generatesTerm toList )
+}
+
+class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizationFormula( g toVectTratGrammar ) {
+  def productionIsIncluded( p: TratGrammar.Production ) = Atom( s"p,$p" )
+  override def vectProductionIsIncluded( p: VectTratGrammar.Production ) = productionIsIncluded( p._1( 0 ), p._2( 0 ) )
 }
 
 object GrammarMinimizationFormula {
