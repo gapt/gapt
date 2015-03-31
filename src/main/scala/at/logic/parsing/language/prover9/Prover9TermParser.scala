@@ -152,11 +152,7 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
     case x => FOLConst( x )
   }
   lazy val variable: PackratParser[FOLVar] = varsymb ^^ { FOLVar( _ ) }
-  lazy val topbottom: PackratParser[FOLFormula] = "$" ~> ( "T" ^^ ( x => topformula ) | "F" ^^ ( x => bottomformula ) )
-
-  //we don't have top and bottom in the algorithms, so we simulate it
-  val topformula = { fol.Or( fol.TopC, fol.Neg( fol.TopC ) ) }
-  val bottomformula = { fol.And( fol.BottomC, fol.Neg( fol.BottomC ) ) }
+  lazy val topbottom: PackratParser[FOLFormula] = "$" ~> ( "T" ^^ ( x => TopC ) | "F" ^^ ( x => BottomC ) )
 
   def createNOp( fs: List[FOLFormula], constructor: ( FOLFormula, FOLFormula ) => FOLFormula ): FOLFormula = {
     //if (fs.size < 2) failure("Binary operator needs to occur at least once!") else
