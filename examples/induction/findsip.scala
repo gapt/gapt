@@ -4,6 +4,7 @@ import at.logic.calculi.lk.base.FSequent
 import at.logic.cli.GAPScalaInteractiveShellLibrary.{time, parse, extractExpansionSequent, prooftool}
 import at.logic.examples.UniformAssociativity3ExampleProof
 import at.logic.language.fol.{toNNF, removeTopAndBottom, lcomp}
+import at.logic.provers.maxsat.MaxSATSolver
 import at.logic.provers.sat4j.Sat4j
 
 def removeEqAxioms( eseq: ExpansionSequent ) = {
@@ -40,7 +41,7 @@ val logicalComp = lcomp(removeTopAndBottom(toNNF(SipGrammarMinimizationFormula(n
 println(s"Logical complexity of the minimization formula: $logicalComp")
 
 println(s"Minimized grammar:")
-val minGrammar = time { minimizeSipGrammar(nfGrammar, instanceLanguages) }
+val minGrammar = time { minimizeSipGrammar(nfGrammar, instanceLanguages, maxSATSolver = MaxSATSolver.QMaxSAT) }
 minGrammar.productions foreach println; println
 
 instanceLanguages foreach { case (n, instanceLanguage) =>
