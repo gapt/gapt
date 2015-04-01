@@ -1,12 +1,11 @@
-import at.logic.algorithms.cutIntroduction._
-import at.logic.calculi.expansionTrees.{removeFromExpansionSequent, ExpansionSequent}
-import at.logic.calculi.lk.base.FSequent
-import at.logic.cli.GAPScalaInteractiveShellLibrary.{time, parse, extractExpansionSequent, prooftool}
-import at.logic.examples._
-import at.logic.language.fol.{toNNF, removeTopAndBottom, lcomp}
-import at.logic.provers.maxsat.{QMaxSAT, MaxSATSolver}
-import at.logic.provers.prover9.{Prover9Prover, Prover9}
-import at.logic.provers.sat4j.Sat4j
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{extractExpansionSequent, time, parse}
+import at.logic.gapt.examples.UniformAssociativity3ExampleProof
+import at.logic.gapt.language.fol.{toNNF, removeTopAndBottom, lcomp}
+import at.logic.gapt.proofs.expansionTrees.{removeFromExpansionSequent, ExpansionSequent}
+import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
+import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.provers.maxsat.QMaxSAT
+import at.logic.gapt.provers.sat4j.Sat4j
 
 def removeEqAxioms( eseq: ExpansionSequent ) = {
   // removes all equality axioms that appear in examples/ProofSequences.scala
