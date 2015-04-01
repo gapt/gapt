@@ -83,7 +83,7 @@ class GrammarFindingTest extends Specification {
 
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" )
       val g = findMinimalGrammar( l map parseTerm, 1 )
-      covers(g, l: _*)
+      covers( g, l: _* )
       g.productions.size must beEqualTo( 2 + 3 )
     }
   }
