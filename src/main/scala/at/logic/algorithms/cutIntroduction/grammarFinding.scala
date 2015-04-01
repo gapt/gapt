@@ -31,11 +31,20 @@ object SameRootSymbol {
   }
 }
 
-object antiUnificator {
+private class antiUnificator {
+  private var varIndex = 0
+  private val vars = mutable.Map[Seq[FOLTerm], FOLVar]()
+  private def getVar( terms: Seq[FOLTerm] ) =
+    vars.getOrElseUpdate( terms, { varIndex += 1; FOLVar( s"β$varIndex" ) } )
+
   def apply( terms: Seq[FOLTerm] ): FOLTerm = terms match {
     case SameRootSymbol( s, as ) => Function( s, as map apply )
-    case _                       => FOLVar( s"β[${terms mkString ","}]" )
+    case _                       => getVar( terms )
   }
+}
+
+object antiUnificator {
+  def apply( terms: Seq[FOLTerm] ): FOLTerm = new antiUnificator().apply( terms )
 }
 
 object normalizeNonTerminals {
