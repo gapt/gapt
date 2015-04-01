@@ -69,8 +69,7 @@ import at.logic.provers.atp.commands.robinson._
 import at.logic.provers.atp.commands.sequents._
 import at.logic.provers.atp.commands.ui._
 import at.logic.provers.{ Prover => abstractProver }
-import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
-import at.logic.provers.maxsat.MaxSATSolver._
+import at.logic.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.provers.minisat.MiniSAT
 import at.logic.provers.prover9.Prover9
 import at.logic.provers.prover9.commands.Prover9InitCommand
@@ -345,7 +344,7 @@ object miniSATprove {
 }
 
 object MaxSATsolve {
-  def apply( hard: List[FOLFormula], soft: List[Tuple2[FOLFormula, Int]], maxsatsolver: MaxSATSolver = MaxSATSolver.QMaxSAT ) = ( new MaxSAT( maxsatsolver ) ).solvePWM( hard, soft )
+  def apply( hard: List[FOLFormula], soft: List[Tuple2[FOLFormula, Int]], maxsatsolver: MaxSATSolver = new QMaxSAT() ) = maxsatsolver.solveWPM( hard, soft )
 }
 
 /**

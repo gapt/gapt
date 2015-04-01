@@ -16,7 +16,7 @@ import at.logic.language.hol.HOLFormula
 import at.logic.provers.basicProver._
 import at.logic.provers.eqProver._
 import at.logic.provers.Prover
-import at.logic.provers.maxsat.MaxSATSolver
+import at.logic.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.provers.minisat.MiniSATProver
 import at.logic.transformations.herbrandExtraction.extractExpansionSequent
 import at.logic.utils.executionModels.timeout._
@@ -415,7 +415,7 @@ object CutIntroduction extends at.logic.utils.logging.Logger {
       case true  => new EquationalProver()
       case false => new BasicProver()
     }
-    val maxsatsolver = MaxSATSolver.QMaxSAT
+    val maxsatsolver = new QMaxSAT()
 
     var phase = ""
     var time = System.currentTimeMillis
