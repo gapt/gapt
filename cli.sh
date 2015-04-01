@@ -16,4 +16,4 @@ while getopts "hm:" FLAG; do
   esac
 done
 
-run_gapt at.logic.cli.CLIMain "$@"
+run_gapt at.logic.gapt.cli.CLIMain "$@"

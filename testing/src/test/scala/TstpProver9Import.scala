@@ -1,12 +1,13 @@
 package at.logic.testing.tstp
 
-import at.logic.algorithms.lk._
-import at.logic.calculi.expansionTrees._
-import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
-import at.logic.provers.minisat._
-import at.logic.provers.veriT._
+import at.logic.gapt.proofs.lk.algorithms
+import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
+import at.logic.gapt.proofs.lk.algorithms.{ solve, containsEqualityReasoning }
+import at.logic.gapt.provers.minisat._
+import at.logic.gapt.provers.veriT._
 import at.logic.testing.{ skipIfRunsLongerThan, recursiveListFiles }
-import at.logic.transformations.herbrandExtraction._
+import at.logic.gapt.proofs.algorithms.herbrandExtraction._
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
 import scala.concurrent.duration._

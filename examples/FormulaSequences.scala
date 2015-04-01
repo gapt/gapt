@@ -1,6 +1,6 @@
-package at.logic.examples
-import at.logic.language.fol._
-import at.logic.calculi.lk.base._
+package at.logic.gapt.examples
+import at.logic.gapt.language.fol._
+import at.logic.gapt.proofs.lk.base._
 
 /*
  * Creates the n-th formula of a sequence where distributivity-based
@@ -11,13 +11,13 @@ object PQPairs {
   def apply( n: Int ): FOLFormula = {
     assert( n >= 1 )
     if ( n == 1 )
-      And( p( 1 ), q( 1 ))
+      FOLAnd( p( 1 ), q( 1 ))
     else
-      Or( apply( n - 1 ), And( p( n ), q( n )))
+      FOLOr( apply( n - 1 ), FOLAnd( p( n ), q( n )))
   }
 
-  def p( i: Int ) = Atom( "p_" + i, Nil )
-  def q( i: Int ) = Atom( "q_" + i, Nil )
+  def p( i: Int ) = FOLAtom( "p_" + i, Nil )
+  def q( i: Int ) = FOLAtom( "q_" + i, Nil )
 }
 
 /*
@@ -31,14 +31,14 @@ object PQPairs {
 object BussTautology {
   def apply( n: Int ) : FSequent = FSequent( Ant( n ), c( n )::d( n )::Nil )
 
-  def c( i: Int ) = Atom( "c_" + i, Nil )
-  def d( i: Int ) = Atom( "d_" + i, Nil )
-  def F( i: Int ) : FOLFormula = if ( i == 1 ) Or( c( 1 ), d( 1 ) ) else And( F( i - 1 ), Or( c( i ), d( i ) ) )
-  def A( i: Int ) = if ( i == 1 ) c( 1 ) else Imp( F( i - 1 ), c( i ) )
-  def B( i: Int ) = if ( i == 1 ) d( 1 ) else Imp( F( i - 1 ), d( i ) )
+  def c( i: Int ) = FOLAtom( "c_" + i, Nil )
+  def d( i: Int ) = FOLAtom( "d_" + i, Nil )
+  def F( i: Int ) : FOLFormula = if ( i == 1 ) FOLOr( c( 1 ), d( 1 ) ) else FOLAnd( F( i - 1 ), FOLOr( c( i ), d( i ) ) )
+  def A( i: Int ) = if ( i == 1 ) c( 1 ) else FOLImp( F( i - 1 ), c( i ) )
+  def B( i: Int ) = if ( i == 1 ) d( 1 ) else FOLImp( F( i - 1 ), d( i ) )
 
   // the antecedens of the final sequent
-  def Ant( i: Int ) : List[FOLFormula] = if ( i == 0 ) Nil else Or( A( i ), B( i ))::Ant( i - 1 )
+  def Ant( i: Int ) : List[FOLFormula] = if ( i == 0 ) Nil else FOLOr( A( i ), B( i ))::Ant( i - 1 )
 }
 
 /*
@@ -60,15 +60,15 @@ object PigeonHolePrinciple {
    **/
   def apply( ps: Int, hs: Int ) = {
     assert( ps > 1 )
-    Imp( And( (1 to ps).map( p =>
-            Or( (1 to hs).map( h => atom(p, h) ).toList ) ).toList ),
-          Or( (1 to hs).map ( h =>
-            Or( (2 to ps).map( p =>
-              Or( ((1 to p - 1)).map( pp =>
-                And(atom(p, h),atom(pp,h))).toList)).toList)).toList))
+    FOLImp( FOLAnd( (1 to ps).map( p =>
+            FOLOr( (1 to hs).map( h => atom(p, h) ).toList ) ).toList ),
+          FOLOr( (1 to hs).map ( h =>
+            FOLOr( (2 to ps).map( p =>
+              FOLOr( ((1 to p - 1)).map( pp =>
+                FOLAnd(atom(p, h),atom(pp,h))).toList)).toList)).toList))
   }
 
-  def atom( p: Int, h: Int ) = Atom(rel, pigeon(p)::hole(h)::Nil)
+  def atom( p: Int, h: Int ) = FOLAtom(rel, pigeon(p)::hole(h)::Nil)
 
   def pigeon(i: Int) = FOLConst("p_" + i)
 

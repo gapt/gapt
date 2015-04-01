@@ -1,7 +1,7 @@
 import java.io.{FileWriter, File}
-import at.logic.calculi.lk.base.LKRuleCreationException
-import at.logic.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
-import at.logic.utils.executionModels.timeout._
+import at.logic.gapt.proofs.lk.base.LKRuleCreationException
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
+import at.logic.gapt.utils.executionModels.timeout._
 
 object runOnProver9Proofs {
   /** The base prover9 path.
