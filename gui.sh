@@ -2,4 +2,4 @@
 basedir="$(dirname "$0")"
 . "$basedir/include.sh"
 
-run_gapt at.logic.gui.prooftool.gui.Main "$@"
+run_gapt at.logic.gapt.gui.Main "$@"

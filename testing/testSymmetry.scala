@@ -1,4 +1,6 @@
 import java.io._
+import at.logic.gapt.proofs.expansionTrees.algorithms
+import at.logic.gapt.proofs.expansionTrees.algorithms.getStatistics
 import org.slf4j.LoggerFactory
 
 /**********
@@ -38,11 +40,11 @@ object testSymmetry {
 
     getVeriTProofs( str ).foreach { case fn =>
       val es = loadVeriTProof( fn ).get
-      val stats_import = at.logic.algorithms.expansionTrees.getStatistics( compressExpansionSequent( es ))
+      val stats_import = getStatistics( compressExpansionSequent( es ))
       val nsymm_import = if ( stats_import._1.contains( symm )) stats_import._1( symm ) else 0
 
       val min = at.logic.algorithms.expansionTrees.minimalExpansionSequent( es, minisat ).get
-      val stats_min = at.logic.algorithms.expansionTrees.getStatistics( compressExpansionSequent( min ))
+      val stats_min = algorithms.getStatistics( compressExpansionSequent( min ))
       val nsymm_min = if ( stats_min._1.contains( symm )) stats_min._1( symm ) else 0
 
       TestSymmetryDataLogger.trace( fn + ": " + nsymm_import + ", " + nsymm_min )
@@ -56,8 +58,8 @@ object testSymmetry {
     getVeriTProofs( str ).foreach { case fn =>
       val es = loadVeriTProof( fn ).get
       val es_wosym = at.logic.calculi.expansionTrees.removeFromExpansionSequent( es, FSequent( symm::Nil, Nil ))
-      val stats_import = at.logic.algorithms.expansionTrees.getStatistics( compressExpansionSequent( es ))
-      val stats_wosym = at.logic.algorithms.expansionTrees.getStatistics( compressExpansionSequent( es_wosym ))
+      val stats_import = algorithms.getStatistics( compressExpansionSequent( es ))
+      val stats_wosym = algorithms.getStatistics( compressExpansionSequent( es_wosym ))
       TestSymmetryDataLogger.trace( fn + ": " + stats_import.total + ", " + stats_wosym.total )
     }
   }
