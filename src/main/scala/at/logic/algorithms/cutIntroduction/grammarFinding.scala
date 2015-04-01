@@ -71,10 +71,10 @@ object normalForms {
           case ( v, setOfPos ) =>
             setOfPos foreach { pos =>
               try {
-                if ( nf.isDefinedAt( HOLPosition( pos ) ) )
-                  nf = new Replacement( pos, v )( nf ).asInstanceOf[FOLTerm]
+                nf = new Replacement( pos, v )( nf ).asInstanceOf[FOLTerm]
               } catch {
                 // FIXME: Replacements are buggy...
+                // All I want is to replace a subterm at a position if the position still exists
                 case _: IllegalArgumentException => ()
               }
             }

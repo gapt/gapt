@@ -17,6 +17,11 @@ class GrammarFindingTest extends Specification {
       val nfs = normalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs.toSet must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x" ) map parseTerm )
     }
+    "not fall prey to replacements bug" in {
+      val l = Seq( "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
+      val nfs = Set( "x", "tuple2(x)", "tuple2(x + x)", "tuple2(0 + 0)", "tuple2(s(x) + s(x))", "tuple2(s(0) + s(0))" )
+      normalForms( l map parseTerm, Seq( FOLVar( "x" ) ) ).toSet must beEqualTo( nfs map parseTerm )
+    }
   }
   "tratNormalForms" should {
     "find strong normal forms" in {
