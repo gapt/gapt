@@ -10,12 +10,12 @@ import at.logic.language.fol._
 import at.logic.language.fol.Atom
 import at.logic.algorithms.cutIntroduction.Deltas._
 import at.logic.language.hol.logicSymbols._
-import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
+import at.logic.models.Interpretation
 import at.logic.utils.dssupport.ListSupport
 import at.logic.utils.logging.Stopwatch
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
-import at.logic.provers.maxsat.{ MaxSATSolver, MapBasedInterpretation, MaxSAT }
+import at.logic.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.utils.dssupport.ListSupport.{ boundedPower, diagCross }
 import at.logic.language.fol.Utils.{ st, subterms, calcCharPartition, incrementAllVars, nonterminalOccurs, replaceAtPosition, getNonterminals }
 
@@ -77,7 +77,7 @@ object TreeGrammarDecomposition {
     phase = "CNF/MaxSAT"
 
     // Retrieving a model from a MaxSAT solver and extract the rules
-    val interpretation = ( new MaxSAT( satsolver ) ).solvePWM( f, g )
+    val interpretation = satsolver.solveWPM( f, g )
 
     interpretation match {
       case Some( interp ) => {
@@ -94,7 +94,7 @@ object TreeGrammarDecomposition {
     }
   }
 
-  def apply( termset: TermSet, n: Int, method: MCSMethod = MCSMethod.MaxSAT, satsolver: MaxSATSolver = MaxSATSolver.QMaxSAT ): Option[MultiGrammar] = {
+  def apply( termset: TermSet, n: Int, method: MCSMethod = MCSMethod.MaxSAT, satsolver: MaxSATSolver = new QMaxSAT() ): Option[MultiGrammar] = {
     val og = apply( termset.set, n, method, satsolver )
     og match {
       case Some( g ) => Some( simpleToMultiGrammar( termset, g ) )
@@ -131,7 +131,7 @@ abstract class TreeGrammarDecomposition( val termset: List[FOLTerm], val n: Int 
 
   // abstract method definitions for individual implementation
   // w.r.t. the method type
-  def getRules( interpretation: Option[MapBasedInterpretation] ): Set[Tuple2[Int, FOLTerm]]
+  def getRules( interpretation: Option[Interpretation] ): Set[Tuple2[Int, FOLTerm]]
   def softConstraints(): Any
   def MCS(): Any
   def R( qindex: Int, qsubtermIndexes: Set[Int] ): FOLFormula
@@ -403,7 +403,7 @@ class TreeGrammarDecompositionPWM( override val termset: List[FOLTerm], override
    * @param interpretation a MapBasedInterpretation of the MCS formulation
    * @return a set of rules
    */
-  def getRules( interpretation: Option[MapBasedInterpretation] ): Set[Tuple2[Int, FOLTerm]] = {
+  def getRules( interpretation: Option[Interpretation] ): Set[Tuple2[Int, FOLTerm]] = {
     interpretation match {
       case Some( model ) => {
         propRules.foldLeft( Set[Tuple2[Int, FOLTerm]]() )( ( acc, x ) => {

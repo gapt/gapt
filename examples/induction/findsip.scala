@@ -4,7 +4,7 @@ import at.logic.calculi.lk.base.FSequent
 import at.logic.cli.GAPScalaInteractiveShellLibrary.{time, parse, extractExpansionSequent, prooftool}
 import at.logic.examples._
 import at.logic.language.fol.{toNNF, removeTopAndBottom, lcomp}
-import at.logic.provers.maxsat.MaxSATSolver
+import at.logic.provers.maxsat.{QMaxSAT, MaxSATSolver}
 import at.logic.provers.prover9.{Prover9Prover, Prover9}
 import at.logic.provers.sat4j.Sat4j
 
@@ -25,12 +25,12 @@ def removeEqAxioms( eseq: ExpansionSequent ) = {
   removeFromExpansionSequent( eseq, eqaxioms )
 }
 
-val N = 4
+val N = 5
 val instanceLanguages = (1 until N) map { n =>
   println(s"Proving for n=$n")
-//  val instanceProof = UniformAssociativity3ExampleProof(n)
+  val instanceProof = UniformAssociativity3ExampleProof(n)
 //  val instanceProof = LinearEqExampleProof(n)
-  val instanceProof = FactorialFunctionEqualityExampleProof(n)
+//  val instanceProof = FactorialFunctionEqualityExampleProof(n)
   val instanceLanguage = TermsExtraction(removeEqAxioms(extractExpansionSequent(instanceProof))).set
   println(s"Instance language:"); instanceLanguage foreach println; println
   n -> instanceLanguage
@@ -45,7 +45,7 @@ val logicalComp = lcomp(removeTopAndBottom(toNNF(SipGrammarMinimizationFormula(n
 println(s"Logical complexity of the minimization formula: $logicalComp")
 
 println(s"Minimized grammar:")
-val minGrammar = time { minimizeSipGrammar(nfGrammar, instanceLanguages, maxSATSolver = MaxSATSolver.QMaxSAT) }
+val minGrammar = time { minimizeSipGrammar(nfGrammar, instanceLanguages, maxSATSolver = new QMaxSAT()) }
 minGrammar.productions foreach println; println
 
 instanceLanguages foreach { case (n, instanceLanguage) =>

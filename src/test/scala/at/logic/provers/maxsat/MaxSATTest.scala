@@ -4,6 +4,7 @@
 
 package at.logic.provers.maxsat
 
+import at.logic.models.{ Interpretation, MapBasedInterpretation }
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -53,67 +54,59 @@ class MaxSATTest extends SpecificationWithJUnit {
     }
   }
 
+  def check( model: Option[Interpretation] ) = model match {
+    case Some( model ) => if ( model.interpret( SimpleMaxSATFormula.x2 ) == true &&
+      model.interpret( SimpleMaxSATFormula.x1 ) == false &&
+      model.interpret( SimpleMaxSATFormula.x3 ) == false ) true
+    else false
+    case None => false
+  }
+
   "QMaxSAT" should {
 
     "deal correctly with a simple instance" in {
-      if ( !new MaxSAT( MaxSATSolver.QMaxSAT ).isInstalled ) skipped( "qmaxsat not installed" )
+      if ( !new QMaxSAT().isInstalled ) skipped( "qmaxsat not installed" )
 
       val ( hard, soft ) = SimpleMaxSATFormula()
-      ( new MaxSAT( MaxSATSolver.QMaxSAT ) ).solvePWM( hard, soft ) must beLike {
-        case Some( model ) => if ( model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x2 ) == true &&
-          model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x1 ) == false &&
-          model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x3 ) == false ) ok
-        else ko
-        case None => ko
-      }
+      check( ( new QMaxSAT() ).solveWPM( hard, soft ) ) must beTrue
     }
   }
 
   "ToySAT" should {
 
     "deal correctly with a simple instance" in {
-      if ( !new MaxSAT( MaxSATSolver.ToySolver ).isInstalled ) skipped( "toysolver not installed" )
+      if ( !new ToySAT().isInstalled ) skipped( "toysat not installed" )
 
       val ( hard, soft ) = SimpleMaxSATFormula()
-      ( new MaxSAT( MaxSATSolver.ToySAT ) ).solvePWM( hard, soft ) must beLike {
-        case Some( model ) => if ( model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x2 ) == true &&
-          model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x1 ) == false &&
-          model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x3 ) == false ) ok
-        else ko
-        case None => ko
-      }
+      check( ( new ToySAT() ).solveWPM( hard, soft ) ) must beTrue
     }
   }
 
   "ToySolver" should {
 
     "deal correctly with a simple instance" in {
-      if ( !new MaxSAT( MaxSATSolver.ToySolver ).isInstalled ) skipped( "toysolver not installed" )
+      if ( !new ToySolver().isInstalled ) skipped( "toysolver not installed" )
 
       val ( hard, soft ) = SimpleMaxSATFormula()
-      ( new MaxSAT( MaxSATSolver.ToySolver ) ).solvePWM( hard, soft ) must beLike {
-        case Some( model ) => if ( model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x2 ) == true &&
-          model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x1 ) == false &&
-          model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x3 ) == false ) ok
-        else ko
-        case None => ko
-      }
+      check( ( new ToySolver() ).solveWPM( hard, soft ) ) must beTrue
     }
   }
 
   "MiniMaxSAT" should {
 
     "deal correctly with a simple instance" in {
-      if ( !new MaxSAT( MaxSATSolver.MiniMaxSAT ).isInstalled ) skipped( "minimaxsat not installed" )
+      if ( !new MiniMaxSAT().isInstalled ) skipped( "minimaxsat not installed" )
 
       val ( hard, soft ) = SimpleMaxSATFormula()
-      ( new MaxSAT( MaxSATSolver.MiniMaxSAT ) ).solvePWM( hard, soft ) must beLike {
-        case Some( model ) => if ( model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x2 ) == true &&
-          model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x1 ) == false &&
-          model.asInstanceOf[MapBasedInterpretation].interpret( SimpleMaxSATFormula.x3 ) == false ) ok
-        else ko
-        case None => ko
-      }
+      check( ( new MiniMaxSAT() ).solveWPM( hard, soft ) ) must beTrue
+    }
+  }
+
+  "MaxSat4j" should {
+
+    "deal correctly with a simple instance" in {
+      val ( hard, soft ) = SimpleMaxSATFormula()
+      check( ( new MaxSat4j() ).solveWPM( hard, soft ) ) must beTrue
     }
   }
 }

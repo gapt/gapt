@@ -11,10 +11,9 @@ import at.logic.calculi.resolution._
 import at.logic.language.fol.FOLFormula
 import at.logic.language.hol._
 import at.logic.models._
-import at.logic.parsing.language.dimacs.DIMACSExporter
+import at.logic.parsing.language.dimacs.{ readDIMACS, writeDIMACS, DIMACSHelper }
 import at.logic.provers.Prover
 import java.io._
-import java.lang.StringBuilder
 import scala.collection.immutable.HashMap
 
 // Call MiniSAT to solve quantifier-free HOLFormulas.
@@ -53,16 +52,16 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
   // Returns None if unsatisfiable.
   def solve( clauses: List[FClause] ): Option[Interpretation] =
     {
-      val dimacs = new DIMACSExporter( clauses )
+      val helper = new DIMACSHelper( clauses )
 
-      val minisat_in = dimacs.getDIMACSString()
+      val minisat_in = writeDIMACS( helper )
       trace( "Generated MiniSAT input: " )
       trace( minisat_in );
 
-      val temp_in = File.createTempFile( "agito_minisat_in", ".sat" )
+      val temp_in = File.createTempFile( "gapt_minisat_in", ".sat" )
       temp_in.deleteOnExit()
 
-      val temp_out = File.createTempFile( "agito_minisat_out", ".sat" )
+      val temp_out = File.createTempFile( "gapt_minisat_out", ".sat" )
       temp_out.deleteOnExit()
 
       val out = new BufferedWriter( new FileWriter( temp_in ) )
@@ -83,7 +82,7 @@ class MiniSAT extends at.logic.utils.logging.Stopwatch {
 
       trace( "MiniSAT result: " + sat )
 
-      dimacs.getInterpretation( sat )
+      readDIMACS( sat, helper )
     }
 }
 

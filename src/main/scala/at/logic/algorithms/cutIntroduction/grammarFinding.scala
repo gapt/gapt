@@ -3,10 +3,8 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.algorithms.matching.FOLMatchingAlgorithm
 import at.logic.language.fol._
 import at.logic.language.fol.replacements.{ Replacement, getAllPositionsFOL }
-import at.logic.language.hol.HOLPosition
 import at.logic.language.lambda.symbols.SymbolA
-import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
-import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
+import at.logic.provers.maxsat.{ MaxSat4j, MaxSATSolver }
 import at.logic.utils.dssupport.ListSupport
 
 import scala.collection.mutable
@@ -242,14 +240,14 @@ object normalFormsTratGrammar {
 }
 
 object minimizeGrammar {
-  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = MaxSATSolver.ToySAT ): TratGrammar = {
+  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j() ): TratGrammar = {
     val formula = new GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
-    new MaxSAT( maxSATSolver ).solvePWM( List( hard ), soft toList ) match {
+    maxSATSolver.solveWPM( List( hard ), soft toList ) match {
       case Some( interp ) => TratGrammar( g.axiom,
-        g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )
+        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
       case None => throw new TreeGrammarDecompositionException( "Grammar does not cover language." )
     }
   }

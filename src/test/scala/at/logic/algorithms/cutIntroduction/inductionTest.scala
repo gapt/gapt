@@ -3,15 +3,13 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.language.fol._
 import at.logic.parsing.language.prover9.Prover9TermParserLadrStyle.parseTerm
 import SipGrammar._
-import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
+import at.logic.provers.maxsat.QMaxSAT
 
 import org.specs2.mutable._
 
 class SipTests extends Specification {
   "SipGrammar" should {
     "produce instance grammars" in {
-      if ( !new MaxSAT( MaxSATSolver.ToySAT ).isInstalled ) skipped( "ToySAT is not installed" )
-
       val g = SipGrammar( Seq( tau -> Function( "r", List( nu ) ) ) )
       g.instanceGrammar( 2 ).productions.toSet must beEqualTo( Set( tau -> parseTerm( "r(0)" ), tau -> parseTerm( "r(s(0))" ) ) )
     }
@@ -19,8 +17,6 @@ class SipTests extends Specification {
 
   "findMinimalSipGrammar" should {
     "find a grammar" in {
-      if ( !new MaxSAT( MaxSATSolver.ToySAT ).isInstalled ) skipped( "ToySAT is not installed" )
-
       val n = 5
       // r(0), ..., r(s^n(0))
       val lang = ( 0 until n ) map { i => Function( "tuple1", List( Utils.numeral( i ) ) ) }
@@ -30,7 +26,8 @@ class SipTests extends Specification {
     }
 
     "find a grammar covering multiple instance languages" in {
-      if ( !new MaxSAT( MaxSATSolver.ToySAT ).isInstalled ) skipped( "ToySAT is not installed" )
+      if ( !new QMaxSAT().isInstalled )
+        skipped( "does not work with maxsat4j -- wrong result..." )
 
       val n = 4
       // i |-> {r(0), ..., r(s^i(0))}
@@ -39,7 +36,7 @@ class SipTests extends Specification {
           Function( "tuple1", List( Utils.numeral( j ) ) )
         } )
       }
-      val g = findMinimalSipGrammar( langs )
+      val g = findMinimalSipGrammar( langs, new QMaxSAT )
       g.productions must beEqualTo( Seq(
         tau -> Function( "tuple1", List( nu ) ) ) )
     }

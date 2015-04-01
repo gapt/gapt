@@ -3,8 +3,7 @@ package at.logic.algorithms.cutIntroduction
 import at.logic.language.fol.Utils.numeral
 import at.logic.language.fol._
 import at.logic.language.lambda.symbols.SymbolA
-import at.logic.provers.maxsat.MaxSATSolver.MaxSATSolver
-import at.logic.provers.maxsat.{ MaxSATSolver, MaxSAT }
+import at.logic.provers.maxsat.{ MaxSat4j, MaxSATSolver }
 
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )
@@ -115,22 +114,22 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
 }
 
 object minimizeSipGrammar {
-  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = MaxSATSolver.ToySAT ): SipGrammar = {
+  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
-    new MaxSAT( maxSATSolver ).solvePWM( List( hard ), soft toList ) match {
+    maxSATSolver.solveWPM( List( hard ), soft toList ) match {
       case Some( interp ) => SipGrammar(
-        g.productions filter { p => interp.interpretAtom( formula.productionIsIncluded( p ) ) } )
+        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
       case None => throw new TreeGrammarDecompositionException( "Grammar does not cover language." )
     }
   }
 }
 
 object findMinimalSipGrammar {
-  def apply( langs: Seq[normalFormsSipGrammar.InstanceLanguage] ) = {
+  def apply( langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
     val polynomialSizedCoveringGrammar = normalFormsSipGrammar( langs )
-    minimizeSipGrammar( polynomialSizedCoveringGrammar, langs )
+    minimizeSipGrammar( polynomialSizedCoveringGrammar, langs, maxSATSolver )
   }
 }
