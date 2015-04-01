@@ -53,6 +53,6 @@ instanceLanguages foreach { case (n, instanceLanguage) =>
   val instanceGrammar = minGrammar.instanceGrammar(n)
 //  println("Instance language:"); instanceLanguage foreach println
 //  println("Instance grammar:"); instanceGrammar.productions foreach println
-  println("Is it covered? " + new Sat4j().solve(GrammarMinimizationFormula(instanceGrammar, instanceLanguage)).isDefined)
+  println("Is it covered? " + new Sat4j().solve(new GrammarMinimizationFormula(instanceGrammar).coversLanguage(instanceLanguage)).isDefined)
   println
 }

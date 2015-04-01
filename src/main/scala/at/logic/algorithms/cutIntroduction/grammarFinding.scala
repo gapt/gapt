@@ -112,7 +112,7 @@ object TratGrammar {
 case class TratGrammar( axiom: FOLVar, productions: Seq[TratGrammar.Production] ) {
   import TratGrammar._
 
-  val nonTerminals = productions flatMap { p => p._1 :: freeVariables(p._2) } distinct
+  val nonTerminals = productions flatMap { p => p._1 :: freeVariables( p._2 ) } distinct
 
   def productions( nonTerminal: FOLVar ): Seq[Production] = productions filter ( _._1 == nonTerminal )
   def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
@@ -124,20 +124,21 @@ case class TratGrammar( axiom: FOLVar, productions: Seq[TratGrammar.Production] 
     productions map asVectTratGrammarProduction )
 }
 
-class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
+class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
   import VectTratGrammar._
 
-  def vectProductionIsIncluded( p: Production ) = Atom( s"p,$p" )
-  def valueOfNonTerminal( t: FOLTerm, n: FOLVar, rest: FOLTerm ) = Atom( s"v,$t,$n=$rest" )
+  def vectProductionIsIncluded( p: Production ): FOLFormula = Atom( s"$p" )
+  def valueOfNonTerminal( n: FOLVar, value: FOLTerm ): FOLFormula = Atom( s"$n=$value" )
 
-  def generatesTerm( t: FOLTerm ) = {
+  val Omega = FOLConst( "Ω" )
+
+  def formula: FOLFormula = {
     val cs = List.newBuilder[FOLFormula]
 
     // TODO: assert that Omega does not occur in g or t
-    val Omega = FOLConst( "Ω" )
 
     // value of axiom must be t
-    cs += valueOfNonTerminal( t, g.axiom, t )
+    cs += valueOfNonTerminal( g.axiom, t )
 
     // possible values must decompose correctly
     val singleVariableAssignmentsToHandle = mutable.Queue( g.axiom -> t )
@@ -156,7 +157,7 @@ class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
         }
         possibleAssignments foreach { assignment =>
           if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) ) )
-            cs += Imp( And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( t, nt, value ) } ),
+            cs += Imp( And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( nt, value ) } ),
               Or( g.productions( containingNonTerminalVect ) map {
                 case p @ ( _, rhss ) =>
                   And( containingNonTerminalVect.zip( assignment ).zip( rhss ) map {
@@ -168,7 +169,7 @@ class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
                             And( matching.folmap map {
                               case ( v, smallerValue: FOLTerm ) =>
                                 singleVariableAssignmentsToHandle enqueue ( v -> smallerValue )
-                                valueOfNonTerminal( t, v, smallerValue )
+                                valueOfNonTerminal( v, smallerValue )
                             } toList ) )
                         case None => BottomC
                       }
@@ -184,14 +185,28 @@ class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
 
     // values are unique
     for ( ( d, v1s ) <- possibleSingleVariableAssignments; ( d2, v2s ) <- possibleSingleVariableAssignments; v1 <- v1s; v2 <- v2s if d == d2 && v1 != v2 )
-      cs += Or( Neg( valueOfNonTerminal( t, d, v1 ) ), Neg( valueOfNonTerminal( t, d, v2 ) ) )
+      cs += Or( Neg( valueOfNonTerminal( d, v1 ) ), Neg( valueOfNonTerminal( d, v2 ) ) )
 
     // values exist
     for ( ( d, vs ) <- possibleSingleVariableAssignments if vs contains Omega )
-      cs += Or( vs map ( valueOfNonTerminal( t, d, _ ) ) toList )
+      cs += Or( vs map ( valueOfNonTerminal( d, _ ) ) toList )
 
     And( cs result )
   }
+}
+
+class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
+  import VectTratGrammar._
+
+  def vectProductionIsIncluded( p: Production ) = Atom( s"$p" )
+  def valueOfNonTerminal( t: FOLTerm, n: FOLVar, rest: FOLTerm ) = Atom( s"$t:$n=$rest" )
+
+  def generatesTerm( t: FOLTerm ) = new TermGenerationFormula( g, t ) {
+    override def vectProductionIsIncluded( p: Production ) =
+      VectGrammarMinimizationFormula.this.vectProductionIsIncluded( p )
+    override def valueOfNonTerminal( n: FOLVar, value: FOLTerm ) =
+      VectGrammarMinimizationFormula.this.valueOfNonTerminal( t, n, value )
+  }.formula
 
   def coversLanguage( lang: Seq[FOLTerm] ) = And( lang map generatesTerm toList )
 }
@@ -199,12 +214,6 @@ class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
 class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizationFormula( g toVectTratGrammar ) {
   def productionIsIncluded( p: TratGrammar.Production ) = Atom( s"p,$p" )
   override def vectProductionIsIncluded( p: VectTratGrammar.Production ) = productionIsIncluded( p._1( 0 ), p._2( 0 ) )
-}
-
-object GrammarMinimizationFormula {
-  def apply( g: TratGrammar ): GrammarMinimizationFormula = new GrammarMinimizationFormula( g )
-  def apply( g: TratGrammar, t: FOLTerm ): FOLFormula = apply( g ).generatesTerm( t )
-  def apply( g: TratGrammar, l: Seq[FOLTerm] ): FOLFormula = apply( g ).coversLanguage( l )
 }
 
 object normalFormsTratGrammar {
@@ -225,7 +234,7 @@ object normalFormsTratGrammar {
 
 object minimizeGrammar {
   def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = MaxSATSolver.ToySAT ): TratGrammar = {
-    val formula = GrammarMinimizationFormula( g )
+    val formula = new GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
