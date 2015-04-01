@@ -351,7 +351,6 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
   def parse_prover9LK( p9_file: String, forceSkolemization: Boolean = false ): LKProof = {
 
     val ( proof, endsequent, clauses ) = Prover9.parse_prover9( p9_file )
-    println( endsequent )
     //val sendsequent = skolemize(endsequent)
     //val folsendsequent= FSequent(sendsequent.antecedent.map(x => hol2fol(x)), sendsequent.succedent.map(x => hol2fol(x)))
 
