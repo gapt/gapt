@@ -34,7 +34,7 @@ class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
     val cnf = f match {
       case f1: FOLFormula => {
         debug( "starting Tseitin CNF-transformation..." )
-        TseitinCNF( f1 )._1
+        TseitinCNF( f1 )
       }
       case _ => {
         debug( "starting naive CNF-transformation..." )

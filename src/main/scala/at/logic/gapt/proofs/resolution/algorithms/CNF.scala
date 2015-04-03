@@ -62,12 +62,19 @@ private object times {
 
 object TseitinCNF {
   /**
-   * Generates from a formula f a Set of FClauses in CNF by using Tseitin's Transformation
+   * Generates from a formula f a List of FClauses in CNF by using Tseitin's Transformation
+   * @param f formula which should be transformed
+   * @return CNF satisfiability-equivalent to f
+   */
+  def apply( f: FOLFormula ): List[FClause] = incremental_apply( f, null )._1
+
+  /**
+   * Generates from a formula f a List of FClauses in CNF by using Tseitin's Transformation
    * @param f formula which should be transformed
    * @param tseitinInstance a previously called TseitinCNF instance, which provides dependencies for future computations
-   * @return triple where 1st are clauses equivalent to f in CNF, 2nd is the subformulaMap and 3rd is an atomBlacklist for eventual further TseitinCNF computations
+   * @return pair where 1st are clauses equivalent to f in CNF, 2nd is updated TseitinCNF instance providing dependecies for future computations
    */
-  def apply( f: FOLFormula, tseitinInstance: TseitinCNF = null ): ( List[FClause], TseitinCNF ) = {
+  def incremental_apply( f: FOLFormula, tseitinInstance: TseitinCNF = null ): ( List[FClause], TseitinCNF ) = {
 
     val tseitin = tseitinInstance match {
       case null => new TseitinCNF()

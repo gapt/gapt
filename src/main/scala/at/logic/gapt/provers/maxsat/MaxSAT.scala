@@ -46,7 +46,7 @@ trait MaxSATSolver extends Logger {
 
     // Hard CNF transformation
     watch.start()
-    val hardCNF = TseitinCNF( FOLAnd( hard ) )._1
+    val hardCNF = TseitinCNF( FOLAnd( hard ) )
     val hardCNFTime = watch.lap( "hardCNF" )
     logTime( "[Runtime]<hard CNF-Generation> ", hardCNFTime )
     trace( "produced hard cnf: " + hardCNF )

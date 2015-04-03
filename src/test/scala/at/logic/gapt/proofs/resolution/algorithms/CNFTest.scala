@@ -47,7 +47,7 @@ class CNFTest extends SpecificationWithJUnit {
         FClause( List( x2, x0 ), List( x1 ) ),
         FClause( List( x, r ), List( x0 ) ),
         FClause( List( x ), List( p, q ) ) )
-      expected.subsetOf( cnf._1.toSet ) must beTrue
+      expected.subsetOf( cnf.toSet ) must beTrue
     }
   }
 }
