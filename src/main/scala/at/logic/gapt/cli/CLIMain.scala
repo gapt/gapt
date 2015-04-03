@@ -33,12 +33,12 @@ object CLIMain {
   import at.logic.gapt.language.hol.logicSymbols._
   import at.logic.gapt.proofs.hoare._
   import at.logic.gapt.proofs.algorithms.skolemization.skolemize
-  import at.logic.gapt.algorithms.lk.regularize
+  import at.logic.gapt.proofs.lk.algorithms.regularize
   import at.logic.gapt.proofs.occurrences.FormulaOccurrence
   import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.Deltas._
-  import at.logic.gapt.algorithms.lk.statistics._
+  import at.logic.gapt.proofs.lk.algorithms.getStatistics
   import at.logic.gapt.provers.minisat.MiniSATProver
-  import at.logic.gapt.gui.{Main => PT}
+  import at.logic.gapt.prooftool.{Main => PT}
   import help.{apply => help}
   import at.logic.gapt.cli.GPL.{apply => copying, printLicense => license}
   """
