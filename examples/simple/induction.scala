@@ -1,4 +1,5 @@
 import at.logic.calculi.lk._
+import at.logic.gapt.proofs.lk.InductionRule
 import at.logic.language.fol._
 import at.logic.language.hol.{HOLExpression, AllVarBlock}
 import at.logic.language.fol.Substitution

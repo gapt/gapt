@@ -3,12 +3,11 @@ import scala.io.Source
 import scala.collection.immutable.HashMap
 import org.slf4j.LoggerFactory
 
-import at.logic.utils.executionModels.timeout._
-import at.logic.calculi.expansionTrees.{ExpansionTree,ExpansionSequent,removeFromExpansionSequent}
-import at.logic.algorithms.cutIntroduction._
-import at.logic.algorithms.lk._
-import at.logic.provers.eqProver._
-import at.logic.provers._
+import at.logic.gapt.utils.executionModels.timeout._
+import at.logic.gapt.proofs.expansionTrees.{ExpansionTree,ExpansionSequent,removeFromExpansionSequent}
+import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
+import at.logic.gapt.provers.eqProver._
+import at.logic.gapt.provers._
 
 // for testCutIntro.compressProofSequences
 :load examples/ProofSequences.scala
@@ -130,20 +129,27 @@ object testCutIntro {
     }
   }
 
-  def compressExpansionProof (ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String) = 
-  status match {
-    case "ok" =>
-      val (cut_intro_status, info_tuple) = method match {
-        case 0 => CutIntroduction.one_cut_one_quantifier_stat (ep.get, hasEquality, timeout)
-        case 1 => CutIntroduction.one_cut_many_quantifiers_stat (ep.get, hasEquality, timeout)
-        case 2 => CutIntroduction.many_cuts_one_quantifier_stat (ep.get, 1, hasEquality, timeout)
-        case 3 => CutIntroduction.many_cuts_one_quantifier_stat (ep.get, 2, hasEquality, timeout)
-      }
-      val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
-      CutIntroDataLogger.trace(name + "," + cut_intro_status + log_string )
-    case _ =>
-      // Failed already during parsing, logging
-      CutIntroDataLogger.trace(method_name + "," + name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
+  def compressExpansionProof (ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String) = { 
+    val method_name = method match {
+      case 0 => "one_cut_one_quant"
+      case 1 => "one_cut_many_quant"
+      case 2 => "many_cuts_one_quant_1"
+      case 3 => "many_cuts_one_quant_2"
+    }
+    status match {
+      case "ok" =>
+        val (cut_intro_status, info_tuple) = method match {
+          case 0 => CutIntroduction.one_cut_one_quantifier_stat (ep.get, hasEquality, timeout)
+          case 1 => CutIntroduction.one_cut_many_quantifiers_stat (ep.get, hasEquality, timeout)
+          case 2 => CutIntroduction.many_cuts_one_quantifier_stat (ep.get, 1, hasEquality, timeout)
+          case 3 => CutIntroduction.many_cuts_one_quantifier_stat (ep.get, 2, hasEquality, timeout)
+        }
+        val log_string = info_tuple.productIterator.foldLeft("") ( (acc, i) => acc + "," + i)  
+        CutIntroDataLogger.trace(method_name + "," + name + "," + cut_intro_status + log_string )
+      case _ =>
+        // Failed already during parsing, logging
+        CutIntroDataLogger.trace(method_name + "," + name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
+    }
   }
 
   /************** finding non-trival prover9-TSTP proofs **********************/

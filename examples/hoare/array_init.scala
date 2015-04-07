@@ -1,7 +1,7 @@
-import at.logic.calculi.expansionTrees.MWeakQuantifier
-import at.logic.cli.GAPScalaInteractiveShellLibrary._
-import at.logic.language.hol.Neg
-import at.logic.language.hoare.{ForLoop, SimpleLoopProblem}
+import at.logic.gapt.proofs.expansionTrees.METWeakQuantifier
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
+import at.logic.gapt.language.hol.HOLNeg
+import at.logic.gapt.proofs.hoare.{ForLoop, SimpleLoopProblem}
 
 val p = parse.program("for y < z do x := set(x, s(y), get(x, y)) od")
 val f = parse.p9("k <= z -> get(x,k) = get(x,0)")
@@ -27,12 +27,12 @@ val proof = prover9.getProof(instanceSeq).get
 
 val expansionSequent = compressExpansionSequent(extractExpansionSequent(proof))
 expansionSequent.antecedent.foreach {
-  case MWeakQuantifier(formula, instances) =>
+  case METWeakQuantifier(formula, instances) =>
     println(s"$formula:")
     instances.foreach { case (inst, terms) => println(s"  $terms ($inst)") }
   case _ => Nil
 }
 val deepSequent = expansionSequent.toDeep
 deepSequent.antecedent.foreach(println(_))
-deepSequent.succedent.foreach(f => println(Neg(f)))
+deepSequent.succedent.foreach(f => println(HOLNeg(f)))
 
