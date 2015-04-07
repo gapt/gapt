@@ -150,6 +150,7 @@ class reduceHolToFol {
       case z: indexedFOVar           => FOLVar( z.name.toString ++ intTermLength( z.index.asInstanceOf[IntegerTerm] ).toString )
       case fov: foVar                => FOLVar( fov.name )
       case foc: foConst              => FOLConst( foc.name )
+      case HOLConst( n, To )         => FOLAtom( n, Nil )
       case HOLVar( n, _ )            => FOLVar( n )
       case HOLConst( n, _ )          => FOLConst( n )
       case HOLTopC                   => FOLTopC

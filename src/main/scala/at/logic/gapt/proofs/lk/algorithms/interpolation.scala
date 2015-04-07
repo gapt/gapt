@@ -1,15 +1,35 @@
-
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol._
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences._
+import at.logic.gapt.provers.Prover
+import at.logic.gapt.language.lambda.types.To
 
 class InterpolationException( msg: String ) extends Exception( msg )
 
 object ExtractInterpolant {
   def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = Interpolate( p, npart, ppart )._3
+
+  /**
+   * Given sequents negative: \Gamma |- \Delta and positive: \Pi |- \Lambda,
+   * compute a proof of \Gamma, \Pi |- \Delta, \Lambda and from that proof,
+   * extract an interpolant I such that \Gamma |- \Delta, I and I, \Pi |- \Lambda
+   * are valid.
+   *
+   * TODO: at the moment, we run hol2fol for technical reasons (\top, \bot are introduced in the algorithm)
+   */
+  def apply( negative: FSequent, positive: FSequent, prover: Prover ): FOLFormula = {
+    val seq = negative compose positive
+    val p = prover.getLKProof( seq ).get
+    val es = p.root
+    val npart = es.antecedent.filter( fo => negative.antecedent.contains( fo.formula ) ) ++
+      es.succedent.filter( fo => negative.succedent.contains( fo.formula ) )
+    val ppart = es.antecedent.filter( fo => positive.antecedent.contains( fo.formula ) ) ++
+      es.succedent.filter( fo => positive.succedent.contains( fo.formula ) )
+    apply( p, npart.toSet, ppart.toSet )
+  }
 }
 
 object Interpolate {
@@ -25,12 +45,12 @@ object Interpolate {
    * @param npart the negative part of the partition of the end-sequent of p
    * @param ppart the positive part of the partition of the end-sequent of p
    * @return      a triple consisting of ( a proof of \Gamma |- \Delta, I,
-   *              a proof of I, \Pi |- \Lambda, the HOLFormula I )
+   *              a proof of I, \Pi |- \Lambda, the FOLFormula I )
    * @throws InterpolationException if the input proof is not propositional
    *         and cut-free or if (npart,ppart) is not a partition of its
    *         end-sequent.
    */
-  def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ): ( LKProof, LKProof, HOLFormula ) = p match {
+  def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ): ( LKProof, LKProof, FOLFormula ) = p match {
 
     case Axiom( s ) => {
       // we assume here that s has exactly one formula in the antecedent and exactly one in the succedent
@@ -39,10 +59,10 @@ object Interpolate {
       val osuc = s.succedent( 0 )
       val form = oant.formula
 
-      if ( npart.contains( oant ) && npart.contains( osuc ) ) ( WeakeningRightRule( p, HOLBottomC ), Axiom( HOLBottomC :: Nil, Nil ), HOLBottomC )
-      else if ( npart.contains( oant ) && ppart.contains( osuc ) ) ( p, p, form )
-      else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), HOLNeg( form ) )
-      else if ( ppart.contains( oant ) && ppart.contains( osuc ) ) ( Axiom( Nil, HOLTopC :: Nil ), WeakeningLeftRule( p, HOLTopC ), HOLTopC )
+      if ( npart.contains( oant ) && npart.contains( osuc ) ) ( WeakeningRightRule( p, FOLBottomC ), Axiom( FOLBottomC :: Nil, Nil ), FOLBottomC )
+      else if ( npart.contains( oant ) && ppart.contains( osuc ) ) ( p, p, form.asInstanceOf[FOLFormula] )
+      else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), FOLNeg( form.asInstanceOf[FOLFormula] ) )
+      else if ( ppart.contains( oant ) && ppart.contains( osuc ) ) ( Axiom( Nil, FOLTopC :: Nil ), WeakeningLeftRule( p, FOLTopC ), FOLTopC )
       else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
     }
 
@@ -87,13 +107,13 @@ object Interpolate {
       val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
 
       if ( npart.contains( m ) ) {
-        val ipl = HOLOr( up1_I, up2_I )
+        val ipl = FOLOr( up1_I, up2_I )
         val np = OrRightRule( AndRightRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
         val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
 
         ( np, pp, ipl )
       } else if ( ppart.contains( m ) ) {
-        val ipl = HOLAnd( up1_I, up2_I )
+        val ipl = FOLAnd( up1_I, up2_I )
         val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
         val pp = AndLeftRule( AndRightRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 
@@ -105,7 +125,7 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       m.formula match {
-        case HOLAnd( l, r ) => // TODO - is this possible in a less ugly way, i.e. without matching? -- analogously below
+        case FOLAnd( l, r ) => // TODO - is this possible in a less ugly way, i.e. without matching? -- analogously below
           if ( npart.contains( m ) ) ( AndLeft1Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, AndLeft1Rule( up_pproof, l, r ), up_I )
           else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
@@ -116,7 +136,7 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       m.formula match {
-        case HOLAnd( l, r ) =>
+        case FOLAnd( l, r ) =>
           if ( npart.contains( m ) ) ( AndLeft2Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, AndLeft2Rule( up_pproof, l, r ), up_I )
           else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
@@ -128,13 +148,13 @@ object Interpolate {
       val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
 
       if ( npart.contains( m ) ) {
-        val ipl = HOLOr( up1_I, up2_I )
+        val ipl = FOLOr( up1_I, up2_I )
         val np = OrRightRule( OrLeftRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
         val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
 
         ( np, pp, ipl )
       } else if ( ppart.contains( m ) ) {
-        val ipl = HOLAnd( up1_I, up2_I )
+        val ipl = FOLAnd( up1_I, up2_I )
         val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
         val pp = AndLeftRule( OrLeftRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 
@@ -146,7 +166,7 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       m.formula match {
-        case HOLOr( l, r ) =>
+        case FOLOr( l, r ) =>
           if ( npart.contains( m ) ) ( OrRight1Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, OrRight1Rule( up_pproof, l, r ), up_I )
           else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
@@ -157,7 +177,7 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       m.formula match {
-        case HOLOr( l, r ) =>
+        case FOLOr( l, r ) =>
           if ( npart.contains( m ) ) ( OrRight2Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, OrRight2Rule( up_pproof, l, r ), up_I )
           else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
@@ -185,13 +205,13 @@ object Interpolate {
       val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
 
       if ( npart.contains( m ) ) {
-        val ipl = HOLOr( up1_I, up2_I )
+        val ipl = FOLOr( up1_I, up2_I )
         val np = OrRightRule( ImpLeftRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
         val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
 
         ( np, pp, ipl )
       } else if ( ppart.contains( m ) ) {
-        val ipl = HOLAnd( up1_I, up2_I )
+        val ipl = FOLAnd( up1_I, up2_I )
         val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
         val pp = AndLeftRule( ImpLeftRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 

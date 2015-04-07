@@ -23,22 +23,21 @@ import at.logic.gapt.provers.minisat.MiniSAT
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent( seq: FSequent, g: MultiGrammar, cf: List[FOLFormula] = Nil ) {
-
-  val endSequent = seq
-  val grammar = g
+class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGrammar, cf: List[FOLFormula] = Nil ) {
+  // TODO: do we even want to allow cf == Nil?
+  val cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( grammar ) else cf
 
   // From ".map" on are lots of castings just to make the data structure right :-|
   // FormulaOccurrence to HOLFormula to FOLFormula and Seq to List...
 
   // Propositional formulas on the left
-  val prop_l: List[FOLFormula] = seq.antecedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
+  val prop_l: List[FOLFormula] = endSequent.antecedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
   // Propositional formulas on the right
-  val prop_r: List[FOLFormula] = seq.succedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
+  val prop_r: List[FOLFormula] = endSequent.succedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
   //Quantified formulas on the left
-  val quant_l: List[FOLFormula] = seq.antecedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
+  val quant_l: List[FOLFormula] = endSequent.antecedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
   //Quantified formulas on the right
-  val quant_r: List[FOLFormula] = seq.succedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
+  val quant_r: List[FOLFormula] = endSequent.succedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
 
   // Instantiated (previously univ. quantified) formulas on the left
   val inst_l: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
@@ -58,13 +57,23 @@ class ExtendedHerbrandSequent( seq: FSequent, g: MultiGrammar, cf: List[FOLFormu
   }
 
   // Separating the formulas that contain/don't contain eigenvariables
-  def varFree( f: FOLFormula ) = freeVariables( f ).intersect( g.eigenvariables ).isEmpty
+  def varFree( f: FOLFormula ) = freeVariables( f ).intersect( grammar.eigenvariables ).isEmpty
   val antecedent = prop_l ++ inst_l.filter( varFree )
   val antecedent_alpha = inst_l.filter( x => !varFree( x ) )
   val succedent = prop_r ++ inst_r.filter( varFree )
   val succedent_alpha = inst_r.filter( x => !varFree( x ) )
 
-  var cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( g ) else cf
+  private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
+    val ant = instantiateAll( cf, alpha )
+    val succ = FOLAnd( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    FOLImp( ant, succ )
+  }
+
+  def getDeep: FSequent = {
+    val s1 = new FSequent( prop_l ++ inst_l, prop_r ++ inst_r )
+    val s2 = new FSequent( ( cutFormulas zip grammar.ss ).map { case ( cf, ( alpha, ts ) ) => getCutImpl( cf, alpha, ts ) }, Nil )
+    s1 compose s2
+  }
 
   override def toString = {
 

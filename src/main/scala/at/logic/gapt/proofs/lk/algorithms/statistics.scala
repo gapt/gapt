@@ -1,4 +1,3 @@
-
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.language.hol.{ HOLAbs, HOLApp, HOLConst, HOLExpression }

@@ -21,37 +21,141 @@ import at.logic.gapt.utils.executionModels.searchAlgorithms.SetNode
 
 object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
-  def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = improveSolution1( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
-  }
-
+  // Solution simplification for n == 1 cuts, with equality.
   def applyEq( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
-    val minSol = improveSolutionEq1( ehs, prover ).sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, List( minSol ) )
+    val improvedSol = improveSolutionGen( ehs, prover, improveSolutionEq1 )
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
   }
 
-  // new version for multiple cuts. TODO: implement
-  private def improveSolution( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
-    val n = ehs.grammar.ss.size
-    Nil
+  // Solution simplification for n >= 1 cuts, without equality.
+  def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
+    val improvedSol = improveSolutionGen( ehs, prover, improveSolution1 )
+    new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, improvedSol )
   }
 
-  private def getIntermediarySolution( k: Int, base: ExtendedHerbrandSequent, cfs: List[FOLFormula] ) = {
-    val n = base.grammar.ss.size
-    val alphas = base.grammar.eigenvariables
+  private def chooseSolution( list: List[FOLFormula] ) = list.sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
+
+  // Solution simplification for n >= 1 cuts, without equality.
+  // returns the list of cut-formulas of the improved solution.
+  private def improveSolutionGen( ehs: ExtendedHerbrandSequent, prover: Prover, improve1: ( ExtendedHerbrandSequent, Prover ) => List[FOLFormula] ): List[FOLFormula] = {
+    val grammar = ehs.grammar
+    val n = grammar.ss.size
+
+    trace( "improving solution for n = " + n )
+
+    val list = ( 1 to n ).foldLeft( Nil: List[FOLFormula] ) {
+      case ( cfs, k ) => {
+        trace( "k: " + k )
+        trace( "current cut-formulas: " + cfs )
+        trace( "getting intermediary solution" )
+        val is = getIntermediarySolution( ehs, cfs )
+
+        trace( "I_" + k + ": " + is )
+        assert( prover.isValid( is.getDeep ) )
+        trace( "I_" + k + " is valid." )
+
+        trace( "improving intermediary solution" )
+        val cf = chooseSolution( improve1( is, prover ) )
+        trace( "got improved cut-formula: " + cf )
+
+        val test_ehs = new ExtendedHerbrandSequent( is.endSequent, is.grammar, cf :: Nil )
+        assert( prover.isValid( test_ehs.getDeep ) )
+        trace( "I_2 with cf: " + test_ehs.getDeep )
+
+        cfs :+ cf
+      }
+    }
+    list.reverse
+  }
+
+  // constructs the grammar U \circ_{alpha_1} S_1 ... \circ_{alpha_{l-1}} S_{l-1}
+  private def getIntermediaryGrammar( l: Int, grammar: MultiGrammar ) = {
+    val us = grammar.us
+    val ss = grammar.ss.take( l - 1 )
+    new MultiGrammar( us, ss )
+  }
+
+  // Computes T_l as in the definition of intermediary solution
+  private def getT( l: Int, grammar: MultiGrammar ): Map[FOLFormula, List[List[FOLTerm]]] =
+    if ( l == 0 )
+      grammar.us
+    else
+      getIntermediaryGrammar( l, grammar ).language
+
+  // computes D as in the proof of Lemma 11
+  // cfs is the list F_n, ..., F_l
+  private def getD( grammar: MultiGrammar, cfs: List[FOLFormula] ): MultiGrammar = {
+    val n = grammar.ss.size
+    val k = cfs.size + 1
     val l = n - k + 1
 
-    // compute ts[ a / ss ]
-    def substAll( ts: List[FOLTerm], a: FOLVar, ss: List[FOLTerm] ) = ts.flatMap( t => ss.map( s => FOLSubstitution( a, s )( t ) ) )
+    trace( "computing D for l = " + l )
 
-    // since our end-sequents are more general, T_l is here not a list of terms, but rather
-    // a list of list of lists of terms: tleft(i)(j)(k) is the k'th T_l-instance of the j'th quantifier of the i'th formula
-    // in the antecedent.
-    //    val tleft = (0 to l - 2).foldLeft( base.grammar.u ) ( (acc, i) => {
-    //      substAll( acc, alphas( i ), base.grammar.slist( i ) )
-    //    } )
-    // TODO: continue here
+    val myss = grammar.ss.reverse.take( n - l )
+    val us = getT( l, grammar )
+    val p = grammar.ss( l - 1 )
+    val ss = p :: Nil
+    val res = new MultiGrammar( us, ss )
+
+    assert( res.language == us ++ getT( l + 1, grammar ) )
+
+    res
+  }
+
+  private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
+    val ant = instantiateAll( cf, alpha )
+    val succ = FOLAnd( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    FOLImp( ant, succ )
+  }
+
+  // cfs is the list F_n, ..., F_l
+  private def getIntermediaryContext( grammar: MultiGrammar, cfs: List[FOLFormula] ): List[FOLFormula] = {
+    val n = grammar.ss.size
+    val k = cfs.size + 1
+    val l = n - k + 1
+
+    val myss = grammar.ss.reverse.take( n - l )
+
+    ( cfs zip myss ).map {
+      case ( cf, ( alpha, termlistlist ) ) => getCutImpl( cf, alpha, termlistlist )
+    }
+  }
+
+  private def instantiateSequent( seq: FSequent, map: Map[FOLFormula, List[List[FOLTerm]]] ) = {
+    def fun( l: Seq[FOLFormula] ) = l.flatMap( f =>
+      map.get( f ) match {
+        case None                 => f :: Nil
+        case Some( termlistlist ) => instantiateAll( f, termlistlist )
+      } )
+
+    new FSequent( fun( seq.antecedent.asInstanceOf[List[FOLFormula]] ), fun( seq.succedent.asInstanceOf[List[FOLFormula]] ) )
+  }
+
+  // Computes the intermediary solution, which is an extended herbrand sequent with a MultiGrammar
+  // for one cut, incorporating previous cut-formulas (in cfs) into the base sequent.
+  private def getIntermediarySolution( base: ExtendedHerbrandSequent, cfs: List[FOLFormula] ) = {
+    val k = cfs.size + 1
+    val grammar = base.grammar
+    val n = grammar.ss.size
+    val alphas = grammar.eigenvariables
+    val l = n - k + 1
+    val orig_es = base.endSequent
+
+    trace( "computing context of intermediary solution" )
+    val es1 = new FSequent( getIntermediaryContext( grammar, cfs ), Nil )
+    trace( "computed context (es1): " + es1 )
+    //    trace( "computing ES-part of intermediary solution" )
+    //    val es2 = instantiateSequent( orig_es, getT( l, grammar ) )
+    //    trace( "ES-part (es2): " + es2 )
+
+    //    trace("es1 compose es2: " + (es1 compose es2))
+
+    val d = getD( grammar, cfs )
+    trace( "d.us:" + d.us )
+    trace( "d.ss:" + d.ss )
+    trace( "canon. sol. based on d: " + CutIntroduction.computeCanonicalSolutions( d ) )
+
+    new ExtendedHerbrandSequent( es1 compose orig_es, d, CutIntroduction.computeCanonicalSolutions( d ) )
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
@@ -265,31 +369,9 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
    * @return True iff f still represents a valid solution.
    */
   def isValidWith( ehs: ExtendedHerbrandSequent, prover: Prover, f: FOLFormula ): Boolean = {
-
     assert( ehs.grammar.ss.size == 1, "isValidWith: only simple grammars supported." )
-
-    //Instantiate with the eigenvariables.
-    val body = ehs.grammar.eigenvariables.foldLeft( f )( ( f, ev ) => instantiate( f, ev ) )
-
-    //Instantiate with all the values in s.
-    val as = ehs.grammar.ss( 0 )._2.toList.foldLeft( List[FOLFormula]() ) {
-      case ( acc, t ) =>
-        ( t.foldLeft( f ) { case ( f, sval ) => instantiate( f, sval ) } ) :: acc
-    }
-
-    val head = FOLAnd( as )
-
-    val impl = FOLImp( body, head )
-
-    val antecedent = ehs.prop_l ++ ehs.inst_l :+ impl
-    val succedent = ehs.prop_r ++ ehs.inst_r
-
-    //isTautology(FSequent(antecedent, succedent))
-    //trace( "calling SAT-solver" )
-    val r = prover.isValid( FOLImp( FOLAnd( antecedent ), FOLOr( succedent ) ) )
-    //trace( "finished call to SAT-solver" )
-
-    r
+    val test_ehs = new ExtendedHerbrandSequent( ehs.endSequent, ehs.grammar, f :: Nil )
+    prover.isValid( test_ehs.getDeep )
   }
 
   //------------------------ FORGETFUL RESOLUTION -------------------------//
