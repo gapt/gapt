@@ -19,9 +19,9 @@ val filename = "./examples/hol-tape/ntape-small.llk"
 import at.logic.gapt.language.fol.algorithms.{undoHol2Fol, replaceAbstractions, reduceHolToFol, recreateWithFactory}
 import at.logic.gapt.language.hol._
 
-import at.logic.gapt.algorithms.fol.hol2fol.undoHol2Fol
+import at.logic.gapt.language.fol.algorithms.undoHol2Fol
+
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
-import at.logic.gapt.algorithms.lk.AtomicExpansion
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.lk.algorithms.{AtomicExpansion, regularize}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent

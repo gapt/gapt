@@ -961,7 +961,7 @@ object format {
 
   def asTex( p: ResolutionProof[Clause] ) = Formatter.asTex( p )
 
-  def llk( f: HOLExpression, latex: Boolean = false ): String = HybridLatexExporter.getFormulaString( f, true, latex )
+  def llk( f: HOLExpression, latex: Boolean = false ): String = toLatexString.getFormulaString( f, true, latex )
 
   def llk( f: FSequent, latex: Boolean ): String = "\\SEQUENT" + HybridLatexExporter.fsequentString( f, latex )
 
@@ -970,7 +970,7 @@ object format {
   def tllk( f: HOLExpression, latex: Boolean = false ) = {
     val ( ctypes, vtypes ) = HybridLatexExporter.getTypes( f, HybridLatexExporter.emptyTypeMap, HybridLatexExporter.emptyTypeMap )
 
-    val fs = HybridLatexExporter.getFormulaString( f, true, latex )
+    val fs = toLatexString.getFormulaString( f, true, latex )
 
     val cs = ctypes.foldLeft( "" )( ( str, p ) => str + "const " + p._1 + " : " + HybridLatexExporter.getTypeString( p._2 ) + ";" )
     val vs = vtypes.foldLeft( "" )( ( str, p ) => str + "var " + p._1 + " : " + HybridLatexExporter.getTypeString( p._2 ) + ";" )
@@ -1023,122 +1023,6 @@ object ntape {
   val p = loadLLK( "algorithms/llk/src/test/resources/tape3.llk" )
   val elp = regularize( definitionElimination( p, "TAPEPROOF" ) )
   val selp = LKtoLKskc( elp )
-
-  //val (rp,es) = loadProver9Proof("ntape.out")
-
-  def apply( filename: String = "algorithms/hlk/src/test/resources/tape3.llk", proofname: String = "TAPEPROOF" ): ( ExtendedProofDatabase, List[FSequent], List[FSequent], Struct, replaceAbstractions.ConstantsMap ) = {
-    println( "Loading proof database " + filename )
-    val p = loadLLK( filename )
-    println( "Eliminating definitions:" )
-    val elp = definitionElimination( p, proofname )
-    println( "Converting to LKskc" )
-    val selp = LKtoLKskc( regularize( elp ) )
-    println( "Extracting struct" )
-    val struct = extractStruct( selp, x => containsQuantifierHOL( x ) )
-    val ( full, fol, hol, csyms ) = css( struct )
-    println( "Simplifying clauseset" )
-    val ax1 = FSequent( Nil, List( parse hlkformula "var x:i; const < : i>i>o; const 1 : i; const + : i>i>i; x<x+1" ) )
-    val ax2 = FSequent( Nil, List( parse hlkformula "var x,y,z:i; const + : i>i>i; x+(y+z)=(x+y)+z" ) )
-    val removed = subsumedClausesRemovalHOL( deleteTautologies( applyFactoring( ax1 :: ax2 :: full ) ) )
-    val ( cm, qhol ) = replaceAbstractions( removed )
-    cm.toList map ( x =>
-      println( x._2 + " & " + HybridLatexExporter.getFormulaString( x._1.asInstanceOf[HOLExpression], true, true ) + "\\\\" ) )
-
-    val qf: List[FSequent] = selp.nodes.toList.flatMap( _ match {
-      case x @ ForallSkRightRule( p, r, a, f, t ) => FSequent( a.formula :: Nil, f.formula :: Nil ) :: Nil;
-      case x @ ExistsSkLeftRule( p, r, a, f, t )  => FSequent( a.formula :: Nil, f.formula :: Nil ) :: Nil;
-      case _                                      => Nil;
-    } )
-
-    ( p, qhol, qf, struct, cm )
-  }
-
-  val rrename = NameReplacement.emptySymbolMap ++ List( ( "s25", ( 2, "s_{25}" ) ), ( "s9", ( 2, "s_{9}" ) ),
-    ( "q1", ( 0, "q_{1}" ) ), ( "q2", ( 0, "q_{2}" ) ),
-    ( "s10", ( 1, "s_{10}" ) ), ( "s26", ( 1, "s_{26}" ) ) )
-
-  def convert( rp: RobinsonResolutionProof ) = NameReplacement( rp, rrename )
-
-  def axioms( rp: RobinsonResolutionProof ) = {
-    val rrp = NameReplacement( rp, rrename )
-    val lkp = RobinsonToLK( rrp, FSequent( Nil, Nil ), ( ( c: FClause ) => Axiom( c.neg, c.pos ) ) )
-    val axioms = lkp.nodes.flatMap( _ match {
-      case a @ Axiom( _ ) => List( a.root.toFSequent );
-      case _              => List[FSequent]()
-    } )
-    val cmap = Map[String, TA]( ( "q_{1}", Ti -> To ), ( "q_{2}", Ti -> To ) )
-    val holaxioms = axioms.map( x => recreateWithFactory( x, HOLFactory ) ).toList
-
-    val folaxs = holaxioms.flatMap( _.formulas ).filter( _.factory != HOLFactory )
-    require( folaxs.isEmpty, "HOL Conversion didn't work on " + folaxs )
-    val raxioms = holaxioms.map( x => changeTypeIn( x, cmap ) )
-
-    ( lkp, raxioms )
-  }
-
-  val subterm1 = parse hlkexp """const s_{9},s_{25}:(i>o)>(i>i); const s_{10},s_{26}:(i>o)>i;
-                                  const q_{1},q_{2}:i>o; const +:i>(i>i); const 1:i;
-                                  (((1 + s_{25}(q_{2}, s_{26}(q_{2}))) + 1) + 1) + s_{9}(q_{1}, s_{10}(q_{1}))"""
-  val subterm2 = parse hlkexp """const s_{9},s_{25}:(i>o)>(i>i); const s_{10},s_{26}:(i>o)>i;
-                                  const q_{1},q_{2}:i>o; const +:i>(i>i); const 1:i;
-                                  (((1 + s_{9}(q_{1}, s_{10}(q_{1}))) + 1) + 1) + s_{25}(q_{2}, s_{26}(q_{2}))"""
-
-  val subvars1 = List( 1, 3 ).map( x => parse hlkexp "var \\alpha_{" + x + "}:i; \\alpha_{" + x + "}" )
-  val subvars2 = List( 4, 6 ).map( x => parse hlkexp "var \\alpha_{" + x + "}:i; \\alpha_{" + x + "}" )
-  val sub = HOLSubstitution( subvars1.map( x => ( x.asInstanceOf[HOLVar], subterm1 ) ) ++
-    subvars2.map( x => ( x.asInstanceOf[HOLVar], subterm2 ) ) )
-
-  def findProj( proof: LKProof, axioms: List[FSequent] ) = {
-    val es = proof.root.toFSequent
-    val pref = Projections.lksk_reflexivity_projection( proof )
-    println( "Calculated projection to reflexivity: " + pref.root.toFSequent.diff( proof.root.toFSequent ) )
-    val proj = pref :: ( Projections( proof, x => containsQuantifierHOL( x ) ).toList )
-    println( "Total projections size: " + proj.size )
-    val pproj = proj.map( x => ( x.root.toFSequent.diff( es ), x ) )
-    val still = StillmanSubsumptionAlgorithmHOL
-
-    val subsumed = axioms.map( x => ( x, pproj.find( y => still.subsumes( y._1, x ) ) ) )
-    val ( can_subsume, cant_subsume ) = subsumed.partition( _._2.nonEmpty )
-    val substitutions = can_subsume.map( x => {
-      val ( ax, Some( ( clause, proof ) ) ) = x
-      ( still.subsumes_by( clause, ax ).get, proof )
-    } )
-
-    ( substitutions, cant_subsume )
-  }
-
-  def hasWeakHOLRule( p: LKProof ) = p.nodes.asInstanceOf[Set[LKProof]].filter( _ match {
-    case ForallSkLeftRule( p, r, aux, f, t ) if t.exptype != Ti => true;
-    case ExistsSkRightRule( p, r, x, f, t ) if t.exptype != Ti => true;
-    case _ => false
-  } )
-
-  def sub_mising( p: LKProof, sub: HOLSubstitution ) = {
-    val ( s, _ ) = applySubstitution( p, sub )
-    val w = hasWeakHOLRule( s ).toList
-    val winf = w.map( _ match {
-      case ForallSkLeftRule( _, _, a, m, e )  => ( a, m, e )
-      case ExistsSkRightRule( _, _, a, m, e ) => ( a, m, e )
-    } )
-
-    winf
-  }
-
-  def printWorking( working: List[( HOLSubstitution, LKProof )] ) = {
-    val workingsubs = working.foldLeft( Map[LKProof, List[HOLSubstitution]]() )( ( map, pair ) => {
-      val l = map.getOrElse( pair._2, List() );
-      map + ( ( pair._2, pair._1 :: l ) )
-    } )
-    workingsubs.map( x => {
-      println( format.llk( x._1.root.toFSequent.diff( selp.root.toFSequent ) ) );
-      println();
-      x._2.map( z =>
-        println( z.holmap.map( y =>
-          format.llk( y._1 ) + " <- " + format.llk( y._2 ) ).mkString( "Sub={", ", ", "}" ) ) );
-      println()
-    } )
-  }
-
 }
 
 object proofs {

@@ -21,8 +21,8 @@ import at.logic.gapt.proofs.lk.EquationVerifier.EqualModuloEquality
 object LLKFormatter {
   /* formats a sequent */
   def f( fs: FSequent ): String = {
-    " " + ( fs.antecedent.map( HybridLatexExporter.getFormulaString( _, true, false ) ).mkString( ", " ) ) + " :- " +
-      ( fs.succedent.map( HybridLatexExporter.getFormulaString( _, true, false ) ).mkString( ", " ) ) + " "
+    " " + ( fs.antecedent.map( toLLKString.apply ).mkString( ", " ) ) + " :- " +
+      ( fs.succedent.map( toLLKString.apply ).mkString( ", " ) ) + " "
   }
 
   def f( s: HOLSubstitution ): String = {
@@ -37,7 +37,7 @@ object LLKFormatter {
     ls.l_antecedent.map( f ).mkString( "", ", ", " :- " ) +
       ls.l_succedent.map( f ).mkString( "", ", ", "" )
   }
-  def f( e: HOLExpression ): String = " " + HybridLatexExporter.getFormulaString( e, true, false ) + " "
+  def f( e: HOLExpression ): String = " " + toLLKString( e ) + " "
 }
 
 /**
@@ -143,9 +143,7 @@ trait TokenToLKConverter extends Logger {
 
     //dependncy analysis
     val dependecies = getDependecyMap( naming, rm )
-    //dependecies map (x => println(x._1.toPrettyString+": "+x._2.mkString(",")))
     val ordering: List[HOLFormula] = getOrdering( dependecies )
-    //println((ordering map (_.toPrettyString)).mkString("Ordering: ",", ",""))
 
     //proof completion in dependency order
     val proofs = ordering.foldLeft( Map[HOLFormula, LKProof]() )( ( proofs_done, f ) => {

@@ -17,9 +17,8 @@ val filename = "tape3-4c.llk"
 import at.logic.gapt.language.fol.algorithms.recreateWithFactory
 import at.logic.gapt.language.hol._
 
-import at.logic.gapt.algorithms.fol.hol2fol.undoHol2Fol
+import at.logic.gapt.language.fol.algorithms.undoHol2Fol
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
-import at.logic.gapt.algorithms.lk.AtomicExpansion
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.lk.algorithms.{AtomicExpansion, subsumedClausesRemovalHOL, regularize}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent

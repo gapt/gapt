@@ -190,14 +190,14 @@ object DrawSequent {
   }
 
   def parseIntegerTerm( t: IntegerTerm, n: Int ): String = t match {
-    // FIXME: in the first case, we implicitely assume that all IntConsts are 0!
+    // FIXME: in the first case, we implicitly assume that all IntConsts are 0!
     // this is just done for convenience, and should be changed ASAP
     case z: IntConst => n.toString
     case IntZero()   => n.toString
-    case v: IntVar => if ( n > 0 )
-      v.toPrettyString + "+" + n.toString
-    else
-      v.toPrettyString
+    case v: IntVar if n > 0 =>
+      toPrettyString( v ) + "+" + n.toString //TODO: why do we use to pretty string here? it doesn't handle LaTeX?
+    case v: IntVar /* if n <= 0 */ =>
+      toPrettyString( v ) //TODO: why do we use to pretty string here? it doesn't handle LaTeX?
     case Succ( s ) => parseIntegerTerm( s, n + 1 )
     case _         => throw new Exception( "Error in parseIntegerTerm(..) in gui" )
   }

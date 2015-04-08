@@ -34,7 +34,8 @@ object LKtoLKskc extends Logger {
     rec( proof, subst_terms, cut_occs )._1
   }
 
-  private def f( f: HOLExpression ): String = HybridLatexExporter.getFormulaString( f, true, false )
+  private def f( f: HOLExpression ): String = toLatexString.apply( f )
+
   private def f( s: Sequent ): String =
     s.antecedent.map( { case LabelledFormulaOccurrence( formula, _, l ) => f( formula ) + ":label" + l.map( f ).mkString( "{", ",", "}" ) } ).mkString( ";" ) + " :- " +
       s.succedent.map( { case LabelledFormulaOccurrence( formula, _, l ) => f( formula ) + ":label" + l.map( f ).mkString( "{", ",", "}" ) } ).mkString( ";" )

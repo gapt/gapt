@@ -7,7 +7,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.language.hol.{ HOLFormula, toLatexString }
 import at.logic.gapt.language.fol._
 import at.logic.gapt.language.lambda.symbols._
 import at.logic.gapt.language.lambda.types._
@@ -22,6 +22,7 @@ import at.logic.gapt.proofs.lksk.UnaryLKskProof
 
 package robinson {
 
+  import at.logic.gapt.language.hol.logicSymbols._
   import at.logic.gapt.utils.logging.Logger
   import org.slf4j.LoggerFactory
 
@@ -327,12 +328,6 @@ package robinson {
       try { op( p ) } finally { p.close() }
     }
 
-    def lst2string[T]( fun: ( T => String ), seperator: String, l: List[T] ): String = l match {
-      case Nil       => ""
-      case List( x ) => fun( x )
-      case x :: xs   => fun( x ) + seperator + lst2string( fun, seperator, xs )
-    }
-
     def apply( p: ResolutionProof[Clause] ): String = {
       apply( "", p, createMap( p, 1, Map[Clause, Int]() )._1 )
     }
@@ -445,10 +440,21 @@ package robinson {
         tex( p, ids, List() )._1 + "\n\\DisplayProof\n\\end{document}"
     }
 
-    def escapeTex( s: String ) = s.replaceAll( "_", "\\_" )
+    def escapeTex( s: String ) = {
+      val s1 = s.replaceAll( "_", "\\_" )
+      val s2 = s1.replaceAll( AndSymbol.toString, "\\land" )
+      val s3 = s2.replaceAll( OrSymbol.toString, "\\lor" )
+      val s4 = s3.replaceAll( ImpSymbol.toString, "\\rightarrow" )
+      val s5 = s4.replaceAll( NegSymbol.toString, "\\neg" )
+      val s6 = s5.replaceAll( ForallSymbol.toString, "\\forall" )
+      val s7 = s6.replaceAll( ExistsSymbol.toString, "\\exists" )
+      s7
+    }
 
     def tex( p: ResolutionProof[Clause], ids: Map[Clause, Int], edges: List[List[Int]] ): ( String, List[List[Int]] ) = {
-      def f( l: Seq[FormulaOccurrence] ): String = lst2string( ( x: FormulaOccurrence ) => escapeTex( x.formula.toPrettyString ), ",", l.toList )
+      def f( l: Seq[FormulaOccurrence] ): String = {
+        l.map( x => toLatexString( x.formula ) ).mkString( ", " )
+      }
 
       p match {
         case Resolution( clause, p1, p2, occ1, occ2, subst ) =>

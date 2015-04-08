@@ -181,6 +181,9 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
           g.setColor( new Color( 200, 50, 200 ) )
           g.drawRect( right.location.x, right.location.y, right.size.width, right.size.height )
           g.setColor( new Color( 0, 0, 0 ) )
+
+          assert( this.size.width >= left.size.width, "Left child must not be wider than parent." )
+          assert( this.size.width >= right.size.width, "Right child must not be wider than parent." )
         }
 
         g.drawLine( ( leftWidth - leftSeqLength ) / 2, height, lineLength, height )

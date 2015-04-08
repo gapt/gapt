@@ -43,56 +43,6 @@ trait HOLExpression extends LambdaExpression {
     case _                   => throw new Exception( "Unrecognized symbol." )
   }
 
-  //outer pretty printing, has no parenthesis around
-  //TODO: introduce binding priorities and skip more parens
-  def toPrettyString: String = this match {
-    case HOLVar( x, tpe )   => x.toString
-    case HOLConst( x, tpe ) => x.toString
-    case HOLAtom( c: HOLConst, List( left, right ) ) if c.sym == EqSymbol =>
-      left.toPrettyString_ + " " + EqSymbol + " " + right.toPrettyString_
-    case HOLAtom( x, args ) =>
-      x + "(" +
-        ( if ( args.size > 1 ) args.head.toPrettyString_ + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toPrettyString_ )
-        else args.foldLeft( "" )( ( s, a ) => s + a.toPrettyString_ ) ) + ")"
-    case HOLFunction( x, args, tpe ) => x + "(" +
-      ( if ( args.size > 1 ) args.head.toString + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toPrettyString_ )
-      else args.foldLeft( "" )( ( s, a ) => s + a.toPrettyString_ ) ) + ")"
-    case HOLAnd( x, y )      => x.toPrettyString_ + AndSymbol + y.toPrettyString_
-    case HOLEquation( x, y ) => x.toPrettyString_ + EqSymbol + y.toPrettyString_
-    case HOLOr( x, y )       => x.toPrettyString_ + OrSymbol + y.toPrettyString_
-    case HOLImp( x, y )      => x.toPrettyString_ + ImpSymbol + y.toPrettyString_
-    case HOLNeg( x )         => NegSymbol + x.toPrettyString_
-    case HOLExVar( x, f )    => ExistsSymbol + x.toString + "." + f.toPrettyString_
-    case HOLAllVar( x, f )   => ForallSymbol + x.toString + "." + f.toPrettyString_
-    case HOLAbs( v, exp )    => "λ" + v.toString + "." + exp.toString
-    case HOLApp( l, r )      => "(" + l.toString + ")" + "(" + r.toString + ")"
-    case _                   => throw new Exception( "Unrecognized symbol." )
-  }
-
-  //inner pretty printing, has parenthesis around
-  def toPrettyString_ : String = this match {
-    case HOLVar( x, tpe )   => x.toString
-    case HOLConst( x, tpe ) => x.toString
-    case HOLAtom( c: HOLConst, List( left, right ) ) if c.sym == EqSymbol =>
-      left.toPrettyString_ + " = " + right.toPrettyString_
-    case HOLAtom( x, args ) => x + "(" +
-      ( if ( args.size > 1 ) args.head.toPrettyString_ + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toPrettyString_ )
-      else args.foldLeft( "" )( ( s, a ) => s + a.toPrettyString_ ) ) + ")"
-    case HOLFunction( x, args, tpe ) => x + "(" +
-      ( if ( args.size > 1 ) args.head.toString + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toPrettyString_ )
-      else args.foldLeft( "" )( ( s, a ) => s + a.toPrettyString_ ) ) + ")"
-    case HOLAnd( x, y )      => "(" + x.toPrettyString_ + AndSymbol + y.toPrettyString_ + ")"
-    case HOLEquation( x, y ) => "(" + x.toPrettyString_ + EqSymbol + y.toPrettyString_ + ")"
-    case HOLOr( x, y )       => "(" + x.toPrettyString_ + OrSymbol + y.toPrettyString_ + ")"
-    case HOLImp( x, y )      => "(" + x.toPrettyString_ + ImpSymbol + y.toPrettyString_ + ")"
-    case HOLNeg( x )         => NegSymbol + x.toPrettyString_
-    case HOLExVar( x, f )    => ExistsSymbol + x.toString + "." + f.toPrettyString_
-    case HOLAllVar( x, f )   => ForallSymbol + x.toString + "." + f.toPrettyString_
-    case HOLAbs( v, exp )    => "(λ" + v.toString + "." + exp.toString + ")"
-    case HOLApp( l, r )      => "(" + l.toString + ")" + "(" + r.toString + ")"
-    case _                   => throw new Exception( "Unrecognized symbol." )
-  }
-
   def arity: Int = this match {
     case HOLVar( _, _ ) | HOLConst( _, _ ) => 0
     case HOLNeg( _ ) | HOLAllVar( _, _ ) | HOLExVar( _, _ ) => 1
@@ -141,7 +91,6 @@ trait HOLExpression extends LambdaExpression {
   def find( exp: HOLExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
   def renameSymbols( map: SymbolMap ): HOLExpression = this match {
-
     case HOLVar( _, _ ) => this
 
     case HOLConst( name, exptype ) => map.get( name ) match {
