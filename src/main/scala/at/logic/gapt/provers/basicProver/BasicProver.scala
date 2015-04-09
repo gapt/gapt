@@ -3,7 +3,6 @@ package at.logic.gapt.provers.basicProver
 
 import at.logic.gapt.proofs.lk.algorithms.LKProver
 import at.logic.gapt.provers.{ FailSafeProver, Prover }
-import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.language.hol.HOLFormula
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 
