@@ -75,9 +75,9 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.3",
-      "org.apache.commons" % "commons-lang3" % "3.3.2",
-      "org.slf4j" % "slf4j-api" % "1.7.10",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.10",
+      "org.apache.commons" % "commons-lang3" % "3.4",
+      "org.slf4j" % "slf4j-api" % "1.7.12",
+      "org.slf4j" % "slf4j-log4j12" % "1.7.12",
       "xml-resolver" % "xml-resolver" % "1.2"),
 
     // UI
