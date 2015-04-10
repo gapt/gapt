@@ -28,7 +28,7 @@ package timeout {
           try {
             result = Right( f )
           } catch {
-            case e: Exception =>
+            case e: Throwable =>
               result = Left( e )
           }
         }
