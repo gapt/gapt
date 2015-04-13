@@ -9,11 +9,12 @@ import at.logic.gapt.utils.ds.trees.BinaryTree
 
 case object InductionRuleType extends BinaryRuleTypeA
 
-/** Binary induction rule:
-  *
-  * Γ |- Δ, A[0]        A[x], Π |- Λ, A[S(x)]
-  * -----------------------------------------
-  *          Γ, Π |- Δ, Λ, A[x]
+/**
+ * Binary induction rule:
+ *
+ * Γ |- Δ, A[0]        A[x], Π |- Λ, A[S(x)]
+ * -----------------------------------------
+ *          Γ, Π |- Δ, Λ, A[x]
  *
  */
 object InductionRule {
@@ -21,7 +22,8 @@ object InductionRule {
   private val zero = FOLConst( "0" )
   private def S( t: FOLTerm ) = FOLFunction( "S", List( t ) )
 
-  /** Constructs a proof ending with an induction rule.
+  /**
+   * Constructs a proof ending with an induction rule.
    *
    * @param s1 The left subproof. The succedent of its end sequent has to contain A[0].
    * @param s2 The right subproof. Its end sequent must contain A[x] in the antecedent and A[S(x)] in the succedent.
@@ -88,7 +90,8 @@ object InductionRule {
     }
   }
 
-  /** Convenience constructor that finds appropriate formula occurrences on its own.
+  /**
+   * Convenience constructor that finds appropriate formula occurrences on its own.
    */
   def apply( s1: LKProof, s2: LKProof, inductionBase: FOLFormula, inductionHypo: FOLFormula, inductionStep: FOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     val term1oc = s1.root.succedent find ( _.formula == inductionBase ) match {
@@ -109,9 +112,10 @@ object InductionRule {
     apply( s1, s2, term1oc, term2oc, term3oc )
   }
 
-  /** Convenience constructor that attempts to find auxiliary formulas on its own.
-    *
-    * Given a proposed main formula A, it will try to find a variable x such that A[x\0], A[x], A[x\S(x)] are contained in the correct parts of s1 and s2.
+  /**
+   * Convenience constructor that attempts to find auxiliary formulas on its own.
+   *
+   * Given a proposed main formula A, it will try to find a variable x such that A[x\0], A[x], A[x\S(x)] are contained in the correct parts of s1 and s2.
    *
    */
   def apply( s1: LKProof, s2: LKProof, main: FOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {

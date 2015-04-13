@@ -3,101 +3,144 @@ import at.logic.gapt.proofs.lk._
 
 object inductionExamples {
 
-  val (x,y,z) = (FOLVar("x"), FOLVar("y"), FOLVar("z"))
-  val (a,b,c) = (FOLVar("α"), FOLVar("β"), FOLVar("γ"))
-  def S(x: FOLTerm) = FOLFunction("S", List(x))
-  def plus(x: FOLTerm, y: FOLTerm) = FOLFunction("+", List(x,y))
+  // Variables and constants
+  val (x, y, z) = (FOLVar("x"), FOLVar("y"), FOLVar("z"))
+  val (a, b, c) = (FOLVar("α"), FOLVar("β"), FOLVar("γ"))
   val zero = FOLConst("0")
 
-  val assoc = AllVarBlock(List(x,y,z), FOLEquation(plus(plus(x,y),z), plus(x, plus(y,z)))).asInstanceOf[FOLFormula]
-  val assocXYZ = FOLEquation(plus(plus(a,b),c), plus(a, plus(b,c)))
-  val assocXY0 = FOLEquation(plus(plus(a,b), zero), plus(a, plus(b, zero)))
-  val assocXYSZ = FOLEquation(plus(plus(a,b),S(c)), plus(a, plus(b,S(c))))
+  // Successor and addition
+  def S(x: FOLTerm) = FOLFunction("S", List(x))
 
-  def add0(v: FOLTerm) = FOLEquation(plus(v,zero), v)
-  val axAdd0 = FOLAllVar(x, add0(x))
+  def plus(x: FOLTerm, y: FOLTerm) = FOLFunction("+", List(x, y))
+
+  // Instances of addition axioms
+  def add0(v: FOLTerm) = FOLEquation(plus(v, zero), v)
 
   def addS(u: FOLTerm, v: FOLTerm) =
-  FOLEquation(
-    plus(u, S(v)),
-    S(plus(u,v))
-  )
-  val axAddS = AllVarBlock(List(x,y), addS(x,y))
+    FOLEquation(
+      plus(u, S(v)),
+      S(plus(u, v))
+    )
 
-  def ref(t: FOLTerm) = FOLEquation(t,t)
+  // Instances of associativity and reflexivity
+  def assoc(x: FOLTerm, y: FOLTerm, z: FOLTerm) = FOLEquation(plus(plus(x, y), z), plus(x, plus(y, z)))
 
-  val eqXPYP0EXPY = FOLEquation(plus(plus(a,b),zero), plus(a,b))
-  val eqYP0EY = FOLEquation(plus(b,zero), b)
+  def ref(t: FOLTerm) = FOLEquation(t, t)
 
-  val axXPYP0EXPY = Axiom(eqXPYP0EXPY)
-  val axYP0EY = Axiom(eqYP0EY)
-
-  val refXPY = Axiom(Nil, List(FOLEquation(plus(a,b),plus(a,b))))
+  // Universally quantified equations
+  val ForAllAssoc = FOLAllVarBlock(List(x, y, z), assoc(x, y, z))
+  val ForAllAdd0 = FOLAllVar(x, add0(x))
+  val ForAllAddS = FOLAllVarBlock(List(x, y), addS(x, y))
 
   val inductionBase1 =
-  Axiom(
-    List(add0(b), add0(plus(a,b))),
-    List(ref(plus(a,b)))
-  )
+    Axiom(
+      Nil,
+      List(ref(plus(a, b)))
+    )
 
   val inductionBase2 =
-  UnaryEquationRightRule(
-  inductionBase1,
-  inductionBase1.root.antecedent.head,
-  inductionBase1.root.succedent.head,
-  FOLEquation(plus(a,b), plus(a,plus(b,zero)))
-  )
+    EquationRightRule(
+      inductionBase1,
+      inductionBase1.root.succedent.head,
+      add0(b),
+      FOLEquation(plus(a, b), plus(a, plus(b, zero)))
+    )
 
   val inductionBase3 =
-  UnaryEquationRightRule(
-    inductionBase2,
-    inductionBase2.root.antecedent.tail.head,
-    inductionBase2.root.succedent.head,
-    assocXY0
-  )
+    EquationRightRule(
+      inductionBase2,
+      inductionBase2.root.succedent.head,
+      add0(plus(a,b)),
+      assoc(a, b, zero)
+    )
 
-  val inductionBase4 =
+ val inductionBase4 =
   ForallLeftRule(
     inductionBase3,
-    inductionBase3.root.antecedent.tail.head,
-    axAdd0,
+    inductionBase3.root.antecedent.head,
+    ForAllAdd0,
     plus(a,b)
   )
+
+  val inductionBase5 = ContractionMacroRule(
+    ForallLeftRule(
+      inductionBase4,
+      inductionBase4.root.antecedent.head,
+      ForAllAdd0,
+      b
+    ))
 
   val inductionBase =
   ContractionMacroRule(
   ForallLeftRule(
     inductionBase4,
     inductionBase4.root.antecedent.head,
-    axAdd0,
+    ForAllAdd0,
     b
   )
   )
 
-  val inductionStepDummy =
-    Axiom(List(assocXYZ), List(assocXYSZ))
+  val inductionStep1 =
+    Axiom(
+      Nil,
+      List(ref(plus(plus(a,b), S(c))))
+    )
 
-  /*val inductionProof =
-  ForallRightBlock(
-    InductionRule(
-      inductionBase,
-      inductionStepDummy,
-      assocXY0,
-      assocXYZ,
-      assocXYSZ
-    ),
-    assoc,
-    List(a,b,c)
+  val inductionStep2 =
+    ForallLeftBlock(
+      EquationRightRule(
+      inductionStep1,
+      inductionStep1.root.succedent(0),
+      addS(plus(a,b), c),
+      FOLEquation(plus(plus(a,b), S(c)), S(plus(plus(a,b),c)))
+      ),
+      ForAllAddS,
+      List(plus(a,b), c)
+    )
+
+
+  val inductionStep3 =
+  EquationRightRule(
+    inductionStep2,
+    inductionStep2.root.succedent(0),
+    assoc(a,b,c),
+    FOLEquation(plus(plus(a,b), S(c)), S(plus(a, plus(b,c))))
   )
-*/
+
+  val inductionStep4 =
+  ForallLeftBlock(
+    EquationRightRule(
+      inductionStep3,
+      inductionStep3.root.succedent(0),
+      addS(a, plus(b,c)),
+      FOLEquation(plus(plus(a,b), S(c)), plus(a, S(plus(b,c))))
+    ),
+    ForAllAddS,
+    List(a, plus(b,c))
+  )
+
+  val inductionStep5 =
+  ForallLeftBlock(
+    EquationRightRule(
+      inductionStep4,
+      inductionStep4.root.succedent(0),
+      addS(b,c),
+      FOLEquation(plus(plus(a,b), S(c)), plus(a, plus(b,S(c))))
+    ),
+    ForAllAddS,
+    List(b,c)
+  )
+
+  val inductionStep = ContractionMacroRule(inductionStep5)
+
   val inductionProof =
     ForallRightBlock(
       InductionRule(
         inductionBase,
-        inductionStepDummy,
-        assocXYZ
+        inductionStep,
+        assoc(a,b,c)
       ),
-      assoc,
+      ForAllAssoc,
       List(a,b,c)
     )
 
