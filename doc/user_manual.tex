@@ -10,6 +10,7 @@
 \usepackage{amsmath}
 \usepackage{bussproofs}
 \usepackage{comment}
+\usepackage{hyperref}
 
 \renewcommand{\familydefault}{\sfdefault} % change to sans serif font
 
@@ -783,7 +784,7 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
 
 \end{multicols}
 
-\subsubsection*{Quantification roles}
+\subsubsection*{Quantification rules}
 
 \begin{multicols}{2}
 
@@ -856,6 +857,15 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
   \end{prooftree}
 
 \end{multicols}
+
+\subsubsection*{Induction}
+  Let $A$ be a formula in which $x$ occurs freely.
+  \begin{prooftree}
+    \AxiomCm{\Gamma \seq \Delta, A[x/0]}
+    \AxiomCm{\Sigma, A \seq \Pi, A[x/S(x)]}
+    \RightLabelm{(\mt{ind})}
+    \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A}
+  \end{prooftree}
 
 
 \begin{meta}
