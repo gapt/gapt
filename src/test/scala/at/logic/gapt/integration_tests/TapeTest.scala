@@ -107,7 +107,6 @@ class TapeTest extends SpecificationWithJUnit {
 
     "apply prover9 to the tape proof clause set" in {
       checkForProverOrSkip
-      skipped( "Infinite loop??" )
 
       val proofdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
