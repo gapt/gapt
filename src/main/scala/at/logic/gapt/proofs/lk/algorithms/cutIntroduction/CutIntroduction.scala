@@ -285,8 +285,8 @@ object CutIntroduction extends Logger {
         if ( verbose ) println( "\nNumber of grammars: " + grammars.length )
 
         if ( grammars.length == 0 ) {
-          throw new CutIntroUncompressibleException( "\nNo grammars found." +
-            " The proof cannot be compressed using one cut.\n" )
+          throw new CutIntroUncompressibleException( "No grammars found." +
+            " The proof cannot be compressed using one cut." )
         }
 
         /********** Proof Construction **********/
@@ -462,7 +462,7 @@ object CutIntroduction extends Logger {
         val grammar = small_grammar match {
           case Some( g ) => g
           case None =>
-            throw new CutIntroUncompressibleException( "\nNo grammars found. The proof cannot be compressed." )
+            throw new CutIntroUncompressibleException( "No grammars found. The proof cannot be compressed." )
         }
         grammarFindingTime = System.currentTimeMillis - time
         time = System.currentTimeMillis
@@ -471,7 +471,7 @@ object CutIntroduction extends Logger {
         // TreeGrammarDecomposition should either be None or some grammar with size > 0
         // we leave it here just to be sure
         if ( grammar.size == 0 ) {
-          throw new CutIntroUncompressibleException( "\nNo grammars found. The proof cannot be compressed." )
+          throw new CutIntroUncompressibleException( "No grammars found. The proof cannot be compressed." )
         }
 
         /********** Proof Construction **********/
