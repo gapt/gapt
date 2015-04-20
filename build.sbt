@@ -99,7 +99,10 @@ lazy val testing = (project in file("testing")).
   disablePlugins(JUnitXmlReportPlugin).
   settings(
     name := "gapt-testing",
-    description := "gapt extended regression tests"
+    description := "gapt extended regression tests",
+
+    // reduce number of concurrent tests to prevent out-of-memory errors
+    testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "threadsNb", "4")
   )
 
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
