@@ -56,6 +56,7 @@ import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.shlk.{ SCHOLParser, SchemaFormulaParser }
 import at.logic.gapt.formats.shlk_parsing.{ sFOParser, sFOParserCNT }
 import at.logic.gapt.formats.veriT._
+import at.logic.gapt.formats.leanCoP._
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.shlk.algorithms.applySchemaSubstitution2
 import at.logic.gapt.provers.atp.Prover
@@ -199,6 +200,10 @@ object loadSLK {
 
 object loadVeriTProof {
   def apply( fileName: String ) = VeriTParser.getExpansionProof( fileName )
+}
+
+object loadLeanCoPProof {
+  def apply( fileName: String ) = LeanCoPParser.getExpansionProof( fileName )
 }
 
 object exportXML {
