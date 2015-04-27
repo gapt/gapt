@@ -40,8 +40,7 @@ import org.specs2.runner.JUnitRunner
 
 @RunWith( classOf[JUnitRunner] )
 class TapeTest extends SpecificationWithJUnit {
-  val box = List()
-  def checkForProverOrSkip = Prover9.refute( box ) must not( throwA[IOException] ).orSkip
+  def checkForProverOrSkip = Prover9.isInstalled() must beTrue.orSkip
 
   sequential
   "The system" should {
