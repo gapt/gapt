@@ -25,15 +25,16 @@ def removeEqAxioms( eseq: ExpansionSequent ) = {
 }
 
 val N = 5
-val instanceLanguages = (1 until N) map { n =>
+val instanceLanguages = ((1 until N) map { n =>
   println(s"Proving for n=$n")
   val instanceProof = UniformAssociativity3ExampleProof(n)
 //  val instanceProof = LinearEqExampleProof(n)
 //  val instanceProof = FactorialFunctionEqualityExampleProof(n)
   val instanceLanguage = TermsExtraction(removeEqAxioms(extractExpansionSequent(instanceProof))).set
+  println(s"Instance sequent: ${instanceProof.root}")
   println(s"Instance language:"); instanceLanguage foreach println; println
   n -> instanceLanguage
-}
+}) :+ (0 -> Seq(parse.p9term("tuple2(0)"))) // FIXME: fix associativity proof to do n=0 as well
 
 println(s"Covering grammar consisting of all normal forms:")
 val nfGrammar = time { normalFormsSipGrammar(instanceLanguages) }
