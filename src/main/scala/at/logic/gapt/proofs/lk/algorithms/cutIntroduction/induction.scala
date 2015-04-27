@@ -19,7 +19,7 @@ object SipGrammar {
   def gamma_i( i: Int ) = FOLVar( s"γ_$i" )
 
   def instantiate( prod: Production, n: Int ): Seq[Production] = prod match {
-    case ( `tau`, r ) if freeVariables( r ).contains( beta ) =>
+    case ( `tau`, r ) if !freeVariables( r ).contains( gamma ) && !freeVariables( r ).contains( nu ) =>
       Seq( tau -> FOLSubstitution( alpha -> numeral( n ), beta -> gamma_i( 0 ) )( r ) )
     case ( `tau`, r ) => ( 0 until n ) map { i =>
       tau ->

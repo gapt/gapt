@@ -12,6 +12,16 @@ class SipTests extends Specification {
       val g = SipGrammar( Seq( tau -> FOLFunction( "r", List( nu ) ) ) )
       g.instanceGrammar( 2 ).productions.toSet must beEqualTo( Set( tau -> parseTerm( "r(0)" ), tau -> parseTerm( "r(s(0))" ) ) )
     }
+
+    "handle n=0 correctly" in {
+      val g = SipGrammar( Seq(
+        tau -> FOLFunction( "r", List( beta ) ),
+        gamma -> gamma,
+        gammaEnd -> parseTerm( "0" ) ) )
+      g.instanceGrammar( 0 ).productions.toSet must beEqualTo( Set(
+        tau -> FOLFunction( "r", List( gamma_i( 0 ) ) ),
+        gamma_i( 0 ) -> parseTerm( "0" ) ) )
+    }
   }
 
   "findMinimalSipGrammar" should {
