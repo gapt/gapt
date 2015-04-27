@@ -3,11 +3,11 @@ package at.logic.gapt.language.hol
 import at.logic.gapt.language.lambda.LambdaPosition
 
 object HOLPosition {
-  implicit def apply( list: List[Int] ) = new HOLPosition( list )
+  def apply( list: List[Int] ) = new HOLPosition( list )
 
   def apply( is: Int* ) = new HOLPosition( is.toList )
 
-  implicit def toList( pos: HOLPosition ) = pos.list
+  def toList( pos: HOLPosition ) = pos.list
 
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
@@ -18,7 +18,10 @@ object HOLPosition {
    * @return Positions of subexpressions satisfying pred.
    */
   def getPositions( exp: HOLExpression, pred: HOLExpression => Boolean = _ => true ): List[HOLPosition] = {
-    LambdaPosition.getPositions( exp, pred ) filter { definesHOLPosition( exp ) } map { toHOLPosition( exp ) }
+    LambdaPosition.getPositions( exp, {
+      case e: HOLExpression => pred( e )
+      case _                => false
+    } ) filter { definesHOLPosition( exp ) } map { toHOLPosition( exp ) }
   }
 
   /**
@@ -62,7 +65,7 @@ object HOLPosition {
    * @return The corresponding LambdaPosition.
    */
   def toLambdaPositionOption( exp: HOLExpression )( pos: HOLPosition ): Option[LambdaPosition] = {
-    if ( pos.isEmpty ) Some( Nil )
+    if ( pos.isEmpty ) Some( LambdaPosition() )
     else {
       val rest = pos.tail
       ( pos.head, exp ) match {
@@ -131,7 +134,7 @@ object HOLPosition {
    * @return The corresponding HOLPosition.
    */
   def toHOLPosition( exp: HOLExpression )( pos: LambdaPosition ): HOLPosition = {
-    if ( pos.isEmpty ) Nil
+    if ( pos.isEmpty ) HOLPosition()
     else {
       val rest = pos.tail
       exp match {
@@ -236,17 +239,15 @@ object HOLPosition {
  */
 class HOLPosition( val list: List[Int] ) {
   require( list.forall( i => i == 1 || i == 2 ) )
-  def head = list.head
-  def tail = list.tail
-  def isEmpty = list.isEmpty
-  override def toString = "[" + toString_( list )
 
-  private def toString_( xs: List[Int] ): String = xs match {
-    case Nil => "]"
-    case x :: Nil =>
-      x.toString + "]"
-    case x :: ys => x.toString + ", " + toString_( ys )
-  }
+  def toList = list
+  def head = list.head
+  def headOption = list.headOption
+  def tail = HOLPosition( list.tail )
+  def isEmpty = list.isEmpty
+  override def toString = s"[${list.mkString( "," )}]"
+
+  def ::( x: Int ): HOLPosition = HOLPosition( x :: list )
 
   override def equals( that: Any ) = that match {
     case p: HOLPosition => p.list == list

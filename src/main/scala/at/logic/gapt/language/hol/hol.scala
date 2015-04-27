@@ -69,7 +69,10 @@ trait HOLExpression extends LambdaExpression {
    * @param pos The position to be retrieved.
    * @return If there is a subexpression at that position, return Some(that expression). Otherwise None.
    */
-  def get( pos: HOLPosition ): Option[HOLExpression]
+  def get( pos: HOLPosition ): Option[HOLExpression] = {
+    val lPos = toLambdaPosition( this )( pos )
+    get( lPos ).asInstanceOf[Option[HOLExpression]]
+  }
 
   /**
    * Tests whether this expression has a subexpression at a given position.
@@ -77,10 +80,7 @@ trait HOLExpression extends LambdaExpression {
    * @param pos The position to be tested.
    * @return Whether this(pos) is defined.
    */
-  def isDefinedAt( pos: HOLPosition ): Boolean = toLambdaPositionOption( this )( pos ) match {
-    case Some( _ ) => true
-    case None      => false
-  }
+  def isDefinedAt( pos: HOLPosition ): Boolean = get( pos ).isDefined
 
   /**
    * Finds all positions of a subexpression in this expression.

@@ -6,19 +6,12 @@
 
 package at.logic.gapt.language.hol
 
-import at.logic.gapt.language.hol.HOLPosition._
 import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.language.lambda.symbols._
 import at.logic.gapt.language.lambda.types._
 import at.logic.gapt.language.lambda.{ Abs, App, Const, FactoryA, LambdaExpression, Var }
 
-class HOLVar protected[hol] ( sym: SymbolA, exptype: TA ) extends Var( sym, exptype ) with HOLExpression {
-
-  override def get( pos: HOLPosition ): Option[HOLExpression] = {
-    val lPos = toLambdaPosition( this )( pos )
-    super.get( lPos ).asInstanceOf[Option[HOLExpression]]
-  }
-}
+class HOLVar protected[hol] ( sym: SymbolA, exptype: TA ) extends Var( sym, exptype ) with HOLExpression
 
 object HOLVar {
   def apply( name: String, exptype: TA ): HOLVar = HOLFactory.createVar( StringSymbol( name ), exptype )
@@ -29,13 +22,7 @@ object HOLVar {
   }
 }
 
-class HOLConst protected[hol] ( sym: SymbolA, exptype: TA ) extends Const( sym, exptype ) with HOLExpression {
-
-  override def get( pos: HOLPosition ): Option[HOLExpression] = {
-    val lPos = toLambdaPosition( this )( pos )
-    super.get( lPos ).asInstanceOf[Option[HOLExpression]]
-  }
-}
+class HOLConst protected[hol] ( sym: SymbolA, exptype: TA ) extends Const( sym, exptype ) with HOLExpression
 
 object HOLConst {
   def apply( name: String, exptype: TA ): HOLConst = HOLFactory.createConst( StringSymbol( name ), exptype )
@@ -47,13 +34,7 @@ object HOLConst {
   }
 }
 
-class HOLApp protected[hol] ( function: HOLExpression, arg: HOLExpression ) extends App( function, arg ) with HOLExpression {
-
-  override def get( pos: HOLPosition ): Option[HOLExpression] = {
-    val lPos = toLambdaPosition( this )( pos )
-    super.get( lPos ).asInstanceOf[Option[HOLExpression]]
-  }
-}
+class HOLApp protected[hol] ( function: HOLExpression, arg: HOLExpression ) extends App( function, arg ) with HOLExpression
 
 object HOLApp {
   def apply( function: HOLExpression, argument: HOLExpression ): HOLApp = function.factory.createApp( function, argument ).asInstanceOf[HOLApp]
@@ -67,13 +48,7 @@ object HOLApp {
   }
 }
 
-class HOLAbs( variable: HOLVar, term: HOLExpression ) extends Abs( variable, term ) with HOLExpression {
-
-  override def get( pos: HOLPosition ): Option[HOLExpression] = {
-    val lPos = toLambdaPosition( this )( pos )
-    super.get( lPos ).asInstanceOf[Option[HOLExpression]]
-  }
-}
+class HOLAbs( variable: HOLVar, term: HOLExpression ) extends Abs( variable, term ) with HOLExpression
 
 object HOLAbs {
   def apply( variable: HOLVar, expression: HOLExpression ): HOLAbs = expression.factory.createAbs( variable, expression ).asInstanceOf[HOLAbs]

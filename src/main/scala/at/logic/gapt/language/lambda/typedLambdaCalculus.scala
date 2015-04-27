@@ -29,7 +29,7 @@ abstract class LambdaExpression {
    * @param p
    * @return
    */
-  def isDefinedAt( p: LambdaPosition ): Boolean
+  def isDefinedAt( p: LambdaPosition ): Boolean = p.isDefined( this )
 
   /**
    * Returns the subexpression at the given position, if it exists.
@@ -37,7 +37,7 @@ abstract class LambdaExpression {
    * @param p
    * @return
    */
-  def get( p: LambdaPosition ): Option[LambdaExpression]
+  def get( p: LambdaPosition ): Option[LambdaExpression] = p.get( this )
 
   def apply( p: LambdaPosition ): LambdaExpression = get( p ) match {
     case Some( e ) => e
@@ -79,9 +79,6 @@ class Var( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
      but it fulfills the contract that : x equals y implies x.hashCode == y.hashCode
    */
   override def hashCode() = 41 * "Var".hashCode + exptype.hashCode
-
-  def isDefinedAt( pos: LambdaPosition ) = pos.isEmpty
-  def get( pos: LambdaPosition ) = if ( pos.isEmpty ) Some( this ) else None
 }
 object Var {
   def apply( name: String, exptype: TA ) = LambdaFactory.createVar( StringSymbol( name ), exptype )
@@ -118,9 +115,6 @@ class Const( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
   override def toString() = "Const(" + name + "," + exptype + ")"
 
   override def hashCode() = ( 41 * name.hashCode ) + exptype.hashCode
-
-  def isDefinedAt( pos: LambdaPosition ) = pos.isEmpty
-  def get( pos: LambdaPosition ) = if ( pos.isEmpty ) Some( this ) else None
 }
 object Const {
   def apply( name: String, exptype: TA ) = LambdaFactory.createConst( StringSymbol( name ), exptype )
@@ -172,23 +166,6 @@ class App( val function: LambdaExpression, val arg: LambdaExpression ) extends L
   override def toString() = "App(" + function + "," + arg + ")"
 
   override def hashCode() = ( 41 * function.hashCode ) + arg.hashCode
-
-  def isDefinedAt( pos: LambdaPosition ) = if ( pos.isEmpty ) true else {
-    val rest = pos.tail
-    pos.head match {
-      case 1 => function isDefinedAt rest
-      case 2 => arg isDefinedAt rest
-      case _ => false
-    }
-  }
-  def get( pos: LambdaPosition ) = if ( pos.isEmpty ) Some( this ) else {
-    val rest = pos.tail
-    pos.head match {
-      case 1 => function.get( rest )
-      case 2 => arg.get( rest )
-      case _ => None
-    }
-  }
 }
 object App {
   def apply( f: LambdaExpression, a: LambdaExpression ) = a.factory.createApp( f, a )
@@ -234,16 +211,6 @@ class Abs( val variable: Var, val term: LambdaExpression ) extends LambdaExpress
      but it fulfills the contract that : x equals y implies x.hashCode == y.hashCode
    */
   override def hashCode() = 41 * "Abs".hashCode + term.hashCode
-
-  def isDefinedAt( pos: LambdaPosition ) =
-    if ( pos.isEmpty ) true
-    else if ( pos.head == 1 ) term isDefinedAt pos.tail
-    else false
-
-  def get( pos: LambdaPosition ) =
-    if ( pos.isEmpty ) Some( this )
-    else if ( pos.head == 1 ) term.get( pos.tail )
-    else None
 }
 object Abs {
   def apply( v: Var, t: LambdaExpression ) = t.factory.createAbs( v, t )
