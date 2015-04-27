@@ -36,9 +36,6 @@ import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
 class ReplayTest extends SpecificationWithJUnit {
   def parse( str: String ): FOLFormula = ( new StringReader( str ) with SimpleFOLParser getTerm ).asInstanceOf[FOLFormula]
 
-  val box = List()
-  def checkForProver9OrSkip = Prover9.refute( box ) must not( throwA[IOException] ).orSkip
-
   implicit def fo2occ( f: FOLFormula ) = factory.createFormulaOccurrence( f, Nil )
 
   private object MyProver extends Prover[Clause]
@@ -164,10 +161,6 @@ class ReplayTest extends SpecificationWithJUnit {
     }
 
     "prove (with xx - 3) -=(a,a) | -=(a,a)." in {
-
-      //checks, if the execution of prover9 works (used by getRefutation2), o.w. skip test
-      Prover9.refute( box ) must not( throwA[IOException] ).orSkip
-
       val eaa = parse( "=(a,a)" )
       val s = FSequent( List( eaa, eaa ), Nil )
       ( getRefutation2( List( s ) ) match {
@@ -178,7 +171,6 @@ class ReplayTest extends SpecificationWithJUnit {
 
     "prove an example from the automated deduction exercises" in {
       skipped( "never worked" )
-      Prover9.refute( box ) must not( throwA[IOException] ).orSkip
 
       /* loops at derivation of clause 7:
         <clause id="7">
@@ -211,9 +203,6 @@ class ReplayTest extends SpecificationWithJUnit {
     }
 
     "refute { :- P; P :- }" in {
-      //checks, if the execution of prover9 works, o.w. skip test
-      Prover9.refute( box ) must not( throwA[IOException] ).orSkip
-
       val p = FOLAtom( "P", Nil )
       val s1 = FSequent( Nil, p :: Nil )
       val s2 = FSequent( p :: Nil, Nil )
@@ -228,8 +217,6 @@ class ReplayTest extends SpecificationWithJUnit {
     }
 
     "find a refutation for a simple clause set " in {
-      //checks, if the execution of prover9 works, o.w. skip test
-      Prover9.refute( box ) must not( throwA[IOException] ).orSkip
       //println("==== SIMPLE EXAMPLE ====")
       val f_eq_g = parse( "=(f(x),g(x))" )
       val px = parse( "P(x)" )
