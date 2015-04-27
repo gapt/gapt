@@ -149,6 +149,11 @@ abstract class TreeGrammarDecomposition( val termset: List[FOLTerm], val n: Int 
   def C( q: FOLTerm ): FOLFormula
 
   /**
+   * Non-terminals occurring in the grammar produced by this decomposition, excluding the axiom.
+   */
+  def nonTerminals = ( 1 until n ).inclusive map { i => FOLVar( nonterminal_a + "_" + i ) }
+
+  /**
    * Eventually adds a term to the term map and returns its index
    * @param t term which is going to be added to the map, if it does not exist yet
    * @return the index of t in termMap

@@ -146,6 +146,38 @@ object toNNF {
   }
 }
 
+object removeTopAndBottom {
+  def apply( f: FOLFormula ): FOLFormula = f match {
+    case FOLAnd( x_, y_ ) => ( apply( x_ ), apply( y_ ) ) match {
+      case ( FOLTopC, y )    => y
+      case ( x, FOLTopC )    => x
+      case ( FOLBottomC, _ ) => FOLBottomC
+      case ( _, FOLBottomC ) => FOLBottomC
+      case ( x, y )          => FOLAnd( x, y )
+    }
+    case FOLOr( x_, y_ ) => ( apply( x_ ), apply( y_ ) ) match {
+      case ( FOLTopC, _ )    => FOLTopC
+      case ( _, FOLTopC )    => FOLTopC
+      case ( FOLBottomC, y ) => y
+      case ( x, FOLBottomC ) => x
+      case ( x, y )          => FOLOr( x, y )
+    }
+    case FOLImp( x_, y_ ) => ( apply( x_ ), apply( y_ ) ) match {
+      case ( FOLTopC, y )    => y
+      case ( _, FOLTopC )    => FOLTopC
+      case ( FOLBottomC, _ ) => FOLTopC
+      case ( x, FOLBottomC ) => x
+      case ( x, y )          => FOLImp( x, y )
+    }
+    case FOLNeg( x_ ) => apply( x_ ) match {
+      case FOLBottomC => FOLTopC
+      case FOLTopC    => FOLBottomC
+      case x          => FOLNeg( x )
+    }
+    case x => x
+  }
+}
+
 // Distribute Ors over Ands
 object distribute {
   def apply( f: FOLFormula ): FOLFormula = f match {
@@ -459,6 +491,12 @@ object Utils extends Logger {
       subterms ++= ts
     }
     subterms
+  }
+
+  def subterms( term: FOLTerm ) = {
+    val subterms = mutable.Set[FOLTerm]()
+    st( term, subterms )
+    subterms toSet
   }
 
   /**

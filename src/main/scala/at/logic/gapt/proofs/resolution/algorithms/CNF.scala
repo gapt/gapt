@@ -66,27 +66,16 @@ object TseitinCNF {
    * @param f formula which should be transformed
    * @return CNF satisfiability-equivalent to f
    */
-  def apply( f: FOLFormula ): List[FClause] = incremental_apply( f, null )._1
+  def apply( f: FOLFormula ): List[FClause] = {
+    val tseitin = new TseitinCNF()
 
-  /**
-   * Generates from a formula f a List of FClauses in CNF by using Tseitin's Transformation
-   * @param f formula which should be transformed
-   * @param tseitinInstance a previously called TseitinCNF instance, which provides dependencies for future computations
-   * @return pair where 1st are clauses equivalent to f in CNF, 2nd is updated TseitinCNF instance providing dependecies for future computations
-   */
-  def incremental_apply( f: FOLFormula, tseitinInstance: TseitinCNF = null ): ( List[FClause], TseitinCNF ) = {
+    val clauses = getConjuncts( removeTopAndBottom( toNNF( f ) ) ) flatMap { c => tseitin.transform( c ) }
+    clauses toList
+  }
 
-    val tseitin = tseitinInstance match {
-      case null => new TseitinCNF()
-      case _ =>
-        val t = new TseitinCNF()
-        t.subformulaMap ++= tseitinInstance.subformulaMap
-        t.auxsyms ++= tseitinInstance.auxsyms
-        t.fsyms ++= tseitinInstance.fsyms
-        t
-    }
-
-    ( tseitin.transform( f ), tseitin )
+  private def getConjuncts( f: FOLFormula ): Set[FOLFormula] = f match {
+    case FOLAnd( x, y ) => getConjuncts( x ) union getConjuncts( y )
+    case x              => Set( x )
   }
 }
 

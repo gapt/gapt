@@ -24,7 +24,8 @@ class FOLSubstitution( val folmap: Map[FOLVar, FOLExpression] ) extends HOLSubst
   def compose( sub: FOLSubstitution ): FOLSubstitution = FOLSubstitution( folmap ++ sub.folmap.map( x => ( x._1, apply( x._2 ) ) ) )
 }
 object FOLSubstitution {
-  def apply( subs: List[( FOLVar, FOLExpression )] ): FOLSubstitution = new FOLSubstitution( Map() ++ subs )
+  def apply( subs: Seq[( FOLVar, FOLExpression )] ): FOLSubstitution = new FOLSubstitution( Map() ++ subs )
+  def apply( sub: ( FOLVar, FOLExpression ), subs: ( FOLVar, FOLExpression )* ): FOLSubstitution = new FOLSubstitution( Map( sub ) ++ subs )
   def apply( variable: FOLVar, expression: FOLExpression ): FOLSubstitution = new FOLSubstitution( Map( variable -> expression ) )
   def apply( map: Map[FOLVar, FOLExpression] ): FOLSubstitution = new FOLSubstitution( map )
   def apply() = new FOLSubstitution( Map() )
