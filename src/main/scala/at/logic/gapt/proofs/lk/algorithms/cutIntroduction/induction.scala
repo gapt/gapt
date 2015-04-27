@@ -37,9 +37,9 @@ case class SipGrammar( productions: Seq[SipGrammar.Production] ) {
 
   override def toString = s"{${productions map { case ( d, t ) => s"$d -> $t" } mkString ", "}}"
 
-  def instanceGrammar( n: Int ) = {
-    TratGrammar( tau, productions flatMap { p => instantiate( p, n ) } distinct )
-  }
+  def instanceGrammar( n: Int ) =
+    TratGrammar( tau, tau +: ( 0 until n ).inclusive.map( gamma_i ),
+      productions flatMap { p => instantiate( p, n ) } distinct )
 }
 
 object normalFormsSipGrammar {
