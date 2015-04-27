@@ -35,7 +35,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
   def show( s: String ) = println( "+++++++++ " + s + " ++++++++++" )
 
-  def f( e: HOLExpression ): String = toLLKString(e)
+  def f( e: HOLExpression ): String = toLLKString( e )
 
   //sequential //skolemization is not thread safe - it shouldnt't make problems here, but in case there are issues, please uncomment
 

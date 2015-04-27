@@ -32,8 +32,8 @@ trait FOLExpression extends HOLExpression {
    *
    */
   override def toString: String = this match {
-    case FOLVar( x )   => x.toString
-    case FOLConst( x ) => x.toString
+    case FOLVar( x )         => x.toString
+    case FOLConst( x )       => x.toString
     case FOLLambdaConst( x ) => x.toString
     case FOLAtom( x, args ) => x + "(" +
       ( if ( args.size > 1 ) args.head.toString + args.tail.foldLeft( "" )( ( s, a ) => s + ", " + a.toString )
