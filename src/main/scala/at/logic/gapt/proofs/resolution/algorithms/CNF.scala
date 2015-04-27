@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.resolution.algorithms
 import at.logic.gapt.language.fol._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.logicSymbols.{ TopSymbol, BottomSymbol }
-import at.logic.gapt.language.lambda.symbols.{ StringSymbol, SymbolA }
+import at.logic.gapt.expr.symbols.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.resolution.FClause
 import scala.annotation.tailrec
 import scala.collection.mutable

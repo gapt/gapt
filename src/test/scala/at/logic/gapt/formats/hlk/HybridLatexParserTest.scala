@@ -3,8 +3,8 @@ package at.logic.gapt.formats.hlk
 import at.logic.gapt.algorithms.hlk._
 import at.logic.gapt.formats.hlk.ast.LambdaAST
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.App
-import at.logic.gapt.language.lambda.types.{ TA, Ti, To }
+import at.logic.gapt.expr.App
+import at.logic.gapt.expr.types.{ TA, Ti, To }
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit

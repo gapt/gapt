@@ -9,8 +9,8 @@ import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.fol.Utils.{ removeDoubles, removeDoubles3 }
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.symbols.SymbolA
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.symbols.SymbolA
+import at.logic.gapt.expr.types._
 import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, SchemaVar, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
 import at.logic.gapt.proofs.shlk.algorithms.{ StepMinusOne, printSchemaProof }
 import at.logic.gapt.utils.ds.Multisets

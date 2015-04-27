@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.resolution.algorithms
 import at.logic.gapt.language.fol.algorithms.recreateWithFactory
 import at.logic.gapt.language.fol.{ FOLFormula, FOLSubstitution }
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.{ FactoryA, LambdaExpression, Var, LambdaSubstitution }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
@@ -167,12 +167,11 @@ abstract class RobinsonToRal {
     require( fs1 multiSetEquals ( convert_sequent( fs2 ) ), msg + " (converted sequent is " + cfs2 + ")" ) //commented out, because the translation is too flexible now
   }
 
-  import at.logic.gapt.language.lambda
   def checkFactory( e: LambdaExpression, f: FactoryA ): Boolean = e match {
-    case lambda.Var( _, _ ) if e.factory == f   => true
-    case lambda.Const( _, _ ) if e.factory == f => true
-    case lambda.App( s, t ) if e.factory == f   => checkFactory( s, f ) && checkFactory( t, f )
-    case lambda.Abs( x, t ) if e.factory == f   => checkFactory( x, f ) && checkFactory( t, f )
+    case Var( _, _ ) if e.factory == f   => true
+    case Const( _, _ ) if e.factory == f => true
+    case App( s, t ) if e.factory == f   => checkFactory( s, f ) && checkFactory( t, f )
+    case Abs( x, t ) if e.factory == f   => checkFactory( x, f ) && checkFactory( t, f )
     case _ if e.factory == f =>
       println( "unhandled case for " + e )
       false

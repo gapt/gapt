@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lk.algorithms.getCutsAsProofs
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.proofs.TreeProof
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types.{ To, Ti }
+import at.logic.gapt.expr.types.{ To, Ti }
 
 import scala.swing.event.Key
 import scala.swing._

@@ -2,7 +2,7 @@ package at.logic.gapt.formats.shlk
 
 import at.logic.gapt.formats.HOLParser
 import at.logic.gapt.language.hol.{ Formula, HOLVar, HOLFormula, HOLExpression }
-import at.logic.gapt.language.lambda.types.{ To, FunctionType, Tindex }
+import at.logic.gapt.expr.types.{ To, FunctionType, Tindex }
 import at.logic.gapt.language.schema._
 
 import scala.util.matching.Regex

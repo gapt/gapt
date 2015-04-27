@@ -1,6 +1,6 @@
 package at.logic.gapt.language.hol
 
-import at.logic.gapt.language.lambda.LambdaPosition
+import at.logic.gapt.expr.LambdaPosition
 
 object HOLPosition {
   def apply( list: List[Int] ) = new HOLPosition( list )
@@ -12,7 +12,7 @@ object HOLPosition {
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
    *
-   * This function is a wrapper around [[at.logic.gapt.language.lambda.LambdaPosition.getPositions]].
+   * This function is a wrapper around [[at.logic.gapt.expr.LambdaPosition.getPositions]].
    * @param exp The expression under consideration.
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
    * @return Positions of subexpressions satisfying pred.
@@ -25,7 +25,7 @@ object HOLPosition {
   }
 
   /**
-   * Replaces a a subexpression in a HOLExpression. This function is actually a wrapper around [[at.logic.gapt.language.lambda.LambdaPosition.replace]].
+   * Replaces a a subexpression in a HOLExpression. This function is actually a wrapper around [[at.logic.gapt.expr.LambdaPosition.replace]].
    *
    * @param exp The expression in which to perform the replacement.
    * @param pos The position at which to replace.

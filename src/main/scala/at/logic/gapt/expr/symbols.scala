@@ -2,7 +2,7 @@
  * Symbols.scala
  */
 
-package at.logic.gapt.language.lambda.symbols
+package at.logic.gapt.expr.symbols
 
 abstract class SymbolA {
   override def hashCode = toString hashCode

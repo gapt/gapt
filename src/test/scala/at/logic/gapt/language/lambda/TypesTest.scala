@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-package at.logic.gapt.language.lambda
+package at.logic.gapt.expr
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith

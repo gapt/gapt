@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.fol.{ FOLAnd, FOLImp, FOLAllVar, FOLEquation, instantiateAll }
 import at.logic.gapt.language.fol.{ FOLVar, FOLTerm, FOLFormula }
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr.symbols._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.utils.logging.Logger

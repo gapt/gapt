@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, beSyntacticMultisetEqual }
 import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import com.sun.org.apache.xml.internal.resolver.CatalogManager

@@ -22,14 +22,14 @@ object CLIMain {
 
   val imports = """
   import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
-  import at.logic.gapt.language.lambda.types._
+  import at.logic.gapt.expr.types._
   import at.logic.gapt.language._
   import at.logic.gapt.language.hol._
   import at.logic.gapt.language.fol._
   import at.logic.gapt.proofs.lk._
   import at.logic.gapt.proofs.lk.base._
   import at.logic.gapt.proofs.lksk
-  import at.logic.gapt.language.lambda.symbols._
+  import at.logic.gapt.expr.symbols._
   import at.logic.gapt.language.hol.logicSymbols._
   import at.logic.gapt.proofs.hoare._
   import at.logic.gapt.proofs.algorithms.skolemization.skolemize

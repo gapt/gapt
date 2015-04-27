@@ -5,7 +5,7 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types.{ Ti => i, To => o }
+import at.logic.gapt.expr.types.{ Ti => i, To => o }
 
 @RunWith( classOf[JUnitRunner] )
 class ExpansionTreeTest extends SpecificationWithJUnit {

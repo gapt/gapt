@@ -2,9 +2,9 @@ package at.logic.gapt.proofs.shlk
 
 import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-//import at.logic.gapt.language.lambda.typedLambdaCalculus.{App, Abs}
-//import at.logic.gapt.language.lambda.BetaReduction._
-//import at.logic.gapt.language.lambda.BetaReduction.ImplicitStandardStrategy._
+//import at.logic.gapt.expr.typedLambdaCalculus.{App, Abs}
+//import at.logic.gapt.expr.BetaReduction._
+//import at.logic.gapt.expr.BetaReduction.ImplicitStandardStrategy._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.language.schema.BetaReduction._
 //import at.logic.calculi.slk._

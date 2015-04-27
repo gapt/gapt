@@ -2,7 +2,7 @@
 package at.logic.gapt.language.schema.logicSymbols
 
 import at.logic.gapt.language.hol.logicSymbols.LogicalSymbolA
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr.symbols._
 
 case object BigAndSymbol extends LogicalSymbolA {
   override def unique = "BigAndSymbol"

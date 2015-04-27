@@ -4,10 +4,10 @@
 
 package at.logic.gapt.language.fol
 
-import at.logic.gapt.language.lambda.FactoryA
+import at.logic.gapt.expr.FactoryA
 import at.logic.gapt.language.hol.{ HOLEqC => HOLEqC, _ }
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.language.hol.logicSymbols._
 
 /**

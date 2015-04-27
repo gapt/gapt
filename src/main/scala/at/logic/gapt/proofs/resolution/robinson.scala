@@ -9,8 +9,8 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.language.hol.{ HOLFormula, toLatexString }
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.utils.ds.acyclicGraphs._
 import at.logic.gapt.proofs.lk.base._
 import scala.collection.immutable.HashSet

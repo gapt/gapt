@@ -15,11 +15,11 @@ import scala.util.matching.Regex
 import scala.util.parsing.combinator._
 //import at.logic.gapt.language.hol._
 import at.logic.gapt.language.schema._
-//import at.logic.gapt.language.lambda.typedLambdaCalculus._
+//import at.logic.gapt.expr.typedLambdaCalculus._
 import java.io.InputStreamReader
 
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr.types._
 
 import scala.collection.mutable.{ Map => MMap }
 //import at.logic.calculi.lk.quantificationRules._
@@ -28,7 +28,7 @@ import scala.collection.mutable.{ Map => MMap }
 //import at.logic.gapt.language.hol.logicSymbols.StringSymbol
 //import at.logic.gapt.language.hol.Imp
 //import at.logic.gapt.language.hol.Neg
-//import at.logic.gapt.language.lambda.symbols.VariableStringSymbol
+//import at.logic.gapt.expr.symbols.VariableStringSymbol
 
 object SCHOLParser {
 
@@ -66,7 +66,7 @@ object SCHOLParser {
       case x: AnyRef                   => throw new Exception( x.toString )
     }
 
-    class SimpleSCHOLParser extends JavaTokenParsers with at.logic.gapt.language.lambda.types.Parsers {
+    class SimpleSCHOLParser extends JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
       def line: Parser[List[Unit]] = rep( cmappingBase )
       def cmappingBase: Parser[Unit] = ( "comment" ~ "\"[\"]*\"" ) ^^ { case x => () } | mappingBase
       def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {

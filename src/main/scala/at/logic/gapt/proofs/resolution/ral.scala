@@ -19,7 +19,7 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.createContext
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.BetaReduction._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.utils.ds.acyclicGraphs._
 import at.logic.gapt.utils.ds.trees.LeafTree
 import at.logic.gapt.utils.labeling._

@@ -9,12 +9,12 @@ package at.logic.gapt.formats.simple
 
 import at.logic.gapt.formats.HOLParser
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types.{ FunctionType, To }
+import at.logic.gapt.expr.types.{ FunctionType, To }
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator._
 
-trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.gapt.language.lambda.types.Parsers {
+trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
   def goal = term
 
   def term: Parser[HOLExpression] = ( non_formula | formula )

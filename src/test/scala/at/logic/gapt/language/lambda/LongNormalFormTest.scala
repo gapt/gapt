@@ -1,4 +1,4 @@
-package at.logic.gapt.language.lambda
+package at.logic.gapt.expr
 
 import longNormalForm._
 import org.specs2.mutable._

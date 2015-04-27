@@ -7,24 +7,24 @@ package at.logic.gapt.language.hol.algorithms.unification.hol
 
 package huet {
 
-import at.logic.gapt.language.lambda.etaExpansion._
+import at.logic.gapt.expr.etaExpansion._
 import scala.collection.immutable.HashMap
 import at.logic.gapt.utils.executionModels.searchAlgorithms.BFSAlgorithm
-import at.logic.gapt.language.lambda.types. {->, Ti, TA, FunctionType}
-import at.logic.gapt.language.lambda.symbols.VariableStringSymbol
-import at.logic.gapt.language.lambda.typedLambdaCalculus._
+import at.logic.gapt.expr.types. {->, Ti, TA, FunctionType}
+import at.logic.gapt.expr.symbols.VariableStringSymbol
+import at.logic.gapt.expr.typedLambdaCalculus._
 import at.logic.gapt.language.hol.algorithms.unification.UnificationAlgorithm
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.HOLExpression
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.lambda.substitutions.Substitution
-import at.logic.gapt.language.lambda.etaExpansion.EtaExpand
+import at.logic.gapt.expr.substitutions.Substitution
+import at.logic.gapt.expr.etaExpansion.EtaExpand
 import scala.collection.mutable.{Set => MSet}
 import at.logic.gapt.utils.executionModels.ndStream.{NDStream, Configuration}
-import at.logic.gapt.language.lambda.BetaReduction._
-import at.logic.gapt.language.lambda.BetaReduction
+import at.logic.gapt.expr.BetaReduction._
+import at.logic.gapt.expr.BetaReduction
 
-//import at.logic.gapt.language.lambda
+//import at.logic.gapt.expr
   import StrategyOuterInner._
   import StrategyLeftRight._
 

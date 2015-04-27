@@ -15,8 +15,8 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.language.fol.{ FOLVar, FOLConst, FOLAtom, FOLFunction }
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.types._
 
 @RunWith( classOf[JUnitRunner] )
 class SimpleResolutionParserTest extends SpecificationWithJUnit {

@@ -6,9 +6,9 @@ package at.logic.gapt.language.hol
 
 import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.types.{ TA, Ti }
-import at.logic.gapt.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
+import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.types.{ TA, Ti }
+import at.logic.gapt.expr.{ freeVariables => freeVariablesLambda, rename => renameLambda }
 
 object freeVariables {
   /**

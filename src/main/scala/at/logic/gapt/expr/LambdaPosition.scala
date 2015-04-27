@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.gapt.language.lambda
+package at.logic.gapt.expr
 
 object LambdaPosition {
   def apply( list: List[Int] ) = new LambdaPosition( list )
@@ -76,7 +76,7 @@ object LambdaPosition {
 }
 
 /**
- * Represents a position in a [[at.logic.gapt.language.lambda.LambdaExpression]].
+ * Represents a position in a [[at.logic.gapt.expr.LambdaExpression]].
  *
  * Positions are represented by lists of Integers. The empty list denotes the expression itself.
  * A nonempty list denotes a position in the left or right subexpression according to whether it starts with 1 or 2.

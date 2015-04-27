@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.lksk.{ Axiom => _, WeakeningLeftRule => _, Weakening
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk._
 
-//import at.logic.gapt.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
+//import at.logic.gapt.expr.typedLambdaCalculus.{LambdaExpression, Var}
 
 object applySchemaSubstitution {
   def handleSchemaEquivalenceRule( new_parent: LKProof,

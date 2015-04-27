@@ -3,8 +3,8 @@ package at.logic.gapt.proofs.algorithms.skolemization
 // This package implements formula and proof Skolemization.
 
 import at.logic.gapt.language.fol.algorithms.convertHolToFol
-import at.logic.gapt.language.lambda.BetaReduction._
-import at.logic.gapt.language.lambda.BetaReduction.ImplicitStandardStrategy._
+import at.logic.gapt.expr.BetaReduction._
+import at.logic.gapt.expr.BetaReduction.ImplicitStandardStrategy._
 import at.logic.gapt.proofs.lk.algorithms.{ applySubstitution, getCutAncestors }
 import scala.collection.immutable.{ HashMap, HashSet }
 import scala.collection.immutable.Stream.Empty
@@ -13,12 +13,12 @@ import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent, PrincipalFormu
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol
 import at.logic.gapt.language.fol.FOLFormula
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.utils.ds.streams.Definitions._
 import at.logic.gapt.proofs.shlk.{ trsArrowLeftRule, SchemaProofLinkRule }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.utils.logging.Logger
-import at.logic.gapt.language.lambda.symbols.SymbolA
+import at.logic.gapt.expr.symbols.SymbolA
 import at.logic.gapt.proofs.lk._
 
 object skolemize extends Logger {

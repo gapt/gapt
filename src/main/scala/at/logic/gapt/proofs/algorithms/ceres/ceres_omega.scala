@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
 import at.logic.gapt.proofs.lksk.algorithms.applySubstitution
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.language.hol.{ HOLFormula, HOLEquation }
-import at.logic.gapt.language.lambda.types.Ti
+import at.logic.gapt.expr.types.Ti
 import at.logic.gapt.proofs.algorithms.ceres.struct.Struct
 import at.logic.gapt.utils.dssupport.ListSupport._
 import at.logic.gapt.proofs.lk.base.{ Sequent, LKProof }

@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lk.algorithms.{ Util, AtomicExpansion }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.symbols.{ SymbolA, StringSymbol }
+import at.logic.gapt.expr.symbols.{ SymbolA, StringSymbol }
 import at.logic.gapt.language.fol.FOLFormula
 import at.logic.gapt.proofs.lk._
 import Util._

@@ -7,7 +7,7 @@ package at.logic.gapt.formats.xml
 
 import at.logic.gapt.formats.ExportingException
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types.{ ->, FunctionType, Ti, To }
+import at.logic.gapt.expr.types.{ ->, FunctionType, Ti, To }
 
 trait HOLTermXMLExporter {
   def exportTerm( term: HOLExpression ): scala.xml.Elem = term match {

@@ -1,7 +1,7 @@
 
 package at.logic.gapt.algorithms.rewriting
 
-import at.logic.gapt.language.lambda.{ Abs, App, Var, Const, LambdaExpression }
+import at.logic.gapt.expr.{ Abs, App, Var, Const, LambdaExpression }
 import at.logic.gapt.language.hol.{ HOLVar, HOLFormula, HOLExpression }
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._

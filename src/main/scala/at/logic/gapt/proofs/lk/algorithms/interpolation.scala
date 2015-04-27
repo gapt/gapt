@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.language.lambda.types.To
+import at.logic.gapt.expr.types.To
 
 class InterpolationException( msg: String ) extends Exception( msg )
 

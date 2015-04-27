@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.symbols.{ StringSymbol }
+import at.logic.gapt.expr.symbols.{ StringSymbol }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.language.hol.HOLExpression
 import at.logic.gapt.proofs.lk.base.{ beSyntacticFSequentEqual, FSequent, Sequent, LKProof }

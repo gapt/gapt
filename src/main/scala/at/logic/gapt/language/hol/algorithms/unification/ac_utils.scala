@@ -5,7 +5,7 @@ See comment in ACUnification.scala
 package at.logic.gapt.language.hol.algorithms.unification
 
 import at.logic.gapt.language.fol.{Function, FOLConst, FOLVar, FOLTerm}
-//import at.logic.gapt.language.lambda.symbols.{VariableSymbolA, VariableStringSymbol}
+//import at.logic.gapt.expr.symbols.{VariableSymbolA, VariableStringSymbol}
 
 object TermUtils {
   //val generator = new VariableGenerator("z_")

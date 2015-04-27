@@ -14,8 +14,8 @@ import scala.xml.Utility.trim
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.types.To
+import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.types.To
 
 @RunWith( classOf[JUnitRunner] )
 class LkExporterTest extends SpecificationWithJUnit {

@@ -37,9 +37,9 @@ import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.hoare.Program
 import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.language.hol.{ BetaReduction => HOLBetaReduction, HOLSubstitution, containsQuantifier => containsQuantifierHOL, _ }
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.{ LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.{ LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
+import at.logic.gapt.expr.types._
 import at.logic.gapt.formats.latex._
 import at.logic.gapt.formats.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }
 import at.logic.gapt.formats.hoare.ProgramParser

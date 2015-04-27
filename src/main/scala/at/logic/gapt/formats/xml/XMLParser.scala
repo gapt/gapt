@@ -14,7 +14,7 @@ package at.logic.gapt.formats.xml
 import at.logic.gapt.formats.ParsingException
 import at.logic.gapt.formats.readers.XMLReaders.NodeReader
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ FSequent, _ }
 import at.logic.gapt.proofs.occurrences._

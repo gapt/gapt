@@ -2,7 +2,7 @@ package at.logic.gapt.formats.veriT
 
 import scala.util.parsing.combinator._
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.BetaReduction._
+import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ETWeakQuantifier, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree }
 import java.io.{ Reader, FileReader }
 

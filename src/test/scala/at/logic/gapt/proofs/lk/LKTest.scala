@@ -5,12 +5,12 @@
 
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.language.lambda.LambdaSubstitution
+import at.logic.gapt.expr.LambdaSubstitution
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.language.hol.logicSymbols._
 import base._
 import at.logic.gapt.language.fol._

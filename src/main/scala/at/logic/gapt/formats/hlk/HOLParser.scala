@@ -3,10 +3,10 @@ package at.logic.gapt.formats.hlk
 import util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.PackratParsers
 
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.language.fol
 
 /**

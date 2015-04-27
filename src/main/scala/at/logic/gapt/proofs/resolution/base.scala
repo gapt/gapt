@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, createContext => lkCrea
 import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types.{ TA, FunctionType }
+import at.logic.gapt.expr.types.{ TA, FunctionType }
 import at.logic.gapt.utils.ds.acyclicGraphs._
 
 trait ResolutionProof[V <: Sequent] extends AGraphProof[V]

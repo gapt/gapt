@@ -6,9 +6,9 @@ package at.logic.gapt.language.hol
 
 import at.logic.gapt.language.hol.HOLPosition._
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.{ FactoryA, LambdaExpression }
+import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.types._
+import at.logic.gapt.expr.{ FactoryA, LambdaExpression }
 
 import scala.collection.mutable
 

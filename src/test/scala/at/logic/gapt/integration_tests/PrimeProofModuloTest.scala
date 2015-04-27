@@ -14,7 +14,7 @@ import at.logic.calculi.lk.base._
 import at.logic.gapt.language.fol.{FOLExpression, FOLFormula}
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter

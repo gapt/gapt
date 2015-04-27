@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.language.hol.{ HOLAbs, HOLApp, HOLConst, HOLExpression }
-import at.logic.gapt.language.lambda.types.TA
+import at.logic.gapt.expr.types.TA
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.lksk.UnaryLKskProof

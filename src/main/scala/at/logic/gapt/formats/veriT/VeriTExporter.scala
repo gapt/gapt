@@ -1,13 +1,13 @@
 package at.logic.gapt.formats.veriT
 
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr.types._
+import at.logic.gapt.expr.symbols._
 import at.logic.gapt.utils.latex._
 import java.io._
 import org.apache.commons.lang3.StringEscapeUtils
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.language.lambda.types.{ Ti, To }
+import at.logic.gapt.expr.types.{ Ti, To }
 
 object VeriTExporter {
 

@@ -6,7 +6,7 @@ import org.specs2.runner.JUnitRunner
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.language.lambda.types.{ Ti, To }
+import at.logic.gapt.expr.types.{ Ti, To }
 import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.expansionTrees.{ ETAtom, ETNeg, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp }
 import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence

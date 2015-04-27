@@ -5,9 +5,9 @@
 package at.logic.gapt.language.fol
 
 import at.logic.gapt.language.fol.replacements.getAllPositionsFOL
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.symbols.getRenaming
-import at.logic.gapt.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
+import at.logic.gapt.expr.types._
+import at.logic.gapt.expr.symbols.getRenaming
+import at.logic.gapt.expr.{ freeVariables => freeVariablesLambda, rename => renameLambda }
 import at.logic.gapt.language.hol.{ isPrenex => isPrenexHOL, containsQuantifier => containsQuantifierHOL, getMatrix => getMatrixHOL, lcomp => lcompHOL, _ }
 import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.utils.logging.Logger

@@ -14,8 +14,8 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.types.FunctionType
+import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.types.FunctionType
 import at.logic.gapt.formats.llk.HybridLatexExporter
 
 object LKtoLKskc extends Logger {

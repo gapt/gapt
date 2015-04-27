@@ -5,13 +5,13 @@ import at.logic.gapt.proofs.lk.algorithms.{ applySubstitution, AtomicExpansion, 
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
 import at.logic.gapt.formats.hlk.{ ast, DeclarationParser, HLKHOLParser }
 import at.logic.gapt.formats.hlk.ast.LambdaAST
-import at.logic.gapt.language.lambda.types.{ To, TA }
+import at.logic.gapt.expr.types.{ To, TA }
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.language.lambda.Var
+import at.logic.gapt.expr.Var
 import at.logic.gapt.proofs.lk.EquationVerifier._
-import at.logic.gapt.language.lambda.BetaReduction._
+import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.utils.logging.Logger
 import org.slf4j.LoggerFactory
 import scala.annotation.tailrec

@@ -124,7 +124,7 @@ class StillmanSubsumptionAlgorithmFOLTest extends SpecificationWithJUnit {
 @RunWith( classOf[JUnitRunner] )
 class StillmanSubsumptionAlgorithmHOLTest extends SpecificationWithJUnit {
   import at.logic.gapt.language.hol._
-  import at.logic.gapt.language.lambda.types._
+  import at.logic.gapt.expr.types._
   "StillmanSubsumptionAlgorithmHOL" should {
     "return true on the following clauses" in {
       val P = HOLConst( "P", Ti -> ( Ti -> To ) )

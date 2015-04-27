@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.hol.{ HOLVar, HOLConst }
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.symbols.StringSymbol
+import at.logic.gapt.expr.symbols.StringSymbol
 import at.logic.gapt.formats.readers.StringReader
 
 @RunWith( classOf[JUnitRunner] )

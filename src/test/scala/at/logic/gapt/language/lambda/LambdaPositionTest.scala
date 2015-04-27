@@ -1,4 +1,4 @@
-package at.logic.gapt.language.lambda
+package at.logic.gapt.expr
 
 import types._
 import LambdaPosition._

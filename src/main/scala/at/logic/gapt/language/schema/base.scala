@@ -6,9 +6,9 @@
 
 package at.logic.gapt.language.schema
 
-import at.logic.gapt.language.lambda.{ LambdaExpression, Var, Const, App, Abs, FactoryA }
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.{ LambdaExpression, Var, Const, App, Abs, FactoryA }
+import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.logicSymbols._
 

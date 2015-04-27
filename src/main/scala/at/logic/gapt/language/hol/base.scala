@@ -7,9 +7,9 @@
 package at.logic.gapt.language.hol
 
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.{ Abs, App, Const, FactoryA, LambdaExpression, Var }
+import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr.types._
+import at.logic.gapt.expr.{ Abs, App, Const, FactoryA, LambdaExpression, Var }
 
 class HOLVar protected[hol] ( sym: SymbolA, exptype: TA ) extends Var( sym, exptype ) with HOLExpression
 

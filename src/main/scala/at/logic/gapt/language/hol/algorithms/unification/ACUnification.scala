@@ -8,7 +8,7 @@ package at.logic.gapt.language.hol.algorithms.unification
 
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.gapt.language.hol.{HOLFormula}
-import at.logic.gapt.language.lambda.symbols.{VariableStringSymbol, VariableSymbolA}
+import at.logic.gapt.expr.symbols.{VariableStringSymbol, VariableSymbolA}
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.parsing.readers.StringReader
 import at.logic.gapt.algorithms.diophantine.{LankfordSolver, Vector}
@@ -16,11 +16,11 @@ import at.logic.calculi.lk.base.FSequent
 import at.logic.gapt.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.gapt.language.fol._
 import at.logic.gapt.language.fol.FOLEquation
-import at.logic.gapt.language.lambda.substitutions.Substitution
+import at.logic.gapt.expr.substitutions.Substitution
 
 import collection.immutable.Stream.Cons
 import at.logic.calculi.lk.base.FSequent
-import at.logic.gapt.language.lambda.typedLambdaCalculus.Normalization
+import at.logic.gapt.expr.typedLambdaCalculus.Normalization
 import scala.collection.mutable
 
 

@@ -7,13 +7,13 @@ package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.language.fol._
 import at.logic.gapt.language.fol.algorithms.{ convertHolToFol, reduceHolToFol }
-import at.logic.gapt.language.lambda.symbols.{ StringSymbol, SymbolA }
+import at.logic.gapt.expr.symbols.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.lk.base.FSequent
 import scala.collection.immutable.HashMap
 import at.logic.gapt.language.hol.HOLFormula
 import at.logic.gapt.language.hol
 import scala.collection.mutable
-import at.logic.gapt.language.lambda.LambdaExpression
+import at.logic.gapt.expr.LambdaExpression
 
 object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   // FIXME: this should not be here!

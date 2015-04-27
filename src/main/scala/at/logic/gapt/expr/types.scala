@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.gapt.language.lambda.types
+package at.logic.gapt.expr.types
 
 import scala.util.parsing.combinator._
 

@@ -7,7 +7,7 @@ package at.logic.gapt.formats.arithmetic
 
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.lambda.symbols.SymbolA
+import at.logic.gapt.expr.symbols.SymbolA
 import at.logic.gapt.language.schema.{ SchemaTopC, SchemaBottomC, BigAnd, BigOr, SchemaFormula }
 import at.logic.gapt.language.schema.logicSymbols.BiggerThanSymbol
 import at.logic.gapt.formats.{ HOLTermExporter, OutputExporter }

@@ -8,7 +8,7 @@ import at.logic.gapt.language.hol.HOLFormula
 //import at.logic.parsing.language.simple.SimpleFOLParser
 //import at.logic.parsing.readers.StringReader
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith

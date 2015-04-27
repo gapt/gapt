@@ -1,13 +1,13 @@
 package at.logic.gapt.algorithms.rewriting
 
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.language.hol.{ HOLVar, HOLConst, HOLAtom, HOLFunction, HOLAnd, HOLEquation, HOLOr, HOLImp, HOLNeg, HOLExVar, HOLAllVar, HOLExpression, HOLFormula }
 import at.logic.gapt.language.fol.{ FOLVar, FOLConst, FOLAtom, FOLFunction, FOLAnd, FOLEquation, FOLOr, FOLImp, FOLNeg, FOLExVar, FOLAllVar, FOLExpression, FOLTerm, FOLFormula, FOLSubstitution }
-import at.logic.gapt.language.lambda.symbols.StringSymbol
+import at.logic.gapt.expr.symbols.StringSymbol
 
 /**
  * performs renaming of constants, functions and predicate symbols

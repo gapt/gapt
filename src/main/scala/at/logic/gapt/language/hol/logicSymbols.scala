@@ -5,7 +5,7 @@
 
 package at.logic.gapt.language.hol.logicSymbols
 
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr.symbols._
 
 abstract class LogicalSymbolA extends SymbolA {
   def unique: String

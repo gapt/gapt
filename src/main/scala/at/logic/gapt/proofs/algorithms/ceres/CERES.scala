@@ -2,8 +2,8 @@ package at.logic.gapt.proofs.algorithms.ceres
 
 import at.logic.gapt.proofs.lk.algorithms.applySubstitution
 import at.logic.gapt.proofs.resolution.FClause
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr.types._
+import at.logic.gapt.expr.symbols._
 import at.logic.gapt.language.hol._
 
 import at.logic.gapt.proofs.lk.base.LKProof

@@ -8,10 +8,10 @@ package at.logic.gapt.language.hol.algorithms.unification.hol
 
 
 import at.logic.gapt.language.hol.algorithms.unification.hol.huet._
-import at.logic.gapt.language.lambda.BetaReduction
-import at.logic.gapt.language.lambda.BetaReduction._
+import at.logic.gapt.expr.BetaReduction
+import at.logic.gapt.expr.BetaReduction._
 import scala.collection.immutable.HashMap
-import at.logic.gapt.language.lambda.substitutions.Substitution
+import at.logic.gapt.expr.substitutions.Substitution
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -19,13 +19,13 @@ import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.gapt.language.hol.algorithms.unification.hol._
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr.symbols._
 import logicSymbols._
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.typedLambdaCalculus._
+import at.logic.gapt.expr.types._
+import at.logic.gapt.expr.typedLambdaCalculus._
 import logicSymbols.ImplicitConverters._
-import at.logic.gapt.language.lambda.types.Definitions._
-import at.logic.gapt.language.lambda.symbols.ImplicitConverters._
+import at.logic.gapt.expr.types.Definitions._
+import at.logic.gapt.expr.symbols.ImplicitConverters._
 import StrategyOuterInner._
 import StrategyLeftRight._
 

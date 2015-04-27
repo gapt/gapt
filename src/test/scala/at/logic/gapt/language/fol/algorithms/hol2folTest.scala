@@ -9,8 +9,8 @@ import at.logic.gapt.language.fol
 import at.logic.gapt.language.fol._
 import at.logic.gapt.language.hol.logicSymbols.ImpSymbol
 import at.logic.gapt.language.hol.{ HOLConst, HOLExpression, HOLVar, HOLAnd, HOLAtom, HOLFunction, HOLImp }
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.types._
 import at.logic.gapt.formats.readers.StringReader
 import org.junit.runner.RunWith
 import org.specs2.mutable._

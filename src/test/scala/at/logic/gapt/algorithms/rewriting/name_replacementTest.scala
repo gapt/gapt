@@ -5,7 +5,7 @@ import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.fol._
 import at.logic.gapt.language.hol.{ HOLConst, HOLVar, HOLAtom, HOLFunction, HOLAnd, HOLOr, HOLNeg }
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.utils.ds.acyclicGraphs.{ BinaryAGraph, UnaryAGraph, LeafAGraph, AGraph }

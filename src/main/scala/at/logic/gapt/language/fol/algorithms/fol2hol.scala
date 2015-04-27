@@ -2,7 +2,7 @@ package at.logic.gapt.language.fol.algorithms
 
 import at.logic.gapt.language.fol.{ FOLExpression, FOLFormula, FOLSubstitution => FOLSubstitution }
 import at.logic.gapt.language.hol.{ HOLSubstitution => HOLSubstitution, _ }
-import at.logic.gapt.language.lambda._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 
 /**

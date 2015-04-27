@@ -4,7 +4,7 @@ package at.logic.gapt.proofs.algorithms.ceres.clauseSchema
 
 import at.logic.gapt.proofs.lk.base.{ Sequent, LKProof }
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.types._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.shlk.algorithms.StepMinusOne
 import collection.mutable.Map
@@ -30,7 +30,7 @@ object ParseResSchema {
         throw new Exception( x.toString )
     }
 
-    class SimpleResolutionSchemaParser extends JavaTokenParsers with at.logic.gapt.language.lambda.types.Parsers {
+    class SimpleResolutionSchemaParser extends JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
 
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
 
@@ -257,7 +257,7 @@ object ParseResSchemaDavid {
         throw new Exception( x.toString )
     }
 
-    class SimpleResolutionSchemaParser extends JavaTokenParsers with at.logic.gapt.language.lambda.types.Parsers {
+    class SimpleResolutionSchemaParser extends JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
 
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
 

@@ -5,8 +5,8 @@
 
 package at.logic.gapt.language.schema
 
-import at.logic.gapt.language.lambda.{ BetaReduction => BetaReductionLambda }
-import at.logic.gapt.language.lambda.BetaReduction.ImplicitStandardStrategy._
+import at.logic.gapt.expr.{ BetaReduction => BetaReductionLambda }
+import at.logic.gapt.expr.BetaReduction.ImplicitStandardStrategy._
 
 object BetaReduction {
 

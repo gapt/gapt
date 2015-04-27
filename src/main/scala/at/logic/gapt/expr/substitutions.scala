@@ -1,5 +1,5 @@
 
-package at.logic.gapt.language.lambda
+package at.logic.gapt.expr
 
 import symbols._
 

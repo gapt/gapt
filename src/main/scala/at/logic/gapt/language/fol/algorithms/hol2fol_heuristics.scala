@@ -2,9 +2,9 @@ package at.logic.gapt.language.fol.algorithms
 
 import at.logic.gapt.language.fol.{ FOLExpression, FOLFormula }
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.FactoryA
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.types.{ TA, Ti, To }
+import at.logic.gapt.expr.FactoryA
+import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.types.{ TA, Ti, To }
 import at.logic.gapt.utils.logging.Logger
 
 /**
