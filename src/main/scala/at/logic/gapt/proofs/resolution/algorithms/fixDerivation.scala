@@ -89,48 +89,66 @@ object fixDerivation extends Logger {
     val my_from = convertSequent( from )
     val ( neg_map, pos_map ) = getSymmetryMap( my_to, my_from ).get
     val init = InitialClause( from.antecedent.map( _.asInstanceOf[FOLFormula] ), from.succedent.map( _.asInstanceOf[FOLFormula] ) )
+
+    var my_from_s = ( List[FOLFormula](), List[FOLFormula]() )
+    var neg_map_s = HashMap[Int, Int]()
+    var pos_map_s = HashMap[Int, Int]()
+
+    // add symmetry derivations
+    val s_neg = neg_map.keySet.foldLeft( init )( ( p, i ) => {
+      val f = my_from._1( i )
+      val to_i = neg_map( i )
+      neg_map_s = neg_map_s + ( my_from_s._1.size -> to_i )
+      f match {
+        case FOLEquation( _, _ ) if my_to._1( to_i ) != f => {
+          my_from_s = ( my_from_s._1 :+ my_to._1( to_i ), my_from_s._2 )
+          applySymm( p, f, false )
+        }
+        case _ => {
+          my_from_s = ( my_from_s._1 :+ f, my_from_s._2 )
+          p
+        }
+      }
+    } )
+    val s_pos = pos_map.keySet.foldLeft( s_neg )( ( p, i ) => {
+      val f = my_from._2( i )
+      val to_i = pos_map( i )
+      pos_map_s = pos_map_s + ( my_from_s._2.size -> to_i )
+      f match {
+        case FOLEquation( _, _ ) if my_to._2( to_i ) != f => {
+          my_from_s = ( my_from_s._1, my_from_s._2 :+ my_to._2( to_i ) )
+          applySymm( p, f, true )
+        }
+        case _ => {
+          my_from_s = ( my_from_s._1, my_from_s._2 :+ f )
+          p
+        }
+      }
+    } )
+
+    assert( to.isSubClauseOf( s_pos.root.toFClause ) )
+
     // contract some formulas if the maps are not injective
-    // create contracted end-clause
-    var my_from_c = ( List[FOLFormula](), List[FOLFormula]() )
-    val c_neg = neg_map.values.toSeq.distinct.foldLeft( init )( ( p, i ) => {
-      val indices = neg_map.filterKeys( k => neg_map( k ) == i ).keySet
-      val form = my_from._1( neg_map( indices.head ) )
-      my_from_c = ( my_from_c._1 :+ form, my_from_c._2 )
+    val c_neg = neg_map_s.values.toSeq.distinct.foldLeft( s_pos )( ( p, i ) => {
+      val indices = neg_map_s.filterKeys( k => neg_map_s( k ) == i ).keySet
+      val form = my_from_s._1( indices.head )
+
       if ( indices.size > 1 )
         Factor( p, form, indices.size, false, FOLSubstitution() )
       else
         p
     } )
-    val c_pos = pos_map.values.toSeq.distinct.foldLeft( c_neg )( ( p, i ) => {
-      val indices = pos_map.filterKeys( k => pos_map( k ) == i ).keySet
-      val form = my_from._2( pos_map( indices.head ) )
-      my_from_c = ( my_from_c._1, my_from_c._2 :+ form )
+
+    pos_map_s.values.toSeq.distinct.foldLeft( c_neg )( ( p, i ) => {
+      val indices = pos_map_s.filterKeys( k => pos_map_s( k ) == i ).keySet
+      val form = my_from_s._2( indices.head )
       if ( indices.size > 1 )
         Factor( p, form, indices.size, true, FOLSubstitution() )
       else
         p
     } )
-    // update maps since we contracted
-    val ( neg_map_c, pos_map_c ) = getSymmetryMap( my_to, my_from_c ).get
-    def isInjective[A, B]( m: Map[A, B] ) = m.values.forall( v => m.filterKeys( k => m( k ) == v ).size == 1 )
-    assert( isInjective( neg_map_c ) )
-    assert( isInjective( pos_map_c ) )
-    // add symmetry derivations
-    val s_neg = neg_map_c.keySet.foldLeft( c_pos )( ( p, i ) => {
-      val f = my_from_c._1( i )
-      f match {
-        case FOLEquation( _, _ ) if my_to._1( neg_map_c( i ) ) != f => applySymm( p, f, false )
-        case _ => p
-      }
-    } )
-    pos_map_c.keySet.foldLeft( s_neg )( ( p, i ) => {
-      val f = my_from_c._2( i )
-      f match {
-        case FOLEquation( _, _ ) if my_to._2( pos_map_c( i ) ) != f => applySymm( p, f, true )
-        case _ => p
-      }
-    } )
   }
+
   private val subsumption_alg = StillmanSubsumptionAlgorithmFOL
   def canDeriveByFactor( to: FClause, from: FSequent ) =
     subsumption_alg.subsumes( from, to.toFSequent )
