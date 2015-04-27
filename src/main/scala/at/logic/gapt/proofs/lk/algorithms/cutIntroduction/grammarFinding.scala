@@ -125,23 +125,28 @@ object TratGrammar {
 
   def asVectTratGrammarProduction( p: Production ): VectTratGrammar.Production =
     List( p._1 ) -> List( p._2 )
+
+  def apply( axiom: FOLVar, productions: Seq[TratGrammar.Production] ): TratGrammar = {
+    val nonTerminals = ( axiom +: ( productions flatMap { p => p._1 :: freeVariables( p._2 ) } ) ).distinct
+    TratGrammar( axiom, nonTerminals, productions )
+  }
 }
 
-case class TratGrammar( axiom: FOLVar, productions: Seq[TratGrammar.Production] ) {
+case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: Seq[TratGrammar.Production] ) {
   import TratGrammar._
-
-  val nonTerminals = ( axiom +: ( productions flatMap { p => p._1 :: freeVariables( p._2 ) } ) ) distinct
 
   def productions( nonTerminal: FOLVar ): Seq[Production] = productions filter ( _._1 == nonTerminal )
   def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
 
   productions foreach {
     case p @ ( a, t ) =>
+      require( nonTerminals contains a, s"unknown non-terminal $a in $p" )
       val allowedNonTerminals = nonTerminals.drop( nonTerminals.indexOf( a ) + 1 ).toSet
       freeVariables( t ) foreach { fv =>
         require( allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals" )
       }
   }
+  require( nonTerminals contains axiom, s"axiom is unknown non-terminal $axiom" )
 
   override def toString = s"($axiom, {${productions map { case ( d, t ) => s"$d -> $t" } mkString ", "}})"
 
