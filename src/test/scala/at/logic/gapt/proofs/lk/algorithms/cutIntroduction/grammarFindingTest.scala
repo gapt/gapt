@@ -7,6 +7,27 @@ import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
 import at.logic.gapt.language.fol._
 
 class GrammarFindingTest extends Specification {
+  "VectTratGrammar" should {
+    "not accept cyclic grammars" in {
+      vtg( Seq( "x" ), Seq( "x->x" ) ) must throwA[IllegalArgumentException]
+      vtg( Seq( "x", "y" ), Seq( "y->x" ) ) must throwA[IllegalArgumentException]
+      vtg( Seq( "x", "y1,y2" ), Seq( "y1->y2", "y2->c" ) ) must throwA[IllegalArgumentException]
+    }
+    "check that axiom is non-terminal" in {
+      vtg( Seq( "y" ) ) must throwA[IllegalArgumentException]
+    }
+    "check that productions start with defined non-terminals" in {
+      vtg( Seq( "x" ), Seq( "y->c" ) ) must throwA[IllegalArgumentException]
+    }
+  }
+
+  "TratGrammar" should {
+    "not accept cyclic grammars" in {
+      vtg( Seq( "x" ), Seq( "x->x" ) ) must throwA[IllegalArgumentException]
+      vtg( Seq( "x", "y" ), Seq( "y->x" ) ) must throwA[IllegalArgumentException]
+    }
+  }
+
   "normalForms" should {
     "find strong normal forms" in {
       val nfs = normalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
@@ -69,6 +90,13 @@ class GrammarFindingTest extends Specification {
       val g = tg( "x->c", "y->d" )
       covers( g, "c" )
       doesNotCover( g, "d" )
+    }
+    "generate term if only tau-productions are allowed" in {
+      val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
+      val g = normalFormsTratGrammar( l, 4 )
+      val formula = new GrammarMinimizationFormula( g )
+      val onlyTauProd = FOLAnd( g.productions.toList.filter( _._1 != g.axiom ).map { p => FOLNeg( formula.productionIsIncluded( p ) ) } )
+      new Sat4j().solve( FOLAnd( formula.generatesTerm( l( 0 ) ), onlyTauProd ) ) must beSome
     }
   }
 

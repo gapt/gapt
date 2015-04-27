@@ -107,6 +107,17 @@ object VectTratGrammar {
 case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.NonTerminalVect], productions: Seq[VectTratGrammar.Production] ) {
   def productions( nonTerminalVect: List[FOLVar] ): Seq[VectTratGrammar.Production] = productions filter ( _._1 == nonTerminalVect )
   //  def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
+
+  productions foreach {
+    case p @ ( a, t ) =>
+      require( nonTerminals contains a, s"unknown non-terminal vector $a in $p" )
+      val i = nonTerminals.indexOf( a )
+      val allowedNonTerminals = nonTerminals.drop( i + 1 ).flatten.toSet
+      t.flatMap( freeVariables( _ ) ) foreach { fv =>
+        require( allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals" )
+      }
+  }
+  require( nonTerminals contains Seq( axiom ), s"axiom is unknown non-terminal vector $axiom" )
 }
 
 object TratGrammar {
@@ -119,10 +130,18 @@ object TratGrammar {
 case class TratGrammar( axiom: FOLVar, productions: Seq[TratGrammar.Production] ) {
   import TratGrammar._
 
-  val nonTerminals = productions flatMap { p => p._1 :: freeVariables( p._2 ) } distinct
+  val nonTerminals = ( axiom +: ( productions flatMap { p => p._1 :: freeVariables( p._2 ) } ) ) distinct
 
   def productions( nonTerminal: FOLVar ): Seq[Production] = productions filter ( _._1 == nonTerminal )
   def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
+
+  productions foreach {
+    case p @ ( a, t ) =>
+      val allowedNonTerminals = nonTerminals.drop( nonTerminals.indexOf( a ) + 1 ).toSet
+      freeVariables( t ) foreach { fv =>
+        require( allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals" )
+      }
+  }
 
   override def toString = s"($axiom, {${productions map { case ( d, t ) => s"$d -> $t" } mkString ", "}})"
 
