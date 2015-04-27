@@ -72,8 +72,10 @@ object TseitinCNF {
     val clauses = getConjuncts( removeTopAndBottom( toNNF( f ) ) ) flatMap { c => tseitin.transform( c ) }
     clauses toList
   }
+}
 
-  private def getConjuncts( f: FOLFormula ): Set[FOLFormula] = f match {
+object getConjuncts {
+  def apply( f: FOLFormula ): Set[FOLFormula] = f match {
     case FOLAnd( x, y ) => getConjuncts( x ) union getConjuncts( y )
     case x              => Set( x )
   }
