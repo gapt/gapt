@@ -16,9 +16,11 @@ class SipTests extends Specification {
     "handle n=0 correctly" in {
       val g = SipGrammar( Seq(
         tau -> FOLFunction( "r", List( beta ) ),
+        tau -> FOLFunction( "r", List( nu ) ),
         gamma -> gamma,
         gammaEnd -> parseTerm( "0" ) ) )
       g.instanceGrammar( 0 ).productions.toSet must beEqualTo( Set(
+        tau -> parseTerm( "r(0)" ),
         tau -> FOLFunction( "r", List( gamma_i( 0 ) ) ),
         gamma_i( 0 ) -> parseTerm( "0" ) ) )
     }
