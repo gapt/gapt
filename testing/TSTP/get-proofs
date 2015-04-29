@@ -16,7 +16,13 @@ do
   do
     for file in `ls $problem/*.s`
     do
-      sed 's/^% //g' $file > $file.out
+      if [ "$1" = "prover9" ]; then
+	# For prover 9
+	sed 's/^% //g' $file > $file.out
+      elif [ "$1" = "leanCoP" ]; then
+	# For leanCoP
+	sed 's/^% \([fof,cnf,\n]\)/\1/g' $file > $file.out
+      fi
     done
   done
 done
