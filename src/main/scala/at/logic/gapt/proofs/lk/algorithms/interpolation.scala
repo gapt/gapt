@@ -17,8 +17,6 @@ object ExtractInterpolant {
    * compute a proof of \Gamma, \Pi |- \Delta, \Lambda and from that proof,
    * extract an interpolant I such that \Gamma |- \Delta, I and I, \Pi |- \Lambda
    * are valid.
-   *
-   * TODO: at the moment, we run hol2fol for technical reasons (\top, \bot are introduced in the algorithm)
    */
   def apply( negative: FSequent, positive: FSequent, prover: Prover ): FOLFormula = {
     val seq = negative compose positive
