@@ -34,7 +34,7 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
   /**
    * Equality treating each side of the sequent as a set.
    */
-  def setEquals( o: FSequent ) = Set( _1 ) == Set( o._1 ) && Set( _2 ) == Set( o._2 )
+  def setEquals( o: FSequent ) = _1.toSet == o._1.toSet && _2.toSet == o._2.toSet
 
   /**
    * Equality treating each side of the sequent as a multiset.
