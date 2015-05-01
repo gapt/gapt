@@ -13,7 +13,7 @@ class BasicProver extends Prover {
   // minisat for validity check
 
   def getLKProof( seq: FSequent ): Option[LKProof] =
-    new LKProver( cleanStructuralRules = false ).getLKProof( seq )
+    new LKProver().getLKProof( seq )
 
   override def isValid( seq: FSequent ): Boolean =
     FailSafeProver.getProver().isValid( seq )

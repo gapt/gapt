@@ -184,7 +184,7 @@ trait TokenToLKConverter extends Logger {
             "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack( 0 ).root.toFSequent ) + " instead!" )
         case "AUTOPROP" =>
           try {
-            val Some( rule ) = solve.solvePropositional( FSequent( ant, suc ), true, true )
+            val Some( rule ) = solve.solvePropositional( FSequent( ant, suc ), true )
             proofstack = rule :: proofstack
             require( proofstack.nonEmpty && proofstack( 0 ).root.toFSequent.multiSetEquals( fs ),
               "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack( 0 ).root.toFSequent ) + " instead!" )

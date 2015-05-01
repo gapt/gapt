@@ -99,14 +99,12 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
   def distinct = FSequent( antecedent.distinct, succedent.distinct )
 
   /**
-   *
    * @param other Another FSequent
    * @return True iff this contains other as a pair of multisets.
    */
   def superMultiSet( other: FSequent ) = other subMultiSet this
 
   /**
-   *
    * @param other Another FSequent.
    * @return True iff this contains other as a pair of sets.
    */
@@ -114,6 +112,10 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
 
   def subMultiSet( other: FSequent ) = ( this diff other ).isEmpty
 
+  /**
+   * @param other Another FSequent.
+   * @return True iff other contains this pair of sets.
+   */
   def subSet( other: FSequent ) = ( this.distinct diff other.distinct ).isEmpty
 
   /**

@@ -29,7 +29,7 @@ class mapTest extends SpecificationWithJUnit {
       HOLNeg( HOLAnd( pxy, qz ) ) )
 
     val deMorgan = HOLAnd( deMorgan1, deMorgan2 )
-    val Some( p1 ) = solve.solvePropositional( FSequent( Nil, List( deMorgan ) ), true, true )
+    val Some( p1 ) = solve.solvePropositional( FSequent( Nil, List( deMorgan ) ), true )
 
     "be able to convert a hol proof to a fol proof" in {
       val ( proof, _ ) = map_proof( p1, convertHolToFol.apply )
