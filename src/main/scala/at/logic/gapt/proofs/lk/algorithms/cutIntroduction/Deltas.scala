@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, toFSequent, quantRulesNumber => quantRulesNumberET }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
@@ -11,7 +10,6 @@ import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.eqProver.EquationalProver
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.utils.dssupport.ListSupport._
 import at.logic.gapt.utils.executionModels.timeout._
 

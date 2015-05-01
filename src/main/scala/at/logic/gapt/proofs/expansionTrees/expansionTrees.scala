@@ -426,21 +426,15 @@ object toShallow {
   }
 }
 
-// Returns the end-sequent of the proof represented by this expansion tree
-object toFSequent {
-  def apply( ep: ExpansionSequent ): FSequent = {
-    val ant = ep.antecedent.map( et => toShallow( et ) )
-    val cons = ep.succedent.map( et => toShallow( et ) )
-
-    FSequent( ant, cons )
-  }
-}
-
+/**
+ * Gets expansion tree of a formula from expansion sequent.
+ */
 object getETOfFormula {
   def apply( etSeq: ExpansionSequent, f: HOLFormula, isAntecedent: Boolean ): Option[ExpansionTree] = {
     getFromExpansionTreeList( if ( isAntecedent ) etSeq.antecedent else etSeq.succedent, f )
   }
-  def getFromExpansionTreeList( ets: Seq[ExpansionTree], f: HOLFormula ): Option[ExpansionTree] = ets match {
+
+  private def getFromExpansionTreeList( ets: Seq[ExpansionTree], f: HOLFormula ): Option[ExpansionTree] = ets match {
     case head :: tail =>
       if ( toShallow( head ) syntaxEquals f ) Some( head )
       else getFromExpansionTreeList( tail, f )

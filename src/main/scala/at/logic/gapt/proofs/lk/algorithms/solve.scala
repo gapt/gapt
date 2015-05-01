@@ -9,7 +9,9 @@ import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.provers.Prover
 
 /**
- * Constructs proofs sequents. Currently supports propositional logic as well as proof construction using expansion trees.
+ * Bottom-up construction of sequent calculus proofs.
+ *
+ * Currently supports propositional logic as well as proof construction using expansion trees.
  */
 object solve extends at.logic.gapt.utils.logging.Logger {
 
@@ -53,7 +55,6 @@ object solve extends at.logic.gapt.utils.logging.Logger {
     prove( seq_norm, strategy ) match {
       case Some( p ) => {
         debug( "finished proof successfully" )
-        //val pWithWeakening = addWeakenings(p, seq)
         val pWithWeakening = WeakeningMacroRule( p, seq )
         Some( if ( cleanStructuralRules ) CleanStructuralRules( pWithWeakening ) else pWithWeakening )
       }
@@ -79,7 +80,6 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
     if ( SolveUtils.isAxiom( seq ) ) {
       val ( f, rest ) = SolveUtils.getAxiomfromSeq( seq )
-      //val p = addWeakenings(Axiom(f::Nil, f::Nil), seq)
       val p = WeakeningMacroRule( Axiom( f :: Nil, f :: Nil ), seq )
       Some( p )
     } else if ( SolveUtils.findNonschematicAxiom( seq ).isDefined ) {
@@ -228,9 +228,9 @@ object solve extends at.logic.gapt.utils.logging.Logger {
             val p_suc2 = rest.succedent
             val premise1 = FSequent( p_ant1, p_suc1 )
             val premise2 = FSequent( p_ant2, p_suc2 )
-            prove( premise2, nextProofStrategies( 0 ) ) match {
-              case Some( p2 ) => prove( premise1, nextProofStrategies( 1 ) ) match {
-                case Some( p1 ) =>
+            prove( premise1, nextProofStrategies( 0 ) ) match {
+              case Some( p1 ) => prove( premise2, nextProofStrategies( 1 ) ) match {
+                case Some( p2 ) =>
                   val p = OrLeftRule( p1, p2, f1, f2 )
                   val p_contr = ContractionMacroRule( p, seq, strict = false )
                   Some( p_contr )
@@ -367,8 +367,6 @@ object solve extends at.logic.gapt.utils.logging.Logger {
             NegRightRule( p, f1 ) )
         } )
 
-      // Binary Rules
-
       case HOLImp( f1, f2 ) =>
         // If the auxiliary formulas already exists, no need to apply the rule
         trySkipRuleApplication( f1 :: Nil, f2 :: Nil ).orElse( {
@@ -413,6 +411,8 @@ object solve extends at.logic.gapt.utils.logging.Logger {
           }
         } )
 
+      // Binary Rules
+
       case HOLAnd( f1, f2 ) =>
         trySkipRuleApplication( Nil, f1 :: Nil ).orElse(
           trySkipRuleApplication( Nil, f2 :: Nil ).orElse( {
@@ -422,9 +422,9 @@ object solve extends at.logic.gapt.utils.logging.Logger {
             val p_suc2 = f2 +: rest.succedent
             val premise1 = FSequent( p_ant1, p_suc1 )
             val premise2 = FSequent( p_ant2, p_suc2 )
-            prove( premise2, nextProofStrategies( 0 ) ) match {
-              case Some( p2 ) => prove( premise1, nextProofStrategies( 1 ) ) match {
-                case Some( p1 ) =>
+            prove( premise1, nextProofStrategies( 0 ) ) match {
+              case Some( p1 ) => prove( premise2, nextProofStrategies( 1 ) ) match {
+                case Some( p2 ) =>
                   val p = AndRightRule( p1, p2, f1, f2 )
                   val p_contr = ContractionMacroRule( p, seq, strict = false )
                   Some( p_contr )
@@ -511,7 +511,10 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
 /**
  * Strategy to tell prove procedure which rules to apply
- * Basic strategies are PropositionalStrategy and ExpansionTreeStrategy
+ *
+ * A strategy selects a next action to execute. An action is represented by
+ * a formula and the information whether this formula is in the antecedent
+ * or the succedent. The action is to apply a rule to this formula.
  */
 abstract class ProofStrategy {
   def calcNextStep( seq: FSequent ): Option[ProofStrategy.Action]
@@ -536,6 +539,9 @@ object ProofStrategy {
   }
 }
 
+/**
+ * Strategy for proving propositional sequents.
+ */
 class PropositionalProofStrategy extends ProofStrategy with at.logic.gapt.utils.logging.Logger {
   val FormulaLocation = ProofStrategy.FormulaLocation // shortcut
 
@@ -586,6 +592,13 @@ class PropositionalProofStrategy extends ProofStrategy with at.logic.gapt.utils.
 
 }
 
+/**
+ * Strategy for constructing a proof from an ExpansionSequent.
+ *
+ * The internal state of this strategy is an ExpansionSequent. The action is
+ * a formula on a side of the sequent plus a witness term or eigenvariable
+ * respectively in case this formula starts with a quantifier.
+ */
 class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) extends PropositionalProofStrategy with at.logic.gapt.utils.logging.Logger {
 
   override def toString(): String = "ExpansionTreeProofStrategy(" + expansionSequent + ")"
@@ -594,6 +607,8 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     if ( SolveUtils.isAxiom( seq ) || SolveUtils.findNonschematicAxiom( seq ).isDefined ) {
       throw new RuntimeException( "Prove strategy called on axiom: " + seq )
     } else {
+      // every possible action (i.e. formula in toShallow( expansionSequent )) must be realizable (in seq)
+      assert( toShallow( expansionSequent ).subSet( seq ) )
 
       // rule preference:
       // NOTE: getOrElse uses call by name, i.e. functions below are only evaluated if really needed
@@ -622,6 +637,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       case _                            => false
     } ).map( formula => formula match {
       case HOLNeg( f1 ) =>
+        trace( "found neg left; exp seq: " + expansionSequent + "; formula: " + formula )
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
         val etSeq1 = expansionSequent.removeFromAntecedent( et ).addToSuccedent( et.asInstanceOf[UnaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
@@ -687,7 +703,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     } ).map( formula => formula match {
       // differentiate again between Imp and Or as formulas appear in different locations when proving
       case HOLImp( _, _ ) => {
-        debug( "found imp; exp seq: " + expansionSequent + "; form: " + formula )
+        trace( "found imp left; exp seq: " + expansionSequent + "; formula: " + formula )
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
         val children = et.asInstanceOf[BinaryExpansionTree].children // children are Tuple2(ET, Option[Formula])
         val etSeqPurged = expansionSequent.removeFromAntecedent( et )
@@ -699,8 +715,8 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       }
       case HOLOr( _, _ ) => {
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
-        val etSeq1 = expansionSequent.replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
-        val etSeq2 = expansionSequent.replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
+        val etSeq1 = expansionSequent.replaceInAntecedent( et, et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
+        val etSeq2 = expansionSequent.replaceInAntecedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
         val ps2 = new ExpansionTreeProofStrategy( etSeq2 )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Antecedent, None, List[ProofStrategy]( ps1, ps2 ) )
