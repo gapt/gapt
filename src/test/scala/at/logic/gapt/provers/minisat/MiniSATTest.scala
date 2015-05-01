@@ -76,7 +76,7 @@ object SATProblems {
 
 @RunWith( classOf[JUnitRunner] )
 class MiniSATTest extends SpecificationWithJUnit {
-  args( skipAll = !( new MiniSATProver ).isInstalled() )
+  args( skipAll = !( new MiniSATProver ).isInstalled )
 
   "MiniSAT" should {
     "find a model for an atom" in {

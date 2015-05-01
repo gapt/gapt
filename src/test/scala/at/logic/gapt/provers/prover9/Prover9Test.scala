@@ -24,7 +24,7 @@ class Prover9Test extends SpecificationWithJUnit with ClasspathFileCopier {
 
   implicit def fo2occ( f: FOLFormula ) = factory.createFormulaOccurrence( f, Nil )
 
-  args( skipAll = !Prover9.isInstalled() )
+  args( skipAll = !Prover9.isInstalled )
   "The Prover9 interface" should {
     "not refute { :- P; Q :- }" in {
 

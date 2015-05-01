@@ -58,7 +58,7 @@ class VeriTProver extends Prover with ExternalProgram {
   override def getLKProof( f: HOLFormula ) =
     throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
 
-  def isInstalled(): Boolean =
+  val isInstalled: Boolean =
     try {
       "veriT --disable-banner".!!
       true

@@ -394,24 +394,24 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
     }
   }
 
-  def isInstalled(): Boolean = {
+  val isInstalled: Boolean = {
     if ( !isLadrToTptpInstalled() ) {
       warn( "ladr_to_tptp not found!" )
-      return false
+      false
     }
-    if ( !isProver9Installed() ) {
+    else if ( !isProver9Installed() ) {
       warn( "prover9 not found!" )
-      return false
+      false
     }
-    if ( !isProoftransInstalled() ) {
+    else if ( !isProoftransInstalled() ) {
       warn( "prooftrans not found!" )
-      return false
+      false
     }
-    if ( !isTptpToLadrInstalled() ) {
+    else if ( !isTptpToLadrInstalled() ) {
       warn( "tptp_to_ladr not found!" )
-      return false
+      false
     }
-    true
+    else true
   }
 
   private def isLadrToTptpInstalled(): Boolean = callBinary( "ladr_to_tptp" ) == 1

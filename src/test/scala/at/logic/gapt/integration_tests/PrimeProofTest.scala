@@ -43,7 +43,7 @@ import org.specs2.runner.JUnitRunner
 
 @RunWith( classOf[JUnitRunner] )
 class PrimeProofTest extends SpecificationWithJUnit {
-  def checkForProverOrSkip = Prover9.isInstalled() must beTrue.orSkip
+  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   def sequentToString( s: Sequent ) = {
     var ret = ""
@@ -154,7 +154,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
       val veriT = new VeriTProver()
 
       if ( false ) { // run this code as soon as issue 260 is fixed:
-        if ( veriT.isInstalled() ) {
+        if ( veriT.isInstalled ) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
           val definitionFreeProof = eliminateDefinitions( proof ) // can't extract ETs in the presence of definitions currently
           val etSeq = extractExpansionSequent( definitionFreeProof, false )
