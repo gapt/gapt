@@ -165,8 +165,6 @@ object solve extends at.logic.gapt.utils.logging.Logger {
           }
         } )
 
-      // Binary Rules
-
       case HOLAnd( f1, f2 ) =>
         trySkipRuleApplication( f1 :: f2 :: Nil, Nil ).orElse( {
           // If one formula is there, do not contract, just pick the other.
@@ -197,6 +195,8 @@ object solve extends at.logic.gapt.utils.logging.Logger {
             }
           }
         } ) // end of And
+
+      // Binary Rules
 
       case HOLImp( f1, f2 ) =>
         trySkipRuleApplication( f2 :: Nil, Nil ).orElse(
@@ -368,16 +368,40 @@ object solve extends at.logic.gapt.utils.logging.Logger {
         } )
 
       case HOLImp( f1, f2 ) =>
-        // If the auxiliary formulas already exists, no need to apply the rule
+        // If both auxiliary formulas already exist, no need to apply the rule
         trySkipRuleApplication( f1 :: Nil, f2 :: Nil ).orElse( {
-          val p_ant = f1 +: rest.antecedent
-          val p_suc = f2 +: rest.succedent
-          val premise = FSequent( p_ant, p_suc )
-          prove( premise, nextProofStrategies( 0 ) ) match {
-            case Some( p ) =>
-              val p1 = ImpRightRule( p, f1, f2 )
-              Some( p1 )
-            case None => None
+          if ( SolveUtils.checkDuplicate( Nil, f2 :: Nil, seq ) ) { // If right auxiliary formula already exists, weaken it after imp:r
+            val p_ant = f1 +: rest.antecedent
+            val p_suc = rest.succedent
+            val premise = FSequent( p_ant, p_suc )
+            prove( premise, nextProofStrategies( 0 ) ) match {
+              case Some( p ) =>
+                val p1 = WeakeningRightRule( p, f2 )
+                val p2 = ImpRightRule( p1, f1, f2 )
+                Some( p2 )
+              case None => None
+            }
+          } else if ( SolveUtils.checkDuplicate( f1 :: Nil, Nil, seq ) ) { // If left auxiliary formula already exists, weaken it after imp:r
+            val p_ant = rest.antecedent
+            val p_suc = f2 +: rest.succedent
+            val premise = FSequent( p_ant, p_suc )
+            prove( premise, nextProofStrategies( 0 ) ) match {
+              case Some( p ) =>
+                val p1 = WeakeningLeftRule( p, f1 )
+                val p2 = ImpRightRule( p1, f1, f2 )
+                Some( p2 )
+              case None => None
+            }
+          } else { // none of the auxiliary formulas exist
+            val p_ant = f1 +: rest.antecedent
+            val p_suc = f2 +: rest.succedent
+            val premise = FSequent( p_ant, p_suc )
+            prove( premise, nextProofStrategies( 0 ) ) match {
+              case Some( p ) =>
+                val p1 = ImpRightRule( p, f1, f2 )
+                Some( p1 )
+              case None => None
+            }
           }
         } )
 
