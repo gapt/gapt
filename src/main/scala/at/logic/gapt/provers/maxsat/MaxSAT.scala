@@ -310,7 +310,7 @@ trait MaxSATSolverBinary extends MaxSATSolver {
    * Checks if a particular Max SAT Solver is installed properly
    * @return true if it is installed, false otherwise
    */
-  def isInstalled(): Boolean = {
+  val isInstalled: Boolean = {
     try {
       val clause = FClause( List(), List( FOLAtom( "P" ) ) )
       solve( List( clause ), List( clause -> 1 ) ) match {
@@ -321,10 +321,9 @@ trait MaxSATSolverBinary extends MaxSATSolver {
       case ex: IOException => {
         warn( "It seems that the MaxSAT solver is not installed properly" )
         warn( noBinaryWarn() )
-        return false
+        false
       }
     }
-    return true
   }
 
   /**

@@ -40,7 +40,7 @@ import org.specs2.runner.JUnitRunner
 
 @RunWith( classOf[JUnitRunner] )
 class TapeTest extends SpecificationWithJUnit {
-  def checkForProverOrSkip = Prover9.isInstalled() must beTrue.orSkip
+  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   sequential
   "The system" should {
