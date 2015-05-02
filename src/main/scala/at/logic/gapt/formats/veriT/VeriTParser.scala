@@ -2,9 +2,11 @@ package at.logic.gapt.formats.veriT
 
 import scala.util.parsing.combinator._
 import at.logic.gapt.language.fol._
+import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.gapt.language.lambda.BetaReduction._
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ETWeakQuantifier, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree }
+import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ETWeakQuantifier, ExpansionSequent, formulaToExpansionTree }
 import java.io.{ Reader, FileReader }
+import scala.collection.immutable.HashMap
 
 object VeriTParser extends RegexParsers {
 
@@ -365,8 +367,21 @@ object VeriTParser extends RegexParsers {
       }
 
       // Transform all pairs into expansion trees
-      val inputET = input.map( p => qFreeToExpansionTree( p ) )
-      val axiomET = joinedInst.map( p => prenexToExpansionTree( p._1, p._2 ) )
+      val inputET = input.map( p => formulaToExpansionTree( p, false ) )
+      val axiomET = joinedInst.map {
+        case p =>
+          // Match p._1 and p._2 to get the variable mapping
+          val fMatrix = getMatrix( p._1 )
+          val instances = p._2
+          val subs = instances.foldLeft( List[FOLSubstitution]() ) {
+            case ( lst, instance ) =>
+              FOLMatchingAlgorithm.matchTerms( fMatrix, instance ) match {
+                case Some( s ) => s :: lst
+                case None      => lst
+              }
+          }
+          formulaToExpansionTree( p._1, subs, false )
+      }
       val ant = axiomET ++ inputET
 
       val cons = List()

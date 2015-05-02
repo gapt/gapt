@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.leanCoP
 
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree }
+import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, formulaToExpansionTree }
 import at.logic.gapt.language.fol._
 
 import java.io.{ Reader, FileReader }
@@ -56,9 +56,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
             val quantified = addQuantifiers( f, vars )
             bindmap.get( i ) match {
               case Some( sublst ) =>
-                val instantiated = sublst.map( s => s( f ) )
-                prenexToExpansionTree( quantified, instantiated )
-              case None => qFreeToExpansionTree( f )
+                formulaToExpansionTree( quantified, sublst, true )
+              case None => formulaToExpansionTree( f, true )
             }
         }
 
