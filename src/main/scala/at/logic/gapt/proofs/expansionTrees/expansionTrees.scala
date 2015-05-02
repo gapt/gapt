@@ -464,10 +464,10 @@ object formulaToExpansionTree {
         assert( valid_subs.length == 1 )
         val next_f = valid_subs.head( f )
         val ev = valid_subs.head( v ).asInstanceOf[HOLVar]
-        ETStrongQuantifier( f, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
+        ETStrongQuantifier( form, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
       case false => // Weak quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
-        ETWeakQuantifier( f, valid_subs.map {
+        ETWeakQuantifier( form, valid_subs.map {
           case s =>
             val next_f = s( f )
             val t = s( v )
@@ -477,7 +477,7 @@ object formulaToExpansionTree {
     case HOLExVar( v, f ) => pos match {
       case true => // Weak quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
-        ETWeakQuantifier( f, valid_subs.map {
+        ETWeakQuantifier( form, valid_subs.map {
           case s =>
             val next_f = s( f )
             val t = s( v )
@@ -488,7 +488,7 @@ object formulaToExpansionTree {
         assert( valid_subs.length == 1 )
         val next_f = valid_subs.head( f )
         val ev = valid_subs.head( v ).asInstanceOf[HOLVar]
-        ETStrongQuantifier( f, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
+        ETStrongQuantifier( form, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
     }
     case _ => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
   }
