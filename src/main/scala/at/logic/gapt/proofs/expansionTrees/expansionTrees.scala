@@ -442,7 +442,7 @@ object getETOfFormula {
 }
 
 /**
- * Builds an expantion tree from a formula and a map from variables to terms.
+ * Builds an expansion tree from a formula and a map from variables to terms.
  * The paremeter pos is true if  the formula is to be considered positive
  * (right side of the sequent).
  */
