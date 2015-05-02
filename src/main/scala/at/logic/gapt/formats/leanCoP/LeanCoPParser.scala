@@ -68,8 +68,14 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case n ~ _ ~ r ~ _ ~ f => ( n, r, f )
   }
   def clauses: Parser[( Int, FOLFormula, String )] = language ~ "(" ~> integer ~ ", plain," ~ clause ~ ", clausify(" ~ name <~ "))." ^^ {
-    case i ~ _ ~ f ~ _ ~ n => ( i, f, n )
+    case i ~ _ ~ f ~ _ ~ n =>
+      assert( n != "lean_eq_theory" )
+      ( i, f, n )
+  } | language ~ "(" ~> integer ~ ", plain," ~ clause <~ ", theory(equality))." ^^ {
+    // Equality theory added by leanCoP
+    case i ~ _ ~ f => ( i, f, "lean_eq_theory" )
   }
+
   def inferences: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = language ~ "(" ~ name ~ ",plain," ~ clause ~ "," ~> info <~ ")." ^^ {
     case bindings => bindings
   }
@@ -90,27 +96,41 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case t ~ _ ~ v => ( t, v )
   }
 
-  def clause: Parser[FOLFormula] = "[" ~> repsep( formula, "," ) <~ "]" ^^ { case formulas => FOLOr( formulas ) }
+  def clause: Parser[FOLFormula] = "[" ~> repsep( formula, "," ) <~ "]" ^^ {
+    case formulas => FOLAnd( formulas )
+  }
 
-  lazy val formula: PackratParser[FOLFormula] = opt( "(" ) ~> ( atom | neg | and | or | impl | forall | exists ) <~ opt( ")" )
+  lazy val formula: PackratParser[FOLFormula] = opt( "(" ) ~> ( atom | neg | and | or | impl | dbl_impl | forall | exists ) <~ opt( ")" )
 
-  def term: Parser[FOLTerm] = variable | function | constant
+  def term: Parser[FOLTerm] = variable | function | constant | skolem_term
   def function: Parser[FOLTerm] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case f ~ _ ~ args => FOLFunction( f, args ) }
   def constant: Parser[FOLConst] = name ^^ { case n => FOLConst( n ) }
-  // Variables in leanCoP are always of the shape _[1-9]+
-  def variable: Parser[FOLVar] = """_[0-9]+""".r ^^ { case n => FOLVar( n ) }
-  // TODO n ^ [...] terms
+  def variable: Parser[FOLVar] = """_[A-Z0-9]+""".r ^^ { case n => FOLVar( n ) }
+  def skolem_term: Parser[FOLTerm] = lean_var ^^ {
+    case ( i, terms ) =>
+      FOLFunction( "sk" + i, terms )
+  }
 
-  lazy val atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case pred ~ _ ~ args => FOLAtom( pred, args ) }
+  lazy val atom: PackratParser[FOLFormula] = real_atom | lean_atom
+  // These are introduced by leanCoP's (restricted) definitional clausal form translation
+  lazy val lean_atom: PackratParser[FOLFormula] = lean_var ^^ {
+    case ( i, terms ) =>
+      FOLAtom( "leanP" + i, terms )
+  }
+  lazy val real_atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case pred ~ _ ~ args => FOLAtom( pred, args ) }
   lazy val neg: PackratParser[FOLFormula] = "~" ~> formula ^^ { case f => FOLNeg( f ) }
   lazy val and: PackratParser[FOLFormula] = formula ~ "&" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLAnd( f1, f2 ) }
   lazy val or: PackratParser[FOLFormula] = formula ~ "|" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLOr( f1, f2 ) }
   lazy val impl: PackratParser[FOLFormula] = formula ~ "=>" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLImp( f1, f2 ) }
+  lazy val dbl_impl: PackratParser[FOLFormula] = formula ~ "<=>" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLAnd( FOLImp( f1, f2 ), FOLImp( f2, f1 ) ) }
   lazy val forall: PackratParser[FOLFormula] = "!" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => FOLAllVar( v, f ) }
   lazy val exists: PackratParser[FOLFormula] = "?" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => FOLExVar( v, f ) }
 
   def name: Parser[String] = """[^ ():,!?\[\]~&|=>]+""".r ^^ { case s => s }
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
+  def lean_var: Parser[( Int, List[FOLTerm] )] = """\d+""".r ~ "^" ~ "[" ~ repsep( term, "," ) ~ "]" ^^ {
+    case i ~ _ ~ _ ~ terms ~ _ => ( i.toInt, terms )
+  }
 
   def comment: Parser[String] = """[%](.*)\n""".r ^^ { case s => "" }
 }
