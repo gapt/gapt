@@ -11,24 +11,6 @@ import at.logic.gapt.expr.types._
 
 trait HOLTermXMLExporter {
   def exportTerm( term: LambdaExpression ): scala.xml.Elem = term match {
-    case HOLAtom( c: Const, args ) =>
-      <constantatomformula symbol={ c.name.toString }>
-        { exportList( args ) }
-      </constantatomformula>
-    case HOLAtom( c: Var, args ) =>
-      <variableatomformula>
-        { exportList( c :: args ) }
-      </variableatomformula>
-    //defined sets need to be matched before general functions
-    case HOLFunction( Const( a, FunctionType( To, ls ) ), args ) if ( ls.last == Ti ) =>
-      <definedset definition={ a } symbol={ a }>
-        { exportList( args ) }
-      </definedset>
-    // TODO Function with Var
-    case HOLFunction( f: Const, args ) =>
-      <function symbol={ f.name.toString }>
-        { exportList( args ) }
-      </function>
     case And( left, right ) =>
       <conjunctiveformula type="and">
         { exportList( left :: right :: Nil ) }
@@ -68,6 +50,24 @@ trait HOLTermXMLExporter {
       <secondordervariable symbol={ a.toString }/>
     case Const( a, Ti ) =>
       <constant symbol={ a.toString }/>
+    case HOLAtom( c: Const, args ) =>
+      <constantatomformula symbol={ c.name.toString }>
+        { exportList( args ) }
+      </constantatomformula>
+    case HOLAtom( c: Var, args ) =>
+      <variableatomformula>
+        { exportList( c :: args ) }
+      </variableatomformula>
+    //defined sets need to be matched before general functions
+    case HOLFunction( Const( a, FunctionType( To, ls ) ), args ) if ( ls.last == Ti ) =>
+      <definedset definition={ a } symbol={ a }>
+        { exportList( args ) }
+      </definedset>
+    // TODO Function with Var
+    case HOLFunction( f: Const, args ) =>
+      <function symbol={ f.name.toString }>
+        { exportList( args ) }
+      </function>
 
     /*
     case AppN1(Var(ConstantStringSymbol(a),FunctionType(Ti(),_)),args) =>

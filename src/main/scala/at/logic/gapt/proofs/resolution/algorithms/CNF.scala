@@ -18,12 +18,12 @@ object CNFp {
   def transform( f: Formula ): List[FClause] = f match {
     case Bottom()        => List( FClause( List(), List() ) )
     case Top()           => List()
-    case HOLAtom( _, _ ) => List( FClause( List(), List( f ) ) )
     case Neg( f2 )       => CNFn.transform( f2 )
     case And( f1, f2 )   => CNFp.transform( f1 ) ++ CNFp.transform( f2 )
     case Or( f1, f2 )    => times( CNFp.transform( f1 ), CNFp.transform( f2 ) )
     case Imp( f1, f2 )   => times( CNFn.transform( f1 ), CNFp.transform( f2 ) )
     case All( _, f2 )    => CNFp.transform( f2 )
+    case HOLAtom( _, _ ) => List( FClause( List(), List( f ) ) )
     case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 }
@@ -41,12 +41,12 @@ object CNFn {
   def transform( f: Formula ): List[FClause] = f match {
     case Bottom()        => List()
     case Top()           => List( FClause( List(), List() ) )
-    case HOLAtom( _, _ ) => List( FClause( List( f ), List() ) )
     case Neg( f2 )       => CNFp.transform( f2 )
     case And( f1, f2 )   => times( CNFn.transform( f1 ), CNFn.transform( f2 ) )
     case Or( f1, f2 )    => CNFn.transform( f1 ) ++ CNFn.transform( f2 )
     case Imp( f1, f2 )   => CNFp.transform( f1 ) ++ CNFn.transform( f2 )
     case Ex( _, f2 )     => CNFn.transform( f2 )
+    case HOLAtom( _, _ ) => List( FClause( List( f ), List() ) )
     case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 }
@@ -102,6 +102,7 @@ class TseitinCNF {
    */
   def getAtomSymbols( f: FOLFormula ): List[String] = f match {
     case FOLAtom( h, args ) => List( h )
+    case Top() | Bottom()   => List()
     case Neg( f2 )          => getAtomSymbols( f2 )
     case And( f1, f2 )      => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
     case Or( f1, f2 )       => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )

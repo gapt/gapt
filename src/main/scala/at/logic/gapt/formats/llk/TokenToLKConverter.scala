@@ -1088,12 +1088,11 @@ trait TokenToLKConverter extends Logger {
   /* Checks if what is contained as formula inside a nesting of neg, and, or, imp. Used for a lookup in an
     axiom conjunction */
   private def formula_contains_atom( f: Formula, what: Formula ): Boolean = f match {
-    case HOLAtom( _, _ ) => f == what
-    case Neg( x )        => formula_contains_atom( x, what )
-    case And( x, y )     => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
-    case Imp( x, y )     => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
-    case Or( x, y )      => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
-    case _               => f == what
+    case Neg( x )    => formula_contains_atom( x, what )
+    case And( x, y ) => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
+    case Imp( x, y ) => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
+    case Or( x, y )  => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
+    case _           => f == what
   }
 
   /* Creates the definition map from a list of ATokens. Also adds a defintion for all the axioms. */

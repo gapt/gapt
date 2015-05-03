@@ -252,6 +252,7 @@ class TPTPHOLExporter {
     case Var( _, _ )                     => set
     case App( s, t )                     => getConsts( s, getConsts( t, set ) )
     case Abs( x, t )                     => getConsts( t, set )
+    case _: DistinguishedConstant        => set
   }
 
 }
