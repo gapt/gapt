@@ -177,13 +177,13 @@ class UnaryFOLConnectiveHelper( val c: LogicalC ) {
     unapply( formula.asInstanceOf[FOLExpression] )
   def unapply( formula: FOLExpression ): Option[FOLFormula] =
     unapply( formula.asInstanceOf[LambdaExpression] ) match {
-      case a: FOLFormula => Some( a )
-      case _             => None
+      case Some( a: FOLFormula ) => Some( a )
+      case _                     => None
     }
   def unapply( formula: PropFormula ): Option[PropFormula] =
     unapply( formula.asInstanceOf[LambdaExpression] ) match {
-      case a: PropFormula => Some( a )
-      case _              => None
+      case Some( a: PropFormula ) => Some( a )
+      case _                      => None
     }
 }
 
