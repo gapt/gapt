@@ -237,14 +237,14 @@ object Const {
   }
 }
 object App {
-  def apply( f: LambdaExpression, a: LambdaExpression ) = f match {
-    case f: PropLambdaTerm => f.numberOfArguments match {
+  def apply( f: LambdaExpression, a: LambdaExpression ) = ( f, a ) match {
+    case ( f: PropLambdaTerm, a: PropFormula ) => f.numberOfArguments match {
       case 1 => new App( f, a ) with PropFormula
       case n => new App( f, a ) with PropLambdaTerm {
         override val numberOfArguments = n - 1
       }
     }
-    case f: FOLLambdaTerm => f.numberOfArguments match {
+    case ( f: FOLLambdaTerm, a: FOLExpression ) => f.numberOfArguments match {
       case 1 => f.returnType match {
         case Ti => new App( f, a ) with FOLTerm
         case To => new App( f, a ) with FOLFormula
@@ -254,7 +254,7 @@ object App {
         override val returnType = f.returnType
       }
     }
-    case f: FOLQuantifier => a match {
+    case ( f: FOLQuantifier, _ ) => a match {
       case a: FOLFormulaWithBoundVar => new App( f, a ) with FOLFormula
       case _                         => new App( f, a ) with Formula
     }
