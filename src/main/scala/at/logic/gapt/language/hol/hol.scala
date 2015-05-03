@@ -156,7 +156,7 @@ object HOLNeg {
 object HOLAnd {
   def apply( fs: List[HOLFormula] ): HOLFormula = fs match {
     case Nil     => HOLTopC // No way to define from which layer this TopC comes from...
-    case f :: fs => fs.foldLeft( f )( ( d, f ) => HOLAnd( d, f ) )
+    case hd :: tl => fs.dropRight(1).foldRight( fs.last )( ( d, f ) => HOLAnd( d, f ) )
 
   }
   def apply( left: HOLFormula, right: HOLFormula ) = {
@@ -185,7 +185,7 @@ object HOLAnd {
 object HOLOr {
   def apply( fs: List[HOLFormula] ): HOLFormula = fs match {
     case Nil     => HOLBottomC // No way to define from which layer this BottomC comes from...
-    case f :: fs => fs.foldLeft( f )( ( d, f ) => HOLOr( d, f ) )
+    case hd :: tl => fs.dropRight(1).foldRight( fs.last )( ( d, f ) => HOLOr( d, f ) )
   }
   def apply( left: HOLFormula, right: HOLFormula ): HOLFormula = {
     val f_left = left.factory

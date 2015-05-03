@@ -213,7 +213,7 @@ object FOLNeg {
 object FOLAnd {
   def apply( fs: List[FOLFormula] ): FOLFormula = fs match {
     case Nil     => FOLTopC
-    case f :: fs => fs.foldLeft( f )( ( d, f ) => FOLAnd( d, f ) )
+    case hd :: tl => fs.dropRight(1).foldRight( fs.last )( ( d, f ) => FOLAnd( d, f ) )
   }
   def apply( left: FOLFormula, right: FOLFormula ) = {
     val and = left.factory.createConnective( AndSymbol ).asInstanceOf[FOLExpression]
@@ -228,7 +228,7 @@ object FOLAnd {
 object FOLOr {
   def apply( fs: List[FOLFormula] ): FOLFormula = fs match {
     case Nil     => FOLBottomC
-    case f :: fs => fs.foldLeft( f )( ( d, f ) => FOLOr( d, f ) )
+    case hd :: tl => fs.dropRight(1).foldRight( fs.last )( ( d, f ) => FOLOr( d, f ) )
   }
   def apply( left: FOLFormula, right: FOLFormula ) = {
     val or = left.factory.createConnective( OrSymbol ).asInstanceOf[FOLExpression]
