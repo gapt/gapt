@@ -191,13 +191,13 @@ object Const {
       override val numberOfArguments = 1
     }
     case TopC() | BottomC() => new Const( sym, exptype ) with PropConnective with PropFormula
-    case EqC( Ti ) => new Const( sym, exptype ) with FOLLambdaTerm with DistinguishedConstant {
-      override val returnType = Ti
-      override val numberOfArguments = 2
-    }
-    case EqC( _ )  => new Const( sym, exptype ) with DistinguishedConstant
-    case ( _, Ti ) => new Const( sym, exptype ) with FOLTerm
-    case ( _, To ) => new Const( sym, exptype ) with PropFormula
+    //    case EqC( Ti ) => new Const( sym, exptype ) with FOLLambdaTerm with DistinguishedConstant {
+    //      override val returnType = To
+    //      override val numberOfArguments = 2
+    //    }
+    //    case EqC( _ )  => new Const( sym, exptype ) with DistinguishedConstant
+    case ( _, Ti )          => new Const( sym, exptype ) with FOLConst
+    case ( _, To )          => new Const( sym, exptype ) with PropFormula
     case ( _, FOLHeadType( Ti, n ) ) => new Const( sym, exptype ) with FOLLambdaTerm {
       override val returnType = Ti
       override val numberOfArguments = n
