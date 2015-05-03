@@ -172,36 +172,36 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "load veriT proofs pi and verify the validity of Deep(pi) using minisat or sat4j" in {
-      val minisat = FailSafeProver.getProver()
+      val fsprover = FailSafeProver.getProver()
       for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
         val p = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( s"test${i}.verit" ) ).get
         val seq = ETtoDeep( p )
 
-        minisat.isValid( seq ) must beTrue
+        fsprover.isValid( seq ) must beTrue
       }
       ok
     }
 
-    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using minisat or sat4j" in {
-      val minisat = FailSafeProver.getProver()
-      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+    "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using minisat or sat4j and readback E to LK" in {
+      val fsprover = FailSafeProver.getProver()
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
-      val lkproof1 = Prover9.parse_prover9LK( testFilePath )
-      val expseq = extractExpansionSequent( lkproof1, false )
+      val lkproof = Prover9.parse_prover9LK( testFilePath )
+      val expseq = extractExpansionSequent( lkproof, false )
       val deep = ETtoDeep( expseq )
 
-      minisat.isValid( deep ) must beTrue
+      fsprover.isValid( deep ) must beTrue
 
-      // the next line should work but does not (see issue 279)
-      // val lkproof2 = solve.expansionProofToLKProof( ETtoShallow( expseq ), expseq )
+      val pr_opt = solve.expansionProofToLKProof( ETtoShallow( expseq ), expseq )
+      pr_opt.isDefined must beTrue
     }
 
     "load Prover9 proof with equality reasoning, extract expansion tree E, verify deep formula of E using veriT" in {
       val veriT = new VeriTProver()
-      if ( !veriT.isInstalled() ) skipped( "VeriT is not installed" )
-      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+      if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "ALG004-1.out" )
 
@@ -213,7 +213,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using solvePropositional" in {
-      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
@@ -225,7 +225,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {
-      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val testFilePath = tempCopyOfClasspathFile( "NUM484+3.out" )
       val lkproof1 = Prover9.parse_prover9LK( testFilePath )
       val expseq = extractExpansionSequent( lkproof1, false )

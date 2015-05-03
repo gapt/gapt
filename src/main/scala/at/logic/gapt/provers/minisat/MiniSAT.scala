@@ -100,7 +100,7 @@ class MiniSATProver extends Prover with at.logic.gapt.utils.logging.Logger with 
     sat.isValid( Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) )
   }
 
-  def isInstalled(): Boolean =
+  val isInstalled: Boolean =
     try {
       val box: List[FClause] = List()
       ( new MiniSAT ).solve( box )

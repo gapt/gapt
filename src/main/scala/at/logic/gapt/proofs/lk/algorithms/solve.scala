@@ -11,18 +11,19 @@ import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.provers.Prover
 
 /**
- * Constructs proofs sequents. Currently supports propositional logic as well as proof construction using expansion trees.
+ * Bottom-up construction of sequent calculus proofs.
+ *
+ * Currently supports propositional logic as well as proof construction using expansion trees.
  */
 object solve extends at.logic.gapt.utils.logging.Logger {
 
   /**
    * Main method for solving propositional sequents
-   * @param seq: sequent to proof
-   * @param cleanStructuralRules: whether to remove unnecessary structural rules
+   * @param seq: sequent to prove
    * @param throwOnError: throw Exception if there is no proof
    * @return a proof if there is one
    */
-  def solvePropositional( seq: FSequent, cleanStructuralRules: Boolean = true, throwOnError: Boolean = false ): Option[LKProof] = {
+  def solvePropositional( seq: FSequent, throwOnError: Boolean = false ): Option[LKProof] = {
     debug( "running solvePropositional" )
 
     if ( SolveUtils.noCommonAtoms( seq ) ) {
@@ -30,7 +31,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
       None
     }
 
-    startProving( seq, new PropositionalProofStrategy, cleanStructuralRules, throwOnError )
+    startProving( seq, new PropositionalProofStrategy, throwOnError )
   }
 
   /**
@@ -43,50 +44,43 @@ object solve extends at.logic.gapt.utils.logging.Logger {
   /**
    * "Solving" for FOL: Use instances from expansion sequent to create LK proof for a sequent
    */
-  def expansionProofToLKProof( seq: FSequent, expansionSequent: ExpansionSequent, cleanStructuralRules: Boolean = true, throwOnError: Boolean = false ): Option[LKProof] = {
+  def expansionProofToLKProof( seq: FSequent, expansionSequent: ExpansionSequent, throwOnError: Boolean = false ): Option[LKProof] = {
     debug( "\nrunning expansionProofToLKProof" )
-    startProving( seq, new ExpansionTreeProofStrategy( expansionSequent ), cleanStructuralRules, throwOnError )
+    startProving( seq, new ExpansionTreeProofStrategy( expansionSequent ), throwOnError )
   }
 
   // internal interface method
-  private def startProving( seq: FSequent, strategy: ProofStrategy, cleanStructuralRules: Boolean, throwOnError: Boolean ): Option[LKProof] = {
+  private def startProving( seq: FSequent, strategy: ProofStrategy, throwOnError: Boolean ): Option[LKProof] = {
     val seq_norm = FSequent( seq.antecedent.toSet.toList, seq.succedent.toSet.toList )
 
     prove( seq_norm, strategy ) match {
       case Some( p ) => {
         debug( "finished proof successfully" )
-        //val pWithWeakening = addWeakenings(p, seq)
-        val pWithWeakening = WeakeningMacroRule( p, seq )
-        Some( if ( cleanStructuralRules ) CleanStructuralRules( pWithWeakening ) else pWithWeakening )
+        Some( WeakeningMacroRule( p, seq ) )
       }
-      case None => {
-        if ( throwOnError ) {
-          throw new Exception( "Sequent is not provable." )
-        } else {
-          None
-        }
-      }
+      case None =>
+        if ( throwOnError ) throw new Exception( "Sequent is not provable." ) else None
     }
   }
 
   private def prove( seq: FSequent, strategy: ProofStrategy ): Option[LKProof] = {
+    // we are only proving set-normalized sequents
     val ant_set = seq.antecedent.toSet
     val suc_set = seq.succedent.toSet
-    if ( ( ant_set.size != seq.antecedent.size ) || ( suc_set.size != seq.succedent.size ) ) {
-      debug( "proving a sequent which is not set-normalized" )
-    }
+    assert( ant_set.size == seq.antecedent.size && suc_set.size == seq.succedent.size )
 
     trace( "proving: " + seq )
     trace( "with strat: " + strategy )
 
+    // TODO: this should be refactored: the first case is for atomic axioms, the second
+    // for sequents A :- A for arbitrary A. The first should be treated as special case
+    // of the second.
     if ( SolveUtils.isAxiom( seq ) ) {
       val ( f, rest ) = SolveUtils.getAxiomfromSeq( seq )
-      //val p = addWeakenings(Axiom(f::Nil, f::Nil), seq)
-      val p = WeakeningMacroRule( Axiom( f :: Nil, f :: Nil ), seq )
-      Some( p )
+      Some( Axiom( f :: Nil, f :: Nil ) )
     } else if ( SolveUtils.findNonschematicAxiom( seq ).isDefined ) {
       val Some( ( f, g ) ) = SolveUtils.findNonschematicAxiom( seq )
-      Some( AtomicExpansion( seq, f, g ) )
+      Some( AtomicExpansion( FSequent( f :: Nil, g :: Nil ) ) )
     } else {
 
       trace( "no axiom, calc next step" )
@@ -96,7 +90,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
         case Some( action ) => {
           trace( "strategy has selected: " + action + " action.form: " + action.formula + "\n" )
 
-          // dumbly apply whatever rule matches to this formula
+          // apply whatever rule matches to this formula
           action.loc match {
             case ProofStrategy.FormulaLocation.Antecedent =>
               assert( seq.antecedent.contains( action.formula ) )
@@ -114,133 +108,131 @@ object solve extends at.logic.gapt.utils.logging.Logger {
   }
 
   private def applyActionAntecedent( action: ProofStrategy.Action, seq: FSequent ): Option[LKProof] = {
-    // sequent without principal sequent to help building upper sequent
+    // sequent without principal sequent to help building upper goal sequent
     val rest = FSequent( seq.antecedent.diff( action.formula :: Nil ), seq.succedent )
     // proof strategies for children (with expansion sequents according to children or no changes in the propositional case)
     val nextProofStrategies = action.getNextStrategies()
 
-    // auxiliary function to bypass rule application if possible
-    def trySkipRuleApplication( toInsertLeft: List[Formula], toInsertRight: List[Formula] ): Option[LKProof] = { // duplicated below
-      if ( SolveUtils.canSkipRuleApplication( toInsertLeft, toInsertRight, seq ) ) {
-        prove( rest, nextProofStrategies( 0 ) ).map( WeakeningLeftRule( _, action.formula ) )
-      } else { None }
-    }
-
-    action.formula match {
+    val rv = action.formula match {
 
       // Quantifier Rules
 
       case All( v, f ) => {
         val quantifiedTerm = action.getQuantifiedTerm().get // must be defined in this case
         val auxFormula = SubstitutionHOL( v, quantifiedTerm )( f )
-        val p_ant = action.formula +: auxFormula +: rest.antecedent
-        val p_suc = rest.succedent
+
+        val p_ant = if ( seq.antecedent.contains( auxFormula ) ) seq.antecedent else auxFormula +: seq.antecedent
+        val p_suc = seq.succedent
         val premise = FSequent( p_ant, p_suc )
+
         prove( premise, nextProofStrategies( 0 ) ).map( proof => {
-          // weak quantifier, keep formula
-          val p1 = ForallLeftRule( proof, auxFormula, action.formula, quantifiedTerm )
-          ContractionLeftRule( p1, action.formula )
+          val proof1 = if ( proof.root.toFSequent.antecedent.contains( auxFormula ) && !rest.antecedent.contains( auxFormula ) )
+            ForallLeftRule( proof, auxFormula, action.formula, quantifiedTerm )
+          else
+            proof
+
+          if ( proof.root.toFSequent.antecedent.contains( action.formula ) )
+            ContractionLeftRule( proof1, action.formula )
+          else
+            proof1
         } )
       }
 
       case Ex( v, f ) => {
         val eigenVar = action.getQuantifiedTerm().get.asInstanceOf[Var]
         val auxFormula = SubstitutionHOL( v, eigenVar )( f )
-        val p_ant = auxFormula +: rest.antecedent
-        val p_suc = rest.succedent
+
+        val p_ant = if ( seq.antecedent.contains( auxFormula ) ) rest.antecedent else auxFormula +: rest.antecedent
+        val p_suc = seq.succedent
         val premise = FSequent( p_ant, p_suc )
+
         prove( premise, nextProofStrategies( 0 ) ).map( proof =>
-          ExistsLeftRule( proof, auxFormula, action.formula, eigenVar ) )
+          if ( proof.root.toFSequent.antecedent.contains( auxFormula ) && !rest.antecedent.contains( auxFormula ) )
+            ExistsLeftRule( proof, auxFormula, action.formula, eigenVar )
+          else
+            proof )
       }
 
       // Unary Rules
 
-      case Neg( f1 ) =>
-        trySkipRuleApplication( Nil, f1 :: Nil ).orElse( {
-          // Computing premise antecedent and succedent
-          val p_ant = rest.antecedent
-          val p_suc = f1 +: rest.succedent
-          val premise = FSequent( p_ant, p_suc )
-          prove( premise, nextProofStrategies( 0 ) ) match {
-            case Some( p ) => Some( NegLeftRule( p, f1 ) )
-            case None      => None
-          }
+      case Neg( f1 ) => {
+        val p_ant = rest.antecedent
+        val p_suc = if ( seq.succedent.contains( f1 ) ) seq.succedent else f1 +: rest.succedent
+        val premise = FSequent( p_ant, p_suc )
+
+        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+          if ( proof.root.toFSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 ) )
+            NegLeftRule( proof, f1 )
+          else
+            proof )
+      }
+
+      case And( f1, f2 ) => {
+        val f1_opt = if ( rest.antecedent.contains( f1 ) ) Nil else f1 :: Nil
+        val f2_opt = if ( rest.antecedent.contains( f2 ) ) Nil else f2 :: Nil
+        val p_ant = f1_opt ++ f2_opt ++ rest.antecedent
+        val p_suc = rest.succedent
+        val premise = FSequent( p_ant, p_suc )
+
+        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
+          val infer_on_f1 = proof.root.toFSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 )
+          val infer_on_f2 = proof.root.toFSequent.antecedent.contains( f2 ) && !rest.antecedent.contains( f2 )
+
+          val proof1 = if ( infer_on_f1 ) AndLeft1Rule( proof, f1, f2 ) else proof
+          val proof2 = if ( infer_on_f2 ) AndLeft2Rule( proof1, f1, f2 ) else proof1
+          if ( infer_on_f1 && infer_on_f2 ) ContractionLeftRule( proof2, action.formula ) else proof2
         } )
+      }
 
       // Binary Rules
 
-      case And( f1, f2 ) =>
-        trySkipRuleApplication( f1 :: f2 :: Nil, Nil ).orElse( {
-          // If one formula is there, do not contract, just pick the other.
-          if ( SolveUtils.checkDuplicate( f1 :: Nil, Nil, seq ) ) {
-            val up_ant = f2 +: rest.antecedent
-            val up_suc = rest.succedent
-            val upremise = FSequent( up_ant, up_suc )
-            prove( upremise, nextProofStrategies( 0 ) ).map( proof =>
-              AndLeft2Rule( proof, f1, f2 ) )
-          } else if ( SolveUtils.checkDuplicate( f2 :: Nil, Nil, seq ) ) {
-            val up_ant = f1 +: rest.antecedent
-            val up_suc = rest.succedent
-            val upremise = FSequent( up_ant, up_suc )
-            prove( upremise, nextProofStrategies( 0 ) ).map( proof =>
-              AndLeft1Rule( proof, f1, f2 ) )
-          } else {
-            // For this case, contract the formula and choose the first and then the second conjunct
-            val up_ant = f1 +: f2 +: rest.antecedent
-            val up_suc = rest.succedent
-            val upremise = FSequent( up_ant, up_suc )
-            prove( upremise, nextProofStrategies( 0 ) ) match {
-              case Some( proof ) =>
-                val proof_and2 = AndLeft2Rule( proof, f1, f2 )
-                val proof_and1 = AndLeft1Rule( proof_and2, f1, f2 )
-                val proof_contr = ContractionLeftRule( proof_and1, action.formula )
-                Some( proof_contr )
-              case None => None
-            }
-          }
-        } ) // end of And
+      case Or( f1, f2 ) => {
+        val p_ant1 = if ( rest.antecedent.contains( f1 ) ) rest.antecedent else f1 +: rest.antecedent
+        val p_suc1 = rest.succedent
+        val premise1 = FSequent( p_ant1, p_suc1 )
 
-      case Imp( f1, f2 ) =>
-        trySkipRuleApplication( f2 :: Nil, Nil ).orElse(
-          trySkipRuleApplication( Nil, f1 :: Nil ).orElse( {
-            val p_ant1 = rest.antecedent
-            val p_suc1 = f1 +: rest.succedent
-            val p_ant2 = f2 +: rest.antecedent
-            val p_suc2 = rest.succedent
-            val premise1 = FSequent( p_ant1, p_suc1 )
-            val premise2 = FSequent( p_ant2, p_suc2 )
-            prove( premise1, nextProofStrategies( 0 ) ) match {
-              case Some( p1 ) => prove( premise2, nextProofStrategies( 1 ) ) match {
-                case Some( p2 ) =>
-                  val p = ImpLeftRule( p1, p2, f1, f2 )
-                  val p_contr = ContractionMacroRule( p, seq, strict = false )
-                  Some( p_contr )
-                case None => None
-              }
-              case None => None
-            }
-          } ) ) // end of Imp
+        prove( premise1, nextProofStrategies( 0 ) ) match {
+          case Some( proof1 ) =>
+            if ( proof1.root.toFSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 ) ) {
+              val p_ant2 = if ( rest.antecedent.contains( f2 ) ) rest.antecedent else f2 +: rest.antecedent
+              val p_suc2 = rest.succedent
+              val premise2 = FSequent( p_ant2, p_suc2 )
 
-      case Or( f1, f2 ) =>
-        trySkipRuleApplication( f1 :: Nil, Nil ).orElse(
-          trySkipRuleApplication( f2 :: Nil, Nil ).orElse( {
-            val p_ant1 = f1 +: rest.antecedent
-            val p_suc1 = rest.succedent
-            val p_ant2 = f2 +: rest.antecedent
-            val p_suc2 = rest.succedent
-            val premise1 = FSequent( p_ant1, p_suc1 )
-            val premise2 = FSequent( p_ant2, p_suc2 )
-            prove( premise2, nextProofStrategies( 0 ) ) match {
-              case Some( p2 ) => prove( premise1, nextProofStrategies( 1 ) ) match {
-                case Some( p1 ) =>
-                  val p = OrLeftRule( p1, p2, f1, f2 )
-                  val p_contr = ContractionMacroRule( p, seq, strict = false )
-                  Some( p_contr )
-                case None => None
-              }
-              case None => None
+              prove( premise2, nextProofStrategies( 1 ) ).map( proof2 =>
+                if ( proof2.root.toFSequent.antecedent.contains( f2 ) && !rest.antecedent.contains( f2 ) )
+                  ContractionMacroRule( OrLeftRule( proof1, proof2, f1, f2 ) )
+                else
+                  proof2 )
+            } else {
+              Some( proof1 )
             }
-          } ) ) // end of Or
+          case None => None
+        }
+      }
+
+      case Imp( f1, f2 ) => {
+        val p_ant1 = rest.antecedent
+        val p_suc1 = if ( rest.succedent.contains( f1 ) ) rest.succedent else f1 +: rest.succedent
+        val premise1 = FSequent( p_ant1, p_suc1 )
+
+        prove( premise1, nextProofStrategies( 0 ) ) match {
+          case Some( proof1 ) =>
+            if ( proof1.root.toFSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 ) ) {
+              val p_ant2 = if ( rest.antecedent.contains( f2 ) ) rest.antecedent else f2 +: rest.antecedent
+              val p_suc2 = rest.succedent
+              val premise2 = FSequent( p_ant2, p_suc2 )
+
+              prove( premise2, nextProofStrategies( 1 ) ).map( proof2 =>
+                if ( proof2.root.toFSequent.antecedent.contains( f2 ) && !rest.antecedent.contains( f2 ) )
+                  ContractionMacroRule( ImpLeftRule( proof1, proof2, f1, f2 ) )
+                else
+                  proof2 )
+            } else {
+              Some( proof1 )
+            }
+          case None => None
+        }
+      }
 
       // Schematic Rules
 
@@ -318,19 +310,18 @@ object solve extends at.logic.gapt.utils.logging.Logger {
       case _ => throw new IllegalArgumentException( "Invalid formula in prove: " + action.formula )
 
     } // end of match formula
+
+    // invariant: we have constructed a proof of a subsequent of seq
+    if ( rv.isDefined ) assert( rv.get.root.toFSequent.subSet( seq ) )
+
+    rv
   }
 
   private def applyActionSuccedent( action: ProofStrategy.Action, seq: FSequent ): Option[LKProof] = {
     val rest = FSequent( seq.antecedent, seq.succedent.diff( action.formula :: Nil ) )
     val nextProofStrategies = action.getNextStrategies()
 
-    def trySkipRuleApplication( toInsertLeft: List[Formula], toInsertRight: List[Formula] ): Option[LKProof] = { // duplicated above
-      if ( SolveUtils.canSkipRuleApplication( toInsertLeft, toInsertRight, seq ) ) {
-        prove( rest, nextProofStrategies( 0 ) ).map( WeakeningRightRule( _, action.formula ) )
-      } else { None }
-    }
-
-    action.formula match {
+    val rv = action.formula match {
 
       // Quantifier Rules
 
@@ -339,102 +330,112 @@ object solve extends at.logic.gapt.utils.logging.Logger {
         val auxFormula = SubstitutionHOL( v, eigenVar )( f )
 
         val p_ant = rest.antecedent
-        val p_suc = auxFormula +: rest.succedent
+        val p_suc = if ( rest.succedent.contains( auxFormula ) ) rest.succedent else auxFormula +: rest.succedent
         val premise = FSequent( p_ant, p_suc )
+
         prove( premise, nextProofStrategies( 0 ) ).map( proof =>
-          ForallRightRule( proof, auxFormula, action.formula, eigenVar ) )
+          if ( proof.root.toFSequent.succedent.contains( auxFormula ) && !rest.succedent.contains( auxFormula ) )
+            ForallRightRule( proof, auxFormula, action.formula, eigenVar )
+          else
+            proof )
       }
 
       case Ex( v, f ) => {
         val quantifiedTerm = action.getQuantifiedTerm().get
         val auxFormula = SubstitutionHOL( v, quantifiedTerm )( f )
+
         val p_ant = rest.antecedent
-        val p_suc = action.formula +: auxFormula +: rest.succedent
+        val p_suc = if ( seq.succedent.contains( auxFormula ) ) seq.succedent else auxFormula +: seq.succedent
         val premise = FSequent( p_ant, p_suc )
+
         prove( premise, nextProofStrategies( 0 ) ).map( proof => {
-          // weak quantifier, keep formula
-          val p1 = ExistsRightRule( proof, auxFormula, action.formula, quantifiedTerm )
-          ContractionRightRule( p1, action.formula )
+          val proof1 = if ( proof.root.toFSequent.succedent.contains( auxFormula ) && !rest.succedent.contains( auxFormula ) )
+            ExistsRightRule( proof, auxFormula, action.formula, quantifiedTerm )
+          else
+            proof
+
+          if ( proof.root.toFSequent.succedent.contains( action.formula ) )
+            ContractionRightRule( proof1, action.formula )
+          else
+            proof1
         } )
       }
 
       // Unary Rules
 
-      case Neg( f1 ) =>
-        trySkipRuleApplication( f1 :: Nil, Nil ).orElse( {
-          val p_ant = f1 +: rest.antecedent
-          val p_suc = rest.succedent
-          val premise = FSequent( p_ant, p_suc )
-          prove( premise, nextProofStrategies( 0 ) ).map( p =>
-            NegRightRule( p, f1 ) )
+      case Neg( f1 ) => {
+        val p_ant = if ( rest.antecedent.contains( f1 ) ) rest.antecedent else f1 +: rest.antecedent
+        val p_suc = rest.succedent
+        val premise = FSequent( p_ant, p_suc )
+
+        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+          if ( proof.root.toFSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 ) )
+            NegRightRule( proof, f1 )
+          else
+            proof )
+      }
+
+      case Imp( f1, f2 ) => {
+        val p_ant = if ( rest.antecedent.contains( f1 ) ) rest.antecedent else f1 +: rest.antecedent
+        val p_suc = if ( rest.succedent.contains( f2 ) ) rest.succedent else f2 +: rest.succedent
+        val premise = FSequent( p_ant, p_suc )
+
+        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
+          val infer_on_f1 = proof.root.toFSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 )
+          val infer_on_f2 = proof.root.toFSequent.succedent.contains( f2 ) && !rest.succedent.contains( f2 )
+
+          if ( infer_on_f1 || infer_on_f2 ) { // need to infer main formula
+            val proof1 = if ( !infer_on_f1 ) WeakeningLeftRule( proof, f1 ) else proof
+            val proof2 = if ( !infer_on_f2 ) WeakeningRightRule( proof1, f2 ) else proof1
+            ImpRightRule( proof2, f1, f2 )
+          } else {
+            proof
+          }
         } )
+      }
+
+      case Or( f1, f2 ) => {
+        val f1_opt = if ( rest.succedent.contains( f1 ) ) Nil else f1 :: Nil
+        val f2_opt = if ( rest.succedent.contains( f2 ) ) Nil else f2 :: Nil
+        val p_ant = rest.antecedent
+        val p_suc = f1_opt ++ f2_opt ++ rest.succedent
+        val premise = FSequent( p_ant, p_suc )
+
+        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
+          val infer_on_f1 = proof.root.toFSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 )
+          val infer_on_f2 = proof.root.toFSequent.succedent.contains( f2 ) && !rest.succedent.contains( f2 )
+
+          val proof1 = if ( infer_on_f1 ) OrRight1Rule( proof, f1, f2 ) else proof
+          val proof2 = if ( infer_on_f2 ) OrRight2Rule( proof1, f1, f2 ) else proof1
+          if ( infer_on_f1 && infer_on_f2 ) ContractionRightRule( proof2, action.formula ) else proof2
+        } )
+      }
 
       // Binary Rules
 
-      case Imp( f1, f2 ) =>
-        // If the auxiliary formulas already exists, no need to apply the rule
-        trySkipRuleApplication( f1 :: Nil, f2 :: Nil ).orElse( {
-          val p_ant = f1 +: rest.antecedent
-          val p_suc = f2 +: rest.succedent
-          val premise = FSequent( p_ant, p_suc )
-          prove( premise, nextProofStrategies( 0 ) ) match {
-            case Some( p ) =>
-              val p1 = ImpRightRule( p, f1, f2 )
-              Some( p1 )
-            case None => None
-          }
-        } )
+      case And( f1, f2 ) => {
+        val p_ant1 = rest.antecedent
+        val p_suc1 = if ( rest.succedent.contains( f1 ) ) rest.succedent else f1 +: rest.succedent
+        val premise1 = FSequent( p_ant1, p_suc1 )
 
-      case Or( f1, f2 ) =>
-        trySkipRuleApplication( Nil, f1 :: f2 :: Nil ).orElse( {
-          if ( SolveUtils.checkDuplicate( Nil, f2 :: Nil, seq ) ) {
-            val up_ant = rest.antecedent
-            val up_suc = f1 +: rest.succedent
-            val upremise = FSequent( up_ant, up_suc )
-            prove( upremise, nextProofStrategies( 0 ) ).map( proof =>
-              OrRight1Rule( proof, f1, f2 ) )
-          } else if ( SolveUtils.checkDuplicate( Nil, f1 :: Nil, seq ) ) {
-            val up_ant = rest.antecedent
-            val up_suc = f2 +: rest.succedent
-            val upremise = FSequent( up_ant, up_suc )
-            prove( upremise, nextProofStrategies( 0 ) ).map( proof =>
-              OrRight2Rule( proof, f1, f2 ) )
-          } else {
-            // For this case, contract the formula and choose the first and then the second conjunct
-            val up_ant = rest.antecedent
-            val up_suc = f1 +: f2 +: rest.succedent
-            val upremise = FSequent( up_ant, up_suc )
-            prove( upremise, nextProofStrategies( 0 ) ) match {
-              case Some( proof ) =>
-                val proof_or2 = OrRight2Rule( proof, f1, f2 )
-                val proof_or1 = OrRight1Rule( proof_or2, f1, f2 )
-                val proof_contr = ContractionRightRule( proof_or1, action.formula )
-                Some( proof_contr )
-              case None => None
-            }
-          }
-        } )
+        prove( premise1, nextProofStrategies( 0 ) ) match {
+          case Some( proof1 ) =>
+            if ( proof1.root.toFSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 ) ) {
+              val p_ant2 = rest.antecedent
+              val p_suc2 = if ( rest.succedent.contains( f2 ) ) rest.succedent else f2 +: rest.succedent
+              val premise2 = FSequent( p_ant2, p_suc2 )
 
-      case And( f1, f2 ) =>
-        trySkipRuleApplication( Nil, f1 :: Nil ).orElse(
-          trySkipRuleApplication( Nil, f2 :: Nil ).orElse( {
-            val p_ant1 = rest.antecedent
-            val p_suc1 = f1 +: rest.succedent
-            val p_ant2 = rest.antecedent
-            val p_suc2 = f2 +: rest.succedent
-            val premise1 = FSequent( p_ant1, p_suc1 )
-            val premise2 = FSequent( p_ant2, p_suc2 )
-            prove( premise2, nextProofStrategies( 0 ) ) match {
-              case Some( p2 ) => prove( premise1, nextProofStrategies( 1 ) ) match {
-                case Some( p1 ) =>
-                  val p = AndRightRule( p1, p2, f1, f2 )
-                  val p_contr = ContractionMacroRule( p, seq, strict = false )
-                  Some( p_contr )
-                case None => None
-              }
-              case None => None
+              prove( premise2, nextProofStrategies( 1 ) ).map( proof2 =>
+                if ( proof2.root.toFSequent.succedent.contains( f2 ) && !rest.succedent.contains( f2 ) )
+                  ContractionMacroRule( AndRightRule( proof1, proof2, f1, f2 ) )
+                else
+                  proof2 )
+            } else {
+              Some( proof1 )
             }
-          } ) )
+          case None => None
+        }
+      }
 
       // Schematic Rules
 
@@ -508,12 +509,20 @@ object solve extends at.logic.gapt.utils.logging.Logger {
       case _ => throw new IllegalArgumentException( "Invalid formula in prove: " + action.formula )
 
     } // end of match formula
+
+    // invariant: we have constructed a proof of a subsequent of seq
+    if ( rv.isDefined ) assert( rv.get.root.toFSequent.subSet( seq ) )
+
+    rv
   }
 }
 
 /**
  * Strategy to tell prove procedure which rules to apply
- * Basic strategies are PropositionalStrategy and ExpansionTreeStrategy
+ *
+ * A strategy selects a next action to execute. An action is represented by
+ * a formula and the information whether this formula is in the antecedent
+ * or the succedent. The action is to apply a rule to this formula.
  */
 abstract class ProofStrategy {
   def calcNextStep( seq: FSequent ): Option[ProofStrategy.Action]
@@ -538,6 +547,9 @@ object ProofStrategy {
   }
 }
 
+/**
+ * Strategy for proving propositional sequents.
+ */
 class PropositionalProofStrategy extends ProofStrategy with at.logic.gapt.utils.logging.Logger {
   val FormulaLocation = ProofStrategy.FormulaLocation // shortcut
 
@@ -588,6 +600,13 @@ class PropositionalProofStrategy extends ProofStrategy with at.logic.gapt.utils.
 
 }
 
+/**
+ * Strategy for constructing a proof from an ExpansionSequent.
+ *
+ * The internal state of this strategy is an ExpansionSequent. The action is
+ * a formula on a side of the sequent plus a witness term or eigenvariable
+ * respectively in case this formula starts with a quantifier.
+ */
 class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) extends PropositionalProofStrategy with at.logic.gapt.utils.logging.Logger {
 
   override def toString(): String = "ExpansionTreeProofStrategy(" + expansionSequent + ")"
@@ -596,6 +615,8 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     if ( SolveUtils.isAxiom( seq ) || SolveUtils.findNonschematicAxiom( seq ).isDefined ) {
       throw new RuntimeException( "Prove strategy called on axiom: " + seq )
     } else {
+      // every possible action (i.e. formula in toShallow( expansionSequent )) must be realizable (in seq)
+      assert( toShallow( expansionSequent ).subSet( seq ) )
 
       // rule preference:
       // NOTE: getOrElse uses call by name, i.e. functions below are only evaluated if really needed
@@ -624,6 +645,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       case _                      => false
     } ).map( formula => formula match {
       case Neg( f1 ) =>
+        trace( "found neg left; exp seq: " + expansionSequent + "; formula: " + formula )
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
         val etSeq1 = expansionSequent.removeFromAntecedent( et ).addToSuccedent( et.asInstanceOf[UnaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
@@ -689,7 +711,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     } ).map( formula => formula match {
       // differentiate again between Imp and Or as formulas appear in different locations when proving
       case Imp( _, _ ) => {
-        debug( "found imp; exp seq: " + expansionSequent + "; form: " + formula )
+        trace( "found imp left; exp seq: " + expansionSequent + "; formula: " + formula )
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
         val children = et.asInstanceOf[BinaryExpansionTree].children // children are Tuple2(ET, Option[Formula])
         val etSeqPurged = expansionSequent.removeFromAntecedent( et )
@@ -701,8 +723,8 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       }
       case Or( _, _ ) => {
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
-        val etSeq1 = expansionSequent.replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
-        val etSeq2 = expansionSequent.replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
+        val etSeq1 = expansionSequent.replaceInAntecedent( et, et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
+        val etSeq2 = expansionSequent.replaceInAntecedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
         val ps2 = new ExpansionTreeProofStrategy( etSeq2 )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Antecedent, None, List[ProofStrategy]( ps1, ps2 ) )
@@ -920,28 +942,10 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
     case Ex( v, f )      => getAtoms( f )
     case All( v, f )     => getAtoms( f )
   }
-
-  // Checks if seq contains the formulas of lft in the antecedent and the formulas of rght on the succedent
-  def checkDuplicate( lft: List[Formula], rght: List[Formula], seq: FSequent ): Boolean = {
-    lft.forall( f => seq.antecedent.contains( f ) ) && rght.forall( f => seq.succedent.contains( f ) )
-  }
-
-  /**
-   * Check if we can skip rules that would add the given formulas to the sequent
-   * Basically we avoid duplicates and problems with expansion trees (if formulas contain quantifiers, their expansion
-   * tree can contain instances which we need)
-   */
-  def canSkipRuleApplication( toInsertLeft: List[Formula], toInsertRight: List[Formula], seq: FSequent ): Boolean = {
-    checkDuplicate( toInsertLeft, toInsertRight, seq ) &&
-      toInsertLeft.forall( f => !containsQuantifier( f ) ) &&
-      toInsertRight.forall( f => !containsQuantifier( f ) )
-  }
-
 }
 
-class LKProver( val cleanStructuralRules: Boolean = true ) extends Prover {
-  def getLKProof( seq: FSequent ): Option[LKProof] =
-    solve.solvePropositional( seq, cleanStructuralRules = cleanStructuralRules )
+class LKProver extends Prover {
+  def getLKProof( seq: FSequent ): Option[LKProof] = solve.solvePropositional( seq )
 }
 
 object AtomicExpansion {
@@ -966,7 +970,6 @@ object AtomicExpansion {
 
     val atomic_proof = atomicExpansion_( f1, f2 )
 
-    //addWeakenings(atomic_proof, fs)
     WeakeningMacroRule( atomic_proof, fs )
   }
 

@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.veriT
 
 import at.logic.gapt.formats.veriT._
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, isQuantified, qFreeToExpansionTree }
+import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, isQuantified, formulaToExpansionTree }
 import at.logic.gapt.utils.traits.ExternalProgram
 import scala.sys.process._
 import java.io._
@@ -41,8 +41,8 @@ class VeriTProver extends Prover with ExternalProgram {
           exp_seq.antecedent.filter( f => isQuantified( f ) ),
           exp_seq.succedent.filter( f => isQuantified( f ) ) )
 
-        val ant_prop = s.antecedent.map( f => qFreeToExpansionTree( f ) )
-        val suc_prop = s.succedent.map( f => qFreeToExpansionTree( f ) )
+        val ant_prop = s.antecedent.map( f => formulaToExpansionTree( f, false ) )
+        val suc_prop = s.succedent.map( f => formulaToExpansionTree( f, true ) )
 
         Some( new ExpansionSequent( exp_seq_quant.antecedent ++ ant_prop, exp_seq_quant.succedent ++ suc_prop ) )
 
@@ -58,7 +58,7 @@ class VeriTProver extends Prover with ExternalProgram {
   override def getLKProof( f: Formula ) =
     throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
 
-  def isInstalled(): Boolean =
+  val isInstalled: Boolean =
     try {
       "veriT --disable-banner".!!
       true

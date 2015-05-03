@@ -8,7 +8,7 @@ package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 import at.logic.gapt.language.fol.{ instantiateAll, FOLSubstitution }
 import at.logic.gapt.language.hol.algorithms.simplify.simplify
 import at.logic.gapt.language.hol.lcomp
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toFSequent, quantRulesNumber => quantRulesNumberET }
+import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, toShallow, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
 import at.logic.gapt.proofs.lk.algorithms.{ quantRulesNumber, _ }
@@ -248,7 +248,7 @@ object CutIntroduction extends Logger {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toFSequent( ep )
+        val endSequent = toShallow( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Term set Extraction **********/
@@ -443,7 +443,7 @@ object CutIntroduction extends Logger {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toFSequent( ep )
+        val endSequent = toShallow( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Terms Extraction **********/

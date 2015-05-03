@@ -31,7 +31,7 @@ import org.specs2.runner.JUnitRunner
 
 @RunWith( classOf[JUnitRunner] )
 class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
-  def checkForProverOrSkip = Prover9.isInstalled() must beTrue.orSkip
+  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   def show( s: String ) = println( "+++++++++ " + s + " ++++++++++" )
 

@@ -272,9 +272,7 @@ object ContractionLeftRule {
   def apply( s1: LKProof, term1: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: y :: _ ) => apply( s1, x, y )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
-        //" for application of the rule with the given formula: " + term1)
-        throw new LKUnaryRuleCreationException( "c:l", s1, term1 :: Nil )
+      case _               => throw new LKUnaryRuleCreationException( "c:l", s1, term1 :: Nil )
     }
   }
 
@@ -383,8 +381,6 @@ object ContractionRightRule {
         apply( s1, x, y )
       case _ =>
         throw new LKUnaryRuleCreationException( "c:r", s1, term1 :: Nil )
-      //throw new LKRuleCreationException("No matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
-      //" for application of the rule c:l with the given formula: " + term1)
     }
   }
 
@@ -649,11 +645,7 @@ object AndRightRule {
   def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula ): BinaryLKProof with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( ( s1.root.succedent.filter( x => x.formula == term1 ) ).toList, ( s2.root.succedent.filter( x => x.formula == term2 ) ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y )
-      case _ =>
-        //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule and:r with the given formulas "
-        //+term1+" in "+s1.root+" and "+term2+ " in "+s2.root)
-        throw new LKBinaryRuleCreationException( "and:r", s1, term1, s2, term2 )
-
+      case _                          => throw new LKBinaryRuleCreationException( "and:r", s1, term1, s2, term2 )
     }
   }
 
@@ -767,8 +759,7 @@ object AndLeft1Rule {
   def apply( s1: LKProof, term1: Formula, term2: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: _ ) => apply( s1, x, term2 )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "and:l", s1, term1 :: term2 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "and:l", s1, term1 :: term2 :: Nil )
     }
   }
 
@@ -872,8 +863,7 @@ object AndLeft2Rule {
   def apply( s1: LKProof, term1: Formula, term2: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.antecedent.filter( x => x.formula == term2 ) ).toList match {
       case ( x :: _ ) => apply( s1, term1, x )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "and:l", s1, term1 :: term2 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "and:l", s1, term1 :: term2 :: Nil )
     }
   }
 
@@ -995,8 +985,7 @@ object OrLeftRule {
   def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList, ( s2.root.antecedent.filter( x => x.formula == term2 ) ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y )
-      case _ => //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
+      case _                          => throw new LKBinaryRuleCreationException( "or:l", s1, term1, s2, term2 )
     }
   }
 
@@ -1107,8 +1096,7 @@ object OrRight1Rule {
   def apply( s1: LKProof, term1: Formula, term2: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.succedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: _ ) => apply( s1, x, term2 )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
     }
   }
   private def getTerms( s1: Sequent, term1oc: FormulaOccurrence ) = {
@@ -1211,13 +1199,12 @@ object OrRight2Rule {
   def apply( s1: LKProof, term1: Formula, term2: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.succedent.filter( x => x.formula == term2 ) ).toList match {
       case ( x :: _ ) => apply( s1, term1, x )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
     }
   }
   private def getTerms( s1: Sequent, term2oc: FormulaOccurrence ) = {
     val term2op = s1.succedent.find( _ == term2oc )
-    if ( term2op == None ) throw new LKRuleCreationException( "Auxialiary formulas are not contained in the right part of the sequent" )
+    if ( term2op == None ) throw new LKRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
     else {
       val term2 = term2op.get
       term2
@@ -1343,8 +1330,7 @@ object ImpLeftRule {
   def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( ( s1.root.succedent.filter( x => x.formula == term1 ) ).toList, ( s2.root.antecedent.filter( x => x.formula == term2 ) ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKBinaryRuleCreationException( "impl:l", s1, term1, s2, term2 )
+      case _                          => throw new LKBinaryRuleCreationException( "impl:l", s1, term1, s2, term2 )
     }
   }
   private def getTerms( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence ) = {
@@ -1459,8 +1445,7 @@ object ImpRightRule {
   def apply( s1: LKProof, term1: Formula, term2: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList, ( s1.root.succedent.filter( x => x.formula == term2 ) ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, x, y )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "imp:r", s1, term1 :: term2 :: Nil )
+      case _                          => throw new LKUnaryRuleCreationException( "imp:r", s1, term1 :: term2 :: Nil )
     }
   }
   private def getTerms( s1: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence ) = {
@@ -1564,10 +1549,7 @@ object NegLeftRule {
   def apply( s1: LKProof, term1: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.succedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: _ ) => apply( s1, x )
-      case _ =>
-        //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule neg:l with the given formula "
-        //  +term1+" in "+s1.root)
-        throw new LKUnaryRuleCreationException( "neg:l", s1, term1 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "neg:l", s1, term1 :: Nil )
     }
   }
   private def getTerms( s1: Sequent, term1oc: FormulaOccurrence ) = {
@@ -1653,10 +1635,7 @@ object NegRightRule {
   def apply( s1: LKProof, term1: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: _ ) => apply( s1, x )
-      case _ =>
-        //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule neg:r with the given formula "
-        //  +term1+" in "+s1)
-        throw new LKUnaryRuleCreationException( "neg:r", s1, term1 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "neg:r", s1, term1 :: Nil )
     }
   }
 

@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.{ HOLPosition, HOLSubstitution, getMatrix }
+import at.logic.gapt.language.hol.{ containsQuantifier, HOLPosition, HOLSubstitution, getMatrix }
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base._
 import scala.annotation.tailrec
@@ -425,21 +425,15 @@ object toShallow {
   }
 }
 
-// Returns the end-sequent of the proof represented by this expansion tree
-object toFSequent {
-  def apply( ep: ExpansionSequent ): FSequent = {
-    val ant = ep.antecedent.map( et => toShallow( et ) )
-    val cons = ep.succedent.map( et => toShallow( et ) )
-
-    FSequent( ant, cons )
-  }
-}
-
+/**
+ * Gets expansion tree of a formula from expansion sequent.
+ */
 object getETOfFormula {
   def apply( etSeq: ExpansionSequent, f: Formula, isAntecedent: Boolean ): Option[ExpansionTree] = {
     getFromExpansionTreeList( if ( isAntecedent ) etSeq.antecedent else etSeq.succedent, f )
   }
-  def getFromExpansionTreeList( ets: Seq[ExpansionTree], f: Formula ): Option[ExpansionTree] = ets match {
+
+  private def getFromExpansionTreeList( ets: Seq[ExpansionTree], f: Formula ): Option[ExpansionTree] = ets match {
     case head :: tail =>
       if ( toShallow( head ) syntaxEquals f ) Some( head )
       else getFromExpansionTreeList( tail, f )
@@ -448,67 +442,56 @@ object getETOfFormula {
 }
 
 /**
- * Builds an expansion tree from a quantifier free formula.
+ * Builds an expansion tree from a formula and a map from variables to terms.
+ * The paremeter pos is true if  the formula is to be considered positive
+ * (right side of the sequent).
  */
-object qFreeToExpansionTree {
-  def apply( f: Formula ): ExpansionTree = f match {
-    case HOLAtom( _, _ ) => ETAtom( f )
-    case Neg( f )        => ETNeg( qFreeToExpansionTree( f ) ).asInstanceOf[ExpansionTree]
-    case And( f1, f2 )   => ETAnd( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
-    case Or( f1, f2 )    => ETOr( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
-    case Imp( f1, f2 )   => ETImp( qFreeToExpansionTree( f1 ), qFreeToExpansionTree( f2 ) ).asInstanceOf[ExpansionTree]
-    case _               => throw new Exception( "Error transforming a quantifier-free formula into an expansion tree: " + f )
+object formulaToExpansionTree {
+  def apply( form: Formula, pos: Boolean ): ExpansionTree = {
+    assert( !containsQuantifier( form ) );
+    apply( form, List(), pos )
   }
-}
 
-/**
- * Builds an expansion tree given a *prenex* formula and
- * its instances (or substitutions) using only weak quantifiers.
- *
- * NOTE: in principle, this could be implemented for non-prenex formulas.
- * What needs to be implemented is a method to remove the quantifiers of a
- * non-prenex formula (taking care about the renaming of variables).
- */
-object prenexToExpansionTree {
-  def apply( f: Formula, lst: List[Formula] ): ExpansionTree = {
-    val fMatrix = getMatrix( f )
-
-    // Each possible instance will generate an expansion tree, and they all 
-    // have the same root.
-    val children = lst.foldLeft( List[( ExpansionTreeWithMerges, LambdaExpression )]() ) {
-      case ( acc, instance ) =>
-        val subs = NaiveIncompleteMatchingAlgorithm.matchTerm( fMatrix, instance )
-        val expTree = subs match {
-          case Some( sub ) => apply_( f, sub )
-          case None => throw new Exception( "ERROR: prenexToExpansionTree: No substitutions found for:\n" +
-            "Matrix: " + fMatrix + "\nInstance: " + instance )
-        }
-        expTree match {
-          case ETWeakQuantifier( _, lst ) => lst.toList ++ acc
-          case _                          => throw new Exception( "ERROR: Quantifier-free formula?" )
-        }
+  def apply( form: Formula, subs: List[_ <: HOLSubstitution], pos: Boolean ): ExpansionTree = form match {
+    case HOLAtom( _, _ ) => ETAtom( form )
+    case Neg( f )        => ETNeg( formulaToExpansionTree( f, subs, !pos ) ).asInstanceOf[ExpansionTree]
+    case And( f1, f2 )   => ETAnd( formulaToExpansionTree( f1, subs, pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case Or( f1, f2 )    => ETOr( formulaToExpansionTree( f1, subs, pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case Imp( f1, f2 )   => ETImp( formulaToExpansionTree( f1, subs, !pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case All( v, f ) => pos match {
+      case true => // Strong quantifier
+        val valid_subs = subs.filter( s => s.domain.contains( v ) )
+        assert( valid_subs.length == 1 )
+        val next_f = valid_subs.head( f )
+        val ev = valid_subs.head( v ).asInstanceOf[Var]
+        ETStrongQuantifier( f, ev, formulaToExpansionTree( next_f, valid_subs, pos ) )
+      case false => // Weak quantifier
+        val valid_subs = subs.filter( s => s.domain.contains( v ) )
+        ETWeakQuantifier( f, valid_subs.map {
+          case s =>
+            val next_f = s( f )
+            val t = s( v )
+            ( formulaToExpansionTree( next_f, List( s ), pos ), t )
+        } ).asInstanceOf[ExpansionTree]
     }
-
-    // TODO: merge edges with the same term.
-    ETWeakQuantifier( f, children ).asInstanceOf[ExpansionTree] // can't contain merges currently, c.f. TODO above
+    case Ex( v, f ) => pos match {
+      case true => // Weak quantifier
+        val valid_subs = subs.filter( s => s.domain.contains( v ) )
+        ETWeakQuantifier( f, valid_subs.map {
+          case s =>
+            val next_f = s( f )
+            val t = s( v )
+            ( formulaToExpansionTree( next_f, List( s ), pos ), t )
+        } ).asInstanceOf[ExpansionTree]
+      case false => // Strong quantifier
+        val valid_subs = subs.filter( s => s.domain.contains( v ) )
+        assert( valid_subs.length == 1 )
+        val next_f = valid_subs.head( f )
+        val ev = valid_subs.head( v ).asInstanceOf[Var]
+        ETStrongQuantifier( f, ev, formulaToExpansionTree( next_f, valid_subs, pos ) )
+    }
+    case _ => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
   }
-
-  def apply_( f: Formula, sub: HOLSubstitution ): ExpansionTreeWithMerges = f match {
-    case All( v, form ) =>
-      val t = sub( v )
-      val one_sub = HOLSubstitution( v, t )
-      val newf = one_sub( form )
-      //val newf = f.instantiate(t.asInstanceOf[FOLTerm])
-      ETWeakQuantifier( f, List( Tuple2( apply_( newf, sub ), t ) ) )
-    case Ex( v, form ) =>
-      val t = sub( v )
-      val one_sub = HOLSubstitution( v, t )
-      val newf = one_sub( form ).asInstanceOf[Formula]
-      //val newf = f.instantiate(t.asInstanceOf[FOLTerm])
-      ETWeakQuantifier( f, List( Tuple2( apply_( newf, sub ), t ) ) )
-    case _ => qFreeToExpansionTree( f )
-  }
-
 }
 
 /**
@@ -884,36 +867,3 @@ object replace {
   }
 
 }
-
-/**
- * Create an expansion tree from a formula. Required for expansion tree extraction for weakenings.
- */
-/*
-object coerceFormulaToET {
-  /**
-   * @param f formula to coerce to ET
-   * @param isAntecedent whether the formula appears in the antecedent or succedent. Relevant for quantifier instances.
-   */
-  def apply(f: Formula, isAntecedent: Boolean): ExpansionTree = {
-    f match {
-      case All(v, formula) =>
-        if (isAntecedent) {
-          StrongQuantifier(f, null, Atom(BottomC)) // TODO: better variable than null here?
-        } else {
-          WeakQuantifier(f, Nil).asInstanceOf[ExpansionTree] // contains no merges
-        }
-      case Ex(v, formula) =>
-        if (isAntecedent) {
-          WeakQuantifier(f, Nil).asInstanceOf[ExpansionTree] // contains no merges
-        } else {
-          StrongQuantifier(f, null, Atom(TopC))
-        }
-      case And(l, r) => And(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
-      case Or(l, r) => Or(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
-      case Imp(l, r) => Imp(coerceFormulaToET(l, isAntecedent), coerceFormulaToET(r, isAntecedent))
-      case HOLAtom(_, _) => Atom(f)
-    }
-  }
-}
-*/
-

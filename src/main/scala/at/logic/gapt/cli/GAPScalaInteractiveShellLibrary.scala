@@ -581,6 +581,7 @@ object help {
         |   loadLLK : String => LKProof - load a proof in the LLK format from given filename
         |   loadSLK: String => Map[String, Tuple2[LKProof, LKProof]] - loads an SLK file
         |   loadVeriTProof : String => ExpansionSequent - loads a veriT proof in the form of an expansion proof.
+        |   loadLeanCoPProof : String => ExpansionSequent - loads a leanCoP proof in the form of an expansion proof.
         |   exportXML: List[Proof], List[String], String => Unit
         |   exportTPTP: List[Proof], List[String], String => Unit
         |   exportSequentListLatex: List[Sequent], String => Unit - write clause set to output file

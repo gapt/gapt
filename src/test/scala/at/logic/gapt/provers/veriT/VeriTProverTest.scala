@@ -15,7 +15,7 @@ class VeriTProverTest extends SpecificationWithJUnit {
 
   val veriT = new VeriTProver()
 
-  args( skipAll = !veriT.isInstalled() )
+  args( skipAll = !veriT.isInstalled )
 
   "VeriT" should {
     "prove a v not a" in {

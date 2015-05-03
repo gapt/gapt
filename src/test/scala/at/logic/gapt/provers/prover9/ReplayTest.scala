@@ -47,7 +47,7 @@ class ReplayTest extends SpecificationWithJUnit {
 
   def getRefutation2( ls: Iterable[FSequent] ) = MyProver.refute( Stream( SetTargetClause( FSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next
 
-  args( skipAll = !Prover9.isInstalled() )
+  args( skipAll = !Prover9.isInstalled )
   "replay" should {
     /*"prove (with para) SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
 
