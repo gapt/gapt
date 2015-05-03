@@ -7,10 +7,7 @@ package at.logic.gapt.prooftool
  * Time: 12:51 PM
  */
 
-import at.logic.gapt.language.hol.HOLAnd
-import at.logic.gapt.language.hol.HOLImp
-import at.logic.gapt.language.hol.HOLNeg
-import at.logic.gapt.language.hol.HOLOr
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.logging.Logger
 
 import swing._
@@ -35,7 +32,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
   background = new Color( 255, 255, 255 )
   yLayoutAlignment = 0.5
   xLayoutAlignment = 0
-  private val state = scala.collection.mutable.Map.empty[HOLFormula, ExpansionTreeState.Value]
+  private val state = scala.collection.mutable.Map.empty[Formula, ExpansionTreeState.Value]
   val highlightColor = Color.red
   initialize
 
@@ -43,21 +40,21 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
     contents += treeToComponent( expansionTree, allow = true )
   }
 
-  def close( f: HOLFormula ) {
+  def close( f: Formula ) {
     contents.clear()
     state += ( ( f, Close ) )
     initialize
     revalidate()
   }
 
-  def open( f: HOLFormula ) {
+  def open( f: Formula ) {
     contents.clear()
     state += ( ( f, Open ) )
     initialize
     revalidate()
   }
 
-  def expand( f: HOLFormula ) {
+  def expand( f: Formula ) {
     contents.clear()
     state += ( ( f, Expand ) )
     initialize
@@ -280,10 +277,10 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
     }
   }
 
-  def getMatrixSymbol( formula: HOLFormula ) = formula match {
-    case HOLExVar( _, _ )  => "\\bigvee"
-    case HOLAllVar( _, _ ) => "\\bigwedge"
-    case _                 => throw new Exception( "Something went wrong in DrawExpansionTree!" )
+  def getMatrixSymbol( formula: Formula ) = formula match {
+    case Ex( _, _ )  => "\\bigvee"
+    case All( _, _ ) => "\\bigwedge"
+    case _           => throw new Exception( "Something went wrong in DrawExpansionTree!" )
   }
 
   /**
@@ -295,14 +292,14 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
       val vars = et.getVars
       val f = et.toShallow
       f match {
-        case HOLAllVar( _, _ ) => vars.foldLeft( "" )( ( str: String, v: HOLVar ) => str + "(\\forall " + DrawSequent.formulaToLatexString( v ) + ")" )
-        case HOLExVar( _, _ )  => vars.foldLeft( "" )( ( str: String, v: HOLVar ) => str + "(\\exists " + DrawSequent.formulaToLatexString( v ) + ")" )
+        case All( _, _ ) => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\forall " + DrawSequent.formulaToLatexString( v ) + ")" )
+        case Ex( _, _ )  => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\exists " + DrawSequent.formulaToLatexString( v ) + ")" )
       }
   }
 
   // Draws <t_1,...,t_n ; ... ; s_1,...,s_n>
   // List of terms are separated by ; and terms in a list by ,
-  def drawTerms( list: List[List[HOLExpression]] ) = new BoxPanel( Orientation.Horizontal ) {
+  def drawTerms( list: List[List[LambdaExpression]] ) = new BoxPanel( Orientation.Horizontal ) {
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
 
@@ -370,14 +367,14 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
     }
   }
 
-  def drawFormula( formula: HOLFormula ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
+  def drawFormula( formula: Formula ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
     trace( "drawFormula called on formula " + formula )
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
     opaque = false
 
     formula match {
-      case HOLNeg( f ) =>
+      case Neg( f ) =>
         val conn = label( "¬", ft )
         val subF = drawFormula( f )
         this.listenTo( conn.mouse.moves )
@@ -389,7 +386,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
         }
         contents += conn
         contents += subF
-      case HOLAnd( f1, f2 ) =>
+      case And( f1, f2 ) =>
         val parenthesis = connectParenthesis( label( "(", ft ), label( ")", ft ) )
         val conn = label( "∧", ft )
         val subF1 = drawFormula( f1 )
@@ -410,7 +407,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case HOLOr( f1, f2 ) =>
+      case Or( f1, f2 ) =>
         val parenthesis = connectParenthesis( label( "(", ft ), label( ")", ft ) )
         val conn = label( "∨", ft )
         val subF1 = drawFormula( f1 )
@@ -431,7 +428,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case HOLImp( f1, f2 ) =>
+      case Imp( f1, f2 ) =>
         val parenthesis = connectParenthesis( label( "(", ft ), label( ")", ft ) )
         val conn = label( "⊃", ft )
         val subF1 = drawFormula( f1 )
@@ -452,10 +449,10 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case HOLExVar( v, f ) =>
+      case Ex( v, f ) =>
         contents += label( "(\\exists " + DrawSequent.formulaToLatexString( v ) + ")", ft )
         contents += drawFormula( f )
-      case HOLAllVar( v, f ) =>
+      case All( v, f ) =>
         contents += label( "(\\forall " + DrawSequent.formulaToLatexString( v ) + ")", ft )
         contents += drawFormula( f )
       case _ =>

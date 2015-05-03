@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.shlk.algorithms
 
 import at.logic.gapt.formats.shlk.{ backToInt, maketogether }
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types.{ ->, FunctionType, Ti, Tindex }
 import at.logic.gapt.language.schema.{ leq, lessThan, sims, _ }
 import at.logic.gapt.proofs.lk._
@@ -253,15 +254,15 @@ object CloneLKProof2 {
       case AndLeft1Rule( p, r, a, m ) => {
         if ( version == 0 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaAnd( l, right ) => right }
+          val a2 = m.formula match { case And( l, right ) => right }
           Tuple2( new_p._1, AndLeft1Rule( new_p._2, defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ), defineremove( a2.asInstanceOf[SchemaFormula], rewriterules ) ) )
         } else if ( version == 1 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaAnd( l, right ) => right }
+          val a2 = m.formula match { case And( l, right ) => right }
           Tuple2( new_p._1, AndLeft1Rule( new_p._2, iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( a2.asInstanceOf[SchemaFormula], ProofLinkPassing ) ) )
         } else if ( version == 2 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaAnd( l, right ) => right }
+          val a2 = m.formula match { case And( l, right ) => right }
           Tuple2( new_p._1, AndLeft1Rule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( a2.asInstanceOf[SchemaFormula], proofSize ) ) )
         } else Tuple2( List(), proof )
       }
@@ -269,15 +270,15 @@ object CloneLKProof2 {
       case AndLeft2Rule( p, r, a, m ) => {
         if ( version == 0 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaAnd( l, _ ) => l }
+          val a2 = m.formula match { case And( l, _ ) => l }
           Tuple2( new_p._1, AndLeft2Rule( new_p._2, defineremove( a2.asInstanceOf[SchemaFormula], rewriterules ), defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ) ) )
         } else if ( version == 1 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaAnd( l, _ ) => l }
+          val a2 = m.formula match { case And( l, _ ) => l }
           Tuple2( new_p._1, AndLeft2Rule( new_p._2, iterateOnFormula( a2.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ) ) )
         } else if ( version == 2 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaAnd( l, _ ) => l }
+          val a2 = m.formula match { case And( l, _ ) => l }
           Tuple2( new_p._1, AndLeft2Rule( new_p._2, cloneMySol( a2.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ) ) )
         } else Tuple2( List(), proof )
       }
@@ -285,15 +286,15 @@ object CloneLKProof2 {
       case OrRight1Rule( p, r, a, m ) => {
         if ( version == 0 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaOr( _, ra ) => ra }
+          val a2 = m.formula match { case Or( _, ra ) => ra }
           Tuple2( new_p._1, OrRight1Rule( new_p._2, defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ), defineremove( a2.asInstanceOf[SchemaFormula], rewriterules ) ) )
         } else if ( version == 1 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaOr( _, ra ) => ra }
+          val a2 = m.formula match { case Or( _, ra ) => ra }
           Tuple2( new_p._1, OrRight1Rule( new_p._2, iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( a2.asInstanceOf[SchemaFormula], ProofLinkPassing ) ) )
         } else if ( version == 2 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaOr( _, ra ) => ra }
+          val a2 = m.formula match { case Or( _, ra ) => ra }
           Tuple2( new_p._1, OrRight1Rule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( a2.asInstanceOf[SchemaFormula], proofSize ) ) )
         } else Tuple2( List(), proof )
       }
@@ -301,15 +302,15 @@ object CloneLKProof2 {
       case OrRight2Rule( p, r, a, m ) => {
         if ( version == 0 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaOr( l, _ ) => l }
+          val a2 = m.formula match { case Or( l, _ ) => l }
           Tuple2( new_p._1, OrRight2Rule( new_p._2, defineremove( a2.asInstanceOf[SchemaFormula], rewriterules ), defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ) ) )
         } else if ( version == 1 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaOr( l, _ ) => l }
+          val a2 = m.formula match { case Or( l, _ ) => l }
           Tuple2( new_p._1, OrRight2Rule( new_p._2, iterateOnFormula( a2.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ) ) )
         } else if ( version == 2 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          val a2 = m.formula match { case SchemaOr( l, _ ) => l }
+          val a2 = m.formula match { case Or( l, _ ) => l }
           Tuple2( new_p._1, OrRight2Rule( new_p._2, cloneMySol( a2.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ) ) )
         } else Tuple2( List(), proof )
       }
@@ -375,10 +376,10 @@ object CloneLKProof2 {
           Tuple2( new_p._1, ForallRightRule( new_p._2, defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ), defineremove( m.formula.asInstanceOf[SchemaFormula], rewriterules ), v ) )
         } else if ( version == 1 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ForallRightRule( new_p._2, iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( m.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( v.asInstanceOf[SchemaExpression], ProofLinkPassing ).asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ForallRightRule( new_p._2, iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( m.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( v.asInstanceOf[SchemaExpression], ProofLinkPassing ).asInstanceOf[Var] ) )
         } else if ( version == 2 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ForallRightRule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( m.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMyTerm( v.asInstanceOf[SchemaExpression], proofSize ).asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ForallRightRule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( m.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMyTerm( v.asInstanceOf[SchemaExpression], proofSize ).asInstanceOf[Var] ) )
         } else Tuple2( List(), proof )
       }
 
@@ -400,10 +401,10 @@ object CloneLKProof2 {
           Tuple2( new_p._1, ExistsLeftRule( new_p._2, defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ), defineremove( m.formula.asInstanceOf[SchemaFormula], rewriterules ), v ) )
         } else if ( version == 1 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ExistsLeftRule( new_p._2, iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( m.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( v.asInstanceOf[SchemaExpression], ProofLinkPassing ).asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ExistsLeftRule( new_p._2, iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( m.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( v.asInstanceOf[SchemaExpression], ProofLinkPassing ).asInstanceOf[Var] ) )
         } else if ( version == 2 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ExistsLeftRule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( m.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMyTerm( v.asInstanceOf[SchemaExpression], proofSize ).asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ExistsLeftRule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( m.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMyTerm( v.asInstanceOf[SchemaExpression], proofSize ).asInstanceOf[Var] ) )
         } else Tuple2( List(), proof )
       }
 
@@ -423,10 +424,10 @@ object CloneLKProof2 {
         if ( version == 0 ) apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
         else if ( version == 1 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ExistsHyperLeftRule( new_p._2, defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ), defineremove( m.formula.asInstanceOf[SchemaFormula], rewriterules ), v.asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ExistsHyperLeftRule( new_p._2, defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ), defineremove( m.formula.asInstanceOf[SchemaFormula], rewriterules ), v.asInstanceOf[Var] ) )
         } else if ( version == 2 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ExistsHyperLeftRule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( m.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMyTerm( v.asInstanceOf[SchemaExpression], proofSize ).asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ExistsHyperLeftRule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( m.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMyTerm( v.asInstanceOf[SchemaExpression], proofSize ).asInstanceOf[Var] ) )
         } else Tuple2( List(), proof )
       }
       case ForallHyperLeftRule( p, seq, a, m, t ) => {
@@ -444,13 +445,13 @@ object CloneLKProof2 {
       case ForallHyperRightRule( p, seq, a, m, v ) => {
         if ( version == 0 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ForallHyperRightRule( new_p._2, defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ), defineremove( m.formula.asInstanceOf[SchemaFormula], rewriterules ), v.asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ForallHyperRightRule( new_p._2, defineremove( a.formula.asInstanceOf[SchemaFormula], rewriterules ), defineremove( m.formula.asInstanceOf[SchemaFormula], rewriterules ), v.asInstanceOf[Var] ) )
         } else if ( version == 1 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ForallHyperRightRule( new_p._2, iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( m.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( v.asInstanceOf[SchemaExpression], ProofLinkPassing ).asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ForallHyperRightRule( new_p._2, iterateOnFormula( a.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( m.formula.asInstanceOf[SchemaFormula], ProofLinkPassing ), iterateOnFormula( v.asInstanceOf[SchemaExpression], ProofLinkPassing ).asInstanceOf[Var] ) )
         } else if ( version == 2 ) {
           val new_p = apply( p, name, rewriterules, proofSize, version, ProofLinkPassing )
-          Tuple2( new_p._1, ForallHyperRightRule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( m.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMyTerm( v.asInstanceOf[SchemaExpression], proofSize ).asInstanceOf[SchemaVar] ) )
+          Tuple2( new_p._1, ForallHyperRightRule( new_p._2, cloneMySol( a.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMySol( m.formula.asInstanceOf[SchemaFormula], proofSize ), cloneMyTerm( v.asInstanceOf[SchemaExpression], proofSize ).asInstanceOf[Var] ) )
         } else Tuple2( List(), proof )
       }
 
@@ -503,7 +504,7 @@ object rewriterulereplace {
   def apply( p: Tuple2[SchemaFormula, SchemaFormula] ): Tuple2[SchemaFormula, SchemaFormula] = if ( AtomMatch( p._1 ) ) {
     val pairone: SchemaFormula = { p._1 match { case SchemaAtom( x, y ) => y case _ => List() } }.tail.foldLeft( Tuple2( 0, p._2 ) )( ( pairppair, t ) => ( pairppair._1 + 1, genterm( pairppair._1, pairppair._2, t ) ) )._2
     Tuple2( p._1 match {
-      case SchemaAtom( x, y ) => SchemaAtom( x, List( y.head ) ++ y.tail.foldLeft( Tuple2( 0, List().asInstanceOf[List[SchemaExpression]] ) )( ( pair, t ) => ( pair._1 + 1, pair._2.asInstanceOf[List[SchemaExpression]] :+ SchemaConst( ( "!" + pair._1 + "!" ), Ti ) ) )._2 )
+      case SchemaAtom( x, y ) => SchemaAtom( x, List( y.head ) ++ y.tail.foldLeft( Tuple2( 0, List().asInstanceOf[List[SchemaExpression]] ) )( ( pair, t ) => ( pair._1 + 1, pair._2.asInstanceOf[List[SchemaExpression]] :+ Const( ( "!" + pair._1 + "!" ), Ti ) ) )._2 )
       case x                  => x
     }, pairone )
   } else p
@@ -515,34 +516,34 @@ object iterateOnFormula {
 object genterm {
   def apply( n: Int, p: SchemaFormula, t: SchemaExpression ): SchemaFormula = {
     p match {
-      case SchemaNeg( nF ) => {
+      case Neg( nF ) => {
         val finForm = apply( n, nF, t )
-        SchemaNeg( finForm )
+        Neg( finForm )
       }
-      case SchemaAnd( lF, rF ) => {
+      case And( lF, rF ) => {
         val finFormL = apply( n, lF, t )
         val finFormR = apply( n, rF, t )
-        SchemaAnd( finFormL, finFormR )
+        And( finFormL, finFormR )
       }
-      case SchemaOr( lF, rF ) => {
+      case Or( lF, rF ) => {
         val finFormL = apply( n, lF, t )
         val finFormR = apply( n, rF, t )
-        SchemaOr( finFormL, finFormR )
+        Or( finFormL, finFormR )
       }
-      case SchemaImp( lF, rF ) => {
+      case Imp( lF, rF ) => {
         val finFormL = apply( n, lF, t )
         val finFormR = apply( n, rF, t )
-        SchemaImp( finFormL, finFormR )
+        Imp( finFormL, finFormR )
       }
-      case SchemaAllVar( aV, aF ) => {
+      case All( aV, aF ) => {
         val finForm = apply( n, aF, t )
-        SchemaAllVar( aV, finForm )
+        All( aV, finForm )
       }
-      case SchemaExVar( aV, aF ) => {
+      case Ex( aV, aF ) => {
         val finForm = apply( n, aF, t )
-        SchemaExVar( aV, finForm )
+        Ex( aV, finForm )
       }
-      case SchemaEquation( l, r ) => SchemaEquation( apply( n, l, t ), apply( n, r, t ) )
+      case Eq( l, r ) => Eq( apply( n, l, t ), apply( n, r, t ) )
       case lessThan( l, r ) => lessThan( apply( n, l, t ), apply( n, r, t ) )
       case sims( l, r ) => sims( apply( n, l, t ), apply( n, r, t ) )
       case leq( l, r ) => leq( apply( n, l, t ), apply( n, r, t ) )
@@ -553,29 +554,29 @@ object genterm {
   }
   def apply( ii: Int, p: SchemaExpression, t: SchemaExpression ): SchemaExpression = {
     t match {
-      case SchemaFunction( head, l, Tindex )        => t
-      case SchemaVar( name, Tindex ) if name == "k" => t
+      case SchemaFunction( head, l, Tindex )  => t
+      case Var( name, Tindex ) if name == "k" => t
       case SchemaFunction( head, l, Ti ) => p match {
         case SchemaFunction( headi, li, Ti ) //if head.name == headi.name && l.length == li.length &&
         if head == headi && l.length == li.length &&
-          l.zip( li ).foldLeft( true, true )( ( b, pair ) => if ( equalterms( pair._1, pair._2 ) && b._2 ) b else ( b._1, false ) )._1 => SchemaConst( "!" + ii + "!", Ti )
+          l.zip( li ).foldLeft( true, true )( ( b, pair ) => if ( equalterms( pair._1, pair._2 ) && b._2 ) b else ( b._1, false ) )._1 => Const( "!" + ii + "!", Ti )
         case SchemaFunction( headi, li, Ti ) => SchemaFunction( head, li.map( x => apply( ii, x, t ) ) )
         case _                               => p
       }
-      case SchemaVar( head, ->( Tindex, Ti ) ) => p match {
-        case SchemaFunction( headi, li, Ti ) if headi == head => SchemaFunction( SchemaConst( "!" + ii + "!", FunctionType( Ti, li.map( _.exptype ) ) ), li )
+      case Var( head, ->( Tindex, Ti ) ) => p match {
+        case SchemaFunction( headi, li, Ti ) if headi == head => SchemaFunction( Const( "!" + ii + "!", FunctionType( Ti, li.map( _.exptype ) ) ), li )
         case _ => p
       }
-      case SchemaVar( head, Ti ) => p match {
-        case SchemaVar( head2, Ti ) if head2 == head => SchemaConst( "!" + ii + "!", Ti )
-        case _                                       => p
+      case Var( head, Ti ) => p match {
+        case Var( head2, Ti ) if head2 == head => Const( "!" + ii + "!", Ti )
+        case _                                 => p
       }
-      case SchemaConst( head, tt ) => p match {
-        case SchemaConst( head2, t2 ) if tt == t2 && head2 == head => SchemaConst( "!" + ii + "!", Ti )
+      case Const( head, tt ) => p match {
+        case Const( head2, t2 ) if tt == t2 && head2 == head => Const( "!" + ii + "!", Ti )
         case _ => p
       }
-      case SchemaAbs( x, tt ) => p match { case SchemaAbs( x2, t2 ) if x == x2 && equalterms( tt, t2 ) => apply( ii, t2, t ) }
-      case _                  => throw new Exception( "ERROR in unfolding missing formula !\n" + t.toString + "\n" )
+      case Abs( x, tt ) => p match { case Abs( x2, t2 ) if x == x2 && equalterms( tt, t2 ) => apply( ii, t2, t ) }
+      case _            => throw new Exception( "ERROR in unfolding missing formula !\n" + t.toString + "\n" )
 
     }
   }
@@ -584,37 +585,37 @@ object genterm {
 object cloneMySol {
   def apply( form: SchemaFormula, proofSize: Int ): SchemaFormula = {
     form match {
-      case SchemaNeg( nF ) => {
+      case Neg( nF ) => {
         val finForm = apply( nF.asInstanceOf[SchemaFormula], proofSize )
-        SchemaNeg( finForm )
+        Neg( finForm )
       }
-      case SchemaAnd( lF, rF ) => {
+      case And( lF, rF ) => {
         val finFormL = apply( lF, proofSize )
         val finFormR = apply( rF, proofSize )
-        SchemaAnd( finFormL, finFormR )
+        And( finFormL, finFormR )
       }
-      case SchemaOr( lF, rF ) => {
+      case Or( lF, rF ) => {
         val finFormL = apply( lF, proofSize )
         val finFormR = apply( rF, proofSize )
-        SchemaOr( finFormL, finFormR )
+        Or( finFormL, finFormR )
       }
-      case SchemaImp( lF, rF ) => {
+      case Imp( lF, rF ) => {
         val finFormL = apply( lF, proofSize )
         val finFormR = apply( rF, proofSize )
-        SchemaImp( finFormL, finFormR )
+        Imp( finFormL, finFormR )
       }
-      case SchemaAllVar( aV, aF ) => {
+      case All( aV, aF ) => {
         val finForm = apply( aF, proofSize )
-        SchemaAllVar( aV, finForm )
+        All( aV, finForm )
       }
-      case SchemaExVar( aV, aF ) => {
+      case Ex( aV, aF ) => {
         val finForm = apply( aF, proofSize )
-        SchemaExVar( aV, finForm )
+        Ex( aV, finForm )
       }
-      case SchemaEquation( l, r ) => SchemaEquation( cloneMyTerm( l, proofSize ), cloneMyTerm( r, proofSize ) )
-      case lessThan( l, r )       => lessThan( cloneMyTerm( l, proofSize ), cloneMyTerm( r, proofSize ) )
-      case sims( l, r )           => sims( cloneMyTerm( l, proofSize ), cloneMyTerm( r, proofSize ) )
-      case leq( l, r )            => leq( cloneMyTerm( l, proofSize ), cloneMyTerm( r, proofSize ) )
+      case Eq( l, r )       => Eq( cloneMyTerm( l, proofSize ), cloneMyTerm( r, proofSize ) )
+      case lessThan( l, r ) => lessThan( cloneMyTerm( l, proofSize ), cloneMyTerm( r, proofSize ) )
+      case sims( l, r )     => sims( cloneMyTerm( l, proofSize ), cloneMyTerm( r, proofSize ) )
+      case leq( l, r )      => leq( cloneMyTerm( l, proofSize ), cloneMyTerm( r, proofSize ) )
       case SchemaAtom( head, sollist ) => {
         val finSOLList = sollist.map( x => cloneMyTerm( x, proofSize ) )
         SchemaAtom( head, finSOLList )
@@ -624,37 +625,37 @@ object cloneMySol {
   }
   def apply( form: SchemaFormula, IN: SchemaExpression, OUT: SchemaExpression ): SchemaFormula = {
     form match {
-      case SchemaNeg( nF ) => {
+      case Neg( nF ) => {
         val finForm = apply( nF.asInstanceOf[SchemaFormula], IN, OUT )
-        SchemaNeg( finForm )
+        Neg( finForm )
       }
-      case SchemaAnd( lF, rF ) => {
+      case And( lF, rF ) => {
         val finFormL = apply( lF, IN, OUT )
         val finFormR = apply( rF, IN, OUT )
-        SchemaAnd( finFormL, finFormR )
+        And( finFormL, finFormR )
       }
-      case SchemaOr( lF, rF ) => {
+      case Or( lF, rF ) => {
         val finFormL = apply( lF, IN, OUT )
         val finFormR = apply( rF, IN, OUT )
-        SchemaOr( finFormL, finFormR )
+        Or( finFormL, finFormR )
       }
-      case SchemaImp( lF, rF ) => {
+      case Imp( lF, rF ) => {
         val finFormL = apply( lF, IN, OUT )
         val finFormR = apply( rF, IN, OUT )
-        SchemaImp( finFormL, finFormR )
+        Imp( finFormL, finFormR )
       }
-      case SchemaAllVar( aV, aF ) => {
+      case All( aV, aF ) => {
         val finForm = apply( aF, IN, OUT )
-        SchemaAllVar( aV, finForm )
+        All( aV, finForm )
       }
-      case SchemaExVar( aV, aF ) => {
+      case Ex( aV, aF ) => {
         val finForm = apply( aF, IN, OUT )
-        SchemaExVar( aV, finForm )
+        Ex( aV, finForm )
       }
-      case SchemaEquation( l, r ) => SchemaEquation( cloneMyTerm( l, IN, OUT ), cloneMyTerm( r, IN, OUT ) )
-      case lessThan( l, r )       => lessThan( cloneMyTerm( l, IN, OUT ), cloneMyTerm( r, IN, OUT ) )
-      case sims( l, r )           => sims( cloneMyTerm( l, IN, OUT ), cloneMyTerm( r, IN, OUT ) )
-      case leq( l, r )            => leq( cloneMyTerm( l, IN, OUT ), cloneMyTerm( r, IN, OUT ) )
+      case Eq( l, r )       => Eq( cloneMyTerm( l, IN, OUT ), cloneMyTerm( r, IN, OUT ) )
+      case lessThan( l, r ) => lessThan( cloneMyTerm( l, IN, OUT ), cloneMyTerm( r, IN, OUT ) )
+      case sims( l, r )     => sims( cloneMyTerm( l, IN, OUT ), cloneMyTerm( r, IN, OUT ) )
+      case leq( l, r )      => leq( cloneMyTerm( l, IN, OUT ), cloneMyTerm( r, IN, OUT ) )
       case SchemaAtom( head, sollist ) => {
         val finSOLList = sollist.map( x => cloneMyTerm( x, IN, OUT ) )
         SchemaAtom( head, finSOLList )
@@ -664,39 +665,39 @@ object cloneMySol {
   }
   def apply( form: SchemaFormula, rewriterules: List[Tuple2[SchemaFormula, SchemaFormula]] ): SchemaFormula = {
     form match {
-      case SchemaNeg( nF ) => {
+      case Neg( nF ) => {
         val finForm = apply( nF.asInstanceOf[SchemaFormula], rewriterules )
-        SchemaNeg( finForm )
+        Neg( finForm )
       }
-      case SchemaAnd( lF, rF ) => {
+      case And( lF, rF ) => {
         val finFormL = apply( lF, rewriterules )
         val finFormR = apply( rF, rewriterules )
-        SchemaAnd( finFormL, finFormR )
+        And( finFormL, finFormR )
       }
-      case SchemaOr( lF, rF ) => {
+      case Or( lF, rF ) => {
         val finFormL = apply( lF, rewriterules )
         val finFormR = apply( rF, rewriterules )
-        SchemaOr( finFormL, finFormR )
+        Or( finFormL, finFormR )
       }
-      case SchemaImp( lF, rF ) => {
+      case Imp( lF, rF ) => {
         val finFormL = apply( lF, rewriterules )
         val finFormR = apply( rF, rewriterules )
-        SchemaImp( finFormL, finFormR )
+        Imp( finFormL, finFormR )
       }
-      case SchemaAllVar( aV, aF ) => {
+      case All( aV, aF ) => {
         val finForm = apply( aF, rewriterules )
-        SchemaAllVar( aV, finForm )
+        All( aV, finForm )
       }
-      case SchemaExVar( aV, aF ) => {
+      case Ex( aV, aF ) => {
         val finForm = apply( aF, rewriterules )
-        SchemaExVar( aV, finForm )
+        Ex( aV, finForm )
       }
-      case SchemaEquation( l, r ) => SchemaEquation( l, r )
-      case lessThan( l, r )       => lessThan( l, r )
-      case sims( l, r )           => sims( l, r )
-      case leq( l, r )            => leq( l, r )
-      case SchemaAtom( _, _ )     => defineremove( form, rewriterules )
-      case _                      => throw new Exception( "ERROR in unfolding missing formula !\n" + form.toString + "\n" )
+      case Eq( l, r )         => Eq( l, r )
+      case lessThan( l, r )   => lessThan( l, r )
+      case sims( l, r )       => sims( l, r )
+      case leq( l, r )        => leq( l, r )
+      case SchemaAtom( _, _ ) => defineremove( form, rewriterules )
+      case _                  => throw new Exception( "ERROR in unfolding missing formula !\n" + form.toString + "\n" )
     }
   }
 }
@@ -708,8 +709,8 @@ object cloneMySol {
 // Function and Atom are improved (see comments there).
 object getName {
   def apply( term: SchemaExpression ) = term match {
-    case SchemaConst( sym, _ ) => sym
-    case SchemaVar( sym, _ )   => sym
+    case Const( sym, _ ) => sym
+    case Var( sym, _ )   => sym
   }
 }
 
@@ -717,12 +718,12 @@ object cloneMyTerm {
   def apply( term: SchemaExpression, proofSize: Int ): SchemaExpression = {
     term match {
       case SchemaFunction( n, l, t ) if getName( n ) == "schS" && t == Tindex => SchemaFunction( n, l.map( x => apply( x, proofSize ) ) )
-      case SchemaVar( n, t ) if n == "k" && t == Tindex => maketogether( proofSize )
+      case Var( n, t ) if n == "k" && t == Tindex => maketogether( proofSize )
       case SchemaFunction( n, l, t ) if t == Tindex => SchemaFunction( n, l.map( x => apply( x, proofSize ) ) )
       case SchemaFunction( n, l, t ) if t == Ti => SchemaFunction( n, l.map( x => apply( x, proofSize ) ) )
-      case SchemaVar( n, t ) if t == Ti | t == Tindex -> Ti => SchemaVar( n, t )
-      case SchemaConst( n, t ) => SchemaConst( n, t )
-      case SchemaAbs( x, t ) => SchemaAbs( x, apply( t, proofSize ) )
+      case Var( n, t ) if t == Ti | t == Tindex -> Ti => Var( n, t )
+      case Const( n, t ) => Const( n, t )
+      case Abs( x, t ) => Abs( x, apply( t, proofSize ) )
       case _ => throw new Exception( "ERROR in unfolding missing formula !\n" + term.toString + "\n" )
 
     }
@@ -730,28 +731,28 @@ object cloneMyTerm {
   def apply( term: SchemaExpression, IN: SchemaExpression, OUT: SchemaExpression ): SchemaExpression = {
     term match {
       case SchemaFunction( head, l, Tindex ) if getName( head ) == "schS" => SchemaFunction( head, l )
-      case SchemaVar( n, Tindex ) if n == "k"                             => SchemaVar( n, Tindex )
+      case Var( n, Tindex ) if n == "k"                                   => Var( n, Tindex )
       case SchemaFunction( n, l, Tindex )                                 => SchemaFunction( n, l.map( x => apply( x, IN, OUT ) ) )
       case SchemaFunction( n, l, Ti ) => IN match {
         case SchemaFunction( ni, li, Ti ) if n == ni && l.length == li.length && l.zip( li ).foldLeft( true, true )( ( b, pair ) => if ( equalterms( pair._1, pair._2 ) && b._2 ) b else ( b._1, false ) )._1 => OUT
         case SchemaFunction( ni, li, Ti ) if n == ni => OUT match {
           // FIXME (Daniel): I don't understand the following line.
           // commented out to make compile, fix later.
-          //case SchemaVar(no,Ti) =>  Function(no,li)
+          //case Var(no,Ti) =>  Function(no,li)
           case _ => SchemaFunction( ni, li )
         }
         case _ => SchemaFunction( n, l.map( x => apply( x, IN, OUT ) ) )
       }
-      case SchemaVar( n, t ) if t == Ti | t == Tindex -> Ti => IN match {
-        case SchemaVar( ni, ti ) if t == ti && ni == n => OUT
-        case _                                         => SchemaVar( n, t )
+      case Var( n, t ) if t == Ti | t == Tindex -> Ti => IN match {
+        case Var( ni, ti ) if t == ti && ni == n => OUT
+        case _                                   => Var( n, t )
       }
-      case SchemaConst( n, t ) => IN match {
-        case SchemaConst( ni, ti ) if t == ti && ni == n => OUT
-        case _ => SchemaConst( n, t )
+      case Const( n, t ) => IN match {
+        case Const( ni, ti ) if t == ti && ni == n => OUT
+        case _                                     => Const( n, t )
       }
-      case SchemaAbs( x, t ) => SchemaAbs( x, apply( t, IN, OUT ) )
-      case _                 => throw new Exception( "ERROR in unfolding missing formula !\n" + term.toString + "\n" )
+      case Abs( x, t ) => Abs( x, apply( t, IN, OUT ) )
+      case _           => throw new Exception( "ERROR in unfolding missing formula !\n" + term.toString + "\n" )
 
     }
   }
@@ -760,33 +761,33 @@ object cloneMyTerm {
 object equalforms {
   def apply( form: SchemaFormula, form2: SchemaFormula ): Boolean = {
     form match {
-      case SchemaNeg( nF ) => form2 match {
-        case SchemaNeg( nF2 ) => apply( nF, nF2 )
-        case _                => false
+      case Neg( nF ) => form2 match {
+        case Neg( nF2 ) => apply( nF, nF2 )
+        case _          => false
       }
-      case SchemaAnd( lF, rF ) => form2 match {
-        case SchemaAnd( lF2, rF2 ) => apply( lF, lF2 ) && apply( rF, rF2 )
-        case _                     => false
+      case And( lF, rF ) => form2 match {
+        case And( lF2, rF2 ) => apply( lF, lF2 ) && apply( rF, rF2 )
+        case _               => false
       }
-      case SchemaOr( lF, rF ) => form2 match {
-        case SchemaOr( lF2, rF2 ) => apply( lF, lF2 ) && apply( rF, rF2 )
-        case _                    => false
+      case Or( lF, rF ) => form2 match {
+        case Or( lF2, rF2 ) => apply( lF, lF2 ) && apply( rF, rF2 )
+        case _              => false
       }
-      case SchemaImp( lF, rF ) => form2 match {
-        case SchemaImp( lF2, rF2 ) => apply( lF, lF2 ) && apply( rF, rF2 )
-        case _                     => false
+      case Imp( lF, rF ) => form2 match {
+        case Imp( lF2, rF2 ) => apply( lF, lF2 ) && apply( rF, rF2 )
+        case _               => false
       }
-      case SchemaAllVar( aV, aF ) => form2 match {
-        case SchemaAllVar( aV2, aF2 ) if aV == aV2 => apply( aF, aF2 )
-        case _                                     => false
+      case All( aV, aF ) => form2 match {
+        case All( aV2, aF2 ) if aV == aV2 => apply( aF, aF2 )
+        case _                            => false
       }
-      case SchemaExVar( aV, aF ) => form2 match {
-        case SchemaExVar( aV2, aF2 ) if aV == aV2 => apply( aF, aF2 )
-        case _                                    => false
+      case Ex( aV, aF ) => form2 match {
+        case Ex( aV2, aF2 ) if aV == aV2 => apply( aF, aF2 )
+        case _                           => false
       }
-      case SchemaEquation( l, r ) => form2 match {
-        case SchemaEquation( l2, r2 ) => equalterms( l, l2 ) && equalterms( r, r2 )
-        case _                        => false
+      case Eq( l, r ) => form2 match {
+        case Eq( l2, r2 ) => equalterms( l, l2 ) && equalterms( r, r2 )
+        case _            => false
       }
       case lessThan( l, r ) => form2 match {
         case lessThan( l2, r2 ) => equalterms( l, l2 ) && equalterms( r, r2 )
@@ -818,9 +819,9 @@ object equalterms {
           l.zip( l2 ).foldLeft( Tuple2( true, true ) )( ( b, pair ) => if ( apply( pair._1, pair._2 ) && b._2 ) b else Tuple2( b._1, false ) )._1
         case _ => false
       }
-      case SchemaVar( "k", Tindex ) => term2 match {
-        case SchemaVar( "k", Tindex ) => true
-        case _                        => false
+      case Var( "k", Tindex ) => term2 match {
+        case Var( "k", Tindex ) => true
+        case _                  => false
       }
       case SchemaFunction( n, l, Tindex ) => term2 match {
         case SchemaFunction( n2, l2, Tindex ) if n == n2 && l.length == l2.length =>
@@ -832,20 +833,20 @@ object equalterms {
           l.zip( l2 ).foldLeft( Tuple2( true, true ) )( ( b, pair ) => if ( apply( pair._1, pair._2 ) && b._2 ) b else Tuple2( b._1, false ) )._1
         case _ => false
       }
-      case SchemaVar( n, ->( Tindex, Ti ) ) => term2 match {
-        case SchemaVar( n2, ->( Tindex, Ti ) ) if n2 == n => true
-        case _ => false
+      case Var( n, ->( Tindex, Ti ) ) => term2 match {
+        case Var( n2, ->( Tindex, Ti ) ) if n2 == n => true
+        case _                                      => false
       }
-      case SchemaVar( n, Ti ) => term2 match {
-        case SchemaVar( n2, Ti ) if n2 == n => true
-        case _                              => false
+      case Var( n, Ti ) => term2 match {
+        case Var( n2, Ti ) if n2 == n => true
+        case _                        => false
       }
-      case SchemaConst( n, t ) => term2 match {
-        case SchemaConst( n2, t2 ) if t == t2 && n2 == n => true
-        case _ => false
+      case Const( n, t ) => term2 match {
+        case Const( n2, t2 ) if t == t2 && n2 == n => true
+        case _                                     => false
       }
-      case SchemaAbs( x, t ) => term2 match { case SchemaAbs( x2, t2 ) if x == x2 => apply( t, t2 ) }
-      case _                 => throw new Exception( "ERROR in unfolding missing formula !\n" + term.toString + "\n" )
+      case Abs( x, t ) => term2 match { case Abs( x2, t2 ) if x == x2 => apply( t, t2 ) }
+      case _           => throw new Exception( "ERROR in unfolding missing formula !\n" + term.toString + "\n" )
 
     }
   }
@@ -853,16 +854,16 @@ object equalterms {
 object AtomMatch {
   def apply( form: SchemaFormula, fform: SchemaFormula ): Boolean = {
     form match {
-      case SchemaNeg( nF )        => apply( nF.asInstanceOf[SchemaFormula], fform )
-      case SchemaAnd( lF, rF )    => apply( lF, fform ) || apply( rF, fform )
-      case SchemaOr( lF, rF )     => apply( lF, fform ) || apply( rF, fform )
-      case SchemaImp( lF, rF )    => apply( lF, fform ) || apply( rF, fform )
-      case SchemaAllVar( aV, aF ) => apply( aF, fform )
-      case SchemaExVar( aV, aF )  => apply( aF, fform )
-      case SchemaEquation( l, r ) => false
-      case lessThan( l, r )       => false
-      case sims( l, r )           => false
-      case leq( l, r )            => false
+      case Neg( nF )        => apply( nF.asInstanceOf[SchemaFormula], fform )
+      case And( lF, rF )    => apply( lF, fform ) || apply( rF, fform )
+      case Or( lF, rF )     => apply( lF, fform ) || apply( rF, fform )
+      case Imp( lF, rF )    => apply( lF, fform ) || apply( rF, fform )
+      case All( aV, aF )    => apply( aF, fform )
+      case Ex( aV, aF )     => apply( aF, fform )
+      case Eq( l, r )       => false
+      case lessThan( l, r ) => false
+      case sims( l, r )     => false
+      case leq( l, r )      => false
       case SchemaAtom( x, y ) => fform match {
         case SchemaAtom( xx, yy ) if xx == x && yy.length == y.length && isIndexSort( y.head ) && isIndexSort( yy.head ) =>
           y.zip( yy ).foldLeft( Tuple2( true, true ) )( ( b, pair ) => if ( equalterms( pair._1, pair._2 ) && b._2 ) b else Tuple2( b._1, false ) )._1 case _ => false
@@ -882,8 +883,8 @@ object isIndexSort {
   def apply( term: SchemaExpression ): Boolean = {
     term match {
       case SchemaFunction( head, l, Tindex ) if getName( head ) == "schS" => apply( l.head )
-      case SchemaVar( "k", Tindex ) => true
-      case SchemaConst( "0", Tindex ) => true
+      case Var( "k", Tindex ) => true
+      case Const( "0", Tindex ) => true
       case _ => false
 
     }

@@ -7,7 +7,7 @@ package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.MinimizeSolution._
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
@@ -53,7 +53,7 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
       val r3 = Set( cpbb, cq )
       val real = Set( r1, r2, r3 )
 
-      val res = ForgetfulParamodulateCNF( FOLAnd( FOLEquation( a, b ) :: paa :: q :: Nil ) )
+      val res = ForgetfulParamodulateCNF( And( Eq( a, b ) :: paa :: q :: Nil ) )
 
       val setres = res.map( cnf => cnf.toSet ).toSet
 
@@ -85,7 +85,7 @@ class ForgetfulResolutionTest extends SpecificationWithJUnit {
       val d = FOLAtom( "D" )
       val e = FOLAtom( "E" )
 
-      val f = FOLAnd( FOLAnd( FOLOr( a, FOLOr( b, c ) ), FOLOr( FOLNeg( b ), d ) ), e )
+      val f = And( And( Or( a, Or( b, c ) ), Or( Neg( b ), d ) ), e )
 
       val res = ForgetfulResolve( f )
 

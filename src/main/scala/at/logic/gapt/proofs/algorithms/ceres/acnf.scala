@@ -10,8 +10,9 @@ import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.hol._
+import at.logic.gapt.language.schema._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types._
-import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaExpression, IntVar, fo2Var, foConst, SchemaAbs, SchemaVar, unfoldSFormula, indexedFOVar, Succ, sTerm, IntZero, SchemaFormula, toIntegerTerm }
 import at.logic.gapt.proofs.algorithms.ceres.UnfoldProjectionTerm._
 import at.logic.gapt.proofs.algorithms.ceres._
 import clauseSchema._
@@ -96,17 +97,17 @@ object ACNF {
     val z = fo2Var( "z" )
     val a = foConst( "a" )
     // a is const... wtf?????
-    val h = SchemaAbs( k, a )
+    val h = Abs( k, a )
     fo2SubstDB.add( z, h )
     val ground_proj_set = projSet.map( set => GroundingProjections( set, fo2SubstDB.map.toMap ) ).toSet
     val end_seq = if ( n == 0 ) {
       val ro = p1base.root
-      val new_map1 = Map.empty[SchemaVar, SchemaExpression] + Tuple2( k, IntZero() )
+      val new_map1 = Map.empty[Var, SchemaExpression] + Tuple2( k, IntZero() )
       var subst = SchemaSubstitution( new_map1 )
       FSequent( ro.antecedent.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ), ro.succedent.toList.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ) )
     } else {
       val ro = p1rec.root
-      val new_map1 = Map.empty[SchemaVar, SchemaExpression] + Tuple2( k, toIntegerTerm( n - 1 ) )
+      val new_map1 = Map.empty[Var, SchemaExpression] + Tuple2( k, toIntegerTerm( n - 1 ) )
       var subst = SchemaSubstitution( new_map1 )
       FSequent( ro.antecedent.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ), ro.succedent.toList.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ) )
     }
@@ -137,7 +138,7 @@ object contractionNormalForm {
 //TODO: this method does not care for bindings! Cvetan, please fix it!
 // Cvetan is no longer here, now what??
 object renameIndexedVarInProjection {
-  def apply( p: LKProof, pair: Tuple2[HOLVar, HOLExpression] ): LKProof = {
+  def apply( p: LKProof, pair: Tuple2[Var, LambdaExpression] ): LKProof = {
     p match {
       case Axiom( seq )                             => Axiom( Sequent( seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( renameVar( fo.formula, pair ), Nil ) ), seq.succedent.map( fo => fo.factory.createFormulaOccurrence( renameVar( fo.formula, pair ), Nil ) ) ) )
       case WeakeningLeftRule( up, _, p1 )           => WeakeningLeftRule( apply( up, pair ), renameVar( p1.formula, pair ) )
@@ -164,7 +165,7 @@ object renameIndexedVarInProjection {
 
 //renames the indexed variable in atom
 object renameVar {
-  def apply( exp: HOLExpression, pair: Tuple2[HOLVar, HOLExpression] ): HOLExpression = {
+  def apply( exp: LambdaExpression, pair: Tuple2[Var, LambdaExpression] ): LambdaExpression = {
     exp match {
       case v: indexedFOVar => {
         if ( v == pair._1 )
@@ -173,7 +174,7 @@ object renameVar {
           return v
       }
       case foc: foConst => {
-        HOLConst( foc.name.toString, Ti )
+        Const( foc.name.toString, Ti )
       }
       case Succ( arg ) => {
         Succ( apply( arg, pair ).asInstanceOf[SchemaExpression] )
@@ -181,33 +182,33 @@ object renameVar {
       case sTerm( f, i, args ) => {
         sTerm( f, i, args.map( x => apply( x, pair ).asInstanceOf[SchemaExpression] ) )
       }
-      case HOLFunction( name, args, typ ) if args.size > 0 => {
-        val func = HOLConst( name.toString(), Ti -> Ti )
+      case HOLFunction( name, args ) if args.size > 0 => {
+        val func = Const( name.toString(), Ti -> Ti )
         HOLFunction( func, args.map( f => apply( f, pair ) ) )
       }
       case _ => exp
     }
   }
-  def apply( f: HOLFormula, pair: Tuple2[HOLVar, HOLExpression] ): HOLFormula = {
+  def apply( f: Formula, pair: Tuple2[Var, LambdaExpression] ): Formula = {
     f match {
       case HOLAtom( name, args ) => {
         val new_args = args.map( f => apply( f, pair ) )
-        HOLAtom( HOLConst( name.toString(), FunctionType( To, new_args.map( _.exptype ) ) ), new_args )
+        HOLAtom( Const( name.toString(), FunctionType( To, new_args.map( _.exptype ) ) ), new_args )
       }
-      case HOLNeg( form )         => HOLNeg( apply( form, pair ) )
-      case HOLImp( form1, form2 ) => HOLImp( apply( form1, pair ), apply( form2, pair ) )
-      case HOLAnd( form1, form2 ) => HOLAnd( apply( form1, pair ), apply( form2, pair ) )
-      case HOLOr( form1, form2 )  => HOLOr( apply( form1, pair ), apply( form2, pair ) )
-      case _                      => f
+      case Neg( form )         => Neg( apply( form, pair ) )
+      case Imp( form1, form2 ) => Imp( apply( form1, pair ), apply( form2, pair ) )
+      case And( form1, form2 ) => And( apply( form1, pair ), apply( form2, pair ) )
+      case Or( form1, form2 )  => Or( apply( form1, pair ), apply( form2, pair ) )
+      case _                   => f
     }
   }
 }
 
 /*
 object SubstituteProof {
-  def subapp(f: HOLFormula, sub:Substitution) = sub(f)
+  def subapp(f: Formula, sub:Substitution) = sub(f)
   def subapp(f: FormulaOccurrence, sub:Substitution) = sub(f.formula)
-  def remove_from_sub(v:HOLVar, sub:Substitution) = Substitution(sub.holmap.filterNot( x => x._1 == v  ))
+  def remove_from_sub(v:Var, sub:Substitution) = Substitution(sub.holmap.filterNot( x => x._1 == v  ))
 
   def apply(proof: LKProof, sub:Substitution) : LKProof =
     proof match {

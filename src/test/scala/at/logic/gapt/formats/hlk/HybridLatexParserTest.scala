@@ -3,7 +3,7 @@ package at.logic.gapt.formats.hlk
 import at.logic.gapt.algorithms.hlk._
 import at.logic.gapt.formats.hlk.ast.LambdaAST
 import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.App
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types.{ TA, Ti, To }
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
@@ -91,9 +91,9 @@ class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCop
 
     "correctly infer replacement terms in equalities" in {
       import at.logic.gapt.proofs.lk.EquationVerifier.{ Different, Equal, EqualModuloEquality, checkReplacement }
-      val List( a ) = List( "a" ) map ( x => HOLConst( x, Ti ) )
-      val List( f, g ) = List( "f", "g" ) map ( x => HOLConst( x, Ti -> Ti ) )
-      val List( p ) = List( "p" ) map ( x => HOLConst( x, Ti -> ( Ti -> ( Ti -> To ) ) ) )
+      val List( a ) = List( "a" ) map ( x => Const( x, Ti ) )
+      val List( f, g ) = List( "f", "g" ) map ( x => Const( x, Ti -> Ti ) )
+      val List( p ) = List( "p" ) map ( x => Const( x, Ti -> ( Ti -> ( Ti -> To ) ) ) )
       val t1 = App( p, List( App( f, a ), App( f, App( g, App( f, a ) ) ), a ) )
       val t2 = App( p, List( App( f, a ), App( f, App( g, App( g, a ) ) ), a ) )
       val fa = App( f, a )
@@ -110,7 +110,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCop
       checkReplacement( fa, ga, t1, t1 ) match {
         case Equal                       => ok
         case Different                   => ko( "Terms " + t1 + " and t2 considered as (completely) different, but they are equal!" )
-        case EqualModuloEquality( path ) => ko( "Found an equality modulo " + HOLEquation( fa.asInstanceOf[HOLExpression], ga.asInstanceOf[HOLExpression] ) + " but should be equal!" )
+        case EqualModuloEquality( path ) => ko( "Found an equality modulo " + Eq( fa.asInstanceOf[LambdaExpression], ga.asInstanceOf[LambdaExpression] ) + " but should be equal!" )
       }
       ok
     }
@@ -154,21 +154,21 @@ class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCop
     "correctly prove the instance of an axiom" in {
       val vmap = Map[String, TA]( "x" -> Ti, "y" -> Ti, "z" -> Ti )
       val cmap = Map[String, TA]( "a" -> Ti, "1" -> Ti, "+" -> ( Ti -> ( Ti -> Ti ) ) )
-      val naming: String => HOLExpression = x => {
-        if ( vmap contains x ) HOLVar( x, vmap( x ) ) else
-          HOLConst( x, cmap( x ) )
+      val naming: String => LambdaExpression = x => {
+        if ( vmap contains x ) Var( x, vmap( x ) ) else
+          Const( x, cmap( x ) )
       }
       val axiom = HLKHOLParser.ASTtoHOL( naming, HybridLatexParser.parseFormula( "(all x all y all z (x+(y+z)=(x+y)+z))" ) )
       val instance = HLKHOLParser.ASTtoHOL( naming, HybridLatexParser.parseFormula( "a+((1+x)+y)=(a+(1+x))+y" ) )
-      val t1 = HOLFunction( HOLConst( "+", Ti -> ( Ti -> Ti ) ), List(
-        HOLConst( "1", Ti ),
-        HOLVar( "x", Ti ) ) )
-      val t2 = HOLConst( "a", Ti )
-      val x = HOLVar( "x", Ti )
-      val y = HOLVar( "y", Ti )
-      val z = HOLVar( "z", Ti )
+      val t1 = HOLFunction( Const( "+", Ti -> ( Ti -> Ti ) ), List(
+        Const( "1", Ti ),
+        Var( "x", Ti ) ) )
+      val t2 = Const( "a", Ti )
+      val x = Var( "x", Ti )
+      val y = Var( "y", Ti )
+      val z = Var( "z", Ti )
       val sub = HOLSubstitution( List( ( x, t2 ), ( y, t1 ), ( z, y ) ) )
-      val p = HybridLatexParser.proveInstance( axiom.asInstanceOf[HOLFormula], instance.asInstanceOf[HOLFormula], sub )
+      val p = HybridLatexParser.proveInstance( axiom.asInstanceOf[Formula], instance.asInstanceOf[Formula], sub )
       p.root.occurrences must haveSize( 2 )
       p.root.antecedent must haveSize( 1 )
       p.root.succedent must haveSize( 1 )

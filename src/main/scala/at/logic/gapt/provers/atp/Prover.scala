@@ -4,11 +4,11 @@
 
 package at.logic.gapt.provers.atp
 
+import at.logic.gapt.expr.FOLExpression
 import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.language.fol.algorithms.{ UnificationAlgorithm, FOLMatchingAlgorithm, FOLUnificationAlgorithm }
 import at.logic.gapt.proofs.resolution.{ Clause, ResolutionProof }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.fol.FOLExpression
 import at.logic.gapt.formats.simple.SimpleResolutionParserFOL
 import at.logic.gapt.formats.readers.FileReader
 import at.logic.gapt.provers.atp.commands.base._

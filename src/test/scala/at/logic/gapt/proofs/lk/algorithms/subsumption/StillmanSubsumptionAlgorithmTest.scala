@@ -9,6 +9,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.expr._
 
 @RunWith( classOf[JUnitRunner] )
 class StillmanSubsumptionAlgorithmFOLTest extends SpecificationWithJUnit {
@@ -127,18 +128,18 @@ class StillmanSubsumptionAlgorithmHOLTest extends SpecificationWithJUnit {
   import at.logic.gapt.expr.types._
   "StillmanSubsumptionAlgorithmHOL" should {
     "return true on the following clauses" in {
-      val P = HOLConst( "P", Ti -> ( Ti -> To ) )
-      val P1 = HOLConst( "P", Ti -> To )
-      val Q = HOLConst( "Q", Ti -> To )
-      val x = HOLVar( "x", Ti )
-      val y = HOLVar( "y", Ti )
-      val z = HOLVar( "z", Ti )
-      val q = HOLVar( "q", Ti -> To )
-      val a = HOLConst( "a", Ti )
-      val b = HOLConst( "b", Ti )
-      val f = HOLConst( "f", Ti -> ( Ti -> ( Ti -> Ti ) ) )
-      val f1 = HOLConst( "f", Ti -> Ti )
-      val f2 = HOLConst( "f", ( Ti -> To ) -> ( Ti -> ( Ti -> Ti ) ) )
+      val P = Const( "P", Ti -> ( Ti -> To ) )
+      val P1 = Const( "P", Ti -> To )
+      val Q = Const( "Q", Ti -> To )
+      val x = Var( "x", Ti )
+      val y = Var( "y", Ti )
+      val z = Var( "z", Ti )
+      val q = Var( "q", Ti -> To )
+      val a = Const( "a", Ti )
+      val b = Const( "b", Ti )
+      val f = Const( "f", Ti -> ( Ti -> ( Ti -> Ti ) ) )
+      val f1 = Const( "f", Ti -> Ti )
+      val f2 = Const( "f", ( Ti -> To ) -> ( Ti -> ( Ti -> Ti ) ) )
       val f2qza = HOLFunction( f2, q :: z :: a :: Nil )
       val f1b = HOLFunction( f1, b :: Nil )
       val fyza = HOLFunction( f, y :: z :: a :: Nil )

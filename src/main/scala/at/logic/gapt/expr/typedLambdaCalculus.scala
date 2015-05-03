@@ -5,6 +5,8 @@
 
 package at.logic.gapt.expr
 
+import at.logic.gapt.language.hol.HOLPosition
+import at.logic.gapt.language.hol.HOLPosition._
 import symbols._
 import types._
 
@@ -43,13 +45,49 @@ abstract class LambdaExpression {
     case Some( e ) => e
     case None      => throw new IllegalArgumentException( "Expression " + this + "is not defined at position " + p + "." )
   }
+  /**
+   * Retrieves this expression's subexpression at a given position.
+   *
+   * @param pos The position to be retrieved.
+   * @return The subexpression at pos.
+   */
+  def apply( pos: HOLPosition ): LambdaExpression = get( pos ) match {
+    case Some( f ) => f
+    case None      => throw new Exception( "Position " + pos + " does not exist in expression " + this + "." )
+  }
 
+  /**
+   * Retrieves this expression's subexpression at a given position, if there is one.
+   *
+   * @param pos The position to be retrieved.
+   * @return If there is a subexpression at that position, return Some(that expression). Otherwise None.
+   */
+  def get( pos: HOLPosition ): Option[LambdaExpression] = {
+    val lPos = toLambdaPosition( this )( pos )
+    get( lPos )
+  }
+
+  /**
+   * Tests whether this expression has a subexpression at a given position.
+   *
+   * @param pos The position to be tested.
+   * @return Whether this(pos) is defined.
+   */
+  def isDefinedAt( pos: HOLPosition ): Boolean = get( pos ).isDefined
+
+  /**
+   * Finds all HOL positions of a subexpression in this expression.
+   *
+   * @param exp The subexpression to be found.
+   * @return A list containing all positions where exp occurs.
+   */
+  def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 }
 
 // Defines the elements that generate lambda-expressions: variables,
 // applications and abstractions (and constants).
 
-class Var private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
+class Var( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
 
   // The name of the variable should be obtained with this method.
   def name: String = sym.toString
@@ -73,7 +111,7 @@ class Var private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpr
   override def hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
 
-class Const private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
+class Const( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
 
   def name: String = sym.toString
 
@@ -90,7 +128,7 @@ class Const private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaEx
   override def hashCode() = ( 41 * name.hashCode ) + exptype.hashCode
 }
 
-class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpression ) extends LambdaExpression {
+class App( val function: LambdaExpression, val arg: LambdaExpression ) extends LambdaExpression {
   val exptype: TA =
     function.exptype match {
       case ( in -> out ) if in == arg.exptype => out
@@ -133,10 +171,9 @@ class Abs( val variable: Var, val term: LambdaExpression ) extends LambdaExpress
 object Var {
   def apply( name: String, exptype: TA ): Var = Var( StringSymbol( name ), exptype )
   def apply( sym: SymbolA, exptype: TA ): Var = exptype match {
-    case Ti     => new Var( sym, exptype ) with FOLVar
-    case Tindex => new Var( sym, exptype ) with SchematicVar
-    case To     => new Var( sym, exptype ) with Formula
-    case _      => new Var( sym, exptype )
+    case Ti => new Var( sym, exptype ) with FOLVar
+    case To => new Var( sym, exptype ) with Formula
+    case _  => new Var( sym, exptype )
   }
   def unapply( e: LambdaExpression ) = e match {
     case v: Var => Some( v.name, v.exptype )
@@ -144,8 +181,6 @@ object Var {
   }
 }
 object Const {
-  import schematic._
-
   def apply( name: String, exptype: TA ): Const = Const( StringSymbol( name ), exptype )
   def apply( sym: SymbolA, exptype: TA ): Const = ( sym, exptype ) match {
     case ForallQ( Ti ) | ExistsQ( Ti ) => new Const( sym, exptype ) with FOLQuantifier
@@ -155,30 +190,12 @@ object Const {
     case NegC() => new Const( sym, exptype ) with PropConnective {
       override val numberOfArguments = 1
     }
-    case TopC() | BottomC()   => new Const( sym, exptype ) with PropConnective with PropFormula
-    case BigAndC() | BigOrC() => new Const( sym, exptype ) with SchematicBigConnective
+    case TopC() | BottomC() => new Const( sym, exptype ) with PropConnective with PropFormula
     case EqC( Ti ) => new Const( sym, exptype ) with FOLLambdaTerm with DistinguishedConstant {
       override val returnType = Ti
       override val numberOfArguments = 2
     }
-    case EqC( Tindex ) => new Const( sym, exptype ) with SchematicLambdaTerm with DistinguishedConstant {
-      override val returnType = Ti
-      override val numberOfArguments = 2
-    }
-    case EqC( _ ) => new Const( sym, exptype ) with DistinguishedConstant
-    case ZeroC()  => new Const( sym, exptype ) with SchematicIntTerm
-    case SuccC() => new Const( sym, exptype ) with SchematicLambdaTerm {
-      override val returnType = Tindex
-      override val numberOfArguments = 1
-    }
-    case PlusC() | TimesC() => new Const( sym, exptype ) with SchematicLambdaTerm {
-      override val returnType = Tindex
-      override val numberOfArguments = 2
-    }
-    case BiggerThanC() | SimC() | LessThanC() | LeqC() => new Const( sym, exptype ) with SchematicLambdaTerm {
-      override val returnType = To
-      override val numberOfArguments = 2
-    }
+    case EqC( _ )  => new Const( sym, exptype ) with DistinguishedConstant
     case ( _, Ti ) => new Const( sym, exptype ) with FOLTerm
     case ( _, To ) => new Const( sym, exptype ) with PropFormula
     case ( _, FOLHeadType( Ti, n ) ) => new Const( sym, exptype ) with FOLLambdaTerm {
@@ -213,28 +230,9 @@ object App {
         override val returnType = f.returnType
       }
     }
-    case f: SchematicLambdaTerm => f.numberOfArguments match {
-      case 1 => f.returnType match {
-        case Tindex => new App( f, a ) with SchematicIntTerm
-        case Ti     => new App( f, a ) with SchematicTerm
-        case To     => new App( f, a ) with SchematicFormula
-      }
-      case n => new App( f, a ) with SchematicLambdaTerm {
-        override val numberOfArguments = n - 1
-        override val returnType = f.returnType
-      }
-    }
     case f: FOLQuantifier => a match {
-      case a: FOLFormulaWithBoundVar       => new App( f, a ) with FOLFormula
-      case a: SchematicFormulaWithBoundVar => new App( f, a ) with SchematicFormula
-      case _                               => new App( f, a ) with Formula
-    }
-    case f: SchematicBigConnective => a match {
-      case a: SchematicFormulaWithBoundIndex => new App( f, a ) with SchematicLambdaTerm {
-        override val numberOfArguments = 2
-        override val returnType = To
-      }
-      case _ => new App( f, a )
+      case a: FOLFormulaWithBoundVar => new App( f, a ) with FOLFormula
+      case _                         => new App( f, a ) with Formula
     }
     case _ => f.exptype match {
       case ->( _, To ) => new App( f, a ) with Formula
@@ -267,10 +265,8 @@ object Apps {
 }
 object Abs {
   def apply( v: Var, t: LambdaExpression ) = ( v.exptype, t ) match {
-    case ( Ti, t: FOLFormula )           => new Abs( v, t ) with FOLFormulaWithBoundVar
-    case ( Ti, t: SchematicFormula )     => new Abs( v, t ) with SchematicFormulaWithBoundVar
-    case ( Tindex, t: SchematicFormula ) => new Abs( v, t ) with SchematicFormulaWithBoundIndex
-    case _                               => new Abs( v, t )
+    case ( Ti, t: FOLFormula ) => new Abs( v, t ) with FOLFormulaWithBoundVar
+    case _                     => new Abs( v, t )
   }
   def apply( variables: List[Var], expression: LambdaExpression ): LambdaExpression = variables match {
     case Nil     => expression

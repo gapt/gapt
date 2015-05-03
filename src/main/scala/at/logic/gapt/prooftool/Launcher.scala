@@ -14,7 +14,7 @@ import event.{ MouseWheelMoved, MouseReleased, MouseDragged }
 import at.logic.gapt.utils.ds.trees.Tree
 import at.logic.gapt.proofs.proofs.TreeProof
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.proofs.Proof
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ structToExpressionTree, Struct }
 
@@ -93,7 +93,7 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
       ProofToolPublisher.publish( UnLoaded )
       StructPublisher.publish( UnLoaded )
       None
-    case formula: HOLFormula => // use the case for lists for single formulas, too
+    case formula: Formula => // use the case for lists for single formulas, too
       layout( new DrawList( formula :: Nil, fSize ) ) = c
       ProofToolPublisher.publish( UnLoaded )
       StructPublisher.publish( UnLoaded )
@@ -102,7 +102,7 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
  * do we need (vertical) display of sequents in prooftool?
  *
     case fSequent: FSequent =>
-      layout(new DrawHerbrandSequent[HOLFormula]((fSequent.antecedent,fSequent.succedent), fSize)) = c
+      layout(new DrawHerbrandSequent[Formula]((fSequent.antecedent,fSequent.succedent), fSize)) = c
       ProofToolPublisher.publish(UnLoaded)
       StructPublisher.publish(UnLoaded)
       None

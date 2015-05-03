@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.beSyntacticMultisetEqual
 import at.logic.gapt.proofs.resolution.robinson.{ Resolution, Paramodulation, Instance, InitialClause }
 import org.junit.runner.RunWith
@@ -28,11 +29,11 @@ class instantiateEliminationTest extends SpecificationWithJUnit {
     val m2a01 = FOLFunction( "multiply", v2 :: add01 :: Nil )
 
     // =(multiply(v0, v1), multiply(v1, v0))
-    val c1 = FOLEquation( m01, m10 )
+    val c1 = Eq( m01, m10 )
     // =(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))
-    val c2 = FOLEquation( ma012, am02m12 )
+    val c2 = Eq( ma012, am02m12 )
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
-    val c3 = FOLEquation( m2a01, am02m12 )
+    val c3 = Eq( m2a01, am02m12 )
 
     val sub1 = FOLSubstitution( Map( ( v0, v2 ) ) )
     val sub2 = FOLSubstitution( Map( ( v1, add01 ) ) )
@@ -64,11 +65,11 @@ class instantiateEliminationTest extends SpecificationWithJUnit {
     val m2a01 = FOLFunction( "multiply", v2 :: add01 :: Nil )
 
     // =(multiply(v0, v1), multiply(v1, v0))
-    val c1 = FOLEquation( m01, m10 )
+    val c1 = Eq( m01, m10 )
     // =(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))
-    val c2 = FOLEquation( ma012, am02m12 )
+    val c2 = Eq( ma012, am02m12 )
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
-    val c3 = FOLEquation( m2a01, am02m12 )
+    val c3 = Eq( m2a01, am02m12 )
 
     val sub1 = FOLSubstitution( Map( ( v0, v2 ), ( v1, add01 ) ) )
 

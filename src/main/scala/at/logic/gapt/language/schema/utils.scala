@@ -5,11 +5,7 @@
 
 package at.logic.gapt.language.schema
 
-import at.logic.gapt.language.hol.{ freeVariables => freeVariablesHOL, HOLFormula }
-
-object freeVariables {
-  def apply( e: SchemaExpression ): List[SchemaVar] = freeVariablesHOL( e ).asInstanceOf[List[SchemaVar]]
-}
+import at.logic.gapt.expr._
 
 object isAtom {
   def apply( f: SchemaFormula ): Boolean = f match {
@@ -27,12 +23,12 @@ object isSAtom {
 
 object unfoldSFormula {
   def apply( f: SchemaFormula ): SchemaFormula = f match {
-    case SchemaAtom( name: SchemaVar, args )   => SchemaAtom( name, args.map( t => unfoldSTerm( t ) ) )
-    case SchemaAtom( name: SchemaConst, args ) => SchemaAtom( name, args.map( t => unfoldSTerm( t ) ) )
-    case SchemaImp( f1, f2 )                   => SchemaImp( unfoldSFormula( f1 ), unfoldSFormula( f2 ) )
-    case SchemaExVar( v, f )                   => SchemaExVar( v, unfoldSFormula( f ) )
-    case SchemaAllVar( v, f )                  => SchemaAllVar( v, unfoldSFormula( f ) )
-    case _                                     => f
+    case SchemaAtom( name: Var, args )   => SchemaAtom( name, args.map( t => unfoldSTerm( t ) ) )
+    case SchemaAtom( name: Const, args ) => SchemaAtom( name, args.map( t => unfoldSTerm( t ) ) )
+    case Imp( f1, f2 )                   => Imp( unfoldSFormula( f1 ), unfoldSFormula( f2 ) )
+    case Ex( v, f )                      => Ex( v, unfoldSFormula( f ) )
+    case All( v, f )                     => All( v, unfoldSFormula( f ) )
+    case _                               => f
   }
 }
 
@@ -45,7 +41,7 @@ object unfoldSTerm {
       case sTerm( func, i, arg ) if dbTRS.map.contains( func ) => {
         if ( i == IntZero() ) {
           val base = dbTRS.map.get( func ).get._1._2
-          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2( x, arg.head )
+          val new_map = Map[Var, SchemaExpression]() + Tuple2( x, arg.head )
           val subst = SchemaSubstitution( new_map )
           subst( base )
         } else if ( i == k ) e
@@ -74,7 +70,7 @@ object unfoldSINDTerm {
         else if ( i == k ) e
         else {
           val step = dbTRS.map.get( func ).get._2._2
-          val new_map = Map[SchemaVar, SchemaExpression]() + Tuple2( k, Pred( i.asInstanceOf[IntegerTerm] ) )
+          val new_map = Map[Var, SchemaExpression]() + Tuple2( k, Pred( i.asInstanceOf[IntegerTerm] ) )
           val subst = SchemaSubstitution( new_map )
           subst( step )
         }

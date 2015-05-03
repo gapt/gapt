@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol.{ FOLFormula, FOLSubstitution, FOLEquation }
+import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.FClause
@@ -37,7 +38,7 @@ object fixDerivation extends Logger {
       ( from zip from.indices ).foldLeft( HashMap[Int, Int]() ) {
         case ( map, ( from_f, from_i ) ) => {
           val to_i = to.indexWhere( to_f => ( from_f == to_f ) || ( ( from_f, to_f ) match {
-            case ( FOLEquation( from_l, from_r ), FOLEquation( to_l, to_r ) ) if from_l == to_r && from_r == to_l => true
+            case ( Eq( from_l, from_r ), Eq( to_l, to_r ) ) if from_l == to_r && from_r == to_l => true
             case _ => false
           } ) )
           if ( to_i != -1 )
@@ -67,10 +68,10 @@ object fixDerivation extends Logger {
   private def applySymm( p: RobinsonResolutionProof, f: FOLFormula, pos: Boolean ) =
     {
       val ( left, right ) = f match {
-        case FOLEquation( l, r ) => ( l, r )
+        case Eq( l, r ) => ( l, r )
       }
-      val newe = FOLEquation( right, left )
-      val refl = FOLEquation( left, left )
+      val newe = Eq( right, left )
+      val refl = Eq( left, left )
       val s = FOLSubstitution()
       if ( pos ) {
         val irefl = InitialClause( Nil, refl :: Nil )
@@ -100,7 +101,7 @@ object fixDerivation extends Logger {
       val to_i = neg_map( i )
       neg_map_s = neg_map_s + ( my_from_s._1.size -> to_i )
       f match {
-        case FOLEquation( _, _ ) if my_to._1( to_i ) != f => {
+        case Eq( _, _ ) if my_to._1( to_i ) != f => {
           my_from_s = ( my_from_s._1 :+ my_to._1( to_i ), my_from_s._2 )
           applySymm( p, f, false )
         }
@@ -115,7 +116,7 @@ object fixDerivation extends Logger {
       val to_i = pos_map( i )
       pos_map_s = pos_map_s + ( my_from_s._2.size -> to_i )
       f match {
-        case FOLEquation( _, _ ) if my_to._2( to_i ) != f => {
+        case Eq( _, _ ) if my_to._2( to_i ) != f => {
           my_from_s = ( my_from_s._1, my_from_s._2 :+ my_to._2( to_i ) )
           applySymm( p, f, true )
         }
@@ -180,8 +181,8 @@ object fixDerivation extends Logger {
     }
   private def isReflexivity( c: FClause ) =
     c.pos.exists( a => a match {
-      case FOLEquation( x, y ) if x == y => true
-      case _                             => false
+      case Eq( x, y ) if x == y => true
+      case _                    => false
     } )
   private def isTautology( c: FClause ) = c.pos.exists( a => c.neg.exists( b => a == b ) )
   // NOTE: What if the symmetric clause found is a tautology?

@@ -6,7 +6,7 @@ import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.fol._
 import at.logic.gapt.expr.symbols.{ StringSymbol }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.language.hol.HOLExpression
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.{ beSyntacticFSequentEqual, FSequent, Sequent, LKProof }
 import at.logic.gapt.proofs.proofs.NullaryProof
 
@@ -27,16 +27,16 @@ class definition_eliminationTest extends SpecificationWithJUnit {
     val at = FOLAtom( a, t :: Nil )
     val aa = FOLAtom( a, alpha :: Nil )
     val bx = FOLAtom( b, x :: Nil )
-    val eqxt = FOLEquation( x, t )
-    val allypay = FOLAllVar( y, pay )
-    val allypty = FOLAllVar( y, pty )
-    val allypxy = FOLAllVar( y, pxy )
-    val allxypxy = FOLAllVar( x, allypxy )
-    val allxax = FOLAllVar( x, ax )
-    val exformula = FOLExVar( x, FOLAnd( qx, ax ) )
+    val eqxt = Eq( x, t )
+    val allypay = All( y, pay )
+    val allypty = All( y, pty )
+    val allypxy = All( y, pxy )
+    val allxypxy = All( x, allypxy )
+    val allxax = All( x, ax )
+    val exformula = Ex( x, And( qx, ax ) )
 
     val i1 = Axiom( List( qa ), List( qa ) )
-    val i2 = ForallLeftRule( i1, i1.root.antecedent( 0 ), FOLAllVar( x, qx ), alpha )
+    val i2 = ForallLeftRule( i1, i1.root.antecedent( 0 ), All( x, qx ), alpha )
 
     val i3 = Axiom( List( pab ), List( pab ) )
     val i4 = ForallLeftRule( i3, i3.root.antecedent( 0 ), allypay, beta )
@@ -46,16 +46,16 @@ class definition_eliminationTest extends SpecificationWithJUnit {
     val i8 = DefinitionLeftRule( i7, i7.root.antecedent( 0 ), allxax )
     val i9 = AndRightRule( i2, i8, i2.root.succedent( 0 ), i8.root.succedent( 0 ) )
     val i10 = ExistsRightRule( i9, i9.root.succedent( 0 ), exformula, alpha )
-    val i11 = DefinitionRightRule( i10, i10.root.succedent( 0 ), FOLExVar( x, bx ) )
+    val i11 = DefinitionRightRule( i10, i10.root.succedent( 0 ), Ex( x, bx ) )
     val i12 = AndLeft2Rule( i11, ax, i11.root.antecedent( 0 ) )
 
     val i13 = Axiom( eqxt :: Nil, eqxt :: Nil )
-    val i14 = EquationLeft1Rule( i13, i12, i13.root.succedent( 0 ), i12.root.antecedent( 1 ), FOLAnd( at, FOLAllVar( x, qx ) ) )
+    val i14 = EquationLeft1Rule( i13, i12, i13.root.succedent( 0 ), i12.root.antecedent( 1 ), And( at, All( x, qx ) ) )
     getoccids( i14, Nil ) map println
 
-    val def1 = ( ax, FOLAllVar( y, pxy ) )
-    val def2 = ( bx, FOLAnd( qx, ax ) )
-    val dmap = Map[HOLExpression, HOLExpression]() + def1 + def2
+    val def1 = ( ax, All( y, pxy ) )
+    val def2 = ( bx, And( qx, ax ) )
+    val dmap = Map[LambdaExpression, LambdaExpression]() + def1 + def2
 
     def getoccids( p: LKProof, l: List[String] ): List[String] = p match {
       case r: NullaryProof[Sequent] =>
@@ -95,10 +95,10 @@ class definition_eliminationTest extends SpecificationWithJUnit {
   "Definition elimination" should {
     "work on formulas" in {
       skipped( "Failing on HOL matching" )
-      val f = FOLAnd( proof1.ax, FOLOr( FOLAtom( proof1.a, proof1.t :: Nil ), proof1.bx ) )
+      val f = And( proof1.ax, Or( FOLAtom( proof1.a, proof1.t :: Nil ), proof1.bx ) )
       val f_ = DefinitionElimination( proof1.dmap, f )
       println( f_ )
-      val correct_f = FOLAnd( proof1.allypxy, FOLOr( proof1.allypty, FOLAnd( proof1.qx, proof1.allypxy ) ) )
+      val correct_f = And( proof1.allypxy, Or( proof1.allypty, And( proof1.qx, proof1.allypxy ) ) )
       f_ mustEqual ( correct_f )
     }
 
@@ -107,7 +107,7 @@ class definition_eliminationTest extends SpecificationWithJUnit {
       import proof1._
       val elp = DefinitionElimination( dmap, i12 )
       println( elp )
-      val expected = FSequent( List( FOLAllVar( x, FOLAllVar( y, pxy ) ), FOLAnd( FOLAllVar( y, pxy ), FOLAllVar( x, qx ) ) ), List( FOLExVar( x, FOLAnd( qx, FOLAllVar( y, pxy ) ) ) ) )
+      val expected = FSequent( List( All( x, All( y, pxy ) ), And( All( y, pxy ), All( x, qx ) ) ), List( Ex( x, And( qx, All( y, pxy ) ) ) ) )
       expected must beSyntacticFSequentEqual( elp.root.toFSequent )
     }
 

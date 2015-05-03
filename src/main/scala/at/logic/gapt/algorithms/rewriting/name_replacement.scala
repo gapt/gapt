@@ -1,12 +1,12 @@
 package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.language.hol.{ HOLVar, HOLConst, HOLAtom, HOLFunction, HOLAnd, HOLEquation, HOLOr, HOLImp, HOLNeg, HOLExVar, HOLAllVar, HOLExpression, HOLFormula }
-import at.logic.gapt.language.fol.{ FOLVar, FOLConst, FOLAtom, FOLFunction, FOLAnd, FOLEquation, FOLOr, FOLImp, FOLNeg, FOLExVar, FOLAllVar, FOLExpression, FOLTerm, FOLFormula, FOLSubstitution }
 import at.logic.gapt.expr.symbols.StringSymbol
 
 /**
@@ -14,9 +14,9 @@ import at.logic.gapt.expr.symbols.StringSymbol
  */
 object NameReplacement {
 
-  def apply( exp: HOLExpression, map: SymbolMap ): HOLExpression = renameSymbols( exp, map )
+  def apply( exp: LambdaExpression, map: SymbolMap ): LambdaExpression = renameSymbols( exp, map )
   def apply( exp: FOLExpression, map: SymbolMap ): FOLExpression = renameSymbols( exp, map )
-  def apply( exp: HOLFormula, map: SymbolMap ): HOLFormula = renameSymbols( exp, map )
+  def apply( exp: Formula, map: SymbolMap ): Formula = renameSymbols( exp, map )
   def apply( exp: FOLFormula, map: SymbolMap ): FOLFormula = renameSymbols( exp, map )
 
   def apply( fs: FSequent, map: SymbolMap ) = renameFSequent( fs, map )
@@ -36,86 +36,46 @@ object NameReplacement {
   // It seems this is used only for FOL though...
   // TODO: think of a way to implement this and remove the duplication.
 
-  def renameSymbols( exp: HOLExpression, map: SymbolMap ): HOLExpression = exp match {
+  def renameSymbols( exp: LambdaExpression, map: SymbolMap ): LambdaExpression = exp match {
 
-    case HOLVar( _, _ ) => exp
+    case Var( _, _ ) => exp
 
-    case HOLConst( name, exptype ) => map.get( name ) match {
+    case Const( name, exptype ) => map.get( name ) match {
       case Some( ( rarity, rname ) ) =>
         if ( Arity( exptype ) == rarity ) {
-          HOLConst( StringSymbol( rname ), exptype )
+          Const( StringSymbol( rname ), exptype )
         } else {
           exp
         }
       case None => exp
     }
 
-    case HOLAtom( x: HOLVar, args )          => HOLAtom( x, args.map( a => renameSymbols( a, map ) ) )
-    case HOLAtom( x: HOLConst, args )        => HOLAtom( renameSymbols( x, map ).asInstanceOf[HOLConst], args.map( a => renameSymbols( a, map ) ) )
-    case HOLFunction( x: HOLVar, args, _ )   => HOLFunction( x, args.map( a => renameSymbols( a, map ) ) )
-    case HOLFunction( x: HOLConst, args, _ ) => HOLFunction( renameSymbols( x, map ).asInstanceOf[HOLConst], args.map( a => renameSymbols( a, map ) ) )
-    case HOLAnd( x, y )                      => HOLAnd( renameSymbols( x, map ), renameSymbols( y, map ) )
-    case HOLEquation( x, y )                 => HOLEquation( renameSymbols( x, map ), renameSymbols( y, map ) )
-    case HOLOr( x, y )                       => HOLOr( renameSymbols( x, map ), renameSymbols( y, map ) )
-    case HOLImp( x, y )                      => HOLImp( renameSymbols( x, map ), renameSymbols( y, map ) )
-    case HOLNeg( x )                         => HOLNeg( renameSymbols( x, map ) )
+    case HOLAtom( x: Var, args )       => HOLAtom( x, args.map( a => renameSymbols( a, map ) ) )
+    case HOLAtom( x: Const, args )     => HOLAtom( renameSymbols( x, map ).asInstanceOf[Const], args.map( a => renameSymbols( a, map ) ) )
+    case HOLFunction( x: Var, args )   => HOLFunction( x, args.map( a => renameSymbols( a, map ) ) )
+    case HOLFunction( x: Const, args ) => HOLFunction( renameSymbols( x, map ).asInstanceOf[Const], args.map( a => renameSymbols( a, map ) ) )
+    case And( x, y )                   => And( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case Eq( x, y )                    => Eq( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case Or( x, y )                    => Or( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case Imp( x, y )                   => Imp( renameSymbols( x, map ), renameSymbols( y, map ) )
+    case Neg( x )                      => Neg( renameSymbols( x, map ) )
     // Variables are not renamed
-    case HOLExVar( x, f )                    => HOLExVar( x, renameSymbols( f, map ) )
-    case HOLAllVar( x, f )                   => HOLAllVar( x, renameSymbols( f, map ) )
+    case Ex( x, f )                    => Ex( x, renameSymbols( f, map ) )
+    case All( x, f )                   => All( x, renameSymbols( f, map ) )
   }
 
-  def renameSymbols( exp: FOLExpression, map: SymbolMap ): FOLExpression = exp match {
+  def renameSymbols( exp: FOLExpression, map: SymbolMap ): FOLExpression =
+    renameSymbols( exp.asInstanceOf[LambdaExpression], map ).asInstanceOf[FOLExpression]
 
-    case FOLVar( _ ) => exp
-
-    case FOLConst( name ) => map.get( name ) match {
-      case Some( ( rarity, rname ) ) =>
-        if ( Arity( exp.exptype ) == rarity ) {
-          FOLConst( StringSymbol( rname ) )
-        } else {
-          exp
-        }
-      case None => exp
-    }
-
-    case FOLAtom( x, args ) => map.get( x.toString ) match {
-      case Some( ( rarity, rname ) ) =>
-        if ( args.length == rarity ) {
-          FOLAtom( StringSymbol( rname ), args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
-        } else {
-          FOLAtom( x, args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
-        }
-      case None => FOLAtom( x, args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
-    }
-
-    case FOLFunction( x, args ) => map.get( x.toString ) match {
-      case Some( ( rarity, rname ) ) =>
-        if ( args.length == rarity ) {
-          FOLFunction( StringSymbol( rname ), args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
-        } else {
-          FOLFunction( x, args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
-        }
-      case None => FOLFunction( x, args.map( a => renameSymbols( a, map ).asInstanceOf[FOLTerm] ) )
-    }
-    case FOLAnd( x, y )      => FOLAnd( renameSymbols( x, map ), renameSymbols( y, map ) )
-    case FOLEquation( x, y ) => FOLEquation( renameSymbols( x, map ).asInstanceOf[FOLTerm], renameSymbols( y, map ).asInstanceOf[FOLTerm] )
-    case FOLOr( x, y )       => FOLOr( renameSymbols( x, map ), renameSymbols( y, map ) )
-    case FOLImp( x, y )      => FOLImp( renameSymbols( x, map ), renameSymbols( y, map ) )
-    case FOLNeg( x )         => FOLNeg( renameSymbols( x, map ) )
-    // Variables are not renamed
-    case FOLExVar( x, f )    => FOLExVar( x, renameSymbols( f, map ) )
-    case FOLAllVar( x, f )   => FOLAllVar( x, renameSymbols( f, map ) )
-  }
-
-  def renameSymbols( exp: HOLFormula, map: SymbolMap ): HOLFormula =
-    renameSymbols( exp.asInstanceOf[HOLExpression], map ).asInstanceOf[HOLFormula]
+  def renameSymbols( exp: Formula, map: SymbolMap ): Formula =
+    renameSymbols( exp.asInstanceOf[LambdaExpression], map ).asInstanceOf[Formula]
 
   def renameSymbols( exp: FOLFormula, map: SymbolMap ): FOLFormula =
-    renameSymbols( exp.asInstanceOf[FOLExpression], map ).asInstanceOf[FOLFormula]
+    renameSymbols( exp.asInstanceOf[LambdaExpression], map ).asInstanceOf[FOLFormula]
 
   // Yes, this sucks. But it was the easiest and fastest way to deal with 
-  // FSequents which are supposed to have FOLFormulas instead of HOLFormulas.
-  def rename_symbols_bla( f: HOLFormula, map: SymbolMap ) = f.isInstanceOf[FOLFormula] match {
+  // FSequents which are supposed to have FOLFormulas instead of Formulas.
+  def rename_symbols_bla( f: Formula, map: SymbolMap ) = f.isInstanceOf[FOLFormula] match {
     case true  => renameSymbols( f.asInstanceOf[FOLFormula], map )
     case false => renameSymbols( f, map )
   }

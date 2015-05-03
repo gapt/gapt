@@ -1,14 +1,14 @@
 
 package at.logic.gapt.provers.atp.commands.sequents
 
+import at.logic.gapt.language.hol.{ HOLSubstitution, subTerms }
 import at.logic.gapt.proofs.lk.algorithms.subsumption.managers._
 import at.logic.gapt.proofs.lk.algorithms.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.gapt.expr.types.->
-import at.logic.gapt.language.hol.{ HOLFormula, HOLExpression, HOLVar, subTerms, HOLSubstitution }
-import at.logic.gapt.language.fol.{ FOLEquation, FOLExpression }
+import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ ResultCommand, DataCommand }
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.utils.ds.{ Add, Remove, PublishingBufferEvent, PublishingBuffer }
@@ -99,9 +99,9 @@ object fvarInvariantMSEqualityEQ {
     if ( f2.succedent.length == 0 )
       return false
     f2.succedent.head match {
-      case FOLEquation( a, b ) => {
+      case Eq( a, b ) => {
         println( "\n\nVutre sum !\n\n" )
-        val f3 = FSequent( f2.antecedent, FOLEquation( b, a ) +: f2.succedent.tail )
+        val f3 = FSequent( f2.antecedent, Eq( b, a ) +: f2.succedent.tail )
         return fvarInvariantMSEquality( c1, f3 )
       }
       case _ => return false
@@ -116,12 +116,12 @@ object fvarInvariantMSEquality {
     val f1 = ( c1.antecedent.map( _.formula ), c1.succedent.map( _.formula ) )
     val FSequent( neg, pos ) = f2
     // we get all free variables from f2 and try to systematically replace those in f1
-    val set1 = ( f1._1 ++ f1._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: HOLVar => true; case _ => false } ).toSet
-    val set2 = ( f2._1 ++ f2._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: HOLVar => true; case _ => false } ).toSet
+    val set1 = ( f1._1 ++ f1._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } ).toSet
+    val set2 = ( f2._1 ++ f2._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } ).toSet
     if ( set1.size != set2.size ) List[FSequent]() // they cannot be equal
     // create all possible substitutions
-    ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => HOLSubstitution( x.asInstanceOf[List[Tuple2[HOLVar, HOLExpression]]] ) ) )
-      yield ( f1._1.map( s( _ ).asInstanceOf[HOLFormula] ), f1._2.map( s( _ ).asInstanceOf[HOLFormula] ) ) ).toList.exists( cls => {
+    ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => HOLSubstitution( x.asInstanceOf[List[Tuple2[Var, LambdaExpression]]] ) ) )
+      yield ( f1._1.map( s( _ ).asInstanceOf[Formula] ), f1._2.map( s( _ ).asInstanceOf[Formula] ) ) ).toList.exists( cls => {
       neg.diff( cls._1 ).isEmpty && pos.diff( cls._2 ).isEmpty && cls._1.diff( neg ).isEmpty && cls._2.diff( pos ).isEmpty
     } )
   }

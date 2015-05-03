@@ -8,7 +8,7 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 
 @RunWith( classOf[JUnitRunner] )
@@ -45,10 +45,10 @@ class VampireTest extends SpecificationWithJUnit {
       val fbc = FOLFunction( "f", b :: c :: Nil )
       val fffbccx = FOLFunction( "f", FOLFunction( "f", fbc :: c :: Nil ) :: x :: Nil )
 
-      val i = FOLEquation( fax, x )
-      val s = FOLEquation( fffbxyz, ffxzfyz )
-      val k = FOLEquation( ffcxy, x )
-      val skk_i = FOLEquation( fffbccx, fax )
+      val i = Eq( fax, x )
+      val s = Eq( fffbxyz, ffxzfyz )
+      val k = Eq( ffcxy, x )
+      val skk_i = Eq( fffbccx, fax )
 
       val s1 = FSequent( Nil, List( i ) )
       val s2 = FSequent( Nil, List( k ) )

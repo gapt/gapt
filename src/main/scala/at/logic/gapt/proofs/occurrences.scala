@@ -1,11 +1,13 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 
 package occurrences {
 
+  import at.logic.gapt.expr.Formula
+
   /**
-   * A formula occurrence is an occurrence of a [[HOLFormula]] in a proof.  Both formulas in different sequents and
+   * A formula occurrence is an occurrence of a [[Formula]] in a proof.  Both formulas in different sequents and
    * multiple occurrences of the same formula (e.g. introduced by contraction) have a different [[FormulaOccurrence]].
    *
    * @param formula  The formula of which this is an occurrence.
@@ -13,7 +15,7 @@ package occurrences {
    *                   this will include the disjunction is occurrence.
    * @param factory  The formula occurrence factory [[FOFactory]] used to construct this occurrence.
    */
-  class FormulaOccurrence( val formula: HOLFormula, val parents: Seq[FormulaOccurrence], val factory: FOFactory ) {
+  class FormulaOccurrence( val formula: Formula, val parents: Seq[FormulaOccurrence], val factory: FOFactory ) {
     /**
      * Auto-incremented integer identifying this occurrence.
      */
@@ -79,14 +81,14 @@ package occurrences {
    * FIXME: The only supported factory is [[defaultFormulaOccurrenceFactory]] at the moment.
    */
   trait FOFactory {
-    def createFormulaOccurrence( formula: HOLFormula, ancestors: Seq[FormulaOccurrence] ): FormulaOccurrence
+    def createFormulaOccurrence( formula: Formula, ancestors: Seq[FormulaOccurrence] ): FormulaOccurrence
   }
 
   /**
    * Creates instances of [[FormulaOccurrence]].
    */
   object defaultFormulaOccurrenceFactory extends FOFactory {
-    def createFormulaOccurrence( formula: HOLFormula, ancestors: Seq[FormulaOccurrence] ): FormulaOccurrence =
+    def createFormulaOccurrence( formula: Formula, ancestors: Seq[FormulaOccurrence] ): FormulaOccurrence =
       new FormulaOccurrence( formula, ancestors, this )
 
     private var id_counter = 10000

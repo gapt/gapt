@@ -12,6 +12,7 @@ import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, createContext => lkCrea
 import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
 import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types.{ TA, FunctionType }
 import at.logic.gapt.utils.ds.acyclicGraphs._
 
@@ -36,15 +37,15 @@ trait CNF extends Sequent {
 }
 
 object IsNeg {
-  def apply( formula: HOLFormula ) = formula match {
-    case HOLNeg( _ ) => true
-    case _           => false
+  def apply( formula: Formula ) = formula match {
+    case Neg( _ ) => true
+    case _        => false
   }
 }
 object StripNeg {
-  def apply( formula: HOLFormula ) = formula match {
-    case HOLNeg( f ) => f
-    case _           => formula
+  def apply( formula: Formula ) = formula match {
+    case Neg( f ) => f
+    case _        => formula
   }
 }
 
@@ -54,8 +55,8 @@ object StripNeg {
 // TODO: make a class out of this?? (That extends sequent, maybe) I did not manage to reuse it where I wanted... 
 // Too many castings and adaptations had to be done (seqs to sets or lists, Formulas to FOLFormulas, etc) :(
 trait FClause {
-  def neg: Seq[HOLFormula]
-  def pos: Seq[HOLFormula]
+  def neg: Seq[Formula]
+  def pos: Seq[Formula]
   def multisetEquals( f: FClause, g: FClause ): Boolean =
     f.neg.diff( g.neg ).isEmpty && f.pos.diff( g.pos ).isEmpty &&
       g.neg.diff( f.neg ).isEmpty && g.pos.diff( f.pos ).isEmpty
@@ -87,7 +88,7 @@ trait FClause {
 
   def isSubClauseOf( c: FClause ) = neg.diff( c.neg ).isEmpty && pos.diff( c.pos ).isEmpty
 
-  def toFSequent = FSequent( neg.map( _.asInstanceOf[HOLFormula] ), pos.map( _.asInstanceOf[HOLFormula] ) )
+  def toFSequent = FSequent( neg.map( _.asInstanceOf[Formula] ), pos.map( _.asInstanceOf[Formula] ) )
 
   /*
    compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
@@ -98,7 +99,7 @@ trait FClause {
 
 // a default factory
 object FClause {
-  def apply( n: Seq[HOLFormula], p: Seq[HOLFormula] ): FClause = new FClause { def neg = n; def pos = p }
+  def apply( n: Seq[Formula], p: Seq[Formula] ): FClause = new FClause { def neg = n; def pos = p }
   def unapply( fc: FClause ) = Some( ( fc.neg, fc.pos ) )
 }
 
@@ -121,7 +122,7 @@ object Clause {
 }
 
 trait InstantiatedVariable {
-  def term: HOLExpression
+  def term: LambdaExpression
 }
 trait AppliedSubstitution {
   def substitution: HOLSubstitution
@@ -130,7 +131,7 @@ trait AppliedSubstitution {
 case object InitialType extends NullaryRuleTypeA
 
 object InitialSequent {
-  def apply[V <: Sequent]( ant: Seq[HOLFormula], suc: Seq[HOLFormula] )( implicit factory: FOFactory ) = {
+  def apply[V <: Sequent]( ant: Seq[Formula], suc: Seq[Formula] )( implicit factory: FOFactory ) = {
     val left: Seq[FormulaOccurrence] = ant.map( factory.createFormulaOccurrence( _, Nil ) )
     val right: Seq[FormulaOccurrence] = suc.map( factory.createFormulaOccurrence( _, Nil ) )
     new LeafAGraph[Sequent]( Sequent( left, right ) ) with NullaryResolutionProof[V] { def rule = InitialType }
@@ -162,16 +163,16 @@ object createContext {
 
 object computeSkolemTerm {
   // used in andrews
-  def apply( sk: SkolemSymbol, t: TA, sub: HOLExpression ) = {
+  def apply( sk: SkolemSymbol, t: TA, sub: LambdaExpression ) = {
     val fv = freeVariables( sub )
     val tp = FunctionType( t, fv.map( v => v.exptype ) )
-    HOLFunction( HOLConst( sk, tp ), fv )
+    HOLFunction( Const( sk, tp ), fv )
   }
 
   // used in ral
   def apply( sk: SkolemSymbol, t: TA, label: Label ) = {
     val tp = FunctionType( t, label.toList.map( v => v.exptype ) )
-    HOLFunction( HOLConst( sk, tp ), label.toList )
+    HOLFunction( Const( sk, tp ), label.toList )
   }
 }
 

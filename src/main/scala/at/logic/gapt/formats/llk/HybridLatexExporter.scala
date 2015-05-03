@@ -2,13 +2,10 @@ package at.logic.gapt.formats.llk
 
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.symbols._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, LabelledSequent }
-import at.logic.gapt.algorithms.hlk.ExtendedProofDatabase
-import at.logic.gapt.language.hol.logicSymbols.{ LogicalSymbolA, EqSymbol }
 import at.logic.gapt.algorithms.hlk.ExtendedProofDatabase
 import at.logic.gapt.proofs.resolution.ral
 
@@ -104,8 +101,8 @@ class HybridLatexExporter( val expandTex: Boolean ) {
 
   def getTypes( exp: LambdaExpression, vmap: Map[String, TA], cmap: Map[String, TA] ): ( Map[String, TA], Map[String, TA] ) = exp match {
     case Var( name, exptype ) =>
-      val sym = exp.asInstanceOf[Var].sym
-      if ( sym.isInstanceOf[LogicalSymbolA] || sym == EqSymbol ) {
+      //      if ( sym.isInstanceOf[LogicalSymbolA] || sym == EqSymbol ) {
+      if ( name == "=" ) { // FIXME: variable with logical symbol name?????
         ( vmap, cmap )
       } else if ( vmap.contains( name ) ) {
         if ( vmap( name ) != exptype ) throw new Exception( "Symbol clash for " + name + " " + vmap( name ) + " != " + exptype )
@@ -114,11 +111,9 @@ class HybridLatexExporter( val expandTex: Boolean ) {
         ( vmap + ( ( name, exptype ) ), cmap )
       }
 
-    case Const( name, exptype ) =>
+    case UndistinguishedConstant( name, exptype ) =>
       val sym = exp.asInstanceOf[Const].sym
-      if ( sym.isInstanceOf[LogicalSymbolA] || sym == EqSymbol ) { //the equation symbol is not a logical symbol
-        ( vmap, cmap )
-      } else if ( cmap.contains( name ) ) {
+      if ( cmap.contains( name ) ) {
         if ( cmap( name ) != exptype ) throw new Exception( "Symbol clash for " + name + " " + cmap( name ) + " != " + exptype )
         ( vmap, cmap )
       } else {

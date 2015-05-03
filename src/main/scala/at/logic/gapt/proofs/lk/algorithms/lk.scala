@@ -1,7 +1,8 @@
 
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.ProofTransformationUtils.computeMap
 import at.logic.gapt.proofs.lk.base._
@@ -60,7 +61,7 @@ object getCutAncestors {
    * @param predicate a function returning true if a cut-ancestor formula should be included in the set
    * @return a set of ancestor (formula) occurrences
    */
-  def apply( p: LKProof, predicate: HOLFormula => Boolean ): Set[FormulaOccurrence] = p match {
+  def apply( p: LKProof, predicate: Formula => Boolean ): Set[FormulaOccurrence] = p match {
     case CutRule( p1, p2, _, a1, a2 ) => if ( predicate( a1.formula ) ) {
       getCutAncestors( p1, predicate ) ++ getCutAncestors( p2, predicate ) ++ getAncestors( a1 ) ++ getAncestors( a2 )
     } else {
@@ -182,25 +183,25 @@ object eliminateDefinitions {
           handleContraction( ( new_parent._1, new_parent._2 ), p, proof, a1, a2, ContractionRightRule.apply )
         }
         case AndLeft1Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLAnd( _, w ) => w }
+          val f = m.formula match { case And( _, w ) => w }
           val new_parent = rec( p )
           val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), f )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
         }
         case AndLeft2Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLAnd( w, _ ) => w }
+          val f = m.formula match { case And( w, _ ) => w }
           val new_parent = rec( p )
           val new_proof = AndLeft2Rule( new_parent._1, f, new_parent._2( a ) )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
         }
         case OrRight1Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLOr( _, w ) => w }
+          val f = m.formula match { case Or( _, w ) => w }
           val new_parent = rec( p )
           val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), f )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
         }
         case OrRight2Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLOr( w, _ ) => w }
+          val f = m.formula match { case Or( w, _ ) => w }
           val new_parent = rec( p )
           val new_proof = OrRight2Rule( new_parent._1, f, new_parent._2( a ) )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
@@ -268,7 +269,7 @@ object eliminateDefinitions {
   def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
+                       constructor: ( LKProof, Formula ) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
@@ -284,8 +285,8 @@ object eliminateDefinitions {
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
 
-  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: HOLFormula,
-                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => BinaryLKProof with AuxiliaryFormulas ) = {
+  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: Formula,
+                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => BinaryLKProof with AuxiliaryFormulas ) = {
     // first left, then right
     val rec1 = rec( p1 )
     val rec2 = rec( p2 )
@@ -311,9 +312,9 @@ object regularize {
 
   def apply( p: LKProof ): LKProof = recApply( p )._1
 
-  def recApply( proof: LKProof ): ( LKProof, List[HOLVar], Map[FormulaOccurrence, FormulaOccurrence] ) = recApply( proof, variables( proof ) )
+  def recApply( proof: LKProof ): ( LKProof, List[Var], Map[FormulaOccurrence, FormulaOccurrence] ) = recApply( proof, variables( proof ) )
 
-  def recApply( proof: LKProof, vars: List[HOLVar] ): ( LKProof, List[HOLVar], Map[FormulaOccurrence, FormulaOccurrence] ) =
+  def recApply( proof: LKProof, vars: List[Var] ): ( LKProof, List[Var], Map[FormulaOccurrence, FormulaOccurrence] ) =
     {
       proof match {
         case r @ CutRule( p1, p2, _, a1, a2 ) => {
@@ -375,25 +376,25 @@ object regularize {
           handleContraction( ( new_parent._1, new_parent._3 ), p, proof, a1, a2, new_parent._2, ContractionRightRule.apply )
         }
         case AndLeft1Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLAnd( _, w ) => w }
+          val f = m.formula match { case And( _, w ) => w }
           val new_parent = recApply( p, vars )
           val new_proof = AndLeft1Rule( new_parent._1, new_parent._3( a ), f )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
         }
         case AndLeft2Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLAnd( w, _ ) => w }
+          val f = m.formula match { case And( w, _ ) => w }
           val new_parent = recApply( p, vars )
           val new_proof = AndLeft2Rule( new_parent._1, f, new_parent._3( a ) )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
         }
         case OrRight1Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLOr( _, w ) => w }
+          val f = m.formula match { case Or( _, w ) => w }
           val new_parent = recApply( p, vars )
           val new_proof = OrRight1Rule( new_parent._1, new_parent._3( a ), f )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
         }
         case OrRight2Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLOr( w, _ ) => w }
+          val f = m.formula match { case Or( w, _ ) => w }
           val new_parent = recApply( p, vars )
           val new_proof = OrRight2Rule( new_parent._1, f, new_parent._3( a ) )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
@@ -440,7 +441,7 @@ object regularize {
           val ( nparent, blacklist, table ) = recApply( p, vars :+ v )
           val ( new_proof, new_blacklist, new_map ) = if ( blacklist.contains( v ) ) // rename eigenvariable
           {
-            val new_var0 = HOLVar( v.name.toString.replaceAll( "_.*$", "" ), v.exptype ) // FIXME: this should use HOLVar.rename
+            val new_var0 = Var( v.name.toString.replaceAll( "_.*$", "" ), v.exptype ) // FIXME: this should use Var.rename
             val new_var = rename( new_var0, blacklist )
             val new_new_parent = applySubstitution( nparent, HOLSubstitution( v, new_var ) )
             val new_map = table.transform( ( k, v ) => new_new_parent._2( v ) ) // compose maps
@@ -455,7 +456,7 @@ object regularize {
           val ( nparent, blacklist, table ) = recApply( p, vars :+ v )
           val ( new_proof, new_blacklist, new_map ) = if ( blacklist.contains( v ) ) // rename eigenvariable
           {
-            val new_var0 = HOLVar( v.name.toString.replaceAll( "_.*$", "" ), v.exptype ) // FIXME: this should use HOLVar.rename
+            val new_var0 = Var( v.name.toString.replaceAll( "_.*$", "" ), v.exptype ) // FIXME: this should use Var.rename
             val new_var = rename( new_var0, blacklist )
             val new_new_parent = applySubstitution( nparent, HOLSubstitution( v, new_var ) )
             val new_map = table.transform( ( k, v ) => new_new_parent._2( v ) ) // compose maps
@@ -470,8 +471,8 @@ object regularize {
   def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       vars: List[HOLVar],
-                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
+                       vars: List[Var],
+                       constructor: ( LKProof, Formula ) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula )
     ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
@@ -482,7 +483,7 @@ object regularize {
                          old_proof: LKProof,
                          a1: FormulaOccurrence,
                          a2: FormulaOccurrence,
-                         vars: List[HOLVar],
+                         vars: List[Var],
                          constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ) = {
     val new_proof = constructor( new_parent._1, new_parent._2( a1 ), new_parent._2( a2 ) )
     ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
@@ -491,8 +492,8 @@ object regularize {
   def handleEquational( r: BinaryLKProof with AuxiliaryFormulas,
                         p1: LKProof, p2: LKProof,
                         a1: FormulaOccurrence, a2: FormulaOccurrence,
-                        m: HOLFormula, vars: List[HOLVar],
-                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => BinaryLKProof with AuxiliaryFormulas ) = {
+                        m: Formula, vars: List[Var],
+                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => BinaryLKProof with AuxiliaryFormulas ) = {
     // first left, then right
     val rec1 = recApply( p1, vars )
     val rec2 = recApply( p2, rec1._2 )
@@ -501,7 +502,7 @@ object regularize {
       computeMap( p2.root.antecedent ++ p2.root.succedent, r, new_proof, rec2._3 ) )
   }
 
-  def handleBinaryProp( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, vars: List[HOLVar],
+  def handleBinaryProp( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, vars: List[Var],
                         constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => BinaryLKProof with AuxiliaryFormulas ) = {
     // first left, then right
     val ( rec1, vars1, map1 ) = recApply( p1, vars )
@@ -512,15 +513,15 @@ object regularize {
   }
 
   // FIXME: this does not belong here - it is not specific to regularization
-  def variables( e: HOLExpression ): List[HOLVar] = e match {
-    case v: HOLVar      => List( v )
-    case c: HOLConst    => List()
-    case HOLApp( s, t ) => variables( s ) ++ variables( t )
-    case HOLAbs( v, t ) => variables( v ) ++ variables( t )
+  def variables( e: LambdaExpression ): List[Var] = e match {
+    case v: Var      => List( v )
+    case c: Const    => List()
+    case App( s, t ) => variables( s ) ++ variables( t )
+    case Abs( v, t ) => variables( v ) ++ variables( t )
   }
 
-  def variables( root: Sequent ): List[HOLVar] = ( root.antecedent ++ root.succedent ).foldLeft( List[HOLVar]() )( ( x, y ) => x ++ variables( y.formula ) )
-  def variables( p: LKProof ): List[HOLVar] = p.fold( variables )( _ ++ variables( _ ) )( _ ++ _ ++ variables( _ ) )
+  def variables( root: Sequent ): List[Var] = ( root.antecedent ++ root.succedent ).foldLeft( List[Var]() )( ( x, y ) => x ++ variables( y.formula ) )
+  def variables( p: LKProof ): List[Var] = p.fold( variables )( _ ++ variables( _ ) )( _ ++ _ ++ variables( _ ) )
 
 }
 
@@ -544,19 +545,19 @@ object replaceSubproof {
         if ( up1.contains( subproof ) ) AndRightRule( replace( up1, subproof, newSubproof ), up2, aux1.formula, aux2.formula )
         else AndRightRule( up1, replace( up2, subproof, newSubproof ), aux1.formula, aux2.formula )
       case AndLeft1Rule( up, _, aux, prin ) => prin.formula match {
-        case HOLAnd( aux.formula, f ) => AndLeft1Rule( replace( up, subproof, newSubproof ), aux.formula, f )
+        case And( aux.formula, f ) => AndLeft1Rule( replace( up, subproof, newSubproof ), aux.formula, f )
       }
       case AndLeft2Rule( up, _, aux, prin ) => prin.formula match {
-        case HOLAnd( f, aux.formula ) => AndLeft2Rule( replace( up, subproof, newSubproof ), f, aux.formula )
+        case And( f, aux.formula ) => AndLeft2Rule( replace( up, subproof, newSubproof ), f, aux.formula )
       }
       case OrLeftRule( up1, up2, _, aux1, aux2, _ ) =>
         if ( up1.contains( subproof ) ) OrLeftRule( replace( up1, subproof, newSubproof ), up2, aux1.formula, aux2.formula )
         else OrLeftRule( up1, replace( up2, subproof, newSubproof ), aux1.formula, aux2.formula )
       case OrRight1Rule( up, _, aux, prin ) => prin.formula match {
-        case HOLOr( aux.formula, f ) => OrRight1Rule( replace( up, subproof, newSubproof ), aux.formula, f )
+        case Or( aux.formula, f ) => OrRight1Rule( replace( up, subproof, newSubproof ), aux.formula, f )
       }
       case OrRight2Rule( up, _, aux, prin ) => prin.formula match {
-        case HOLOr( f, aux.formula ) => OrRight2Rule( replace( up, subproof, newSubproof ), f, aux.formula )
+        case Or( f, aux.formula ) => OrRight2Rule( replace( up, subproof, newSubproof ), f, aux.formula )
       }
       case ImpLeftRule( up1, up2, _, aux1, aux2, _ ) =>
         if ( up1.contains( subproof ) ) ImpLeftRule( replace( up1, subproof, newSubproof ), up2, aux1.formula, aux2.formula )

@@ -8,10 +8,12 @@
 
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
+import at.logic.gapt.language.fol.instantiateAll
+import at.logic.gapt.language.hol.containsQuantifier
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution.FClause
 import scala.collection.immutable.Stack
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.MinimizeSolution.MyFClause
@@ -28,7 +30,7 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
   val cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( grammar ) else cf
 
   // From ".map" on are lots of castings just to make the data structure right :-|
-  // FormulaOccurrence to HOLFormula to FOLFormula and Seq to List...
+  // FormulaOccurrence to Formula to FOLFormula and Seq to List...
 
   // Propositional formulas on the left
   val prop_l: List[FOLFormula] = endSequent.antecedent.filter( x => !containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
@@ -43,16 +45,16 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
   val inst_l: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
     case ( f, acc ) =>
       f match {
-        case FOLAllVar( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
-        case _                 => acc
+        case All( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
+        case _           => acc
       }
   }
   // Instantiated (previously ex. quantified) formulas on the right
   val inst_r: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
     case ( f, acc ) =>
       f match {
-        case FOLExVar( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
-        case _                => acc
+        case Ex( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
+        case _          => acc
       }
   }
 
@@ -65,8 +67,8 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
 
   private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
     val ant = instantiateAll( cf, alpha )
-    val succ = FOLAnd( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
-    FOLImp( ant, succ )
+    val succ = And( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    Imp( ant, succ )
   }
 
   def getDeep: FSequent = {
@@ -91,7 +93,7 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
     val str1 = antecedent.foldRight("") ( (f, acc) => acc + f + ", ")
     val str2 = succedent_alpha.foldRight("") ( (f, acc) => acc + f + ", ")
     val str3 = succedent.foldRight("") ( (f, acc) => acc + f + ", ")
-    val str4 = cutFormula match { case AllVar( x, f ) => "λ " + x + ". " + f }
+    val str4 = cutFormula match { case All( x, f ) => "λ " + x + ". " + f }
       
     (str1 + str0 + implication + " :- " + str3 + str2 + " where " + X + " = " + str4)*/
 

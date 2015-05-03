@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.language.schema.IndexedPredicate
 import at.logic.gapt.expr.types.{ To, Tindex }
-import at.logic.gapt.language.hol.{ HOLExpression, HOLApp, HOLConst, HOLFormula }
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.logging.Logger
 import scala.annotation.tailrec
 import scala.util.control.TailCalls._
@@ -229,15 +229,15 @@ object SimplifyStruct {
 }
 
 object renameCLsymbols {
-  def createMap( cs: List[Sequent] ): Map[HOLExpression, HOLExpression] = {
+  def createMap( cs: List[Sequent] ): Map[LambdaExpression, LambdaExpression] = {
     var i: Int = 1
-    var map = Map.empty[HOLExpression, HOLExpression]
+    var map = Map.empty[LambdaExpression, LambdaExpression]
     cs.foreach( seq => {
       ( seq.antecedent ++ seq.succedent ).foreach( fo => {
         fo.formula match {
           case IndexedPredicate( constant, indices ) if constant.sym.isInstanceOf[ClauseSetSymbol] => {
             if ( !map.contains( constant ) ) {
-              map = map + Tuple2( constant, HOLConst( "cl_" + i.toString, Tindex -> To ) )
+              map = map + Tuple2( constant, Const( "cl_" + i.toString, Tindex -> To ) )
               i = i + 1
             }
           }
@@ -248,14 +248,14 @@ object renameCLsymbols {
     return map
   }
 
-  def apply( cs: List[Sequent] ): ( List[FSequent], Map[HOLExpression, HOLExpression] ) = {
+  def apply( cs: List[Sequent] ): ( List[FSequent], Map[LambdaExpression, LambdaExpression] ) = {
     val map = createMap( cs )
     val list = cs.map( seq => {
       val ant = seq.antecedent.map( fo => {
         fo.formula match {
           case IndexedPredicate( constant, indices ) if constant.sym.isInstanceOf[ClauseSetSymbol] => {
             if ( map.contains( constant ) ) {
-              HOLApp( map( constant ), indices.head )
+              App( map( constant ), indices.head )
             } else
               throw new Exception( "\nError in renameCLsymbols.apply !\n" )
           }
@@ -266,14 +266,14 @@ object renameCLsymbols {
         fo.formula match {
           case IndexedPredicate( constant, indices ) if constant.sym.isInstanceOf[ClauseSetSymbol] => {
             if ( map.contains( constant ) ) {
-              HOLApp( map( constant ), indices.head )
+              App( map( constant ), indices.head )
             } else
               throw new Exception( "\nError in renameCLsymbols.apply !\n" )
           }
           case _ => fo.formula
         }
       } )
-      FSequent( ant.asInstanceOf[List[HOLFormula]], succ.asInstanceOf[List[HOLFormula]] )
+      FSequent( ant.asInstanceOf[List[Formula]], succ.asInstanceOf[List[Formula]] )
     } )
     ( list, map )
   }

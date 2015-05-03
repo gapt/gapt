@@ -6,7 +6,7 @@ import scala.util.parsing.combinator.PackratParsers
 import at.logic.gapt.expr.symbols._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.fol
 
 /**
@@ -153,7 +153,7 @@ object DeclarationParser extends DeclarationParser;
 
 class DeclarationParser extends HOLASTParser {
   /* The main entry point to the parser for prover9 formulas. To parse literals, use literal as the entry point. */
-  def parseDeclaration( s: String ): Map[String, HOLExpression] = parseAll( declaration_list, s ) match {
+  def parseDeclaration( s: String ): Map[String, LambdaExpression] = parseAll( declaration_list, s ) match {
     case Success( result, _ ) => result
     case NoSuccess( msg, input ) =>
       throw new Exception( "Error parsing type declaration '" + s + "' at position " + input.pos + ". Error message: " + msg )
@@ -167,17 +167,17 @@ class DeclarationParser extends HOLASTParser {
   lazy val simpleType: PackratParser[TA] = ti | to
   lazy val complexType: PackratParser[TA] = ( ( complexType | parens( complexType ) ) ~ ">" ~ ( complexType | parens( complexType ) ) ) ^^ { case t1 ~ _ ~ t2 => t1 -> t2 } | simpleType
 
-  lazy val constdecl: PackratParser[Map[String, HOLExpression]] = "const" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
-    case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map ( x => ( x, HOLConst( x, exptype ) ) ) )
+  lazy val constdecl: PackratParser[Map[String, LambdaExpression]] = "const" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
+    case _ ~ varnames ~ _ ~ exptype => Map[String, LambdaExpression]() ++ ( varnames map ( x => ( x, Const( x, exptype ) ) ) )
   }
 
-  lazy val vardecl: PackratParser[Map[String, HOLExpression]] = "var" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
-    case _ ~ varnames ~ _ ~ exptype => Map[String, HOLExpression]() ++ ( varnames map ( x => ( x, HOLVar( x, exptype ) ) ) )
+  lazy val vardecl: PackratParser[Map[String, LambdaExpression]] = "var" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
+    case _ ~ varnames ~ _ ~ exptype => Map[String, LambdaExpression]() ++ ( varnames map ( x => ( x, Var( x, exptype ) ) ) )
   }
 
   //declaration lists e.g.: var x,y :i; const a,b : i; const P : i > i > o
-  lazy val declaration: PackratParser[Map[String, HOLExpression]] = constdecl | vardecl
-  lazy val declaration_list: PackratParser[Map[String, HOLExpression]] =
+  lazy val declaration: PackratParser[Map[String, LambdaExpression]] = constdecl | vardecl
+  lazy val declaration_list: PackratParser[Map[String, LambdaExpression]] =
     ( rep1sep( declaration, ";" ) ~ ";" ) ^^ {
       case l ~ _ => l.foldLeft( defaultsymbols )( ( map, x ) => {
         for ( v <- map.keys ) {
@@ -187,54 +187,54 @@ class DeclarationParser extends HOLASTParser {
       } )
     }
 
-  val defaultsymbols = Map[String, HOLExpression]()
+  val defaultsymbols = Map[String, LambdaExpression]()
 
-  lazy val declaredformula: PackratParser[( Map[String, HOLExpression], ast.LambdaAST )] =
+  lazy val declaredformula: PackratParser[( Map[String, LambdaExpression], ast.LambdaAST )] =
     ( declaration_list ~ formula ) ^^ { case d ~ f => ( d, f ) }
 }
 
 object HLKHOLParser extends HLKHOLParser
 class HLKHOLParser {
   //automated casting, a bit dirty
-  private def f( e: HOLExpression ): HOLFormula = {
-    require( e.isInstanceOf[HOLFormula], "The expression " + e + " is supposed to be a formula!" )
-    e.asInstanceOf[HOLFormula]
+  private def f( e: LambdaExpression ): Formula = {
+    require( e.isInstanceOf[Formula], "The expression " + e + " is supposed to be a formula!" )
+    e.asInstanceOf[Formula]
   }
-  private def v( e: HOLExpression ): HOLVar = {
-    require( e.isInstanceOf[HOLVar], "The expression " + e + " is supposed to be a variable!" )
-    e.asInstanceOf[HOLVar]
+  private def v( e: LambdaExpression ): Var = {
+    require( e.isInstanceOf[Var], "The expression " + e + " is supposed to be a variable!" )
+    e.asInstanceOf[Var]
   }
 
-  def ASTtoHOLnormalized( create: String => HOLExpression, exp: ast.LambdaAST ): HOLExpression =
+  def ASTtoHOLnormalized( create: String => LambdaExpression, exp: ast.LambdaAST ): LambdaExpression =
     BetaReduction.betaNormalize( ASTtoHOL( create, exp ) )
 
   //converts an ast to a holformula. create decides if the string represents a constant or variable of appropriate type
   // and returns the matching hol expression
-  def ASTtoHOL( create: String => HOLExpression, exp: ast.LambdaAST ): HOLExpression = exp match {
-    case ast.Abs( ast.Var( x ), t )    => HOLAbs( v( create( x ) ), ASTtoHOL( create, t ) )
-    case ast.All( ast.Var( x ), t )    => HOLAllVar( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
-    case ast.Exists( ast.Var( x ), t ) => HOLExVar( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
+  def ASTtoHOL( create: String => LambdaExpression, exp: ast.LambdaAST ): LambdaExpression = exp match {
+    case ast.Abs( ast.Var( x ), t )    => Abs( v( create( x ) ), ASTtoHOL( create, t ) )
+    case ast.All( ast.Var( x ), t )    => All( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
+    case ast.Exists( ast.Var( x ), t ) => Ex( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
 
-    case ast.Neg( l )                  => HOLNeg( f( ASTtoHOL( create, l ) ) )
+    case ast.Neg( l )                  => Neg( f( ASTtoHOL( create, l ) ) )
 
     case ast.App( Nil )                => throw new Exception( "Empty applications are not accepted!" )
     case ast.App( first :: Nil )       => ASTtoHOL( create, first )
     case ast.App( first :: rest ) =>
       //require(! rest.isEmpty, "Empty applications are not accepted!");
-      rest.foldLeft( ASTtoHOL( create, first ) )( ( exp, a ) => HOLApp( exp, ASTtoHOL( create, a ) ) )
+      rest.foldLeft( ASTtoHOL( create, first ) )( ( exp, a ) => App( exp, ASTtoHOL( create, a ) ) )
 
-    case ast.And( l, r ) => HOLAnd( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
-    case ast.Or( l, r )  => HOLOr( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
-    case ast.Imp( l, r ) => HOLImp( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
+    case ast.And( l, r ) => And( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
+    case ast.Or( l, r )  => Or( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
+    case ast.Imp( l, r ) => Imp( f( ASTtoHOL( create, l ) ), f( ASTtoHOL( create, r ) ) )
 
-    case ast.Eq( l, r )  => HOLEquation( ASTtoHOL( create, l ), ASTtoHOL( create, r ) )
+    case ast.Eq( l, r )  => Eq( ASTtoHOL( create, l ), ASTtoHOL( create, r ) )
 
     case ast.Var( x )    => create( x )
-    case ast.Top()       => HOLAtom( HOLTopC, Nil )
-    case ast.Bottom()    => HOLAtom( HOLBottomC, Nil )
+    case ast.Top()       => HOLAtom( Top(), Nil )
+    case ast.Bottom()    => HOLAtom( Bottom(), Nil )
   }
 
-  def parse( create: String => HOLVar, s: CharSequence ): HOLExpression = {
+  def parse( create: String => Var, s: CharSequence ): LambdaExpression = {
     DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
       case DeclarationParser.Success( result, _ ) => ASTtoHOL( create, result )
       case DeclarationParser.NoSuccess( msg, input ) =>
@@ -243,7 +243,7 @@ class HLKHOLParser {
 
   }
 
-  def parse( s: CharSequence ): HOLExpression = {
+  def parse( s: CharSequence ): LambdaExpression = {
     DeclarationParser.parseAll( DeclarationParser.declaredformula, s ) match {
       case DeclarationParser.Success( ( declarations, tree ), _ ) =>
         ASTtoHOL( x => declarations( x ), tree )
@@ -253,7 +253,7 @@ class HLKHOLParser {
 
   }
 
-  def parseFormula( s: String ): HOLExpression = f( parse( s ) )
+  def parseFormula( s: String ): LambdaExpression = f( parse( s ) )
 
 }
 

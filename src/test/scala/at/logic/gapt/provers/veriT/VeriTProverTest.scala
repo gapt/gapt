@@ -4,7 +4,7 @@
 
 package at.logic.gapt.provers.veriT
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import org.junit.runner.RunWith
 import org.specs2.mutable._
@@ -21,7 +21,7 @@ class VeriTProverTest extends SpecificationWithJUnit {
     "prove a v not a" in {
       //skipped("--proof-version in isValid is only supported on Giselle's machine")
       val a = FOLAtom( "a", Nil )
-      val f = FOLOr( a, FOLNeg( a ) )
+      val f = Or( a, Neg( a ) )
 
       veriT.isValid( f ) must beEqualTo( true )
     }

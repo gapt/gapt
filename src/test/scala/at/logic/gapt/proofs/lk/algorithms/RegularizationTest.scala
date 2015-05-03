@@ -1,7 +1,7 @@
 
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.FSequent
@@ -13,8 +13,8 @@ import org.specs2.runner.JUnitRunner
 class RegularizationTest extends SpecificationWithJUnit {
   "Regularization" should {
     "apply correctly to a simple proof (1)" in {
-      val x = HOLVar( "x", Ti )
-      val P = HOLConst( "P", Ti -> To )
+      val x = Var( "x", Ti )
+      val P = Const( "P", Ti -> To )
       val px = HOLAtom( P, x :: Nil )
       val s = FSequent( px :: Nil, px :: Nil )
       val ax1 = Axiom( px :: Nil, px :: Nil )
@@ -27,12 +27,12 @@ class RegularizationTest extends SpecificationWithJUnit {
 
     "apply to a simple proof (2)" in {
       skipped( "Fix me. Should not depend so much on the names and the kind of renaming used" )
-      val List( a, b, x, y ) = List( "a", "b", "x", "y" ) map ( ( x: String ) => HOLVar( x, Ti ) )
-      val List( k, l ) = List( "k", "l" ) map ( ( x: String ) => HOLConst( x, Ti ) )
-      val P = HOLConst( "P", Ti -> ( Ti -> ( Ti -> To ) ) )
+      val List( a, b, x, y ) = List( "a", "b", "x", "y" ) map ( ( x: String ) => Var( x, Ti ) )
+      val List( k, l ) = List( "k", "l" ) map ( ( x: String ) => Const( x, Ti ) )
+      val P = Const( "P", Ti -> ( Ti -> ( Ti -> To ) ) )
       val Pabk = HOLAtom( P, List( a, b, k ) )
-      val exPayk = HOLExVar( y, HOLAtom( P, List( a, y, k ) ) )
-      val Q = HOLConst( "Q", Ti -> ( Ti -> ( Ti -> ( Ti -> To ) ) ) )
+      val exPayk = Ex( y, HOLAtom( P, List( a, y, k ) ) )
+      val Q = Const( "Q", Ti -> ( Ti -> ( Ti -> ( Ti -> To ) ) ) )
       val Pxyk = HOLAtom( Q, List( x, y, k, l ) )
 
       val l1 = Axiom( Pabk :: Nil, Pabk :: Nil )
@@ -68,12 +68,12 @@ class RegularizationTest extends SpecificationWithJUnit {
       skipped( "Fix me. Should not depend so much on the names and the kind of renaming used" )
       //this is similar to (2) but checks the universal quantifier and if there are no collisions between newly
       // generated vars and already existing ones
-      val List( a, b, x, y ) = List( "a_1", "a_2", "x", "y" ) map ( ( x: String ) => HOLVar( x, Ti ) )
-      val List( k, l ) = List( "k", "l" ) map ( ( x: String ) => HOLConst( x, Ti ) )
-      val P = HOLConst( "P", Ti -> ( Ti -> ( Ti -> To ) ) )
+      val List( a, b, x, y ) = List( "a_1", "a_2", "x", "y" ) map ( ( x: String ) => Var( x, Ti ) )
+      val List( k, l ) = List( "k", "l" ) map ( ( x: String ) => Const( x, Ti ) )
+      val P = Const( "P", Ti -> ( Ti -> ( Ti -> To ) ) )
       val Pabk = HOLAtom( P, List( a, b, k ) )
-      val exPayk = HOLAllVar( y, HOLAtom( P, List( a, y, k ) ) )
-      val Q = HOLConst( "Q", Ti -> ( Ti -> ( Ti -> ( Ti -> To ) ) ) )
+      val exPayk = All( y, HOLAtom( P, List( a, y, k ) ) )
+      val Q = Const( "Q", Ti -> ( Ti -> ( Ti -> ( Ti -> To ) ) ) )
       val Pxyk = HOLAtom( Q, List( x, y, k, l ) )
 
       val l1 = Axiom( Pabk :: Nil, Pabk :: Nil )

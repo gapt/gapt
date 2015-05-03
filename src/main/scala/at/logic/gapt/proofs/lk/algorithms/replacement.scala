@@ -8,8 +8,7 @@
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
@@ -23,7 +22,7 @@ object applyReplacement {
                        repl: Map[FOLTerm, FOLTerm],
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
+                       constructor: ( LKProof, Formula ) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, TermReplacement( m.formula.asInstanceOf[FOLFormula], repl ) )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + ( ( m, new_proof.prin.head ) ) )
@@ -51,7 +50,7 @@ object applyReplacement {
   }
 
   def handleEquationRule(
-    constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof,
+    constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => LKProof,
     p1: LKProof,
     p2: LKProof,
     old_proof: LKProof,
@@ -60,7 +59,7 @@ object applyReplacement {
     s: Sequent,
     a1: FormulaOccurrence,
     a2: FormulaOccurrence,
-    m: HOLFormula ) = {
+    m: Formula ) = {
     val new_proof = constructor( new_p1._1, new_p2._1, a1, a2, m )
     ( new_proof, computeMap( p1.root.antecedent ++ p1.root.succedent ++ p2.root.antecedent ++ p2.root.succedent,
       old_proof, new_proof, new_p1._2 ++ new_p2._2 ) )
@@ -96,26 +95,26 @@ object applyReplacement {
       }
       case AndRightRule( p1, p2, s, a1, a2, m ) => handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, AndRightRule.apply )
       case AndLeft1Rule( p, s, a, m ) => {
-        val f = m.formula match { case FOLAnd( _, w ) => w }
+        val f = m.formula match { case And( _, w ) => w }
         val new_parent = new_parents.head
         val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), TermReplacement( f.asInstanceOf[FOLFormula], repl ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case AndLeft2Rule( p, s, a, m ) => {
-        val f = m.formula match { case FOLAnd( w, _ ) => w }
+        val f = m.formula match { case And( w, _ ) => w }
         val new_parent = new_parents.head
         val new_proof = AndLeft2Rule( new_parent._1, TermReplacement( f.asInstanceOf[FOLFormula], repl ), new_parent._2( a ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case OrLeftRule( p1, p2, s, a1, a2, m ) => handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, OrLeftRule.apply )
       case OrRight1Rule( p, s, a, m ) => {
-        val f = m.formula match { case FOLOr( _, w ) => w }
+        val f = m.formula match { case Or( _, w ) => w }
         val new_parent = new_parents.head
         val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), TermReplacement( f.asInstanceOf[FOLFormula], repl ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case OrRight2Rule( p, s, a, m ) => {
-        val f = m.formula match { case FOLOr( w, _ ) => w }
+        val f = m.formula match { case Or( w, _ ) => w }
         val new_parent = new_parents.head
         val new_proof = OrRight2Rule( new_parent._1, TermReplacement( f.asInstanceOf[FOLFormula], repl ), new_parent._2( a ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )

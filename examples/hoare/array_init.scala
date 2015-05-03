@@ -1,6 +1,6 @@
 import at.logic.gapt.proofs.expansionTrees.METWeakQuantifier
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
-import at.logic.gapt.language.hol.HOLNeg
+import at.logic.gapt.language.hol.Neg
 import at.logic.gapt.proofs.hoare.{ForLoop, SimpleLoopProblem}
 
 val p = parse.program("for y < z do x := set(x, s(y), get(x, y)) od")
@@ -34,5 +34,5 @@ expansionSequent.antecedent.foreach {
 }
 val deepSequent = expansionSequent.toDeep
 deepSequent.antecedent.foreach(println(_))
-deepSequent.succedent.foreach(f => println(HOLNeg(f)))
+deepSequent.succedent.foreach(f => println(Neg(f)))
 

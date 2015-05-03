@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.dimacs
 
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.models.MapBasedInterpretation
 import at.logic.gapt.proofs.resolution.FClause
 
@@ -50,14 +50,14 @@ object readDIMACS {
 
 object writeDIMACS {
   def apply( helper: DIMACSHelper ) = {
-    def getDIMACSString1( atom: HOLFormula, pos: Boolean ): String =
+    def getDIMACSString1( atom: Formula, pos: Boolean ): String =
       if ( pos ) helper.atom_map.get( atom ).get.toString else "-" + helper.atom_map.get( atom ).get
 
     def getDIMACSString( clause: FClause ): String =
       {
         val sb = new StringBuilder()
 
-        def atoms_to_str( as: Seq[HOLFormula], pol: Boolean ) = as.foreach( a => {
+        def atoms_to_str( as: Seq[Formula], pol: Boolean ) = as.foreach( a => {
           sb.append( getDIMACSString1( a, pol ) );
           sb.append( " " );
         } )

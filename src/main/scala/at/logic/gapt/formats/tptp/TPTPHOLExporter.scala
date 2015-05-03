@@ -1,9 +1,8 @@
 package at.logic.gapt.formats.tptp
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
-import at.logic.gapt.language.hol.logicSymbols._
 
 /**
  * Created by marty on 12/10/13.
@@ -30,7 +29,7 @@ class TPTPHOLExporter {
 
     val vdecs = vdecs_.foldLeft( "" )( _ ++ _ )
 
-    val cdecs_ = for ( c <- cs if c.sym != EqSymbol ) yield { //need to exclude the predefined constant =
+    val cdecs_ = for ( c <- cs ) yield {
       index = index + 1
       thf_type_dec( index, c, cnames ) + "\n"
     }
@@ -44,7 +43,7 @@ class TPTPHOLExporter {
           thf_formula_dec( index, fs.toFormula, vnames, cnames ) + "\n"
         }
       case false =>
-        val negClauses = HOLNeg( HOLAnd( l.map( closedFormula ) ) )
+        val negClauses = Neg( And( l.map( closedFormula ) ) )
         index = index + 1
         // since in thf conjectures are seen as conjunction. the negated cnf is one big formula
         List( thf_formula_dec( index, negClauses, vnames, cnames ) )
@@ -63,8 +62,8 @@ class TPTPHOLExporter {
       return ()
     };
     println( "% Symbol translation table for THF export:" )
-    val csyms = cnames.keySet.toList.map( { case HOLConst( s, _ ) => s } )
-    val vsyms = vnames.keySet.toList.map( { case HOLVar( s, _ ) => s } )
+    val csyms = cnames.keySet.toList.map( { case Const( s, _ ) => s } )
+    val vsyms = vnames.keySet.toList.map( { case Var( s, _ ) => s } )
 
     val width = ( vsyms ++ csyms ).sortWith( ( x, y ) => y.size < x.size ).head.size
 
@@ -102,22 +101,22 @@ class TPTPHOLExporter {
 
   }
 
-  type NameMap = Map[HOLVar, String]
-  val emptyNameMap = Map[HOLVar, String]()
-  type CNameMap = Map[HOLConst, String]
-  val emptyCNameMap = Map[HOLConst, String]()
+  type NameMap = Map[Var, String]
+  val emptyNameMap = Map[Var, String]()
+  type CNameMap = Map[Const, String]
+  val emptyCNameMap = Map[Const, String]()
 
-  def createFormula( f: HOLExpression, map: Map[HOLVar, String] ) = f match {
-    case HOLVar( _, _ ) => map( f.asInstanceOf[HOLVar] )
+  def createFormula( f: LambdaExpression, map: Map[Var, String] ) = f match {
+    case Var( _, _ ) => map( f.asInstanceOf[Var] )
   }
 
-  def createNamesFromSequent( l: List[FSequent] ): ( List[HOLVar], NameMap, List[HOLConst], CNameMap ) = {
-    val vs = l.foldLeft( Set[HOLVar]() )( ( set, fs ) => getVars( fs.toFormula, set ) ).toList
-    val cs = l.foldLeft( Set[HOLConst]() )( ( set, fs ) => getConsts( fs.toFormula, set ) ).toList
+  def createNamesFromSequent( l: List[FSequent] ): ( List[Var], NameMap, List[Const], CNameMap ) = {
+    val vs = l.foldLeft( Set[Var]() )( ( set, fs ) => getVars( fs.toFormula, set ) ).toList
+    val cs = l.foldLeft( Set[Const]() )( ( set, fs ) => getConsts( fs.toFormula, set ) ).toList
     ( vs, createNamesFromVar( vs ), cs, createNamesFromConst( cs ) )
   }
 
-  def createNamesFromVar( l: List[HOLVar] ): NameMap = l.foldLeft( emptyNameMap )( ( map, v ) => {
+  def createNamesFromVar( l: List[Var] ): NameMap = l.foldLeft( emptyNameMap )( ( map, v ) => {
     if ( map contains v )
       map
     else {
@@ -126,12 +125,12 @@ class TPTPHOLExporter {
     }
   } )
 
-  def closedFormula( fs: FSequent ): HOLFormula = {
+  def closedFormula( fs: FSequent ): Formula = {
     val f = fs.toFormula
-    freeVariables( f ).foldRight( f )( ( v, g ) => HOLAllVar( v, g ) )
+    freeVariables( f ).foldRight( f )( ( v, g ) => All( v, g ) )
   }
 
-  def createNamesFromConst( l: List[HOLConst] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {
+  def createNamesFromConst( l: List[Const] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {
     if ( map contains v )
       map
     else {
@@ -148,38 +147,38 @@ class TPTPHOLExporter {
       "] )."
   }
 
-  def thf_formula_dec( i: Int, f: HOLFormula, vmap: NameMap, cmap: CNameMap ) = {
+  def thf_formula_dec( i: Int, f: Formula, vmap: NameMap, cmap: CNameMap ) = {
     "thf(" + i + ", conjecture, " + thf_formula( f, vmap, cmap, true ) + " )."
   }
 
-  def thf_negformula_dec( i: Int, f: HOLFormula, vmap: NameMap, cmap: CNameMap ) = {
+  def thf_negformula_dec( i: Int, f: Formula, vmap: NameMap, cmap: CNameMap ) = {
     "thf(" + i + ", negated_conjecture, " + thf_formula( f, vmap, cmap, true ) + " )."
   }
 
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
-  def thf_formula( f: HOLExpression, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
+  def thf_formula( f: LambdaExpression, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
     f match {
-      case HOLNeg( x )         => addparens( " ~" + thf_formula( x, vmap, cmap ), !outermost )
-      case HOLAnd( x, y )      => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
-      case HOLOr( x, y )       => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
-      case HOLImp( x, y )      => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )
-      case HOLAllVar( x, t )   => addparens( "![" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case HOLExVar( x, t )    => addparens( "?[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case HOLEquation( x, y ) => addparens( thf_formula( x, vmap, cmap ) + " = " + thf_formula( y, vmap, cmap ), !outermost )
-      case HOLAbs( x, t )      => addparens( "^[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case HOLApp( s, t )      => addparens( thf_formula( s, vmap, cmap ) + " @ " + thf_formula( t, vmap, cmap ), !outermost )
-      case HOLVar( _, _ )      => vmap( f.asInstanceOf[HOLVar] )
-      case HOLConst( _, _ )    => cmap( f.asInstanceOf[HOLConst] )
-      case _                   => throw new Exception( "TPTP export does not support outermost connective of " + f )
+      case Neg( x )      => addparens( " ~" + thf_formula( x, vmap, cmap ), !outermost )
+      case And( x, y )   => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
+      case Or( x, y )    => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
+      case Imp( x, y )   => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )
+      case All( x, t )   => addparens( "![" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case Ex( x, t )    => addparens( "?[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case Eq( x, y )    => addparens( thf_formula( x, vmap, cmap ) + " = " + thf_formula( y, vmap, cmap ), !outermost )
+      case Abs( x, t )   => addparens( "^[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case App( s, t )   => addparens( thf_formula( s, vmap, cmap ) + " @ " + thf_formula( t, vmap, cmap ), !outermost )
+      case Var( _, _ )   => vmap( f.asInstanceOf[Var] )
+      case Const( _, _ ) => cmap( f.asInstanceOf[Const] )
+      case _             => throw new Exception( "TPTP export does not support outermost connective of " + f )
     }
   }
 
-  def thf_type_dec( i: Int, v: HOLVar, vmap: NameMap ): String = {
+  def thf_type_dec( i: Int, v: Var, vmap: NameMap ): String = {
     require( vmap.contains( v ), "Did not generate an export name for " + v + "!" )
     "thf(" + i + ", type, " + vmap( v ) + ": " + getTypeString( v.exptype ) + " )."
   }
 
-  def thf_type_dec( i: Int, c: HOLConst, cmap: CNameMap ): String = {
+  def thf_type_dec( i: Int, c: Const, cmap: CNameMap ): String = {
     require( cmap.contains( c ), "Did not generate an export name for " + c + "!" )
     "thf(" + i + ", type, " + cmap( c ) + ": " + getTypeString( c.exptype ) + " )."
   }
@@ -193,7 +192,7 @@ class TPTPHOLExporter {
     case _                 => throw new Exception( "TPTP type export for " + t + " not implemented!" )
   }
 
-  def mkVarName( str: String, map: Map[HOLVar, String] ) = {
+  def mkVarName( str: String, map: Map[Var, String] ) = {
     val fstr_ = str.filter( _.toString.matches( "[a-zA-Z0-9]" ) )
     val fstr = if ( fstr_.isEmpty ) {
       println( "Warning: " + str + " needs to be completely replaced by a fresh variable!" )
@@ -240,23 +239,18 @@ class TPTPHOLExporter {
     str + i
   }
 
-  def getVars( t: HOLExpression, set: Set[HOLVar] ): Set[HOLVar] = t match {
-    case HOLConst( _, _ ) => set
-    case HOLVar( _, _ )   => set + t.asInstanceOf[HOLVar]
-    case HOLApp( s, t )   => getVars( s, getVars( t, set ) )
-    case HOLAbs( x, t )   => getVars( t, set + x )
+  def getVars( t: LambdaExpression, set: Set[Var] ): Set[Var] = t match {
+    case Const( _, _ ) => set
+    case Var( _, _ )   => set + t.asInstanceOf[Var]
+    case App( s, t )   => getVars( s, getVars( t, set ) )
+    case Abs( x, t )   => getVars( t, set + x )
   }
 
-  def getConsts( t: HOLExpression, set: Set[HOLConst] ): Set[HOLConst] = t match {
-    case HOLConst( _, _ ) =>
-      val c = t.asInstanceOf[HOLConst]
-      if ( c.sym.isInstanceOf[LogicalSymbolA] )
-        set
-      else
-        set + c
-    case HOLVar( _, _ ) => set
-    case HOLApp( s, t ) => getConsts( s, getConsts( t, set ) )
-    case HOLAbs( x, t ) => getConsts( t, set )
+  def getConsts( t: LambdaExpression, set: Set[Const] ): Set[Const] = t match {
+    case UndistinguishedConstant( _, _ ) => set + t.asInstanceOf[Const]
+    case Var( _, _ )                     => set
+    case App( s, t )                     => getConsts( s, getConsts( t, set ) )
+    case Abs( x, t )                     => getConsts( t, set )
   }
 
 }

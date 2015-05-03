@@ -1,9 +1,8 @@
 package at.logic.gapt.formats.veriT
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.expr.symbols._
-import at.logic.gapt.utils.latex._
 import java.io._
 import org.apache.commons.lang3.StringEscapeUtils
 import at.logic.gapt.proofs.lk.base.FSequent
@@ -56,8 +55,8 @@ object VeriTExporter {
     if ( succ.length == 0 ) {
       s1
     } else {
-      val negs = succ.map( x => FOLNeg( x ) )
-      val disj = FOLOr( negs )
+      val negs = succ.map( x => Neg( x ) )
+      val disj = Or( negs )
       s1 + "(assert " + toSMTFormat( disj ) + ")\n"
     }
   }
@@ -87,18 +86,18 @@ object VeriTExporter {
       Set( ( toSMTString( pred ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
     case FOLFunction( fun, args ) =>
       Set( ( toSMTString( fun ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
-    case FOLAnd( f1, f2 )   => getSymbols( f1 ) ++ getSymbols( f2 )
-    case FOLOr( f1, f2 )    => getSymbols( f1 ) ++ getSymbols( f2 )
-    case FOLImp( f1, f2 )   => getSymbols( f1 ) ++ getSymbols( f2 )
-    case FOLNeg( f1 )       => getSymbols( f1 )
-    case FOLAllVar( _, f1 ) => getSymbols( f1 )
-    case FOLExVar( _, f1 )  => getSymbols( f1 )
-    case _                  => throw new Exception( "Undefined formula: " + f )
+    case And( f1, f2 ) => getSymbols( f1 ) ++ getSymbols( f2 )
+    case Or( f1, f2 )  => getSymbols( f1 ) ++ getSymbols( f2 )
+    case Imp( f1, f2 ) => getSymbols( f1 ) ++ getSymbols( f2 )
+    case Neg( f1 )     => getSymbols( f1 )
+    case All( _, f1 )  => getSymbols( f1 )
+    case Ex( _, f1 )   => getSymbols( f1 )
+    case _             => throw new Exception( "Undefined formula: " + f )
   }
 
   private def toSMTFormat( f: FOLExpression ): String = f match {
-    case FOLTopC       => "true"
-    case FOLBottomC    => "false"
+    case Top()         => "true"
+    case Bottom()      => "false"
     case FOLVar( s )   => toSMTString( s )
     case FOLConst( s ) => toSMTString( s )
     case FOLAtom( pred, args ) =>
@@ -109,10 +108,10 @@ object VeriTExporter {
       }
     // Functions should have arguments.
     case FOLFunction( fun, args ) => "(" + toSMTString( fun ) + " " + args.foldRight( "" )( ( t, acc ) => toSMTFormat( t ) + " " + acc ) + ")"
-    case FOLAnd( f1, f2 )         => "(and " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
-    case FOLOr( f1, f2 )          => "(or " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
-    case FOLImp( f1, f2 )         => "(=> " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
-    case FOLNeg( f1 )             => "(not " + toSMTFormat( f1 ) + ")"
+    case And( f1, f2 )            => "(and " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
+    case Or( f1, f2 )             => "(or " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
+    case Imp( f1, f2 )            => "(=> " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
+    case Neg( f1 )                => "(not " + toSMTFormat( f1 ) + ")"
     case _                        => throw new Exception( "Undefined formula for SMT: " + f )
   }
 

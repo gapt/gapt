@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.hoare
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.FOLSubstitution
 
 object usedVariables {
   def apply( p: Program ): List[FOLVar] = p match {
@@ -49,7 +50,7 @@ object LoopFree {
 object weakestPrecondition {
   def apply( p: Program, f: FOLFormula ): FOLFormula = p match {
     case Assign( x, t )    => FOLSubstitution( x, t )( f )
-    case IfElse( c, a, b ) => FOLAnd( FOLImp( c, weakestPrecondition( a, f ) ), FOLImp( FOLNeg( c ), weakestPrecondition( b, f ) ) )
+    case IfElse( c, a, b ) => And( Imp( c, weakestPrecondition( a, f ) ), Imp( Neg( c ), weakestPrecondition( b, f ) ) )
     case Skip()            => f
     case Sequence( a, b )  => weakestPrecondition( a, weakestPrecondition( b, f ) )
   }

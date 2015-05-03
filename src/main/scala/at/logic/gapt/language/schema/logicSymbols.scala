@@ -1,29 +1,28 @@
 
 package at.logic.gapt.language.schema.logicSymbols
 
-import at.logic.gapt.language.hol.logicSymbols.LogicalSymbolA
 import at.logic.gapt.expr.symbols._
 
-case object BigAndSymbol extends LogicalSymbolA {
-  override def unique = "BigAndSymbol"
+case object BigAndSymbol extends SymbolA {
+  def unique = "BigAndSymbol"
   override def toString = "⋀"
   def toCode = "BigAndSymbol"
 }
 
-case object BigOrSymbol extends LogicalSymbolA {
-  override def unique = "BigOrSymbol"
+case object BigOrSymbol extends SymbolA {
+  def unique = "BigOrSymbol"
   override def toString = "⋁"
   def toCode = "BigOrSymbol"
 }
 
-case object PlusSymbol extends LogicalSymbolA {
-  override def unique = "Plus"
+case object PlusSymbol extends SymbolA {
+  def unique = "Plus"
   override def toString = "+"
   def toCode = "Plus"
 }
 
-case object TimesSymbol extends LogicalSymbolA {
-  override def unique = "Times"
+case object TimesSymbol extends SymbolA {
+  def unique = "Times"
   override def toString = "×"
   def toCode = "Times"
 }

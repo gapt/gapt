@@ -11,6 +11,9 @@ import at.logic.gapt.expr.symbols.{ SymbolA, getRenaming }
 // There is no guarantee on the ordering of the list.
 object freeVariables {
   def apply( e: LambdaExpression ): List[Var] = getFreeVariables( e, List() ).distinct
+  def apply( e: FOLExpression ): List[FOLVar] =
+    apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[List[FOLVar]]
+  def apply( es: List[FOLExpression] ): List[FOLVar] = es.flatMap( apply( _ ) )
 
   private def getFreeVariables( e: LambdaExpression, bound: List[Var] ): List[Var] = e match {
     case v: Var =>
@@ -26,8 +29,10 @@ object freeVariables {
 // variables/constants in the blackList, returns this variable if this variable 
 // is not in the blackList
 object rename {
-  def apply( v: Var, blackList: List[Var] ): Var = v.factory.createVar( getRenaming( v.sym, blackList.map( v => v.sym ) ), v.exptype )
+  def apply( v: Var, blackList: List[Var] ): Var = Var( getRenaming( v.sym, blackList.map( v => v.sym ) ), v.exptype )
+  def apply( v: FOLVar, blackList: List[Var] ): FOLVar =
+    apply( v.asInstanceOf[Var], blackList ).asInstanceOf[FOLVar]
   def apply( a: SymbolA, blackList: List[SymbolA] ): SymbolA = getRenaming( a, blackList )
-  def apply( c: Const, blackList: List[Const] ): Const = c.factory.createConst( getRenaming( c.sym, blackList.map( c => c.sym ) ), c.exptype )
+  def apply( c: Const, blackList: List[Const] ): Const = Const( getRenaming( c.sym, blackList.map( c => c.sym ) ), c.exptype )
 }
 

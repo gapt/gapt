@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.{ Or, Formula }
+import at.logic.gapt.expr._
 import at.logic.gapt.language.schema.SchemaFormula
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
@@ -15,7 +16,7 @@ object CloneLKProof {
   def apply( p: LKProof ): LKProof = {
     p match {
 
-      case Axiom( ro ) => Axiom( ro.antecedent.map( fo => fo.formula.asInstanceOf[HOLFormula] ), ro.succedent.map( fo => fo.formula.asInstanceOf[HOLFormula] ) )
+      case Axiom( ro ) => Axiom( ro.antecedent.map( fo => fo.formula.asInstanceOf[Formula] ), ro.succedent.map( fo => fo.formula.asInstanceOf[Formula] ) )
 
       case AndLeftEquivalenceRule1( p, s, a, m ) => {
         val new_p = apply( p )
@@ -82,25 +83,25 @@ object CloneLKProof {
 
       case AndLeft1Rule( p, r, a, m ) => {
         val new_p = apply( p )
-        val a2 = m.formula match { case HOLAnd( l, right ) => right }
+        val a2 = m.formula match { case And( l, right ) => right }
         AndLeft1Rule( new_p, a.formula, a2 )
       }
 
       case AndLeft2Rule( p, r, a, m ) => {
         val new_p = apply( p )
-        val a2 = m.formula match { case HOLAnd( l, _ ) => l }
+        val a2 = m.formula match { case And( l, _ ) => l }
         AndLeft2Rule( new_p, a2, a.formula )
       }
 
       case OrRight1Rule( p, r, a, m ) => {
         val new_p = apply( p )
-        val a2 = m.formula match { case HOLOr( _, r ) => r }
+        val a2 = m.formula match { case Or( _, r ) => r }
         OrRight1Rule( new_p, a.formula, a2 )
       }
 
       case OrRight2Rule( p, r, a, m ) => {
         val new_p = apply( p )
-        val a2 = m.formula match { case HOLOr( l, _ ) => l }
+        val a2 = m.formula match { case Or( l, _ ) => l }
         OrRight2Rule( new_p, a2, a.formula )
       }
 
@@ -323,7 +324,7 @@ object CloneLKProof {
 
       case AndLeft1Rule( p, _, a, m ) =>
         val ( pCloned, map ) = withMap( p )
-        val a2 = m.formula match { case HOLAnd( _, r ) => r }
+        val a2 = m.formula match { case And( _, r ) => r }
         val aNew = map( a )
         val proofCloned = AndLeft1Rule( pCloned, aNew, a2 )
 
@@ -333,7 +334,7 @@ object CloneLKProof {
 
       case AndLeft2Rule( p, _, a, m ) =>
         val ( pCloned, map ) = withMap( p )
-        val a2 = m.formula match { case HOLAnd( l, _ ) => l }
+        val a2 = m.formula match { case And( l, _ ) => l }
         val aNew = map( a )
         val proofCloned = AndLeft2Rule( pCloned, a2, aNew )
 
@@ -343,7 +344,7 @@ object CloneLKProof {
 
       case OrRight1Rule( p, _, a, m ) =>
         val ( pCloned, map ) = withMap( p )
-        val a2 = m.formula match { case HOLAnd( _, r ) => r }
+        val a2 = m.formula match { case And( _, r ) => r }
         val aNew = map( a )
         val proofCloned = OrRight1Rule( pCloned, aNew, a2 )
 
@@ -353,7 +354,7 @@ object CloneLKProof {
 
       case OrRight2Rule( p, _, a, m ) =>
         val ( pCloned, map ) = withMap( p )
-        val a2 = m.formula match { case HOLAnd( l, _ ) => l }
+        val a2 = m.formula match { case And( l, _ ) => l }
         val aNew = map( a )
         val proofCloned = OrRight2Rule( pCloned, a2, aNew )
 

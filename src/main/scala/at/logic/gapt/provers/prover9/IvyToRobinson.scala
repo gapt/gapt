@@ -1,8 +1,9 @@
 package at.logic.gapt.formats.ivy.conversion
 
 import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof }
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution.robinson.{ Instance => RInstantiate }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.{ FClause, Clause }
@@ -155,11 +156,11 @@ object IvyToRobinson {
             val ( rparent, parentmap ) = convert( parent, map )
 
             //there is no robinson rule for flip, so we simulate it: from P :- Q, s=t and :- s=s prove P :- Q, t=s by paramod
-            val FOLEquation( s, t ) = flipped.formula
+            val Eq( s, t: FOLTerm ) = flipped.formula
 
             //create a proof of s=s
             val x = FOLVar( "x" )
-            val xx = RInitialClause( Nil, FOLEquation( x, x ) :: Nil )
+            val xx = RInitialClause( Nil, Eq( x, x ) :: Nil )
             val ss = RInstantiate( xx, FOLSubstitution( ( x, t ) :: Nil ) )
             debug( "instantiate " + ss )
             //val ts = Equation(s,t)
@@ -259,7 +260,7 @@ object IvyToRobinson {
           case None =>
             //insert a new axiom, will be later removed
             val ( rparent, parentmap ) = convert( parent, map )
-            val newaxiom = RInitialClause( Nil, FOLEquation( new_symbol, replacement_term ) :: Nil )
+            val newaxiom = RInitialClause( Nil, Eq( new_symbol, replacement_term ) :: Nil )
             //val Some(rlit) = rparent.root.succedent.find(_.formula == lit.ancestors(0).formula)
 
             //val rproof = RParamodulation(newaxiom, rparent, newaxiom.root.succedent(0), rlit, lit.formula.asInstanceOf[FOLFormula], Substitution[FOLExpression]())

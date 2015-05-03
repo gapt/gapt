@@ -5,14 +5,13 @@ package at.logic.gapt.proofs.algorithms.skolemization
 import at.logic.gapt.language.fol.algorithms.convertHolToFol
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr.BetaReduction.ImplicitStandardStrategy._
+import at.logic.gapt.language.hol.{ HOLSubstitution, SkolemSymbolFactory }
 import at.logic.gapt.proofs.lk.algorithms.{ applySubstitution, getCutAncestors }
 import scala.collection.immutable.{ HashMap, HashSet }
 import scala.collection.immutable.Stream.Empty
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent, PrincipalFormulas }
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.hol
-import at.logic.gapt.language.fol.FOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.utils.ds.streams.Definitions._
 import at.logic.gapt.proofs.shlk.{ trsArrowLeftRule, SchemaProofLinkRule }
@@ -26,7 +25,7 @@ object skolemize extends Logger {
   def apply( p: LKProof ): LKProof =
     {
       val fos = p.root.antecedent ++ p.root.succedent
-      val inst_map = fos.foldLeft( new HashMap[FormulaOccurrence, List[HOLExpression]]() )( ( m, fo ) => m + ( fo -> Nil ) )
+      val inst_map = fos.foldLeft( new HashMap[FormulaOccurrence, List[LambdaExpression]]() )( ( m, fo ) => m + ( fo -> Nil ) )
 
       // TODO: make this a parameter?
       var cur_stream = SkolemSymbolFactory.getSkolemSymbols
@@ -50,10 +49,10 @@ object skolemize extends Logger {
   def apply( fs: FSequent ): FSequent = FSequent( fs.antecedent.map( apply( _, 0 ) ), fs.succedent.map( apply( _, 1 ) ) )
 
   /* formula skolemization -- polarity 0 is negative and polarity 1 is positive */
-  def apply( f: HOLFormula, pol: Int ): HOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
+  def apply( f: Formula, pol: Int ): Formula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
 
   /* formula skolemization -- symbols provides the skolem symbols to introduce */
-  def apply( f: HOLFormula, pol: Int, symbols: Stream[SymbolA] ): HOLFormula = skolemize( f, pol, symbols )
+  def apply( f: Formula, pol: Int, symbols: Stream[SymbolA] ): Formula = skolemize( f, pol, symbols )
 
   /* formula skolemization -- polarity 0 is negative and polarity 1 is positive */
   def apply( f: FOLFormula, pol: Int ): FOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
@@ -73,7 +72,7 @@ object skolemize extends Logger {
   */
   def skolemize( proof: LKProof,
                  symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                 inst_map: Map[FormulaOccurrence, List[HOLExpression]],
+                 inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
                  cut_ancs: Set[FormulaOccurrence] ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) = {
     implicit val s_map = symbol_map
     implicit val i_map = inst_map
@@ -124,15 +123,15 @@ object skolemize extends Logger {
       case ContractionLeftRule( p, _, a1, a2, _ )  => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply )
       case ContractionRightRule( p, _, a1, a2, _ ) => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply )
       case AndRightRule( p1, p2, _, a1, a2, m )    => handleBinaryRule( proof, p1, p2, a1, a2, m, AndRightRule.computeLeftAux, AndRightRule.computeRightAux, AndRightRule.apply )
-      case AndLeft1Rule( p, _, a, m )              => handleUnary1Rule( proof, p, a, m, 1, HOLAnd.unapply, AndLeft1Rule.computeAux, AndLeft1Rule.apply )
-      case AndLeft2Rule( p, _, a, m )              => handleUnary2Rule( proof, p, a, m, 1, HOLAnd.unapply, AndLeft2Rule.computeAux, AndLeft2Rule.apply )
+      case AndLeft1Rule( p, _, a, m )              => handleUnary1Rule( proof, p, a, m, 1, And.unapply, AndLeft1Rule.computeAux, AndLeft1Rule.apply )
+      case AndLeft2Rule( p, _, a, m )              => handleUnary2Rule( proof, p, a, m, 1, And.unapply, AndLeft2Rule.computeAux, AndLeft2Rule.apply )
       case OrLeftRule( p1, p2, _, a1, a2, m )      => handleBinaryRule( proof, p1, p2, a1, a2, m, OrLeftRule.computeLeftAux, OrLeftRule.computeRightAux, OrLeftRule.apply )
-      case OrRight1Rule( p, _, a, m )              => handleUnary1Rule( proof, p, a, m, 0, HOLOr.unapply, OrRight1Rule.computeAux, OrRight1Rule.apply )
-      case OrRight2Rule( p, _, a, m )              => handleUnary2Rule( proof, p, a, m, 0, HOLOr.unapply, OrRight2Rule.computeAux, OrRight2Rule.apply )
+      case OrRight1Rule( p, _, a, m )              => handleUnary1Rule( proof, p, a, m, 0, Or.unapply, OrRight1Rule.computeAux, OrRight1Rule.apply )
+      case OrRight2Rule( p, _, a, m )              => handleUnary2Rule( proof, p, a, m, 0, Or.unapply, OrRight2Rule.computeAux, OrRight2Rule.apply )
       case ImpLeftRule( p1, p2, _, a1, a2, m )     => handleBinaryRule( proof, p1, p2, a1, a2, m, ImpLeftRule.computeLeftAux, ImpLeftRule.computeRightAux, ImpLeftRule.apply )
       case ImpRightRule( p, _, a1, a2, m ) => {
         val new_main = if ( cut_ancs.contains( m ) ) m.formula else sk( m.formula, 0, inst_map( m ), symbol_map( m ) )
-        val ( na1, na2 ) = new_main match { case HOLImp( l, r ) => ( l, r ) }
+        val ( na1, na2 ) = new_main match { case Imp( l, r ) => ( l, r ) }
         val new_proof = skolemize( p,
           copyMapToAncestor( symbol_map ).updated( a1, even( symbol_map( m ) ) ).updated( a2, odd( symbol_map( m ) ) ),
           copyMapToAncestor( inst_map ),
@@ -162,9 +161,9 @@ object skolemize extends Logger {
   }
 
   def handleEqRule( proof: LKProof, p1: LKProof, p2: LKProof, e: FormulaOccurrence, a: FormulaOccurrence, m: FormulaOccurrence,
-                    pol: Int, constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                                                                inst_map: Map[FormulaOccurrence, List[HOLExpression]],
-                                                                                                                                cut_ancs: Set[FormulaOccurrence] ) = {
+                    pol: Int, constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
+                                                                                                                             inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
+                                                                                                                             cut_ancs: Set[FormulaOccurrence] ) = {
     val ( new_aux, new_main ) = if ( !cut_ancs.contains( m ) )
       ( sk( a.formula, pol, inst_map( m ), symbol_map( m ) ), sk( m.formula, pol, inst_map( m ), symbol_map( m ) ) )
     else
@@ -179,9 +178,9 @@ object skolemize extends Logger {
   }
 
   def handleDefRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, pol: Int,
-                     constructor: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                           inst_map: Map[FormulaOccurrence, List[HOLExpression]],
-                                                                                           cut_ancs: Set[FormulaOccurrence] ) = {
+                     constructor: ( LKProof, FormulaOccurrence, Formula ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
+                                                                                        inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
+                                                                                        cut_ancs: Set[FormulaOccurrence] ) = {
     //println("skolemizing def aux (pol: " + pol + "): " + a.formula.toStringSimple)
     val ( new_aux, new_main ) = if ( !cut_ancs.contains( m ) )
       ( sk( a.formula, pol, inst_map( m ), symbol_map( m ) ), sk( m.formula, pol, inst_map( m ), symbol_map( m ) ) )
@@ -195,9 +194,9 @@ object skolemize extends Logger {
   }
 
   def handleNegRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
-                     computeAux: HOLFormula => HOLFormula,
+                     computeAux: Formula => Formula,
                      constructor: ( LKProof, FormulaOccurrence ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                               inst_map: Map[FormulaOccurrence, List[HOLExpression]],
+                                                                               inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
                                                                                cut_ancs: Set[FormulaOccurrence] ) = {
     val new_proof = skolemize( p, copyMapToAncestor( symbol_map ), copyMapToAncestor( inst_map ),
       copySetToAncestor( cut_ancs ) )
@@ -205,11 +204,11 @@ object skolemize extends Logger {
     ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) )
   }
 
-  def handleUnaryRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: HOLFormula, m: FormulaOccurrence,
-                       computeAux: HOLFormula => HOLFormula,
-                       constructor: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof,
+  def handleUnaryRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, weak: Formula, m: FormulaOccurrence,
+                       computeAux: Formula => Formula,
+                       constructor: ( LKProof, FormulaOccurrence, Formula ) => LKProof,
                        partition: Stream[SymbolA] => Stream[SymbolA] )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                        inst_map: Map[FormulaOccurrence, List[HOLExpression]],
+                                                                        inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
                                                                         cut_ancs: Set[FormulaOccurrence] ) = {
     val new_proof = skolemize( p,
       copyMapToAncestor( symbol_map ).updated( a, partition( symbol_map( m ) ) ),
@@ -223,11 +222,11 @@ object skolemize extends Logger {
   // choose right subformula as weak subformula
   def handleUnary1Rule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
                         pol: Int,
-                        mainConn: HOLExpression => Option[( HOLFormula, HOLFormula )],
-                        computeAux: HOLFormula => HOLFormula,
-                        constructor: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                              inst_map: Map[FormulaOccurrence, List[HOLExpression]],
-                                                                                              cut_ancs: Set[FormulaOccurrence] ) = {
+                        mainConn: LambdaExpression => Option[( Formula, Formula )],
+                        computeAux: Formula => Formula,
+                        constructor: ( LKProof, FormulaOccurrence, Formula ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
+                                                                                           inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
+                                                                                           cut_ancs: Set[FormulaOccurrence] ) = {
     val new_main = if ( cut_ancs.contains( m ) ) m.formula else sk( m.formula, pol, inst_map( m ), symbol_map( m ) )
     val weak = mainConn( new_main ) match { case Some( ( _, w ) ) => w; case None => throw new Exception( "Unexpected None." ) }
     handleUnaryRule( proof, p, a, weak, m, computeAux, constructor, even )
@@ -238,11 +237,11 @@ object skolemize extends Logger {
   // choose left subformula as weak subformula
   def handleUnary2Rule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
                         pol: Int,
-                        mainConn: HOLExpression => Option[( HOLFormula, HOLFormula )],
-                        computeAux: HOLFormula => HOLFormula,
-                        constructor: ( LKProof, HOLFormula, FormulaOccurrence ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                              inst_map: Map[FormulaOccurrence, List[HOLExpression]],
-                                                                                              cut_ancs: Set[FormulaOccurrence] ) = {
+                        mainConn: LambdaExpression => Option[( Formula, Formula )],
+                        computeAux: Formula => Formula,
+                        constructor: ( LKProof, Formula, FormulaOccurrence ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
+                                                                                           inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
+                                                                                           cut_ancs: Set[FormulaOccurrence] ) = {
     val new_main = if ( cut_ancs.contains( m ) ) m.formula else sk( m.formula, pol, inst_map( m ), symbol_map( m ) )
     val weak = mainConn( new_main ) match { case Some( ( w, _ ) ) => w; case None => throw new Exception( "Unexpected None." ) }
     handleUnaryRule( proof, p, a, weak, m, computeAux,
@@ -250,9 +249,9 @@ object skolemize extends Logger {
   }
 
   def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: FormulaOccurrence,
-                        computeLeftAux: HOLFormula => HOLFormula, computeRightAux: HOLFormula => HOLFormula,
+                        computeLeftAux: Formula => Formula, computeRightAux: Formula => Formula,
                         constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                                              inst_map: Map[FormulaOccurrence, List[HOLExpression]],
+                                                                                                              inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
                                                                                                               cut_ancs: Set[FormulaOccurrence] ) = {
     val new_symbol_map_left = copyMapToAncestor( symbol_map ).updated( a1, even( symbol_map( m ) ) )
     val new_symbol_map_right = copyMapToAncestor( symbol_map ).updated( a2, odd( symbol_map( m ) ) )
@@ -266,17 +265,17 @@ object skolemize extends Logger {
 
   def handleContractionRule( proof: LKProof, p: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence,
                              constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                                          inst_map: Map[FormulaOccurrence, List[HOLExpression]],
+                                                                                                          inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
                                                                                                           cut_ancs: Set[FormulaOccurrence] ) = {
     val new_proof = skolemize( p, copyMapToAncestor( symbol_map ), copyMapToAncestor( inst_map ), copySetToAncestor( cut_ancs ) )
     val ret = constructor( new_proof._1, new_proof._2( a1 ), new_proof._2( a2 ) )
     ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) )
   }
 
-  def handleWeakQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, t: HOLExpression,
+  def handleWeakQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, t: LambdaExpression,
                            pol: Int,
-                           constructor: ( LKProof, FormulaOccurrence, HOLFormula, HOLExpression ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                                                inst_map: Map[FormulaOccurrence, List[HOLExpression]],
+                           constructor: ( LKProof, FormulaOccurrence, Formula, LambdaExpression ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
+                                                                                                                inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
                                                                                                                 cut_ancs: Set[FormulaOccurrence] ) = {
     //println("\nentering weak quant rule for "+proof.root.toStringSimple)
     //inst_map map println
@@ -302,9 +301,9 @@ object skolemize extends Logger {
 
   def handleWeakeningRule( proof: LKProof, p: LKProof, m: FormulaOccurrence,
                            pol: Int,
-                           constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                                     inst_map: Map[FormulaOccurrence, List[HOLExpression]],
-                                                                                                     cut_ancs: Set[FormulaOccurrence] ) = {
+                           constructor: ( LKProof, Formula ) => LKProof with PrincipalFormulas )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
+                                                                                                  inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
+                                                                                                  cut_ancs: Set[FormulaOccurrence] ) = {
     val new_main = if ( cut_ancs.contains( m ) ) m.formula else sk( m.formula, pol, inst_map( m ), symbol_map( m ) )
     val new_proof = skolemize( p, copyMapToAncestor( symbol_map - m ),
       copyMapToAncestor( inst_map - m ),
@@ -313,20 +312,20 @@ object skolemize extends Logger {
     ( ret, copyMapToDescendant( proof, ret, new_proof._2 ) + ( m -> ret.prin.head ) )
   }
 
-  def handleStrongQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, v: HOLVar,
-                             constructor: ( LKProof, FormulaOccurrence, HOLFormula, HOLVar ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
-                                                                                                           inst_map: Map[FormulaOccurrence, List[HOLExpression]],
-                                                                                                           cut_ancs: Set[FormulaOccurrence] ) = {
+  def handleStrongQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, v: Var,
+                             constructor: ( LKProof, FormulaOccurrence, Formula, Var ) => LKProof )( implicit symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
+                                                                                                     inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
+                                                                                                     cut_ancs: Set[FormulaOccurrence] ) = {
     //println("\nentering strong quant rule for "+proof.root.toStringSimple)
     if ( !cut_ancs.contains( m ) ) {
       val sym_stream = symbol_map( m )
-      val sym = HOLConst( sym_stream.head, FunctionType( v.exptype, inst_map( m ).map( _.exptype ) ) )
+      val sym = Const( sym_stream.head, FunctionType( v.exptype, inst_map( m ).map( _.exptype ) ) )
       //println("skolem symbol: " + sym)
       val skolem_term = HOLFunction( sym, inst_map( m ) )
       val sub = HOLSubstitution( v, skolem_term )
       val sub_proof = applySubstitution( p, sub )
       //println("old es: " + p.root)
-      //sub.map map (( x : (Var,HOLExpression) ) => println("sub: " + x._1 + " -> " + x._2.toStringSimple))
+      //sub.map map (( x : (Var,LambdaExpression) ) => println("sub: " + x._1 + " -> " + x._2.toStringSimple))
       //println("after sub: " + sub_proof._1.root )
       // invert the formula occurrence map.
       val inv_map = sub_proof._2.foldLeft( new HashMap[FormulaOccurrence, FormulaOccurrence] )( ( m, p ) => m + ( p._2 -> p._1 ) )
@@ -376,17 +375,17 @@ object skolemize extends Logger {
     else
       0
 
-  def skolemize( f: HOLFormula, pol: Int, symbols: Stream[SymbolA] ) = sk( f, pol, Nil, symbols )
+  def skolemize( f: Formula, pol: Int, symbols: Stream[SymbolA] ) = sk( f, pol, Nil, symbols )
 
-  def sk( f: HOLFormula, pol: Int, terms: List[HOLExpression], symbols: Stream[SymbolA] ): HOLFormula = f match {
-    case HOLAnd( l, r ) => HOLAnd( sk( l, pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
-    case HOLOr( l, r )  => HOLOr( sk( l, pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
-    case HOLImp( l, r ) => HOLImp( sk( l, invert( pol ), terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
-    case HOLNeg( f )    => HOLNeg( sk( f, invert( pol ), terms, symbols ) )
-    case HOLExVar( x, f ) =>
+  def sk( f: Formula, pol: Int, terms: List[LambdaExpression], symbols: Stream[SymbolA] ): Formula = f match {
+    case And( l, r ) => And( sk( l, pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case Or( l, r )  => Or( sk( l, pol, terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case Imp( l, r ) => Imp( sk( l, invert( pol ), terms, even( symbols ) ), sk( r, pol, terms, odd( symbols ) ) )
+    case Neg( f )    => Neg( sk( f, invert( pol ), terms, symbols ) )
+    case Ex( x, f ) =>
       if ( pol == 1 ) {
         trace( "skolemizing AllQ" )
-        val sym = HOLConst( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
+        val sym = Const( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
         val sf = HOLFunction( sym, terms )
 
         val sub = HOLSubstitution( x, sf )
@@ -397,11 +396,11 @@ object skolemize extends Logger {
         trace( "result of skolemization: " + res )
         res
       } else
-        HOLExVar( x, sk( f, pol, terms :+ x, symbols ) )
-    case HOLAllVar( x, f ) =>
+        Ex( x, sk( f, pol, terms :+ x, symbols ) )
+    case All( x, f ) =>
       if ( pol == 0 ) {
         trace( "skolemizing AllQ" )
-        val sym = HOLConst( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
+        val sym = Const( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
         val sf = HOLFunction( sym, terms )
 
         val sub = HOLSubstitution( x, sf )
@@ -412,7 +411,7 @@ object skolemize extends Logger {
         trace( "result of skolemization: " + res )
         res
       } else
-        HOLAllVar( x, sk( f, pol, terms :+ x, symbols ) )
+        All( x, sk( f, pol, terms :+ x, symbols ) )
     case HOLAtom( _, _ ) => f
   }
 }

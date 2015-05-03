@@ -6,7 +6,7 @@ import at.logic.gapt.utils.traits.ExternalProgram
 import scala.sys.process._
 import java.io._
 import at.logic.gapt.provers._
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 
 class VeriTProver extends Prover with ExternalProgram {
@@ -55,7 +55,7 @@ class VeriTProver extends Prover with ExternalProgram {
   // would generate an LK proof from an Expansion Tree.
   override def getLKProof( s: FSequent ) =
     throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
-  override def getLKProof( f: HOLFormula ) =
+  override def getLKProof( f: Formula ) =
     throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
 
   def isInstalled(): Boolean =

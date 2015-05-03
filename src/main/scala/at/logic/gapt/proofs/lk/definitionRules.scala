@@ -7,7 +7,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 import base._
 
@@ -38,7 +38,7 @@ object DefinitionLeftRule {
    * @param main The formula with which A is to be replaced.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula ) = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: Formula ) = {
     val aux_fo = getTerms( s1.root, term1oc )
     val prinFormula = aux_fo.factory.createFormulaOccurrence( main, aux_fo :: Nil )
 
@@ -75,7 +75,7 @@ object DefinitionLeftRule {
    * @param main The formula with which A is to be replaced.
    * @return The sequent (sL, main |- sR).
    */
-  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula ) = {
+  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: Formula ) = {
     val aux_fo = getTerms( s1, term1oc )
     val prinFormula = aux_fo.factory.createFormulaOccurrence( main, aux_fo :: Nil )
 
@@ -115,7 +115,7 @@ object DefinitionLeftRule {
    * @param main The formula with which aux is to be replaced.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+  def apply( s1: LKProof, aux: Formula, main: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     s1.root.antecedent.filter( x => x.formula == aux ).toList match {
       case ( x :: _ ) => apply( s1, x, main )
       case _          => throw new LKRuleCreationException( "No matching formula occurrence found for application of the rule with the given auxiliary formula" )
@@ -152,7 +152,7 @@ object DefinitionRightRule {
    * @param main The formula with which A is to be replaced.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula ) = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: Formula ) = {
     val aux_fo = getTerms( s1.root, term1oc )
     val prinFormula = aux_fo.factory.createFormulaOccurrence( main, aux_fo :: Nil )
 
@@ -189,7 +189,7 @@ object DefinitionRightRule {
    * @param main The formula with which A is to be replaced.
    * @return The sequent (sL |- sR, main).
    */
-  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula ) = {
+  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: Formula ) = {
     val aux_fo = getTerms( s1, term1oc )
     val prinFormula = aux_fo.factory.createFormulaOccurrence( main, aux_fo :: Nil )
 
@@ -229,7 +229,7 @@ object DefinitionRightRule {
    * @param main The formula with which aux is to be replaced.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+  def apply( s1: LKProof, aux: Formula, main: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     s1.root.succedent.filter( x => x.formula == aux ).toList match {
       case ( x :: _ ) => apply( s1, x, main )
       case _          => throw new LKRuleCreationException( "No matching formula occurrence found for application of the rule with the given auxiliary formula" )

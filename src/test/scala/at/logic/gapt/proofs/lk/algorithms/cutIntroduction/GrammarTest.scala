@@ -9,7 +9,7 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import scala.collection.immutable.HashMap
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import TermsExtraction._
 import ComputeGrammars._
 import Deltas._
@@ -593,7 +593,7 @@ class GrammarTest extends SpecificationWithJUnit {
 
       val x = FOLVar( "x" )
       val y = FOLVar( "y" )
-      val form = FOLAllVar( x, FOLAllVar( y, FOLAtom( "P", x :: y :: Nil ) ) )
+      val form = All( x, All( y, FOLAtom( "P", x :: y :: Nil ) ) )
 
       val f = "f"
       val a = FOLConst( "a" )

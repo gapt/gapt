@@ -3,10 +3,9 @@ package at.logic.gapt.provers.maxsat
 import java.io._
 
 import at.logic.gapt.formats.dimacs.DIMACSHelper
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.resolution.algorithms.{ TseitinCNF, CNFp }
 import at.logic.gapt.utils.logging.{ Logger, Stopwatch }
 
@@ -46,7 +45,7 @@ trait MaxSATSolver extends Logger {
 
     // Hard CNF transformation
     watch.start()
-    val hardCNF = TseitinCNF( FOLAnd( hard ) )
+    val hardCNF = TseitinCNF( And( hard ) )
     val hardCNFTime = watch.lap( "hardCNF" )
     logTime( "[Runtime]<hard CNF-Generation> ", hardCNFTime )
     trace( "produced hard cnf: " + hardCNF )
@@ -75,7 +74,7 @@ class WDIMACSHelper( val hard: List[FClause], val soft: List[Tuple2[FClause, Int
    * @param pol polarization (true, false)
    * @return a literal in .wcnf format
    */
-  protected def getWCNFString( atom: FOLFormula, pol: Boolean, atom_map: Map[HOLFormula, Int] ): String =
+  protected def getWCNFString( atom: FOLFormula, pol: Boolean, atom_map: Map[Formula, Int] ): String =
     if ( pol ) atom_map.get( atom ).get.toString else "-" + atom_map.get( atom ).get
 
   /**
@@ -86,7 +85,7 @@ class WDIMACSHelper( val hard: List[FClause], val soft: List[Tuple2[FClause, Int
    * @param weight weight of clause
    * @return a clause in .wcnf format
    */
-  protected def getWCNFString( clause: FClause, weight: Int, atom_map: Map[HOLFormula, Int] ): String =
+  protected def getWCNFString( clause: FClause, weight: Int, atom_map: Map[Formula, Int] ): String =
     {
       val sb = new StringBuilder()
 
@@ -411,7 +410,7 @@ trait MaxSATSolverBinary extends MaxSATSolver {
       //val str = Stream.continually(in.readLine()).takeWhile(_ != null).mkString("\n")
 
       readWDIMACS( output.toString(), format(), helper ) match {
-        case Some( model ) => Some( new MapBasedInterpretation( model.asInstanceOf[Map[HOLFormula, Boolean]] ) )
+        case Some( model ) => Some( new MapBasedInterpretation( model.asInstanceOf[Map[Formula, Boolean]] ) )
         case None          => None
       }
     }

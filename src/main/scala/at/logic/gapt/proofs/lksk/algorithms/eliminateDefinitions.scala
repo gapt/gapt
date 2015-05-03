@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lksk.algorithms
 
-import at.logic.gapt.language.hol.{ TypeSynonyms => _, _ }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _, _ }
 import at.logic.gapt.proofs.lksk._
@@ -78,28 +78,28 @@ object eliminateDefinitions {
           handleContraction( ( new_parent._1, new_parent._2 ), p, proof, a1.asInstanceOf[LabelledFormulaOccurrence], a2.asInstanceOf[LabelledFormulaOccurrence], ContractionRightRule.apply )
         }
         case AndLeft1Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLAnd( _, w ) => w }
+          val f = m.formula match { case And( _, w ) => w }
           val new_parent = rec( p )
           val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ), f )
           val ls = toLabelledSequent( p.root )
           ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
         }
         case AndLeft2Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLAnd( w, _ ) => w }
+          val f = m.formula match { case And( w, _ ) => w }
           val new_parent = rec( p )
           val new_proof = AndLeft2Rule( new_parent._1, f, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ) )
           val ls = toLabelledSequent( p.root )
           ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
         }
         case OrRight1Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLOr( _, w ) => w }
+          val f = m.formula match { case Or( _, w ) => w }
           val new_parent = rec( p )
           val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ), f )
           val ls = toLabelledSequent( p.root )
           ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
         }
         case OrRight2Rule( p, s, a, m ) => {
-          val f = m.formula match { case HOLOr( w, _ ) => w }
+          val f = m.formula match { case Or( w, _ ) => w }
           val new_parent = rec( p )
           val new_proof = OrRight2Rule( new_parent._1, f, new_parent._2( a.asInstanceOf[LabelledFormulaOccurrence] ) )
           val ls = toLabelledSequent( p.root )
@@ -203,7 +203,7 @@ object eliminateDefinitions {
   def handleWeakening( new_parent: ( LKProof, mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ),
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       constructor: ( LKProof, HOLFormula, TypeSynonyms.Label ) => LKProof with PrincipalFormulas,
+                       constructor: ( LKProof, Formula, TypeSynonyms.Label ) => LKProof with PrincipalFormulas,
                        m: LabelledFormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula, m.skolem_label )
     val ls = toLabelledSequent( old_parent.root )
@@ -221,8 +221,8 @@ object eliminateDefinitions {
     ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, old_proof, new_proof, new_parent._2 ) )
   }
 
-  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: LabelledFormulaOccurrence, a2: LabelledFormulaOccurrence, m: HOLFormula,
-                        constructor: ( LKProof, LKProof, LabelledFormulaOccurrence, LabelledFormulaOccurrence, HOLFormula ) => BinaryLKProof with AuxiliaryFormulas ) = {
+  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: LabelledFormulaOccurrence, a2: LabelledFormulaOccurrence, m: Formula,
+                        constructor: ( LKProof, LKProof, LabelledFormulaOccurrence, LabelledFormulaOccurrence, Formula ) => BinaryLKProof with AuxiliaryFormulas ) = {
     // first left, then right
     val rec1 = rec( p1 )
     val rec2 = rec( p2 )

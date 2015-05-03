@@ -4,9 +4,8 @@ import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, to
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.language.fol.Utils._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.eqProver.EquationalProver
 import at.logic.gapt.provers.minisat.MiniSATProver

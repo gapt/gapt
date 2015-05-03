@@ -1,11 +1,11 @@
 package at.logic.gapt.integration_tests
 
+import at.logic.gapt.language.fol.Utils
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol.logicSymbols._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.symbols._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
@@ -30,7 +30,7 @@ class CutIntroTest extends SpecificationWithJUnit {
     val p = "P"
 
     val x = FOLVar( "x" )
-    val ass = FOLAllVar( x, FOLImp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
+    val ass = All( x, Imp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
     if ( k == n ) // leaf proof
     {
       val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
@@ -38,7 +38,7 @@ class CutIntroTest extends SpecificationWithJUnit {
     } else {
       val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
       val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
-      val aux = FOLImp( p1, p2 )
+      val aux = Imp( p1, p2 )
       ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
     }
   }
@@ -80,8 +80,8 @@ class CutIntroTest extends SpecificationWithJUnit {
       val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
 
       // expected result
-      val cf1 = FOLAllVar( a1, FOLOr( FOLAtom( "P", fun( 2, a1 ) :: Nil ), FOLNeg( FOLAtom( "P", a1 :: Nil ) ) ) )
-      val cf2 = FOLAllVar( a2, FOLOr( FOLAtom( "P", fun( 4, a2 ) :: Nil ), FOLNeg( FOLAtom( "P", a2 :: Nil ) ) ) )
+      val cf1 = All( a1, Or( FOLAtom( "P", fun( 2, a1 ) :: Nil ), Neg( FOLAtom( "P", a1 :: Nil ) ) ) )
+      val cf2 = All( a2, Or( FOLAtom( "P", fun( 4, a2 ) :: Nil ), Neg( FOLAtom( "P", a2 :: Nil ) ) ) )
 
       result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
 

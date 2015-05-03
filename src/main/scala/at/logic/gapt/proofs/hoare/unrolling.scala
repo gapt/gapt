@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.hoare
 
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.Utils.numeral
 
 object unrollLoop {
@@ -32,11 +33,11 @@ case class SimpleLoopProblem( val loop: ForLoop, val gamma: Seq[FOLFormula], val
   def pi: FOLFormula =
     FOLSubstitution( varsAtTime( loop.indexVar ) )(
       weakestPrecondition( loop.body,
-        FOLAnd( varsAtTime( FOLFunction( "s", List( loop.indexVar ) ) ) map {
-          case ( v, s ) => FOLEquation( s, v )
+        And( varsAtTime( FOLFunction( "s", List( loop.indexVar ) ) ) map {
+          case ( v, s ) => Eq( s, v )
         } ) ) )
 
-  def Pi: FOLFormula = FOLAllVar( loop.indexVar, pi )
+  def Pi: FOLFormula = All( loop.indexVar, pi )
 
   def A: FOLFormula = FOLSubstitution( varsAtTime( numeral( 0 ) ) )( precondition )
   def B: FOLFormula = FOLSubstitution( varsAtTime( loop.limit ) )( postcondition )

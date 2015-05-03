@@ -7,7 +7,8 @@
 
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol.{ HOLSubstitution, _ }
+import at.logic.gapt.language.hol.HOLSubstitution
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
@@ -136,17 +137,17 @@ object ReductiveCutElim {
     case ContractionRightRule( up, _, aux, _, _ )   => ContractionRightRule( cutElim( up ), aux.formula )
     case AndRightRule( up1, up2, _, aux1, aux2, _ ) => AndRightRule( cutElim( up1 ), cutElim( up2 ), aux1.formula, aux2.formula )
     case AndLeft1Rule( up, _, aux, prin ) => prin.formula match {
-      case HOLAnd( aux.formula, f ) => AndLeft1Rule( cutElim( up ), aux.formula, f )
+      case And( aux.formula, f ) => AndLeft1Rule( cutElim( up ), aux.formula, f )
     }
     case AndLeft2Rule( up, _, aux, prin ) => prin.formula match {
-      case HOLAnd( f, aux.formula ) => AndLeft2Rule( cutElim( up ), f, aux.formula )
+      case And( f, aux.formula ) => AndLeft2Rule( cutElim( up ), f, aux.formula )
     }
     case OrLeftRule( up1, up2, _, aux1, aux2, _ ) => OrLeftRule( cutElim( up1 ), cutElim( up2 ), aux1.formula, aux2.formula )
     case OrRight1Rule( up, _, aux, prin ) => prin.formula match {
-      case HOLOr( aux.formula, f ) => OrRight1Rule( cutElim( up ), aux.formula, f )
+      case Or( aux.formula, f ) => OrRight1Rule( cutElim( up ), aux.formula, f )
     }
     case OrRight2Rule( up, _, aux, prin ) => prin.formula match {
-      case HOLOr( f, aux.formula ) => OrRight2Rule( cutElim( up ), f, aux.formula )
+      case Or( f, aux.formula ) => OrRight2Rule( cutElim( up ), f, aux.formula )
     }
     case ImpLeftRule( up1, up2, _, aux1, aux2, _ )     => ImpLeftRule( cutElim( up1 ), cutElim( up2 ), aux1.formula, aux2.formula )
     case ImpRightRule( up, _, aux1, aux2, _ )          => ImpRightRule( cutElim( up ), aux1.formula, aux2.formula )
@@ -173,11 +174,11 @@ object ReductiveCutElim {
         CutRule( cutElim( up1 ), cutElim( up2 ), a1.formula )
   }
 
-  private def reduceCut( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
+  private def reduceCut( left: LKProof, right: LKProof, cutFormula1: Formula, cutFormula2: Formula ): LKProof =
     reduceGrade( left, right, cutFormula1, cutFormula2 )
 
   // Grade reduction rules:
-  private def reduceGrade( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
+  private def reduceGrade( left: LKProof, right: LKProof, cutFormula1: Formula, cutFormula2: Formula ): LKProof =
     ( left, right ) match {
       case ( AndRightRule( up1, up2, _, aux1, aux2, prin1 ), AndLeft1Rule( up, _, aux, prin2 ) ) if ( prin1.formula == cutFormula1 && prin2.formula == cutFormula2 ) =>
         var tmp: LKProof = CutRule( up1, up, aux1, aux )
@@ -206,7 +207,7 @@ object ReductiveCutElim {
       case _ => reduceGradeQ( left, right, cutFormula1, cutFormula2 )
     }
 
-  private def reduceGradeQ( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
+  private def reduceGradeQ( left: LKProof, right: LKProof, cutFormula1: Formula, cutFormula2: Formula ): LKProof =
     ( left, right ) match {
       case ( ForallRightRule( up1, _, aux1, prin1, eigenVar ), ForallLeftRule( up2, _, aux2, prin2, term ) ) if ( prin1.formula == cutFormula1 && prin2.formula == cutFormula2 ) =>
         val up = applySubstitution( up1, HOLSubstitution( eigenVar, term ) )._1
@@ -220,7 +221,7 @@ object ReductiveCutElim {
     }
 
   // Rank reduction rules:
-  private def reduceRank( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
+  private def reduceRank( left: LKProof, right: LKProof, cutFormula1: Formula, cutFormula2: Formula ): LKProof =
     ( left, right ) match {
       case ( Axiom( seq ), proof: LKProof ) if ( seq.isTaut ) => proof
       case ( proof: LKProof, Axiom( seq ) ) if ( seq.isTaut ) => proof
@@ -297,7 +298,7 @@ object ReductiveCutElim {
         throw new ReductiveCutElimException( "Can't match the case: Cut(" + left.rule.toString + ", " + right.rule.toString + ")" )
     }
 
-  private def reduceUnaryLeft( unary: UnaryLKProof, proof: LKProof, cutFormula: HOLFormula ): LKProof = unary match {
+  private def reduceUnaryLeft( unary: UnaryLKProof, proof: LKProof, cutFormula: Formula ): LKProof = unary match {
     case WeakeningLeftRule( up, _, prin ) =>
       WeakeningLeftRule( CutRule( up, proof, cutFormula ), prin.formula )
     case ContractionLeftRule( up, _, aux, _, prin ) =>
@@ -307,16 +308,16 @@ object ReductiveCutElim {
     case DefinitionRightRule( up, _, aux, prin ) if ( prin.formula != cutFormula ) =>
       DefinitionRightRule( CutRule( up, proof, cutFormula ), aux.formula, prin.formula )
     case AndLeft1Rule( up, _, aux, prin ) => prin.formula match {
-      case HOLAnd( aux.formula, f ) => AndLeft1Rule( CutRule( up, proof, cutFormula ), aux.formula, f )
+      case And( aux.formula, f ) => AndLeft1Rule( CutRule( up, proof, cutFormula ), aux.formula, f )
     }
     case AndLeft2Rule( up, _, aux, prin ) => prin.formula match {
-      case HOLAnd( f, aux.formula ) => AndLeft2Rule( CutRule( up, proof, cutFormula ), f, aux.formula )
+      case And( f, aux.formula ) => AndLeft2Rule( CutRule( up, proof, cutFormula ), f, aux.formula )
     }
     case OrRight1Rule( up, _, aux, prin ) if prin.formula != cutFormula => prin.formula match {
-      case HOLOr( aux.formula, f ) => OrRight1Rule( CutRule( up, proof, cutFormula ), aux.formula, f )
+      case Or( aux.formula, f ) => OrRight1Rule( CutRule( up, proof, cutFormula ), aux.formula, f )
     }
     case OrRight2Rule( up, _, aux, prin ) if prin.formula != cutFormula => prin.formula match {
-      case HOLOr( f, aux.formula ) => OrRight2Rule( CutRule( up, proof, cutFormula ), f, aux.formula )
+      case Or( f, aux.formula ) => OrRight2Rule( CutRule( up, proof, cutFormula ), f, aux.formula )
     }
     case ImpRightRule( up, _, aux1, aux2, prin ) if prin.formula != cutFormula =>
       ImpRightRule( CutRule( up, proof, cutFormula ), aux1.formula, aux2.formula )
@@ -338,7 +339,7 @@ object ReductiveCutElim {
     }
   }
 
-  private def reduceUnaryRight( proof: LKProof, unary: UnaryLKProof, cutFormula: HOLFormula ): LKProof = unary match {
+  private def reduceUnaryRight( proof: LKProof, unary: UnaryLKProof, cutFormula: Formula ): LKProof = unary match {
     case WeakeningRightRule( up, _, prin ) =>
       WeakeningRightRule( CutRule( proof, up, cutFormula ), prin.formula )
     case ContractionRightRule( up, _, aux, _, prin ) =>
@@ -348,16 +349,16 @@ object ReductiveCutElim {
     case DefinitionRightRule( up, _, aux, prin ) =>
       DefinitionRightRule( CutRule( proof, up, cutFormula ), aux.formula, prin.formula )
     case AndLeft1Rule( up, _, aux, prin ) if prin.formula != cutFormula => prin.formula match {
-      case HOLAnd( aux.formula, f ) => AndLeft1Rule( CutRule( proof, up, cutFormula ), aux.formula, f )
+      case And( aux.formula, f ) => AndLeft1Rule( CutRule( proof, up, cutFormula ), aux.formula, f )
     }
     case AndLeft2Rule( up, _, aux, prin ) if prin.formula != cutFormula => prin.formula match {
-      case HOLAnd( f, aux.formula ) => AndLeft2Rule( CutRule( proof, up, cutFormula ), f, aux.formula )
+      case And( f, aux.formula ) => AndLeft2Rule( CutRule( proof, up, cutFormula ), f, aux.formula )
     }
     case OrRight1Rule( up, _, aux, prin ) => prin.formula match {
-      case HOLOr( aux.formula, f ) => OrRight1Rule( CutRule( proof, up, cutFormula ), aux.formula, f )
+      case Or( aux.formula, f ) => OrRight1Rule( CutRule( proof, up, cutFormula ), aux.formula, f )
     }
     case OrRight2Rule( up, _, aux, prin ) => prin.formula match {
-      case HOLOr( f, aux.formula ) => OrRight2Rule( CutRule( proof, up, cutFormula ), f, aux.formula )
+      case Or( f, aux.formula ) => OrRight2Rule( CutRule( proof, up, cutFormula ), f, aux.formula )
     }
     case ImpRightRule( up, _, aux1, aux2, prin ) =>
       ImpRightRule( CutRule( proof, up, cutFormula ), aux1.formula, aux2.formula )
@@ -377,7 +378,7 @@ object ReductiveCutElim {
       throw new ReductiveCutElimException( "Can't match the case: Cut(" + proof.rule.toString + ", " + unary.rule.toString + ")" )
   }
 
-  private def reduceBinaryLeft( binary: BinaryLKProof, proof: LKProof, cutFormula: HOLFormula ): LKProof = binary match {
+  private def reduceBinaryLeft( binary: BinaryLKProof, proof: LKProof, cutFormula: Formula ): LKProof = binary match {
     case AndRightRule( up1, up2, _, aux1, aux2, prin ) if prin.formula != cutFormula =>
       if ( ( aux1.formula != cutFormula && up1.root.succedent.exists( x => x.formula == cutFormula ) ) ||
         ( aux1.formula == cutFormula && up1.root.succedent.find( x => x.formula == cutFormula ).size > 1 ) )
@@ -413,7 +414,7 @@ object ReductiveCutElim {
     }
   }
 
-  private def reduceBinaryRight( proof: LKProof, binary: BinaryLKProof, cutFormula: HOLFormula ): LKProof = binary match {
+  private def reduceBinaryRight( proof: LKProof, binary: BinaryLKProof, cutFormula: Formula ): LKProof = binary match {
     case AndRightRule( up1, up2, _, aux1, aux2, prin ) =>
       if ( up1.root.antecedent.exists( x => x.formula == cutFormula ) )
         AndRightRule( CutRule( proof, up1, cutFormula ), up2, aux1.formula, aux2.formula )

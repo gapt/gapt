@@ -29,11 +29,12 @@
 
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
+import at.logic.gapt.language.hol.isPrenex
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.expansionTrees.algorithms.compressQuantifiers
 import at.logic.gapt.proofs.expansionTrees.{ METWeakQuantifier, METStrongQuantifier }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.algorithms.herbrandExtraction._
 import scala.collection.immutable.HashMap
 

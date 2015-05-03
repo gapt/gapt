@@ -11,11 +11,9 @@ import at.logic.gapt.proofs.lk.base.FSequent
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.fol.{ FOLVar, FOLConst, FOLAtom, FOLFunction }
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.expr.symbols.StringSymbol
 import at.logic.gapt.expr.types._
 
 @RunWith( classOf[JUnitRunner] )
@@ -23,15 +21,15 @@ class SimpleResolutionParserTest extends SpecificationWithJUnit {
   //  private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserHOL
   private class MyParser2( input: String ) extends StringReader( input ) with SimpleResolutionParserFOL
 
-  val pa = HOLAtom( HOLConst( StringSymbol( "p" ), Ti -> To ), HOLConst( StringSymbol( "a" ), Ti ) :: Nil )
-  val pfx = HOLAtom( HOLConst( StringSymbol( "p" ), Ti -> To ), HOLFunction( HOLConst( StringSymbol( "f" ), Ti -> Ti ), HOLVar( StringSymbol( "x" ), Ti ) :: Nil ) :: Nil )
-  val px = HOLAtom( HOLConst( StringSymbol( "p" ), Ti -> To ), HOLVar( StringSymbol( "x" ), Ti ) :: Nil )
-  val pffa = HOLAtom( HOLConst( StringSymbol( "p" ), Ti -> To ), HOLFunction( HOLConst( StringSymbol( "f" ), Ti -> Ti ), HOLFunction( HOLConst( StringSymbol( "f" ), Ti -> Ti ), HOLConst( StringSymbol( "a" ), Ti ) :: Nil ) :: Nil ) :: Nil )
+  val pa = HOLAtom( Const( "p", Ti -> To ), Const( "a", Ti ) :: Nil )
+  val pfx = HOLAtom( Const( "p", Ti -> To ), HOLFunction( Const( "f", Ti -> Ti ), Var( "x", Ti ) :: Nil ) :: Nil )
+  val px = HOLAtom( Const( "p", Ti -> To ), Var( "x", Ti ) :: Nil )
+  val pffa = HOLAtom( Const( "p", Ti -> To ), HOLFunction( Const( "f", Ti -> Ti ), HOLFunction( Const( "f", Ti -> Ti ), Const( "a", Ti ) :: Nil ) :: Nil ) :: Nil )
 
-  val pa_fol = FOLAtom( StringSymbol( "P" ), FOLConst( StringSymbol( "a" ) ) :: Nil )
-  val pfx_fol = FOLAtom( StringSymbol( "P" ), FOLFunction( "f", FOLVar( StringSymbol( "x" ) ) :: Nil ) :: Nil )
-  val px_fol = FOLAtom( StringSymbol( "P" ), FOLVar( StringSymbol( "x" ) ) :: Nil )
-  val pffa_fol = FOLAtom( StringSymbol( "P" ), FOLFunction( "f", FOLFunction( "f", FOLConst( "a" ) :: Nil ) :: Nil ) :: Nil )
+  val pa_fol = FOLAtom( "P", FOLConst( "a" ) :: Nil )
+  val pfx_fol = FOLAtom( "P", FOLFunction( "f", FOLVar( "x" ) :: Nil ) :: Nil )
+  val px_fol = FOLAtom( "P", FOLVar( "x" ) :: Nil )
+  val pffa_fol = FOLAtom( "P", FOLFunction( "f", FOLFunction( "f", FOLConst( "a" ) :: Nil ) :: Nil ) :: Nil )
 
   def clause_to_lists( cl: Clause ): ( Seq[Formula], Seq[Formula] ) = ( cl.negative map ( _.formula ), cl.positive map ( _.formula ) )
 

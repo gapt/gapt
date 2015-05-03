@@ -7,7 +7,7 @@ it out for now. [Giselle]
 package at.logic.gapt.language.hol.algorithms.unification
 
 import at.logic.calculi.lk.base.types.FSequent
-import at.logic.gapt.language.hol.{HOLFormula}
+import at.logic.gapt.language.hol.{Formula}
 import at.logic.gapt.expr.symbols.{VariableStringSymbol, VariableSymbolA}
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.parsing.readers.StringReader
@@ -15,7 +15,7 @@ import at.logic.gapt.algorithms.diophantine.{LankfordSolver, Vector}
 import at.logic.calculi.lk.base.FSequent
 import at.logic.gapt.language.hol.logicSymbols.{ConstantStringSymbol, ConstantSymbolA}
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.fol.FOLEquation
+import at.logic.gapt.language.fol.Eq
 import at.logic.gapt.expr.substitutions.Substitution
 
 import collection.immutable.Stream.Cons
@@ -26,7 +26,7 @@ import scala.collection.mutable
 
 package types {
 class Equation(val left: FOLTerm, val right : FOLTerm) {
-  def toFormula() = FOLEquation(left, right)
+  def toFormula() = Eq(left, right)
 }
 }
 
@@ -65,10 +65,10 @@ abstract class EequalityA {
         reequal_to_(f1,g1) && reequal_to_(f2,g2)
 
       // these two rules work only if the variables are canonically renamed in both formulas
-      case (AllVar(x1,t1), AllVar(x2,t2)) =>
+      case (All(x1,t1), All(x2,t2)) =>
         (x1 == x2) && reequal_to_(t1,t2)
 
-      case (ExVar(x1,t1), ExVar(x2,t2)) =>
+      case (Ex(x1,t1), Ex(x2,t2)) =>
         (x1 == x2) && reequal_to_(t1,t2)
 
       case default => false
@@ -614,8 +614,8 @@ object ACUtils {
     formula match {
       case Atom(p, args) => Atom(p, args map ((x:FOLTerm) => fun(x)))
       case Neg(l) => Neg(structural_fold(fun,l))
-      case AllVar(q,l) => AllVar(q,structural_fold(fun,l))
-      case ExVar(q,l) => ExVar(q,structural_fold(fun,l))
+      case All(q,l) => All(q,structural_fold(fun,l))
+      case Ex(q,l) => Ex(q,structural_fold(fun,l))
       case And(l,r) => And(structural_fold(fun,l), structural_fold(fun,r))
       case Or(l,r)  => Or(structural_fold(fun,l), structural_fold(fun,r))
       case Imp(l,r) => Imp(structural_fold(fun,l), structural_fold(fun,r))
@@ -875,7 +875,7 @@ object ACUEquality {
 
   def tautology_removal(theory : EequalityA, clauses : List[FSequent]) : List[FSequent] = {
     clauses.foldLeft (List[FSequent]()) ( (done : List[FSequent], s : FSequent) =>
-      if (s._1.exists( (pos : HOLFormula) => s._2.exists( (neg : HOLFormula) =>  theory.reequal_to(pos.asInstanceOf[FOLFormula], neg.asInstanceOf[FOLFormula]) )))
+      if (s._1.exists( (pos : Formula) => s._2.exists( (neg : Formula) =>  theory.reequal_to(pos.asInstanceOf[FOLFormula], neg.asInstanceOf[FOLFormula]) )))
         done
       else
         done.+:(s)
@@ -887,14 +887,14 @@ object ACUEquality {
   private def clause_restricted_subsumed_in(theory : EequalityA, clause : FSequent, list : List[FSequent]) = list.exists( (s : FSequent) =>
     clause._1.length == s._1.length &&
     clause._2.length == s._2.length &&
-    clause._1.forall((f:HOLFormula) => s._1.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
-    clause._2.forall((f:HOLFormula) => s._2.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) ))
+    clause._1.forall((f:Formula) => s._1.exists((g:Formula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
+    clause._2.forall((f:Formula) => s._2.exists((g:Formula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) ))
   )
 
   //returns true if clause is reequal some element of list modulo the theory, where clause may be weakened (i.e. have additional literals)
   def clause_restricted_subsumed_in2(theory : EequalityA, clause : FSequent, list : List[FSequent]) = list.exists( (s : FSequent) =>
-    s._1.forall((f:HOLFormula) => clause._1.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
-    s._2.forall((f:HOLFormula) => clause._2.exists((g:HOLFormula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) ))
+    s._1.forall((f:Formula) => clause._1.exists((g:Formula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) )) &&
+    s._2.forall((f:Formula) => clause._2.exists((g:Formula) => theory.reequal_to(f.asInstanceOf[FOLFormula], g.asInstanceOf[FOLFormula]) ))
   )
 
   def restricted_subsumption(theory : EequalityA, clauses : List[FSequent]) : List[FSequent] =
@@ -920,7 +920,7 @@ object ACUEquality {
     import at.logic.gapt.language.hol._
     seqs.filter(_ match {
       case FSequent(_, succedent) => succedent.exists(
-        (f: HOLFormula) =>
+        (f: Formula) =>
           f match {
             case Atom(ConstantStringSymbol("="), List(x,y)) =>  e.word_equalsto(x.asInstanceOf[FOLTerm],y.asInstanceOf[FOLTerm])
             case _ => false

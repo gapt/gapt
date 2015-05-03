@@ -10,6 +10,7 @@ import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 
+import at.logic.gapt.expr._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.Axiom
@@ -39,7 +40,7 @@ class SLKTest extends SpecificationWithJUnit {
       val a_sn = IndexedPredicate( "A", Succ( n ) :: Nil )
       val and_1_n_ai = BigAnd( i, ai, Succ( IntZero() ), n )
       val and_1_sn_ai = BigAnd( i, ai, Succ( IntZero() ), Succ( n ) )
-      val ax = Axiom( SchemaAnd( and_1_n_ai, a_sn ) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] )
+      val ax = Axiom( And( and_1_n_ai, a_sn ) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] )
       val proof = AndEquivalenceRule1( ax, ax.root.antecedent.head, and_1_sn_ai )
       proof.root.toFSequent must beEqualTo( FSequent( and_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] ) )
 
@@ -52,18 +53,18 @@ class SLKTest extends SpecificationWithJUnit {
       val a_sn = IndexedPredicate( "A", Succ( n ) :: Nil )
       val or_1_n_ai = BigOr( i, ai, Succ( IntZero() ), n )
       val or_1_sn_ai = BigOr( i, ai, Succ( IntZero() ), Succ( n ) )
-      val ax = Axiom( SchemaOr( or_1_n_ai, a_sn ) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] )
+      val ax = Axiom( Or( or_1_n_ai, a_sn ) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] )
       val proof = OrEquivalenceRule1( ax, ax.root.antecedent.head, or_1_sn_ai )
       proof.root.toFSequent must beEqualTo( FSequent( or_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] ) )
 
     }
 
     "work for sCutRule" in {
-      def f = SchemaConst( "f", Ti -> Ti )
-      def h = SchemaConst( "h", ->( Tindex, ->( Ti, Ti ) ) )
-      def g = SchemaConst( "g", ->( Tindex, ->( Ti, Ti ) ) )
+      def f = Const( "f", Ti -> Ti )
+      def h = Const( "h", ->( Tindex, ->( Ti, Ti ) ) )
+      def g = Const( "g", ->( Tindex, ->( Ti, Ti ) ) )
       val k = IntVar( "k" )
-      val x = SchemaVar( "x", Ti )
+      val x = Var( "x", Ti )
       val base2 = x
       val step2 = foTerm( "f", sTerm( g, Succ( k ), x :: Nil ) :: Nil )
       val base1 = sTerm( g, IntZero(), x :: Nil )
@@ -72,8 +73,8 @@ class SLKTest extends SpecificationWithJUnit {
       dbTRS.add( g, Tuple2( base1, base2 ), Tuple2( step1, step2 ) )
       val term1 = sTerm( g, Succ( Succ( k ) ), x :: Nil )
       val term2 = foTerm( "f", sTerm( g, Succ( k ), x :: Nil ) :: Nil )
-      val f1 = SchemaAtom( SchemaConst( "P", term1.exptype -> To ), term1 :: Nil )
-      val f2 = SchemaAtom( SchemaConst( "P", term2.exptype -> To ), term2 :: Nil )
+      val f1 = SchemaAtom( Const( "P", term1.exptype -> To ), term1 :: Nil )
+      val f2 = SchemaAtom( Const( "P", term2.exptype -> To ), term2 :: Nil )
 
       val ax1 = Axiom( f1 :: Nil, f1 :: Nil )
       val ax2 = Axiom( f2 :: Nil, f2 :: Nil )

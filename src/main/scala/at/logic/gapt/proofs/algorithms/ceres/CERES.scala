@@ -4,7 +4,7 @@ import at.logic.gapt.proofs.lk.algorithms.applySubstitution
 import at.logic.gapt.proofs.resolution.FClause
 import at.logic.gapt.expr.types._
 import at.logic.gapt.expr.symbols._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lk.base.FSequent
@@ -40,7 +40,7 @@ class CERESR2LK {
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
+  def apply( p: LKProof, pred: Formula => Boolean ): LKProof = {
     val es = p.root.toFSequent
     val proj = Projections( p, pred ) + CERES.refProjection( es )
 
@@ -85,7 +85,7 @@ class CERES {
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
+  def apply( p: LKProof, pred: Formula => Boolean ): LKProof = {
     val es = p.root.toFSequent
     val proj = Projections( p, pred )
 
@@ -99,7 +99,7 @@ class CERES {
     }
   }
 
-  def apply( lkproof: LKProof, refutation: LKProof, pred: HOLFormula => Boolean ): LKProof = {
+  def apply( lkproof: LKProof, refutation: LKProof, pred: Formula => Boolean ): LKProof = {
     CERES( lkproof.root.toFSequent, Projections( lkproof, pred ) + refProjection( lkproof.root.toFSequent ), refutation )
   }
 
@@ -173,8 +173,8 @@ class CERES {
 
   def refProjection( es: FSequent ): LKProof = {
     require( es.formulas.nonEmpty, "Can not project reflexivity to an empty end-sequent!" )
-    val x = es.formulas( 0 ).factory.createVar( StringSymbol( "x" ), Ti ).asInstanceOf[HOLVar]
-    val axiomseq = FSequent( Nil, List( HOLEquation( x, x ) ) )
+    val x = Var( StringSymbol( "x" ), Ti ).asInstanceOf[Var]
+    val axiomseq = FSequent( Nil, List( Eq( x, x ) ) )
     //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
     WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq compose es )
   }

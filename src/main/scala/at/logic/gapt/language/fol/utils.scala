@@ -5,22 +5,12 @@
 package at.logic.gapt.language.fol
 
 import at.logic.gapt.language.fol.replacements.getAllPositionsFOL
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.symbols.getRenaming
 import at.logic.gapt.expr.{ freeVariables => freeVariablesLambda, rename => renameLambda }
-import at.logic.gapt.language.hol.{ isPrenex => isPrenexHOL, containsQuantifier => containsQuantifierHOL, getMatrix => getMatrixHOL, lcomp => lcompHOL, _ }
-import at.logic.gapt.language.hol.logicSymbols._
+import at.logic.gapt.language.hol.{ getMatrix => getMatrixHOL, _ }
 import at.logic.gapt.utils.logging.Logger
-import scala.Some
-import scala.Tuple3
 import scala.collection.mutable
-
-// Returns a list *without duplicates* of the free variables in the expression.
-// There is no guarantee on the ordering of the list.
-object freeVariables {
-  def apply( e: FOLExpression ): List[FOLVar] = freeVariablesLambda( e ).asInstanceOf[List[FOLVar]]
-  def apply( es: List[FOLExpression] ): List[FOLVar] = es.flatMap( apply( _ ) )
-}
 
 // matches for consts and vars, but nothing else
 object VarOrConst {
@@ -31,21 +21,13 @@ object VarOrConst {
   }
 }
 
-object isPrenex {
-  def apply( e: FOLExpression ): Boolean = isPrenexHOL( e )
-}
-
-object containsQuantifier {
-  def apply( e: FOLExpression ): Boolean = containsQuantifierHOL( e )
-}
-
 // Instantiates a term in a quantified formula (using the first quantifier).
 object instantiate {
   def apply( f: FOLFormula, t: FOLTerm ): FOLFormula = f match {
-    case FOLAllVar( v, form ) =>
+    case All( v, form ) =>
       val sub = FOLSubstitution( v, t )
       sub( form )
-    case FOLExVar( v, form ) =>
+    case Ex( v, form ) =>
       val sub = FOLSubstitution( v, t )
       sub( form )
     case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
@@ -59,7 +41,7 @@ object rename {
   // FIXME
   // Why doesn't the first method work??? If needed, the same should be done for renaming of constants...
   //def apply(v: FOLVar, blackList: List[FOLVar]) : FOLVar = renameLambda(v, blackList).asInstanceOf[FOLVar]
-  def apply( v: FOLVar, blackList: List[FOLVar] ): FOLVar = new FOLVar( getRenaming( v.sym, blackList.map( v => v.sym ) ) )
+  def apply( v: FOLVar, blackList: List[FOLVar] ): FOLVar = FOLVar( getRenaming( v.sym, blackList.map( v => v.sym ) ).toString )
   def apply( c: FOLConst, blackList: List[FOLConst] ): FOLConst = renameLambda( c, blackList ).asInstanceOf[FOLConst]
 
   // renames a list of variables to pairwise distinct variables
@@ -114,7 +96,7 @@ object instantiateAll {
    *   such that each list has length <= n, this function returns the list
    *   of instances of f obtained by calling instantiateAll on each list of terms.
    */
-  def apply( f: FOLFormula, lst: Seq[Seq[FOLTerm]] ): Seq[FOLFormula] =
+  def apply( f: FOLFormula, lst: Seq[Seq[FOLTerm]] )( implicit d: DummyImplicit ): Seq[FOLFormula] =
     lst.map( terms => instantiateAll( f, terms ) )
 }
 
@@ -126,20 +108,20 @@ object toNNF {
   def apply( f: FOLFormula ): FOLFormula = f match {
     case FOLAtom( _, _ )     => f
     case FOLFunction( _, _ ) => f
-    case FOLImp( f1, f2 )    => FOLOr( toNNF( FOLNeg( f1 ) ), toNNF( f2 ) )
-    case FOLAnd( f1, f2 )    => FOLAnd( toNNF( f1 ), toNNF( f2 ) )
-    case FOLOr( f1, f2 )     => FOLOr( toNNF( f1 ), toNNF( f2 ) )
-    case FOLExVar( x, f )    => FOLExVar( x, toNNF( f ) )
-    case FOLAllVar( x, f )   => FOLAllVar( x, toNNF( f ) )
-    case FOLNeg( f ) => f match {
-      case FOLAtom( _, _ )     => FOLNeg( f )
-      case FOLFunction( _, _ ) => FOLNeg( f )
-      case FOLNeg( f1 )        => toNNF( f1 )
-      case FOLImp( f1, f2 )    => FOLAnd( toNNF( f1 ), toNNF( FOLNeg( f2 ) ) )
-      case FOLAnd( f1, f2 )    => FOLOr( toNNF( FOLNeg( f1 ) ), toNNF( FOLNeg( f2 ) ) )
-      case FOLOr( f1, f2 )     => FOLAnd( toNNF( FOLNeg( f1 ) ), toNNF( FOLNeg( f2 ) ) )
-      case FOLExVar( x, f )    => FOLAllVar( x, toNNF( FOLNeg( f ) ) )
-      case FOLAllVar( x, f )   => FOLExVar( x, toNNF( FOLNeg( f ) ) )
+    case Imp( f1, f2 )       => Or( toNNF( Neg( f1 ) ), toNNF( f2 ) )
+    case And( f1, f2 )       => And( toNNF( f1 ), toNNF( f2 ) )
+    case Or( f1, f2 )        => Or( toNNF( f1 ), toNNF( f2 ) )
+    case Ex( x, f )          => Ex( x, toNNF( f ) )
+    case All( x, f )         => All( x, toNNF( f ) )
+    case Neg( f ) => f match {
+      case FOLAtom( _, _ )     => Neg( f )
+      case FOLFunction( _, _ ) => Neg( f )
+      case Neg( f1 )           => toNNF( f1 )
+      case Imp( f1, f2 )       => And( toNNF( f1 ), toNNF( Neg( f2 ) ) )
+      case And( f1, f2 )       => Or( toNNF( Neg( f1 ) ), toNNF( Neg( f2 ) ) )
+      case Or( f1, f2 )        => And( toNNF( Neg( f1 ) ), toNNF( Neg( f2 ) ) )
+      case Ex( x, f )          => All( x, toNNF( Neg( f ) ) )
+      case All( x, f )         => Ex( x, toNNF( Neg( f ) ) )
       case _                   => throw new Exception( "ERROR: Unexpected case while transforming to negation normal form." )
     }
     case _ => throw new Exception( "ERROR: Unexpected case while transforming to negation normal form." )
@@ -149,14 +131,14 @@ object toNNF {
 // Distribute Ors over Ands
 object distribute {
   def apply( f: FOLFormula ): FOLFormula = f match {
-    case FOLAtom( _, _ )               => f
+    case FOLAtom( _, _ )         => f
     // Negation has only atomic scope
-    case FOLNeg( FOLAtom( _, _ ) )     => f
-    case FOLAnd( f1, f2 )              => FOLAnd( distribute( f1 ), distribute( f2 ) )
-    case FOLOr( f1, FOLAnd( f2, f3 ) ) => FOLAnd( distribute( FOLOr( f1, f2 ) ), distribute( FOLOr( f1, f3 ) ) )
-    case FOLOr( FOLAnd( f1, f2 ), f3 ) => FOLAnd( distribute( FOLOr( f1, f3 ) ), distribute( FOLOr( f2, f3 ) ) )
-    case FOLOr( f1, f2 )               => FOLOr( distribute( f1 ), distribute( f2 ) )
-    case _                             => throw new Exception( "ERROR: Unexpected case while distributing Ors over Ands." )
+    case Neg( FOLAtom( _, _ ) )  => f
+    case And( f1, f2 )           => And( distribute( f1 ), distribute( f2 ) )
+    case Or( f1, And( f2, f3 ) ) => And( distribute( Or( f1, f2 ) ), distribute( Or( f1, f3 ) ) )
+    case Or( And( f1, f2 ), f3 ) => And( distribute( Or( f1, f3 ) ), distribute( Or( f2, f3 ) ) )
+    case Or( f1, f2 )            => Or( distribute( f1 ), distribute( f2 ) )
+    case _                       => throw new Exception( "ERROR: Unexpected case while distributing Ors over Ands." )
   }
 }
 
@@ -173,12 +155,12 @@ object numOfAtoms {
   def apply( f: FOLFormula ): Int = f match {
     case FOLAtom( _, _ )     => 1
     case FOLFunction( _, _ ) => 1
-    case FOLImp( f1, f2 )    => numOfAtoms( f1 ) + numOfAtoms( f2 )
-    case FOLAnd( f1, f2 )    => numOfAtoms( f1 ) + numOfAtoms( f2 )
-    case FOLOr( f1, f2 )     => numOfAtoms( f1 ) + numOfAtoms( f2 )
-    case FOLExVar( x, f )    => numOfAtoms( f )
-    case FOLAllVar( x, f )   => numOfAtoms( f )
-    case FOLNeg( f )         => numOfAtoms( f )
+    case Imp( f1, f2 )       => numOfAtoms( f1 ) + numOfAtoms( f2 )
+    case And( f1, f2 )       => numOfAtoms( f1 ) + numOfAtoms( f2 )
+    case Or( f1, f2 )        => numOfAtoms( f1 ) + numOfAtoms( f2 )
+    case Ex( x, f )          => numOfAtoms( f )
+    case All( x, f )         => numOfAtoms( f )
+    case Neg( f )            => numOfAtoms( f )
     case _                   => throw new Exception( "ERROR: Unexpected case while counting the number of atoms." )
   }
 }
@@ -217,30 +199,30 @@ object replaceFreeOccurenceOf {
     formula match {
       case FOLAtom( _, args ) => FOLSubstitution( variable, by ).apply( formula )
 
-      case FOLNeg( f ) =>
-        FOLNeg( replaceFreeOccurenceOf( variable, by, f ) )
+      case Neg( f ) =>
+        Neg( replaceFreeOccurenceOf( variable, by, f ) )
 
-      case FOLAnd( f1, f2 ) =>
+      case And( f1, f2 ) =>
         val r1 = replaceFreeOccurenceOf( variable, by, f1 )
         val r2 = replaceFreeOccurenceOf( variable, by, f2 )
-        FOLAnd( r1, r2 )
+        And( r1, r2 )
 
-      case FOLOr( f1, f2 ) =>
+      case Or( f1, f2 ) =>
         val r1 = replaceFreeOccurenceOf( variable, by, f1 )
         val r2 = replaceFreeOccurenceOf( variable, by, f2 )
-        FOLOr( r1, r2 )
+        Or( r1, r2 )
 
-      case FOLExVar( v, f ) =>
+      case Ex( v, f ) =>
         if ( v.syntaxEquals( variable ) )
           formula
         else
-          FOLExVar( v, replaceFreeOccurenceOf( variable, by, f ) )
+          Ex( v, replaceFreeOccurenceOf( variable, by, f ) )
 
-      case FOLAllVar( v, f ) =>
+      case All( v, f ) =>
         if ( v.syntaxEquals( variable ) )
           formula
         else
-          FOLAllVar( v, replaceFreeOccurenceOf( variable, by, f ) )
+          All( v, replaceFreeOccurenceOf( variable, by, f ) )
 
       case _ => throw new Exception( "Unknown operator encountered during renaming of outermost bound variable. Formula is: " + formula )
     }
@@ -253,13 +235,13 @@ object reverseCNF {
   def apply( f: List[FOLFormula] ): FOLFormula = {
     val ( ant, succ ) = f.foldRight( ( List[FOLFormula](), List[FOLFormula]() ) ) {
       case ( f, ( ant, succ ) ) => f match {
-        case FOLNeg( a ) => ( a :: ant, succ )
-        case a           => ( ant, a :: succ )
+        case Neg( a ) => ( a :: ant, succ )
+        case a        => ( ant, a :: succ )
       }
     }
-    val conj = FOLAnd( ant )
-    val disj = FOLOr( succ )
-    FOLImp( conj, disj )
+    val conj = And( ant )
+    val disj = Or( succ )
+    Imp( conj, disj )
   }
 }
 
@@ -267,7 +249,7 @@ object addQuantifiers {
   /**
    * Adds a list of universal quantifiers to a FOL formula.
    * The first element of the list will be the outermost quantifier.
-   * A generalization of applying AllVar(x,f).
+   * A generalization of applying All(x,f).
    *
    * It always holds that addQuantifiers(f,removeQuantifiers(f)._1) = f.
    *
@@ -275,7 +257,7 @@ object addQuantifiers {
    * @param xs A list of variables [x1,...,xn] over which to universally quantify f.
    * @return [forall x1,...,xn] f
    */
-  def apply( f: FOLFormula, xs: List[FOLVar] ) = xs.reverse.foldLeft( f )( ( f, x ) => FOLAllVar( x, f ) )
+  def apply( f: FOLFormula, xs: List[FOLVar] ) = xs.reverse.foldLeft( f )( ( f, x ) => All( x, f ) )
 }
 
 object removeQuantifiers {
@@ -283,13 +265,13 @@ object removeQuantifiers {
   /**
    * Strips the initial universal quantifiers from a FOL formula that begins
    * with a quantifier block.
-   * A generalization of unapplying AllVar(x,f).
+   * A generalization of unapplying All(x,f).
    *
    * @param f A FOL formula of the form [forall x1,...,xn] f'.
    * @return The tuple ([xn,...,x1], f').
    */
   def apply( f: FOLFormula ): ( List[FOLVar], FOLFormula ) = f match {
-    case FOLAllVar( x, f ) => {
+    case All( x, f ) => {
       val ( xs, fret ) = removeQuantifiers( f )
       ( x :: xs, fret )
     }
@@ -303,7 +285,7 @@ object univclosure {
    * @param f the formula to be closed
    * @return forall x_1 ... forall x_n f, where {x_i | 1 <= i <= n} = FV(f)
    */
-  def apply( f: FOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => FOLAllVar( v, g ) )
+  def apply( f: FOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => All( v, g ) )
 }
 
 object existsclosure {
@@ -312,7 +294,7 @@ object existsclosure {
    * @param f the formula to be closed
    * @return exists x_1 ... exists x_n f, where {x_i | 1 <= i <= n} = FV(f)
    */
-  def apply( f: FOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => FOLExVar( v, g ) )
+  def apply( f: FOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => Ex( v, g ) )
 }
 
 object removeNQuantifiers {
@@ -328,11 +310,11 @@ object removeNQuantifiers {
    * of f''.
    */
   def apply( f: FOLFormula, n: Int ): ( List[FOLVar], FOLFormula ) = f match {
-    case FOLAllVar( x, f ) => {
+    case All( x, f ) => {
       if ( n > 0 ) {
         val ( xs, fret ) = removeNQuantifiers( f, n - 1 )
         ( xs :+ x, fret )
-      } else { ( List[FOLVar](), FOLAllVar( x, f ) ) }
+      } else { ( List[FOLVar](), All( x, f ) ) }
     }
     case f => ( List[FOLVar](), f )
   }
@@ -358,14 +340,14 @@ object collectVariables {
    *         in the formula, it will occur multiple times in the returned list.
    */
   def apply( f: FOLFormula ): List[FOLVar] = f match {
-    case FOLAnd( f1, f2 )   => collectVariables( f1 ) ++ collectVariables( f2 )
-    case FOLOr( f1, f2 )    => collectVariables( f1 ) ++ collectVariables( f2 )
-    case FOLImp( f1, f2 )   => collectVariables( f1 ) ++ collectVariables( f2 )
-    case FOLNeg( f1 )       => collectVariables( f1 )
-    case FOLAllVar( _, f1 ) => collectVariables( f1 )
-    case FOLExVar( _, f1 )  => collectVariables( f1 )
-    case FOLAtom( _, f1 )   => f1.map( f => collectVariables( f ) ).foldLeft( List[FOLVar]() )( _ ++ _ )
-    case _                  => throw new IllegalArgumentException( "Unhandled case in fol.utils.collectVariables(FOLFormula)!" )
+    case And( f1, f2 )    => collectVariables( f1 ) ++ collectVariables( f2 )
+    case Or( f1, f2 )     => collectVariables( f1 ) ++ collectVariables( f2 )
+    case Imp( f1, f2 )    => collectVariables( f1 ) ++ collectVariables( f2 )
+    case Neg( f1 )        => collectVariables( f1 )
+    case All( _, f1 )     => collectVariables( f1 )
+    case Ex( _, f1 )      => collectVariables( f1 )
+    case FOLAtom( _, f1 ) => f1.map( f => collectVariables( f ) ).foldLeft( List[FOLVar]() )( _ ++ _ )
+    case _                => throw new IllegalArgumentException( "Unhandled case in fol.utils.collectVariables(FOLFormula)!" )
   }
 
   /**
@@ -388,10 +370,6 @@ object isEigenvariable {
     case Array( eigenvariable, n ) => n.forall( Character.isDigit )
     case _                         => false
   }
-}
-
-object lcomp {
-  def apply( f: FOLFormula ) = lcompHOL( f )
 }
 
 object Utils extends Logger {
@@ -525,11 +503,11 @@ object Utils extends Logger {
    * @param prefix2 prefix which should replace prefix1
    * @return a FOLTerm, where all FOLVars starting with prefix1 have been replaced by FOLVars starting with prefix2 instead
    */
-  def replaceAllVars( t: FOLTerm, prefix1: String, prefix2: String ): FOLTerm = {
+  def replaceAlls( t: FOLTerm, prefix1: String, prefix2: String ): FOLTerm = {
     t match {
       case FOLVar( x )         => FOLVar( x.replace( prefix1, prefix2 ) )
       case FOLConst( c )       => FOLConst( c )
-      case FOLFunction( f, l ) => FOLFunction( f, l.map( p => replaceAllVars( p, prefix1, prefix2 ) ) )
+      case FOLFunction( f, l ) => FOLFunction( f, l.map( p => replaceAlls( p, prefix1, prefix2 ) ) )
       case _                   => throw new Exception( "Unexpected case. Malformed FOLTerm." )
     }
   }
@@ -558,12 +536,12 @@ object Utils extends Logger {
    * @param t term
    * @return term with incremented variable indexes
    */
-  def incrementAllVars( t: FOLTerm, prefix: String ): FOLTerm = {
+  def incrementAlls( t: FOLTerm, prefix: String ): FOLTerm = {
     t match {
       case FOLVar( x ) if x.startsWith( prefix ) => incrementIndex( FOLVar( x ) )
       case FOLVar( x )                           => FOLVar( x )
       case FOLConst( c )                         => FOLConst( c )
-      case FOLFunction( f, l )                   => FOLFunction( f, l.map( p => incrementAllVars( p, prefix ) ) )
+      case FOLFunction( f, l )                   => FOLFunction( f, l.map( p => incrementAlls( p, prefix ) ) )
       case _                                     => throw new Exception( "Unexpected case. Malformed FOLTerm." )
     }
   }
@@ -596,7 +574,7 @@ object Utils extends Logger {
    */
   def replaceAtPosition( t: FOLTerm, variable: String, position: List[Int], index: Int ): FOLTerm = {
     try {
-      val replacement = new at.logic.gapt.language.fol.replacements.Replacement( position, FOLVar( variable + "_" + index ) )
+      val replacement = new Replacement( position, FOLVar( variable + "_" + index ) )
       return replacement( t ).asInstanceOf[FOLTerm]
     } catch {
       case e: IllegalArgumentException => // Possible, nothing special to do here.
@@ -636,13 +614,13 @@ object getArityOfConstants {
     case FOLAtom( h, args )     => Set( ( args.length, h.toString ) ) ++ args.map( arg => getArityOfConstants( arg ) ).flatten
     case FOLFunction( h, args ) => Set( ( args.length, h.toString ) ) ++ args.map( arg => getArityOfConstants( arg ) ).flatten
 
-    case FOLAnd( x, y )         => getArityOfConstants( x ) ++ getArityOfConstants( y )
-    case FOLEquation( x, y )    => getArityOfConstants( x ) ++ getArityOfConstants( y )
-    case FOLOr( x, y )          => getArityOfConstants( x ) ++ getArityOfConstants( y )
-    case FOLImp( x, y )         => getArityOfConstants( x ) ++ getArityOfConstants( y )
-    case FOLNeg( x )            => getArityOfConstants( x )
-    case FOLExVar( x, f )       => getArityOfConstants( f )
-    case FOLAllVar( x, f )      => getArityOfConstants( f )
+    case And( x, y )            => getArityOfConstants( x ) ++ getArityOfConstants( y )
+    case Eq( x, y )             => getArityOfConstants( x ) ++ getArityOfConstants( y )
+    case Or( x, y )             => getArityOfConstants( x ) ++ getArityOfConstants( y )
+    case Imp( x, y )            => getArityOfConstants( x ) ++ getArityOfConstants( y )
+    case Neg( x )               => getArityOfConstants( x )
+    case Ex( x, f )             => getArityOfConstants( f )
+    case All( x, f )            => getArityOfConstants( f )
   }
 }
 
@@ -720,17 +698,17 @@ object toAbbreviatedString {
         }
 
       }
-      case FOLAnd( x, y )      => ( "(" + toAbbreviatedString( x ) + " " + AndSymbol + " " + toAbbreviatedString( y ) + ")", AndSymbol.toString(), 0 )
-      case FOLEquation( x, y ) => ( "(" + toAbbreviatedString( x ) + " " + EqSymbol + " " + toAbbreviatedString( y ) + ")", EqSymbol.toString(), 0 )
-      case FOLOr( x, y )       => ( "(" + toAbbreviatedString( x ) + " " + OrSymbol + " " + toAbbreviatedString( y ) + ")", OrSymbol.toString(), 0 )
-      case FOLImp( x, y )      => ( "(" + toAbbreviatedString( x ) + " " + ImpSymbol + " " + toAbbreviatedString( y ) + ")", ImpSymbol.toString(), 0 )
-      case FOLNeg( x )         => ( NegSymbol + toAbbreviatedString( x ), NegSymbol.toString(), 0 )
-      case FOLExVar( x, f )    => ( ExistsSymbol + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ExistsSymbol.toString(), 0 )
-      case FOLAllVar( x, f )   => ( ForallSymbol + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ForallSymbol.toString(), 0 )
-      case FOLAbs( v, exp )    => ( "(λ" + toAbbreviatedString( v ) + "." + toAbbreviatedString( exp ) + ")", "λ", 0 )
-      case FOLApp( l, r )      => ( "(" + toAbbreviatedString( l ) + ")(" + toAbbreviatedString( r ) + ")", "()()", 0 )
-      case FOLConst( x )       => ( x.toString(), x.toString(), 0 )
-      case _                   => throw new Exception( "ERROR: Unknown FOL expression." );
+      case And( x, y )   => ( "(" + toAbbreviatedString( x ) + " " + AndC.name + " " + toAbbreviatedString( y ) + ")", AndC.name.toString(), 0 )
+      case Eq( x, y )    => ( "(" + toAbbreviatedString( x ) + " " + EqC.name + " " + toAbbreviatedString( y ) + ")", EqC.name.toString(), 0 )
+      case Or( x, y )    => ( "(" + toAbbreviatedString( x ) + " " + OrC.name + " " + toAbbreviatedString( y ) + ")", OrC.name.toString(), 0 )
+      case Imp( x, y )   => ( "(" + toAbbreviatedString( x ) + " " + ImpC.name + " " + toAbbreviatedString( y ) + ")", ImpC.name.toString(), 0 )
+      case Neg( x )      => ( NegC.name + toAbbreviatedString( x ), NegC.name.toString(), 0 )
+      case Ex( x, f )    => ( ExistsQ.name + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ExistsQ.name.toString(), 0 )
+      case All( x, f )   => ( ForallQ.name + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ForallQ.name.toString(), 0 )
+      //      case Abs( v, exp )    => ( "(λ" + toAbbreviatedString( v ) + "." + toAbbreviatedString( exp ) + ")", "λ", 0 )
+      //      case App( l, r )      => ( "(" + toAbbreviatedString( l ) + ")(" + toAbbreviatedString( r ) + ")", "()()", 0 )
+      case FOLConst( x ) => ( x.toString(), x.toString(), 0 )
+      case _             => throw new Exception( "ERROR: Unknown FOL expression." );
     }
     return s
 

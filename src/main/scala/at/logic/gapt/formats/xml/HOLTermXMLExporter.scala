@@ -1,72 +1,72 @@
 /*
- * HOLExpressionExporter.scala
+ * LambdaExpressionExporter.scala
  *
  */
 
 package at.logic.gapt.formats.xml
 
 import at.logic.gapt.formats.ExportingException
-import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.types.{ ->, FunctionType, Ti, To }
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.types._
 
 trait HOLTermXMLExporter {
-  def exportTerm( term: HOLExpression ): scala.xml.Elem = term match {
-    case HOLAtom( c: HOLConst, args ) =>
+  def exportTerm( term: LambdaExpression ): scala.xml.Elem = term match {
+    case HOLAtom( c: Const, args ) =>
       <constantatomformula symbol={ c.name.toString }>
         { exportList( args ) }
       </constantatomformula>
-    case HOLAtom( c: HOLVar, args ) =>
+    case HOLAtom( c: Var, args ) =>
       <variableatomformula>
         { exportList( c :: args ) }
       </variableatomformula>
     //defined sets need to be matched before general functions
-    case HOLFunction( HOLConst( a, FunctionType( To, ls ) ), args, rtype ) if ( ls.last == Ti ) =>
+    case HOLFunction( Const( a, FunctionType( To, ls ) ), args ) if ( ls.last == Ti ) =>
       <definedset definition={ a } symbol={ a }>
         { exportList( args ) }
       </definedset>
-    // TODO Function with HOLVar
-    case HOLFunction( f: HOLConst, args, _ ) =>
+    // TODO Function with Var
+    case HOLFunction( f: Const, args ) =>
       <function symbol={ f.name.toString }>
         { exportList( args ) }
       </function>
-    case HOLAnd( left, right ) =>
+    case And( left, right ) =>
       <conjunctiveformula type="and">
         { exportList( left :: right :: Nil ) }
       </conjunctiveformula>
-    case HOLOr( left, right ) =>
+    case Or( left, right ) =>
       <conjunctiveformula type="or">
         { exportList( left :: right :: Nil ) }
       </conjunctiveformula>
-    case HOLImp( left, right ) =>
+    case Imp( left, right ) =>
       <conjunctiveformula type="impl">
         { exportList( left :: right :: Nil ) }
       </conjunctiveformula>
-    case HOLNeg( f ) =>
+    case Neg( f ) =>
       <conjunctiveformula type="neg">
         { exportTerm( f ) }
       </conjunctiveformula>
-    case HOLAllVar( vr @ HOLVar( _, Ti ), f ) =>
+    case All( vr @ Var( _, Ti ), f ) =>
       <quantifiedformula type="all">
         { exportList( vr :: f :: Nil ) }
       </quantifiedformula>
-    case HOLExVar( vr @ HOLVar( _, Ti ), f ) =>
+    case Ex( vr @ Var( _, Ti ), f ) =>
       <quantifiedformula type="exists">
         { exportList( vr :: f :: Nil ) }
       </quantifiedformula>
-    case HOLAllVar( vr @ HOLVar( _, ->( Ti, To ) ), f ) =>
+    case All( vr @ Var( _, ->( Ti, To ) ), f ) =>
       <secondorderquantifiedformula type="all">
         { exportList( vr :: f :: Nil ) }
       </secondorderquantifiedformula>
-    case HOLExVar( vr @ HOLVar( _, ->( Ti, To ) ), f ) =>
+    case Ex( vr @ Var( _, ->( Ti, To ) ), f ) =>
       <secondorderquantifiedformula type="exists">
         { exportList( vr :: f :: Nil ) }
       </secondorderquantifiedformula>
     // TODO: variables and constants of other types
-    case HOLVar( a, Ti ) =>
+    case Var( a, Ti ) =>
       <variable symbol={ a.toString }/>
-    case HOLVar( a, ->( Ti, To ) ) =>
+    case Var( a, ->( Ti, To ) ) =>
       <secondordervariable symbol={ a.toString }/>
-    case HOLConst( a, Ti ) =>
+    case Const( a, Ti ) =>
       <constant symbol={ a.toString }/>
 
     /*
@@ -77,7 +77,7 @@ trait HOLTermXMLExporter {
     case Var(VariableStringSymbol(a), ->(Ti(),To())) =>
       <secondordervariable symbol={a}/>
       */
-    case HOLAbsN1( varlist, func ) =>
+    case AbsN1( varlist, func ) =>
       <lambdasubstitution>
         <variablelist>
           { exportList( varlist ) }
@@ -85,20 +85,20 @@ trait HOLTermXMLExporter {
       </lambdasubstitution>
     case _ => throw new ExportingException( "Term cannot be exported into the required xml format: " + term.toString )
   }
-  private def exportList( ls: List[HOLExpression] ) = ls.map( x => exportTerm( x ) )
+  private def exportList( ls: List[LambdaExpression] ) = ls.map( x => exportTerm( x ) )
 }
 
-private object HOLAbsN {
-  def unapply( e: HOLExpression ): Option[( List[HOLVar], HOLExpression )] = e match {
-    case HOLAbs( x, e1 ) =>
+private object AbsN {
+  def unapply( e: LambdaExpression ): Option[( List[Var], LambdaExpression )] = e match {
+    case Abs( x, e1 ) =>
       val Some( ( vs, re ) ) = unapply( e1 ); Some( ( x :: vs, re ) )
     case _ => Some( ( Nil, e ) )
   }
 }
 
-private object HOLAbsN1 {
-  def unapply( e: HOLExpression ): Option[( List[HOLVar], HOLExpression )] = e match {
-    case HOLAbsN( vs, e1 ) if vs.nonEmpty =>
+private object AbsN1 {
+  def unapply( e: LambdaExpression ): Option[( List[Var], LambdaExpression )] = e match {
+    case AbsN( vs, e1 ) if vs.nonEmpty =>
       Some( ( vs, e1 ) )
     case _ => None
   }

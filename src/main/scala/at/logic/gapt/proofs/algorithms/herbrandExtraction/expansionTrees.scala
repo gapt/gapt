@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.algorithms.herbrandExtraction
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.expansionTrees.{ ETWeakQuantifier, ETStrongQuantifier, ETAnd, ETOr, ETImp, ETNeg, ETAtom, ETMerge, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
 import at.logic.gapt.proofs.occurrences._
@@ -11,8 +12,8 @@ class extractExpansionSequent {
 
   def apply( proof: LKProof, verbose: Boolean ): ExpansionSequent = {
     val map = extract( proof, verbose )
-    val clean_ant = proof.root.antecedent.filter( f => map( f ) != ETAtom( HOLTopC ) )
-    val clean_suc = proof.root.succedent.filter( f => map( f ) != ETAtom( HOLBottomC ) )
+    val clean_ant = proof.root.antecedent.filter( f => map( f ) != ETAtom( Top() ) )
+    val clean_suc = proof.root.succedent.filter( f => map( f ) != ETAtom( Bottom() ) )
     mergeTree( ( clean_ant.map( fo => map( fo ) ), clean_suc.map( fo => map( fo ) ) ) )
   }
 
@@ -58,19 +59,19 @@ class extractExpansionSequent {
     } else {
       val axiomFormula = axiomCandidates( 0 )
 
-      Map( r.antecedent.map( fo => ( fo, ETAtom( if ( fo syntaxEquals axiomFormula ) fo.formula else HOLTopC ) ) ) ++
-        r.succedent.map( fo => ( fo, ETAtom( if ( fo syntaxEquals axiomFormula ) fo.formula else HOLBottomC ) ) ): _* )
+      Map( r.antecedent.map( fo => ( fo, ETAtom( if ( fo syntaxEquals axiomFormula ) fo.formula else Top() ) ) ) ++
+        r.succedent.map( fo => ( fo, ETAtom( if ( fo syntaxEquals axiomFormula ) fo.formula else Bottom() ) ) ): _* )
     }
   }
 
   //occurs in handleAxiom
   private def allAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isAtom( o.formula ) )
-  private def isReflexivity( f: HOLFormula ) = f match { case HOLEquation( s, t ) if s == t => true; case _ => false }
+  private def isReflexivity( f: Formula ) = f match { case Eq( s, t ) if s == t => true; case _ => false }
 
   def handleUnary( r: Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
-      case WeakeningRightRule( _, _, _ )           => ETAtom( HOLBottomC )
-      case WeakeningLeftRule( _, _, _ )            => ETAtom( HOLTopC )
+      case WeakeningRightRule( _, _, _ )           => ETAtom( Bottom() )
+      case WeakeningLeftRule( _, _, _ )            => ETAtom( Top() )
       case ForallLeftRule( _, _, a, _, t )         => ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) )
       case ExistsRightRule( _, _, a, _, t )        => ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) )
       case ForallRightRule( _, _, a, _, v )        => ETStrongQuantifier( p.formula, v, map( a ) )
@@ -78,17 +79,17 @@ class extractExpansionSequent {
       case ContractionLeftRule( _, _, a1, a2, _ )  => ETMerge( map( a1 ), map( a2 ) )
       case ContractionRightRule( _, _, a1, a2, _ ) => ETMerge( map( a1 ), map( a2 ) )
       case AndLeft1Rule( _, _, a, _ ) =>
-        val HOLAnd( _, f2 ) = p.formula
-        ETAnd( map( a ), ETAtom( HOLTopC ) )
+        val And( _, f2 ) = p.formula
+        ETAnd( map( a ), ETAtom( Top() ) )
       case AndLeft2Rule( _, _, a, _ ) =>
-        val HOLAnd( f1, _ ) = p.formula
-        ETAnd( ETAtom( HOLTopC ), map( a ) )
+        val And( f1, _ ) = p.formula
+        ETAnd( ETAtom( Top() ), map( a ) )
       case OrRight1Rule( _, _, a, _ ) =>
-        val HOLOr( _, f2 ) = p.formula
-        ETOr( map( a ), ETAtom( HOLBottomC ) )
+        val Or( _, f2 ) = p.formula
+        ETOr( map( a ), ETAtom( Bottom() ) )
       case OrRight2Rule( _, _, a, _ ) =>
-        val HOLOr( f1, _ ) = p.formula
-        ETOr( ETAtom( HOLBottomC ), map( a ) )
+        val Or( f1, _ ) = p.formula
+        ETOr( ETAtom( Bottom() ), map( a ) )
       case ImpRightRule( _, _, a1, a2, _ ) =>
         ETImp( map( a1 ), map( a2 ) )
       case NegLeftRule( _, _, a, _ )         => ETNeg( map( a ) )

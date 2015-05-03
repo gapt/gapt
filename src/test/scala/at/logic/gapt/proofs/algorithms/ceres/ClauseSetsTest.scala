@@ -7,6 +7,7 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.schema._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.proofs.algorithms.ceres.projections.{ DeleteTautology, DeleteRedundantSequents }
@@ -26,10 +27,10 @@ class ClauseSetsTest extends SpecificationWithJUnit {
   "ClauseSets" should {
     "- transform a Struct into a standard clause set" in {
 
-      val a = HOLAtom( HOLVar( "a", To ) )
-      val b = HOLAtom( HOLVar( "b", To ) )
-      val c = HOLAtom( HOLVar( "c", To ) )
-      val d = HOLAtom( HOLVar( "d", To ) )
+      val a = HOLAtom( Var( "a", To ) )
+      val b = HOLAtom( Var( "b", To ) )
+      val c = HOLAtom( Var( "c", To ) )
+      val d = HOLAtom( Var( "d", To ) )
       val fa = defaultFormulaOccurrenceFactory.createFormulaOccurrence( a, Nil )
       val fb = defaultFormulaOccurrenceFactory.createFormulaOccurrence( b, Nil )
       val fc = defaultFormulaOccurrenceFactory.createFormulaOccurrence( c, Nil )
@@ -63,7 +64,7 @@ class ClauseSetsTest extends SpecificationWithJUnit {
       val struct = StructCreators.extract( p1s, getCutAncestors( p1s ) )
       val cs: List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( struct ) ) )
 
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( IntZero() ) )
+      val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( IntZero() ) )
       var subst = SchemaSubstitution( new_map )
       val gr = groundStruct( struct, subst.asInstanceOf[HOLSubstitution] )
       val unfold_gr = unfoldGroundStruct( gr )

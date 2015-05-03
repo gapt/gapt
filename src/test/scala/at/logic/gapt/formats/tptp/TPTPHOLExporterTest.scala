@@ -4,16 +4,16 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.execute.Success
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.proofs.lk.base.FSequent
 
 class TPTPHOLExporterTest extends SpecificationWithJUnit {
   "Export to TPTP thf" should {
     "handle atoms correctly" in {
-      val x = HOLVar( "x", Ti -> To )
-      val y = HOLVar( "y", To )
-      val c = HOLConst( "c", Ti )
+      val x = Var( "x", Ti -> To )
+      val y = Var( "y", To )
+      val c = Const( "c", Ti )
 
       val ax = HOLAtom( x, List( c ) )
       val ay = HOLAtom( y )

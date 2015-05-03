@@ -6,7 +6,8 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.fol.Utils
-import at.logic.gapt.language.schema.{ SchemaSubstitution, SchemaVar, SchemaFormula, IndexedPredicate, IntVar, IntZero, IntegerTerm, Succ }
+import at.logic.gapt.language.schema.{ SchemaSubstitution, SchemaFormula, IndexedPredicate, IntVar, IntZero, IntegerTerm, Succ }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.shlk.algorithms.StepMinusOne
 import at.logic.gapt.utils.ds.Multisets
 import at.logic.gapt.utils.ds.Multisets.Multiset
@@ -59,7 +60,7 @@ object RelevantCC {
     val cclistbase = Utils.removeDoubles( cclist1 ::: cclist ).map( pair => {
       val seq = SchemaProofDB.get( pair._1 ).base.root
       val k = IntVar( "k" )
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero().asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero().asInstanceOf[IntegerTerm] )
       var sub = SchemaSubstitution( new_map )
       val groundccant = pair._2._1.map( fo => sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) )
       val groundccsucc = pair._2._2.map( fo => sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) )
@@ -79,15 +80,15 @@ object RelevantCC {
       val len = StepMinusOne.lengthVar( index.asInstanceOf[IntegerTerm] )
       val foccsInSeqAnt = seq.antecedent.filter( fo => cut_omega_anc.contains( fo ) )
       val foccsInSeqSucc = seq.succedent.filter( fo => cut_omega_anc.contains( fo ) )
-      var new_map = Map.empty[SchemaVar, IntegerTerm]
+      var new_map = Map.empty[Var, IntegerTerm]
       var sub = SchemaSubstitution( new_map )
       if ( len == 0 )
-        new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( index.asInstanceOf[IntegerTerm] ) )
+        new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( index.asInstanceOf[IntegerTerm] ) )
       else if ( len == 1 )
-        new_map = Map.empty[SchemaVar, IntegerTerm]
+        new_map = Map.empty[Var, IntegerTerm]
       else {
         val k = IntVar( "k" )
-        new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( k, StepMinusOne.intTermPlus( k, len - 1 ) )
+        new_map = Map.empty[Var, IntegerTerm] + Tuple2( k, StepMinusOne.intTermPlus( k, len - 1 ) )
         sub = SchemaSubstitution( new_map )
         val newccAnt = seq1.antecedent.toList.filter( fo => foccsInSeqAnt.map( foo => foo.formula ).contains( sub( fo.formula.asInstanceOf[SchemaFormula] ) ) )
         val newccSucc = seq1.succedent.toList.filter( fo => foccsInSeqSucc.map( foo => foo.formula ).contains( sub( fo.formula.asInstanceOf[SchemaFormula] ) ) )

@@ -1,9 +1,10 @@
 package at.logic.gapt.integration_tests
 
+import at.logic.gapt.language.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.provers.maxsat.{ MaxSat4j, MaxSATSolver }
 import org.junit.runner.RunWith
@@ -23,14 +24,14 @@ class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
     val p = "P"
 
     val x = FOLVar( "x" )
-    val ass = FOLAllVar( x, FOLImp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
+    val ass = All( x, Imp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
     if ( k == n ) { // leaf proof {
       val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
       WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
     } else {
       val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
       val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
-      val aux = FOLImp( p1, p2 )
+      val aux = Imp( p1, p2 )
       ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
     }
   }

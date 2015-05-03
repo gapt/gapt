@@ -1,13 +1,14 @@
 
 package at.logic.gapt.provers.atp.commands.robinson
 
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.language.fol.algorithms.UnificationAlgorithm
 import at.logic.gapt.language.hol.{ getAtPosition, getAllPositions, Replacement }
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.language.fol.{ FOLExpression, FOLEquation, FOLFormula, FOLSubstitution }
+import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.ProverException
 import at.logic.gapt.provers.atp.commands.base.DataCommand
 import at.logic.gapt.provers.atp.commands.sequents.SetSequentsCommand
@@ -173,7 +174,7 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
       l2 <- p2.root.antecedent ++ p2.root.succedent
       subTerm <- getAllPositions( l2.formula ) // except var positions and only on positions of the same type as a or b
     } yield l1.formula match {
-      case FOLEquation( a, b ) => {
+      case Eq( a: FOLTerm, b: FOLTerm ) => {
         //println("\n\n\n\nEq1 = "+l1.formula)
         //println("l2 = "+l2.formula)
         //println(Console.RED+"subTerm = "+subTerm+Console.RESET)
@@ -206,7 +207,7 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
         l2 <- p1.root.antecedent ++ p1.root.succedent
         subTerm <- getAllPositions( l2.formula ) // except variable positions
       } yield l1.formula match {
-        case FOLEquation( a, b ) => {
+        case Eq( a: FOLTerm, b: FOLTerm ) => {
           //              println("\n\n\n\nEq2 : "+l1.formula)
           //              println("l2 = "+l2.formula)
           //              println(Console.RED+"subTerm = "+subTerm+Console.RESET)
@@ -246,7 +247,7 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
       l2 <- p2.root.antecedent ++ p2.root.succedent
       subTerm <- getAllPositions( l2.formula ) // except var positions and only on positions of the same type as a or b
     } yield l1.formula match {
-      case FOLEquation( a, b ) => {
+      case Eq( a: FOLTerm, b: FOLTerm ) => {
         val mgus1 = if ( a.exptype == subTerm._2.exptype ) alg.unify( a, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
         require( mgus1.size < 2 )
         val mgus2 = if ( b.exptype == subTerm._2.exptype ) alg.unify( b, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
@@ -267,7 +268,7 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
         l2 <- p1.root.antecedent ++ p1.root.succedent
         subTerm <- getAllPositions( l2.formula ) // except variable positions
       } yield l1.formula match {
-        case FOLEquation( a, b ) => {
+        case Eq( a: FOLTerm, b: FOLTerm ) => {
           val mgus1 = if ( a.exptype == subTerm._2.exptype ) alg.unify( a, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
           require( mgus1.size < 2 )
           val mgus2 = if ( b.exptype == subTerm._2.exptype ) alg.unify( b, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
@@ -326,7 +327,7 @@ case class ParamodulationLiteralPositionCommand( alg: UnificationAlgorithm ) ext
     // we need to require that lit1 is an equation
     val lit1 = occ1._1
     val lit2 = occ2._1
-    val FOLEquation( l, r ) = lit1.formula
+    val Eq( l: FOLTerm, r: FOLTerm ) = lit1.formula
     val subTerm = getAtPosition( lit2.formula, pos2 )
     if ( pos1 == 1 ) {
       val mgu = if ( l.exptype == subTerm.exptype ) alg.unify( l, subTerm.asInstanceOf[FOLExpression] ) else throw new ProverException( "Paramodulation on " + lit1 + " and " + lit2 + " at position " + pos2 + " is not possible due to different types" )

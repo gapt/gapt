@@ -2,12 +2,13 @@
 
 package at.logic.gapt.proofs.lk.algorithms
 
+import at.logic.gapt.expr.Formula
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 
 object Util {
-  class ElimEx( val uproofs: List[LKProof], val aux: List[FormulaOccurrence], val prim: HOLFormula, val defs: Option[Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
+  class ElimEx( val uproofs: List[LKProof], val aux: List[FormulaOccurrence], val prim: Formula, val defs: Option[Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
     override def getMessage = {
       var s = "proofs:\n\n"
       for ( p <- uproofs )
@@ -81,7 +82,7 @@ object Util {
     error
   }
   //fsequent2sequent
-  def f2focc( f: HOLFormula ) = new FormulaOccurrence( f, Nil, defaultFormulaOccurrenceFactory )
+  def f2focc( f: Formula ) = new FormulaOccurrence( f, Nil, defaultFormulaOccurrenceFactory )
   def fsequent2sequent( s: FSequent ) = Sequent( s._1 map f2focc, s._2 map f2focc )
 
 }

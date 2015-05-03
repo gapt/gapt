@@ -4,7 +4,7 @@ import at.logic.gapt.language.fol.algorithms.FOLUnificationAlgorithm
 import at.logic.gapt.provers.atp.commands.robinson.ParamodulationCommand
 import org.specs2.mutable._
 import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.language.fol.FOLFormula
+import at.logic.gapt.expr._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.proofs.lk.base.FSequent

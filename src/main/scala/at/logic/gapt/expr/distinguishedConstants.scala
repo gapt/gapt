@@ -55,20 +55,20 @@ object EqC {
   }
 }
 
-package schematic {
-
-  object BigAndC extends LogicalC( "⋀", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
-  object BigOrC extends LogicalC( "⋁", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
-
-  object ZeroC extends LogicalC( "0", Tindex )
-  object SuccC extends LogicalC( "s", Tindex -> Tindex )
-
-  object PlusC extends LogicalC( "+", Tindex -> ( Tindex -> Tindex ) )
-  object TimesC extends LogicalC( "×", Tindex -> ( Tindex -> Tindex ) )
-
-  object BiggerThanC extends LogicalC( ">", Tindex -> ( Tindex -> To ) )
-  object SimC extends LogicalC( "~", Tindex -> ( Tindex -> To ) )
-  object LessThanC extends LogicalC( "<", Tindex -> ( Tindex -> To ) )
-  object LeqC extends LogicalC( "≤", Tindex -> ( Tindex -> To ) )
-
-}
+//package schematic {
+//
+//  object BigAndC extends LogicalC( "⋀", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
+//  object BigOrC extends LogicalC( "⋁", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
+//
+//  object ZeroC extends LogicalC( "0", Tindex )
+//  object SuccC extends LogicalC( "s", Tindex -> Tindex )
+//
+//  object PlusC extends LogicalC( "+", Tindex -> ( Tindex -> Tindex ) )
+//  object TimesC extends LogicalC( "×", Tindex -> ( Tindex -> Tindex ) )
+//
+//  object BiggerThanC extends LogicalC( ">", Tindex -> ( Tindex -> To ) )
+//  object SimC extends LogicalC( "~", Tindex -> ( Tindex -> To ) )
+//  object LessThanC extends LogicalC( "<", Tindex -> ( Tindex -> To ) )
+//  object LeqC extends LogicalC( "≤", Tindex -> ( Tindex -> To ) )
+//
+//}

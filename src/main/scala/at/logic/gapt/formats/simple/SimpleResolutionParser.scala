@@ -5,7 +5,7 @@
 
 package at.logic.gapt.formats.simple
 
-import at.logic.gapt.language.hol.{ HOLNeg, HOLFormula }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 
 /*
@@ -35,16 +35,16 @@ trait SimpleResolutionParser extends ResolutionParser {
   def clauseList: Parser[List[FSequent]] = rep( clause )
   protected def clause: Parser[FSequent]
 
-  protected def formula2: Parser[HOLFormula] = ( neg | atom )
-  protected def neg2: Parser[HOLFormula] = "-" ~ atom ^^ { case "-" ~ x => HOLNeg( x ) }
+  protected def formula2: Parser[Formula] = ( neg | atom )
+  protected def neg2: Parser[Formula] = "-" ~ atom ^^ { case "-" ~ x => Neg( x ) }
 
-  protected def filterPosFormulas( f: HOLFormula ): Boolean = f match {
-    case HOLNeg( x ) => true
-    case _           => false
+  protected def filterPosFormulas( f: Formula ): Boolean = f match {
+    case Neg( x ) => true
+    case _        => false
   }
-  protected def stripNeg( f: HOLFormula ): HOLFormula = f match {
-    case HOLNeg( x ) => x
-    case _           => f
+  protected def stripNeg( f: Formula ): Formula = f match {
+    case Neg( x ) => x
+    case _        => f
   }
 }
 

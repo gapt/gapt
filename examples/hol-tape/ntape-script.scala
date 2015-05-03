@@ -41,25 +41,25 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 
 
 
- class Robinson2RalAndUndoHOL2Fol(sig_vars : Map[String, List[HOLVar]],
-                                   sig_consts : Map[String, List[HOLConst]],
+ class Robinson2RalAndUndoHOL2Fol(sig_vars : Map[String, List[Var]],
+                                   sig_consts : Map[String, List[Const]],
                                    cmap : replaceAbstractions.ConstantsMap) extends RobinsonToRal {
-    val absmap = Map[String, HOLExpression]() ++ (cmap.toList.map(x => (x._2.toString, x._1)))
-    val cache = Map[HOLExpression, HOLExpression]()
+    val absmap = Map[String, LambdaExpression]() ++ (cmap.toList.map(x => (x._2.toString, x._1)))
+    val cache = Map[LambdaExpression, LambdaExpression]()
 
-    override def convert_formula(e:HOLFormula) : HOLFormula = {
+    override def convert_formula(e:Formula) : Formula = {
 //      require(e.isInstanceOf[FOLFormula], "The formula "+e +" is, against our expectations, not from the fol layer." )
 
       BetaReduction.betaNormalize(
-        recreateWithFactory( undoHol2Fol.backtranslate(e, sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[HOLFormula]  
+        recreateWithFactory( undoHol2Fol.backtranslate(e, sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[Formula]  
     )
     }
 
     override def convert_substitution(s:HOLSubstitution) : HOLSubstitution = {
       val mapping = s.map.toList.map(x =>
         (
-          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression]).asInstanceOf[HOLVar],
-          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[FOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[HOLExpression])
+          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[LambdaExpression]).asInstanceOf[Var],
+          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[FOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[LambdaExpression])
           )
       )
 
@@ -68,8 +68,8 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
   }
 
  object Robinson2RalAndUndoHOL2Fol {
-    def apply(sig_vars : Map[String, List[HOLVar]],
-              sig_consts : Map[String, List[HOLConst]],
+    def apply(sig_vars : Map[String, List[Var]],
+              sig_consts : Map[String, List[Const]],
               cmap : replaceAbstractions.ConstantsMap) =
       new Robinson2RalAndUndoHOL2Fol(sig_vars, sig_consts, cmap)
   }

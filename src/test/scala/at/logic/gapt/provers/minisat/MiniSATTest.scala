@@ -11,7 +11,7 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.lk.base.FSequent
 
@@ -22,12 +22,12 @@ object SATProblems {
 
     def apply( ps: Int, hs: Int ) = {
       assert( ps > 1 )
-      FOLImp( FOLAnd( ( 1 to ps ).map( p =>
-        FOLOr( ( 1 to hs ).map( h => atom( p, h ) ).toList ) ).toList ),
-        FOLOr( ( 1 to hs ).map( h =>
-          FOLOr( ( 2 to ps ).map( p =>
-            FOLOr( ( ( 1 to p - 1 ) ).map( pp =>
-              FOLAnd( atom( p, h ), atom( pp, h ) ) ).toList ) ).toList ) ).toList ) )
+      Imp( And( ( 1 to ps ).map( p =>
+        Or( ( 1 to hs ).map( h => atom( p, h ) ).toList ) ).toList ),
+        Or( ( 1 to hs ).map( h =>
+          Or( ( 2 to ps ).map( p =>
+            Or( ( ( 1 to p - 1 ) ).map( pp =>
+              And( atom( p, h ), atom( pp, h ) ) ).toList ) ).toList ) ).toList ) )
     }
 
     def atom( p: Int, h: Int ) = FOLAtom( rel, pigeon( p ) :: hole( h ) :: Nil )
@@ -50,8 +50,8 @@ object SATProblems {
     val c2 = FClause( pc :: Nil, Nil )
     c1 :: c2 :: Nil
   }
-  def getProblem3a() = FOLOr( pc, FOLNeg( pc ) )
-  def getProblem3b() = new FSequent( Nil, FOLOr( pc, FOLNeg( pc ) ) :: Nil )
+  def getProblem3a() = Or( pc, Neg( pc ) )
+  def getProblem3b() = new FSequent( Nil, Or( pc, Neg( pc ) ) :: Nil )
   def getProblem4() = pc
   def getProblem5() = {
     val c1 = FClause( Nil, pc :: Nil )
@@ -118,14 +118,11 @@ class MiniSATTest extends SpecificationWithJUnit {
     }
 
     "say bottom is unsatisfiable" in {
-      new MiniSAT().solve( FOLBottomC ) must beNone
+      new MiniSAT().solve( Bottom() ) must beNone
     }
 
     "say top is satisfiable" in {
-      new MiniSAT().solve( FOLTopC ) must beLike {
-        case Some( _ ) => ok
-        case None      => ko
-      }
+      new MiniSAT().solve( Top() ) must beSome
     }
 
   }

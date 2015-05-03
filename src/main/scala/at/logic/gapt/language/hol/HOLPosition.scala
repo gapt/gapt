@@ -1,6 +1,6 @@
 package at.logic.gapt.language.hol
 
-import at.logic.gapt.expr.LambdaPosition
+import at.logic.gapt.expr._
 
 object HOLPosition {
   def apply( list: List[Int] ) = new HOLPosition( list )
@@ -17,41 +17,41 @@ object HOLPosition {
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
    * @return Positions of subexpressions satisfying pred.
    */
-  def getPositions( exp: HOLExpression, pred: HOLExpression => Boolean = _ => true ): List[HOLPosition] = {
+  def getPositions( exp: LambdaExpression, pred: LambdaExpression => Boolean = _ => true ): List[HOLPosition] = {
     LambdaPosition.getPositions( exp, {
-      case e: HOLExpression => pred( e )
-      case _                => false
+      case e: LambdaExpression => pred( e )
+      case _                   => false
     } ) filter { definesHOLPosition( exp ) } map { toHOLPosition( exp ) }
   }
 
   /**
-   * Replaces a a subexpression in a HOLExpression. This function is actually a wrapper around [[at.logic.gapt.expr.LambdaPosition.replace]].
+   * Replaces a a subexpression in a LambdaExpression. This function is actually a wrapper around [[at.logic.gapt.expr.LambdaPosition.replace]].
    *
    * @param exp The expression in which to perform the replacement.
    * @param pos The position at which to replace.
    * @param repTerm The expression that exp(pos) should be replaced with.
    * @return
    */
-  def replace( exp: HOLExpression, pos: HOLPosition, repTerm: HOLExpression ) = LambdaPosition.replace( exp, toLambdaPosition( exp )( pos ), repTerm ).asInstanceOf[HOLExpression]
+  def replace( exp: LambdaExpression, pos: HOLPosition, repTerm: LambdaExpression ) = LambdaPosition.replace( exp, toLambdaPosition( exp )( pos ), repTerm ).asInstanceOf[LambdaExpression]
 
   /**
-   * Compares to HOLExpressions and returns the list of outermost positions where they differ.
+   * Compares to LambdaExpressions and returns the list of outermost positions where they differ.
    *
    * @param exp1 The first expression.
    * @param exp2 The second expression.
    * @return The list of outermost positions at which exp1 and exp2 differ.
    */
-  def differingPositions( exp1: HOLExpression, exp2: HOLExpression ): List[HOLPosition] = LambdaPosition.differingPositions( exp1, exp2 ) map { toHOLPosition( exp1 ) }
+  def differingPositions( exp1: LambdaExpression, exp2: LambdaExpression ): List[HOLPosition] = LambdaPosition.differingPositions( exp1, exp2 ) map { toHOLPosition( exp1 ) }
 
   /**
    * Converts a HOLPosition into the corresponding LambdaPosition.
    *
    * Note that position conversion is always relative to a given expression.
    * @param pos The position to be converted.
-   * @param exp The relevant HOLExpression.
+   * @param exp The relevant LambdaExpression.
    * @return The corresponding LambdaPosition.
    */
-  def toLambdaPosition( exp: HOLExpression )( pos: HOLPosition ): LambdaPosition = toLambdaPositionOption( exp )( pos ) match {
+  def toLambdaPosition( exp: LambdaExpression )( pos: HOLPosition ): LambdaPosition = toLambdaPositionOption( exp )( pos ) match {
     case Some( p ) => p
     case None      => throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to LambdaPosition." )
   }
@@ -61,31 +61,31 @@ object HOLPosition {
    *
    * Note that position conversion is always relative to a given expression.
    * @param pos The position to be converted.
-   * @param exp The relevant HOLExpression.
+   * @param exp The relevant LambdaExpression.
    * @return The corresponding LambdaPosition.
    */
-  def toLambdaPositionOption( exp: HOLExpression )( pos: HOLPosition ): Option[LambdaPosition] = {
+  def toLambdaPositionOption( exp: LambdaExpression )( pos: HOLPosition ): Option[LambdaPosition] = {
     if ( pos.isEmpty ) Some( LambdaPosition() )
     else {
       val rest = pos.tail
       ( pos.head, exp ) match {
-        case ( 1, HOLNeg( subExp ) ) =>
+        case ( 1, Neg( subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
             case Some( subPos ) => Some( 2 :: subPos )
             case None           => None
           }
 
-        case ( _, HOLNeg( _ ) ) => None
+        case ( _, Neg( _ ) ) => None
 
-        case ( 1, HOLExVar( _, subExp ) ) =>
+        case ( 1, Ex( _, subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
             case Some( subPos ) => Some( 2 :: 1 :: subPos )
             case None           => None
           }
 
-        case ( _, HOLExVar( _, _ ) ) => None
+        case ( _, Ex( _, _ ) ) => None
 
-        case ( 1, HOLAllVar( _, subExp ) ) =>
+        case ( 1, All( _, subExp ) ) =>
           toLambdaPositionOption( subExp )( rest ) match {
             case Some( subPos ) => Some( 2 :: 1 :: subPos )
             case None           => None
@@ -105,17 +105,17 @@ object HOLPosition {
 
         case ( _, BinaryConnective( _, _ ) ) => None
 
-        case ( 1, HOLApp( f, _ ) ) => toLambdaPositionOption( f )( rest ) match {
+        case ( 1, App( f, _ ) ) => toLambdaPositionOption( f )( rest ) match {
           case Some( subPos ) => Some( 1 :: subPos )
           case None           => None
         }
 
-        case ( 2, HOLApp( _, arg ) ) => toLambdaPositionOption( arg )( rest ) match {
+        case ( 2, App( _, arg ) ) => toLambdaPositionOption( arg )( rest ) match {
           case Some( subPos ) => Some( 2 :: subPos )
           case None           => None
         }
 
-        case ( 1, HOLAbs( _, term ) ) => toLambdaPositionOption( term )( rest ) match {
+        case ( 1, Abs( _, term ) ) => toLambdaPositionOption( term )( rest ) match {
           case Some( subPos ) => Some( 1 :: subPos )
           case None           => None
         }
@@ -130,15 +130,15 @@ object HOLPosition {
    *
    * Note that position conversion is always relative to a given expression.
    * @param pos The position to be converted.
-   * @param exp The relevant HOLExpression.
+   * @param exp The relevant LambdaExpression.
    * @return The corresponding HOLPosition.
    */
-  def toHOLPosition( exp: HOLExpression )( pos: LambdaPosition ): HOLPosition = {
+  def toHOLPosition( exp: LambdaExpression )( pos: LambdaPosition ): HOLPosition = {
     if ( pos.isEmpty ) HOLPosition()
     else {
       val rest = pos.tail
       exp match {
-        case HOLNeg( subExp ) =>
+        case Neg( subExp ) =>
           if ( pos.head == 2 )
             1 :: toHOLPosition( subExp )( rest )
           else
@@ -151,24 +151,24 @@ object HOLPosition {
             2 :: toHOLPosition( right )( rest )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
-        case HOLExVar( _, subExp ) =>
+        case Ex( _, subExp ) =>
           if ( pos.head == 2 && rest.headOption == Some( 1 ) )
             1 :: toHOLPosition( subExp )( rest.tail )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
-        case HOLAllVar( _, subExp ) =>
+        case All( _, subExp ) =>
           if ( pos.head == 2 && rest.headOption == Some( 1 ) )
             1 :: toHOLPosition( subExp )( rest.tail )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
-        case HOLApp( f, arg ) =>
+        case App( f, arg ) =>
           if ( pos.head == 1 )
             1 :: toHOLPosition( f )( rest )
           else if ( pos.head == 2 )
             2 :: toHOLPosition( arg )( rest )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
 
-        case HOLAbs( _, term ) =>
+        case Abs( _, term ) =>
           if ( pos.head == 1 )
             1 :: toHOLPosition( term )( rest )
           else throw new Exception( "Can't convert position " + pos + " for expression " + exp + " to HOLPosition." )
@@ -185,12 +185,12 @@ object HOLPosition {
    * @param pos
    * @return
    */
-  def definesHOLPosition( exp: HOLExpression )( pos: LambdaPosition ): Boolean = {
+  def definesHOLPosition( exp: LambdaExpression )( pos: LambdaPosition ): Boolean = {
     if ( pos.isEmpty ) true
     else {
       val rest = pos.tail
       exp match {
-        case HOLNeg( subExp ) =>
+        case Neg( subExp ) =>
           if ( pos.head == 2 )
             definesHOLPosition( subExp )( rest )
           else
@@ -203,24 +203,24 @@ object HOLPosition {
             definesHOLPosition( right )( rest )
           else false
 
-        case HOLExVar( _, subExp ) =>
+        case Ex( _, subExp ) =>
           if ( pos.head == 2 && rest.headOption == Some( 1 ) )
             definesHOLPosition( subExp )( rest.tail )
           else false
 
-        case HOLAllVar( _, subExp ) =>
+        case All( _, subExp ) =>
           if ( pos.head == 2 && rest.headOption == Some( 1 ) )
             definesHOLPosition( subExp )( rest.tail )
           else false
 
-        case HOLApp( f, arg ) =>
+        case App( f, arg ) =>
           if ( pos.head == 1 )
             definesHOLPosition( f )( rest )
           else if ( pos.head == 2 )
             definesHOLPosition( arg )( rest )
           else false
 
-        case HOLAbs( _, term ) =>
+        case Abs( _, term ) =>
           if ( pos.head == 1 )
             definesHOLPosition( term )( rest )
           else false
@@ -231,7 +231,7 @@ object HOLPosition {
   }
 }
 /**
- * Represents a position in a [[at.logic.gapt.language.hol.HOLExpression]].
+ * Represents a position in a [[at.logic.gapt.language.hol.LambdaExpression]].
  *
  * Positions are given as lists of Integers. The empty list denotes the current expression itself.
  * A list starting with k denotes a subexpression in the k^th^ argument of the current expression.
@@ -258,11 +258,11 @@ class HOLPosition( val list: List[Int] ) {
 }
 
 object BinaryConnective {
-  def unapply( exp: HOLExpression ) = exp match {
-    case HOLAnd( l, r )      => Some( l, r )
-    case HOLOr( l, r )       => Some( l, r )
-    case HOLImp( l, r )      => Some( l, r )
-    case HOLEquation( l, r ) => Some( l, r )
-    case _                   => None
+  def unapply( exp: LambdaExpression ) = exp match {
+    case And( l, r ) => Some( l, r )
+    case Or( l, r )  => Some( l, r )
+    case Imp( l, r ) => Some( l, r )
+    case Eq( l, r )  => Some( l, r )
+    case _           => None
   }
 }

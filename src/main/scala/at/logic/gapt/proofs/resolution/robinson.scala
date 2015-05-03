@@ -7,24 +7,22 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol.{ HOLFormula, toLatexString }
-import at.logic.gapt.language.fol._
+import at.logic.gapt.language.hol.toLatexString
 import at.logic.gapt.expr.symbols._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.utils.ds.acyclicGraphs._
 import at.logic.gapt.proofs.lk.base._
 import scala.collection.immutable.HashSet
 import at.logic.gapt.proofs.lk.EquationVerifier._
-import at.logic.gapt.language.hol.Formula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.lk.{ EquationVerifier, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lksk.UnaryLKskProof
+import at.logic.gapt.language.fol.{ FOLSubstitution, rename }
+import at.logic.gapt.utils.logging.Logger
+import org.slf4j.LoggerFactory
 
 package robinson {
-
-  import at.logic.gapt.language.hol.logicSymbols._
-  import at.logic.gapt.utils.logging.Logger
-  import org.slf4j.LoggerFactory
 
   /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
@@ -33,7 +31,7 @@ package robinson {
       apply( set, sub, Map[FormulaOccurrence, List[FormulaOccurrence]]() )
     def apply( set: Seq[FormulaOccurrence], sub: FOLSubstitution, additional_context: Map[FormulaOccurrence, Seq[FormulaOccurrence]] ): Seq[FormulaOccurrence] =
       set.map( x =>
-        x.factory.createFormulaOccurrence( sub( x.formula.asInstanceOf[FOLFormula] ).asInstanceOf[HOLFormula],
+        x.factory.createFormulaOccurrence( sub( x.formula.asInstanceOf[FOLFormula] ).asInstanceOf[Formula],
           x :: additional_context.getOrElse( x, Nil ).toList ) )
   }
 
@@ -143,7 +141,7 @@ package robinson {
         case ( Some( term1 ), Some( term2 ), _ ) =>
           val prinFormula = term2.factory.createFormulaOccurrence( sub( newLiteral ), term1 :: term2 :: Nil )
           sub( term1.formula ) match {
-            case FOLEquation( s, t ) =>
+            case Eq( s, t ) =>
               ( EquationVerifier( s, t, sub( term2.formula ), sub( newLiteral ) ), EquationVerifier( t, s, sub( term2.formula ), sub( newLiteral ) ) ) match {
                 case ( Different, Different ) =>
                   if ( s == t ) debug( s + "==" + t )
@@ -170,7 +168,7 @@ package robinson {
           val term2 = term2opSuc.get
           val prinFormula = term2.factory.createFormulaOccurrence( sub( newLiteral ), term1 :: term2 :: Nil )
           sub( term1.formula ) match {
-            case FOLEquation( s, t ) =>
+            case Eq( s, t ) =>
               ( EquationVerifier( s, t, sub( term2.formula ), sub( newLiteral ) ), EquationVerifier( t, s, sub( term2.formula ), sub( newLiteral ) ) ) match {
                 case ( Different, Different ) =>
                   if ( s == t ) println( s + "==" + t )
@@ -442,12 +440,12 @@ package robinson {
 
     def escapeTex( s: String ) = {
       val s1 = s.replaceAll( "_", "\\_" )
-      val s2 = s1.replaceAll( AndSymbol.toString, "\\land" )
-      val s3 = s2.replaceAll( OrSymbol.toString, "\\lor" )
-      val s4 = s3.replaceAll( ImpSymbol.toString, "\\rightarrow" )
-      val s5 = s4.replaceAll( NegSymbol.toString, "\\neg" )
-      val s6 = s5.replaceAll( ForallSymbol.toString, "\\forall" )
-      val s7 = s6.replaceAll( ExistsSymbol.toString, "\\exists" )
+      val s2 = s1.replaceAll( AndC.name, "\\land" )
+      val s3 = s2.replaceAll( OrC.name, "\\lor" )
+      val s4 = s3.replaceAll( ImpC.name, "\\rightarrow" )
+      val s5 = s4.replaceAll( NegC.name, "\\neg" )
+      val s6 = s5.replaceAll( ForallQ.name, "\\forall" )
+      val s7 = s6.replaceAll( ExistsQ.name, "\\exists" )
       s7
     }
 

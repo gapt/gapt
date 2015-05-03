@@ -10,7 +10,7 @@ package at.logic.gapt.prooftool
 import java.awt.{ Font, Color }
 import Font._
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent }
-import at.logic.gapt.language.hol.HOLExpression
+import at.logic.gapt.expr._
 import swing.{ FlowPanel, GridPanel, Label }
 
 class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1 ) {
@@ -41,9 +41,9 @@ class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1
     }
 
     def drawMember( x: Any ) = x match {
-      case s: Sequent                               => DrawSequent( s, ft, str )
-      case fs: FSequent                             => DrawSequent.applyF( fs, ft, str )
-      case ( f1: HOLExpression, f2: HOLExpression ) => drawDefinition( f1, f2, ft )
+      case s: Sequent                                     => DrawSequent( s, ft, str )
+      case fs: FSequent                                   => DrawSequent.applyF( fs, ft, str )
+      case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
       case _ => new Label( x.toString ) {
         background = new Color( 255, 255, 255 )
         opaque = true
@@ -53,7 +53,7 @@ class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1
     }
   }
 
-  def drawDefinition( f1: HOLExpression, f2: HOLExpression, ft: Font ) = new FlowPanel {
+  def drawDefinition( f1: LambdaExpression, f2: LambdaExpression, ft: Font ) = new FlowPanel {
     background = new Color( 255, 255, 255 )
     opaque = false
 
@@ -67,6 +67,6 @@ class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1
     contents += new Label( " := " ) { font = ft }
     contents += label2
 
-    def expressionToLabel( e: HOLExpression ): LatexLabel = LatexLabel( ft, DrawSequent.formulaToLatexString( e ) )
+    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( ft, DrawSequent.formulaToLatexString( e ) )
   }
 }

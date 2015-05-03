@@ -1,14 +1,14 @@
 package at.logic.gapt.proofs.shlk
 
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.language.schema._
-import at.logic.gapt.language.schema.BetaReduction._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.{ ContractionRightRuleType, ContractionLeftRuleType, CutRuleType, Axiom }
-import at.logic.gapt.language.hol.HOLExpression
+import BetaReduction._
 
 case object AndEquivalenceRule1Type extends UnaryRuleTypeA
 case object AndEquivalenceRule2Type extends UnaryRuleTypeA
@@ -1128,8 +1128,8 @@ object ExistsHyperRightRule {
   }
 
   def computeAux( main: SchemaFormula, term: SchemaExpression ) = main match {
-    case SchemaExVar( _, sub ) => betaNormalize( SchemaApp( sub, term ) ).asInstanceOf[SchemaFormula]
-    case _                     => throw new LKRuleCreationException( "Main formula of ExistsRightRule must have a universal quantifier as head symbol." )
+    case Ex( _, sub ) => betaNormalize( App( sub, term ) ).asInstanceOf[SchemaFormula]
+    case _            => throw new LKRuleCreationException( "Main formula of ExistsRightRule must have a universal quantifier as head symbol." )
   }
 
   def apply( s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, term: SchemaExpression ): LKProof = {
@@ -1177,13 +1177,13 @@ object ExistsHyperRightRule {
 }
 
 object ForallHyperRightRule {
-  def apply( s1: LKProof, aux: SchemaFormula, main: SchemaFormula, eigen_var: SchemaVar ): LKProof =
+  def apply( s1: LKProof, aux: SchemaFormula, main: SchemaFormula, eigen_var: Var ): LKProof =
     s1.root.succedent.filter( x => x.formula == aux ).toList match {
       case ( x :: _ ) => apply( s1, x, main, eigen_var )
       case _          => throw new LKRuleCreationException( "No matching formula occurrence found for application of the rule with the given auxiliary formula" )
     }
 
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ): LKProof = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: Var ): LKProof = {
     val aux_fo = getTerms( s1.root, term1oc, main, eigen_var )
     val prinFormula = getPrinFormula( main, aux_fo )
     val sequent = getSequent( s1.root, aux_fo, prinFormula )
@@ -1196,18 +1196,18 @@ object ForallHyperRightRule {
       override def name = "\u2200 hyp:r"
     }
   }
-  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
+  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: Var ) = {
     val aux_fo = getTerms( s1, term1oc, main, eigen_var )
     val prinFormula = getPrinFormula( main, aux_fo )
     getSequent( s1, aux_fo, prinFormula )
   }
-  private def getTerms( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
+  private def getTerms( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: Var ) = {
     val term1op = s1.succedent.find( _ == term1oc )
     if ( term1op == None ) throw new LKRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
     else {
       val aux_fo = term1op.get
       main match {
-        case SchemaAllVar( _, sub ) => {
+        case All( _, sub ) => {
           // eigenvar condition
           assert( ( s1.antecedent ++ ( s1.succedent.filterNot( _ == aux_fo ) ) ).forall( fo => !freeVariables( fo.formula.asInstanceOf[SchemaFormula] ).contains( eigen_var ) ),
             "Eigenvariable " + eigen_var.toString + " occurs in context " + s1.toString )
@@ -1216,7 +1216,7 @@ object ForallHyperRightRule {
           //            println("eigen_var = "+eigen_var)
           //            println("betaNormalize( App( sub, eigen_var ): " + betaNormalize( App( sub, eigen_var )))
           //            println("aux_fo: " + aux_fo.formula)
-          // TODO: uncomment assert( betaNormalize( SchemaApp( sub, eigen_var ) ) == aux_fo.formula , "\n\nassert 2 in getTerms of ForallRight fails!\n\n")
+          // TODO: uncomment assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula , "\n\nassert 2 in getTerms of ForallRight fails!\n\n")
           aux_fo
         }
         case _ => throw new LKRuleCreationException( "Main formula of ForallRightRule must have a universal quantifier as head symbol." )
@@ -1241,13 +1241,13 @@ object ForallHyperRightRule {
 }
 
 object ExistsHyperLeftRule {
-  def apply( s1: LKProof, aux: SchemaFormula, main: SchemaFormula, eigen_var: SchemaVar ): LKProof =
+  def apply( s1: LKProof, aux: SchemaFormula, main: SchemaFormula, eigen_var: Var ): LKProof =
     s1.root.antecedent.filter( x => x.formula == aux ).toList match {
       case ( x :: _ ) => apply( s1, x, main, eigen_var )
       case _          => throw new LKRuleCreationException( "No matching formula occurrence found for application of the rule with the given auxiliary formula" )
     }
 
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ): LKProof = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: Var ): LKProof = {
     val aux_fo = getTerms( s1.root, term1oc, main, eigen_var )
     val prinFormula = getPrinFormula( main, aux_fo )
     val sequent = getSequent( s1.root, aux_fo, prinFormula )
@@ -1260,18 +1260,18 @@ object ExistsHyperLeftRule {
       override def name = "\u2203 hyp:l"
     }
   }
-  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
+  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: Var ) = {
     val aux_fo = getTerms( s1, term1oc, main, eigen_var )
     val prinFormula = getPrinFormula( main, aux_fo )
     getSequent( s1, aux_fo, prinFormula )
   }
-  private def getTerms( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: SchemaVar ) = {
+  private def getTerms( s1: Sequent, term1oc: FormulaOccurrence, main: SchemaFormula, eigen_var: Var ) = {
     val term1op = s1.antecedent.find( _ == term1oc )
     if ( term1op == None ) throw new LKRuleCreationException( "Auxialiary formulas are not contained in the right part of the sequent" )
     else {
       val aux_fo = term1op.get
       main match {
-        case SchemaExVar( _, sub ) => {
+        case Ex( _, sub ) => {
           // eigenvar condition
           assert( ( ( s1.antecedent.filterNot( _ == aux_fo ) ) ++ s1.succedent ).forall( fo => !freeVariables( fo.formula.asInstanceOf[SchemaFormula] ).contains( eigen_var ) ),
             "Eigenvariable " + eigen_var.toString + " occurs in context " + s1.toString )

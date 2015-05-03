@@ -6,7 +6,7 @@
 package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType, Axiom => LKAxiom, _ }
@@ -34,7 +34,7 @@ object Axiom {
     // I think we want LeafTree[LabelledSequent] here, but it's incompatible with LKProof
     ( new LeafTree[Sequent]( new LabelledSequent( left, right ) ) with NullaryLKProof { def rule = InitialRuleType }, ( left.toList, right.toList ) )
   }
-  def createOccurrence( f: HOLFormula, l: Label ): LabelledFormulaOccurrence =
+  def createOccurrence( f: Formula, l: Label ): LabelledFormulaOccurrence =
     LKskFOFactory.createInitialOccurrence( f, l )
   def unapply( proof: LKProof ) = if ( proof.rule == InitialRuleType ) Some( ( proof.root ) ) else None
 }
@@ -47,9 +47,9 @@ object WeakeningLeftRule {
    * @param l the label
    * @return an LKProof with last rule weakening left
    */
-  def apply( s1: LKProof, f: HOLFormula, l: Label ) = createDefault( s1, f, l )
+  def apply( s1: LKProof, f: Formula, l: Label ) = createDefault( s1, f, l )
 
-  def createDefault( s1: LKProof, f: HOLFormula, l: Label ) = {
+  def createDefault( s1: LKProof, f: Formula, l: Label ) = {
     val prinFormula: LabelledFormulaOccurrence = LKskFOFactory.createInitialOccurrence( f, l )
     // I think we want LeafTree[LabelledSequent] here, but it's incompatible with LKProof
     new UnaryTree[Sequent](
@@ -74,9 +74,9 @@ object WeakeningRightRule {
    * @param l the label
    * @return an LKProof with last rule weakening left
    */
-  def apply( s1: LKProof, f: HOLFormula, l: Label ): LKProof = createDefault( s1, f, l )
+  def apply( s1: LKProof, f: Formula, l: Label ): LKProof = createDefault( s1, f, l )
 
-  def createDefault( s1: LKProof, f: HOLFormula, l: Label ) = {
+  def createDefault( s1: LKProof, f: Formula, l: Label ) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence( f, l )
     new UnaryTree[Sequent](
       new LabelledSequent( createContext( s1.root.antecedent ).asInstanceOf[Seq[LabelledFormulaOccurrence]], createContext( s1.root.succedent ).asInstanceOf[Seq[LabelledFormulaOccurrence]] :+ prinFormula ), s1 ) with UnaryLKProof with PrincipalFormulas {
@@ -102,13 +102,13 @@ case object ExistsSkRightRuleType extends UnaryRuleTypeA
 
 object ForallSkLeftRule {
   // removeFromLabel indicates whether to remove the term subst from the label of the main formula.
-  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: HOLExpression, removeFromLabel: Boolean ) = {
+  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst_t: LambdaExpression, removeFromLabel: Boolean ) = {
     main match {
-      case HOLAllVar( x, sub ) => {
+      case All( x, sub ) => {
         // TODO: comment in to check validity of the rule.
         // commented out at the moment because we don't know the subst term
         // in the XML parser. We need first-order unification for that.
-        //assert( betaNormalize( App( sub, subst_t ) ) == aux ) //needs to change because we changed the All matchen to AllVar
+        //assert( betaNormalize( App( sub, subst_t ) ) == aux ) //needs to change because we changed the All matchen to All
         if ( !s1.root.antecedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException( "Premise does not contain the given formula occurrence.", s1, auxf.formula :: Nil )
         if ( !auxf.skolem_label.contains( subst_t ) )
@@ -138,10 +138,10 @@ object ForallSkLeftRule {
 }
 
 object ExistsSkRightRule {
-  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: HOLExpression, removeFromLabel: Boolean ) = {
+  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst_t: LambdaExpression, removeFromLabel: Boolean ) = {
     main match {
-      case HOLExVar( x, sub ) => {
-        //assert( betaNormalize( App( sub, subst_t ) ) == aux ) //needs to change because we changed the All matchen to AllVar
+      case Ex( x, sub ) => {
+        //assert( betaNormalize( App( sub, subst_t ) ) == aux ) //needs to change because we changed the All matchen to All
         if ( !s1.root.succedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException( "Premise does not contain the given formula occurrence.", s1, auxf.formula :: Nil )
         if ( !auxf.skolem_label.contains( subst_t ) )
@@ -170,9 +170,9 @@ object ExistsSkRightRule {
 }
 
 object ForallSkRightRule {
-  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: HOLExpression ) = {
+  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, skolem_term: LambdaExpression ) = {
     main match {
-      case HOLAllVar( x, sub ) => {
+      case All( x, sub ) => {
         // TODO: check Skolem term
         if ( !s1.root.succedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException( "Premise does not contain the given formula occurrence.", s1, auxf.formula :: Nil )
@@ -200,9 +200,9 @@ object ForallSkRightRule {
 }
 
 object ExistsSkLeftRule {
-  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: HOLExpression ) = {
+  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, skolem_term: LambdaExpression ) = {
     main match {
-      case HOLExVar( x, sub ) => {
+      case Ex( x, sub ) => {
         // TODO: check Skolem term
         if ( !s1.root.antecedent.contains( auxf ) )
           throw new LKUnaryRuleCreationException( "Premise does not contain the given formula occurrence.", s1, auxf.formula :: Nil )

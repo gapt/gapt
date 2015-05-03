@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.proofs.lk.base.{ BinaryLKProof, Sequent }
 import at.logic.gapt.proofs.lk.{ Axiom, CutRule }
@@ -12,8 +12,8 @@ import org.specs2.runner.JUnitRunner
 @RunWith( classOf[JUnitRunner] )
 class CutFormulaExtractionTest extends SpecificationWithJUnit {
   "Substitutions" should {
-    val x = HOLVar( "x", Ti )
-    val P = HOLConst( "P", Ti -> To )
+    val x = Var( "x", Ti )
+    val P = Const( "P", Ti -> To )
     val px = HOLAtom( P, List( x ) )
     val ax1 = Axiom( List( px ), List( px ) )
     val ax2 = Axiom( List( px ), List( px ) )

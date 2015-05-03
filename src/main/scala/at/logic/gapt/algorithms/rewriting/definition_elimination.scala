@@ -1,27 +1,26 @@
 package at.logic.gapt.algorithms.rewriting
 
+import at.logic.gapt.expr._
 import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.lk.algorithms.{ Util, AtomicExpansion }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.language.hol._
 import at.logic.gapt.expr.symbols.{ SymbolA, StringSymbol }
-import at.logic.gapt.language.fol.FOLFormula
 import at.logic.gapt.proofs.lk._
 import Util._
-import at.logic.gapt.language.hol.BetaReduction
 
 object DefinitionElimination extends DefinitionElimination
 class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
-  type DefinitionsMap = Map[HOLExpression, HOLExpression]
-  type ProcessedDefinitionsMap = Map[SymbolA, ( List[HOLVar], HOLFormula )]
+  type DefinitionsMap = Map[LambdaExpression, LambdaExpression]
+  type ProcessedDefinitionsMap = Map[SymbolA, ( List[Var], Formula )]
 
-  def apply( dmap: DefinitionsMap, f: HOLFormula ): HOLFormula = {
+  def apply( dmap: DefinitionsMap, f: Formula ): Formula = {
     val edmap = expand_dmap( dmap )
     BetaReduction.betaNormalize( replaceAll_informula( edmap, f ) )
   }
 
-  def apply( dmap: DefinitionsMap, f: HOLExpression ): HOLExpression = {
+  def apply( dmap: DefinitionsMap, f: LambdaExpression ): LambdaExpression = {
     val edmap = expand_dmap( dmap )
     BetaReduction.betaNormalize( replaceAll_in( edmap, f ) )
   }
@@ -41,34 +40,34 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
     if ( r == l ) r else fixedpoint_seq( f, r )
   }
 
-  private def c( e: HOLExpression ) = {
-    if ( e.isInstanceOf[HOLFormula] ) e.asInstanceOf[HOLFormula] else
+  private def c( e: LambdaExpression ) = {
+    if ( e.isInstanceOf[Formula] ) e.asInstanceOf[Formula] else
       throw new Exception( "Could not convert " + e + " to a HOL Formula!" )
   }
 
-  def replaceAll_informula( dmap: DefinitionsMap, e: HOLFormula ): HOLFormula = c( replaceAll_in( dmap, e ) )
-  def replaceAll_in( dmap: DefinitionsMap, e: HOLExpression ): HOLExpression = {
+  def replaceAll_informula( dmap: DefinitionsMap, e: Formula ): Formula = c( replaceAll_in( dmap, e ) )
+  def replaceAll_in( dmap: DefinitionsMap, e: LambdaExpression ): LambdaExpression = {
     e match {
-      case HOLConst( _, _ )  => try_to_match( dmap, e )
-      case HOLVar( _, _ )    => try_to_match( dmap, e )
-      case HOLNeg( s )       => HOLNeg( replaceAll_informula( dmap, s ) )
-      case HOLAnd( s, t )    => HOLAnd( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case HOLOr( s, t )     => HOLOr( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case HOLImp( s, t )    => HOLImp( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case HOLAllVar( x, t ) => HOLAllVar( x, replaceAll_informula( dmap, t ) )
-      case HOLExVar( x, t )  => HOLExVar( x, replaceAll_informula( dmap, t ) )
-      case HOLApp( s, t ) =>
+      case Const( _, _ ) => try_to_match( dmap, e )
+      case Var( _, _ )   => try_to_match( dmap, e )
+      case Neg( s )      => Neg( replaceAll_informula( dmap, s ) )
+      case And( s, t )   => And( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
+      case Or( s, t )    => Or( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
+      case Imp( s, t )   => Imp( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
+      case All( x, t )   => All( x, replaceAll_informula( dmap, t ) )
+      case Ex( x, t )    => Ex( x, replaceAll_informula( dmap, t ) )
+      case App( s, t ) =>
         val fullmatch = try_to_match( dmap, e )
         if ( fullmatch == e )
-          try_to_match( dmap, e.factory.createApp( replaceAll_in( dmap, s ), replaceAll_in( dmap, t ) ).asInstanceOf[HOLExpression] )
+          try_to_match( dmap, App( replaceAll_in( dmap, s ), replaceAll_in( dmap, t ) ).asInstanceOf[LambdaExpression] )
         else
           replaceAll_in( dmap, fullmatch )
-      case HOLAbs( x, t ) => e.factory.createAbs( x, replaceAll_in( dmap, t ) ).asInstanceOf[HOLExpression]
+      case Abs( x, t ) => Abs( x, replaceAll_in( dmap, t ) ).asInstanceOf[LambdaExpression]
     }
   }
 
-  def try_to_matchformula( dmap: DefinitionsMap, e: HOLExpression ) = c( try_to_match( dmap, e ) )
-  def try_to_match( dmap: DefinitionsMap, e: HOLExpression ): HOLExpression = {
+  def try_to_matchformula( dmap: DefinitionsMap, e: LambdaExpression ) = c( try_to_match( dmap, e ) )
+  def try_to_match( dmap: DefinitionsMap, e: LambdaExpression ): LambdaExpression = {
     dmap.keys.foldLeft( e )( ( v, key ) => {
       //      println("matching " + v + " against " + key)
       NaiveIncompleteMatchingAlgorithm.holMatch( key, v )( Nil ) match {
@@ -91,12 +90,12 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
     else expand_dmap( ndmap )
   }
 
-  private def eliminate_from_( defs: ProcessedDefinitionsMap, f: HOLFormula ): HOLFormula = {
+  private def eliminate_from_( defs: ProcessedDefinitionsMap, f: Formula ): Formula = {
     f match {
       case HOLAtom( e, args ) => {
         val sym = e match {
-          case v: HOLVar   => v.sym
-          case c: HOLConst => c.sym
+          case v: Var   => v.sym
+          case c: Const => c.sym
         }
 
         defs.get( sym ) match {
@@ -107,34 +106,34 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
             } else {
               //we need to insert the correct values for the free variables in the definition
               //the casting is needed since we cannot make a map covariant
-              //val pairs = (definition_args zip args)  filter ((x:(HOLExpression, HOLExpression) ) => x._1.isInstanceOf[HOLVar])
+              //val pairs = (definition_args zip args)  filter ((x:(LambdaExpression, LambdaExpression) ) => x._1.isInstanceOf[Var])
               val pairs = definition_args zip args
               val sub = HOLSubstitution( pairs )
               println( "Substitution:" )
               println( sub )
-              sub.apply( defined_formula ).asInstanceOf[HOLFormula]
+              sub.apply( defined_formula ).asInstanceOf[Formula]
             }
           case _ => f
         }
       }
-      case HOLNeg( f1 )       => HOLNeg( eliminate_from_( defs, f1 ) )
-      case HOLAllVar( q, f1 ) => HOLAllVar( q, eliminate_from_( defs, f1 ) )
-      case HOLExVar( q, f1 )  => HOLExVar( q, eliminate_from_( defs, f1 ) )
-      case HOLAnd( f1, f2 )   => HOLAnd( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case HOLImp( f1, f2 )   => HOLImp( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case HOLOr( f1, f2 )    => HOLOr( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case _                  => println( "Warning: unhandled case in definition elimination!" ); f
+      case Neg( f1 )     => Neg( eliminate_from_( defs, f1 ) )
+      case All( q, f1 )  => All( q, eliminate_from_( defs, f1 ) )
+      case Ex( q, f1 )   => Ex( q, eliminate_from_( defs, f1 ) )
+      case And( f1, f2 ) => And( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
+      case Imp( f1, f2 ) => Imp( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
+      case Or( f1, f2 )  => Or( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
+      case _             => println( "Warning: unhandled case in definition elimination!" ); f
     }
   }
 
   private val emptymap = Map[FormulaOccurrence, FormulaOccurrence]() //this will be passed to some functions
 
-  def eliminate_in_proof( rewrite: ( HOLExpression => HOLExpression ), proof: LKProof ): LKProof =
+  def eliminate_in_proof( rewrite: ( LambdaExpression => LambdaExpression ), proof: LKProof ): LKProof =
     eliminate_in_proof_( rewrite, proof )._2
 
   //eliminates defs in proof and returns a mapping from the old aux formulas to the new aux formulas
   // + the proof with the definition removed
-  def eliminate_in_proof_( rewrite: ( HOLExpression => HOLExpression ), proof: LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+  def eliminate_in_proof_( rewrite: ( LambdaExpression => LambdaExpression ), proof: LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     proof match {
       // introductory rules
       case Axiom( Sequent( antecedent, succedent ) ) =>
@@ -190,12 +189,12 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
       case AndLeft1Rule( uproof, root, aux, prin ) =>
         debug( "And 1 Left!" )
-        val vf = prin.formula match { case HOLAnd( _, x ) => x }
+        val vf = prin.formula match { case And( _, x ) => x }
         handleUnaryLogicalRule( rewrite, uproof, root, aux, vf, AndLeft1Rule.apply )
 
       case AndLeft2Rule( uproof, root, aux, prin ) =>
         debug( "And 2 Left!" )
-        val vf = prin.formula match { case HOLAnd( x, _ ) => x }
+        val vf = prin.formula match { case And( x, _ ) => x }
         handleUnaryLogicalRule( rewrite, uproof, root, aux, vf, switchargs( AndLeft2Rule.apply ) )
 
       case AndRightRule( uproof1, uproof2, root, aux1, aux2, prin ) =>
@@ -204,12 +203,12 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
       case OrRight1Rule( uproof, root, aux, prin ) =>
         debug( "Or 1 Right" )
-        val vf = prin.formula match { case HOLOr( _, x ) => x }
+        val vf = prin.formula match { case Or( _, x ) => x }
         handleUnaryLogicalRule( rewrite, uproof, root, aux, vf, OrRight1Rule.apply )
 
       case OrRight2Rule( uproof, root, aux, prin ) =>
         debug( "Or 2 Right" )
-        val vf = prin.formula match { case HOLOr( x, _ ) => x }
+        val vf = prin.formula match { case Or( x, _ ) => x }
         handleUnaryLogicalRule( rewrite, uproof, root, aux, vf, switchargs( OrRight2Rule.apply ) )
 
       case OrLeftRule( uproof1, uproof2, root, aux1, aux2, prin ) =>
@@ -270,16 +269,16 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
   // ------ helper functions for rewriting
 
-  def handleWeakeningRule( rewrite: ( HOLExpression => HOLExpression ),
+  def handleWeakeningRule( rewrite: ( LambdaExpression => LambdaExpression ),
                            uproof: LKProof, root: Sequent, prin: FormulaOccurrence,
-                           createRule: ( LKProof, HOLFormula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+                           createRule: ( LKProof, Formula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, c( rewrite( prin.formula ) ) )
     val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
-  def handleContractionRule( rewrite: ( HOLExpression => HOLExpression ),
+  def handleContractionRule( rewrite: ( LambdaExpression => LambdaExpression ),
                              uproof: LKProof,
                              root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
                              createRule: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
@@ -298,7 +297,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
     }
   }
 
-  def handleNegationRule( rewrite: ( HOLExpression => HOLExpression ), uproof: LKProof, root: Sequent,
+  def handleNegationRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof: LKProof, root: Sequent,
                           aux: FormulaOccurrence,
                           createRule: ( LKProof, FormulaOccurrence ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
@@ -308,16 +307,16 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
   }
 
   //only handles AndL1,2 and OrR1,2 -- ImpR and NegL/R are different
-  def handleUnaryLogicalRule( rewrite: ( HOLExpression => HOLExpression ), uproof: LKProof, root: Sequent,
-                              aux: FormulaOccurrence, weakened_formula: HOLFormula,
-                              createRule: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+  def handleUnaryLogicalRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof: LKProof, root: Sequent,
+                              aux: FormulaOccurrence, weakened_formula: Formula,
+                              createRule: ( LKProof, FormulaOccurrence, Formula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, dmap( aux ), c( rewrite( weakened_formula ) ) )
     val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
-  def handleBinaryLogicalRule( rewrite: ( HOLExpression => HOLExpression ), uproof1: LKProof, uproof2: LKProof,
+  def handleBinaryLogicalRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof1: LKProof, uproof2: LKProof,
                                root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
                                prin: FormulaOccurrence,
                                createRule: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
@@ -329,18 +328,18 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
     ( correspondences, dproof )
   }
 
-  def handleWeakQuantifierRule( rewrite: ( HOLExpression => HOLExpression ), uproof: LKProof, root: Sequent,
-                                aux: FormulaOccurrence, prin: FormulaOccurrence, substituted_term: HOLExpression,
-                                createRule: ( LKProof, FormulaOccurrence, HOLFormula, HOLExpression ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+  def handleWeakQuantifierRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof: LKProof, root: Sequent,
+                                aux: FormulaOccurrence, prin: FormulaOccurrence, substituted_term: LambdaExpression,
+                                createRule: ( LKProof, FormulaOccurrence, Formula, LambdaExpression ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, dmap( aux ), c( rewrite( prin.formula ) ), rewrite( substituted_term ) )
     val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
-  def handleStrongQuantifierRule( rewrite: ( HOLExpression => HOLExpression ), uproof: LKProof, root: Sequent,
-                                  aux: FormulaOccurrence, prin: FormulaOccurrence, eigenvar: HOLVar,
-                                  createRule: ( LKProof, FormulaOccurrence, HOLFormula, HOLVar ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+  def handleStrongQuantifierRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof: LKProof, root: Sequent,
+                                  aux: FormulaOccurrence, prin: FormulaOccurrence, eigenvar: Var,
+                                  createRule: ( LKProof, FormulaOccurrence, Formula, Var ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     debug( "roccs= " + root.occurrences.map( _.id ) )
     debug( "doccs= " + duproof.root.occurrences.map( _.id ) )
@@ -352,10 +351,10 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
     ( correspondences, dproof )
   }
 
-  def handleEquationalRule( rewrite: ( HOLExpression => HOLExpression ), uproof1: LKProof, uproof2: LKProof,
+  def handleEquationalRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof1: LKProof, uproof2: LKProof,
                             root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
                             prin: FormulaOccurrence,
-                            createRule: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+                            createRule: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap1, duproof1 ) = eliminate_in_proof_( rewrite, uproof1 )
     val ( dmap2, duproof2 ) = eliminate_in_proof_( rewrite, uproof2 )
     val dproof = createRule( duproof1, duproof2, dmap1( aux1 ), dmap2( aux2 ), c( rewrite( prin.formula ) ) )
@@ -364,9 +363,9 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
     ( correspondences, dproof )
   }
 
-  def handleDefinitionRule( rewrite: ( HOLExpression => HOLExpression ), uproof: LKProof, root: Sequent,
+  def handleDefinitionRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof: LKProof, root: Sequent,
                             aux: FormulaOccurrence, prin: FormulaOccurrence,
-                            createRule: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+                            createRule: ( LKProof, FormulaOccurrence, Formula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
 
     val correspondences_toparent =
@@ -386,7 +385,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
   // calculates the correspondences between occurences of the formulas in the original end-sequent and those in the
   // definition free one.  
-  private def calculateCorrespondences( root: Sequent, duproof: LKProof, rewrite: ( HOLExpression => HOLExpression ) ): Map[FormulaOccurrence, FormulaOccurrence] = {
+  private def calculateCorrespondences( root: Sequent, duproof: LKProof, rewrite: ( LambdaExpression => LambdaExpression ) ): Map[FormulaOccurrence, FormulaOccurrence] = {
 
     val rr = duproof.root.antecedent.foldLeft( emptymap )( ( map, occ ) => {
       val corr = root.antecedent.find( o => occ.formula == rewrite( o.formula ) && !map.contains( o ) )

@@ -1,7 +1,8 @@
 package at.logic.gapt.formats.leanCoP
 
+import at.logic.gapt.language.fol.{ addQuantifiers, FOLSubstitution }
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, prenexToExpansionTree, qFreeToExpansionTree }
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 
 import java.io.{ Reader, FileReader }
 import scala.util.parsing.combinator._
@@ -91,7 +92,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case t ~ _ ~ v => ( t, v )
   }
 
-  def clause: Parser[FOLFormula] = "[" ~> repsep( formula, "," ) <~ "]" ^^ { case formulas => FOLOr( formulas ) }
+  def clause: Parser[FOLFormula] = "[" ~> repsep( formula, "," ) <~ "]" ^^ { case formulas => Or( formulas ) }
 
   lazy val formula: PackratParser[FOLFormula] = opt( "(" ) ~> ( atom | neg | and | or | impl | forall | exists ) <~ opt( ")" )
 
@@ -103,12 +104,12 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   // TODO n ^ [...] terms
 
   lazy val atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case pred ~ _ ~ args => FOLAtom( pred, args ) }
-  lazy val neg: PackratParser[FOLFormula] = "~" ~> formula ^^ { case f => FOLNeg( f ) }
-  lazy val and: PackratParser[FOLFormula] = formula ~ "&" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLAnd( f1, f2 ) }
-  lazy val or: PackratParser[FOLFormula] = formula ~ "|" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLOr( f1, f2 ) }
-  lazy val impl: PackratParser[FOLFormula] = formula ~ "=>" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLImp( f1, f2 ) }
-  lazy val forall: PackratParser[FOLFormula] = "!" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => FOLAllVar( v, f ) }
-  lazy val exists: PackratParser[FOLFormula] = "?" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => FOLExVar( v, f ) }
+  lazy val neg: PackratParser[FOLFormula] = "~" ~> formula ^^ { case f => Neg( f ) }
+  lazy val and: PackratParser[FOLFormula] = formula ~ "&" ~ formula ^^ { case f1 ~ _ ~ f2 => And( f1, f2 ) }
+  lazy val or: PackratParser[FOLFormula] = formula ~ "|" ~ formula ^^ { case f1 ~ _ ~ f2 => Or( f1, f2 ) }
+  lazy val impl: PackratParser[FOLFormula] = formula ~ "=>" ~ formula ^^ { case f1 ~ _ ~ f2 => Imp( f1, f2 ) }
+  lazy val forall: PackratParser[FOLFormula] = "!" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => All( v, f ) }
+  lazy val exists: PackratParser[FOLFormula] = "?" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => Ex( v, f ) }
 
   def name: Parser[String] = """[^ ():,!?\[\]~&|=>]+""".r ^^ { case s => s }
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }

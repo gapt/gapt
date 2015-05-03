@@ -6,6 +6,7 @@ import org.specs2.runner.JUnitRunner
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.types.{ Ti, To }
 import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.expansionTrees.{ ETAtom, ETNeg, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp }
@@ -18,50 +19,50 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.{ LKtoLKskc => skolemi
 @RunWith( classOf[JUnitRunner] )
 class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
   object simpleHOLProof {
-    val p = HOLAtom( HOLConst( "P", To ), Nil )
-    val x = HOLVar( "X", To )
+    val p = HOLAtom( Const( "P", To ), Nil )
+    val x = Var( "X", To )
     val xatom = HOLAtom( x, Nil )
-    val existsx = HOLExVar( x, xatom )
+    val existsx = Ex( x, xatom )
 
     val ax = Axiom( List( p ), List( p ) )
     val i1 = ExistsRightRule( ax, ax.root.succedent( 0 ), existsx, p )
     val i2 = NegRightRule( i1, i1.root.antecedent( 0 ) )
-    val i3 = ExistsRightRule( i2, i2.root.succedent( 1 ), existsx, HOLNeg( p ) )
+    val i3 = ExistsRightRule( i2, i2.root.succedent( 1 ), existsx, Neg( p ) )
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
     val proof = skolemize( i4 )
   }
 
   object simpleLKSKProof {
-    val p = HOLAtom( HOLConst( "P", To ), Nil )
-    val x = HOLVar( "X", To )
+    val p = HOLAtom( Const( "P", To ), Nil )
+    val x = Var( "X", To )
     val xatom = HOLAtom( x, Nil )
-    val existsx = HOLExVar( x, xatom )
+    val existsx = Ex( x, xatom )
 
-    val ( ax, _ ) = lksk.Axiom.createDefault( FSequent( List( p ), List( p ) ), ( List( Set( HOLNeg( p ) ) ), List( Set( p ) ) ) )
+    val ( ax, _ ) = lksk.Axiom.createDefault( FSequent( List( p ), List( p ) ), ( List( Set( Neg( p ) ) ), List( Set( p ) ) ) )
     val i1 = lksk.ExistsSkRightRule( ax, ax.root.succedent( 0 ).asInstanceOf[LabelledFormulaOccurrence], existsx, p, true )
     val i2 = NegRightRule( i1, i1.root.antecedent( 0 ) )
-    val i3 = lksk.ExistsSkRightRule( i2, i2.root.succedent( 1 ).asInstanceOf[LabelledFormulaOccurrence], existsx, HOLNeg( p ), true )
+    val i3 = lksk.ExistsSkRightRule( i2, i2.root.succedent( 1 ).asInstanceOf[LabelledFormulaOccurrence], existsx, Neg( p ), true )
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
   }
 
   object simpleHOLProof2 {
-    val x = HOLVar( "X", Ti -> To )
-    val a = HOLVar( "\\alpha", Ti )
-    val u = HOLVar( "u", Ti )
+    val x = Var( "X", Ti -> To )
+    val a = Var( "\\alpha", Ti )
+    val u = Var( "u", Ti )
 
-    val p = HOLConst( "P", Ti -> To )
+    val p = Const( "P", Ti -> To )
     val pa = HOLAtom( p, List( a ) )
     val pu = HOLAtom( p, List( u ) )
     val xatoma = HOLAtom( x, List( a ) )
     val xatomu = HOLAtom( x, List( u ) )
 
-    val existsx = HOLExVar( x, xatoma )
-    val alluexistsx = HOLAllVar( u, HOLExVar( x, xatomu ) )
+    val existsx = Ex( x, xatoma )
+    val alluexistsx = All( u, Ex( x, xatomu ) )
 
     val ax = Axiom( List( pa ), List( pa ) )
-    val i1 = ExistsRightRule( ax, ax.root.succedent( 0 ), existsx, HOLAbs( u, pu ) )
+    val i1 = ExistsRightRule( ax, ax.root.succedent( 0 ), existsx, Abs( u, pu ) )
     val i2 = NegRightRule( i1, i1.root.antecedent( 0 ) )
-    val i3 = ExistsRightRule( i2, i2.root.succedent( 1 ), existsx, HOLAbs( u, HOLNeg( pu ) ) )
+    val i3 = ExistsRightRule( i2, i2.root.succedent( 1 ), existsx, Abs( u, Neg( pu ) ) )
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
     val i5 = ForallRightRule( i4, i4.root.succedent( 0 ), alluexistsx, a )
 
@@ -69,40 +70,40 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
   }
 
   object simpleHOLProof3 {
-    val p = HOLConst( "P", Ti -> To )
-    val a = HOLVar( "\\alpha", Ti )
-    val u = HOLVar( "u", Ti )
+    val p = Const( "P", Ti -> To )
+    val a = Var( "\\alpha", Ti )
+    val u = Var( "u", Ti )
 
     val pa = HOLAtom( p, a :: Nil )
     val pu = HOLAtom( p, u :: Nil )
-    val allpu = HOLAllVar( u, pu )
+    val allpu = All( u, pu )
 
-    val x = HOLVar( "X", To )
+    val x = Var( "X", To )
     val xatom = HOLAtom( x, Nil )
-    val existsx = HOLExVar( x, xatom )
+    val existsx = Ex( x, xatom )
 
     val ax = Axiom( List( pa ), List( pa ) )
     val i0a = ForallLeftRule( ax, ax.root.antecedent( 0 ), allpu, a )
     val i0b = ForallRightRule( i0a, i0a.root.succedent( 0 ), allpu, a )
     val i1 = ExistsRightRule( i0b, i0b.root.succedent( 0 ), existsx, allpu )
     val i2 = NegRightRule( i1, i1.root.antecedent( 0 ) )
-    val i3 = ExistsRightRule( i2, i2.root.succedent( 1 ), existsx, HOLNeg( allpu ) )
+    val i3 = ExistsRightRule( i2, i2.root.succedent( 1 ), existsx, Neg( allpu ) )
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
     val proof = skolemize( i4 )
   }
 
   object simpleHOLProof4 {
-    val p = HOLConst( "P", Ti -> To )
-    val a = HOLVar( "\\alpha", Ti )
-    val u = HOLVar( "u", Ti )
+    val p = Const( "P", Ti -> To )
+    val a = Var( "\\alpha", Ti )
+    val u = Var( "u", Ti )
 
     val pa = HOLAtom( p, a :: Nil )
     val pu = HOLAtom( p, u :: Nil )
-    val allpu = HOLAllVar( u, pu )
+    val allpu = All( u, pu )
 
-    val x = HOLVar( "X", To )
+    val x = Var( "X", To )
     val xatom = HOLAtom( x, Nil )
-    val existsx = HOLExVar( x, xatom )
+    val existsx = Ex( x, xatom )
 
     val ax = Axiom( List( pa ), List( pa ) )
     val i0a = ForallLeftRule( ax, ax.root.antecedent( 0 ), allpu, a )
@@ -111,7 +112,7 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
     val i2 = NegRightRule( i1, i1.root.antecedent( 0 ) )
     val i2a = WeakeningLeftRule( i2, allpu )
     val i2b = ImpRightRule( i2a, i2a.root.antecedent( 0 ), i2a.root.succedent( 1 ) )
-    val i3 = ExistsRightRule( i2b, i2b.root.succedent( 1 ), existsx, HOLImp( allpu, HOLNeg( allpu ) ) )
+    val i3 = ExistsRightRule( i2b, i2b.root.succedent( 1 ), existsx, Imp( allpu, Neg( allpu ) ) )
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
     val proof = skolemize( i4 )
   }
@@ -121,8 +122,8 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
 
       val et = extractLKSKExpansionSequent( simpleHOLProof.i4, false )
 
-      val inst1: ( ExpansionTree, HOLFormula ) = ( ETAtom( simpleHOLProof.p ), simpleHOLProof.p )
-      val inst2: ( ExpansionTree, HOLFormula ) = ( ETNeg( ETAtom( simpleHOLProof.p ) ), HOLNeg( simpleHOLProof.p ) )
+      val inst1: ( ExpansionTree, Formula ) = ( ETAtom( simpleHOLProof.p ), simpleHOLProof.p )
+      val inst2: ( ExpansionTree, Formula ) = ( ETNeg( ETAtom( simpleHOLProof.p ) ), Neg( simpleHOLProof.p ) )
       val cet: ExpansionTree = ETWeakQuantifier( simpleHOLProof.existsx, List( inst1, inst2 ) ).asInstanceOf[ExpansionTree] //TODO: this cast is ugly
 
       val control = ExpansionSequent( Nil, List( cet ) )

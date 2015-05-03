@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.expansionTrees.algorithms
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees._
 
 import scala.collection.immutable._
@@ -10,8 +10,8 @@ import scala.collection.immutable._
  * MultiExpansionSequent and provides human-readable formatting of this data.
  */
 object getStatistics {
-  class ESStats( _1: HashMap[HOLFormula, Int], _2: HashMap[HOLFormula, Int] )
-      extends Tuple2[HashMap[HOLFormula, Int], HashMap[HOLFormula, Int]]( _1, _2 ) {
+  class ESStats( _1: HashMap[Formula, Int], _2: HashMap[Formula, Int] )
+      extends Tuple2[HashMap[Formula, Int], HashMap[Formula, Int]]( _1, _2 ) {
 
     override def toString = {
       val as = _1.foldLeft( "antecedent:\n" )(
@@ -34,9 +34,9 @@ object getStatistics {
   }
 
   def apply( mes: MultiExpansionSequent ) = {
-    val a_stats = mes.antecedent.foldLeft( new HashMap[HOLFormula, Int]() )(
+    val a_stats = mes.antecedent.foldLeft( new HashMap[Formula, Int]() )(
       ( map, met ) => map + ( met.toShallow -> met.numberOfInstances ) )
-    val s_stats = mes.succedent.foldLeft( new HashMap[HOLFormula, Int]() )(
+    val s_stats = mes.succedent.foldLeft( new HashMap[Formula, Int]() )(
       ( map, met ) => map + ( met.toShallow -> met.numberOfInstances ) )
 
     new ESStats( a_stats, s_stats )

@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.robinson._
@@ -31,11 +32,11 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
     val m2a01 = FOLFunction( "multiply", v2 :: add01 :: Nil )
 
     // =(multiply(v0, v1), multiply(v1, v0))
-    val c1 = FOLEquation( m01, m10 )
+    val c1 = Eq( m01, m10 )
     // =(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))
-    val c2 = FOLEquation( ma012, am02m12 )
+    val c2 = Eq( ma012, am02m12 )
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
-    val c3 = FOLEquation( m2a01, am02m12 )
+    val c3 = Eq( m2a01, am02m12 )
 
     val sub = FOLSubstitution( Map( ( v0, v2 ), ( v1, add01 ) ) )
 
@@ -62,11 +63,11 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
     val m2a01 = FOLFunction( "multiply", v2 :: add01 :: Nil )
 
     // =(multiply(v0_, v1_), multiply(v1_, v0_))
-    val c1 = FOLEquation( m01u, m10u )
+    val c1 = Eq( m01u, m10u )
     // =(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))
-    val c2 = FOLEquation( ma012, am02m12 )
+    val c2 = Eq( ma012, am02m12 )
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
-    val c3 = FOLEquation( m2a01, am02m12 )
+    val c3 = Eq( m2a01, am02m12 )
 
     val sub = FOLSubstitution( Map( ( v0, v2 ), ( v1, add01 ) ) )
 
@@ -93,11 +94,11 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
     val m2a01 = FOLFunction( "multiply", v2 :: add01 :: Nil )
 
     // =(multiply(v0, v1), multiply(v1, v0))
-    val c1 = FOLEquation( m01, m10 )
+    val c1 = Eq( m01, m10 )
     // =(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))
-    val c2 = FOLEquation( ma012, am02m12 )
+    val c2 = Eq( ma012, am02m12 )
     // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
-    val c3 = FOLEquation( m2a01, am02m12 )
+    val c3 = Eq( m2a01, am02m12 )
 
     val sub1 = FOLSubstitution( Map( ( v0, v0u ), ( v1, v1u ) ) )
     val sub2 = FOLSubstitution( Map( ( v0u, v2 ), ( v1u, add01 ) ) )
@@ -172,8 +173,8 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val a = FOLConst( "a" )
         val b = FOLConst( "b" )
         val x = FOLVar( "x" )
-        val exb = FOLEquation( x, b )
-        val eab = FOLEquation( a, b )
+        val exb = Eq( x, b )
+        val eab = Eq( a, b )
         val Pfa = FOLAtom( "P", FOLFunction( "f", a :: Nil ) :: Nil )
         val Pfb = FOLAtom( "P", FOLFunction( "f", b :: Nil ) :: Nil )
 
@@ -190,8 +191,8 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val a = FOLConst( "a" )
         val b = FOLConst( "b" )
         val x = FOLVar( "x" )
-        val ebx = FOLEquation( b, x )
-        val eba = FOLEquation( b, a )
+        val ebx = Eq( b, x )
+        val eba = Eq( b, a )
         val Pfa = FOLAtom( "P", FOLFunction( "f", a :: Nil ) :: Nil )
         val Pfb = FOLAtom( "P", FOLFunction( "f", b :: Nil ) :: Nil )
 
@@ -212,7 +213,7 @@ class ResolutionToLKTest extends SpecificationWithJUnit {
         val a = FOLConst( "a" )
         val Px = FOLAtom( "P", x :: Nil )
         val Pa = FOLAtom( "P", a :: Nil )
-        val f1 = FOLAllVar( x, Px )
+        val f1 = All( x, Px )
 
         val seq = FSequent( List( f1 ), List( Pa ) )
         val p1 = InitialClause( List(), List( Px ) )

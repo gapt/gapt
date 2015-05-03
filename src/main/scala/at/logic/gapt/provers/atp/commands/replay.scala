@@ -10,7 +10,6 @@ import at.logic.gapt.proofs.resolution.robinson.{ RobinsonResolutionProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.robinson.InitialClause._
-import at.logic.gapt.language.fol.{ FOLVar, FOLExpression, FOLFormula }
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.provers.atp.Prover
 import at.logic.gapt.utils.ds.PublishingBuffer

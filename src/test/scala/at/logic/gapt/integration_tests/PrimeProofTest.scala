@@ -7,9 +7,7 @@ import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.{ getStatistics, deleteTautologies, eliminateDefinitions }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.fol.FOLFormula
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.expr.symbols._
 import at.logic.gapt.expr.types._
 import at.logic.gapt.formats.latex.SequentsListLatexExporter
@@ -75,10 +73,10 @@ class PrimeProofTest extends SpecificationWithJUnit {
     //      val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s) map (_.getSequent)
     //
     //      // we will add three axioms: 0 < p(x), 1 < p(x), x = x
-    //      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("0"), Ti())::Function(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
-    //      val seq2 = Sequent(Nil, Atom(ConstantStringSymbol("<"), HOLConst(ConstantStringSymbol("1"), Ti())::Function(ConstantStringSymbol("p"), HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
-    //      val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), HOLVar(VariableStringSymbol("x"), Ti())::(HOLVar(VariableStringSymbol("x"), Ti())::Nil))::Nil)
-    //      val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), Function(ConstantStringSymbol("+"), HOLConst(ConstantStringSymbol("0"), Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil, Ti())::HOLVar(VariableStringSymbol("x"), Ti())::Nil)::Nil)
+    //      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), Const(ConstantStringSymbol("0"), Ti())::Function(ConstantStringSymbol("p"), Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
+    //      val seq2 = Sequent(Nil, Atom(ConstantStringSymbol("<"), Const(ConstantStringSymbol("1"), Ti())::Function(ConstantStringSymbol("p"), Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
+    //      val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), Var(VariableStringSymbol("x"), Ti())::(Var(VariableStringSymbol("x"), Ti())::Nil))::Nil)
+    //      val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), Function(ConstantStringSymbol("+"), Const(ConstantStringSymbol("0"), Ti())::Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Var(VariableStringSymbol("x"), Ti())::Nil)::Nil)
     //
     //      val holcs : List[Sequent] = pdb.axioms ::: List[Sequent](seq1,seq2,seq3,seq4) ::: csPre
     //
@@ -89,8 +87,8 @@ class PrimeProofTest extends SpecificationWithJUnit {
     //      val imap = Map[at.logic.gapt.expr.typedLambdaCalculus.LambdaExpression, at.logic.gapt.language.hol.logicSymbols.ConstantStringSymbol]()
     //      val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
     //      val cs = holcs.map(x => Sequent(
-    //          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula]),
-    //          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula])
+    //          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[LambdaExpression],imap,iid).asInstanceOf[FOLFormula]),
+    //          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[LambdaExpression],imap,iid).asInstanceOf[FOLFormula])
     //      ))
     //      val sections = ("Definitions", imap.toList.map(x => (x._1, FOLConst(x._2))))::sectionsPre
     //
@@ -110,7 +108,7 @@ class PrimeProofTest extends SpecificationWithJUnit {
     //
     // /*     // apply unit resolution and subsumption on the resulted clause set
     //      val pb = new at.logic.gapt.utils.ds.PublishingBuffer[Clause]
-    //      pb.insertAll(0,cssv.map(x => at.logic.calculi.resolution.base.Clause(x.antecedent.asInstanceOf[List[HOLFormula]], x.succedent.asInstanceOf[List[HOLFormula]])))
+    //      pb.insertAll(0,cssv.map(x => at.logic.calculi.resolution.base.Clause(x.antecedent.asInstanceOf[List[Formula]], x.succedent.asInstanceOf[List[Formula]])))
     //      val ref = new at.logic.gapt.provers.atp.refinements.UnitRefinement(pb)
     //      val subsumMng = new at.logic.gapt.proofs.lk.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.gapt.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
     //        new at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.gapt.algorithms.matching.fol.FOLMatchingAlgorithm})

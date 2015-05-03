@@ -1,7 +1,7 @@
 
 package at.logic.gapt.proofs.algorithms.ceres
 
-import at.logic.gapt.language.hol.logicSymbols.LogicalSymbolA
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.{ getAncestors, getCutAncestors }
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
@@ -11,7 +11,7 @@ import at.logic.gapt.language.fol.Utils.{ removeDoubles, removeDoubles3 }
 import at.logic.gapt.language.hol._
 import at.logic.gapt.expr.symbols.SymbolA
 import at.logic.gapt.expr.types._
-import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, SchemaVar, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
+import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
 import at.logic.gapt.proofs.shlk.algorithms.{ StepMinusOne, printSchemaProof }
 import at.logic.gapt.utils.ds.Multisets
 import at.logic.gapt.utils.ds.Multisets.Multiset
@@ -27,9 +27,9 @@ import scala.collection.immutable.HashMap
 
 trait ProjectionTerm
 
-class pTimes( val rho: String, val left: ProjectionTerm, val right: ProjectionTerm, val aux1: HOLFormula, val aux2: HOLFormula ) extends ProjectionTerm
+class pTimes( val rho: String, val left: ProjectionTerm, val right: ProjectionTerm, val aux1: Formula, val aux2: Formula ) extends ProjectionTerm
 object pTimes {
-  def apply( rho: String, left: ProjectionTerm, right: ProjectionTerm, aux1: HOLFormula, aux2: HOLFormula ): pTimes = {
+  def apply( rho: String, left: ProjectionTerm, right: ProjectionTerm, aux1: Formula, aux2: Formula ): pTimes = {
     new pTimes( rho, left, right, aux1, aux2 )
   }
   def unapply( term: ProjectionTerm ) = term match {
@@ -49,9 +49,9 @@ object pPlus {
   }
 }
 
-class pUnary( val rho: String, val upper: ProjectionTerm, val auxl: List[HOLExpression] ) extends ProjectionTerm
+class pUnary( val rho: String, val upper: ProjectionTerm, val auxl: List[LambdaExpression] ) extends ProjectionTerm
 object pUnary {
-  def apply( rho: String, upper: ProjectionTerm, auxl: List[HOLExpression] ) = {
+  def apply( rho: String, upper: ProjectionTerm, auxl: List[LambdaExpression] ) = {
     new pUnary( rho, upper, auxl )
   }
   def unapply( term: ProjectionTerm ) = term match {
@@ -94,25 +94,25 @@ object ProjectionTermCreators {
 
     val l = slpt.map( tri => {
       val k = IntVar( "k" )
-      val trans_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( k, IntVar( "n" ) )
+      val trans_map = Map.empty[Var, IntegerTerm] + Tuple2( k, IntVar( "n" ) )
       val trans_sub = SchemaSubstitution( trans_map )
       val seq = SchemaProofDB.get( tri._1 ).rec.root
-      val ms = new Multisets.HashMultiset[HOLFormula]( HashMap.empty[HOLFormula, Int] )
-      val ms11 = tri._3.filter( fo => seq.antecedent.contains( fo ) ).map( fo => trans_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) ).foldLeft( ms )( ( res, f ) => res + f.asInstanceOf[HOLFormula] )
-      val ms22 = tri._3.filter( fo => seq.succedent.contains( fo ) ).map( fo => trans_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) ).foldLeft( ms )( ( res, f ) => res + f.asInstanceOf[HOLFormula] )
+      val ms = new Multisets.HashMultiset[Formula]( HashMap.empty[Formula, Int] )
+      val ms11 = tri._3.filter( fo => seq.antecedent.contains( fo ) ).map( fo => trans_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) ).foldLeft( ms )( ( res, f ) => res + f.asInstanceOf[Formula] )
+      val ms22 = tri._3.filter( fo => seq.succedent.contains( fo ) ).map( fo => trans_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) ).foldLeft( ms )( ( res, f ) => res + f.asInstanceOf[Formula] )
       val name = "\u039e(" + tri._1 + "_step, (" + cutConfToString( ( ms11, ms22 ) ) + "))"
       ProjectionTermDB.put( name, tri._2 )
       ( name, PStructToExpressionTree( tri._2 ) )
     } ) ::: slptb.map( tri => {
       val k = IntVar( "k" )
-      val trans1_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( k, IntVar( "n" ) )
+      val trans1_map = Map.empty[Var, IntegerTerm] + Tuple2( k, IntVar( "n" ) )
       val trans1_sub = SchemaSubstitution( trans1_map )
-      val trans_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( k, IntZero() )
+      val trans_map = Map.empty[Var, IntegerTerm] + Tuple2( k, IntZero() )
       val trans_sub = SchemaSubstitution( trans_map )
       val seq = SchemaProofDB.get( tri._1 ).rec.root
-      val ms = new Multisets.HashMultiset[HOLFormula]( HashMap.empty[HOLFormula, Int] )
-      val ms11 = seq.antecedent.filter( fo => tri._3._1.map( x => x.formula ).contains( trans_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ).asInstanceOf[HOLFormula] ) ).foldLeft( ms )( ( res, fo ) => res + trans1_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ).asInstanceOf[HOLFormula] )
-      val ms22 = seq.succedent.filter( fo => tri._3._2.map( x => x.formula ).contains( trans_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ).asInstanceOf[HOLFormula] ) ).foldLeft( ms )( ( res, fo ) => res + trans1_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ).asInstanceOf[HOLFormula] )
+      val ms = new Multisets.HashMultiset[Formula]( HashMap.empty[Formula, Int] )
+      val ms11 = seq.antecedent.filter( fo => tri._3._1.map( x => x.formula ).contains( trans_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ).asInstanceOf[Formula] ) ).foldLeft( ms )( ( res, fo ) => res + trans1_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ).asInstanceOf[Formula] )
+      val ms22 = seq.succedent.filter( fo => tri._3._2.map( x => x.formula ).contains( trans_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ).asInstanceOf[Formula] ) ).foldLeft( ms )( ( res, fo ) => res + trans1_sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ).asInstanceOf[Formula] )
       val name = "\u039e(" + tri._1 + "_base, (" + cutConfToString( ( ms11, ms22 ) ) + "))"
       ProjectionTermDB.put( name, tri._2 )
       ( name, PStructToExpressionTree( tri._2 ) )
@@ -150,7 +150,7 @@ object ProjectionTermCreators {
     val cclistbase = removeDoubles( cclist1 ::: cclist ).map( pair => {
       val seq = SchemaProofDB.get( pair._1 ).base.root
       val k = IntVar( "k" )
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero().asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero().asInstanceOf[IntegerTerm] )
       var sub = SchemaSubstitution( new_map )
       val groundccant = pair._2._1.map( fo => sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) )
       val groundccsucc = pair._2._2.map( fo => sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) )
@@ -170,15 +170,15 @@ object ProjectionTermCreators {
       val len = StepMinusOne.lengthVar( index.asInstanceOf[IntegerTerm] )
       val foccsInSeqAnt = seq.antecedent.filter( fo => cut_omega_anc.contains( fo ) )
       val foccsInSeqSucc = seq.succedent.filter( fo => cut_omega_anc.contains( fo ) )
-      var new_map = Map.empty[SchemaVar, IntegerTerm]
+      var new_map = Map.empty[Var, IntegerTerm]
       var sub = SchemaSubstitution( new_map )
       if ( len == 0 )
-        new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( index.asInstanceOf[IntegerTerm] ) )
+        new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( index.asInstanceOf[IntegerTerm] ) )
       else if ( len == 1 )
-        new_map = Map.empty[SchemaVar, IntegerTerm] //+ Tuple2(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
+        new_map = Map.empty[Var, IntegerTerm] //+ Tuple2(IntVar(new VariableStringSymbol("k")).asInstanceOf[Var], index )
       else {
         val k = IntVar( "k" )
-        new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( k, StepMinusOne.intTermPlus( k, len - 1 ) )
+        new_map = Map.empty[Var, IntegerTerm] + Tuple2( k, StepMinusOne.intTermPlus( k, len - 1 ) )
         sub = SchemaSubstitution( new_map )
         val newccAnt = seq1.antecedent.toList.filter( fo => foccsInSeqAnt.map( foo => foo.formula ).contains( sub( fo.formula ) ) )
         val newccSucc = seq1.succedent.toList.filter( fo => foccsInSeqSucc.map( foo => foo.formula ).contains( sub( fo.formula ) ) )
@@ -377,12 +377,12 @@ object PStructToExpressionTree {
       val len = StepMinusOne.lengthVar( index )
       val foccsInSeqAnt = seq.antecedent.filter( fo => cut_omega_anc.contains( fo ) )
       val foccsInSeqSucc = seq.succedent.filter( fo => cut_omega_anc.contains( fo ) )
-      var new_map = Map.empty[SchemaVar, IntegerTerm]
+      var new_map = Map.empty[Var, IntegerTerm]
       var strant = ""; var str1ant = ""; var strsucc = ""; var str1succ = "";
       val k = IntVar( "k" )
-      val trans_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( k, IntVar( "n" ) )
+      val trans_map = Map.empty[Var, IntegerTerm] + Tuple2( k, IntVar( "n" ) )
       val trans_sub = SchemaSubstitution( trans_map )
-      var f1 = Seq.empty[HOLExpression]; var f2 = Seq.empty[HOLExpression];
+      var f1 = Seq.empty[LambdaExpression]; var f2 = Seq.empty[LambdaExpression];
       if ( len == 0 ) {
         f1 = foccsInSeqAnt.map( fo => trans_sub( fo.formula.asInstanceOf[SchemaFormula] ) )
         f2 = foccsInSeqSucc.map( fo => trans_sub( fo.formula.asInstanceOf[SchemaFormula] ) )
@@ -390,9 +390,9 @@ object PStructToExpressionTree {
         f1 = foccsInSeqAnt.map( fo => trans_sub( StepMinusOne.minusMore( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar], len ) ) )
         f2 = foccsInSeqSucc.map( fo => trans_sub( StepMinusOne.minusMore( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar], len ) ) )
       }
-      val ms = new Multisets.HashMultiset[HOLFormula]( HashMap.empty[HOLFormula, Int] )
-      val ms11 = f1.foldLeft( ms )( ( res, f ) => res + f.asInstanceOf[HOLFormula] )
-      val ms22 = f2.foldLeft( ms )( ( res, f ) => res + f.asInstanceOf[HOLFormula] )
+      val ms = new Multisets.HashMultiset[Formula]( HashMap.empty[Formula, Int] )
+      val ms11 = f1.foldLeft( ms )( ( res, f ) => res + f.asInstanceOf[Formula] )
+      val ms22 = f2.foldLeft( ms )( ( res, f ) => res + f.asInstanceOf[Formula] )
       LeafTree( IndexedPredicate( new ProjectionSetSymbol( proof_name, ( ms11, ms22 ) ), index :: Nil ) )
     }
   }
@@ -417,11 +417,11 @@ object PStructToExpressionTree {
       val len = StepMinusOne.length( index, k )
       val foccsInSeqAnt = seq.antecedent.filter( fo => cut_omega_anc.contains( fo ) )
       val foccsInSeqSucc = seq.succedent.filter( fo => cut_omega_anc.contains( fo ) )
-      var new_map = Map.empty[SchemaVar, IntegerTerm]
+      var new_map = Map.empty[Var, IntegerTerm]
       var strant = ""; var str1ant = ""; var strsucc = ""; var str1succ = "";
-      val trans_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( k, IntVar( "n" ) )
+      val trans_map = Map.empty[Var, IntegerTerm] + Tuple2( k, IntVar( "n" ) )
       val trans_sub = SchemaSubstitution( trans_map )
-      var f1 = Seq.empty[HOLExpression]; var f2 = Seq.empty[HOLExpression];
+      var f1 = Seq.empty[LambdaExpression]; var f2 = Seq.empty[LambdaExpression];
       if ( len == 0 ) {
         f1 = foccsInSeqAnt.map( fo => trans_sub( fo.formula.asInstanceOf[SchemaFormula] ) )
         f2 = foccsInSeqSucc.map( fo => trans_sub( fo.formula.asInstanceOf[SchemaFormula] ) )
@@ -446,32 +446,32 @@ object PStructToExpressionTree {
   }
 
   // We define some symbols that represent the operations of the struct
-  case class PTimesSymbol( val rho: String ) extends LogicalSymbolA {
-    override def unique = "TimesSymbol"
+  case class PTimesSymbol( val rho: String ) extends SymbolA {
+    def unique = "TimesSymbol"
     override def toString = "⊗_" + rho
     def toCode = "TimesSymbol"
   }
 
-  case object PPlusSymbol extends LogicalSymbolA {
-    override def unique = "PlusSymbol"
+  case object PPlusSymbol extends SymbolA {
+    def unique = "PlusSymbol"
     override def toString = "⊕"
     def toCode = "PlusSymbol"
   }
 
-  case class PWeakSymbol( val seq: Sequent ) extends LogicalSymbolA {
-    override def unique = "WeakSymbol"
+  case class PWeakSymbol( val seq: Sequent ) extends SymbolA {
+    def unique = "WeakSymbol"
     override def toString = "w^{" + seq.toString + "}"
     def toCode = "WeakSymbol"
   }
 
-  class ProjectionSetSymbol( val name: String, val cut_occs: ( Multiset[HOLFormula], Multiset[HOLFormula] ) ) extends SymbolA {
+  class ProjectionSetSymbol( val name: String, val cut_occs: ( Multiset[Formula], Multiset[Formula] ) ) extends SymbolA {
     override def toString() =
       "pr^{(" + cutConfToString( cut_occs ) + ")," + name + "}"
   }
 
-  case class PTimesC( val rho: String ) extends HOLConst( new PTimesSymbol( rho ), Type( "( o -> (o -> o) )" ) )
-  case object PPlusC extends HOLConst( PPlusSymbol, Type( "( o -> (o -> o) )" ) )
-  case class PWeakC( val seq: Sequent ) extends HOLConst( new PWeakSymbol( seq ), Type( "(o -> o)" ) )
+  case class PTimesC( val rho: String ) extends Const( new PTimesSymbol( rho ), Type( "( o -> (o -> o) )" ) )
+  case object PPlusC extends Const( PPlusSymbol, Type( "( o -> (o -> o) )" ) )
+  case class PWeakC( val seq: Sequent ) extends Const( new PWeakSymbol( seq ), Type( "(o -> o)" ) )
 
   // for nice printing in Console only !
   def printTree( r: Tree[String] ): Unit = r match {
@@ -523,11 +523,11 @@ object GroundingProjectionTerm {
     if ( i < 0 )
       throw new Exception( "\n\nThe instance for computing projections is not a natural number !\n" )
     if ( i == 0 ) {
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero() )
+      val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero() )
       val subst = SchemaSubstitution( new_map )
       apply( pair._1, subst )
     } else {
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), toIntegerTerm( i - 1 ) )
+      val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), toIntegerTerm( i - 1 ) )
       val subst = SchemaSubstitution( new_map )
       apply( pair._2, subst )
     }
@@ -597,7 +597,7 @@ object UnfoldProjectionTerm {
   def getEndSequent( proof: String, number: Int ): FSequent = {
     val k = IntVar( "k" )
     val seq = SchemaProofDB.get( proof ).seq
-    val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( k, toIntegerTerm( number ) )
+    val new_map = Map.empty[Var, IntegerTerm] + Tuple2( k, toIntegerTerm( number ) )
     val sub = SchemaSubstitution( new_map )
     FSequent( seq.antecedent.map( f => unfoldSFormula( sub( f.asInstanceOf[SchemaFormula] ) ) ), seq.succedent.map( f => unfoldSFormula( sub( f.asInstanceOf[SchemaFormula] ) ) ) )
   }
@@ -615,7 +615,7 @@ object UnfoldProjectionTerm {
           val p = SchemaProofDB.get( proof_name ).base
           val seq = p.root
           val k = IntVar( "k" )
-          val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero().asInstanceOf[IntegerTerm] )
+          val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero().asInstanceOf[IntegerTerm] )
           var sub = SchemaSubstitution( new_map )
           val omega_sub = omega.map( fo => sub( StepMinusOne.minusOne( fo.formula.asInstanceOf[SchemaFormula], k.asInstanceOf[IntVar] ) ) )
           val omega1 = ( seq.antecedent ++ seq.succedent ).toSet.filter( fo => omega_sub.contains( fo.formula.asInstanceOf[SchemaFormula] ) )
@@ -629,7 +629,7 @@ object UnfoldProjectionTerm {
 
         val omega1ant = seq0.antecedent.toSet.filter( fo => canc.contains( fo ) || getAncestors( omega ).contains( fo ) )
         val omega1succ = seq0.succedent.toSet.filter( fo => canc.contains( fo ) || getAncestors( omega ).contains( fo ) )
-        val mapFind = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( k.asInstanceOf[IntegerTerm] ).asInstanceOf[IntegerTerm] )
+        val mapFind = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( k.asInstanceOf[IntegerTerm] ).asInstanceOf[IntegerTerm] )
         var subFind = SchemaSubstitution( mapFind )
         /*next lines are related with the index of the proof-link.
             We have to map the configuration in the proof-link to the
@@ -639,15 +639,15 @@ object UnfoldProjectionTerm {
            */
         val b = omega1ant.forall( fo => seq.antecedent.map( fo => fo.formula ).contains( subFind( fo.formula.asInstanceOf[SchemaFormula] ) ) ) && omega1succ.forall( fo => seq.succedent.map( fo => fo.formula ).contains( subFind( fo.formula.asInstanceOf[SchemaFormula] ) ) )
         val new_map1 = b match {
-          case false => Map.empty[SchemaVar, IntegerTerm]
-          case true  => Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( k.asInstanceOf[IntegerTerm] ).asInstanceOf[IntegerTerm] )
+          case false => Map.empty[Var, IntegerTerm]
+          case true  => Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( k.asInstanceOf[IntegerTerm] ).asInstanceOf[IntegerTerm] )
         }
         var sub1 = SchemaSubstitution( new_map1 )
         val omega1_sub = omega1.map( fo => sub1( fo.formula.asInstanceOf[SchemaFormula] ) )
         val endSeqOcc = ( seq.antecedent ++ seq.succedent ).toSet.filter( fo => omega1_sub.contains( fo.formula.asInstanceOf[SchemaFormula] ) ) ++ getAncestors( omega )
         val omega1Anc = endSeqOcc.foldLeft( Set.empty[FormulaOccurrence] )( ( acc, fo ) => acc ++ getAncestors( fo ) )
         val pterm = ProjectionTermCreators.extract( p, endSeqOcc, omega1Anc ++ getCutAncestors( p ) )
-        val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Pred( index ) )
+        val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Pred( index ) )
         var sub = SchemaSubstitution( new_map )
         val ground = GroundingProjectionTerm( pterm, sub )
         UnfoldProjectionTerm( ground )
@@ -687,38 +687,38 @@ object ProjectionTermToSetOfProofs {
       case unary: pUnary => {
         val set = ProjectionTermToSetOfProofs( unary.upper )
         unary.rho match {
-          case "w:l"      => set.map( p => WeakeningLeftRule( p, unary.auxl.head.asInstanceOf[HOLFormula] ) )
-          case "w:r"      => set.map( p => WeakeningRightRule( p, unary.auxl.head.asInstanceOf[HOLFormula] ) )
-          case "c:l"      => set.map( p => ContractionLeftRule( p, unary.auxl.head.asInstanceOf[HOLFormula] ) )
-          case "c:r"      => set.map( p => ContractionRightRule( p, unary.auxl.head.asInstanceOf[HOLFormula] ) )
-          case "\u00ac:l" => set.map( p => NegLeftRule( p, unary.auxl.head.asInstanceOf[HOLFormula] ) )
-          case "\u00ac:r" => set.map( p => NegRightRule( p, unary.auxl.head.asInstanceOf[HOLFormula] ) )
-          case "\u2200:l" => set.map( p => ForallLeftRule( p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.tail.head.asInstanceOf[HOLFormula], unary.auxl.last ) )
-          case "\u2203:r" => set.map( p => ExistsRightRule( p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.tail.head.asInstanceOf[HOLFormula], unary.auxl.last ) )
-          case "\u2283:r" => set.map( p => ImpRightRule( p, unary.auxl.head.asInstanceOf[HOLFormula], unary.auxl.last.asInstanceOf[HOLFormula] ) )
+          case "w:l"      => set.map( p => WeakeningLeftRule( p, unary.auxl.head.asInstanceOf[Formula] ) )
+          case "w:r"      => set.map( p => WeakeningRightRule( p, unary.auxl.head.asInstanceOf[Formula] ) )
+          case "c:l"      => set.map( p => ContractionLeftRule( p, unary.auxl.head.asInstanceOf[Formula] ) )
+          case "c:r"      => set.map( p => ContractionRightRule( p, unary.auxl.head.asInstanceOf[Formula] ) )
+          case "\u00ac:l" => set.map( p => NegLeftRule( p, unary.auxl.head.asInstanceOf[Formula] ) )
+          case "\u00ac:r" => set.map( p => NegRightRule( p, unary.auxl.head.asInstanceOf[Formula] ) )
+          case "\u2200:l" => set.map( p => ForallLeftRule( p, unary.auxl.head.asInstanceOf[Formula], unary.auxl.tail.head.asInstanceOf[Formula], unary.auxl.last ) )
+          case "\u2203:r" => set.map( p => ExistsRightRule( p, unary.auxl.head.asInstanceOf[Formula], unary.auxl.tail.head.asInstanceOf[Formula], unary.auxl.last ) )
+          case "\u2283:r" => set.map( p => ImpRightRule( p, unary.auxl.head.asInstanceOf[Formula], unary.auxl.last.asInstanceOf[Formula] ) )
           case "\u2227:l1" => {
             val a = unary.auxl.last match {
-              case HOLAnd( f1, f2 ) => f1.asInstanceOf[HOLFormula]
+              case And( f1, f2 ) => f1.asInstanceOf[Formula]
             }
-            set.map( p => AndLeft1Rule( p, a, unary.auxl.head.asInstanceOf[HOLFormula] ) )
+            set.map( p => AndLeft1Rule( p, a, unary.auxl.head.asInstanceOf[Formula] ) )
           }
           case "\u2227:l2" => {
             val a = unary.auxl.last match {
-              case HOLAnd( f1, f2 ) => f2.asInstanceOf[HOLFormula]
+              case And( f1, f2 ) => f2.asInstanceOf[Formula]
             }
-            set.map( p => AndLeft2Rule( p, a, unary.auxl.head.asInstanceOf[HOLFormula] ) )
+            set.map( p => AndLeft2Rule( p, a, unary.auxl.head.asInstanceOf[Formula] ) )
           }
           case "\u2228:r1" => {
             val a = unary.auxl.last match {
-              case HOLOr( f1, f2 ) => f1.asInstanceOf[HOLFormula]
+              case Or( f1, f2 ) => f1.asInstanceOf[Formula]
             }
-            set.map( p => OrRight1Rule( p, a, unary.auxl.head.asInstanceOf[HOLFormula] ) )
+            set.map( p => OrRight1Rule( p, a, unary.auxl.head.asInstanceOf[Formula] ) )
           }
           case "\u2228:r2" => {
             val a = unary.auxl.last match {
-              case HOLOr( f1, f2 ) => f2.asInstanceOf[HOLFormula]
+              case Or( f1, f2 ) => f2.asInstanceOf[Formula]
             }
-            set.map( p => OrRight2Rule( p, a, unary.auxl.head.asInstanceOf[HOLFormula] ) )
+            set.map( p => OrRight2Rule( p, a, unary.auxl.head.asInstanceOf[Formula] ) )
           }
           case "\u21A0:l" => set.map( p => trsArrowLeftRule( p, unary.auxl.head.asInstanceOf[SchemaFormula], unary.auxl.last.asInstanceOf[SchemaFormula] ) )
           case "\u21A0:r" => set.map( p => trsArrowRightRule( p, unary.auxl.head.asInstanceOf[SchemaFormula], unary.auxl.last.asInstanceOf[SchemaFormula] ) )

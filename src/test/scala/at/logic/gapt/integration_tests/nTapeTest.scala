@@ -5,11 +5,12 @@ import java.io.IOException
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
-import at.logic.gapt.language.fol.algorithms.{ undoHol2Fol, replaceAbstractions, reduceHolToFol, recreateWithFactory }
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.algorithms.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
+import at.logic.gapt.language.hol.{ freeHOVariables, containsQuantifier, HOLSubstitution, toLLKString }
 import at.logic.gapt.proofs.lk.algorithms.{ AtomicExpansion, regularize }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.language.hol._
 import at.logic.gapt.expr.symbols.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.resolution.algorithms.RobinsonToRal
 
@@ -34,36 +35,38 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
 
   def show( s: String ) = println( "+++++++++ " + s + " ++++++++++" )
 
-  def f( e: HOLExpression ): String = toLLKString( e )
+  def f( e: LambdaExpression ): String = toLLKString( e )
 
   //sequential //skolemization is not thread safe - it shouldnt't make problems here, but in case there are issues, please uncomment
 
-  class Robinson2RalAndUndoHOL2Fol( sig_vars: Map[String, List[HOLVar]],
-                                    sig_consts: Map[String, List[HOLConst]],
+  class Robinson2RalAndUndoHOL2Fol( sig_vars: Map[String, List[Var]],
+                                    sig_consts: Map[String, List[Const]],
                                     cmap: replaceAbstractions.ConstantsMap ) extends RobinsonToRal {
-    val absmap = Map[String, HOLExpression]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
-    val cache = Map[HOLExpression, HOLExpression]()
+    val absmap = Map[String, LambdaExpression]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
+    val cache = Map[LambdaExpression, LambdaExpression]()
 
-    override def convert_formula( e: HOLFormula ): HOLFormula = {
+    override def convert_formula( e: Formula ): Formula = {
       //require(e.isInstanceOf[FOLFormula], "Expecting prover 9 formula "+e+" to be from the FOL layer, but it is not.")
 
       BetaReduction.betaNormalize(
-        recreateWithFactory( undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap )( HOLFactory ), HOLFactory ).asInstanceOf[HOLFormula] )
+        undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap ) )
     }
 
     override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = {
-      val mapping = s.map.toList.map( x =>
-        (
-          BetaReduction.betaNormalize( recreateWithFactory( undoHol2Fol.backtranslate( x._1.asInstanceOf[HOLExpression], sig_vars, sig_consts, absmap, None )( HOLFactory ), HOLFactory ).asInstanceOf[HOLExpression] ).asInstanceOf[HOLVar],
-          BetaReduction.betaNormalize( recreateWithFactory( undoHol2Fol.backtranslate( x._2.asInstanceOf[HOLExpression], sig_vars, sig_consts, absmap, None )( HOLFactory ), HOLFactory ).asInstanceOf[HOLExpression] ) ) )
+      val mapping = s.map.toList.map {
+        case ( from, to ) =>
+          (
+            BetaReduction.betaNormalize( undoHol2Fol.backtranslate( from, sig_vars, sig_consts, absmap, None ) ).asInstanceOf[Var],
+            BetaReduction.betaNormalize( undoHol2Fol.backtranslate( to, sig_vars, sig_consts, absmap, None ) ) )
+      }
 
       HOLSubstitution( mapping )
     }
   }
 
   object Robinson2RalAndUndoHOL2Fol {
-    def apply( sig_vars: Map[String, List[HOLVar]],
-               sig_consts: Map[String, List[HOLConst]],
+    def apply( sig_vars: Map[String, List[Var]],
+               sig_consts: Map[String, List[Const]],
                cmap: replaceAbstractions.ConstantsMap ) =
       new Robinson2RalAndUndoHOL2Fol( sig_vars, sig_consts, cmap )
   }
@@ -103,8 +106,8 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     ( ind1base, ind1step, ind2base, ind2step ) match {
-      case ( HOLAbs( xb, sb ), HOLAbs( xs, ss ), HOLAbs( yb, tb ), HOLAbs( ys, ts ) ) =>
-        val map = Map[HOLExpression, StringSymbol]()
+      case ( Abs( xb, sb ), Abs( xs, ss ), Abs( yb, tb ), Abs( ys, ts ) ) =>
+        val map = Map[LambdaExpression, StringSymbol]()
         val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
 
         val ( map1, sb1 ) = replaceAbstractions( sb, map, counter )
@@ -112,10 +115,10 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
         val ( map3, tb1 ) = replaceAbstractions( tb, map2, counter )
         val ( map4, ts1 ) = replaceAbstractions( ts, map3, counter )
 
-        println( "base 1 simplified: " + f( HOLAbs( xb, sb1 ) ) )
-        println( "base 2 simplified: " + f( HOLAbs( yb, tb1 ) ) )
-        println( "step 1 simplified: " + f( HOLAbs( xs, ss1 ) ) )
-        println( "step 2 simplified: " + f( HOLAbs( ys, ts1 ) ) )
+        println( "base 1 simplified: " + f( Abs( xb, sb1 ) ) )
+        println( "base 2 simplified: " + f( Abs( yb, tb1 ) ) )
+        println( "step 1 simplified: " + f( Abs( xs, ss1 ) ) )
+        println( "step 2 simplified: " + f( Abs( ys, ts1 ) ) )
 
         println( "With shortcuts:" )
         for ( ( term, sym ) <- map4 ) {

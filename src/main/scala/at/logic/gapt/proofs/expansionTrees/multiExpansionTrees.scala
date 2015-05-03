@@ -1,7 +1,7 @@
 
 package at.logic.gapt.proofs.expansionTrees
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base.FSequent
 import Utility._
@@ -14,8 +14,8 @@ import Utility._
  */
 
 object Utility {
-  type T1 = NonTerminalNodeA[Option[HOLFormula], Option[Seq[HOLExpression]]]
-  type Instance = ( MultiExpansionTree, Seq[HOLExpression] )
+  type T1 = NonTerminalNodeA[Option[Formula], Option[Seq[LambdaExpression]]]
+  type Instance = ( MultiExpansionTree, Seq[LambdaExpression] )
 
   /**
    * If formula starts with ∃x,,1,,…∃x,,n,,, returns [x,,1,,,…,x,,n,,]. Otherwise returns Nil.
@@ -23,9 +23,9 @@ object Utility {
    * @param formula The formula under consideration.
    * @return
    */
-  def getVarsEx( formula: HOLFormula ): List[HOLVar] = formula match {
-    case HOLExVar( v, f ) => v +: getVarsEx( f )
-    case _                => Nil
+  def getVarsEx( formula: Formula ): List[Var] = formula match {
+    case Ex( v, f ) => v +: getVarsEx( f )
+    case _          => Nil
   }
 
   /**
@@ -34,30 +34,30 @@ object Utility {
    * @param formula The formula under consideration.
    * @return
    */
-  def getVarsAll( formula: HOLFormula ): List[HOLVar] = formula match {
-    case HOLAllVar( v, f ) => v +: getVarsAll( f )
-    case _                 => Nil
+  def getVarsAll( formula: Formula ): List[Var] = formula match {
+    case All( v, f ) => v +: getVarsAll( f )
+    case _           => Nil
   }
 
   /**
    * Strips off the first n quantifiers of a formula.
    * It's only well-defined for formulas that begin with at least n quantifiers.
    *
-   * @param formula A HOLFormula
+   * @param formula A Formula
    * @param n Number of quantifiers to be removed
    * @return form without the first n quantifiers
    */
-  def removeQuantifiers( formula: HOLFormula, n: Int ): HOLFormula =
+  def removeQuantifiers( formula: Formula, n: Int ): Formula =
     if ( n == 0 )
       formula
     else formula match {
-      case HOLAllVar( _, f ) => removeQuantifiers( f, n - 1 )
-      case HOLExVar( _, f )  => removeQuantifiers( f, n - 1 )
-      case _                 => throw new Exception( "Trying to remove too many quantifiers!" )
+      case All( _, f ) => removeQuantifiers( f, n - 1 )
+      case Ex( _, f )  => removeQuantifiers( f, n - 1 )
+      case _           => throw new Exception( "Trying to remove too many quantifiers!" )
     }
 }
 
-trait MultiExpansionTree extends TreeA[Option[HOLFormula], Option[Seq[HOLExpression]]] {
+trait MultiExpansionTree extends TreeA[Option[Formula], Option[Seq[LambdaExpression]]] {
 
   /**
    * Computes the expansion tree's deep formula.
@@ -65,14 +65,14 @@ trait MultiExpansionTree extends TreeA[Option[HOLFormula], Option[Seq[HOLExpress
    * @param pol Determines whether the tree is negated (<0) or not (>0).
    * @return The deep formula.
    */
-  def toDeep( pol: Int ): HOLFormula
+  def toDeep( pol: Int ): Formula
 
   /**
    * Computes the expansion tree's shallow formula.
    *
    * @return The shallow formula.
    */
-  def toShallow: HOLFormula
+  def toShallow: Formula
 
   /**
    * Tests whether the tree contains any weak quantifier nodes.
@@ -94,14 +94,14 @@ trait MultiExpansionTree extends TreeA[Option[HOLFormula], Option[Seq[HOLExpress
    *
    * @return
    */
-  def getVars: List[HOLVar]
+  def getVars: List[Var]
 
   /**
    * Returns a node's shallow formula minus the quantifiers represented by that node.
    *
    * @return The shallow formula of this node minus the quantifiers represented by it (if any).
    */
-  def getSubformula: HOLFormula
+  def getSubformula: Formula
 
   /**
    * Returns the number of quantifiers represented by a node.
@@ -118,16 +118,16 @@ trait MultiExpansionTree extends TreeA[Option[HOLFormula], Option[Seq[HOLExpress
  * @param formula The formula expanded by this tree.
  * @param instances The instance blocks used for the weak quantifiers.
  */
-case class METWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
+case class METWeakQuantifier( formula: Formula, instances: Seq[Instance] )
     extends MultiExpansionTree with T1 {
   lazy val node = Some( formula )
   lazy val children = instances.map( x => ( x._1, Some( x._2 ) ) )
 
-  override def toDeep( pol: Int ): HOLFormula = {
+  override def toDeep( pol: Int ): Formula = {
     if ( pol > 0 )
-      HOLOr( instances.map( t => t._1.toDeep( pol ) ).toList )
+      Or( instances.map( t => t._1.toDeep( pol ) ).toList )
     else
-      HOLAnd( instances.map( t => t._1.toDeep( pol ) ).toList )
+      And( instances.map( t => t._1.toDeep( pol ) ).toList )
   }
   override def toShallow = formula
 
@@ -136,8 +136,8 @@ case class METWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
   override def numberOfInstances = instances.foldLeft( 0 )( ( acc, inst ) => acc + inst._1.numberOfInstances )
 
   override def getVars = formula match {
-    case HOLExVar( v, subF )  => v +: getVarsEx( subF )
-    case HOLAllVar( v, subF ) => v +: getVarsAll( subF )
+    case Ex( v, subF )  => v +: getVarsEx( subF )
+    case All( v, subF ) => v +: getVarsAll( subF )
   }
 
   override def getSubformula = {
@@ -156,12 +156,12 @@ case class METWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
  * @param variables The vector '''α''' of eigenvariables used for the quantifiers.
  * @param selection The expansion tree E.
  */
-case class METStrongQuantifier( formula: HOLFormula, variables: Seq[HOLVar], selection: MultiExpansionTree )
+case class METStrongQuantifier( formula: Formula, variables: Seq[Var], selection: MultiExpansionTree )
     extends MultiExpansionTree with T1 {
   lazy val node = Some( formula )
   lazy val children = List( ( selection, Some( variables ) ) )
 
-  override def toDeep( pol: Int ): HOLFormula = selection.toDeep( pol )
+  override def toDeep( pol: Int ): Formula = selection.toDeep( pol )
   override def toShallow = formula
 
   override def containsWeakQuantifiers = selection.containsWeakQuantifiers
@@ -169,8 +169,8 @@ case class METStrongQuantifier( formula: HOLFormula, variables: Seq[HOLVar], sel
   override def numberOfInstances = selection.numberOfInstances
 
   override def getVars = formula match {
-    case HOLExVar( v, subF )  => v +: getVarsEx( subF )
-    case HOLAllVar( v, subF ) => v +: getVarsAll( subF )
+    case Ex( v, subF )  => v +: getVarsEx( subF )
+    case All( v, subF ) => v +: getVarsAll( subF )
   }
 
   override def getSubformula = {
@@ -188,20 +188,20 @@ case class METStrongQuantifier( formula: HOLFormula, variables: Seq[HOLVar], sel
  * @param skolemSymbols The vector '''c''' of skolem symbols used for the quantifiers.
  * @param selection The expansion tree E.
  */
-case class METSkolemQuantifier( formula: HOLFormula, skolemSymbols: Seq[HOLExpression], selection: MultiExpansionTree )
+case class METSkolemQuantifier( formula: Formula, skolemSymbols: Seq[LambdaExpression], selection: MultiExpansionTree )
     extends MultiExpansionTree with T1 {
   lazy val node = Some( formula )
   lazy val children = List( ( selection, Some( skolemSymbols ) ) )
 
-  override def toDeep( pol: Int ): HOLFormula = selection.toDeep( pol )
+  override def toDeep( pol: Int ): Formula = selection.toDeep( pol )
   override def toShallow = formula
   override def containsWeakQuantifiers = selection.containsWeakQuantifiers
 
   override def numberOfInstances = selection.numberOfInstances
 
   override def getVars = formula match {
-    case HOLExVar( v, subF )  => v +: getVarsEx( subF )
-    case HOLAllVar( v, subF ) => v +: getVarsAll( subF )
+    case Ex( v, subF )  => v +: getVarsEx( subF )
+    case All( v, subF ) => v +: getVarsAll( subF )
   }
 
   override def getSubformula = {
@@ -223,8 +223,8 @@ case class METAnd( left: MultiExpansionTree, right: MultiExpansionTree ) extends
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 
-  override def toDeep( pol: Int ): HOLFormula = HOLAnd( left.toDeep( pol ), right.toDeep( pol ) )
-  override def toShallow = HOLAnd( left.toShallow, right.toShallow )
+  override def toDeep( pol: Int ): Formula = And( left.toDeep( pol ), right.toDeep( pol ) )
+  override def toShallow = And( left.toShallow, right.toShallow )
 
   override def containsWeakQuantifiers = left.containsWeakQuantifiers || right.containsWeakQuantifiers
 
@@ -251,8 +251,8 @@ case class METAnd( left: MultiExpansionTree, right: MultiExpansionTree ) extends
 case class METOr( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
-  override def toDeep( pol: Int ): HOLFormula = HOLOr( left.toDeep( pol ), right.toDeep( pol ) )
-  override def toShallow = HOLOr( left.toShallow, right.toShallow )
+  override def toDeep( pol: Int ): Formula = Or( left.toDeep( pol ), right.toDeep( pol ) )
+  override def toShallow = Or( left.toShallow, right.toShallow )
 
   override def containsWeakQuantifiers = left.containsWeakQuantifiers || right.containsWeakQuantifiers
 
@@ -278,8 +278,8 @@ case class METOr( left: MultiExpansionTree, right: MultiExpansionTree ) extends 
 case class METImp( left: MultiExpansionTree, right: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
-  override def toDeep( pol: Int ): HOLFormula = HOLImp( left.toDeep( -pol ), right.toDeep( pol ) )
-  override def toShallow = HOLImp( left.toShallow, right.toShallow )
+  override def toDeep( pol: Int ): Formula = Imp( left.toDeep( -pol ), right.toDeep( pol ) )
+  override def toShallow = Imp( left.toShallow, right.toShallow )
 
   override def containsWeakQuantifiers = left.containsWeakQuantifiers || right.containsWeakQuantifiers
 
@@ -305,8 +305,8 @@ case class METImp( left: MultiExpansionTree, right: MultiExpansionTree ) extends
 case class METNeg( tree: MultiExpansionTree ) extends MultiExpansionTree with T1 {
   val node = None
   lazy val children = List( Tuple2( tree, None ) )
-  override def toDeep( pol: Int ): HOLFormula = HOLNeg( tree.toDeep( -pol ) )
-  override def toShallow = HOLNeg( tree.toShallow )
+  override def toDeep( pol: Int ): Formula = Neg( tree.toDeep( -pol ) )
+  override def toShallow = Neg( tree.toShallow )
 
   override def containsWeakQuantifiers = tree.containsWeakQuantifiers
 
@@ -329,9 +329,9 @@ case class METNeg( tree: MultiExpansionTree ) extends MultiExpansionTree with T1
  * Atom(f)
  * @param formula The formula f.
  */
-case class METAtom( formula: HOLFormula ) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula], Option[Seq[HOLExpression]]] {
+case class METAtom( formula: Formula ) extends MultiExpansionTree with TerminalNodeA[Option[Formula], Option[Seq[LambdaExpression]]] {
   lazy val node = Some( formula )
-  override def toDeep( pol: Int ): HOLFormula = formula
+  override def toDeep( pol: Int ): Formula = formula
   override def toShallow = formula
 
   override def containsWeakQuantifiers = false
@@ -369,10 +369,10 @@ class MultiExpansionSequent( val antecedent: Seq[MultiExpansionTree], val succed
   /**
    * Maps a function over the sequent.
    *
-   * @param f A function of type [[at.logic.gapt.proofs.expansionTrees.MultiExpansionTree]] → [[at.logic.gapt.language.hol.HOLFormula]]
+   * @param f A function of type [[at.logic.gapt.proofs.expansionTrees.MultiExpansionTree]] → [[at.logic.gapt.language.hol.Formula]]
    * @return The result of the map.
    */
-  def map( f: MultiExpansionTree => HOLFormula ): FSequent = {
+  def map( f: MultiExpansionTree => Formula ): FSequent = {
     new FSequent( antecedent.map( f ), succedent.map( f ) )
   }
 

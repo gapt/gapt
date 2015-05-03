@@ -1,6 +1,7 @@
 package at.logic.gapt.language.fol.algorithms
 
-import at.logic.gapt.language.fol.{ FOLExpression, FOLSubstitution }
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.FOLSubstitution
 
 /**
  * The interface for an unification algorithm of finitary type, i.e.
