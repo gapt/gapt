@@ -107,9 +107,8 @@ object PCNF {
    * @return
    */
   private def PCNFn( f: Formula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
-    case Top()           => Axiom( Nil, List( f ) )
-    case HOLAtom( _, _ ) => Axiom( List( f ), List( f ) )
-    case Neg( f2 )       => NegRightRule( PCNFp( f2, a, sub ), f2 )
+    case Top()     => Axiom( Nil, List( f ) )
+    case Neg( f2 ) => NegRightRule( PCNFp( f2, a, sub ), f2 )
     case And( f1, f2 ) => {
       AndRightRule( PCNFn( f1, a, sub ), PCNFn( f2, a, sub ), f1, f2 )
     }
@@ -124,8 +123,9 @@ object PCNF {
       else throw new IllegalArgumentException( "clause: " + as( a, sub ) + " is not found in CNFs of ancestors: "
         + CNFp( f1 ) + " or " + CNFn( f2 ) + " of formula " + f )
     }
-    case Ex( v, f2 ) => ExistsRightRule( PCNFn( f2, a, sub ), f2, f, v.asInstanceOf[Var] )
-    case _           => throw new IllegalArgumentException( "unknown head of formula: " + a.toString )
+    case Ex( v, f2 )     => ExistsRightRule( PCNFn( f2, a, sub ), f2, f, v.asInstanceOf[Var] )
+    case HOLAtom( _, _ ) => Axiom( List( f ), List( f ) )
+    case _               => throw new IllegalArgumentException( "unknown head of formula: " + a.toString )
   }
 
   /**
@@ -135,9 +135,8 @@ object PCNF {
    * @return
    */
   private def PCNFp( f: Formula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
-    case Top()           => Axiom( List( f ), Nil )
-    case HOLAtom( _, _ ) => Axiom( List( f ), List( f ) )
-    case Neg( f2 )       => NegLeftRule( PCNFn( f2, a, sub ), f2 )
+    case Top()     => Axiom( List( f ), Nil )
+    case Neg( f2 ) => NegLeftRule( PCNFn( f2, a, sub ), f2 )
     case And( f1, f2 ) =>
       if ( containsSubsequent( CNFp( f1 ), as( a, sub ) ) ) AndLeft1Rule( PCNFp( f1, a, sub ), f1, f2 )
       else if ( containsSubsequent( CNFp( f2 ), as( a, sub ) ) ) AndLeft2Rule( PCNFp( f2, a, sub ), f1, f2 )
@@ -149,8 +148,9 @@ object PCNF {
     case Imp( f1, f2 ) => {
       ImpLeftRule( PCNFn( f1, a, sub ), PCNFp( f2, a, sub ), f1, f2 )
     }
-    case All( v, f2 ) => ForallLeftRule( PCNFp( f2, a, sub ), f2, f, v.asInstanceOf[Var] )
-    case _            => throw new IllegalArgumentException( "unknown head of formula: " + a.toString )
+    case All( v, f2 )    => ForallLeftRule( PCNFp( f2, a, sub ), f2, f, v.asInstanceOf[Var] )
+    case HOLAtom( _, _ ) => Axiom( List( f ), List( f ) )
+    case _               => throw new IllegalArgumentException( "unknown head of formula: " + a.toString )
   }
 
   def getVariableRenaming( f1: FClause, f2: FClause ): Option[HOLSubstitution] = {
