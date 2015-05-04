@@ -16,7 +16,7 @@ val LeanCoPImportLogger = LoggerFactory.getLogger("LeanCoPImportLogger")
 object testLeanCoPImport {
 
   var fail = 0
-  var timeout = 0
+  var timeout_error = 0
   var syntax_error = 0
   var no_match = 0
   var success = 0
@@ -39,7 +39,7 @@ object testLeanCoPImport {
 	  no_match += 1;
 	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
 	case e: TimeOutException =>
-	  timeout += 1;
+	  timeout_error += 1;
 	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
 	case e: Throwable => 
 	  fail += 1; 
@@ -52,7 +52,7 @@ object testLeanCoPImport {
     LeanCoPImportLogger.info( "success " + success )
     LeanCoPImportLogger.info( "no_match " + no_match )
     LeanCoPImportLogger.info( "syntax_error " + syntax_error )
-    LeanCoPImportLogger.info( "timeout " + timeout )
+    LeanCoPImportLogger.info( "timeout_error " + timeout_error )
     LeanCoPImportLogger.info( "failure " + fail )
     LeanCoPImportLogger.info( "==========================" )
 
