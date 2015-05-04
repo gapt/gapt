@@ -32,7 +32,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   // introduced definitions)
   // (reverse engineering leanCoP)
   // Definitions will be introduced for conjectures, but not for other formulas.
-  def toDefinitionalClausalForm( f: FOLFormula, conj: Boolean ): FOLFormula = {
+  def toDefinitionalClausalForm( f: FOLFormula ): FOLFormula = {
     var i = 0
 
     def toDCF( f: FOLFormula, inConj: Boolean ): ( FOLFormula, List[FOLFormula] ) = f match {
@@ -61,14 +61,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case _ => throw new Exception( "Unsuported format for definitional clausal transformation: " + f )
     }
 
-    // NOTE: FOLOr on lists must be right associative.
-    if (conj) {
-      val ( fd, defs ) = toDCF( f, false )
-      FOLOr.rightAssociative( fd :: defs.flatMap( d => toDNF( d ) ) )
-    }
-    else {
-      FOLOr.rightAssociative( toDNF( f ) )
-    }
+    val ( fd, defs ) = toDCF( f, false )
+    FOLOr.rightAssociative( fd :: defs.flatMap( d => toDNF( d ) ) )
   }
 
   // leanCoP renames all variables so that they do not clash.
@@ -124,9 +118,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
             val formula = input_formulas( name )._1 // FOLFormula
             val clausified = {
               if ( input_formulas( name )._2 == "conjecture" ) {
-		toDefinitionalClausalForm( toNNF( dropQuantifiers( formula ) ), true )
+		toDefinitionalClausalForm( toNNF( dropQuantifiers( formula ) ) )
 	      }
-              else toDefinitionalClausalForm( dropQuantifiers( toNNF( FOLNeg( formula ) ) ), false )
+              else FOLOr.rightAssociative( toDNF( dropQuantifiers( toNNF( FOLNeg( formula ) ) ) ) )
             }
             val lean_clauses = FOLOr( lst_int.map( i => clauses( i )._1 ).toList )
             val subs = FOLMatchingAlgorithm.matchTerms( clausified, lean_clauses ) match {
