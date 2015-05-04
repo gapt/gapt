@@ -7,8 +7,8 @@ package at.logic.gapt.language.fol
 import at.logic.gapt.language.fol.replacements.getAllPositionsFOL
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.symbols.getRenaming
-import at.logic.gapt.expr.{ freeVariables => freeVariablesLambda, rename => renameLambda }
-import at.logic.gapt.language.hol.{ getMatrix => getMatrixHOL, _ }
+import at.logic.gapt.expr.{ rename => renameLambda }
+import at.logic.gapt.language.hol.{ getMatrix => getMatrixHOL, HOLPosition }
 import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable
 
@@ -572,15 +572,11 @@ object Utils extends Logger {
    * @param index nonterminal index i
    * @return the original term if the replacement could not be processed, or t|p = α_index
    */
-  def replaceAtPosition( t: FOLTerm, variable: String, position: List[Int], index: Int ): FOLTerm = {
-    try {
-      val replacement = new Replacement( position, FOLVar( variable + "_" + index ) )
-      return replacement( t ).asInstanceOf[FOLTerm]
-    } catch {
-      case e: IllegalArgumentException => // Possible, nothing special to do here.
+  def replaceAtPosition( t: FOLTerm, variable: String, position: List[Int], index: Int ): FOLTerm =
+    HOLPosition.toLambdaPositionOption( t )( HOLPosition( position ) ) match {
+      case Some( p ) => LambdaPosition.replace( t, p, FOLVar( variable + "_" + index ) ).asInstanceOf[FOLTerm]
+      case _         => t
     }
-    return t
-  }
 
   /**
    * Given a FOLTerm and a prefix for a variable,

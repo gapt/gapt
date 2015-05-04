@@ -38,6 +38,10 @@ object getAllPositionsFOL {
    */
   def apply( expression: FOLExpression ): List[Tuple2[List[Int], FOLExpression]] =
     HOLPosition.getPositions( expression )
-      .filter { p => expression.get( p ).isInstanceOf[FOLExpression] }
-      .map { p => p.toList -> expression( p ).asInstanceOf[FOLExpression] }
+      .flatMap { p =>
+        expression.get( p ) match {
+          case Some( e: FOLExpression ) => Some( p.toList -> e )
+          case _                        => None
+        }
+      }
 }
