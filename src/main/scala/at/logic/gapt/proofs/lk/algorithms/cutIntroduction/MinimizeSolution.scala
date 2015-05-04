@@ -9,7 +9,6 @@ package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.FClause
-import at.logic.gapt.language.fol.Utils._
 import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.resolution.algorithms.CNFp
 import at.logic.gapt.provers.Prover
@@ -177,7 +176,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     // Transform to conjunctive normal form
     trace( "starting CNF-Transformation" )
-    val cnf = toCNF( f )
+    val cnf = FOLAnd( toCNF( f ) )
     trace( "finished CNF-Transformation" )
 
     // Exhaustive search over the resolvents (depth-first search),
@@ -262,7 +261,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     //0. Convert to a clause set where each clause is a list of positive and negative atoms.
     //1. assign a number to every atom in F.
-    val fNumbered = numberAtoms( CNFp( toCNF( form2 ) ).map( c => toMyFClause( c ) ).toList )
+    val fNumbered = numberAtoms( CNFp( form2 ).map( c => toMyFClause( c ) ).toList )
 
     //2. gather the positive and negative occurrences o every variable v into sets v+ and v-.
     val posNegSets = fNumbered.foldLeft( Map[FOLFormula, ( Set[Int], Set[Int] )]() ) { ( m, clause ) =>

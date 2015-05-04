@@ -8,6 +8,9 @@ import java.io.{ Reader, FileReader }
 import scala.util.parsing.combinator._
 import scala.collection.immutable.HashMap
 
+class LeanCoPParserException( msg: String ) extends Exception( msg: String )
+class LeanCoPNoMatchException( msg: String ) extends Exception( msg: String )
+
 object LeanCoPParser extends RegexParsers with PackratParsers {
 
   def getExpansionProof( filename: String ): ExpansionSequent = {
@@ -18,9 +21,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     parseAll( expansionSequent, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new Exception( "leanCoP parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new LeanCoPParserException( "leanCoP parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
       case Error( msg, next ) =>
-        throw new Exception( "leanCoP parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new LeanCoPParserException( "leanCoP parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
     }
   }
 
@@ -28,7 +31,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   // Takes a formula in NNF and returns a list of clauses in DNF (possibly with
   // introduced definitions)
   // (reverse engineering leanCoP)
-  def toDefinitionalClausalForm( f: FOLFormula ): FOLFormula = {
+  // Definitions will be introduced for conjectures, but not for other formulas.
+  def toDefinitionalClausalForm( f: FOLFormula, conj: Boolean ): FOLFormula = {
     var i = 0
 
     def toDCF( f: FOLFormula, inConj: Boolean ): ( FOLFormula, List[FOLFormula] ) = f match {
@@ -54,26 +58,20 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
           ( FOLOr( f1d, f2d ), d1 ++ d2 )
         }
       }
-      case _ => throw new Exception( "Unsuported format for definitional clausal transformation." )
+      case _ => throw new Exception( "Unsuported format for definitional clausal transformation: " + f )
     }
 
-    // to DNF
-    def toClause( f: FOLFormula ): List[FOLFormula] = f match {
-      case FOLAtom( _, _ )               => List( f )
-      case FOLNeg( FOLAtom( _, _ ) )     => List( f )
-      case FOLOr( f1, f2 )               => toClause( f1 ) ++ toClause( f2 )
-      case FOLAnd( f1, FOLOr( f2, f3 ) ) => toClause( FOLAnd( f1, f2 ) ) ++ toClause( FOLAnd( f1, f3 ) )
-      case FOLAnd( FOLOr( f1, f2 ), f3 ) => toClause( FOLAnd( f1, f3 ) ) ++ toClause( FOLAnd( f2, f3 ) )
-      case FOLAnd( f1, f2 )              => List( f )
-      case _                             => throw new Exception( "ERROR: Unexpected case while distributing Ors over Ands." )
+    // NOTE: FOLOr on lists must be right associative.
+    if (conj) {
+      val ( fd, defs ) = toDCF( f, false )
+      FOLOr( fd :: defs.flatMap( d => toDNF( d ) ) )
     }
-
-    val ( fd, defs ) = toDCF( f, false )
-
-    FOLOr( fd :: defs.flatMap( d => toClause( d ) ) )
+    else {
+      FOLOr( toDNF( f ) )
+    }
   }
 
-  // Trusting that there is no variable capture.
+  // leanCoP renames all variables so that they do not clash.
   def dropQuantifiers( f: FOLFormula ): FOLFormula = f match {
     case FOLAtom( _, _ )    => f
     case FOLNeg( f1 )       => FOLNeg( dropQuantifiers( f1 ) )
@@ -124,15 +122,16 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
         val formula_substitutions = formulas_to_clauses.foldLeft( HashMap[String, ( FOLFormula, List[FOLSubstitution] )]() ) {
           case ( map, ( name, lst_int ) ) =>
             val formula = input_formulas( name )._1 // FOLFormula
-            val negated_axiom = {
-              if ( input_formulas( name )._2 == "axiom" ) toNNF( FOLNeg( formula ) )
-              else formula
+            val clausified = {
+              if ( input_formulas( name )._2 == "conjecture" ) {
+		toDefinitionalClausalForm( toNNF( dropQuantifiers( formula ) ), true )
+	      }
+              else toDefinitionalClausalForm( dropQuantifiers( toNNF( FOLNeg( formula ) ) ), false )
             }
-            val clausified = toDefinitionalClausalForm( dropQuantifiers( negated_axiom ) )
             val lean_clauses = FOLOr( lst_int.map( i => clauses( i )._1 ).toList )
             val subs = FOLMatchingAlgorithm.matchTerms( clausified, lean_clauses ) match {
               case Some( s ) => s
-              case None      => throw new Exception( "leanCoP parsing: formulas " + clausified + " and " + lean_clauses + "do not match." )
+              case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formulas " + clausified + " and " + lean_clauses + " do not match." )
             }
             val sublst = lst_int.flatMap( i => clauses_substitutions.get( i ) match {
               case Some( cs ) => cs.map( s => s.compose( subs ) )
@@ -189,7 +188,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   lazy val formula: PackratParser[FOLFormula] = formula_def | ( "(" ~> formula <~ ")" )
-  lazy val formula_def: PackratParser[FOLFormula] = neg | and | or | impl | dbl_impl | forall | exists | atom
+  lazy val formula_def: PackratParser[FOLFormula] = forall | exists | dbl_impl | impl | or | and | neg | eq | not_eq | atom
 
   def term: Parser[FOLTerm] = variable | function | constant | skolem_term
   def function: Parser[FOLTerm] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case f ~ _ ~ args => FOLFunction( f, args ) }
@@ -207,15 +206,26 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       FOLAtom( "leanP" + i, terms )
   }
   lazy val real_atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case pred ~ _ ~ args => FOLAtom( pred, args ) }
-  lazy val neg: PackratParser[FOLFormula] = "-" ~> formula ^^ { case f => FOLNeg( f ) }
+  // Negation is - for leanCoP formulas and ~ for TPTP formulas
+  lazy val neg: PackratParser[FOLFormula] = ( "-" | "~" ) ~> formula ^^ { case f => FOLNeg( f ) }
   lazy val and: PackratParser[FOLFormula] = formula ~ "&" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLAnd( f1, f2 ) }
   lazy val or: PackratParser[FOLFormula] = formula ~ "|" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLOr( f1, f2 ) }
-  lazy val impl: PackratParser[FOLFormula] = formula ~ "=>" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLImp( f1, f2 ) }
-  lazy val dbl_impl: PackratParser[FOLFormula] = formula ~ "<=>" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLAnd( FOLImp( f1, f2 ), FOLImp( f2, f1 ) ) }
-  lazy val forall: PackratParser[FOLFormula] = "!" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => FOLAllVar( v, f ) }
-  lazy val exists: PackratParser[FOLFormula] = "?" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => FOLExVar( v, f ) }
+  lazy val impl: PackratParser[FOLFormula] = formula ~ "=>" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLOr( FOLNeg( f1 ), f2 ) }
+  lazy val dbl_impl: PackratParser[FOLFormula] = formula ~ "<=>" ~ formula ^^ { case f1 ~ _ ~ f2 => 
+    FOLAnd( FOLOr( FOLNeg( f1 ), f2 ), FOLOr( f1, FOLNeg( f2 ) ) )
+  }
+  lazy val forall: PackratParser[FOLFormula] = "!" ~ "[" ~> repsep( variable, "," ) ~ "] :" ~ formula ^^ { 
+    case vars ~ _ ~ form => 
+      vars.foldLeft( form ) ( (f, v) => FOLAllVar( v, f ) )
+  }
+  lazy val exists: PackratParser[FOLFormula] = "?" ~ "[" ~> repsep( variable, "," ) ~ "] :" ~ formula ^^ {
+    case vars ~ _ ~ form => 
+      vars.foldLeft( form ) ( (f, v) => FOLExVar( v, f ) )
+  }
+  lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ { case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) ) } 
+  lazy val not_eq: PackratParser[FOLFormula] = "(!" ~> term ~ ")" ~ "=" ~ term ^^ { case t1 ~ _ ~ _ ~ t2 => FOLNeg( FOLAtom( "=", List( t1, t2 ) ) ) }
 
-  def name: Parser[String] = """^(?!_)[^ ():,!?\[\]\-&|=>]+""".r ^^ { case s => s }
+  def name: Parser[String] = """^(?![_ \d])[^ ():,!?\[\]\-&|=>~]+""".r ^^ { case s => s }
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
   def lean_var: Parser[( Int, List[FOLTerm] )] = """\d+""".r ~ "^" ~ "[" ~ repsep( term, "," ) ~ "]" ^^ {
     case i ~ _ ~ _ ~ terms ~ _ => ( i.toInt, terms )

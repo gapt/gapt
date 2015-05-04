@@ -118,8 +118,6 @@ object instantiateAll {
     lst.map( terms => instantiateAll( f, terms ) )
 }
 
-// TODO: some of the methods below should work for FOL and HOL...
-
 // Transforms a formula to negation normal form (transforming also
 // implications into disjunctions)
 object toNNF {
@@ -146,27 +144,36 @@ object toNNF {
   }
 }
 
-// Distribute Ors over Ands
-object distribute {
-  def apply( f: FOLFormula ): FOLFormula = f match {
-    case FOLAtom( _, _ )               => f
-    // Negation has only atomic scope
-    case FOLNeg( FOLAtom( _, _ ) )     => f
-    case FOLAnd( f1, f2 )              => FOLAnd( distribute( f1 ), distribute( f2 ) )
-    case FOLOr( f1, FOLAnd( f2, f3 ) ) => FOLAnd( distribute( FOLOr( f1, f2 ) ), distribute( FOLOr( f1, f3 ) ) )
-    case FOLOr( FOLAnd( f1, f2 ), f3 ) => FOLAnd( distribute( FOLOr( f1, f3 ) ), distribute( FOLOr( f2, f3 ) ) )
-    case FOLOr( f1, f2 )               => FOLOr( distribute( f1 ), distribute( f2 ) )
-    case _                             => throw new Exception( "ERROR: Unexpected case while distributing Ors over Ands." )
+object toCNF {
+  // Assumes f is in NNF
+  def apply( f: FOLFormula ): List[FOLFormula] = f match {
+    case FOLAtom( _, _ )               => List( f )
+    case FOLNeg( FOLAtom( _, _ ) )     => List( f )
+    case FOLAnd( f1, f2 )              => toCNF( f1 ) ++ toCNF( f2 )
+    case FOLOr( f1, FOLAnd( f2, f3 ) ) => toCNF( FOLOr( f1, f2 ) ) ++ toCNF( FOLOr( f1, f3 ) )
+    case FOLOr( FOLAnd( f1, f2 ), f3 ) => toCNF( FOLOr( f1, f3 ) ) ++ toCNF( FOLOr( f2, f3 ) )
+    case FOLOr( f1, f2 )              => 
+      val clauses1 = toCNF( f1 )
+      val clauses2 = toCNF( f2 )
+      for( c1 <- clauses1; c2 <- clauses2 ) yield FOLOr( c1, c2 )
+    case _                             => throw new Exception( "ERROR on CNF transformation of the formula: " + f )
   }
 }
 
-// Transforms a formula to conjunctive normal form
-// 1. Transform to negation normal form
-// 2. Distribute Ors over Ands
-// OBS: works for propositional formulas only
-// TODO: tests for this
-object toCNF {
-  def apply( f: FOLFormula ): FOLFormula = distribute( toNNF( f ) )
+object toDNF {
+  // Assumes f is in NNF
+  def apply( f: FOLFormula ): List[FOLFormula] = f match {
+    case FOLAtom( _, _ )               => List( f )
+    case FOLNeg( FOLAtom( _, _ ) )     => List( f )
+    case FOLOr( f1, f2 )               => toDNF( f1 ) ++ toDNF( f2 )
+    case FOLAnd( f1, FOLOr( f2, f3 ) ) => toDNF( FOLAnd( f1, f2 ) ) ++ toDNF( FOLAnd( f1, f3 ) )
+    case FOLAnd( FOLOr( f1, f2 ), f3 ) => toDNF( FOLAnd( f1, f3 ) ) ++ toDNF( FOLAnd( f2, f3 ) )
+    case FOLAnd( f1, f2 )              => 
+      val clauses1 = toDNF( f1 )
+      val clauses2 = toDNF( f2 )
+      for( c1 <- clauses1; c2 <- clauses2 ) yield FOLAnd( c1, c2 )
+    case _                             => throw new Exception( "ERROR on DNF transformation of the formula: " + f )
+  }
 }
 
 object numOfAtoms {
