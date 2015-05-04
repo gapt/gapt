@@ -219,6 +219,7 @@ object FOLAnd {
     val and = left.factory.createConnective( AndSymbol ).asInstanceOf[FOLExpression]
     FOLApp( FOLApp( and, left ), right ).asInstanceOf[FOLFormula]
   }
+  def rightAssociative( fs: List[FOLFormula] ) = apply( fs )
   def unapply( expression: FOLExpression ) = expression match {
     case FOLApp( FOLApp( FOLAndC, left ), right ) => Some( ( left.asInstanceOf[FOLFormula], right.asInstanceOf[FOLFormula] ) )
     case _                                        => None
@@ -234,6 +235,7 @@ object FOLOr {
     val or = left.factory.createConnective( OrSymbol ).asInstanceOf[FOLExpression]
     FOLApp( FOLApp( or, left ), right ).asInstanceOf[FOLFormula]
   }
+  def rightAssociative( fs: List[FOLFormula] ) = apply( fs )
   def unapply( expression: FOLExpression ) = expression match {
     case FOLApp( FOLApp( FOLOrC, left ), right ) => Some( ( left.asInstanceOf[FOLFormula], right.asInstanceOf[FOLFormula] ) )
     case _                                       => None

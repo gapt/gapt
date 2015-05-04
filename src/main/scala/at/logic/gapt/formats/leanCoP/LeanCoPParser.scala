@@ -64,10 +64,10 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     // NOTE: FOLOr on lists must be right associative.
     if (conj) {
       val ( fd, defs ) = toDCF( f, false )
-      FOLOr( fd :: defs.flatMap( d => toDNF( d ) ) )
+      FOLOr.rightAssociative( fd :: defs.flatMap( d => toDNF( d ) ) )
     }
     else {
-      FOLOr( toDNF( f ) )
+      FOLOr.rightAssociative( toDNF( f ) )
     }
   }
 
