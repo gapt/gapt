@@ -31,8 +31,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   // Takes a formula in NNF and returns a list of clauses in DNF (possibly with
   // introduced definitions)
   // (reverse engineering leanCoP)
-  // Definitions will be introduced for conjectures, but not for other formulas.
-  def toDefinitionalClausalForm( f: FOLFormula ): FOLFormula = {
+  def toDefinitionalClausalForm( f: FOLFormula ): List[FOLFormula] = {
     var i = 0
 
     def toDCF( f: FOLFormula, inConj: Boolean ): ( FOLFormula, List[FOLFormula] ) = f match {
@@ -62,7 +61,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     }
 
     val ( fd, defs ) = toDCF( f, false )
-    FOLOr.rightAssociative( fd :: defs.flatMap( d => toDNF( d ) ) )
+    fd :: defs.flatMap( d => toDNF( d ) )
   }
 
   // leanCoP renames all variables so that they do not clash.
@@ -74,6 +73,26 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case FOLOr( f1, f2 )    => FOLOr( dropQuantifiers( f1 ), dropQuantifiers( f2 ) )
     case FOLExVar( x, f1 )  => dropQuantifiers( f1 )
     case FOLAllVar( x, f1 ) => dropQuantifiers( f1 )
+  }
+
+  def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLFormula] ): Option[FOLSubstitution] = {
+    
+    val num_clauses = lean_clauses.length
+    val goal = FOLOr.rightAssociative( lean_clauses )
+
+    // Get all sub-lists of my_clauses of size num_clauses
+    val set_same_size = my_clauses.combinations(num_clauses)
+    val candidates = set_same_size.flatMap( s => s.permutations.map( p => FOLOr.rightAssociative( p ) ) )
+
+    def findSubstitution(lst: List[FOLFormula], goal: FOLFormula): Option[FOLSubstitution] = lst match {
+      case Nil => None
+      case hd :: tl => FOLMatchingAlgorithm.matchTerms(hd, goal) match {
+	case None => findSubstitution( tl, goal )
+	case Some(sub) => Some(sub)
+      }
+    }
+    
+    findSubstitution( candidates.toList, goal )
   }
 
   def expansionSequent: Parser[ExpansionSequent] =
@@ -120,10 +139,10 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
               if ( input_formulas( name )._2 == "conjecture" ) {
 		toDefinitionalClausalForm( toNNF( dropQuantifiers( formula ) ) )
 	      }
-              else FOLOr.rightAssociative( toDNF( dropQuantifiers( toNNF( FOLNeg( formula ) ) ) ) )
+              else toDNF( dropQuantifiers( toNNF( FOLNeg( formula ) ) ) )
             }
-            val lean_clauses = FOLOr( lst_int.map( i => clauses( i )._1 ).toList )
-            val subs = FOLMatchingAlgorithm.matchTerms( clausified, lean_clauses ) match {
+            val lean_clauses = lst_int.map( i => clauses( i )._1 ).toList
+            val subs = matchClauses( clausified, lean_clauses ) match {
               case Some( s ) => s
               case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formulas " + clausified + " and " + lean_clauses + " do not match." )
             }
