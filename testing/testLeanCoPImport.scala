@@ -51,7 +51,7 @@ object testLeanCoPImport {
 
     LeanCoPImportLogger.info( "==========================" )
     LeanCoPImportLogger.info( "leanCoP import results:" )
-    LeanCoPImportLogger.info( "success " + success + "(no TSTP proof " + no_proof + ")" )
+    LeanCoPImportLogger.info( "success " + success + " (no TSTP proof " + no_proof + ")" )
     LeanCoPImportLogger.info( "no_match " + no_match )
     LeanCoPImportLogger.info( "syntax_error " + syntax_error )
     LeanCoPImportLogger.info( "timeout_error " + timeout_error )
