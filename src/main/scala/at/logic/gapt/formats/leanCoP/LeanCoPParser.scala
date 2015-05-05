@@ -13,11 +13,11 @@ class LeanCoPNoMatchException( msg: String ) extends Exception( msg: String )
 
 object LeanCoPParser extends RegexParsers with PackratParsers {
 
-  def getExpansionProof( filename: String ): ExpansionSequent = {
+  def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
     getExpansionProof( new FileReader( filename ) )
   }
 
-  def getExpansionProof( reader: Reader ): ExpansionSequent = {
+  def getExpansionProof( reader: Reader ): Option[ExpansionSequent] = {
     parseAll( expansionSequent, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
@@ -76,26 +76,26 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLFormula] ): Option[FOLSubstitution] = {
-    
+
     val num_clauses = lean_clauses.length
     val goal = FOLOr.rightAssociative( lean_clauses )
 
     // Get all sub-lists of my_clauses of size num_clauses
-    val set_same_size = my_clauses.combinations(num_clauses)
+    val set_same_size = my_clauses.combinations( num_clauses )
     val candidates = set_same_size.flatMap( s => s.permutations.map( p => FOLOr.rightAssociative( p ) ) )
 
-    def findSubstitution(lst: List[FOLFormula], goal: FOLFormula): Option[FOLSubstitution] = lst match {
+    def findSubstitution( lst: List[FOLFormula], goal: FOLFormula ): Option[FOLSubstitution] = lst match {
       case Nil => None
-      case hd :: tl => FOLMatchingAlgorithm.matchTerms(hd, goal) match {
-	case None => findSubstitution( tl, goal )
-	case Some(sub) => Some(sub)
+      case hd :: tl => FOLMatchingAlgorithm.matchTerms( hd, goal ) match {
+        case None        => findSubstitution( tl, goal )
+        case Some( sub ) => Some( sub )
       }
     }
-    
+
     findSubstitution( candidates.toList, goal )
   }
 
-  def expansionSequent: Parser[ExpansionSequent] =
+  def expansionSequent: Parser[Option[ExpansionSequent]] =
     rep( comment ) ~> rep( input ) ~ comment ~ rep( clauses ) ~ comment ~ rep( inferences ) <~ rep( comment ) ^^ {
       case input ~ _ ~ clauses_lst ~ _ ~ bindings_opt =>
 
@@ -137,9 +137,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
             val formula = input_formulas( name )._1 // FOLFormula
             val clausified = {
               if ( input_formulas( name )._2 == "conjecture" ) {
-		toDefinitionalClausalForm( toNNF( dropQuantifiers( formula ) ) )
-	      }
-              else toDNF( dropQuantifiers( toNNF( FOLNeg( formula ) ) ) )
+                toDefinitionalClausalForm( toNNF( dropQuantifiers( formula ) ) )
+              } else toDNF( dropQuantifiers( toNNF( FOLNeg( formula ) ) ) )
             }
             val lean_clauses = lst_int.map( i => clauses( i )._1 ).toList
             val subs = matchClauses( clausified, lean_clauses ) match {
@@ -161,8 +160,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
             else ( ( et :: a ), s )
         }
 
-        new ExpansionSequent( ant, succ )
-    }
+        Some( new ExpansionSequent( ant, succ ) )
+    } | rep( comment ) ^^ { case _ => None } // No TPTP proof
 
   def input: Parser[( String, String, FOLFormula )] = language ~ "(" ~> name ~ "," ~ role ~ "," ~ formula <~ ", file(" ~ "[^()]*".r ~ "))." ^^ {
     case n ~ _ ~ r ~ _ ~ f => ( n, r, f )
@@ -224,18 +223,19 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   lazy val and: PackratParser[FOLFormula] = formula ~ "&" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLAnd( f1, f2 ) }
   lazy val or: PackratParser[FOLFormula] = formula ~ "|" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLOr( f1, f2 ) }
   lazy val impl: PackratParser[FOLFormula] = formula ~ "=>" ~ formula ^^ { case f1 ~ _ ~ f2 => FOLOr( FOLNeg( f1 ), f2 ) }
-  lazy val dbl_impl: PackratParser[FOLFormula] = formula ~ "<=>" ~ formula ^^ { case f1 ~ _ ~ f2 => 
-    FOLAnd( FOLOr( FOLNeg( f1 ), f2 ), FOLOr( f1, FOLNeg( f2 ) ) )
+  lazy val dbl_impl: PackratParser[FOLFormula] = formula ~ "<=>" ~ formula ^^ {
+    case f1 ~ _ ~ f2 =>
+      FOLAnd( FOLOr( FOLNeg( f1 ), f2 ), FOLOr( f1, FOLNeg( f2 ) ) )
   }
-  lazy val forall: PackratParser[FOLFormula] = "!" ~ "[" ~> repsep( variable, "," ) ~ "] :" ~ formula ^^ { 
-    case vars ~ _ ~ form => 
-      vars.foldLeft( form ) ( (f, v) => FOLAllVar( v, f ) )
+  lazy val forall: PackratParser[FOLFormula] = "!" ~ "[" ~> repsep( variable, "," ) ~ "] :" ~ formula ^^ {
+    case vars ~ _ ~ form =>
+      vars.foldLeft( form )( ( f, v ) => FOLAllVar( v, f ) )
   }
   lazy val exists: PackratParser[FOLFormula] = "?" ~ "[" ~> repsep( variable, "," ) ~ "] :" ~ formula ^^ {
-    case vars ~ _ ~ form => 
-      vars.foldLeft( form ) ( (f, v) => FOLExVar( v, f ) )
+    case vars ~ _ ~ form =>
+      vars.foldLeft( form )( ( f, v ) => FOLExVar( v, f ) )
   }
-  lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ { case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) ) } 
+  lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ { case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) ) }
   lazy val not_eq: PackratParser[FOLFormula] = "(!" ~> term ~ ")" ~ "=" ~ term ^^ { case t1 ~ _ ~ _ ~ t2 => FOLNeg( FOLAtom( "=", List( t1, t2 ) ) ) }
 
   def name: Parser[String] = """^(?![_ \d])[^ ():,!?\[\]\-&|=>~]+""".r ^^ { case s => s }

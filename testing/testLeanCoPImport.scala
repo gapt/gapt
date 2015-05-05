@@ -20,6 +20,7 @@ object testLeanCoPImport {
   var syntax_error = 0
   var no_match = 0
   var success = 0
+  var no_proof = 0
 
   def apply( str: String, timeout: Int ) = {
     
@@ -29,7 +30,8 @@ object testLeanCoPImport {
     proof_files.foreach { case f =>
       try { withTimeout( timeout * 1000 ) { 
 	LeanCoPParser.getExpansionProof( new FileReader( f ) ) match {
-	  case _ => success += 1
+	  case Some(_) => success += 1
+	  case None => success += 1; no_proof += 1
 	}
       } } catch {
 	case e: LeanCoPParserException =>
@@ -49,7 +51,7 @@ object testLeanCoPImport {
 
     LeanCoPImportLogger.info( "==========================" )
     LeanCoPImportLogger.info( "leanCoP import results:" )
-    LeanCoPImportLogger.info( "success " + success )
+    LeanCoPImportLogger.info( "success " + success + "(no TSTP proof " + no_proof + ")" )
     LeanCoPImportLogger.info( "no_match " + no_match )
     LeanCoPImportLogger.info( "syntax_error " + syntax_error )
     LeanCoPImportLogger.info( "timeout_error " + timeout_error )

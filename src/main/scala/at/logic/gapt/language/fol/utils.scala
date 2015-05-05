@@ -152,11 +152,11 @@ object toCNF {
     case FOLAnd( f1, f2 )              => toCNF( f1 ) ++ toCNF( f2 )
     case FOLOr( f1, FOLAnd( f2, f3 ) ) => toCNF( FOLOr( f1, f2 ) ) ++ toCNF( FOLOr( f1, f3 ) )
     case FOLOr( FOLAnd( f1, f2 ), f3 ) => toCNF( FOLOr( f1, f3 ) ) ++ toCNF( FOLOr( f2, f3 ) )
-    case FOLOr( f1, f2 )              => 
+    case FOLOr( f1, f2 ) =>
       val clauses1 = toCNF( f1 )
       val clauses2 = toCNF( f2 )
-      for( c1 <- clauses1; c2 <- clauses2 ) yield FOLOr( c1, c2 )
-    case _                             => throw new Exception( "ERROR on CNF transformation of the formula: " + f )
+      for ( c1 <- clauses1; c2 <- clauses2 ) yield FOLOr( c1, c2 )
+    case _ => throw new Exception( "ERROR on CNF transformation of the formula: " + f )
   }
 }
 
@@ -168,11 +168,11 @@ object toDNF {
     case FOLOr( f1, f2 )               => toDNF( f1 ) ++ toDNF( f2 )
     case FOLAnd( f1, FOLOr( f2, f3 ) ) => toDNF( FOLAnd( f1, f2 ) ) ++ toDNF( FOLAnd( f1, f3 ) )
     case FOLAnd( FOLOr( f1, f2 ), f3 ) => toDNF( FOLAnd( f1, f3 ) ) ++ toDNF( FOLAnd( f2, f3 ) )
-    case FOLAnd( f1, f2 )              => 
+    case FOLAnd( f1, f2 ) =>
       val clauses1 = toDNF( f1 )
       val clauses2 = toDNF( f2 )
-      for( c1 <- clauses1; c2 <- clauses2 ) yield FOLAnd( c1, c2 )
-    case _                             => throw new Exception( "ERROR on DNF transformation of the formula: " + f )
+      for ( c1 <- clauses1; c2 <- clauses2 ) yield FOLAnd( c1, c2 )
+    case _ => throw new Exception( "ERROR on DNF transformation of the formula: " + f )
   }
 }
 
