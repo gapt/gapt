@@ -10,6 +10,7 @@ import scala.collection.immutable.HashMap
 
 class LeanCoPParserException( msg: String ) extends Exception( msg: String )
 class LeanCoPNoMatchException( msg: String ) extends Exception( msg: String )
+class LeanCoPNoLeanPredException( msg: String ) extends Exception( msg: String )
 
 object LeanCoPParser extends RegexParsers with PackratParsers {
 
@@ -49,6 +50,10 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
           val candidates = lean_preds.filter { case ( n, a ) => a == vars.length }
           val ordered_candidates = candidates.sorted
+
+          if ( candidates.isEmpty ) {
+            throw new LeanCoPNoLeanPredException( "Formula: " + f + " Candidates: " + lean_preds )
+          }
 
           // Trusting that we have the same order as leanCoP
           val pred_name = ordered_candidates.head._1
@@ -163,6 +168,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case FOLNeg( f ) => getSkFunctions( f )
     case FOLAnd( f1, f2 ) => getSkFunctions( f1 ) ++ getSkFunctions( f2 )
     case FOLOr( f1, f2 ) => getSkFunctions( f1 ) ++ getSkFunctions( f2 )
+    case FOLExVar( x, f1 ) => getSkFunctions( f1 )
+    case FOLAllVar( x, f1 ) => getSkFunctions( f1 )
     case _ => throw new Exception( "Unsupported format for getSkFunctions: " + cls )
   }
 
@@ -175,6 +182,23 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case FOLOr( f1, f2 )    => FOLOr( dropQuantifiers( f1 ), dropQuantifiers( f2 ) )
     case FOLExVar( x, f1 )  => dropQuantifiers( f1 )
     case FOLAllVar( x, f1 ) => dropQuantifiers( f1 )
+  }
+
+  def toMagicalDNF( f: FOLFormula ): List[FOLFormula] = {
+    val normal_dnf = toDNF( f )
+
+    def collectLiterals( cls: FOLFormula ): List[FOLFormula] = cls match {
+      case FOLAtom( _, _ ) => List( cls )
+      case FOLNeg( FOLAtom( _, _ ) ) => List( cls )
+      case FOLAnd( f1 @ FOLAtom( _, _ ), f2 ) => f1 :: collectLiterals( f2 )
+      case FOLAnd( f1 @ FOLNeg( FOLAtom( _, _ ) ), f2 ) => f1 :: collectLiterals( f2 )
+      case FOLAnd( f1, f2 @ FOLAtom( _, _ ) ) => f2 :: collectLiterals( f1 )
+      case FOLAnd( f1, f2 @ FOLNeg( FOLAtom( _, _ ) ) ) => f2 :: collectLiterals( f1 )
+      case FOLAnd( f1, f2 ) => collectLiterals( f1 ) ++ collectLiterals( f2 )
+      case _ => throw new Exception( "collectLiterals: formula " + cls + " is not a clause." )
+    }
+
+    normal_dnf.map( c => FOLAnd( collectLiterals( c ) ) )
   }
 
   def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLFormula] ): Option[FOLSubstitution] = {
@@ -225,13 +249,6 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
           case ( n, m ) => ( n, m.keys )
         }
 
-        val ( lean_pred_map, sk_terms_map ) = formulas_to_clauses.foldLeft( HashMap[String, List[( String, Int )]](), HashMap[String, List[( String, Int )]]() ) {
-          case ( ( map_pred, map_sk ), ( name, lst_i ) ) =>
-            val lean_preds = lst_i.flatMap( i => getLeanPreds( clauses( i )._1 ) ).toList
-            val sk_func = lst_i.flatMap( i => getSkFunctions( clauses( i )._1 ) ).toList
-            ( map_pred + ( name -> lean_preds ), map_sk + ( name -> sk_func ) )
-        }
-
         val bindings = bindings_opt.flatten
 
         // Int (number of clause) -> list of substitutions used
@@ -262,17 +279,22 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
             val f_no_quant = dropQuantifiers( f_skolemized )
 
-            // It seems definitional clausal form is always used for conjectures.
-            // This can be optimized.
-            val subs = matchClauses( toDNF( f_no_quant ), lean_clauses ) match {
-              case Some( s ) => s
-              case None =>
+            // If there are not lean predicate symbols, use regular DNF transformation
+            val subs = lean_preds match {
+              case Nil =>
+                val f_dnf = toMagicalDNF( f_no_quant )
+                matchClauses( f_dnf, lean_clauses ) match {
+                  case Some( s ) => s
+                  case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_dnf + " and clauses " + lean_clauses + " do not match." )
+                }
+              case _ :: _ =>
                 val f_clausified = toDefinitionalClausalForm( f_no_quant, lean_preds )
                 matchClauses( f_clausified, lean_clauses ) match {
                   case Some( s ) => s
                   case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_clausified + " and clauses " + lean_clauses + " do not match." )
                 }
             }
+
             val sublst = lst_int.flatMap( i => clauses_substitutions.get( i ) match {
               case Some( cs ) => cs.map( s => s.compose( subs ) )
               case None       => List()
