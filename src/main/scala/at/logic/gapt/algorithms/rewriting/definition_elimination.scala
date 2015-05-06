@@ -92,6 +92,12 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
   private def eliminate_from_( defs: ProcessedDefinitionsMap, f: Formula ): Formula = {
     f match {
+      case Neg( f1 )     => Neg( eliminate_from_( defs, f1 ) )
+      case All( q, f1 )  => All( q, eliminate_from_( defs, f1 ) )
+      case Ex( q, f1 )   => Ex( q, eliminate_from_( defs, f1 ) )
+      case And( f1, f2 ) => And( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
+      case Imp( f1, f2 ) => Imp( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
+      case Or( f1, f2 )  => Or( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
       case HOLAtom( e, args ) => {
         val sym = e match {
           case v: Var   => v.sym
@@ -116,13 +122,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
           case _ => f
         }
       }
-      case Neg( f1 )     => Neg( eliminate_from_( defs, f1 ) )
-      case All( q, f1 )  => All( q, eliminate_from_( defs, f1 ) )
-      case Ex( q, f1 )   => Ex( q, eliminate_from_( defs, f1 ) )
-      case And( f1, f2 ) => And( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case Imp( f1, f2 ) => Imp( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case Or( f1, f2 )  => Or( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case _             => println( "Warning: unhandled case in definition elimination!" ); f
+      case _ => println( "Warning: unhandled case in definition elimination!" ); f
     }
   }
 

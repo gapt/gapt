@@ -45,7 +45,6 @@ object containsQuantifier {
   def apply( e: LambdaExpression ): Boolean = e match {
     case Var( x, tpe )      => false
     case Const( x, tpe )    => false
-    case HOLAtom( x, args ) => false
     case And( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
     case Or( x, y )         => containsQuantifier( x ) || containsQuantifier( y )
     case Imp( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
@@ -55,19 +54,20 @@ object containsQuantifier {
     // Is this really necessary?
     case Abs( v, exp )      => containsQuantifier( exp )
     case App( l, r )        => containsQuantifier( l ) || containsQuantifier( r )
+    case HOLAtom( x, args ) => false
     case _                  => throw new Exception( "Unrecognized symbol." )
   }
 }
 
 object containsStrongQuantifier {
   def apply( f: Formula, pol: Boolean ): Boolean = f match {
-    case HOLAtom( _, _ ) => false
     case And( s, t )     => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
     case Or( s, t )      => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
     case Imp( s, t )     => containsStrongQuantifier( s, !pol ) || containsStrongQuantifier( t, pol )
     case Neg( s )        => containsStrongQuantifier( s, !pol )
     case All( x, s )     => if ( pol == true ) true else containsStrongQuantifier( s, pol )
     case Ex( x, s )      => if ( pol == false ) true else containsStrongQuantifier( s, pol )
+    case HOLAtom( _, _ ) => false
     case _               => throw new Exception( "Unhandled case!" )
   }
 
@@ -80,13 +80,13 @@ object isPrenex {
   def apply( e: LambdaExpression ): Boolean = e match {
     case Var( _, _ )     => true
     case Const( _, _ )   => true
-    case HOLAtom( _, _ ) => true
     case Neg( f )        => !containsQuantifier( f )
     case And( f1, f2 )   => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
     case Or( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
     case Imp( f1, f2 )   => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
     case Ex( v, f )      => isPrenex( f )
     case All( v, f )     => isPrenex( f )
+    case HOLAtom( _, _ ) => true
     case _               => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
   }
 }
@@ -102,8 +102,6 @@ object subTerms {
   def apply( e: LambdaExpression ): List[LambdaExpression] = e match {
     case Var( _, _ )            => List( e )
     case Const( _, _ )          => List( e )
-    case HOLAtom( _, args )     => e +: args.flatMap( a => subTerms( a ) )
-    case HOLFunction( _, args ) => e +: args.flatMap( a => subTerms( a ) )
     case And( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
     case Or( x, y )             => e +: ( subTerms( x ) ++ subTerms( y ) )
     case Imp( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
@@ -112,6 +110,8 @@ object subTerms {
     case Ex( _, x )             => e +: subTerms( x )
     case Abs( _, x )            => e +: subTerms( x )
     case App( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
+    case HOLAtom( _, args )     => e +: args.flatMap( a => subTerms( a ) )
+    case HOLFunction( _, args ) => e +: args.flatMap( a => subTerms( a ) )
     case _                      => throw new Exception( "Unrecognized symbol." )
   }
 }
@@ -126,13 +126,13 @@ object isLogicalSymbol {
  */
 object lcomp {
   def apply( formula: Formula ): Int = formula match {
-    case HOLAtom( _, _ ) => 1
     case Neg( f )        => lcomp( f ) + 1
     case And( f, g )     => lcomp( f ) + lcomp( g ) + 1
     case Or( f, g )      => lcomp( f ) + lcomp( g ) + 1
     case Imp( f, g )     => lcomp( f ) + lcomp( g ) + 1
     case Ex( x, f )      => lcomp( f ) + 1
     case All( x, f )     => lcomp( f ) + 1
+    case HOLAtom( _, _ ) => 1
   }
 
   def apply( seq: FSequent ): Int = seq.antecedent.foldLeft( 0 )( _ + lcomp( _ ) ) + seq.succedent.foldLeft( 0 )( _ + lcomp( _ ) )
@@ -274,8 +274,18 @@ object toAbbreviatedString {
   private def pretty( exp: LambdaExpression ): ( String, String, Int ) = {
 
     val s: ( String, String, Int ) = exp match {
-      case null        => ( "null", "null", -2 )
-      case Var( x, t ) => ( x.toString() + " : " + t.toString(), x.toString(), 0 )
+      case null                => ( "null", "null", -2 )
+      case Var( x, t )         => ( x.toString() + " : " + t.toString(), x.toString(), 0 )
+      case And( x, y )         => ( "(" + toAbbreviatedString( x ) + " " + AndC.name + " " + toAbbreviatedString( y ) + ")", AndC.name, 0 )
+      case Eq( x, y )          => ( "(" + toAbbreviatedString( x ) + " " + EqC.name + " " + toAbbreviatedString( y ) + ")", EqC.name, 0 )
+      case Or( x, y )          => ( "(" + toAbbreviatedString( x ) + " " + OrC.name + " " + toAbbreviatedString( y ) + ")", OrC.name, 0 )
+      case Imp( x, y )         => ( "(" + toAbbreviatedString( x ) + " " + ImpC.name + " " + toAbbreviatedString( y ) + ")", ImpC.name, 0 )
+      case Neg( x )            => ( NegC.name + toAbbreviatedString( x ), NegC.name, 0 )
+      case Ex( x, f )          => ( ExistsQ.name + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ExistsQ.name, 0 )
+      case All( x, f )         => ( ForallQ.name + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ForallQ.name, 0 )
+      case Abs( v, exp )       => ( "(λ" + toAbbreviatedString( v ) + "." + toAbbreviatedString( exp ) + ")", "λ", 0 )
+      case App( l, r )         => ( "(" + toAbbreviatedString( l ) + ")(" + toAbbreviatedString( r ) + ")", "()()", 0 )
+      case Const( x, exptype ) => ( x.toString(), x.toString(), 0 )
       case HOLAtom( x, args ) => {
         ( x.toString() + "(" + ( args.foldRight( "" ) {
           case ( x, "" )  => "" + toAbbreviatedString( x )
@@ -311,17 +321,7 @@ object toAbbreviatedString {
         }
 
       }
-      case And( x, y )         => ( "(" + toAbbreviatedString( x ) + " " + AndC.name + " " + toAbbreviatedString( y ) + ")", AndC.name, 0 )
-      case Eq( x, y )          => ( "(" + toAbbreviatedString( x ) + " " + EqC.name + " " + toAbbreviatedString( y ) + ")", EqC.name, 0 )
-      case Or( x, y )          => ( "(" + toAbbreviatedString( x ) + " " + OrC.name + " " + toAbbreviatedString( y ) + ")", OrC.name, 0 )
-      case Imp( x, y )         => ( "(" + toAbbreviatedString( x ) + " " + ImpC.name + " " + toAbbreviatedString( y ) + ")", ImpC.name, 0 )
-      case Neg( x )            => ( NegC.name + toAbbreviatedString( x ), NegC.name, 0 )
-      case Ex( x, f )          => ( ExistsQ.name + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ExistsQ.name, 0 )
-      case All( x, f )         => ( ForallQ.name + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ForallQ.name, 0 )
-      case Abs( v, exp )       => ( "(λ" + toAbbreviatedString( v ) + "." + toAbbreviatedString( exp ) + ")", "λ", 0 )
-      case App( l, r )         => ( "(" + toAbbreviatedString( l ) + ")(" + toAbbreviatedString( r ) + ")", "()()", 0 )
-      case Const( x, exptype ) => ( x.toString(), x.toString(), 0 )
-      case _                   => throw new Exception( "ERROR: Unknown HOL expression." );
+      case _ => throw new Exception( "ERROR: Unknown HOL expression." );
     }
     return s
 

@@ -453,11 +453,10 @@ object formulaToExpansionTree {
   }
 
   def apply( form: Formula, subs: List[_ <: HOLSubstitution], pos: Boolean ): ExpansionTree = form match {
-    case HOLAtom( _, _ ) => ETAtom( form )
-    case Neg( f )        => ETNeg( formulaToExpansionTree( f, subs, !pos ) ).asInstanceOf[ExpansionTree]
-    case And( f1, f2 )   => ETAnd( formulaToExpansionTree( f1, subs, pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
-    case Or( f1, f2 )    => ETOr( formulaToExpansionTree( f1, subs, pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
-    case Imp( f1, f2 )   => ETImp( formulaToExpansionTree( f1, subs, !pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case Neg( f )      => ETNeg( formulaToExpansionTree( f, subs, !pos ) ).asInstanceOf[ExpansionTree]
+    case And( f1, f2 ) => ETAnd( formulaToExpansionTree( f1, subs, pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case Or( f1, f2 )  => ETOr( formulaToExpansionTree( f1, subs, pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case Imp( f1, f2 ) => ETImp( formulaToExpansionTree( f1, subs, !pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
     case All( v, f ) => pos match {
       case true => // Strong quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
@@ -490,7 +489,8 @@ object formulaToExpansionTree {
         val ev = valid_subs.head( v ).asInstanceOf[Var]
         ETStrongQuantifier( form, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
     }
-    case _ => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
+    case HOLAtom( _, _ ) => ETAtom( form )
+    case _               => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
   }
 }
 

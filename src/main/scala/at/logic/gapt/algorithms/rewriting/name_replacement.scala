@@ -50,10 +50,6 @@ object NameReplacement {
       case None => exp
     }
 
-    case HOLAtom( x: Var, args )       => HOLAtom( x, args.map( a => renameSymbols( a, map ) ) )
-    case HOLAtom( x: Const, args )     => HOLAtom( renameSymbols( x, map ).asInstanceOf[Const], args.map( a => renameSymbols( a, map ) ) )
-    case HOLFunction( x: Var, args )   => HOLFunction( x, args.map( a => renameSymbols( a, map ) ) )
-    case HOLFunction( x: Const, args ) => HOLFunction( renameSymbols( x, map ).asInstanceOf[Const], args.map( a => renameSymbols( a, map ) ) )
     case And( x, y )                   => And( renameSymbols( x, map ), renameSymbols( y, map ) )
     case Eq( x, y )                    => Eq( renameSymbols( x, map ), renameSymbols( y, map ) )
     case Or( x, y )                    => Or( renameSymbols( x, map ), renameSymbols( y, map ) )
@@ -62,6 +58,10 @@ object NameReplacement {
     // Variables are not renamed
     case Ex( x, f )                    => Ex( x, renameSymbols( f, map ) )
     case All( x, f )                   => All( x, renameSymbols( f, map ) )
+    case HOLAtom( x: Var, args )       => HOLAtom( x, args.map( a => renameSymbols( a, map ) ) )
+    case HOLAtom( x: Const, args )     => HOLAtom( renameSymbols( x, map ).asInstanceOf[Const], args.map( a => renameSymbols( a, map ) ) )
+    case HOLFunction( x: Var, args )   => HOLFunction( x, args.map( a => renameSymbols( a, map ) ) )
+    case HOLFunction( x: Const, args ) => HOLFunction( renameSymbols( x, map ).asInstanceOf[Const], args.map( a => renameSymbols( a, map ) ) )
   }
 
   def renameSymbols( exp: FOLExpression, map: SymbolMap ): FOLExpression =

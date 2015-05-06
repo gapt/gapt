@@ -191,15 +191,15 @@ object renameVar {
   }
   def apply( f: Formula, pair: Tuple2[Var, LambdaExpression] ): Formula = {
     f match {
-      case HOLAtom( name, args ) => {
-        val new_args = args.map( f => apply( f, pair ) )
-        HOLAtom( Const( name.toString(), FunctionType( To, new_args.map( _.exptype ) ) ), new_args )
-      }
       case Neg( form )         => Neg( apply( form, pair ) )
       case Imp( form1, form2 ) => Imp( apply( form1, pair ), apply( form2, pair ) )
       case And( form1, form2 ) => And( apply( form1, pair ), apply( form2, pair ) )
       case Or( form1, form2 )  => Or( apply( form1, pair ), apply( form2, pair ) )
-      case _                   => f
+      case HOLAtom( name, args ) => {
+        val new_args = args.map( f => apply( f, pair ) )
+        HOLAtom( Const( name.toString(), FunctionType( To, new_args.map( _.exptype ) ) ), new_args )
+      }
+      case _ => f
     }
   }
 }

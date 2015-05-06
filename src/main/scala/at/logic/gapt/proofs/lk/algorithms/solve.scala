@@ -869,7 +869,6 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   }
 
   private def isNotSchematic( f: Formula ): Boolean = f match {
-    case HOLAtom( _, _ )      => true
     case Neg( l )             => isNotSchematic( l.asInstanceOf[Formula] )
     case And( l, r )          => isNotSchematic( l.asInstanceOf[Formula] ) && isNotSchematic( r.asInstanceOf[Formula] )
     case Or( l, r )           => isNotSchematic( l.asInstanceOf[Formula] ) && isNotSchematic( r.asInstanceOf[Formula] )
@@ -878,6 +877,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
     case Ex( _, l )           => isNotSchematic( l.asInstanceOf[Formula] )
     case BigAnd( _, _, _, _ ) => false
     case BigOr( _, _, _, _ )  => false
+    case HOLAtom( _, _ )      => true
     case _                    => warn( "WARNING: Unexpected operator in test for schematic formula " + f ); false
   }
 
@@ -934,13 +934,13 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
 
   // TODO: move this to hol!!!!!!
   private def getAtoms( f: Formula ): List[Formula] = f match {
-    case HOLAtom( _, _ ) => List( f )
     case Neg( f )        => getAtoms( f.asInstanceOf[Formula] )
     case And( f1, f2 )   => getAtoms( f1 ) ++ getAtoms( f2 )
     case Or( f1, f2 )    => getAtoms( f1 ) ++ getAtoms( f2 )
     case Imp( f1, f2 )   => getAtoms( f1 ) ++ getAtoms( f2 )
     case Ex( v, f )      => getAtoms( f )
     case All( v, f )     => getAtoms( f )
+    case HOLAtom( _, _ ) => List( f )
   }
 }
 
