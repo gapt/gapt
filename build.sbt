@@ -107,7 +107,8 @@ lazy val testing = (project in file("testing")).
     description := "gapt extended regression tests",
 
     // reduce number of concurrent tests to prevent out-of-memory errors
-    testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "threadsNb", "4")
+    testGrouping <<= definedTests in Test map oneJvmPerTest,
+    testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "threadsNb", "2")
   )
 
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
