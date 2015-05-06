@@ -170,7 +170,7 @@ object getMatrix {
     }
   }
 
-  def apply( f: FOLFormula ): FOLFormula = apply( f ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
 }
 
 object normalizeFreeVariables {
