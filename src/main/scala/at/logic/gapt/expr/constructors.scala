@@ -90,7 +90,7 @@ class QuantifierHelper( val q: QuantifierC ) {
 object All extends QuantifierHelper( ForallC )
 object Ex extends QuantifierHelper( ExistsC )
 
-class BinaryPropConnectiveHelper( val c: LogicalC ) {
+class BinaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply( a: LambdaExpression, b: LambdaExpression ): Formula =
     Apps( c(), a, b ).asInstanceOf[Formula]
   def apply( a: FOLFormula, b: FOLFormula ): FOLFormula =
@@ -164,7 +164,7 @@ object Ors {
   }
 }
 
-class UnaryPropConnectiveHelper( val c: LogicalC ) {
+class UnaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply( a: LambdaExpression ): Formula = Apps( c(), a ).asInstanceOf[Formula]
   def apply( a: FOLFormula ): FOLFormula = apply( a.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
   def apply( a: PropFormula ): PropFormula = apply( a.asInstanceOf[LambdaExpression] ).asInstanceOf[PropFormula]
@@ -189,7 +189,7 @@ class UnaryPropConnectiveHelper( val c: LogicalC ) {
 
 object Neg extends UnaryPropConnectiveHelper( NegC )
 
-class NullaryPropConnectiveHelper( val c: LogicalC ) {
+class NullaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply(): PropFormula = c().asInstanceOf[PropFormula]
   def unapply( formula: LambdaExpression ) = formula match {
     case c() => true

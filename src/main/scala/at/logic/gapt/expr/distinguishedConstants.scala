@@ -2,73 +2,77 @@ package at.logic.gapt.expr
 import types._
 import symbols._
 
-class LogicalC( val name: String, val ty: TA ) {
+abstract class LogicalC( val name: String ) {
   val symbol = StringSymbol( name )
 
-  def apply() = Const( symbol, ty )
-  def unapply( exp: LambdaExpression ): Boolean = exp match {
-    case Const( sym, exptype ) => unapply( StringSymbol( sym ), exptype )
-    case _                     => false
+  private[expr]type MatchResult
+  private[expr] def matchType( exptype: TA ): MatchResult
+  private[expr] def noMatch: MatchResult
+
+  def unapply( exp: LambdaExpression ): MatchResult = exp match {
+    case Const( `name`, exptype ) => matchType( exptype )
+    case _                        => noMatch
   }
-  def unapply( pair: ( SymbolA, TA ) ): Boolean = pair match {
-    case ( `symbol`, `ty` ) => true
-    case _                  => false
+  private[expr] def unapply( pair: ( SymbolA, TA ) ): MatchResult = pair match {
+    case ( `symbol`, ty ) => matchType( ty )
+    case _                => noMatch
   }
 }
 
-class QuantifierC( val name: String ) {
-  val symbol = StringSymbol( name )
+class MonomorphicLogicalC( name: String, val ty: TA ) extends LogicalC( name ) {
+  def apply() = Const( symbol, ty )
 
+  private[expr]type MatchResult = Boolean
+  private[expr] override def matchType( exptype: TA ) = exptype == ty
+  private[expr] override def noMatch = false
+}
+
+class QuantifierC( name: String ) extends LogicalC( name ) {
   def apply( qtype: TA ) = Const( symbol, ( qtype -> To ) -> To )
-  def unapply( exp: LambdaExpression ): Option[TA] = exp match {
-    case Const( sym, exptype ) => unapply( StringSymbol( sym ), exptype )
+
+  private[expr]type MatchResult = Option[TA]
+  private[expr] override def matchType( exptype: TA ) = exptype match {
+    case ( qtype -> To ) -> To => Some( qtype )
     case _                     => None
   }
-  def unapply( pair: ( SymbolA, TA ) ): Option[TA] = pair match {
-    case ( `symbol`, ( qtype -> To ) -> To ) => Some( qtype )
-    case _                                   => None
-  }
+  private[expr] override def noMatch = None
 }
 
-object AndC extends LogicalC( "∧", To -> ( To -> To ) )
-object OrC extends LogicalC( "∨", To -> ( To -> To ) )
-object ImpC extends LogicalC( "⊃", To -> ( To -> To ) )
-object NegC extends LogicalC( "¬", To -> To )
-object BottomC extends LogicalC( "⊥", To )
-object TopC extends LogicalC( "⊤", To )
+object AndC extends MonomorphicLogicalC( "∧", To -> ( To -> To ) )
+object OrC extends MonomorphicLogicalC( "∨", To -> ( To -> To ) )
+object ImpC extends MonomorphicLogicalC( "⊃", To -> ( To -> To ) )
+object NegC extends MonomorphicLogicalC( "¬", To -> To )
+object BottomC extends MonomorphicLogicalC( "⊥", To )
+object TopC extends MonomorphicLogicalC( "⊤", To )
 
 object ExistsC extends QuantifierC( "∃" )
 object ForallC extends QuantifierC( "∀" )
 
-object EqC {
-  val name = "="
-  val symbol = StringSymbol( name )
-
+object EqC extends LogicalC( "=" ) {
   def apply( ty: TA ) = Const( symbol, ty -> ( ty -> To ) )
-  def unapply( exp: LambdaExpression ): Option[TA] = exp match {
-    case Const( sym, exptype ) => unapply( StringSymbol( sym ), exptype )
-    case _                     => None
+
+  private[expr]type MatchResult = Option[TA]
+  private[expr] override def matchType( exptype: TA ) = exptype match {
+    case ty -> ( ty_ -> To ) if ty == ty_ => Some( ty )
+    case _                                => None
   }
-  def unapply( pair: ( SymbolA, TA ) ): Option[TA] = pair match {
-    case ( `symbol`, ty -> ( ty_ -> To ) ) if ty == ty_ => Some( ty )
-    case _ => None
-  }
+  private[expr] override def noMatch = None
 }
 
 //package schematic {
 //
-//  object BigAndC extends LogicalC( "⋀", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
-//  object BigOrC extends LogicalC( "⋁", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
+//  object BigAndC extends MonomorphicLogicalC( "⋀", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
+//  object BigOrC extends MonomorphicLogicalC( "⋁", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
 //
-//  object ZeroC extends LogicalC( "0", Tindex )
-//  object SuccC extends LogicalC( "s", Tindex -> Tindex )
+//  object ZeroC extends MonomorphicLogicalC( "0", Tindex )
+//  object SuccC extends MonomorphicLogicalC( "s", Tindex -> Tindex )
 //
-//  object PlusC extends LogicalC( "+", Tindex -> ( Tindex -> Tindex ) )
-//  object TimesC extends LogicalC( "×", Tindex -> ( Tindex -> Tindex ) )
+//  object PlusC extends MonomorphicLogicalC( "+", Tindex -> ( Tindex -> Tindex ) )
+//  object TimesC extends MonomorphicLogicalC( "×", Tindex -> ( Tindex -> Tindex ) )
 //
-//  object BiggerThanC extends LogicalC( ">", Tindex -> ( Tindex -> To ) )
-//  object SimC extends LogicalC( "~", Tindex -> ( Tindex -> To ) )
-//  object LessThanC extends LogicalC( "<", Tindex -> ( Tindex -> To ) )
-//  object LeqC extends LogicalC( "≤", Tindex -> ( Tindex -> To ) )
+//  object BiggerThanC extends MonomorphicLogicalC( ">", Tindex -> ( Tindex -> To ) )
+//  object SimC extends MonomorphicLogicalC( "~", Tindex -> ( Tindex -> To ) )
+//  object LessThanC extends MonomorphicLogicalC( "<", Tindex -> ( Tindex -> To ) )
+//  object LeqC extends MonomorphicLogicalC( "≤", Tindex -> ( Tindex -> To ) )
 //
 //}
