@@ -207,7 +207,7 @@ object Var {
 object Const {
   def apply( name: String, exptype: TA ): Const = Const( StringSymbol( name ), exptype )
   def apply( sym: SymbolA, exptype: TA ): Const = ( sym, exptype ) match {
-    case ForallQ( Ti ) | ExistsQ( Ti ) => new Const( sym, exptype ) with FOLQuantifier
+    case ForallC( Ti ) | ExistsC( Ti ) => new Const( sym, exptype ) with FOLQuantifier
     case AndC() | OrC() | ImpC() => new Const( sym, exptype ) with PropConnective {
       override val numberOfArguments = 2
     }

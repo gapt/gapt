@@ -37,8 +37,8 @@ object NegC extends LogicalC( "¬", To -> To )
 object BottomC extends LogicalC( "⊥", To )
 object TopC extends LogicalC( "⊤", To )
 
-object ExistsQ extends QuantifierC( "∃" )
-object ForallQ extends QuantifierC( "∀" )
+object ExistsC extends QuantifierC( "∃" )
+object ForallC extends QuantifierC( "∀" )
 
 object EqC {
   val name = "="

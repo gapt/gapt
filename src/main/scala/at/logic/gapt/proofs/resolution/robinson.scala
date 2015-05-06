@@ -444,8 +444,8 @@ package robinson {
       val s3 = s2.replaceAll( OrC.name, "\\lor" )
       val s4 = s3.replaceAll( ImpC.name, "\\rightarrow" )
       val s5 = s4.replaceAll( NegC.name, "\\neg" )
-      val s6 = s5.replaceAll( ForallQ.name, "\\forall" )
-      val s7 = s6.replaceAll( ExistsQ.name, "\\exists" )
+      val s6 = s5.replaceAll( ForallC.name, "\\forall" )
+      val s7 = s6.replaceAll( ExistsC.name, "\\exists" )
       s7
     }
 

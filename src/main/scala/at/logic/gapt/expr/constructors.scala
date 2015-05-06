@@ -87,10 +87,10 @@ class QuantifierHelper( val q: QuantifierC ) {
   }
 }
 
-object All extends QuantifierHelper( ForallQ )
-object Ex extends QuantifierHelper( ExistsQ )
+object All extends QuantifierHelper( ForallC )
+object Ex extends QuantifierHelper( ExistsC )
 
-class BinaryFOLConnectiveHelper( val c: LogicalC ) {
+class BinaryPropConnectiveHelper( val c: LogicalC ) {
   def apply( a: LambdaExpression, b: LambdaExpression ): Formula =
     Apps( c(), a, b ).asInstanceOf[Formula]
   def apply( a: FOLFormula, b: FOLFormula ): FOLFormula =
@@ -116,15 +116,15 @@ class BinaryFOLConnectiveHelper( val c: LogicalC ) {
     }
 }
 
-object And extends BinaryFOLConnectiveHelper( AndC ) {
+object And extends BinaryPropConnectiveHelper( AndC ) {
   def apply( conjs: List[Formula] ): Formula = Ands( conjs: _* )
   def apply( conjs: List[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = Ands( conjs: _* )
 }
-object Or extends BinaryFOLConnectiveHelper( OrC ) {
+object Or extends BinaryPropConnectiveHelper( OrC ) {
   def apply( conjs: List[Formula] ): Formula = Ors( conjs: _* )
   def apply( conjs: List[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = Ors( conjs: _* )
 }
-object Imp extends BinaryFOLConnectiveHelper( ImpC )
+object Imp extends BinaryPropConnectiveHelper( ImpC )
 
 object Ands {
   def apply( conjs: LambdaExpression* ): Formula = conjs match {
@@ -164,7 +164,7 @@ object Ors {
   }
 }
 
-class UnaryFOLConnectiveHelper( val c: LogicalC ) {
+class UnaryPropConnectiveHelper( val c: LogicalC ) {
   def apply( a: LambdaExpression ): Formula = Apps( c(), a ).asInstanceOf[Formula]
   def apply( a: FOLFormula ): FOLFormula = apply( a.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
   def apply( a: PropFormula ): PropFormula = apply( a.asInstanceOf[LambdaExpression] ).asInstanceOf[PropFormula]
@@ -187,9 +187,9 @@ class UnaryFOLConnectiveHelper( val c: LogicalC ) {
     }
 }
 
-object Neg extends UnaryFOLConnectiveHelper( NegC )
+object Neg extends UnaryPropConnectiveHelper( NegC )
 
-class NullaryFOLConnective( val c: LogicalC ) {
+class NullaryPropConnectiveHelper( val c: LogicalC ) {
   def apply(): PropFormula = c().asInstanceOf[PropFormula]
   def unapply( formula: LambdaExpression ) = formula match {
     case c() => true
@@ -197,8 +197,8 @@ class NullaryFOLConnective( val c: LogicalC ) {
   }
 }
 
-object Top extends NullaryFOLConnective( TopC )
-object Bottom extends NullaryFOLConnective( BottomC )
+object Top extends NullaryPropConnectiveHelper( TopC )
+object Bottom extends NullaryPropConnectiveHelper( BottomC )
 
 object Eq {
   def apply( a: LambdaExpression, b: LambdaExpression ): Formula = Apps( EqC( a.exptype ), a, b ).asInstanceOf[Formula]

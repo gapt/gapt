@@ -200,9 +200,9 @@ class reduceHolToFol {
       case Or( n1, n2 )    => FOLFunction( OrC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
       case Imp( n1, n2 )   => FOLFunction( ImpC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
       case All( v: Var, n ) =>
-        FOLFunction( ForallQ.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
+        FOLFunction( ForallC.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
       case Ex( v: Var, n ) =>
-        FOLFunction( ExistsQ.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
+        FOLFunction( ExistsC.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
       case HOLAtom( head, ls ) =>
         FOLFunction( head.toString, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
       case HOLFunction( Const( name, _ ), ls ) =>
