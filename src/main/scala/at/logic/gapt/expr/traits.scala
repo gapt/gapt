@@ -11,35 +11,33 @@ trait DistinguishedConstant extends Const
 trait FOLExpression extends LambdaExpression {
   def renameSymbols( map: SymbolMap ): FOLExpression = NameReplacement( this, map )
 }
-trait FOLLambdaTerm extends LambdaExpression {
-  def returnType: TA
-  def numberOfArguments: Int
+private[expr] trait FOLLambdaTerm extends LambdaExpression {
+  private[expr] def returnType: TA
+  private[expr] def numberOfArguments: Int
 }
 trait FOLTerm extends FOLLambdaTerm with FOLExpression {
-  override val returnType = Ti
-  override val numberOfArguments = 0
+  private[expr] override val returnType = Ti
+  private[expr] override val numberOfArguments = 0
 
   override def renameSymbols( map: SymbolMap ): FOLTerm = NameReplacement( this, map ).asInstanceOf[FOLTerm]
 }
 trait FOLVar extends Var with FOLTerm
 trait FOLConst extends Const with FOLTerm
 trait FOLFormula extends FOLLambdaTerm with Formula with FOLExpression {
-  override val returnType = To
-  override val numberOfArguments = 0
+  private[expr] override val returnType = To
+  private[expr] override val numberOfArguments = 0
 
   override def renameSymbols( map: SymbolMap ): FOLFormula = NameReplacement( this, map )
 }
-trait FOLFormulaWithBoundVar extends LambdaExpression
+private[expr] trait FOLFormulaWithBoundVar extends LambdaExpression
 trait FOLQuantifier extends DistinguishedConstant
 
-trait PropLambdaTerm extends FOLLambdaTerm {
-  override val returnType = To
+private[expr] trait PropLambdaTerm extends FOLLambdaTerm {
+  private[expr] override val returnType = To
 }
-trait PropFormula extends PropLambdaTerm with FOLFormula {
-  override val numberOfArguments = 0
-}
+trait PropFormula extends PropLambdaTerm with FOLFormula
 trait PropConnective extends DistinguishedConstant with PropLambdaTerm {
-  override val returnType = To
+  private[expr] override val returnType = To
 }
 trait PropAtom extends Const with PropFormula
 
