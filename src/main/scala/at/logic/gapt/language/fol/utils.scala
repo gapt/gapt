@@ -100,8 +100,6 @@ object instantiateAll {
     lst.map( terms => instantiateAll( f, terms ) )
 }
 
-// TODO: some of the methods below should work for FOL and HOL...
-
 // Transforms a formula to negation normal form (transforming also
 // implications into disjunctions)
 object toNNF {
@@ -128,27 +126,36 @@ object toNNF {
   }
 }
 
-// Distribute Ors over Ands
-object distribute {
-  def apply( f: FOLFormula ): FOLFormula = f match {
-    case FOLAtom( _, _ )         => f
-    // Negation has only atomic scope
-    case Neg( FOLAtom( _, _ ) )  => f
-    case And( f1, f2 )           => And( distribute( f1 ), distribute( f2 ) )
-    case Or( f1, And( f2, f3 ) ) => And( distribute( Or( f1, f2 ) ), distribute( Or( f1, f3 ) ) )
-    case Or( And( f1, f2 ), f3 ) => And( distribute( Or( f1, f3 ) ), distribute( Or( f2, f3 ) ) )
-    case Or( f1, f2 )            => Or( distribute( f1 ), distribute( f2 ) )
-    case _                       => throw new Exception( "ERROR: Unexpected case while distributing Ors over Ands." )
+object toCNF {
+  // Assumes f is in NNF
+  def apply( f: FOLFormula ): List[FOLFormula] = f match {
+    case FOLAtom( _, _ )         => List( f )
+    case Neg( FOLAtom( _, _ ) )  => List( f )
+    case And( f1, f2 )           => toCNF( f1 ) ++ toCNF( f2 )
+    case Or( f1, And( f2, f3 ) ) => toCNF( Or( f1, f2 ) ) ++ toCNF( Or( f1, f3 ) )
+    case Or( And( f1, f2 ), f3 ) => toCNF( Or( f1, f3 ) ) ++ toCNF( Or( f2, f3 ) )
+    case Or( f1, f2 ) =>
+      val clauses1 = toCNF( f1 )
+      val clauses2 = toCNF( f2 )
+      for ( c1 <- clauses1; c2 <- clauses2 ) yield Or( c1, c2 )
+    case _ => throw new Exception( "ERROR on CNF transformation of the formula: " + f )
   }
 }
 
-// Transforms a formula to conjunctive normal form
-// 1. Transform to negation normal form
-// 2. Distribute Ors over Ands
-// OBS: works for propositional formulas only
-// TODO: tests for this
-object toCNF {
-  def apply( f: FOLFormula ): FOLFormula = distribute( toNNF( f ) )
+object toDNF {
+  // Assumes f is in NNF
+  def apply( f: FOLFormula ): List[FOLFormula] = f match {
+    case FOLAtom( _, _ )         => List( f )
+    case Neg( FOLAtom( _, _ ) )  => List( f )
+    case Or( f1, f2 )            => toDNF( f1 ) ++ toDNF( f2 )
+    case And( f1, Or( f2, f3 ) ) => toDNF( And( f1, f2 ) ) ++ toDNF( And( f1, f3 ) )
+    case And( Or( f1, f2 ), f3 ) => toDNF( And( f1, f3 ) ) ++ toDNF( And( f2, f3 ) )
+    case And( f1, f2 ) =>
+      val clauses1 = toDNF( f1 )
+      val clauses2 = toDNF( f2 )
+      for ( c1 <- clauses1; c2 <- clauses2 ) yield And( c1, c2 )
+    case _ => throw new Exception( "ERROR on DNF transformation of the formula: " + f )
+  }
 }
 
 object numOfAtoms {
@@ -163,11 +170,6 @@ object numOfAtoms {
     case Neg( f )            => numOfAtoms( f )
     case _                   => throw new Exception( "ERROR: Unexpected case while counting the number of atoms." )
   }
-}
-
-// Returns the quantifier free part of a prenex formula
-object getMatrix {
-  def apply( f: FOLFormula ): FOLFormula = getMatrixHOL( f ).asInstanceOf[FOLFormula]
 }
 
 object replaceFreeOccurenceOf {

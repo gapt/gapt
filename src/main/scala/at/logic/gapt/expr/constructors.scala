@@ -135,6 +135,11 @@ object Ands {
   def apply( conjs: FOLFormula* ): FOLFormula =
     Ands( conjs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
 
+  def rightAssociative( conjs: LambdaExpression* ): Formula =
+    conjs.reduceRightOption( And.apply ).getOrElse( Top() ).asInstanceOf[Formula]
+  def rightAssociative( conjs: FOLFormula* ): FOLFormula =
+    rightAssociative( conjs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
+
   def unapply( formula: LambdaExpression ): Some[List[LambdaExpression]] = formula match {
     case And( Ands( as ), Ands( bs ) ) => Some( as ::: bs )
     case a                             => Some( List( a ) )
@@ -153,6 +158,11 @@ object Ors {
   }
   def apply( conjs: FOLFormula* ): FOLFormula =
     Ors( conjs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
+
+  def rightAssociative( conjs: LambdaExpression* ): Formula =
+    conjs.reduceRightOption( Or.apply ).getOrElse( Bottom() ).asInstanceOf[Formula]
+  def rightAssociative( conjs: FOLFormula* ): FOLFormula =
+    rightAssociative( conjs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
 
   def unapply( formula: LambdaExpression ): Some[List[LambdaExpression]] = formula match {
     case Or( Ors( as ), Ors( bs ) ) => Some( as ::: bs )

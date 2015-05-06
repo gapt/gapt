@@ -1,7 +1,8 @@
 package at.logic.gapt.formats.veriT
 
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
-import at.logic.gapt.language.fol.{ FOLSubstitution, getMatrix, instantiate }
+import at.logic.gapt.language.fol.{ FOLSubstitution, instantiate }
+import at.logic.gapt.language.hol.getMatrix
 
 import scala.util.parsing.combinator._
 import at.logic.gapt.expr._
@@ -9,6 +10,9 @@ import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionTree, ETWeakQuantifier, ExpansionSequent }
 import java.io.{ Reader, FileReader }
 import scala.collection.immutable.HashMap
+
+class VeriTParserException( msg: String ) extends Exception( msg: String )
+class VeriTUnfoldingTransitivityException( msg: String ) extends Exception( msg: String )
 
 object VeriTParser extends RegexParsers {
 
@@ -144,16 +148,16 @@ object VeriTParser extends RegexParsers {
           f3 :: unfoldChain_( l.tail, newc )
 
         case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) =>
-          throw new Exception( "ERROR: the conclusion of the previous terms have" +
+          throw new VeriTUnfoldingTransitivityException( "ERROR: the conclusion of the previous terms have" +
             " no literal in common with the next one. Are the literals out of order?" +
             "\nconclusion: " + c + "\nsecond literal: " + l.head )
 
         case _ =>
-          throw new Exception( "ERROR: wrong format for negated equality: " + c )
+          throw new VeriTUnfoldingTransitivityException( "ERROR: wrong format for negated equality: " + c )
       }
 
       case Neg( FOLAtom( eq0, List( x0, x1 ) ) ) if eq0.toString != eq =>
-        throw new Exception( "ERROR: Predicate " + eq0 + " in eq_transitive is not equality." )
+        throw new VeriTUnfoldingTransitivityException( "ERROR: Predicate " + eq0 + " in eq_transitive is not equality." )
 
       // When reaching the final literal, check if they are the same.
       case FOLAtom( eq0, List( x0, x1 ) ) if eq0.toString == eq => c match {
@@ -161,19 +165,19 @@ object VeriTParser extends RegexParsers {
         case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) if x1 == x2 && x0 == x3 => Nil
 
         case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) =>
-          throw new Exception( "ERROR: the conclusion of the previous terms" +
+          throw new VeriTUnfoldingTransitivityException( "ERROR: the conclusion of the previous terms" +
             " have no literal in common with the conclusion of the chain. Are the literals out of order?" +
             " Is the conclusion not the last one?" )
 
         case _ =>
-          throw new Exception( "ERROR: wrong format for negated equality: " + c )
+          throw new VeriTUnfoldingTransitivityException( "ERROR: wrong format for negated equality: " + c )
       }
 
       case FOLAtom( eq0, List( x0, x1 ) ) if eq0.toString != eq =>
-        throw new Exception( "ERROR: Predicate " + eq0 + " in eq_transitive is not equality." )
+        throw new VeriTUnfoldingTransitivityException( "ERROR: Predicate " + eq0 + " in eq_transitive is not equality." )
 
       case _ =>
-        throw new Exception( "Unmatched list head: " + l.head )
+        throw new VeriTUnfoldingTransitivityException( "Unmatched list head: " + l.head )
     }
 
     val instances = unfoldChain( l )
@@ -314,9 +318,9 @@ object VeriTParser extends RegexParsers {
     parseAll( proof, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new Exception( "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException( "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
       case Error( msg, next ) =>
-        throw new Exception( "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException( "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
     }
   }
 
@@ -326,9 +330,9 @@ object VeriTParser extends RegexParsers {
     parseAll( parseUnsat, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new Exception( "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException( "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
       case Error( msg, next ) =>
-        throw new Exception( "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException( "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
     }
   }
 

@@ -4,23 +4,7 @@
 
 package at.logic.gapt.language.hol
 
-import at.logic.gapt.language.hol.HOLPosition._
-import at.logic.gapt.expr.symbols.StringSymbol
-import at.logic.gapt.expr.types._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ LambdaExpression }
-
-import scala.collection.mutable
-
-//  def arity: Int = this match {
-//    case Var( _, _ ) | Const( _, _ ) => 0
-//    case Neg( _ ) | All( _, _ ) | Ex( _, _ ) => 1
-//    case BinaryConnective( _, _ ) => 2
-//    case HOLAtom( _, args ) => args.length
-//    case HOLFunction( _, args, _ ) => args.length
-//    case Abs( _, _ ) => 1
-//    case _ => throw new Exception( "Unhandled LambdaExpression " + this + "." )
-//  }
 
 /**
  * A block of existential quantifiers.

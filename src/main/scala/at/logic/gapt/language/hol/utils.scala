@@ -169,6 +169,8 @@ object getMatrix {
       case _            => throw new Exception( "ERROR: Unexpected case while extracting the matrix of a formula." )
     }
   }
+
+  def apply( f: FOLFormula ): FOLFormula = apply( f ).asInstanceOf[FOLFormula]
 }
 
 object normalizeFreeVariables {

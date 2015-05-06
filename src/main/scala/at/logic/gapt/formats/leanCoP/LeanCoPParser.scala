@@ -9,19 +9,22 @@ import java.io.{ Reader, FileReader }
 import scala.util.parsing.combinator._
 import scala.collection.immutable.HashMap
 
+class LeanCoPParserException( msg: String ) extends Exception( msg: String )
+class LeanCoPNoMatchException( msg: String ) extends Exception( msg: String )
+
 object LeanCoPParser extends RegexParsers with PackratParsers {
 
-  def getExpansionProof( filename: String ): ExpansionSequent = {
+  def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
     getExpansionProof( new FileReader( filename ) )
   }
 
-  def getExpansionProof( reader: Reader ): ExpansionSequent = {
+  def getExpansionProof( reader: Reader ): Option[ExpansionSequent] = {
     parseAll( expansionSequent, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new Exception( "leanCoP parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new LeanCoPParserException( "leanCoP parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
       case Error( msg, next ) =>
-        throw new Exception( "leanCoP parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new LeanCoPParserException( "leanCoP parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
     }
   }
 
@@ -29,7 +32,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   // Takes a formula in NNF and returns a list of clauses in DNF (possibly with
   // introduced definitions)
   // (reverse engineering leanCoP)
-  def toDefinitionalClausalForm( f: FOLFormula ): FOLFormula = {
+  def toDefinitionalClausalForm( f: FOLFormula ): List[FOLFormula] = {
     var i = 0
 
     def toDCF( f: FOLFormula, inConj: Boolean ): ( FOLFormula, List[FOLFormula] ) = f match {
@@ -55,26 +58,14 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
           ( Or( f1d, f2d ), d1 ++ d2 )
         }
       }
-      case _ => throw new Exception( "Unsuported format for definitional clausal transformation." )
-    }
-
-    // to DNF
-    def toClause( f: FOLFormula ): List[FOLFormula] = f match {
-      case FOLAtom( _, _ )         => List( f )
-      case Neg( FOLAtom( _, _ ) )  => List( f )
-      case Or( f1, f2 )            => toClause( f1 ) ++ toClause( f2 )
-      case And( f1, Or( f2, f3 ) ) => toClause( And( f1, f2 ) ) ++ toClause( And( f1, f3 ) )
-      case And( Or( f1, f2 ), f3 ) => toClause( And( f1, f3 ) ) ++ toClause( And( f2, f3 ) )
-      case And( f1, f2 )           => List( f )
-      case _                       => throw new Exception( "ERROR: Unexpected case while distributing Ors over Ands." )
+      case _ => throw new Exception( "Unsuported format for definitional clausal transformation: " + f )
     }
 
     val ( fd, defs ) = toDCF( f, false )
-
-    Or( fd :: defs.flatMap( d => toClause( d ) ) )
+    fd :: defs.flatMap( d => toDNF( d ) )
   }
 
-  // Trusting that there is no variable capture.
+  // leanCoP renames all variables so that they do not clash.
   def dropQuantifiers( f: FOLFormula ): FOLFormula = f match {
     case FOLAtom( _, _ ) => f
     case Neg( f1 )       => Neg( dropQuantifiers( f1 ) )
@@ -85,7 +76,27 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case All( x, f1 )    => dropQuantifiers( f1 )
   }
 
-  def expansionSequent: Parser[ExpansionSequent] =
+  def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLFormula] ): Option[FOLSubstitution] = {
+
+    val num_clauses = lean_clauses.length
+    val goal = Ors.rightAssociative( lean_clauses: _* )
+
+    // Get all sub-lists of my_clauses of size num_clauses
+    val set_same_size = my_clauses.combinations( num_clauses )
+    val candidates = set_same_size.flatMap( s => s.permutations.map( p => Ors.rightAssociative( p: _* ) ) )
+
+    def findSubstitution( lst: List[FOLFormula], goal: FOLFormula ): Option[FOLSubstitution] = lst match {
+      case Nil => None
+      case hd :: tl => FOLMatchingAlgorithm.matchTerms( hd, goal ) match {
+        case None        => findSubstitution( tl, goal )
+        case Some( sub ) => Some( sub )
+      }
+    }
+
+    findSubstitution( candidates.toList, goal )
+  }
+
+  def expansionSequent: Parser[Option[ExpansionSequent]] =
     rep( comment ) ~> rep( input ) ~ comment ~ rep( clauses ) ~ comment ~ rep( inferences ) <~ rep( comment ) ^^ {
       case input ~ _ ~ clauses_lst ~ _ ~ bindings_opt =>
 
@@ -125,15 +136,15 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
         val formula_substitutions = formulas_to_clauses.foldLeft( HashMap[String, ( FOLFormula, List[FOLSubstitution] )]() ) {
           case ( map, ( name, lst_int ) ) =>
             val formula = input_formulas( name )._1 // FOLFormula
-            val negated_axiom = {
-              if ( input_formulas( name )._2 == "axiom" ) toNNF( Neg( formula ) )
-              else formula
+            val clausified = {
+              if ( input_formulas( name )._2 == "conjecture" ) {
+                toDefinitionalClausalForm( toNNF( dropQuantifiers( formula ) ) )
+              } else toDNF( dropQuantifiers( toNNF( Neg( formula ) ) ) )
             }
-            val clausified = toDefinitionalClausalForm( dropQuantifiers( negated_axiom ) )
-            val lean_clauses = Or( lst_int.map( i => clauses( i )._1 ).toList )
-            val subs = FOLMatchingAlgorithm.matchTerms( clausified, lean_clauses ) match {
+            val lean_clauses = lst_int.map( i => clauses( i )._1 ).toList
+            val subs = matchClauses( clausified, lean_clauses ) match {
               case Some( s ) => s
-              case None      => throw new Exception( "leanCoP parsing: formulas " + clausified + " and " + lean_clauses + "do not match." )
+              case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formulas " + clausified + " and " + lean_clauses + " do not match." )
             }
             val sublst = lst_int.flatMap( i => clauses_substitutions.get( i ) match {
               case Some( cs ) => cs.map( s => s.compose( subs ) )
@@ -150,8 +161,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
             else ( ( et :: a ), s )
         }
 
-        new ExpansionSequent( ant, succ )
-    }
+        Some( new ExpansionSequent( ant, succ ) )
+    } | rep( comment ) ^^ { case _ => None } // No TPTP proof
 
   def input: Parser[( String, String, FOLFormula )] = language ~ "(" ~> name ~ "," ~ role ~ "," ~ formula <~ ", file(" ~ "[^()]*".r ~ "))." ^^ {
     case n ~ _ ~ r ~ _ ~ f => ( n, r, f )
@@ -172,9 +183,12 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   def language: Parser[String] = "fof" | "cnf"
   def role: Parser[String] = "axiom" | "conjecture" | "lemma" | "hypothesis"
 
-  def info: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = start | reduction | extension | ext_w_bind
+  def info: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = start | start_bind | reduction | extension | ext_w_bind
 
   def start: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "start(" ~> integer <~ ")" ^^ { case _ => None }
+  def start_bind: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "start(" ~> integer ~ ",bind(" ~ list_subs <~ "))" ^^ {
+    case n ~ _ ~ ls => Some( ( n, ls._1, ls._2 ) )
+  }
   def reduction: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "reduction('" ~> integer <~ "')" ^^ { case _ => None }
   def extension: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "extension(" ~> integer <~ ")" ^^ { case _ => None }
   def ext_w_bind: Parser[Option[( Int, List[FOLVar], List[FOLTerm] )]] = "extension(" ~> integer ~ ",bind(" ~ list_subs <~ "))" ^^ {
@@ -189,8 +203,57 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case formulas => And( formulas )
   }
 
-  lazy val formula: PackratParser[FOLFormula] = formula_def | ( "(" ~> formula <~ ")" )
-  lazy val formula_def: PackratParser[FOLFormula] = neg | and | or | impl | dbl_impl | forall | exists | atom
+  lazy val formula: PackratParser[FOLFormula] = quantified
+
+  lazy val quantified: PackratParser[FOLFormula] = (
+    "!" ~ "[" ~> repsep( variable, "," ) ~ "] :" ~ quantified ^^ {
+      case vars ~ _ ~ form =>
+        vars.foldLeft( form )( ( f, v ) => All( v, f ) )
+    }
+    | "?" ~ "[" ~> repsep( variable, "," ) ~ "] :" ~ quantified ^^ {
+      case vars ~ _ ~ form =>
+        vars.foldLeft( form )( ( f, v ) => Ex( v, f ) )
+    }
+    | dbl_impl )
+
+  lazy val dbl_impl: PackratParser[FOLFormula] = (
+    impl ~ "<=>" ~ dbl_impl ^^ {
+      case f1 ~ _ ~ f2 =>
+        And( Or( Neg( f1 ), f2 ), Or( f1, Neg( f2 ) ) )
+    }
+    | impl )
+
+  lazy val impl: PackratParser[FOLFormula] = (
+    and ~ "=>" ~ impl ^^ { case f1 ~ _ ~ f2 => Or( Neg( f1 ), f2 ) }
+    | and )
+
+  lazy val and: PackratParser[FOLFormula] = (
+    or ~ "&" ~ and ^^ { case f1 ~ _ ~ f2 => And( f1, f2 ) }
+    | or )
+
+  lazy val or: PackratParser[FOLFormula] = (
+    neg ~ "|" ~ or ^^ { case f1 ~ _ ~ f2 => Or( f1, f2 ) }
+    | neg )
+
+  lazy val neg: PackratParser[FOLFormula] = (
+    ( "-" | "~" ) ~> neg ^^ { case f => Neg( f ) }
+    | atom )
+
+  lazy val atom: PackratParser[FOLFormula] = not_eq | eq | real_atom | lean_atom | quantified | "(" ~> formula <~ ")"
+  // These are introduced by leanCoP's (restricted) definitional clausal form translation
+  lazy val lean_atom: PackratParser[FOLFormula] = lean_var ^^ {
+    case ( i, terms ) =>
+      FOLAtom( "leanP" + i, terms )
+  }
+  lazy val real_atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ {
+    case pred ~ _ ~ args => FOLAtom( pred, args )
+  }
+  lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
+    case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) )
+  }
+  lazy val not_eq: PackratParser[FOLFormula] = "(!" ~> term ~ ")" ~ "=" ~ term ^^ {
+    case t1 ~ _ ~ _ ~ t2 => Neg( FOLAtom( "=", List( t1, t2 ) ) )
+  }
 
   def term: Parser[FOLTerm] = variable | function | constant | skolem_term
   def function: Parser[FOLTerm] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case f ~ _ ~ args => FOLFunction( f, args ) }
@@ -200,27 +263,12 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case ( i, terms ) =>
       FOLFunction( "sk" + i, terms )
   }
-
-  lazy val atom: PackratParser[FOLFormula] = real_atom | lean_atom
-  // These are introduced by leanCoP's (restricted) definitional clausal form translation
-  lazy val lean_atom: PackratParser[FOLFormula] = lean_var ^^ {
-    case ( i, terms ) =>
-      FOLAtom( "leanP" + i, terms )
-  }
-  lazy val real_atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case pred ~ _ ~ args => FOLAtom( pred, args ) }
-  lazy val neg: PackratParser[FOLFormula] = "-" ~> formula ^^ { case f => Neg( f ) }
-  lazy val and: PackratParser[FOLFormula] = formula ~ "&" ~ formula ^^ { case f1 ~ _ ~ f2 => And( f1, f2 ) }
-  lazy val or: PackratParser[FOLFormula] = formula ~ "|" ~ formula ^^ { case f1 ~ _ ~ f2 => Or( f1, f2 ) }
-  lazy val impl: PackratParser[FOLFormula] = formula ~ "=>" ~ formula ^^ { case f1 ~ _ ~ f2 => Imp( f1, f2 ) }
-  lazy val dbl_impl: PackratParser[FOLFormula] = formula ~ "<=>" ~ formula ^^ { case f1 ~ _ ~ f2 => And( Imp( f1, f2 ), Imp( f2, f1 ) ) }
-  lazy val forall: PackratParser[FOLFormula] = "!" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => All( v, f ) }
-  lazy val exists: PackratParser[FOLFormula] = "?" ~ "[" ~> variable ~ "] :" ~ formula ^^ { case v ~ _ ~ f => Ex( v, f ) }
-
-  def name: Parser[String] = """^(?!_)[^ ():,!?\[\]\-&|=>]+""".r ^^ { case s => s }
-  def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
   def lean_var: Parser[( Int, List[FOLTerm] )] = """\d+""".r ~ "^" ~ "[" ~ repsep( term, "," ) ~ "]" ^^ {
     case i ~ _ ~ _ ~ terms ~ _ => ( i.toInt, terms )
   }
+
+  def name: Parser[String] = """^(?![_ \d])[^ ():,!?\[\]\-&|=>~]+""".r ^^ { case s => s }
+  def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
 
   def comment: Parser[String] = """[%](.*)\n""".r ^^ { case s => "" }
 }
