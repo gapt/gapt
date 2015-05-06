@@ -214,25 +214,23 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
     }
   }
 
-  // TODO: this seems unnecessarily complicated
-  //
-  //  "Higher Order Formula matching" should {
-  //    "not allow P and P match as an Atom " in {
-  //      val f = And( HOLAtom( Var( "P", To ), Nil ), HOLAtom( Var( "P", To ), Nil ) )
-  //
-  //      f must beLike {
-  //        case HOLAtom( _, _ ) =>
-  //          println( "Is an atom" ); ko
-  //        case HOLFunction( _, _ ) => ko
-  //        case All( _, _ )         => ko
-  //        case Ex( _, _ )          => ko
-  //        case Or( _, _ )          => ko
-  //        case Imp( _, _ )         => ko
-  //        case And( _, _ )         => ok
-  //        case _                   => ko
-  //      }
-  //    }
-  //  }
+  "Higher Order Formula matching" should {
+    "not allow P and P match as an Atom " in {
+      val f = And( HOLAtom( Var( "P", To ), Nil ), HOLAtom( Var( "P", To ), Nil ) )
+
+      f must beLike {
+        case HOLAtom( _, _ ) =>
+          println( "Is an atom" ); ko
+        case HOLFunction( _, _ ) => ko
+        case All( _, _ )         => ko
+        case Ex( _, _ )          => ko
+        case Or( _, _ )          => ko
+        case Imp( _, _ )         => ko
+        case And( _, _ )         => ok
+        case _                   => ko
+      }
+    }
+  }
 
   "Quantifier blocks" should {
     val x = Var( "x", Ti )

@@ -15,8 +15,8 @@ object HOLAtom {
   def apply( head: LambdaExpression, args: List[LambdaExpression] ): Formula =
     Apps( head, args ).asInstanceOf[Formula]
   def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
-    case Apps( head, args ) if e.exptype == To => Some( head, args )
-    case _                                     => None
+    case Apps( head @ ( UndistinguishedConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
+    case _ => None
   }
 }
 
@@ -27,8 +27,8 @@ object HOLFunction {
     res
   }
   def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
-    case Apps( head, args ) if e.exptype != To => Some( head, args )
-    case _                                     => None
+    case Apps( head @ ( UndistinguishedConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype != To => Some( head, args )
+    case _ => None
   }
 }
 
