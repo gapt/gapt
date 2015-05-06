@@ -43,6 +43,7 @@ object instantiate {
 
 object containsQuantifier {
   def apply( e: LambdaExpression ): Boolean = e match {
+    case Top() | Bottom()   => false
     case Var( x, tpe )      => false
     case Const( x, tpe )    => false
     case And( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
@@ -61,14 +62,15 @@ object containsQuantifier {
 
 object containsStrongQuantifier {
   def apply( f: Formula, pol: Boolean ): Boolean = f match {
-    case And( s, t )     => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
-    case Or( s, t )      => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
-    case Imp( s, t )     => containsStrongQuantifier( s, !pol ) || containsStrongQuantifier( t, pol )
-    case Neg( s )        => containsStrongQuantifier( s, !pol )
-    case All( x, s )     => if ( pol == true ) true else containsStrongQuantifier( s, pol )
-    case Ex( x, s )      => if ( pol == false ) true else containsStrongQuantifier( s, pol )
-    case HOLAtom( _, _ ) => false
-    case _               => throw new Exception( "Unhandled case!" )
+    case Top() | Bottom() => false
+    case And( s, t )      => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
+    case Or( s, t )       => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
+    case Imp( s, t )      => containsStrongQuantifier( s, !pol ) || containsStrongQuantifier( t, pol )
+    case Neg( s )         => containsStrongQuantifier( s, !pol )
+    case All( x, s )      => if ( pol == true ) true else containsStrongQuantifier( s, pol )
+    case Ex( x, s )       => if ( pol == false ) true else containsStrongQuantifier( s, pol )
+    case HOLAtom( _, _ )  => false
+    case _                => throw new Exception( "Unhandled case!" )
   }
 
   def apply( s: FSequent ): Boolean =
@@ -78,16 +80,17 @@ object containsStrongQuantifier {
 
 object isPrenex {
   def apply( e: LambdaExpression ): Boolean = e match {
-    case Var( _, _ )     => true
-    case Const( _, _ )   => true
-    case Neg( f )        => !containsQuantifier( f )
-    case And( f1, f2 )   => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Or( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Imp( f1, f2 )   => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Ex( v, f )      => isPrenex( f )
-    case All( v, f )     => isPrenex( f )
-    case HOLAtom( _, _ ) => true
-    case _               => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
+    case Top() | Bottom() => true
+    case Var( _, _ )      => true
+    case Const( _, _ )    => true
+    case Neg( f )         => !containsQuantifier( f )
+    case And( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case Or( f1, f2 )     => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case Imp( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case Ex( v, f )       => isPrenex( f )
+    case All( v, f )      => isPrenex( f )
+    case HOLAtom( _, _ )  => true
+    case _                => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
   }
 }
 
@@ -100,6 +103,7 @@ object isAtom {
 
 object subTerms {
   def apply( e: LambdaExpression ): List[LambdaExpression] = e match {
+    case Top() | Bottom()       => List( e )
     case Var( _, _ )            => List( e )
     case Const( _, _ )          => List( e )
     case And( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
@@ -126,13 +130,14 @@ object isLogicalSymbol {
  */
 object lcomp {
   def apply( formula: Formula ): Int = formula match {
-    case Neg( f )        => lcomp( f ) + 1
-    case And( f, g )     => lcomp( f ) + lcomp( g ) + 1
-    case Or( f, g )      => lcomp( f ) + lcomp( g ) + 1
-    case Imp( f, g )     => lcomp( f ) + lcomp( g ) + 1
-    case Ex( x, f )      => lcomp( f ) + 1
-    case All( x, f )     => lcomp( f ) + 1
-    case HOLAtom( _, _ ) => 1
+    case Top() | Bottom() => 1
+    case Neg( f )         => lcomp( f ) + 1
+    case And( f, g )      => lcomp( f ) + lcomp( g ) + 1
+    case Or( f, g )       => lcomp( f ) + lcomp( g ) + 1
+    case Imp( f, g )      => lcomp( f ) + lcomp( g ) + 1
+    case Ex( x, f )       => lcomp( f ) + 1
+    case All( x, f )      => lcomp( f ) + 1
+    case HOLAtom( _, _ )  => 1
   }
 
   def apply( seq: FSequent ): Int = seq.antecedent.foldLeft( 0 )( _ + lcomp( _ ) ) + seq.succedent.foldLeft( 0 )( _ + lcomp( _ ) )
@@ -151,7 +156,8 @@ object getMatrix {
   def apply( f: Formula ): Formula = {
     assert( isPrenex( f ) )
     f match {
-      case Var( _, _ ) |
+      case Top() | Bottom() |
+        Var( _, _ ) |
         Const( _, _ ) |
         HOLAtom( _, _ ) |
         Imp( _, _ ) |

@@ -35,7 +35,7 @@ class extractExpansionSequent {
   def handleAxiom( r: Sequent, verbose: Boolean ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     // guess the axiom: must be an atom and appear left as well as right
     // can't use set intersection, but lists are small enough to do it manually
-    val axiomCandidates = r.antecedent.filter( elem => r.succedent.exists( elem2 => elem syntaxEquals elem2 ) ).filter( o => isAtom( o.formula ) )
+    val axiomCandidates = r.antecedent.filter( elem => r.succedent.exists( elem2 => elem syntaxEquals elem2 ) ).filter( o => isAtom( o.formula ) || o.formula == Bottom() || o.formula == Top() )
 
     if ( axiomCandidates.size > 1 && verbose ) {
       println( "Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: " + axiomCandidates )
@@ -65,7 +65,7 @@ class extractExpansionSequent {
   }
 
   //occurs in handleAxiom
-  private def allAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isAtom( o.formula ) )
+  private def allAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isAtom( o.formula ) || o.formula == Top() || o.formula == Bottom() )
   private def isReflexivity( f: Formula ) = f match { case Eq( s, t ) if s == t => true; case _ => false }
 
   def handleUnary( r: Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {

@@ -101,7 +101,7 @@ object PCNF {
   }
 
   /**
-   * assuming a in CNF^-^(f) we give a proof of a o |- f
+   * assuming a in CNF^-^(f) we give a proof of a o (|- f)
    * @param f
    * @param a
    * @return
@@ -129,13 +129,13 @@ object PCNF {
   }
 
   /**
-   * assuming a in CNF^+^(f) we give a proof of a o f |-
+   * assuming a in CNF^+^(f) we give a proof of a o (f |-)
    * @param f
    * @param a
    * @return
    */
   private def PCNFp( f: Formula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
-    case Top()     => Axiom( List( f ), Nil )
+    case Bottom()  => Axiom( List( f ), Nil )
     case Neg( f2 ) => NegLeftRule( PCNFn( f2, a, sub ), f2 )
     case And( f1, f2 ) =>
       if ( containsSubsequent( CNFp( f1 ), as( a, sub ) ) ) AndLeft1Rule( PCNFp( f1, a, sub ), f1, f2 )
