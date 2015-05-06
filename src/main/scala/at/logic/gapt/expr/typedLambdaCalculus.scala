@@ -194,11 +194,8 @@ class Abs( val variable: Var, val term: LambdaExpression ) extends LambdaExpress
 
 object Var {
   def apply( name: String, exptype: TA ): Var = Var( StringSymbol( name ), exptype )
-  def apply( sym: SymbolA, exptype: TA ): Var = exptype match {
-    case Ti => new Var( sym, exptype ) with FOLVar
-    case To => new Var( sym, exptype ) with Formula
-    case _  => new Var( sym, exptype )
-  }
+  def apply( sym: SymbolA, exptype: TA ): Var = determineTraits.forVar( sym, exptype )
+
   def unapply( e: LambdaExpression ) = e match {
     case v: Var => Some( v.name, v.exptype )
     case _      => None
@@ -206,58 +203,15 @@ object Var {
 }
 object Const {
   def apply( name: String, exptype: TA ): Const = Const( StringSymbol( name ), exptype )
-  def apply( sym: SymbolA, exptype: TA ): Const = ( sym, exptype ) match {
-    case ForallC( Ti ) | ExistsC( Ti ) => new Const( sym, exptype ) with FOLQuantifier
-    case AndC() | OrC() | ImpC() => new Const( sym, exptype ) with PropConnective {
-      override val numberOfArguments = 2
-    }
-    case NegC() => new Const( sym, exptype ) with PropConnective {
-      override val numberOfArguments = 1
-    }
-    case TopC() | BottomC() => new Const( sym, exptype ) with PropConnective with PropFormula
-    case ( _, Ti )          => new Const( sym, exptype ) with FOLConst
-    case ( _, To )          => new Const( sym, exptype ) with PropFormula
-    case ( _, FOLHeadType( Ti, n ) ) => new Const( sym, exptype ) with FOLLambdaTerm {
-      override val returnType = Ti
-      override val numberOfArguments = n
-    }
-    case ( _, FOLHeadType( To, n ) ) => new Const( sym, exptype ) with PropLambdaTerm {
-      override val numberOfArguments = n
-    }
-    case _ => new Const( sym, exptype )
-  }
+  def apply( sym: SymbolA, exptype: TA ): Const = determineTraits.forConst( sym, exptype )
+
   def unapply( e: LambdaExpression ) = e match {
     case c: Const => Some( c.name, c.exptype )
     case _        => None
   }
 }
 object App {
-  def apply( f: LambdaExpression, a: LambdaExpression ) = ( f, a ) match {
-    case ( f: PropLambdaTerm, a: PropFormula ) => f.numberOfArguments match {
-      case 1 => new App( f, a ) with PropFormula
-      case n => new App( f, a ) with PropLambdaTerm {
-        override val numberOfArguments = n - 1
-      }
-    }
-    case ( f: FOLLambdaTerm, a: FOLExpression ) => f.numberOfArguments match {
-      case 1 => f.returnType match {
-        case Ti => new App( f, a ) with FOLTerm
-        case To => new App( f, a ) with FOLFormula
-      }
-      case n => new App( f, a ) with FOLLambdaTerm {
-        override val numberOfArguments = n - 1
-        override val returnType = f.returnType
-      }
-    }
-    case ( f: FOLQuantifier, _ ) => a match {
-      case a: FOLFormulaWithBoundVar => new App( f, a ) with FOLFormula
-      case _                         => new App( f, a ) with Formula
-    }
-    case _ => f.exptype match {
-      case ->( _, To ) => new App( f, a ) with Formula
-      case _           => new App( f, a )
-    }
-  }
+  def apply( f: LambdaExpression, a: LambdaExpression ) = determineTraits.forApp( f, a )
 
   @deprecated( "This constructor has moved to Apps" )
   def apply( function: LambdaExpression, arguments: List[LambdaExpression] ): LambdaExpression = Apps( function, arguments )
@@ -283,14 +237,12 @@ object Apps {
   }
 }
 object Abs {
-  def apply( v: Var, t: LambdaExpression ) = ( v.exptype, t ) match {
-    case ( Ti, t: FOLFormula ) => new Abs( v, t ) with FOLFormulaWithBoundVar
-    case _                     => new Abs( v, t )
-  }
+  def apply( v: Var, t: LambdaExpression ) = determineTraits.forAbs( v, t )
   def apply( variables: List[Var], expression: LambdaExpression ): LambdaExpression = variables match {
     case Nil     => expression
     case x :: ls => Abs( x, apply( ls, expression ) )
   }
+
   def unapply( e: LambdaExpression ) = e match {
     case a: Abs => Some( ( a.variable, a.term ) )
     case _      => None
