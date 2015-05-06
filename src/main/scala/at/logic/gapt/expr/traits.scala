@@ -7,7 +7,7 @@ import types._
 
 trait Formula extends LambdaExpression
 
-trait DistinguishedConstant extends Const
+trait LogicalConstant extends Const
 
 trait FOLExpression extends LambdaExpression {
   def renameSymbols( map: SymbolMap ): FOLExpression = NameReplacement( this, map )
@@ -31,13 +31,13 @@ trait FOLFormula extends FOLLambdaTerm with Formula with FOLExpression {
   override def renameSymbols( map: SymbolMap ): FOLFormula = NameReplacement( this, map )
 }
 private[expr] trait FOLFormulaWithBoundVar extends LambdaExpression
-trait FOLQuantifier extends DistinguishedConstant
+trait FOLQuantifier extends LogicalConstant
 
 private[expr] trait PropLambdaTerm extends FOLLambdaTerm {
   private[expr] override val returnType = To
 }
 trait PropFormula extends PropLambdaTerm with FOLFormula
-trait PropConnective extends DistinguishedConstant with PropLambdaTerm {
+trait PropConnective extends LogicalConstant with PropLambdaTerm {
   private[expr] override val returnType = To
 }
 trait PropAtom extends Const with PropFormula

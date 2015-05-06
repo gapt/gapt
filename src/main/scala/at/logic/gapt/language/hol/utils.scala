@@ -121,7 +121,7 @@ object subTerms {
 }
 
 object isLogicalSymbol {
-  def apply( e: LambdaExpression ): Boolean = e.isInstanceOf[DistinguishedConstant]
+  def apply( e: LambdaExpression ): Boolean = e.isInstanceOf[LogicalConstant]
 }
 
 /**

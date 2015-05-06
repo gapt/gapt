@@ -2,7 +2,7 @@ package at.logic.gapt.expr
 import at.logic.gapt.expr.types._
 import org.specs2.mutable._
 
-class DistinguishedConstantsTest extends Specification {
+class LogicalConstantsTest extends Specification {
   "Quantifiers" should {
     "have correct type" in {
       ForallC( Ti -> To ).exptype must_== ( ( ( Ti -> To ) -> To ) -> To )

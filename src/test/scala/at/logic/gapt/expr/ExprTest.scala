@@ -30,7 +30,7 @@ class ExprTest extends Specification {
       Apps( AndC(), Apps( R, c, c ), Apps( R, c, c ) ) must beAnInstanceOf[FOLFormula]
 
       TopC() must beAnInstanceOf[FOLFormula]
-      TopC() must beAnInstanceOf[DistinguishedConstant]
+      TopC() must beAnInstanceOf[LogicalConstant]
     }
   }
 

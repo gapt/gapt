@@ -1,9 +1,9 @@
 package at.logic.gapt.expr
 import types._
 
-object UndistinguishedConstant {
+object NonLogicalConstant {
   def unapply( e: LambdaExpression ) = e match {
-    case c: DistinguishedConstant => None
+    case c: LogicalConstant => None
     case Const( n, t )            => Some( n, t )
     case _                        => None
   }
@@ -15,7 +15,7 @@ object HOLAtom {
   def apply( head: LambdaExpression, args: List[LambdaExpression] ): Formula =
     Apps( head, args ).asInstanceOf[Formula]
   def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
-    case Apps( head @ ( UndistinguishedConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
+    case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
     case _ => None
   }
 }
@@ -27,7 +27,7 @@ object HOLFunction {
     res
   }
   def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
-    case Apps( head @ ( UndistinguishedConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype != To => Some( head, args )
+    case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype != To => Some( head, args )
     case _ => None
   }
 }
@@ -49,7 +49,7 @@ object FOLAtom {
     Apps( Const( sym, FOLHeadType( To, args.length ) ), args ).asInstanceOf[FOLFormula]
 
   def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( UndistinguishedConstant( sym, FOLHeadType( To, _ ) ), args ) if e.isInstanceOf[FOLFormula] =>
+    case Apps( NonLogicalConstant( sym, FOLHeadType( To, _ ) ), args ) if e.isInstanceOf[FOLFormula] =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
@@ -61,7 +61,7 @@ object FOLFunction {
     Apps( Const( sym, FOLHeadType( Ti, args.length ) ), args ).asInstanceOf[FOLTerm]
 
   def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( UndistinguishedConstant( sym, FOLHeadType( Ti, _ ) ), args ) if e.isInstanceOf[FOLTerm] =>
+    case Apps( NonLogicalConstant( sym, FOLHeadType( Ti, _ ) ), args ) if e.isInstanceOf[FOLTerm] =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }

@@ -111,7 +111,7 @@ class HybridLatexExporter( val expandTex: Boolean ) {
         ( vmap + ( ( name, exptype ) ), cmap )
       }
 
-    case UndistinguishedConstant( name, exptype ) =>
+    case NonLogicalConstant( name, exptype ) =>
       val sym = exp.asInstanceOf[Const].sym
       if ( cmap.contains( name ) ) {
         if ( cmap( name ) != exptype ) throw new Exception( "Symbol clash for " + name + " " + cmap( name ) + " != " + exptype )

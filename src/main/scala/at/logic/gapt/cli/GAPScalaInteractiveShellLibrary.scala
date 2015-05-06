@@ -1199,7 +1199,7 @@ object css {
     case Var( sym, ta ) =>
       val ( vt, ct ) = emptysmboltable
       ( vt + ( ( ta, Set( sym ) ) ), ct )
-    case UndistinguishedConstant( sym, ta ) =>
+    case NonLogicalConstant( sym, ta ) =>
       val ( vt, ct ) = emptysmboltable
       ( vt, ct + ( ( ta, Set( sym ) ) ) )
     case App( s, t ) =>
