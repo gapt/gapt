@@ -156,6 +156,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   // Collects all n ^ [...] functions used for skolemization and their arities
   def getSkFunctions( cls: FOLExpression ): List[( String, Int )] = cls match {
     case FOLFunction( n, args ) if n.toString.startsWith( "leanSk" ) => List( ( n.toString, args.length ) )
+    case FOLFunction( _, _ ) => List()
     case FOLVar( _ ) => List()
     case FOLConst( _ ) => List()
     case FOLAtom( _, args ) => args.flatMap( a => getSkFunctions( a ) )
@@ -329,18 +330,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case formulas => FOLAnd( formulas )
   }
 
-  lazy val formula: PackratParser[FOLFormula] = dbl_impl | quantified
-
-  lazy val quantified: PackratParser[FOLFormula] = (
-    "!" ~ "[" ~> repsep( variable, "," ) ~ "] : (" ~ formula <~ ")" ^^ {
-      case vars ~ _ ~ form =>
-        vars.foldLeft( form )( ( f, v ) => FOLAllVar( v, f ) )
-    }
-    | "?" ~ "[" ~> repsep( variable, "," ) ~ "] : (" ~ formula <~ ")" ^^ {
-      case vars ~ _ ~ form =>
-        vars.foldLeft( form )( ( f, v ) => FOLExVar( v, f ) )
-    }
-    | dbl_impl )
+  lazy val formula: PackratParser[FOLFormula] = dbl_impl
 
   lazy val dbl_impl: PackratParser[FOLFormula] = (
     impl ~ "<=>" ~ dbl_impl ^^ {
@@ -363,7 +353,18 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
   lazy val neg: PackratParser[FOLFormula] = (
     ( "-" | "~" ) ~> neg ^^ { case f => FOLNeg( f ) }
-    | atom )
+    | quantified )
+
+  lazy val quantified: PackratParser[FOLFormula] = (
+    "!" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
+      case vars ~ _ ~ form =>
+        vars.foldLeft( form )( ( f, v ) => FOLAllVar( v, f ) )
+    }
+    | "?" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
+      case vars ~ _ ~ form =>
+        vars.foldLeft( form )( ( f, v ) => FOLExVar( v, f ) )
+    }
+    | neg | atom )
 
   lazy val atom: PackratParser[FOLFormula] = not_eq | eq | real_atom | lean_atom | quantified | "(" ~> formula <~ ")"
   // These are introduced by leanCoP's (restricted) definitional clausal form translation
