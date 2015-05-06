@@ -247,12 +247,12 @@ class TPTPHOLExporter {
   }
 
   def getConsts( t: LambdaExpression, set: Set[Const] ): Set[Const] = t match {
-    case EqC( _ )                        => set
+    case EqC( _ )                   => set
     case NonLogicalConstant( _, _ ) => set + t.asInstanceOf[Const]
-    case Var( _, _ )                     => set
-    case App( s, t )                     => getConsts( s, getConsts( t, set ) )
-    case Abs( x, t )                     => getConsts( t, set )
-    case _: LogicalConstant        => set
+    case Var( _, _ )                => set
+    case App( s, t )                => getConsts( s, getConsts( t, set ) )
+    case Abs( x, t )                => getConsts( t, set )
+    case _: LogicalConstant         => set
   }
 
 }

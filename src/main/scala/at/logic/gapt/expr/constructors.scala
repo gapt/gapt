@@ -4,8 +4,8 @@ import types._
 object NonLogicalConstant {
   def unapply( e: LambdaExpression ) = e match {
     case c: LogicalConstant => None
-    case Const( n, t )            => Some( n, t )
-    case _                        => None
+    case Const( n, t )      => Some( n, t )
+    case _                  => None
   }
 }
 
