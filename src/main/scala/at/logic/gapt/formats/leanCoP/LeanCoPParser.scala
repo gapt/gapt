@@ -161,8 +161,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   // Collects all n ^ [...] functions used for skolemization and their arities
   def getSkFunctions( cls: FOLExpression ): List[( String, Int )] = cls match {
     case FOLFunction( n, args ) if n.toString.startsWith( "leanSk" ) => List( ( n.toString, args.length ) )
-    case FOLFunction( _, _ ) => List()
+    case FOLFunction( _, args ) => args.flatMap( a => getSkFunctions( a ) )
     case FOLVar( _ ) => List()
+    case FOLConst( n ) if n.toString.startsWith( "leanSk" ) => List( ( n.toString, 0 ) )
     case FOLConst( _ ) => List()
     case FOLAtom( _, args ) => args.flatMap( a => getSkFunctions( a ) )
     case FOLNeg( f ) => getSkFunctions( f )
@@ -275,7 +276,10 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
             val f_in_nnf = toNNF( f_right_pol )
 
             // All formulas are on the left side of the sequent for leanCoP
-            val f_skolemized = skolemizeWith( f_in_nnf, skolem_functions, true )
+            val f_skolemized = skolem_functions match {
+              case Nil    => f_in_nnf
+              case _ :: _ => skolemizeWith( f_in_nnf, skolem_functions, true )
+            }
 
             val f_no_quant = dropQuantifiers( f_skolemized )
 
@@ -386,7 +390,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case vars ~ _ ~ form =>
         vars.foldLeft( form )( ( f, v ) => FOLExVar( v, f ) )
     }
-    | neg | atom )
+    | atom )
 
   lazy val atom: PackratParser[FOLFormula] = not_eq | eq | real_atom | lean_atom | quantified | "(" ~> formula <~ ")"
   // These are introduced by leanCoP's (restricted) definitional clausal form translation
