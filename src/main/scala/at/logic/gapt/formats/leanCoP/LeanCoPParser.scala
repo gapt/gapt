@@ -390,7 +390,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case vars ~ _ ~ form =>
         vars.foldLeft( form )( ( f, v ) => FOLExVar( v, f ) )
     }
-    | atom )
+    | neg | atom )
 
   lazy val atom: PackratParser[FOLFormula] = not_eq | eq | real_atom | lean_atom | quantified | "(" ~> formula <~ ")"
   // These are introduced by leanCoP's (restricted) definitional clausal form translation
