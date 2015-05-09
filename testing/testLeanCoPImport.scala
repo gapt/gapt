@@ -21,7 +21,7 @@ object testLeanCoPImport {
   var no_match = 0
   var sk_fun_error = 0
   var lean_pred_error = 0
-  val no_lean_pred = 0
+  var no_lean_pred = 0
   var success = 0
   var no_proof = 0
 
