@@ -152,7 +152,7 @@ object Ands {
 
 object Ors {
   def apply( conjs: LambdaExpression* ): Formula = conjs match {
-    case Seq()                  => Top()
+    case Seq()                  => Bottom()
     case Seq( conj )            => conj.asInstanceOf[Formula]
     case Seq( conj, rest @ _* ) => Or( conj, Ors( rest: _* ) )
   }
