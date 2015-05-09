@@ -461,7 +461,7 @@ object formulaToExpansionTree {
     case HOLAllVar( v, f ) => pos match {
       case true => // Strong quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
-        assert( valid_subs.length == 1 )
+        assert( valid_subs.length == 1, ("Found no substitutions for " + v + " in " + subs ) )
         val next_f = valid_subs.head( f )
         val ev = valid_subs.head( v ).asInstanceOf[HOLVar]
         ETStrongQuantifier( form, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]

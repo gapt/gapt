@@ -11,6 +11,7 @@ import scala.collection.immutable.HashMap
 class LeanCoPParserException( msg: String ) extends Exception( msg: String )
 class LeanCoPNoMatchException( msg: String ) extends Exception( msg: String )
 class LeanCoPNoLeanPredException( msg: String ) extends Exception( msg: String )
+class LeanCoPLeanPredWrongArityException( msg: String ) extends Exception( msg: String )
 
 object LeanCoPParser extends RegexParsers with PackratParsers {
 
@@ -51,8 +52,11 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
           val candidates = lean_preds.filter { case ( n, a ) => a == vars.length }
           val ordered_candidates = candidates.sorted
 
+          if ( lean_preds.isEmpty ) {
+            throw new LeanCoPNoLeanPredException( "Formula: " + f )
+          }
           if ( candidates.isEmpty ) {
-            throw new LeanCoPNoLeanPredException( "Formula: " + f + " Candidates: " + lean_preds )
+            throw new LeanCoPLeanPredWrongArityException( "Formula: " + f + " Candidates: " + lean_preds + " Arity: " + vars.length )
           }
 
           // Trusting that we have the same order as leanCoP
@@ -84,68 +88,6 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
     val ( fd, defs ) = toDCF( f, lean_preds, false )
     fd :: defs.flatMap( d => toDNF( d ) )
-  }
-
-  // Polarity is true for positive and false for negative
-  def skolemizeWith( f: FOLFormula, sk_functions: List[( String, Int )], polarity: Boolean ): FOLFormula = {
-
-    def skWith( f: FOLFormula, terms: List[FOLVar], sk_functions: List[( String, Int )], polarity: Boolean ): FOLFormula = f match {
-      case FOLAtom( _, _ ) => f
-      case FOLNeg( f1 )    => FOLNeg( skWith( f1, terms, sk_functions, !polarity ) )
-      case FOLImp( f1, f2 ) =>
-        val f1sk = skWith( f1, terms, sk_functions, !polarity )
-        // TODO candidate for efficiency improvement
-        val used = getSkFunctions( f1sk )
-        val rest = sk_functions.filter( f => !used.contains( f ) )
-        val f2sk = skWith( f2, terms, rest, polarity )
-        FOLImp( f1sk, f2sk )
-      case FOLAnd( f1, f2 ) =>
-        val f1sk = skWith( f1, terms, sk_functions, polarity )
-        // TODO candidate for efficiency improvement
-        val used = getSkFunctions( f1sk )
-        val rest = sk_functions.filter( f => !used.contains( f ) )
-        val f2sk = skWith( f2, terms, rest, polarity )
-        FOLAnd( f1sk, f2sk )
-      case FOLOr( f1, f2 ) =>
-        val f1sk = skWith( f1, terms, sk_functions, polarity )
-        // TODO candidate for efficiency improvement
-        val used = getSkFunctions( f1sk )
-        val rest = sk_functions.filter( f => !used.contains( f ) )
-        val f2sk = skWith( f2, terms, rest, polarity )
-        FOLOr( f1sk, f2sk )
-      case FOLExVar( x, f1 ) => polarity match {
-        case true => // Weak quantifier
-          FOLExVar( x, skWith( f1, terms :+ x, sk_functions, polarity ) )
-        case false => // Strong quantifier
-          val candidates = sk_functions.filter { case ( n, a ) => a == terms.size }
-          val ordered_candidates = candidates.sorted
-
-          val fun_name = ordered_candidates.head._1
-          val sk_func = FOLFunction( fun_name, terms )
-          val rest = sk_functions.filter { case ( n, a ) => n != fun_name }
-
-          val sub = FOLSubstitution( x, sk_func )
-          val f1sk = sub( f1 )
-          skWith( f1sk, terms, rest, polarity )
-      }
-      case FOLAllVar( x, f1 ) => polarity match {
-        case true => // Strong quantifier
-          val candidates = sk_functions.filter { case ( n, a ) => a == terms.size }
-          val ordered_candidates = candidates.sorted
-
-          val fun_name = ordered_candidates.head._1
-          val sk_func = FOLFunction( fun_name, terms )
-          val rest = sk_functions.filter { case ( n, a ) => n != fun_name }
-
-          val sub = FOLSubstitution( x, sk_func )
-          val f1sk = sub( f1 )
-          skWith( f1sk, terms, rest, polarity )
-        case false => // Weak quantifier
-          FOLAllVar( x, skWith( f1, terms :+ x, sk_functions, polarity ) )
-      }
-    }
-
-    skWith( f, List(), sk_functions, polarity )
   }
 
   // Collects all n ^ [...] predicates used and their arities
@@ -275,13 +217,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
             val f_in_nnf = toNNF( f_right_pol )
 
-            // All formulas are on the left side of the sequent for leanCoP
-            val f_skolemized = skolem_functions match {
-              case Nil    => f_in_nnf
-              case _ :: _ => skolemizeWith( f_in_nnf, skolem_functions, true )
-            }
-
-            val f_no_quant = dropQuantifiers( f_skolemized )
+            val f_no_quant = dropQuantifiers( f_in_nnf )
 
             // If there are not lean predicate symbols, use regular DNF transformation
             val subs = lean_preds match {
@@ -289,19 +225,21 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
                 val f_dnf = toMagicalDNF( f_no_quant )
                 matchClauses( f_dnf, lean_clauses ) match {
                   case Some( s ) => s
-                  case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_dnf + " and clauses " + lean_clauses + " do not match." )
+                  case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_dnf + 
+		    " and clauses " + lean_clauses + " do not match." )
                 }
               case _ :: _ =>
                 val f_clausified = toDefinitionalClausalForm( f_no_quant, lean_preds )
                 matchClauses( f_clausified, lean_clauses ) match {
                   case Some( s ) => s
-                  case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_clausified + " and clauses " + lean_clauses + " do not match." )
+                  case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_clausified + 
+		    " and clauses " + lean_clauses + " do not match." )
                 }
             }
 
             val sublst = lst_int.flatMap( i => clauses_substitutions.get( i ) match {
               case Some( cs ) => cs.map( s => s.compose( subs ) )
-              case None       => List()
+              case None       => List(subs)
             } ).toList
             map + ( name -> ( ( f_original, sublst ) ) )
         }

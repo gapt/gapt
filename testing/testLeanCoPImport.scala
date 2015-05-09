@@ -21,6 +21,7 @@ object testLeanCoPImport {
   var no_match = 0
   var sk_fun_error = 0
   var lean_pred_error = 0
+  val no_lean_pred = 0
   var success = 0
   var no_proof = 0
 
@@ -43,6 +44,9 @@ object testLeanCoPImport {
 	  no_match += 1;
 	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
 	case e: LeanCoPNoLeanPredException =>
+	  no_lean_pred += 1
+	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	case e: LeanCoPLeanPredWrongArityException =>
 	  lean_pred_error += 1
 	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
 	case e: NoSuchElementException =>
@@ -62,6 +66,7 @@ object testLeanCoPImport {
     LeanCoPImportLogger.info( "success " + success + " (no TSTP proof " + no_proof + ")" )
     LeanCoPImportLogger.info( "no_match " + no_match )
     LeanCoPImportLogger.info( "lean_pred_error " + lean_pred_error )
+    LeanCoPImportLogger.info( "no_lean_pred " + no_lean_pred )
     LeanCoPImportLogger.info( "sk_fun_error " + sk_fun_error )
     LeanCoPImportLogger.info( "syntax_error " + syntax_error )
     LeanCoPImportLogger.info( "timeout_error " + timeout_error )
