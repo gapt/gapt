@@ -100,22 +100,6 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case _ => throw new Exception( "Unsupported format for getLeanPreds: " + cls )
   }
 
-  // Collects all n ^ [...] functions used for skolemization and their arities
-  def getSkFunctions( cls: FOLExpression ): List[( String, Int )] = cls match {
-    case FOLFunction( n, args ) if n.toString.startsWith( "leanSk" ) => List( ( n.toString, args.length ) )
-    case FOLFunction( _, args ) => args.flatMap( a => getSkFunctions( a ) )
-    case FOLVar( _ ) => List()
-    case FOLConst( n ) if n.toString.startsWith( "leanSk" ) => List( ( n.toString, 0 ) )
-    case FOLConst( _ ) => List()
-    case FOLAtom( _, args ) => args.flatMap( a => getSkFunctions( a ) )
-    case FOLNeg( f ) => getSkFunctions( f )
-    case FOLAnd( f1, f2 ) => getSkFunctions( f1 ) ++ getSkFunctions( f2 )
-    case FOLOr( f1, f2 ) => getSkFunctions( f1 ) ++ getSkFunctions( f2 )
-    case FOLExVar( x, f1 ) => getSkFunctions( f1 )
-    case FOLAllVar( x, f1 ) => getSkFunctions( f1 )
-    case _ => throw new Exception( "Unsupported format for getSkFunctions: " + cls )
-  }
-
   // leanCoP renames all variables so that they do not clash.
   def dropQuantifiers( f: FOLFormula ): FOLFormula = f match {
     case FOLAtom( _, _ )    => f
@@ -207,8 +191,6 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
             val lean_clauses = lst_int.map( i => clauses( i )._1 ).toList
             // New predicates used in the def clausal translation and arity
             val lean_preds = lean_clauses.flatMap( c => getLeanPreds( c ) ).distinct
-            // Skolem terms used in skolemization and arity
-            val skolem_functions = lean_clauses.flatMap( c => getSkFunctions( c ) ).distinct
 
             val ( f_original, role ) = input_formulas( name )
 
@@ -351,8 +333,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   def constant: Parser[FOLConst] = name ^^ { case n => FOLConst( n ) }
   def variable: Parser[FOLVar] = """_[A-Z0-9]+""".r ^^ { case n => FOLVar( n ) }
   def skolem_term: Parser[FOLTerm] = lean_var ^^ {
-    case ( i, terms ) =>
-      FOLFunction( "leanSk" + i, terms )
+    case ( i, _ ) =>
+      // Pretend it's an eigenvariable.
+      FOLVar( "leanSk" + i )
   }
   def lean_var: Parser[( Int, List[FOLTerm] )] = """\d+""".r ~ "^" ~ "[" ~ repsep( term, "," ) ~ "]" ^^ {
     case i ~ _ ~ _ ~ terms ~ _ => ( i.toInt, terms )
