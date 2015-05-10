@@ -109,6 +109,7 @@ lazy val testing = (project in file("testing")).
     // reduce number of concurrent tests to prevent out-of-memory errors
 //    testGrouping <<= definedTests in Test map oneJvmPerTest,
 //    testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "threadsNb", "2")
+    baseDirectory in Test := file("."),
     fork in Test := true
   )
 
