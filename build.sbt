@@ -110,6 +110,7 @@ lazy val testing = (project in file("testing")).
 //    testGrouping <<= definedTests in Test map oneJvmPerTest,
 //    testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "threadsNb", "2")
     baseDirectory in Test := file("."),
+    javaOptions in Test ++= Seq("-Xss30m", "-Xmx4G"),
     fork in Test := true
   )
 
