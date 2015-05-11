@@ -358,12 +358,12 @@ object ProjectionTermCreators {
 object PStructToExpressionTree {
 
   def apply( s: ProjectionTerm ): Tree[AnyRef] = s match {
-    case pTimes( rho, left, right, aux1, aux2 ) => BinaryTree( new PTimesC( rho ), apply( left ), apply( right ) )
+    case pTimes( rho, left, right, aux1, aux2 ) => BinaryTree( PTimesC( rho ), apply( left ), apply( right ) )
     case pPlus( seq1, seq2, left, right, w1, w2 ) => {
       val t1 = if ( w1.antecedent.isEmpty && w1.succedent.isEmpty ) apply( left )
-      else UnaryTree( new PWeakC( w1 ), apply( left ) )
+      else UnaryTree( PWeakC( w1 ), apply( left ) )
       val t2 = if ( w2.antecedent.isEmpty && w2.succedent.isEmpty ) apply( right )
-      else UnaryTree( new PWeakC( w2 ), apply( right ) )
+      else UnaryTree( PWeakC( w2 ), apply( right ) )
       BinaryTree( PPlusC, t1, t2 )
 
     }
@@ -400,7 +400,7 @@ object PStructToExpressionTree {
   // for nice printing in console - the braces are with different colors and such things
   def applyConsole( s: ProjectionTerm ): Tree[String] = s match {
 
-    case pTimes( rho, left, right, a1, a2 ) => BinaryTree[String]( ( new PTimesC( "" ) ).toString + rho, applyConsole( left ), applyConsole( right ) )
+    case pTimes( rho, left, right, a1, a2 ) => BinaryTree[String]( ( PTimesC( "" ) ).toString + rho, applyConsole( left ), applyConsole( right ) )
     case pPlus( seq1, seq2, left, right, w1, w2 ) => {
       val t1 = UnaryTree[String]( "w^{" + printSchemaProof.sequentToString( w1 ) + "}", applyConsole( left ) )
       val t2 = UnaryTree[String]( "w^{" + printSchemaProof.sequentToString( w2 ) + "}", applyConsole( right ) )
@@ -469,9 +469,28 @@ object PStructToExpressionTree {
       "pr^{(" + cutConfToString( cut_occs ) + ")," + name + "}"
   }
 
-  case class PTimesC( val rho: String ) extends Const( new PTimesSymbol( rho ), Type( "( o -> (o -> o) )" ) )
-  case object PPlusC extends Const( PPlusSymbol, Type( "( o -> (o -> o) )" ) )
-  case class PWeakC( val seq: Sequent ) extends Const( new PWeakSymbol( seq ), Type( "(o -> o)" ) )
+  object PTimesC {
+    val prefix = "⊗_"
+    def apply( rho: String ) = Const( prefix + rho, To -> ( To -> To ) )
+    def unapply( e: LambdaExpression ): Option[String] = e match {
+      case Const( name, To -> ( To -> To ) ) if name.startsWith( prefix ) =>
+        Some( name.substring( prefix.length ) )
+      case _ => None
+    }
+  }
+  object PPlusC extends MonomorphicLogicalC( PPlusSymbol.toString, Type( "( o -> (o -> o) )" ) )
+
+  object PWeakC {
+    def apply( seq: Sequent ) = Const( PWeakSymbol( seq ), To -> To )
+
+    def unapply( e: LambdaExpression ) = e match {
+      case c: Const => c.sym match {
+        case PWeakSymbol( seq ) => Some( seq )
+        case _                  => None
+      }
+      case _ => None
+    }
+  }
 
   // for nice printing in Console only !
   def printTree( r: Tree[String] ): Unit = r match {

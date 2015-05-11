@@ -602,9 +602,9 @@ object fo2VarSubstitution {
     case sTerm( v, i, args )                           => unfoldSTerm( o )
 
     //case non: nonVarSclause => nonVarSclause(non.ant.map(f => apply(f, mapfo2).asInstanceOf[SchemaFormula]), non.succ.map(f => apply(f, mapfo2).asInstanceOf[SchemaFormula]))
-    case indFOvar: indexedFOVar =>
-      val z = fo2Var( indFOvar.name.toString() )
-      apply( App( z, indFOvar.index ), mapfo2 )
+    case indexedFOVar( name, index ) =>
+      val z = fo2Var( name )
+      apply( App( z, index ), mapfo2 )
 
     case _ => o
   }

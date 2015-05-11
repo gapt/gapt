@@ -167,14 +167,14 @@ object renameIndexedVarInProjection {
 object renameVar {
   def apply( exp: LambdaExpression, pair: Tuple2[Var, LambdaExpression] ): LambdaExpression = {
     exp match {
-      case v: indexedFOVar => {
+      case v @ indexedFOVar( _, _ ) => {
         if ( v == pair._1 )
           return pair._2
         else
           return v
       }
-      case foc: foConst => {
-        Const( foc.name.toString, Ti )
+      case foConst( name ) => {
+        FOLConst( name )
       }
       case Succ( arg ) => {
         Succ( apply( arg, pair ).asInstanceOf[SchemaExpression] )

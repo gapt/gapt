@@ -161,8 +161,8 @@ object DrawSequent {
         //formats everything else
         nameToLatexString( name.toString ) + { if ( args.isEmpty ) "" else args.map( x => formulaToLatexString( x, outermost = false ) ).mkString( "(", ",", ")" ) }
       }
-    case vi: indexedFOVar    => vi.name.toString + "_{" + formulaToLatexString( vi.index, outermost = false ) + "}"
-    case vi: indexedOmegaVar => vi.name.toString + "_{" + formulaToLatexString( vi.index, outermost = false ) + "}"
+    case indexedFOVar( name, index )    => name + "_{" + formulaToLatexString( index, outermost = false ) + "}"
+    case indexedOmegaVar( name, index ) => name + "_{" + formulaToLatexString( index, outermost = false ) + "}"
     case v: Var if v.sym.isInstanceOf[ClauseSetSymbol] => //Fixme: never enters here because type of ClauseSetSymbol is changed
       //parse cl variables to display cut-configuration.
       val cl = v.sym.asInstanceOf[ClauseSetSymbol]

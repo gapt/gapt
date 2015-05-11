@@ -133,7 +133,7 @@ object applySchemaSubstitution {
           CloneLKProof( SchemaProofDB.get( link ).base )
         else if ( cnt == 1 ) {
           new_ind match {
-            case y: IntZero => {
+            case IntZero() => {
               CloneLKProof( SchemaProofDB.get( link ).base )
             }
             case _ => {
@@ -227,8 +227,8 @@ object StepMinusOne {
   }
 
   def length( t: IntegerTerm, k: IntVar ): Int = t match {
-    case y: IntVar if y == k => 0
-    case c: IntZero          => 0
+    case y @ IntVar( _ ) if y == k => 0
+    case IntZero()                 => 0
     case Succ( t1 ) => {
       1 + length( t1, k )
     }
@@ -236,7 +236,7 @@ object StepMinusOne {
   }
 
   def lengthGround( t: IntegerTerm ): Int = t match {
-    case c: IntZero => 0
+    case IntZero() => 0
     case Succ( t1 ) => {
       1 + lengthGround( t1 )
     }
@@ -244,7 +244,7 @@ object StepMinusOne {
   }
 
   def lengthVar( t: IntegerTerm ): Int = t match {
-    case y: IntVar => 0
+    case y @ IntVar( _ ) => 0
     case Succ( t1 ) => {
       1 + lengthVar( t1 )
     }
@@ -253,7 +253,6 @@ object StepMinusOne {
 
   //return an axpression such that all s(k) is substituted by k
   def minusOne( e: SchemaExpression, k: IntVar ): SchemaExpression = e match {
-    case x: IntegerTerm                  => intTermMinusOne( x, k )
     case IndexedPredicate( pointer, l )  => IndexedPredicate( pointer.name, minusOne( l.head, k ).asInstanceOf[IntegerTerm] )
     case BigAnd( v, formula, init, end ) => BigAnd( v, formula, minusOne( init, k ).asInstanceOf[IntegerTerm], minusOne( end, k ).asInstanceOf[IntegerTerm] )
     case BigOr( v, formula, init, end )  => BigOr( v, formula, minusOne( init, k ).asInstanceOf[IntegerTerm], minusOne( end, k ).asInstanceOf[IntegerTerm] )
@@ -264,12 +263,13 @@ object StepMinusOne {
     case All( v, f )                     => All( v, minusOne( f, k ).asInstanceOf[SchemaFormula] )
     case SchemaAtom( name: Var, args )   => SchemaAtom( name, args.map( x => minusOne( x, k ) ) )
     case SchemaAtom( name: Const, args ) => SchemaAtom( name, args.map( x => minusOne( x, k ) ) )
-    case ifo: indexedFOVar               => indexedFOVar( ifo.name, minusOne( ifo.index, k ).asInstanceOf[IntegerTerm] )
+    case indexedFOVar( name, index )     => indexedFOVar( name, minusOne( index, k ).asInstanceOf[IntegerTerm] )
     case indexedOmegaVar( name, index )  => indexedOmegaVar( name, minusOne( index, k ).asInstanceOf[IntegerTerm] )
     case sTerm( name, i, args ) => {
       sTerm( name, minusOne( i, k ), args )
     }
     case foTerm( v, arg ) => foTerm( v, minusOne( arg, k ) :: Nil )
+    case x: IntegerTerm   => intTermMinusOne( x, k )
     case _                => e
   }
 

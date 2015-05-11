@@ -146,35 +146,35 @@ object PlusN {
 object structToExpressionTree {
   def apply( s: Struct ): Tree[LambdaExpression] = s match {
     case A( f )                  => LeafTree( f.formula )
-    case Dual( sub )             => UnaryTree( DualC, apply( sub ) )
-    case Times( left, right, _ ) => BinaryTree( TimesC, apply( left ), apply( right ) )
-    case Plus( left, right )     => BinaryTree( PlusC, apply( left ), apply( right ) )
-    case EmptyTimesJunction()    => LeafTree( EmptyTimesC )
-    case EmptyPlusJunction()     => LeafTree( EmptyPlusC )
+    case Dual( sub )             => UnaryTree( DualC(), apply( sub ) )
+    case Times( left, right, _ ) => BinaryTree( TimesC(), apply( left ), apply( right ) )
+    case Plus( left, right )     => BinaryTree( PlusC(), apply( left ), apply( right ) )
+    case EmptyTimesJunction()    => LeafTree( EmptyTimesC() )
+    case EmptyPlusJunction()     => LeafTree( EmptyPlusC() )
   }
 
   // constructs struct Tree without empty leaves.
   def prunedTree( s: Struct ): Tree[LambdaExpression] = s match {
     case A( f )      => LeafTree( f.formula )
-    case Dual( sub ) => UnaryTree( DualC, prunedTree( sub ) )
+    case Dual( sub ) => UnaryTree( DualC(), prunedTree( sub ) )
     case Times( left, right, _ ) =>
       val l = prunedTree( left )
       val r = prunedTree( right )
       if ( l.isInstanceOf[LeafTree[LambdaExpression]] && ( l.vertex == EmptyTimesC || l.vertex == EmptyPlusC ) )
-        if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) LeafTree( EmptyTimesC )
+        if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) LeafTree( EmptyTimesC() )
         else r
       else if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) l
-      else BinaryTree( TimesC, l, r )
+      else BinaryTree( TimesC(), l, r )
     case Plus( left, right ) =>
       val l = prunedTree( left )
       val r = prunedTree( right )
       if ( l.isInstanceOf[LeafTree[LambdaExpression]] && ( l.vertex == EmptyTimesC || l.vertex == EmptyPlusC ) )
-        if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) LeafTree( EmptyPlusC )
+        if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) LeafTree( EmptyPlusC() )
         else r
       else if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) l
-      else BinaryTree( PlusC, l, r )
-    case EmptyTimesJunction() => LeafTree( EmptyTimesC )
-    case EmptyPlusJunction()  => LeafTree( EmptyPlusC )
+      else BinaryTree( PlusC(), l, r )
+    case EmptyTimesJunction() => LeafTree( EmptyTimesC() )
+    case EmptyPlusJunction()  => LeafTree( EmptyPlusC() )
   }
 
   // We define some symbols that represent the operations of the struct
@@ -209,11 +209,11 @@ object structToExpressionTree {
     def toCode = "EmptyPlusSymbol"
   }
 
-  case object TimesC extends Const( TimesSymbol, Type( "( o -> (o -> o) )" ) )
-  case object PlusC extends Const( PlusSymbol, Type( "( o -> (o -> o) )" ) )
-  case object DualC extends Const( DualSymbol, Type( "(o -> o)" ) )
-  case object EmptyTimesC extends Const( EmptyTimesSymbol, To )
-  case object EmptyPlusC extends Const( EmptyPlusSymbol, To )
+  object TimesC extends MonomorphicLogicalC( TimesSymbol.toString, Type( "( o -> (o -> o) )" ) )
+  object PlusC extends MonomorphicLogicalC( PlusSymbol.toString, Type( "( o -> (o -> o) )" ) )
+  object DualC extends MonomorphicLogicalC( DualSymbol.toString, Type( "(o -> o)" ) )
+  object EmptyTimesC extends MonomorphicLogicalC( EmptyTimesSymbol.toString, To )
+  object EmptyPlusC extends MonomorphicLogicalC( EmptyPlusSymbol.toString, To )
 }
 
 // some stuff for schemata

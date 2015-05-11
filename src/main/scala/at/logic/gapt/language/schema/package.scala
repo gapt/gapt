@@ -5,6 +5,9 @@ import at.logic.gapt.expr._
 package object schema {
   type SchemaExpression = LambdaExpression
   type IntegerTerm = LambdaExpression
-  type IntVar = Var
+  type IntConst = Const
   type SchemaFormula = Formula
+  type fo2Var = Var
+  type IntVar = Var
 }
+

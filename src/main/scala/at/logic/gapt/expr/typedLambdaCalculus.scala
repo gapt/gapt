@@ -111,7 +111,7 @@ abstract class LambdaExpression {
 // Defines the elements that generate lambda-expressions: variables,
 // applications and abstractions (and constants).
 
-class Var( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
+class Var private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
 
   // The name of the variable should be obtained with this method.
   def name: String = sym.toString
@@ -135,7 +135,7 @@ class Var( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
   override def hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
 
-class Const( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
+class Const private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
 
   def name: String = sym.toString
 
@@ -152,7 +152,7 @@ class Const( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
   override def hashCode() = ( 41 * name.hashCode ) + exptype.hashCode
 }
 
-class App( val function: LambdaExpression, val arg: LambdaExpression ) extends LambdaExpression {
+class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpression ) extends LambdaExpression {
   val exptype: TA =
     function.exptype match {
       case ( in -> out ) if in == arg.exptype => out
@@ -173,7 +173,7 @@ class App( val function: LambdaExpression, val arg: LambdaExpression ) extends L
   override def hashCode() = ( 41 * function.hashCode ) + arg.hashCode
 }
 
-class Abs( val variable: Var, val term: LambdaExpression ) extends LambdaExpression {
+class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extends LambdaExpression {
   val exptype: TA = variable.exptype -> term.exptype
 
   def syntaxEquals( e: LambdaExpression ) = e match {

@@ -77,8 +77,8 @@ class SchemaTest extends SpecificationWithJUnit {
       val bt3 = BiggerThan( one, two )
       val bt4 = BiggerThan( two, i )
       bt1 must beLike {
-        case SchemaAtom( BiggerThanC, x :: y :: Nil ) => ok
-        case _                                        => ko
+        case SchemaAtom( BiggerThanC(), x :: y :: Nil ) => ok
+        case _ => ko
       }
     }
 

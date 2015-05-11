@@ -15,16 +15,22 @@ import at.logic.gapt.language.schema.logicSymbols._
 /******************** SPECIAL INTEGERS ************************************/
 
 object IntVar {
-  def apply( name: String ) = new IntVar( StringSymbol( name ), Tindex )
+  def apply( name: String ) = Var( StringSymbol( name ), Tindex )
   def unapply( t: IntegerTerm ) = t match {
-    case i: IntVar => Some( i.name )
-    case _         => None
+    case Var( name, Tindex ) => Some( name )
+    case _                   => None
   }
 }
 
-class IntConst( sym: SymbolA ) extends Const( sym, Tindex )
+object IntConst {
+  def apply( sym: SymbolA ): IntConst = Const( sym, Tindex )
+  def unapply( t: IntegerTerm ) = t match {
+    case c @ Const( name, Tindex ) => Some( c.asInstanceOf[Const].sym )
+    case _                         => None
+  }
+}
 
-case class IntZero() extends Const( StringSymbol( "0" ), Tindex )
+object IntZero extends MonomorphicLogicalC( "0", Tindex )
 
 /**************************************************************************/
 
@@ -57,95 +63,58 @@ object IndexedPredicate {
 
 }
 
-class indexedFOVar( sym: SymbolA, val index: SchemaExpression ) extends Var( sym, Ti ) {
-  override def toString = name.toString + "(" + index + ")" + ":" + exptype.toString
-  override def equals( a: Any ): Boolean = a match {
-    case v: indexedFOVar if v.name.toString == this.name.toString() && v.index == this.index => true
-    case _ => false
-  }
-}
-object indexedFOVar {
-  def apply( name: String, i: SchemaExpression ): Var = new indexedFOVar( StringSymbol( name ), i )
-  def unapply( s: SchemaExpression ) = s match {
-    case v: indexedFOVar => Some( v.name, v.index )
-    case _               => None
-  }
+case class IndexedVarSymbol( name: String, val index: SchemaExpression ) extends SymbolA {
+  override def toString = name + "(" + index + ")"
 }
 
-class indexedOmegaVar( sym: SymbolA, val index: SchemaExpression ) extends Var( sym, Tindex ) {
-  override def toString = name.toString + "(" + index + ")" + ":" + exptype.toString
-  override def equals( a: Any ): Boolean = a match {
-    case v: indexedOmegaVar if v.name == this.name && v.index == this.index => true
-    case _ => false
+object indexedFOVar {
+  def apply( name: String, i: SchemaExpression ) = Var( IndexedVarSymbol( name, i ), Ti )
+  def unapply( s: SchemaExpression ) = s match {
+    case Var( _, Ti ) => s.asInstanceOf[Var].sym match {
+      case IndexedVarSymbol( name, index ) => Some( name, index )
+      case _                               => None
+    }
+    case _ => None
   }
 }
 
 object indexedOmegaVar {
-  def apply( name: String, i: SchemaExpression ): Var = {
-    new indexedOmegaVar( StringSymbol( name ), i )
-  }
+  def apply( name: String, i: SchemaExpression ) = Var( IndexedVarSymbol( name, i ), Tindex )
   def unapply( s: SchemaExpression ) = s match {
-    case v: indexedOmegaVar => Some( v.name, v.index )
-    case _                  => None
+    case Var( _, Tindex ) => s.asInstanceOf[Var].sym match {
+      case IndexedVarSymbol( name, index ) => Some( name, index )
+      case _                               => None
+    }
+    case _ => None
   }
 }
 
-class foVar( sym: SymbolA ) extends Var( sym, Ti ) {
-  override def equals( a: Any ): Boolean = a match {
-    case v: foVar if v.name.toString == this.name.toString => true
-    case _ => false
-  }
-}
 object foVar {
-  def apply( name: String ) = new foVar( StringSymbol( name ) )
-  def unapply( t: SchemaExpression ) = t match {
-    case v: foVar => Some( v.name )
-    case _        => None
-  }
+  def apply( name: String ) = FOLVar( name )
+  def unapply( t: SchemaExpression ) = FOLVar.unapply( t )
 }
 
 //indexed second-order variable of type: ind->i
-class fo2Var( sym: SymbolA ) extends Var( sym, ->( Tindex, Ti ) ) {
-  override def equals( a: Any ): Boolean = a match {
-    case v: fo2Var if v.sym.toString == this.sym.toString => true
-    case _ => false
-  }
-}
 object fo2Var {
-  def apply( name: String ) = new fo2Var( StringSymbol( name ) )
+  def apply( name: String ) = Var( name, Tindex -> Ti )
   def unapply( s: SchemaExpression ) = s match {
-    case v: fo2Var => Some( v.name )
-    case _         => None
+    case Var( name, Tindex -> Ti ) => Some( name )
+    case _                         => None
   }
 }
 
 //first-order constant
-class foConst( sym: SymbolA ) extends Const( sym, Ti ) {
-  override def equals( a: Any ): Boolean = a match {
-    case v: foConst if v.name.toString == this.name.toString => true
-    case _ => false
-  }
-}
 object foConst {
-  def apply( name: String ) = new foConst( StringSymbol( name ) )
-  def unapply( t: SchemaExpression ) = t match {
-    case c: foConst => Some( c.name, c.exptype )
-    case _          => None
-  }
+  def apply( name: String ) = FOLConst( name )
+  def unapply( t: SchemaExpression ) = FOLConst.unapply( t )
 }
 
 //first-order variable of type ω
-class fowVar( sym: SymbolA ) extends Var( sym, Tindex ) {
-  override def equals( a: Any ): Boolean = a match {
-    case v: fowVar if v.name.toString() == this.name.toString() => true
-    case _ => false
-  }
-}
 object fowVar {
-  def apply( name: String ) = new fowVar( StringSymbol( name ) )
+  def apply( name: String ) = Var( name, Tindex )
   def unapply( t: SchemaExpression ) = t match {
-    case v: fowVar => Some( v.name, v.exptype )
-    case _         => None
+    case Var( name, Tindex ) => Some( name, Tindex )
+    case _                   => None
   }
 }
 
@@ -193,22 +162,22 @@ object SchemaFunction {
 
 /*************** OPERATORS *****************/
 
-case object BigAndC extends Const( BigAndSymbol, ->( ->( Tindex, To ), ->( Tindex, ->( Tindex, To ) ) ) )
-case object BigOrC extends Const( BigOrSymbol, ->( ->( Tindex, To ), ->( Tindex, ->( Tindex, To ) ) ) )
-case object BiggerThanC extends Const( BiggerThanSymbol, ->( Tindex, ->( Tindex, To ) ) )
-case class LessThanC( e: TA ) extends Const( LessThanSymbol, ->( Tindex, ->( Tindex, To ) ) )
-case class LeqC( e: TA ) extends Const( LeqSymbol, ->( Tindex, ->( Tindex, To ) ) )
-case object SuccC extends Const( StringSymbol( "s" ), ->( Tindex, Tindex ) )
+object BigAndC extends MonomorphicLogicalC( BigAndSymbol.toString, ->( ->( Tindex, To ), ->( Tindex, ->( Tindex, To ) ) ) )
+object BigOrC extends MonomorphicLogicalC( BigOrSymbol.toString, ->( ->( Tindex, To ), ->( Tindex, ->( Tindex, To ) ) ) )
+object BiggerThanC extends MonomorphicLogicalC( BiggerThanSymbol.toString, ->( Tindex, ->( Tindex, To ) ) )
+object LessThanC extends MonomorphicLogicalC( LessThanSymbol.toString, ->( Tindex, ->( Tindex, To ) ) )
+object LeqC extends MonomorphicLogicalC( LeqSymbol.toString, ->( Tindex, ->( Tindex, To ) ) )
+object SuccC extends MonomorphicLogicalC( "s", ->( Tindex, Tindex ) )
 
 object BigAnd {
   def apply( i: IntVar, iter: SchemaFormula, init: IntegerTerm, end: IntegerTerm ): SchemaFormula =
-    apply( new Abs( i, iter ), init, end )
+    apply( Abs( i, iter ), init, end )
 
   def apply( iter: Abs, init: IntegerTerm, end: IntegerTerm ): SchemaFormula =
-    App( BigAndC, iter :: init :: end :: Nil ).asInstanceOf[SchemaFormula]
+    App( BigAndC(), iter :: init :: end :: Nil ).asInstanceOf[SchemaFormula]
 
   def unapply( expression: SchemaExpression ) = expression match {
-    case App( App( App( BigAndC, Abs( v, formula ) ), init: IntegerTerm ), end: IntegerTerm ) =>
+    case App( App( App( BigAndC(), Abs( v, formula ) ), init: IntegerTerm ), end: IntegerTerm ) =>
       Some( v, formula.asInstanceOf[SchemaFormula], init, end )
     case _ => None
   }
@@ -216,32 +185,32 @@ object BigAnd {
 
 object BigOr {
   def apply( i: IntVar, iter: SchemaFormula, init: IntegerTerm, end: IntegerTerm ): SchemaFormula =
-    apply( new Abs( i, iter ), init, end )
+    apply( Abs( i, iter ), init, end )
 
   def apply( iter: Abs, init: IntegerTerm, end: IntegerTerm ): SchemaFormula =
-    App( BigOrC, iter :: init :: end :: Nil ).asInstanceOf[SchemaFormula]
+    App( BigOrC(), iter :: init :: end :: Nil ).asInstanceOf[SchemaFormula]
 
   def unapply( expression: SchemaExpression ) = expression match {
-    case App( App( App( BigOrC, Abs( v, formula ) ), init: IntegerTerm ), end: IntegerTerm ) =>
+    case App( App( App( BigOrC(), Abs( v, formula ) ), init: IntegerTerm ), end: IntegerTerm ) =>
       Some( v, formula.asInstanceOf[SchemaFormula], init, end )
     case _ => None
   }
 }
 
 object BiggerThan {
-  def apply( l: IntegerTerm, r: IntegerTerm ) = App( App( BiggerThanC, l ), r )
+  def apply( l: IntegerTerm, r: IntegerTerm ) = App( App( BiggerThanC(), l ), r )
   def unapply( e: SchemaExpression ) = e match {
-    case App( App( BiggerThanC, l ), r ) => Some( ( l, r ) )
-    case _                               => None
+    case App( App( BiggerThanC(), l ), r ) => Some( ( l, r ) )
+    case _                                 => None
   }
 }
 
 object Succ {
-  def apply( t: IntegerTerm ): IntegerTerm = App( SuccC, t ).asInstanceOf[IntegerTerm]
+  def apply( t: IntegerTerm ): IntegerTerm = App( SuccC(), t ).asInstanceOf[IntegerTerm]
   //  def apply( t: SchemaExpression ): SchemaExpression = App( SuccC, t )
   def unapply( p: SchemaExpression ) = p match {
-    case App( SuccC, t: IntegerTerm ) => Some( t )
-    case _                            => None
+    case App( SuccC(), t: IntegerTerm ) => Some( t )
+    case _                              => None
   }
 }
 
@@ -301,24 +270,24 @@ object SchemaAtom {
 object lessThan {
   def apply( left: SchemaExpression, right: SchemaExpression ) = {
     require( left.exptype == right.exptype )
-    App( App( LessThanC( left.exptype ), left ), right ).asInstanceOf[SchemaFormula]
+    App( App( LessThanC(), left ), right ).asInstanceOf[SchemaFormula]
   }
 
   def unapply( expression: SchemaExpression ) = expression match {
-    case App( App( LessThanC( _ ), left ), right ) => Some( left, right )
-    case _                                         => None
+    case App( App( LessThanC(), left ), right ) => Some( left, right )
+    case _                                      => None
   }
 }
 
 object leq {
   def apply( left: SchemaExpression, right: SchemaExpression ) = {
     require( left.exptype == right.exptype )
-    App( App( LeqC( left.exptype ), left ), right ).asInstanceOf[SchemaFormula]
+    App( App( LeqC(), left ), right ).asInstanceOf[SchemaFormula]
   }
 
   def unapply( expression: SchemaExpression ) = expression match {
-    case App( App( LeqC( _ ), left ), right ) => Some( left, right )
-    case _                                    => None
+    case App( App( LeqC(), left ), right ) => Some( left, right )
+    case _                                 => None
   }
 }
 
@@ -444,7 +413,7 @@ object dbTRS extends Iterable[( Const, ( ( SchemaExpression, SchemaExpression ),
   def iterator = map.iterator
 }
 
-case class SimsC( e: TA ) extends Const( simSymbol, Ti -> ( Ti -> To ) )
+object SimsC extends MonomorphicLogicalC( simSymbol.toString, Ti -> ( Ti -> To ) )
 
 class sTermRewriteSys( val func: Const, val base: SchemaExpression, val rec: SchemaExpression )
 
@@ -455,12 +424,12 @@ object sTermRewriteSys {
 object sims {
   def apply( left: SchemaExpression, right: SchemaExpression ) = {
     require( left.exptype == right.exptype )
-    App( App( SimsC( left.exptype ), left ), right ).asInstanceOf[SchemaFormula]
+    App( App( SimsC(), left ), right ).asInstanceOf[SchemaFormula]
   }
 
   def unapply( expression: SchemaExpression ) = expression match {
-    case App( App( SimsC( _ ), left ), right ) => Some( left.asInstanceOf[SchemaExpression], right.asInstanceOf[SchemaExpression] )
-    case _                                     => None
+    case App( App( SimsC(), left ), right ) => Some( left.asInstanceOf[SchemaExpression], right.asInstanceOf[SchemaExpression] )
+    case _                                  => None
   }
 }
 
