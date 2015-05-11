@@ -5,9 +5,9 @@ import symbols._
 abstract class LogicalC( val name: String ) {
   val symbol = StringSymbol( name )
 
-  private[expr]type MatchResult
-  private[expr] def matchType( exptype: TA ): MatchResult
-  private[expr] def noMatch: MatchResult
+  protected type MatchResult
+  protected def matchType( exptype: TA ): MatchResult
+  protected def noMatch: MatchResult
 
   def unapply( exp: LambdaExpression ): MatchResult = exp match {
     case Const( `name`, exptype ) => matchType( exptype )
@@ -22,20 +22,20 @@ abstract class LogicalC( val name: String ) {
 class MonomorphicLogicalC( name: String, val ty: TA ) extends LogicalC( name ) {
   def apply() = Const( symbol, ty )
 
-  private[expr]type MatchResult = Boolean
-  private[expr] override def matchType( exptype: TA ) = exptype == ty
-  private[expr] override def noMatch = false
+  protected type MatchResult = Boolean
+  protected override def matchType( exptype: TA ) = exptype == ty
+  protected override def noMatch = false
 }
 
 class QuantifierC( name: String ) extends LogicalC( name ) {
   def apply( qtype: TA ) = Const( symbol, ( qtype -> To ) -> To )
 
-  private[expr]type MatchResult = Option[TA]
-  private[expr] override def matchType( exptype: TA ) = exptype match {
+  protected type MatchResult = Option[TA]
+  protected override def matchType( exptype: TA ) = exptype match {
     case ( qtype -> To ) -> To => Some( qtype )
     case _                     => None
   }
-  private[expr] override def noMatch = None
+  protected override def noMatch = None
 }
 
 object AndC extends MonomorphicLogicalC( "∧", To -> ( To -> To ) )
@@ -51,12 +51,12 @@ object ForallC extends QuantifierC( "∀" )
 object EqC extends LogicalC( "=" ) {
   def apply( ty: TA ) = Const( symbol, ty -> ( ty -> To ) )
 
-  private[expr]type MatchResult = Option[TA]
-  private[expr] override def matchType( exptype: TA ) = exptype match {
+  protected type MatchResult = Option[TA]
+  protected override def matchType( exptype: TA ) = exptype match {
     case ty -> ( ty_ -> To ) if ty == ty_ => Some( ty )
     case _                                => None
   }
-  private[expr] override def noMatch = None
+  protected override def noMatch = None
 }
 
 //package schematic {
