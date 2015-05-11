@@ -10,6 +10,7 @@ import at.logic.gapt.proofs.lk.algorithms.{ solve, containsEqualityReasoning }
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
 import scala.concurrent.duration._
+import scala.util.Random
 
 import scala.xml.XML
 
@@ -41,6 +42,7 @@ class VeriTTestCase( val f: File ) extends RegressionTestCase( f.getName ) {
   }
 }
 
+// Usage: RegressionTests [<test number limit>]
 object RegressionTests extends App {
   def prover9TestCases =
     recursiveListFiles( "testing/TSTP/prover9" )
@@ -52,7 +54,14 @@ object RegressionTests extends App {
       .filter( _.getName.endsWith( ".proof_flat" ) )
       .map( new VeriTTestCase( _ ) )
 
-  val testCases = ( prover9TestCases ++ veritTestCases ).take( 30 )
+  val allTestCases = prover9TestCases ++ veritTestCases
+
+  val testCases = args match {
+    case Array( limit ) =>
+      println( s"Only running $limit random tests." )
+      Random.shuffle( allTestCases ).take( limit toInt )
+    case _ => allTestCases
+  }
 
   testCases.par foreach { tc =>
     println( s"${tc.getClass.getSimpleName}/${tc.name}" )
