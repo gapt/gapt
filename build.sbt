@@ -96,7 +96,7 @@ lazy val root = (project in file(".")).
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5")
   )
 
-addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/test:scalariformFormat")
+addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/scalariformFormat ; testing/test:scalariformFormat")
 
 lazy val testing = (project in file("testing")).
   dependsOn(root).
@@ -106,12 +106,10 @@ lazy val testing = (project in file("testing")).
     name := "gapt-testing",
     description := "gapt extended regression tests",
 
-    // reduce number of concurrent tests to prevent out-of-memory errors
-//    testGrouping <<= definedTests in Test map oneJvmPerTest,
-//    testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "threadsNb", "2")
     baseDirectory in Test := file("."),
-    javaOptions in Test ++= Seq("-Xss30m", "-Xmx4G"),
-    fork in Test := true
+    baseDirectory in run := file("."),
+    javaOptions ++= Seq("-Xss30m", "-Xmx4G"),
+    fork := true
   )
 
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
