@@ -64,10 +64,7 @@ abstract class RegressionTestCase( val name: String ) {
 object toJUnitXml {
   private def apply( testCase: RegressionTestCase ): Seq[Node] =
     testCase.result.map { step =>
-      val className = step.name match {
-        case None             => testCase.getClass.getSimpleName
-        case Some( stepName ) => s"${testCase.getClass.getSimpleName}/$stepName"
-      }
+      val className = s"${testCase.getClass.getSimpleName}.${step.name.getOrElse( "<all>" )}"
       <testcase classname={ className } name={ testCase.name } time={ ( step.runtime / 1.second ).toString }>
         {
           for ( t <- step.exception.toSeq )
