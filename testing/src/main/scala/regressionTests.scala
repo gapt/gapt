@@ -71,5 +71,5 @@ object RegressionTests extends App {
     tc.run()
   }
 
-  XML.save( "target/regression-test-results.xml", toJUnitXml( testCases ) )
+  XML.save( "target/regression-test-results.xml", toJUnitXml( testCases ), "UTF-8" )
 }
