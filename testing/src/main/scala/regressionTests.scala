@@ -63,8 +63,11 @@ object RegressionTests extends App {
     case _ => allTestCases
   }
 
+  val total = testCases.length
+  var started = 0
   testCases.par foreach { tc =>
-    println( s"${tc.getClass.getSimpleName}/${tc.name}" )
+    started += 1
+    println( s"[${( 100 * started ) / total}%] ${tc.getClass.getSimpleName}/${tc.name}" )
     tc.run()
   }
 
