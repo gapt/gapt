@@ -26,7 +26,7 @@ abstract class RegressionTestCase( val name: String ) {
     val result = try {
       Right( timeout match {
         case None             => block
-        case Some( duration ) => withTimeout( duration toMillis )( block )
+        case Some( duration ) => withTimeout( duration )( block )
       } )
     } catch {
       case t: Throwable => Left( t )
@@ -35,10 +35,9 @@ abstract class RegressionTestCase( val name: String ) {
     val runtime = ( endTime - beginTime ) nanos
 
     val ( exception, isTimeout ) = result match {
-      case Left( _: TimeOutException ) => ( None, true )
-      case Left( _: ThreadDeath )      => ( None, true )
-      case Left( t )                   => ( Some( t ), false )
-      case Right( _ )                  => ( None, false )
+      case Left( t @ ( _: TimeOutException | _: ThreadDeath ) ) => ( Some( t ), true )
+      case Left( t ) => ( Some( t ), false )
+      case Right( _ ) => ( None, false )
     }
     steps += Step( name, exception, runtime, isTimeout )
 
