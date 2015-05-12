@@ -1,8 +1,10 @@
 package at.logic.gapt.utils.executionModels
+import scala.concurrent.duration._
 
 package timeout {
 
-  class TimeOutException extends Exception
+  class TimeOutException( cause: Throwable, val duration: Duration )
+    extends Exception( s"Timeout of $duration exceeded.", cause )
 
   /**
    * runs f with timeout to
@@ -20,29 +22,32 @@ package timeout {
    * }
    */
   object withTimeout {
-    def apply[T]( to: Long )( f: => T ): T = {
-      var result: Either[Throwable, T] = Left( new TimeOutException() )
+    @deprecated
+    def apply[T]( to: Long )( f: => T ): T = apply( to millis )( f )
 
-      val r = new Runnable {
-        def run() {
-          try {
-            result = Right( f )
-          } catch {
-            case e: Throwable =>
-              result = Left( e )
+    def apply[T]( duration: Duration )( f: => T ): T = {
+      var result: Either[Throwable, T] = Left( new TimeOutException( null, duration ) )
+
+      val t = new Thread {
+        override def run() = {
+          result = try Right( f ) catch {
+            case e: ThreadDeath => Left( new TimeOutException( e, duration ) )
+            case t: Throwable   => Left( t )
           }
         }
       }
 
-      val t = new Thread( r )
       t.start()
-      t.join( to )
-      if ( t.isAlive() ) {
-        t.stop()
-      }
+      t.join( duration toMillis )
+      t.stop()
 
-      if ( result.isLeft ) throw result.left.get
-      else result.right.get
+      // wait until variable result has been written
+      t.join()
+
+      result match {
+        case Left( t )      => throw t
+        case Right( value ) => value
+      }
     }
   }
 
