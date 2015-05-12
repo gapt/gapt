@@ -207,21 +207,21 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
                 val f_dnf = toMagicalDNF( f_no_quant )
                 matchClauses( f_dnf, lean_clauses ) match {
                   case Some( s ) => s
-                  case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_dnf + 
-		    " and clauses " + lean_clauses + " do not match." )
+                  case None => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_dnf +
+                    " and clauses " + lean_clauses + " do not match." )
                 }
               case _ :: _ =>
                 val f_clausified = toDefinitionalClausalForm( f_no_quant, lean_preds )
                 matchClauses( f_clausified, lean_clauses ) match {
                   case Some( s ) => s
-                  case None      => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_clausified + 
-		    " and clauses " + lean_clauses + " do not match." )
+                  case None => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_clausified +
+                    " and clauses " + lean_clauses + " do not match." )
                 }
             }
 
             val sublst = lst_int.flatMap( i => clauses_substitutions.get( i ) match {
               case Some( cs ) => cs.map( s => s.compose( subs ) )
-              case None       => List(subs)
+              case None       => List( subs )
             } ).toList
             map + ( name -> ( ( f_original, sublst ) ) )
         }
