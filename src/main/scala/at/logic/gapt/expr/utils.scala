@@ -5,7 +5,7 @@
 
 package at.logic.gapt.expr
 
-import at.logic.gapt.expr.symbols.{ SymbolA, getRenaming }
+import at.logic.gapt.expr.{ SymbolA, getRenaming }
 
 // Returns a list *without duplicates* of the free variables in the expression.
 // There is no guarantee on the ordering of the list.

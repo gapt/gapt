@@ -2,7 +2,7 @@
 //
 //import at.logic.gapt.proofs.shlk.SchemaProofDB
 //import at.logic.gapt.language.schema._
-//import at.logic.gapt.expr.types._
+//import at.logic.gapt.expr._
 //import java.io.File.separator
 //import java.io.{ FileInputStream, InputStreamReader }
 //import org.junit.runner.RunWith

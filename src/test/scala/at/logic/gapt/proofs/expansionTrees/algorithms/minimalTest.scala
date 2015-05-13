@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansionTrees.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.provers.FailSafeProver
 import org.junit.runner.RunWith

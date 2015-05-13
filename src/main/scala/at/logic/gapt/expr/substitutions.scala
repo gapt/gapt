@@ -1,9 +1,7 @@
 
 package at.logic.gapt.expr
 
-import symbols._
-
-/* 
+/*
  * A substitution is a mapping from variables to lambda-expressions which differs from the identity
  * on finitely many variables. Therefore:
  *  1) each variable is mapped to only one lambda expression

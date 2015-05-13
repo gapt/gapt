@@ -12,12 +12,12 @@ import scala.collection.immutable.Stream.Empty
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent, PrincipalFormulas }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.streams.Definitions._
 import at.logic.gapt.proofs.shlk.{ trsArrowLeftRule, SchemaProofLinkRule }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.utils.logging.Logger
-import at.logic.gapt.expr.symbols.SymbolA
+import at.logic.gapt.expr.SymbolA
 import at.logic.gapt.proofs.lk._
 
 object skolemize extends Logger {

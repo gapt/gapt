@@ -13,8 +13,8 @@ import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, Formu
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.hol.{ HOLSubstitution => HOLSubstitution, _ }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
-import at.logic.gapt.expr.symbols.SymbolA
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.SymbolA
 import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, BiggerThan, IntZero, IntVar, IntegerTerm, IndexedPredicate, Succ, BigAnd, BigOr, Pred }
 import at.logic.gapt.utils.ds.Multisets.Multiset
 import at.logic.gapt.utils.ds.Multisets._

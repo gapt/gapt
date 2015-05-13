@@ -6,8 +6,8 @@ package at.logic.gapt.language.algorithms
 
 import at.logic.gapt.formats.simple.{ SimpleHOLParser, SimpleFOLParser }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.symbols.StringSymbol
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr.StringSymbol
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.language.fol.algorithms.{ convertHolToFol, changeTypeIn, reduceHolToFol }
 import org.junit.runner.RunWith

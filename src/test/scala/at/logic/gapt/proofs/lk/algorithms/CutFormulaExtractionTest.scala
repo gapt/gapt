@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.{ BinaryLKProof, Sequent }
 import at.logic.gapt.proofs.lk.{ Axiom, CutRule }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence

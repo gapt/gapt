@@ -1,5 +1,4 @@
 package at.logic.gapt.expr
-import types._
 
 object NonLogicalConstant {
   def unapply( e: LambdaExpression ) = e match {

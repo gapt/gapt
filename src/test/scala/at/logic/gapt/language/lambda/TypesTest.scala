@@ -11,7 +11,6 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import scala.util.parsing.combinator._
-import types._
 
 @RunWith( classOf[JUnitRunner] )
 class TypesTest extends SpecificationWithJUnit {
@@ -19,7 +18,7 @@ class TypesTest extends SpecificationWithJUnit {
     "produce a binary function type ( i -> (i -> o ) )" in {
       FunctionType( To, Ti :: Ti :: Nil ) must beEqualTo( ->( Ti, ->( Ti, To ) ) )
     }
-    val p = new JavaTokenParsers with types.Parsers
+    val p = new JavaTokenParsers with Parsers
     "parse correctly from string (1)" in {
       ( p.parseAll( p.Type, "i" ).get ) must beEqualTo( Ti )
     }

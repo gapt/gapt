@@ -19,13 +19,13 @@ import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.gapt.language.hol.algorithms.unification.hol._
 import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr._
 import logicSymbols._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.typedLambdaCalculus._
 import logicSymbols.ImplicitConverters._
-import at.logic.gapt.expr.types.Definitions._
-import at.logic.gapt.expr.symbols.ImplicitConverters._
+import at.logic.gapt.expr.Definitions._
+import at.logic.gapt.expr.ImplicitConverters._
 import StrategyOuterInner._
 import StrategyLeftRight._
 

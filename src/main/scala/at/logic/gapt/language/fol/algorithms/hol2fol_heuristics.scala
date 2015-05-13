@@ -1,8 +1,8 @@
 package at.logic.gapt.language.fol.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.symbols.StringSymbol
-import at.logic.gapt.expr.types.{ TA, Ti, To }
+import at.logic.gapt.expr.StringSymbol
+import at.logic.gapt.expr.{ TA, Ti, To }
 import at.logic.gapt.utils.logging.Logger
 
 /**

@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.LabelledSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ Label, EmptyLabel }
 import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.types.{ Ti, To }
+import at.logic.gapt.expr.{ Ti, To }
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner

@@ -1,11 +1,8 @@
 package at.logic.gapt.expr
 
-import longNormalForm._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
-import symbols._
-import types.{ Ti, -> }
 
 @RunWith( classOf[JUnitRunner] )
 class EtaExpansionTest extends SpecificationWithJUnit {

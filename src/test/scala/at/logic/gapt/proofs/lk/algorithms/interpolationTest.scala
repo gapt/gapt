@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.fol._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._

@@ -12,9 +12,6 @@
 
 package at.logic.gapt.expr
 
-import symbols._
-import types._
-
 object longNormalForm {
   def apply( term: LambdaExpression ): LambdaExpression = apply( term, List() )
   def apply( term: LambdaExpression, disallowedVars: List[Var] ): LambdaExpression = term match {

@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.symbols.StringSymbol
-import at.logic.gapt.expr.types.{ Ti, To }
+import at.logic.gapt.expr.StringSymbol
+import at.logic.gapt.expr.{ Ti, To }
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toShallow, ETAtom, ETNeg, ETOr, ETStrongQuantifier, ETWeakQuantifier }
 import at.logic.gapt.proofs.lk.base.{ FSequent, beSyntacticFSequentEqual }

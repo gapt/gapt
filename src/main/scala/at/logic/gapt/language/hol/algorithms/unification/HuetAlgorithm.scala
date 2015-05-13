@@ -10,8 +10,8 @@ package huet {
 import at.logic.gapt.expr.etaExpansion._
 import scala.collection.immutable.HashMap
 import at.logic.gapt.utils.executionModels.searchAlgorithms.BFSAlgorithm
-import at.logic.gapt.expr.types. {->, Ti, TA, FunctionType}
-import at.logic.gapt.expr.symbols.VariableStringSymbol
+import at.logic.gapt.expr. {->, Ti, TA, FunctionType}
+import at.logic.gapt.expr.VariableStringSymbol
 import at.logic.gapt.expr.typedLambdaCalculus._
 import at.logic.gapt.language.hol.algorithms.unification.UnificationAlgorithm
 import at.logic.gapt.language.hol._

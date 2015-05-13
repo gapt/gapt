@@ -12,9 +12,9 @@ import at.logic.gapt.proofs.shlk._
 import scala.Tuple4
 import at.logic.gapt.language.schema.IntZero
 import scala.Tuple2
-import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import scala.Tuple4
@@ -64,7 +64,7 @@ object sFOParserCNT {
         throw new Exception( x.toString )
     }
 
-    class SimpleSLKParser extends JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
+    class SimpleSLKParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
       def line: Parser[List[Unit]] = rep( cmappingBase )
       def cmappingBase: Parser[Unit] = ( "comment" ~ "\"[\"]*\"" ) ^^ { x => () } | mappingBase
       def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {

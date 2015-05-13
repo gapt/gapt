@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.occurrences
-import at.logic.gapt.expr.types.Ti
+import at.logic.gapt.expr.Ti
 import at.logic.gapt.utils.logging.Logger
 
 /**

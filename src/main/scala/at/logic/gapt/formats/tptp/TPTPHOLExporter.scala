@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 
 /**

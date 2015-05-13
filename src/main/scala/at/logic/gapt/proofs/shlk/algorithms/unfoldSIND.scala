@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.shlk.algorithms
 
 import at.logic.gapt.formats.shlk.{ backToInt, maketogether }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types.{ ->, FunctionType, Ti, Tindex }
+import at.logic.gapt.expr.{ ->, FunctionType, Ti, Tindex }
 import at.logic.gapt.language.schema.{ leq, lessThan, sims, _ }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._

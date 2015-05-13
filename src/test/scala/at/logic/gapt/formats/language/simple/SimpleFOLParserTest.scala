@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.language.fol._
-import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.formats.readers.StringReader
 
 @RunWith( classOf[JUnitRunner] )

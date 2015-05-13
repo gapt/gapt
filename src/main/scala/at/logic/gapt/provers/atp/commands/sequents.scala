@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lk.algorithms.subsumption.{ StillmanSubsumptionAlgor
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
-import at.logic.gapt.expr.types.->
+import at.logic.gapt.expr.->
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ ResultCommand, DataCommand }
 import at.logic.gapt.provers.atp.Definitions._

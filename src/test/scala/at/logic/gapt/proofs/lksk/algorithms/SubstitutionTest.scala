@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lksk.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms._

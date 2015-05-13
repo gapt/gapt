@@ -6,7 +6,7 @@
 package at.logic.gapt.language.hol.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.hol.HOLSubstitution
 import org.junit.runner.RunWith
 import org.specs2.mutable._

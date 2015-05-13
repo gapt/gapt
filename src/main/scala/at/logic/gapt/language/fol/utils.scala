@@ -6,7 +6,7 @@ package at.logic.gapt.language.fol
 
 import at.logic.gapt.language.fol.replacements.getAllPositionsFOL
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.symbols.getRenaming
+import at.logic.gapt.expr.getRenaming
 import at.logic.gapt.expr.{ rename => renameLambda }
 import at.logic.gapt.language.hol.{ getMatrix => getMatrixHOL, HOLPosition }
 import at.logic.gapt.utils.logging.Logger

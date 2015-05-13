@@ -7,7 +7,7 @@ package at.logic.gapt.formats.latex
 
 import at.logic.gapt.formats.{ HOLTermExporter, OutputExporter }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.schema.indexedOmegaVar
 
 trait HOLTermLatexExporter extends OutputExporter with HOLTermExporter {

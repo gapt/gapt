@@ -1,13 +1,13 @@
 package at.logic.gapt.algorithms.rewriting
 
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.StringSymbol
 
 /**
  * performs renaming of constants, functions and predicate symbols

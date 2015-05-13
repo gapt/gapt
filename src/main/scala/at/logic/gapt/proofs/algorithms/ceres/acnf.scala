@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.algorithms.ceres.UnfoldProjectionTerm._
 import at.logic.gapt.proofs.algorithms.ceres._
 import clauseSchema._

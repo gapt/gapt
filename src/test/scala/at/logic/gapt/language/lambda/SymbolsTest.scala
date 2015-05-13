@@ -11,8 +11,6 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import symbols._
-
 @RunWith( classOf[JUnitRunner] )
 class SymbolsTest extends SpecificationWithJUnit {
   "Equality between symbols" should {

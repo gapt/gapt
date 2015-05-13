@@ -8,8 +8,8 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.{ getStatistics, deleteTautologies, eliminateDefinitions }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.symbols._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.latex.SequentsListLatexExporter
 import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter

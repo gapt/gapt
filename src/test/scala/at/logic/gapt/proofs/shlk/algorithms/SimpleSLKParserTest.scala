@@ -9,7 +9,7 @@ import java.io.InputStreamReader
 
 import at.logic.gapt.formats.shlk_parsing.SHLK
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types.To
+import at.logic.gapt.expr.To
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.lk._
 import org.junit.runner.RunWith

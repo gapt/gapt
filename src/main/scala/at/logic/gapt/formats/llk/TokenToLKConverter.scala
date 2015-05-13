@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lk.algorithms.{ applySubstitution, AtomicExpansion, 
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
 import at.logic.gapt.formats.hlk.{ ast, DeclarationParser, HLKHOLParser }
 import at.logic.gapt.formats.hlk.ast.LambdaAST
-import at.logic.gapt.expr.types.{ To, TA }
+import at.logic.gapt.expr.{ To, TA }
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._

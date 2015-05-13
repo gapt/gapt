@@ -1,5 +1,5 @@
 package at.logic.gapt.expr
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import org.specs2.mutable._
 
 class LogicalConstantsTest extends Specification {

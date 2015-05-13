@@ -7,7 +7,7 @@ package at.logic.gapt.formats.xml
 
 import at.logic.gapt.formats.ExportingException
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 
 trait HOLTermXMLExporter {
   def exportTerm( term: LambdaExpression ): scala.xml.Elem = term match {

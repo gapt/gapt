@@ -11,7 +11,7 @@ import at.logic.gapt.language.hol.{ freeHOVariables, containsQuantifier, HOLSubs
 import at.logic.gapt.proofs.lk.algorithms.{ AtomicExpansion, regularize }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.expr.symbols.{ StringSymbol, SymbolA }
+import at.logic.gapt.expr.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.resolution.algorithms.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._

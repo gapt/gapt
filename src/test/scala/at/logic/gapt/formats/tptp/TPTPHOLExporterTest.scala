@@ -5,7 +5,7 @@ import org.specs2.runner.JUnitRunner
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.execute.Success
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 
 class TPTPHOLExporterTest extends SpecificationWithJUnit {

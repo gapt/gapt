@@ -2,7 +2,7 @@
 package at.logic.gapt.proofs.shlk.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.algorithms.solve
 import at.logic.gapt.proofs.lk.base.FSequent
 import org.junit.runner.RunWith

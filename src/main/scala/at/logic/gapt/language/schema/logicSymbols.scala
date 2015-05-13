@@ -1,7 +1,7 @@
 
 package at.logic.gapt.language.schema.logicSymbols
 
-import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr._
 
 case object BigAndSymbol extends SymbolA {
   def unique = "BigAndSymbol"

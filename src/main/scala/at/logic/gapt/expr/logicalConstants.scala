@@ -1,6 +1,4 @@
 package at.logic.gapt.expr
-import types._
-import symbols._
 
 abstract class LogicalC( val name: String ) {
   val symbol = StringSymbol( name )

@@ -7,14 +7,14 @@
 
 package at.logic.gapt.formats.simple
 
-import at.logic.gapt.expr.types.{ To, FunctionType }
+import at.logic.gapt.expr.{ To, FunctionType }
 import at.logic.gapt.formats.HOLParser
 import at.logic.gapt.expr._
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator._
 
-trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
+trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.gapt.expr.Parsers {
   def goal = term
 
   def term: Parser[LambdaExpression] = ( non_formula | formula )

@@ -8,8 +8,8 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.language.hol.toLatexString
-import at.logic.gapt.expr.symbols._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.acyclicGraphs._
 import at.logic.gapt.proofs.lk.base._
 import scala.collection.immutable.HashSet

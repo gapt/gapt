@@ -7,7 +7,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import scala.util.parsing.combinator.PackratParsers
 import scala.collection.immutable.HashSet
-import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr.StringSymbol
 
 /**
  * Parser for first order formulas in the prover 9 format.

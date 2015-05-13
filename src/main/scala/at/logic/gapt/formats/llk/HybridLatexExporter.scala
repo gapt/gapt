@@ -2,7 +2,7 @@ package at.logic.gapt.formats.llk
 
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, LabelledSequent }

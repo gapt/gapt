@@ -23,8 +23,8 @@ import java.io.File.separator
 import at.logic.gapt.formats.language.xml._
 import scala.xml.Utility.trim
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
-import at.logic.gapt.expr.symbols.StringSymbol
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.StringSymbol
 
 @RunWith( classOf[JUnitRunner] )
 class HOLTermExporterTest extends SpecificationWithJUnit {

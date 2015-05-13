@@ -8,7 +8,7 @@ package at.logic.gapt.language.hol.algorithms.unification
 
 import at.logic.calculi.lk.base.types.FSequent
 import at.logic.gapt.language.hol.{Formula}
-import at.logic.gapt.expr.symbols.{VariableStringSymbol, VariableSymbolA}
+import at.logic.gapt.expr.{VariableStringSymbol, VariableSymbolA}
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.parsing.readers.StringReader
 import at.logic.gapt.algorithms.diophantine.{LankfordSolver, Vector}

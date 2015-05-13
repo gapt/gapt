@@ -1,8 +1,8 @@
 package at.logic.gapt.language.fol.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.symbols.{ StringSymbol, SymbolA }
-import at.logic.gapt.expr.types.{ FunctionType, TA, Ti, To }
+import at.logic.gapt.expr.{ StringSymbol, SymbolA }
+import at.logic.gapt.expr.{ FunctionType, TA, Ti, To }
 import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.language.hol.{ HOLSubstitution, Replacement, getAllPositions2, normalizeFreeVariables }
 import at.logic.gapt.language.schema._

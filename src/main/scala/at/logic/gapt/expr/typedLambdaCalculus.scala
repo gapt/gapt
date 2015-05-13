@@ -7,8 +7,6 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.language.hol.HOLPosition
 import at.logic.gapt.language.hol.HOLPosition._
-import symbols._
-import types._
 
 // Collects all methods that operate on LambdaExpressions
 abstract class LambdaExpression {

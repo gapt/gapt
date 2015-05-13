@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk.algorithms
 import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.algorithms.convertHolToFol
 import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import org.junit.runner.RunWith

@@ -8,8 +8,6 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import types._
-import symbols._
 import scala.collection.immutable.{ HashSet, HashMap }
 import scala.math.signum
 

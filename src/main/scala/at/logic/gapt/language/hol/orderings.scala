@@ -1,6 +1,6 @@
 package at.logic.gapt.language.hol
 
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 
 /**

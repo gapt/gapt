@@ -19,8 +19,8 @@ import at.logic.gapt.expr._
 //import at.logic.gapt.expr.typedLambdaCalculus._
 import java.io.InputStreamReader
 
-import at.logic.gapt.expr.symbols._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 
 import scala.collection.mutable.{ Map => MMap }
 //import at.logic.calculi.lk.quantificationRules._
@@ -29,7 +29,7 @@ import scala.collection.mutable.{ Map => MMap }
 //import at.logic.gapt.language.hol.logicSymbols.StringSymbol
 //import at.logic.gapt.language.hol.Imp
 //import at.logic.gapt.language.hol.Neg
-//import at.logic.gapt.expr.symbols.VariableStringSymbol
+//import at.logic.gapt.expr.VariableStringSymbol
 
 object SCHOLParser {
 
@@ -67,7 +67,7 @@ object SCHOLParser {
       case x: AnyRef                   => throw new Exception( x.toString )
     }
 
-    class SimpleSCHOLParser extends JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
+    class SimpleSCHOLParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
       def line: Parser[List[Unit]] = rep( cmappingBase )
       def cmappingBase: Parser[Unit] = ( "comment" ~ "\"[\"]*\"" ) ^^ { case x => () } | mappingBase
       def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {

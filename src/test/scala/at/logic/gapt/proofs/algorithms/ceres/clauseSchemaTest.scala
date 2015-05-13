@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.language.schema._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import java.io.File.separator
 import org.junit.runner.RunWith
 import org.specs2.execute.Success

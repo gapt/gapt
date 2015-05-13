@@ -13,8 +13,8 @@ import scala.Tuple4
 import at.logic.gapt.language.schema.IntZero
 import at.logic.gapt.expr._
 import scala.Tuple2
-import at.logic.gapt.expr.symbols.StringSymbol
-import at.logic.gapt.expr.types.{ To, FunctionType, Tindex, Ti }
+import at.logic.gapt.expr.StringSymbol
+import at.logic.gapt.expr.{ To, FunctionType, Tindex, Ti }
 import at.logic.gapt.proofs.lk._
 
 object sFOParser {
@@ -37,7 +37,7 @@ object sFOParser {
       case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
         throw new Exception( "Error in sFOParser.parseSequent : " + x.toString )
     }
-    class SequentParser extends JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
+    class SequentParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
       def term: Parser[SchemaExpression] = ( non_formula | formula )
       def formula: Parser[SchemaFormula] = ( atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant ) ^? { case trm: SchemaFormula => trm }
@@ -193,7 +193,7 @@ object sFOParser {
         throw new Exception( x.toString )
     }
 
-    //    class ParserTxt extends JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
+    //    class ParserTxt extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
     //
     //      def line: Parser[List[Unit]] = repsep(mapping,"\n")
     //
@@ -204,7 +204,7 @@ object sFOParser {
     //      }
     //    }
 
-    class SimpleSLKParser extends JavaTokenParsers with at.logic.gapt.expr.types.Parsers {
+    class SimpleSLKParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
       def line: Parser[List[Unit]] = rep( mappingBase )
       def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
         case l ~ ":" ~ p => {

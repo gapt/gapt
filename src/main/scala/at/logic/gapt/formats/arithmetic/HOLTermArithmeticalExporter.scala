@@ -6,7 +6,7 @@
 package at.logic.gapt.formats.arithmetic
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.symbols.SymbolA
+import at.logic.gapt.expr.SymbolA
 import at.logic.gapt.formats.{ HOLTermExporter, OutputExporter }
 import at.logic.gapt.language.hol.VarOrConst
 import at.logic.gapt.language.schema.{ BigOr, BigAnd }

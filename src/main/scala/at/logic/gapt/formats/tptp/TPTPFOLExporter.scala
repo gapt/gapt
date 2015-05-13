@@ -6,7 +6,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.language.fol.algorithms.{ convertHolToFol, reduceHolToFol }
-import at.logic.gapt.expr.symbols.{ StringSymbol, SymbolA }
+import at.logic.gapt.expr.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.lk.base.FSequent
 import scala.collection.immutable.HashMap
 import at.logic.gapt.expr._

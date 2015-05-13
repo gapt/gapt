@@ -2,8 +2,6 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
-import symbols._
-import types._
 
 trait Formula extends LambdaExpression
 

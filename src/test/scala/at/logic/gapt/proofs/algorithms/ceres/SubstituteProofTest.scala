@@ -8,8 +8,8 @@ import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import java.io.File.separator
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.expr.types._
-import at.logic.gapt.expr.symbols._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 
 /**
  * Created with IntelliJ IDEA.

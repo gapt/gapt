@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lk.{ UnaryLKProof, BinaryLKProof }
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.gapt.proofs.shlk.AndEquivalenceRule1._
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.expr.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, _ }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.BetaReduction._
