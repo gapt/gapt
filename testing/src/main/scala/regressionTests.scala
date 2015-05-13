@@ -9,6 +9,7 @@ import at.logic.gapt.proofs.expansionTrees.toDeep
 import at.logic.gapt.proofs.lk.algorithms.{ solve, containsEqualityReasoning }
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
+import scala.collection.JavaConversions
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -72,4 +73,15 @@ object RegressionTests extends App {
   }
 
   XML.save( "target/regression-test-results.xml", toJUnitXml( testCases ), "UTF-8" )
+
+  // This should not contain any non-daemon threads except main.
+  println( "List of all running threads:" )
+  import JavaConversions._
+  for ( ( thread, stackTrace ) <- Thread.getAllStackTraces ) {
+    println( s"  ${thread.getName} (isDaemon = ${thread.isDaemon})" )
+    for ( stackFrame <- stackTrace ) println( s"    $stackFrame" )
+  }
+
+  // Exit even if there are still threads running.
+  System.exit( 0 )
 }
