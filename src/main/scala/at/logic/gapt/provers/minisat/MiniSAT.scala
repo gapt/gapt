@@ -81,6 +81,9 @@ class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 
       trace( "MiniSAT result: " + sat )
 
+      temp_in.delete()
+      temp_out.delete()
+
       readDIMACS( sat, helper )
     }
 }
