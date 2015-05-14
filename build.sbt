@@ -106,7 +106,6 @@ lazy val testing = (project in file("testing")).
     name := "gapt-testing",
     description := "gapt extended regression tests",
 
-    baseDirectory in Test := file("."),
     baseDirectory in run := file("."),
     javaOptions ++= Seq("-Xss30m", "-Xmx4G"),
     fork := true
