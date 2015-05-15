@@ -1,4 +1,5 @@
 package at.logic.gapt.utils.executionModels
+import at.logic.gapt.utils.logging.Logger
 import scala.concurrent.duration._
 
 package timeout {
@@ -21,7 +22,7 @@ package timeout {
    *   case ... other exception
    * }
    */
-  object withTimeout {
+  object withTimeout extends Logger {
     @deprecated
     def apply[T]( to: Long )( f: => T ): T = apply( to millis )( f )
 
@@ -42,7 +43,10 @@ package timeout {
       t.stop()
 
       // wait until variable result has been written
-      t.join()
+      t.join( 1.second toMillis )
+      if ( t.isAlive ) {
+        warn( "Worker thread still alive; stacktrace:\n" + t.getStackTrace.mkString( "\n" ) )
+      }
 
       result match {
         case Left( t )      => throw t
