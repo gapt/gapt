@@ -173,8 +173,6 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
           } catch {
             case e @ LKQuantifierException( root, occf, term, formula, qvar ) =>
               throw new LKUnaryRuleCreationException( "Substitution errror: " + s + ":\n" + e.getMessage, rp, List( occf, formula ) )
-            case e: Throwable =>
-              throw new Exception( "Unhandled error:" + e.getMessage, e )
           }
       }
       map( proof.root.toFClause ) = ret
