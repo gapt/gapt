@@ -44,7 +44,7 @@ class ProofDatabase( val Definitions: Map[LambdaExpression, LambdaExpression],
   }
 }
 
-class TestException( val formulas: ( LambdaExpression, Formula ) ) extends Exception
+class TestException( val formulas: ( LambdaExpression, HOLFormula ) ) extends Exception
 
 // performs the matching necessary to compute substitution terms/eigenvars
 object Match {
@@ -124,7 +124,7 @@ object XMLParser {
      * @return   A list of Formulas corresponding to the list of nodes.
      * @see XMLParser.XMLFormulaParser
      */
-    def nodesToFormulas( ns: List[Node] ): List[Formula] =
+    def nodesToFormulas( ns: List[Node] ): List[HOLFormula] =
       ns.map( c => ( new NodeReader( c ) with XMLFormulaParser ).getFormula() )
 
     /**
@@ -272,7 +272,7 @@ object XMLParser {
      * @return A List of Formula objects corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not a &lt;formulalist&gt; Node.
      */
-    def getFormulaList(): List[Formula] = getFormulaList( getInput() )
+    def getFormulaList(): List[HOLFormula] = getFormulaList( getInput() )
 
     /**
      * If the Node n is a &lt;sequent&gt; element,
@@ -353,9 +353,9 @@ object XMLParser {
      *                              trait XMLVariableListParser extends XMLNodeParser {
      *
      */
-    def getNameTermDefinition(): ( String, ( List[Var], Formula ) ) = getNameTermDefinition( getInput() )
-    def getNameTermDefinition( n: Node ): ( String, ( List[Var], Formula ) ) = ( n.attribute( "symbol" ).get.head.text, getTermDefinitionRec( n ) )
-    def getTermDefinitionRec( n: Node ): ( List[Var], Formula ) =
+    def getNameTermDefinition(): ( String, ( List[Var], HOLFormula ) ) = getNameTermDefinition( getInput() )
+    def getNameTermDefinition( n: Node ): ( String, ( List[Var], HOLFormula ) ) = ( n.attribute( "symbol" ).get.head.text, getTermDefinitionRec( n ) )
+    def getTermDefinitionRec( n: Node ): ( List[Var], HOLFormula ) =
       (
         ( n.child ).filter( ( m: Node ) =>
           trim( m ) match { case <variablelist>{ ns @ _* }</variablelist> => true; case _ => false } ).map( c =>
@@ -367,17 +367,17 @@ object XMLParser {
             val args = XMLUtils.nodesToAbstractTerms( c.child.toList )
             HOLAtom( Const( c.attribute( "symbol" ).get.head.text, FunctionType( To, args.map( _.exptype ) ) ), args )
           } ).head )
-    def getNameFormulaDefinition(): ( String, ( List[Var], Formula ) ) = getNameFormulaDefinition( getInput() )
-    def getNameFormulaDefinition( n: Node ): ( String, ( List[Var], Formula ) ) = ( n.attribute( "symbol" ).get.head.text, getFormulaDefinitionRec( n ) )
-    def getFormulaDefinitionRec( n: Node ): ( List[Var], Formula ) = (
+    def getNameFormulaDefinition(): ( String, ( List[Var], HOLFormula ) ) = getNameFormulaDefinition( getInput() )
+    def getNameFormulaDefinition( n: Node ): ( String, ( List[Var], HOLFormula ) ) = ( n.attribute( "symbol" ).get.head.text, getFormulaDefinitionRec( n ) )
+    def getFormulaDefinitionRec( n: Node ): ( List[Var], HOLFormula ) = (
       ( n.child ).filter( ( m: Node ) =>
         trim( m ) match { case <variablelist>{ ns @ _* }</variablelist> => true; case _ => false } ).map( c =>
         ( new NodeReader( c ) with XMLVariableListParser ).getVariableList() ).head,
       ( n.child ).filter( ( m: Node ) =>
         trim( m ) match { case <variablelist>{ ns @ _* }</variablelist> => false; case _ => true } ).map( c =>
         ( new NodeReader( c ) with XMLFormulaParser ).getFormula() ).head )
-    def getIndirectDefinition(): ( Formula, Formula ) = getIndirectDefinitionRec( getInput() )
-    def getIndirectDefinitionRec( ns: Node ): ( Formula, Formula ) = (
+    def getIndirectDefinition(): ( HOLFormula, HOLFormula ) = getIndirectDefinitionRec( getInput() )
+    def getIndirectDefinitionRec( ns: Node ): ( HOLFormula, HOLFormula ) = (
       ( new NodeReader( ns.child( 1 ) ) with XMLFormulaParser ).getFormula(),
       ( new NodeReader( ns.child( 2 ) ) with XMLFormulaParser ).getFormula() )
 
@@ -476,7 +476,7 @@ object XMLParser {
           // check whether conclusion has been correctly constructed
           assert( root multiSetEquals conc, triple._1.root.toString + " does not equal " + conc.toString + "(rule type " + rt + ")" )
           // check whether the permutation of the formula occurrences corresponds to the conclusion
-          def checkPerm( perm: Array[FormulaOccurrence], list: Seq[Formula] ) =
+          def checkPerm( perm: Array[FormulaOccurrence], list: Seq[HOLFormula] ) =
             perm.zip( perm.indices ).foreach( p => assert( p._1.formula == list.apply( p._2 ),
               "formula at occurrence " + p._1.formula.toString +
                 " is not equal to formula in list position " + p._2 + ": " +
@@ -1049,7 +1049,7 @@ object XMLParser {
      * @throws ParsingException If the Node provided by getInput() is not one of the elements
      *                          defined by the &amp;formula; entity.
      */
-    def getFormula(): Formula = getFormula( getInput() )
+    def getFormula(): HOLFormula = getFormula( getInput() )
 
     /**
      *  If n is one of the elements defined by the
@@ -1060,7 +1060,7 @@ object XMLParser {
      * @throws ParsingException If n is not one of the elements
      *                          defined by the &amp;formula; entity.
      */
-    def getFormula( n: Node ): Formula =
+    def getFormula( n: Node ): HOLFormula =
       trim( n ) match {
         case <constantatomformula>{ ns @ _* }</constantatomformula> => n.attribute( "definition" ) match {
           case Some( seq ) =>
@@ -1077,7 +1077,7 @@ object XMLParser {
         case <variableatomformula>{ ns @ _* }</variableatomformula> => HOLAtom( ( new NodeReader( ns.head ) with XMLSetTermParser ).getSetTerm().asInstanceOf[Var],
           XMLUtils.nodesToAbstractTerms( ns.toList.tail ) )
         case <definedsetformula>{ ns @ _* }</definedsetformula> => App( ( new NodeReader( ns.head ) with XMLSetTermParser ).getSetTerm().asInstanceOf[LambdaExpression],
-          XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[Formula]
+          XMLUtils.nodesToAbstractTerms( ns.toList.tail ) ).asInstanceOf[HOLFormula]
         case <conjunctiveformula>{ ns @ _* }</conjunctiveformula> => createConjunctiveFormula( n.attribute( "type" ).get.head.text,
           XMLUtils.nodesToFormulas( ns.toList ) )
         case <quantifiedformula>{ ns @ _* }</quantifiedformula> =>
@@ -1098,7 +1098,7 @@ object XMLParser {
         case _ => throw new ParsingException( "Could not parse XML: " + n.toString )
       }
 
-    private def createConjunctiveFormula( sym: String, formulas: List[Formula] ): Formula =
+    private def createConjunctiveFormula( sym: String, formulas: List[HOLFormula] ): HOLFormula =
       {
         sym match {
           case "and"  => And( formulas.head, formulas.last )
@@ -1109,7 +1109,7 @@ object XMLParser {
         }
       }
 
-    private def createQuantifiedFormula( sym: String, variable: Var, formula: Formula ): Formula =
+    private def createQuantifiedFormula( sym: String, variable: Var, formula: HOLFormula ): HOLFormula =
       sym match {
         case "all"     => All( variable, formula )
         case "exists"  => Ex( variable, formula )
@@ -1224,7 +1224,7 @@ object XMLParser {
      */
     def getSetTerm(): LambdaExpression = getSetTerm( getInput() )
 
-    def compose( vars: List[Var], f: Formula ): LambdaExpression = vars match {
+    def compose( vars: List[Var], f: HOLFormula ): LambdaExpression = vars match {
       case Nil     => f
       case h :: tl => Abs( h, compose( tl, f ) )
     }

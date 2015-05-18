@@ -48,7 +48,7 @@ object PopupMenu {
   }
 
   // PopupMenu for Expansion Trees.
-  def apply( det: DrawExpansionTree, f: Formula, component: Component, x: Int, y: Int ) {
+  def apply( det: DrawExpansionTree, f: HOLFormula, component: Component, x: Int, y: Int ) {
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "Close" ) { det.close( f ) } )
       contents += new MenuItem( Action( "Open" ) { det.open( f ) } )
@@ -79,7 +79,7 @@ object PopupMenu {
     popupMenu.show( ced.titleLabel, x, y )
   }
 
-  def firstQuantifiers( f: Formula ): List[Formula] = f match {
+  def firstQuantifiers( f: HOLFormula ): List[HOLFormula] = f match {
     case HOLAtom( _, _ )          => Nil
     case And( l, r )              => firstQuantifiers( l ) ++ firstQuantifiers( r )
     case Imp( l, r )              => firstQuantifiers( l ) ++ firstQuantifiers( r )
@@ -88,7 +88,7 @@ object PopupMenu {
     case All( _, _ ) | Ex( _, _ ) => List( f )
   }
 
-  def expandRecursive( det: DrawExpansionTree, f: Formula ): Unit = f match {
+  def expandRecursive( det: DrawExpansionTree, f: HOLFormula ): Unit = f match {
     case HOLAtom( _, _ ) =>
     case And( l, r ) =>
       expandRecursive( det, l ); expandRecursive( det, r )

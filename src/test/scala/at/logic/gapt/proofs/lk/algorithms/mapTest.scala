@@ -57,8 +57,8 @@ class mapTest extends SpecificationWithJUnit {
       val cut = CutRule( i1a, i2, i1a.root.succedent( 0 ), i2.root.antecedent( 0 ) )
 
       def fun( e: LambdaExpression ): LambdaExpression = e match {
-        case f: Formula => convertHolToFol.convertFormula( f )
-        case _          => convertHolToFol.convertTerm( e )
+        case f: HOLFormula => convertHolToFol.convertFormula( f )
+        case _             => convertHolToFol.convertTerm( e )
       }
 
       val ( cutproof, _ ) = map_proof( cut, fun )

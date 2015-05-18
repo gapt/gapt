@@ -5,10 +5,10 @@ import at.logic.gapt.expr._
 /* A trait describing propositional interpretations */
 trait Interpretation {
   // Interpret an atom.
-  def interpretAtom( atom: Formula ): Boolean
+  def interpretAtom( atom: HOLFormula ): Boolean
 
   // Interpret an arbitrary formula.
-  def interpret( f: Formula ): Boolean = f match {
+  def interpret( f: HOLFormula ): Boolean = f match {
     case And( f1, f2 )   => interpret( f1 ) && interpret( f2 )
     case Or( f1, f2 )    => interpret( f1 ) || interpret( f2 )
     case Imp( f1, f2 )   => !interpret( f1 ) || interpret( f2 )
@@ -18,8 +18,8 @@ trait Interpretation {
 
 }
 
-class MapBasedInterpretation( val model: Map[Formula, Boolean] ) extends Interpretation {
-  def interpretAtom( atom: Formula ) = model.get( atom ) match {
+class MapBasedInterpretation( val model: Map[HOLFormula, Boolean] ) extends Interpretation {
+  def interpretAtom( atom: HOLFormula ) = model.get( atom ) match {
     case Some( b ) => b
     case None      => false
   }

@@ -20,7 +20,7 @@ import at.logic.gapt.expr.FunctionType
 import at.logic.gapt.formats.llk.HybridLatexExporter
 
 object LKtoLKskc extends Logger {
-  def fo2occ( f: Formula ) = factory.createFormulaOccurrence( f, Nil )
+  def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Nil )
 
   def apply( proof: LKProof ): LKProof = apply( proof, getCutAncestors( proof ) )
 
@@ -313,13 +313,13 @@ object LKtoLKskc extends Logger {
   }
 
   def handleEquationRule(
-    constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => LKProof,
+    constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof,
     p1: LKProof,
     p2: LKProof,
     s: Sequent,
     a1: FormulaOccurrence,
     a2: FormulaOccurrence,
-    m: Formula,
+    m: HOLFormula,
     old_proof: LKProof,
     subst_terms: Map[FormulaOccurrence, Label],
     cut_occs: Set[FormulaOccurrence] ) = {
@@ -353,7 +353,7 @@ object LKtoLKskc extends Logger {
   def copyWeakQuantRule( proof: LKProof, subst_terms: Map[FormulaOccurrence, Label],
                          parent: LKProof, aux: FormulaOccurrence, main: FormulaOccurrence,
                          term: LambdaExpression, end_seq: Sequent, cut_occs: Set[FormulaOccurrence],
-                         constructor: ( LKProof, FormulaOccurrence, Formula, LambdaExpression ) => LKProof ) = {
+                         constructor: ( LKProof, FormulaOccurrence, HOLFormula, LambdaExpression ) => LKProof ) = {
     val new_label_map = copyMapFromAncestor( end_seq.antecedent ++ end_seq.succedent, subst_terms )
     val r = rec( parent, new_label_map, cut_occs )
     val sk_proof = constructor( r._1, r._2( aux ), main.formula, term )
@@ -364,7 +364,7 @@ object LKtoLKskc extends Logger {
   def transformWeakQuantRule( proof: LKProof, subst_terms: Map[FormulaOccurrence, Label],
                               parent: LKProof, aux: FormulaOccurrence, main: FormulaOccurrence,
                               term: LambdaExpression, context: Seq[FormulaOccurrence], cut_occs: Set[FormulaOccurrence],
-                              constructor: ( LKProof, LabelledFormulaOccurrence, Formula, LambdaExpression, Boolean ) => LKProof ) = {
+                              constructor: ( LKProof, LabelledFormulaOccurrence, HOLFormula, LambdaExpression, Boolean ) => LKProof ) = {
     val new_label_map = copyMapFromAncestor( context, subst_terms ) + Tuple2( aux, subst_terms( main ) + term )
     val r = rec( parent, new_label_map, cut_occs )
     val sk_proof = constructor( r._1, r._2( aux ), main.formula, term,

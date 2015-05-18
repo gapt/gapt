@@ -61,7 +61,7 @@ object getCutAncestors {
    * @param predicate a function returning true if a cut-ancestor formula should be included in the set
    * @return a set of ancestor (formula) occurrences
    */
-  def apply( p: LKProof, predicate: Formula => Boolean ): Set[FormulaOccurrence] = p match {
+  def apply( p: LKProof, predicate: HOLFormula => Boolean ): Set[FormulaOccurrence] = p match {
     case CutRule( p1, p2, _, a1, a2 ) => if ( predicate( a1.formula ) ) {
       getCutAncestors( p1, predicate ) ++ getCutAncestors( p2, predicate ) ++ getAncestors( a1 ) ++ getAncestors( a2 )
     } else {
@@ -269,7 +269,7 @@ object eliminateDefinitions {
   def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       constructor: ( LKProof, Formula ) => LKProof with PrincipalFormulas,
+                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
@@ -285,8 +285,8 @@ object eliminateDefinitions {
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
 
-  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: Formula,
-                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => BinaryLKProof with AuxiliaryFormulas ) = {
+  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: HOLFormula,
+                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => BinaryLKProof with AuxiliaryFormulas ) = {
     // first left, then right
     val rec1 = rec( p1 )
     val rec2 = rec( p2 )
@@ -472,7 +472,7 @@ object regularize {
                        old_parent: LKProof,
                        old_proof: LKProof,
                        vars: List[Var],
-                       constructor: ( LKProof, Formula ) => LKProof with PrincipalFormulas,
+                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula )
     ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
@@ -492,8 +492,8 @@ object regularize {
   def handleEquational( r: BinaryLKProof with AuxiliaryFormulas,
                         p1: LKProof, p2: LKProof,
                         a1: FormulaOccurrence, a2: FormulaOccurrence,
-                        m: Formula, vars: List[Var],
-                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => BinaryLKProof with AuxiliaryFormulas ) = {
+                        m: HOLFormula, vars: List[Var],
+                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => BinaryLKProof with AuxiliaryFormulas ) = {
     // first left, then right
     val rec1 = recApply( p1, vars )
     val rec2 = recApply( p2, rec1._2 )

@@ -28,7 +28,7 @@ import scala.xml.SAXParseException
 @RunWith( classOf[JUnitRunner] )
 class XMLParserTest extends SpecificationWithJUnit {
 
-  implicit def fo2occ( f: Formula ) = factory.createFormulaOccurrence( f, Nil )
+  implicit def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Nil )
   implicit def fseq2seq( s: FSequent ) = Sequent( s._1 map fo2occ, s._2 map fo2occ )
   // helper to create 0-ary predicate constants
   def pc( sym: String ) = fo2occ( pcf( sym ) )
@@ -206,7 +206,7 @@ class XMLParserTest extends SpecificationWithJUnit {
                   ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) ) ),
                   Var( "X", Ti -> To ) ::
                     Var( "Y", Ti -> To ) :: Nil ),
-                  Var( "z", Ti ) ) ).asInstanceOf[Formula] ) ) ) //TODO: cast should not be neccessary
+                  Var( "z", Ti ) ) ).asInstanceOf[HOLFormula] ) ) ) //TODO: cast should not be neccessary
                   ) )
     }
     // BUG in specs2

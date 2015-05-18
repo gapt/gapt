@@ -47,7 +47,7 @@ class reduceHolToFol {
    * @param formula a HOL formula to convert
    * @return the reduced FOL formula
    */
-  def apply( formula: Formula ): FOLFormula =
+  def apply( formula: HOLFormula ): FOLFormula =
     //inner cast needed to call the correct apply method
     reduceHolToFol( formula.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
 
@@ -83,7 +83,7 @@ class reduceHolToFol {
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced formula and the updated scope
    */
-  def apply( formula: Formula, scope: Map[LambdaExpression, StringSymbol], id: { def nextId: Int } ): ( FOLFormula, Map[LambdaExpression, StringSymbol] ) = {
+  def apply( formula: HOLFormula, scope: Map[LambdaExpression, StringSymbol], id: { def nextId: Int } ): ( FOLFormula, Map[LambdaExpression, StringSymbol] ) = {
     val ( scope_, qterm ) = replaceAbstractions( formula, scope, id )
     ( apply_( qterm ).asInstanceOf[FOLFormula], scope_ )
   }
@@ -110,13 +110,13 @@ class reduceHolToFol {
    * @return a pair of the reduced expression and the updated scope
    */
   def apply( s: FSequent, scope: Map[LambdaExpression, StringSymbol], id: { def nextId: Int } ): ( FSequent, Map[LambdaExpression, StringSymbol] ) = {
-    val ( scope1, ant ) = s.antecedent.foldLeft( ( scope, List[Formula]() ) )( ( r, formula ) => {
+    val ( scope1, ant ) = s.antecedent.foldLeft( ( scope, List[HOLFormula]() ) )( ( r, formula ) => {
       val ( scope_, f_ ) = replaceAbstractions( formula, r._1, id )
-      ( scope_, f_.asInstanceOf[Formula] :: r._2 )
+      ( scope_, f_.asInstanceOf[HOLFormula] :: r._2 )
     } )
-    val ( scope2, succ ) = s.succedent.foldLeft( ( scope1, List[Formula]() ) )( ( r, formula ) => {
+    val ( scope2, succ ) = s.succedent.foldLeft( ( scope1, List[HOLFormula]() ) )( ( r, formula ) => {
       val ( scope_, f_ ) = replaceAbstractions( formula, r._1, id )
-      ( scope_, f_.asInstanceOf[Formula] :: r._2 )
+      ( scope_, f_.asInstanceOf[HOLFormula] :: r._2 )
     } )
 
     ( FSequent( ant.reverse map apply_, succ.reverse map apply_ ), scope ++ scope2 )
@@ -139,7 +139,7 @@ class reduceHolToFol {
 
   }
 
-  private def apply_( f: Formula ): FOLFormula =
+  private def apply_( f: HOLFormula ): FOLFormula =
     apply_( f.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
 
   //assumes we are on the logical level of the hol formula - all types are mapped to i, i>o or i>i>o respectively
@@ -269,15 +269,15 @@ class replaceAbstractions {
   }
 
   def apply( f: FSequent, scope: ConstantsMap, id: { def nextId: Int } ): ( ConstantsMap, FSequent ) = {
-    val ( scope1, ant ) = f.antecedent.foldLeft( ( scope, List[Formula]() ) )( ( rec, formula ) => {
+    val ( scope1, ant ) = f.antecedent.foldLeft( ( scope, List[HOLFormula]() ) )( ( rec, formula ) => {
       val ( scope_, f ) = rec
       val ( nscope, nformula ) = replaceAbstractions( formula, scope_, id )
-      ( nscope, nformula.asInstanceOf[Formula] :: f )
+      ( nscope, nformula.asInstanceOf[HOLFormula] :: f )
     } )
-    val ( scope2, succ ) = f.succedent.foldLeft( ( scope1, List[Formula]() ) )( ( rec, formula ) => {
+    val ( scope2, succ ) = f.succedent.foldLeft( ( scope1, List[HOLFormula]() ) )( ( rec, formula ) => {
       val ( scope_, f ) = rec
       val ( nscope, nformula ) = replaceAbstractions( formula, scope_, id )
-      ( nscope, nformula.asInstanceOf[Formula] :: f )
+      ( nscope, nformula.asInstanceOf[HOLFormula] :: f )
     } )
 
     ( scope2, FSequent( ant.reverse, succ.reverse ) )
@@ -294,8 +294,8 @@ class replaceAbstractions {
     apply( e, Map[LambdaExpression, StringSymbol](), counter )._2
   }
 
-  def apply( formula: Formula ): Formula =
-    apply( formula.asInstanceOf[LambdaExpression] ).asInstanceOf[Formula]
+  def apply( formula: HOLFormula ): HOLFormula =
+    apply( formula.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 
   // scope and id are used to give the same names for new functions and constants between different calls of this method
   def apply( e: LambdaExpression, scope: ConstantsMap, id: { def nextId: Int } ): ( ConstantsMap, LambdaExpression ) = e match {
@@ -306,10 +306,10 @@ class replaceAbstractions {
     //quantifiers should be kept
     case All( x, f ) =>
       val ( scope_, e_ ) = replaceAbstractions( f, scope, id )
-      ( scope_, All( x, e_.asInstanceOf[Formula] ) )
+      ( scope_, All( x, e_.asInstanceOf[HOLFormula] ) )
     case Ex( x, f ) =>
       val ( scope_, e_ ) = replaceAbstractions( f, scope, id )
-      ( scope_, Ex( x, e_.asInstanceOf[Formula] ) )
+      ( scope_, Ex( x, e_.asInstanceOf[HOLFormula] ) )
     case App( s, t ) =>
       val ( scope1, s1 ) = replaceAbstractions( s, scope, id )
       val ( scope2, t1 ) = replaceAbstractions( t, scope1, id )
@@ -351,7 +351,7 @@ class undoReplaceAbstractions {
   def apply( fs: FSequent, map: ConstantsMap ): FSequent = FSequent(
     fs.antecedent.map( apply( _, map ) ),
     fs.succedent.map( apply( _, map ) ) )
-  def apply( f: Formula, map: ConstantsMap ): Formula = apply( f.asInstanceOf[LambdaExpression], map ).asInstanceOf[Formula]
+  def apply( f: HOLFormula, map: ConstantsMap ): HOLFormula = apply( f.asInstanceOf[LambdaExpression], map ).asInstanceOf[HOLFormula]
   def apply( e: LambdaExpression, map: ConstantsMap ): LambdaExpression = {
     val stringsmap = map.map( x => ( x._2.toString(), x._1 ) ) //inverting the map works because the symbols are unique
     getAllPositions2( e ).foldLeft( e )( ( exp, position ) =>
@@ -372,14 +372,14 @@ object convertHolToFol extends convertHolToFol
  */
 class convertHolToFol {
   def apply( e: LambdaExpression ): FOLExpression = e match {
-    case f: Formula => convertFormula( f )
-    case _          => convertTerm( e )
+    case f: HOLFormula => convertFormula( f )
+    case _             => convertTerm( e )
   }
-  def apply( e: Formula ): FOLFormula = convertFormula( e )
+  def apply( e: HOLFormula ): FOLFormula = convertFormula( e )
   def apply( fs: FSequent ): FSequent =
     FSequent( fs.antecedent.map( apply ), fs.succedent.map( apply ) )
 
-  def convertFormula( e: Formula ): FOLFormula = e match {
+  def convertFormula( e: HOLFormula ): FOLFormula = e match {
     case HOLAtom( Const( sym, exptype ), args ) if ( args.filterNot( _.exptype == Ti ).isEmpty ) =>
       FOLAtom( sym, args map convertTerm )
 
@@ -459,7 +459,7 @@ object changeTypeIn {
 
   }
   def apply( e: FOLExpression, tmap: TypeMap ): FOLExpression = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLExpression]
-  def apply( e: Formula, tmap: TypeMap ): Formula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[Formula]
+  def apply( e: HOLFormula, tmap: TypeMap ): HOLFormula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[HOLFormula]
   def apply( e: FOLFormula, tmap: TypeMap ): FOLFormula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLFormula]
   def apply( fs: FSequent, tmap: TypeMap ): FSequent = FSequent( fs.antecedent.map( x => apply( x, tmap ) ),
     fs.succedent.map( x => apply( x, tmap ) ) )

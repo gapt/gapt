@@ -31,7 +31,7 @@ class SimpleResolutionParserTest extends SpecificationWithJUnit {
   val px_fol = FOLAtom( "P", FOLVar( "x" ) :: Nil )
   val pffa_fol = FOLAtom( "P", FOLFunction( "f", FOLFunction( "f", FOLConst( "a" ) :: Nil ) :: Nil ) :: Nil )
 
-  def clause_to_lists( cl: Clause ): ( Seq[Formula], Seq[Formula] ) = ( cl.negative map ( _.formula ), cl.positive map ( _.formula ) )
+  def clause_to_lists( cl: Clause ): ( Seq[HOLFormula], Seq[HOLFormula] ) = ( cl.negative map ( _.formula ), cl.positive map ( _.formula ) )
 
   "SimpleResolutionParser" should {
     /*

@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.expr.{ Or, Formula }
+import at.logic.gapt.expr.{ Or, HOLFormula }
 import at.logic.gapt.expr._
 import at.logic.gapt.language.schema.SchemaFormula
 import at.logic.gapt.proofs.lk._
@@ -16,7 +16,7 @@ object CloneLKProof {
   def apply( p: LKProof ): LKProof = {
     p match {
 
-      case Axiom( ro ) => Axiom( ro.antecedent.map( fo => fo.formula.asInstanceOf[Formula] ), ro.succedent.map( fo => fo.formula.asInstanceOf[Formula] ) )
+      case Axiom( ro ) => Axiom( ro.antecedent.map( fo => fo.formula.asInstanceOf[HOLFormula] ), ro.succedent.map( fo => fo.formula.asInstanceOf[HOLFormula] ) )
 
       case AndLeftEquivalenceRule1( p, s, a, m ) => {
         val new_p = apply( p )

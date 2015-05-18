@@ -34,7 +34,7 @@ object Axiom {
     // I think we want LeafTree[LabelledSequent] here, but it's incompatible with LKProof
     ( new LeafTree[Sequent]( new LabelledSequent( left, right ) ) with NullaryLKProof { def rule = InitialRuleType }, ( left.toList, right.toList ) )
   }
-  def createOccurrence( f: Formula, l: Label ): LabelledFormulaOccurrence =
+  def createOccurrence( f: HOLFormula, l: Label ): LabelledFormulaOccurrence =
     LKskFOFactory.createInitialOccurrence( f, l )
   def unapply( proof: LKProof ) = if ( proof.rule == InitialRuleType ) Some( ( proof.root ) ) else None
 }
@@ -47,9 +47,9 @@ object WeakeningLeftRule {
    * @param l the label
    * @return an LKProof with last rule weakening left
    */
-  def apply( s1: LKProof, f: Formula, l: Label ) = createDefault( s1, f, l )
+  def apply( s1: LKProof, f: HOLFormula, l: Label ) = createDefault( s1, f, l )
 
-  def createDefault( s1: LKProof, f: Formula, l: Label ) = {
+  def createDefault( s1: LKProof, f: HOLFormula, l: Label ) = {
     val prinFormula: LabelledFormulaOccurrence = LKskFOFactory.createInitialOccurrence( f, l )
     // I think we want LeafTree[LabelledSequent] here, but it's incompatible with LKProof
     new UnaryTree[Sequent](
@@ -74,9 +74,9 @@ object WeakeningRightRule {
    * @param l the label
    * @return an LKProof with last rule weakening left
    */
-  def apply( s1: LKProof, f: Formula, l: Label ): LKProof = createDefault( s1, f, l )
+  def apply( s1: LKProof, f: HOLFormula, l: Label ): LKProof = createDefault( s1, f, l )
 
-  def createDefault( s1: LKProof, f: Formula, l: Label ) = {
+  def createDefault( s1: LKProof, f: HOLFormula, l: Label ) = {
     val prinFormula = LKskFOFactory.createInitialOccurrence( f, l )
     new UnaryTree[Sequent](
       new LabelledSequent( createContext( s1.root.antecedent ).asInstanceOf[Seq[LabelledFormulaOccurrence]], createContext( s1.root.succedent ).asInstanceOf[Seq[LabelledFormulaOccurrence]] :+ prinFormula ), s1 ) with UnaryLKProof with PrincipalFormulas {
@@ -102,7 +102,7 @@ case object ExistsSkRightRuleType extends UnaryRuleTypeA
 
 object ForallSkLeftRule {
   // removeFromLabel indicates whether to remove the term subst from the label of the main formula.
-  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst_t: LambdaExpression, removeFromLabel: Boolean ) = {
+  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: LambdaExpression, removeFromLabel: Boolean ) = {
     main match {
       case All( x, sub ) => {
         // TODO: comment in to check validity of the rule.
@@ -138,7 +138,7 @@ object ForallSkLeftRule {
 }
 
 object ExistsSkRightRule {
-  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, subst_t: LambdaExpression, removeFromLabel: Boolean ) = {
+  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, subst_t: LambdaExpression, removeFromLabel: Boolean ) = {
     main match {
       case Ex( x, sub ) => {
         //assert( betaNormalize( App( sub, subst_t ) ) == aux ) //needs to change because we changed the All matchen to All
@@ -170,7 +170,7 @@ object ExistsSkRightRule {
 }
 
 object ForallSkRightRule {
-  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, skolem_term: LambdaExpression ) = {
+  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: LambdaExpression ) = {
     main match {
       case All( x, sub ) => {
         // TODO: check Skolem term
@@ -200,7 +200,7 @@ object ForallSkRightRule {
 }
 
 object ExistsSkLeftRule {
-  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: Formula, skolem_term: LambdaExpression ) = {
+  def apply( s1: LKProof, auxf: LabelledFormulaOccurrence, main: HOLFormula, skolem_term: LambdaExpression ) = {
     main match {
       case Ex( x, sub ) => {
         // TODO: check Skolem term

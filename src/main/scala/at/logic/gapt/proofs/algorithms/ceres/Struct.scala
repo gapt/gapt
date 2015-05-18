@@ -221,12 +221,12 @@ object structToExpressionTree {
 // cut configurations: one using multisets of formulas (to relate different proof definitions)
 // and one using FormulaOccurrences (if we are only considering a single proof definition)
 object TypeSynonyms {
-  type CutConfiguration = ( Multiset[Formula], Multiset[Formula] )
+  type CutConfiguration = ( Multiset[HOLFormula], Multiset[HOLFormula] )
   type CutOccurrenceConfiguration = Set[FormulaOccurrence]
 }
 object cutConfToString {
   def apply( cc: TypeSynonyms.CutConfiguration ) = {
-    def str( m: Multiset[Formula] ) = m.foldLeft( "" )( ( s, f ) => s + { if ( s != "" ) ", " else "" } + f.toString )
+    def str( m: Multiset[HOLFormula] ) = m.foldLeft( "" )( ( s, f ) => s + { if ( s != "" ) ", " else "" } + f.toString )
     str( cc._1 ) + " | " + str( cc._2 )
   }
 }
@@ -235,38 +235,38 @@ object cutConfToString {
 // by, for each o in cc, taking the element f from seq such that
 // f, where param goes to term, is equal to o.formula.
 object cutOccConfigToCutConfig {
-  def apply( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm] ): ( Multiset[Formula], Multiset[Formula] ) = {
-    cc.foldLeft( ( HashMultiset[Formula](), HashMultiset[Formula]() ) )( ( res, fo ) => {
+  def apply( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm] ): ( Multiset[HOLFormula], Multiset[HOLFormula] ) = {
+    cc.foldLeft( ( HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( ( res, fo ) => {
       val cca = res._1
       val ccs = res._2
       if ( so.antecedent.map( x => x.formula ).contains( fo.formula ) )
-        ( cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[Formula]], params, terms ), ccs )
+        ( cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[HOLFormula]], params, terms ), ccs )
       else if ( so.succedent.map( x => x.formula ).contains( fo.formula ) )
-        ( cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[Formula]], params, terms ) )
+        ( cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[HOLFormula]], params, terms ) )
       else
         throw new Exception( "\nError in cutOccConfigToCutConfig !\n" )
     } )
   }
 
-  def applyRCC( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration ): ( Multiset[Formula], Multiset[Formula] ) = {
+  def applyRCC( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration ): ( Multiset[HOLFormula], Multiset[HOLFormula] ) = {
     if ( cc.isEmpty )
-      return ( HashMultiset[Formula](), HashMultiset[Formula]() )
+      return ( HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() )
     val seq = so.toFSequent
     val params = IntVar( "k" ) :: Nil
     val terms = IntVar( "k" ) :: Nil
-    cc.foldLeft( ( HashMultiset[Formula](), HashMultiset[Formula]() ) )( ( res, fo ) => {
+    cc.foldLeft( ( HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( ( res, fo ) => {
       val cca = res._1
       val ccs = res._2
       if ( so.antecedent.map( x => x.formula ).contains( fo.formula ) )
-        ( cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[Formula]], params, terms ), ccs )
+        ( cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[HOLFormula]], params, terms ), ccs )
       else if ( so.succedent.map( x => x.formula ).contains( fo.formula ) )
-        ( cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[Formula]], params, terms ) )
+        ( cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[HOLFormula]], params, terms ) )
       else
         throw new Exception( "\nError in cutOccConfigToCutConfigRCC !\n" )
     } )
   }
 
-  def getFormulaForCC( fo: FormulaOccurrence, fs: List[Formula], params: List[IntVar], terms: List[IntegerTerm] ) =
+  def getFormulaForCC( fo: FormulaOccurrence, fs: List[HOLFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
     {
       val sub = HOLSubstitution( params.zip( terms ) )
 
@@ -318,10 +318,10 @@ object StructCreators {
   // clause set for the proof called "name"
   // fresh_param should be fresh
 
-  def extractFormula( name: String, fresh_param: IntVar ): Formula =
+  def extractFormula( name: String, fresh_param: IntVar ): HOLFormula =
     {
-      val cs_0_f = SchemaProofDB.foldLeft[Formula]( Top() )( ( f, ps ) =>
-        And( cutConfigurations( ps._2.base ).foldLeft[Formula]( Top() )( ( f2, cc ) =>
+      val cs_0_f = SchemaProofDB.foldLeft[HOLFormula]( Top() )( ( f, ps ) =>
+        And( cutConfigurations( ps._2.base ).foldLeft[HOLFormula]( Top() )( ( f2, cc ) =>
           And( Imp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero() :: Nil ) ),
             IntZero() :: Nil ),
             toFormula( extractBaseWithCutConfig( ps._2, cc ) ) ), f2 ) ),
@@ -330,20 +330,20 @@ object StructCreators {
       // assumption: all proofs in the SchemaProofDB have the
       // same running variable "k".
       val k = IntVar( "k" )
-      val cs_1_f = SchemaProofDB.foldLeft[Formula]( Top() )( ( f, ps ) =>
-        And( cutConfigurations( ps._2.rec ).foldLeft[Formula]( Top() )( ( f2, cc ) =>
+      val cs_1_f = SchemaProofDB.foldLeft[HOLFormula]( Top() )( ( f, ps ) =>
+        And( cutConfigurations( ps._2.rec ).foldLeft[HOLFormula]( Top() )( ( f2, cc ) =>
           And( Imp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ( k ) :: Nil ) ),
             Succ( k ) :: Nil ),
             toFormula( extractStepWithCutConfig( ps._2, cc ) ) ), f2 ) ),
           f ) )
 
-      val cl_n = IndexedPredicate( new ClauseSetSymbol( name, ( HashMultiset[Formula], HashMultiset[Formula] ) ),
+      val cl_n = IndexedPredicate( new ClauseSetSymbol( name, ( HashMultiset[HOLFormula], HashMultiset[HOLFormula] ) ),
         fresh_param :: Nil )
       And( cl_n, And( cs_0_f, BigAnd( k, cs_1_f.asInstanceOf[SchemaFormula], IntZero(), fresh_param ) ) )
     }
 
-  def toFormula( s: Struct ): Formula =
-    transformStructToClauseSet( s ).foldLeft[Formula]( Top() )( ( f, c ) =>
+  def toFormula( s: Struct ): HOLFormula =
+    transformStructToClauseSet( s ).foldLeft[HOLFormula]( Top() )( ( f, c ) =>
       And( f, toFormula( c ) ) )
 
   // FIXME: this method should not exist.
@@ -351,8 +351,8 @@ object StructCreators {
   // constants are not created by the factories, and hence
   // do not work across language-levels, but the constants
   // are neede to transform a sequent to a formula in general.
-  def toFormula( s: Sequent ): Formula =
-    Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[Formula] ) ).toList ++ ( s.succedent map ( _.formula.asInstanceOf[Formula] ) ) )
+  def toFormula( s: Sequent ): HOLFormula =
+    Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[HOLFormula] ) ).toList ++ ( s.succedent map ( _.formula.asInstanceOf[HOLFormula] ) ) )
 
   def extractRelevantStruct( name: String, fresh_param: IntVar ): Tuple2[List[( String, Struct, Set[FormulaOccurrence] )], List[( String, Struct, Set[FormulaOccurrence] )]] = {
     val rcc = RelevantCC( name )._1.flatten
@@ -392,7 +392,7 @@ object StructCreators {
         cutOccConfigToCutConfig( hackGettingProof( triple._1 ).rec.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, Succ( k ) :: Nil ) ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
         triple._2 ), result ) )
 
-    val cl_n = IndexedPredicate( new ClauseSetSymbol( name, ( HashMultiset[Formula], HashMultiset[Formula] ) ),
+    val cl_n = IndexedPredicate( new ClauseSetSymbol( name, ( HashMultiset[HOLFormula], HashMultiset[HOLFormula] ) ),
       fresh_param :: Nil )
     Plus( A( toOccurrence( cl_n, SchemaProofDB.get( name ).rec.root ) ), Plus( cs_0, cs_1 ) )
   }
@@ -474,13 +474,13 @@ object StructCreators {
     }
 
   // TODO this should really disappear.
-  def toOccurrence( f: Formula, so: Sequent ) =
+  def toOccurrence( f: HOLFormula, so: Sequent ) =
     {
       defaultFormulaOccurrenceFactory.createFormulaOccurrence( f, Nil )
     }
 
   def extract( p: LKProof ): Struct = extract( p, getCutAncestors( p ) )
-  def extract( p: LKProof, predicate: Formula => Boolean ): Struct = extract( p, getCutAncestors( p, predicate ) )
+  def extract( p: LKProof, predicate: HOLFormula => Boolean ): Struct = extract( p, getCutAncestors( p, predicate ) )
 
   private def debug( s: String ) = { /* println("DEBUG:"+s) */ }
 
@@ -613,7 +613,7 @@ object groundStruct {
         A( fo.factory.createFormulaOccurrence( subst( fo.formula ), Nil ) ) // ????????????????????????
       }
       case Dual( sub )                  => Dual( apply( sub, subst ) )
-      case Times( left, right, foList ) => Times( apply( left, subst ), apply( right, subst ), foList.map( fo => fo.factory.createFormulaOccurrence( subst( fo.formula ).asInstanceOf[Formula], Nil ) ) )
+      case Times( left, right, foList ) => Times( apply( left, subst ), apply( right, subst ), foList.map( fo => fo.factory.createFormulaOccurrence( subst( fo.formula ).asInstanceOf[HOLFormula], Nil ) ) )
       case Plus( left, right )          => Plus( apply( left, subst ), apply( right, subst ) )
       case _                            => s
     }

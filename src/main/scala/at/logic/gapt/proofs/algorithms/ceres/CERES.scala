@@ -40,7 +40,7 @@ class CERESR2LK {
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof, pred: Formula => Boolean ): LKProof = {
+  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
     val es = p.root.toFSequent
     val proj = Projections( p, pred ) + CERES.refProjection( es )
 
@@ -85,7 +85,7 @@ class CERES {
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof, pred: Formula => Boolean ): LKProof = {
+  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
     val es = p.root.toFSequent
     val proj = Projections( p, pred )
 
@@ -99,7 +99,7 @@ class CERES {
     }
   }
 
-  def apply( lkproof: LKProof, refutation: LKProof, pred: Formula => Boolean ): LKProof = {
+  def apply( lkproof: LKProof, refutation: LKProof, pred: HOLFormula => Boolean ): LKProof = {
     CERES( lkproof.root.toFSequent, Projections( lkproof, pred ) + refProjection( lkproof.root.toFSequent ), refutation )
   }
 

@@ -16,7 +16,7 @@ object NameReplacement {
 
   def apply( exp: LambdaExpression, map: SymbolMap ): LambdaExpression = renameSymbols( exp, map )
   def apply( exp: FOLExpression, map: SymbolMap ): FOLExpression = renameSymbols( exp, map )
-  def apply( exp: Formula, map: SymbolMap ): Formula = renameSymbols( exp, map )
+  def apply( exp: HOLFormula, map: SymbolMap ): HOLFormula = renameSymbols( exp, map )
   def apply( exp: FOLFormula, map: SymbolMap ): FOLFormula = renameSymbols( exp, map )
 
   def apply( fs: FSequent, map: SymbolMap ) = renameFSequent( fs, map )
@@ -67,15 +67,15 @@ object NameReplacement {
   def renameSymbols( exp: FOLExpression, map: SymbolMap ): FOLExpression =
     renameSymbols( exp.asInstanceOf[LambdaExpression], map ).asInstanceOf[FOLExpression]
 
-  def renameSymbols( exp: Formula, map: SymbolMap ): Formula =
-    renameSymbols( exp.asInstanceOf[LambdaExpression], map ).asInstanceOf[Formula]
+  def renameSymbols( exp: HOLFormula, map: SymbolMap ): HOLFormula =
+    renameSymbols( exp.asInstanceOf[LambdaExpression], map ).asInstanceOf[HOLFormula]
 
   def renameSymbols( exp: FOLFormula, map: SymbolMap ): FOLFormula =
     renameSymbols( exp.asInstanceOf[LambdaExpression], map ).asInstanceOf[FOLFormula]
 
   // Yes, this sucks. But it was the easiest and fastest way to deal with 
   // FSequents which are supposed to have FOLFormulas instead of Formulas.
-  def rename_symbols_bla( f: Formula, map: SymbolMap ) = f.isInstanceOf[FOLFormula] match {
+  def rename_symbols_bla( f: HOLFormula, map: SymbolMap ) = f.isInstanceOf[FOLFormula] match {
     case true  => renameSymbols( f.asInstanceOf[FOLFormula], map )
     case false => renameSymbols( f, map )
   }

@@ -125,7 +125,7 @@ class TPTPHOLExporter {
     }
   } )
 
-  def closedFormula( fs: FSequent ): Formula = {
+  def closedFormula( fs: FSequent ): HOLFormula = {
     val f = fs.toFormula
     freeVariables( f ).foldRight( f )( ( v, g ) => All( v, g ) )
   }
@@ -147,11 +147,11 @@ class TPTPHOLExporter {
       "] )."
   }
 
-  def thf_formula_dec( i: Int, f: Formula, vmap: NameMap, cmap: CNameMap ) = {
+  def thf_formula_dec( i: Int, f: HOLFormula, vmap: NameMap, cmap: CNameMap ) = {
     "thf(" + i + ", conjecture, " + thf_formula( f, vmap, cmap, true ) + " )."
   }
 
-  def thf_negformula_dec( i: Int, f: Formula, vmap: NameMap, cmap: CNameMap ) = {
+  def thf_negformula_dec( i: Int, f: HOLFormula, vmap: NameMap, cmap: CNameMap ) = {
     "thf(" + i + ", negated_conjecture, " + thf_formula( f, vmap, cmap, true ) + " )."
   }
 

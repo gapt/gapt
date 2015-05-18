@@ -529,7 +529,7 @@ abstract class ProofStrategy {
 }
 object ProofStrategy {
   object FormulaLocation extends Enumeration { val Succedent, Antecedent = Value }
-  class Action( val formula: Formula, val loc: FormulaLocation.Value, private val oldStrategy: Option[ProofStrategy] ) {
+  class Action( val formula: HOLFormula, val loc: FormulaLocation.Value, private val oldStrategy: Option[ProofStrategy] ) {
     override def toString() = "ProofStrategy.Action(" + formula + ", " + loc + ")"
 
     /**
@@ -837,7 +837,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
 }
 
 object ExpansionTreeProofStrategy {
-  class ExpansionTreeAction( override val formula: Formula, override val loc: ProofStrategy.FormulaLocation.Value,
+  class ExpansionTreeAction( override val formula: HOLFormula, override val loc: ProofStrategy.FormulaLocation.Value,
                              val quantifiedTerm: Option[LambdaExpression], val subStrategy: Seq[ProofStrategy] )
       extends ProofStrategy.Action( formula, loc, None ) {
     override def toString() = "ExpansionTreeAction(" + formula + ", " + loc + ", " + quantifiedTerm + "," + subStrategy + ")"
@@ -855,7 +855,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
           f.syntaxEquals( f2 ) ) )
   }
 
-  def findNonschematicAxiom( seq: FSequent ): Option[( Formula, Formula )] = {
+  def findNonschematicAxiom( seq: FSequent ): Option[( HOLFormula, HOLFormula )] = {
     val axs = for (
       f <- seq.antecedent.toList;
       g <- seq.succedent.toList;
@@ -868,20 +868,20 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
     }
   }
 
-  private def isNotSchematic( f: Formula ): Boolean = f match {
-    case Neg( l )             => isNotSchematic( l.asInstanceOf[Formula] )
-    case And( l, r )          => isNotSchematic( l.asInstanceOf[Formula] ) && isNotSchematic( r.asInstanceOf[Formula] )
-    case Or( l, r )           => isNotSchematic( l.asInstanceOf[Formula] ) && isNotSchematic( r.asInstanceOf[Formula] )
-    case Imp( l, r )          => isNotSchematic( l.asInstanceOf[Formula] ) && isNotSchematic( r.asInstanceOf[Formula] )
-    case All( _, l )          => isNotSchematic( l.asInstanceOf[Formula] )
-    case Ex( _, l )           => isNotSchematic( l.asInstanceOf[Formula] )
+  private def isNotSchematic( f: HOLFormula ): Boolean = f match {
+    case Neg( l )             => isNotSchematic( l.asInstanceOf[HOLFormula] )
+    case And( l, r )          => isNotSchematic( l.asInstanceOf[HOLFormula] ) && isNotSchematic( r.asInstanceOf[HOLFormula] )
+    case Or( l, r )           => isNotSchematic( l.asInstanceOf[HOLFormula] ) && isNotSchematic( r.asInstanceOf[HOLFormula] )
+    case Imp( l, r )          => isNotSchematic( l.asInstanceOf[HOLFormula] ) && isNotSchematic( r.asInstanceOf[HOLFormula] )
+    case All( _, l )          => isNotSchematic( l.asInstanceOf[HOLFormula] )
+    case Ex( _, l )           => isNotSchematic( l.asInstanceOf[HOLFormula] )
     case BigAnd( _, _, _, _ ) => false
     case BigOr( _, _, _, _ )  => false
     case HOLAtom( _, _ )      => true
     case _                    => warn( "WARNING: Unexpected operator in test for schematic formula " + f ); false
   }
 
-  def getAxiomfromSeq( seq: FSequent ): ( Formula, FSequent ) = {
+  def getAxiomfromSeq( seq: FSequent ): ( HOLFormula, FSequent ) = {
     if ( isAxiom( seq ) ) {
       seq.antecedent.foreach( f => if ( seq.succedent.contains( f ) ) {
         return ( f, removeFfromSeqAnt( removeFfromSeqSucc( seq, f ), f ) )
@@ -890,30 +890,30 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
     } else throw new Exception( "\nError in else-autoprop.getAxiomfromSeq !\n" )
   }
 
-  def removeFfromSeqAnt( seq: FSequent, f: Formula ): FSequent = {
+  def removeFfromSeqAnt( seq: FSequent, f: HOLFormula ): FSequent = {
     FSequent( seq.antecedent.filter( x => x != f ), seq.succedent )
   }
 
-  def removeFfromSeqSucc( seq: FSequent, f: Formula ): FSequent = {
+  def removeFfromSeqSucc( seq: FSequent, f: HOLFormula ): FSequent = {
     FSequent( seq.antecedent, seq.succedent.filter( x => x != f ) )
   }
 
-  def removeFfromSeqAnt( seq: FSequent, flist: List[Formula] ): FSequent = {
+  def removeFfromSeqAnt( seq: FSequent, flist: List[HOLFormula] ): FSequent = {
     FSequent( seq.antecedent.filter( x => !flist.contains( x ) ), seq.succedent )
   }
 
-  def removeFfromSeqSucc( seq: FSequent, flist: List[Formula] ): FSequent = {
+  def removeFfromSeqSucc( seq: FSequent, flist: List[HOLFormula] ): FSequent = {
     FSequent( seq.antecedent, seq.succedent.filter( x => !flist.contains( x ) ) )
   }
 
-  def removefromExpSeqAnt( seq: ExpansionSequent, f: Formula ): ExpansionSequent = {
+  def removefromExpSeqAnt( seq: ExpansionSequent, f: HOLFormula ): ExpansionSequent = {
     getETOfFormula( seq, f, /*isAntecedent*/ true ) match {
       case Some( et ) => seq.removeFromAntecedent( et )
       case None       => throw new IllegalArgumentException( "Formula " + f + " not contained in expansion sequent " + seq )
     }
   }
 
-  def removefromExpSeqSucc( seq: ExpansionSequent, f: Formula ): ExpansionSequent = {
+  def removefromExpSeqSucc( seq: ExpansionSequent, f: HOLFormula ): ExpansionSequent = {
     getETOfFormula( seq, f, /*isAntecedent*/ false ) match {
       case Some( et ) => seq.removeFromSuccedent( et )
       case None       => throw new IllegalArgumentException( "Formula " + f + " not contained in expansion sequent " + seq )
@@ -927,14 +927,14 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
     atoms.size == atoms.toSet.size
   }
   // TODO: move this to sequent!!!!!
-  private def getAtoms( seq: FSequent ): List[Formula] = {
+  private def getAtoms( seq: FSequent ): List[HOLFormula] = {
     val all = seq.antecedent ++ seq.succedent
-    all.foldLeft( List[Formula]() ) { case ( acc, f ) => getAtoms( f ) ++ acc }
+    all.foldLeft( List[HOLFormula]() ) { case ( acc, f ) => getAtoms( f ) ++ acc }
   }
 
   // TODO: move this to hol!!!!!!
-  private def getAtoms( f: Formula ): List[Formula] = f match {
-    case Neg( f )        => getAtoms( f.asInstanceOf[Formula] )
+  private def getAtoms( f: HOLFormula ): List[HOLFormula] = f match {
+    case Neg( f )        => getAtoms( f.asInstanceOf[HOLFormula] )
     case And( f1, f2 )   => getAtoms( f1 ) ++ getAtoms( f2 )
     case Or( f1, f2 )    => getAtoms( f1 ) ++ getAtoms( f2 )
     case Imp( f1, f2 )   => getAtoms( f1 ) ++ getAtoms( f2 )
@@ -966,7 +966,7 @@ object AtomicExpansion {
   def apply( p: LKProof ): LKProof = expandProof( p )
 
   /* Same as apply(fs:FSequent) but you can specify the formula on the lhs (f1) and rhs (f2) */
-  def apply( fs: FSequent, f1: Formula, f2: Formula ) = {
+  def apply( fs: FSequent, f1: HOLFormula, f2: HOLFormula ) = {
 
     val atomic_proof = atomicExpansion_( f1, f2 )
 
@@ -974,7 +974,7 @@ object AtomicExpansion {
   }
 
   // assumes f1 == f2
-  private def atomicExpansion_( f1: Formula, f2: Formula ): LKProof = {
+  private def atomicExpansion_( f1: HOLFormula, f2: HOLFormula ): LKProof = {
     try {
       ( f1, f2 ) match {
         case ( Neg( l1 ), Neg( l2 ) ) =>

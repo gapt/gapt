@@ -93,7 +93,7 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
       ProofToolPublisher.publish( UnLoaded )
       StructPublisher.publish( UnLoaded )
       None
-    case formula: Formula => // use the case for lists for single formulas, too
+    case formula: HOLFormula => // use the case for lists for single formulas, too
       layout( new DrawList( formula :: Nil, fSize ) ) = c
       ProofToolPublisher.publish( UnLoaded )
       StructPublisher.publish( UnLoaded )

@@ -55,7 +55,7 @@ class VeriTProver extends Prover with ExternalProgram {
   // would generate an LK proof from an Expansion Tree.
   override def getLKProof( s: FSequent ) =
     throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
-  override def getLKProof( f: Formula ) =
+  override def getLKProof( f: HOLFormula ) =
     throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
 
   val isInstalled: Boolean =

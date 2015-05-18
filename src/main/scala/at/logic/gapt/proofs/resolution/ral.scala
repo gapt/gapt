@@ -76,7 +76,7 @@ object InitialSequent {
       ( left.toList, right.toList ) )
   }
 
-  def createOccurrence( f: Formula, l: Label ): LabelledFormulaOccurrence =
+  def createOccurrence( f: HOLFormula, l: Label ): LabelledFormulaOccurrence =
     LKskFOFactory.createInitialOccurrence( f, l )
 
   def unapply( proof: RalResolutionProof[LabelledSequent] ) = if ( proof.rule == InitialRalType ) Some( ( proof.root ) ) else None
@@ -588,7 +588,7 @@ object AFactorF {
 }
 
 object ParaT {
-  def apply[V <: LabelledSequent]( s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, term2oc: LabelledFormulaOccurrence, para_formula: Formula ) = {
+  def apply[V <: LabelledSequent]( s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, term2oc: LabelledFormulaOccurrence, para_formula: HOLFormula ) = {
     val term1ops = s1.root.succedent.find( x => x == term1oc )
     val term2ops = s2.root.succedent.find( x => x == term2oc )
     ( term1ops, term2ops ) match {
@@ -639,7 +639,7 @@ object ParaT {
 }
 
 object ParaF {
-  def apply[V <: LabelledSequent]( s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, term2oc: LabelledFormulaOccurrence, para_formula: Formula ) = {
+  def apply[V <: LabelledSequent]( s1: RalResolutionProof[V], s2: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, term2oc: LabelledFormulaOccurrence, para_formula: HOLFormula ) = {
     val term1ops = s1.root.succedent.find( x => x == term1oc )
     val term2ops = s2.root.antecedent.find( x => x == term2oc )
     ( term1ops, term2ops ) match {

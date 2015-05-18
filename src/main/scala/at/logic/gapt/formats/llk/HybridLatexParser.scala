@@ -15,8 +15,8 @@ import at.logic.gapt.formats.llk.TokenToLKConverter
  *  An extended proof database allows to label subproofs by formulas. It provides mappings from formulas to proofs
  * additionally to the list of pairs.
  */
-case class ExtendedProofDatabase( eproofs: Map[Formula, LKProof],
-                                  eaxioms: Map[Formula, Formula],
+case class ExtendedProofDatabase( eproofs: Map[HOLFormula, LKProof],
+                                  eaxioms: Map[HOLFormula, HOLFormula],
                                   edefinitions: Map[LambdaExpression, LambdaExpression] )
     extends ProofDatabase( Map(), Nil, Nil, Nil ) {
   override val proofs: List[( String, LKProof )] = eproofs.map( x =>

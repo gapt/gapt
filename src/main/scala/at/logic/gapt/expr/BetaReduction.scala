@@ -114,6 +114,6 @@ object BetaReduction {
     case x: Var      => x
   }
 
-  def betaReduce( f: Formula ): Formula = betaReduce( f.asInstanceOf[LambdaExpression] ).asInstanceOf[Formula]
-  def betaNormalize( f: Formula ): Formula = betaNormalize( f.asInstanceOf[LambdaExpression] ).asInstanceOf[Formula]
+  def betaReduce( f: HOLFormula ): HOLFormula = betaReduce( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+  def betaNormalize( f: HOLFormula ): HOLFormula = betaNormalize( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 }

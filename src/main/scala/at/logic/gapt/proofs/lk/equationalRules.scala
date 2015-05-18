@@ -35,7 +35,7 @@ object EquationVerifier {
 
   def apply( s: LambdaExpression, t: LambdaExpression, e1: LambdaExpression, e2: LambdaExpression ) = checkReplacement( s, t, e1, e2 )
   //this is a convenience method, apart from that everything is general
-  def apply( eq: Formula, e1: Formula, e2: Formula ): Option[List[Int]] = {
+  def apply( eq: HOLFormula, e1: HOLFormula, e2: HOLFormula ): Option[List[Int]] = {
     //println("try "+eq+" "+e1+" "+e2)
     eq match {
       case Eq( s, t ) => apply( s, t, e1, e2 ) match {
@@ -103,7 +103,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
    * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -161,7 +161,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
 
         term match {
           case Some( `s` ) =>
-            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[Formula]
+            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.root.antecedent )
             val ant2 = createContext( s2.root.antecedent.filterNot( _ == auxocc ) )
@@ -220,7 +220,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
    * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
    * @return The sequent (sL, A[T1/b], tL |- sR, tR).
    */
-  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): Sequent = {
+  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): Sequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -278,7 +278,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
 
         term match {
           case Some( `s` ) =>
-            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[Formula]
+            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.antecedent )
             val ant2 = createContext( s2.antecedent.filterNot( _ == auxocc ) )
@@ -325,7 +325,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
    * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.succedent.filter( x => x.formula == term1 ).toList, s2.root.antecedent.filter( x => x.formula == term2 ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y, main )
       case _                          => throw new LKRuleCreationException( "No matching formula occurrences found for application of the rule with the given formula" )
@@ -361,7 +361,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
    *      sL, A[T1/a], tL |- sR, tR
    * </pre>
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     //trace("s1: "+s1+", s2: "+s2+", term1oc: "+term1oc+", term2oc: "+term2oc+", main: "+main)
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val aux = auxocc.formula
@@ -421,7 +421,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
 
         term match {
           case Some( `t` ) =>
-            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[Formula]
+            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.root.antecedent )
             val ant2 = createContext( s2.root.antecedent.filterNot( _ == auxocc ) )
@@ -463,7 +463,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
    *      sL, A[T1/a], tL |- sR, tR
    * </pre>
    */
-  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): Sequent = {
+  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): Sequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -522,7 +522,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
 
         term match {
           case Some( `t` ) =>
-            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[Formula]
+            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.antecedent )
             val ant2 = createContext( s2.antecedent.filterNot( _ == auxocc ) )
@@ -553,7 +553,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
    *      sL, A[T1/a], tL |- sR, tR
    * </pre>
    */
-  def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+  def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     ( s1.root.succedent.filter( x => x.formula == term1 ).toList, s2.root.antecedent.filter( x => x.formula == term2 ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y, main )
       case _                          => throw new LKRuleCreationException( "No matching formula occurrences found for application of the rule with the given formula" )
@@ -605,7 +605,7 @@ object EquationRight1Rule extends EquationRuleLogger {
    * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     //trace("s1: "+s1+", s2: "+s2+", term1oc: "+term1oc+", term2oc: "+term2oc+", main: "+main)
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val aux = auxocc.formula
@@ -665,7 +665,7 @@ object EquationRight1Rule extends EquationRuleLogger {
 
         term match {
           case Some( `s` ) =>
-            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[Formula]
+            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.root.antecedent )
             val ant2 = createContext( s2.root.antecedent )
@@ -724,7 +724,7 @@ object EquationRight1Rule extends EquationRuleLogger {
    * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
    * @return The sequent (sL, A[T1/b], tL |- sR, tR).
    */
-  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): Sequent = {
+  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): Sequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -783,7 +783,7 @@ object EquationRight1Rule extends EquationRuleLogger {
 
         term match {
           case Some( `s` ) =>
-            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[Formula]
+            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.antecedent )
             val ant2 = createContext( s2.antecedent )
@@ -830,7 +830,7 @@ object EquationRight1Rule extends EquationRuleLogger {
    * @param main The formula A[T1/b], in which T1 has been replaced by b instead.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+  def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     ( s1.root.succedent.filter( x => x.formula == term1 ).toList, s2.root.succedent.filter( x => x.formula == term2 ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y, main )
       case _                          => throw new LKRuleCreationException( "No matching formula occurrences found for application of the rule with the given formula" )
@@ -866,7 +866,7 @@ object EquationRight2Rule extends EquationRuleLogger {
    *      sL, tL |- sR, tR, A[T1/a]
    * </pre>
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     //trace("s1: "+s1+", s2: "+s2+", term1oc: "+term1oc+", term2oc: "+term2oc+", main: "+main)
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val aux = auxocc.formula
@@ -926,7 +926,7 @@ object EquationRight2Rule extends EquationRuleLogger {
 
         term match {
           case Some( `t` ) =>
-            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[Formula]
+            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.root.antecedent )
             val ant2 = createContext( s2.root.antecedent )
@@ -968,7 +968,7 @@ object EquationRight2Rule extends EquationRuleLogger {
    *      sL, tL |- sR, tR, A[T1/a]
    * </pre>
    */
-  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): Sequent = {
+  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): Sequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -1027,7 +1027,7 @@ object EquationRight2Rule extends EquationRuleLogger {
 
         term match {
           case Some( `t` ) =>
-            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[Formula]
+            val prin = HOLPosition.replace( aux, pos, s ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.antecedent )
             val ant2 = createContext( s2.antecedent )
@@ -1058,7 +1058,7 @@ object EquationRight2Rule extends EquationRuleLogger {
    *      sL, tL |- sR, tR, A[T1/a]
    * </pre>
    */
-  def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+  def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     ( s1.root.succedent.filter( x => x.formula == term1 ).toList, s2.root.succedent.filter( x => x.formula == term2 ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y, main )
       case _                          => throw new LKRuleCreationException( "No matching formula occurrences found for application of the rule with the given formula" )

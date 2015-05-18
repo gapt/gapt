@@ -189,7 +189,7 @@ object renameVar {
       case _ => exp
     }
   }
-  def apply( f: Formula, pair: Tuple2[Var, LambdaExpression] ): Formula = {
+  def apply( f: HOLFormula, pair: Tuple2[Var, LambdaExpression] ): HOLFormula = {
     f match {
       case Neg( form )         => Neg( apply( form, pair ) )
       case Imp( form1, form2 ) => Imp( apply( form1, pair ), apply( form2, pair ) )

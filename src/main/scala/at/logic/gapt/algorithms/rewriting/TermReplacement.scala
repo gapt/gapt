@@ -24,13 +24,13 @@ object TermReplacement extends Logger {
     rename_term( term, what, by )
   }
 
-  def apply( f: Formula, what: LambdaExpression, by: LambdaExpression ): Formula = {
+  def apply( f: HOLFormula, what: LambdaExpression, by: LambdaExpression ): HOLFormula = {
     require( what.exptype == by.exptype )
-    rename_term( f.asInstanceOf[LambdaExpression], what, by ).asInstanceOf[Formula]
+    rename_term( f.asInstanceOf[LambdaExpression], what, by ).asInstanceOf[HOLFormula]
   }
 
-  def apply( term: Formula, p: Map[LambdaExpression, LambdaExpression] ): Formula =
-    apply( term.asInstanceOf[LambdaExpression], p ).asInstanceOf[Formula]
+  def apply( term: HOLFormula, p: Map[LambdaExpression, LambdaExpression] ): HOLFormula =
+    apply( term.asInstanceOf[LambdaExpression], p ).asInstanceOf[HOLFormula]
 
   def apply( term: LambdaExpression, p: Map[LambdaExpression, LambdaExpression] ): LambdaExpression =
     p.foldLeft( term )( ( t, x ) => {
@@ -51,8 +51,8 @@ object TermReplacement extends Logger {
   // FIXME: these polymorphic functions do not have the types you think they have...
 
   def rename_fsequent( fs: FSequent, what: LambdaExpression, by: LambdaExpression ): FSequent =
-    FSequent( fs.antecedent.map( apply( what, by, _ ).asInstanceOf[Formula] ),
-      fs.succedent.map( apply( what, by, _ ).asInstanceOf[Formula] ) )
+    FSequent( fs.antecedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] ),
+      fs.succedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] ) )
 
   def rename_fsequent( fs: FSequent, p: Map[LambdaExpression, LambdaExpression] ): FSequent = {
     FSequent( fs.antecedent.map( apply( _, p ) ),

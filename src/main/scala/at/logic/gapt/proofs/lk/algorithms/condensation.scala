@@ -19,8 +19,8 @@ class condensation {
 object factoring extends factoring
 class factoring {
   def apply( fs: FSequent ): FSequent = {
-    val ant = fs.antecedent.foldLeft( List[Formula]() )( ( a_, f ) => if ( a_.contains( f ) ) a_ else f :: a_ )
-    val suc = fs.succedent.foldLeft( List[Formula]() )( ( a_, f ) => if ( a_.contains( f ) ) a_ else f :: a_ )
+    val ant = fs.antecedent.foldLeft( List[HOLFormula]() )( ( a_, f ) => if ( a_.contains( f ) ) a_ else f :: a_ )
+    val suc = fs.succedent.foldLeft( List[HOLFormula]() )( ( a_, f ) => if ( a_.contains( f ) ) a_ else f :: a_ )
     FSequent( ant.reverse, suc.reverse )
   }
 

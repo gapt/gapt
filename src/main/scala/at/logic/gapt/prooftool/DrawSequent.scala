@@ -26,7 +26,7 @@ import at.logic.gapt.expr.Tindex
 
 object DrawSequent {
   implicit val factory = defaultFormulaOccurrenceFactory
-  implicit def fo2occ( f: Formula ) = factory.createFormulaOccurrence( f, Seq[FormulaOccurrence]() )
+  implicit def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Seq[FormulaOccurrence]() )
   implicit def fseq2seq( s: FSequent ) = Sequent( s._1 map fo2occ, s._2 map fo2occ )
 
   //used by DrawClList
@@ -73,7 +73,7 @@ object DrawSequent {
     }
   }
 
-  def formulaToLabel( f: Formula, ft: Font ): LatexLabel = LatexLabel( ft, formulaToLatexString( f ), fo2occ( f ) )
+  def formulaToLabel( f: HOLFormula, ft: Font ): LatexLabel = LatexLabel( ft, formulaToLatexString( f ), fo2occ( f ) )
   def formulaToLabel( fo: FormulaOccurrence, ft: Font ): LatexLabel = LatexLabel( ft, formulaToLatexString( fo.formula ), fo )
 
   // this method is used by DrawTree when drawing projections.

@@ -36,8 +36,8 @@ object AndLeftRule {
    * @return An LK Proof ending with the new inference.
    */
   def apply( s1: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence ) = {
-    val p0 = AndLeft1Rule( s1, term1oc, term2oc.formula.asInstanceOf[Formula] )
-    val p1 = AndLeft2Rule( p0, term1oc.formula.asInstanceOf[Formula], p0.getDescendantInLowerSequent( term2oc ).get )
+    val p0 = AndLeft1Rule( s1, term1oc, term2oc.formula.asInstanceOf[HOLFormula] )
+    val p1 = AndLeft2Rule( p0, term1oc.formula.asInstanceOf[HOLFormula], p0.getDescendantInLowerSequent( term2oc ).get )
     ContractionLeftRule( p1, p1.prin.head, p1.getDescendantInLowerSequent( p0.prin.head ).get )
   }
 
@@ -57,7 +57,7 @@ object AndLeftRule {
    * @param term2 The second formula to be replaced in the antecedent of s2.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, term1: Formula, term2: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply( s1: LKProof, term1: HOLFormula, term2: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     val x1 = s1.root.antecedent.find( _.formula == term1 )
     if ( x1 == None )
       throw new LKRuleCreationException( "Not matching formula occurrences found for application of the rule with the given formula" )
@@ -108,7 +108,7 @@ object OrRightRule {
    * @param term2 The second formula to be replaced in the succedent of s2.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, term1: Formula, term2: Formula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply( s1: LKProof, term1: HOLFormula, term2: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     val x1 = s1.root.succedent.find( _.formula == term1 )
     if ( x1 == None )
       throw new LKRuleCreationException( "Not matching formula occurrences found for application of the rule with the given formula" )
@@ -336,7 +336,7 @@ object EquationLeftRule extends EquationRuleLogger {
    * @param main A formula A' such that A' is obtained by replacing one occurrence of s in A by t or vice versa.
    * @return A proof ending with either an [[EquationLeft1Rule]] or an [[EquationLeft2Rule]] according to which one leads from A to A'.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -400,7 +400,7 @@ object EquationLeftRule extends EquationRuleLogger {
    * @param main A formula A' such that A' is obtained by replacing one occurrence of s in A by t or vice versa.
    * @return A proof ending with either an [[EquationLeft1Rule]] or an [[EquationLeft2Rule]] according to which one leads from A to A'.
    */
-  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): Sequent = {
+  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): Sequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -502,7 +502,7 @@ object EquationLeftRule extends EquationRuleLogger {
    * @param main A formula A' such that A' is obtained by replacing one occurrence of s in A by t or vice versa.
    * @return A proof ending with either an [[EquationLeft1Rule]] or an [[EquationLeft2Rule]] according to which one leads from A to A'.
    */
-  def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.succedent.filter( x => x.formula == term1 ).toList, s2.root.antecedent.filter( x => x.formula == term2 ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y, main )
       case _                          => throw new LKRuleCreationException( "Not matching formula occurrences found for application of the rule with the given formula" )
@@ -513,7 +513,7 @@ object EquationLeftRule extends EquationRuleLogger {
    * This version creates an axiom for the equation.
    *
    */
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, eq: Formula, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, eq: HOLFormula, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     val leftSubproof = Axiom( eq )
     apply( leftSubproof, s1, leftSubproof.root.succedent( 0 ), term1oc, main )
   }
@@ -581,7 +581,7 @@ object EquationRightRule extends EquationRuleLogger {
    * @param main A formula A' such that A' is obtained by replacing one occurrence of s in A by t or vice versa.
    * @return A proof ending with either an [[EquationRight1Rule]] or an [[EquationRight2Rule]] according to which one leads from A to A'.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -645,7 +645,7 @@ object EquationRightRule extends EquationRuleLogger {
    * @param main A formula A' such that A' is obtained by replacing one occurrence of s in A by t or vice versa.
    * @return A proof ending with either an [[EquationRight1Rule]] or an [[EquationRight2Rule]] according to which one leads from A to A'.
    */
-  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): Sequent = {
+  def apply( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): Sequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val aux = auxocc.formula
     val eq = eqocc.formula
@@ -746,7 +746,7 @@ object EquationRightRule extends EquationRuleLogger {
    * @param main A formula A' such that A' is obtained by replacing one occurrence of s in A by t or vice versa.
    * @return A proof ending with either an [[EquationRight1Rule]] or an [[EquationRight2Rule]] according to which one leads from A to A'.
    */
-  def apply( s1: LKProof, s2: LKProof, term1: Formula, term2: Formula, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
+  def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas =
     ( s1.root.succedent.filter( x => x.formula == term1 ).toList, s2.root.succedent.filter( x => x.formula == term2 ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y, main )
       case _                          => throw new LKRuleCreationException( "Not matching formula occurrences found for application of the rule with the given formula" )
@@ -756,7 +756,7 @@ object EquationRightRule extends EquationRuleLogger {
    * This version creates an axiom for the equation.
    *
    */
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, eq: Formula, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, eq: HOLFormula, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     val leftSubproof = Axiom( eq )
     apply( leftSubproof, s1, leftSubproof.root.succedent( 0 ), term1oc, main )
   }
@@ -883,7 +883,7 @@ object EquationLeftMacroRule extends EquationRuleLogger {
    * @param main The proposed main formula.
    * @return A new proof with principal formula main. Eq rules will be used according to the replacements that need to be made.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas = {
     val ( eqocc, auxocc ) = ( s1.root.succedent.find( _ == term1oc ), s2.root.antecedent.find( _ == term2oc ) ) match {
       case ( Some( e ), Some( a ) ) => ( e, a )
       case _                        => throw new LKRuleCreationException( "Auxiliary formulas not found." )
@@ -1016,7 +1016,7 @@ object EquationRightMacroRule extends EquationRuleLogger {
    * @param main The proposed main formula.
    * @return A new proof with principal formula main. Eq rules will be used according to the replacements that need to be made.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: Formula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas = {
     val ( eqocc, auxocc ) = ( s1.root.succedent.find( _ == term1oc ), s2.root.succedent.find( _ == term2oc ) ) match {
       case ( Some( e ), Some( a ) ) => ( e, a )
       case _                        => throw new LKRuleCreationException( "Auxiliary formulas not found." )
@@ -1093,7 +1093,7 @@ object ContractionLeftMacroRule extends MacroRuleLogger {
    * @param n Maximum number of occurrences of form in the antecedent of the end sequent. Defaults to 1, i.e. all occurrences are contracted.
    * @return
    */
-  def apply( s1: LKProof, form: Formula, n: Int = 1 ): Tree[Sequent] with LKProof = {
+  def apply( s1: LKProof, form: HOLFormula, n: Int = 1 ): Tree[Sequent] with LKProof = {
     if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
     val list = s1.root.antecedent.filter( _.formula == form ).drop( n - 1 )
 
@@ -1138,7 +1138,7 @@ object ContractionRightMacroRule extends MacroRuleLogger {
    * @param n Maximum number of occurrences of form in the succedent of the end sequent. Defaults to 1, i.e. all occurrences are contracted.
    * @return
    */
-  def apply( s1: LKProof, form: Formula, n: Int = 1 ): Tree[Sequent] with LKProof = {
+  def apply( s1: LKProof, form: HOLFormula, n: Int = 1 ): Tree[Sequent] with LKProof = {
     if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
     val list = s1.root.succedent.filter( _.formula == form ).drop( n - 1 )
 
@@ -1207,7 +1207,7 @@ object WeakeningLeftMacroRule extends MacroRuleLogger {
    * @param list A list of Formulas.
    * @return A new proof whose antecedent contains new occurrences of the formulas in list.
    */
-  def apply( s1: LKProof, list: Seq[Formula] ): Tree[Sequent] with LKProof =
+  def apply( s1: LKProof, list: Seq[HOLFormula] ): Tree[Sequent] with LKProof =
     list.foldLeft( s1 ) { ( acc, x ) => WeakeningLeftRule( acc, x ) }
 
   /**
@@ -1217,7 +1217,7 @@ object WeakeningLeftMacroRule extends MacroRuleLogger {
    * @param n A natural number.
    * @return s1 extended with weakenings such that form occurs at least n times in the antecedent of the end sequent.
    */
-  def apply( s1: LKProof, form: Formula, n: Int ): Tree[Sequent] with LKProof = {
+  def apply( s1: LKProof, form: HOLFormula, n: Int ): Tree[Sequent] with LKProof = {
     val nCurrent = s1.root.antecedent.count( _.formula == form )
 
     WeakeningLeftMacroRule( s1, Seq.fill( n - nCurrent )( form ) )
@@ -1236,7 +1236,7 @@ object WeakeningRightMacroRule extends MacroRuleLogger {
    * @param list A list of Formulas.
    * @return A new proof whose succedent contains new occurrences of the formulas in list.
    */
-  def apply( s1: LKProof, list: Seq[Formula] ): Tree[Sequent] with LKProof =
+  def apply( s1: LKProof, list: Seq[HOLFormula] ): Tree[Sequent] with LKProof =
     list.foldLeft( s1 ) { ( acc, x ) => WeakeningRightRule( acc, x ) }
 
   /**
@@ -1246,7 +1246,7 @@ object WeakeningRightMacroRule extends MacroRuleLogger {
    * @param n A natural number.
    * @return s1 extended with weakenings such that form occurs at least n times in the succedent of the end sequent.
    */
-  def apply( s1: LKProof, form: Formula, n: Int ): Tree[Sequent] with LKProof = {
+  def apply( s1: LKProof, form: HOLFormula, n: Int ): Tree[Sequent] with LKProof = {
     val nCurrent = s1.root.succedent.count( _.formula == form )
 
     WeakeningRightMacroRule( s1, Seq.fill( n - nCurrent )( form ) )
@@ -1266,7 +1266,7 @@ object WeakeningMacroRule extends MacroRuleLogger {
    * @param sucList A list of formulas.
    * @return A new proof whose antecedent and succedent contain new occurrences of the formulas in antList and sucList, respectively.
    */
-  def apply( s1: LKProof, antList: Seq[Formula], sucList: Seq[Formula] ): Tree[Sequent] with LKProof =
+  def apply( s1: LKProof, antList: Seq[HOLFormula], sucList: Seq[HOLFormula] ): Tree[Sequent] with LKProof =
     WeakeningRightMacroRule( WeakeningLeftMacroRule( s1, antList ), sucList )
 
   /**
@@ -1302,7 +1302,7 @@ object WeakeningContractionMacroRule extends MacroRuleLogger {
    * @param strict If true: requires that for (f,n) in antList or sucList, if f occurs in the root of s1, then n > 0.
    * @return
    */
-  def apply( s1: LKProof, antList: Seq[( Formula, Int )], sucList: Seq[( Formula, Int )], strict: Boolean ): Tree[Sequent] with LKProof = {
+  def apply( s1: LKProof, antList: Seq[( HOLFormula, Int )], sucList: Seq[( HOLFormula, Int )], strict: Boolean ): Tree[Sequent] with LKProof = {
     val currentAnt = s1.root.antecedent map { _.formula }
     val currentSuc = s1.root.succedent map { _.formula }
 

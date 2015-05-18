@@ -115,8 +115,8 @@ object parseLLKExp {
 object parseLLKFormula {
   def apply( s: String ) = {
     val exp = HLKHOLParser.parse( s )
-    require( exp.isInstanceOf[Formula], "Expression is no HOL Formula!" )
-    exp.asInstanceOf[Formula]
+    require( exp.isInstanceOf[HOLFormula], "Expression is no HOL Formula!" )
+    exp.asInstanceOf[HOLFormula]
   }
 }
 
@@ -138,7 +138,7 @@ object parseProver9 {
 object hol2folpure extends convertHolToFol
 
 object toClauses {
-  def apply( f: Formula ) = CNFp( f )
+  def apply( f: HOLFormula ) = CNFp( f )
 }
 
 object deleteTautologies {
@@ -327,15 +327,15 @@ object prover9 {
 
 object proveProp {
   def apply( seq: FSequent ): Option[LKProof] = solve.solvePropositional( seq )
-  def apply( f: Formula ): Option[LKProof] = apply( FSequent( Nil, f :: Nil ) )
+  def apply( f: HOLFormula ): Option[LKProof] = apply( FSequent( Nil, f :: Nil ) )
 }
 
 object miniSATsolve {
-  def apply( f: Formula ) = ( new MiniSAT ).solve( f )
+  def apply( f: HOLFormula ) = ( new MiniSAT ).solve( f )
 }
 
 object miniSATprove {
-  def apply( f: Formula ) = ( new MiniSAT ).isValid( f )
+  def apply( f: HOLFormula ) = ( new MiniSAT ).isValid( f )
 }
 
 object MaxSATsolve {
@@ -409,7 +409,7 @@ object extractStruct {
   def apply( p: LKProof ) =
     StructCreators.extract( p )
 
-  def apply( p: LKProof, cutformula_condition: Formula => Boolean ) =
+  def apply( p: LKProof, cutformula_condition: HOLFormula => Boolean ) =
     StructCreators.extract( p, cutformula_condition )
 
   def apply( p: LKProof, cut_occs: Set[FormulaOccurrence] ) =
@@ -563,12 +563,12 @@ object help {
         |   parseHOL: String => LambdaExpression
         |   parseLISP: String => List[SExpression]
         |   parseLLKExp: String => LambdaExpression - example: "var x,y: i>o; (\\ x => (\\y => (x=y) ))"
-        |   parseLLKFormula: String => Formula -  example: "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
+        |   parseLLKFormula: String => HOLFormula -  example: "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
         |   parseProver9: String => FOLFormula - example: "(all x (P(x,f(x)) -> (exists y P(x,y))))"
         |
         | Formulas / Sequents / Expressions:
-        |   hol2folpure: LambdaExpression => FOLExpression, Formula => FOLFormula - transformation of scala type
-        |   toClauses: Formula => Set[FClause] - the clause set representation of the given formula
+        |   hol2folpure: LambdaExpression => FOLExpression, HOLFormula => FOLFormula - transformation of scala type
+        |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
         |   deleteTautologies: List[FSequent] => List[FSequent] - remove all FSequents of form ..., A |- A, ...
         |   removeSubsumed: List[FSequent] => List[FSequent] - remove all subsumed FSequents
         |   unitResolve: List[FSequent] => List[FSequent] - normalization under unit resolution
@@ -595,8 +595,8 @@ object help {
         |   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
         |   prover9.getProof:  FSequent => Option[LKProof] - prove a sequent with prover9
         |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
-        |   miniSATsolve: Formula => Option[Interpretation] - obtain a model for a quantifier-free formula using MiniSAT
-        |   miniSATprove: Formula => Boolean - check if a quantifier-free formula is valid using MiniSAT
+        |   miniSATsolve: HOLFormula => Option[Interpretation] - obtain a model for a quantifier-free formula using MiniSAT
+        |   miniSATprove: HOLFormula => Boolean - check if a quantifier-free formula is valid using MiniSAT
         |   MaxSATsolve: (Set[FOLFormula], Set[Tuple2[FOLFormula,Int]]) => Option[Interpretation] - obtain a model for a set of quantifier-free formulas (interpreted as hard constraints) and a set of tuples of quantifier-free formulas (interpreted as soft constraints) w.r.t. provided weights using qmaxsat
         |
         | Proof Theory:
@@ -606,7 +606,7 @@ object help {
         |   extractExpansionSequent: LKProof => ExpansionSequent - extract expansion sequent from LKProof
         |   ExpansionProofToLKProof: ExpansionSequent => Option[LKProof]
         |   eliminateCuts: LKProof => LKProof - eliminate cuts by Gentzen's method
-        |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => Formula - extract propositional Craig interpolant
+        |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
         |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.
         |   compressExpansionSequent: ExpansionSequent => MultiExpansionSequent - compress the quantifiers in the trees of the sequent using vectors for the terms.
         |   minimalExpansionSequents: ( ExpansionSequent, Prover ) => List[ExpansionSequent] - find all minimal expansion sequents below the given one that are still valid according to the prover.
@@ -668,7 +668,7 @@ object refuteClauseList {
 object computeProjections {
   def apply( p: LKProof ): Set[LKProof] = Projections( p )
 
-  def apply( p: LKProof, pred: Formula => Boolean ): Set[LKProof] = Projections( p, pred ) // introduced in lambda calc merge
+  def apply( p: LKProof, pred: HOLFormula => Boolean ): Set[LKProof] = Projections( p, pred ) // introduced in lambda calc merge
 }
 
 object computeGroundProjections {
@@ -738,7 +738,7 @@ object deleteEquationalTautologies {
   //private val emptymap = MMap[LambdaExpression, String]()
   //val acu = new MulACUEquality(List("+","*") map (_), List("0","1") map (_))
 
-  def apply( ls: List[FSequent] ) = ls.filterNot( _._2 exists ( ( f: Formula ) =>
+  def apply( ls: List[FSequent] ) = ls.filterNot( _._2 exists ( ( f: HOLFormula ) =>
     f match {
       case HOLAtom( c: Const, List( x, y ) ) => c.sym == "=" && x == y
       case HOLAtom( c: Var, List( x, y ) )   => c.sym == "=" && x == y
@@ -766,7 +766,7 @@ object deleteEquationalTautologies {
 }
 
 object fsequent2sequent {
-  def f2focc( f: Formula ) = new FormulaOccurrence( f, Nil, defaultFormulaOccurrenceFactory )
+  def f2focc( f: HOLFormula ) = new FormulaOccurrence( f, Nil, defaultFormulaOccurrenceFactory )
 
   def apply( s: FSequent ) = Sequent( s._1 map f2focc, s._2 map f2focc )
 }
@@ -779,7 +779,7 @@ object fsequent2sequent {
   */
 
 object Robinson2Ral extends RobinsonToRal {
-  override def convert_formula( e: Formula ): Formula = e
+  override def convert_formula( e: HOLFormula ): HOLFormula = e
   override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
 
   //TODO: this is somehow dirty....
@@ -788,7 +788,7 @@ object Robinson2Ral extends RobinsonToRal {
 
 object GenerateRobinson2Ral {
   def apply( hol2folscope: collection.mutable.Map[LambdaExpression, StringSymbol] ): RobinsonToRal = new RobinsonToRal {
-    override def convert_formula( e: Formula ): Formula = e
+    override def convert_formula( e: HOLFormula ): HOLFormula = e
     override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
 
     //TODO: this is somehow dirty....
@@ -892,10 +892,10 @@ object parse {
 
   def hlkexp( s: String ): LambdaExpression = HLKHOLParser.parse( s )
 
-  def hlkformula( s: String ): Formula = {
+  def hlkformula( s: String ): HOLFormula = {
     val exp = HLKHOLParser.parse( s )
-    require( exp.isInstanceOf[Formula], "Expression is no HOL Formula!" )
-    exp.asInstanceOf[Formula]
+    require( exp.isInstanceOf[HOLFormula], "Expression is no HOL Formula!" )
+    exp.asInstanceOf[HOLFormula]
   }
 
   def program( s: String ): Program = ProgramParser.parseProgram( s )
@@ -905,7 +905,7 @@ object parse {
     println( "folterm: String => FOLTerm" )
     println( "p9: String => FOLFormula" )
     println( "hlkexp: String => LambdaExpression" )
-    println( "hlkformula: String => Formula" )
+    println( "hlkformula: String => HOLFormula" )
     println( "hol: String => LambdaExpression" )
     println( "slk: String => Map[String, Tuple2[LKProof, LKProof]]" )
   }
@@ -1100,9 +1100,9 @@ object normalizeSub {
 }
 
 object findDefinitions {
-  def apply( p: LKProof ) = definitions_( p, Map[Formula, Formula]() )
+  def apply( p: LKProof ) = definitions_( p, Map[HOLFormula, HOLFormula]() )
 
-  def definitions_( p: LKProof, m: Map[Formula, Formula] ): Map[Formula, Formula] = p match {
+  def definitions_( p: LKProof, m: Map[HOLFormula, HOLFormula] ): Map[HOLFormula, HOLFormula] = p match {
     case DefinitionLeftRule( proof, root, a, p ) =>
       //println("definition rule left! "+a+" "+p);
       definitions_( proof, m ) + ( ( p.formula, a.formula ) );

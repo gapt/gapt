@@ -31,7 +31,7 @@ package robinson {
       apply( set, sub, Map[FormulaOccurrence, List[FormulaOccurrence]]() )
     def apply( set: Seq[FormulaOccurrence], sub: FOLSubstitution, additional_context: Map[FormulaOccurrence, Seq[FormulaOccurrence]] ): Seq[FormulaOccurrence] =
       set.map( x =>
-        x.factory.createFormulaOccurrence( sub( x.formula.asInstanceOf[FOLFormula] ).asInstanceOf[Formula],
+        x.factory.createFormulaOccurrence( sub( x.formula.asInstanceOf[FOLFormula] ).asInstanceOf[HOLFormula],
           x :: additional_context.getOrElse( x, Nil ).toList ) )
   }
 
@@ -264,7 +264,7 @@ package robinson {
 
     /* factors cnt occurrences of a literal into 1.*/
     def apply( p: RobinsonResolutionProof,
-               a: Formula, cnt: Int, pos: Boolean, sub: FOLSubstitution ): RobinsonResolutionProof = {
+               a: HOLFormula, cnt: Int, pos: Boolean, sub: FOLSubstitution ): RobinsonResolutionProof = {
       val list = if ( pos ) p.root.positive else p.root.negative
       val occ = list.find( fo => fo.formula == a ).get
       val occs = list.filter( _ != occ ).foldLeft( List[FormulaOccurrence]() )( ( res, fo ) => if ( res.size < cnt - 1 && fo.formula == a )
@@ -295,7 +295,7 @@ package robinson {
     /* factors a_cnt occurrences of a (pos) and b_cnt occurrences of b (neg)
      into 1.*/
     def apply( p: RobinsonResolutionProof,
-               a: Formula, a_cnt: Int, b: Formula, b_cnt: Int,
+               a: HOLFormula, a_cnt: Int, b: HOLFormula, b_cnt: Int,
                sub: FOLSubstitution ): RobinsonResolutionProof = {
       val a_occ = p.root.negative.find( fo => fo.formula == a ).get
       val b_occ = p.root.positive.find( fo => fo.formula == b ).get

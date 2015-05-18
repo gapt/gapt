@@ -37,13 +37,13 @@ trait CNF extends Sequent {
 }
 
 object IsNeg {
-  def apply( formula: Formula ) = formula match {
+  def apply( formula: HOLFormula ) = formula match {
     case Neg( _ ) => true
     case _        => false
   }
 }
 object StripNeg {
-  def apply( formula: Formula ) = formula match {
+  def apply( formula: HOLFormula ) = formula match {
     case Neg( f ) => f
     case _        => formula
   }
@@ -55,8 +55,8 @@ object StripNeg {
 // TODO: make a class out of this?? (That extends sequent, maybe) I did not manage to reuse it where I wanted... 
 // Too many castings and adaptations had to be done (seqs to sets or lists, Formulas to FOLFormulas, etc) :(
 trait FClause {
-  def neg: Seq[Formula]
-  def pos: Seq[Formula]
+  def neg: Seq[HOLFormula]
+  def pos: Seq[HOLFormula]
   def multisetEquals( f: FClause, g: FClause ): Boolean =
     f.neg.diff( g.neg ).isEmpty && f.pos.diff( g.pos ).isEmpty &&
       g.neg.diff( f.neg ).isEmpty && g.pos.diff( f.pos ).isEmpty
@@ -88,7 +88,7 @@ trait FClause {
 
   def isSubClauseOf( c: FClause ) = neg.diff( c.neg ).isEmpty && pos.diff( c.pos ).isEmpty
 
-  def toFSequent = FSequent( neg.map( _.asInstanceOf[Formula] ), pos.map( _.asInstanceOf[Formula] ) )
+  def toFSequent = FSequent( neg.map( _.asInstanceOf[HOLFormula] ), pos.map( _.asInstanceOf[HOLFormula] ) )
 
   /*
    compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
@@ -99,7 +99,7 @@ trait FClause {
 
 // a default factory
 object FClause {
-  def apply( n: Seq[Formula], p: Seq[Formula] ): FClause = new FClause { def neg = n; def pos = p }
+  def apply( n: Seq[HOLFormula], p: Seq[HOLFormula] ): FClause = new FClause { def neg = n; def pos = p }
   def unapply( fc: FClause ) = Some( ( fc.neg, fc.pos ) )
 }
 
@@ -131,7 +131,7 @@ trait AppliedSubstitution {
 case object InitialType extends NullaryRuleTypeA
 
 object InitialSequent {
-  def apply[V <: Sequent]( ant: Seq[Formula], suc: Seq[Formula] )( implicit factory: FOFactory ) = {
+  def apply[V <: Sequent]( ant: Seq[HOLFormula], suc: Seq[HOLFormula] )( implicit factory: FOFactory ) = {
     val left: Seq[FormulaOccurrence] = ant.map( factory.createFormulaOccurrence( _, Nil ) )
     val right: Seq[FormulaOccurrence] = suc.map( factory.createFormulaOccurrence( _, Nil ) )
     new LeafAGraph[Sequent]( Sequent( left, right ) ) with NullaryResolutionProof[V] { def rule = InitialType }

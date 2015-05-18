@@ -14,7 +14,7 @@ import scala.collection.mutable
 
 object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   // FIXME: this should not be here!
-  def hol2fol( f: Formula ): FOLFormula =
+  def hol2fol( f: HOLFormula ): FOLFormula =
     {
       val imap = mutable.Map[LambdaExpression, StringSymbol]()
       val iid = new { var idd = 0; def nextId = { idd = idd + 1; idd } }

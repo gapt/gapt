@@ -122,8 +122,8 @@ class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
 
       val et = extractLKSKExpansionSequent( simpleHOLProof.i4, false )
 
-      val inst1: ( ExpansionTree, Formula ) = ( ETAtom( simpleHOLProof.p ), simpleHOLProof.p )
-      val inst2: ( ExpansionTree, Formula ) = ( ETNeg( ETAtom( simpleHOLProof.p ) ), Neg( simpleHOLProof.p ) )
+      val inst1: ( ExpansionTree, HOLFormula ) = ( ETAtom( simpleHOLProof.p ), simpleHOLProof.p )
+      val inst2: ( ExpansionTree, HOLFormula ) = ( ETNeg( ETAtom( simpleHOLProof.p ) ), Neg( simpleHOLProof.p ) )
       val cet: ExpansionTree = ETWeakQuantifier( simpleHOLProof.existsx, List( inst1, inst2 ) ).asInstanceOf[ExpansionTree] //TODO: this cast is ugly
 
       val control = ExpansionSequent( Nil, List( cet ) )

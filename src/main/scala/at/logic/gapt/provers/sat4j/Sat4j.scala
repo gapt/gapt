@@ -57,14 +57,14 @@ object readSat4j extends Logger {
 // Call Sat4j to solve quantifier-free Formulas.
 class Sat4j extends Stopwatch {
   // Checks if f is valid using Sat4j.
-  def isValid( f: Formula ) = solve( Neg( f ) ) match {
+  def isValid( f: HOLFormula ) = solve( Neg( f ) ) match {
     case Some( _ ) => false
     case None      => true
   }
 
   // Returns a model of the formula obtained from the Sat4j SAT solver.
   // Returns None if unsatisfiable.
-  def solve( f: Formula ): Option[Interpretation] = {
+  def solve( f: HOLFormula ): Option[Interpretation] = {
     start()
     val cnf = f match {
       case f1: FOLFormula => TseitinCNF( f1 )
@@ -114,7 +114,7 @@ class Sat4jProver extends Prover with Logger {
   def getLKProof( seq: FSequent ): Option[LKProof] =
     throw new Exception( "Sat4j does not produce proofs!" )
 
-  override def isValid( f: Formula ): Boolean = {
+  override def isValid( f: HOLFormula ): Boolean = {
     val sat = new Sat4j()
     sat.isValid( f )
   }

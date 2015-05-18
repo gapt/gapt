@@ -19,7 +19,7 @@ class RalResolutionTest extends SpecificationWithJUnit {
     "work on simple proofs" in {
       val x = Var( "X", To )
       val p = HOLAtom( Const( "P", To ), Nil )
-      val exx = Ex( x, x.asInstanceOf[Formula] )
+      val exx = Ex( x, x.asInstanceOf[HOLFormula] )
       val root = FSequent( Nil, List( exx ) )
       val labels: ( List[Label], List[Label] ) = ( List[Label](), List[Label]( EmptyLabel() ) )
 

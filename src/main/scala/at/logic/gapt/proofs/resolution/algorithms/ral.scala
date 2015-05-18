@@ -16,7 +16,7 @@ import at.logic.gapt.proofs.resolution.robinson._
 
 object RobinsonToRal extends RobinsonToRal {
   @deprecated
-  override def convert_formula( e: Formula ): Formula = e
+  override def convert_formula( e: HOLFormula ): HOLFormula = e
   @deprecated
   override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
 
@@ -32,7 +32,7 @@ abstract class RobinsonToRal {
   val emptyTranslationMap = Map[FormulaOccurrence, LabelledFormulaOccurrence]()
 
   /* convert formula will be called on any formula before translation */
-  def convert_formula( e: Formula ): Formula;
+  def convert_formula( e: HOLFormula ): HOLFormula;
 
   /* convert subsitution will be called on any substitution before translation */
   def convert_substitution( s: HOLSubstitution ): HOLSubstitution;
@@ -47,7 +47,7 @@ abstract class RobinsonToRal {
         val fc: FSequent = clause.toFSequent
         val rule = InitialSequent( convert_sequent( fc ), ( fc.antecedent.toList.map( x => EmptyLabel() ), fc.succedent.toList.map( x => EmptyLabel() ) ) )
         my_require( rule.root.toFSequent, clause.toFSequent, "Error in initial translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
-        require( !rule.root.toFSequent.formulas.contains( ( x: Formula ) => x.isInstanceOf[FOLFormula] ), "Formulas contain fol content!" )
+        require( !rule.root.toFSequent.formulas.contains( ( x: HOLFormula ) => x.isInstanceOf[FOLFormula] ), "Formulas contain fol content!" )
 
         ( emptyTranslationMap, rule )
 
@@ -164,14 +164,14 @@ abstract class RobinsonToRal {
     require( fs1 multiSetEquals ( convert_sequent( fs2 ) ), msg + " (converted sequent is " + cfs2 + ")" ) //commented out, because the translation is too flexible now
   }
 
-  def pickFO( f: Formula, list: Seq[LabelledFormulaOccurrence], exclusion_list: Seq[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence =
+  def pickFO( f: HOLFormula, list: Seq[LabelledFormulaOccurrence], exclusion_list: Seq[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence =
     list.find( x => x.formula == f && !exclusion_list.contains( x ) ) match {
       case None         => throw new Exception( "Could not find auxiliary formula " + f + " in " + list.mkString( "(", ",", ")" ) )
       case Some( focc ) => focc
     }
 
-  def pickFOant( f: Formula, fs: LabelledSequent, exclusion_list: Seq[LabelledFormulaOccurrence] ) = pickFO( f, fs.l_antecedent, exclusion_list )
-  def pickFOsucc( f: Formula, fs: LabelledSequent, exclusion_list: Seq[LabelledFormulaOccurrence] ) = pickFO( f, fs.l_succedent, exclusion_list )
+  def pickFOant( f: HOLFormula, fs: LabelledSequent, exclusion_list: Seq[LabelledFormulaOccurrence] ) = pickFO( f, fs.l_antecedent, exclusion_list )
+  def pickFOsucc( f: HOLFormula, fs: LabelledSequent, exclusion_list: Seq[LabelledFormulaOccurrence] ) = pickFO( f, fs.l_succedent, exclusion_list )
 
   def updateMap( map: TranslationMap, root1: Clause, root2: Clause, nroot: LabelledSequent ): TranslationMap = {
 

@@ -95,8 +95,8 @@ object IvyParser extends Logger {
         val sub: FOLSubstitution = parse_substitution( subst_exp, is_variable_symbol )
         val fclause: FSequent = parse_clause( clause, is_variable_symbol )
 
-        def connect( ancestors: Seq[FormulaOccurrence], formulas: Seq[Formula] ): Seq[FormulaOccurrence] =
-          ( ancestors zip formulas ) map ( ( v: ( FormulaOccurrence, Formula ) ) =>
+        def connect( ancestors: Seq[FormulaOccurrence], formulas: Seq[HOLFormula] ): Seq[FormulaOccurrence] =
+          ( ancestors zip formulas ) map ( ( v: ( FormulaOccurrence, HOLFormula ) ) =>
             occurrences.factory.createFormulaOccurrence( v._2, List( v._1 ) ) )
 
         val inference = Instantiate( id, clause, sub,
@@ -296,7 +296,7 @@ object IvyParser extends Logger {
         }
 
         //connects ancestors to formulas
-        def connect( ancestors: List[FormulaOccurrence], formulas: List[Formula] ): List[FormulaOccurrence] = {
+        def connect( ancestors: List[FormulaOccurrence], formulas: List[HOLFormula] ): List[FormulaOccurrence] = {
           //find ancestor for every formula in conclusion clause
           val ( occs, rem ) = connect_( ancestors, formulas )
           //now connect the contracted formulas
@@ -305,7 +305,7 @@ object IvyParser extends Logger {
         }
 
         //connects each formula to an ancestor, returns a pair of connected formulas and unconnected ancestors
-        def connect_( ancestors: List[FormulaOccurrence], formulas: List[Formula] ): ( List[FormulaOccurrence], List[FormulaOccurrence] ) = {
+        def connect_( ancestors: List[FormulaOccurrence], formulas: List[HOLFormula] ): ( List[FormulaOccurrence], List[FormulaOccurrence] ) = {
           formulas match {
             case x :: xs =>
               val index = ancestors.indexWhere( _.formula == x )
@@ -496,8 +496,8 @@ object IvyParser extends Logger {
   /* parses a clause sexpression to a fclause -- the structure is (or lit1 (or lit2 .... (or litn-1 litn)...)) */
   def parse_clause( exp: SExpression, is_variable_symbol: String => Boolean ): FSequent = {
     val clauses = parse_clause_( exp, is_variable_symbol )
-    var pos: List[Formula] = Nil
-    var neg: List[Formula] = Nil
+    var pos: List[HOLFormula] = Nil
+    var neg: List[HOLFormula] = Nil
 
     for ( c <- clauses ) {
       c match {
@@ -518,7 +518,7 @@ object IvyParser extends Logger {
   }
 
   //TODO: merge code with parse_clause_
-  def parse_clause_frompos( exp: SExpression, pos: List[Int], is_variable_symbol: String => Boolean ): ( Formula, List[Int] ) = exp match {
+  def parse_clause_frompos( exp: SExpression, pos: List[Int], is_variable_symbol: String => Boolean ): ( HOLFormula, List[Int] ) = exp match {
     case LispList( LispAtom( "or" ) :: left :: right :: Nil ) =>
       pos match {
         case 1 :: rest =>
@@ -550,7 +550,7 @@ object IvyParser extends Logger {
   }
 
   //directly converts a clause as nested or expression into a list with the literals in the same order
-  def parse_clause_( exp: SExpression, is_variable_symbol: String => Boolean ): List[Formula] = exp match {
+  def parse_clause_( exp: SExpression, is_variable_symbol: String => Boolean ): List[HOLFormula] = exp match {
     case LispList( LispAtom( "or" ) :: left :: right :: Nil ) =>
       val rightclause = parse_clause_( right, is_variable_symbol )
 

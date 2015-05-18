@@ -203,7 +203,7 @@ object eliminateDefinitions {
   def handleWeakening( new_parent: ( LKProof, mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ),
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       constructor: ( LKProof, Formula, TypeSynonyms.Label ) => LKProof with PrincipalFormulas,
+                       constructor: ( LKProof, HOLFormula, TypeSynonyms.Label ) => LKProof with PrincipalFormulas,
                        m: LabelledFormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, m.formula, m.skolem_label )
     val ls = toLabelledSequent( old_parent.root )
@@ -221,8 +221,8 @@ object eliminateDefinitions {
     ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, old_proof, new_proof, new_parent._2 ) )
   }
 
-  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: LabelledFormulaOccurrence, a2: LabelledFormulaOccurrence, m: Formula,
-                        constructor: ( LKProof, LKProof, LabelledFormulaOccurrence, LabelledFormulaOccurrence, Formula ) => BinaryLKProof with AuxiliaryFormulas ) = {
+  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas, p1: LKProof, p2: LKProof, a1: LabelledFormulaOccurrence, a2: LabelledFormulaOccurrence, m: HOLFormula,
+                        constructor: ( LKProof, LKProof, LabelledFormulaOccurrence, LabelledFormulaOccurrence, HOLFormula ) => BinaryLKProof with AuxiliaryFormulas ) = {
     // first left, then right
     val rec1 = rec( p1 )
     val rec2 = rec( p2 )

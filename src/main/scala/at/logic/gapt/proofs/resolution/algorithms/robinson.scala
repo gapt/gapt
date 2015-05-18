@@ -193,7 +193,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
    * @param main A Formula.
    * @return True iff 1.) equation is of the form s = s 2,) main and aux coincide and 3.) s occurs in aux.
    */
-  private def isTrivial( equation: Formula, aux: Formula, main: Formula ): Boolean = equation match {
+  private def isTrivial( equation: HOLFormula, aux: HOLFormula, main: HOLFormula ): Boolean = equation match {
     case Eq( s, t ) =>
       if ( s != t || aux != main )
         false

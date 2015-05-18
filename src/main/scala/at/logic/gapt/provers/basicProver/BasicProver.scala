@@ -17,7 +17,7 @@ class BasicProver extends Prover {
   override def isValid( seq: FSequent ): Boolean =
     FailSafeProver.getProver().isValid( seq )
 
-  override def isValid( f: Formula ): Boolean = {
+  override def isValid( f: HOLFormula ): Boolean = {
     FailSafeProver.getProver().isValid( f )
   }
 }

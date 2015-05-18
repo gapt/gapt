@@ -13,9 +13,9 @@ object CNFp {
   /**
    * @param f a Formula which is regular and does not contain strong quantifiers
    */
-  def apply( f: Formula ): List[FClause] = transform( f ).distinct
+  def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
-  def transform( f: Formula ): List[FClause] = f match {
+  def transform( f: HOLFormula ): List[FClause] = f match {
     case Bottom()        => List( FClause( List(), List() ) )
     case Top()           => List()
     case Neg( f2 )       => CNFn.transform( f2 )
@@ -36,9 +36,9 @@ object CNFn {
   /**
    * @param f a Formula which is regular and does not contain strong quantifiers
    */
-  def apply( f: Formula ): List[FClause] = transform( f ).distinct
+  def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
-  def transform( f: Formula ): List[FClause] = f match {
+  def transform( f: HOLFormula ): List[FClause] = f match {
     case Bottom()        => List()
     case Top()           => List( FClause( List(), List() ) )
     case Neg( f2 )       => CNFp.transform( f2 )

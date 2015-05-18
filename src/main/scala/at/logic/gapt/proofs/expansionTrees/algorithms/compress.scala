@@ -95,17 +95,17 @@ object decompressQuantifiers {
    */
   def apply( sequent: MultiExpansionSequent ): ExpansionSequent = ExpansionSequent( sequent.antecedent.map( this.apply ), sequent.succedent.map( this.apply ) )
 
-  private def decompressStrong( f: Formula, eig: Seq[Var], sel: ExpansionTree ): ExpansionTree = f match {
+  private def decompressStrong( f: HOLFormula, eig: Seq[Var], sel: ExpansionTree ): ExpansionTree = f match {
     case All( _, _ ) | Ex( _, _ ) => ETStrongQuantifier( f, eig.head, decompressStrong( instantiate( f, eig.head ), eig.tail, sel ) )
     case _                        => sel
   }
 
-  private def decompressSkolem( f: Formula, exp: Seq[LambdaExpression], sel: ExpansionTree ): ExpansionTree = f match {
+  private def decompressSkolem( f: HOLFormula, exp: Seq[LambdaExpression], sel: ExpansionTree ): ExpansionTree = f match {
     case All( _, _ ) | Ex( _, _ ) => ETSkolemQuantifier( f, exp.head, decompressSkolem( instantiate( f, exp.head ), exp.tail, sel ) )
     case _                        => sel
   }
 
-  private def decompressWeak( f: Formula, instances: Seq[( ExpansionTree, Seq[LambdaExpression] )] ): ExpansionTree = f match {
+  private def decompressWeak( f: HOLFormula, instances: Seq[( ExpansionTree, Seq[LambdaExpression] )] ): ExpansionTree = f match {
     case Ex( _, _ ) | All( _, _ ) =>
       val groupedInstances = groupSeq( instances.map( p => ( p._2.head, p._1, p._2.tail ) ), ( t: ( LambdaExpression, ExpansionTree, Seq[LambdaExpression] ) ) => t._1 ).map( l => ( l.head._1, l.map( t => ( t._2, t._3 ) ) ) ) // Result: groupedInstances is a list of elements of the form (t, [(E_1, s_1),..,(E_n, s_n)]).
       val newInstances = groupedInstances.map( p => ( p._1, decompressWeak( instantiate( f, p._1 ), p._2 ) ) ) // Result: newInstances is a list of elements of the form (t, E)

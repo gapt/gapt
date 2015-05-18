@@ -174,11 +174,11 @@ object ReductiveCutElim {
         CutRule( cutElim( up1 ), cutElim( up2 ), a1.formula )
   }
 
-  private def reduceCut( left: LKProof, right: LKProof, cutFormula1: Formula, cutFormula2: Formula ): LKProof =
+  private def reduceCut( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
     reduceGrade( left, right, cutFormula1, cutFormula2 )
 
   // Grade reduction rules:
-  private def reduceGrade( left: LKProof, right: LKProof, cutFormula1: Formula, cutFormula2: Formula ): LKProof =
+  private def reduceGrade( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
     ( left, right ) match {
       case ( AndRightRule( up1, up2, _, aux1, aux2, prin1 ), AndLeft1Rule( up, _, aux, prin2 ) ) if ( prin1.formula == cutFormula1 && prin2.formula == cutFormula2 ) =>
         var tmp: LKProof = CutRule( up1, up, aux1, aux )
@@ -207,7 +207,7 @@ object ReductiveCutElim {
       case _ => reduceGradeQ( left, right, cutFormula1, cutFormula2 )
     }
 
-  private def reduceGradeQ( left: LKProof, right: LKProof, cutFormula1: Formula, cutFormula2: Formula ): LKProof =
+  private def reduceGradeQ( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
     ( left, right ) match {
       case ( ForallRightRule( up1, _, aux1, prin1, eigenVar ), ForallLeftRule( up2, _, aux2, prin2, term ) ) if ( prin1.formula == cutFormula1 && prin2.formula == cutFormula2 ) =>
         val up = applySubstitution( up1, HOLSubstitution( eigenVar, term ) )._1
@@ -221,7 +221,7 @@ object ReductiveCutElim {
     }
 
   // Rank reduction rules:
-  private def reduceRank( left: LKProof, right: LKProof, cutFormula1: Formula, cutFormula2: Formula ): LKProof =
+  private def reduceRank( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
     ( left, right ) match {
       case ( Axiom( seq ), proof: LKProof ) if ( seq.isTaut ) => proof
       case ( proof: LKProof, Axiom( seq ) ) if ( seq.isTaut ) => proof
@@ -298,7 +298,7 @@ object ReductiveCutElim {
         throw new ReductiveCutElimException( "Can't match the case: Cut(" + left.rule.toString + ", " + right.rule.toString + ")" )
     }
 
-  private def reduceUnaryLeft( unary: UnaryLKProof, proof: LKProof, cutFormula: Formula ): LKProof = unary match {
+  private def reduceUnaryLeft( unary: UnaryLKProof, proof: LKProof, cutFormula: HOLFormula ): LKProof = unary match {
     case WeakeningLeftRule( up, _, prin ) =>
       WeakeningLeftRule( CutRule( up, proof, cutFormula ), prin.formula )
     case ContractionLeftRule( up, _, aux, _, prin ) =>
@@ -339,7 +339,7 @@ object ReductiveCutElim {
     }
   }
 
-  private def reduceUnaryRight( proof: LKProof, unary: UnaryLKProof, cutFormula: Formula ): LKProof = unary match {
+  private def reduceUnaryRight( proof: LKProof, unary: UnaryLKProof, cutFormula: HOLFormula ): LKProof = unary match {
     case WeakeningRightRule( up, _, prin ) =>
       WeakeningRightRule( CutRule( proof, up, cutFormula ), prin.formula )
     case ContractionRightRule( up, _, aux, _, prin ) =>
@@ -378,7 +378,7 @@ object ReductiveCutElim {
       throw new ReductiveCutElimException( "Can't match the case: Cut(" + proof.rule.toString + ", " + unary.rule.toString + ")" )
   }
 
-  private def reduceBinaryLeft( binary: BinaryLKProof, proof: LKProof, cutFormula: Formula ): LKProof = binary match {
+  private def reduceBinaryLeft( binary: BinaryLKProof, proof: LKProof, cutFormula: HOLFormula ): LKProof = binary match {
     case AndRightRule( up1, up2, _, aux1, aux2, prin ) if prin.formula != cutFormula =>
       if ( ( aux1.formula != cutFormula && up1.root.succedent.exists( x => x.formula == cutFormula ) ) ||
         ( aux1.formula == cutFormula && up1.root.succedent.find( x => x.formula == cutFormula ).size > 1 ) )
@@ -414,7 +414,7 @@ object ReductiveCutElim {
     }
   }
 
-  private def reduceBinaryRight( proof: LKProof, binary: BinaryLKProof, cutFormula: Formula ): LKProof = binary match {
+  private def reduceBinaryRight( proof: LKProof, binary: BinaryLKProof, cutFormula: HOLFormula ): LKProof = binary match {
     case AndRightRule( up1, up2, _, aux1, aux2, prin ) =>
       if ( up1.root.antecedent.exists( x => x.formula == cutFormula ) )
         AndRightRule( CutRule( proof, up1, cutFormula ), up2, aux1.formula, aux2.formula )

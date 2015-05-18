@@ -196,9 +196,9 @@ class DeclarationParser extends HOLASTParser {
 object HLKHOLParser extends HLKHOLParser
 class HLKHOLParser {
   //automated casting, a bit dirty
-  private def f( e: LambdaExpression ): Formula = {
-    require( e.isInstanceOf[Formula], "The expression " + e + " is supposed to be a formula!" )
-    e.asInstanceOf[Formula]
+  private def f( e: LambdaExpression ): HOLFormula = {
+    require( e.isInstanceOf[HOLFormula], "The expression " + e + " is supposed to be a formula!" )
+    e.asInstanceOf[HOLFormula]
   }
   private def v( e: LambdaExpression ): Var = {
     require( e.isInstanceOf[Var], "The expression " + e + " is supposed to be a variable!" )

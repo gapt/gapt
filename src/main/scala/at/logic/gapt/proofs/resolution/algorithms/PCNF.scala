@@ -58,14 +58,14 @@ object PCNF {
       case None =>
         // check for tautology
         a.pos.find( p => a.neg.exists( n => n == p ) ) match {
-          case Some( f ) => ( Axiom( a.neg, a.pos ), f.asInstanceOf[Formula], false )
+          case Some( f ) => ( Axiom( a.neg, a.pos ), f.asInstanceOf[HOLFormula], false )
           case _ =>
             // check for reflexivity
             a.pos.find( f => f match {
               case Eq( a, b ) if a == b => true
               case _                    => false
             } ) match {
-              case Some( f ) => ( Axiom( List(), List( f ) ), f.asInstanceOf[Formula], false )
+              case Some( f ) => ( Axiom( List(), List( f ) ), f.asInstanceOf[HOLFormula], false )
               case _         => throw new ResolutionException( "Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString( ";\n" ) + "\n]", Nil, a :: cnf.toList )
             }
         }
@@ -93,10 +93,10 @@ object PCNF {
     // for each formula F in s, count its occurrences in s and resp and apply contractions on resp until we reach the same number
     val p1 = s.neg.toSet.foldLeft( resp )( ( p, f ) =>
       ( ( 1 ).to( p.root.antecedent.filter( _.formula == f ).size - s.neg.filter( _ == f ).size ) ).foldLeft( p )( ( q, n ) =>
-        ContractionLeftRule( q, f.asInstanceOf[Formula] ) ) )
+        ContractionLeftRule( q, f.asInstanceOf[HOLFormula] ) ) )
     val p2 = s.pos.toSet.foldLeft( p1 )( ( p, f ) =>
       ( ( 1 ).to( p.root.succedent.filter( _.formula == f ).size - s.pos.filter( _ == f ).size ) ).foldLeft( p )( ( q, n ) =>
-        ContractionRightRule( q, f.asInstanceOf[Formula] ) ) )
+        ContractionRightRule( q, f.asInstanceOf[HOLFormula] ) ) )
     p2
   }
 
@@ -106,7 +106,7 @@ object PCNF {
    * @param a
    * @return
    */
-  private def PCNFn( f: Formula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
+  private def PCNFn( f: HOLFormula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
     case Top()     => Axiom( Nil, List( f ) )
     case Neg( f2 ) => NegRightRule( PCNFp( f2, a, sub ), f2 )
     case And( f1, f2 ) => {
@@ -134,7 +134,7 @@ object PCNF {
    * @param a
    * @return
    */
-  private def PCNFp( f: Formula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
+  private def PCNFp( f: HOLFormula, a: FClause, sub: HOLSubstitution ): LKProof = f match {
     case Bottom()  => Axiom( List( f ), Nil )
     case Neg( f2 ) => NegLeftRule( PCNFn( f2, a, sub ), f2 )
     case And( f1, f2 ) =>

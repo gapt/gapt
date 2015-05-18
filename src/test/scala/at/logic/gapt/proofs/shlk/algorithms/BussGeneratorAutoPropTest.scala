@@ -42,7 +42,7 @@ object BussTautology {
 
   def c( i: Int ) = HOLAtom( Const( "c_" + i, Ti -> To ), a :: Nil )
   def d( i: Int ) = HOLAtom( Const( "d_" + i, Ti -> To ), a :: Nil )
-  def F( i: Int ): Formula = if ( i == 1 )
+  def F( i: Int ): HOLFormula = if ( i == 1 )
     Or( c( 1 ), d( 1 ) )
   else
     And( F( i - 1 ), Or( c( i ), d( i ) ) )
@@ -52,5 +52,5 @@ object BussTautology {
   else Imp( F( i - 1 ), d( i ) )
 
   // the antecedens of the final sequent
-  def Ant( i: Int ): List[Formula] = if ( i == 0 ) Nil else Or( A( i ), B( i ) ) :: Ant( i - 1 )
+  def Ant( i: Int ): List[HOLFormula] = if ( i == 0 ) Nil else Or( A( i ), B( i ) ) :: Ant( i - 1 )
 }

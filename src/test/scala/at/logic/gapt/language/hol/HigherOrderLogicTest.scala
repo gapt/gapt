@@ -27,15 +27,15 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
 
     "mix correctly the formula trait (1)" in {
       val result = a1 match {
-        case x: Formula => true
-        case _          => false
+        case x: HOLFormula => true
+        case _             => false
       }
       result must beTrue
     }
     "mix correctly the formula trait (2)" in {
       val result = a22 match {
-        case x: Formula => true
-        case _          => false
+        case x: HOLFormula => true
+        case _             => false
       }
       result must beTrue
     }
@@ -43,8 +43,8 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       val at1 = HOLAtom( Var( "P", ->( c2.exptype, ->( a22.exptype, To ) ) ), c2 :: a22 :: Nil )
       // Another way to construct P's type is: FunctionType(To, args.map(a => a.exptype) )
       val result = at1 match {
-        case x: Formula => true
-        case _          => false
+        case x: HOLFormula => true
+        case _             => false
       }
       result must beTrue
     }

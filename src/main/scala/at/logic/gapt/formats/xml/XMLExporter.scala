@@ -76,7 +76,7 @@ object XMLExporter {
       <formulalist> { fs._2.map( x => exportFormula( x ) ) } </formulalist>
     </sequent>
 
-  def exportFormula( formula: Formula ): Node = formula match {
+  def exportFormula( formula: HOLFormula ): Node = formula match {
     case Eq( term1, term2 ) =>
       println( "Equation: " + term1.toString + ", " + term2.toString )
       <constantatomformula type="or">
@@ -169,7 +169,7 @@ object XMLExporter {
     val ( formula, vars ) = decompose( subst )
     <lambdasubstitution>
       { exportVariableList( vars ) }
-      { exportFormula( formula.asInstanceOf[Formula] ) }
+      { exportFormula( formula.asInstanceOf[HOLFormula] ) }
     </lambdasubstitution>
   }
 

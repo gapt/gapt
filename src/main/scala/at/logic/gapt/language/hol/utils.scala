@@ -16,7 +16,7 @@ object freeHOVariables {
    * @param f the expressions to extract from
    * @return the list of free variables with type != Ti in e
    */
-  def apply( f: Formula ) = freeVariables( f ).filter( _ match { case Var( _, Ti ) => false; case _ => true } )
+  def apply( f: HOLFormula ) = freeVariables( f ).filter( _ match { case Var( _, Ti ) => false; case _ => true } )
 }
 
 // matches for consts and vars, but nothing else
@@ -30,7 +30,7 @@ object VarOrConst {
 
 // Instantiates a term in a quantified formula (using the first quantifier).
 object instantiate {
-  def apply( f: Formula, t: LambdaExpression ): Formula = f match {
+  def apply( f: HOLFormula, t: LambdaExpression ): HOLFormula = f match {
     case All( v, form ) =>
       val sub = HOLSubstitution( v, t )
       sub( form )
@@ -61,7 +61,7 @@ object containsQuantifier {
 }
 
 object containsStrongQuantifier {
-  def apply( f: Formula, pol: Boolean ): Boolean = f match {
+  def apply( f: HOLFormula, pol: Boolean ): Boolean = f match {
     case Top() | Bottom() => false
     case And( s, t )      => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
     case Or( s, t )       => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
@@ -129,7 +129,7 @@ object isLogicalSymbol {
  * starting from the root of the formula. The inner structure of atoms is not counted.
  */
 object lcomp {
-  def apply( formula: Formula ): Int = formula match {
+  def apply( formula: HOLFormula ): Int = formula match {
     case Top() | Bottom() => 1
     case Neg( f )         => lcomp( f ) + 1
     case And( f, g )      => lcomp( f ) + lcomp( g ) + 1
@@ -153,7 +153,7 @@ object getMatrix {
    * @param f the formula of the form Qx1.Qx2. ... .Qxn.F[x1,...xn] where F is quantifier free. (n may be 0)
    * @return the stripped formula F[x1,...,xn]
    */
-  def apply( f: Formula ): Formula = {
+  def apply( f: HOLFormula ): HOLFormula = {
     assert( isPrenex( f ) )
     f match {
       case Top() | Bottom() |
@@ -170,7 +170,7 @@ object getMatrix {
     }
   }
 
-  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 
 object normalizeFreeVariables {
@@ -182,7 +182,7 @@ object normalizeFreeVariables {
    * @param f the formula to be normalized
    * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
    */
-  def apply( f: Formula ): ( Formula, HOLSubstitution ) = apply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[( Formula, HOLSubstitution )]
+  def apply( f: HOLFormula ): ( HOLFormula, HOLSubstitution ) = apply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[( HOLFormula, HOLSubstitution )]
 
   /**
    * Systematically renames the free variables by their left-to-right occurence in a HOL Expression f to x_{i} where all
@@ -221,8 +221,8 @@ object normalizeFreeVariables {
    * @param freshName a function which generates a fresh name every call.
    * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
    */
-  def apply( f: Formula, freshName: () => String ): ( Formula, HOLSubstitution ) =
-    apply( f.asInstanceOf[LambdaExpression], freshName ).asInstanceOf[( Formula, HOLSubstitution )]
+  def apply( f: HOLFormula, freshName: () => String ): ( HOLFormula, HOLSubstitution ) =
+    apply( f.asInstanceOf[LambdaExpression], freshName ).asInstanceOf[( HOLFormula, HOLSubstitution )]
 
   /**
    * Works exactly like normalizeFreeVaribles(f:LambdaExpression) but allows the specification of your own name generator.

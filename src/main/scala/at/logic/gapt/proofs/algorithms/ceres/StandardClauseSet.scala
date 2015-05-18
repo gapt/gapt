@@ -273,7 +273,7 @@ object renameCLsymbols {
           case _ => fo.formula
         }
       } )
-      FSequent( ant.asInstanceOf[List[Formula]], succ.asInstanceOf[List[Formula]] )
+      FSequent( ant.asInstanceOf[List[HOLFormula]], succ.asInstanceOf[List[HOLFormula]] )
     } )
     ( list, map )
   }

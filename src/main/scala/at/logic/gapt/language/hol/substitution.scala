@@ -9,9 +9,9 @@ import at.logic.gapt.expr._
 
 @deprecated
 class HOLSubstitution( val holmap: Map[Var, LambdaExpression] ) extends LambdaSubstitution( holmap.asInstanceOf[Map[Var, LambdaExpression]] ) {
-  def apply( t: Formula ): Formula = {
+  def apply( t: HOLFormula ): HOLFormula = {
     val s = LambdaSubstitution( map.asInstanceOf[Map[Var, LambdaExpression]] )
-    s( t ).asInstanceOf[Formula]
+    s( t ).asInstanceOf[HOLFormula]
   }
 
   def compose( sub: HOLSubstitution ): HOLSubstitution = HOLSubstitution( holmap ++ sub.holmap.map( x => ( x._1, apply( x._2 ) ) ) )

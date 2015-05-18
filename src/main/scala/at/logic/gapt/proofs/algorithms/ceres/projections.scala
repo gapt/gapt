@@ -66,9 +66,9 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ): Set[LKProof] = apply( proof, Set.empty[FormulaOccurrence], x => true )
-  def apply( proof: LKProof, pred: Formula => Boolean ): Set[LKProof] = apply( proof, Set.empty[FormulaOccurrence], pred )
+  def apply( proof: LKProof, pred: HOLFormula => Boolean ): Set[LKProof] = apply( proof, Set.empty[FormulaOccurrence], pred )
 
-  def apply( proof: LKProof, cut_ancs: Set[FormulaOccurrence], pred: Formula => Boolean ): Set[LKProof] = {
+  def apply( proof: LKProof, cut_ancs: Set[FormulaOccurrence], pred: HOLFormula => Boolean ): Set[LKProof] = {
     implicit val c_ancs = cut_ancs
     try {
       debug( "working on rule " + proof.rule )
@@ -338,7 +338,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   def handleContractionRule( proof: LKProof, p: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: FormulaOccurrence,
                              constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof,
-                             pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
+                             pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ), pred )
       if ( cut_ancs.contains( m ) ) s
@@ -348,9 +348,9 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
       } )
     }
 
-  def handleUnaryRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, w: Formula, m: FormulaOccurrence,
-                       constructor: ( LKProof, FormulaOccurrence, Formula ) => LKProof,
-                       pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
+  def handleUnaryRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, w: HOLFormula, m: FormulaOccurrence,
+                       constructor: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof,
+                       pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ), pred )
       if ( cut_ancs.contains( m ) ) s
@@ -363,7 +363,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   //implication does not weaken the second argument, we need two occs
   def handleUnaryImpRule( proof: LKProof, p: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: FormulaOccurrence,
                           constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof,
-                          pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
+                          pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ), pred )
       if ( cut_ancs.contains( m ) ) s
@@ -374,8 +374,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     }
 
   def handleWeakeningRule( proof: LKProof, p: LKProof, m: FormulaOccurrence,
-                           constructor: ( LKProof, Formula ) => LKProof with PrincipalFormulas,
-                           pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
+                           constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
+                           pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ), pred )
       if ( cut_ancs.contains( m ) ) s
@@ -383,8 +383,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     }
 
   def handleLKSKWeakeningRule( proof: LKProof, p: LKProof, m: LabelledFormulaOccurrence,
-                               constructor: ( LKProof, Formula, Label ) => LKProof with PrincipalFormulas,
-                               pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
+                               constructor: ( LKProof, HOLFormula, Label ) => LKProof with PrincipalFormulas,
+                               pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ), pred )
       if ( cut_ancs.contains( m ) ) s
@@ -394,8 +394,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     }
 
   def handleDefRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
-                     constructor: ( LKProof, FormulaOccurrence, Formula ) => LKProof,
-                     pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
+                     constructor: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof,
+                     pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ), pred )
       if ( cut_ancs.contains( m ) ) s
@@ -407,7 +407,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   def handleNegRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
                      constructor: ( LKProof, FormulaOccurrence ) => LKProof,
-                     pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
+                     pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
     {
       val s = apply( p, copySetToAncestor( cut_ancs ), pred )
       if ( cut_ancs.contains( m ) ) s
@@ -418,8 +418,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     }
 
   def handleWeakQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, t: LambdaExpression,
-                           constructor: ( LKProof, FormulaOccurrence, Formula, LambdaExpression ) => LKProof,
-                           pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
+                           constructor: ( LKProof, FormulaOccurrence, HOLFormula, LambdaExpression ) => LKProof,
+                           pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( cut_ancs ), pred )
     if ( cut_ancs.contains( m ) ) s
     else s.map( pm => {
@@ -429,8 +429,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   }
 
   def handleLKSKWeakQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: LabelledFormulaOccurrence, t: LambdaExpression,
-                               constructor: ( LKProof, LabelledFormulaOccurrence, Formula, LambdaExpression, Boolean ) => LKProof,
-                               pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
+                               constructor: ( LKProof, LabelledFormulaOccurrence, HOLFormula, LambdaExpression, Boolean ) => LKProof,
+                               pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( cut_ancs ), pred )
     if ( cut_ancs.contains( m ) ) s
     else {
@@ -462,7 +462,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence,
                         m: FormulaOccurrence, constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof,
-                        pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ) = {
+                        pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ) = {
     val new_cut_ancs = copySetToAncestor( cut_ancs )
     val s1 = apply( p1, new_cut_ancs, pred )
     val s2 = apply( p2, new_cut_ancs, pred )
@@ -474,8 +474,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   }
 
   def handleEqRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence,
-                    m: FormulaOccurrence, constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => LKProof,
-                    pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ) = {
+                    m: FormulaOccurrence, constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof,
+                    pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ) = {
     val new_cut_ancs = copySetToAncestor( cut_ancs )
     val s1 = apply( p1, new_cut_ancs, pred )
     val s2 = apply( p2, new_cut_ancs, pred )
@@ -490,15 +490,15 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   }
 
   def handleStrongQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, v: Var,
-                             constructor: ( LKProof, Formula, Formula, Var ) => LKProof, pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
+                             constructor: ( LKProof, HOLFormula, HOLFormula, Var ) => LKProof, pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( cut_ancs ), pred )
     if ( cut_ancs.contains( m ) ) s
     else throw new Exception( "The proof is not skolemized!" ) // s.map( p => constructor( p, a, m.formula, v ) )
   }
 
   def handleLKSKStrongQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: LabelledFormulaOccurrence, skolemterm: LambdaExpression,
-                                 constructor: ( LKProof, LabelledFormulaOccurrence, Formula, LambdaExpression ) => LKProof,
-                                 pred: Formula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
+                                 constructor: ( LKProof, LabelledFormulaOccurrence, HOLFormula, LambdaExpression ) => LKProof,
+                                 pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( cut_ancs ), pred )
     if ( cut_ancs.contains( m ) ) s
     else {
@@ -537,8 +537,8 @@ object DeleteTautology {
 
 object DeleteReduntantFOfromSequent {
   def apply( s: Sequent ): Sequent = {
-    val setant = s.antecedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[Formula] )( ( seq, t ) => t +: seq )
-    val setsucc = s.succedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[Formula] )( ( seq, t ) => t +: seq )
+    val setant = s.antecedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
+    val setsucc = s.succedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
     Sequent( setant.map( f => factory.createFormulaOccurrence( f, Nil ) ), setsucc.map( f => factory.createFormulaOccurrence( f, Nil ) ) )
   }
 }

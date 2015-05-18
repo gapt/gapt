@@ -18,17 +18,17 @@ import scala.collection.immutable.HashMap
 // Call MiniSAT to solve quantifier-free Formulas.
 class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 
-  var atom_map: Map[Formula, Int] = new HashMap[Formula, Int]
+  var atom_map: Map[HOLFormula, Int] = new HashMap[HOLFormula, Int]
 
   // Checks if f is valid using MiniSAT.
-  def isValid( f: Formula ) = solve( Neg( f ) ) match {
+  def isValid( f: HOLFormula ) = solve( Neg( f ) ) match {
     case Some( _ ) => false
     case None      => true
   }
 
   // Returns a model of the formula obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
-  def solve( f: Formula ): Option[Interpretation] = {
+  def solve( f: HOLFormula ): Option[Interpretation] = {
     start()
     val cnf = f match {
       case f1: FOLFormula => {
@@ -92,7 +92,7 @@ class MiniSATProver extends Prover with at.logic.gapt.utils.logging.Logger with 
   def getLKProof( seq: FSequent ): Option[at.logic.gapt.proofs.lk.base.LKProof] =
     throw new Exception( "MiniSAT does not produce proofs!" )
 
-  override def isValid( f: Formula ): Boolean = {
+  override def isValid( f: HOLFormula ): Boolean = {
     val sat = new MiniSAT()
     sat.isValid( f )
   }

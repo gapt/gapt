@@ -13,7 +13,7 @@ import at.logic.gapt.utils.ds.trees._
  * @param antecedent The formulas on the left side of the sequent.
  * @param succedent The formulas on the right side of the sequent.
  */
-class FSequent( val antecedent: Seq[Formula], val succedent: Seq[Formula] ) {
+class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] ) {
 
   type SymbolMap = Map[String, ( Int, String )]
 
@@ -48,7 +48,7 @@ class FSequent( val antecedent: Seq[Formula], val succedent: Seq[Formula] ) {
   /**
    * The formula on both sides of the sequent, i.e. the concatenation of antecedent and succedent.
    */
-  def formulas: Seq[Formula] = antecedent ++ succedent
+  def formulas: Seq[HOLFormula] = antecedent ++ succedent
 
   /**
    * Takes the multiset difference between two sequents, i.e. each side separately.
@@ -63,7 +63,7 @@ class FSequent( val antecedent: Seq[Formula], val succedent: Seq[Formula] ) {
   /**
    * Interpretation of the sequent as a formula.
    */
-  def toFormula: Formula = Or( antecedent.toList.map( f => Neg( f ) ) ++ succedent )
+  def toFormula: HOLFormula = Or( antecedent.toList.map( f => Neg( f ) ) ++ succedent )
 
   /**
    * Are both sides of the sequent empty?
@@ -131,7 +131,7 @@ class FSequent( val antecedent: Seq[Formula], val succedent: Seq[Formula] ) {
 }
 
 object FSequent {
-  def apply( ant: Seq[Formula], succ: Seq[Formula] ): FSequent = new FSequent( ant, succ )
+  def apply( ant: Seq[HOLFormula], succ: Seq[HOLFormula] ): FSequent = new FSequent( ant, succ )
 
   /**
    * Constructs an [[FSequent]] from a [[Sequent]], by ignoring where the formulas occur.
@@ -141,7 +141,7 @@ object FSequent {
   /**
    * Destructs an [[FSequent]] into a tuple of its antecedent and succedent.
    */
-  def unapply( f: FSequent ): Option[( Seq[Formula], Seq[Formula] )] = Some( ( f.antecedent, f.succedent ) )
+  def unapply( f: FSequent ): Option[( Seq[HOLFormula], Seq[HOLFormula] )] = Some( ( f.antecedent, f.succedent ) )
 }
 
 object FSequentOrdering extends FSequentOrdering
@@ -251,11 +251,11 @@ object Sequent {
 class LKRuleException( msg: String ) extends RuleException( msg )
 class LKRuleCreationException( msg: String ) extends LKRuleException( msg )
 //these two classes allow detailed error diagnosis
-case class LKUnaryRuleCreationException( name: String, parent: LKProof, aux: List[Formula] )
+case class LKUnaryRuleCreationException( name: String, parent: LKProof, aux: List[HOLFormula] )
     extends LKRuleCreationException( "" ) {
   override def getMessage = "Could not create lk rule " + name + " from parent " + parent.root + " with auxiliary formulas " + aux.mkString( ", " )
 }
-case class LKBinaryRuleCreationException( name: String, parent1: LKProof, aux1: Formula, parent2: LKProof, aux2: Formula )
+case class LKBinaryRuleCreationException( name: String, parent1: LKProof, aux1: HOLFormula, parent2: LKProof, aux2: HOLFormula )
     extends LKRuleCreationException( "" ) {
   override def getMessage = "Could not create lk rule " + name + " from left parent " + parent1.root + " with auxiliary formula " + aux1 +
     " and right parent " + parent2.root + " with auxiliary formula " + aux2
@@ -310,6 +310,6 @@ trait TermPositions {
 object createContext {
   def apply( set: Seq[FormulaOccurrence] ): Seq[FormulaOccurrence] =
     set.map( x =>
-      x.factory.createFormulaOccurrence( x.formula.asInstanceOf[Formula], x :: Nil ) )
+      x.factory.createFormulaOccurrence( x.formula.asInstanceOf[HOLFormula], x :: Nil ) )
 }
 

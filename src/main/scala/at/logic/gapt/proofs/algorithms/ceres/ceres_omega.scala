@@ -252,7 +252,7 @@ class ceres_omega {
    * Finds an occurrence in candidates - exclusion_list, which has the same formula and label as aux.
    * @return the first occurrence in candidates which matches
    */
-  def findAuxByFormulaAndLabel( formula: Formula,
+  def findAuxByFormulaAndLabel( formula: HOLFormula,
                                 skolem_label: Label,
                                 candidates: Seq[LabelledFormulaOccurrence],
                                 exclusion_list: Seq[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence = try {

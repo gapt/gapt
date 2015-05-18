@@ -39,10 +39,10 @@ class SimpleHOLParserTest extends SpecificationWithJUnit {
     }
     val var3 = HOLAtom( Var( "x3", To ) )
     "parse correctly a formula variable" in {
-      ( new MyParser( "x3: o" ).getTerm() ) must beLike { case x: Formula => ok }
+      ( new MyParser( "x3: o" ).getTerm() ) must beLike { case x: HOLFormula => ok }
     }
     "parse correctly a formula constant" in {
-      ( new MyParser( "c: o" ).getTerm() ) must beLike { case x: Formula => ok }
+      ( new MyParser( "c: o" ).getTerm() ) must beLike { case x: HOLFormula => ok }
     }
     val f1 = HOLFunction( Const( StringSymbol( "f" ), Ti -> Ti ), Const( StringSymbol( "a" ), Ti ) :: Nil )
     "parse correctly a function" in {

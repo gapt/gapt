@@ -28,8 +28,8 @@ case class Replacement( position: List[Int], expression: LambdaExpression ) {
   def apply( term: LambdaExpression ): LambdaExpression = replace( position, term )
 
   // To avoid all the casting...
-  private def replace( pos: List[Int], f: Formula ): Formula =
-    replace( pos, f.asInstanceOf[LambdaExpression] ).asInstanceOf[Formula]
+  private def replace( pos: List[Int], f: HOLFormula ): HOLFormula =
+    replace( pos, f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 
   private def replace( pos: List[Int], exp: LambdaExpression ): LambdaExpression = {
     ( pos, exp ) match {

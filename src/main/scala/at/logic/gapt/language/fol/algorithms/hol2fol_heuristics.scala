@@ -27,8 +27,8 @@ object undoHol2Fol extends Logger {
   def backtranslate( e: LambdaExpression,
                      sig_vars: Map[String, List[Var]],
                      sig_consts: Map[String, List[Const]],
-                     abssymbol_map: Map[String, LambdaExpression] ): Formula =
-    backtranslate( e.asInstanceOf[LambdaExpression], sig_vars, sig_consts, abssymbol_map, Some( To ) ).asInstanceOf[Formula]
+                     abssymbol_map: Map[String, LambdaExpression] ): HOLFormula =
+    backtranslate( e.asInstanceOf[LambdaExpression], sig_vars, sig_consts, abssymbol_map, Some( To ) ).asInstanceOf[HOLFormula]
   /**
    * We do some dirty stuff in here to translate a prover9 term back to the richer type signature of hol proofs, undoing
    * replace abstractions at the same time.

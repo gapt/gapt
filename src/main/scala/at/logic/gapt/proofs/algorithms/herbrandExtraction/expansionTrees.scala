@@ -66,7 +66,7 @@ class extractExpansionSequent {
 
   //occurs in handleAxiom
   private def allAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isAtom( o.formula ) || o.formula == Top() || o.formula == Bottom() )
-  private def isReflexivity( f: Formula ) = f match { case Eq( s, t ) if s == t => true; case _ => false }
+  private def isReflexivity( f: HOLFormula ) = f match { case Eq( s, t ) if s == t => true; case _ => false }
 
   def handleUnary( r: Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {

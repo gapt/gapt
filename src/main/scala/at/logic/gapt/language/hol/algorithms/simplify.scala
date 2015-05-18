@@ -3,8 +3,8 @@ package at.logic.gapt.language.hol.algorithms.simplify
 import at.logic.gapt.expr._
 
 object simplify {
-  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
-  def apply( f: Formula ): Formula = f match {
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+  def apply( f: HOLFormula ): HOLFormula = f match {
     case And( l, r ) => ( simplify( l ), simplify( r ) ) match {
       case ( Top(), r )       => r
       case ( r, Top() )       => r

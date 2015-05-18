@@ -19,7 +19,7 @@ trait Prover {
    * @param formula The formula whose validity should be checked.
    * @return True if the formula is valid.
    */
-  def isValid( formula: Formula ): Boolean = isValid( FSequent( Nil, formula :: Nil ) )
+  def isValid( formula: HOLFormula ): Boolean = isValid( FSequent( Nil, formula :: Nil ) )
 
   /**
    * @param seq The formula whose validity should be checked.
@@ -34,7 +34,7 @@ trait Prover {
    * @param formula The formula that should be proved.
    * @return An LK-Proof of  :- formula, or None if not successful.
    */
-  def getLKProof( formula: Formula ): Option[LKProof] = getLKProof( FSequent( Nil, formula :: Nil ) )
+  def getLKProof( formula: HOLFormula ): Option[LKProof] = getLKProof( FSequent( Nil, formula :: Nil ) )
 
   /**
    * @param seq The sequent that should be proved.

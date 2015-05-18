@@ -162,7 +162,7 @@ class map_proof {
                        fun: LambdaExpression => LambdaExpression,
                        old_parent: LKProof,
                        old_proof: LKProof,
-                       constructor: ( LKProof, Formula ) => LKProof with PrincipalFormulas,
+                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
                        m: FormulaOccurrence ) = {
     val new_proof = constructor( new_parent._1, wrapFun( fun )( m.formula ) )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + ( ( m, new_proof.prin.head ) ) )
@@ -190,7 +190,7 @@ class map_proof {
   }
 
   def handleEquationRule(
-    constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, Formula ) => LKProof,
+    constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof,
     p1: LKProof,
     p2: LKProof,
     old_proof: LKProof,
@@ -199,14 +199,14 @@ class map_proof {
     s: Sequent,
     a1: FormulaOccurrence,
     a2: FormulaOccurrence,
-    m: Formula ) = {
+    m: HOLFormula ) = {
     val new_proof = constructor( new_p1._1, new_p2._1, a1, a2, m )
     ( new_proof, computeMap( p1.root.antecedent ++ p1.root.succedent ++ p2.root.antecedent ++ p2.root.succedent,
       old_proof, new_proof, new_p1._2 ++ new_p2._2 ) )
   }
 
   /* creates a function of type Formula => Formula from a function of type LambdaExpression => LambdaExpression */
-  private def wrapFun( f: LambdaExpression => LambdaExpression ): ( Formula => Formula ) =
-    ( exp: Formula ) => f( exp ).asInstanceOf[Formula]
+  private def wrapFun( f: LambdaExpression => LambdaExpression ): ( HOLFormula => HOLFormula ) =
+    ( exp: HOLFormula ) => f( exp ).asInstanceOf[HOLFormula]
 
 }

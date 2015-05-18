@@ -32,7 +32,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
   background = new Color( 255, 255, 255 )
   yLayoutAlignment = 0.5
   xLayoutAlignment = 0
-  private val state = scala.collection.mutable.Map.empty[Formula, ExpansionTreeState.Value]
+  private val state = scala.collection.mutable.Map.empty[HOLFormula, ExpansionTreeState.Value]
   val highlightColor = Color.red
   initialize
 
@@ -40,21 +40,21 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
     contents += treeToComponent( expansionTree, allow = true )
   }
 
-  def close( f: Formula ) {
+  def close( f: HOLFormula ) {
     contents.clear()
     state += ( ( f, Close ) )
     initialize
     revalidate()
   }
 
-  def open( f: Formula ) {
+  def open( f: HOLFormula ) {
     contents.clear()
     state += ( ( f, Open ) )
     initialize
     revalidate()
   }
 
-  def expand( f: Formula ) {
+  def expand( f: HOLFormula ) {
     contents.clear()
     state += ( ( f, Expand ) )
     initialize
@@ -277,7 +277,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
     }
   }
 
-  def getMatrixSymbol( formula: Formula ) = formula match {
+  def getMatrixSymbol( formula: HOLFormula ) = formula match {
     case Ex( _, _ )  => "\\bigvee"
     case All( _, _ ) => "\\bigwedge"
     case _           => throw new Exception( "Something went wrong in DrawExpansionTree!" )
@@ -367,7 +367,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
     }
   }
 
-  def drawFormula( formula: Formula ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
+  def drawFormula( formula: HOLFormula ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
     trace( "drawFormula called on formula " + formula )
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5

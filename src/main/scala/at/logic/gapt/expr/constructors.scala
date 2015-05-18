@@ -9,10 +9,10 @@ object NonLogicalConstant {
 }
 
 object HOLAtom {
-  def apply( head: LambdaExpression, args: LambdaExpression* ): Formula =
+  def apply( head: LambdaExpression, args: LambdaExpression* ): HOLFormula =
     apply( head, args toList )
-  def apply( head: LambdaExpression, args: List[LambdaExpression] ): Formula =
-    Apps( head, args ).asInstanceOf[Formula]
+  def apply( head: LambdaExpression, args: List[LambdaExpression] ): HOLFormula =
+    Apps( head, args ).asInstanceOf[HOLFormula]
   def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
     case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
     case _ => None
@@ -67,15 +67,15 @@ object FOLFunction {
 }
 
 class QuantifierHelper( val q: QuantifierC ) {
-  def apply( v: Var, formula: LambdaExpression ): Formula =
-    App( q( v.exptype ), Abs( v, formula ) ).asInstanceOf[Formula]
+  def apply( v: Var, formula: LambdaExpression ): HOLFormula =
+    App( q( v.exptype ), Abs( v, formula ) ).asInstanceOf[HOLFormula]
   def apply( v: FOLVar, formula: FOLFormula ): FOLFormula =
     apply( v, formula.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
 
-  def unapply( e: LambdaExpression ): Option[( Var, Formula )] = e match {
+  def unapply( e: LambdaExpression ): Option[( Var, HOLFormula )] = e match {
     // TODO: eta-expansion?
-    case App( q( _ ), Abs( v, formula: Formula ) ) => Some( ( v, formula ) )
-    case _                                         => None
+    case App( q( _ ), Abs( v, formula: HOLFormula ) ) => Some( ( v, formula ) )
+    case _ => None
   }
 
   def unapply( f: FOLFormula ): Option[( FOLVar, FOLFormula )] =
@@ -90,16 +90,16 @@ object All extends QuantifierHelper( ForallC )
 object Ex extends QuantifierHelper( ExistsC )
 
 class BinaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
-  def apply( a: LambdaExpression, b: LambdaExpression ): Formula =
-    Apps( c(), a, b ).asInstanceOf[Formula]
+  def apply( a: LambdaExpression, b: LambdaExpression ): HOLFormula =
+    Apps( c(), a, b ).asInstanceOf[HOLFormula]
   def apply( a: FOLFormula, b: FOLFormula ): FOLFormula =
     apply( a, b.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
   def apply( a: PropFormula, b: PropFormula ): PropFormula =
     apply( a, b.asInstanceOf[LambdaExpression] ).asInstanceOf[PropFormula]
 
-  def unapply( formula: LambdaExpression ): Option[( Formula, Formula )] = formula match {
-    case App( App( c(), a: Formula ), b: Formula ) => Some( ( a, b ) )
-    case _                                         => None
+  def unapply( formula: LambdaExpression ): Option[( HOLFormula, HOLFormula )] = formula match {
+    case App( App( c(), a: HOLFormula ), b: HOLFormula ) => Some( ( a, b ) )
+    case _ => None
   }
   def unapply( formula: FOLFormula ): Option[( FOLFormula, FOLFormula )] =
     unapply( formula.asInstanceOf[FOLExpression] )
@@ -116,21 +116,21 @@ class BinaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
 }
 
 class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: MonomorphicLogicalC ) extends BinaryPropConnectiveHelper( c ) {
-  def apply( fs: List[Formula] ): Formula = nAry( fs: _* )
+  def apply( fs: List[HOLFormula] ): HOLFormula = nAry( fs: _* )
   def apply( fs: List[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = nAry( fs: _* )
 
-  def leftAssociative( fs: LambdaExpression* ): Formula =
-    fs.reduceLeftOption( super.apply ).getOrElse( neutral() ).asInstanceOf[Formula]
+  def leftAssociative( fs: LambdaExpression* ): HOLFormula =
+    fs.reduceLeftOption( super.apply ).getOrElse( neutral() ).asInstanceOf[HOLFormula]
   def leftAssociative( fs: FOLFormula* ): FOLFormula =
     leftAssociative( fs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
 
-  def rightAssociative( fs: LambdaExpression* ): Formula =
-    fs.reduceRightOption( super.apply ).getOrElse( neutral() ).asInstanceOf[Formula]
+  def rightAssociative( fs: LambdaExpression* ): HOLFormula =
+    fs.reduceRightOption( super.apply ).getOrElse( neutral() ).asInstanceOf[HOLFormula]
   def rightAssociative( fs: FOLFormula* ): FOLFormula =
     rightAssociative( fs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
 
   object nAry {
-    def apply( fs: LambdaExpression* )( implicit d: DummyImplicit ): Formula = leftAssociative( fs: _* )
+    def apply( fs: LambdaExpression* )( implicit d: DummyImplicit ): HOLFormula = leftAssociative( fs: _* )
     def apply( fs: FOLFormula* )( implicit d: DummyImplicit ): FOLFormula = leftAssociative( fs: _* )
 
     private object Binary {
@@ -153,13 +153,13 @@ object Or extends MonoidalBinaryPropConnectiveHelper( OrC, BottomC )
 object Imp extends BinaryPropConnectiveHelper( ImpC )
 
 class UnaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
-  def apply( a: LambdaExpression ): Formula = Apps( c(), a ).asInstanceOf[Formula]
+  def apply( a: LambdaExpression ): HOLFormula = Apps( c(), a ).asInstanceOf[HOLFormula]
   def apply( a: FOLFormula ): FOLFormula = apply( a.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
   def apply( a: PropFormula ): PropFormula = apply( a.asInstanceOf[LambdaExpression] ).asInstanceOf[PropFormula]
 
-  def unapply( formula: LambdaExpression ): Option[Formula] = formula match {
-    case App( c(), a: Formula ) => Some( a )
-    case _                      => None
+  def unapply( formula: LambdaExpression ): Option[HOLFormula] = formula match {
+    case App( c(), a: HOLFormula ) => Some( a )
+    case _                         => None
   }
   def unapply( formula: FOLFormula ): Option[FOLFormula] =
     unapply( formula.asInstanceOf[FOLExpression] )
@@ -189,7 +189,7 @@ object Top extends NullaryPropConnectiveHelper( TopC )
 object Bottom extends NullaryPropConnectiveHelper( BottomC )
 
 object Eq {
-  def apply( a: LambdaExpression, b: LambdaExpression ): Formula = Apps( EqC( a.exptype ), a, b ).asInstanceOf[Formula]
+  def apply( a: LambdaExpression, b: LambdaExpression ): HOLFormula = Apps( EqC( a.exptype ), a, b ).asInstanceOf[HOLFormula]
   def apply( a: FOLTerm, b: FOLTerm ): FOLFormula =
     apply( a, b.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
 

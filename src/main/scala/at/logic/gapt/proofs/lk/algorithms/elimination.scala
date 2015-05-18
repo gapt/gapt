@@ -36,7 +36,7 @@ object CleanStructuralRules {
 
   // Note: using a pair instead of a sequent because sequents are composed of 
   // formula occurrences and not formulas.
-  private def cleanStructuralRules( pr: LKProof, fun: ( ( LKProof, ( List[Formula], List[Formula] ) ) => TailRec[LKProof] ) ): TailRec[LKProof] =
+  private def cleanStructuralRules( pr: LKProof, fun: ( ( LKProof, ( List[HOLFormula], List[HOLFormula] ) ) => TailRec[LKProof] ) ): TailRec[LKProof] =
     pr match {
       // Base case: axiom
       case Axiom( s ) => fun( pr, ( Nil, Nil ) )

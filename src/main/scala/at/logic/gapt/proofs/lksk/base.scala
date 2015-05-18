@@ -22,7 +22,7 @@ object TypeSynonyms {
 
 import TypeSynonyms._
 
-class LabelledFormulaOccurrence( override val formula: Formula,
+class LabelledFormulaOccurrence( override val formula: HOLFormula,
                                  override val parents: List[LabelledFormulaOccurrence],
                                  val skolem_label: Label ) extends FormulaOccurrence( formula, parents, LKskFOFactory ) {
   override def toString: String = formula.toString + " [label: " + skolem_label.toString + "]"
@@ -32,14 +32,14 @@ object LabelledFormulaOccurrence {
 }
 
 object LKskFOFactory extends FOFactory {
-  override def createFormulaOccurrence( formula: Formula, ancestors: Seq[FormulaOccurrence] ): FormulaOccurrence = {
+  override def createFormulaOccurrence( formula: HOLFormula, ancestors: Seq[FormulaOccurrence] ): FormulaOccurrence = {
     if ( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
       createOccurrence( formula, ( ancestors.asInstanceOf[Seq[LabelledFormulaOccurrence]] ).toList )
     else //TODO: we can not check if the label is unchanged in unlabelled ancestors
       throw new Exception( "ancestors not labelled" )
   }
 
-  def createContextFormulaOccurrenceWithSubst( formula: Formula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], sub: HOLSubstitution ) = {
+  def createContextFormulaOccurrenceWithSubst( formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], sub: HOLSubstitution ) = {
     assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
     val l_ancestors = ancestors.map( _.asInstanceOf[LabelledFormulaOccurrence] )
     val l = l_ancestors.head.skolem_label
@@ -47,7 +47,7 @@ object LKskFOFactory extends FOFactory {
     new LabelledFormulaOccurrence( betaNormalize( sub( formula ) ), l_ancestors, l.map( x => betaNormalize( sub( x ) ) ) )
   }
 
-  def createOccurrence( formula: Formula, ancestors: List[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence = {
+  def createOccurrence( formula: HOLFormula, ancestors: List[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence = {
     val l = ancestors.head.skolem_label
     assert( ancestors.forall( a => a.skolem_label == l ) )
     new LabelledFormulaOccurrence( formula, ancestors, l )
@@ -56,7 +56,7 @@ object LKskFOFactory extends FOFactory {
   // when creating a main formula for a weak quantifier inference in LKsk, we may choose
   // whether to delete the term from the label, or not. If deletion is not desired,
   // term should be set to None.
-  def createWeakQuantMain( formula: Formula, ancestor: LabelledFormulaOccurrence, term: Option[LambdaExpression] ) =
+  def createWeakQuantMain( formula: HOLFormula, ancestor: LabelledFormulaOccurrence, term: Option[LambdaExpression] ) =
     {
       val newlabel = term match {
         case None      => ancestor.skolem_label
@@ -65,7 +65,7 @@ object LKskFOFactory extends FOFactory {
       new LabelledFormulaOccurrence( formula, ancestor :: Nil, newlabel )
     }
 
-  def createInitialOccurrence( formula: Formula, label: Label ) =
+  def createInitialOccurrence( formula: HOLFormula, label: Label ) =
     new LabelledFormulaOccurrence( formula, Nil, label )
 
 }

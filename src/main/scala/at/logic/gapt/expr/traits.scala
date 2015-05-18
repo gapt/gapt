@@ -3,7 +3,7 @@ package at.logic.gapt.expr
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
 
-trait Formula extends LambdaExpression
+trait HOLFormula extends LambdaExpression
 
 trait LogicalConstant extends Const
 
@@ -22,7 +22,7 @@ trait FOLTerm extends FOLLambdaTerm with FOLExpression {
 }
 trait FOLVar extends Var with FOLTerm
 trait FOLConst extends Const with FOLTerm
-trait FOLFormula extends FOLLambdaTerm with Formula with FOLExpression {
+trait FOLFormula extends FOLLambdaTerm with HOLFormula with FOLExpression {
   private[expr] override val returnType = To
   private[expr] override val numberOfArguments = 0
 
@@ -43,7 +43,7 @@ trait PropAtom extends Const with PropFormula
 private[expr] object determineTraits {
   def forVar( sym: SymbolA, exptype: TA ): Var = exptype match {
     case Ti => new Var( sym, exptype ) with FOLVar
-    case To => new Var( sym, exptype ) with Formula
+    case To => new Var( sym, exptype ) with HOLFormula
     case _  => new Var( sym, exptype )
   }
   def forConst( sym: SymbolA, exptype: TA ): Const = ( sym, exptype ) match {
@@ -85,10 +85,10 @@ private[expr] object determineTraits {
     }
     case ( f: FOLQuantifier, _ ) => a match {
       case a: FOLFormulaWithBoundVar => new App( f, a ) with FOLFormula
-      case _                         => new App( f, a ) with Formula
+      case _                         => new App( f, a ) with HOLFormula
     }
     case _ => f.exptype match {
-      case ->( _, To ) => new App( f, a ) with Formula
+      case ->( _, To ) => new App( f, a ) with HOLFormula
       case _           => new App( f, a )
     }
   }

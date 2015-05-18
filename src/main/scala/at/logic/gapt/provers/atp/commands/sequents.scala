@@ -121,7 +121,7 @@ object fvarInvariantMSEquality {
     if ( set1.size != set2.size ) List[FSequent]() // they cannot be equal
     // create all possible substitutions
     ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => HOLSubstitution( x.asInstanceOf[List[Tuple2[Var, LambdaExpression]]] ) ) )
-      yield ( f1._1.map( s( _ ).asInstanceOf[Formula] ), f1._2.map( s( _ ).asInstanceOf[Formula] ) ) ).toList.exists( cls => {
+      yield ( f1._1.map( s( _ ).asInstanceOf[HOLFormula] ), f1._2.map( s( _ ).asInstanceOf[HOLFormula] ) ) ).toList.exists( cls => {
       neg.diff( cls._1 ).isEmpty && pos.diff( cls._2 ).isEmpty && cls._1.diff( neg ).isEmpty && cls._2.diff( pos ).isEmpty
     } )
   }
