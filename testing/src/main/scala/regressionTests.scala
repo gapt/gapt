@@ -9,16 +9,15 @@ import at.logic.gapt.proofs.expansionTrees.toDeep
 import at.logic.gapt.proofs.lk.algorithms.{ solve, containsEqualityReasoning }
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
-import scala.collection.JavaConversions
 import scala.concurrent.duration._
 import scala.util.Random
 
 import scala.xml.XML
 
-class Prover9TestCase( val f: File ) extends RegressionTestCase( f.getParentFile.getName ) {
+class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.getName ) {
   override def timeout = Some( 10 minutes )
 
-  override def test() = {
+  override def test( implicit testRun: TestRun ) = {
     val p = loadProver9LKProof( f.getAbsolutePath ) --- "import"
 
     val E = extractExpansionSequent( p, false ) --- "extractExpansionSequent"
@@ -34,8 +33,8 @@ class Prover9TestCase( val f: File ) extends RegressionTestCase( f.getParentFile
   }
 }
 
-class VeriTTestCase( val f: File ) extends RegressionTestCase( f.getName ) {
-  override def test() = {
+class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
+  override def test( implicit testRun: TestRun ) = {
     val E = VeriTParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
 
     val deep = toDeep( E ) --- "toDeep"
@@ -45,15 +44,14 @@ class VeriTTestCase( val f: File ) extends RegressionTestCase( f.getName ) {
 
 // Usage: RegressionTests [<test number limit>]
 object RegressionTests extends App {
-  def prover9TestCases =
-    recursiveListFiles( "testing/TSTP/prover9" )
-      .filter( _.getName.endsWith( ".out" ) )
-      .map( new Prover9TestCase( _ ) )
+  def prover9Proofs = recursiveListFiles( "testing/TSTP/prover9" )
+    .filter( _.getName.endsWith( ".out" ) )
 
-  def veritTestCases =
-    recursiveListFiles( "testing/veriT-SMT-LIB" )
-      .filter( _.getName.endsWith( ".proof_flat" ) )
-      .map( new VeriTTestCase( _ ) )
+  def veritProofs = recursiveListFiles( "testing/veriT-SMT-LIB" )
+    .filter( _.getName.endsWith( ".proof_flat" ) )
+
+  val prover9TestCases = prover9Proofs.map( new Prover9TestCase( _ ) )
+  val veritTestCases = veritProofs.map( new VeriTTestCase( _ ) )
 
   val allTestCases = prover9TestCases ++ veritTestCases
 
@@ -66,22 +64,19 @@ object RegressionTests extends App {
 
   val total = testCases.length
   var started = 0
-  testCases.par foreach { tc =>
+  val results = testCases.par map { tc =>
     started += 1
-    println( s"[${( 100 * started ) / total}%] ${tc.getClass.getSimpleName}/${tc.name}" )
-    tc.run()
+    println( s"[${( 100 * started ) / total}%] $tc" )
+    try {
+      tc.runOutOfProcessToJUnitXML()
+    } catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        <testsuite/>
+    }
   }
 
-  XML.save( "target/regression-test-results.xml", toJUnitXml( testCases ), "UTF-8" )
-
-  // This should not contain any non-daemon threads except main.
-  println( "List of all running threads:" )
-  import JavaConversions._
-  for ( ( thread, stackTrace ) <- Thread.getAllStackTraces ) {
-    println( s"  ${thread.getName} (isDaemon = ${thread.isDaemon})" )
-    for ( stackFrame <- stackTrace ) println( s"    $stackFrame" )
-  }
-
-  // Exit even if there are still threads running.
-  System.exit( 0 )
+  XML.save( "target/regression-test-results.xml",
+    <testsuite> { results flatMap ( _.child ) toList } </testsuite>,
+    "UTF-8" )
 }
