@@ -26,11 +26,11 @@ class Prover9TestCase( val f: File ) extends RegressionTestCase( f.getParentFile
 
     if ( !containsEqualityReasoning( p ) ) {
       new MiniSATProver().isValid( deep ) !-- "minisat validity"
+
+      solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
+      solve.expansionProofToLKProof( E ).isDefined !-- "expansionProofToLKProof"
     }
     new VeriTProver().isValid( deep ) !-- "verit validity"
-
-    solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
-    solve.expansionProofToLKProof( E ).isDefined !-- "expansionProofToLKProof"
   }
 }
 
