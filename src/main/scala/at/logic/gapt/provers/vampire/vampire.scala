@@ -97,7 +97,7 @@ object Vampire extends Logger {
     try {
       Vampire.refute( box )
     } catch {
-      case e: Throwable =>
+      case e: IOException =>
         warn( e.getMessage )
         return false
     }
