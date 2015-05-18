@@ -38,6 +38,7 @@ package timeout {
         }
       }
 
+      t.setDaemon( true )
       t.start()
       t.join( duration toMillis )
       t.stop()
