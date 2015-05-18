@@ -115,63 +115,42 @@ class BinaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
     }
 }
 
-object And extends BinaryPropConnectiveHelper( AndC ) {
-  def apply( conjs: List[Formula] ): Formula = Ands( conjs: _* )
-  def apply( conjs: List[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = Ands( conjs: _* )
+class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: MonomorphicLogicalC ) extends BinaryPropConnectiveHelper( c ) {
+  def apply( fs: List[Formula] ): Formula = nAry( fs: _* )
+  def apply( fs: List[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = nAry( fs: _* )
+
+  def leftAssociative( fs: LambdaExpression* ): Formula =
+    fs.reduceLeftOption( super.apply ).getOrElse( neutral() ).asInstanceOf[Formula]
+  def leftAssociative( fs: FOLFormula* ): FOLFormula =
+    leftAssociative( fs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
+
+  def rightAssociative( fs: LambdaExpression* ): Formula =
+    fs.reduceRightOption( super.apply ).getOrElse( neutral() ).asInstanceOf[Formula]
+  def rightAssociative( fs: FOLFormula* ): FOLFormula =
+    rightAssociative( fs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
+
+  object nAry {
+    def apply( fs: LambdaExpression* )( implicit d: DummyImplicit ): Formula = leftAssociative( fs: _* )
+    def apply( fs: FOLFormula* )( implicit d: DummyImplicit ): FOLFormula = leftAssociative( fs: _* )
+
+    private object Binary {
+      def unapply( formula: LambdaExpression ) = MonoidalBinaryPropConnectiveHelper.this.unapply( formula )
+    }
+
+    def unapply( formula: LambdaExpression ): Some[List[LambdaExpression]] = formula match {
+      case Binary( nAry( as ), nAry( bs ) ) => Some( as ::: bs )
+      case neutral()                        => Some( List() )
+      case _                                => Some( List( formula ) )
+    }
+
+    def unapply( formula: FOLFormula ): Some[List[FOLFormula]] =
+      unapply( formula.asInstanceOf[LambdaExpression] ).asInstanceOf
+  }
 }
-object Or extends BinaryPropConnectiveHelper( OrC ) {
-  def apply( conjs: List[Formula] ): Formula = Ors( conjs: _* )
-  def apply( conjs: List[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = Ors( conjs: _* )
-}
+
+object And extends MonoidalBinaryPropConnectiveHelper( AndC, TopC )
+object Or extends MonoidalBinaryPropConnectiveHelper( OrC, BottomC )
 object Imp extends BinaryPropConnectiveHelper( ImpC )
-
-object Ands {
-  def apply( conjs: LambdaExpression* ): Formula = conjs match {
-    case Seq()                  => Top()
-    case Seq( conj )            => conj.asInstanceOf[Formula]
-    case Seq( conj, rest @ _* ) => And( conj, Ands( rest: _* ) )
-  }
-  def apply( conjs: FOLFormula* ): FOLFormula =
-    Ands( conjs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
-
-  def rightAssociative( conjs: LambdaExpression* ): Formula =
-    conjs.reduceRightOption( And.apply ).getOrElse( Top() ).asInstanceOf[Formula]
-  def rightAssociative( conjs: FOLFormula* ): FOLFormula =
-    rightAssociative( conjs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
-
-  def unapply( formula: LambdaExpression ): Some[List[LambdaExpression]] = formula match {
-    case And( Ands( as ), Ands( bs ) ) => Some( as ::: bs )
-    case a                             => Some( List( a ) )
-  }
-  def unapply( formula: FOLFormula ): Some[List[FOLFormula]] = formula match {
-    case And( Ands( as ), Ands( bs ) ) => Some( as ::: bs )
-    case a                             => Some( List( a ) )
-  }
-}
-
-object Ors {
-  def apply( conjs: LambdaExpression* ): Formula = conjs match {
-    case Seq()                  => Bottom()
-    case Seq( conj )            => conj.asInstanceOf[Formula]
-    case Seq( conj, rest @ _* ) => Or( conj, Ors( rest: _* ) )
-  }
-  def apply( conjs: FOLFormula* ): FOLFormula =
-    Ors( conjs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
-
-  def rightAssociative( conjs: LambdaExpression* ): Formula =
-    conjs.reduceRightOption( Or.apply ).getOrElse( Bottom() ).asInstanceOf[Formula]
-  def rightAssociative( conjs: FOLFormula* ): FOLFormula =
-    rightAssociative( conjs.asInstanceOf[Seq[LambdaExpression]]: _* ).asInstanceOf[FOLFormula]
-
-  def unapply( formula: LambdaExpression ): Some[List[LambdaExpression]] = formula match {
-    case Or( Ors( as ), Ors( bs ) ) => Some( as ::: bs )
-    case a                          => Some( List( a ) )
-  }
-  def unapply( formula: FOLFormula ): Some[List[FOLFormula]] = formula match {
-    case Or( Ors( as ), Ors( bs ) ) => Some( as ::: bs )
-    case a                          => Some( List( a ) )
-  }
-}
 
 class UnaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply( a: LambdaExpression ): Formula = Apps( c(), a ).asInstanceOf[Formula]

@@ -46,7 +46,7 @@ class Vector( val vector: List[Int] ) {
 
   override def equals( v: Any ): Boolean = v match {
     case v: Vector => vector equals v.vector
-    case _ => false
+    case _         => false
   }
 
   override def toString = "Vector(" + ( vector.foldRight( ")" )( ( x: Int, y: String ) => if ( y == ")" ) x.toString + y else x + "," + y ) )

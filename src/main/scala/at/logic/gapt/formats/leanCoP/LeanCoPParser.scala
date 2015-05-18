@@ -131,11 +131,11 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLFormula] ): Option[FOLSubstitution] = {
 
     val num_clauses = lean_clauses.length
-    val goal = Ors.rightAssociative( lean_clauses: _* )
+    val goal = Or.rightAssociative( lean_clauses: _* )
 
     // Get all sub-lists of my_clauses of size num_clauses
     val set_same_size = my_clauses.combinations( num_clauses )
-    val candidates = set_same_size.flatMap( s => s.permutations.map( p => Ors.rightAssociative( p: _* ) ) )
+    val candidates = set_same_size.flatMap( s => s.permutations.map( p => Or.rightAssociative( p: _* ) ) )
 
     def findSubstitution( lst: List[FOLFormula], goal: FOLFormula ): Option[FOLSubstitution] = lst match {
       case Nil => None
