@@ -8,7 +8,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.sys.process._
-import scala.xml.{ XML, Node }
+import scala.xml.Elem
 
 abstract class RegressionTestCase( val name: String ) extends Serializable {
   protected def test( implicit testRun: TestRun ): Unit
@@ -49,7 +49,7 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
       result
     }
 
-    def toJUnitXml: Node =
+    def toJUnitXml: Elem =
       <testsuite>
         {
           steps map { step =>
@@ -87,27 +87,40 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
       testRun.runStep( Some( name ) ) { require( block, name ) }
   }
 
-  def runOutOfProcessToJUnitXML(): Node = {
-    val baos = new ByteArrayOutputStream()
-    val oos = new ObjectOutputStream( baos )
-    oos.writeObject( this )
-    oos.close()
-
-    val javaBinary = new File( new File( System.getProperty( "java.home" ), "bin" ), "java" ).getAbsolutePath
-    val stdout = Seq( javaBinary, "-Xmx1G", "-Xss30m",
-      "-cp", System.getProperty( "java.class.path" ),
-      OutOfProcessRunner.getClass.getCanonicalName.replace( "$", "" ),
-      toString ) #< new ByteArrayInputStream( baos.toByteArray ) !!
-
-    XML.loadString( stdout )
-  }
-
   override def toString = s"${getClass.getSimpleName}.$name"
 }
 
-private object OutOfProcessRunner extends App {
-  val testCase = new ObjectInputStream( System.in ).readObject().asInstanceOf[RegressionTestCase]
-  print( testCase.run().toJUnitXml )
+object runOutOfProcess {
+  def main( args: Array[String] ): Unit = {
+    val f: () => Serializable = deserialize( System.in )
+    serialize( System.out, f() )
+  }
+
+  private def serialize( out: OutputStream, obj: Any ) = {
+    val oos = new ObjectOutputStream( out )
+    try oos.writeObject( obj ) finally oos.close()
+  }
+
+  private def deserialize[T]( in: InputStream ): T = {
+    val ois = new ObjectInputStream( in )
+    try ois.readObject().asInstanceOf[T] finally ois.close()
+  }
+
+  def apply[T <: Serializable]( extraJvmArgs: Seq[String] )( f: => T ): T = {
+    var result: Option[T] = None
+    val processIO = new ProcessIO(
+      in => serialize( in, () => f ),
+      out => result = Some( deserialize( out ) ),
+      err = BasicIO.toStdErr )
+
+    val javaBinary = new File( new File( System.getProperty( "java.home" ), "bin" ), "java" ).getAbsolutePath
+    val process = ( Seq( javaBinary ) ++ extraJvmArgs ++
+      Seq( "-cp", System.getProperty( "java.class.path" ),
+        getClass.getCanonicalName.dropRight( 1 ) ) ) run processIO
+    process.exitValue()
+
+    result.get
+  }
 }
 
 object recursiveListFiles {

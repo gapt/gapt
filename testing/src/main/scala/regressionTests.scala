@@ -67,8 +67,8 @@ object RegressionTests extends App {
   val results = testCases.par map { tc =>
     started += 1
     println( s"[${( 100 * started ) / total}%] $tc" )
-    try {
-      tc.runOutOfProcessToJUnitXML()
+    try runOutOfProcess( Seq( "-Xmx1G", "-Xss30m" ) ) {
+      tc.run().toJUnitXml
     } catch {
       case t: Throwable =>
         t.printStackTrace()
