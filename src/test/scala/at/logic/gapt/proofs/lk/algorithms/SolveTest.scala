@@ -174,6 +174,22 @@ class SolveTest extends SpecificationWithJUnit {
       lkProof.isDefined must beTrue
     }
 
+    "prove top" in {
+      solve.solvePropositional( FSequent( Seq(), Seq( Top() ) ) ) must beSome
+    }
+
+    "not prove bottom" in {
+      solve.solvePropositional( FSequent( Seq(), Seq( Bottom() ) ) ) must beNone
+    }
+
+    "not refute top" in {
+      solve.solvePropositional( FSequent( Seq( Top() ), Seq() ) ) must beNone
+    }
+
+    "refute bottom" in {
+      solve.solvePropositional( FSequent( Seq( Bottom() ), Seq() ) ) must beSome
+    }
+
   }
 }
 

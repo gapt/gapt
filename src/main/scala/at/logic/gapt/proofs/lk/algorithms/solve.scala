@@ -28,7 +28,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
     if ( SolveUtils.noCommonAtoms( seq ) ) {
       trace( "no common atoms: " + seq )
-      None
+      //      None
     }
 
     startProving( seq, new PropositionalProofStrategy, throwOnError )
@@ -152,6 +152,9 @@ object solve extends at.logic.gapt.utils.logging.Logger {
           else
             proof )
       }
+
+      // Nullary rules
+      case Bottom() => Some( Axiom( seq ) ) // FIXME: add rules for top/bottom?
 
       // Unary Rules
 
@@ -361,6 +364,9 @@ object solve extends at.logic.gapt.utils.logging.Logger {
         } )
       }
 
+      // Nullary rules
+      case Top() => Some( Axiom( seq ) ) // FIXME: add rules for top/bottom?
+
       // Unary Rules
 
       case Neg( f1 ) => {
@@ -561,16 +567,29 @@ class PropositionalProofStrategy extends ProofStrategy with at.logic.gapt.utils.
 
       // rule preference:
       // NOTE: getOrElse uses call by name, i.e. functions below are only evaluated if really needed
-      findUnaryLeft( seq ).orElse(
-        findUnaryRight( seq ).orElse(
-          findBinaryLeft( seq ).orElse(
-            findBinaryRight( seq ).orElse(
-              {
-                debug( "PropositionalProofStrategy is unable to find a rule to apply on: " + seq )
-                None
-              } ) ) ) )
+      findNullaryLeft( seq ).orElse(
+        findNullaryRight( seq ).orElse(
+          findUnaryLeft( seq ).orElse(
+            findUnaryRight( seq ).orElse(
+              findBinaryLeft( seq ).orElse(
+                findBinaryRight( seq ).orElse(
+                  {
+                    debug( "PropositionalProofStrategy is unable to find a rule to apply on: " + seq )
+                    None
+                  } ) ) ) ) ) )
     }
   }
+
+  def findNullaryLeft( seq: FSequent ): Option[ProofStrategy.Action] =
+    seq.antecedent.find( f => f match {
+      case Bottom() => true
+      case _        => false
+    } ).map( new ProofStrategy.Action( _, FormulaLocation.Antecedent, Some( this ) ) )
+  def findNullaryRight( seq: FSequent ): Option[ProofStrategy.Action] =
+    seq.succedent.find( f => f match {
+      case Top() => true
+      case _     => false
+    } ).map( new ProofStrategy.Action( _, FormulaLocation.Succedent, Some( this ) ) )
 
   // Tries to find a formula on the left or on the right such that its
   // introduction rule is unary.
@@ -878,6 +897,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
     case BigAnd( _, _, _, _ ) => false
     case BigOr( _, _, _, _ )  => false
     case HOLAtom( _, _ )      => true
+    case Bottom() | Top()     => true
     case _                    => warn( "WARNING: Unexpected operator in test for schematic formula " + f ); false
   }
 
@@ -934,13 +954,14 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
 
   // TODO: move this to hol!!!!!!
   private def getAtoms( f: HOLFormula ): List[HOLFormula] = f match {
-    case Neg( f )        => getAtoms( f.asInstanceOf[HOLFormula] )
-    case And( f1, f2 )   => getAtoms( f1 ) ++ getAtoms( f2 )
-    case Or( f1, f2 )    => getAtoms( f1 ) ++ getAtoms( f2 )
-    case Imp( f1, f2 )   => getAtoms( f1 ) ++ getAtoms( f2 )
-    case Ex( v, f )      => getAtoms( f )
-    case All( v, f )     => getAtoms( f )
-    case HOLAtom( _, _ ) => List( f )
+    case Neg( f )         => getAtoms( f.asInstanceOf[HOLFormula] )
+    case And( f1, f2 )    => getAtoms( f1 ) ++ getAtoms( f2 )
+    case Or( f1, f2 )     => getAtoms( f1 ) ++ getAtoms( f2 )
+    case Imp( f1, f2 )    => getAtoms( f1 ) ++ getAtoms( f2 )
+    case Ex( v, f )       => getAtoms( f )
+    case All( v, f )      => getAtoms( f )
+    case Bottom() | Top() => List()
+    case HOLAtom( _, _ )  => List( f )
   }
 }
 
@@ -977,6 +998,9 @@ object AtomicExpansion {
   private def atomicExpansion_( f1: HOLFormula, f2: HOLFormula ): LKProof = {
     try {
       ( f1, f2 ) match {
+        case ( Bottom(), Bottom() ) => Axiom( FSequent( Seq( Bottom() ), Seq( Bottom() ) ) )
+        case ( Top(), Top() )       => Axiom( FSequent( Seq( Top() ), Seq( Top() ) ) )
+
         case ( Neg( l1 ), Neg( l2 ) ) =>
           val parent = atomicExpansion_( l1, l2 )
           NegLeftRule( NegRightRule( parent, l1 ), l2 )
