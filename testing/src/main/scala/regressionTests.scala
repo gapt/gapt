@@ -50,10 +50,12 @@ object RegressionTests extends App {
   def veritProofs = recursiveListFiles( "testing/veriT-SMT-LIB" )
     .filter( _.getName.endsWith( ".proof_flat" ) )
 
-  val prover9TestCases = prover9Proofs.map( new Prover9TestCase( _ ) )
-  val veritTestCases = veritProofs.map( new VeriTTestCase( _ ) )
+  def prover9TestCases = prover9Proofs.map( new Prover9TestCase( _ ) )
+  def veritTestCases = veritProofs.map( new VeriTTestCase( _ ) )
 
-  val allTestCases = prover9TestCases ++ veritTestCases
+  def allTestCases = prover9TestCases ++ veritTestCases
+
+  def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
 
   val testCases = args match {
     case Array( limit ) =>
