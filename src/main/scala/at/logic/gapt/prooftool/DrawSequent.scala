@@ -142,7 +142,7 @@ object DrawSequent {
         } //or return the predicate symbol
         else nameToLatexString( constant.name.toString )
       } + { if ( indices.isEmpty ) "" else indices.map( x => formulaToLatexString( x ) ).mkString( "_{", ",", "}" ) }
-    case t: IntegerTerm => parseIntegerTerm( t, 0 )
+    case t: IntegerTerm if t.exptype == Tindex => parseIntegerTerm( t, 0 )
     case HOLAtom( pred, args ) =>
       val name = pred match {
         case Const( n, _ ) => n
