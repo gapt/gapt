@@ -489,8 +489,9 @@ object formulaToExpansionTree {
         val ev = valid_subs.head( v ).asInstanceOf[Var]
         ETStrongQuantifier( form, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
     }
-    case HOLAtom( _, _ ) => ETAtom( form )
-    case _               => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
+    case HOLAtom( _, _ )  => ETAtom( form )
+    case Top() | Bottom() => ETAtom( form ) // FIXME: add top/bottom to expansion trees
+    case _                => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
   }
 }
 

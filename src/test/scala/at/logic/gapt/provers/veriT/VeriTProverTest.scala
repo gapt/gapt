@@ -32,5 +32,10 @@ class VeriTProverTest extends SpecificationWithJUnit {
 
       veriT.getExpansionSequent( s ) must not be None
     }
+
+    "prove top" in { veriT.getExpansionSequent( FSequent( Seq(), Seq( Top() ) ) ) must beSome }
+    "not prove bottom" in { veriT.getExpansionSequent( FSequent( Seq(), Seq( Bottom() ) ) ) must beNone }
+    "not refute top" in { veriT.getExpansionSequent( FSequent( Seq( Top() ), Seq() ) ) must beNone }
+    "refute bottom" in { veriT.getExpansionSequent( FSequent( Seq( Bottom() ), Seq() ) ) must beSome }
   }
 }

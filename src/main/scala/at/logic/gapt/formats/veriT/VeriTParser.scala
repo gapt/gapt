@@ -436,7 +436,7 @@ object VeriTParser extends RegexParsers {
       getEqCongrPredInstances( c )
   }
 
-  def innerRule: Parser[List[String]] = resolution | and | and_pos | and_neg | or | or_pos | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2 | not_and | not_or
+  def innerRule: Parser[List[String]] = resolution | and | and_pos | and_neg | or | or_pos | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2 | not_and | not_or | true_ | false_
   // Rules that I don't care except if they use some clause (collecting their labels)
   def resolution: Parser[List[String]] = "resolution" ~> premises <~ conclusion
   def and: Parser[List[String]] = "and" ~> premises <~ conclusion
@@ -453,6 +453,8 @@ object VeriTParser extends RegexParsers {
   def not_implies2: Parser[List[String]] = "not_implies2" ~> premises <~ conclusion
   def not_and: Parser[List[String]] = "not_and" ~> premises <~ conclusion
   def not_or: Parser[List[String]] = "not_or" ~> premises <~ conclusion
+  def true_ = "true" ~> conclusion ^^ { _ => Nil }
+  def false_ = "false" ~> conclusion ^^ { _ => Nil }
 
   // Collecting the clauses' labels used in the proof
   def premises: Parser[List[String]] = ":clauses (" ~> rep( label ) <~ ")"

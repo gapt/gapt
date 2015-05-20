@@ -86,13 +86,14 @@ object VeriTExporter {
       Set( ( toSMTString( pred ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
     case FOLFunction( fun, args ) =>
       Set( ( toSMTString( fun ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
-    case And( f1, f2 ) => getSymbols( f1 ) ++ getSymbols( f2 )
-    case Or( f1, f2 )  => getSymbols( f1 ) ++ getSymbols( f2 )
-    case Imp( f1, f2 ) => getSymbols( f1 ) ++ getSymbols( f2 )
-    case Neg( f1 )     => getSymbols( f1 )
-    case All( _, f1 )  => getSymbols( f1 )
-    case Ex( _, f1 )   => getSymbols( f1 )
-    case _             => throw new Exception( "Undefined formula: " + f )
+    case And( f1, f2 )    => getSymbols( f1 ) ++ getSymbols( f2 )
+    case Or( f1, f2 )     => getSymbols( f1 ) ++ getSymbols( f2 )
+    case Imp( f1, f2 )    => getSymbols( f1 ) ++ getSymbols( f2 )
+    case Neg( f1 )        => getSymbols( f1 )
+    case All( _, f1 )     => getSymbols( f1 )
+    case Ex( _, f1 )      => getSymbols( f1 )
+    case Top() | Bottom() => Set()
+    case _                => throw new Exception( "Undefined formula: " + f )
   }
 
   private def toSMTFormat( f: FOLExpression ): String = f match {
