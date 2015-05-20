@@ -69,9 +69,9 @@ object VeriTExporter {
     symbols.foldLeft( "(declare-sort S 0)\n" ) {
       case ( acc, t ) => t._3 match {
         // It is an atom
-        case To => acc ++ "(declare-fun " + toSMTString( t._1 ) + " (" + "S " * t._2 + ") Bool)\n"
+        case To => acc ++ "(declare-fun " + t._1 + " (" + "S " * t._2 + ") Bool)\n"
         // It is a function
-        case Ti => acc ++ "(declare-fun " + toSMTString( t._1 ) + " (" + "S " * t._2 + ") S)\n"
+        case Ti => acc ++ "(declare-fun " + t._1 + " (" + "S " * t._2 + ") S)\n"
         case _  => throw new Exception( "Unexpected type for function or predicate: " + t._3 )
       }
     }
@@ -81,12 +81,12 @@ object VeriTExporter {
   // (Note: here we would only use propositional formulas, but it is already
   // implemented for quantifiers just in case...)
   private def getSymbols( f: FOLExpression ): Set[( String, Int, TA )] = f match {
-    case FOLVar( s )   => Set( ( toSMTString( s ), 0, Ti ) )
-    case FOLConst( s ) => Set( ( toSMTString( s ), 0, Ti ) )
+    case FOLVar( s )   => Set( ( toSMTString( s, true ), 0, Ti ) )
+    case FOLConst( s ) => Set( ( toSMTString( s, false ), 0, Ti ) )
     case FOLAtom( pred, args ) =>
-      Set( ( toSMTString( pred ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
+      Set( ( toSMTString( pred, false ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
     case FOLFunction( fun, args ) =>
-      Set( ( toSMTString( fun ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
+      Set( ( toSMTString( fun, false ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
     case FOLAnd( f1, f2 )   => getSymbols( f1 ) ++ getSymbols( f2 )
     case FOLOr( f1, f2 )    => getSymbols( f1 ) ++ getSymbols( f2 )
     case FOLImp( f1, f2 )   => getSymbols( f1 ) ++ getSymbols( f2 )
@@ -99,16 +99,16 @@ object VeriTExporter {
   private def toSMTFormat( f: FOLExpression ): String = f match {
     case FOLTopC       => "true"
     case FOLBottomC    => "false"
-    case FOLVar( s )   => toSMTString( s )
-    case FOLConst( s ) => toSMTString( s )
+    case FOLVar( s )   => toSMTString( s, true )
+    case FOLConst( s ) => toSMTString( s, false )
     case FOLAtom( pred, args ) =>
       if ( args.size == 0 ) {
-        toSMTString( pred )
+        toSMTString( pred, false )
       } else {
-        "(" + toSMTString( pred ) + " " + args.foldLeft( "" )( ( acc, t ) => toSMTFormat( t ) + " " + acc ) + ")"
+        "(" + toSMTString( pred, false ) + " " + args.foldLeft( "" )( ( acc, t ) => toSMTFormat( t ) + " " + acc ) + ")"
       }
     // Functions should have arguments.
-    case FOLFunction( fun, args ) => "(" + toSMTString( fun ) + " " + args.foldRight( "" )( ( t, acc ) => toSMTFormat( t ) + " " + acc ) + ")"
+    case FOLFunction( fun, args ) => "(" + toSMTString( fun, false ) + " " + args.foldRight( "" )( ( t, acc ) => toSMTFormat( t ) + " " + acc ) + ")"
     case FOLAnd( f1, f2 )         => "(and " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
     case FOLOr( f1, f2 )          => "(or " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
     case FOLImp( f1, f2 )         => "(=> " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
@@ -129,8 +129,8 @@ object VeriTExporter {
 
   // Transforms the string into ASCII and checks if 
   // it does not clash with veriT keywords.
-  private def toSMTString( s: SymbolA ): String = toSMTString( s.toString )
-  private def toSMTString( s: String ): String = {
+  private def toSMTString( s: SymbolA, isVar: Boolean ): String = toSMTString( s.toString, isVar )
+  private def toSMTString( s: String, isVar: Boolean ): String = {
     // It's a number, append a character before it.
     val ascii = if ( s.forall( c => Character.isDigit( c ) ) ) {
       "n" + s
@@ -139,7 +139,11 @@ object VeriTExporter {
       StringEscapeUtils.escapeJava( s ).replaceAll( """\\""", "" )
     }
 
-    if ( smt_keywords.contains( ascii ) ) ascii + "_clash"
+    val clash = if ( smt_keywords.contains( ascii ) ) ascii + "_clash"
     else ascii
+
+    // FIXME: this is a hack to get VeriTParser to recognize variables
+    if ( isVar ) clash + "$"
+    else clash
   }
 }
