@@ -25,7 +25,7 @@ object VeriTParser extends RegexParsers {
     // Checking which equalities were in the wrong order and generating the symmetry instances
     val symm = pairs.foldLeft( List[Instances]() )( ( acc, p ) =>
       if ( eqs_pairs.contains( ( p._2, p._1 ) ) && p._1 != p._2 ) {
-        acc :+ getSymmInstances( p._2, p._1 )
+        acc :+ getSymmInstance( p._2, p._1 )
       } else {
         assert( eqs_pairs.contains( p ) )
         acc
@@ -40,7 +40,8 @@ object VeriTParser extends RegexParsers {
     ( eqs_correct, symm )
   }
 
-  def getSymmInstances( a: FOLTerm, b: FOLTerm ): Instances = {
+  // Generates a symmetry instance: a=b -> b=a
+  def getSymmInstance( a: FOLTerm, b: FOLTerm ): Instances = {
     val x = FOLVar( "x" )
     val y = FOLVar( "y" )
     val eq = "="
@@ -49,11 +50,9 @@ object VeriTParser extends RegexParsers {
     val imp = FOLImp( eq1, eq2 )
     val eq_symm = FOLAllVar( x, FOLAllVar( y, imp ) )
 
-    // TODO: can we generate only one direction of the symmetry axiom?
-    val i1 = instantiate( instantiate( eq_symm, a ), b )
-    val i2 = instantiate( instantiate( eq_symm, b ), a )
+    val inst = instantiate( instantiate( eq_symm, a ), b )
 
-    ( eq_symm, List( i1, i2 ) )
+    ( eq_symm, List( inst ) )
   }
 
   def getEqReflInstances( f: List[FOLFormula] ): List[Instances] = {
@@ -115,7 +114,7 @@ object VeriTParser extends RegexParsers {
           val f2 = instantiate( f1, x1 ) // or x3, should be the same
           val f3 = instantiate( f2, x0 )
 
-          symm = getSymmInstances( x0, x1 ) :: symm
+          symm = getSymmInstance( x0, x1 ) :: symm
 
           f3 :: unfoldChain_( l.tail, newc )
 
@@ -127,8 +126,8 @@ object VeriTParser extends RegexParsers {
           val f2 = instantiate( f1, x1 ) // or x2, should be the same
           val f3 = instantiate( f2, x0 )
 
-          symm = getSymmInstances( x0, x1 ) :: symm
-          symm = getSymmInstances( x2, x3 ) :: symm
+          symm = getSymmInstance( x0, x1 ) :: symm
+          symm = getSymmInstance( x2, x3 ) :: symm
 
           f3 :: unfoldChain_( l.tail, newc )
 
@@ -140,7 +139,7 @@ object VeriTParser extends RegexParsers {
           val f2 = instantiate( f1, x0 ) // or x2, should be the same
           val f3 = instantiate( f2, x1 )
 
-          symm = getSymmInstances( x2, x3 ) :: symm
+          symm = getSymmInstance( x2, x3 ) :: symm
 
           f3 :: unfoldChain_( l.tail, newc )
 
@@ -353,12 +352,7 @@ object VeriTParser extends RegexParsers {
           } else acc
       }
 
-      // Generating symmetry clauses for the equalities occurring in the formula
-      // to be proved
-      val inputEqPairs = input.flatMap( f => getEqualityPairs( f ) )
-      val inputSymm = inputEqPairs.map( p => getSymmInstances( p._1, p._2 ) )
-
-      val axioms = r.foldLeft( inputSymm )( ( acc, p ) => acc ++ p._2 )
+      val axioms = r.flatMap( p => p._2 )
 
       // Join the instances of the same quantified formula
       val keys = axioms.map( p => p._1 ).distinct
