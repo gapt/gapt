@@ -10,7 +10,6 @@ import at.logic.gapt.language.lambda.symbols.getRenaming
 import at.logic.gapt.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
 import at.logic.gapt.language.hol.{ isPrenex => isPrenexHOL, containsQuantifier => containsQuantifierHOL, getMatrix => getMatrixHOL, lcomp => lcompHOL, _ }
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.utils.logging.Logger
 import scala.Some
 import scala.Tuple3
 import scala.collection.mutable
@@ -401,7 +400,7 @@ object lcomp {
   def apply( f: FOLFormula ) = lcompHOL( f )
 }
 
-object Utils extends Logger {
+object Utils {
   // Constructs the FOLTerm f^k(a)
   def iterateTerm( a: FOLTerm, f: String, k: Int ): FOLTerm =
     if ( k < 0 ) throw new Exception( "iterateTerm called with negative iteration count" )
