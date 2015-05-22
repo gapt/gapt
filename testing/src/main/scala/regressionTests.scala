@@ -73,6 +73,7 @@ object RegressionTests extends App {
       tc.run().toJUnitXml
     } catch {
       case t: Throwable =>
+        println( s"$tc failed:" )
         t.printStackTrace()
         <testsuite/>
     }

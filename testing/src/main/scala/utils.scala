@@ -90,36 +90,52 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
   override def toString = s"${getClass.getSimpleName}.$name"
 }
 
-object runOutOfProcess {
-  def main( args: Array[String] ): Unit = {
-    val f: () => Serializable = deserialize( System.in )
-    serialize( System.out, f() )
+object withTempFile {
+  def apply[T]( block: String => T ): T = {
+    val tempFile = File.createTempFile( "gapt-runOutOfProcess-", ".tmp" )
+    try block( tempFile getAbsolutePath ) finally tempFile.delete()
   }
+}
 
-  private def serialize( out: OutputStream, obj: Any ) = {
-    val oos = new ObjectOutputStream( out )
+object runOutOfProcess {
+  private type InputType = () => Serializable
+  private type OutputType = Either[Throwable, Serializable]
+
+  def main( args: Array[String] ): Unit = try args match {
+    case Array( inFile, outFile ) =>
+      val f: InputType = deserialize( inFile )
+      serialize[OutputType]( outFile, try Right( f() ) catch { case t: Throwable => Left( t ) } )
+  } finally System.exit( 0 )
+
+  private def serialize[T]( fileName: String, obj: T ) = {
+    val oos = new ObjectOutputStream( new FileOutputStream( fileName ) )
     try oos.writeObject( obj ) finally oos.close()
   }
 
-  private def deserialize[T]( in: InputStream ): T = {
-    val ois = new ObjectInputStream( in )
+  private def deserialize[T]( fileName: String ): T = {
+    val ois = new ObjectInputStream( new FileInputStream( fileName ) )
     try ois.readObject().asInstanceOf[T] finally ois.close()
   }
 
   def apply[T <: Serializable]( extraJvmArgs: Seq[String] )( f: => T ): T = {
-    var result: Option[T] = None
-    val processIO = new ProcessIO(
-      in => serialize( in, () => f ),
-      out => result = Some( deserialize( out ) ),
-      err = BasicIO.toStdErr )
+    val output = withTempFile { inputFile =>
+      withTempFile { outputFile =>
+        serialize[InputType]( inputFile, () => f )
 
-    val javaBinary = new File( new File( System.getProperty( "java.home" ), "bin" ), "java" ).getAbsolutePath
-    val process = ( Seq( javaBinary ) ++ extraJvmArgs ++
-      Seq( "-cp", System.getProperty( "java.class.path" ),
-        getClass.getCanonicalName.dropRight( 1 ) ) ) run processIO
-    process.exitValue()
+        val javaBinary = new File( new File( System.getProperty( "java.home" ), "bin" ), "java" ).getAbsolutePath
+        ( Seq( javaBinary ) ++ extraJvmArgs ++
+          Seq( "-cp", System.getProperty( "java.class.path" ),
+            getClass.getCanonicalName.dropRight( 1 ),
+            inputFile, outputFile ) ) !
 
-    result.get
+        deserialize[OutputType]( outputFile )
+      }
+    }
+
+    output match {
+      case Left( t )       => throw t
+      case Right( result ) => result.asInstanceOf[T]
+    }
   }
 }
 
