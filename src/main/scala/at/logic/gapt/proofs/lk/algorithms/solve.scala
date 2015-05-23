@@ -124,15 +124,14 @@ object solve extends at.logic.gapt.utils.logging.Logger {
         val premise = FSequent( p_ant, p_suc )
 
         prove( premise, nextProofStrategies( 0 ) ).map( proof => {
-          val proof1 = if ( proof.root.toFSequent.antecedent.contains( auxFormula ) && !rest.antecedent.contains( auxFormula ) )
-            ForallLeftRule( proof, auxFormula, action.formula, quantifiedTerm )
-          else
+          if ( proof.root.toFSequent.antecedent.contains( auxFormula ) && !rest.antecedent.contains( auxFormula ) ) {
+            val proof1 = ForallLeftRule( proof, auxFormula, action.formula, quantifiedTerm )
+            if ( proof.root.toFSequent.antecedent.contains( action.formula ) ) // main formula already appears in upper proof
+              ContractionLeftRule( proof1, action.formula )
+            else
+              proof1
+          } else
             proof
-
-          if ( proof.root.toFSequent.antecedent.contains( action.formula ) )
-            ContractionLeftRule( proof1, action.formula )
-          else
-            proof1
         } )
       }
 
@@ -347,15 +346,14 @@ object solve extends at.logic.gapt.utils.logging.Logger {
         val premise = FSequent( p_ant, p_suc )
 
         prove( premise, nextProofStrategies( 0 ) ).map( proof => {
-          val proof1 = if ( proof.root.toFSequent.succedent.contains( auxFormula ) && !rest.succedent.contains( auxFormula ) )
-            ExistsRightRule( proof, auxFormula, action.formula, quantifiedTerm )
-          else
+          if ( proof.root.toFSequent.succedent.contains( auxFormula ) && !rest.succedent.contains( auxFormula ) ) {
+            val proof1 = ExistsRightRule( proof, auxFormula, action.formula, quantifiedTerm )
+            if ( proof.root.toFSequent.succedent.contains( action.formula ) )
+              ContractionRightRule( proof1, action.formula )
+            else
+              proof1
+          } else
             proof
-
-          if ( proof.root.toFSequent.succedent.contains( action.formula ) )
-            ContractionRightRule( proof1, action.formula )
-          else
-            proof1
         } )
       }
 
@@ -527,6 +525,7 @@ abstract class ProofStrategy {
 }
 object ProofStrategy {
   object FormulaLocation extends Enumeration { val Succedent, Antecedent = Value }
+
   class Action( val formula: HOLFormula, val loc: FormulaLocation.Value, private val oldStrategy: Option[ProofStrategy] ) {
     override def toString() = "ProofStrategy.Action(" + formula + ", " + loc + ")"
 
