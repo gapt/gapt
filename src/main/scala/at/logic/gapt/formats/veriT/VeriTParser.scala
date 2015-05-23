@@ -68,8 +68,8 @@ object VeriTParser extends RegexParsers {
   // in veriT is *always* ( not =(x0, x1) , not =(x1, x2) , ... , not =(xn-1, xn) , =(x0, xn) )
   def getEqTransInstances( l: List[FOLFormula] ): List[Instances] = {
     val x = FOLVar( "x" )
-    val y = FOLVar( ":y" )
-    val z = FOLVar( ":z" )
+    val y = FOLVar( "y" )
+    val z = FOLVar( "z" )
     val eq = "="
     val eq1 = FOLAtom( eq, List( x, y ) )
     val eq2 = FOLAtom( eq, List( y, z ) )
