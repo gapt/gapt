@@ -69,6 +69,10 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
     }
     ( formula, terms.distinct )
   } ).toMap
+
+  override def toString(): String = {
+    "{ " + us + " } " + ss.foldLeft( "" )( ( acc, s ) => acc ++ "o(" + s._1.mkString( "," ) + ") { " + s._2.mkString( "," ) + " } " )
+  }
 }
 
 object simpleToMultiGrammar {
