@@ -29,7 +29,7 @@ abstract class LambdaExpression {
    * @param that  Lambda expression to compare against.
    * @return whether this lambda expression is equal to that lambda expression modulo alpha-conversion.
    */
-  def alphaEquals( that: LambdaExpression ): Boolean = this alphaEquals( that, List(), List() )
+  def alphaEquals( that: LambdaExpression ): Boolean = this alphaEquals ( that, List(), List() )
 
   /**
    * Alpha-equality in a bound variable context.
