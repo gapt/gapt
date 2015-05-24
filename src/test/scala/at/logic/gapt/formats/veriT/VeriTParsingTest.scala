@@ -11,7 +11,7 @@ class VeriTParsingTest extends SpecificationWithJUnit with ClasspathFileCopier {
   "The veriT parser" should {
     "parse correctly the simplest proof of the database" in {
       val formulas = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( "test0.verit" ) )
-      formulas.get.antecedent must haveSize( 3 )
+      formulas.get.antecedent must haveSize( 2 )
     }
 
     "parse correctly a more complicated example" in {
