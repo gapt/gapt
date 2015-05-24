@@ -15,13 +15,36 @@ abstract class LambdaExpression {
   def exptype: TA
 
   def hashCode: Int
-  override def equals( a: Any ) = alphaEquals( a, Map[Var, Var]() )
+  override def equals( a: Any ) = a match {
+    case e: LambdaExpression => this alphaEquals e
+    case _                   => false
+  }
 
   // Syntactic equality
   def syntaxEquals( e: LambdaExpression ): Boolean
 
-  // Alpha equality
-  def alphaEquals( a: Any, subs: Map[Var, Var] ): Boolean
+  /**
+   * Alpha-equality.
+   *
+   * @param that  Lambda expression to compare against.
+   * @return whether this lambda expression is equal to that lambda expression modulo alpha-conversion.
+   */
+  def alphaEquals( that: LambdaExpression ): Boolean = this alphaEquals( that, List(), List() )
+
+  /**
+   * Alpha-equality in a bound variable context.
+   *
+   * The parameters thisCtx and thatCtx list the bound variables in the corresponding lambda expressions, they can be
+   * thought of as maps from DeBruijn indices to their bound variables.  If we invert this map and extend it to
+   * non-bound variables as the identity, then the inverse map renames bound variables to new fresh variables (actually
+   * numbers).
+   *
+   * @param that  Lambda expression to compare against.
+   * @param thisCtx Bound variables in this lambda expression.
+   * @param thatCtx Bound variables in that lambda expression.
+   * @return whether thisCtx^{-1}(this) is alpha-equal to thatCtx^{-1}(that)
+   */
+  private[expr] def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ): Boolean
 
   /**
    * Tests whether this Expression has a subexpression at the given position.
@@ -120,15 +143,12 @@ class Var private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpr
     case _           => false
   }
 
-  // Alpha-equality
-  // Two free variables are *not* alpha-equivalent if they don't have the same
-  // name and type or if they are not in the substitution list because of a
-  // binding.
-  def alphaEquals( a: Any, subs: Map[Var, Var] ) = a match {
-    case Var( n, t ) if !subs.contains( this )    => ( n == name && t == exptype )
-    case v: Var if subs( this ).syntaxEquals( v ) => true
-    case _                                        => false
-  }
+  private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ): Boolean =
+    ( thisCtx indexOf this, thatCtx indexOf that ) match {
+      case ( -1, -1 )         => this syntaxEquals that // not bound
+      case ( i, j ) if i == j => true // both bound to the same DeBruijn index
+      case _                  => false
+    }
 
   override def hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
@@ -142,10 +162,8 @@ class Const private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaEx
     case _             => false
   }
 
-  def alphaEquals( a: Any, subs: Map[Var, Var] ) = a match {
-    case Const( n, t ) => n == name && t == exptype
-    case _             => false
-  }
+  private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ) =
+    this syntaxEquals that
 
   override def hashCode() = ( 41 * name.hashCode ) + exptype.hashCode
 }
@@ -163,9 +181,11 @@ class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpress
     case _           => false
   }
 
-  def alphaEquals( a: Any, subs: Map[Var, Var] ) = a match {
-    case App( e1, e2 ) => e1.alphaEquals( function, subs ) && e2.alphaEquals( arg, subs )
-    case _             => false
+  private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
+    case App( that_function, that_arg ) =>
+      this.function.alphaEquals( that_function, thisCtx, thatCtx ) &&
+        this.arg.alphaEquals( that_arg, thisCtx, thatCtx )
+    case _ => false
   }
 
   override def hashCode() = ( 41 * function.hashCode ) + arg.hashCode
@@ -179,11 +199,9 @@ class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extend
     case _             => false
   }
 
-  def alphaEquals( a: Any, subs: Map[Var, Var] ) = a match {
-    case Abs( v, t ) =>
-      if ( v.exptype == variable.exptype ) {
-        t.alphaEquals( term, subs + ( variable -> v ) + ( v -> variable ) )
-      } else false
+  private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
+    case Abs( that_variable, that_term ) if this.variable.exptype == that_variable.exptype =>
+      this.term alphaEquals ( that_term, this.variable :: thisCtx, that_variable :: thatCtx )
     case _ => false
   }
 
