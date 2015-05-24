@@ -104,6 +104,7 @@ object instantiateAll {
 // implications into disjunctions)
 object toNNF {
   def apply( f: FOLFormula ): FOLFormula = f match {
+    case Top() | Bottom()    => f
     case FOLAtom( _, _ )     => f
     case FOLFunction( _, _ ) => f
     case Imp( f1, f2 )       => Or( toNNF( Neg( f1 ) ), toNNF( f2 ) )
@@ -112,6 +113,8 @@ object toNNF {
     case Ex( x, f )          => Ex( x, toNNF( f ) )
     case All( x, f )         => All( x, toNNF( f ) )
     case Neg( f ) => f match {
+      case Top()               => Bottom()
+      case Bottom()            => Top()
       case FOLAtom( _, _ )     => Neg( f )
       case FOLFunction( _, _ ) => Neg( f )
       case Neg( f1 )           => toNNF( f1 )
@@ -129,6 +132,8 @@ object toNNF {
 object toCNF {
   // Assumes f is in NNF
   def apply( f: FOLFormula ): List[FOLFormula] = f match {
+    case Top()                   => Nil
+    case Bottom()                => List( f )
     case FOLAtom( _, _ )         => List( f )
     case Neg( FOLAtom( _, _ ) )  => List( f )
     case And( f1, f2 )           => toCNF( f1 ) ++ toCNF( f2 )
@@ -145,6 +150,8 @@ object toCNF {
 object toDNF {
   // Assumes f is in NNF
   def apply( f: FOLFormula ): List[FOLFormula] = f match {
+    case Bottom()                => Nil
+    case Top()                   => List( f )
     case FOLAtom( _, _ )         => List( f )
     case Neg( FOLAtom( _, _ ) )  => List( f )
     case Or( f1, f2 )            => toDNF( f1 ) ++ toDNF( f2 )
@@ -162,6 +169,7 @@ object numOfAtoms {
   def apply( f: FOLFormula ): Int = f match {
     case FOLAtom( _, _ )     => 1
     case FOLFunction( _, _ ) => 1
+    case Top() | Bottom()    => 0
     case Imp( f1, f2 )       => numOfAtoms( f1 ) + numOfAtoms( f2 )
     case And( f1, f2 )       => numOfAtoms( f1 ) + numOfAtoms( f2 )
     case Or( f1, f2 )        => numOfAtoms( f1 ) + numOfAtoms( f2 )
@@ -226,7 +234,9 @@ object replaceFreeOccurenceOf {
         else
           All( v, replaceFreeOccurenceOf( variable, by, f ) )
 
-      case _ => throw new Exception( "Unknown operator encountered during renaming of outermost bound variable. Formula is: " + formula )
+      case Top() | Bottom() => formula
+
+      case _                => throw new Exception( "Unknown operator encountered during renaming of outermost bound variable. Formula is: " + formula )
     }
   }
 }
@@ -349,6 +359,7 @@ object collectVariables {
     case All( _, f1 )     => collectVariables( f1 )
     case Ex( _, f1 )      => collectVariables( f1 )
     case FOLAtom( _, f1 ) => f1.map( f => collectVariables( f ) ).foldLeft( List[FOLVar]() )( _ ++ _ )
+    case Top() | Bottom() => List()
     case _                => throw new IllegalArgumentException( "Unhandled case in fol.utils.collectVariables(FOLFormula)!" )
   }
 
