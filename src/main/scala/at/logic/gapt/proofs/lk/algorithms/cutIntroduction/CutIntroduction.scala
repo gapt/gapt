@@ -368,7 +368,7 @@ object CutIntroduction extends Logger {
       case e: LKRuleCreationException =>
         status = "lk_rule_creation_exception"
         ( None, Some( e ) )
-      case e: Exception =>
+      case e: Throwable =>
         status = "cutintro_other_exception"
         ( None, Some( e ) )
     }
@@ -536,7 +536,7 @@ object CutIntroduction extends Logger {
       case e: CutIntroEHSUnprovableException =>
         status = "cutintro_ehs_unprovable"
         ( None, Some( e ) )
-      case e: Exception =>
+      case e: Throwable =>
         status = "cutintro_other_exception"
         ( None, Some( e ) )
     }
