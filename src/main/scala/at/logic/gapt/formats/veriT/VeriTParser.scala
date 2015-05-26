@@ -356,7 +356,7 @@ object VeriTParser extends RegexParsers {
       }
 
       val inputEqPairs = input.flatMap( f => getEqualityPairs( f ) )
-      val inputSymm = inputEqPairs.map( p => getSymmInstance( p._1, p._2 ) )
+      val inputSymm = inputEqPairs.flatMap( p => List( getSymmInstance( p._1, p._2 ), getSymmInstance( p._2, p._1 ) ) )
 
       val axioms = r.flatMap( p => p._2 ) ::: inputSymm
 

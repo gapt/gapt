@@ -369,7 +369,7 @@ object CutIntroduction extends Logger {
       case e: LKRuleCreationException =>
         status = "lk_rule_creation_exception"
         ( None, Some( e ) )
-      case e: Exception =>
+      case e: Throwable =>
         status = "cutintro_other_exception"
         ( None, Some( e ) )
     }
@@ -537,7 +537,7 @@ object CutIntroduction extends Logger {
       case e: CutIntroEHSUnprovableException =>
         status = "cutintro_ehs_unprovable"
         ( None, Some( e ) )
-      case e: Exception =>
+      case e: Throwable =>
         status = "cutintro_other_exception"
         ( None, Some( e ) )
     }
@@ -709,7 +709,7 @@ object CutIntroduction extends Logger {
         trace( "freeVariables( A( " + i + "  ) ): " + freeVariables( A( i - 1 ) ) )
         trace( "alphas.drop( " + i + " ): " + alphas.drop( i - 1 ) )
         // if A_i fulfills the variable condition, set A_i':= A_i
-        if ( freeVariables( A( i - 1 ) ).toSet subsetOf alphas.drop( i - 1 ).flatMap(x => x).toSet ) {
+        if ( freeVariables( A( i - 1 ) ).toSet subsetOf alphas.drop( i - 1 ).flatMap( x => x ).toSet ) {
           trace( "fulfills the variable condition" )
           acc :+ A( i - 1 )
         } else // otherwise, compute interpolant I and set A_':= And( A_i, I )
@@ -806,7 +806,7 @@ object CutIntroduction extends Logger {
         ( fs zip instances ).foldLeft( proof ) {
           case ( proof, ( f, ( ui, uip ) ) ) => {
             trace( "in myWeakQuantRules" )
-            trace( "f: " + f)
+            trace( "f: " + f )
             trace( "ui: " + ui )
             trace( "uip: " + uip )
             trace( "ui diff uip: " + ( ui diff uip ) )

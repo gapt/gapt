@@ -147,7 +147,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       ok
     }
 
-    "construct proof with expansion sequent extracted from proof 1/2" in {
+    "construct proof with expansion sequent extracted from proof (1/2)" in {
       val y = FOLVar( "y" )
       val x = FOLVar( "x" )
       val Py = FOLAtom( "P", y :: Nil )
@@ -165,7 +165,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       proof.isDefined must beTrue
     }
 
-    "construct proof with expansion sequent extracted from proof 2/2" in {
+    "construct proof with expansion sequent extracted from proof (2/2)" in {
       val proof = LinearExampleProof( 0, 4 )
 
       val proofPrime = solve.expansionProofToLKProof( proof.root.toFSequent, extractExpansionSequent( proof, false ) )
@@ -183,14 +183,29 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       ok
     }
 
-    "prove quasi-tautology by veriT and verify validity using minisat or sat4j" in {
-
+    "prove quasi-tautology by veriT and verify validity using minisat or sat4j (1/2)" in {
       val fsprover = FailSafeProver.getProver()
       val veriT = new VeriTProver()
       if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
 
       val F = Prover9TermParser.parseFormula( "a=b -> b=a" )
       val E = veriT.getExpansionSequent( FSequent( Nil, F :: Nil ) ).get
+
+      val Edeep = ETtoDeep( E )
+      fsprover.isValid( Edeep ) must beTrue
+    }
+
+    "prove quasi-tautology by veriT and verify validity using minisat or sat4j (2/2)" in {
+      skipped( "does not work currently; symmetry-instances are missing" )
+
+      val fsprover = FailSafeProver.getProver()
+      val veriT = new VeriTProver()
+      if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
+
+      val C = Prover9TermParser.parseFormula( "f(x_0,y_0) = f(y_0,x_0)" )
+      val AS = Prover9TermParser.parseFormula( "f(x_0,y_0)=x_0 -> ( f(y_0,x_0)=y_0 -> x_0=y_0 )" )
+      val s = FSequent( C :: Nil, AS :: Nil )
+      val E = veriT.getExpansionSequent( s ).get
 
       val Edeep = ETtoDeep( E )
       fsprover.isValid( Edeep ) must beTrue

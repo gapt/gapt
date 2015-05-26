@@ -7,7 +7,7 @@ package at.logic.gapt.language.hol
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.expr.{ TA, Ti }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ freeVariables => freeVariablesLambda, rename => renameLambda }
+import at.logic.gapt.expr.{ freeVariables => freeVariablesLambda, boundVariables => boundVariablesLambda, rename => renameLambda }
 
 object freeHOVariables {
   /**
@@ -17,6 +17,15 @@ object freeHOVariables {
    * @return the list of free variables with type != Ti in e
    */
   def apply( f: HOLFormula ) = freeVariables( f ).filter( _ match { case Var( _, Ti ) => false; case _ => true } )
+}
+
+object boundVariables {
+  /**
+   * Computes a list of all bound HOL Variables of an expression, including repetitions.
+   * @param e the expressions to extract from
+   * @return the list of free variables in e
+   */
+  def apply( e: LambdaExpression ): List[Var] = boundVariablesLambda( e ).asInstanceOf[List[Var]]
 }
 
 // matches for consts and vars, but nothing else
