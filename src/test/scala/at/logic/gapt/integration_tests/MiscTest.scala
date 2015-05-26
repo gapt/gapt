@@ -14,6 +14,7 @@ import at.logic.gapt.expr._
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.formats.prover9.Prover9TermParser
 import at.logic.gapt.provers.FailSafeProver
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.prover9.Prover9
@@ -180,6 +181,20 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
         fsprover.isValid( seq ) must beTrue
       }
       ok
+    }
+
+    "prove quasi-tautology by veriT and verify validity using minisat or sat4j" in {
+      skipped( "does not work currently; needs symmetry instance on input formula" )
+
+      val fsprover = FailSafeProver.getProver()
+      val veriT = new VeriTProver()
+      if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
+
+      val F = Prover9TermParser.parseFormula( "a=b -> b=a" )
+      val E = veriT.getExpansionSequent( FSequent( Nil, F :: Nil ) ).get
+
+      val Edeep = ETtoDeep( E )
+      fsprover.isValid( Edeep ) must beTrue
     }
 
     "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using minisat or sat4j and readback E to LK" in {

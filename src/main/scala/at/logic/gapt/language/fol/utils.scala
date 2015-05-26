@@ -9,7 +9,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.getRenaming
 import at.logic.gapt.expr.{ rename => renameLambda }
 import at.logic.gapt.language.hol.{ getMatrix => getMatrixHOL, HOLPosition }
-import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable
 
 // matches for consts and vars, but nothing else
@@ -385,7 +384,7 @@ object isEigenvariable {
   }
 }
 
-object Utils extends Logger {
+object Utils {
   // Constructs the FOLTerm f^k(a)
   def iterateTerm( a: FOLTerm, f: String, k: Int ): FOLTerm =
     if ( k < 0 ) throw new Exception( "iterateTerm called with negative iteration count" )
