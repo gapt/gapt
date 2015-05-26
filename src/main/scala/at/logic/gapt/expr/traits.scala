@@ -41,59 +41,64 @@ trait PropConnective extends LogicalConstant with PropLambdaTerm {
 trait PropAtom extends Const with PropFormula
 
 private[expr] object determineTraits {
+  private class Var_with_FOLVar( s: SymbolA, t: TA ) extends Var( s, t ) with FOLVar
+  private class Var_with_HOLFormula( s: SymbolA, t: TA ) extends Var( s, t ) with HOLFormula
   def forVar( sym: SymbolA, exptype: TA ): Var = exptype match {
-    case Ti => new Var( sym, exptype ) with FOLVar
-    case To => new Var( sym, exptype ) with HOLFormula
+    case Ti => new Var_with_FOLVar( sym, exptype )
+    case To => new Var_with_HOLFormula( sym, exptype )
     case _  => new Var( sym, exptype )
   }
+
+  private class Const_with_FOLQuantifier( s: SymbolA, t: TA ) extends Const( s, t ) with FOLQuantifier
+  private class Const_with_PropConnective_with_PropFormula( s: SymbolA, t: TA ) extends Const( s, t ) with PropConnective with PropFormula
+  private class Const_with_FOLConst( s: SymbolA, t: TA ) extends Const( s, t ) with FOLConst
+  private class Const_with_PropFormula( s: SymbolA, t: TA ) extends Const( s, t ) with PropFormula
+  private class Const_with_PropConnective( s: SymbolA, t: TA, override val numberOfArguments: Int ) extends Const( s, t ) with PropConnective
+  private class Const_with_PropLambdaTerm( s: SymbolA, t: TA, override val numberOfArguments: Int ) extends Const( s, t ) with PropLambdaTerm
+  private class Const_with_FOLLambdaTerm( s: SymbolA, t: TA, override val returnType: TA, override val numberOfArguments: Int ) extends Const( s, t ) with FOLLambdaTerm
   def forConst( sym: SymbolA, exptype: TA ): Const = ( sym, exptype ) match {
-    case ForallC( Ti ) | ExistsC( Ti ) => new Const( sym, exptype ) with FOLQuantifier
-    case AndC() | OrC() | ImpC() => new Const( sym, exptype ) with PropConnective {
-      override val numberOfArguments = 2
-    }
-    case NegC() => new Const( sym, exptype ) with PropConnective {
-      override val numberOfArguments = 1
-    }
-    case TopC() | BottomC() => new Const( sym, exptype ) with PropConnective with PropFormula
-    case ( _, Ti )          => new Const( sym, exptype ) with FOLConst
-    case ( _, To )          => new Const( sym, exptype ) with PropFormula
-    case ( _, FOLHeadType( Ti, n ) ) => new Const( sym, exptype ) with FOLLambdaTerm {
-      override val returnType = Ti
-      override val numberOfArguments = n
-    }
-    case ( _, FOLHeadType( To, n ) ) => new Const( sym, exptype ) with PropLambdaTerm {
-      override val numberOfArguments = n
-    }
-    case _ => new Const( sym, exptype )
+    case ForallC( Ti ) | ExistsC( Ti ) => new Const_with_FOLQuantifier( sym, exptype )
+    case AndC() | OrC() | ImpC()       => new Const_with_PropConnective( sym, exptype, 2 )
+    case NegC()                        => new Const_with_PropConnective( sym, exptype, 1 )
+    case TopC() | BottomC()            => new Const_with_PropConnective_with_PropFormula( sym, exptype )
+    case ( _, Ti )                     => new Const_with_FOLConst( sym, exptype )
+    case ( _, To )                     => new Const_with_PropFormula( sym, exptype )
+    case ( _, FOLHeadType( Ti, n ) )   => new Const_with_FOLLambdaTerm( sym, exptype, Ti, n )
+    case ( _, FOLHeadType( To, n ) )   => new Const_with_PropLambdaTerm( sym, exptype, n )
+    case _                             => new Const( sym, exptype )
   }
+
+  private class App_with_PropFormula( f: LambdaExpression, a: LambdaExpression ) extends App( f, a ) with PropFormula
+  private class App_with_FOLTerm( f: LambdaExpression, a: LambdaExpression ) extends App( f, a ) with FOLTerm
+  private class App_with_FOLFormula( f: LambdaExpression, a: LambdaExpression ) extends App( f, a ) with FOLFormula
+  private class App_with_HOLFormula( f: LambdaExpression, a: LambdaExpression ) extends App( f, a ) with HOLFormula
+  private class App_with_FOLLambdaTerm( f: LambdaExpression, a: LambdaExpression, override val returnType: TA, override val numberOfArguments: Int ) extends App( f, a ) with FOLLambdaTerm
+  private class App_with_PropLambdaTerm( f: LambdaExpression, a: LambdaExpression, override val numberOfArguments: Int ) extends App( f, a ) with PropLambdaTerm
   def forApp( f: LambdaExpression, a: LambdaExpression ): App = ( f, a ) match {
     case ( f: PropLambdaTerm, a: PropFormula ) => f.numberOfArguments match {
-      case 1 => new App( f, a ) with PropFormula
-      case n => new App( f, a ) with PropLambdaTerm {
-        override val numberOfArguments = n - 1
-      }
+      case 1 => new App_with_PropFormula( f, a )
+      case n => new App_with_PropLambdaTerm( f, a, n - 1 )
     }
     case ( f: FOLLambdaTerm, a: FOLExpression ) => f.numberOfArguments match {
       case 1 => f.returnType match {
-        case Ti => new App( f, a ) with FOLTerm
-        case To => new App( f, a ) with FOLFormula
+        case Ti => new App_with_FOLTerm( f, a )
+        case To => new App_with_FOLFormula( f, a )
       }
-      case n => new App( f, a ) with FOLLambdaTerm {
-        override val numberOfArguments = n - 1
-        override val returnType = f.returnType
-      }
+      case n => new App_with_FOLLambdaTerm( f, a, f.returnType, n - 1 )
     }
     case ( f: FOLQuantifier, _ ) => a match {
-      case a: FOLFormulaWithBoundVar => new App( f, a ) with FOLFormula
-      case _                         => new App( f, a ) with HOLFormula
+      case a: FOLFormulaWithBoundVar => new App_with_FOLFormula( f, a )
+      case _                         => new App_with_HOLFormula( f, a )
     }
     case _ => f.exptype match {
-      case ->( _, To ) => new App( f, a ) with HOLFormula
+      case ->( _, To ) => new App_with_HOLFormula( f, a )
       case _           => new App( f, a )
     }
   }
+
+  private class Abs_with_FOLFormulaWithBoundVar( v: Var, t: LambdaExpression ) extends Abs( v, t ) with FOLFormulaWithBoundVar
   def forAbs( v: Var, t: LambdaExpression ): Abs = ( v.exptype, t ) match {
-    case ( Ti, t: FOLFormula ) => new Abs( v, t ) with FOLFormulaWithBoundVar
+    case ( Ti, t: FOLFormula ) => new Abs_with_FOLFormulaWithBoundVar( v, t )
     case _                     => new Abs( v, t )
   }
 }

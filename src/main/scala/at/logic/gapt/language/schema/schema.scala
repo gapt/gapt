@@ -45,20 +45,10 @@ object IndexedPredicate {
   }
   def apply( name: String, indexTerm: IntegerTerm ): SchemaFormula = apply( name, indexTerm :: Nil )
 
-  def unapply( expression: SchemaExpression ) = expression match {
-    case App( _, _ ) if expression.exptype == To =>
-      val p = unapply_( expression )
-      if ( p._2.forall( t => t.exptype == Tindex ) ) {
-        Some( p )
-      } else None
+  def unapply( expression: SchemaExpression ): Option[( Const, List[SchemaExpression] )] = expression match {
+    case HOLAtom( head: Const, args ) if args.forall( t => t.exptype == Tindex ) =>
+      Some( ( head, args ) )
     case _ => None
-  }
-  // Recursive unapply to get the head and args
-  private def unapply_( e: SchemaExpression ): ( Const, List[SchemaExpression] ) = e match {
-    case c: Const => ( c, Nil )
-    case App( e1, e2 ) =>
-      val t = unapply_( e1 )
-      ( t._1, t._2 :+ e2 )
   }
 
 }
