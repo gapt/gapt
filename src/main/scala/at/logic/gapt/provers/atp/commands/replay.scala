@@ -55,9 +55,8 @@ case class ReplayCommand( parentIds: Iterable[String], id: String, cls: FSequent
 
   def apply( state: State, data: Any ) = {
     import Stream.cons
-    debug( "\nReplayCommand" )
     //get guided clauses mapping from id to resolution proof of id
-    debug( "\nTarget clause :" + id + "\nfrom " + parentIds.toList )
+    debug( "ReplayCommand: Target clause :" + id + " from " + parentIds.toList )
     val gmap = state( "gmap" ).asInstanceOf[MMap[String, ResolutionProof[Clause]]]
     //println("\nData="+data)
     //println("\nTarget clause="+cls)
@@ -65,8 +64,8 @@ case class ReplayCommand( parentIds: Iterable[String], id: String, cls: FSequent
     val gproofs = ( parentIds.toList ).filterNot( _ == "-1" ) map gmap
 
     //val target : Clause = if (id == "-1") Clause(Nil,Nil) else Clause(cls.antecedent, cls.succedent)
-    //println("\nTrying to prove  "+cls+"  from :")
-    gproofs map ( x => debug( x.root.toString ) )
+    debug( s"Trying to prove $cls from:" )
+    gproofs foreach ( x => debug( x.root.toString ) )
 
     //initialize new prover to spawn -- same as proveFOL in cli
     val prover = new Prover[Clause] {}
@@ -97,7 +96,7 @@ case class ReplayCommand( parentIds: Iterable[String], id: String, cls: FSequent
     }
   }
 
-  override def toString = "ReplayCommand New(" + parentIds + ")"
+  override def toString = s"ReplayCommand New($parentIds, $id, $cls)"
 }
 
 // we dont have subsumption as it might prevent reaching the exact clause we look for
