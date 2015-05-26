@@ -607,7 +607,7 @@ object CutIntroduction extends Logger {
             val subst = FOLSubstitution( variables.zip( terms ) )
             subst( ci ) :: acc
         }
-        val ci_quant = FOLAllVar(variables, ci)
+        val ci_quant = FOLAllVar( variables, ci )
         FOLAnd( forms ) :: ci_quant :: cut_formulas.tail
       // The last term set contains only constants, so we drop the formula generated with it.
     }.tail.reverse
@@ -708,7 +708,7 @@ object CutIntroduction extends Logger {
         trace( "freeVariables( A( " + i + "  ) ): " + freeVariables( A( i - 1 ) ) )
         trace( "alphas.drop( " + i + " ): " + alphas.drop( i - 1 ) )
         // if A_i fulfills the variable condition, set A_i':= A_i
-        if ( freeVariables( A( i - 1 ) ).toSet subsetOf alphas.drop( i - 1 ).flatMap(x => x).toSet ) {
+        if ( freeVariables( A( i - 1 ) ).toSet subsetOf alphas.drop( i - 1 ).flatMap( x => x ).toSet ) {
           trace( "fulfills the variable condition" )
           acc :+ A( i - 1 )
         } else // otherwise, compute interpolant I and set A_':= And( A_i, I )
@@ -805,7 +805,7 @@ object CutIntroduction extends Logger {
         ( fs zip instances ).foldLeft( proof ) {
           case ( proof, ( f, ( ui, uip ) ) ) => {
             trace( "in myWeakQuantRules" )
-            trace( "f: " + f)
+            trace( "f: " + f )
             trace( "ui: " + ui )
             trace( "uip: " + uip )
             trace( "ui diff uip: " + ( ui diff uip ) )
