@@ -60,7 +60,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
         val test_ehs = new ExtendedHerbrandSequent( is.endSequent, is.grammar, cf :: Nil )
         assert( prover.isValid( test_ehs.getDeep ) )
-        trace( "I_2 with cf: " + test_ehs.getDeep )
+        trace( "I_" + k + " with cf: " + test_ehs.getDeep )
 
         cfs :+ cf
       }
