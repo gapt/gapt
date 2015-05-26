@@ -13,6 +13,8 @@ trait Interpretation {
     case Or( f1, f2 )    => interpret( f1 ) || interpret( f2 )
     case Imp( f1, f2 )   => !interpret( f1 ) || interpret( f2 )
     case Neg( f1 )       => !interpret( f1 )
+    case Bottom()        => false
+    case Top()           => true
     case HOLAtom( _, _ ) => interpretAtom( f )
   }
 

@@ -142,7 +142,6 @@ object DrawSequent {
         } //or return the predicate symbol
         else nameToLatexString( constant.name.toString )
       } + { if ( indices.isEmpty ) "" else indices.map( x => formulaToLatexString( x ) ).mkString( "_{", ",", "}" ) }
-    case t: IntegerTerm if t.exptype == Tindex => parseIntegerTerm( t, 0 )
     case HOLAtom( pred, args ) =>
       val name = pred match {
         case Const( n, _ ) => n
@@ -185,8 +184,9 @@ object DrawSequent {
       else if ( args.size == 2 && name.toString.matches( """(=|!=|\\neq|<|>|\\leq|\\geq|\\in|\+|-|\*|/)""" ) ) //!name.toString.matches("""[\w\p{InGreek}]*"""))
         "(" + formulaToLatexString( args.head, outermost = false ) + " " + nameToLatexString( name.toString ) + " " + formulaToLatexString( args.last, outermost = false ) + ")"
       else nameToLatexString( name.toString ) + { if ( args.isEmpty ) "" else args.map( x => formulaToLatexString( x, outermost = false ) ).mkString( "(", ",", ")" ) }
-    case Abs( v, s ) => "(" + """ \lambda """ + formulaToLatexString( v, outermost = false ) + """.""" + formulaToLatexString( s, outermost = false ) + ")"
-    case App( s, t ) => formulaToLatexString( s, outermost = false ) + "(" + formulaToLatexString( t, outermost = false ) + ")"
+    case Abs( v, s )                           => "(" + """ \lambda """ + formulaToLatexString( v, outermost = false ) + """.""" + formulaToLatexString( s, outermost = false ) + ")"
+    case App( s, t )                           => formulaToLatexString( s, outermost = false ) + "(" + formulaToLatexString( t, outermost = false ) + ")"
+    case t: IntegerTerm if t.exptype == Tindex => parseIntegerTerm( t, 0 )
   }
 
   def parseIntegerTerm( t: IntegerTerm, n: Int ): String = t match {

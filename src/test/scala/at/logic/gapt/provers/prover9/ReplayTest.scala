@@ -133,7 +133,7 @@ class ReplayTest extends SpecificationWithJUnit {
     } */
 
     "work on the tape-in clause set" in {
-      skipped("runs in an infinite loop, see https://github.com/gapt/gapt/issues/327")
+      skipped( "runs in an infinite loop, see https://github.com/gapt/gapt/issues/327" )
 
       val formulas = List(
         "f(X+Y)=0",

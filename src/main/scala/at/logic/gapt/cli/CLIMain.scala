@@ -29,7 +29,6 @@ object CLIMain {
   import at.logic.gapt.proofs.lk._
   import at.logic.gapt.proofs.lk.base._
   import at.logic.gapt.proofs.lksk
-  import at.logic.gapt.language.hol.logicSymbols._
   import at.logic.gapt.proofs.hoare._
   import at.logic.gapt.proofs.algorithms.skolemization.skolemize
   import at.logic.gapt.proofs.lk.algorithms.regularize

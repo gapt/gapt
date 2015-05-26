@@ -21,6 +21,7 @@ import at.logic.gapt.utils.ds.Multisets._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet._
 import at.logic.gapt.proofs.algorithms.ceres.RelevantCC
+import at.logic.gapt.utils.logging.Logger
 import scala.collection.immutable.HashSet
 import scala.math.max
 
@@ -302,7 +303,7 @@ class ClauseSetSymbol( val name: String, val cut_occs: TypeSynonyms.CutConfigura
   }
 }
 
-object StructCreators {
+object StructCreators extends Logger {
   def size( s: Struct ): Int = size( s, 0 )
   //TODO:make tailrecursive
   def size( s: Struct, n: Int ): Int = s match {
@@ -481,8 +482,6 @@ object StructCreators {
 
   def extract( p: LKProof ): Struct = extract( p, getCutAncestors( p ) )
   def extract( p: LKProof, predicate: HOLFormula => Boolean ): Struct = extract( p, getCutAncestors( p, predicate ) )
-
-  private def debug( s: String ) = { /* println("DEBUG:"+s) */ }
 
   def extract( p: LKProof, cut_occs: Set[FormulaOccurrence] ): Struct = p match {
     case Axiom( so ) => // in case of axioms of the form A :- A with labelled formulas, proceed as in Daniel's PhD thesis
