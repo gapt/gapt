@@ -452,26 +452,36 @@ object formulaToExpansionTree {
     apply( form, List(), pos )
   }
 
-  def apply( form: HOLFormula, subs: List[_ <: HOLSubstitution], pos: Boolean ): ExpansionTree = form match {
+  
+  def apply( form: HOLFormula, subs: List[_ <: HOLSubstitution], pos: Boolean ): ExpansionTree = {
+    // form's quantified variables must be pairwise distinct
+    val bound = boundVariables( form )
+    assert( bound.distinct.length == bound.length, "formulaToExpansionTree: bound variables are not pairwise distinct." )
+    // substitutions should not have variable capture
+    assert( subs.forall( s => s.domain.intersect(s.range) == Nil ), "formulaToExpansionTree: substitutions have variable capture." )
+    apply_( form, subs, pos )
+  }
+
+  private def apply_( form: HOLFormula, subs: List[_ <: HOLSubstitution], pos: Boolean ): ExpansionTree = form match {
     case HOLAtom( _, _ )  => ETAtom( form )
-    case HOLNeg( f )      => ETNeg( formulaToExpansionTree( f, subs, !pos ) ).asInstanceOf[ExpansionTree]
-    case HOLAnd( f1, f2 ) => ETAnd( formulaToExpansionTree( f1, subs, pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
-    case HOLOr( f1, f2 )  => ETOr( formulaToExpansionTree( f1, subs, pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
-    case HOLImp( f1, f2 ) => ETImp( formulaToExpansionTree( f1, subs, !pos ), formulaToExpansionTree( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case HOLNeg( f )      => ETNeg( apply_( f, subs, !pos ) ).asInstanceOf[ExpansionTree]
+    case HOLAnd( f1, f2 ) => ETAnd( apply_( f1, subs, pos ), apply_( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case HOLOr( f1, f2 )  => ETOr( apply_( f1, subs, pos ), apply_( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
+    case HOLImp( f1, f2 ) => ETImp( apply_( f1, subs, !pos ), apply_( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
     case HOLAllVar( v, f ) => pos match {
       case true => // Strong quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
         assert( valid_subs.length == 1, ( "Found no substitutions for " + v + " in " + subs ) )
         val next_f = valid_subs.head( f )
         val ev = valid_subs.head( v ).asInstanceOf[HOLVar]
-        ETStrongQuantifier( form, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
+        ETStrongQuantifier( form, ev, apply_( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
       case false => // Weak quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
         ETWeakQuantifier( form, valid_subs.map {
           case s =>
             val next_f = s( f )
             val t = s( v )
-            ( formulaToExpansionTree( next_f, List( s ), pos ), t )
+            ( apply_( next_f, List( s ), pos ), t )
         } ).asInstanceOf[ExpansionTree]
     }
     case HOLExVar( v, f ) => pos match {
@@ -481,14 +491,14 @@ object formulaToExpansionTree {
           case s =>
             val next_f = s( f )
             val t = s( v )
-            ( formulaToExpansionTree( next_f, List( s ), pos ), t )
+            ( apply_( next_f, List( s ), pos ), t )
         } ).asInstanceOf[ExpansionTree]
       case false => // Strong quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
         assert( valid_subs.length == 1 )
         val next_f = valid_subs.head( f )
         val ev = valid_subs.head( v ).asInstanceOf[HOLVar]
-        ETStrongQuantifier( form, ev, formulaToExpansionTree( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
+        ETStrongQuantifier( form, ev, apply_( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
     }
     case _ => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
   }

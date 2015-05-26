@@ -8,11 +8,11 @@ import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.language.lambda.symbols.StringSymbol
 import at.logic.gapt.language.lambda.types.{ TA, Ti }
-import at.logic.gapt.language.lambda.{ freeVariables => freeVariablesLambda, rename => renameLambda }
+import at.logic.gapt.language.lambda.{ freeVariables => freeVariablesLambda, boundVariables => boundVariablesLambda, rename => renameLambda }
 
 object freeVariables {
   /**
-   * Computes a list of all HOL Variables of an expression, including repetitions.
+   * Computes a list of all HOL Variables of an expression, without duplicates.
    * @param e the expressions to extract from
    * @return the list of free variables in e
    */
@@ -27,6 +27,15 @@ object freeHOVariables {
    * @return the list of free variables with type != Ti in e
    */
   def apply( f: HOLFormula ) = freeVariables( f ).filter( _ match { case HOLVar( _, Ti ) => false; case _ => true } )
+}
+
+object boundVariables {
+  /**
+   * Computes a list of all bound HOL Variables of an expression, including repetitions.
+   * @param e the expressions to extract from
+   * @return the list of free variables in e
+   */
+  def apply( e: HOLExpression ): List[HOLVar] = boundVariablesLambda( e ).asInstanceOf[List[HOLVar]]
 }
 
 // matches for consts and vars, but nothing else
