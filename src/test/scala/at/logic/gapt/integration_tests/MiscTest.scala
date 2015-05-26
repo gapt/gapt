@@ -183,7 +183,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "prove quasi-tautology by veriT and verify validity using minisat or sat4j" in {
-      skipped( "does not work currently; needs symmetry instance on input formula" )
 
       val fsprover = FailSafeProver.getProver()
       val veriT = new VeriTProver()
