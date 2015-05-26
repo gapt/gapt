@@ -123,6 +123,21 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
         Abs( y, x ) must_!= Abs( x, x )
         Abs( x, x ) must_!= Abs( y, x )
       }
+      "\\y x.x = \\x x.x" in {
+        val x = Var( "x", Ti )
+        val y = Var( "y", Ti )
+        val a = Abs( y, Abs(x,x) )
+        val b = Abs( x, Abs(x,x ) )
+        (a == b) must beTrue
+      }
+      "\\x y.x = \\x x.x" in {
+        val x = Var( "x", Ti )
+        val y = Var( "y", Ti )
+        val a = Abs( x, Abs(y,x) )
+        val b = Abs( x, Abs(x,x ) )
+        (a == b) must beFalse
+      }
+
     }
   }
 
