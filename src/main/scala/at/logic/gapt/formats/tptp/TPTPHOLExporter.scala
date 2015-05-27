@@ -29,7 +29,7 @@ class TPTPHOLExporter {
 
     val vdecs = vdecs_.foldLeft( "" )( _ ++ _ )
 
-    val cdecs_ = for ( c <- cs ) yield {
+    val cdecs_ = for ( c <- cs if c.name != "=" ) yield {
       index = index + 1
       thf_type_dec( index, c, cnames ) + "\n"
     }

@@ -111,6 +111,8 @@ class HybridLatexExporter( val expandTex: Boolean ) {
         ( vmap + ( ( name, exptype ) ), cmap )
       }
 
+    case EqC( _ ) => ( vmap, cmap )
+
     case NonLogicalConstant( name, exptype ) =>
       val sym = exp.asInstanceOf[Const].sym
       if ( cmap.contains( name ) ) {

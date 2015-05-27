@@ -740,9 +740,9 @@ object deleteEquationalTautologies {
 
   def apply( ls: List[FSequent] ) = ls.filterNot( _._2 exists ( ( f: HOLFormula ) =>
     f match {
-      case HOLAtom( c: Const, List( x, y ) ) => c.sym == "=" && x == y
-      case HOLAtom( c: Var, List( x, y ) )   => c.sym == "=" && x == y
-      case _                                 => false
+      case Eq( x, y )                             => x == y
+      case HOLAtom( Var( "=", _ ), List( x, y ) ) => x == y
+      case _                                      => false
     } ) )
 
   /* FIXME: depends on EequalityA which is not adapted to the new lambda calculus
