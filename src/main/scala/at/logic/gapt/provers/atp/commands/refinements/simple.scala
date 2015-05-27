@@ -7,10 +7,11 @@ import at.logic.gapt.provers.atp.commands.base.InitialCommand
 import at.logic.gapt.provers.atp.commands.refinements.base.{ Refinement, RefinementID }
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.utils.ds.PublishingBuffer
+import at.logic.gapt.utils.logging.Logger
 import collection.mutable.ListBuffer
 
 // the command
-case class SimpleRefinementGetCommand[V <: Sequent]() extends InitialCommand[V] {
+case class SimpleRefinementGetCommand[V <: Sequent]() extends InitialCommand[V] with Logger {
   def apply( state: State ) = {
     val refinement =
       if ( state.isDefinedAt( RefinementID() ) ) state( RefinementID() ).asInstanceOf[SimpleRefinement[V]]
@@ -21,7 +22,7 @@ case class SimpleRefinementGetCommand[V <: Sequent]() extends InitialCommand[V] 
       }
     refinement.getNext match {
       case None      => List()
-      case Some( p ) => List( ( state, p ) )
+      case Some( p ) => debug( p toString ); List( ( state, p ) )
     }
   }
 
