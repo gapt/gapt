@@ -12,13 +12,15 @@ import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ ResultCommand, DataCommand }
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.utils.ds.{ Add, Remove, PublishingBufferEvent, PublishingBuffer }
+import at.logic.gapt.utils.logging.Logger
 import at.logic.gapt.utils.patterns.listeners.ListenerManager
 
 abstract class SetSequentsCommand[V <: Sequent]( val clauses: Iterable[FSequent] ) extends DataCommand[V]
 
 // set the target clause, i.e. the empty clause normally
-case class SetTargetClause[V <: Sequent]( val clause: FSequent ) extends DataCommand[V] {
+case class SetTargetClause[V <: Sequent]( val clause: FSequent ) extends DataCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
+    debug( s"targetClause <- $clause" )
     List( ( state += new Tuple2( "targetClause", clause ), data ) )
   }
 }
@@ -47,18 +49,20 @@ case class InsertResolventCommand[V <: Sequent]() extends DataCommand[V] {
 }
 
 // deterministically trying to match all indices (it is deterministic as it does not change the state of the different cases)
-case class ApplyOnAllPolarizedLiteralPairsCommand[V <: Sequent]() extends DataCommand[V] {
+case class ApplyOnAllPolarizedLiteralPairsCommand[V <: Sequent]() extends DataCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
     val p = data.asInstanceOf[Tuple2[ResolutionProof[V], ResolutionProof[V]]]
+    debug( p toString )
     ( for ( i <- p._1.root.antecedent; j <- p._2.root.succedent ) yield ( state, List( ( p._2, ( j, true ) ), ( p._1, ( i, false ) ) ) ) ) ++
       ( for ( i <- p._1.root.succedent; j <- p._2.root.antecedent ) yield ( state, List( ( p._1, ( i, true ) ), ( p._2, ( j, false ) ) ) ) )
   }
 }
 
-case class RefutationReachedCommand[V <: Sequent]() extends ResultCommand[V] {
+case class RefutationReachedCommand[V <: Sequent]() extends ResultCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
     val target = state( "targetClause" ).asInstanceOf[FSequent]
     val d = data.asInstanceOf[ResolutionProof[V]]
+    debug( d.root toString )
     if ( fvarInvariantMSEquality( d.root, target ) ) {
       Some( d )
     } else {
@@ -155,21 +159,24 @@ abstract class SimpleSubsumptionCommand[V <: Sequent]( val alg: SubsumptionAlgor
   override def toString = "SimpleSubsumptionCommand(" + alg.getClass + ")"
 }
 
-case class SimpleForwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) {
+case class SimpleForwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) with Logger {
   def apply( state: State, data: Any ) = {
     val manager = getManager( state )
     val res = data.asInstanceOf[ResolutionProof[V]]
     val res1 = res.root.toFSequent
-    if ( manager.forwardSubsumption( res1 ) ) List() else List( ( state, data ) )
+    val isSubsumed = manager forwardSubsumption res1
+    debug( s"${if ( isSubsumed ) "subsumed" else "NOT subsumed"}: $res1" )
+    if ( isSubsumed ) List() else List( ( state, data ) )
   }
   override def toString = "SimpleForwardSubsumptionCommand(" + a.getClass + ")"
 }
 
-case class SimpleBackwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) {
+case class SimpleBackwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) with Logger {
   def apply( state: State, data: Any ) = {
     val manager = getManager( state )
     val res = data.asInstanceOf[ResolutionProof[V]]
     val res1 = res.root.toFSequent
+    debug( res1 toString )
     manager.backwardSubsumption( res1 )
     List( ( state, data ) )
   }

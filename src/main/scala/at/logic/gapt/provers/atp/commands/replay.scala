@@ -28,10 +28,11 @@ import scala.collection.mutable.{ Map => MMap }
 
 //TODO: i'm not sure, why the other publishing buffers are robinsonproofs -- since we cannot upcast here and the gmap
 // only holds resolution proofs, i'm not sure what is better
-case class SetClauseWithProofCommand( clauses: Iterable[ResolutionProof[Clause]] ) extends DataCommand[Clause] {
+case class SetClauseWithProofCommand( clauses: Iterable[ResolutionProof[Clause]] ) extends DataCommand[Clause] with Logger {
   def apply( state: State, data: Any ) = {
     val pb = new PublishingBuffer[ResolutionProof[Clause]]
     clauses.foreach( x => pb += x )
+    debug( s"clauses ++= $clauses" )
     List( ( state += new Tuple2( "clauses", pb ), data ) )
   }
 }

@@ -355,7 +355,10 @@ object VeriTParser extends RegexParsers {
           } else acc
       }
 
-      val axioms = r.flatMap( p => p._2 )
+      val inputEqPairs = input.flatMap( f => getEqualityPairs( f ) )
+      val inputSymm = inputEqPairs.flatMap( p => List( getSymmInstance( p._1, p._2 ), getSymmInstance( p._2, p._1 ) ) )
+
+      val axioms = r.flatMap( p => p._2 ) ::: inputSymm
 
       // Join the instances of the same quantified formula
       val keys = axioms.map( p => p._1 ).distinct

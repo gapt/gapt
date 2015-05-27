@@ -25,6 +25,17 @@ object freeVariables {
   }
 }
 
+// Returns a list *with duplicates* of the bound variables in the expression.
+// There is no guarantee on the ordering of the list.
+object boundVariables {
+  def apply( e: LambdaExpression ): List[Var] = e match {
+    case Var( _, _ )     => List()
+    case Const( _, _ )   => List()
+    case App( exp, arg ) => boundVariables( exp ) ++ boundVariables( arg )
+    case Abs( v, exp )   => v :: boundVariables( exp )
+  }
+}
+
 // get a new variable/constant (similar to the current and) different from all 
 // variables/constants in the blackList, returns this variable if this variable 
 // is not in the blackList

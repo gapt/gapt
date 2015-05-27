@@ -7,7 +7,6 @@ package at.logic.gapt.language.hol
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.expr.{ TA, Ti }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ freeVariables => freeVariablesLambda, rename => renameLambda }
 
 object freeHOVariables {
   /**
