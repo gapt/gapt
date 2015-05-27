@@ -122,7 +122,7 @@ trait Prover[V <: Sequent] extends Logger {
       List()
     } else {
       //if (!conf.commands.head.toString.matches("(VariantsCommand|IsGuidedNotFoundCommand|SimpleRefinementGetCommand|ClauseFactorCommand).*"))
-      debug(s"Executing command: ${conf.commands.head.getClass.getSimpleName} :: ${conf.commands.head}")
+      debug( s"Executing command: ${conf.commands.head.getClass.getSimpleName} :: ${conf.commands.head}" )
 
       conf.commands.head match {
         case com: InitialCommand[_] => com( conf.state ).map( x => new MyConfiguration( x._1, conf.commands.tail, x._2 ) )
