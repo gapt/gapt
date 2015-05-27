@@ -1,5 +1,18 @@
 package at.logic.gapt.expr
 
+/**
+ * Helper class for logical constants.
+ *
+ * A logical constant describes a propositional connective, or a quantifier, etc.  This is different from an expression
+ * consisting of only this logical constant, as the expression is an object of type LambdaExpression and needs to have
+ * a definite type.
+ *
+ * A logical constant consists of a name (e.g. "∀"), and a set of possible types, (e.g. (Ti->To)->To,
+ * ((Ti->Ti)->To)->To, ...).  Subclasses need to implement the function matchType, which matches these possible types.
+ * This way we can handle the parametric types of the quantifiers.
+ *
+ * @param name  The name of this logical constant, e.g. "∀"
+ */
 abstract class LogicalC( val name: String ) {
   val symbol = StringSymbol( name )
 
@@ -17,6 +30,12 @@ abstract class LogicalC( val name: String ) {
   }
 }
 
+/**
+ * Logical constant with a fixed type.
+ *
+ * @param name  The name of this logical constant, e.g. "∧"
+ * @param ty  The fixed type of this logical constant, e.g. To->To->To
+ */
 class MonomorphicLogicalC( name: String, val ty: TA ) extends LogicalC( name ) {
   def apply() = Const( symbol, ty )
 
@@ -25,6 +44,11 @@ class MonomorphicLogicalC( name: String, val ty: TA ) extends LogicalC( name ) {
   protected override def noMatch = false
 }
 
+/**
+ * A logical constant describing a quantifier, which is of type (α->To)->To.
+ *
+ * @param name  The name of this logical constant, e.g. "∀"
+ */
 class QuantifierC( name: String ) extends LogicalC( name ) {
   def apply( qtype: TA ) = Const( symbol, ( qtype -> To ) -> To )
 
