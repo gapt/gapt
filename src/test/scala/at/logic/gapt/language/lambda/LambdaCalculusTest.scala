@@ -193,6 +193,9 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
       val x_renamed = rename( x, blacklist )
 
       ( blacklist.contains( x_renamed ) ) must beEqualTo( false )
+
+      x_renamed.sym must beAnInstanceOf[VariantSymbol]
+      x_renamed.sym.asInstanceOf[VariantSymbol].s must_== "x"
     }
 
     "produce a new variable different from all in the blacklist (in presence of maliciously chosen variable names)" in {

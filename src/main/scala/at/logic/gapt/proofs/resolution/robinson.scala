@@ -18,7 +18,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.lk.{ EquationVerifier, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lksk.UnaryLKskProof
-import at.logic.gapt.language.fol.{ FOLSubstitution, rename }
+import at.logic.gapt.language.fol.{ FOLSubstitution }
 import at.logic.gapt.utils.logging.Logger
 import org.slf4j.LoggerFactory
 

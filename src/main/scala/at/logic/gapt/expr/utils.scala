@@ -34,5 +34,14 @@ object rename {
     apply( v.asInstanceOf[Var], blackList ).asInstanceOf[FOLVar]
   def apply( a: SymbolA, blackList: List[SymbolA] ): SymbolA = getRenaming( a, blackList )
   def apply( c: Const, blackList: List[Const] ): Const = Const( getRenaming( c.sym, blackList.map( c => c.sym ) ), c.exptype )
+
+  // renames a list of variables to pairwise distinct variables
+  // while avoiding names from blackList.
+  def apply( vs: Set[FOLVar], blackList: Set[FOLVar] ): Map[FOLVar, FOLVar] = {
+    val v_list = vs.toList
+    ( v_list zip
+      v_list.foldLeft( Nil: List[FOLVar] )(
+        ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList ) ) ).toMap
+  }
 }
 

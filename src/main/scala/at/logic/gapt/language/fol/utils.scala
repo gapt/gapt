@@ -6,8 +6,6 @@ package at.logic.gapt.language.fol
 
 import at.logic.gapt.language.fol.replacements.getAllPositionsFOL
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.getRenaming
-import at.logic.gapt.expr.{ rename => renameLambda }
 import at.logic.gapt.language.hol.{ getMatrix => getMatrixHOL, HOLPosition }
 import scala.collection.mutable
 
@@ -30,26 +28,6 @@ object instantiate {
       val sub = FOLSubstitution( v, t )
       sub( form )
     case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
-  }
-}
-
-// get a new variable/constant (similar to the current and) different from all 
-// variables/constants in the blackList, returns this variable if this variable 
-// is not in the blackList
-object rename {
-  // FIXME
-  // Why doesn't the first method work??? If needed, the same should be done for renaming of constants...
-  //def apply(v: FOLVar, blackList: List[FOLVar]) : FOLVar = renameLambda(v, blackList).asInstanceOf[FOLVar]
-  def apply( v: FOLVar, blackList: List[FOLVar] ): FOLVar = FOLVar( getRenaming( v.sym, blackList.map( v => v.sym ) ).toString )
-  def apply( c: FOLConst, blackList: List[FOLConst] ): FOLConst = renameLambda( c, blackList ).asInstanceOf[FOLConst]
-
-  // renames a list of variables to pairwise distinct variables
-  // while avoiding names from blackList.
-  def apply( vs: Set[FOLVar], blackList: Set[FOLVar] ): Map[FOLVar, FOLVar] = {
-    val v_list = vs.toList
-    ( v_list zip
-      v_list.foldLeft( Nil: List[FOLVar] )(
-        ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList ) ) ).toMap
   }
 }
 
