@@ -26,7 +26,7 @@ object freeVariables {
 // There is no guarantee on the ordering of the list.
 object boundVariables {
   def apply( e: LambdaExpression ): List[Var] = e match {
-    case Var( _, _ ) => List()
+    case Var( _, _ )     => List()
     case Const( _, _ )   => List()
     case App( exp, arg ) => boundVariables( exp ) ++ boundVariables( arg )
     case Abs( v, exp )   => v :: boundVariables( exp )

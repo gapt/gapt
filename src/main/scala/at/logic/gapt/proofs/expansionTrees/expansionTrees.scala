@@ -452,13 +452,12 @@ object formulaToExpansionTree {
     apply( form, List(), pos )
   }
 
-  
   def apply( form: HOLFormula, subs: List[_ <: HOLSubstitution], pos: Boolean ): ExpansionTree = {
     // form's quantified variables must be pairwise distinct
     val bound = boundVariables( form )
     assert( bound.distinct.length == bound.length, "formulaToExpansionTree: bound variables are not pairwise distinct." )
     // substitutions should not have variable capture
-    assert( subs.forall( s => s.domain.intersect(s.range) == Nil ), "formulaToExpansionTree: substitutions have variable capture." )
+    assert( subs.forall( s => s.domain.intersect( s.range ) == Nil ), "formulaToExpansionTree: substitutions have variable capture." )
     apply_( form, subs, pos )
   }
 
