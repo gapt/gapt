@@ -6,6 +6,7 @@ import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.expansionTrees.{ toDeep => ETtoDeep, toShallow => ETtoShallow }
+import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms._
 import at.logic.gapt.proofs.lk.base._
@@ -175,7 +176,8 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       val fsprover = FailSafeProver.getProver()
       for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
         val p = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( s"test${i}.verit" ) ).get
-        val seq = ETtoDeep( p )
+        val taut_p = addSymmetry( p )
+        val seq = ETtoDeep( taut_p )
 
         fsprover.isValid( seq ) must beTrue
       }
