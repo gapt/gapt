@@ -123,8 +123,6 @@ object toLatexString {
       else
         "(@ " + getFormulaString( s, false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
 
-
-
   }
 
   def nameToLatexString( s: String, escapebrack: Boolean = true ): String = {

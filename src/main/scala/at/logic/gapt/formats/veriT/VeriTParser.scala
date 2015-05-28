@@ -25,50 +25,26 @@ object VeriTParser extends RegexParsers {
       case Neg( FOLAtom( _, List( a, b ) ) ) => ( a, b )
     } )
 
-    // Checking which equalities were in the wrong order and generating the symmetry instances
-    val symm = pairs.foldLeft( List[Instances]() )( ( acc, p ) =>
-      if ( eqs_pairs.contains( ( p._2, p._1 ) ) && p._1 != p._2 ) {
-        acc :+ getSymmInstance( p._2, p._1 )
-      } else {
-        assert( eqs_pairs.contains( p ) )
-        acc
-      } )
-
     // Generate the correct equalities
     val eqs_correct = pairs.foldRight( List[FOLFormula]() ) {
       case ( p, acc ) =>
         FOLAtom( "=", List( p._1, p._2 ) ) :: acc
     }
 
-    ( eqs_correct, symm )
+    eqs_correct
   }
 
-  // Generates a symmetry instance: a=b -> b=a
-  def getSymmInstance( a: FOLTerm, b: FOLTerm ): Instances = {
-    val x = FOLVar( "x" )
-    val y = FOLVar( "y" )
-    val eq = "="
-    val eq1 = FOLAtom( eq, List( x, y ) )
-    val eq2 = FOLAtom( eq, List( y, x ) )
-    val imp = Imp( eq1, eq2 )
-    val eq_symm = All( x, All( y, imp ) )
-
-    val inst = instantiate( instantiate( eq_symm, a ), b )
-
-    ( eq_symm, List( inst ) )
-  }
-
-  def getEqReflInstances( f: List[FOLFormula] ): List[Instances] = {
+  def getEqReflInstances( f: List[FOLFormula] ): Instances = {
     val x = FOLVar( "x" )
     val eq = "="
     val eq_refl = All( x, FOLAtom( eq, List( x, x ) ) )
-    List( ( eq_refl, f ) )
+    ( eq_refl, f )
   }
 
   // Assuming all the antecedents of the implication are ordered:
   // ( =(x0, x1)  ^  =(x1, x2)  ^ ... ^  =(xn-1, xn)  ->  =(x0, xn) )
   // in veriT is *always* ( not =(x0, x1) , not =(x1, x2) , ... , not =(xn-1, xn) , =(x0, xn) )
-  def getEqTransInstances( l: List[FOLFormula] ): List[Instances] = {
+  def getEqTransInstances( l: List[FOLFormula] ): Instances = {
     val x = FOLVar( "x" )
     val y = FOLVar( "y" )
     val z = FOLVar( "z" )
@@ -78,8 +54,6 @@ object VeriTParser extends RegexParsers {
     val eq3 = FOLAtom( eq, List( x, z ) )
     val imp = Imp( And( eq1, eq2 ), eq3 )
     val eq_trans = All( x, All( y, All( z, imp ) ) )
-
-    var symm = List[Instances]()
 
     // Transforms a transitivity chain (represented as a list):
     //
@@ -117,8 +91,6 @@ object VeriTParser extends RegexParsers {
           val f2 = instantiate( f1, x1 ) // or x3, should be the same
           val f3 = instantiate( f2, x0 )
 
-          symm = getSymmInstance( x0, x1 ) :: symm
-
           f3 :: unfoldChain_( l.tail, newc )
 
         // y=x ^ z=y -> x=z
@@ -129,9 +101,6 @@ object VeriTParser extends RegexParsers {
           val f2 = instantiate( f1, x1 ) // or x2, should be the same
           val f3 = instantiate( f2, x0 )
 
-          symm = getSymmInstance( x0, x1 ) :: symm
-          symm = getSymmInstance( x2, x3 ) :: symm
-
           f3 :: unfoldChain_( l.tail, newc )
 
         // y=x ^ y=z -> x=z
@@ -141,8 +110,6 @@ object VeriTParser extends RegexParsers {
           val f1 = instantiate( eq_trans, x3 )
           val f2 = instantiate( f1, x0 ) // or x2, should be the same
           val f3 = instantiate( f2, x1 )
-
-          symm = getSymmInstance( x2, x3 ) :: symm
 
           f3 :: unfoldChain_( l.tail, newc )
 
@@ -180,13 +147,13 @@ object VeriTParser extends RegexParsers {
     }
 
     val instances = unfoldChain( l )
-    ( eq_trans, instances ) :: symm
+    ( eq_trans, instances )
   }
 
   // Assuming all the antecedents of the implication are ordered:
   // ( =(x0, y0)  ^  =(x1, y1)  ^ ... ^  =(xn, yn)  ->  =(f x0...xn, f y0...yn) )
   // in veriT is *always* ( not =(x0, y0) , not =(x1, y1) , ... , not =(xn, yn), =(f x0...xn, f y0...yn) )
-  def getEqCongrInstances( f: List[FOLFormula] ): List[Instances] = {
+  def getEqCongrInstances( f: List[FOLFormula] ): Instances = {
 
     def getFunctionName( f: FOLFormula ): String = f match {
       case FOLAtom( eq, List( f1, _ ) ) => f1 match {
@@ -232,10 +199,10 @@ object VeriTParser extends RegexParsers {
 
     val ( args1, args2 ) = getArgsLst( f.last )
     val pairs = args1.zip( args2 )
-    val ( eqs_correct, symm ) = genEqualities( pairs, f.dropRight( 1 ) )
+    val eqs_correct = genEqualities( pairs, f.dropRight( 1 ) )
     val instance = Imp( And( eqs_correct ), f.last )
 
-    ( ( eq_congr, List( instance ) ) :: symm )
+    ( eq_congr, List( instance ) )
   }
 
   // Assuming all the antecedents of the implication are ordered:
@@ -244,7 +211,7 @@ object VeriTParser extends RegexParsers {
   // ( not =(x0, y0) , not =(x1, y1) , ... , not =(xn, yn), not p(x0...xn), p(y0...yn) )
   // or
   // ( not =(x0, y0) , not =(x1, y1) , ... , not =(xn, yn), p(x0...xn), not p(y0...yn) )
-  def getEqCongrPredInstances( f: List[FOLFormula] ): List[Instances] = {
+  def getEqCongrPredInstances( f: List[FOLFormula] ): Instances = {
 
     def getPredName( f: FOLFormula ): String = f match {
       case FOLAtom( p, _ )        => p.toString
@@ -286,33 +253,21 @@ object VeriTParser extends RegexParsers {
 
     val ( args1, args2 ) = getArgsLst( f( f.length - 2 ), f( f.length - 1 ) )
     val pairs = args1.zip( args2 )
-    val ( eqs_correct, symm ) = genEqualities( pairs, f.dropRight( 2 ) )
+    val eqs_correct = genEqualities( pairs, f.dropRight( 2 ) )
     val ( p1, p2 ) = ( f( f.length - 2 ), f( f.length - 1 ) ) match {
       case ( Neg( f1 ), f2 ) => ( f1, f2 )
       case ( f1, Neg( f2 ) ) => ( f2, f1 )
     }
     val instance = Imp( And( eqs_correct :+ p1 ), p2 )
 
-    ( eq_congr_pred, List( instance ) ) :: symm
-  }
-
-  /* 
-   * Given a quantifier free formula f, returns all pairs of terms which occur
-   * in the same equality predicate.
-   */
-  def getEqualityPairs( f: FOLFormula ): List[( FOLTerm, FOLTerm )] = f match {
-    case FOLAtom( eq, List( t1, t2 ) ) if eq.toString == "=" => List( ( t1, t2 ) )
-    case FOLAtom( p, _ ) if p.toString != "=" => List()
-    case Neg( f1 ) => getEqualityPairs( f1 )
-    case And( f1, f2 ) => getEqualityPairs( f1 ) ++ getEqualityPairs( f2 )
-    case Or( f1, f2 ) => getEqualityPairs( f1 ) ++ getEqualityPairs( f2 )
-    case Imp( f1, f2 ) => getEqualityPairs( f1 ) ++ getEqualityPairs( f2 )
+    ( eq_congr_pred, List( instance ) )
   }
 
   def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
     getExpansionProof( new FileReader( filename ) )
   }
 
+  // NOTE: The expansion proof returned is a tautology modulo symmetry!!!!
   def getExpansionProof( reader: Reader ): Option[ExpansionSequent] = {
     parseAll( proof, reader ) match {
       case Success( r, _ ) => r
@@ -355,10 +310,7 @@ object VeriTParser extends RegexParsers {
           } else acc
       }
 
-      val inputEqPairs = input.flatMap( f => getEqualityPairs( f ) )
-      val inputSymm = inputEqPairs.flatMap( p => List( getSymmInstance( p._1, p._2 ), getSymmInstance( p._2, p._1 ) ) )
-
-      val axioms = r.flatMap( p => p._2 ) ::: inputSymm
+      val axioms = r.map( p => p._2 ).flatten
 
       // Join the instances of the same quantified formula
       val keys = axioms.map( p => p._1 ).distinct
@@ -413,22 +365,22 @@ object VeriTParser extends RegexParsers {
 
   // RESOLUTION RULES AND EQUALITY AXIOMS
   // Inner rules return the labels of the clauses used and equality axioms returns the axiom and its instances
-  def rules: Parser[( List[String], List[Instances] )] = "(set" ~ label ~ "(" ~> rule <~ "))"
-  def rule: Parser[( List[String], List[Instances] )] = eqAxiom ^^ { case i => ( Nil, i ) } | innerRule ^^ { case s => ( s, Nil ) }
-  def eqAxiom: Parser[List[Instances]] = eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
-  def eq_reflexive: Parser[List[Instances]] = "eq_reflexive" ~> conclusion ^^ {
+  def rules: Parser[( List[String], Option[Instances] )] = "(set" ~ label ~ "(" ~> rule <~ "))"
+  def rule: Parser[( List[String], Option[Instances] )] = eqAxiom ^^ { case i => ( Nil, Some( i ) ) } | innerRule ^^ { case s => ( s, None ) }
+  def eqAxiom: Parser[Instances] = eq_reflexive | eq_transitive | eq_congruence | eq_congruence_pred
+  def eq_reflexive: Parser[Instances] = "eq_reflexive" ~> conclusion ^^ {
     case c =>
       getEqReflInstances( c )
   }
-  def eq_transitive: Parser[List[Instances]] = "eq_transitive" ~> conclusion ^^ {
+  def eq_transitive: Parser[Instances] = "eq_transitive" ~> conclusion ^^ {
     case c =>
       getEqTransInstances( c )
   }
-  def eq_congruence: Parser[List[Instances]] = "eq_congruent" ~> conclusion ^^ {
+  def eq_congruence: Parser[Instances] = "eq_congruent" ~> conclusion ^^ {
     case c =>
       getEqCongrInstances( c )
   }
-  def eq_congruence_pred: Parser[List[Instances]] = "eq_congruent_pred" ~> conclusion ^^ {
+  def eq_congruence_pred: Parser[Instances] = "eq_congruent_pred" ~> conclusion ^^ {
     case c =>
       getEqCongrPredInstances( c )
   }

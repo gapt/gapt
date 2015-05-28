@@ -7,6 +7,7 @@ import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.expansionTrees.{ toDeep => ETtoDeep, toShallow => ETtoShallow }
+import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms._
 import at.logic.gapt.proofs.lk.base._
@@ -126,11 +127,26 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       val p = LinearExampleProof( 0, 4 )
       val pi = CutIntroduction.one_cut_one_quantifier( p, false )
-      val pe = ReductiveCutElim.eliminateAllByUppermost( pi, steps = false )
+      val pe = ReductiveCutElim( pi )
 
       ReductiveCutElim.isCutFree( p ) must beEqualTo( true )
       ReductiveCutElim.isCutFree( pi ) must beEqualTo( false )
       ReductiveCutElim.isCutFree( pe ) must beEqualTo( true )
+    }
+
+    "load Prover9 proof without equality reasoning, introduce a cut and eliminate it via Gentzen" in {
+      skipped( "fails currently but should work after merge with regular-layers" )
+
+      val fsprover = FailSafeProver.getProver()
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+
+      val testFilePath = tempCopyOfClasspathFile( "SYN726-1.out" )
+      val p1 = Prover9.parse_prover9LK( testFilePath )
+      val p2 = CutIntroduction.one_cut_many_quantifiers( p1, false )
+      val p3 = ReductiveCutElim( p2 )
+
+      ReductiveCutElim.isCutFree( p2 ) must beEqualTo( true )
+      ReductiveCutElim.isCutFree( p3 ) must beEqualTo( false )
     }
 
     "extract expansion tree from tape proof" in {
@@ -172,11 +188,23 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       proofPrime.isDefined must beTrue
     }
 
+    "load Prover9 proof without equality reasoning and eliminate cuts via Gentzen" in {
+      val fsprover = FailSafeProver.getProver()
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+
+      val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
+      val p = Prover9.parse_prover9LK( testFilePath )
+      val q = ReductiveCutElim( p )
+
+      ReductiveCutElim.isCutFree( q ) must beEqualTo( true )
+    }
+
     "load veriT proofs pi and verify the validity of Deep(pi) using minisat or sat4j" in {
       val fsprover = FailSafeProver.getProver()
       for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
         val p = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( s"test${i}.verit" ) ).get
-        val seq = ETtoDeep( p )
+        val taut_p = addSymmetry( p )
+        val seq = ETtoDeep( taut_p )
 
         fsprover.isValid( seq ) must beTrue
       }
@@ -196,8 +224,6 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "prove quasi-tautology by veriT and verify validity using minisat or sat4j (2/2)" in {
-      skipped( "does not work currently; symmetry-instances are missing" )
-
       val fsprover = FailSafeProver.getProver()
       val veriT = new VeriTProver()
       if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )

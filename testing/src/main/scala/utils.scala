@@ -10,17 +10,44 @@ import scala.concurrent.duration._
 import scala.sys.process._
 import scala.xml.Elem
 
+/**
+ * Single regression test case, e.g. Prover9TestCase.ALG-123.
+ *
+ * Subclasses only need to implement [[test()]].
+ *
+ * @param name  Name of this test case, e.g. "ALG-123".
+ */
 abstract class RegressionTestCase( val name: String ) extends Serializable {
+  /**
+   * Perform the actual testing; to be implemented by subclasses.
+   *
+   * The results of this test run--how long it took, what steps have succeeded, whether an exception has been
+   * thrown--is saved in testRun.  More fine-grained reporting can be enabled by using the operators [[StepBlock.---]],
+   * [[StepBlock.--?]], and [[StepCondition.!--]].
+   *
+   * The parameter testRun is implicit so that these operators can be used as binary operators without explicitly
+   * specifying the testRun.
+   *
+   * @param testRun  Saves the results of this test run.
+   */
   protected def test( implicit testRun: TestRun ): Unit
 
   def timeout: Option[Duration] = None
 
+  /**
+   * Run this test case (in the same process).
+   *
+   * @return Results of the test run.
+   */
   def run(): TestRun = {
     val testRun = new TestRun()
     testRun.runStep( None, timeout )( test( testRun ) )
     testRun
   }
 
+  /**
+   * Results of running a single regression test case.
+   */
   class TestRun {
     case class Step( name: Option[String], exception: Option[Throwable], runtime: Duration, isTimeout: Boolean )
 
@@ -49,6 +76,9 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
       result
     }
 
+    /**
+     * JUnit XML result file describing this test run.  The format is compatible with Jenkins.
+     */
     def toJUnitXml: Elem =
       <testsuite>
         {
@@ -70,11 +100,26 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
   }
 
   protected implicit class StepBlock[T]( block: => T ) {
+    /**
+     * Runs the passed [[block]] as a step in a regression test case.
+     *
+     * @param name Name of the step.
+     * @return The return value of [[block]].
+     * @throws Throwable If [[block]] raises an exception, it is rethrown.
+     */
     def ---( name: String )( implicit testRun: TestRun ) =
       testRun.runStep( Some( name ) )( block ) match {
         case Left( t )    => throw t
         case Right( res ) => res
       }
+
+    /**
+     * Runs the passed [[block]] as a step in a regression test case, ignoring thrown exceptions (but still recording
+     * them in the test run).
+     *
+     * @param name Name of the step
+     * @return Some(returnValue), if [[block]] returns returnValue.  None, if [[block]] throws an exception.
+     */
     def --?( name: String )( implicit testRun: TestRun ) =
       testRun.runStep( Some( name ) )( block ) match {
         case Left( t )    => None
@@ -83,6 +128,12 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
   }
 
   protected implicit class StepCondition( block: => Boolean ) {
+    /**
+     * Verify that [[block]] returns true.  Exceptions thrown in [[block]] are ignored (but still recorded in the test
+     * run).
+     *
+     * @param name Name of the step
+     */
     def !--( name: String )( implicit testRun: TestRun ) =
       testRun.runStep( Some( name ) ) { require( block, name ) }
   }
@@ -97,6 +148,9 @@ object withTempFile {
   }
 }
 
+/**
+ * Runs a Scala closure in an external JVM, and returns the result (or exception, if thrown).
+ */
 object runOutOfProcess {
   private type InputType = () => Serializable
   private type OutputType = Either[Throwable, Serializable]

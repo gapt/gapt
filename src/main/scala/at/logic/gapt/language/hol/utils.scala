@@ -45,19 +45,19 @@ object instantiate {
  */
 object containsQuantifier {
   def apply( e: LambdaExpression ): Boolean = e match {
-    case Top() | Bottom()   => false
-    case Var( x, tpe )      => false
-    case Const( x, tpe )    => false
-    case And( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
-    case Or( x, y )         => containsQuantifier( x ) || containsQuantifier( y )
-    case Imp( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
-    case Neg( x )           => containsQuantifier( x )
-    case Ex( x, f )         => true
-    case All( x, f )        => true
+    case Top() | Bottom() => false
+    case Var( x, tpe )    => false
+    case Const( x, tpe )  => false
+    case And( x, y )      => containsQuantifier( x ) || containsQuantifier( y )
+    case Or( x, y )       => containsQuantifier( x ) || containsQuantifier( y )
+    case Imp( x, y )      => containsQuantifier( x ) || containsQuantifier( y )
+    case Neg( x )         => containsQuantifier( x )
+    case Ex( x, f )       => true
+    case All( x, f )      => true
     // Is this really necessary? Yes, they handle cases like P( (\x.x) a ) .
-    case Abs( v, exp )      => containsQuantifier( exp )
-    case App( l, r )        => containsQuantifier( l ) || containsQuantifier( r )
-    case _                  => throw new Exception( "Unrecognized symbol." )
+    case Abs( v, exp )    => containsQuantifier( exp )
+    case App( l, r )      => containsQuantifier( l ) || containsQuantifier( r )
+    case _                => throw new Exception( "Unrecognized symbol." )
   }
 }
 
@@ -66,25 +66,23 @@ object containsQuantifier {
  * For example, P( (all x:x) ) contains a quantifier, but it is inside of an atom.
  */
 object containsQuantifierOnLogicalLevel {
-  def apply(e: LambdaExpression): Boolean = e match {
-    case Top() | Bottom() => false
-    case Var(x, tpe) => false
-    case Const(x, tpe) => false
-    case And(x, y) => containsQuantifierOnLogicalLevel(x) || containsQuantifierOnLogicalLevel(y)
-    case Or(x, y) =>  containsQuantifierOnLogicalLevel(x) || containsQuantifierOnLogicalLevel(y)
-    case Imp(x, y) => containsQuantifierOnLogicalLevel(x) || containsQuantifierOnLogicalLevel(y)
-    case Neg(x) =>  containsQuantifierOnLogicalLevel(x)
-    case Ex(x, f) => true
-    case All(x, f) => true
+  def apply( e: LambdaExpression ): Boolean = e match {
+    case Top() | Bottom()   => false
+    case Var( x, tpe )      => false
+    case Const( x, tpe )    => false
+    case And( x, y )        => containsQuantifierOnLogicalLevel( x ) || containsQuantifierOnLogicalLevel( y )
+    case Or( x, y )         => containsQuantifierOnLogicalLevel( x ) || containsQuantifierOnLogicalLevel( y )
+    case Imp( x, y )        => containsQuantifierOnLogicalLevel( x ) || containsQuantifierOnLogicalLevel( y )
+    case Neg( x )           => containsQuantifierOnLogicalLevel( x )
+    case Ex( x, f )         => true
+    case All( x, f )        => true
     // Is this really necessary? Yes, they handle cases like P( (\x.x) a ) .
-    case HOLAtom(x, args) => false // contents of atoms is ignored
-    case Abs(v, exp) => containsQuantifierOnLogicalLevel(exp)
-    case App(l, r) => containsQuantifierOnLogicalLevel(l) || containsQuantifierOnLogicalLevel(r)
-    case _ => throw new Exception("Unrecognized symbol.")
+    case HOLAtom( x, args ) => false // contents of atoms is ignored
+    case Abs( v, exp )      => containsQuantifierOnLogicalLevel( exp )
+    case App( l, r )        => containsQuantifierOnLogicalLevel( l ) || containsQuantifierOnLogicalLevel( r )
+    case _                  => throw new Exception( "Unrecognized symbol." )
   }
 }
-
-
 
 object containsStrongQuantifier {
   def apply( f: HOLFormula, pol: Boolean ): Boolean = f match {

@@ -2,6 +2,7 @@ package at.logic.gapt.provers.veriT
 
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, isQuantified, formulaToExpansionTree }
+import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
 import at.logic.gapt.utils.traits.ExternalProgram
 import scala.sys.process._
 import java.io._
@@ -44,7 +45,10 @@ class VeriTProver extends Prover with ExternalProgram {
         val ant_prop = s.antecedent.map( f => formulaToExpansionTree( f, false ) )
         val suc_prop = s.succedent.map( f => formulaToExpansionTree( f, true ) )
 
-        Some( new ExpansionSequent( exp_seq_quant.antecedent ++ ant_prop, exp_seq_quant.succedent ++ suc_prop ) )
+        val quasi_taut = new ExpansionSequent( exp_seq_quant.antecedent ++ ant_prop, exp_seq_quant.succedent ++ suc_prop )
+        val taut = addSymmetry( quasi_taut )
+
+        Some( taut )
 
       case None => None
     }

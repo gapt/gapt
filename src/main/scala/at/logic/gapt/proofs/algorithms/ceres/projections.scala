@@ -75,7 +75,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     try {
       //debug( "working on rule " + proof.rule )
 
-      val r : Set[LKProof] = proof match {
+      val r: Set[LKProof] = proof match {
         case Axiom( s )                              => Set( Axiom( s ) )
 
         case ExistsSkLeftRule( p, _, a, m, v )       => handleLKSKStrongQuantRule( proof, p, a, m, v, ExistsSkLeftRule.apply, pred )
