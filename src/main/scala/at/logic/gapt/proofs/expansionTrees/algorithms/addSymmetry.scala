@@ -9,12 +9,12 @@ import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toDeep, formulaTo
  * returns an expansion sequent S' which is S extended by the symmetry instances
  * needed to make it a tautology.
  */
- // TODO: After the layer reform, maybe this can use HOLFormulas.
+// TODO: After the layer reform, maybe this can use HOLFormulas.
 object addSymmetry {
-  
+
   def apply( s: ExpansionSequent ): ExpansionSequent = {
 
-    val deep_sequent = toDeep(s)
+    val deep_sequent = toDeep( s )
     val eq_ant = deep_sequent.antecedent.flatMap( f => getEqualityPairs( f.asInstanceOf[FOLFormula], false ) )
     val eq_suc = deep_sequent.succedent.flatMap( f => getEqualityPairs( f.asInstanceOf[FOLFormula], true ) )
     val polarized_eq = eq_ant ++ eq_suc
@@ -25,9 +25,9 @@ object addSymmetry {
     val symm1 = positive_pairs.filter( p => negative_pairs.contains( ( p._2, p._1 ) ) ).map( p => ( p._2, p._1 ) )
     // Add p._1 = p._2 -> p._2 = p._1
     val symm2 = negative_pairs.filter( p => positive_pairs.contains( ( p._2, p._1 ) ) )
-    
-    val symm_terms = (symm1 ++ symm2).distinct
-    
+
+    val symm_terms = ( symm1 ++ symm2 ).distinct
+
     val x = FOLVar( "x" )
     val y = FOLVar( "y" )
     val eq = "="
@@ -35,18 +35,18 @@ object addSymmetry {
     val eq2 = FOLAtom( eq, List( y, x ) )
     val imp = FOLImp( eq1, eq2 )
     val eq_symm = FOLAllVar( x, FOLAllVar( y, imp ) )
-    
-    val subs = symm_terms.map( p => FOLSubstitution( Map( (x, p._1), (y, p._2) ) ) )
+
+    val subs = symm_terms.map( p => FOLSubstitution( Map( ( x, p._1 ), ( y, p._2 ) ) ) )
 
     val et = formulaToExpansionTree( eq_symm, subs.toList, false )
-  
+
     // This expansion sequent should be a tautology.
     // (Not adding the expensive check)
     new ExpansionSequent( et +: s.antecedent, s.succedent )
- }
-  
-  /** 
-   * Given a quantifier free formula f and polarity pol, returns all pairs of 
+  }
+
+  /**
+   * Given a quantifier free formula f and polarity pol, returns all pairs of
    * terms which occur in the same equality predicate and its polarity.
    * pol is true for positive polarity.
    */
@@ -58,5 +58,5 @@ object addSymmetry {
     case FOLOr( f1, f2 )                                     => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
     case FOLImp( f1, f2 )                                    => getEqualityPairs( f1, !pol ) ++ getEqualityPairs( f2, pol )
   }
-  
+
 }
