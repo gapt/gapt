@@ -7,7 +7,7 @@ import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.algorithms.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
-import at.logic.gapt.language.hol.{ freeHOVariables, containsQuantifier, HOLSubstitution, toLLKString }
+import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.algorithms.{ AtomicExpansion, regularize }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
@@ -144,9 +144,9 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       val selp = LKtoLKskc( elp )
 
       show( "Extracting struct" )
-      val struct = StructCreators.extract( selp, x => containsQuantifier( x ) || freeHOVariables( x ).nonEmpty )
+      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
       show( "Computing projections" )
-      val proj = Projections( selp, x => containsQuantifier( x ) || freeHOVariables( x ).nonEmpty )
+      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
 
       show( "Computing clause set" )
       val cl = AlternativeStandardClauseSet( struct )
@@ -198,9 +198,9 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
       val selp = LKtoLKskc( elp )
 
       show( "Extracting struct" )
-      val struct = StructCreators.extract( selp, x => containsQuantifier( x ) || freeHOVariables( x ).nonEmpty )
+      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
       show( "Computing projections" )
-      val proj = Projections( selp, x => containsQuantifier( x ) || freeHOVariables( x ).nonEmpty )
+      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
 
       show( "Computing clause set" )
       val cl = AlternativeStandardClauseSet( struct )

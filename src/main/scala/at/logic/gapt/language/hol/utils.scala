@@ -40,6 +40,9 @@ object instantiate {
   }
 }
 
+/**
+ * True iff All or Ex matches any subterm of e.
+ */
 object containsQuantifier {
   def apply( e: LambdaExpression ): Boolean = e match {
     case Top() | Bottom()   => false
@@ -51,13 +54,37 @@ object containsQuantifier {
     case Neg( x )           => containsQuantifier( x )
     case Ex( x, f )         => true
     case All( x, f )        => true
-    // Is this really necessary?
+    // Is this really necessary? Yes, they handle cases like P( (\x.x) a ) .
     case Abs( v, exp )      => containsQuantifier( exp )
     case App( l, r )        => containsQuantifier( l ) || containsQuantifier( r )
-    case HOLAtom( x, args ) => false
     case _                  => throw new Exception( "Unrecognized symbol." )
   }
 }
+
+/**
+ * True iff All or Ex is contained in the logical structure of e.
+ * For example, P( (all x:x) ) contains a quantifier, but it is inside of an atom.
+ */
+object containsQuantifierOnLogicalLevel {
+  def apply(e: LambdaExpression): Boolean = e match {
+    case Top() | Bottom() => false
+    case Var(x, tpe) => false
+    case Const(x, tpe) => false
+    case And(x, y) => containsQuantifierOnLogicalLevel(x) || containsQuantifierOnLogicalLevel(y)
+    case Or(x, y) =>  containsQuantifierOnLogicalLevel(x) || containsQuantifierOnLogicalLevel(y)
+    case Imp(x, y) => containsQuantifierOnLogicalLevel(x) || containsQuantifierOnLogicalLevel(y)
+    case Neg(x) =>  containsQuantifierOnLogicalLevel(x)
+    case Ex(x, f) => true
+    case All(x, f) => true
+    // Is this really necessary? Yes, they handle cases like P( (\x.x) a ) .
+    case HOLAtom(x, args) => false // contents of atoms is ignored
+    case Abs(v, exp) => containsQuantifierOnLogicalLevel(exp)
+    case App(l, r) => containsQuantifierOnLogicalLevel(l) || containsQuantifierOnLogicalLevel(r)
+    case _ => throw new Exception("Unrecognized symbol.")
+  }
+}
+
+
 
 object containsStrongQuantifier {
   def apply( f: HOLFormula, pol: Boolean ): Boolean = f match {

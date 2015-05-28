@@ -84,10 +84,10 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
       val selp = LKtoLKskc(elp)
 
       show("Extracting struct")
-      val struct = StructCreators.extract(selp, x => containsQuantifier(x) || freeHOVariables(x).nonEmpty)
+      val struct = StructCreators.extract(selp, x => containsQuantifierOnLogicalLevel(x) || freeHOVariables(x).nonEmpty)
 
       show("Computing projections")
-      val proj = Projections(selp, x => containsQuantifier(x) || freeHOVariables(x).nonEmpty)
+      val proj = Projections(selp, x => containsQuantifierOnLogicalLevel(x) || freeHOVariables(x).nonEmpty)
 
       show("Computing clause set")
       val cl = SimpleStandardClauseSet(struct)

@@ -1,6 +1,5 @@
 package at.logic.gapt.expr
 
-import at.logic.gapt.expr.{ To, Ti }
 import org.specs2.mutable._
 
 class ExprTest extends Specification {

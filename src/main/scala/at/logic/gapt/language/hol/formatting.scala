@@ -86,14 +86,6 @@ object toLatexString {
 
     case Var( v, _ )   => v.toString
     case Const( c, _ ) => c.toString
-    case Abs( x, t ) =>
-      "(\\lambda " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
-    case App( s, t ) =>
-      if ( escape_latex )
-        "\\apply{ " + getFormulaString( s, false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + "}"
-      else
-        "(@ " + getFormulaString( s, false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
-
     case HOLAtom( f, args ) =>
       val sym = f match {
         case Const( x, _ ) => x
@@ -122,6 +114,16 @@ object toLatexString {
         else
           nameToLatexString( sym.toString ) + ( if ( args.isEmpty ) " " else args.map( getFormulaString( _, false, escape_latex ) ).mkString( "(", ", ", ")" ) )
       }
+    // these cases need to be below the quantifiers and function/atom, since the latter are less general than abs/app
+    case Abs( x, t ) =>
+      "(\\lambda " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
+    case App( s, t ) =>
+      if ( escape_latex )
+        "\\apply{ " + getFormulaString( s, false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + "}"
+      else
+        "(@ " + getFormulaString( s, false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
+
+
 
   }
 

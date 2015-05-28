@@ -65,15 +65,17 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   }
 
   // This method computes the standard projections according to the original CERES definition.
-  def apply( proof: LKProof ): Set[LKProof] = apply( proof, Set.empty[FormulaOccurrence], x => true )
-  def apply( proof: LKProof, pred: HOLFormula => Boolean ): Set[LKProof] = apply( proof, Set.empty[FormulaOccurrence], pred )
+  def apply( proof: LKProof ): Set[LKProof] =
+    apply( proof, Set.empty[FormulaOccurrence], x => true )
+  def apply( proof: LKProof, pred: HOLFormula => Boolean ): Set[LKProof] =
+    apply( proof, Set.empty[FormulaOccurrence], pred )
 
   def apply( proof: LKProof, cut_ancs: Set[FormulaOccurrence], pred: HOLFormula => Boolean ): Set[LKProof] = {
     implicit val c_ancs = cut_ancs
     try {
-      debug( "working on rule " + proof.rule )
+      //debug( "working on rule " + proof.rule )
 
-      proof match {
+      val r : Set[LKProof] = proof match {
         case Axiom( s )                              => Set( Axiom( s ) )
 
         case ExistsSkLeftRule( p, _, a, m, v )       => handleLKSKStrongQuantRule( proof, p, a, m, v, ExistsSkLeftRule.apply, pred )
@@ -130,6 +132,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
           }
         case _ => throw new Exception( "No such a rule in Projections.apply" )
       }
+      r
     } catch {
       case e: ProjectionException =>
         //println("passing exception up...")
@@ -524,7 +527,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     }
   }
 
-  def copySetToAncestor( set: Set[FormulaOccurrence] ) = set.foldLeft( new HashSet[FormulaOccurrence] )( ( s, fo ) => s ++ fo.parents )
+  def copySetToAncestor( set: Set[FormulaOccurrence] ) =
+    set.foldLeft( Set[FormulaOccurrence]() )( ( s, fo ) => s ++ fo.parents )
 }
 
 object DeleteTautology {
