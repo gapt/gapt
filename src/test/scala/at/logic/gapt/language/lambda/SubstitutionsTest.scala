@@ -2,14 +2,12 @@
  * SubstitutionsTest.scala
  */
 
-package at.logic.gapt.language.lambda
+package at.logic.gapt.expr
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import types._
-import symbols._
 import BetaReduction._
 import ImplicitStandardStrategy._
 import org.specs2.execute.Success

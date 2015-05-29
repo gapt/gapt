@@ -19,6 +19,15 @@ doc/*.toc
 doc/*.fdb_latexmk
 doc/*.fls
 doc/*.out
+language-proposal/*.aux
+language-proposal/*.bbl
+language-proposal/*.blg
+language-proposal/*.log
+language-proposal/*.pdf
+language-proposal/*.toc
+language-proposal/*.fdb_latexmk
+language-proposal/*.fls
+language-proposal/*.out
 
 # vim
 .*.sw?

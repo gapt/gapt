@@ -4,14 +4,12 @@
 
 package at.logic.gapt.provers.prover9
 
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.simple.SimpleFOLParser
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.proofs.resolution.robinson.{ Formatter, RobinsonResolutionProof }
-import at.logic.gapt.language.fol._
 import at.logic.gapt.formats.readers.StringReader
-import java.io.File.separator
-import java.io.IOException
 
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.junit.runner.RunWith
@@ -43,7 +41,7 @@ class Prover9Test extends SpecificationWithJUnit with ClasspathFileCopier {
 
       val p = new Prover9Prover()
 
-      val s = FSequent( Nil, List( FOLAllVar( FOLVar( "x" ), parse( "=(x,x)" ) ) ) )
+      val s = FSequent( Nil, List( All( FOLVar( "x" ), parse( "=(x,x)" ) ) ) )
 
       p.isValid( s ) must beTrue
       // TODO: cannot yet import proofs for arbitrary formulas
@@ -56,7 +54,7 @@ class Prover9Test extends SpecificationWithJUnit with ClasspathFileCopier {
     "prove { A or B :- -(-A and -B)  }" in {
 
       val p = new Prover9Prover()
-      val s = FSequent( List( FOLOr( parse( "A" ), parse( "B" ) ) ), List( FOLNeg( FOLAnd( FOLNeg( parse( "A" ) ), FOLNeg( parse( "B" ) ) ) ) ) )
+      val s = FSequent( List( Or( parse( "A" ), parse( "B" ) ) ), List( Neg( And( Neg( parse( "A" ) ), Neg( parse( "B" ) ) ) ) ) )
 
       p.isValid( s ) must beTrue
       p.getRobinsonProof( s ) must beLike {

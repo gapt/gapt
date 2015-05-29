@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.expansionTrees.algorithms
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees._
 
 import scala.collection.immutable._

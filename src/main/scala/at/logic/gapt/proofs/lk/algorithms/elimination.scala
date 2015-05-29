@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.schema.{ SchemaFormula, SchemaAnd => AndS, SchemaOr => OrS }
+import at.logic.gapt.expr._
+import at.logic.gapt.language.schema.SchemaFormula
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.shlk._
@@ -122,7 +122,7 @@ object CleanStructuralRules {
           ws._1.contains( a.formula ) match {
             case true => tailcall( fun( proof, ( ws._1.diff( List( a.formula ) ) :+ m.formula, ws._2 ) ) )
             case false =>
-              val HOLAnd( _, a2 ) = m.formula
+              val And( _, a2 ) = m.formula
               tailcall( fun( AndLeft1Rule( proof, a.formula, a2 ), ws ) )
           }
         } ) )
@@ -132,7 +132,7 @@ object CleanStructuralRules {
           ws._1.contains( a.formula ) match {
             case true => tailcall( fun( proof, ( ws._1.diff( List( a.formula ) ) :+ m.formula, ws._2 ) ) )
             case false =>
-              val HOLAnd( a1, _ ) = m.formula
+              val And( a1, _ ) = m.formula
               tailcall( fun( AndLeft2Rule( proof, a1, a.formula ), ws ) )
           }
         } ) )
@@ -142,7 +142,7 @@ object CleanStructuralRules {
           ws._2.contains( a.formula ) match {
             case true => tailcall( fun( proof, ( ws._1, ws._2.diff( List( a.formula ) ) :+ m.formula ) ) )
             case false =>
-              val HOLOr( _, a2 ) = m.formula
+              val Or( _, a2 ) = m.formula
               tailcall( fun( OrRight1Rule( proof, a.formula, a2 ), ws ) )
           }
         } ) )
@@ -152,7 +152,7 @@ object CleanStructuralRules {
           ws._2.contains( a.formula ) match {
             case true => tailcall( fun( proof, ( ws._1, ws._2.diff( List( a.formula ) ) :+ m.formula ) ) )
             case false =>
-              val HOLOr( a1, _ ) = m.formula
+              val Or( a1, _ ) = m.formula
               tailcall( fun( OrRight2Rule( proof, a1, a.formula ), ws ) )
           }
         } ) )

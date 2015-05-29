@@ -10,14 +10,9 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.fol.Utils._
-import at.logic.gapt.proofs.occurrences._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.utils.dssupport.MapSupport._
-import at.logic.gapt.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.{ DFS, BFS, setSearch }
-import Deltas._
-import at.logic.gapt.language.fol
 
 import scala.collection.immutable.HashMap
 

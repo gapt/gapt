@@ -1,53 +1,54 @@
 package at.logic.gapt.language.hol
 
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 
 /**
  * Ordering for HOL Formulas (also for FOL)
  */
 object HOLOrdering extends HOLOrdering
-class HOLOrdering extends Ordering[HOLExpression] {
-  override def compare( x: HOLExpression, y: HOLExpression ): Int = ( x, y ) match {
+class HOLOrdering extends Ordering[LambdaExpression] {
+  override def compare( x: LambdaExpression, y: LambdaExpression ): Int = ( x, y ) match {
     case ( x, y ) if x syntaxEquals y => 0
-    case ( HOLVar( s1, t1 ), HOLVar( s2, t2 ) ) =>
+    case ( Var( s1, t1 ), Var( s2, t2 ) ) =>
       s1.toString() compare s2.toString() match {
         case 0 => TAOrdering.compare( t1, t2 )
         case x => x
       }
 
-    case ( HOLConst( s1, t1 ), HOLConst( s2, t2 ) ) =>
+    case ( Const( s1, t1 ), Const( s2, t2 ) ) =>
       s1.toString() compare s2.toString() match {
         case 0 => TAOrdering.compare( t1, t2 )
         case x => x
       }
 
-    case ( HOLApp( s1, t1 ), HOLApp( s2, t2 ) ) =>
+    case ( App( s1, t1 ), App( s2, t2 ) ) =>
       compare( s1, s2 ) match {
         case 0 => compare( t1, t2 )
         case x => x
       }
 
-    case ( HOLAbs( x1, t1 ), HOLAbs( x2, t2 ) ) =>
+    case ( Abs( x1, t1 ), Abs( x2, t2 ) ) =>
       compare( x1, x2 ) match {
         case 0 => compare( t1, t2 )
         case x => x
       }
 
-    case ( HOLVar( _, _ ), _ )                => -1
+    case ( Var( _, _ ), _ )             => -1
 
-    case ( HOLConst( _, _ ), HOLVar( _, _ ) ) => 1
-    case ( HOLConst( _, _ ), _ )              => -1
+    case ( Const( _, _ ), Var( _, _ ) ) => 1
+    case ( Const( _, _ ), _ )           => -1
 
-    case ( HOLApp( _, _ ), HOLVar( _, _ ) )   => 1
-    case ( HOLApp( _, _ ), HOLConst( _, _ ) ) => 1
-    case ( HOLApp( _, _ ), _ )                => -1
+    case ( App( _, _ ), Var( _, _ ) )   => 1
+    case ( App( _, _ ), Const( _, _ ) ) => 1
+    case ( App( _, _ ), _ )             => -1
 
-    case ( HOLAbs( _, _ ), HOLVar( _, _ ) )   => 1
-    case ( HOLAbs( _, _ ), HOLConst( _, _ ) ) => 1
-    case ( HOLAbs( _, _ ), HOLApp( _, _ ) )   => 1
-    case ( HOLAbs( _, _ ), _ )                => -1
+    case ( Abs( _, _ ), Var( _, _ ) )   => 1
+    case ( Abs( _, _ ), Const( _, _ ) ) => 1
+    case ( Abs( _, _ ), App( _, _ ) )   => 1
+    case ( Abs( _, _ ), _ )             => -1
 
-    case _                                    => throw new Exception( "Unhandled comparision of hol epxressions: " + x + " ? " + y )
+    case _                              => throw new Exception( "Unhandled comparision of hol epxressions: " + x + " ? " + y )
   }
 }
 

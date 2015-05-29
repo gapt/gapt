@@ -8,6 +8,7 @@ package at.logic.gapt.proofs.shlk.algorithms
 import java.io.InputStreamReader
 
 import at.logic.gapt.formats.shlk_parsing.sFOParserCNT
+import at.logic.gapt.expr._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
@@ -29,7 +30,7 @@ class sFOparserCNTTest extends SpecificationWithJUnit {
       val k = IntVar( "k" )
       val Ai2 = IndexedPredicate( "A", Succ( Succ( i ) ) )
       val Ai = IndexedPredicate( "A", Succ( i ) )
-      val f1 = SchemaAnd( A0, BigAnd( i, Ai, IntZero(), Succ( i ) ) )
+      val f1 = And( A0, BigAnd( i, Ai, IntZero(), Succ( i ) ) )
       val ax11 = Axiom( A0 :: Nil, A0 :: Nil )
 
       val s = new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "David.lks" ) )

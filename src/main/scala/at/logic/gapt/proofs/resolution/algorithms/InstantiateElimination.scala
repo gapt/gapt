@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.Sequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.Clause
@@ -140,7 +141,7 @@ object InstantiateElimination {
         newv :: acc
     }
 
-    val olds_new = olds zip news.asInstanceOf[List[FOLExpression]]
+    val olds_new = olds zip news.asInstanceOf[List[FOLTerm]]
     val r = FOLSubstitution( olds_new )
     val t = FOLSubstitution( s.folmap.map( el => ( r( el._1 ).asInstanceOf[FOLVar], el._2 ) ) )
 

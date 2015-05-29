@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.lksk.algorithms
 
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms._
 import at.logic.gapt.proofs.lksk._
@@ -12,15 +13,15 @@ import org.specs2.runner.JUnitRunner
 @RunWith( classOf[JUnitRunner] )
 class SubstitutionTest extends SpecificationWithJUnit {
   "Substitutions" should {
-    val f = HOLConst( "f", Ti -> Ti )
-    val y = HOLVar( "y", Ti )
-    val x = HOLVar( "x", Ti )
-    val a = HOLVar( "a", Ti )
-    val fa = HOLApp( f, a )
-    val R = HOLConst( "R", Ti -> ( Ti -> To ) )
+    val f = Const( "f", Ti -> Ti )
+    val y = Var( "y", Ti )
+    val x = Var( "x", Ti )
+    val a = Var( "a", Ti )
+    val fa = App( f, a )
+    val R = Const( "R", Ti -> ( Ti -> To ) )
     val Rafa = HOLAtom( R, a :: fa :: Nil )
-    val exyRay = HOLExVar( y, HOLAtom( R, a :: y :: Nil ) )
-    val allxexy = HOLAllVar( x, HOLExVar( y, HOLAtom( R, x :: y :: Nil ) ) )
+    val exyRay = Ex( y, HOLAtom( R, a :: y :: Nil ) )
+    val allxexy = All( x, Ex( y, HOLAtom( R, x :: y :: Nil ) ) )
 
     val ax = Axiom.createDefault( new FSequent( Rafa :: Nil, Rafa :: Nil ), Tuple2( ( EmptyLabel() + a ) :: Nil, EmptyLabel() :: Nil ) )
     val r1 = ExistsSkLeftRule( ax._1, ax._2._1.head, exyRay, fa )
@@ -29,9 +30,9 @@ class SubstitutionTest extends SpecificationWithJUnit {
     r2.root.succedent.toList.head must beLike { case o: LabelledFormulaOccurrence => ok }
 
     "work for an axiom" in {
-      val P = HOLConst( "P", Ti -> To )
+      val P = Const( "P", Ti -> To )
       val Px = HOLAtom( P, x :: Nil )
-      val c: HOLExpression = HOLConst( "c", Ti )
+      val c: LambdaExpression = Const( "c", Ti )
       val Pc = HOLAtom( P, c :: Nil )
 
       val a = Axiom.createDefault( new FSequent( Px :: Nil, Px :: Nil ), Tuple2( ( EmptyLabel() + x ) :: Nil, ( EmptyLabel() + y ) :: Nil ) )
@@ -42,13 +43,13 @@ class SubstitutionTest extends SpecificationWithJUnit {
     }
 
     "apply correctly to a simple proof" in {
-      val c = HOLConst( "c", Ti )
-      val g = HOLConst( "g", Ti -> Ti )
-      val gc = HOLApp( g, c )
-      val fgc = HOLApp( f, gc )
-      val R = HOLConst( "R", Ti -> ( Ti -> To ) )
+      val c = Const( "c", Ti )
+      val g = Const( "g", Ti -> Ti )
+      val gc = App( g, c )
+      val fgc = App( f, gc )
+      val R = Const( "R", Ti -> ( Ti -> To ) )
       val Rgcfgc = HOLAtom( R, gc :: fgc :: Nil )
-      val exyRgcy = HOLExVar( y, HOLAtom( R, gc :: y :: Nil ) )
+      val exyRgcy = Ex( y, HOLAtom( R, gc :: y :: Nil ) )
       val subst = HOLSubstitution( a, gc ) // a <- g(c)
 
       val p_s = applySubstitution( r2, subst )

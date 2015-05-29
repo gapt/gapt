@@ -7,7 +7,7 @@ import at.logic.gapt.utils.traits.ExternalProgram
 import scala.sys.process._
 import java.io._
 import at.logic.gapt.provers._
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 
 class VeriTProver extends Prover with ExternalProgram {

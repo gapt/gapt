@@ -111,9 +111,11 @@ Daniel Weller - \texttt{weller@logic.at}
 
 \section{Introduction}
 
-GAPT is a generic architecture for proof transformations. It is implemented
-in Scala and its logical basis is simple type theory. It has
-layers for first-order logic and schematic first-order logic.
+GAPT is a generic architecture for proof transformations implemented in Scala.
+Formulas, terms, and other expressions are are represented as lambda terms in
+simple type theory.  Terms and formulas of first-order logic and schematic
+first-order logic are hence encoded as lambda terms, these form regular
+subsets.
 
 The focus of GAPT are proof transformations (in contrast to proof assistants
 whose focus is proof formalization and automated deduction systems whose focus

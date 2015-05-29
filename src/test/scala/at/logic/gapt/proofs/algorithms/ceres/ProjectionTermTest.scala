@@ -6,6 +6,7 @@ import at.logic.gapt.proofs.lk.base.{ Sequent, LKProof }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.shlk.{ SchemaProof, SchemaProofDB }
 import at.logic.gapt.language.schema._
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.shlk_parsing.{ SHLK, sFOParser }
 import at.logic.gapt.utils.ds.trees.BinaryTree
 import at.logic.gapt.utils.testing.ClasspathFileCopier
@@ -48,7 +49,7 @@ class ProjectionTermTest extends SpecificationWithJUnit with ClasspathFileCopier
       val Ai = IndexedPredicate( "A", i )
       val Ai1 = IndexedPredicate( "A", Succ( i ) )
 
-      val orneg = SchemaOr( SchemaNeg( Ai ), Ai1.asInstanceOf[SchemaFormula] )
+      val orneg = Or( Neg( Ai ), Ai1.asInstanceOf[SchemaFormula] )
       val Ak1 = IndexedPredicate( "A", Succ( k ) )
       val An = IndexedPredicate( "A", k )
       val An1 = IndexedPredicate( "A", n1 )
@@ -59,7 +60,7 @@ class ProjectionTermTest extends SpecificationWithJUnit with ClasspathFileCopier
       val w1 = WeakeningRightRule( ax1, A3 )
       val negl1 = NegLeftRule( w1, A0 )
       val ax2 = Axiom( A1 :: Nil, A1 :: Nil )
-      val orl1 = OrLeftRule( negl1, ax2, SchemaNeg( A0 ), A1 )
+      val orl1 = OrLeftRule( negl1, ax2, Neg( A0 ), A1 )
       val ax3 = Axiom( A1 :: Nil, A1 :: Nil )
       val root = CutRule( orl1, ax3, A1 )
 
@@ -92,7 +93,7 @@ class ProjectionTermTest extends SpecificationWithJUnit with ClasspathFileCopier
       val fo = p2.root.succedent.head
 
       val pterm = ProjectionTermCreators.extract( p1, Set.empty[FormulaOccurrence], getCutAncestors( p1 ) )
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( Succ( IntZero() ) ).asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( Succ( IntZero() ) ).asInstanceOf[IntegerTerm] )
       var sub = SchemaSubstitution( new_map )
       val t = PStructToExpressionTree.applyConsole( pterm )
 
@@ -124,7 +125,7 @@ class ProjectionTermTest extends SpecificationWithJUnit with ClasspathFileCopier
       val fo = p2.root.succedent.head
 
       val pterm = ProjectionTermCreators.extract( p1, Set.empty[FormulaOccurrence], getCutAncestors( p1 ) )
-      val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( Succ( IntZero() ) ).asInstanceOf[IntegerTerm] )
+      val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( Succ( IntZero() ) ).asInstanceOf[IntegerTerm] )
       var sub = SchemaSubstitution( new_map )
 
       val t = PStructToExpressionTree.applyConsole( pterm )

@@ -2,6 +2,7 @@
 
 package at.logic.gapt.proofs.shlk.algorithms
 
+import at.logic.gapt.expr._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.{ CloneLKProof, UnfoldException }
@@ -10,7 +11,7 @@ import at.logic.gapt.proofs.lksk.{ Axiom => _, WeakeningLeftRule => _, Weakening
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk._
 
-//import at.logic.gapt.language.lambda.typedLambdaCalculus.{LambdaExpression, Var}
+//import at.logic.gapt.expr.typedLambdaCalculus.{LambdaExpression, Var}
 
 object applySchemaSubstitution {
   def handleSchemaEquivalenceRule( new_parent: LKProof,
@@ -74,26 +75,26 @@ object applySchemaSubstitution {
       case AndRightRule( p1, p2, s, a1, a2, m ) => handleBinaryProp( new_parents.head, new_parents.last, subst, a1, a2, p1, p2, proof, AndRightRule.apply )
 
       case AndLeft1Rule( p, s, a, m ) => {
-        val f = m.formula match { case SchemaAnd( _, w ) => w }
+        val f = m.formula match { case And( _, w ) => w }
         val new_parent = new_parents.head
         val new_proof = AndLeft1Rule( new_parent, subst( a.formula.asInstanceOf[SchemaFormula] ), subst( f ) )
         new_proof
       }
       case AndLeft2Rule( p, s, a, m ) => {
-        val f = m.formula match { case SchemaAnd( w, _ ) => w }
+        val f = m.formula match { case And( w, _ ) => w }
         val new_parent = new_parents.head
         val new_proof = AndLeft2Rule( new_parent, subst( f ), subst( a.formula.asInstanceOf[SchemaFormula] ) )
         new_proof
       }
 
       case OrRight1Rule( p, s, a, m ) => {
-        val f = m.formula match { case SchemaOr( _, w ) => w }
+        val f = m.formula match { case Or( _, w ) => w }
         val new_parent = new_parents.head
         val new_proof = OrRight1Rule( new_parent, subst( a.formula.asInstanceOf[SchemaFormula] ), subst( f ) )
         new_proof
       }
       case OrRight2Rule( p, s, a, m ) => {
-        val f = m.formula match { case SchemaOr( w, _ ) => w }
+        val f = m.formula match { case Or( w, _ ) => w }
         val new_parent = new_parents.head
         val new_proof = OrRight2Rule( new_parent, subst( f ), subst( a.formula.asInstanceOf[SchemaFormula] ) )
         new_proof
@@ -118,7 +119,7 @@ object applySchemaSubstitution {
       RemoveEqRulesFromGroundSchemaProof( SchemaProofDB.get( proof_name ).base )
     else {
       val k = IntVar( "k" )
-      val subst = SchemaSubstitution( ( k.asInstanceOf[SchemaVar], toIntegerTerm( number - 1 ) ) :: Nil )
+      val subst = SchemaSubstitution( ( k.asInstanceOf[Var], toIntegerTerm( number - 1 ) ) :: Nil )
       RemoveEqRulesFromGroundSchemaProof( apply( SchemaProofDB.get( proof_name ).rec, subst, number ) )
     }
   }
@@ -132,7 +133,7 @@ object applySchemaSubstitution {
           CloneLKProof( SchemaProofDB.get( link ).base )
         else if ( cnt == 1 ) {
           new_ind match {
-            case y: IntZero => {
+            case IntZero() => {
               CloneLKProof( SchemaProofDB.get( link ).base )
             }
             case _ => {
@@ -226,8 +227,8 @@ object StepMinusOne {
   }
 
   def length( t: IntegerTerm, k: IntVar ): Int = t match {
-    case y: IntVar if y == k => 0
-    case c: IntZero          => 0
+    case y @ IntVar( _ ) if y == k => 0
+    case IntZero()                 => 0
     case Succ( t1 ) => {
       1 + length( t1, k )
     }
@@ -235,7 +236,7 @@ object StepMinusOne {
   }
 
   def lengthGround( t: IntegerTerm ): Int = t match {
-    case c: IntZero => 0
+    case IntZero() => 0
     case Succ( t1 ) => {
       1 + lengthGround( t1 )
     }
@@ -243,7 +244,7 @@ object StepMinusOne {
   }
 
   def lengthVar( t: IntegerTerm ): Int = t match {
-    case y: IntVar => 0
+    case y @ IntVar( _ ) => 0
     case Succ( t1 ) => {
       1 + lengthVar( t1 )
     }
@@ -252,23 +253,23 @@ object StepMinusOne {
 
   //return an axpression such that all s(k) is substituted by k
   def minusOne( e: SchemaExpression, k: IntVar ): SchemaExpression = e match {
-    case x: IntegerTerm                        => intTermMinusOne( x, k )
-    case IndexedPredicate( pointer, l )        => IndexedPredicate( pointer.name, minusOne( l.head, k ).asInstanceOf[IntegerTerm] )
-    case BigAnd( v, formula, init, end )       => BigAnd( v, formula, minusOne( init, k ).asInstanceOf[IntegerTerm], minusOne( end, k ).asInstanceOf[IntegerTerm] )
-    case BigOr( v, formula, init, end )        => BigOr( v, formula, minusOne( init, k ).asInstanceOf[IntegerTerm], minusOne( end, k ).asInstanceOf[IntegerTerm] )
-    case SchemaOr( l, r )                      => SchemaOr( minusOne( l, k ).asInstanceOf[SchemaFormula], minusOne( r, k ).asInstanceOf[SchemaFormula] )
-    case SchemaAnd( l, r )                     => SchemaAnd( minusOne( l, k ).asInstanceOf[SchemaFormula], minusOne( r, k ).asInstanceOf[SchemaFormula] )
-    case SchemaNeg( l )                        => SchemaNeg( minusOne( l, k ).asInstanceOf[SchemaFormula] )
-    case SchemaImp( l, r )                     => SchemaImp( minusOne( l, k ).asInstanceOf[SchemaFormula], minusOne( r, k ).asInstanceOf[SchemaFormula] )
-    case SchemaAllVar( v, f )                  => SchemaAllVar( v, minusOne( f, k ).asInstanceOf[SchemaFormula] )
-    case SchemaAtom( name: SchemaVar, args )   => SchemaAtom( name, args.map( x => minusOne( x, k ) ) )
-    case SchemaAtom( name: SchemaConst, args ) => SchemaAtom( name, args.map( x => minusOne( x, k ) ) )
-    case ifo: indexedFOVar                     => indexedFOVar( ifo.name, minusOne( ifo.index, k ).asInstanceOf[IntegerTerm] )
-    case indexedOmegaVar( name, index )        => indexedOmegaVar( name, minusOne( index, k ).asInstanceOf[IntegerTerm] )
+    case IndexedPredicate( pointer, l )  => IndexedPredicate( pointer.name, minusOne( l.head, k ).asInstanceOf[IntegerTerm] )
+    case BigAnd( v, formula, init, end ) => BigAnd( v, formula, minusOne( init, k ).asInstanceOf[IntegerTerm], minusOne( end, k ).asInstanceOf[IntegerTerm] )
+    case BigOr( v, formula, init, end )  => BigOr( v, formula, minusOne( init, k ).asInstanceOf[IntegerTerm], minusOne( end, k ).asInstanceOf[IntegerTerm] )
+    case Or( l, r )                      => Or( minusOne( l, k ).asInstanceOf[SchemaFormula], minusOne( r, k ).asInstanceOf[SchemaFormula] )
+    case And( l, r )                     => And( minusOne( l, k ).asInstanceOf[SchemaFormula], minusOne( r, k ).asInstanceOf[SchemaFormula] )
+    case Neg( l )                        => Neg( minusOne( l, k ).asInstanceOf[SchemaFormula] )
+    case Imp( l, r )                     => Imp( minusOne( l, k ).asInstanceOf[SchemaFormula], minusOne( r, k ).asInstanceOf[SchemaFormula] )
+    case All( v, f )                     => All( v, minusOne( f, k ).asInstanceOf[SchemaFormula] )
+    case SchemaAtom( name: Var, args )   => SchemaAtom( name, args.map( x => minusOne( x, k ) ) )
+    case SchemaAtom( name: Const, args ) => SchemaAtom( name, args.map( x => minusOne( x, k ) ) )
+    case indexedFOVar( name, index )     => indexedFOVar( name, minusOne( index, k ).asInstanceOf[IntegerTerm] )
+    case indexedOmegaVar( name, index )  => indexedOmegaVar( name, minusOne( index, k ).asInstanceOf[IntegerTerm] )
     case sTerm( name, i, args ) => {
       sTerm( name, minusOne( i, k ), args )
     }
     case foTerm( v, arg ) => foTerm( v, minusOne( arg, k ) :: Nil )
+    case x: IntegerTerm   => intTermMinusOne( x, k )
     case _                => e
   }
 
@@ -377,25 +378,25 @@ object StepMinusOne {
 
       case AndLeft1Rule( p, r, a, m ) => {
         val new_p = apply( p, k )
-        val a2 = m.formula match { case SchemaAnd( l, right ) => right }
+        val a2 = m.formula match { case And( l, right ) => right }
         AndLeft1Rule( new_p, minusOne( a.formula.asInstanceOf[SchemaFormula], k ), minusOne( a2, k ) )
       }
 
       case AndLeft2Rule( p, r, a, m ) => {
         val new_p = apply( p, k )
-        val a2 = m.formula match { case SchemaAnd( l, _ ) => l }
+        val a2 = m.formula match { case And( l, _ ) => l }
         AndLeft2Rule( new_p, minusOne( a2, k ), minusOne( a.formula.asInstanceOf[SchemaFormula], k ) )
       }
 
       case OrRight1Rule( p, r, a, m ) => {
         val new_p = apply( p, k )
-        val a2 = m.formula match { case SchemaOr( _, r ) => r }
+        val a2 = m.formula match { case Or( _, r ) => r }
         OrRight1Rule( new_p, minusOne( a.formula.asInstanceOf[SchemaFormula], k ), minusOne( a2, k ) )
       }
 
       case OrRight2Rule( p, r, a, m ) => {
         val new_p = apply( p, k )
-        val a2 = m.formula match { case SchemaOr( l, _ ) => l }
+        val a2 = m.formula match { case Or( l, _ ) => l }
         OrRight2Rule( new_p, minusOne( a2, k ), minusOne( a.formula.asInstanceOf[SchemaFormula], k ) )
       }
 
@@ -467,25 +468,25 @@ object RemoveEqRulesFromGroundSchemaProof {
 
       case AndLeft1Rule( p, r, a, m ) => {
         val new_p = apply( p )
-        val a2 = m.formula match { case SchemaAnd( l, right ) => right }
+        val a2 = m.formula match { case And( l, right ) => right }
         AndLeft1Rule( new_p, unfoldGroundSchF( a.formula.asInstanceOf[SchemaFormula] ), unfoldGroundSchF( a2 ) )
       }
 
       case AndLeft2Rule( p, r, a, m ) => {
         val new_p = apply( p )
-        val a2 = m.formula match { case SchemaAnd( l, _ ) => l }
+        val a2 = m.formula match { case And( l, _ ) => l }
         AndLeft2Rule( new_p, unfoldGroundSchF( a2 ), unfoldGroundSchF( a.formula.asInstanceOf[SchemaFormula] ) )
       }
 
       case OrRight1Rule( p, r, a, m ) => {
         val new_p = apply( p )
-        val a2 = m.formula match { case SchemaOr( _, r ) => r }
+        val a2 = m.formula match { case Or( _, r ) => r }
         OrRight1Rule( new_p, unfoldGroundSchF( a.formula.asInstanceOf[SchemaFormula] ), unfoldGroundSchF( a2 ) )
       }
 
       case OrRight2Rule( p, r, a, m ) => {
         val new_p = apply( p )
-        val a2 = m.formula match { case SchemaOr( l, _ ) => l }
+        val a2 = m.formula match { case Or( l, _ ) => l }
         OrRight2Rule( new_p, unfoldGroundSchF( a2 ), unfoldGroundSchF( a.formula.asInstanceOf[SchemaFormula] ) )
       }
 
@@ -511,17 +512,17 @@ object RemoveEqRulesFromGroundSchemaProof {
   def unfoldGroundSchF( f: SchemaFormula ): SchemaFormula = f match {
     case BigAnd( v, formula, init, end ) =>
       andNSchemaF( formula, StepMinusOne.lengthGround( init ), StepMinusOne.lengthGround( end ) )
-    case SchemaAnd( l @ left, r @ right ) => SchemaAnd( unfoldGroundSchF( l ), unfoldGroundSchF( r ) )
-    case SchemaOr( l @ left, r @ right )  => SchemaOr( unfoldGroundSchF( l ), unfoldGroundSchF( r ) )
-    case SchemaNeg( l @ left )            => SchemaNeg( unfoldGroundSchF( l ) )
-    case _                                => f
+    case And( l @ left, r @ right ) => And( unfoldGroundSchF( l ), unfoldGroundSchF( r ) )
+    case Or( l @ left, r @ right )  => Or( unfoldGroundSchF( l ), unfoldGroundSchF( r ) )
+    case Neg( l @ left )            => Neg( unfoldGroundSchF( l ) )
+    case _                          => f
   }
 
   def groundSchemaF( f: SchemaFormula, init: Int ): SchemaFormula = f match {
     case IndexedPredicate( pointer, l ) => IndexedPredicate( pointer.name, toIntegerTerm( init + StepMinusOne.lengthVar( l.head.asInstanceOf[IntegerTerm] ) ).asInstanceOf[IntegerTerm] )
-    case SchemaAnd( l, r )              => SchemaAnd( groundSchemaF( l, init ), groundSchemaF( r, init ) )
-    case SchemaOr( l, r )               => SchemaOr( groundSchemaF( l, init ), groundSchemaF( r, init ) )
-    case SchemaNeg( l )                 => SchemaNeg( groundSchemaF( l, init ) )
+    case And( l, r )                    => And( groundSchemaF( l, init ), groundSchemaF( r, init ) )
+    case Or( l, r )                     => Or( groundSchemaF( l, init ), groundSchemaF( r, init ) )
+    case Neg( l )                       => Neg( groundSchemaF( l, init ) )
     case _                              => throw new Exception( "groundSchemaF" )
   }
 
@@ -534,13 +535,13 @@ object RemoveEqRulesFromGroundSchemaProof {
       val l1 = list.map( i => {
         f match {
           case IndexedPredicate( _, _ ) => groundSchemaF( f, i )
-          case SchemaAnd( l, r )        => SchemaAnd( groundSchemaF( l, i ), groundSchemaF( r, i ) )
-          case SchemaOr( l, r )         => SchemaOr( groundSchemaF( l, i ), groundSchemaF( r, i ) )
-          case SchemaNeg( l )           => SchemaNeg( groundSchemaF( l, i ) )
+          case And( l, r )              => And( groundSchemaF( l, i ), groundSchemaF( r, i ) )
+          case Or( l, r )               => Or( groundSchemaF( l, i ), groundSchemaF( r, i ) )
+          case Neg( l )                 => Neg( groundSchemaF( l, i ) )
           case _                        => throw new Exception( "andNSchemaF" )
         }
       } )
-      l1.tail.foldLeft( l1.head )( ( x, res ) => SchemaAnd( x, res ) )
+      l1.tail.foldLeft( l1.head )( ( x, res ) => And( x, res ) )
     }
   }
 }

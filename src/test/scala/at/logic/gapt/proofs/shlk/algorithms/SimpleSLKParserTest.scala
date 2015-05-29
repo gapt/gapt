@@ -8,7 +8,8 @@ package at.logic.gapt.proofs.shlk.algorithms
 import java.io.InputStreamReader
 
 import at.logic.gapt.formats.shlk_parsing.SHLK
-import at.logic.gapt.language.lambda.types.To
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.To
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.lk._
 import org.junit.runner.RunWith
@@ -22,8 +23,8 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
 
     sequential
     "parse correctly a SLK-proof" in {
-      val var3 = SchemaAtom( SchemaVar( "x3", To ), Nil )
-      val var4 = SchemaAtom( SchemaVar( "x4", To ), Nil )
+      val var3 = SchemaAtom( Var( "x3", To ), Nil )
+      val var4 = SchemaAtom( Var( "x4", To ), Nil )
       val ax1 = Axiom( var3 :: Nil, var3 :: Nil )
       val ax2 = Axiom( var4 :: Nil, var4 :: Nil )
       val negl = NegLeftRule( ax1, var3 )
@@ -33,7 +34,7 @@ class SimpleSLKParserTest extends SpecificationWithJUnit {
       val i = IntVar( "i" )
       val Ai2 = IndexedPredicate( "A", Succ( Succ( i ) ) )
       val Ai = IndexedPredicate( "A", Succ( i ) )
-      val f1 = SchemaAnd( A0, BigAnd( i, Ai, IntZero(), Succ( i ) ) )
+      val f1 = And( A0, BigAnd( i, Ai, IntZero(), Succ( i ) ) )
       val ax11 = Axiom( A0 :: Nil, A0 :: Nil )
 
       val s = new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "shlk-adder.lks" ) )

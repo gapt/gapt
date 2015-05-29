@@ -39,22 +39,22 @@ class treesTest extends SpecificationWithJUnit {
       0 must beEqualTo( 0 )
 
       /*
-      val a = HOLConst(new ConstantSymbolA("a"), i)
-      val b = HOLConst(new ConstantSymbolA("b"), i)
-      val p = HOLConst(new ConstantSymbolA("p"), i->o)
-      val X = HOLVar(new VariableSymbolA("X"), i)
+      val a = Const(new ConstantSymbolA("a"), i)
+      val b = Const(new ConstantSymbolA("b"), i)
+      val p = Const(new ConstantSymbolA("p"), i->o)
+      val X = Var(new VariableSymbolA("X"), i)
 
 
-      val pa = App(p,a).asInstanceOf[HOLFormula]
-      val pb = App(p,b).asInstanceOf[HOLFormula]
-      val fa = App(f,a).asInstanceOf[HOLExpression]
-      val fb = App(f,b).asInstanceOf[HOLExpression]
-      val pfa = App(p,fa).asInstanceOf[HOLFormula]
-      val pfb = App(p,fb).asInstanceOf[HOLFormula]
-      val ffa = App(f,fa).asInstanceOf[HOLExpression]
-      val ffb = App(f,fb).asInstanceOf[HOLExpression]
-      val pffa = App(p,ffa).asInstanceOf[HOLFormula]
-      val pffb = App(p,ffb).asInstanceOf[HOLFormula]
+      val pa = App(p,a).asInstanceOf[Formula]
+      val pb = App(p,b).asInstanceOf[Formula]
+      val fa = App(f,a).asInstanceOf[LambdaExpression]
+      val fb = App(f,b).asInstanceOf[LambdaExpression]
+      val pfa = App(p,fa).asInstanceOf[Formula]
+      val pfb = App(p,fb).asInstanceOf[Formula]
+      val ffa = App(f,fa).asInstanceOf[LambdaExpression]
+      val ffb = App(f,fb).asInstanceOf[LambdaExpression]
+      val pffa = App(p,ffa).asInstanceOf[Formula]
+      val pffb = App(p,ffb).asInstanceOf[Formula]
 
       val seq1 = Sequent(Nil, pa::pfa::Nil)
       val seq2 = Sequent(pb::Nil, pa::Nil)

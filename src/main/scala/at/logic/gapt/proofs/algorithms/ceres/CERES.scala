@@ -2,9 +2,9 @@ package at.logic.gapt.proofs.algorithms.ceres
 
 import at.logic.gapt.proofs.lk.algorithms.applySubstitution
 import at.logic.gapt.proofs.resolution.FClause
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lk.base.FSequent
@@ -173,8 +173,8 @@ class CERES {
 
   def refProjection( es: FSequent ): LKProof = {
     require( es.formulas.nonEmpty, "Can not project reflexivity to an empty end-sequent!" )
-    val x = es.formulas( 0 ).factory.createVar( StringSymbol( "x" ), Ti ).asInstanceOf[HOLVar]
-    val axiomseq = FSequent( Nil, List( HOLEquation( x, x ) ) )
+    val x = Var( StringSymbol( "x" ), Ti ).asInstanceOf[Var]
+    val axiomseq = FSequent( Nil, List( Eq( x, x ) ) )
     //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
     WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq compose es )
   }

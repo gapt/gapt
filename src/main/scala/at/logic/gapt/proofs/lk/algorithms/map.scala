@@ -7,7 +7,7 @@
 
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
@@ -15,7 +15,7 @@ import at.logic.gapt.proofs.occurrences._
 object map_proof extends map_proof
 class map_proof {
   import at.logic.gapt.proofs.lk.algorithms.ProofTransformationUtils.computeMap
-  def apply( proof: LKProof, fun: HOLExpression => HOLExpression ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) =
+  def apply( proof: LKProof, fun: LambdaExpression => LambdaExpression ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) =
     proof match {
       case Axiom( _ ) =>
         handleRule( proof, Nil, fun )
@@ -26,7 +26,7 @@ class map_proof {
     }
 
   def handleRule( proof: LKProof, new_parents: List[( LKProof, Map[FormulaOccurrence, FormulaOccurrence] )],
-                  fun: HOLExpression => HOLExpression ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) = {
+                  fun: LambdaExpression => LambdaExpression ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) = {
     val wfun = wrapFun( fun )
     proof match {
       case Axiom( so ) => {
@@ -58,13 +58,13 @@ class map_proof {
       case AndRightRule( p1, p2, s, a1, a2, m ) =>
         handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, AndRightRule.apply )
       case AndLeft1Rule( p, s, a, m ) => {
-        val f = m.formula match { case HOLAnd( _, w ) => w }
+        val f = m.formula match { case And( _, w ) => w }
         val new_parent = new_parents.head
         val new_proof = AndLeft1Rule( new_parent._1, new_parent._2( a ), wfun( f ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case AndLeft2Rule( p, s, a, m ) => {
-        val f = m.formula match { case HOLAnd( w, _ ) => w }
+        val f = m.formula match { case And( w, _ ) => w }
         val new_parent = new_parents.head
         val new_proof = AndLeft2Rule( new_parent._1, wfun( f ), new_parent._2( a ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
@@ -72,13 +72,13 @@ class map_proof {
       case OrLeftRule( p1, p2, s, a1, a2, m ) =>
         handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, OrLeftRule.apply )
       case OrRight1Rule( p, s, a, m ) => {
-        val f = m.formula match { case HOLOr( _, w ) => w }
+        val f = m.formula match { case Or( _, w ) => w }
         val new_parent = new_parents.head
         val new_proof = OrRight1Rule( new_parent._1, new_parent._2( a ), wfun( f ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case OrRight2Rule( p, s, a, m ) => {
-        val f = m.formula match { case HOLOr( w, _ ) => w }
+        val f = m.formula match { case Or( w, _ ) => w }
         val new_parent = new_parents.head
         val new_proof = OrRight2Rule( new_parent._1, wfun( f ), new_parent._2( a ) )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
@@ -146,12 +146,12 @@ class map_proof {
       }
       case ExistsLeftRule( p, s, a, m, v ) => {
         val new_parent = new_parents.head
-        val new_proof = ExistsLeftRule( new_parent._1, new_parent._2( a ), wfun( m.formula ), fun( v ).asInstanceOf[HOLVar] )
+        val new_proof = ExistsLeftRule( new_parent._1, new_parent._2( a ), wfun( m.formula ), fun( v ).asInstanceOf[Var] )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case ForallRightRule( p, s, a, m, v ) => {
         val new_parent = new_parents.head
-        val new_proof = ForallRightRule( new_parent._1, new_parent._2( a ), wfun( m.formula ), fun( v ).asInstanceOf[HOLVar] )
+        val new_proof = ForallRightRule( new_parent._1, new_parent._2( a ), wfun( m.formula ), fun( v ).asInstanceOf[Var] )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
     }
@@ -159,7 +159,7 @@ class map_proof {
 
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
   def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                       fun: HOLExpression => HOLExpression,
+                       fun: LambdaExpression => LambdaExpression,
                        old_parent: LKProof,
                        old_proof: LKProof,
                        constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
@@ -205,8 +205,8 @@ class map_proof {
       old_proof, new_proof, new_p1._2 ++ new_p2._2 ) )
   }
 
-  /* creates a function of type HOLFormula => HOLFormula from a function of type HOLExpression => HOLExpression */
-  private def wrapFun( f: HOLExpression => HOLExpression ): ( HOLFormula => HOLFormula ) =
+  /* creates a function of type Formula => Formula from a function of type LambdaExpression => LambdaExpression */
+  private def wrapFun( f: LambdaExpression => LambdaExpression ): ( HOLFormula => HOLFormula ) =
     ( exp: HOLFormula ) => f( exp ).asInstanceOf[HOLFormula]
 
 }

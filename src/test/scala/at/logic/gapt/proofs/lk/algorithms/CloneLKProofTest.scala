@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
@@ -13,7 +13,7 @@ class CloneLKProofTest extends SpecificationWithJUnit {
     val List( x, y ) = List( "x", "y" ) map ( FOLVar( _ ) )
     val p = "P"
     val pay = FOLAtom( p, List( a, y ) )
-    val allxpax = FOLExVar( x, FOLAtom( p, List( a, x ) ) )
+    val allxpax = Ex( x, FOLAtom( p, List( a, x ) ) )
     val ax = Axiom( List( pay ), List( pay ) )
     val i1 = ExistsRightRule( ax, ax.root.succedent( 0 ), allxpax, y )
     val i2 = ExistsLeftRule( i1, i1.root.antecedent( 0 ), allxpax, y )

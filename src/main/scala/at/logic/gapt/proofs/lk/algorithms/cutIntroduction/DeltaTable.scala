@@ -28,6 +28,7 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.Utils._
 import at.logic.gapt.proofs.occurrences._
 import scala.collection.immutable.HashMap

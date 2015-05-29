@@ -4,17 +4,11 @@
 
 package at.logic.gapt.provers.sat4j
 
-import java.io.IOException
-
+import at.logic.gapt.expr._
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import at.logic.gapt.language.fol._
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.models.Interpretation
 import at.logic.gapt.provers.minisat.SATProblems
 
 @RunWith( classOf[JUnitRunner] )
@@ -60,14 +54,11 @@ class Sat4JTest extends SpecificationWithJUnit {
     }
 
     "say bottom is unsatisfiable" in {
-      new Sat4j().solve( FOLBottomC ) must beNone
+      new Sat4j().solve( Bottom() ) must beNone
     }
 
     "say top is satisfiable" in {
-      new Sat4j().solve( FOLTopC ) must beLike {
-        case Some( _ ) => ok
-        case None      => ko
-      }
+      new Sat4j().solve( Top() ) must beSome
     }
   }
 }

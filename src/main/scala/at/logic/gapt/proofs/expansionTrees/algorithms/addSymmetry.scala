@@ -2,6 +2,7 @@
 package at.logic.gapt.proofs.expansionTrees.algorithms
 
 import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toDeep, formulaToExpansionTree }
 
 /**
@@ -33,8 +34,8 @@ object addSymmetry {
     val eq = "="
     val eq1 = FOLAtom( eq, List( x, y ) )
     val eq2 = FOLAtom( eq, List( y, x ) )
-    val imp = FOLImp( eq1, eq2 )
-    val eq_symm = FOLAllVar( x, FOLAllVar( y, imp ) )
+    val imp = Imp( eq1, eq2 )
+    val eq_symm = All( x, All( y, imp ) )
 
     val subs = symm_terms.map( p => FOLSubstitution( Map( ( x, p._1 ), ( y, p._2 ) ) ) )
 
@@ -52,11 +53,12 @@ object addSymmetry {
    */
   def getEqualityPairs( f: FOLFormula, pol: Boolean ): List[( FOLExpression, FOLExpression, Boolean )] = f match {
     case FOLAtom( eq, List( t1, t2 ) ) if eq.toString == "=" => List( ( t1, t2, pol ) )
-    case FOLAtom( p, _ ) if p.toString != "="                => List()
-    case FOLNeg( f1 )                                        => getEqualityPairs( f1, !pol )
-    case FOLAnd( f1, f2 )                                    => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
-    case FOLOr( f1, f2 )                                     => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
-    case FOLImp( f1, f2 )                                    => getEqualityPairs( f1, !pol ) ++ getEqualityPairs( f2, pol )
+    case FOLAtom( p, _ ) if p.toString != "=" => List()
+    case Bottom() | Top() => List()
+    case Neg( f1 ) => getEqualityPairs( f1, !pol )
+    case And( f1, f2 ) => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
+    case Or( f1, f2 ) => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
+    case Imp( f1, f2 ) => getEqualityPairs( f1, !pol ) ++ getEqualityPairs( f2, pol )
   }
 
 }

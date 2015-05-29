@@ -6,6 +6,7 @@ import org.specs2.runner.JUnitRunner
 import org.specs2._
 import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.resolution.robinson._
+import at.logic.gapt.expr._
 
 /**
  * Test for replacment of constant symbols by terms

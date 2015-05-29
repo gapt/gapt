@@ -4,6 +4,7 @@
  */
 package at.logic.gapt.language.fol.algorithms
 
+import at.logic.gapt.expr._
 import at.logic.gapt.language.fol._
 
 object FOLMatchingAlgorithm {
@@ -11,10 +12,10 @@ object FOLMatchingAlgorithm {
   /**
    * Computes a FOLSubstitution that turns term from into term to, if one exists.
    *
-   * @param from A HOLExpression.
-   * @param to A HOLExpression.
+   * @param from A LambdaExpression.
+   * @param to A LambdaExpression.
    * @param forbiddenVars A list of variables that cannot be in the domain of the FOLSubstitution. Defaults to Nil.
-   * @return If there is a variable FOLSubstitution that turns from into to FOLAnd doesn't contain any elements of forbiddenVars, it is returned. Otherwise None.
+   * @return If there is a variable FOLSubstitution that turns from into to And doesn't contain any elements of forbiddenVars, it is returned. Otherwise None.
    */
   def matchTerms( from: FOLExpression, to: FOLExpression, forbiddenVars: List[FOLVar] = Nil ): Option[FOLSubstitution] = computeSubstitution( List( ( from, to ) ), forbiddenVars )
 
@@ -43,25 +44,25 @@ object FOLMatchingAlgorithm {
         case ( FOLAtom( f1, args1 ), FOLAtom( f2, args2 ) ) if f1 == f2 && args1.length == args2.length =>
           computeSubstitution( ( args1 zip args2 ) ++ rest, forbiddenVars )
 
-        case ( FOLAnd( a, b ), FOLAnd( c, d ) ) =>
+        case ( And( a, b ), And( c, d ) ) =>
           computeSubstitution( ( a, c ) :: ( b, d ) :: rest, forbiddenVars )
 
-        case ( FOLOr( a, b ), FOLOr( c, d ) ) =>
+        case ( Or( a, b ), Or( c, d ) ) =>
           computeSubstitution( ( a, c ) :: ( b, d ) :: rest, forbiddenVars )
 
-        case ( FOLImp( a, b ), FOLImp( c, d ) ) =>
+        case ( Imp( a, b ), Imp( c, d ) ) =>
           computeSubstitution( ( a, c ) :: ( b, d ) :: rest, forbiddenVars )
 
-        case ( FOLNeg( a ), FOLNeg( b ) ) =>
+        case ( Neg( a ), Neg( b ) ) =>
           computeSubstitution( ( a, b ) :: rest, forbiddenVars )
 
-        case ( FOLExVar( v1, f1 ), FOLExVar( v2, f2 ) ) =>
+        case ( Ex( v1, f1 ), Ex( v2, f2 ) ) =>
           computeSubstitution( ( f1, f2 ) :: rest, v1 :: v2 :: forbiddenVars )
 
-        case ( FOLAllVar( v1, f1 ), FOLAllVar( v2, f2 ) ) =>
+        case ( All( v1, f1 ), All( v2, f2 ) ) =>
           computeSubstitution( ( f1, f2 ) :: rest, v1 :: v2 :: forbiddenVars )
 
-        case ( v: FOLVar, exp: FOLExpression ) =>
+        case ( v: FOLVar, exp: FOLTerm ) =>
           if ( forbiddenVars contains v )
             None
           else {

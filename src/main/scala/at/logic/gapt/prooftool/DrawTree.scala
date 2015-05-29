@@ -13,7 +13,7 @@ import BorderPanel._
 import java.awt.Font._
 import java.awt.{ RenderingHints, BasicStroke }
 import at.logic.gapt.utils.ds.trees._
-import at.logic.gapt.language.hol.HOLExpression
+import at.logic.gapt.expr._
 import DrawSequent._
 import at.logic.gapt.proofs.algorithms.ceres.struct.structToExpressionTree.{ TimesC, PlusC }
 import at.logic.gapt.proofs.algorithms.ceres.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
@@ -27,10 +27,10 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   private val bd = Swing.EmptyBorder( fSize / 2 )
   private val tx = tree.vertex match {
-    case PWeakC( seq )     => "w^{" + sequentToLatexString( seq ) + "}"
-    case he: HOLExpression => formulaToLatexString( he )
-    case seq: Sequent      => sequentToLatexString( seq )
-    case _                 => tree.vertex.toString
+    case PWeakC( seq )        => "w^{" + sequentToLatexString( seq ) + "}"
+    case he: LambdaExpression => formulaToLatexString( he )
+    case seq: Sequent         => sequentToLatexString( seq )
+    case _                    => tree.vertex.toString
   }
   private var drawLines = true
 

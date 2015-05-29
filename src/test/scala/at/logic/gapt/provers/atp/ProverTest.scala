@@ -9,7 +9,7 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ BranchCommand, Command }
 import at.logic.gapt.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.gapt.proofs.lk.base.FSequent

@@ -12,7 +12,8 @@ import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, createContext => lkCrea
 import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types.{ TA, FunctionType }
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.{ TA, FunctionType }
 import at.logic.gapt.utils.ds.acyclicGraphs._
 
 trait ResolutionProof[V <: Sequent] extends AGraphProof[V]
@@ -37,14 +38,14 @@ trait CNF extends Sequent {
 
 object IsNeg {
   def apply( formula: HOLFormula ) = formula match {
-    case HOLNeg( _ ) => true
-    case _           => false
+    case Neg( _ ) => true
+    case _        => false
   }
 }
 object StripNeg {
   def apply( formula: HOLFormula ) = formula match {
-    case HOLNeg( f ) => f
-    case _           => formula
+    case Neg( f ) => f
+    case _        => formula
   }
 }
 
@@ -121,7 +122,7 @@ object Clause {
 }
 
 trait InstantiatedVariable {
-  def term: HOLExpression
+  def term: LambdaExpression
 }
 trait AppliedSubstitution {
   def substitution: HOLSubstitution
@@ -162,16 +163,16 @@ object createContext {
 
 object computeSkolemTerm {
   // used in andrews
-  def apply( sk: SkolemSymbol, t: TA, sub: HOLExpression ) = {
+  def apply( sk: SkolemSymbol, t: TA, sub: LambdaExpression ) = {
     val fv = freeVariables( sub )
     val tp = FunctionType( t, fv.map( v => v.exptype ) )
-    HOLFunction( HOLConst( sk, tp ), fv )
+    HOLFunction( Const( sk, tp ), fv )
   }
 
   // used in ral
   def apply( sk: SkolemSymbol, t: TA, label: Label ) = {
     val tp = FunctionType( t, label.toList.map( v => v.exptype ) )
-    HOLFunction( HOLConst( sk, tp ), label.toList )
+    HOLFunction( Const( sk, tp ), label.toList )
   }
 }
 

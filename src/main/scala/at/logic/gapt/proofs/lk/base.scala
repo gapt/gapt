@@ -1,8 +1,10 @@
 package at.logic.gapt.proofs.lk.base
 
+import at.logic.gapt.algorithms.rewriting.NameReplacement
+import at.logic.gapt.language.hol.{ HOLPosition, HOLOrdering }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol.{ freeVariables => HOLfreeVariables, _ }
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 
 /**
@@ -61,7 +63,7 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
   /**
    * Interpretation of the sequent as a formula.
    */
-  def toFormula: HOLFormula = HOLOr( antecedent.toList.map( f => HOLNeg( f ) ) ++ succedent )
+  def toFormula: HOLFormula = Or( antecedent.toList.map( f => Neg( f ) ) ++ succedent )
 
   /**
    * Are both sides of the sequent empty?
@@ -125,7 +127,7 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
   def toTuple = ( antecedent, succedent )
 
   def renameSymbols( map: SymbolMap ) =
-    FSequent( antecedent map ( _.renameSymbols( map ) ), succedent map ( _.renameSymbols( map ) ) )
+    FSequent( antecedent map ( NameReplacement( _, map ) ), succedent map ( NameReplacement( _, map ) ) )
 }
 
 object FSequent {
@@ -225,8 +227,8 @@ class Sequent( val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formul
    */
   def isReflexivity = antecedent.size == 0 && succedent.size == 1 && (
     succedent.head.formula match {
-      case HOLEquation( s, t ) => ( s == t )
-      case _                   => false
+      case Eq( s, t ) => ( s == t )
+      case _          => false
     } )
 
   /**
@@ -237,7 +239,7 @@ class Sequent( val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formul
 
   override def toString: String = toFSequent toString
 
-  def freeVariables: List[HOLVar] = ( ( antecedent ++ succedent ) flatMap ( ( fo: FormulaOccurrence ) => HOLfreeVariables( fo.formula ) ) ).toList
+  def freeVariables: List[Var] = ( ( antecedent ++ succedent ) flatMap ( ( fo: FormulaOccurrence ) => at.logic.gapt.expr.freeVariables( fo.formula ) ) ).toList
 }
 
 object Sequent {
@@ -293,10 +295,10 @@ trait PrincipalFormulas {
   def prin: List[FormulaOccurrence]
 }
 trait SubstitutionTerm {
-  def subst: HOLExpression
+  def subst: LambdaExpression
 }
 trait Eigenvariable {
-  def eigenvar: HOLVar
+  def eigenvar: Var
 }
 
 trait TermPositions {

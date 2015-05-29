@@ -15,6 +15,7 @@ import at.logic.gapt.proofs.resolution.{ FClause, Clause }
 import at.logic.gapt.proofs.resolution.algorithms._
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
@@ -377,16 +378,16 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
         case FClause( Nil, Nil ) => false;
         case _                   => true
       } )
-      val clauses = fclauses.map( c => univclosure( FOLOr(
-        c.neg.map( f => FOLNeg( f.asInstanceOf[FOLFormula] ) ).toList ++
+      val clauses = fclauses.map( c => univclosure( Or(
+        c.neg.map( f => Neg( f.asInstanceOf[FOLFormula] ) ).toList ++
           c.pos.map( f => f.asInstanceOf[FOLFormula] ).toList ) ) )
       val clauses_ = clauses.partition( _ match {
-        case FOLNeg( _ ) => false;
-        case _           => true
+        case Neg( _ ) => false;
+        case _        => true
       } )
       //val cendsequent = FSequent(clauses.toList, Nil)
       val cendsequent2 = FSequent( clauses_._1.toList, clauses_._2.map( _ match {
-        case FOLNeg( x ) => x
+        case Neg( x ) => x
       } ).toList )
 
       RobinsonToLK( proof, cendsequent2 )
@@ -472,7 +473,7 @@ class Prover9Prover extends Prover with at.logic.gapt.utils.logging.Logger {
       seq.succedent.flatMap( f => freeVariables( f.asInstanceOf[FOLFormula] ) ).toSet
     // FIXME: make a better association between the consts and the vars.
     //val map = free.zip( free.map( v => new FOLConst( new CopySymbol( v.name ) ) ) ).toMap
-    val map = free.zip( free.map( v => new FOLConst( v.sym ) ) ).toMap
+    val map = free.zip( free.map( v => FOLConst( v.sym.toString ) ) ).toMap
     trace( "grounding map in prover9: " )
     trace( map.toString )
     // FIXME: cast of formula of sequent!

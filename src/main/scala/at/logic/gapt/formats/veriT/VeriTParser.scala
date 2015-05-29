@@ -1,10 +1,13 @@
 package at.logic.gapt.formats.veriT
 
-import scala.util.parsing.combinator._
-import at.logic.gapt.language.fol._
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
-import at.logic.gapt.language.lambda.BetaReduction._
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ETWeakQuantifier, ExpansionSequent, formulaToExpansionTree }
+import at.logic.gapt.language.fol.{ FOLSubstitution, instantiate }
+import at.logic.gapt.language.hol.getMatrix
+
+import scala.util.parsing.combinator._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.BetaReduction._
+import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionTree, ETWeakQuantifier, ExpansionSequent }
 import java.io.{ Reader, FileReader }
 import scala.collection.immutable.HashMap
 
@@ -19,7 +22,7 @@ object VeriTParser extends RegexParsers {
 
     // Transforms the equalities provided into a list of pairs
     val eqs_pairs = eqs.map( f => f match {
-      case FOLNeg( FOLAtom( _, List( a, b ) ) ) => ( a, b )
+      case Neg( FOLAtom( _, List( a, b ) ) ) => ( a, b )
     } )
 
     // Generate the correct equalities
@@ -34,7 +37,7 @@ object VeriTParser extends RegexParsers {
   def getEqReflInstances( f: List[FOLFormula] ): Instances = {
     val x = FOLVar( "x" )
     val eq = "="
-    val eq_refl = FOLAllVar( x, FOLAtom( eq, List( x, x ) ) )
+    val eq_refl = All( x, FOLAtom( eq, List( x, x ) ) )
     ( eq_refl, f )
   }
 
@@ -49,8 +52,8 @@ object VeriTParser extends RegexParsers {
     val eq1 = FOLAtom( eq, List( x, y ) )
     val eq2 = FOLAtom( eq, List( y, z ) )
     val eq3 = FOLAtom( eq, List( x, z ) )
-    val imp = FOLImp( FOLAnd( eq1, eq2 ), eq3 )
-    val eq_trans = FOLAllVar( x, FOLAllVar( y, FOLAllVar( z, imp ) ) )
+    val imp = Imp( And( eq1, eq2 ), eq3 )
+    val eq_trans = All( x, All( y, All( z, imp ) ) )
 
     // Transforms a transitivity chain (represented as a list):
     //
@@ -65,14 +68,14 @@ object VeriTParser extends RegexParsers {
     //
     def unfoldChain( l: List[FOLFormula] ) = unfoldChain_( l.tail, l( 0 ) )
     def unfoldChain_( l: List[FOLFormula], c: FOLFormula ): List[FOLFormula] = l.head match {
-      case FOLNeg( FOLAtom( eq0, List( x0, x1 ) ) ) if eq0.toString == eq => c match {
+      case Neg( FOLAtom( eq0, List( x0, x1 ) ) ) if eq0.toString == eq => c match {
         // Note that the variables are:
         // x2=x3 ^ x0=x1
         // Checking all possible cases of atom ordering:
 
         // x=y ^ y=z -> x=z
-        case FOLNeg( FOLAtom( eq1, List( x2, x3 ) ) ) if x3 == x0 =>
-          val newc = FOLNeg( FOLAtom( eq, List( x2, x1 ) ) )
+        case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) if x3 == x0 =>
+          val newc = Neg( FOLAtom( eq, List( x2, x1 ) ) )
           // Instances
           val f1 = instantiate( eq_trans, x2 )
           val f2 = instantiate( f1, x0 ) // or x3, should be the same
@@ -81,8 +84,8 @@ object VeriTParser extends RegexParsers {
           f3 :: unfoldChain_( l.tail, newc )
 
         // x=y ^ z=y -> x=z
-        case FOLNeg( FOLAtom( eq1, List( x2, x3 ) ) ) if x3 == x1 =>
-          val newc = FOLNeg( FOLAtom( eq, List( x2, x0 ) ) )
+        case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) if x3 == x1 =>
+          val newc = Neg( FOLAtom( eq, List( x2, x0 ) ) )
           // Instances
           val f1 = instantiate( eq_trans, x2 )
           val f2 = instantiate( f1, x1 ) // or x3, should be the same
@@ -91,8 +94,8 @@ object VeriTParser extends RegexParsers {
           f3 :: unfoldChain_( l.tail, newc )
 
         // y=x ^ z=y -> x=z
-        case FOLNeg( FOLAtom( eq1, List( x2, x3 ) ) ) if x2 == x1 =>
-          val newc = FOLNeg( FOLAtom( eq, List( x3, x0 ) ) )
+        case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) if x2 == x1 =>
+          val newc = Neg( FOLAtom( eq, List( x3, x0 ) ) )
           // Instances
           val f1 = instantiate( eq_trans, x3 )
           val f2 = instantiate( f1, x1 ) // or x2, should be the same
@@ -101,8 +104,8 @@ object VeriTParser extends RegexParsers {
           f3 :: unfoldChain_( l.tail, newc )
 
         // y=x ^ y=z -> x=z
-        case FOLNeg( FOLAtom( eq1, List( x2, x3 ) ) ) if x2 == x0 =>
-          val newc = FOLNeg( FOLAtom( eq, List( x3, x1 ) ) )
+        case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) if x2 == x0 =>
+          val newc = Neg( FOLAtom( eq, List( x3, x1 ) ) )
           // Instances
           val f1 = instantiate( eq_trans, x3 )
           val f2 = instantiate( f1, x0 ) // or x2, should be the same
@@ -110,7 +113,7 @@ object VeriTParser extends RegexParsers {
 
           f3 :: unfoldChain_( l.tail, newc )
 
-        case FOLNeg( FOLAtom( eq1, List( x2, x3 ) ) ) =>
+        case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) =>
           throw new VeriTUnfoldingTransitivityException( "ERROR: the conclusion of the previous terms have" +
             " no literal in common with the next one. Are the literals out of order?" +
             "\nconclusion: " + c + "\nsecond literal: " + l.head )
@@ -119,15 +122,15 @@ object VeriTParser extends RegexParsers {
           throw new VeriTUnfoldingTransitivityException( "ERROR: wrong format for negated equality: " + c )
       }
 
-      case FOLNeg( FOLAtom( eq0, List( x0, x1 ) ) ) if eq0.toString != eq =>
+      case Neg( FOLAtom( eq0, List( x0, x1 ) ) ) if eq0.toString != eq =>
         throw new VeriTUnfoldingTransitivityException( "ERROR: Predicate " + eq0 + " in eq_transitive is not equality." )
 
       // When reaching the final literal, check if they are the same.
       case FOLAtom( eq0, List( x0, x1 ) ) if eq0.toString == eq => c match {
-        case FOLNeg( FOLAtom( eq1, List( x2, x3 ) ) ) if x0 == x2 && x1 == x3 => Nil
-        case FOLNeg( FOLAtom( eq1, List( x2, x3 ) ) ) if x1 == x2 && x0 == x3 => Nil
+        case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) if x0 == x2 && x1 == x3 => Nil
+        case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) if x1 == x2 && x0 == x3 => Nil
 
-        case FOLNeg( FOLAtom( eq1, List( x2, x3 ) ) ) =>
+        case Neg( FOLAtom( eq1, List( x2, x3 ) ) ) =>
           throw new VeriTUnfoldingTransitivityException( "ERROR: the conclusion of the previous terms" +
             " have no literal in common with the conclusion of the chain. Are the literals out of order?" +
             " Is the conclusion not the last one?" )
@@ -173,20 +176,20 @@ object VeriTParser extends RegexParsers {
           val eq = "="
           FOLAtom( eq, List( p._1, p._2 ) ) :: acc
       }
-      val conj = FOLAnd( equalities )
+      val conj = And( equalities )
       val name = fname
       val f1 = FOLFunction( name, listX )
       val f2 = FOLFunction( name, listY )
       val eq = "="
       val last_eq = FOLAtom( eq, List( f1, f2 ) )
-      val matrix = FOLImp( conj, last_eq )
+      val matrix = Imp( conj, last_eq )
 
       val quantY = listY.foldRight( matrix ) {
-        case ( yi, f ) => FOLAllVar( yi, f )
+        case ( yi, f ) => All( yi, f )
       }
 
       listX.foldRight( quantY ) {
-        case ( xi, f ) => FOLAllVar( xi, f )
+        case ( xi, f ) => All( xi, f )
       }
     }
 
@@ -197,7 +200,7 @@ object VeriTParser extends RegexParsers {
     val ( args1, args2 ) = getArgsLst( f.last )
     val pairs = args1.zip( args2 )
     val eqs_correct = genEqualities( pairs, f.dropRight( 1 ) )
-    val instance = FOLImp( FOLAnd( eqs_correct ), f.last )
+    val instance = Imp( And( eqs_correct ), f.last )
 
     ( eq_congr, List( instance ) )
   }
@@ -211,13 +214,13 @@ object VeriTParser extends RegexParsers {
   def getEqCongrPredInstances( f: List[FOLFormula] ): Instances = {
 
     def getPredName( f: FOLFormula ): String = f match {
-      case FOLAtom( p, _ )           => p.toString
-      case FOLNeg( FOLAtom( p, _ ) ) => p.toString
+      case FOLAtom( p, _ )        => p.toString
+      case Neg( FOLAtom( p, _ ) ) => p.toString
     }
 
     def getArgsLst( p1: FOLFormula, p2: FOLFormula ) = ( p1, p2 ) match {
-      case ( FOLNeg( FOLAtom( _, args1 ) ), FOLAtom( _, args2 ) ) => ( args1, args2 )
-      case ( FOLAtom( _, args1 ), FOLNeg( FOLAtom( _, args2 ) ) ) => ( args2, args1 )
+      case ( Neg( FOLAtom( _, args1 ) ), FOLAtom( _, args2 ) ) => ( args1, args2 )
+      case ( FOLAtom( _, args1 ), Neg( FOLAtom( _, args2 ) ) ) => ( args2, args1 )
     }
 
     // Generate the eq_congruent_pred with the right number of literals
@@ -232,15 +235,15 @@ object VeriTParser extends RegexParsers {
       val name = pname
       val p1 = FOLAtom( name, listX )
       val p2 = FOLAtom( name, listY )
-      val conj = FOLAnd( equalities :+ p1 )
-      val matrix = FOLImp( conj, p2 )
+      val conj = And( equalities :+ p1 )
+      val matrix = Imp( conj, p2 )
 
       val quantY = listY.foldRight( matrix ) {
-        case ( yi, f ) => FOLAllVar( yi, f )
+        case ( yi, f ) => All( yi, f )
       }
 
       listX.foldRight( quantY ) {
-        case ( xi, f ) => FOLAllVar( xi, f )
+        case ( xi, f ) => All( xi, f )
       }
     }
 
@@ -252,10 +255,10 @@ object VeriTParser extends RegexParsers {
     val pairs = args1.zip( args2 )
     val eqs_correct = genEqualities( pairs, f.dropRight( 2 ) )
     val ( p1, p2 ) = ( f( f.length - 2 ), f( f.length - 1 ) ) match {
-      case ( FOLNeg( f1 ), f2 ) => ( f1, f2 )
-      case ( f1, FOLNeg( f2 ) ) => ( f2, f1 )
+      case ( Neg( f1 ), f2 ) => ( f1, f2 )
+      case ( f1, Neg( f2 ) ) => ( f2, f1 )
     }
-    val instance = FOLImp( FOLAnd( eqs_correct :+ p1 ), p2 )
+    val instance = Imp( And( eqs_correct :+ p1 ), p2 )
 
     ( eq_congr_pred, List( instance ) )
   }
@@ -382,7 +385,7 @@ object VeriTParser extends RegexParsers {
       getEqCongrPredInstances( c )
   }
 
-  def innerRule: Parser[List[String]] = resolution | and | and_pos | and_neg | or | or_pos | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2 | not_and | not_or
+  def innerRule: Parser[List[String]] = resolution | and | and_pos | and_neg | or | or_pos | or_neg | implies | implies_pos | implies_neg1 | implies_neg2 | not_implies1 | not_implies2 | not_and | not_or | true_ | false_
   // Rules that I don't care except if they use some clause (collecting their labels)
   def resolution: Parser[List[String]] = "resolution" ~> premises <~ conclusion
   def and: Parser[List[String]] = "and" ~> premises <~ conclusion
@@ -399,6 +402,8 @@ object VeriTParser extends RegexParsers {
   def not_implies2: Parser[List[String]] = "not_implies2" ~> premises <~ conclusion
   def not_and: Parser[List[String]] = "not_and" ~> premises <~ conclusion
   def not_or: Parser[List[String]] = "not_or" ~> premises <~ conclusion
+  def true_ = "true" ~> conclusion ^^ { _ => Nil }
+  def false_ = "false" ~> conclusion ^^ { _ => Nil }
 
   // Collecting the clauses' labels used in the proof
   def premises: Parser[List[String]] = ":clauses (" ~> rep( label ) <~ ")"
@@ -417,21 +422,21 @@ object VeriTParser extends RegexParsers {
   }
 
   def andFormula: Parser[FOLFormula] = "(and" ~> rep( formula ) <~ ")" ^^ {
-    case flst => FOLAnd( flst )
+    case flst => And( flst )
   }
   def orFormula: Parser[FOLFormula] = "(or" ~> rep( formula ) <~ ")" ^^ {
-    case flst => FOLOr( flst )
+    case flst => Or( flst )
   }
   def implFormula: Parser[FOLFormula] = "(=>" ~> rep( formula ) <~ ")" ^^ {
     case flst =>
       val last = flst( flst.size - 1 )
       val second_last = flst( flst.size - 2 )
       val rest = flst.dropRight( 2 )
-      val imp = FOLImp( second_last, last )
-      rest.foldRight( imp ) { case ( f, acc ) => FOLImp( f, acc ) }
+      val imp = Imp( second_last, last )
+      rest.foldRight( imp ) { case ( f, acc ) => Imp( f, acc ) }
   }
   def notFormula: Parser[FOLFormula] = "(not" ~> formula <~ ")" ^^ {
-    case f => FOLNeg( f )
+    case f => Neg( f )
   }
   def pred: Parser[FOLFormula] = "(" ~> name ~ rep( term ) <~ ")" ^^ {
     case name ~ args =>
@@ -449,7 +454,7 @@ object VeriTParser extends RegexParsers {
   // it and second because the garbage collector goes crazy and crashes while
   // constructing this huge lambda-term
   def let: Parser[FOLFormula] = "(" ~> "let" ~> "(" ~> rep( binding ) ~ ")" ~ expression <~ ")" ^^ {
-    case _ => FOLOr( List() )
+    case _ => Or( List() )
   }
 
   def binding: Parser[( FOLTerm, FOLTerm )] = "(" ~> constant ~ term <~ ")" ^^ {

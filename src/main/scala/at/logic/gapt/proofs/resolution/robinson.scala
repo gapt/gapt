@@ -7,24 +7,22 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol.{ HOLFormula, toLatexString }
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.symbols._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.language.hol.toLatexString
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.acyclicGraphs._
 import at.logic.gapt.proofs.lk.base._
 import scala.collection.immutable.HashSet
 import at.logic.gapt.proofs.lk.EquationVerifier._
-import at.logic.gapt.language.hol.Formula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.lk.{ EquationVerifier, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lksk.UnaryLKskProof
+import at.logic.gapt.language.fol.{ FOLSubstitution }
+import at.logic.gapt.utils.logging.Logger
+import org.slf4j.LoggerFactory
 
 package robinson {
-
-  import at.logic.gapt.language.hol.logicSymbols._
-  import at.logic.gapt.utils.logging.Logger
-  import org.slf4j.LoggerFactory
 
   /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
  * additional_context  may add additional ancestors, needed e.g. for factoring */
@@ -143,7 +141,7 @@ package robinson {
         case ( Some( term1 ), Some( term2 ), _ ) =>
           val prinFormula = term2.factory.createFormulaOccurrence( sub( newLiteral ), term1 :: term2 :: Nil )
           sub( term1.formula ) match {
-            case FOLEquation( s, t ) =>
+            case Eq( s, t ) =>
               ( EquationVerifier( s, t, sub( term2.formula ), sub( newLiteral ) ), EquationVerifier( t, s, sub( term2.formula ), sub( newLiteral ) ) ) match {
                 case ( Different, Different ) =>
                   if ( s == t ) debug( s + "==" + t )
@@ -170,7 +168,7 @@ package robinson {
           val term2 = term2opSuc.get
           val prinFormula = term2.factory.createFormulaOccurrence( sub( newLiteral ), term1 :: term2 :: Nil )
           sub( term1.formula ) match {
-            case FOLEquation( s, t ) =>
+            case Eq( s, t ) =>
               ( EquationVerifier( s, t, sub( term2.formula ), sub( newLiteral ) ), EquationVerifier( t, s, sub( term2.formula ), sub( newLiteral ) ) ) match {
                 case ( Different, Different ) =>
                   if ( s == t ) println( s + "==" + t )
@@ -266,7 +264,7 @@ package robinson {
 
     /* factors cnt occurrences of a literal into 1.*/
     def apply( p: RobinsonResolutionProof,
-               a: Formula, cnt: Int, pos: Boolean, sub: FOLSubstitution ): RobinsonResolutionProof = {
+               a: HOLFormula, cnt: Int, pos: Boolean, sub: FOLSubstitution ): RobinsonResolutionProof = {
       val list = if ( pos ) p.root.positive else p.root.negative
       val occ = list.find( fo => fo.formula == a ).get
       val occs = list.filter( _ != occ ).foldLeft( List[FormulaOccurrence]() )( ( res, fo ) => if ( res.size < cnt - 1 && fo.formula == a )
@@ -297,7 +295,7 @@ package robinson {
     /* factors a_cnt occurrences of a (pos) and b_cnt occurrences of b (neg)
      into 1.*/
     def apply( p: RobinsonResolutionProof,
-               a: Formula, a_cnt: Int, b: Formula, b_cnt: Int,
+               a: HOLFormula, a_cnt: Int, b: HOLFormula, b_cnt: Int,
                sub: FOLSubstitution ): RobinsonResolutionProof = {
       val a_occ = p.root.negative.find( fo => fo.formula == a ).get
       val b_occ = p.root.positive.find( fo => fo.formula == b ).get
@@ -442,12 +440,12 @@ package robinson {
 
     def escapeTex( s: String ) = {
       val s1 = s.replaceAll( "_", "\\_" )
-      val s2 = s1.replaceAll( AndSymbol.toString, "\\land" )
-      val s3 = s2.replaceAll( OrSymbol.toString, "\\lor" )
-      val s4 = s3.replaceAll( ImpSymbol.toString, "\\rightarrow" )
-      val s5 = s4.replaceAll( NegSymbol.toString, "\\neg" )
-      val s6 = s5.replaceAll( ForallSymbol.toString, "\\forall" )
-      val s7 = s6.replaceAll( ExistsSymbol.toString, "\\exists" )
+      val s2 = s1.replaceAll( AndC.name, "\\land" )
+      val s3 = s2.replaceAll( OrC.name, "\\lor" )
+      val s4 = s3.replaceAll( ImpC.name, "\\rightarrow" )
+      val s5 = s4.replaceAll( NegC.name, "\\neg" )
+      val s6 = s5.replaceAll( ForallC.name, "\\forall" )
+      val s7 = s6.replaceAll( ExistsC.name, "\\exists" )
       s7
     }
 

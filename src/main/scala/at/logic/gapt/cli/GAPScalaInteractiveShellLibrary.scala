@@ -35,11 +35,11 @@ import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.prooftool.Main
 import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.hoare.Program
-import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.hol.{ BetaReduction => HOLBetaReduction, HOLSubstitution, containsQuantifier => containsQuantifierHOL, _ }
-import at.logic.gapt.language.lambda.symbols.StringSymbol
-import at.logic.gapt.language.lambda.{ LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.hol.{ containsQuantifier => containsQuantifierHOL, _ }
+import at.logic.gapt.expr.StringSymbol
+import at.logic.gapt.expr.{ LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.latex._
 import at.logic.gapt.formats.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }
 import at.logic.gapt.formats.hoare.ProgramParser
@@ -235,7 +235,7 @@ object exportSequentListLatex {
 
     val sections = try {
       // convert to fol and obtain map of definitons
-      val imap = Map[HOLExpression, String]()
+      val imap = Map[LambdaExpression, String]()
       val iid = new {
         var idd = 0;
 
@@ -245,8 +245,8 @@ object exportSequentListLatex {
       }
       /*
              val cs = ls.map(x => Sequent(
-             x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula]),
-             x.succedent.map(y => reduceHolToFol(y.asInstanceOf[HOLExpression],imap,iid).asInstanceOf[FOLFormula])
+             x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[LambdaExpression],imap,iid).asInstanceOf[FOLFormula]),
+             x.succedent.map(y => reduceHolToFol(y.asInstanceOf[LambdaExpression],imap,iid).asInstanceOf[FOLFormula])
              ))*/
       ( "Definitions", imap.toList.map( x => ( x._1, FOLConst( x._2 ) ) ) ) :: sectionsPre
     } catch {
@@ -318,7 +318,7 @@ object prover9 {
 
   //get the ground substitution of the ground resolution refutation
   //the ground substitution is a list of pairs, it can't be a map ! The reason is : a clause can be used several times in the resolution refutation.
-  //def getGroundSubstitution(rrp: RobinsonResolutionProof): List[(HOLVar, HOLExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
+  //def getGroundSubstitution(rrp: RobinsonResolutionProof): List[(Var, LambdaExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
   def getProof( seq: FSequent ): Option[LKProof] = {
     val p = new at.logic.gapt.provers.prover9.Prover9Prover()
     p.getLKProof( seq )
@@ -560,14 +560,14 @@ object help {
         |
         | Parsing:
         |   parseFOL: String => FOLFormula - example: "Forall x Imp P(x,f(x)) Exists y P(x,y)"
-        |   parseHOL: String => HOLExpression
+        |   parseHOL: String => LambdaExpression
         |   parseLISP: String => List[SExpression]
-        |   parseLLKExp: String => HOLExpression - example: "var x,y: i>o; (\\ x => (\\y => (x=y) ))"
+        |   parseLLKExp: String => LambdaExpression - example: "var x,y: i>o; (\\ x => (\\y => (x=y) ))"
         |   parseLLKFormula: String => HOLFormula -  example: "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
         |   parseProver9: String => FOLFormula - example: "(all x (P(x,f(x)) -> (exists y P(x,y))))"
         |
         | Formulas / Sequents / Expressions:
-        |   hol2folpure: HOLExpression => FOLExpression, HOLFormula => FOLFormula - transformation of scala type
+        |   hol2folpure: LambdaExpression => FOLExpression, HOLFormula => FOLFormula - transformation of scala type
         |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
         |   deleteTautologies: List[FSequent] => List[FSequent] - remove all FSequents of form ..., A |- A, ...
         |   removeSubsumed: List[FSequent] => List[FSequent] - remove all subsumed FSequents
@@ -672,7 +672,7 @@ object computeProjections {
 }
 
 object computeGroundProjections {
-  def apply( projections: Set[LKProof], groundSubs: List[( HOLVar, HOLExpression )] ): Set[LKProof] = {
+  def apply( projections: Set[LKProof], groundSubs: List[( Var, LambdaExpression )] ): Set[LKProof] = {
     groundSubs.map( subs => projections.map( pr => renameIndexedVarInProjection( pr, subs ) ) ).flatten.toSet
   }
 }
@@ -735,18 +735,18 @@ object escape_underscore {
 
 object deleteEquationalTautologies {
   //private val counter = new {private var state = 0; def nextId = { state = state +1; state}}
-  //private val emptymap = MMap[HOLExpression, String]()
+  //private val emptymap = MMap[LambdaExpression, String]()
   //val acu = new MulACUEquality(List("+","*") map (_), List("0","1") map (_))
 
   def apply( ls: List[FSequent] ) = ls.filterNot( _._2 exists ( ( f: HOLFormula ) =>
     f match {
-      case HOLAtom( c: HOLConst, List( x, y ) ) => c.sym == "=" && x == y
-      case HOLAtom( c: HOLVar, List( x, y ) )   => c.sym == "=" && x == y
-      case _                                    => false
+      case Eq( x, y )                             => x == y
+      case HOLAtom( Var( "=", _ ), List( x, y ) ) => x == y
+      case _                                      => false
     } ) )
 
   /* FIXME: depends on EequalityA which is not adapted to the new lambda calculus
-    def isEquationalTautology( e: EequalityA, f: HOLFormula) = f match {
+    def isEquationalTautology( e: EequalityA, f: Formula) = f match {
       case Atom(ConstantStringSymbol(sym), List(x,y)) =>
         val s : FOLTerm = reduceHolToFol(x, emptymap, counter ).asInstanceOf[FOLTerm]
         val t : FOLTerm = reduceHolToFol(y, emptymap, counter ).asInstanceOf[FOLTerm]
@@ -755,13 +755,13 @@ object deleteEquationalTautologies {
     }
 
     def isEquationalSequentTautology(e : EequalityA, s:FSequent) = {
-      s._1 exists ((f: HOLFormula) =>
-          s._2 exists  ((g: HOLFormula) =>
+      s._1 exists ((f: Formula) =>
+          s._2 exists  ((g: Formula) =>
             e.reequal_to( reduceHolToFol(f, emptymap, counter), reduceHolToFol(g,emptymap, counter))
             ))
     }
 
-    def apply(e : EequalityA ,ls : List[FSequent]) = (ls.filterNot( _._2 exists ((f:HOLFormula) => isEquationalTautology(e,f) ))) filterNot (isEquationalSequentTautology(e,_))
+    def apply(e : EequalityA ,ls : List[FSequent]) = (ls.filterNot( _._2 exists ((f:Formula) => isEquationalTautology(e,f) ))) filterNot (isEquationalSequentTautology(e,_))
     */
 }
 
@@ -779,27 +779,20 @@ object fsequent2sequent {
   */
 
 object Robinson2Ral extends RobinsonToRal {
-  override def convert_formula( e: HOLFormula ): HOLFormula = recreateWithFactory( e, HOLFactory ).asInstanceOf[HOLFormula]
-  override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = {
-    recreateWithFactory( s, HOLFactory, convert_map ).asInstanceOf[HOLSubstitution]
-  }
+  override def convert_formula( e: HOLFormula ): HOLFormula = e
+  override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
 
   //TODO: this is somehow dirty....
-  def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution = HOLSubstitution( m.asInstanceOf[Map[HOLVar, HOLExpression]] )
+  def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution = HOLSubstitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
 }
 
 object GenerateRobinson2Ral {
   def apply( hol2folscope: collection.mutable.Map[LambdaExpression, StringSymbol] ): RobinsonToRal = new RobinsonToRal {
-    override def convert_formula( e: HOLFormula ): HOLFormula = {
-
-      recreateWithFactory( e, HOLFactory ).asInstanceOf[HOLFormula]
-    }
-    override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = {
-      recreateWithFactory( s, HOLFactory, convert_map ).asInstanceOf[HOLSubstitution]
-    }
+    override def convert_formula( e: HOLFormula ): HOLFormula = e
+    override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
 
     //TODO: this is somehow dirty....
-    def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution = HOLSubstitution( m.asInstanceOf[Map[HOLVar, HOLExpression]] )
+    def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution = HOLSubstitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
   }
 }
 
@@ -897,7 +890,7 @@ object parse {
     SExpressionParser.parseString( string )
   }
 
-  def hlkexp( s: String ): HOLExpression = HLKHOLParser.parse( s )
+  def hlkexp( s: String ): LambdaExpression = HLKHOLParser.parse( s )
 
   def hlkformula( s: String ): HOLFormula = {
     val exp = HLKHOLParser.parse( s )
@@ -911,9 +904,9 @@ object parse {
     println( "fol: String => FOLFormula" )
     println( "folterm: String => FOLTerm" )
     println( "p9: String => FOLFormula" )
-    println( "hlkexp: String => HOLExpression" )
+    println( "hlkexp: String => LambdaExpression" )
     println( "hlkformula: String => HOLFormula" )
-    println( "hol: String => HOLExpression" )
+    println( "hol: String => LambdaExpression" )
     println( "slk: String => Map[String, Tuple2[LKProof, LKProof]]" )
   }
 }
@@ -967,13 +960,13 @@ object format {
 
   def asTex( p: ResolutionProof[Clause] ) = Formatter.asTex( p )
 
-  def llk( f: HOLExpression, latex: Boolean = false ): String = toLatexString.getFormulaString( f, true, latex )
+  def llk( f: LambdaExpression, latex: Boolean = false ): String = toLatexString.getFormulaString( f, true, latex )
 
   def llk( f: FSequent, latex: Boolean ): String = "\\SEQUENT" + HybridLatexExporter.fsequentString( f, latex )
 
   def llk( f: FSequent ): String = llk( f, false )
 
-  def tllk( f: HOLExpression, latex: Boolean = false ) = {
+  def tllk( f: LambdaExpression, latex: Boolean = false ) = {
     val ( ctypes, vtypes ) = HybridLatexExporter.getTypes( f, HybridLatexExporter.emptyTypeMap, HybridLatexExporter.emptyTypeMap )
 
     val fs = toLatexString.getFormulaString( f, true, latex )
@@ -998,7 +991,7 @@ object format {
 
 object mapProof extends map_proof {
   val help =
-    """mapProof(l : LKProof, fun : HOLExpression => HOLExpression) : LKProof
+    """mapProof(l : LKProof, fun : LambdaExpression => LambdaExpression) : LKProof
       |
       |Applies the function fun to every formula in the proof. This can result in incorrect proofs.
     """.stripMargin
@@ -1008,14 +1001,14 @@ object mapProof extends map_proof {
 object rename {
   val help =
     """
-      | rename(exp: HOLExpression, map: SymbolMap): HOLExpression
-      | rename(fs: FSequent, map: SymbolMap) : HOLExpression
+      | rename(exp: LambdaExpression, map: SymbolMap): LambdaExpression
+      | rename(fs: FSequent, map: SymbolMap) : LambdaExpression
       | rename(p: RobinsonResolutionProof, map: SymbolMap): RobinsonResolutionProof
       |
       | The symbol map is a map from oldname:String to pairs of (a:Int,newname). Applying
       | rename will replace every occurrence of a symbol with oldname and arity a by newname.
     """.stripMargin
-  def apply(exp: HOLExpression, map: NameReplacement.SymbolMap): HOLExpression = NameReplacement(exp, map)
+  def apply(exp: LambdaExpression, map: NameReplacement.SymbolMap): LambdaExpression = NameReplacement(exp, map)
 
   def apply(fs: FSequent, map: NameReplacement.SymbolMap) = NameReplacement(fs, map)
 
@@ -1033,13 +1026,13 @@ object ntape {
 
 object proofs {
   def simple1(): LKProof = {
-    val x = HOLVar( "x", Ti )
-    val y = HOLVar( "y", Ti )
-    val a = HOLVar( "a", Ti )
-    val b = HOLVar( "b", Ti )
-    val Rab = HOLAtom( HOLConst( "R", Ti -> ( Ti -> To ) ), a :: b :: Nil )
-    val exyRay = HOLExVar( y, HOLAtom( HOLConst( "R", Ti -> ( Ti -> To ) ), a :: y :: Nil ) )
-    val allxexyRxy = HOLAllVar( x, HOLExVar( y, HOLAtom( HOLConst( "R", Ti -> ( Ti -> To ) ), x :: y :: Nil ) ) )
+    val x = Var( "x", Ti )
+    val y = Var( "y", Ti )
+    val a = Var( "a", Ti )
+    val b = Var( "b", Ti )
+    val Rab = HOLAtom( Const( "R", Ti -> ( Ti -> To ) ), a :: b :: Nil )
+    val exyRay = Ex( y, HOLAtom( Const( "R", Ti -> ( Ti -> To ) ), a :: y :: Nil ) )
+    val allxexyRxy = All( x, Ex( y, HOLAtom( Const( "R", Ti -> ( Ti -> To ) ), x :: y :: Nil ) ) )
     val ax = Axiom( Rab :: Nil, Rab :: Nil )
     val r1 = ExistsRightRule( ax, ax.root.succedent( 0 ), exyRay, b )
     val r2 = ExistsLeftRule( r1, r1.root.antecedent( 0 ), exyRay, b )
@@ -1088,21 +1081,21 @@ object lkproof {
 
     class MyParser(input: String) extends StringReader(input) with SimpleHOLParser
 
-      def apply(l: List[Tuple2[String, String]]) : NDStream[Substitution[HOLExpression]] = {
-        val termargs : List[Tuple2[HOLExpression,HOLExpression]] = l map (
+      def apply(l: List[Tuple2[String, String]]) : NDStream[Substitution[LambdaExpression]] = {
+        val termargs : List[Tuple2[LambdaExpression,LambdaExpression]] = l map (
             (arg : Tuple2[String,String]) =>
             (parse hol arg._1, parse hol arg._2)
             )
           Huet(termargs)
       }
-    def apply(s1: String, s2: String) : NDStream[Substitution[HOLExpression]] = apply(Tuple2(s1,s2)::Nil)
+    def apply(s1: String, s2: String) : NDStream[Substitution[LambdaExpression]] = apply(Tuple2(s1,s2)::Nil)
   }
   */
 
 object normalizeSub {
 
   def apply( sub: HOLSubstitution ): Unit = {
-    sub.holmap.foreach( x => println( "\n<" + ( HOLBetaReduction.betaNormalize( x._1 ) ).toString + " -> " + ( HOLBetaReduction.betaNormalize( x._2 ) ).toString + ">" ) )
+    sub.holmap.foreach( x => println( "\n<" + ( BetaReduction.betaNormalize( x._1 ) ).toString + " -> " + ( BetaReduction.betaNormalize( x._2 ) ).toString + ">" ) )
   }
 }
 
@@ -1137,7 +1130,7 @@ object definitionElimination {
     apply( db.Definitions, p )
   }
 
-  def apply( definition_map: Map[HOLExpression, HOLExpression], p: LKProof ): LKProof =
+  def apply( definition_map: Map[LambdaExpression, LambdaExpression], p: LKProof ): LKProof =
     AtomicExpansion( DefinitionElimination( definition_map, p ) )
 }
 
@@ -1202,23 +1195,22 @@ object css {
       ( vt ++ vt_, ct ++ ct_ )
     } )
 
-  def extractSymbolTable( l: HOLExpression ): Symboltable = l match {
-    case HOLVar( sym, ta ) =>
+  def extractSymbolTable( l: LambdaExpression ): Symboltable = l match {
+    case Var( sym, ta ) =>
       val ( vt, ct ) = emptysmboltable
       ( vt + ( ( ta, Set( sym ) ) ), ct )
-    case v: HOLConst if v.sym.isInstanceOf[LogicalSymbolA] =>
-      emptysmboltable
-    case HOLConst( sym, ta ) =>
+    case NonLogicalConstant( sym, ta ) =>
       val ( vt, ct ) = emptysmboltable
       ( vt, ct + ( ( ta, Set( sym ) ) ) )
-    case HOLApp( s, t ) =>
+    case App( s, t ) =>
       val ( vt1, ct1 ) = extractSymbolTable( s )
       val ( vt2, ct2 ) = extractSymbolTable( t )
       ( vt1 ++ vt2, ct1 ++ ct2 )
-    case HOLAbs( x, t ) =>
+    case Abs( x, t ) =>
       val ( vt1, ct1 ) = extractSymbolTable( x )
       val ( vt2, ct2 ) = extractSymbolTable( t )
       ( vt1 ++ vt2, ct1 ++ ct2 )
+    case _ => emptysmboltable
   }
 }
 

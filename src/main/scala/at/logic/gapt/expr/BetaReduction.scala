@@ -3,9 +3,7 @@
  *
  */
 
-package at.logic.gapt.language.lambda
-
-import symbols._
+package at.logic.gapt.expr
 
 /* The BetaReduction object encapsulates two functions:
  * 1) betaNormalize, which transforms a lambda expression to beta normal form.
@@ -41,7 +39,7 @@ object BetaReduction {
     implicit val implicitLeft = StrategyLeftRight.Leftmost
   }
 
-  def betaNormalize( expression: LambdaExpression )( implicit strategy: StrategyOuterInner.Value ): LambdaExpression = expression match {
+  def betaNormalize( expression: LambdaExpression )( implicit strategy: StrategyOuterInner.Value = ImplicitStandardStrategy.implicitOuter ): LambdaExpression = expression match {
     case App( Abs( x, body ), arg ) => strategy match {
       // If it is outermost strategy, we first reduce the current redex by applying sigma,
       // and then we call betaNormalize recursively on the result.
@@ -63,7 +61,7 @@ object BetaReduction {
     case x: Const    => x
   }
 
-  def betaReduce( expression: LambdaExpression )( implicit strategyOI: StrategyOuterInner.Value, strategyLR: StrategyLeftRight.Value ): LambdaExpression = expression match {
+  def betaReduce( expression: LambdaExpression )( implicit strategyOI: StrategyOuterInner.Value = ImplicitStandardStrategy.implicitOuter, strategyLR: StrategyLeftRight.Value = ImplicitStandardStrategy.implicitLeft ): LambdaExpression = expression match {
 
     case App( Abs( x, t ), arg ) => strategyOI match {
 
@@ -115,4 +113,7 @@ object BetaReduction {
     case Abs( x, m ) => Abs( x, betaReduce( m )( strategyOI, strategyLR ) )
     case x: Var      => x
   }
+
+  def betaReduce( f: HOLFormula ): HOLFormula = betaReduce( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+  def betaNormalize( f: HOLFormula ): HOLFormula = betaNormalize( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 }

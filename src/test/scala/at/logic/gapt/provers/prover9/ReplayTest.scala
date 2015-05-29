@@ -9,8 +9,8 @@ import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.resolution.robinson.{ Formatter, RobinsonResolutionProof }
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.simple.{ SimpleFOLParser, SimpleResolutionParserFOL }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.formats.readers.StringReader

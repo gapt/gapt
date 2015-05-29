@@ -1,8 +1,10 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 
 package occurrences {
+
+  import at.logic.gapt.expr.HOLFormula
 
   /**
    * A formula occurrence is an occurrence of a [[HOLFormula]] in a proof.  Both formulas in different sequents and
@@ -101,6 +103,6 @@ package object occurrences {
   /**
    * Implicitly converts a [[FormulaOccurrence]] to the formula its occurrence it records.
    */
-  implicit def formulaOccurrenceToFormula( fo: FormulaOccurrence ): Formula = fo.formula
+  implicit def formulaOccurrenceToFormula( fo: FormulaOccurrence ): HOLFormula = fo.formula
 }
 

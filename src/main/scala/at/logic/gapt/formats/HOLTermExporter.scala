@@ -1,13 +1,13 @@
 /*
- * HOLExpressionExporter.scala
+ * LambdaExpressionExporter.scala
  *
  */
 
 package at.logic.gapt.formats
 
-import at.logic.gapt.language.hol.HOLExpression
+import at.logic.gapt.expr.LambdaExpression
 
 trait HOLTermExporter {
-  def exportTerm( t: HOLExpression ): Unit
-  def exportFunction( t: HOLExpression ): Unit // so arithmetical symbols can be parsed separately
+  def exportTerm( t: LambdaExpression ): Unit
+  def exportFunction( t: LambdaExpression ): Unit // so arithmetical symbols can be parsed separately
 }

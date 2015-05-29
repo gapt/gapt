@@ -5,12 +5,13 @@
 
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.language.hol.HOLPosition
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 import base._
-import at.logic.gapt.language.lambda.{ rename => renameLambda, freeVariables => freeVariablesLambda, LambdaSubstitution => SubstitutionLambda, _ }
+import at.logic.gapt.expr.{ rename => renameLambda, freeVariables => freeVariablesLambda, LambdaSubstitution => SubstitutionLambda, _ }
 import at.logic.gapt.utils.logging._
 import org.slf4j.LoggerFactory
 
@@ -32,12 +33,12 @@ object EquationVerifier {
   case object Different extends ReplacementResult
   case class EqualModuloEquality( path: List[Int] ) extends ReplacementResult
 
-  def apply( s: HOLExpression, t: HOLExpression, e1: HOLExpression, e2: HOLExpression ) = checkReplacement( s, t, e1, e2 )
+  def apply( s: LambdaExpression, t: LambdaExpression, e1: LambdaExpression, e2: LambdaExpression ) = checkReplacement( s, t, e1, e2 )
   //this is a convenience method, apart from that everything is general
   def apply( eq: HOLFormula, e1: HOLFormula, e2: HOLFormula ): Option[List[Int]] = {
     //println("try "+eq+" "+e1+" "+e2)
     eq match {
-      case HOLEquation( s, t ) => apply( s, t, e1, e2 ) match {
+      case Eq( s, t ) => apply( s, t, e1, e2 ) match {
         case EqualModuloEquality( path ) =>
           //println("result:"+path)
           Some( path )
@@ -45,7 +46,7 @@ object EquationVerifier {
           //println("no result")
           None
       }
-      case _ => throw new Exception( "Error checking for term replacement in " + e1 + " and " + e2 + ": " + eq + " is not an HOLEquation!" )
+      case _ => throw new Exception( "Error checking for term replacement in " + e1 + " and " + e2 + ": " + eq + " is not an Eq!" )
     }
   }
 
@@ -91,7 +92,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
    *      sL, A[T1/b], tL |- sR, tR
    * </pre>
    *
-   * @param s1 The left proof with the HOLEquation a=b in the succedent in its bottommost sequent.
+   * @param s1 The left proof with the Eq a=b in the succedent in its bottommost sequent.
    * @param s2 The right proof with a formula A[T1/a] in the antecedent of its bottommost sequent,
    *        in which some term T1 has been replaced by the term a. Note that identical terms to
    *        T1 may occur elsewhere in A. These will not be changed.
@@ -108,8 +109,8 @@ object EquationLeft1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
           debug( "aux and main formula are equal." )
@@ -117,13 +118,13 @@ object EquationLeft1Rule extends EquationRuleLogger {
           val sAux = aux.find( s )
 
           if ( sAux.isEmpty )
-            throw new LKRuleCreationException( "HOLEquation is trivial, but term " + s + " does not occur in " + aux + "." )
+            throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
           apply( s1, s2, term1oc, term2oc, sAux.head )
         } else if ( ( s == t ) && ( main != aux ) ) {
-          throw new LKRuleCreationException( "HOLEquation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+          throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
-          throw new LKRuleCreationException( "Nontrivial HOLEquation, but aux and main formula are equal." )
+          throw new LKRuleCreationException( "Nontrivial Eq, but aux and main formula are equal." )
         } else {
           val sAux = aux.find( s )
           val tMain = main.find( t )
@@ -144,7 +145,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
             } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
           } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
         }
-      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an HOLEquation." )
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
@@ -153,8 +154,8 @@ object EquationLeft1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
 
@@ -189,7 +190,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
         }
 
       case _ =>
-        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an HOLEquation." )
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an Eq." )
     }
   }
 
@@ -225,8 +226,8 @@ object EquationLeft1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
           debug( "aux and main formula are equal." )
@@ -234,13 +235,13 @@ object EquationLeft1Rule extends EquationRuleLogger {
           val sAux = aux.find( s )
 
           if ( sAux.isEmpty )
-            throw new LKRuleCreationException( "HOLEquation is trivial, but term " + s + " does not occur in " + aux + "." )
+            throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
           apply( s1, s2, term1oc, term2oc, sAux.head )
         } else if ( s == t && main != aux ) {
-          throw new LKRuleCreationException( "HOLEquation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+          throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
-          throw new LKRuleCreationException( "Nontrivial HOLEquation, but aux and main formula are equal." )
+          throw new LKRuleCreationException( "Nontrivial Eq, but aux and main formula are equal." )
         } else {
           val sAux = aux.find( s )
           val tMain = main.find( t )
@@ -261,7 +262,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
             } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
           } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
         }
-      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an HOLEquation." )
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
@@ -270,8 +271,8 @@ object EquationLeft1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
 
@@ -295,7 +296,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
         }
 
       case _ =>
-        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an HOLEquation." )
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an Eq." )
     }
   }
 
@@ -367,8 +368,8 @@ object EquationLeft2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
           debug( "aux and main formula are equal." )
@@ -376,13 +377,13 @@ object EquationLeft2Rule extends EquationRuleLogger {
           val sAux = aux.find( s )
 
           if ( sAux.isEmpty )
-            throw new LKRuleCreationException( "HOLEquation is trivial, but term " + s + " does not occur in " + aux + "." )
+            throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
           apply( s1, s2, term1oc, term2oc, sAux.head )
         } else if ( s == t && main != aux ) {
-          throw new LKRuleCreationException( "HOLEquation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+          throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
-          throw new LKRuleCreationException( "Nontrivial HOLEquation, but aux and main formula are equal." )
+          throw new LKRuleCreationException( "Nontrivial Eq, but aux and main formula are equal." )
         } else {
           val tAux = aux.find( t )
           val sMain = main.find( s )
@@ -404,7 +405,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
           } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
         }
 
-      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an HOLEquation." )
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
@@ -413,8 +414,8 @@ object EquationLeft2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
 
@@ -449,7 +450,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
         }
 
       case _ =>
-        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an HOLEquation." )
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an Eq." )
     }
   }
 
@@ -468,8 +469,8 @@ object EquationLeft2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
           debug( "aux and main formula are equal." )
@@ -477,13 +478,13 @@ object EquationLeft2Rule extends EquationRuleLogger {
           val sAux = aux.find( s )
 
           if ( sAux.isEmpty )
-            throw new LKRuleCreationException( "HOLEquation is trivial, but term " + s + " does not occur in " + aux + "." )
+            throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
           apply( s1, s2, term1oc, term2oc, sAux.head )
         } else if ( s == t && main != aux ) {
-          throw new LKRuleCreationException( "HOLEquation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+          throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
-          throw new LKRuleCreationException( "Nontrivial HOLEquation, but aux and main formula are equal." )
+          throw new LKRuleCreationException( "Nontrivial Eq, but aux and main formula are equal." )
         } else {
           val tAux = aux.find( t )
           val sMain = main.find( s )
@@ -505,7 +506,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
           } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
         }
 
-      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an HOLEquation." )
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
@@ -514,8 +515,8 @@ object EquationLeft2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
 
@@ -539,7 +540,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
         }
 
       case _ =>
-        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an HOLEquation." )
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an Eq." )
     }
   }
 
@@ -611,8 +612,8 @@ object EquationRight1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
           debug( "aux and main formula are equal." )
@@ -620,13 +621,13 @@ object EquationRight1Rule extends EquationRuleLogger {
           val sAux = aux.find( s )
 
           if ( sAux.isEmpty )
-            throw new LKRuleCreationException( "HOLEquation is trivial, but term " + s + " does not occur in " + aux + "." )
+            throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
           apply( s1, s2, term1oc, term2oc, sAux.head )
         } else if ( ( s == t ) && ( main != aux ) ) {
-          throw new LKRuleCreationException( "HOLEquation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+          throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
-          throw new LKRuleCreationException( "Nontrivial HOLEquation, but aux and main formula are equal." )
+          throw new LKRuleCreationException( "Nontrivial Eq, but aux and main formula are equal." )
         } else {
           val sAux = aux.find( s )
           val tMain = main.find( t )
@@ -648,7 +649,7 @@ object EquationRight1Rule extends EquationRuleLogger {
           } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
         }
 
-      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an HOLEquation." )
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
@@ -657,8 +658,8 @@ object EquationRight1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
 
@@ -693,7 +694,7 @@ object EquationRight1Rule extends EquationRuleLogger {
         }
 
       case _ =>
-        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an HOLEquation." )
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an Eq." )
     }
   }
 
@@ -729,8 +730,8 @@ object EquationRight1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
           debug( "aux and main formula are equal." )
@@ -738,13 +739,13 @@ object EquationRight1Rule extends EquationRuleLogger {
           val sAux = aux.find( s )
 
           if ( sAux.isEmpty )
-            throw new LKRuleCreationException( "HOLEquation is trivial, but term " + s + " does not occur in " + aux + "." )
+            throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
           apply( s1, s2, term1oc, term2oc, sAux.head )
         } else if ( ( s == t ) && ( main != aux ) ) {
-          throw new LKRuleCreationException( "HOLEquation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+          throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
-          throw new LKRuleCreationException( "Nontrivial HOLEquation, but aux and main formula are equal." )
+          throw new LKRuleCreationException( "Nontrivial Eq, but aux and main formula are equal." )
         } else {
           val sAux = aux.find( s )
           val tMain = main.find( t )
@@ -766,7 +767,7 @@ object EquationRight1Rule extends EquationRuleLogger {
           } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
         }
 
-      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an HOLEquation." )
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
@@ -775,8 +776,8 @@ object EquationRight1Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
 
@@ -800,7 +801,7 @@ object EquationRight1Rule extends EquationRuleLogger {
         }
 
       case _ =>
-        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an HOLEquation." )
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an Eq." )
     }
   }
 
@@ -872,8 +873,8 @@ object EquationRight2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
           debug( "aux and main formula are equal." )
@@ -881,13 +882,13 @@ object EquationRight2Rule extends EquationRuleLogger {
           val sAux = aux.find( s )
 
           if ( sAux.isEmpty )
-            throw new LKRuleCreationException( "HOLEquation is trivial, but term " + s + " does not occur in " + aux + "." )
+            throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
           apply( s1, s2, term1oc, term2oc, sAux.head )
         } else if ( ( s == t ) && ( main != aux ) ) {
-          throw new LKRuleCreationException( "HOLEquation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+          throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
-          throw new LKRuleCreationException( "Nontrivial HOLEquation, but aux and main formula are equal." )
+          throw new LKRuleCreationException( "Nontrivial Eq, but aux and main formula are equal." )
         } else {
           val tAux = aux.find( t )
           val sMain = main.find( s )
@@ -909,7 +910,7 @@ object EquationRight2Rule extends EquationRuleLogger {
           } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
         }
 
-      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an HOLEquation." )
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
@@ -918,8 +919,8 @@ object EquationRight2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
 
@@ -954,7 +955,7 @@ object EquationRight2Rule extends EquationRuleLogger {
         }
 
       case _ =>
-        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an HOLEquation." )
+        throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an Eq." )
     }
   }
 
@@ -973,8 +974,8 @@ object EquationRight2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
 
         if ( main == aux && s == t ) {
           debug( "aux and main formula are equal." )
@@ -982,13 +983,13 @@ object EquationRight2Rule extends EquationRuleLogger {
           val sAux = aux.find( s )
 
           if ( sAux.isEmpty )
-            throw new LKRuleCreationException( "HOLEquation is trivial, but term " + s + " does not occur in " + aux + "." )
+            throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
           apply( s1, s2, term1oc, term2oc, sAux.head )
         } else if ( ( s == t ) && ( main != aux ) ) {
-          throw new LKRuleCreationException( "HOLEquation is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
+          throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
-          throw new LKRuleCreationException( "Nontrivial HOLEquation, but aux and main formula are equal." )
+          throw new LKRuleCreationException( "Nontrivial Eq, but aux and main formula are equal." )
         } else {
           val tAux = aux.find( t )
           val sMain = main.find( s )
@@ -1010,7 +1011,7 @@ object EquationRight2Rule extends EquationRuleLogger {
           } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
         }
 
-      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an HOLEquation." )
+      case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
@@ -1019,8 +1020,8 @@ object EquationRight2Rule extends EquationRuleLogger {
     val eq = eqocc.formula
 
     eq match {
-      case HOLEquation( s, t ) =>
-        trace( "HOLEquation: " + s + " = " + t + "." )
+      case Eq( s, t ) =>
+        trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
         val term = aux.get( pos )
 
@@ -1044,7 +1045,7 @@ object EquationRight2Rule extends EquationRuleLogger {
         }
 
       case _ =>
-        throw new Exception( "Formula occurrence " + eqocc + " is not an HOLEquation." )
+        throw new Exception( "Formula occurrence " + eqocc + " is not an Eq." )
     }
   }
 

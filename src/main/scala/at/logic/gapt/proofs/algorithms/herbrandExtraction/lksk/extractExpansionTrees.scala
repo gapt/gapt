@@ -6,8 +6,7 @@ import at.logic.gapt.proofs.expansionTrees.{ merge => mergeTree, ETAtom => AtomT
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
 import at.logic.gapt.proofs.lksk._
-import scala.Tuple2
-import at.logic.gapt.language.hol.{ HOLTopC, HOLBottomC }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.{ BinaryLKProof, CutRule, UnaryLKProof }
 
 /**
@@ -27,11 +26,11 @@ class extractLKSKExpansionSequent extends extractExpansionSequent {
     case WeakeningRightRule( parent, r, p ) =>
       val map = extract( parent, verbose )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, AtomTree( HOLBottomC ) ) )
+      contextmap + ( ( p, AtomTree( Bottom() ) ) )
     case WeakeningLeftRule( parent, r, p ) =>
       val map = extract( parent, verbose )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, AtomTree( HOLTopC ) ) )
+      contextmap + ( ( p, AtomTree( Top() ) ) )
     case ForallSkLeftRule( parent, r, a, p, t ) =>
       val map = extract( parent, verbose )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )

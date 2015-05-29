@@ -5,17 +5,18 @@
 
 package at.logic.gapt.proofs.lksk
 
+import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.Sequent
 import at.logic.gapt.proofs.occurrences._
 import BetaReduction.betaNormalize
 
 object TypeSynonyms {
-  type Label = Set[HOLExpression]
+  type Label = Set[LambdaExpression]
   object EmptyLabel {
-    def apply() = Set[HOLExpression]()
+    def apply() = Set[LambdaExpression]()
   }
 }
 
@@ -55,7 +56,7 @@ object LKskFOFactory extends FOFactory {
   // when creating a main formula for a weak quantifier inference in LKsk, we may choose
   // whether to delete the term from the label, or not. If deletion is not desired,
   // term should be set to None.
-  def createWeakQuantMain( formula: HOLFormula, ancestor: LabelledFormulaOccurrence, term: Option[HOLExpression] ) =
+  def createWeakQuantMain( formula: HOLFormula, ancestor: LabelledFormulaOccurrence, term: Option[LambdaExpression] ) =
     {
       val newlabel = term match {
         case None      => ancestor.skolem_label

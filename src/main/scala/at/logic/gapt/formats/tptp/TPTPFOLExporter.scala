@@ -5,15 +5,12 @@
 
 package at.logic.gapt.formats.tptp
 
-import at.logic.gapt.language.fol._
 import at.logic.gapt.language.fol.algorithms.{ convertHolToFol, reduceHolToFol }
-import at.logic.gapt.language.lambda.symbols.{ StringSymbol, SymbolA }
+import at.logic.gapt.expr.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.lk.base.FSequent
 import scala.collection.immutable.HashMap
-import at.logic.gapt.language.hol.HOLFormula
-import at.logic.gapt.language.hol
+import at.logic.gapt.expr._
 import scala.collection.mutable
-import at.logic.gapt.language.lambda.LambdaExpression
 
 object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   // FIXME: this should not be here!
@@ -73,8 +70,8 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   // and dislike parentheses), we only export clauses at the moment.
   def tptp( f: FOLFormula )( implicit s_map: Map[FOLVar, String] ): String = f match {
     case FOLAtom( x, args ) => handleAtom( x, args )
-    case FOLOr( x, y )      => tptp( x ) + " | " + tptp( y )
-    case FOLNeg( x )        => "~" + tptp( x )
+    case Or( x, y )         => tptp( x ) + " | " + tptp( y )
+    case Neg( x )           => "~" + tptp( x )
   }
 
   private def addToMap( v: FOLVar )( implicit s_map: Map[FOLVar, String] ) = {
@@ -84,15 +81,15 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   // Exports a full formula in TPTP format.
   def tptpFormula( f: FOLFormula )( implicit s_map: Map[FOLVar, String] ): String = f match {
     case FOLAtom( x, args ) => handleAtom( x, args )
-    case FOLOr( x, y )      => "( " + tptpFormula( x ) + " | " + tptpFormula( y ) + " )"
-    case FOLNeg( x )        => "( ~" + tptpFormula( x ) + ")"
-    case FOLAnd( x, y )     => "( " + tptpFormula( x ) + " & " + tptpFormula( y ) + " )"
-    case FOLImp( x, y )     => "( " + tptpFormula( x ) + " => " + tptpFormula( y ) + " )"
-    case FOLAllVar( v, f ) => {
+    case Or( x, y )         => "( " + tptpFormula( x ) + " | " + tptpFormula( y ) + " )"
+    case Neg( x )           => "( ~" + tptpFormula( x ) + ")"
+    case And( x, y )        => "( " + tptpFormula( x ) + " & " + tptpFormula( y ) + " )"
+    case Imp( x, y )        => "( " + tptpFormula( x ) + " => " + tptpFormula( y ) + " )"
+    case All( v, f ) => {
       val new_map = addToMap( v )
       "(! [" + tptp( v )( new_map ) + "] : " + tptpFormula( f )( new_map ) + ")"
     }
-    case FOLExVar( v, f ) =>
+    case Ex( v, f ) =>
       {
         val new_map = addToMap( v )
         "(? [" + tptp( v )( new_map ) + "] : " + tptpFormula( f )( new_map ) + ")"
@@ -105,7 +102,7 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
     case FOLFunction( x, args ) => handleAtom( x, args )
   }
 
-  def handleAtom( x: SymbolA, args: List[FOLTerm] )( implicit s_map: Map[FOLVar, String] ) =
+  def handleAtom( x: String, args: List[FOLTerm] )( implicit s_map: Map[FOLVar, String] ) =
     if ( x.toString.equals( "=" ) )
       tptp( args.head ) + " = " + tptp( args.last )
     else

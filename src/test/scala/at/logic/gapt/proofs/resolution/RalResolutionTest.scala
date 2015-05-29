@@ -1,10 +1,11 @@
 package at.logic.gapt.proofs.resolution.ral
 
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.LabelledSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ Label, EmptyLabel }
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types.{ Ti, To }
+import at.logic.gapt.expr.{ Ti, To }
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
@@ -16,15 +17,15 @@ import org.specs2.runner.JUnitRunner
 class RalResolutionTest extends SpecificationWithJUnit {
   "Ral resolution" should {
     "work on simple proofs" in {
-      val x = HOLVar( "X", To )
-      val p = HOLAtom( HOLConst( "P", To ), Nil )
-      val exx = HOLExVar( x, x.asInstanceOf[HOLFormula] )
+      val x = Var( "X", To )
+      val p = HOLAtom( Const( "P", To ), Nil )
+      val exx = Ex( x, x.asInstanceOf[HOLFormula] )
       val root = FSequent( Nil, List( exx ) )
       val labels: ( List[Label], List[Label] ) = ( List[Label](), List[Label]( EmptyLabel() ) )
 
       val i1 = InitialSequent( root, labels )
       val i2 = ForallT( i1, i1.root.l_succedent( 0 ), x )
-      val i3 = Sub( i2, HOLSubstitution( x, HOLAnd( p, HOLNeg( p ) ) ) )
+      val i3 = Sub( i2, HOLSubstitution( x, And( p, Neg( p ) ) ) )
       val i4 = AndT1( i3, i3.root.l_succedent( 0 ) )
       val i5 = AndT2( i3, i3.root.l_succedent( 0 ) )
       val i6 = NegT( i5, i5.root.l_succedent( 0 ) )
@@ -35,10 +36,10 @@ class RalResolutionTest extends SpecificationWithJUnit {
     }
 
     "work on non-idempotent substitutions" in {
-      val x = HOLVar( "x", Ti )
-      val fx = HOLFunction( HOLConst( "f", Ti -> Ti ), x :: Nil )
-      val px = HOLAtom( HOLConst( "P", Ti -> To ), List( x ) )
-      val pfx = HOLAtom( HOLConst( "P", Ti -> To ), List( fx ) )
+      val x = Var( "x", Ti )
+      val fx = HOLFunction( Const( "f", Ti -> Ti ), x :: Nil )
+      val px = HOLAtom( Const( "P", Ti -> To ), List( x ) )
+      val pfx = HOLAtom( Const( "P", Ti -> To ), List( fx ) )
 
       val sub = HOLSubstitution( x, fx )
 

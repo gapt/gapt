@@ -4,6 +4,7 @@
  */
 
 package at.logic.gapt.language.hol
+import at.logic.gapt.expr._
 
 /**
  * Replacement represents the rewriting notion of a hole at a certain position. We expect that
@@ -18,44 +19,44 @@ package at.logic.gapt.language.hol
  * @param position A path of branchings in the term tree. Nil is the root position, 1 is the first argument  etc.
  * @param expression The term which will be inserted.
  */
-case class Replacement( position: List[Int], expression: HOLExpression ) {
+case class Replacement( position: List[Int], expression: LambdaExpression ) {
   /**
    * Applies the replacement of the classes expression at the classes position to the given term.
    * @param term The term in which we perform the replacement.
    * @return an expression identical to term except that it contains expression as a subtree at the position
    */
-  def apply( term: HOLExpression ): HOLExpression = replace( position, term )
+  def apply( term: LambdaExpression ): LambdaExpression = replace( position, term )
 
   // To avoid all the casting...
   private def replace( pos: List[Int], f: HOLFormula ): HOLFormula =
-    replace( pos, f.asInstanceOf[HOLExpression] ).asInstanceOf[HOLFormula]
+    replace( pos, f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 
-  private def replace( pos: List[Int], exp: HOLExpression ): HOLExpression = {
+  private def replace( pos: List[Int], exp: LambdaExpression ): LambdaExpression = {
     ( pos, exp ) match {
-      case ( 1 :: rest, HOLAnd( m, n ) )      => HOLAnd( replace( rest, m ), n )
-      case ( 2 :: rest, HOLAnd( m, n ) )      => HOLAnd( m, replace( rest, n ) )
-      case ( 1 :: rest, HOLOr( m, n ) )       => HOLOr( replace( rest, m ), n )
-      case ( 2 :: rest, HOLOr( m, n ) )       => HOLOr( m, replace( rest, n ) )
-      case ( 1 :: rest, HOLImp( m, n ) )      => HOLImp( replace( rest, m ), n )
-      case ( 2 :: rest, HOLImp( m, n ) )      => HOLImp( m, replace( rest, n ) )
-      case ( 1 :: rest, HOLNeg( m ) )         => HOLNeg( replace( rest, m ) )
-      case ( 1 :: rest, HOLExVar( v, m ) )    => HOLExVar( v, replace( rest, m ) )
-      case ( 1 :: rest, HOLAllVar( v, m ) )   => HOLAllVar( v, replace( rest, m ) )
-      case ( 1 :: rest, HOLEquation( m, n ) ) => HOLEquation( replace( rest, m ), n )
-      case ( 2 :: rest, HOLEquation( m, n ) ) => HOLEquation( m, replace( rest, n ) )
-      case ( n :: rest, HOLAtom( p: HOLConst, args ) ) => {
+      case ( 1 :: rest, And( m, n ) ) => And( replace( rest, m ), n )
+      case ( 2 :: rest, And( m, n ) ) => And( m, replace( rest, n ) )
+      case ( 1 :: rest, Or( m, n ) )  => Or( replace( rest, m ), n )
+      case ( 2 :: rest, Or( m, n ) )  => Or( m, replace( rest, n ) )
+      case ( 1 :: rest, Imp( m, n ) ) => Imp( replace( rest, m ), n )
+      case ( 2 :: rest, Imp( m, n ) ) => Imp( m, replace( rest, n ) )
+      case ( 1 :: rest, Neg( m ) )    => Neg( replace( rest, m ) )
+      case ( 1 :: rest, Ex( v, m ) )  => Ex( v, replace( rest, m ) )
+      case ( 1 :: rest, All( v, m ) ) => All( v, replace( rest, m ) )
+      case ( 1 :: rest, Eq( m, n ) )  => Eq( replace( rest, m ), n )
+      case ( 2 :: rest, Eq( m, n ) )  => Eq( m, replace( rest, n ) )
+      case ( n :: rest, HOLAtom( p: Const, args ) ) => {
         val ( firstArgs, arg :: remainingArgs ) = args.splitAt( n - 1 )
         HOLAtom( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
       }
-      case ( n :: rest, HOLAtom( p: HOLVar, args ) ) => {
+      case ( n :: rest, HOLAtom( p: Var, args ) ) => {
         val ( firstArgs, arg :: remainingArgs ) = args.splitAt( n - 1 )
         HOLAtom( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
       }
-      case ( n :: rest, HOLFunction( p: HOLConst, args, t ) ) => {
+      case ( n :: rest, HOLFunction( p: Const, args ) ) => {
         val ( firstArgs, arg :: remainingArgs ) = args.splitAt( n - 1 )
         HOLFunction( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
       }
-      case ( n :: rest, HOLFunction( p: HOLVar, args, t ) ) => {
+      case ( n :: rest, HOLFunction( p: Var, args ) ) => {
         val ( firstArgs, arg :: remainingArgs ) = args.splitAt( n - 1 )
         HOLFunction( p, firstArgs ::: ( replace( rest, arg ) :: remainingArgs ) )
       }
@@ -70,44 +71,46 @@ case class Replacement( position: List[Int], expression: HOLExpression ) {
  * Variabls are excluded. To include them, use getAllPositions2.
  */
 //TODO: rename getAllpositions2 to getAllPositions and replace calls to this by the general method and filter
+@deprecated
 object getAllPositions {
   /**
    * Calculates a list of all subterms of an expression together with their respective positions.
    * @param expression an arbitrary hol epxression
    * @return a list of pairs (position, subterm)
    */
-  def apply( expression: HOLExpression ): List[Tuple2[List[Int], HOLExpression]] = getAllPositions2( expression ) filter ( _ match {
-    case HOLVar( _, _ ) => false
-    case _              => true
+  def apply( expression: LambdaExpression ): List[Tuple2[List[Int], LambdaExpression]] = getAllPositions2( expression ) filter ( _ match {
+    case Var( _, _ ) => false
+    case _           => true
   } )
 }
 
-//TODO: Refactor this workaround, which is used for the trat grammar decomposition (Used in getAllPositionsFOL). It just handles the HOLVar differently than getAllPositions
+//TODO: Refactor this workaround, which is used for the trat grammar decomposition (Used in getAllPositionsFOL). It just handles the Var differently than getAllPositions
 /**
  * Calculates a list of all subterms of an expression together with their respective positions.
  */
+@deprecated
 object getAllPositions2 {
   /**
    * Calculates a list of all subterms of an expression together with their respective positions.
    * @param expression an arbitrary hol epxression
    * @return a list of pairs (position, subterm)
    */
-  def apply( expression: HOLExpression ): List[Tuple2[List[Int], HOLExpression]] = recApply( expression, List() )
-  private def recApply( t: HOLExpression, curPos: List[Int] ): List[( List[Int], HOLExpression )] = t match {
-    case HOLVar( _, _ )      => ( curPos, t ) :: Nil
-    case HOLConst( _, _ )    => ( curPos, t ) :: Nil
-    case HOLExVar( _, exp )  => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
-    case HOLAllVar( _, exp ) => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
+  def apply( expression: LambdaExpression ): List[Tuple2[List[Int], LambdaExpression]] = recApply( expression, List() )
+  private def recApply( t: LambdaExpression, curPos: List[Int] ): List[( List[Int], LambdaExpression )] = t match {
+    case Var( _, _ )   => ( curPos, t ) :: Nil
+    case Const( _, _ ) => ( curPos, t ) :: Nil
+    case Ex( _, exp )  => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
+    case All( _, exp ) => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
     case HOLAtom( _, args ) => ( curPos, t ) :: args.zipWithIndex.flatMap( el =>
-      recApply( el._1.asInstanceOf[HOLExpression], curPos ::: List( el._2 + 1 ) ) )
-    case HOLFunction( _, args, _ ) => ( curPos, t ) :: args.zipWithIndex.flatMap( el =>
-      recApply( el._1.asInstanceOf[HOLExpression], curPos ::: List( el._2 + 1 ) ) )
-    case HOLAbs( _, exp ) => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
-    case HOLNeg( f )      => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) )
-    case HOLOr( f, g )    => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
-    case HOLAnd( f, g )   => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
-    case HOLImp( f, g )   => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
-    case HOLApp( s, t ) =>
+      recApply( el._1.asInstanceOf[LambdaExpression], curPos ::: List( el._2 + 1 ) ) )
+    case HOLFunction( _, args ) => ( curPos, t ) :: args.zipWithIndex.flatMap( el =>
+      recApply( el._1.asInstanceOf[LambdaExpression], curPos ::: List( el._2 + 1 ) ) )
+    case Abs( _, exp ) => ( curPos, t ) :: recApply( exp, curPos ::: List( 1 ) )
+    case Neg( f )      => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) )
+    case Or( f, g )    => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
+    case And( f, g )   => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
+    case Imp( f, g )   => ( curPos, t ) :: recApply( f, curPos ::: List( 1 ) ) ::: recApply( g, curPos ::: List( 2 ) )
+    case App( s, t ) =>
       throw new Exception( "Application of " + s + " to " + t + " is unhandled (no logical operator, no Atom, no Function)!" )
     case _ =>
       throw new Exception( "Case for " + t + " not handled!" )
@@ -117,6 +120,7 @@ object getAllPositions2 {
 /**
  * Returns a specific subterm within a position.
  */
+@deprecated
 object getAtPosition {
   /**
    * Returns the subterm at expression | pos
@@ -124,20 +128,20 @@ object getAtPosition {
    * @param pos A path of branchings in the term tree. Nil is the root position, 1 is the first argument  etc.
    * @return The subterm, if it exists.
    */
-  def apply( expression: HOLExpression, pos: List[Int] ): HOLExpression = ( expression, pos ) match {
-    case ( t, Nil )                               => t
-    case ( HOLVar( _, _ ), n )                    => throw new IllegalArgumentException( "trying to obtain a subterm of a variable at position: " + n )
-    case ( HOLConst( _, _ ), n )                  => throw new IllegalArgumentException( "trying to obtain a subterm of a constant at position: " + n )
-    case ( HOLAllVar( _, exp ), 1 :: rest )       => getAtPosition( exp, rest )
-    case ( HOLExVar( _, exp ), 1 :: rest )        => getAtPosition( exp, rest )
-    case ( HOLAtom( _, args ), n :: rest )        => getAtPosition( args( n - 1 ).asInstanceOf[HOLExpression], rest )
-    case ( HOLFunction( _, args, _ ), n :: rest ) => getAtPosition( args( n - 1 ).asInstanceOf[HOLExpression], rest )
-    case ( HOLAbs( _, exp ), 1 :: rest )          => getAtPosition( exp, rest )
-    case ( _, n :: rest )                         => throw new IllegalArgumentException( "trying to obtain a subterm of " + expression + " at position: " + n )
+  def apply( expression: LambdaExpression, pos: List[Int] ): LambdaExpression = ( expression, pos ) match {
+    case ( t, Nil )                            => t
+    case ( Var( _, _ ), n )                    => throw new IllegalArgumentException( "trying to obtain a subterm of a variable at position: " + n )
+    case ( Const( _, _ ), n )                  => throw new IllegalArgumentException( "trying to obtain a subterm of a constant at position: " + n )
+    case ( All( _, exp ), 1 :: rest )          => getAtPosition( exp, rest )
+    case ( Ex( _, exp ), 1 :: rest )           => getAtPosition( exp, rest )
+    case ( HOLAtom( _, args ), n :: rest )     => getAtPosition( args( n - 1 ).asInstanceOf[LambdaExpression], rest )
+    case ( HOLFunction( _, args ), n :: rest ) => getAtPosition( args( n - 1 ).asInstanceOf[LambdaExpression], rest )
+    case ( Abs( _, exp ), 1 :: rest )          => getAtPosition( exp, rest )
+    case ( _, n :: rest )                      => throw new IllegalArgumentException( "trying to obtain a subterm of " + expression + " at position: " + n )
   }
 }
 
 /*object ImplicitConverters {
-  implicit def convertPairToReplacement(pair: Tuple2[List[Int],HOLExpression]):Replacement = Replacement(pair._1, pair._2)
-  implicit def convertReplacementToPair(rep: Replacement):Tuple2[List[Int],HOLExpression] = (rep.position, rep.expression)
+  implicit def convertPairToReplacement(pair: Tuple2[List[Int],LambdaExpression]):Replacement = Replacement(pair._1, pair._2)
+  implicit def convertReplacementToPair(rep: Replacement):Tuple2[List[Int],LambdaExpression] = (rep.position, rep.expression)
 }*/

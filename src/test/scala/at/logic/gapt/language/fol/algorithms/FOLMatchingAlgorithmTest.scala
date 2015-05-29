@@ -5,7 +5,7 @@
 
 package at.logic.gapt.language.fol.algorithms
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
@@ -84,8 +84,8 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val gx1a = FOLFunction( "g", x1 :: a :: Nil )
       val term1 = FOLFunction( "f", x1 :: gx1x3 :: x3 :: Nil )
       val term2 = FOLFunction( "f", c :: gx1a :: x3 :: Nil )
-      val P1 = FOLAllVar( x1, FOLAtom( "P", x1 :: term1 :: Nil ) )
-      val P2 = FOLAllVar( x1, FOLAtom( "P", c :: term2 :: Nil ) )
+      val P1 = All( x1, FOLAtom( "P", x1 :: term1 :: Nil ) )
+      val P2 = All( x1, FOLAtom( "P", c :: term2 :: Nil ) )
       val sub1 = FOLMatchingAlgorithm.matchTerms( P1, P2, freeVariables( P2 ) )
       // ??
       0 must beEqualTo( 0 )
@@ -96,8 +96,8 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val gx1a = FOLFunction( "g", x1 :: a :: Nil )
       val term1 = FOLFunction( "f", x1 :: gx1x3 :: x3 :: Nil )
       val term2 = FOLFunction( "f", c :: gx1a :: x3 :: Nil )
-      val P1 = FOLAnd( FOLAtom( "P", x1 :: term1 :: Nil ), FOLAtom( "Q", x1 :: Nil ) )
-      val P2 = FOLAnd( FOLAtom( "P", c :: term2 :: Nil ), FOLAtom( "Q", c :: Nil ) )
+      val P1 = And( FOLAtom( "P", x1 :: term1 :: Nil ), FOLAtom( "Q", x1 :: Nil ) )
+      val P2 = And( FOLAtom( "P", c :: term2 :: Nil ), FOLAtom( "Q", c :: Nil ) )
       val sub1 = FOLMatchingAlgorithm.matchTerms( P1, P2, freeVariables( P2 ) )
       sub1 must beEqualTo( None )
     }
@@ -107,8 +107,8 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val gax1 = FOLFunction( "g", a :: x1 :: Nil )
       val term1 = FOLFunction( "f", x2 :: gx2x3 :: x3 :: Nil )
       val term2 = FOLFunction( "f", c :: gax1 :: x1 :: Nil )
-      val P1 = FOLAnd( FOLAtom( "P", term1 :: Nil ), FOLAtom( "Q", c :: Nil ) )
-      val P2 = FOLAnd( FOLAtom( "P", term2 :: Nil ), FOLAtom( "Q", c :: Nil ) )
+      val P1 = And( FOLAtom( "P", term1 :: Nil ), FOLAtom( "Q", c :: Nil ) )
+      val P2 = And( FOLAtom( "P", term2 :: Nil ), FOLAtom( "Q", c :: Nil ) )
       val sub1 = FOLMatchingAlgorithm.matchTerms( P1, P2, freeVariables( P2 ) )
       sub1 must beEqualTo( None )
     }
@@ -118,8 +118,8 @@ class FOLMatchingAlgorithmTest extends SpecificationWithJUnit {
       val gcx1 = FOLFunction( "g", c :: x1 :: Nil )
       val term1 = FOLFunction( "f", x2 :: gx2x3 :: x3 :: Nil )
       val term2 = FOLFunction( "f", c :: gcx1 :: x2 :: Nil )
-      val P1 = FOLAnd( FOLAtom( "P", term1 :: Nil ), FOLAtom( "Q", x2 :: Nil ) )
-      val P2 = FOLAnd( FOLAtom( "P", term2 :: Nil ), FOLAtom( "Q", c :: Nil ) )
+      val P1 = And( FOLAtom( "P", term1 :: Nil ), FOLAtom( "Q", x2 :: Nil ) )
+      val P2 = And( FOLAtom( "P", term2 :: Nil ), FOLAtom( "Q", c :: Nil ) )
       val sub1 = FOLMatchingAlgorithm.matchTerms( P1, P2, freeVariables( P2 ) )
       sub1 must beEqualTo( None )
     }

@@ -7,7 +7,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 import base._
 

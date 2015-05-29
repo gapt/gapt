@@ -10,10 +10,7 @@
  * Matching by Gilles Dowek (http://who.rocq.inria.fr/Gilles.Dowek/Publi/unification.ps)
  */
 
-package at.logic.gapt.language.lambda
-
-import symbols._
-import types._
+package at.logic.gapt.expr
 
 object longNormalForm {
   def apply( term: LambdaExpression ): LambdaExpression = apply( term, List() )
