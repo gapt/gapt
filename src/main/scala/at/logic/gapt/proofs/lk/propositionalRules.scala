@@ -7,7 +7,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 import base._
 
@@ -79,7 +79,7 @@ object Axiom {
    * @param suc The succedent of the axiom.
    * @return The LKProof consisting of (ant |- suc) as its axiom.
    */
-  def apply[T]( ant: Seq[Formula], suc: Seq[Formula] )( implicit factory: FOFactory ): LeafTree[Sequent] with NullaryLKProof = {
+  def apply[T]( ant: Seq[HOLFormula], suc: Seq[HOLFormula] )( implicit factory: FOFactory ): LeafTree[Sequent] with NullaryLKProof = {
     val left: Seq[FormulaOccurrence] = ant.map( x => factory.createFormulaOccurrence( x.asInstanceOf[HOLFormula], Nil ) )
     val right: Seq[FormulaOccurrence] = suc.map( x => factory.createFormulaOccurrence( x.asInstanceOf[HOLFormula], Nil ) )
     new LeafTree[Sequent]( Sequent( left, right ) ) with NullaryLKProof { def rule = InitialRuleType }
@@ -272,9 +272,7 @@ object ContractionLeftRule {
   def apply( s1: LKProof, term1: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: y :: _ ) => apply( s1, x, y )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
-        //" for application of the rule with the given formula: " + term1)
-        throw new LKUnaryRuleCreationException( "c:l", s1, term1 :: Nil )
+      case _               => throw new LKUnaryRuleCreationException( "c:l", s1, term1 :: Nil )
     }
   }
 
@@ -383,8 +381,6 @@ object ContractionRightRule {
         apply( s1, x, y )
       case _ =>
         throw new LKUnaryRuleCreationException( "c:r", s1, term1 :: Nil )
-      //throw new LKRuleCreationException("No matching formula occurrences found in " + s1.root.antecedent.map(_.formula) +
-      //" for application of the rule c:l with the given formula: " + term1)
     }
   }
 
@@ -561,14 +557,14 @@ object AndRightRule {
    * @param main A formula of the form l And r
    * @return l.
    */
-  def computeLeftAux( main: HOLFormula ) = main match { case HOLAnd( l, _ ) => l }
+  def computeLeftAux( main: HOLFormula ) = main match { case And( l, _ ) => l }
 
   /**
    * Returns the right subformula.
    * @param main A formula of the form l And r
    * @return r.
    */
-  def computeRightAux( main: HOLFormula ) = main match { case HOLAnd( _, r ) => r }
+  def computeRightAux( main: HOLFormula ) = main match { case And( _, r ) => r }
 
   /**
    * <pre>Merges two formulas A & B (marked by term1oc & term2oc in the
@@ -649,11 +645,7 @@ object AndRightRule {
   def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula ): BinaryLKProof with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( ( s1.root.succedent.filter( x => x.formula == term1 ) ).toList, ( s2.root.succedent.filter( x => x.formula == term2 ) ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y )
-      case _ =>
-        //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule and:r with the given formulas "
-        //+term1+" in "+s1.root+" and "+term2+ " in "+s2.root)
-        throw new LKBinaryRuleCreationException( "and:r", s1, term1, s2, term2 )
-
+      case _                          => throw new LKBinaryRuleCreationException( "and:r", s1, term1, s2, term2 )
     }
   }
 
@@ -671,7 +663,7 @@ object AndRightRule {
   private def getPrinFormula( term1: FormulaOccurrence, term2: FormulaOccurrence ) = {
     val holterm1 = term1.formula
     val holterm2 = term2.formula
-    val form = HOLAnd( holterm1, holterm2 )
+    val form = And( holterm1, holterm2 )
     term1.factory.createFormulaOccurrence( form, term1 :: term2 :: Nil )
   }
 
@@ -700,7 +692,7 @@ object AndLeft1Rule {
    * @param main A formula of the form l And r
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case HOLAnd( l, _ ) => l }
+  def computeAux( main: HOLFormula ) = main match { case And( l, _ ) => l }
 
   /**
    * <pre>Replaces a formula F (marked by term1oc) with the conjunction
@@ -767,8 +759,7 @@ object AndLeft1Rule {
   def apply( s1: LKProof, term1: HOLFormula, term2: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: _ ) => apply( s1, x, term2 )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "and:l", s1, term1 :: term2 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "and:l", s1, term1 :: term2 :: Nil )
     }
   }
 
@@ -782,7 +773,7 @@ object AndLeft1Rule {
   }
   private def getPrinFormula( term1: FormulaOccurrence, term2: HOLFormula ) = {
     val holterm1 = term1.formula
-    val form = HOLAnd( holterm1, term2 )
+    val form = And( holterm1, term2 )
     term1.factory.createFormulaOccurrence( form, term1 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -805,7 +796,7 @@ object AndLeft2Rule {
    * @param main A formula of the form l And r
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case HOLAnd( _, r ) => r }
+  def computeAux( main: HOLFormula ) = main match { case And( _, r ) => r }
 
   /**
    * <pre>Replaces a formula F (marked by term2oc) with the conjunction
@@ -872,8 +863,7 @@ object AndLeft2Rule {
   def apply( s1: LKProof, term1: HOLFormula, term2: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.antecedent.filter( x => x.formula == term2 ) ).toList match {
       case ( x :: _ ) => apply( s1, term1, x )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "and:l", s1, term1 :: term2 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "and:l", s1, term1 :: term2 :: Nil )
     }
   }
 
@@ -888,7 +878,7 @@ object AndLeft2Rule {
 
   private def getPrinFormula( term1: HOLFormula, term2: FormulaOccurrence ) = {
     val holterm2 = term2.formula
-    val form = HOLAnd( term1, holterm2 )
+    val form = And( term1, holterm2 )
     term2.factory.createFormulaOccurrence( form, term2 :: Nil )
   }
 
@@ -912,14 +902,14 @@ object OrLeftRule {
    * @param main A formula of the form l Or r
    * @return l.
    */
-  def computeLeftAux( main: HOLFormula ) = main match { case HOLOr( l, _ ) => l }
+  def computeLeftAux( main: HOLFormula ) = main match { case Or( l, _ ) => l }
 
   /**
    * Returns the left subformula.
    * @param main A formula of the form l Or r
    * @return r.
    */
-  def computeRightAux( main: HOLFormula ) = main match { case HOLOr( _, r ) => r }
+  def computeRightAux( main: HOLFormula ) = main match { case Or( _, r ) => r }
 
   /**
    * <pre>Merges two formulas A & B (marked by term1oc & term2oc in the
@@ -995,8 +985,7 @@ object OrLeftRule {
   def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList, ( s2.root.antecedent.filter( x => x.formula == term2 ) ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y )
-      case _ => //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
+      case _                          => throw new LKBinaryRuleCreationException( "or:l", s1, term1, s2, term2 )
     }
   }
 
@@ -1014,7 +1003,7 @@ object OrLeftRule {
   private def getPrinFormula( term1: FormulaOccurrence, term2: FormulaOccurrence ) = {
     val holterm1 = term1.formula
     val holterm2 = term2.formula
-    val form = HOLOr( holterm1, holterm2 )
+    val form = Or( holterm1, holterm2 )
     term1.factory.createFormulaOccurrence( form, term1 :: term2 :: Nil )
   }
 
@@ -1040,7 +1029,7 @@ object OrRight1Rule {
    * @param main A formula of the form l Or r
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case HOLOr( l, _ ) => l }
+  def computeAux( main: HOLFormula ) = main match { case Or( l, _ ) => l }
 
   /**
    * <pre>Replaces a formula F (marked by term1oc) with the disjunction
@@ -1107,8 +1096,7 @@ object OrRight1Rule {
   def apply( s1: LKProof, term1: HOLFormula, term2: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.succedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: _ ) => apply( s1, x, term2 )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
     }
   }
   private def getTerms( s1: Sequent, term1oc: FormulaOccurrence ) = {
@@ -1121,7 +1109,7 @@ object OrRight1Rule {
   }
   private def getPrinFormula( term1: FormulaOccurrence, term2: HOLFormula ) = {
     val holterm1 = term1.formula
-    val form = HOLOr( holterm1, term2 )
+    val form = Or( holterm1, term2 )
     term1.factory.createFormulaOccurrence( form, term1 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1144,7 +1132,7 @@ object OrRight2Rule {
    * @param main A formula of the form l Or r
    * @return r.
    */
-  def computeAux( main: HOLFormula ) = main match { case HOLOr( _, r ) => r }
+  def computeAux( main: HOLFormula ) = main match { case Or( _, r ) => r }
 
   /**
    * <pre>Replaces a formula F (marked by term2oc) with the disjunction
@@ -1211,13 +1199,12 @@ object OrRight2Rule {
   def apply( s1: LKProof, term1: HOLFormula, term2: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.succedent.filter( x => x.formula == term2 ) ).toList match {
       case ( x :: _ ) => apply( s1, term1, x )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "or:r", s1, term1 :: term2 :: Nil )
     }
   }
   private def getTerms( s1: Sequent, term2oc: FormulaOccurrence ) = {
     val term2op = s1.succedent.find( _ == term2oc )
-    if ( term2op == None ) throw new LKRuleCreationException( "Auxialiary formulas are not contained in the right part of the sequent" )
+    if ( term2op == None ) throw new LKRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
     else {
       val term2 = term2op.get
       term2
@@ -1225,7 +1212,7 @@ object OrRight2Rule {
   }
   private def getPrinFormula( term1: HOLFormula, term2: FormulaOccurrence ) = {
     val holterm2 = term2.formula
-    val form = HOLOr( term1, holterm2 )
+    val form = Or( term1, holterm2 )
     term2.factory.createFormulaOccurrence( form, term2 :: Nil )
   }
   private def getSequent( s1: Sequent, term2: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1248,14 +1235,14 @@ object ImpLeftRule {
    * @param main A formula of the form l Imp r
    * @return l.
    */
-  def computeLeftAux( main: HOLFormula ) = main match { case HOLImp( l, _ ) => l }
+  def computeLeftAux( main: HOLFormula ) = main match { case Imp( l, _ ) => l }
 
   /**
    * Returns the right subformula.
    * @param main A formula of the form l Imp r
    * @return r.
    */
-  def computeRightAux( main: HOLFormula ) = main match { case HOLImp( _, r ) => r }
+  def computeRightAux( main: HOLFormula ) = main match { case Imp( _, r ) => r }
 
   /**
    * <pre>Introduces an implication A -> B,
@@ -1343,8 +1330,7 @@ object ImpLeftRule {
   def apply( s1: LKProof, s2: LKProof, term1: HOLFormula, term2: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( ( s1.root.succedent.filter( x => x.formula == term1 ) ).toList, ( s2.root.antecedent.filter( x => x.formula == term2 ) ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKBinaryRuleCreationException( "impl:l", s1, term1, s2, term2 )
+      case _                          => throw new LKBinaryRuleCreationException( "impl:l", s1, term1, s2, term2 )
     }
   }
   private def getTerms( s1: Sequent, s2: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence ) = {
@@ -1360,7 +1346,7 @@ object ImpLeftRule {
   private def getPrinFormula( term1: FormulaOccurrence, term2: FormulaOccurrence ) = {
     val holterm1 = term1.formula
     val holterm2 = term2.formula
-    val form = HOLImp( holterm1, holterm2 )
+    val form = Imp( holterm1, holterm2 )
     term1.factory.createFormulaOccurrence( form, term1 :: term2 :: Nil )
   }
   private def getSequent( s1: Sequent, s2: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1459,8 +1445,7 @@ object ImpRightRule {
   def apply( s1: LKProof, term1: HOLFormula, term2: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList, ( s1.root.succedent.filter( x => x.formula == term2 ) ).toList ) match {
       case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, x, y )
-      case _ => //throw new LKRuleCreationException("Not matching formula occurrences found for application of the rule with the given formula")
-        throw new LKUnaryRuleCreationException( "imp:r", s1, term1 :: term2 :: Nil )
+      case _                          => throw new LKUnaryRuleCreationException( "imp:r", s1, term1 :: term2 :: Nil )
     }
   }
   private def getTerms( s1: Sequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence ) = {
@@ -1476,7 +1461,7 @@ object ImpRightRule {
   private def getPrinFormula( term1: FormulaOccurrence, term2: FormulaOccurrence ) = {
     val holterm1 = term1.formula
     val holterm2 = term2.formula
-    val form = HOLImp( holterm1, holterm2 )
+    val form = Imp( holterm1, holterm2 )
     term1.factory.createFormulaOccurrence( form, term1 :: term2 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, term2: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1500,7 +1485,7 @@ object NegLeftRule {
    * @param main A formula of the Not l
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case HOLNeg( s ) => s }
+  def computeAux( main: HOLFormula ) = main match { case Neg( s ) => s }
 
   /**
    * <pre>Replaces a formula F (marked by term1oc) in the succedent of
@@ -1564,10 +1549,7 @@ object NegLeftRule {
   def apply( s1: LKProof, term1: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.succedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: _ ) => apply( s1, x )
-      case _ =>
-        //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule neg:l with the given formula "
-        //  +term1+" in "+s1.root)
-        throw new LKUnaryRuleCreationException( "neg:l", s1, term1 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "neg:l", s1, term1 :: Nil )
     }
   }
   private def getTerms( s1: Sequent, term1oc: FormulaOccurrence ) = {
@@ -1580,7 +1562,7 @@ object NegLeftRule {
   }
   private def getPrinFormula( term1: FormulaOccurrence ) = {
     val holterm1 = term1.formula
-    val form = HOLNeg( holterm1 )
+    val form = Neg( holterm1 )
     term1.factory.createFormulaOccurrence( form, term1 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
@@ -1603,7 +1585,7 @@ object NegRightRule {
    * @param main A formula of the Not l
    * @return l.
    */
-  def computeAux( main: HOLFormula ) = main match { case HOLNeg( s ) => s }
+  def computeAux( main: HOLFormula ) = main match { case Neg( s ) => s }
 
   /**
    * <pre>Replaces a formula F (marked by term1oc) in the antecedent of
@@ -1653,10 +1635,7 @@ object NegRightRule {
   def apply( s1: LKProof, term1: HOLFormula ): UnaryTree[Sequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     ( s1.root.antecedent.filter( x => x.formula == term1 ) ).toList match {
       case ( x :: _ ) => apply( s1, x )
-      case _ =>
-        //throw new LKRuleCreationException("No matching formula occurrences found for application of the rule neg:r with the given formula "
-        //  +term1+" in "+s1)
-        throw new LKUnaryRuleCreationException( "neg:r", s1, term1 :: Nil )
+      case _          => throw new LKUnaryRuleCreationException( "neg:r", s1, term1 :: Nil )
     }
   }
 
@@ -1685,7 +1664,7 @@ object NegRightRule {
   }
   private def getPrinFormula( term1: FormulaOccurrence ) = {
     val holterm1 = term1.formula
-    val form = HOLNeg( holterm1 )
+    val form = Neg( holterm1 )
     term1.factory.createFormulaOccurrence( form, term1 :: Nil )
   }
   private def getSequent( s1: Sequent, term1: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {

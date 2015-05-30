@@ -2,7 +2,7 @@
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.proofs.lk.algorithms.subsumption._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.FSequent
 

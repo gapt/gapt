@@ -6,8 +6,7 @@
 package at.logic.gapt.provers.minisat
 
 import at.logic.gapt.formats.dimacs.{ readDIMACS, writeDIMACS, DIMACSHelper }
-import at.logic.gapt.language.fol.FOLFormula
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.resolution._
 import java.io._
@@ -16,13 +15,13 @@ import at.logic.gapt.proofs.resolution.algorithms.{ TseitinCNF, CNFp }
 import at.logic.gapt.provers.Prover
 import scala.collection.immutable.HashMap
 
-// Call MiniSAT to solve quantifier-free HOLFormulas.
+// Call MiniSAT to solve quantifier-free Formulas.
 class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 
   var atom_map: Map[HOLFormula, Int] = new HashMap[HOLFormula, Int]
 
   // Checks if f is valid using MiniSAT.
-  def isValid( f: HOLFormula ) = solve( HOLNeg( f ) ) match {
+  def isValid( f: HOLFormula ) = solve( Neg( f ) ) match {
     case Some( _ ) => false
     case None      => true
   }
@@ -82,6 +81,9 @@ class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 
       trace( "MiniSAT result: " + sat )
 
+      temp_in.delete()
+      temp_out.delete()
+
       readDIMACS( sat, helper )
     }
 }
@@ -97,11 +99,11 @@ class MiniSATProver extends Prover with at.logic.gapt.utils.logging.Logger with 
 
   override def isValid( seq: FSequent ): Boolean = {
     val sat = new MiniSAT()
-    trace( "calling MiniSAT.isValid( " + HOLImp( HOLAnd( seq.antecedent.toList ), HOLOr( seq.succedent.toList ) ) + ")" )
-    sat.isValid( HOLImp( HOLAnd( seq.antecedent.toList ), HOLOr( seq.succedent.toList ) ) )
+    trace( "calling MiniSAT.isValid( " + Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) + ")" )
+    sat.isValid( Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) )
   }
 
-  def isInstalled(): Boolean =
+  val isInstalled: Boolean =
     try {
       val box: List[FClause] = List()
       ( new MiniSAT ).solve( box )

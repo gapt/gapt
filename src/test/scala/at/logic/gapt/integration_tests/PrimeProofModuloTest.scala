@@ -14,7 +14,7 @@ import at.logic.calculi.lk.base._
 import at.logic.gapt.language.fol.{FOLExpression, FOLFormula}
 import at.logic.gapt.language.hol._
 import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
 import at.logic.parsing.calculi.latex.SequentsListLatexExporter
 import at.logic.parsing.calculus.xml.saveXML
 import at.logic.parsing.language.arithmetic.HOLTermArithmeticalExporter
@@ -88,9 +88,9 @@ class PrimeProofTest extends SpecificationWithJUnit {
 
       def is_folsequent(fs : FSequent) = fs._1.forall(_.isInstanceOf[FOLFormula]) && fs._2.forall(_.isInstanceOf[FOLFormula])
 
-      //val cs = cs_hol map ( (fs : FSequent) => FSequent(fs._1.map((x:HOLFormula) => reduceHolToFol(x)), fs._2.map((x:HOLFormula) => reduceHolToFol(x)) ) )
+      //val cs = cs_hol map ( (fs : FSequent) => FSequent(fs._1.map((x:Formula) => reduceHolToFol(x)), fs._2.map((x:Formula) => reduceHolToFol(x)) ) )
       def iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
-      val cs = cs_hol map ( (fs : FSequent) => reduceHolToFol(fs, Map[HOLExpression, String](), iid) )
+      val cs = cs_hol map ( (fs : FSequent) => reduceHolToFol(fs, Map[LambdaExpression, String](), iid) )
       println("# of non FOL formulas in cs =" + cs.filterNot(is_folsequent).size )
 
       val theory = new MulACUEquality(List("+", "*"), List("0", "1"))

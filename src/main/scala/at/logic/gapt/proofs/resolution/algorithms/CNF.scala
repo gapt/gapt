@@ -1,56 +1,55 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.hol.logicSymbols.{ TopSymbol, BottomSymbol }
-import at.logic.gapt.language.lambda.symbols.{ StringSymbol, SymbolA }
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.toNNF
+import at.logic.gapt.language.hol.algorithms.simplify.simplify
 import at.logic.gapt.proofs.resolution.FClause
 import scala.annotation.tailrec
 import scala.collection.mutable
 
 /**
- * Computes a clause set which is logically equivalent to the HOLFormula f by
+ * Computes a clause set which is logically equivalent to the Formula f by
  * expanding it using distributivity.
  */
 object CNFp {
   /**
-   * @param f a HOLFormula which is regular and does not contain strong quantifiers
+   * @param f a Formula which is regular and does not contain strong quantifiers
    */
   def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
   def transform( f: HOLFormula ): List[FClause] = f match {
-    case HOLBottomC         => List( FClause( List(), List() ) )
-    case HOLTopC            => List()
-    case HOLAtom( _, _ )    => List( FClause( List(), List( f ) ) )
-    case HOLNeg( f2 )       => CNFn.transform( f2 )
-    case HOLAnd( f1, f2 )   => CNFp.transform( f1 ) ++ CNFp.transform( f2 )
-    case HOLOr( f1, f2 )    => times( CNFp.transform( f1 ), CNFp.transform( f2 ) )
-    case HOLImp( f1, f2 )   => times( CNFn.transform( f1 ), CNFp.transform( f2 ) )
-    case HOLAllVar( _, f2 ) => CNFp.transform( f2 )
-    case _                  => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
+    case Bottom()        => List( FClause( List(), List() ) )
+    case Top()           => List()
+    case Neg( f2 )       => CNFn.transform( f2 )
+    case And( f1, f2 )   => CNFp.transform( f1 ) ++ CNFp.transform( f2 )
+    case Or( f1, f2 )    => times( CNFp.transform( f1 ), CNFp.transform( f2 ) )
+    case Imp( f1, f2 )   => times( CNFn.transform( f1 ), CNFp.transform( f2 ) )
+    case All( _, f2 )    => CNFp.transform( f2 )
+    case HOLAtom( _, _ ) => List( FClause( List(), List( f ) ) )
+    case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 }
 
 /**
  * Computes a clause set which is logically equivalent to the negation of
- * the HOLFormula f by expanding it using distributivity.
+ * the Formula f by expanding it using distributivity.
  */
 object CNFn {
   /**
-   * @param f a HOLFormula which is regular and does not contain strong quantifiers
+   * @param f a Formula which is regular and does not contain strong quantifiers
    */
   def apply( f: HOLFormula ): List[FClause] = transform( f ).distinct
 
   def transform( f: HOLFormula ): List[FClause] = f match {
-    case HOLBottomC        => List()
-    case HOLTopC           => List( FClause( List(), List() ) )
-    case HOLAtom( _, _ )   => List( FClause( List( f ), List() ) )
-    case HOLNeg( f2 )      => CNFp.transform( f2 )
-    case HOLAnd( f1, f2 )  => times( CNFn.transform( f1 ), CNFn.transform( f2 ) )
-    case HOLOr( f1, f2 )   => CNFn.transform( f1 ) ++ CNFn.transform( f2 )
-    case HOLImp( f1, f2 )  => CNFp.transform( f1 ) ++ CNFn.transform( f2 )
-    case HOLExVar( _, f2 ) => CNFn.transform( f2 )
-    case _                 => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
+    case Bottom()        => List()
+    case Top()           => List( FClause( List(), List() ) )
+    case Neg( f2 )       => CNFp.transform( f2 )
+    case And( f1, f2 )   => times( CNFn.transform( f1 ), CNFn.transform( f2 ) )
+    case Or( f1, f2 )    => CNFn.transform( f1 ) ++ CNFn.transform( f2 )
+    case Imp( f1, f2 )   => CNFp.transform( f1 ) ++ CNFn.transform( f2 )
+    case Ex( _, f2 )     => CNFn.transform( f2 )
+    case HOLAtom( _, _ ) => List( FClause( List( f ), List() ) )
+    case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 }
 
@@ -69,15 +68,15 @@ object TseitinCNF {
   def apply( f: FOLFormula ): List[FClause] = {
     val tseitin = new TseitinCNF()
 
-    val clauses = getConjuncts( removeTopAndBottom( toNNF( f ) ) ) flatMap { c => tseitin.transform( c ) }
+    val clauses = getConjuncts( simplify( toNNF( f ) ) ) flatMap { c => tseitin.transform( c ) }
     clauses toList
   }
 }
 
 object getConjuncts {
   def apply( f: FOLFormula ): Set[FOLFormula] = f match {
-    case FOLAnd( x, y ) => getConjuncts( x ) union getConjuncts( y )
-    case x              => Set( x )
+    case And( x, y ) => getConjuncts( x ) union getConjuncts( y )
+    case x           => Set( x )
   }
 }
 
@@ -86,22 +85,23 @@ class TseitinCNF {
   // add already known subformulas
   val subformulaMap = mutable.Map[FOLFormula, FOLFormula]()
 
-  val hc = StringSymbol( "x" )
-  var fsyms = Set[SymbolA]()
-  var auxsyms = mutable.MutableList[SymbolA]()
+  val hc = "x"
+  var fsyms = Set[String]()
+  var auxsyms = mutable.MutableList[String]()
   /**
    * Get a list of all Atoms symbols used in f
    * @param f formula
    * @return List of all atom symbols used in f
    */
-  def getAtomSymbols( f: FOLFormula ): List[SymbolA] = f match {
+  def getAtomSymbols( f: FOLFormula ): List[String] = f match {
     case FOLAtom( h, args ) => List( h )
-    case FOLNeg( f2 )       => getAtomSymbols( f2 )
-    case FOLAnd( f1, f2 )   => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
-    case FOLOr( f1, f2 )    => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
-    case FOLImp( f1, f2 )   => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
-    case FOLExVar( _, f2 )  => getAtomSymbols( f2 )
-    case FOLAllVar( _, f2 ) => getAtomSymbols( f2 )
+    case Top() | Bottom()   => List()
+    case Neg( f2 )          => getAtomSymbols( f2 )
+    case And( f1, f2 )      => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
+    case Or( f1, f2 )       => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
+    case Imp( f1, f2 )      => getAtomSymbols( f1 ) ::: getAtomSymbols( f2 )
+    case Ex( _, f2 )        => getAtomSymbols( f2 )
+    case All( _, f2 )       => getAtomSymbols( f2 )
     case _                  => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 
@@ -112,15 +112,8 @@ class TseitinCNF {
 
     // parseFormula and transform it via Tseitin-Transformation
     val pf = parseFormula( f )
-    val extraDefs =
-      if ( fsyms.contains( TopSymbol ) || fsyms.contains( BottomSymbol ) )
-        getConstantDefs()
-      else
-        Nil
-    ( pf._2 ++ extraDefs ) :+ FClause( List(), List( pf._1 ) )
+    pf._2 :+ FClause( List(), List( pf._1 ) )
   }
-
-  private def getConstantDefs() = FClause( List(), List( FOLTopC ) ) :: FClause( List( FOLBottomC ), List() ) :: Nil
 
   /**
    * Adds a FOLFormula to fol.Atom map to the subFormulas HashMap, iff
@@ -139,7 +132,7 @@ class TseitinCNF {
         subformulaMap( f )
       } else {
         auxCounter += 1
-        var auxsym = StringSymbol( s"$hc$auxCounter" )
+        var auxsym = s"$hc$auxCounter"
         if ( fsyms.contains( auxsym ) ) {
           addIfNotExists( f )
         } else {
@@ -159,7 +152,15 @@ class TseitinCNF {
    */
   def parseFormula( f: FOLFormula ): Tuple2[FOLFormula, List[FClause]] = f match {
     case FOLAtom( _, _ ) => ( f, List() )
-    case FOLNeg( f2 ) =>
+
+    case Top() =>
+      val x = addIfNotExists( f )
+      ( x, List( FClause( List(), List( x ) ) ) )
+    case Bottom() =>
+      val x = addIfNotExists( f )
+      ( x, List( FClause( List( x ), List() ) ) )
+
+    case Neg( f2 ) =>
       val pf = parseFormula( f2 )
       val x = addIfNotExists( f )
       val x1 = pf._1
@@ -167,7 +168,7 @@ class TseitinCNF {
       val c2 = FClause( List(), List( x, x1 ) )
       ( x, pf._2 ++ List( c1, c2 ) )
 
-    case FOLAnd( f1, f2 ) =>
+    case And( f1, f2 ) =>
       val pf1 = parseFormula( f1 )
       val pf2 = parseFormula( f2 )
       val x = addIfNotExists( f )
@@ -178,7 +179,7 @@ class TseitinCNF {
       val c3 = FClause( List( x1, x2 ), List( x ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
-    case FOLOr( f1, f2 ) =>
+    case Or( f1, f2 ) =>
       val pf1 = parseFormula( f1 )
       val pf2 = parseFormula( f2 )
       val x = addIfNotExists( f )
@@ -189,7 +190,7 @@ class TseitinCNF {
       val c3 = FClause( List( x ), List( x1, x2 ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
-    case FOLImp( f1, f2 ) =>
+    case Imp( f1, f2 ) =>
       val pf1 = parseFormula( f1 )
       val pf2 = parseFormula( f2 )
       val x = addIfNotExists( f )

@@ -1,18 +1,20 @@
 
 package at.logic.gapt.provers.atp.commands.robinson
 
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.language.fol.algorithms.UnificationAlgorithm
 import at.logic.gapt.language.hol.{ getAtPosition, getAllPositions, Replacement }
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.language.fol.{ FOLExpression, FOLEquation, FOLFormula, FOLSubstitution }
+import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.ProverException
 import at.logic.gapt.provers.atp.commands.base.DataCommand
 import at.logic.gapt.provers.atp.commands.sequents.SetSequentsCommand
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.utils.ds.PublishingBuffer
+import at.logic.gapt.utils.logging.Logger
 
 // adds to the state the initial set of resolution proofs, made from the input clauses
 case class SetClausesCommand( override val clauses: Iterable[FSequent] ) extends SetSequentsCommand[Clause]( clauses ) {
@@ -42,18 +44,20 @@ case object SetClausesFromDataCommand extends DataCommand[Clause] {
 }
 
 // create variants to a pair of two clauses
-case object VariantsCommand extends DataCommand[Clause] {
+case object VariantsCommand extends DataCommand[Clause] with Logger {
   def apply( state: State, data: Any ) = {
     val p = data.asInstanceOf[Tuple2[RobinsonResolutionProof, RobinsonResolutionProof]]
+    debug( p toString )
     List( ( state, ( Variant( p._1 ), Variant( p._2 ) ) ) )
   }
   override def toString = "VariantsCommand()"
 }
 
-case class ResolveCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] {
+case class ResolveCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
   def apply( state: State, data: Any ) = {
     val ( ( p1, ( lit1, b1 ) ) :: ( p2, ( lit2, b2 ) ) :: Nil ) = data.asInstanceOf[Iterable[Tuple2[RobinsonResolutionProof, Tuple2[FormulaOccurrence, Boolean]]]].toList
     val mgus = alg.unify( lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression] )
+    debug( mgus toString )
     require( mgus.size < 2 ) // as it is first order it must have at most one mgu
     mgus.map( x => ( state, Resolution( p1, p2, lit1, lit2, x.asInstanceOf[FOLSubstitution] ) ) )
   }
@@ -62,7 +66,7 @@ case class ResolveCommand( alg: UnificationAlgorithm ) extends DataCommand[Claus
 }
 
 // this command should be used when the target clause is not the empty clause and should be called before Resolution is called
-case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] {
+case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
   // computes all subsets
   private def sb[T]( ls: List[T] ): List[List[T]] = ls match {
     case Nil      => Nil
@@ -107,6 +111,8 @@ case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[
         case ( t2, Nil ) => for { b <- t2 } yield ( Factor( p._2, b, t2.filterNot( _ == b ), t._3 ) )
         case _           => for { a <- t._1; b <- t._2 } yield ( Factor( p._2, a, t._1.filterNot( _ == a ), b, t._2.filterNot( _ == b ), t._3 ) )
       } ) :+ p._2
+    debug( fac1 toString )
+    debug( fac2 toString )
     for { f1 <- fac1; f2 <- fac2 } yield ( ( state, ( f1, f2 ) ) )
   }
 
@@ -116,7 +122,7 @@ case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[
 
 // this command factorize only on the side of the resolving assuming on the way to the empty clause we will factorize also on the other side
 // should be called after resolution is called
-case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] {
+case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
   def apply( state: State, data: Any ) = {
     val res @ Resolution( cls, pr1, pr2, occ1, occ2, sub ) = data.asInstanceOf[RobinsonResolutionProof]
     val factors1 = computeFactors( alg, pr1.root.succedent, pr1.root.succedent.filterNot( _ == occ1 ).toList, occ1, FOLSubstitution() /*sub.asInstanceOf[Substitution]*/ , Nil )
@@ -135,6 +141,8 @@ case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause
         val factor2 = Factor( pr2, occ2, ls2, sub2.asInstanceOf[FOLSubstitution] )
         ( factor2, factor2.root.getChildOf( occ2 ).get )
       }
+      debug( s"$pr11, $occ11, true" )
+      debug( s"$pr21, $occ21, false" )
       List( ( pr11, ( occ11, true ) ), ( pr21, ( occ21, false ) ) )
       //Resolution(pr11, pr21, occ11, occ21, sub)
     } ).flatMap( x => new ResolveCommand( alg ).apply( state, x ) )
@@ -166,14 +174,14 @@ case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause
 
 }
 
-case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] {
+case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
   def apply( p1: RobinsonResolutionProof, p2: RobinsonResolutionProof ) = {
     val l = ( for {
       l1 <- p1.root.succedent
       l2 <- p2.root.antecedent ++ p2.root.succedent
       subTerm <- getAllPositions( l2.formula ) // except var positions and only on positions of the same type as a or b
     } yield l1.formula match {
-      case FOLEquation( a, b ) => {
+      case Eq( a: FOLTerm, b: FOLTerm ) => {
         //println("\n\n\n\nEq1 = "+l1.formula)
         //println("l2 = "+l2.formula)
         //println(Console.RED+"subTerm = "+subTerm+Console.RESET)
@@ -206,7 +214,7 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
         l2 <- p1.root.antecedent ++ p1.root.succedent
         subTerm <- getAllPositions( l2.formula ) // except variable positions
       } yield l1.formula match {
-        case FOLEquation( a, b ) => {
+        case Eq( a: FOLTerm, b: FOLTerm ) => {
           //              println("\n\n\n\nEq2 : "+l1.formula)
           //              println("l2 = "+l2.formula)
           //              println(Console.RED+"subTerm = "+subTerm+Console.RESET)
@@ -241,12 +249,13 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
 
   def apply( state: State, data: Any ) = {
     val ( p1, p2 ) = data.asInstanceOf[Tuple2[RobinsonResolutionProof, RobinsonResolutionProof]]
-    ( ( for {
+    debug( data toString )
+    val l = ( ( for {
       l1 <- p1.root.succedent
       l2 <- p2.root.antecedent ++ p2.root.succedent
       subTerm <- getAllPositions( l2.formula ) // except var positions and only on positions of the same type as a or b
     } yield l1.formula match {
-      case FOLEquation( a, b ) => {
+      case Eq( a: FOLTerm, b: FOLTerm ) => {
         val mgus1 = if ( a.exptype == subTerm._2.exptype ) alg.unify( a, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
         require( mgus1.size < 2 )
         val mgus2 = if ( b.exptype == subTerm._2.exptype ) alg.unify( b, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
@@ -267,7 +276,7 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
         l2 <- p1.root.antecedent ++ p1.root.succedent
         subTerm <- getAllPositions( l2.formula ) // except variable positions
       } yield l1.formula match {
-        case FOLEquation( a, b ) => {
+        case Eq( a: FOLTerm, b: FOLTerm ) => {
           val mgus1 = if ( a.exptype == subTerm._2.exptype ) alg.unify( a, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
           require( mgus1.size < 2 )
           val mgus2 = if ( b.exptype == subTerm._2.exptype ) alg.unify( b, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
@@ -284,6 +293,8 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
         }
         case _ => List()
       } ) ).flatMap( ( x => x.map( y => ( state, y ) ) ) )
+    l foreach { x => debug( x toString ) }
+    l
   }
 
   override def toString = "ParamodulationCommand()"
@@ -326,7 +337,7 @@ case class ParamodulationLiteralPositionCommand( alg: UnificationAlgorithm ) ext
     // we need to require that lit1 is an equation
     val lit1 = occ1._1
     val lit2 = occ2._1
-    val FOLEquation( l, r ) = lit1.formula
+    val Eq( l: FOLTerm, r: FOLTerm ) = lit1.formula
     val subTerm = getAtPosition( lit2.formula, pos2 )
     if ( pos1 == 1 ) {
       val mgu = if ( l.exptype == subTerm.exptype ) alg.unify( l, subTerm.asInstanceOf[FOLExpression] ) else throw new ProverException( "Paramodulation on " + lit1 + " and " + lit2 + " at position " + pos2 + " is not possible due to different types" )

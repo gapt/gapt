@@ -7,10 +7,9 @@ import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import java.io.File.separator
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.hol.logicSymbols._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,9 +25,9 @@ class SubstituteProofTest extends SpecificationWithJUnit {
     val tokens = HybridLatexParser.parseFile("target" + separator + "substitutions.llk")
     val pdb = HybridLatexParser.createLKProof(tokens)
     val map  = Map[String, LKProof]() ++ pdb.proofs
-    val x = HOLVar(StringSymbol("x"), Ti )
-    val f = HOLConst(StringSymbol("f"), Ti -> Ti )
-    val fa = Function(f, List(HOLConst(StringSymbol("a"), Ti)))
+    val x = Var(StringSymbol("x"), Ti )
+    val f = Const(StringSymbol("f"), Ti -> Ti )
+    val fa = Function(f, List(Const(StringSymbol("a"), Ti)))
 
     val sub1 = Substitution(x,fa)
 

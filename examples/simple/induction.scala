@@ -1,4 +1,5 @@
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.AllBlock
 import at.logic.gapt.proofs.lk._
 
 object inductionExamples {
@@ -14,23 +15,23 @@ object inductionExamples {
   def plus(x: FOLTerm, y: FOLTerm) = FOLFunction("+", List(x, y))
 
   // Instances of addition axioms
-  def add0(v: FOLTerm) = FOLEquation(plus(v, zero), v)
+  def add0(v: FOLTerm) = Eq(plus(v, zero), v)
 
   def addS(u: FOLTerm, v: FOLTerm) =
-    FOLEquation(
+    Eq(
       plus(u, S(v)),
       S(plus(u, v))
     )
 
   // Instances of associativity and reflexivity
-  def assoc(x: FOLTerm, y: FOLTerm, z: FOLTerm) = FOLEquation(plus(plus(x, y), z), plus(x, plus(y, z)))
+  def assoc(x: FOLTerm, y: FOLTerm, z: FOLTerm) = Eq(plus(plus(x, y), z), plus(x, plus(y, z)))
 
-  def ref(t: FOLTerm) = FOLEquation(t, t)
+  def ref(t: FOLTerm) = Eq(t, t)
 
   // Universally quantified equations
-  val ForAllAssoc = FOLAllVarBlock(List(x, y, z), assoc(x, y, z))
-  val ForAllAdd0 = FOLAllVar(x, add0(x))
-  val ForAllAddS = FOLAllVarBlock(List(x, y), addS(x, y))
+  val ForAllAssoc = AllBlock(List(x, y, z), assoc(x, y, z))
+  val ForAllAdd0 = All(x, add0(x))
+  val ForAllAddS = AllBlock(List(x, y), addS(x, y))
 
   val inductionBase1 =
     Axiom(
@@ -43,7 +44,7 @@ object inductionExamples {
       inductionBase1,
       inductionBase1.root.succedent.head,
       add0(b),
-      FOLEquation(plus(a, b), plus(a, plus(b, zero)))
+      Eq(plus(a, b), plus(a, plus(b, zero)))
     )
 
   val inductionBase3 =
@@ -92,7 +93,7 @@ object inductionExamples {
       inductionStep1,
       inductionStep1.root.succedent(0),
       addS(plus(a,b), c),
-      FOLEquation(plus(plus(a,b), S(c)), S(plus(plus(a,b),c)))
+      Eq(plus(plus(a,b), S(c)), S(plus(plus(a,b),c)))
       ),
       ForAllAddS,
       List(plus(a,b), c)
@@ -104,7 +105,7 @@ object inductionExamples {
     inductionStep2,
     inductionStep2.root.succedent(0),
     assoc(a,b,c),
-    FOLEquation(plus(plus(a,b), S(c)), S(plus(a, plus(b,c))))
+    Eq(plus(plus(a,b), S(c)), S(plus(a, plus(b,c))))
   )
 
   val inductionStep4 =
@@ -113,7 +114,7 @@ object inductionExamples {
       inductionStep3,
       inductionStep3.root.succedent(0),
       addS(a, plus(b,c)),
-      FOLEquation(plus(plus(a,b), S(c)), plus(a, S(plus(b,c))))
+      Eq(plus(plus(a,b), S(c)), plus(a, S(plus(b,c))))
     ),
     ForAllAddS,
     List(a, plus(b,c))
@@ -125,7 +126,7 @@ object inductionExamples {
       inductionStep4,
       inductionStep4.root.succedent(0),
       addS(b,c),
-      FOLEquation(plus(plus(a,b), S(c)), plus(a, plus(b,S(c))))
+      Eq(plus(plus(a,b), S(c)), plus(a, plus(b,S(c))))
     ),
     ForAllAddS,
     List(b,c)

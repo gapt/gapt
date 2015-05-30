@@ -12,15 +12,16 @@ import at.logic.gapt.proofs.lksk.{ LabelledSequent, UnaryLKskProof, LabelledForm
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.hol.{ HOLSubstitution => HOLSubstitution, _ }
-import at.logic.gapt.language.hol.logicSymbols._
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.symbols.SymbolA
-import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, BiggerThan, IntZero, IntVar, IntegerTerm, IndexedPredicate, Succ, SchemaTopC, BigAnd, BigOr, Pred, SchemaVar }
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.SymbolA
+import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, BiggerThan, IntZero, IntVar, IntegerTerm, IndexedPredicate, Succ, BigAnd, BigOr, Pred }
 import at.logic.gapt.utils.ds.Multisets.Multiset
 import at.logic.gapt.utils.ds.Multisets._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet._
 import at.logic.gapt.proofs.algorithms.ceres.RelevantCC
+import at.logic.gapt.utils.logging.Logger
 import scala.collection.immutable.HashSet
 import scala.math.max
 
@@ -144,76 +145,76 @@ object PlusN {
 // (for, e.g. displaying purposes)
 
 object structToExpressionTree {
-  def apply( s: Struct ): Tree[HOLExpression] = s match {
+  def apply( s: Struct ): Tree[LambdaExpression] = s match {
     case A( f )                  => LeafTree( f.formula )
-    case Dual( sub )             => UnaryTree( DualC, apply( sub ) )
-    case Times( left, right, _ ) => BinaryTree( TimesC, apply( left ), apply( right ) )
-    case Plus( left, right )     => BinaryTree( PlusC, apply( left ), apply( right ) )
-    case EmptyTimesJunction()    => LeafTree( EmptyTimesC )
-    case EmptyPlusJunction()     => LeafTree( EmptyPlusC )
+    case Dual( sub )             => UnaryTree( DualC(), apply( sub ) )
+    case Times( left, right, _ ) => BinaryTree( TimesC(), apply( left ), apply( right ) )
+    case Plus( left, right )     => BinaryTree( PlusC(), apply( left ), apply( right ) )
+    case EmptyTimesJunction()    => LeafTree( EmptyTimesC() )
+    case EmptyPlusJunction()     => LeafTree( EmptyPlusC() )
   }
 
   // constructs struct Tree without empty leaves.
-  def prunedTree( s: Struct ): Tree[HOLExpression] = s match {
+  def prunedTree( s: Struct ): Tree[LambdaExpression] = s match {
     case A( f )      => LeafTree( f.formula )
-    case Dual( sub ) => UnaryTree( DualC, prunedTree( sub ) )
+    case Dual( sub ) => UnaryTree( DualC(), prunedTree( sub ) )
     case Times( left, right, _ ) =>
       val l = prunedTree( left )
       val r = prunedTree( right )
-      if ( l.isInstanceOf[LeafTree[HOLExpression]] && ( l.vertex == EmptyTimesC || l.vertex == EmptyPlusC ) )
-        if ( r.isInstanceOf[LeafTree[HOLExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) LeafTree( EmptyTimesC )
+      if ( l.isInstanceOf[LeafTree[LambdaExpression]] && ( l.vertex == EmptyTimesC || l.vertex == EmptyPlusC ) )
+        if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) LeafTree( EmptyTimesC() )
         else r
-      else if ( r.isInstanceOf[LeafTree[HOLExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) l
-      else BinaryTree( TimesC, l, r )
+      else if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) l
+      else BinaryTree( TimesC(), l, r )
     case Plus( left, right ) =>
       val l = prunedTree( left )
       val r = prunedTree( right )
-      if ( l.isInstanceOf[LeafTree[HOLExpression]] && ( l.vertex == EmptyTimesC || l.vertex == EmptyPlusC ) )
-        if ( r.isInstanceOf[LeafTree[HOLExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) LeafTree( EmptyPlusC )
+      if ( l.isInstanceOf[LeafTree[LambdaExpression]] && ( l.vertex == EmptyTimesC || l.vertex == EmptyPlusC ) )
+        if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) LeafTree( EmptyPlusC() )
         else r
-      else if ( r.isInstanceOf[LeafTree[HOLExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) l
-      else BinaryTree( PlusC, l, r )
-    case EmptyTimesJunction() => LeafTree( EmptyTimesC )
-    case EmptyPlusJunction()  => LeafTree( EmptyPlusC )
+      else if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) l
+      else BinaryTree( PlusC(), l, r )
+    case EmptyTimesJunction() => LeafTree( EmptyTimesC() )
+    case EmptyPlusJunction()  => LeafTree( EmptyPlusC() )
   }
 
   // We define some symbols that represent the operations of the struct
 
-  case object TimesSymbol extends LogicalSymbolA {
-    override def unique = "TimesSymbol"
+  case object TimesSymbol extends SymbolA {
+    def unique = "TimesSymbol"
     override def toString = "⊗"
     def toCode = "TimesSymbol"
   }
 
-  case object PlusSymbol extends LogicalSymbolA {
-    override def unique = "PlusSymbol"
+  case object PlusSymbol extends SymbolA {
+    def unique = "PlusSymbol"
     override def toString = "⊕"
     def toCode = "PlusSymbol"
   }
 
-  case object DualSymbol extends LogicalSymbolA {
-    override def unique = "DualSymbol"
+  case object DualSymbol extends SymbolA {
+    def unique = "DualSymbol"
     override def toString = "∼"
     def toCode = "DualSymbol"
   }
 
-  case object EmptyTimesSymbol extends LogicalSymbolA {
-    override def unique = "EmptyTimesSymbol"
+  case object EmptyTimesSymbol extends SymbolA {
+    def unique = "EmptyTimesSymbol"
     override def toString = "ε_⊗"
     def toCode = "EmptyTimesSymbol"
   }
 
-  case object EmptyPlusSymbol extends LogicalSymbolA {
-    override def unique = "EmptyPlusSymbol"
+  case object EmptyPlusSymbol extends SymbolA {
+    def unique = "EmptyPlusSymbol"
     override def toString = "ε_⊕"
     def toCode = "EmptyPlusSymbol"
   }
 
-  case object TimesC extends HOLConst( TimesSymbol, Type( "( o -> (o -> o) )" ) )
-  case object PlusC extends HOLConst( PlusSymbol, Type( "( o -> (o -> o) )" ) )
-  case object DualC extends HOLConst( DualSymbol, Type( "(o -> o)" ) )
-  case object EmptyTimesC extends HOLConst( EmptyTimesSymbol, To )
-  case object EmptyPlusC extends HOLConst( EmptyPlusSymbol, To )
+  object TimesC extends MonomorphicLogicalC( TimesSymbol.toString, Type( "( o -> (o -> o) )" ) )
+  object PlusC extends MonomorphicLogicalC( PlusSymbol.toString, Type( "( o -> (o -> o) )" ) )
+  object DualC extends MonomorphicLogicalC( DualSymbol.toString, Type( "(o -> o)" ) )
+  object EmptyTimesC extends MonomorphicLogicalC( EmptyTimesSymbol.toString, To )
+  object EmptyPlusC extends MonomorphicLogicalC( EmptyPlusSymbol.toString, To )
 }
 
 // some stuff for schemata
@@ -302,7 +303,7 @@ class ClauseSetSymbol( val name: String, val cut_occs: TypeSynonyms.CutConfigura
   }
 }
 
-object StructCreators {
+object StructCreators extends Logger {
   def size( s: Struct ): Int = size( s, 0 )
   //TODO:make tailrecursive
   def size( s: Struct, n: Int ): Int = s match {
@@ -320,9 +321,9 @@ object StructCreators {
 
   def extractFormula( name: String, fresh_param: IntVar ): HOLFormula =
     {
-      val cs_0_f = SchemaProofDB.foldLeft[HOLFormula]( SchemaTopC )( ( f, ps ) =>
-        HOLAnd( cutConfigurations( ps._2.base ).foldLeft[HOLFormula]( SchemaTopC )( ( f2, cc ) =>
-          HOLAnd( HOLImp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero() :: Nil ) ),
+      val cs_0_f = SchemaProofDB.foldLeft[HOLFormula]( Top() )( ( f, ps ) =>
+        And( cutConfigurations( ps._2.base ).foldLeft[HOLFormula]( Top() )( ( f2, cc ) =>
+          And( Imp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero() :: Nil ) ),
             IntZero() :: Nil ),
             toFormula( extractBaseWithCutConfig( ps._2, cc ) ) ), f2 ) ),
           f ) )
@@ -330,21 +331,21 @@ object StructCreators {
       // assumption: all proofs in the SchemaProofDB have the
       // same running variable "k".
       val k = IntVar( "k" )
-      val cs_1_f = SchemaProofDB.foldLeft[HOLFormula]( SchemaTopC )( ( f, ps ) =>
-        HOLAnd( cutConfigurations( ps._2.rec ).foldLeft[HOLFormula]( SchemaTopC )( ( f2, cc ) =>
-          HOLAnd( HOLImp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ( k ) :: Nil ) ),
+      val cs_1_f = SchemaProofDB.foldLeft[HOLFormula]( Top() )( ( f, ps ) =>
+        And( cutConfigurations( ps._2.rec ).foldLeft[HOLFormula]( Top() )( ( f2, cc ) =>
+          And( Imp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ( k ) :: Nil ) ),
             Succ( k ) :: Nil ),
             toFormula( extractStepWithCutConfig( ps._2, cc ) ) ), f2 ) ),
           f ) )
 
       val cl_n = IndexedPredicate( new ClauseSetSymbol( name, ( HashMultiset[HOLFormula], HashMultiset[HOLFormula] ) ),
         fresh_param :: Nil )
-      HOLAnd( cl_n, HOLAnd( cs_0_f, BigAnd( k, cs_1_f.asInstanceOf[SchemaFormula], IntZero(), fresh_param ) ) )
+      And( cl_n, And( cs_0_f, BigAnd( k, cs_1_f.asInstanceOf[SchemaFormula], IntZero(), fresh_param ) ) )
     }
 
   def toFormula( s: Struct ): HOLFormula =
-    transformStructToClauseSet( s ).foldLeft[HOLFormula]( SchemaTopC )( ( f, c ) =>
-      HOLAnd( f, toFormula( c ) ) )
+    transformStructToClauseSet( s ).foldLeft[HOLFormula]( Top() )( ( f, c ) =>
+      And( f, toFormula( c ) ) )
 
   // FIXME: this method should not exist.
   // it's a workaround necessary since so far, the logical
@@ -352,7 +353,7 @@ object StructCreators {
   // do not work across language-levels, but the constants
   // are neede to transform a sequent to a formula in general.
   def toFormula( s: Sequent ): HOLFormula =
-    HOLOr( s.antecedent.map( f => HOLNeg( f.formula.asInstanceOf[HOLFormula] ) ).toList ++ ( s.succedent map ( _.formula.asInstanceOf[HOLFormula] ) ) )
+    Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[HOLFormula] ) ).toList ++ ( s.succedent map ( _.formula.asInstanceOf[HOLFormula] ) ) )
 
   def extractRelevantStruct( name: String, fresh_param: IntVar ): Tuple2[List[( String, Struct, Set[FormulaOccurrence] )], List[( String, Struct, Set[FormulaOccurrence] )]] = {
     val rcc = RelevantCC( name )._1.flatten
@@ -481,8 +482,6 @@ object StructCreators {
 
   def extract( p: LKProof ): Struct = extract( p, getCutAncestors( p ) )
   def extract( p: LKProof, predicate: HOLFormula => Boolean ): Struct = extract( p, getCutAncestors( p, predicate ) )
-
-  private def debug( s: String ) = { /* println("DEBUG:"+s) */ }
 
   def extract( p: LKProof, cut_occs: Set[FormulaOccurrence] ): Struct = p match {
     case Axiom( so ) => // in case of axioms of the form A :- A with labelled formulas, proceed as in Daniel's PhD thesis
@@ -626,7 +625,7 @@ object unfoldGroundStruct {
     s match {
       case A( fo ) => {
         fo.formula match {
-          case HOLApp( f, l ) => f.asInstanceOf[HOLConst].sym match {
+          case App( f, l ) => f.asInstanceOf[Const].sym match {
             case clsym: ClauseSetSymbol => {
               if ( l == IntZero() ) {
                 val base = SchemaProofDB.get( clsym.name ).base
@@ -638,15 +637,15 @@ object unfoldGroundStruct {
               //TODO: take into account the omega-ancestors
               val struct = StructCreators.extract( step, getCutAncestors( step ) )
               //println("struct : "+struct)
-              val new_map = Map.empty[SchemaVar, IntegerTerm] + Tuple2( IntVar( "k" ), Pred( l.asInstanceOf[IntegerTerm] ) )
+              val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Pred( l.asInstanceOf[IntegerTerm] ) )
               val new_subst = SchemaSubstitution( new_map )
               val gr_struct = groundStruct( struct, new_subst.asInstanceOf[HOLSubstitution] )
               //println("ground struct : "+gr_struct)
               return unfoldGroundStruct( gr_struct )
             }
             case _ => {
-              //if(f.asInstanceOf[HOLConst].name.toString().contains("cl^"))
-              //println("proof_name = "+f.asInstanceOf[HOLConst].name.asInstanceOf[ClauseSetSymbol].name)
+              //if(f.asInstanceOf[Const].name.toString().contains("cl^"))
+              //println("proof_name = "+f.asInstanceOf[Const].name.asInstanceOf[ClauseSetSymbol].name)
             }
           }
           case _ => () //println("complex f-la")

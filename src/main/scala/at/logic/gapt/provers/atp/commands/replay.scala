@@ -10,7 +10,6 @@ import at.logic.gapt.proofs.resolution.robinson.{ RobinsonResolutionProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.robinson.InitialClause._
-import at.logic.gapt.language.fol.{ FOLVar, FOLExpression, FOLFormula }
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.provers.atp.Prover
 import at.logic.gapt.utils.ds.PublishingBuffer
@@ -29,10 +28,11 @@ import scala.collection.mutable.{ Map => MMap }
 
 //TODO: i'm not sure, why the other publishing buffers are robinsonproofs -- since we cannot upcast here and the gmap
 // only holds resolution proofs, i'm not sure what is better
-case class SetClauseWithProofCommand( clauses: Iterable[ResolutionProof[Clause]] ) extends DataCommand[Clause] {
+case class SetClauseWithProofCommand( clauses: Iterable[ResolutionProof[Clause]] ) extends DataCommand[Clause] with Logger {
   def apply( state: State, data: Any ) = {
     val pb = new PublishingBuffer[ResolutionProof[Clause]]
     clauses.foreach( x => pb += x )
+    debug( s"clauses ++= $clauses" )
     List( ( state += new Tuple2( "clauses", pb ), data ) )
   }
 }
@@ -56,9 +56,8 @@ case class ReplayCommand( parentIds: Iterable[String], id: String, cls: FSequent
 
   def apply( state: State, data: Any ) = {
     import Stream.cons
-    debug( "\nReplayCommand" )
     //get guided clauses mapping from id to resolution proof of id
-    debug( "\nTarget clause :" + id + "\nfrom " + parentIds.toList )
+    debug( "ReplayCommand: Target clause :" + id + " from " + parentIds.toList )
     val gmap = state( "gmap" ).asInstanceOf[MMap[String, ResolutionProof[Clause]]]
     //println("\nData="+data)
     //println("\nTarget clause="+cls)
@@ -66,8 +65,8 @@ case class ReplayCommand( parentIds: Iterable[String], id: String, cls: FSequent
     val gproofs = ( parentIds.toList ).filterNot( _ == "-1" ) map gmap
 
     //val target : Clause = if (id == "-1") Clause(Nil,Nil) else Clause(cls.antecedent, cls.succedent)
-    //println("\nTrying to prove  "+cls+"  from :")
-    gproofs map ( x => debug( x.root.toString ) )
+    debug( s"Trying to prove $cls from:" )
+    gproofs foreach ( x => debug( x.root.toString ) )
 
     //initialize new prover to spawn -- same as proveFOL in cli
     val prover = new Prover[Clause] {}
@@ -98,7 +97,7 @@ case class ReplayCommand( parentIds: Iterable[String], id: String, cls: FSequent
     }
   }
 
-  override def toString = "ReplayCommand New(" + parentIds + ")"
+  override def toString = s"ReplayCommand New($parentIds, $id, $cls)"
 }
 
 // we dont have subsumption as it might prevent reaching the exact clause we look for

@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.hoare
 
-import at.logic.gapt.language.fol.{ FOLFormula, FOLTerm, FOLVar }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.hoare._
 import at.logic.gapt.formats.prover9.{ Prover9TermParserLadrStyle, Prover9TermParserA }
 import scala.util.parsing.combinator.PackratParsers

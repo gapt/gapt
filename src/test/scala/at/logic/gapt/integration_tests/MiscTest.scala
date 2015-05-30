@@ -2,17 +2,20 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
+import at.logic.gapt.language.fol.Utils
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.expansionTrees.{ toDeep => ETtoDeep, toShallow => ETtoShallow }
+import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.formats.prover9.Prover9TermParser
 import at.logic.gapt.provers.FailSafeProver
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.prover9.Prover9
@@ -45,7 +48,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     val p = "P"
 
     val x = FOLVar( "x" )
-    val ass = FOLAllVar( x, FOLImp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
+    val ass = All( x, Imp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
     if ( k == n ) // leaf proof
     {
       val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
@@ -53,7 +56,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     } else {
       val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
       val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
-      val aux = FOLImp( p1, p2 )
+      val aux = Imp( p1, p2 )
       ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
     }
   }
@@ -124,11 +127,26 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       val p = LinearExampleProof( 0, 4 )
       val pi = CutIntroduction.one_cut_one_quantifier( p, false )
-      val pe = ReductiveCutElim.eliminateAllByUppermost( pi, steps = false )
+      val pe = ReductiveCutElim( pi )
 
       ReductiveCutElim.isCutFree( p ) must beEqualTo( true )
       ReductiveCutElim.isCutFree( pi ) must beEqualTo( false )
       ReductiveCutElim.isCutFree( pe ) must beEqualTo( true )
+    }
+
+    "load Prover9 proof without equality reasoning, introduce a cut and eliminate it via Gentzen" in {
+      skipped( "fails currently but should work after merge with regular-layers" )
+
+      val fsprover = FailSafeProver.getProver()
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+
+      val testFilePath = tempCopyOfClasspathFile( "SYN726-1.out" )
+      val p1 = Prover9.parse_prover9LK( testFilePath )
+      val p2 = CutIntroduction.one_cut_many_quantifiers( p1, false )
+      val p3 = ReductiveCutElim( p2 )
+
+      ReductiveCutElim.isCutFree( p2 ) must beEqualTo( true )
+      ReductiveCutElim.isCutFree( p3 ) must beEqualTo( false )
     }
 
     "extract expansion tree from tape proof" in {
@@ -145,12 +163,12 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       ok
     }
 
-    "construct proof with expansion sequent extracted from proof 1/2" in {
+    "construct proof with expansion sequent extracted from proof (1/2)" in {
       val y = FOLVar( "y" )
       val x = FOLVar( "x" )
       val Py = FOLAtom( "P", y :: Nil )
       val Px = FOLAtom( "P", x :: Nil )
-      val AllxPx = FOLAllVar( x, Px )
+      val AllxPx = All( x, Px )
 
       // test with 1 weak & 1 strong
       val p1 = Axiom( Py :: Nil, Py :: Nil )
@@ -163,44 +181,82 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
       proof.isDefined must beTrue
     }
 
-    "construct proof with expansion sequent extracted from proof 2/2" in {
+    "construct proof with expansion sequent extracted from proof (2/2)" in {
       val proof = LinearExampleProof( 0, 4 )
 
       val proofPrime = solve.expansionProofToLKProof( proof.root.toFSequent, extractExpansionSequent( proof, false ) )
       proofPrime.isDefined must beTrue
     }
 
+    "load Prover9 proof without equality reasoning and eliminate cuts via Gentzen" in {
+      val fsprover = FailSafeProver.getProver()
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+
+      val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
+      val p = Prover9.parse_prover9LK( testFilePath )
+      val q = ReductiveCutElim( p )
+
+      ReductiveCutElim.isCutFree( q ) must beEqualTo( true )
+    }
+
     "load veriT proofs pi and verify the validity of Deep(pi) using minisat or sat4j" in {
-      val minisat = FailSafeProver.getProver()
+      val fsprover = FailSafeProver.getProver()
       for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
         val p = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( s"test${i}.verit" ) ).get
-        val seq = ETtoDeep( p )
+        val taut_p = addSymmetry( p )
+        val seq = ETtoDeep( taut_p )
 
-        minisat.isValid( seq ) must beTrue
+        fsprover.isValid( seq ) must beTrue
       }
       ok
     }
 
-    "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using minisat or sat4j" in {
-      val minisat = FailSafeProver.getProver()
-      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+    "prove quasi-tautology by veriT and verify validity using minisat or sat4j (1/2)" in {
+      val fsprover = FailSafeProver.getProver()
+      val veriT = new VeriTProver()
+      if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
+
+      val F = Prover9TermParser.parseFormula( "a=b -> b=a" )
+      val E = veriT.getExpansionSequent( FSequent( Nil, F :: Nil ) ).get
+
+      val Edeep = ETtoDeep( E )
+      fsprover.isValid( Edeep ) must beTrue
+    }
+
+    "prove quasi-tautology by veriT and verify validity using minisat or sat4j (2/2)" in {
+      val fsprover = FailSafeProver.getProver()
+      val veriT = new VeriTProver()
+      if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
+
+      val C = Prover9TermParser.parseFormula( "f(x_0,y_0) = f(y_0,x_0)" )
+      val AS = Prover9TermParser.parseFormula( "f(x_0,y_0)=x_0 -> ( f(y_0,x_0)=y_0 -> x_0=y_0 )" )
+      val s = FSequent( C :: Nil, AS :: Nil )
+      val E = veriT.getExpansionSequent( s ).get
+
+      val Edeep = ETtoDeep( E )
+      fsprover.isValid( Edeep ) must beTrue
+    }
+
+    "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using minisat or sat4j and readback E to LK" in {
+      val fsprover = FailSafeProver.getProver()
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
-      val lkproof1 = Prover9.parse_prover9LK( testFilePath )
-      val expseq = extractExpansionSequent( lkproof1, false )
+      val lkproof = Prover9.parse_prover9LK( testFilePath )
+      val expseq = extractExpansionSequent( lkproof, false )
       val deep = ETtoDeep( expseq )
 
-      minisat.isValid( deep ) must beTrue
+      fsprover.isValid( deep ) must beTrue
 
-      // the next line should work but does not (see issue 279)
-      // val lkproof2 = solve.expansionProofToLKProof( ETtoShallow( expseq ), expseq )
+      val pr_opt = solve.expansionProofToLKProof( ETtoShallow( expseq ), expseq )
+      pr_opt.isDefined must beTrue
     }
 
     "load Prover9 proof with equality reasoning, extract expansion tree E, verify deep formula of E using veriT" in {
       val veriT = new VeriTProver()
-      if ( !veriT.isInstalled() ) skipped( "VeriT is not installed" )
-      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+      if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "ALG004-1.out" )
 
@@ -212,7 +268,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using solvePropositional" in {
-      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
@@ -224,7 +280,7 @@ class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
     }
 
     "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {
-      if ( !Prover9.isInstalled() ) skipped( "Prover9 is not installed" )
+      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val testFilePath = tempCopyOfClasspathFile( "NUM484+3.out" )
       val lkproof1 = Prover9.parse_prover9LK( testFilePath )
       val expseq = extractExpansionSequent( lkproof1, false )

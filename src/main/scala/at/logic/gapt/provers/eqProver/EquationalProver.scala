@@ -8,7 +8,6 @@ package at.logic.gapt.provers.eqProver
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT._
-import at.logic.gapt.language.hol.HOLFormula
 import at.logic.gapt.proofs.lk.base.FSequent
 
 class EquationalProver extends Prover {

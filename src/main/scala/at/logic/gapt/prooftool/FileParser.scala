@@ -21,7 +21,7 @@ import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.shlk.SCHOLParser
 import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.formats.xml.ProofDatabase
-import at.logic.gapt.language.hol.HOLExpression
+import at.logic.gapt.expr._
 import at.logic.gapt.language.schema.dbTRS
 import at.logic.gapt.proofs.algorithms.ceres.clauseSchema._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
@@ -61,7 +61,7 @@ class FileParser {
     proofs = Nil
     termTrees = Nil
     val ps = sFOParser.parseProofs( input ) // constructs dbTRS as a side effect.
-    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[HOLExpression, HOLExpression]
+    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
     //  val start = System.currentTimeMillis()
     proofdb = new ProofDatabase( defs, ps, Nil, Nil )
     //  val end = System.currentTimeMillis()
@@ -73,7 +73,7 @@ class FileParser {
     proofs = Nil
     termTrees = Nil
     val ps = SCHOLParser.parseProofs( input ) // constructs dbTRS as a side effect.
-    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[HOLExpression, HOLExpression]
+    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
     //  val start = System.currentTimeMillis()
     proofdb = new ProofDatabase( defs, ps, Nil, Nil )
     //  val end = System.currentTimeMillis()
@@ -87,7 +87,7 @@ class FileParser {
       val p222 = p._2._2._2
       ( p._1, TermType.ResolutionTerm, rTermToTree( p212 ) ) :: ( p._1, TermType.ResolutionTerm, rTermToTree( p222 ) ) :: Nil
     } ).flatten.toList ::: termTrees.filterNot( tpl => tpl._2 == TermType.ResolutionTerm ) // The filter removes old resolution terms.
-    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[HOLExpression, HOLExpression]
+    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
     addDefinitions( defs )
   }
 
@@ -181,7 +181,7 @@ class FileParser {
     termTrees = list ::: termTrees
   }
 
-  def addDefinitions( defs: Map[HOLExpression, HOLExpression] ) {
+  def addDefinitions( defs: Map[LambdaExpression, LambdaExpression] ) {
     val map = proofdb.Definitions ++ defs
     proofdb = new ProofDatabase( map, proofdb.proofs, proofdb.axioms, proofdb.sequentLists )
   }

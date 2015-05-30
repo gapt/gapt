@@ -1,9 +1,9 @@
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.fol.FOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.algorithms.convertHolToFol
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import org.junit.runner.RunWith
@@ -16,20 +16,20 @@ import org.specs2.runner.JUnitRunner
 @RunWith( classOf[JUnitRunner] )
 class mapTest extends SpecificationWithJUnit {
   "map" should {
-    val List( u, x, y, z ) = List( "u", "x", "y", "z" ) map ( HOLVar( _, Ti ) )
-    val List( a, b, c ) = List( "a", "b", "c" ) map ( HOLConst( _, Ti ) )
-    val List( p ) = List( "p" ) map ( HOLConst( _, Ti -> ( Ti -> To ) ) )
-    val List( q ) = List( "q" ) map ( HOLConst( _, Ti -> To ) )
+    val List( u, x, y, z ) = List( "u", "x", "y", "z" ) map ( Var( _, Ti ) )
+    val List( a, b, c ) = List( "a", "b", "c" ) map ( Const( _, Ti ) )
+    val List( p ) = List( "p" ) map ( Const( _, Ti -> ( Ti -> To ) ) )
+    val List( q ) = List( "q" ) map ( Const( _, Ti -> To ) )
     val pxy = HOLAtom( p, List( x, y ) )
     val qz = HOLAtom( q, List( z ) )
 
-    val deMorgan1 = HOLImp( HOLNeg( HOLAnd( pxy, qz ) ),
-      HOLOr( HOLNeg( pxy ), HOLNeg( qz ) ) )
-    val deMorgan2 = HOLImp( HOLOr( HOLNeg( pxy ), HOLNeg( qz ) ),
-      HOLNeg( HOLAnd( pxy, qz ) ) )
+    val deMorgan1 = Imp( Neg( And( pxy, qz ) ),
+      Or( Neg( pxy ), Neg( qz ) ) )
+    val deMorgan2 = Imp( Or( Neg( pxy ), Neg( qz ) ),
+      Neg( And( pxy, qz ) ) )
 
-    val deMorgan = HOLAnd( deMorgan1, deMorgan2 )
-    val Some( p1 ) = solve.solvePropositional( FSequent( Nil, List( deMorgan ) ), true, true )
+    val deMorgan = And( deMorgan1, deMorgan2 )
+    val Some( p1 ) = solve.solvePropositional( FSequent( Nil, List( deMorgan ) ), true )
 
     "be able to convert a hol proof to a fol proof" in {
       val ( proof, _ ) = map_proof( p1, convertHolToFol.apply )
@@ -44,8 +44,8 @@ class mapTest extends SpecificationWithJUnit {
     "be able to convert a proof with a quantified cut" in {
       val sub = HOLSubstitution( z, a )
       val sub2 = HOLSubstitution( z, u )
-      val zdeMorgan = HOLAllVar( u, sub2( deMorgan ) )
-      val zdeMorgan1 = HOLAllVar( u, sub2( deMorgan1 ) )
+      val zdeMorgan = All( u, sub2( deMorgan ) )
+      val zdeMorgan1 = All( u, sub2( deMorgan1 ) )
       val Some( proof ) = solve.solvePropositional( FSequent( List( deMorgan ), List( deMorgan1 ) ) )
 
       val i1 = ForallLeftRule( proof, proof.root.antecedent( 0 ), zdeMorgan, z )
@@ -56,7 +56,7 @@ class mapTest extends SpecificationWithJUnit {
 
       val cut = CutRule( i1a, i2, i1a.root.succedent( 0 ), i2.root.antecedent( 0 ) )
 
-      def fun( e: HOLExpression ): HOLExpression = e match {
+      def fun( e: LambdaExpression ): LambdaExpression = e match {
         case f: HOLFormula => convertHolToFol.convertFormula( f )
         case _             => convertHolToFol.convertTerm( e )
       }

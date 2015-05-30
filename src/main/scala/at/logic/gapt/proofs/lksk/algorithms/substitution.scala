@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lksk.algorithms
 
-import at.logic.gapt.language.hol.BetaReduction.{ betaNormalize => normalize }
+import at.logic.gapt.expr.BetaReduction.{ betaNormalize => normalize }
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.algorithms.{ ProofTransformationUtils, applySubstitution => LKapplySubstitution }
 import at.logic.gapt.proofs.lk.base._

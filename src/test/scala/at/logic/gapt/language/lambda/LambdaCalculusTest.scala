@@ -2,14 +2,12 @@
  * LambdaCalculusTest.scala
  */
 
-package at.logic.gapt.language.lambda
+package at.logic.gapt.expr
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import types._
-import symbols._
 import scala.collection.immutable.{ HashSet, HashMap }
 import scala.math.signum
 
@@ -109,6 +107,37 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
         ( a6 ) must not be equalTo( b6 )
         ( a6.syntaxEquals( b6 ) ) must beEqualTo( false )
       }
+      "\\x y z. f y != \\z x y. f z" in {
+        val x = Var( "x", Ti )
+        val y = Var( "y", Ti )
+        val z = Var( "z", Ti )
+        val f = Const( "f", Ti -> Ti )
+        val a = Abs( x, Abs( y, Abs( z, App( f, y ) ) ) )
+        val b = Abs( z, Abs( x, Abs( y, App( f, z ) ) ) )
+        a must_!= b
+        b must_!= a
+      }
+      "\\y. x != \\x. x" in {
+        val x = Var( "x", Ti )
+        val y = Var( "y", Ti )
+        Abs( y, x ) must_!= Abs( x, x )
+        Abs( x, x ) must_!= Abs( y, x )
+      }
+      "\\y x.x = \\x x.x" in {
+        val x = Var( "x", Ti )
+        val y = Var( "y", Ti )
+        val a = Abs( y, Abs( x, x ) )
+        val b = Abs( x, Abs( x, x ) )
+        ( a == b ) must beTrue
+      }
+      "\\x y.x = \\x x.x" in {
+        val x = Var( "x", Ti )
+        val y = Var( "y", Ti )
+        val a = Abs( x, Abs( y, x ) )
+        val b = Abs( x, Abs( x, x ) )
+        ( a == b ) must beFalse
+      }
+
     }
   }
 
@@ -164,6 +193,9 @@ class LambdaCalculusTest extends SpecificationWithJUnit {
       val x_renamed = rename( x, blacklist )
 
       ( blacklist.contains( x_renamed ) ) must beEqualTo( false )
+
+      x_renamed.sym must beAnInstanceOf[VariantSymbol]
+      x_renamed.sym.asInstanceOf[VariantSymbol].s must_== "x"
     }
 
     "produce a new variable different from all in the blacklist (in presence of maliciously chosen variable names)" in {

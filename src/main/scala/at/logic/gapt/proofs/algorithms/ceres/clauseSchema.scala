@@ -7,9 +7,10 @@ import at.logic.gapt.proofs.lk.{ UnaryLKProof, BinaryLKProof }
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.gapt.proofs.shlk.AndEquivalenceRule1._
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, _ }
-import at.logic.gapt.language.schema.BetaReduction._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.proofs.shlk.algorithms.printSchemaProof
 
 abstract class sResolutionTerm {}
@@ -168,16 +169,16 @@ object sTermN {
   def apply( f: String, l: List[SchemaExpression] ): SchemaExpression = {
     require( l.head.exptype == Tindex )
     val typ = l.map( x => x.exptype ).foldRight( Ti.asInstanceOf[TA] )( ( x, t ) => ->( x, t ) )
-    val func = SchemaConst( f, typ )
+    val func = Const( f, typ )
     return SchemaFunction( func, l )
   }
-  def apply( f: SchemaConst, i: IntegerTerm, l: List[SchemaExpression] ): SchemaExpression = {
+  def apply( f: Const, i: IntegerTerm, l: List[SchemaExpression] ): SchemaExpression = {
     SchemaFunction( f, l )
   }
   def unapply( s: SchemaExpression ) = s match {
-    case SchemaFunction( name: SchemaConst, args, typ ) if typ == Ti && args.length != 0 && args.head.exptype == Tindex => {
+    case SchemaFunction( name: Const, args, typ ) if typ == Ti && args.length != 0 && args.head.exptype == Tindex => {
       val typ = args.map( x => x.exptype ).foldLeft( Ti.asInstanceOf[TA] )( ( x, t ) => ->( x, t ) )
-      val f = SchemaConst( name.name, typ )
+      val f = Const( name.name, typ )
       Some( ( f.name.toString(), args.head.asInstanceOf[SchemaExpression], args.tail.asInstanceOf[List[SchemaExpression]] ) )
     }
     case _ => None
@@ -213,7 +214,7 @@ object dbTRSclauseSchema {
 }
 
 // unfolds terms of the form : σ(k+1, x, l)
-//k : IntVar, x: HOLVar of type ind->i, l: IntVar
+//k : IntVar, x: Var of type ind->i, l: IntVar
 object unfoldSTermN {
   //for ground term
   def apply( t: SchemaExpression, trs: dbTRSsTermN ): SchemaExpression = {
@@ -223,18 +224,18 @@ object unfoldSTermN {
       case sTermN( func, i, arg ) if trs.map.contains( func ) => {
         if ( i == IntZero() ) {
           val map = if ( arg.size != 0 )
-            Map[SchemaVar, SchemaExpression]() + Tuple2( k, i ) + Tuple2( l, arg.last )
+            Map[Var, SchemaExpression]() + Tuple2( k, i ) + Tuple2( l, arg.last )
           else
-            Map[SchemaVar, SchemaExpression]() + Tuple2( k, i )
+            Map[Var, SchemaExpression]() + Tuple2( k, i )
           val subst = SchemaSubstitution( map )
           val base = trs.map.get( func ).get._1._2
           subst( base )
         } else if ( i == k ) t
         else {
           val map = if ( arg.size != 0 )
-            Map[SchemaVar, SchemaExpression]() + Tuple2( k, i ) + Tuple2( l, arg.last )
+            Map[Var, SchemaExpression]() + Tuple2( k, i ) + Tuple2( l, arg.last )
           else
-            Map[SchemaVar, SchemaExpression]() + Tuple2( k, i )
+            Map[Var, SchemaExpression]() + Tuple2( k, i )
           val subst = SchemaSubstitution( map )
           trs.map.get( func ).get._2._2 match {
             case foTerm( name, arg1 ) => foTerm( name, apply( sTermN( func, Pred( i.asInstanceOf[IntegerTerm] ) :: ( arg.map( x => subst( x ) ) ) ), trs ) :: Nil )
@@ -249,14 +250,14 @@ object unfoldSTermN {
 // rewrites  σ(k+1, x, k)  in  P(σ(k+1, x, k))
 object unfoldGroundAtom {
   def apply( f: SchemaFormula, trs: dbTRSsTermN ): SchemaFormula = f match {
-    case SchemaAtom( name: SchemaVar, args )   => SchemaAtom( name, args.map( x => unfoldSTermN( x, trs ) ) )
-    case SchemaAtom( name: SchemaConst, args ) => SchemaAtom( name, args.map( x => unfoldSTermN( x, trs ) ) )
-    case _                                     => f
+    case SchemaAtom( name: Var, args )   => SchemaAtom( name, args.map( x => unfoldSTermN( x, trs ) ) )
+    case SchemaAtom( name: Const, args ) => SchemaAtom( name, args.map( x => unfoldSTermN( x, trs ) ) )
+    case _                               => f
   }
   def apply( f: SchemaFormula ): SchemaFormula = f match {
-    case SchemaAtom( name: SchemaVar, args )   => SchemaAtom( name, args.map( x => unfoldSTerm( x ) ) )
-    case SchemaAtom( name: SchemaConst, args ) => SchemaAtom( name, args.map( x => unfoldSTerm( x ) ) )
-    case _                                     => f
+    case SchemaAtom( name: Var, args )   => SchemaAtom( name, args.map( x => unfoldSTerm( x ) ) )
+    case SchemaAtom( name: Const, args ) => SchemaAtom( name, args.map( x => unfoldSTerm( x ) ) )
+    case _                               => f
   }
 }
 
@@ -582,17 +583,17 @@ object fo2VarSubstitution {
     //    rTerm(apply(r.left, mapfo2).asInstanceOf[sResolutionTerm], apply(r.right, mapfo2).asInstanceOf[sResolutionTerm], apply(r.atom, mapfo2).asInstanceOf[SchemaFormula])
 
     case SchemaAtom( name, args ) =>
-      val newAtomName = SchemaConst( name.toString, args.reverse.map( x => x.exptype ).foldRight( To.asInstanceOf[TA] )( ( x, t ) => ->( x, t ) ) )
+      val newAtomName = Const( name.toString, args.reverse.map( x => x.exptype ).foldRight( To.asInstanceOf[TA] )( ( x, t ) => ->( x, t ) ) )
       unfoldGroundAtom( SchemaAtom( newAtomName, args.map( x =>
         apply( apply( x, mapfo2 ), mapfo2 ) ) ) )
 
-    case SchemaImp( f1, f2 ) => SchemaImp( apply( f1, mapfo2 ).asInstanceOf[SchemaFormula], apply( f2, mapfo2 ).asInstanceOf[SchemaFormula] )
-    case SchemaAnd( f1, f2 ) => SchemaAnd( apply( f1, mapfo2 ).asInstanceOf[SchemaFormula], apply( f2, mapfo2 ).asInstanceOf[SchemaFormula] )
-    case SchemaOr( f1, f2 )  => SchemaOr( apply( f1, mapfo2 ).asInstanceOf[SchemaFormula], apply( f2, mapfo2 ).asInstanceOf[SchemaFormula] )
-    case SchemaApp( v, index ) if index.exptype == Tindex => {
+    case Imp( f1, f2 ) => Imp( apply( f1, mapfo2 ).asInstanceOf[SchemaFormula], apply( f2, mapfo2 ).asInstanceOf[SchemaFormula] )
+    case And( f1, f2 ) => And( apply( f1, mapfo2 ).asInstanceOf[SchemaFormula], apply( f2, mapfo2 ).asInstanceOf[SchemaFormula] )
+    case Or( f1, f2 )  => Or( apply( f1, mapfo2 ).asInstanceOf[SchemaFormula], apply( f2, mapfo2 ).asInstanceOf[SchemaFormula] )
+    case App( v, index ) if index.exptype == Tindex => {
       println( "v = " + v.toString )
       println( "index = " + index.toString )
-      val exp = SchemaApp( mapfo2.get( v.asInstanceOf[fo2Var] ).get, index )
+      val exp = App( mapfo2.get( v.asInstanceOf[fo2Var] ).get, index )
       val beta = betaReduce( exp )
       unfoldSTerm( beta )
     }
@@ -601,9 +602,9 @@ object fo2VarSubstitution {
     case sTerm( v, i, args )                           => unfoldSTerm( o )
 
     //case non: nonVarSclause => nonVarSclause(non.ant.map(f => apply(f, mapfo2).asInstanceOf[SchemaFormula]), non.succ.map(f => apply(f, mapfo2).asInstanceOf[SchemaFormula]))
-    case indFOvar: indexedFOVar =>
-      val z = fo2Var( indFOvar.name.toString() )
-      apply( SchemaApp( z, indFOvar.index ), mapfo2 )
+    case indexedFOVar( name, index ) =>
+      val z = fo2Var( name )
+      apply( App( z, index ), mapfo2 )
 
     case _ => o
   }
@@ -656,7 +657,7 @@ object unfoldResolutionProofSchema {
           base
         } else {
           val step2 = resolutionProofSchemaDB.map.get( rho1.name ).get._2._2
-          val map = Map.empty[SchemaVar, SchemaExpression] + Tuple2( k, Pred( rho1.args.head.asInstanceOf[IntegerTerm] ) )
+          val map = Map.empty[Var, SchemaExpression] + Tuple2( k, Pred( rho1.args.head.asInstanceOf[IntegerTerm] ) )
           val subst = SchemaSubstitution( map )
           val rho_subst = IntVarSubstitution( step2, subst )
           apply( rho_subst )
@@ -683,13 +684,13 @@ object InstantiateResSchema {
   def getCorrectTermAndSubst( term_name: String, inst: Int ): ( sResolutionTerm, SchemaSubstitution ) = {
     val k = IntVar( "k" )
     if ( inst == 0 ) {
-      val map = Map[SchemaVar, SchemaExpression]() + Tuple2( k, IntZero() )
+      val map = Map[Var, SchemaExpression]() + Tuple2( k, IntZero() )
       val subst = SchemaSubstitution( map )
       val rho1 = resolutionProofSchemaDB.map.get( term_name ).get._1._1
       ( rho1, subst )
     } else {
       val i = toIntegerTerm( inst - 1 )
-      val map = Map[SchemaVar, SchemaExpression]() + Tuple2( k, i )
+      val map = Map[Var, SchemaExpression]() + Tuple2( k, i )
       val subst = SchemaSubstitution( map )
       val rho1 = resolutionProofSchemaDB.map.get( term_name ).get._2._1
       ( rho1, subst )

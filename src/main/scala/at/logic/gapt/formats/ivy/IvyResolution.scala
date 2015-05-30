@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.proofs.{ NullaryAGraphProof, UnaryAGraphProof, Binar
 import at.logic.gapt.utils.ds.acyclicGraphs.{ LeafAGraph, UnaryAGraph, BinaryAGraph }
 import at.logic.gapt.formats.lisp.SExpression
 import at.logic.gapt.language.fol.FOLSubstitution
-import at.logic.gapt.language.fol.{ FOLConst, FOLTerm }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.Clause
 

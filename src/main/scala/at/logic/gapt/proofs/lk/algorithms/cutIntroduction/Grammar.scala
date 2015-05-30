@@ -10,14 +10,9 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.fol.Utils._
-import at.logic.gapt.proofs.occurrences._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.utils.dssupport.MapSupport._
-import at.logic.gapt.utils.executionModels.searchAlgorithms.SetNode
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.{ DFS, BFS, setSearch }
-import Deltas._
-import at.logic.gapt.language.fol
 
 import scala.collection.immutable.HashMap
 
@@ -27,7 +22,7 @@ import scala.collection.immutable.HashMap
  * @param slist list of non-terminals and their corresponding sets (((a1,...,am1), S,,1,,), ..., (z1,...,zmn, S,,n,,))
  */
 class Grammar( val u: List[FOLTerm], val slist: List[( List[FOLVar], Set[List[FOLTerm]] )] ) {
-
+  require( slist.forall { case ( vars, termlistlist ) => termlistlist.forall { case termlist => vars.length == termlist.length } } )
   /** Returns the size of the grammar, i.e. |u| + |s| */
   def size = u.size + slist.foldLeft( 0 )( ( acc, s ) => acc + s._2.size )
 
@@ -50,6 +45,7 @@ class Grammar( val u: List[FOLTerm], val slist: List[( List[FOLVar], Set[List[FO
 // where the U_i are sets of lists of terms corresponding to the instances of the x_i,
 // and the S_i are sets of lists of terms.
 class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[( List[FOLVar], List[List[FOLTerm]] )] ) {
+  require( ss.forall { case ( vars, termlistlist ) => termlistlist.forall { case termlist => vars.length == termlist.length } } )
 
   /** Returns the size of the grammar, i.e. |u| + |s| */
   def size = u_size + s_size
@@ -57,7 +53,7 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
   private def s_size = ss.foldLeft( 0 ) { case ( acc, ( _, set ) ) => acc + set.size }
 
   /** Returns the set of eigenvariables that occur in the grammar. */
-  def eigenvariables = ss.flatMap( s => s._1 ).distinct
+  def eigenvariables = ss.map( s => s._1 )
 
   /** Returns the number of eigenvariables that occur in this grammar. */
   def numVars = eigenvariables.length
@@ -205,6 +201,12 @@ object ComputeGrammars {
           val ev = FOLVar( eigenvariable + "_0" )
           val newpairs = if ( s.size == 1 && s.head.forall( e => terms.contains( e ) ) ) { ( ev, s.head ) :: pairs } else pairs
 
+          val evs = newpairs.foldLeft( List[FOLVar]() )( {
+            case ( acc, p ) =>
+              val t = p._1
+              acc ++ freeVariables( t )
+          } ).distinct
+
           // Whenever we find a smaller S-vector,
           // we add the grammars in its row to the list of returned ones.
           if ( s.size < smallestGrammarSize ) {
@@ -213,7 +215,7 @@ object ComputeGrammars {
 
             coverings.foldLeft( grammars ) {
               case ( acc, u ) =>
-                ( new Grammar( u, ( ev :: Nil, s ) :: Nil ) ) :: acc
+                ( new Grammar( u, ( evs, s ) :: Nil ) ) :: acc
             }
           } else grammars
 

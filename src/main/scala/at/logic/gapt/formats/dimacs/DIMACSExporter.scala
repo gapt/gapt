@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.dimacs
 
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.models.MapBasedInterpretation
 import at.logic.gapt.proofs.resolution.FClause
 

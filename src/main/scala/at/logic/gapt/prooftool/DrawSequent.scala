@@ -7,10 +7,10 @@ package at.logic.gapt.prooftool
  * Time: 4:25 PM
  */
 
+import at.logic.gapt.language.hol.toPrettyString
 import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.language.schema.{ BiggerThanC, BigAnd, BigOr, IndexedPredicate, indexedFOVar, indexedOmegaVar, IntegerTerm, IntVar, IntConst, Succ }
 import at.logic.gapt.proofs.algorithms.ceres.struct.ClauseSetSymbol
 import at.logic.gapt.proofs.algorithms.ceres.PStructToExpressionTree.ProjectionSetSymbol
 import org.scilab.forge.jlatexmath.{ TeXIcon, TeXConstants, TeXFormula }
@@ -19,10 +19,10 @@ import java.awt.image.BufferedImage
 import swing._
 import event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
 import java.awt.event.MouseEvent
-import at.logic.gapt.language.schema.IntZero
+import at.logic.gapt.language.schema._
 import at.logic.gapt.utils.latex.nameToLatexString
 import collection.mutable
-import at.logic.gapt.language.lambda.types.Tindex
+import at.logic.gapt.expr.Tindex
 
 object DrawSequent {
   implicit val factory = defaultFormulaOccurrenceFactory
@@ -96,30 +96,30 @@ object DrawSequent {
     s
   }
 
-  def formulaToLatexString( t: HOLExpression, outermost: Boolean = true ): String = t match {
-    case HOLNeg( f ) => """\neg """ + formulaToLatexString( f, outermost = false )
-    case HOLAnd( f1, f2 ) =>
+  def formulaToLatexString( t: LambdaExpression, outermost: Boolean = true ): String = t match {
+    case Neg( f ) => """\neg """ + formulaToLatexString( f, outermost = false )
+    case And( f1, f2 ) =>
       if ( outermost )
         formulaToLatexString( f1, outermost = false ) + """ \wedge """ + formulaToLatexString( f2, outermost = false )
       else
         "(" + formulaToLatexString( f1, outermost = false ) + """ \wedge """ + formulaToLatexString( f2, outermost = false ) + ")"
-    case HOLOr( f1, f2 ) =>
+    case Or( f1, f2 ) =>
       if ( outermost )
         formulaToLatexString( f1, outermost = false ) + """ \vee """ + formulaToLatexString( f2, outermost = false )
       else
         "(" + formulaToLatexString( f1, outermost = false ) + """ \vee """ + formulaToLatexString( f2, outermost = false ) + ")"
 
-    case HOLImp( f1, f2 ) =>
+    case Imp( f1, f2 ) =>
       if ( outermost )
         formulaToLatexString( f1, outermost = false ) + """ \supset """ + formulaToLatexString( f2, outermost = false )
       else
         "(" + formulaToLatexString( f1, outermost = false ) + """ \supset """ + formulaToLatexString( f2, outermost = false ) + ")"
-    case HOLExVar( v, f ) =>
+    case Ex( v, f ) =>
       if ( v.exptype == Tindex -> Tindex )
         "(" + """\exists^{hyp} """ + formulaToLatexString( v, outermost = false ) + """)""" + formulaToLatexString( f, outermost = false )
       else
         "(" + """\exists """ + formulaToLatexString( v, outermost = false ) + """)""" + formulaToLatexString( f, outermost = false )
-    case HOLAllVar( v, f ) =>
+    case All( v, f ) =>
       if ( v.exptype == Tindex -> Tindex )
         "(" + """\forall^{hyp} """ + formulaToLatexString( v, outermost = false ) + """)""" + formulaToLatexString( f, outermost = false )
       else
@@ -142,12 +142,11 @@ object DrawSequent {
         } //or return the predicate symbol
         else nameToLatexString( constant.name.toString )
       } + { if ( indices.isEmpty ) "" else indices.map( x => formulaToLatexString( x ) ).mkString( "_{", ",", "}" ) }
-    case t: IntegerTerm => parseIntegerTerm( t, 0 )
     case HOLAtom( pred, args ) =>
       val name = pred match {
-        case HOLConst( n, _ ) => n
-        case HOLVar( n, _ )   => n
-        case _                => throw new Exception( "An atom can only contain a const or a var on the outermost level!" )
+        case Const( n, _ ) => n
+        case Var( n, _ )   => n
+        case _             => throw new Exception( "An atom can only contain a const or a var on the outermost level!" )
       }
       if ( args.size == 2 && name.toString.matches( """(=|!=|\\neq|<|>|\\leq|\\geq|\\in|\+|-|\*|/)""" ) ) { //!name.toString.matches("""[\w\p{InGreek}]*""")) {
         //formats infix formulas
@@ -161,22 +160,22 @@ object DrawSequent {
         //formats everything else
         nameToLatexString( name.toString ) + { if ( args.isEmpty ) "" else args.map( x => formulaToLatexString( x, outermost = false ) ).mkString( "(", ",", ")" ) }
       }
-    case vi: indexedFOVar    => vi.name.toString + "_{" + formulaToLatexString( vi.index, outermost = false ) + "}"
-    case vi: indexedOmegaVar => vi.name.toString + "_{" + formulaToLatexString( vi.index, outermost = false ) + "}"
-    case v: HOLVar if v.sym.isInstanceOf[ClauseSetSymbol] => //Fixme: never enters here because type of ClauseSetSymbol is changed
+    case indexedFOVar( name, index )    => name + "_{" + formulaToLatexString( index, outermost = false ) + "}"
+    case indexedOmegaVar( name, index ) => name + "_{" + formulaToLatexString( index, outermost = false ) + "}"
+    case v: Var if v.sym.isInstanceOf[ClauseSetSymbol] => //Fixme: never enters here because type of ClauseSetSymbol is changed
       //parse cl variables to display cut-configuration.
       val cl = v.sym.asInstanceOf[ClauseSetSymbol]
       "cl^{" + cl.name + ",(" + cl.cut_occs._1.foldLeft( "" )( ( s, f ) => s + { if ( s != "" ) ", " else "" } + formulaToLatexString( f ) ) + " | " +
         cl.cut_occs._2.foldLeft( "" )( ( s, f ) => s + { if ( s != "" ) ", " else "" } + formulaToLatexString( f, outermost = false ) ) + ")}"
-    case HOLVar( name, _ ) if t.exptype == Tindex -> Tindex =>
+    case Var( name, _ ) if t.exptype == Tindex -> Tindex =>
       "\\textbf {" + name.toString + "}"
-    case HOLVar( name, _ )   => name
-    case HOLConst( name, _ ) => name
-    case HOLFunction( f, args, _ ) =>
+    case Var( name, _ )   => name
+    case Const( name, _ ) => name
+    case HOLFunction( f, args ) =>
       val name = f match {
-        case HOLConst( n, _ ) => n
-        case HOLVar( n, _ )   => n
-        case _                => throw new Exception( "An atom can only contain a const or a var on the outermost level!" )
+        case Const( n, _ ) => n
+        case Var( n, _ )   => n
+        case _             => throw new Exception( "An atom can only contain a const or a var on the outermost level!" )
       }
 
       if ( name.toString == "EXP" )
@@ -185,8 +184,9 @@ object DrawSequent {
       else if ( args.size == 2 && name.toString.matches( """(=|!=|\\neq|<|>|\\leq|\\geq|\\in|\+|-|\*|/)""" ) ) //!name.toString.matches("""[\w\p{InGreek}]*"""))
         "(" + formulaToLatexString( args.head, outermost = false ) + " " + nameToLatexString( name.toString ) + " " + formulaToLatexString( args.last, outermost = false ) + ")"
       else nameToLatexString( name.toString ) + { if ( args.isEmpty ) "" else args.map( x => formulaToLatexString( x, outermost = false ) ).mkString( "(", ",", ")" ) }
-    case HOLAbs( v, s ) => "(" + """ \lambda """ + formulaToLatexString( v, outermost = false ) + """.""" + formulaToLatexString( s, outermost = false ) + ")"
-    case HOLApp( s, t ) => formulaToLatexString( s, outermost = false ) + "(" + formulaToLatexString( t, outermost = false ) + ")"
+    case Abs( v, s )                           => "(" + """ \lambda """ + formulaToLatexString( v, outermost = false ) + """.""" + formulaToLatexString( s, outermost = false ) + ")"
+    case App( s, t )                           => formulaToLatexString( s, outermost = false ) + "(" + formulaToLatexString( t, outermost = false ) + ")"
+    case t: IntegerTerm if t.exptype == Tindex => parseIntegerTerm( t, 0 )
   }
 
   def parseIntegerTerm( t: IntegerTerm, n: Int ): String = t match {
@@ -202,8 +202,8 @@ object DrawSequent {
     case _         => throw new Exception( "Error in parseIntegerTerm(..) in gui" )
   }
 
-  def parseNestedUnaryFunction( parent_name: String, t: HOLExpression, n: Int ): String = t match {
-    case HOLFunction( name, args, _ ) =>
+  def parseNestedUnaryFunction( parent_name: String, t: LambdaExpression, n: Int ): String = t match {
+    case HOLFunction( name, args ) =>
       if ( args.size == 1 && name.toString == parent_name ) parseNestedUnaryFunction( parent_name, args.head, n + 1 )
       else parent_name + { if ( n > 1 ) "^{" + n.toString + "}" else "" } + "(" + formulaToLatexString( t ) + ")"
     case _ => parent_name + { if ( n > 1 ) "^{" + n.toString + "}" else "" } + "(" + formulaToLatexString( t ) + ")"

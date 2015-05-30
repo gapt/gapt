@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.hlk
 
 /**
- * Tests for HOLFormulaParser
+ * Tests for FormulaParser
  */
 import at.logic.gapt.proofs.lk.base.FSequent
 import org.specs2.mutable._
@@ -18,9 +18,7 @@ import at.logic.gapt.proofs.occurrences.factory
 import util.parsing.input.Position
 import org.specs2.execute.Success
 
-// to use matchers like anyInt()
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.hol.logicSymbols._
+import at.logic.gapt.expr._
 import java.io.File.separator
 
 @RunWith( classOf[JUnitRunner] )
@@ -261,7 +259,7 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
       str map { x =>
         val f = HLKHOLParser.parseFormula( x )
         f match {
-          case HOLAllVar( x, HOLImp( HOLAtom( p, px :: Nil ), HOLExVar( y, HOLAtom( q, List( qx, qy ) ) ) ) ) =>
+          case All( x, Imp( HOLAtom( p, px :: Nil ), Ex( y, HOLAtom( q, List( qx, qy ) ) ) ) ) =>
             "success" mustEqual ( "success" )
           case _ =>
             f mustEqual ( "(fails)" )

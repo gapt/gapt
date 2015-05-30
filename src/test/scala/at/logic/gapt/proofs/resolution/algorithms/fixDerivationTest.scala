@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol.{ FOLAtom, FOLConst, FOLEquation, FOLSubstitution, FOLVar }
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
@@ -25,11 +26,11 @@ class FixDerivationTest extends SpecificationWithJUnit {
       val b = FOLConst( "b" )
       val c = FOLConst( "c" )
       val d = FOLConst( "d" )
-      val ab = FOLEquation( a, b )
-      val bc = FOLEquation( b, c )
-      val cd = FOLEquation( c, d )
-      val cb = FOLEquation( c, b )
-      val dc = FOLEquation( d, c )
+      val ab = Eq( a, b )
+      val bc = Eq( b, c )
+      val cd = Eq( c, d )
+      val cb = Eq( c, b )
+      val dc = Eq( d, c )
       val from = FSequent( ab :: bc :: Nil, cd :: Nil )
       val to = FClause( cb :: ab :: Nil, dc :: Nil )
 

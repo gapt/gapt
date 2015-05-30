@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause }
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.language.fol.FOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.provers.atp.commands.base.DataCommand
 import scala.collection.mutable.Map

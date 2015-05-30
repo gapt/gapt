@@ -1,5 +1,5 @@
 /*
- * HOLExpressionExporterTest.scala
+ * LambdaExpressionExporterTest.scala
  *
  * To change this template, choose Tools | Template Manager
  * and open the template in the editor.
@@ -22,37 +22,38 @@ import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import java.io.File.separator
 import at.logic.gapt.formats.language.xml._
 import scala.xml.Utility.trim
-import at.logic.gapt.language.lambda.types._
-import at.logic.gapt.language.lambda.symbols.StringSymbol
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.StringSymbol
 
 @RunWith( classOf[JUnitRunner] )
 class HOLTermExporterTest extends SpecificationWithJUnit {
 
   val exporter = new HOLTermXMLExporter {}
   // helper to create 0-ary predicate constants
-  def pc( sym: String ) = HOLAtom( HOLConst( sym, To ) )
+  def pc( sym: String ) = HOLAtom( Const( sym, To ) )
 
-  "HOLExpressionExporter" should {
+  "LambdaExpressionExporter" should {
     "export correctly a constant c" in {
-      exporter.exportTerm( HOLConst( "c", "i" ) ) must beEqualTo( <constant symbol="c"/> )
+      exporter.exportTerm( Const( "c", Ti ) ) must beEqualTo( <constant symbol="c"/> )
     }
     "export correctly a term g(c)" in {
-      trim( exporter.exportTerm( HOLApp( HOLConst( "g", Ti -> Ti ), HOLConst( "c", "i" ) ) ) ) must beEqualTo( <function symbol="g"><constant symbol="c"/></function> )
+      trim( exporter.exportTerm( App( Const( "g", Ti -> Ti ), Const( "c", Ti ) ) ) ) must beEqualTo( <function symbol="g"><constant symbol="c"/></function> )
     }
     "export correctly a variable x" in {
-      trim( exporter.exportTerm( HOLVar( "x", Ti ) ) ) must beEqualTo( <variable symbol="x"></variable> )
+      trim( exporter.exportTerm( Var( "x", Ti ) ) ) must beEqualTo( <variable symbol="x"></variable> )
     }
     "export correctly a term f(x,c)" in {
       trim( exporter.exportTerm(
-        HOLFunction( HOLConst( "f", Ti -> ( Ti -> Ti ) ),
-          List( HOLVar( StringSymbol( "x" ), Ti ), HOLConst( "c", Ti ) ) ) ) ) must beEqualTo(
+        HOLFunction( Const( "f", Ti -> ( Ti -> Ti ) ),
+          List( Var( StringSymbol( "x" ), Ti ), Const( "c", Ti ) ) ) ) ) must beEqualTo(
         <function symbol="f"><variable symbol="x"/><constant symbol="c"/></function> )
     }
     "export correctly an atom formula P(f(x,c),y)" in {
-      trim( exporter.exportTerm( HOLAtom( HOLConst( "P", Ti -> ( Ti -> To ) ), List(
-        HOLFunction( HOLConst( "f", Ti -> ( Ti -> Ti ) ),
-          List( HOLVar( "x", Ti ), HOLConst( "c", Ti ) ) ),
-        HOLVar( "y", Ti ) ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( HOLAtom( Const( "P", Ti -> ( Ti -> To ) ), List(
+        HOLFunction( Const( "f", Ti -> ( Ti -> Ti ) ),
+          List( Var( "x", Ti ), Const( "c", Ti ) ) ),
+        Var( "y", Ti ) ) ) ) ) must beEqualTo( trim(
         <constantatomformula symbol="P">
           <function symbol="f">
             <variable symbol="x"/>
@@ -62,14 +63,14 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
         </constantatomformula> ) )
     }
     "export correctly a conjunction of atoms P and Q" in {
-      trim( exporter.exportTerm( HOLAnd( pc( "P" ), pc( "Q" ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( And( pc( "P" ), pc( "Q" ) ) ) ) must beEqualTo( trim(
         <conjunctiveformula type="and">
           <constantatomformula symbol="P"/>
           <constantatomformula symbol="Q"/>
         </conjunctiveformula> ) )
     }
     "export correctly a quantified formula (exists x) x = x" in {
-      trim( exporter.exportTerm( HOLExVar( HOLVar( "x", Ti ), HOLEquation( HOLVar( "x", Ti ), HOLVar( "x", Ti ) ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( Ex( Var( "x", Ti ), Eq( Var( "x", Ti ), Var( "x", Ti ) ) ) ) ) must beEqualTo( trim(
         <quantifiedformula type="exists">
           <variable symbol="x"/>
           <constantatomformula symbol="=">
@@ -79,18 +80,18 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
         </quantifiedformula> ) )
     }
     "export correctly a second-order variable X" in {
-      trim( exporter.exportTerm( HOLVar( "X", Ti -> To ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( Var( "X", Ti -> To ) ) ) must beEqualTo( trim(
         <secondordervariable symbol="X"/> ) )
     }
     "export correctly a variable atom formula X(c)" in {
-      trim( exporter.exportTerm( HOLAtom( HOLVar( "X", Ti -> To ), HOLConst( "c", Ti ) :: Nil ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( HOLAtom( Var( "X", Ti -> To ), Const( "c", Ti ) :: Nil ) ) ) must beEqualTo( trim(
         <variableatomformula>
           <secondordervariable symbol="X"/>
           <constant symbol="c"/>
         </variableatomformula> ) )
     }
     "export correctly a second-order quantified formula (all Z)Z(c)" in {
-      trim( exporter.exportTerm( HOLAllVar( HOLVar( "Z", Ti -> To ), HOLAtom( HOLVar( "Z", Ti -> To ), HOLConst( "c", "i" ) :: Nil ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( All( Var( "Z", Ti -> To ), HOLAtom( Var( "Z", Ti -> To ), Const( "c", Ti ) :: Nil ) ) ) ) must beEqualTo( trim(
         <secondorderquantifiedformula type="all">
           <secondordervariable symbol="Z"/>
           <variableatomformula>
@@ -100,7 +101,7 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
         </secondorderquantifiedformula> ) )
     }
     "export correctly a LambdaExpression lambda x . P(x)" in {
-      trim( exporter.exportTerm( HOLAbs( HOLVar( "x", Ti ), HOLAtom( HOLConst( "P", Ti -> To ), HOLVar( "x", Ti ) :: Nil ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( Abs( Var( "x", Ti ), HOLAtom( Const( "P", Ti -> To ), Var( "x", Ti ) :: Nil ) ) ) ) must beEqualTo( trim(
         <lambdasubstitution>
           <variablelist>
             <variable symbol="x"/>
@@ -111,8 +112,8 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
         </lambdasubstitution> ) )
     }
     "export correctly a LambdaExpression lambda x,y. R(x,y)" in {
-      trim( exporter.exportTerm( HOLAbs( HOLVar( "x", Ti ), HOLAbs( HOLVar( "y", Ti ),
-        HOLAtom( HOLConst( "R", Ti -> ( Ti -> To ) ), List( HOLVar( "x", Ti ), HOLVar( "y", Ti ) ) ) ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( Abs( Var( "x", Ti ), Abs( Var( "y", Ti ),
+        HOLAtom( Const( "R", Ti -> ( Ti -> To ) ), List( Var( "x", Ti ), Var( "y", Ti ) ) ) ) ) ) ) must beEqualTo( trim(
         <lambdasubstitution>
           <variablelist>
             <variable symbol="x"/>
@@ -125,10 +126,10 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
         </lambdasubstitution> ) )
     }
     "export correctly a defined set \\cap(X, Y)" in {
-      trim( exporter.exportTerm( HOLApp(
-        HOLApp( HOLConst( "\\cap", ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) ) ),
-          HOLVar( "X", Ti -> To ) ),
-        HOLVar( "Y", Ti -> To ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportTerm( App(
+        App( Const( "\\cap", ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) ) ),
+          Var( "X", Ti -> To ) ),
+        Var( "Y", Ti -> To ) ) ) ) must beEqualTo( trim(
         <definedset symbol="\cap" definition="\cap">
           <secondordervariable symbol="X"/>
           <secondordervariable symbol="Y"/>
@@ -136,9 +137,9 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
     }
     // definedsetformula is not supported yet
     /*"export correctly a defined set formula \\cup(X,Y)(c)" in {
-      trim(exporter.exportTerm(App(AppN( HOLConst( new ConstantStringSymbol("\\cup"), "((i -> o) -> ((i -> o) -> (i -> o)))"),
-          HOLVar( new VariableStringSymbol("X"), "(i -> o)" )::HOLVar( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
-          HOLConst( new ConstantStringSymbol("c"), "i" ) ))) must beEqualTo (trim(
+      trim(exporter.exportTerm(App(AppN( Const( new ConstantStringSymbol("\\cup"), "((i -> o) -> ((i -> o) -> (i -> o)))"),
+          Var( new VariableStringSymbol("X"), "(i -> o)" )::Var( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
+          Const( new ConstantStringSymbol("c"), "i" ) ))) must beEqualTo (trim(
         <definedsetformula>
           <definedset symbol="\cup" definition="\cup">
             <secondordervariable symbol="X"/>
@@ -149,15 +150,15 @@ class HOLTermExporterTest extends SpecificationWithJUnit {
       ))
     }
     "export correctly a complex sentence (all X)(all Y)(all z) X(z) impl \\cup(X,Y)(z)" in {
-      trim(exporter.exportTerm(AllVar( HOLVar( new VariableStringSymbol("X"), "(i -> o)" ),
-          AllVar( HOLVar( new VariableStringSymbol("Y"), "(i -> o)"),
-            AllVar( HOLVar( new VariableStringSymbol("z"), "i"),
-              Imp( Atom( new VariableStringSymbol("X"), HOLVar( "z", "i" )::Nil ),
-                HOLAppFormula(AppN( HOLConst( new ConstantStringSymbol("\\cup"),
+      trim(exporter.exportTerm(All( Var( new VariableStringSymbol("X"), "(i -> o)" ),
+          All( Var( new VariableStringSymbol("Y"), "(i -> o)"),
+            All( Var( new VariableStringSymbol("z"), "i"),
+              Imp( Atom( new VariableStringSymbol("X"), Var( "z", "i" )::Nil ),
+                AppFormula(AppN( Const( new ConstantStringSymbol("\\cup"),
                                    "((i -> o) -> ((i -> o) -> (i -> o)))"),
-                           HOLVar( new VariableStringSymbol("X"), "(i -> o)" )::
-                           HOLVar( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
-                    HOLVar( "z", "i" ) ) ) ) ) ) )) must beEqualTo (trim(
+                           Var( new VariableStringSymbol("X"), "(i -> o)" )::
+                           Var( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
+                    Var( "z", "i" ) ) ) ) ) ) )) must beEqualTo (trim(
         <secondorderquantifiedformula type="all">
           <secondordervariable symbol="X"/>
           <secondorderquantifiedformula type="all">

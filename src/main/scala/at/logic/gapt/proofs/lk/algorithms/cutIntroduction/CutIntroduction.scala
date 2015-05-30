@@ -5,14 +5,15 @@
  */
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toFSequent, quantRulesNumber => quantRulesNumberET }
-import at.logic.gapt.language.fol.algorithms.simplify.simplify
+import at.logic.gapt.language.fol.{ AllBlock, instantiateAll, FOLSubstitution }
+import at.logic.gapt.language.hol.algorithms.simplify.simplify
+import at.logic.gapt.language.hol.lcomp
+import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, toShallow, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
 import at.logic.gapt.proofs.lk.algorithms.{ quantRulesNumber, _ }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
 import at.logic.gapt.provers.Prover
@@ -247,7 +248,7 @@ object CutIntroduction extends Logger {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toFSequent( ep )
+        val endSequent = toShallow( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Term set Extraction **********/
@@ -368,7 +369,7 @@ object CutIntroduction extends Logger {
       case e: LKRuleCreationException =>
         status = "lk_rule_creation_exception"
         ( None, Some( e ) )
-      case e: Exception =>
+      case e: Throwable =>
         status = "cutintro_other_exception"
         ( None, Some( e ) )
     }
@@ -442,7 +443,7 @@ object CutIntroduction extends Logger {
     val ( proof, error ) = try {
       withTimeout( timeout * 1000 ) {
 
-        val endSequent = toFSequent( ep )
+        val endSequent = toShallow( ep )
         if ( verbose ) println( "\nEnd sequent: " + endSequent )
 
         /********** Terms Extraction **********/
@@ -536,7 +537,7 @@ object CutIntroduction extends Logger {
       case e: CutIntroEHSUnprovableException =>
         status = "cutintro_ehs_unprovable"
         ( None, Some( e ) )
-      case e: Exception =>
+      case e: Throwable =>
         status = "cutintro_other_exception"
         ( None, Some( e ) )
     }
@@ -582,11 +583,13 @@ object CutIntroduction extends Logger {
           case ( acc, termlist ) => {
             val freeVars = freeVariables( termlist )
 
+            // TODO: try to reverse the variable bindings
+            // in the construction of
             if ( freeVars.intersect( variables ).nonEmpty ) {
               val i_f = instantiateAll( formula, termlist )
               val f = formula match {
-                case FOLExVar( _ )  => FOLNeg( i_f )
-                case FOLAllVar( _ ) => i_f
+                case Ex( _ )  => Neg( i_f )
+                case All( _ ) => i_f
               }
               f :: acc
             } else acc
@@ -594,7 +597,7 @@ object CutIntroduction extends Logger {
         }
       }
     }
-    val c1 = FOLAnd( instantiated_f )
+    val c1 = And( instantiated_f )
 
     g.ss.foldLeft( List( c1 ) ) {
       case ( cut_formulas, ( variables, termset ) ) =>
@@ -605,16 +608,16 @@ object CutIntroduction extends Logger {
             val subst = FOLSubstitution( variables.zip( terms ) )
             subst( ci ) :: acc
         }
-        val ci_quant = variables.foldLeft( ci ) { ( f, v ) => FOLAllVar( v, f ) }
-        FOLAnd( forms ) :: ci_quant :: cut_formulas.tail
+        val ci_quant = AllBlock( variables, ci )
+        And( forms ) :: ci_quant :: cut_formulas.tail
       // The last term set contains only constants, so we drop the formula generated with it.
     }.tail.reverse
   }
 
   private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
     val ant = instantiateAll( cf, alpha )
-    val succ = FOLAnd( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
-    FOLImp( ant, succ )
+    val succ = And( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    Imp( ant, succ )
   }
 
   /**
@@ -636,12 +639,12 @@ object CutIntroduction extends Logger {
     // As an efficiency improvement, we treat the non-quantified part of the end-sequent
     // separately (since it never needs to be instantiated).
     val quantPart = FSequent( endSequent.antecedent.filter {
-      case FOLAllVar( _ ) => true
-      case _              => false
+      case All( _ ) => true
+      case _        => false
     },
       endSequent.succedent.filter {
-        case FOLExVar( _ ) => true
-        case _             => false
+        case Ex( _ ) => true
+        case _       => false
       } )
 
     // In our setting, we work with a sequent instead of a formula F as in the paper.
@@ -662,7 +665,7 @@ object CutIntroduction extends Logger {
     def getUs( fs: Seq[FOLFormula] ): Seq[Seq[Seq[Seq[FOLTerm]]]] =
       ( 0 to alphas.size ).map( i => fs.map( f => {
         val termlistlist = grammar.us( f )
-        termlistlist.filter( termlist => freeVariables( termlist ).intersect( alphas.take( i ) ).isEmpty )
+        termlistlist.filter( termlist => freeVariables( termlist ).intersect( alphas.take( i ).flatMap( x => x ) ).isEmpty )
       } ) )
 
     val Uleft = getUs( F.antecedent.asInstanceOf[Seq[FOLFormula]] )
@@ -672,11 +675,11 @@ object CutIntroduction extends Logger {
     trace( "Uright : " + Uright )
 
     // define the A_i
-    val A = ( cutFormulas zip alphas ).map {
+    val A: List[FOLFormula] = ( cutFormulas zip alphas ).map {
       case ( cf, ev ) => {
         trace( "computing A" )
         trace( "instantiating " + cf + " with " + ev )
-        instantiateAll( cf, ev :: Nil )
+        instantiateAll( cf, ev )
       }
     }
 
@@ -695,7 +698,7 @@ object CutIntroduction extends Logger {
     trace( "AS: " + AS )
 
     // define the CI_i
-    val cutImplications = ( 0 to alphas.size - 1 ).map( i => getCutImpl( cutFormulas( i ), alphas( i ) :: Nil, grammar.ss( i )._2 ) )
+    val cutImplications = ( 0 to alphas.size - 1 ).map( i => getCutImpl( cutFormulas( i ), alphas( i ), grammar.ss( i )._2 ) )
 
     // compute the A_i' via interpolation
     // TODO: increase performance by feeding existing proofs to the
@@ -706,7 +709,7 @@ object CutIntroduction extends Logger {
         trace( "freeVariables( A( " + i + "  ) ): " + freeVariables( A( i - 1 ) ) )
         trace( "alphas.drop( " + i + " ): " + alphas.drop( i - 1 ) )
         // if A_i fulfills the variable condition, set A_i':= A_i
-        if ( freeVariables( A( i - 1 ) ).toSet subsetOf alphas.drop( i - 1 ).toSet ) {
+        if ( freeVariables( A( i - 1 ) ).toSet subsetOf alphas.drop( i - 1 ).flatMap( x => x ).toSet ) {
           trace( "fulfills the variable condition" )
           acc :+ A( i - 1 )
         } else // otherwise, compute interpolant I and set A_':= And( A_i, I )
@@ -718,14 +721,14 @@ object CutIntroduction extends Logger {
           val neg = negf compose ( new FSequent( cutImplications.take( i - 1 ), Nil ) )
           val pos = posf compose ( new FSequent( AS( i - 1 ), acc ) )
           val interpolant = ExtractInterpolant( neg, pos, prover )
-          val res = FOLAnd( A( i - 1 ), interpolant )
+          val res = And( A( i - 1 ), interpolant )
           val res2 = simplify( res )
           acc :+ res2
         }
       }
     }.reverse
 
-    val cutFormulasPrime = ( Aprime zip Aprime.indices ).map { case ( a, i ) => FOLAllVar( alphas( i ), a ) }
+    val cutFormulasPrime = ( Aprime zip Aprime.indices ).map { case ( a, i ) => AllBlock( alphas( i ), a ) }
 
     // define A'_i[x \ S_i]
     val AprimeS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiateAll( cutFormulasPrime( i ), s ) ) )
@@ -765,7 +768,7 @@ object CutIntroduction extends Logger {
     val proof = ( 0 to alphas.size - 1 ).foldLeft( Lproof_ )( ( lproof, i ) => {
       val left = buildLeftPart( i, quantPart, Aprime, Uleft, Uright, alphas, cutFormulasPrime( i ), lproof )
       trace( " Rproofs_( " + i + " ).root: " + Rproofs_( i ).root )
-      val right = buildRightPart( Rproofs_( i ), cutFormulasPrime( i ), grammar.ss( i )._2.map( _.head ).toList )
+      val right = buildRightPart( Rproofs_( i ), cutFormulasPrime( i ), grammar.ss( i )._2 )
       trace( "right part ES: " + right.root )
       val cut = CutRule( left, right, cutFormulasPrime( i ) )
       val cont1 = ContractionMacroRule( cut, FU( i + 1 ), false )
@@ -793,16 +796,17 @@ object CutIntroduction extends Logger {
    * ----------------------------------------------------------------------------- \forall_r
    * \forall G, G[U_{i+1}] :- D[U_{i+1}], \exists D, (\forall x) A_{i}[x], ..., A_n
    */
-  private def buildLeftPart( i: Int, es: FSequent, A: Seq[FOLFormula], Uleft: Seq[Seq[Seq[Seq[FOLTerm]]]], Uright: Seq[Seq[Seq[Seq[FOLTerm]]]], alphas: Seq[FOLVar], cf: FOLFormula, proof: LKProof ) =
+  private def buildLeftPart( i: Int, es: FSequent, A: Seq[FOLFormula], Uleft: Seq[Seq[Seq[Seq[FOLTerm]]]], Uright: Seq[Seq[Seq[Seq[FOLTerm]]]], alphas: Seq[Seq[FOLVar]], cf: FOLFormula, proof: LKProof ) =
     {
       trace( "in buildLeftPart" )
       trace( "Uleft( " + i + " ): " + Uleft( i ) )
       trace( "Uleft( " + ( i + 1 ) + " ): " + Uleft( i + 1 ) )
       trace( "es: " + proof.root )
-      def myWeakQuantRules( proof: LKProof, fs: Seq[FOLFormula], instances: Seq[Pair[Seq[Seq[FOLTerm]], Seq[Seq[FOLTerm]]]] ) =
+      def myWeakQuantRules( proof: LKProof, fs: Seq[FOLFormula], instances: Seq[Tuple2[Seq[Seq[FOLTerm]], Seq[Seq[FOLTerm]]]] ) =
         ( fs zip instances ).foldLeft( proof ) {
           case ( proof, ( f, ( ui, uip ) ) ) => {
             trace( "in myWeakQuantRules" )
+            trace( "f: " + f )
             trace( "ui: " + ui )
             trace( "uip: " + uip )
             trace( "ui diff uip: " + ( ui diff uip ) )
@@ -812,9 +816,8 @@ object CutIntroduction extends Logger {
 
       val p1 = myWeakQuantRules( proof, es.antecedent.asInstanceOf[Seq[FOLFormula]], Uleft( i ) zip Uleft( i + 1 ) )
       val p2 = myWeakQuantRules( p1, es.succedent.asInstanceOf[Seq[FOLFormula]], Uright( i ) zip Uright( i + 1 ) )
-      trace( "es after myWeakQuantRules: " + p2.root )
 
-      ForallRightRule( p2, A( i ), cf, alphas( i ) )
+      ForallRightBlock( p2, cf, alphas( i ) )
     }
 
   /**
@@ -826,12 +829,12 @@ object CutIntroduction extends Logger {
    *
    * (to be used to cut against the result of buildLeftPart)
    */
-  private def buildRightPart( proof: LKProof, a: FOLFormula, s: Seq[FOLTerm] ) =
+  private def buildRightPart( proof: LKProof, a: FOLFormula, s: Seq[Seq[FOLTerm]] ) =
     {
       trace( "calling buildRightPart" )
       trace( "a: " + a )
       trace( "s: " + s )
-      genWeakQuantRules( a, s.map( _ :: Nil ), proof )
+      genWeakQuantRules( a, s, proof )
     }
 
   // Both methods below are responsible for generating the instances of 
@@ -842,10 +845,10 @@ object CutIntroduction extends Logger {
     trace( "lst: " + lst )
     ( f, lst ) match {
       case ( _, Nil ) => ax
-      case ( FOLAllVar( _, _ ), h :: t ) =>
+      case ( All( _, _ ), h :: t ) =>
         val newForm = instantiateAll( f, h )
         ContractionLeftRule( ForallLeftBlock( genWeakQuantRules( f, t, ax ), f, h ), f )
-      case ( FOLExVar( _, _ ), h :: t ) =>
+      case ( Ex( _, _ ), h :: t ) =>
         val newForm = instantiateAll( f, h )
         ContractionRightRule( ExistsRightBlock( genWeakQuantRules( f, t, ax ), f, h ), f )
     }

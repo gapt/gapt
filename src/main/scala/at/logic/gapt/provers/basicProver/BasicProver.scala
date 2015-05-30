@@ -1,10 +1,9 @@
 
 package at.logic.gapt.provers.basicProver
 
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.algorithms.LKProver
 import at.logic.gapt.provers.{ FailSafeProver, Prover }
-import at.logic.gapt.provers.minisat.MiniSATProver
-import at.logic.gapt.language.hol.HOLFormula
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 
 class BasicProver extends Prover {
@@ -13,7 +12,7 @@ class BasicProver extends Prover {
   // minisat for validity check
 
   def getLKProof( seq: FSequent ): Option[LKProof] =
-    new LKProver( cleanStructuralRules = false ).getLKProof( seq )
+    new LKProver().getLKProof( seq )
 
   override def isValid( seq: FSequent ): Boolean =
     FailSafeProver.getProver().isValid( seq )

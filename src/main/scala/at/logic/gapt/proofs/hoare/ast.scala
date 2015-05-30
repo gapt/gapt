@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.hoare
 
-import at.logic.gapt.language.fol.{ FOLFormula, FOLTerm, FOLVar }
+import at.logic.gapt.expr._
 
 abstract class Program {
   override def toString = this match {

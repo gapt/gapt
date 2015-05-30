@@ -4,11 +4,11 @@
 
 package at.logic.gapt.provers.atp
 
+import at.logic.gapt.expr.FOLExpression
 import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.language.fol.algorithms.{ UnificationAlgorithm, FOLMatchingAlgorithm, FOLUnificationAlgorithm }
 import at.logic.gapt.proofs.resolution.{ Clause, ResolutionProof }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.fol.FOLExpression
 import at.logic.gapt.formats.simple.SimpleResolutionParserFOL
 import at.logic.gapt.formats.readers.FileReader
 import at.logic.gapt.provers.atp.commands.base._
@@ -17,6 +17,7 @@ import at.logic.gapt.provers.atp.commands.logical.DeterministicMacroCommand
 import at.logic.gapt.provers.atp.commands.refinements.base.SequentsMacroCommand
 import at.logic.gapt.utils.executionModels.ndStream.{ Configuration, NDStream }
 import at.logic.gapt.utils.executionModels.searchAlgorithms.BFSAlgorithm
+import at.logic.gapt.utils.logging.Logger
 
 import collection.mutable.HashMap
 
@@ -101,7 +102,7 @@ object SearchDerivation extends at.logic.gapt.utils.logging.Logger {
 
 class ProverException( msg: String ) extends Exception( msg )
 
-trait Prover[V <: Sequent] {
+trait Prover[V <: Sequent] extends Logger {
 
   def refute( commands: Stream[Command[V]] ): NDStream[ResolutionProof[V]] = {
     //println("\nrefute")
@@ -121,7 +122,7 @@ trait Prover[V <: Sequent] {
       List()
     } else {
       //if (!conf.commands.head.toString.matches("(VariantsCommand|IsGuidedNotFoundCommand|SimpleRefinementGetCommand|ClauseFactorCommand).*"))
-      //println("\nProver Executing command: "+Console.RED+conf.commands.head.getClass+Console.RESET+" :: "+conf.commands.head.toString+"\n")
+      debug( s"Executing command: ${conf.commands.head.getClass.getSimpleName} :: ${conf.commands.head}" )
 
       conf.commands.head match {
         case com: InitialCommand[_] => com( conf.state ).map( x => new MyConfiguration( x._1, conf.commands.tail, x._2 ) )

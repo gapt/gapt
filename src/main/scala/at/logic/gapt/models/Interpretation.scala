@@ -1,6 +1,6 @@
 package at.logic.gapt.models
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
 
 /* A trait describing propositional interpretations */
 trait Interpretation {
@@ -9,11 +9,13 @@ trait Interpretation {
 
   // Interpret an arbitrary formula.
   def interpret( f: HOLFormula ): Boolean = f match {
-    case HOLAnd( f1, f2 ) => interpret( f1 ) && interpret( f2 )
-    case HOLOr( f1, f2 )  => interpret( f1 ) || interpret( f2 )
-    case HOLImp( f1, f2 ) => !interpret( f1 ) || interpret( f2 )
-    case HOLNeg( f1 )     => !interpret( f1 )
-    case HOLAtom( _, _ )  => interpretAtom( f )
+    case And( f1, f2 )   => interpret( f1 ) && interpret( f2 )
+    case Or( f1, f2 )    => interpret( f1 ) || interpret( f2 )
+    case Imp( f1, f2 )   => !interpret( f1 ) || interpret( f2 )
+    case Neg( f1 )       => !interpret( f1 )
+    case Bottom()        => false
+    case Top()           => true
+    case HOLAtom( _, _ ) => interpretAtom( f )
   }
 
 }

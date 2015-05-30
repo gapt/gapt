@@ -1,10 +1,11 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
+import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.sat4j.Sat4j
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 
 class GrammarFindingTest extends Specification {
   "VectTratGrammar" should {
@@ -72,7 +73,7 @@ class GrammarFindingTest extends Specification {
         Seq( "x->r(y)" ), Seq( "x->r(z)" ), Seq( "y->c" ), Seq( "z->d" ) )
       val p = g.productions( 3 ) // z->d
       val f = new TermGenerationFormula( g, parseTerm( "r(c)" ) )
-      new Sat4j().solve( FOLAnd( f.formula, FOLNeg( f.vectProductionIsIncluded( p ) ) ) ) must beSome
+      new Sat4j().solve( And( f.formula, Neg( f.vectProductionIsIncluded( p ) ) ) ) must beSome
 
     }
     "generate term with 2 productions" in {
@@ -83,8 +84,8 @@ class GrammarFindingTest extends Specification {
       val g = tg( "x->c" )
       val p = g.productions( 0 )
       val formula = new GrammarMinimizationFormula( g )
-      new Sat4j().solve( FOLAnd( formula.generatesTerm( parseTerm( "c" ) ),
-        FOLNeg( formula.productionIsIncluded( p ) ) ) ) must beNone
+      new Sat4j().solve( And( formula.generatesTerm( parseTerm( "c" ) ),
+        Neg( formula.productionIsIncluded( p ) ) ) ) must beNone
     }
     "Lang((x, {x -> c, y -> d})) = {c}" in {
       val g = tg( "x->c", "y->d" )
@@ -95,8 +96,8 @@ class GrammarFindingTest extends Specification {
       val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
       val g = normalFormsTratGrammar( l, 4 )
       val formula = new GrammarMinimizationFormula( g )
-      val onlyTauProd = FOLAnd( g.productions.toList.filter( _._1 != g.axiom ).map { p => FOLNeg( formula.productionIsIncluded( p ) ) } )
-      new Sat4j().solve( FOLAnd( formula.generatesTerm( l( 0 ) ), onlyTauProd ) ) must beSome
+      val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
+      new Sat4j().solve( And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) ) must beSome
     }
   }
 
@@ -110,8 +111,10 @@ class GrammarFindingTest extends Specification {
 
   "findMinimalGrammar" should {
     "find covering grammar" in {
+      if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
+
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" )
-      val g = findMinimalGrammar( l map parseTerm, 1 )
+      val g = findMinimalGrammar( l map parseTerm, 1, new QMaxSAT )
       covers( g, l: _* )
       g.productions.size must beEqualTo( 2 + 3 )
     }

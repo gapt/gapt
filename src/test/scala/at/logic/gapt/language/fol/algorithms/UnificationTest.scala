@@ -1,12 +1,11 @@
 
 package at.logic.gapt.language.fol.algorithms
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.FOLSubstitution
 import org.junit.runner.RunWith
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
-//import at.logic.gapt.language.lambda.types._
-//import at.logic.gapt.language.hol.logicSymbols._
 
 @RunWith( classOf[JUnitRunner] )
 class UnificationTest extends SpecificationWithJUnit {
@@ -107,9 +106,9 @@ class UnificationTest extends SpecificationWithJUnit {
 
     // the following test was automatically generated using the toCode function
     "unify two formulas from a real-world example" in {
-      val t1 = FOLOr( FOLNeg( FOLAtom( "=", FOLConst( "ladr1" ) :: FOLFunction( "ladr3", FOLFunction( "ladr2", FOLVar( "B" ) :: FOLVar( "A" ) :: Nil ) :: Nil ) :: Nil ) ), FOLAtom( "=", FOLConst( "ladr0" ) :: FOLFunction( "ladr3", FOLFunction( "ladr2", FOLFunction( "ladr2", FOLConst( "ladr0" ) :: FOLFunction( "ladr2", FOLVar( "B" ) :: FOLVar( "A" ) :: Nil ) :: Nil ) :: FOLVar( "C" ) :: Nil ) :: Nil ) :: Nil ) )
+      val t1 = Or( Neg( FOLAtom( "=", FOLConst( "ladr1" ) :: FOLFunction( "ladr3", FOLFunction( "ladr2", FOLVar( "B" ) :: FOLVar( "A" ) :: Nil ) :: Nil ) :: Nil ) ), FOLAtom( "=", FOLConst( "ladr0" ) :: FOLFunction( "ladr3", FOLFunction( "ladr2", FOLFunction( "ladr2", FOLConst( "ladr0" ) :: FOLFunction( "ladr2", FOLVar( "B" ) :: FOLVar( "A" ) :: Nil ) :: Nil ) :: FOLVar( "C" ) :: Nil ) :: Nil ) :: Nil ) )
 
-      val t2 = FOLOr( FOLNeg( FOLAtom( "=", FOLConst( "ladr1" ) :: FOLFunction( "ladr3", FOLFunction( "ladr2", FOLVar( "x_{3}" ) :: FOLVar( "x_{2}" ) :: Nil ) :: Nil ) :: Nil ) ), FOLAtom( "=", FOLConst( "ladr0" ) :: FOLFunction( "ladr3", FOLFunction( "ladr2", FOLFunction( "ladr2", FOLConst( "ladr0" ) :: FOLFunction( "ladr2", FOLVar( "x_{3}" ) :: FOLVar( "x_{2}" ) :: Nil ) :: Nil ) :: FOLVar( "x_{4}" ) :: Nil ) :: Nil ) :: Nil ) )
+      val t2 = Or( Neg( FOLAtom( "=", FOLConst( "ladr1" ) :: FOLFunction( "ladr3", FOLFunction( "ladr2", FOLVar( "x_{3}" ) :: FOLVar( "x_{2}" ) :: Nil ) :: Nil ) :: Nil ) ), FOLAtom( "=", FOLConst( "ladr0" ) :: FOLFunction( "ladr3", FOLFunction( "ladr2", FOLFunction( "ladr2", FOLConst( "ladr0" ) :: FOLFunction( "ladr2", FOLVar( "x_{3}" ) :: FOLVar( "x_{2}" ) :: Nil ) :: Nil ) :: FOLVar( "x_{4}" ) :: Nil ) :: Nil ) :: Nil ) )
 
       ( FOLUnificationAlgorithm.unify( t1, t2 ) ) must beEqualTo( FOLSubstitution( ( FOLVar( "B" ), FOLVar( "x_{3}" ) ) :: ( FOLVar( "A" ), FOLVar( "x_{2}" ) )
         :: ( FOLVar( "C" ), FOLVar( "x_{4}" ) ) :: Nil ) :: Nil )

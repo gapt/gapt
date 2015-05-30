@@ -1,9 +1,7 @@
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol.algorithms.recreateWithFactory
-import at.logic.gapt.language.fol.{ FOLFormula, FOLSubstitution }
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.{ FactoryA, LambdaExpression, Var, LambdaSubstitution }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
@@ -17,18 +15,17 @@ import at.logic.gapt.proofs.resolution.robinson._
  */
 
 object RobinsonToRal extends RobinsonToRal {
-  override def convert_formula( e: HOLFormula ): HOLFormula =
-    recreateWithFactory( e, HOLFactory ).asInstanceOf[HOLFormula]
-  override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = {
-    recreateWithFactory( s, HOLFactory, convert_map ).asInstanceOf[HOLSubstitution]
-  }
+  @deprecated
+  override def convert_formula( e: HOLFormula ): HOLFormula = e
+  @deprecated
+  override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
 
   //TODO: this is somehow dirty....
   def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution =
-    HOLSubstitution( m.asInstanceOf[Map[HOLVar, HOLExpression]] )
+    HOLSubstitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
 }
 
-case class RalException[V <: LabelledSequent]( val message: String, val rp: List[RobinsonResolutionProof], val ralp: List[RalResolutionProof[V]], val exp: List[HOLExpression] ) extends Exception( message );
+case class RalException[V <: LabelledSequent]( val message: String, val rp: List[RobinsonResolutionProof], val ralp: List[RalResolutionProof[V]], val exp: List[LambdaExpression] ) extends Exception( message );
 
 abstract class RobinsonToRal {
   type TranslationMap = Map[FormulaOccurrence, LabelledFormulaOccurrence]
@@ -165,20 +162,6 @@ abstract class RobinsonToRal {
   def my_require( fs1: FSequent, fs2: FSequent, msg: String ) = {
     val cfs2 = convert_sequent( fs2 )
     require( fs1 multiSetEquals ( convert_sequent( fs2 ) ), msg + " (converted sequent is " + cfs2 + ")" ) //commented out, because the translation is too flexible now
-  }
-
-  import at.logic.gapt.language.lambda
-  def checkFactory( e: LambdaExpression, f: FactoryA ): Boolean = e match {
-    case lambda.Var( _, _ ) if e.factory == f   => true
-    case lambda.Const( _, _ ) if e.factory == f => true
-    case lambda.App( s, t ) if e.factory == f   => checkFactory( s, f ) && checkFactory( t, f )
-    case lambda.Abs( x, t ) if e.factory == f   => checkFactory( x, f ) && checkFactory( t, f )
-    case _ if e.factory == f =>
-      println( "unhandled case for " + e )
-      false
-    case _ =>
-      println( "wrong factory for " + e + " expected: " + f + " but is:" + e.factory )
-      false
   }
 
   def pickFO( f: HOLFormula, list: Seq[LabelledFormulaOccurrence], exclusion_list: Seq[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence =

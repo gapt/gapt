@@ -2,6 +2,6 @@ package at.logic.gapt.utils.traits
 
 trait ExternalProgram {
 
-  def isInstalled(): Boolean
+  val isInstalled: Boolean
 
 }

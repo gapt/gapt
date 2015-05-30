@@ -4,7 +4,7 @@
 
 package at.logic.gapt.language.hol
 
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.streams.Definitions._
 
 trait TSkolemSymbol

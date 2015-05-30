@@ -5,8 +5,8 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.getCutsAsProofs
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.proofs.TreeProof
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types.{ To, Ti }
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.{ To, Ti }
 
 import scala.swing.event.Key
 import scala.swing._
@@ -405,18 +405,18 @@ class MyMenubar extends MenuBar {
   contents += new Menu( "Tests" ) {
     mnemonic = Key.T
     contents += new MenuItem( Action( "Non-Prenex Proof 1" ) {
-      val p = HOLVar( "p", Ti -> To )
-      val a = HOLVar( "a", Ti )
-      val b = HOLVar( "b", Ti )
-      val q = HOLVar( "q", Ti -> To )
-      val x = HOLVar( "x", Ti )
+      val p = Var( "p", Ti -> To )
+      val a = Var( "a", Ti )
+      val b = Var( "b", Ti )
+      val q = Var( "q", Ti -> To )
+      val x = Var( "x", Ti )
       val px = HOLAtom( p, x :: Nil ) // p(x)
       val pa = HOLAtom( p, a :: Nil ) // p(a)
       val pb = HOLAtom( p, b :: Nil ) // p(b)
       val qa = HOLAtom( q, a :: Nil ) // q(a)
       val substa = a // x -> a
       val substb = b // x -> b
-      val all_px = HOLAllVar( x, px ) // forall x. p(x)
+      val all_px = All( x, px ) // forall x. p(x)
 
       val axm1 = Axiom( pa :: Nil, pa :: Nil )
       val axm2 = Axiom( pb :: Nil, pb :: Nil )
@@ -430,20 +430,20 @@ class MyMenubar extends MenuBar {
       ProofToolPublisher.publish( EnableMenus )
     } ) { border = customBorder }
     contents += new MenuItem( Action( "Non-Prenex Proof 2" ) {
-      val p = HOLVar( "p", Ti -> To )
-      val a = HOLVar( "a", Ti )
-      val b = HOLVar( "b", Ti )
-      val q = HOLVar( "q", Ti -> To )
-      val x = HOLVar( "x", Ti )
-      val y = HOLVar( "y", Ti )
+      val p = Var( "p", Ti -> To )
+      val a = Var( "a", Ti )
+      val b = Var( "b", Ti )
+      val q = Var( "q", Ti -> To )
+      val x = Var( "x", Ti )
+      val y = Var( "y", Ti )
       val px = HOLAtom( p, x :: Nil ) // p(x)
       val pa = HOLAtom( p, a :: Nil ) // p(a)
       val pb = HOLAtom( p, b :: Nil ) // p(b)
       val qy = HOLAtom( q, y :: Nil ) // q(a)
       val substa = a // x -> a
       val substb = b // x -> b
-      val ex_px = HOLExVar( x, px ) // exists x. p(x)
-      val ex_qy = HOLExVar( y, qy )
+      val ex_px = Ex( x, px ) // exists x. p(x)
+      val ex_qy = Ex( y, qy )
 
       val axm1 = Axiom( pa :: Nil, pa :: Nil )
       val axm2 = Axiom( pb :: Nil, pb :: Nil )
@@ -457,12 +457,12 @@ class MyMenubar extends MenuBar {
       ProofToolPublisher.publish( EnableMenus )
     } ) { border = customBorder }
     contents += new MenuItem( Action( "Nested Proof 1" ) {
-      val p = HOLVar( "p", Ti -> To )
-      val a = HOLVar( "a", Ti )
-      val b = HOLVar( "b", Ti )
-      val q = HOLVar( "q", Ti -> To )
-      val x = HOLVar( "x", Ti )
-      val y = HOLVar( "y", Ti )
+      val p = Var( "p", Ti -> To )
+      val a = Var( "a", Ti )
+      val b = Var( "b", Ti )
+      val q = Var( "q", Ti -> To )
+      val x = Var( "x", Ti )
+      val y = Var( "y", Ti )
       val px = HOLAtom( p, x :: Nil ) // p(x)
       val pa = HOLAtom( p, a :: Nil ) // p(a)
       val pb = HOLAtom( p, b :: Nil ) // p(b)
@@ -470,7 +470,7 @@ class MyMenubar extends MenuBar {
       val qy = HOLAtom( q, y :: Nil ) // q(a)
       val substa = a // x -> a
       val substb = b // x -> b
-      val all_px = HOLAllVar( x, px ) // forall x. p(x)
+      val all_px = All( x, px ) // forall x. p(x)
 
       val axm1 = Axiom( pa :: Nil, pa :: Nil )
       val axm2 = Axiom( pb :: Nil, pb :: Nil )
@@ -479,7 +479,7 @@ class MyMenubar extends MenuBar {
       val andrght = AndRightRule( all1, all2, pa, pb )
       val contr = ContractionLeftRule( andrght, all_px )
       val andlft = AndLeft1Rule( contr, all_px, qa )
-      val all3 = ForallLeftRule( andlft, HOLAnd( all_px, qa ), HOLAllVar( y, HOLAnd( all_px, qy ) ), a )
+      val all3 = ForallLeftRule( andlft, And( all_px, qa ), All( y, And( all_px, qy ) ), a )
 
       Main.updateLauncher( "Proof", all3, Main.defaultFontSize )
       ProofToolPublisher.publish( EnableMenus )

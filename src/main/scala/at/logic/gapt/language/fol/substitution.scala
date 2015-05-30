@@ -5,20 +5,23 @@
 
 package at.logic.gapt.language.fol
 
-import at.logic.gapt.language.hol.{ HOLSubstitution, HOLExpression, HOLVar }
+import at.logic.gapt.expr._
+import at.logic.gapt.language.hol.HOLSubstitution
 
-class FOLSubstitution( val folmap: Map[FOLVar, FOLExpression] ) extends HOLSubstitution( folmap.asInstanceOf[Map[HOLVar, HOLExpression]] ) {
-  def apply( t: FOLExpression ): FOLExpression = {
-    val s = HOLSubstitution( map.asInstanceOf[Map[HOLVar, HOLExpression]] )
-    s( t ).asInstanceOf[FOLExpression]
+// FIXME: does FOLExpression really make sense here (instead of FOLTerm)?
+
+class FOLSubstitution( val folmap: Map[FOLVar, FOLExpression] ) extends HOLSubstitution( folmap.asInstanceOf[Map[Var, LambdaExpression]] ) {
+  def apply( t: FOLTerm ): FOLTerm = {
+    val s = HOLSubstitution( map.asInstanceOf[Map[Var, LambdaExpression]] )
+    s( t ).asInstanceOf[FOLTerm]
   }
   def apply( t: FOLFormula ): FOLFormula = {
-    val s = HOLSubstitution( map.asInstanceOf[Map[HOLVar, HOLExpression]] )
+    val s = HOLSubstitution( map.asInstanceOf[Map[Var, LambdaExpression]] )
     s( t ).asInstanceOf[FOLFormula]
   }
-  def apply( t: FOLTerm ): FOLTerm = {
-    val s = HOLSubstitution( map.asInstanceOf[Map[HOLVar, HOLExpression]] )
-    s( t ).asInstanceOf[FOLTerm]
+  def apply( t: FOLExpression ): FOLExpression = {
+    val s = HOLSubstitution( map.asInstanceOf[Map[Var, LambdaExpression]] )
+    s( t ).asInstanceOf[FOLExpression]
   }
 
   def compose( sub: FOLSubstitution ): FOLSubstitution = FOLSubstitution( folmap ++ sub.folmap.map( x => ( x._1, apply( x._2 ) ) ) )

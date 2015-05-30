@@ -1,9 +1,8 @@
 
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.fol.{ FOLConst, FOLVar, FOLAtom, FOLFunction }
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import org.junit.runner.RunWith
 import org.specs2.mutable._
@@ -12,31 +11,31 @@ import org.specs2.runner.JUnitRunner
 @RunWith( classOf[JUnitRunner] )
 class SimplificationTest extends SpecificationWithJUnit {
   "Simplifications" should {
-    val a = HOLAtom( HOLVar( "a", To ) )
-    val b = HOLAtom( HOLVar( "b", To ) )
+    val a = HOLAtom( Var( "a", To ) )
+    val b = HOLAtom( Var( "b", To ) )
     val s1 = FSequent( a :: Nil, a :: Nil )
     val s2 = FSequent( b :: a :: b :: Nil, b :: b :: b :: a :: b :: Nil )
     val s3 = FSequent( a :: Nil, b :: Nil )
     val s4 = FSequent( b :: Nil, a :: Nil )
 
-    val P = HOLConst( "P", ( Ti -> Ti ) -> To )
-    val Q = HOLConst( "Q", ( Ti -> Ti ) -> To )
-    val z = HOLVar( "z", Ti -> Ti )
-    val z2 = HOLVar( "z2", Ti -> Ti )
-    val b1 = HOLConst( "b", Ti -> Ti )
+    val P = Const( "P", ( Ti -> Ti ) -> To )
+    val Q = Const( "Q", ( Ti -> Ti ) -> To )
+    val z = Var( "z", Ti -> Ti )
+    val z2 = Var( "z2", Ti -> Ti )
+    val b1 = Const( "b", Ti -> Ti )
     val Pz = HOLAtom( P, z :: Nil )
     val Pz2 = HOLAtom( P, z2 :: Nil )
     val Qb1 = HOLAtom( Q, b1 :: Nil )
 
-    val f1a = HOLAnd( Pz, Qb1 )
-    val f1b = HOLAnd( Pz2, Qb1 )
+    val f1a = And( Pz, Qb1 )
+    val f1b = And( Pz2, Qb1 )
 
-    val P1 = HOLConst( "P", Ti -> To )
-    val x = HOLVar( "x", Ti )
-    val y = HOLVar( "y", Ti )
-    val ai = HOLConst( "a", Ti )
-    val b2 = HOLConst( "b", Ti )
-    val f = HOLConst( "f", Ti -> ( Ti -> Ti ) )
+    val P1 = Const( "P", Ti -> To )
+    val x = Var( "x", Ti )
+    val y = Var( "y", Ti )
+    val ai = Const( "a", Ti )
+    val b2 = Const( "b", Ti )
+    val f = Const( "f", Ti -> ( Ti -> Ti ) )
     val fxy = HOLFunction( f, x :: y :: Nil )
     val fba = HOLFunction( f, b2 :: ai :: Nil )
 

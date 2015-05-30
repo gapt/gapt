@@ -6,8 +6,8 @@ import at.logic.gapt.formats.xml.ProofDatabase
 import scala.util.parsing.input.PagedSeqReader
 import scala.collection.immutable.PagedSeq
 import java.io.FileReader
-import at.logic.gapt.language.lambda.types.TA
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.TA
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.formats.llk.TokenToLKConverter
 
@@ -17,14 +17,14 @@ import at.logic.gapt.formats.llk.TokenToLKConverter
  */
 case class ExtendedProofDatabase( eproofs: Map[HOLFormula, LKProof],
                                   eaxioms: Map[HOLFormula, HOLFormula],
-                                  edefinitions: Map[HOLExpression, HOLExpression] )
+                                  edefinitions: Map[LambdaExpression, LambdaExpression] )
     extends ProofDatabase( Map(), Nil, Nil, Nil ) {
   override val proofs: List[( String, LKProof )] = eproofs.map( x =>
     x._1 match {
-      case HOLAtom( HOLConst( sym, _ ), _ ) => ( sym.toString, x._2 )
-      case HOLAtom( HOLVar( sym, _ ), _ )   => ( sym.toString, x._2 )
+      case HOLAtom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
+      case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
     } ).toList
-  override val Definitions: Map[HOLExpression, HOLExpression] = edefinitions
+  override val Definitions: Map[LambdaExpression, LambdaExpression] = edefinitions
   override val axioms: List[FSequent] = eaxioms.values.toList map ( x => FSequent( Nil, x :: Nil ) )
   override val sequentLists: List[( String, List[FSequent] )] = Nil
 }

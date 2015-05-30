@@ -3,10 +3,9 @@ package at.logic.gapt.provers.maxsat
 import java.io._
 
 import at.logic.gapt.formats.dimacs.DIMACSHelper
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.resolution.algorithms.{ TseitinCNF, CNFp }
 import at.logic.gapt.utils.logging.{ Logger, Stopwatch }
 
@@ -46,7 +45,7 @@ trait MaxSATSolver extends Logger {
 
     // Hard CNF transformation
     watch.start()
-    val hardCNF = TseitinCNF( FOLAnd( hard ) )
+    val hardCNF = TseitinCNF( And( hard ) )
     val hardCNFTime = watch.lap( "hardCNF" )
     logTime( "[Runtime]<hard CNF-Generation> ", hardCNFTime )
     trace( "produced hard cnf: " + hardCNF )
@@ -310,7 +309,7 @@ trait MaxSATSolverBinary extends MaxSATSolver {
    * Checks if a particular Max SAT Solver is installed properly
    * @return true if it is installed, false otherwise
    */
-  def isInstalled(): Boolean = {
+  val isInstalled: Boolean = {
     try {
       val clause = FClause( List(), List( FOLAtom( "P" ) ) )
       solve( List( clause ), List( clause -> 1 ) ) match {
@@ -321,10 +320,9 @@ trait MaxSATSolverBinary extends MaxSATSolver {
       case ex: IOException => {
         warn( "It seems that the MaxSAT solver is not installed properly" )
         warn( noBinaryWarn() )
-        return false
+        false
       }
     }
-    return true
   }
 
   /**

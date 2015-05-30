@@ -9,8 +9,8 @@ import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.resolution.robinson.{ Formatter, RobinsonResolutionProof }
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.simple.{ SimpleFOLParser, SimpleResolutionParserFOL }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.formats.readers.StringReader
@@ -47,7 +47,7 @@ class ReplayTest extends SpecificationWithJUnit {
 
   def getRefutation2( ls: Iterable[FSequent] ) = MyProver.refute( Stream( SetTargetClause( FSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next
 
-  args( skipAll = !Prover9.isInstalled() )
+  args( skipAll = !Prover9.isInstalled )
   "replay" should {
     /*"prove (with para) SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
 

@@ -5,11 +5,9 @@
 package at.logic.gapt.provers.sat4j
 
 import at.logic.gapt.formats.dimacs.{ writeDIMACS, readDIMACS, DIMACSHelper }
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution.algorithms.{ CNFp, TseitinCNF }
 import at.logic.gapt.utils.logging.{ Stopwatch, Logger }
-import at.logic.gapt.language.fol.FOLFormula
-import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 import at.logic.gapt.provers.Prover
@@ -56,10 +54,10 @@ object readSat4j extends Logger {
   }
 }
 
-// Call Sat4j to solve quantifier-free HOLFormulas.
+// Call Sat4j to solve quantifier-free Formulas.
 class Sat4j extends Stopwatch {
   // Checks if f is valid using Sat4j.
-  def isValid( f: HOLFormula ) = solve( HOLNeg( f ) ) match {
+  def isValid( f: HOLFormula ) = solve( Neg( f ) ) match {
     case Some( _ ) => false
     case None      => true
   }
@@ -123,8 +121,8 @@ class Sat4jProver extends Prover with Logger {
 
   override def isValid( seq: FSequent ): Boolean = {
     val sat = new Sat4j()
-    trace( "calling Sat4j.isValid( " + HOLImp( HOLAnd( seq.antecedent.toList ), HOLOr( seq.succedent.toList ) ) + ")" )
-    sat.isValid( HOLImp( HOLAnd( seq.antecedent.toList ), HOLOr( seq.succedent.toList ) ) )
+    trace( "calling Sat4j.isValid( " + Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) + ")" )
+    sat.isValid( Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) )
   }
 
 }

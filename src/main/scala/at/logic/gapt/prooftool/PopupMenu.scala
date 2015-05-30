@@ -12,7 +12,7 @@ import javax.swing.JPopupMenu
 import swing._
 import at.logic.gapt.proofs.proofs.TreeProof
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.language.hol.{ HOLFormula, HOLNeg, HOLAnd, HOLImp, HOLOr, HOLExVar, HOLAllVar, HOLAtom }
+import at.logic.gapt.expr._
 
 class PopupMenu extends Component with Wrapper {
   override lazy val peer: JPopupMenu = new JPopupMenu
@@ -80,26 +80,26 @@ object PopupMenu {
   }
 
   def firstQuantifiers( f: HOLFormula ): List[HOLFormula] = f match {
-    case HOLAtom( _, _ )                      => Nil
-    case HOLAnd( l, r )                       => firstQuantifiers( l ) ++ firstQuantifiers( r )
-    case HOLImp( l, r )                       => firstQuantifiers( l ) ++ firstQuantifiers( r )
-    case HOLOr( l, r )                        => firstQuantifiers( l ) ++ firstQuantifiers( r )
-    case HOLNeg( l )                          => firstQuantifiers( l )
-    case HOLAllVar( _, _ ) | HOLExVar( _, _ ) => List( f )
+    case HOLAtom( _, _ )          => Nil
+    case And( l, r )              => firstQuantifiers( l ) ++ firstQuantifiers( r )
+    case Imp( l, r )              => firstQuantifiers( l ) ++ firstQuantifiers( r )
+    case Or( l, r )               => firstQuantifiers( l ) ++ firstQuantifiers( r )
+    case Neg( l )                 => firstQuantifiers( l )
+    case All( _, _ ) | Ex( _, _ ) => List( f )
   }
 
   def expandRecursive( det: DrawExpansionTree, f: HOLFormula ): Unit = f match {
     case HOLAtom( _, _ ) =>
-    case HOLAnd( l, r ) =>
+    case And( l, r ) =>
       expandRecursive( det, l ); expandRecursive( det, r )
-    case HOLImp( l, r ) =>
+    case Imp( l, r ) =>
       expandRecursive( det, l ); expandRecursive( det, r )
-    case HOLOr( l, r ) =>
+    case Or( l, r ) =>
       expandRecursive( det, l ); expandRecursive( det, r )
-    case HOLNeg( l ) => expandRecursive( det, l )
-    case HOLAllVar( _, l ) =>
+    case Neg( l ) => expandRecursive( det, l )
+    case All( _, l ) =>
       det.expand( f ); expandRecursive( det, l )
-    case HOLExVar( _, l ) => det.expand( f ); expandRecursive( det, l )
+    case Ex( _, l ) => det.expand( f ); expandRecursive( det, l )
   }
 }
 

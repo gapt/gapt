@@ -8,7 +8,8 @@
 package at.logic.gapt.proofs.algorithms.skolemization.lksk
 
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.symbols._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom }
@@ -17,24 +18,24 @@ import at.logic.gapt.proofs.lksk._
 import org.junit.runner.RunWith
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 
 @RunWith( classOf[JUnitRunner] )
 class LKskcTest extends SpecificationWithJUnit {
 
   "Transformation from LK to LKskc" should {
-    val x = HOLVar( "x", Ti )
-    val y = HOLVar( "y", Ti )
-    val c = HOLConst( "c", Ti )
-    val r = HOLConst( "R", Ti -> ( Ti -> To ) )
+    val x = Var( "x", Ti )
+    val y = Var( "y", Ti )
+    val c = Const( "c", Ti )
+    val r = Const( "R", Ti -> ( Ti -> To ) )
 
     "work for a small proof with only weak quantifiers" in {
       val Rcc = HOLAtom( r, c :: c :: Nil )
       val Rcx = HOLAtom( r, c :: x :: Nil )
       val Ryx = HOLAtom( r, y :: x :: Nil )
-      val allxRcx = HOLAllVar( x, Rcx )
-      val allyallxRyx = HOLAllVar( y, HOLAllVar( x, Ryx ) )
+      val allxRcx = All( x, Rcx )
+      val allyallxRyx = All( y, All( x, Ryx ) )
       val proof = ForallLeftRule(
         ForallLeftRule(
           LKAxiom( Rcc :: Nil, Nil ),
@@ -49,11 +50,11 @@ class LKskcTest extends SpecificationWithJUnit {
     }
 
     "work for a cut-free proof" in {
-      val a = HOLVar( "a", Ti )
-      val b = HOLVar( "b", Ti )
+      val a = Var( "a", Ti )
+      val b = Var( "b", Ti )
       val Rab = HOLAtom( r, a :: b :: Nil )
-      val exyRay = HOLExVar( y, HOLAtom( r, a :: y :: Nil ) )
-      val allxexyRxy = HOLAllVar( x, HOLExVar( y, HOLAtom( r, x :: y :: Nil ) ) )
+      val exyRay = Ex( y, HOLAtom( r, a :: y :: Nil ) )
+      val allxexyRxy = All( x, Ex( y, HOLAtom( r, x :: y :: Nil ) ) )
       val ax = LKAxiom( Rab :: Nil, Rab :: Nil )
       val r1 = ExistsRightRule( ax, Rab, exyRay, b )
       val r2 = ExistsLeftRule( r1, Rab, exyRay, b )

@@ -1,6 +1,6 @@
 package at.logic.gapt.provers
 
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base._
 
 /**

@@ -9,8 +9,8 @@ import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom, _ }
 import TypeSynonyms._
@@ -18,13 +18,13 @@ import at.logic.gapt.proofs.occurrences.FOFactory
 
 @RunWith( classOf[JUnitRunner] )
 class LKskTest extends SpecificationWithJUnit {
-  val c1 = HOLVar( "a", Ti -> To )
-  val v1 = HOLVar( "x", Ti )
+  val c1 = Var( "a", Ti -> To )
+  val v1 = Var( "x", Ti )
   val f1 = HOLAtom( c1, v1 :: Nil )
-  val c2 = HOLVar( "b", Ti -> To )
-  val v2 = HOLVar( "c", Ti )
+  val c2 = Var( "b", Ti -> To )
+  val v2 = Var( "c", Ti )
   val f2 = HOLAtom( c1, v1 :: Nil )
-  val f3 = HOLAtom( HOLVar( "e", To ) )
+  val f3 = HOLAtom( Var( "e", To ) )
   val ax = Axiom.createDefault( new FSequent( f1 :: Nil, f1 :: Nil ), Tuple2( ( EmptyLabel() + f2 ) :: Nil, EmptyLabel() :: Nil ) )
   val a1 = ax._1 // Axiom return a pair of the proof and a mapping and we want only the proof here
   val a2 = ( Axiom.createDefault( new FSequent( f1 :: Nil, f1 :: Nil ), Tuple2( ( EmptyLabel() + f2 ) :: Nil, ( EmptyLabel() + f3 ) :: Nil ) ) )._1

@@ -1,24 +1,26 @@
 
 package at.logic.gapt.provers.atp.commands.sequents
 
+import at.logic.gapt.language.hol.{ HOLSubstitution, subTerms }
 import at.logic.gapt.proofs.lk.algorithms.subsumption.managers._
 import at.logic.gapt.proofs.lk.algorithms.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
-import at.logic.gapt.language.lambda.types.->
-import at.logic.gapt.language.hol.{ HOLFormula, HOLExpression, HOLVar, subTerms, HOLSubstitution }
-import at.logic.gapt.language.fol.{ FOLEquation, FOLExpression }
+import at.logic.gapt.expr.->
+import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ ResultCommand, DataCommand }
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.utils.ds.{ Add, Remove, PublishingBufferEvent, PublishingBuffer }
+import at.logic.gapt.utils.logging.Logger
 import at.logic.gapt.utils.patterns.listeners.ListenerManager
 
 abstract class SetSequentsCommand[V <: Sequent]( val clauses: Iterable[FSequent] ) extends DataCommand[V]
 
 // set the target clause, i.e. the empty clause normally
-case class SetTargetClause[V <: Sequent]( val clause: FSequent ) extends DataCommand[V] {
+case class SetTargetClause[V <: Sequent]( val clause: FSequent ) extends DataCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
+    debug( s"targetClause <- $clause" )
     List( ( state += new Tuple2( "targetClause", clause ), data ) )
   }
 }
@@ -47,18 +49,20 @@ case class InsertResolventCommand[V <: Sequent]() extends DataCommand[V] {
 }
 
 // deterministically trying to match all indices (it is deterministic as it does not change the state of the different cases)
-case class ApplyOnAllPolarizedLiteralPairsCommand[V <: Sequent]() extends DataCommand[V] {
+case class ApplyOnAllPolarizedLiteralPairsCommand[V <: Sequent]() extends DataCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
     val p = data.asInstanceOf[Tuple2[ResolutionProof[V], ResolutionProof[V]]]
+    debug( p toString )
     ( for ( i <- p._1.root.antecedent; j <- p._2.root.succedent ) yield ( state, List( ( p._2, ( j, true ) ), ( p._1, ( i, false ) ) ) ) ) ++
       ( for ( i <- p._1.root.succedent; j <- p._2.root.antecedent ) yield ( state, List( ( p._1, ( i, true ) ), ( p._2, ( j, false ) ) ) ) )
   }
 }
 
-case class RefutationReachedCommand[V <: Sequent]() extends ResultCommand[V] {
+case class RefutationReachedCommand[V <: Sequent]() extends ResultCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
     val target = state( "targetClause" ).asInstanceOf[FSequent]
     val d = data.asInstanceOf[ResolutionProof[V]]
+    debug( d.root toString )
     if ( fvarInvariantMSEquality( d.root, target ) ) {
       Some( d )
     } else {
@@ -99,9 +103,9 @@ object fvarInvariantMSEqualityEQ {
     if ( f2.succedent.length == 0 )
       return false
     f2.succedent.head match {
-      case FOLEquation( a, b ) => {
+      case Eq( a, b ) => {
         println( "\n\nVutre sum !\n\n" )
-        val f3 = FSequent( f2.antecedent, FOLEquation( b, a ) +: f2.succedent.tail )
+        val f3 = FSequent( f2.antecedent, Eq( b, a ) +: f2.succedent.tail )
         return fvarInvariantMSEquality( c1, f3 )
       }
       case _ => return false
@@ -116,11 +120,11 @@ object fvarInvariantMSEquality {
     val f1 = ( c1.antecedent.map( _.formula ), c1.succedent.map( _.formula ) )
     val FSequent( neg, pos ) = f2
     // we get all free variables from f2 and try to systematically replace those in f1
-    val set1 = ( f1._1 ++ f1._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: HOLVar => true; case _ => false } ).toSet
-    val set2 = ( f2._1 ++ f2._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: HOLVar => true; case _ => false } ).toSet
+    val set1 = ( f1._1 ++ f1._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } ).toSet
+    val set2 = ( f2._1 ++ f2._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } ).toSet
     if ( set1.size != set2.size ) List[FSequent]() // they cannot be equal
     // create all possible substitutions
-    ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => HOLSubstitution( x.asInstanceOf[List[Tuple2[HOLVar, HOLExpression]]] ) ) )
+    ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => HOLSubstitution( x.asInstanceOf[List[Tuple2[Var, LambdaExpression]]] ) ) )
       yield ( f1._1.map( s( _ ).asInstanceOf[HOLFormula] ), f1._2.map( s( _ ).asInstanceOf[HOLFormula] ) ) ).toList.exists( cls => {
       neg.diff( cls._1 ).isEmpty && pos.diff( cls._2 ).isEmpty && cls._1.diff( neg ).isEmpty && cls._2.diff( pos ).isEmpty
     } )
@@ -155,21 +159,24 @@ abstract class SimpleSubsumptionCommand[V <: Sequent]( val alg: SubsumptionAlgor
   override def toString = "SimpleSubsumptionCommand(" + alg.getClass + ")"
 }
 
-case class SimpleForwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) {
+case class SimpleForwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) with Logger {
   def apply( state: State, data: Any ) = {
     val manager = getManager( state )
     val res = data.asInstanceOf[ResolutionProof[V]]
     val res1 = res.root.toFSequent
-    if ( manager.forwardSubsumption( res1 ) ) List() else List( ( state, data ) )
+    val isSubsumed = manager forwardSubsumption res1
+    debug( s"${if ( isSubsumed ) "subsumed" else "NOT subsumed"}: $res1" )
+    if ( isSubsumed ) List() else List( ( state, data ) )
   }
   override def toString = "SimpleForwardSubsumptionCommand(" + a.getClass + ")"
 }
 
-case class SimpleBackwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) {
+case class SimpleBackwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) with Logger {
   def apply( state: State, data: Any ) = {
     val manager = getManager( state )
     val res = data.asInstanceOf[ResolutionProof[V]]
     val res1 = res.root.toFSequent
+    debug( res1 toString )
     manager.backwardSubsumption( res1 )
     List( ( state, data ) )
   }

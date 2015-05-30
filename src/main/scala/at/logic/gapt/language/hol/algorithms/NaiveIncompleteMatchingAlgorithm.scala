@@ -5,25 +5,26 @@
 
 package at.logic.gapt.language.hol.algorithms
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.hol.HOLSubstitution
 
 object NaiveIncompleteMatchingAlgorithm {
 
-  def matchTerm( term: HOLExpression, posInstance: HOLExpression ): Option[HOLSubstitution] =
+  def matchTerm( term: LambdaExpression, posInstance: LambdaExpression ): Option[HOLSubstitution] =
     matchTerm( term, posInstance, freeVariables( posInstance ) )
 
   // restrictedDomain: variables to be treated as constants.
-  def matchTerm( term: HOLExpression, posInstance: HOLExpression, restrictedDomain: List[HOLVar] ): Option[HOLSubstitution] =
+  def matchTerm( term: LambdaExpression, posInstance: LambdaExpression, restrictedDomain: List[Var] ): Option[HOLSubstitution] =
     holMatch( term, posInstance )( restrictedDomain )
 
-  def holMatch( s: HOLExpression, t: HOLExpression )( implicit restrictedDomain: List[HOLVar] ): Option[HOLSubstitution] =
+  def holMatch( s: LambdaExpression, t: LambdaExpression )( implicit restrictedDomain: List[Var] ): Option[HOLSubstitution] =
     ( s, t ) match {
-      case ( HOLApp( s_1, s_2 ), HOLApp( t_1, t_2 ) ) => merge( holMatch( s_1, t_1 ), holMatch( s_2, t_2 ) )
-      case ( s: HOLVar, t: HOLExpression ) if !restrictedDomain.contains( s ) && s.exptype == t.exptype => Some( HOLSubstitution( s, t ) )
-      case ( v1: HOLVar, v2: HOLVar ) if v1 == v2 => Some( HOLSubstitution() )
-      case ( v1: HOLVar, v2: HOLVar ) if v1 != v2 => None
-      case ( c1: HOLConst, c2: HOLConst ) if c1 == c2 => Some( HOLSubstitution() )
-      case ( HOLAbs( v1, e1 ), HOLAbs( v2, e2 ) ) => holMatch( e1, e2 ) //TODO: add sub v2 <- v1 on e2 and check
+      case ( App( s_1, s_2 ), App( t_1, t_2 ) ) => merge( holMatch( s_1, t_1 ), holMatch( s_2, t_2 ) )
+      case ( s: Var, t: LambdaExpression ) if !restrictedDomain.contains( s ) && s.exptype == t.exptype => Some( HOLSubstitution( s, t ) )
+      case ( v1: Var, v2: Var ) if v1 == v2 => Some( HOLSubstitution() )
+      case ( v1: Var, v2: Var ) if v1 != v2 => None
+      case ( c1: Const, c2: Const ) if c1 == c2 => Some( HOLSubstitution() )
+      case ( Abs( v1, e1 ), Abs( v2, e2 ) ) => holMatch( e1, e2 ) //TODO: add sub v2 <- v1 on e2 and check
       case _ => None
     }
 

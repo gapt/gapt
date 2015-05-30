@@ -1,29 +1,20 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
-import at.logic.gapt.language.fol.replacements.{ Replacement, getAllPositionsFOL }
-import at.logic.gapt.language.lambda.symbols.SymbolA
 import at.logic.gapt.provers.maxsat.{ MaxSat4j, MaxSATSolver }
 import at.logic.gapt.utils.dssupport.ListSupport
 
 import scala.collection.mutable
 
-object FunctionOrConstant {
-  def unapply( term: FOLTerm ): Option[( SymbolA, List[FOLTerm] )] = term match {
-    case FOLFunction( s, args ) => Some( ( s, args ) )
-    case c: FOLConst            => Some( ( c.sym, Nil ) )
-    case _                      => None
-  }
-}
-
 object SameRootSymbol {
-  def unapply( terms: Seq[FOLTerm] ): Option[( SymbolA, List[List[FOLTerm]] )] =
+  def unapply( terms: Seq[FOLTerm] ): Option[( String, List[List[FOLTerm]] )] =
     unapply( terms toList )
 
-  def unapply( terms: List[FOLTerm] ): Option[( SymbolA, List[List[FOLTerm]] )] = terms match {
-    case FunctionOrConstant( s, as ) :: Nil => Some( ( s, as map ( List( _ ) ) ) )
-    case FunctionOrConstant( s, as ) :: SameRootSymbol( t, bs ) if s == t =>
+  def unapply( terms: List[FOLTerm] ): Option[( String, List[List[FOLTerm]] )] = terms match {
+    case FOLFunction( s, as ) :: Nil => Some( ( s, as map ( List( _ ) ) ) )
+    case FOLFunction( s, as ) :: SameRootSymbol( t, bs ) if s == t =>
       Some( ( s, ( as, bs ).zipped map ( _ :: _ ) ) )
     case _ => None
   }
@@ -54,9 +45,8 @@ object normalizeNonTerminals {
 }
 
 object characteristicPartition {
-  def apply( term: FOLTerm ): List[List[List[Int]]] = {
-    getAllPositionsFOL( term ).groupBy( _._2 ).values.map( _.map( _._1 ) ).toList
-  }
+  def apply( term: FOLTerm ): List[List[LambdaPosition]] =
+    LambdaPosition.getPositions( term, _.isInstanceOf[FOLTerm] ).groupBy( term.get ).values.toList
 }
 
 object normalForms {
@@ -66,7 +56,7 @@ object normalForms {
     val nfs = Set.newBuilder[FOLTerm]
     antiUnifiers foreach { au =>
       val charP = characteristicPartition( au )
-      val possibleSubsts = nonTerminals.foldLeft[List[List[( FOLVar, List[List[Int]] )]]]( List( Nil ) ) {
+      val possibleSubsts = nonTerminals.foldLeft[List[List[( FOLVar, List[LambdaPosition] )]]]( List( Nil ) ) {
         case ( substs, nonTerminal ) =>
           substs flatMap { subst =>
             subst :: ( charP map ( setOfPos => ( nonTerminal, setOfPos ) :: subst ) )
@@ -77,13 +67,8 @@ object normalForms {
         subst foreach {
           case ( v, setOfPos ) =>
             setOfPos foreach { pos =>
-              try {
-                nf = new Replacement( pos, v )( nf ).asInstanceOf[FOLTerm]
-              } catch {
-                // FIXME: Replacements are buggy...
-                // All I want is to replace a subterm at a position if the position still exists
-                case _: IllegalArgumentException => ()
-              }
+              if ( nf.isDefinedAt( pos ) )
+                nf = LambdaPosition.replace( nf, pos, v ).asInstanceOf[FOLTerm]
             }
         }
         if ( freeVariables( nf ).forall( nonTerminals.contains( _ ) ) ) nfs += nf
@@ -188,21 +173,21 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
         }
         possibleAssignments foreach { assignment =>
           if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) ) )
-            cs += FOLImp( FOLAnd( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( nt, value ) } ),
-              FOLOr( g.productions( containingNonTerminalVect ) map {
+            cs += Imp( And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( nt, value ) } ),
+              Or( g.productions( containingNonTerminalVect ) map {
                 case p @ ( _, rhss ) =>
-                  FOLAnd( containingNonTerminalVect.zip( assignment ).zip( rhss ) map {
-                    case ( ( nt, value ), rhs ) if value == Omega => FOLTopC
+                  And( containingNonTerminalVect.zip( assignment ).zip( rhss ) map {
+                    case ( ( nt, value ), rhs ) if value == Omega => Top()
                     case ( ( nt, value ), rhs ) =>
                       FOLMatchingAlgorithm.matchTerms( rhs, value ) match {
                         case Some( matching ) =>
-                          FOLAnd( vectProductionIsIncluded( p ),
-                            FOLAnd( matching.folmap map {
+                          And( vectProductionIsIncluded( p ),
+                            And( matching.folmap map {
                               case ( v, smallerValue: FOLTerm ) =>
                                 singleVariableAssignmentsToHandle enqueue ( v -> smallerValue )
                                 valueOfNonTerminal( v, smallerValue )
                             } toList ) )
-                        case None => FOLBottomC
+                        case None => Bottom()
                       }
                   } )
               } toList ) )
@@ -216,13 +201,13 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
 
     // values are unique
     for ( ( d, v1s ) <- possibleSingleVariableAssignments; ( d2, v2s ) <- possibleSingleVariableAssignments; v1 <- v1s; v2 <- v2s if d == d2 && v1 != v2 )
-      cs += FOLOr( FOLNeg( valueOfNonTerminal( d, v1 ) ), FOLNeg( valueOfNonTerminal( d, v2 ) ) )
+      cs += Or( Neg( valueOfNonTerminal( d, v1 ) ), Neg( valueOfNonTerminal( d, v2 ) ) )
 
     // values exist
     for ( ( d, vs ) <- possibleSingleVariableAssignments if vs contains Omega )
-      cs += FOLOr( vs map ( valueOfNonTerminal( d, _ ) ) toList )
+      cs += Or( vs map ( valueOfNonTerminal( d, _ ) ) toList )
 
-    FOLAnd( cs result )
+    And( cs result )
   }
 }
 
@@ -239,7 +224,7 @@ class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
       VectGrammarMinimizationFormula.this.valueOfNonTerminal( t, n, value )
   }.formula
 
-  def coversLanguage( lang: Seq[FOLTerm] ) = FOLAnd( lang map generatesTerm toList )
+  def coversLanguage( lang: Seq[FOLTerm] ) = And( lang map generatesTerm toList )
 }
 
 class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizationFormula( g toVectTratGrammar ) {
@@ -268,7 +253,7 @@ object minimizeGrammar {
     val formula = new GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
-    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( FOLNeg( _ ) -> 1 )
+    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
       case Some( interp ) => TratGrammar( g.axiom,
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
@@ -278,8 +263,8 @@ object minimizeGrammar {
 }
 
 object findMinimalGrammar {
-  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int ) = {
+  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
     val polynomialSizedCoveringGrammar = normalFormsTratGrammar( lang, numberOfNonTerminals )
-    minimizeGrammar( polynomialSizedCoveringGrammar, lang )
+    minimizeGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
 }

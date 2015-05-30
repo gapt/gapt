@@ -1,8 +1,7 @@
 
 package at.logic.gapt.proofs.resolution.algorithms
 
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.{ CloneLKProof, applySubstitution => applySub }
 import at.logic.gapt.proofs.lk.base._
@@ -173,8 +172,6 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
           } catch {
             case e @ LKQuantifierException( root, occf, term, formula, qvar ) =>
               throw new LKUnaryRuleCreationException( "Substitution errror: " + s + ":\n" + e.getMessage, rp, List( occf, formula ) )
-            case e: Throwable =>
-              throw new Exception( "Unhandled error:" + e.getMessage, e )
           }
       }
       map( proof.root.toFClause ) = ret
@@ -192,12 +189,12 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
    * Tests whether constructing an equality rule with a given equation, auxiliary formula and main formula would be superfluous.
    *
    * @param equation An Equation.
-   * @param aux A HOLFormula.
-   * @param main A HOLFormula.
+   * @param aux A Formula.
+   * @param main A Formula.
    * @return True iff 1.) equation is of the form s = s 2,) main and aux coincide and 3.) s occurs in aux.
    */
   private def isTrivial( equation: HOLFormula, aux: HOLFormula, main: HOLFormula ): Boolean = equation match {
-    case FOLEquation( s, t ) =>
+    case Eq( s, t ) =>
       if ( s != t || aux != main )
         false
       else if ( aux.find( s ).isEmpty )

@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.symbols.SymbolA
+import at.logic.gapt.expr._
+import at.logic.gapt.language.fol.{ Utils, FOLSubstitution }
 import Utils.numeral
 import at.logic.gapt.provers.maxsat.{ MaxSat4j, MaxSATSolver }
 
@@ -51,7 +51,7 @@ object normalFormsSipGrammar {
   type InstanceLanguage = ( Int, Seq[FOLTerm] )
 
   // TODO: better convention
-  private def isFormulaSymbol( sym: SymbolA ) = sym.toString.startsWith( "tuple" )
+  private def isFormulaSymbol( sym: String ) = sym.startsWith( "tuple" )
 
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
     import SipGrammar._
@@ -63,7 +63,7 @@ object normalFormsSipGrammar {
       val fv = freeVariables( nf )
 
       nf match {
-        case FunctionOrConstant( f, _ ) if isFormulaSymbol( f ) =>
+        case FOLFunction( f, _ ) if isFormulaSymbol( f ) =>
           if ( !fv.contains( nu ) ) prods += tau -> FOLSubstitution( gamma -> beta )( nf )
           prods += tau -> nf
 
@@ -79,14 +79,14 @@ object normalFormsSipGrammar {
 
 object atoms {
   def apply( f: FOLFormula ): Set[FOLFormula] = f match {
-    case FOLAtom( _ )         => Set( f )
-    case FOLAnd( x, y )       => apply( x ) union apply( y )
-    case FOLOr( x, y )        => apply( x ) union apply( y )
-    case FOLImp( x, y )       => apply( x ) union apply( y )
-    case FOLNeg( x )          => apply( x )
-    case FOLTopC | FOLBottomC => Set()
-    case FOLExVar( x, y )     => apply( y )
-    case FOLAllVar( x, y )    => apply( y )
+    case FOLAtom( _ )     => Set( f )
+    case And( x, y )      => apply( x ) union apply( y )
+    case Or( x, y )       => apply( x ) union apply( y )
+    case Imp( x, y )      => apply( x ) union apply( y )
+    case Neg( x )         => apply( x )
+    case Top() | Bottom() => Set()
+    case Ex( x, y )       => apply( y )
+    case All( x, y )      => apply( y )
   }
 }
 
@@ -111,10 +111,10 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
           yield instP -> p ).groupBy( _._1 ).values foreach { l =>
           val tratProdInc = tratMinForm.productionIsIncluded( l.head._1 )
           if ( atomsInInstForm contains tratProdInc )
-            cs += FOLImp( tratProdInc, FOLOr( l map ( _._2 ) map productionIsIncluded toList ) )
+            cs += Imp( tratProdInc, Or( l map ( _._2 ) map productionIsIncluded toList ) )
         }
     }
-    FOLAnd( cs.result toList )
+    And( cs.result toList )
   }
 }
 
@@ -123,7 +123,7 @@ object minimizeSipGrammar {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
     val atomsInHard = atoms( hard )
-    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( FOLNeg( _ ) -> 1 )
+    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
       case Some( interp ) => SipGrammar(
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )

@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansionTrees.algorithms
 
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees._
 import org.junit.runner.RunWith
 import org.specs2.mutable._
@@ -10,19 +10,19 @@ import org.specs2.runner.JUnitRunner
 @RunWith( classOf[JUnitRunner] )
 class compressTest extends SpecificationWithJUnit {
 
-  val x = HOLVar( ( "x" ), Ti )
-  val c = HOLConst( ( "c" ), Ti )
-  val d = HOLConst( ( "d" ), Ti )
-  val P = HOLConst( "P", Ti -> To )
+  val x = Var( ( "x" ), Ti )
+  val c = Const( ( "c" ), Ti )
+  val d = Const( ( "d" ), Ti )
+  val P = Const( "P", Ti -> To )
 
   val et1: ExpansionTree = merge(
     ETWeakQuantifier(
-      HOLAllVar( x, HOLAtom( P, x :: Nil ) ),
+      All( x, HOLAtom( P, x :: Nil ) ),
       List( ( ETAtom( HOLAtom( P, c :: Nil ) ), c ), ( ETAtom( HOLAtom( P, d :: Nil ) ), d ) ) ) )
 
   val et2: ExpansionTree = merge(
     ETWeakQuantifier(
-      HOLExVar( x, HOLAtom( P, x :: Nil ) ),
+      Ex( x, HOLAtom( P, x :: Nil ) ),
       List( ( ETAtom( HOLAtom( P, c :: Nil ) ), c ), ( ETAtom( HOLAtom( P, d :: Nil ) ), d ) ) ) )
 
   val eSeq = ExpansionSequent( List( et1 ), List( et2 ) )

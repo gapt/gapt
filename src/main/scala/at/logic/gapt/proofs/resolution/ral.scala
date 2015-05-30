@@ -18,8 +18,9 @@ import at.logic.gapt.proofs.lksk.TypeSynonyms._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.createContext
 import at.logic.gapt.language.hol._
-import at.logic.gapt.language.hol.BetaReduction._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr.BetaReduction._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.acyclicGraphs._
 import at.logic.gapt.utils.ds.trees.LeafTree
 import at.logic.gapt.utils.labeling._
@@ -111,7 +112,7 @@ object Cut {
 }
 
 object ForallT {
-  def apply[V <: LabelledSequent]( s1: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, v: HOLVar ) = {
+  def apply[V <: LabelledSequent]( s1: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, v: Var ) = {
     s1.root.l_succedent.find( x => x == term1oc ) match {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
@@ -142,7 +143,7 @@ object ForallF {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val t = term1.formula match { case HOLAllVar( x, _ ) => x.exptype }
+        val t = term1.formula match { case All( x, _ ) => x.exptype }
         val skt = computeSkolemTerm( sk, t, term1.skolem_label )
         val f = instantiate( term1.formula, skt )
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
@@ -166,7 +167,7 @@ object ForallF {
 }
 
 object ExistsF {
-  def apply[V <: LabelledSequent]( s1: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, v: HOLVar ) = {
+  def apply[V <: LabelledSequent]( s1: RalResolutionProof[V], term1oc: LabelledFormulaOccurrence, v: Var ) = {
     s1.root.l_antecedent.find( x => x == term1oc ) match {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
@@ -197,7 +198,7 @@ object ExistsT {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val t = term1.formula match { case HOLExVar( x, _ ) => x.exptype }
+        val t = term1.formula match { case Ex( x, _ ) => x.exptype }
         val skt = computeSkolemTerm( sk, t, term1.skolem_label )
         val f = instantiate( term1.formula, skt )
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
@@ -243,7 +244,7 @@ object NegF {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLNeg( f ) = term1.formula
+        val Neg( f ) = term1.formula
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent filterNot ( _ == term1 ) ), createContext( s1.root.succedent ) :+ prinFormula ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = NegFRalType
@@ -268,7 +269,7 @@ object NegT {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLNeg( f ) = term1.formula
+        val Neg( f ) = term1.formula
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( f ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent ) :+ prinFormula, createContext( s1.root.succedent filterNot ( _ == term1 ) ) ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = NegTRalType
@@ -293,7 +294,7 @@ object AndT1 {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLAnd( l, _ ) = term1.formula
+        val And( l, _ ) = term1.formula
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( l ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent ), createContext( s1.root.succedent filterNot ( _ == term1 ) ) :+ prinFormula ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = AndT1RalType
@@ -318,7 +319,7 @@ object AndT2 {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLAnd( _, r ) = term1.formula
+        val And( _, r ) = term1.formula
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( r ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent ), createContext( s1.root.succedent filterNot ( _ == term1 ) ) :+ prinFormula ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = AndT1RalType
@@ -343,7 +344,7 @@ object OrF1 {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLOr( l, _ ) = term1.formula
+        val Or( l, _ ) = term1.formula
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( l ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent filterNot ( _ == term1 ) ) :+ prinFormula, createContext( s1.root.succedent ) ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = OrF1RalType
@@ -368,7 +369,7 @@ object OrF2 {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLOr( _, r ) = term1.formula
+        val Or( _, r ) = term1.formula
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( r ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent filterNot ( _ == term1 ) ) :+ prinFormula, createContext( s1.root.succedent ) ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = OrF2RalType
@@ -393,7 +394,7 @@ object ImpF1 {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLImp( l, _ ) = term1.formula
+        val Imp( l, _ ) = term1.formula
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( l ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent filterNot ( _ == term1 ) ) :+ prinFormula, createContext( s1.root.succedent ) ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = ImpF1RalType
@@ -418,7 +419,7 @@ object ImpF2 {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLImp( _, r ) = term1.formula
+        val Imp( _, r ) = term1.formula
         val prinFormula = term1.factory.createFormulaOccurrence( betaNormalize( r ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent ), createContext( s1.root.succedent filterNot ( _ == term1 ) ) :+ prinFormula ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = ImpF2RalType
@@ -442,7 +443,7 @@ object AndF {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLAnd( l, r ) = term1.formula
+        val And( l, r ) = term1.formula
         val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( l ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         val prinFormula2 = term1.factory.createFormulaOccurrence( betaNormalize( r ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent filterNot ( _ == term1 ) ) ++ List( prinFormula1, prinFormula2 ), createContext( s1.root.succedent ) ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
@@ -468,7 +469,7 @@ object OrT {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLOr( l, r ) = term1.formula
+        val Or( l, r ) = term1.formula
         val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( l ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         val prinFormula2 = term1.factory.createFormulaOccurrence( betaNormalize( r ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent( createContext( s1.root.antecedent ), createContext( s1.root.succedent filterNot ( _ == term1 ) ) ++ List( prinFormula1, prinFormula2 ) ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
@@ -494,7 +495,7 @@ object ImpT {
       case None =>
         throw new ResolutionRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( term1 ) =>
-        val HOLOr( l, r ) = term1.formula
+        val Or( l, r ) = term1.formula
         val prinFormula1 = term1.factory.createFormulaOccurrence( betaNormalize( l ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         val prinFormula2 = term1.factory.createFormulaOccurrence( betaNormalize( r ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent(
@@ -595,7 +596,7 @@ object ParaT {
         Some( occ2 @ LabelledFormulaOccurrence( term2, anc2, label2 ) ) ) =>
         require( label1 == label2, "Paramodulation requires the labels to match, but we have " + label1 + " and " + label2 )
         val flip = term1 match {
-          case HOLEquation( s, t ) =>
+          case Eq( s, t ) =>
             ( EquationVerifier( s, t, term2, para_formula ), EquationVerifier( t, s, term2, para_formula ) ) match {
               case ( Different, Different ) =>
                 throw new Exception( "Could not verify equation " + s + " = " + t + ". Please check if " + para_formula + " really results from a replacement in " + term2 )
@@ -646,7 +647,7 @@ object ParaF {
         Some( occ2 @ LabelledFormulaOccurrence( term2, anc2, label2 ) ) ) =>
         require( label1 == label2, "Paramodulation requires the labels to match, but we have " + label1 + " and " + label2 )
         val flip = term1 match {
-          case HOLEquation( s, t ) =>
+          case Eq( s, t ) =>
             ( EquationVerifier( s, t, term2, para_formula ), EquationVerifier( t, s, term2, para_formula ) ) match {
               case ( Different, Different ) =>
                 throw new Exception( "Could not verify equation " + s + " = " + t + ". Please check if " + para_formula + " really results from a replacement in " + term2 )

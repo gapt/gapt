@@ -4,11 +4,11 @@ package at.logic.gapt.language.hol.algorithms.unification
 
 import at.logic.gapt.language.hol.algorithms.unification.Vector
 import at.logic.calculi.lk.base.{Sequent, FSequent}
-import at.logic.gapt.language.hol.HOLFormula
+import at.logic.gapt.language.hol.Formula
 //import at.logic.parsing.language.simple.SimpleFOLParser
 //import at.logic.parsing.readers.StringReader
 import at.logic.gapt.language.fol._
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.expr._
 
 import org.specs2.mutable._
 import org.junit.runner.RunWith
@@ -482,7 +482,7 @@ class ACUnificationTest extends SpecificationWithJUnit {
       }
 
 
-      def flattenlist(s:Seq[HOLFormula]) = s map ( (x:HOLFormula) => theory.flatten(x.asInstanceOf[FOLFormula]) )
+      def flattenlist(s:Seq[Formula]) = s map ( (x:Formula) => theory.flatten(x.asInstanceOf[FOLFormula]) )
 
 
       val eliminated = ACUEquality.restricted_subsumption(theory, factored)

@@ -5,10 +5,8 @@ import at.logic.gapt.proofs.lk.algorithms.applySubstitution
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution.algorithms.RobinsonToLK
-import at.logic.gapt.proofs.shlk.SchemaProofDB
-import at.logic.gapt.language.fol.{ FOLSubstitution, FOLExpression, FOLAllVar, FOLConst, FOLVar }
-import at.logic.gapt.language.hol.{ HOLFormula, HOLVar, HOLAbs, HOLExpression }
-import at.logic.gapt.language.lambda.types._
+import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.provers.prover9.Prover9
@@ -16,19 +14,16 @@ import at.logic.gapt.proofs.algorithms.ceres.clauseSchema._
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
-import java.io.File.separator
 import java.io.{ FileInputStream, InputStreamReader }
 import org.junit.runner.RunWith
-//import org.specs2.internal.scalaz.Success
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.runner.JUnitRunner
-import scala.io._
 
 @RunWith( classOf[JUnitRunner] )
 class acnfTest extends SpecificationWithJUnit {
   implicit val factory = defaultFormulaOccurrenceFactory
 
-  args( sequential = true, skipAll = !Prover9.isInstalled() )
+  args( sequential = true, skipAll = !Prover9.isInstalled )
   "ACNFTest" should {
     "should create correctly the ACNF for journal_example.lks" in {
       skipped( "Error at: at.logic.gapt.proofs.algorithms.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)" )
@@ -67,7 +62,7 @@ class acnfTest extends SpecificationWithJUnit {
     }
 
     "should correctly handle equality rules" in {
-      def groundproj( projections: Set[LKProof], groundSubs: List[( HOLVar, HOLExpression )] ): Set[LKProof] = {
+      def groundproj( projections: Set[LKProof], groundSubs: List[( Var, LambdaExpression )] ): Set[LKProof] = {
         groundSubs.map( subs => projections.map( pr => renameIndexedVarInProjection( pr, subs ) ) ).flatten.toSet
       }
 

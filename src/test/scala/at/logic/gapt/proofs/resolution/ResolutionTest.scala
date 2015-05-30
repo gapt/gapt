@@ -5,13 +5,14 @@
 
 package at.logic.gapt.proofs.resolution
 
+import at.logic.gapt.language.fol.FOLSubstitution
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base._
 
 @RunWith( classOf[JUnitRunner] )
@@ -39,7 +40,7 @@ class ResolutionTest extends SpecificationWithJUnit {
     "correctly keep the context of demodulated formulas " in {
       val P = "P"
       val List( a, b, c, d, e, f ) = List( "a", "b", "c", "d", "e", "f" ) map ( x => FOLConst( x ).asInstanceOf[FOLTerm] )
-      val List( e1, e2, e3, p, q ) = List( FOLEquation( a, b ), FOLEquation( c, d ), FOLEquation( e, f ), FOLAtom( P, a :: Nil ), FOLAtom( P, b :: Nil ) )
+      val List( e1, e2, e3, p, q ) = List( Eq( a, b ), Eq( c, d ), Eq( e, f ), FOLAtom( P, a :: Nil ), FOLAtom( P, b :: Nil ) )
       val p1 = InitialClause( Nil, List( e1, e2 ) )
       val p2 = InitialClause( Nil, List( e3, p ) )
       val p3 = Paramodulation( p1, p2, p1.root.succedent( 0 ), p2.root.succedent( 1 ), q, FOLSubstitution() )
@@ -65,8 +66,8 @@ class ResolutionTest extends SpecificationWithJUnit {
   /* using deprecated data structure. Please update.
   "Andrews Resolution" should {
     "refute 'not (A or not A)'" in {
-      val a = HOLAtom(HOLConst("p", To))
-      val f = HOLNeg(HOLOr(a, HOLNeg(a))).asInstanceOf[FormulaOccurrence]
+      val a = HOLAtom(Const("p", To))
+      val f = Neg(Or(a, Neg(a))).asInstanceOf[FormulaOccurrence]
       val s = Sequent(Nil, f::Nil)
       val p0 = InitialSequent[SequentOccurrence](s)
       val p1 = NotT( p0, p0.root.succedent.head )
@@ -78,13 +79,13 @@ class ResolutionTest extends SpecificationWithJUnit {
     }
 
     "handle strong quantifiers correctly" in {
-      val x = HOLVar("X", i -> o )
-      val y = HOLVar("y", i )
-      val z = HOLVar("Z", i -> o )
+      val x = Var("X", i -> o )
+      val y = Var("y", i )
+      val z = Var("Z", i -> o )
       val args = x::y::z::Nil
       val tp = FunctionType(To, args.map(a => a.exptype))
-      val a = HOLAtom(HOLConst("R", tp), args)
-      val qa = HOLAllVar( x, a )
+      val a = HOLAtom(Const("R", tp), args)
+      val qa = All( x, a )
 
       qa.freeVariables must not contain( x )
 
@@ -95,8 +96,8 @@ class ResolutionTest extends SpecificationWithJUnit {
       val skt2 = HOLFunction( sk, z::y::Nil, i -> o)
       val tp1 = FunctionType(To, skt1.exptype::y.exptype::z.exptype::Nil)
       val tp2 = FunctionType(To, skt2.exptype::y.exptype::z.exptype::Nil)
-      val ska1 = HOLAtom(HOLConst("R", tp1), skt1::y::z::Nil )
-      val ska2 = HOLAtom(HOLConst("R", tp2), skt2::y::z::Nil )
+      val ska1 = HOLAtom(Const("R", tp1), skt1::y::z::Nil )
+      val ska2 = HOLAtom(Const("R", tp2), skt2::y::z::Nil )
 
       val p0 = InitialSequent[SequentOccurrence]( Sequent( qa::Nil, Nil ) )
       val p1 = ForallF( p0, p0.root.antecedent.head, sk )
@@ -105,23 +106,23 @@ class ResolutionTest extends SpecificationWithJUnit {
     }
 
     "handle weak quantifiers and substitution correctly" in {
-      val x = HOLVar("X", i -> o )
-      val f = HOLConst("f", (i -> o) -> i )
-      val xfx = HOLApp(x, HOLApp( f, x ) ).asInstanceOf[HOLFormula]
-      val m = HOLAllVar( x, xfx )
+      val x = Var("X", i -> o )
+      val f = Const("f", (i -> o) -> i )
+      val xfx = App(x, App( f, x ) ).asInstanceOf[Formula]
+      val m = All( x, xfx )
 
-      val z = HOLVar("z", i)
-      val Pz = HOLAtom( HOLConst("P", To -> z.exptype), z::Nil )
-      val form = HOLOr(Pz, Neg(Pz))
-      val t = HOLAbs( z, form )
+      val z = Var("z", i)
+      val Pz = HOLAtom( Const("P", To -> z.exptype), z::Nil )
+      val form = Or(Pz, Neg(Pz))
+      val t = Abs( z, form )
 
       val p0 = InitialSequent[SequentOccurrence]( Sequent( Nil, m::Nil ) )
       val p1 = ForallT( p0, p0.root.succedent.head, x )
       val p2 = Sub( p1, HOLSubstitution( x, t ) )
 
-      val newa = HOLAtom( ConstantStringSymbol("P"), HOLApp( f, t )::Nil )
+      val newa = HOLAtom( ConstantStringSymbol("P"), App( f, t )::Nil )
       p2.root.getSequent.succedent.head must beEqualTo( 
-        HOLOr( newa, HOLNeg( newa ) ) )
+        Or( newa, Neg( newa ) ) )
     }
   }
 */

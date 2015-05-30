@@ -1,12 +1,9 @@
 
 package at.logic.gapt.provers.prover9.commands
 
-import at.logic.gapt.language.fol.algorithms.FOLUnificationAlgorithm
-import at.logic.gapt.language.hol.getAtPosition
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.{ Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.atp.Definitions._
@@ -26,8 +23,6 @@ import org.xml.sax.InputSource
 import scala.xml._
 import sys.process._
 import util.matching.Regex
-import util.parsing.combinator.JavaTokenParsers
-import at.logic.gapt.utils.dssupport.ListSupport
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:
@@ -101,8 +96,8 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
 
         val X = FOLVar( "X" )
         val Y = FOLVar( "Y" )
-        val eq1 = FOLNeg( FOLEquation( X, Y ) )
-        val eq2 = FOLEquation( Y, X )
+        val eq1 = Neg( Eq( X, Y ) )
+        val eq2 = Eq( Y, X )
         cmnds = cmnds ++ assumption( "999999", eq1 :: eq2 :: Nil ) // symmetry
         //          val lit1 = MyParser.parseAll(MyParser.literal, "-X=Y").get
         //          val lit2 = MyParser.parseAll(MyParser.literal, "Y=X").get
@@ -152,15 +147,15 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
 
   private def literals2FSequent( lits: Seq[FOLFormula] ): FSequent = {
     FSequent( lits.filter( l => l match {
-      case FOLNeg( _ ) => true
-      case _           => false
+      case Neg( _ ) => true
+      case _        => false
     } )
       .map( l => l match {
-        case FOLNeg( f ) => f
+        case Neg( f ) => f
       } ),
       lits.filter( l => l match {
-        case FOLNeg( _ ) => false
-        case _           => true
+        case Neg( _ ) => false
+        case _        => true
       } ) )
   }
   val INTq_CHAR = 97
@@ -217,7 +212,7 @@ case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
       (x._1,x._2,translate(x._2.formula, x._3.toList))
     })))
   }
-  private def translate(f: HOLExpression, pos: List[Int]): List[Int] = {
+  private def translate(f: LambdaExpression, pos: List[Int]): List[Int] = {
     if (pos.isEmpty) pos
     else f match {
       case Neg(Equation(x,y)) if (pos.head == 1) => 1::1::translate (x, pos.tail)
@@ -359,7 +354,7 @@ object InferenceExtractor {
       val ( positive_goals, negated_goals ): ( List[FOLFormula], List[FOLFormula] ) = goals.foldLeft( ( List[FOLFormula](), List[FOLFormula]() ) )( ( pair, f ) => {
         val ( pg, ng ) = pair
         f match {
-          case FOLNeg( x ) =>
+          case Neg( x ) =>
             ( pg, x :: ng )
           case _ =>
             ( f :: pg, ng )
@@ -391,18 +386,18 @@ object InferenceExtractor {
   }
 
   def implications( f: FOLFormula ): FSequent = f match {
-    case FOLImp( f1, f2 ) => FSequent( conjunctions( f1 ), disjunctions( f2 ) )
-    case _                => FSequent( Nil, f :: Nil )
+    case Imp( f1, f2 ) => FSequent( conjunctions( f1 ), disjunctions( f2 ) )
+    case _             => FSequent( Nil, f :: Nil )
   }
 
   def disjunctions( f: FOLFormula ): List[FOLFormula] = f match {
-    case FOLOr( f1, f2 ) => disjunctions( f1 ) ++ disjunctions( f2 )
-    case _               => List[FOLFormula]( f )
+    case Or( f1, f2 ) => disjunctions( f1 ) ++ disjunctions( f2 )
+    case _            => List[FOLFormula]( f )
   }
 
   def conjunctions( f: FOLFormula ): List[FOLFormula] = f match {
-    case FOLAnd( f1, f2 ) => disjunctions( f1 ) ++ disjunctions( f2 )
-    case _                => List[FOLFormula]( f )
+    case And( f1, f2 ) => disjunctions( f1 ) ++ disjunctions( f2 )
+    case _             => List[FOLFormula]( f )
   }
 
 }
