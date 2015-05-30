@@ -88,6 +88,12 @@ abstract class LambdaExpression {
     get( lPos )
   }
 
+  def replace( pos: LambdaPosition, replacement: LambdaExpression ): LambdaExpression =
+    LambdaPosition.replace( this, pos, replacement )
+
+  def replace( pos: HOLPosition, replacement: LambdaExpression ): LambdaExpression =
+    HOLPosition.replace( this, pos, replacement )
+
   /**
    * Tests whether this expression has a subexpression at a given position.
    *
