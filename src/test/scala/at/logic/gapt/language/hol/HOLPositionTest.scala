@@ -24,4 +24,10 @@ class HOLPositionTest extends SpecificationWithJUnit {
       replace( Px, HOLPosition( 2 ), App( f, c ) ) must beEqualTo( Pfc )
     }
   }
+
+  "get" should {
+    "be total" in {
+      FOLFunction( "f", FOLConst( "c" ) ).get( HOLPosition( 1, 2, 1, 2 ) ) must beNone
+    }
+  }
 }

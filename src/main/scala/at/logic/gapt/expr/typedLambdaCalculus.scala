@@ -83,10 +83,8 @@ abstract class LambdaExpression {
    * @param pos The position to be retrieved.
    * @return If there is a subexpression at that position, return Some(that expression). Otherwise None.
    */
-  def get( pos: HOLPosition ): Option[LambdaExpression] = {
-    val lPos = toLambdaPosition( this )( pos )
-    get( lPos )
-  }
+  def get( pos: HOLPosition ): Option[LambdaExpression] =
+    HOLPosition.toLambdaPositionOption( this )( pos ).flatMap( get )
 
   /**
    * Tests whether this expression has a subexpression at a given position.
