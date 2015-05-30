@@ -34,7 +34,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     new VeriTProver().isValid( deep ) !-- "verit validity"
     val q = CutIntroduction.one_cut_many_quantifiers( p, false ) --- "cut-introduction"
 
-    if ( !containsEqualityReasoning( q )) {
+    if ( !containsEqualityReasoning( q ) ) {
       ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
     }
   }
