@@ -34,12 +34,9 @@ import java.io.File.separator
 import java.io.{ IOException, FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class TapeTest extends SpecificationWithJUnit {
+class TapeTest extends Specification {
   def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   sequential

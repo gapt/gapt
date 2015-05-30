@@ -21,19 +21,14 @@ import at.logic.gapt.provers.prover9.commands.Prover9InitCommand
 import java.io.File.separator
 import java.io.IOException
 
-import org.junit.runner.RunWith
-import org.mockito.Matchers._
-import org.specs2.mock.Mockito
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.formats.prover9.Prover9TermParser.parseFormula
 import at.logic.gapt.provers.prover9.commands.Prover9InitCommand
 import scala.Some
 import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
 import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
 
-@RunWith( classOf[JUnitRunner] )
-class ReplayTest extends SpecificationWithJUnit {
+class ReplayTest extends Specification {
   def parse( str: String ): FOLFormula = ( new StringReader( str ) with SimpleFOLParser getTerm ).asInstanceOf[FOLFormula]
 
   implicit def fo2occ( f: FOLFormula ) = factory.createFormulaOccurrence( f, Nil )

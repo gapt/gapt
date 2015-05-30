@@ -1,8 +1,6 @@
 package at.logic.gapt.proofs.algorithms.herbrandExtraction.lksk
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.base.FSequent
@@ -16,8 +14,7 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.{ LKtoLKskc => skolemi
 /**
  * Created by marty on 8/7/14.
  */
-@RunWith( classOf[JUnitRunner] )
-class extractLKSKExpansionSequentTest extends SpecificationWithJUnit {
+class extractLKSKExpansionSequentTest extends Specification {
   object simpleHOLProof {
     val p = HOLAtom( Const( "P", To ), Nil )
     val x = Var( "X", To )

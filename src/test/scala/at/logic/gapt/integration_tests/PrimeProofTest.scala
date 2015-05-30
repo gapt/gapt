@@ -35,12 +35,9 @@ import at.logic.gapt.provers.atp.refinements.UnitRefinement
 import java.io.File.separator
 import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class PrimeProofTest extends SpecificationWithJUnit {
+class PrimeProofTest extends Specification {
   def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   def sequentToString( s: Sequent ) = {

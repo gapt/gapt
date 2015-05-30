@@ -5,13 +5,10 @@
 package at.logic.gapt.language.fol
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class FirstOrderLogicTest extends SpecificationWithJUnit {
+class FirstOrderLogicTest extends Specification {
   "FirstOrderLogic" should {
     "construct correctly an atom formula P(x,f(y),c)" in {
       val List( p, x, y, f, c ) = List( "P", "x", "y", "f", "c" )

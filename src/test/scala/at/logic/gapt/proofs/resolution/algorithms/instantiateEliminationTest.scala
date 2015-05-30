@@ -4,12 +4,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.beSyntacticMultisetEqual
 import at.logic.gapt.proofs.resolution.robinson.{ Resolution, Paramodulation, Instance, InitialClause }
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class instantiateEliminationTest extends SpecificationWithJUnit {
+class instantiateEliminationTest extends Specification {
 
   object UNSproof {
     val v0 = FOLVar( "v0" )

@@ -6,16 +6,13 @@
 package at.logic.gapt.expr
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import BetaReduction._
 import StrategyOuterInner._
 import StrategyLeftRight._
 import ImplicitStandardStrategy._
 
-@RunWith( classOf[JUnitRunner] )
-class BetaReductionTest extends SpecificationWithJUnit {
+class BetaReductionTest extends Specification {
 
   val v = Var( "v", Ti );
   val x = Var( "x", Ti );

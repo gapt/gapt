@@ -1,12 +1,9 @@
 package at.logic.gapt.formats.veriT
 
 import at.logic.gapt.utils.testing.ClasspathFileCopier
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class VeriTParsingTest extends SpecificationWithJUnit with ClasspathFileCopier {
+class VeriTParsingTest extends Specification with ClasspathFileCopier {
 
   "The veriT parser" should {
     "parse correctly the simplest proof of the database" in {

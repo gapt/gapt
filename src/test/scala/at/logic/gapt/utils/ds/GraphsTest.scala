@@ -8,14 +8,11 @@
 package at.logic.gapt.utils.ds
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import graphs._
 import GraphImplicitConverters._
 
-@RunWith( classOf[JUnitRunner] )
-class GraphsTest extends SpecificationWithJUnit {
+class GraphsTest extends Specification {
   "Graph" should {
     val g1: EmptyGraph[String] = ()
     val g2: VertexGraph[String] = ( "a", g1 )

@@ -7,16 +7,13 @@ import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.provers.maxsat.{ MaxSat4j, MaxSATSolver }
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable._
 
 /**
  * Created by spoerk on 09.10.14.
  */
 
-@RunWith( classOf[JUnitRunner] )
-class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
+class TreeGrammarDecompositionTest extends Specification {
 
   private def LinearExampleProof( k: Int, n: Int ): LKProof = {
     val s = "s"

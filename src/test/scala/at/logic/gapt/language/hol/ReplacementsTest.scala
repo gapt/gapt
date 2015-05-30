@@ -6,15 +6,12 @@
 package at.logic.gapt.language.hol.replacements
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.language.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class ReplacementsTest extends SpecificationWithJUnit {
+class ReplacementsTest extends Specification {
   "Replacements" should {
     "work correctly on" in {
       "Atoms" in {

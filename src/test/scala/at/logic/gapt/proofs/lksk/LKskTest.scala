@@ -6,8 +6,6 @@
 package at.logic.gapt.proofs.lksk
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
@@ -16,8 +14,7 @@ import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom, _ }
 import TypeSynonyms._
 import at.logic.gapt.proofs.occurrences.FOFactory
 
-@RunWith( classOf[JUnitRunner] )
-class LKskTest extends SpecificationWithJUnit {
+class LKskTest extends Specification {
   val c1 = Var( "a", Ti -> To )
   val v1 = Var( "x", Ti )
   val f1 = HOLAtom( c1, v1 :: Nil )
