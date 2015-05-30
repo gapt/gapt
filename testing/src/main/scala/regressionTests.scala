@@ -28,14 +28,14 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       new MiniSATProver().isValid( deep ) !-- "minisat validity"
       solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
       solve.expansionProofToLKProof( E ).isDefined !-- "expansionProofToLKProof"
-      ReductiveCutElim( p ) --- "cut-elim (input)"
+      ReductiveCutElim( p ) --? "cut-elim (input)"
     }
 
     new VeriTProver().isValid( deep ) !-- "verit validity"
     val q = CutIntroduction.one_cut_many_quantifiers( p, false ) --- "cut-introduction"
 
     if ( !containsEqualityReasoning( q )) {
-      ReductiveCutElim( q ) --- "cut-elim (cut-intro)"
+      ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
     }
   }
 }
