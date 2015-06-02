@@ -5,14 +5,11 @@
 package at.logic.gapt.provers.vampire
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 
-@RunWith( classOf[JUnitRunner] )
-class VampireTest extends SpecificationWithJUnit {
+class VampireTest extends Specification {
 
   args( skipAll = !Vampire.isInstalled() )
 

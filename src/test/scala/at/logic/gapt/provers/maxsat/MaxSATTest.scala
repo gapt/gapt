@@ -6,14 +6,11 @@ package at.logic.gapt.provers.maxsat
 
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class MaxSATTest extends SpecificationWithJUnit {
+class MaxSATTest extends Specification {
   val box: List[FClause] = List()
 
   /*

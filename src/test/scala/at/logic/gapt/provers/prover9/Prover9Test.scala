@@ -12,12 +12,9 @@ import at.logic.gapt.proofs.resolution.robinson.{ Formatter, RobinsonResolutionP
 import at.logic.gapt.formats.readers.StringReader
 
 import at.logic.gapt.utils.testing.ClasspathFileCopier
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class Prover9Test extends SpecificationWithJUnit with ClasspathFileCopier {
+class Prover9Test extends Specification with ClasspathFileCopier {
   def parse( str: String ): FOLFormula = ( new StringReader( str ) with SimpleFOLParser getTerm ).asInstanceOf[FOLFormula]
 
   implicit def fo2occ( f: FOLFormula ) = factory.createFormulaOccurrence( f, Nil )

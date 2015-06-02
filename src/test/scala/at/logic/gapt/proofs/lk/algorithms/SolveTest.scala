@@ -7,12 +7,9 @@ import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toShallow, ETAtom, ETNeg, ETOr, ETStrongQuantifier, ETWeakQuantifier }
 import at.logic.gapt.proofs.lk.base.{ FSequent, beSyntacticFSequentEqual }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class SolveTest extends SpecificationWithJUnit {
+class SolveTest extends Specification {
   implicit val factory = defaultFormulaOccurrenceFactory
   "SolveTest" should {
     "solve the sequents" in {

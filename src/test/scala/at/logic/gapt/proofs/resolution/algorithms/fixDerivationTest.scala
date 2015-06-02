@@ -5,12 +5,9 @@ import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class FixDerivationTest extends SpecificationWithJUnit {
+class FixDerivationTest extends Specification {
   "fixDerivation" should {
     "not say that p :- is derivable from p :- p, r by symmetry" in {
       val p = FOLAtom( "p", Nil )

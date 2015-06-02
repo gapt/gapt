@@ -6,9 +6,7 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ TA, Ti, To }
 import at.logic.gapt.utils.testing.ClasspathFileCopier
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,8 +15,7 @@ import org.specs2.runner.JUnitRunner
  * Time: 3:02 PM
  * To change this template use File | Settings | File Templates.
  */
-@RunWith( classOf[JUnitRunner] )
-class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCopier {
+class HybridLatexParserTest extends Specification with ClasspathFileCopier {
   val p1 =
     """\AX{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }
       |\AX{ NOCC(h_1,\alpha,\sigma)}{NOCC(h_1,\alpha,\sigma)}

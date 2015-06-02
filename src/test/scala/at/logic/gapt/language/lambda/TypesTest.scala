@@ -8,12 +8,9 @@
 package at.logic.gapt.expr
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import scala.util.parsing.combinator._
 
-@RunWith( classOf[JUnitRunner] )
-class TypesTest extends SpecificationWithJUnit {
+class TypesTest extends Specification {
   "Types" should {
     "produce a binary function type ( i -> (i -> o ) )" in {
       FunctionType( To, Ti :: Ti :: Nil ) must beEqualTo( ->( Ti, ->( Ti, To ) ) )

@@ -14,14 +14,11 @@ import at.logic.gapt.proofs.algorithms.ceres.projections.{ DeleteTautology, Dele
 import at.logic.gapt.proofs.algorithms.ceres.struct._
 import java.io.File.separator
 import java.io.{ FileInputStream, InputStreamReader }
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import scala.io._
 import scala.xml._
 
-@RunWith( classOf[JUnitRunner] )
-class ClauseSetsTest extends SpecificationWithJUnit {
+class ClauseSetsTest extends Specification {
 
   sequential
   "ClauseSets" should {

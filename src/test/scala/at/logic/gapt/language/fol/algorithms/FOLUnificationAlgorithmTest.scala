@@ -6,12 +6,9 @@
 package at.logic.gapt.language.fol.algorithms
 
 import at.logic.gapt.expr._
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class FOLUnificationAlgorithmTest extends SpecificationWithJUnit {
+class FOLUnificationAlgorithmTest extends Specification {
 
   "UnificationBasedFOLMatchingAlgorithm" should {
     "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {

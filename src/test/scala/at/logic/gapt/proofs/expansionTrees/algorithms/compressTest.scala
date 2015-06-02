@@ -3,12 +3,9 @@ package at.logic.gapt.proofs.expansionTrees.algorithms
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees._
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class compressTest extends SpecificationWithJUnit {
+class compressTest extends Specification {
 
   val x = Var( ( "x" ), Ti )
   val c = Const( ( "c" ), Ti )

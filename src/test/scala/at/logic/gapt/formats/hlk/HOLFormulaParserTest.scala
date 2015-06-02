@@ -5,10 +5,6 @@ package at.logic.gapt.formats.hlk
  */
 import at.logic.gapt.proofs.lk.base.FSequent
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mock.Mockito
-import org.mockito.Matchers._
 import java.io.IOException
 import at.logic.gapt.proofs.resolution.robinson.Formatter
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
@@ -21,8 +17,7 @@ import org.specs2.execute.Success
 import at.logic.gapt.expr._
 import java.io.File.separator
 
-@RunWith( classOf[JUnitRunner] )
-class HOLASTParserTest extends SpecificationWithJUnit {
+class HOLASTParserTest extends Specification {
 
   "The HOL AST Parser parser" should {
     "handle conjunctions and atoms" in {

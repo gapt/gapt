@@ -1,12 +1,9 @@
 package at.logic.gapt.language.hol.algorithms.unification
 
 import at.logic.gapt.language.hol.algorithms.unification
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class LankfordSolverTest extends SpecificationWithJUnit {
+class LankfordSolverTest extends Specification {
   "The Lankford Diophantine solver" should {
     "handle vectors correctly" in {
       val v1: Vector = Vector( -1, 0, 1, 0, 0, 2 )

@@ -6,17 +6,14 @@
 /* 
 package at.logic.gapt.proofs.lk.algorithms.subsumption.managers
 
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.utils.ds.mutable.trees._
 import at.logic.calculi.lk.base.FSequent
 import at.logic.gapt.proofs.lk.algorithms.subsumption._
 import at.logic.gapt.language.fol._
 
-@RunWith(classOf[JUnitRunner])
-class FeatureVectorIndexingManagerTest extends SpecificationWithJUnit {
+class FeatureVectorIndexingManagerTest extends Specification {
 
   "tree.scala" should {
     "create correctly a tree" in {

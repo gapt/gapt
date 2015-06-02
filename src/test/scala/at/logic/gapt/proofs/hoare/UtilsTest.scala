@@ -1,13 +1,10 @@
 package at.logic.gapt.proofs.hoare
 
 import at.logic.gapt.formats.hoare.ProgramParser
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 import ProgramParser._
 
-@RunWith( classOf[JUnitRunner] )
-class UtilsTest extends SpecificationWithJUnit {
+class UtilsTest extends Specification {
   "LoopFree" should {
     "match loop-free programs" in {
       LoopFree.unapply( parseProgram( "skip" ) ) must beSome

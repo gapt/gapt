@@ -10,13 +10,10 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.basicProver.BasicProver
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import scala.collection.immutable.HashSet
 
-@RunWith( classOf[JUnitRunner] )
-class CutIntroTest extends SpecificationWithJUnit {
+class CutIntroTest extends Specification {
   private def LinearExampleTermset( n: Int ): List[FOLTerm] =
     if ( n == 0 )
       List[FOLTerm]()

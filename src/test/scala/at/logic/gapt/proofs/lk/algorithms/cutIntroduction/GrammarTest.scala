@@ -6,8 +6,6 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import scala.collection.immutable.HashMap
 import at.logic.gapt.expr._
 import TermsExtraction._
@@ -15,8 +13,7 @@ import ComputeGrammars._
 import Deltas._
 import types._
 
-@RunWith( classOf[JUnitRunner] )
-class GrammarTest extends SpecificationWithJUnit {
+class GrammarTest extends Specification {
 
   // On the comments of the examples below, consider A as α
 
