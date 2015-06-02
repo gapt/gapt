@@ -8,8 +8,6 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr.LambdaSubstitution
 import at.logic.gapt.language.hol.HOLPosition
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import base._
@@ -25,8 +23,7 @@ import base._
  * Still missing for each rule:
  * 1) To check that all exceptions are thrown when needed
  */
-@RunWith( classOf[JUnitRunner] )
-class LKTest extends SpecificationWithJUnit {
+class LKTest extends Specification {
 
   val c1 = Var( "a", Ti -> To )
   val v1 = Var( "x", Ti )

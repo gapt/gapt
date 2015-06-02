@@ -13,14 +13,11 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import skolemize._
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class SkolemizationTest extends SpecificationWithJUnit {
+class SkolemizationTest extends Specification {
 
   sequential
   "Skolemization" should {

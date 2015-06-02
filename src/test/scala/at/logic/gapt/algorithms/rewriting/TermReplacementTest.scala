@@ -1,9 +1,6 @@
 package at.logic.gapt.algorithms.rewriting
 
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
-import org.specs2._
+import org.specs2.mutable._
 import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.expr._
@@ -11,8 +8,7 @@ import at.logic.gapt.expr._
 /**
  * Test for replacment of constant symbols by terms
  */
-@RunWith( classOf[JUnitRunner] )
-class TermReplacementTest extends SpecificationWithJUnit {
+class TermReplacementTest extends Specification {
 
   val c1 = FOLAtom( "P", FOLFunction( "g", FOLConst( "a" ) :: Nil ) :: Nil )
   val c2 = FOLAtom( "P", FOLFunction( "g", FOLVar( "x" ) :: Nil ) :: Nil )

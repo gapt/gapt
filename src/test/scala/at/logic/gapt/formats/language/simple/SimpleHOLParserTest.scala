@@ -9,16 +9,13 @@ package at.logic.gapt.formats.language.simple
 
 import at.logic.gapt.formats.simple.SimpleHOLParser
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.hol._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class SimpleHOLParserTest extends SpecificationWithJUnit {
+class SimpleHOLParserTest extends Specification {
   private class MyParser( input: String ) extends StringReader( input ) with SimpleHOLParser
   "SimpleHOLParser" should {
     val var1 = Var( StringSymbol( "x1" ), Ti -> ( Ti -> Ti ) )

@@ -6,15 +6,12 @@ import at.logic.gapt.proofs.lksk.LabelledSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ Label, EmptyLabel }
 import at.logic.gapt.language.hol._
 import at.logic.gapt.expr.{ Ti, To }
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
 /**
  * Created by marty on 9/10/14.
  */
-@RunWith( classOf[JUnitRunner] )
-class RalResolutionTest extends SpecificationWithJUnit {
+class RalResolutionTest extends Specification {
   "Ral resolution" should {
     "work on simple proofs" in {
       val x = Var( "X", To )

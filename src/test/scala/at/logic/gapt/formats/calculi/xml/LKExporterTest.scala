@@ -6,8 +6,6 @@ package at.logic.gapt.formats.calculi.xml
 
 import at.logic.gapt.formats.xml.{ HOLTermXMLExporter, LKExporter }
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import scala.xml.Utility.trim
 
@@ -16,8 +14,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.To
 
-@RunWith( classOf[JUnitRunner] )
-class LkExporterTest extends SpecificationWithJUnit {
+class LkExporterTest extends Specification {
 
   val exporter = new LKExporter {}
   // helper to create 0-ary predicate constants

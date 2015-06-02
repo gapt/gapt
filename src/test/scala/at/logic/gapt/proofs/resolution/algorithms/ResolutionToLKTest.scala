@@ -5,17 +5,14 @@ import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.robinson._
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
 import scala.collection.immutable.Map.{ Map1, Map2 }
 
 // we compare toStrings as proofs have only pointer equality. This needs to be changed by allowing syntaxEquals in graphs and vertices should
 // have syntaxEquals as well
 
-@RunWith( classOf[JUnitRunner] )
-class ResolutionToLKTest extends SpecificationWithJUnit {
+class ResolutionToLKTest extends Specification {
 
   object UNSproof {
     val v0 = FOLVar( "v0" )

@@ -1,14 +1,11 @@
 package at.logic.gapt.utils.executionModels
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import ndStream._
 import searchAlgorithms._
 
-@RunWith( classOf[JUnitRunner] )
-class NDStreamTest extends SpecificationWithJUnit {
+class NDStreamTest extends Specification {
   class MyConfiguration( val n: Int ) extends Configuration[Int] {
     def result = if ( n < 1 ) Some( n ) else None
     def isTerminal = result != None

@@ -1,12 +1,9 @@
 package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 
 import at.logic.gapt.expr._
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class TreeGrammarDecompositionTest extends SpecificationWithJUnit {
+class TreeGrammarDecompositionTest extends Specification {
 
   /**
    * Constructs a recursively called function term with

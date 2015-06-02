@@ -5,9 +5,7 @@
 
 package at.logic.gapt.proofs.shlk
 
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 
 import at.logic.gapt.expr._
@@ -17,8 +15,7 @@ import at.logic.gapt.proofs.lk.Axiom
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class SLKTest extends SpecificationWithJUnit {
+class SLKTest extends Specification {
   implicit val factory = defaultFormulaOccurrenceFactory
 
   "The calculus SLK" should {

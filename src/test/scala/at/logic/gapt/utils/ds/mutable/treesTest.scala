@@ -8,16 +8,13 @@
 package at.logic.gapt.utils.ds.mutable
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.utils.ds.mutable.trees._
 //import at.logic.calculi.lk.base._
 //import at.logic.gapt.language.hol._
 import scala.util.parsing.combinator._
 
-@RunWith( classOf[JUnitRunner] )
-class treesTest extends SpecificationWithJUnit {
+class treesTest extends Specification {
 
   "tree.scala" should {
     "create correctly a tree" in {

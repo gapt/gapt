@@ -7,14 +7,11 @@ import at.logic.gapt.language.schema._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import java.io.File.separator
-import org.junit.runner.RunWith
 import org.specs2.execute.Success
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import scala.io._
 
-@RunWith( classOf[JUnitRunner] )
-class clauseSchemaTest extends SpecificationWithJUnit {
+class clauseSchemaTest extends Specification {
   "clauseSchemaTest" should {
     "create a correct schema clause" in {
       val k = IntVar( "k" )

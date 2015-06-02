@@ -15,14 +15,11 @@ import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom }
 import at.logic.gapt.proofs.lk.{ ForallLeftRule, ForallRightRule, ExistsLeftRule, ExistsRightRule }
 import at.logic.gapt.proofs.lksk._
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 
-@RunWith( classOf[JUnitRunner] )
-class LKskcTest extends SpecificationWithJUnit {
+class LKskcTest extends Specification {
 
   "Transformation from LK to LKskc" should {
     val x = Var( "x", Ti )

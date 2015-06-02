@@ -5,14 +5,11 @@
 
 package at.logic.gapt.proofs.lk.algorithms.subsumption
 
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class StillmanSubsumptionAlgorithmFOLTest extends SpecificationWithJUnit {
+class StillmanSubsumptionAlgorithmFOLTest extends Specification {
   import at.logic.gapt.language.fol._
   "StillmanSubsumptionAlgorithmFOL" should {
     val P = "P"
@@ -122,8 +119,7 @@ class StillmanSubsumptionAlgorithmFOLTest extends SpecificationWithJUnit {
   }
 }
 
-@RunWith( classOf[JUnitRunner] )
-class StillmanSubsumptionAlgorithmHOLTest extends SpecificationWithJUnit {
+class StillmanSubsumptionAlgorithmHOLTest extends Specification {
   import at.logic.gapt.language.hol._
   import at.logic.gapt.expr._
   "StillmanSubsumptionAlgorithmHOL" should {

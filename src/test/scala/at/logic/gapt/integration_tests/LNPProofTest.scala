@@ -16,13 +16,10 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import java.util.zip.GZIPInputStream
 import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import java.io.File.separator
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import org.specs2.execute.Success
 
-@RunWith( classOf[JUnitRunner] )
-class LNPProofTest extends SpecificationWithJUnit {
+class LNPProofTest extends Specification {
 
   def sequentToString( s: Sequent ) = {
     var ret = ""

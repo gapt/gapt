@@ -1,8 +1,6 @@
 package at.logic.gapt.algorithms.rewriting
 
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 import at.logic.gapt.language.fol._
 import at.logic.gapt.expr.{ StringSymbol }
 import at.logic.gapt.proofs.lk._
@@ -10,8 +8,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.{ beSyntacticFSequentEqual, FSequent, Sequent, LKProof }
 import at.logic.gapt.proofs.proofs.NullaryProof
 
-@RunWith( classOf[JUnitRunner] )
-class definition_eliminationTest extends SpecificationWithJUnit {
+class definition_eliminationTest extends Specification {
   object proof1 {
     val List( alphasym, betasym, xsym, ysym ) = List( "\\alpha", "\\beta", "x", "y" )
     val List( p, q, a, b, tsym ) = List( "P", "Q", "A", "B", "t" )

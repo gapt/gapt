@@ -2,8 +2,6 @@ package at.logic.gapt.proofs.algorithms.herbrandExtraction
 
 import at.logic.gapt.language.fol.Utils
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk._
@@ -11,8 +9,7 @@ import at.logic.gapt.proofs.expansionTrees.{ ETStrongQuantifier, ETWeakQuantifie
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class ExtractExpansionSequentTest extends SpecificationWithJUnit {
+class ExtractExpansionSequentTest extends Specification {
 
   def LinearExampleProof( k: Int, n: Int ): LKProof = {
     val s = "s"

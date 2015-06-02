@@ -1,9 +1,7 @@
 package at.logic.gapt.formats.ivy
 
 import at.logic.gapt.utils.testing.ClasspathFileCopier
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable._
 import at.logic.gapt.formats.lisp
 import java.io.File.separator
 import util.parsing.input.Reader
@@ -12,8 +10,7 @@ import lisp.{ SExpressionParser }
 /**
  * Test for the Ivy interface.
  */
-@RunWith( classOf[JUnitRunner] )
-class IvyTest extends SpecificationWithJUnit with ClasspathFileCopier {
+class IvyTest extends Specification with ClasspathFileCopier {
   def dumpreader[T]( r: Reader[T] ) = {
     var reader = r
     println( "=== dumping reader! ===" )
