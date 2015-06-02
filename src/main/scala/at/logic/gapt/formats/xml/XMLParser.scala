@@ -15,7 +15,6 @@ import at.logic.gapt.formats.ParsingException
 import at.logic.gapt.formats.readers.XMLReaders.NodeReader
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ FSequent, _ }
 import at.logic.gapt.proofs.occurrences._
@@ -49,28 +48,28 @@ class TestException( val formulas: ( LambdaExpression, HOLFormula ) ) extends Ex
 // performs the matching necessary to compute substitution terms/eigenvars
 object Match {
 
-  def apply( s: LambdaExpression, t: LambdaExpression ): Option[HOLSubstitution] =
+  def apply( s: LambdaExpression, t: LambdaExpression ): Option[Substitution] =
     ( s, t ) match {
       case ( App( s_1, s_2 ), App( t_1, t_2 ) )               => merge( apply( s_1, t_1 ), apply( s_2, t_2 ) )
-      case ( v: Var, _ ) if !getVars( t ).contains( v )       => Some( HOLSubstitution( v, t ) )
-      case ( v1 @ Var( _, _ ), v2 @ Var( _, _ ) ) if v1 == v2 => Some( HOLSubstitution() )
+      case ( v: Var, _ ) if !getVars( t ).contains( v )       => Some( Substitution( v, t ) )
+      case ( v1 @ Var( _, _ ), v2 @ Var( _, _ ) ) if v1 == v2 => Some( Substitution() )
       case ( v1 @ Var( _, _ ), v2 @ Var( _, _ ) ) if v1 != v2 => {
         None
       }
-      case ( c1 @ Const( _, _ ), c2 @ Const( _, _ ) ) if c1 == c2 => Some( HOLSubstitution() )
+      case ( c1 @ Const( _, _ ), c2 @ Const( _, _ ) ) if c1 == c2 => Some( Substitution() )
       case ( Abs( v1, e1 ), Abs( v2, e2 ) ) => apply( e1, e2 )
       case _ => None
     }
 
-  def merge( s1: Option[HOLSubstitution], s2: Option[HOLSubstitution] ): Option[HOLSubstitution] = ( s1, s2 ) match {
+  def merge( s1: Option[Substitution], s2: Option[Substitution] ): Option[Substitution] = ( s1, s2 ) match {
     case ( Some( ss1 ), Some( ss2 ) ) => {
       if ( !ss1.map.forall( s1 =>
         ss2.map.forall( s2 =>
           s1._1 != s2._1 || s1._2 == s2._2 ) ) )
         None
       else {
-        val new_list = ss2.holmap.filter( s2 => ss1.holmap.forall( s1 => s1._1 != s2._1 ) )
-        Some( HOLSubstitution( ss1.holmap ++ new_list ) )
+        val new_list = ss2.map.filter( s2 => ss1.map.forall( s1 => s1._1 != s2._1 ) )
+        Some( Substitution( ss1.map ++ new_list ) )
       }
     }
     case ( None, _ ) => None

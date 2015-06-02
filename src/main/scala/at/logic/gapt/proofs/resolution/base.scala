@@ -125,7 +125,7 @@ trait InstantiatedVariable {
   def term: LambdaExpression
 }
 trait AppliedSubstitution {
-  def substitution: HOLSubstitution
+  def substitution: Substitution
 }
 
 case object InitialType extends NullaryRuleTypeA
@@ -151,9 +151,9 @@ object createContext {
   // creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
   // additional_context  may add additional ancestors, needed e.g. for factoring
   // used in Robinson
-  def apply( set: Seq[FormulaOccurrence], sub: HOLSubstitution ): Seq[FormulaOccurrence] =
+  def apply( set: Seq[FormulaOccurrence], sub: Substitution ): Seq[FormulaOccurrence] =
     apply( set, sub, Map[FormulaOccurrence, List[FormulaOccurrence]]() )
-  def apply( set: Seq[FormulaOccurrence], sub: HOLSubstitution, additional_context: Map[FormulaOccurrence, Seq[FormulaOccurrence]] ): Seq[FormulaOccurrence] =
+  def apply( set: Seq[FormulaOccurrence], sub: Substitution, additional_context: Map[FormulaOccurrence, Seq[FormulaOccurrence]] ): Seq[FormulaOccurrence] =
     set.map( x =>
       x.factory.createFormulaOccurrence( sub( x.formula ), x :: additional_context.getOrElse( x, Nil ).toList ) )
 

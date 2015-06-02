@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol.{ HOLSubstitution => SubstitutionHOL, _ }
 import at.logic.gapt.expr._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.language.hol.isAtom
@@ -119,7 +118,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
       case All( v, f ) => {
         val quantifiedTerm = action.getQuantifiedTerm().get // must be defined in this case
-        val auxFormula = SubstitutionHOL( v, quantifiedTerm )( f )
+        val auxFormula = Substitution( v, quantifiedTerm )( f )
 
         val p_ant = if ( seq.antecedent.contains( auxFormula ) ) seq.antecedent else auxFormula +: seq.antecedent
         val p_suc = seq.succedent
@@ -139,7 +138,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
       case Ex( v, f ) => {
         val eigenVar = action.getQuantifiedTerm().get.asInstanceOf[Var]
-        val auxFormula = SubstitutionHOL( v, eigenVar )( f )
+        val auxFormula = Substitution( v, eigenVar )( f )
 
         val p_ant = if ( seq.antecedent.contains( auxFormula ) ) rest.antecedent else auxFormula +: rest.antecedent
         val p_suc = seq.succedent
@@ -329,7 +328,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
       case All( v, f ) => {
         val eigenVar = action.getQuantifiedTerm().get.asInstanceOf[Var]
-        val auxFormula = SubstitutionHOL( v, eigenVar )( f )
+        val auxFormula = Substitution( v, eigenVar )( f )
 
         val p_ant = rest.antecedent
         val p_suc = if ( rest.succedent.contains( auxFormula ) ) rest.succedent else auxFormula +: rest.succedent
@@ -344,7 +343,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
       case Ex( v, f ) => {
         val quantifiedTerm = action.getQuantifiedTerm().get
-        val auxFormula = SubstitutionHOL( v, quantifiedTerm )( f )
+        val auxFormula = Substitution( v, quantifiedTerm )( f )
 
         val p_ant = rest.antecedent
         val p_suc = if ( seq.succedent.contains( auxFormula ) ) seq.succedent else auxFormula +: seq.succedent
@@ -1028,8 +1027,8 @@ object AtomicExpansion {
 
         case ( All( x1: Var, l1 ), All( x2: Var, l2 ) ) =>
           val eigenvar = rename( x1, freeVariables( l1 ) ++ freeVariables( l2 ) )
-          val sub1 = SubstitutionHOL( List( ( x1, eigenvar ) ) )
-          val sub2 = SubstitutionHOL( List( ( x2, eigenvar ) ) )
+          val sub1 = Substitution( List( ( x1, eigenvar ) ) )
+          val sub2 = Substitution( List( ( x2, eigenvar ) ) )
           val aux1 = sub1( l1 )
           val aux2 = sub2( l2 )
 
@@ -1039,8 +1038,8 @@ object AtomicExpansion {
 
         case ( Ex( x1: Var, l1 ), Ex( x2: Var, l2 ) ) =>
           val eigenvar = rename( x1, freeVariables( l1 ) ++ freeVariables( l2 ) )
-          val sub1 = SubstitutionHOL( List( ( x1, eigenvar ) ) )
-          val sub2 = SubstitutionHOL( List( ( x2, eigenvar ) ) )
+          val sub1 = Substitution( List( ( x1, eigenvar ) ) )
+          val sub2 = Substitution( List( ( x2, eigenvar ) ) )
           val aux1 = sub1( l1 )
           val aux2 = sub2( l2 )
 

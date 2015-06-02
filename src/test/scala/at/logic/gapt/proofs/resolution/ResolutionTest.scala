@@ -115,7 +115,7 @@ class ResolutionTest extends Specification {
 
       val p0 = InitialSequent[SequentOccurrence]( Sequent( Nil, m::Nil ) )
       val p1 = ForallT( p0, p0.root.succedent.head, x )
-      val p2 = Sub( p1, HOLSubstitution( x, t ) )
+      val p2 = Sub( p1, Substitution( x, t ) )
 
       val newa = HOLAtom( ConstantStringSymbol("P"), App( f, t )::Nil )
       p2.root.getSequent.succedent.head must beEqualTo( 

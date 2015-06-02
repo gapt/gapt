@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.LambdaSubstitution
+import at.logic.gapt.expr.Substitution
 import at.logic.gapt.language.hol.HOLPosition
 import org.specs2.mutable._
 import at.logic.gapt.expr._

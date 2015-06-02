@@ -458,15 +458,15 @@ object changeTypeIn {
     case _           => throw new Exception( "Unhandled case of a HOL Formula! " + e )
 
   }
-  def apply( e: FOLExpression, tmap: TypeMap ): FOLExpression = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLExpression]
+  def apply( e: FOLTerm, tmap: TypeMap ): FOLTerm = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLTerm]
   def apply( e: HOLFormula, tmap: TypeMap ): HOLFormula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[HOLFormula]
   def apply( e: FOLFormula, tmap: TypeMap ): FOLFormula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLFormula]
   def apply( fs: FSequent, tmap: TypeMap ): FSequent = FSequent( fs.antecedent.map( x => apply( x, tmap ) ),
     fs.succedent.map( x => apply( x, tmap ) ) )
 
   //different names bc of type erasure
-  private def holsub( s: HOLSubstitution, tmap: TypeMap ): HOLSubstitution = HOLSubstitution(
-    s.holmap.map( x =>
+  private def holsub( s: Substitution, tmap: TypeMap ): Substitution = Substitution(
+    s.map.map( x =>
       ( apply( x._1, tmap ).asInstanceOf[Var], apply( x._2, tmap ) ) ) )
 
   private def folsub( s: FOLSubstitution, tmap: TypeMap ): FOLSubstitution = FOLSubstitution( s.folmap.map( x =>

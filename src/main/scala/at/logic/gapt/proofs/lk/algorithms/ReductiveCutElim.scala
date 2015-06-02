@@ -7,7 +7,6 @@
 
 package at.logic.gapt.proofs.lk.algorithms
 
-import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
@@ -210,10 +209,10 @@ object ReductiveCutElim {
   private def reduceGradeQ( left: LKProof, right: LKProof, cutFormula1: HOLFormula, cutFormula2: HOLFormula ): LKProof =
     ( left, right ) match {
       case ( ForallRightRule( up1, _, aux1, prin1, eigenVar ), ForallLeftRule( up2, _, aux2, prin2, term ) ) if ( prin1.formula == cutFormula1 && prin2.formula == cutFormula2 ) =>
-        val up = applySubstitution( up1, HOLSubstitution( eigenVar, term ) )._1
+        val up = applySubstitution( up1, Substitution( eigenVar, term ) )._1
         CutRule( up, up2, aux2.formula )
       case ( ExistsRightRule( up1, _, aux1, prin1, term ), ExistsLeftRule( up2, _, aux2, prin2, eigenVar ) ) if ( prin1.formula == cutFormula1 && prin2.formula == cutFormula2 ) =>
-        val up = applySubstitution( up2, HOLSubstitution( eigenVar, term ) )._1
+        val up = applySubstitution( up2, Substitution( eigenVar, term ) )._1
         CutRule( up1, up, aux1.formula )
       case ( DefinitionRightRule( up1, _, aux1, prin1 ), DefinitionLeftRule( up2, _, aux2, prin2 ) ) if ( prin1.formula == cutFormula1 && prin2.formula == cutFormula2 ) =>
         CutRule( up1, up2, aux1, aux2 )

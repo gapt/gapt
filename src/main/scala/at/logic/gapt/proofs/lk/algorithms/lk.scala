@@ -2,7 +2,6 @@
 package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.ProofTransformationUtils.computeMap
 import at.logic.gapt.proofs.lk.base._
@@ -443,7 +442,7 @@ object regularize {
           {
             val new_var0 = Var( v.name.toString.replaceAll( "_.*$", "" ), v.exptype ) // FIXME: this should use Var.rename
             val new_var = rename( new_var0, blacklist )
-            val new_new_parent = applySubstitution( nparent, HOLSubstitution( v, new_var ) )
+            val new_new_parent = applySubstitution( nparent, Substitution( v, new_var ) )
             val new_map = table.transform( ( k, v ) => new_new_parent._2( v ) ) // compose maps
             ( ExistsLeftRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist :+ new_var, new_map )
           } else {
@@ -458,7 +457,7 @@ object regularize {
           {
             val new_var0 = Var( v.name.toString.replaceAll( "_.*$", "" ), v.exptype ) // FIXME: this should use Var.rename
             val new_var = rename( new_var0, blacklist )
-            val new_new_parent = applySubstitution( nparent, HOLSubstitution( v, new_var ) )
+            val new_new_parent = applySubstitution( nparent, Substitution( v, new_var ) )
             val new_map = table.transform( ( k, v ) => new_new_parent._2( v ) ) // compose maps
             ( ForallRightRule( new_new_parent._1, new_map( a ), m.formula, new_var ), blacklist :+ new_var, new_map )
           } else

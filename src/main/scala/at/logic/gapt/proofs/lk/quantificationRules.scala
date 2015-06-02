@@ -425,7 +425,7 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
             assert( ( s1.antecedent ++ ( s1.succedent.filterNot( _ == aux_fo ) ) ).forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
               "Eigenvariable " + eigen_var + " occurs in context " + s1 )
 
-            val back_substitiution = HOLSubstitution( x, eigen_var )
+            val back_substitiution = Substitution( x, eigen_var )
 
             //This check does the following: if we conclude exists x.A[x] from A[t] then A[x\t] must be A[t].
             //If it fails, you are doing something seriously wrong!
@@ -439,7 +439,7 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
             assert( ( ( s1.antecedent.filterNot( _ == aux_fo ) ) ++ s1.succedent ).forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
               "Eigenvariable " + eigen_var + " occurs in context " + s1 )
 
-            val back_substitiution = HOLSubstitution( x, eigen_var )
+            val back_substitiution = Substitution( x, eigen_var )
 
             //This check does the following: if we conclude exists x.A[x] from A[t] then A[x\t] must be A[t].
             //If it fails, you are doing something seriously wrong!
@@ -457,10 +457,10 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
 class WeakRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polarity ) {
   def computeAux( main: HOLFormula, term: LambdaExpression ) = main match {
     case All( v, sub ) =>
-      val s = HOLSubstitution( v, term )
+      val s = Substitution( v, term )
       ( v, betaNormalize( s( sub ) ) )
     case Ex( v, sub ) =>
-      val s = HOLSubstitution( v, term )
+      val s = Substitution( v, term )
       ( v, betaNormalize( s( sub ) ) )
     case _ => throw new LKRuleCreationException( "Main formula of a quantifier rule must start with a strong quantfier." )
   }

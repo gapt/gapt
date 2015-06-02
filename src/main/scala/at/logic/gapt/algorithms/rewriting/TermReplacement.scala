@@ -89,11 +89,11 @@ object RenameResproof extends Logger {
   import TermReplacement._
 
   // map from sumbol name to pair of Arity and replacement symbol name
-  type SymbolMap = Map[FOLExpression, FOLExpression]
+  type SymbolMap = Map[FOLTerm, FOLTerm]
   type OccMap = Map[FormulaOccurrence, FormulaOccurrence]
   type ProofMap = Map[RobinsonResolutionProof, ( OccMap, RobinsonResolutionProof )]
 
-  val emptySymbolMap = Map[FOLExpression, FOLExpression]()
+  val emptySymbolMap = Map[FOLTerm, FOLTerm]()
   val emptyOccMap = Map[FormulaOccurrence, FormulaOccurrence]()
   val emptyProofMap = Map[RobinsonResolutionProof, ( OccMap, RobinsonResolutionProof )]()
 
@@ -132,13 +132,13 @@ object RenameResproof extends Logger {
 
         case Variant( clause, parent1, sub ) =>
           val ( rpmap, rmap, rparent1 ) = if ( pmap contains parent1 ) add_pmap( pmap, parent1 ) else rename_resproof( parent1, irules, smap, pmap )
-          val nsmap: Map[FOLVar, FOLExpression] = sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) )
+          val nsmap: Map[FOLVar, FOLTerm] = sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) )
           val nsub = FOLSubstitution( nsmap )
           val inference: RobinsonResolutionProof = Variant( rparent1, nsub )
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
-            t.formula == apply( o.formula.asInstanceOf[FOLExpression], smap ) &&
+            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }
@@ -161,7 +161,7 @@ object RenameResproof extends Logger {
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
-            t.formula == apply( o.formula.asInstanceOf[FOLExpression], smap ) &&
+            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }
@@ -186,7 +186,7 @@ object RenameResproof extends Logger {
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
             trace( "anc corr in matcher:" )
             trace( anc_correspondences.toString )
-            t.formula == apply( o.formula.asInstanceOf[FOLExpression], smap ) &&
+            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }
@@ -209,7 +209,7 @@ object RenameResproof extends Logger {
 
           def matcher( o: FormulaOccurrence, t: FormulaOccurrence ): Boolean = {
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
-            t.formula == apply( o.formula.asInstanceOf[FOLExpression], smap ).asInstanceOf[FOLFormula] &&
+            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ).asInstanceOf[FOLFormula] &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }
@@ -226,7 +226,7 @@ object RenameResproof extends Logger {
           val nsub = FOLSubstitution( sub.folmap map ( x => ( x._1, apply( x._2, smap ) ) ) )
 
           val Some( prim ) = clause.literals.map( _._1 ).find( occ => occ.parents == List( lit1, lit2 ) || occ.parents == List( lit2, lit1 ) )
-          val nformula = apply( prim.formula.asInstanceOf[FOLExpression], smap ).asInstanceOf[FOLFormula]
+          val nformula = apply( prim.formula.asInstanceOf[FOLFormula], smap ).asInstanceOf[FOLFormula]
 
           // this is the rule containing the introduction
           if ( irules contains parent1 ) {
@@ -247,7 +247,7 @@ object RenameResproof extends Logger {
             //println(t); println(t.ancestors)
             val anc_correspondences: Seq[FormulaOccurrence] = o.parents.map( rmap )
             //println(anc_correspondences)
-            t.formula == apply( o.formula.asInstanceOf[FOLExpression], smap ) &&
+            t.formula == apply( o.formula.asInstanceOf[FOLFormula], smap ) &&
               anc_correspondences.diff( t.parents ).isEmpty &&
               t.parents.diff( anc_correspondences ).isEmpty
           }

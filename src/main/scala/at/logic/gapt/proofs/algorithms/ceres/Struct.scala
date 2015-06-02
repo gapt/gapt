@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk.{ LabelledSequent, UnaryLKskProof, LabelledFormulaOccurrence }
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.language.hol.{ HOLSubstitution => HOLSubstitution, _ }
+import at.logic.gapt.language.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.SymbolA
@@ -269,7 +269,7 @@ object cutOccConfigToCutConfig {
 
   def getFormulaForCC( fo: FormulaOccurrence, fs: List[HOLFormula], params: List[IntVar], terms: List[IntegerTerm] ) =
     {
-      val sub = HOLSubstitution( params.zip( terms ) )
+      val sub = Substitution( params.zip( terms ) )
 
       val list = fs.filter( f => {
         sub( f ).syntaxEquals( fo.formula ) || f.syntaxEquals( fo.formula )
@@ -597,7 +597,7 @@ object StructCreators extends Logger {
 
 //returns an arithmetically ground struct
 object groundStruct {
-  def apply( s: Struct, subst: HOLSubstitution ): Struct = {
+  def apply( s: Struct, subst: Substitution ): Struct = {
     s match {
       case A( fo ) => {
         fo.formula match {
@@ -639,7 +639,7 @@ object unfoldGroundStruct {
               //println("struct : "+struct)
               val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Pred( l.asInstanceOf[IntegerTerm] ) )
               val new_subst = SchemaSubstitution( new_map )
-              val gr_struct = groundStruct( struct, new_subst.asInstanceOf[HOLSubstitution] )
+              val gr_struct = groundStruct( struct, new_subst.asInstanceOf[Substitution] )
               //println("ground struct : "+gr_struct)
               return unfoldGroundStruct( gr_struct )
             }
