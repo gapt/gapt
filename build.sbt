@@ -83,7 +83,9 @@ lazy val root = (project in file(".")).
       "org.apache.commons" % "commons-lang3" % "3.4",
       "org.slf4j" % "slf4j-api" % "1.7.12",
       "org.slf4j" % "slf4j-log4j12" % "1.7.12",
-      "xml-resolver" % "xml-resolver" % "1.2"),
+      "xml-resolver" % "xml-resolver" % "1.2",
+      "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"),
 
     // UI
     libraryDependencies ++= Seq(
@@ -91,9 +93,7 @@ lazy val root = (project in file(".")).
       "jline" % "jline" % "2.12.1",
       "org.scala-lang.modules" %% "scala-swing" % "1.0.1",
       "com.itextpdf" % "itextpdf" % "5.5.5",
-      "org.scilab.forge" % "jlatexmath" % "1.0.2",
-      "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5")
+      "org.scilab.forge" % "jlatexmath" % "1.0.2")
   )
 
 addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/scalariformFormat ; testing/test:scalariformFormat")
