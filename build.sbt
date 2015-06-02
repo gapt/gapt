@@ -114,6 +114,7 @@ lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ba
 
 lazy val testDependencies = Seq(
   "org.specs2" %% "specs2-core" % "3.6",
+  "org.specs2" %% "specs2-junit" % "3.6",  // needed for junitxml output
   "org.specs2" %% "specs2-matcher" % "3.6")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =
