@@ -52,7 +52,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
         undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap ) )
     }
 
-    override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = {
+    override def convert_substitution( s: Substitution ): Substitution = {
       val mapping = s.map.toList.map {
         case ( from, to ) =>
           (
@@ -60,7 +60,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
             BetaReduction.betaNormalize( undoHol2Fol.backtranslate( to, sig_vars, sig_consts, absmap, None ) ) )
       }
 
-      HOLSubstitution( mapping )
+      Substitution( mapping )
     }
   }
 

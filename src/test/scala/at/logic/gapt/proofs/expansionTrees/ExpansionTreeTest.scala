@@ -1,7 +1,6 @@
 
 package at.logic.gapt.proofs.expansionTrees
 
-import at.logic.gapt.language.hol.HOLSubstitution
 import org.specs2.mutable._
 import org.junit.runner.RunWith
 import org.specs2.runner.JUnitRunner
@@ -57,7 +56,7 @@ class ExpansionTreeTest extends SpecificationWithJUnit {
   "Expansion Trees substitution" should {
 
     "replace variables correctly 1" in {
-      val s = HOLSubstitution( y, d )
+      val s = Substitution( y, d )
       val etPrime = substitute( s, et2 )
 
       etPrime mustEqual ETWeakQuantifier(
@@ -66,7 +65,7 @@ class ExpansionTreeTest extends SpecificationWithJUnit {
     }
 
     "replace variables correctly 2" in {
-      val s = HOLSubstitution( z, d )
+      val s = Substitution( z, d )
       val etPrime = substitute( s, et2 )
 
       etPrime mustEqual ETWeakQuantifier(
@@ -75,7 +74,7 @@ class ExpansionTreeTest extends SpecificationWithJUnit {
     }
 
     "replace variables correctly 3" in {
-      val s = HOLSubstitution( z, y )
+      val s = Substitution( z, y )
       val etPrime = substitute( s, et3 )
 
       etPrime mustEqual ETStrongQuantifier(
@@ -85,14 +84,14 @@ class ExpansionTreeTest extends SpecificationWithJUnit {
     }
 
     "not replace const " in {
-      val s = HOLSubstitution( Var( "c", i ), Const( "d", i ) )
+      val s = Substitution( Var( "c", i ), Const( "d", i ) )
       val etPrime = substitute( s, et1 )
 
       etPrime mustEqual et1
     }
 
     "create merge node in case of collapse in weak quantifier instances " in {
-      val s = HOLSubstitution( z, y )
+      val s = Substitution( z, y )
       val etPrime = substitute.applyNoMerge( s, et4 )
 
       etPrime mustEqual ETWeakQuantifier(

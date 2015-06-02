@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.lksk.algorithms
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms._
 import at.logic.gapt.proofs.lksk._
@@ -36,7 +35,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val Pc = HOLAtom( P, c :: Nil )
 
       val a = Axiom.createDefault( new FSequent( Px :: Nil, Px :: Nil ), Tuple2( ( EmptyLabel() + x ) :: Nil, ( EmptyLabel() + y ) :: Nil ) )
-      val subst = HOLSubstitution( x, c )
+      val subst = Substitution( x, c )
       val r = applySubstitution( a._1, subst )
       r._1.root.succedent.toList.head must beLike { case o: LabelledFormulaOccurrence => o.skolem_label == ( EmptyLabel() + y ) && o.formula == Pc must_== true }
       r._1.root.antecedent.toList.head must beLike { case o: LabelledFormulaOccurrence => o.skolem_label == ( EmptyLabel() + c ) && o.formula == Pc must_== true }
@@ -50,7 +49,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val R = Const( "R", Ti -> ( Ti -> To ) )
       val Rgcfgc = HOLAtom( R, gc :: fgc :: Nil )
       val exyRgcy = Ex( y, HOLAtom( R, gc :: y :: Nil ) )
-      val subst = HOLSubstitution( a, gc ) // a <- g(c)
+      val subst = Substitution( a, gc ) // a <- g(c)
 
       val p_s = applySubstitution( r2, subst )
       p_s._1.root.antecedent.toList.head must beLike { case o: LabelledFormulaOccurrence => o.skolem_label == EmptyLabel() && o.formula == allxexy must_== true }

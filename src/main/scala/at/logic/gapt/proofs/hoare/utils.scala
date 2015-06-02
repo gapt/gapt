@@ -19,10 +19,10 @@ object mapVariableNames {
 }
 
 object substVariables {
-  def apply( p: Program, f: Map[FOLVar, FOLExpression] ): Program =
+  def apply( p: Program, f: Map[FOLVar, FOLTerm] ): Program =
     apply( p, ( x: FOLVar ) => f.getOrElse( x, x ) )
 
-  def apply( p: Program, f: FOLVar => FOLExpression ): Program = p match {
+  def apply( p: Program, f: FOLVar => FOLTerm ): Program = p match {
     case Assign( x, t )     => Assign( f( x ).asInstanceOf[FOLVar], apply( t, f ) )
     case IfElse( c, a, b )  => IfElse( apply( c, f ), apply( a, f ), apply( b, f ) )
     case ForLoop( i, n, b ) => ForLoop( f( i ).asInstanceOf[FOLVar], f( n ).asInstanceOf[FOLVar], apply( b, f ) )
@@ -30,10 +30,10 @@ object substVariables {
     case Sequence( a, b )   => Sequence( apply( a, f ), apply( b, f ) )
   }
 
-  def apply( t: FOLTerm, f: FOLVar => FOLExpression ): FOLTerm = makeSubstitution( t, f )( t )
-  def apply( t: FOLFormula, f: FOLVar => FOLExpression ): FOLFormula = makeSubstitution( t, f )( t )
+  def apply( t: FOLTerm, f: FOLVar => FOLTerm ): FOLTerm = makeSubstitution( t, f )( t )
+  def apply( t: FOLFormula, f: FOLVar => FOLTerm ): FOLFormula = makeSubstitution( t, f )( t )
 
-  private def makeSubstitution( t: FOLExpression, f: FOLVar => FOLExpression ) =
+  private def makeSubstitution( t: FOLExpression, f: FOLVar => FOLTerm ) =
     FOLSubstitution( freeVariables( t ) map ( ( x: FOLVar ) => x -> f( x ) ) )
 }
 

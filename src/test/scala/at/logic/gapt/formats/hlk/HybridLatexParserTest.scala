@@ -167,7 +167,7 @@ class HybridLatexParserTest extends SpecificationWithJUnit with ClasspathFileCop
       val x = Var( "x", Ti )
       val y = Var( "y", Ti )
       val z = Var( "z", Ti )
-      val sub = HOLSubstitution( List( ( x, t2 ), ( y, t1 ), ( z, y ) ) )
+      val sub = Substitution( List( ( x, t2 ), ( y, t1 ), ( z, y ) ) )
       val p = HybridLatexParser.proveInstance( axiom.asInstanceOf[HOLFormula], instance.asInstanceOf[HOLFormula], sub )
       p.root.occurrences must haveSize( 2 )
       p.root.antecedent must haveSize( 1 )

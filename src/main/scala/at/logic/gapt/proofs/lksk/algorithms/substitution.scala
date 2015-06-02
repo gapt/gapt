@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lksk.algorithms
 
 import at.logic.gapt.expr.BetaReduction.{ betaNormalize => normalize }
+import at.logic.gapt.expr.Substitution
 import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk.algorithms.{ ProofTransformationUtils, applySubstitution => LKapplySubstitution }
 import at.logic.gapt.proofs.lk.base._
@@ -14,7 +15,7 @@ object applySubstitution extends at.logic.gapt.utils.logging.Logger {
   def toLabelledSequent( so: Sequent ) = new LabelledSequent( so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
     so.succedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ) )
 
-  def apply( proof: LKProof, subst: HOLSubstitution ): ( LKProof, Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ) =
+  def apply( proof: LKProof, subst: Substitution ): ( LKProof, Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ) =
     proof match {
       case Axiom( so: LabelledSequent ) => {
         val ant_occs = so.l_antecedent

@@ -38,7 +38,7 @@ import at.logic.gapt.proofs.hoare.Program
 import at.logic.gapt.expr._
 import at.logic.gapt.language.hol.{ containsQuantifier => containsQuantifierHOL, _ }
 import at.logic.gapt.expr.StringSymbol
-import at.logic.gapt.expr.{ LambdaExpression, Var, LambdaSubstitution => LambdaSubstitution }
+import at.logic.gapt.expr.{ LambdaExpression, Var, Substitution => Substitution }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.latex._
 import at.logic.gapt.formats.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }
@@ -780,19 +780,19 @@ object fsequent2sequent {
 
 object Robinson2Ral extends RobinsonToRal {
   override def convert_formula( e: HOLFormula ): HOLFormula = e
-  override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
+  override def convert_substitution( s: Substitution ): Substitution = s
 
   //TODO: this is somehow dirty....
-  def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution = HOLSubstitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
+  def convert_map( m: Map[Var, LambdaExpression] ): Substitution = Substitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
 }
 
 object GenerateRobinson2Ral {
   def apply( hol2folscope: collection.mutable.Map[LambdaExpression, StringSymbol] ): RobinsonToRal = new RobinsonToRal {
     override def convert_formula( e: HOLFormula ): HOLFormula = e
-    override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
+    override def convert_substitution( s: Substitution ): Substitution = s
 
     //TODO: this is somehow dirty....
-    def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution = HOLSubstitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
+    def convert_map( m: Map[Var, LambdaExpression] ): Substitution = Substitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
   }
 }
 
@@ -1094,8 +1094,8 @@ object lkproof {
 
 object normalizeSub {
 
-  def apply( sub: HOLSubstitution ): Unit = {
-    sub.holmap.foreach( x => println( "\n<" + ( BetaReduction.betaNormalize( x._1 ) ).toString + " -> " + ( BetaReduction.betaNormalize( x._2 ) ).toString + ">" ) )
+  def apply( sub: Substitution ): Unit = {
+    sub.map.foreach( x => println( "\n<" + ( BetaReduction.betaNormalize( x._1 ) ).toString + " -> " + ( BetaReduction.betaNormalize( x._2 ) ).toString + ">" ) )
   }
 }
 

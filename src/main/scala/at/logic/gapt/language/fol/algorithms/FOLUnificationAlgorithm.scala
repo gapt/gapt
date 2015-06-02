@@ -20,7 +20,7 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
 
   def unify( term1: FOLExpression, term2: FOLExpression ): List[FOLSubstitution] =
     unifySetOfTuples( Tuple2( term1.asInstanceOf[FOLExpression], term2.asInstanceOf[FOLExpression] ) :: Nil, Nil ) match {
-      case Some( ( Nil, ls ) ) => List( FOLSubstitution( ls.map( x => ( x._1.asInstanceOf[FOLVar], x._2 ) ) ) )
+      case Some( ( Nil, ls ) ) => List( FOLSubstitution( ls.map( x => ( x._1.asInstanceOf[FOLVar], x._2.asInstanceOf[FOLTerm] ) ) ) )
       case _                   => Nil
     }
 
@@ -58,12 +58,12 @@ object FOLUnificationAlgorithm extends UnificationAlgorithm {
 
       case ( ( ( Neg( f1 ), Neg( f2 ) ) :: s ), s2 ) => unifySetOfTuples( ( f1, f2 ) :: s, s2 )
 
-      case ( ( ( x: FOLVar, v ) :: s ), s2 ) if !getVars( v ).contains( x ) => {
+      case ( ( ( x: FOLVar, v: FOLTerm ) :: s ), s2 ) if !getVars( v ).contains( x ) => {
         val sub = FOLSubstitution( x, v )
         unifySetOfTuples( applySubToListOfPairs( s, sub ), ( x, v ) :: applySubToListOfPairs( s2, sub ) )
       }
 
-      case ( ( ( v, x: FOLVar ) :: s ), s2 ) if !getVars( v ).contains( x ) => {
+      case ( ( ( v: FOLTerm, x: FOLVar ) :: s ), s2 ) if !getVars( v ).contains( x ) => {
         val sub = FOLSubstitution( x, v )
         unifySetOfTuples( applySubToListOfPairs( s, sub ), ( x, v ) :: applySubToListOfPairs( s2, sub ) )
       }

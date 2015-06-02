@@ -2,7 +2,7 @@
 // a transformation from LK to LK_skc
 package at.logic.gapt.proofs.algorithms.skolemization.lksk
 
-import at.logic.gapt.language.hol.{ HOLSubstitution, toLatexString }
+import at.logic.gapt.language.hol.{ toLatexString }
 import at.logic.gapt.proofs.lk.algorithms.getCutAncestors
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
 import at.logic.gapt.proofs.lksk.algorithms.applySubstitution
@@ -82,7 +82,7 @@ object LKtoLKskc extends Logger {
             val f = Const( getFreshSkolemFunctionSymbol, FunctionType( alpha, args.map( _.exptype ) ) )
             debug( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
             val s = HOLFunction( f, args )
-            val subst = HOLSubstitution( v, s )
+            val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ForallSkRightRule( new_parent._1, new_parent._2( newaux ), m.formula, s )
             //assert( new_proof.root.isInstanceOf[LabelledSequent] )
@@ -111,7 +111,7 @@ object LKtoLKskc extends Logger {
             val f = Const( getFreshSkolemFunctionSymbol, FunctionType( alpha, args.map( _.exptype ) ) )
             debug( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
             val s = HOLFunction( f, args )
-            val subst = HOLSubstitution( v, s )
+            val subst = Substitution( v, s )
             val new_parent = applySubstitution( r._1, subst )
             val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2( newaux ), m.formula, s )
             //assert( new_proof.root.isInstanceOf[LabelledSequent] )

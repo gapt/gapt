@@ -8,7 +8,6 @@ package at.logic.gapt.proofs.lk.algorithms.subsumption
 import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.utils.dssupport.ListSupport.remove_doubles
@@ -26,7 +25,7 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
    * @param s2 a clause
    * @return if s1 subsumes s2, the substitution necessary. None otherwise.
    */
-  def subsumes_by( s1: FSequent, s2: FSequent ): Option[HOLSubstitution] = {
+  def subsumes_by( s1: FSequent, s2: FSequent ): Option[Substitution] = {
     val left = s1._1.map( x => Neg( x ) ) ++ s1._2.map( x => x )
     val right = s2._1.map( x => Neg( x ) ) ++ s2._2.map( x => x )
     val lv = remove_doubles( left.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ) ++ l ) )
@@ -38,16 +37,16 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
       ( v :: pair._1, v :: pair._2 )
     } )
 
-    val sub = HOLSubstitution( renames zip newnames )
-    val rsub = HOLSubstitution( newnames zip renames )
+    val sub = Substitution( renames zip newnames )
+    val rsub = Substitution( newnames zip renames )
 
-    ST( left, right.map( f => sub( f ) ), HOLSubstitution(), newnames ++ rv.filter( x => !lv.contains( x ) ) ) match {
+    ST( left, right.map( f => sub( f ) ), Substitution(), newnames ++ rv.filter( x => !lv.contains( x ) ) ) match {
       case None          => None
-      case Some( subst ) => Some( HOLSubstitution( subst.holmap.map( x => ( x._1, rsub( x._2 ) ) ) ) )
+      case Some( subst ) => Some( Substitution( subst.map.map( x => ( x._1, rsub( x._2 ) ) ) ) )
     }
   }
 
-  def ST( ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: HOLSubstitution, restrictedDomain: List[Var] ): Option[HOLSubstitution] =
+  def ST( ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: Substitution, restrictedDomain: List[Var] ): Option[Substitution] =
     ls1 match {
       case Nil => Some( sub ) // first list is exhausted
       case x :: ls =>
@@ -57,7 +56,7 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
           matchAlg.matchTerm( sx, sub( t ), restrictedDomain ) match {
             case Some( sub2 ) =>
               val nsub = sub2.compose( sub )
-              val st = ST( ls, ls2, nsub, restrictedDomain ++ nsub.holmap.flatMap( s => freeVariables( s._2 ) ) )
+              val st = ST( ls, ls2, nsub, restrictedDomain ++ nsub.map.flatMap( s => freeVariables( s._2 ) ) )
               if ( st.nonEmpty ) st :: Nil else Nil
             case _ => Nil
           } )

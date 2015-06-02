@@ -66,7 +66,7 @@ class ClauseSetsTest extends SpecificationWithJUnit {
 
       val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( IntZero() ) )
       var subst = SchemaSubstitution( new_map )
-      val gr = groundStruct( struct, subst.asInstanceOf[HOLSubstitution] )
+      val gr = groundStruct( struct, subst.asInstanceOf[Substitution] )
       val unfold_gr = unfoldGroundStruct( gr )
 
       val cs_gr = StandardClauseSet.transformStructToClauseSet( gr )
