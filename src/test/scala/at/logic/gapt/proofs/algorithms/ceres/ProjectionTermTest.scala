@@ -14,14 +14,11 @@ import clauseSchema.ParseResSchema._
 import clauseSchema._
 import java.io.File.separator
 import java.io.{ FileInputStream, InputStreamReader }
-import org.junit.runner.RunWith
 
 import org.specs2.execute.Success
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class ProjectionTermTest extends SpecificationWithJUnit with ClasspathFileCopier {
+class ProjectionTermTest extends Specification with ClasspathFileCopier {
   implicit val factory = defaultFormulaOccurrenceFactory
 
   sequential

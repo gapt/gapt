@@ -2,13 +2,10 @@ package at.logic.gapt.formats.hoare
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.hoare._
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 import ProgramParser._
 
-@RunWith( classOf[JUnitRunner] )
-class ProgramParserTest extends SpecificationWithJUnit {
+class ProgramParserTest extends Specification {
   "ProgramParser" should {
     "parse an assignment" in {
       parseProgram( "x := f(x)" ) must beEqualTo( Assign( "x", parseTerm( "f(x)" ) ) )

@@ -15,12 +15,9 @@ import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
 import java.io.{ FileInputStream, InputStreamReader }
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class acnfTest extends SpecificationWithJUnit {
+class acnfTest extends Specification {
   implicit val factory = defaultFormulaOccurrenceFactory
 
   args( sequential = true, skipAll = !Prover9.isInstalled )

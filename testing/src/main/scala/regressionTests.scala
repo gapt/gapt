@@ -5,6 +5,7 @@ import java.io.File
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
+import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
 import at.logic.gapt.proofs.expansionTrees.toDeep
 import at.logic.gapt.proofs.lk.algorithms.{ solve, containsEqualityReasoning, ReductiveCutElim }
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.CutIntroduction
@@ -42,7 +43,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
 class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
   override def test( implicit testRun: TestRun ) = {
-    val E = VeriTParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
+    val E = addSymmetry( VeriTParser.getExpansionProof( f.getAbsolutePath ).get ) --- "import"
 
     val deep = toDeep( E ) --- "toDeep"
     new MiniSATProver().isValid( deep.toFormula ) !-- "minisat validity"

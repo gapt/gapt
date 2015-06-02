@@ -86,6 +86,12 @@ abstract class LambdaExpression {
   def get( pos: HOLPosition ): Option[LambdaExpression] =
     HOLPosition.toLambdaPositionOption( this )( pos ).flatMap( get )
 
+  def replace( pos: LambdaPosition, replacement: LambdaExpression ): LambdaExpression =
+    LambdaPosition.replace( this, pos, replacement )
+
+  def replace( pos: HOLPosition, replacement: LambdaExpression ): LambdaExpression =
+    HOLPosition.replace( this, pos, replacement )
+
   /**
    * Tests whether this expression has a subexpression at a given position.
    *

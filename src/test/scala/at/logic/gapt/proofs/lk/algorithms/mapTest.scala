@@ -6,15 +6,12 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
 /**
  * Created by marty on 10/17/14.
  */
-@RunWith( classOf[JUnitRunner] )
-class mapTest extends SpecificationWithJUnit {
+class mapTest extends Specification {
   "map" should {
     val List( u, x, y, z ) = List( "u", "x", "y", "z" ) map ( Var( _, Ti ) )
     val List( a, b, c ) = List( "a", "b", "c" ) map ( Const( _, Ti ) )

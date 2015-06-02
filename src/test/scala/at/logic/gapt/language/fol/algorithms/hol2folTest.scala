@@ -10,12 +10,9 @@ import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.language.fol.algorithms.{ convertHolToFol, changeTypeIn, reduceHolToFol }
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class hol2folTest extends SpecificationWithJUnit {
+class hol2folTest extends Specification {
   def imap = Map[LambdaExpression, StringSymbol]() // the scope for most tests is just the term itself
   def iid = new { var idd = 0; def nextId = { idd = idd + 1; idd } }
 

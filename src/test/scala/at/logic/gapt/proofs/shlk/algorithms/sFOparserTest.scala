@@ -12,13 +12,10 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.lk._
-import org.junit.runner.RunWith
 import org.specs2.execute.Success
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class sFOparserTest extends SpecificationWithJUnit {
+class sFOparserTest extends Specification {
 
   sequential
   "sFOparser" should {

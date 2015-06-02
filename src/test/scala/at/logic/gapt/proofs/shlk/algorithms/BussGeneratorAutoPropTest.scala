@@ -5,14 +5,11 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.algorithms.solve
 import at.logic.gapt.proofs.lk.base.FSequent
-import org.junit.runner.RunWith
 import org.specs2.execute.Success
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
 // Seems like this is testing auto-propositional for HOL... why is it here?
-@RunWith( classOf[JUnitRunner] )
-class BussGeneratorAutoPropTest extends SpecificationWithJUnit {
+class BussGeneratorAutoPropTest extends Specification {
   "BussGeneratorAutoPropTest" should {
     "continue autopropositional" in {
 

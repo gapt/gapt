@@ -8,8 +8,6 @@ import java.io.IOException
 
 import at.logic.gapt.models.Interpretation
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution._
@@ -74,8 +72,7 @@ object SATProblems {
   }
 }
 
-@RunWith( classOf[JUnitRunner] )
-class MiniSATTest extends SpecificationWithJUnit {
+class MiniSATTest extends Specification {
   args( skipAll = !( new MiniSATProver ).isInstalled )
 
   "MiniSAT" should {

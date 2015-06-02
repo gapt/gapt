@@ -8,12 +8,9 @@ package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.MinimizeSolution._
 
 import at.logic.gapt.expr._
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class ForgetfulResolutionTest extends SpecificationWithJUnit {
+class ForgetfulResolutionTest extends Specification {
 
   "Forgetful Paramodulation Should" should {
 

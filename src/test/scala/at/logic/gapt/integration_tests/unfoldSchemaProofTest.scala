@@ -5,14 +5,11 @@ import java.io.InputStreamReader
 
 import at.logic.gapt.formats.shlk_parsing.SHLK.parseProof
 import at.logic.gapt.language.schema._
-import org.junit.runner.RunWith
 import org.specs2.execute.Success
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
 // Moved this test to integration_tests because it uses an external file.
-@RunWith( classOf[JUnitRunner] )
-class UnfoldSchemaProofTest extends SpecificationWithJUnit {
+class UnfoldSchemaProofTest extends Specification {
   //implicit val factory = defaultFormulaOccurrenceFactory
   "UnfoldSchemaProofTest" should {
     "unfold the adder.slk" in {

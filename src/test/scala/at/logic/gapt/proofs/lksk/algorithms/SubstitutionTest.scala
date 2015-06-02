@@ -5,12 +5,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms._
 import at.logic.gapt.proofs.lksk._
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class SubstitutionTest extends SpecificationWithJUnit {
+class SubstitutionTest extends Specification {
   "Substitutions" should {
     val f = Const( "f", Ti -> Ti )
     val y = Var( "y", Ti )

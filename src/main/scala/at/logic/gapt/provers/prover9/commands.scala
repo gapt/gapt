@@ -11,7 +11,7 @@ import at.logic.gapt.provers.atp.commands.base._
 import at.logic.gapt.provers.atp.commands.guided.GetGuidedClausesCommand._
 import at.logic.gapt.provers.atp.commands.guided.{ AddGuidedClausesCommand, GetGuidedClausesCommand, AddGuidedResolventCommand, AddGuidedInitialClauseCommand }
 import at.logic.gapt.provers.atp.commands.replay.ReplayCommand
-import at.logic.gapt.provers.atp.commands.robinson.{ ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand, ParamodulationLiteralPositionCommand }
+import at.logic.gapt.provers.atp.commands.robinson.{ ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand }
 import at.logic.gapt.provers.atp.commands.sequents.{ RefutationReachedCommand, fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand }
 import at.logic.gapt.provers.prover9.Prover9Exception
 import at.logic.gapt.utils.logging.Logger

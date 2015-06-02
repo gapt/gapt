@@ -1,11 +1,8 @@
 package at.logic.gapt.expr
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class EtaExpansionTest extends SpecificationWithJUnit {
+class EtaExpansionTest extends Specification {
   val v = Var( "v", Ti );
   val x = Var( "x", Ti );
   val y = Var( "y", Ti );

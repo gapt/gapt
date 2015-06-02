@@ -2,13 +2,10 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ Ti => i, To => o }
 
-@RunWith( classOf[JUnitRunner] )
-class ExpansionTreeTest extends SpecificationWithJUnit {
+class ExpansionTreeTest extends Specification {
 
   val alpha = Var( "\\alpha", i )
   val beta = Var( "\\beta", i )

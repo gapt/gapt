@@ -4,12 +4,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.provers.FailSafeProver
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class minimalExpansionSequentTest extends SpecificationWithJUnit {
+class minimalExpansionSequentTest extends Specification {
 
   val x = Var( "x", Ti )
   val c = Const( "c", Ti )

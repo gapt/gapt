@@ -6,8 +6,6 @@ package at.logic.gapt.formats.calculi.xml
 
 import at.logic.gapt.formats.simple.SimpleXMLProofParser
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import scala.xml._
 
@@ -16,8 +14,7 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 
-@RunWith( classOf[JUnitRunner] )
-class SimpleXMLParserTest extends SpecificationWithJUnit {
+class SimpleXMLParserTest extends Specification {
   "parse correctly a simple tree" in {
     // use trivial string parser
     implicit val Parser: String => String = ( x => x )

@@ -15,18 +15,15 @@ import com.sun.org.apache.xml.internal.resolver.tools.CatalogResolver
 import java.io.File.separator
 import java.io.{ FileInputStream, InputStreamReader, ByteArrayInputStream }
 import java.util.zip.GZIPInputStream
-import org.junit.runner.RunWith
 import org.specs2.matcher.Expectable
 import org.specs2.matcher.Matcher
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import org.xml.sax.ErrorHandler
 import org.xml.sax.helpers.XMLReaderFactory
 import scala.io.{ BufferedSource, Source }
 import scala.xml.SAXParseException
 
-@RunWith( classOf[JUnitRunner] )
-class XMLParserTest extends SpecificationWithJUnit {
+class XMLParserTest extends Specification {
 
   implicit def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Nil )
   implicit def fseq2seq( s: FSequent ) = Sequent( s._1 map fo2occ, s._2 map fo2occ )

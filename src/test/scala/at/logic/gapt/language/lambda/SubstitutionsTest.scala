@@ -5,15 +5,12 @@
 package at.logic.gapt.expr
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import BetaReduction._
 import ImplicitStandardStrategy._
 import org.specs2.execute.Success
 
-@RunWith( classOf[JUnitRunner] )
-class SubstitutionsTest extends SpecificationWithJUnit {
+class SubstitutionsTest extends Specification {
 
   "Substitutions" should {
     "NOT compose the substitution {f(y)/x} and {g(y)/x}" in {

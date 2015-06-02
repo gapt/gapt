@@ -7,12 +7,9 @@ package at.logic.gapt.language.hol.algorithms
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class NaiveIncompleteMatchingAlgorithmTest extends SpecificationWithJUnit {
+class NaiveIncompleteMatchingAlgorithmTest extends Specification {
   "NaiveIncompleteMatchingAlgorithm " should {
     "match correctly the HOL expressions P(a,x) and P(a,f(b))" in {
       val P = Const( "P", Ti -> ( Ti -> To ) )
