@@ -20,7 +20,7 @@ import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.gapt.proofs.lk.algorithms.subsumption._
 import at.logic.gapt.language.fol.algorithms._
-import at.logic.gapt.proofs.expansionTrees.algorithms.{ compressQuantifiers, minimalExpansionSequents => minimalExpSeq }
+import at.logic.gapt.proofs.expansionTrees.algorithms.{ compressQuantifiers, addSymmetry, minimalExpansionSequents => minimalExpSeq }
 import at.logic.gapt.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
 import at.logic.gapt.proofs.lk._
@@ -199,7 +199,10 @@ object loadSLK {
 }
 
 object loadVeriTProof {
-  def apply( fileName: String ) = VeriTParser.getExpansionProof( fileName )
+  def apply( fileName: String ) = {
+    val Eopt = VeriTParser.getExpansionProof( fileName )
+    Eopt.map( E => addSymmetry( E ) )
+  }
 }
 
 object loadLeanCoPProof {
