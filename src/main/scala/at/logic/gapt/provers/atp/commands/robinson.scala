@@ -3,7 +3,7 @@ package at.logic.gapt.provers.atp.commands.robinson
 
 import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.language.fol.algorithms.UnificationAlgorithm
-import at.logic.gapt.language.hol.{ getAtPosition, getAllPositions, Replacement }
+import at.logic.gapt.language.hol.HOLPosition
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
@@ -175,124 +175,55 @@ case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause
 }
 
 case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
+  def apply( state: State, data: Any ) = {
+    val ( p1, p2 ) = data.asInstanceOf[Tuple2[RobinsonResolutionProof, RobinsonResolutionProof]]
+    apply( p1, p2 ).flatMap( x => x.map( y => ( state, y ) ) )
+  }
   def apply( p1: RobinsonResolutionProof, p2: RobinsonResolutionProof ) = {
+    debug( ( p1, p2 ) toString )
     val l = ( for {
       l1 <- p1.root.succedent
       l2 <- p2.root.antecedent ++ p2.root.succedent
-      subTerm <- getAllPositions( l2.formula ) // except var positions and only on positions of the same type as a or b
+      subTermPosition <- HOLPosition.getPositions( l2.formula, _.isInstanceOf[FOLTerm] ) // except var positions and only on positions of the same type as a or b
     } yield l1.formula match {
       case Eq( a: FOLTerm, b: FOLTerm ) => {
-        //println("\n\n\n\nEq1 = "+l1.formula)
-        //println("l2 = "+l2.formula)
-        //println(Console.RED+"subTerm = "+subTerm+Console.RESET)
-        val mgus1 = if ( a.exptype == subTerm._2.exptype ) alg.unify( a, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
+        val mgus1 = if ( a.exptype == l2.formula( subTermPosition ).exptype ) alg.unify( a, l2.formula( subTermPosition ).asInstanceOf[FOLExpression] ) else Nil
         require( mgus1.size < 2 )
-        val mgus2 = if ( b.exptype == subTerm._2.exptype ) alg.unify( b, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
-        require( mgus2.size < 2 )
-        val l = if ( !mgus1.isEmpty )
-          if ( !mgus2.isEmpty )
-            List( Paramodulation( p1, p2, l1, l2, Replacement( subTerm._1, b ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus1.head ),
-              Paramodulation( p1, p2, l1, l2, Replacement( subTerm._1, a ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus2.head ) )
-          else List( Paramodulation( p1, p2, l1, l2, Replacement( subTerm._1, b ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus1.head ) )
-        else if ( !mgus2.isEmpty )
-          List( Paramodulation( p1, p2, l1, l2, Replacement( subTerm._1, a ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus2.head ) )
-        else List()
-        //println(Console.RESET)
-        //println(mgus1)
-        //print(mgus2)
-        //l.foreach(y => println("\n"+Console.BLUE+y.name+"\n"+y.root+"\n"+Console.RESET+y.rule))
-        l
-      }
-      case _ => {
-        //println("\n\nNot Eq2 : "+l1.formula)
-        //println("l2 = "+l2.formula)
-        List()
-      }
-    } ) ++
-      ( for {
-        l1 <- p2.root.succedent
-        l2 <- p1.root.antecedent ++ p1.root.succedent
-        subTerm <- getAllPositions( l2.formula ) // except variable positions
-      } yield l1.formula match {
-        case Eq( a: FOLTerm, b: FOLTerm ) => {
-          //              println("\n\n\n\nEq2 : "+l1.formula)
-          //              println("l2 = "+l2.formula)
-          //              println(Console.RED+"subTerm = "+subTerm+Console.RESET)
-          val mgus1 = if ( a.exptype == subTerm._2.exptype ) alg.unify( a, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
-          require( mgus1.size < 2 )
-          val mgus2 = if ( b.exptype == subTerm._2.exptype ) alg.unify( b, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
-          require( mgus2.size < 2 )
-
-          val l = if ( !mgus1.isEmpty )
-            if ( !mgus2.isEmpty )
-              List( Paramodulation( p2, p1, l1, l2, Replacement( subTerm._1, b ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus1.head ),
-                Paramodulation( p2, p1, l1, l2, Replacement( subTerm._1, a ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus2.head ) )
-            else List( Paramodulation( p2, p1, l1, l2, Replacement( subTerm._1, b ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus1.head ) )
-          else if ( !mgus2.isEmpty )
-            List( Paramodulation( p2, p1, l1, l2, Replacement( subTerm._1, a ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus2.head ) )
-          else List()
-          //              println(Console.RESET )
-          //              println(mgus1)
-          //              print(mgus2)
-          //              l.foreach(y => println("\n"+Console.BLUE+y.name+"\n"+y.root+"\n"+Console.RESET+y.rule))
-          l
-        }
-        case _ => {
-          //println("\n\nNot Eq2 : "+l1.formula)
-          //println("l2 = "+l2.formula)
-          List()
-        }
-      } )
-    //println(Console.RED)
-    l
-  }
-
-  def apply( state: State, data: Any ) = {
-    val ( p1, p2 ) = data.asInstanceOf[Tuple2[RobinsonResolutionProof, RobinsonResolutionProof]]
-    debug( data toString )
-    val l = ( ( for {
-      l1 <- p1.root.succedent
-      l2 <- p2.root.antecedent ++ p2.root.succedent
-      subTerm <- getAllPositions( l2.formula ) // except var positions and only on positions of the same type as a or b
-    } yield l1.formula match {
-      case Eq( a: FOLTerm, b: FOLTerm ) => {
-        val mgus1 = if ( a.exptype == subTerm._2.exptype ) alg.unify( a, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
-        require( mgus1.size < 2 )
-        val mgus2 = if ( b.exptype == subTerm._2.exptype ) alg.unify( b, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
+        val mgus2 = if ( b.exptype == l2.formula( subTermPosition ).exptype ) alg.unify( b, l2.formula( subTermPosition ).asInstanceOf[FOLExpression] ) else Nil
         require( mgus2.size < 2 )
         if ( !mgus1.isEmpty )
           if ( !mgus2.isEmpty )
-            List( Paramodulation( p1, p2, l1, l2, Replacement( subTerm._1, b ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus1.head ),
-              Paramodulation( p1, p2, l1, l2, Replacement( subTerm._1, a ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus2.head ) )
-          else List( Paramodulation( p1, p2, l1, l2, Replacement( subTerm._1, b ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus1.head ) )
+            List( Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ),
+              Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head ) )
+          else List( Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ) )
         else if ( !mgus2.isEmpty )
-          List( Paramodulation( p1, p2, l1, l2, Replacement( subTerm._1, a ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus2.head ) )
+          List( Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head ) )
         else List()
       }
       case _ => List()
-    } ) ++
-      ( for {
+    } ) ++ (
+      for {
         l1 <- p2.root.succedent
         l2 <- p1.root.antecedent ++ p1.root.succedent
-        subTerm <- getAllPositions( l2.formula ) // except variable positions
+        subTermPosition <- HOLPosition.getPositions( l2.formula, _.isInstanceOf[FOLTerm] ) // except variable positions
       } yield l1.formula match {
         case Eq( a: FOLTerm, b: FOLTerm ) => {
-          val mgus1 = if ( a.exptype == subTerm._2.exptype ) alg.unify( a, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
+          val mgus1 = if ( a.exptype == l2.formula( subTermPosition ).exptype ) alg.unify( a, l2.formula( subTermPosition ).asInstanceOf[FOLExpression] ) else Nil
           require( mgus1.size < 2 )
-          val mgus2 = if ( b.exptype == subTerm._2.exptype ) alg.unify( b, subTerm._2.asInstanceOf[FOLExpression] ) else Nil
+          val mgus2 = if ( b.exptype == l2.formula( subTermPosition ).exptype ) alg.unify( b, l2.formula( subTermPosition ).asInstanceOf[FOLExpression] ) else Nil
           require( mgus2.size < 2 )
 
           if ( !mgus1.isEmpty )
             if ( !mgus2.isEmpty )
-              List( Paramodulation( p2, p1, l1, l2, Replacement( subTerm._1, b ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus1.head ),
-                Paramodulation( p2, p1, l1, l2, Replacement( subTerm._1, a ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus2.head ) )
-            else List( Paramodulation( p2, p1, l1, l2, Replacement( subTerm._1, b ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus1.head ) )
+              List( Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ),
+                Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head ) )
+            else List( Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ) )
           else if ( !mgus2.isEmpty )
-            List( Paramodulation( p2, p1, l1, l2, Replacement( subTerm._1, a ).apply( l2.formula ).asInstanceOf[FOLFormula], mgus2.head ) )
+            List( Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head ) )
           else List()
         }
         case _ => List()
-      } ) ).flatMap( ( x => x.map( y => ( state, y ) ) ) )
+      } )
     l foreach { x => debug( x toString ) }
     l
   }
@@ -329,29 +260,29 @@ case object VariantLiteralCommand extends DataCommand[Clause] {
 
 // paramodulation where we get in addition to the two clauses, also the literals and the position in the literals
 // lit1 must always be the equation
-case class ParamodulationLiteralPositionCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] {
-  def apply( state: State, data: Any ) = {
-    val ( ( p1, occ1, pos1s ) :: ( p2, occ2, pos2s ) :: Nil ) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof, Tuple2[FormulaOccurrence, Boolean], Iterable[Int]]]].toList
-    val pos1 = pos1s.head
-    val pos2 = pos2s.toList // because bad interface in syntax should be Iterable in Replacement
-    // we need to require that lit1 is an equation
-    val lit1 = occ1._1
-    val lit2 = occ2._1
-    val Eq( l: FOLTerm, r: FOLTerm ) = lit1.formula
-    val subTerm = getAtPosition( lit2.formula, pos2 )
-    if ( pos1 == 1 ) {
-      val mgu = if ( l.exptype == subTerm.exptype ) alg.unify( l, subTerm.asInstanceOf[FOLExpression] ) else throw new ProverException( "Paramodulation on " + lit1 + " and " + lit2 + " at position " + pos2 + " is not possible due to different types" )
-      require( mgu.size < 2 )
-      if ( mgu.isEmpty ) throw new ProverException( "Paramodulation on " + lit1.formula + " at position " + pos1 + " and " + lit2.formula + " at position " + pos2 + " is not possible due to non-unifiable subterms" )
-      List( ( state, Paramodulation( p1, p2, lit1, lit2, Replacement( pos2, r ).apply( lit2.formula ).asInstanceOf[FOLFormula], mgu.head ) ) )
-    } else if ( pos1 == 2 ) {
-      val mgu = if ( r.exptype == subTerm.exptype ) alg.unify( r, subTerm.asInstanceOf[FOLExpression] ) else throw new ProverException( "Paramodulation on " + lit1 + " and " + lit2 + " at position " + pos2 + " is not possible due to different types" )
-      require( mgu.size < 2 )
-      if ( mgu.isEmpty ) throw new ProverException( "Paramodulation on " + lit1.formula + " at position " + pos1 + " and " + lit2.formula + " at position " + pos2 + " is not possible due to non-unifiable subterms" )
-      List( ( state, Paramodulation( p1, p2, lit1, lit2, Replacement( pos2, l ).apply( lit2.formula ).asInstanceOf[FOLFormula], mgu.head ) ) )
-    } else throw new ProverException( "Equation's position: " + pos1 + " is greater than 2 or smaller than 1" )
-  }
-
-  override def toString = "ParamodulationLiteralPositionCommand()"
-
-}
+//case class ParamodulationLiteralPositionCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] {
+//  def apply( state: State, data: Any ) = {
+//    val ( ( p1, occ1, pos1s ) :: ( p2, occ2, pos2s ) :: Nil ) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof, Tuple2[FormulaOccurrence, Boolean], Iterable[Int]]]].toList
+//    val pos1 = pos1s.head
+//    val pos2 = pos2s.toList // because bad interface in syntax should be Iterable in Replacement
+//    // we need to require that lit1 is an equation
+//    val lit1 = occ1._1
+//    val lit2 = occ2._1
+//    val Eq( l: FOLTerm, r: FOLTerm ) = lit1.formula
+//    val subTerm = getAtPosition( lit2.formula, pos2 )
+//    if ( pos1 == 1 ) {
+//      val mgu = if ( l.exptype == subTerm.exptype ) alg.unify( l, subTerm.asInstanceOf[FOLExpression] ) else throw new ProverException( "Paramodulation on " + lit1 + " and " + lit2 + " at position " + pos2 + " is not possible due to different types" )
+//      require( mgu.size < 2 )
+//      if ( mgu.isEmpty ) throw new ProverException( "Paramodulation on " + lit1.formula + " at position " + pos1 + " and " + lit2.formula + " at position " + pos2 + " is not possible due to non-unifiable subterms" )
+//      List( ( state, Paramodulation( p1, p2, lit1, lit2, Replacement( pos2, r ).apply( lit2.formula ).asInstanceOf[FOLFormula], mgu.head ) ) )
+//    } else if ( pos1 == 2 ) {
+//      val mgu = if ( r.exptype == subTerm.exptype ) alg.unify( r, subTerm.asInstanceOf[FOLExpression] ) else throw new ProverException( "Paramodulation on " + lit1 + " and " + lit2 + " at position " + pos2 + " is not possible due to different types" )
+//      require( mgu.size < 2 )
+//      if ( mgu.isEmpty ) throw new ProverException( "Paramodulation on " + lit1.formula + " at position " + pos1 + " and " + lit2.formula + " at position " + pos2 + " is not possible due to non-unifiable subterms" )
+//      List( ( state, Paramodulation( p1, p2, lit1, lit2, Replacement( pos2, l ).apply( lit2.formula ).asInstanceOf[FOLFormula], mgu.head ) ) )
+//    } else throw new ProverException( "Equation's position: " + pos1 + " is greater than 2 or smaller than 1" )
+//  }
+//
+//  override def toString = "ParamodulationLiteralPositionCommand()"
+//
+//}
