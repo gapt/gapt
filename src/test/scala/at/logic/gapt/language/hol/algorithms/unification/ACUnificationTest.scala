@@ -11,15 +11,12 @@ import at.logic.gapt.language.fol._
 import at.logic.gapt.expr._
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import org.specs2.matcher.Matcher
 import org.specs2.matcher.Expectable
 import org.specs2.execute.Skipped
 import org.specs2.execute.Success
 
-@RunWith(classOf[JUnitRunner])
-class ACUnificationTest extends SpecificationWithJUnit {
+class ACUnificationTest extends Specification {
   // Is parsing used only for avoinding constructing the terms???
   //val parse = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLTerm]
   //val parse_pred = (s:String) => (new StringReader(s) with SimpleFOLParser {}).getTerm().asInstanceOf[FOLFormula]

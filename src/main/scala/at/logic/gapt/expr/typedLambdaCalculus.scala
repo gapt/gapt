@@ -83,10 +83,14 @@ abstract class LambdaExpression {
    * @param pos The position to be retrieved.
    * @return If there is a subexpression at that position, return Some(that expression). Otherwise None.
    */
-  def get( pos: HOLPosition ): Option[LambdaExpression] = {
-    val lPos = toLambdaPosition( this )( pos )
-    get( lPos )
-  }
+  def get( pos: HOLPosition ): Option[LambdaExpression] =
+    HOLPosition.toLambdaPositionOption( this )( pos ).flatMap( get )
+
+  def replace( pos: LambdaPosition, replacement: LambdaExpression ): LambdaExpression =
+    LambdaPosition.replace( this, pos, replacement )
+
+  def replace( pos: HOLPosition, replacement: LambdaExpression ): LambdaExpression =
+    HOLPosition.replace( this, pos, replacement )
 
   /**
    * Tests whether this expression has a subexpression at a given position.
@@ -105,27 +109,27 @@ abstract class LambdaExpression {
   def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
   override def toString = this match {
-    case All( Var( x, Ti ), e )           => s"∀$x.$e"
-    case All( Var( x, t ), e )            => s"∀$x:$t.$e"
-    case Ex( Var( x, Ti ), e )            => s"∃$x.$e"
-    case Ex( Var( x, t ), e )             => s"∃$x:$t.$e"
-    case And.nAry( xs @ Seq( _, _, _* ) ) => s"(${xs mkString "∧"})"
-    case Or.nAry( xs @ Seq( _, _, _* ) )  => s"(${xs mkString "∨"})"
-    case Imp( x, y )                      => s"($x⊃$y)"
-    case Neg( x )                         => s"¬$x"
-    case Bottom()                         => "⊥"
-    case Top()                            => "⊤"
+    case All( Var( x, Ti ), e )  => s"∀$x.$e"
+    case All( Var( x, t ), e )   => s"∀$x:$t.$e"
+    case Ex( Var( x, Ti ), e )   => s"∃$x.$e"
+    case Ex( Var( x, t ), e )    => s"∃$x:$t.$e"
+    case And( x, y )             => s"($x∧$y)"
+    case Or( x, y )              => s"($x∨$y)"
+    case Imp( x, y )             => s"($x⊃$y)"
+    case Neg( x )                => s"¬$x"
+    case Bottom()                => "⊥"
+    case Top()                   => "⊤"
 
-    case Eq( x, y )                       => s"$x=$y"
-    case FOLAtom( r, Seq() )              => s"$r"
-    case FOLFunction( f, Seq() )          => s"$f"
-    case FOLAtom( r, xs )                 => s"$r(${xs mkString ","})"
-    case FOLFunction( f, xs )             => s"$f(${xs mkString ","})"
+    case Eq( x, y )              => s"$x=$y"
+    case FOLAtom( r, Seq() )     => s"$r"
+    case FOLFunction( f, Seq() ) => s"$f"
+    case FOLAtom( r, xs )        => s"$r(${xs mkString ","})"
+    case FOLFunction( f, xs )    => s"$f(${xs mkString ","})"
 
-    case Abs( x, t )                      => s"λ$x.$t"
-    case App( x, y )                      => s"($x $y)"
-    case Var( x, t )                      => s"$x"
-    case Const( x, t )                    => s"$x"
+    case Abs( x, t )             => s"λ$x.$t"
+    case App( x, y )             => s"($x $y)"
+    case Var( x, t )             => s"$x"
+    case Const( x, t )           => s"$x"
   }
 }
 

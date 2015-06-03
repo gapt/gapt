@@ -18,11 +18,11 @@ object RobinsonToRal extends RobinsonToRal {
   @deprecated
   override def convert_formula( e: HOLFormula ): HOLFormula = e
   @deprecated
-  override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = s
+  override def convert_substitution( s: Substitution ): Substitution = s
 
   //TODO: this is somehow dirty....
-  def convert_map( m: Map[Var, LambdaExpression] ): LambdaSubstitution =
-    HOLSubstitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
+  def convert_map( m: Map[Var, LambdaExpression] ): Substitution =
+    Substitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
 }
 
 case class RalException[V <: LabelledSequent]( val message: String, val rp: List[RobinsonResolutionProof], val ralp: List[RalResolutionProof[V]], val exp: List[LambdaExpression] ) extends Exception( message );
@@ -35,7 +35,7 @@ abstract class RobinsonToRal {
   def convert_formula( e: HOLFormula ): HOLFormula;
 
   /* convert subsitution will be called on any substitution before translation */
-  def convert_substitution( s: HOLSubstitution ): HOLSubstitution;
+  def convert_substitution( s: Substitution ): Substitution;
 
   def convert_sequent( fs: FSequent ): FSequent = FSequent( fs.antecedent.map( convert_formula ), fs.succedent.map( convert_formula ) )
 
@@ -118,7 +118,7 @@ abstract class RobinsonToRal {
       case Instance( clause, parent, sub_ ) =>
 
         val sub = convert_substitution( sub_ )
-        //        val subexps = sub.holmap.toList.flatMap(x => List(x._1,x._2)).filterNot(checkFactory(_, HOLFactory))
+        //        val subexps = sub.map.toList.flatMap(x => List(x._1,x._2)).filterNot(checkFactory(_, HOLFactory))
         //        my_require(subexps.isEmpty , "Substitution contains fol content: "+subexps.map(_.factory))
         val ( rmap1, rp1 ) = apply( parent, map )
         //        val rootexps = rp1.root.toFSequent.formulas.filterNot(checkFactory(_,HOLFactory))

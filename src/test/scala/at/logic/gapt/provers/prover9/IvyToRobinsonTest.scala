@@ -5,17 +5,14 @@ import org.specs2.specification.core.Fragments
 
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import conversion.IvyToRobinson
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable._
 import at.logic.gapt.formats.lisp
 import lisp.{ SExpressionParser }
 
 /**
  * Test for the Ivy interface.
  */
-@RunWith( classOf[JUnitRunner] )
-class IvyToRobinsonTest extends SpecificationWithJUnit with ClasspathFileCopier {
+class IvyToRobinsonTest extends Specification with ClasspathFileCopier {
 
   def parse( file: String ): MatchResult[Any] = {
     val result = SExpressionParser( tempCopyOfClasspathFile( file ) )

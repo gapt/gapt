@@ -1,8 +1,6 @@
 package at.logic.gapt.proofs.algorithms.ceres.ACNF
 
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import java.io.File.separator
@@ -19,8 +17,7 @@ import at.logic.gapt.expr._
  * To change this template use File | Settings | File Templates.
  */
 /*
-@RunWith(classOf[JUnitRunner])
-class SubstituteProofTest extends SpecificationWithJUnit {
+class SubstituteProofTest extends Specification {
   "Proof substitution" should {
     val tokens = HybridLatexParser.parseFile("target" + separator + "substitutions.llk")
     val pdb = HybridLatexParser.createLKProof(tokens)

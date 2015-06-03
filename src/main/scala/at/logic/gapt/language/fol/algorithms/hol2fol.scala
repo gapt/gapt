@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ StringSymbol, SymbolA }
 import at.logic.gapt.expr.{ FunctionType, TA, Ti, To }
 import at.logic.gapt.language.fol.FOLSubstitution
-import at.logic.gapt.language.hol.{ HOLSubstitution, Replacement, getAllPositions2, normalizeFreeVariables }
+import at.logic.gapt.language.hol._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.proofs.lk.base.FSequent
 
@@ -354,12 +354,12 @@ class undoReplaceAbstractions {
   def apply( f: HOLFormula, map: ConstantsMap ): HOLFormula = apply( f.asInstanceOf[LambdaExpression], map ).asInstanceOf[HOLFormula]
   def apply( e: LambdaExpression, map: ConstantsMap ): LambdaExpression = {
     val stringsmap = map.map( x => ( x._2.toString(), x._1 ) ) //inverting the map works because the symbols are unique
-    getAllPositions2( e ).foldLeft( e )( ( exp, position ) =>
+    HOLPosition.getPositions( e ).foldLeft( e )( ( exp, position ) =>
       //we check if the position is a constant with an abstraction symbol
-      position._2 match {
+      e( position ) match {
         case Const( name, _ ) if stringsmap.contains( name ) =>
           //if yes, we replace it by the original expression
-          Replacement( position._1, stringsmap( name ) )( exp )
+          exp.replace( position, stringsmap( name ) )
         case _ => exp
       } )
   }
@@ -458,15 +458,15 @@ object changeTypeIn {
     case _           => throw new Exception( "Unhandled case of a HOL Formula! " + e )
 
   }
-  def apply( e: FOLExpression, tmap: TypeMap ): FOLExpression = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLExpression]
+  def apply( e: FOLTerm, tmap: TypeMap ): FOLTerm = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLTerm]
   def apply( e: HOLFormula, tmap: TypeMap ): HOLFormula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[HOLFormula]
   def apply( e: FOLFormula, tmap: TypeMap ): FOLFormula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLFormula]
   def apply( fs: FSequent, tmap: TypeMap ): FSequent = FSequent( fs.antecedent.map( x => apply( x, tmap ) ),
     fs.succedent.map( x => apply( x, tmap ) ) )
 
   //different names bc of type erasure
-  private def holsub( s: HOLSubstitution, tmap: TypeMap ): HOLSubstitution = HOLSubstitution(
-    s.holmap.map( x =>
+  private def holsub( s: Substitution, tmap: TypeMap ): Substitution = Substitution(
+    s.map.map( x =>
       ( apply( x._1, tmap ).asInstanceOf[Var], apply( x._2, tmap ) ) ) )
 
   private def folsub( s: FOLSubstitution, tmap: TypeMap ): FOLSubstitution = FOLSubstitution( s.folmap.map( x =>

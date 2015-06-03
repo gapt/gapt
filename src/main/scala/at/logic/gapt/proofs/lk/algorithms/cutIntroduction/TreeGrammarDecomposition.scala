@@ -255,7 +255,7 @@ abstract class TreeGrammarDecomposition( val termset: List[FOLTerm], val n: Int 
         // get the current positions, we want to substitute
         val positionSet = partition( i )
         // since the rest fragments of all positions are the same, we can take an arbitrary one
-        val r = at.logic.gapt.language.fol.replacements.getAtPositionFOL( k, positionSet( 0 ) )
+        val r = k( positionSet( 0 ) ).asInstanceOf[FOLTerm]
         // do the substitutions at the corresponding positions
         new_key = positionSet.foldLeft( new_key )( ( acc, pos ) => replaceAtPosition( acc, nonterminal_a, pos, i + 1 ) )
         // if we were able to substitute anything

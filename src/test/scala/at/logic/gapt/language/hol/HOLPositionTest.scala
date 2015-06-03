@@ -5,11 +5,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class HOLPositionTest extends SpecificationWithJUnit {
+class HOLPositionTest extends Specification {
   "HOLPositions" should {
     "be computed correctly" in {
       val x = Var( "x", Ti )
@@ -22,6 +19,12 @@ class HOLPositionTest extends SpecificationWithJUnit {
 
       getPositions( Px ) must beEqualTo( List( HOLPosition( Nil ), HOLPosition( 1 ), HOLPosition( 2 ) ) )
       replace( Px, HOLPosition( 2 ), App( f, c ) ) must beEqualTo( Pfc )
+    }
+  }
+
+  "get" should {
+    "be total" in {
+      FOLFunction( "f", FOLConst( "c" ) ).get( HOLPosition( 1, 2, 1, 2 ) ) must beNone
     }
   }
 }

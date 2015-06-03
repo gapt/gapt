@@ -9,15 +9,12 @@ package at.logic.gapt.formats.simple
 
 import at.logic.gapt.proofs.lk.base.FSequent
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class SimpleResolutionParserTest extends SpecificationWithJUnit {
+class SimpleResolutionParserTest extends Specification {
   //  private class MyParser(input: String) extends StringReader(input) with SimpleResolutionParserHOL
   private class MyParser2( input: String ) extends StringReader( input ) with SimpleResolutionParserFOL
 

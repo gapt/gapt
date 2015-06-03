@@ -5,17 +5,14 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.language.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 
-@RunWith( classOf[JUnitRunner] )
-class interpolationTest extends SpecificationWithJUnit {
+class interpolationTest extends Specification {
   "interpolation" should {
 
     "correctly interpolate an axiom with top" in {

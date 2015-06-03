@@ -6,13 +6,10 @@ package at.logic.gapt.provers.sat4j
 
 import at.logic.gapt.expr._
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.provers.minisat.SATProblems
 
-@RunWith( classOf[JUnitRunner] )
-class Sat4JTest extends SpecificationWithJUnit {
+class Sat4JTest extends Specification {
   "Sat4J" should {
     "find a model for an atom" in {
       ( new Sat4j ).solve( SATProblems.getProblem1() ) must beLike {

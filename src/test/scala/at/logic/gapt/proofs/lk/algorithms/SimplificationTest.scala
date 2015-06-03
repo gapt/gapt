@@ -4,12 +4,9 @@ package at.logic.gapt.proofs.lk.algorithms
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class SimplificationTest extends SpecificationWithJUnit {
+class SimplificationTest extends Specification {
   "Simplifications" should {
     val a = HOLAtom( Var( "a", To ) )
     val b = HOLAtom( Var( "b", To ) )

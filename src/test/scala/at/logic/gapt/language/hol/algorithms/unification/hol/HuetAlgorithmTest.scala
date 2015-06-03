@@ -13,8 +13,6 @@ import at.logic.gapt.expr.BetaReduction._
 import scala.collection.immutable.HashMap
 import at.logic.gapt.expr.substitutions.Substitution
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.parsing.readers.StringReader
 import at.logic.parsing.language.simple.SimpleFOLParser
 import at.logic.gapt.language.hol.algorithms.unification.hol._
@@ -32,8 +30,7 @@ import StrategyLeftRight._
 
 //private class MyParser(input: String) extends StringReader(input) with SimpleFOLParser
 
-@RunWith(classOf[JUnitRunner])
-class HuetAlgorithmTest extends SpecificationWithJUnit with org.specs2.ScalaCheck {
+class HuetAlgorithmTest extends Specification with org.specs2.ScalaCheck {
     "HuetAlgorithm" should {
 
 //       class MyParser(input: String) extends StringReader(input) with SimpleHOLParser

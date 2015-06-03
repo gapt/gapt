@@ -5,12 +5,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.{ BinaryLKProof, Sequent }
 import at.logic.gapt.proofs.lk.{ Axiom, CutRule }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class CutFormulaExtractionTest extends SpecificationWithJUnit {
+class CutFormulaExtractionTest extends Specification {
   "Substitutions" should {
     val x = Var( "x", Ti )
     val P = Const( "P", Ti -> To )

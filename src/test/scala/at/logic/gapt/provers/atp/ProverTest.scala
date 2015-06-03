@@ -6,8 +6,6 @@ package at.logic.gapt.provers.atp
 import at.logic.gapt.language.fol.algorithms.FOLUnificationAlgorithm
 import at.logic.gapt.language.schema.SchemaAtom
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ BranchCommand, Command }
@@ -25,8 +23,7 @@ import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorit
 private class MyParser( str: String ) extends StringReader( str ) with SimpleResolutionParserFOL
 private object MyProver extends Prover[Clause]
 
-@RunWith( classOf[JUnitRunner] )
-class ProverTest extends SpecificationWithJUnit {
+class ProverTest extends Specification {
 
   def parse( str: String ): FOLFormula = ( new StringReader( str ) with SimpleFOLParser getTerm ).asInstanceOf[FOLFormula]
 

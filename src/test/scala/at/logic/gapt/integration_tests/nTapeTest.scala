@@ -25,12 +25,9 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent }
 
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
+class nTapeTest extends Specification with ClasspathFileCopier {
   def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   def show( s: String ) = println( "+++++++++ " + s + " ++++++++++" )
@@ -52,7 +49,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
         undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap ) )
     }
 
-    override def convert_substitution( s: HOLSubstitution ): HOLSubstitution = {
+    override def convert_substitution( s: Substitution ): Substitution = {
       val mapping = s.map.toList.map {
         case ( from, to ) =>
           (
@@ -60,7 +57,7 @@ class nTapeTest extends SpecificationWithJUnit with ClasspathFileCopier {
             BetaReduction.betaNormalize( undoHol2Fol.backtranslate( to, sig_vars, sig_consts, absmap, None ) ) )
       }
 
-      HOLSubstitution( mapping )
+      Substitution( mapping )
     }
   }
 

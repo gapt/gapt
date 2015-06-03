@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.expr._
 import BetaReduction._
-import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.algorithms.ProofTransformationUtils.computeMap
 import at.logic.gapt.proofs.lk.base._
@@ -12,7 +11,7 @@ object applySubstitution {
 
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
   def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                       subst: HOLSubstitution,
+                       subst: Substitution,
                        old_parent: LKProof,
                        old_proof: LKProof,
                        constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
@@ -59,7 +58,7 @@ object applySubstitution {
   }
 
   def handleRule( proof: LKProof, new_parents: List[( LKProof, Map[FormulaOccurrence, FormulaOccurrence] )],
-                  subst: HOLSubstitution ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) = {
+                  subst: Substitution ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) = {
     proof match {
       case Axiom( so ) => {
         val ant_occs = so.antecedent
@@ -210,7 +209,7 @@ object applySubstitution {
     }
   }
 
-  def apply( proof: LKProof, subst: HOLSubstitution ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) =
+  def apply( proof: LKProof, subst: Substitution ): ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ) =
     proof match {
       case Axiom( _ )                    => handleRule( proof, Nil, subst )
       case UnaryLKProof( _, p, _, _, _ ) => handleRule( proof, apply( p, subst ) :: Nil, subst )

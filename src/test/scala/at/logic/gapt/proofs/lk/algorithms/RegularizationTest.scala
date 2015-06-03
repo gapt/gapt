@@ -5,12 +5,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.FSequent
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class RegularizationTest extends SpecificationWithJUnit {
+class RegularizationTest extends Specification {
   "Regularization" should {
     "apply correctly to a simple proof (1)" in {
       val x = Var( "x", Ti )

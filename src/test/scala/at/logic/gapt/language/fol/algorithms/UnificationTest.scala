@@ -3,12 +3,9 @@ package at.logic.gapt.language.fol.algorithms
 
 import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.FOLSubstitution
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class UnificationTest extends SpecificationWithJUnit {
+class UnificationTest extends Specification {
 
   "FOL Unification" should {
     "unify the terms" in {

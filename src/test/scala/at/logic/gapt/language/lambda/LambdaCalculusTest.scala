@@ -5,14 +5,11 @@
 package at.logic.gapt.expr
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import scala.collection.immutable.{ HashSet, HashMap }
 import scala.math.signum
 
-@RunWith( classOf[JUnitRunner] )
-class LambdaCalculusTest extends SpecificationWithJUnit {
+class LambdaCalculusTest extends Specification {
 
   "TypedLambdaCalculus" should {
     "make implicit conversion from String to Name" in {

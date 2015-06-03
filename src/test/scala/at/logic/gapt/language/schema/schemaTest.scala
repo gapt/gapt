@@ -1,14 +1,11 @@
 package at.logic.gapt.language.schema
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import BetaReduction._
 
-@RunWith( classOf[JUnitRunner] )
-class SchemaTest extends SpecificationWithJUnit {
+class SchemaTest extends Specification {
   "Schema" should {
     val i = IntVar( "i" )
     val one = Succ( IntZero() )

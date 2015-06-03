@@ -3,15 +3,11 @@ package at.logic.gapt.proofs.lk.algorithms
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.FSequent
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class SubstitutionTest extends SpecificationWithJUnit {
+class SubstitutionTest extends Specification {
   "Substitutions" should {
     object proof1 {
       val x = Var( "x", Ti )
@@ -23,7 +19,7 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val a = Const( "a", Ti )
       val f = Const( "f", Ti -> Ti )
       val fa = App( f, a )
-      val subst = HOLSubstitution( x, fa )
+      val subst = Substitution( x, fa )
     }
 
     object proof2 {
@@ -39,8 +35,8 @@ class SubstitutionTest extends SpecificationWithJUnit {
       val a = Const( "a", Ti )
       val f = Const( "f", Ti -> Ti )
       val fa = App( f, a )
-      val subst = HOLSubstitution( y, fa )
-      val subst2 = HOLSubstitution( y, x ) //test for overbinding
+      val subst = Substitution( y, fa )
+      val subst2 = Substitution( y, x ) //test for overbinding
     }
 
     "apply correctly to a simple proof" in {

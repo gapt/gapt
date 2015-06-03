@@ -8,14 +8,11 @@
 package at.logic.gapt.utils.ds
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import Multisets._
 import scala.collection.immutable.HashSet
 
-@RunWith( classOf[JUnitRunner] )
-class MultisetsTest extends SpecificationWithJUnit {
+class MultisetsTest extends Specification {
   "Multisets" should {
     val m1 = ( ( HashMultiset[Int] + 1 ) + 1 ) + 2
 
