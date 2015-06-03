@@ -26,6 +26,11 @@ class GrammarFindingTest extends Specification {
         Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
       g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
     }
+    "compute the language if a non-terminal has no productions" in {
+      val g = vtg( Seq( "x", "y1,y2", "z1,z2,z3" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
+    }
   }
 
   "TratGrammar" should {

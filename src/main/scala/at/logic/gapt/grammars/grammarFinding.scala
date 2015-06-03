@@ -109,9 +109,11 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
   def language: Set[FOLTerm] = {
     var lang = Set[FOLTerm]( axiom )
     nonTerminals.foreach { a =>
-      lang = productions( a ) flatMap { p =>
-        lang.map( FOLSubstitution( p.zipped toSeq ).apply )
-      } toSet
+      val P_a = productions(a)
+      if (P_a.nonEmpty)
+        lang = P_a.flatMap { p =>
+          lang.map(FOLSubstitution(p.zipped toSeq).apply)
+        } toSet
     }
     lang filter ( freeVariables( _ ).isEmpty )
   }
