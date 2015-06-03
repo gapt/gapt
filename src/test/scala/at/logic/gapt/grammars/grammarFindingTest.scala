@@ -6,6 +6,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.sat4j.Sat4j
+import org.specs2.specification.core.Fragments
 
 class GrammarFindingTest extends Specification {
   "VectTratGrammar" should {
@@ -19,6 +20,11 @@ class GrammarFindingTest extends Specification {
     }
     "check that productions start with defined non-terminals" in {
       vtg( Seq( "x" ), Seq( "y->c" ) ) must throwA[IllegalArgumentException]
+    }
+    "correctly compute the language" in {
+      val g = vtg( Seq( "x", "y1,y2" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
     }
   }
 
@@ -74,7 +80,6 @@ class GrammarFindingTest extends Specification {
       val p = g.productions( 3 ) // z->d
       val f = new TermGenerationFormula( g, parseTerm( "r(c)" ) )
       new Sat4j().solve( And( f.formula, Neg( f.vectProductionIsIncluded( p ) ) ) ) must beSome
-
     }
     "generate term with 2 productions" in {
       val g = tg( "x->f(y)", "y->c" )
@@ -110,13 +115,35 @@ class GrammarFindingTest extends Specification {
   }
 
   "findMinimalGrammar" should {
-    "find covering grammar" in {
-      if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
+    if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
 
+    "find covering grammar of minimal size" in {
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" )
       val g = findMinimalGrammar( l map parseTerm, 1, new QMaxSAT )
       covers( g, l: _* )
       g.productions.size must beEqualTo( 2 + 3 )
+      g.language must_== l.map( parseTerm ).toSet
+    }
+
+    "find covering grammars" in {
+      Fragments.foreach( Seq(
+        1 -> Seq( "f(c)", "g(c,c)", "g(c,d)" ) -> 3,
+        1 -> Seq( "f(c)", "f(d)", "g(c,c)", "g(c,d)", "h(e,f(c))", "h(e,f(d))" ) -> 5,
+        2 -> Seq(
+          "f(c,c,c)", "f(c,d,c)", "f(c,e,c)",
+          "f(d,c,c)", "f(d,d,c)", "f(d,e,c)",
+          "f(e,c,c)", "f(e,d,c)", "f(e,e,c)",
+          "f(c,c,d)", "f(c,d,d)", "f(c,e,d)",
+          "f(d,c,d)", "f(d,d,d)", "f(d,e,d)",
+          "f(e,c,d)", "f(e,d,d)", "f(e,e,d)" ) -> 8 ) ) {
+        case ( ( n, l_str ), sizeOfMinG ) =>
+          val l = l_str map parseTerm
+          s"for $l with $n non-terminals" in {
+            val g = findMinimalGrammar( l, n, new QMaxSAT )
+            g.productions.size must_== sizeOfMinG
+            ( l.toSet diff g.language ) must_== Set()
+          }
+      }
     }
   }
 

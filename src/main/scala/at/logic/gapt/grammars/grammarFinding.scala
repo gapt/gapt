@@ -2,8 +2,8 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
-import at.logic.gapt.language.fol.{FOLSubstitution, Utils}
-import at.logic.gapt.provers.maxsat.{MaxSATSolver, MaxSat4j}
+import at.logic.gapt.language.fol.{ FOLSubstitution, Utils }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 import at.logic.gapt.utils.dssupport.ListSupport
 
 import scala.collection.mutable
@@ -90,8 +90,10 @@ object VectTratGrammar {
 }
 
 case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.NonTerminalVect], productions: Seq[VectTratGrammar.Production] ) {
-  def productions( nonTerminalVect: List[FOLVar] ): Seq[VectTratGrammar.Production] = productions filter ( _._1 == nonTerminalVect )
-  //  def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
+  import VectTratGrammar._
+
+  def productions( nonTerminalVect: NonTerminalVect ): Seq[Production] = productions filter ( _._1 == nonTerminalVect )
+  def rightHandSides( nonTerminal: NonTerminalVect ) = productions( nonTerminal ) map ( _._2 )
 
   productions foreach {
     case p @ ( a, t ) =>
@@ -103,6 +105,16 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
       }
   }
   require( nonTerminals contains Seq( axiom ), s"axiom is unknown non-terminal vector $axiom" )
+
+  def language: Set[FOLTerm] = {
+    var lang = Set[FOLTerm]( axiom )
+    nonTerminals.foreach { a =>
+      lang = productions( a ) flatMap { p =>
+        lang.map( FOLSubstitution( p.zipped toSeq ).apply )
+      } toSet
+    }
+    lang filter ( freeVariables( _ ).isEmpty )
+  }
 }
 
 object TratGrammar {
@@ -138,6 +150,8 @@ case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: S
   def toVectTratGrammar: VectTratGrammar = VectTratGrammar(
     axiom, nonTerminals map ( List( _ ) ),
     productions map asVectTratGrammarProduction )
+
+  def language: Set[FOLTerm] = toVectTratGrammar language
 }
 
 class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
