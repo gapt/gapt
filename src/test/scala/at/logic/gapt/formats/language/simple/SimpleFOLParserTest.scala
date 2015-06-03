@@ -9,15 +9,12 @@ package at.logic.gapt.formats.language.simple
 
 import at.logic.gapt.formats.simple.SimpleFOLParser
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.language.fol._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.formats.readers.StringReader
 
-@RunWith( classOf[JUnitRunner] )
-class SimpleFOLParserTest extends SpecificationWithJUnit {
+class SimpleFOLParserTest extends Specification {
   private class MyParser( input: String ) extends StringReader( input ) with SimpleFOLParser
 
   val var1 = FOLVar( "x1" )

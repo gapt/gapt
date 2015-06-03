@@ -5,16 +5,13 @@ import at.logic.gapt.provers.atp.commands.robinson.ParamodulationCommand
 import org.specs2.mutable._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.expr._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.formats.prover9.Prover9TermParser.parseFormula
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.gapt.provers.atp.commands.sequents._
 import at.logic.gapt.provers.atp.commands.base._
 
-@RunWith( classOf[JUnitRunner] )
-class RobinsonTest extends SpecificationWithJUnit {
+class RobinsonTest extends Specification {
   "ParamodulationCommand" should {
     "applying paramodulation command on two res.proofs" in {
       "failing replay command for prime0" in {

@@ -25,8 +25,8 @@ object LLKFormatter {
       ( fs.succedent.map( toLLKString.apply ).mkString( ", " ) ) + " "
   }
 
-  def f( s: HOLSubstitution ): String = {
-    s.holmap.map( x => f( x._1 ) + " -> " + f( x._2 ) ).mkString( "{", ",", "}" )
+  def f( s: Substitution ): String = {
+    s.map.map( x => f( x._1 ) + " -> " + f( x._2 ) ).mkString( "{", ",", "}" )
   }
 
   def f( fs: Sequent ): String = f( fs.toFSequent )
@@ -325,7 +325,7 @@ trait TokenToLKConverter extends Logger {
     def inferTerm( x: Var, holf: HOLFormula ): LambdaExpression = {
       NaiveIncompleteMatchingAlgorithm.holMatch( holf, aux )( Nil ) match {
         case Some( sub ) =>
-          val s: LambdaExpression = sub.holmap.getOrElse( x, x ) //in case the variable was projected away, we use the identity function
+          val s: LambdaExpression = sub.map.getOrElse( x, x ) //in case the variable was projected away, we use the identity function
           if ( auxterm.nonEmpty ) {
             //try to use user provided term
             val t: LambdaExpression = HLKHOLParser.ASTtoHOL( naming, auxterm.get )
@@ -376,7 +376,7 @@ trait TokenToLKConverter extends Logger {
     def inferTerm( x: Var, f: HOLFormula ): LambdaExpression = {
       NaiveIncompleteMatchingAlgorithm.holMatch( f, aux )( Nil ) match {
         case Some( sub ) =>
-          val s: LambdaExpression = sub.holmap.getOrElse( x, x ) //in case the term was projected away we try the identity function
+          val s: LambdaExpression = sub.map.getOrElse( x, x ) //in case the term was projected away we try the identity function
           if ( auxterm.nonEmpty ) {
             //try to use user provided term
             val t: LambdaExpression = HLKHOLParser.ASTtoHOL( naming, auxterm.get )
@@ -814,11 +814,11 @@ trait TokenToLKConverter extends Logger {
 
   val axformula = HOLAtom( Const( "AX", To ), Nil )
 
-  def createSubstitution( naming: String => LambdaExpression, astlist: List[( ast.Var, LambdaAST )] ): HOLSubstitution = {
+  def createSubstitution( naming: String => LambdaExpression, astlist: List[( ast.Var, LambdaAST )] ): Substitution = {
     val terms: List[( Var, LambdaExpression )] = astlist.foldLeft( List[( Var, LambdaExpression )]() )( ( list, p ) => {
       ( HLKHOLParser.ASTtoHOL( naming, p._1 ).asInstanceOf[Var], HLKHOLParser.ASTtoHOL( naming, p._2 ) ) :: list
     } )
-    HOLSubstitution( terms.reverse )
+    Substitution( terms.reverse )
   }
 
   /* =============== Macro Rules ============================ */
@@ -845,7 +845,7 @@ trait TokenToLKConverter extends Logger {
       val r1 = NaiveIncompleteMatchingAlgorithm.holMatch( ax, auxf )( Nil ) match {
         case Some( sub ) if sub( ax ) syntaxEquals ( auxf ) => ( name, ax1, sub ) :: Nil
         case Some( sub ) =>
-          val sub2 = HOLSubstitution( sub.holmap.filter( x => x._1 != x._2 ) )
+          val sub2 = Substitution( sub.map.filter( x => x._1 != x._2 ) )
           if ( sub2( ax ) syntaxEquals ( auxf ) )
             ( name, ax1, sub2 ) :: Nil
           else
@@ -939,7 +939,7 @@ trait TokenToLKConverter extends Logger {
       val r1 = NaiveIncompleteMatchingAlgorithm.holMatch( ax, auxf )( Nil ) match {
         case Some( sub ) if sub( ax ) syntaxEquals ( auxf ) => ( name, ax1, sub ) :: Nil
         case Some( sub2 ) =>
-          val sub = HOLSubstitution( sub2.holmap.filterNot( x => x._1 == x._2 ) )
+          val sub = Substitution( sub2.map.filterNot( x => x._1 == x._2 ) )
           if ( sub( ax ) syntaxEquals ( auxf ) ) {
             ( name, ax1, sub ) :: Nil
           } else {
@@ -1173,7 +1173,7 @@ trait TokenToLKConverter extends Logger {
       throw new Exception( "Could not convert " + e + " to a HOL Formula!" )
 
   def getAxiomLookupProof( name: HOLFormula, axiom: HOLFormula, instance: HOLFormula,
-                           axiomconj: HOLFormula, axiomproof: LKProof, sub: HOLSubstitution ): ( HOLFormula, LKProof ) = {
+                           axiomconj: HOLFormula, axiomproof: LKProof, sub: Substitution ): ( HOLFormula, LKProof ) = {
     axiomconj match {
       case x if x syntaxEquals ( name ) =>
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
@@ -1194,21 +1194,21 @@ trait TokenToLKConverter extends Logger {
   }
 
   //TODO:move this code to an appropriate place
-  def proveInstance( axiom: HOLFormula, instance: HOLFormula, sub: HOLSubstitution ): LKProof = {
+  def proveInstance( axiom: HOLFormula, instance: HOLFormula, sub: Substitution ): LKProof = {
     //val (qs,body) = stripUniversalQuantifiers(axiom)
     proveInstance_( axiom, instance, sub, Axiom( List( instance ), List( instance ) ) )._2
   }
 
-  def proveInstanceFrom( axiom: HOLFormula, instance: HOLFormula, sub: HOLSubstitution, uproof: LKProof ): LKProof = {
+  def proveInstanceFrom( axiom: HOLFormula, instance: HOLFormula, sub: Substitution, uproof: LKProof ): LKProof = {
     //val (qs,body) = stripUniversalQuantifiers(axiom)
     proveInstance_( axiom, instance, sub, uproof )._2
   }
-  def proveInstance_( axiom: HOLFormula, instance: HOLFormula, sub: HOLSubstitution, axiomproof: LKProof ): ( HOLFormula, LKProof ) = {
+  def proveInstance_( axiom: HOLFormula, instance: HOLFormula, sub: Substitution, axiomproof: LKProof ): ( HOLFormula, LKProof ) = {
     //    println("Prove instance with sub "+f(sub))
     axiom match {
       case All( v, s ) =>
         val ( aux, uproof ) = proveInstance_( s, instance, sub, axiomproof )
-        ( c( sub( axiom ) ), ForallLeftRule( uproof, aux, c( sub( axiom ) ), sub.holmap( v ) ) )
+        ( c( sub( axiom ) ), ForallLeftRule( uproof, aux, c( sub( axiom ) ), sub.map( v ) ) )
       case f if normalize( sub( f ) ) syntaxEquals instance =>
         ( instance, axiomproof )
       case _ => throw new Exception( "Implementation error! Could not decompose " + f( axiom ) + " subterm=" + sub( axiom ) + " need=" + f( instance ) )

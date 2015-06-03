@@ -5,15 +5,12 @@
 package at.logic.gapt.language.hol
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import BetaReduction._
 
-@RunWith( classOf[JUnitRunner] )
-class HigherOrderLogicTest extends SpecificationWithJUnit {
+class HigherOrderLogicTest extends Specification {
 
   "HigherOrderLogic" should {
     val c1 = Const( "a", Ti -> To )
@@ -105,7 +102,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       val t = Abs( z, Pz )
       val pft = App( p, App( f, t ) )
 
-      val sigma = HOLSubstitution( x, t )
+      val sigma = Substitution( x, t )
 
       betaNormalize( sigma( xfx ) ) must beEqualTo( pft )
     }
@@ -121,7 +118,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       val t = Abs( z, Pz )
       val pft = HOLAtom( p, HOLFunction( f, t :: Nil ) :: Nil )
 
-      val sigma = HOLSubstitution( x, t )
+      val sigma = Substitution( x, t )
       val xfx_sigma = betaNormalize( sigma( xfx ) )
 
       xfx_sigma must beEqualTo( pft )
@@ -182,7 +179,7 @@ class HigherOrderLogicTest extends SpecificationWithJUnit {
       q_form match {
         case All( x, f ) => {
           val a = Const( "a", x.exptype )
-          val sub = HOLSubstitution( x, a )
+          val sub = Substitution( x, a )
           val P3 = HOLAtom( Var( "P", ->( sCTn.exptype, ->( a.exptype, To ) ) ), sCTn :: a :: Nil )
           val s = sub( f )
           val result = s match {

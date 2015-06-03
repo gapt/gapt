@@ -208,7 +208,7 @@ object renameVar {
 object SubstituteProof {
   def subapp(f: Formula, sub:Substitution) = sub(f)
   def subapp(f: FormulaOccurrence, sub:Substitution) = sub(f.formula)
-  def remove_from_sub(v:Var, sub:Substitution) = Substitution(sub.holmap.filterNot( x => x._1 == v  ))
+  def remove_from_sub(v:Var, sub:Substitution) = Substitution(sub.map.filterNot( x => x._1 == v  ))
 
   def apply(proof: LKProof, sub:Substitution) : LKProof =
     proof match {

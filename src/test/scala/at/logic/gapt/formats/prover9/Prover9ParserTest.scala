@@ -1,12 +1,9 @@
 package at.logic.gapt.formats.prover9
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 import at.logic.gapt.expr._
 
-@RunWith( classOf[JUnitRunner] )
-class Prover9ParserTest extends SpecificationWithJUnit {
+class Prover9ParserTest extends Specification {
   "The Prover9 language parser" should {
     "handle conjunctions and atoms" in {
       List( "p(X)", "A", "-p(y)", "-p(Y)",

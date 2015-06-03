@@ -33,12 +33,9 @@ import at.logic.gapt.proofs.algorithms.skolemization.skolemize
 import java.io.File.separator
 import java.io.{IOException, FileReader, FileInputStream, InputStreamReader}
 import java.util.zip.GZIPInputStream
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 
-@RunWith(classOf[JUnitRunner])
-class PrimeProofTest extends SpecificationWithJUnit {
+class PrimeProofTest extends Specification {
   val box = List()
   def checkForProverOrSkip = Prover9.refute(box) must not(throwA[IOException]).orSkip
 

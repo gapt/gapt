@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.{ containsQuantifier, HOLPosition, HOLSubstitution, getMatrix }
+import at.logic.gapt.language.hol.{ containsQuantifier, HOLPosition, getMatrix }
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base._
 import scala.annotation.tailrec
@@ -452,7 +452,7 @@ object formulaToExpansionTree {
     apply( form, List(), pos )
   }
 
-  def apply( form: HOLFormula, subs: List[_ <: HOLSubstitution], pos: Boolean ): ExpansionTree = {
+  def apply( form: HOLFormula, subs: List[_ <: Substitution], pos: Boolean ): ExpansionTree = {
     // form's quantified variables must be pairwise distinct
     val bound = boundVariables( form )
     assert( bound.distinct.length == bound.length, "formulaToExpansionTree: bound variables are not pairwise distinct." )
@@ -461,7 +461,7 @@ object formulaToExpansionTree {
     apply_( form, subs, pos )
   }
 
-  private def apply_( form: HOLFormula, subs: List[_ <: HOLSubstitution], pos: Boolean ): ExpansionTree = form match {
+  private def apply_( form: HOLFormula, subs: List[_ <: Substitution], pos: Boolean ): ExpansionTree = form match {
     case HOLAtom( _, _ ) => ETAtom( form )
     case Neg( f )        => ETNeg( apply_( f, subs, !pos ) ).asInstanceOf[ExpansionTree]
     case And( f1, f2 )   => ETAnd( apply_( f1, subs, pos ), apply_( f2, subs, pos ) ).asInstanceOf[ExpansionTree]
@@ -524,7 +524,7 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
   /**
    * Perform substitution including propagation of merge nodes
    */
-  def apply( s: HOLSubstitution, et: ExpansionTreeWithMerges ): ExpansionTree = {
+  def apply( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTree = {
     val etSubstituted = doApplySubstitution( s, et )
     //merge(etSubstituted)
     etSubstituted.asInstanceOf[ExpansionTree]
@@ -534,11 +534,11 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
    * Perform substitution _without_ propagation of merge nodes
    * Useful for tests, has to be extra method due to different return type
    */
-  def applyNoMerge( s: HOLSubstitution, et: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = {
+  def applyNoMerge( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = {
     doApplySubstitution( s, et )
   }
 
-  private[expansionTrees] def doApplySubstitution( s: HOLSubstitution, et: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = et match {
+  private[expansionTrees] def doApplySubstitution( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = et match {
     case ETAtom( f )     => ETAtom( s.apply( f ) )
     case ETNeg( t1 )     => ETNeg( doApplySubstitution( s, t1 ) )
     case ETAnd( t1, t2 ) => ETAnd( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
@@ -556,7 +556,7 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
   /**
    * If present, apply Substitution s to weak quantifier instances, then create merge nodes for duplicates
    */
-  private[expansionTrees] def mergeWeakQuantifiers( s: Option[HOLSubstitution], instances: Seq[( ExpansionTreeWithMerges, LambdaExpression )] ): Seq[( ExpansionTreeWithMerges, LambdaExpression )] = {
+  private[expansionTrees] def mergeWeakQuantifiers( s: Option[Substitution], instances: Seq[( ExpansionTreeWithMerges, LambdaExpression )] ): Seq[( ExpansionTreeWithMerges, LambdaExpression )] = {
     // through merging, some instances might disappear
     // keep map (substituted var -> [  ] ) to rebuild instances from it
     type InstList = ListBuffer[ExpansionTreeWithMerges]
@@ -655,16 +655,16 @@ object merge extends at.logic.gapt.utils.logging.Logger {
    * If no substitution is returned, the tree in the return value does not contain merge nodes
    * @param polarity: required for merging top and bottom.
    */
-  private def detectAndMergeMergeNodes( tree: ExpansionTreeWithMerges, polarity: Boolean ): ( Option[HOLSubstitution], ExpansionTreeWithMerges ) = {
+  private def detectAndMergeMergeNodes( tree: ExpansionTreeWithMerges, polarity: Boolean ): ( Option[Substitution], ExpansionTreeWithMerges ) = {
 
     // code which is required for all binary operators
     // @param leftPolarity: polarity of left child
     def start_op2( t1: ExpansionTreeWithMerges, t2: ExpansionTreeWithMerges,
                    OpFactory: ( ExpansionTreeWithMerges, ExpansionTreeWithMerges ) => ExpansionTreeWithMerges,
-                   leftPolarity: Boolean ): ( Option[HOLSubstitution], ExpansionTreeWithMerges ) = {
+                   leftPolarity: Boolean ): ( Option[Substitution], ExpansionTreeWithMerges ) = {
       val ( subst1, res1 ) = detectAndMergeMergeNodes( t1, leftPolarity )
       subst1 match {
-        case Some( s: HOLSubstitution ) => // found substitution, need to return right here
+        case Some( s: Substitution ) => // found substitution, need to return right here
           ( Some( s ), OpFactory( res1, t1 ) )
         case None => // no substitution, continue
           val ( subst2, res2 ) = detectAndMergeMergeNodes( t2, polarity )
@@ -688,7 +688,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
           val ( subst, res ) = detectAndMergeMergeNodes( et, polarity )
           instancesPrime += Tuple2( res, expr )
           subst match {
-            case Some( s: HOLSubstitution ) => {
+            case Some( s: Substitution ) => {
               return ( Some( s ), ETWeakQuantifier( f, instancesPrime ++ instances.drop( instancesPrime.length ) ) )
             }
             case None =>
@@ -713,17 +713,17 @@ object merge extends at.logic.gapt.utils.logging.Logger {
    * Returns either a substitution in case we have to do a substitution at the highest level or the merged tree
    * Call with children of merge node
    */
-  private def doApplyMerge( tree1: ExpansionTreeWithMerges, tree2: ExpansionTreeWithMerges, polarity: Boolean ): ( Option[HOLSubstitution], ExpansionTreeWithMerges ) = {
+  private def doApplyMerge( tree1: ExpansionTreeWithMerges, tree2: ExpansionTreeWithMerges, polarity: Boolean ): ( Option[Substitution], ExpansionTreeWithMerges ) = {
     trace( "apply merge called on: \n" + tree1 + "\n" + tree2 )
 
     // similar as above, code which is required for all binary operators
     def start_op2( s1: ExpansionTreeWithMerges, t1: ExpansionTreeWithMerges,
                    s2: ExpansionTreeWithMerges, t2: ExpansionTreeWithMerges,
                    OpFactory: ( ExpansionTreeWithMerges, ExpansionTreeWithMerges ) => ExpansionTreeWithMerges,
-                   leftPolarity: Boolean ): ( Option[HOLSubstitution], ExpansionTreeWithMerges ) = {
+                   leftPolarity: Boolean ): ( Option[Substitution], ExpansionTreeWithMerges ) = {
       val ( subst1, res1 ) = doApplyMerge( s1, s2, leftPolarity )
       subst1 match {
-        case Some( s: HOLSubstitution ) => ( Some( s ), OpFactory( res1, ETMerge( t1, t2 ) ) )
+        case Some( s: Substitution ) => ( Some( s ), OpFactory( res1, ETMerge( t1, t2 ) ) )
         case None =>
           val ( subst2, res2 ) = doApplyMerge( t1, t2, polarity )
           ( subst2, OpFactory( res1, res2 ) ) // might be Some(subst) or None
@@ -745,7 +745,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
 
       case ( ETStrongQuantifier( f1, v1, sel1 ), ETStrongQuantifier( f2, v2, sel2 ) ) if f1 == f2 =>
         trace( "encountered strong quantifier " + f1 + "; renaming " + v2 + " to " + v1 )
-        return ( Some( HOLSubstitution( v2, v1 ) ), ETStrongQuantifier( f1, v1, ETMerge( sel1, sel2 ) ) )
+        return ( Some( Substitution( v2, v1 ) ), ETStrongQuantifier( f1, v1, ETMerge( sel1, sel2 ) ) )
 
       case ( ETSkolemQuantifier( f1, s1, sel1 ), ETSkolemQuantifier( f2, s2, sel2 ) ) if f1 == f2 =>
         val sel2_ = if ( s1 != s2 ) {
@@ -761,7 +761,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
 
         } else sel2
         //trace("encountered skolem quantifier "+f1+"; renaming "+v2+" to "+v1)
-        return ( Some( HOLSubstitution() ), ETSkolemQuantifier( f1, s1, ETMerge( sel1, sel2_ ) ) )
+        return ( Some( Substitution() ), ETSkolemQuantifier( f1, s1, ETMerge( sel1, sel2_ ) ) )
 
       case ( ETWeakQuantifier( f1, children1 ), ETWeakQuantifier( f2, children2 ) ) if f1 == f2 => {
         val newTree = ETWeakQuantifier( f1, substitute.mergeWeakQuantifiers( None, children1 ++ children2 ) )
@@ -778,15 +778,15 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       case ( ETMerge( n1, n2 ), _ ) => { // we proceed top-bottom. Sometimes we need to propagate a merge below another merge, in which case the lower merge has to be resolved first
         val ( subst, res ) = doApplyMerge( n1, n2, polarity )
         subst match {
-          case Some( s: HOLSubstitution ) => ( Some( s ), ETMerge( res, tree2 ) )
-          case None                       => doApplyMerge( res, tree2, polarity )
+          case Some( s: Substitution ) => ( Some( s ), ETMerge( res, tree2 ) )
+          case None                    => doApplyMerge( res, tree2, polarity )
         }
       }
       case ( _, ETMerge( n1, n2 ) ) => { // see above
         val ( subst, res ) = doApplyMerge( n1, n2, polarity )
         subst match {
-          case Some( s: HOLSubstitution ) => ( Some( s ), ETMerge( res, tree2 ) )
-          case None                       => doApplyMerge( tree1, res, polarity )
+          case Some( s: Substitution ) => ( Some( s ), ETMerge( res, tree2 ) )
+          case None                    => doApplyMerge( tree1, res, polarity )
         }
       }
       case _ => throw new IllegalArgumentException( "Bug in merge in extractExpansionSequent. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2 )

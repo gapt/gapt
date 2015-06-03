@@ -4,15 +4,12 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.FClause
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
 // we compare toStrings as proofs have only pointer equality. This needs to be changed by allowing syntaxEquals in graphs and vertices should
 // have syntaxEquals as well
 
-@RunWith( classOf[JUnitRunner] )
-class projectionsTest extends SpecificationWithJUnit {
+class projectionsTest extends Specification {
   "PCNF" should {
     "create the projection of" in {
       val Pa = FOLAtom( "P", FOLConst( "a" ) :: Nil )

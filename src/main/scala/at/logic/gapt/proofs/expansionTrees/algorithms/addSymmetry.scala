@@ -51,7 +51,7 @@ object addSymmetry {
    * terms which occur in the same equality predicate and its polarity.
    * pol is true for positive polarity.
    */
-  def getEqualityPairs( f: FOLFormula, pol: Boolean ): List[( FOLExpression, FOLExpression, Boolean )] = f match {
+  def getEqualityPairs( f: FOLFormula, pol: Boolean ): List[( FOLTerm, FOLTerm, Boolean )] = f match {
     case FOLAtom( eq, List( t1, t2 ) ) if eq.toString == "=" => List( ( t1, t2, pol ) )
     case FOLAtom( p, _ ) if p.toString != "=" => List()
     case Bottom() | Top() => List()

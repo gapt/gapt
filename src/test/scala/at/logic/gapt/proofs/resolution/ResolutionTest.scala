@@ -7,16 +7,13 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.language.fol.FOLSubstitution
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base._
 
-@RunWith( classOf[JUnitRunner] )
-class ResolutionTest extends SpecificationWithJUnit {
+class ResolutionTest extends Specification {
 
   "Paramodulation rule in Robinson Resolution" should {
     "be created correctly" in {
@@ -118,7 +115,7 @@ class ResolutionTest extends SpecificationWithJUnit {
 
       val p0 = InitialSequent[SequentOccurrence]( Sequent( Nil, m::Nil ) )
       val p1 = ForallT( p0, p0.root.succedent.head, x )
-      val p2 = Sub( p1, HOLSubstitution( x, t ) )
+      val p2 = Sub( p1, Substitution( x, t ) )
 
       val newa = HOLAtom( ConstantStringSymbol("P"), App( f, t )::Nil )
       p2.root.getSequent.succedent.head must beEqualTo( 

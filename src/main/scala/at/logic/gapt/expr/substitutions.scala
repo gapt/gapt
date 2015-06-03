@@ -11,7 +11,7 @@ package at.logic.gapt.expr
  * As the lambda calculus contains variable binders, substitution can only be defined up to alpha-equivalence.
  * When applying a substitution, bound variables are renamed if needed.
  */
-class LambdaSubstitution( val map: Map[Var, LambdaExpression] ) {
+class Substitution( val map: Map[Var, LambdaExpression] ) {
 
   // Require that each variable is substituted by a term of the same type
   for ( s <- map ) require( s._1.exptype == s._2.exptype,
@@ -34,13 +34,13 @@ class LambdaSubstitution( val map: Map[Var, LambdaExpression] ) {
         // Abs(x, t) [x -> u] = Abs(x, t)
         // The replacement of v is not done, removing it from the substitution and applying to t1
         val newMap = map - v
-        LambdaSubstitution( newMap )
+        Substitution( newMap )
       } else this
 
       val ( freshVar, newTerm ) = if ( fv.contains( v ) ) {
         // Variable captured, renaming the abstracted variable
         val freshVar = rename( v, fv )
-        val sub = LambdaSubstitution( v, freshVar )
+        val sub = Substitution( v, freshVar )
         val newTerm = sub( t1 )
         ( freshVar, newTerm )
       } else ( v, t1 )
@@ -48,15 +48,17 @@ class LambdaSubstitution( val map: Map[Var, LambdaExpression] ) {
       Abs( freshVar, newSub( newTerm ) )
   }
 
+  def apply( t: HOLFormula ): HOLFormula = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+
   def domain: List[Var] = map.keys.toList
   def range: List[Var] = map.foldLeft( List[Var]() )( ( acc, data ) => freeVariables( data._2 ) ++ acc )
 
-  def ::( sub: ( Var, LambdaExpression ) ) = new LambdaSubstitution( map + sub )
-  def ::( otherSubstitution: LambdaSubstitution ) = new LambdaSubstitution( map ++ otherSubstitution.map )
+  def ::( sub: ( Var, LambdaExpression ) ) = new Substitution( map + sub )
+  def ::( otherSubstitution: Substitution ) = new Substitution( map ++ otherSubstitution.map )
 
   override def equals( a: Any ) = a match {
-    case s: LambdaSubstitution => map.equals( s.map )
-    case _                     => false
+    case s: Substitution => map.equals( s.map )
+    case _               => false
   }
 
   // an identity function maps all variables to themselves
@@ -64,7 +66,7 @@ class LambdaSubstitution( val map: Map[Var, LambdaExpression] ) {
 
   // make sure the overriden keys are of the applying sub
   // note: compose is in function application notation i.e. (sigma compose tau) apply x = sigma(tau(x)) = x.tau.sigma
-  def compose( sub: LambdaSubstitution ): LambdaSubstitution = LambdaSubstitution( map ++ sub.map.map( x => ( x._1, apply( x._2 ) ) ) )
+  def compose( sub: Substitution ): Substitution = Substitution( map ++ sub.map.map( x => ( x._1, apply( x._2 ) ) ) )
 
   //REMARK: this does not imply the substitution is injective
   def isRenaming = map.forall( p => p._2.isInstanceOf[Var] )
@@ -76,10 +78,10 @@ class LambdaSubstitution( val map: Map[Var, LambdaExpression] ) {
 
 }
 
-object LambdaSubstitution {
-  def apply( subs: List[( Var, LambdaExpression )] ): LambdaSubstitution = new LambdaSubstitution( Map() ++ subs )
-  def apply( variable: Var, expression: LambdaExpression ): LambdaSubstitution = new LambdaSubstitution( Map( variable -> expression ) )
-  def apply( map: Map[Var, LambdaExpression] ): LambdaSubstitution = new LambdaSubstitution( map )
-  def apply() = new LambdaSubstitution( Map() )
+object Substitution {
+  def apply( subs: List[( Var, LambdaExpression )] ): Substitution = new Substitution( Map() ++ subs )
+  def apply( variable: Var, expression: LambdaExpression ): Substitution = new Substitution( Map( variable -> expression ) )
+  def apply( map: Map[Var, LambdaExpression] ): Substitution = new Substitution( map )
+  def apply() = new Substitution( Map() )
 }
 

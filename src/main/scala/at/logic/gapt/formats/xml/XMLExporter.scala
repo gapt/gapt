@@ -52,8 +52,8 @@ object XMLExporter {
       <rule symbol={ p.name } type={ ruleType }>
         { exportSequent( p.root ) }
         { exportRule( p.uProof ) }
-        { if ( ruleType == "foralll2" ) exportLambdaSubstitution( ForallLeftRule.unapply( proof ).get._5.asInstanceOf[Abs] ) }
-        { if ( ruleType == "existsr2" ) exportLambdaSubstitution( ExistsRightRule.unapply( proof ).get._5.asInstanceOf[Abs] ) }
+        { if ( ruleType == "foralll2" ) exportSubstitution( ForallLeftRule.unapply( proof ).get._5.asInstanceOf[Abs] ) }
+        { if ( ruleType == "existsr2" ) exportSubstitution( ExistsRightRule.unapply( proof ).get._5.asInstanceOf[Abs] ) }
       </rule>
     case p: BinaryLKProof =>
       <rule symbol={ p.name } type={ getRuleType( p ) }>
@@ -165,7 +165,7 @@ object XMLExporter {
 
   private def decompose( a: Abs ): ( LambdaExpression, List[Var] ) = decompose( a, Nil )
 
-  def exportLambdaSubstitution( subst: Abs ) = {
+  def exportSubstitution( subst: Abs ) = {
     val ( formula, vars ) = decompose( subst )
     <lambdasubstitution>
       { exportVariableList( vars ) }

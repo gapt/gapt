@@ -1,8 +1,6 @@
 package at.logic.gapt.algorithms.rewriting
 
-import org.junit.runner.RunWith
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 import at.logic.gapt.language.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
@@ -13,8 +11,7 @@ import at.logic.gapt.utils.ds.acyclicGraphs.{ BinaryAGraph, UnaryAGraph, LeafAGr
 /**
  * Test for renaming of constant symbols
  */
-@RunWith( classOf[JUnitRunner] )
-class name_replacementTest extends SpecificationWithJUnit {
+class name_replacementTest extends Specification {
 
   val c1 = FOLAtom( "P", FOLFunction( "g", FOLConst( "a" ) :: Nil ) :: Nil )
   val c2 = FOLAtom( "P", FOLFunction( "g", FOLVar( "x" ) :: Nil ) :: Nil )

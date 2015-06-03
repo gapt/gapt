@@ -8,11 +8,8 @@
 package at.logic.gapt.expr
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
-@RunWith( classOf[JUnitRunner] )
-class SymbolsTest extends SpecificationWithJUnit {
+class SymbolsTest extends Specification {
   "Equality between symbols" should {
     "return true if it is the same class and mixed with the same string" in {
       ( VariantSymbol( "a" ) ) must beEqualTo( VariantSymbol( "a" ) )

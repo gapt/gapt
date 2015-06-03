@@ -1,15 +1,12 @@
 package at.logic.gapt.formats.hlk
 
-import org.junit.runner.RunWith
 import org.specs2.execute.Success
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
 /**
  * Test files for the hol parser
  */
-@RunWith( classOf[JUnitRunner] )
-class HOLParserTest extends SpecificationWithJUnit {
+class HOLParserTest extends Specification {
   "HLK HOL Parser" should {
     "Parse atoms" in {
       /*

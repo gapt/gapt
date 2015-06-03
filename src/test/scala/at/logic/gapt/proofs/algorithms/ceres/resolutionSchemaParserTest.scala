@@ -5,13 +5,10 @@
 //import at.logic.gapt.expr._
 //import java.io.File.separator
 //import java.io.{ FileInputStream, InputStreamReader }
-//import org.junit.runner.RunWith
-//import org.specs2.mutable.SpecificationWithJUnit
-//import org.specs2.runner.JUnitRunner
+//import org.specs2.mutable._
 //import scala.io._
 //
-//@RunWith( classOf[JUnitRunner] )
-//class resolutionSchemaParserTest extends SpecificationWithJUnit {
+//class resolutionSchemaParserTest extends Specification {
 //
 //  sequential
 //  "resolutionSchemaParserTest" should {

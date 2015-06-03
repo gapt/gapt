@@ -8,15 +8,12 @@
 package at.logic.gapt.utils.ds
 
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import trees._
 import graphs._
 import TreeImplicitConverters._
 
-@RunWith( classOf[JUnitRunner] )
-class TreesTest extends SpecificationWithJUnit {
+class TreesTest extends Specification {
   "Tree" should {
     "pattern match as graphs and recursively" in {
       val lt = BinaryTree( "y", LeafTree( "a" ), LeafTree( "b" ) )

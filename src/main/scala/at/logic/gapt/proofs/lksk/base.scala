@@ -5,7 +5,6 @@
 
 package at.logic.gapt.proofs.lksk
 
-import at.logic.gapt.language.hol.HOLSubstitution
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
@@ -39,7 +38,7 @@ object LKskFOFactory extends FOFactory {
       throw new Exception( "ancestors not labelled" )
   }
 
-  def createContextFormulaOccurrenceWithSubst( formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], sub: HOLSubstitution ) = {
+  def createContextFormulaOccurrenceWithSubst( formula: HOLFormula, current: FormulaOccurrence, ancestors: List[FormulaOccurrence], sub: Substitution ) = {
     assert( ancestors.forall( _.isInstanceOf[LabelledFormulaOccurrence] ) )
     val l_ancestors = ancestors.map( _.asInstanceOf[LabelledFormulaOccurrence] )
     val l = l_ancestors.head.skolem_label

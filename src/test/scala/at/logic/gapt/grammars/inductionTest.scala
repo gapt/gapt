@@ -1,11 +1,11 @@
-package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
+package at.logic.gapt.grammars
 
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.SipGrammar._
+import at.logic.gapt.expr._
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
+import at.logic.gapt.grammars.SipGrammar._
+import at.logic.gapt.language.fol.Utils
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import org.specs2.mutable._
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
-import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.Utils
 
 class SipTests extends Specification {
   "SipGrammar" should {

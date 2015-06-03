@@ -5,7 +5,7 @@ package at.logic.gapt.proofs.algorithms.skolemization
 import at.logic.gapt.language.fol.algorithms.convertHolToFol
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr.BetaReduction.ImplicitStandardStrategy._
-import at.logic.gapt.language.hol.{ HOLSubstitution, SkolemSymbolFactory }
+import at.logic.gapt.language.hol.{ SkolemSymbolFactory }
 import at.logic.gapt.proofs.lk.algorithms.{ applySubstitution, getCutAncestors }
 import scala.collection.immutable.{ HashMap, HashSet }
 import scala.collection.immutable.Stream.Empty
@@ -322,7 +322,7 @@ object skolemize extends Logger {
       val sym = Const( sym_stream.head, FunctionType( v.exptype, inst_map( m ).map( _.exptype ) ) )
       //println("skolem symbol: " + sym)
       val skolem_term = HOLFunction( sym, inst_map( m ) )
-      val sub = HOLSubstitution( v, skolem_term )
+      val sub = Substitution( v, skolem_term )
       val sub_proof = applySubstitution( p, sub )
       //println("old es: " + p.root)
       //sub.map map (( x : (Var,LambdaExpression) ) => println("sub: " + x._1 + " -> " + x._2.toStringSimple))
@@ -388,7 +388,7 @@ object skolemize extends Logger {
         val sym = Const( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
         val sf = HOLFunction( sym, terms )
 
-        val sub = HOLSubstitution( x, sf )
+        val sub = Substitution( x, sf )
         trace( "substitution: " + sub )
         trace( "before: " + f )
         trace( "after: " + sub( f ) )
@@ -403,7 +403,7 @@ object skolemize extends Logger {
         val sym = Const( symbols.head, FunctionType( x.exptype, terms.map( _.exptype ) ) )
         val sf = HOLFunction( sym, terms )
 
-        val sub = HOLSubstitution( x, sf )
+        val sub = Substitution( x, sf )
         trace( "substitution: " + sub )
         trace( f.toString )
         trace( sub( f ).toString )

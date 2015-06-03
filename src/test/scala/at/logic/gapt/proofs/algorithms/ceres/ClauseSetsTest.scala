@@ -14,14 +14,11 @@ import at.logic.gapt.proofs.algorithms.ceres.projections.{ DeleteTautology, Dele
 import at.logic.gapt.proofs.algorithms.ceres.struct._
 import java.io.File.separator
 import java.io.{ FileInputStream, InputStreamReader }
-import org.junit.runner.RunWith
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
 import scala.io._
 import scala.xml._
 
-@RunWith( classOf[JUnitRunner] )
-class ClauseSetsTest extends SpecificationWithJUnit {
+class ClauseSetsTest extends Specification {
 
   sequential
   "ClauseSets" should {
@@ -66,7 +63,7 @@ class ClauseSetsTest extends SpecificationWithJUnit {
 
       val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( IntZero() ) )
       var subst = SchemaSubstitution( new_map )
-      val gr = groundStruct( struct, subst.asInstanceOf[HOLSubstitution] )
+      val gr = groundStruct( struct, subst.asInstanceOf[Substitution] )
       val unfold_gr = unfoldGroundStruct( gr )
 
       val cs_gr = StandardClauseSet.transformStructToClauseSet( gr )

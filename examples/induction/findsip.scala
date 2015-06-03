@@ -1,6 +1,9 @@
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{extractExpansionSequent, time, parse}
 import at.logic.gapt.examples.UniformAssociativity3ExampleProof
-import at.logic.gapt.language.fol.{toNNF, removeTopAndBottom, lcomp}
+import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, normalFormsSipGrammar, GrammarMinimizationFormula}
+import at.logic.gapt.language.fol.toNNF
+import at.logic.gapt.language.hol.algorithms.simplify.simplify
+import at.logic.gapt.language.hol.lcomp
 import at.logic.gapt.proofs.expansionTrees.{removeFromExpansionSequent, ExpansionSequent}
 import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.proofs.lk.base.FSequent
@@ -41,7 +44,7 @@ val nfGrammar = time { normalFormsSipGrammar(instanceLanguages) }
 //nfGrammar.productions foreach println; println
 println(s"${nfGrammar.productions.size} productions.")
 
-val logicalComp = lcomp(removeTopAndBottom(toNNF(SipGrammarMinimizationFormula(nfGrammar).coversLanguageFamily(instanceLanguages))))
+val logicalComp = lcomp(simplify(toNNF(SipGrammarMinimizationFormula(nfGrammar).coversLanguageFamily(instanceLanguages))))
 println(s"Logical complexity of the minimization formula: $logicalComp")
 
 println(s"Minimized grammar:")

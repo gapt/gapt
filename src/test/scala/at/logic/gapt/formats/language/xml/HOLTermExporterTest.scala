@@ -9,8 +9,6 @@ package at.logic.gapt.formats.language.xml
 
 import at.logic.gapt.formats.xml.HOLTermXMLExporter
 import org.specs2.mutable._
-import org.junit.runner.RunWith
-import org.specs2.runner.JUnitRunner
 
 import scala.xml._
 
@@ -26,8 +24,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 
-@RunWith( classOf[JUnitRunner] )
-class HOLTermExporterTest extends SpecificationWithJUnit {
+class HOLTermExporterTest extends Specification {
 
   val exporter = new HOLTermXMLExporter {}
   // helper to create 0-ary predicate constants

@@ -33,13 +33,10 @@ import java.io.File.separator
 import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.testing.ClasspathFileCopier
-import org.junit.runner.RunWith
 import org.specs2.execute.Success
-import org.specs2.mutable.SpecificationWithJUnit
-import org.specs2.runner.JUnitRunner
+import org.specs2.mutable._
 
-@RunWith( classOf[JUnitRunner] )
-class MiscTest extends SpecificationWithJUnit with ClasspathFileCopier {
+class MiscTest extends Specification with ClasspathFileCopier {
 
   // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
   private def LinearExampleProof( k: Int, n: Int ): LKProof = {

@@ -4,7 +4,6 @@
 
 package at.logic.gapt.language.fol
 
-import at.logic.gapt.language.fol.replacements.getAllPositionsFOL
 import at.logic.gapt.expr._
 import at.logic.gapt.language.hol.{ getMatrix => getMatrixHOL, HOLPosition }
 import scala.collection.mutable
@@ -461,8 +460,8 @@ object Utils {
    * @param t term for which the characteristic Partition is calculated
    * @return characteristic partition of t
    */
-  def calcCharPartition( t: FOLTerm ): List[List[List[Int]]] = {
-    val positions = getAllPositionsFOL( t )
+  def calcCharPartition( t: FOLTerm ): List[List[HOLPosition]] = {
+    val positions = HOLPosition.getPositions( t, _.isInstanceOf[FOLTerm] ).map( p => p -> t( p ).asInstanceOf[FOLTerm] )
     /**
      * It recursively separates the positions in the list into different
      * partitions accorindg to their referencing terms.
@@ -470,10 +469,10 @@ object Utils {
      * @param pos position list
      * @return
      */
-    def recCCP( pos: List[( List[Int], FOLExpression )] ): List[List[List[Int]]] = {
+    def recCCP( pos: List[( HOLPosition, FOLTerm )] ): List[List[HOLPosition]] = {
       pos match {
         case x :: xs => {
-          val result = ( ( None, Some( x._1 ) ) :: xs.foldLeft( List[( Option[( List[Int], FOLExpression )], Option[List[Int]] )]() )( ( acc, y ) => {
+          val result = ( ( None, Some( x._1 ) ) :: xs.foldLeft( List[( Option[( HOLPosition, FOLTerm )], Option[HOLPosition] )]() )( ( acc, y ) => {
             // add them to the characteristic Partition if the terms match
             if ( x._2 == y._2 ) {
               ( None, Some( y._1 ) ) :: acc
@@ -568,8 +567,8 @@ object Utils {
    * @param index nonterminal index i
    * @return the original term if the replacement could not be processed, or t|p = α_index
    */
-  def replaceAtPosition( t: FOLTerm, variable: String, position: List[Int], index: Int ): FOLTerm =
-    HOLPosition.toLambdaPositionOption( t )( HOLPosition( position ) ) match {
+  def replaceAtPosition( t: FOLTerm, variable: String, position: HOLPosition, index: Int ): FOLTerm =
+    HOLPosition.toLambdaPositionOption( t )( position ) match {
       case Some( p ) => LambdaPosition.replace( t, p, FOLVar( variable + "_" + index ) ).asInstanceOf[FOLTerm]
       case _         => t
     }

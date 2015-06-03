@@ -1,9 +1,9 @@
-package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
+package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.{ Utils, FOLSubstitution }
-import Utils.numeral
-import at.logic.gapt.provers.maxsat.{ MaxSat4j, MaxSATSolver }
+import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.language.fol.Utils.numeral
+import at.logic.gapt.provers.maxsat.{MaxSATSolver, MaxSat4j}
 
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )
@@ -127,7 +127,7 @@ object minimizeSipGrammar {
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
       case Some( interp ) => SipGrammar(
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
-      case None => throw new TreeGrammarDecompositionException( "Grammar does not cover language." )
+      case None => throw new Exception( "Grammar does not cover language." )
     }
   }
 }

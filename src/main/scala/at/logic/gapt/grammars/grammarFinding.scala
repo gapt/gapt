@@ -1,9 +1,9 @@
-package at.logic.gapt.proofs.lk.algorithms.cutIntroduction
+package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
-import at.logic.gapt.provers.maxsat.{ MaxSat4j, MaxSATSolver }
+import at.logic.gapt.language.fol.{FOLSubstitution, Utils}
+import at.logic.gapt.provers.maxsat.{MaxSATSolver, MaxSat4j}
 import at.logic.gapt.utils.dssupport.ListSupport
 
 import scala.collection.mutable
@@ -38,7 +38,7 @@ object antiUnificator {
 
 object normalizeNonTerminals {
   def apply( term: FOLTerm ): FOLTerm = {
-    val renaming: Seq[( FOLVar, FOLExpression )] =
+    val renaming: Seq[( FOLVar, FOLTerm )] =
       freeVariables( term ).distinct.zipWithIndex map { case ( v, i ) => v -> FOLVar( s"β$i" ) }
     FOLSubstitution( renaming )( term )
   }
@@ -257,7 +257,7 @@ object minimizeGrammar {
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
       case Some( interp ) => TratGrammar( g.axiom,
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
-      case None => throw new TreeGrammarDecompositionException( "Grammar does not cover language." )
+      case None => throw new Exception( "Grammar does not cover language." )
     }
   }
 }
