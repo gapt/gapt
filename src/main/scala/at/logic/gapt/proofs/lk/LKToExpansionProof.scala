@@ -1,51 +1,51 @@
-package at.logic.gapt.proofs.algorithms.herbrandExtraction
+package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.expansionTrees.{ ETWeakQuantifier, ETStrongQuantifier, ETAnd, ETOr, ETImp, ETNeg, ETAtom, ETMerge, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
+import at.logic.gapt.utils.logging.Logger
 
-object extractExpansionSequent extends extractExpansionSequent
-class extractExpansionSequent {
+object LKToExpansionProof extends LKToExpansionProof
+class LKToExpansionProof extends Logger {
 
-  def apply( proof: LKProof, verbose: Boolean ): ExpansionSequent = {
-    val map = extract( proof, verbose )
+  def apply( proof: LKProof ): ExpansionSequent = {
+    val map = extract( proof )
     val clean_ant = proof.root.antecedent.filter( f => map( f ) != ETAtom( Top() ) )
     val clean_suc = proof.root.succedent.filter( f => map( f ) != ETAtom( Bottom() ) )
     mergeTree( ( clean_ant.map( fo => map( fo ) ), clean_suc.map( fo => map( fo ) ) ) )
   }
 
-  private def extract( proof: LKProof, verbose: Boolean ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = proof match {
+  private def extract( proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = proof match {
     case Axiom( r ) =>
-      handleAxiom( r, verbose )
+      handleAxiom( r )
     case UnaryLKProof( _, up, r, _, p ) =>
-      val map = extract( up, verbose )
+      val map = extract( up )
       handleUnary( r, p, map, proof )
 
-    case CutRule( up1, up2, r, _, _ ) => getMapOfContext( ( r.antecedent ++ r.succedent ).toSet, extract( up1, verbose ) ++ extract( up2, verbose ) )
+    case CutRule( up1, up2, r, _, _ ) => getMapOfContext( ( r.antecedent ++ r.succedent ).toSet, extract( up1 ) ++ extract( up2 ) )
     case BinaryLKProof( _, up1, up2, r, a1, a2, Some( p ) ) =>
-      val map = extract( up1, verbose ) ++ extract( up2, verbose )
+      val map = extract( up1 ) ++ extract( up2 )
       handleBinary( r, map, proof, a1, a2, p )
 
     case _ => throw new IllegalArgumentException( "unsupported proof rule: " + proof )
   }
 
-  def handleAxiom( r: Sequent, verbose: Boolean ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
+  def handleAxiom( r: Sequent ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     // guess the axiom: must be an atom and appear left as well as right
     // can't use set intersection, but lists are small enough to do it manually
     val axiomCandidates = r.antecedent.filter( elem => r.succedent.exists( elem2 => elem syntaxEquals elem2 ) ).filter( o => isAtom( o.formula ) || o.formula == Bottom() || o.formula == Top() )
 
-    if ( axiomCandidates.size > 1 && verbose ) {
-      println( "Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: " + axiomCandidates )
+    if ( axiomCandidates.size > 1 ) {
+      debug( "Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: " + axiomCandidates )
     }
 
     if ( axiomCandidates.isEmpty ) {
       if ( allAtoms( r.antecedent ) && allAtoms( r.succedent ) ) {
-        if ( !( ( r.antecedent.isEmpty ) && ( r.succedent.size == 1 ) && ( isReflexivity( r.succedent( 0 ).formula ) ) ) && verbose ) {
+        if ( !( ( r.antecedent.isEmpty ) && ( r.succedent.size == 1 ) && ( isReflexivity( r.succedent( 0 ).formula ) ) ) ) {
           //only print the warning for non reflexivity atoms
-          println( "Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: " + r )
+          debug( "Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: " + r )
         }
         Map( r.antecedent.map( fo => ( fo, ETAtom( fo.formula ) ) ) ++
           r.succedent.map( fo => ( fo, ETAtom( fo.formula ) ) ): _* )
@@ -112,7 +112,7 @@ class extractExpansionSequent {
   }
 
   // the set of formula occurrences given to method must not contain any principal formula
-  private[herbrandExtraction] def getMapOfContext( s: Set[FormulaOccurrence], map: Map[FormulaOccurrence, ExpansionTreeWithMerges] ): Map[FormulaOccurrence, ExpansionTreeWithMerges] =
+  protected def getMapOfContext( s: Set[FormulaOccurrence], map: Map[FormulaOccurrence, ExpansionTreeWithMerges] ): Map[FormulaOccurrence, ExpansionTreeWithMerges] =
     Map( s.toList.map( fo => ( fo, {
       require( fo.parents.size == 1 )
       map( fo.parents.head )

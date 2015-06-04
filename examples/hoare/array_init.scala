@@ -25,7 +25,7 @@ val instanceSeq = slp.instanceSequent(1)
 println(instanceSeq)
 val proof = prover9.getProof(instanceSeq).get
 
-val expansionSequent = compressExpansionSequent(extractExpansionSequent(proof))
+val expansionSequent = compressExpansionSequent(LKToExpansionProof(proof))
 expansionSequent.antecedent.foreach {
   case METWeakQuantifier(formula, instances) =>
     println(s"$formula:")

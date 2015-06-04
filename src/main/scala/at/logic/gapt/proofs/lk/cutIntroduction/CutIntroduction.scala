@@ -17,7 +17,6 @@ import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.utils.logging.Logger
 import scala.collection.immutable.HashSet
@@ -205,7 +204,7 @@ object CutIntroduction extends Logger {
 
     val clean_proof = CleanStructuralRules( proof )
     val num_rules = rulesNumber( clean_proof )
-    val ep = extractExpansionSequent( clean_proof, false )
+    val ep = LKToExpansionProof( clean_proof )
     val hasEquality = containsEqualityReasoning( clean_proof )
     execute( ep, hasEquality, manyQuantifiers, num_rules, timeout, verbose )
   }
@@ -403,7 +402,7 @@ object CutIntroduction extends Logger {
 
     val clean_proof = CleanStructuralRules( proof )
     val num_rules = rulesNumber( clean_proof )
-    val ep = extractExpansionSequent( clean_proof, false )
+    val ep = LKToExpansionProof( clean_proof )
     val hasEquality = containsEqualityReasoning( clean_proof )
     execute( ep, hasEquality, num_rules, n, timeout, verbose )
   }

@@ -788,7 +788,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
           case None                    => doApplyMerge( tree1, res, polarity )
         }
       }
-      case _ => throw new IllegalArgumentException( "Bug in merge in extractExpansionSequent. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2 )
+      case _ => throw new IllegalArgumentException( "Bug in merge in LKToExpansionProof. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2 )
     }
   }
 }

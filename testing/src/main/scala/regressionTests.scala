@@ -5,9 +5,8 @@ import java.io.File
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep }
-import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim }
+import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof }
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
@@ -22,7 +21,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def test( implicit testRun: TestRun ) = {
     val p = loadProver9LKProof( f.getAbsolutePath ) --- "import"
 
-    val E = extractExpansionSequent( p, false ) --- "extractExpansionSequent"
+    val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E ) --- "toDeep"
 
     if ( !containsEqualityReasoning( p ) ) {

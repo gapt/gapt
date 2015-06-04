@@ -20,7 +20,6 @@ import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile._
 import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ StructCreators, structToExpressionTree }
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.gapt.proofs.algorithms.skolemization.skolemize
 
@@ -150,7 +149,7 @@ class PrimeProofTest extends Specification {
         if ( veriT.isInstalled ) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
           val definitionFreeProof = eliminateDefinitions( proof ) // can't extract ETs in the presence of definitions currently
-          val etSeq = extractExpansionSequent( definitionFreeProof, false )
+          val etSeq = LKToExpansionProof( definitionFreeProof )
           val fSequent = toDeep( etSeq )
           veriT.isValid( fSequent ) must beTrue
         }

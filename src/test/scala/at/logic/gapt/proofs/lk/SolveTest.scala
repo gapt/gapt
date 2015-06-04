@@ -142,7 +142,7 @@ class SolveTest extends Specification {
       (fssymbols diff psymbols) must beEmpty */
     }
 
-    // tests of expansionProofToLKProof also in MiscTest, such that it can be used in combination with extractExpansionSequent
+    // tests of expansionProofToLKProof also in MiscTest, such that it can be used in combination with LKToExpansionProof
 
     "prove sequent where quantifier order matters" in {
       // example from Chaudhuri et.al.: A multi-focused proof system ...

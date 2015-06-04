@@ -31,16 +31,16 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 
 import at.logic.gapt.expr.hol.isPrenex
 import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.algorithms.herbrandExtraction._
 import scala.collection.immutable.HashMap
 
 class TermsExtractionException( msg: String ) extends Exception( msg )
 
 object TermsExtraction {
 
-  def apply( proof: LKProof ): TermSet = apply( extractExpansionSequent( proof, false ) )
+  def apply( proof: LKProof ): TermSet = apply( LKToExpansionProof( proof ) )
 
   def apply( expProof: ExpansionSequent ): TermSet = {
 

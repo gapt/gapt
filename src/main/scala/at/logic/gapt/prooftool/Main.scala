@@ -32,7 +32,6 @@ import at.logic.gapt.proofs.algorithms.ceres.struct.{ structToExpressionTree, St
 import at.logic.gapt.proofs.algorithms.ceres.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
 import at.logic.gapt.proofs.algorithms.ceres.{ UnfoldProjectionTerm, ProjectionTermCreators }
 import at.logic.gapt.utils.ds.trees.Tree
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.proofs.algorithms.skolemization.skolemize
 import at.logic.gapt.proofs.algorithms.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
 import at.logic.gapt.proofs.algorithms.ceres.ACNF.ACNF
@@ -463,7 +462,7 @@ object Main extends SimpleSwingApplication {
   def expansionTree() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val et = extractExpansionSequent( body.getContent.getData.get._2.asInstanceOf[LKProof], false )
+      val et = LKToExpansionProof( body.getContent.getData.get._2.asInstanceOf[LKProof] )
       updateLauncher( "Expansion Tree", et, 14 )
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {

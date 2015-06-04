@@ -1,10 +1,9 @@
-package at.logic.gapt.proofs.algorithms.herbrandExtraction
+package at.logic.gapt.proofs.lk
 
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.expansionTrees.{ ETStrongQuantifier, ETWeakQuantifier, ETAtom, ETImp }
 import at.logic.gapt.proofs.lk.base.LKProof
 
@@ -30,7 +29,7 @@ class ExtractExpansionSequentTest extends Specification {
   "The expansion tree extraction" should {
 
     "handle successive contractions " in {
-      val etSeq = extractExpansionSequent( LinearExampleProof( 0, 2 ), false )
+      val etSeq = LKToExpansionProof( LinearExampleProof( 0, 2 ) )
 
       val p = "P"
       val x = FOLVar( "x" )
@@ -82,7 +81,7 @@ class ExtractExpansionSequentTest extends Specification {
       val p4 = ExistsLeftRule( p3, HOLAtom( P, beta :: Nil ), Ex( x, HOLAtom( P, x :: Nil ) ), beta )
       val p5 = ContractionLeftRule( p4, Ex( x, HOLAtom( P, x :: Nil ) ) )
 
-      val ( ante, succ ) = extractExpansionSequent( p5, false ).toTuple()
+      val ( ante, succ ) = LKToExpansionProof( p5 ).toTuple()
 
       ante mustEqual ( List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), alpha, ETAtom( HOLAtom( P, alpha :: Nil ) ) ) ) )
       // this assumes that the first variable wins, f(beta) would also be valid
@@ -103,7 +102,7 @@ class ExtractExpansionSequentTest extends Specification {
       val p3 = WeakeningLeftRule( p2, Bottom() ) // weakened, hence top on left side
       val p4 = ContractionLeftRule( p3, Bottom() ) // negative polarity, bottom must win
 
-      val ( ante, succ ) = extractExpansionSequent( p4, false ).toTuple()
+      val ( ante, succ ) = LKToExpansionProof( p4 ).toTuple()
       ante mustEqual ETAtom( Bottom() ) :: Nil
       succ mustEqual ETAtom( Top() ) :: Nil
     }
@@ -125,7 +124,7 @@ class ExtractExpansionSequentTest extends Specification {
       val p1 = AndRightRule( p0_0, p0_2, FOLAtom( p, c :: Nil ), FOLAtom( p, d :: Nil ) )
       val p2 = ContractionLeftRule( p1, f )
 
-      val etSeq = extractExpansionSequent( p2, false )
+      val etSeq = LKToExpansionProof( p2 )
 
       etSeq.antecedent.count( _.isInstanceOf[ETWeakQuantifier] ) mustEqual 1
       etSeq.antecedent.count( _.isInstanceOf[ETAtom] ) mustEqual 1

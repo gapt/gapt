@@ -5,57 +5,53 @@
 
 package at.logic.gapt.cli.GAPScalaInteractiveShellLibrary
 
-import java.io.{ FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
-import java.util.zip.GZIPInputStream
-
-import at.logic.gapt.formats.xml.{ XMLParser, ProofDatabase, LKExporter }
-import at.logic.gapt.proofs.algorithms.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
-import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK, ceres_omega }
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.{ Struct, StructCreators }
-import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
-import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
-import at.logic.gapt.proofs.lk.subsumption._
-import at.logic.gapt.expr.fol._
-import at.logic.gapt.proofs.expansionTrees.{ compressQuantifiers, addSymmetry, minimalExpansionSequents => minimalExpSeq }
-import at.logic.gapt.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.{ deleteTautologies => deleteTaut, _ }
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lksk.applySubstitution
-import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
-import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.prooftool.Main
-import at.logic.gapt.proofs.hoare.Program
-import at.logic.gapt.expr.hol.{ containsQuantifier => containsQuantifierHOL, _ }
-import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.latex._
-import at.logic.gapt.formats.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }
+import at.logic.gapt.expr.fol._
+import at.logic.gapt.expr.hol.{ containsQuantifier => containsQuantifierHOL, _ }
+import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
+import at.logic.gapt.formats.hlk.HLKHOLParser
 import at.logic.gapt.formats.hoare.ProgramParser
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
 import at.logic.gapt.formats.ivy.{ IvyParser, IvyResolutionProof, InitialClause => IvyInitialClause, Instantiate => IvyInstantiate, Propositional => IvyPropositional, Resolution => IvyResolution }
-import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
-import at.logic.gapt.formats.hlk.HLKHOLParser
-import at.logic.gapt.formats.prover9._
-import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
-import XMLParser._
+import at.logic.gapt.formats.latex._
+import at.logic.gapt.formats.leanCoP._
 import at.logic.gapt.formats.lisp.SExpressionParser
+import at.logic.gapt.formats.llk.HybridLatexExporter
+import at.logic.gapt.formats.prover9._
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.shlk.{ SCHOLParser, SchemaFormulaParser }
 import at.logic.gapt.formats.shlk_parsing.{ sFOParser, sFOParserCNT }
+import at.logic.gapt.formats.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }
+import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
 import at.logic.gapt.formats.veriT._
-import at.logic.gapt.formats.leanCoP._
 import at.logic.gapt.formats.writers.FileWriter
+import at.logic.gapt.formats.xml.{ XMLParser, ProofDatabase, LKExporter }
+import at.logic.gapt.proofs.algorithms.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
+import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
+import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
+import at.logic.gapt.proofs.algorithms.ceres.struct.{ Struct, StructCreators }
+import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK, ceres_omega }
+import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
+import at.logic.gapt.proofs.algorithms.skolemization.skolemize
+import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
+import at.logic.gapt.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.{ compressQuantifiers, addSymmetry, minimalExpansionSequents => minimalExpSeq }
+import at.logic.gapt.proofs.hoare.Program
+import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lk.cutIntroduction._
+import at.logic.gapt.proofs.lk.subsumption._
+import at.logic.gapt.proofs.lk.{ deleteTautologies => deleteTaut, _ }
+import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
+import at.logic.gapt.proofs.lksk.{ applySubstitution, LKSKToExpansionProof }
+import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
+import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.shlk.applySchemaSubstitution2
+import at.logic.gapt.prooftool.Main
 import at.logic.gapt.provers.atp.Prover
 import at.logic.gapt.provers.atp.commands.base._
 import at.logic.gapt.provers.atp.commands.logical.DeterministicAndCommand
@@ -66,15 +62,15 @@ import at.logic.gapt.provers.atp.commands.sequents._
 import at.logic.gapt.provers.atp.commands.ui._
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.gapt.provers.minisat.MiniSAT
-import at.logic.gapt.provers.{ Prover => abstractProver }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.prover9.commands.Prover9InitCommand
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
-import at.logic.gapt.proofs.algorithms.herbrandExtraction
+import at.logic.gapt.provers.{ Prover => abstractProver }
 import at.logic.gapt.utils.logging.Stopwatch
-
+import java.io.{ FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
+import java.util.zip.GZIPInputStream
 import scala.collection.mutable.{ Map => MMap }
+
+import XMLParser._
 
 /**
  * *****************************************************************************
@@ -354,9 +350,7 @@ object lkTolksk {
   def apply( p: LKProof ) = LKtoLKskc( p )
 }
 
-object extractExpansionSequent {
-  def apply( proof: LKProof ): ExpansionSequent = herbrandExtraction.extractExpansionSequent( proof, true )
-}
+// object LKToExpansionProof directly from imports
 
 object ExpansionProofToLKProof {
   def apply( ep: ExpansionSequent ): Option[LKProof] = solve.expansionProofToLKProof( ep )
@@ -600,7 +594,7 @@ object help {
         |   regularize: LKProof => LKProof - regularize the given LK proof
         |   skolemize: LKProof => LKProof - skolemize the input proof
         |   lkTolksk: LKProof => LKProof
-        |   extractExpansionSequent: LKProof => ExpansionSequent - extract expansion sequent from LKProof
+        |   LKToExpansionProof: LKProof => ExpansionSequent - extract expansion proof from LKProof
         |   ExpansionProofToLKProof: ExpansionSequent => Option[LKProof]
         |   eliminateCuts: LKProof => LKProof - eliminate cuts by Gentzen's method
         |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
@@ -1114,10 +1108,7 @@ object findDefinitions {
   }
 }
 
-object extractLKSKExpansionSequent {
-  def apply( proof: LKProof ): ExpansionSequent =
-    herbrandExtraction.lksk.extractLKSKExpansionSequent( proof, true )
-}
+// object LKSKExpansionProof directly from imports
 
 object definitionElimination {
   def apply( db: ProofDatabase, name: String ): LKProof = {
