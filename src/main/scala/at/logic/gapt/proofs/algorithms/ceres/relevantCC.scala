@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.algorithms.ceres
 
-import at.logic.gapt.proofs.lk.algorithms.{ getAncestors, getCutAncestors }
+import at.logic.gapt.proofs.lk.{ getAncestors, getCutAncestors }
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.language.fol.Utils
 import at.logic.gapt.language.schema.{ SchemaSubstitution, SchemaFormula, IndexedPredicate, IntVar, IntZero, IntegerTerm, Succ }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.shlk.algorithms.StepMinusOne
+import at.logic.gapt.proofs.shlk.StepMinusOne
 import at.logic.gapt.utils.ds.Multisets
 import at.logic.gapt.utils.ds.Multisets.Multiset
 import at.logic.gapt.utils.ds.trees.BinaryTree

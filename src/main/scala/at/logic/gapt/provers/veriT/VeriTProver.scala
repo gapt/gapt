@@ -1,8 +1,7 @@
 package at.logic.gapt.provers.veriT
 
 import at.logic.gapt.formats.veriT._
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, isQuantified, formulaToExpansionTree }
-import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
+import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, ExpansionSequent, isQuantified, formulaToExpansionTree }
 import at.logic.gapt.utils.traits.ExternalProgram
 import scala.sys.process._
 import java.io._

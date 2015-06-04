@@ -3,7 +3,7 @@
 
 package at.logic.gapt.provers.atp
 
-import at.logic.gapt.language.fol.algorithms.FOLUnificationAlgorithm
+import at.logic.gapt.language.fol.FOLUnificationAlgorithm
 import at.logic.gapt.language.schema.SchemaAtom
 import org.specs2.mutable._
 
@@ -18,7 +18,7 @@ import at.logic.gapt.provers.atp.commands.robinson._
 import at.logic.gapt.formats.simple.{ SimpleFOLParser, SimpleResolutionParserFOL }
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
+import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 
 private class MyParser( str: String ) extends StringReader( str ) with SimpleResolutionParserFOL
 private object MyProver extends Prover[Clause]

@@ -1,15 +1,15 @@
 // This package implements the higher-order analogue to Skolemization:
 // a transformation from LK to LK_skc
+
 package at.logic.gapt.proofs.algorithms.skolemization.lksk
 
 import at.logic.gapt.language.hol.{ toLatexString }
-import at.logic.gapt.proofs.lk.algorithms.getCutAncestors
+import at.logic.gapt.proofs.lk.getCutAncestors
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
-import at.logic.gapt.proofs.lksk.algorithms.applySubstitution
 import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable.{ Map, HashMap }
 import at.logic.gapt.proofs.lksk._
-import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, WeakeningRightRule => LKWeakeningRightRule, _ }
+import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, WeakeningRightRule => LKWeakeningRightRule, applySubstitution => LKapplySubstitution, _ }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent

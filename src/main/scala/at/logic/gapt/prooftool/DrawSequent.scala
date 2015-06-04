@@ -1,11 +1,11 @@
-package at.logic.gapt.prooftool
-
 /**
  * Created by IntelliJ IDEA.
  * User: mrukhaia
  * Date: 2/3/11
  * Time: 4:25 PM
  */
+
+package at.logic.gapt.prooftool
 
 import at.logic.gapt.language.hol.toPrettyString
 import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }

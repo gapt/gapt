@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.algorithms.ceres
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.{ getAncestors, getCutAncestors }
+import at.logic.gapt.proofs.lk.{ getAncestors, getCutAncestors }
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.shlk._
@@ -12,7 +12,7 @@ import at.logic.gapt.language.hol._
 import at.logic.gapt.expr.SymbolA
 import at.logic.gapt.expr._
 import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
-import at.logic.gapt.proofs.shlk.algorithms.{ StepMinusOne, printSchemaProof }
+import at.logic.gapt.proofs.shlk.{ StepMinusOne, printSchemaProof }
 import at.logic.gapt.utils.ds.Multisets
 import at.logic.gapt.utils.ds.Multisets.Multiset
 import at.logic.gapt.utils.ds.trees.BinaryTree

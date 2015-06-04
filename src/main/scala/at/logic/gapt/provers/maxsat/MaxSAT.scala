@@ -6,7 +6,7 @@ import at.logic.gapt.formats.dimacs.DIMACSHelper
 import at.logic.gapt.expr._
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.algorithms.{ TseitinCNF, CNFp }
+import at.logic.gapt.proofs.resolution.{ TseitinCNF, CNFp }
 import at.logic.gapt.utils.logging.{ Logger, Stopwatch }
 
 import scala.collection.immutable.Map

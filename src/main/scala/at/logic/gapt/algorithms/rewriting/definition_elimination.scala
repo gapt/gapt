@@ -1,8 +1,8 @@
 package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.proofs.lk.algorithms.{ Util, AtomicExpansion }
+import at.logic.gapt.language.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.gapt.proofs.lk.{ Util, AtomicExpansion }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.language.hol._

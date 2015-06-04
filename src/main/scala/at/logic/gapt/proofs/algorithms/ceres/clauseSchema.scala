@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.algorithms.ceres.clauseSchema
 
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.getAncestors
+import at.logic.gapt.proofs.lk.getAncestors
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ UnaryLKProof, BinaryLKProof }
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
@@ -11,7 +11,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.language.schema.{ SchemaSubstitution => SchemaSubstitution, _ }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.BetaReduction._
-import at.logic.gapt.proofs.shlk.algorithms.printSchemaProof
+import at.logic.gapt.proofs.shlk.printSchemaProof
 
 abstract class sResolutionTerm {}
 abstract class sClauseTerm extends sResolutionTerm {}

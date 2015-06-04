@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.llk
 
-import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.proofs.lk.algorithms.{ applySubstitution, AtomicExpansion, solve }
+import at.logic.gapt.language.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.gapt.proofs.lk.{ applySubstitution, AtomicExpansion, solve }
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
 import at.logic.gapt.formats.hlk.{ ast, DeclarationParser, HLKHOLParser }
 import at.logic.gapt.formats.hlk.ast.LambdaAST

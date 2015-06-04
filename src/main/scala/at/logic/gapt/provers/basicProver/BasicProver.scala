@@ -2,7 +2,7 @@
 package at.logic.gapt.provers.basicProver
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.algorithms.LKProver
+import at.logic.gapt.proofs.lk.LKProver
 import at.logic.gapt.provers.{ FailSafeProver, Prover }
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 

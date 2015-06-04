@@ -8,11 +8,11 @@ package at.logic.gapt.provers.prover9
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.language.hol.containsStrongQuantifier
-import at.logic.gapt.proofs.lk.algorithms.applyReplacement
+import at.logic.gapt.proofs.lk.applyReplacement
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ CutRule, Axiom }
 import at.logic.gapt.proofs.resolution.{ FClause, Clause }
-import at.logic.gapt.proofs.resolution.algorithms._
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.gapt.language.fol._
 import at.logic.gapt.expr._

@@ -1,11 +1,11 @@
-package at.logic.gapt.prooftool
-
 /**
  * Created by IntelliJ IDEA.
  * User: mrukhaia
  * Date: Oct 30, 2010
  * Time: 5:43:38 PM
  */
+
+package at.logic.gapt.prooftool
 
 import java.awt.Font._
 import java.awt.event.{ MouseEvent, MouseMotionListener }

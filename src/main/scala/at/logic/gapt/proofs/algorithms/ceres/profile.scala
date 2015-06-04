@@ -1,7 +1,5 @@
-
 package at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile
 
-import at.logic.gapt.proofs.lk.algorithms.getCutAncestors
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.{ LabelledSequent, LabelledFormulaOccurrence, UnaryLKskProof }

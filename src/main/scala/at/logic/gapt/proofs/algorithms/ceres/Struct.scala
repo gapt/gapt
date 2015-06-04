@@ -6,7 +6,7 @@
 package at.logic.gapt.proofs.algorithms.ceres.struct
 
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.{ getAncestors, getCutAncestors }
+import at.logic.gapt.proofs.lk.{ getAncestors, getCutAncestors }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk.{ LabelledSequent, UnaryLKskProof, LabelledFormulaOccurrence }
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }

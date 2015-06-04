@@ -1,35 +1,21 @@
 package at.logic.gapt.formats.shlk
 
-/**
- * Please move this file to parsing!
- */
-
-//import at.logic.calculi.lk.macroRules._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.solve
+import at.logic.gapt.proofs.lk.solve
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.proofs.shlk.algorithms.getName
+import at.logic.gapt.proofs.shlk.getName
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator._
-//import at.logic.gapt.language.hol._
 import at.logic.gapt.language.schema._
 import at.logic.gapt.expr._
-//import at.logic.gapt.expr.typedLambdaCalculus._
 import java.io.InputStreamReader
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 
 import scala.collection.mutable.{ Map => MMap }
-//import at.logic.calculi.lk.quantificationRules._
-//import at.logic.gapt.language.hol.And
-//import at.logic.gapt.language.hol.Or
-//import at.logic.gapt.language.hol.logicSymbols.StringSymbol
-//import at.logic.gapt.language.hol.Imp
-//import at.logic.gapt.language.hol.Neg
-//import at.logic.gapt.expr.VariableStringSymbol
 
 object SCHOLParser {
 

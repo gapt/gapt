@@ -3,8 +3,8 @@ package at.logic.gapt.provers.atp.commands.replay
 /**
  * this file contains command for a guided search using ids for clauses,as for example when parsing the output of theorem provers and using the rules from there
  */
-import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmFOL
-import at.logic.gapt.language.fol.algorithms.{ FOLMatchingAlgorithm, FOLUnificationAlgorithm }
+import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
+import at.logic.gapt.language.fol.{ FOLMatchingAlgorithm, FOLUnificationAlgorithm }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.gapt.proofs.resolution.robinson.{ RobinsonResolutionProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent }

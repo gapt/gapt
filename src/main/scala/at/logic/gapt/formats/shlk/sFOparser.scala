@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.shlk_parsing
 
-import at.logic.gapt.proofs.lk.algorithms.solve
+import at.logic.gapt.proofs.lk.solve
 
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex

@@ -5,7 +5,6 @@
 
 package at.logic.gapt.expr
 
-import at.logic.gapt.expr.{ SymbolA, getRenaming }
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, LKProof }
 

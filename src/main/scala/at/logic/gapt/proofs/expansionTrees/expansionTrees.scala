@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.expansionTrees
 
-import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
+import at.logic.gapt.language.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.expr._
 import at.logic.gapt.language.hol.{ containsQuantifier, HOLPosition, getMatrix }
 import at.logic.gapt.utils.ds.trees._

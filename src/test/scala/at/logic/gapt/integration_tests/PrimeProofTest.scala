@@ -2,10 +2,10 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
-import at.logic.gapt.proofs.lk.algorithms.subsumption._
+import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.{ getStatistics, deleteTautologies, eliminateDefinitions }
+import at.logic.gapt.proofs.lk.{ getStatistics, deleteTautologies, eliminateDefinitions }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.language.hol._
 import at.logic.gapt.expr._

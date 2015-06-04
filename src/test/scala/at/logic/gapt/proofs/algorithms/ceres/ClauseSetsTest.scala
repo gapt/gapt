@@ -1,7 +1,7 @@
 
 package at.logic.gapt.proofs.algorithms.ceres.clauseSets
 
-import at.logic.gapt.proofs.lk.algorithms.getCutAncestors
+import at.logic.gapt.proofs.lk.getCutAncestors
 import at.logic.gapt.proofs.lk.base.Sequent
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk.SchemaProofDB

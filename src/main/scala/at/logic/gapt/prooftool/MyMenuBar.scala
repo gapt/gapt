@@ -1,12 +1,11 @@
 package at.logic.gapt.prooftool
 
 import java.awt.Color
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.getCutsAsProofs
+import at.logic.gapt.proofs.lk.getCutsAsProofs
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.proofs.TreeProof
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ To, Ti }
 
 import scala.swing.event.Key
 import scala.swing._

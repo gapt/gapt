@@ -2,7 +2,7 @@ package at.logic.gapt.formats.leanCoP
 
 import at.logic.gapt.language.fol._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
+import at.logic.gapt.language.fol.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, formulaToExpansionTree }
 
 import java.io.{ Reader, FileReader }

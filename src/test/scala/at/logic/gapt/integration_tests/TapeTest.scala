@@ -1,10 +1,10 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
-import at.logic.gapt.language.fol.algorithms.convertHolToFol
+import at.logic.gapt.language.fol.convertHolToFol
 import at.logic.gapt.language.hol._
-import at.logic.gapt.proofs.lk.algorithms.{ AtomicExpansion, deleteTautologies, map_proof, regularize }
-import at.logic.gapt.proofs.resolution.algorithms.RobinsonToLK
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, deleteTautologies, map_proof, regularize }
+import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.proofs.resolution.{ Clause, ResolutionProof }
 import at.logic.gapt.proofs.lk._
 

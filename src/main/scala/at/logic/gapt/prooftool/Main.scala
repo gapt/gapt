@@ -1,5 +1,3 @@
-package at.logic.gapt.prooftool
-
 /**
  * Created by IntelliJ IDEA.
  * User: mrukhaia
@@ -7,10 +5,12 @@ package at.logic.gapt.prooftool
  * Time: 12:08:33 PM
  */
 
+package at.logic.gapt.prooftool
+
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
-import at.logic.gapt.proofs.lk.algorithms._
-import at.logic.gapt.proofs.lksk.algorithms.eliminateDefinitions
-import at.logic.gapt.proofs.shlk.algorithms.{ applySchemaSubstitution2, applySchemaSubstitution }
+import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lksk.eliminateDefinitions
+import at.logic.gapt.proofs.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
 import com.itextpdf.awt.PdfGraphics2D
 import scala.swing._
 import BorderPanel._

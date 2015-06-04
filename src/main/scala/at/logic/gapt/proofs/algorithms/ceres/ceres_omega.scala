@@ -1,9 +1,9 @@
 package at.logic.gapt.proofs.algorithms.ceres
 
-import at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithmHOL
+import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
-import at.logic.gapt.proofs.lksk.algorithms.applySubstitution
+import at.logic.gapt.proofs.lksk.applySubstitution
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.Ti

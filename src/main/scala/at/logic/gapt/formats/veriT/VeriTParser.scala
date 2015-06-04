@@ -1,7 +1,6 @@
 package at.logic.gapt.formats.veriT
 
-import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
-import at.logic.gapt.language.fol.{ FOLSubstitution, instantiate }
+import at.logic.gapt.language.fol.{ FOLMatchingAlgorithm, FOLSubstitution, instantiate }
 import at.logic.gapt.language.hol.getMatrix
 
 import scala.util.parsing.combinator._

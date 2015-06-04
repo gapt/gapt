@@ -11,7 +11,7 @@ import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.resolution._
 import java.io._
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.resolution.algorithms.{ TseitinCNF, CNFp }
+import at.logic.gapt.proofs.resolution.{ TseitinCNF, CNFp }
 import at.logic.gapt.provers.Prover
 import scala.collection.immutable.HashMap
 

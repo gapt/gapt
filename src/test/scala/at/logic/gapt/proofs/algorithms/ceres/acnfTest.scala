@@ -1,10 +1,10 @@
 package at.logic.gapt.proofs.algorithms.ceres.ACNF
 
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.applySubstitution
+import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.proofs.resolution.algorithms.RobinsonToLK
+import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.language.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle

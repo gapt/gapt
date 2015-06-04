@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.atp
 
-import at.logic.gapt.language.fol.algorithms.FOLUnificationAlgorithm
+import at.logic.gapt.language.fol.FOLUnificationAlgorithm
 import at.logic.gapt.provers.atp.commands.robinson.ParamodulationCommand
 import org.specs2.mutable._
 import at.logic.gapt.proofs.resolution.robinson._

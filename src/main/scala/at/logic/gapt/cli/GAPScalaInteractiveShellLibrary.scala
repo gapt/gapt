@@ -14,23 +14,23 @@ import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK, ceres_omega }
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
 import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ Struct, StructCreators }
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
+import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
-import at.logic.gapt.proofs.lk.algorithms.subsumption._
-import at.logic.gapt.language.fol.algorithms._
-import at.logic.gapt.proofs.expansionTrees.algorithms.{ compressQuantifiers, addSymmetry, minimalExpansionSequents => minimalExpSeq }
+import at.logic.gapt.proofs.lk.subsumption._
+import at.logic.gapt.language.fol._
+import at.logic.gapt.proofs.expansionTrees.{ compressQuantifiers, addSymmetry, minimalExpansionSequents => minimalExpSeq }
 import at.logic.gapt.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.{ deleteTautologies => deleteTaut, _ }
+import at.logic.gapt.proofs.lk.{ deleteTautologies => deleteTaut, _ }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lksk.algorithms.applySubstitution
+import at.logic.gapt.proofs.lksk.applySubstitution
 import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.algorithms._
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.prooftool.Main
 import at.logic.gapt.language.fol._
@@ -58,7 +58,7 @@ import at.logic.gapt.formats.shlk_parsing.{ sFOParser, sFOParserCNT }
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.formats.leanCoP._
 import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.proofs.shlk.algorithms.applySchemaSubstitution2
+import at.logic.gapt.proofs.shlk.applySchemaSubstitution2
 import at.logic.gapt.provers.atp.Prover
 import at.logic.gapt.provers.atp.commands.base._
 import at.logic.gapt.provers.atp.commands.logical.DeterministicAndCommand
