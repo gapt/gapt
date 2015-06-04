@@ -2,7 +2,6 @@
 
 package at.logic.gapt.proofs.algorithms.skolemization
 
-import at.logic.gapt.expr.fol.convertHolToFol
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr.BetaReduction.ImplicitStandardStrategy._
 import at.logic.gapt.expr.hol.{ SkolemSymbolFactory }
@@ -58,9 +57,9 @@ object skolemize extends Logger {
   def apply( f: FOLFormula, pol: Int ): FOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
 
   /* formula skolemization -- symbols provides the skolem symbols to introduce */
-  def apply( f: FOLFormula, pol: Int, symbols: Stream[SymbolA] ): FOLFormula = convertHolToFol( skolemize( f, pol, symbols ) )
-  /*
+  def apply( f: FOLFormula, pol: Int, symbols: Stream[SymbolA] ): FOLFormula = skolemize( f, pol, symbols ).asInstanceOf[FOLFormula]
 
+  /*
   Idea of the algorithm: Going upwards in the prooftree, we remember the 
   instantiations of the weak quantifiers (inst_map) and replace EV's by Skolem terms (symbols chosen by symbol_map).
   The skolemized formulas in the proof-tree are computed dynamically at every step.

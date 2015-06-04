@@ -14,9 +14,7 @@ object reduceHolToFol extends reduceHolToFol
  *  - Change the type of constants and variables s.t. they are first order (i.e. Const("c", To->Ti) is mapped to FOLConst("c",Ti)
  *  - Logical operators inside the term structure are replaced by first order terms
  *
- * @note Make sure you need all of these tricks. If you have a HOL formula which actually is a FOL formula, use
- *       [[convertHolToFol]]. To replace abstraction subterms, use [[replaceAbstractions]]. Both have clear and easily
- *       revertible semantics.
+ * @note Make sure you need all of these tricks. To only replace abstraction subterms, use [[replaceAbstractions]].
  *
  */
 class reduceHolToFol {
@@ -360,44 +358,6 @@ class undoReplaceAbstractions {
         case _ => exp
       } )
   }
-}
-
-// FIXME: is this still needed after the merge of the regular-layers branch?
-object convertHolToFol extends convertHolToFol
-/**
- * In contrast to [[reduceHolToFol]], we recreate the term via the fol constructors but
- * do not try to remove higher-order content.
- */
-class convertHolToFol {
-  def apply( e: LambdaExpression ): FOLExpression = e match {
-    case f: HOLFormula => convertFormula( f )
-    case _             => convertTerm( e )
-  }
-  def apply( e: HOLFormula ): FOLFormula = convertFormula( e )
-  def apply( fs: FSequent ): FSequent =
-    FSequent( fs.antecedent.map( apply ), fs.succedent.map( apply ) )
-
-  def convertFormula( e: HOLFormula ): FOLFormula = e match {
-    case HOLAtom( Const( sym, exptype ), args ) if ( args.filterNot( _.exptype == Ti ).isEmpty ) =>
-      FOLAtom( sym, args map convertTerm )
-
-    case Neg( x )                   => Neg( convertFormula( x ) )
-    case And( x, y )                => And( convertFormula( x ), convertFormula( y ) )
-    case Or( x, y )                 => Or( convertFormula( x ), convertFormula( y ) )
-    case Imp( x, y )                => Imp( convertFormula( x ), convertFormula( y ) )
-    case All( x @ Var( _, Ti ), t ) => All( convertTerm( x ).asInstanceOf[FOLVar], convertFormula( t ) )
-    case Ex( x @ Var( _, Ti ), t )  => Ex( convertTerm( x ).asInstanceOf[FOLVar], convertFormula( t ) )
-    case _                          => throw new Exception( "Could not convert term " + e + " to first order!" )
-  }
-
-  def convertTerm( e: LambdaExpression ): FOLTerm = e match {
-    case Var( x, Ti )   => FOLVar( x )
-    case Const( x, Ti ) => FOLConst( x )
-    case HOLFunction( Const( f, FunctionType( Ti, _ ) ), args ) if e.exptype == Ti && ( args.filterNot( _.exptype == Ti ).isEmpty ) =>
-      FOLFunction( f, args map convertTerm )
-    case _ => throw new Exception( "Could not convert term " + e + " to first order!" )
-  }
-
 }
 
 /**

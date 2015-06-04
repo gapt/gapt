@@ -29,13 +29,11 @@ class hol2folTest extends Specification {
         val hol = HOLAtom( Const( "A", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: ha :: Nil )
         val fol = FOLAtom( "A", fx :: fa :: Nil )
         reduceHolToFol( hol ) must beEqualTo( fol )
-        convertHolToFol( new MyParserHOL( "A(x:i, a:i)" ).getTerm() ) must beEqualTo( new MyParserFOL( "A(x, a)" ).getTerm() )
       }
       "Function - f(x:(i->i), a:(o->i)):(o->o)" in {
         val hol = HOLFunction( Const( "f", ( Ti -> Ti ) -> ( ( To -> Ti ) -> ( To -> To ) ) ), hx :: ha :: Nil )
         val fol = FOLFunction( "f", fx :: fa :: Nil )
         reduceHolToFol( hol ) must beEqualTo( fol )
-        convertHolToFol.convertTerm( new MyParserHOL( "f(x:i, a:i):i" ).getTerm() ) must beEqualTo( new MyParserFOL( "f(x, a)" ).getTerm() )
       }
       "Connective - And A(x:(i->i), a:(o->i)) B(x:(i->i), b:(o->i))" in {
         val hA = HOLAtom( Const( "A", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: ha :: Nil )
@@ -45,7 +43,6 @@ class hol2folTest extends Specification {
         val fB = FOLAtom( "B", fx :: fb :: Nil )
         val fol = And( fA, fB )
         reduceHolToFol( hol ) must beEqualTo( fol )
-        convertHolToFol( new MyParserHOL( "And A(x:i, a:i) B(x:i, b:i)" ).getTerm() ) must beEqualTo( new MyParserFOL( "And A(x, a) B(x, b)" ).getTerm() )
       }
       "Abstraction - f(Abs x:(i->i) A(x:(i->i), a:(o->i))):(o->o)" in {
         val holf = new MyParserHOL( "f(Abs x:(i->i) A(x:(i->i), a:(o->i))):(o->o)" ).getTerm()

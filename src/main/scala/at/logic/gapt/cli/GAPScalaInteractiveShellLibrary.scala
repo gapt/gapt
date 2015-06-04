@@ -132,8 +132,6 @@ object parseProver9 {
  * ****************************************************************************
  */
 
-object hol2folpure extends convertHolToFol
-
 object toClauses {
   def apply( f: HOLFormula ) = CNFp( f )
 }
@@ -567,7 +565,6 @@ object help {
         |   parseProver9: String => FOLFormula - example: "(all x (P(x,f(x)) -> (exists y P(x,y))))"
         |
         | Formulas / Sequents / Expressions:
-        |   hol2folpure: LambdaExpression => FOLExpression, HOLFormula => FOLFormula - transformation of scala type
         |   toClauses: HOLFormula => Set[FClause] - the clause set representation of the given formula
         |   deleteTautologies: List[FSequent] => List[FSequent] - remove all FSequents of form ..., A |- A, ...
         |   removeSubsumed: List[FSequent] => List[FSequent] - remove all subsumed FSequents
@@ -1166,7 +1163,7 @@ object css {
     }
 
     val fol = l.flatMap( x => try {
-      hol2folpure( x ) :: Nil
+      x :: Nil
     } catch {
       case e: Exception => Nil
     } )
@@ -1179,7 +1176,7 @@ object css {
   }
 
   def extractHOL( l: List[FSequent] ): List[FSequent] = l.flatMap( x => try {
-    hol2folpure( x.toFormula )
+    x.toFormula
     Nil
   } catch {
     case e: Exception => x :: Nil
