@@ -6,10 +6,9 @@ import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
-import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
-import at.logic.gapt.proofs.expansionTrees.toDeep
-import at.logic.gapt.proofs.lk.algorithms.{ solve, containsEqualityReasoning, ReductiveCutElim }
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
+import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep }
+import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim }
+import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
 import scala.concurrent.duration._
