@@ -8,14 +8,14 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.lk.cutIntroduction.MCSMethod.MCSMethod
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas._
 import at.logic.gapt.utils.dssupport.ListSupport
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.gapt.utils.dssupport.ListSupport.{ boundedPower, diagCross }
-import at.logic.gapt.language.fol.Utils.{ st, subterms, calcCharPartition, incrementAlls, nonterminalOccurs, replaceAtPosition, getNonterminals }
+import at.logic.gapt.expr.fol.Utils.{ st, subterms, calcCharPartition, incrementAlls, nonterminalOccurs, replaceAtPosition, getNonterminals }
 
 /**
  * MinCostSAT Method

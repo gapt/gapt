@@ -9,7 +9,7 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.dssupport.ListSupport._
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.{ DFS, BFS, setSearch }

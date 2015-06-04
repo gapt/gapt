@@ -5,10 +5,9 @@ import at.logic.gapt.proofs.lk.getCutAncestors
 import at.logic.gapt.proofs.lk.base.Sequent
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk.SchemaProofDB
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.schema._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.proofs.algorithms.ceres.projections.{ DeleteTautology, DeleteRedundantSequents }
 import at.logic.gapt.proofs.algorithms.ceres.struct._

@@ -19,7 +19,7 @@ import at.logic.gapt.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.gapt.proofs.lk.subsumption._
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr.fol._
 import at.logic.gapt.proofs.expansionTrees.{ compressQuantifiers, addSymmetry, minimalExpansionSequents => minimalExpSeq }
 import at.logic.gapt.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
@@ -33,12 +33,9 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.prooftool.Main
-import at.logic.gapt.language.fol._
 import at.logic.gapt.proofs.hoare.Program
-import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.{ containsQuantifier => containsQuantifierHOL, _ }
+import at.logic.gapt.expr.hol.{ containsQuantifier => containsQuantifierHOL, _ }
 import at.logic.gapt.expr.StringSymbol
-import at.logic.gapt.expr.{ LambdaExpression, Var, Substitution => Substitution }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.latex._
 import at.logic.gapt.formats.simple.{ SimpleHOLParser, SimpleFOLParser, SimpleResolutionParserFOL }

@@ -1,13 +1,10 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.language.fol.Utils
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.basicProver.BasicProver
 import org.specs2.mutable._

@@ -7,16 +7,14 @@
 
 package at.logic.gapt.proofs.algorithms.skolemization.lksk
 
-import at.logic.gapt.language.hol._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom }
 import at.logic.gapt.proofs.lk.{ ForallLeftRule, ForallRightRule, ExistsLeftRule, ExistsRightRule }
 import at.logic.gapt.proofs.lksk._
 import org.specs2.mutable._
-import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 
 class LKskcTest extends Specification {

@@ -1,11 +1,11 @@
 
-package at.logic.gapt.formats.language.xml
+package at.logic.gapt.formats.expr.xml
 
 import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, beSyntacticMultisetEqual }
 import at.logic.gapt.proofs.occurrences.factory
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._

@@ -3,7 +3,7 @@
 
 package at.logic.gapt.proofs.algorithms.skolemization.lksk
 
-import at.logic.gapt.language.hol.{ toLatexString }
+import at.logic.gapt.expr.hol.{ toLatexString }
 import at.logic.gapt.proofs.lk.getCutAncestors
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
 import at.logic.gapt.utils.logging.Logger

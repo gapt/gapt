@@ -8,12 +8,9 @@ import at.logic.gapt.proofs.shlk.getName
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator._
-import at.logic.gapt.language.schema._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr._
 import java.io.InputStreamReader
-
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
 
 import scala.collection.mutable.{ Map => MMap }
 

@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.language.hol.HOLPosition
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._

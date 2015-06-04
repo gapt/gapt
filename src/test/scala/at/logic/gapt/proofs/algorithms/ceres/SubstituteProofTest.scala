@@ -4,10 +4,9 @@ import org.specs2.mutable._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import java.io.File.separator
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
 
 /**
  * Created with IntelliJ IDEA.
@@ -57,4 +56,4 @@ class SubstituteProofTest extends Specification {
   }
 
 }
-*/ 
+*/

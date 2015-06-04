@@ -2,7 +2,7 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr.fol._
 
 /**
  * Given an expansion sequent S which is a quasi-tautology (modulo symmetry),

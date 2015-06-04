@@ -4,7 +4,7 @@ package at.logic.gapt.integration_tests
 import java.io.InputStreamReader
 
 import at.logic.gapt.formats.shlk_parsing.SHLK.parseProof
-import at.logic.gapt.language.schema._
+import at.logic.gapt.expr.schema._
 import org.specs2.execute.Success
 import org.specs2.mutable._
 

@@ -2,7 +2,7 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.instantiate
+import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.utils.dssupport.ListSupport.groupSeq
 
 /**

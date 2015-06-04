@@ -1,6 +1,6 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.language.fol.{ FOLSubstitution, Utils }
+import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof

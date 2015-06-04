@@ -27,9 +27,9 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.Utils._
+import at.logic.gapt.expr.fol.Utils._
 import at.logic.gapt.proofs.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.gapt.utils.dssupport.ListSupport._

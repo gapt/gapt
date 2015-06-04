@@ -1,9 +1,9 @@
 
 package at.logic.gapt.provers.atp.commands.robinson
 
-import at.logic.gapt.language.fol.FOLSubstitution
-import at.logic.gapt.language.fol.UnificationAlgorithm
-import at.logic.gapt.language.hol.HOLPosition
+import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.UnificationAlgorithm
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause

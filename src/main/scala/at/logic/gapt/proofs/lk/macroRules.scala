@@ -4,8 +4,8 @@
 
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.language.fol.instantiateAll
-import at.logic.gapt.language.hol.HOLPosition
+import at.logic.gapt.expr.fol.instantiateAll
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._

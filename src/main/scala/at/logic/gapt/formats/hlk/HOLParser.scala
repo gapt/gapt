@@ -4,10 +4,8 @@ import util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.PackratParsers
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.language.hol._
-import at.logic.gapt.expr._
-import at.logic.gapt.language.fol
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.expr.fol
 
 /**
  * Extension of prover9 parser to hol

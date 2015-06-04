@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.ivy.conversion
 
 import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
-import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution.robinson.{ Instance => RInstantiate }

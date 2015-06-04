@@ -6,12 +6,11 @@ import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk.{ AtomicExpansion, regularize }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.expr.{ StringSymbol, SymbolA }
 import at.logic.gapt.proofs.resolution.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._

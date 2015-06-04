@@ -6,7 +6,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.{ Sequent, LKProof }
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.schema._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.proofs.shlk.StepMinusOne
 import collection.mutable.Map
 import java.io.InputStreamReader

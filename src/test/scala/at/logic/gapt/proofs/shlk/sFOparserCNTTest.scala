@@ -9,7 +9,7 @@ import java.io.InputStreamReader
 
 import at.logic.gapt.formats.shlk_parsing.sFOParserCNT
 import at.logic.gapt.expr._
-import at.logic.gapt.language.schema._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import org.specs2.execute.Success

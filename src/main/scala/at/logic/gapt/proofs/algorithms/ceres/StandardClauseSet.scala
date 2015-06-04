@@ -10,8 +10,7 @@ import at.logic.gapt.proofs.algorithms.ceres.struct._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.language.schema.IndexedPredicate
-import at.logic.gapt.expr.{ To, Tindex }
+import at.logic.gapt.expr.schema.IndexedPredicate
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.logging.Logger
 import scala.annotation.tailrec

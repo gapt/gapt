@@ -7,8 +7,7 @@ package at.logic.gapt.formats.latex
 
 import at.logic.gapt.formats.{ HOLTermExporter, OutputExporter }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.language.schema.indexedOmegaVar
+import at.logic.gapt.expr.schema.indexedOmegaVar
 
 trait HOLTermLatexExporter extends OutputExporter with HOLTermExporter {
   // it is LambdaExpression and require because of the stupid design chose not to have a common element for HOL

@@ -8,8 +8,8 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
-import at.logic.gapt.language.fol.instantiateAll
-import at.logic.gapt.language.hol.containsQuantifier
+import at.logic.gapt.expr.fol.instantiateAll
+import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._

@@ -1,10 +1,10 @@
 
 package at.logic.gapt.provers.atp.commands.sequents
 
-import at.logic.gapt.language.hol.{ subTerms }
+import at.logic.gapt.expr.hol.{ subTerms }
 import at.logic.gapt.proofs.lk.subsumption.managers._
 import at.logic.gapt.proofs.lk.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
-import at.logic.gapt.language.fol.FOLMatchingAlgorithm
+import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
 import at.logic.gapt.expr.->

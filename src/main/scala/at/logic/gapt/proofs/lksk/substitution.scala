@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr.BetaReduction.{ betaNormalize => normalize }
 import at.logic.gapt.expr.Substitution
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk.{ ProofTransformationUtils, applySubstitution => LKapplySubstitution }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ BinaryLKProof, UnaryLKProof }

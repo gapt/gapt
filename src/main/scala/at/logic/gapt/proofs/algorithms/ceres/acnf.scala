@@ -1,16 +1,15 @@
 
 package at.logic.gapt.proofs.algorithms.ceres.ACNF
 
-import at.logic.gapt.language.fol.FOLMatchingAlgorithm
+import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.Clause
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.schema._
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.algorithms.ceres.UnfoldProjectionTerm._
 import at.logic.gapt.proofs.algorithms.ceres._

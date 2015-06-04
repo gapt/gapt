@@ -4,8 +4,8 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ Sequent, LKProof }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.shlk.{ SchemaProof, SchemaProofDB }
-import at.logic.gapt.language.schema._
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.formats.shlk_parsing.{ SHLK, sFOParser }
 import at.logic.gapt.utils.ds.trees.BinaryTree
 import at.logic.gapt.utils.testing.ClasspathFileCopier

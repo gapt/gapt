@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.schema._
-import at.logic.gapt.language.hol.isAtom
+import at.logic.gapt.expr.schema._
+import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._

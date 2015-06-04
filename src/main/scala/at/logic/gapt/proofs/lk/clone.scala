@@ -1,8 +1,7 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.{ Or, HOLFormula }
 import at.logic.gapt.expr._
-import at.logic.gapt.language.schema.SchemaFormula
+import at.logic.gapt.expr.schema.SchemaFormula
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, _ }

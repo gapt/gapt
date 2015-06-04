@@ -2,10 +2,10 @@
 
 package at.logic.gapt.proofs.algorithms.skolemization
 
-import at.logic.gapt.language.fol.convertHolToFol
+import at.logic.gapt.expr.fol.convertHolToFol
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr.BetaReduction.ImplicitStandardStrategy._
-import at.logic.gapt.language.hol.{ SkolemSymbolFactory }
+import at.logic.gapt.expr.hol.{ SkolemSymbolFactory }
 import at.logic.gapt.proofs.lk.{ applySubstitution, getCutAncestors }
 import scala.collection.immutable.{ HashMap, HashSet }
 import scala.collection.immutable.Stream.Empty

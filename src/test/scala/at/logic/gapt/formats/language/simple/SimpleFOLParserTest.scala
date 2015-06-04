@@ -5,13 +5,12 @@
  * and open the template in the editor.
  */
 
-package at.logic.gapt.formats.language.simple
+package at.logic.gapt.formats.expr.simple
 
 import at.logic.gapt.formats.simple.SimpleFOLParser
 import org.specs2.mutable._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol._
-import at.logic.gapt.expr.StringSymbol
+import at.logic.gapt.expr.fol._
 import at.logic.gapt.formats.readers.StringReader
 
 class SimpleFOLParserTest extends Specification {

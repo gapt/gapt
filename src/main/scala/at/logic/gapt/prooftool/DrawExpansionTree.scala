@@ -17,7 +17,7 @@ import java.awt.event.MouseEvent
 import at.logic.gapt.proofs.expansionTrees.{ METAnd, METAtom, METOr, METImp, METNeg, METWeakQuantifier, METSkolemQuantifier, METStrongQuantifier, MultiExpansionTree }
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import org.slf4j.LoggerFactory
 
 object ExpansionTreeState extends Enumeration {

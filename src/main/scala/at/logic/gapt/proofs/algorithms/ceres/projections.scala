@@ -5,16 +5,12 @@
 
 package at.logic.gapt.proofs.algorithms.ceres.projections
 
-import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent, PrincipalFormulas }
+import at.logic.gapt.proofs.lk.base._
 import scala.collection.immutable.HashSet
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ rename, freeVariables }
 import at.logic.gapt.proofs.lksk.{
   ExistsSkLeftRule,
   ForallSkRightRule,

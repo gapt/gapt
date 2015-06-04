@@ -1,9 +1,8 @@
 package at.logic.gapt.proofs.shlk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.schema._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.{ CloneLKProof, UnfoldException }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk.{ Axiom => _, WeakeningLeftRule => _, WeakeningRightRule => _ }
 import at.logic.gapt.proofs.occurrences._

@@ -3,8 +3,8 @@
 
 package at.logic.gapt.provers.atp
 
-import at.logic.gapt.language.fol.FOLUnificationAlgorithm
-import at.logic.gapt.language.schema.SchemaAtom
+import at.logic.gapt.expr.fol.FOLUnificationAlgorithm
+import at.logic.gapt.expr.schema.SchemaAtom
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._

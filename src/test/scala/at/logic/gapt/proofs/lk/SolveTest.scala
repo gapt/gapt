@@ -2,8 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
-import at.logic.gapt.expr.{ Ti, To }
-import at.logic.gapt.language.schema._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toShallow, ETAtom, ETNeg, ETOr, ETStrongQuantifier, ETWeakQuantifier }
 import at.logic.gapt.proofs.lk.base.{ FSequent, beSyntacticFSequentEqual }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
@@ -86,7 +85,7 @@ class SolveTest extends Specification {
     }
 
     "prove non-atomic axioms (1)" in {
-      import at.logic.gapt.language.hol._
+      import at.logic.gapt.expr.hol._
       val List( x, y, z ) = List( "x", "y", "z" ) map ( x => Var( StringSymbol( x ), Ti ) )
       val List( u, v, w ) = List( "u", "v", "w" ) map ( x => Var( StringSymbol( x ), Ti -> Ti ) )
       val List( a, b, c, zero ) = List( "a", "b", "c", "0" ) map ( x => Const( StringSymbol( x ), Ti ) )
@@ -116,7 +115,7 @@ class SolveTest extends Specification {
     }
 
     "prove non-atomic axioms (2)" in {
-      import at.logic.gapt.language.hol._
+      import at.logic.gapt.expr.hol._
       val List( x, y, z ) = List( "x", "y", "z" ) map ( x => Var( StringSymbol( x ), Ti ) )
       val List( u, v, w ) = List( "u", "v", "w" ) map ( x => Var( StringSymbol( x ), Ti -> Ti ) )
       val List( a, b, c, zero ) = List( "a", "b", "c", "0" ) map ( x => Const( StringSymbol( x ), Ti ) )

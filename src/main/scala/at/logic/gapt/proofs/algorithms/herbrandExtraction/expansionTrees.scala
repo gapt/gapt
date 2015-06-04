@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.algorithms.herbrandExtraction
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.expansionTrees.{ ETWeakQuantifier, ETStrongQuantifier, ETAnd, ETOr, ETImp, ETNeg, ETAtom, ETMerge, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
 import at.logic.gapt.proofs.occurrences._
 

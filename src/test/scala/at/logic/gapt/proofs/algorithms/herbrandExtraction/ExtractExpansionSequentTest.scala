@@ -1,13 +1,12 @@
 package at.logic.gapt.proofs.algorithms.herbrandExtraction
 
-import at.logic.gapt.language.fol.Utils
 import org.specs2.mutable._
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.fol.Utils
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.expansionTrees.{ ETStrongQuantifier, ETWeakQuantifier, ETAtom, ETImp }
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.expr._
 
 class ExtractExpansionSequentTest extends Specification {
 

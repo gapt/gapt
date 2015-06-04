@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.lk.base.FSequent

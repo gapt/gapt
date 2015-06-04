@@ -29,7 +29,7 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
-import at.logic.gapt.language.hol.isPrenex
+import at.logic.gapt.expr.hol.isPrenex
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.expr._

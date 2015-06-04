@@ -10,7 +10,7 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.FClause
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol._
+import at.logic.gapt.expr.fol._
 import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.minisat.MiniSAT

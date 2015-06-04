@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.base
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
-import at.logic.gapt.language.hol.{ HOLPosition, HOLOrdering }
+import at.logic.gapt.expr.hol.{ HOLPosition, HOLOrdering }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._

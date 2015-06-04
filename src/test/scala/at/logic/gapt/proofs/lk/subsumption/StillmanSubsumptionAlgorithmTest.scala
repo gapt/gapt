@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.expr._
 
 class StillmanSubsumptionAlgorithmFOLTest extends Specification {
-  import at.logic.gapt.language.fol._
+  import at.logic.gapt.expr.fol._
   "StillmanSubsumptionAlgorithmFOL" should {
     val P = "P"
     val Q = "Q"
@@ -120,7 +120,7 @@ class StillmanSubsumptionAlgorithmFOLTest extends Specification {
 }
 
 class StillmanSubsumptionAlgorithmHOLTest extends Specification {
-  import at.logic.gapt.language.hol._
+  import at.logic.gapt.expr.hol._
   import at.logic.gapt.expr._
   "StillmanSubsumptionAlgorithmHOL" should {
     "return true on the following clauses" in {

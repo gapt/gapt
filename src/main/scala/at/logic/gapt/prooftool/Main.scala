@@ -21,8 +21,8 @@ import javax.swing.filechooser.FileFilter
 import javax.swing.SwingUtilities
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.proofs.TreeProof
-import at.logic.gapt.language.hol._
-import at.logic.gapt.language.schema.IntVar
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.expr.schema.IntVar
 import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
 import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import at.logic.gapt.formats.writers.FileWriter

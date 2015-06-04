@@ -5,10 +5,9 @@
 
 package at.logic.gapt.proofs.lk.subsumption
 
-import at.logic.gapt.language.fol.FOLSubstitution
-import at.logic.gapt.language.fol.FOLMatchingAlgorithm
+import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.utils.dssupport.ListSupport.remove_doubles
 
