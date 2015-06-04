@@ -3,6 +3,7 @@ package at.logic.gapt.testing
 import java.io.File
 
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
+import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
@@ -41,6 +42,17 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   }
 }
 
+class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.getName ) {
+  override def timeout = Some( 2 minutes )
+
+  override def test( implicit testRun: TestRun ) = {
+    val E = LeanCoPParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
+
+    val deep = toDeep( E ) --- "toDeep"
+    new MiniSATProver().isValid( deep.toFormula ) !-- "minisat validity"
+  }
+}
+
 class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
   override def test( implicit testRun: TestRun ) = {
     val E = addSymmetry( VeriTParser.getExpansionProof( f.getAbsolutePath ).get ) --- "import"
@@ -55,13 +67,17 @@ object RegressionTests extends App {
   def prover9Proofs = recursiveListFiles( "testing/TSTP/prover9" )
     .filter( _.getName.endsWith( ".out" ) )
 
+  def leancopProofs = recursiveListFiles( "testing/TSTP/leanCoP" )
+    .filter( _.getName.endsWith( ".out" ) )
+
   def veritProofs = recursiveListFiles( "testing/veriT-SMT-LIB" )
     .filter( _.getName.endsWith( ".proof_flat" ) )
 
   def prover9TestCases = prover9Proofs.map( new Prover9TestCase( _ ) )
+  def leancopTestCases = leancopProofs.map( new LeanCoPTestCase( _ ) )
   def veritTestCases = veritProofs.map( new VeriTTestCase( _ ) )
 
-  def allTestCases = prover9TestCases ++ veritTestCases
+  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases
 
   def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
 
