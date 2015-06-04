@@ -16,16 +16,16 @@ val filename = "./examples/hol-tape/ntape-small.llk"
 
 /* begin of proof script  */
 
-import at.logic.gapt.language.fol.algorithms.{undoHol2Fol, replaceAbstractions, reduceHolToFol, recreateWithFactory}
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.fol.{undoHol2Fol, replaceAbstractions, reduceHolToFol}
+import at.logic.gapt.expr.hol._
 
-import at.logic.gapt.language.fol.algorithms.undoHol2Fol
+import at.logic.gapt.expr.fol.undoHol2Fol
 
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
-import at.logic.gapt.proofs.lk.algorithms.{AtomicExpansion, regularize}
+import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.proofs.resolution.algorithms.RobinsonToRal
+import at.logic.gapt.proofs.resolution.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets._
@@ -38,33 +38,31 @@ import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 
  def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
 
-
-
- class Robinson2RalAndUndoHOL2Fol(sig_vars : Map[String, List[Var]],
-                                   sig_consts : Map[String, List[Const]],
-                                   cmap : replaceAbstractions.ConstantsMap) extends RobinsonToRal {
-    val absmap = Map[String, LambdaExpression]() ++ (cmap.toList.map(x => (x._2.toString, x._1)))
+ class Robinson2RalAndUndoHOL2Fol( sig_vars: Map[String, List[Var]],
+                                    sig_consts: Map[String, List[Const]],
+                                    cmap: replaceAbstractions.ConstantsMap ) extends RobinsonToRal {
+    val absmap = Map[String, LambdaExpression]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
     val cache = Map[LambdaExpression, LambdaExpression]()
 
-    override def convert_formula(e:Formula) : Formula = {
-//      require(e.isInstanceOf[FOLFormula], "The formula "+e +" is, against our expectations, not from the fol layer." )
+    override def convert_formula( e: HOLFormula ): HOLFormula = {
+      //require(e.isInstanceOf[FOLFormula], "Expecting prover 9 formula "+e+" to be from the FOL layer, but it is not.")
 
       BetaReduction.betaNormalize(
-        recreateWithFactory( undoHol2Fol.backtranslate(e, sig_vars, sig_consts, absmap)(HOLFactory), HOLFactory).asInstanceOf[Formula]  
-    )
+        undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap ) )
     }
 
-    override def convert_substitution(s:Substitution) : Substitution = {
-      val mapping = s.map.toList.map(x =>
-        (
-          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._1.asInstanceOf[FOLVar], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[LambdaExpression]).asInstanceOf[Var],
-          BetaReduction.betaNormalize(recreateWithFactory(undoHol2Fol.backtranslate(x._2.asInstanceOf[FOLExpression], sig_vars, sig_consts, absmap, None)(HOLFactory), HOLFactory).asInstanceOf[LambdaExpression])
-          )
-      )
+    override def convert_substitution( s: Substitution ): Substitution = {
+      val mapping = s.map.toList.map {
+        case ( from, to ) =>
+          (
+            BetaReduction.betaNormalize( undoHol2Fol.backtranslate( from, sig_vars, sig_consts, absmap, None ) ).asInstanceOf[Var],
+            BetaReduction.betaNormalize( undoHol2Fol.backtranslate( to, sig_vars, sig_consts, absmap, None ) ) )
+      }
 
-      Substitution(mapping)
+      Substitution( mapping )
     }
   }
+
 
  object Robinson2RalAndUndoHOL2Fol {
     def apply(sig_vars : Map[String, List[Var]],

@@ -42,8 +42,6 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     val cache = Map[LambdaExpression, LambdaExpression]()
 
     override def convert_formula( e: HOLFormula ): HOLFormula = {
-      //require(e.isInstanceOf[FOLFormula], "Expecting prover 9 formula "+e+" to be from the FOL layer, but it is not.")
-
       BetaReduction.betaNormalize(
         undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap ) )
     }
