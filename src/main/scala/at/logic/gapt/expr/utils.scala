@@ -38,21 +38,22 @@ object boundVariables {
   }
 }
 
-/** Returns the set of constants
-  *
-  */
+/**
+ * Returns the set of constants
+ *
+ */
 object constants {
   /**
    *
    * @param e A LambdaExpression
    * @return The set of constant symbols in e
    */
-  def apply(e: LambdaExpression): Set[Const] = e match {
-    case _: Var => Set()
+  def apply( e: LambdaExpression ): Set[Const] = e match {
+    case _: Var             => Set()
     case _: LogicalConstant => Set()
-    case c: Const => Set(c)
-    case App(exp, arg) => constants(exp) union constants(arg)
-    case Abs(v, exp) => constants(exp)
+    case c: Const           => Set( c )
+    case App( exp, arg )    => constants( exp ) union constants( arg )
+    case Abs( v, exp )      => constants( exp )
   }
 
   /**
@@ -60,28 +61,28 @@ object constants {
    * @param s An FSequent
    * @return The set of constant symbols in s
    */
-  def apply(s: FSequent): Set[Const] = apply(s.toFormula)
+  def apply( s: FSequent ): Set[Const] = apply( s.toFormula )
 
   /**
    *
    * @param s A Sequent
    * @return The set of constant symbols in s
    */
-  def apply(s: Sequent): Set[Const] = apply(s.toFormula)
+  def apply( s: Sequent ): Set[Const] = apply( s.toFormula )
 
   /**
    *
    * @param p An LKProof
    * @return The set of constant symbols in p
    */
-  def apply(p: LKProof): Set[Const] = p match {
-    case Axiom(seq) => apply(seq)
+  def apply( p: LKProof ): Set[Const] = p match {
+    case Axiom( seq ) => apply( seq )
 
-    case UnaryLKProof(_, u1, seq, _, _) =>
-      apply(seq) union apply(u1)
+    case UnaryLKProof( _, u1, seq, _, _ ) =>
+      apply( seq ) union apply( u1 )
 
-    case BinaryLKProof(_, u1, u2, seq, _, _, _) =>
-      apply(seq) union apply(u1) union apply(u2)
+    case BinaryLKProof( _, u1, u2, seq, _, _, _ ) =>
+      apply( seq ) union apply( u1 ) union apply( u2 )
   }
 }
 
