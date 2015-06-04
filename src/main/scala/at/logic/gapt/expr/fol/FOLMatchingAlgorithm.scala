@@ -7,7 +7,6 @@ package at.logic.gapt.expr.fol
 import at.logic.gapt.expr._
 
 object FOLMatchingAlgorithm {
-
   /**
    * Computes a FOLSubstitution that turns term from into term to, if one exists.
    *

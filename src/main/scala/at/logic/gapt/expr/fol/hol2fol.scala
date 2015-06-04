@@ -362,6 +362,7 @@ class undoReplaceAbstractions {
   }
 }
 
+// FIXME: is this still needed after the merge of the regular-layers branch?
 object convertHolToFol extends convertHolToFol
 /**
  * In contrast to [[reduceHolToFol]], we recreate the term via the fol constructors but

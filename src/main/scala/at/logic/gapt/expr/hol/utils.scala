@@ -1,5 +1,5 @@
 /*
- * Simple functions that operate on LambdaExpressions, Formulas and sequents.
+ * Utility functions for higher-order logic.
  */
 
 package at.logic.gapt.expr.hol
@@ -7,17 +7,81 @@ package at.logic.gapt.expr.hol
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.expr._
 
-object freeHOVariables {
+/**
+ * A block of existential quantifiers.
+ */
+object ExBlock {
   /**
-   * Computes a list of all HOL Variables which are not of type i in a formula, including repetitions. Together with
-   * checks on quantifiers, this can be used to decide if a formula has "true" higher-order content.
-   * @param f the expressions to extract from
-   * @return the list of free variables with type != Ti in e
+   *
+   * @param vars A list of HOL variables v,,1,,, …, v,,n,,.
+   * @param sub The formula F to be quantified over.
+   * @return ∃v,,1,,…∃v,,n,,F
    */
-  def apply( f: HOLFormula ) = freeVariables( f ).filter( _ match { case Var( _, Ti ) => false; case _ => true } )
+  def apply( vars: List[Var], sub: HOLFormula ): HOLFormula = vars match {
+    case Nil     => sub
+    case v :: vs => Ex( v, ExBlock( vs, sub ) )
+  }
+
+  /**
+   *
+   * @param expression A LambdaExpression
+   * @return If expression begins with an ∃-block: a pair consisting of the variables of the block and the quantified subformula.
+   */
+  def unapply( expression: LambdaExpression ) = expression match {
+    case f: HOLFormula =>
+      val ( vars, sub ) = unapplyHelper( f )
+      if ( vars.nonEmpty ) Some( ( vars, sub ) )
+      else None
+    case _ => None
+  }
+
+  private def unapplyHelper( f: HOLFormula ): ( List[Var], HOLFormula ) = f match {
+    case Ex( v, sub ) =>
+      val ( subVars, subF ) = unapplyHelper( sub )
+      ( v :: subVars, subF )
+    case _ => ( Nil, f )
+  }
 }
 
-// matches for consts and vars, but nothing else
+/**
+ * A block of universal quantifiers.
+ */
+object AllBlock {
+  /**
+   *
+   * @param vars A list of HOL variables v,,1,,, …, v,,n,,.
+   * @param sub The formula F to be quantified over.
+   * @return ∀v,,1,,…∀v,,n,,F
+   */
+  def apply( vars: List[Var], sub: HOLFormula ): HOLFormula = vars match {
+    case Nil     => sub
+    case v :: vs => All( v, AllBlock( vs, sub ) )
+  }
+
+  /**
+   *
+   * @param expression A LambdaExpression
+   * @return If expression begins with an ∀-block: a pair consisting of the variables of the block and the quantified subformula.
+   */
+  def unapply( expression: LambdaExpression ) = expression match {
+    case f: HOLFormula =>
+      val ( vars, sub ) = unapplyHelper( f )
+      if ( vars.nonEmpty ) Some( ( vars, sub ) )
+      else None
+    case _ => None
+  }
+
+  private def unapplyHelper( f: HOLFormula ): ( List[Var], HOLFormula ) = f match {
+    case All( v, sub ) =>
+      val ( subVars, subF ) = unapplyHelper( sub )
+      ( v :: subVars, subF )
+    case _ => ( Nil, f )
+  }
+}
+
+/**
+ * matches for consts and vars, but nothing else
+ */
 object VarOrConst {
   def unapply( e: LambdaExpression ): Option[( String, TA )] = e match {
     case Var( name, et )   => Some( ( name, et ) )
@@ -26,16 +90,30 @@ object VarOrConst {
   }
 }
 
-// Instantiates a term in a quantified formula (using the first quantifier).
-object instantiate {
-  def apply( f: HOLFormula, t: LambdaExpression ): HOLFormula = f match {
-    case All( v, form ) =>
-      val sub = Substitution( v, t )
-      sub( form )
-    case Ex( v, form ) =>
-      val sub = Substitution( v, t )
-      sub( form )
-    case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
+object isLogicalSymbol {
+  def apply( e: LambdaExpression ): Boolean = e.isInstanceOf[LogicalConstant]
+}
+
+object isAtom {
+  def apply( e: LambdaExpression ): Boolean = e match {
+    case HOLAtom( _, _ ) => true
+    case _               => false
+  }
+}
+
+object isPrenex {
+  def apply( e: LambdaExpression ): Boolean = e match {
+    case Top() | Bottom() => true
+    case Var( _, _ )      => true
+    case Const( _, _ )    => true
+    case Neg( f )         => !containsQuantifier( f )
+    case And( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case Or( f1, f2 )     => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case Imp( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
+    case Ex( v, f )       => isPrenex( f )
+    case All( v, f )      => isPrenex( f )
+    case HOLAtom( _, _ )  => true
+    case _                => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
   }
 }
 
@@ -101,50 +179,14 @@ object containsStrongQuantifier {
       s.succedent.exists( x => containsStrongQuantifier( x, true ) )
 }
 
-object isPrenex {
-  def apply( e: LambdaExpression ): Boolean = e match {
-    case Top() | Bottom() => true
-    case Var( _, _ )      => true
-    case Const( _, _ )    => true
-    case Neg( f )         => !containsQuantifier( f )
-    case And( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Or( f1, f2 )     => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Imp( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
-    case Ex( v, f )       => isPrenex( f )
-    case All( v, f )      => isPrenex( f )
-    case HOLAtom( _, _ )  => true
-    case _                => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
-  }
-}
-
-object isAtom {
-  def apply( e: LambdaExpression ): Boolean = e match {
-    case HOLAtom( _, _ ) => true
-    case _               => false
-  }
-}
-
-object subTerms {
-  def apply( e: LambdaExpression ): List[LambdaExpression] = e match {
-    case Top() | Bottom()       => List( e )
-    case Var( _, _ )            => List( e )
-    case Const( _, _ )          => List( e )
-    case And( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
-    case Or( x, y )             => e +: ( subTerms( x ) ++ subTerms( y ) )
-    case Imp( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
-    case Neg( x )               => e +: subTerms( x )
-    case All( _, x )            => e +: subTerms( x )
-    case Ex( _, x )             => e +: subTerms( x )
-    case Abs( _, x )            => e +: subTerms( x )
-    case App( x, y )            => e +: ( subTerms( x ) ++ subTerms( y ) )
-    case HOLAtom( _, args )     => e +: args.flatMap( a => subTerms( a ) )
-    case HOLFunction( _, args ) => e +: args.flatMap( a => subTerms( a ) )
-    case _                      => throw new Exception( "Unrecognized symbol." )
-  }
-}
-
-object isLogicalSymbol {
-  def apply( e: LambdaExpression ): Boolean = e.isInstanceOf[LogicalConstant]
+object freeHOVariables {
+  /**
+   * Computes a list of all HOL Variables which are not of type i in a formula, including repetitions. Together with
+   * checks on quantifiers, this can be used to decide if a formula has "true" higher-order content.
+   * @param f the expressions to extract from
+   * @return the list of free variables with type != Ti in e
+   */
+  def apply( f: HOLFormula ) = freeVariables( f ).filter( _ match { case Var( _, Ti ) => false; case _ => true } )
 }
 
 /**
@@ -194,6 +236,19 @@ object getMatrix {
   }
 
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+}
+
+// Instantiates a term in a quantified formula (using the first quantifier).
+object instantiate {
+  def apply( f: HOLFormula, t: LambdaExpression ): HOLFormula = f match {
+    case All( v, form ) =>
+      val sub = Substitution( v, t )
+      sub( form )
+    case Ex( v, form ) =>
+      val sub = Substitution( v, t )
+      sub( form )
+    case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
+  }
 }
 
 object normalizeFreeVariables {
@@ -269,93 +324,4 @@ object normalizeFreeVariables {
     val sub = Substitution( map )
     ( sub( f ), sub )
   }
-}
-
-object toAbbreviatedString {
-  /**
-   * This function takes a HOL construction and converts it to a abbreviated string version. The abbreviated string version is made
-   * by replacing the code construction for logic symbols by string versions in the file language/hol/logicC.names.scala.
-   * Several recursive function calls will be transformed into an abbreviated form (e.g. f(f(f(x))) => f^3^(x)).
-   * Terms are also handled by the this function.
-   * @param  e  The method has no parameters other then the object which is to be written as a string
-   * @throws Exception This occurs when an unknown subformula is found when parsing the HOL construction
-   * @return A String which contains the defined symbols in language/hol/logicC.names.scala.
-   *
-   */
-  def apply( e: LambdaExpression ): String = {
-
-    val p = pretty( e )
-
-    val r: String = e match {
-      case HOLFunction( x, args ) => {
-        if ( p._1 != p._2 && p._2 != "tuple1" )
-          if ( p._3 > 0 )
-            return p._2 + "^" + ( p._3 + 1 ) + "(" + p._1 + ") : " + e.exptype
-          else
-            return p._1
-        else
-          return p._1
-      }
-      case _ => return p._1
-    }
-
-    return r
-  }
-
-  private def pretty( exp: LambdaExpression ): ( String, String, Int ) = {
-
-    val s: ( String, String, Int ) = exp match {
-      case null                => ( "null", "null", -2 )
-      case Var( x, t )         => ( x.toString() + " : " + t.toString(), x.toString(), 0 )
-      case And( x, y )         => ( "(" + toAbbreviatedString( x ) + " " + AndC.name + " " + toAbbreviatedString( y ) + ")", AndC.name, 0 )
-      case Eq( x, y )          => ( "(" + toAbbreviatedString( x ) + " " + EqC.name + " " + toAbbreviatedString( y ) + ")", EqC.name, 0 )
-      case Or( x, y )          => ( "(" + toAbbreviatedString( x ) + " " + OrC.name + " " + toAbbreviatedString( y ) + ")", OrC.name, 0 )
-      case Imp( x, y )         => ( "(" + toAbbreviatedString( x ) + " " + ImpC.name + " " + toAbbreviatedString( y ) + ")", ImpC.name, 0 )
-      case Neg( x )            => ( NegC.name + toAbbreviatedString( x ), NegC.name, 0 )
-      case Ex( x, f )          => ( ExistsC.name + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ExistsC.name, 0 )
-      case All( x, f )         => ( ForallC.name + toAbbreviatedString( x ) + "." + toAbbreviatedString( f ), ForallC.name, 0 )
-      case Abs( v, exp )       => ( "(λ" + toAbbreviatedString( v ) + "." + toAbbreviatedString( exp ) + ")", "λ", 0 )
-      case App( l, r )         => ( "(" + toAbbreviatedString( l ) + ")(" + toAbbreviatedString( r ) + ")", "()()", 0 )
-      case Const( x, exptype ) => ( x.toString(), x.toString(), 0 )
-      case HOLAtom( x, args ) => {
-        ( x.toString() + "(" + ( args.foldRight( "" ) {
-          case ( x, "" )  => "" + toAbbreviatedString( x )
-          case ( x, str ) => toAbbreviatedString( x ) + ", " + str
-        } ) + ")" + " : o", x.toString(), 0 )
-      }
-      case HOLFunction( x, args ) => {
-        // if only 1 argument is provided
-        // check if abbreviating of recursive function calls is possible
-        if ( args.length == 1 ) {
-          val p = pretty( args.head )
-
-          // current function is equal to first and ONLY argument
-          if ( p._2 == x.toString() ) {
-            // increment counter and return (<current-string>, <functionsymbol>, <counter>)
-            return ( p._1, x.toString(), p._3 + 1 )
-          } // function symbol has changed from next to this level
-          else {
-
-            // in case of multiple recursive function calls
-            if ( p._3 > 0 ) {
-              return ( p._2 + "^" + p._3 + "(" + p._1 + ") : " + exp.exptype.toString(), x.toString(), 0 )
-            } // otherwise
-            else {
-              return ( p._1, x.toString(), 1 )
-            }
-          }
-        } else {
-          return ( x.toString() + "(" + ( args.foldRight( "" ) {
-            case ( x, "" ) => toAbbreviatedString( x )
-            case ( x, s )  => toAbbreviatedString( x ) + ", " + s
-          } ) + ") : " + exp.exptype.toString(), x.toString(), 0 )
-        }
-
-      }
-      case _ => throw new Exception( "ERROR: Unknown HOL expression." );
-    }
-    return s
-
-  }
-
 }

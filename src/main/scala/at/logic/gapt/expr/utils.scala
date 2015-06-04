@@ -1,6 +1,5 @@
 /*
- * Simple functions that operate on lambda-expressions
- *
+ * Utility functions for the lambda calculus.
  */
 
 package at.logic.gapt.expr
@@ -8,8 +7,10 @@ package at.logic.gapt.expr
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, LKProof }
 
-// Returns a list *without duplicates* of the free variables in the expression.
-// There is no guarantee on the ordering of the list.
+/**
+ * Returns a list *without duplicates* of the free variables in the expression.
+ * There is no guarantee on the ordering of the list.
+ */
 object freeVariables {
   def apply( e: LambdaExpression ): List[Var] = getFreeVariables( e, List() ).distinct
   def apply( e: FOLExpression ): List[FOLVar] =
@@ -26,8 +27,10 @@ object freeVariables {
   }
 }
 
-// Returns a list *with duplicates* of the bound variables in the expression.
-// There is no guarantee on the ordering of the list.
+/**
+ * Returns a list *with duplicates* of the bound variables in the expression.
+ * There is no guarantee on the ordering of the list.
+ */
 object boundVariables {
   def apply( e: LambdaExpression ): List[Var] = e match {
     case Var( _, _ )     => List()
@@ -38,8 +41,7 @@ object boundVariables {
 }
 
 /**
- * Returns the set of constants
- *
+ * Returns the set of constants occuring in the argument.
  */
 object constants {
   /**
@@ -85,9 +87,23 @@ object constants {
   }
 }
 
-// get a new variable/constant (similar to the current and) different from all 
-// variables/constants in the blackList, returns this variable if this variable 
-// is not in the blackList
+/**
+ * Returns the list of all subterms of the given LambdaExpression.
+ */
+object subTerms {
+  def apply( e: LambdaExpression ): List[LambdaExpression] = e match {
+    case Var( _, _ )   => List( e )
+    case Const( _, _ ) => List( e )
+    case Abs( _, e0 )  => e +: subTerms( e0 )
+    case App( e1, e2 ) => e +: ( subTerms( e1 ) ++ subTerms( e2 ) )
+  }
+}
+
+/**
+ * get a new variable/constant (similar to the current and) different from all
+ * variables/constants in the blackList, returns this variable if this variable
+ * is not in the blackList.
+ */
 object rename {
   def apply( v: Var, blackList: List[Var] ): Var = Var( getRenaming( v.sym, blackList.map( v => v.sym ) ), v.exptype )
   def apply( v: FOLVar, blackList: List[Var] ): FOLVar =
@@ -95,8 +111,9 @@ object rename {
   def apply( a: SymbolA, blackList: List[SymbolA] ): SymbolA = getRenaming( a, blackList )
   def apply( c: Const, blackList: List[Const] ): Const = Const( getRenaming( c.sym, blackList.map( c => c.sym ) ), c.exptype )
 
-  // renames a list of variables to pairwise distinct variables
-  // while avoiding names from blackList.
+  /**
+   * renames a list of variables to pairwise distinct variables while avoiding names from blackList.
+   */
   def apply( vs: Set[FOLVar], blackList: Set[FOLVar] ): Map[FOLVar, FOLVar] = {
     val v_list = vs.toList
     ( v_list zip
