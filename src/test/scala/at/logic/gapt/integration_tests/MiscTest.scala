@@ -130,8 +130,6 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "load Prover9 proof without equality reasoning, introduce a cut and eliminate it via Gentzen" in {
-      skipped( "fails currently but should work after merge with regular-layers" )
-
       val fsprover = FailSafeProver.getProver()
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
@@ -140,8 +138,8 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val p2 = CutIntroduction.one_cut_many_quantifiers( p1, false )
       val p3 = ReductiveCutElim( p2 )
 
-      ReductiveCutElim.isCutFree( p2 ) must beEqualTo( true )
-      ReductiveCutElim.isCutFree( p3 ) must beEqualTo( false )
+      ReductiveCutElim.isCutFree( p2 ) must beEqualTo( false )
+      ReductiveCutElim.isCutFree( p3 ) must beEqualTo( true )
     }
 
     "extract expansion tree from tape proof" in {
