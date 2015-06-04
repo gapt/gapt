@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequen
 import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
 import at.logic.gapt.proofs.expansionTrees.toDeep
 import at.logic.gapt.proofs.lk.algorithms.{ solve, containsEqualityReasoning, ReductiveCutElim }
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.CutIntroduction
+import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
 import scala.concurrent.duration._
@@ -34,10 +34,18 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     }
 
     new VeriTProver().isValid( deep ) !-- "verit validity"
-    val q = CutIntroduction.one_cut_many_quantifiers( p, false ) --- "cut-introduction"
 
-    if ( !containsEqualityReasoning( q ) ) {
-      ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
+    val q_opt = {
+      try {
+        Some( CutIntroduction.one_cut_many_quantifiers( p, false ) )
+      } catch {
+        // do not count uncompressibility as failure of test
+        case e: CutIntroUncompressibleException => None
+      }
+    } --- "cut-introduction"
+
+    if ( q_opt.isDefined && !containsEqualityReasoning( q_opt.get ) ) {
+      ReductiveCutElim( q_opt.get ) --? "cut-elim (cut-intro)"
     }
   }
 }
