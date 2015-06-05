@@ -35,6 +35,25 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
     }
     lang filter ( freeVariables( _ ).isEmpty )
   }
+
+  override def toString: String = {
+    val s = new StringBuilder
+    s append s"Axiom: ($axiom)\n"
+    s append s"Non-terminal vectors:\n"
+    nonTerminals foreach { a =>
+      s append s"  (${a.mkString( ", " )})\n"
+    }
+    s append s"Productions:\n"
+    productions.sortBy { case ( as, ts ) => nonTerminals.indexOf( as ) } foreach {
+      case ( as, ts ) =>
+        ( as, ts ).zipped foreach {
+          case ( a, t ) =>
+            s append s"  $a -> $t\n"
+        }
+        s append "\n"
+    }
+    s.toString()
+  }
 }
 
 object TratGrammar {
@@ -65,11 +84,21 @@ case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: S
   }
   require( nonTerminals contains axiom, s"axiom is unknown non-terminal $axiom" )
 
-  override def toString = s"($axiom, {${productions map { case ( d, t ) => s"$d -> $t" } mkString ", "}})"
-
   def toVectTratGrammar: VectTratGrammar = VectTratGrammar(
     axiom, nonTerminals map ( List( _ ) ),
     productions map asVectTratGrammarProduction )
 
   def language: Set[FOLTerm] = toVectTratGrammar language
+
+  override def toString: String = {
+    val s = new StringBuilder
+    s append s"Axiom: $axiom\n"
+    s append s"Non-terminals: ${nonTerminals.mkString( ", " )}\n"
+    s append s"Productions:\n"
+    productions.sortBy { case ( a, t ) => ( nonTerminals.indexOf( a ), t.toString() ) } foreach {
+      case ( a, t ) =>
+        s append s"  $a -> $t\n"
+    }
+    s.toString()
+  }
 }
