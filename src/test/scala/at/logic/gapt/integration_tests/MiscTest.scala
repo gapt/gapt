@@ -6,7 +6,7 @@ import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
-import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep => ETtoDeep, toShallow => ETtoShallow }
+import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep => ETtoDeep, ExpansionProofToLK }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.expr._
@@ -167,15 +167,15 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
       val etSeq = LKToExpansionProof( p3 )
 
-      val proof = solve.expansionProofToLKProof( p3.root.toFSequent, etSeq )
-      proof.isDefined must beTrue
+      val proof = ExpansionProofToLK( etSeq ) // must not throw exception
+      ok
     }
 
     "construct proof with expansion sequent extracted from proof (2/2)" in {
       val proof = LinearExampleProof( 0, 4 )
 
-      val proofPrime = solve.expansionProofToLKProof( proof.root.toFSequent, LKToExpansionProof( proof ) )
-      proofPrime.isDefined must beTrue
+      val proofPrime = ExpansionProofToLK( LKToExpansionProof( proof ) ) // must not throw exception
+      ok
     }
 
     "load Prover9 proof without equality reasoning and eliminate cuts via Gentzen" in {
@@ -239,8 +239,8 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
       fsprover.isValid( deep ) must beTrue
 
-      val pr_opt = solve.expansionProofToLKProof( ETtoShallow( expseq ), expseq )
-      pr_opt.isDefined must beTrue
+      ExpansionProofToLK( expseq ) // must not throw exception
+      ok
     }
 
     "load Prover9 proof with equality reasoning, extract expansion tree E, verify deep formula of E using veriT" in {

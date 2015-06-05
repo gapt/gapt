@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.expansionTrees
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ NaiveIncompleteMatchingAlgorithm, containsQuantifier, HOLPosition, getMatrix }
 import at.logic.gapt.utils.ds.trees._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -422,6 +423,15 @@ object toShallow {
 
     FSequent( ant, succ )
   }
+}
+
+object ExpansionProofToLK {
+  /**
+   * Translate an expansion proof to LK.
+   * @param ep an expansion sequent whose deep sequent is a propositional tautology
+   * @return an LKProof of the shallow sequent of ep
+   */
+  def apply( ep: ExpansionSequent ): LKProof = solve.expansionProofToLKProof( ep ).get
 }
 
 /**

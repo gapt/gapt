@@ -348,9 +348,7 @@ object MaxSATsolve {
 
 // object LKToExpansionProof directly from imports
 
-object ExpansionProofToLKProof {
-  def apply( ep: ExpansionSequent ): Option[LKProof] = solve.expansionProofToLKProof( ep )
-}
+// object ExpansionProofToLK directly from imports
 
 object eliminateCuts {
   def apply( proof: LKProof ): LKProof = ReductiveCutElim( proof )
@@ -591,7 +589,7 @@ object help {
         |   skolemize: LKProof => LKProof - skolemize the input proof
         |   lkTolksk: LKProof => LKProof
         |   LKToExpansionProof: LKProof => ExpansionSequent - extract expansion proof from LKProof
-        |   ExpansionProofToLKProof: ExpansionSequent => Option[LKProof]
+        |   ExpansionProofToLK: ExpansionSequent => Option[LKProof]
         |   eliminateCuts: LKProof => LKProof - eliminate cuts by Gentzen's method
         |   extractInterpolant: ( LKProof, Set[FormulaOccurrence], Set[FormulaOccurrence] ) => HOLFormula - extract propositional Craig interpolant
         |   compressExpansionTree: ExpansionTree => MultiExpansionTree - compress the quantifiers in the tree using vectors for the terms.

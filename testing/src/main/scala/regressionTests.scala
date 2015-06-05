@@ -5,7 +5,7 @@ import java.io.File
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
-import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep }
+import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep, ExpansionProofToLK }
 import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof }
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
@@ -27,7 +27,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     if ( !containsEqualityReasoning( p ) ) {
       new MiniSATProver().isValid( deep ) !-- "minisat validity"
       solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
-      solve.expansionProofToLKProof( E ).isDefined !-- "expansionProofToLKProof"
+      ExpansionProofToLK( E ) --- "expansionProofToLKProof"
       ReductiveCutElim( p ) --? "cut-elim (input)"
     }
 
