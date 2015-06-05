@@ -19,7 +19,7 @@ import at.logic.gapt.expr.hol._
 
 import at.logic.gapt.expr.fol.undoHol2Fol
 
-import at.logic.gapt.algorithms.hlk.HybridLatexParser
+import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize, subsumedClausesRemovalHOL}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent

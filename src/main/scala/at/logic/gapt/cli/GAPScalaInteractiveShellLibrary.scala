@@ -5,7 +5,7 @@
 
 package at.logic.gapt.cli.GAPScalaInteractiveShellLibrary
 
-import at.logic.gapt.algorithms.hlk.{ ExtendedProofDatabase, HybridLatexParser }
+import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, HybridLatexParser }
 import at.logic.gapt.algorithms.rewriting.{ DefinitionElimination, NameReplacement }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._

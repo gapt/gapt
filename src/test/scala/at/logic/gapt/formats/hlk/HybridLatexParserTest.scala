@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.hlk
 
-import at.logic.gapt.algorithms.hlk._
+import at.logic.gapt.formats.llk._
 import at.logic.gapt.formats.hlk.ast.LambdaAST
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._

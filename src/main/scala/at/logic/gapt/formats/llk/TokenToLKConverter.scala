@@ -13,7 +13,7 @@ import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.utils.logging.Logger
 import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
-import at.logic.gapt.algorithms.hlk._
+import at.logic.gapt.formats.llk._
 import at.logic.gapt.proofs.lk.EquationVerifier.EqualModuloEquality
 
 object LLKFormatter {

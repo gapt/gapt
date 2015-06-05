@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.algorithms.ceres.ACNF
 
 import org.specs2.mutable._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
-import at.logic.gapt.algorithms.hlk.HybridLatexParser
+import at.logic.gapt.formats.llk.HybridLatexParser
 import java.io.File.separator
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._

@@ -10,7 +10,7 @@ package at.logic.gapt.prooftool
 import java.io.{ FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
-import at.logic.gapt.algorithms.hlk.HybridLatexParser
+import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.ParsingException
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson

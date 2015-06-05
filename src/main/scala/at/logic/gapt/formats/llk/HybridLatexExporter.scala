@@ -5,7 +5,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, LabelledSequent }
-import at.logic.gapt.algorithms.hlk.ExtendedProofDatabase
 import at.logic.gapt.proofs.resolution.ral
 
 object LatexProofExporter extends HybridLatexExporter( true )
