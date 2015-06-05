@@ -3,7 +3,7 @@ package at.logic.gapt.integration_tests
 import java.io.IOException
 
 import at.logic.gapt.algorithms.hlk.HybridLatexParser
-import at.logic.gapt.formats.llk.HybridLatexExporter
+import at.logic.gapt.formats.llk.{ HybridLatexExporter, toLLKString }
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }

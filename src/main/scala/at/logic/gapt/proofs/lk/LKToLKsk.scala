@@ -4,8 +4,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ toLatexString }
-import at.logic.gapt.formats.llk.HybridLatexExporter
+import at.logic.gapt.formats.llk.{ HybridLatexExporter, toLatexString }
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
 import at.logic.gapt.proofs.lksk.{ Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule, applySubstitution => LKskapplySubstitution, _ }

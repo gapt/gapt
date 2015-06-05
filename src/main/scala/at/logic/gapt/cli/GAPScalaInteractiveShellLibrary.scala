@@ -18,7 +18,7 @@ import at.logic.gapt.formats.ivy.{ IvyParser, IvyResolutionProof, InitialClause 
 import at.logic.gapt.formats.latex._
 import at.logic.gapt.formats.leanCoP._
 import at.logic.gapt.formats.lisp.SExpressionParser
-import at.logic.gapt.formats.llk.HybridLatexExporter
+import at.logic.gapt.formats.llk.{ HybridLatexExporter, toLatexString }
 import at.logic.gapt.formats.prover9._
 import at.logic.gapt.formats.readers.StringReader
 import at.logic.gapt.formats.readers.XMLReaders._
