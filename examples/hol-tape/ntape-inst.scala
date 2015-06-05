@@ -31,7 +31,7 @@ import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
 
 import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
-import at.logic.gapt.proofs.lksk.LKSKToExpansionProof
+import at.logic.gapt.proofs.lksk.LKskToExpansionProof
 import at.logic.gapt.proofs.lk.LKToLKsk
 
 

@@ -10,7 +10,7 @@ import org.specs2.mutable._
 /**
  * Created by marty on 8/7/14.
  */
-class LKSKToExpansionProofTest extends Specification {
+class LKskToExpansionProofTest extends Specification {
   object simpleHOLProof {
     val p = HOLAtom( Const( "P", To ), Nil )
     val x = Var( "X", To )
@@ -25,7 +25,7 @@ class LKSKToExpansionProofTest extends Specification {
     val proof = LKToLKsk( i4 )
   }
 
-  object simpleLKSKProof {
+  object simpleLKskProof {
     val p = HOLAtom( Const( "P", To ), Nil )
     val x = Var( "X", To )
     val xatom = HOLAtom( x, Nil )
@@ -110,10 +110,10 @@ class LKSKToExpansionProofTest extends Specification {
     val proof = LKToLKsk( i4 )
   }
 
-  "LKSK Expansion Tree Extraction" should {
+  "LKsk Expansion Tree Extraction" should {
     "work for an hol proof with only weak quantifiers" in {
 
-      val et = LKSKToExpansionProof( simpleHOLProof.i4 )
+      val et = LKskToExpansionProof( simpleHOLProof.i4 )
 
       val inst1: ( ExpansionTree, HOLFormula ) = ( ETAtom( simpleHOLProof.p ), simpleHOLProof.p )
       val inst2: ( ExpansionTree, HOLFormula ) = ( ETNeg( ETAtom( simpleHOLProof.p ) ), Neg( simpleHOLProof.p ) )
@@ -125,7 +125,7 @@ class LKSKToExpansionProofTest extends Specification {
     }
 
     "work for the same hol proof, automatically skolemized" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKSKToExpansionProof( simpleHOLProof.proof )
+      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof.proof )
 
       val r = et match {
         case ETWeakQuantifier( _, Seq(
@@ -141,7 +141,7 @@ class LKSKToExpansionProofTest extends Specification {
     }
 
     "work for the same hol proof, manually skolemized" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKSKToExpansionProof( simpleLKSKProof.i4 )
+      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleLKskProof.i4 )
 
       val r = et match {
         case ETWeakQuantifier( _, Seq(
@@ -157,7 +157,7 @@ class LKSKToExpansionProofTest extends Specification {
     }
 
     "work for a skolemized hol proof with strong individual quantifiers" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKSKToExpansionProof( simpleHOLProof2.proof )
+      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof2.proof )
 
       val r = et match {
         case ETSkolemQuantifier( _, sk,
@@ -174,7 +174,7 @@ class LKSKToExpansionProofTest extends Specification {
     }
 
     "work for a skolemized hol proof with strong individual quantifiers inside weak ho quantifiers" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKSKToExpansionProof( simpleHOLProof3.proof )
+      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof3.proof )
 
       val r = et match {
         case ETWeakQuantifier( _, Seq(
@@ -190,7 +190,7 @@ class LKSKToExpansionProofTest extends Specification {
     }
 
     "work for a skolemized hol proof with weakening" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKSKToExpansionProof( simpleHOLProof4.proof )
+      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof4.proof )
 
       val r = et match {
         case ETWeakQuantifier( _, Seq(

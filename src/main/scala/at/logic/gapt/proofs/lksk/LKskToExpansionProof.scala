@@ -9,8 +9,8 @@ import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 /**
  * Extends expansion tree extraction to lksk.
  */
-object LKSKToExpansionProof extends LKSKToExpansionProof;
-class LKSKToExpansionProof extends LKToExpansionProof {
+object LKskToExpansionProof extends LKskToExpansionProof;
+class LKskToExpansionProof extends LKToExpansionProof {
   override def apply( proof: LKProof ): ExpansionSequent = {
     val map = extract( proof )
     mergeTree( ( proof.root.antecedent.map( fo => map( fo ) ), proof.root.succedent.map( fo => map( fo ) ) ) )

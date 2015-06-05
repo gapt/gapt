@@ -44,7 +44,7 @@ import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.proofs.lk.{ deleteTautologies => deleteTaut, _ }
 import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
-import at.logic.gapt.proofs.lksk.{ applySubstitution, LKSKToExpansionProof }
+import at.logic.gapt.proofs.lksk.{ applySubstitution, LKskToExpansionProof }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
@@ -1102,7 +1102,7 @@ object findDefinitions {
   }
 }
 
-// object LKSKExpansionProof directly from imports
+// object LKskToExpansionProof directly from imports
 
 object definitionElimination {
   def apply( db: ProofDatabase, name: String ): LKProof = {

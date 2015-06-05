@@ -33,7 +33,7 @@ import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
 
 import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
-import at.logic.gapt.proofs.lksk.LKSKToExpansionProof
+import at.logic.gapt.proofs.lksk.LKskToExpansionProof
 import at.logic.gapt.proofs.lk.LKToLKsk
 
  def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
@@ -109,5 +109,5 @@ import at.logic.gapt.proofs.lk.LKToLKsk
       show("Creating acnf")
       val (acnf, endclause) = ceres_omega(proj, ralp, sequentToLabelledSequent(selp.root), struct)
       show("Compute expansion tree")
-      val et = LKSKToExpansionProof(acnf)
+      val et = LKskToExpansionProof(acnf)
       show(" End of script ")

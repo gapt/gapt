@@ -19,7 +19,7 @@ import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
 
 import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
-import at.logic.gapt.proofs.lksk.LKSKToExpansionProof
+import at.logic.gapt.proofs.lksk.LKskToExpansionProof
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent }
 
@@ -169,7 +169,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
           val ( acnf, endclause ) = ceres_omega( proj, ralp, sequentToLabelledSequent( selp.root ), struct )
 
           show( "Compute expansion tree" )
-          val et = LKSKToExpansionProof( acnf )
+          val et = LKskToExpansionProof( acnf )
           show( " HOORAY! " )
 
           printStatistics( et )
@@ -223,7 +223,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
           val ( acnf, endclause ) = ceres_omega( proj, ralp, sequentToLabelledSequent( selp.root ), struct )
 
           show( "Compute expansion tree" )
-          val et = LKSKToExpansionProof( acnf )
+          val et = LKskToExpansionProof( acnf )
           show( " HOORAY! " )
 
           printStatistics( et )
