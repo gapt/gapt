@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.algorithms.ceres.clauseSchema
+package at.logic.gapt.proofs.ceres.clauseSchema
 
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 import at.logic.gapt.proofs.lk._

@@ -26,11 +26,11 @@ import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
 import at.logic.gapt.proofs.resolution.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets._
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.clauseSets._
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.StructCreators
 
-import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
+import at.logic.gapt.proofs.ceres.ceres_omega
 import at.logic.gapt.proofs.lksk.LKskToExpansionProof
 import at.logic.gapt.proofs.lk.LKToLKsk
 

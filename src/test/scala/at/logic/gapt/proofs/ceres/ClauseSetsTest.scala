@@ -1,5 +1,5 @@
 
-package at.logic.gapt.proofs.algorithms.ceres.clauseSets
+package at.logic.gapt.proofs.ceres.clauseSets
 
 import at.logic.gapt.proofs.lk.getCutAncestors
 import at.logic.gapt.proofs.lk.base.Sequent
@@ -9,8 +9,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.formats.shlk_parsing.sFOParser
-import at.logic.gapt.proofs.algorithms.ceres.projections.{ DeleteTautology, DeleteRedundantSequents }
-import at.logic.gapt.proofs.algorithms.ceres.struct._
+import at.logic.gapt.proofs.ceres.projections.{ DeleteTautology, DeleteRedundantSequents }
+import at.logic.gapt.proofs.ceres.struct._
 import java.io.File.separator
 import java.io.{ FileInputStream, InputStreamReader }
 import org.specs2.mutable._

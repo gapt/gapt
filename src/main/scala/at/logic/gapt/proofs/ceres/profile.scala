@@ -1,11 +1,11 @@
-package at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile
+package at.logic.gapt.proofs.ceres.clauseSets.profile
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.{ LabelledSequent, LabelledFormulaOccurrence, UnaryLKskProof }
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet._
-import at.logic.gapt.proofs.algorithms.ceres.struct._
+import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet._
+import at.logic.gapt.proofs.ceres.struct._
 
 object getListOfFOccsInStruct {
   def apply( s: Struct ): List[FormulaOccurrence] = s match {

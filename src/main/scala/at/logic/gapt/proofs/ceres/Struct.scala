@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.gapt.proofs.algorithms.ceres.struct
+package at.logic.gapt.proofs.ceres.struct
 
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
@@ -17,8 +17,8 @@ import at.logic.gapt.expr.schema.{ SchemaSubstitution => SchemaSubstitution, Sch
 import at.logic.gapt.utils.ds.Multisets.Multiset
 import at.logic.gapt.utils.ds.Multisets._
 import at.logic.gapt.utils.ds.trees._
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet._
-import at.logic.gapt.proofs.algorithms.ceres.RelevantCC
+import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet._
+import at.logic.gapt.proofs.ceres.RelevantCC
 import at.logic.gapt.utils.logging.Logger
 import scala.collection.immutable.HashSet
 import scala.math.max

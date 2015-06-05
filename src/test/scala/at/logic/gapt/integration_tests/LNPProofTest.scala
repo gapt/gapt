@@ -8,8 +8,8 @@ import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
+import at.logic.gapt.proofs.ceres.struct.StructCreators
 
 import java.util.zip.GZIPInputStream
 import java.io.{ FileReader, FileInputStream, InputStreamReader }

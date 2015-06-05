@@ -16,7 +16,7 @@ import at.logic.gapt.proofs.proofs.TreeProof
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.proofs.Proof
-import at.logic.gapt.proofs.algorithms.ceres.struct.{ structToExpressionTree, Struct }
+import at.logic.gapt.proofs.ceres.struct.{ structToExpressionTree, Struct }
 
 class Launcher( private val option: Option[( String, AnyRef )], private val fSize: Int ) extends GridBagPanel with MouseMotionListener {
   option match {

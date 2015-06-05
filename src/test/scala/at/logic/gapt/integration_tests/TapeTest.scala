@@ -16,11 +16,11 @@ import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
 import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
 import at.logic.gapt.provers.prover9._
 
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile.proofProfile
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
-import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK }
+import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
+import at.logic.gapt.proofs.ceres.clauseSets.profile.proofProfile
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.{ CERES, CERESR2LK }
 
 import commands.Prover9InitCommand
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination

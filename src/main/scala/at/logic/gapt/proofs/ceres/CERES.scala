@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.algorithms.ceres
+package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.proofs.resolution.FClause
@@ -13,10 +13,10 @@ import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
+import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.StructCreators
 
 /**
  * Two implementations of first-order CERES, one (CERES) grounding the proof before the transformation, the other (CERESR2LK)

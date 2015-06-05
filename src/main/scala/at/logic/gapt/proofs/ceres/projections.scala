@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.gapt.proofs.algorithms.ceres.projections
+package at.logic.gapt.proofs.ceres.projections
 
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._

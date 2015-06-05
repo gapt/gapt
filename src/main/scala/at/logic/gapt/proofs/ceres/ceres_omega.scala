@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.algorithms.ceres
+package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.gapt.proofs.lk._
@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lksk.applySubstitution
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.Ti
-import at.logic.gapt.proofs.algorithms.ceres.struct.Struct
+import at.logic.gapt.proofs.ceres.struct.Struct
 import at.logic.gapt.utils.dssupport.ListSupport._
 import at.logic.gapt.proofs.lk.base.{ Sequent, LKProof }
 import at.logic.gapt.proofs.lksk

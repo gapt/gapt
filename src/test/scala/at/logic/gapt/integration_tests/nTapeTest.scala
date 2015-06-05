@@ -14,11 +14,11 @@ import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
 import at.logic.gapt.proofs.resolution.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.AlternativeStandardClauseSet
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.clauseSets.AlternativeStandardClauseSet
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.StructCreators
 
-import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
+import at.logic.gapt.proofs.ceres.ceres_omega
 import at.logic.gapt.proofs.lksk.LKskToExpansionProof
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent }

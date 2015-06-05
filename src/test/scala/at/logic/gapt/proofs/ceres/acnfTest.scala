@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.algorithms.ceres.ACNF
+package at.logic.gapt.proofs.ceres.ACNF
 
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.applySubstitution
@@ -10,10 +10,10 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.proofs.algorithms.ceres.clauseSchema._
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.clauseSchema._
+import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.StructCreators
 import java.io.{ FileInputStream, InputStreamReader }
 import org.specs2.mutable._
 

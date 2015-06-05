@@ -29,11 +29,11 @@ import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.formats.xml.{ XMLParser, ProofDatabase, LKExporter }
-import at.logic.gapt.proofs.algorithms.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.{ Struct, StructCreators }
-import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK, ceres_omega }
+import at.logic.gapt.proofs.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
+import at.logic.gapt.proofs.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.{ Struct, StructCreators }
+import at.logic.gapt.proofs.ceres.{ CERES, CERESR2LK, ceres_omega }
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
 import at.logic.gapt.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
 import at.logic.gapt.proofs.expansionTrees.{ compressQuantifiers, addSymmetry, minimalExpansionSequents => minimalExpSeq }
