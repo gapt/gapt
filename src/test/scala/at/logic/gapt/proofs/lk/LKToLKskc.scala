@@ -5,17 +5,16 @@
  * and open the template in the editor.
  */
 
-package at.logic.gapt.proofs.algorithms.skolemization.lksk
+package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
-import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom }
-import at.logic.gapt.proofs.lk.{ ForallLeftRule, ForallRightRule, ExistsLeftRule, ExistsRightRule }
-import at.logic.gapt.proofs.lksk._
-import org.specs2.mutable._
+import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom }
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
+import at.logic.gapt.proofs.lksk._
+import at.logic.gapt.proofs.occurrences._
+import org.specs2.mutable._
 
 class LKskcTest extends Specification {
 
@@ -36,7 +35,7 @@ class LKskcTest extends Specification {
           LKAxiom( Rcc :: Nil, Nil ),
           Rcc, allxRcx, c ),
         allxRcx, allyallxRyx, c )
-      val lkskc_proof = LKtoLKskc( proof, Set() )
+      val lkskc_proof = LKToLKsk( proof, Set() )
 
       lkskc_proof.root.antecedent.toList.head must beLike {
         case o: LabelledFormulaOccurrence =>
@@ -55,7 +54,7 @@ class LKskcTest extends Specification {
       val r2 = ExistsLeftRule( r1, Rab, exyRay, b )
       val r3 = ForallLeftRule( r2, exyRay, allxexyRxy, a )
       val r4 = ForallRightRule( r3, exyRay, allxexyRxy, a )
-      val lkskc_proof = LKtoLKskc( r4, Set() )
+      val lkskc_proof = LKToLKsk( r4, Set() )
 
       val occurrences: Set[FormulaOccurrence] = lkskc_proof.nodes.flatMap( x => x.asInstanceOf[LKProof].root.occurrences ).toSet
       val constants = occurrences.flatMap( x => subTerms( x.formula ).filter( _ match { case VarOrConst( _, _ ) => true; case _ => false } ) )

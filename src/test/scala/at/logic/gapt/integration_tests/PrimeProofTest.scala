@@ -20,8 +20,6 @@ import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile._
 import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ StructCreators, structToExpressionTree }
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
 
 /* comment out until atp works again
 import at.logic.gapt.provers.atp.Prover

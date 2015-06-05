@@ -3,21 +3,17 @@
  */
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.{ getStatistics, deleteTautologies }
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
-import at.logic.gapt.provers.prover9._
+import at.logic.gapt.formats.tptp.TPTPFOLExporter
+import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
+import at.logic.gapt.formats.xml.XMLParser._
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile._
 import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
-
+import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.provers.prover9._
 import java.io.File.separator
 import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
@@ -49,7 +45,7 @@ class LatticeTest extends Specification {
       val proof = proofdb.proofs.head._2
       //printStats( proof )
 
-      val proof_sk = LKtoLKskc( proof )
+      val proof_sk = LKToLKsk( proof )
       val s = StructCreators.extract( proof_sk )
       /*
       val cs = StandardClauseSet.transformStructToClauseSet( s )

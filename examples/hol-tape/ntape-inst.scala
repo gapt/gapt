@@ -32,7 +32,7 @@ import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
 
 import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
 import at.logic.gapt.proofs.lksk.LKSKToExpansionProof
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
+import at.logic.gapt.proofs.lk.LKToLKsk
 
 
  def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")

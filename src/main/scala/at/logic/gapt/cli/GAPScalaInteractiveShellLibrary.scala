@@ -34,8 +34,6 @@ import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ StandardClauseSet, Sim
 import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ Struct, StructCreators }
 import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK, ceres_omega }
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ExpansionTree }
 import at.logic.gapt.proofs.expansionTrees.{ MultiExpansionTree, MultiExpansionSequent }
 import at.logic.gapt.proofs.expansionTrees.{ compressQuantifiers, addSymmetry, minimalExpansionSequents => minimalExpSeq }
@@ -346,9 +344,7 @@ object MaxSATsolve {
 
 // object skolemize taken directly from imports
 
-object lkTolksk {
-  def apply( p: LKProof ) = LKtoLKskc( p )
-}
+// object LKToLKsk take directly from imports
 
 // object LKToExpansionProof directly from imports
 
@@ -1012,7 +1008,7 @@ object rename {
 object ntape {
   val p = loadLLK( "algorithms/llk/src/test/resources/tape3.llk" )
   val elp = regularize( definitionElimination( p, "TAPEPROOF" ) )
-  val selp = LKtoLKskc( elp )
+  val selp = LKToLKsk( elp )
 }
 
 object proofs {

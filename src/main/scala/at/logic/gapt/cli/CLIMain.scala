@@ -23,17 +23,14 @@ object CLIMain {
   val imports = """
   import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
   import at.logic.gapt.expr._
-  import at.logic.gapt.expr.hol._
   import at.logic.gapt.expr.fol._
+  import at.logic.gapt.expr.hol._
+  import at.logic.gapt.proofs.hoare._
   import at.logic.gapt.proofs.lk._
   import at.logic.gapt.proofs.lk.base._
-  import at.logic.gapt.proofs.lksk
-  import at.logic.gapt.proofs.hoare._
-  import at.logic.gapt.proofs.algorithms.skolemization.skolemize
-  import at.logic.gapt.proofs.lk.regularize
-  import at.logic.gapt.proofs.occurrences.FormulaOccurrence
   import at.logic.gapt.proofs.lk.cutIntroduction.Deltas._
-  import at.logic.gapt.proofs.lk.getStatistics
+  import at.logic.gapt.proofs.lksk
+  import at.logic.gapt.proofs.occurrences.FormulaOccurrence
   import at.logic.gapt.provers.minisat.MiniSATProver
   import at.logic.gapt.prooftool.{Main => PT}
   import help.{apply => help}

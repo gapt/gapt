@@ -2,7 +2,6 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.{ getStatistics, deleteTautologies }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.latex.SequentsListLatexExporter
 import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
@@ -11,7 +10,6 @@ import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
 import java.io.{ FileReader, FileInputStream, InputStreamReader }
@@ -44,7 +42,7 @@ class LNPProofTest extends Specification {
       val proof = proofs.head._2
       //printStats( proof )
 
-      val proof_sk = LKtoLKskc( proof )
+      val proof_sk = LKToLKsk( proof )
       val s = StructCreators.extract( proof_sk )
 
       val cs = StandardClauseSet.transformStructToClauseSet( s ) map ( _.toFSequent )

@@ -22,8 +22,6 @@ import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile._
 import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 
 import java.util.zip.GZIPInputStream
 import java.io.File.separator
@@ -62,7 +60,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 //      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("simple_ind.xml"))) with XMLProofDatabaseParser)..getProofDatabase()
 //      proofs.size must beEqualTo(1)
 //      val proof = proofs.first
-//      val proof_sk = LKtoLKskc( proof )
+//      val proof_sk = LKToLKsk( proof )
 //      val s = StructCreators.extract( proof_sk )
 //      val cs = StandardClauseSet.transformStructToClauseSet( s )
 //      val dcs = deleteTautologies( cs )
@@ -149,7 +147,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val ( _, p ) :: _ = proofs
       val elp = AtomicExpansion( DefinitionElimination( db.Definitions, p ) )
       val reg = regularize( elp )
-      val lksk_proof = LKtoLKskc( reg )
+      val lksk_proof = LKToLKsk( reg )
       // TODO
       val et = LKToExpansionProof( reg ) // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok

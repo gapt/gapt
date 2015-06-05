@@ -1,25 +1,19 @@
 // This package implements the higher-order analogue to Skolemization:
 // a transformation from LK to LK_skc
 
-package at.logic.gapt.proofs.algorithms.skolemization.lksk
+package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ toLatexString }
-import at.logic.gapt.proofs.lk.getCutAncestors
+import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
+import at.logic.gapt.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
+import at.logic.gapt.proofs.lksk.{ Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule, applySubstitution => LKskapplySubstitution, _ }
+import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable.{ Map, HashMap }
-import at.logic.gapt.proofs.lksk._
-import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, WeakeningRightRule => LKWeakeningRightRule, applySubstitution => LKapplySubstitution, _ }
-import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.occurrences.factory
-import at.logic.gapt.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
-import at.logic.gapt.expr.StringSymbol
-import at.logic.gapt.expr.FunctionType
-import at.logic.gapt.formats.llk.HybridLatexExporter
 
-object LKtoLKskc extends Logger {
+object LKToLKsk extends Logger {
   def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Nil )
 
   def apply( proof: LKProof ): LKProof = apply( proof, getCutAncestors( proof ) )
@@ -45,13 +39,13 @@ object LKtoLKskc extends Logger {
   // like ForallLeft, ExistsRight etc. For an example, see algorithms.lk.substitution
   // and the handleEquationalRule method below!
   def rec( proof: LKProof, subst_terms: Map[FormulaOccurrence, Label], cut_occs: Set[FormulaOccurrence] ): ( LKProof, Map[FormulaOccurrence, LabelledFormulaOccurrence] ) = proof match {
-    case LKAxiom( so ) => {
+    case Axiom( so ) => {
       val ant = so.antecedent.map( fo => fo.formula )
       val succ = so.succedent.map( fo => fo.formula )
       val labels_ant = so.antecedent.map( fo => subst_terms( fo ) ).toList
       val labels_succ = so.succedent.map( fo => subst_terms( fo ) ).toList
 
-      val a = Axiom.createDefault( FSequent( ant, succ ), Tuple2( labels_ant, labels_succ ) )
+      val a = LKskAxiom.createDefault( FSequent( ant, succ ), Tuple2( labels_ant, labels_succ ) )
 
       //assert( a._1.root.isInstanceOf[LabelledSequent] )
       val map = new HashMap[FormulaOccurrence, LabelledFormulaOccurrence]
@@ -75,7 +69,7 @@ object LKtoLKskc extends Logger {
       if ( !cut_occs.contains( m ) ) {
         val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
         val r = rec( p, new_label_map, cut_occs )
-        val newaux = r._2( a )
+        val newaux: LabelledFormulaOccurrence = r._2( a )
         val args = newaux.skolem_label.toList
         m.formula match {
           case All( Var( _, alpha ), _ ) =>
@@ -83,7 +77,7 @@ object LKtoLKskc extends Logger {
             debug( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
             val s = HOLFunction( f, args )
             val subst = Substitution( v, s )
-            val new_parent = applySubstitution( r._1, subst )
+            val new_parent = LKskapplySubstitution( r._1, subst )
             val new_proof = ForallSkRightRule( new_parent._1, new_parent._2( newaux ), m.formula, s )
             //assert( new_proof.root.isInstanceOf[LabelledSequent] )
             // TODO: casts are only due to Set/Map not being covariant!?
@@ -112,7 +106,7 @@ object LKtoLKskc extends Logger {
             debug( "Using Skolem function symbol '" + f + "' for formula " + m.formula )
             val s = HOLFunction( f, args )
             val subst = Substitution( v, s )
-            val new_parent = applySubstitution( r._1, subst )
+            val new_parent = LKskapplySubstitution( r._1, subst )
             val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2( newaux ), m.formula, s )
             //assert( new_proof.root.isInstanceOf[LabelledSequent] )
             // TODO: casts are only due to Set/Map not being covariant!?
@@ -239,18 +233,18 @@ object LKtoLKskc extends Logger {
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
       ( sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) )
     }
-    case LKWeakeningLeftRule( p, s, m ) => {
+    case WeakeningLeftRule( p, s, m ) => {
       val new_label_map = copyMapFromAncestor( ( s.antecedent filterNot ( _ == m ) ) ++ s.succedent, subst_terms )
       val r = rec( p, new_label_map, cut_occs )
-      val sk_proof = WeakeningLeftRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
+      val sk_proof = LKskWeakeningLeftRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
       ( sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) +
         Tuple2( m, sk_proof.prin.head ) )
     }
-    case LKWeakeningRightRule( p, s, m ) => {
+    case WeakeningRightRule( p, s, m ) => {
       val new_label_map = copyMapFromAncestor( s.antecedent ++ ( s.succedent filterNot ( _ == m ) ), subst_terms )
       val r = rec( p, new_label_map, cut_occs )
-      val sk_proof = WeakeningRightRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
+      val sk_proof = LKskWeakeningRightRule.createDefault( r._1, m.formula, subst_terms.apply( m ) )
       //assert( sk_proof.root.isInstanceOf[LabelledSequent] )
       ( sk_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, sk_proof, r._2 ) +
         Tuple2( m, sk_proof.prin.head ) )

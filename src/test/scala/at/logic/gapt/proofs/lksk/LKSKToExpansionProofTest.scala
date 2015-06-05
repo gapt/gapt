@@ -2,11 +2,9 @@ package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.{ LKtoLKskc => skolemize }
 import at.logic.gapt.proofs.expansionTrees.{ ETAtom, ETNeg, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp }
 import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, _ }
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence
 import org.specs2.mutable._
 
 /**
@@ -24,7 +22,7 @@ class LKSKToExpansionProofTest extends Specification {
     val i2 = NegRightRule( i1, i1.root.antecedent( 0 ) )
     val i3 = ExistsRightRule( i2, i2.root.succedent( 1 ), existsx, Neg( p ) )
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
-    val proof = skolemize( i4 )
+    val proof = LKToLKsk( i4 )
   }
 
   object simpleLKSKProof {
@@ -61,7 +59,7 @@ class LKSKToExpansionProofTest extends Specification {
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
     val i5 = ForallRightRule( i4, i4.root.succedent( 0 ), alluexistsx, a )
 
-    val proof = skolemize( i5 )
+    val proof = LKToLKsk( i5 )
   }
 
   object simpleHOLProof3 {
@@ -84,7 +82,7 @@ class LKSKToExpansionProofTest extends Specification {
     val i2 = NegRightRule( i1, i1.root.antecedent( 0 ) )
     val i3 = ExistsRightRule( i2, i2.root.succedent( 1 ), existsx, Neg( allpu ) )
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
-    val proof = skolemize( i4 )
+    val proof = LKToLKsk( i4 )
   }
 
   object simpleHOLProof4 {
@@ -109,7 +107,7 @@ class LKSKToExpansionProofTest extends Specification {
     val i2b = ImpRightRule( i2a, i2a.root.antecedent( 0 ), i2a.root.succedent( 1 ) )
     val i3 = ExistsRightRule( i2b, i2b.root.succedent( 1 ), existsx, Imp( allpu, Neg( allpu ) ) )
     val i4 = ContractionRightRule( i3, i3.root.succedent( 0 ), i3.root.succedent( 1 ) )
-    val proof = skolemize( i4 )
+    val proof = LKToLKsk( i4 )
   }
 
   "LKSK Expansion Tree Extraction" should {

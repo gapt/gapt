@@ -26,13 +26,11 @@ import at.logic.gapt.expr.schema.IntVar
 import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
 import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.gapt.proofs.algorithms.ceres.clauseSets.{ renameCLsymbols, StandardClauseSet }
 import at.logic.gapt.proofs.algorithms.ceres.struct.{ structToExpressionTree, StructCreators }
 import at.logic.gapt.proofs.algorithms.ceres.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
 import at.logic.gapt.proofs.algorithms.ceres.{ UnfoldProjectionTerm, ProjectionTermCreators }
 import at.logic.gapt.utils.ds.trees.Tree
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
 import at.logic.gapt.proofs.algorithms.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
 import at.logic.gapt.proofs.algorithms.ceres.ACNF.ACNF
 import at.logic.gapt.proofs.shlk.SchemaProofDB
@@ -531,7 +529,7 @@ object Main extends SimpleSwingApplication {
   def computeClList() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+      val proof_sk = LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] )
       val s = StructCreators.extract( proof_sk )
       val csPre: List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
 
@@ -596,7 +594,7 @@ object Main extends SimpleSwingApplication {
   def computeClListOnlyQuantifiedCuts() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
+      val proof_sk = eliminateDefinitions( LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
       val s = StructCreators.extract( proof_sk, f => containsQuantifier( f ) )
       val csPre: List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
       db.addSeqList( csPre.map( x => x.toFSequent ) )
@@ -611,7 +609,7 @@ object Main extends SimpleSwingApplication {
   def computeStruct() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val proof_sk = LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+      val proof_sk = LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] )
       val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk ) )
       db.addTermTree( s )
       updateLauncher( "Struct", s, defaultFontSize )
@@ -626,7 +624,7 @@ object Main extends SimpleSwingApplication {
   def computeStructOnlyQuantifiedCuts() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val proof_sk = eliminateDefinitions( LKtoLKskc( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
+      val proof_sk = eliminateDefinitions( LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
       val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk, f => containsQuantifier( f ) ) )
       db.addTermTree( s )
       updateLauncher( "Struct", s, defaultFontSize )
@@ -655,7 +653,7 @@ object Main extends SimpleSwingApplication {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val pair = body.getContent.getData.get
-      val new_proof = eliminateDefinitions( LKtoLKskc( pair._2.asInstanceOf[LKProof] ) )
+      val new_proof = eliminateDefinitions( LKToLKsk( pair._2.asInstanceOf[LKProof] ) )
       db.addProofs( ( pair._1 + " without def rules", new_proof ) :: Nil )
       updateLauncher( "Proof without Definitions", new_proof, 14 )
       body.cursor = java.awt.Cursor.getDefaultCursor

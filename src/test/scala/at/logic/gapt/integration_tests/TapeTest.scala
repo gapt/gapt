@@ -22,9 +22,6 @@ import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
 import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
 import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK }
 
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
-
 import commands.Prover9InitCommand
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 
@@ -44,7 +41,7 @@ class TapeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
-      val proof_sk = LKtoLKskc( proof )
+      val proof_sk = LKToLKsk( proof )
       val s = StructCreators.extract( proof_sk )
       /*
       val cs = StandardClauseSet.transformStructToClauseSet( s )
@@ -106,7 +103,7 @@ class TapeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
-      val proof_sk = LKtoLKskc( proof )
+      val proof_sk = LKToLKsk( proof )
       val s = StructCreators.extract( proof_sk )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
 

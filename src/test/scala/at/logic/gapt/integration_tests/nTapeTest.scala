@@ -8,7 +8,7 @@ import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, regularize }
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, regularize, LKToLKsk }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
 import at.logic.gapt.proofs.resolution.RobinsonToRal
@@ -20,7 +20,6 @@ import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
 
 import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
 import at.logic.gapt.proofs.lksk.LKSKToExpansionProof
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent }
 
@@ -134,7 +133,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
       show( "Eliminating definitions, expanding tautological axioms" )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "TAPEPROOF" ) ) ) )
       show( "Skolemizing" )
-      val selp = LKtoLKskc( elp )
+      val selp = LKToLKsk( elp )
 
       show( "Extracting struct" )
       val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
@@ -188,7 +187,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
       show( "Eliminating definitions, expanding tautological axioms" )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "TAPEPROOF" ) ) ) )
       show( "Skolemizing" )
-      val selp = LKtoLKskc( elp )
+      val selp = LKToLKsk( elp )
 
       show( "Extracting struct" )
       val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )

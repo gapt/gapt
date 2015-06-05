@@ -1,23 +1,19 @@
 // This package implements formula and proof Skolemization.
 
-package at.logic.gapt.proofs.algorithms.skolemization
+package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr.BetaReduction.ImplicitStandardStrategy._
-import at.logic.gapt.expr.hol.{ SkolemSymbolFactory }
-import at.logic.gapt.proofs.lk.{ applySubstitution, getCutAncestors }
-import scala.collection.immutable.{ HashMap, HashSet }
-import scala.collection.immutable.Stream.Empty
-import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent, PrincipalFormulas }
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.utils.ds.streams.Definitions._
-import at.logic.gapt.proofs.shlk.{ trsArrowLeftRule, SchemaProofLinkRule }
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr.SymbolA
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.{ SkolemSymbolFactory }
+import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.occurrences._
+import at.logic.gapt.proofs.shlk.{ trsArrowLeftRule, SchemaProofLinkRule }
+import at.logic.gapt.utils.ds.streams.Definitions._
+import at.logic.gapt.utils.logging.Logger
+import scala.collection.immutable.Stream.Empty
+import scala.collection.immutable.{ HashMap, HashSet }
 
 object skolemize extends Logger {
   /* proof skolemization */
