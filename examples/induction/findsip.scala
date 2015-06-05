@@ -49,13 +49,13 @@ println(s"Logical complexity of the minimization formula: $logicalComp")
 
 println(s"Minimized grammar:")
 val minGrammar = time { minimizeSipGrammar(nfGrammar, instanceLanguages, maxSATSolver = new QMaxSAT()) }
-minGrammar.productions foreach println; println
+println(minGrammar)
 
 instanceLanguages foreach { case (n, instanceLanguage) =>
   println(s"Checking covering for n=$n: ")
   val instanceGrammar = minGrammar.instanceGrammar(n)
 //  println("Instance language:"); instanceLanguage foreach println
 //  println("Instance grammar:"); instanceGrammar.productions foreach println
-  println("Is it covered? " + new Sat4j().solve(new GrammarMinimizationFormula(instanceGrammar).coversLanguage(instanceLanguage)).isDefined)
+  println("Is it covered? " + (instanceLanguage.toSet diff instanceGrammar.language).isEmpty)
   println
 }
