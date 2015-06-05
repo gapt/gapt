@@ -120,9 +120,9 @@ class GrammarFindingTest extends Specification {
   }
 
   "findMinimalGrammar" should {
-    if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
-
     "find covering grammar of minimal size" in {
+      if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
+
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" )
       val g = findMinimalGrammar( l map parseTerm, 1, new QMaxSAT )
       covers( g, l: _* )
@@ -144,6 +144,8 @@ class GrammarFindingTest extends Specification {
         case ( ( n, l_str ), sizeOfMinG ) =>
           val l = l_str map parseTerm
           s"for $l with $n non-terminals" in {
+            if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
+
             val g = findMinimalGrammar( l, n, new QMaxSAT )
             g.productions.size must_== sizeOfMinG
             ( l.toSet diff g.language ) must_== Set()
