@@ -3,6 +3,7 @@ package at.logic.gapt.provers.veriT
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, ExpansionSequent, isQuantified, formulaToExpansionTree }
 import at.logic.gapt.utils.traits.ExternalProgram
+import at.logic.gapt.utils.withTempFile
 import scala.sys.process._
 import java.io._
 import at.logic.gapt.provers._
@@ -16,7 +17,9 @@ class VeriTProver extends Prover with ExternalProgram {
     // Generate the input file for veriT
     val veritInput = VeriTExporter( s )
 
-    val veritOutput = "veriT" #< new ByteArrayInputStream( veritInput.getBytes ) !!
+    val veritOutput = withTempFile.fromString( veritInput ) { veritInputFile =>
+      Seq( "veriT", veritInputFile ) !!
+    }
 
     // Parse the output
     VeriTParser.isUnsat( new StringReader( veritOutput ) )
@@ -33,7 +36,9 @@ class VeriTProver extends Prover with ExternalProgram {
   def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] = {
     val smtBenchmark = VeriTExporter( s )
 
-    val output = "veriT --proof=- --proof-version=1" #< new ByteArrayInputStream( smtBenchmark.getBytes ) !!
+    val output = withTempFile.fromString( smtBenchmark ) { smtFile =>
+      Seq( "veriT", "--proof=-", "--proof-version=1", smtFile ) !!
+    }
 
     VeriTParser.getExpansionProof( new StringReader( output ) ) match {
       case Some( exp_seq ) =>

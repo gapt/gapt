@@ -16,7 +16,6 @@ class VeriTProverTest extends Specification {
 
   "VeriT" should {
     "prove a v not a" in {
-      //skipped("--proof-version in isValid is only supported on Giselle's machine")
       val a = FOLAtom( "a", Nil )
       val f = Or( a, Neg( a ) )
 
@@ -35,7 +34,6 @@ class VeriTProverTest extends Specification {
     }
 
     "not prove bottom" in {
-      skipped( "occasionally veriT does not terminate on this input" )
       veriT.getExpansionSequent( FSequent( Seq(), Seq( Bottom() ) ) ) must beNone
     }
 
