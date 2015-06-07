@@ -5,8 +5,8 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 
 object usedVariables {
   def apply( p: Program ): List[FOLVar] = p match {
-    case Assign( x, t )     => x :: freeVariables( t )
-    case IfElse( c, a, b )  => freeVariables( c ) ++ usedVariables( a ) ++ usedVariables( b )
+    case Assign( x, t )     => x :: freeVariables( t ).toList
+    case IfElse( c, a, b )  => freeVariables( c ).toList ++ usedVariables( a ) ++ usedVariables( b )
     case ForLoop( i, n, b ) => i :: n :: usedVariables( b )
     case Skip()             => Nil
     case Sequence( a, b )   => usedVariables( a ) ++ usedVariables( b )
@@ -34,7 +34,7 @@ object substVariables {
   def apply( t: FOLFormula, f: FOLVar => FOLTerm ): FOLFormula = makeSubstitution( t, f )( t )
 
   private def makeSubstitution( t: FOLExpression, f: FOLVar => FOLTerm ) =
-    FOLSubstitution( freeVariables( t ) map ( ( x: FOLVar ) => x -> f( x ) ) )
+    FOLSubstitution( freeVariables( t ).toList map ( ( x: FOLVar ) => x -> f( x ) ) )
 }
 
 object LoopFree {

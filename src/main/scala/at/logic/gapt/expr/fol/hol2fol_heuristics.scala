@@ -54,7 +54,7 @@ object undoHol2Fol extends Logger {
       case Imp( f, g ) => Imp( backtranslate( f, sig_vars, sig_consts, abssymbol_map ), backtranslate( g, sig_vars, sig_consts, abssymbol_map ) )
       case All( x, f ) =>
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )
-        val xcandidates = freeVariables( f_ ).filter( _.name == x.name )
+        val xcandidates = freeVariables( f_ ).toList.filter( _.name == x.name )
         xcandidates match {
           case Nil        => All( Var( x.sym, x.exptype ).asInstanceOf[Var], f_ )
           case List( x_ ) => All( x_, f_ )
@@ -62,7 +62,7 @@ object undoHol2Fol extends Logger {
         }
       case Ex( x, f ) =>
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )
-        val xcandidates = freeVariables( f_ ).filter( _.name == x.name )
+        val xcandidates = freeVariables( f_ ).toList.filter( _.name == x.name )
         xcandidates match {
           case Nil        => Ex( Var( x.sym, x.exptype ).asInstanceOf[Var], f_ )
           case List( x_ ) => Ex( x_, f_ )
@@ -72,7 +72,7 @@ object undoHol2Fol extends Logger {
       //cases for term replacement
       case Const( name, _ ) if abssymbol_map.contains( name ) =>
         val qterm_ = abssymbol_map( name )
-        val qterm: LambdaExpression = freeVariables( qterm_ ).foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
+        val qterm: LambdaExpression = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         expected_type match {
           case Some( expt ) =>
             require( qterm.exptype == expt, "We did a replacement of the symbol " + name + " by " + qterm + " but the type " + qterm.exptype + " is not the expected type " + expected_type )
@@ -83,7 +83,7 @@ object undoHol2Fol extends Logger {
 
       case HOLFunction( Const( name, _ ), args ) if abssymbol_map.contains( name ) =>
         val qterm_ = abssymbol_map( name )
-        val qterm: LambdaExpression = freeVariables( qterm_ ).foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
+        val qterm: LambdaExpression = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         val btargs = args.map( x => backtranslate( x.asInstanceOf[LambdaExpression], sig_vars, sig_consts, abssymbol_map, None ) )
         val r = btargs.foldLeft( qterm )( ( term, nextarg ) => App( term, nextarg ) )
         expected_type match {

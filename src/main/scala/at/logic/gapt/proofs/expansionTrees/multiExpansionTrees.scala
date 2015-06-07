@@ -2,6 +2,7 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base.FSequent
 import Utility._
@@ -16,45 +17,6 @@ import Utility._
 object Utility {
   type T1 = NonTerminalNodeA[Option[HOLFormula], Option[Seq[LambdaExpression]]]
   type Instance = ( MultiExpansionTree, Seq[LambdaExpression] )
-
-  /**
-   * If formula starts with ∃x,,1,,…∃x,,n,,, returns [x,,1,,,…,x,,n,,]. Otherwise returns Nil.
-   *
-   * @param formula The formula under consideration.
-   * @return
-   */
-  def getVarsEx( formula: HOLFormula ): List[Var] = formula match {
-    case Ex( v, f ) => v +: getVarsEx( f )
-    case _          => Nil
-  }
-
-  /**
-   * If formula starts with ∀x,,1,,…∀x,,n,,, returns [x,,1,,,…,x,,n,,]. Otherwise returns Nil.
-   *
-   * @param formula The formula under consideration.
-   * @return
-   */
-  def getVarsAll( formula: HOLFormula ): List[Var] = formula match {
-    case All( v, f ) => v +: getVarsAll( f )
-    case _           => Nil
-  }
-
-  /**
-   * Strips off the first n quantifiers of a formula.
-   * It's only well-defined for formulas that begin with at least n quantifiers.
-   *
-   * @param formula A Formula
-   * @param n Number of quantifiers to be removed
-   * @return form without the first n quantifiers
-   */
-  def removeQuantifiers( formula: HOLFormula, n: Int ): HOLFormula =
-    if ( n == 0 )
-      formula
-    else formula match {
-      case All( _, f ) => removeQuantifiers( f, n - 1 )
-      case Ex( _, f )  => removeQuantifiers( f, n - 1 )
-      case _           => throw new Exception( "Trying to remove too many quantifiers!" )
-    }
 }
 
 trait MultiExpansionTree extends TreeA[Option[HOLFormula], Option[Seq[LambdaExpression]]] {
@@ -136,8 +98,8 @@ case class METWeakQuantifier( formula: HOLFormula, instances: Seq[Instance] )
   override def numberOfInstances = instances.foldLeft( 0 )( ( acc, inst ) => acc + inst._1.numberOfInstances )
 
   override def getVars = formula match {
-    case Ex( v, subF )  => v +: getVarsEx( subF )
-    case All( v, subF ) => v +: getVarsAll( subF )
+    case Ex( v, subF )  => v +: variablesEx( subF )
+    case All( v, subF ) => v +: variablesAll( subF )
   }
 
   override def getSubformula = {
@@ -169,8 +131,8 @@ case class METStrongQuantifier( formula: HOLFormula, variables: Seq[Var], select
   override def numberOfInstances = selection.numberOfInstances
 
   override def getVars = formula match {
-    case Ex( v, subF )  => v +: getVarsEx( subF )
-    case All( v, subF ) => v +: getVarsAll( subF )
+    case Ex( v, subF )  => v +: variablesEx( subF )
+    case All( v, subF ) => v +: variablesAll( subF )
   }
 
   override def getSubformula = {
@@ -200,8 +162,8 @@ case class METSkolemQuantifier( formula: HOLFormula, skolemSymbols: Seq[LambdaEx
   override def numberOfInstances = selection.numberOfInstances
 
   override def getVars = formula match {
-    case Ex( v, subF )  => v +: getVarsEx( subF )
-    case All( v, subF ) => v +: getVarsAll( subF )
+    case Ex( v, subF )  => v +: variablesEx( subF )
+    case All( v, subF ) => v +: variablesAll( subF )
   }
 
   override def getSubformula = {

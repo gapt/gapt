@@ -165,7 +165,7 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   }
 
   def normalizeFormula( f: FOLFormula ): FOLFormula = {
-    val freevars: List[( FOLVar, Int )] = freeVariables( f ).zipWithIndex
+    val freevars: List[( FOLVar, Int )] = freeVariables( f ).toList.zipWithIndex
     val pairs: List[( FOLVar, FOLVar )] = freevars.map( x => { ( x._1, FOLVar( "v" + x._2 ) ) } )
     val nf: FOLFormula = FOLSubstitution( pairs )( f )
     nf

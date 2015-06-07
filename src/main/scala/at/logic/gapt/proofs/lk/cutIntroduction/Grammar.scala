@@ -208,7 +208,7 @@ object ComputeGrammars {
           val evs = newpairs.foldLeft( List[FOLVar]() )( {
             case ( acc, p ) =>
               val t = p._1
-              acc ++ freeVariables( t )
+              acc ++ freeVariables( t ).toList
           } ).distinct
 
           // Whenever we find a smaller S-vector,

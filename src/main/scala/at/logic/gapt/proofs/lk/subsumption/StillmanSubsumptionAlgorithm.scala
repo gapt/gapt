@@ -27,8 +27,8 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
   def subsumes_by( s1: FSequent, s2: FSequent ): Option[Substitution] = {
     val left = s1._1.map( x => Neg( x ) ) ++ s1._2.map( x => x )
     val right = s2._1.map( x => Neg( x ) ) ++ s2._2.map( x => x )
-    val lv = remove_doubles( left.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ) ++ l ) )
-    val rv = remove_doubles( right.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ) ++ l ) )
+    val lv = remove_doubles( left.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ).toList ++ l ) )
+    val rv = remove_doubles( right.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ).toList ++ l ) )
     val renames = rv.filter( x => lv.contains( x ) )
     val ( newnames, _ ) = renames.reverse.foldLeft( ( List[Var](), lv ++ rv ) )( ( pair, x ) => {
       val v = rename( x, pair._2 )
@@ -52,10 +52,10 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
         val sx = sub( x );
         //TODO: the original algorithm uses backtracking, this does not. check if this implementation is incomplete
         val nsubs = ls2.flatMap( t =>
-          matchAlg.matchTerm( sx, sub( t ), restrictedDomain ) match {
+          matchAlg.matchTerm( sx, sub( t ), restrictedDomain.toSet ) match {
             case Some( sub2 ) =>
               val nsub = sub2.compose( sub )
-              val st = ST( ls, ls2, nsub, restrictedDomain ++ nsub.map.flatMap( s => freeVariables( s._2 ) ) )
+              val st = ST( ls, ls2, nsub, restrictedDomain ++ nsub.map.flatMap( s => freeVariables( s._2 ).toList ) )
               if ( st.nonEmpty ) st :: Nil else Nil
             case _ => Nil
           } )
@@ -71,8 +71,8 @@ object StillmanSubsumptionAlgorithmFOL extends SubsumptionAlgorithm {
   def subsumes_by( s1: FSequent, s2: FSequent ): Option[FOLSubstitution] = {
     val left = s1._1.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ s1._2.map( x => x.asInstanceOf[FOLFormula] )
     val right = s2._1.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ s2._2.map( x => x.asInstanceOf[FOLFormula] )
-    val lv = remove_doubles( left.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ) ++ l ) )
-    val rv = remove_doubles( right.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ) ++ l ) )
+    val lv = remove_doubles( left.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ).toList ++ l ) )
+    val rv = remove_doubles( right.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ).toList ++ l ) )
     val renames = rv.filter( x => lv.contains( x ) )
     val ( newnames, _ ) = renames.foldLeft( ( List[FOLVar](), lv ++ rv ) )( ( pair, x ) => {
       val v = rename( x, pair._2 )
@@ -93,10 +93,10 @@ object StillmanSubsumptionAlgorithmFOL extends SubsumptionAlgorithm {
     case x :: ls =>
       val sx = sub( x );
       val nsubs = ls2.flatMap( t =>
-        matchAlg.matchTerms( sx, sub( t ), restrictedDomain ) match {
+        matchAlg.matchTerms( sx, sub( t ), restrictedDomain.toSet ) match {
           case Some( sub2 ) =>
             val nsub = sub2.compose( sub )
-            val st = ST( ls, ls2, nsub, restrictedDomain ++ nsub.folmap.flatMap( s => freeVariables( s._2 ) ) )
+            val st = ST( ls, ls2, nsub, restrictedDomain ++ nsub.folmap.flatMap( s => freeVariables( s._2 ).toList ) )
             if ( st.nonEmpty ) st :: Nil else Nil
           case _ => Nil
         } )

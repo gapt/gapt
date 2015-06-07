@@ -42,7 +42,7 @@ class LKToExpansionProof extends Logger {
     }
 
     if ( axiomCandidates.isEmpty ) {
-      if ( allAtoms( r.antecedent ) && allAtoms( r.succedent ) ) {
+      if ( allExtendedAtoms( r.antecedent ) && allExtendedAtoms( r.succedent ) ) {
         if ( !( ( r.antecedent.isEmpty ) && ( r.succedent.size == 1 ) && ( isReflexivity( r.succedent( 0 ).formula ) ) ) ) {
           //only print the warning for non reflexivity atoms
           debug( "Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: " + r )
@@ -65,8 +65,7 @@ class LKToExpansionProof extends Logger {
   }
 
   //occurs in handleAxiom
-  private def allAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isAtom( o.formula ) || o.formula == Top() || o.formula == Bottom() )
-  private def isReflexivity( f: HOLFormula ) = f match { case Eq( s, t ) if s == t => true; case _ => false }
+  private def allExtendedAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isExtendedAtom( o.formula ) )
 
   protected def handleUnary( r: Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {

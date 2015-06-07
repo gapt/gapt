@@ -135,9 +135,9 @@ class nTapeTest extends Specification with ClasspathFileCopier {
       val selp = LKToLKsk( elp )
 
       show( "Extracting struct" )
-      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
       show( "Computing projections" )
-      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
 
       show( "Computing clause set" )
       val cl = AlternativeStandardClauseSet( struct )
@@ -189,9 +189,9 @@ class nTapeTest extends Specification with ClasspathFileCopier {
       val selp = LKToLKsk( elp )
 
       show( "Extracting struct" )
-      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
       show( "Computing projections" )
-      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
 
       show( "Computing clause set" )
       val cl = AlternativeStandardClauseSet( struct )

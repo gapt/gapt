@@ -68,7 +68,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
   def try_to_match( dmap: DefinitionsMap, e: LambdaExpression ): LambdaExpression = {
     dmap.keys.foldLeft( e )( ( v, key ) => {
       //      println("matching " + v + " against " + key)
-      NaiveIncompleteMatchingAlgorithm.holMatch( key, v )( Nil ) match {
+      NaiveIncompleteMatchingAlgorithm.matchTerm( key, v, Set() ) match {
         case None => v
         case Some( sub ) =>
           val r = sub( dmap( key ) )

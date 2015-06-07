@@ -311,7 +311,7 @@ object regularize {
 
   def apply( p: LKProof ): LKProof = recApply( p )._1
 
-  def recApply( proof: LKProof ): ( LKProof, List[Var], Map[FormulaOccurrence, FormulaOccurrence] ) = recApply( proof, variables( proof ) )
+  def recApply( proof: LKProof ): ( LKProof, List[Var], Map[FormulaOccurrence, FormulaOccurrence] ) = recApply( proof, variables( proof ).toList )
 
   def recApply( proof: LKProof, vars: List[Var] ): ( LKProof, List[Var], Map[FormulaOccurrence, FormulaOccurrence] ) =
     {
@@ -510,18 +510,6 @@ object regularize {
     ( new_proof, vars2, computeMap( p1.root.antecedent ++ p1.root.succedent, r, new_proof, map1 ) ++
       computeMap( p2.root.antecedent ++ p2.root.succedent, r, new_proof, map2 ) )
   }
-
-  // FIXME: this does not belong here - it is not specific to regularization
-  def variables( e: LambdaExpression ): List[Var] = e match {
-    case v: Var      => List( v )
-    case c: Const    => List()
-    case App( s, t ) => variables( s ) ++ variables( t )
-    case Abs( v, t ) => variables( v ) ++ variables( t )
-  }
-
-  def variables( root: Sequent ): List[Var] = ( root.antecedent ++ root.succedent ).foldLeft( List[Var]() )( ( x, y ) => x ++ variables( y.formula ) )
-  def variables( p: LKProof ): List[Var] = p.fold( variables )( _ ++ variables( _ ) )( _ ++ _ ++ variables( _ ) )
-
 }
 
 object replaceSubproof {

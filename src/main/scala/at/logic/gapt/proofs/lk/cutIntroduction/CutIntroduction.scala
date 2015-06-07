@@ -5,17 +5,17 @@
  */
 package at.logic.gapt.proofs.lk.cutIntroduction
 
-import at.logic.gapt.expr.fol.{ AllBlock, instantiateAll, FOLSubstitution }
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.hol.simplify.simplify
-import at.logic.gapt.expr.hol.lcomp
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, toShallow, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.expr._
+import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
+import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
-import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.utils.logging.Logger
@@ -579,12 +579,12 @@ object CutIntroduction extends Logger {
         val termlistlist = g.us( formula )
         acc ++ termlistlist.foldLeft( List[FOLFormula]() ) {
           case ( acc, termlist ) => {
-            val freeVars = freeVariables( termlist )
+            val freeVars = freeVariables( termlist ).toList
 
             // TODO: try to reverse the variable bindings
             // in the construction of
             if ( freeVars.intersect( variables ).nonEmpty ) {
-              val i_f = instantiateAll( formula, termlist )
+              val i_f = instantiate( formula, termlist )
               val f = formula match {
                 case Ex( _ )  => Neg( i_f )
                 case All( _ ) => i_f
@@ -613,8 +613,8 @@ object CutIntroduction extends Logger {
   }
 
   private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
-    val ant = instantiateAll( cf, alpha )
-    val succ = And( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    val ant = instantiate( cf, alpha )
+    val succ = And( ts.map( termlist => instantiate( cf, termlist ) ).toList )
     Imp( ant, succ )
   }
 
@@ -663,7 +663,7 @@ object CutIntroduction extends Logger {
     def getUs( fs: Seq[FOLFormula] ): Seq[Seq[Seq[Seq[FOLTerm]]]] =
       ( 0 to alphas.size ).map( i => fs.map( f => {
         val termlistlist = grammar.us( f )
-        termlistlist.filter( termlist => freeVariables( termlist ).intersect( alphas.take( i ).flatMap( x => x ) ).isEmpty )
+        termlistlist.filter( termlist => freeVariables( termlist ).toList.intersect( alphas.take( i ).flatMap( x => x ) ).isEmpty )
       } ) )
 
     val Uleft = getUs( F.antecedent.asInstanceOf[Seq[FOLFormula]] )
@@ -677,7 +677,7 @@ object CutIntroduction extends Logger {
       case ( cf, ev ) => {
         trace( "computing A" )
         trace( "instantiating " + cf + " with " + ev )
-        instantiateAll( cf, ev )
+        instantiate( cf, ev )
       }
     }
 
@@ -685,13 +685,13 @@ object CutIntroduction extends Logger {
 
     // define the sequent corresponding to F[x \ U_i]
     val FU = ( 0 to alphas.size ).map( i => FSequent(
-      ( F.antecedent zip Uleft( i ) ).flatMap { case ( f, terms ) => instantiateAll( f.asInstanceOf[FOLFormula], terms ) },
-      ( F.succedent zip Uright( i ) ).flatMap { case ( f, terms ) => instantiateAll( f.asInstanceOf[FOLFormula], terms ) } ) )
+      ( F.antecedent zip Uleft( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) },
+      ( F.succedent zip Uright( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) } ) )
 
     trace( "FU: " + FU )
 
     // define A_i[x \ S_i]
-    val AS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiateAll( cutFormulas( i ), s ) ) )
+    val AS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiate( cutFormulas( i ), s ) ) )
 
     trace( "AS: " + AS )
 
@@ -704,10 +704,10 @@ object CutIntroduction extends Logger {
     val Aprime = ( 1 to alphas.size ).reverse.foldLeft( Nil: List[FOLFormula] ) {
       case ( acc, i ) => {
         trace( "A_" + i + ": " + A( i - 1 ) )
-        trace( "freeVariables( A( " + i + "  ) ): " + freeVariables( A( i - 1 ) ) )
+        trace( "freeVariables( A( " + i + "  ) ): " + freeVariables( A( i - 1 ) ).toList )
         trace( "alphas.drop( " + i + " ): " + alphas.drop( i - 1 ) )
         // if A_i fulfills the variable condition, set A_i':= A_i
-        if ( freeVariables( A( i - 1 ) ).toSet subsetOf alphas.drop( i - 1 ).flatMap( x => x ).toSet ) {
+        if ( freeVariables( A( i - 1 ) ) subsetOf alphas.drop( i - 1 ).flatMap( x => x ).toSet ) {
           trace( "fulfills the variable condition" )
           acc :+ A( i - 1 )
         } else // otherwise, compute interpolant I and set A_':= And( A_i, I )
@@ -729,7 +729,7 @@ object CutIntroduction extends Logger {
     val cutFormulasPrime = ( Aprime zip Aprime.indices ).map { case ( a, i ) => AllBlock( alphas( i ), a ) }
 
     // define A'_i[x \ S_i]
-    val AprimeS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiateAll( cutFormulasPrime( i ), s ) ) )
+    val AprimeS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiate( cutFormulasPrime( i ), s ) ) )
 
     // define L_1
     val L1 = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, Aprime ++ ehs.succedent ++ ehs.succedent_alpha )
@@ -844,10 +844,10 @@ object CutIntroduction extends Logger {
     ( f, lst ) match {
       case ( _, Nil ) => ax
       case ( All( _, _ ), h :: t ) =>
-        val newForm = instantiateAll( f, h )
+        val newForm = instantiate( f, h )
         ContractionLeftRule( ForallLeftBlock( genWeakQuantRules( f, t, ax ), f, h ), f )
       case ( Ex( _, _ ), h :: t ) =>
-        val newForm = instantiateAll( f, h )
+        val newForm = instantiate( f, h )
         ContractionRightRule( ExistsRightBlock( genWeakQuantRules( f, t, ax ), f, h ), f )
     }
   }

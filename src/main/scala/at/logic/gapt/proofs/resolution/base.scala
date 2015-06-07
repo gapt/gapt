@@ -164,7 +164,7 @@ object createContext {
 object computeSkolemTerm {
   // used in andrews
   def apply( sk: SkolemSymbol, t: TA, sub: LambdaExpression ) = {
-    val fv = freeVariables( sub )
+    val fv = freeVariables( sub ).toList
     val tp = FunctionType( t, fv.map( v => v.exptype ) )
     HOLFunction( Const( sk, tp ), fv )
   }

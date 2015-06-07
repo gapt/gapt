@@ -131,8 +131,8 @@ object SchemaFunction {
   }
 
   def unapply( expression: SchemaExpression ) = expression match {
-    case App( c: Const, _ ) if isLogicalSymbol( c )           => None
-    case App( App( c: Const, _ ), _ ) if isLogicalSymbol( c ) => None
+    case App( c: Const, _ ) if isLogicalConstant( c )           => None
+    case App( App( c: Const, _ ), _ ) if isLogicalConstant( c ) => None
     case App( _, _ ) if ( expression.exptype != To ) =>
       val t = unapply_( expression )
       Some( ( t._1, t._2, expression.exptype ) )
@@ -236,8 +236,8 @@ object SchemaAtom {
   }
 
   def unapply( expression: SchemaExpression ) = expression match {
-    case App( c: Const, _ ) if isLogicalSymbol( c ) => None
-    case App( App( c: Const, _ ), _ ) if isLogicalSymbol( c ) => None
+    case App( c: Const, _ ) if isLogicalConstant( c ) => None
+    case App( App( c: Const, _ ), _ ) if isLogicalConstant( c ) => None
     case App( _, _ ) if ( expression.exptype == To ) => Some( unapply_( expression ) )
     case Const( _, _ ) if ( expression.exptype == To ) => Some( ( expression, Nil ) )
     case Var( _, _ ) if ( expression.exptype == To ) => Some( ( expression, Nil ) )

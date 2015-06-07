@@ -11,6 +11,7 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.FClause
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.minisat.MiniSAT
@@ -103,8 +104,8 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
   }
 
   private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
-    val ant = instantiateAll( cf, alpha )
-    val succ = And( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    val ant = instantiate( cf, alpha )
+    val succ = And( ts.map( termlist => instantiate( cf, termlist ) ).toList )
     Imp( ant, succ )
   }
 
@@ -125,7 +126,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     def fun( l: Seq[FOLFormula] ) = l.flatMap( f =>
       map.get( f ) match {
         case None                 => f :: Nil
-        case Some( termlistlist ) => instantiateAll( f, termlistlist )
+        case Some( termlistlist ) => instantiate( f, termlistlist )
       } )
 
     new FSequent( fun( seq.antecedent.asInstanceOf[List[FOLFormula]] ), fun( seq.succedent.asInstanceOf[List[FOLFormula]] ) )
@@ -173,7 +174,9 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     val cutFormula = ehs.cutFormulas.head
 
     // Remove quantifier 
-    val ( xs, f ) = removeQuantifiers( cutFormula )
+    val ( xs, f ) = cutFormula match {
+      case AllBlock( vars, form ) => ( vars, form )
+    }
 
     // Transform to conjunctive normal form
     trace( "starting CNF-Transformation" )
@@ -186,7 +189,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     def searchSolution( f: FOLFormula ): List[FOLFormula] =
       f :: oneStepEqualityImprovement( f ).foldRight( List[FOLFormula]() )( ( r, acc ) =>
-        if ( isValidWith( ehs, prover, addQuantifiers( r, xs ) ) ) {
+        if ( isValidWith( ehs, prover, AllBlock( xs, r ) ) ) {
           count = count + 1
           searchSolution( r ) ::: acc
         } else {
@@ -194,7 +197,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
           acc
         } )
 
-    searchSolution( cnf ).map( s => addQuantifiers( s, xs ) )
+    searchSolution( cnf ).map( s => AllBlock( xs, s ) )
   }
 
   //---------------------------------------------------------------------------
@@ -256,7 +259,9 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
   private def improveSolution1( ehs: ExtendedHerbrandSequent, prover: Prover ): List[FOLFormula] = {
     assert( ehs.cutFormulas.length == 1, "Solution minimization only implemented for one cut formula." )
 
-    val ( xs, form2 ) = removeQuantifiers( ehs.cutFormulas.head )
+    val ( xs, form2 ) = ehs.cutFormulas.head match {
+      case AllBlock( vars, form ) => ( vars, form )
+    }
 
     if ( xs.length == 0 ) { throw new CutIntroException( "ERROR: Canonical solution is not quantified." ) }
 
@@ -348,7 +353,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     //node-filter which checks for validity using miniSAT
     def nodeFilter( node: ResNode ): Boolean = {
       satCount = satCount + 1
-      isValidWith( ehs, prover, addQuantifiers( NumberedCNFtoFormula( node.currentFormula ), xs ) )
+      isValidWith( ehs, prover, AllBlock( xs, NumberedCNFtoFormula( node.currentFormula ) ) )
     }
 
     //Perform the DFS
@@ -356,7 +361,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     //All-quantify the found solutions.
     //debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
-    solutions.map( n => NumberedCNFtoFormula( n.currentFormula ) ).map( s => addQuantifiers( s, xs ) )
+    solutions.map( n => NumberedCNFtoFormula( n.currentFormula ) ).map( s => AllBlock( xs, s ) )
   }
 
   /**

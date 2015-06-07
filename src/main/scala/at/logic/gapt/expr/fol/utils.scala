@@ -5,104 +5,8 @@
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ getMatrix => getMatrixHOL, HOLPosition }
+import at.logic.gapt.expr.hol.HOLPosition
 import scala.collection.mutable
-
-/**
- * A block of existential quantifiers.
- *
- */
-object ExBlock {
-  /**
-   *
-   * @param vars A list of FOL variables v,,1,,, …, v,,n,,.
-   * @param sub The formula F to be quantified over.
-   * @return ∃v,,1,,…∃v,,n,,F
-   */
-  def apply( vars: List[FOLVar], sub: FOLFormula ): FOLFormula = vars match {
-    case Nil     => sub
-    case v :: vs => Ex( v, ExBlock( vs, sub ) )
-  }
-
-  /**
-   *
-   * @param expression A FOLExpression
-   * @return If expression begins with an ∃-block: a pair consisting of the variables of the block and the quantified subformula.
-   */
-  def unapply( expression: FOLFormula ) = expression match {
-    case f: FOLFormula =>
-      val ( vars, sub ) = unapplyHelper( f )
-      if ( vars.nonEmpty ) Some( ( vars, sub ) )
-      else None
-    case _ => None
-  }
-
-  private def unapplyHelper( f: FOLFormula ): ( List[FOLVar], FOLFormula ) = f match {
-    case Ex( v, sub ) =>
-      val ( subVars, subF ) = unapplyHelper( sub )
-      ( v :: subVars, subF )
-    case _ => ( Nil, f )
-  }
-}
-
-/**
- * A block of universal quantifiers.
- *
- */
-object AllBlock {
-  /**
-   *
-   * @param vars A list of FOL variables v,,1,,, …, v,,n,,.
-   * @param sub The formula F to be quantified over.
-   * @return ∀v,,1,,…∀v,,n,,F
-   */
-  def apply( vars: List[FOLVar], sub: FOLFormula ): FOLFormula = vars match {
-    case Nil     => sub
-    case v :: vs => All( v, AllBlock( vs, sub ) )
-  }
-
-  /**
-   *
-   * @param expression A FOLExpression
-   * @return If expression begins with an ∀-block: a pair consisting of the variables of the block and the quantified subformula.
-   */
-  def unapply( expression: FOLFormula ) = expression match {
-    case f: FOLFormula =>
-      val ( vars, sub ) = unapplyHelper( f )
-      if ( vars.nonEmpty ) Some( ( vars, sub ) )
-      else None
-    case _ => None
-  }
-
-  private def unapplyHelper( f: FOLFormula ): ( List[FOLVar], FOLFormula ) = f match {
-    case All( v, sub ) =>
-      val ( subVars, subF ) = unapplyHelper( sub )
-      ( v :: subVars, subF )
-    case _ => ( Nil, f )
-  }
-}
-
-// matches for consts and vars, but nothing else
-object VarOrConst {
-  def unapply( e: FOLExpression ) = e match {
-    case FOLVar( name )   => Some( name )
-    case FOLConst( name ) => Some( name )
-    case _                => None
-  }
-}
-
-// Instantiates a term in a quantified formula (using the first quantifier).
-object instantiate {
-  def apply( f: FOLFormula, t: FOLTerm ): FOLFormula = f match {
-    case All( v, form ) =>
-      val sub = FOLSubstitution( v, t )
-      sub( form )
-    case Ex( v, form ) =>
-      val sub = FOLSubstitution( v, t )
-      sub( form )
-    case _ => throw new Exception( "ERROR: trying to replace variables in a formula without quantifier." )
-  }
-}
 
 /** Returns whether t is a function. */
 /** Returns whether t is a function whose name fulfills to a given condition. */
@@ -130,24 +34,6 @@ object fromFunc {
 /** Unsafely extracts the function arguments from a term. Fails if the term is not a function. */
 object fromFuncArgs {
   def apply( t: FOLTerm ) = t match { case FOLFunction( _, a ) => a }
-}
-
-// Instantiates all quantifiers of the formula with the terms in lst.
-// OBS: the number of quantifiers in the formula must be greater or equal than the
-// number of terms in lst.
-object instantiateAll {
-  def apply( f: FOLFormula, lst: Seq[FOLTerm] ): FOLFormula = lst match {
-    case Nil    => f
-    case h :: t => instantiateAll( instantiate( f, h ), t )
-  }
-
-  /**
-   * If f is a formula \forall x_1 ... x_n G, and lst is a list of lists of terms
-   *   such that each list has length <= n, this function returns the list
-   *   of instances of f obtained by calling instantiateAll on each list of terms.
-   */
-  def apply( f: FOLFormula, lst: Seq[Seq[FOLTerm]] )( implicit d: DummyImplicit ): Seq[FOLFormula] =
-    lst.map( terms => instantiateAll( f, terms ) )
 }
 
 // Transforms a formula to negation normal form (transforming also
@@ -212,21 +98,6 @@ object toDNF {
       val clauses2 = toDNF( f2 )
       for ( c1 <- clauses1; c2 <- clauses2 ) yield And( c1, c2 )
     case _ => throw new Exception( "ERROR on DNF transformation of the formula: " + f )
-  }
-}
-
-object numOfAtoms {
-  def apply( f: FOLFormula ): Int = f match {
-    case FOLAtom( _, _ )     => 1
-    case FOLFunction( _, _ ) => 1
-    case Top() | Bottom()    => 0
-    case Imp( f1, f2 )       => numOfAtoms( f1 ) + numOfAtoms( f2 )
-    case And( f1, f2 )       => numOfAtoms( f1 ) + numOfAtoms( f2 )
-    case Or( f1, f2 )        => numOfAtoms( f1 ) + numOfAtoms( f2 )
-    case Ex( x, f )          => numOfAtoms( f )
-    case All( x, f )         => numOfAtoms( f )
-    case Neg( f )            => numOfAtoms( f )
-    case _                   => throw new Exception( "ERROR: Unexpected case while counting the number of atoms." )
   }
 }
 
@@ -304,81 +175,6 @@ object reverseCNF {
     val conj = And( ant )
     val disj = Or( succ )
     Imp( conj, disj )
-  }
-}
-
-object addQuantifiers {
-  /**
-   * Adds a list of universal quantifiers to a FOL formula.
-   * The first element of the list will be the outermost quantifier.
-   * A generalization of applying All(x,f).
-   *
-   * It always holds that addQuantifiers(f,removeQuantifiers(f)._1) = f.
-   *
-   * @param f A FOL formula, typically with the free variables of xs.
-   * @param xs A list of variables [x1,...,xn] over which to universally quantify f.
-   * @return [forall x1,...,xn] f
-   */
-  def apply( f: FOLFormula, xs: List[FOLVar] ) = xs.reverse.foldLeft( f )( ( f, x ) => All( x, f ) )
-}
-
-object removeQuantifiers {
-
-  /**
-   * Strips the initial universal quantifiers from a FOL formula that begins
-   * with a quantifier block.
-   * A generalization of unapplying All(x,f).
-   *
-   * @param f A FOL formula of the form [forall x1,...,xn] f'.
-   * @return The tuple ([xn,...,x1], f').
-   */
-  def apply( f: FOLFormula ): ( List[FOLVar], FOLFormula ) = f match {
-    case All( x, f ) => {
-      val ( xs, fret ) = removeQuantifiers( f )
-      ( x :: xs, fret )
-    }
-    case f => ( List[FOLVar](), f )
-  }
-}
-
-object univclosure {
-  /**
-   * Closes the given formula universally
-   * @param f the formula to be closed
-   * @return forall x_1 ... forall x_n f, where {x_i | 1 <= i <= n} = FV(f)
-   */
-  def apply( f: FOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => All( v, g ) )
-}
-
-object existsclosure {
-  /**
-   * Closes the given formula existentially
-   * @param f the formula to be closed
-   * @return exists x_1 ... exists x_n f, where {x_i | 1 <= i <= n} = FV(f)
-   */
-  def apply( f: FOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => Ex( v, g ) )
-}
-
-object removeNQuantifiers {
-  /**
-   * Removes at most n universal quantifiers from a FOL formula that begins
-   * with a quantifier block.
-   *
-   * See removeQuantifiers.
-   *
-   * @param f A FOL formula of the form [forall x1,...,xm] f'.
-   * @param n The number of quantifiers to strip.
-   * @return The tuple ([x1',...,xn], f'') where n' <= n & n' <= m and f' is a subformula
-   * of f''.
-   */
-  def apply( f: FOLFormula, n: Int ): ( List[FOLVar], FOLFormula ) = f match {
-    case All( x, f ) => {
-      if ( n > 0 ) {
-        val ( xs, fret ) = removeNQuantifiers( f, n - 1 )
-        ( xs :+ x, fret )
-      } else { ( List[FOLVar](), All( x, f ) ) }
-    }
-    case f => ( List[FOLVar](), f )
   }
 }
 

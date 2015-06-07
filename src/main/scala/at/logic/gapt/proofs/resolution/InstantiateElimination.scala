@@ -635,7 +635,7 @@ object InstantiateElimination {
 
   // TODO: should this method go somewhere else??
   def getVars( s: Sequent ): VarSet =
-    s.occurrences.foldLeft( Set[FOLVar]() )( ( acc, occ ) => acc ++ freeVariables( occ.formula.asInstanceOf[FOLFormula] ).toSet )
+    s.occurrences.foldLeft( Set[FOLVar]() )( ( acc, occ ) => acc ++ freeVariables( occ.formula.asInstanceOf[FOLFormula] ) )
 
   def getVars( ss: Seq[Sequent] ): VarSet = ss.foldLeft( Set[FOLVar]() )( ( acc, s ) => acc ++ getVars( s ) )
 

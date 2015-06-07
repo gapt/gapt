@@ -15,6 +15,7 @@ import at.logic.gapt.proofs.resolution.{ FClause, Clause }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause, RobinsonResolutionProof }
 import at.logic.gapt.expr.fol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.IvyParser.{ IvyStyleVariables, PrologStyleVariables, LadrStyleVariables }
@@ -357,8 +358,8 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
 
     if ( !forceSkolemization && !containsStrongQuantifier( endsequent ) ) {
 
-      val ant = endsequent.antecedent.map( x => univclosure( x.asInstanceOf[FOLFormula] ) )
-      val suc = endsequent.succedent.map( x => existsclosure( x.asInstanceOf[FOLFormula] ) )
+      val ant = endsequent.antecedent.map( x => univclosure( x ) )
+      val suc = endsequent.succedent.map( x => existsclosure( x ) )
       val closure = FSequent( ant, suc )
 
       val clause_set = CNFn( endsequent.toFormula ).map( c =>
@@ -469,8 +470,8 @@ class Prover9Prover extends Prover with at.logic.gapt.utils.logging.Logger {
   private def ground( seq: FSequent ): ( FSequent, Map[FOLVar, FOLConst] ) = {
     // FIXME: cast of formula of sequent!
     val free = seq.antecedent.flatMap(
-      f => freeVariables( f.asInstanceOf[FOLFormula] ) ).toSet ++
-      seq.succedent.flatMap( f => freeVariables( f.asInstanceOf[FOLFormula] ) ).toSet
+      f => freeVariables( f.asInstanceOf[FOLFormula] ) ) ++
+      seq.succedent.flatMap( f => freeVariables( f.asInstanceOf[FOLFormula] ) )
     // FIXME: make a better association between the consts and the vars.
     //val map = free.zip( free.map( v => new FOLConst( new CopySymbol( v.name ) ) ) ).toMap
     val map = free.zip( free.map( v => FOLConst( v.sym.toString ) ) ).toMap

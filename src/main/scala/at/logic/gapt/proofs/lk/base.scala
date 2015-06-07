@@ -239,6 +239,7 @@ class Sequent( val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formul
 
   override def toString: String = toFSequent toString
 
+  // TODO: why a list, why not a set?
   def freeVariables: List[Var] = ( ( antecedent ++ succedent ) flatMap ( ( fo: FormulaOccurrence ) => at.logic.gapt.expr.freeVariables( fo.formula ) ) ).toList
 }
 

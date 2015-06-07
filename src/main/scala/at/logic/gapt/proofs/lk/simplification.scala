@@ -39,7 +39,7 @@ object simpleUnitResolutionNormalization {
     seqs.map( x => if ( !x._1.isEmpty ) ( matchPos( posUnit, x ) ) else x )
   }
   private def matchPos( posUnit: List[FSequent], s: FSequent ): FSequent = {
-    val restDomain = ( s._1.flatMap( x => freeVariables( x ) ) ++ s._2.flatMap( x => freeVariables( x ) ) ).toList
+    val restDomain = ( s._1.flatMap( x => freeVariables( x ).toList ) ++ s._2.flatMap( x => freeVariables( x ).toList ) ).toSet
     val newAnt = s._1.filter( x => posUnit.forall( y => alg.matchTerm( y._2.head, x, restDomain ) == None ) )
     if ( newAnt.size == s._1.size ) s else new FSequent( newAnt, s._2 )
   }

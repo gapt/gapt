@@ -1,14 +1,13 @@
 package at.logic.gapt.formats.veriT
 
-import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution, instantiate }
-import at.logic.gapt.expr.hol.getMatrix
-
-import scala.util.parsing.combinator._
-import at.logic.gapt.expr._
 import at.logic.gapt.expr.BetaReduction._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
+import at.logic.gapt.expr.hol.{ instantiate, getMatrix }
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionTree, ETWeakQuantifier, ExpansionSequent }
 import java.io.{ Reader, FileReader }
 import scala.collection.immutable.HashMap
+import scala.util.parsing.combinator._
 
 class VeriTParserException( msg: String ) extends Exception( msg: String )
 class VeriTUnfoldingTransitivityException( msg: String ) extends Exception( msg: String )

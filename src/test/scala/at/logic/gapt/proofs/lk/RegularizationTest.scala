@@ -49,7 +49,7 @@ class RegularizationTest extends Specification {
       for ( name <- names )
         blacklist must contain( name )
 
-      val regvars = regularize.variables( rproof )
+      val regvars = variables( rproof ).toList
 
       //our implementation always appends a number, so b will be removed from the original proof
       regvars must beEqualTo( blacklist filterNot ( _ == b ) )
@@ -90,7 +90,7 @@ class RegularizationTest extends Specification {
       for ( name <- names )
         blacklist must contain( name )
 
-      val regvars = regularize.variables( rproof )
+      val regvars = variables( rproof ).toList
 
       //here a_1 will be taken, so the replacements of a_2 will be a_3 and a_4
       regvars must beEqualTo( blacklist filterNot ( _ == b ) )

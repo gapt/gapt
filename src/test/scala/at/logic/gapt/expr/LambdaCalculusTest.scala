@@ -205,6 +205,35 @@ class LambdaCalculusTest extends Specification {
     }
   }
 
+  "Checking for variable normal form" should {
+    "work correctly for negative" in {
+      val x = Var( "x", Ti )
+      val z = Var( "z", Ti )
+      val idx = Abs( x, x )
+      val M = App( idx, App( idx, z ) )
+
+      isInVNF( M ) must beFalse
+    }
+
+    "work correctly for positive" in {
+      val x = Var( "x", Ti )
+      val y = Var( "y", Ti )
+      val z = Var( "z", Ti )
+      val idx = Abs( x, x )
+      val idy = Abs( y, y )
+      val M = App( idx, App( idy, z ) )
+
+      isInVNF( M ) must beTrue
+    }
+
+    "treat overbinding correctly" in {
+      val x = Var( "x", Ti )
+      val M = Abs( x, Abs( x, x ) )
+
+      isInVNF( M ) must beFalse
+    }
+  }
+
   "TypedLambdaCalculus" should {
     "extract free variables correctly" in {
       val x = Var( "X", Ti -> To )
@@ -225,7 +254,7 @@ class LambdaCalculusTest extends Specification {
       val z = Var( "z", Ti )
       val M = App( Abs( x, App( x, z ) ), x )
 
-      val fv = freeVariables( M ).toSet
+      val fv = freeVariables( M )
       val fv_correct = Set( x, z )
 
       fv must be equalTo ( fv_correct )
@@ -236,7 +265,7 @@ class LambdaCalculusTest extends Specification {
       val z = Var( "z", Ti )
       val M = Abs( x, App( Abs( x, App( x, z ) ), x ) )
 
-      val fv = freeVariables( M ).toSet
+      val fv = freeVariables( M )
       val fv_correct = Set( z )
 
       fv must be equalTo ( fv_correct )

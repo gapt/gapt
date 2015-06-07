@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET }
@@ -799,7 +800,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       val firstApplicable = instances.find( inst => inst match {
         case ( et: ExpansionTree, term: LambdaExpression ) =>
           // check if free variables of term appear in any strong quantifier
-          val vars = freeVariables( term ).toSet
+          val vars = freeVariables( term )
           val doVarsAppear = doVariablesAppearInStrongQuantifier( vars, _: ExpansionTree )
           val canUseInstance = expansionSequent.succedent.forall( !doVarsAppear( _ ) ) && expansionSequent.antecedent.forall( !doVarsAppear( _ ) )
           canUseInstance
@@ -941,25 +942,8 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   // Checks if the atoms occurring in seq are all different (if so, the sequent
   // is not provable.
   def noCommonAtoms( seq: FSequent ): Boolean = {
-    val atoms = getAtoms( seq )
-    atoms.size == atoms.toSet.size
-  }
-  // TODO: move this to sequent!!!!!
-  private def getAtoms( seq: FSequent ): List[HOLFormula] = {
-    val all = seq.antecedent ++ seq.succedent
-    all.foldLeft( List[HOLFormula]() ) { case ( acc, f ) => getAtoms( f ) ++ acc }
-  }
-
-  // TODO: move this to hol!!!!!!
-  private def getAtoms( f: HOLFormula ): List[HOLFormula] = f match {
-    case Neg( f )         => getAtoms( f.asInstanceOf[HOLFormula] )
-    case And( f1, f2 )    => getAtoms( f1 ) ++ getAtoms( f2 )
-    case Or( f1, f2 )     => getAtoms( f1 ) ++ getAtoms( f2 )
-    case Imp( f1, f2 )    => getAtoms( f1 ) ++ getAtoms( f2 )
-    case Ex( v, f )       => getAtoms( f )
-    case All( v, f )      => getAtoms( f )
-    case Bottom() | Top() => List()
-    case HOLAtom( _, _ )  => List( f )
+    val ats = atoms( seq )
+    ats.size == ats.toSet.size
   }
 }
 
@@ -1026,7 +1010,7 @@ object AtomicExpansion {
           ImpRightRule( i1, l2, r2 )
 
         case ( All( x1: Var, l1 ), All( x2: Var, l2 ) ) =>
-          val eigenvar = rename( x1, freeVariables( l1 ) ++ freeVariables( l2 ) )
+          val eigenvar = rename( x1, freeVariables( l1 ).toList ++ freeVariables( l2 ).toList )
           val sub1 = Substitution( List( ( x1, eigenvar ) ) )
           val sub2 = Substitution( List( ( x2, eigenvar ) ) )
           val aux1 = sub1( l1 )
@@ -1037,7 +1021,7 @@ object AtomicExpansion {
           ForallRightRule( i1, aux2, f2, eigenvar )
 
         case ( Ex( x1: Var, l1 ), Ex( x2: Var, l2 ) ) =>
-          val eigenvar = rename( x1, freeVariables( l1 ) ++ freeVariables( l2 ) )
+          val eigenvar = rename( x1, freeVariables( l1 ).toList ++ freeVariables( l2 ).toList )
           val sub1 = Substitution( List( ( x1, eigenvar ) ) )
           val sub2 = Substitution( List( ( x2, eigenvar ) ) )
           val aux1 = sub1( l1 )

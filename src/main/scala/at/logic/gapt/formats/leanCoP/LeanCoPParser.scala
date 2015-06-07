@@ -47,7 +47,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
         ( And( f1d, f2d ), d1 ++ d2 )
       case Or( f1, f2 ) => {
         if ( inConj ) {
-          val vars = freeVariables( f )
+          val vars = freeVariables( f ).toList
 
           val candidates = lean_preds.filter { case ( n, a ) => a == vars.length }
           val ordered_candidates = candidates.sorted

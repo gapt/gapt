@@ -8,8 +8,7 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
-import at.logic.gapt.expr.fol.instantiateAll
-import at.logic.gapt.expr.hol.containsQuantifier
+import at.logic.gapt.expr.hol.{ instantiate, containsQuantifier }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
@@ -45,7 +44,7 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
   val inst_l: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
     case ( f, acc ) =>
       f match {
-        case All( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
+        case All( _, _ ) => instantiate( f, grammar.us( f ) ).toList ++ acc
         case _           => acc
       }
   }
@@ -53,21 +52,21 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
   val inst_r: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
     case ( f, acc ) =>
       f match {
-        case Ex( _, _ ) => instantiateAll( f, grammar.us( f ) ).toList ++ acc
+        case Ex( _, _ ) => instantiate( f, grammar.us( f ) ).toList ++ acc
         case _          => acc
       }
   }
 
   // Separating the formulas that contain/don't contain eigenvariables
-  def varFree( f: FOLFormula ) = freeVariables( f ).intersect( grammar.eigenvariables ).isEmpty
+  def varFree( f: FOLFormula ) = freeVariables( f ).toList.intersect( grammar.eigenvariables ).isEmpty
   val antecedent = prop_l ++ inst_l.filter( varFree )
   val antecedent_alpha = inst_l.filter( x => !varFree( x ) )
   val succedent = prop_r ++ inst_r.filter( varFree )
   val succedent_alpha = inst_r.filter( x => !varFree( x ) )
 
   private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
-    val ant = instantiateAll( cf, alpha )
-    val succ = And( ts.map( termlist => instantiateAll( cf, termlist ) ).toList )
+    val ant = instantiate( cf, alpha )
+    val succ = And( ts.map( termlist => instantiate( cf, termlist ) ).toList )
     Imp( ant, succ )
   }
 
