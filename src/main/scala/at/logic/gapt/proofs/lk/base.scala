@@ -135,6 +135,10 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
 object FSequent {
   def apply( ant: Seq[HOLFormula], succ: Seq[HOLFormula] ): FSequent = new FSequent( ant, succ )
 
+  def apply( polarizedFormulas: Seq[( HOLFormula, Boolean )] ): FSequent =
+    FSequent( polarizedFormulas.filter( _._2 == true ).map( _._1 ),
+      polarizedFormulas.filter( _._2 == false ).map( _._1 ) )
+
   /**
    * Constructs an [[FSequent]] from a [[Sequent]], by ignoring where the formulas occur.
    */

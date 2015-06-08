@@ -2,21 +2,26 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
+import at.logic.gapt.grammars.SipGrammar
+import at.logic.gapt.proofs.expansionTrees.{ extractInstances, InstanceTermEncoding, toDeep, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 import at.logic.gapt.provers.prover9.Prover9Prover
 
+import scala.collection.mutable
+
 class GeneralSIP( val ExpSeq0: ExpansionSequent, val ExpSeq1: ExpansionSequent, val ExpSeq2: ExpansionSequent, val B: FOLFormula, val t: List[FOLTerm], val u: List[FOLTerm] ) {
   import GeneralSIP._
 
-  require( ExpSeq0.succedent.isEmpty, "Right-hand side of ExpSeq0 is nonempty" )
-  require( ExpSeq1.succedent.isEmpty, "Right-hand side of ExpSeq1 is nonempty" )
-  require( ExpSeq2.succedent.isEmpty, "Right-hand side of ExpSeq2 is nonempty" )
+  private def toGamma( expansionSequent: ExpansionSequent ) =
+    extractInstances( expansionSequent ).polarizedFormulas.map {
+      case ( formula: FOLFormula, true )  => formula
+      case ( formula: FOLFormula, false ) => Neg( formula )
+    }.toList
 
-  val Gamma0 = toDeep( ExpSeq0 ).antecedent.toList.asInstanceOf[List[FOLFormula]]
-  val Gamma1 = toDeep( ExpSeq1 ).antecedent.toList.asInstanceOf[List[FOLFormula]]
-  val Gamma2 = toDeep( ExpSeq2 ).antecedent.toList.asInstanceOf[List[FOLFormula]]
+  val Gamma0 = toGamma( ExpSeq0 )
+  val Gamma1 = toGamma( ExpSeq1 )
+  val Gamma2 = toGamma( ExpSeq2 )
 
   require( freeVariables( Gamma0 ) subsetOf Set( alpha, beta ), freeVariables( Gamma0 ).toString )
   require( freeVariables( Gamma1 ) subsetOf Set( alpha, nu, gamma ), freeVariables( Gamma1 ).toString )
@@ -35,7 +40,7 @@ object GeneralSIP {
   val nu = FOLVar( "ν" )
   val snu = FOLFunction( "s", List( nu ) )
 
-  def X( x1: FOLTerm, x2: FOLTerm, x3: FOLTerm ): HOLFormula = HOLAtom( Var( "X", Ti -> Ti -> Ti -> To ), x1, x2, x3 )
+  def X( x1: FOLTerm, x2: FOLTerm, x3: FOLTerm ): HOLFormula = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), x1, x2, x3 )
 }
 
 class SchematicSIP( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent, ExpSeq2: ExpansionSequent, B: FOLFormula, t: List[FOLTerm], u: List[FOLTerm] ) extends GeneralSIP( ExpSeq0, ExpSeq1, ExpSeq2, B, t, u ) {
@@ -103,4 +108,31 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
 object SimpleInductionProof {
   val y = FOLVar( "y" )
 
+}
+
+object decodeSipGrammar {
+  import SipGrammar._
+
+  def apply( encoding: InstanceTermEncoding, grammar: SipGrammar ) = {
+    val seq0 = mutable.Buffer[FOLTerm]()
+    val seq1 = mutable.Buffer[FOLTerm]()
+    val seq2 = mutable.Buffer[FOLTerm]()
+    val ts = mutable.Buffer[FOLTerm]()
+    val us = mutable.Buffer[FOLTerm]()
+
+    grammar.productions foreach {
+      case ( `tau`, t ) =>
+        val fvs = freeVariables( t )
+        if ( !fvs.contains( nu ) && !fvs.contains( gamma ) ) seq0 += t
+        if ( !fvs.contains( beta ) ) seq1 += t
+        if ( !fvs.contains( nu ) && !fvs.contains( beta ) && !fvs.contains( gamma ) ) seq2 += t
+      case ( `gamma`, t )    => ts += t
+      case ( `gammaEnd`, u ) => us += u
+    }
+
+    new SchematicSIP( encoding.decodeToExpansionSequent( seq0 ),
+      encoding.decodeToExpansionSequent( seq1 ),
+      encoding.decodeToExpansionSequent( seq2 ),
+      Bottom(), ts.toList, us.toList )
+  }
 }

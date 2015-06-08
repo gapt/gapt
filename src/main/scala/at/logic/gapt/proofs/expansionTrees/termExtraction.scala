@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
+import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.{ AllBlock, instantiate, isPrenex }
 import at.logic.gapt.proofs.lk.base._
 
@@ -134,9 +134,14 @@ case class InstanceTermEncoding( endSequent: FSequent ) {
   def decode( terms: Iterable[FOLTerm] ): Set[PolarizedFormula] =
     terms map decode toSet
 
-  def decodeToFSequent( terms: Iterable[FOLTerm] ): FSequent = {
-    val instances = decode( terms ).toList
-    FSequent( instances.filter( _._2 == true ).map( _._1 ),
-      instances.filter( _._2 == false ).map( _._1 ) )
+  def decodeToFSequent( terms: Iterable[FOLTerm] ): FSequent = FSequent( decode( terms ).toSeq )
+
+  def decodeToExpansionSequent( terms: Iterable[FOLTerm] ): ExpansionSequent = {
+    val polExpTrees = terms.map { case FOLFunction( f, args ) => ( findESFormula( f ).get, args ) }.
+      groupBy( _._1 ).toSeq.map {
+        case ( ( esFormula @ AllBlock( vars, _ ), pol ), instances ) =>
+          formulaToExpansionTree( esFormula, instances.map( _._2 ).map { terms => FOLSubstitution( ( vars, terms ).zipped.toList ) }.toList, !pol ) -> pol
+      }
+    ExpansionSequent( polExpTrees.filter( _._2 == true ).map( _._1 ).toList, polExpTrees.filter( _._2 == false ).map( _._1 ).toList )
   }
 }
