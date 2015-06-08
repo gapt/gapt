@@ -23,7 +23,7 @@ println(instanceSeq)
 val proof = prover9.getProof(instanceSeq).get
 
 println("\nExpansion sequent:")
-val expansionSequent = compressExpansionSequent(extractExpansionSequent(proof))
+val expansionSequent = compressExpansionSequent(LKToExpansionProof(proof))
 expansionSequent.antecedent.foreach {
   case MWeakQuantifier(formula, instances) =>
     println(s"$formula:")

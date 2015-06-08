@@ -3,12 +3,11 @@ package at.logic.gapt.testing
 import java.io.File
 
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
+import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
-import at.logic.gapt.proofs.expansionTrees.algorithms.addSymmetry
-import at.logic.gapt.proofs.expansionTrees.toDeep
-import at.logic.gapt.proofs.lk.algorithms.{ solve, containsEqualityReasoning, ReductiveCutElim }
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction.CutIntroduction
+import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep, ExpansionProofToLK }
+import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof }
+import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
 import scala.concurrent.duration._
@@ -22,22 +21,41 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def test( implicit testRun: TestRun ) = {
     val p = loadProver9LKProof( f.getAbsolutePath ) --- "import"
 
-    val E = extractExpansionSequent( p, false ) --- "extractExpansionSequent"
+    val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E ) --- "toDeep"
 
     if ( !containsEqualityReasoning( p ) ) {
       new MiniSATProver().isValid( deep ) !-- "minisat validity"
       solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
-      solve.expansionProofToLKProof( E ).isDefined !-- "expansionProofToLKProof"
+      ExpansionProofToLK( E ) --- "expansionProofToLKProof"
       ReductiveCutElim( p ) --? "cut-elim (input)"
     }
 
     new VeriTProver().isValid( deep ) !-- "verit validity"
-    val q = CutIntroduction.one_cut_many_quantifiers( p, false ) --- "cut-introduction"
 
-    if ( !containsEqualityReasoning( q ) ) {
-      ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
+    val q_opt = {
+      try {
+        Some( CutIntroduction.one_cut_many_quantifiers( p, false ) )
+      } catch {
+        // do not count uncompressibility as failure of test
+        case e: CutIntroUncompressibleException => None
+      }
+    } --- "cut-introduction"
+
+    if ( q_opt.isDefined && !containsEqualityReasoning( q_opt.get ) ) {
+      ReductiveCutElim( q_opt.get ) --? "cut-elim (cut-intro)"
     }
+  }
+}
+
+class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.getName ) {
+  override def timeout = Some( 2 minutes )
+
+  override def test( implicit testRun: TestRun ) = {
+    val E = LeanCoPParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
+
+    val deep = toDeep( E ) --- "toDeep"
+    new MiniSATProver().isValid( deep.toFormula ) !-- "minisat validity"
   }
 }
 
@@ -55,13 +73,17 @@ object RegressionTests extends App {
   def prover9Proofs = recursiveListFiles( "testing/TSTP/prover9" )
     .filter( _.getName.endsWith( ".out" ) )
 
+  def leancopProofs = recursiveListFiles( "testing/TSTP/leanCoP" )
+    .filter( _.getName.endsWith( ".out" ) )
+
   def veritProofs = recursiveListFiles( "testing/veriT-SMT-LIB" )
     .filter( _.getName.endsWith( ".proof_flat" ) )
 
   def prover9TestCases = prover9Proofs.map( new Prover9TestCase( _ ) )
+  def leancopTestCases = leancopProofs.map( new LeanCoPTestCase( _ ) )
   def veritTestCases = veritProofs.map( new VeriTTestCase( _ ) )
 
-  def allTestCases = prover9TestCases ++ veritTestCases
+  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases
 
   def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
 

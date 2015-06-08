@@ -1,11 +1,10 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.language.fol.{ FOLSubstitution, Utils }
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
+import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
+import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
 import at.logic.gapt.provers.maxsat.{ MaxSat4j, MaxSATSolver }
 import org.specs2.mutable._
 
@@ -34,7 +33,7 @@ class TreeGrammarDecompositionTest extends Specification {
   }
 
   private def toTerms( p: LKProof ): List[FOLTerm] = {
-    val testtree = extractExpansionSequent( p, false )
+    val testtree = LKToExpansionProof( p )
     val testterms = TermsExtraction( testtree )
     val testlanguage = testterms.set
     testlanguage

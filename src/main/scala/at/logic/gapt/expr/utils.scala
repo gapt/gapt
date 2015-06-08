@@ -1,46 +1,123 @@
 /*
- * Simple functions that operate on lambda-expressions
- *
+ * Utility functions for the lambda calculus.
  */
 
 package at.logic.gapt.expr
 
-import at.logic.gapt.expr.{ SymbolA, getRenaming }
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, LKProof }
 
-// Returns a list *without duplicates* of the free variables in the expression.
-// There is no guarantee on the ordering of the list.
+/**
+ * Matches constants and variables, but nothing else.
+ */
+object VarOrConst {
+  def unapply( e: LambdaExpression ): Option[( String, TA )] = e match {
+    case Var( name, et )   => Some( ( name, et ) )
+    case Const( name, et ) => Some( ( name, et ) )
+    case _                 => None
+  }
+}
+
+/**
+ * A lambda term is in variable-normal form (VNF) if different binders bind
+ * different variables.
+ */
+object isInVNF {
+  def apply( e: LambdaExpression ): Boolean = apply_( e )._1
+
+  private def apply_( e: LambdaExpression ): ( Boolean, Set[Var] ) = e match {
+    case Var( _, _ )   => ( true, Set() )
+    case Const( _, _ ) => ( true, Set() )
+    case App( exp, arg ) => {
+      val ih_exp = apply_( exp )
+      val ih_arg = apply_( arg )
+
+      val ok = ih_exp._1 && ih_arg._1 && ( ( ih_exp._2 intersect ih_arg._2 ) == Set() )
+      val vars = ih_exp._2 union ih_arg._2
+
+      ( ok, vars )
+    }
+    case Abs( v, exp ) => {
+      val ih = apply_( exp )
+
+      val ok = ih._1 && !ih._2.contains( v )
+      val vars = ih._2 + v
+
+      ( ok, vars )
+    }
+  }
+}
+
+/**
+ * Returns the set of all variables occurring in the given argument (including
+ * vacuously bound variables).
+ */
+object variables {
+  def apply( e: LambdaExpression ): Set[Var] = e match {
+    case v: Var      => Set( v )
+    case c: Const    => Set()
+    case App( s, t ) => apply( s ) ++ apply( t )
+    case Abs( v, t ) => apply( v ) ++ apply( t )
+  }
+
+  def apply( s: FSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
+  def apply( s: Sequent ): Set[Var] = apply( s.toFSequent )
+  def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
+}
+
+/**
+ * Returns the set of free variables in the given argument.
+ */
 object freeVariables {
-  def apply( e: LambdaExpression ): List[Var] = getFreeVariables( e, List() ).distinct
-  def apply( e: FOLExpression ): List[FOLVar] =
-    apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[List[FOLVar]]
-  def apply( es: List[FOLExpression] ): List[FOLVar] = es.flatMap( apply( _ ) )
+  def apply( e: LambdaExpression ): Set[Var] = apply_( e, Set() )
 
-  private def getFreeVariables( e: LambdaExpression, bound: List[Var] ): List[Var] = e match {
-    case v: Var =>
-      if ( !bound.contains( v ) ) List( v )
-      else List()
-    case Const( _, _ )   => List()
-    case App( exp, arg ) => getFreeVariables( exp, bound ) ++ getFreeVariables( arg, bound )
-    case Abs( v, exp )   => getFreeVariables( exp, v :: bound )
+  def apply( e: FOLExpression ): Set[FOLVar] = apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
+  def apply( es: Set[FOLExpression] ): Set[FOLVar] = es.flatMap( apply( _ ) )
+  def apply( es: List[FOLExpression] ): Set[FOLVar] = apply( es.toSet )
+
+  private def apply_( e: LambdaExpression, boundvars: Set[Var] ): Set[Var] = e match {
+    case v: Var          => if ( !boundvars.contains( v ) ) Set( v ) else Set()
+    case Const( _, _ )   => Set()
+    case App( exp, arg ) => apply_( exp, boundvars ) ++ apply_( arg, boundvars )
+    case Abs( v, exp )   => apply_( exp, boundvars + v )
   }
 }
 
-// Returns a list *with duplicates* of the bound variables in the expression.
-// There is no guarantee on the ordering of the list.
-object boundVariables {
-  def apply( e: LambdaExpression ): List[Var] = e match {
-    case Var( _, _ )     => List()
-    case Const( _, _ )   => List()
-    case App( exp, arg ) => boundVariables( exp ) ++ boundVariables( arg )
-    case Abs( v, exp )   => v :: boundVariables( exp )
+/**
+ * Returns the set of non-logical constants occuring in the given argument.
+ */
+object constants {
+  def apply( e: LambdaExpression ): Set[Const] = e match {
+    case _: Var             => Set()
+    case _: LogicalConstant => Set()
+    case c: Const           => Set( c )
+    case App( exp, arg )    => constants( exp ) union constants( arg )
+    case Abs( v, exp )      => constants( exp )
+  }
+
+  def apply( s: FSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
+  def apply( s: Sequent ): Set[Const] = apply( s.toFSequent )
+  def apply( p: LKProof ): Set[Const] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
+}
+
+/**
+ * Returns the list of all subterms of the given lambda term.
+ * TODO: why a list? why not a set?
+ */
+object subTerms {
+  def apply( e: LambdaExpression ): List[LambdaExpression] = e match {
+    case Var( _, _ )   => List( e )
+    case Const( _, _ ) => List( e )
+    case Abs( _, e0 )  => e +: subTerms( e0 )
+    case App( e1, e2 ) => e +: ( subTerms( e1 ) ++ subTerms( e2 ) )
   }
 }
 
-// get a new variable/constant (similar to the current and) different from all 
-// variables/constants in the blackList, returns this variable if this variable 
-// is not in the blackList
+/**
+ * get a new variable/constant (similar to the current and) different from all
+ * variables/constants in the blackList, returns this variable if this variable
+ * is not in the blackList.
+ */
 object rename {
   def apply( v: Var, blackList: List[Var] ): Var = Var( getRenaming( v.sym, blackList.map( v => v.sym ) ), v.exptype )
   def apply( v: FOLVar, blackList: List[Var] ): FOLVar =
@@ -48,8 +125,9 @@ object rename {
   def apply( a: SymbolA, blackList: List[SymbolA] ): SymbolA = getRenaming( a, blackList )
   def apply( c: Const, blackList: List[Const] ): Const = Const( getRenaming( c.sym, blackList.map( c => c.sym ) ), c.exptype )
 
-  // renames a list of variables to pairwise distinct variables
-  // while avoiding names from blackList.
+  /**
+   * renames a list of variables to pairwise distinct variables while avoiding names from blackList.
+   */
   def apply( vs: Set[FOLVar], blackList: Set[FOLVar] ): Map[FOLVar, FOLVar] = {
     val v_list = vs.toList
     ( v_list zip
@@ -57,149 +135,3 @@ object rename {
         ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList ) ) ).toMap
   }
 }
-
-/**
- * Models the signature of an expression
- *
- * @param bVars Set of bound variables
- * @param fVars Set of free variables
- * @param consts Set of constants
- */
-class Signature( val bVars: Set[Var], val fVars: Set[Var], val consts: Set[Const] ) {
-
-  /**
-   * Creates a signature from lists by converting to sets
-   *
-   * @param bv List of bound variables
-   * @param fv List of free variables
-   * @param c List of constants
-   * @return
-   */
-  def this( bv: List[Var], fv: List[Var], c: List[Const] ) = this( bv.toSet, fv.toSet, c.toSet )
-
-  /**
-   * Computes the union of two signatures
-   *
-   * @param that Another signature
-   * @return
-   */
-  def union( that: Signature ) = new Signature( this.bVars union that.bVars, this.fVars union that.fVars, this.consts union that.consts )
-
-  /**
-   * Computes the intersection of two signatures
-   *
-   * @param that Another signature
-   * @return
-   */
-  def intersect( that: Signature ) = new Signature( this.bVars intersect that.bVars, this.fVars intersect that.fVars, this.consts intersect that.consts )
-
-  /**
-   * Adds a variable to the set of bound variables and removes it from free variables
-   *
-   * @param v A variable
-   * @return
-   */
-  def bind( v: Var ): Signature = new Signature( bVars + v, fVars - v, consts )
-
-  /**
-   * Adds a variable ot the set of free variables and removes it from bound variables
-   *
-   * @param v A variable
-   * @return
-   */
-  def unbind( v: Var ): Signature = new Signature( bVars - v, fVars + v, consts )
-
-  /**
-   * Prints the signature
-   *
-   */
-  def display: Unit = {
-    println( "Bound variables:" )
-    bVars foreach {
-      v => println( "\t" + v.name + ": " + v.exptype.toString )
-    }
-
-    println( "Free variables:" )
-    fVars foreach {
-      v => println( "\t" + v.name + ": " + v.exptype.toString )
-    }
-
-    println( "Constants:" )
-    consts foreach {
-      c => println( "\t" + c.name + ": " + c.exptype.toString )
-    }
-  }
-
-  /**
-   * Converts the signature to a tuple
-   *
-   * @return The tuple (bVars, fVars, consts)
-   */
-  def toTuple: ( Set[Var], Set[Var], Set[Const] ) = ( bVars, fVars, consts )
-
-  override def equals( that: Any ): Boolean = that match {
-    case Signature( bv, fv, c ) =>
-      bVars == bv && fVars == fv && consts == c
-    case _ => false
-  }
-
-  override def hashCode: Int = ( ( ( 41 + bVars.hashCode ) * 41 ) + fVars.hashCode * 41 ) + consts.hashCode
-
-}
-
-object Signature {
-
-  /**
-   * Computes the signature of a lambda expression
-   *
-   * @param e A lambda expression
-   * @return The signature of e
-   */
-  def apply( e: LambdaExpression ): Signature = e match {
-    case v: Var             => new Signature( Nil, List( v ), Nil )
-    case c: LogicalConstant => new Signature( Nil, Nil, Nil )
-    case c: Const           => new Signature( Nil, Nil, List( c ) )
-    case App( exp, arg ) =>
-      Signature( exp ) union Signature( arg )
-    case Abs( v, exp ) =>
-      Signature( exp ).bind( v )
-  }
-
-  /**
-   * Computes the signature of an FSequent
-   *
-   * @param s An FSequent
-   * @return The signature of s
-   */
-  def apply( s: FSequent ): Signature = apply( s.toFormula )
-
-  /**
-   * Computes the signature of a Sequent
-   *
-   * @param s A sequent
-   * @return The signature of s
-   */
-  def apply( s: Sequent ): Signature = apply( s.toFormula )
-
-  /**
-   * Computes the signature of an LKProof
-   *
-   * @param p An LKProof
-   * @return The signature of p
-   */
-  def apply( p: LKProof ): Signature = p match {
-    case Axiom( seq ) => Signature( seq )
-
-    case UnaryLKProof( _, u1, seq, _, _ ) =>
-      Signature( seq ) union Signature( u1 )
-
-    case BinaryLKProof( _, u1, u2, seq, _, _, _ ) =>
-      Signature( seq ) union Signature( u1 ) union Signature( u2 )
-  }
-
-  def unapply( s: Any ): Option[( Set[Var], Set[Var], Set[Const] )] = s match {
-    case sig: Signature => Some( sig.bVars, sig.fVars, sig.consts )
-    case _              => None
-  }
-}
-

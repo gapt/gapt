@@ -5,22 +5,13 @@
 
 package at.logic.gapt.formats.tptp
 
-import at.logic.gapt.language.fol.algorithms.{ convertHolToFol, reduceHolToFol }
-import at.logic.gapt.expr.{ StringSymbol, SymbolA }
+import at.logic.gapt.expr.fol.{ reduceHolToFol }
 import at.logic.gapt.proofs.lk.base.FSequent
 import scala.collection.immutable.HashMap
 import at.logic.gapt.expr._
 import scala.collection.mutable
 
 object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
-  // FIXME: this should not be here!
-  def hol2fol( f: HOLFormula ): FOLFormula =
-    {
-      val imap = mutable.Map[LambdaExpression, StringSymbol]()
-      val iid = new { var idd = 0; def nextId = { idd = idd + 1; idd } }
-      convertHolToFol( f )
-    }
-
   // convert a named list of clauses to a CNF refutation problem.
   // TODO: have to give a different name because of erasure :-(
   def tptp_problem_named( ss: List[Tuple2[String, FSequent]] ) =
@@ -28,7 +19,7 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
 
   // Convert a sequent into a tptp proof problem.
   def tptp_proof_problem( seq: FSequent ) =
-    "fof( to_prove, conjecture, " + exportFormula( hol2fol( seq.toFormula ) ) + ").\n"
+    "fof( to_prove, conjecture, " + exportFormula( seq.toFormula.asInstanceOf[FOLFormula] ) + ").\n"
 
   // convert a list of clauses to a CNF refutation problem.
   def tptp_problem( ss: List[FSequent] ) =

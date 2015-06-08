@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.language.schema._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.{ ContractionRightRuleType, ContractionLeftRuleType, CutRuleType, Axiom }
 import BetaReduction._

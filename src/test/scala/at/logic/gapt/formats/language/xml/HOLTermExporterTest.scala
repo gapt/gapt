@@ -5,24 +5,21 @@
  * and open the template in the editor.
  */
 
-package at.logic.gapt.formats.language.xml
+package at.logic.gapt.formats.expr.xml
 
 import at.logic.gapt.formats.xml.HOLTermXMLExporter
 import org.specs2.mutable._
 
 import scala.xml._
 
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import java.util.zip.GZIPInputStream
 import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import java.io.File.separator
-import at.logic.gapt.formats.language.xml._
 import scala.xml.Utility.trim
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.StringSymbol
 
 class HOLTermExporterTest extends Specification {
 

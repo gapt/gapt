@@ -5,8 +5,8 @@
 
 package at.logic.gapt.expr
 
-import at.logic.gapt.language.hol.HOLPosition
-import at.logic.gapt.language.hol.HOLPosition._
+import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.HOLPosition._
 
 // Collects all methods that operate on LambdaExpressions
 abstract class LambdaExpression {
@@ -126,7 +126,7 @@ abstract class LambdaExpression {
     case FOLAtom( r, xs )        => s"$r(${xs mkString ","})"
     case FOLFunction( f, xs )    => s"$f(${xs mkString ","})"
 
-    case Abs( x, t )             => s"λ$x.$t"
+    case Abs( x, t )             => s"(λ$x.$t)"
     case App( x, y )             => s"($x $y)"
     case Var( x, t )             => s"$x"
     case Const( x, t )           => s"$x"

@@ -1,12 +1,10 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
-import at.logic.gapt.language.fol.algorithms.convertHolToFol
-import at.logic.gapt.language.hol._
-import at.logic.gapt.proofs.lk.algorithms.{ AtomicExpansion, deleteTautologies, map_proof, regularize }
-import at.logic.gapt.proofs.resolution.algorithms.RobinsonToLK
-import at.logic.gapt.proofs.resolution.{ Clause, ResolutionProof }
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.resolution.RobinsonToLK
+import at.logic.gapt.proofs.resolution.{ Clause, ResolutionProof }
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
@@ -18,14 +16,11 @@ import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
 import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
 import at.logic.gapt.provers.prover9._
 
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile.proofProfile
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
-import at.logic.gapt.proofs.algorithms.ceres.{ CERES, CERESR2LK }
-
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
+import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
+import at.logic.gapt.proofs.ceres.clauseSets.profile.proofProfile
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.{ CERES, CERESR2LK }
 
 import commands.Prover9InitCommand
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
@@ -46,7 +41,7 @@ class TapeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
-      val proof_sk = LKtoLKskc( proof )
+      val proof_sk = LKToLKsk( proof )
       val s = StructCreators.extract( proof_sk )
       /*
       val cs = StandardClauseSet.transformStructToClauseSet( s )
@@ -108,7 +103,7 @@ class TapeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
-      val proof_sk = LKtoLKskc( proof )
+      val proof_sk = LKToLKsk( proof )
       val s = StructCreators.extract( proof_sk )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
 
@@ -127,45 +122,44 @@ class TapeTest extends Specification {
       //get the proof
       val pdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "the-proof" ) ) ) )
-      val ( foltape, _ ) = map_proof( elp, convertHolToFol.apply )
 
       //get the refutation of the clause set, refute it
-      val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( foltape ) )
+      val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( elp ) )
       val Some( taperp ) = Prover9.refute( tapecl.map( _.toFSequent ) )
       val lkref = RobinsonToLK( taperp )
 
       //get projections etc
-      val tapeproj = Projections( foltape )
-      val refproj = CERES.refProjection( foltape.root.toFSequent )
+      val tapeproj = Projections( elp )
+      val refproj = CERES.refProjection( elp.root.toFSequent )
 
-      val acnf = CERES( foltape.root.toFSequent, tapeproj + refproj, lkref )
+      val acnf = CERES( elp.root.toFSequent, tapeproj + refproj, lkref )
 
       //the acnf must not contain any quantified cuts
       acnf.nodes.collect( { case c @ CutRule( _, _, _, aux, _ ) if containsQuantifier( aux.formula ) => c } ) must beEmpty
-      acnf.root.toFSequent must beSyntacticFSequentEqual( foltape.root.toFSequent )
+      acnf.root.toFSequent must beSyntacticFSequentEqual( elp.root.toFSequent )
 
     }
 
     "create an acnf of the tape proof via robinson2lk" in {
       checkForProverOrSkip
+
       //get the proof
       val pdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "the-proof" ) ) ) )
-      val ( foltape, _ ) = map_proof( elp, convertHolToFol.apply )
 
       //get the refutation of the clause set, refute it
-      val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( foltape ) )
+      val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( elp ) )
       val Some( taperp ) = Prover9.refute( tapecl.map( _.toFSequent ) )
 
       //get projections etc
-      val tapeproj = Projections( foltape )
-      val refproj = CERES.refProjection( foltape.root.toFSequent )
+      val tapeproj = Projections( elp )
+      val refproj = CERES.refProjection( elp.root.toFSequent )
 
-      val acnf = CERESR2LK( foltape.root.toFSequent, tapeproj + refproj, taperp )
+      val acnf = CERESR2LK( elp.root.toFSequent, tapeproj + refproj, taperp )
 
       //the acnf must not contain any quantified cuts
       acnf.nodes.collect( { case c @ CutRule( _, _, _, aux, _ ) if containsQuantifier( aux.formula ) => c } ) must beEmpty
-      acnf.root.toFSequent must beSyntacticFSequentEqual( foltape.root.toFSequent )
+      acnf.root.toFSequent must beSyntacticFSequentEqual( elp.root.toFSequent )
 
     }
 

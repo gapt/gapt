@@ -5,13 +5,13 @@
 
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.language.hol.TypeSynonyms.SkolemSymbol
+import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, createContext => lkCreateContext }
 import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ TA, FunctionType }
 import at.logic.gapt.utils.ds.acyclicGraphs._
@@ -164,7 +164,7 @@ object createContext {
 object computeSkolemTerm {
   // used in andrews
   def apply( sk: SkolemSymbol, t: TA, sub: LambdaExpression ) = {
-    val fv = freeVariables( sub )
+    val fv = freeVariables( sub ).toList
     val tp = FunctionType( t, fv.map( v => v.exptype ) )
     HOLFunction( Const( sk, tp ), fv )
   }

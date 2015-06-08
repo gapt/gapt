@@ -1,8 +1,8 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.FOLSubstitution
-import at.logic.gapt.language.fol.Utils.numeral
+import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 
 object SipGrammar {

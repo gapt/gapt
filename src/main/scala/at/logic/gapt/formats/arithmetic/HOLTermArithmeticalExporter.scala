@@ -6,15 +6,13 @@
 package at.logic.gapt.formats.arithmetic
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.SymbolA
 import at.logic.gapt.formats.{ HOLTermExporter, OutputExporter }
-import at.logic.gapt.language.hol.VarOrConst
-import at.logic.gapt.language.schema.{ BigOr, BigAnd }
+import at.logic.gapt.expr.schema.{ BigOr, BigAnd }
 
 // FIXME: bad import, we don't want to import
 // something from transformations here.
-import at.logic.gapt.proofs.algorithms.ceres.struct.ClauseSetSymbol
-import at.logic.gapt.proofs.algorithms.ceres.struct.TypeSynonyms.CutConfiguration
+import at.logic.gapt.proofs.ceres.struct.ClauseSetSymbol
+import at.logic.gapt.proofs.ceres.struct.TypeSynonyms.CutConfiguration
 
 trait HOLTermArithmeticalExporter extends OutputExporter with HOLTermExporter {
   def exportFunction( t: LambdaExpression ): Unit = t match {

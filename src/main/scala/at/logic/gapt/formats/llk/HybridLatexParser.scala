@@ -1,15 +1,13 @@
-package at.logic.gapt.algorithms.hlk
+package at.logic.gapt.formats.llk
 
-import at.logic.gapt.formats.hlk.{ ast, DeclarationParser }
-import at.logic.gapt.formats.hlk.ast.LambdaAST
-import at.logic.gapt.formats.xml.ProofDatabase
-import scala.util.parsing.input.PagedSeqReader
-import scala.collection.immutable.PagedSeq
-import java.io.FileReader
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.TA
+import at.logic.gapt.formats.hlk.ast.LambdaAST
+import at.logic.gapt.formats.hlk.{ ast, DeclarationParser }
+import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
-import at.logic.gapt.formats.llk.TokenToLKConverter
+import java.io.FileReader
+import scala.collection.immutable.PagedSeq
+import scala.util.parsing.input.PagedSeqReader
 
 /**
  *  An extended proof database allows to label subproofs by formulas. It provides mappings from formulas to proofs

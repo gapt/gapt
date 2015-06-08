@@ -16,7 +16,6 @@ class VeriTProverTest extends Specification {
 
   "VeriT" should {
     "prove a v not a" in {
-      //skipped("--proof-version in isValid is only supported on Giselle's machine")
       val a = FOLAtom( "a", Nil )
       val f = Or( a, Neg( a ) )
 
@@ -30,9 +29,20 @@ class VeriTProverTest extends Specification {
       veriT.getExpansionSequent( s ) must not be None
     }
 
-    "prove top" in { veriT.getExpansionSequent( FSequent( Seq(), Seq( Top() ) ) ) must beSome }
-    "not prove bottom" in { veriT.getExpansionSequent( FSequent( Seq(), Seq( Bottom() ) ) ) must beNone }
-    "not refute top" in { veriT.getExpansionSequent( FSequent( Seq( Top() ), Seq() ) ) must beNone }
-    "refute bottom" in { veriT.getExpansionSequent( FSequent( Seq( Bottom() ), Seq() ) ) must beSome }
+    "prove top" in {
+      veriT.getExpansionSequent( FSequent( Seq(), Seq( Top() ) ) ) must beSome
+    }
+
+    "not prove bottom" in {
+      veriT.getExpansionSequent( FSequent( Seq(), Seq( Bottom() ) ) ) must beNone
+    }
+
+    "not refute top" in {
+      veriT.getExpansionSequent( FSequent( Seq( Top() ), Seq() ) ) must beNone
+    }
+
+    "refute bottom" in {
+      veriT.getExpansionSequent( FSequent( Seq( Bottom() ), Seq() ) ) must beSome
+    }
   }
 }

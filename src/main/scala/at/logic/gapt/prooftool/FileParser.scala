@@ -1,5 +1,3 @@
-package at.logic.gapt.prooftool
-
 /**
  * Created by IntelliJ IDEA.
  * User: mrukhaia
@@ -7,10 +5,12 @@ package at.logic.gapt.prooftool
  * Time: 4:42 PM
  */
 
+package at.logic.gapt.prooftool
+
 import java.io.{ FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
-import at.logic.gapt.algorithms.hlk.HybridLatexParser
+import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.ParsingException
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
@@ -22,8 +22,8 @@ import at.logic.gapt.formats.shlk.SCHOLParser
 import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.expr._
-import at.logic.gapt.language.schema.dbTRS
-import at.logic.gapt.proofs.algorithms.ceres.clauseSchema._
+import at.logic.gapt.expr.schema.dbTRS
+import at.logic.gapt.proofs.ceres.clauseSchema._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 import at.logic.gapt.proofs.proofs.{ Proof, TreeProof }
 import at.logic.gapt.proofs.shlk.SchemaProofDB

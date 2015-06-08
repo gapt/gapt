@@ -9,7 +9,7 @@ package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk.base.{ LKProof }
 import at.logic.gapt.proofs.lk.{ WeakeningLeftRuleType, WeakeningRightRuleType }
 import at.logic.gapt.proofs.lk.{ ForallLeftRuleType, ExistsRightRuleType, ForallRightRuleType, ExistsLeftRuleType }

@@ -1,9 +1,8 @@
 package at.logic.gapt.algorithms.rewriting
 
 import org.specs2.mutable._
-import at.logic.gapt.language.fol._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.utils.ds.acyclicGraphs.{ BinaryAGraph, UnaryAGraph, LeafAGraph, AGraph }

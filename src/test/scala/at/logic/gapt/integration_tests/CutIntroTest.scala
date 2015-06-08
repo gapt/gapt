@@ -1,13 +1,10 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.language.fol.Utils
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.Utils
+import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.basicProver.BasicProver
 import org.specs2.mutable._
@@ -82,7 +79,7 @@ class CutIntroTest extends Specification {
 
       result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
 
-      at.logic.gapt.proofs.lk.algorithms.quantRulesNumber( r_proof.get ) must beEqualTo( grammar.size + ss.size )
+      at.logic.gapt.proofs.lk.quantRulesNumber( r_proof.get ) must beEqualTo( grammar.size + ss.size )
     }
   }
 }

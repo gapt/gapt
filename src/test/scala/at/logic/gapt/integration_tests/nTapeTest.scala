@@ -2,26 +2,23 @@ package at.logic.gapt.integration_tests
 
 import java.io.IOException
 
-import at.logic.gapt.algorithms.hlk.HybridLatexParser
-import at.logic.gapt.formats.llk.HybridLatexExporter
+import at.logic.gapt.formats.llk.{ HybridLatexParser, HybridLatexExporter, toLLKString }
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.algorithms.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
-import at.logic.gapt.language.hol._
-import at.logic.gapt.proofs.lk.algorithms.{ AtomicExpansion, regularize }
+import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, regularize, LKToLKsk }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.expr.{ StringSymbol, SymbolA }
-import at.logic.gapt.proofs.resolution.algorithms.RobinsonToRal
+import at.logic.gapt.proofs.resolution.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.AlternativeStandardClauseSet
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.clauseSets.AlternativeStandardClauseSet
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.StructCreators
 
-import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
+import at.logic.gapt.proofs.ceres.ceres_omega
+import at.logic.gapt.proofs.lksk.LKskToExpansionProof
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent }
 
@@ -43,8 +40,6 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     val cache = Map[LambdaExpression, LambdaExpression]()
 
     override def convert_formula( e: HOLFormula ): HOLFormula = {
-      //require(e.isInstanceOf[FOLFormula], "Expecting prover 9 formula "+e+" to be from the FOL layer, but it is not.")
-
       BetaReduction.betaNormalize(
         undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap ) )
     }
@@ -137,12 +132,12 @@ class nTapeTest extends Specification with ClasspathFileCopier {
       show( "Eliminating definitions, expanding tautological axioms" )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "TAPEPROOF" ) ) ) )
       show( "Skolemizing" )
-      val selp = LKtoLKskc( elp )
+      val selp = LKToLKsk( elp )
 
       show( "Extracting struct" )
-      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
       show( "Computing projections" )
-      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
 
       show( "Computing clause set" )
       val cl = AlternativeStandardClauseSet( struct )
@@ -173,7 +168,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
           val ( acnf, endclause ) = ceres_omega( proj, ralp, sequentToLabelledSequent( selp.root ), struct )
 
           show( "Compute expansion tree" )
-          val et = extractLKSKExpansionSequent( acnf, false )
+          val et = LKskToExpansionProof( acnf )
           show( " HOORAY! " )
 
           printStatistics( et )
@@ -191,12 +186,12 @@ class nTapeTest extends Specification with ClasspathFileCopier {
       show( "Eliminating definitions, expanding tautological axioms" )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "TAPEPROOF" ) ) ) )
       show( "Skolemizing" )
-      val selp = LKtoLKskc( elp )
+      val selp = LKToLKsk( elp )
 
       show( "Extracting struct" )
-      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
       show( "Computing projections" )
-      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
 
       show( "Computing clause set" )
       val cl = AlternativeStandardClauseSet( struct )
@@ -227,7 +222,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
           val ( acnf, endclause ) = ceres_omega( proj, ralp, sequentToLabelledSequent( selp.root ), struct )
 
           show( "Compute expansion tree" )
-          val et = extractLKSKExpansionSequent( acnf, false )
+          val et = LKskToExpansionProof( acnf )
           show( " HOORAY! " )
 
           printStatistics( et )

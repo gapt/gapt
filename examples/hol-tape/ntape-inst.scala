@@ -9,30 +9,31 @@
  * *************************************************************************** */
 
 /* adjust filename to load a different example */
-val filename = "tape3-4c.llk"  
-//val filename = "examples/hol-tape/tape3-3.llk"  
+//val filename = "tape3-4c.llk"  
+val filename = "examples/hol-tape/tape3-3.llk"  
 
 /* begin of proof script  */
 
-import at.logic.gapt.language.fol.algorithms.recreateWithFactory
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.fol.{undoHol2Fol, replaceAbstractions, reduceHolToFol}
+import at.logic.gapt.expr.hol._
 
-import at.logic.gapt.language.fol.algorithms.undoHol2Fol
-import at.logic.gapt.algorithms.hlk.HybridLatexParser
+import at.logic.gapt.expr.fol.undoHol2Fol
+
+import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
-import at.logic.gapt.proofs.lk.algorithms.{AtomicExpansion, subsumedClausesRemovalHOL, regularize}
+import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize, subsumedClausesRemovalHOL}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.proofs.resolution.algorithms.RobinsonToRal
-
+import at.logic.gapt.proofs.resolution.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets._
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres.clauseSets._
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.StructCreators
 
-import at.logic.gapt.proofs.algorithms.ceres.ceres_omega
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.lksk.extractLKSKExpansionSequent
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
+import at.logic.gapt.proofs.ceres.ceres_omega
+import at.logic.gapt.proofs.lksk.LKskToExpansionProof
+import at.logic.gapt.proofs.lk.LKToLKsk
+
 
  def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
 

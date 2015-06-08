@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk.base
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
-import at.logic.gapt.language.hol.{ HOLPosition, HOLOrdering }
+import at.logic.gapt.expr.hol.{ HOLPosition, HOLOrdering }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
@@ -239,6 +239,7 @@ class Sequent( val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formul
 
   override def toString: String = toFSequent toString
 
+  // TODO: why a list, why not a set?
   def freeVariables: List[Var] = ( ( antecedent ++ succedent ) flatMap ( ( fo: FormulaOccurrence ) => at.logic.gapt.expr.freeVariables( fo.formula ) ) ).toList
 }
 

@@ -1,6 +1,6 @@
 package at.logic.gapt.grammars
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.FOLSubstitution
 
 object VectTratGrammar {
   type NonTerminalVect = List[FOLVar]
@@ -63,7 +63,7 @@ object TratGrammar {
     List( p._1 ) -> List( p._2 )
 
   def apply( axiom: FOLVar, productions: Seq[TratGrammar.Production] ): TratGrammar = {
-    val nonTerminals = ( axiom +: ( productions flatMap { p => p._1 :: freeVariables( p._2 ) } ) ).distinct
+    val nonTerminals = ( ( axiom +: productions.map( _._1 ) ) ++ productions.flatMap { p => freeVariables( p._2 ) } ).distinct
     TratGrammar( axiom, nonTerminals, productions )
   }
 }

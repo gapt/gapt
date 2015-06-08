@@ -1,9 +1,9 @@
 package at.logic.gapt.proofs.expansionTrees
 
-import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.{ containsQuantifier, HOLPosition, getMatrix }
+import at.logic.gapt.expr.hol.{ NaiveIncompleteMatchingAlgorithm, containsQuantifier, HOLPosition, getMatrix }
 import at.logic.gapt.utils.ds.trees._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -425,6 +425,15 @@ object toShallow {
   }
 }
 
+object ExpansionProofToLK {
+  /**
+   * Translate an expansion proof to LK.
+   * @param ep an expansion sequent whose deep sequent is a propositional tautology
+   * @return an LKProof of the shallow sequent of ep
+   */
+  def apply( ep: ExpansionSequent ): LKProof = solve.expansionProofToLKProof( ep ).get
+}
+
 /**
  * Gets expansion tree of a formula from expansion sequent.
  */
@@ -454,8 +463,7 @@ object formulaToExpansionTree {
 
   def apply( form: HOLFormula, subs: List[_ <: Substitution], pos: Boolean ): ExpansionTree = {
     // form's quantified variables must be pairwise distinct
-    val bound = boundVariables( form )
-    assert( bound.distinct.length == bound.length, "formulaToExpansionTree: bound variables are not pairwise distinct." )
+    assert( isInVNF( form ), "formulaToExpansionTree: bound variables are not pairwise distinct." )
     // substitutions should not have variable capture
     assert( subs.forall( s => s.domain.intersect( s.range ) == Nil ), "formulaToExpansionTree: substitutions have variable capture." )
     apply_( form, subs, pos )
@@ -789,7 +797,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
           case None                    => doApplyMerge( tree1, res, polarity )
         }
       }
-      case _ => throw new IllegalArgumentException( "Bug in merge in extractExpansionSequent. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2 )
+      case _ => throw new IllegalArgumentException( "Bug in merge in LKToExpansionProof. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2 )
     }
   }
 }

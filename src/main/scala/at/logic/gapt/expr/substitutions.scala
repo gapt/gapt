@@ -50,8 +50,9 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
 
   def apply( t: HOLFormula ): HOLFormula = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 
+  // TODO: why lists? why not sets?
   def domain: List[Var] = map.keys.toList
-  def range: List[Var] = map.foldLeft( List[Var]() )( ( acc, data ) => freeVariables( data._2 ) ++ acc )
+  def range: List[Var] = map.foldLeft( List[Var]() )( ( acc, data ) => freeVariables( data._2 ).toList ++ acc )
 
   def ::( sub: ( Var, LambdaExpression ) ) = new Substitution( map + sub )
   def ::( otherSubstitution: Substitution ) = new Substitution( map ++ otherSubstitution.map )

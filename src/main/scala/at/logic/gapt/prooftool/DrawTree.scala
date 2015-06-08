@@ -1,11 +1,11 @@
-package at.logic.gapt.prooftool
-
 /**
  * Created by IntelliJ IDEA.
  * User: mrukhaia
  * Date: 2/6/11
  * Time: 1:38 PM
  */
+
+package at.logic.gapt.prooftool
 
 import scala.swing._
 import event._
@@ -15,8 +15,8 @@ import java.awt.{ RenderingHints, BasicStroke }
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.expr._
 import DrawSequent._
-import at.logic.gapt.proofs.algorithms.ceres.struct.structToExpressionTree.{ TimesC, PlusC }
-import at.logic.gapt.proofs.algorithms.ceres.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
+import at.logic.gapt.proofs.ceres.struct.structToExpressionTree.{ TimesC, PlusC }
+import at.logic.gapt.proofs.ceres.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
 import at.logic.gapt.proofs.lk.base.Sequent
 import java.awt.event.{ MouseMotionListener, MouseEvent }
 
