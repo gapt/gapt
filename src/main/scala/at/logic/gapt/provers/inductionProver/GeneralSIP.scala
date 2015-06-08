@@ -2,11 +2,20 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 
-class GeneralSIP( val Gamma0: List[FOLFormula], val Gamma1: List[FOLFormula], val Gamma2: List[FOLFormula], val B: FOLFormula, val t: List[FOLTerm], val u: List[FOLTerm] ) {
+class GeneralSIP( val ExpSeq0: ExpansionSequent, val ExpSeq1: ExpansionSequent, val ExpSeq2: ExpansionSequent, val B: FOLFormula, val t: List[FOLTerm], val u: List[FOLTerm] ) {
   import GeneralSIP._
+
+  require( ExpSeq0.succedent.isEmpty, "Right-hand side of ExpSeq0 is nonempty" )
+  require( ExpSeq1.succedent.isEmpty, "Right-hand side of ExpSeq1 is nonempty" )
+  require( ExpSeq2.succedent.isEmpty, "Right-hand side of ExpSeq2 is nonempty" )
+
+  val Gamma0 = toDeep( ExpSeq0 ).antecedent.toList.asInstanceOf[List[FOLFormula]]
+  val Gamma1 = toDeep( ExpSeq1 ).antecedent.toList.asInstanceOf[List[FOLFormula]]
+  val Gamma2 = toDeep( ExpSeq2 ).antecedent.toList.asInstanceOf[List[FOLFormula]]
 
   require( List( alpha, beta ) contains freeVariables( Gamma0 ), "Gamma0 contains free variables other than α, β" )
   require( List( alpha, nu, gamma ) contains freeVariables( Gamma1 ), "Gamma1 contains free variables other than α, ν, γ" )
@@ -28,7 +37,8 @@ object GeneralSIP {
   def X( x1: FOLTerm, x2: FOLTerm, x3: FOLTerm ): HOLFormula = HOLAtom( Var( "X", Ti -> Ti -> Ti -> To ), x1, x2, x3 )
 }
 
-class SchematicSIP( Gamma0: List[FOLFormula], Gamma1: List[FOLFormula], Gamma2: List[FOLFormula], B: FOLFormula, t: List[FOLTerm], u: List[FOLTerm] ) extends GeneralSIP( Gamma0, Gamma1, Gamma2, B, t, u ) {
+class SchematicSIP( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent, ExpSeq2: ExpansionSequent, B: FOLFormula, t: List[FOLTerm], u: List[FOLTerm] ) extends GeneralSIP( ExpSeq0, ExpSeq1, ExpSeq2, B, t, u ) {
+
   import GeneralSIP._
 
   val Sequent0 = FSequent( Gamma0, List( X( alpha, zero, beta ) ) )
@@ -41,7 +51,7 @@ class SchematicSIP( Gamma0: List[FOLFormula], Gamma1: List[FOLFormula], Gamma2: 
   val Sequent2 = FSequent( Gamma2 ++ Xu, List( B ) )
 }
 
-class SimpleInductionProof( Gamma0: List[FOLFormula], Gamma1: List[FOLFormula], Gamma2: List[FOLFormula], B: FOLFormula, t: List[FOLTerm], u: List[FOLTerm], val inductionFormula: FOLFormula ) extends GeneralSIP( Gamma0, Gamma1, Gamma2, B, t, u ) {
+class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent, ExpSeq2: ExpansionSequent, B: FOLFormula, t: List[FOLTerm], u: List[FOLTerm], val inductionFormula: FOLFormula ) extends GeneralSIP( ExpSeq0, ExpSeq1, ExpSeq2, B, t, u ) {
   import GeneralSIP._
   import SimpleInductionProof._
 

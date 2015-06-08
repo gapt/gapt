@@ -5,7 +5,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ instantiate, HOLPosition }
+import at.logic.gapt.expr.hol.{ isPrenex, instantiate, HOLPosition }
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.ds.trees._
@@ -1352,6 +1353,50 @@ object WeakeningContractionMacroRule extends MacroRuleLogger {
     val sucList = targetSuc.distinct map ( f => ( f, targetSuc.count( _ == f ) ) )
 
     apply( s1, antList, sucList, strict )
+  }
+}
+
+/**
+ * Computes a proof of F from a proof of some instances of F
+ *
+ */
+object proofFromInstances {
+  /**
+   *
+   * @param s1 An LKProof containing the instances in es in its end sequent.
+   * @param es An ExpansionSequent in which all shallow formulas are prenex and which contains no strong or Skolem quantifiers.
+   * @return A proof starting with s1 and ending with the deep sequent of es.
+   */
+  def apply( s1: LKProof, es: ExpansionSequent ): LKProof = ( es.antecedent ++ es.succedent ).foldLeft( s1 )( apply )
+
+  /**
+   *
+   * @param s1 An LKProof containing the instances in et in its end sequent
+   * @param et An ExpansionTree whose shallow formula is prenex and which contains no strong or Skolem quantifiers.
+   * @return A proof starting with s1 and ending with the deep formula of et.
+   */
+  def apply( s1: LKProof, et: ExpansionTree ): LKProof = {
+    require( isPrenex( toShallow( et ) ), "Shallow formula of " + et + " is not prenex" )
+
+    et match {
+      case ETWeakQuantifier( f @ All( _, _ ), instances ) =>
+        val tmp = instances.foldLeft( s1 ) {
+          ( acc, i ) => ForallLeftRule( apply( acc, i._1 ), toShallow( i._1 ), f, i._2 )
+        }
+
+        ContractionLeftMacroRule( tmp, f )
+
+      case ETWeakQuantifier( f @ Ex( _, _ ), instances ) =>
+        val tmp = instances.foldLeft( s1 ) {
+          ( acc, i ) => ExistsRightRule( apply( acc, i._1 ), toShallow( i._1 ), f, i._2 )
+        }
+
+        ContractionRightMacroRule( tmp, f )
+
+      case ETSkolemQuantifier( _, _, _ ) | ETStrongQuantifier( _, _, _ ) =>
+        throw new UnsupportedOperationException( "This case is not handled at this time." )
+      case _ => s1
+    }
   }
 }
 
