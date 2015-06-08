@@ -3,9 +3,9 @@ package at.logic.gapt.expr
 /**
  * Helper class for logical constants.
  *
- * A logical constant describes a propositional connective, or a quantifier, etc.  This is different from an expression
- * consisting of only this logical constant, as the expression is an object of type LambdaExpression and needs to have
- * a definite type.
+ * The logical constans are the propositional connectives, the quantifiers, bottom, top, and the equality constant.
+ * A logical constant is different from an expression consisting of only this logical constant, as the expression
+ * is an object of type LambdaExpression and needs to have a definite type.
  *
  * A logical constant consists of a name (e.g. "∀"), and a set of possible types, (e.g. (Ti->To)->To,
  * ((Ti->Ti)->To)->To, ...).  Subclasses need to implement the function matchType, which matches these possible types.

@@ -6,7 +6,7 @@ package at.logic.gapt.provers.sat4j
 
 import at.logic.gapt.formats.dimacs.{ writeDIMACS, readDIMACS, DIMACSHelper }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.algorithms.{ CNFp, TseitinCNF }
+import at.logic.gapt.proofs.resolution.{ CNFp, TseitinCNF }
 import at.logic.gapt.utils.logging.{ Stopwatch, Logger }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }

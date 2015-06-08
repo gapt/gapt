@@ -1,10 +1,9 @@
 package at.logic.gapt.algorithms.rewriting
 
 import org.specs2.mutable._
-import at.logic.gapt.language.fol._
-import at.logic.gapt.expr.{ StringSymbol }
-import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ beSyntacticFSequentEqual, FSequent, Sequent, LKProof }
 import at.logic.gapt.proofs.proofs.NullaryProof
 

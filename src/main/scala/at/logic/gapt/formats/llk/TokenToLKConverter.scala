@@ -1,12 +1,10 @@
 package at.logic.gapt.formats.llk
 
-import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.proofs.lk.algorithms.{ applySubstitution, AtomicExpansion, solve }
+import at.logic.gapt.proofs.lk.{ applySubstitution, AtomicExpansion, solve }
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
 import at.logic.gapt.formats.hlk.{ ast, DeclarationParser, HLKHOLParser }
 import at.logic.gapt.formats.hlk.ast.LambdaAST
-import at.logic.gapt.expr.{ To, TA }
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
@@ -15,7 +13,7 @@ import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.utils.logging.Logger
 import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
-import at.logic.gapt.algorithms.hlk._
+import at.logic.gapt.formats.llk._
 import at.logic.gapt.proofs.lk.EquationVerifier.EqualModuloEquality
 
 object LLKFormatter {
@@ -323,7 +321,7 @@ trait TokenToLKConverter extends Logger {
     }
 
     def inferTerm( x: Var, holf: HOLFormula ): LambdaExpression = {
-      NaiveIncompleteMatchingAlgorithm.holMatch( holf, aux )( Nil ) match {
+      NaiveIncompleteMatchingAlgorithm.matchTerm( holf, aux, Set() ) match {
         case Some( sub ) =>
           val s: LambdaExpression = sub.map.getOrElse( x, x ) //in case the variable was projected away, we use the identity function
           if ( auxterm.nonEmpty ) {
@@ -374,7 +372,7 @@ trait TokenToLKConverter extends Logger {
     }
 
     def inferTerm( x: Var, f: HOLFormula ): LambdaExpression = {
-      NaiveIncompleteMatchingAlgorithm.holMatch( f, aux )( Nil ) match {
+      NaiveIncompleteMatchingAlgorithm.matchTerm( f, aux, Set() ) match {
         case Some( sub ) =>
           val s: LambdaExpression = sub.map.getOrElse( x, x ) //in case the term was projected away we try the identity function
           if ( auxterm.nonEmpty ) {
@@ -798,7 +796,7 @@ trait TokenToLKConverter extends Logger {
     require( auxterm.isDefined, "Can not refer to a subproof(CONTINUEFROM): Need a proof name to link to!" )
     val link = HLKHOLParser.ASTtoHOL( naming, auxterm.get )
     val ps: List[LKProof] = proofs.toList.flatMap( x => {
-      NaiveIncompleteMatchingAlgorithm.holMatch( x._1, link )( Nil ) match {
+      NaiveIncompleteMatchingAlgorithm.matchTerm( x._1, link, Set() ) match {
         case None => Nil
         case Some( sub ) =>
           applySubstitution( x._2, sub )._1 :: Nil
@@ -842,7 +840,7 @@ trait TokenToLKConverter extends Logger {
       val ( _, ax2 ) = stripUniversalQuantifiers( ax1 )
       val ax = normalize( sub( ax2 ) )
       //println("Trying:"+f(ax)+" against "+f(auxf))
-      val r1 = NaiveIncompleteMatchingAlgorithm.holMatch( ax, auxf )( Nil ) match {
+      val r1 = NaiveIncompleteMatchingAlgorithm.matchTerm( ax, auxf, Set() ) match {
         case Some( sub ) if sub( ax ) syntaxEquals ( auxf ) => ( name, ax1, sub ) :: Nil
         case Some( sub ) =>
           val sub2 = Substitution( sub.map.filter( x => x._1 != x._2 ) )
@@ -936,7 +934,7 @@ trait TokenToLKConverter extends Logger {
       val ( _, ax2 ) = stripUniversalQuantifiers( ax1 )
       val ax = betaNormalize( sub( ax2 ).asInstanceOf[LambdaExpression] )( StrategyOuterInner.Outermost )
       //println("Trying: "+ f(ax))
-      val r1 = NaiveIncompleteMatchingAlgorithm.holMatch( ax, auxf )( Nil ) match {
+      val r1 = NaiveIncompleteMatchingAlgorithm.matchTerm( ax, auxf, Set() ) match {
         case Some( sub ) if sub( ax ) syntaxEquals ( auxf ) => ( name, ax1, sub ) :: Nil
         case Some( sub2 ) =>
           val sub = Substitution( sub2.map.filterNot( x => x._1 == x._2 ) )
@@ -1004,7 +1002,7 @@ trait TokenToLKConverter extends Logger {
         case RToken( "CONTINUEFROM", Some( f ), _, _, _ ) =>
           //find the matching proofs
           proofnames.filter( p =>
-            NaiveIncompleteMatchingAlgorithm.holMatch( p, c( HLKHOLParser.ASTtoHOL( naming, f ) ) )( Nil ).isDefined ) match {
+            NaiveIncompleteMatchingAlgorithm.matchTerm( p, c( HLKHOLParser.ASTtoHOL( naming, f ) ), Set() ).isDefined ) match {
             //and check if the dependency is ok
             case Nil =>
               throw new HybridLatexParserException( "Could not find a matching dependency for proof " + f
@@ -1019,7 +1017,7 @@ trait TokenToLKConverter extends Logger {
         case RToken( "INSTLEMMA", Some( f ), _, _, _ ) =>
           //find the matching proofs
           proofnames.filter( p =>
-            NaiveIncompleteMatchingAlgorithm.holMatch( p, c( HLKHOLParser.ASTtoHOL( naming, f ) ) )( Nil ).isDefined ) match {
+            NaiveIncompleteMatchingAlgorithm.matchTerm( p, c( HLKHOLParser.ASTtoHOL( naming, f ) ), Set() ).isDefined ) match {
             //and check if the dependency is ok
             case Nil =>
               throw new HybridLatexParserException( "Could not find a matching dependency for proof " + f
@@ -1109,7 +1107,7 @@ trait TokenToLKConverter extends Logger {
 
       lformula match {
         case HOLAtom( _, _ ) =>
-          require( freeVariables( lformula ).toSet == freeVariables( rformula ).toSet,
+          require( freeVariables( lformula ) == freeVariables( rformula ),
             "Definition formulas " + lformula + " and " + rformula + " do not have the same set of free variables!" +
               "\n" + freeVariables( lformula ) + "\n" + freeVariables( rformula ) )
           map + ( ( lformula, rformula ) )
@@ -1132,7 +1130,7 @@ trait TokenToLKConverter extends Logger {
         case ( f1 @ HOLFunction( _, _ ), f2 @ HOLFunction( _, _ ) ) =>
           require( f1.exptype == f2.exptype,
             "The types of defined formulas and definition must match, but are: " + f1.exptype + " and " + f2.exptype )
-          require( freeVariables( lexpression ).toSet == freeVariables( rexpression ).toSet,
+          require( freeVariables( lexpression ) == freeVariables( rexpression ),
             "Definition function " + lexpression + " and " + rexpression + " do not have the same set of free variables!" )
           map + ( ( lexpression, rexpression ) )
         case _ => throw new HybridLatexParserException( "Left hand side of a definition must be an atom, but is " + lexpression )
@@ -1214,7 +1212,4 @@ trait TokenToLKConverter extends Logger {
       case _ => throw new Exception( "Implementation error! Could not decompose " + f( axiom ) + " subterm=" + sub( axiom ) + " need=" + f( instance ) )
     }
   }
-
-  def univclosure( f: HOLFormula ) = freeVariables( f ).foldRight( f )( ( v, g ) => All( v.asInstanceOf[Var], g ) )
-
 }

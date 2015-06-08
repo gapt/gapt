@@ -5,13 +5,13 @@
 
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.language.hol.HOLPosition
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 import base._
-import at.logic.gapt.expr.{ rename => renameLambda, freeVariables => freeVariablesLambda, Substitution => SubstitutionLambda, _ }
+import at.logic.gapt.expr.{ rename => renameLambda, Substitution => SubstitutionLambda, _ }
 import at.logic.gapt.utils.logging._
 import org.slf4j.LoggerFactory
 
@@ -68,7 +68,7 @@ object EquationVerifier {
         if ( expt1 != expt2 )
           Different
         else {
-          val vn = renameLambda( v1, freeVariablesLambda( s ) ++ freeVariablesLambda( t ) ++ freeVariablesLambda( t1 ) ++ freeVariablesLambda( t2 ) ) //TODO: pass the list on instead of recreating it
+          val vn = renameLambda( v1, freeVariables( s ).toList ++ freeVariables( t ).toList ++ freeVariables( t1 ).toList ++ freeVariables( t2 ).toList ) //TODO: pass the list on instead of recreating it
           checkReplacement( s, t, SubstitutionLambda( v1, vn )( t1 ), SubstitutionLambda( v2, vn )( t2 ) )
         }
       case _ => Different

@@ -3,6 +3,7 @@ package at.logic.gapt.testing
 import java.io._
 
 import at.logic.gapt.utils.executionModels.timeout.{ TimeOutException, withTimeout }
+import at.logic.gapt.utils.withTempFile
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.mutable
@@ -139,13 +140,6 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
   }
 
   override def toString = s"${getClass.getSimpleName}.$name"
-}
-
-object withTempFile {
-  def apply[T]( block: String => T ): T = {
-    val tempFile = File.createTempFile( "gapt-runOutOfProcess-", ".tmp" )
-    try block( tempFile getAbsolutePath ) finally tempFile.delete()
-  }
 }
 
 /**

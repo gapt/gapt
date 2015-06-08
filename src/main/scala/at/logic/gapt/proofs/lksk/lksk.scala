@@ -19,7 +19,7 @@ import TypeSynonyms._
 // Axioms (and weakenings) always return a pair(Proof, mapping) which maps the indices of the list given into the new occurrences.
 object Axiom {
   /**
-   * Creates an LKSK Axiom rule from the given unlabeled sequent a pair of labels
+   * Creates an LKsk Axiom rule from the given unlabeled sequent a pair of labels
    * @param seq unlabeled sequent of the axiom
    * @param maps pair of lists with labels for the antecedent and succedent
    * @return an LKProof of the Axiom

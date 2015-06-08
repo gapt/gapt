@@ -5,15 +5,13 @@
  * and open the template in the editor.
  */
 
-package at.logic.gapt.formats.language.simple
+package at.logic.gapt.formats.expr.simple
 
 import at.logic.gapt.formats.simple.SimpleHOLParser
 import org.specs2.mutable._
-import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.StringSymbol
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.readers.StringReader
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
 
 class SimpleHOLParserTest extends Specification {
   private class MyParser( input: String ) extends StringReader( input ) with SimpleHOLParser

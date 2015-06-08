@@ -1,5 +1,3 @@
-package at.logic.gapt.prooftool
-
 /**
  * Created by IntelliJ IDEA.
  * User: mrukhaia
@@ -7,19 +5,21 @@ package at.logic.gapt.prooftool
  * Time: 4:25 PM
  */
 
-import at.logic.gapt.language.hol.toPrettyString
+package at.logic.gapt.prooftool
+
+import at.logic.gapt.expr.hol.toPrettyString
 import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.proofs.algorithms.ceres.struct.ClauseSetSymbol
-import at.logic.gapt.proofs.algorithms.ceres.PStructToExpressionTree.ProjectionSetSymbol
+import at.logic.gapt.proofs.ceres.struct.ClauseSetSymbol
+import at.logic.gapt.proofs.ceres.PStructToExpressionTree.ProjectionSetSymbol
 import org.scilab.forge.jlatexmath.{ TeXIcon, TeXConstants, TeXFormula }
 import java.awt.{ Color, Font }
 import java.awt.image.BufferedImage
 import swing._
 import event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
 import java.awt.event.MouseEvent
-import at.logic.gapt.language.schema._
+import at.logic.gapt.expr.schema._
 import at.logic.gapt.utils.latex.nameToLatexString
 import collection.mutable
 import at.logic.gapt.expr.Tindex

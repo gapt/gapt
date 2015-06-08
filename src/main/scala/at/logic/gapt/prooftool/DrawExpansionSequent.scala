@@ -2,7 +2,7 @@ package at.logic.gapt.prooftool
 
 // The code in this file displays expansion sequents.
 
-import at.logic.gapt.proofs.expansionTrees.algorithms.compressQuantifiers
+import at.logic.gapt.proofs.expansionTrees.compressQuantifiers
 import at.logic.gapt.utils.logging.Logger
 
 import swing._

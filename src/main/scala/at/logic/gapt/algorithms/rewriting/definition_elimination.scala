@@ -1,12 +1,10 @@
 package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.hol.algorithms.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.proofs.lk.algorithms.{ Util, AtomicExpansion }
+import at.logic.gapt.proofs.lk.{ Util, AtomicExpansion }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.language.hol._
-import at.logic.gapt.expr.{ SymbolA, StringSymbol }
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
 import Util._
 
@@ -70,7 +68,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
   def try_to_match( dmap: DefinitionsMap, e: LambdaExpression ): LambdaExpression = {
     dmap.keys.foldLeft( e )( ( v, key ) => {
       //      println("matching " + v + " against " + key)
-      NaiveIncompleteMatchingAlgorithm.holMatch( key, v )( Nil ) match {
+      NaiveIncompleteMatchingAlgorithm.matchTerm( key, v, Set() ) match {
         case None => v
         case Some( sub ) =>
           val r = sub( dmap( key ) )

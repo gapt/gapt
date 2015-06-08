@@ -1,8 +1,8 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.FOLSubstitution
-import at.logic.gapt.language.fol.Utils.numeral
+import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 
 object SipGrammar {
@@ -50,12 +50,12 @@ case class SipGrammar( productions: Seq[SipGrammar.Production] ) {
 object normalFormsSipGrammar {
   type InstanceLanguage = ( Int, Seq[FOLTerm] )
 
-  // TODO: better convention
-  private def isFormulaSymbol( sym: String ) = sym.startsWith( "tuple" )
-
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
     import SipGrammar._
     val nfs = tratNormalForms( instanceLanguages flatMap ( _._2 ), Seq( gamma, alpha, nu ) )
+
+    // TODO: explicitly handle formula/term symbol distinction
+    val formulaSymbols = instanceLanguages.flatMap( _._2 ).map { case FOLFunction( f, _ ) => f }.toSet
 
     val prods = Set.newBuilder[Production]
 
@@ -63,7 +63,7 @@ object normalFormsSipGrammar {
       val fv = freeVariables( nf )
 
       nf match {
-        case FOLFunction( f, _ ) if isFormulaSymbol( f ) =>
+        case FOLFunction( f, _ ) if formulaSymbols contains f =>
           if ( !fv.contains( nu ) ) prods += tau -> FOLSubstitution( gamma -> beta )( nf )
           prods += tau -> nf
 

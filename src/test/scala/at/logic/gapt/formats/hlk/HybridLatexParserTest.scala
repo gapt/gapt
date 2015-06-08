@@ -1,10 +1,9 @@
 package at.logic.gapt.formats.hlk
 
-import at.logic.gapt.algorithms.hlk._
+import at.logic.gapt.formats.llk._
 import at.logic.gapt.formats.hlk.ast.LambdaAST
-import at.logic.gapt.language.hol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ TA, Ti, To }
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
 

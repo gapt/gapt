@@ -1,12 +1,11 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
-import at.logic.gapt.language.fol.{ FOLSubstitution, Utils }
+import at.logic.gapt.expr.fol.{ Utils, FOLMatchingAlgorithm }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 import at.logic.gapt.utils.dssupport.ListSupport
 
-import scala.collection.mutable
+import scala.collection.{ Set, mutable }
 
 object SameRootSymbol {
   def unapply( terms: Seq[FOLTerm] ): Option[( String, List[List[FOLTerm]] )] =
@@ -36,14 +35,6 @@ object antiUnificator {
   def apply( terms: Seq[FOLTerm] ): FOLTerm = new antiUnificator().apply( terms )
 }
 
-object normalizeNonTerminals {
-  def apply( term: FOLTerm ): FOLTerm = {
-    val renaming: Seq[( FOLVar, FOLTerm )] =
-      freeVariables( term ).distinct.zipWithIndex map { case ( v, i ) => v -> FOLVar( s"β$i" ) }
-    FOLSubstitution( renaming )( term )
-  }
-}
-
 object characteristicPartition {
   def apply( term: FOLTerm ): List[List[LambdaPosition]] =
     LambdaPosition.getPositions( term, _.isInstanceOf[FOLTerm] ).groupBy( term.get ).values.toList
@@ -52,7 +43,7 @@ object characteristicPartition {
 object normalForms {
   def apply( lang: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
     val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 )
-      .map( terms => normalizeNonTerminals( antiUnificator( terms ) ) ).toSet
+      .map( terms => antiUnificator( terms ) )
     val nfs = Set.newBuilder[FOLTerm]
     antiUnifiers foreach { au =>
       val charP = characteristicPartition( au )
@@ -182,12 +173,14 @@ object normalFormsTratGrammar {
     val nfs = tratNormalForms( lang, rhsNonTerminals )
     val nonTerminals = FOLVar( "τ" ) +: rhsNonTerminals
     TratGrammar( nonTerminals( 0 ), nfs flatMap { nf =>
-      freeVariables( nf ) match {
-        case Nil => nonTerminals map { v => v -> nf }
-        case fvs =>
+      val fvs = freeVariables( nf )
+      val possibleLhsVars =
+        if ( fvs.isEmpty ) nonTerminals
+        else {
           val lowestIndex = fvs.map( nonTerminals.indexOf( _ ) ).min
-          ( 0 until lowestIndex ) map { v => nonTerminals( v ) -> nf }
-      }
+          ( 0 until lowestIndex ) map ( nonTerminals( _ ) )
+        }
+      possibleLhsVars map { v => v -> nf }
     } )
   }
 }

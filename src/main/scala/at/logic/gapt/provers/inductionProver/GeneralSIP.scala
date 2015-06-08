@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.{ ContractionLeftMacroRule, ForallLeftRule, ForallRightRule, Axiom }
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 
@@ -37,6 +37,7 @@ class SchematicSIP( Gamma0: List[FOLFormula], Gamma1: List[FOLFormula], Gamma2: 
   val Sequent1 = FSequent( Gamma1 ++ Xt, List( X( alpha, snu, gamma ) ) )
 
   private val Xu = u map { X( alpha, alpha, _ ) }
+
   val Sequent2 = FSequent( Gamma2 ++ Xu, List( B ) )
 }
 
@@ -80,4 +81,5 @@ class SimpleInductionProof( Gamma0: List[FOLFormula], Gamma1: List[FOLFormula], 
 
 object SimpleInductionProof {
   val y = FOLVar( "y" )
+
 }

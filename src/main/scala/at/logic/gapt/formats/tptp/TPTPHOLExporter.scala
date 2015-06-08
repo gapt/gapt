@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
 
 /**
@@ -125,10 +125,7 @@ class TPTPHOLExporter {
     }
   } )
 
-  def closedFormula( fs: FSequent ): HOLFormula = {
-    val f = fs.toFormula
-    freeVariables( f ).foldRight( f )( ( v, g ) => All( v, g ) )
-  }
+  def closedFormula( fs: FSequent ): HOLFormula = univclosure( fs.toFormula )
 
   def createNamesFromConst( l: List[Const] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {
     if ( map contains v )

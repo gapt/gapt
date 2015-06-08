@@ -5,22 +5,20 @@
  */
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.language.hol.toLatexString
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.utils.ds.acyclicGraphs._
-import at.logic.gapt.proofs.lk.base._
-import scala.collection.immutable.HashSet
+import at.logic.gapt.expr.fol.{ FOLSubstitution }
+import at.logic.gapt.formats.llk.toLatexString
 import at.logic.gapt.proofs.lk.EquationVerifier._
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.occurrences.FormulaOccurrence
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ EquationVerifier, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lksk.UnaryLKskProof
-import at.logic.gapt.language.fol.{ FOLSubstitution }
+import at.logic.gapt.proofs.occurrences.FormulaOccurrence
+import at.logic.gapt.proofs.occurrences._
+import at.logic.gapt.proofs.proofs._
+import at.logic.gapt.utils.ds.acyclicGraphs._
 import at.logic.gapt.utils.logging.Logger
 import org.slf4j.LoggerFactory
+import scala.collection.immutable.HashSet
 
 package robinson {
 
@@ -222,7 +220,7 @@ package robinson {
 
     def apply( p: RobinsonResolutionProof ): ResolutionProof[Clause] = {
       // TODO: refactor the following into Sequent.getFreeAndBoundVariables
-      val vars = p.root.occurrences.foldLeft( HashSet[FOLVar]() )( ( m, f ) => m ++ freeVariables( f.formula.asInstanceOf[FOLFormula] ) )
+      val vars = p.root.occurrences.foldLeft( HashSet[FOLVar]() )( ( m, f ) => m ++ freeVariables( f.formula.asInstanceOf[FOLFormula] ).toList )
       // TODO: should not be necessary to pass argument Ti() here.
       // we return an actual variant only if there are free variables, otherwise we return the parent proof as it does not change
       if ( vars.isEmpty ) p

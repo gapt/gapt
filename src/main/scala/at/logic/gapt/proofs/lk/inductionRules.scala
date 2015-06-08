@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol._
-import at.logic.gapt.language.fol.algorithms.FOLMatchingAlgorithm
+import at.logic.gapt.expr.fol._
+import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.proofs.BinaryRuleTypeA

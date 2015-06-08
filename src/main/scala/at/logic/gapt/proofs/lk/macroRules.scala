@@ -4,13 +4,11 @@
 
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.language.fol.instantiateAll
-import at.logic.gapt.language.hol.HOLPosition
-import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.utils.ds.trees._
+import at.logic.gapt.expr.hol.{ instantiate, HOLPosition }
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.occurrences._
+import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable.ListBuffer
 
@@ -188,7 +186,7 @@ object ExistsRightBlock {
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof s1.
    */
   def apply( s1: LKProof, main: FOLFormula, terms: Seq[FOLTerm] ): LKProof = {
-    val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiateAll( main, terms.take( n ) ) ).toList
+    val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) ).toList
 
     //partiallyInstantiatedMains.foreach(println)
 
@@ -227,7 +225,7 @@ object ForallLeftBlock {
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof s1.
    */
   def apply( s1: LKProof, main: FOLFormula, terms: Seq[FOLTerm] ): LKProof = {
-    val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiateAll( main, terms.take( n ) ) ).toList
+    val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) ).toList
 
     //partiallyInstantiatedMains.foreach(println)
 
@@ -268,7 +266,7 @@ object ForallRightBlock {
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof s1.
    */
   def apply( s1: LKProof, main: FOLFormula, eigenvariables: Seq[FOLVar] ): LKProof = {
-    val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiateAll( main, eigenvariables.take( n ) ) ).toList
+    val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) ).toList
 
     //partiallyInstantiatedMains.foreach(println)
 

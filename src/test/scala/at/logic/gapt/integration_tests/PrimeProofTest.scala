@@ -2,13 +2,11 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
-import at.logic.gapt.proofs.lk.algorithms.subsumption._
+import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.algorithms.{ getStatistics, deleteTautologies, eliminateDefinitions }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.language.hol._
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.latex.SequentsListLatexExporter
 import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
@@ -18,13 +16,10 @@ import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriTProver
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.StandardClauseSet
-import at.logic.gapt.proofs.algorithms.ceres.clauseSets.profile._
-import at.logic.gapt.proofs.algorithms.ceres.projections.Projections
-import at.logic.gapt.proofs.algorithms.ceres.struct.{ StructCreators, structToExpressionTree }
-import at.logic.gapt.proofs.algorithms.herbrandExtraction.extractExpansionSequent
-import at.logic.gapt.proofs.algorithms.skolemization.lksk.LKtoLKskc
-import at.logic.gapt.proofs.algorithms.skolemization.skolemize
+import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
+import at.logic.gapt.proofs.ceres.clauseSets.profile._
+import at.logic.gapt.proofs.ceres.projections.Projections
+import at.logic.gapt.proofs.ceres.struct.{ StructCreators, structToExpressionTree }
 
 /* comment out until atp works again
 import at.logic.gapt.provers.atp.Prover
@@ -152,7 +147,7 @@ class PrimeProofTest extends Specification {
         if ( veriT.isInstalled ) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
           val definitionFreeProof = eliminateDefinitions( proof ) // can't extract ETs in the presence of definitions currently
-          val etSeq = extractExpansionSequent( definitionFreeProof, false )
+          val etSeq = LKToExpansionProof( definitionFreeProof )
           val fSequent = toDeep( etSeq )
           veriT.isValid( fSequent ) must beTrue
         }

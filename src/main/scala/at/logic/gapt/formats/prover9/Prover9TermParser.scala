@@ -1,9 +1,8 @@
 package at.logic.gapt.formats.prover9
 
-import at.logic.gapt.language.fol.FOLSubstitution
-
 import util.parsing.combinator.JavaTokenParsers
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
 import scala.util.parsing.combinator.PackratParsers
 import scala.collection.immutable.HashSet
@@ -166,7 +165,7 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   }
 
   def normalizeFormula( f: FOLFormula ): FOLFormula = {
-    val freevars: List[( FOLVar, Int )] = freeVariables( f ).zipWithIndex
+    val freevars: List[( FOLVar, Int )] = freeVariables( f ).toList.zipWithIndex
     val pairs: List[( FOLVar, FOLVar )] = freevars.map( x => { ( x._1, FOLVar( "v" + x._2 ) ) } )
     val nf: FOLFormula = FOLSubstitution( pairs )( f )
     nf

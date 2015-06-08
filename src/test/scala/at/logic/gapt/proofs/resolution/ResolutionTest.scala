@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.language.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.FOLSubstitution
 import org.specs2.mutable._
 
 import at.logic.gapt.proofs.resolution.robinson._

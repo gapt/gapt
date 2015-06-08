@@ -10,8 +10,6 @@ package at.logic.gapt.utils.ds.mutable
 import org.specs2.mutable._
 
 import at.logic.gapt.utils.ds.mutable.trees._
-//import at.logic.calculi.lk.base._
-//import at.logic.gapt.language.hol._
 import scala.util.parsing.combinator._
 
 class treesTest extends Specification {
