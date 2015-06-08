@@ -20,9 +20,9 @@ object VeriTExporter {
     // Define the logic
     val logic = "(set-logic QF_UF)\n"
     // Declare the function and predicate symbols with arity
-    val symbols = getSymbolsDeclaration( ( s._1 ++ s._2 ).asInstanceOf[List[FOLFormula]] )
+    val symbols = getSymbolsDeclaration( ( s._1 ++ s._2 ).map( _.asInstanceOf[FOLFormula] ) )
     // Generate assertions for the antecedent and succedent formulas
-    val asserts = getAssertions( s._1.asInstanceOf[List[FOLFormula]], s._2.asInstanceOf[List[FOLFormula]] )
+    val asserts = getAssertions( s._1.map( _.asInstanceOf[FOLFormula] ), s._2.map( _.asInstanceOf[FOLFormula] ) )
     // Generate the check_sat formula
     val check_sat = "(check-sat)"
 
@@ -46,7 +46,7 @@ object VeriTExporter {
     file
   }
 
-  private def getAssertions( ant: List[FOLFormula], succ: List[FOLFormula] ) = {
+  private def getAssertions( ant: Seq[FOLFormula], succ: Seq[FOLFormula] ) = {
     val s1 = ant.foldLeft( "" ) {
       case ( acc, f ) =>
         "(assert " + toSMTFormat( f ) + ")\n" + acc
@@ -62,7 +62,7 @@ object VeriTExporter {
   }
 
   // Gets all the symbols and arities that occur in the formulas of the list
-  private def getSymbolsDeclaration( flst: List[FOLFormula] ) = {
+  private def getSymbolsDeclaration( flst: Seq[FOLFormula] ) = {
     val symbols = flst.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) =>
       getSymbols( f ) ++ acc )
     symbols.foldLeft( "(declare-sort S 0)\n" ) {
