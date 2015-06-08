@@ -2,9 +2,12 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ETWeakQuantifier, merge, ETAtom }
+import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 
 class InductionProverTest extends Specification {
+
+  if ( !Prover9.isInstalled ) skipAll
 
   "the SimpleInductionProof class" should {
     val zero = FOLConst( "0" )
