@@ -5,6 +5,7 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
+import at.logic.gapt.provers.prover9.Prover9Prover
 
 class GeneralSIP( val ExpSeq0: ExpansionSequent, val ExpSeq1: ExpansionSequent, val ExpSeq2: ExpansionSequent, val B: FOLFormula, val t: List[FOLTerm], val u: List[FOLTerm] ) {
   import GeneralSIP._
@@ -71,25 +72,31 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
   val Sequent2 = FSequent( Gamma2 ++ Fu, List( B ) )
 
   def toLKProof: LKProof = {
-    val inductionBaseAxiom = Axiom( Sequent0 )
-    val inductionBase1 = ForallRightRule( inductionBaseAxiom, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), gamma )
+    val p9prover = new Prover9Prover
 
-    val inductionStepAxiom = Axiom( Sequent1 )
-    val inductionStep1 = ForallRightRule( inductionStepAxiom, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
+    val pi0 = p9prover.getLKProof(Sequent0).get
+    val inductionBase1 = proofFromInstances(pi0, ExpSeq0)
+    val inductionBase2 = ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), gamma )
+
+    val pi1 = p9prover.getLKProof(Sequent1).get
+    val inductionStep1 = proofFromInstances(pi1, ExpSeq1)
     val inductionStep2 = t.foldLeft( inductionStep1 ) {
       ( acc, ti ) => ForallLeftRule( acc, F( alpha, nu, ti ), All( y, F( alpha, nu, y ) ), ti )
     }
-    val inductionStep3 = ContractionLeftMacroRule( inductionStep2, All( y, F( alpha, nu, y ) ) )
+    val inductionStep3 = ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
 
-    val conclusionAxiom = Axiom( Sequent2 )
-    val conclusion1 = u.foldLeft( conclusionAxiom.asInstanceOf[LKProof] ) {
+    val inductionStep4 = ContractionLeftMacroRule( inductionStep3, All( y, F( alpha, nu, y ) ) )
+
+    val pi2 = p9prover.getLKProof(Sequent1).get
+    val conclusion1 = proofFromInstances(pi2, ExpSeq2)
+    val conclusion2 = u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
       ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
     }
-    val conclusion2 = ContractionLeftMacroRule( conclusion1, All( y, F( alpha, alpha, y ) ) )
+    val conclusion3 = ContractionLeftMacroRule( conclusion2, All( y, F( alpha, alpha, y ) ) )
 
     val inductionProof = InductionRule( inductionBase1, inductionStep3, All( y, F( alpha, zero, y ) ), All( y, F( alpha, nu, y ) ), All( y, F( alpha, snu, y ) ), alpha )
 
-    CutRule( inductionProof, conclusion2, All( y, F( alpha, alpha, y ) ) )
+    CutRule( inductionProof, conclusion3, All( y, F( alpha, alpha, y ) ) )
   }
 }
 
