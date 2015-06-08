@@ -1,14 +1,14 @@
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{extractExpansionSequent, time, parse}
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{time, parse}
 import at.logic.gapt.examples.UniformAssociativity3ExampleProof
+import at.logic.gapt.expr.fol.toNNF
+import at.logic.gapt.expr.hol.lcomp
+import at.logic.gapt.expr.hol.simplify.simplify
 import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, normalFormsSipGrammar, GrammarMinimizationFormula}
-import at.logic.gapt.language.fol.toNNF
-import at.logic.gapt.language.hol.algorithms.simplify.simplify
-import at.logic.gapt.language.hol.lcomp
 import at.logic.gapt.proofs.expansionTrees.{removeFromExpansionSequent, ExpansionSequent}
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
+import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.cutIntroduction.TermsExtraction
 import at.logic.gapt.provers.maxsat.QMaxSAT
-import at.logic.gapt.provers.sat4j.Sat4j
 
 def removeEqAxioms( eseq: ExpansionSequent ) = {
   // removes all equality axioms that appear in examples/ProofSequences.scala
@@ -33,7 +33,7 @@ val instanceLanguages = ((1 until N) map { n =>
   val instanceProof = UniformAssociativity3ExampleProof(n)
 //  val instanceProof = LinearEqExampleProof(n)
 //  val instanceProof = FactorialFunctionEqualityExampleProof(n)
-  val instanceLanguage = TermsExtraction(removeEqAxioms(extractExpansionSequent(instanceProof))).set
+  val instanceLanguage = TermsExtraction(removeEqAxioms(LKToExpansionProof(instanceProof))).set
   println(s"Instance sequent: ${instanceProof.root}")
   println(s"Instance language:"); instanceLanguage foreach println; println
   n -> instanceLanguage
