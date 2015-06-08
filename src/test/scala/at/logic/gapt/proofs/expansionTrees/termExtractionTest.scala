@@ -51,7 +51,7 @@ class TermExtractionTest extends Specification {
     }
     "decode correctly" in {
       encoding.decode( encoding.encode( FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) -> true ) ) must_==
-        Some( FOLAtom( "P", FOLConst( "c" ), FOLVar( "y" ) ) -> true )
+        ( FOLAtom( "P", FOLConst( "c" ), FOLVar( "y" ) ) -> true )
     }
   }
 }

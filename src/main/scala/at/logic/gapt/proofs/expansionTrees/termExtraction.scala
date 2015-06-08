@@ -121,11 +121,22 @@ case class InstanceTermEncoding( endSequent: FSequent ) {
    *
    * The resulting instance can contain alpha in the inductive case.
    */
-  def decode( term: FOLTerm ): Option[PolarizedFormula] = term match {
+  def decodeOption( term: FOLTerm ): Option[PolarizedFormula] = term match {
     case FOLFunction( f, args ) =>
       findESFormula( f ).map {
         case ( esFormula, pol ) =>
           instantiate( esFormula, args ) -> pol
       }
+  }
+
+  def decode( term: FOLTerm ): PolarizedFormula = decodeOption( term ).get
+
+  def decode( terms: Iterable[FOLTerm] ): Set[PolarizedFormula] =
+    terms map decode toSet
+
+  def decodeToFSequent( terms: Iterable[FOLTerm] ): FSequent = {
+    val instances = decode( terms ).toList
+    FSequent( instances.filter( _._2 == true ).map( _._1 ),
+      instances.filter( _._2 == false ).map( _._1 ) )
   }
 }
