@@ -18,13 +18,13 @@ class GeneralSIP( val ExpSeq0: ExpansionSequent, val ExpSeq1: ExpansionSequent, 
   val Gamma1 = toDeep( ExpSeq1 ).antecedent.toList.asInstanceOf[List[FOLFormula]]
   val Gamma2 = toDeep( ExpSeq2 ).antecedent.toList.asInstanceOf[List[FOLFormula]]
 
-  require( List( alpha, beta ) contains freeVariables( Gamma0 ), "Gamma0 contains free variables other than α, β" )
-  require( List( alpha, nu, gamma ) contains freeVariables( Gamma1 ), "Gamma1 contains free variables other than α, ν, γ" )
-  require( List( alpha ) contains freeVariables( Gamma2 ), "Gamma2 contains free variables other than α" )
-  require( List( alpha ) contains freeVariables( B ), "B contains free variables other than α" )
+  require( freeVariables( Gamma0 ) subsetOf Set( alpha, beta ), freeVariables( Gamma0 ).toString )
+  require( freeVariables( Gamma1 ) subsetOf Set( alpha, nu, gamma ), freeVariables( Gamma1 ).toString )
+  require( freeVariables( Gamma2 ) subsetOf Set( alpha ), freeVariables( Gamma2 ).toString )
+  require( freeVariables( B ) subsetOf Set( alpha ), "B contains free variables other than α" )
 
-  require( List( alpha ) contains freeVariables( u ), "A term in u contains free variables other than α" )
-  require( List( alpha, nu, gamma ) contains freeVariables( t ), "A term in t contains free variables other than α, ν, γ" )
+  require( freeVariables( u ) subsetOf Set( alpha ), "A term in u contains free variables other than α" )
+  require( freeVariables( t ) subsetOf Set( alpha, nu, gamma ), "A term in t contains free variables other than α, ν, γ" )
 }
 
 object GeneralSIP {
@@ -56,7 +56,7 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
   import GeneralSIP._
   import SimpleInductionProof._
 
-  require( List( alpha, nu, gamma ) contains freeVariables( inductionFormula ), "inductionFormula contains free variables other than α, ν, γ" )
+  require( freeVariables( inductionFormula ) subsetOf Set( alpha, nu, gamma ), "inductionFormula contains free variables other than α, ν, γ" )
 
   private def F( x1: FOLTerm, x2: FOLTerm, x3: FOLTerm ): FOLFormula = {
     val sub = FOLSubstitution( List( alpha -> x1, nu -> x2, gamma -> x3 ) )
@@ -74,12 +74,12 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
   def toLKProof: LKProof = {
     val p9prover = new Prover9Prover
 
-    val pi0 = p9prover.getLKProof(Sequent0).get
-    val inductionBase1 = proofFromInstances(pi0, ExpSeq0)
-    val inductionBase2 = ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), gamma )
+    val pi0 = p9prover.getLKProof( Sequent0 ).get
+    val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
+    val inductionBase2 = ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), beta )
 
-    val pi1 = p9prover.getLKProof(Sequent1).get
-    val inductionStep1 = proofFromInstances(pi1, ExpSeq1)
+    val pi1 = p9prover.getLKProof( Sequent1 ).get
+    val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
     val inductionStep2 = t.foldLeft( inductionStep1 ) {
       ( acc, ti ) => ForallLeftRule( acc, F( alpha, nu, ti ), All( y, F( alpha, nu, y ) ), ti )
     }
@@ -87,14 +87,14 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
 
     val inductionStep4 = ContractionLeftMacroRule( inductionStep3, All( y, F( alpha, nu, y ) ) )
 
-    val pi2 = p9prover.getLKProof(Sequent1).get
-    val conclusion1 = proofFromInstances(pi2, ExpSeq2)
+    val pi2 = p9prover.getLKProof( Sequent2 ).get
+    val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
     val conclusion2 = u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
       ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
     }
     val conclusion3 = ContractionLeftMacroRule( conclusion2, All( y, F( alpha, alpha, y ) ) )
 
-    val inductionProof = InductionRule( inductionBase1, inductionStep3, All( y, F( alpha, zero, y ) ), All( y, F( alpha, nu, y ) ), All( y, F( alpha, snu, y ) ), alpha )
+    val inductionProof = InductionRule( inductionBase2, inductionStep4, All( y, F( alpha, zero, y ) ), All( y, F( alpha, nu, y ) ), All( y, F( alpha, snu, y ) ), alpha )
 
     CutRule( inductionProof, conclusion3, All( y, F( alpha, alpha, y ) ) )
   }

@@ -1367,7 +1367,8 @@ object proofFromInstances {
    * @param es An ExpansionSequent in which all shallow formulas are prenex and which contains no strong or Skolem quantifiers.
    * @return A proof starting with s1 and ending with the deep sequent of es.
    */
-  def apply( s1: LKProof, es: ExpansionSequent ): LKProof = ( es.antecedent ++ es.succedent ).foldLeft( s1 )( apply )
+  def apply( s1: LKProof, es: ExpansionSequent ): LKProof =
+    ( es.antecedent ++ es.succedent ).foldLeft( s1 )( apply )
 
   /**
    *
