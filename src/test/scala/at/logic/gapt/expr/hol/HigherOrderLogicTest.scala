@@ -267,22 +267,10 @@ class HigherOrderLogicTest extends Specification {
     }
 
     "Fail to match other formulas" in {
-      exP match {
-        case AllBlock( _, _ ) => failure
-        case _                =>
-      }
-
-      allP match {
-        case ExBlock( _, _ ) => failure
-        case _               =>
-      }
-
-      Pxyz match {
-        case AllBlock( _, _ ) | ExBlock( _, _ ) => failure
-        case _                                  =>
-      }
-
-      success
+      exP must beLike { case AllBlock( List(), _ ) => ok }
+      allP must beLike { case ExBlock( List(), _ ) => ok }
+      Pxyz must beLike { case AllBlock( List(), _ ) => ok }
+      Pxyz must beLike { case ExBlock( List(), _ ) => ok }
     }
   }
 }
