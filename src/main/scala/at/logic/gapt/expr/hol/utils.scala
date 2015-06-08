@@ -314,7 +314,7 @@ object univclosure {
    */
   def apply( f: HOLFormula ): HOLFormula = freeVariables( f ).foldRight( f )( ( v, g ) => All( v, g ) )
 
-  def apply( f: FOLFormula ): FOLFormula = apply( f ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 
 object existsclosure {
@@ -325,7 +325,7 @@ object existsclosure {
    */
   def apply( f: HOLFormula ): HOLFormula = freeVariables( f ).foldRight( f )( ( v, g ) => Ex( v, g ) )
 
-  def apply( f: FOLFormula ): FOLFormula = apply( f ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 
 object removeQuantifiers {
