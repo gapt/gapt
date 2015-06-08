@@ -24,15 +24,13 @@ object ExBlock {
   def apply( vars: List[FOLVar], sub: FOLFormula ): FOLFormula = apply( vars.asInstanceOf[List[Var]], sub.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 
   /**
-   * TODO: better semantics may be: match all HOLFormulas, but return empty list of vars in case formula does not start with Ex.
    * @param expression A LambdaExpression
    * @return If expression begins with an ∃-block: a pair consisting of the variables of the block and the quantified subformula.
    */
   def unapply( expression: LambdaExpression ): Option[( List[Var], HOLFormula )] = expression match {
     case f: HOLFormula =>
       val ( vars, sub ) = unapplyHelper( f )
-      if ( vars.nonEmpty ) Some( ( vars, sub ) )
-      else None
+      Some( ( vars, sub ) )
     case _ => None
   }
 
@@ -75,8 +73,7 @@ object AllBlock {
   def unapply( expression: LambdaExpression ) = expression match {
     case f: HOLFormula =>
       val ( vars, sub ) = unapplyHelper( f )
-      if ( vars.nonEmpty ) Some( ( vars, sub ) )
-      else None
+      Some( ( vars, sub ) )
     case _ => None
   }
 
@@ -314,7 +311,7 @@ object univclosure {
    */
   def apply( f: HOLFormula ): HOLFormula = freeVariables( f ).foldRight( f )( ( v, g ) => All( v, g ) )
 
-  def apply( f: FOLFormula ): FOLFormula = apply( f ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 
 object existsclosure {
@@ -325,7 +322,7 @@ object existsclosure {
    */
   def apply( f: HOLFormula ): HOLFormula = freeVariables( f ).foldRight( f )( ( v, g ) => Ex( v, g ) )
 
-  def apply( f: FOLFormula ): FOLFormula = apply( f ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 
 object removeQuantifiers {

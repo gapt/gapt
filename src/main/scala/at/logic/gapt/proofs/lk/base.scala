@@ -50,6 +50,8 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
    */
   def formulas: Seq[HOLFormula] = antecedent ++ succedent
 
+  def polarizedFormulas: Seq[( HOLFormula, Boolean )] = antecedent.map( _ -> true ) ++ succedent.map( _ -> false )
+
   /**
    * Takes the multiset difference between two sequents, i.e. each side separately.
    */

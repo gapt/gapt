@@ -330,6 +330,9 @@ class ExpansionSequent( val antecedent: Seq[ExpansionTree], val succedent: Seq[E
     ( antecedent, succedent )
   }
 
+  def polarizedTrees: Seq[( ExpansionTree, Boolean )] =
+    antecedent.map( _ -> true ) ++ succedent.map( _ -> false )
+
   def map( f: ExpansionTree => ExpansionTree ): ExpansionSequent = {
     new ExpansionSequent( antecedent.map( f ), succedent.map( f ) )
   }

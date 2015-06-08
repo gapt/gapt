@@ -4,11 +4,12 @@ import at.logic.gapt.expr.fol.toNNF
 import at.logic.gapt.expr.hol.lcomp
 import at.logic.gapt.expr.hol.simplify.simplify
 import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, normalFormsSipGrammar, GrammarMinimizationFormula}
-import at.logic.gapt.proofs.expansionTrees.{removeFromExpansionSequent, ExpansionSequent}
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.lk.cutIntroduction.TermsExtraction
 import at.logic.gapt.provers.maxsat.QMaxSAT
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 
 def removeEqAxioms( eseq: ExpansionSequent ) = {
   // removes all equality axioms that appear in examples/ProofSequences.scala
@@ -28,20 +29,33 @@ def removeEqAxioms( eseq: ExpansionSequent ) = {
 }
 
 val N = 5
-val instanceLanguages = ((1 until N) map { n =>
-  println(s"Proving for n=$n")
+var instanceSequents = (1 until N) map { n =>
   val instanceProof = UniformAssociativity3ExampleProof(n)
 //  val instanceProof = LinearEqExampleProof(n)
 //  val instanceProof = FactorialFunctionEqualityExampleProof(n)
-  val instanceLanguage = TermsExtraction(removeEqAxioms(LKToExpansionProof(instanceProof))).set
-  println(s"Instance sequent: ${instanceProof.root}")
-  println(s"Instance language:"); instanceLanguage foreach println; println
-  n -> instanceLanguage
-}) :+ (0 -> Seq(parse.p9term("tuple2(0)"))) // FIXME: fix associativity proof to do n=0 as well
+  n -> removeEqAxioms(LKToExpansionProof(instanceProof))
+}
+
+val endSequent = FSequent(
+  instanceSequents.flatMap{ case (n,seq) => toShallow(seq).antecedent }.distinct,
+  Seq(parseFormula("(x + x) + x = x + (x + x)"))
+)
+println(s"End-sequent of the sip: $endSequent")
+
+val encoding = InstanceTermEncoding(endSequent)
+var instanceLanguages = instanceSequents.map { case (n, seq) =>
+  n -> encoding.encode(seq)
+}
+// patch up missing case for n=0
+instanceLanguages = instanceLanguages ++
+  Seq(0 -> Seq(encoding.encode(parseFormula("0+0=0") -> true)))
+instanceLanguages foreach { case (n, l) =>
+  println(s"Instance language for n=$n:\n${l.mkString("\n")}\n")
+}
 
 println(s"Covering grammar consisting of all normal forms:")
 val nfGrammar = time { normalFormsSipGrammar(instanceLanguages) }
-//nfGrammar.productions foreach println; println
+//println(nfGrammar)
 println(s"${nfGrammar.productions.size} productions.")
 
 val logicalComp = lcomp(simplify(toNNF(SipGrammarMinimizationFormula(nfGrammar).coversLanguageFamily(instanceLanguages))))
@@ -50,12 +64,10 @@ println(s"Logical complexity of the minimization formula: $logicalComp")
 println(s"Minimized grammar:")
 val minGrammar = time { minimizeSipGrammar(nfGrammar, instanceLanguages, maxSATSolver = new QMaxSAT()) }
 println(minGrammar)
+println()
 
 instanceLanguages foreach { case (n, instanceLanguage) =>
-  println(s"Checking covering for n=$n: ")
   val instanceGrammar = minGrammar.instanceGrammar(n)
-//  println("Instance language:"); instanceLanguage foreach println
-//  println("Instance grammar:"); instanceGrammar.productions foreach println
-  println("Is it covered? " + (instanceLanguage.toSet diff instanceGrammar.language).isEmpty)
-  println
+  println(s"Instance language for n=$n covered? " + (instanceLanguage.toSet diff instanceGrammar.language).isEmpty)
+//  println(s"Instance grammar:\n$instanceGrammar")
 }
