@@ -704,7 +704,7 @@ class LKTest extends Specification {
     val zero = FOLConst( "0" )
     val x = FOLVar( "x" )
     val y = FOLVar( "y" )
-    val Sx = FOLFunction( "S", List( x ) )
+    val Sx = FOLFunction( "s", List( x ) )
 
     val P0y = FOLAtom( "P", List( zero, y ) )
     val Pxy = FOLAtom( "P", List( x, y ) )
@@ -718,20 +718,7 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx )
-
-      success
-    }
-
-    "correctly construct a small induction proof if only the main formula is given" in {
-      val ax1 = Axiom( List( P0y ), List( P0y ) )
-      val occZero = ax1.root.succedent.head
-
-      val ax2 = Axiom( List( Pxy ), List( PSxy ) )
-      val occX = ax2.root.antecedent.head
-      val occSx = ax2.root.succedent.head
-
-      InductionRule( ax1, ax2, Pxy )
+      InductionRule( ax1, ax2, occZero, occX, occSx, x )
 
       success
     }
@@ -747,7 +734,7 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
     }
 
     "fail if more than one variable needs to be substituted" in {
@@ -761,7 +748,7 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
     }
 
     "fail if different variables need to be substituted" in {
@@ -775,7 +762,7 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
     }
 
     "fail if the eigenvariable condition is not satisfied" in {
@@ -787,13 +774,13 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
 
       val ax2_ = Axiom( List( Pxy ), List( PSxy, Qx ) )
       val occX_ = ax2_.root.antecedent.head
       val occSx_ = ax2_.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
     }
   }
   /*

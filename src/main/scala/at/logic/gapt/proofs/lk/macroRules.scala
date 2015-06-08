@@ -1542,12 +1542,12 @@ object applyRecursive {
         throw new LKRuleCreationException( "Couldn't find descendants of " + a1 + " and " + a2 + "." )
       f( EquationRight2Rule( subProof1, subProof2, a1New.get, a2New.get, pos( 0 ) ) )
 
-    case InductionRule( up1, up2, _, a1, a2, a3, _ ) =>
+    case InductionRule( up1, up2, _, a1, a2, a3, _, term ) =>
       val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
       val ( a1New, a2New, a3New ) = ( subProof1.root.succedent.find( _ =^= a1 ), subProof2.root.antecedent.find( _ =^= a2 ), subProof2.root.succedent.find( _ =^= a3 ) )
       if ( a1New.isEmpty || a2New.isEmpty || a3New.isEmpty )
         throw new LKRuleCreationException( "Couldn't find descendants of " + a1 + ", " + a2 + ", " + a3 + "." )
-      f( InductionRule( subProof1, subProof2, a1New.get, a2New.get, a3New.get ) )
+      f( InductionRule( subProof1, subProof2, a1New.get, a2New.get, a3New.get, term ) )
 
   }
 }

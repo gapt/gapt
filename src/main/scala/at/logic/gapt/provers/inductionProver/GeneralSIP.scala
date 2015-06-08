@@ -2,7 +2,7 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.{ ContractionLeftMacroRule, ForallLeftRule, ForallRightRule, Axiom }
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 
 class GeneralSIP( val Gamma0: List[FOLFormula], val Gamma1: List[FOLFormula], val Gamma2: List[FOLFormula], val B: FOLFormula, val t: List[FOLTerm], val u: List[FOLTerm] ) {
@@ -60,12 +60,12 @@ class SimpleInductionProof( Gamma0: List[FOLFormula], Gamma1: List[FOLFormula], 
   val Fu = u map { F( alpha, alpha, _ ) }
   val Sequent2 = FSequent( Gamma2 ++ Fu, List( B ) )
 
-  def toLKProof = {
+  def toLKProof: LKProof = {
     val inductionBaseAxiom = Axiom( Sequent0 )
-    val inductionBase1 = ForallRightRule( inductionBaseAxiom, F( alpha, zero, beta ), F( alpha, zero, y ), gamma )
+    val inductionBase1 = ForallRightRule( inductionBaseAxiom, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), gamma )
 
     val inductionStepAxiom = Axiom( Sequent1 )
-    val inductionStep1 = ForallRightRule( inductionStepAxiom, F( alpha, snu, gamma ), F( alpha, snu, y ), gamma )
+    val inductionStep1 = ForallRightRule( inductionStepAxiom, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
     val inductionStep2 = t.foldLeft( inductionStep1 ) {
       ( acc, ti ) => ForallLeftRule( acc, F( alpha, nu, ti ), All( y, F( alpha, nu, y ) ), ti )
     }
@@ -76,6 +76,10 @@ class SimpleInductionProof( Gamma0: List[FOLFormula], Gamma1: List[FOLFormula], 
       ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
     }
     val conclusion2 = ContractionLeftMacroRule( conclusion1, All( y, F( alpha, alpha, y ) ) )
+
+    val inductionProof = InductionRule( inductionBase1, inductionStep3, All( y, F( alpha, zero, y ) ), All( y, F( alpha, nu, y ) ), All( y, F( alpha, snu, y ) ), alpha )
+
+    CutRule( inductionProof, conclusion2, All( y, F( alpha, alpha, y ) ) )
   }
 }
 
