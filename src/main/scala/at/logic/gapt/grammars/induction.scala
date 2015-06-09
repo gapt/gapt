@@ -51,11 +51,21 @@ object normalFormsSipGrammar {
   type InstanceLanguage = ( Int, Seq[FOLTerm] )
 
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
-    import SipGrammar._
-    val nfs = tratNormalForms( instanceLanguages flatMap ( _._2 ), Seq( gamma, alpha, nu ) )
+    val allTerms = instanceLanguages.flatMap( _._2 )
 
     // TODO: explicitly handle formula/term symbol distinction
-    val formulaSymbols = instanceLanguages.flatMap( _._2 ).map { case FOLFunction( f, _ ) => f }.toSet
+    val formulaSymbols = allTerms map { case FOLFunction( f, _ ) => f } toSet
+
+    allTerms foreach {
+      case term @ FOLFunction( _, args ) =>
+        val nonFormulaSymbols = args flatMap ( constants( _ ) ) map ( _.name ) toSet
+
+        require( freeVariables( term ) isEmpty, s"Term $term in instance language is not closed." )
+        require( ( formulaSymbols intersect nonFormulaSymbols ) isEmpty )
+    }
+
+    import SipGrammar._
+    val nfs = tratNormalForms( instanceLanguages flatMap ( _._2 ), Seq( gamma, alpha, nu ) )
 
     val prods = Set.newBuilder[Production]
 
