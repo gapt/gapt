@@ -33,13 +33,17 @@ val factorialES = FSequent(
     FOLFunction("g", FOLConst("1"), alpha),
     FOLFunction("f", alpha))))
 
+val generalES = FSequent(
+  Seq("P(0,x)", "P(x,f(y)) & P(x,g(y)) -> P(s(x),y)")
+    map (s => univclosure(parseFormula(s))),
+  Seq(FOLAtom("P", alpha, FOLConst("c"))))
+
 val linearES = FSequent(
   Seq("P(x) -> P(s(x))", "P(0)")
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("P", alpha)))
 
-// The only end-sequent that we can handle ATM...
-val endSequent = linearES
+val endSequent = generalES
 
 var instanceProofs = (0 until 3) map { n =>
   val instanceSequent = FOLSubstitution(alpha -> Utils.numeral(n)).apply(endSequent)
