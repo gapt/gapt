@@ -109,27 +109,31 @@ abstract class LambdaExpression {
   def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
   override def toString = this match {
-    case All( Var( x, Ti ), e )  => s"∀$x.$e"
-    case All( Var( x, t ), e )   => s"∀$x:$t.$e"
-    case Ex( Var( x, Ti ), e )   => s"∃$x.$e"
-    case Ex( Var( x, t ), e )    => s"∃$x:$t.$e"
-    case And( x, y )             => s"($x∧$y)"
-    case Or( x, y )              => s"($x∨$y)"
-    case Imp( x, y )             => s"($x⊃$y)"
-    case Neg( x )                => s"¬$x"
-    case Bottom()                => "⊥"
-    case Top()                   => "⊤"
+    case Eq( x, y )                      => s"$x=$y"
+    case Neg( Eq( x, y ) )               => s"$x≠$y"
+    case FOLFunction( "+", Seq( x, y ) ) => s"($x+$y)"
+    case FOLFunction( "*", Seq( x, y ) ) => s"($x*$y)"
 
-    case Eq( x, y )              => s"$x=$y"
-    case FOLAtom( r, Seq() )     => s"$r"
-    case FOLFunction( f, Seq() ) => s"$f"
-    case FOLAtom( r, xs )        => s"$r(${xs mkString ","})"
-    case FOLFunction( f, xs )    => s"$f(${xs mkString ","})"
+    case All( Var( x, Ti ), e )          => s"∀$x.$e"
+    case All( Var( x, t ), e )           => s"∀$x:$t.$e"
+    case Ex( Var( x, Ti ), e )           => s"∃$x.$e"
+    case Ex( Var( x, t ), e )            => s"∃$x:$t.$e"
+    case And( x, y )                     => s"($x∧$y)"
+    case Or( x, y )                      => s"($x∨$y)"
+    case Imp( x, y )                     => s"($x⊃$y)"
+    case Neg( x )                        => s"¬$x"
+    case Bottom()                        => "⊥"
+    case Top()                           => "⊤"
 
-    case Abs( x, t )             => s"(λ$x.$t)"
-    case App( x, y )             => s"($x $y)"
-    case Var( x, t )             => s"$x"
-    case Const( x, t )           => s"$x"
+    case FOLAtom( r, Seq() )             => s"$r"
+    case FOLFunction( f, Seq() )         => s"$f"
+    case FOLAtom( r, xs )                => s"$r(${xs mkString ","})"
+    case FOLFunction( f, xs )            => s"$f(${xs mkString ","})"
+
+    case Abs( x, t )                     => s"(λ$x.$t)"
+    case App( x, y )                     => s"($x $y)"
+    case Var( x, t )                     => s"$x"
+    case Const( x, t )                   => s"$x"
   }
 }
 
