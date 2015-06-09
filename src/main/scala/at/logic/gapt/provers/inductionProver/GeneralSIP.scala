@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.grammars.SipGrammar
 import at.logic.gapt.proofs.expansionTrees.{ extractInstances, InstanceTermEncoding, toDeep, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
@@ -138,5 +138,18 @@ object decodeSipGrammar {
       encoding.decodeToExpansionSequent( seq1 ),
       encoding.decodeToExpansionSequent( seq2 ),
       Bottom(), ts.toList, us.toList )
+  }
+}
+
+object canonicalSolution {
+  import GeneralSIP._
+
+  def apply( sip: SchematicSIP, i: Int ): FOLFormula = i match {
+    case 0 => FOLSubstitution( beta -> gamma )( And( sip.Gamma0 ) )
+    case i =>
+      val C_ = apply( sip, i - 1 )
+      val nuSubst = FOLSubstitution( nu -> Utils.numeral( i - 1 ) )
+      And( nuSubst( And( sip.Gamma1 ) ),
+        And( sip.t map { t => FOLSubstitution( gamma -> nuSubst( t ) )( C_ ) } ) )
   }
 }

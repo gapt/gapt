@@ -6,8 +6,9 @@ import at.logic.gapt.grammars.findMinimalSipGrammar
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.inductionProver.GeneralSIP._
-import at.logic.gapt.provers.inductionProver.decodeSipGrammar
+import at.logic.gapt.provers.inductionProver.{canonicalSolution, decodeSipGrammar}
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
@@ -112,3 +113,9 @@ println(s"Gamma1 = ${schematicSip.Gamma1}")
 println(s"Gamma2 = ${schematicSip.Gamma2}")
 println(s"t = ${schematicSip.t}")
 println(s"u = ${schematicSip.u}")
+
+(0 until 3) foreach { i =>
+  val C_i = canonicalSolution(schematicSip, i)
+  val C_i_CNF = CNFp(C_i)
+  println(s"C_$i = $C_i_CNF")
+}
