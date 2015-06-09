@@ -19,6 +19,13 @@ val assocES = FSequent(
     FOLFunction("+", FOLFunction("+", alpha, alpha), alpha),
     FOLFunction("+", alpha, FOLFunction("+", alpha, alpha)))))
 
+val commES = FSequent(
+  Seq("s(x+y) = x+s(y)", "s(x+y) = s(x)+y", "x+0 = x", "0+x = x")
+    map (s => univclosure(parseFormula(s))),
+  Seq(Eq(
+    FOLFunction("+", FOLConst("k"), alpha),
+    FOLFunction("+", alpha, FOLConst("k")))))
+
 val factorialES = FSequent(
   Seq(
     "f(0) = 1",
@@ -43,7 +50,7 @@ val linearES = FSequent(
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("P", alpha)))
 
-val endSequent = generalES
+val endSequent = commES
 
 var instanceProofs = (0 until 3) map { n =>
   val instanceSequent = FOLSubstitution(alpha -> Utils.numeral(n)).apply(endSequent)
