@@ -130,6 +130,10 @@ object decodeSipGrammar {
       case ( `gammaEnd`, u ) => us += u
     }
 
+    // dummy step terms
+    if ( ts isEmpty ) ts += FOLConst( "0" )
+    if ( us isEmpty ) us += FOLConst( "0" )
+
     new SchematicSIP( encoding.decodeToExpansionSequent( seq0 ),
       encoding.decodeToExpansionSequent( seq1 ),
       encoding.decodeToExpansionSequent( seq2 ),
