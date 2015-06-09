@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
-import at.logic.gapt.expr.hol.{ AllBlock, instantiate, isPrenex }
+import at.logic.gapt.expr.hol.{ ExBlock, AllBlock, instantiate, isPrenex }
 import at.logic.gapt.proofs.lk.base._
 
 /**
@@ -76,7 +76,9 @@ case class InstanceTermEncoding( endSequent: FSequent ) {
   }
 
   private def instanceTerms( instance: PolarizedFormula, esFormula: PolarizedFormula ) = ( instance, esFormula ) match {
-    case ( ( instf: FOLFormula, pol ), ( AllBlock( vars, esf ), pol_ ) ) if pol == pol_ =>
+    case ( ( instf: FOLFormula, true ), ( AllBlock( vars, esf ), true ) ) =>
+      FOLMatchingAlgorithm.matchTerms( esf, instf ).map { subst => vars.map( subst.apply ) }
+    case ( ( instf: FOLFormula, false ), ( ExBlock( vars, esf ), false ) ) =>
       FOLMatchingAlgorithm.matchTerms( esf, instf ).map { subst => vars.map( subst.apply ) }
     case _ => None
   }
@@ -139,7 +141,11 @@ case class InstanceTermEncoding( endSequent: FSequent ) {
   def decodeToExpansionSequent( terms: Iterable[FOLTerm] ): ExpansionSequent = {
     val polExpTrees = terms.map { case FOLFunction( f, args ) => ( findESFormula( f ).get, args ) }.
       groupBy( _._1 ).toSeq.map {
-        case ( ( esFormula @ AllBlock( vars, _ ), pol ), instances ) =>
+        case ( ( esFormula, pol ), instances ) =>
+          val vars = ( esFormula, pol ) match {
+            case ( AllBlock( vs, _ ), true ) => vs
+            case ( ExBlock( vs, _ ), false ) => vs
+          }
           formulaToExpansionTree( esFormula, instances.map( _._2 ).map { terms => FOLSubstitution( ( vars, terms ).zipped.toList ) }.toList, !pol ) -> pol
       }
     ExpansionSequent( polExpTrees.filter( _._2 == true ).map( _._1 ).toList, polExpTrees.filter( _._2 == false ).map( _._1 ).toList )

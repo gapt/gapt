@@ -40,6 +40,13 @@ val factorialES = FSequent(
     FOLFunction("g", FOLConst("1"), alpha),
     FOLFunction("f", alpha))))
 
+val homES = FSequent(
+  Seq("f(s(x)) = s(f(x))",
+    "0+x = x", "x+0 = x",
+    "s(x)+y = s(x+y)", "x + s(y) = s(x+y)")
+    map (s => univclosure(parseFormula(s))),
+  Seq(Ex(FOLVar("x"), Eq(FOLFunction("+", FOLVar("x"), alpha), FOLFunction("f", alpha)))))
+
 val generalES = FSequent(
   Seq("P(0,x)", "P(x,f(y)) & P(x,g(y)) -> P(s(x),y)")
     map (s => univclosure(parseFormula(s))),
