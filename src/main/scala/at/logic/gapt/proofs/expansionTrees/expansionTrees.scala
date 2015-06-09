@@ -541,6 +541,9 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
     etSubstituted.asInstanceOf[ExpansionTree]
   }
 
+  def apply( s: Substitution, es: ExpansionSequent ): ExpansionSequent =
+    ExpansionSequent( es.antecedent.map( apply( s, _ ) ), es.succedent.map( apply( s, _ ) ) )
+
   /**
    * Perform substitution _without_ propagation of merge nodes
    * Useful for tests, has to be extra method due to different return type
