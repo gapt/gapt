@@ -116,6 +116,6 @@ println(s"u = ${schematicSip.u}")
 
 (0 until 3) foreach { i =>
   val C_i = canonicalSolution(schematicSip, i)
-  val C_i_CNF = CNFp(C_i)
-  println(s"C_$i = $C_i_CNF")
+  println(s"C_$i =")
+  CNFp(C_i) foreach { clause => println(s"  $clause") }
 }
