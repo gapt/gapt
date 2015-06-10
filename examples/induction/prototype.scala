@@ -5,6 +5,7 @@ import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.provers.inductionProver.GeneralSIP._
 import at.logic.gapt.provers.inductionProver._
+import org.apache.log4j.{Level, Logger}
 
 // doesn't work: associativity instances are too complicated
 val assocES = FSequent(
@@ -62,6 +63,8 @@ val linearES = FSequent(
 val endSequent = linearES
 
 println(s"Proving $endSequent")
+
+Logger.getLogger(classOf[SipProver].getName).setLevel(Level.DEBUG)
 
 // TODO: just a stop-gap
 val solutionCandidates = Seq(
