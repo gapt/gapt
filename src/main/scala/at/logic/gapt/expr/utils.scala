@@ -75,6 +75,8 @@ object freeVariables {
 
   def apply( es: GenTraversable[LambdaExpression] ): Set[Var] = ( Set.empty[Var] /: es ) { ( acc, e ) => acc union apply( e ) }
 
+  def apply( seq: FSequent ): Set[Var] = apply( seq.antecedent ++ seq.succedent )
+
   def apply( e: FOLExpression ): Set[FOLVar] = apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
   def apply( es: Set[FOLExpression] ): Set[FOLVar] = es.flatMap( apply )
   def apply( es: List[FOLExpression] ): Set[FOLVar] = apply( es.toSet )

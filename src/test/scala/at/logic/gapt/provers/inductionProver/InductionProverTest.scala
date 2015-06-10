@@ -64,20 +64,20 @@ class InductionProverTest extends Specification {
     val et7 = merge( ETWeakQuantifier( All( x, uL( x ) ), List(
       ( ETAtom( uL( f( alpha ) ) ), f( alpha ) ) ) ) )
 
+    val et8 = ETAtom( Eq( g( s( zero ), alpha ), f( alpha ) ) )
+
     val u = List( s( zero ) )
 
-    val ExpSeq2 = ExpansionSequent( List( et7 ), Nil )
-
-    val B = Eq( g( s( zero ), alpha ), f( alpha ) )
+    val ExpSeq2 = ExpansionSequent( List( et7 ), List( et8 ) )
 
     "be constructed correctly" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, B, t, u, F )
+      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
 
       success
     }
 
     "produce an LKProof" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, B, t, u, F )
+      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
       p.toLKProof
 
       success

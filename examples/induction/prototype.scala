@@ -3,7 +3,7 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.provers.inductionProver.GeneralSIP._
+import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
 import at.logic.gapt.provers.inductionProver._
 import org.apache.log4j.{Level, Logger}
 
@@ -72,11 +72,11 @@ val solutionCandidates = Seq(
   "P(0) -> P(x)",
   "y+x = x+y"
 ) map(s => FOLSubstitution(
-  FOLVar("x") -> GeneralSIP.nu,
-  FOLVar("y") -> GeneralSIP.gamma,
-  FOLVar("z") -> GeneralSIP.alpha)(parseFormula(s)))
+  FOLVar("x") -> SimpleInductionProof.nu,
+  FOLVar("y") -> SimpleInductionProof.gamma,
+  FOLVar("z") -> SimpleInductionProof.alpha)(parseFormula(s)))
 val solutionFinder = new SolutionFinder {
-  override def findSolution(schematicSip: SchematicSIP): Option[FOLFormula] =
+  override def findSolution(schematicSip: SimpleInductionProof): Option[FOLFormula] =
     solutionCandidates find { cand =>
       try {
         schematicSip.solve(cand).toLKProof

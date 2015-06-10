@@ -7,7 +7,7 @@ import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
 
 class CanonicalSolutionTest extends Specification {
-  import GeneralSIP._
+  import SimpleInductionProof._
 
   val x = FOLVar( "x" )
   val f0 = FOLAtom( "P", FOLConst( "0" ) )
@@ -25,7 +25,7 @@ class CanonicalSolutionTest extends Specification {
   val ts = List( FOLConst( "0" ) )
   val us = List( FOLConst( "0" ) )
 
-  val sip = new SchematicSIP( seq0, seq1, seq2, Bottom(), ts, us )
+  val sip = new SimpleInductionProof( seq0, seq1, seq2, ts, us )
 
   val sol = Imp( FOLAtom( "P", FOLConst( "0" ) ), FOLAtom( "P", nu ) )
 
