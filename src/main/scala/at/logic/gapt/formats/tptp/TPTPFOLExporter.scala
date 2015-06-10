@@ -71,6 +71,8 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
 
   // Exports a full formula in TPTP format.
   def tptpFormula( f: FOLFormula )( implicit s_map: Map[FOLVar, String] ): String = f match {
+    case Top()              => "$true"
+    case Bottom()           => "$false"
     case FOLAtom( x, args ) => handleAtom( x, args )
     case Or( x, y )         => "( " + tptpFormula( x ) + " | " + tptpFormula( y ) + " )"
     case Neg( x )           => "( ~" + tptpFormula( x ) + ")"
