@@ -85,8 +85,7 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
     // Induction base
     val pi0 = p9prover.getLKProof( Sequent0 ).get
     val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
-    val inductionBase2 = CleanStructuralRules(ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), beta ))
-
+    val inductionBase2 = CleanStructuralRules( ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), beta ) )
 
     // Induction step
     val pi1 = p9prover.getLKProof( Sequent1 ).get
@@ -96,8 +95,7 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
     }
     val inductionStep3 = ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
 
-    val inductionStep4 = CleanStructuralRules( inductionStep3)
-
+    val inductionStep4 = CleanStructuralRules( inductionStep3 )
 
     // Conclusion
     val pi2 = p9prover.getLKProof( Sequent2 ).get
@@ -105,8 +103,7 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
     val conclusion2 = u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
       ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
     }
-    val conclusion3 = CleanStructuralRules( conclusion2)
-
+    val conclusion3 = CleanStructuralRules( conclusion2 )
 
     // Combining the proofs
     val inductionProof = InductionRule( inductionBase2, inductionStep4, All( y, F( alpha, zero, y ) ), All( y, F( alpha, nu, y ) ), All( y, F( alpha, snu, y ) ), alpha )
