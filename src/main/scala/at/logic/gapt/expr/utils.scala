@@ -7,6 +7,8 @@ package at.logic.gapt.expr
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, LKProof }
 
+import scala.collection.GenTraversable
+
 /**
  * Matches constants and variables, but nothing else.
  */
@@ -60,6 +62,10 @@ object variables {
     case Abs( v, t ) => apply( v ) ++ apply( t )
   }
 
+  def apply[C <: GenTraversable[LambdaExpression]]( es: C): Set[Var] = es.foldLeft(Set.empty[Var]) {
+    (acc, e) => apply(e) union acc
+  }
+
   def apply( s: FSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: Sequent ): Set[Var] = apply( s.toFSequent )
   def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
@@ -71,9 +77,15 @@ object variables {
 object freeVariables {
   def apply( e: LambdaExpression ): Set[Var] = apply_( e, Set() )
 
+  def apply[C <: GenTraversable[LambdaExpression]]( es: C): Set[Var] = es.foldLeft(Set.empty[Var]) {
+    (acc, e) => apply(e) union acc
+  }
+
   def apply( e: FOLExpression ): Set[FOLVar] = apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
-  def apply( es: Set[FOLExpression] ): Set[FOLVar] = es.flatMap( apply( _ ) )
-  def apply( es: List[FOLExpression] ): Set[FOLVar] = apply( es.toSet )
+
+  def apply[C <: GenTraversable[FOLExpression]]( fs: C): Set[FOLVar] = fs.foldLeft(Set.empty[FOLVar]) {
+    (acc, f) => apply(f) union acc
+  }
 
   private def apply_( e: LambdaExpression, boundvars: Set[Var] ): Set[Var] = e match {
     case v: Var          => if ( !boundvars.contains( v ) ) Set( v ) else Set()
@@ -93,6 +105,10 @@ object constants {
     case c: Const           => Set( c )
     case App( exp, arg )    => constants( exp ) union constants( arg )
     case Abs( v, exp )      => constants( exp )
+  }
+
+  def apply[C <: GenTraversable[LambdaExpression]](es: C): Set[Const] =  es.foldLeft(Set.empty[Const]) {
+    (acc, e) => apply(e) union acc
   }
 
   def apply( s: FSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
