@@ -186,7 +186,7 @@ object ExistsRightBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof s1.
    */
-  def apply( s1: LKProof, main: FOLFormula, terms: Seq[FOLTerm] ): LKProof = {
+  def apply( s1: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) ).toList
 
     //partiallyInstantiatedMains.foreach(println)
@@ -225,7 +225,7 @@ object ForallLeftBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof s1.
    */
-  def apply( s1: LKProof, main: FOLFormula, terms: Seq[FOLTerm] ): LKProof = {
+  def apply( s1: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) ).toList
 
     //partiallyInstantiatedMains.foreach(println)
@@ -266,7 +266,7 @@ object ForallRightBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof s1.
    */
-  def apply( s1: LKProof, main: FOLFormula, eigenvariables: Seq[FOLVar] ): LKProof = {
+  def apply( s1: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = {
     val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) ).toList
 
     //partiallyInstantiatedMains.foreach(println)
@@ -1376,25 +1376,41 @@ object proofFromInstances {
    * @param et An ExpansionTree whose shallow formula is prenex and which contains no strong or Skolem quantifiers.
    * @return A proof starting with s1 and ending with the deep formula of et.
    */
-  def apply( s1: LKProof, et: ExpansionTree ): LKProof = {
-    require( isPrenex( toShallow( et ) ), "Shallow formula of " + et + " is not prenex" )
+  def apply( s1: LKProof, et: ExpansionTree ): LKProof = apply( s1, compressQuantifiers( et ) )
 
-    et match {
-      case ETWeakQuantifier( f @ All( _, _ ), instances ) =>
+  /**
+   *
+   * @param s1 An LKProof containing the instances in mes in its end sequent.
+   * @param mes A MultiExpansionSequent in which all shallow formulas are prenex and which contains no strong or Skolem quantifiers.
+   * @return A proof starting with s1 and ending with the deep sequent of mes.
+   */
+  def apply( s1: LKProof, mes: MultiExpansionSequent ): LKProof = ( mes.antecedent ++ mes.succedent ).foldLeft( s1 )( apply )
+
+  /**
+   *
+   * @param s1 An LKProof containing the instances in et in its end sequent
+   * @param met A MultiExpansionTree whose shallow formula is prenex and which contains no strong or Skolem quantifiers.
+   * @return A proof starting with s1 and ending with the deep formula of met.
+   */
+  def apply( s1: LKProof, met: MultiExpansionTree ): LKProof = {
+    require( isPrenex( met.toShallow ), "Shallow formula of " + met + " is not prenex" )
+
+    met match {
+      case METWeakQuantifier( f @ All( _, _ ), instances ) =>
         val tmp = instances.foldLeft( s1 ) {
-          ( acc, i ) => ForallLeftRule( apply( acc, i._1 ), toShallow( i._1 ), f, i._2 )
+          ( acc, i ) => ForallLeftBlock( acc, f, i._2 )
         }
 
         ContractionLeftMacroRule( tmp, f )
 
-      case ETWeakQuantifier( f @ Ex( _, _ ), instances ) =>
+      case METWeakQuantifier( f @ Ex( _, _ ), instances ) =>
         val tmp = instances.foldLeft( s1 ) {
-          ( acc, i ) => ExistsRightRule( apply( acc, i._1 ), toShallow( i._1 ), f, i._2 )
+          ( acc, i ) => ExistsRightBlock( acc, f, i._2 )
         }
 
         ContractionRightMacroRule( tmp, f )
 
-      case ETSkolemQuantifier( _, _, _ ) | ETStrongQuantifier( _, _, _ ) =>
+      case METSkolemQuantifier( _, _, _ ) | METStrongQuantifier( _, _, _ ) =>
         throw new UnsupportedOperationException( "This case is not handled at this time." )
       case _ => s1
     }
