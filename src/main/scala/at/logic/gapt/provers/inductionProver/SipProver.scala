@@ -2,7 +2,6 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
-import at.logic.gapt.formats.veriT.VeriTParserException
 import at.logic.gapt.grammars.findMinimalSipGrammar
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
@@ -10,7 +9,7 @@ import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.maxsat.QMaxSAT
-import at.logic.gapt.provers.prover9.{ Prover9, Prover9Prover }
+import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.utils.logging.Logger
 
@@ -24,6 +23,7 @@ class SipProver( solutionFinder: SolutionFinder,
                  minimizeInstanceLanguages: Boolean = false,
                  quasiTautProver: Prover = new VeriTProver() )
     extends Prover with Logger {
+
   override def getLKProof( endSequent: FSequent ): Option[LKProof] = getLKProofAndSolution( endSequent ).map( _._1 )
 
   def getLKProofAndSolution( endSequent: FSequent ): Option[( LKProof, FOLFormula )] = {
@@ -72,7 +72,7 @@ class SipProver( solutionFinder: SolutionFinder,
 
     debug( "Finding grammar..." )
     val grammar = findMinimalSipGrammar( instanceLanguages, new QMaxSAT )
-    debug( grammar toString )
+    debug( s"Grammar:\n$grammar" )
 
     ( 0 until 10 ) foreach { n =>
       lazy val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
@@ -93,7 +93,7 @@ class SipProver( solutionFinder: SolutionFinder,
 
     ( 0 until 3 ) foreach { i =>
       lazy val C_i = canonicalSolution( schematicSip, i )
-      debug( s"C_$i = ${CNFp( C_i ).map( clause => s"  $clause\n" )}" )
+      debug( s"C_$i =\n${CNFp( C_i ).mkString( "\n" )}" )
     }
 
     solutionFinder.findSolution( schematicSip ) map { solution =>
