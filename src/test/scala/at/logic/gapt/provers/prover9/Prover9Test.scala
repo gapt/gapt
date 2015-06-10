@@ -73,6 +73,11 @@ class Prover9Test extends Specification with ClasspathFileCopier {
       }
     }
 
+    "prove top" in { Prover9.prove( FSequent( Seq(), Seq( Top() ) ) ) must beSome }
+    "not prove bottom" in { Prover9.prove( FSequent( Seq(), Seq( Bottom() ) ) ) must beNone }
+    "not refute top" in { Prover9.prove( FSequent( Seq( Top() ), Seq() ) ) must beNone }
+    "refute bottom" in { Prover9.prove( FSequent( Seq( Bottom() ), Seq() ) ) must beSome }
+
   }
 
   "The Prover9 interface" should {

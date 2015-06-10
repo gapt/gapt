@@ -171,14 +171,14 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
       case And( f1, f2 ) => {
         val f1_opt = if ( rest.antecedent.contains( f1 ) ) Nil else f1 :: Nil
-        val f2_opt = if ( rest.antecedent.contains( f2 ) ) Nil else f2 :: Nil
+        val f2_opt = if ( ( f1_opt ++ rest.antecedent ).contains( f2 ) ) Nil else f2 :: Nil
         val p_ant = f1_opt ++ f2_opt ++ rest.antecedent
         val p_suc = rest.succedent
         val premise = FSequent( p_ant, p_suc )
 
         prove( premise, nextProofStrategies( 0 ) ).map( proof => {
           val infer_on_f1 = proof.root.toFSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 )
-          val infer_on_f2 = proof.root.toFSequent.antecedent.contains( f2 ) && !rest.antecedent.contains( f2 )
+          val infer_on_f2 = proof.root.toFSequent.antecedent.contains( f2 ) && !( f1_opt ++ rest.antecedent ).contains( f2 )
 
           val proof1 = if ( infer_on_f1 ) AndLeft1Rule( proof, f1, f2 ) else proof
           val proof2 = if ( infer_on_f2 ) AndLeft2Rule( proof1, f1, f2 ) else proof1
@@ -400,14 +400,14 @@ object solve extends at.logic.gapt.utils.logging.Logger {
 
       case Or( f1, f2 ) => {
         val f1_opt = if ( rest.succedent.contains( f1 ) ) Nil else f1 :: Nil
-        val f2_opt = if ( rest.succedent.contains( f2 ) ) Nil else f2 :: Nil
+        val f2_opt = if ( ( f1_opt ++ rest.succedent ).contains( f2 ) ) Nil else f2 :: Nil
         val p_ant = rest.antecedent
         val p_suc = f1_opt ++ f2_opt ++ rest.succedent
         val premise = FSequent( p_ant, p_suc )
 
         prove( premise, nextProofStrategies( 0 ) ).map( proof => {
           val infer_on_f1 = proof.root.toFSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 )
-          val infer_on_f2 = proof.root.toFSequent.succedent.contains( f2 ) && !rest.succedent.contains( f2 )
+          val infer_on_f2 = proof.root.toFSequent.succedent.contains( f2 ) && !( f1_opt ++ rest.succedent ).contains( f2 )
 
           val proof1 = if ( infer_on_f1 ) OrRight1Rule( proof, f1, f2 ) else proof
           val proof2 = if ( infer_on_f2 ) OrRight2Rule( proof1, f1, f2 ) else proof1

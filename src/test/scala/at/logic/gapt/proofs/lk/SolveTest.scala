@@ -186,6 +186,18 @@ class SolveTest extends Specification {
       solve.solvePropositional( FSequent( Seq( Bottom() ), Seq() ) ) must beSome
     }
 
+    "prove ( p ∨ p ) ⊃ ( p ∧ p )" in {
+      val p = FOLAtom( "p" ) // TODO: should rather be PropAtom
+      val F = Imp( Or( p, p ), And( p, p ) )
+      solve.solvePropositional( FSequent( Seq(), Seq( F ) ) ) must beSome
+    }
+
+    "prove ( p ∧ p ) ⊃ ( p ∨ p )" in {
+      val p = FOLAtom( "p" ) // TODO: should rather be PropAtom
+      val F = Imp( And( p, p ), Or( p, p ) )
+      solve.solvePropositional( FSequent( Seq(), Seq( F ) ) ) must beSome
+    }
+
     "prove BussTautology(2)" in {
       solve.solvePropositional( BussTautology( 2 ) ) must beSome
     }
