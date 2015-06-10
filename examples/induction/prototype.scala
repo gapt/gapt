@@ -8,11 +8,12 @@ import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.inductionProver.GeneralSIP._
-import at.logic.gapt.provers.inductionProver.{canonicalSolution, decodeSipGrammar}
+import at.logic.gapt.provers.inductionProver.{GeneralSIP, canonicalSolution, decodeSipGrammar}
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 
+// doesn't work: associativity instances are too complicated
 val assocES = FSequent(
   Seq("s(x+y) = x+s(y)", "x+0 = x")
     map (s => univclosure(parseFormula(s))),
@@ -27,6 +28,7 @@ val commES = FSequent(
     FOLFunction("+", FOLConst("k"), alpha),
     FOLFunction("+", alpha, FOLConst("k")))))
 
+// doesn't work: associativity instances are too complicated
 val factorialES = FSequent(
   Seq(
     "f(0) = 1",
@@ -41,6 +43,7 @@ val factorialES = FSequent(
     FOLFunction("g", FOLConst("1"), alpha),
     FOLFunction("f", alpha))))
 
+// doesn't work: seems to require Sigma_1-induction
 val homES = FSequent(
   Seq("f(s(x)) = s(f(x))",
     "0+x = x", "x+0 = x",
@@ -63,7 +66,9 @@ val linearES = FSequent(
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("P", alpha)))
 
-val endSequent = commES
+val endSequent = linearES
+
+println(s"Proving $endSequent")
 
 var instanceProofs = (0 until 3) map { n =>
   val instanceSequent = FOLSubstitution(alpha -> Utils.numeral(n)).apply(endSequent)
@@ -111,6 +116,9 @@ val schematicSip = decodeSipGrammar(termEncoding, grammar)
 println(s"Gamma0 = ${schematicSip.Gamma0}")
 println(s"Gamma1 = ${schematicSip.Gamma1}")
 println(s"Gamma2 = ${schematicSip.Gamma2}")
+println(s"Sequent0 = ${schematicSip.Sequent0}")
+println(s"Sequent1 = ${schematicSip.Sequent1}")
+println(s"Sequent2 = ${schematicSip.Sequent2}")
 println(s"t = ${schematicSip.t}")
 println(s"u = ${schematicSip.u}")
 
@@ -118,4 +126,28 @@ println(s"u = ${schematicSip.u}")
   val C_i = canonicalSolution(schematicSip, i)
   println(s"C_$i =")
   CNFp(C_i) foreach { clause => println(s"  $clause") }
+}
+
+// TODO: this is just a crutch so that we can test toLKProof...
+val solutionCandidates = Seq(
+  "P(x,y)",
+  "P(0) -> P(x)",
+  "y+x = x+y"
+) map(s => FOLSubstitution(
+  FOLVar("x") -> GeneralSIP.nu,
+  FOLVar("y") -> GeneralSIP.gamma,
+  FOLVar("z") -> GeneralSIP.alpha)(parseFormula(s)))
+val maybeIndProof = solutionCandidates flatMap { cand =>
+  try {
+    Some(cand -> schematicSip.solve(cand).toLKProof)
+  } catch {
+    case _: Throwable => None
+  }
+} headOption
+
+maybeIndProof match {
+  case Some((solution, indProof)) =>
+    println(s"Found induction proof with solution $solution")
+  case None =>
+    println(s"Didn't find induction proof.")
 }

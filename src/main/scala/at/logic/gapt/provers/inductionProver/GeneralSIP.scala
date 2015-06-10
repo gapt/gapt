@@ -55,6 +55,9 @@ class SchematicSIP( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent, ExpSeq
   private val Xu = u map { X( alpha, alpha, _ ) }
 
   val Sequent2 = FSequent( Gamma2 ++ Xu, List( B ) )
+
+  def solve( inductionFormula: FOLFormula ): SimpleInductionProof =
+    new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, B, t, u, inductionFormula )
 }
 
 class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent, ExpSeq2: ExpansionSequent, B: FOLFormula, t: List[FOLTerm], u: List[FOLTerm], val inductionFormula: FOLFormula ) extends GeneralSIP( ExpSeq0, ExpSeq1, ExpSeq2, B, t, u ) {
