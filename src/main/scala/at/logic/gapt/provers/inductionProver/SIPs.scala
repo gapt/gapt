@@ -82,10 +82,13 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
   def toLKProof: LKProof = {
     val p9prover = new Prover9Prover
 
+    // Induction base
     val pi0 = p9prover.getLKProof( Sequent0 ).get
     val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
-    val inductionBase2 = ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), beta )
+    val inductionBase2 = CleanStructuralRules(ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), beta ))
 
+
+    // Induction step
     val pi1 = p9prover.getLKProof( Sequent1 ).get
     val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
     val inductionStep2 = t.foldLeft( inductionStep1 ) {
@@ -93,15 +96,19 @@ class SimpleInductionProof( ExpSeq0: ExpansionSequent, ExpSeq1: ExpansionSequent
     }
     val inductionStep3 = ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
 
-    val inductionStep4 = ContractionLeftMacroRule( inductionStep3, All( y, F( alpha, nu, y ) ) )
+    val inductionStep4 = CleanStructuralRules( inductionStep3)
 
+
+    // Conclusion
     val pi2 = p9prover.getLKProof( Sequent2 ).get
     val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
     val conclusion2 = u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
       ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
     }
-    val conclusion3 = ContractionLeftMacroRule( conclusion2, All( y, F( alpha, alpha, y ) ) )
+    val conclusion3 = CleanStructuralRules( conclusion2)
 
+
+    // Combining the proofs
     val inductionProof = InductionRule( inductionBase2, inductionStep4, All( y, F( alpha, zero, y ) ), All( y, F( alpha, nu, y ) ), All( y, F( alpha, snu, y ) ), alpha )
 
     CutRule( inductionProof, conclusion3, All( y, F( alpha, alpha, y ) ) )
