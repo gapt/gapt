@@ -14,7 +14,7 @@ import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.utils.logging.Logger
 
 trait SolutionFinder {
-  def findSolution( schematicSIP: SchematicSIP ): Option[FOLFormula]
+  def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula]
 }
 
 class SipProver( solutionFinder: SolutionFinder,
@@ -30,7 +30,7 @@ class SipProver( solutionFinder: SolutionFinder,
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
       case singleton if singleton.size == 1 => singleton.head
     }
-    require( inductionVariable == GeneralSIP.alpha ) // TODO: maybe relax this restriction
+    require( inductionVariable == SimpleInductionProof.alpha ) // TODO: maybe relax this restriction
 
     var instanceProofs = instances map { n =>
       val instanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )( endSequent )
@@ -97,7 +97,7 @@ class SipProver( solutionFinder: SolutionFinder,
     }
 
     solutionFinder.findSolution( schematicSip ) map { solution =>
-      schematicSip.solve( solution ).toLKProof -> solution
+      schematicSip.solve( solution ).toLKProof.get -> solution
     }
   }
 }
