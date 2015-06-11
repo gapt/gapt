@@ -180,13 +180,13 @@ object fixDerivation extends Logger {
 
   def tryDeriveViaSearchDerivation( to: FClause, from: Seq[FSequent] ) = {
     val cls_sequent = FSequent( to.neg.map( _.asInstanceOf[FOLFormula] ), to.pos.map( _.asInstanceOf[FOLFormula] ) )
-    SearchDerivation( from, cls_sequent, true ) map { d =>
+    SearchDerivation( from, cls_sequent, true ) flatMap { d =>
       val ret = d.asInstanceOf[RobinsonResolutionProof]
       if ( ret.root.toFClause != to ) {
         val ret_seq = FSequent( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) )
-        tryDeriveByFactor( to, ret_seq ).getOrElse( InitialClause( to ) )
+        tryDeriveByFactor( to, ret_seq )
       } else {
-        ret
+        Some( ret )
       }
     }
   }
