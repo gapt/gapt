@@ -58,12 +58,6 @@ object fixDerivation extends Logger {
   }
   private def convertSequent( seq: FSequent ) =
     ( seq.antecedent.map( f => f.asInstanceOf[FOLFormula] ), seq.succedent.map( f => f.asInstanceOf[FOLFormula] ) )
-  def canDeriveBySymmetry( to: FClause, from: FSequent ): Boolean =
-    canDeriveBySymmetry( convertSequent( to.toFSequent ), convertSequent( from ) )
-  def canDeriveBySymmetry( to: Pair[Seq[FOLFormula], Seq[FOLFormula]], from: Pair[Seq[FOLFormula], Seq[FOLFormula]] ): Boolean = getSymmetryMap( to, from ) match {
-    case Some( _ ) => true
-    case None      => false
-  }
   private def applySymm( p: RobinsonResolutionProof, f: FOLFormula, pos: Boolean ) =
     {
       val ( left, right ) = f match {
@@ -83,85 +77,78 @@ object fixDerivation extends Logger {
         Factor( eq2, newe, 3, pos, s )
       }
     }
-  private def deriveBySymmetry( to: FClause, from: FSequent ) = {
-    trace( "deriving " + to + " from " + from + " by symmetry" )
-    val my_to = convertSequent( to.toFSequent )
-    val my_from = convertSequent( from )
-    val ( neg_map, pos_map ) = getSymmetryMap( my_to, my_from ).get
-    val init = InitialClause( from.antecedent.map( _.asInstanceOf[FOLFormula] ), from.succedent.map( _.asInstanceOf[FOLFormula] ) )
+  def tryDeriveBySymmetry( to: FClause, from: FSequent ): Option[RobinsonResolutionProof] =
+    getSymmetryMap( convertSequent( to.toFSequent ), convertSequent( from ) ) map {
+      case ( neg_map, pos_map ) =>
+        trace( "deriving " + to + " from " + from + " by symmetry" )
+        val my_to = convertSequent( to.toFSequent )
+        val my_from = convertSequent( from )
+        val ( neg_map, pos_map ) = getSymmetryMap( my_to, my_from ).get
+        val init = InitialClause( from.antecedent.map( _.asInstanceOf[FOLFormula] ), from.succedent.map( _.asInstanceOf[FOLFormula] ) )
 
-    var my_from_s = ( List[FOLFormula](), List[FOLFormula]() )
-    var neg_map_s = HashMap[Int, Int]()
-    var pos_map_s = HashMap[Int, Int]()
+        var my_from_s = ( List[FOLFormula](), List[FOLFormula]() )
+        var neg_map_s = HashMap[Int, Int]()
+        var pos_map_s = HashMap[Int, Int]()
 
-    // add symmetry derivations
-    val s_neg = neg_map.keySet.foldLeft( init )( ( p, i ) => {
-      val f = my_from._1( i )
-      val to_i = neg_map( i )
-      neg_map_s = neg_map_s + ( my_from_s._1.size -> to_i )
-      f match {
-        case Eq( _, _ ) if my_to._1( to_i ) != f => {
-          my_from_s = ( my_from_s._1 :+ my_to._1( to_i ), my_from_s._2 )
-          applySymm( p, f, false )
-        }
-        case _ => {
-          my_from_s = ( my_from_s._1 :+ f, my_from_s._2 )
-          p
-        }
-      }
-    } )
-    val s_pos = pos_map.keySet.foldLeft( s_neg )( ( p, i ) => {
-      val f = my_from._2( i )
-      val to_i = pos_map( i )
-      pos_map_s = pos_map_s + ( my_from_s._2.size -> to_i )
-      f match {
-        case Eq( _, _ ) if my_to._2( to_i ) != f => {
-          my_from_s = ( my_from_s._1, my_from_s._2 :+ my_to._2( to_i ) )
-          applySymm( p, f, true )
-        }
-        case _ => {
-          my_from_s = ( my_from_s._1, my_from_s._2 :+ f )
-          p
-        }
-      }
-    } )
+        // add symmetry derivations
+        val s_neg = neg_map.keySet.foldLeft( init )( ( p, i ) => {
+          val f = my_from._1( i )
+          val to_i = neg_map( i )
+          neg_map_s = neg_map_s + ( my_from_s._1.size -> to_i )
+          f match {
+            case Eq( _, _ ) if my_to._1( to_i ) != f => {
+              my_from_s = ( my_from_s._1 :+ my_to._1( to_i ), my_from_s._2 )
+              applySymm( p, f, false )
+            }
+            case _ => {
+              my_from_s = ( my_from_s._1 :+ f, my_from_s._2 )
+              p
+            }
+          }
+        } )
+        val s_pos = pos_map.keySet.foldLeft( s_neg )( ( p, i ) => {
+          val f = my_from._2( i )
+          val to_i = pos_map( i )
+          pos_map_s = pos_map_s + ( my_from_s._2.size -> to_i )
+          f match {
+            case Eq( _, _ ) if my_to._2( to_i ) != f => {
+              my_from_s = ( my_from_s._1, my_from_s._2 :+ my_to._2( to_i ) )
+              applySymm( p, f, true )
+            }
+            case _ => {
+              my_from_s = ( my_from_s._1, my_from_s._2 :+ f )
+              p
+            }
+          }
+        } )
 
-    assert( to.isSubClauseOf( s_pos.root.toFClause ) )
+        assert( to.isSubClauseOf( s_pos.root.toFClause ) )
 
-    // contract some formulas if the maps are not injective
-    val c_neg = neg_map_s.values.toSeq.distinct.foldLeft( s_pos )( ( p, i ) => {
-      val indices = neg_map_s.filterKeys( k => neg_map_s( k ) == i ).keySet
-      val form = my_from_s._1( indices.head )
+        // contract some formulas if the maps are not injective
+        val c_neg = neg_map_s.values.toSeq.distinct.foldLeft( s_pos )( ( p, i ) => {
+          val indices = neg_map_s.filterKeys( k => neg_map_s( k ) == i ).keySet
+          val form = my_from_s._1( indices.head )
 
-      if ( indices.size > 1 )
-        Factor( p, form, indices.size, false, FOLSubstitution() )
-      else
-        p
-    } )
+          if ( indices.size > 1 )
+            Factor( p, form, indices.size, false, FOLSubstitution() )
+          else
+            p
+        } )
 
-    pos_map_s.values.toSeq.distinct.foldLeft( c_neg )( ( p, i ) => {
-      val indices = pos_map_s.filterKeys( k => pos_map_s( k ) == i ).keySet
-      val form = my_from_s._2( indices.head )
-      if ( indices.size > 1 )
-        Factor( p, form, indices.size, true, FOLSubstitution() )
-      else
-        p
-    } )
-  }
+        pos_map_s.values.toSeq.distinct.foldLeft( c_neg )( ( p, i ) => {
+          val indices = pos_map_s.filterKeys( k => pos_map_s( k ) == i ).keySet
+          val form = my_from_s._2( indices.head )
+          if ( indices.size > 1 )
+            Factor( p, form, indices.size, true, FOLSubstitution() )
+          else
+            p
+        } )
+    }
 
   private val subsumption_alg = StillmanSubsumptionAlgorithmFOL
-  def canDeriveByFactor( to: FClause, from: FSequent ) =
-    subsumption_alg.subsumes( from, to.toFSequent )
-  def deriveByFactor( to: FClause, from: FSequent ): RobinsonResolutionProof =
-    {
-      trace( "deriving " + to + " from " + from + " by factoring" )
-      val init = InitialClause( from.antecedent.map( _.asInstanceOf[FOLFormula] ), from.succedent.map( _.asInstanceOf[FOLFormula] ) )
-      deriveByFactor( to, init )
-    }
-  def deriveByFactor( to: FClause, from: RobinsonResolutionProof ): RobinsonResolutionProof =
-    {
-      val from_c = FSequent( from.root.antecedent.map( _.formula ), from.root.succedent.map( _.formula ) )
-      val s = subsumption_alg.subsumes_by( from_c, to.toFSequent ).get
+  def tryDeriveByFactor( to: FClause, from_c: FSequent ): Option[RobinsonResolutionProof] =
+    subsumption_alg.subsumes_by( from_c, to.toFSequent ) map { s =>
+      val from = InitialClause( from_c.antecedent.map( _.asInstanceOf[FOLFormula] ), from_c.succedent.map( _.asInstanceOf[FOLFormula] ) )
       val from_s = FClause( from_c.antecedent.map( s( _ ) ), from_c.succedent.map( s( _ ) ) )
       // make a first Factor inference that does not contract, but applies
       // the FOLSubstitution
@@ -178,111 +165,107 @@ object fixDerivation extends Logger {
         Factor( proof, atom, cnt, true, FOLSubstitution() )
       } )
     }
+
   private def isReflexivity( c: FClause ) =
     c.pos.exists( a => a match {
       case Eq( x, y ) if x == y => true
       case _                    => false
     } )
   private def isTautology( c: FClause ) = c.pos.exists( a => c.neg.exists( b => a == b ) )
-  // NOTE: What if the symmetric clause found is a tautology?
-  private def handleInitialClause( cls: FClause, cs: Seq[FSequent] ) = {
-    val cls_sequent = FSequent(
-      cls.neg.map( f => f.asInstanceOf[FOLFormula] ),
-      cls.pos.map( f => f.asInstanceOf[FOLFormula] ) )
-    if ( cs.contains( cls_sequent ) || isReflexivity( cls ) || isTautology( cls ) ) InitialClause( cls )
-    else
-      cs.find( c => canDeriveByFactor( cls, c ) ) match {
-        case Some( c ) => deriveByFactor( cls, c )
-        case None => cs.find( c => canDeriveBySymmetry( cls, c ) ) match {
-          case Some( c ) => deriveBySymmetry( cls, c )
-          case None => SearchDerivation( cs, cls_sequent, true ) match {
-            case Some( d ) => {
-              val ret = d.asInstanceOf[RobinsonResolutionProof]
-              if ( ret.root.toFClause != cls ) {
-                if ( canDeriveByFactor( cls, FSequent( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) ) ) )
-                  deriveByFactor( cls, ret )
-                else
-                  InitialClause( cls )
-              } else
-                ret
-            }
-            case None => {
-              warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
-              InitialClause( cls )
-            }
-          }
-        }
-      }
+  def tryDeriveTrivial( to: FClause, from: Seq[FSequent] ) = {
+    val cls_sequent = FSequent( to.neg.map( _.asInstanceOf[FOLFormula] ), to.pos.map( _.asInstanceOf[FOLFormula] ) )
+    if ( from.contains( cls_sequent ) || isReflexivity( to ) || isTautology( to ) ) Some( InitialClause( to ) )
+    else None
   }
-  def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ): RobinsonResolutionProof = {
-    rec( p )( cs )
-  }
-  // The inductive invariant is that if we had previously a derivation of a clause c,
-  // we will now have a derivation of a subclause of c. Hence we have to drop some parts
-  // of the derivation.
-  private def rec( p: RobinsonResolutionProof )( implicit cs: Seq[FSequent] ): RobinsonResolutionProof = {
-    var fac = false
-    val res = p match {
-      case InitialClause( cls ) => handleInitialClause( cls.toFClause, cs )
-      case Factor( r, par, a, s ) => {
-        fac = true
-        a match {
-          case lit1 :: Nil => {
-            val rp = rec( par )
-            val form = lit1.head.formula
-            val pos = par.root.succedent.contains( lit1.head )
-            val cnt_ = if ( pos ) rp.root.succedent.filter( _.formula == form ).size - p.root.succedent.filter( _.formula == form ).size + 1
-            else rp.root.antecedent.filter( _.formula == form ).size - p.root.antecedent.filter( _.formula == form ).size + 1
-            val cnt = if ( cnt_ > 0 ) cnt_ else 0
-            if ( cnt == 0 )
-              rp
-            else
-              Factor( rp, form, cnt, pos, s )
-          }
-          case lit1 :: lit2 :: Nil => {
-            val rp = rec( p )
-            val form_left = lit1.head.formula
-            val form_right = lit2.head.formula
-            val cnt_left_ = rp.root.antecedent.filter( _.formula == form_left ).size - p.root.antecedent.filter( _.formula == form_left ).size
-            val cnt_right_ = rp.root.succedent.filter( _.formula == form_right ).size - p.root.succedent.filter( _.formula == form_right ).size
-            val cnt_left = if ( cnt_left_ > 0 ) cnt_left_ else 0
-            val cnt_right = if ( cnt_right_ > 0 ) cnt_right_ else 0
-            if ( cnt_left == 0 && cnt_right == 0 )
-              rp
-            else
-              Factor( rp, form_left, cnt_left, form_right, cnt_right, s )
-          }
-          case _ => throw new Exception( "Factor rule for " + p.root + " does not have one or two primary formulas!" )
-        }
+
+  def tryDeriveViaSearchDerivation( to: FClause, from: Seq[FSequent] ) = {
+    val cls_sequent = FSequent( to.neg.map( _.asInstanceOf[FOLFormula] ), to.pos.map( _.asInstanceOf[FOLFormula] ) )
+    SearchDerivation( from, cls_sequent, true ) flatMap { d =>
+      val ret = d.asInstanceOf[RobinsonResolutionProof]
+      if ( ret.root.toFClause != to ) {
+        val ret_seq = FSequent( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) )
+        tryDeriveByFactor( to, ret_seq )
+      } else {
+        Some( ret )
       }
-      case Variant( r, p, s ) => Variant( rec( p ), s )
-      case Resolution( r, p1, p2, a1, a2, s ) => {
-        val rp1 = rec( p1 )
-        val rp2 = rec( p2 )
-        if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
-          rp1
-        else if ( !rp2.root.antecedent.exists( _.formula == a2.formula ) )
-          rp2
-        else
-          Resolution( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], s )
-      }
-      case Paramodulation( r, p1, p2, a1, a2, p, s ) => {
-        val rp1 = rec( p1 )
-        val rp2 = rec( p2 )
-        val right = p2.root.succedent.contains( a2 )
-        if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
-          rp1
-        else if ( right && !rp2.root.succedent.exists( _.formula == a2.formula ) )
-          rp2
-        else if ( !right && !rp2.root.antecedent.exists( _.formula == a2.formula ) )
-          rp2
-        else
-          Paramodulation( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], p.formula.asInstanceOf[FOLFormula], s, right )
-      }
-      // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
-      case Instance( _, p, s ) => Instance( rec( p ), s )
     }
-    assert( res.root.toFClause.isSubClauseOf( p.root.toFClause ), "res.root.toFClause: " + res.root.toFClause + "\np.root.toFClause: " + p.root.toFClause + "\np.rule: " + p.rule )
-    res
+  }
+
+  private def findFirstSome[A, B]( seq: Seq[A] )( f: A => Option[B] ): Option[B] =
+    seq.view.flatMap( f( _ ) ).headOption
+
+  def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ): RobinsonResolutionProof =
+    mapInitialClauses( p ) { cls =>
+      tryDeriveTrivial( cls, cs ).
+        orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
+        orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
+        orElse( tryDeriveViaSearchDerivation( cls, cs ) ).
+        getOrElse {
+          warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
+          InitialClause( cls )
+        }
+    }
+}
+
+/**
+ * Applies a function to each initial clause in a resolution proof, replacing the initial clause with a new proof.
+ * The resulting proof may prove a smaller clause than the original one.
+ */
+object mapInitialClauses {
+  def apply( p: RobinsonResolutionProof )( f: FClause => RobinsonResolutionProof ): RobinsonResolutionProof = p match {
+    case InitialClause( cls ) => f( cls.toFClause )
+
+    case Factor( r, par, List( lit1 ), s ) =>
+      val rp = apply( par )( f )
+      val form = lit1.head.formula
+      val pos = par.root.succedent.contains( lit1.head )
+      val cnt_ = if ( pos ) rp.root.succedent.count( _.formula == form ) - p.root.succedent.count( _.formula == form ) + 1
+      else rp.root.antecedent.count( _.formula == form ) - p.root.antecedent.count( _.formula == form ) + 1
+      val cnt = if ( cnt_ > 0 ) cnt_ else 0
+      if ( cnt == 0 )
+        rp
+      else
+        Factor( rp, form, cnt, pos, s )
+
+    case Factor( r, par, List( lit1, lit2 ), s ) =>
+      val rp = apply( par )( f )
+      val form_left = lit1.head.formula
+      val form_right = lit2.head.formula
+      val cnt_left_ = rp.root.antecedent.count( _.formula == form_left ) - p.root.antecedent.count( _.formula == form_left )
+      val cnt_right_ = rp.root.succedent.count( _.formula == form_right ) - p.root.succedent.count( _.formula == form_right )
+      val cnt_left = if ( cnt_left_ > 0 ) cnt_left_ else 0
+      val cnt_right = if ( cnt_right_ > 0 ) cnt_right_ else 0
+      if ( cnt_left == 0 && cnt_right == 0 )
+        rp
+      else
+        Factor( rp, form_left, cnt_left, form_right, cnt_right, s )
+
+    case Variant( r, p, s ) => Variant( apply( p )( f ), s )
+
+    case Resolution( r, p1, p2, a1, a2, s ) =>
+      val rp1 = apply( p1 )( f )
+      val rp2 = apply( p2 )( f )
+      if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
+        rp1
+      else if ( !rp2.root.antecedent.exists( _.formula == a2.formula ) )
+        rp2
+      else
+        Resolution( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], s )
+
+    case Paramodulation( r, p1, p2, a1, a2, p, s ) =>
+      val rp1 = apply( p1 )( f )
+      val rp2 = apply( p2 )( f )
+      val right = p2.root.succedent.contains( a2 )
+      if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
+        rp1
+      else if ( right && !rp2.root.succedent.exists( _.formula == a2.formula ) )
+        rp2
+      else if ( !right && !rp2.root.antecedent.exists( _.formula == a2.formula ) )
+        rp2
+      else
+        Paramodulation( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], p.formula.asInstanceOf[FOLFormula], s, right )
+
+    // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
+    case Instance( _, p, s ) => Instance( apply( p )( f ), s )
   }
 }
