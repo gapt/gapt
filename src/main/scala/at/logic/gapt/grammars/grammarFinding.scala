@@ -42,6 +42,8 @@ object characteristicPartition {
 
 object normalForms {
   def apply( lang: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
+    lang foreach { term => require(freeVariables(term) isEmpty) }
+
     val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 )
       .map( terms => antiUnificator( terms ) )
     val nfs = Set.newBuilder[FOLTerm]
