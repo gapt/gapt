@@ -77,14 +77,7 @@ val solutionCandidates = Seq(
   FOLVar("z") -> SimpleInductionProof.alpha)(parseFormula(s)))
 val solutionFinder = new SolutionFinder {
   override def findSolution(schematicSip: SimpleInductionProof): Option[FOLFormula] =
-    solutionCandidates find { cand =>
-      try {
-        schematicSip.solve(cand).toLKProof
-        true
-      } catch {
-        case _: Throwable => false
-      }
-    }
+    solutionCandidates find { cand => schematicSip.solve(cand).isSolved }
 }
 
 val sipProver = new SipProver(solutionFinder)

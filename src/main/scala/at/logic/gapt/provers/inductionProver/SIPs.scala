@@ -30,9 +30,9 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
 
   val p9prover = new Prover9Prover
 
-  val Gamma0 = toShallow( ExpSeq0 )
-  val Gamma1 = toShallow( ExpSeq1 )
-  val Gamma2 = toShallow( ExpSeq2 )
+  val Gamma0 = extractInstances( ExpSeq0 )
+  val Gamma1 = extractInstances( ExpSeq1 )
+  val Gamma2 = extractInstances( ExpSeq2 )
 
   require( freeVariables( Gamma0 ) subsetOf Set( alpha, beta ), "Gamma0 should contain only α, β, but freeVariables(Gamma0) = " + freeVariables( Gamma0 ).toString() )
   require( freeVariables( Gamma1 ) subsetOf Set( alpha, nu, gamma ), "Gamma1 should contain only α, ν, γ, but freeVariables(Gamma1) = " + freeVariables( Gamma1 ).toString() )
@@ -51,7 +51,7 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
     sub( inductionFormula )
   }
 
-  val Sequent0 = F( alpha, zero, beta ) +: Gamma0
+  val Sequent0 = Gamma0 :+ F( alpha, zero, beta )
 
   val Ft = t map { F( alpha, nu, _ ) }
   val Sequent1 = Ft ++: Gamma1 :+ F( alpha, snu, gamma )
