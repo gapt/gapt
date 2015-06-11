@@ -69,6 +69,8 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
    */
   def toFormula: HOLFormula = Or( antecedent.toList.map( f => Neg( f ) ) ++ succedent )
 
+  def toNegFormula: HOLFormula = And( antecedent ++ succedent.map( Neg( _ ) ) )
+
   /**
    * Are both sides of the sequent empty?
    */

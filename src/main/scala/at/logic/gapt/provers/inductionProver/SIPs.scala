@@ -170,11 +170,11 @@ object canonicalSolution {
   import SimpleInductionProof._
 
   def apply( sip: SimpleInductionProof, i: Int ): FOLFormula = i match {
-    case 0 => FOLSubstitution( beta -> gamma )( sip.Gamma0.toFormula ).asInstanceOf[FOLFormula]
+    case 0 => FOLSubstitution( beta -> gamma )( sip.Gamma0.toNegFormula ).asInstanceOf[FOLFormula]
     case i =>
       val C_ = apply( sip, i - 1 )
       val nuSubst = FOLSubstitution( nu -> Utils.numeral( i - 1 ) )
-      And( nuSubst( sip.Gamma1.toFormula ).asInstanceOf[FOLFormula],
+      And( nuSubst( sip.Gamma1.toNegFormula ).asInstanceOf[FOLFormula],
         And( sip.t map { t => FOLSubstitution( gamma -> nuSubst( t ) )( C_ ) } ) )
   }
 }
