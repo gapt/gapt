@@ -214,75 +214,71 @@ object fixDerivation extends Logger {
         }
       }
   }
-  def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ): RobinsonResolutionProof = {
-    rec( p )( cs )
-  }
-  // The inductive invariant is that if we had previously a derivation of a clause c,
-  // we will now have a derivation of a subclause of c. Hence we have to drop some parts
-  // of the derivation.
-  private def rec( p: RobinsonResolutionProof )( implicit cs: Seq[FSequent] ): RobinsonResolutionProof = {
-    var fac = false
-    val res = p match {
-      case InitialClause( cls ) => handleInitialClause( cls.toFClause, cs )
-      case Factor( r, par, a, s ) => {
-        fac = true
-        a match {
-          case lit1 :: Nil => {
-            val rp = rec( par )
-            val form = lit1.head.formula
-            val pos = par.root.succedent.contains( lit1.head )
-            val cnt_ = if ( pos ) rp.root.succedent.filter( _.formula == form ).size - p.root.succedent.filter( _.formula == form ).size + 1
-            else rp.root.antecedent.filter( _.formula == form ).size - p.root.antecedent.filter( _.formula == form ).size + 1
-            val cnt = if ( cnt_ > 0 ) cnt_ else 0
-            if ( cnt == 0 )
-              rp
-            else
-              Factor( rp, form, cnt, pos, s )
-          }
-          case lit1 :: lit2 :: Nil => {
-            val rp = rec( p )
-            val form_left = lit1.head.formula
-            val form_right = lit2.head.formula
-            val cnt_left_ = rp.root.antecedent.filter( _.formula == form_left ).size - p.root.antecedent.filter( _.formula == form_left ).size
-            val cnt_right_ = rp.root.succedent.filter( _.formula == form_right ).size - p.root.succedent.filter( _.formula == form_right ).size
-            val cnt_left = if ( cnt_left_ > 0 ) cnt_left_ else 0
-            val cnt_right = if ( cnt_right_ > 0 ) cnt_right_ else 0
-            if ( cnt_left == 0 && cnt_right == 0 )
-              rp
-            else
-              Factor( rp, form_left, cnt_left, form_right, cnt_right, s )
-          }
-          case _ => throw new Exception( "Factor rule for " + p.root + " does not have one or two primary formulas!" )
-        }
-      }
-      case Variant( r, p, s ) => Variant( rec( p ), s )
-      case Resolution( r, p1, p2, a1, a2, s ) => {
-        val rp1 = rec( p1 )
-        val rp2 = rec( p2 )
-        if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
-          rp1
-        else if ( !rp2.root.antecedent.exists( _.formula == a2.formula ) )
-          rp2
-        else
-          Resolution( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], s )
-      }
-      case Paramodulation( r, p1, p2, a1, a2, p, s ) => {
-        val rp1 = rec( p1 )
-        val rp2 = rec( p2 )
-        val right = p2.root.succedent.contains( a2 )
-        if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
-          rp1
-        else if ( right && !rp2.root.succedent.exists( _.formula == a2.formula ) )
-          rp2
-        else if ( !right && !rp2.root.antecedent.exists( _.formula == a2.formula ) )
-          rp2
-        else
-          Paramodulation( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], p.formula.asInstanceOf[FOLFormula], s, right )
-      }
-      // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
-      case Instance( _, p, s ) => Instance( rec( p ), s )
+  def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ): RobinsonResolutionProof =
+    mapInitialClauses(p) { clause =>
+      handleInitialClause(clause, cs)
     }
-    assert( res.root.toFClause.isSubClauseOf( p.root.toFClause ), "res.root.toFClause: " + res.root.toFClause + "\np.root.toFClause: " + p.root.toFClause + "\np.rule: " + p.rule )
-    res
+}
+
+/**
+ * Applies a function to each initial clause in a resolution proof, replacing the initial clause with a new proof.
+ * The resulting proof may prove a smaller clause than the original one.
+ */
+object mapInitialClauses {
+  def apply( p: RobinsonResolutionProof )( f: FClause => RobinsonResolutionProof ): RobinsonResolutionProof = p match {
+    case InitialClause( cls ) => f( cls.toFClause )
+
+    case Factor( r, par, List( lit1 ), s ) =>
+      val rp = apply( par )( f )
+      val form = lit1.head.formula
+      val pos = par.root.succedent.contains( lit1.head )
+      val cnt_ = if ( pos ) rp.root.succedent.count( _.formula == form ) - p.root.succedent.count( _.formula == form ) + 1
+      else rp.root.antecedent.count( _.formula == form ) - p.root.antecedent.count( _.formula == form ) + 1
+      val cnt = if ( cnt_ > 0 ) cnt_ else 0
+      if ( cnt == 0 )
+        rp
+      else
+        Factor( rp, form, cnt, pos, s )
+
+    case Factor( r, par, List( lit1, lit2 ), s ) =>
+      val rp = apply( par )( f )
+      val form_left = lit1.head.formula
+      val form_right = lit2.head.formula
+      val cnt_left_ = rp.root.antecedent.count( _.formula == form_left ) - p.root.antecedent.count( _.formula == form_left )
+      val cnt_right_ = rp.root.succedent.count( _.formula == form_right ) - p.root.succedent.count( _.formula == form_right )
+      val cnt_left = if ( cnt_left_ > 0 ) cnt_left_ else 0
+      val cnt_right = if ( cnt_right_ > 0 ) cnt_right_ else 0
+      if ( cnt_left == 0 && cnt_right == 0 )
+        rp
+      else
+        Factor( rp, form_left, cnt_left, form_right, cnt_right, s )
+
+    case Variant( r, p, s ) => Variant( apply( p )( f ), s )
+
+    case Resolution( r, p1, p2, a1, a2, s ) =>
+      val rp1 = apply( p1 )( f )
+      val rp2 = apply( p2 )( f )
+      if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
+        rp1
+      else if ( !rp2.root.antecedent.exists( _.formula == a2.formula ) )
+        rp2
+      else
+        Resolution( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], s )
+
+    case Paramodulation( r, p1, p2, a1, a2, p, s ) =>
+      val rp1 = apply( p1 )( f )
+      val rp2 = apply( p2 )( f )
+      val right = p2.root.succedent.contains( a2 )
+      if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
+        rp1
+      else if ( right && !rp2.root.succedent.exists( _.formula == a2.formula ) )
+        rp2
+      else if ( !right && !rp2.root.antecedent.exists( _.formula == a2.formula ) )
+        rp2
+      else
+        Paramodulation( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], p.formula.asInstanceOf[FOLFormula], s, right )
+
+    // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
+    case Instance( _, p, s ) => Instance( apply( p )( f ), s )
   }
 }
