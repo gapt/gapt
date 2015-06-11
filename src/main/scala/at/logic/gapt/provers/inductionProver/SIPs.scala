@@ -59,6 +59,10 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
   val Fu = u map { F( alpha, alpha, _ ) }
   val Sequent2 = Fu ++: Gamma2
 
+  var pi0Op: Option[LKProof] = None
+  var pi1Op: Option[LKProof] = None
+  var pi2Op: Option[LKProof] = None
+
   /**
    *
    * @return True if this is a schematic sip, i.e. the induction formula is unknown.
@@ -70,6 +74,16 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @return True if the induction formula is in fact a solution.
    */
   def isSolved: Boolean = p9prover.isValid( Sequent0 ) && p9prover.isValid( Sequent1 ) && p9prover.isValid( Sequent2 )
+
+  /**
+   * Uses prover9 to compute the subproofs π,,0,,, π,,1,,, π,,2,,, provided Sequent0, Sequent1, Sequent2 are provable.
+   *
+   */
+  def subproofsFromProver9 = if ( isSolved ) {
+    pi0Op = p9prover.getLKProof( Sequent0 )
+    pi1Op = p9prover.getLKProof( Sequent1 )
+    pi2Op = p9prover.getLKProof( Sequent2 )
+  }
 
   /**
    * TODO: Find a better name for this
@@ -86,7 +100,7 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    */
   def toLKProof: Option[LKProof] = {
 
-    ( p9prover.getLKProof( Sequent0 ), p9prover.getLKProof( Sequent1 ), p9prover.getLKProof( Sequent2 ) ) match {
+    ( pi0Op, pi1Op, pi2Op ) match {
       case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) =>
         // Induction base
         val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
@@ -117,7 +131,9 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
 
         Some( CutRule( inductionProof, conclusion3, All( y, F( alpha, alpha, y ) ) ) )
 
-      case _ => None
+      case _ if isSolved =>
+        subproofsFromProver9; toLKProof
+      case _             => None
     }
 
   }
