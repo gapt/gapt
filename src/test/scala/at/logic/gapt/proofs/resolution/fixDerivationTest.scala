@@ -15,7 +15,7 @@ class FixDerivationTest extends Specification {
       val to = FClause( p :: Nil, Nil )
       val from = FSequent( p :: Nil, p :: r :: Nil )
 
-      fixDerivation.canDeriveBySymmetry( to, from ) must beFalse
+      fixDerivation.tryDeriveBySymmetry( to, from ) must beNone
     }
 
     "say that a=b, b=c :- c=d is derivable from c=b, a=b :- d=c" in {
@@ -31,7 +31,7 @@ class FixDerivationTest extends Specification {
       val from = FSequent( ab :: bc :: Nil, cd :: Nil )
       val to = FClause( cb :: ab :: Nil, dc :: Nil )
 
-      fixDerivation.canDeriveBySymmetry( to, from ) must beTrue
+      fixDerivation.tryDeriveBySymmetry( to, from ) must beSome
     }
 
     "say that p(a) :- q(x) can be derived by factoring from p(x), p(y) :- q(u), q(v)" in {
@@ -50,7 +50,7 @@ class FixDerivationTest extends Specification {
       val to = FClause( pa :: Nil, qx :: Nil )
       val from = FSequent( px :: py :: Nil, qu :: qv :: Nil )
 
-      fixDerivation.canDeriveByFactor( to, from ) must beTrue
+      fixDerivation.tryDeriveByFactor( to, from ) must beSome
     }
 
     "obtain a derivation of :- p from { :- q; q :- p } from a derivation of :- p, r from { :- q, r; q :- p }" in {
