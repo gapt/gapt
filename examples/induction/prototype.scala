@@ -63,9 +63,10 @@ val linearES = FSequent(
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("P", alpha)))
 
-lazy val tipES = TipParser.parse(Source.fromFile("/home/gebner/tip-benchs/benchmarks/prod/prop_01.smt2").mkString) match {
-  case FSequent(theory, Seq(concl)) =>
-    FSequent(theory, Seq(instantiate(concl, alpha)))
+lazy val tipES = TipParser.parse(Source.fromFile("/home/gebner/tip-benchs/benchmarks/isaplanner/prop_10.smt2").mkString) match {
+  // the Imp-stripping is a workaround for issue 340
+  case FSequent(theory, Seq(All(v, Imp(_, concl)))) =>
+    FSequent(theory, Seq(Substitution(v -> alpha)(concl)))
 }
 
 val endSequent = linearES
@@ -77,15 +78,20 @@ Logger.getLogger(classOf[SipProver].getName).setLevel(Level.DEBUG)
 // TODO: just a stop-gap
 val solutionCandidates = Seq(
   "P(x,y)",
-  "P(0) -> P(x)",
-  "y+x = x+y"
+  "P(x)",
+  "y+x = x+y",
+  "minus(x,x) = 0"
 ) map(s => FOLSubstitution(
   FOLVar("x") -> SimpleInductionProof.nu,
   FOLVar("y") -> SimpleInductionProof.gamma,
   FOLVar("z") -> SimpleInductionProof.alpha)(parseFormula(s)))
 val solutionFinder = new SolutionFinder {
   override def findSolution(schematicSip: SimpleInductionProof): Option[FOLFormula] =
-    solutionCandidates find { cand => schematicSip.solve(cand).isSolved }
+    solutionCandidates find { cand =>
+      val sip = schematicSip.solve(cand)
+//      println(sip.Sequent0); println(sip.Sequent1); println(sip.Sequent2); println()
+      sip.isSolved
+    }
 }
 
 val sipProver = new SipProver(solutionFinder)

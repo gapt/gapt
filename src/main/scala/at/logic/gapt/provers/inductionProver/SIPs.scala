@@ -164,9 +164,10 @@ object decodeSipGrammar {
     grammar.productions foreach {
       case ( `tau`, t ) =>
         val fvs = freeVariables( t )
-        if ( !fvs.contains( nu ) && !fvs.contains( beta ) && !fvs.contains( gamma ) ) seq2 += t
-        else if ( !fvs.contains( beta ) ) seq1 += t
-        else if ( !fvs.contains( nu ) && !fvs.contains( gamma ) ) seq0 += t
+        // FIXME: this produces many more instances than the paper, but seems necessary for isaplanner/prop_10
+        if ( !fvs.contains( beta ) && !fvs.contains( gamma ) ) seq2 += FOLSubstitution(nu -> alpha)(t)
+        if ( !fvs.contains( beta ) ) seq1 += t
+        if ( !fvs.contains( gamma ) ) seq0 += FOLSubstitution(nu -> Utils.numeral(0))(t)
       case ( `gamma`, t )    => ts += t
       case ( `gammaEnd`, u ) => us += u
     }
