@@ -24,9 +24,10 @@ class SipProver( solutionFinder: SolutionFinder,
                  quasiTautProver: Prover = new VeriTProver() )
     extends Prover with Logger {
 
-  override def getLKProof( endSequent: FSequent ): Option[LKProof] = getLKProofAndSolution( endSequent ).map( _._1 )
+  override def getLKProof( endSequent: FSequent ): Option[LKProof] =
+    getSimpleInductionProof( endSequent ).map( _.toLKProof.get )
 
-  def getLKProofAndSolution( endSequent: FSequent ): Option[( LKProof, FOLFormula )] = {
+  def getSimpleInductionProof( endSequent: FSequent ): Option[SimpleInductionProof] = {
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
       case singleton if singleton.size == 1 => singleton.head
     }
@@ -96,8 +97,6 @@ class SipProver( solutionFinder: SolutionFinder,
       debug( s"C_$i =\n${CNFp( C_i ).mkString( "\n" )}" )
     }
 
-    solutionFinder.findSolution( schematicSip ) map { solution =>
-      schematicSip.solve( solution ).toLKProof.get -> solution
-    }
+    solutionFinder.findSolution( schematicSip ).map( schematicSip.solve )
   }
 }

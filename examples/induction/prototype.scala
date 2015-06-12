@@ -82,11 +82,11 @@ val solutionFinder = new SolutionFinder {
 
 val sipProver = new SipProver(solutionFinder)
 
-val maybeIndProof = sipProver.getLKProofAndSolution(endSequent)
+val maybeIndProof = sipProver.getSimpleInductionProof(endSequent)
 
 maybeIndProof match {
-  case Some((indProof, solution)) =>
-    println(s"Found induction proof with solution $solution")
+  case Some(sip) =>
+    println(s"Found induction proof with solution ${sip.inductionFormula}")
   case None =>
     println(s"Didn't find induction proof.")
 }
