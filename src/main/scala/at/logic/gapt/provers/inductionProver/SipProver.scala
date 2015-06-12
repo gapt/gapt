@@ -39,15 +39,6 @@ class SipProver( solutionFinder: SolutionFinder,
       n -> LKToExpansionProof( instanceProver.getLKProof( instanceSequent ).get )
     }
 
-    // Ground the instance proofs.
-    instanceProofs = instanceProofs map {
-      case ( n, expProof ) =>
-        n -> substitute(
-          FOLSubstitution( freeVariables( toDeep( expProof ).toFormula ).
-            map { c => FOLVar( c.name ) -> FOLConst( c.name ) }.toSeq ),
-          expProof )
-    }
-
     if ( minimizeInstanceLanguages ) {
       instanceProofs = instanceProofs map {
         case ( n, expProof ) =>
@@ -61,9 +52,17 @@ class SipProver( solutionFinder: SolutionFinder,
     }
 
     val termEncoding = InstanceTermEncoding( endSequent )
-    val instanceLanguages = instanceProofs map {
+    var instanceLanguages = instanceProofs map {
       case ( n, expSeq ) =>
         n -> termEncoding.encode( expSeq )
+    }
+
+    // Ground the instance languages.
+    instanceLanguages = instanceLanguages map {
+      case ( n, lang ) =>
+        val groundingSubst = FOLSubstitution( freeVariables( lang ).
+          map { c => FOLVar( c.name ) -> FOLConst( c.name ) }.toSeq )
+        n -> lang.map( groundingSubst.apply )
     }
 
     instanceLanguages foreach {

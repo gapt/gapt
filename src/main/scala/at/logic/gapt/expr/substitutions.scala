@@ -81,6 +81,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
 
 object Substitution {
   def apply( subs: List[( Var, LambdaExpression )] ): Substitution = new Substitution( Map() ++ subs )
+  def apply( subs: ( Var, LambdaExpression )* ): Substitution = new Substitution( Map() ++ subs )
   def apply( variable: Var, expression: LambdaExpression ): Substitution = new Substitution( Map( variable -> expression ) )
   def apply( map: Map[Var, LambdaExpression] ): Substitution = new Substitution( map )
   def apply() = new Substitution( Map() )
