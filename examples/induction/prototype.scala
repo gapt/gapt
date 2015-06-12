@@ -69,7 +69,7 @@ lazy val tipES = TipParser.parse(Source.fromFile("/home/gebner/tip-benchs/benchm
     FSequent(theory, Seq(Substitution(v -> alpha)(concl)))
 }
 
-val endSequent = linearES
+val endSequent = tipES
 
 println(s"Proving $endSequent")
 
