@@ -46,20 +46,10 @@ object VeriTExporter {
     file
   }
 
-  private def getAssertions( ant: Seq[FOLFormula], succ: Seq[FOLFormula] ) = {
-    val s1 = ant.foldLeft( "" ) {
-      case ( acc, f ) =>
-        "(assert " + toSMTFormat( f ) + ")\n" + acc
-    }
-
-    if ( succ.length == 0 ) {
-      s1
-    } else {
-      val negs = succ.map( x => Neg( x ) )
-      val disj = Or( negs )
-      s1 + "(assert " + toSMTFormat( disj ) + ")\n"
-    }
-  }
+  private def getAssertions( ant: Seq[FOLFormula], succ: Seq[FOLFormula] ) =
+    ( ant ++ succ.map( Neg( _ ) ) ).map { formula =>
+      s"(assert ${toSMTFormat( formula )})\n"
+    }.mkString
 
   // Gets all the symbols and arities that occur in the formulas of the list
   private def getSymbolsDeclaration( flst: Seq[FOLFormula] ) = {
