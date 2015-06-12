@@ -133,7 +133,7 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
 
       case _ if isSolved =>
         subproofsFromProver9; toLKProof
-      case _             => None
+      case _ => None
     }
 
   }
