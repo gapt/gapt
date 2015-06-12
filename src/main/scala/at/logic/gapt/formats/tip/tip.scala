@@ -1,0 +1,53 @@
+package at.logic.gapt.formats.tip
+
+import at.logic.gapt.algorithms.rewriting.NameReplacement
+import at.logic.gapt.expr.hol.isPrenex
+import at.logic.gapt.expr._
+import at.logic.gapt.formats.prover9.Prover9TermParser
+import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.utils.withTempFile
+import scala.collection.mutable
+import scala.sys.process._
+
+object TipParser {
+  private def parseLADR( contents: String ): FSequent = {
+    val antecedent = mutable.Buffer[HOLFormula]()
+    val succedent = mutable.Buffer[HOLFormula]()
+
+    var currentBuffer = antecedent
+
+    val formulaParser = Prover9TermParser
+    val formulaLine = """([^#.]+)#.*""".r
+
+    contents.split( "\n" ) foreach {
+      case "formulas(assumptions)." => currentBuffer = antecedent
+      case "formulas(goals)."       => currentBuffer = succedent
+      case formulaLine( formula )   => currentBuffer += formulaParser.parseFormula( formula )
+      case x                        => ()
+    }
+
+    FSequent( antecedent, succedent )
+  }
+
+  private def fixupConstants( seq: FSequent ) =
+    NameReplacement( seq, Map( "z" -> ( 0, "0" ) ) )
+
+  private def fixupNonPrenex( f: HOLFormula ): Seq[HOLFormula] = f match {
+    case _ if isPrenex( f ) => Seq( f )
+    case And( x, y )        => fixupNonPrenex( x ) ++ fixupNonPrenex( y )
+    case All( v, g )        => fixupNonPrenex( g ).map( All( v, _ ) )
+  }
+
+  private def fixupNonPrenex( seq: FSequent ): FSequent =
+    FSequent( seq.antecedent.flatMap( fixupNonPrenex ), seq.succedent )
+
+  def parse( contents: String ): FSequent = {
+    val ladr = withTempFile.fromString( contents ) { tipFile =>
+      Seq( "tip", "--why", tipFile ) #|
+        Seq( "why3", "prove", "-D", "eprover", "-F", "whyml", "-" ) #|
+        Seq( "tptp_to_ladr" ) !!
+    }
+
+    fixupNonPrenex( fixupConstants( parseLADR( ladr ) ) )
+  }
+}

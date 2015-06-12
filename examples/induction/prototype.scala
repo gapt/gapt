@@ -1,11 +1,14 @@
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.{instantiate, univclosure}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.formats.tip.TipParser
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
 import at.logic.gapt.provers.inductionProver._
 import org.apache.log4j.{Level, Logger}
+
+import scala.io.Source
 
 // doesn't work: associativity instances are too complicated
 val assocES = FSequent(
@@ -59,6 +62,11 @@ val linearES = FSequent(
   Seq("P(x) -> P(s(x))", "P(0)")
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("P", alpha)))
+
+lazy val tipES = TipParser.parse(Source.fromFile("/home/gebner/tip-benchs/benchmarks/prod/prop_01.smt2").mkString) match {
+  case FSequent(theory, Seq(concl)) =>
+    FSequent(theory, Seq(instantiate(concl, alpha)))
+}
 
 val endSequent = linearES
 
