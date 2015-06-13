@@ -47,14 +47,6 @@ object Deltas {
    * The variable in the returned decomposition -- if it occurrs -- will be named [eigenvariable]_0.
    */
   class OneVariableDelta extends DeltaVector {
-    // There must be a better way...
-    // TODO: this should go somewhere else?
-    def listEquals( lst1: List[FOLTerm], lst2: List[FOLTerm] ): Boolean = ( lst1, lst2 ) match {
-      case ( Nil, Nil )               => true
-      case ( hd1 :: tl1, hd2 :: tl2 ) => ( hd1.syntaxEquals( hd2 ) ) && listEquals( tl1, tl2 )
-      case ( _, _ )                   => false
-    }
-
     def computeDelta( terms: List[FOLTerm], eigenvariable: String ): Set[types.Decomposition] = {
       val ( u, s1 ) = computeDg( terms, FOLVar( eigenvariable + "_0" ) )
 
@@ -117,7 +109,7 @@ object Deltas {
             } else {
               // Check if they are the same
               val first = nonempty.head
-              if ( nonempty.forall( l => listEquals( l, first ) ) ) {
+              if ( nonempty.forall( l => ( l == first ) ) ) {
                 // All terms are the same
                 val newargs = deltaOfArgs.foldRight( List[FOLTerm]() )( ( x, acc ) => x._1 :: acc )
                 val u = FOLFunction( h, newargs )
