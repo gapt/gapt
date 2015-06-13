@@ -49,4 +49,24 @@ class ExprTest extends Specification {
       FOLAtom( "P" ).toString must beEqualTo( "P" )
     }
   }
+
+  "variables and free variables" should {
+    val x = Var( "x", Ti )
+    val y = Var( "y", Ti )
+    val M1 = App( Abs( x, Abs( y, x ) ), x )
+
+    val u = FOLVar( "u" )
+    val v = FOLVar( "v" )
+    val t1 = FOLFunction( "f", FOLFunction( "g", u ), v )
+
+    "be extracted correctly from " + M1 in {
+      variables( M1 ) must beEqualTo( Set( x, y ) )
+      freeVariables( M1 ) must beEqualTo( Set( x ) )
+    }
+
+    "be extracted correctly from the FOLTerm " + t1 in {
+      variables( t1 ) must beEqualTo( Set( u, v ) )
+      freeVariables( t1 ) must beEqualTo( Set( u, v ) )
+    }
+  }
 }

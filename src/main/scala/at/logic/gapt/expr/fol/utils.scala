@@ -189,41 +189,6 @@ object createFOLVars {
   }
 }
 
-object collectVariables {
-  /**
-   * Returns the list (not set!) of all occurring variables, free or bound, in a FOL FORMULA, from left to right.
-   *
-   * @param f The FOL formula in which to collect the variables.
-   * @return The list of occurring variables, from left to right. If a variable occurs multiple times
-   *         in the formula, it will occur multiple times in the returned list.
-   */
-  def apply( f: FOLFormula ): List[FOLVar] = f match {
-    case And( f1, f2 )    => collectVariables( f1 ) ++ collectVariables( f2 )
-    case Or( f1, f2 )     => collectVariables( f1 ) ++ collectVariables( f2 )
-    case Imp( f1, f2 )    => collectVariables( f1 ) ++ collectVariables( f2 )
-    case Neg( f1 )        => collectVariables( f1 )
-    case All( _, f1 )     => collectVariables( f1 )
-    case Ex( _, f1 )      => collectVariables( f1 )
-    case FOLAtom( _, f1 ) => f1.map( f => collectVariables( f ) ).foldLeft( List[FOLVar]() )( _ ++ _ )
-    case Top() | Bottom() => List()
-    case _                => throw new IllegalArgumentException( "Unhandled case in fol.utils.collectVariables(FOLFormula)!" )
-  }
-
-  /**
-   * Returns the list (not set!) of all occurring variables, free or bound, in a FOLTerm, from left to right.
-   *
-   * @param f The FOLTerm in which to collect the variables.
-   * @return The list of occurring variables, from left to right. If a variable occurs multiple times
-   *         in the formula, it will occur multiple times in the returned list.
-   */
-  def apply( f: FOLTerm ): List[FOLVar] = f match {
-    case FOLVar( x )             => List( FOLVar( x ) )
-    case FOLFunction( _, terms ) => terms.map( t => collectVariables( t ) ).foldLeft( List[FOLVar]() )( _ ++ _ )
-    case FOLConst( _ )           => Nil
-    case _                       => throw new IllegalArgumentException( "Unhandled case in fol.utils.collectVariables(FOLTerm)!" )
-  }
-}
-
 object isEigenvariable {
   def apply( x: FOLVar, eigenvariable: String ) = x.toString.split( '_' ) match {
     case Array( eigenvariable, n ) => n.forall( Character.isDigit )

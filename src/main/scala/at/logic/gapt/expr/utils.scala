@@ -60,6 +60,7 @@ object variables {
     case Abs( v, t ) => apply( v ) ++ apply( t )
   }
 
+  def apply( t: FOLTerm ): Set[FOLVar] = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
   def apply( s: FSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: Sequent ): Set[Var] = apply( s.toFSequent )
   def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )

@@ -324,8 +324,8 @@ object Deltas {
   private def smallestVarInU( eigenvariable: String, u: types.U ): Option[Int] = {
     def extractIndex( x: FOLVar ) = x.toString.substring( eigenvariable.length + 1, x.toString.length ).toInt
 
-    val res = collectVariables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( extractIndex )
-    if ( res.length == 0 ) None else Some( res.min )
+    val res = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( extractIndex )
+    if ( res.isEmpty ) None else Some( res.min )
   }
 
   /**
@@ -336,8 +336,8 @@ object Deltas {
   private def largestVarInU( eigenvariable: String, u: types.U ): Option[Int] = {
     def extractIndex( x: FOLVar ) = x.toString.substring( eigenvariable.length + 1, x.toString.length ).toInt
 
-    val res = collectVariables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( extractIndex )
-    if ( res.length == 0 ) None else Some( res.max )
+    val res = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( extractIndex )
+    if ( res.isEmpty ) None else Some( res.max )
   }
 
   /**
@@ -358,7 +358,7 @@ object Deltas {
       val indexedS = s.zip( start to ( start + s.size - 1 ) )
 
       //Get the list of all variables occurring in u
-      var presentVars = collectVariables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).distinct
+      var presentVars = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) )
 
       //Go through s, look ahead for duplicates, and delete them.
       def nub2( u: types.U, s: List[( List[FOLTerm], Int )] ): types.RawDecomposition = s match {
