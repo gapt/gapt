@@ -4,14 +4,14 @@
 
 package at.logic.gapt.provers.sat4j
 
-import at.logic.gapt.formats.dimacs.{ writeDIMACS, readDIMACS, DIMACSHelper }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.{ CNFp, TseitinCNF }
-import at.logic.gapt.utils.logging.{ Stopwatch, Logger }
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.expr.hol.CNFp
+import at.logic.gapt.formats.dimacs.{ writeDIMACS, readDIMACS, DIMACSHelper }
 import at.logic.gapt.models._
+import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
+import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.provers.Prover
+import at.logic.gapt.utils.logging.{ Stopwatch, Logger }
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
@@ -68,7 +68,7 @@ class Sat4j extends Stopwatch {
     start()
     val cnf = f match {
       case f1: FOLFormula => TseitinCNF( f1 )
-      case _              => CNFp( f )
+      case _              => CNFp.toFClauseList( f )
     }
     lap( "CNF done" )
     val int = solve( cnf )

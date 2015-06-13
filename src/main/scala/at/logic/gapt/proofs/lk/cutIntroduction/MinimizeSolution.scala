@@ -12,7 +12,6 @@ import at.logic.gapt.proofs.resolution.FClause
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.minisat.MiniSAT
 import at.logic.gapt.utils.dssupport.ListSupport
@@ -180,7 +179,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     // Transform to conjunctive normal form
     trace( "starting CNF-Transformation" )
-    val cnf = And( toCNF( f ) )
+    val cnf = CNFp.toFormula( f )
     trace( "finished CNF-Transformation" )
 
     // Exhaustive search over the resolvents (depth-first search),
@@ -259,7 +258,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     //0. Convert to a clause set where each clause is a list of positive and negative atoms.
     //1. assign a number to every atom in F.
-    val fNumbered = numberAtoms( CNFp( form2 ).map( c => toMyFClause( c ) ).toList )
+    val fNumbered = numberAtoms( CNFp.toFClauseList( form2 ).map( c => toMyFClause( c ) ).toList )
 
     //2. gather the positive and negative occurrences o every variable v into sets v+ and v-.
     val posNegSets = fNumbered.foldLeft( Map[FOLFormula, ( Set[Int], Set[Int] )]() ) { ( m, clause ) =>
@@ -407,7 +406,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
   //
   def ForgetfulResolve( f: FOLFormula ): List[FOLFormula] =
     {
-      val clauses = CNFp( f ).map( c => toMyFClause( c ) )
+      val clauses = CNFp.toFClauseList( f ).map( c => toMyFClause( c ) )
       clauses.foldLeft( List[FOLFormula]() )( ( list, c1 ) =>
         list ::: clauses.dropWhile( _ != c1 ).foldLeft( List[FOLFormula]() )( ( list2, c2 ) =>
           if ( resolvable( c1, c2 ) )
@@ -429,7 +428,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
   // Implements forgetful paramodulation.
   def ForgetfulParamodulateCNF( f: FOLFormula ): List[List[MyFClause[FOLFormula]]] =
-    ForgetfulParamodulateCNF( CNFp( f ).map( c => toMyFClause( c ) ) )
+    ForgetfulParamodulateCNF( CNFp.toFClauseList( f ).map( c => toMyFClause( c ) ) )
 
   // Implements forgetful paramodulation.
   def ForgetfulParamodulateCNF( clauses: List[MyFClause[FOLFormula]] ): List[List[MyFClause[FOLFormula]]] =

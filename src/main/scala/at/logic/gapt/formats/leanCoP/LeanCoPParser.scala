@@ -1,8 +1,8 @@
 package at.logic.gapt.formats.leanCoP
 
-import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
+import at.logic.gapt.expr.fol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, formulaToExpansionTree }
 
 import java.io.{ Reader, FileReader }
@@ -87,7 +87,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     }
 
     val ( fd, defs ) = toDCF( f, lean_preds, false )
-    fd :: defs.flatMap( d => toDNF( d ) )
+    fd :: defs.flatMap( d => DNFp.toFormulaList( d ) )
   }
 
   // Collects all n ^ [...] predicates used and their arities
@@ -112,7 +112,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   def toMagicalDNF( f: FOLFormula ): List[FOLFormula] = {
-    val normal_dnf = toDNF( f )
+    val normal_dnf = DNFp.toFormulaList( f )
 
     def collectLiterals( cls: FOLFormula ): List[FOLFormula] = cls match {
       case FOLAtom( _, _ )                        => List( cls )

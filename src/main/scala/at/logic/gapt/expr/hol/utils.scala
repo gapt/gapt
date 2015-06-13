@@ -112,7 +112,7 @@ object isReflexivity {
 }
 
 /**
- * Returns true iff the given LambdaExpression is an atom (which does
+ * Returns true iff the given HOLFormula is an atom (which does
  * not include top nor bottom).
  */
 object isAtom {
@@ -123,13 +123,30 @@ object isAtom {
 }
 
 /**
- * Returns true iff the given LambdaExpression is an extended atom, i.e. an
+ * Returns true iff the given HOLFormula is an extended atom, i.e. an
  * atom or top or bottom.
  */
 object isExtendedAtom {
   def apply( e: HOLFormula ): Boolean = e match {
     case HOLAtom( _, _ ) | Top() | Bottom() => true
     case _                                  => false
+  }
+}
+
+/**
+ * Returns true iff the given HOLFormula starts with a negation.
+ */
+object isNeg {
+  def apply( formula: HOLFormula ) = formula match {
+    case Neg( _ ) => true
+    case _        => false
+  }
+}
+
+object stripNeg {
+  def apply( formula: HOLFormula ) = formula match {
+    case Neg( f ) => f
+    case _        => formula
   }
 }
 
@@ -324,6 +341,28 @@ object existsclosure {
    * @return exists x_1 ... exists x_n f, where {x_i | 1 <= i <= n} = FV(f)
    */
   def apply( f: HOLFormula ): HOLFormula = freeVariables( f ).foldRight( f )( ( v, g ) => Ex( v, g ) )
+
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+}
+
+/**
+ * Dualize a formula in NNF by switching conjunctions with disjunctions,
+ * universal with existential quantifiers, top with bottom and positive literals
+ * with negative literals. The formula dualize( A ) is logically equivalent to
+ * the negation of A.
+ */
+object dualize {
+  def apply( f: HOLFormula ): HOLFormula = f match {
+    case Top()                     => Bottom()
+    case Bottom()                  => Top()
+    case HOLAtom( x, args )        => Neg( HOLAtom( x, args ) )
+    case Neg( HOLAtom( x, args ) ) => HOLAtom( x, args )
+    case And( f1, f2 )             => Or( apply( f1 ), apply( f2 ) )
+    case Or( f1, f2 )              => And( apply( f1 ), apply( f2 ) )
+    case All( v, f )               => Ex( v, apply( f ) )
+    case Ex( v, f )                => All( v, apply( f ) )
+    case _                         => throw new Exception( "Formula not in NNF!" )
+  }
 
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }

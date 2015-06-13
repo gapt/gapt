@@ -8,7 +8,6 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.expr.hol.simplify.simplify
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, toShallow, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._

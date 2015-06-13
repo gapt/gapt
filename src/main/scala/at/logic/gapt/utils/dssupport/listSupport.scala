@@ -5,8 +5,6 @@
 
 package at.logic.gapt.utils.dssupport
 
-//import scala.actors._
-
 object ListSupport {
 
   /** Cartesian product of an arbitrary list of lists */
@@ -18,6 +16,11 @@ object ListSupport {
   /** Cartesian product of two lists */
   def product[A, B]( xs: List[A], ys: List[B] ) = {
     xs.flatMap( ( x ) => ys.map( ( y ) => ( x, y ) ) )
+  }
+
+  /** all lists obtainable by concatenating one from s1 with one from s2 */
+  def times[T]( s1: List[List[T]], s2: List[List[T]] ): List[List[T]] = {
+    s1.flatMap( c1 => s2.map( c2 => c1 ++ c2 ) )
   }
 
   /** Find all subsets */

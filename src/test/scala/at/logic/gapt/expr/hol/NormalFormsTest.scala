@@ -1,0 +1,19 @@
+package at.logic.gapt.expr.hol
+
+import at.logic.gapt.expr._
+import at.logic.gapt.proofs.resolution._
+import org.specs2.mutable._
+
+class CNFTest extends Specification {
+  "the computation of CNFp(f)" should {
+    "be {|- Pa,Qa, Qa|-} for f = (Pa ∨ Qa) ∧ ¬Qa" in {
+      val Pa = FOLAtom( "P", FOLConst( "a" ) :: Nil )
+      val Qa = FOLAtom( "Q", FOLConst( "a" ) :: Nil )
+      val nQa = Neg( Qa )
+      val PavQa = Or( Pa, Qa )
+      val f = And( PavQa, nQa )
+      CNFp.toFClauseList( f ).toSet must beEqualTo( Set( FClause( List(), List( Pa, Qa ) ), FClause( List( Qa ), List() ) ) )
+    }
+  }
+}
+

@@ -33,6 +33,28 @@ class ExprTest extends Specification {
     }
   }
 
+  "N-ary connectives" should {
+    "match correctly" in {
+      val p = FOLAtom( "p" )
+      val q = FOLAtom( "q" )
+      val r = FOLAtom( "r" )
+      val Fl = And( p, And( q, r ) )
+      val Fr = And( And( p, q ), r )
+
+      // FIXME: why is this cast necessary?
+      val ll = Fl.asInstanceOf[LambdaExpression] match {
+        case And.nAry( cs ) => cs
+      }
+      ll must beEqualTo( p :: q :: r :: Nil )
+
+      // FIXME: why is this cast necessary?
+      val rl = Fr.asInstanceOf[LambdaExpression] match {
+        case And.nAry( cs ) => cs
+      }
+      ll must beEqualTo( p :: q :: r :: Nil )
+    }
+  }
+
   "FOL helpers" should {
     "have correct static types" in {
       val a: FOLTerm = FOLFunction( "f", FOLVar( "x" ), FOLFunction( "c" ) )

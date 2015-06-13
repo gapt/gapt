@@ -4,9 +4,9 @@ import java.io._
 
 import at.logic.gapt.formats.dimacs.DIMACSHelper
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.{ TseitinCNF, CNFp }
 import at.logic.gapt.utils.logging.{ Logger, Stopwatch }
 
 import scala.collection.immutable.Map
@@ -52,7 +52,7 @@ trait MaxSATSolver extends Logger {
 
     // Soft CNF transformation
     watch.start()
-    val softCNFs = soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten
+    val softCNFs = soft.map( s => CNFp.toFClauseList( s._1 ).map( f => ( f, s._2 ) ) ).flatten
     val softCNFTime = watch.lap( "softCNF" )
     logTime( "[Runtime]<soft CNF-Generation> ", softCNFTime )
     trace( "produced soft cnf: " + softCNFs )

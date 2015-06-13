@@ -34,7 +34,7 @@ object PCNF {
       s.succedent.tail.foldLeft( Neg( s.succedent.head ) )( ( f1, f2 ) => And( f1, Neg( f2 ) ) )
 
     // compute CNF and confirm a <- CNF(-s) up to variable renaming
-    val cnf = CNFp( form )
+    val cnf = CNFp.toFClauseList( form )
     var sub = Substitution()
     var subi = Substitution()
     val op = cnf.find( y => getVariableRenaming( y, a ) match {
@@ -44,12 +44,12 @@ object PCNF {
     val ( p, f, inAntecedent ) = op match {
       case Some( f2 ) => {
         // find the right formula and compute the proof
-        s.antecedent.find( x => containsMatchingClause( f2, CNFp( x ) ) ) match {
+        s.antecedent.find( x => containsMatchingClause( f2, CNFp.toFClauseList( x ) ) ) match {
           case Some( f3 ) => {
             ( applySub( PCNFp( f3, a, subi ), sub )._1, f3, true )
           }
           case _ => {
-            val f3 = s.succedent.find( x => containsMatchingClause( f2, CNFn( x ) ) ).get
+            val f3 = s.succedent.find( x => containsMatchingClause( f2, CNFn.toFClauseList( x ) ) ).get
             ( applySub( PCNFn( f3, a, subi ), sub )._1, f3, false )
           }
         }
@@ -112,15 +112,15 @@ object PCNF {
       AndRightRule( PCNFn( f1, a, sub ), PCNFn( f2, a, sub ), f1, f2 )
     }
     case Or( f1, f2 ) =>
-      if ( containsSubsequent( CNFn( f1 ), as( a, sub ) ) ) OrRight1Rule( PCNFn( f1, a, sub ), f1, f2 )
-      else if ( containsSubsequent( CNFn( f2 ), as( a, sub ) ) ) OrRight2Rule( PCNFn( f2, a, sub ), f1, f2 )
+      if ( containsSubsequent( CNFn.toFClauseList( f1 ), as( a, sub ) ) ) OrRight1Rule( PCNFn( f1, a, sub ), f1, f2 )
+      else if ( containsSubsequent( CNFn.toFClauseList( f2 ), as( a, sub ) ) ) OrRight2Rule( PCNFn( f2, a, sub ), f1, f2 )
       else throw new IllegalArgumentException( "clause: " + as( a, sub ) + " is not found in CNFs of ancestors: "
-        + CNFn( f1 ) + " or " + CNFn( f2 ) + " of formula " + f )
+        + CNFn.toFClauseList( f1 ) + " or " + CNFn.toFClauseList( f2 ) + " of formula " + f )
     case Imp( f1, f2 ) => {
-      if ( containsSubsequent( CNFp( f1 ), as( a, sub ) ) ) ImpRightRule( WeakeningRightRule( PCNFp( f1, a, sub ), f2 ), f1, f2 )
-      else if ( containsSubsequent( CNFn( f2 ), as( a, sub ) ) ) ImpRightRule( WeakeningLeftRule( PCNFn( f2, a, sub ), f1 ), f1, f2 )
+      if ( containsSubsequent( CNFp.toFClauseList( f1 ), as( a, sub ) ) ) ImpRightRule( WeakeningRightRule( PCNFp( f1, a, sub ), f2 ), f1, f2 )
+      else if ( containsSubsequent( CNFn.toFClauseList( f2 ), as( a, sub ) ) ) ImpRightRule( WeakeningLeftRule( PCNFn( f2, a, sub ), f1 ), f1, f2 )
       else throw new IllegalArgumentException( "clause: " + as( a, sub ) + " is not found in CNFs of ancestors: "
-        + CNFp( f1 ) + " or " + CNFn( f2 ) + " of formula " + f )
+        + CNFp.toFClauseList( f1 ) + " or " + CNFn.toFClauseList( f2 ) + " of formula " + f )
     }
     case Ex( v, f2 )     => ExistsRightRule( PCNFn( f2, a, sub ), f2, f, v.asInstanceOf[Var] )
     case HOLAtom( _, _ ) => Axiom( List( f ), List( f ) )
@@ -137,10 +137,10 @@ object PCNF {
     case Bottom()  => Axiom( List( f ), Nil )
     case Neg( f2 ) => NegLeftRule( PCNFn( f2, a, sub ), f2 )
     case And( f1, f2 ) =>
-      if ( containsSubsequent( CNFp( f1 ), as( a, sub ) ) ) AndLeft1Rule( PCNFp( f1, a, sub ), f1, f2 )
-      else if ( containsSubsequent( CNFp( f2 ), as( a, sub ) ) ) AndLeft2Rule( PCNFp( f2, a, sub ), f1, f2 )
+      if ( containsSubsequent( CNFp.toFClauseList( f1 ), as( a, sub ) ) ) AndLeft1Rule( PCNFp( f1, a, sub ), f1, f2 )
+      else if ( containsSubsequent( CNFp.toFClauseList( f2 ), as( a, sub ) ) ) AndLeft2Rule( PCNFp( f2, a, sub ), f1, f2 )
       else throw new IllegalArgumentException( "clause: " + as( a, sub ) + " is not found in CNFs of ancestors: "
-        + CNFp( f1 ) + " or " + CNFp( f2 ) + " of formula " + f )
+        + CNFp.toFClauseList( f1 ) + " or " + CNFp.toFClauseList( f2 ) + " of formula " + f )
     case Or( f1, f2 ) => {
       OrLeftRule( PCNFp( f1, a, sub ), PCNFp( f2, a, sub ), f1, f2 )
     }
