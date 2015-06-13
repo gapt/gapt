@@ -15,6 +15,11 @@ object ListSupport {
     case h :: t => for ( eh <- h; et <- product( t ) ) yield eh :: et
   }
 
+  /** Cartesian product of two lists */
+  def product[A, B]( xs: List[A], ys: List[B] ) = {
+    xs.flatMap( ( x ) => ys.map( ( y ) => ( x, y ) ) )
+  }
+
   /** Find all subsets */
   def subsets[T]( s: List[T] ): List[List[T]] = {
     if ( s.size == 0 ) List( List() )

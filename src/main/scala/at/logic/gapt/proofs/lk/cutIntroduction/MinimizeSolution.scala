@@ -15,7 +15,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.minisat.MiniSAT
-import at.logic.gapt.utils.dssupport.ListSupport.mapAccumL
+import at.logic.gapt.utils.dssupport.ListSupport
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SetNode
@@ -207,20 +207,12 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
   //Helper functions.
 
   /**
-   * Returns the Cartesian product of two sets.
-   * e.g. choose2([1,2],[3,4]) = [(1,2),(1,3),(1,4),(1,5)]
-   */
-  def cartesianProduct[A, B]( xs: List[A], ys: List[B] ) = {
-    xs.flatMap( ( x ) => ys.map( ( y ) => ( x, y ) ) )
-  }
-
-  /**
    * Give each atom in a formula an index. Multiple occurrences of the same atom get different indices.
    * @param formula A list of clauses.
    * @return Formula, but with each atom turned into a tuple. The 2nd component is the atom's index.
    */
   def numberAtoms( formula: List[MyFClause[FOLFormula]] ) =
-    mapAccumL( ( c: Int, cl: MyFClause[FOLFormula] ) => ( c + cl.neg.length + cl.pos.length,
+    ListSupport.mapAccumL( ( c: Int, cl: MyFClause[FOLFormula] ) => ( c + cl.neg.length + cl.pos.length,
       new MyFClause( cl.neg zip ( Stream from c ), cl.pos zip ( Stream from ( c + cl.neg.length ) ) ) ),
       0, formula )._2
 
@@ -300,7 +292,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     }
 
     //3. for every variable v, generate every (v1 in v+, v2 in v-) and number all of the resultant pairs.
-    val pairs = posNegSets.map( ( v ) => { val ( _, ( n, p ) ) = v; cartesianProduct( n.toList, p.toList ) } ).flatten.zipWithIndex.toList
+    val pairs = posNegSets.map( ( v ) => { val ( _, ( n, p ) ) = v; ListSupport.product( n.toList, p.toList ) } ).flatten.zipWithIndex.toList
 
     //-----------------------------------------------------------------------
     //DFS starts here
