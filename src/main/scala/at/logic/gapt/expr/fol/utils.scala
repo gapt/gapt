@@ -101,67 +101,6 @@ object toDNF {
   }
 }
 
-object replaceFreeOccurenceOf {
-  def apply( variable: String, by: String, formula: FOLFormula ): FOLFormula = {
-    replaceFreeOccurenceOf( FOLVar( variable ), FOLVar( by ), formula )
-  }
-
-  /**
-   * Replaces all free ocurrences of a variable by another variable in a FOLTerm.
-   *
-   * @param variable The name of the free variable to replace.
-   * @param by The name of the new variable.
-   * @param term The term in which to replace [variable] with [by].
-   */
-  def apply( variable: String, by: String, term: FOLTerm ): FOLTerm = term match {
-    case FOLFunction( f, terms ) => FOLFunction( f, terms.map( x => replaceFreeOccurenceOf( variable, by, x ) ) )
-    case ( v @ FOLVar( x ) )     => if ( x.toString() == variable ) FOLVar( by ) else v
-    case ( c @ FOLConst( _ ) )   => c
-  }
-
-  /**
-   * Replaces all free ocurrences of a variable by another variable in a FOL formula.
-   *
-   * @param variable The name of the free variable to replace.
-   * @param by The name of the new variable.
-   * @param formula The formula in which to replace [variable] with [by].
-   */
-  def apply( variable: FOLVar, by: FOLVar, formula: FOLFormula ): FOLFormula = {
-    formula match {
-      case FOLAtom( _, args ) => FOLSubstitution( variable, by ).apply( formula )
-
-      case Neg( f ) =>
-        Neg( replaceFreeOccurenceOf( variable, by, f ) )
-
-      case And( f1, f2 ) =>
-        val r1 = replaceFreeOccurenceOf( variable, by, f1 )
-        val r2 = replaceFreeOccurenceOf( variable, by, f2 )
-        And( r1, r2 )
-
-      case Or( f1, f2 ) =>
-        val r1 = replaceFreeOccurenceOf( variable, by, f1 )
-        val r2 = replaceFreeOccurenceOf( variable, by, f2 )
-        Or( r1, r2 )
-
-      case Ex( v, f ) =>
-        if ( v.syntaxEquals( variable ) )
-          formula
-        else
-          Ex( v, replaceFreeOccurenceOf( variable, by, f ) )
-
-      case All( v, f ) =>
-        if ( v.syntaxEquals( variable ) )
-          formula
-        else
-          All( v, replaceFreeOccurenceOf( variable, by, f ) )
-
-      case Top() | Bottom() => formula
-
-      case _                => throw new Exception( "Unknown operator encountered during renaming of outermost bound variable. Formula is: " + formula )
-    }
-  }
-}
-
 // Transforms a list of literals into an implication formula, with negative 
 // literals on the antecedent and positive literals on the succedent.
 object reverseCNF {

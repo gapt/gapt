@@ -373,7 +373,8 @@ object Deltas {
           //and delete ev_[x] from presentvars
           val newU = duplicates.foldLeft( u )( ( curU, dupl ) => {
             presentVars = presentVars.filter( pv => pv.toString != ( eigenvariable + "_" + dupl._2 ) )
-            replaceFreeOccurenceOf( eigenvariable + "_" + dupl._2, eigenvariable + "_" + ind, curU )
+            val r = FOLSubstitution( Map( FOLVar( eigenvariable + "_" + dupl._2 ) -> FOLVar( eigenvariable + "_" + ind ) ) )
+            r( curU )
           } )
 
           val ret = nub2( newU, rest )
@@ -388,7 +389,8 @@ object Deltas {
       val renamings = presentVars.toList.sortBy( x => x.toString ).zip( start to ( presentVars.size - 1 ) )
 
       val reindexedU = renamings.foldLeft( swissCheeseU ) { ( curU, ren ) =>
-        replaceFreeOccurenceOf( ren._1.toString, eigenvariable + "_" + ren._2, curU )
+        val r = FOLSubstitution( Map( FOLVar( ren._1.toString ) -> FOLVar( eigenvariable + "_" + ren._2 ) ) )
+        r( curU )
       }
 
       ( reindexedU, newS )
