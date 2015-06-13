@@ -8,31 +8,24 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import scala.collection.mutable
 
-/** Returns whether t is a function. */
-/** Returns whether t is a function whose name fulfills to a given condition. */
-object isFunc {
-  def apply( t: FOLTerm ): Boolean = isFunc( t, _ => true )
+object isFOLFunction {
+  /** Returns whether t is a function. */
+  def apply( t: FOLTerm ): Boolean = apply( t, _ => true )
+
+  /** Returns whether t is a function whose name fulfills to a given condition. */
   def apply( t: FOLTerm, cond: String => Boolean ): Boolean = t match {
     case FOLFunction( f, _ ) => cond( f.toString )
     case _                   => false
   }
 }
 
-/** Returns whether t is a variable. */
-object isVar {
-  def apply( t: FOLTerm ): Boolean = t match {
-    case FOLVar( _ ) => true
-    case _           => false
-  }
-}
-
 /** Unsafely extracts the function name from a term. Fails if the term is not a function. */
-object fromFunc {
+object FOLFunctionName {
   def apply( t: FOLTerm ) = t match { case FOLFunction( f, _ ) => f }
 }
 
 /** Unsafely extracts the function arguments from a term. Fails if the term is not a function. */
-object fromFuncArgs {
+object FOLFunctionArgs {
   def apply( t: FOLTerm ) = t match { case FOLFunction( _, a ) => a }
 }
 
@@ -114,24 +107,6 @@ object reverseCNF {
     val conj = And( ant )
     val disj = Or( succ )
     Imp( conj, disj )
-  }
-}
-
-/**
- * Given varName and an integer n,
- * returns the list [varName_0,...,varName_(n-1)],
- * where varName_i is a FOLVar with the same name.
- */
-object createFOLVars {
-  def apply( varName: String, n: Int ) = {
-    ( 0 to ( n - 1 ) ).map( n => FOLVar( ( varName + "_" + n ) ) ).toList
-  }
-}
-
-object isEigenvariable {
-  def apply( x: FOLVar, eigenvariable: String ) = x.toString.split( '_' ) match {
-    case Array( eigenvariable, n ) => n.forall( Character.isDigit )
-    case _                         => false
   }
 }
 
