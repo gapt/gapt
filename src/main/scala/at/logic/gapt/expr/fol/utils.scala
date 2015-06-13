@@ -206,40 +206,6 @@ object Utils {
   // Constructs the FOLTerm s^k(0)
   def numeral( k: Int ) = iterateTerm( FOLConst( "0" ).asInstanceOf[FOLTerm], "s", k )
 
-  // TODO: these functions should go to listSupport in dssupport in the
-  // utils project.
-
-  def removeDoubles[T]( l: List[T] ): List[T] = {
-    removeDoubles_( l.reverse ).reverse
-  }
-
-  private def removeDoubles_[T]( l: List[T] ): List[T] = {
-    l match {
-      case head :: tail =>
-        if ( tail.contains( head ) )
-          removeDoubles( tail )
-        else
-          head :: removeDoubles( tail )
-      case Nil => Nil
-    }
-  }
-
-  //auxiliary function which removes duplications from list of type:
-  //List[List[(String, Tree[AnyRef], Set[FormulaOccurrence])]]
-  //and type
-  ////List[List[(String, Tree[AnyRef], (Set[FormulaOccurrence], Set[FormulaOccurrence]))]]
-
-  def removeDoubles3[T, R]( l: List[Tuple3[String, T, R]] ): List[Tuple3[String, T, R]] = {
-    l match {
-      case head :: tail =>
-        if ( tail.map( tri => tri._3 ).contains( head._3 ) )
-          removeDoubles3( tail )
-        else
-          head :: removeDoubles3( tail )
-      case Nil => Nil
-    }
-  }
-
   /**
    * A method for generating all subterms of a particular term
    * @param term term, which is processed
