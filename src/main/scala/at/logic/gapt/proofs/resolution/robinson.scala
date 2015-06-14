@@ -57,7 +57,7 @@ package robinson {
       }
     }
     def apply( literals: Seq[FOLFormula] )( implicit factory: FOFactory ): RobinsonResolutionProof = {
-      val lits: Seq[Tuple2[FormulaOccurrence, Boolean]] = literals.map( l => if ( isNeg( l ) ) ( factory.createFormulaOccurrence( stripNeg( l ), Nil ), false )
+      val lits: Seq[Tuple2[FormulaOccurrence, Boolean]] = literals.map( l => if ( isNeg( l ) ) ( factory.createFormulaOccurrence( removeNeg( l ), Nil ), false )
       else ( factory.createFormulaOccurrence( l, Nil ), true ) )
       new LeafAGraph[Clause]( Clause( lits ) ) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
         def rule = InitialType

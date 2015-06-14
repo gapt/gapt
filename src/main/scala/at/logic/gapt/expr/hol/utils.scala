@@ -143,10 +143,13 @@ object isNeg {
   }
 }
 
-object stripNeg {
+/**
+ * Remove the leading negation from a formula.
+ */
+object removeNeg {
   def apply( formula: HOLFormula ) = formula match {
     case Neg( f ) => f
-    case _        => formula
+    case _        => throw new Exception( "Formula does not start with negation." )
   }
 }
 
@@ -156,8 +159,6 @@ object stripNeg {
 object isPrenex {
   def apply( e: HOLFormula ): Boolean = e match {
     case Top() | Bottom() => true
-    case Var( _, _ )      => true
-    case Const( _, _ )    => true
     case Neg( f )         => !containsQuantifier( f )
     case And( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
     case Or( f1, f2 )     => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
@@ -369,7 +370,27 @@ object dualize {
 
 object removeQuantifiers {
   /**
-   * Strips off the first n quantifiers of a formula.
+   * Removes the outermost block of quantifiers from a formula f.
+   * @param f the formula of the form Qx1.Qx2. ... .Qxn.F[x1,...xn] where F is quantifier free. (n may be 0)
+   * @return the stripped formula F[x1,...,xn]
+   */
+  def apply( f: HOLFormula ): HOLFormula = {
+    f match {
+      case Top() | Bottom() |
+        HOLAtom( _, _ ) |
+        Imp( _, _ ) |
+        And( _, _ ) |
+        Or( _, _ ) |
+        Neg( _ ) => f
+      case Ex( x, f0 )  => apply( f0 )
+      case All( x, f0 ) => apply( f0 )
+      case _            => throw new Exception( "ERROR: Unexpected case while extracting the matrix of a formula." )
+    }
+  }
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+
+  /**
+   * Removes the leading n quantifiers of a formula.
    * It's only well-defined for formulas that begin with at least n quantifiers.
    *
    * @param formula A Formula
@@ -387,33 +408,19 @@ object removeQuantifiers {
     }
 }
 
-/**
- * Returns the quantifier free part of a prenex formula
- */
-object getMatrix {
+object removeAllQuantifiers {
   /**
-   * Strips the outermost block of quantifiers from a formula f in prenex form. The result is also called the
-   * matrix of f.
-   * @param f the formula of the form Qx1.Qx2. ... .Qxn.F[x1,...xn] where F is quantifier free. (n may be 0)
-   * @return the stripped formula F[x1,...,xn]
+   * Removes all quantifiers from the logical level of a HOLFormula. Atoms are not changed.
    */
-  def apply( f: HOLFormula ): HOLFormula = {
-    assert( isPrenex( f ) )
-    f match {
-      case Top() | Bottom() |
-        Var( _, _ ) |
-        Const( _, _ ) |
-        HOLAtom( _, _ ) |
-        Imp( _, _ ) |
-        And( _, _ ) |
-        Or( _, _ ) |
-        Neg( _ ) => f
-      case Ex( x, f0 )  => getMatrix( f0 )
-      case All( x, f0 ) => getMatrix( f0 )
-      case _            => throw new Exception( "ERROR: Unexpected case while extracting the matrix of a formula." )
-    }
+  def apply( f: HOLFormula ): HOLFormula = f match {
+    case HOLAtom( _, _ ) => f
+    case Neg( f1 )       => Neg( apply( f1 ) )
+    case Imp( f1, f2 )   => Imp( apply( f1 ), apply( f2 ) )
+    case And( f1, f2 )   => And( apply( f1 ), apply( f2 ) )
+    case Or( f1, f2 )    => Or( apply( f1 ), apply( f2 ) )
+    case Ex( x, f1 )     => apply( f1 )
+    case All( x, f1 )    => apply( f1 )
   }
-
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 

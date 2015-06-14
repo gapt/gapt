@@ -101,7 +101,7 @@ object CNFp {
   def toFClauseList( f: HOLFormula ): List[FClause] = {
     apply( f ).distinct.map(
       literals => {
-        val neg = literals.filter( isNeg( _ ) ).map( stripNeg( _ ) )
+        val neg = literals.filter( isNeg( _ ) ).map( removeNeg( _ ) )
         val pos = literals.filterNot( isNeg( _ ) )
         FClause( neg, pos )
       } )
@@ -138,7 +138,7 @@ object CNFn {
   def toFClauseList( f: HOLFormula ): List[FClause] = {
     apply( f ).distinct.map(
       literals => {
-        val neg = literals.filter( isNeg( _ ) ).map( stripNeg( _ ) )
+        val neg = literals.filter( isNeg( _ ) ).map( removeNeg( _ ) )
         val pos = literals.filterNot( isNeg( _ ) )
         FClause( neg, pos )
       } )

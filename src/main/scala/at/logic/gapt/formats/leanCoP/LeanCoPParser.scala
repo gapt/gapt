@@ -100,17 +100,6 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case _ => throw new Exception( "Unsupported format for getLeanPreds: " + cls )
   }
 
-  // leanCoP renames all variables so that they do not clash.
-  def dropQuantifiers( f: FOLFormula ): FOLFormula = f match {
-    case FOLAtom( _, _ ) => f
-    case Neg( f1 )       => Neg( dropQuantifiers( f1 ) )
-    case Imp( f1, f2 )   => Imp( dropQuantifiers( f1 ), dropQuantifiers( f2 ) )
-    case And( f1, f2 )   => And( dropQuantifiers( f1 ), dropQuantifiers( f2 ) )
-    case Or( f1, f2 )    => Or( dropQuantifiers( f1 ), dropQuantifiers( f2 ) )
-    case Ex( x, f1 )     => dropQuantifiers( f1 )
-    case All( x, f1 )    => dropQuantifiers( f1 )
-  }
-
   def toMagicalDNF( f: FOLFormula ): List[FOLFormula] = {
     val normal_dnf = DNFp.toFormulaList( f )
 
@@ -199,7 +188,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
             val f_in_nnf = toNNF( f_right_pol )
 
-            val f_no_quant = dropQuantifiers( f_in_nnf )
+            val f_no_quant = removeAllQuantifiers( f_in_nnf )
 
             // If there are not lean predicate symbols, use regular DNF transformation
             val subs = lean_preds match {
