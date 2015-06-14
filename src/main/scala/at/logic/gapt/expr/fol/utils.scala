@@ -29,6 +29,48 @@ object FOLFunctionArgs {
   def apply( t: FOLTerm ) = t match { case FOLFunction( _, a ) => a }
 }
 
+/**
+ * Generation of first-order subterms (note that this notion differs from
+ * lambda subterms).
+ */
+object FOLSubTerms {
+  /**
+   * Generate all subterms of a FOLTerm.
+   */
+  def apply( t: FOLTerm ): Set[FOLTerm] = {
+    val subterms = mutable.Set[FOLTerm]()
+    apply_( t, subterms )
+    subterms.toSet
+  }
+
+  /**
+   * Generate all subterms of a list of FOLTerms.
+   */
+  def apply( language: List[FOLTerm] ): Set[FOLTerm] = {
+    val subterms = mutable.Set[FOLTerm]()
+    language.foreach( apply_( _, subterms ) )
+    subterms.toSet
+  }
+
+  /**
+   * Generate all subterms of a FOLTerm using a mutable set for efficiency.
+   * @param term term, which is processed
+   * @param subterms for speeding up the process, if there are already some computed subterms
+   * @return the set of all first-order subterms of term
+   */
+  private def apply_( term: FOLTerm, subterms: mutable.Set[FOLTerm] ): Unit = {
+    // if the term is not in the set of subterms yet, add it and add all its subterms
+    // this check avoids duplicate addition of all subterms of a subterm
+    if ( !subterms.contains( term ) ) {
+      subterms += term
+      term match {
+        case FOLFunction( _, args ) => args.foreach( apply_( _, subterms ) )
+      }
+    }
+  }
+
+}
+
 object Utils {
   // Constructs the FOLTerm f^k(a)
   def iterateTerm( a: FOLTerm, f: String, k: Int ): FOLTerm =
@@ -38,48 +80,6 @@ object Utils {
 
   // Constructs the FOLTerm s^k(0)
   def numeral( k: Int ) = iterateTerm( FOLConst( "0" ).asInstanceOf[FOLTerm], "s", k )
-
-  /**
-   * A method for generating all subterms of a particular term
-   * @param term term, which is processed
-   * @param subterms [optional] for speeding up the process, if there are already some computed subterms (default: {})
-   * @return a HasMap of all subterms represented as string => subterm
-   */
-  def st( term: FOLTerm, subterms: mutable.Set[FOLTerm] = mutable.Set[FOLTerm]() ): mutable.Set[FOLTerm] = {
-    // if the term is not in the set of subterms yet
-    // add it and add all its subterms
-    if ( !subterms.contains( term ) ) {
-      // add a term
-      subterms += term
-      // generate all subterms
-      val ts = term match {
-        case FOLVar( v )            => Set[FOLTerm]()
-        case FOLConst( c )          => Set[FOLTerm]()
-        case FOLFunction( f, args ) => args.flatMap( ( ( t: FOLTerm ) => st( t, subterms ) ) )
-      }
-      subterms ++= ts
-    }
-    subterms
-  }
-
-  /**
-   * Generating all subterms of a language of FOLTerms
-   *
-   * @param language termset for which st is called for each element
-   * @return list of all subterms
-   */
-  def subterms( language: List[FOLTerm] ): Set[FOLTerm] = {
-    val terms = mutable.Set[FOLTerm]()
-    // for each term of the language
-    for ( t <- language ) {
-      // if terms does not contain t yet
-      if ( !terms.contains( t ) ) {
-        // add it and all of its subterms to the list
-        terms ++= st( t, terms )
-      }
-    }
-    terms.toSet
-  }
 
   /**
    * Calculates the characteristic partition of a term t
