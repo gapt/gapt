@@ -19,8 +19,6 @@ class TPTPHOLExporter {
     require( l.nonEmpty, "Cannot export an empty sequent list!" )
     val ( vs, vnames, cs, cnames ) = createNamesFromSequent( l )
 
-    printStatistics( vnames, cnames )
-
     var index = 0
     val vdecs_ = for ( v <- vs ) yield {
       index = index + 1

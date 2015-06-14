@@ -27,7 +27,8 @@ import org.specs2.mutable._
 class nTapeTest extends Specification with ClasspathFileCopier {
   def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
-  def show( s: String ) = println( "+++++++++ " + s + " ++++++++++" )
+  def show( s: String ) = Unit // = println( "+++++++++ " + s + " ++++++++++" )
+  def show_detail( s: String ) = Unit // = println( "+++++++++ " + s + " ++++++++++" )
 
   def f( e: LambdaExpression ): String = toLLKString( e )
 
@@ -107,15 +108,15 @@ class nTapeTest extends Specification with ClasspathFileCopier {
         val ( map3, tb1 ) = replaceAbstractions( tb, map2, counter )
         val ( map4, ts1 ) = replaceAbstractions( ts, map3, counter )
 
-        println( "base 1 simplified: " + f( Abs( xb, sb1 ) ) )
-        println( "base 2 simplified: " + f( Abs( yb, tb1 ) ) )
-        println( "step 1 simplified: " + f( Abs( xs, ss1 ) ) )
-        println( "step 2 simplified: " + f( Abs( ys, ts1 ) ) )
+        show_detail( "base 1 simplified: " + f( Abs( xb, sb1 ) ) )
+        show_detail( "base 2 simplified: " + f( Abs( yb, tb1 ) ) )
+        show_detail( "step 1 simplified: " + f( Abs( xs, ss1 ) ) )
+        show_detail( "step 2 simplified: " + f( Abs( ys, ts1 ) ) )
 
-        println( "With shortcuts:" )
+        show_detail( "With shortcuts:" )
         for ( ( term, sym ) <- map4 ) {
-          println( "Symbol: " + sym )
-          println( "Term:   " + f( term ) )
+          show_detail( "Symbol: " + sym )
+          show_detail( "Term:   " + f( term ) )
         }
     }
 
@@ -143,11 +144,11 @@ class nTapeTest extends Specification with ClasspathFileCopier {
       val cl = AlternativeStandardClauseSet( struct )
       show( "Exporting to prover 9" )
       val ( cmap, folcl_ ) = replaceAbstractions( cl.toList )
-      println( "Calculated cmap: " )
-      cmap.map( x => println( x._1 + " := " + x._2 ) )
+      show_detail( "Calculated cmap: " )
+      cmap.map( x => show_detail( x._1 + " := " + x._2 ) )
 
       val folcl = reduceHolToFol( folcl_ )
-      folcl.map( println( _ ) )
+      folcl.map( x => show_detail( x.toString ) )
 
       show( "Refuting clause set" )
       Prover9.refute( folcl ) match {
@@ -197,11 +198,11 @@ class nTapeTest extends Specification with ClasspathFileCopier {
       val cl = AlternativeStandardClauseSet( struct )
       show( "Exporting to prover 9" )
       val ( cmap, folcl_ ) = replaceAbstractions( cl.toList )
-      println( "Calculated cmap: " )
-      cmap.map( x => println( x._1 + " := " + x._2 ) )
+      show_detail( "Calculated cmap: " )
+      cmap.map( x => show_detail( x._1 + " := " + x._2 ) )
 
       val folcl = reduceHolToFol( folcl_ )
-      folcl.map( println( _ ) )
+      folcl.map( x => show_detail( x.toString ) )
 
       show( "Refuting clause set" )
       Prover9.refute( folcl ) match {

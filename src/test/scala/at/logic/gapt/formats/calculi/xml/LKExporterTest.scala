@@ -34,32 +34,33 @@ class LkExporterTest extends Specification {
           </formulalist>
         </sequent> ) )
     }
-  }
-  "export correctly a sequent list {A1, B1 :- C1, D1, A2, B2 :- C2, D2}" in {
-    trim( exporter.exportSequentList( "testlist", List( FSequent( List( "A1", "B1" ) map ( pc ), List( "C1", "D1" ) map ( pc ) ),
-      FSequent( List( "A2", "B2" ) map ( pc ), List( "C2", "D2" ) map ( pc ) ) ) ) ) must beEqualTo( trim(
-      <sequentlist symbol="testlist">
-        <sequent>
-          <formulalist>
-            <constantatomformula symbol="A1"/>
-            <constantatomformula symbol="B1"/>
-          </formulalist>
-          <formulalist>
-            <constantatomformula symbol="C1"/>
-            <constantatomformula symbol="D1"/>
-          </formulalist>
-        </sequent>
-        <sequent>
-          <formulalist>
-            <constantatomformula symbol="A2"/>
-            <constantatomformula symbol="B2"/>
-          </formulalist>
-          <formulalist>
-            <constantatomformula symbol="C2"/>
-            <constantatomformula symbol="D2"/>
-          </formulalist>
-        </sequent>
-      </sequentlist> ) )
+
+    "export correctly a sequent list {A1, B1 :- C1, D1, A2, B2 :- C2, D2}" in {
+      trim( exporter.exportSequentList( "testlist", List( FSequent( List( "A1", "B1" ) map ( pc ), List( "C1", "D1" ) map ( pc ) ),
+        FSequent( List( "A2", "B2" ) map ( pc ), List( "C2", "D2" ) map ( pc ) ) ) ) ) must beEqualTo( trim(
+        <sequentlist symbol="testlist">
+          <sequent>
+            <formulalist>
+              <constantatomformula symbol="A1"/>
+              <constantatomformula symbol="B1"/>
+            </formulalist>
+            <formulalist>
+              <constantatomformula symbol="C1"/>
+              <constantatomformula symbol="D1"/>
+            </formulalist>
+          </sequent>
+          <sequent>
+            <formulalist>
+              <constantatomformula symbol="A2"/>
+              <constantatomformula symbol="B2"/>
+            </formulalist>
+            <formulalist>
+              <constantatomformula symbol="C2"/>
+              <constantatomformula symbol="D2"/>
+            </formulalist>
+          </sequent>
+        </sequentlist> ) )
+    }
   }
 }
 

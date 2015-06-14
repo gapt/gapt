@@ -4,9 +4,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution._
 import org.specs2.mutable._
 
-class CNFTest extends Specification {
+class TseitinCNFTest extends Specification {
   "the computation of TseitinCNF(f)" should {
-    "should be correct for ((P ∨ Q) ∧ R ) -> ¬S" in {
+    "be correct for ((P ∨ Q) ∧ R ) -> ¬S" in {
       val p = FOLAtom( "P", Nil )
       val q = FOLAtom( "Q", Nil )
       val r = FOLAtom( "R", Nil )

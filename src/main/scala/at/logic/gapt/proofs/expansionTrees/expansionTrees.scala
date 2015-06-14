@@ -759,7 +759,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
         val sel2_ = if ( s1 != s2 ) {
           //TODO: we need to replace s2 by s1 in sel2, otherwise the merge operation fails
           //println(, "Can only merge Skolem Quantifier Nodes, if the skolem constants "+s1+" and "+s2+" are the same!")
-          println( "Warning: merged skolem quantifiers are not equal - deep formula only valid modulo the equality " + s1 + " = " + s2 )
+          trace( "Warning: merged skolem quantifiers are not equal - deep formula only valid modulo the equality " + s1 + " = " + s2 )
           ( s1, s2 ) match {
             case ( c: Const, d: Const ) =>
               replace( d, c, sel2 )
