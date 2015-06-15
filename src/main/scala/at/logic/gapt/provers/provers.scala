@@ -1,6 +1,8 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
+import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base._
 
 /**
@@ -41,4 +43,7 @@ trait Prover {
    * @return An LK-Proof of the sequent, or None if not successful.
    */
   def getLKProof( seq: FSequent ): Option[LKProof]
+
+  def getExpansionSequent( seq: FSequent ): Option[ExpansionSequent] =
+    getLKProof( seq ).map( LKToExpansionProof( _ ) )
 }

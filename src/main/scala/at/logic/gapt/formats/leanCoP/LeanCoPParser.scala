@@ -138,7 +138,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   def expansionSequent: Parser[Option[ExpansionSequent]] =
-    rep( comment ) ~> rep( input ) ~ comment ~ rep( clauses ) ~ comment ~ rep( inferences ) <~ rep( comment ) ^^ {
+    rep( comment ) ~> rep( input ) ~ rep( comment ) ~ rep( clauses ) ~ rep( comment ) ~ rep( inferences ) <~ rep( comment ) ^^ {
       case input ~ _ ~ clauses_lst ~ _ ~ bindings_opt =>
 
         // Name -> (Formula, Role)
@@ -307,8 +307,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case ( i, terms ) =>
       FOLAtom( "leanP" + i, terms )
   }
-  lazy val real_atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ {
-    case pred ~ _ ~ args => FOLAtom( pred, args )
+  lazy val real_atom: PackratParser[FOLFormula] = name ~ opt( "(" ~> repsep( term, "," ) <~ ")" ) ^^ {
+    case pred ~ Some( args ) => FOLAtom( pred, args )
+    case pred ~ None         => FOLAtom( pred )
   }
   lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
     case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) )
@@ -330,7 +331,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case i ~ _ ~ _ ~ terms ~ _ => ( i.toInt, terms )
   }
 
-  def name: Parser[String] = """^(?![_ \d])[^ ():,!?\[\]\-&|=>~]+""".r ^^ { case s => s }
+  def name: Parser[String] = lower_word_or_integer | single_quoted
+  def lower_word_or_integer: Parser[String] = """[a-z0-9_-][A-Za-z0-9_-]*""".r
+  def single_quoted: Parser[String] = "'" ~> """[^']*""".r <~ "'"
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
 
   def comment: Parser[String] = """[%](.*)\n""".r ^^ { case s => "" }

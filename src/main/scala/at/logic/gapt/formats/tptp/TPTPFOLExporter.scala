@@ -21,6 +21,12 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   def tptp_proof_problem( seq: FSequent ) =
     "fof( to_prove, conjecture, " + exportFormula( seq.toFormula.asInstanceOf[FOLFormula] ) + ").\n"
 
+  def tptp_proof_problem_split( seq: FSequent ) =
+    ( seq.antecedent.map( _ -> "axiom" ) ++ seq.succedent.map( _ -> "conjecture" ) ).zipWithIndex.map {
+      case ( ( formula: FOLFormula, role ), index ) =>
+        s"fof( formula$index, $role, ${exportFormula( formula )} ).\n"
+    }.mkString
+
   // convert a list of clauses to a CNF refutation problem.
   def tptp_problem( ss: List[FSequent] ) =
     tptp_problem_named( ss.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ) )
