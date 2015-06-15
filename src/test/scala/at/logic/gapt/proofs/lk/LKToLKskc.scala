@@ -57,8 +57,6 @@ class LKskcTest extends Specification {
       val lkskc_proof = LKToLKsk( r4, Set() )
 
       val occurrences: Set[FormulaOccurrence] = lkskc_proof.nodes.flatMap( x => x.asInstanceOf[LKProof].root.occurrences ).toSet
-      val constants = occurrences.flatMap( x => subTerms( x.formula ).filter( _ match { case VarOrConst( _, _ ) => true; case _ => false } ) )
-      println( constants )
 
       lkskc_proof.root.antecedent.toList.head must beLike {
         case o: LabelledFormulaOccurrence =>

@@ -2,7 +2,6 @@ package at.logic.gapt.expr.hol
 
 import HOLPosition._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
 
 import org.specs2.mutable._
 

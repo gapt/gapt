@@ -1,7 +1,7 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ Utils, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol.{ FOLSubTerms, Utils, FOLMatchingAlgorithm }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 import at.logic.gapt.utils.dssupport.ListSupport
 
@@ -73,7 +73,7 @@ object normalForms {
 
 object tratNormalForms {
   def apply( terms: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
-    normalForms( Utils.subterms( terms toList ) toSeq, nonTerminals )
+    normalForms( FOLSubTerms( terms toList ) toSeq, nonTerminals )
   }
 }
 

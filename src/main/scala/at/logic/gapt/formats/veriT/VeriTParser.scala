@@ -3,7 +3,7 @@ package at.logic.gapt.formats.veriT
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
-import at.logic.gapt.expr.hol.{ instantiate, getMatrix }
+import at.logic.gapt.expr.hol.{ removeQuantifiers, instantiate, isPrenex }
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionTree, ETWeakQuantifier, ExpansionSequent }
 import java.io.{ Reader, FileReader }
 import scala.collection.immutable.HashMap
@@ -289,7 +289,8 @@ object VeriTParser extends RegexParsers {
       val axiomET = joinedInst.map {
         case p =>
           // Match p._1 and p._2 to get the variable mapping
-          val fMatrix = getMatrix( p._1 )
+          assert( isPrenex( p._1 ) )
+          val fMatrix = removeQuantifiers( p._1 )
           val instances = p._2
           val subs = instances.foldLeft( List[FOLSubstitution]() ) {
             case ( lst, instance ) =>

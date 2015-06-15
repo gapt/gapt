@@ -170,4 +170,31 @@ class DeltaTable( terms: List[FOLTerm], eigenvariable: String, delta: DeltaVecto
       case ( k, num ) => prln( "% 3d".format( k ) + "   " + num )
     }
   }
+
+  /**
+   * @param k only include lines with at least k pairs (defaults to 1 which displays all lines)
+   */
+  def toPrettyString( k: Int = 1 ): String = {
+    def SVectorToString( ss: types.SVector ): String = { "〈" + ss.mkString( ", " ) + "〉" }
+    def SToString( s: types.S ): String = { "{" + s.map( SVectorToString( _ ) ).mkString( ", " ) + "}" }
+
+    var rv = "number of lines: " + table.size + "\n"
+
+    val display = table.filter( e => e._2.size >= k )
+
+    rv += "number of lines with at least " + k + " pairs: " + display.size + "\n"
+
+    display.foreach {
+      case ( s, pairs ) => {
+        rv += SToString( s ) + ":\n"
+        pairs.foreach {
+          case ( u, ti ) => {
+            rv += "  " + u + ": " + ti.mkString( ", " ) + "\n"
+          }
+        }
+      }
+    }
+
+    rv
+  }
 }

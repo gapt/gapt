@@ -47,14 +47,6 @@ object Deltas {
    * The variable in the returned decomposition -- if it occurrs -- will be named [eigenvariable]_0.
    */
   class OneVariableDelta extends DeltaVector {
-    // There must be a better way...
-    // TODO: this should go somewhere else?
-    def listEquals( lst1: List[FOLTerm], lst2: List[FOLTerm] ): Boolean = ( lst1, lst2 ) match {
-      case ( Nil, Nil )               => true
-      case ( hd1 :: tl1, hd2 :: tl2 ) => ( hd1.syntaxEquals( hd2 ) ) && listEquals( tl1, tl2 )
-      case ( _, _ )                   => false
-    }
-
     def computeDelta( terms: List[FOLTerm], eigenvariable: String ): Set[types.Decomposition] = {
       val ( u, s1 ) = computeDg( terms, FOLVar( eigenvariable + "_0" ) )
 
@@ -117,7 +109,7 @@ object Deltas {
             } else {
               // Check if they are the same
               val first = nonempty.head
-              if ( nonempty.forall( l => listEquals( l, first ) ) ) {
+              if ( nonempty.forall( l => ( l == first ) ) ) {
                 // All terms are the same
                 val newargs = deltaOfArgs.foldRight( List[FOLTerm]() )( ( x, acc ) => x._1 :: acc )
                 val u = FOLFunction( h, newargs )
@@ -192,13 +184,13 @@ object Deltas {
 
         //We choose the second case and filter out all the results with too many variables, then apply nub.
         if ( commonFuncHead( terms ) ) {
-          val recursionResults = terms.map( t => fromFuncArgs( t ) ).transpose.foldLeft( Set( ( Nil: List[types.U], Nil: types.RawS, curInd ) ) )( computePart )
+          val recursionResults = terms.map( t => FOLFunctionArgs( t ) ).transpose.foldLeft( Set( ( Nil: List[types.U], Nil: types.RawS, curInd ) ) )( computePart )
           val filteredResults = recursionResults.filter { case ( _, s, _ ) => s.distinct.length <= upperBound }
 
           //Apply nub to each result
           val nubbedResults = filteredResults.map {
             case ( uParts, rawS, ind ) =>
-              val rawU = FOLFunction( fromFunc( terms.head ), uParts )
+              val rawU = FOLFunction( FOLFunctionName( terms.head ), uParts )
 
               val ( u, s ) = nub( smallestVarInU( eigenvariable, rawU ), eigenvariable, rawU, rawS )
 
@@ -209,7 +201,7 @@ object Deltas {
         }
 
         //We also choose the third case, provided that the terms don't begin with a common, unary function symbol
-        if ( !commonFuncHead( terms ) || fromFuncArgs( terms.head ).length != 1 ) {
+        if ( !commonFuncHead( terms ) || FOLFunctionArgs( terms.head ).length != 1 ) {
           results = results + ( ( FOLVar( eigenvariable + "_" + curInd ), List( terms ), curInd + 1 ) )
         }
 
@@ -286,10 +278,10 @@ object Deltas {
 
         //Get the function args (unapply._2) and fold with computePart
         //The result might contain duplicate variables and therefore, nub must be applied
-        val ( rawUParts, s, newInd ) = terms.map( t => fromFuncArgs( t ) ).transpose.foldLeft( ( Nil: List[types.U], Nil: types.RawS, curInd ) )( computePart )
+        val ( rawUParts, s, newInd ) = terms.map( t => FOLFunctionArgs( t ) ).transpose.foldLeft( ( Nil: List[types.U], Nil: types.RawS, curInd ) )( computePart )
 
         //Reapply the function head to the pieces
-        val u = FOLFunction( fromFunc( terms.head ), rawUParts )
+        val u = FOLFunction( FOLFunctionName( terms.head ), rawUParts )
 
         //val (u,s) = nub(smallestVarInU(eigenvariable, rawU), eigenvariable, rawU, rawS)
 
@@ -306,11 +298,18 @@ object Deltas {
 
   //------------------------Helper functions---------------------------------/
 
+  private def isEigenvariable( x: FOLVar, eigenvariable: String ) = x.toString.split( '_' ) match {
+    case Array( eigenvariable, n ) => n.forall( Character.isDigit )
+    case _                         => false
+  }
+
+  private def extractIndex( x: FOLVar, eigenvariable: String ) = x.toString.substring( eigenvariable.length + 1, x.toString.length ).toInt
+
   /** returns true iff all given terms begin with the same function symbol & the same arity.*/
   private def commonFuncHead( terms: List[FOLTerm] ) = {
-    if ( isFunc( terms.head ) ) {
-      terms.tail.forall( isFunc( _: FOLTerm, ( fname => fname == fromFunc( terms.head ).toString ) ) ) &&
-        terms.map( fromFuncArgs( _ ).length ).distinct.length <= 1
+    if ( isFOLFunction( terms.head ) ) {
+      terms.tail.forall( isFOLFunction( _: FOLTerm, ( fname => fname == FOLFunctionName( terms.head ) ) ) ) &&
+        terms.map( FOLFunctionArgs( _ ).length ).distinct.length <= 1
     } else false
   }
 
@@ -322,10 +321,8 @@ object Deltas {
    * This function is used for nub.
    */
   private def smallestVarInU( eigenvariable: String, u: types.U ): Option[Int] = {
-    def extractIndex( x: FOLVar ) = x.toString.substring( eigenvariable.length + 1, x.toString.length ).toInt
-
-    val res = collectVariables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( extractIndex )
-    if ( res.length == 0 ) None else Some( res.min )
+    val res = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( v => extractIndex( v, eigenvariable ) )
+    if ( res.isEmpty ) None else Some( res.min )
   }
 
   /**
@@ -334,10 +331,8 @@ object Deltas {
    * where i is the variable index. If u has no variables, None is returned.
    */
   private def largestVarInU( eigenvariable: String, u: types.U ): Option[Int] = {
-    def extractIndex( x: FOLVar ) = x.toString.substring( eigenvariable.length + 1, x.toString.length ).toInt
-
-    val res = collectVariables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( extractIndex )
-    if ( res.length == 0 ) None else Some( res.max )
+    val res = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( v => extractIndex( v, eigenvariable ) )
+    if ( res.isEmpty ) None else Some( res.max )
   }
 
   /**
@@ -358,7 +353,7 @@ object Deltas {
       val indexedS = s.zip( start to ( start + s.size - 1 ) )
 
       //Get the list of all variables occurring in u
-      var presentVars = collectVariables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).distinct
+      var presentVars = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) )
 
       //Go through s, look ahead for duplicates, and delete them.
       def nub2( u: types.U, s: List[( List[FOLTerm], Int )] ): types.RawDecomposition = s match {
@@ -373,7 +368,8 @@ object Deltas {
           //and delete ev_[x] from presentvars
           val newU = duplicates.foldLeft( u )( ( curU, dupl ) => {
             presentVars = presentVars.filter( pv => pv.toString != ( eigenvariable + "_" + dupl._2 ) )
-            replaceFreeOccurenceOf( eigenvariable + "_" + dupl._2, eigenvariable + "_" + ind, curU )
+            val r = FOLSubstitution( Map( FOLVar( eigenvariable + "_" + dupl._2 ) -> FOLVar( eigenvariable + "_" + ind ) ) )
+            r( curU )
           } )
 
           val ret = nub2( newU, rest )
@@ -388,7 +384,8 @@ object Deltas {
       val renamings = presentVars.toList.sortBy( x => x.toString ).zip( start to ( presentVars.size - 1 ) )
 
       val reindexedU = renamings.foldLeft( swissCheeseU ) { ( curU, ren ) =>
-        replaceFreeOccurenceOf( ren._1.toString, eigenvariable + "_" + ren._2, curU )
+        val r = FOLSubstitution( Map( FOLVar( ren._1.toString ) -> FOLVar( eigenvariable + "_" + ren._2 ) ) )
+        r( curU )
       }
 
       ( reindexedU, newS )

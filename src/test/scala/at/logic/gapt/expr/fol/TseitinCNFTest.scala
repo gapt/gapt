@@ -1,22 +1,12 @@
-package at.logic.gapt.proofs.resolution
+package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.resolution._
 import org.specs2.mutable._
 
-class CNFTest extends Specification {
-  "the computation of CNFp(f)" should {
-    "be {|- Pa,Qa, Qa|-} for f = (Pa ∨ Qa) ∧ ¬Qa" in {
-      val Pa = FOLAtom( "P", FOLConst( "a" ) :: Nil )
-      val Qa = FOLAtom( "Q", FOLConst( "a" ) :: Nil )
-      val nQa = Neg( Qa )
-      val PavQa = Or( Pa, Qa )
-      val f = And( PavQa, nQa )
-      CNFp( f ).toSet must beEqualTo( Set( FClause( List(), List( Pa, Qa ) ), FClause( List( Qa ), List() ) ) )
-    }
-  }
-
+class TseitinCNFTest extends Specification {
   "the computation of TseitinCNF(f)" should {
-    "should be right, where f = ((P ∨ Q) ∧ R ) -> ¬S" in {
+    "be correct for ((P ∨ Q) ∧ R ) -> ¬S" in {
       val p = FOLAtom( "P", Nil )
       val q = FOLAtom( "Q", Nil )
       val r = FOLAtom( "R", Nil )
@@ -42,7 +32,7 @@ class CNFTest extends Specification {
         FClause( List( x2, x0 ), List( x1 ) ),
         FClause( List( x, r ), List( x0 ) ),
         FClause( List( x ), List( p, q ) ) )
-      expected.subsetOf( new TseitinCNF().transform( f ).toSet ) must beTrue
+      expected.subsetOf( new TseitinCNF().apply( f ).toSet ) must beTrue
     }
   }
 }

@@ -1,6 +1,7 @@
 
 package at.logic.gapt.integration_tests
 
+import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.lk.cutIntroduction._
@@ -33,26 +34,6 @@ import org.specs2.mutable._
 
 class MiscTest extends Specification with ClasspathFileCopier {
 
-  // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
-  private def LinearExampleProof( k: Int, n: Int ): LKProof = {
-    val s = "s"
-    val c = "0"
-    val p = "P"
-
-    val x = FOLVar( "x" )
-    val ass = All( x, Imp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
-    if ( k == n ) // leaf proof
-    {
-      val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
-      WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
-    } else {
-      val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
-      val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
-      val aux = Imp( p1, p2 )
-      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
-    }
-  }
-
   sequential
   "The system" should {
     /*
@@ -72,7 +53,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 //    */
 
     "perform cut introduction on an example proof" in {
-      val p = LinearExampleProof( 0, 7 )
+      val p = LinearExampleProof( 7 )
       CutIntroduction.one_cut_one_quantifier( p, false )
       Success()
     }
@@ -117,7 +98,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
-      val p = LinearExampleProof( 0, 4 )
+      val p = LinearExampleProof( 4 )
       val pi = CutIntroduction.one_cut_one_quantifier( p, false )
       val pe = ReductiveCutElim( pi )
 
@@ -172,7 +153,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "construct proof with expansion sequent extracted from proof (2/2)" in {
-      val proof = LinearExampleProof( 0, 4 )
+      val proof = LinearExampleProof( 4 )
 
       val proofPrime = ExpansionProofToLK( LKToExpansionProof( proof ) ) // must not throw exception
       ok

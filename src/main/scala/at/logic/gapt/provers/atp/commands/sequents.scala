@@ -118,8 +118,8 @@ object fvarInvariantMSEquality {
     val f1 = ( c1.antecedent.map( _.formula ), c1.succedent.map( _.formula ) )
     val FSequent( neg, pos ) = f2
     // we get all free variables from f2 and try to systematically replace those in f1
-    val set1 = ( f1._1 ++ f1._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } ).toSet
-    val set2 = ( f2._1 ++ f2._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } ).toSet
+    val set1 = ( f1._1 ++ f1._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } )
+    val set2 = ( f2._1 ++ f2._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } )
     if ( set1.size != set2.size ) List[FSequent]() // they cannot be equal
     // create all possible substitutions
     ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => Substitution( x.asInstanceOf[List[Tuple2[Var, LambdaExpression]]] ) ) )

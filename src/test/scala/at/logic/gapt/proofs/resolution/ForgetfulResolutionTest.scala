@@ -6,6 +6,10 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.Paramodulants
+import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.MyFClause
+import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.ForgetfulParamodulateCNF
+import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.ForgetfulResolve
 import org.specs2.mutable._
 
 class ForgetfulResolutionTest extends Specification {

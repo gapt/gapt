@@ -1,14 +1,11 @@
 package at.logic.gapt.integration_tests
 
+import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.basicProver.BasicProver
 import org.specs2.mutable._
-import scala.collection.immutable.HashSet
 
 class CutIntroTest extends Specification {
   private def LinearExampleTermset( n: Int ): List[FOLTerm] =
@@ -17,29 +14,9 @@ class CutIntroTest extends Specification {
     else
       Utils.numeral( n - 1 ) :: LinearExampleTermset( n - 1 )
 
-  // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
-  private def LinearExampleProof( k: Int, n: Int ): LKProof = {
-    val s = "s"
-    val c = "0"
-    val p = "P"
-
-    val x = FOLVar( "x" )
-    val ass = All( x, Imp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
-    if ( k == n ) // leaf proof
-    {
-      val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
-      WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
-    } else {
-      val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
-      val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
-      val aux = Imp( p1, p2 )
-      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
-    }
-  }
-
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
-      val proof = LinearExampleProof( 0, 4 )
+      val proof = LinearExampleProof( 4 )
 
       val termset = TermsExtraction( proof )
       val set = termset.set.foldRight( List[FOLTerm]() )( ( t, acc ) => termset.getTermTuple( t ) ++ acc )
@@ -51,7 +28,7 @@ class CutIntroTest extends Specification {
 
     "introduce two cuts into linear example proof (n = 8)" in {
       def fun( n: Int, t: FOLTerm ): FOLTerm = if ( n == 0 ) t else FOLFunction( "s", fun( n - 1, t ) :: Nil )
-      val proof = LinearExampleProof( 0, 8 )
+      val proof = LinearExampleProof( 8 )
       val f = proof.root.antecedent.tail.head.formula.asInstanceOf[FOLFormula]
       val a1 = FOLVar( "α_1" )
       val a2 = FOLVar( "α_2" )

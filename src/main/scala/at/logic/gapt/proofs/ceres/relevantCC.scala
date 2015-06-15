@@ -26,8 +26,8 @@ object RelevantCC {
     val spt = SchemaProofDB.toList.map( pair => genCCProofTool( pair._1 ) )
     val sptb = SchemaProofDB.toList.map( pair => genCCProofToolBase( pair._1 ) )
 
-    val l_step = Utils.removeDoubles( List( ( proof_name, Set.empty[FormulaOccurrence] ) ) :: spt ).filter( x => x.nonEmpty )
-    val l_base = Utils.removeDoubles( List( ( proof_name, Set.empty[FormulaOccurrence] ) ) :: sptb ).filter( x => x.nonEmpty )
+    val l_step = ( List( ( proof_name, Set.empty[FormulaOccurrence] ) ) :: spt ).distinct.filter( x => x.nonEmpty )
+    val l_base = ( List( ( proof_name, Set.empty[FormulaOccurrence] ) ) :: sptb ).distinct.filter( x => x.nonEmpty )
     val pair = ( l_step, l_base )
     pair
   }
@@ -37,7 +37,7 @@ object RelevantCC {
     val cclist = getCC( p_rec, List.empty[FormulaOccurrence], p_rec )
     val cclistproof_name = cclist.filter( pair => pair._1 == proof_name )
     val cclist1 = cclistproof_name.map( pair => getCC( SchemaProofDB.get( pair._1 ).rec, pair._2._1 ::: pair._2._2, SchemaProofDB.get( pair._1 ).rec ) ).flatten
-    val l = Utils.removeDoubles( cclist ::: cclist1 ).filter( pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty )
+    val l = ( cclist ::: cclist1 ).distinct.filter( pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty )
     l.map( pair => ( pair._1, ( pair._2._1 ::: pair._2._1 ).toSet ) )
   }
 
@@ -46,7 +46,7 @@ object RelevantCC {
     val cclist = getCC( p_rec, List.empty[FormulaOccurrence], p_rec )
     val cclistproof_name = cclist.filter( pair => pair._1 == proof_name )
     val cclist1 = cclistproof_name.map( pair => getCC( SchemaProofDB.get( pair._1 ).rec, pair._2._1 ::: pair._2._2, SchemaProofDB.get( pair._1 ).rec ) ).flatten
-    val l = Utils.removeDoubles( cclist ::: cclist1 ).filter( pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty )
+    val l = ( cclist ::: cclist1 ).distinct.filter( pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty )
     l.map( pair => ( pair._1, ( pair._2._1 ::: pair._2._2 ).toSet ) )
   }
 
@@ -57,7 +57,7 @@ object RelevantCC {
     val cclistproof_name = cclist.filter( pair => pair._1 == proof_name )
     val cclist1 = cclistproof_name.map( pair => getCC( p_rec, pair._2._1 ::: pair._2._2, p_rec ) ).flatten
 
-    val cclistbase = Utils.removeDoubles( cclist1 ::: cclist ).map( pair => {
+    val cclistbase = ( cclist1 ::: cclist ).distinct.map( pair => {
       val seq = SchemaProofDB.get( pair._1 ).base.root
       val k = IntVar( "k" )
       val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero().asInstanceOf[IntegerTerm] )
@@ -68,7 +68,7 @@ object RelevantCC {
 
       ( pair._1, s )
     } )
-    Utils.removeDoubles( cclistbase ).filter( pair =>
+    ( cclistbase ).distinct.filter( pair =>
       pair._2._1.nonEmpty || pair._2._2.nonEmpty ).map( pair =>
       ( pair._1, ( pair._2._1.toSet ++ pair._2._2.toSet ) ) )
   }

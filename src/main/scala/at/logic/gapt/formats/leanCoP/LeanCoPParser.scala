@@ -1,8 +1,8 @@
 package at.logic.gapt.formats.leanCoP
 
-import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
+import at.logic.gapt.expr.fol._
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionTree, ExpansionSequent, formulaToExpansionTree }
 
 import java.io.{ Reader, FileReader }
@@ -87,7 +87,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     }
 
     val ( fd, defs ) = toDCF( f, lean_preds, false )
-    fd :: defs.flatMap( d => toDNF( d ) )
+    fd :: defs.flatMap( d => DNFp.toFormulaList( d ) )
   }
 
   // Collects all n ^ [...] predicates used and their arities
@@ -100,19 +100,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case _ => throw new Exception( "Unsupported format for getLeanPreds: " + cls )
   }
 
-  // leanCoP renames all variables so that they do not clash.
-  def dropQuantifiers( f: FOLFormula ): FOLFormula = f match {
-    case FOLAtom( _, _ ) => f
-    case Neg( f1 )       => Neg( dropQuantifiers( f1 ) )
-    case Imp( f1, f2 )   => Imp( dropQuantifiers( f1 ), dropQuantifiers( f2 ) )
-    case And( f1, f2 )   => And( dropQuantifiers( f1 ), dropQuantifiers( f2 ) )
-    case Or( f1, f2 )    => Or( dropQuantifiers( f1 ), dropQuantifiers( f2 ) )
-    case Ex( x, f1 )     => dropQuantifiers( f1 )
-    case All( x, f1 )    => dropQuantifiers( f1 )
-  }
-
   def toMagicalDNF( f: FOLFormula ): List[FOLFormula] = {
-    val normal_dnf = toDNF( f )
+    val normal_dnf = DNFp.toFormulaList( f )
 
     def collectLiterals( cls: FOLFormula ): List[FOLFormula] = cls match {
       case FOLAtom( _, _ )                        => List( cls )
@@ -149,7 +138,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   def expansionSequent: Parser[Option[ExpansionSequent]] =
-    rep( comment ) ~> rep( input ) ~ comment ~ rep( clauses ) ~ comment ~ rep( inferences ) <~ rep( comment ) ^^ {
+    rep( comment ) ~> rep( input ) ~ rep( comment ) ~ rep( clauses ) ~ rep( comment ) ~ rep( inferences ) <~ rep( comment ) ^^ {
       case input ~ _ ~ clauses_lst ~ _ ~ bindings_opt =>
 
         // Name -> (Formula, Role)
@@ -199,7 +188,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
             val f_in_nnf = toNNF( f_right_pol )
 
-            val f_no_quant = dropQuantifiers( f_in_nnf )
+            val f_no_quant = removeAllQuantifiers( f_in_nnf )
 
             // If there are not lean predicate symbols, use regular DNF transformation
             val subs = lean_preds match {
@@ -318,8 +307,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case ( i, terms ) =>
       FOLAtom( "leanP" + i, terms )
   }
-  lazy val real_atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ {
-    case pred ~ _ ~ args => FOLAtom( pred, args )
+  lazy val real_atom: PackratParser[FOLFormula] = name ~ opt( "(" ~> repsep( term, "," ) <~ ")" ) ^^ {
+    case pred ~ Some( args ) => FOLAtom( pred, args )
+    case pred ~ None         => FOLAtom( pred )
   }
   lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
     case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) )
@@ -341,7 +331,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case i ~ _ ~ _ ~ terms ~ _ => ( i.toInt, terms )
   }
 
-  def name: Parser[String] = """^(?![_ \d])[^ ():,!?\[\]\-&|=>~]+""".r ^^ { case s => s }
+  def name: Parser[String] = lower_word_or_integer | single_quoted
+  def lower_word_or_integer: Parser[String] = """[a-z0-9_-][A-Za-z0-9_-]*""".r
+  def single_quoted: Parser[String] = "'" ~> """[^']*""".r <~ "'"
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
 
   def comment: Parser[String] = """[%](.*)\n""".r ^^ { case s => "" }

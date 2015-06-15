@@ -5,14 +5,14 @@
 
 package at.logic.gapt.provers.minisat
 
-import at.logic.gapt.formats.dimacs.{ readDIMACS, writeDIMACS, DIMACSHelper }
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.formats.dimacs.{ readDIMACS, writeDIMACS, DIMACSHelper }
 import at.logic.gapt.models.Interpretation
-import at.logic.gapt.proofs.resolution._
-import java.io._
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.resolution.{ TseitinCNF, CNFp }
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.Prover
+import java.io._
 import scala.collection.immutable.HashMap
 
 // Call MiniSAT to solve quantifier-free Formulas.
@@ -37,7 +37,7 @@ class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
       }
       case _ => {
         debug( "starting naive CNF-transformation..." )
-        CNFp( f )
+        CNFp.toFClauseList( f )
       }
     }
     debug( "CNF-transformation finished." )

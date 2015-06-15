@@ -5,14 +5,22 @@
 
 package at.logic.gapt.utils.dssupport
 
-//import scala.actors._
-
 object ListSupport {
 
   /** Cartesian product of an arbitrary list of lists */
   def product[T]( l: List[List[T]] ): List[List[T]] = l match {
     case Nil    => List( Nil )
     case h :: t => for ( eh <- h; et <- product( t ) ) yield eh :: et
+  }
+
+  /** Cartesian product of two lists */
+  def product[A, B]( xs: List[A], ys: List[B] ) = {
+    xs.flatMap( ( x ) => ys.map( ( y ) => ( x, y ) ) )
+  }
+
+  /** all lists obtainable by concatenating one from s1 with one from s2 */
+  def times[T]( s1: List[List[T]], s2: List[List[T]] ): List[List[T]] = {
+    s1.flatMap( c1 => s2.map( c2 => c1 ++ c2 ) )
   }
 
   /** Find all subsets */
@@ -98,10 +106,19 @@ object ListSupport {
     case ( x :: _ ) => x
   }
 
-  def remove_doubles[T]( l: List[T] ): List[T] = remove_doubles_( l.reverse ).reverse
-  private def remove_doubles_[T]( l: List[T] ): List[T] = l match {
-    case Nil     => Nil
-    case x :: xs => if ( xs contains x ) remove_doubles_( xs ) else x :: remove_doubles_( xs )
+  /**
+   * For each 3rd component which occurs in the list, remove all but the last element
+   * with that 3rd component.
+   */
+  def distinct3rd[T, R]( l: List[Tuple3[String, T, R]] ): List[Tuple3[String, T, R]] = {
+    l match {
+      case head :: tail =>
+        if ( tail.map( tri => tri._3 ).contains( head._3 ) )
+          distinct3rd( tail )
+        else
+          head :: distinct3rd( tail )
+      case Nil => Nil
+    }
   }
 
   def removeFirst[A]( s: Seq[A], a: A ): Seq[A] = {
@@ -126,10 +143,9 @@ object ListSupport {
     case Nil     => Nil
     case y +: ys => ys +: listComplements( ys ).map( zs => y +: zs )
   }
+
   /**
    * Given a list xs, returns a list of copies of xs without the nth, ..., last element.
-   *
-   *
    */
   def listComplements[T]( xs: Seq[T], n: Int ): Seq[Seq[T]] = {
     val ( fst, snd ) = xs splitAt ( n - 1 )
