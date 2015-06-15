@@ -1,35 +1,17 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.examples.LinearExampleProof
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.expansionTrees.{ ETStrongQuantifier, ETWeakQuantifier, ETAtom, ETImp }
-import at.logic.gapt.proofs.lk.base.LKProof
 
 class ExtractExpansionSequentTest extends Specification {
-
-  def LinearExampleProof( k: Int, n: Int ): LKProof = {
-    val s = "s"
-    val p = "P"
-
-    val x = FOLVar( "x" )
-    val ass = All( x, Imp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
-    if ( k == n ) {
-      val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
-      WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
-    } else {
-      val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
-      val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
-      val aux = Imp( p1, p2 )
-      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
-    }
-  }
 
   "The expansion tree extraction" should {
 
     "handle successive contractions " in {
-      val etSeq = LKToExpansionProof( LinearExampleProof( 0, 2 ) )
+      val etSeq = LKToExpansionProof( LinearExampleProof( 2 ) )
 
       val p = "P"
       val x = FOLVar( "x" )
