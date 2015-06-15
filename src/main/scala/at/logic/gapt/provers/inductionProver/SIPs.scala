@@ -59,10 +59,6 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
   val Fu = u map { F( alpha, alpha, _ ) }
   val Sequent2 = Fu ++: Gamma2
 
-  var pi0Op: Option[LKProof] = None
-  var pi1Op: Option[LKProof] = None
-  var pi2Op: Option[LKProof] = None
-
   /**
    *
    * @return True if this is a schematic sip, i.e. the induction formula is unknown.
@@ -76,16 +72,6 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
   def isSolved: Boolean = p9prover.isValid( Sequent0 ) && p9prover.isValid( Sequent1 ) && p9prover.isValid( Sequent2 )
 
   /**
-   * Uses prover9 to compute the subproofs π,,0,,, π,,1,,, π,,2,,, provided Sequent0, Sequent1, Sequent2 are provable.
-   *
-   */
-  def subproofsFromProver9 = if ( isSolved ) {
-    pi0Op = p9prover.getLKProof( Sequent0 )
-    pi1Op = p9prover.getLKProof( Sequent1 )
-    pi2Op = p9prover.getLKProof( Sequent2 )
-  }
-
-  /**
    * TODO: Find a better name for this
    *
    * @param f A FOLFormula
@@ -94,46 +80,54 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
   def solve( f: FOLFormula ): SimpleInductionProof = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, f )
 
   /**
-   * Converts this into an LKProof, if possible (i.e. inductionFormula is a solution).
+   * Converts this into an LKProof, with user-supplied proofs π,,0,,, π,,1,,, π,,2,,.
+   *
+   * @param pi0 Proof of the induction base.
+   * @param pi1 Proof of the induction step.
+   * @param pi2 Proof of the conclusion.
+   * @return The LKProof represented by this object.
+   */
+  def toLKProof( pi0: LKProof, pi1: LKProof, pi2: LKProof ): LKProof = {
+    // Induction base
+    val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
+    val inductionBase2 = CleanStructuralRules( ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), beta ) )
+
+    // Induction step
+    val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
+    val inductionStep2 = t.foldLeft( inductionStep1 ) {
+      ( acc, ti ) => ForallLeftRule( acc, F( alpha, nu, ti ), All( y, F( alpha, nu, y ) ), ti )
+    }
+    val inductionStep3 = ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
+
+    val inductionStep4 = CleanStructuralRules( inductionStep3 )
+
+    // Conclusion
+    val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
+    val conclusion2 = u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
+      ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
+    }
+    val conclusion3 = CleanStructuralRules( conclusion2 )
+
+    // Combining the proofs
+    val inductionProof = InductionRule( inductionBase2,
+      inductionStep4, All( y, F( alpha, zero, y ) ).asInstanceOf[FOLFormula],
+      All( y, F( alpha, nu, y ) ).asInstanceOf[FOLFormula],
+      All( y, F( alpha, snu, y ) ).asInstanceOf[FOLFormula],
+      alpha )
+
+    CutRule( inductionProof, conclusion3, All( y, F( alpha, alpha, y ) ) )
+  }
+  /**
+   * Converts this into an LKProof, calling prover9 to provide π,,0,,, π,,1,,, π,,2,,.
    *
    * @return The LKProof represented by this object
    */
   def toLKProof: Option[LKProof] = {
 
+    val ( pi0Op, pi1Op, pi2Op ) = ( p9prover.getLKProof( Sequent0 ), p9prover.getLKProof( Sequent1 ), p9prover.getLKProof( Sequent2 ) )
     ( pi0Op, pi1Op, pi2Op ) match {
-      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) =>
-        // Induction base
-        val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
-        val inductionBase2 = CleanStructuralRules( ForallRightRule( inductionBase1, F( alpha, zero, beta ), All( y, F( alpha, zero, y ) ), beta ) )
-
-        // Induction step
-        val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
-        val inductionStep2 = t.foldLeft( inductionStep1 ) {
-          ( acc, ti ) => ForallLeftRule( acc, F( alpha, nu, ti ), All( y, F( alpha, nu, y ) ), ti )
-        }
-        val inductionStep3 = ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
-
-        val inductionStep4 = CleanStructuralRules( inductionStep3 )
-
-        // Conclusion
-        val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
-        val conclusion2 = u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
-          ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
-        }
-        val conclusion3 = CleanStructuralRules( conclusion2 )
-
-        // Combining the proofs
-        val inductionProof = InductionRule( inductionBase2,
-          inductionStep4, All( y, F( alpha, zero, y ) ).asInstanceOf[FOLFormula],
-          All( y, F( alpha, nu, y ) ).asInstanceOf[FOLFormula],
-          All( y, F( alpha, snu, y ) ).asInstanceOf[FOLFormula],
-          alpha )
-
-        Some( CutRule( inductionProof, conclusion3, All( y, F( alpha, alpha, y ) ) ) )
-
-      case _ if isSolved =>
-        subproofsFromProver9; toLKProof
-      case _ => None
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => Some( toLKProof( pi0, pi1, pi2 ) )
+      case _                                         => None
     }
 
   }
