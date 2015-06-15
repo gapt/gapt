@@ -6,10 +6,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.Paramodulants
-import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.MyFClause
-import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.ForgetfulParamodulateCNF
-import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.ForgetfulResolve
+import at.logic.gapt.expr.hol.CNFp
 import org.specs2.mutable._
 
 class ForgetfulResolutionTest extends Specification {
@@ -52,7 +49,7 @@ class ForgetfulResolutionTest extends Specification {
       val r3 = Set( cpbb, cq )
       val real = Set( r1, r2, r3 )
 
-      val res = ForgetfulParamodulateCNF( And( Eq( a, b ) :: paa :: q :: Nil ) )
+      val res = ForgetfulParamodulate( CNFp.toFClauseList( And( Eq( a, b ) :: paa :: q :: Nil ) ).map( MyFClause.toMyFClause ) )
 
       val setres = res.map( cnf => cnf.toSet ).toSet
 
@@ -88,8 +85,8 @@ class ForgetfulResolutionTest extends Specification {
 
       val res = ForgetfulResolve( f )
 
-      //println("Formula (in CNF): " + f)
-      //println("Resolvent: " + res)
+      println( "Formula (in CNF): " + f )
+      println( "Resolvent: " + res )
 
       res.size must beEqualTo( 1 )
     }
