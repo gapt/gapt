@@ -2,11 +2,11 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
+import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.findMinimalSipGrammar
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
-import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.prover9.Prover9Prover

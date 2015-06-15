@@ -2,6 +2,7 @@ package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.Clause
@@ -226,6 +227,24 @@ object NameReplacement {
           extendw_pmap( p, rpmap2, rsmap, inference )
 
       }
+  }
+
+  def apply( expSequent: ExpansionSequent, map: SymbolMap ): ExpansionSequent =
+    ExpansionSequent( expSequent.antecedent.map( apply( _, map ) ), expSequent.succedent.map( apply( _, map ) ) )
+
+  def apply( expTree: ExpansionTree, map: SymbolMap ): ExpansionTree = expTree match {
+    case ETAtom( f )     => ETAtom( apply( f, map ) )
+    case ETNeg( t1 )     => ETNeg( apply( t1, map ) )
+    case ETAnd( t1, t2 ) => ETAnd( apply( t1, map ), apply( t2, map ) )
+    case ETOr( t1, t2 )  => ETOr( apply( t1, map ), apply( t2, map ) )
+    case ETImp( t1, t2 ) => ETImp( apply( t1, map ), apply( t2, map ) )
+    case ETStrongQuantifier( f, v, selection ) =>
+      ETStrongQuantifier( apply( f, map ), v, apply( selection, map ) )
+    case ETSkolemQuantifier( f, v, selection ) =>
+      ETSkolemQuantifier( apply( f, map ), v, apply( selection, map ) )
+    case ETWeakQuantifier( f, instances ) =>
+      ETWeakQuantifier.applyWithoutMerge( apply( f, map ),
+        instances map { case ( t, term ) => apply( t, map ) -> apply( term, map ) } )
   }
 
   /* creates a mapping from elements in objects to targets. the predicate matches indicates when two elements should

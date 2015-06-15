@@ -1,29 +1,26 @@
 
 package at.logic.gapt.proofs.ceres
 
+import at.logic.gapt.expr.SymbolA
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.expr.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.{ getAncestors, getCutAncestors }
 import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.expr.fol.Utils.{ removeDoubles, removeDoubles3 }
-import at.logic.gapt.expr.hol._
-import at.logic.gapt.expr.SymbolA
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
-import at.logic.gapt.proofs.shlk.{ StepMinusOne, printSchemaProof }
 import at.logic.gapt.utils.ds.Multisets
 import at.logic.gapt.utils.ds.Multisets.Multiset
 import at.logic.gapt.utils.ds.trees.BinaryTree
 import at.logic.gapt.utils.ds.trees.LeafTree
 import at.logic.gapt.utils.ds.trees.Tree
 import at.logic.gapt.utils.ds.trees.UnaryTree
+import at.logic.gapt.utils.dssupport.ListSupport
+import scala.collection.immutable.HashMap
 import struct.StructCreators
 import struct.TypeSynonyms
-import struct.cutOccConfigToCutConfig
 import struct.cutConfToString
-import scala.collection.immutable.HashMap
+import struct.cutOccConfigToCutConfig
 
 trait ProjectionTerm
 
@@ -87,8 +84,8 @@ object ProjectionTermCreators {
 
   def relevantProj( main_proof: String ): List[( String, Tree[AnyRef] )] = {
     val s = SchemaProofDB.toList.map( pair => genCC( pair._1 ) ) //for console
-    val spt = removeDoubles3( SchemaProofDB.toList.map( pair => genCCProofTool( pair._1 ) ).flatten )
-    val sptb = removeDoubles3( SchemaProofDB.toList.map( pair => genCCProofToolBase( pair._1 ) ).flatten )
+    val spt = ListSupport.distinct3rd( SchemaProofDB.toList.map( pair => genCCProofTool( pair._1 ) ).flatten )
+    val sptb = ListSupport.distinct3rd( SchemaProofDB.toList.map( pair => genCCProofToolBase( pair._1 ) ).flatten )
     val slpt = ( main_proof, extract( SchemaProofDB.get( main_proof ).rec, Set.empty[FormulaOccurrence], getCutAncestors( SchemaProofDB.get( main_proof ).rec ) ), Set.empty[FormulaOccurrence] ) :: spt
     val slptb = ( main_proof, extract( SchemaProofDB.get( main_proof ).base, Set.empty[FormulaOccurrence], getCutAncestors( SchemaProofDB.get( main_proof ).base ) ), ( Set.empty[FormulaOccurrence], Set.empty[FormulaOccurrence] ) ) :: sptb
 
@@ -126,7 +123,7 @@ object ProjectionTermCreators {
     val cclist = getCC( p_rec, List.empty[FormulaOccurrence], p_rec )
     val cclistproof_name = cclist.filter( pair => pair._1 == proof_name )
     val cclist1 = cclistproof_name.map( pair => getCC( SchemaProofDB.get( pair._1 ).rec, pair._2._1 ::: pair._2._2, SchemaProofDB.get( pair._1 ).rec ) ).flatten
-    val l = removeDoubles( cclist ::: cclist1 ).filter( pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty )
+    val l = ( cclist ::: cclist1 ).distinct.filter( pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty )
     l.map( pair => ( pair._1, PStructToExpressionTree.applyConsole( extract( SchemaProofDB.get( pair._1 ).rec, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors( SchemaProofDB.get( pair._1 ).rec ) ) ), ( pair._2._1 ::: pair._2._1 ).toSet ) )
   }
 
@@ -136,7 +133,7 @@ object ProjectionTermCreators {
     val cclist = getCC( p_rec, List.empty[FormulaOccurrence], p_rec )
     val cclistproof_name = cclist.filter( pair => pair._1 == proof_name )
     val cclist1 = cclistproof_name.map( pair => getCC( SchemaProofDB.get( pair._1 ).rec, pair._2._1 ::: pair._2._2, SchemaProofDB.get( pair._1 ).rec ) ).flatten
-    val l = removeDoubles( cclist ::: cclist1 ).filter( pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty )
+    val l = ( cclist ::: cclist1 ).distinct.filter( pair => pair._2._1.nonEmpty || pair._2._2.nonEmpty )
     l.map( pair => ( pair._1, extract( SchemaProofDB.get( pair._1 ).rec, ( pair._2._1 ::: pair._2._2 ).toSet, getCutAncestors( SchemaProofDB.get( pair._1 ).rec ) ), ( pair._2._1 ::: pair._2._2 ).toSet ) )
   }
 
@@ -147,7 +144,7 @@ object ProjectionTermCreators {
     val cclistproof_name = cclist.filter( pair => pair._1 == proof_name )
     val cclist1 = cclistproof_name.map( pair => getCC( p_rec, pair._2._1 ::: pair._2._2, p_rec ) ).flatten
     println( "\ncclist1 = " + cclist1 )
-    val cclistbase = removeDoubles( cclist1 ::: cclist ).map( pair => {
+    val cclistbase = ( cclist1 ::: cclist ).distinct.map( pair => {
       val seq = SchemaProofDB.get( pair._1 ).base.root
       val k = IntVar( "k" )
       val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero().asInstanceOf[IntegerTerm] )
@@ -157,7 +154,7 @@ object ProjectionTermCreators {
       val s = ( seq.antecedent.filter( fo => groundccant.contains( fo.formula ) ), seq.succedent.filter( fo => groundccsucc.contains( fo.formula ) ) )
       ( pair._1, s )
     } )
-    removeDoubles( cclistbase ).filter( pair =>
+    ( cclistbase ).distinct.filter( pair =>
       pair._2._1.nonEmpty || pair._2._2.nonEmpty ).map( pair =>
       ( pair._1, extract( SchemaProofDB.get( pair._1 ).base, pair._2._1.toSet ++ pair._2._2.toSet, getCutAncestors( SchemaProofDB.get( pair._1 ).base ) ), ( pair._2._1.toSet, pair._2._2.toSet ) ) )
   }

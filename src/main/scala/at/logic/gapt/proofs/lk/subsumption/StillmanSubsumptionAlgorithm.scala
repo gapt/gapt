@@ -9,7 +9,6 @@ import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.utils.dssupport.ListSupport.remove_doubles
 
 // TODO: find a smart way (without reaching out to the lambda layer!!) to not duplicate this code.
 
@@ -27,8 +26,8 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
   def subsumes_by( s1: FSequent, s2: FSequent ): Option[Substitution] = {
     val left = s1._1.map( x => Neg( x ) ) ++ s1._2.map( x => x )
     val right = s2._1.map( x => Neg( x ) ) ++ s2._2.map( x => x )
-    val lv = remove_doubles( left.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ).toList ++ l ) )
-    val rv = remove_doubles( right.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ).toList ++ l ) )
+    val lv = ( left.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ).toList ++ l ) ).distinct
+    val rv = ( right.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ).toList ++ l ) ).distinct
     val renames = rv.filter( x => lv.contains( x ) )
     val ( newnames, _ ) = renames.reverse.foldLeft( ( List[Var](), lv ++ rv ) )( ( pair, x ) => {
       val v = rename( x, pair._2 )
@@ -71,8 +70,8 @@ object StillmanSubsumptionAlgorithmFOL extends SubsumptionAlgorithm {
   def subsumes_by( s1: FSequent, s2: FSequent ): Option[FOLSubstitution] = {
     val left = s1._1.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ s1._2.map( x => x.asInstanceOf[FOLFormula] )
     val right = s2._1.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ s2._2.map( x => x.asInstanceOf[FOLFormula] )
-    val lv = remove_doubles( left.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ).toList ++ l ) )
-    val rv = remove_doubles( right.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ).toList ++ l ) )
+    val lv = ( left.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ).toList ++ l ) ).distinct
+    val rv = ( right.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ).toList ++ l ) ).distinct
     val renames = rv.filter( x => lv.contains( x ) )
     val ( newnames, _ ) = renames.foldLeft( ( List[FOLVar](), lv ++ rv ) )( ( pair, x ) => {
       val v = rename( x, pair._2 )

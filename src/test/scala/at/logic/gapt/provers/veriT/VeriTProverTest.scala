@@ -4,6 +4,7 @@
 
 package at.logic.gapt.provers.veriT
 
+import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.FSequent
 import org.specs2.mutable._
@@ -43,6 +44,10 @@ class VeriTProverTest extends Specification {
 
     "refute bottom" in {
       veriT.getExpansionSequent( FSequent( Seq( Bottom() ), Seq() ) ) must beSome
+    }
+
+    "validate the buss tautology for n=1" in {
+      veriT.isValid( BussTautology( 1 ) ) must beTrue
     }
   }
 }

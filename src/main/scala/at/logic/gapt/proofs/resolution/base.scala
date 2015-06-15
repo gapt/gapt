@@ -36,19 +36,6 @@ trait CNF extends Sequent {
     } ) )
 }
 
-object IsNeg {
-  def apply( formula: HOLFormula ) = formula match {
-    case Neg( _ ) => true
-    case _        => false
-  }
-}
-object StripNeg {
-  def apply( formula: HOLFormula ) = formula match {
-    case Neg( f ) => f
-    case _        => formula
-  }
-}
-
 /**
  * the sequences are actually multisets, as can be seen from the equal method
  */

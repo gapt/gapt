@@ -8,227 +8,67 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import scala.collection.mutable
 
-/** Returns whether t is a function. */
-/** Returns whether t is a function whose name fulfills to a given condition. */
-object isFunc {
-  def apply( t: FOLTerm ): Boolean = isFunc( t, _ => true )
+object isFOLFunction {
+  /** Returns whether t is a function. */
+  def apply( t: FOLTerm ): Boolean = apply( t, _ => true )
+
+  /** Returns whether t is a function whose name fulfills to a given condition. */
   def apply( t: FOLTerm, cond: String => Boolean ): Boolean = t match {
     case FOLFunction( f, _ ) => cond( f.toString )
     case _                   => false
   }
 }
 
-/** Returns whether t is a variable. */
-object isVar {
-  def apply( t: FOLTerm ): Boolean = t match {
-    case FOLVar( _ ) => true
-    case _           => false
-  }
-}
-
 /** Unsafely extracts the function name from a term. Fails if the term is not a function. */
-object fromFunc {
+object FOLFunctionName {
   def apply( t: FOLTerm ) = t match { case FOLFunction( f, _ ) => f }
 }
 
 /** Unsafely extracts the function arguments from a term. Fails if the term is not a function. */
-object fromFuncArgs {
+object FOLFunctionArgs {
   def apply( t: FOLTerm ) = t match { case FOLFunction( _, a ) => a }
 }
 
-// Transforms a formula to negation normal form (transforming also
-// implications into disjunctions)
-object toNNF {
-  def apply( f: FOLFormula ): FOLFormula = f match {
-    case Top() | Bottom()    => f
-    case FOLAtom( _, _ )     => f
-    case FOLFunction( _, _ ) => f
-    case Imp( f1, f2 )       => Or( toNNF( Neg( f1 ) ), toNNF( f2 ) )
-    case And( f1, f2 )       => And( toNNF( f1 ), toNNF( f2 ) )
-    case Or( f1, f2 )        => Or( toNNF( f1 ), toNNF( f2 ) )
-    case Ex( x, f )          => Ex( x, toNNF( f ) )
-    case All( x, f )         => All( x, toNNF( f ) )
-    case Neg( f ) => f match {
-      case Top()               => Bottom()
-      case Bottom()            => Top()
-      case FOLAtom( _, _ )     => Neg( f )
-      case FOLFunction( _, _ ) => Neg( f )
-      case Neg( f1 )           => toNNF( f1 )
-      case Imp( f1, f2 )       => And( toNNF( f1 ), toNNF( Neg( f2 ) ) )
-      case And( f1, f2 )       => Or( toNNF( Neg( f1 ) ), toNNF( Neg( f2 ) ) )
-      case Or( f1, f2 )        => And( toNNF( Neg( f1 ) ), toNNF( Neg( f2 ) ) )
-      case Ex( x, f )          => All( x, toNNF( Neg( f ) ) )
-      case All( x, f )         => Ex( x, toNNF( Neg( f ) ) )
-      case _                   => throw new Exception( "ERROR: Unexpected case while transforming to negation normal form." )
-    }
-    case _ => throw new Exception( "ERROR: Unexpected case while transforming to negation normal form." )
-  }
-}
-
-object toCNF {
-  // Assumes f is in NNF
-  def apply( f: FOLFormula ): List[FOLFormula] = f match {
-    case Top()                   => Nil
-    case Bottom()                => List( f )
-    case FOLAtom( _, _ )         => List( f )
-    case Neg( FOLAtom( _, _ ) )  => List( f )
-    case And( f1, f2 )           => toCNF( f1 ) ++ toCNF( f2 )
-    case Or( f1, And( f2, f3 ) ) => toCNF( Or( f1, f2 ) ) ++ toCNF( Or( f1, f3 ) )
-    case Or( And( f1, f2 ), f3 ) => toCNF( Or( f1, f3 ) ) ++ toCNF( Or( f2, f3 ) )
-    case Or( f1, f2 ) =>
-      val clauses1 = toCNF( f1 )
-      val clauses2 = toCNF( f2 )
-      for ( c1 <- clauses1; c2 <- clauses2 ) yield Or( c1, c2 )
-    case _ => throw new Exception( "ERROR on CNF transformation of the formula: " + f )
-  }
-}
-
-object toDNF {
-  // Assumes f is in NNF
-  def apply( f: FOLFormula ): List[FOLFormula] = f match {
-    case Bottom()                => Nil
-    case Top()                   => List( f )
-    case FOLAtom( _, _ )         => List( f )
-    case Neg( FOLAtom( _, _ ) )  => List( f )
-    case Or( f1, f2 )            => toDNF( f1 ) ++ toDNF( f2 )
-    case And( f1, Or( f2, f3 ) ) => toDNF( And( f1, f2 ) ) ++ toDNF( And( f1, f3 ) )
-    case And( Or( f1, f2 ), f3 ) => toDNF( And( f1, f3 ) ) ++ toDNF( And( f2, f3 ) )
-    case And( f1, f2 ) =>
-      val clauses1 = toDNF( f1 )
-      val clauses2 = toDNF( f2 )
-      for ( c1 <- clauses1; c2 <- clauses2 ) yield And( c1, c2 )
-    case _ => throw new Exception( "ERROR on DNF transformation of the formula: " + f )
-  }
-}
-
-object replaceFreeOccurenceOf {
-  def apply( variable: String, by: String, formula: FOLFormula ): FOLFormula = {
-    replaceFreeOccurenceOf( FOLVar( variable ), FOLVar( by ), formula )
+/**
+ * Generation of first-order subterms (note that this notion differs from
+ * lambda subterms).
+ */
+object FOLSubTerms {
+  /**
+   * Generate all subterms of a FOLTerm.
+   */
+  def apply( t: FOLTerm ): Set[FOLTerm] = {
+    val subterms = mutable.Set[FOLTerm]()
+    apply_( t, subterms )
+    subterms.toSet
   }
 
   /**
-   * Replaces all free ocurrences of a variable by another variable in a FOLTerm.
-   *
-   * @param variable The name of the free variable to replace.
-   * @param by The name of the new variable.
-   * @param term The term in which to replace [variable] with [by].
+   * Generate all subterms of a list of FOLTerms.
    */
-  def apply( variable: String, by: String, term: FOLTerm ): FOLTerm = term match {
-    case FOLFunction( f, terms ) => FOLFunction( f, terms.map( x => replaceFreeOccurenceOf( variable, by, x ) ) )
-    case ( v @ FOLVar( x ) )     => if ( x.toString() == variable ) FOLVar( by ) else v
-    case ( c @ FOLConst( _ ) )   => c
+  def apply( language: List[FOLTerm] ): Set[FOLTerm] = {
+    val subterms = mutable.Set[FOLTerm]()
+    language.foreach( apply_( _, subterms ) )
+    subterms.toSet
   }
 
   /**
-   * Replaces all free ocurrences of a variable by another variable in a FOL formula.
-   *
-   * @param variable The name of the free variable to replace.
-   * @param by The name of the new variable.
-   * @param formula The formula in which to replace [variable] with [by].
+   * Generate all subterms of a FOLTerm using a mutable set for efficiency.
+   * @param term term, which is processed
+   * @param subterms for speeding up the process, if there are already some computed subterms
+   * @return the set of all first-order subterms of term
    */
-  def apply( variable: FOLVar, by: FOLVar, formula: FOLFormula ): FOLFormula = {
-    formula match {
-      case FOLAtom( _, args ) => FOLSubstitution( variable, by ).apply( formula )
-
-      case Neg( f ) =>
-        Neg( replaceFreeOccurenceOf( variable, by, f ) )
-
-      case And( f1, f2 ) =>
-        val r1 = replaceFreeOccurenceOf( variable, by, f1 )
-        val r2 = replaceFreeOccurenceOf( variable, by, f2 )
-        And( r1, r2 )
-
-      case Or( f1, f2 ) =>
-        val r1 = replaceFreeOccurenceOf( variable, by, f1 )
-        val r2 = replaceFreeOccurenceOf( variable, by, f2 )
-        Or( r1, r2 )
-
-      case Ex( v, f ) =>
-        if ( v.syntaxEquals( variable ) )
-          formula
-        else
-          Ex( v, replaceFreeOccurenceOf( variable, by, f ) )
-
-      case All( v, f ) =>
-        if ( v.syntaxEquals( variable ) )
-          formula
-        else
-          All( v, replaceFreeOccurenceOf( variable, by, f ) )
-
-      case Top() | Bottom() => formula
-
-      case _                => throw new Exception( "Unknown operator encountered during renaming of outermost bound variable. Formula is: " + formula )
-    }
-  }
-}
-
-// Transforms a list of literals into an implication formula, with negative 
-// literals on the antecedent and positive literals on the succedent.
-object reverseCNF {
-  def apply( f: List[FOLFormula] ): FOLFormula = {
-    val ( ant, succ ) = f.foldRight( ( List[FOLFormula](), List[FOLFormula]() ) ) {
-      case ( f, ( ant, succ ) ) => f match {
-        case Neg( a ) => ( a :: ant, succ )
-        case a        => ( ant, a :: succ )
+  private def apply_( term: FOLTerm, subterms: mutable.Set[FOLTerm] ): Unit = {
+    // if the term is not in the set of subterms yet, add it and add all its subterms
+    // this check avoids duplicate addition of all subterms of a subterm
+    if ( !subterms.contains( term ) ) {
+      subterms += term
+      term match {
+        case FOLFunction( _, args ) => args.foreach( apply_( _, subterms ) )
       }
     }
-    val conj = And( ant )
-    val disj = Or( succ )
-    Imp( conj, disj )
-  }
-}
-
-/**
- * Given varName and an integer n,
- * returns the list [varName_0,...,varName_(n-1)],
- * where varName_i is a FOLVar with the same name.
- */
-object createFOLVars {
-  def apply( varName: String, n: Int ) = {
-    ( 0 to ( n - 1 ) ).map( n => FOLVar( ( varName + "_" + n ) ) ).toList
-  }
-}
-
-object collectVariables {
-  /**
-   * Returns the list (not set!) of all occurring variables, free or bound, in a FOL FORMULA, from left to right.
-   *
-   * @param f The FOL formula in which to collect the variables.
-   * @return The list of occurring variables, from left to right. If a variable occurs multiple times
-   *         in the formula, it will occur multiple times in the returned list.
-   */
-  def apply( f: FOLFormula ): List[FOLVar] = f match {
-    case And( f1, f2 )    => collectVariables( f1 ) ++ collectVariables( f2 )
-    case Or( f1, f2 )     => collectVariables( f1 ) ++ collectVariables( f2 )
-    case Imp( f1, f2 )    => collectVariables( f1 ) ++ collectVariables( f2 )
-    case Neg( f1 )        => collectVariables( f1 )
-    case All( _, f1 )     => collectVariables( f1 )
-    case Ex( _, f1 )      => collectVariables( f1 )
-    case FOLAtom( _, f1 ) => f1.map( f => collectVariables( f ) ).foldLeft( List[FOLVar]() )( _ ++ _ )
-    case Top() | Bottom() => List()
-    case _                => throw new IllegalArgumentException( "Unhandled case in fol.utils.collectVariables(FOLFormula)!" )
   }
 
-  /**
-   * Returns the list (not set!) of all occurring variables, free or bound, in a FOLTerm, from left to right.
-   *
-   * @param f The FOLTerm in which to collect the variables.
-   * @return The list of occurring variables, from left to right. If a variable occurs multiple times
-   *         in the formula, it will occur multiple times in the returned list.
-   */
-  def apply( f: FOLTerm ): List[FOLVar] = f match {
-    case FOLVar( x )             => List( FOLVar( x ) )
-    case FOLFunction( _, terms ) => terms.map( t => collectVariables( t ) ).foldLeft( List[FOLVar]() )( _ ++ _ )
-    case FOLConst( _ )           => Nil
-    case _                       => throw new IllegalArgumentException( "Unhandled case in fol.utils.collectVariables(FOLTerm)!" )
-  }
-}
-
-object isEigenvariable {
-  def apply( x: FOLVar, eigenvariable: String ) = x.toString.split( '_' ) match {
-    case Array( eigenvariable, n ) => n.forall( Character.isDigit )
-    case _                         => false
-  }
 }
 
 object Utils {
@@ -240,88 +80,6 @@ object Utils {
 
   // Constructs the FOLTerm s^k(0)
   def numeral( k: Int ) = iterateTerm( FOLConst( "0" ).asInstanceOf[FOLTerm], "s", k )
-
-  // TODO: these functions should go to listSupport in dssupport in the
-  // utils project.
-
-  def removeDoubles[T]( l: List[T] ): List[T] = {
-    removeDoubles_( l.reverse ).reverse
-  }
-
-  private def removeDoubles_[T]( l: List[T] ): List[T] = {
-    l match {
-      case head :: tail =>
-        if ( tail.contains( head ) )
-          removeDoubles( tail )
-        else
-          head :: removeDoubles( tail )
-      case Nil => Nil
-    }
-  }
-
-  //auxiliary function which removes duplications from list of type:
-  //List[List[(String, Tree[AnyRef], Set[FormulaOccurrence])]]
-  //and type
-  ////List[List[(String, Tree[AnyRef], (Set[FormulaOccurrence], Set[FormulaOccurrence]))]]
-
-  def removeDoubles3[T, R]( l: List[Tuple3[String, T, R]] ): List[Tuple3[String, T, R]] = {
-    l match {
-      case head :: tail =>
-        if ( tail.map( tri => tri._3 ).contains( head._3 ) )
-          removeDoubles3( tail )
-        else
-          head :: removeDoubles3( tail )
-      case Nil => Nil
-    }
-  }
-
-  /**
-   * A method for generating all subterms of a particular term
-   * @param term term, which is processed
-   * @param subterms [optional] for speeding up the process, if there are already some computed subterms (default: {})
-   * @return a HasMap of all subterms represented as string => subterm
-   */
-  def st( term: FOLTerm, subterms: mutable.Set[FOLTerm] = mutable.Set[FOLTerm]() ): mutable.Set[FOLTerm] = {
-    // if the term is not in the set of subterms yet
-    // add it and add all its subterms
-    if ( !subterms.contains( term ) ) {
-      // add a term
-      subterms += term
-      // generate all subterms
-      val ts = term match {
-        case FOLVar( v )            => Set[FOLTerm]()
-        case FOLConst( c )          => Set[FOLTerm]()
-        case FOLFunction( f, args ) => args.flatMap( ( ( t: FOLTerm ) => st( t, subterms ) ) )
-      }
-      subterms ++= ts
-    }
-    subterms
-  }
-
-  def subterms( term: FOLTerm ) = {
-    val subterms = mutable.Set[FOLTerm]()
-    st( term, subterms )
-    subterms toSet
-  }
-
-  /**
-   * Generating all subterms of a language of FOLTerms
-   *
-   * @param language termset for which st is called for each element
-   * @return list of all subterms
-   */
-  def subterms( language: List[FOLTerm] ): Set[FOLTerm] = {
-    val terms = mutable.Set[FOLTerm]()
-    // for each term of the language
-    for ( t <- language ) {
-      // if terms does not contain t yet
-      if ( !terms.contains( t ) ) {
-        // add it and all of its subterms to the list
-        terms ++= st( t, terms )
-      }
-    }
-    terms.toSet
-  }
 
   /**
    * Calculates the characteristic partition of a term t

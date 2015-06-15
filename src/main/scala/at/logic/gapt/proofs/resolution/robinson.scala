@@ -7,6 +7,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution }
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.llk.toLatexString
 import at.logic.gapt.proofs.lk.EquationVerifier._
 import at.logic.gapt.proofs.lk.base._
@@ -56,7 +57,7 @@ package robinson {
       }
     }
     def apply( literals: Seq[FOLFormula] )( implicit factory: FOFactory ): RobinsonResolutionProof = {
-      val lits: Seq[Tuple2[FormulaOccurrence, Boolean]] = literals.map( l => if ( IsNeg( l ) ) ( factory.createFormulaOccurrence( StripNeg( l ), Nil ), false )
+      val lits: Seq[Tuple2[FormulaOccurrence, Boolean]] = literals.map( l => if ( isNeg( l ) ) ( factory.createFormulaOccurrence( removeNeg( l ), Nil ), false )
       else ( factory.createFormulaOccurrence( l, Nil ), true ) )
       new LeafAGraph[Clause]( Clause( lits ) ) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
         def rule = InitialType

@@ -29,10 +29,13 @@ class SipTests extends Specification {
 
   "findMinimalSipGrammar" should {
     "find a grammar" in {
+      if ( !new QMaxSAT().isInstalled )
+        skipped( "does not work with maxsat4j -- wrong result..." )
+
       val n = 5
       // r(0), ..., r(s^n(0))
       val lang = ( 0 until n ) map { i => FOLFunction( "tuple1", List( Utils.numeral( i ) ) ) }
-      val g = findMinimalSipGrammar( Seq( ( n, lang ) ) )
+      val g = findMinimalSipGrammar( Seq( ( n, lang ) ), new QMaxSAT )
       g.productions must beEqualTo( Seq(
         tau -> FOLFunction( "tuple1", List( nu ) ) ) )
     }

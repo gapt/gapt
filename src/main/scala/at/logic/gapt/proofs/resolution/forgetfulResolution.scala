@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.CNFp
 
 class MyFClause[A]( val neg: List[A], val pos: List[A] ) {
   override def equals( o: Any ) = o match {
@@ -47,7 +48,7 @@ object ForgetfulResolve {
   def apply( clauses: List[MyFClause[FOLFormula]] ): List[List[MyFClause[FOLFormula]]] =
     clauses.map { c => apply_( clauses.dropWhile( _ != c ), c ) }.filterNot( _.isEmpty )
 
-  def apply( f: FOLFormula ): List[FOLFormula] = apply( CNFp( f ).map( toMyFClause ) ).map( CNFtoFormula )
+  def apply( f: FOLFormula ): List[FOLFormula] = apply( CNFp.toFClauseList( f ).map( toMyFClause ) ).map( CNFtoFormula )
 
   def apply_( clauses: List[MyFClause[FOLFormula]], c: MyFClause[FOLFormula] ): List[MyFClause[FOLFormula]] = {
     ( List[MyFClause[FOLFormula]]() /: clauses )( ( acc, ci ) =>
@@ -86,7 +87,7 @@ object ForgetfulResolve {
 object ForgetfulParamodulate {
   import MyFClause._
 
-  def apply( f: FOLFormula ): List[FOLFormula] = apply( CNFp( f ).map( toMyFClause ) ).map( CNFtoFormula )
+  def apply( f: FOLFormula ): List[FOLFormula] = apply( CNFp.toFClauseList( f ).map( toMyFClause ) ).map( CNFtoFormula )
 
   def apply( clauses: List[MyFClause[FOLFormula]] ): List[List[MyFClause[FOLFormula]]] =
     {

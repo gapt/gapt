@@ -8,14 +8,14 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.lk.cutIntroduction.MCSMethod.MCSMethod
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLSubTerms }
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas._
 import at.logic.gapt.utils.dssupport.ListSupport
 import scala.collection.mutable.MutableList
 import scala.collection.mutable
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.gapt.utils.dssupport.ListSupport.{ boundedPower, diagCross }
-import at.logic.gapt.expr.fol.Utils.{ st, subterms, calcCharPartition, incrementAlls, nonterminalOccurs, replaceAtPosition, getNonterminals }
+import at.logic.gapt.expr.fol.Utils.{ calcCharPartition, incrementAlls, nonterminalOccurs, replaceAtPosition, getNonterminals }
 
 /**
  * MinCostSAT Method
@@ -162,7 +162,7 @@ abstract class TreeGrammarDecomposition( val termset: List[FOLTerm], val n: Int 
   def suffKeys() {
 
     //var result = scala.collection.mutable.Set[FOLTerm]()
-    val st = subterms( termset )
+    val st = FOLSubTerms( termset )
     // since we only need to construct terms with n nonterminals, we only have to consider
     // subsets of st(L') with a size of at most n+1
     val poweredSubSets = boundedPower( st.toList, n + 1 )
@@ -556,7 +556,7 @@ class TreeGrammarDecompositionPWM( override val termset: List[FOLTerm], override
    */
   def C( q: FOLTerm ): FOLFormula = {
 
-    val subterms = st( q )
+    val subterms = FOLSubTerms( q )
     // save the index of the term for later
     val qindex = addToTermMap( q )
     var qsubtermIndexes = mutable.Set[Int]()

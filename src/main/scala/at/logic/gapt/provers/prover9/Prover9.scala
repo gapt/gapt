@@ -170,7 +170,7 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
       // the proof obtained by prover9 can be fixed to have
       // as the clauses the clauses of this CNF (and not e.g.
       // these clauses modulo symmetry)
-      val cs = Some( CNFn( seq.toFormula ).map( _.toFSequent ).toList )
+      val cs = Some( CNFn.toFClauseList( seq.toFormula ).map( _.toFSequent ).toList )
       runP9OnLADR( input_file, output_file, cs )
     }
 
@@ -362,7 +362,7 @@ object Prover9 extends at.logic.gapt.utils.logging.Logger {
       val suc = endsequent.succedent.map( x => existsclosure( x ) )
       val closure = FSequent( ant, suc )
 
-      val clause_set = CNFn( endsequent.toFormula ).map( c =>
+      val clause_set = CNFn.toFClauseList( endsequent.toFormula ).map( c =>
         FSequent( c.neg.map( f => f.asInstanceOf[FOLFormula] ), c.pos.map( f => f.asInstanceOf[FOLFormula] ) ) )
 
       val res_proof = fixDerivation( proof, clause_set )

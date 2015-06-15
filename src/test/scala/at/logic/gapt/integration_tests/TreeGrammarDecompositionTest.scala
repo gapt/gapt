@@ -1,11 +1,12 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
+import at.logic.gapt.examples.LinearExampleProof
+import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.expr._
-import at.logic.gapt.provers.maxsat.{ MaxSat4j, MaxSATSolver }
+import at.logic.gapt.provers.maxsat.MaxSat4j
 import org.specs2.mutable._
 
 /**
@@ -13,24 +14,6 @@ import org.specs2.mutable._
  */
 
 class TreeGrammarDecompositionTest extends Specification {
-
-  private def LinearExampleProof( k: Int, n: Int ): LKProof = {
-    val s = "s"
-    val c = "0"
-    val p = "P"
-
-    val x = FOLVar( "x" )
-    val ass = All( x, Imp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
-    if ( k == n ) { // leaf proof {
-      val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
-      WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
-    } else {
-      val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
-      val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
-      val aux = Imp( p1, p2 )
-      ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), LinearExampleProof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
-    }
-  }
 
   private def toTerms( p: LKProof ): List[FOLTerm] = {
     val testtree = LKToExpansionProof( p )
@@ -58,7 +41,7 @@ class TreeGrammarDecompositionTest extends Specification {
 
   "TreeGrammarDecomposition" should {
     "extract and decompose the termset of the linear example proof of 8 (n = 1)" in {
-      val proof = LinearExampleProof( 0, 8 )
+      val proof = LinearExampleProof( 8 )
       val proofLanguage = toTerms( proof )
 
       val grammar = TreeGrammarDecomposition( proofLanguage, 1, MCSMethod.MaxSAT, new MaxSat4j() )
@@ -74,7 +57,7 @@ class TreeGrammarDecompositionTest extends Specification {
 
     "extract and decompose the termset of the linear example proof of 18 (n = 2)" in {
       skipped( "this takes too long" )
-      val proof = LinearExampleProof( 0, 18 )
+      val proof = LinearExampleProof( 18 )
       val proofLanguage = toTerms( proof )
 
       val grammar = TreeGrammarDecomposition( proofLanguage, 2, MCSMethod.MaxSAT, new MaxSat4j() )

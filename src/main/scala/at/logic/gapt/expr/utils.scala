@@ -62,6 +62,7 @@ object variables {
     case Abs( v, t ) => apply( v ) ++ apply( t )
   }
 
+  def apply( t: FOLTerm ): Set[FOLVar] = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
   def apply( s: FSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: Sequent ): Set[Var] = apply( s.toFSequent )
   def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
@@ -109,15 +110,13 @@ object constants {
 }
 
 /**
- * Returns the list of all subterms of the given lambda term.
- * TODO: why a list? why not a set?
+ * Returns the set of all subterms of the given lambda term.
  */
 object subTerms {
-  def apply( e: LambdaExpression ): List[LambdaExpression] = e match {
-    case Var( _, _ )   => List( e )
-    case Const( _, _ ) => List( e )
-    case Abs( _, e0 )  => e +: subTerms( e0 )
-    case App( e1, e2 ) => e +: ( subTerms( e1 ) ++ subTerms( e2 ) )
+  def apply( e: LambdaExpression ): Set[LambdaExpression] = e match {
+    case Var( _, _ ) | Const( _, _ ) => Set( e )
+    case Abs( _, e0 )                => apply( e0 ) + e
+    case App( e1, e2 )               => ( apply( e1 ) ++ apply( e2 ) ) + e
   }
 }
 
@@ -134,7 +133,7 @@ object rename {
   def apply( c: Const, blackList: List[Const] ): Const = Const( getRenaming( c.sym, blackList.map( c => c.sym ) ), c.exptype )
 
   /**
-   * renames a list of variables to pairwise distinct variables while avoiding names from blackList.
+   * renames a set of variables to pairwise distinct variables while avoiding names from blackList.
    */
   def apply( vs: Set[FOLVar], blackList: Set[FOLVar] ): Map[FOLVar, FOLVar] = {
     val v_list = vs.toList

@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.schema._
@@ -202,25 +203,5 @@ class SolveTest extends Specification {
       solve.solvePropositional( BussTautology( 2 ) ) must beSome
     }
   }
-}
-
-object BussTautology {
-  def apply( n: Int ): FSequent = FSequent( Ant( n ), c( n ) :: d( n ) :: Nil )
-
-  val a = Const( "a", Ti )
-
-  def c( i: Int ) = HOLAtom( Const( "c_" + i, Ti -> To ), a :: Nil )
-  def d( i: Int ) = HOLAtom( Const( "d_" + i, Ti -> To ), a :: Nil )
-  def F( i: Int ): HOLFormula = if ( i == 1 )
-    Or( c( 1 ), d( 1 ) )
-  else
-    And( F( i - 1 ), Or( c( i ), d( i ) ) )
-  def A( i: Int ) = if ( i == 1 ) c( 1 )
-  else Imp( F( i - 1 ), c( i ) )
-  def B( i: Int ) = if ( i == 1 ) d( 1 )
-  else Imp( F( i - 1 ), d( i ) )
-
-  // the antecedens of the final sequent
-  def Ant( i: Int ): List[HOLFormula] = if ( i == 0 ) Nil else Or( A( i ), B( i ) ) :: Ant( i - 1 )
 }
 

@@ -109,7 +109,7 @@ object isReflexivity {
 }
 
 /**
- * Returns true iff the given LambdaExpression is an atom (which does
+ * Returns true iff the given HOLFormula is an atom (which does
  * not include top nor bottom).
  */
 object isAtom {
@@ -120,7 +120,7 @@ object isAtom {
 }
 
 /**
- * Returns true iff the given LambdaExpression is an extended atom, i.e. an
+ * Returns true iff the given HOLFormula is an extended atom, i.e. an
  * atom or top or bottom.
  */
 object isExtendedAtom {
@@ -131,13 +131,31 @@ object isExtendedAtom {
 }
 
 /**
+ * Returns true iff the given HOLFormula starts with a negation.
+ */
+object isNeg {
+  def apply( formula: HOLFormula ) = formula match {
+    case Neg( _ ) => true
+    case _        => false
+  }
+}
+
+/**
+ * Remove the leading negation from a formula.
+ */
+object removeNeg {
+  def apply( formula: HOLFormula ) = formula match {
+    case Neg( f ) => f
+    case _        => throw new Exception( "Formula does not start with negation." )
+  }
+}
+
+/**
  * Returns true iff the given formula is prenex.
  */
 object isPrenex {
   def apply( e: HOLFormula ): Boolean = e match {
     case Top() | Bottom() => true
-    case Var( _, _ )      => true
-    case Const( _, _ )    => true
     case Neg( f )         => !containsQuantifier( f )
     case And( f1, f2 )    => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
     case Or( f1, f2 )     => !containsQuantifier( f1 ) && !containsQuantifier( f2 )
@@ -325,9 +343,51 @@ object existsclosure {
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 
+/**
+ * Dualize a formula in NNF by switching conjunctions with disjunctions,
+ * universal with existential quantifiers, top with bottom and positive literals
+ * with negative literals. The formula dualize( A ) is logically equivalent to
+ * the negation of A.
+ */
+object dualize {
+  def apply( f: HOLFormula ): HOLFormula = f match {
+    case Top()                     => Bottom()
+    case Bottom()                  => Top()
+    case HOLAtom( x, args )        => Neg( HOLAtom( x, args ) )
+    case Neg( HOLAtom( x, args ) ) => HOLAtom( x, args )
+    case And( f1, f2 )             => Or( apply( f1 ), apply( f2 ) )
+    case Or( f1, f2 )              => And( apply( f1 ), apply( f2 ) )
+    case All( v, f )               => Ex( v, apply( f ) )
+    case Ex( v, f )                => All( v, apply( f ) )
+    case _                         => throw new Exception( "Formula not in NNF!" )
+  }
+
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+}
+
 object removeQuantifiers {
   /**
-   * Strips off the first n quantifiers of a formula.
+   * Removes the outermost block of quantifiers from a formula f.
+   * @param f the formula of the form Qx1.Qx2. ... .Qxn.F[x1,...xn] where F is quantifier free. (n may be 0)
+   * @return the stripped formula F[x1,...,xn]
+   */
+  def apply( f: HOLFormula ): HOLFormula = {
+    f match {
+      case Top() | Bottom() |
+        HOLAtom( _, _ ) |
+        Imp( _, _ ) |
+        And( _, _ ) |
+        Or( _, _ ) |
+        Neg( _ ) => f
+      case Ex( x, f0 )  => apply( f0 )
+      case All( x, f0 ) => apply( f0 )
+      case _            => throw new Exception( "ERROR: Unexpected case while extracting the matrix of a formula." )
+    }
+  }
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+
+  /**
+   * Removes the leading n quantifiers of a formula.
    * It's only well-defined for formulas that begin with at least n quantifiers.
    *
    * @param formula A Formula
@@ -345,33 +405,19 @@ object removeQuantifiers {
     }
 }
 
-/**
- * Returns the quantifier free part of a prenex formula
- */
-object getMatrix {
+object removeAllQuantifiers {
   /**
-   * Strips the outermost block of quantifiers from a formula f in prenex form. The result is also called the
-   * matrix of f.
-   * @param f the formula of the form Qx1.Qx2. ... .Qxn.F[x1,...xn] where F is quantifier free. (n may be 0)
-   * @return the stripped formula F[x1,...,xn]
+   * Removes all quantifiers from the logical level of a HOLFormula. Atoms are not changed.
    */
-  def apply( f: HOLFormula ): HOLFormula = {
-    assert( isPrenex( f ) )
-    f match {
-      case Top() | Bottom() |
-        Var( _, _ ) |
-        Const( _, _ ) |
-        HOLAtom( _, _ ) |
-        Imp( _, _ ) |
-        And( _, _ ) |
-        Or( _, _ ) |
-        Neg( _ ) => f
-      case Ex( x, f0 )  => getMatrix( f0 )
-      case All( x, f0 ) => getMatrix( f0 )
-      case _            => throw new Exception( "ERROR: Unexpected case while extracting the matrix of a formula." )
-    }
+  def apply( f: HOLFormula ): HOLFormula = f match {
+    case HOLAtom( _, _ ) => f
+    case Neg( f1 )       => Neg( apply( f1 ) )
+    case Imp( f1, f2 )   => Imp( apply( f1 ), apply( f2 ) )
+    case And( f1, f2 )   => And( apply( f1 ), apply( f2 ) )
+    case Or( f1, f2 )    => Or( apply( f1 ), apply( f2 ) )
+    case Ex( x, f1 )     => apply( f1 )
+    case All( x, f1 )    => apply( f1 )
   }
-
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 

@@ -6,6 +6,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.CNFp
 import org.specs2.mutable._
 
 class ForgetfulResolutionTest extends Specification {
@@ -48,7 +49,7 @@ class ForgetfulResolutionTest extends Specification {
       val r3 = Set( cpbb, cq )
       val real = Set( r1, r2, r3 )
 
-      val res = ForgetfulParamodulate( CNFp( And( Eq( a, b ) :: paa :: q :: Nil ) ).map( MyFClause.toMyFClause ) )
+      val res = ForgetfulParamodulate( CNFp.toFClauseList( And( Eq( a, b ) :: paa :: q :: Nil ) ).map( MyFClause.toMyFClause ) )
 
       val setres = res.map( cnf => cnf.toSet ).toSet
 

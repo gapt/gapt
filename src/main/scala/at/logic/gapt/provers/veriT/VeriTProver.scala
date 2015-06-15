@@ -33,7 +33,7 @@ class VeriTProver extends Prover with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] = {
+  override def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] = {
     val smtBenchmark = VeriTExporter( s )
 
     val output = withTempFile.fromString( smtBenchmark ) { smtFile =>

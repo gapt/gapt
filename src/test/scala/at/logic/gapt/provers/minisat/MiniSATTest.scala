@@ -6,6 +6,7 @@ package at.logic.gapt.provers.minisat
 
 import java.io.IOException
 
+import at.logic.gapt.examples.PigeonHolePrinciple
 import at.logic.gapt.models.Interpretation
 import org.specs2.mutable._
 
@@ -14,27 +15,6 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.lk.base.FSequent
 
 object SATProblems {
-  object PigeonHolePrinciple {
-    // The binary relation symbol.
-    val rel = "R"
-
-    def apply( ps: Int, hs: Int ) = {
-      assert( ps > 1 )
-      Imp( And( ( 1 to ps ).map( p =>
-        Or( ( 1 to hs ).map( h => atom( p, h ) ).toList ) ).toList ),
-        Or( ( 1 to hs ).map( h =>
-          Or( ( 2 to ps ).map( p =>
-            Or( ( ( 1 to p - 1 ) ).map( pp =>
-              And( atom( p, h ), atom( pp, h ) ) ).toList ) ).toList ) ).toList ) )
-    }
-
-    def atom( p: Int, h: Int ) = FOLAtom( rel, pigeon( p ) :: hole( h ) :: Nil )
-
-    def pigeon( i: Int ) = FOLConst( "p_" + i )
-
-    def hole( i: Int ) = FOLConst( "h_" + i )
-  }
-
   val c = FOLConst( "c" )
   val d = FOLConst( "d" )
   val e = FOLConst( "e" )
