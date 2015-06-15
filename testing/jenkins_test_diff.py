@@ -17,11 +17,12 @@ state_renaming = {
         }
 
 tests = [ 'Prover9TestCase/'+s for s in ('<all>', 'import', 'minisat validity', 'solvePropositional', 'expansionProofToLKProof', 'verit validity') ] \
-        + [ 'VeriTTestCase/'+s for s in ('<all>', 'import', 'minisat validity') ]
+        + [ 'VeriTTestCase/'+s for s in ('<all>', 'import', 'minisat validity') ] \
+        + [ 'LeanCoPTestCase/'+s for s in ('<all>', 'import', 'minisat validity') ]
 
 def get_test_results(build_no, test_case_step):
     url = 'http://compile:8080/job/{0}/{1}/testReport/{2}/' \
-            .format(*map(urllib.parse.quote, [ 'gapt regr test v2', build_no, test_case_step ]))
+            .format(*map(urllib.parse.quote, [ 'gapt extended testing', build_no, test_case_step ]))
     return urllib.request.urlopen(url).read()
 
 def parse_jenkins(f, prefix=''):
