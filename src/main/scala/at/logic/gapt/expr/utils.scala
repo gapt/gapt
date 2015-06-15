@@ -7,6 +7,8 @@ package at.logic.gapt.expr
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, LKProof }
 
+import scala.collection.GenTraversable
+
 /**
  * Matches constants and variables, but nothing else.
  */
@@ -71,8 +73,12 @@ object variables {
 object freeVariables {
   def apply( e: LambdaExpression ): Set[Var] = apply_( e, Set() )
 
+  def apply( es: GenTraversable[LambdaExpression] ): Set[Var] = ( Set.empty[Var] /: es ) { ( acc, e ) => acc union apply( e ) }
+
+  def apply( seq: FSequent ): Set[Var] = apply( seq.antecedent ++ seq.succedent )
+
   def apply( e: FOLExpression ): Set[FOLVar] = apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
-  def apply( es: Set[FOLExpression] ): Set[FOLVar] = es.flatMap( apply( _ ) )
+  def apply( es: Set[FOLExpression] ): Set[FOLVar] = es.flatMap( apply )
   def apply( es: List[FOLExpression] ): Set[FOLVar] = apply( es.toSet )
 
   private def apply_( e: LambdaExpression, boundvars: Set[Var] ): Set[Var] = e match {

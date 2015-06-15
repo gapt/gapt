@@ -7,6 +7,8 @@ import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
 
+import scala.collection.GenTraversable
+
 /**
  * A sequent Γ :- Δ of formulas.
  *
@@ -66,6 +68,8 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
    * Interpretation of the sequent as a formula.
    */
   def toFormula: HOLFormula = Or( antecedent.toList.map( f => Neg( f ) ) ++ succedent )
+
+  def toNegFormula: HOLFormula = And( antecedent ++ succedent.map( Neg( _ ) ) )
 
   /**
    * Are both sides of the sequent empty?
@@ -130,6 +134,90 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
 
   def renameSymbols( map: SymbolMap ) =
     FSequent( antecedent map ( NameReplacement( _, map ) ), succedent map ( NameReplacement( _, map ) ) )
+
+  /**
+   *
+   * @param f A HOLFormula
+   * @return The sequent with f added to the antecedent
+   */
+  def addToAntecedent( f: HOLFormula ): FSequent = new FSequent( f +: antecedent, succedent )
+
+  /**
+   *
+   * @param f A HOLFormula
+   * @return The sequent with f added to the antecedent
+   */
+  def +:( f: HOLFormula ) = addToAntecedent( f )
+
+  /**
+   *
+   * @param fs A collection of HOLFormulas.
+   * @return The sequent with fs added to the antecedent.
+   */
+  def addToAntecedent( fs: GenTraversable[HOLFormula] ): FSequent = ( this /: fs )( ( acc, f ) => acc.addToAntecedent( f ) )
+
+  /**
+   *
+   * @param fs Several HOLFormulas.
+   * @return The sequent with fs added to the antecedent.
+   */
+  def addToAntecedent( fs: HOLFormula* ): FSequent = addToAntecedent( fs )
+
+  /**
+   *
+   * @param fs A collection of HOLFormulas.
+   * @return The sequent with fs added to the antecedent.
+   */
+  def ++:( fs: GenTraversable[HOLFormula] ): FSequent = addToAntecedent( fs )
+
+  /**
+   *
+   * @param fs Several HOLFormulas.
+   * @return The sequent with fs added to the antecedent.
+   */
+  def ++:( fs: HOLFormula* ): FSequent = addToAntecedent( fs )
+
+  /**
+   *
+   * @param f A HOLFormula
+   * @return The sequent with f added to the succedent
+   */
+  def addToSuccedent( f: HOLFormula ): FSequent = new FSequent( antecedent, f +: succedent )
+
+  /**
+   *
+   * @param f A HOLFormula
+   * @return The sequent with f added to the succedent
+   */
+  def :+( f: HOLFormula ) = addToSuccedent( f )
+
+  /**
+   *
+   * @param fs A collection of HOLFormulas.
+   * @return The sequent with fs added to the succedent.
+   */
+  def addToSuccedent( fs: GenTraversable[HOLFormula] ): FSequent = ( this /: fs )( ( acc, f ) => acc.addToSuccedent( f ) )
+
+  /**
+   *
+   * @param fs Several HOLFormulas.
+   * @return The sequent with fs added to the succedent.
+   */
+  def addToSuccedent( fs: HOLFormula* ): FSequent = addToSuccedent( fs )
+
+  /**
+   *
+   * @param fs A collection of HOLFormulas.
+   * @return The sequent with fs added to the succedent.
+   */
+  def :++( fs: GenTraversable[HOLFormula] ): FSequent = addToSuccedent( fs )
+
+  /**
+   *
+   * @param fs Several HOLFormulas.
+   * @return The sequent with fs added to the succedent.
+   */
+  def :++( fs: HOLFormula* ): FSequent = addToSuccedent( fs )
 }
 
 object FSequent {

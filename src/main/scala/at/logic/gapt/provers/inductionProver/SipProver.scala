@@ -2,7 +2,6 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
-import at.logic.gapt.formats.veriT.VeriTParserException
 import at.logic.gapt.grammars.findMinimalSipGrammar
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
@@ -10,12 +9,12 @@ import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 import at.logic.gapt.proofs.resolution.CNFp
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.maxsat.QMaxSAT
-import at.logic.gapt.provers.prover9.{ Prover9, Prover9Prover }
+import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.utils.logging.Logger
 
 trait SolutionFinder {
-  def findSolution( schematicSIP: SchematicSIP ): Option[FOLFormula]
+  def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula]
 }
 
 class SipProver( solutionFinder: SolutionFinder,
@@ -24,27 +23,20 @@ class SipProver( solutionFinder: SolutionFinder,
                  minimizeInstanceLanguages: Boolean = false,
                  quasiTautProver: Prover = new VeriTProver() )
     extends Prover with Logger {
-  override def getLKProof( endSequent: FSequent ): Option[LKProof] = getLKProofAndSolution( endSequent ).map( _._1 )
 
-  def getLKProofAndSolution( endSequent: FSequent ): Option[( LKProof, FOLFormula )] = {
+  override def getLKProof( endSequent: FSequent ): Option[LKProof] =
+    getSimpleInductionProof( endSequent ).map( _.toLKProof.get )
+
+  def getSimpleInductionProof( endSequent: FSequent ): Option[SimpleInductionProof] = {
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
       case singleton if singleton.size == 1 => singleton.head
     }
-    require( inductionVariable == GeneralSIP.alpha ) // TODO: maybe relax this restriction
+    require( inductionVariable == SimpleInductionProof.alpha ) // TODO: maybe relax this restriction
 
     var instanceProofs = instances map { n =>
       val instanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )( endSequent )
       debug( s"[n=$n] Proving $instanceSequent" )
       n -> LKToExpansionProof( instanceProver.getLKProof( instanceSequent ).get )
-    }
-
-    // Ground the instance proofs.
-    instanceProofs = instanceProofs map {
-      case ( n, expProof ) =>
-        n -> substitute(
-          FOLSubstitution( freeVariables( toDeep( expProof ).toFormula ).
-            map { c => FOLVar( c.name ) -> FOLConst( c.name ) }.toSeq ),
-          expProof )
     }
 
     if ( minimizeInstanceLanguages ) {
@@ -60,9 +52,17 @@ class SipProver( solutionFinder: SolutionFinder,
     }
 
     val termEncoding = InstanceTermEncoding( endSequent )
-    val instanceLanguages = instanceProofs map {
+    var instanceLanguages = instanceProofs map {
       case ( n, expSeq ) =>
         n -> termEncoding.encode( expSeq )
+    }
+
+    // Ground the instance languages.
+    instanceLanguages = instanceLanguages map {
+      case ( n, lang ) =>
+        val groundingSubst = FOLSubstitution( freeVariables( lang ).
+          map { c => FOLVar( c.name ) -> FOLConst( c.name ) }.toSeq )
+        n -> lang.map( groundingSubst.apply )
     }
 
     instanceLanguages foreach {
@@ -72,7 +72,7 @@ class SipProver( solutionFinder: SolutionFinder,
 
     debug( "Finding grammar..." )
     val grammar = findMinimalSipGrammar( instanceLanguages, new QMaxSAT )
-    debug( grammar toString )
+    debug( s"Grammar:\n$grammar" )
 
     ( 0 until 10 ) foreach { n =>
       lazy val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
@@ -93,11 +93,9 @@ class SipProver( solutionFinder: SolutionFinder,
 
     ( 0 until 3 ) foreach { i =>
       lazy val C_i = canonicalSolution( schematicSip, i )
-      debug( s"C_$i = ${CNFp( C_i ).map( clause => s"  $clause\n" )}" )
+      debug( s"C_$i =\n${CNFp( C_i ).mkString( "\n" )}" )
     }
 
-    solutionFinder.findSolution( schematicSip ) map { solution =>
-      schematicSip.solve( solution ).toLKProof -> solution
-    }
+    solutionFinder.findSolution( schematicSip ).map( schematicSip.solve )
   }
 }
