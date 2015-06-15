@@ -41,17 +41,8 @@ class ExprTest extends Specification {
       val Fl = And( p, And( q, r ) )
       val Fr = And( And( p, q ), r )
 
-      // FIXME: why is this cast necessary?
-      val ll = Fl.asInstanceOf[LambdaExpression] match {
-        case And.nAry( cs ) => cs
-      }
-      ll must beEqualTo( p :: q :: r :: Nil )
-
-      // FIXME: why is this cast necessary?
-      val rl = Fr.asInstanceOf[LambdaExpression] match {
-        case And.nAry( cs ) => cs
-      }
-      ll must beEqualTo( p :: q :: r :: Nil )
+      Fl must beLike { case And.nAry( Seq( `p`, `q`, `r` ) ) => ok }
+      Fr must beLike { case And.nAry( Seq( `p`, `q`, `r` ) ) => ok }
     }
   }
 
