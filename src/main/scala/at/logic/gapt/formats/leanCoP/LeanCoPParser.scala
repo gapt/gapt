@@ -330,7 +330,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case i ~ _ ~ _ ~ terms ~ _ => ( i.toInt, terms )
   }
 
-  def name: Parser[String] = """^(?![_ \d])[^ ():,!?\[\]\-&|=>~]+""".r ^^ { case s => s }
+  def name: Parser[String] = lower_word_or_integer | single_quoted
+  def lower_word_or_integer: Parser[String] = """[a-z_0-9][_A-Za-z0-9]*""".r
+  def single_quoted: Parser[String] = "'" ~> """[^']*""".r <~ "'"
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
 
   def comment: Parser[String] = """[%](.*)\n""".r ^^ { case s => "" }
