@@ -48,7 +48,7 @@ class ForgetfulResolutionTest extends Specification {
       val r3 = Set( cpbb, cq )
       val real = Set( r1, r2, r3 )
 
-      val res = ForgetfulParamodulateCNF( And( Eq( a, b ) :: paa :: q :: Nil ) )
+      val res = ForgetfulParamodulate( CNFp( And( Eq( a, b ) :: paa :: q :: Nil ) ).map( MyFClause.toMyFClause ) )
 
       val setres = res.map( cnf => cnf.toSet ).toSet
 
@@ -84,8 +84,8 @@ class ForgetfulResolutionTest extends Specification {
 
       val res = ForgetfulResolve( f )
 
-      //println("Formula (in CNF): " + f)
-      //println("Resolvent: " + res)
+      println( "Formula (in CNF): " + f )
+      println( "Resolvent: " + res )
 
       res.size must beEqualTo( 1 )
     }
