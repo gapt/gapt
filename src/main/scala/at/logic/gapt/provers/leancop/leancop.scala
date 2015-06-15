@@ -32,7 +32,7 @@ class LeanCoPProver extends Prover with ExternalProgram {
   override def isValid( s: FSequent ): Boolean =
     getExpansionSequent( s ).isDefined
 
-  def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] = {
+  override def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] = {
     val tptp = TPTPFOLExporter.tptp_proof_problem( s )
     val leanCopOutput = withTempFile.fromString( tptp ) { tptpFile =>
       Seq( "leancop", tptpFile ) !!
