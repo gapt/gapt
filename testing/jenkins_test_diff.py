@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import sys
-from bs4 import BeautifulSoup
+import json
 from collections import defaultdict
 import urllib.request, urllib.parse
 
@@ -9,38 +9,27 @@ _, build_number_old, build_number_new = sys.argv
 print('Comparing jenkins build {0} and {1}'.format(build_number_old, build_number_new))
 
 state_renaming = {
-        'Passed': 'Pass',
-        'Regression': 'Fail',
-        'Failed': 'Fail',
-        'Fixed': 'Pass',
-        'Skipped': 'Skip',
+        'PASSED': 'Pass',
+        'REGRESSION': 'Fail',
+        'FAILED': 'Fail',
+        'FIXED': 'Pass',
+        'SKIPPED': 'Skip',
         }
 
-tests = [ 'Prover9TestCase/'+s for s in ('<all>', 'import', 'minisat validity', 'solvePropositional', 'expansionProofToLKProof', 'verit validity') ] \
-        + [ 'VeriTTestCase/'+s for s in ('<all>', 'import', 'minisat validity') ] \
-        + [ 'LeanCoPTestCase/'+s for s in ('<all>', 'import', 'minisat validity') ]
+def get_test_results(build_no):
+    url = 'http://compile:8080/job/{0}/{1}/testReport/api/json?tree=suites[cases[className,name,status]]' \
+            .format(*map(urllib.parse.quote, [ 'gapt extended testing', build_no ]))
+    return urllib.request.urlopen(url).read().decode('utf-8')
 
-def get_test_results(build_no, test_case_step):
-    url = 'http://compile:8080/job/{0}/{1}/testReport/{2}/' \
-            .format(*map(urllib.parse.quote, [ 'gapt extended testing', build_no, test_case_step ]))
-    return urllib.request.urlopen(url).read()
-
-def parse_jenkins(f, prefix=''):
+def parse_jenkins(json_data):
     test_states = {}
-    for test in BeautifulSoup(f).find(id='testresult').find_all('tr')[1:]:
-        name, duration, state = test.find_all('td')
-        test_states[prefix+name.text] = state_renaming[state.text]
+    for suite in json.loads(json_data)['suites']:
+        for case in suite['cases']:
+            test_states[case['className']+'/'+case['name']] = state_renaming[case['status']]
     return test_states
 
-old_test_states = {}
-new_test_states = {}
-
-for test in tests:
-    print('Downloading results for {0}...'.format(test))
-
-    prefix = test+'/'
-    old_test_states.update(parse_jenkins(get_test_results(build_number_old, test), prefix))
-    new_test_states.update(parse_jenkins(get_test_results(build_number_new, test), prefix))
+old_test_states = parse_jenkins(get_test_results(build_number_old))
+new_test_states = parse_jenkins(get_test_results(build_number_new))
 
 transitions = defaultdict(list)
 for test_name in old_test_states.keys() | new_test_states.keys():
