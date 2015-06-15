@@ -73,13 +73,13 @@ object variables {
 object freeVariables {
   def apply( e: LambdaExpression ): Set[Var] = apply_( e, Set() )
 
+  def apply( e: FOLExpression ): Set[FOLVar] = apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
+
   def apply( es: GenTraversable[LambdaExpression] ): Set[Var] = ( Set.empty[Var] /: es ) { ( acc, e ) => acc union apply( e ) }
 
-  def apply( seq: FSequent ): Set[Var] = apply( seq.antecedent ++ seq.succedent )
+  def apply( es: GenTraversable[FOLExpression] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = ( Set.empty[FOLVar] /: es ) { ( acc, e ) => acc union apply( e ) }
 
-  def apply( e: FOLExpression ): Set[FOLVar] = apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
-  def apply( es: Set[FOLExpression] ): Set[FOLVar] = es.flatMap( apply )
-  def apply( es: List[FOLExpression] ): Set[FOLVar] = apply( es.toSet )
+  def apply( seq: FSequent ): Set[Var] = apply( seq.antecedent ++ seq.succedent )
 
   private def apply_( e: LambdaExpression, boundvars: Set[Var] ): Set[Var] = e match {
     case v: Var          => if ( !boundvars.contains( v ) ) Set( v ) else Set()
@@ -100,6 +100,8 @@ object constants {
     case App( exp, arg )    => constants( exp ) union constants( arg )
     case Abs( v, exp )      => constants( exp )
   }
+
+  def apply( es: GenTraversable[LambdaExpression] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }
 
   def apply( s: FSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: Sequent ): Set[Const] = apply( s.toFSequent )
