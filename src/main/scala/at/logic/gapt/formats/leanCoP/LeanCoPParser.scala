@@ -307,8 +307,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case ( i, terms ) =>
       FOLAtom( "leanP" + i, terms )
   }
-  lazy val real_atom: PackratParser[FOLFormula] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ {
-    case pred ~ _ ~ args => FOLAtom( pred, args )
+  lazy val real_atom: PackratParser[FOLFormula] = name ~ opt( "(" ~> repsep( term, "," ) <~ ")" ) ^^ {
+    case pred ~ Some( args ) => FOLAtom( pred, args )
+    case pred ~ None         => FOLAtom( pred )
   }
   lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
     case t1 ~ _ ~ t2 => FOLAtom( "=", List( t1, t2 ) )
@@ -331,7 +332,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   def name: Parser[String] = lower_word_or_integer | single_quoted
-  def lower_word_or_integer: Parser[String] = """[a-z_0-9][_A-Za-z0-9]*""".r
+  def lower_word_or_integer: Parser[String] = """[a-z0-9_-][A-Za-z0-9_-]*""".r
   def single_quoted: Parser[String] = "'" ~> """[^']*""".r <~ "'"
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }
 
