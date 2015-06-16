@@ -15,21 +15,6 @@ import at.logic.gapt.utils.withTempFile
 
 import scala.sys.process._
 
-/*
-
- Unfortunately, leancop cannot be installed easily--it can only be run
- in the directory where it was extracted.
-
- As a workaround, you need to place a script like the following in your
- PATH:
-
-#!/bin/sh
-file=$(readlink -f "$1")
-cd ~/Downloads/leancop22casc14
-./leancop.sh "$file"
-
- */
-
 class LeanCoPProver extends Prover with ExternalProgram {
 
   override def isValid( s: FSequent ): Boolean =
@@ -37,6 +22,8 @@ class LeanCoPProver extends Prover with ExternalProgram {
 
   override def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] =
     withRenamedConstants( s ) { seq =>
+      require( seq.succedent.size == 1 )
+
       val tptp = TPTPFOLExporter.tptp_proof_problem_split( seq )
       val leanCopOutput = withTempFile.fromString( tptp ) { tptpFile =>
         Seq( "leancop", tptpFile ) !!

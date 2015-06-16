@@ -94,6 +94,6 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
       
     (str1 + str0 + implication + " :- " + str3 + str2 + " where " + X + " = " + str4)*/
 
-    antecedent.mkString( "", ", ", "" ) + ", " + antecedent_alpha.mkString( "", ", ", "" ) + " ⊦ " + succedent.mkString( "", ", ", "" ) + ", " + succedent_alpha.mkString( "", ", ", "" )
+    ( antecedent ++ antecedent_alpha ).mkString( "", ", ", "" ) + " ⊦ " + ( succedent ++ succedent_alpha ).mkString( "", ", ", "" )
   }
 }

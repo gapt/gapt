@@ -115,36 +115,3 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
 
   def single_quote( s: String ) = "'" + s + "'"
 }
-
-object TPTPfofExporter {
-  def apply( conjectures: Seq[FOLFormula] ) = generate_file( Nil, conjectures )
-  def apply( axioms: Seq[FOLFormula], conjectures: Seq[FOLFormula] ) = generate_file( axioms, conjectures )
-
-  def generate_file( axioms: Seq[FOLFormula], conjectures: Seq[FOLFormula] ) = {
-    val builder = new StringBuilder()
-
-    var count = 0
-    for ( formula <- axioms ) {
-      builder append ( "fof(axiom" )
-      builder append ( count )
-      builder append ( ", axiom, " )
-      //builder append (Renaming.fol_as_tptp(formula) )
-      builder append ( ").\n\n" )
-
-      count = count + 1
-    }
-
-    for ( formula <- conjectures ) {
-      builder append ( "fof(formula" )
-      builder append ( count )
-      builder append ( ", conjecture, " )
-      //builder append (Renaming.fol_as_tptp(formula) )
-      builder append ( ").\n\n" )
-
-      count = count + 1
-    }
-    builder.toString()
-  }
-
-}
-

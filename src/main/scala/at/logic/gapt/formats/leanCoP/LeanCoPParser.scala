@@ -275,7 +275,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     | impl )
 
   lazy val impl: PackratParser[FOLFormula] = (
-    and ~ "=>" ~ impl ^^ { case f1 ~ _ ~ f2 => Or( Neg( f1 ), f2 ) }
+    and ~ "=>" ~ impl ^^ { case f1 ~ _ ~ f2 => Imp( f1, f2 ) }
     | and )
 
   lazy val and: PackratParser[FOLFormula] = (
