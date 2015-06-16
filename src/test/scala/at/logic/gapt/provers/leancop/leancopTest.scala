@@ -42,6 +42,11 @@ class LeanCoPProverTest extends Specification {
       leanCoP.getExpansionSequent( seq ) must beSome
     }
 
+    "P,P->Q |- Q" in {
+      val seq = FSequent(Seq(FOLAtom("P"), Imp(FOLAtom("P"), FOLAtom("Q"))), Seq(FOLAtom("Q")))
+      leanCoP.getExpansionSequent(seq) must beSome
+    }
+
     //    "validate the buss tautology for n=1" in { leanCoP.isValid( BussTautology( 1 ) ) must beTrue }
 
     // top/bottom cannot be parsed yet
