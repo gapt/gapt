@@ -2,17 +2,18 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
+import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.SipGrammar
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
-import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, CNFp, MyFClause, ForgetfulResolve }
+import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, MyFClause, ForgetfulResolve }
 import at.logic.gapt.proofs.resolution.MyFClause._
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.utils.logging.Logger
 
-import scala.collection.{ SeqView, mutable }
+import scala.collection.mutable
 
 /**
  * Models a simple induction proof.
@@ -224,7 +225,7 @@ object FindFormulaH {
     val num = Utils.numeral( n )
     val CSn = canonicalSolution( S, n )
 
-    val M = findConseq( S, n, CNFp( CSn ).map( toMyFClause ) ).toList.sortBy( _.length )
+    val M = findConseq( S, n, CNFp.toFClauseList( CSn ).map( toMyFClause ) ).toList.sortBy( _.length )
 
     val proofs = M.view.flatMap { F =>
       val C = CNFtoFormula( F )

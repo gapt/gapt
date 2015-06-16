@@ -36,7 +36,7 @@ class SipProver( solutionFinder: SolutionFinder,
     var instanceProofs = instances map { n =>
       val instanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )( endSequent )
       debug( s"[n=$n] Proving $instanceSequent" )
-      n -> instanceProver.getExpansionSequent(instanceSequent).get
+      n -> instanceProver.getExpansionSequent( instanceSequent ).get
     }
 
     if ( minimizeInstanceLanguages ) {
