@@ -75,23 +75,14 @@ println(s"Proving $endSequent")
 
 Logger.getLogger(classOf[SipProver].getName).setLevel(Level.DEBUG)
 
-// TODO: just a stop-gap
-val solutionCandidates = Seq(
-  "P(x,y)",
-  "P(x)",
-  "y+x = x+y",
-  "minus(x,x) = 0"
-) map(s => FOLSubstitution(
-  FOLVar("x") -> SimpleInductionProof.nu,
-  FOLVar("y") -> SimpleInductionProof.gamma,
-  FOLVar("z") -> SimpleInductionProof.alpha)(parseFormula(s)))
 val solutionFinder = new SolutionFinder {
-  override def findSolution(schematicSip: SimpleInductionProof): Option[FOLFormula] =
-    solutionCandidates find { cand =>
-      val sip = schematicSip.solve(cand)
-//      println(sip.Sequent0); println(sip.Sequent1); println(sip.Sequent2); println()
-      sip.isSolved
+  override def findSolution(schematicSIP: SimpleInductionProof): Option[FOLFormula] = FindFormulaH(schematicSIP, 1) match {
+    case Some(p) => p match {
+      case (_,f) => Some(f)
+      case _ => None
     }
+    case None => None
+  }
 }
 
 val sipProver = new SipProver(solutionFinder)

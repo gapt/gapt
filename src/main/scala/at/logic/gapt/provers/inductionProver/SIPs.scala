@@ -6,9 +6,13 @@ import at.logic.gapt.grammars.SipGrammar
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
+import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, CNFp, MyFClause, ForgetfulResolve }
+import at.logic.gapt.proofs.resolution.MyFClause._
 import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.utils.logging.Logger
 
-import scala.collection.mutable
+import scala.collection.{ SeqView, mutable }
 
 /**
  * Models a simple induction proof.
@@ -187,5 +191,55 @@ object canonicalSolution {
       val nuSubst = FOLSubstitution( nu -> Utils.numeral( i - 1 ) )
       And( nuSubst( sip.Gamma1.toNegFormula ).asInstanceOf[FOLFormula],
         And( sip.t map { t => FOLSubstitution( gamma -> nuSubst( t ) )( C_ ) } ) )
+  }
+}
+
+object findConseq extends Logger {
+  import SimpleInductionProof._
+
+  val veriTProver = new VeriTProver()
+
+  def apply( S: SimpleInductionProof, n: Int, A: List[MyFClause[FOLFormula]] ): Set[List[MyFClause[FOLFormula]]] = {
+    debug( "findConseq called on A = " + A )
+    val num = Utils.numeral( n )
+    val Gamma2n = FOLSubstitution( alpha, num )( S.Gamma2 )
+    var M = Set( A )
+
+    ( ForgetfulResolve( A ) union ForgetfulParamodulate( A ) ).foreach { F: List[MyFClause[FOLFormula]] =>
+      val Fui = S.u.map( ui => FOLSubstitution( List( alpha -> num, gamma -> ui ) )( CNFtoFormula( F ) ) )
+      if ( veriTProver.isValid( Fui ++: Gamma2n ) )
+        M = M union apply( S, n, F )
+    }
+
+    M
+  }
+}
+
+object FindFormulaH {
+  import SimpleInductionProof._
+
+  val veriTProver = new VeriTProver()
+
+  def apply( S: SimpleInductionProof, n: Int ): Option[( SimpleInductionProof, FOLFormula )] = {
+    val num = Utils.numeral( n )
+    val CSn = canonicalSolution( S, n )
+
+    val M = findConseq( S, n, CNFp( CSn ).map( toMyFClause ) ).toList.sortBy( _.length )
+
+    val proofs = M.view.flatMap { F =>
+      val C = CNFtoFormula( F )
+      val pos = C.find( num ).toSet // If I understand the paper correctly, an improvement can be made here
+      val posSets = pos.subsets().toList
+
+      posSets.view.flatMap { P =>
+        val Ctilde = ( C /: P )( ( acc, p ) => acc.replace( p, nu ).asInstanceOf[FOLFormula] )
+        if ( S.solve( Ctilde ).isSolved )
+          Some( ( S, Ctilde ) )
+        else
+          None
+      }
+    }
+
+    proofs.headOption
   }
 }
