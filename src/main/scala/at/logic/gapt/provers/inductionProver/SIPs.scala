@@ -280,3 +280,8 @@ object FindFormulaH {
     proofs.headOption
   }
 }
+
+class HeuristicSolutionFinder( n: Int ) extends SolutionFinder {
+  override def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula] =
+    FindFormulaH( schematicSIP, n ) map ( _._2 )
+}

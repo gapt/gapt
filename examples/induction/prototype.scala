@@ -75,17 +75,7 @@ println(s"Proving $endSequent")
 
 Logger.getLogger(classOf[SipProver].getName).setLevel(Level.DEBUG)
 
-val solutionFinder = new SolutionFinder {
-  override def findSolution(schematicSIP: SimpleInductionProof): Option[FOLFormula] = FindFormulaH(schematicSIP, 1) match {
-    case Some(p) => p match {
-      case (_,f) => Some(f)
-      case _ => None
-    }
-    case None => None
-  }
-}
-
-val sipProver = new SipProver(solutionFinder)
+val sipProver = new SipProver(solutionFinder = new HeuristicSolutionFinder(1))
 
 val maybeIndProof = sipProver.getSimpleInductionProof(endSequent)
 

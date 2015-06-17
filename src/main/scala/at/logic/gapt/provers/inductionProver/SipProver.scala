@@ -17,7 +17,7 @@ trait SolutionFinder {
   def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula]
 }
 
-class SipProver( solutionFinder: SolutionFinder,
+class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1 ),
                  instanceProver: Prover = new Prover9Prover(),
                  instances: Seq[Int] = 0 until 3,
                  minimizeInstanceLanguages: Boolean = false,
