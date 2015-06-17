@@ -120,7 +120,7 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
       All( y, F( alpha, snu, y ) ).asInstanceOf[FOLFormula],
       alpha )
 
-    CutRule( inductionProof, conclusion3, All( y, F( alpha, alpha, y ) ) )
+    CleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusion3, All( y, F( alpha, alpha, y ) ) ) ) )
   }
   /**
    * Converts this into an LKProof, calling prover9 to provide π,,0,,, π,,1,,, π,,2,,.
