@@ -68,7 +68,7 @@ class VeriTProver extends Prover with ExternalProgram {
 
   val isInstalled: Boolean =
     try {
-      "veriT --disable-banner".!!
+      "veriT --version".!!
       true
     } catch {
       case ex: IOException => false
