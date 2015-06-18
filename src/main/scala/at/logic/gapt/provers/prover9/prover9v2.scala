@@ -32,9 +32,10 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
     getRobinsonProof( groundFreeVariables( seq )._1 ).isDefined
 
   def getRobinsonProof( seq: FSequent ): Option[RobinsonResolutionProof] =
-    withRenamedConstants( seq ) { seq =>
-      val cnf = CNFn.toFClauseList( seq.toFormula ).map( renameVars )
+    getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
 
+  def getRobinsonProof( cnf: List[FClause] ): Option[RobinsonResolutionProof] =
+    withRenamedConstants( cnf ) { cnf =>
       val p9Input = toP9Input( cnf )
       withTempFile.fromString( p9Input ) { p9InputFile =>
         try Some( Seq( "prover9", "-f", p9InputFile ) !! )
@@ -75,15 +76,9 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
     RobinsonToLK( fixedResProof, closure )
   }
 
-  def renameVars( clause: FClause ): FClause =
-    Substitution( freeVariables( clause.toFSequent.toFormula ).
-      toSeq.zipWithIndex.map {
-        case ( v, i ) => v -> FOLVar( s"x$i" )
-      } )( clause )
-
-  private def withRenamedConstants( seq: FSequent )( f: FSequent => Option[RobinsonResolutionProof] ): Option[RobinsonResolutionProof] = {
-    val ( renamedSeq, invertRenaming ) = renameConstantsToFi( seq )
-    f( renamedSeq ) map { renamedProof =>
+  private def withRenamedConstants( cnf: List[FClause] )( f: List[FClause] => Option[RobinsonResolutionProof] ): Option[RobinsonResolutionProof] = {
+    val ( renamedCNF, invertRenaming ) = renameConstantsToFi( cnf )
+    f( renamedCNF ) map { renamedProof =>
       NameReplacement( renamedProof, invertRenaming )
     }
   }
@@ -97,7 +92,12 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
 
   def toP9Input( cnf: List[FClause] ): String =
     ( "set(quiet)" +: "formulas(sos)" +: cnf.map( toP9Input ) :+ "end_of_list" ).map( _ + ".\n" ).mkString
-  def toP9Input( clause: FClause ): String = toP9Input( clause.toFSequent.toFormula )
+  def renameVars( formula: LambdaExpression ): LambdaExpression =
+    Substitution( freeVariables( formula ).
+      toSeq.zipWithIndex.map {
+        case ( v, i ) => v -> FOLVar( s"x$i" )
+      } )( formula )
+  def toP9Input( clause: FClause ): String = toP9Input( renameVars( clause.toFSequent.toFormula ) )
   def toP9Input( expr: LambdaExpression ): String = expr match {
     case Neg( a )             => s"-${toP9Input( a )}"
     case Or( a, b )           => s"${toP9Input( a )} | ${toP9Input( b )}"
