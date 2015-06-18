@@ -160,7 +160,10 @@ class GrammarFindingTest extends Specification {
       case Array( a, t ) => FOLVar( a ) -> parseTerm( t )
     }
 
-  def tg( prods: String* ) = TratGrammar( FOLVar( "x" ), prods map parseProduction toList )
+  def tg( prods: String* ) = {
+    val ps = prods map parseProduction
+    TratGrammar( FOLVar( "x" ), ps map ( _._1 ) distinct, ps )
+  }
 
   def vtg( nts: Seq[String], prods: Seq[String]* ) =
     VectTratGrammar( FOLVar( "x" ), nts map { nt => nt.split( "," ).map( FOLVar( _ ) ).toList },

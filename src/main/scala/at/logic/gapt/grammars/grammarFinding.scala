@@ -197,7 +197,7 @@ object minimizeGrammar {
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
-      case Some( interp ) => TratGrammar( g.axiom,
+      case Some( interp ) => TratGrammar( g.axiom, g.nonTerminals,
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
     }
