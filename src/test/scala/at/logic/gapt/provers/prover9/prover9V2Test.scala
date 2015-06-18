@@ -36,6 +36,11 @@ class Prover9V2Test extends Specification {
     "not prove bottom" in { prover9.getLKProof( FSequent( Seq(), Seq( Bottom() ) ) ) must beNone }
     "not refute top" in { prover9.getLKProof( FSequent( Seq( Top() ), Seq() ) ) must beNone }
     "refute bottom" in { prover9.getLKProof( FSequent( Seq( Bottom() ), Seq() ) ) must beSome }
+
+    "ground sequents" in {
+      val seq = FSequent( Seq( parseFormula( "x=y" ) ), Seq( parseFormula( "y=x" ) ) )
+      prover9.getLKProof( seq ) must beSome
+    }
   }
 
   "Prover9 proof output loader" should {

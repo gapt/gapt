@@ -8,11 +8,12 @@ import at.logic.gapt.expr.hol.{ existsclosure, univclosure, CNFn }
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.IvyParser.IvyStyleVariables
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.proofs.lk.applyReplacement
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
-import at.logic.gapt.provers.{ renameConstantsToFi, Prover }
+import at.logic.gapt.provers.{ groundFreeVariables, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.withTempFile
 
@@ -21,12 +22,14 @@ import scala.sys.process._
 
 class Prover9ProverV2 extends Prover with ExternalProgram {
   override def getLKProof( seq: FSequent ): Option[LKProof] =
-    getRobinsonProof( seq ) map { robinsonProof =>
-      RobinsonToLK( robinsonProof, seq )
+    withGroundVariables( seq ) { seq =>
+      getRobinsonProof( seq ) map { robinsonProof =>
+        RobinsonToLK( robinsonProof, seq )
+      }
     }
 
   override def isValid( seq: FSequent ): Boolean =
-    getRobinsonProof( seq ).isDefined
+    getRobinsonProof( groundFreeVariables( seq )._1 ).isDefined
 
   def getRobinsonProof( seq: FSequent ): Option[RobinsonResolutionProof] =
     withRenamedConstants( seq ) { seq =>
@@ -85,6 +88,13 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
     }
   }
 
+  private def withGroundVariables( seq: FSequent )( f: FSequent => Option[LKProof] ): Option[LKProof] = {
+    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
+    f( renamedSeq ) map { renamedProof =>
+      applyReplacement( renamedProof, invertRenaming )._1
+    }
+  }
+
   def toP9Input( cnf: List[FClause] ): String =
     ( "set(quiet)" +: "formulas(sos)" +: cnf.map( toP9Input ) :+ "end_of_list" ).map( _ + ".\n" ).mkString
   def toP9Input( clause: FClause ): String = toP9Input( clause.toFSequent.toFormula )
@@ -104,4 +114,3 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
       ( "prover9 --help" ! ProcessLogger( _ => () ) ) == 1
     } catch { case _: IOException => false }
 }
-
