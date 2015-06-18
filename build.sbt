@@ -44,24 +44,29 @@ lazy val root = (project in file(".")).
 
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
-    releaseDist <<= (sbtassembly.AssemblyKeys.assembly, Keys.baseDirectory, Keys.target, Keys.version) map {
-        (assemblyJar: File, baseDirectory: File, target: File, version: String) =>
-      val archiveFile = target / s"gapt-$version.tar.gz"
+    releaseDist := {
+      val baseDir = baseDirectory.value
+      val version = Keys.version.value
+      val apidocs = (doc in Compile).value
 
-      Process(List("latexmk", "-pdf", "user_manual.tex"), baseDirectory / "doc") !
+      val archiveFile = target.value / s"gapt-$version.tar.gz"
+
+      Process(List("latexmk", "-pdf", "user_manual.tex"), baseDir / "doc") !
 
       val filesToIncludeAsIs = List(
         "COPYING", "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples")
-      val entries = List((assemblyJar, s"gapt-$version.jar")) ++
-        filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDirectory / fn)}
-          .map{f => (f, baseDirectory.toPath.relativize(f.toPath))} ++
-        List((baseDirectory / "doc/README.dist", "README"),
-             (baseDirectory / "doc/user_manual.pdf", "user_manual.pdf"))
+      val entries = List((assembly.value, s"gapt-$version.jar")) ++
+        filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDir / fn)}
+          .map{f => (f, baseDir.toPath.relativize(f.toPath))} ++
+        List((baseDir / "doc/README.dist", "README"),
+             (baseDir / "doc/user_manual.pdf", "user_manual.pdf")) ++
+          recursiveListFiles(apidocs).map{f => f -> s"apidocs/${apidocs.toPath.relativize(f.toPath)}"}
 
       val archiveStem = s"gapt-$version"
 
       IO.gzipFileOut(archiveFile) { gzipOut =>
         val tarOut = new TarArchiveOutputStream(gzipOut)
+        tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX)
 
         entries.foreach { case (file, pathInArchive) =>
           val tarEntry = new TarArchiveEntry(file, s"$archiveStem/$pathInArchive")
