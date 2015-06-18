@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.prover9
 
-import java.io.{ ByteArrayInputStream, ByteArrayOutputStream }
+import java.io.{ IOException, ByteArrayInputStream, ByteArrayOutputStream }
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr._
@@ -76,6 +76,8 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
     if ( args.isEmpty ) function else s"$function(${args.map( toP9Input ).mkString( "," )})"
 
   override val isInstalled: Boolean =
-    ( "prover9 --help" #> new ByteArrayOutputStream ! ) == 1
+    try {
+      ( "prover9 --help" #> new ByteArrayOutputStream ! ) == 1
+    } catch { case _: IOException => false }
 }
 
