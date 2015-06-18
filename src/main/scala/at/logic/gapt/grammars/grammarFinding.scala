@@ -2,7 +2,7 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, Utils, FOLMatchingAlgorithm }
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
 import at.logic.gapt.utils.dssupport.ListSupport
 
 import scala.collection.{ Set, mutable }
@@ -188,7 +188,7 @@ object normalFormsTratGrammar {
 }
 
 object minimizeGrammar {
-  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j() ): TratGrammar = {
+  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new QMaxSAT ): TratGrammar = {
     val formula = new GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
@@ -202,7 +202,7 @@ object minimizeGrammar {
 }
 
 object findMinimalGrammar {
-  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
+  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
     val polynomialSizedCoveringGrammar = normalFormsTratGrammar( lang, numberOfNonTerminals )
     minimizeGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
