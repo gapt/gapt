@@ -4,17 +4,19 @@ import java.io.{ IOException, ByteArrayInputStream, ByteArrayOutputStream }
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.CNFn
+import at.logic.gapt.expr.hol.{ existsclosure, univclosure, CNFn }
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.IvyParser.IvyStyleVariables
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
 import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.provers.prover9.commands.InferenceExtractor
 import at.logic.gapt.provers.{ renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.withTempFile
 
+import scala.io.Source
 import scala.sys.process._
 
 class Prover9ProverV2 extends Prover with ExternalProgram {
@@ -46,6 +48,28 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
     val ivyProof = withTempFile.fromString( ivy ) { ivyFile => IvyParser( ivyFile, IvyStyleVariables ) }
 
     IvyToRobinson( ivyProof )
+  }
+
+  def reconstructLKProofFromFile( p9File: String ): LKProof =
+    reconstructLKProofFromOutput( Source.fromFile( p9File ).mkString )
+
+  def reconstructLKProofFromOutput( p9Output: String ): LKProof = {
+    // The TPTP prover9 output files can't be read by prooftrans ivy directly...
+    val fixedP9Output = "prooftrans" #< new ByteArrayInputStream( p9Output.getBytes() ) !!
+
+    val resProof = parseProof( fixedP9Output )
+    val endSequent = withTempFile.fromString( p9Output ) { p9File =>
+      InferenceExtractor.viaLADR( p9File )
+    }
+
+    val closure = FSequent( endSequent.antecedent.map( x => univclosure( x ) ),
+      endSequent.succedent.map( x => existsclosure( x ) ) )
+
+    val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
+
+    val fixedResProof = fixDerivation( resProof, ourCNF.map( _.toFSequent ) )
+
+    RobinsonToLK( fixedResProof, closure )
   }
 
   def renameVars( clause: FClause ): FClause =
