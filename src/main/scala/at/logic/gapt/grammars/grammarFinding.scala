@@ -177,12 +177,12 @@ object normalFormsProofGrammar {
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
     val nfs = tratNormalForms( lang, rhsNonTerminals )
     val axiom = FOLVar( "τ" )
-    TratGrammar( axiom,  axiom +: rhsNonTerminals, nfs flatMap { nf =>
+    TratGrammar( axiom, axiom +: rhsNonTerminals, nfs flatMap { nf =>
       val fvs = freeVariables( nf )
       val possibleLhsVars = nf match {
-        case FOLFunction(f, _) if formulaSymbols contains f => Seq(axiom)
+        case FOLFunction( f, _ ) if formulaSymbols contains f => Seq( axiom )
         case _ =>
-          val lowestIndex = (fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size).min
+          val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
           ( 0 until lowestIndex ) map ( rhsNonTerminals( _ ) )
       }
       possibleLhsVars map { v => v -> nf }
@@ -207,7 +207,6 @@ object minimizeGrammar {
 object findMinimalGrammar {
   def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
     val polynomialSizedCoveringGrammar = normalFormsProofGrammar( lang, numberOfNonTerminals )
-    println(polynomialSizedCoveringGrammar)
     minimizeGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
 }
