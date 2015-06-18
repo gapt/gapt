@@ -9,10 +9,10 @@ import org.specs2.mutable._
 
 import scala.io.Source
 
-class Prover9V2Test extends Specification {
-  val prover9 = new Prover9ProverV2
+class Prover9Test extends Specification {
+  val prover9 = new Prover9Prover
 
-  args( skipAll = !prover9.isInstalled )
+  args( skipAll = !new Prover9Prover().isInstalled )
   "The Prover9 interface" should {
     "prove identity" in {
       val k = FOLConst( "k" )
@@ -55,17 +55,17 @@ class Prover9V2Test extends Specification {
     def load( fn: String ) = Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( fn ) ).mkString
 
     "goat puzzle PUZ047+1.out" in {
-      new Prover9ProverV2().reconstructLKProofFromOutput( load( "PUZ047+1.out" ) )
+      prover9.reconstructLKProofFromOutput( load( "PUZ047+1.out" ) )
       ok
     }
 
     "expansion proof paper example cade13example.out" in {
-      new Prover9ProverV2().reconstructLKProofFromOutput( load( "cade13example.out" ) )
+      prover9.reconstructLKProofFromOutput( load( "cade13example.out" ) )
       ok
     }
 
     "proof with new_symbol" in {
-      new Prover9ProverV2().reconstructLKProofFromOutput( load( "ALG138+1.out" ) )
+      prover9.reconstructLKProofFromOutput( load( "ALG138+1.out" ) )
       ok
     }
   }

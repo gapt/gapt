@@ -18,6 +18,7 @@ class FOLSubstitution( val folmap: Map[FOLVar, FOLTerm] ) extends Substitution( 
 }
 object FOLSubstitution {
   def apply( subs: GenTraversable[( FOLVar, FOLTerm )] ): FOLSubstitution = new FOLSubstitution( Map() ++ subs )
+  def apply( subs: ( FOLVar, FOLTerm )* ): FOLSubstitution = new FOLSubstitution( Map() ++ subs )
   def apply( variable: FOLVar, expression: FOLTerm ): FOLSubstitution = new FOLSubstitution( Map( variable -> expression ) )
   def apply( map: Map[FOLVar, FOLTerm] ): FOLSubstitution = new FOLSubstitution( map )
   def apply() = new FOLSubstitution( Map() )

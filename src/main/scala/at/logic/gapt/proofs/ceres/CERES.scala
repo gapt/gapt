@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 
 import at.logic.gapt.proofs.ceres.projections.Projections
@@ -46,7 +46,7 @@ class CERESR2LK {
 
     val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( p, pred ) )
 
-    Prover9.refute( tapecl.map( _.toFSequent ) ) match {
+    new Prover9Prover().getRobinsonProof( tapecl.map( _.toFSequent ) ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         apply( es, proj, rp )
@@ -91,7 +91,7 @@ class CERES {
 
     val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( p, pred ) )
     val refl = refProjection( es )
-    Prover9.refute( tapecl.map( _.toFSequent ) ) match {
+    new Prover9Prover().getRobinsonProof( tapecl.map( _.toFSequent ) ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         val lkproof = RobinsonToLK( rp )

@@ -20,7 +20,7 @@ import java.util.zip.GZIPInputStream
 import org.specs2.mutable._
 
 class LatticeTest extends Specification {
-  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
+  def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
 
   def sequentToString( s: Sequent ) = {
     var ret = ""
@@ -84,11 +84,11 @@ class LatticeTest extends Specification {
       val prf_cs_intersect = prf.filter( seq => cs.contains( seq ) )
 
       // refute it with prover9
-      Prover9.refute( prf ) match {
+      new Prover9Prover().getRobinsonProof( prf ) match {
         case None      => "" must beEqualTo( "refutation of proof profile failed" )
         case Some( _ ) => true must beEqualTo( true )
       }
-      Prover9.refute( cs ) match {
+      new Prover9Prover().getRobinsonProof( cs ) match {
         case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
         case Some( _ ) => true must beEqualTo( true )
       }

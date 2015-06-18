@@ -20,7 +20,7 @@ import at.logic.gapt.utils.withTempFile
 import scala.io.Source
 import scala.sys.process._
 
-class Prover9ProverV2 extends Prover with ExternalProgram {
+class Prover9Prover extends Prover with ExternalProgram {
   override def getLKProof( seq: FSequent ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
       getRobinsonProof( seq ) map { robinsonProof =>
@@ -33,6 +33,9 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
 
   def getRobinsonProof( seq: FSequent ): Option[RobinsonResolutionProof] =
     getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
+
+  def getRobinsonProof( cnf: List[FSequent] )( implicit dummyImplicit: DummyImplicit ): Option[RobinsonResolutionProof] =
+    getRobinsonProof( cnf.map { case FSequent( ant, suc ) => FClause( ant, suc ) } )
 
   def getRobinsonProof( cnf: List[FClause] ): Option[RobinsonResolutionProof] =
     withRenamedConstants( cnf ) { cnf =>
