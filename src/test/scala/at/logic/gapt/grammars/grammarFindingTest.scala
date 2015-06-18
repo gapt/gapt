@@ -104,7 +104,7 @@ class GrammarFindingTest extends Specification {
     }
     "generate term if only tau-productions are allowed" in {
       val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
-      val g = normalFormsTratGrammar( l, 4 )
+      val g = normalFormsProofGrammar( l, 4 )
       val formula = new GrammarMinimizationFormula( g )
       val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       new Sat4j().solve( And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) ) must beSome
