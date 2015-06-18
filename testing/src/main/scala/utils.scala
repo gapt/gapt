@@ -86,7 +86,9 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
           steps map { step =>
             val testCaseName = RegressionTestCase.this.getClass.getSimpleName
             val className = s"$testCaseName.${step.name.getOrElse( "<all>" )}"
-            <testcase classname={ className } name={ name } time={ ( step.runtime / 1.second ).toString }>
+            // This prevents name clashes in jenkins as both + and - are replaced by _
+            val escapedName = name.replace( "+", "<p>" ).replace( "-", "<m>" )
+            <testcase classname={ className } name={ escapedName } time={ ( step.runtime / 1.second ).toString }>
               {
                 for ( t <- step.exception.toSeq )
                   yield <error message={ t.getMessage } type={ t.getClass.getName }>{

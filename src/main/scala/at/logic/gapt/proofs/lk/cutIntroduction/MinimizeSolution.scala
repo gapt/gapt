@@ -175,7 +175,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     // Remove quantifier 
     val ( xs, f ) = cutFormula match {
-      case AllBlock( vars, form ) => ( vars, form )
+      case All.Block( vars, form ) => ( vars, form )
     }
 
     // Transform to conjunctive normal form
@@ -189,7 +189,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     def searchSolution( f: FOLFormula ): List[FOLFormula] =
       f :: oneStepEqualityImprovement( f ).foldRight( List[FOLFormula]() )( ( r, acc ) =>
-        if ( isValidWith( ehs, prover, AllBlock( xs, r ) ) ) {
+        if ( isValidWith( ehs, prover, All.Block( xs, r ) ) ) {
           count = count + 1
           searchSolution( r ) ::: acc
         } else {
@@ -197,7 +197,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
           acc
         } )
 
-    searchSolution( cnf ).map( s => AllBlock( xs, s ) )
+    searchSolution( cnf ).map( s => All.Block( xs, s ) )
   }
 
   //---------------------------------------------------------------------------
@@ -252,7 +252,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     assert( ehs.cutFormulas.length == 1, "Solution minimization only implemented for one cut formula." )
 
     val ( xs, form2 ) = ehs.cutFormulas.head match {
-      case AllBlock( vars, form ) => ( vars, form )
+      case All.Block( vars, form ) => ( vars, form )
     }
 
     if ( xs.length == 0 ) { throw new CutIntroException( "ERROR: Canonical solution is not quantified." ) }
@@ -345,7 +345,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     //node-filter which checks for validity using miniSAT
     def nodeFilter( node: ResNode ): Boolean = {
       satCount = satCount + 1
-      isValidWith( ehs, prover, AllBlock( xs, NumberedCNFtoFormula( node.currentFormula ) ) )
+      isValidWith( ehs, prover, All.Block( xs, NumberedCNFtoFormula( node.currentFormula ) ) )
     }
 
     //Perform the DFS
@@ -353,7 +353,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     //All-quantify the found solutions.
     //debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
-    solutions.map( n => NumberedCNFtoFormula( n.currentFormula ) ).map( s => AllBlock( xs, s ) )
+    solutions.map( n => NumberedCNFtoFormula( n.currentFormula ) ).map( s => All.Block( xs, s ) )
   }
 
   /**

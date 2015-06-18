@@ -84,6 +84,29 @@ class QuantifierHelper( val q: QuantifierC ) {
     case Some( ( v: FOLVar, formula: FOLFormula ) ) => Some( ( v, formula ) )
     case _ => None
   }
+
+  object Block {
+    def apply( vars: Seq[Var], formula: LambdaExpression ): LambdaExpression = vars match {
+      case v +: vs => QuantifierHelper.this( v, apply( vs, formula ) )
+      case Seq()   => formula
+    }
+    def apply( vars: Seq[Var], formula: HOLFormula ): HOLFormula =
+      apply( vars, formula.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+    def apply( vars: Seq[FOLVar], formula: FOLFormula ): FOLFormula =
+      apply( vars, formula.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
+
+    private object SingleQ {
+      def unapply( e: LambdaExpression ) = QuantifierHelper.this.unapply( e )
+    }
+    def unapply( e: LambdaExpression ): Some[( List[Var], LambdaExpression )] = e match {
+      case SingleQ( v, Block( vs, f ) ) => Some( ( v :: vs, f ) )
+      case _                            => Some( ( List(), e ) )
+    }
+    def unapply( f: HOLFormula ): Some[( List[Var], HOLFormula )] =
+      unapply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[Some[( List[Var], HOLFormula )]]
+    def unapply( f: FOLFormula ): Some[( List[FOLVar], FOLFormula )] =
+      unapply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[Some[( List[FOLVar], FOLFormula )]]
+  }
 }
 
 object All extends QuantifierHelper( ForallC )

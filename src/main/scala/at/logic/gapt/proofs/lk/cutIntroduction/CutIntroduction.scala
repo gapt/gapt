@@ -605,7 +605,7 @@ object CutIntroduction extends Logger {
             val subst = FOLSubstitution( variables.zip( terms ) )
             subst( ci ) :: acc
         }
-        val ci_quant = AllBlock( variables, ci )
+        val ci_quant = All.Block( variables, ci )
         And( forms ) :: ci_quant :: cut_formulas.tail
       // The last term set contains only constants, so we drop the formula generated with it.
     }.tail.reverse
@@ -725,7 +725,7 @@ object CutIntroduction extends Logger {
       }
     }.reverse
 
-    val cutFormulasPrime = ( Aprime zip Aprime.indices ).map { case ( a, i ) => AllBlock( alphas( i ), a ) }
+    val cutFormulasPrime = ( Aprime zip Aprime.indices ).map { case ( a, i ) => All.Block( alphas( i ), a ) }
 
     // define A'_i[x \ S_i]
     val AprimeS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiate( cutFormulasPrime( i ), s ) ) )
