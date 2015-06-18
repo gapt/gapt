@@ -77,7 +77,7 @@ class Prover9ProverV2 extends Prover with ExternalProgram {
 
   override val isInstalled: Boolean =
     try {
-      ( "prover9 --help" #> new ByteArrayOutputStream ! ) == 1
+      ( "prover9 --help" ! ProcessLogger( _ => () ) ) == 1
     } catch { case _: IOException => false }
 }
 
