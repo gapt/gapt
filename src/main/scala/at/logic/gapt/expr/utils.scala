@@ -6,6 +6,7 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, LKProof }
+import at.logic.gapt.proofs.resolution.FClause
 
 /**
  * Matches constants and variables, but nothing else.
@@ -76,6 +77,8 @@ object freeVariables {
   def apply( es: Set[FOLExpression] ): Set[FOLVar] = es.flatMap( apply( _ ) )
   def apply( es: List[FOLExpression] ): Set[FOLVar] = apply( es.toSet )
 
+  def apply( sequent: FSequent ): Set[Var] = sequent.formulas.flatMap( apply( _ ) ).toSet
+
   private def apply_( e: LambdaExpression, boundvars: Set[Var] ): Set[Var] = e match {
     case v: Var          => if ( !boundvars.contains( v ) ) Set( v ) else Set()
     case Const( _, _ )   => Set()
@@ -99,6 +102,7 @@ object constants {
   def apply( s: FSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: Sequent ): Set[Const] = apply( s.toFSequent )
   def apply( p: LKProof ): Set[Const] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
+  def apply( clause: FClause ): Set[Const] = ( clause.neg ++ clause.pos ).flatMap( apply ).toSet
 }
 
 /**

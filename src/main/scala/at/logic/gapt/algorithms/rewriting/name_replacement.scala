@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.proofs.resolution.Clause
+import at.logic.gapt.proofs.resolution.{ FClause, Clause }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.expr.StringSymbol
 
@@ -24,6 +24,9 @@ object NameReplacement {
     //don't process the proof if there is nothing to do
     if ( map.isEmpty ) p else rename_resproof( p, map )._2
   }
+
+  def apply( clause: FClause, map: SymbolMap ): FClause =
+    FClause( clause.neg.map( f => apply( f, map ) ), clause.pos.map( f => apply( f, map ) ) )
 
   // map from symbol name to pair of Arity and replacement symbol name
   type SymbolMap = Map[String, ( Int, String )]
