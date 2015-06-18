@@ -174,7 +174,7 @@ object normalFormsTratGrammar {
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
     val nfs = tratNormalForms( lang, rhsNonTerminals )
     val nonTerminals = FOLVar( "τ" ) +: rhsNonTerminals
-    TratGrammar( nonTerminals( 0 ), nfs flatMap { nf =>
+    TratGrammar( nonTerminals( 0 ), nonTerminals, nfs flatMap { nf =>
       val fvs = freeVariables( nf )
       val possibleLhsVars =
         if ( fvs.isEmpty ) nonTerminals
