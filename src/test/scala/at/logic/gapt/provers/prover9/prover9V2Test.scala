@@ -18,7 +18,7 @@ class Prover9V2Test extends Specification {
       val k = FOLConst( "k" )
       val s = FSequent( Seq(), Seq( Eq( k, k ) ) )
       prover9.getLKProof( s ) must beLike {
-        case Some(p) => p.root.toFSequent must_== s
+        case Some( p ) => p.root.toFSequent must_== s
       }
     }
 
@@ -26,7 +26,7 @@ class Prover9V2Test extends Specification {
       val Seq( a, b ) = Seq( "A", "B" ).map( FOLAtom( _ ) )
       val s = FSequent( Seq( Or( a, b ) ), Seq( Neg( And( Neg( a ), Neg( b ) ) ) ) )
       prover9.getLKProof( s ) must beLike {
-        case Some(p) => p.root.toFSequent must_== s
+        case Some( p ) => p.root.toFSequent must_== s
       }
     }
 
@@ -34,7 +34,7 @@ class Prover9V2Test extends Specification {
       val seq = FSequent( Seq( "0+x=x", "s(x)+y=s(x+y)" ).map( s => univclosure( parseFormula( s ) ) ),
         Seq( parseFormula( "s(0)+s(s(0)) = s(s(s(0)))" ) ) )
       prover9.getLKProof( seq ) must beLike {
-        case Some(p) => p.root.toFSequent must_== seq
+        case Some( p ) => p.root.toFSequent must_== seq
       }
     }
 
@@ -46,7 +46,7 @@ class Prover9V2Test extends Specification {
     "ground sequents" in {
       val seq = FSequent( Seq( parseFormula( "x=y" ) ), Seq( parseFormula( "y=x" ) ) )
       prover9.getLKProof( seq ) must beLike {
-        case Some(p) => p.root.toFSequent must_== seq
+        case Some( p ) => p.root.toFSequent must_== seq
       }
     }
   }
