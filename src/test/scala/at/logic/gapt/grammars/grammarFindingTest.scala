@@ -113,6 +113,7 @@ class GrammarFindingTest extends Specification {
 
   "minimizeGrammar" should {
     "remove redundant productions" in {
+      if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
       val g = tg( "x->c", "x->d" )
       val minG = minimizeGrammar( g, Seq( "c" ) map parseTerm )
       minG.productions must beEqualTo( Seq( "x->c" ) map parseProduction )
