@@ -41,11 +41,10 @@ class Prover9Prover extends Prover with ExternalProgram {
     withRenamedConstants( cnf ) { cnf =>
       val p9Input = toP9Input( cnf )
       withTempFile.fromString( p9Input ) { p9InputFile =>
-        val p9Output = Seq( "prover9", "-f", p9InputFile ).lineStream_!
-        if ( p9Output.contains( "============================== PROOF =================================" ) ) {
-          Some( p9Output.mkString( "\n" ) )
-        } else {
-          None
+        val out = new ByteArrayOutputStream
+        Seq( "prover9", "-f", p9InputFile ) #> out ! match {
+          case 0 => Some( out toString )
+          case 2 => None
         }
       } map parseProof
     }
@@ -102,7 +101,11 @@ class Prover9Prover extends Prover with ExternalProgram {
   }
 
   def toP9Input( cnf: List[FClause] ): String =
-    ( "set(quiet)" +: "formulas(sos)" +: cnf.map( toP9Input ) :+ "end_of_list" ).map( _ + ".\n" ).mkString
+    ( "set(quiet)" +:
+      "clear(auto_denials)" +:
+      "formulas(sos)" +:
+      cnf.map( toP9Input ) :+
+      "end_of_list" ).map( _ + ".\n" ).mkString
   def renameVars( formula: LambdaExpression ): LambdaExpression =
     Substitution( freeVariables( formula ).
       toSeq.zipWithIndex.map {
