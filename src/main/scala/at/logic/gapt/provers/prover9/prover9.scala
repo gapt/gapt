@@ -49,9 +49,10 @@ class Prover9Prover extends Prover with ExternalProgram {
       } map parseProof
     }
 
-  def parseProof( content: String ) = {
-    // TODO: this will probably break like veriT before...
-    val ivy = "prooftrans ivy" #< new ByteArrayInputStream( content.getBytes ) !!
+  def parseProof( p9Output: String ) = {
+    val ivy = withTempFile.fromString( p9Output ) { p9OutputFile =>
+      Seq( "prooftrans", "ivy", "-f", p9OutputFile ) !!
+    }
 
     val ivyProof = withTempFile.fromString( ivy ) { ivyFile => IvyParser( ivyFile, IvyStyleVariables ) }
 
@@ -63,7 +64,9 @@ class Prover9Prover extends Prover with ExternalProgram {
 
   def reconstructLKProofFromOutput( p9Output: String ): LKProof = {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
-    val fixedP9Output = "prooftrans" #< new ByteArrayInputStream( p9Output.getBytes() ) !!
+    val fixedP9Output = withTempFile.fromString( p9Output ) { p9OutputFile =>
+      Seq( "prooftrans", "-f", p9OutputFile ) !!
+    }
 
     val resProof = parseProof( fixedP9Output )
     val endSequent = withTempFile.fromString( p9Output ) { p9File =>
