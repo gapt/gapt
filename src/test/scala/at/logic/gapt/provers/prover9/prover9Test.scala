@@ -76,6 +76,11 @@ class Prover9Test extends Specification {
       prover9.reconstructLKProofFromOutput( load( "ALG138+1.out" ) )
       ok
     }
+
+    "strong quantifiers" in {
+      prover9.reconstructLKProofFromOutput( load( "GEO200+1.out" ) )
+      ok
+    }
   }
 
 }

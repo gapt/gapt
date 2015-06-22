@@ -4,7 +4,7 @@ import java.io.{ IOException, ByteArrayInputStream, ByteArrayOutputStream }
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ existsclosure, univclosure, CNFn }
+import at.logic.gapt.expr.hol.{ containsStrongQuantifier, existsclosure, univclosure, CNFn }
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.IvyParser.IvyStyleVariables
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
@@ -68,7 +68,13 @@ class Prover9Prover extends Prover with ExternalProgram {
 
     val resProof = parseProof( fixedP9Output )
     val endSequent = withTempFile.fromString( p9Output ) { p9File =>
-      InferenceExtractor.viaLADR( p9File )
+      val tptpEndSequent = InferenceExtractor.viaLADR( p9File )
+      if ( containsStrongQuantifier( tptpEndSequent ) ) {
+        // in this case the prover9 proof contains skolem symbols which we do not try to match
+        InferenceExtractor.clausesViaLADR( p9File )
+      } else {
+        tptpEndSequent
+      }
     }
 
     val closure = FSequent( endSequent.antecedent.map( x => univclosure( x ) ),
