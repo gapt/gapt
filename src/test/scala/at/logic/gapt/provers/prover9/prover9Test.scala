@@ -81,6 +81,11 @@ class Prover9Test extends Specification {
       prover9.reconstructLKProofFromOutput( load( "GEO200+1.out" ) )
       ok
     }
+
+    "cnf with different equation order" in {
+      prover9.reconstructLKProofFromOutput( load( "NUM561+2.out" ) )
+      ok
+    }
   }
 
 }
