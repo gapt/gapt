@@ -271,7 +271,7 @@ object FindFormulaH {
       posSets.view.flatMap { P =>
         val Ctilde = ( C /: P )( ( acc, p ) => acc.replace( p, nu ).asInstanceOf[FOLFormula] )
         if ( S.solve( Ctilde ).isSolved )
-          Some( ( S, Ctilde ) )
+          Some( ( S.solve( Ctilde ), Ctilde ) )
         else
           None
       }
