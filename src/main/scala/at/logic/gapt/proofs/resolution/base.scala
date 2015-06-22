@@ -163,3 +163,10 @@ object computeSkolemTerm {
   }
 }
 
+object initialSequents {
+  def apply[V <: Sequent]( p: ResolutionProof[V] ): Set[V] =
+    p.nodes.collect {
+      case n: NullaryResolutionProof[V] if n.rule == InitialType => n.root
+    }
+}
+

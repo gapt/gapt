@@ -41,11 +41,13 @@ class Prover9Prover extends Prover with ExternalProgram {
     withRenamedConstants( cnf ) { cnf =>
       val p9Input = toP9Input( cnf )
       withTempFile.fromString( p9Input ) { p9InputFile =>
-        try Some( Seq( "prover9", "-f", p9InputFile ) !! )
-        catch {
-          case e: RuntimeException => None
+        val p9Output = Seq( "prover9", "-f", p9InputFile ).lineStream_!
+        if ( p9Output.contains( "============================== PROOF =================================" ) ) {
+          Some( p9Output.mkString( "\n" ) )
+        } else {
+          None
         }
-      } map { p9Output => parseProof( p9Output ) }
+      } map parseProof
     }
 
   def parseProof( content: String ) = {

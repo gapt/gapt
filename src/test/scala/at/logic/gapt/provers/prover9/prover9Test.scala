@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.lk.base.FSequent
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.proofs.resolution.{ initialSequents, FClause }
 
 import org.specs2.mutable._
 
@@ -47,6 +48,13 @@ class Prover9Test extends Specification {
       val seq = FSequent( Seq( parseFormula( "x=y" ) ), Seq( parseFormula( "y=x" ) ) )
       prover9.getLKProof( seq ) must beLike {
         case Some( p ) => p.root.toFSequent must_== seq
+      }
+    }
+
+    "handle exit code 2" in {
+      val cnf = List( FClause( Seq(), Seq() ), FClause( Seq( FOLAtom( "a" ) ), Seq() ) )
+      prover9.getRobinsonProof( cnf ) must beLike {
+        case Some( p ) => initialSequents( p ).map( _.toFClause ) must contain( atMost( cnf.toSet ) )
       }
     }
   }
