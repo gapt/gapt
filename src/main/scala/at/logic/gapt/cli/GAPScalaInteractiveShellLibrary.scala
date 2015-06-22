@@ -304,14 +304,9 @@ object refuteFOLI {
 }
 
 object prover9 {
-  //we have to refute
-  //  def apply( filename: String ): Option[RobinsonResolutionProof] = new Prover9Prover().parseProof( filename )
-
   def apply( clauses: Seq[FSequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses.toList )
 
   def apply( clauses: List[Sequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses map ( _.toFSequent ) )
-
-  //  def refuteTPTP( fn: String ) = new Prover9Prover().getRobinsonProofTPTP( fn )
 
   //get the ground substitution of the ground resolution refutation
   //the ground substitution is a list of pairs, it can't be a map ! The reason is : a clause can be used several times in the resolution refutation.
@@ -578,8 +573,6 @@ object help {
         |   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
         |   refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
         |   prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9
-        |   prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file
-        |   new Prover9Prover().getRobinsonProofTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
         |   prover9.getProof:  FSequent => Option[LKProof] - prove a sequent with prover9
         |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
         |   miniSATsolve: HOLFormula => Option[Interpretation] - obtain a model for a quantifier-free formula using MiniSAT
