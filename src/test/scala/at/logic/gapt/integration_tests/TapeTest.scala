@@ -32,7 +32,7 @@ import java.util.zip.GZIPInputStream
 import org.specs2.mutable._
 
 class TapeTest extends Specification {
-  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
+  def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
 
   sequential
   "The system" should {
@@ -80,11 +80,11 @@ class TapeTest extends Specification {
 
       val prf_cs_intersect = prf.filter( seq => cs.contains( seq ) )
 
-      Prover9.refute( prf ) match {
+      new Prover9Prover().getRobinsonProof( prf ) match {
         case None      => "" must beEqualTo( "refutation of proof profile failed" )
         case Some( _ ) => true must beEqualTo( true )
       }
-      Prover9.refute( cs ) match {
+      new Prover9Prover().getRobinsonProof( cs ) match {
         case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
         case Some( _ ) => true must beEqualTo( true )
       }
@@ -125,7 +125,7 @@ class TapeTest extends Specification {
 
       //get the refutation of the clause set, refute it
       val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( elp ) )
-      val Some( taperp ) = Prover9.refute( tapecl.map( _.toFSequent ) )
+      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( _.toFSequent ) )
       val lkref = RobinsonToLK( taperp )
 
       //get projections etc
@@ -149,7 +149,7 @@ class TapeTest extends Specification {
 
       //get the refutation of the clause set, refute it
       val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( elp ) )
-      val Some( taperp ) = Prover9.refute( tapecl.map( _.toFSequent ) )
+      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( _.toFSequent ) )
 
       //get projections etc
       val tapeproj = Projections( elp )

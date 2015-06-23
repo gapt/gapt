@@ -1,0 +1,208 @@
+%------------------------------------------------------------------------------
+File       : Prover9---1109a
+Problem    : NUM561+2 : TPTP v5.3.0. Released v4.0.0.
+Transform  : none
+Format     : tptp:raw
+Command    : run_prover9 %d %s
+
+Computer   : art08.cs.miami.edu
+Model      : i686 i686
+CPU        : Intel(R) Pentium(R) 4 CPU 3.00GHz @ 3000MHz
+Memory     : 2005MB
+OS         : Linux 2.6.32.26-175.fc12.i686.PAE
+CPULimit   : 300s
+DateTime   : Thu Jun 14 02:59:26 EDT 2012
+
+Result     : Theorem 0.81s
+Output     : Refutation 0.81s
+Verified   : 
+Statistics : -
+
+Comments   : 
+%------------------------------------------------------------------------------
+%----ERROR: Could not form TPTP format derivation
+%------------------------------------------------------------------------------
+%----ORIGINAL SYSTEM OUTPUT
+============================== Prover9 ===============================
+Prover9 (32) version 2009-11A, November 2009.
+Process 21280 was started by tptp on art08.cs.miami.edu,
+Thu Jun 14 02:59:27 2012
+The command was "/home/graph/tptp/Systems/Prover9---1109a/prover9 -t 300 -f /tmp/Prover9_21226_art08.cs.miami.edu".
+============================== end of head ===========================
+============================== INPUT =================================
+% Reading from file /tmp/Prover9_21226_art08.cs.miami.edu
+set(prolog_style_variables).
+set(auto2).
+    % set(auto2) -> set(auto).
+    % set(auto) -> set(auto_inference).
+    % set(auto) -> set(auto_setup).
+    % set(auto_setup) -> set(predicate_elim).
+    % set(auto_setup) -> assign(eq_defs, unfold).
+    % set(auto) -> set(auto_limits).
+    % set(auto_limits) -> assign(max_weight, "100.000").
+    % set(auto_limits) -> assign(sos_limit, 20000).
+    % set(auto) -> set(auto_denials).
+    % set(auto) -> set(auto_process).
+    % set(auto2) -> assign(new_constants, 1).
+    % set(auto2) -> assign(fold_denial_max, 3).
+    % set(auto2) -> assign(max_weight, "200.000").
+    % set(auto2) -> assign(max_hours, 1).
+    % assign(max_hours, 1) -> assign(max_seconds, 3600).
+    % set(auto2) -> assign(max_seconds, 0).
+    % set(auto2) -> assign(max_minutes, 5).
+    % assign(max_minutes, 5) -> assign(max_seconds, 300).
+    % set(auto2) -> set(sort_initial_sos).
+    % set(auto2) -> assign(sos_limit, -1).
+    % set(auto2) -> assign(lrs_ticks, 3000).
+    % set(auto2) -> assign(max_megs, 400).
+    % set(auto2) -> assign(stats, some).
+    % set(auto2) -> clear(echo_input).
+    % set(auto2) -> set(quiet).
+    % set(auto2) -> clear(print_initial_clauses).
+    % set(auto2) -> clear(print_given).
+assign(lrs_ticks,-1).
+assign(sos_limit,10000).
+assign(order,kbo).
+set(lex_order_vars).
+clear(print_given).
+% formulas(sos).  % not echoed (72 formulas)
+============================== end of input ==========================
+% From the command line: assign(max_seconds, 300).
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+% Formulas that are not ordinary clauses:
+1 (all W0 (aSet0(W0) -> $T)) # label(mSetSort) # label(axiom) # label(non_clause).  [assumption].
+2 (all W0 (aElement0(W0) -> $T)) # label(mElmSort) # label(axiom) # label(non_clause).  [assumption].
+3 (all W0 (aSet0(W0) -> (all W1 (aElementOf0(W1,W0) -> aElement0(W1))))) # label(mEOfElem) # label(axiom) # label(non_clause).  [assumption].
+4 (all W0 (aSet0(W0) -> (isFinite0(W0) -> $T))) # label(mFinRel) # label(axiom) # label(non_clause).  [assumption].
+5 (all W0 (W0 = slcrc0 <-> aSet0(W0) & -(exists W1 aElementOf0(W1,W0)))) # label(mDefEmp) # label(definition) # label(non_clause).  [assumption].
+6 (all W0 (aSet0(W0) -> (isCountable0(W0) -> $T))) # label(mCntRel) # label(axiom) # label(non_clause).  [assumption].
+7 (all W0 (aSet0(W0) & isCountable0(W0) -> -isFinite0(W0))) # label(mCountNFin) # label(axiom) # label(non_clause).  [assumption].
+8 (all W0 (aSet0(W0) & isCountable0(W0) -> W0 != slcrc0)) # label(mCountNFin_01) # label(axiom) # label(non_clause).  [assumption].
+9 (all W0 (aSet0(W0) -> (all W1 (aSubsetOf0(W1,W0) <-> aSet0(W1) & (all W2 (aElementOf0(W2,W1) -> aElementOf0(W2,W0))))))) # label(mDefSub) # label(definition) # label(non_clause).  [assumption].
+10 (all W0 (aSet0(W0) & isFinite0(W0) -> (all W1 (aSubsetOf0(W1,W0) -> isFinite0(W1))))) # label(mSubFSet) # label(axiom) # label(non_clause).  [assumption].
+11 (all W0 (aSet0(W0) -> aSubsetOf0(W0,W0))) # label(mSubRefl) # label(axiom) # label(non_clause).  [assumption].
+12 (all W0 all W1 (aSet0(W0) & aSet0(W1) -> (aSubsetOf0(W0,W1) & aSubsetOf0(W1,W0) -> W0 = W1))) # label(mSubASymm) # label(axiom) # label(non_clause).  [assumption].
+13 (all W0 all W1 all W2 (aSet0(W0) & aSet0(W1) & aSet0(W2) -> (aSubsetOf0(W0,W1) & aSubsetOf0(W1,W2) -> aSubsetOf0(W0,W2)))) # label(mSubTrans) # label(axiom) # label(non_clause).  [assumption].
+14 (all W0 all W1 (aSet0(W0) & aElement0(W1) -> (all W2 (W2 = sdtpldt0(W0,W1) <-> aSet0(W2) & (all W3 (aElementOf0(W3,W2) <-> aElement0(W3) & (aElementOf0(W3,W0) | W3 = W1))))))) # label(mDefCons) # label(definition) # label(non_clause).  [assumption].
+15 (all W0 all W1 (aSet0(W0) & aElement0(W1) -> (all W2 (W2 = sdtmndt0(W0,W1) <-> aSet0(W2) & (all W3 (aElementOf0(W3,W2) <-> aElement0(W3) & aElementOf0(W3,W0) & W3 != W1)))))) # label(mDefDiff) # label(definition) # label(non_clause).  [assumption].
+16 (all W0 (aSet0(W0) -> (all W1 (aElementOf0(W1,W0) -> sdtpldt0(sdtmndt0(W0,W1),W1) = W0)))) # label(mConsDiff) # label(axiom) # label(non_clause).  [assumption].
+17 (all W0 all W1 (aElement0(W0) & aSet0(W1) -> (-aElementOf0(W0,W1) -> sdtmndt0(sdtpldt0(W1,W0),W0) = W1))) # label(mDiffCons) # label(axiom) # label(non_clause).  [assumption].
+18 (all W0 (aElement0(W0) -> (all W1 (aSet0(W1) & isCountable0(W1) -> isCountable0(sdtpldt0(W1,W0)))))) # label(mCConsSet) # label(axiom) # label(non_clause).  [assumption].
+19 (all W0 (aElement0(W0) -> (all W1 (aSet0(W1) & isCountable0(W1) -> isCountable0(sdtmndt0(W1,W0)))))) # label(mCDiffSet) # label(axiom) # label(non_clause).  [assumption].
+20 (all W0 (aElement0(W0) -> (all W1 (aSet0(W1) & isFinite0(W1) -> isFinite0(sdtpldt0(W1,W0)))))) # label(mFConsSet) # label(axiom) # label(non_clause).  [assumption].
+21 (all W0 (aElement0(W0) -> (all W1 (aSet0(W1) & isFinite0(W1) -> isFinite0(sdtmndt0(W1,W0)))))) # label(mFDiffSet) # label(axiom) # label(non_clause).  [assumption].
+22 (all W0 (aElementOf0(W0,szNzAzT0) -> aElementOf0(szszuzczcdt0(W0),szNzAzT0) & szszuzczcdt0(W0) != sz00)) # label(mSuccNum) # label(axiom) # label(non_clause).  [assumption].
+23 (all W0 all W1 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) -> (szszuzczcdt0(W0) = szszuzczcdt0(W1) -> W0 = W1))) # label(mSuccEquSucc) # label(axiom) # label(non_clause).  [assumption].
+24 (all W0 (aElementOf0(W0,szNzAzT0) -> W0 = sz00 | (exists W1 (aElementOf0(W1,szNzAzT0) & W0 = szszuzczcdt0(W1))))) # label(mNatExtra) # label(axiom) # label(non_clause).  [assumption].
+25 (all W0 (aElementOf0(W0,szNzAzT0) -> W0 != szszuzczcdt0(W0))) # label(mNatNSucc) # label(axiom) # label(non_clause).  [assumption].
+26 (all W0 all W1 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) -> (sdtlseqdt0(W0,W1) -> $T))) # label(mLessRel) # label(axiom) # label(non_clause).  [assumption].
+27 (all W0 (aElementOf0(W0,szNzAzT0) -> sdtlseqdt0(sz00,W0))) # label(mZeroLess) # label(axiom) # label(non_clause).  [assumption].
+28 (all W0 (aElementOf0(W0,szNzAzT0) -> -sdtlseqdt0(szszuzczcdt0(W0),sz00))) # label(mNoScLessZr) # label(axiom) # label(non_clause).  [assumption].
+29 (all W0 all W1 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) -> (sdtlseqdt0(W0,W1) <-> sdtlseqdt0(szszuzczcdt0(W0),szszuzczcdt0(W1))))) # label(mSuccLess) # label(axiom) # label(non_clause).  [assumption].
+30 (all W0 (aElementOf0(W0,szNzAzT0) -> sdtlseqdt0(W0,szszuzczcdt0(W0)))) # label(mLessSucc) # label(axiom) # label(non_clause).  [assumption].
+31 (all W0 (aElementOf0(W0,szNzAzT0) -> sdtlseqdt0(W0,W0))) # label(mLessRefl) # label(axiom) # label(non_clause).  [assumption].
+32 (all W0 all W1 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) -> (sdtlseqdt0(W0,W1) & sdtlseqdt0(W1,W0) -> W0 = W1))) # label(mLessASymm) # label(axiom) # label(non_clause).  [assumption].
+33 (all W0 all W1 all W2 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) & aElementOf0(W2,szNzAzT0) -> (sdtlseqdt0(W0,W1) & sdtlseqdt0(W1,W2) -> sdtlseqdt0(W0,W2)))) # label(mLessTrans) # label(axiom) # label(non_clause).  [assumption].
+34 (all W0 all W1 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) -> sdtlseqdt0(W0,W1) | sdtlseqdt0(szszuzczcdt0(W1),W0))) # label(mLessTotal) # label(axiom) # label(non_clause).  [assumption].
+35 (all W0 all W1 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) -> (iLess0(W0,W1) -> $T))) # label(mIHSort) # label(axiom) # label(non_clause).  [assumption].
+36 (all W0 (aElementOf0(W0,szNzAzT0) -> iLess0(W0,szszuzczcdt0(W0)))) # label(mIH) # label(axiom) # label(non_clause).  [assumption].
+37 (all W0 (aSet0(W0) -> aElement0(sbrdtbr0(W0)))) # label(mCardS) # label(axiom) # label(non_clause).  [assumption].
+38 (all W0 (aSet0(W0) -> (aElementOf0(sbrdtbr0(W0),szNzAzT0) <-> isFinite0(W0)))) # label(mCardNum) # label(axiom) # label(non_clause).  [assumption].
+39 (all W0 (aSet0(W0) -> (sbrdtbr0(W0) = sz00 <-> W0 = slcrc0))) # label(mCardEmpty) # label(axiom) # label(non_clause).  [assumption].
+40 (all W0 (aSet0(W0) & isFinite0(W0) -> (all W1 (aElement0(W1) -> (-aElementOf0(W1,W0) -> sbrdtbr0(sdtpldt0(W0,W1)) = szszuzczcdt0(sbrdtbr0(W0))))))) # label(mCardCons) # label(axiom) # label(non_clause).  [assumption].
+41 (all W0 (aSet0(W0) -> (all W1 (isFinite0(W0) & aElementOf0(W1,W0) -> szszuzczcdt0(sbrdtbr0(sdtmndt0(W0,W1))) = sbrdtbr0(W0))))) # label(mCardDiff) # label(axiom) # label(non_clause).  [assumption].
+42 (all W0 (aSet0(W0) -> (all W1 (isFinite0(W0) & aSubsetOf0(W1,W0) -> sdtlseqdt0(sbrdtbr0(W1),sbrdtbr0(W0)))))) # label(mCardSub) # label(axiom) # label(non_clause).  [assumption].
+43 (all W0 all W1 (aSet0(W0) & aElementOf0(W1,szNzAzT0) -> (isFinite0(W0) & sdtlseqdt0(W1,sbrdtbr0(W0)) -> (exists W2 (aSubsetOf0(W2,W0) & sbrdtbr0(W2) = W1))))) # label(mCardSubEx) # label(axiom) # label(non_clause).  [assumption].
+44 (all W0 (aSubsetOf0(W0,szNzAzT0) & W0 != slcrc0 -> (all W1 (W1 = szmzizndt0(W0) <-> aElementOf0(W1,W0) & (all W2 (aElementOf0(W2,W0) -> sdtlseqdt0(W1,W2))))))) # label(mDefMin) # label(definition) # label(non_clause).  [assumption].
+45 (all W0 (aSubsetOf0(W0,szNzAzT0) & isFinite0(W0) & W0 != slcrc0 -> (all W1 (W1 = szmzazxdt0(W0) <-> aElementOf0(W1,W0) & (all W2 (aElementOf0(W2,W0) -> sdtlseqdt0(W2,W1))))))) # label(mDefMax) # label(definition) # label(non_clause).  [assumption].
+46 (all W0 all W1 (aSubsetOf0(W0,szNzAzT0) & aSubsetOf0(W1,szNzAzT0) & W0 != slcrc0 & W1 != slcrc0 -> (aElementOf0(szmzizndt0(W0),W1) & aElementOf0(szmzizndt0(W1),W0) -> szmzizndt0(W0) = szmzizndt0(W1)))) # label(mMinMin) # label(axiom) # label(non_clause).  [assumption].
+47 (all W0 (aElementOf0(W0,szNzAzT0) -> (all W1 (W1 = slbdtrb0(W0) <-> aSet0(W1) & (all W2 (aElementOf0(W2,W1) <-> aElementOf0(W2,szNzAzT0) & sdtlseqdt0(szszuzczcdt0(W2),W0))))))) # label(mDefSeg) # label(definition) # label(non_clause).  [assumption].
+48 (all W0 (aElementOf0(W0,szNzAzT0) -> isFinite0(slbdtrb0(W0)))) # label(mSegFin) # label(axiom) # label(non_clause).  [assumption].
+49 (all W0 all W1 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) -> (aElementOf0(W0,slbdtrb0(szszuzczcdt0(W1))) <-> aElementOf0(W0,slbdtrb0(W1)) | W0 = W1))) # label(mSegSucc) # label(axiom) # label(non_clause).  [assumption].
+50 (all W0 all W1 (aElementOf0(W0,szNzAzT0) & aElementOf0(W1,szNzAzT0) -> (sdtlseqdt0(W0,W1) <-> aSubsetOf0(slbdtrb0(W0),slbdtrb0(W1))))) # label(mSegLess) # label(axiom) # label(non_clause).  [assumption].
+51 (all W0 (aSubsetOf0(W0,szNzAzT0) & isFinite0(W0) -> (exists W1 (aElementOf0(W1,szNzAzT0) & aSubsetOf0(W0,slbdtrb0(W1)))))) # label(mFinSubSeg) # label(axiom) # label(non_clause).  [assumption].
+52 (all W0 (aElementOf0(W0,szNzAzT0) -> sbrdtbr0(slbdtrb0(W0)) = W0)) # label(mCardSeg) # label(axiom) # label(non_clause).  [assumption].
+53 (all W0 all W1 (aSet0(W0) & aElementOf0(W1,szNzAzT0) -> (all W2 (W2 = slbdtsldtrb0(W0,W1) <-> aSet0(W2) & (all W3 (aElementOf0(W3,W2) <-> aSubsetOf0(W3,W0) & sbrdtbr0(W3) = W1)))))) # label(mDefSel) # label(definition) # label(non_clause).  [assumption].
+54 (all W0 (aSet0(W0) & isFinite0(W0) -> (all W1 (aElementOf0(W1,szNzAzT0) -> isFinite0(slbdtsldtrb0(W0,W1)))))) # label(mSelFSet) # label(axiom) # label(non_clause).  [assumption].
+55 (all W0 (aSet0(W0) & -isFinite0(W0) -> (all W1 (aElementOf0(W1,szNzAzT0) -> slbdtsldtrb0(W0,W1) != slcrc0)))) # label(mSelNSet) # label(axiom) # label(non_clause).  [assumption].
+56 (all W0 (aSet0(W0) & isCountable0(W0) -> (all W1 (aElementOf0(W1,szNzAzT0) & W1 != sz00 -> isCountable0(slbdtsldtrb0(W0,W1)))))) # label(mSelCSet) # label(axiom) # label(non_clause).  [assumption].
+57 (all W0 (aElementOf0(W0,szNzAzT0) -> (all W1 all W2 (aSet0(W1) & aSet0(W2) & W0 != sz00 -> (aSubsetOf0(slbdtsldtrb0(W1,W0),slbdtsldtrb0(W2,W0)) & slbdtsldtrb0(W1,W0) != slcrc0 -> aSubsetOf0(W1,W2)))))) # label(mSelSub) # label(axiom) # label(non_clause).  [assumption].
+58 (all W0 all W1 (aSet0(W0) & aElementOf0(W1,szNzAzT0) -> (all W2 (aSubsetOf0(W2,slbdtsldtrb0(W0,W1)) & isFinite0(W2) -> (exists W3 (aSubsetOf0(W3,W0) & isFinite0(W3) & aSubsetOf0(W2,slbdtsldtrb0(W3,W1)))))))) # label(mSelExtra) # label(axiom) # label(non_clause).  [assumption].
+59 (all W0 (aFunction0(W0) -> $T)) # label(mFunSort) # label(axiom) # label(non_clause).  [assumption].
+60 (all W0 (aFunction0(W0) -> aSet0(szDzozmdt0(W0)))) # label(mDomSet) # label(axiom) # label(non_clause).  [assumption].
+61 (all W0 (aFunction0(W0) -> (all W1 (aElementOf0(W1,szDzozmdt0(W0)) -> aElement0(sdtlpdtrp0(W0,W1)))))) # label(mImgElm) # label(axiom) # label(non_clause).  [assumption].
+62 (all W0 all W1 (aFunction0(W0) & aElement0(W1) -> (all W2 (W2 = sdtlbdtrb0(W0,W1) <-> aSet0(W2) & (all W3 (aElementOf0(W3,W2) <-> aElementOf0(W3,szDzozmdt0(W0)) & sdtlpdtrp0(W0,W3) = W1)))))) # label(mDefPtt) # label(definition) # label(non_clause).  [assumption].
+63 (all W0 all W1 (aFunction0(W0) & aElement0(W1) -> aSubsetOf0(sdtlbdtrb0(W0,W1),szDzozmdt0(W0)))) # label(mPttSet) # label(axiom) # label(non_clause).  [assumption].
+64 (all W0 (aFunction0(W0) -> (all W1 (aSubsetOf0(W1,szDzozmdt0(W0)) -> (all W2 (W2 = sdtlcdtrc0(W0,W1) <-> aSet0(W2) & (all W3 (aElementOf0(W3,W2) <-> (exists W4 (aElementOf0(W4,W1) & sdtlpdtrp0(W0,W4) = W3)))))))))) # label(mDefSImg) # label(definition) # label(non_clause).  [assumption].
+65 -((exists W0 (aElementOf0(W0,szDzozmdt0(xF)) & sdtlpdtrp0(xF,W0) = sdtlpdtrp0(xF,xx))) | aElementOf0(sdtlpdtrp0(xF,xx),sdtlcdtrc0(xF,szDzozmdt0(xF)))) # label(m__) # label(negated_conjecture) # label(non_clause).  [assumption].
+============================== end of process non-clausal formulas ===
+============================== PROCESS INITIAL CLAUSES ===============
+============================== PREDICATE ELIMINATION =================
+66 aFunction0(xF) # label(m__2911) # label(hypothesis).  [assumption].
+67 -aFunction0(A) | aSet0(szDzozmdt0(A)) # label(mDomSet) # label(axiom).  [clausify(60)].
+68 -aFunction0(A) | -aElementOf0(B,szDzozmdt0(A)) | aElement0(sdtlpdtrp0(A,B)) # label(mImgElm) # label(axiom).  [clausify(61)].
+69 -aFunction0(A) | -aElement0(B) | sdtlbdtrb0(A,B) != C | aSet0(C) # label(mDefPtt) # label(definition).  [clausify(62)].
+70 -aFunction0(A) | -aElement0(B) | sdtlbdtrb0(A,B) != C | -aElementOf0(D,C) | aElementOf0(D,szDzozmdt0(A)) # label(mDefPtt) # label(definition).  [clausify(62)].
+71 -aFunction0(A) | -aElement0(B) | sdtlbdtrb0(A,B) != C | -aElementOf0(D,C) | sdtlpdtrp0(A,D) = B # label(mDefPtt) # label(definition).  [clausify(62)].
+72 -aFunction0(A) | -aElement0(B) | sdtlbdtrb0(A,B) != C | aElementOf0(D,C) | -aElementOf0(D,szDzozmdt0(A)) | sdtlpdtrp0(A,D) != B # label(mDefPtt) # label(definition).  [clausify(62)].
+73 -aFunction0(A) | -aElement0(B) | sdtlbdtrb0(A,B) = C | -aSet0(C) | aElementOf0(f13(A,B,C),C) | aElementOf0(f13(A,B,C),szDzozmdt0(A)) # label(mDefPtt) # label(definition).  [clausify(62)].
+74 -aFunction0(A) | -aElement0(B) | sdtlbdtrb0(A,B) = C | -aSet0(C) | aElementOf0(f13(A,B,C),C) | sdtlpdtrp0(A,f13(A,B,C)) = B # label(mDefPtt) # label(definition).  [clausify(62)].
+75 -aFunction0(A) | -aElement0(B) | sdtlbdtrb0(A,B) = C | -aSet0(C) | -aElementOf0(f13(A,B,C),C) | -aElementOf0(f13(A,B,C),szDzozmdt0(A)) | sdtlpdtrp0(A,f13(A,B,C)) != B # label(mDefPtt) # label(definition).  [clausify(62)].
+76 -aFunction0(A) | -aElement0(B) | aSubsetOf0(sdtlbdtrb0(A,B),szDzozmdt0(A)) # label(mPttSet) # label(axiom).  [clausify(63)].
+77 -aFunction0(A) | -aSubsetOf0(B,szDzozmdt0(A)) | sdtlcdtrc0(A,B) != C | aSet0(C) # label(mDefSImg) # label(definition).  [clausify(64)].
+78 -aFunction0(A) | -aSubsetOf0(B,szDzozmdt0(A)) | sdtlcdtrc0(A,B) != C | -aElementOf0(D,C) | aElementOf0(f14(A,B,C,D),B) # label(mDefSImg) # label(definition).  [clausify(64)].
+79 -aFunction0(A) | -aSubsetOf0(B,szDzozmdt0(A)) | sdtlcdtrc0(A,B) != C | -aElementOf0(D,C) | sdtlpdtrp0(A,f14(A,B,C,D)) = D # label(mDefSImg) # label(definition).  [clausify(64)].
+80 -aFunction0(A) | -aSubsetOf0(B,szDzozmdt0(A)) | sdtlcdtrc0(A,B) != C | aElementOf0(D,C) | -aElementOf0(E,B) | sdtlpdtrp0(A,E) != D # label(mDefSImg) # label(definition).  [clausify(64)].
+81 -aFunction0(A) | -aSubsetOf0(B,szDzozmdt0(A)) | sdtlcdtrc0(A,B) = C | -aSet0(C) | aElementOf0(f15(A,B,C),C) | aElementOf0(f16(A,B,C),B) # label(mDefSImg) # label(definition).  [clausify(64)].
+82 -aFunction0(A) | -aSubsetOf0(B,szDzozmdt0(A)) | sdtlcdtrc0(A,B) = C | -aSet0(C) | aElementOf0(f15(A,B,C),C) | sdtlpdtrp0(A,f16(A,B,C)) = f15(A,B,C) # label(mDefSImg) # label(definition).  [clausify(64)].
+83 -aFunction0(A) | -aSubsetOf0(B,szDzozmdt0(A)) | sdtlcdtrc0(A,B) = C | -aSet0(C) | -aElementOf0(f15(A,B,C),C) | -aElementOf0(D,B) | sdtlpdtrp0(A,D) != f15(A,B,C) # label(mDefSImg) # label(definition).  [clausify(64)].
+Derived: aSet0(szDzozmdt0(xF)).  [resolve(66,a,67,a)].
+Derived: -aElementOf0(A,szDzozmdt0(xF)) | aElement0(sdtlpdtrp0(xF,A)).  [resolve(66,a,68,a)].
+Derived: -aElement0(A) | sdtlbdtrb0(xF,A) != B | aSet0(B).  [resolve(66,a,69,a)].
+Derived: -aElement0(A) | sdtlbdtrb0(xF,A) != B | -aElementOf0(C,B) | aElementOf0(C,szDzozmdt0(xF)).  [resolve(66,a,70,a)].
+Derived: -aElement0(A) | sdtlbdtrb0(xF,A) != B | -aElementOf0(C,B) | sdtlpdtrp0(xF,C) = A.  [resolve(66,a,71,a)].
+Derived: -aElement0(A) | sdtlbdtrb0(xF,A) != B | aElementOf0(C,B) | -aElementOf0(C,szDzozmdt0(xF)) | sdtlpdtrp0(xF,C) != A.  [resolve(66,a,72,a)].
+Derived: -aElement0(A) | sdtlbdtrb0(xF,A) = B | -aSet0(B) | aElementOf0(f13(xF,A,B),B) | aElementOf0(f13(xF,A,B),szDzozmdt0(xF)).  [resolve(66,a,73,a)].
+Derived: -aElement0(A) | sdtlbdtrb0(xF,A) = B | -aSet0(B) | aElementOf0(f13(xF,A,B),B) | sdtlpdtrp0(xF,f13(xF,A,B)) = A.  [resolve(66,a,74,a)].
+Derived: -aElement0(A) | sdtlbdtrb0(xF,A) = B | -aSet0(B) | -aElementOf0(f13(xF,A,B),B) | -aElementOf0(f13(xF,A,B),szDzozmdt0(xF)) | sdtlpdtrp0(xF,f13(xF,A,B)) != A.  [resolve(66,a,75,a)].
+Derived: -aElement0(A) | aSubsetOf0(sdtlbdtrb0(xF,A),szDzozmdt0(xF)).  [resolve(66,a,76,a)].
+Derived: -aSubsetOf0(A,szDzozmdt0(xF)) | sdtlcdtrc0(xF,A) != B | aSet0(B).  [resolve(66,a,77,a)].
+Derived: -aSubsetOf0(A,szDzozmdt0(xF)) | sdtlcdtrc0(xF,A) != B | -aElementOf0(C,B) | aElementOf0(f14(xF,A,B,C),A).  [resolve(66,a,78,a)].
+Derived: -aSubsetOf0(A,szDzozmdt0(xF)) | sdtlcdtrc0(xF,A) != B | -aElementOf0(C,B) | sdtlpdtrp0(xF,f14(xF,A,B,C)) = C.  [resolve(66,a,79,a)].
+Derived: -aSubsetOf0(A,szDzozmdt0(xF)) | sdtlcdtrc0(xF,A) != B | aElementOf0(C,B) | -aElementOf0(D,A) | sdtlpdtrp0(xF,D) != C.  [resolve(66,a,80,a)].
+Derived: -aSubsetOf0(A,szDzozmdt0(xF)) | sdtlcdtrc0(xF,A) = B | -aSet0(B) | aElementOf0(f15(xF,A,B),B) | aElementOf0(f16(xF,A,B),A).  [resolve(66,a,81,a)].
+Derived: -aSubsetOf0(A,szDzozmdt0(xF)) | sdtlcdtrc0(xF,A) = B | -aSet0(B) | aElementOf0(f15(xF,A,B),B) | sdtlpdtrp0(xF,f16(xF,A,B)) = f15(xF,A,B).  [resolve(66,a,82,a)].
+Derived: -aSubsetOf0(A,szDzozmdt0(xF)) | sdtlcdtrc0(xF,A) = B | -aSet0(B) | -aElementOf0(f15(xF,A,B),B) | -aElementOf0(C,A) | sdtlpdtrp0(xF,C) != f15(xF,A,B).  [resolve(66,a,83,a)].
+============================== end predicate elimination =============
+Auto_denials:  (non-Horn, no changes).
+Term ordering decisions:
+Function symbol KB weights:  szNzAzT0=1. xF=1. slcrc0=1. sz00=1. xx=1. slbdtsldtrb0=1. sdtpldt0=1. sdtmndt0=1. sdtlpdtrp0=1. sdtlbdtrb0=1. sdtlcdtrc0=1. f2=1. f6=1. f7=1. f8=1. f9=1. slbdtrb0=1. sbrdtbr0=1. szszuzczcdt0=1. szDzozmdt0=1. szmzizndt0=1. szmzazxdt0=1. f1=1. f5=1. f10=1. f3=1. f4=1. f11=1. f12=1. f13=1. f15=1. f16=1. f14=1.
+============================== end of process initial clauses ========
+============================== CLAUSES FOR SEARCH ====================
+============================== end of clauses for search =============
+============================== SEARCH ================================
+% Starting search at 0.03 seconds.
+============================== PROOF =================================
+% Proof 1 at 0.04 (+ 0.01) seconds.
+% Length of proof is 4.
+% Level of proof is 2.
+% Maximum clause weight is 11.000.
+% Given clauses 93.
+65 -((exists W0 (aElementOf0(W0,szDzozmdt0(xF)) & sdtlpdtrp0(xF,W0) = sdtlpdtrp0(xF,xx))) | aElementOf0(sdtlpdtrp0(xF,xx),sdtlcdtrc0(xF,szDzozmdt0(xF)))) # label(m__) # label(negated_conjecture) # label(non_clause).  [assumption].
+195 aElementOf0(xx,szDzozmdt0(xF)) # label(m__2911_02) # label(hypothesis).  [assumption].
+196 -aElementOf0(A,szDzozmdt0(xF)) | sdtlpdtrp0(xF,xx) != sdtlpdtrp0(xF,A) # label(m__) # label(negated_conjecture).  [clausify(65)].
+318 $F.  [resolve(196,a,195,a),xx(a)].
+============================== end of proof ==========================
+============================== STATISTICS ============================
+Given=93. Generated=280. Kept=229. proofs=1.
+Usable=93. Sos=109. Demods=4. Limbo=0, Disabled=173. Hints=0.
+Megabytes=0.63.
+User_CPU=0.04, System_CPU=0.01, Wall_clock=0.
+============================== end of statistics =====================
+============================== end of search =========================
+THEOREM PROVED
+Exiting with 1 proof.
+Process 21280 exit (max_proofs) Thu Jun 14 02:59:27 2012
+Prover9 interrupted
+
+%------------------------------------------------------------------------------

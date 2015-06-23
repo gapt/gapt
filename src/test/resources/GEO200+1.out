@@ -1,0 +1,140 @@
+%------------------------------------------------------------------------------
+File       : Prover9---1109a
+Problem    : GEO200+1 : TPTP v5.3.0. Released v3.3.0.
+Transform  : none
+Format     : tptp:raw
+Command    : run_prover9 %d %s
+
+Computer   : art05.cs.miami.edu
+Model      : i686 i686
+CPU        : Intel(R) Pentium(R) 4 CPU 2.80GHz @ 2800MHz
+Memory     : 2005MB
+OS         : Linux 2.6.32.26-175.fc12.i686.PAE
+CPULimit   : 300s
+DateTime   : Wed Jun 13 15:11:41 EDT 2012
+
+Result     : Theorem 0.60s
+Output     : Refutation 0.60s
+Verified   : 
+Statistics : -
+
+Comments   : 
+%------------------------------------------------------------------------------
+%----ERROR: Could not form TPTP format derivation
+%------------------------------------------------------------------------------
+%----ORIGINAL SYSTEM OUTPUT
+============================== Prover9 ===============================
+Prover9 (32) version 2009-11A, November 2009.
+Process 10289 was started by tptp on art05.cs.miami.edu,
+Wed Jun 13 15:11:42 2012
+The command was "/home/graph/tptp/Systems/Prover9---1109a/prover9 -t 300 -f /tmp/Prover9_10235_art05.cs.miami.edu".
+============================== end of head ===========================
+============================== INPUT =================================
+% Reading from file /tmp/Prover9_10235_art05.cs.miami.edu
+set(prolog_style_variables).
+set(auto2).
+    % set(auto2) -> set(auto).
+    % set(auto) -> set(auto_inference).
+    % set(auto) -> set(auto_setup).
+    % set(auto_setup) -> set(predicate_elim).
+    % set(auto_setup) -> assign(eq_defs, unfold).
+    % set(auto) -> set(auto_limits).
+    % set(auto_limits) -> assign(max_weight, "100.000").
+    % set(auto_limits) -> assign(sos_limit, 20000).
+    % set(auto) -> set(auto_denials).
+    % set(auto) -> set(auto_process).
+    % set(auto2) -> assign(new_constants, 1).
+    % set(auto2) -> assign(fold_denial_max, 3).
+    % set(auto2) -> assign(max_weight, "200.000").
+    % set(auto2) -> assign(max_hours, 1).
+    % assign(max_hours, 1) -> assign(max_seconds, 3600).
+    % set(auto2) -> assign(max_seconds, 0).
+    % set(auto2) -> assign(max_minutes, 5).
+    % assign(max_minutes, 5) -> assign(max_seconds, 300).
+    % set(auto2) -> set(sort_initial_sos).
+    % set(auto2) -> assign(sos_limit, -1).
+    % set(auto2) -> assign(lrs_ticks, 3000).
+    % set(auto2) -> assign(max_megs, 400).
+    % set(auto2) -> assign(stats, some).
+    % set(auto2) -> clear(echo_input).
+    % set(auto2) -> set(quiet).
+    % set(auto2) -> clear(print_initial_clauses).
+    % set(auto2) -> clear(print_given).
+assign(lrs_ticks,-1).
+assign(sos_limit,10000).
+assign(order,kbo).
+set(lex_order_vars).
+clear(print_given).
+% formulas(sos).  % not echoed (15 formulas)
+============================== end of input ==========================
+% From the command line: assign(max_seconds, 300).
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+% Formulas that are not ordinary clauses:
+1 (all X -distinct_points(X,X)) # label(apart1) # label(axiom) # label(non_clause).  [assumption].
+2 (all X -distinct_lines(X,X)) # label(apart2) # label(axiom) # label(non_clause).  [assumption].
+3 (all X -convergent_lines(X,X)) # label(apart3) # label(axiom) # label(non_clause).  [assumption].
+4 (all X all Y all Z (distinct_points(X,Y) -> distinct_points(X,Z) | distinct_points(Y,Z))) # label(apart4) # label(axiom) # label(non_clause).  [assumption].
+5 (all X all Y all Z (distinct_lines(X,Y) -> distinct_lines(X,Z) | distinct_lines(Y,Z))) # label(apart5) # label(axiom) # label(non_clause).  [assumption].
+6 (all X all Y all Z (convergent_lines(X,Y) -> convergent_lines(X,Z) | convergent_lines(Y,Z))) # label(ax6) # label(axiom) # label(non_clause).  [assumption].
+7 (all X all Y (distinct_points(X,Y) -> -apart_point_and_line(X,line_connecting(X,Y)))) # label(ci1) # label(axiom) # label(non_clause).  [assumption].
+8 (all X all Y (distinct_points(X,Y) -> -apart_point_and_line(Y,line_connecting(X,Y)))) # label(ci2) # label(axiom) # label(non_clause).  [assumption].
+9 (all X all Y (convergent_lines(X,Y) -> -apart_point_and_line(intersection_point(X,Y),X))) # label(ci3) # label(axiom) # label(non_clause).  [assumption].
+10 (all X all Y (convergent_lines(X,Y) -> -apart_point_and_line(intersection_point(X,Y),Y))) # label(ci4) # label(axiom) # label(non_clause).  [assumption].
+11 (all X all Y all U all V (distinct_points(X,Y) & distinct_lines(U,V) -> apart_point_and_line(X,U) | apart_point_and_line(X,V) | apart_point_and_line(Y,U) | apart_point_and_line(Y,V))) # label(cu1) # label(axiom) # label(non_clause).  [assumption].
+12 (all X all Y all Z (apart_point_and_line(X,Y) -> distinct_points(X,Z) | apart_point_and_line(Z,Y))) # label(ceq1) # label(axiom) # label(non_clause).  [assumption].
+13 (all X all Y all Z (apart_point_and_line(X,Y) -> distinct_lines(Y,Z) | apart_point_and_line(X,Z))) # label(ceq2) # label(axiom) # label(non_clause).  [assumption].
+14 (all X all Y all Z (convergent_lines(X,Y) -> distinct_lines(Y,Z) | convergent_lines(X,Z))) # label(ceq3) # label(axiom) # label(non_clause).  [assumption].
+15 -(all X all Y (distinct_points(X,Y) -> -distinct_lines(line_connecting(X,Y),line_connecting(Y,X)))) # label(con) # label(negated_conjecture) # label(non_clause).  [assumption].
+============================== end of process non-clausal formulas ===
+============================== PROCESS INITIAL CLAUSES ===============
+============================== PREDICATE ELIMINATION =================
+============================== end predicate elimination =============
+Auto_denials:  (non-Horn, no changes).
+Term ordering decisions:
+Function symbol KB weights:  c1=1. c2=1. line_connecting=1. intersection_point=1.
+============================== end of process initial clauses ========
+============================== CLAUSES FOR SEARCH ====================
+============================== end of clauses for search =============
+============================== SEARCH ================================
+% Starting search at 0.01 seconds.
+============================== PROOF =================================
+% Proof 1 at 0.01 (+ 0.00) seconds.
+% Length of proof is 21.
+% Level of proof is 6.
+% Maximum clause weight is 18.000.
+% Given clauses 25.
+1 (all X -distinct_points(X,X)) # label(apart1) # label(axiom) # label(non_clause).  [assumption].
+4 (all X all Y all Z (distinct_points(X,Y) -> distinct_points(X,Z) | distinct_points(Y,Z))) # label(apart4) # label(axiom) # label(non_clause).  [assumption].
+7 (all X all Y (distinct_points(X,Y) -> -apart_point_and_line(X,line_connecting(X,Y)))) # label(ci1) # label(axiom) # label(non_clause).  [assumption].
+8 (all X all Y (distinct_points(X,Y) -> -apart_point_and_line(Y,line_connecting(X,Y)))) # label(ci2) # label(axiom) # label(non_clause).  [assumption].
+11 (all X all Y all U all V (distinct_points(X,Y) & distinct_lines(U,V) -> apart_point_and_line(X,U) | apart_point_and_line(X,V) | apart_point_and_line(Y,U) | apart_point_and_line(Y,V))) # label(cu1) # label(axiom) # label(non_clause).  [assumption].
+15 -(all X all Y (distinct_points(X,Y) -> -distinct_lines(line_connecting(X,Y),line_connecting(Y,X)))) # label(con) # label(negated_conjecture) # label(non_clause).  [assumption].
+16 distinct_points(c1,c2) # label(con) # label(negated_conjecture).  [clausify(15)].
+17 distinct_lines(line_connecting(c1,c2),line_connecting(c2,c1)) # label(con) # label(negated_conjecture).  [clausify(15)].
+18 -distinct_points(A,A) # label(apart1) # label(axiom).  [clausify(1)].
+21 -distinct_points(A,B) | -apart_point_and_line(A,line_connecting(A,B)) # label(ci1) # label(axiom).  [clausify(7)].
+22 -distinct_points(A,B) | -apart_point_and_line(B,line_connecting(A,B)) # label(ci2) # label(axiom).  [clausify(8)].
+25 -distinct_points(A,B) | distinct_points(A,C) | distinct_points(B,C) # label(apart4) # label(axiom).  [clausify(4)].
+31 -distinct_points(A,B) | -distinct_lines(C,D) | apart_point_and_line(A,C) | apart_point_and_line(A,D) | apart_point_and_line(B,C) | apart_point_and_line(B,D) # label(cu1) # label(axiom).  [clausify(11)].
+32 -apart_point_and_line(c1,line_connecting(c1,c2)).  [resolve(21,a,16,a)].
+33 -apart_point_and_line(c2,line_connecting(c1,c2)).  [resolve(22,a,16,a)].
+34 distinct_points(c1,A) | distinct_points(c2,A).  [resolve(25,a,16,a)].
+38 distinct_points(c1,A) | distinct_points(c2,B) | distinct_points(A,B).  [resolve(34,b,25,a)].
+41 distinct_points(c2,c1).  [factor(38,a,c),unit_del(a,18)].
+42 -apart_point_and_line(c1,line_connecting(c2,c1)).  [resolve(41,a,22,a)].
+43 -apart_point_and_line(c2,line_connecting(c2,c1)).  [resolve(41,a,21,a)].
+46 $F.  [ur(31,b,17,a,c,32,a,d,42,a,e,33,a,f,43,a),unit_del(a,16)].
+============================== end of proof ==========================
+============================== STATISTICS ============================
+Given=25. Generated=76. Kept=30. proofs=1.
+Usable=25. Sos=5. Demods=0. Limbo=0, Disabled=16. Hints=0.
+Megabytes=0.07.
+User_CPU=0.01, System_CPU=0.00, Wall_clock=0.
+============================== end of statistics =====================
+============================== end of search =========================
+THEOREM PROVED
+Exiting with 1 proof.
+Process 10289 exit (max_proofs) Wed Jun 13 15:11:42 2012
+Prover9 interrupted
+
+%------------------------------------------------------------------------------

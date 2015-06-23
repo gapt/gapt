@@ -6,6 +6,7 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, LKProof }
+import at.logic.gapt.proofs.resolution.FClause
 
 import scala.collection.GenTraversable
 
@@ -107,6 +108,7 @@ object constants {
   def apply( s: FSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: Sequent ): Set[Const] = apply( s.toFSequent )
   def apply( p: LKProof ): Set[Const] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
+  def apply( clause: FClause ): Set[Const] = ( clause.neg ++ clause.pos ).flatMap( apply ).toSet
 }
 
 /**
