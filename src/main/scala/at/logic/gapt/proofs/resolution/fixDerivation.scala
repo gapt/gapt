@@ -1,11 +1,15 @@
 package at.logic.gapt.proofs.resolution
 
+import at.logic.gapt.algorithms.rewriting.{ NameReplacement, RenameResproof }
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.provers.atp.SearchDerivation
+import at.logic.gapt.provers.groundFreeVariables
+import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.immutable.HashMap
@@ -191,6 +195,13 @@ object fixDerivation extends Logger {
     }
   }
 
+  private val prover9 = new Prover9Prover
+  def tryDeriveViaResolution( to: FClause, from: Seq[FSequent] ) =
+    if ( prover9 isInstalled )
+      findDerivationViaResolution( to, from.map { seq => FClause( seq.antecedent, seq.succedent ) }.toSet )
+    else
+      None
+
   private def findFirstSome[A, B]( seq: Seq[A] )( f: A => Option[B] ): Option[B] =
     seq.view.flatMap( f( _ ) ).headOption
 
@@ -200,6 +211,7 @@ object fixDerivation extends Logger {
         orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
         orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
         orElse( tryDeriveViaSearchDerivation( cls, cs ) ).
+        orElse( tryDeriveViaResolution( cls, cs ) ).
         getOrElse {
           warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
           InitialClause( cls )
@@ -267,5 +279,93 @@ object mapInitialClauses {
 
     // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
     case Instance( _, p, s ) => Instance( apply( p )( f ), s )
+  }
+}
+
+object tautologifyInitialClauses {
+  private def findMatchingOccurrences( occ: FormulaOccurrence, from: Clause, to: Clause ): Seq[FormulaOccurrence] =
+    if ( from.negative.contains( occ ) )
+      to.negative.filter( _.formula == occ.formula )
+    else
+      to.positive.filter( _.formula == occ.formula )
+
+  /**
+   * Replace matching initial clauses by tautologies.
+   *
+   * If shouldTautologify is true for an initial clause Γ:-Δ, then it is replaced by the tautology Γ,Δ:-Γ,Δ.  The
+   * resulting resolution proof has the same structure as the original proof, and will hence contain many duplicate
+   * literals originating from the new initial clauses as the new literals are not factored away.
+   */
+  def apply( p: RobinsonResolutionProof, shouldTautologify: FClause => Boolean ): RobinsonResolutionProof =
+    p match {
+      case InitialClause( clause ) if shouldTautologify( clause.toFClause ) =>
+        val allLiterals = ( clause.antecedent ++ clause.succedent ).map( _.formula ).map( _.asInstanceOf[FOLFormula] )
+        InitialClause( allLiterals, allLiterals )
+      case InitialClause( clause ) => p
+      case Factor( clause, p1, List( occurrences ), subst ) =>
+        Factor( apply( p1, shouldTautologify ),
+          occurrences.head.formula, occurrences.size, p1.root.positive.contains( occurrences.head ), subst )
+      case Variant( clause, p1, subst )  => Variant( apply( p1, shouldTautologify ), subst )
+      case Instance( clause, p1, subst ) => Instance( apply( p1, shouldTautologify ), subst )
+      case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
+        val newP1 = apply( p1, shouldTautologify )
+        val newP2 = apply( p2, shouldTautologify )
+        val newOcc1 = newP1.root.succedent.find( _.formula == occ1.formula ).get
+        val newOcc2 = newP2.root.antecedent.find( _.formula == occ2.formula ).get
+        Resolution( newP1, newP2, newOcc1, newOcc2, subst )
+      case Paramodulation( clause, p1, p2, occ1, occ2, main, subst ) =>
+        val newP1 = apply( p1, shouldTautologify )
+        val newP2 = apply( p2, shouldTautologify )
+        val newOcc1 = newP1.root.succedent.find( _.formula == occ1.formula ).get
+        val newOcc2 = findMatchingOccurrences( occ2, p2.root, newP2.root ).head
+        Paramodulation( newP1, newP2, newOcc1, newOcc2, main.formula.asInstanceOf[FOLFormula], subst )
+    }
+}
+
+object containedVariables {
+  def apply( p: RobinsonResolutionProof ): Set[FOLVar] =
+    p.nodes.flatMap {
+      case node: RobinsonResolutionProof =>
+        freeVariables( node.root.toFSequent ).map( _.asInstanceOf[FOLVar] )
+    }
+}
+
+object factorDuplicateLiterals {
+  def apply( p: RobinsonResolutionProof ): RobinsonResolutionProof =
+    p.root.literals.groupBy( l => ( l._1.formula, l._2 ) ).foldLeft( p ) {
+      case ( p_, ( ( lit, pos ), occs ) ) =>
+        Factor( p_, lit, occs.size, pos, FOLSubstitution() )
+    }
+}
+
+object findDerivationViaResolution {
+  /**
+   * Finds a resolution derivation of a clause from a set of clauses.
+   *
+   * The resulting resolution proof ends in a subclause of the specified clause a, and its initial clauses are either
+   * from bs, tautologies, or reflexivity.
+   *
+   * @param a Consequence to prove.
+   * @param bs Set of initial clauses for the resulting proof.
+   * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
+   */
+  def apply( a: FClause, bs: Set[FClause] ): Option[RobinsonResolutionProof] = {
+    val grounding = groundFreeVariables.getGroundingMap( freeVariables( a.toFSequent ),
+      ( a.toFSequent.formulas ++ bs.flatMap( _.toFSequent.formulas ) ).flatMap( constants( _ ) ).toSet )
+
+    val groundingSubst = FOLSubstitution( grounding )
+    val negatedClausesA = a.neg.map { f => FClause( Seq(), Seq( groundingSubst( f ) ) ) } ++
+      a.pos.map { f => FClause( Seq( groundingSubst( f ) ), Seq() ) }
+
+    new Prover9Prover().getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
+      val tautologified = tautologifyInitialClauses( refutation, negatedClausesA.toSet )
+
+      val toUnusedVars = rename( grounding.map( _._1 ).toSet, containedVariables( tautologified ) )
+      val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }.toMap[FOLTerm, FOLTerm]
+      val derivation = RenameResproof.rename_resproof( tautologified, Set(), nonOverbindingUnground )
+      val derivationInOrigVars = Variant( derivation, FOLSubstitution( toUnusedVars.map( _.swap ) ) )
+
+      factorDuplicateLiterals( derivationInOrigVars )
+    }
   }
 }

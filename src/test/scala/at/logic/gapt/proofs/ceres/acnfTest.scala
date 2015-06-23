@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.ceres.ACNF
 
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
@@ -9,18 +10,18 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.formats.shlk_parsing.sFOParser
-import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.proofs.ceres.clauseSchema._
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.ceres.projections.Projections
 import at.logic.gapt.proofs.ceres.struct.StructCreators
 import java.io.{ FileInputStream, InputStreamReader }
+import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.mutable._
 
 class acnfTest extends Specification {
   implicit val factory = defaultFormulaOccurrenceFactory
 
-  args( sequential = true, skipAll = !Prover9.isInstalled )
+  args( sequential = true, skipAll = !new Prover9Prover().isInstalled )
   "ACNFTest" should {
     "should create correctly the ACNF for journal_example.lks" in {
       skipped( "Error at: at.logic.gapt.proofs.algorithms.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)" )
@@ -87,7 +88,7 @@ class acnfTest extends Specification {
 
       val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( es ) )
 
-      val rp = Prover9.refute( cs.toList.map( _.toFSequent ) )
+      val rp = new Prover9Prover().getRobinsonProof( cs.toList.map( _.toFSequent ) )
       rp must not beEmpty
 
       val proj = Projections( es )
@@ -95,7 +96,7 @@ class acnfTest extends Specification {
 
       //for (p <- proj) println(p)
       val rlkp = RobinsonToLK( rp.get )
-      val gproj = proj map ( applySubstitution( _, FOLSubstitution( ( u, b ) :: Nil ) )._1 )
+      val gproj = proj map ( applySubstitution( _, FOLSubstitution( u -> a, v -> a ) )._1 )
       //gproj map (x => println(" "+x))
       val acnf = ACNF.plugProjections( rlkp, gproj, es.root.toFSequent )
       //println(acnf)

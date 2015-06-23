@@ -13,7 +13,6 @@ import at.logic.gapt.provers.atp.commands.guided.{ AddGuidedClausesCommand, GetG
 import at.logic.gapt.provers.atp.commands.replay.ReplayCommand
 import at.logic.gapt.provers.atp.commands.robinson.{ ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand }
 import at.logic.gapt.provers.atp.commands.sequents.{ RefutationReachedCommand, fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand }
-import at.logic.gapt.provers.prover9.Prover9Exception
 import at.logic.gapt.utils.logging.Logger
 
 import collection.mutable.{ ListBuffer, Map }
@@ -120,7 +119,7 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
         } )
         if ( !lastParents.isEmpty ) cmnds = cmnds ++ replay( lastParents, "-1", List() ) // try to obtain the empty clause if last rule in prover9 refutation does not initiate a replay
       },
-      stderr => { val err: String = scala.io.Source.fromInputStream( stderr ).mkString; if ( !err.isEmpty ) throw new Prover9Exception( err ) } )
+      stderr => { val err: String = scala.io.Source.fromInputStream( stderr ).mkString; if ( !err.isEmpty ) throw new Exception( err ) } )
 
     //      val p  = "tptp_to_ladr" #| "prover9" #| "prooftrans xml expand"
     val p = "tptp_to_ladr" #| "prover9" #| "prooftrans xml"

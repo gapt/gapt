@@ -60,8 +60,8 @@ import at.logic.gapt.provers.atp.commands.sequents._
 import at.logic.gapt.provers.atp.commands.ui._
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.gapt.provers.minisat.MiniSAT
-import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.provers.prover9.commands.Prover9InitCommand
+import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.commands.{ InferenceExtractor, Prover9InitCommand }
 import at.logic.gapt.provers.{ Prover => abstractProver }
 import at.logic.gapt.utils.logging.Stopwatch
 import java.io.{ FileInputStream, IOException, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
@@ -69,6 +69,8 @@ import java.util.zip.GZIPInputStream
 import scala.collection.mutable.{ Map => MMap }
 
 import XMLParser._
+
+import scala.io.Source
 
 /**
  * *****************************************************************************
@@ -169,11 +171,14 @@ object loadProofs {
 }
 
 object loadProver9Proof {
-  def apply( filename: String ): ( RobinsonResolutionProof, FSequent, FSequent ) = Prover9.parse_prover9( filename )
+  def apply( filename: String ): ( RobinsonResolutionProof, FSequent, FSequent ) =
+    ( new Prover9Prover().parseProof( Source.fromFile( filename ).mkString ),
+      InferenceExtractor.viaLADR( filename ),
+      InferenceExtractor.clausesViaLADR( filename ) )
 }
 
 object loadProver9LKProof {
-  def apply( filename: String, forceSkolemization: Boolean = false ) = Prover9.parse_prover9LK( filename, forceSkolemization )
+  def apply( filename: String ) = new Prover9Prover().reconstructLKProofFromFile( filename )
 }
 
 object loadLLK {
@@ -299,22 +304,14 @@ object refuteFOLI {
 }
 
 object prover9 {
-  //we have to refute
-  def apply( filename: String ): Option[RobinsonResolutionProof] = Prover9.refute( filename )
+  def apply( clauses: Seq[FSequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses.toList )
 
-  def apply( clauses: Seq[FSequent] ): Option[RobinsonResolutionProof] = Prover9.refute( clauses.toList )
-
-  def apply( clauses: List[Sequent] ): Option[RobinsonResolutionProof] = Prover9.refute( clauses map ( _.toFSequent ) )
-
-  def refuteTPTP( fn: String ) = Prover9.refuteTPTP( fn )
+  def apply( clauses: List[Sequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses map ( _.toFSequent ) )
 
   //get the ground substitution of the ground resolution refutation
   //the ground substitution is a list of pairs, it can't be a map ! The reason is : a clause can be used several times in the resolution refutation.
   //def getGroundSubstitution(rrp: RobinsonResolutionProof): List[(Var, LambdaExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
-  def getProof( seq: FSequent ): Option[LKProof] = {
-    val p = new at.logic.gapt.provers.prover9.Prover9Prover()
-    p.getLKProof( seq )
-  }
+  def getProof( seq: FSequent ): Option[LKProof] = new Prover9Prover().getLKProof( seq )
 }
 
 object proveProp {
@@ -576,8 +573,6 @@ object help {
         |   refuteFOL: Seq[Clause] => Option[ResolutionProof[Clause]] - call internal resolution prover TAP
         |   refuteFOLI: Seq[Clause] => Option[ResolutionProof[Clause]] - simple interactive refutation
         |   prover9: List[Sequent],Seq[Clause] => Option[ResolutionProof[Clause]] - call prover9
-        |   prover9: String => Option[ResolutionProof[Clause]] - call prover9 on given Ladr file
-        |   prover9.refuteTPTP:  String => Option[ResolutionProof[Clause]] - call prover9 on given TPTP file
         |   prover9.getProof:  FSequent => Option[LKProof] - prove a sequent with prover9
         |   proveProp: FSequent => Option[LKProof] - tableau-like proof search for propositional logic
         |   miniSATsolve: HOLFormula => Option[Interpretation] - obtain a model for a quantifier-free formula using MiniSAT
