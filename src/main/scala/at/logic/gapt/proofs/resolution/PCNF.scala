@@ -40,7 +40,7 @@ object PCNF {
     val op = cnf.find( y => ( getVariableRenaming( y, a ), getVariableRenaming( a, y ) ) match {
       case ( Some( s ), Some( si ) ) =>
         sub = s; subi = si; true
-      case _                         => false
+      case _ => false
     } )
     val ( p, f, inAntecedent ) = op match {
       case Some( f2 ) => {
