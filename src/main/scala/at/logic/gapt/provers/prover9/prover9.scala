@@ -104,8 +104,8 @@ class Prover9Prover extends Prover with ExternalProgram {
   }
 
   def toP9Input( cnf: List[FClause] ): String =
-    ( "set(quiet)" +:
-      "clear(auto_denials)" +:
+    ( "set(quiet)" +: // suppresses noisy output on stderr
+      "clear(auto_denials)" +: // prevents prover9 from exiting with error code 2 even though a proof was found
       "formulas(sos)" +:
       cnf.map( toP9Input ) :+
       "end_of_list" ).map( _ + ".\n" ).mkString
