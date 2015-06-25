@@ -108,8 +108,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case Neg( FOLAtom( _, _ ) )                 => List( cls )
       case And( f1 @ FOLAtom( _, _ ), f2 )        => f1 :: collectLiterals( f2 )
       case And( f1 @ Neg( FOLAtom( _, _ ) ), f2 ) => f1 :: collectLiterals( f2 )
-      case And( f1, f2 @ FOLAtom( _, _ ) )        => f2 :: collectLiterals( f1 )
-      case And( f1, f2 @ Neg( FOLAtom( _, _ ) ) ) => f2 :: collectLiterals( f1 )
+      case And( f1, f2 @ FOLAtom( _, _ ) )        => collectLiterals( f1 ) :+ f2
+      case And( f1, f2 @ Neg( FOLAtom( _, _ ) ) ) => collectLiterals( f1 ) :+ f2
       case And( f1, f2 )                          => collectLiterals( f1 ) ++ collectLiterals( f2 )
       case _                                      => throw new Exception( "collectLiterals: formula " + cls + " is not a clause." )
     }
@@ -197,14 +197,14 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
                 matchClauses( f_dnf, lean_clauses ) match {
                   case Some( s ) => s
                   case None => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_dnf +
-                    " and clauses " + lean_clauses + " do not match." )
+                    " and clauses " + lean_clauses + " do not match [1]." )
                 }
               case _ :: _ =>
                 val f_clausified = toDefinitionalClausalForm( f_no_quant, lean_preds )
                 matchClauses( f_clausified, lean_clauses ) match {
                   case Some( s ) => s
                   case None => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_clausified +
-                    " and clauses " + lean_clauses + " do not match." )
+                    " and clauses " + lean_clauses + " do not match [2]." )
                 }
             }
 
