@@ -38,11 +38,15 @@ object addSymmetry {
 
     val subs = symm_terms.map( p => FOLSubstitution( Map( ( x, p._1 ), ( y, p._2 ) ) ) )
 
-    val et = formulaToExpansionTree( eq_symm, subs.toList, false )
+    if (subs.length == 0) s
+    else {
 
-    // This expansion sequent should be a tautology.
-    // (Not adding the expensive check)
-    new ExpansionSequent( et +: s.antecedent, s.succedent )
+      val et = formulaToExpansionTree( eq_symm, subs.toList, false )
+
+      // This expansion sequent should be a tautology.
+      // (Not adding the expensive check)
+      new ExpansionSequent( et +: s.antecedent, s.succedent )
+    }
   }
 
   /**
