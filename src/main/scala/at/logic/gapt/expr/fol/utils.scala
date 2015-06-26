@@ -71,6 +71,19 @@ object FOLSubTerms {
 
 }
 
+object Numeral {
+  def apply( k: Int ): FOLTerm = k match {
+    case 0 => FOLFunction( "0" )
+    case _ => FOLFunction( "s", Numeral( k - 1 ) )
+  }
+
+  def unapply( t: FOLTerm ): Option[Int] = t match {
+    case FOLFunction( "s", List( Numeral( k ) ) ) => Some( k + 1 )
+    case FOLFunction( "0", List() )               => Some( 0 )
+    case _                                        => None
+  }
+}
+
 object Utils {
   // Constructs the FOLTerm f^k(a)
   def iterateTerm( a: FOLTerm, f: String, k: Int ): FOLTerm =
@@ -79,7 +92,7 @@ object Utils {
     else FOLFunction( f, iterateTerm( a, f, k - 1 ) :: Nil )
 
   // Constructs the FOLTerm s^k(0)
-  def numeral( k: Int ) = iterateTerm( FOLConst( "0" ).asInstanceOf[FOLTerm], "s", k )
+  def numeral( k: Int ) = Numeral( k )
 }
 
 object getArityOfConstants {
