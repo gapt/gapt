@@ -38,7 +38,7 @@ object addSymmetry {
 
     val subs = symm_terms.map( p => FOLSubstitution( Map( ( x, p._1 ), ( y, p._2 ) ) ) )
 
-    if (subs.length == 0) s
+    if ( subs.length == 0 ) s
     else {
 
       val et = formulaToExpansionTree( eq_symm, subs.toList, false )
