@@ -243,13 +243,16 @@ object findConseq extends Logger {
     var M = Set( A )
 
     ( ForgetfulResolve( A ) union ForgetfulParamodulate( A ) ).foreach { F: List[MyFClause[FOLFormula]] =>
-      val Fui = S.u.map( ui => FOLSubstitution( List( alpha -> num, gamma -> ui ) )( CNFtoFormula( F ) ) )
-      if ( veriTProver.isValid( Fui ++: Gamma2n ) )
+      val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( CNFtoFormula( F ) ) ) )
+      if ( veriTProver.isValid( Fu ++: Gamma2n ) )
         M = M union apply( S, n, F )
     }
 
     M
   }
+
+  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula ): Set[List[MyFClause[FOLFormula]]] =
+    apply( S, n, CNFp.toFClauseList( A ).map( toMyFClause ) )
 }
 
 object FindFormulaH {
@@ -261,7 +264,7 @@ object FindFormulaH {
     val num = Utils.numeral( n )
     val CSn = canonicalSolution( S, n )
 
-    val M = findConseq( S, n, CNFp.toFClauseList( CSn ).map( toMyFClause ) ).toList.sortBy( _.length )
+    val M = findConseq( S, n, CSn ).toList.sortBy( _.length )
 
     val proofs = M.view.flatMap { F =>
       val C = CNFtoFormula( F )
