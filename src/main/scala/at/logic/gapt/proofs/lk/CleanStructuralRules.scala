@@ -82,15 +82,17 @@ object CleanStructuralRules {
                 val ws_2 = wsl._2.diff( List( a1.formula ) ) ++ wsr._2 ++ suc2
                 tailcall( fun( proof1, ( ws_1, ws_2 ) ) ) // The choice for proof1 is arbitrary
               case ( true, false ) =>
-                val ws_1 = wsl._1 ++ wsr._2
-                val ws_2 = wsl._2.diff( List( a1.formula ) ) ++ wsr._2
-                val p = WeakeningRightRule( proof1, a1.formula )
-                tailcall( fun( CutRule( p, proof2, a1.formula ), ( ws_1, ws_2 ) ) )
+                val ant2 = proof2.root.antecedent.map( _.formula )
+                val suc2 = proof2.root.succedent.map( _.formula )
+                val ws_1 = wsl._1 ++ wsr._1.diff( List( a2.formula ) ) ++ ant2
+                val ws_2 = wsl._2.diff( List( a1.formula ) ) ++ wsr._2 ++ suc2
+                tailcall( fun( proof1, ( ws_1, ws_2 ) ) )
               case ( false, true ) =>
-                val ws_1 = wsl._1 ++ wsr._1.diff( List( a2.formula ) )
-                val ws_2 = wsl._2 ++ wsr._2
-                val p = WeakeningLeftRule( proof2, a2.formula )
-                tailcall( fun( CutRule( proof1, p, a1.formula ), ( ws_1, ws_2 ) ) )
+                val ant1 = proof1.root.antecedent.map( _.formula )
+                val suc1 = proof1.root.succedent.map( _.formula )
+                val ws_1 = wsl._1 ++ wsr._1.diff( List( a2.formula ) ) ++ ant1
+                val ws_2 = wsl._2.diff( List( a1.formula ) ) ++ wsr._2 ++ suc1
+                tailcall( fun( proof2, ( ws_1, ws_2 ) ) )
               case ( false, false ) =>
                 val ws_1 = wsl._1 ++ wsr._1
                 val ws_2 = wsl._2 ++ wsr._2
