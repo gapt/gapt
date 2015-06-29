@@ -1,6 +1,11 @@
 
 package at.logic.gapt.expr
 
+import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.resolution.FClause
+
+import scala.collection.GenTraversable
+
 /*
  * A substitution is a mapping from variables to lambda-expressions which differs from the identity
  * on finitely many variables. Therefore:
@@ -49,6 +54,8 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   }
 
   def apply( t: HOLFormula ): HOLFormula = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+  def apply( sequent: FSequent ): FSequent = FSequent( sequent.antecedent.map( apply ), sequent.succedent.map( apply ) )
+  def apply( clause: FClause ): FClause = FClause( clause.neg.map( apply ), clause.pos.map( apply ) )
 
   // TODO: why lists? why not sets?
   def domain: List[Var] = map.keys.toList
@@ -80,7 +87,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
 }
 
 object Substitution {
-  def apply( subs: List[( Var, LambdaExpression )] ): Substitution = new Substitution( Map() ++ subs )
+  def apply( subs: GenTraversable[( Var, LambdaExpression )] ): Substitution = new Substitution( Map() ++ subs )
   def apply( subs: ( Var, LambdaExpression )* ): Substitution = new Substitution( Map() ++ subs )
   def apply( variable: Var, expression: LambdaExpression ): Substitution = new Substitution( Map( variable -> expression ) )
   def apply( map: Map[Var, LambdaExpression] ): Substitution = new Substitution( map )

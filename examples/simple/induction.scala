@@ -1,5 +1,4 @@
 import at.logic.gapt.expr._
-import at.logic.gapt.language.fol.AllBlock
 import at.logic.gapt.proofs.lk._
 
 object inductionExamples {
@@ -10,7 +9,7 @@ object inductionExamples {
   val zero = FOLConst("0")
 
   // Successor and addition
-  def S(x: FOLTerm) = FOLFunction("S", List(x))
+  def s(x: FOLTerm) = FOLFunction("s", List(x))
 
   def plus(x: FOLTerm, y: FOLTerm) = FOLFunction("+", List(x, y))
 
@@ -19,8 +18,8 @@ object inductionExamples {
 
   def addS(u: FOLTerm, v: FOLTerm) =
     Eq(
-      plus(u, S(v)),
-      S(plus(u, v))
+      plus(u, s(v)),
+      s(plus(u, v))
     )
 
   // Instances of associativity and reflexivity
@@ -29,9 +28,9 @@ object inductionExamples {
   def ref(t: FOLTerm) = Eq(t, t)
 
   // Universally quantified equations
-  val ForAllAssoc = AllBlock(List(x, y, z), assoc(x, y, z))
+  val ForAllAssoc = All.Block(List(x, y, z), assoc(x, y, z))
   val ForAllAdd0 = All(x, add0(x))
-  val ForAllAddS = AllBlock(List(x, y), addS(x, y))
+  val ForAllAddS = All.Block(List(x, y), addS(x, y))
 
   val inductionBase1 =
     Axiom(
@@ -84,16 +83,16 @@ object inductionExamples {
   val inductionStep1 =
     Axiom(
       Nil,
-      List(ref(plus(plus(a,b), S(c))))
+      List(ref(plus(plus(a,b), s(c))))
     )
 
   val inductionStep2 =
     ForallLeftBlock(
       EquationRightRule(
       inductionStep1,
-      inductionStep1.root.succedent(0),
+      inductionStep1.root.succedent.head,
       addS(plus(a,b), c),
-      Eq(plus(plus(a,b), S(c)), S(plus(plus(a,b),c)))
+      Eq(plus(plus(a,b), s(c)), s(plus(plus(a,b),c)))
       ),
       ForAllAddS,
       List(plus(a,b), c)
@@ -103,18 +102,18 @@ object inductionExamples {
   val inductionStep3 =
   EquationRightRule(
     inductionStep2,
-    inductionStep2.root.succedent(0),
+    inductionStep2.root.succedent.head,
     assoc(a,b,c),
-    Eq(plus(plus(a,b), S(c)), S(plus(a, plus(b,c))))
+    Eq(plus(plus(a,b), s(c)), s(plus(a, plus(b,c))))
   )
 
   val inductionStep4 =
   ForallLeftBlock(
     EquationRightRule(
       inductionStep3,
-      inductionStep3.root.succedent(0),
+      inductionStep3.root.succedent.head,
       addS(a, plus(b,c)),
-      Eq(plus(plus(a,b), S(c)), plus(a, S(plus(b,c))))
+      Eq(plus(plus(a,b), s(c)), plus(a, s(plus(b,c))))
     ),
     ForAllAddS,
     List(a, plus(b,c))
@@ -124,9 +123,9 @@ object inductionExamples {
   ForallLeftBlock(
     EquationRightRule(
       inductionStep4,
-      inductionStep4.root.succedent(0),
+      inductionStep4.root.succedent.head,
       addS(b,c),
-      Eq(plus(plus(a,b), S(c)), plus(a, plus(b,S(c))))
+      Eq(plus(plus(a,b), s(c)), plus(a, plus(b,s(c))))
     ),
     ForAllAddS,
     List(b,c)
@@ -139,7 +138,10 @@ object inductionExamples {
       InductionRule(
         inductionBase,
         inductionStep,
-        assoc(a,b,c)
+        assoc(a,b,zero),
+        assoc(a,b,c),
+        assoc(a,b,s(c)),
+        c
       ),
       ForAllAssoc,
       List(a,b,c)

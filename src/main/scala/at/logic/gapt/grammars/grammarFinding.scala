@@ -2,7 +2,7 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, Utils, FOLMatchingAlgorithm }
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
 import at.logic.gapt.utils.dssupport.ListSupport
 
 import scala.collection.{ Set, mutable }
@@ -169,32 +169,35 @@ class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizati
   override def vectProductionIsIncluded( p: VectTratGrammar.Production ) = productionIsIncluded( p._1( 0 ), p._2( 0 ) )
 }
 
-object normalFormsTratGrammar {
+object normalFormsProofGrammar {
   def apply( lang: Seq[FOLTerm], n: Int ) = {
+    // TODO: explicitly handle formula/term symbol distinction
+    val formulaSymbols = lang map { case FOLFunction( f, _ ) => f } toSet
+
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
     val nfs = tratNormalForms( lang, rhsNonTerminals )
-    val nonTerminals = FOLVar( "τ" ) +: rhsNonTerminals
-    TratGrammar( nonTerminals( 0 ), nfs flatMap { nf =>
+    val axiom = FOLVar( "τ" )
+    TratGrammar( axiom, axiom +: rhsNonTerminals, nfs flatMap { nf =>
       val fvs = freeVariables( nf )
-      val possibleLhsVars =
-        if ( fvs.isEmpty ) nonTerminals
-        else {
-          val lowestIndex = fvs.map( nonTerminals.indexOf( _ ) ).min
-          ( 0 until lowestIndex ) map ( nonTerminals( _ ) )
-        }
+      val possibleLhsVars = nf match {
+        case FOLFunction( f, _ ) if formulaSymbols contains f => Seq( axiom )
+        case _ =>
+          val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
+          ( 0 until lowestIndex ) map ( rhsNonTerminals( _ ) )
+      }
       possibleLhsVars map { v => v -> nf }
     } )
   }
 }
 
 object minimizeGrammar {
-  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j() ): TratGrammar = {
+  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new QMaxSAT ): TratGrammar = {
     val formula = new GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
-      case Some( interp ) => TratGrammar( g.axiom,
+      case Some( interp ) => TratGrammar( g.axiom, g.nonTerminals,
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
     }
@@ -202,8 +205,67 @@ object minimizeGrammar {
 }
 
 object findMinimalGrammar {
-  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
-    val polynomialSizedCoveringGrammar = normalFormsTratGrammar( lang, numberOfNonTerminals )
+  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
+    val polynomialSizedCoveringGrammar = normalFormsProofGrammar( lang, numberOfNonTerminals )
     minimizeGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
+  }
+}
+
+object takeN {
+  def apply[A]( n: Int, from: Seq[A] ): Seq[List[A]] = n match {
+    case 0 => Seq( Nil )
+    case _ =>
+      takeN( n - 1, from ) flatMap { rest =>
+        from.map( _ :: rest )
+      }
+  }
+}
+
+object normalFormsProofVectGrammar {
+  import VectTratGrammar._
+
+  def apply( lang: Seq[FOLTerm], arities: Seq[Int] ): VectTratGrammar = {
+    val rhsNonTerminals = arities.zipWithIndex map { case ( arity, i ) => ( 0 until arity ).map( j => FOLVar( s"α_${i}_$j" ) ).toList }
+    apply( lang, FOLVar( "τ" ), rhsNonTerminals )
+  }
+
+  def apply( lang: Seq[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {
+    // TODO: explicitly handle formula/term symbol distinction
+    val formulaSymbols = lang map { case FOLFunction( f, _ ) => f } toSet
+
+    val nfs = tratNormalForms( lang, nonTermVects flatten )
+
+    val nts = List( axiom ) +: nonTermVects
+    VectTratGrammar( axiom, nts, nts.zipWithIndex flatMap {
+      case ( a, i ) =>
+        val allowedNonTerms = nts.drop( i + 1 ).flatten.toSet
+        val allowedRHS = nfs filter { nf => freeVariables( nf ) subsetOf allowedNonTerms }
+        val rhsWithCorrectType = allowedRHS filter {
+          case FOLFunction( f, _ ) if formulaSymbols contains f => a == List( axiom )
+          case _ => a != List( axiom )
+        }
+        takeN( a.size, rhsWithCorrectType ).map( a -> _ )
+    } )
+  }
+}
+
+object minimizeVectGrammar {
+  def apply( g: VectTratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new QMaxSAT ): VectTratGrammar = {
+    val formula = new VectGrammarMinimizationFormula( g )
+    val hard = formula.coversLanguage( lang )
+    val atomsInHard = atoms( hard )
+    val soft = g.productions map formula.vectProductionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
+    maxSATSolver.solveWPM( List( hard ), soft toList ) match {
+      case Some( interp ) => VectTratGrammar( g.axiom, g.nonTerminals,
+        g.productions filter { p => interp.interpret( formula.vectProductionIsIncluded( p ) ) } )
+      case None => throw new Exception( "Grammar does not cover language." )
+    }
+  }
+}
+
+object findMinimalVectGrammar {
+  def apply( lang: Seq[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
+    val polynomialSizedCoveringGrammar = normalFormsProofVectGrammar( lang, aritiesOfNonTerminals )
+    minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
 }

@@ -17,7 +17,7 @@ import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.formats.prover9.Prover9TermParser
 import at.logic.gapt.provers.FailSafeProver
 import at.logic.gapt.provers.minisat.MiniSATProver
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.ceres.clauseSets.profile._
@@ -109,10 +109,10 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
     "load Prover9 proof without equality reasoning, introduce a cut and eliminate it via Gentzen" in {
       val fsprover = FailSafeProver.getProver()
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "SYN726-1.out" )
-      val p1 = Prover9.parse_prover9LK( testFilePath )
+      val p1 = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
       val p2 = CutIntroduction.one_cut_many_quantifiers( p1, false )
       val p3 = ReductiveCutElim( p2 )
 
@@ -161,10 +161,10 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
     "load Prover9 proof without equality reasoning and eliminate cuts via Gentzen" in {
       val fsprover = FailSafeProver.getProver()
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
-      val p = Prover9.parse_prover9LK( testFilePath )
+      val p = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
       val q = ReductiveCutElim( p )
 
       ReductiveCutElim.isCutFree( q ) must beEqualTo( true )
@@ -210,11 +210,11 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
     "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using minisat or sat4j and readback E to LK" in {
       val fsprover = FailSafeProver.getProver()
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
-      val lkproof = Prover9.parse_prover9LK( testFilePath )
+      val lkproof = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
       val expseq = LKToExpansionProof( lkproof )
       val deep = ETtoDeep( expseq )
 
@@ -227,11 +227,11 @@ class MiscTest extends Specification with ClasspathFileCopier {
     "load Prover9 proof with equality reasoning, extract expansion tree E, verify deep formula of E using veriT" in {
       val veriT = new VeriTProver()
       if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "ALG004-1.out" )
 
-      val lkProof = Prover9.parse_prover9LK( testFilePath )
+      val lkProof = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
       val expansionSequent = LKToExpansionProof( lkProof )
       val deep = ETtoDeep( expansionSequent )
 
@@ -239,11 +239,11 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "load Prover9 proof without equality reasoning, extract expansion tree E, verify deep formula of E using solvePropositional" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
-      val lkproof1 = Prover9.parse_prover9LK( testFilePath )
+      val lkproof1 = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
       val expseq = LKToExpansionProof( lkproof1 )
       val deep = ETtoDeep( expseq )
 
@@ -251,9 +251,9 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
       val testFilePath = tempCopyOfClasspathFile( "NUM484+3.out" )
-      val lkproof1 = Prover9.parse_prover9LK( testFilePath )
+      val lkproof1 = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
       val expseq = LKToExpansionProof( lkproof1 )
       val deep = ETtoDeep( expseq )
       success( "everything worked fine" )

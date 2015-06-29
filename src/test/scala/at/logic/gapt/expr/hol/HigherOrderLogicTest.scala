@@ -237,26 +237,26 @@ class HigherOrderLogicTest extends Specification {
     val exP = Ex( x, Ex( y, Ex( z, Pxyz ) ) )
 
     "Correctly introduce one quantifier" in {
-      AllBlock( List( x ), Pxyz ) must beEqualTo( All( x, Pxyz ) )
-      ExBlock( List( x ), Pxyz ) must beEqualTo( Ex( x, Pxyz ) )
+      All.Block( List( x ), Pxyz ) must beEqualTo( All( x, Pxyz ) )
+      Ex.Block( List( x ), Pxyz ) must beEqualTo( Ex( x, Pxyz ) )
     }
 
     "Correctly introduce multiple quantifiers" in {
-      AllBlock( List( x, y, z ), Pxyz ) must beEqualTo( allP )
-      ExBlock( List( x, y, z ), Pxyz ) must beEqualTo( exP )
+      All.Block( List( x, y, z ), Pxyz ) must beEqualTo( allP )
+      Ex.Block( List( x, y, z ), Pxyz ) must beEqualTo( exP )
     }
 
     "Correctly match quantified formulas" in {
 
       val match1 = allP match {
-        case AllBlock( vars, f ) =>
+        case All.Block( vars, f ) =>
           vars == List( x, y, z )
           f == Pxyz
         case _ => false
       }
 
       val match2 = exP match {
-        case ExBlock( vars, f ) =>
+        case Ex.Block( vars, f ) =>
           vars == List( x, y, z )
           f == Pxyz
         case _ => false
@@ -267,10 +267,10 @@ class HigherOrderLogicTest extends Specification {
     }
 
     "Fail to match other formulas" in {
-      exP must beLike { case AllBlock( List(), _ ) => ok }
-      allP must beLike { case ExBlock( List(), _ ) => ok }
-      Pxyz must beLike { case AllBlock( List(), _ ) => ok }
-      Pxyz must beLike { case ExBlock( List(), _ ) => ok }
+      exP must beLike { case All.Block( List(), _ ) => ok }
+      allP must beLike { case Ex.Block( List(), _ ) => ok }
+      Pxyz must beLike { case All.Block( List(), _ ) => ok }
+      Pxyz must beLike { case Ex.Block( List(), _ ) => ok }
     }
   }
 }

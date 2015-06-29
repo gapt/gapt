@@ -2,14 +2,14 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ETWeakQuantifier, merge, ETAtom }
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.mutable._
 
 class InductionProverTest extends Specification {
 
-  if ( !Prover9.isInstalled ) skipAll
+  if ( !new Prover9Prover().isInstalled ) skipAll
 
-  "the SimpleInductionProof class" should {
+  "the factorial example proof" should {
     val zero = FOLConst( "0" )
     val alpha = FOLVar( "α" )
     val beta = FOLVar( "β" )
@@ -81,6 +81,107 @@ class InductionProverTest extends Specification {
       p.toLKProof
 
       success
+    }
+
+    "find the induction formula" in {
+      val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
+      FindFormulaH( sip, 0 ) match {
+        case Some( _ ) => success
+        case None      => failure
+      }
+    }
+  }
+
+  "the associativity example proof" should {
+    // Variables and constants
+    val ( x, y, z ) = ( FOLVar( "x" ), FOLVar( "y" ), FOLVar( "z" ) )
+    val ( alpha, beta, gamma ) = ( FOLVar( "α" ), FOLVar( "β" ), FOLVar( "γ" ) )
+    val nu = FOLVar( "ν" )
+    val zero = FOLConst( "0" )
+
+    // Successor and addition
+    def s( x: FOLTerm ) = FOLFunction( "s", List( x ) )
+
+    def plus( x: FOLTerm, y: FOLTerm ) = FOLFunction( "+", List( x, y ) )
+
+    // Instances of addition axioms
+    def add0( v: FOLTerm ) = Eq( plus( v, zero ), v )
+
+    def addS( u: FOLTerm, v: FOLTerm ) =
+      Eq(
+        plus( u, s( v ) ),
+        s( plus( u, v ) ) )
+
+    // Instances of associativity and reflexivity
+    def assoc( x: FOLTerm, y: FOLTerm, z: FOLTerm ) = Eq( plus( plus( x, y ), z ), plus( x, plus( y, z ) ) )
+    def ref( t: FOLTerm ) = Eq( t, t )
+
+    // Universally quantified equations
+    val ForAllAssoc = All.Block( List( x, y, z ), assoc( x, y, z ) )
+    val ForAllAdd0 = All( x, add0( x ) )
+    val ForAllAddS = All.Block( List( x, y ), addS( x, y ) )
+
+    val et1 = merge( ETWeakQuantifier( ForAllAdd0, List(
+      ( ETAtom( add0( beta ) ), beta ),
+      ( ETAtom( add0( plus( alpha, beta ) ) ), plus( alpha, beta ) ) ) ) )
+
+    val ExpSeq0 = ExpansionSequent( List( et1 ), Nil )
+
+    val et2 = merge( ETWeakQuantifier(
+      ForAllAddS,
+      List(
+        ( ETWeakQuantifier(
+          All( y, addS( gamma, y ) ),
+          List(
+            ( ETAtom( addS( gamma, nu ) ),
+              nu ) ) ),
+          gamma ),
+
+        ( ETWeakQuantifier(
+          All( y, addS( alpha, y ) ),
+          List(
+            ( ETAtom( addS( alpha, plus( gamma, nu ) ) ),
+              plus( gamma, nu ) ) ) ),
+          alpha ),
+
+        ( ETWeakQuantifier(
+          All( y, addS( plus( alpha, gamma ), y ) ),
+          List(
+            ( ETAtom( addS( plus( alpha, gamma ), nu ) ),
+              nu ) ) ),
+          plus( alpha, gamma ) ) ) ) )
+
+    val t = List( gamma )
+
+    val ExpSeq1 = ExpansionSequent( List( et2 ), Nil )
+
+    val B = assoc( alpha, alpha, alpha )
+
+    val u = List( alpha )
+
+    val ExpSeq2 = ExpansionSequent( Nil, List( ETAtom( B ) ) )
+
+    val F = assoc( alpha, gamma, nu )
+
+    "be constructed correctly" in {
+      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+
+      success
+    }
+
+    "produce an LKProof" in {
+      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      p.toLKProof
+
+      success
+    }
+
+    "find the induction formula" in {
+      val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
+      FindFormulaH( sip, 0 ) match {
+        case Some( _ ) => success
+        case None      => failure
+      }
     }
   }
 }

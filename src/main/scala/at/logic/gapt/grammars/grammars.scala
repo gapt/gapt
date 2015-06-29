@@ -61,11 +61,6 @@ object TratGrammar {
 
   def asVectTratGrammarProduction( p: Production ): VectTratGrammar.Production =
     List( p._1 ) -> List( p._2 )
-
-  def apply( axiom: FOLVar, productions: Seq[TratGrammar.Production] ): TratGrammar = {
-    val nonTerminals = ( ( axiom +: productions.map( _._1 ) ) ++ productions.flatMap { p => freeVariables( p._2 ) } ).distinct
-    TratGrammar( axiom, nonTerminals, productions )
-  }
 }
 
 case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: Seq[TratGrammar.Production] ) {

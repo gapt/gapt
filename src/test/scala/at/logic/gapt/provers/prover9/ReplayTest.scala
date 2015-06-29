@@ -42,12 +42,12 @@ class ReplayTest extends Specification {
 
   def getRefutation2( ls: Iterable[FSequent] ) = MyProver.refute( Stream( SetTargetClause( FSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next
 
-  args( skipAll = !Prover9.isInstalled )
+  args( skipAll = !new Prover9Prover().isInstalled )
   "replay" should {
     /*"prove (with para) SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
 
       //checks, if the execution of prover9 works, o.w. skip test
-      Prover9.refute(box ) must not(throwA[IOException]).orSkip
+      new Prover9Prover().getRobinsonProof(box ) must not(throwA[IOException]).orSkip
 
 
       val i = parse("=(f(a,x),x)")
@@ -201,7 +201,7 @@ class ReplayTest extends Specification {
       val p = FOLAtom( "P", Nil )
       val s1 = FSequent( Nil, p :: Nil )
       val s2 = FSequent( p :: Nil, Nil )
-      val result: Option[RobinsonResolutionProof] = Prover9.refute( s1 :: s2 :: Nil )
+      val result: Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( s1 :: s2 :: Nil )
       result match {
         case Some( proof ) =>
           //println(Formatter.asHumanReadableString(proof))

@@ -3,8 +3,9 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.mutable._
 
 class FixDerivationTest extends Specification {
@@ -85,5 +86,57 @@ class FixDerivationTest extends Specification {
       fixDerivation( der, cq :: cqp :: Nil ).root.toFSequent must beEqualTo( cp )
     }
 
+  }
+
+  "findDerivationViaResolution" should {
+    def isTautological( f: FClause ): Boolean =
+      ( f.neg intersect f.pos ).nonEmpty ||
+        f.pos.collect { case Eq( FOLVar( x ), FOLVar( x_ ) ) if x == x_ => () }.nonEmpty
+
+    def check( a: FClause, bs: Set[FClause] ) = {
+      if ( !new Prover9Prover().isInstalled ) skipped
+      findDerivationViaResolution( a, bs ) must beLike {
+        case Some( p ) =>
+          p.root.toFClause.isSubClauseOf( a ) aka s"${p.root} subclause of $a" must_== true
+          foreach( initialSequents( p ).map( _.toFClause ) ) { initial =>
+            val inBsModRenaming = bs.exists( b => PCNF.getVariableRenaming( initial, b ).isDefined )
+            ( isTautological( initial ) || inBsModRenaming ) aka s"$initial in $bs or tautology" must_== true
+          }
+      }
+    }
+
+    "-q|p, q := p" in {
+      val a = FClause( Seq(), Seq( FOLAtom( "p" ) ) )
+      val bs = Set( FClause( Seq(), Seq( FOLAtom( "q" ) ) ), FClause( Seq( FOLAtom( "q" ) ), Seq( FOLAtom( "p" ) ) ) )
+      check( a, bs )
+    }
+
+    "-p(x)|f(x,y)=y, p(a) := f(a,z)=z" in {
+      val a = FClause( Seq(), Seq( parseFormula( "f(a,z)=z" ) ) )
+      val bs = Set( FClause( Seq( parseFormula( "p(x)" ) ), Seq( parseFormula( "f(x,y)=y" ) ) ),
+        FClause( Seq(), Seq( parseFormula( "p(a)" ) ) ) )
+      check( a, bs )
+    }
+
+    "p|p|q := p|q" in {
+      val a = FClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "q" ) ) )
+      val bs = Set( FClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "p" ), FOLAtom( "q" ) ) ) )
+      check( a, bs )
+    }
+
+    "p|q := p|p|q" in {
+      val a = FClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "p" ), FOLAtom( "q" ) ) )
+      val bs = Set( FClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "q" ) ) ) )
+      check( a, bs )
+    }
+
+    "requires factoring" in {
+      val a = FClause( Seq( FOLAtom( "p" ) ), Seq() )
+      val bs = Set(
+        FClause( Seq( FOLAtom( "p" ), FOLAtom( "q" ) ), Seq( FOLAtom( "r" ) ) ),
+        FClause( Seq( FOLAtom( "p" ) ), Seq( FOLAtom( "q" ), FOLAtom( "r" ) ) ),
+        FClause( Seq( FOLAtom( "p" ), FOLAtom( "r" ) ), Seq() ) )
+      check( a, bs )
+    }
   }
 }

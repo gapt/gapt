@@ -3,7 +3,7 @@ package at.logic.gapt.grammars
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.fol.Utils.numeral
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
 
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )
@@ -129,7 +129,7 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
 }
 
 object minimizeSipGrammar {
-  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ): SipGrammar = {
+  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new QMaxSAT ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
     val atomsInHard = atoms( hard )
@@ -143,7 +143,7 @@ object minimizeSipGrammar {
 }
 
 object findMinimalSipGrammar {
-  def apply( langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
+  def apply( langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
     val polynomialSizedCoveringGrammar = normalFormsSipGrammar( langs )
     minimizeSipGrammar( polynomialSizedCoveringGrammar, langs, maxSATSolver )
   }

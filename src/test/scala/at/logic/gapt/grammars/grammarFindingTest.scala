@@ -104,7 +104,7 @@ class GrammarFindingTest extends Specification {
     }
     "generate term if only tau-productions are allowed" in {
       val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
-      val g = normalFormsTratGrammar( l, 4 )
+      val g = normalFormsProofGrammar( l, 4 )
       val formula = new GrammarMinimizationFormula( g )
       val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       new Sat4j().solve( And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) ) must beSome
@@ -113,6 +113,7 @@ class GrammarFindingTest extends Specification {
 
   "minimizeGrammar" should {
     "remove redundant productions" in {
+      if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
       val g = tg( "x->c", "x->d" )
       val minG = minimizeGrammar( g, Seq( "c" ) map parseTerm )
       minG.productions must beEqualTo( Seq( "x->c" ) map parseProduction )
@@ -159,7 +160,10 @@ class GrammarFindingTest extends Specification {
       case Array( a, t ) => FOLVar( a ) -> parseTerm( t )
     }
 
-  def tg( prods: String* ) = TratGrammar( FOLVar( "x" ), prods map parseProduction toList )
+  def tg( prods: String* ) = {
+    val ps = prods map parseProduction
+    TratGrammar( FOLVar( "x" ), ps map ( _._1 ) distinct, ps )
+  }
 
   def vtg( nts: Seq[String], prods: Seq[String]* ) =
     VectTratGrammar( FOLVar( "x" ), nts map { nt => nt.split( "," ).map( FOLVar( _ ) ).toList },

@@ -37,9 +37,10 @@ object PCNF {
     val cnf = CNFp.toFClauseList( form )
     var sub = Substitution()
     var subi = Substitution()
-    val op = cnf.find( y => getVariableRenaming( y, a ) match {
-      case Some( s ) => { sub = s; subi = getVariableRenaming( a, y ).get; true }
-      case _         => false
+    val op = cnf.find( y => ( getVariableRenaming( y, a ), getVariableRenaming( a, y ) ) match {
+      case ( Some( s ), Some( si ) ) =>
+        sub = s; subi = si; true
+      case _ => false
     } )
     val ( p, f, inAntecedent ) = op match {
       case Some( f2 ) => {
