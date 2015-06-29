@@ -67,39 +67,57 @@ class RecSchemGenLangFormula( val recursionScheme: RecursionScheme,
     FOLUnificationAlgorithm.unify( rule_.rhs, against ).headOption.map( _( rule_.lhs ) )
   }
 
-  def apply( targets: Seq[( FOLTerm, FOLTerm )] ): FOLFormula = {
+  type Target = ( FOLTerm, FOLTerm )
+  def apply( targets: Seq[Target] ): FOLFormula = {
+    val edges = mutable.ArrayBuffer[( Target, Rule, Target )]()
+    val goals = mutable.Set[Target]()
+
     val queue = mutable.Queue( targets: _* )
-    val alreadyDone = mutable.Set[( FOLTerm, FOLTerm )]()
-    val formulas = mutable.ListBuffer[FOLFormula]()
-
-    targets foreach { case ( from, to ) => formulas += derivable( from, to ) }
-
+    val alreadyDone = mutable.Set[Target]()
     while ( queue nonEmpty ) {
       val target @ ( from, to ) = queue.dequeue()
 
       if ( !alreadyDone( target ) && FOLMatchingAlgorithm.matchTerms( to, from ).isEmpty ) {
-        val possibleReductions = recursionScheme.rules flatMap { rule =>
-          reverseMatch( rule, to ).map( canonicalVars( _ ) -> rule )
-        }
-
-        formulas += Imp( derivable( from, to ), Or( possibleReductions.toSeq flatMap {
-          case ( newTo, rule ) =>
+        recursionScheme.rules foreach { rule =>
+          reverseMatch( rule, to ).map( canonicalVars( _ ) ).foreach { newTo =>
             targetFilter( from, newTo ) match {
               case Some( true ) =>
-                Some( ruleIncluded( rule ) )
-              case Some( false ) =>
-                None
-              case _ =>
+                goals += ( from -> newTo )
+                edges += ( ( target, rule, from -> newTo ) )
+              case Some( false ) => ()
+              case None =>
+                edges += ( ( target, rule, from -> newTo ) )
                 queue enqueue ( from -> newTo )
-                Some( And( derivable( from, newTo ), ruleIncluded( rule ) ) )
             }
-        } ) )
+          }
+        }
       }
 
       alreadyDone += target
     }
 
-    And( formulas )
+    val reachable = mutable.Set[Target]( goals.toSeq: _* )
+    var changed = true
+    while ( changed ) {
+      changed = false
+      edges.foreach {
+        case ( a, r, b ) =>
+          if ( ( reachable contains b ) && !( reachable contains a ) ) {
+            reachable += a
+            changed = true
+          }
+      }
+    }
+
+    And( ( targets diff goals.toSeq ).map { case ( from, to ) => derivable( from, to ) } ++ ( reachable map {
+      case t if goals contains t => Top()
+      case t @ ( from, to ) =>
+        Imp( derivable( from, to ), Or(
+          edges collect {
+            case ( `t`, r, b ) if goals contains b => ruleIncluded( r )
+            case ( `t`, r, ( from_, to_ ) )        => And( ruleIncluded( r ), derivable( from_, to_ ) )
+          } ) )
+    } ) )
   }
 }
 
