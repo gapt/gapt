@@ -1,6 +1,6 @@
 package at.logic.gapt.grammars
 
-import at.logic.gapt.expr.fol.{ FOLUnificationAlgorithm, Numeral, FOLSubstitution, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ toNNF, simplify, lcomp }
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
@@ -127,7 +127,10 @@ object SipRecSchem {
         from match {
           case FOLFunction( A, List( Numeral( n ) ) ) =>
             to match {
-              case FOLFunction( G, List( x, _, _ ) ) if termSize( x ) > n + 1 => Some( false )
+              case FOLFunction( A, _ ) => Some( false )
+              case FOLFunction( G, List( FOLFunction( f, _ ), _, _ ) ) if f != "s" && f != "0" => Some( false )
+              case FOLFunction( G, List( x, _, FOLVar( _ ) | Numeral( `n` ) ) ) if termSize( x ) <= n + 1 => None
+              case FOLFunction( G, _ ) => Some( false )
               case _ => None
             }
         }
@@ -157,23 +160,30 @@ object SipRecSchem {
     val rules = Set.newBuilder[Rule]
 
     val Seq( x, y, z ) = Seq( "x", "y", "z" ).map( FOLVar( _ ) )
-    val nfs = tratNormalForms( instanceLanguages flatMap ( _._2 ), Seq( x, y, z ) )
-    for ( nf <- nfs ) {
-      val fvs = freeVariables( nf )
-      if ( !nf.isInstanceOf[FOLVar] ) {
-        if ( !fvs.contains( y ) && !fvs.contains( z ) ) {
-          rules += Rule( FOLFunction( A, x ), nf )
-        }
-        rules += Rule( FOLFunction( G, FOLFunction( "s", x ), y, z ), nf )
 
-        if ( !fvs.contains( x ) )
-          rules += Rule( FOLFunction( G, FOLFunction( "0" ), y, z ), nf )
-      }
+    val allTerms = instanceLanguages flatMap ( _._2 )
+    val topLevelNFs = at.logic.gapt.grammars.normalForms( allTerms, Seq( x, y, z ) ).filter( !_.isInstanceOf[FOLVar] )
+    val argumentNFs = at.logic.gapt.grammars.normalForms( allTerms flatMap { case FOLFunction( _, as ) => FOLSubTerms( as ) }, Seq( x, y, z ) )
+
+    for ( nf <- topLevelNFs ) {
+      val fvs = freeVariables( nf )
+
+      if ( !fvs.contains( y ) && !fvs.contains( z ) )
+        rules += Rule( FOLFunction( A, x ), nf )
+
+      if ( !fvs.contains( x ) )
+        rules += Rule( FOLFunction( G, FOLFunction( "0" ), y, z ), nf )
+
+      rules += Rule( FOLFunction( G, FOLFunction( "s", x ), y, z ), nf )
+    }
+
+    for ( nf <- argumentNFs ) {
+      val fvs = freeVariables( nf )
+
+      if ( !fvs.contains( y ) && !fvs.contains( z ) )
+        rules += Rule( FOLFunction( A, x ), FOLFunction( G, x, nf, x ) )
 
       rules += Rule( FOLFunction( G, FOLFunction( "s", x ), y, z ), FOLFunction( G, x, nf, z ) )
-      if ( !fvs.contains( y ) && !fvs.contains( z ) ) {
-        rules += Rule( FOLFunction( A, x ), FOLFunction( G, x, nf, x ) )
-      }
     }
 
     RecursionScheme( rules.result() )
