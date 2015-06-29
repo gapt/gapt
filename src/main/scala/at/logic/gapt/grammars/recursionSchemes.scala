@@ -170,11 +170,10 @@ object SipRecSchem {
 
       if ( !fvs.contains( y ) && !fvs.contains( z ) )
         rules += Rule( FOLFunction( A, x ), nf )
-
-      if ( !fvs.contains( x ) )
+      else if ( !fvs.contains( x ) )
         rules += Rule( FOLFunction( G, FOLFunction( "0" ), y, z ), nf )
-
-      rules += Rule( FOLFunction( G, FOLFunction( "s", x ), y, z ), nf )
+      else
+        rules += Rule( FOLFunction( G, FOLFunction( "s", x ), y, z ), nf )
     }
 
     for ( nf <- argumentNFs ) {
