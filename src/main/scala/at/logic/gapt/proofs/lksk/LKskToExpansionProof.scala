@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lksk
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.{ BinaryLKProof, CutRule, UnaryLKProof, LKToExpansionProof }
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.expansionTrees.{ merge => mergeTree, ETAtom => AtomTree, _ }
+import at.logic.gapt.proofs.expansionTrees.{ merge => mergeTree, _ }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
 /**
@@ -23,11 +23,11 @@ class LKskToExpansionProof extends LKToExpansionProof {
     case WeakeningRightRule( parent, r, p ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, AtomTree( Bottom() ) ) )
+      contextmap + ( ( p, ETWeakening( p.formula ) ) )
     case WeakeningLeftRule( parent, r, p ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, AtomTree( Top() ) ) )
+      contextmap + ( ( p, ETWeakening( p.formula ) ) )
     case ForallSkLeftRule( parent, r, a, p, t ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )

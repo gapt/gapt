@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.expansionTrees.{ ETWeakQuantifier, ETStrongQuantifier, ETAnd, ETOr, ETImp, ETNeg, ETAtom, ETMerge, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
+import at.logic.gapt.proofs.expansionTrees.{ ETWeakQuantifier, ETStrongQuantifier, ETAnd, ETOr, ETImp, ETNeg, ETAtom, ETWeakening, ETMerge, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.logging.Logger
@@ -35,7 +35,7 @@ class LKToExpansionProof extends Logger {
   protected def handleAxiom( r: Sequent ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     // guess the axiom: must be an atom and appear left as well as right
     // can't use set intersection, but lists are small enough to do it manually
-    val axiomCandidates = r.antecedent.filter( elem => r.succedent.exists( elem2 => elem syntaxEquals elem2 ) ).filter( o => isAtom( o.formula ) || o.formula == Bottom() || o.formula == Top() )
+    val axiomCandidates = r.antecedent.filter( elem => r.succedent.exists( elem2 => elem syntaxEquals elem2 ) ).filter( o => isExtendedAtom( o.formula ) )
 
     if ( axiomCandidates.size > 1 ) {
       debug( "Warning: Multiple candidates for axiom formula in expansion tree extraction, choosing first one of: " + axiomCandidates )
@@ -59,8 +59,8 @@ class LKToExpansionProof extends Logger {
     } else {
       val axiomFormula = axiomCandidates( 0 )
 
-      Map( r.antecedent.map( fo => ( fo, ETAtom( if ( fo syntaxEquals axiomFormula ) fo.formula else Top() ) ) ) ++
-        r.succedent.map( fo => ( fo, ETAtom( if ( fo syntaxEquals axiomFormula ) fo.formula else Bottom() ) ) ): _* )
+      Map( r.antecedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETAtom( fo.formula ) else ETWeakening( fo.formula ) ) ) ++
+        r.succedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETAtom( fo.formula ) else ETWeakening( fo.formula ) ) ): _* )
     }
   }
 
@@ -69,8 +69,8 @@ class LKToExpansionProof extends Logger {
 
   protected def handleUnary( r: Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
-      case WeakeningRightRule( _, _, _ )           => ETAtom( Bottom() )
-      case WeakeningLeftRule( _, _, _ )            => ETAtom( Top() )
+      case WeakeningRightRule( _, _, _ )           => ETWeakening( p.formula )
+      case WeakeningLeftRule( _, _, _ )            => ETWeakening( p.formula )
       case ForallLeftRule( _, _, a, _, t )         => ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) )
       case ExistsRightRule( _, _, a, _, t )        => ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) )
       case ForallRightRule( _, _, a, _, v )        => ETStrongQuantifier( p.formula, v, map( a ) )
@@ -79,16 +79,16 @@ class LKToExpansionProof extends Logger {
       case ContractionRightRule( _, _, a1, a2, _ ) => ETMerge( map( a1 ), map( a2 ) )
       case AndLeft1Rule( _, _, a, _ ) =>
         val And( _, f2 ) = p.formula
-        ETAnd( map( a ), ETAtom( Top() ) )
+        ETAnd( map( a ), ETWeakening( f2 ) )
       case AndLeft2Rule( _, _, a, _ ) =>
         val And( f1, _ ) = p.formula
-        ETAnd( ETAtom( Top() ), map( a ) )
+        ETAnd( ETWeakening( f1 ), map( a ) )
       case OrRight1Rule( _, _, a, _ ) =>
         val Or( _, f2 ) = p.formula
-        ETOr( map( a ), ETAtom( Bottom() ) )
+        ETOr( map( a ), ETWeakening( f2 ) )
       case OrRight2Rule( _, _, a, _ ) =>
         val Or( f1, _ ) = p.formula
-        ETOr( ETAtom( Bottom() ), map( a ) )
+        ETOr( ETWeakening( f1 ), map( a ) )
       case ImpRightRule( _, _, a1, a2, _ ) =>
         ETImp( map( a1 ), map( a2 ) )
       case NegLeftRule( _, _, a, _ )         => ETNeg( map( a ) )

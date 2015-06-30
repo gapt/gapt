@@ -110,9 +110,7 @@ class ExtractExpansionSequentTest extends Specification {
 
       etSeq.antecedent.count( _.isInstanceOf[ETWeakQuantifier] ) mustEqual 1
       etSeq.antecedent.count( _.isInstanceOf[ETAtom] ) mustEqual 1
-
     }
   }
-
 }
 
