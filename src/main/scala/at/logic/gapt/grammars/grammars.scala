@@ -24,6 +24,8 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
   }
   require( nonTerminals contains Seq( axiom ), s"axiom is unknown non-terminal vector $axiom" )
 
+  def size = productions.size
+
   def language: Set[FOLTerm] = {
     var lang = Set[FOLTerm]( axiom )
     nonTerminals.foreach { a =>
