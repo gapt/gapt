@@ -661,7 +661,7 @@ object CutIntroduction extends Logger {
 
     def getUs( fs: Seq[FOLFormula] ): Seq[Seq[Seq[Seq[FOLTerm]]]] =
       ( 0 to alphas.size ).map( i => fs.map( f => {
-        val termlistlist = grammar.us( f )
+        val termlistlist = grammar.us.getOrElse( f, List() )
         termlistlist.filter( termlist => freeVariables( termlist ).toList.intersect( alphas.take( i ).flatMap( x => x ) ).isEmpty )
       } ) )
 
