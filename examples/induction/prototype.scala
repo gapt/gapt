@@ -69,13 +69,21 @@ lazy val tipES = TipParser.parse(Source.fromFile("/home/gebner/tip-benchs/benchm
     FSequent(theory, Seq(Substitution(v -> alpha)(concl)))
 }
 
-val endSequent = commES
+val sumES = FSequent(
+  List(
+    FOLAtom("P", List(alpha, FOLConst("0"))),
+    univclosure(parseFormula("P(s(x),y) -> P(x,s(y))"))),
+  List(
+    FOLAtom("P", List(FOLConst("0"), alpha))
+  )
+)
+val endSequent = sumES
 
 println(s"Proving $endSequent")
 
 Logger.getLogger(classOf[SipProver].getName).setLevel(Level.DEBUG)
 
-val sipProver = new SipProver(solutionFinder = new HeuristicSolutionFinder(1))
+val sipProver = new SipProver(solutionFinder = new HeuristicSolutionFinder(1), instances = (0 until 5))
 
 val maybeIndProof = sipProver.getSimpleInductionProof(endSequent)
 

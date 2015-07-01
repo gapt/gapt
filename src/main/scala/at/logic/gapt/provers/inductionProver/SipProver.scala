@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
+import at.logic.gapt.expr.fol.{FOLSubstitution, Utils}
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.findMinimalSipGrammar
 import at.logic.gapt.proofs.expansionTrees._
@@ -38,7 +38,6 @@ class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1
       debug( s"[n=$n] Proving $instanceSequent" )
       n -> instanceProver.getExpansionSequent( instanceSequent ).get
     }
-
     if ( minimizeInstanceLanguages ) {
       instanceProofs = instanceProofs map {
         case ( n, expProof ) =>
@@ -50,6 +49,17 @@ class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1
           n -> minExpProof
       }
     }
+
+    getSimpleInductionProof(endSequent, instanceProofs)
+
+  }
+
+  def getSimpleInductionProof(endSequent: FSequent, instanceProofs: Seq[(Int, ExpansionSequent)]): Option[SimpleInductionProof] = {
+
+    val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
+      case singleton if singleton.size == 1 => singleton.head
+    }
+    require( inductionVariable == SimpleInductionProof.alpha ) // TODO: maybe relax this restriction
 
     val termEncoding = InstanceTermEncoding( endSequent )
     var instanceLanguages = instanceProofs map {
