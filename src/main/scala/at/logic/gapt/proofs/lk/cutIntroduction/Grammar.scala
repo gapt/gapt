@@ -14,44 +14,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.grammars.VectTratGrammar
 import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
 import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.{ DFS, BFS, setSearch }
-
-import scala.collection.immutable.HashMap
-
-/**
- * Creates a grammar from a decomposition {U o,,a1,...,am1,, S,,1,, o,,b1,...,bm2,, ... o,,z1,...,zmn,, S,,n,,}
- * @param u set U
- * @param slist list of non-terminals and their corresponding sets (((a1,...,am1), S,,1,,), ..., (z1,...,zmn, S,,n,,))
- */
-@deprecated( "Use VectTratGrammar directly" )
-class Grammar( val vectTratGrammar: VectTratGrammar ) {
-
-  def this( u: List[FOLTerm], slist: List[( List[FOLVar], Set[List[FOLTerm]] )] ) =
-    this{
-      val axiom = FOLVar( "τ" )
-      val nonTerminals = List( axiom ) :: slist.map( _._1 )
-      val productions = u.map( t => List( axiom ) -> List( t ) ) ++ slist.flatMap { case ( a, ts ) => ts.map( a -> _ ) }
-      VectTratGrammar( axiom, nonTerminals, productions )
-    }
-
-  def u: List[FOLTerm] = vectTratGrammar.rightHandSides( List( vectTratGrammar.axiom ) ).flatten.toList
-  def slist: List[( List[FOLVar], Set[List[FOLTerm]] )] = vectTratGrammar.nonTerminals.filter( _ != List( vectTratGrammar.axiom ) ).map { a =>
-    a -> vectTratGrammar.rightHandSides( a ).toSet
-  }.toList
-
-  require( slist.forall { case ( vars, termlistlist ) => termlistlist.forall { case termlist => vars.length == termlist.length } } )
-
-  /** Returns the size of the grammar, i.e. |u| + |s| */
-  def size = u.size + vectTratGrammar.size
-
-  /** Returns the set of eigenvariables that occur in the grammar. */
-  def eigenvariables = vectTratGrammar.nonTerminals.flatten
-
-  /** Returns the number of eigenvariables that occur in this grammar. */
-  def numVars = eigenvariables.length
-
-  override def toString: String = vectTratGrammar.toString
-}
 
 // For cut-introduction, we consider sequents
 // \forall x_1 F_1(x_1), ..., \forall x_n F_n(x_n) :- \exists x_{n+1} F_{n+1}(x_{n+1}), ..., \exists x_m F(x_m)
@@ -93,9 +55,6 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
 }
 
 object simpleToMultiGrammar {
-  def apply( terms: TermSet, g: Grammar ): MultiGrammar =
-    apply( terms.encoding, g.vectTratGrammar )
-
   def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): MultiGrammar = {
     val us = g.rightHandSides( g.axiomVect ).map( _.head ).
       groupBy { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }.
