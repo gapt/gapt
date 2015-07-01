@@ -140,7 +140,7 @@ val evenES = FSequent(
 )
 
 
-val endSequent = evenES
+val endSequent = commES
 
 println(s"Proving $endSequent")
 

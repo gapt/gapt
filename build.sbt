@@ -8,7 +8,7 @@ lazy val commonSettings = Seq(
   startYear := Some(2008),
   version := "1.10-SNAPSHOT",
 
-  scalaVersion := "2.11.6",
+  scalaVersion := "2.11.7",
   scalacOptions in (Compile, doc) ++= Seq("-diagrams","-implicits"),
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test),
@@ -118,9 +118,9 @@ lazy val testing = (project in file("testing")).
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
 
 lazy val testDependencies = Seq(
-  "org.specs2" %% "specs2-core" % "3.6",
-  "org.specs2" %% "specs2-junit" % "3.6",  // needed for junitxml output
-  "org.specs2" %% "specs2-matcher" % "3.6")
+  "org.specs2" %% "specs2-core" % "3.6.2",
+  "org.specs2" %% "specs2-junit" % "3.6.2",  // needed for junitxml output
+  "org.specs2" %% "specs2-matcher" % "3.6.2")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =
   tests map { test =>
