@@ -63,6 +63,13 @@ val linearES = FSequent(
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("P", alpha)))
 
+// known to be working:
+//   isaplanner/prop_10.smt2
+//   isaplanner/prop_17.smt2
+//   tip2015/nat_pow_one.smt2
+//
+// interesting failures:
+//   prod/prop_16.smt2
 lazy val tipES = TipParser.parse(Source.fromFile("/home/gebner/tip-benchs/benchmarks/isaplanner/prop_10.smt2").mkString) match {
   // the Imp-stripping is a workaround for issue 340
   case FSequent(theory, Seq(All(v, Imp(_, concl)))) =>

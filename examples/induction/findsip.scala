@@ -1,13 +1,10 @@
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{time, parse}
 import at.logic.gapt.examples.UniformAssociativity3ExampleProof
-import at.logic.gapt.expr.fol.toNNF
-import at.logic.gapt.expr.hol.lcomp
-import at.logic.gapt.expr.hol.simplify.simplify
+import at.logic.gapt.expr.hol.{toNNF, simplify, lcomp}
 import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, normalFormsSipGrammar, GrammarMinimizationFormula}
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.lk.cutIntroduction.TermsExtraction
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 

@@ -35,12 +35,50 @@ object extractInstanceTerms {
  * number of formulas in the antecedent/succedent.
  */
 object extractInstances {
-  def apply( expansionTree: ExpansionTree ): Seq[FOLFormula] =
-    extractInstanceTerms( expansionTree ) map { case ( f, terms ) => instantiate( f, terms ) }
+  def apply( expansionTree: ExpansionTree ): Seq[FOLFormula] = {
+
+    if ( !containsWeakQuantifiers( expansionTree ) )
+      Seq( toDeep( expansionTree ).asInstanceOf[FOLFormula] )
+
+    else expansionTree match {
+      case ETWeakQuantifier( _, instances ) =>
+        instances flatMap { i => extractInstances( i._1 ) }
+      case ETStrongQuantifier( _, _, t ) => extractInstances( t )
+      case ETSkolemQuantifier( _, _, t ) => extractInstances( t )
+      case ETNeg( t )                    => extractInstances( t ) map { i => Neg( i ) }
+
+      case ETAnd( l, r ) =>
+        extractInstances( l ) flatMap { i =>
+          extractInstances( r ) map { j => And( i, j ) }
+        }
+      case ETOr( l, r ) =>
+        extractInstances( l ) flatMap { i =>
+          extractInstances( r ) map { j => Or( i, j ) }
+        }
+
+      case ETImp( l, r ) =>
+        extractInstances( l ) flatMap { i =>
+          extractInstances( r ) map { j => Imp( i, j ) }
+        }
+    }
+
+  }
 
   def apply( expansionSequent: ExpansionSequent ): FSequent =
     FSequent( expansionSequent.antecedent flatMap apply,
       expansionSequent.succedent flatMap apply )
+
+  // TODO: This should be somewhere else, for MultiExpansionTrees it's a member method.
+  private def containsWeakQuantifiers( et: ExpansionTree ): Boolean = et match {
+    case ETAtom( _ )                   => false
+    case ETWeakQuantifier( _, _ )      => true
+    case ETNeg( t )                    => containsWeakQuantifiers( t )
+    case ETAnd( l, r )                 => containsWeakQuantifiers( l ) || containsWeakQuantifiers( r )
+    case ETOr( l, r )                  => containsWeakQuantifiers( l ) || containsWeakQuantifiers( r )
+    case ETImp( l, r )                 => containsWeakQuantifiers( l ) || containsWeakQuantifiers( r )
+    case ETStrongQuantifier( _, _, t ) => containsWeakQuantifiers( t )
+    case ETSkolemQuantifier( _, _, t ) => containsWeakQuantifiers( t )
+  }
 }
 
 /**
