@@ -1,16 +1,15 @@
 import java.io._
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{loadVeriTProof, extractTerms, loadProver9LKProof}
+import at.logic.gapt.examples._
+import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lk.cutIntroduction.{TermSet, CutIntroduction}
+
 import scala.io.Source
 import scala.collection.immutable.HashMap
 import org.slf4j.LoggerFactory
 
 import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.proofs.expansionTrees.{ExpansionTree,ExpansionSequent,removeFromExpansionSequent}
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
-import at.logic.gapt.provers.eqProver._
-import at.logic.gapt.provers._
-
-// for testCutIntro.compressProofSequences
-:load examples/ProofSequences.scala
+import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 
 /**********
  * test script for the cut-introduction algorithm on output proofs from prover9,
@@ -178,7 +177,7 @@ object testCutIntro {
     val data = termsets.foldLeft("") {
       case (acc, (k, v)) =>
         val tssize = v.set.size
-        val n_functions = v.formulaFunction.size
+        val n_functions = v.formulas.distinct.size
         instance_per_formula += tssize.toFloat/n_functions.toFloat
         ts_size += tssize
         k + "," + n_functions + "," + tssize + "\n" + acc
@@ -212,7 +211,7 @@ object testCutIntro {
         case p: LKProof => try { withTimeout(timeout * 1000) { 
           val ts = extractTerms(p)
           val tssize = ts.set.size
-          val n_functions = ts.formulaFunction.size
+          val n_functions = ts.formulas.distinct.size
 
           if(tssize > n_functions)
             termsets += (file.getAbsolutePath -> ts)

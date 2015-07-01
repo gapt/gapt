@@ -29,41 +29,19 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
-import at.logic.gapt.expr.hol.isPrenex
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.expr._
-import scala.collection.immutable.HashMap
 
-class TermsExtractionException( msg: String ) extends Exception( msg )
-
+@deprecated( "Use InstanceTermEncoding instead." )
 object TermsExtraction {
-
   def apply( proof: LKProof ): TermSet = apply( LKToExpansionProof( proof ) )
 
   def apply( expProof: ExpansionSequent ): TermSet = {
+    val encoding = InstanceTermEncoding( toShallow( expProof ) )
 
-    val multiExpTrees = expProof.antecedent.map( et => compressQuantifiers( et ) ) ++ expProof.succedent.map( et => compressQuantifiers( et ) )
-
-    val tuple_set = multiExpTrees.foldRight( HashMap[FOLFormula, List[List[FOLTerm]]]() ) {
-      case ( mTree, map ) =>
-        if ( isPrenex( mTree.toShallow.asInstanceOf[FOLFormula] ) ) {
-          mTree match {
-            case METWeakQuantifier( form, children ) =>
-              val f = form.asInstanceOf[FOLFormula]
-              val terms = children.map { case ( tree, termsSeq ) => termsSeq.map( t => t.asInstanceOf[FOLTerm] ).toList }.toList
-              if ( map.contains( f ) ) {
-                val t = map( f )
-                map + ( f -> ( t ++ terms ) )
-              } else map + ( f -> terms )
-            case METStrongQuantifier( _, _, _ ) => throw new TermsExtractionException( "ERROR: Found strong quantifier while extracting terms." )
-            case _                              => map
-          }
-        } else throw new TermsExtractionException( "ERROR: Trying to extract the terms of an expansion proof with non-prenex formulas." )
-    }
-
-    new TermSet( tuple_set )
+    new TermSet( encoding, groundTerms( encoding.encode( expProof ) ).toList )
   }
 }
 
@@ -71,44 +49,18 @@ object TermsExtraction {
 // this represents a set of terms containing, for every such key, the terms g_F( t_1 ), ..., g_F( t_n ),
 // where g_F is a function symbol associated with the formula F. Functions to go back and forth
 // between the input map and the representation are provided.
+@deprecated( "Use InstanceTermEncoding instead." )
+class TermSet( encoding: InstanceTermEncoding, val set: List[FOLTerm] ) {
 
-class TermSet( terms: Map[FOLFormula, List[List[FOLTerm]]] ) {
-
-  var formulaFunction = new HashMap[String, FOLFormula]
-  var set: List[FOLTerm] = Nil
-
-  terms.foreach {
-    case ( f, lst ) =>
-      val functionSymbol = new TupleFunction
-      formulaFunction += ( functionSymbol.name -> f )
-      set = lst.foldRight( set ) {
-        case ( tuple, acc ) => FOLFunction( functionSymbol.name, tuple ) :: acc
-      }
-  }
-
-  def formulas = terms.keys
+  def formulas = set.map { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }
 
   // Given g_F( t_i ) as above, return F.
   def getFormula( t: FOLTerm ): FOLFormula = t match {
-    case FOLFunction( symbol, _ ) => formulaFunction( symbol.toString )
-    case _                        => throw new TermsExtractionException( "Term is not a function: " + t )
+    case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1
   }
 
   // Given g_F( t_i ) as above, return t_i.
   def getTermTuple( t: FOLTerm ): List[FOLTerm] = t match {
     case FOLFunction( _, tuple ) => tuple
-    case _                       => throw new TermsExtractionException( "Term is not a function: " + t )
-  }
-
-  object TupleFunction {
-    private var current = 0
-    private def inc = {
-      current += 1
-      current
-    }
-  }
-  class TupleFunction {
-    val id = TupleFunction.inc
-    val name = "tuple" + id
   }
 }

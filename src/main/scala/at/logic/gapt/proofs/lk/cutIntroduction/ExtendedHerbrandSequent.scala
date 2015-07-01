@@ -13,9 +13,7 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.FClause
 import scala.collection.immutable.Stack
-import at.logic.gapt.proofs.lk.cutIntroduction.MinimizeSolution.MyFClause
 import at.logic.gapt.utils.dssupport.ListSupport.mapAccumL
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch

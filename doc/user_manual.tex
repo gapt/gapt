@@ -861,12 +861,12 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 \end{multicols}
 
 \subsubsection*{Induction}
-  Let $A$ be a formula in which $x$ occurs freely.
+  Let $A$ be a formula in which $x$ occurs freely and $t$ a term.
   \begin{prooftree}
     \AxiomCm{\Gamma \seq \Delta, A[x/0]}
-    \AxiomCm{\Sigma, A \seq \Pi, A[x/S(x)]}
+    \AxiomCm{\Sigma, A \seq \Pi, A[x/s(x)]}
     \RightLabelm{(\mt{ind})}
-    \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A}
+    \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[x/t]}
   \end{prooftree}
 
 

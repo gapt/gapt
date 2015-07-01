@@ -269,6 +269,13 @@ object ForallRightRule extends StrongRuleHelper( true ) {
     }
   }
 
+  def apply( s1: LKProof, aux: HOLFormula, quantifiedVar: Var, eigenVar: Var ): LKProof = {
+    val sub = Substitution( eigenVar, quantifiedVar )
+    val main = All( quantifiedVar, sub( aux ) )
+
+    apply( s1, aux, main, eigenVar )
+  }
+
   /**
    * <pre>Constructs a proof ending with a ForallRight rule.
    * This function merely returns the resulting sequent, not a proof.
@@ -357,6 +364,13 @@ object ExistsLeftRule extends StrongRuleHelper( false ) {
       case e: LKRuleCreationException =>
         throw new LKUnaryRuleCreationException( e.getMessage, s1, Nil )
     }
+  }
+
+  def apply( s1: LKProof, aux: HOLFormula, quantifiedVar: Var, eigenVar: Var ): LKProof = {
+    val sub = Substitution( eigenVar, quantifiedVar )
+    val main = Ex( quantifiedVar, sub( aux ) )
+
+    apply( s1, aux, main, eigenVar )
   }
 
   /**

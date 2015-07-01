@@ -352,7 +352,7 @@ class MultiExpansionSequent( val antecedent: Seq[MultiExpansionTree], val succed
   /**
    * Maps a function over the sequent.
    *
-   * @param f A function of type [[at.logic.gapt.proofs.expansionTrees.MultiExpansionTree]] → [[at.logic.gapt.language.hol.Formula]]
+   * @param f A function of type [[at.logic.gapt.proofs.expansionTrees.MultiExpansionTree]] → [[at.logic.gapt.expr.hol.HOLFormula]]
    * @return The result of the map.
    */
   def map( f: MultiExpansionTree => HOLFormula ): FSequent = {

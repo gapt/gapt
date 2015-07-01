@@ -661,7 +661,7 @@ object CutIntroduction extends Logger {
 
     def getUs( fs: Seq[FOLFormula] ): Seq[Seq[Seq[Seq[FOLTerm]]]] =
       ( 0 to alphas.size ).map( i => fs.map( f => {
-        val termlistlist = grammar.us( f )
+        val termlistlist = grammar.us.getOrElse( f, List() )
         termlistlist.filter( termlist => freeVariables( termlist ).toList.intersect( alphas.take( i ).flatMap( x => x ) ).isEmpty )
       } ) )
 
@@ -834,6 +834,7 @@ object CutIntroduction extends Logger {
       genWeakQuantRules( a, s, proof )
     }
 
+  //TODO: This should be replaced by the proofFromInstances macro rule.
   // Both methods below are responsible for generating the instances of 
   // end-sequent ancestors with the terms from the set U
   def genWeakQuantRules( f: FOLFormula, lst: Seq[Seq[FOLTerm]], ax: LKProof ): LKProof = {

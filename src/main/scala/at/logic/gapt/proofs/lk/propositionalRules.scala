@@ -501,13 +501,13 @@ object CutRule {
    * @return An LK proof with s1 & s2 as its two subtrees and (sL, tL |- sR, tR) as its bottommost sequent.
    */
   def apply( s1: LKProof, s2: LKProof, term1: HOLFormula ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas = {
-    ( ( s1.root.succedent.filter( x => x.formula.syntaxEquals( term1 ) ) ).toList, ( s2.root.antecedent.filter( x => x.formula.syntaxEquals( term1 ) ) ).toList ) match {
-      case ( ( x :: _ ), ( y :: _ ) ) => apply( s1, s2, x, y )
-      case ( Nil, Nil ) => throw new LKRuleCreationException( "Not matching formula occurrences found in both " + s1.root.succedent + " and " +
+    ( s1.root.succedent.find( _.formula == term1 ), s2.root.antecedent.find( _.formula == term1 ) ) match {
+      case ( Some( x ), Some( y ) ) => apply( s1, s2, x, y )
+      case ( None, None ) => throw new LKRuleCreationException( "Not matching formula occurrences found in both " + s1.root.succedent + " and " +
         s2.root.antecedent + " for application of the rule with the given formula " + term1 )
-      case ( Nil, _ ) => throw new LKRuleCreationException( "Not matching formula occurrences found in " + s1.root.succedent +
+      case ( None, _ ) => throw new LKRuleCreationException( "Not matching formula occurrences found in " + s1.root.succedent +
         " for application of the rule with the given formula " + term1 )
-      case ( _, Nil ) => throw new LKRuleCreationException( "Not matching formula occurrences found in " + s2.root.antecedent +
+      case ( _, None ) => throw new LKRuleCreationException( "Not matching formula occurrences found in " + s2.root.antecedent +
         " for application of the rule with the given formula " + term1 )
     }
   }
