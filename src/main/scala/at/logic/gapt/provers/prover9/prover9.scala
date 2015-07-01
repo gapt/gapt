@@ -17,10 +17,11 @@ import at.logic.gapt.provers.{ groundFreeVariables, renameConstantsToFi, Prover 
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.withTempFile
 
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.sys.process._
 
-class Prover9Prover extends Prover with ExternalProgram {
+class Prover9Prover( val extraCommands: Seq[String] = Seq() ) extends Prover with ExternalProgram {
   override def getLKProof( seq: FSequent ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
       getRobinsonProof( seq ) map { robinsonProof =>
@@ -103,12 +104,20 @@ class Prover9Prover extends Prover with ExternalProgram {
     }
   }
 
-  def toP9Input( cnf: List[FClause] ): String =
-    ( "set(quiet)" +: // suppresses noisy output on stderr
-      "clear(auto_denials)" +: // prevents prover9 from exiting with error code 2 even though a proof was found
-      "formulas(sos)" +:
-      cnf.map( toP9Input ) :+
-      "end_of_list" ).map( _ + ".\n" ).mkString
+  def toP9Input( cnf: List[FClause] ): String = {
+    val commands = ArrayBuffer[String]()
+
+    commands += "set(quiet)" // suppresses noisy output on stderr
+    commands += "clear(auto_denials)" // prevents prover9 from exiting with error code 2 even though a proof was found
+    commands ++= extraCommands
+
+    commands += "formulas(sos)"
+    commands ++= cnf map toP9Input
+    commands += "end_of_list"
+
+    commands.map( _ + ".\n" ).mkString
+  }
+
   def renameVars( formula: LambdaExpression ): LambdaExpression =
     Substitution( freeVariables( formula ).
       toSeq.zipWithIndex.map {
