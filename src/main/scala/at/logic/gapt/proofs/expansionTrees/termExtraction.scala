@@ -38,10 +38,10 @@ object extractInstances {
   def apply( expansionTree: ExpansionTree ): Seq[FOLFormula] = {
 
     if ( !containsWeakQuantifiers( expansionTree ) )
-      toDeep(expansionTree) match {
-        case Bottom() => Seq()
-        case Top() => Seq()
-        case f: FOLFormula => Seq (f )
+      toDeep( expansionTree ) match {
+        case Bottom()      => Seq()
+        case Top()         => Seq()
+        case f: FOLFormula => Seq( f )
       }
     else expansionTree match {
       case ETWeakQuantifier( _, instances ) =>
@@ -74,7 +74,7 @@ object extractInstances {
   // TODO: This should be somewhere else, for MultiExpansionTrees it's a member method.
   private def containsWeakQuantifiers( et: ExpansionTree ): Boolean = et match {
     case ETAtom( _ )                   => false
-    case ETWeakening( _ ) => false
+    case ETWeakening( _ )              => false
     case ETWeakQuantifier( _, _ )      => true
     case ETNeg( t )                    => containsWeakQuantifiers( t )
     case ETAnd( l, r )                 => containsWeakQuantifiers( l ) || containsWeakQuantifiers( r )
