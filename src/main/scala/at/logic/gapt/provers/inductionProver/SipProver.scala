@@ -20,6 +20,7 @@ trait SolutionFinder {
 class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1 ),
                  instanceProver: Prover = new Prover9Prover(),
                  instances: Seq[Int] = 0 until 3,
+                 testInstances: Seq[Int] = 0 until 15,
                  minimizeInstanceLanguages: Boolean = false,
                  quasiTautProver: Prover = new VeriTProver() )
     extends Prover with Logger {
@@ -81,28 +82,31 @@ class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1
     val grammar = findMinimalSipGrammar( instanceLanguages, new QMaxSAT )
     debug( s"Grammar:\n$grammar" )
 
-    ( 0 until 10 ) foreach { n =>
-      lazy val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
+    if ( testInstances.forall { n =>
+      val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
         termEncoding.decodeToFSequent( grammar.instanceGrammar( n ).language ) )
-      debug( s"Checking tautology of instance language for n=$n: "
-        + new VeriTProver().isValid( generatedInstanceSequent ) )
+      val isQuasiTaut = quasiTautProver.isValid( generatedInstanceSequent )
+      debug( s"[n=$n] Instance language is quasi-tautological: $isQuasiTaut" )
+      isQuasiTaut
+    } ) {
+      val schematicSip = decodeSipGrammar( termEncoding, grammar )
+      debug( s"Gamma0 = ${schematicSip.Gamma0}" )
+      debug( s"Gamma1 = ${schematicSip.Gamma1}" )
+      debug( s"Gamma2 = ${schematicSip.Gamma2}" )
+      debug( s"Sequent0 = ${schematicSip.Sequent0}" )
+      debug( s"Sequent1 = ${schematicSip.Sequent1}" )
+      debug( s"Sequent2 = ${schematicSip.Sequent2}" )
+      debug( s"t = ${schematicSip.t}" )
+      debug( s"u = ${schematicSip.u}" )
+
+      ( 0 until 3 ) foreach { i =>
+        lazy val C_i = canonicalSolution( schematicSip, i )
+        debug( s"C_$i =\n${CNFp( C_i ).map( _.mkString( ", " ) ).mkString( "\n" )}" )
+      }
+
+      solutionFinder.findSolution( schematicSip ).map( schematicSip.solve )
+    } else {
+      None // sip grammar does not generate a quasi-tautology for a concrete instance, hence unsolvable
     }
-
-    val schematicSip = decodeSipGrammar( termEncoding, grammar )
-    debug( s"Gamma0 = ${schematicSip.Gamma0}" )
-    debug( s"Gamma1 = ${schematicSip.Gamma1}" )
-    debug( s"Gamma2 = ${schematicSip.Gamma2}" )
-    debug( s"Sequent0 = ${schematicSip.Sequent0}" )
-    debug( s"Sequent1 = ${schematicSip.Sequent1}" )
-    debug( s"Sequent2 = ${schematicSip.Sequent2}" )
-    debug( s"t = ${schematicSip.t}" )
-    debug( s"u = ${schematicSip.u}" )
-
-    ( 0 until 3 ) foreach { i =>
-      lazy val C_i = canonicalSolution( schematicSip, i )
-      debug( s"C_$i =\n${CNFp( C_i ).map( _.mkString( ", " ) ).mkString( "\n" )}" )
-    }
-
-    solutionFinder.findSolution( schematicSip ).map( schematicSip.solve )
   }
 }
