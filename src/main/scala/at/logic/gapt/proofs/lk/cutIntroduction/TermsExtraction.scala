@@ -41,7 +41,7 @@ object TermsExtraction {
   def apply( expProof: ExpansionSequent ): TermSet = {
     val encoding = InstanceTermEncoding( toShallow( expProof ) )
 
-    new TermSet( encoding, encoding.encode( expProof ).toList )
+    new TermSet( encoding, groundTerms( encoding.encode( expProof ) ).toList )
   }
 }
 

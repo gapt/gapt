@@ -85,6 +85,14 @@ object extractInstances {
   }
 }
 
+object groundTerms {
+  def apply( term: FOLTerm ): FOLTerm =
+    FOLSubstitution( freeVariables( term ).
+      map { c => FOLVar( c.name ) -> FOLConst( c.name ) }.toSeq )( term )
+
+  def apply( lang: Seq[FOLTerm] ): Seq[FOLTerm] = lang map apply
+}
+
 /**
  * Encodes instances of a prenex FOL Pi_1 end-sequent as FOL terms.
  *

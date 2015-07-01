@@ -69,10 +69,7 @@ class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1
 
     // Ground the instance languages.
     instanceLanguages = instanceLanguages map {
-      case ( n, lang ) =>
-        val groundingSubst = FOLSubstitution( freeVariables( lang ).
-          map { c => FOLVar( c.name ) -> FOLConst( c.name ) }.toSeq )
-        n -> lang.map( groundingSubst.apply )
+      case ( n, lang ) => n -> groundTerms( lang )
     }
 
     instanceLanguages foreach {
