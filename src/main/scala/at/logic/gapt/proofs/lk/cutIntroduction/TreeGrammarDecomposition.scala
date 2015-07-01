@@ -5,6 +5,7 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
+import at.logic.gapt.grammars.TratGrammar
 import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.lk.cutIntroduction.MCSMethod.MCSMethod
 import at.logic.gapt.expr._
@@ -43,7 +44,7 @@ object TreeGrammarDecomposition {
    * @param method how the MinCostSAT formulation of the problem should be solved (QMaxSAT, Simplex, ...)
    * @return (list of grammars, status, log)
    */
-  def apply( termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver ): Option[Grammar] = {
+  def apply( termset: List[FOLTerm], n: Int, method: MCSMethod, satsolver: MaxSATSolver ): Option[TratGrammar] = {
 
     var phase = "TGD"
 
@@ -85,7 +86,7 @@ object TreeGrammarDecomposition {
         val grammar = decomp.getGrammar( rules )
 
         // If the grammar has only U terms, it is trivial
-        if ( grammar.slist.size == 0 ) return None
+        if ( grammar.productions.forall( _._1 == grammar.axiom ) ) return None
         else return Some( grammar )
       }
       case None => return None
@@ -95,7 +96,7 @@ object TreeGrammarDecomposition {
   def apply( termset: TermSet, n: Int, method: MCSMethod = MCSMethod.MaxSAT, satsolver: MaxSATSolver = new QMaxSAT() ): Option[MultiGrammar] = {
     val og = apply( termset.set, n, method, satsolver )
     og match {
-      case Some( g ) => Some( simpleToMultiGrammar( termset, g ) )
+      case Some( g ) => Some( simpleToMultiGrammar( termset.encoding, g.toVectTratGrammar ) )
       case None      => None
     }
   }
@@ -310,38 +311,16 @@ abstract class TreeGrammarDecomposition( val termset: List[FOLTerm], val n: Int 
    * @param rules a set of of tuples of the form {(<non-terminal-index>, <FOLTerm>}
    * @return grammars representing provided rules
    */
-  def getGrammar( rules: Set[Tuple2[Int, FOLTerm]] ): Grammar = {
+  def getGrammar( rules: Set[( Int, FOLTerm )] ): TratGrammar = {
+    val nonTerminalMap = rules.map( _._1 ).map { i =>
+      i -> FOLVar( nonterminal_a + "_" + i )
+    }.toMap
+    val nonTerminals = nonTerminalMap.toSeq.sortBy( _._1 ).map( _._2 )
+    val axiom = nonTerminals.head
 
-    val slist = mutable.MutableList[( List[FOLVar], Set[List[FOLTerm]] )]()
+    val productions = rules map { case ( i, t ) => nonTerminalMap( i ) -> t }
 
-    // get all nonterminals in rules
-    val evs = rules.foldLeft( List[String]() )( ( acc, r ) => getNonterminals( r._2, nonterminal_a + "_" ) ::: acc ).distinct.sorted
-
-    // don't forget to add the α_0
-    // to the list of all nonterminal indexes
-    val indexes = 0 :: evs.map( x => x.split( "_" ).last.toInt )
-
-    // divide the rules by the nonterminal index
-    val decomps = indexes.foldLeft( List[( Int, Set[List[FOLTerm]] )]() )( ( acc, i ) => ( i, rules.filter( _._1 == i ).map( x => List( x._2 ) ).toSet ) :: acc ).toMap
-    var u = decomps( 0 ).flatten.toList
-
-    for ( i <- indexes ) {
-      if ( i != 0 ) {
-        val s = decomps( i )
-        val quantifiedVars = List( FOLVar( nonterminal_a + "_" + i ) )
-        slist += Tuple2( quantifiedVars, s )
-
-        // TODO: (X) this part denoted the substitutions which have to be 
-        // performed on U for each rule \alpha_i => S_i. This should possibly 
-        // be part of computeCanonicalSolutions
-        /*val subs = s.foldLeft(List[Substitution]())((acc2,s0) => {
-          Substitution(s0.map( s1 => (FOLVar(nonterminal_a+"_"+ i), s1))) :: acc2
-        })
-
-        u = u.foldLeft(List[FOLTerm]())((acc, u0) => subs.map(sub => sub(u0)) ::: acc)*/
-      }
-    }
-    return new Grammar( u, slist.toList )
+    TratGrammar( axiom, nonTerminals, productions.toSeq )
   }
 
   /**
