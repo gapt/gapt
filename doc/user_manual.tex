@@ -574,9 +574,9 @@ gapt> val grms = computeGrammars(ts)
 The number of grammars found is shown, 26 in this case. This list of grammars is guaranteed
 to contain all grammars of minimal size (but not all grammars as the algorithm
 will not generate grammars larger than others already generated).
-The grammars are ordered by size, and one can see the first ones by calling:
+The grammars are ordered by size, and one can see the first five by calling:
 \begin{lstlisting}
-gapt> seeNFirstGrammars(grms, 5)
+gapt> grms.take(5) foreach println
 \end{lstlisting}
 This will print on the screen the first 5 grammars, and we can choose which one
 to use for compressing the proof, in this case we take the second one:

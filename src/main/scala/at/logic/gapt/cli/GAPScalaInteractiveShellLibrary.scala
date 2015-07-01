@@ -475,16 +475,6 @@ object computeGrammars {
   }
 }
 
-object seeNFirstGrammars {
-  def apply( lst: List[Grammar], n: Int ) = {
-    println( "\n" );
-    for ( i <- 0 to n - 1 ) {
-      println( i + ". " + lst( i ) + "\n(size = " + lst( i ).size + ")\n" )
-    }
-    println( "\nNote that the function symbols 'tuplei' are inserted by the system as part of the algorithm." )
-  }
-}
-
 object generateExtendedHerbrandSequent {
   def apply( es: FSequent, g: MultiGrammar ): ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
   def apply( es: Sequent, g: MultiGrammar ): ExtendedHerbrandSequent = apply( es.toFSequent, g )
@@ -607,7 +597,6 @@ object help {
         |   ncutIntro: (LKProof,Int,[MaxSATSolver]) => Option[List[FOLFormula]] - performs cut introduction for a maximum of n (Int) cuts. (optional: MaxSATSolver {QMaxSAT, ToySAT, ToySolver}")"
         |   extractTerms: LKProof => FlatTermSet - extract the witnesses of the existential quantifiers of the end-sequent of a proof
         |   computeGrammars: FlatTermSet => List[Grammar] - computes all the grammars of a given list of terms (returns a list ordered by symbolic complexity)
-        |   seeNFirstGrammars: List[Grammar], Int => Unit - prints the first n grammars from a list
         |   generateExtendedHerbrandSequent: Sequent, Grammar => ExtendedHerbrandSequent - generates the Extended Herbrand Sequent from an end-sequent of a proof and a grammar
         |   computeCanonicalSolution: MultiGrammar => FOLFormula - computes the canonical solution for the cut-introduction problem
         |   minimizeSolution: ExtendedHerbrandSequent => ExtendedHerbrandSequent - minimizes the solution associated with the extended Herbrand sequent returning another Herbrand sequent with this minimal solution
