@@ -112,9 +112,9 @@ object simpleToMultiGrammar {
  */
 object ComputeGrammars {
 
-  def apply( terms: TermSet, delta: DeltaVector ): List[Grammar] = ComputeGrammars( terms.set, delta )
+  def apply( terms: TermSet, delta: DeltaVector ): List[VectTratGrammar] = ComputeGrammars( terms.set, delta )
 
-  def apply( terms: List[FOLTerm], delta: DeltaVector ): List[Grammar] = {
+  def apply( terms: List[FOLTerm], delta: DeltaVector ): List[VectTratGrammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = "α"
     val deltatable = new DeltaTable( terms, eigenvariable, delta )
@@ -131,7 +131,7 @@ object ComputeGrammars {
    */
   def findValidGrammars( terms: TermSet, deltatable: DeltaTable, eigenvariable: String ): List[MultiGrammar] = {
     val gs = findValidGrammars( terms.set, deltatable, eigenvariable )
-    gs.map( g => simpleToMultiGrammar( terms, g ) )
+    gs.map( g => simpleToMultiGrammar( terms.encoding, g ) )
   }
 
   /**
@@ -142,7 +142,7 @@ object ComputeGrammars {
    * @param deltatable A generalized delta table for terms.
    * @param eigenvariable The name of eigenvariables to introduce.
    */
-  def findValidGrammars( terms: List[FOLTerm], deltatable: DeltaTable, eigenvariable: String ): List[Grammar] = {
+  def findValidGrammars( terms: List[FOLTerm], deltatable: DeltaTable, eigenvariable: String, axiom: FOLVar = FOLVar( "τ" ) ): List[VectTratGrammar] = {
 
     //Helper functions for grammars
 
@@ -214,7 +214,7 @@ object ComputeGrammars {
 
     //Go through the rows of the delta table and find the smallest
     //covering in each row.
-    deltatable.table.foldLeft( List[Grammar]() ) {
+    deltatable.table.foldLeft( List[VectTratGrammar]() ) {
       case ( grammars, ( s, pairs ) ) =>
 
         // Ignoring entries where s.size == 1 because they are trivial
@@ -239,7 +239,8 @@ object ComputeGrammars {
 
             coverings.foldLeft( grammars ) {
               case ( acc, u ) =>
-                ( new Grammar( u, ( evs, s ) :: Nil ) ) :: acc
+                VectTratGrammar( axiom, Seq( List( axiom ), evs ),
+                  u.map( List( axiom ) -> List( _ ) ) ++ s.map( evs -> _ ) ) :: acc
             }
           } else grammars
 
