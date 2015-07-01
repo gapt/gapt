@@ -55,16 +55,6 @@ class GrammarFindingTest extends Specification {
       normalForms( l map parseTerm, Seq( FOLVar( "x" ) ) ).toSet must beEqualTo( nfs map parseTerm )
     }
   }
-  "tratNormalForms" should {
-    "find strong normal forms" in {
-      val nfs = tratNormalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
-      nfs.toSet must beEqualTo( Set( "c", "d", "f(c)", "f(d)", "f(x)", "x" ) map parseTerm )
-    }
-    "not introduce equations between non-terminals" in {
-      val nfs = tratNormalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
-      nfs.toSet must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x", "c", "d" ) map parseTerm )
-    }
-  }
 
   "TermGenerationFormula" should {
     "work for production vectors" in {

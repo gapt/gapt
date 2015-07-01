@@ -6,7 +6,7 @@ package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
-import scala.collection.mutable
+import scala.collection.{ GenTraversable, mutable }
 
 object isFOLFunction {
   /** Returns whether t is a function. */
@@ -46,7 +46,7 @@ object FOLSubTerms {
   /**
    * Generate all subterms of a list of FOLTerms.
    */
-  def apply( language: List[FOLTerm] ): Set[FOLTerm] = {
+  def apply( language: GenTraversable[FOLTerm] ): Set[FOLTerm] = {
     val subterms = mutable.Set[FOLTerm]()
     language.foreach( apply_( _, subterms ) )
     subterms.toSet

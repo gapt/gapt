@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.{ FOLSubTerms, Utils, FOLMatchingAlgorithm }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
 import at.logic.gapt.utils.dssupport.ListSupport
 
-import scala.collection.{ Set, mutable }
+import scala.collection.{ GenTraversable, Set, mutable }
 
 object SameRootSymbol {
   def unapply( terms: Seq[FOLTerm] ): Option[( String, List[List[FOLTerm]] )] =
@@ -41,7 +41,7 @@ object characteristicPartition {
 }
 
 object normalForms {
-  def apply( lang: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
+  def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
     lang foreach { term => require( freeVariables( term ) isEmpty ) }
 
     val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 )
@@ -68,12 +68,6 @@ object normalForms {
       }
     }
     nfs.result.toList
-  }
-}
-
-object tratNormalForms {
-  def apply( terms: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
-    normalForms( FOLSubTerms( terms toList ) toSeq, nonTerminals )
   }
 }
 
@@ -171,21 +165,14 @@ class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizati
 
 object normalFormsProofGrammar {
   def apply( lang: Seq[FOLTerm], n: Int ) = {
-    // TODO: explicitly handle formula/term symbol distinction
-    val formulaSymbols = lang map { case FOLFunction( f, _ ) => f } toSet
-
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
-    val nfs = tratNormalForms( lang, rhsNonTerminals )
+    val topLevelNFs = normalForms( lang, rhsNonTerminals )
+    val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), rhsNonTerminals.tail )
     val axiom = FOLVar( "τ" )
-    TratGrammar( axiom, axiom +: rhsNonTerminals, nfs flatMap { nf =>
+    TratGrammar( axiom, axiom +: rhsNonTerminals, topLevelNFs.map( axiom -> _ ) ++ argumentNFs.flatMap { nf =>
       val fvs = freeVariables( nf )
-      val possibleLhsVars = nf match {
-        case FOLFunction( f, _ ) if formulaSymbols contains f => Seq( axiom )
-        case _ =>
-          val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
-          ( 0 until lowestIndex ) map ( rhsNonTerminals( _ ) )
-      }
-      possibleLhsVars map { v => v -> nf }
+      val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
+      ( 0 until lowestIndex ) map { i => rhsNonTerminals( i ) -> nf }
     } )
   }
 }
@@ -230,22 +217,17 @@ object normalFormsProofVectGrammar {
   }
 
   def apply( lang: Seq[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {
-    // TODO: explicitly handle formula/term symbol distinction
-    val formulaSymbols = lang map { case FOLFunction( f, _ ) => f } toSet
+    val topLevelNFs = normalForms( lang, nonTermVects flatten )
+    val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), nonTermVects.tail flatten )
 
-    val nfs = tratNormalForms( lang, nonTermVects flatten )
-
-    val nts = List( axiom ) +: nonTermVects
-    VectTratGrammar( axiom, nts, nts.zipWithIndex flatMap {
-      case ( a, i ) =>
-        val allowedNonTerms = nts.drop( i + 1 ).flatten.toSet
-        val allowedRHS = nfs filter { nf => freeVariables( nf ) subsetOf allowedNonTerms }
-        val rhsWithCorrectType = allowedRHS filter {
-          case FOLFunction( f, _ ) if formulaSymbols contains f => a == List( axiom )
-          case _ => a != List( axiom )
-        }
-        takeN( a.size, rhsWithCorrectType ).map( a -> _ )
-    } )
+    VectTratGrammar( axiom, List( axiom ) +: nonTermVects,
+      topLevelNFs.map( List( axiom ) -> List( _ ) ) ++
+        nonTermVects.zipWithIndex.flatMap {
+          case ( a, i ) =>
+            val allowedNonTerms = nonTermVects.drop( i + 1 ).flatten.toSet
+            val allowedRHS = argumentNFs filter { nf => freeVariables( nf ) subsetOf allowedNonTerms }
+            takeN( a.size, allowedRHS ).map( a -> _ )
+        } )
   }
 }
 

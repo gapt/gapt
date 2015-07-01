@@ -1,7 +1,7 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLSubstitution }
 import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
 
@@ -51,36 +51,27 @@ object normalFormsSipGrammar {
   type InstanceLanguage = ( Int, Seq[FOLTerm] )
 
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
-    val allTerms = instanceLanguages.flatMap( _._2 )
-
-    // TODO: explicitly handle formula/term symbol distinction
-    val formulaSymbols = allTerms map { case FOLFunction( f, _ ) => f } toSet
-
-    allTerms foreach {
-      case term @ FOLFunction( _, args ) =>
-        val nonFormulaSymbols = args flatMap ( constants( _ ) ) map ( _.name ) toSet
-
-        require( freeVariables( term ) isEmpty, s"Term $term in instance language is not closed." )
-        require( ( formulaSymbols intersect nonFormulaSymbols ) isEmpty )
-    }
-
     import SipGrammar._
-    val nfs = tratNormalForms( instanceLanguages flatMap ( _._2 ), Seq( gamma, alpha, nu ) )
+
+    val allTerms = instanceLanguages.flatMap( _._2 )
+    val topLevelNFs = normalForms( allTerms, Seq( gamma, alpha, nu ) )
+    val argumentNFs = normalForms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
+      Seq( gamma, alpha, nu ) )
 
     val prods = Set.newBuilder[Production]
 
-    for ( nf <- nfs ) {
+    for ( nf <- topLevelNFs ) {
       val fv = freeVariables( nf )
 
-      nf match {
-        case FOLFunction( f, _ ) if formulaSymbols contains f =>
-          if ( !fv.contains( nu ) ) prods += tau -> FOLSubstitution( gamma -> beta )( nf )
-          prods += tau -> nf
+      if ( !fv.contains( nu ) ) prods += tau -> FOLSubstitution( gamma -> beta )( nf )
+      prods += tau -> nf
+    }
 
-        case _ =>
-          prods += gamma -> nf
-          if ( !fv.contains( nu ) && !fv.contains( gamma ) ) prods += gammaEnd -> nf
-      }
+    for ( nf <- argumentNFs ) {
+      val fv = freeVariables( nf )
+
+      prods += gamma -> nf
+      if ( !fv.contains( nu ) && !fv.contains( gamma ) ) prods += gammaEnd -> nf
     }
 
     SipGrammar( prods.result.toSeq )
