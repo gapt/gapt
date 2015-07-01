@@ -108,8 +108,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case Neg( FOLAtom( _, _ ) )                 => List( cls )
       case And( f1 @ FOLAtom( _, _ ), f2 )        => f1 :: collectLiterals( f2 )
       case And( f1 @ Neg( FOLAtom( _, _ ) ), f2 ) => f1 :: collectLiterals( f2 )
-      case And( f1, f2 @ FOLAtom( _, _ ) )        => f2 :: collectLiterals( f1 )
-      case And( f1, f2 @ Neg( FOLAtom( _, _ ) ) ) => f2 :: collectLiterals( f1 )
+      case And( f1, f2 @ FOLAtom( _, _ ) )        => collectLiterals( f1 ) :+ f2
+      case And( f1, f2 @ Neg( FOLAtom( _, _ ) ) ) => collectLiterals( f1 ) :+ f2
       case And( f1, f2 )                          => collectLiterals( f1 ) ++ collectLiterals( f2 )
       case _                                      => throw new Exception( "collectLiterals: formula " + cls + " is not a clause." )
     }
@@ -197,14 +197,14 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
                 matchClauses( f_dnf, lean_clauses ) match {
                   case Some( s ) => s
                   case None => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_dnf +
-                    " and clauses " + lean_clauses + " do not match." )
+                    " and clauses " + lean_clauses + " do not match [1]." )
                 }
               case _ :: _ =>
                 val f_clausified = toDefinitionalClausalForm( f_no_quant, lean_preds )
                 matchClauses( f_clausified, lean_clauses ) match {
                   case Some( s ) => s
                   case None => throw new LeanCoPNoMatchException( "leanCoP parsing: formula " + f_clausified +
-                    " and clauses " + lean_clauses + " do not match." )
+                    " and clauses " + lean_clauses + " do not match [2]." )
                 }
             }
 
@@ -301,7 +301,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     }
     | neg | atom )
 
-  lazy val atom: PackratParser[FOLFormula] = not_eq | eq | real_atom | lean_atom | quantified | "(" ~> formula <~ ")"
+  lazy val atom: PackratParser[FOLFormula] = not_eq | eq | lean_atom | real_atom | quantified | "(" ~> formula <~ ")"
   // These are introduced by leanCoP's (restricted) definitional clausal form translation
   lazy val lean_atom: PackratParser[FOLFormula] = lean_var ^^ {
     case ( i, terms ) =>
@@ -318,7 +318,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     case t1 ~ _ ~ _ ~ t2 => Neg( FOLAtom( "=", List( t1, t2 ) ) )
   }
 
-  def term: Parser[FOLTerm] = variable | function | constant | skolem_term
+  def term: Parser[FOLTerm] = skolem_term | variable | function | constant
   def function: Parser[FOLTerm] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case f ~ _ ~ args => FOLFunction( f, args ) }
   def constant: Parser[FOLConst] = name ^^ { case n => FOLConst( n ) }
   def variable: Parser[FOLVar] = """_[A-Z0-9]+""".r ^^ { case n => FOLVar( n ) }

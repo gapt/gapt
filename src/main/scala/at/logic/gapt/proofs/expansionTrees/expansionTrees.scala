@@ -15,6 +15,7 @@ import scala.collection.immutable.HashMap
 trait ExpansionTreeWithMerges extends TreeA[Option[HOLFormula], Option[LambdaExpression]] {
   override def toString = this match {
     case ETAtom( f ) => "Atom(" + f.toString + ")"
+    case ETWeakening( f ) => "Weakening(" + f.toString + ")"
     case ETNeg( t1 ) => NegC.name + t1.toString
     case ETAnd( t1, t2 ) => t1.toString + AndC.name + t2.toString
     case ETOr( t1, t2 ) => t1.toString + OrC.name + t2.toString
@@ -33,7 +34,8 @@ trait ExpansionTreeWithMerges extends TreeA[Option[HOLFormula], Option[LambdaExp
     if ( visited contains this )
       visited
     else this match {
-      case ETAtom( v ) => visited + ( ( this, 1 ) )
+      case ETAtom( _ )      => visited + ( ( this, 1 ) )
+      case ETWeakening( _ ) => visited + ( ( this, 1 ) )
       case ETNeg( child ) =>
         val nvisited = child.size( visited )
         nvisited + ( ( this, nvisited( child ) + 1 ) )
@@ -289,15 +291,25 @@ case class ETAtom( formula: HOLFormula ) extends ExpansionTree with TerminalNode
 }
 
 /**
+ * Represents a weakening in an expansion tree, i.e. a subformula which is not
+ * needed for making the deep formula a tautology.
+ * @param formula the (weak) formula at this node
+ */
+case class ETWeakening( formula: HOLFormula ) extends ExpansionTree with TerminalNodeAWithEquality[Option[HOLFormula], Option[LambdaExpression]] {
+  lazy val node = Some( formula )
+}
+
+/**
  * Returns number of quantifiers
  */
 object quantRulesNumber {
   def apply( tree: ExpansionTreeWithMerges ): Int = tree match {
-    case ETAtom( f )     => 0
-    case ETNeg( t1 )     => quantRulesNumber( t1 )
-    case ETAnd( t1, t2 ) => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
-    case ETOr( t1, t2 )  => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
-    case ETImp( t1, t2 ) => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
+    case ETAtom( f )      => 0
+    case ETWeakening( f ) => 0
+    case ETNeg( t1 )      => quantRulesNumber( t1 )
+    case ETAnd( t1, t2 )  => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
+    case ETOr( t1, t2 )   => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
+    case ETImp( t1, t2 )  => quantRulesNumber( t1 ) + quantRulesNumber( t2 )
     case ETWeakQuantifier( _, children ) => children.foldRight( 0 ) {
       case ( ( et, _ ), sum ) => quantRulesNumber( et ) + 1 + sum
     }
@@ -315,6 +327,7 @@ object quantRulesNumber {
 object isQuantified {
   def apply( tree: ExpansionTreeWithMerges ): Boolean = tree match {
     case ETAtom( _ )                   => false
+    case ETWeakening( _ )              => false
     case ETNeg( t )                    => isQuantified( t )
     case ETAnd( t1, t2 )               => isQuantified( t1 ) || isQuantified( t2 )
     case ETOr( t1, t2 )                => isQuantified( t1 ) || isQuantified( t2 )
@@ -389,11 +402,12 @@ object ExpansionSequent {
 
 object toDeep {
   def apply( tree: ExpansionTreeWithMerges, pol: Int = 1 ): HOLFormula = tree match {
-    case ETAtom( f )     => f
-    case ETNeg( t1 )     => Neg( toDeep( t1, -pol ) )
-    case ETAnd( t1, t2 ) => And( toDeep( t1, pol ), toDeep( t2, pol ) )
-    case ETOr( t1, t2 )  => Or( toDeep( t1, pol ), toDeep( t2, pol ) )
-    case ETImp( t1, t2 ) => Imp( toDeep( t1, -pol ), toDeep( t2, pol ) )
+    case ETAtom( f )      => f
+    case ETWeakening( f ) => if ( pol > 0 ) Bottom() else Top()
+    case ETNeg( t1 )      => Neg( toDeep( t1, -pol ) )
+    case ETAnd( t1, t2 )  => And( toDeep( t1, pol ), toDeep( t2, pol ) )
+    case ETOr( t1, t2 )   => Or( toDeep( t1, pol ), toDeep( t2, pol ) )
+    case ETImp( t1, t2 )  => Imp( toDeep( t1, -pol ), toDeep( t2, pol ) )
     case ETWeakQuantifier( _, cs ) => {
       if ( pol > 0 )
         Or( cs.map( t => toDeep( t._1, pol ) ).toList )
@@ -412,6 +426,7 @@ object toDeep {
 object toShallow {
   def apply( tree: ExpansionTreeWithMerges ): HOLFormula = tree match {
     case ETAtom( f )                   => f
+    case ETWeakening( f )              => f
     case ETNeg( t1 )                   => Neg( toShallow( t1 ) )
     case ETAnd( t1, t2 )               => And( toShallow( t1 ), toShallow( t2 ) )
     case ETOr( t1, t2 )                => Or( toShallow( t1 ), toShallow( t2 ) )
@@ -553,11 +568,12 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
   }
 
   private[expansionTrees] def doApplySubstitution( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = et match {
-    case ETAtom( f )     => ETAtom( s.apply( f ) )
-    case ETNeg( t1 )     => ETNeg( doApplySubstitution( s, t1 ) )
-    case ETAnd( t1, t2 ) => ETAnd( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
-    case ETOr( t1, t2 )  => ETOr( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
-    case ETImp( t1, t2 ) => ETImp( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
+    case ETAtom( f )      => ETAtom( s( f ) )
+    case ETWeakening( f ) => ETWeakening( s( f ) )
+    case ETNeg( t1 )      => ETNeg( doApplySubstitution( s, t1 ) )
+    case ETAnd( t1, t2 )  => ETAnd( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
+    case ETOr( t1, t2 )   => ETOr( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
+    case ETImp( t1, t2 )  => ETImp( doApplySubstitution( s, t1 ), doApplySubstitution( s, t2 ) )
     case ETStrongQuantifier( f, v, selection ) =>
       ETStrongQuantifier( s( f ), s( v ).asInstanceOf[Var], doApplySubstitution( s, selection ) )
     case ETSkolemQuantifier( f, v, selection ) =>
@@ -711,7 +727,8 @@ object merge extends at.logic.gapt.utils.logging.Logger {
         // all instances done without substitution
         ( None, ETWeakQuantifier( f, instancesPrime.toList ) )
       }
-      case ETAtom( f ) => ( None, ETAtom( f ) )
+      case ETAtom( f )      => ( None, ETAtom( f ) )
+      case ETWeakening( f ) => ( None, ETWeakening( f ) )
       case ETNeg( s1 ) => {
         val ( subst, res ) = detectAndMergeMergeNodes( s1, !polarity ) // changes polarity
         ( subst, ETNeg( res ) )
@@ -745,14 +762,8 @@ object merge extends at.logic.gapt.utils.logging.Logger {
     }
 
     ( tree1, tree2 ) match {
-      // top/bottom merging:
-      // top [merge] A = A if !polarity
-      // bottom [merge] A = A if polarity
-      case ( ETAtom( Top() ), _ ) if !polarity              => detectAndMergeMergeNodes( tree2, polarity )
-      case ( _, ETAtom( Top() ) ) if !polarity              => detectAndMergeMergeNodes( tree1, polarity )
-
-      case ( ETAtom( Bottom() ), _ ) if polarity            => detectAndMergeMergeNodes( tree2, polarity )
-      case ( _, ETAtom( Bottom() ) ) if polarity            => detectAndMergeMergeNodes( tree1, polarity )
+      case ( ETWeakening( _ ), _ )                          => detectAndMergeMergeNodes( tree2, polarity )
+      case ( _, ETWeakening( _ ) )                          => detectAndMergeMergeNodes( tree1, polarity )
 
       //TODO: the f1 == f2 check is too strong if the proof contains contractions on paramodulated formulas. Find a better replacement.
       case ( ETAtom( f1 ), ETAtom( f2 ) ) /* if f1 == f2 */ => ( None, ETAtom( f1 ) )
@@ -851,11 +862,12 @@ object replace {
    * @return an et with all constants what replaced by constants by
    */
   def apply( what: Const, by: Const, where: ExpansionTree ): ExpansionTree = where match {
-    case ETAtom( f )   => ETAtom( replaceAll( what, by, f ) )
-    case ETNeg( l )    => ETNeg( apply( what, by, l ) )
-    case ETAnd( l, r ) => ETAnd( apply( what, by, l ), apply( what, by, r ) )
-    case ETOr( l, r )  => ETOr( apply( what, by, l ), apply( what, by, r ) )
-    case ETImp( l, r ) => ETImp( apply( what, by, l ), apply( what, by, r ) )
+    case ETAtom( f )      => ETAtom( replaceAll( what, by, f ) )
+    case ETWeakening( f ) => ETWeakening( replaceAll( what, by, f ) )
+    case ETNeg( l )       => ETNeg( apply( what, by, l ) )
+    case ETAnd( l, r )    => ETAnd( apply( what, by, l ), apply( what, by, r ) )
+    case ETOr( l, r )     => ETOr( apply( what, by, l ), apply( what, by, r ) )
+    case ETImp( l, r )    => ETImp( apply( what, by, l ), apply( what, by, r ) )
     case ETWeakQuantifier( f, instances ) =>
       val children = instances.map( x =>
         ( apply( what, by, x._1 ), replaceAll( what, by, x._2 ) ) )
@@ -874,11 +886,12 @@ object replace {
    * @return an et with all constants what replaced by constants by
    */
   def apply( what: Const, by: Const, where: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = where match {
-    case ETAtom( f )   => ETAtom( replaceAll( what, by, f ) )
-    case ETNeg( l )    => ETNeg( apply( what, by, l ) )
-    case ETAnd( l, r ) => ETAnd( apply( what, by, l ), apply( what, by, r ) )
-    case ETOr( l, r )  => ETOr( apply( what, by, l ), apply( what, by, r ) )
-    case ETImp( l, r ) => ETImp( apply( what, by, l ), apply( what, by, r ) )
+    case ETAtom( f )      => ETAtom( replaceAll( what, by, f ) )
+    case ETWeakening( f ) => ETWeakening( replaceAll( what, by, f ) )
+    case ETNeg( l )       => ETNeg( apply( what, by, l ) )
+    case ETAnd( l, r )    => ETAnd( apply( what, by, l ), apply( what, by, r ) )
+    case ETOr( l, r )     => ETOr( apply( what, by, l ), apply( what, by, r ) )
+    case ETImp( l, r )    => ETImp( apply( what, by, l ), apply( what, by, r ) )
     case ETWeakQuantifier( f, instances ) =>
       val children = instances.map( x =>
         ( apply( what, by, x._1 ), replaceAll( what, by, x._2 ) ) )

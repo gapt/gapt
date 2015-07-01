@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.expansionTrees.{ ETAtom, ETNeg, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp }
+import at.logic.gapt.proofs.expansionTrees.{ ETAtom, ETNeg, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp, ETWeakening }
 import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, _ }
 import at.logic.gapt.proofs.lk.base.FSequent
 import org.specs2.mutable._
@@ -127,82 +127,62 @@ class LKskToExpansionProofTest extends Specification {
     "work for the same hol proof, automatically skolemized" in {
       val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof.proof )
 
-      val r = et match {
+      et must beLike {
         case ETWeakQuantifier( _, Seq(
           ( ETAtom( _ ), _ ),
           ( ETNeg( ETAtom( _ ) ), _ ) )
-          ) =>
-          ""
-        case _ =>
-          "expansion tree " + et + " does not match expected pattern!"
+          ) => ok
+        case _ => ko
       }
-
-      r must_== ( "" )
     }
 
     "work for the same hol proof, manually skolemized" in {
       val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleLKskProof.i4 )
 
-      val r = et match {
+      et must beLike {
         case ETWeakQuantifier( _, Seq(
           ( ETAtom( _ ), _ ),
           ( ETNeg( ETAtom( _ ) ), _ ) )
-          ) =>
-          ""
-        case _ =>
-          "expansion tree " + et + " does not match expected pattern!"
+          ) => ok
+        case _ => ko
       }
-
-      r must_== ( "" )
     }
 
     "work for a skolemized hol proof with strong individual quantifiers" in {
       val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof2.proof )
 
-      val r = et match {
+      et must beLike {
         case ETSkolemQuantifier( _, sk,
           ETWeakQuantifier( _, Seq(
             ( ETAtom( _ ), _ ),
             ( ETNeg( ETAtom( _ ) ), _ ) )
-            ) ) =>
-          ""
-        case _ =>
-          "expansion tree " + et + " does not match expected pattern!"
+            ) ) => ok
+        case _ => ko
       }
-
-      r must_== ( "" )
     }
 
     "work for a skolemized hol proof with strong individual quantifiers inside weak ho quantifiers" in {
       val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof3.proof )
 
-      val r = et match {
+      et must beLike {
         case ETWeakQuantifier( _, Seq(
           ( ETSkolemQuantifier( _, sk1, ETAtom( _ ) ), _ ),
           ( ETNeg( ETWeakQuantifier( _, Seq( ( ETAtom( _ ), sk2 ) ) ) ), _ )
-          ) ) =>
-          ""
-        case _ =>
-          "expansion tree " + et + " does not match expected pattern!"
+          ) ) => ok
+        case _ => ko
       }
-
-      r must_== ( "" )
     }
 
     "work for a skolemized hol proof with weakening" in {
       val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof4.proof )
 
-      val r = et match {
+      et must beLike {
         case ETWeakQuantifier( _, Seq(
           ( ETSkolemQuantifier( _, sk1, ETAtom( _ ) ), _ ),
-          ( ETImp( ETAtom( _ ), ETNeg( ETWeakQuantifier( _, Seq( ( ETAtom( _ ), sk2 ) ) ) ) ), _ )
-          ) ) =>
-          ""
-        case _ =>
-          "expansion tree " + et + " does not match expected pattern!"
+          ( ETImp( ETWeakening( _ ), ETNeg( ETWeakQuantifier( _, Seq( ( ETAtom( _ ), sk2 ) ) ) ) ), _ )
+          ) ) => ok
+        case _ => ko
       }
-
-      r must_== ( "" )
     }
   }
 

@@ -18,6 +18,7 @@ object compressQuantifiers {
    */
   def apply( tree: ExpansionTree ): MultiExpansionTree = tree match {
     case ETAtom( f )               => METAtom( f )
+    case ETWeakening( f )          => METWeakening( f )
     case ETNeg( t1 )               => METNeg( compressQuantifiers( t1 ) )
     case ETAnd( t1, t2 )           => METAnd( compressQuantifiers( t1 ), compressQuantifiers( t2 ) )
     case ETOr( t1, t2 )            => METOr( compressQuantifiers( t1 ), compressQuantifiers( t2 ) )
@@ -68,11 +69,12 @@ object decompressQuantifiers {
    * @return The corresponding ExpansionTree.
    */
   def apply( tree: MultiExpansionTree ): ExpansionTree = tree match {
-    case METAtom( f )     => ETAtom( f )
-    case METNeg( t1 )     => ETNeg( decompressQuantifiers( t1 ) )
-    case METAnd( t1, t2 ) => ETAnd( decompressQuantifiers( t1 ), decompressQuantifiers( t2 ) )
-    case METOr( t1, t2 )  => ETOr( decompressQuantifiers( t1 ), decompressQuantifiers( t2 ) )
-    case METImp( t1, t2 ) => ETImp( decompressQuantifiers( t1 ), decompressQuantifiers( t2 ) )
+    case METAtom( f )      => ETAtom( f )
+    case METWeakening( f ) => ETWeakening( f )
+    case METNeg( t1 )      => ETNeg( decompressQuantifiers( t1 ) )
+    case METAnd( t1, t2 )  => ETAnd( decompressQuantifiers( t1 ), decompressQuantifiers( t2 ) )
+    case METOr( t1, t2 )   => ETOr( decompressQuantifiers( t1 ), decompressQuantifiers( t2 ) )
+    case METImp( t1, t2 )  => ETImp( decompressQuantifiers( t1 ), decompressQuantifiers( t2 ) )
 
     case METStrongQuantifier( f, eig, sel ) =>
       val selNew = decompressQuantifiers( sel )

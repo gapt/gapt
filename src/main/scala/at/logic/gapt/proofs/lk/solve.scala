@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr.hol.isAtom
-import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET }
+import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET, ETWeakening }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.shlk._
@@ -636,22 +636,46 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       // every possible action (i.e. formula in toShallow( expansionSequent )) must be realizable (in seq)
       assert( toShallow( expansionSequent ).subSet( seq ) )
 
+      val goal_pruned = removeWeakFormulas( seq )
+
       // rule preference:
       // NOTE: getOrElse uses call by name, i.e. functions below are only evaluated if really needed
-      findUnaryLeft( seq ).orElse(
-        findUnaryRight( seq ).orElse(
+      findUnaryLeft( goal_pruned ).orElse(
+        findUnaryRight( goal_pruned ).orElse(
 
-          findStrongQuantifier( seq ).orElse( // can always apply strong quantifier
-            findWeakQuantifier( seq ).orElse( // weak before binary rules since it's unary
+          findStrongQuantifier( goal_pruned ).orElse( // can always apply strong quantifier
+            findWeakQuantifier( goal_pruned ).orElse( // weak before binary rules since it's unary
 
-              findBinaryLeft( seq ).orElse(
-                findBinaryRight( seq ).orElse(
+              findBinaryLeft( goal_pruned ).orElse(
+                findBinaryRight( goal_pruned ).orElse(
                   {
                     debug( "ExpansionTreeProofStrategy is unable to find a rule to apply on: " + seq )
                     None
                   } ) ) ) ) ) )
     }
   }
+
+  /**
+   * Remove all formulas from seq which correspond to top-level ETWeakening-nodes in expansionSequent
+   *
+   * This assumes that Shallow( expansionSequent ) is a subset of seq and that there are no duplicate
+   * formulas in seq.
+   */
+  private def removeWeakFormulas( seq: FSequent ) = {
+    val w_ant = expansionSequent.antecedent.filter( e => e match {
+      case ETWeakening( _ ) => true
+      case _                => false
+    } ).map( toShallow( _ ) )
+    val w_suc = expansionSequent.succedent.filter( e => e match {
+      case ETWeakening( _ ) => true
+      case _                => false
+    } ).map( toShallow( _ ) )
+
+    FSequent( seq.antecedent.filterNot( w_ant.contains( _ ) ), seq.succedent.filterNot( w_suc.contains( _ ) ) )
+  }
+
+  // TODO:  why do find... operate on seq, would it not make more sense to have them work on expansionSequent?
+  //        in particular since we have assert( toShallow( expansionSequent ).subSet( seq ) )
 
   /**
    * need to override find-methods as we keep track of the state of the expansion sequent here
@@ -785,6 +809,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
         doVariablesAppearInStrongQuantifier( vars, child1 ) || doVariablesAppearInStrongQuantifier( vars, child2 )
       case UnaryExpansionTree( child1 ) => doVariablesAppearInStrongQuantifier( vars, child1 )
       case AtomET( _ )                  => false
+      case ETWeakening( _ )             => false
     }
   }
 

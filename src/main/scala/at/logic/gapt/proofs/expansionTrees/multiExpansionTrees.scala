@@ -142,6 +142,7 @@ case class METStrongQuantifier( formula: HOLFormula, variables: Seq[Var], select
 
   override def numberOfQuantifiers = variables.length
 }
+
 /**
  * Models a block of Skolem quantifiers.
  *
@@ -230,6 +231,7 @@ case class METOr( left: MultiExpansionTree, right: MultiExpansionTree ) extends 
 
   override def numberOfQuantifiers = 0
 }
+
 /**
  * Models an implication.
  *
@@ -294,6 +296,25 @@ case class METNeg( tree: MultiExpansionTree ) extends MultiExpansionTree with T1
 case class METAtom( formula: HOLFormula ) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula], Option[Seq[LambdaExpression]]] {
   lazy val node = Some( formula )
   override def toDeep( pol: Int ): HOLFormula = formula
+  override def toShallow = formula
+
+  override def containsWeakQuantifiers = false
+
+  override def numberOfInstances = 1
+
+  override def getVars = Nil
+
+  override def getSubformula = formula
+
+  override def numberOfQuantifiers = 0
+}
+
+/**
+ * Models a weakening in an expansion tree.
+ */
+case class METWeakening( formula: HOLFormula ) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula], Option[Seq[LambdaExpression]]] {
+  lazy val node = Some( formula )
+  override def toDeep( pol: Int ): HOLFormula = if ( pol > 0 ) Bottom() else Top()
   override def toShallow = formula
 
   override def containsWeakQuantifiers = false
