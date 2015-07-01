@@ -1,5 +1,5 @@
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.{Utils, FOLSubstitution}
 import at.logic.gapt.expr.hol.{instantiate, univclosure}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.formats.tip.TipParser
@@ -84,13 +84,69 @@ val sumES = FSequent(
     FOLAtom("P", List(FOLConst("0"), alpha))
   )
 )
-val endSequent = sumES
+
+// P(0,0), ∀x,y.(P(x,y) → P(s(x),y)), ∀x,y.(P(x,y) → P(x,s(y))) :- P(α,α)
+val squareES = FSequent(
+  List(
+    "P(0,0)",
+    "P(x,y) -> P(s(x),y)",
+    "P(x,y) -> P(x,s(y))"
+  ) map {s => univclosure(parseFormula(s))},
+  List(
+    FOLAtom("P", List(FOLVar("α"), FOLVar("α")))
+  )
+)
+
+// ∀x.x+0 = x, ∀x,y. x+s(y) = s(x+y) :- α+s(α) = s(α) + α
+val commsxES = FSequent(
+  List(
+    "x+0=x",
+    "x+s(y)=s(x+y)"
+  ) map {s => univclosure(parseFormula(s))},
+  List(
+    FOLSubstitution(FOLVar("x"),FOLVar("α"))(parseFormula("x+s(x)=s(x)+x"))
+  )
+)
+
+// ∀x.x+0 = x, ∀x,y. x+s(y) = s(x+y) :- α+s(0) = s(0) + α
+val comm1ES = FSequent(
+  List(
+    "x+0=x",
+    "x+s(y)=s(x+y)"
+  ) map {s => univclosure(parseFormula(s))},
+  List(
+    FOLSubstitution(FOLVar("x"),FOLVar("α"))(parseFormula("x+s(0)=s(0)+x"))
+  )
+)
+
+val assoc2ES = FSequent(
+  Seq("s(x+y) = x+s(y)", "x+0 = x")
+    map (s => univclosure(parseFormula(s))),
+  Seq(Eq(
+    FOLFunction("+", FOLFunction("+", Utils.numeral(2), alpha), alpha),
+    FOLFunction("+", Utils.numeral(2), FOLFunction("+", alpha, alpha)))))
+
+val evenES = FSequent(
+  List(
+    "x+s(y) = s(x+y)",
+    "x+0 = x",
+    "even(0)",
+    "-even(s(0))",
+    "even(s(s(x))) <-> even(x)"
+  ) map (s => univclosure(parseFormula(s))),
+  List(
+    FOLSubstitution(FOLVar("x"),FOLVar("α"))(parseFormula("even(x+x)"))
+  )
+)
+
+
+val endSequent = evenES
 
 println(s"Proving $endSequent")
 
 Logger.getLogger(classOf[SipProver].getName).setLevel(Level.DEBUG)
 
-val sipProver = new SipProver(solutionFinder = new HeuristicSolutionFinder(1), instances = (0 until 5))
+val sipProver = new SipProver(solutionFinder = new HeuristicSolutionFinder(0), instances = 0 until 3)
 
 val maybeIndProof = sipProver.getSimpleInductionProof(endSequent)
 

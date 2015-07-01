@@ -252,14 +252,12 @@ class HigherOrderLogicTest extends Specification {
         case All.Block( vars, f ) =>
           vars == List( x, y, z )
           f == Pxyz
-        case _ => false
       }
 
       val match2 = exP match {
         case Ex.Block( vars, f ) =>
           vars == List( x, y, z )
           f == Pxyz
-        case _ => false
       }
 
       match1 must beTrue
