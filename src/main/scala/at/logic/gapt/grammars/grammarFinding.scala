@@ -37,7 +37,8 @@ object antiUnificator {
 
 object characteristicPartition {
   def apply( term: FOLTerm ): List[List[LambdaPosition]] =
-    LambdaPosition.getPositions( term, _.isInstanceOf[FOLTerm] ).groupBy( term.get ).values.toList
+    LambdaPosition.getPositions( term, st => st.isInstanceOf[FOLTerm] && freeVariables( st ).nonEmpty ).
+      groupBy( term.get ).values.toList
 }
 
 object normalForms {
