@@ -7,6 +7,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.Substitution
 import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.proofs.expansionTrees.{ merge, ExpansionSequent, ETAtom, ETWeakQuantifier }
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import base._
@@ -704,7 +705,7 @@ class LKTest extends Specification {
     val zero = FOLConst( "0" )
     val x = FOLVar( "x" )
     val y = FOLVar( "y" )
-    val Sx = FOLFunction( "S", List( x ) )
+    val Sx = FOLFunction( "s", List( x ) )
 
     val P0y = FOLAtom( "P", List( zero, y ) )
     val Pxy = FOLAtom( "P", List( x, y ) )
@@ -718,20 +719,7 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx )
-
-      success
-    }
-
-    "correctly construct a small induction proof if only the main formula is given" in {
-      val ax1 = Axiom( List( P0y ), List( P0y ) )
-      val occZero = ax1.root.succedent.head
-
-      val ax2 = Axiom( List( Pxy ), List( PSxy ) )
-      val occX = ax2.root.antecedent.head
-      val occSx = ax2.root.succedent.head
-
-      InductionRule( ax1, ax2, Pxy )
+      InductionRule( ax1, ax2, occZero, occX, occSx, x )
 
       success
     }
@@ -747,7 +735,7 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
     }
 
     "fail if more than one variable needs to be substituted" in {
@@ -761,7 +749,7 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
     }
 
     "fail if different variables need to be substituted" in {
@@ -775,7 +763,7 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
     }
 
     "fail if the eigenvariable condition is not satisfied" in {
@@ -787,14 +775,57 @@ class LKTest extends Specification {
       val occX = ax2.root.antecedent.head
       val occSx = ax2.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
 
       val ax2_ = Axiom( List( Pxy ), List( PSxy, Qx ) )
       val occX_ = ax2_.root.antecedent.head
       val occSx_ = ax2_.root.succedent.head
 
-      InductionRule( ax1, ax2, occZero, occX, occSx ) must throwAn[LKRuleCreationException]
+      InductionRule( ax1, ax2, occZero, occX, occSx, x ) must throwAn[LKRuleCreationException]
     }
+  }
+
+  "proofFromInstances" should {
+    val x = FOLVar( "x" )
+    val y = FOLVar( "y" )
+    val s1 = FOLConst( "s_1" )
+    val s2 = FOLConst( "s_2" )
+    val t11 = FOLConst( "t_11" )
+    val t12 = FOLConst( "t_12" )
+    val t21 = FOLConst( "t_21" )
+
+    def F( x1: FOLTerm, x2: FOLTerm ) = FOLAtom( "F", List( x1, x2 ) )
+    def G( x1: FOLTerm, x2: FOLTerm ) = FOLAtom( "G", List( x1, x2 ) )
+
+    val et1 = merge( ETWeakQuantifier( All( x, All( y, F( x, y ) ) ),
+      List(
+        ( ETWeakQuantifier( All( y, F( s1, y ) ),
+          List(
+            ( ETAtom( F( s1, t11 ) ), t11 ),
+            ( ETAtom( F( s1, t12 ) ), t12 ) ) ), s1 ),
+        ( ETWeakQuantifier( All( y, F( s2, y ) ),
+          List(
+            ( ETAtom( F( s2, t21 ) ), t21 ) ) ), s2 ) ) ) )
+
+    val et2 = merge( ETWeakQuantifier( Ex( x, Ex( y, G( x, y ) ) ),
+      List(
+        ( ETWeakQuantifier( Ex( y, G( s1, y ) ),
+          List(
+            ( ETAtom( G( s1, t11 ) ), t11 ),
+            ( ETAtom( G( s1, t12 ) ), t12 ) ) ), s1 ),
+        ( ETWeakQuantifier( Ex( y, G( s2, y ) ),
+          List(
+            ( ETAtom( G( s2, t21 ) ), t21 ) ) ), s2 ) ) ) )
+
+    "correctly compute a small proof" in {
+      val es = ExpansionSequent( List( et1 ), List( et2 ) )
+      val p = Axiom( List( F( s1, t11 ), F( s1, t12 ), F( s2, t21 ) ), List( G( s1, t11 ), G( s1, t12 ), G( s2, t21 ) ) )
+
+      proofFromInstances( p, es )
+
+      success
+    }
+
   }
   /*
 

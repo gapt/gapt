@@ -291,7 +291,7 @@ case class ETAtom( formula: HOLFormula ) extends ExpansionTree with TerminalNode
 }
 
 /**
- * Represents a weakening in an expansiont tree, i.e. a subformula which is not
+ * Represents a weakening in an expansion tree, i.e. a subformula which is not
  * needed for making the deep formula a tautology.
  * @param formula the (weak) formula at this node
  */
@@ -342,6 +342,9 @@ class ExpansionSequent( val antecedent: Seq[ExpansionTree], val succedent: Seq[E
   def toTuple(): ( Seq[ExpansionTree], Seq[ExpansionTree] ) = {
     ( antecedent, succedent )
   }
+
+  def polarizedTrees: Seq[( ExpansionTree, Boolean )] =
+    antecedent.map( _ -> true ) ++ succedent.map( _ -> false )
 
   def map( f: ExpansionTree => ExpansionTree ): ExpansionSequent = {
     new ExpansionSequent( antecedent.map( f ), succedent.map( f ) )
@@ -552,6 +555,9 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
     //merge(etSubstituted)
     etSubstituted.asInstanceOf[ExpansionTree]
   }
+
+  def apply( s: Substitution, es: ExpansionSequent ): ExpansionSequent =
+    ExpansionSequent( es.antecedent.map( apply( s, _ ) ), es.succedent.map( apply( s, _ ) ) )
 
   /**
    * Perform substitution _without_ propagation of merge nodes

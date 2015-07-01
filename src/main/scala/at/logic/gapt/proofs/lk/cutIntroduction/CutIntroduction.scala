@@ -834,6 +834,7 @@ object CutIntroduction extends Logger {
       genWeakQuantRules( a, s, proof )
     }
 
+  //TODO: This should be replaced by the proofFromInstances macro rule.
   // Both methods below are responsible for generating the instances of 
   // end-sequent ancestors with the terms from the set U
   def genWeakQuantRules( f: FOLFormula, lst: Seq[Seq[FOLTerm]], ax: LKProof ): LKProof = {

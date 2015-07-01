@@ -101,6 +101,42 @@ object CleanStructuralRules {
           } )
         } ) )
 
+      case InductionRule( p1, p2, _, base, step1, step2, m, t ) =>
+        tailcall( cleanStructuralRules( p1, { ( proof1, wsl ) =>
+          cleanStructuralRules( p2, { ( proof2, wsr ) =>
+            ( wsl._2.contains( base.formula ), wsr._1.contains( step1.formula ), wsr._2.contains( step2.formula ) ) match {
+              case ( true, _, _ ) => // In this case we delete the second subproof, i.e. the induction step.
+                val ant2 = proof2.root.antecedent.map( _.formula )
+                val suc2 = proof2.root.succedent.map( _.formula )
+                val ws_1 = wsl._1 ++ ( wsr._1 diff List( step1.formula ) ) ++ ant2
+                val ws_2 = ( wsl._2 diff List( base.formula ) ) ++ ( wsr._2 diff List( step2.formula ) ) ++ suc2
+                tailcall( fun( proof1, ( ws_1, ws_2 ) ) )
+              case ( false, true, true ) => // In this case we delete the first subproof, i.e. the induction base.
+                val ant1 = proof1.root.antecedent map ( _.formula )
+                val suc1 = proof1.root.succedent map ( _.formula )
+                val ws_1 = wsl._1 ++ ( wsr._1 diff List( step1.formula ) ) ++ ant1
+                val ws_2 = ( wsl._1 diff List( base.formula ) ) ++ ( wsr._2 diff List( step2.formula ) ) ++ suc1
+                tailcall( fun( proof2, ( ws_1, ws_2 ) ) )
+
+              // In the following three cases, we have to actually construct the induction rule.
+              case ( false, true, false ) =>
+                val ws_1 = wsl._1 ++ ( wsr._1 diff List( step1.formula ) )
+                val ws_2 = wsl._2 ++ wsr._2
+                val p = WeakeningLeftRule( proof2, step1.formula )
+                tailcall( fun( InductionRule( proof1, proof2, base.formula.asInstanceOf[FOLFormula], step1.formula.asInstanceOf[FOLFormula], step2.formula.asInstanceOf[FOLFormula], t ), ( ws_1, ws_2 ) ) )
+              case ( false, false, true ) =>
+                val ws_1 = wsl._1 ++ wsr._1
+                val ws_2 = wsl._2 ++ ( wsr._2 diff List( step2.formula ) )
+                val p = WeakeningRightRule( proof2, step2.formula )
+                tailcall( fun( InductionRule( proof1, proof2, base.formula.asInstanceOf[FOLFormula], step1.formula.asInstanceOf[FOLFormula], step2.formula.asInstanceOf[FOLFormula], t ), ( ws_1, ws_2 ) ) )
+              case ( false, false, false ) =>
+                val ws_1 = wsl._1 ++ wsr._1
+                val ws_2 = wsl._2 ++ wsr._2
+                tailcall( fun( InductionRule( proof1, proof2, base.formula.asInstanceOf[FOLFormula], step1.formula.asInstanceOf[FOLFormula], step2.formula.asInstanceOf[FOLFormula], t ), ( ws_1, ws_2 ) ) )
+            }
+          } )
+        } ) )
+
       // Unary rules, one aux formula:
 
       case NegLeftRule( p, _, a, m ) =>
