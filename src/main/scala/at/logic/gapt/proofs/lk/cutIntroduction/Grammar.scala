@@ -12,6 +12,7 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars.VectTratGrammar
+import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
 import at.logic.gapt.utils.dssupport.ListSupport._
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.{ DFS, BFS, setSearch }
 
@@ -92,13 +93,17 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
 }
 
 object simpleToMultiGrammar {
-  def apply( terms: TermSet, g: Grammar ): MultiGrammar = {
-    val us = g.u.foldLeft( HashMap[FOLFormula, List[List[FOLTerm]]]() )( ( acc, t ) => {
-      val f = terms.getFormula( t )
-      val old: List[List[FOLTerm]] = acc.getOrElse( f, List[List[FOLTerm]]() )
-      acc + ( ( f, ( old :+ terms.getTermTuple( t ) ) ) )
-    } )
-    new MultiGrammar( us, g.slist.map { case ( left, right ) => ( left, right.toList ) } )
+  def apply( terms: TermSet, g: Grammar ): MultiGrammar =
+    apply( terms.encoding, g.vectTratGrammar )
+
+  def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): MultiGrammar = {
+    val us = g.rightHandSides( g.axiomVect ).map( _.head ).
+      groupBy { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }.
+      mapValues( _.map { case FOLFunction( _, as ) => as }.toList )
+    val slist = g.nonTerminals.filter( _ != g.axiomVect ).
+      map { a => a -> g.rightHandSides( a ).toList }.toList
+
+    new MultiGrammar( us, slist )
   }
 }
 

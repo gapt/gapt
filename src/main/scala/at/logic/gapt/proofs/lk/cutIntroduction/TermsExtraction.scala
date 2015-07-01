@@ -50,7 +50,7 @@ object TermsExtraction {
 // where g_F is a function symbol associated with the formula F. Functions to go back and forth
 // between the input map and the representation are provided.
 @deprecated( "Use InstanceTermEncoding instead." )
-class TermSet( encoding: InstanceTermEncoding, val set: List[FOLTerm] ) {
+class TermSet( val encoding: InstanceTermEncoding, val set: List[FOLTerm] ) {
 
   def formulas = set.map { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }
 
