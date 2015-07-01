@@ -38,6 +38,8 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
   val Gamma1 = extractInstances( ExpSeq1 )
   val Gamma2 = extractInstances( ExpSeq2 )
 
+  val EndSequent = ( toShallow( ExpSeq0 ) union toShallow( ExpSeq1 ) union toShallow( ExpSeq2 ) ).distinct
+
   require( freeVariables( Gamma0 ) subsetOf Set( alpha, beta ), "Gamma0 should contain only α, β, but freeVariables(Gamma0) = " + freeVariables( Gamma0 ).toString() )
   require( freeVariables( Gamma1 ) subsetOf Set( alpha, nu, gamma ), "Gamma1 should contain only α, ν, γ, but freeVariables(Gamma1) = " + freeVariables( Gamma1 ).toString() )
   require( freeVariables( Gamma2 ) subsetOf Set( alpha ), "Gamma2 should contain only α, but freeVariables(Gamma2) = " + freeVariables( Gamma2 ).toString() )
@@ -169,6 +171,23 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @return The LKProof represented by this object
    */
   def toLKProof: LKProof = toLKProof( new Prover9Prover )
+
+  /**
+   * Extracts a SIP grammar from the SIP according to the paper.
+   *
+   * @return The grammar corresponding to the sip.
+   */
+  def toSipGrammar: SipGrammar = {
+    import SipGrammar._
+
+    val termEncoding = InstanceTermEncoding( EndSequent )
+    val terms = termEncoding.encode( ExpSeq0 ) ++ termEncoding.encode( ExpSeq1 ) ++ termEncoding.encode( ExpSeq2 )
+    val tauProductions = terms map { x => tau -> x }
+    val gammaProductions = t map { ti => gamma -> ti }
+    val gammaEndProductions = u map { ui => gammaEnd -> ui }
+
+    SipGrammar( tauProductions ++ gammaProductions ++ gammaEndProductions )
+  }
 }
 
 object SimpleInductionProof {
