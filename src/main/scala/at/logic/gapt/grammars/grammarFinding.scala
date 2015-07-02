@@ -177,7 +177,7 @@ class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizati
 object normalFormsProofGrammar {
   def apply( lang: Seq[FOLTerm], n: Int ) = {
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
-    val topLevelNFs = normalForms( lang, rhsNonTerminals )
+    val topLevelNFs = normalForms( lang, rhsNonTerminals ).filter( !_.isInstanceOf[FOLVar] )
     val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), rhsNonTerminals.tail )
     val axiom = FOLVar( "τ" )
     TratGrammar( axiom, axiom +: rhsNonTerminals, topLevelNFs.map( axiom -> _ ) ++ argumentNFs.flatMap { nf =>
@@ -228,7 +228,7 @@ object normalFormsProofVectGrammar {
   }
 
   def apply( lang: Seq[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {
-    val topLevelNFs = normalForms( lang, nonTermVects flatten )
+    val topLevelNFs = normalForms( lang, nonTermVects flatten ).filter( !_.isInstanceOf[FOLVar] )
     val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), nonTermVects.tail flatten )
 
     VectTratGrammar( axiom, List( axiom ) +: nonTermVects,

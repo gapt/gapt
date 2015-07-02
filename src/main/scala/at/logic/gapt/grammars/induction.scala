@@ -54,7 +54,7 @@ object normalFormsSipGrammar {
     import SipGrammar._
 
     val allTerms = instanceLanguages.flatMap( _._2 )
-    val topLevelNFs = normalForms( allTerms, Seq( gamma, alpha, nu ) )
+    val topLevelNFs = normalForms( allTerms, Seq( gamma, alpha, nu ) ).filter( !_.isInstanceOf[FOLVar] )
     val argumentNFs = normalForms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
       Seq( gamma, alpha, nu ) )
 

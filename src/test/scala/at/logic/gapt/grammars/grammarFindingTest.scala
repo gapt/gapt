@@ -67,6 +67,18 @@ class GrammarFindingTest extends Specification {
     }
   }
 
+  "normal forms grammars" should {
+    "not contain tau->alpha" in {
+      val l = Seq( "r(c)", "r(d)" ) map parseTerm
+
+      val g = normalFormsProofGrammar( l, 1 )
+      g.productions must not contain ( g.axiom -> g.nonTerminals( 1 ) )
+
+      val vg = normalFormsProofVectGrammar( l, Seq( 1 ) )
+      vg.productions must not contain ( List( vg.axiom ) -> vg.nonTerminals( 1 ) )
+    }
+  }
+
   "TermGenerationFormula" should {
     "work for production vectors" in {
       val g = vtg( Seq( "x", "y1,y2" ),

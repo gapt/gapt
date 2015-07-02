@@ -27,6 +27,15 @@ class SipTests extends Specification {
     }
   }
 
+  "normal forms sip grammar" should {
+    "not contain tau->gamma" in {
+      val l = Seq( "r(c)", "r(d)" ) map parseTerm
+
+      val g = normalFormsSipGrammar( Seq( 1 -> l ) )
+      g.productions must not contain ( tau -> gamma )
+    }
+  }
+
   "findMinimalSipGrammar" should {
     "find a grammar" in {
       if ( !new QMaxSAT().isInstalled )
