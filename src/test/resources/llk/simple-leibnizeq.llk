@@ -1,0 +1,24 @@
+\CONSTDEC{P}{i>i>o}
+\CONSTDEC{s,t}{i}
+\VARDEC{X,Y}{i>o}
+\VARDEC{x,y}{i}
+
+\CONSTDEC{THEPROOF}{o}
+
+\AX{Y(s)}{ Y(s)}
+\AX{Y(t)}{ Y(t)}
+\IMPL{Y(s) \impl Y(t), Y(s)}{ Y(t)}
+\ALLL{}{(\forall X (X(s) \impl X(t))), Y(s)}{ Y(t)}
+\NEGR{(\forall X (X(s) \impl X(t)))}{\neg Y(s), Y(t)}
+\ORR{(\forall X (X(s) \impl X(t)))}{\neg Y(s) \lor Y(t)}
+\ALLR{}{(\forall X (X(s) \impl X(t)))}{(\forall X (\neg X(s) \lor X(t)))}
+
+
+\AX{ (\forall x P(x,s)) }{(\forall x P(x,s))}
+\NEGL{\neg (\forall x P(x,s)), (\forall x P(x,s)) }{}
+\AX{(\forall x P(x,t)) }{ (\forall x P(x,t))}
+\ORL{\neg (\forall x P(x,s)) \lor (\forall x P(x,t)), (\forall x P(x,s)) }{ (\forall x P(x,t))}
+\IMPR{\neg (\forall x P(x,s)) \lor (\forall x P(x,t))}{(\forall x P(x,s)) \impl (\forall x P(x,t))}
+\ALLL{(\lambda y (\forall x P(x,y)))}{(\forall X (\neg X(s) \lor X(t)))}{(\forall x P(x,s)) \impl (\forall x P(x,t))}
+\CUT{(\forall X (X(s) \impl X(t)))}{(\forall x P(x,s)) \impl (\forall x P(x,t))}
+\CONTINUEWITH{THEPROOF}

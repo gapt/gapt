@@ -140,22 +140,21 @@ object containsStrongQuantifier {
       s.succedent.exists( x => containsStrongQuantifier( x, true ) )
 }
 
-/**
- * TODO: why a list? why not a set?
- */
-object freeHOVariablesList {
+object freeHOVariables {
   /**
-   * Computes a list of all HOL Variables which are not of type i in a formula, including repetitions. Together with
+   * Computes the set of all HOL Variables which are not of type i in a formula. Together with
    * checks on quantifiers, this can be used to decide if a formula has "true" higher-order content.
+   *
    * @param f the expressions to extract from
    * @return the list of free variables with type != Ti in e
    */
-  def apply( f: HOLFormula ) = freeVariables( f ).toList.filter( _ match { case Var( _, Ti ) => false; case _ => true } )
+  def apply(f : LambdaExpression) = freeVariables(f).filter(_ match { case Var(_,Ti) => false; case _ => true })
+
 }
 
 /**
  * Return the list of all atoms *with duplicates* in the given argument.
- * TODO: why a list? why duplicats? why not a set?
+ * TODO: why a list? why duplicates? why not a set?
  */
 object atoms {
   def apply( f: HOLFormula ): List[HOLFormula] = f match {

@@ -15,6 +15,11 @@ import at.logic.gapt.proofs.ceres.UnfoldProjectionTerm._
 import at.logic.gapt.proofs.ceres._
 import clauseSchema._
 
+
+/**
+ * This code is a leftover from schematic CERES and only works for specific schema proofs.
+ * For first-order CERES, the CERES object does a grounding on its own.
+ */
 object ACNF {
   def plugProjections( resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: FSequent ): LKProof = {
     resRefutation match {

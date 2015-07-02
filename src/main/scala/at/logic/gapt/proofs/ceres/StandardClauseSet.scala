@@ -47,10 +47,10 @@ class AlternativeStandardClauseSet( val optimize_plus: ( Set[FSequent], Set[FSeq
   def apply( struct: Struct ): Set[FSequent] = struct match {
     case A( fo )                        => Set( FSequent( Nil, List( fo.formula ) ) )
     case Dual( A( fo ) )                => Set( FSequent( List( fo.formula ), Nil ) )
-    case EmptyPlusJunction()            => Set()
-    case EmptyTimesJunction()           => Set( FSequent( Nil, Nil ) )
-    case Plus( EmptyPlusJunction(), x ) => apply( x )
-    case Plus( x, EmptyPlusJunction() ) => apply( x )
+    case EmptyPlusJunction            => Set()
+    case EmptyTimesJunction           => Set( FSequent( Nil, Nil ) )
+    case Plus( EmptyPlusJunction, x ) => apply( x )
+    case Plus( x, EmptyPlusJunction ) => apply( x )
     case Plus( A( f1 ), Dual( A( f2 ) ) ) if f1.formula == f2.formula =>
       Set()
     case Plus( Dual( A( f2 ) ), A( f1 ) ) if f1.formula == f2.formula =>
@@ -58,8 +58,8 @@ class AlternativeStandardClauseSet( val optimize_plus: ( Set[FSequent], Set[FSeq
     case Plus( x, y ) =>
       val ( x_, y_ ) = optimize_plus( apply( x ), apply( y ) )
       x_ ++ y_
-    case Times( EmptyTimesJunction(), x, _ ) => apply( x )
-    case Times( x, EmptyTimesJunction(), _ ) => apply( x )
+    case Times( EmptyTimesJunction, x, _ ) => apply( x )
+    case Times( x, EmptyTimesJunction, _ ) => apply( x )
     case Times( x, y, _ ) =>
       val xs = apply( x )
       val ys = apply( y )
@@ -85,8 +85,8 @@ object StandardClauseSet extends Logger {
   def normalize( struct: Struct ): Struct = struct match {
     case s: A                  => s
     case s: Dual               => s
-    case e: EmptyTimesJunction => e
-    case e: EmptyPlusJunction  => e
+    case EmptyTimesJunction => struct
+    case EmptyPlusJunction  => struct
     case Plus( s1, s2 )        => Plus( normalize( s1 ), normalize( s2 ) )
     case Times( s1, s2, aux )  => merge( normalize( s1 ), normalize( s2 ), aux )
   }
@@ -107,7 +107,7 @@ object StandardClauseSet extends Logger {
       transformCartesianProductToStruct( rest, aux, rec :: acc )
 
     case Nil =>
-      acc.reverse.foldLeft[Struct]( EmptyPlusJunction() )( ( struct, fun ) => fun( struct ) )
+      acc.reverse.foldLeft[Struct]( EmptyPlusJunction )( ( struct, fun ) => fun( struct ) )
   }
 
   private def merge( s1: Struct, s2: Struct, aux: List[FormulaOccurrence] ): Struct = {
@@ -134,20 +134,20 @@ object StandardClauseSet extends Logger {
    */
   private def getTimesJunctions( struct: Struct, fun: List[Struct] => TailRec[List[Struct]] ): TailRec[List[Struct]] = struct match {
     case s: Times              => fun( List( s ) )
-    case s: EmptyTimesJunction => fun( List( s ) )
+    case EmptyTimesJunction => fun( List( struct ) )
     case s: A                  => fun( List( s ) )
     case s: Dual               => fun( List( s ) )
-    case s: EmptyPlusJunction  => fun( Nil )
+    case EmptyPlusJunction  => fun( Nil )
     case Plus( s1, s2 ) => tailcall( getTimesJunctions( s1, ( x: List[Struct] ) =>
       tailcall( getTimesJunctions( s2, ( y: List[Struct] ) => fun( x ::: y ) ) ) ) )
   }
 
   private def slowgetTimesJunctions( struct: Struct ): List[Struct] = struct match {
     case s: Times              => s :: Nil
-    case s: EmptyTimesJunction => s :: Nil
+    case EmptyTimesJunction => struct :: Nil
     case s: A                  => s :: Nil
     case s: Dual               => s :: Nil
-    case s: EmptyPlusJunction  => Nil
+    case EmptyPlusJunction  => Nil
     case Plus( s1, s2 )        => slowgetTimesJunctions( s1 ) ::: slowgetTimesJunctions( s2 )
   }
 
@@ -155,8 +155,8 @@ object StandardClauseSet extends Logger {
   private def getLiterals( struct: Struct, fun: List[Struct] => TailRec[List[Struct]] ): TailRec[List[Struct]] = struct match {
     case s: A                  => fun( s :: Nil )
     case s: Dual               => fun( s :: Nil )
-    case s: EmptyTimesJunction => fun( Nil )
-    case s: EmptyPlusJunction  => fun( Nil )
+    case EmptyTimesJunction => fun( Nil )
+    case EmptyPlusJunction  => fun( Nil )
     case Plus( s1, s2 ) => tailcall( getLiterals( s1, x =>
       tailcall( getLiterals( s2, y => fun( x ::: y ) ) ) ) )
     case Times( s1, s2, _ ) => tailcall( getLiterals( s1, x =>
@@ -166,8 +166,8 @@ object StandardClauseSet extends Logger {
   private def slowgetLiterals( struct: Struct ): List[Struct] = struct match {
     case s: A                  => s :: Nil
     case s: Dual               => s :: Nil
-    case s: EmptyTimesJunction => Nil
-    case s: EmptyPlusJunction  => Nil
+    case EmptyTimesJunction => Nil
+    case EmptyPlusJunction  => Nil
     case Plus( s1, s2 )        => slowgetLiterals( s1 ) ::: slowgetLiterals( s2 )
     case Times( s1, s2, _ )    => slowgetLiterals( s1 ) ::: slowgetLiterals( s2 )
   }
@@ -189,20 +189,20 @@ object StandardClauseSet extends Logger {
 }
 object SimplifyStruct {
   def apply( s: Struct ): Struct = s match {
-    case EmptyPlusJunction()                 => s
-    case EmptyTimesJunction()                => s
+    case EmptyPlusJunction                 => s
+    case EmptyTimesJunction                => s
     case A( _ )                              => s
-    case Dual( EmptyPlusJunction() )         => EmptyTimesJunction()
-    case Dual( EmptyTimesJunction() )        => EmptyPlusJunction()
+    case Dual( EmptyPlusJunction )         => EmptyTimesJunction
+    case Dual( EmptyTimesJunction )        => EmptyPlusJunction
     case Dual( x )                           => Dual( SimplifyStruct( x ) )
-    case Times( x, EmptyTimesJunction(), _ ) => SimplifyStruct( x )
-    case Times( EmptyTimesJunction(), x, _ ) => SimplifyStruct( x )
+    case Times( x, EmptyTimesJunction, _ ) => SimplifyStruct( x )
+    case Times( EmptyTimesJunction, x, _ ) => SimplifyStruct( x )
     case Times( x, Dual( y ), aux ) if x.formula_equal( y ) =>
       //println("tautology deleted")
-      EmptyPlusJunction()
+      EmptyPlusJunction
     case Times( Dual( x ), y, aux ) if x.formula_equal( y ) =>
       //println("tautology deleted")
-      EmptyPlusJunction()
+      EmptyPlusJunction
     case Times( x, y, aux ) =>
       //TODO: adjust aux formulas, they are not needed for the css construction, so we can drop them,
       // but this method should be as general as possible

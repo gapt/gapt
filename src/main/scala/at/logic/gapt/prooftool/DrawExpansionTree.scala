@@ -14,7 +14,7 @@ import swing._
 import scala.swing.event.{ MouseExited, MouseEntered, MouseClicked }
 import java.awt.{ Font, Color }
 import java.awt.event.MouseEvent
-import at.logic.gapt.proofs.expansionTrees.{ METAnd, METAtom, METOr, METImp, METNeg, METWeakQuantifier, METSkolemQuantifier, METStrongQuantifier, MultiExpansionTree }
+import at.logic.gapt.proofs.expansionTrees._
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
 import at.logic.gapt.expr.hol._
@@ -273,6 +273,13 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
           if ( state.get( formula ) == Some( Open ) ) contents += drawTerms( terms )
           contents += drawFormula( subF )
         }
+
+      case METWeakening(f) =>
+        //not really tested
+        val lbl = DrawSequent.formulaToLabel( f, ft )
+        lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
+        contents += lbl
+
 
     }
   }

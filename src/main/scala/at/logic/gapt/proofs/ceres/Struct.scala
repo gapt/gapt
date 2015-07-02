@@ -45,7 +45,7 @@ object Times {
 }
 
 class Times( val left: Struct, val right: Struct, val auxFOccs: List[FormulaOccurrence] ) extends Struct {
-  override def toString(): String = Console.RED + "(" + Console.RESET + left + Console.RED + " ⊗ " + Console.RESET + right + Console.RED + ")" + Console.RESET
+  override def toString(): String = "(" + left + " ⊗ " + right + ")"
   override def formula_equal( s: Struct ) = s match {
     case Times( x, y, aux ) => left.formula_equal( x ) && right.formula_equal( y ) &&
       aux.diff( auxFOccs ).isEmpty && auxFOccs.diff( aux ).isEmpty
@@ -65,7 +65,7 @@ class Times( val left: Struct, val right: Struct, val auxFOccs: List[FormulaOccu
 }
 
 case class Plus( left: Struct, right: Struct ) extends Struct {
-  override def toString(): String = Console.BLUE + "(" + Console.RESET + left + Console.BLUE + " ⊕ " + Console.RESET + right + Console.BLUE + ")" + Console.RESET
+  override def toString(): String = "("+ left + " ⊕ " + right + ")"
   override def formula_equal( s: Struct ) = s match {
     case Plus( x, y ) => left.formula_equal( x ) && right.formula_equal( y )
     case _            => false
@@ -81,7 +81,7 @@ case class Plus( left: Struct, right: Struct ) extends Struct {
   }
 }
 case class Dual( sub: Struct ) extends Struct {
-  override def toString(): String = Console.GREEN + "~(" + Console.RESET + sub + Console.GREEN + ")" + Console.RESET
+  override def toString(): String = "~(" + sub + ")"
   override def formula_equal( s: Struct ) = s match {
     case Dual( x ) => sub.formula_equal( x )
     case _         => false
@@ -104,19 +104,19 @@ case class A( fo: FormulaOccurrence ) extends Struct { // Atomic Struct
   override def size() = 1
   override def alternations() = 0
 }
-case class EmptyTimesJunction() extends Struct {
-  override def toString(): String = Console.RED + "ε" + Console.RESET
+case object EmptyTimesJunction extends Struct {
+  override def toString(): String = "ε⊗"
   override def formula_equal( s: Struct ) = s match {
-    case EmptyTimesJunction() => true
+    case EmptyTimesJunction => true
     case _                    => false
   }
   override def size() = 1
   override def alternations() = 0
 }
-case class EmptyPlusJunction() extends Struct {
-  override def toString(): String = Console.BLUE + "ε" + Console.RESET
+case object EmptyPlusJunction extends Struct {
+  override def toString(): String = "ε⊕"
   override def formula_equal( s: Struct ) = s match {
-    case EmptyPlusJunction() => true
+    case EmptyPlusJunction => true
     case _                   => false
   }
   override def size() = 1
@@ -126,7 +126,7 @@ case class EmptyPlusJunction() extends Struct {
 /* convenience object allowing to create and match a set of plus nodes */
 object PlusN {
   def apply( l: List[Struct] ): Struct = l match {
-    case Nil      => EmptyPlusJunction()
+    case Nil      => EmptyPlusJunction
     case x :: Nil => x
     case x :: xs  => Plus( x, PlusN( xs ) )
   }
@@ -148,8 +148,8 @@ object structToExpressionTree {
     case Dual( sub )             => UnaryTree( DualC(), apply( sub ) )
     case Times( left, right, _ ) => BinaryTree( TimesC(), apply( left ), apply( right ) )
     case Plus( left, right )     => BinaryTree( PlusC(), apply( left ), apply( right ) )
-    case EmptyTimesJunction()    => LeafTree( EmptyTimesC() )
-    case EmptyPlusJunction()     => LeafTree( EmptyPlusC() )
+    case EmptyTimesJunction    => LeafTree( EmptyTimesC() )
+    case EmptyPlusJunction     => LeafTree( EmptyPlusC() )
   }
 
   // constructs struct Tree without empty leaves.
@@ -172,8 +172,8 @@ object structToExpressionTree {
         else r
       else if ( r.isInstanceOf[LeafTree[LambdaExpression]] && ( r.vertex == EmptyTimesC || r.vertex == EmptyPlusC ) ) l
       else BinaryTree( PlusC(), l, r )
-    case EmptyTimesJunction() => LeafTree( EmptyTimesC() )
-    case EmptyPlusJunction()  => LeafTree( EmptyPlusC() )
+    case EmptyTimesJunction => LeafTree( EmptyTimesC() )
+    case EmptyPlusJunction  => LeafTree( EmptyPlusC() )
   }
 
   // We define some symbols that represent the operations of the struct
@@ -214,6 +214,27 @@ object structToExpressionTree {
   object EmptyTimesC extends MonomorphicLogicalC( EmptyTimesSymbol.toString, To )
   object EmptyPlusC extends MonomorphicLogicalC( EmptyPlusSymbol.toString, To )
 }
+
+
+/**
+ * Returns s.toString with color coding of struct operators. When a big struct is loaded in the cli, the string truncation
+ * can mess up the terminal, therefore this is not the default behaviour.
+ */
+object coloredStructString {
+  def apply(s:Struct) = s match {
+    case A(fo) =>
+      fo.formula.toString
+    case Dual(sub) =>
+      Console.GREEN + "~(" + Console.RESET + sub + Console.GREEN + ")" + Console.RESET
+    case Times(left, right, _) =>
+      Console.RED + "(" + Console.RESET + left + Console.RED + " ⊗ " + Console.RESET + right + Console.RED + ")" + Console.RESET
+    case Plus(left, right) =>
+      Console.BLUE + "(" + Console.RESET + left + Console.BLUE + " ⊕ " + Console.RESET + right + Console.BLUE + ")" + Console.RESET
+    case EmptyPlusJunction => Console.RED + "ε" + Console.RESET
+    case EmptyTimesJunction => Console.BLUE + "ε" + Console.RESET
+  }
+}
+
 
 // some stuff for schemata
 
@@ -309,8 +330,8 @@ object StructCreators extends Logger {
     case Dual( x )            => size( x, n + 1 )
     case Plus( l, r )         => size( l, size( r, n + 1 ) )
     case Times( l, r, _ )     => size( l, size( r, n + 1 ) )
-    case EmptyPlusJunction()  => n
-    case EmptyTimesJunction() => n
+    case EmptyPlusJunction  => n
+    case EmptyTimesJunction => n
   }
 
   // this is for proof schemata: it extracts the characteristic
@@ -378,7 +399,7 @@ object StructCreators extends Logger {
 
   def extractStruct( name: String, fresh_param: IntVar ): Struct = {
     val terms = extractRelevantStruct( name, fresh_param )
-    val cs_0 = terms._2.foldLeft[Struct]( EmptyPlusJunction() )( ( result, triple ) =>
+    val cs_0 = terms._2.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
       Plus( Times( Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol( triple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
         cutOccConfigToCutConfig( hackGettingProof( triple._1 ).base.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, IntZero() :: Nil ) ), IntZero() :: Nil ), hackGettingProof( triple._1 ).base.root ) ) ),
         triple._2 ), result ) )
@@ -386,7 +407,7 @@ object StructCreators extends Logger {
     // assumption: all proofs in the SchemaProofDB have the
     // same running variable "k".
     val k = IntVar( "k" )
-    val cs_1 = terms._1.foldLeft[Struct]( EmptyPlusJunction() )( ( result, triple ) =>
+    val cs_1 = terms._1.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
       Plus( Times( Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol( triple._1.replace( "Θ(", "" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
         cutOccConfigToCutConfig( hackGettingProof( triple._1 ).rec.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, Succ( k ) :: Nil ) ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
         triple._2 ), result ) )
@@ -403,7 +424,7 @@ object StructCreators extends Logger {
       extractStepWithCutConfig( SchemaProofDB.get( pair._1 ), pair._2 ),
       pair._2 ) )
     val k = IntVar( "k" )
-    val cs_0 = relevant_struct_list_step.foldLeft[Struct]( EmptyPlusJunction() )( ( result, triple ) =>
+    val cs_0 = relevant_struct_list_step.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
       Plus( Times( Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol( triple._1.replace( "Θ(", "" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
         cutOccConfigToCutConfig.applyRCC( hackGettingProof( triple._1 ).rec.root, triple._3 ) ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
         triple._2 ), result ) )
@@ -427,7 +448,7 @@ object StructCreators extends Logger {
 
     println( "\nrelevant_struct_list_base : " + relevant_struct_list_base )
     //the triple is here 4-ple
-    val cs_0 = relevant_struct_list_base.foldLeft[Struct]( EmptyPlusJunction() )( ( result, fourple ) =>
+    val cs_0 = relevant_struct_list_base.foldLeft[Struct]( EmptyPlusJunction )( ( result, fourple ) =>
       if ( fourple._3 == fourple._4 )
         Plus( Times( Dual( A( toOccurrence(
         IndexedPredicate( new ClauseSetSymbol( fourple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
@@ -587,7 +608,7 @@ object StructCreators extends Logger {
   }
 
   def makeTimesJunction( structs: List[Struct], aux: List[FormulaOccurrence] ): Struct = structs match {
-    case Nil        => EmptyTimesJunction()
+    case Nil        => EmptyTimesJunction
     case s1 :: Nil  => s1
     case s1 :: tail => Times( s1, makeTimesJunction( tail, aux ), aux )
   }

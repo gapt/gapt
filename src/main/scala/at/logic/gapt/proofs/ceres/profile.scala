@@ -13,8 +13,8 @@ object getListOfFOccsInStruct {
     case Times( s1, s2, _ )    => apply( s1 ) ++ apply( s2 )
     case A( fo )               => fo :: Nil //{ println("\n\nA(fo) = "+fo);fo::Nil}
     case Dual( sub )           => apply( sub )
-    case e: EmptyTimesJunction => List[FormulaOccurrence]()
-    case e: EmptyPlusJunction  => List[FormulaOccurrence]()
+    case EmptyTimesJunction => Nil
+    case EmptyPlusJunction  => Nil
     case _                     => { println( "\n\nERROR in getListOfFOccsInStruct" ); List() }
   }
 }
@@ -39,8 +39,8 @@ object proofProfile {
     }
     case s: A                  => s
     case Dual( sub )           => Dual( rewrite( sub ) )
-    case e: EmptyTimesJunction => e
-    case e: EmptyPlusJunction  => e
+    case EmptyTimesJunction => struct
+    case EmptyPlusJunction  => struct
   }
 
   def transformStructToProfile( struct: Struct, proof: LKProof ) = {
@@ -98,7 +98,7 @@ object proofProfile {
 
   private def getTimesJunctions( struct: Struct ): List[Struct] = struct match {
     case s: Times              => s :: Nil
-    case s: EmptyTimesJunction => s :: Nil
+    case EmptyTimesJunction => struct :: Nil
     case s: A                  => s :: Nil
     case s: Dual               => s :: Nil
     case Plus( s1, s2 )        => getTimesJunctions( s1 ) ::: getTimesJunctions( s2 )
@@ -107,8 +107,8 @@ object proofProfile {
   private def getLiterals( struct: Struct ): List[Struct] = struct match {
     case s: A                  => s :: Nil
     case s: Dual               => s :: Nil
-    case s: EmptyTimesJunction => Nil
-    case s: EmptyPlusJunction  => Nil
+    case EmptyTimesJunction => Nil
+    case EmptyPlusJunction  => Nil
     case Plus( s1, s2 )        => getLiterals( s1 ) ::: getLiterals( s2 )
     case Times( s1, s2, _ )    => getLiterals( s1 ) ::: getLiterals( s2 )
   }

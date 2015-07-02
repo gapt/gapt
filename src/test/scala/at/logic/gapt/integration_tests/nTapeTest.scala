@@ -27,8 +27,8 @@ import org.specs2.mutable._
 class nTapeTest extends Specification with ClasspathFileCopier {
   def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
 
-  def show( s: String ) = Unit // = println( "+++++++++ " + s + " ++++++++++" )
-  def show_detail( s: String ) = Unit // = println( "+++++++++ " + s + " ++++++++++" )
+  def show( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
+  def show_detail( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
 
   def f( e: LambdaExpression ): String = toLLKString( e )
 
@@ -69,6 +69,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     case _             => List( et )
   }
 
+  //prints the interesting terms from the expansion sequent
   def printStatistics( et: ExpansionSequent ) = {
     val indet = decompose( ( et.antecedent( 1 ) ) )( 2 )
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
@@ -122,115 +123,82 @@ class nTapeTest extends Specification with ClasspathFileCopier {
 
   }
 
+  /**
+   * The actual cut-elimination procedure.
+   * @param filename
+   * @return Some(errormessage) if something breaks, None otherwise
+   */
+  def doCutelim(filename : String) : Option[String] = {
+    show( "Loading file" )
+    val tokens = HybridLatexParser.parseFile( filename )
+    val pdb = HybridLatexParser.createLKProof( tokens )
+    show( "Eliminating definitions, expanding tautological axioms" )
+    val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "TAPEPROOF" ) ) ) )
+    show( "Skolemizing" )
+    val selp = LKToLKsk( elp )
+
+    show( "Extracting struct" )
+    val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+    show( "Computing projections" )
+    val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+
+    show( "Computing clause set" )
+    val cl = AlternativeStandardClauseSet( struct )
+    show( "Exporting to prover 9" )
+    val ( cmap, folcl_ ) = replaceAbstractions( cl.toList )
+    show_detail( "Calculated cmap: " )
+    cmap.map( x => show_detail( x._1 + " := " + x._2 ) )
+
+    val folcl = reduceHolToFol( folcl_ )
+    folcl.map( x => show_detail( x.toString ) )
+
+    show( "Refuting clause set" )
+    new Prover9Prover().getRobinsonProof( folcl ) match {
+      case None =>
+        Some( "could not refute clause set" )
+      case Some( rp ) =>
+        show( "Getting formulas" )
+        val proofformulas = selp.nodes.flatMap( _.asInstanceOf[LKProof].root.toFSequent.formulas ).toList.distinct
+
+        show( "Extracting signature from " + proofformulas.size + " formulas" )
+        val ( sigc, sigv ) = undoHol2Fol.getSignature( proofformulas )
+
+        show( "Converting to Ral" )
+
+        val myconverter = Robinson2RalAndUndoHOL2Fol( sigv.map( x => ( x._1, x._2.toList ) ), sigc.map( x => ( x._1, x._2.toList ) ), cmap )
+        val ralp = myconverter( rp )
+        show( "Creating acnf" )
+        val ( acnf, endclause ) = ceres_omega( proj, ralp, sequentToLabelledSequent( selp.root ), struct )
+
+        show( "Compute expansion tree" )
+        val et = LKskToExpansionProof( acnf )
+        show( " HOORAY! " )
+
+        printStatistics( et )
+
+        None
+    }
+
+  }
+
   sequential
   "The higher-order tape proof" should {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
       //skipped("works but takes a bit time")
       checkForProverOrSkip
-      show( "Loading file" )
-      val tokens = HybridLatexParser.parseFile( tempCopyOfClasspathFile( "tape3.llk" ) )
-      val pdb = HybridLatexParser.createLKProof( tokens )
-      show( "Eliminating definitions, expanding tautological axioms" )
-      val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "TAPEPROOF" ) ) ) )
-      show( "Skolemizing" )
-      val selp = LKToLKsk( elp )
-
-      show( "Extracting struct" )
-      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
-      show( "Computing projections" )
-      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
-
-      show( "Computing clause set" )
-      val cl = AlternativeStandardClauseSet( struct )
-      show( "Exporting to prover 9" )
-      val ( cmap, folcl_ ) = replaceAbstractions( cl.toList )
-      show_detail( "Calculated cmap: " )
-      cmap.map( x => show_detail( x._1 + " := " + x._2 ) )
-
-      val folcl = reduceHolToFol( folcl_ )
-      folcl.map( x => show_detail( x.toString ) )
-
-      show( "Refuting clause set" )
-      new Prover9Prover().getRobinsonProof( folcl ) match {
-        case None =>
-          ko( "could not refute clause set" )
-        case Some( rp ) =>
-          show( "Getting formulas" )
-          val proofformulas = selp.nodes.flatMap( _.asInstanceOf[LKProof].root.toFSequent.formulas ).toList.distinct
-
-          show( "Extracting signature from " + proofformulas.size + " formulas" )
-          val ( sigc, sigv ) = undoHol2Fol.getSignature( proofformulas )
-
-          show( "Converting to Ral" )
-
-          val myconverter = Robinson2RalAndUndoHOL2Fol( sigv.map( x => ( x._1, x._2.toList ) ), sigc.map( x => ( x._1, x._2.toList ) ), cmap )
-          val ralp = myconverter( rp )
-          show( "Creating acnf" )
-          val ( acnf, endclause ) = ceres_omega( proj, ralp, sequentToLabelledSequent( selp.root ), struct )
-
-          show( "Compute expansion tree" )
-          val et = LKskToExpansionProof( acnf )
-          show( " HOORAY! " )
-
-          printStatistics( et )
-
-          ok
+      doCutelim(  tempCopyOfClasspathFile( "tape3.llk" )  ) match {
+        case Some(error) => ko(error)
+        case None => ok
       }
 
     }
 
     "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
       checkForProverOrSkip
-      show( "Loading file" )
-      val tokens = HybridLatexParser.parseFile( tempCopyOfClasspathFile( "tape3ex.llk" ) )
-      val pdb = HybridLatexParser.createLKProof( tokens )
-      show( "Eliminating definitions, expanding tautological axioms" )
-      val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "TAPEPROOF" ) ) ) )
-      show( "Skolemizing" )
-      val selp = LKToLKsk( elp )
-
-      show( "Extracting struct" )
-      val struct = StructCreators.extract( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
-      show( "Computing projections" )
-      val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariablesList( x ).nonEmpty )
-
-      show( "Computing clause set" )
-      val cl = AlternativeStandardClauseSet( struct )
-      show( "Exporting to prover 9" )
-      val ( cmap, folcl_ ) = replaceAbstractions( cl.toList )
-      show_detail( "Calculated cmap: " )
-      cmap.map( x => show_detail( x._1 + " := " + x._2 ) )
-
-      val folcl = reduceHolToFol( folcl_ )
-      folcl.map( x => show_detail( x.toString ) )
-
-      show( "Refuting clause set" )
-      new Prover9Prover().getRobinsonProof( folcl ) match {
-        case None =>
-          ko( "could not refute clause set" )
-        case Some( rp ) =>
-          show( "Getting formulas" )
-          val proofformulas = selp.nodes.flatMap( _.asInstanceOf[LKProof].root.toFSequent.formulas ).toList.distinct
-
-          show( "Extracting signature from " + proofformulas.size + " formulas" )
-          val ( sigc, sigv ) = undoHol2Fol.getSignature( proofformulas )
-
-          show( "Converting to Ral" )
-
-          val myconverter = Robinson2RalAndUndoHOL2Fol( sigv.map( x => ( x._1, x._2.toList ) ), sigc.map( x => ( x._1, x._2.toList ) ), cmap )
-          val ralp = myconverter( rp )
-          show( "Creating acnf" )
-          val ( acnf, endclause ) = ceres_omega( proj, ralp, sequentToLabelledSequent( selp.root ), struct )
-
-          show( "Compute expansion tree" )
-          val et = LKskToExpansionProof( acnf )
-          show( " HOORAY! " )
-
-          printStatistics( et )
-
-          ok
+      doCutelim(  tempCopyOfClasspathFile( "tape3ex.llk" )  ) match {
+        case Some(error) => ko(error)
+        case None => ok
       }
-
     }
 
   }

@@ -66,10 +66,14 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
 
   /**
    * Interpretation of the sequent as a formula.
+   * Why is this not the definition of a sequent (/\ F -> \/ G)? The current implementation (\/-F \/ G) is
+   * only classically equivalent (In IL a -> b :/- -a \/ b).
    */
   def toFormula: HOLFormula = Or( antecedent.toList.map( f => Neg( f ) ) ++ succedent )
 
   def toNegFormula: HOLFormula = And( antecedent ++ succedent.map( Neg( _ ) ) )
+
+  def toImplication: HOLFormula = Imp(And(antecedent.toList), Or(succedent))
 
   /**
    * Are both sides of the sequent empty?

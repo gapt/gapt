@@ -38,7 +38,7 @@ class TPTPHOLExporter {
         for ( fs <- l ) yield {
           index = index + 1
           //thf_sequent_dec( index, fs, vnames, cnames ) + "\n" //leo doesn't support sequents?
-          thf_formula_dec( index, fs.toFormula, vnames, cnames ) + "\n"
+          thf_formula_dec( index, fs.toImplication, vnames, cnames ) + "\n"
         }
       case false =>
         val negClauses = Neg( And( l.map( closedFormula ) ) )
@@ -153,7 +153,7 @@ class TPTPHOLExporter {
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
   def thf_formula( f: LambdaExpression, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
     f match {
-      case Neg( x )      => addparens( " ~" + thf_formula( x, vmap, cmap ), !outermost )
+      case Neg( x )      => addparens( " ~(" + thf_formula( x, vmap, cmap )+")", outermost ) //negation of atoms needs parenthesis!
       case And( x, y )   => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
       case Or( x, y )    => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
       case Imp( x, y )   => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )
@@ -234,6 +234,7 @@ class TPTPHOLExporter {
     str + i
   }
 
+  /** extract all variables, bound and free */
   def getVars( t: LambdaExpression, set: Set[Var] ): Set[Var] = t match {
     case Const( _, _ ) => set
     case Var( _, _ )   => set + t.asInstanceOf[Var]
@@ -243,11 +244,11 @@ class TPTPHOLExporter {
 
   def getConsts( t: LambdaExpression, set: Set[Const] ): Set[Const] = t match {
     case EqC( _ )                   => set
+    case _: LogicalConstant         => set
     case NonLogicalConstant( _, _ ) => set + t.asInstanceOf[Const]
     case Var( _, _ )                => set
     case App( s, t )                => getConsts( s, getConsts( t, set ) )
     case Abs( x, t )                => getConsts( t, set )
-    case _: LogicalConstant         => set
   }
 
 }

@@ -9,7 +9,7 @@
  * *************************************************************************** */
 
 /* adjust filename to load a different example */
-val filename = "./examples/hol-tape/ntape-small.llk"  
+val filename = "./examples/hol-tape/ntape.llk"  
 
 //val filename = "./examples/hol-tape/ntape.llk"  
 //val filename = "tape3old.llk"  
@@ -23,7 +23,7 @@ import at.logic.gapt.expr.fol.undoHol2Fol
 
 import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
-import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize}
+import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize, LKToLKsk}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
 import at.logic.gapt.proofs.resolution.RobinsonToRal
 
@@ -78,7 +78,7 @@ import at.logic.gapt.proofs.lk.LKToLKsk
       val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("TAPEPROOF"))))
 
       show("Skolemizing")
-      val selp = LKtoLKskc(elp)
+      val selp = LKToLKsk(elp)
 
       show("Extracting struct")
       val struct = StructCreators.extract(selp, x => containsQuantifierOnLogicalLevel(x) || freeHOVariables(x).nonEmpty)
