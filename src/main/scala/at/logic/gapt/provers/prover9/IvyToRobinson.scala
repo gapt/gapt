@@ -2,11 +2,10 @@ package at.logic.gapt.formats.ivy.conversion
 
 import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.resolution.robinson.{ InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, RobinsonResolutionProof }
+import at.logic.gapt.proofs.resolution.robinson.{ InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, Instance => RInstantiate, RobinsonResolutionProof }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.robinson.{ Instance => RInstantiate }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.{ FClause, Clause }
+import at.logic.gapt.proofs.resolution.{ mapInitialClauses, FClause, Clause }
 import at.logic.gapt.algorithms.rewriting.RenameResproof
 import at.logic.gapt.proofs.lk.base.FSequent
 
@@ -21,15 +20,26 @@ object IvyToRobinson {
 
   def apply( iproof: IvyResolutionProof ): RobinsonResolutionProof = {
     val ( proof, pmap ) = convert( iproof, Map[String, RobinsonResolutionProof]() )
-    val ( newsymbol_rules, mapping ) = iproof.nodes.foldLeft( ( Set[RobinsonResolutionProof]() ), Set[( FOLConst, FOLTerm )]() )( ( set, node ) =>
-      node match {
-        case NewSymbol( id, _, _, sym, rt, _, _ ) => ( set._1 + ( pmap( id ) ), set._2 + ( ( sym, rt ) ) )
-        case _                                    => set
-      } )
 
-    //println("mapping: "+mapping)
-    val trproof = RenameResproof.rename_resproof( proof, newsymbol_rules, RenameResproof.emptySymbolMap ++ mapping )
-    trproof
+    val variablesInProof = proof.nodes.flatMap {
+      case p: RobinsonResolutionProof => freeVariables( p.root.toFormula.asInstanceOf[FOLFormula] )
+    }
+    val ( newSymbols, justifications ) = iproof.nodes.collect {
+      case NewSymbol( _, _, _, sym, rt, _, parent ) =>
+        val justification = pmap( parent.id )
+        justification.root.toFClause match {
+          case _ if freeVariables( rt ).isEmpty =>
+            ( sym -> rt, RInitialClause( Seq(), Seq( Eq( rt, rt ) ) ) )
+          case FClause( Seq(), Seq( Eq( lhs: FOLTerm, rhs: FOLTerm ) ) ) if lhs == rt =>
+            val subst = FOLSubstitution( rename( freeVariables( rhs ), variablesInProof ) )
+            ( sym -> subst( rhs ), RVariant( justification, subst ) )
+        }
+    }.unzip
+
+    val trproof = RenameResproof.rename_resproof( proof, Set(), RenameResproof.emptySymbolMap ++ newSymbols )
+    mapInitialClauses( trproof ) { cls =>
+      justifications.find( _.root.toFClause == cls ).getOrElse { RInitialClause( cls ) }
+    }
   }
 
   def convert( iproof: IvyResolutionProof, map: ProofMap ): ( RobinsonResolutionProof, ProofMap ) = {
