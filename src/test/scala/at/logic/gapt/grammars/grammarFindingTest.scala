@@ -45,6 +45,10 @@ class GrammarFindingTest extends Specification {
       val nfs = normalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs.toSet must beEqualTo( Set( "f(c)", "f(d)", "f(x)", "x" ) map parseTerm )
     }
+    "not find half-weak normal forms" in {
+      val nfs = normalForms( Seq( "r(c,f(c))", "r(d,f(d))" ) map parseTerm, Seq( FOLVar( "x" ) ) )
+      nfs.toSet must beEqualTo( Set( "x", "r(x,f(x))", "r(c,f(c))", "r(d,f(d))" ) map parseTerm )
+    }
     "not introduce equations between non-terminals" in {
       val nfs = normalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs.toSet must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x" ) map parseTerm )
@@ -53,6 +57,13 @@ class GrammarFindingTest extends Specification {
       val l = Seq( "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
       val nfs = Set( "x", "tuple2(x)", "tuple2(x + x)", "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
       normalForms( l map parseTerm, Seq( FOLVar( "x" ) ) ).toSet must beEqualTo( nfs map parseTerm )
+    }
+  }
+
+  "nfsSubsumedByAU" should {
+    "r(x, f(x)) with variables y,z" in {
+      nfsSubsumedByAU( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
+        Set( "y", "z", "r(y, f(y))", "r(z, f(z))" ).map( parseTerm )
     }
   }
 

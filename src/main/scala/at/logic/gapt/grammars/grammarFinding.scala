@@ -41,34 +41,44 @@ object characteristicPartition {
       groupBy( term.get ).values.toList
 }
 
+object termSize {
+  def apply( t: FOLTerm ): Int = t match {
+    case FOLFunction( _, as ) => 1 + as.map( apply ).sum
+    case FOLVar( _ )          => 1
+  }
+}
+
+object nfsSubsumedByAU {
+  def apply( au: FOLTerm, nts: Set[FOLVar] ): Set[FOLTerm] = apply( au, nts, nts,
+    LambdaPosition.getPositions( au, _.isInstanceOf[FOLTerm] ).
+      groupBy( au( _ ).asInstanceOf[FOLTerm] ).toList.
+      sortBy { case ( st, _ ) => termSize( st ) }.
+      map( _._2 ) )
+
+  private def apply( au: FOLTerm, ntsToDo: Set[FOLVar], nts: Set[FOLVar], allPositions: List[List[LambdaPosition]] ): Set[FOLTerm] = allPositions match {
+    case positions :: otherPositions =>
+      positions.flatMap { au.get( _ ) }.headOption.
+        map( _.asInstanceOf[FOLTerm] ).
+        filterNot( freeVariables( _ ) subsetOf nts ).
+        map { st =>
+          ntsToDo flatMap { nt =>
+            var generalization = au
+            for ( pos <- positions ) generalization = generalization.replace( pos, nt ).asInstanceOf[FOLTerm]
+            apply( generalization, ntsToDo - nt, nts, otherPositions )
+          }
+        }.getOrElse( Set() ) ++ apply( au, ntsToDo, nts, otherPositions )
+    case Nil if freeVariables( au ) subsetOf nts => Set( au )
+    case _                                       => Set()
+  }
+}
+
 object normalForms {
   def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
     lang foreach { term => require( freeVariables( term ) isEmpty ) }
 
-    val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 )
-      .map( terms => antiUnificator( terms ) )
-    val nfs = Set.newBuilder[FOLTerm]
-    antiUnifiers foreach { au =>
-      val charP = characteristicPartition( au )
-      val possibleSubsts = nonTerminals.foldLeft[List[List[( FOLVar, List[LambdaPosition] )]]]( List( Nil ) ) {
-        case ( substs, nonTerminal ) =>
-          substs flatMap { subst =>
-            subst :: ( charP map ( setOfPos => ( nonTerminal, setOfPos ) :: subst ) )
-          }
-      }
-      possibleSubsts foreach { subst =>
-        var nf = au
-        subst foreach {
-          case ( v, setOfPos ) =>
-            setOfPos foreach { pos =>
-              if ( nf.isDefinedAt( pos ) )
-                nf = LambdaPosition.replace( nf, pos, v ).asInstanceOf[FOLTerm]
-            }
-        }
-        if ( freeVariables( nf ).forall( nonTerminals.contains( _ ) ) ) nfs += nf
-      }
-    }
-    nfs.result.toList
+    val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ).
+      map( antiUnificator( _ ) ).toSet[FOLTerm]
+    antiUnifiers.flatMap { au => nfsSubsumedByAU( au, nonTerminals.toSet ) }.toSeq
   }
 }
 
