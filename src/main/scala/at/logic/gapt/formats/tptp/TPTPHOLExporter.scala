@@ -153,7 +153,7 @@ class TPTPHOLExporter {
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
   def thf_formula( f: LambdaExpression, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
     f match {
-      case Neg( x )      => addparens( " ~(" + thf_formula( x, vmap, cmap )+")", outermost ) //negation of atoms needs parenthesis!
+      case Neg( x )      => addparens( " ~(" + thf_formula( x, vmap, cmap ) + ")", outermost ) //negation of atoms needs parenthesis!
       case And( x, y )   => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
       case Or( x, y )    => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
       case Imp( x, y )   => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )

@@ -73,7 +73,7 @@ class FSequent( val antecedent: Seq[HOLFormula], val succedent: Seq[HOLFormula] 
 
   def toNegFormula: HOLFormula = And( antecedent ++ succedent.map( Neg( _ ) ) )
 
-  def toImplication: HOLFormula = Imp(And(antecedent.toList), Or(succedent))
+  def toImplication: HOLFormula = Imp( And( antecedent.toList ), Or( succedent ) )
 
   /**
    * Are both sides of the sequent empty?

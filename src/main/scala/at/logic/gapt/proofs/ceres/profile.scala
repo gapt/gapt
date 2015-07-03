@@ -9,13 +9,13 @@ import at.logic.gapt.proofs.ceres.struct._
 
 object getListOfFOccsInStruct {
   def apply( s: Struct ): List[FormulaOccurrence] = s match {
-    case Plus( s1, s2 )        => apply( s1 ) ++ apply( s2 )
-    case Times( s1, s2, _ )    => apply( s1 ) ++ apply( s2 )
-    case A( fo )               => fo :: Nil //{ println("\n\nA(fo) = "+fo);fo::Nil}
-    case Dual( sub )           => apply( sub )
+    case Plus( s1, s2 )     => apply( s1 ) ++ apply( s2 )
+    case Times( s1, s2, _ ) => apply( s1 ) ++ apply( s2 )
+    case A( fo )            => fo :: Nil //{ println("\n\nA(fo) = "+fo);fo::Nil}
+    case Dual( sub )        => apply( sub )
     case EmptyTimesJunction => Nil
     case EmptyPlusJunction  => Nil
-    case _                     => { println( "\n\nERROR in getListOfFOccsInStruct" ); List() }
+    case _                  => { println( "\n\nERROR in getListOfFOccsInStruct" ); List() }
   }
 }
 
@@ -37,8 +37,8 @@ object proofProfile {
     case Times( s1, s2, auxFOccs ) => {
       applyRule( rewrite( s1 ), rewrite( s2 ), auxFOccs )
     }
-    case s: A                  => s
-    case Dual( sub )           => Dual( rewrite( sub ) )
+    case s: A               => s
+    case Dual( sub )        => Dual( rewrite( sub ) )
     case EmptyTimesJunction => struct
     case EmptyPlusJunction  => struct
   }
@@ -97,20 +97,20 @@ object proofProfile {
   }
 
   private def getTimesJunctions( struct: Struct ): List[Struct] = struct match {
-    case s: Times              => s :: Nil
+    case s: Times           => s :: Nil
     case EmptyTimesJunction => struct :: Nil
-    case s: A                  => s :: Nil
-    case s: Dual               => s :: Nil
-    case Plus( s1, s2 )        => getTimesJunctions( s1 ) ::: getTimesJunctions( s2 )
+    case s: A               => s :: Nil
+    case s: Dual            => s :: Nil
+    case Plus( s1, s2 )     => getTimesJunctions( s1 ) ::: getTimesJunctions( s2 )
   }
 
   private def getLiterals( struct: Struct ): List[Struct] = struct match {
-    case s: A                  => s :: Nil
-    case s: Dual               => s :: Nil
+    case s: A               => s :: Nil
+    case s: Dual            => s :: Nil
     case EmptyTimesJunction => Nil
     case EmptyPlusJunction  => Nil
-    case Plus( s1, s2 )        => getLiterals( s1 ) ::: getLiterals( s2 )
-    case Times( s1, s2, _ )    => getLiterals( s1 ) ::: getLiterals( s2 )
+    case Plus( s1, s2 )     => getLiterals( s1 ) ::: getLiterals( s2 )
+    case Times( s1, s2, _ ) => getLiterals( s1 ) ::: getLiterals( s2 )
   }
 }
 

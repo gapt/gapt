@@ -148,7 +148,7 @@ object freeHOVariables {
    * @param f the expressions to extract from
    * @return the list of free variables with type != Ti in e
    */
-  def apply(f : LambdaExpression) = freeVariables(f).filter(_ match { case Var(_,Ti) => false; case _ => true })
+  def apply( f: LambdaExpression ) = freeVariables( f ).filter( _ match { case Var( _, Ti ) => false; case _ => true } )
 
 }
 

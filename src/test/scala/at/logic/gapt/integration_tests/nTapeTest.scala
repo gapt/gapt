@@ -128,7 +128,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
    * @param filename
    * @return Some(errormessage) if something breaks, None otherwise
    */
-  def doCutelim(filename : String) : Option[String] = {
+  def doCutelim( filename: String ): Option[String] = {
     show( "Loading file" )
     val tokens = HybridLatexParser.parseFile( filename )
     val pdb = HybridLatexParser.createLKProof( tokens )
@@ -186,18 +186,18 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
       //skipped("works but takes a bit time")
       checkForProverOrSkip
-      doCutelim(  tempCopyOfClasspathFile( "tape3.llk" )  ) match {
-        case Some(error) => ko(error)
-        case None => ok
+      doCutelim( tempCopyOfClasspathFile( "tape3.llk" ) ) match {
+        case Some( error ) => ko( error )
+        case None          => ok
       }
 
     }
 
     "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
       checkForProverOrSkip
-      doCutelim(  tempCopyOfClasspathFile( "tape3ex.llk" )  ) match {
-        case Some(error) => ko(error)
-        case None => ok
+      doCutelim( tempCopyOfClasspathFile( "tape3ex.llk" ) ) match {
+        case Some( error ) => ko( error )
+        case None          => ok
       }
     }
 

@@ -65,7 +65,7 @@ class Times( val left: Struct, val right: Struct, val auxFOccs: List[FormulaOccu
 }
 
 case class Plus( left: Struct, right: Struct ) extends Struct {
-  override def toString(): String = "("+ left + " ⊕ " + right + ")"
+  override def toString(): String = "(" + left + " ⊕ " + right + ")"
   override def formula_equal( s: Struct ) = s match {
     case Plus( x, y ) => left.formula_equal( x ) && right.formula_equal( y )
     case _            => false
@@ -108,7 +108,7 @@ case object EmptyTimesJunction extends Struct {
   override def toString(): String = "ε⊗"
   override def formula_equal( s: Struct ) = s match {
     case EmptyTimesJunction => true
-    case _                    => false
+    case _                  => false
   }
   override def size() = 1
   override def alternations() = 0
@@ -117,7 +117,7 @@ case object EmptyPlusJunction extends Struct {
   override def toString(): String = "ε⊕"
   override def formula_equal( s: Struct ) = s match {
     case EmptyPlusJunction => true
-    case _                   => false
+    case _                 => false
   }
   override def size() = 1
   override def alternations() = 0
@@ -148,8 +148,8 @@ object structToExpressionTree {
     case Dual( sub )             => UnaryTree( DualC(), apply( sub ) )
     case Times( left, right, _ ) => BinaryTree( TimesC(), apply( left ), apply( right ) )
     case Plus( left, right )     => BinaryTree( PlusC(), apply( left ), apply( right ) )
-    case EmptyTimesJunction    => LeafTree( EmptyTimesC() )
-    case EmptyPlusJunction     => LeafTree( EmptyPlusC() )
+    case EmptyTimesJunction      => LeafTree( EmptyTimesC() )
+    case EmptyPlusJunction       => LeafTree( EmptyPlusC() )
   }
 
   // constructs struct Tree without empty leaves.
@@ -215,26 +215,24 @@ object structToExpressionTree {
   object EmptyPlusC extends MonomorphicLogicalC( EmptyPlusSymbol.toString, To )
 }
 
-
 /**
  * Returns s.toString with color coding of struct operators. When a big struct is loaded in the cli, the string truncation
  * can mess up the terminal, therefore this is not the default behaviour.
  */
 object coloredStructString {
-  def apply(s:Struct) = s match {
-    case A(fo) =>
+  def apply( s: Struct ) = s match {
+    case A( fo ) =>
       fo.formula.toString
-    case Dual(sub) =>
+    case Dual( sub ) =>
       Console.GREEN + "~(" + Console.RESET + sub + Console.GREEN + ")" + Console.RESET
-    case Times(left, right, _) =>
+    case Times( left, right, _ ) =>
       Console.RED + "(" + Console.RESET + left + Console.RED + " ⊗ " + Console.RESET + right + Console.RED + ")" + Console.RESET
-    case Plus(left, right) =>
+    case Plus( left, right ) =>
       Console.BLUE + "(" + Console.RESET + left + Console.BLUE + " ⊕ " + Console.RESET + right + Console.BLUE + ")" + Console.RESET
-    case EmptyPlusJunction => Console.RED + "ε" + Console.RESET
+    case EmptyPlusJunction  => Console.RED + "ε" + Console.RESET
     case EmptyTimesJunction => Console.BLUE + "ε" + Console.RESET
   }
 }
-
 
 // some stuff for schemata
 
@@ -326,10 +324,10 @@ object StructCreators extends Logger {
   def size( s: Struct ): Int = size( s, 0 )
   //TODO:make tailrecursive
   def size( s: Struct, n: Int ): Int = s match {
-    case A( _ )               => n
-    case Dual( x )            => size( x, n + 1 )
-    case Plus( l, r )         => size( l, size( r, n + 1 ) )
-    case Times( l, r, _ )     => size( l, size( r, n + 1 ) )
+    case A( _ )             => n
+    case Dual( x )          => size( x, n + 1 )
+    case Plus( l, r )       => size( l, size( r, n + 1 ) )
+    case Times( l, r, _ )   => size( l, size( r, n + 1 ) )
     case EmptyPlusJunction  => n
     case EmptyTimesJunction => n
   }

@@ -45,8 +45,8 @@ object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
  */
 class AlternativeStandardClauseSet( val optimize_plus: ( Set[FSequent], Set[FSequent] ) => ( Set[FSequent], Set[FSequent] ) ) {
   def apply( struct: Struct ): Set[FSequent] = struct match {
-    case A( fo )                        => Set( FSequent( Nil, List( fo.formula ) ) )
-    case Dual( A( fo ) )                => Set( FSequent( List( fo.formula ), Nil ) )
+    case A( fo )                      => Set( FSequent( Nil, List( fo.formula ) ) )
+    case Dual( A( fo ) )              => Set( FSequent( List( fo.formula ), Nil ) )
     case EmptyPlusJunction            => Set()
     case EmptyTimesJunction           => Set( FSequent( Nil, Nil ) )
     case Plus( EmptyPlusJunction, x ) => apply( x )
@@ -83,12 +83,12 @@ object StandardClauseSet extends Logger {
   override def loggerName = "CeresLogger"
 
   def normalize( struct: Struct ): Struct = struct match {
-    case s: A                  => s
-    case s: Dual               => s
-    case EmptyTimesJunction => struct
-    case EmptyPlusJunction  => struct
-    case Plus( s1, s2 )        => Plus( normalize( s1 ), normalize( s2 ) )
-    case Times( s1, s2, aux )  => merge( normalize( s1 ), normalize( s2 ), aux )
+    case s: A                 => s
+    case s: Dual              => s
+    case EmptyTimesJunction   => struct
+    case EmptyPlusJunction    => struct
+    case Plus( s1, s2 )       => Plus( normalize( s1 ), normalize( s2 ) )
+    case Times( s1, s2, aux ) => merge( normalize( s1 ), normalize( s2 ), aux )
   }
 
   def transformStructToClauseSet( struct: Struct ) = clausify( normalize( struct ) )
@@ -133,28 +133,28 @@ object StandardClauseSet extends Logger {
    * @return a tailrec object representing the result
    */
   private def getTimesJunctions( struct: Struct, fun: List[Struct] => TailRec[List[Struct]] ): TailRec[List[Struct]] = struct match {
-    case s: Times              => fun( List( s ) )
+    case s: Times           => fun( List( s ) )
     case EmptyTimesJunction => fun( List( struct ) )
-    case s: A                  => fun( List( s ) )
-    case s: Dual               => fun( List( s ) )
+    case s: A               => fun( List( s ) )
+    case s: Dual            => fun( List( s ) )
     case EmptyPlusJunction  => fun( Nil )
     case Plus( s1, s2 ) => tailcall( getTimesJunctions( s1, ( x: List[Struct] ) =>
       tailcall( getTimesJunctions( s2, ( y: List[Struct] ) => fun( x ::: y ) ) ) ) )
   }
 
   private def slowgetTimesJunctions( struct: Struct ): List[Struct] = struct match {
-    case s: Times              => s :: Nil
+    case s: Times           => s :: Nil
     case EmptyTimesJunction => struct :: Nil
-    case s: A                  => s :: Nil
-    case s: Dual               => s :: Nil
+    case s: A               => s :: Nil
+    case s: Dual            => s :: Nil
     case EmptyPlusJunction  => Nil
-    case Plus( s1, s2 )        => slowgetTimesJunctions( s1 ) ::: slowgetTimesJunctions( s2 )
+    case Plus( s1, s2 )     => slowgetTimesJunctions( s1 ) ::: slowgetTimesJunctions( s2 )
   }
 
   private def getLiterals( struct: Struct ): List[Struct] = getLiterals( struct, x => done( x ) ).result
   private def getLiterals( struct: Struct, fun: List[Struct] => TailRec[List[Struct]] ): TailRec[List[Struct]] = struct match {
-    case s: A                  => fun( s :: Nil )
-    case s: Dual               => fun( s :: Nil )
+    case s: A               => fun( s :: Nil )
+    case s: Dual            => fun( s :: Nil )
     case EmptyTimesJunction => fun( Nil )
     case EmptyPlusJunction  => fun( Nil )
     case Plus( s1, s2 ) => tailcall( getLiterals( s1, x =>
@@ -164,12 +164,12 @@ object StandardClauseSet extends Logger {
   }
 
   private def slowgetLiterals( struct: Struct ): List[Struct] = struct match {
-    case s: A                  => s :: Nil
-    case s: Dual               => s :: Nil
+    case s: A               => s :: Nil
+    case s: Dual            => s :: Nil
     case EmptyTimesJunction => Nil
     case EmptyPlusJunction  => Nil
-    case Plus( s1, s2 )        => slowgetLiterals( s1 ) ::: slowgetLiterals( s2 )
-    case Times( s1, s2, _ )    => slowgetLiterals( s1 ) ::: slowgetLiterals( s2 )
+    case Plus( s1, s2 )     => slowgetLiterals( s1 ) ::: slowgetLiterals( s2 )
+    case Times( s1, s2, _ ) => slowgetLiterals( s1 ) ::: slowgetLiterals( s2 )
   }
 
   private def isDual( s: Struct ): Boolean = s match { case x: Dual => true; case _ => false }
@@ -191,10 +191,10 @@ object SimplifyStruct {
   def apply( s: Struct ): Struct = s match {
     case EmptyPlusJunction                 => s
     case EmptyTimesJunction                => s
-    case A( _ )                              => s
+    case A( _ )                            => s
     case Dual( EmptyPlusJunction )         => EmptyTimesJunction
     case Dual( EmptyTimesJunction )        => EmptyPlusJunction
-    case Dual( x )                           => Dual( SimplifyStruct( x ) )
+    case Dual( x )                         => Dual( SimplifyStruct( x ) )
     case Times( x, EmptyTimesJunction, _ ) => SimplifyStruct( x )
     case Times( EmptyTimesJunction, x, _ ) => SimplifyStruct( x )
     case Times( x, Dual( y ), aux ) if x.formula_equal( y ) =>
