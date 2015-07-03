@@ -519,9 +519,6 @@ object CutIntroduction extends Logger {
       case e: StackOverflowError =>
         status = "cutintro_stack_overflow"
         ( None, Some( e ) )
-      case e: TreeGrammarDecompositionException =>
-        status = "tgd_failed"
-        ( None, Some( e ) )
       case e: CutIntroUncompressibleException =>
         status = "cutintro_uncompressible"
         ( None, Some( e ) )

@@ -104,20 +104,5 @@ object ListSupport {
     ( for ( i <- List.range( 1, n + 1 ) ) yield genLists( s, 0, i ) ).foldLeft( List[List[A]]() )( ( prevLists, l ) => prevLists ++ l )
   }
 
-  /**
-   * Generates out of a list l
-   * the diagonal cartesian product l² of it
-   * minus the diagonal and mirrorcases
-   *
-   * @param l list of elements
-   * @return diagonal cartesian product of l
-   */
-  def diagCross( l: List[Int] ): List[( Int, Int )] = {
-    l match {
-      case x :: xs => xs.map( y => ( x, y ) ) ++ diagCross( xs )
-      case _       => Nil
-    }
-  }
-
 }
 
