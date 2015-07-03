@@ -9,7 +9,6 @@ import util.parsing.combinator.PackratParsers
 import scala.collection.immutable.PagedSeq
 import scala.collection.mutable
 import scala.collection.immutable
-import at.logic.gapt.utils.dssupport.ListSupport.lst2string
 
 /**
  * ** Lisp SExpression Datatypes and Parser
@@ -35,7 +34,7 @@ case class List( elements: immutable.List[SExpression] ) extends SExpression {
   def ::( head: SExpression ) = lisp.List( head :: elements )
   def ++( list2: lisp.List ) = lisp.List( elements ++ list2.elements )
 
-  override def toString = "(" + lst2string( ( ( x: SExpression ) => x.toString ), " ", elements ) + ")"
+  override def toString = "(" + elements.mkString( " " ) + ")"
   //def prepend(head : SExpression, list : lisp.List) = lisp.List(head::list.list)
 }
 

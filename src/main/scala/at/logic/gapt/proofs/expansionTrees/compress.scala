@@ -3,7 +3,6 @@ package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.utils.dssupport.ListSupport.groupSeq
 
 /**
  * Converts an ExpansionTree to a MultiExpansionTree by squishing quantifiers together into blocks.
@@ -108,7 +107,7 @@ object decompressQuantifiers {
 
   private def decompressWeak( f: HOLFormula, instances: Seq[( ExpansionTree, Seq[LambdaExpression] )] ): ExpansionTree = f match {
     case Ex( _, _ ) | All( _, _ ) =>
-      val groupedInstances = groupSeq( instances.map( p => ( p._2.head, p._1, p._2.tail ) ), ( t: ( LambdaExpression, ExpansionTree, Seq[LambdaExpression] ) ) => t._1 ).map( l => ( l.head._1, l.map( t => ( t._2, t._3 ) ) ) ) // Result: groupedInstances is a list of elements of the form (t, [(E_1, s_1),..,(E_n, s_n)]).
+      val groupedInstances = instances.groupBy( _._2.head ).toSeq
       val newInstances = groupedInstances.map( p => ( p._1, decompressWeak( instantiate( f, p._1 ), p._2 ) ) ) // Result: newInstances is a list of elements of the form (t, E)
       merge( ETWeakQuantifier( f, newInstances.map( p => ( p._2, p._1 ) ) ) )
 
