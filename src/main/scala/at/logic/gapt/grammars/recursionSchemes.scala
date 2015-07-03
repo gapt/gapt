@@ -181,7 +181,7 @@ object SipRecSchem {
 
     val allTerms = instanceLanguages flatMap ( _._2 )
     val topLevelNFs = at.logic.gapt.grammars.normalForms( allTerms, Seq( x, y, z ) ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentNFs = at.logic.gapt.grammars.normalForms( allTerms flatMap { case FOLFunction( _, as ) => FOLSubTerms( as ) }, Seq( x, y, z ) )
+    val argumentNFs = at.logic.gapt.grammars.normalForms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ), Seq( x, y, z ) )
 
     for ( nf <- topLevelNFs ) {
       val fvs = freeVariables( nf )
