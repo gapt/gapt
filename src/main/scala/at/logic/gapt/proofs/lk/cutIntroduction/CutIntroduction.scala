@@ -8,6 +8,7 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol._
+import at.logic.gapt.grammars.findMinimalGrammar
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, toShallow, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
@@ -456,21 +457,14 @@ object CutIntroduction extends Logger {
         /********** Grammar finding **********/
         phase = "grammar_finding"
 
-        val small_grammar = TreeGrammarDecomposition( termset, n, MCSMethod.MaxSAT, maxsatsolver )
-        val grammar = small_grammar match {
-          case Some( g ) => g
-          case None =>
-            throw new CutIntroUncompressibleException( "No grammars found. The proof cannot be compressed." )
+        val grammar = findMinimalGrammar( termset.set, n, maxsatsolver ) match {
+          case g if g.productions.exists( _._1 != g.axiom ) =>
+            simpleToMultiGrammar( termset.encoding, g.toVectTratGrammar )
+          case _ =>
+            throw new CutIntroUncompressibleException( "Found minimal grammar that consists only of tau-productions." )
         }
         grammarFindingTime = System.currentTimeMillis - time
         time = System.currentTimeMillis
-
-        // Although this shouldn't be the case, because of the grammar returned by
-        // TreeGrammarDecomposition should either be None or some grammar with size > 0
-        // we leave it here just to be sure
-        if ( grammar.size == 0 ) {
-          throw new CutIntroUncompressibleException( "No grammars found. The proof cannot be compressed." )
-        }
 
         /********** Proof Construction **********/
 
