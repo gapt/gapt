@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause => RInitialClause, Resolution => RResolution, Factor => RFactor, Variant => RVariant, Paramodulation => RParamodulation, Instance => RInstantiate, RobinsonResolutionProof }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.{ mapInitialClauses, FClause, Clause }
+import at.logic.gapt.proofs.resolution.{ InitialType, mapInitialClauses, FClause, Clause }
 import at.logic.gapt.algorithms.rewriting.RenameResproof
 import at.logic.gapt.proofs.lk.base.FSequent
 
@@ -36,10 +36,15 @@ object IvyToRobinson {
         }
     }.unzip
 
-    val trproof = RenameResproof.rename_resproof( proof, Set(), RenameResproof.emptySymbolMap ++ newSymbols )
-    mapInitialClauses( trproof ) { cls =>
-      justifications.find( _.root.toFClause == cls ).getOrElse { RInitialClause( cls ) }
-    }
+    val proofWithoutNewSymbols =
+      RenameResproof.rename_resproof( proof, Set(), RenameResproof.emptySymbolMap ++ newSymbols )
+
+    if ( justifications.forall( _.rule == InitialType ) )
+      proofWithoutNewSymbols
+    else
+      mapInitialClauses( proofWithoutNewSymbols ) { cls =>
+        justifications.find( _.root.toFClause == cls ).getOrElse { RInitialClause( cls ) }
+      }
   }
 
   def convert( iproof: IvyResolutionProof, map: ProofMap ): ( RobinsonResolutionProof, ProofMap ) = {
