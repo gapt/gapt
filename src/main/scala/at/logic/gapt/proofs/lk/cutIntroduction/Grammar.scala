@@ -142,7 +142,7 @@ object ComputeGrammars {
             //Create the union of the pairs in the subset and check whether it amounts to <terms>
             val ( u, t ) = set.foldLeft( ( List[types.U](), List[FOLTerm]() ) ) {
               case ( acc, ( u, t ) ) =>
-                ( u :: acc._1, tailRecUnion( t, acc._2 ) )
+                ( u :: acc._1, t ++ acc._2 )
             }
 
             val difference = terms.diff( t )
@@ -178,7 +178,7 @@ object ComputeGrammars {
 
         // Ignoring entries where s.size == 1 because they are trivial
         // grammars with the function symbol on the right.
-        if ( numTerms( s, safeHead( pairs, ( null, Nil ) )._2 ) > 1 ) {
+        if ( numTerms( s, pairs.headOption.map( _._2 ).getOrElse( Nil ) ) > 1 ) {
 
           // Add the trivial decomposition {alpha_0} o s if s only has one vector
           val ev = FOLVar( eigenvariable + "_0" )

@@ -90,7 +90,7 @@ object Deltas {
             // By computing the transpose of this matrix, the columns are now the 
             // rows, i.e., the inner lists. So we can just use fold to apply the
             // function to every such list.
-            val listOfArgs = transpose( allargs )
+            val listOfArgs = allargs.transpose
             val deltaOfArgs = listOfArgs.foldRight( List[( FOLTerm, List[FOLTerm] )]() )( ( a, acc ) => computeDg( a, eigenvariable ) :: acc )
 
             // A delta vector can be constructed only if the lists returned from the arguments are all the same

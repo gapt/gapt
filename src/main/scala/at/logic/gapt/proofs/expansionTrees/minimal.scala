@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.utils.dssupport.ListSupport.{ listComplements, zipper }
+import at.logic.gapt.utils.dssupport.ListSupport.listComplements
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable.{ ListBuffer, HashMap => mMap }
@@ -153,7 +153,7 @@ private[expansionTrees] class Minimizer( val sequent: MultiExpansionSequent, val
       var n = ant.length
       trace( "Generating successor trees for antecedent ..." )
       for ( j <- 1 to n ) {
-        val ( tree, fst, snd ) = zipper( ant, j ) //We iteratively focus each expansion tree in the antecedent of S.
+        val ( fst, tree :: snd ) = ant.splitAt( j - 1 ) //We iteratively focus each expansion tree in the antecedent of S.
         trace( "[" + j + "/" + n + "]" )
         val newTrees = generateSuccessorTrees( tree ) // We generate all successor trees of the current tree.
 
@@ -188,7 +188,7 @@ private[expansionTrees] class Minimizer( val sequent: MultiExpansionSequent, val
       n = suc.length
       trace( "Generating successor trees for succedent ..." )
       for ( j <- 1 to n ) {
-        val ( tree, fst, snd ) = zipper( suc, j )
+        val ( fst, tree :: snd ) = suc.splitAt( j - 1 )
         trace( "[" + j + "/" + n + "]" )
         val newTrees = generateSuccessorTrees( tree )
 

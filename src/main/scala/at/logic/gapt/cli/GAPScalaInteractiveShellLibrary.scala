@@ -172,7 +172,7 @@ object loadProofs {
 
 object loadProver9Proof {
   def apply( filename: String ): ( RobinsonResolutionProof, FSequent, FSequent ) =
-    ( new Prover9Prover().parseProof( Source.fromFile( filename ).mkString ),
+    ( new Prover9Prover().reconstructRobinsonProofFromFile( filename ),
       InferenceExtractor.viaLADR( filename ),
       InferenceExtractor.clausesViaLADR( filename ) )
 }

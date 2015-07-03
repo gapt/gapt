@@ -45,24 +45,37 @@ class GrammarFindingTest extends Specification {
       val nfs = normalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs.toSet must beEqualTo( Set( "f(c)", "f(d)", "f(x)", "x" ) map parseTerm )
     }
+    "not find half-weak normal forms" in {
+      val nfs = normalForms( Seq( "r(c,f(c))", "r(d,f(d))" ) map parseTerm, Seq( FOLVar( "x" ) ) )
+      nfs.toSet must beEqualTo( Set( "x", "r(x,f(x))", "r(c,f(c))", "r(d,f(d))" ) map parseTerm )
+    }
     "not introduce equations between non-terminals" in {
       val nfs = normalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs.toSet must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x" ) map parseTerm )
     }
     "not fall prey to replacements bug" in {
       val l = Seq( "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
-      val nfs = Set( "x", "tuple2(x)", "tuple2(x + x)", "tuple2(0 + 0)", "tuple2(s(x) + s(x))", "tuple2(s(0) + s(0))" )
+      val nfs = Set( "x", "tuple2(x)", "tuple2(x + x)", "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
       normalForms( l map parseTerm, Seq( FOLVar( "x" ) ) ).toSet must beEqualTo( nfs map parseTerm )
     }
   }
-  "tratNormalForms" should {
-    "find strong normal forms" in {
-      val nfs = tratNormalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
-      nfs.toSet must beEqualTo( Set( "c", "d", "f(c)", "f(d)", "f(x)", "x" ) map parseTerm )
+
+  "nfsSubsumedByAU" should {
+    "r(x, f(x)) with variables y,z" in {
+      nfsSubsumedByAU( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
+        Set( "y", "z", "r(y, f(y))", "r(z, f(z))" ).map( parseTerm )
     }
-    "not introduce equations between non-terminals" in {
-      val nfs = tratNormalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
-      nfs.toSet must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x", "c", "d" ) map parseTerm )
+  }
+
+  "normal forms grammars" should {
+    "not contain tau->alpha" in {
+      val l = Seq( "r(c)", "r(d)" ) map parseTerm
+
+      val g = normalFormsProofGrammar( l, 1 )
+      g.productions must not contain ( g.axiom -> g.nonTerminals( 1 ) )
+
+      val vg = normalFormsProofVectGrammar( l, Seq( 1 ) )
+      vg.productions must not contain ( List( vg.axiom ) -> vg.nonTerminals( 1 ) )
     }
   }
 

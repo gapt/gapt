@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
-import at.logic.gapt.expr.hol.{ instantiate, isPrenex }
+import at.logic.gapt.expr.hol.{ containsQuantifier, instantiate, isPrenex }
 import at.logic.gapt.proofs.lk.base._
 
 /**
@@ -35,54 +35,21 @@ object extractInstanceTerms {
  * number of formulas in the antecedent/succedent.
  */
 object extractInstances {
-  def apply( expansionTree: ExpansionTree ): Seq[FOLFormula] = {
-
-    if ( !containsWeakQuantifiers( expansionTree ) )
-      toDeep( expansionTree ) match {
-        case Bottom()      => Seq()
-        case Top()         => Seq()
-        case f: FOLFormula => Seq( f )
-      }
+  def apply( expansionTree: ExpansionTree ): Seq[FOLFormula] =
+    if ( !containsQuantifier( toShallow( expansionTree ) ) )
+      Seq( toShallow( expansionTree ).asInstanceOf[FOLFormula] )
     else expansionTree match {
+      case ETWeakening( _ ) => Seq()
       case ETWeakQuantifier( _, instances ) =>
         instances flatMap { i => extractInstances( i._1 ) }
       case ETStrongQuantifier( _, _, t ) => extractInstances( t )
       case ETSkolemQuantifier( _, _, t ) => extractInstances( t )
-      case ETNeg( t )                    => extractInstances( t ) map { i => Neg( i ) }
-
-      case ETAnd( l, r ) =>
-        extractInstances( l ) flatMap { i =>
-          extractInstances( r ) map { j => And( i, j ) }
-        }
-      case ETOr( l, r ) =>
-        extractInstances( l ) flatMap { i =>
-          extractInstances( r ) map { j => Or( i, j ) }
-        }
-
-      case ETImp( l, r ) =>
-        extractInstances( l ) flatMap { i =>
-          extractInstances( r ) map { j => Imp( i, j ) }
-        }
     }
-
-  }
 
   def apply( expansionSequent: ExpansionSequent ): FSequent =
     FSequent( expansionSequent.antecedent flatMap apply,
       expansionSequent.succedent flatMap apply )
 
-  // TODO: This should be somewhere else, for MultiExpansionTrees it's a member method.
-  private def containsWeakQuantifiers( et: ExpansionTree ): Boolean = et match {
-    case ETAtom( _ )                   => false
-    case ETWeakening( _ )              => false
-    case ETWeakQuantifier( _, _ )      => true
-    case ETNeg( t )                    => containsWeakQuantifiers( t )
-    case ETAnd( l, r )                 => containsWeakQuantifiers( l ) || containsWeakQuantifiers( r )
-    case ETOr( l, r )                  => containsWeakQuantifiers( l ) || containsWeakQuantifiers( r )
-    case ETImp( l, r )                 => containsWeakQuantifiers( l ) || containsWeakQuantifiers( r )
-    case ETStrongQuantifier( _, _, t ) => containsWeakQuantifiers( t )
-    case ETSkolemQuantifier( _, _, t ) => containsWeakQuantifiers( t )
-  }
 }
 
 object groundTerms {

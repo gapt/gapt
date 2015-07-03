@@ -23,34 +23,6 @@ object ListSupport {
     s1.flatMap( c1 => s2.map( c2 => c1 ++ c2 ) )
   }
 
-  /** Find all subsets */
-  def subsets[T]( s: List[T] ): List[List[T]] = {
-    if ( s.size == 0 ) List( List() )
-    else {
-      val tailSubsets = subsets( s.tail );
-      tailSubsets ++ tailSubsets.map( s.head :: _ )
-    }
-  }
-
-  /** Computes the transpose of a matrix implemented as a list of lists. */
-  def transpose[T]( m: List[List[T]] ): List[List[T]] = m match {
-    case Nil           => Nil
-    case ( Nil ) :: tl => Nil
-    case hd :: tl =>
-      val heads = m.foldRight( List[T]() )( ( lst, acc ) => lst.head :: acc )
-      val tails = m.foldRight( List[List[T]]() )( ( lst, acc ) => lst.tail :: acc )
-      heads :: transpose( tails )
-  }
-
-  /**
-   * A tail-recursive union without duplicate elimination.
-   * When order does not matter, ++ can be replaced by this.
-   */
-  def tailRecUnion[A]( xs: List[A], ys: List[A] ): List[A] = ys match {
-    case Nil            => xs
-    case ( y :: yrest ) => tailRecUnion( y :: xs, yrest )
-  }
-
   /**
    * Performs a map with an accumulator.
    * Useful for e.g. mapping a custom counter onto a collection.
@@ -71,41 +43,6 @@ object ListSupport {
     }
   }
 
-  def lst2string[T]( fun: T => String, separator: String, l: List[T] ): String = l match {
-    case Nil       => ""
-    case List( x ) => fun( x )
-    case x :: xs   => fun( x ) + separator + lst2string( fun, separator, xs )
-  }
-
-  /**
-   * Identical to foldLeft, but with addition function which returns when the folding should be aborted.
-   * If that function returns False for an element, the folding is aborted and the result of the last execution
-   * of the folding function is returned.
-   *
-   * @param acc The initial value and the first argument of the folding function.
-   * @param list The list of elements to fold.
-   * @param cont The function specifying when to abort.
-   * It is executed for each list element before the folding function.
-   * @param f The folding function which takes the accumulated value and the next list element
-   * and returns a the next accumulated value.
-   */
-  def foldLeftWhile[A, B]( acc: B, list: Iterable[A], cont: A => Boolean, f: ( B, A ) => B ): B = {
-    if ( list.isEmpty || !cont( list.head ) ) { acc }
-    else { foldLeftWhile( f( acc, list.head ), list.tail, cont, f ) }
-  }
-
-  /**
-   * A safe version of List.head which never fails.
-   *
-   * @param xs The list of which to return the head.
-   * @param default The value to return in case the list is empty.
-   * @return xs.head if xs is not empty, otherwise default.
-   */
-  def safeHead[A]( xs: List[A], default: A ): A = xs match {
-    case Nil        => default
-    case ( x :: _ ) => x
-  }
-
   /**
    * For each 3rd component which occurs in the list, remove all but the last element
    * with that 3rd component.
@@ -121,13 +58,6 @@ object ListSupport {
     }
   }
 
-  def removeFirst[A]( s: Seq[A], a: A ): Seq[A] = {
-    val index = s.indexOf( a )
-    s.take( index ) ++ s.takeRight( s.size - index - 1 )
-  }
-
-  def removeFirst[A]( s: List[A], a: A ): List[A] = removeFirstWhere( s, ( x: A ) => a == x )
-
   def removeFirstWhere[A]( s: List[A], prop: A => Boolean ): List[A] = s match {
     case Nil                    => Nil
     case x :: xs if prop( x )   => xs
@@ -142,56 +72,6 @@ object ListSupport {
   def listComplements[T]( xs: Seq[T] ): Seq[Seq[T]] = xs match {
     case Nil     => Nil
     case y +: ys => ys +: listComplements( ys ).map( zs => y +: zs )
-  }
-
-  /**
-   * Given a list xs, returns a list of copies of xs without the nth, ..., last element.
-   */
-  def listComplements[T]( xs: Seq[T], n: Int ): Seq[Seq[T]] = {
-    val ( fst, snd ) = xs splitAt ( n - 1 )
-    listComplements( snd ).map( zs => fst ++ zs )
-  }
-
-  def listComplements_[T]( xs: Seq[T] ): Seq[( T, Seq[T] )] = xs match {
-    case Nil     => Nil
-    case y +: ys => ( y, ys ) +: listComplements_( ys ).map( p => ( p._1, y +: p._2 ) )
-  }
-
-  /**
-   * Splits a list into (nth element, elements 1,..,(n-1), elements (n+1),..,end)
-   * @param xs The list to split.
-   * @param n  The position to split at.
-   */
-  def zipper[T]( xs: Seq[T], n: Int ): ( T, Seq[T], Seq[T] ) = xs match {
-    case Nil => throw new IllegalArgumentException
-    case y +: ys => {
-      if ( n == 1 )
-        ( y, Nil, ys )
-      else {
-        val ( z, fst, snd ) = zipper( ys, n - 1 )
-        ( z, y +: fst, snd )
-      }
-    }
-  }
-
-  /**
-   * Groups sequence xs into subsequences of elements that have the same image under function f.
-   * @param xs The sequence to be partitioned.
-   * @param f  The function.
-   */
-  def groupSeq[A, B]( xs: Seq[A], f: A => B ): Seq[Seq[A]] = xs match {
-    case Nil => Nil
-    case y +: ys => {
-      val z = f( y )
-      val zs = y +: ys.filter( x => ( f( x ) == z ) )
-      val rest = ys.filterNot( x => ( f( x ) == z ) )
-      zs +: groupSeq( rest, f )
-    }
-  }
-
-  def pairwiseImages[A, B, C]( xs: Seq[A], ys: Seq[B], f: ( A, B ) => C ): Seq[Seq[C]] = xs match {
-    case Nil     => Nil
-    case z +: zs => ys.map( y => f( z, y ) ) +: pairwiseImages( zs, ys, f )
   }
 
   /**

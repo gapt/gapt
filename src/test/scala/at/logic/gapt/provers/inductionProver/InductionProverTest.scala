@@ -83,6 +83,12 @@ class InductionProverTest extends Specification {
       success
     }
 
+    "produce a SIP grammar" in {
+      new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
+
+      success
+    }
+
     "find the induction formula" in {
       val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
       FindFormulaH( sip, 0 ) match {
@@ -172,6 +178,12 @@ class InductionProverTest extends Specification {
     "produce an LKProof" in {
       val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
       p.toLKProof
+
+      success
+    }
+
+    "produce a SIP grammar" in {
+      new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
 
       success
     }

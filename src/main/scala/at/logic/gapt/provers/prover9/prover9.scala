@@ -60,16 +60,23 @@ class Prover9Prover( val extraCommands: Seq[String] = Seq() ) extends Prover wit
     IvyToRobinson( ivyProof )
   }
 
-  def reconstructLKProofFromFile( p9File: String ): LKProof =
-    reconstructLKProofFromOutput( Source.fromFile( p9File ).mkString )
+  def reconstructRobinsonProofFromFile( p9File: String ): RobinsonResolutionProof =
+    reconstructRobinsonProofFromOutput( Source.fromFile( p9File ).mkString )
 
-  def reconstructLKProofFromOutput( p9Output: String ): LKProof = {
+  def reconstructRobinsonProofFromOutput( p9Output: String ): RobinsonResolutionProof = {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
     val fixedP9Output = withTempFile.fromString( p9Output ) { p9OutputFile =>
       Seq( "prooftrans", "-f", p9OutputFile ) !!
     }
 
-    val resProof = parseProof( fixedP9Output )
+    parseProof( fixedP9Output )
+  }
+
+  def reconstructLKProofFromFile( p9File: String ): LKProof =
+    reconstructLKProofFromOutput( Source.fromFile( p9File ).mkString )
+
+  def reconstructLKProofFromOutput( p9Output: String ): LKProof = {
+    val resProof = reconstructRobinsonProofFromOutput( p9Output )
     val endSequent = withTempFile.fromString( p9Output ) { p9File =>
       val tptpEndSequent = InferenceExtractor.viaLADR( p9File )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {

@@ -34,24 +34,7 @@ class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1
     }
     require( inductionVariable == SimpleInductionProof.alpha ) // TODO: maybe relax this restriction
 
-    var instanceProofs = instances map { n =>
-      val instanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )( endSequent )
-      debug( s"[n=$n] Proving $instanceSequent" )
-      n -> instanceProver.getExpansionSequent( instanceSequent ).get
-    }
-    if ( minimizeInstanceLanguages ) {
-      instanceProofs = instanceProofs map {
-        case ( n, expProof ) =>
-          val minExpProof = minimalExpansionSequent( expProof, new VeriTProver ).get
-          debug {
-            val removedInstances = extractInstances( expProof ) diff extractInstances( minExpProof )
-            s"[n=$n] Removing unnecessary instances $removedInstances"
-          }
-          n -> minExpProof
-      }
-    }
-
-    getSimpleInductionProof( endSequent, instanceProofs )
+    getSimpleInductionProof( endSequent, generateInstanceProofs( endSequent, inductionVariable ) )
 
   }
 
@@ -108,5 +91,26 @@ class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1
     } else {
       None // sip grammar does not generate a quasi-tautology for a concrete instance, hence unsolvable
     }
+  }
+
+  def generateInstanceProofs( endSequent: FSequent, inductionVariable: FOLVar ): Seq[( Int, ExpansionSequent )] = {
+    var instanceProofs = instances map { n =>
+      val instanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )( endSequent )
+      debug( s"[n=$n] Proving $instanceSequent" )
+      n -> instanceProver.getExpansionSequent( instanceSequent ).get
+    }
+    if ( minimizeInstanceLanguages ) {
+      instanceProofs = instanceProofs map {
+        case ( n, expProof ) =>
+          val minExpProof = minimalExpansionSequent( expProof, new VeriTProver ).get
+          debug {
+            val removedInstances = extractInstances( expProof ) diff extractInstances( minExpProof )
+            s"[n=$n] Removing unnecessary instances $removedInstances"
+          }
+          n -> minExpProof
+      }
+    }
+
+    instanceProofs
   }
 }

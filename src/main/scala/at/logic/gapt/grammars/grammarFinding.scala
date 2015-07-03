@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.{ FOLSubTerms, Utils, FOLMatchingAlgorithm }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
 import at.logic.gapt.utils.dssupport.ListSupport
 
-import scala.collection.{ Set, mutable }
+import scala.collection.{ GenTraversable, Set, mutable }
 
 object SameRootSymbol {
   def unapply( terms: Seq[FOLTerm] ): Option[( String, List[List[FOLTerm]] )] =
@@ -37,43 +37,48 @@ object antiUnificator {
 
 object characteristicPartition {
   def apply( term: FOLTerm ): List[List[LambdaPosition]] =
-    LambdaPosition.getPositions( term, _.isInstanceOf[FOLTerm] ).groupBy( term.get ).values.toList
+    LambdaPosition.getPositions( term, st => st.isInstanceOf[FOLTerm] && freeVariables( st ).nonEmpty ).
+      groupBy( term.get ).values.toList
 }
 
-object normalForms {
-  def apply( lang: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
-    lang foreach { term => require( freeVariables( term ) isEmpty ) }
-
-    val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 )
-      .map( terms => antiUnificator( terms ) )
-    val nfs = Set.newBuilder[FOLTerm]
-    antiUnifiers foreach { au =>
-      val charP = characteristicPartition( au )
-      val possibleSubsts = nonTerminals.foldLeft[List[List[( FOLVar, List[LambdaPosition] )]]]( List( Nil ) ) {
-        case ( substs, nonTerminal ) =>
-          substs flatMap { subst =>
-            subst :: ( charP map ( setOfPos => ( nonTerminal, setOfPos ) :: subst ) )
-          }
-      }
-      possibleSubsts foreach { subst =>
-        var nf = au
-        subst foreach {
-          case ( v, setOfPos ) =>
-            setOfPos foreach { pos =>
-              if ( nf.isDefinedAt( pos ) )
-                nf = LambdaPosition.replace( nf, pos, v ).asInstanceOf[FOLTerm]
-            }
-        }
-        if ( freeVariables( nf ).forall( nonTerminals.contains( _ ) ) ) nfs += nf
-      }
-    }
-    nfs.result.toList
+object termSize {
+  def apply( t: FOLTerm ): Int = t match {
+    case FOLFunction( _, as ) => 1 + as.map( apply ).sum
+    case FOLVar( _ )          => 1
   }
 }
 
-object tratNormalForms {
-  def apply( terms: Seq[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
-    normalForms( FOLSubTerms( terms toList ) toSeq, nonTerminals )
+object nfsSubsumedByAU {
+  def apply( au: FOLTerm, nts: Set[FOLVar] ): Set[FOLTerm] = apply( au, nts, nts,
+    LambdaPosition.getPositions( au, _.isInstanceOf[FOLTerm] ).
+      groupBy( au( _ ).asInstanceOf[FOLTerm] ).toList.
+      sortBy { case ( st, _ ) => termSize( st ) }.
+      map( _._2 ) )
+
+  private def apply( au: FOLTerm, ntsToDo: Set[FOLVar], nts: Set[FOLVar], allPositions: List[List[LambdaPosition]] ): Set[FOLTerm] = allPositions match {
+    case positions :: otherPositions =>
+      positions.flatMap { au.get( _ ) }.headOption.
+        map( _.asInstanceOf[FOLTerm] ).
+        filterNot( freeVariables( _ ) subsetOf nts ).
+        map { st =>
+          ntsToDo flatMap { nt =>
+            var generalization = au
+            for ( pos <- positions ) generalization = generalization.replace( pos, nt ).asInstanceOf[FOLTerm]
+            apply( generalization, ntsToDo - nt, nts, otherPositions )
+          }
+        }.getOrElse( Set() ) ++ apply( au, ntsToDo, nts, otherPositions )
+    case Nil if freeVariables( au ) subsetOf nts => Set( au )
+    case _                                       => Set()
+  }
+}
+
+object normalForms {
+  def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
+    lang foreach { term => require( freeVariables( term ) isEmpty ) }
+
+    val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ).
+      map( antiUnificator( _ ) ).toSet[FOLTerm]
+    antiUnifiers.flatMap { au => nfsSubsumedByAU( au, nonTerminals.toSet ) }.toSeq
   }
 }
 
@@ -171,21 +176,14 @@ class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizati
 
 object normalFormsProofGrammar {
   def apply( lang: Seq[FOLTerm], n: Int ) = {
-    // TODO: explicitly handle formula/term symbol distinction
-    val formulaSymbols = lang map { case FOLFunction( f, _ ) => f } toSet
-
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
-    val nfs = tratNormalForms( lang, rhsNonTerminals )
+    val topLevelNFs = normalForms( lang, rhsNonTerminals ).filter( !_.isInstanceOf[FOLVar] )
+    val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), rhsNonTerminals.tail )
     val axiom = FOLVar( "τ" )
-    TratGrammar( axiom, axiom +: rhsNonTerminals, nfs flatMap { nf =>
+    TratGrammar( axiom, axiom +: rhsNonTerminals, topLevelNFs.map( axiom -> _ ) ++ argumentNFs.flatMap { nf =>
       val fvs = freeVariables( nf )
-      val possibleLhsVars = nf match {
-        case FOLFunction( f, _ ) if formulaSymbols contains f => Seq( axiom )
-        case _ =>
-          val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
-          ( 0 until lowestIndex ) map ( rhsNonTerminals( _ ) )
-      }
-      possibleLhsVars map { v => v -> nf }
+      val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
+      ( 0 until lowestIndex ) map { i => rhsNonTerminals( i ) -> nf }
     } )
   }
 }
@@ -230,22 +228,17 @@ object normalFormsProofVectGrammar {
   }
 
   def apply( lang: Seq[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {
-    // TODO: explicitly handle formula/term symbol distinction
-    val formulaSymbols = lang map { case FOLFunction( f, _ ) => f } toSet
+    val topLevelNFs = normalForms( lang, nonTermVects flatten ).filter( !_.isInstanceOf[FOLVar] )
+    val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), nonTermVects.tail flatten )
 
-    val nfs = tratNormalForms( lang, nonTermVects flatten )
-
-    val nts = List( axiom ) +: nonTermVects
-    VectTratGrammar( axiom, nts, nts.zipWithIndex flatMap {
-      case ( a, i ) =>
-        val allowedNonTerms = nts.drop( i + 1 ).flatten.toSet
-        val allowedRHS = nfs filter { nf => freeVariables( nf ) subsetOf allowedNonTerms }
-        val rhsWithCorrectType = allowedRHS filter {
-          case FOLFunction( f, _ ) if formulaSymbols contains f => a == List( axiom )
-          case _ => a != List( axiom )
-        }
-        takeN( a.size, rhsWithCorrectType ).map( a -> _ )
-    } )
+    VectTratGrammar( axiom, List( axiom ) +: nonTermVects,
+      topLevelNFs.map( List( axiom ) -> List( _ ) ) ++
+        nonTermVects.zipWithIndex.flatMap {
+          case ( a, i ) =>
+            val allowedNonTerms = nonTermVects.drop( i + 1 ).flatten.toSet
+            val allowedRHS = argumentNFs filter { nf => freeVariables( nf ) subsetOf allowedNonTerms }
+            takeN( a.size, allowedRHS ).map( a -> _ )
+        } )
   }
 }
 

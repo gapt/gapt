@@ -144,3 +144,28 @@ object rename {
         ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList ) ) ).toMap
   }
 }
+
+object toImplications {
+  /**
+   * Transforms subformulas of the form ¬A ∨ B or A ∨ ¬B to A → B or B → A, respectively.
+   *
+   * @param formula
+   * @return
+   */
+  def apply( formula: HOLFormula ): HOLFormula = formula match {
+    case Or( Neg( f ), g ) =>
+      Imp( apply( f ), apply( g ) )
+    case Or( f, Neg( g ) ) =>
+      Imp( apply( g ), apply( f ) )
+    case Or( f, g ) =>
+      Or( apply( f ), apply( g ) )
+    case And( f, g ) =>
+      And( apply( f ), apply( g ) )
+    case Neg( f )    => Neg( apply( f ) )
+    case Ex( v, f )  => Ex( v, apply( f ) )
+    case All( v, f ) => All( v, apply( f ) )
+    case _           => formula
+  }
+
+  def apply( formula: FOLFormula ): FOLFormula = apply( formula.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+}
