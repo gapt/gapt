@@ -10,6 +10,8 @@ object VectTratGrammar {
 case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.NonTerminalVect], productions: Seq[VectTratGrammar.Production] ) {
   import VectTratGrammar._
 
+  def axiomVect: NonTerminalVect = List( axiom )
+
   def productions( nonTerminalVect: NonTerminalVect ): Seq[Production] = productions filter ( _._1 == nonTerminalVect )
   def rightHandSides( nonTerminal: NonTerminalVect ) = productions( nonTerminal ) map ( _._2 )
 
@@ -22,7 +24,9 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
         require( allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals" )
       }
   }
-  require( nonTerminals contains Seq( axiom ), s"axiom is unknown non-terminal vector $axiom" )
+  require( nonTerminals contains axiomVect, s"axiom is unknown non-terminal vector $axiom" )
+
+  def size = productions.size
 
   def language: Set[FOLTerm] = {
     var lang = Set[FOLTerm]( axiom )

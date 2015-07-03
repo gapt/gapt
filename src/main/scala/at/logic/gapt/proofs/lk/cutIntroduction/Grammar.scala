@@ -11,31 +11,9 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
+import at.logic.gapt.grammars.VectTratGrammar
+import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
 import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.{ DFS, BFS, setSearch }
-
-import scala.collection.immutable.HashMap
-
-/**
- * Creates a grammar from a decomposition {U o,,a1,...,am1,, S,,1,, o,,b1,...,bm2,, ... o,,z1,...,zmn,, S,,n,,}
- * @param u set U
- * @param slist list of non-terminals and their corresponding sets (((a1,...,am1), S,,1,,), ..., (z1,...,zmn, S,,n,,))
- */
-class Grammar( val u: List[FOLTerm], val slist: List[( List[FOLVar], Set[List[FOLTerm]] )] ) {
-  require( slist.forall { case ( vars, termlistlist ) => termlistlist.forall { case termlist => vars.length == termlist.length } } )
-  /** Returns the size of the grammar, i.e. |u| + |s| */
-  def size = u.size + slist.foldLeft( 0 )( ( acc, s ) => acc + s._2.size )
-
-  /** Returns the set of eigenvariables that occur in the grammar. */
-  def eigenvariables = slist.flatMap( s => s._1 ).distinct
-
-  /** Returns the number of eigenvariables that occur in this grammar. */
-  def numVars = eigenvariables.length
-
-  override def toString(): String = {
-    "{ " + u.mkString( "," ) + " } " + slist.foldLeft( "" )( ( acc, s ) => acc ++ "o(" + s._1.mkString( "," ) + ") { " + s._2.mkString( "," ) + " } " )
-  }
-}
 
 // For cut-introduction, we consider sequents
 // \forall x_1 F_1(x_1), ..., \forall x_n F_n(x_n) :- \exists x_{n+1} F_{n+1}(x_{n+1}), ..., \exists x_m F(x_m)
@@ -77,13 +55,14 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
 }
 
 object simpleToMultiGrammar {
-  def apply( terms: TermSet, g: Grammar ): MultiGrammar = {
-    val us = g.u.foldLeft( HashMap[FOLFormula, List[List[FOLTerm]]]() )( ( acc, t ) => {
-      val f = terms.getFormula( t )
-      val old: List[List[FOLTerm]] = acc.getOrElse( f, List[List[FOLTerm]]() )
-      acc + ( ( f, ( old :+ terms.getTermTuple( t ) ) ) )
-    } )
-    new MultiGrammar( us, g.slist.map { case ( left, right ) => ( left, right.toList ) } )
+  def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): MultiGrammar = {
+    val us = g.rightHandSides( g.axiomVect ).map( _.head ).
+      groupBy { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }.
+      mapValues( _.map { case FOLFunction( _, as ) => as }.toList )
+    val slist = g.nonTerminals.filter( _ != g.axiomVect ).
+      map { a => a -> g.rightHandSides( a ).toList }.toList
+
+    new MultiGrammar( us, slist )
   }
 }
 
@@ -92,9 +71,9 @@ object simpleToMultiGrammar {
  */
 object ComputeGrammars {
 
-  def apply( terms: TermSet, delta: DeltaVector ): List[Grammar] = ComputeGrammars( terms.set, delta )
+  def apply( terms: TermSet, delta: DeltaVector ): List[VectTratGrammar] = ComputeGrammars( terms.set, delta )
 
-  def apply( terms: List[FOLTerm], delta: DeltaVector ): List[Grammar] = {
+  def apply( terms: List[FOLTerm], delta: DeltaVector ): List[VectTratGrammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.
     val eigenvariable = "α"
     val deltatable = new DeltaTable( terms, eigenvariable, delta )
@@ -111,7 +90,7 @@ object ComputeGrammars {
    */
   def findValidGrammars( terms: TermSet, deltatable: DeltaTable, eigenvariable: String ): List[MultiGrammar] = {
     val gs = findValidGrammars( terms.set, deltatable, eigenvariable )
-    gs.map( g => simpleToMultiGrammar( terms, g ) )
+    gs.map( g => simpleToMultiGrammar( terms.encoding, g ) )
   }
 
   /**
@@ -122,7 +101,7 @@ object ComputeGrammars {
    * @param deltatable A generalized delta table for terms.
    * @param eigenvariable The name of eigenvariables to introduce.
    */
-  def findValidGrammars( terms: List[FOLTerm], deltatable: DeltaTable, eigenvariable: String ): List[Grammar] = {
+  def findValidGrammars( terms: List[FOLTerm], deltatable: DeltaTable, eigenvariable: String, axiom: FOLVar = FOLVar( "τ" ) ): List[VectTratGrammar] = {
 
     //Helper functions for grammars
 
@@ -194,7 +173,7 @@ object ComputeGrammars {
 
     //Go through the rows of the delta table and find the smallest
     //covering in each row.
-    deltatable.table.foldLeft( List[Grammar]() ) {
+    deltatable.table.foldLeft( List[VectTratGrammar]() ) {
       case ( grammars, ( s, pairs ) ) =>
 
         // Ignoring entries where s.size == 1 because they are trivial
@@ -219,7 +198,8 @@ object ComputeGrammars {
 
             coverings.foldLeft( grammars ) {
               case ( acc, u ) =>
-                ( new Grammar( u, ( evs, s ) :: Nil ) ) :: acc
+                VectTratGrammar( axiom, Seq( List( axiom ), evs ),
+                  u.map( List( axiom ) -> List( _ ) ) ++ s.map( evs -> _ ) ) :: acc
             }
           } else grammars
 
