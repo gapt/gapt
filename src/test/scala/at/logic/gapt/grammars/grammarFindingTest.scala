@@ -21,6 +21,10 @@ class GrammarFindingTest extends Specification {
     "check that productions start with defined non-terminals" in {
       vtg( Seq( "x" ), Seq( "y->c" ) ) must throwA[IllegalArgumentException]
     }
+    "check that production sides have same length" in {
+      VectTratGrammar( FOLVar( "x" ), Seq( List( FOLVar( "x" ) ) ),
+        Seq( List( FOLVar( "x" ) ) -> List( FOLConst( "a" ), FOLConst( "b" ) ) ) ) must throwA[IllegalArgumentException]
+    }
     "correctly compute the language" in {
       val g = vtg( Seq( "x", "y1,y2" ),
         Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
