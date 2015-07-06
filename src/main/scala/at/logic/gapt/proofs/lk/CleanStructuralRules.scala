@@ -30,7 +30,8 @@ object CleanStructuralRules {
 
   def apply( p: LKProof ): LKProof = {
     cleanStructuralRules( p, {
-      ( proof, ws ) => done( WeakeningMacroRule( proof, p.root.toFSequent ) )
+      ( proof, ws ) =>
+        done( WeakeningMacroRule( proof, p.root.toFSequent ) )
     } ).result
   }
 
@@ -78,20 +79,20 @@ object CleanStructuralRules {
               case ( true, true ) =>
                 val ant2 = proof2.root.antecedent.map( _.formula )
                 val suc2 = proof2.root.succedent.map( _.formula )
-                val ws_1 = wsl._1 ++ wsr._1.diff( List( a2.formula ) ) ++ ant2
+                val ws_1 = wsl._1 ++ wsr._1.diff( List( a2.formula ) ) ++ ( ant2 diff List( a2.formula ) )
                 val ws_2 = wsl._2.diff( List( a1.formula ) ) ++ wsr._2 ++ suc2
                 tailcall( fun( proof1, ( ws_1, ws_2 ) ) ) // The choice for proof1 is arbitrary
               case ( true, false ) =>
                 val ant2 = proof2.root.antecedent.map( _.formula )
                 val suc2 = proof2.root.succedent.map( _.formula )
-                val ws_1 = wsl._1 ++ wsr._1.diff( List( a2.formula ) ) ++ ant2
+                val ws_1 = wsl._1 ++ wsr._1.diff( List( a2.formula ) ) ++ ( ant2 diff List( a2.formula ) )
                 val ws_2 = wsl._2.diff( List( a1.formula ) ) ++ wsr._2 ++ suc2
                 tailcall( fun( proof1, ( ws_1, ws_2 ) ) )
               case ( false, true ) =>
                 val ant1 = proof1.root.antecedent.map( _.formula )
                 val suc1 = proof1.root.succedent.map( _.formula )
                 val ws_1 = wsl._1 ++ wsr._1.diff( List( a2.formula ) ) ++ ant1
-                val ws_2 = wsl._2.diff( List( a1.formula ) ) ++ wsr._2 ++ suc1
+                val ws_2 = wsl._2.diff( List( a1.formula ) ) ++ wsr._2 ++ ( suc1 diff List( a1.formula ) )
                 tailcall( fun( proof2, ( ws_1, ws_2 ) ) )
               case ( false, false ) =>
                 val ws_1 = wsl._1 ++ wsr._1
