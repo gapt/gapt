@@ -84,7 +84,7 @@ class RecSchemGenLangFormula( val recursionScheme: RecursionScheme,
     while ( queue nonEmpty ) {
       val target @ ( from, to ) = queue.dequeue()
 
-      if ( !alreadyDone( target ) && FOLMatchingAlgorithm.matchTerms( to, from ).isEmpty ) {
+      if ( !alreadyDone( target ) )
         recursionScheme.rules foreach { rule =>
           reverseMatch( rule, to ).map( canonicalVars( _ ) ).foreach { newTo =>
             targetFilter( from, newTo ) match {
@@ -98,7 +98,6 @@ class RecSchemGenLangFormula( val recursionScheme: RecursionScheme,
             }
           }
         }
-      }
 
       alreadyDone += target
     }
@@ -116,13 +115,14 @@ class RecSchemGenLangFormula( val recursionScheme: RecursionScheme,
       }
     }
 
-    And( ( targets diff goals.toSeq ).map { case ( from, to ) => derivable( from, to ) } ++ ( reachable map {
-      case t if goals contains t => Top()
-      case t @ ( from, to ) =>
+    require( targets.toSet subsetOf reachable.result() )
+
+    And( targets.map { case ( from, to ) => derivable( from, to ) } ++ ( reachable collect {
+      case t @ ( from, to ) if !( goals contains t ) =>
         Imp( derivable( from, to ), Or(
           edges collect {
-            case ( `t`, r, b ) if goals contains b => ruleIncluded( r )
-            case ( `t`, r, ( from_, to_ ) )        => And( ruleIncluded( r ), derivable( from_, to_ ) )
+            case ( `t`, r, b ) if goals contains b                      => ruleIncluded( r )
+            case ( `t`, r, b @ ( from_, to_ ) ) if reachable contains b => And( ruleIncluded( r ), derivable( from_, to_ ) )
           } ) )
     } ) )
   }
