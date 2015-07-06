@@ -62,10 +62,17 @@ class RecSchemGenLangFormula( val recursionScheme: RecursionScheme,
   def ruleIncluded( rule: Rule ) = FOLAtom( s"${rule.lhs}->${rule.rhs}" )
   def derivable( from: FOLTerm, to: FOLTerm ) = FOLAtom( s"$from=>$to" )
 
-  def reverseMatch( rule: Rule, against: FOLTerm ) = {
-    val rule_ = rule( FOLSubstitution( rename( freeVariables( rule.lhs ), freeVariables( against ) ) ) )
-    FOLUnificationAlgorithm.unify( rule_.rhs, against ).headOption.map( _( rule_.lhs ) )
-  }
+  def reverseMatch( rule: Rule, against: FOLTerm ) =
+    ( rule, against ) match {
+      case ( Rule( _, FOLFunction( f, _ ) ), FOLFunction( f_, _ ) ) if f != f_ => None
+      case _ =>
+        val ( fvsRule, fvsAgainst ) = ( freeVariables( rule.lhs ), freeVariables( against ) )
+        val rule_ = if ( fvsRule intersect fvsAgainst nonEmpty )
+          rule( FOLSubstitution( rename( freeVariables( rule.lhs ), freeVariables( against ) ) ) )
+        else
+          rule
+        FOLUnificationAlgorithm.unify( rule_.rhs, against ).headOption.map( _( rule_.lhs ) )
+    }
 
   type Target = ( FOLTerm, FOLTerm )
   def apply( targets: Seq[Target] ): FOLFormula = {
