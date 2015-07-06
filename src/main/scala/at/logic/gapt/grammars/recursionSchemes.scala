@@ -127,7 +127,7 @@ object minimizeRecursionScheme extends Logger {
              solver: MaxSATSolver = new QMaxSAT ) = {
     val formula = new RecSchemGenLangFormula( recSchem, targetFilter )
     val hard = formula( targets )
-    warn( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
+    debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> 1 }
     val interp = solver.solveWPM( List( hard ), soft toList ).get
     RecursionScheme( recSchem.rules.filter { rule => interp.interpret( formula.ruleIncluded( rule ) ) } )

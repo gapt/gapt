@@ -3,7 +3,9 @@ package at.logic.gapt.grammars
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLSubstitution }
 import at.logic.gapt.expr.fol.Utils.numeral
+import at.logic.gapt.expr.hol.{ toNNF, lcomp, simplify }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
+import at.logic.gapt.utils.logging.Logger
 
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )
@@ -119,10 +121,11 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
   }
 }
 
-object minimizeSipGrammar {
+object minimizeSipGrammar extends Logger {
   def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new QMaxSAT ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
+    debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
