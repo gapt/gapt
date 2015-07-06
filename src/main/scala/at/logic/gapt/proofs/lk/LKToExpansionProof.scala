@@ -12,9 +12,7 @@ class LKToExpansionProof extends Logger {
 
   def apply( proof: LKProof ): ExpansionSequent = {
     val map = extract( proof )
-    val clean_ant = proof.root.antecedent.filter( f => map( f ) != ETAtom( Top() ) )
-    val clean_suc = proof.root.succedent.filter( f => map( f ) != ETAtom( Bottom() ) )
-    mergeTree( ( clean_ant.map( fo => map( fo ) ), clean_suc.map( fo => map( fo ) ) ) )
+    mergeTree( ( proof.root.antecedent.map( fo => map( fo ) ), proof.root.succedent.map( fo => map( fo ) ) ) )
   }
 
   private def extract( proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = proof match {
