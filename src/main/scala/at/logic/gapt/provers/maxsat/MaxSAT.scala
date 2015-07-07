@@ -66,7 +66,8 @@ trait MaxSATSolver extends Logger {
   }
 }
 
-class WDIMACSHelper( val hard: List[FClause], val soft: List[Tuple2[FClause, Int]] ) extends DIMACSHelper( soft.foldLeft( hard )( ( acc, c ) => acc :+ c._1 ) ) {
+class WDIMACSHelper( val hard: List[FClause], val soft: List[( FClause, Int )] )
+    extends DIMACSHelper( hard ++ soft.map( _._1 ) ) {
   /**
    * Returns for a given atom and
    * polarization a String for a propositional Variable in .wcnf format
