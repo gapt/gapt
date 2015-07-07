@@ -35,12 +35,6 @@ object antiUnificator {
   def apply( terms: Seq[FOLTerm] ): FOLTerm = new antiUnificator().apply( terms )
 }
 
-object characteristicPartition {
-  def apply( term: FOLTerm ): List[List[LambdaPosition]] =
-    LambdaPosition.getPositions( term, st => st.isInstanceOf[FOLTerm] && freeVariables( st ).nonEmpty ).
-      groupBy( term.get ).values.toList
-}
-
 object termSize {
   def apply( t: FOLTerm ): Int = t match {
     case FOLFunction( _, as ) => 1 + as.map( apply ).sum
