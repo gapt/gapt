@@ -2,7 +2,7 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, Utils, FOLMatchingAlgorithm }
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 import at.logic.gapt.utils.dssupport.ListSupport
 
 import scala.collection.{ GenTraversable, Set, mutable }
@@ -189,7 +189,7 @@ object normalFormsProofGrammar {
 }
 
 object minimizeGrammar {
-  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new QMaxSAT ): TratGrammar = {
+  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j ): TratGrammar = {
     val formula = new GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
@@ -203,7 +203,7 @@ object minimizeGrammar {
 }
 
 object findMinimalGrammar {
-  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
+  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
     val polynomialSizedCoveringGrammar = normalFormsProofGrammar( lang, numberOfNonTerminals )
     minimizeGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
@@ -243,7 +243,7 @@ object normalFormsProofVectGrammar {
 }
 
 object minimizeVectGrammar {
-  def apply( g: VectTratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new QMaxSAT ): VectTratGrammar = {
+  def apply( g: VectTratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j ): VectTratGrammar = {
     val formula = new VectGrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
@@ -257,7 +257,7 @@ object minimizeVectGrammar {
 }
 
 object findMinimalVectGrammar {
-  def apply( lang: Seq[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
+  def apply( lang: Seq[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
     val polynomialSizedCoveringGrammar = normalFormsProofVectGrammar( lang, aritiesOfNonTerminals )
     minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
