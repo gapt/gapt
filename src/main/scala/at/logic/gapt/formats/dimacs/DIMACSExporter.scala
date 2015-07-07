@@ -11,14 +11,10 @@ import at.logic.gapt.proofs.resolution.FClause
 class DIMACSHelper( val clauses: List[FClause] ) {
   val atoms = clauses.flatMap( c => c.neg ++ c.pos ).distinct
   val atom_map = atoms.zip( 1 to atoms.size ).toMap
+  val reverseAtomMap = atom_map.map( _.swap )
   val nl = System.getProperty( "line.separator" )
 
-  def getAtom( i: Int ) = {
-    atom_map.find( p => i == p._2 ) match {
-      case Some( ( a, n ) ) => Some( a )
-      case _                => None
-    }
-  }
+  def getAtom( i: Int ): Option[HOLFormula] = reverseAtomMap get i
 }
 
 object readDIMACS {
