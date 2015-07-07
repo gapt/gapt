@@ -8,6 +8,8 @@ package at.logic.gapt.expr
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.expr.hol.HOLPosition._
 
+import scala.annotation.tailrec
+
 // Collects all methods that operate on LambdaExpressions
 abstract class LambdaExpression {
 
@@ -255,10 +257,15 @@ object Apps {
     case x :: ls => apply( App( function, x ), ls )
   }
 
-  def unapply( e: LambdaExpression ): Some[( LambdaExpression, List[LambdaExpression] )] = e match {
-    case App( Apps( hd, args ), arg ) => Some( ( hd, args ::: List( arg ) ) )
-    case e                            => Some( ( e, List() ) )
-  }
+  def unapply( e: LambdaExpression ): Some[( LambdaExpression, List[LambdaExpression] )] =
+    Some( decompose( e, Nil ) )
+
+  @tailrec
+  private def decompose( e: LambdaExpression, restArgs: List[LambdaExpression] ): ( LambdaExpression, List[LambdaExpression] ) =
+    e match {
+      case App( head, arg ) => decompose( head, arg :: restArgs )
+      case head             => ( head, restArgs )
+    }
 }
 object Abs {
   def apply( v: Var, t: LambdaExpression ) = determineTraits.forAbs( v, t )
