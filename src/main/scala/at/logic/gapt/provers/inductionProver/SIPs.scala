@@ -215,32 +215,32 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
     def num( k: Int ) = Utils.numeral( k )
     def gam( k: Int ) = FOLVar( "γ_" + k )
 
-    val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
-    val inductionBase2 = ContractionMacroRule(
+    val inductionBase1 = applySubstitution( proofFromInstances( pi0, ExpSeq0 ), FOLSubstitution( List( alpha -> num( n ), beta -> gam( 0 ) ) ) )._1
+    val inductionBase = ContractionMacroRule(
       if ( indFormIsQuantified )
-        ForallRightRule( inductionBase1, F( alpha, zero, beta ), Fprime( alpha, zero ), beta )
+        ForallRightRule( inductionBase1, F( num( n ), zero, gam( 0 ) ), Fprime( num( n ), zero ), gam( 0 ) )
       else
         inductionBase1 )
-    val sub = FOLSubstitution( List( alpha -> num( n ) ) )
-    val inductionBase = applySubstitution( inductionBase2, sub )._1
 
     if ( n > 0 ) {
-      val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
-      val inductionStep2 =
-        if ( indFormIsQuantified ) {
-          t.foldLeft( inductionStep1 ) {
-            ( acc, ti ) => ForallLeftRule( acc, F( alpha, nu, ti ), All( y, F( alpha, nu, y ) ), ti )
-          }
-        } else
-          inductionStep1
 
-      val inductionStep3 = ContractionMacroRule(
-        if ( indFormIsQuantified )
-          ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
-        else
-          inductionStep2 )
+      def inductionStep( k: Int ) = {
+        val sub = FOLSubstitution( List( alpha -> num( n ), nu -> num( k ), gamma -> gam( k + 1 ) ) )
+        val inductionStep1 = applySubstitution( proofFromInstances( pi1, ExpSeq1 ), sub )._1
+        val inductionStep2 =
+          if ( indFormIsQuantified ) {
+            t.foldLeft( inductionStep1 ) {
+              ( acc, ti ) => ForallLeftRule( acc, F( num( n ), num( k ), sub( ti ) ), All( y, F( num( n ), num( k ), y ) ), sub( ti ) )
+            }
+          } else
+            inductionStep1
 
-      def inductionStep( k: Int ) = applySubstitution( inductionStep3, FOLSubstitution( List( alpha -> num( n ), nu -> num( k ) ) ) )._1
+        ContractionMacroRule(
+          if ( indFormIsQuantified )
+            ForallRightRule( inductionStep2, F( num( n ), num( k + 1 ), gam( k + 1 ) ), All( y, F( num( n ), num( k + 1 ), y ) ), gam( k + 1 ) )
+          else
+            inductionStep2 )
+      }
 
       val stepsProof = ( inductionBase /: ( 0 until n ) ) { ( acc, i ) =>
         CutRule( acc, inductionStep( i ), Fprime( num( n ), num( i ) ) )
