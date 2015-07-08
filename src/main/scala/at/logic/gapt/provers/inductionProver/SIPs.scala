@@ -1,5 +1,6 @@
 package at.logic.gapt.provers.inductionProver
 
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.expr.hol.CNFp
@@ -57,6 +58,12 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
     sub( inductionFormula )
   }
 
+  private def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula =
+    if ( indFormIsQuantified )
+      All( y, F( x1, x2, y ) ).asInstanceOf[FOLFormula]
+    else
+      F( x1, x2, gamma ).asInstanceOf[FOLFormula]
+
   val Sequent0 = Gamma0 :+ F( alpha, zero, beta )
 
   val Ft = t map { F( alpha, nu, _ ) }
@@ -64,6 +71,13 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
 
   val Fu = u map { F( alpha, alpha, _ ) }
   val Sequent2 = Fu ++: Gamma2
+
+  /**
+   * Returns true iff the induction formula needs to be quantified over.
+   *
+   * @return
+   */
+  def indFormIsQuantified = freeVariables( inductionFormula ) contains gamma
 
   /**
    *
@@ -94,14 +108,6 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @return The LKProof represented by this object.
    */
   def toLKProof( pi0: LKProof, pi1: LKProof, pi2: LKProof ): LKProof = {
-    val indFormIsQuantified = freeVariables( inductionFormula ) contains gamma
-
-    def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula =
-      if ( indFormIsQuantified )
-        All( y, F( x1, x2, y ) ).asInstanceOf[FOLFormula]
-      else
-        F( x1, x2, gamma ).asInstanceOf[FOLFormula]
-
     if ( indFormIsQuantified ) {
       require( t.nonEmpty, "Induction formula contains γ, but no step terms have been supplied." )
       require( u.nonEmpty, "Induction formula contains γ, but no cut terms have been supplied." )
@@ -153,14 +159,14 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
 
   /**
    *
-   * @param prover
+   * @param prover The prover used to generate π,,0,, ,…,π,,2,,.
    * @return
    */
   def toLKProof( prover: Prover ): LKProof = {
 
     val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
     ( pi0Op, pi1Op, pi2Op ) match {
-      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toLKProof( pi0, pi1, pi2 )
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toLKProof( CleanStructuralRules( pi0 ), CleanStructuralRules( pi1 ), CleanStructuralRules( pi2 ) )
       case _                                         => throw new Exception( "Not a correct LKProof." )
     }
   }
@@ -171,6 +177,89 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @return The LKProof represented by this object
    */
   def toLKProof: LKProof = toLKProof( new Prover9Prover )
+
+  /**
+   * Computes the nth instance proof. Uses prover9 to compute the subproofs.
+   *
+   * @param n A natural number
+   * @return The nth instance of this sip.
+   */
+  def toInstanceLKProof( n: Int ): LKProof = toInstanceLKProof( n, new Prover9Prover() )
+
+  /**
+   * Computes the nth instance proof,
+   *
+   * @param n A natural number
+   * @param prover The prover used to generate π,,0,, ,…,π,,2,,.
+   * @return The nth instance of this sip.
+   */
+  def toInstanceLKProof( n: Int, prover: Prover ): LKProof = {
+
+    val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
+    ( pi0Op, pi1Op, pi2Op ) match {
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toInstanceLKProof( n, CleanStructuralRules( pi0 ), CleanStructuralRules( pi1 ), CleanStructuralRules( pi2 ) )
+      case _                                         => throw new Exception( "Not a correct LKProof." )
+    }
+  }
+
+  /**
+   * Computes the nth instance proof, with user-supplied proofs π,,0,,, π,,1,,, π,,2,,.
+   *
+   * @param n A natural number
+   * @param pi0 Proof of the induction base.
+   * @param pi1 Proof of the induction step.
+   * @param pi2 Proof of the conclusion.
+   * @return The nth instance of this sip.
+   */
+  def toInstanceLKProof( n: Int, pi0: LKProof, pi1: LKProof, pi2: LKProof ): LKProof = {
+    def num( k: Int ) = Utils.numeral( k )
+    def gam( k: Int ) = FOLVar( "γ_" + k )
+
+    val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
+    val inductionBase2 = ContractionMacroRule(
+      if ( indFormIsQuantified )
+        ForallRightRule( inductionBase1, F( alpha, zero, beta ), Fprime( alpha, zero ), beta )
+      else
+        inductionBase1 )
+    val sub = FOLSubstitution( List( alpha -> num( n ) ) )
+    val inductionBase = applySubstitution( inductionBase2, sub )._1
+
+    if ( n > 0 ) {
+      val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
+      val inductionStep2 =
+        if ( indFormIsQuantified ) {
+          t.foldLeft( inductionStep1 ) {
+            ( acc, ti ) => ForallLeftRule( acc, F( alpha, nu, ti ), All( y, F( alpha, nu, y ) ), ti )
+          }
+        } else
+          inductionStep1
+
+      val inductionStep3 = ContractionMacroRule(
+        if ( indFormIsQuantified )
+          ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
+        else
+          inductionStep2 )
+
+      def inductionStep( k: Int ) = applySubstitution( inductionStep3, FOLSubstitution( List( alpha -> num( n ), nu -> num( k ) ) ) )._1
+
+      val stepsProof = ( inductionBase /: ( 0 until n ) ) { ( acc, i ) =>
+        CutRule( acc, inductionStep( i ), Fprime( num( n ), num( i ) ) )
+      }
+
+      val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
+      val conclusion2 = ContractionMacroRule(
+        if ( indFormIsQuantified ) {
+          u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
+            ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
+          }
+        } else
+          conclusion1 )
+
+      val conclusion = applySubstitution( conclusion2, FOLSubstitution( alpha, num( n ) ) )._1
+
+      CutRule( stepsProof, conclusion, Fprime( num( n ), num( n ) ) )
+    } else inductionBase
+  }
 
   /**
    * Extracts a SIP grammar from the SIP according to the paper.
