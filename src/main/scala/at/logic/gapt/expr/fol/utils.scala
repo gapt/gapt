@@ -5,7 +5,8 @@
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.containsQuantifier
+import at.logic.gapt.proofs.lk.base.FSequent
 import scala.collection.{ GenTraversable, mutable }
 
 object isFOLFunction {
@@ -69,6 +70,23 @@ object FOLSubTerms {
     }
   }
 
+}
+
+object isFOLPrenexSigma1 {
+  def apply( f: LambdaExpression ): Boolean = f match {
+    case Ex.Block( _, matrix: FOLFormula ) if !containsQuantifier( matrix ) => true
+    case _ => false
+  }
+
+  def apply( seq: FSequent ): Boolean =
+    seq.antecedent.forall( isFOLPrenexPi1( _ ) ) && seq.succedent.forall( isFOLPrenexSigma1( _ ) )
+}
+
+object isFOLPrenexPi1 {
+  def apply( f: LambdaExpression ): Boolean = f match {
+    case All.Block( _, matrix: FOLFormula ) if !containsQuantifier( matrix ) => true
+    case _ => false
+  }
 }
 
 object Utils {

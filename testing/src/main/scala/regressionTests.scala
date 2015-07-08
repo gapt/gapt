@@ -3,6 +3,7 @@ package at.logic.gapt.testing
 import java.io.File
 
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
+import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep, ExpansionProofToLK }
@@ -35,7 +36,10 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     val q_opt = {
       try {
-        Some( CutIntroduction.one_cut_many_quantifiers( p, false ) )
+        if ( isFOLPrenexSigma1( p.root.toFSequent ) )
+          Some( CutIntroduction.one_cut_many_quantifiers( p, false ) )
+        else
+          None
       } catch {
         // do not count uncompressibility as failure of test
         case e: CutIntroUncompressibleException => None
