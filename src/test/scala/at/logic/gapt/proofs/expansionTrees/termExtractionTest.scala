@@ -7,7 +7,7 @@ import org.specs2.mutable._
 class TermExtractionTest extends Specification {
   val Seq( x, y ) = Seq( "x", "y" ).map( FOLVar( _ ) )
   val esP = All( x, FOLAtom( "P", x, y ) )
-  val esR = All( x, FOLAtom( "R", x ) )
+  val esR = Ex( x, FOLAtom( "R", x ) )
   val endSequent = FSequent(
     Seq( esP ),
     Seq( esR ) )
