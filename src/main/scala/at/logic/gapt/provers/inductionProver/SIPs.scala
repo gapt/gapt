@@ -184,7 +184,7 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @param n A natural number
    * @return The nth instance of this sip.
    */
-  def toInstanceLKProof( n: Int ): LKProof = toInstanceLKProof( n, new Prover9Prover() )
+  def toInstanceLKProof( n: Int, rename: Boolean ): LKProof = toInstanceLKProof( n, new Prover9Prover(), rename )
 
   /**
    * Computes the nth instance proof,
@@ -193,11 +193,11 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @param prover The prover used to generate π,,0,, ,…,π,,2,,.
    * @return The nth instance of this sip.
    */
-  def toInstanceLKProof( n: Int, prover: Prover ): LKProof = {
+  def toInstanceLKProof( n: Int, prover: Prover, rename: Boolean ): LKProof = {
 
     val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
     ( pi0Op, pi1Op, pi2Op ) match {
-      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toInstanceLKProof( n, CleanStructuralRules( pi0 ), CleanStructuralRules( pi1 ), CleanStructuralRules( pi2 ) )
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toInstanceLKProof( n, CleanStructuralRules( pi0 ), CleanStructuralRules( pi1 ), CleanStructuralRules( pi2 ), rename )
       case _                                         => throw new Exception( "Not a correct LKProof." )
     }
   }
@@ -211,33 +211,41 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @param pi2 Proof of the conclusion.
    * @return The nth instance of this sip.
    */
-  def toInstanceLKProof( n: Int, pi0: LKProof, pi1: LKProof, pi2: LKProof ): LKProof = {
+  def toInstanceLKProof( n: Int, pi0: LKProof, pi1: LKProof, pi2: LKProof, rename: Boolean ): LKProof = {
     def num( k: Int ) = Utils.numeral( k )
     def gam( k: Int ) = FOLVar( "γ_" + k )
 
-    val inductionBase1 = applySubstitution( proofFromInstances( pi0, ExpSeq0 ), FOLSubstitution( List( alpha -> num( n ), beta -> gam( 0 ) ) ) )._1
+    val baseSub = if (rename)
+       FOLSubstitution( List( alpha -> num( n ), beta -> gam( 0 ) ) )
+    else
+      FOLSubstitution( alpha, num( n ) )
+
+    val inductionBase1 = applySubstitution( proofFromInstances( pi0, ExpSeq0 ), baseSub )._1
     val inductionBase = ContractionMacroRule(
       if ( indFormIsQuantified )
-        ForallRightRule( inductionBase1, F( num( n ), zero, gam( 0 ) ), Fprime( num( n ), zero ), gam( 0 ) )
+        ForallRightRule( inductionBase1, baseSub(F(alpha, zero, beta) ), baseSub(Fprime( alpha, zero )), baseSub(beta).asInstanceOf[FOLVar] )
       else
         inductionBase1 )
 
-    if ( n > 0 ) {
-
       def inductionStep( k: Int ) = {
-        val sub = FOLSubstitution( List( alpha -> num( n ), nu -> num( k ), gamma -> gam( k + 1 ) ) )
+        val sub =
+          if (rename)
+            FOLSubstitution( List( alpha -> num( n ), nu -> num( k ), gamma -> gam( k + 1 ) ) )
+          else
+            FOLSubstitution( List( alpha -> num( n ), nu -> num( k ) ) )
+
         val inductionStep1 = applySubstitution( proofFromInstances( pi1, ExpSeq1 ), sub )._1
         val inductionStep2 =
           if ( indFormIsQuantified ) {
             t.foldLeft( inductionStep1 ) {
-              ( acc, ti ) => ForallLeftRule( acc, F( num( n ), num( k ), sub( ti ) ), All( y, F( num( n ), num( k ), y ) ), sub( ti ) )
+              ( acc, ti ) => ForallLeftRule( acc, sub(F(alpha, nu, ti)), sub(All( y, F( alpha, nu, y ) )), sub( ti ) )
             }
           } else
             inductionStep1
 
         ContractionMacroRule(
           if ( indFormIsQuantified )
-            ForallRightRule( inductionStep2, F( num( n ), num( k + 1 ), gam( k + 1 ) ), All( y, F( num( n ), num( k + 1 ), y ) ), gam( k + 1 ) )
+            ForallRightRule( inductionStep2, sub(F( alpha, snu, gamma )), sub(All( y, F( alpha, snu, y ) )), sub(gamma).asInstanceOf[FOLVar] )
           else
             inductionStep2 )
       }
@@ -245,6 +253,8 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
       val stepsProof = ( inductionBase /: ( 0 until n ) ) { ( acc, i ) =>
         CutRule( acc, inductionStep( i ), Fprime( num( n ), num( i ) ) )
       }
+
+      val conclusionSub = FOLSubstitution( alpha, num( n ) )
 
       val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
       val conclusion2 = ContractionMacroRule(
@@ -255,10 +265,9 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
         } else
           conclusion1 )
 
-      val conclusion = applySubstitution( conclusion2, FOLSubstitution( alpha, num( n ) ) )._1
+      val conclusion = applySubstitution( conclusion2, conclusionSub )._1
 
       CutRule( stepsProof, conclusion, Fprime( num( n ), num( n ) ) )
-    } else inductionBase
   }
 
   /**
