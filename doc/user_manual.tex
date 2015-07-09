@@ -165,7 +165,7 @@ the gapt-cli zip-file you will find a shellscript \texttt{cli.sh}.
 
 Running this script
 \begin{lstlisting}[mathescape=false]
-$ ./cli.sh
+ ./cli.sh
 \end{lstlisting}
 will start the command-line interface of GAPT.
 
@@ -296,6 +296,8 @@ The prover9 syntax was also extended to higher-order logic, where type declarati
 \begin{lstlisting}
 gapt> val I = parseLLKFormula ( "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))" )
 \end{lstlisting}
+
+Please refere to Appendix~\ref{app:formulasyntax} for a full description of the languages the parsers accept.
 
 \begin{meta}
 TODO: add the other parsers
@@ -1067,6 +1069,120 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 % \begin{lstlisting}[mathescape=false]
 % $ java -jar prooftool-XX-SNAPSHOT-jar-with-dependencies.jar
 % \end{lstlisting}
+
+\section{Formula Syntax}
+\label{app:formulasyntax}
+
+\subsection{Simple FOL Parsing (parseFOL)}
+
+The simple FOL parser interpretes names strings built over the alphabet
+ $[\mathtt{a, \ldots, z, A ,\ldots, Z, 0, \ldots 9,-,\_,\{,\} } ]$. Also the
+ equality symbol $=$ is a name.
+
+Names starting with lower case letters from \texttt{a} to \texttt{t} are
+ interpeted as constant symbols. Likewise, names starting with lower case
+ letters from \texttt{u} to \texttt{z} are interpreted as variables.
+ Function symbols start with a lower case letter and predicate symbols
+ start with an upper case letter.
+
+Arguments are always seperated by commas and put in parenthesis. Terms are
+ built from variable, constant symbols and function symbols applied
+ to a number of arguments, which are terms. Likewise, atoms are
+ predicate symbols, possibly with arguments which are again terms.
+
+For example, the following are terms:
+
+ \begin{lstlisting}
+   "constant", "variable", "function(constant,variable)", "s_{21}"
+ \end{lstlisting}
+
+And the following are atoms:
+
+ \begin{lstlisting}
+   "P_1(alpha, beta(x))", "=(25,v)"
+ \end{lstlisting}
+
+The logical connectives are called $\{\mathtt{And,Or,Neg,Imp,Forall,Exists}\}$
+ and are written in prefix form.
+
+For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
+ is parsed as:
+
+ \begin{lstlisting}
+gapt> parseFOL("Forall x Imp P(x,f(x)) Exists y P(x,y)")
+res0: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+ \end{lstlisting}
+
+\subsection{Prover 9 parser (parseProver9)}
+
+The Prover9 parser interpretes names strings built over the alphabet
+ $[\mathtt{a, \ldots, z, A ,\ldots, Z, 0, \ldots 9} ]$. Also the
+ equality symbol $=$ and the arithmetic operators $\{\mathtt{+,-,*,/}\}$
+ are names.
+
+Since prover 9 has two naming schemes, we describe both of them. The default
+ is the native LADR scheme.
+
+\subsubsection{LADR naming scheme (default)}
+
+Names starting with lower case letters from \texttt{u} to \texttt{z} are
+ interpeted as variable symbols. Every name starting with a different letter
+ is interpeted as a constant/function/predicate symbol, depending on the
+ position in the term.
+
+\subsubsection{Prolog naming scheme}
+Names starting with upper case letters from \texttt{A} to \texttt{Z} are
+ interpeted as variable symbols. Every name starting with a different letter
+ is interpeted as a constant/function, depending on the
+ position in the term. Predicates start with a lower or an upper case letter.
+
+\subsubsection{Terms and Formulas}
+Arguments are always seperated by commas and put in parenthesis. Terms are
+ built from variable, constant symbols and function symbols applied
+ to a number of arguments, which are terms. Likewise, atoms are
+ predicate symbols, possibly with arguments which are again terms. The
+ function symbols $\{\mathtt{+,-,*,/}\}$ and the equality predicate $=$
+ are written in infix notation.
+
+For example, the following are terms in the LADR naming scheme:
+
+ \begin{lstlisting}
+   "constant", "variable", "function(constant,variable)", "s_{21} + 5"
+ \end{lstlisting}
+
+And the following are atoms:
+
+ \begin{lstlisting}
+   "P1(alpha, beta(x))", "25 = v"
+ \end{lstlisting}
+
+The logical connectives are called $\{\mathtt{\&,|,->,all,exists}\}$ where
+ the quantifiers and negation are written in prefix form and conjunction,
+ disjunction and implication are written in infix form.
+
+Conjunction and disjunction are right-associative. Quantifiers always need to
+ be enclosed in parenthesis but a series of quantfiers doesn't need parenthesis
+ in between. The binding order is (from strongest to weakest):
+ $\mathtt{\neg,\forall,\exists,\land\lor,\rightarrow}$.
+
+
+For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
+ is parsed as:
+
+ \begin{lstlisting}
+gapt> parseProver9("(all x (P(x,f(x)) -> (exists y P(x,y))))")
+res0: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+ \end{lstlisting}
+
+The Prolog scheme is activated by adding an additional false to the parser:
+
+ \begin{lstlisting}
+gapt> parseProver9("(all X (P(X,f(X)) -> (exists Y P(X,Y))))", false)
+res0: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
+ \end{lstlisting}
+
+
+
 
 \end{appendix}
 
