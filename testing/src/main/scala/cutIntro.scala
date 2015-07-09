@@ -1,3 +1,5 @@
+package at.logic.gapt.testing
+
 import java.io._
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{loadVeriTProof, extractTerms, loadProver9LKProof}
 import at.logic.gapt.examples._
@@ -33,8 +35,6 @@ import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
  * scala> testCutIntro.compressAll(timeout: Int)
  * see compressAll for how to call specific tests
  **********/
-
-val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger")
 
 /*
  * Each log line is a tuple consisting in the following values in this order:
@@ -75,6 +75,11 @@ val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger")
  */
 
 object testCutIntro {
+
+  val CutIntroDataLogger = LoggerFactory.getLogger("CutIntroDataLogger")
+
+  def main(args: Array[String]): Unit =
+    compressAll(60)
 
   def apply() = {
     println("Usage: for example calls please see the implementation of testCutIntro.compressAll()")
@@ -161,7 +166,7 @@ object testCutIntro {
   var termsets = HashMap[String, TermSet]()
 
   def findNonTrivialTSTPExamples ( str : String, timeout : Int ) = {
-    
+
     nonTrivialTermset(str, timeout)
     val file = new File("testing/resultsCutIntro/tstp_non_trivial_termset.csv")
     val summary = new File("testing/resultsCutIntro/tstp_non_trivial_summary.txt")
@@ -208,7 +213,7 @@ object testCutIntro {
     else if (file.getName.endsWith(".out")) {
       total += 1
       try { withTimeout(timeout * 1000) { loadProver9LKProof(file.getAbsolutePath) match {
-        case p: LKProof => try { withTimeout(timeout * 1000) { 
+        case p: LKProof => try { withTimeout(timeout * 1000) {
           val ts = extractTerms(p)
           val tssize = ts.set.size
           val n_functions = ts.formulas.distinct.size
@@ -430,4 +435,9 @@ object testCutIntro {
 */
 
 
+}
+
+
+object findNonTrivialTSTPExamples extends App {
+  testCutIntro.findNonTrivialTSTPExamples("testing/TSTP/prover9", 60)
 }
