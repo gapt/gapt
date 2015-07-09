@@ -240,7 +240,7 @@ object App {
   def apply( f: LambdaExpression, a: LambdaExpression ) = determineTraits.forApp( f, a )
 
   @deprecated( "This constructor has moved to Apps" )
-  def apply( function: LambdaExpression, arguments: List[LambdaExpression] ): LambdaExpression = Apps( function, arguments )
+  def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression = Apps( function, arguments )
 
   def unapply( e: LambdaExpression ) = e match {
     case a: App => Some( ( a.function, a.arg ) )
@@ -248,14 +248,12 @@ object App {
   }
 }
 object Apps {
-  def apply( function: LambdaExpression, arguments: LambdaExpression* ): LambdaExpression =
-    apply( function, arguments toList )
+  def apply( function: LambdaExpression, arguments: LambdaExpression* )( implicit dummyImplicit: DummyImplicit ): LambdaExpression =
+    apply( function, arguments )
 
   // create an n-ary application with left-associative parentheses
-  def apply( function: LambdaExpression, arguments: List[LambdaExpression] ): LambdaExpression = arguments match {
-    case Nil     => function
-    case x :: ls => apply( App( function, x ), ls )
-  }
+  def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression =
+    arguments.foldLeft( function )( App( _, _ ) )
 
   def unapply( e: LambdaExpression ): Some[( LambdaExpression, List[LambdaExpression] )] =
     Some( decompose( e, Nil ) )
@@ -269,10 +267,8 @@ object Apps {
 }
 object Abs {
   def apply( v: Var, t: LambdaExpression ) = determineTraits.forAbs( v, t )
-  def apply( variables: List[Var], expression: LambdaExpression ): LambdaExpression = variables match {
-    case Nil     => expression
-    case x :: ls => Abs( x, apply( ls, expression ) )
-  }
+  def apply( variables: Seq[Var], expression: LambdaExpression ): LambdaExpression =
+    variables.foldRight( expression )( Abs( _, _ ) )
 
   def unapply( e: LambdaExpression ) = e match {
     case a: Abs => Some( ( a.variable, a.term ) )
