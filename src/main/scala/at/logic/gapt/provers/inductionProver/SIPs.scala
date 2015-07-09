@@ -215,59 +215,59 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
     def num( k: Int ) = Utils.numeral( k )
     def gam( k: Int ) = FOLVar( "γ_" + k )
 
-    val baseSub = if (rename)
-       FOLSubstitution( List( alpha -> num( n ), beta -> gam( 0 ) ) )
+    val baseSub = if ( rename )
+      FOLSubstitution( List( alpha -> num( n ), beta -> gam( 0 ) ) )
     else
       FOLSubstitution( alpha, num( n ) )
 
     val inductionBase1 = applySubstitution( proofFromInstances( pi0, ExpSeq0 ), baseSub )._1
     val inductionBase = ContractionMacroRule(
       if ( indFormIsQuantified )
-        ForallRightRule( inductionBase1, baseSub(F(alpha, zero, beta) ), baseSub(Fprime( alpha, zero )), baseSub(beta).asInstanceOf[FOLVar] )
+        ForallRightRule( inductionBase1, baseSub( F( alpha, zero, beta ) ), baseSub( Fprime( alpha, zero ) ), baseSub( beta ).asInstanceOf[FOLVar] )
       else
         inductionBase1 )
 
-      def inductionStep( k: Int ) = {
-        val sub =
-          if (rename)
-            FOLSubstitution( List( alpha -> num( n ), nu -> num( k ), gamma -> gam( k + 1 ) ) )
-          else
-            FOLSubstitution( List( alpha -> num( n ), nu -> num( k ) ) )
+    def inductionStep( k: Int ) = {
+      val sub =
+        if ( rename )
+          FOLSubstitution( List( alpha -> num( n ), nu -> num( k ), gamma -> gam( k + 1 ) ) )
+        else
+          FOLSubstitution( List( alpha -> num( n ), nu -> num( k ) ) )
 
-        val inductionStep1 = applySubstitution( proofFromInstances( pi1, ExpSeq1 ), sub )._1
-        val inductionStep2 =
-          if ( indFormIsQuantified ) {
-            t.foldLeft( inductionStep1 ) {
-              ( acc, ti ) => ForallLeftRule( acc, sub(F(alpha, nu, ti)), sub(All( y, F( alpha, nu, y ) )), sub( ti ) )
-            }
-          } else
-            inductionStep1
-
-        ContractionMacroRule(
-          if ( indFormIsQuantified )
-            ForallRightRule( inductionStep2, sub(F( alpha, snu, gamma )), sub(All( y, F( alpha, snu, y ) )), sub(gamma).asInstanceOf[FOLVar] )
-          else
-            inductionStep2 )
-      }
-
-      val stepsProof = ( inductionBase /: ( 0 until n ) ) { ( acc, i ) =>
-        CutRule( acc, inductionStep( i ), Fprime( num( n ), num( i ) ) )
-      }
-
-      val conclusionSub = FOLSubstitution( alpha, num( n ) )
-
-      val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
-      val conclusion2 = ContractionMacroRule(
+      val inductionStep1 = applySubstitution( proofFromInstances( pi1, ExpSeq1 ), sub )._1
+      val inductionStep2 =
         if ( indFormIsQuantified ) {
-          u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
-            ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
+          t.foldLeft( inductionStep1 ) {
+            ( acc, ti ) => ForallLeftRule( acc, sub( F( alpha, nu, ti ) ), sub( All( y, F( alpha, nu, y ) ) ), sub( ti ) )
           }
         } else
-          conclusion1 )
+          inductionStep1
 
-      val conclusion = applySubstitution( conclusion2, conclusionSub )._1
+      ContractionMacroRule(
+        if ( indFormIsQuantified )
+          ForallRightRule( inductionStep2, sub( F( alpha, snu, gamma ) ), sub( All( y, F( alpha, snu, y ) ) ), sub( gamma ).asInstanceOf[FOLVar] )
+        else
+          inductionStep2 )
+    }
 
-      CutRule( stepsProof, conclusion, Fprime( num( n ), num( n ) ) )
+    val stepsProof = ( inductionBase /: ( 0 until n ) ) { ( acc, i ) =>
+      CutRule( acc, inductionStep( i ), Fprime( num( n ), num( i ) ) )
+    }
+
+    val conclusionSub = FOLSubstitution( alpha, num( n ) )
+
+    val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
+    val conclusion2 = ContractionMacroRule(
+      if ( indFormIsQuantified ) {
+        u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
+          ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
+        }
+      } else
+        conclusion1 )
+
+    val conclusion = applySubstitution( conclusion2, conclusionSub )._1
+
+    CutRule( stepsProof, conclusion, Fprime( num( n ), num( n ) ) )
   }
 
   /**
