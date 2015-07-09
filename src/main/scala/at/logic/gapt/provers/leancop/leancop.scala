@@ -45,7 +45,7 @@ class LeanCoPProver extends Prover with ExternalProgram {
   override val isInstalled: Boolean = ( Seq( "which", "leancop" ) #> new ByteArrayOutputStream ! ) == 0
 
   private def withRenamedConstants( seq: FSequent )( f: FSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
-    val ( renamedSeq, invertRenaming ) = renameConstantsToFi( seq )
+    val ( renamedSeq, _, invertRenaming ) = renameConstantsToFi( seq )
     f( renamedSeq ) map { renamedExpSeq =>
       NameReplacement( renamedExpSeq, invertRenaming )
     }

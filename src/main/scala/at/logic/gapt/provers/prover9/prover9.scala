@@ -21,7 +21,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.sys.process._
 
-class Prover9Prover( val extraCommands: Seq[String] = Seq() ) extends Prover with ExternalProgram {
+class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends Prover with ExternalProgram {
   override def getLKProof( seq: FSequent ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
       getRobinsonProof( seq ) map { robinsonProof =>
@@ -39,15 +39,16 @@ class Prover9Prover( val extraCommands: Seq[String] = Seq() ) extends Prover wit
     getRobinsonProof( cnf.map { case FSequent( ant, suc ) => FClause( ant, suc ) } )
 
   def getRobinsonProof( cnf: List[FClause] ): Option[RobinsonResolutionProof] =
-    withRenamedConstants( cnf ) { cnf =>
-      val p9Input = toP9Input( cnf )
-      withTempFile.fromString( p9Input ) { p9InputFile =>
-        val out = new ByteArrayOutputStream
-        Seq( "prover9", "-f", p9InputFile ) #> out ! match {
-          case 0 => Some( out toString )
-          case 2 => None
-        }
-      } map parseProof
+    withRenamedConstants( cnf ) {
+      case ( renaming, cnf ) =>
+        val p9Input = toP9Input( cnf, renaming )
+        withTempFile.fromString( p9Input ) { p9InputFile =>
+          val out = new ByteArrayOutputStream
+          Seq( "prover9", "-f", p9InputFile ) #> out ! match {
+            case 0 => Some( out toString )
+            case 2 => None
+          }
+        } map parseProof
     }
 
   def parseProof( p9Output: String ) = {
@@ -97,9 +98,9 @@ class Prover9Prover( val extraCommands: Seq[String] = Seq() ) extends Prover wit
     RobinsonToLK( fixedResProof, closure )
   }
 
-  private def withRenamedConstants( cnf: List[FClause] )( f: List[FClause] => Option[RobinsonResolutionProof] ): Option[RobinsonResolutionProof] = {
-    val ( renamedCNF, invertRenaming ) = renameConstantsToFi( cnf )
-    f( renamedCNF ) map { renamedProof =>
+  private def withRenamedConstants( cnf: List[FClause] )( f: ( Map[Const, String], List[FClause] ) => Option[RobinsonResolutionProof] ): Option[RobinsonResolutionProof] = {
+    val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf )
+    f( renaming, renamedCNF ) map { renamedProof =>
       NameReplacement( renamedProof, invertRenaming )
     }
   }
@@ -111,12 +112,12 @@ class Prover9Prover( val extraCommands: Seq[String] = Seq() ) extends Prover wit
     }
   }
 
-  def toP9Input( cnf: List[FClause] ): String = {
+  def toP9Input( cnf: List[FClause], renaming: Map[Const, String] ): String = {
     val commands = ArrayBuffer[String]()
 
     commands += "set(quiet)" // suppresses noisy output on stderr
     commands += "clear(auto_denials)" // prevents prover9 from exiting with error code 2 even though a proof was found
-    commands ++= extraCommands
+    commands ++= extraCommands( renaming )
 
     commands += "formulas(sos)"
     commands ++= cnf map toP9Input
