@@ -85,7 +85,7 @@ object CutIntroduction extends Logger {
    * @throws CutIntroException when the proof is not found.
    */
   def one_cut_one_quantifier( proof: LKProof, verbose: Boolean ) =
-    execute( proof, DeltaTableMethod( false ), 3600, verbose ).get
+    execute( proof, DeltaTableMethod( false ), verbose ).get
   /**
    * Tries to introduce one cut with one quantifier to the proof represented by
    * the ExpansionSequent.
@@ -99,7 +99,7 @@ object CutIntroduction extends Logger {
    * @throws CutIntroException when the proof is not found.
    */
   def one_cut_one_quantifier( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, DeltaTableMethod( false ), -1, 3600, verbose ).get
+    execute( es, hasEquality, DeltaTableMethod( false ), verbose ).get
 
   /**
    * Tries to introduce one cut with as many quantifiers as possible to the LKProof.
@@ -111,7 +111,7 @@ object CutIntroduction extends Logger {
    * @throws CutIntroException when the proof is not found.
    */
   def one_cut_many_quantifiers( proof: LKProof, verbose: Boolean ) =
-    execute( proof, DeltaTableMethod( true ), 3600, verbose ).get
+    execute( proof, DeltaTableMethod( true ), verbose ).get
   /**
    * Tries to introduce one cut with as many quantifiers as possible to the
    * proof represented by the ExpansionSequent.
@@ -125,7 +125,7 @@ object CutIntroduction extends Logger {
    * @throws CutIntroException when the proof is not found.
    */
   def one_cut_many_quantifiers( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, DeltaTableMethod( true ), -1, 3600, verbose ).get
+    execute( es, hasEquality, DeltaTableMethod( true ), verbose ).get
   /**
    * Tries to introduce many cuts with one quantifier each to the LKProof.
    *
@@ -137,7 +137,7 @@ object CutIntroduction extends Logger {
    * @throws CutIntroException when the cut-formulas are not found.
    */
   def many_cuts_one_quantifier( proof: LKProof, numcuts: Int, verbose: Boolean ) =
-    execute( proof, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), 3600, verbose ) getOrElse {
+    execute( proof, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose ) getOrElse {
       throw new CutIntroIncompleteException( "Incomplete method. Proof not computed." )
     }
   /**
@@ -154,15 +154,11 @@ object CutIntroduction extends Logger {
    * @throws CutIntroException when the proof is not found.
    */
   def many_cuts_one_quantifier( es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), -1, 3600, verbose ).get
+    execute( es, hasEquality, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose ).get
 
-  def execute( proof: LKProof, method: GrammarFindingMethod ): LKProof = execute( proof, method, false )
-  def execute( proof: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ): LKProof =
+  def execute( proof: LKProof, method: GrammarFindingMethod ): Option[LKProof] = execute( proof, method, false )
+  def execute( proof: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ): Option[LKProof] =
     execute( proof, hasEquality, method, false )
-  def execute( proof: LKProof, method: GrammarFindingMethod, verbose: Boolean ): LKProof =
-    execute( proof, method, 3600, verbose ).get
-  def execute( proof: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): LKProof =
-    execute( proof, hasEquality, method, -1, 3600, verbose ).get
 
   /*
    * ATTENTION
@@ -197,17 +193,17 @@ object CutIntroduction extends Logger {
     println( "Time for cleaning the structural rules of the final proof: " + ( if ( log._16 == -1 ) "n/a" else log._16 ) );
   }
 
-  // Delta-table methods
-  private def execute( proof: LKProof, method: GrammarFindingMethod, timeout: Int, verbose: Boolean ): Option[LKProof] = {
-
+  def execute( proof: LKProof, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] = {
     val clean_proof = CleanStructuralRules( proof )
-    val num_rules = rulesNumber( clean_proof )
+    metrics.value( "inf_input", rulesNumber( clean_proof ) )
+
     val ep = LKToExpansionProof( clean_proof )
     val hasEquality = containsEqualityReasoning( clean_proof )
-    execute( ep, hasEquality, method, num_rules, timeout, verbose )
+
+    execute( ep, hasEquality, method, verbose )
   }
 
-  private def execute( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, num_lk_rules: Int, timeout: Int, verbose: Boolean ): Option[LKProof] = {
+  def execute( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] = {
 
     val prover = hasEquality match {
       case true  => new EquationalProver()
@@ -215,7 +211,6 @@ object CutIntroduction extends Logger {
     }
 
     metrics.value( "quant_input", quantRulesNumberET( ep ) )
-    metrics.value( "inf_input", num_lk_rules )
 
     val endSequent = toShallow( ep )
     if ( verbose ) println( "\nEnd sequent: " + endSequent )

@@ -119,14 +119,18 @@ object testCutIntro extends App {
    */
   def compressLKProof( proof: Option[LKProof], timeout: Int, method: GrammarFindingMethod ) = {
     metrics.value( "method", method.name )
-    CutIntroduction.execute( proof.get, method )
-    metrics.value( "status", "ok" )
+    CutIntroduction.execute( proof.get, method ) match {
+      case Some( _ ) => metrics.value( "status", "ok" )
+      case None      => metrics.value( "status", "cutintro_uncompressible" )
+    }
   }
 
   def compressExpansionProof( ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: GrammarFindingMethod ) = {
     metrics.value( "method", method.name )
-    CutIntroduction.execute( ep.get, hasEquality, method )
-    metrics.value( "status", "ok" )
+    CutIntroduction.execute( ep.get, hasEquality, method ) match {
+      case Some( _ ) => metrics.value( "status", "ok" )
+      case None      => metrics.value( "status", "cutintro_uncompressible" )
+    }
   }
 
   /************** finding non-trival prover9-TSTP proofs **********************/
