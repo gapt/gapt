@@ -1,10 +1,12 @@
 package at.logic.gapt.testing
 
 import java.io._
+import java.nio.file.{ Paths, Files }
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{ loadVeriTProof, extractTerms, loadProver9LKProof }
 import at.logic.gapt.examples._
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lk.cutIntroduction.{ TermSet, CutIntroduction }
+import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
 import scala.io.Source
 import scala.collection.immutable.HashMap
@@ -12,6 +14,11 @@ import org.slf4j.LoggerFactory
 
 import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
+
+import org.json4s._
+import org.json4s.native._
+import org.json4s.native.JsonMethods._
+import org.json4s.JsonDSL._
 
 /**
  * ********
@@ -38,50 +45,17 @@ import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
  * ********
  */
 
-/*
- * Each log line is a tuple consisting in the following values in this order:
- * 
- * name of the proof or file
- * description of the status of the operation
- * number of rules in the LK proof
- * number of quantifier rules in the LK proof
- * number of rules in the proof with cut
- * number of quantifier rules in the proof with cut
- * size of the term-set extracted
- * size of the minimal grammar found
- * number of minimal grammars
- * size of the canonical solution (logical complexity)
- * size of the minimized solution (logical complexity)
- * time for extracting the term set
- * time for generating the delta-table (when applicable)
- * time for finding the grammar (this includes the the time for generating the delta-table)
- * time for improving the solution
- * time for building the proof
- * time for cleaning the structural rules of the final proof
- * -------------
- * For general information about the logger, see the 'Guidelines'-page of the developer wiki.
- * For using the abover loggers, add (for example) the following to your log4j.xml:
- * 
- * <appender name="CutIntroDataLogFile" class="org.apache.log4j.FileAppender">
- *   <param name="File" value="logs/CutIntroDataLog.txt"/>
- *   <layout class="org.apache.log4j.PatternLayout">
- *     <param name="ConversionPattern" value="%m%n"/>
- *   </layout>
- * </appender>
- *
- * <logger name="CutIntroDataLogger">
- *   <level value="trace"/>
- *   <appender-ref ref="CutIntroDataLogFile"/>
- * </logger>
- *
- */
+object testCutIntro extends App {
 
-object testCutIntro {
+  val resultsOut = new PrintWriter( "result_lines.json" )
 
-  val CutIntroDataLogger = LoggerFactory.getLogger( "CutIntroDataLogger" )
+  compressAll( 60 )
 
-  def main( args: Array[String] ): Unit =
-    compressAll( 60 )
+  resultsOut.close()
+
+  Files.write( Paths.get( "results.json" ),
+    compact( render( JArray(
+      Source.fromFile( "result_lines.json" ).getLines().map( parse( _ ) ).toList ) ) ).getBytes )
 
   def apply() = {
     println( "Usage: for example calls please see the implementation of testCutIntro.compressAll()" )
@@ -105,57 +79,59 @@ object testCutIntro {
     compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, 3 )
   }
 
+  def saveMetrics( f: => Unit ): CollectMetrics = {
+    val collectedMetrics = new CollectMetrics
+    metrics.current.withValue( collectedMetrics ) {
+      metrics.time( "total" )( f )
+    }
+
+    val json = JObject( collectedMetrics.data.mapValues {
+      case l: Long => JInt( l )
+      case l: Int  => JInt( l )
+      case s       => JString( s toString )
+    }.toList )
+    resultsOut.println( compact( render( json ) ) ); resultsOut.flush()
+
+    collectedMetrics
+  }
+
   /*
    * Everything eventually ends up in one of these two methods.
    * All calls to cut-introduction and logging are done exclusively here
    *
    */
-  def compressLKProof( proof: Option[LKProof], timeout: Int, method: Int, name: String, status: String ) = {
+  def compressLKProof( proof: Option[LKProof], timeout: Int, method: Int ) = {
     val method_name = method match {
       case 0 => "one_cut_one_quant"
       case 1 => "one_cut_many_quant"
       case 2 => "many_cuts_one_quant_1"
       case 3 => "many_cuts_one_quant_2"
     }
-    status match {
-      case "ok" =>
-        val ( cut_intro_status, info_tuple ) = method match {
-          case 0 => CutIntroduction.one_cut_one_quantifier_stat( proof.get, timeout )
-          case 1 => CutIntroduction.one_cut_many_quantifiers_stat( proof.get, timeout )
-          case 2 => CutIntroduction.many_cuts_one_quantifier_stat( proof.get, 1, timeout )
-          case 3 => CutIntroduction.many_cuts_one_quantifier_stat( proof.get, 2, timeout )
-        }
-        val log_string = info_tuple.productIterator.foldLeft( "" )( ( acc, i ) => acc + "," + i )
-        CutIntroDataLogger.trace( method_name + "," + name + "," + cut_intro_status + log_string )
-        cut_intro_status.split( "_" ).last
-      case _ =>
-        // Failed already during parsing, logging
-        CutIntroDataLogger.trace( method_name + "," + name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
-        status.split( "_" ).last
+    metrics.value( "method", method_name )
+    val cut_intro_status = method match {
+      case 0 => CutIntroduction.one_cut_one_quantifier_stat( proof.get, timeout )
+      case 1 => CutIntroduction.one_cut_many_quantifiers_stat( proof.get, timeout )
+      case 2 => CutIntroduction.many_cuts_one_quantifier_stat( proof.get, 1, timeout )
+      case 3 => CutIntroduction.many_cuts_one_quantifier_stat( proof.get, 2, timeout )
     }
+    metrics.value( "status", cut_intro_status )
   }
 
-  def compressExpansionProof( ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int, name: String, status: String ) = {
+  def compressExpansionProof( ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int ) = {
     val method_name = method match {
       case 0 => "one_cut_one_quant"
       case 1 => "one_cut_many_quant"
       case 2 => "many_cuts_one_quant_1"
       case 3 => "many_cuts_one_quant_2"
     }
-    status match {
-      case "ok" =>
-        val ( cut_intro_status, info_tuple ) = method match {
-          case 0 => CutIntroduction.one_cut_one_quantifier_stat( ep.get, hasEquality, timeout )
-          case 1 => CutIntroduction.one_cut_many_quantifiers_stat( ep.get, hasEquality, timeout )
-          case 2 => CutIntroduction.many_cuts_one_quantifier_stat( ep.get, 1, hasEquality, timeout )
-          case 3 => CutIntroduction.many_cuts_one_quantifier_stat( ep.get, 2, hasEquality, timeout )
-        }
-        val log_string = info_tuple.productIterator.foldLeft( "" )( ( acc, i ) => acc + "," + i )
-        CutIntroDataLogger.trace( method_name + "," + name + "," + cut_intro_status + log_string )
-      case _ =>
-        // Failed already during parsing, logging
-        CutIntroDataLogger.trace( method_name + "," + name + "," + status + ",-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1" )
+    metrics.value( "method", method_name )
+    val cut_intro_status = method match {
+      case 0 => CutIntroduction.one_cut_one_quantifier_stat( ep.get, hasEquality, timeout )
+      case 1 => CutIntroduction.one_cut_many_quantifiers_stat( ep.get, hasEquality, timeout )
+      case 2 => CutIntroduction.many_cuts_one_quantifier_stat( ep.get, 1, hasEquality, timeout )
+      case 3 => CutIntroduction.many_cuts_one_quantifier_stat( ep.get, 2, hasEquality, timeout )
     }
+    metrics.value( "status", cut_intro_status )
   }
 
   /************** finding non-trival prover9-TSTP proofs **********************/
@@ -248,37 +224,29 @@ object testCutIntro {
     lines.foreach {
       case l =>
         val data = l.split( "," )
-        compressTSTPProof( data( 0 ), timeout, method )
+        saveMetrics { compressTSTPProof( data( 0 ), timeout, method ) }
     }
   }
 
   /// compress the prover9-TSTP proof found in file fn
   def compressTSTPProof( fn: String, timeout: Int, method: Int ) = {
-    var status = "ok"
-
-    val file = new File( fn )
-    if ( file.getName.endsWith( ".out" ) ) {
-      val proof = try {
-        withTimeout( timeout * 1000 ) {
-          val p = loadProver9LKProof( file.getAbsolutePath )
-          Some( p )
+    metrics.value( "file", fn )
+    if ( fn.endsWith( ".out" ) ) {
+      try {
+        val p = withTimeout( timeout * 1000 ) {
+          loadProver9LKProof( fn )
         }
+        compressLKProof( Some( p ), timeout, method )
       } catch {
         case e: TimeOutException =>
-          status = "parsing_timeout"
-          None
+          metrics.value( "status", "parsing_timeout" )
         case e: OutOfMemoryError =>
-          status = "parsing_out_of_memory"
-          None
+          metrics.value( "status", "parsing_out_of_memory" )
         case e: StackOverflowError =>
-          status = "parsing_stack_overflow"
-          None
+          metrics.value( "status", "parsing_stack_overflow" )
         case e: Exception =>
-          status = "parsing_other_exception"
-          None
+          metrics.value( "status", "parsing_other_exception" )
       }
-
-      compressLKProof( proof, timeout, method, fn, status )
     }
   }
 
@@ -286,11 +254,8 @@ object testCutIntro {
 
   // Compress all veriT-proofs found in the directory str and beyond
   def compressVeriT( str: String, timeout: Int, method: Int ) = {
-    val proofs = getVeriTProofs( str )
-    //proofs.par.foreach { case p => 
-    proofs.foreach {
-      case p =>
-        compressVeriTProof( p, timeout, method )
+    getVeriTProofs( str ) foreach { p =>
+      saveMetrics { compressVeriTProof( p, timeout, method ) }
     }
   }
 
@@ -306,111 +271,109 @@ object testCutIntro {
 
   // Compress the veriT-proof in file str
   def compressVeriTProof( str: String, timeout: Int, method: Int ) {
-    var status = "ok"
+    metrics.value( "file", str )
 
-    val expproof = try {
+    try {
       withTimeout( timeout * 1000 ) {
-        val ep = loadVeriTProof( str )
-
-        if ( ep.isEmpty ) {
-          status = "parsing_no_proof_found"
-        }
-
-        ep
+        loadVeriTProof( str )
+      } map { ep =>
+        // VeriT proofs have the equality axioms as formulas in the end-sequent
+        compressExpansionProof( Some( ep ), false, timeout, method )
+      } getOrElse {
+        metrics.value( "status", "parsing_no_proof_found" )
       }
     } catch {
       case e: TimeOutException =>
-        status = "parsing_timeout"
-        None
+        metrics.value( "status", "parsing_timeout" )
       case e: OutOfMemoryError =>
-        status = "parsing_out_of_memory"
-        None
+        metrics.value( "status", "parsing_out_of_memory" )
       case e: StackOverflowError =>
-        status = "parsing_stack_overflow"
-        None
+        metrics.value( "status", "parsing_stack_overflow" )
       case e: Exception =>
-        status = "parsing_other_exception"
-        None
+        metrics.value( "status", "parsing_other_exception" )
     }
-
-    // VeriT proofs have the equality axioms as formulas in the end-sequent
-    compressExpansionProof( expproof, false, timeout, method, str, status )
   }
 
   /***************************** Proof Sequences ******************************/
 
   def compressProofSequences( timeout: Int, method: Int ) = {
 
+    def compress( p: LKProof, pn: String ): String =
+      saveMetrics {
+        metrics.value( "file", pn )
+        compressLKProof( Some( p ), timeout, method )
+      }.data( "status" ).toString
+
     var i = 0
     var status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "LinearExampleProof(" + i + ")"
-      status = compressLKProof( Some( LinearExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( LinearExampleProof( i ), pn )
     }
 
     i = 0
     status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "SquareDiagonalExampleProof(" + i + ")"
-      status = compressLKProof( Some( SquareDiagonalExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( SquareDiagonalExampleProof( i ), pn )
     }
 
     i = 0
     status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "SquareEdgesExampleProof(" + i + ")"
-      status = compressLKProof( Some( SquareEdgesExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( SquareEdgesExampleProof( i ), pn )
     }
 
     i = 0
     status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "SquareEdges2DimExampleProof(" + i + ")"
-      status = compressLKProof( Some( SquareEdges2DimExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( SquareEdges2DimExampleProof( i ), pn )
     }
 
     i = 0
     status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "LinearEqExampleProof(" + i + ")"
-      status = compressLKProof( Some( LinearEqExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( LinearEqExampleProof( i ), pn )
     }
 
     i = 0
     status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "SumOfOnesF2ExampleProof(" + i + ")"
-      status = compressLKProof( Some( SumOfOnesF2ExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( SumOfOnesF2ExampleProof( i ), pn )
     }
 
     i = 0
     status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "SumOfOnesFExampleProof(" + i + ")"
-      status = compressLKProof( Some( SumOfOnesFExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( SumOfOnesFExampleProof( i ), pn )
     }
 
     i = 0
     status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "SumOfOnesExampleProof(" + i + ")"
-      status = compressLKProof( Some( SumOfOnesExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( SumOfOnesExampleProof( i ), pn )
     }
 
     i = 0
     status = ""
-    while ( status != "timeout" ) {
+    while ( !status.endsWith( "timeout" ) ) {
       i = i + 1
       val pn = "UniformAssociativity3ExampleProof(" + i + ")"
-      status = compressLKProof( Some( UniformAssociativity3ExampleProof( i ) ), timeout, method, pn, "ok" )
+      status = compress( UniformAssociativity3ExampleProof( i ), pn )
     }
   }
 
