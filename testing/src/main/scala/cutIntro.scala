@@ -10,42 +10,14 @@ import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
 import scala.io.Source
 import scala.collection.immutable.HashMap
-import org.slf4j.LoggerFactory
 
 import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 
 import org.json4s._
-import org.json4s.native._
 import org.json4s.native.JsonMethods._
-import org.json4s.JsonDSL._
 
 import scala.concurrent.duration._
-
-/**
- * ********
- * test script for the cut-introduction algorithm on output proofs from prover9,
- * veriT and example proof sequences.
- * usage example from CLI:
- *
- * scala> :load testing/testCutIntro.scala
- *
- * scala> testCutIntro.findNonTrivialTSTPExamples( "testing/TSTP/prover9/", 60 )
- *
- * test the tests by
- * scala> testCutIntro.compressTSTP ("testing/resultsCutIntro/tstp_minitest.csv", timeout: Int, method: Int)
- * scala> testCutIntro.compressVeriT ("testing/veriT-SMT-LIB/QF_UF/eq_diamond/", timeout: Int, method: Int)
- * scala> testCutIntro.compressProofSequences (timeout: Int, method: Int)
- * Where method is:
- * 0: introduce one cut with one quantifier
- * 1: introduce one cut with as many quantifiers as possible
- * 2: introduce many cuts with one quantifier each
- *
- * run the tests by
- * scala> testCutIntro.compressAll(timeout: Int)
- * see compressAll for how to call specific tests
- * ********
- */
 
 object testCutIntro extends App {
 
@@ -58,10 +30,6 @@ object testCutIntro extends App {
   Files.write( Paths.get( "results.json" ),
     compact( render( JArray(
       Source.fromFile( "result_lines.json" ).getLines().map( parse( _ ) ).toList ) ) ).getBytes )
-
-  def apply() = {
-    println( "Usage: for example calls please see the implementation of testCutIntro.compressAll()" )
-  }
 
   def compressAll( timeout: Int ) {
     compressAll( DeltaTableMethod( false ), timeout )
@@ -110,58 +78,47 @@ object testCutIntro extends App {
     collectedMetrics
   }
 
-  /*
-   * Everything eventually ends up in one of these two methods.
-   * All calls to cut-introduction and logging are done exclusively here
-   *
-   */
-  def compressLKProof( proof: Option[LKProof], timeout: Int, method: GrammarFindingMethod ) = {
+  def compressLKProof( proof: LKProof, timeout: Int, method: GrammarFindingMethod ) = {
     metrics.value( "method", method.name )
-    CutIntroduction.execute( proof.get, method ) match {
+    CutIntroduction.execute( proof, method ) match {
       case Some( _ ) => metrics.value( "status", "ok" )
       case None      => metrics.value( "status", "cutintro_uncompressible" )
     }
   }
 
-  def compressExpansionProof( ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: GrammarFindingMethod ) = {
+  def compressExpansionProof( ep: ExpansionSequent, hasEquality: Boolean, timeout: Int, method: GrammarFindingMethod ) = {
     metrics.value( "method", method.name )
-    CutIntroduction.execute( ep.get, hasEquality, method ) match {
+    CutIntroduction.execute( ep, hasEquality, method ) match {
       case Some( _ ) => metrics.value( "status", "ok" )
       case None      => metrics.value( "status", "cutintro_uncompressible" )
     }
   }
 
-  /************** finding non-trival prover9-TSTP proofs **********************/
   // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
   def compressTSTP( str: String, timeout: Int, method: GrammarFindingMethod ) = {
 
     // Process each file in parallel
-    val lines = Source.fromFile( str ).getLines().toList
-    //lines.par.foreach { case l =>
-    lines.foreach {
-      case l =>
-        val data = l.split( "," )
-        saveMetrics( timeout ) { compressTSTPProof( data( 0 ), timeout, method ) }
+    Source.fromFile( str ).getLines() foreach { l =>
+      val data = l.split( "," )
+      saveMetrics( timeout ) { compressTSTPProof( data( 0 ), timeout, method ) }
     }
   }
 
   /// compress the prover9-TSTP proof found in file fn
   def compressTSTPProof( fn: String, timeout: Int, method: GrammarFindingMethod ) = {
     metrics.value( "file", fn )
-    if ( fn.endsWith( ".out" ) ) {
-      try {
-        val p = loadProver9LKProof( fn )
-        compressLKProof( Some( p ), timeout, method )
-      } catch {
-        case e: TimeOutException =>
-          metrics.value( "status", "parsing_timeout" )
-        case e: OutOfMemoryError =>
-          metrics.value( "status", "parsing_out_of_memory" )
-        case e: StackOverflowError =>
-          metrics.value( "status", "parsing_stack_overflow" )
-        case e: Exception =>
-          metrics.value( "status", "parsing_other_exception" )
-      }
+    try {
+      val p = loadProver9LKProof( fn )
+      compressLKProof( p, timeout, method )
+    } catch {
+      case e: TimeOutException =>
+        metrics.value( "status", "parsing_timeout" )
+      case e: OutOfMemoryError =>
+        metrics.value( "status", "parsing_out_of_memory" )
+      case e: StackOverflowError =>
+        metrics.value( "status", "parsing_stack_overflow" )
+      case e: Exception =>
+        metrics.value( "status", "parsing_other_exception" )
     }
   }
 
@@ -191,7 +148,7 @@ object testCutIntro extends App {
     try {
       loadVeriTProof( str ) map { ep =>
         // VeriT proofs have the equality axioms as formulas in the end-sequent
-        compressExpansionProof( Some( ep ), false, timeout, method )
+        compressExpansionProof( ep, false, timeout, method )
       } getOrElse {
         metrics.value( "status", "parsing_no_proof_found" )
       }
@@ -211,116 +168,30 @@ object testCutIntro extends App {
 
   def compressProofSequences( timeout: Int, method: GrammarFindingMethod ) = {
 
-    def compress( p: LKProof, pn: String ): String =
-      saveMetrics( timeout ) {
-        metrics.value( "file", pn )
-        compressLKProof( Some( p ), timeout, method )
-      }.data( "status" ).toString
-
-    var i = 0
-    var status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "LinearExampleProof(" + i + ")"
-      status = compress( LinearExampleProof( i ), pn )
+    def run( name: Int => String, p: Int => LKProof ) = {
+      var i = 0
+      var status = ""
+      while ( !status.endsWith( "timeout" ) ) {
+        i = i + 1
+        val pn = name( i )
+        status = saveMetrics( timeout ) {
+          metrics.value( "file", pn )
+          compressLKProof( p( i ), timeout, method )
+        }.data( "status" ).toString
+      }
     }
 
-    i = 0
-    status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "SquareDiagonalExampleProof(" + i + ")"
-      status = compress( SquareDiagonalExampleProof( i ), pn )
-    }
-
-    i = 0
-    status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "SquareEdgesExampleProof(" + i + ")"
-      status = compress( SquareEdgesExampleProof( i ), pn )
-    }
-
-    i = 0
-    status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "SquareEdges2DimExampleProof(" + i + ")"
-      status = compress( SquareEdges2DimExampleProof( i ), pn )
-    }
-
-    i = 0
-    status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "LinearEqExampleProof(" + i + ")"
-      status = compress( LinearEqExampleProof( i ), pn )
-    }
-
-    i = 0
-    status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "SumOfOnesF2ExampleProof(" + i + ")"
-      status = compress( SumOfOnesF2ExampleProof( i ), pn )
-    }
-
-    i = 0
-    status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "SumOfOnesFExampleProof(" + i + ")"
-      status = compress( SumOfOnesFExampleProof( i ), pn )
-    }
-
-    i = 0
-    status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "SumOfOnesExampleProof(" + i + ")"
-      status = compress( SumOfOnesExampleProof( i ), pn )
-    }
-
-    i = 0
-    status = ""
-    while ( !status.endsWith( "timeout" ) ) {
-      i = i + 1
-      val pn = "UniformAssociativity3ExampleProof(" + i + ")"
-      status = compress( UniformAssociativity3ExampleProof( i ), pn )
-    }
+    run( i => s"LinearExampleProof($i)", LinearExampleProof( _ ) )
+    run( i => s"SquareDiagonalExampleProof($i)", SquareDiagonalExampleProof( _ ) )
+    run( i => s"SquareEdgesExampleProof($i)", SquareEdgesExampleProof( _ ) )
+    run( i => s"SquareEdges2DimExampleProof($i)", SquareEdges2DimExampleProof( _ ) )
+    run( i => s"LinearEqExampleProof($i)", LinearEqExampleProof( _ ) )
+    run( i => s"SumOfOnesF2ExampleProof($i)", SumOfOnesF2ExampleProof( _ ) )
+    run( i => s"SumOfOnesFExampleProof($i)", SumOfOnesFExampleProof( _ ) )
+    run( i => s"SumOfOnesExampleProof($i)", SumOfOnesExampleProof( _ ) )
+    run( i => s"UniformAssociativity3ExampleProof($i)", UniformAssociativity3ExampleProof( _ ) )
+    run( i => s"FactorialFunctionEqualityExampleProof($i)", FactorialFunctionEqualityExampleProof( _ ) )
   }
-
-  /*
-  def compressLKProof( name: String, p: LKProof, timeout: Int, moduloEq: Boolean, useForgetfulPara: Boolean ) = {
-    val r = if ( moduloEq )
-      compressExpansionProof( removeEqAxioms( extractExpansionTrees( p )), new EquationalProver(), timeout, useForgetfulPara )
-    else
-      compressExpansionProof( extractExpansionTrees( p ), new DefaultProver(), timeout, false )
-
-    val status = r._1
-    val cutintro_logline = r._2
-
-    CutIntroDataLogger.trace( name + ",n/a," + status + ",n/a," + rulesNumber( p ) + "," + quantRulesNumber( p ) + cutintro_logline ) // log all, computing #infqf, #qinfcf
-  }
-
-  def removeEqAxioms( eseq: ExpansionSequent ) = {
-   // removes all equality axioms that appear in examples/ProofSequences.scala
-   val R = parse.fol( "Forall x =(x,x)" )
-   val S = parse.fol( "Forall x Forall y Imp =(x,y) =(y,x)" )
-   val T = parse.fol( "Forall x Forall y Forall z Imp And =(x,y) =(y,z) =(x,z)" )
-   val Tprime = parse.fol( "Forall x Forall y Forall z Imp =(x,y) Imp =(y,z) =(x,z)" )
-   val CSuc = parse.fol( "Forall x Forall y Imp =(x,y) =(s(x),s(y))" )
-   val CPlus = parse.fol( "Forall x Forall y Forall u Forall v Imp =(x,y) Imp =(u,v) =(+(x,u),+(y,v))" )
-   val CPlusL = parse.fol( "Forall x Forall y Forall z Imp =(y,z) =(+(y,x),+(z,x))" ) // congruence plus left
-   val CgR = parse.fol( "Forall x Forall y Forall z Imp =(y,z) =(g(x,y),g(x,z))" ) // congruence of g on the right
-   val CMultR = parse.fol( "Forall x Forall y Forall z Imp =(x,y) =(*(z,x),*(z,y))" ) // congruence of mult right
-
-   val eqaxioms = new FSequent( R::S::T::Tprime::CSuc::CPlus::CPlusL::CgR::CMultR::Nil, Nil )
-
-   removeFromExpansionSequent( eseq, eqaxioms )
-  }
-*/
-
 }
 
 object findNonTrivialTSTPExamples extends App {
