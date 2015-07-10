@@ -5,7 +5,7 @@ import java.nio.file.{ Paths, Files }
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{ loadVeriTProof, extractTerms, loadProver9LKProof }
 import at.logic.gapt.examples._
 import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
-import at.logic.gapt.proofs.lk.cutIntroduction.{ CutIntroUncompressibleException, CutIntroEHSUnprovableException, TermSet, CutIntroduction }
+import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
 import scala.io.Source
@@ -63,22 +63,18 @@ object testCutIntro extends App {
     println( "Usage: for example calls please see the implementation of testCutIntro.compressAll()" )
   }
 
-  def compressAll( timeout: Int ) = {
+  def compressAll( timeout: Int ) {
+    compressAll( DeltaTableMethod( false ), timeout )
+    compressAll( DeltaTableMethod( true ), timeout )
+    compressAll( MaxSATMethod( 1 ), timeout )
+    compressAll( MaxSATMethod( 2 ), timeout )
+    compressAll( MaxSATMethod( 2, 2 ), timeout )
+  }
 
-    compressProofSequences( timeout, 0 )
-    compressProofSequences( timeout, 1 )
-    compressProofSequences( timeout, 2 )
-    compressProofSequences( timeout, 3 )
-
-    compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 0 )
-    compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 1 )
-    compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 2 )
-    compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, 3 )
-
-    compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, 0 )
-    compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, 1 )
-    compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, 2 )
-    compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, 3 )
+  def compressAll( method: GrammarFindingMethod, timeout: Int ) = {
+    compressProofSequences( timeout, method )
+    compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, method )
+    compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, method )
   }
 
   def saveMetrics( timeout: Int )( f: => Unit ): CollectMetrics = {
@@ -121,37 +117,15 @@ object testCutIntro extends App {
    * All calls to cut-introduction and logging are done exclusively here
    *
    */
-  def compressLKProof( proof: Option[LKProof], timeout: Int, method: Int ) = {
-    val method_name = method match {
-      case 0 => "one_cut_one_quant"
-      case 1 => "one_cut_many_quant"
-      case 2 => "many_cuts_one_quant_1"
-      case 3 => "many_cuts_one_quant_2"
-    }
-    metrics.value( "method", method_name )
-    ( method match {
-      case 0 => CutIntroduction.one_cut_one_quantifier_stat( proof.get, timeout )
-      case 1 => CutIntroduction.one_cut_many_quantifiers_stat( proof.get, timeout )
-      case 2 => CutIntroduction.many_cuts_one_quantifier_stat( proof.get, 1, timeout )
-      case 3 => CutIntroduction.many_cuts_one_quantifier_stat( proof.get, 2, timeout )
-    } ).get
+  def compressLKProof( proof: Option[LKProof], timeout: Int, method: GrammarFindingMethod ) = {
+    metrics.value( "method", method.name )
+    CutIntroduction.execute( proof.get, method )
     metrics.value( "status", "ok" )
   }
 
-  def compressExpansionProof( ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int ) = {
-    val method_name = method match {
-      case 0 => "one_cut_one_quant"
-      case 1 => "one_cut_many_quant"
-      case 2 => "many_cuts_one_quant_1"
-      case 3 => "many_cuts_one_quant_2"
-    }
-    metrics.value( "method", method_name )
-    ( method match {
-      case 0 => CutIntroduction.one_cut_one_quantifier_stat( ep.get, hasEquality, timeout )
-      case 1 => CutIntroduction.one_cut_many_quantifiers_stat( ep.get, hasEquality, timeout )
-      case 2 => CutIntroduction.many_cuts_one_quantifier_stat( ep.get, 1, hasEquality, timeout )
-      case 3 => CutIntroduction.many_cuts_one_quantifier_stat( ep.get, 2, hasEquality, timeout )
-    } ).get
+  def compressExpansionProof( ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: GrammarFindingMethod ) = {
+    metrics.value( "method", method.name )
+    CutIntroduction.execute( ep.get, hasEquality, method )
     metrics.value( "status", "ok" )
   }
 
@@ -237,7 +211,7 @@ object testCutIntro extends App {
   }
 
   // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
-  def compressTSTP( str: String, timeout: Int, method: Int ) = {
+  def compressTSTP( str: String, timeout: Int, method: GrammarFindingMethod ) = {
 
     // Process each file in parallel
     val lines = Source.fromFile( str ).getLines().toList
@@ -250,7 +224,7 @@ object testCutIntro extends App {
   }
 
   /// compress the prover9-TSTP proof found in file fn
-  def compressTSTPProof( fn: String, timeout: Int, method: Int ) = {
+  def compressTSTPProof( fn: String, timeout: Int, method: GrammarFindingMethod ) = {
     metrics.value( "file", fn )
     if ( fn.endsWith( ".out" ) ) {
       try {
@@ -272,7 +246,7 @@ object testCutIntro extends App {
   /****************************** VeriT SMT-LIB ******************************/
 
   // Compress all veriT-proofs found in the directory str and beyond
-  def compressVeriT( str: String, timeout: Int, method: Int ) = {
+  def compressVeriT( str: String, timeout: Int, method: GrammarFindingMethod ) = {
     getVeriTProofs( str ) foreach { p =>
       saveMetrics( timeout ) { compressVeriTProof( p, timeout, method ) }
     }
@@ -289,7 +263,7 @@ object testCutIntro extends App {
   }
 
   // Compress the veriT-proof in file str
-  def compressVeriTProof( str: String, timeout: Int, method: Int ) {
+  def compressVeriTProof( str: String, timeout: Int, method: GrammarFindingMethod ) {
     metrics.value( "file", str )
 
     try {
@@ -313,7 +287,7 @@ object testCutIntro extends App {
 
   /***************************** Proof Sequences ******************************/
 
-  def compressProofSequences( timeout: Int, method: Int ) = {
+  def compressProofSequences( timeout: Int, method: GrammarFindingMethod ) = {
 
     def compress( p: LKProof, pn: String ): String =
       saveMetrics( timeout ) {
