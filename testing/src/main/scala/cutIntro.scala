@@ -4,8 +4,8 @@ import java.io._
 import java.nio.file.{ Paths, Files }
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{ loadVeriTProof, extractTerms, loadProver9LKProof }
 import at.logic.gapt.examples._
-import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.lk.cutIntroduction.{ TermSet, CutIntroduction }
+import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
+import at.logic.gapt.proofs.lk.cutIntroduction.{ CutIntroUncompressibleException, CutIntroEHSUnprovableException, TermSet, CutIntroduction }
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
 import scala.io.Source
@@ -19,6 +19,8 @@ import org.json4s._
 import org.json4s.native._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
+
+import scala.concurrent.duration._
 
 /**
  * ********
@@ -79,10 +81,29 @@ object testCutIntro extends App {
     compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, 3 )
   }
 
-  def saveMetrics( f: => Unit ): CollectMetrics = {
+  def saveMetrics( timeout: Int )( f: => Unit ): CollectMetrics = {
     val collectedMetrics = new CollectMetrics
     metrics.current.withValue( collectedMetrics ) {
-      metrics.time( "total" )( f )
+      try {
+        withTimeout( timeout seconds ) {
+          metrics.time( "total" )( f )
+        }
+      } catch {
+        case e: TimeOutException =>
+          metrics.value( "status", collectedMetrics.currentPhase + "_timeout" )
+        case e: OutOfMemoryError =>
+          metrics.value( "status", "cutintro_out_of_memory" )
+        case e: StackOverflowError =>
+          metrics.value( "status", "cutintro_stack_overflow" )
+        case e: CutIntroUncompressibleException =>
+          metrics.value( "status", "cutintro_uncompressible" )
+        case e: CutIntroEHSUnprovableException =>
+          metrics.value( "status", "cutintro_ehs_unprovable" )
+        case e: LKRuleCreationException =>
+          metrics.value( "status", "lk_rule_creation_exception" )
+        case e: Throwable =>
+          metrics.value( "status", "cutintro_other_exception" )
+      }
     }
 
     val json = JObject( collectedMetrics.data.mapValues {
@@ -108,13 +129,13 @@ object testCutIntro extends App {
       case 3 => "many_cuts_one_quant_2"
     }
     metrics.value( "method", method_name )
-    val cut_intro_status = method match {
+    ( method match {
       case 0 => CutIntroduction.one_cut_one_quantifier_stat( proof.get, timeout )
       case 1 => CutIntroduction.one_cut_many_quantifiers_stat( proof.get, timeout )
       case 2 => CutIntroduction.many_cuts_one_quantifier_stat( proof.get, 1, timeout )
       case 3 => CutIntroduction.many_cuts_one_quantifier_stat( proof.get, 2, timeout )
-    }
-    metrics.value( "status", cut_intro_status )
+    } ).get
+    metrics.value( "status", "ok" )
   }
 
   def compressExpansionProof( ep: Option[ExpansionSequent], hasEquality: Boolean, timeout: Int, method: Int ) = {
@@ -125,13 +146,13 @@ object testCutIntro extends App {
       case 3 => "many_cuts_one_quant_2"
     }
     metrics.value( "method", method_name )
-    val cut_intro_status = method match {
+    ( method match {
       case 0 => CutIntroduction.one_cut_one_quantifier_stat( ep.get, hasEquality, timeout )
       case 1 => CutIntroduction.one_cut_many_quantifiers_stat( ep.get, hasEquality, timeout )
       case 2 => CutIntroduction.many_cuts_one_quantifier_stat( ep.get, 1, hasEquality, timeout )
       case 3 => CutIntroduction.many_cuts_one_quantifier_stat( ep.get, 2, hasEquality, timeout )
-    }
-    metrics.value( "status", cut_intro_status )
+    } ).get
+    metrics.value( "status", "ok" )
   }
 
   /************** finding non-trival prover9-TSTP proofs **********************/
@@ -224,7 +245,7 @@ object testCutIntro extends App {
     lines.foreach {
       case l =>
         val data = l.split( "," )
-        saveMetrics { compressTSTPProof( data( 0 ), timeout, method ) }
+        saveMetrics( timeout ) { compressTSTPProof( data( 0 ), timeout, method ) }
     }
   }
 
@@ -233,9 +254,7 @@ object testCutIntro extends App {
     metrics.value( "file", fn )
     if ( fn.endsWith( ".out" ) ) {
       try {
-        val p = withTimeout( timeout * 1000 ) {
-          loadProver9LKProof( fn )
-        }
+        val p = loadProver9LKProof( fn )
         compressLKProof( Some( p ), timeout, method )
       } catch {
         case e: TimeOutException =>
@@ -255,7 +274,7 @@ object testCutIntro extends App {
   // Compress all veriT-proofs found in the directory str and beyond
   def compressVeriT( str: String, timeout: Int, method: Int ) = {
     getVeriTProofs( str ) foreach { p =>
-      saveMetrics { compressVeriTProof( p, timeout, method ) }
+      saveMetrics( timeout ) { compressVeriTProof( p, timeout, method ) }
     }
   }
 
@@ -274,9 +293,7 @@ object testCutIntro extends App {
     metrics.value( "file", str )
 
     try {
-      withTimeout( timeout * 1000 ) {
-        loadVeriTProof( str )
-      } map { ep =>
+      loadVeriTProof( str ) map { ep =>
         // VeriT proofs have the equality axioms as formulas in the end-sequent
         compressExpansionProof( Some( ep ), false, timeout, method )
       } getOrElse {
@@ -299,7 +316,7 @@ object testCutIntro extends App {
   def compressProofSequences( timeout: Int, method: Int ) = {
 
     def compress( p: LKProof, pn: String ): String =
-      saveMetrics {
+      saveMetrics( timeout ) {
         metrics.value( "file", pn )
         compressLKProof( Some( p ), timeout, method )
       }.data( "status" ).toString
