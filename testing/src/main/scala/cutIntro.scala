@@ -91,8 +91,6 @@ object testCutIntro extends App {
           metrics.value( "status", "cutintro_out_of_memory" )
         case e: StackOverflowError =>
           metrics.value( "status", "cutintro_stack_overflow" )
-        case e: CutIntroUncompressibleException =>
-          metrics.value( "status", "cutintro_uncompressible" )
         case e: CutIntroEHSUnprovableException =>
           metrics.value( "status", "cutintro_ehs_unprovable" )
         case e: LKRuleCreationException =>

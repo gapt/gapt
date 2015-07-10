@@ -34,20 +34,13 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     new VeriTProver().isValid( deep ) !-- "verit validity"
 
-    val q_opt = {
-      try {
-        if ( isFOLPrenexSigma1( p.root.toFSequent ) )
-          Some( CutIntroduction.one_cut_many_quantifiers( p, false ) )
-        else
-          None
-      } catch {
-        // do not count uncompressibility as failure of test
-        case e: CutIntroUncompressibleException => None
-      }
-    } --- "cut-introduction"
+    if ( isFOLPrenexSigma1( p.root.toFSequent ) ) {
+      val qOption = CutIntroduction.one_cut_many_quantifiers( p, false ) --- "cut-introduction"
 
-    if ( q_opt.isDefined && !containsEqualityReasoning( q_opt.get ) ) {
-      ReductiveCutElim( q_opt.get ) --? "cut-elim (cut-intro)"
+      qOption foreach { q =>
+        if ( !containsEqualityReasoning( q ) )
+          ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
+      }
     }
   }
 }

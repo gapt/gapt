@@ -22,8 +22,6 @@ import at.logic.gapt.utils.logging.{ CollectMetrics, metrics, Logger }
 import scala.collection.immutable.HashSet
 
 class CutIntroException( msg: String ) extends Exception( msg )
-class CutIntroIncompleteException( msg: String ) extends Exception( msg )
-class CutIntroUncompressibleException( msg: String ) extends CutIntroException( msg )
 
 trait GrammarFindingMethod {
   def findGrammars( lang: Set[FOLTerm] ): Seq[VectTratGrammar]
@@ -82,10 +80,9 @@ object CutIntroduction extends Logger {
    * @param verbose Whether information about the cut-introduction process
    *        should be printed on screen.
    * @return A proof with one quantified cut.
-   * @throws CutIntroException when the proof is not found.
    */
   def one_cut_one_quantifier( proof: LKProof, verbose: Boolean ) =
-    execute( proof, DeltaTableMethod( false ), verbose ).get
+    execute( proof, DeltaTableMethod( false ), verbose )
   /**
    * Tries to introduce one cut with one quantifier to the proof represented by
    * the ExpansionSequent.
@@ -96,10 +93,9 @@ object CutIntroduction extends Logger {
    * @param verbose Whether information about the cut-introduction process
    *        should be printed on screen.
    * @return A proof with one quantified cut.
-   * @throws CutIntroException when the proof is not found.
    */
   def one_cut_one_quantifier( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, DeltaTableMethod( false ), verbose ).get
+    execute( es, hasEquality, DeltaTableMethod( false ), verbose )
 
   /**
    * Tries to introduce one cut with as many quantifiers as possible to the LKProof.
@@ -108,10 +104,9 @@ object CutIntroduction extends Logger {
    * @param verbose Whether information about the cut-introduction process
    *        should be printed on screen.
    * @return A proof with one quantified cut.
-   * @throws CutIntroException when the proof is not found.
    */
   def one_cut_many_quantifiers( proof: LKProof, verbose: Boolean ) =
-    execute( proof, DeltaTableMethod( true ), verbose ).get
+    execute( proof, DeltaTableMethod( true ), verbose )
   /**
    * Tries to introduce one cut with as many quantifiers as possible to the
    * proof represented by the ExpansionSequent.
@@ -122,10 +117,9 @@ object CutIntroduction extends Logger {
    * @param verbose Whether information about the cut-introduction process
    *        should be printed on screen.
    * @return A proof with one quantified cut.
-   * @throws CutIntroException when the proof is not found.
    */
   def one_cut_many_quantifiers( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, DeltaTableMethod( true ), verbose ).get
+    execute( es, hasEquality, DeltaTableMethod( true ), verbose )
   /**
    * Tries to introduce many cuts with one quantifier each to the LKProof.
    *
@@ -134,12 +128,9 @@ object CutIntroduction extends Logger {
    * @param verbose Whether information about the cut-introduction process
    *        should be printed on screen.
    * @return A list of cut-formulas.
-   * @throws CutIntroException when the cut-formulas are not found.
    */
   def many_cuts_one_quantifier( proof: LKProof, numcuts: Int, verbose: Boolean ) =
-    execute( proof, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose ) getOrElse {
-      throw new CutIntroIncompleteException( "Incomplete method. Proof not computed." )
-    }
+    execute( proof, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose )
   /**
    * Tries to introduce many cuts with one quantifier each to the proof
    * represented by the ExpansionSequent.
@@ -151,10 +142,9 @@ object CutIntroduction extends Logger {
    * @param verbose Whether information about the cut-introduction process
    *        should be printed on screen.
    * @return A list of cut-formulas.
-   * @throws CutIntroException when the proof is not found.
    */
   def many_cuts_one_quantifier( es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, verbose: Boolean ) =
-    execute( es, hasEquality, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose ).get
+    execute( es, hasEquality, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose )
 
   def execute( proof: LKProof, method: GrammarFindingMethod ): Option[LKProof] = execute( proof, method, false )
   def execute( proof: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ): Option[LKProof] =
@@ -228,56 +218,59 @@ object CutIntroduction extends Logger {
     }
 
     if ( smallestGrammars.isEmpty ) {
-      throw new CutIntroUncompressibleException( "No grammars found." +
-        " The proof cannot be compressed using one cut." )
-    }
+      None
+    } else {
+      /** ******** Proof Construction **********/
+      metrics.value( "mingrammar", smallestGrammars.head.size )
+      metrics.value( "num_mingram", smallestGrammars.size )
+      if ( verbose ) println( "Smallest grammar-size: " + smallestGrammars.head.size )
+      if ( verbose ) println( "Number of smallest grammars: " + smallestGrammars.length )
 
-    /********** Proof Construction **********/
-    metrics.value( "mingrammar", smallestGrammars.head.size )
-    metrics.value( "num_mingram", smallestGrammars.size )
-    if ( verbose ) println( "Smallest grammar-size: " + smallestGrammars.head.size )
-    if ( verbose ) println( "Number of smallest grammars: " + smallestGrammars.length )
+      val proofs = smallestGrammars.map { grammar =>
+        val ( cutFormulas, ehs1 ) = metrics.time( "sol" ) {
+          val cutFormulas = computeCanonicalSolutions( grammar )
 
-    val proofs = smallestGrammars.map { grammar =>
-      val ( cutFormulas, ehs1 ) = metrics.time( "sol" ) {
-        val cutFormulas = computeCanonicalSolutions( grammar )
+          val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
+          val ehs1 =
+            if ( hasEquality && cutFormulas.size == 1 )
+              MinimizeSolution.applyEq( ehs, prover )
+            else if ( !hasEquality && cutFormulas.size == 1 )
+              MinimizeSolution.apply( ehs, prover )
+            else
+              ehs // TODO: minimize solution for multiple cuts
 
-        val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
-        val ehs1 =
-          if ( hasEquality && cutFormulas.size == 1 )
-            MinimizeSolution.applyEq( ehs, prover )
-          else if ( !hasEquality && cutFormulas.size == 1 )
-            MinimizeSolution.apply( ehs, prover )
-          else
-            ehs // TODO: minimize solution for multiple cuts
+          ( cutFormulas, ehs1 )
+        }
 
-        ( cutFormulas, ehs1 )
+        val proof = metrics.time( "prcons" ) {
+          buildProofWithCut( ehs1, prover )
+        }
+
+        val pruned_proof = metrics.time( "cleanproof" ) {
+          CleanStructuralRules( proof.get )
+        }
+
+        ( pruned_proof, ehs1, lcomp( cutFormulas.head ), lcomp( ehs1.cutFormulas.head ) )
       }
 
-      val proof = metrics.time( "prcons" ) { buildProofWithCut( ehs1, prover ) }
+      // Sort the list by size of proofs
+      val sorted = proofs.sortWith( ( p1, p2 ) => rulesNumber( p1._1 ) < rulesNumber( p2._1 ) )
+      val smallestProof = sorted.head._1
+      val ehs = sorted.head._2
 
-      val pruned_proof = metrics.time( "cleanproof" ) { CleanStructuralRules( proof.get ) }
+      metrics.value( "cuts_in", getStatistics( smallestProof ).cuts )
+      metrics.value( "can_sol", sorted.head._3 )
+      metrics.value( "min_sol", sorted.head._4 )
+      metrics.value( "inf_output", rulesNumber( smallestProof ) )
+      metrics.value( "quant_output", quantRulesNumber( smallestProof ) )
+      if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas.head + "\n" )
 
-      ( pruned_proof, ehs1, lcomp( cutFormulas.head ), lcomp( ehs1.cutFormulas.head ) )
+      if ( verbose ) {
+        //      print_log_tuple( tuple );
+      }
+
+      Some( smallestProof )
     }
-
-    // Sort the list by size of proofs
-    val sorted = proofs.sortWith( ( p1, p2 ) => rulesNumber( p1._1 ) < rulesNumber( p2._1 ) )
-    val smallestProof = sorted.head._1
-    val ehs = sorted.head._2
-
-    metrics.value( "cuts_in", getStatistics( smallestProof ).cuts )
-    metrics.value( "can_sol", sorted.head._3 )
-    metrics.value( "min_sol", sorted.head._4 )
-    metrics.value( "inf_output", rulesNumber( smallestProof ) )
-    metrics.value( "quant_output", quantRulesNumber( smallestProof ) )
-    if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas.head + "\n" )
-
-    if ( verbose ) {
-      //      print_log_tuple( tuple );
-    }
-
-    Some( smallestProof )
   }
 
   /**
