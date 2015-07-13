@@ -1,5 +1,6 @@
 package at.logic.gapt.testing
 
+import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
 import java.nio.file.{ Paths, Files }
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{ loadVeriTProof, extractTerms, loadProver9LKProof }
@@ -30,8 +31,8 @@ object testCutIntro extends App {
   Files.write(
     Paths.get( "results.json" ),
     compact( render( JArray(
-    Source.fromFile( "result_lines.json" ).getLines().map( parse( _ ) ).toList
-  ) ) ).getBytes
+      Source.fromFile( "result_lines.json" ).getLines().map( parse( _ ) ).toList
+    ) ) ).getBytes
   )
 
   def compressAll( timeout: Int ) {
@@ -43,6 +44,7 @@ object testCutIntro extends App {
   }
 
   def compressAll( method: GrammarFindingMethod, timeout: Int ) = {
+    compressLeanCoP( timeout, method )
     compressProofSequences( timeout, method )
     compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, method )
     compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, method )
@@ -152,6 +154,36 @@ object testCutIntro extends App {
       loadVeriTProof( str ) map { ep =>
         // VeriT proofs have the equality axioms as formulas in the end-sequent
         compressExpansionProof( ep, false, timeout, method )
+      } getOrElse {
+        metrics.value( "status", "parsing_no_proof_found" )
+      }
+    } catch {
+      case e: TimeOutException =>
+        metrics.value( "status", "parsing_timeout" )
+      case e: OutOfMemoryError =>
+        metrics.value( "status", "parsing_out_of_memory" )
+      case e: StackOverflowError =>
+        metrics.value( "status", "parsing_stack_overflow" )
+      case e: Exception =>
+        metrics.value( "status", "parsing_other_exception" )
+    }
+  }
+
+  // leancop
+
+  def compressLeanCoP( timeout: Int, method: GrammarFindingMethod ) = {
+    recursiveListFiles( "testing/TSTP/leanCoP" ) foreach { f =>
+      if ( f.getName endsWith ".out" ) {
+        compressLeanCoPProof( f.getAbsolutePath, timeout, method )
+      }
+    }
+  }
+
+  def compressLeanCoPProof( fn: String, timeout: Int, method: GrammarFindingMethod ) = saveMetrics( timeout ) {
+    metrics.value( "file", fn )
+    try {
+      LeanCoPParser.getExpansionProof( fn ) map { proof =>
+        compressExpansionProof( proof, true, timeout, method )
       } getOrElse {
         metrics.value( "status", "parsing_no_proof_found" )
       }
