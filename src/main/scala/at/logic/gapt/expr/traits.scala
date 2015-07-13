@@ -101,8 +101,8 @@ private[expr] object determineTraits {
       case _                         => new App_with_HOLFormula( f, a )
     }
     case _ => f.exptype match {
-      case ->( _, To ) => new App_with_HOLFormula( f, a )
-      case _           => new App( f, a )
+      case `->`( _, To ) => new App_with_HOLFormula( f, a )
+      case _             => new App( f, a )
     }
   }
 

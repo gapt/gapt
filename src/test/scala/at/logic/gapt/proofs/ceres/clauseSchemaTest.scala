@@ -32,7 +32,7 @@ class clauseSchemaTest extends Specification {
       val non = nonVarSclause( Q0 :: Nil, List.empty[SchemaFormula] )
       val map = Map[sClauseVar, sClause]() + Tuple2( X.asInstanceOf[sClauseVar], non )
       val l = Ti :: To :: Tindex :: Nil
-      l.foldLeft( To.asInstanceOf[TA] )( ( x, t ) => ->( x, t ) )
+      l.foldLeft( To.asInstanceOf[TA] )( ( x, t ) => x -> t )
 
       ok
     }
@@ -54,8 +54,8 @@ class clauseSchemaTest extends Specification {
       val Pk1 = IndexedPredicate( "P", Succ( k ) )
       val X = sClauseVar( "X" )
       val x = fo2Var( "x" )
-      val P = Const( "P", ->( Ti, To ) )
-      val g = Const( "g", ->( Ti, Ti ) )
+      val P = Const( "P", Ti -> To )
+      val g = Const( "g", Ti -> Ti )
       val sigma0x0 = sTermN( "σ", zero :: x :: zero :: Nil )
       val sigmaskxsk = sTermN( "σ", Succ( k ) :: x :: Succ( k ) :: Nil )
       val Psigma0x0 = SchemaAtom( P, sigma0x0 :: Nil )
@@ -109,7 +109,7 @@ class clauseSchemaTest extends Specification {
     "create a schema clause term : ⊗ and ⊕ " in {
       val k = IntVar( "k" )
       val X = sClauseVar( "X" )
-      val g = Var( "g", ->( Ti, Ti ) )
+      val g = Var( "g", Ti -> Ti )
       val x = fo2Var( "x" )
       val zero = IntZero();
       val one = Succ( IntZero() );
@@ -121,7 +121,7 @@ class clauseSchemaTest extends Specification {
       val st1 = sTermN( "σ'", k :: Nil )
       val rewrite_base1 = a
       val rewrite_step1 = App( g, st1 )
-      val P = Const( "P", ->( Ti, To ) )
+      val P = Const( "P", Ti -> To )
       val d1base = clauseSetTerm( "d1", zero :: x :: X :: Nil )
       val d1step = clauseSetTerm( "d1", Succ( k ) :: x :: X :: Nil )
       val d2base = clauseSetTerm( "d2", zero :: x :: X :: Nil )
@@ -184,8 +184,8 @@ class clauseSchemaTest extends Specification {
       val Pk1 = IndexedPredicate( "P", Succ( k ) )
       val X = sClauseVar( "X" )
       val x = fo2Var( "x" )
-      val P = Const( "P", ->( Ti, To ) )
-      val g = Const( "g", ->( Ti, Ti ) )
+      val P = Const( "P", Ti -> To )
+      val g = Const( "g", Ti -> Ti )
       val sigma0x0 = sTermN( "σ", zero :: x :: zero :: Nil )
       val sigmaskxsk = sTermN( "σ", Succ( k ) :: x :: Succ( k ) :: Nil )
       val Psigma0x0 = SchemaAtom( P, sigma0x0 :: Nil )
@@ -223,7 +223,7 @@ class clauseSchemaTest extends Specification {
       val l = IntVar( "l" )
       val k = IntVar( "k" )
       val X = sClauseVar( "X" )
-      val g = Const( "g", ->( Ti, Ti ) )
+      val g = Const( "g", Ti -> Ti )
       val x = fo2Var( "x" )
       val zero = IntZero(); val one = Succ( IntZero() ); val two = Succ( Succ( IntZero() ) ); val three = Succ( Succ( Succ( IntZero() ) ) )
       val a = Var( "a", Ti )
@@ -233,7 +233,7 @@ class clauseSchemaTest extends Specification {
 
       val rewrite_base1 = a
       val rewrite_step1 = App( g, st1 )
-      val P = Const( "P", ->( Ti, To ) )
+      val P = Const( "P", Ti -> To )
       val d1base = clauseSetTerm( "d1", zero :: x :: X :: Nil )
       val d1step = clauseSetTerm( "d1", Succ( k ) :: x :: X :: Nil )
       val d2base = clauseSetTerm( "d2", zero :: x :: X :: Nil )
@@ -283,7 +283,7 @@ class clauseSchemaTest extends Specification {
       val l = IntVar( "l" )
       val k = IntVar( "k" )
       val X = sClauseVar( "X" )
-      val g = Const( "g", ->( Ti, Ti ) )
+      val g = Const( "g", Ti -> Ti )
       val x = fo2Var( "x" )
       val zero = IntZero(); val one = Succ( IntZero() ); val two = Succ( Succ( IntZero() ) ); val three = Succ( Succ( Succ( IntZero() ) ) )
       val a = Var( "a", Ti )
@@ -293,7 +293,7 @@ class clauseSchemaTest extends Specification {
 
       val rewrite_base1 = a
       val rewrite_step1 = App( g, st1 )
-      val P = Const( "P", ->( Ti, To ) )
+      val P = Const( "P", Ti -> To )
       val c = Const( "c", Ti )
       val b = Const( "b", Ti )
       val Pc = App( P, c )

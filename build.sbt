@@ -16,15 +16,14 @@ lazy val commonSettings = Seq(
   // scalaz-stream is not on maven.org
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
-  sourcesInBase := false, // people like to keep scripts lying around
+  sourcesInBase := false // people like to keep scripts lying around
 
-  defaultScalariformSettings,
-  ScalariformKeys.preferences := ScalariformKeys.preferences.value
+) ++ defaultScalariformSettings :+
+  (ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignParameters, true)
     .setPreference(AlignSingleLineCaseStatements, true)
     .setPreference(DoubleIndentClassDeclaration, true)
     .setPreference(SpaceInsideParentheses, true))
-)
 
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
