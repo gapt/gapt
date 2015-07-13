@@ -212,8 +212,9 @@ object CutIntroduction extends Logger {
     if ( verbose ) println( "Size of term set: " + termset.set.size )
 
     /********** Grammar finding **********/
-    val smallestGrammars = method.findGrammars( termset.set.toSet ) collect {
-      case g if g.productions.exists( _._1 != g.axiom ) =>
+    val smallestVtratGrammars = method.findGrammars( termset.set.toSet )
+    val smallestGrammars = smallestVtratGrammars collect {
+      case g if g.productions.exists( _._1 != g.axiomVect ) =>
         simpleToMultiGrammar( termset.encoding, g )
     }
 
