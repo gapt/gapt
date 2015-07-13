@@ -8,14 +8,14 @@ package at.logic.gapt.proofs.lk.subsumption
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 // TODO: find a smart way (without reaching out to the lambda layer!!) to not duplicate this code.
 
 object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
   val matchAlg = NaiveIncompleteMatchingAlgorithm
 
-  def subsumes( s1: FSequent, s2: FSequent ): Boolean = subsumes_by( s1, s2 ).nonEmpty
+  def subsumes( s1: HOLSequent, s2: HOLSequent ): Boolean = subsumes_by( s1, s2 ).nonEmpty
 
   /**
    * Calculates the subtitution to apply to s1 in order to subsume s2. if it exists
@@ -23,9 +23,9 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
    * @param s2 a clause
    * @return if s1 subsumes s2, the substitution necessary. None otherwise.
    */
-  def subsumes_by( s1: FSequent, s2: FSequent ): Option[Substitution] = {
-    val left = s1._1.map( x => Neg( x ) ) ++ s1._2.map( x => x )
-    val right = s2._1.map( x => Neg( x ) ) ++ s2._2.map( x => x )
+  def subsumes_by( s1: HOLSequent, s2: HOLSequent ): Option[Substitution] = {
+    val left = s1.antecedent.map( x => Neg( x ) ) ++ s1.succedent.map( x => x )
+    val right = s2.antecedent.map( x => Neg( x ) ) ++ s2.succedent.map( x => x )
     val lv = ( left.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ).toList ++ l ) ).distinct
     val rv = ( right.foldLeft( List[Var]() )( ( l, f ) => freeVariables( f ).toList ++ l ) ).distinct
     val renames = rv.filter( x => lv.contains( x ) )
@@ -65,11 +65,11 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
 object StillmanSubsumptionAlgorithmFOL extends SubsumptionAlgorithm {
   val matchAlg = FOLMatchingAlgorithm
 
-  def subsumes( s1: FSequent, s2: FSequent ): Boolean = subsumes_by( s1, s2 ).nonEmpty
+  def subsumes( s1: HOLSequent, s2: HOLSequent ): Boolean = subsumes_by( s1, s2 ).nonEmpty
 
-  def subsumes_by( s1: FSequent, s2: FSequent ): Option[FOLSubstitution] = {
-    val left = s1._1.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ s1._2.map( x => x.asInstanceOf[FOLFormula] )
-    val right = s2._1.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ s2._2.map( x => x.asInstanceOf[FOLFormula] )
+  def subsumes_by( s1: HOLSequent, s2: HOLSequent ): Option[FOLSubstitution] = {
+    val left = s1.antecedent.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ s1.succedent.map( x => x.asInstanceOf[FOLFormula] )
+    val right = s2.antecedent.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ s2.succedent.map( x => x.asInstanceOf[FOLFormula] )
     val lv = ( left.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ).toList ++ l ) ).distinct
     val rv = ( right.foldLeft( List[FOLVar]() )( ( l, f ) => freeVariables( f ).toList ++ l ) ).distinct
     val renames = rv.filter( x => lv.contains( x ) )

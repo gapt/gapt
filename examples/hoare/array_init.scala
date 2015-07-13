@@ -1,7 +1,8 @@
+import at.logic.gapt.expr.Neg
 import at.logic.gapt.proofs.expansionTrees.METWeakQuantifier
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
-import at.logic.gapt.language.hol.Neg
 import at.logic.gapt.proofs.hoare.{ForLoop, SimpleLoopProblem}
+import at.logic.gapt.proofs.lk.LKToExpansionProof
 
 val p = parse.program("for y < z do x := set(x, s(y), get(x, y)) od")
 val f = parse.p9("k <= z -> get(x,k) = get(x,0)")

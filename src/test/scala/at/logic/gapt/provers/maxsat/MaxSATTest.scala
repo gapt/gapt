@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
 
 class MaxSATTest extends Specification {
-  val box: List[FClause] = List()
+  val box: List[HOLClause] = List()
 
   /*
    * Simple instance for testing wether weighted partial MaxSAT

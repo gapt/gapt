@@ -41,9 +41,9 @@ class ResolutionTest extends Specification {
       val p1 = InitialClause( Nil, List( e1, e2 ) )
       val p2 = InitialClause( Nil, List( e3, p ) )
       val p3 = Paramodulation( p1, p2, p1.root.succedent( 0 ), p2.root.succedent( 1 ), q, FOLSubstitution() )
-      val expected_root = FSequent( Nil, List( e2, e3, q ) )
+      val expected_root = HOLSequent( Nil, List( e2, e3, q ) )
 
-      p3.root.toFSequent must beSyntacticFSequentEqual( expected_root )
+      p3.root.toHOLSequent must beSyntacticFSequentEqual( expected_root )
 
     }
   }

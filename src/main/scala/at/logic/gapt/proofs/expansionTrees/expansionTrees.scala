@@ -418,8 +418,8 @@ object toDeep {
     case ETSkolemQuantifier( _, _, t ) => toDeep( t, pol ) //TODO: check if this is correct
   }
 
-  def apply( expansionSequent: ExpansionSequent ): FSequent = {
-    FSequent( expansionSequent.antecedent.map( toDeep.apply( _, -1 ) ), expansionSequent.succedent.map( toDeep.apply( _, 1 ) ) ) // compiler wants the applys here
+  def apply( expansionSequent: ExpansionSequent ): HOLSequent = {
+    HOLSequent( expansionSequent.antecedent.map( toDeep.apply( _, -1 ) ), expansionSequent.succedent.map( toDeep.apply( _, 1 ) ) ) // compiler wants the applys here
   }
 }
 
@@ -435,11 +435,11 @@ object toShallow {
     case ETStrongQuantifier( f, _, _ ) => f
   }
 
-  def apply( ep: ExpansionSequent ): FSequent = {
+  def apply( ep: ExpansionSequent ): HOLSequent = {
     val ant = ep.antecedent.map( et => toShallow( et ) )
     val succ = ep.succedent.map( et => toShallow( et ) )
 
-    FSequent( ant, succ )
+    HOLSequent( ant, succ )
   }
 }
 
@@ -539,9 +539,9 @@ object removeFromExpansionSequent {
    * @param seq: specifies formulas to remove; formulas in the antecedent/consequent will remove expansion trees in the antecedent/consequent of the expansion tree
    *             expansion trees are removed if Sh(e) \in seq (using default equality, which is alpha equality)
    */
-  def apply( etSeq: ExpansionSequent, seq: FSequent ): ExpansionSequent = {
-    val ante = etSeq.antecedent.filter( et => !seq._1.contains( toShallow( et ) ) )
-    val cons = etSeq.succedent.filter( et => !seq._2.contains( toShallow( et ) ) )
+  def apply( etSeq: ExpansionSequent, seq: HOLSequent ): ExpansionSequent = {
+    val ante = etSeq.antecedent.filterNot( et => seq.antecedent.contains( toShallow( et ) ) )
+    val cons = etSeq.succedent.filterNot( et => seq.succedent.contains( toShallow( et ) ) )
     new ExpansionSequent( ante, cons )
   }
 }

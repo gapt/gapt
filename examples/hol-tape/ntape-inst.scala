@@ -52,10 +52,10 @@ import at.logic.gapt.proofs.lk.LKToLKsk
  show("Computing clause set")
  //val cl = AlternativeStandardClauseSet(struct)
  val cl = SimpleStandardClauseSet(struct)
- //val cl = structToClausesList(struct).map(_.toFSequent)
+ //val cl = structToClausesList(struct).map(_.toHOLSequent)
 
  show("simplifying clause set")
- val fs = FSequent(Nil, List(parseLLKFormula("var x :i; x = x")))
+ val fs = HOLSequent(Nil, List(parseLLKFormula("var x :i; x = x")))
  val rcl = subsumedClausesRemovalHOL(fs::(cl.toList))
  val tcl = deleteTautologies(rcl)
 

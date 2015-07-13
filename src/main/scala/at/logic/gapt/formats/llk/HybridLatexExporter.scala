@@ -1,10 +1,10 @@
 package at.logic.gapt.formats.llk
 
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, LabelledSequent }
+import at.logic.gapt.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, LabelledOccSequent }
 import at.logic.gapt.proofs.resolution.ral
 
 object LatexProofExporter extends HybridLatexExporter( true )
@@ -85,12 +85,12 @@ class HybridLatexExporter( val expandTex: Boolean ) {
   }
 
   def getTypes( p: LKProof, vacc: Map[String, TA], cacc: Map[String, TA] ): ( Map[String, TA], Map[String, TA] ) = {
-    val formulas = p.nodes.flatMap( _.asInstanceOf[LKProof].root.toFSequent.formulas )
+    val formulas = p.nodes.flatMap( _.asInstanceOf[LKProof].root.toHOLSequent.formulas )
     formulas.foldLeft( ( vacc, cacc ) )( ( map, f ) =>
       getTypes( f, map._1, map._2 ) )
   }
 
-  def getTypes( p: FSequent, vacc: Map[String, TA], cacc: Map[String, TA] ): ( Map[String, TA], Map[String, TA] ) = {
+  def getTypes( p: HOLSequent, vacc: Map[String, TA], cacc: Map[String, TA] ): ( Map[String, TA], Map[String, TA] ) = {
     p.formulas.foldLeft( ( vacc, cacc ) )( ( m, f ) => getTypes( f, m._1, m._2 ) )
   }
 
@@ -135,96 +135,96 @@ class HybridLatexExporter( val expandTex: Boolean ) {
       if ( outermost ) s else "(" + s + ")"
   }
 
-  def fsequentString( fs: FSequent, escape_latex: Boolean ): String =
+  def fsequentString( fs: HOLSequent, escape_latex: Boolean ): String =
     fs.antecedent.map( toLatexString.getFormulaString( _, true, escape_latex ) ).mkString( "{", ",", "}" ) +
       fs.succedent.map( toLatexString.getFormulaString( _, true, escape_latex ) ).mkString( "{", ",", "}" )
 
   def generateProof( p: LKProof, s: String, escape_latex: Boolean ): String = p match {
     case Axiom( root ) =>
-      "\\AX" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s
+      "\\AX" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s
     // unary rules
     case NegLeftRule( p1, root, _, _ ) =>
-      generateProof( p1, "\\NEGL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\NEGL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case NegRightRule( p1, root, _, _ ) =>
-      generateProof( p1, "\\NEGR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\NEGR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case AndLeft1Rule( p1, root, _, _ ) =>
-      generateProof( p1, "\\ANDL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\ANDL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case AndLeft2Rule( p1, root, _, _ ) =>
-      generateProof( p1, "\\ANDL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\ANDL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case OrRight1Rule( p1, root, _, _ ) =>
-      generateProof( p1, "\\ORR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\ORR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case OrRight2Rule( p1, root, _, _ ) =>
-      generateProof( p1, "\\ORR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\ORR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ImpRightRule( p1, root, _, _, _ ) =>
-      generateProof( p1, "\\IMPR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\IMPR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     //binary rules
     case AndRightRule( p1, p2, root, _, _, _ ) =>
-      generateProof( p1, generateProof( p2, "\\ANDR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\ANDR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
     case OrLeftRule( p1, p2, root, _, _, _ ) =>
-      generateProof( p1, generateProof( p2, "\\ORL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\ORL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
     case ImpLeftRule( p1, p2, root, _, _, _ ) =>
-      generateProof( p1, generateProof( p2, "\\IMPL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\IMPL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
     //structural rules
     case CutRule( p1, p2, root, _, _ ) =>
-      generateProof( p1, generateProof( p2, "\\CUT" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\CUT" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
     case WeakeningLeftRule( p1, root, _ ) =>
-      generateProof( p1, "\\WEAKL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\WEAKL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case WeakeningRightRule( p1, root, _ ) =>
-      generateProof( p1, "\\WEAKR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\WEAKR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ContractionLeftRule( p1, root, _, _, _ ) =>
-      generateProof( p1, "\\CONTRL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\CONTRL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ContractionRightRule( p1, root, _, _, _ ) =>
-      generateProof( p1, "\\CONTRR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\CONTRR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     //quantifier rules
     case ForallLeftRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\ALLL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\ALLL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ForallRightRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\ALLR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\ALLR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ExistsLeftRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\EXL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\EXL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ExistsRightRule( p1, root, aux, main, term ) =>
-      generateProof( p1, "\\EXR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\EXR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     //equality rules
     case EquationLeft1Rule( p1, p2, root, _, _, _, _ ) =>
-      generateProof( p1, generateProof( p2, "\\EQL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\EQL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
     case EquationLeft2Rule( p1, p2, root, _, _, _, _ ) =>
-      generateProof( p1, generateProof( p2, "\\EQL" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\EQL" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
     case EquationRight1Rule( p1, p2, root, _, _, _, _ ) =>
-      generateProof( p1, generateProof( p2, "\\EQR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\EQR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
     case EquationRight2Rule( p1, p2, root, _, _, _, _ ) =>
-      generateProof( p1, generateProof( p2, "\\EQR" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\EQR" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex ), escape_latex )
     //definition rules
     case DefinitionLeftRule( p1, root, _, _ ) =>
-      generateProof( p1, "\\DEF" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\DEF" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case DefinitionRightRule( p1, root, _, _ ) =>
-      generateProof( p1, "\\DEF" + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+      generateProof( p1, "\\DEF" + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
 
     //TODO: this is only a way to write out the proof, but it cannot be read back in (labels are not handled by llk so far)
     case ExistsSkLeftRule( p1, root, aux, main, term ) =>
       generateProof( p1, "\\EXSKL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
-        + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+        + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ExistsSkRightRule( p1, root, aux, main, term ) =>
       generateProof( p1, "\\EXSKR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
-        + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+        + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ForallSkLeftRule( p1, root, aux, main, term ) =>
       generateProof( p1, "\\ALLSKL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
-        + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+        + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
     case ForallSkRightRule( p1, root, aux, main, term ) =>
       generateProof( p1, "\\ALLSKR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
-        + fsequentString( root.toFSequent, escape_latex ) + "\n" + s, escape_latex )
+        + fsequentString( root.toHOLSequent, escape_latex ) + "\n" + s, escape_latex )
 
   }
 
-  def generateRal[T <: LabelledSequent](
+  def generateRal[T <: LabelledOccSequent](
     ralp: ral.RalResolutionProof[T],
     s:    String                    = "", escape_latex: Boolean
   ): String = ralp match {
-    case ral.InitialSequent( seq ) => "\\AX" + fsequentString( seq.toFSequent, escape_latex )
+    case ral.InitialSequent( seq ) => "\\AX" + fsequentString( seq.toHOLSequent, escape_latex )
 
     case ral.Cut( root, p1, p2, aux1, aux2 ) =>
       generateRal(
         p1,
-        generateRal( p2, "\\CUT" + fsequentString( root.toFSequent, escape_latex ) + s, escape_latex ),
+        generateRal( p2, "\\CUT" + fsequentString( root.toHOLSequent, escape_latex ) + s, escape_latex ),
         escape_latex
       )
 

@@ -175,9 +175,9 @@ object Main extends SimpleSwingApplication {
           case list: List[_] =>
             try {
               val ls = list.map {
-                case s: Sequent   => s.toFSequent
-                case fs: FSequent => fs
-                case _            => throw new Exception( "Cannot save this kind of lists." )
+                case s: OccSequent  => s.toHOLSequent
+                case fs: HOLSequent => fs
+                case _              => throw new Exception( "Cannot save this kind of lists." )
               }
               if ( result.endsWith( ".xml" ) || chooser.fileFilter.getDescription == ".xml" ) {
                 XMLExporter( result, new ProofDatabase( Map(), Nil, Nil, List( ( pair._1, ls ) ) ) )
@@ -311,13 +311,13 @@ object Main extends SimpleSwingApplication {
       body.getContent.contents.head match {
         case dp: DrawProof =>
           dp.search = input_str
-          if ( dp.proof.root.isInstanceOf[Sequent] )
+          if ( dp.proof.root.isInstanceOf[OccSequent] )
             ProofToolPublisher.publish( ChangeFormulaColor( Search.inTreeProof( input_str, dp.proof ), Color.green, reset = true ) )
           else dp.searchNotInLKProof()
           dp.revalidate()
         case dp: DrawResolutionProof =>
           dp.search = input_str
-          if ( dp.proof.root.isInstanceOf[Sequent] )
+          if ( dp.proof.root.isInstanceOf[OccSequent] )
             ProofToolPublisher.publish( ChangeFormulaColor( Search.inResolutionProof( input_str, dp.proof ), Color.green, reset = true ) )
           else dp.searchNotInLKProof()
           dp.revalidate()
@@ -501,7 +501,7 @@ object Main extends SimpleSwingApplication {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val list = cutformulaExtraction( body.getContent.getData.get._2.asInstanceOf[LKProof] )
-      db.addSeqList( "cutFormulaList ", list.map( x => x.toFSequent ) )
+      db.addSeqList( "cutFormulaList ", list.map( x => x.toHOLSequent ) )
       updateLauncher( "Cut-formula List", list, 16 )
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
@@ -531,9 +531,9 @@ object Main extends SimpleSwingApplication {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val proof_sk = LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] )
       val s = StructCreators.extract( proof_sk )
-      val csPre: List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
+      val csPre: List[OccSequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
 
-      db.addSeqList( csPre.map( x => x.toFSequent ) )
+      db.addSeqList( csPre.map( x => x.toHOLSequent ) )
       updateLauncher( "cllist", csPre, 16 )
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
@@ -548,10 +548,10 @@ object Main extends SimpleSwingApplication {
       val n = IntVar( "n" )
 
       val s = StructCreators.extractStruct( body.getContent.getData.get._1, n )
-      val cs: List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
+      val cs: List[OccSequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
       val pair = renameCLsymbols( cs )
 
-      db.addSeqList( pair._1 ) //.map(x => x.toFSequent))
+      db.addSeqList( pair._1 ) //.map(x => x.toHOLSequent))
       db.addDefinitions( pair._2 )
       updateLauncher( "Schematic Clause Set", pair._1, 16 )
       body.cursor = java.awt.Cursor.getDefaultCursor
@@ -596,8 +596,8 @@ object Main extends SimpleSwingApplication {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val proof_sk = eliminateDefinitions( LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
       val s = StructCreators.extract( proof_sk, f => containsQuantifier( f ) )
-      val csPre: List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
-      db.addSeqList( csPre.map( x => x.toFSequent ) )
+      val csPre: List[OccSequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
+      db.addSeqList( csPre.map( x => x.toHOLSequent ) )
       updateLauncher( "cllist", csPre, 16 )
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {

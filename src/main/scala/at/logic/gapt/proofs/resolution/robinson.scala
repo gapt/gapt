@@ -24,7 +24,7 @@ import scala.collection.immutable.HashSet
 package robinson {
 
   /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
- * additional_context  may add additional ancestors, needed e.g. for factoring */
+* additional_context  may add additional ancestors, needed e.g. for factoring */
   object createContext {
     def apply( set: Seq[FormulaOccurrence], sub: FOLSubstitution ): Seq[FormulaOccurrence] =
       apply( set, sub, Map[FormulaOccurrence, List[FormulaOccurrence]]() )
@@ -41,18 +41,18 @@ package robinson {
   case object ResolutionType extends BinaryRuleTypeA
   case object ParamodulationType extends BinaryRuleTypeA
 
-  trait RobinsonResolutionProof extends ResolutionProof[Clause] {
+  trait RobinsonResolutionProof extends ResolutionProof[OccClause] {
     def getAccumulatedSubstitution: FOLSubstitution
   }
 
   object InitialClause {
-    def apply( c: FClause )( implicit factory: FOFactory ): RobinsonResolutionProof =
-      apply( c.neg.map( f => f.asInstanceOf[FOLFormula] ), c.pos.map( f => f.asInstanceOf[FOLFormula] ) )
+    def apply( c: HOLClause )( implicit factory: FOFactory ): RobinsonResolutionProof =
+      apply( c.negative.map( f => f.asInstanceOf[FOLFormula] ), c.positive.map( f => f.asInstanceOf[FOLFormula] ) )
 
     def apply( ant: Seq[FOLFormula], suc: Seq[FOLFormula] )( implicit factory: FOFactory ): RobinsonResolutionProof = {
       val left: Seq[FormulaOccurrence] = ant.map( factory.createFormulaOccurrence( _, Nil ) )
       val right: Seq[FormulaOccurrence] = suc.map( factory.createFormulaOccurrence( _, Nil ) )
-      new LeafAGraph[Clause]( Clause( left, right ) ) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
+      new LeafAGraph[OccClause]( OccClause( left, right ) ) with NullaryResolutionProof[OccClause] with RobinsonResolutionProof {
         def rule = InitialType
         override def name = "initial"
         def getAccumulatedSubstitution = FOLSubstitution()
@@ -61,13 +61,13 @@ package robinson {
     def apply( literals: Seq[FOLFormula] )( implicit factory: FOFactory ): RobinsonResolutionProof = {
       val lits: Seq[Tuple2[FormulaOccurrence, Boolean]] = literals.map( l => if ( isNeg( l ) ) ( factory.createFormulaOccurrence( removeNeg( l ), Nil ), false )
       else ( factory.createFormulaOccurrence( l, Nil ), true ) )
-      new LeafAGraph[Clause]( Clause( lits ) ) with NullaryResolutionProof[Clause] with RobinsonResolutionProof {
+      new LeafAGraph[OccClause]( OccClause( lits ) ) with NullaryResolutionProof[OccClause] with RobinsonResolutionProof {
         def rule = InitialType
         override def name = "initial"
         def getAccumulatedSubstitution = FOLSubstitution()
       }
     }
-    def unapply( proof: ResolutionProof[Clause] ) = if ( proof.rule == InitialType ) Some( ( proof.root ) ) else None
+    def unapply( proof: ResolutionProof[OccClause] ) = if ( proof.rule == InitialType ) Some( ( proof.root ) ) else None
   }
 
   // left side is always resolved on positive literal and right on negative
@@ -90,10 +90,10 @@ package robinson {
           if ( sub( term1.formula.asInstanceOf[FOLFormula] ) != sub( term2.formula.asInstanceOf[FOLFormula] ) )
             throw new LKRuleCreationException( "Formulas to be cut are not identical (modulo the given substitution)" )
           else {
-            new BinaryAGraph[Clause]( Clause(
+            new BinaryAGraph[OccClause]( OccClause(
               createContext( p1.root.antecedent, sub ) ++ createContext( p2.root.antecedent.filterNot( _ == term2 ), sub ),
               createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent, sub )
-            ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof {
+            ), p1, p2 ) with BinaryResolutionProof[OccClause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof {
               def rule = ResolutionType
               def aux = ( term1 :: Nil ) :: ( term2 :: Nil ) :: Nil
               def substitution = sub
@@ -107,8 +107,8 @@ package robinson {
           throw new LKRuleCreationException( "Auxiliary formulas are not contained in the correct part of the sequent (first argument positive, second negative)" )
       }
     }
-    def unapply( proof: ResolutionProof[Clause] with AppliedSubstitution ) = if ( proof.rule == ResolutionType ) {
-      val pr = proof.asInstanceOf[BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas]
+    def unapply( proof: ResolutionProof[OccClause] with AppliedSubstitution ) = if ( proof.rule == ResolutionType ) {
+      val pr = proof.asInstanceOf[BinaryResolutionProof[OccClause] with AppliedSubstitution with AuxiliaryFormulas]
       Some( ( pr.root, pr.uProof1.asInstanceOf[RobinsonResolutionProof], pr.uProof2.asInstanceOf[RobinsonResolutionProof],
         pr.aux.head.head, pr.aux.tail.head.head, pr.substitution.asInstanceOf[FOLSubstitution] ) )
     } else None
@@ -154,10 +154,10 @@ package robinson {
               }
           }
 
-          new BinaryAGraph[Clause]( Clause(
+          new BinaryAGraph[OccClause]( OccClause(
             createContext( p1.root.antecedent, sub ) ++ createContext( p2.root.antecedent.filterNot( _ == term2 ), sub ) :+ prinFormula,
             createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent, sub )
-          ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
+          ), p1, p2 ) with BinaryResolutionProof[OccClause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
             def rule = ParamodulationType
             def aux = ( term1 :: Nil ) :: ( term2 :: Nil ) :: Nil
             def substitution = sub
@@ -182,10 +182,10 @@ package robinson {
               }
           }
 
-          new BinaryAGraph[Clause]( Clause(
+          new BinaryAGraph[OccClause]( OccClause(
             createContext( p1.root.antecedent, sub ) ++ createContext( p2.root.antecedent, sub ),
             createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent.filterNot( _ == term2 ), sub ) :+ prinFormula
-          ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
+          ), p1, p2 ) with BinaryResolutionProof[OccClause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
 
             def rule = ParamodulationType
             def aux = ( term1 :: Nil ) :: ( term2 :: Nil ) :: Nil
@@ -200,8 +200,8 @@ package robinson {
 
     }
 
-    def unapply( proof: ResolutionProof[Clause] with AppliedSubstitution ) = if ( proof.rule == ParamodulationType ) {
-      val p = proof.asInstanceOf[BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas]
+    def unapply( proof: ResolutionProof[OccClause] with AppliedSubstitution ) = if ( proof.rule == ParamodulationType ) {
+      val p = proof.asInstanceOf[BinaryResolutionProof[OccClause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas]
       if ( p.aux.size != 2 ) throw new Exception( "Unexpected number of auxiliary clauses during Paramodulation matching (aux.size != 2)!" )
       if ( p.aux( 0 ).size != 1 ) throw new Exception( "Unexpected number of auxiliary clauses during Paramodulation matching (aux(0).size != 1)!" )
       if ( p.aux( 1 ).size != 1 ) throw new Exception( "Unexpected number of auxiliary clauses during Paramodulation matching (aux(1).size != 1)!" )
@@ -214,8 +214,8 @@ package robinson {
   object Variant {
     def apply( p: RobinsonResolutionProof, sub: FOLSubstitution ): RobinsonResolutionProof = {
       require( sub.isRenaming )
-      val newCl = Clause( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
-      new UnaryAGraph[Clause]( newCl, p ) with UnaryResolutionProof[Clause] with AppliedSubstitution with RobinsonResolutionProof {
+      val newCl = OccClause( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
+      new UnaryAGraph[OccClause]( newCl, p ) with UnaryResolutionProof[OccClause] with AppliedSubstitution with RobinsonResolutionProof {
         def rule = VariantType
         def substitution = sub
         override def toString = "Vr(" + root.toString + ", " + p.toString + ", " + substitution.toString + ")"
@@ -224,7 +224,7 @@ package robinson {
       }
     }
 
-    def apply( p: RobinsonResolutionProof ): ResolutionProof[Clause] = {
+    def apply( p: RobinsonResolutionProof ): ResolutionProof[OccClause] = {
       // TODO: refactor the following into Sequent.getFreeAndBoundVariables
       val vars = p.root.occurrences.foldLeft( HashSet[FOLVar]() )( ( m, f ) => m ++ freeVariables( f.formula.asInstanceOf[FOLFormula] ).toList )
       // TODO: should not be necessary to pass argument Ti() here.
@@ -233,8 +233,8 @@ package robinson {
       else apply( p, FOLSubstitution( rename( vars, vars ) ) )
     }
 
-    def unapply( proof: ResolutionProof[Clause] with AppliedSubstitution ) = if ( proof.rule == VariantType ) {
-      val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution]
+    def unapply( proof: ResolutionProof[OccClause] with AppliedSubstitution ) = if ( proof.rule == VariantType ) {
+      val pr = proof.asInstanceOf[UnaryResolutionProof[OccClause] with AppliedSubstitution]
       Some( ( pr.root, pr.uProof.asInstanceOf[RobinsonResolutionProof], pr.substitution.asInstanceOf[FOLSubstitution] ) )
     } else None
   }
@@ -257,8 +257,8 @@ package robinson {
       assert( !occurrencesToRemove.contains( a ) )
       val r = p.root.removeFormulasAtOccurrences( occurrencesToRemove )
       val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() + ( ( a, occurrencesToRemove ) )
-      val newCl = Clause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ) )
-      new UnaryAGraph[Clause]( newCl, p ) with UnaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof {
+      val newCl = OccClause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ) )
+      new UnaryAGraph[OccClause]( newCl, p ) with UnaryResolutionProof[OccClause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof {
         def rule = FactorType
         def substitution = sub
         def aux = ( a :: occurrencesToRemove.toList ) :: Nil
@@ -291,8 +291,8 @@ package robinson {
     ): RobinsonResolutionProof = {
       val r = p.root.removeFormulasAtOccurrences( oc1 ++ oc2 )
       val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() ++ List( ( a, oc1 ), ( b, oc2 ) )
-      val newCl = Clause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ) )
-      new UnaryAGraph[Clause]( newCl, p ) with UnaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof {
+      val newCl = OccClause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ) )
+      new UnaryAGraph[OccClause]( newCl, p ) with UnaryResolutionProof[OccClause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof {
         def rule = FactorType
         def substitution = sub
         def aux = ( a :: oc1.toList ) :: ( b :: oc2.toList ) :: Nil
@@ -325,8 +325,8 @@ package robinson {
     /* decomposes to root clause, parent proof, aux formula and the substitution needed
      * aux contains the list of auxiliar formulas for each factored formula in the conclusion
      * (i.e. aux.size is either 1 or 2, each contained list has size >=1).  */
-    def unapply( proof: ResolutionProof[Clause] with AppliedSubstitution ) = if ( proof.rule == FactorType ) {
-      val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas]
+    def unapply( proof: ResolutionProof[OccClause] with AppliedSubstitution ) = if ( proof.rule == FactorType ) {
+      val pr = proof.asInstanceOf[UnaryResolutionProof[OccClause] with AppliedSubstitution with AuxiliaryFormulas]
       Some( ( pr.root, pr.uProof.asInstanceOf[RobinsonResolutionProof], pr.aux, pr.substitution.asInstanceOf[FOLSubstitution] ) )
     } else None
   }
@@ -338,8 +338,8 @@ package robinson {
       try { op( p ) } finally { p.close() }
     }
 
-    def apply( p: ResolutionProof[Clause] ): String = {
-      apply( "", p, createMap( p, 1, Map[Clause, Int]() )._1 )
+    def apply( p: ResolutionProof[OccClause] ): String = {
+      apply( "", p, createMap( p, 1, Map[OccClause, Int]() )._1 )
     }
 
     def asGraphViz( p: LKProof ): String = {
@@ -383,9 +383,9 @@ package robinson {
       }
     }
 
-    def asHumanReadableString( p: ResolutionProof[Clause] ) = apply( p )
+    def asHumanReadableString( p: ResolutionProof[OccClause] ) = apply( p )
 
-    def createMap( p: ResolutionProof[Clause], i: Int, map: Map[Clause, Int] ): ( Map[Clause, Int], Int ) = p match {
+    def createMap( p: ResolutionProof[OccClause], i: Int, map: Map[OccClause, Int] ): ( Map[OccClause, Int], Int ) = p match {
       case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
         val ( m1, h1 ) = createMap( p1, i, map )
         val ( m2, h2 ) = createMap( p2, h1, m1 )
@@ -430,8 +430,8 @@ package robinson {
       case _ => throw new Exception( "Unhandled Case!" )
     }
 
-    def asTex( p: ResolutionProof[Clause] ): String = {
-      val ids = createMap( p, 1, Map[Clause, Int]() )._1
+    def asTex( p: ResolutionProof[OccClause] ): String = {
+      val ids = createMap( p, 1, Map[OccClause, Int]() )._1
       """\documentclass[a4paper,8pt,usenames,dvipsnames]{article}
 \ usepackage[utf8]{inputenc}
 \ usepackage{amssymb}
@@ -461,7 +461,7 @@ package robinson {
       s7
     }
 
-    def tex( p: ResolutionProof[Clause], ids: Map[Clause, Int], edges: List[List[Int]] ): ( String, List[List[Int]] ) = {
+    def tex( p: ResolutionProof[OccClause], ids: Map[OccClause, Int], edges: List[List[Int]] ): ( String, List[List[Int]] ) = {
       def f( l: Seq[FormulaOccurrence] ): String = {
         l.map( x => toLatexString( x.formula ) ).mkString( ", " )
       }
@@ -492,15 +492,15 @@ package robinson {
       }
     }
 
-    def asGraphViz( p: ResolutionProof[Clause] ): String = {
-      val ids = createMap( p, 1, Map[Clause, Int]() )._1
+    def asGraphViz( p: ResolutionProof[OccClause] ): String = {
+      val ids = createMap( p, 1, Map[OccClause, Int]() )._1
 
       "digraph resproof {\n graph [rankdir=TB]; node [shape=box];\n" +
         ( ids.keys.foldLeft( "" )( ( str, clause ) => str + "v" + ids( clause ) + " [label=\"" + clause + "\"];\n" ) ) +
         gv( p, ids, List() )._1 +
         "}\n"
     }
-    def gv( p: ResolutionProof[Clause], ids: Map[Clause, Int], edges: List[List[Int]] ): ( String, List[List[Int]] ) = p match {
+    def gv( p: ResolutionProof[OccClause], ids: Map[OccClause, Int], edges: List[List[Int]] ): ( String, List[List[Int]] ) = p match {
       case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
         val ( str1, e1 ) = gv( p1, ids, edges )
         val ( str2, e2 ) = gv( p2, ids, e1 )
@@ -559,7 +559,7 @@ package robinson {
       case _                       => ( "", edges )
     }
 
-    def apply( indent: String, p: ResolutionProof[Clause], ids: Map[Clause, Int] ): String = p match {
+    def apply( indent: String, p: ResolutionProof[OccClause], ids: Map[OccClause, Int] ): String = p match {
       case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
         indent + "(" + ids( clause ) + ") Resolution([" + clause + "] aux1=[" + occ1.formula + "] aux2=[" + occ2.formula + "] sub=" + subst + ")\n" +
           apply( "  " + indent, p1, ids ) + apply( "  " + indent, p2, ids )

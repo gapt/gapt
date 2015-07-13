@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.Sequent
+import at.logic.gapt.proofs.lk.base.OccSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.robinson.{ Factor, InitialClause, Instance, Paramodulation, Resolution, RobinsonResolutionProof, Variant }
 
@@ -99,9 +99,9 @@ object ResolutionSubstitution {
     occ.factory.createFormulaOccurrence( subf, nanc )
   }
 
-  def substitute_clause( c: Clause, sub: FOLSubstitution ): Clause = {
+  def substitute_clause( c: OccClause, sub: FOLSubstitution ): OccClause = {
     val nlits = c.literals map ( x => ( substitute_focc( x._1, sub ), x._2 ) )
-    Clause( nlits )
+    OccClause( nlits )
   }
 }
 
@@ -150,13 +150,13 @@ object InstantiateElimination {
   }
 
   /* wrapper around successor(pocc,clause) -- for documentation it's better to ask what the arent clause is */
-  def successor( pocc: FormulaOccurrence, parentclause: Clause, clause: Clause ): FormulaOccurrence = {
+  def successor( pocc: FormulaOccurrence, parentclause: OccClause, clause: OccClause ): FormulaOccurrence = {
     require( parentclause.occurrences contains pocc, "Error finding successor, occurrence not present in parentclause" )
     successor( pocc, clause )
   }
 
   /* find successor of occurrence pocc in clause */
-  def successor( pocc: FormulaOccurrence, clause: Clause ): FormulaOccurrence = {
+  def successor( pocc: FormulaOccurrence, clause: OccClause ): FormulaOccurrence = {
     val s = List( pocc )
     clause.occurrences.find( _.parents.toList == s ) match {
       case Some( x ) => x
@@ -165,7 +165,7 @@ object InstantiateElimination {
   }
 
   /* find successor of of list of occurrences poccs in clause */
-  def successor( poccs: List[FormulaOccurrence], clause: Clause ): FormulaOccurrence = {
+  def successor( poccs: List[FormulaOccurrence], clause: OccClause ): FormulaOccurrence = {
     clause.occurrences.find( x =>
       ( x.parents.toList diff poccs ).isEmpty && ( poccs diff x.parents.toList ).isEmpty ) match {
       case Some( x ) => x
@@ -176,7 +176,7 @@ object InstantiateElimination {
   /* if m is a mapping from literals in the parent of original_clause to literals in the parent of new-clause,
    * return a mapping from successor literals to successor literals, works only if the ancestor relation is a
    * bijection (intended use is for the instance rule) */
-  def successormap( m: OccMap, original_clause: Clause, new_clause: Clause ): OccMap = {
+  def successormap( m: OccMap, original_clause: OccClause, new_clause: OccClause ): OccMap = {
     val ooccs = original_clause.occurrences
     val noccs = new_clause.occurrences
     m.foldLeft( emptyOccMap )( ( itmap, pair ) => {
@@ -657,10 +657,10 @@ object InstantiateElimination {
   }
 
   // TODO: should this method go somewhere else??
-  def getVars( s: Sequent ): VarSet =
+  def getVars( s: OccSequent ): VarSet =
     s.occurrences.foldLeft( Set[FOLVar]() )( ( acc, occ ) => acc ++ freeVariables( occ.formula.asInstanceOf[FOLFormula] ) )
 
-  def getVars( ss: Seq[Sequent] ): VarSet = ss.foldLeft( Set[FOLVar]() )( ( acc, s ) => acc ++ getVars( s ) )
+  def getVars( ss: Seq[OccSequent] ): VarSet = ss.foldLeft( Set[FOLVar]() )( ( acc, s ) => acc ++ getVars( s ) )
 
 }
 

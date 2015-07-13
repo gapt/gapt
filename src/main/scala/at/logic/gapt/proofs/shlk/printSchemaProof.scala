@@ -1,13 +1,13 @@
 package at.logic.gapt.proofs.shlk
 
-import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.shlk._
 
 object printSchemaProof {
 
   // TODO: this should move to where Sequent is declared...
-  def sequentToString( s: Sequent ): String = {
+  def sequentToString( s: OccSequent ): String = {
     var sb = new scala.StringBuilder()
     var first = true
     for ( f <- s.antecedent ) {

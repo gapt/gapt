@@ -4,8 +4,8 @@ package at.logic.gapt.provers.atp.commands.sequents
 import at.logic.gapt.proofs.lk.subsumption.managers._
 import at.logic.gapt.proofs.lk.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
 import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
-import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
+import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, OccClause }
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ ResultCommand, DataCommand }
 import at.logic.gapt.provers.atp.Definitions._
@@ -13,10 +13,10 @@ import at.logic.gapt.utils.ds.{ Add, Remove, PublishingBufferEvent, PublishingBu
 import at.logic.gapt.utils.logging.Logger
 import at.logic.gapt.utils.patterns.listeners.ListenerManager
 
-abstract class SetSequentsCommand[V <: Sequent]( val clauses: Iterable[FSequent] ) extends DataCommand[V]
+abstract class SetSequentsCommand[V <: OccSequent]( val clauses: Iterable[HOLSequent] ) extends DataCommand[V]
 
 // set the target clause, i.e. the empty clause normally
-case class SetTargetClause[V <: Sequent]( val clause: FSequent ) extends DataCommand[V] with Logger {
+case class SetTargetClause[V <: OccSequent]( val clause: HOLSequent ) extends DataCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
     debug( s"targetClause <- $clause" )
     List( ( state += new Tuple2( "targetClause", clause ), data ) )
@@ -24,14 +24,14 @@ case class SetTargetClause[V <: Sequent]( val clause: FSequent ) extends DataCom
 }
 
 // tests whether the clauses list contains the target clause
-case class SearchForEmptyClauseCommand[V <: Sequent]() extends ResultCommand[V] {
+case class SearchForEmptyClauseCommand[V <: OccSequent]() extends ResultCommand[V] {
   def apply( state: State, data: Any ) = {
-    val target = state( "targetClause" ).asInstanceOf[FSequent]
+    val target = state( "targetClause" ).asInstanceOf[HOLSequent]
     state( "clauses" ).asInstanceOf[PublishingBuffer[ResolutionProof[V]]].find( x => fvarInvariantMSEquality( x.root, target ) )
   }
 }
 
-case class InsertResolventCommand[V <: Sequent]() extends DataCommand[V] {
+case class InsertResolventCommand[V <: OccSequent]() extends DataCommand[V] {
   def apply( state: State, data: Any ) = {
     ( if ( state.isDefinedAt( "clauses" ) ) state( "clauses" ).asInstanceOf[PublishingBuffer[ResolutionProof[V]]]
     else {
@@ -47,7 +47,7 @@ case class InsertResolventCommand[V <: Sequent]() extends DataCommand[V] {
 }
 
 // deterministically trying to match all indices (it is deterministic as it does not change the state of the different cases)
-case class ApplyOnAllPolarizedLiteralPairsCommand[V <: Sequent]() extends DataCommand[V] with Logger {
+case class ApplyOnAllPolarizedLiteralPairsCommand[V <: OccSequent]() extends DataCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
     val p = data.asInstanceOf[Tuple2[ResolutionProof[V], ResolutionProof[V]]]
     debug( p toString )
@@ -56,9 +56,9 @@ case class ApplyOnAllPolarizedLiteralPairsCommand[V <: Sequent]() extends DataCo
   }
 }
 
-case class RefutationReachedCommand[V <: Sequent]() extends ResultCommand[V] with Logger {
+case class RefutationReachedCommand[V <: OccSequent]() extends ResultCommand[V] with Logger {
   def apply( state: State, data: Any ) = {
-    val target = state( "targetClause" ).asInstanceOf[FSequent]
+    val target = state( "targetClause" ).asInstanceOf[HOLSequent]
     val d = data.asInstanceOf[ResolutionProof[V]]
     debug( d.root toString )
     if ( fvarInvariantMSEquality( d.root, target ) ) {
@@ -71,25 +71,25 @@ case class RefutationReachedCommand[V <: Sequent]() extends ResultCommand[V] wit
   override def toString = "RefutationReachedCommand"
 }
 
-case class SubsumedTargedSetFromClauseSetCommand[V <: Sequent]() extends ResultCommand[V] {
+case class SubsumedTargedSetFromClauseSetCommand[V <: OccSequent]() extends ResultCommand[V] {
   def apply( state: State, data: Any ) = {
-    val target = state( "targetClause" ).asInstanceOf[FSequent]
+    val target = state( "targetClause" ).asInstanceOf[HOLSequent]
     val clauses = state( "clauses" ).asInstanceOf[Traversable[ResolutionProof[V]]]
     val alg = StillmanSubsumptionAlgorithmFOL
-    val res = clauses.find( c => alg.subsumes( c.root.toFSequent, target ) )
+    val res = clauses.find( c => alg.subsumes( c.root.toHOLSequent, target ) )
     res
   }
 }
 
 //checks whether the resolvent is subsumed
-case class SubsumedTargedReachedCommand[V <: Sequent]() extends ResultCommand[V] {
+case class SubsumedTargedReachedCommand[V <: OccSequent]() extends ResultCommand[V] {
   def apply( state: State, data: Any ) = {
-    val target = state( "targetClause" ).asInstanceOf[FSequent]
+    val target = state( "targetClause" ).asInstanceOf[HOLSequent]
     val d = data.asInstanceOf[ResolutionProof[V]]
-    if ( firstSubsumesSecond( d.root.toFSequent, target ) ) Some( d )
+    if ( firstSubsumesSecond( d.root.toHOLSequent, target ) ) Some( d )
     else None
   }
-  def firstSubsumesSecond( s1: FSequent, s2: FSequent ): Boolean = {
+  def firstSubsumesSecond( s1: HOLSequent, s2: HOLSequent ): Boolean = {
     val alg = StillmanSubsumptionAlgorithmFOL
     alg.subsumes( s1, s2 )
   }
@@ -97,13 +97,13 @@ case class SubsumedTargedReachedCommand[V <: Sequent]() extends ResultCommand[V]
 
 //cvetan - kommutativity of the equality
 object fvarInvariantMSEqualityEQ {
-  def apply[V <: Sequent]( c1: V, f2: FSequent ): Boolean = {
+  def apply[V <: OccSequent]( c1: V, f2: HOLSequent ): Boolean = {
     if ( f2.succedent.length == 0 )
       return false
     f2.succedent.head match {
       case Eq( a, b ) => {
         println( "\n\nVutre sum !\n\n" )
-        val f3 = FSequent( f2.antecedent, Eq( b, a ) +: f2.succedent.tail )
+        val f3 = HOLSequent( f2.antecedent, Eq( b, a ) +: f2.succedent.tail )
         return fvarInvariantMSEquality( c1, f3 )
       }
       case _ => return false
@@ -114,13 +114,13 @@ object fvarInvariantMSEqualityEQ {
 // tests for multiset equality while ignoring the names of the free variables
 // FIXME: this is the only command that uses HOL... why is this mixed??
 object fvarInvariantMSEquality {
-  def apply[V <: Sequent]( c1: V, f2: FSequent ): Boolean = {
+  def apply[V <: OccSequent]( c1: V, f2: HOLSequent ): Boolean = {
     val f1 = ( c1.antecedent.map( _.formula ), c1.succedent.map( _.formula ) )
-    val FSequent( neg, pos ) = f2
+    val HOLSequent( neg, pos ) = f2
     // we get all free variables from f2 and try to systematically replace those in f1
     val set1 = ( f1._1 ++ f1._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } )
-    val set2 = ( f2._1 ++ f2._2 ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } )
-    if ( set1.size != set2.size ) List[FSequent]() // they cannot be equal
+    val set2 = ( f2.antecedent ++ f2.succedent ).flatMap( subTerms( _ ) ).filter( e => e match { case f: Var => true; case _ => false } )
+    if ( set1.size != set2.size ) List[HOLSequent]() // they cannot be equal
     // create all possible substitutions
     ( for ( s <- set1.toList.permutations.map( _.zip( set2 ) ).map( x => Substitution( x.asInstanceOf[List[Tuple2[Var, LambdaExpression]]] ) ) )
       yield ( f1._1.map( s( _ ).asInstanceOf[HOLFormula] ), f1._2.map( s( _ ).asInstanceOf[HOLFormula] ) ) ).toList.exists( cls => {
@@ -129,7 +129,7 @@ object fvarInvariantMSEquality {
   }
 }
 
-case class IfNotExistCommand[V <: Sequent]() extends DataCommand[V] {
+case class IfNotExistCommand[V <: OccSequent]() extends DataCommand[V] {
   def apply( state: State, data: Any ) = {
     val buffer = state( "clauses" ).asInstanceOf[PublishingBuffer[ResolutionProof[V]]]
     val res = data.asInstanceOf[ResolutionProof[V]]
@@ -137,7 +137,7 @@ case class IfNotExistCommand[V <: Sequent]() extends DataCommand[V] {
   }
 }
 
-abstract class SimpleSubsumptionCommand[V <: Sequent]( val alg: SubsumptionAlgorithm ) extends DataCommand[V] {
+abstract class SimpleSubsumptionCommand[V <: OccSequent]( val alg: SubsumptionAlgorithm ) extends DataCommand[V] {
   protected def getManager( state: State ): SubsumptionManager = {
     if ( state.isDefinedAt( "simpleSubsumManager" ) ) state( "simpleSubsumManager" ).asInstanceOf[SubsumptionManager]
     else {
@@ -145,11 +145,11 @@ abstract class SimpleSubsumptionCommand[V <: Sequent]( val alg: SubsumptionAlgor
       // set a listener that will listen to the buffer and fire an event (to the subsumption manager) when sequents are added or removed
       val lis = new ListenerManager[SubsumptionDSEvent] {
         buffer.addListener( ( x: PublishingBufferEvent[ResolutionProof[V]] ) => x.ar match {
-          case Add    => fireEvent( SubsumptionDSEvent( SAdd, x.elem.root.toFSequent ) )
-          case Remove => fireEvent( SubsumptionDSEvent( SRemove, x.elem.root.toFSequent ) )
+          case Add    => fireEvent( SubsumptionDSEvent( SAdd, x.elem.root.toHOLSequent ) )
+          case Remove => fireEvent( SubsumptionDSEvent( SRemove, x.elem.root.toHOLSequent ) )
         } )
       }
-      val man = new SimpleManager( lis, alg, () => buffer.iterator.map( _.root.toFSequent ), f => buffer.exists( p => f( p.root.toFSequent ) ), s => { buffer.filterNot( _.root.toFSequent == s ); () } )
+      val man = new SimpleManager( lis, alg, () => buffer.iterator.map( _.root.toHOLSequent ), f => buffer.exists( p => f( p.root.toHOLSequent ) ), s => { buffer.filterNot( _.root.toHOLSequent == s ); () } )
       state( "simpleSubsumManager" ) = man
       man
     }
@@ -157,11 +157,11 @@ abstract class SimpleSubsumptionCommand[V <: Sequent]( val alg: SubsumptionAlgor
   override def toString = "SimpleSubsumptionCommand(" + alg.getClass + ")"
 }
 
-case class SimpleForwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) with Logger {
+case class SimpleForwardSubsumptionCommand[V <: OccSequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) with Logger {
   def apply( state: State, data: Any ) = {
     val manager = getManager( state )
     val res = data.asInstanceOf[ResolutionProof[V]]
-    val res1 = res.root.toFSequent
+    val res1 = res.root.toHOLSequent
     val isSubsumed = manager forwardSubsumption res1
     debug( s"${if ( isSubsumed ) "subsumed" else "NOT subsumed"}: $res1" )
     if ( isSubsumed ) List() else List( ( state, data ) )
@@ -169,11 +169,11 @@ case class SimpleForwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorith
   override def toString = "SimpleForwardSubsumptionCommand(" + a.getClass + ")"
 }
 
-case class SimpleBackwardSubsumptionCommand[V <: Sequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) with Logger {
+case class SimpleBackwardSubsumptionCommand[V <: OccSequent]( a: SubsumptionAlgorithm ) extends SimpleSubsumptionCommand[V]( a ) with Logger {
   def apply( state: State, data: Any ) = {
     val manager = getManager( state )
     val res = data.asInstanceOf[ResolutionProof[V]]
-    val res1 = res.root.toFSequent
+    val res1 = res.root.toHOLSequent
     debug( res1 toString )
     manager.backwardSubsumption( res1 )
     List( ( state, data ) )

@@ -6,7 +6,7 @@ import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import java.io.InputStreamReader
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, OccSequent, LKProof }
 import collection.mutable.{ Map => MMap }
 import at.logic.gapt.proofs.shlk._
 import scala.Tuple4
@@ -97,7 +97,7 @@ object sFOParserCNT {
         case "proof" ~ str ~ str1 ~ seq ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~ line2 ~ "}" ~ procents => {
           //          proofName = str
           bigMMap.put( str, Tuple2( mapBase, mapStep ) )
-          SchemaProofDB.put( new SchemaProof( str, IntVar( "k" ) :: Nil, seq.toFSequent, mapBase.get( "root" ).get, mapStep.get( "root" ).get ) )
+          SchemaProofDB.put( new SchemaProof( str, IntVar( "k" ) :: Nil, seq.toHOLSequent, mapBase.get( "root" ).get, mapStep.get( "root" ).get ) )
           mapBase = MMap.empty[String, LKProof]
           mapStep = MMap.empty[String, LKProof]
           //          println("\n\nParsing is SUCCESSFUL : "+str)
@@ -326,7 +326,7 @@ object sFOParserCNT {
       def symbols: String = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073\0173\0175]+""" // +-*/\^<>=`~?@&|!#{}';
 
       //      def sequent: Parser[Sequent] = formula ~ "|-" ~ formula ^^ { case lf ~ "|-" ~ rf => {
-      def sequent: Parser[Sequent] = repsep( formula, "," ) ~ "|-" ~ repsep( formula, "," ) ^^ {
+      def sequent: Parser[OccSequent] = repsep( formula, "," ) ~ "|-" ~ repsep( formula, "," ) ^^ {
         case lfs ~ "|-" ~ rfs => {
           //          println("\n\nSEQUENT")
           Axiom( lfs, rfs ).root
@@ -346,14 +346,14 @@ object sFOParserCNT {
       //      def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
       //        case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
       ////          println("\n\npLink")
-      //          SchemaProofLinkRule(sequent.toFSequent, name, v::Nil)
+      //          SchemaProofLinkRule(sequent.toHOLSequent, name, v::Nil)
       //        }
       //      }
 
       def pFOLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ repsep( term, "," ) ~ ")" ~ sequent ~ ")" ^^ {
         case "pLink(" ~ "(" ~ name ~ "," ~ l ~ ")" ~ sequent ~ ")" => {
           //          println("\n\npLink")
-          FOSchemaProofLinkRule( sequent.toFSequent, name, l )
+          FOSchemaProofLinkRule( sequent.toHOLSequent, name, l )
         }
       }
 
@@ -661,7 +661,7 @@ object sFOParserCNT {
       }
 
       def autoprop: Parser[LKProof] = "autoprop(" ~ sequent ~ ")" ^^ {
-        case "autoprop(" ~ seq ~ ")" => solve.solvePropositional( seq.toFSequent, throwOnError = true ).get
+        case "autoprop(" ~ seq ~ ")" => solve.solvePropositional( seq.toHOLSequent, throwOnError = true ).get
       }
 
       def termDefL1: Parser[LKProof] = "termDefL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
@@ -690,7 +690,7 @@ object sFOParserCNT {
 }
 
 object getPLinks {
-  def apply( p: LKProof ): List[Sequent] = p match {
+  def apply( p: LKProof ): List[OccSequent] = p match {
     case Axiom( so ) => Nil
     case UnaryLKProof( _, upperProof, _, _, _ ) => apply( upperProof )
     case BinaryLKProof( _, upperProofLeft, upperProofRight, _, aux1, aux2, _ ) => apply( upperProofLeft ) ::: apply( upperProofRight )
@@ -708,23 +708,23 @@ object getPLinks {
 //makes a clauses CL,A|-C,D  and CL|-E,F to CL|-(~A\/C\/D) /\ (E\/F)
 object ClauseSetToCNF {
   //returns: CL |- formulaList
-  def apply( seq: FSequent ): FSequent = {
+  def apply( seq: HOLSequent ): HOLSequent = {
     val headCLsym = seq.antecedent.head
     if ( seq.antecedent.size == 1 && seq.succedent.size <= 1 )
       return seq
     else if ( seq.antecedent.size == 1 )
-      return FSequent( headCLsym :: Nil, Or( seq.succedent.toList.asInstanceOf[List[SchemaFormula]] ) :: Nil )
+      return HOLSequent( headCLsym :: Nil, Or( seq.succedent.toList.asInstanceOf[List[SchemaFormula]] ) :: Nil )
     val succ = Or( seq.antecedent.tail.toList.map( f =>
       Neg( f.asInstanceOf[SchemaFormula] ) ) ++ seq.succedent.asInstanceOf[List[SchemaFormula]] )
-    FSequent( headCLsym :: Nil, succ :: Nil )
+    HOLSequent( headCLsym :: Nil, succ :: Nil )
   }
 
   var mapCLsym: MMap[SchemaFormula, List[SchemaFormula]] = MMap.empty[SchemaFormula, List[SchemaFormula]]
 
-  def combiningCLsymbols( ccs: List[FSequent] ): MMap[SchemaFormula, List[SchemaFormula]] = {
+  def combiningCLsymbols( ccs: List[HOLSequent] ): MMap[SchemaFormula, List[SchemaFormula]] = {
     ccs.map( fseq => {
       //      println("\ncombining: "+mapCLsym)
-      val seq: FSequent = ClauseSetToCNF( fseq )
+      val seq: HOLSequent = ClauseSetToCNF( fseq )
       //      println("\n\nseq: "+seq)
       val f = seq.antecedent.head
       if ( !mapCLsym.contains( f.asInstanceOf[SchemaFormula] ) )
@@ -743,15 +743,15 @@ object ClauseSetToCNF {
     mapCLsym
   }
 
-  def apply( ccs: List[FSequent] ): List[FSequent] = {
+  def apply( ccs: List[HOLSequent] ): List[HOLSequent] = {
     combiningCLsymbols( ccs )
-    mapCLsym.toList.map( pair => FSequent( pair._1 :: Nil, And( pair._2.asInstanceOf[List[SchemaFormula]] ) :: Nil ) )
+    mapCLsym.toList.map( pair => HOLSequent( pair._1 :: Nil, And( pair._2.asInstanceOf[List[SchemaFormula]] ) :: Nil ) )
   }
 }
 
 object RW {
   //non-grounded map : CL_k -> Schemaformula
-  def createMMap( ccs: List[FSequent] ): MMap[SchemaFormula, SchemaFormula] = {
+  def createMMap( ccs: List[HOLSequent] ): MMap[SchemaFormula, SchemaFormula] = {
     var map = MMap.empty[SchemaFormula, SchemaFormula]
     ccs.foreach( fseq => {
       if ( fseq.antecedent.size > 0 )

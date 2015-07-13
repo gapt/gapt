@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.resolution.ral
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.lksk.LabelledSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.lksk.LabelledOccSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ Label, EmptyLabel }
 import at.logic.gapt.expr.hol._
 import org.specs2.mutable._
@@ -16,7 +16,7 @@ class RalResolutionTest extends Specification {
       val x = Var( "X", To )
       val p = HOLAtom( Const( "P", To ), Nil )
       val exx = Ex( x, x.asInstanceOf[HOLFormula] )
-      val root = FSequent( Nil, List( exx ) )
+      val root = HOLSequent( Nil, List( exx ) )
       val labels: ( List[Label], List[Label] ) = ( List[Label](), List[Label]( EmptyLabel() ) )
 
       val i1 = InitialSequent( root, labels )
@@ -27,7 +27,7 @@ class RalResolutionTest extends Specification {
       val i6 = NegT( i5, i5.root.l_succedent( 0 ) )
       val i7 = Cut( i4, i6, List( i4.root.l_succedent( 0 ) ), List( i6.root.l_antecedent( 0 ) ) )
 
-      i7.root.toFSequent must_== ( FSequent( Nil, Nil ) )
+      i7.root.toHOLSequent must_== ( HOLSequent( Nil, Nil ) )
       ok
     }
 
@@ -39,7 +39,7 @@ class RalResolutionTest extends Specification {
 
       val sub = Substitution( x, fx )
 
-      val root = FSequent( Nil, List( px ) )
+      val root = HOLSequent( Nil, List( px ) )
       val labels: ( List[Label], List[Label] ) = ( List[Label](), List[Label]( EmptyLabel() ) )
 
       val i1 = InitialSequent( root, labels )

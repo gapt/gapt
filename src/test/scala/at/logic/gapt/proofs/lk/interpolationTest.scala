@@ -28,8 +28,8 @@ class interpolationTest extends Specification {
       val ( nproof, pproof, ipl ) = Interpolate( ax, npart, ppart )
 
       ipl must beEqualTo( Bottom() )
-      nproof.root.toFSequent must beEqualTo( FSequent( p :: Nil, p :: Bottom() :: Nil ) )
-      pproof.root.toFSequent must beEqualTo( FSequent( Bottom() :: Nil, Nil ) )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( p :: Nil, p :: Bottom() :: Nil ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
     }
 
     "correctly interpolate a single unary inference with not p" in {
@@ -42,8 +42,8 @@ class interpolationTest extends Specification {
       val ( nproof, pproof, ipl ) = Interpolate( pr, npart, ppart )
 
       ipl must beEqualTo( Neg( p ) )
-      nproof.root.toFSequent must beEqualTo( FSequent( Nil, Neg( p ) :: Or( p, q ) :: Nil ) )
-      pproof.root.toFSequent must beEqualTo( FSequent( p :: Neg( p ) :: Nil, Nil ) )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( Nil, Neg( p ) :: Or( p, q ) :: Nil ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( p :: Neg( p ) :: Nil, Nil ) )
     }
 
     "correctly interpolate a single binary inference with bot or q" in {
@@ -57,8 +57,8 @@ class interpolationTest extends Specification {
       val ( nproof, pproof, ipl ) = Interpolate( pr, npart, ppart )
 
       ipl must beEqualTo( Or( Bottom(), q ) )
-      nproof.root.toFSequent must beEqualTo( FSequent( Or( p, q ) :: Nil, p :: Or( Bottom(), q ) :: Nil ) )
-      pproof.root.toFSequent must beEqualTo( FSequent( Or( Bottom(), q ) :: Nil, q :: Nil ) )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( Or( p, q ) :: Nil, p :: Or( Bottom(), q ) :: Nil ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( Or( Bottom(), q ) :: Nil, q :: Nil ) )
     }
 
     "correctly interpolate a small proof of 4 inference rules" in {
@@ -79,8 +79,8 @@ class interpolationTest extends Specification {
       val ( nproof, pproof, ipl ) = Interpolate( p4, npart, ppart )
 
       ipl must beEqualTo( Or( Bottom(), Or( q, r ) ) )
-      nproof.root.toFSequent must beEqualTo( FSequent( p :: Imp( p, Or( q, r ) ) :: Nil, Or( Bottom(), Or( q, r ) ) :: Nil ) )
-      pproof.root.toFSequent must beEqualTo( FSequent( Or( Bottom(), Or( q, r ) ) :: Nil, Imp( Neg( q ), r ) :: Nil ) )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( p :: Imp( p, Or( q, r ) ) :: Nil, Or( Bottom(), Or( q, r ) ) :: Nil ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( Or( Bottom(), Or( q, r ) ) :: Nil, Imp( Neg( q ), r ) :: Nil ) )
     }
 
   }

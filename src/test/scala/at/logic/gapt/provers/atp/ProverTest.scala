@@ -10,7 +10,7 @@ import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ BranchCommand, Command }
 import at.logic.gapt.provers.atp.commands.logical.DeterministicAndCommand
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.provers.atp.commands.refinements.simple._
 import at.logic.gapt.provers.atp.commands.refinements.base._
 import at.logic.gapt.provers.atp.commands.sequents._
@@ -21,109 +21,109 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 
 private class MyParser( str: String ) extends StringReader( str ) with SimpleResolutionParserFOL
-private object MyProver extends Prover[Clause]
+private object MyProver extends Prover[OccClause]
 
 class ProverTest extends Specification {
 
   def parse( str: String ): FOLFormula = ( new StringReader( str ) with SimpleFOLParser getTerm ).asInstanceOf[FOLFormula]
 
   // stream based on macro command that optimize the stack usage
-  def stream1a: Stream[Command[Clause]] = Stream.cons( SequentsMacroCommand[Clause](
-    SimpleRefinementGetCommand[Clause],
-    List( VariantsCommand, ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ),
-      SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
-      SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
-      InsertResolventCommand[Clause] ),
-    RefutationReachedCommand[Clause]
+  def stream1a: Stream[Command[OccClause]] = Stream.cons( SequentsMacroCommand[OccClause](
+    SimpleRefinementGetCommand[OccClause],
+    List( VariantsCommand, ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ),
+      SimpleForwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
+      SimpleBackwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
+      InsertResolventCommand[OccClause] ),
+    RefutationReachedCommand[OccClause]
   ), stream1a )
-  def streama: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1a ) )
+  def streama: Stream[Command[OccClause]] = Stream.cons( SetTargetClause( HOLSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1a ) )
 
   // stream based on normal stack usage using configurations normally - may explode stack if branching too fast
-  def stream1b: Stream[Command[Clause]] = Stream.cons(
-    SimpleRefinementGetCommand[Clause],
+  def stream1b: Stream[Command[OccClause]] = Stream.cons(
+    SimpleRefinementGetCommand[OccClause],
     Stream.cons(
       VariantsCommand,
       Stream.cons(
-        BranchCommand[Clause]( List(
-          Stream( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
+        BranchCommand[OccClause]( List(
+          Stream( ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
           Stream( ParamodulationCommand( FOLUnificationAlgorithm ) )
         ) ),
         Stream.cons(
-          SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+          SimpleForwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
           Stream.cons(
-            SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+            SimpleBackwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
             Stream.cons(
-              InsertResolventCommand[Clause],
-              Stream.cons( RefutationReachedCommand[Clause], stream1b )
+              InsertResolventCommand[OccClause],
+              Stream.cons( RefutationReachedCommand[OccClause], stream1b )
             )
           )
         )
       )
     )
   )
-  def streamb: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1b ) )
+  def streamb: Stream[Command[OccClause]] = Stream.cons( SetTargetClause( HOLSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1b ) )
 
   // stream based on "deterministic and command" that allows branching in a sequential way, which can be used in user interfaces as the other commands might
   // ask for an input, put it in the stack and will not necessarily act on it immediately.
-  def stream1c: Stream[Command[Clause]] = Stream.cons(
-    SimpleRefinementGetCommand[Clause],
+  def stream1c: Stream[Command[OccClause]] = Stream.cons(
+    SimpleRefinementGetCommand[OccClause],
     Stream.cons(
       VariantsCommand,
       Stream.cons(
-        DeterministicAndCommand[Clause]( (
-          List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
+        DeterministicAndCommand[OccClause]( (
+          List( ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
           List( ParamodulationCommand( FOLUnificationAlgorithm ) )
         ) ),
         Stream.cons(
-          SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+          SimpleForwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
           Stream.cons(
-            SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+            SimpleBackwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
             Stream.cons(
-              InsertResolventCommand[Clause],
-              Stream.cons( RefutationReachedCommand[Clause], stream1c )
+              InsertResolventCommand[OccClause],
+              Stream.cons( RefutationReachedCommand[OccClause], stream1c )
             )
           )
         )
       )
     )
   )
-  def streamc: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1c ) )
+  def streamc: Stream[Command[OccClause]] = Stream.cons( SetTargetClause( HOLSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1c ) )
 
-  def stream1d: Stream[Command[Clause]] = Stream.cons(
-    SimpleRefinementGetCommand[Clause],
+  def stream1d: Stream[Command[OccClause]] = Stream.cons(
+    SimpleRefinementGetCommand[OccClause],
     Stream.cons(
       VariantsCommand,
       Stream.cons(
-        DeterministicAndCommand[Clause]( (
-          List( ClauseFactorCommand( FOLUnificationAlgorithm ), ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ) ),
+        DeterministicAndCommand[OccClause]( (
+          List( ClauseFactorCommand( FOLUnificationAlgorithm ), ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( FOLUnificationAlgorithm ) ),
           List( ParamodulationCommand( FOLUnificationAlgorithm ) )
         ) ),
         Stream.cons(
-          InsertResolventCommand[Clause],
-          Stream.cons( RefutationReachedCommand[Clause], stream1d )
+          InsertResolventCommand[OccClause],
+          Stream.cons( RefutationReachedCommand[OccClause], stream1d )
         )
       )
     )
   )
-  def streamd( f: FSequent ): Stream[Command[Clause]] = Stream.cons( SetTargetClause( f ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1d ) )
-  def stream1e: Stream[Command[Clause]] = Stream.cons(
-    SimpleRefinementGetCommand[Clause],
+  def streamd( f: HOLSequent ): Stream[Command[OccClause]] = Stream.cons( SetTargetClause( f ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1d ) )
+  def stream1e: Stream[Command[OccClause]] = Stream.cons(
+    SimpleRefinementGetCommand[OccClause],
     Stream.cons(
       VariantsCommand,
       Stream.cons(
         ClauseFactorCommand( FOLUnificationAlgorithm ),
         Stream.cons(
-          DeterministicAndCommand[Clause]( (
-            List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ) ),
+          DeterministicAndCommand[OccClause]( (
+            List( ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( FOLUnificationAlgorithm ) ),
             List( ParamodulationCommand( FOLUnificationAlgorithm ) )
           ) ),
           Stream.cons(
-            SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+            SimpleForwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
             Stream.cons(
-              SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+              SimpleBackwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
               Stream.cons(
-                InsertResolventCommand[Clause],
-                Stream.cons( RefutationReachedCommand[Clause], stream1e )
+                InsertResolventCommand[OccClause],
+                Stream.cons( RefutationReachedCommand[OccClause], stream1e )
               )
             )
           )
@@ -131,18 +131,18 @@ class ProverTest extends Specification {
       )
     )
   )
-  def streame: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1e ) )
+  def streame: Stream[Command[OccClause]] = Stream.cons( SetTargetClause( HOLSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1e ) )
 
   def getRefutation( str: String ): Boolean = MyProver.refute( Stream.cons( SetClausesCommand( new MyParser( str ).getClauseList ), streamc ) ).next must beLike {
-    case Some( a ) if a.asInstanceOf[ResolutionProof[Clause]].root =^ Clause( List(), List() ) => ok
+    case Some( a ) if a.asInstanceOf[ResolutionProof[OccClause]].root =^ OccClause( List(), List() ) => ok
     case _ => ko
   }
-  def getRefutationd( str: String, f: FSequent ): Boolean = MyProver.refute( Stream.cons( SetClausesCommand( new MyParser( str ).getClauseList ), streamd( f ) ) ).next must beLike {
+  def getRefutationd( str: String, f: HOLSequent ): Boolean = MyProver.refute( Stream.cons( SetClausesCommand( new MyParser( str ).getClauseList ), streamd( f ) ) ).next must beLike {
     case Some( _ ) => ok
     case _         => ko
   }
   def getRefutatione( str: String ): Boolean = MyProver.refute( Stream.cons( SetClausesCommand( new MyParser( str ).getClauseList ), streame ) ).next must beLike {
-    case Some( a ) if a.asInstanceOf[ResolutionProof[Clause]].root =^ Clause( List(), List() ) => ok
+    case Some( a ) if a.asInstanceOf[ResolutionProof[OccClause]].root =^ OccClause( List(), List() ) => ok
     case _ => ko
   }
 
@@ -203,7 +203,7 @@ class ProverTest extends Specification {
         val lit1 = FOLAtom( "P", var1 :: Nil )
         val lit2 = FOLAtom( "P", fun1 :: Nil )
         val init = new MyParser( "-P(x) | -P(y) | P(f(x)). P(x)." ).getClauseList
-        val target = FSequent( List( lit1 ), List( lit2 ) )
+        val target = HOLSequent( List( lit1 ), List( lit2 ) )
         SearchDerivation( init, target ) must beLike {
           case Some( _ ) => ok
           case _         => ko
@@ -212,7 +212,7 @@ class ProverTest extends Specification {
       "P(f(a)) from -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a)." in {
         val pfa = parse( "P(f(a))" )
         val init = new MyParser( " -P(x) | -P(y) | P(f(x)) | P(f(y)). P(a)." ).getClauseList
-        val target = FSequent( List(), List( pfa ) )
+        val target = HOLSequent( List(), List( pfa ) )
         SearchDerivation( init, target ) must beLike {
           case Some( _ ) => ok
           case _         => ko
@@ -221,7 +221,7 @@ class ProverTest extends Specification {
       "-P(f(a)) from -=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x)." in {
         val pfa = parse( "P(f(a))" )
         val init = new MyParser( "-=(z,z) | -P(x) | -P(y) | P(f(x)) | P(f(y)). -P(f(f(a))). =(x,x)." ).getClauseList
-        val target = FSequent( List( pfa ), List() )
+        val target = HOLSequent( List( pfa ), List() )
         SearchDerivation( init, target ) must beLike {
           case Some( _ ) => ok
           case _         => ko

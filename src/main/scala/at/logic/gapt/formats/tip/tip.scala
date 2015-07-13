@@ -4,13 +4,13 @@ import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr.hol.isPrenex
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParser
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.utils.withTempFile
 import scala.collection.mutable
 import scala.sys.process._
 
 object TipParser {
-  private def parseLADR( contents: String ): FSequent = {
+  private def parseLADR( contents: String ): HOLSequent = {
     val antecedent = mutable.Buffer[HOLFormula]()
     val succedent = mutable.Buffer[HOLFormula]()
 
@@ -26,10 +26,10 @@ object TipParser {
       case x                        => ()
     }
 
-    FSequent( antecedent, succedent )
+    HOLSequent( antecedent, succedent )
   }
 
-  private def fixupConstants( seq: FSequent ) =
+  private def fixupConstants( seq: HOLSequent ) =
     NameReplacement( seq, Map( "z" -> ( 0, "0" ) ) )
 
   private def fixupNonPrenex( f: HOLFormula ): Seq[HOLFormula] = f match {
@@ -38,10 +38,10 @@ object TipParser {
     case All( v, g )        => fixupNonPrenex( g ).map( All( v, _ ) )
   }
 
-  private def fixupNonPrenex( seq: FSequent ): FSequent =
-    FSequent( seq.antecedent.flatMap( fixupNonPrenex ), seq.succedent )
+  private def fixupNonPrenex( seq: HOLSequent ): HOLSequent =
+    HOLSequent( seq.antecedent.flatMap( fixupNonPrenex ), seq.succedent )
 
-  def parse( contents: String ): FSequent = {
+  def parse( contents: String ): HOLSequent = {
     val ladr = withTempFile.fromString( contents ) { tipFile =>
       Seq( "tip", "--why", tipFile ) #|
         Seq( "why3", "prove", "-D", "eprover", "-F", "whyml", "-" ) #|

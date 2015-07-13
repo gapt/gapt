@@ -78,7 +78,7 @@ object ForallLeftRule extends WeakRuleHelper( false ) {
       val prinFormula = getPrinFormula( main, aux_fo )
       val sequent = getSequent( s1.root, aux_fo, prinFormula )
 
-      new UnaryTree[Sequent]( sequent, s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+      new UnaryTree[OccSequent]( sequent, s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
         def rule = ForallLeftRuleType
         def aux = ( aux_fo :: Nil ) :: Nil
         def prin = prinFormula :: Nil
@@ -108,7 +108,7 @@ object ForallLeftRule extends WeakRuleHelper( false ) {
    * @param term The term to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return The sequent (sL, Forall x.A |- sR).
    */
-  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ) = {
+  def apply( s1: OccSequent, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ) = {
     val aux_fo = getTerms( s1, term1oc, main, term )
     val prinFormula = getPrinFormula( main, aux_fo )
     getSequent( s1, aux_fo, prinFormula )
@@ -169,7 +169,7 @@ object ExistsRightRule extends WeakRuleHelper( true ) {
       val prinFormula = getPrinFormula( main, aux_fo )
       val sequent = getSequent( s1.root, aux_fo, prinFormula )
 
-      new UnaryTree[Sequent]( sequent, s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+      new UnaryTree[OccSequent]( sequent, s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
         def rule = ExistsRightRuleType
         def aux = ( aux_fo :: Nil ) :: Nil
         def prin = prinFormula :: Nil
@@ -198,7 +198,7 @@ object ExistsRightRule extends WeakRuleHelper( true ) {
    * @param term The term to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ) = {
+  def apply( s1: OccSequent, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ) = {
     val aux_fo = getTerms( s1, term1oc, main, term )
     val prinFormula = getPrinFormula( main, aux_fo )
     getSequent( s1, aux_fo, prinFormula )
@@ -258,7 +258,7 @@ object ForallRightRule extends StrongRuleHelper( true ) {
       val prinFormula = getPrinFormula( main, aux_fo )
       val sequent = getSequent( s1.root, aux_fo, prinFormula )
 
-      new UnaryTree[Sequent]( sequent, s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
+      new UnaryTree[OccSequent]( sequent, s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
         def rule = ForallRightRuleType
         def aux = ( aux_fo :: Nil ) :: Nil
         def prin = prinFormula :: Nil
@@ -295,7 +295,7 @@ object ForallRightRule extends StrongRuleHelper( true ) {
    * @param eigen_var The eigenvariable to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return The sequent (sL |- sR, Forall x.A).
    */
-  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ) = {
+  def apply( s1: OccSequent, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ) = {
     val aux_fo = getTerms( s1, term1oc, main, eigen_var )
     val prinFormula = getPrinFormula( main, aux_fo )
     getSequent( s1, aux_fo, prinFormula )
@@ -355,7 +355,7 @@ object ExistsLeftRule extends StrongRuleHelper( false ) {
       val prinFormula = getPrinFormula( main, aux_fo )
       val sequent = getSequent( s1.root, aux_fo, prinFormula )
 
-      new UnaryTree[Sequent]( sequent, s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
+      new UnaryTree[OccSequent]( sequent, s1 ) with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable {
         def rule = ExistsLeftRuleType
         def aux = ( aux_fo :: Nil ) :: Nil
         def prin = prinFormula :: Nil
@@ -392,7 +392,7 @@ object ExistsLeftRule extends StrongRuleHelper( false ) {
    * @param eigen_var The eigenvariable to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return The sequent (sL, Exists x.A |- sR).
    */
-  def apply( s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ) = {
+  def apply( s1: OccSequent, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ) = {
     val aux_fo = getTerms( s1, term1oc, main, eigen_var )
     val prinFormula = getPrinFormula( main, aux_fo )
     getSequent( s1, aux_fo, prinFormula )
@@ -411,26 +411,26 @@ class QuantifierRuleHelper( polarity: Boolean ) {
     aux_fo.factory.createFormulaOccurrence( main, aux_fo :: Nil )
   }
 
-  private[lk] def getSequent( s1: Sequent, aux_fo: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
+  private[lk] def getSequent( s1: OccSequent, aux_fo: FormulaOccurrence, prinFormula: FormulaOccurrence ) = {
     if ( polarity == false ) {
       //working on antecedent {
       val ant = createContext( s1.antecedent.filterNot( _ == aux_fo ) )
       val antecedent = ant :+ prinFormula
       val succedent = createContext( s1.succedent )
-      Sequent( antecedent, succedent )
+      OccSequent( antecedent, succedent )
     } else {
       //working on succedent
       val antecedent = createContext( s1.antecedent )
       val suc = createContext( s1.succedent.filterNot( _ == aux_fo ) )
       val succedent = suc :+ prinFormula
-      Sequent( antecedent, succedent )
+      OccSequent( antecedent, succedent )
     }
 
   }
 }
 
 class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polarity ) {
-  private[lk] def getTerms( s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ) = {
+  private[lk] def getTerms( s1: OccSequent, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ) = {
     val foccs = if ( polarity == false ) s1.antecedent else s1.succedent
     foccs.find( _ == term1oc ) match {
       case None => throw new LKRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
@@ -480,7 +480,7 @@ class WeakRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polarity
     case _ => throw new LKRuleCreationException( "Main formula of a quantifier rule must start with a strong quantfier." )
   }
 
-  private[lk] def getTerms( s1: Sequent, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ) = {
+  private[lk] def getTerms( s1: OccSequent, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ) = {
     val foccs = if ( polarity == false ) s1.antecedent else s1.succedent
     foccs.find( _ == term1oc ) match {
       case None => throw new LKRuleCreationException( "Auxiliary formulas are not contained in the correct part of the sequent!" )

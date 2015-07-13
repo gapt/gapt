@@ -2,7 +2,7 @@
 package at.logic.gapt.proofs.ceres.clauseSets
 
 import at.logic.gapt.proofs.lk.getCutAncestors
-import at.logic.gapt.proofs.lk.base.Sequent
+import at.logic.gapt.proofs.lk.base.OccSequent
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.expr._
@@ -35,8 +35,8 @@ class ClauseSetsTest extends Specification {
       val struct = Times( Plus( A( fa ), A( fb ) ), Plus( A( fc ), A( fd ) ) )
       val cs = StandardClauseSet.transformStructToClauseSet( struct )
       val res = cs.forall( seq => seq.antecedent.isEmpty && (
-        seq =^ Sequent( Nil, List( fa, fc ) ) || seq =^ Sequent( Nil, List( fa, fd ) ) ||
-        seq =^ Sequent( Nil, List( fb, fc ) ) || seq =^ Sequent( Nil, List( fb, fd ) )
+        seq =^ OccSequent( Nil, List( fa, fc ) ) || seq =^ OccSequent( Nil, List( fa, fd ) ) ||
+        seq =^ OccSequent( Nil, List( fb, fc ) ) || seq =^ OccSequent( Nil, List( fb, fd ) )
       ) )
       res must beTrue
     }
@@ -59,7 +59,7 @@ class ClauseSetsTest extends Specification {
 
       val n = IntVar( "n" )
       val struct = StructCreators.extract( p1s, getCutAncestors( p1s ) )
-      val cs: List[Sequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( struct ) ) )
+      val cs: List[OccSequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( struct ) ) )
 
       val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), Succ( IntZero() ) )
       var subst = SchemaSubstitution( new_map )

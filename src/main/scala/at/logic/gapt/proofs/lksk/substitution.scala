@@ -12,17 +12,17 @@ import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 object applySubstitution extends at.logic.gapt.utils.logging.Logger {
   import at.logic.gapt.proofs.lk.ProofTransformationUtils.computeMap
 
-  def toLabelledSequent( so: Sequent ) = new LabelledSequent(
+  def toLabelledSequent( so: OccSequent ) = new LabelledOccSequent(
     so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
     so.succedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] )
   )
 
   def apply( proof: LKProof, subst: Substitution ): ( LKProof, Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ) =
     proof match {
-      case Axiom( so: LabelledSequent ) => {
+      case Axiom( so: LabelledOccSequent ) => {
         val ant_occs = so.l_antecedent
         val succ_occs = so.l_succedent
-        val seq = FSequent( ant_occs.map( fo => normalize( subst( fo.formula ) ) ), succ_occs.map( fo => normalize( subst( fo.formula ) ) ) )
+        val seq = HOLSequent( ant_occs.map( fo => normalize( subst( fo.formula ) ) ), succ_occs.map( fo => normalize( subst( fo.formula ) ) ) )
         val labels_ant = ant_occs.map( fo => fo.skolem_label.map( t => subst( t ) ) ).toList
         val labels_succ = succ_occs.map( fo => fo.skolem_label.map( t => subst( t ) ) ).toList
         val ( a, ( antecedent, succedent ) ) = Axiom.createDefault( seq, Tuple2( labels_ant, labels_succ ) )

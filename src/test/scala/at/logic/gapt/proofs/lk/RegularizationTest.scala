@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import org.specs2.mutable._
 
 class RegularizationTest extends Specification {
@@ -12,12 +12,12 @@ class RegularizationTest extends Specification {
       val x = Var( "x", Ti )
       val P = Const( "P", Ti -> To )
       val px = HOLAtom( P, x :: Nil )
-      val s = FSequent( px :: Nil, px :: Nil )
+      val s = HOLSequent( px :: Nil, px :: Nil )
       val ax1 = Axiom( px :: Nil, px :: Nil )
       val ax2 = Axiom( px :: Nil, px :: Nil )
       val proof = CutRule( ax1, ax2, ax1.root.succedent.head, ax2.root.antecedent.head )
       val p_s = regularize( proof )
-      val s2 = p_s.root.toFSequent
+      val s2 = p_s.root.toHOLSequent
       s2 must beEqualTo( s )
     }
 

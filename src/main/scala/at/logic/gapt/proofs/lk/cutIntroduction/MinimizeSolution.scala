@@ -9,7 +9,6 @@ package at.logic.gapt.proofs.lk.cutIntroduction
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.MyFClause._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr.hol._
@@ -122,14 +121,14 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     }
   }
 
-  private def instantiateSequent( seq: FSequent, map: Map[FOLFormula, List[List[FOLTerm]]] ) = {
+  private def instantiateSequent( seq: HOLSequent, map: Map[FOLFormula, List[List[FOLTerm]]] ) = {
     def fun( l: Seq[FOLFormula] ) = l.flatMap( f =>
       map.get( f ) match {
         case None                 => f :: Nil
         case Some( termlistlist ) => instantiate( f, termlistlist )
       } )
 
-    new FSequent( fun( seq.antecedent.asInstanceOf[List[FOLFormula]] ), fun( seq.succedent.asInstanceOf[List[FOLFormula]] ) )
+    new HOLSequent( fun( seq.antecedent.asInstanceOf[List[FOLFormula]] ), fun( seq.succedent.asInstanceOf[List[FOLFormula]] ) )
   }
 
   // Computes the intermediary solution, which is an extended herbrand sequent with a MultiGrammar
@@ -143,7 +142,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     val orig_es = base.endSequent
 
     trace( "computing context of intermediary solution" )
-    val es1 = new FSequent( getIntermediaryContext( grammar, cfs ), Nil )
+    val es1 = new HOLSequent( getIntermediaryContext( grammar, cfs ), Nil )
     trace( "computed context (es1): " + es1 )
     //    trace( "computing ES-part of intermediary solution" )
     //    val es2 = instantiateSequent( orig_es, getT( l, grammar ) )
@@ -211,10 +210,10 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
    * @param formula A list of clauses.
    * @return Formula, but with each atom turned into a tuple. The 2nd component is the atom's index.
    */
-  def numberAtoms( formula: List[MyFClause[FOLFormula]] ) =
+  def numberAtoms( formula: List[FOLClause] ) =
     ListSupport.mapAccumL(
-      ( c: Int, cl: MyFClause[FOLFormula] ) => ( c + cl.neg.length + cl.pos.length,
-        new MyFClause( cl.neg zip ( Stream from c ), cl.pos zip ( Stream from ( c + cl.neg.length ) ) ) ),
+      ( c: Int, cl: FOLClause ) => ( c + cl.negative.length + cl.positive.length,
+        new Clause( cl.negative zip ( Stream from c ), cl.positive zip ( Stream from ( c + cl.negative.length ) ) ) ),
       0, formula
     )._2
 
@@ -261,12 +260,12 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     //0. Convert to a clause set where each clause is a list of positive and negative atoms.
     //1. assign a number to every atom in F.
-    val fNumbered = numberAtoms( CNFp.toFClauseList( form2 ).map( c => toMyFClause( c ) ).toList )
+    val fNumbered = numberAtoms( CNFp.toClauseList( form2 ).toList )
 
     //2. gather the positive and negative occurrences o every variable v into sets v+ and v-.
     val posNegSets = fNumbered.foldLeft( Map[FOLFormula, ( Set[Int], Set[Int] )]() ) { ( m, clause ) =>
-      val neg = clause.neg
-      val pos = clause.pos
+      val neg = clause.negative
+      val pos = clause.positive
 
       //Add the negative atoms of the clause to the negative set.
       val m2 = neg.foldLeft( m ) { ( m, pair ) =>
@@ -305,7 +304,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
         val appliedPairs:   List[( ( Int, Int ), Int )],
         val remainingPairs: List[( ( Int, Int ), Int )],
         val resolvedVars:   Set[Int],
-        val currentFormula: List[MyFClause[( FOLFormula, Int )]]
+        val currentFormula: List[Clause[( FOLFormula, Int )]]
     ) extends SetNode[( Int, Int )] {
 
       def includedElements: List[( ( Int, Int ), Int )] = appliedPairs
@@ -349,7 +348,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     //node-filter which checks for validity using miniSAT
     def nodeFilter( node: ResNode ): Boolean = {
       satCount = satCount + 1
-      isValidWith( ehs, prover, All.Block( xs, NumberedCNFtoFormula( node.currentFormula ) ) )
+      isValidWith( ehs, prover, All.Block( xs, FOLClause.NumberedCNFtoFormula( node.currentFormula ) ) )
     }
 
     //Perform the DFS
@@ -357,7 +356,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
 
     //All-quantify the found solutions.
     //debug("IMPROVESOLUTION 2 - # of sets examined: " + satCount + ".finished")
-    solutions.map( n => NumberedCNFtoFormula( n.currentFormula ) ).map( s => All.Block( xs, s ) )
+    solutions.map( n => FOLClause.NumberedCNFtoFormula( n.currentFormula ) ).map( s => All.Block( xs, s ) )
   }
 
   /**

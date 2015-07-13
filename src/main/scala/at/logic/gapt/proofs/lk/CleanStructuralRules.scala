@@ -31,7 +31,7 @@ object CleanStructuralRules {
   def apply( p: LKProof ): LKProof = {
     cleanStructuralRules( p, {
       ( proof, ws ) =>
-        done( WeakeningMacroRule( proof, p.root.toFSequent ) )
+        done( WeakeningMacroRule( proof, p.root.toHOLSequent ) )
     } ).result
   }
 

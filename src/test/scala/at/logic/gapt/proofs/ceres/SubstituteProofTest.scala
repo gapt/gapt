@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.algorithms.ceres.ACNF
 
 import org.specs2.mutable._
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
 import at.logic.gapt.formats.llk.HybridLatexParser
 import java.io.File.separator
 import at.logic.gapt.expr._
@@ -36,20 +36,20 @@ class SubstituteProofTest extends Specification {
 
     "work on simple proofs (2)" in {
       val p_ = SubstituteProof(map("P2"), sub1)
-      val fs = map("P2").root.toFSequent
+      val fs = map("P2").root.toHOLSequent
       val fssub = FSequent(fs.antecedent map (x => sub1(x)),
                            fs.succedent map (x => sub1(x)))
-      p_.root.toFSequent must beSyntacticFSequentEqual (fssub)
+      p_.root.toHOLSequent must beSyntacticFSequentEqual (fssub)
     }
 
     "work on simple proofs (3)" in {
       skipped("meh")
       val p_ = SubstituteProof(map("P3"), sub1)
-      val fs = map("P3").root.toFSequent
+      val fs = map("P3").root.toHOLSequent
       p_.root must beSyntacticMultisetEqual (map("P3").root)
       val fssub = FSequent(fs.antecedent map (x => sub1(x)),
         fs.succedent map (x => sub1(x)))
-      p_.root.toFSequent must beSyntacticFSequentEqual (fssub)
+      p_.root.toHOLSequent must beSyntacticFSequentEqual (fssub)
     }
 
 

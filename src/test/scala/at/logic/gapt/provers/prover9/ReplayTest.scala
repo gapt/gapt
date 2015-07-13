@@ -4,9 +4,9 @@
 
 package at.logic.gapt.provers.prover9
 
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.occurrences.factory
-import at.logic.gapt.proofs.resolution.Clause
+import at.logic.gapt.proofs.resolution.OccClause
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.resolution.robinson.{ Formatter, RobinsonResolutionProof }
 import at.logic.gapt.expr._
@@ -33,14 +33,14 @@ class ReplayTest extends Specification {
 
   implicit def fo2occ( f: FOLFormula ) = factory.createFormulaOccurrence( f, Nil )
 
-  private object MyProver extends Prover[Clause]
+  private object MyProver extends Prover[OccClause]
 
-  def getRefutation( ls: Iterable[FSequent] ): Boolean = MyProver.refute( Stream( SetTargetClause( FSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next must beLike {
-    case Some( a ) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals ( FSequent( List(), List() ) ) => ok
+  def getRefutation( ls: Iterable[HOLSequent] ): Boolean = MyProver.refute( Stream( SetTargetClause( HOLSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next must beLike {
+    case Some( a ) if a.asInstanceOf[ResolutionProof[OccClause]].root syntacticMultisetEquals ( HOLSequent( List(), List() ) ) => ok
     case _ => ko
   }
 
-  def getRefutation2( ls: Iterable[FSequent] ) = MyProver.refute( Stream( SetTargetClause( FSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next
+  def getRefutation2( ls: Iterable[HOLSequent] ) = MyProver.refute( Stream( SetTargetClause( HOLSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next
 
   args( skipAll = !new Prover9Prover().isInstalled )
   "replay" should {
@@ -137,20 +137,20 @@ class ReplayTest extends Specification {
         "f(((X + Z0) + 1) + Z1) = 1"
       ).map( parseFormula )
 
-      val c1 = FSequent( Nil, List( formulas( 0 ), formulas( 1 ) ) )
-      val c2 = FSequent( List( formulas( 2 ), formulas( 3 ) ), Nil )
-      val c3 = FSequent( List( formulas( 4 ), formulas( 5 ) ), Nil )
+      val c1 = HOLSequent( Nil, List( formulas( 0 ), formulas( 1 ) ) )
+      val c2 = HOLSequent( List( formulas( 2 ), formulas( 3 ) ), Nil )
+      val c3 = HOLSequent( List( formulas( 4 ), formulas( 5 ) ), Nil )
 
       val ls = List( c1, c2, c3 )
 
-      val prover = new Prover[Clause] {}
+      val prover = new Prover[OccClause] {}
 
       prover.refute( Stream(
-        SetTargetClause( FSequent( List(), List() ) ),
+        SetTargetClause( HOLSequent( List(), List() ) ),
         Prover9InitCommand( ls ),
         SetStreamCommand()
       ) ).next must beLike {
-        case Some( a ) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals ( FSequent( List(), List() ) ) =>
+        case Some( a ) if a.asInstanceOf[ResolutionProof[OccClause]].root syntacticMultisetEquals ( HOLSequent( List(), List() ) ) =>
           ok
         case _ =>
           ko
@@ -159,9 +159,9 @@ class ReplayTest extends Specification {
 
     "prove (with xx - 3) -=(a,a) | -=(a,a)." in {
       val eaa = parse( "=(a,a)" )
-      val s = FSequent( List( eaa, eaa ), Nil )
+      val s = HOLSequent( List( eaa, eaa ), Nil )
       ( getRefutation2( List( s ) ) match {
-        case Some( a ) if a.asInstanceOf[ResolutionProof[Clause]].root.toFSequent multiSetEquals ( FSequent( List(), List() ) ) => true
+        case Some( a ) if a.asInstanceOf[ResolutionProof[OccClause]].root.toHOLSequent multiSetEquals ( HOLSequent( List(), List() ) ) => true
         case _ => false
       } ) must beTrue
     }
@@ -186,12 +186,12 @@ class ReplayTest extends Specification {
       val idem = parse( "=(*(x,x), e)" )
       val comm = parse( "=(*(x,y), *(y,x))" )
       val ncomm = parse( "=(*(c1,c2), *(c2,c1))" )
-      val s1 = FSequent( Nil, List( assoc ) )
-      val s2 = FSequent( Nil, List( neutr ) )
-      val s3 = FSequent( Nil, List( idem ) )
-      val s4 = FSequent( List( ncomm ), Nil )
+      val s1 = HOLSequent( Nil, List( assoc ) )
+      val s2 = HOLSequent( Nil, List( neutr ) )
+      val s3 = HOLSequent( Nil, List( idem ) )
+      val s4 = HOLSequent( List( ncomm ), Nil )
       ( getRefutation2( List( s1, s2, s3, s4 ) ) match {
-        case Some( a ) if a.asInstanceOf[RobinsonResolutionProof].root.toFSequent multiSetEquals ( FSequent( List(), List() ) ) =>
+        case Some( a ) if a.asInstanceOf[RobinsonResolutionProof].root.toHOLSequent multiSetEquals ( HOLSequent( List(), List() ) ) =>
           //println(Formatter.asHumanReadableString(a)   )
           //println("======= GraphViz output: =======\n" + Formatter.asGraphViz(a)   )
           true
@@ -201,8 +201,8 @@ class ReplayTest extends Specification {
 
     "refute { :- P; P :- }" in {
       val p = FOLAtom( "P", Nil )
-      val s1 = FSequent( Nil, p :: Nil )
-      val s2 = FSequent( p :: Nil, Nil )
+      val s1 = HOLSequent( Nil, p :: Nil )
+      val s2 = HOLSequent( p :: Nil, Nil )
       val result: Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( s1 :: s2 :: Nil )
       result match {
         case Some( proof ) =>
@@ -221,10 +221,10 @@ class ReplayTest extends Specification {
       val pa = parse( "P(a)" )
       val goal = parse( "P(g(a))" )
 
-      val s1 = FSequent( Nil, List( f_eq_g ) )
-      val s2 = FSequent( List( px ), List( pfx ) )
-      val s3 = FSequent( Nil, List( pa ) )
-      val t1 = FSequent( List( goal ), Nil )
+      val s1 = HOLSequent( Nil, List( f_eq_g ) )
+      val s2 = HOLSequent( List( px ), List( pfx ) )
+      val s3 = HOLSequent( Nil, List( pa ) )
+      val t1 = HOLSequent( List( goal ), Nil )
       //println(TPTPFOLExporter.tptp_problem(List(s1,s2,s3,t1)))
       //println()
       val Some( result ) = getRefutation2( List( s1, s2, s3, t1 ) )

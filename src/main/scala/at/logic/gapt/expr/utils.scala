@@ -5,8 +5,8 @@
 package at.logic.gapt.expr
 
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
-import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, LKProof }
-import at.logic.gapt.proofs.resolution.FClause
+import at.logic.gapt.proofs.lk.base.{ OccSequent, HOLSequent, LKProof }
+import at.logic.gapt.proofs.resolution.HOLClause
 
 import scala.collection.GenTraversable
 
@@ -64,8 +64,8 @@ object variables {
   }
 
   def apply( t: FOLTerm ): Set[FOLVar] = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
-  def apply( s: FSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
-  def apply( s: Sequent ): Set[Var] = apply( s.toFSequent )
+  def apply( s: HOLSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
+  def apply( s: OccSequent )( implicit dummy: DummyImplicit ): Set[Var] = apply( s.toHOLSequent )
   def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
 }
 
@@ -81,7 +81,7 @@ object freeVariables {
 
   def apply( es: GenTraversable[FOLExpression] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = ( Set.empty[FOLVar] /: es ) { ( acc, e ) => acc union apply( e ) }
 
-  def apply( seq: FSequent ): Set[Var] = apply( seq.antecedent ++ seq.succedent )
+  def apply( seq: HOLSequent ): Set[Var] = apply( seq.antecedent ++ seq.succedent )
 
   private def apply_( e: LambdaExpression, boundvars: Set[Var] ): Set[Var] = e match {
     case v: Var          => if ( !boundvars.contains( v ) ) Set( v ) else Set()
@@ -105,10 +105,9 @@ object constants {
 
   def apply( es: GenTraversable[LambdaExpression] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }
 
-  def apply( s: FSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
-  def apply( s: Sequent ): Set[Const] = apply( s.toFSequent )
+  def apply( s: HOLSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
+  def apply( s: OccSequent )( implicit dummy: DummyImplicit ): Set[Const] = apply( s.toHOLSequent )
   def apply( p: LKProof ): Set[Const] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
-  def apply( clause: FClause ): Set[Const] = ( clause.neg ++ clause.pos ).flatMap( apply ).toSet
 }
 
 /**

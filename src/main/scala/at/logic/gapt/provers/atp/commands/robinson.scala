@@ -4,9 +4,9 @@ package at.logic.gapt.provers.atp.commands.robinson
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.fol.UnificationAlgorithm
 import at.logic.gapt.expr.hol.HOLPosition
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.proofs.resolution.Clause
+import at.logic.gapt.proofs.resolution.OccClause
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.ProverException
@@ -17,10 +17,10 @@ import at.logic.gapt.utils.ds.PublishingBuffer
 import at.logic.gapt.utils.logging.Logger
 
 // adds to the state the initial set of resolution proofs, made from the input clauses
-case class SetClausesCommand( override val clauses: Iterable[FSequent] ) extends SetSequentsCommand[Clause]( clauses ) {
+case class SetClausesCommand( override val clauses: Iterable[HOLSequent] ) extends SetSequentsCommand[OccClause]( clauses ) {
   def apply( state: State, data: Any ) = {
     val pb = new PublishingBuffer[RobinsonResolutionProof]
-    clauses.foreach( x => pb += InitialClause( x._1.asInstanceOf[Seq[FOLFormula]], x._2.asInstanceOf[Seq[FOLFormula]] ) )
+    clauses.foreach( x => pb += InitialClause( x.antecedent.asInstanceOf[Seq[FOLFormula]], x.succedent.asInstanceOf[Seq[FOLFormula]] ) )
     List( ( state += new Tuple2( "clauses", pb ), data ) )
   }
 
@@ -29,7 +29,7 @@ case class SetClausesCommand( override val clauses: Iterable[FSequent] ) extends
 }
 
 // this should also work with subsumption but as we replace the pb we need to remove subsumption managers if there are any in the state
-case object SetClausesFromDataCommand extends DataCommand[Clause] {
+case object SetClausesFromDataCommand extends DataCommand[OccClause] {
   def apply( state: State, data: Any ) = {
     state.remove( "simpleSubsumManager" )
     // we need a better way to reset things that are connected to the pb such as a specific
@@ -44,7 +44,7 @@ case object SetClausesFromDataCommand extends DataCommand[Clause] {
 }
 
 // create variants to a pair of two clauses
-case object VariantsCommand extends DataCommand[Clause] with Logger {
+case object VariantsCommand extends DataCommand[OccClause] with Logger {
   def apply( state: State, data: Any ) = {
     val p = data.asInstanceOf[Tuple2[RobinsonResolutionProof, RobinsonResolutionProof]]
     debug( p toString )
@@ -53,7 +53,7 @@ case object VariantsCommand extends DataCommand[Clause] with Logger {
   override def toString = "VariantsCommand()"
 }
 
-case class ResolveCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
+case class ResolveCommand( alg: UnificationAlgorithm ) extends DataCommand[OccClause] with Logger {
   def apply( state: State, data: Any ) = {
     val ( ( p1, ( lit1, b1 ) ) :: ( p2, ( lit2, b2 ) ) :: Nil ) = data.asInstanceOf[Iterable[Tuple2[RobinsonResolutionProof, Tuple2[FormulaOccurrence, Boolean]]]].toList
     val mgus = alg.unify( lit1.formula.asInstanceOf[FOLExpression], lit2.formula.asInstanceOf[FOLExpression] )
@@ -66,7 +66,7 @@ case class ResolveCommand( alg: UnificationAlgorithm ) extends DataCommand[Claus
 }
 
 // this command should be used when the target clause is not the empty clause and should be called before Resolution is called
-case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
+case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[OccClause] with Logger {
   // computes all subsets
   private def sb[T]( ls: List[T] ): List[List[T]] = ls match {
     case Nil      => Nil
@@ -122,7 +122,7 @@ case class ClauseFactorCommand( alg: UnificationAlgorithm ) extends DataCommand[
 
 // this command factorize only on the side of the resolving assuming on the way to the empty clause we will factorize also on the other side
 // should be called after resolution is called
-case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
+case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[OccClause] with Logger {
   def apply( state: State, data: Any ) = {
     val res @ Resolution( cls, pr1, pr2, occ1, occ2, sub ) = data.asInstanceOf[RobinsonResolutionProof]
     val factors1 = computeFactors( alg, pr1.root.succedent, pr1.root.succedent.filterNot( _ == occ1 ).toList, occ1, FOLSubstitution() /*sub.asInstanceOf[Substitution]*/ , Nil )
@@ -174,7 +174,7 @@ case class FactorCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause
 
 }
 
-case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataCommand[Clause] with Logger {
+case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataCommand[OccClause] with Logger {
   def apply( state: State, data: Any ) = {
     val ( p1, p2 ) = data.asInstanceOf[Tuple2[RobinsonResolutionProof, RobinsonResolutionProof]]
     apply( p1, p2 ).flatMap( x => x.map( y => ( state, y ) ) )
@@ -238,7 +238,7 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
 }
 
 // create variants to a pair of two clauses and propagate the literal and position information
-case object VariantLiteralPositionCommand extends DataCommand[Clause] {
+case object VariantLiteralPositionCommand extends DataCommand[OccClause] {
   def apply( state: State, data: Any ) = {
     val ( ( p1, occ1, pos1 ) :: ( p2, occ2, pos2 ) :: Nil ) = data.asInstanceOf[Iterable[Tuple3[RobinsonResolutionProof, Tuple2[FormulaOccurrence, Boolean], Iterable[Int]]]].toList
     val v1 = Variant( p1 )
@@ -251,7 +251,7 @@ case object VariantLiteralPositionCommand extends DataCommand[Clause] {
 }
 
 // create variants to a pair of two clauses and propagate the literal information
-case object VariantLiteralCommand extends DataCommand[Clause] {
+case object VariantLiteralCommand extends DataCommand[OccClause] {
   def apply( state: State, data: Any ) = {
     val ( ( p1, occ1 ) :: ( p2, occ2 ) :: Nil ) = data.asInstanceOf[Iterable[Tuple2[RobinsonResolutionProof, Tuple2[FormulaOccurrence, Boolean]]]].toList
     val v1 = Variant( p1 )

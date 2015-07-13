@@ -211,7 +211,7 @@ class map_proof {
     old_proof:   LKProof,
     new_p1:      ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
     new_p2:      ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-    s:           Sequent,
+    s:           OccSequent,
     a1:          FormulaOccurrence,
     a2:          FormulaOccurrence,
     m:           HOLFormula

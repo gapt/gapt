@@ -36,7 +36,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     val q_opt = {
       try {
-        if ( isFOLPrenexSigma1( p.root.toFSequent ) )
+        if ( isFOLPrenexSigma1( p.root.toHOLSequent ) )
           Some( CutIntroduction.one_cut_many_quantifiers( p, false ) )
         else
           None

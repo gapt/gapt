@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ Sequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ OccSequent, LKProof }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.shlk.{ SchemaProof, SchemaProofDB }
 import at.logic.gapt.expr._

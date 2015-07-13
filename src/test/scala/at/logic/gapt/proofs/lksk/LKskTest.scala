@@ -9,7 +9,7 @@ import org.specs2.mutable._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom, _ }
 import TypeSynonyms._
 import at.logic.gapt.proofs.occurrences.FOFactory
@@ -22,9 +22,9 @@ class LKskTest extends Specification {
   val v2 = Var( "c", Ti )
   val f2 = HOLAtom( c1, v1 :: Nil )
   val f3 = HOLAtom( Var( "e", To ) )
-  val ax = Axiom.createDefault( new FSequent( f1 :: Nil, f1 :: Nil ), Tuple2( ( EmptyLabel() + f2 ) :: Nil, EmptyLabel() :: Nil ) )
+  val ax = Axiom.createDefault( new HOLSequent( f1 :: Nil, f1 :: Nil ), Tuple2( ( EmptyLabel() + f2 ) :: Nil, EmptyLabel() :: Nil ) )
   val a1 = ax._1 // Axiom return a pair of the proof and a mapping and we want only the proof here
-  val a2 = ( Axiom.createDefault( new FSequent( f1 :: Nil, f1 :: Nil ), Tuple2( ( EmptyLabel() + f2 ) :: Nil, ( EmptyLabel() + f3 ) :: Nil ) ) )._1
+  val a2 = ( Axiom.createDefault( new HOLSequent( f1 :: Nil, f1 :: Nil ), Tuple2( ( EmptyLabel() + f2 ) :: Nil, ( EmptyLabel() + f3 ) :: Nil ) ) )._1
 
   "The factories/extractors for LKsk" should {
     "work for Axioms" in {

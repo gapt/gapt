@@ -7,7 +7,7 @@ package at.logic.gapt.provers.atp
 import at.logic.gapt.expr.FOLExpression
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.expr.fol.{ UnificationAlgorithm, FOLMatchingAlgorithm, FOLUnificationAlgorithm }
-import at.logic.gapt.proofs.resolution.{ Clause, ResolutionProof }
+import at.logic.gapt.proofs.resolution.{ OccClause, ResolutionProof }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.simple.SimpleResolutionParserFOL
 import at.logic.gapt.formats.readers.FileReader
@@ -37,35 +37,35 @@ import Definitions._
 
 object Main {
 
-  def stream1: Stream[Command[Clause]] = Stream.cons(
-    getTwoClausesFromUICommand[Clause]( PromptTerminal.GetTwoClauses ),
+  def stream1: Stream[Command[OccClause]] = Stream.cons(
+    getTwoClausesFromUICommand[OccClause]( PromptTerminal.GetTwoClauses ),
     Stream.cons(
       VariantsCommand,
       Stream.cons(
-        DeterministicAndCommand[Clause]( (
-          List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
+        DeterministicAndCommand[OccClause]( (
+          List( ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
           List( ParamodulationCommand( FOLUnificationAlgorithm ) )
         ) ),
         Stream.cons(
-          SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+          SimpleForwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
           Stream.cons(
-            SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+            SimpleBackwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
             Stream.cons(
-              InsertResolventCommand[Clause],
-              Stream.cons( RefutationReachedCommand[Clause], stream1 )
+              InsertResolventCommand[OccClause],
+              Stream.cons( RefutationReachedCommand[OccClause], stream1 )
             )
           )
         )
       )
     )
   )
-  def stream: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1 ) )
+  def stream: Stream[Command[OccClause]] = Stream.cons( SetTargetClause( HOLSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1 ) )
   def main( args: Array[String] ) {
     if ( args.length < 1 ) {
       println( helpmsg )
       return
     }
-    val prover = new Prover[Clause] {}
+    val prover = new Prover[OccClause] {}
     prover.refute( Stream.cons( SetClausesCommand( ( new FileReader( args( 0 ) ) with SimpleResolutionParserFOL ).getClauseList ), stream ) ).next
   }
 
@@ -96,17 +96,17 @@ object SearchDerivation extends at.logic.gapt.utils.logging.Logger {
       }
   }
 
-  def stream1( alg: UnificationAlgorithm ): Stream[Command[Clause]] = Stream.cons( SequentsMacroCommand[Clause](
-    SimpleRefinementGetCommand[Clause],
-    List( ClauseFactorCommand( alg ), ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( alg ),
-      InsertResolventCommand[Clause] ),
-    SubsumedTargedReachedCommand[Clause]
+  def stream1( alg: UnificationAlgorithm ): Stream[Command[OccClause]] = Stream.cons( SequentsMacroCommand[OccClause](
+    SimpleRefinementGetCommand[OccClause],
+    List( ClauseFactorCommand( alg ), ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( alg ),
+      InsertResolventCommand[OccClause] ),
+    SubsumedTargedReachedCommand[OccClause]
   ), stream1( alg ) )
-  def stream( f: FSequent, alg: UnificationAlgorithm ): Stream[Command[Clause]] = Stream.cons( SetTargetClause( f ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1( alg ) ) )
+  def stream( f: HOLSequent, alg: UnificationAlgorithm ): Stream[Command[OccClause]] = Stream.cons( SetTargetClause( f ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1( alg ) ) )
 
-  object MyProver extends Prover[Clause]
+  object MyProver extends Prover[OccClause]
 
-  def apply( initial_clauses: Seq[FSequent], target: FSequent, propositional: Boolean = false ) = {
+  def apply( initial_clauses: Seq[HOLSequent], target: HOLSequent, propositional: Boolean = false ) = {
     val alg = if ( propositional ) triv_unification else FOLUnificationAlgorithm
     val msg = if ( propositional ) "propositional" else "first-order"
     trace( "Looking for a " + msg + " resolution derivation of " + target + " from " + initial_clauses + "." )
@@ -116,7 +116,7 @@ object SearchDerivation extends at.logic.gapt.utils.logging.Logger {
 
 class ProverException( msg: String ) extends Exception( msg )
 
-trait Prover[V <: Sequent] extends Logger {
+trait Prover[V <: OccSequent] extends Logger {
 
   def refute( commands: Stream[Command[V]] ): NDStream[ResolutionProof[V]] = {
     //println("\nrefute")

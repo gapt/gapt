@@ -8,11 +8,11 @@ import scala.sys.process._
 import java.io._
 import at.logic.gapt.provers._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 class VeriTProver extends Prover with ExternalProgram {
 
-  override def isValid( s: FSequent ): Boolean = {
+  override def isValid( s: HOLSequent ): Boolean = {
 
     // Generate the input file for veriT
     val veritInput = VeriTExporter( s )
@@ -33,7 +33,7 @@ class VeriTProver extends Prover with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  override def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] = {
+  override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] = {
     val smtBenchmark = VeriTExporter( s )
 
     val output = withTempFile.fromString( smtBenchmark ) { smtFile =>
@@ -62,7 +62,7 @@ class VeriTProver extends Prover with ExternalProgram {
   // VeriT proofs are parsed as Expansion Trees.
   // At the moment there is no method implemented that 
   // would generate an LK proof from an Expansion Tree.
-  override def getLKProof( s: FSequent ) =
+  override def getLKProof( s: HOLSequent ) =
     throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
   override def getLKProof( f: HOLFormula ) =
     throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )

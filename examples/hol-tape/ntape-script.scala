@@ -97,7 +97,7 @@ import at.logic.gapt.proofs.lk.LKToLKsk
       val Some(rp) = new Prover9Prover().getRobinsonProof(folcl)
 
       show("Getting formulas")
-      val proofformulas = selp.nodes.flatMap(_.asInstanceOf[LKProof].root.toFSequent.formulas  ).toList.distinct
+      val proofformulas = selp.nodes.flatMap(_.asInstanceOf[LKProof].root.toHOLSequent.formulas  ).toList.distinct
 
       show("Extracting signature from "+proofformulas.size+ " formulas")
       val (sigc, sigv) = undoHol2Fol.getSignature( proofformulas )

@@ -9,7 +9,7 @@ import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.IvyParser.IvyStyleVariables
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
 import at.logic.gapt.proofs.lk.applyReplacement
-import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
+import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
@@ -22,23 +22,20 @@ import scala.io.Source
 import scala.sys.process._
 
 class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends Prover with ExternalProgram {
-  override def getLKProof( seq: FSequent ): Option[LKProof] =
+  override def getLKProof( seq: HOLSequent ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
       getRobinsonProof( seq ) map { robinsonProof =>
         RobinsonToLK( robinsonProof, seq )
       }
     }
 
-  override def isValid( seq: FSequent ): Boolean =
+  override def isValid( seq: HOLSequent ): Boolean =
     getRobinsonProof( groundFreeVariables( seq )._1 ).isDefined
 
-  def getRobinsonProof( seq: FSequent ): Option[RobinsonResolutionProof] =
+  def getRobinsonProof( seq: HOLSequent ): Option[RobinsonResolutionProof] =
     getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
 
-  def getRobinsonProof( cnf: List[FSequent] )( implicit dummyImplicit: DummyImplicit ): Option[RobinsonResolutionProof] =
-    getRobinsonProof( cnf.map { case FSequent( ant, suc ) => FClause( ant, suc ) } )
-
-  def getRobinsonProof( cnf: List[FClause] ): Option[RobinsonResolutionProof] =
+  def getRobinsonProof( cnf: List[HOLClause] ): Option[RobinsonResolutionProof] =
     withRenamedConstants( cnf ) {
       case ( renaming, cnf ) =>
         val p9Input = toP9Input( cnf, renaming )
@@ -88,33 +85,33 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
       }
     }
 
-    val closure = FSequent(
+    val closure = HOLSequent(
       endSequent.antecedent.map( x => univclosure( x ) ),
       endSequent.succedent.map( x => existsclosure( x ) )
     )
 
     val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
 
-    val fixedResProof = fixDerivation( resProof, ourCNF.map( _.toFSequent ) )
+    val fixedResProof = fixDerivation( resProof, ourCNF )
 
     RobinsonToLK( fixedResProof, closure )
   }
 
-  private def withRenamedConstants( cnf: List[FClause] )( f: ( Map[Const, String], List[FClause] ) => Option[RobinsonResolutionProof] ): Option[RobinsonResolutionProof] = {
+  private def withRenamedConstants( cnf: List[HOLClause] )( f: ( Map[Const, String], List[HOLClause] ) => Option[RobinsonResolutionProof] ): Option[RobinsonResolutionProof] = {
     val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf )
     f( renaming, renamedCNF ) map { renamedProof =>
       NameReplacement( renamedProof, invertRenaming )
     }
   }
 
-  private def withGroundVariables( seq: FSequent )( f: FSequent => Option[LKProof] ): Option[LKProof] = {
+  private def withGroundVariables( seq: HOLSequent )( f: HOLSequent => Option[LKProof] ): Option[LKProof] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
     f( renamedSeq ) map { renamedProof =>
       applyReplacement( renamedProof, invertRenaming )._1
     }
   }
 
-  def toP9Input( cnf: List[FClause], renaming: Map[Const, String] ): String = {
+  def toP9Input( cnf: List[HOLClause], renaming: Map[Const, String] ): String = {
     val commands = ArrayBuffer[String]()
 
     commands += "set(quiet)" // suppresses noisy output on stderr
@@ -133,7 +130,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
       toSeq.zipWithIndex.map {
         case ( v, i ) => v -> FOLVar( s"x$i" )
       } )( formula )
-  def toP9Input( clause: FClause ): String = toP9Input( renameVars( clause.toFSequent.toFormula ) )
+  def toP9Input( clause: HOLClause ): String = toP9Input( renameVars( clause.toFormula ) )
   def toP9Input( expr: LambdaExpression ): String = expr match {
     case Neg( a )             => s"-${toP9Input( a )}"
     case Or( a, b )           => s"${toP9Input( a )} | ${toP9Input( b )}"

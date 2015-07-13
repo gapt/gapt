@@ -88,8 +88,8 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
       val s = StructCreators.extract( proof )
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent )
-      val prf = deleteTautologies( proofProfile( s, proof ).map( _.toFSequent ) )
+      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent )
+      val prf = deleteTautologies( proofProfile( s, proof ).map( _.toHOLSequent ) )
       val path = "target" + separator + "test1p-out.xml"
       saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
         projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
@@ -189,7 +189,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
 
       val F = Prover9TermParser.parseFormula( "a=b -> b=a" )
-      val E = veriT.getExpansionSequent( FSequent( Nil, F :: Nil ) ).get
+      val E = veriT.getExpansionSequent( HOLSequent( Nil, F :: Nil ) ).get
 
       val Edeep = ETtoDeep( E )
       fsprover.isValid( Edeep ) must beTrue
@@ -202,7 +202,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
       val C = Prover9TermParser.parseFormula( "f(x_0,y_0) = f(y_0,x_0)" )
       val AS = Prover9TermParser.parseFormula( "f(x_0,y_0)=x_0 -> ( f(y_0,x_0)=y_0 -> x_0=y_0 )" )
-      val s = FSequent( C :: Nil, AS :: Nil )
+      val s = HOLSequent( C :: Nil, AS :: Nil )
       val E = veriT.getExpansionSequent( s ).get
 
       val Edeep = ETtoDeep( E )

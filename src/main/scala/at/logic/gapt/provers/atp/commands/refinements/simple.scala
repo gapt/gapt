@@ -1,7 +1,7 @@
 
 package at.logic.gapt.provers.atp.commands.refinements.simple
 
-import at.logic.gapt.proofs.lk.base.Sequent
+import at.logic.gapt.proofs.lk.base.OccSequent
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.provers.atp.commands.base.InitialCommand
 import at.logic.gapt.provers.atp.commands.refinements.base.{ Refinement, RefinementID }
@@ -11,7 +11,7 @@ import at.logic.gapt.utils.logging.Logger
 import collection.mutable.ListBuffer
 
 // the command
-case class SimpleRefinementGetCommand[V <: Sequent]() extends InitialCommand[V] with Logger {
+case class SimpleRefinementGetCommand[V <: OccSequent]() extends InitialCommand[V] with Logger {
   def apply( state: State ) = {
     val refinement =
       if ( state.isDefinedAt( RefinementID() ) ) state( RefinementID() ).asInstanceOf[SimpleRefinement[V]]
@@ -30,7 +30,7 @@ case class SimpleRefinementGetCommand[V <: Sequent]() extends InitialCommand[V] 
 
 }
 
-private[refinements] class SimpleRefinement[V <: Sequent]( clauses: PublishingBuffer[ResolutionProof[V]] ) extends Refinement[V]( clauses ) {
+private[refinements] class SimpleRefinement[V <: OccSequent]( clauses: PublishingBuffer[ResolutionProof[V]] ) extends Refinement[V]( clauses ) {
   val pairs = new ListBuffer[Tuple2[ResolutionProof[V], ResolutionProof[V]]] // all pairs of possible two clauses
   insertClauses
   def getNext: Option[Tuple2[ResolutionProof[V], ResolutionProof[V]]] = if ( isEmpty ) None else Some( pairs.remove( 0 ) )

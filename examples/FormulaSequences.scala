@@ -29,7 +29,7 @@ object PQPairs {
  *
  */
 object BussTautology {
-  def apply( n: Int ) : FSequent = FSequent( Ant( n ), c( n )::d( n )::Nil )
+  def apply( n: Int ) : HOLSequent = HOLSequent( Ant( n ), c( n )::d( n )::Nil )
 
   def c( i: Int ) = FOLAtom( "c_" + i, Nil )
   def d( i: Int ) = FOLAtom( "d_" + i, Nil )

@@ -2,7 +2,7 @@ package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
 
 /**
  * Created by marty on 12/10/13.
@@ -15,7 +15,7 @@ class TPTPHOLExporter {
    *
    * @note In contrast to prover9, for multiple conjectures, each of them has to be proved.
    */
-  def apply( l: List[FSequent], positive: Boolean = false ): String = {
+  def apply( l: List[HOLSequent], positive: Boolean = false ): String = {
     require( l.nonEmpty, "Cannot export an empty sequent list!" )
     val ( vs, vnames, cs, cnames ) = createNamesFromSequent( l )
 
@@ -108,7 +108,7 @@ class TPTPHOLExporter {
     case Var( _, _ ) => map( f.asInstanceOf[Var] )
   }
 
-  def createNamesFromSequent( l: List[FSequent] ): ( List[Var], NameMap, List[Const], CNameMap ) = {
+  def createNamesFromSequent( l: List[HOLSequent] ): ( List[Var], NameMap, List[Const], CNameMap ) = {
     val vs = l.foldLeft( Set[Var]() )( ( set, fs ) => getVars( fs.toFormula, set ) ).toList
     val cs = l.foldLeft( Set[Const]() )( ( set, fs ) => getConsts( fs.toFormula, set ) ).toList
     ( vs, createNamesFromVar( vs ), cs, createNamesFromConst( cs ) )
@@ -123,7 +123,7 @@ class TPTPHOLExporter {
     }
   } )
 
-  def closedFormula( fs: FSequent ): HOLFormula = univclosure( fs.toFormula )
+  def closedFormula( fs: HOLSequent ): HOLFormula = univclosure( fs.toFormula )
 
   def createNamesFromConst( l: List[Const] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {
     if ( map contains v )
@@ -134,7 +134,7 @@ class TPTPHOLExporter {
     }
   } )
 
-  def thf_sequent_dec( i: Int, f: FSequent, vmap: NameMap, cmap: CNameMap ) = {
+  def thf_sequent_dec( i: Int, f: HOLSequent, vmap: NameMap, cmap: CNameMap ) = {
     "thf(" + i + ", conjecture, [" +
       ( f.antecedent.map( f => thf_formula( f, vmap, cmap ) ).mkString( "," ) ) +
       "] --> [" +

@@ -4,13 +4,13 @@ import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.resolution.FClause
+import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.resolution.HOLClause
 
 object renameConstantsToFi {
   private def mkName( i: Int ) = s"f$i"
-  private def getRenaming( seq: FSequent ): Map[Const, String] = getRenaming( constants( seq ) )
-  private def getRenaming( cnf: List[FClause] ): Map[Const, String] =
+  private def getRenaming( seq: HOLSequent ): Map[Const, String] = getRenaming( constants( seq ) )
+  private def getRenaming( cnf: List[HOLClause] ): Map[Const, String] =
     getRenaming( cnf.flatMap( constants( _ ) ).toSet )
   private def getRenaming( constants: Set[Const] ): Map[Const, String] =
     constants.toSeq.zipWithIndex.map {
@@ -24,13 +24,13 @@ object renameConstantsToFi {
   private def invertRenaming( map: SymbolMap ) =
     map.map { case ( from, ( arity, to ) ) => ( to, ( arity, from ) ) }
 
-  def apply( seq: FSequent ): ( FSequent, Map[Const, String], SymbolMap ) = {
+  def apply( seq: HOLSequent ): ( HOLSequent, Map[Const, String], SymbolMap ) = {
     val renaming = getRenaming( seq )
     val map = renamingToSymbolMap( renaming )
     val renamedSeq = NameReplacement( seq, map )
     ( renamedSeq, renaming, invertRenaming( map ) )
   }
-  def apply( cnf: List[FClause] ): ( List[FClause], Map[Const, String], SymbolMap ) = {
+  def apply( cnf: List[HOLClause] ): ( List[HOLClause], Map[Const, String], SymbolMap ) = {
     val renaming = getRenaming( cnf )
     val map = renamingToSymbolMap( renaming )
     val renamedCNF = cnf.map( clause => NameReplacement( clause, map ) )
@@ -47,10 +47,10 @@ object groundFreeVariables {
     }
   }
 
-  def getGroundingMap( seq: FSequent ): Seq[( FOLVar, FOLConst )] =
+  def getGroundingMap( seq: HOLSequent ): Seq[( FOLVar, FOLConst )] =
     getGroundingMap( variables( seq ), constants( seq ) )
 
-  def apply( seq: FSequent ): ( FSequent, Map[FOLTerm, FOLTerm] ) = {
+  def apply( seq: HOLSequent ): ( HOLSequent, Map[FOLTerm, FOLTerm] ) = {
     val groundingMap = getGroundingMap( seq )
     val groundSeq = FOLSubstitution( groundingMap )( seq )
     val unground = groundingMap.map { case ( f, t ) => ( t, f ) }.toMap[FOLTerm, FOLTerm]

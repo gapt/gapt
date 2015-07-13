@@ -226,7 +226,7 @@ object ReductiveCutElim {
       case ( proof: LKProof, Axiom( seq ) ) if ( seq.isTaut ) => proof
       // This is a case for nontautological axioms
       case ( ax1: NullaryLKProof, ax2: NullaryLKProof ) =>
-        val seq = CutRule( ax1, ax2, cutFormula1 ).root.toFSequent
+        val seq = CutRule( ax1, ax2, cutFormula1 ).root.toHOLSequent
         Axiom( seq.antecedent, seq.succedent )
       //case (WeakeningRightRule(up, _, prin), proof: LKProof) => //Can't match this, why??? Fixed: moved as a subcase of UnaryLKProof
       case ( proof: LKProof, WeakeningLeftRule( up, _, prin ) ) =>

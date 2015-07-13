@@ -16,7 +16,7 @@ import at.logic.gapt.formats.readers.XMLReaders.NodeReader
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ FSequent, _ }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, _ }
 import at.logic.gapt.proofs.occurrences._
 
 import scala.Predef._
@@ -26,8 +26,8 @@ import scala.xml._
 class ProofDatabase(
     val Definitions:  Map[LambdaExpression, LambdaExpression],
     val proofs:       List[Tuple2[String, LKProof]],
-    val axioms:       List[FSequent],
-    val sequentLists: List[Tuple2[String, List[FSequent]]]
+    val axioms:       List[HOLSequent],
+    val sequentLists: List[Tuple2[String, List[HOLSequent]]]
 ) {
   //Does a proof lookup by name
   def proof( name: String ): LKProof = {
@@ -37,7 +37,7 @@ class ProofDatabase(
     ps( 0 )._2
   }
 
-  def sequentlist( name: String ): List[FSequent] = {
+  def sequentlist( name: String ): List[HOLSequent] = {
     val ps = sequentLists.filter( _._1 == name )
     require( ps.nonEmpty, "Could not find sequent list " + name + " in proof database!" )
     if ( ps.size > 1 ) println( "Warning: sequent list " + name + " occurs more than once in proof database!" )
@@ -242,7 +242,7 @@ object XMLParser {
      * @return A Sequent object corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not a &lt;sequent&gt; Node.
      */
-    def getSequent(): FSequent = getSequent( getInput() )
+    def getSequent(): HOLSequent = getSequent( getInput() )
 
     /**
      * If the Node provided by XMLNodeParser is a &lt;sequentlist&gt; element,
@@ -251,11 +251,11 @@ object XMLParser {
      * @return A List of Sequent objects corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not a &lt;sequentlist&gt; Node.
      */
-    def getSequentList(): List[FSequent] = getSequentList( getInput() )
+    def getSequentList(): List[HOLSequent] = getSequentList( getInput() )
 
-    def getNamedSequentList( n: Node ): ( String, List[FSequent] ) = ( n.attribute( "symbol" ).get.head.text, getSequentList( n ) )
+    def getNamedSequentList( n: Node ): ( String, List[HOLSequent] ) = ( n.attribute( "symbol" ).get.head.text, getSequentList( n ) )
 
-    def getNamedSequentList(): ( String, List[FSequent] ) = getNamedSequentList( getInput() )
+    def getNamedSequentList(): ( String, List[HOLSequent] ) = getNamedSequentList( getInput() )
 
     /**
      * If the Node provided by XMLNodeParser is an &lt;axiomset&gt; element,
@@ -264,7 +264,7 @@ object XMLParser {
      * @return A List of Sequent objects corresponding to the Node provided by getInput().
      * @throws ParsingException If the Node provided by getInput() is not a &lt;axiomset&gt; Node.
      */
-    def getAxiomSet(): List[FSequent] = getAxiomSet( getInput() )
+    def getAxiomSet(): List[HOLSequent] = getAxiomSet( getInput() )
 
     /**
      * If the Node provided by XMLNodeParser is a &lt;formulalist&gt; element,
@@ -282,10 +282,10 @@ object XMLParser {
      * @return A Sequent object corresponding to n.
      * @throws ParsingException If n is not a &lt;sequent&gt; node.
      */
-    def getSequent( n: Node ): FSequent =
+    def getSequent( n: Node ): HOLSequent =
       trim( n ) match {
         case <sequent>{ ns @ _* }</sequent> =>
-          FSequent( getFormulaList( ns.head ), getFormulaList( ns.last ) )
+          HOLSequent( getFormulaList( ns.head ), getFormulaList( ns.last ) )
         case _ => throw new ParsingException( "Could not parse XML: " + n.toString )
       }
 
@@ -462,8 +462,8 @@ object XMLParser {
           val rt = n.attribute( "type" ).get.head.text
           val param = if ( n.attribute( "param" ) == None ) None else Some( n.attribute( "param" ).get.head.text )
           val conc = ( new NodeReader( ns.head ) with XMLSequentParser ).getSequent()
-          val antecedent = conc._1
-          val succedent = conc._2
+          val antecedent = conc.antecedent
+          val succedent = conc.succedent
 
           // TODO: according to DTD, there may be a "substitution" element here
           // but I think it's not actually used.
@@ -480,7 +480,7 @@ object XMLParser {
           val r_perms = recl.map( p => p._3 )
           val triple = createRule( rt, conc, prems, l_perms, r_perms, param, subst )
 
-          val root: FSequent = FSequent( triple._1.root.antecedent map ( _.formula ), triple._1.root.succedent map ( _.formula ) )
+          val root: HOLSequent = HOLSequent( triple._1.root.antecedent map ( _.formula ), triple._1.root.succedent map ( _.formula ) )
 
           // check whether conclusion has been correctly constructed
           assert( root multiSetEquals conc, triple._1.root.toString + " does not equal " + conc.toString + "(rule type " + rt + ")" )
@@ -565,11 +565,11 @@ object XMLParser {
       case None      => throw new Exception( "Expected to find formula occurrence descendant for " + o + " in " + r.root + ", but didn't!" )
     }
 
-    private def createRule( rt: String, conc: FSequent, prems: List[LKProof],
+    private def createRule( rt: String, conc: HOLSequent, prems: List[LKProof],
                             l_perms: List[Array[FormulaOccurrence]], r_perms: List[Array[FormulaOccurrence]],
                             param: Option[String], subst: Option[LambdaExpression] ): ( LKProof, Array[FormulaOccurrence], Array[FormulaOccurrence] ) = {
-      val antecedent = conc._1
-      val succedent = conc._2
+      val antecedent = conc.antecedent
+      val succedent = conc.succedent
       rt match {
         case "axiom" => {
           val a = Axiom( antecedent, succedent ) // The Axiom factory provides the axiom and the initial map from

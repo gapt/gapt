@@ -26,7 +26,7 @@ class SLKTest extends Specification {
       val f = BigAnd( i, pi, IntZero(), IntZero() )
       val ax = Axiom( p0 +: Seq.empty[SchemaFormula], Seq.empty[SchemaFormula] )
       val proof = AndEquivalenceRule3( ax, ax.root.antecedent.head, f )
-      proof.root.toFSequent must beEqualTo( FSequent( f +: Seq.empty[SchemaFormula], Seq.empty[SchemaFormula] ) )
+      proof.root.toHOLSequent must beEqualTo( HOLSequent( f +: Seq.empty[SchemaFormula], Seq.empty[SchemaFormula] ) )
     }
 
     "work for AndEquivalenceRule1" in {
@@ -38,7 +38,7 @@ class SLKTest extends Specification {
       val and_1_sn_ai = BigAnd( i, ai, Succ( IntZero() ), Succ( n ) )
       val ax = Axiom( And( and_1_n_ai, a_sn ) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] )
       val proof = AndEquivalenceRule1( ax, ax.root.antecedent.head, and_1_sn_ai )
-      proof.root.toFSequent must beEqualTo( FSequent( and_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] ) )
+      proof.root.toHOLSequent must beEqualTo( HOLSequent( and_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] ) )
 
     }
 
@@ -51,7 +51,7 @@ class SLKTest extends Specification {
       val or_1_sn_ai = BigOr( i, ai, Succ( IntZero() ), Succ( n ) )
       val ax = Axiom( Or( or_1_n_ai, a_sn ) +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] )
       val proof = OrEquivalenceRule1( ax, ax.root.antecedent.head, or_1_sn_ai )
-      proof.root.toFSequent must beEqualTo( FSequent( or_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] ) )
+      proof.root.toHOLSequent must beEqualTo( HOLSequent( or_1_sn_ai +: Seq.empty[SchemaFormula], a_sn +: Seq.empty[SchemaFormula] ) )
 
     }
 

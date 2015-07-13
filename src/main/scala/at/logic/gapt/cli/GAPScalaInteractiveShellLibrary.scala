@@ -43,7 +43,7 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.proofs.lk.{ deleteTautologies => deleteTaut, _ }
-import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledSequent }
+import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledOccSequent }
 import at.logic.gapt.proofs.lksk.{ applySubstitution, LKskToExpansionProof }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution._
@@ -133,15 +133,15 @@ object toClauses {
 }
 
 object deleteTautologies {
-  def apply( ls: List[FSequent] ) = deleteTaut( ls )
+  def apply( ls: List[HOLSequent] ) = deleteTaut( ls )
 }
 
 object unitResolve {
-  def apply( ls: List[FSequent] ) = simpleUnitResolutionNormalization( ls )
+  def apply( ls: List[HOLSequent] ) = simpleUnitResolutionNormalization( ls )
 }
 
 object removeSubsumed {
-  def apply( ls: List[FSequent] ) = subsumedClausesRemoval( ls )
+  def apply( ls: List[HOLSequent] ) = subsumedClausesRemoval( ls )
 }
 
 /**
@@ -171,7 +171,7 @@ object loadProofs {
 }
 
 object loadProver9Proof {
-  def apply( filename: String ): ( RobinsonResolutionProof, FSequent, FSequent ) =
+  def apply( filename: String ): ( RobinsonResolutionProof, HOLSequent, HOLSequent ) =
     (
       new Prover9Prover().reconstructRobinsonProofFromFile( filename ),
       InferenceExtractor.viaLADR( filename ),
@@ -221,7 +221,7 @@ object exportXML {
 }
 
 object exportTPTP {
-  def apply( ls: List[FSequent], filename: String ) = {
+  def apply( ls: List[HOLSequent], filename: String ) = {
     val file = new JBufferedWriter( new JFileWriter( filename ) )
     file.write( TPTPFOLExporter.tptp_problem( ls ) )
     file.close
@@ -230,7 +230,7 @@ object exportTPTP {
 
 // TODO: Martin - please clean this up.
 object exportSequentListLatex {
-  def apply( ls: List[Sequent], outputFile: String ) = {
+  def apply( ls: List[OccSequent], outputFile: String ) = {
     // maps original types and definitions of abstractions
     val sectionsPre = ( "Types", getTypeInformation( ls ).toList.sortWith( ( x, y ) => x.toString < y.toString ) ) :: Nil
 
@@ -253,12 +253,12 @@ object exportSequentListLatex {
     } catch {
       case _: Exception => sectionsPre
     }
-    ( new FileWriter( outputFile ) with SequentsListLatexExporter with HOLTermArithmeticalExporter ).exportSequentList( ls map ( _.toFSequent ), sections ).close
+    ( new FileWriter( outputFile ) with SequentsListLatexExporter with HOLTermArithmeticalExporter ).exportSequentList( ls map ( _.toHOLSequent ), sections ).close
   }
 }
 
 object exportLabelledSequentListLatex {
-  def apply( ls: List[LabelledSequent], outputFile: String ) = {
+  def apply( ls: List[LabelledOccSequent], outputFile: String ) = {
     // maps original types and definitions of abstractions
     val sections = ( "Types", getTypeInformation( ls ).toList.sortWith( ( x, y ) => x.toString < y.toString ) ) :: Nil
     ( new FileWriter( outputFile ) with LabelledSequentsListLatexExporter with HOLTermArithmeticalExporter ).exportSequentList( ls, sections ).close
@@ -272,42 +272,42 @@ object exportLabelledSequentListLatex {
  */
 
 object refuteFOL {
-  def stream1: Stream[Command[Clause]] = Stream.cons( SequentsMacroCommand[Clause](
-    SimpleRefinementGetCommand[Clause],
-    List( VariantsCommand, DeterministicAndCommand[Clause](
-      List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
+  def stream1: Stream[Command[OccClause]] = Stream.cons( SequentsMacroCommand[OccClause](
+    SimpleRefinementGetCommand[OccClause],
+    List( VariantsCommand, DeterministicAndCommand[OccClause](
+      List( ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
       List( ParamodulationCommand( FOLUnificationAlgorithm ) )
     ),
-      SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
-      SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
-      InsertResolventCommand[Clause] ),
-    RefutationReachedCommand[Clause]
+      SimpleForwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
+      SimpleBackwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
+      InsertResolventCommand[OccClause] ),
+    RefutationReachedCommand[OccClause]
   ), stream1 )
 
-  def stream: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1 ) )
+  def stream: Stream[Command[OccClause]] = Stream.cons( SetTargetClause( HOLSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1 ) )
 
-  def apply( clauses: Seq[FSequent] ): Option[ResolutionProof[Clause]] =
-    new Prover[Clause] {}.
+  def apply( clauses: Seq[HOLSequent] ): Option[ResolutionProof[OccClause]] =
+    new Prover[OccClause] {}.
       refute( Stream.cons( SetClausesCommand( clauses ), stream ) ).next
 }
 
 object refuteFOLI {
-  def stream1: Stream[Command[Clause]] = Stream.cons(
-    getTwoClausesFromUICommand[Clause]( PromptTerminal.GetTwoClauses ),
+  def stream1: Stream[Command[OccClause]] = Stream.cons(
+    getTwoClausesFromUICommand[OccClause]( PromptTerminal.GetTwoClauses ),
     Stream.cons(
       VariantsCommand,
       Stream.cons(
-        DeterministicAndCommand[Clause]( (
-          List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
+        DeterministicAndCommand[OccClause]( (
+          List( ApplyOnAllPolarizedLiteralPairsCommand[OccClause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
           List( ParamodulationCommand( FOLUnificationAlgorithm ) )
         ) ),
         Stream.cons(
-          SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+          SimpleForwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
           Stream.cons(
-            SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+            SimpleBackwardSubsumptionCommand[OccClause]( StillmanSubsumptionAlgorithmFOL ),
             Stream.cons(
-              InsertResolventCommand[Clause],
-              Stream.cons( RefutationReachedCommand[Clause], stream1 )
+              InsertResolventCommand[OccClause],
+              Stream.cons( RefutationReachedCommand[OccClause], stream1 )
             )
           )
         )
@@ -315,27 +315,27 @@ object refuteFOLI {
     )
   )
 
-  def stream: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1 ) )
+  def stream: Stream[Command[OccClause]] = Stream.cons( SetTargetClause( HOLSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[OccClause], stream1 ) )
 
-  def apply( clauses: Seq[FSequent] ): Option[ResolutionProof[Clause]] =
-    new Prover[Clause] {}.
+  def apply( clauses: Seq[HOLSequent] ): Option[ResolutionProof[OccClause]] =
+    new Prover[OccClause] {}.
       refute( Stream.cons( SetClausesCommand( clauses ), stream ) ).next
 }
 
 object prover9 {
-  def apply( clauses: Seq[FSequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses.toList )
+  def apply( clauses: Seq[HOLSequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses.toList )
 
-  def apply( clauses: List[Sequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses map ( _.toFSequent ) )
+  def apply( clauses: List[OccSequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses map ( _.toHOLSequent ) )
 
   //get the ground substitution of the ground resolution refutation
   //the ground substitution is a list of pairs, it can't be a map ! The reason is : a clause can be used several times in the resolution refutation.
   //def getGroundSubstitution(rrp: RobinsonResolutionProof): List[(Var, LambdaExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
-  def getProof( seq: FSequent ): Option[LKProof] = new Prover9Prover().getLKProof( seq )
+  def getProof( seq: HOLSequent ): Option[LKProof] = new Prover9Prover().getLKProof( seq )
 }
 
 object proveProp {
-  def apply( seq: FSequent ): Option[LKProof] = solve.solvePropositional( seq )
-  def apply( f: HOLFormula ): Option[LKProof] = apply( FSequent( Nil, f :: Nil ) )
+  def apply( seq: HOLSequent ): Option[LKProof] = solve.solvePropositional( seq )
+  def apply( f: HOLFormula ): Option[LKProof] = apply( HOLSequent( Nil, f :: Nil ) )
 }
 
 object miniSATsolve {
@@ -495,8 +495,8 @@ object computeGrammars {
 }
 
 object generateExtendedHerbrandSequent {
-  def apply( es: FSequent, g: MultiGrammar ): ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
-  def apply( es: Sequent, g: MultiGrammar ): ExtendedHerbrandSequent = apply( es.toFSequent, g )
+  def apply( es: HOLSequent, g: MultiGrammar ): ExtendedHerbrandSequent = new ExtendedHerbrandSequent( es, g )
+  def apply( es: OccSequent, g: MultiGrammar )( implicit dummy: DummyImplicit ): ExtendedHerbrandSequent = apply( es.toHOLSequent, g )
 }
 
 object computeCanonicalSolutions {
@@ -650,7 +650,7 @@ object simplifyStruct {
 }
 
 object refuteClauseList {
-  def apply( cl: List[Sequent] ): Option[RobinsonResolutionProof] = prover9( cl )
+  def apply( cl: List[OccSequent] ): Option[RobinsonResolutionProof] = prover9( cl )
 }
 
 object computeProjections {
@@ -670,7 +670,7 @@ object foCERES extends CERESR2LK
 object foCERESground extends CERES
 
 object buildACNF {
-  def apply( ref: LKProof, projs: Set[LKProof], es: FSequent ) = ACNF( ref, projs, es )
+  def apply( ref: LKProof, projs: Set[LKProof], es: HOLSequent ) = ACNF( ref, projs, es )
 }
 
 /******************** Proof loaders *************************/
@@ -681,7 +681,7 @@ object loadPrime {
     val p2_ = regularize( skolemize( p2 ) )
     val cs2 = structToClausesList( extractStruct( p2_ ) )
     /* removeDuplicates does not exist anymore
-    val cs2_ = removeDuplicates(deleteEquationalTautologies(deleteTautologies(cs2 map ((x: Sequent) => x.toFSequent))))
+    val cs2_ = removeDuplicates(deleteEquationalTautologies(deleteTautologies(cs2 map ((x: Sequent) => x.toHOLSequent))))
     writeLatex(cs2_ map (fsequent2sequent.apply), "cs" + i + ".tex")
     exportTPTP(cs2_, "cs" + i + ".p")
     (p2, p2_, cs2, cs2_)
@@ -691,7 +691,7 @@ object loadPrime {
 }
 
 object exportVeriT {
-  def apply( f: FSequent, fileName: String ) = VeriTExporter( f, fileName )
+  def apply( f: HOLSequent, fileName: String ) = VeriTExporter( f, fileName )
 }
 
 object exportLLK {
@@ -705,7 +705,7 @@ object exportLLK {
 }
 
 object escape_underscore {
-  def escape_constants( r: RobinsonResolutionProof, fs: List[FSequent] ): ( RobinsonResolutionProof, List[FSequent] ) = {
+  def escape_constants( r: RobinsonResolutionProof, fs: List[HOLSequent] ): ( RobinsonResolutionProof, List[HOLSequent] ) = {
     val names: Set[( Int, String )] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map( fo =>
       getArityOfConstants( fo.formula.asInstanceOf[FOLFormula] ) ) ).flatten.flatten
 
@@ -726,7 +726,7 @@ object deleteEquationalTautologies {
   //private val emptymap = MMap[LambdaExpression, String]()
   //val acu = new MulACUEquality(List("+","*") map (_), List("0","1") map (_))
 
-  def apply( ls: List[FSequent] ) = ls.filterNot( _._2 exists ( ( f: HOLFormula ) =>
+  def apply( ls: List[HOLSequent] ) = ls.filterNot( _.succedent exists ( ( f: HOLFormula ) =>
     f match {
       case Eq( x, y )                             => x == y
       case HOLAtom( Var( "=", _ ), List( x, y ) ) => x == y
@@ -756,12 +756,12 @@ object deleteEquationalTautologies {
 object fsequent2sequent {
   def f2focc( f: HOLFormula ) = new FormulaOccurrence( f, Nil, defaultFormulaOccurrenceFactory )
 
-  def apply( s: FSequent ) = Sequent( s._1 map f2focc, s._2 map f2focc )
+  def apply( s: HOLSequent ) = s map f2focc
 }
 
 /*
   object normalizeClauses {
-    //def apply(ls: List[Sequent]) = sequentNormalize(ls map (_.toFSequent))
+    //def apply(ls: List[Sequent]) = sequentNormalize(ls map (_.toHOLSequent))
     def apply(ls: List[FSequent]) = sequentNormalize(ls)
   }
   */
@@ -789,14 +789,14 @@ object applyFactoring extends factoring
 object rule_isomorphic extends rule_isomorphic //this subsumes the LK version
 
 object exportLatex {
-  def apply( list: List[FSequent], fn: String ) = {
+  def apply( list: List[HOLSequent], fn: String ) = {
     val writer = ( new FileWriter( fn ) with SequentsListLatexExporter with HOLTermArithmeticalExporter )
     writer.exportSequentList( list, Nil ).close
   }
 }
 
 object exportTHF {
-  def apply( ls: List[FSequent], filename: String, positive: Boolean = false ) = {
+  def apply( ls: List[HOLSequent], filename: String, positive: Boolean = false ) = {
     val file = new JBufferedWriter( new JFileWriter( filename ) )
     file.write( TPTPHOLExporter( ls, positive ) )
     file.close
@@ -909,50 +909,50 @@ object replay {
 
   private class MyParser( str: String ) extends StringReader( str ) with SimpleResolutionParserFOL
 
-  def apply1( clauses: String ): Option[ResolutionProof[Clause]] = {
+  def apply1( clauses: String ): Option[ResolutionProof[OccClause]] = {
     apply( new MyParser( clauses ).getClauseList )
   }
 
-  def apply( clauses: Seq[FSequent] ): Option[ResolutionProof[Clause]] =
+  def apply( clauses: Seq[HOLSequent] ): Option[ResolutionProof[OccClause]] =
     try {
-      new Prover[Clause] {}.
-        refute( Stream( SetTargetClause( FSequent( List(), List() ) ), Prover9InitCommand( clauses ), SetStreamCommand() ) ).next
+      new Prover[OccClause] {}.
+        refute( Stream( SetTargetClause( HOLSequent( List(), List() ) ), Prover9InitCommand( clauses ), SetStreamCommand() ) ).next
     } catch {
       case e: IOException => throw new IOException( "Prover9 is not installed: " + e.getMessage() )
     }
 
-  def apply( clauses: List[Sequent] ): Option[ResolutionProof[Clause]] =
+  def apply( clauses: List[OccSequent] ): Option[ResolutionProof[OccClause]] =
     try {
-      new Prover[Clause] {}.
-        refute( Stream( SetTargetClause( FSequent( List(), List() ) ), Prover9InitCommand( ( clauses map ( ( x: Sequent ) => x.toFSequent ) ).toList ), SetStreamCommand() ) ).next
+      new Prover[OccClause] {}.
+        refute( Stream( SetTargetClause( HOLSequent( List(), List() ) ), Prover9InitCommand( ( clauses map ( ( x: OccSequent ) => x.toHOLSequent ) ).toList ), SetStreamCommand() ) ).next
     } catch {
       case e: IOException => throw new IOException( "Prover9 is not installed: " + e.getMessage() )
     }
 }
 
 object Robinson2LK {
-  def apply( resProof: ResolutionProof[Clause] ): LKProof = RobinsonToLK( resProof.asInstanceOf[RobinsonResolutionProof] )
+  def apply( resProof: ResolutionProof[OccClause] ): LKProof = RobinsonToLK( resProof.asInstanceOf[RobinsonResolutionProof] )
 
-  def apply( resProof: ResolutionProof[Clause], seq: FSequent ): LKProof = RobinsonToLK( resProof.asInstanceOf[RobinsonResolutionProof], seq )
+  def apply( resProof: ResolutionProof[OccClause], seq: HOLSequent ): LKProof = RobinsonToLK( resProof.asInstanceOf[RobinsonResolutionProof], seq )
 }
 
 object format {
-  def apply( p: ResolutionProof[Clause] ) = asHumanReadableString( p )
+  def apply( p: ResolutionProof[OccClause] ) = asHumanReadableString( p )
 
-  def asHumanReadableString( p: ResolutionProof[Clause] ) = Formatter.asHumanReadableString( p )
+  def asHumanReadableString( p: ResolutionProof[OccClause] ) = Formatter.asHumanReadableString( p )
 
-  def asGraphVizString( p: ResolutionProof[Clause] ) = Formatter.asGraphViz( p )
+  def asGraphVizString( p: ResolutionProof[OccClause] ) = Formatter.asGraphViz( p )
   def asGraphVizString( p: LKProof ) = Formatter.asGraphViz( p )
 
   def asXml( p: LKProof ) = Formatter.asXml( p )
 
-  def asTex( p: ResolutionProof[Clause] ) = Formatter.asTex( p )
+  def asTex( p: ResolutionProof[OccClause] ) = Formatter.asTex( p )
 
   def llk( f: LambdaExpression, latex: Boolean = false ): String = toLatexString.getFormulaString( f, true, latex )
 
-  def llk( f: FSequent, latex: Boolean ): String = "\\SEQUENT" + HybridLatexExporter.fsequentString( f, latex )
+  def llk( f: HOLSequent, latex: Boolean ): String = "\\SEQUENT" + HybridLatexExporter.fsequentString( f, latex )
 
-  def llk( f: FSequent ): String = llk( f, false )
+  def llk( f: HOLSequent ): String = llk( f, false )
 
   def tllk( f: LambdaExpression, latex: Boolean = false ) = {
     val ( ctypes, vtypes ) = HybridLatexExporter.getTypes( f, HybridLatexExporter.emptyTypeMap, HybridLatexExporter.emptyTypeMap )
@@ -1120,27 +1120,27 @@ object definitionElimination {
 }
 
 object css {
-  def apply( s: Struct ): ( List[FSequent], List[FSequent], List[FSequent], FOLConstantsMap ) = {
+  def apply( s: Struct ): ( List[HOLSequent], List[HOLSequent], List[HOLSequent], FOLConstantsMap ) = {
     val clauselist = structToClausesList( SimplifyStruct( s ) )
     val ( fcmap, fol, hol ) = apply( clauselist )
-    ( clauselist.map( _.toFSequent ), fol, hol, fcmap )
+    ( clauselist.map( _.toHOLSequent ), fol, hol, fcmap )
   }
 
-  def apply( l: List[Sequent] ): ( FOLConstantsMap, List[FSequent], List[FSequent] ) =
+  def apply( l: List[OccSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) =
     prunes( l )
 
-  def prunes( l: List[Sequent] ): ( FOLConstantsMap, List[FSequent], List[FSequent] ) = {
-    prunefs( l map ( _.toFSequent ) )
+  def prunes( l: List[OccSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) = {
+    prunefs( l map ( _.toHOLSequent ) )
   }
 
-  def prunefs( l: List[FSequent] ): ( FOLConstantsMap, List[FSequent], List[FSequent] ) = {
+  def prunefs( l: List[HOLSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) = {
     val ( fcmap, fol ) = extractFOL( l )
-    ( fcmap, removeSubsumed( fol ).sorted( FSequentOrdering ), extractHOL( l ).toSet.toList.sorted( FSequentOrdering ) )
+    ( fcmap, removeSubsumed( fol ).sorted( HOLSequentOrdering ), extractHOL( l ).toSet.toList.sorted( HOLSequentOrdering ) )
   }
 
   type FOLConstantsMap = Map[String, FOLExpression]
 
-  def extractFOL( l: List[FSequent] ): ( FOLConstantsMap, List[FSequent] ) = {
+  def extractFOL( l: List[HOLSequent] ): ( FOLConstantsMap, List[HOLSequent] ) = {
     val map = MMap[FOLExpression, String]()
     val counter = new {
       private var state = 0;
@@ -1163,7 +1163,7 @@ object css {
     ( rmap, fol )
   }
 
-  def extractHOL( l: List[FSequent] ): List[FSequent] = l.flatMap( x => try {
+  def extractHOL( l: List[HOLSequent] ): List[HOLSequent] = l.flatMap( x => try {
     x.toFormula
     Nil
   } catch {
@@ -1173,7 +1173,7 @@ object css {
   type Symboltable = ( Map[TA, Set[String]], Map[TA, Set[String]] )
   val emptysmboltable = ( Map[TA, Set[String]](), Map[TA, Set[String]]() )
 
-  def extractSymbolTable( l: List[FSequent] ): Symboltable =
+  def extractSymbolTable( l: List[HOLSequent] ): Symboltable =
     l.foldLeft( emptysmboltable )( ( table, x ) => {
       val ( vt, ct ) = extractSymbolTable( x.toFormula )
       val ( vt_, ct_ ) = table

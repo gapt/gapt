@@ -489,7 +489,7 @@ object CloneLKProof2 {
             else throw new Exception( "ERROR ProofLinks are wrong !\n" )
           }
         } else if ( version == 2 ) Tuple2( List(), FOSchemaProofLinkRule(
-          new FSequent(
+          new HOLSequent(
             s.antecedent.map( x => cloneMySol( x.formula.asInstanceOf[SchemaFormula], proofSize ) ),
             s.succedent.map( x => cloneMySol( x.formula.asInstanceOf[SchemaFormula], proofSize ) )
           ), name2, l.map( x => cloneMyTerm( x, proofSize ) )

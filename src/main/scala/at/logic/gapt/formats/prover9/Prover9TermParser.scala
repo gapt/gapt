@@ -3,7 +3,7 @@ package at.logic.gapt.formats.prover9
 import util.parsing.combinator.JavaTokenParsers
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import scala.util.parsing.combinator.PackratParsers
 import scala.collection.immutable.HashSet
 import at.logic.gapt.expr.StringSymbol
@@ -158,9 +158,9 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
     fs.reduceRight( ( f: FOLFormula, g: FOLFormula ) => constructor( f, g ) )
   }
 
-  def normalizeFSequent( f: FSequent ) = {
+  def normalizeFSequent( f: HOLSequent ) = {
     require( ( f.antecedent ++ f.succedent ).forall( _.isInstanceOf[FOLFormula] ), "normalization only works on FOL formulas" )
-    FSequent(
+    HOLSequent(
       f.antecedent.map( x => normalizeFormula( x.asInstanceOf[FOLFormula] ) ),
       f.succedent.map( x => normalizeFormula( x.asInstanceOf[FOLFormula] ) )
     )

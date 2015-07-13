@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.hlk.ast.LambdaAST
 import at.logic.gapt.formats.hlk.{ ast, DeclarationParser }
 import at.logic.gapt.formats.xml.ProofDatabase
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
 import java.io.FileReader
 import scala.collection.immutable.PagedSeq
 import scala.util.parsing.input.PagedSeqReader
@@ -25,8 +25,8 @@ case class ExtendedProofDatabase(
       case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
     } ).toList
   override val Definitions: Map[LambdaExpression, LambdaExpression] = edefinitions
-  override val axioms: List[FSequent] = eaxioms.values.toList map ( x => FSequent( Nil, x :: Nil ) )
-  override val sequentLists: List[( String, List[FSequent] )] = Nil
+  override val axioms: List[HOLSequent] = eaxioms.values.toList map ( x => HOLSequent( Nil, x :: Nil ) )
+  override val sequentLists: List[( String, List[HOLSequent] )] = Nil
 }
 
 /**

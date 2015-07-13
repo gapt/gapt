@@ -7,7 +7,7 @@ package at.logic.gapt.prooftool
  * Time: 3:00:53 PM
  */
 
-import at.logic.gapt.proofs.lk.base.Sequent
+import at.logic.gapt.proofs.lk.base.OccSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.proofs.TreeProof
 
@@ -30,6 +30,6 @@ case class ShowAllRules( proof: TreeProof[_] ) extends Event
 case class HideProof( proof: TreeProof[_] ) extends Event
 case class ShowProof( proof: TreeProof[_] ) extends Event
 
-case class ChangeSequentColor( seqList: Sequent, color: Color, reset: Boolean ) extends Event
+case class ChangeSequentColor( seqList: OccSequent, color: Color, reset: Boolean ) extends Event
 case class ChangeFormulaColor( occurrences: Set[FormulaOccurrence], color: Color, reset: Boolean ) extends Event
 case class ShowOnly( formulas: Set[FormulaOccurrence], reset: Boolean ) extends Event

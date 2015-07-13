@@ -4,7 +4,7 @@ import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ beSyntacticFSequentEqual, FSequent, Sequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ beSyntacticFSequentEqual, HOLSequent, OccSequent, LKProof }
 import at.logic.gapt.proofs.proofs.NullaryProof
 
 class definition_eliminationTest extends Specification {
@@ -54,7 +54,7 @@ class definition_eliminationTest extends Specification {
     val dmap = Map[LambdaExpression, LambdaExpression]() + def1 + def2
 
     def getoccids( p: LKProof, l: List[String] ): List[String] = p match {
-      case r: NullaryProof[Sequent] =>
+      case r: NullaryProof[OccSequent] =>
         val line = r.rule + ": " + r.root.antecedent.map( _.id ).mkString( "," ) + " :- " + ( r.root.succedent.map( _.id ).mkString( "," ) )
         line :: Nil
       case r @ UnaryLKProof( _, p1, root, _, _ ) =>
@@ -103,8 +103,8 @@ class definition_eliminationTest extends Specification {
       import proof1._
       val elp = DefinitionElimination( dmap, i12 )
       println( elp )
-      val expected = FSequent( List( All( x, All( y, pxy ) ), And( All( y, pxy ), All( x, qx ) ) ), List( Ex( x, And( qx, All( y, pxy ) ) ) ) )
-      expected must beSyntacticFSequentEqual( elp.root.toFSequent )
+      val expected = HOLSequent( List( All( x, All( y, pxy ) ), And( All( y, pxy ), All( x, qx ) ) ), List( Ex( x, And( qx, All( y, pxy ) ) ) ) )
+      expected must beSyntacticFSequentEqual( elp.root.toHOLSequent )
     }
 
     "work on a simple proof with equality" in {

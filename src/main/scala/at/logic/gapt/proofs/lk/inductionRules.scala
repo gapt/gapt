@@ -84,10 +84,10 @@ object InductionRule {
     // Construct the new sequent
     val ant = createContext( s1.root.antecedent ++ s2.root.antecedent.filterNot( _ == occX ) )
     val suc = createContext( s1.root.succedent.filterNot( _ == occZero ) ++ s2.root.succedent.filterNot( _ == occSx ) )
-    val newSeq = Sequent( ant, prinOcc +: suc )
+    val newSeq = OccSequent( ant, prinOcc +: suc )
 
     // Construct the new proof
-    new BinaryTree[Sequent]( newSeq, s1, s2 ) with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
+    new BinaryTree[OccSequent]( newSeq, s1, s2 ) with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm {
       def rule = InductionRuleType
 
       def aux = List( occZero ) :: List( occX, occSx ) :: Nil
@@ -100,7 +100,7 @@ object InductionRule {
   /**
    * Convenience constructor that finds appropriate formula occurrences on its own.
    */
-  def apply( s1: LKProof, s2: LKProof, inductionBase: FOLFormula, inductionHypo: FOLFormula, inductionStep: FOLFormula, term: FOLTerm ): BinaryTree[Sequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
+  def apply( s1: LKProof, s2: LKProof, inductionBase: FOLFormula, inductionHypo: FOLFormula, inductionStep: FOLFormula, term: FOLTerm ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas = {
     val term1oc = s1.root.succedent find ( _.formula == inductionBase ) match {
       case None      => throw new LKRuleCreationException( "Formula " + inductionBase + " not found in " + s1.root.succedent + "." )
       case Some( o ) => o

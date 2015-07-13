@@ -69,13 +69,13 @@ class DrawSingleSequentInference( var orientation: Orientation.Value ) extends S
     val aux = p() match {
       case Some( a: UnaryLKProof with AuxiliaryFormulas ) =>
         val r = a.uProof.root
-        List( Sequent( r.antecedent.filter( a.aux( 0 ).contains ), r.succedent.filter( a.aux( 0 ).contains ) ) )
+        List( OccSequent( r.antecedent.filter( a.aux( 0 ).contains ), r.succedent.filter( a.aux( 0 ).contains ) ) )
       case Some( a: BinaryLKProof with AuxiliaryFormulas ) =>
         val r1 = a.uProof1.root
         val r2 = a.uProof2.root
         List(
-          Sequent( r1.antecedent.filter( a.aux( 0 ).contains ), r1.succedent.filter( a.aux( 0 ).contains ) ),
-          Sequent( r2.antecedent.filter( a.aux( 1 ).contains ), r2.succedent.filter( a.aux( 1 ).contains ) )
+          OccSequent( r1.antecedent.filter( a.aux( 0 ).contains ), r1.succedent.filter( a.aux( 0 ).contains ) ),
+          OccSequent( r2.antecedent.filter( a.aux( 1 ).contains ), r2.succedent.filter( a.aux( 1 ).contains ) )
         )
 
       case _ =>
@@ -88,7 +88,7 @@ class DrawSingleSequentInference( var orientation: Orientation.Value ) extends S
     val primary = p() match {
       case Some( pf: PrincipalFormulas ) =>
         val r = p().get.root
-        Some( Sequent( r.antecedent.filter( pf.prin.contains ), r.succedent.filter( pf.prin.contains ) ) )
+        Some( OccSequent( r.antecedent.filter( pf.prin.contains ), r.succedent.filter( pf.prin.contains ) ) )
       case Some( p: NullaryLKProof ) =>
         Some( p.root )
 

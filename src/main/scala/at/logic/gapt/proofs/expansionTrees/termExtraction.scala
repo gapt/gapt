@@ -46,8 +46,8 @@ object extractInstances {
       case ETSkolemQuantifier( _, _, t ) => extractInstances( t )
     }
 
-  def apply( expansionSequent: ExpansionSequent ): FSequent =
-    FSequent(
+  def apply( expansionSequent: ExpansionSequent ): HOLSequent =
+    HOLSequent(
       expansionSequent.antecedent flatMap apply,
       expansionSequent.succedent flatMap apply
     )
@@ -74,7 +74,7 @@ object groundTerms {
  * in the end-sequents of instance proofs are substitution instances of [[endSequent]]; the encoded terms still only
  * capture the instances used in the instance proofs--i.e. not alpha.
  */
-case class InstanceTermEncoding( endSequent: FSequent ) {
+case class InstanceTermEncoding( endSequent: HOLSequent ) {
 
   require( isFOLPrenexSigma1( endSequent ), s"$endSequent is not a prenex FOL Sigma_1 sequent" )
 
@@ -115,7 +115,7 @@ case class InstanceTermEncoding( endSequent: FSequent ) {
   /**
    * Encodes a sequent consisting of instances of an instance sequent.
    */
-  def encode( instance: FSequent ): Seq[FOLTerm] =
+  def encode( instance: HOLSequent ): Seq[FOLTerm] =
     instance.polarizedFormulas.map { instf => encode( instf.asInstanceOf[PolarizedFormula] ) }
 
   /**
@@ -152,7 +152,7 @@ case class InstanceTermEncoding( endSequent: FSequent ) {
   def decode( terms: Iterable[FOLTerm] ): Set[PolarizedFormula] =
     terms map decode toSet
 
-  def decodeToFSequent( terms: Iterable[FOLTerm] ): FSequent = FSequent( decode( terms ).toSeq )
+  def decodeToFSequent( terms: Iterable[FOLTerm] ): HOLSequent = HOLSequent( decode( terms ).toSeq )
 
   def decodeToExpansionSequent( terms: Iterable[FOLTerm] ): ExpansionSequent = {
     val polExpTrees = terms.map { case FOLFunction( f, args ) => ( findESFormula( f ).get, args ) }.

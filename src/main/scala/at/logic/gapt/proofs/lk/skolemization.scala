@@ -41,7 +41,7 @@ object skolemize extends Logger {
     }
 
   /* sequent skolemization */
-  def apply( fs: FSequent ): FSequent = FSequent( fs.antecedent.map( apply( _, 0 ) ), fs.succedent.map( apply( _, 1 ) ) )
+  def apply( fs: HOLSequent ): HOLSequent = HOLSequent( fs.antecedent.map( apply( _, 0 ) ), fs.succedent.map( apply( _, 1 ) ) )
 
   /* formula skolemization -- polarity 0 is negative and polarity 1 is positive */
   def apply( f: HOLFormula, pol: Int ): HOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )

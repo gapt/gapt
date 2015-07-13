@@ -1,13 +1,13 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.lk.applySubstitution
-import at.logic.gapt.proofs.resolution.FClause
+import at.logic.gapt.proofs.resolution.HOLClause
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
@@ -41,12 +41,12 @@ class CERESR2LK {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
-    val es = p.root.toFSequent
+    val es = p.root.toHOLSequent
     val proj = Projections( p, pred ) + CERES.refProjection( es )
 
     val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( p, pred ) )
 
-    new Prover9Prover().getRobinsonProof( tapecl.map( _.toFSequent ) ) match {
+    new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLSequent ) ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         apply( es, proj, rp )
@@ -61,8 +61,8 @@ class CERESR2LK {
    * @param rp A resolution refutation
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( endsequent: FSequent, proj: Set[LKProof], rp: RobinsonResolutionProof ) = {
-    RobinsonToLK( rp, endsequent, fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc.toFSequent ) )
+  def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: RobinsonResolutionProof ) = {
+    RobinsonToLK( rp, endsequent, fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) )
   }
 
 }
@@ -86,12 +86,12 @@ class CERES {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
-    val es = p.root.toFSequent
+    val es = p.root.toHOLSequent
     val proj = Projections( p, pred )
 
     val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( p, pred ) )
     val refl = refProjection( es )
-    new Prover9Prover().getRobinsonProof( tapecl.map( _.toFSequent ) ) match {
+    new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLSequent ) ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         val lkproof = RobinsonToLK( rp )
@@ -100,7 +100,7 @@ class CERES {
   }
 
   def apply( lkproof: LKProof, refutation: LKProof, pred: HOLFormula => Boolean ): LKProof = {
-    CERES( lkproof.root.toFSequent, Projections( lkproof, pred ) + refProjection( lkproof.root.toFSequent ), refutation )
+    CERES( lkproof.root.toHOLSequent, Projections( lkproof, pred ) + refProjection( lkproof.root.toHOLSequent ), refutation )
   }
 
   /**
@@ -110,9 +110,9 @@ class CERES {
    * @param refutation A resolution refutation converted to LK (for instance with Robinson2LK)
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( endsequent: FSequent, projections: Set[LKProof], refutation: LKProof ): LKProof = refutation match {
+  def apply( endsequent: HOLSequent, projections: Set[LKProof], refutation: LKProof ): LKProof = refutation match {
     case Axiom( root ) =>
-      findMatchingProjection( endsequent, projections )( root.toFSequent )
+      findMatchingProjection( endsequent, projections )( root.toHOLSequent )
 
     case CutRule( p1, p2, root, aux1, aux2 ) =>
       val rp1 = CERES( endsequent, projections, p1 )
@@ -155,17 +155,17 @@ class CERES {
 
   }
 
-  def findMatchingProjection( endsequent: FSequent, projections: Set[LKProof] ): ( FSequent => LKProof ) = {
-    ( axfs: FSequent ) =>
+  def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] ): ( HOLSequent => LKProof ) = {
+    ( axfs: HOLSequent ) =>
       {
-        projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.root.toFSequent diff endsequent, axfs ) ) match {
+        projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.root.toHOLSequent diff endsequent, axfs ) ) match {
           case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
             projections.map( _.root ).mkString( "{\n", ",\n", "\n}" ) )
           case Some( proj ) =>
-            val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.root.toFSequent diff endsequent, axfs )
+            val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.root.toHOLSequent diff endsequent, axfs )
             val ( subproj, _ ) = applySubstitution( proj, sub )
             require(
-              ( subproj.root.toFSequent diff endsequent ).multiSetEquals( axfs ),
+              ( subproj.root.toHOLSequent diff endsequent ).multiSetEquals( axfs ),
               "Instance of projection with end-sequent " + subproj.root + " is not equal to " + axfs + " x " + endsequent
             )
             subproj
@@ -173,15 +173,15 @@ class CERES {
       }
   }
 
-  def refProjection( es: FSequent ): LKProof = {
+  def refProjection( es: HOLSequent ): LKProof = {
     require( es.formulas.nonEmpty, "Can not project reflexivity to an empty end-sequent!" )
     val x = Var( StringSymbol( "x" ), Ti ).asInstanceOf[Var]
-    val axiomseq = FSequent( Nil, List( Eq( x, x ) ) )
+    val axiomseq = HOLSequent( Nil, List( Eq( x, x ) ) )
     //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
     WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq compose es )
   }
 
-  def contractEndsequent( p: LKProof, es: FSequent ) = {
+  def contractEndsequent( p: LKProof, es: HOLSequent ) = {
     val left = es.antecedent.foldLeft( p )( ( proof, f ) => ContractionLeftRule( proof, f ) )
     val right = es.succedent.foldLeft( left )( ( proof, f ) => ContractionRightRule( proof, f ) )
     right

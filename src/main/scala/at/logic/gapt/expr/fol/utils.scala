@@ -6,7 +6,7 @@ package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.containsQuantifier
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import scala.collection.{ GenTraversable, mutable }
 
 object isFOLFunction {
@@ -78,7 +78,7 @@ object isFOLPrenexSigma1 {
     case _ => false
   }
 
-  def apply( seq: FSequent ): Boolean =
+  def apply( seq: HOLSequent ): Boolean =
     seq.antecedent.forall( isFOLPrenexPi1( _ ) ) && seq.succedent.forall( isFOLPrenexSigma1( _ ) )
 }
 

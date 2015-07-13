@@ -212,12 +212,12 @@ class ResolutionToLKTest extends Specification {
         val Pa = FOLAtom( "P", a :: Nil )
         val f1 = All( x, Px )
 
-        val seq = FSequent( List( f1 ), List( Pa ) )
+        val seq = HOLSequent( List( f1 ), List( Pa ) )
         val p1 = InitialClause( List(), List( Px ) )
         val p2 = InitialClause( List( Pa ), List() )
         val v1 = Variant( p1, FOLSubstitution( new Map1( x, y ) ) )
         val resProof = Resolution( v1, p2, v1.root.positive( 0 ), p2.root.negative( 0 ), FOLSubstitution( new Map1( y, a ) ) )
-        RobinsonToLK( resProof, seq ).root.toFSequent.toString must beEqualTo( FSequent( List( f1 ), List( Pa ) ).toString )
+        RobinsonToLK( resProof, seq ).root.toHOLSequent.toString must beEqualTo( HOLSequent( List( f1 ), List( Pa ) ).toString )
       }
       "transform the original subproof of the UNS example" in {
         val r = RobinsonToLK( UNSproof.p4 ).root

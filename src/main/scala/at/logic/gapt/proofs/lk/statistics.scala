@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.TA
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
 import at.logic.gapt.proofs.lksk.UnaryLKskProof
 import at.logic.gapt.proofs.shlk._
 
@@ -41,7 +41,7 @@ object getStatistics {
 // return the types of all constants in the sequents list
 // TODO: this can be implemented with an immutable map
 object getTypeInformation {
-  def apply( sequents: List[Sequent] ): Map[LambdaExpression, TA] = {
+  def apply( sequents: List[OccSequent] ): Map[LambdaExpression, TA] = {
     val map = mutable.Map[LambdaExpression, TA]()
     sequents.foreach( s => {
       s.antecedent.foreach( f => mapValues( map, f.formula ) );

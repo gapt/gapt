@@ -32,7 +32,7 @@ trait MaxSATSolver extends Logger {
    * @return None if hard is unsatisfiable, otherwise Some(model), where model is a model
    * of hard maximizing the sum of the weights of soft.
    */
-  def solve( hard: List[FClause], soft: List[( FClause, Int )] ): Option[Interpretation]
+  def solve( hard: List[HOLClause], soft: List[( HOLClause, Int )] ): Option[Interpretation]
 
   /**
    * @param hard Hard constraints.
@@ -52,7 +52,7 @@ trait MaxSATSolver extends Logger {
 
     // Soft CNF transformation
     watch.start()
-    val softCNFs = soft.map( s => CNFp.toFClauseList( s._1 ).map( f => ( f, s._2 ) ) ).flatten
+    val softCNFs = soft.map( s => CNFp.toClauseList( s._1 ).map( f => ( f, s._2 ) ) ).flatten
     val softCNFTime = watch.lap( "softCNF" )
     logTime( "[Runtime]<soft CNF-Generation> ", softCNFTime )
     trace( "produced soft cnf: " + softCNFs )
@@ -66,7 +66,7 @@ trait MaxSATSolver extends Logger {
   }
 }
 
-class WDIMACSHelper( val hard: List[FClause], val soft: List[( FClause, Int )] )
+class WDIMACSHelper( val hard: List[HOLClause], val soft: List[( HOLClause, Int )] )
     extends DIMACSHelper( hard ++ soft.map( _._1 ) ) {
   /**
    * Returns for a given atom and
@@ -86,7 +86,7 @@ class WDIMACSHelper( val hard: List[FClause], val soft: List[( FClause, Int )] )
    * @param weight weight of clause
    * @return a clause in .wcnf format
    */
-  protected def getWCNFString( clause: FClause, weight: Int, atom_map: Map[HOLFormula, Int] ): String =
+  protected def getWCNFString( clause: HOLClause, weight: Int, atom_map: Map[HOLFormula, Int] ): String =
     {
       val sb = new StringBuilder()
 
@@ -96,8 +96,8 @@ class WDIMACSHelper( val hard: List[FClause], val soft: List[( FClause, Int )] )
         sb.append( " " );
       } )
 
-      atoms_to_str( clause.pos.asInstanceOf[Seq[FOLFormula]], true )
-      atoms_to_str( clause.neg.asInstanceOf[Seq[FOLFormula]], false )
+      atoms_to_str( clause.positive.asInstanceOf[Seq[FOLFormula]], true )
+      atoms_to_str( clause.negative.asInstanceOf[Seq[FOLFormula]], false )
 
       sb.toString()
     }
@@ -312,7 +312,7 @@ trait MaxSATSolverBinary extends MaxSATSolver {
    */
   val isInstalled: Boolean = {
     try {
-      val clause = FClause( List(), List( FOLAtom( "P" ) ) )
+      val clause = HOLClause( List(), List( FOLAtom( "P" ) ) )
       solve( List( clause ), List( clause -> 1 ) ) match {
         case Some( _ ) => true
         case None      => throw new IOException()
@@ -335,7 +335,7 @@ trait MaxSATSolverBinary extends MaxSATSolver {
    * @param soft clause set (+ weights) of soft constraints
    * @return None if UNSAT, Some(minimal model) otherwise
    */
-  protected def getFromMaxSATBinary( hard: List[FClause], soft: List[Tuple2[FClause, Int]] ): Option[Interpretation] =
+  protected def getFromMaxSATBinary( hard: List[HOLClause], soft: List[Tuple2[HOLClause, Int]] ): Option[Interpretation] =
     {
       debug( "Generating wcnf file..." )
       val helper = new WDIMACSHelper( hard, soft )

@@ -8,7 +8,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.formats.dimacs.{ writeDIMACS, readDIMACS, DIMACSHelper }
 import at.logic.gapt.models._
-import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
+import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.utils.logging.{ Stopwatch, Logger }
@@ -69,7 +69,7 @@ class Sat4j extends Stopwatch {
     start()
     val cnf = f match {
       case f1: FOLFormula => TseitinCNF( f1 )
-      case _              => CNFp.toFClauseList( f )
+      case _              => CNFp.toClauseList( f )
     }
     lap( "CNF done" )
     val int = solve( cnf )
@@ -79,7 +79,7 @@ class Sat4j extends Stopwatch {
 
   // Returns a model of the set of clauses obtained from the Sat4j SAT solver.
   // Returns None if unsatisfiable.
-  def solve( clauses: List[FClause] ): Option[Interpretation] =
+  def solve( clauses: List[HOLClause] ): Option[Interpretation] =
     {
       val helper = new DIMACSHelper( clauses )
 
@@ -112,7 +112,7 @@ class Sat4j extends Stopwatch {
 }
 
 class Sat4jProver extends Prover with Logger {
-  def getLKProof( seq: FSequent ): Option[LKProof] =
+  def getLKProof( seq: HOLSequent ): Option[LKProof] =
     throw new Exception( "Sat4j does not produce proofs!" )
 
   override def isValid( f: HOLFormula ): Boolean = {
@@ -120,7 +120,7 @@ class Sat4jProver extends Prover with Logger {
     sat.isValid( f )
   }
 
-  override def isValid( seq: FSequent ): Boolean = {
+  override def isValid( seq: HOLSequent ): Boolean = {
     val sat = new Sat4j()
     trace( "calling Sat4j.isValid( " + Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) + ")" )
     sat.isValid( Imp( And( seq.antecedent.toList ), Or( seq.succedent.toList ) ) )

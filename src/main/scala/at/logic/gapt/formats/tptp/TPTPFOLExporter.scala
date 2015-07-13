@@ -6,7 +6,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr.fol.{ reduceHolToFol }
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import scala.collection.immutable.HashMap
 import at.logic.gapt.expr._
 import scala.collection.mutable
@@ -14,32 +14,32 @@ import scala.collection.mutable
 object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   // convert a named list of clauses to a CNF refutation problem.
   // TODO: have to give a different name because of erasure :-(
-  def tptp_problem_named( ss: List[Tuple2[String, FSequent]] ) =
+  def tptp_problem_named( ss: List[Tuple2[String, HOLSequent]] ) =
     ss.foldLeft( "" )( ( s, p ) => s + sequentToProblem( p._2, p._1 ) + "\n" )
 
   // Convert a sequent into a tptp proof problem.
-  def tptp_proof_problem( seq: FSequent ) =
+  def tptp_proof_problem( seq: HOLSequent ) =
     "fof( to_prove, conjecture, " + exportFormula( seq.toFormula.asInstanceOf[FOLFormula] ) + ").\n"
 
-  def tptp_proof_problem_split( seq: FSequent ) =
+  def tptp_proof_problem_split( seq: HOLSequent ) =
     ( seq.antecedent.map( _ -> "axiom" ) ++ seq.succedent.map( _ -> "conjecture" ) ).zipWithIndex.map {
       case ( ( formula: FOLFormula, role ), index ) =>
         s"fof( formula$index, $role, ${exportFormula( formula )} ).\n"
     }.mkString
 
   // convert a list of clauses to a CNF refutation problem.
-  def tptp_problem( ss: List[FSequent] ) =
+  def tptp_problem( ss: List[HOLSequent] ) =
     tptp_problem_named( ss.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ) )
 
-  def sequentToProblemFull( s: FSequent, n: String ) =
+  def sequentToProblemFull( s: HOLSequent, n: String ) =
     "fof( " + n + ",axiom," + export( s ) + ")."
 
-  def sequentToProblem( s: FSequent, n: String ) =
+  def sequentToProblem( s: HOLSequent, n: String ) =
     "cnf( " + n + ",axiom," + export( s ) + ")."
 
   // TODO: would like to have FOLSequent here --- instead, we cast
   // we export it as a disjunction
-  def export( s: FSequent ) = {
+  def export( s: HOLSequent ) = {
     val f = reduceHolToFol( s.toFormula )
     val map = getVarRenaming( f )
     trace( "var renaming: " + map )

@@ -3,7 +3,7 @@ package at.logic.gapt.formats.expr.xml
 
 import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, beSyntacticMultisetEqual }
+import at.logic.gapt.proofs.lk.base.{ OccSequent, HOLSequent, beSyntacticMultisetEqual }
 import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
@@ -26,7 +26,7 @@ import scala.xml.SAXParseException
 class XMLParserTest extends Specification {
 
   implicit def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Nil )
-  implicit def fseq2seq( s: FSequent ) = Sequent( s._1 map fo2occ, s._2 map fo2occ )
+  implicit def fseq2seq( s: HOLSequent ) = s map fo2occ
   // helper to create 0-ary predicate constants
   def pc( sym: String ) = fo2occ( pcf( sym ) )
   def pcf( sym: String ) = HOLAtom( Const( sym, To ), List() )
@@ -292,7 +292,7 @@ class XMLParserTest extends Specification {
                           </rule>
                         </proof> ) with XMLProofParser ).getProof() must
         beLike {
-          case Axiom( conc ) if conc.syntacticMultisetEquals( Sequent(
+          case Axiom( conc ) if conc.syntacticMultisetEquals( OccSequent(
             pc( "P" ) :: Nil,
             pc( "P" ) :: Nil
           ) ) => ok
@@ -357,7 +357,7 @@ class XMLParserTest extends Specification {
                               </sequent>
                             </rule>
                           </rule> ) with XMLProofParser ).getProof().root ) must beSyntacticMultisetEqual(
-        Sequent( pc( "A" ) :: Nil, Nil )
+        OccSequent( pc( "A" ) :: Nil, Nil )
       )
     }
     "parse an involved contraction rule" in {
@@ -387,7 +387,7 @@ class XMLParserTest extends Specification {
                             </sequent>
                           </rule>
                         </rule> ) with XMLProofParser ).getProof().root must beSyntacticMultisetEqual(
-        Sequent( pc( "A" ) :: pc( "B" ) :: pc( "C" ) :: pc( "C" ) :: pc( "D" ) :: Nil, Nil )
+        OccSequent( pc( "A" ) :: pc( "B" ) :: pc( "C" ) :: pc( "C" ) :: pc( "D" ) :: Nil, Nil )
       )
     }
     "parse correctly a proof of A, A :- A and A" in {
@@ -427,7 +427,7 @@ class XMLParserTest extends Specification {
                             </rule>
                           </rule>
                         </proof> ) with XMLProofParser ).getProof().root must beSyntacticMultisetEqual(
-        Sequent( pc( "A" ) :: pc( "A" ) :: Nil, fo2occ( And( pcf( "A" ), pcf( "A" ) ) ) :: Nil )
+        OccSequent( pc( "A" ) :: pc( "A" ) :: Nil, fo2occ( And( pcf( "A" ), pcf( "A" ) ) ) :: Nil )
       )
     }
     "parse correctly a proof with one orr1 rule and one permr rule" in {
@@ -463,7 +463,7 @@ class XMLParserTest extends Specification {
                             </rule>
                           </rule>
                         </proof> ) with XMLProofParser ).getProof().root must beSyntacticMultisetEqual(
-        Sequent( Nil, pc( "B" ) :: fo2occ( Or( pcf( "A" ), pcf( "C" ) ) ) :: Nil )
+        OccSequent( Nil, pc( "B" ) :: fo2occ( Or( pcf( "A" ), pcf( "C" ) ) ) :: Nil )
       )
     }
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
@@ -471,7 +471,7 @@ class XMLParserTest extends Specification {
 
       proofs.size must beEqualTo( 1 )
       proofs.head._2.root must beSyntacticMultisetEqual(
-        Sequent( Nil, pc( "A" ) :: pc( "C" ) :: pc( "F" ) ::
+        OccSequent( Nil, pc( "A" ) :: pc( "C" ) :: pc( "F" ) ::
           fo2occ( And( pcf( "B" ), pcf( "E" ) ) ) ::
           fo2occ( Or( pcf( "D" ), pcf( "G" ) ) ) :: Nil )
       )
@@ -481,7 +481,7 @@ class XMLParserTest extends Specification {
 
       proofs.size must beEqualTo( 1 )
       proofs.head._2.root must beSyntacticMultisetEqual(
-        Sequent( Nil, fo2occ( Or( pcf( "A" ), pcf( "C" ) ) ) ::
+        OccSequent( Nil, fo2occ( Or( pcf( "A" ), pcf( "C" ) ) ) ::
           fo2occ( Or( pcf( "B" ), pcf( "D" ) ) ) :: Nil )
       )
     }
@@ -502,7 +502,7 @@ class XMLParserTest extends Specification {
       )
 
       proofs.size must beEqualTo( 1 )
-      proofs.head._2.root must beSyntacticMultisetEqual( Sequent( f1 :: Nil, f2 :: Nil ) )
+      proofs.head._2.root must beSyntacticMultisetEqual( OccSequent( f1 :: Nil, f2 :: Nil ) )
     }
 
     "parse correctly a sequentlist from a gzipped file" in {

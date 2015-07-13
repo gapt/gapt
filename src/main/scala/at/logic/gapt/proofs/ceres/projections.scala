@@ -31,7 +31,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   def reflexivity_projection( proof: LKProof, t: TA = Ti ): LKProof = {
     //TODO: in case of fol, fol equality is not used
     //TODO: lksk is not handled
-    val es = proof.root.toFSequent
+    val es = proof.root.toHOLSequent
     val x = Var( "x", t )
 
     var count = 0
@@ -45,13 +45,13 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   def lksk_reflexivity_projection( proof: LKProof, t: TA = Ti ): LKProof = {
 
     //TODO: in case of fol, fol equality is not used
-    val es = proof.root.toFSequent
+    val es = proof.root.toHOLSequent
     val x = Var( "x", t )
 
     var count = 0
     val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList ).asInstanceOf[Var]
     val ( ax, _ ) = AxiomSk.createDefault(
-      FSequent( Nil, List( Eq( x_, x_ ) ) ),
+      HOLSequent( Nil, List( Eq( x_, x_ ) ) ),
       ( List(), List( EmptyLabel() ) )
     )
     require( ax.root.occurrences.size == 1, "Couldn't create reflexivity!" )
@@ -172,7 +172,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     List( ac1, ac2 )
   }
 
-  def pickrule( p: LKProof, s: List[Sequent], aux: List[FormulaOccurrence] ): List[FormulaOccurrence] = {
+  def pickrule( p: LKProof, s: List[OccSequent], aux: List[FormulaOccurrence] ): List[FormulaOccurrence] = {
     //debug("Pick for rule: "+p.name)
     p.rule match {
       //Unary rules
@@ -531,23 +531,23 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 }
 
 object DeleteTautology {
-  def apply( l: List[Sequent] ): List[Sequent] = {
+  def apply( l: List[OccSequent] ): List[OccSequent] = {
     l.filter( seq => {
-      seq.antecedent.toList.map( fo => fo.formula ).intersect( seq.succedent.toList.map( fo => fo.formula ) ) == List[Sequent]()
+      seq.antecedent.toList.map( fo => fo.formula ).intersect( seq.succedent.toList.map( fo => fo.formula ) ) == List[OccSequent]()
     } ).map( seq1 => DeleteReduntantFOfromSequent( seq1 ) )
   }
 }
 
 object DeleteReduntantFOfromSequent {
-  def apply( s: Sequent ): Sequent = {
+  def apply( s: OccSequent ): OccSequent = {
     val setant = s.antecedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
     val setsucc = s.succedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
-    Sequent( setant.map( f => factory.createFormulaOccurrence( f, Nil ) ), setsucc.map( f => factory.createFormulaOccurrence( f, Nil ) ) )
+    OccSequent( setant.map( f => factory.createFormulaOccurrence( f, Nil ) ), setsucc.map( f => factory.createFormulaOccurrence( f, Nil ) ) )
   }
 }
 
 object DeleteRedundantSequents {
-  private def member( seq: Sequent, l: List[Sequent] ): Boolean = {
+  private def member( seq: OccSequent, l: List[OccSequent] ): Boolean = {
     l match {
       case seq1 :: ls =>
         if ( seq.antecedent.toList.map( fo => fo.formula ).toSet == seq1.antecedent.toList.map( fo => fo.formula ).toSet &&
@@ -557,7 +557,7 @@ object DeleteRedundantSequents {
     }
   }
 
-  def apply( l: List[Sequent] ): List[Sequent] = {
+  def apply( l: List[OccSequent] ): List[OccSequent] = {
     l match {
       case x :: ls =>
         val new_ls = apply( ls )
@@ -565,7 +565,7 @@ object DeleteRedundantSequents {
           new_ls
         else
           x :: new_ls
-      case _ => List[Sequent]()
+      case _ => List[OccSequent]()
     }
   }
 }

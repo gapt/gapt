@@ -17,7 +17,7 @@ import at.logic.gapt.expr._
 import DrawSequent._
 import at.logic.gapt.proofs.ceres.struct.structToExpressionTree.{ TimesC, PlusC }
 import at.logic.gapt.proofs.ceres.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
-import at.logic.gapt.proofs.lk.base.Sequent
+import at.logic.gapt.proofs.lk.base.OccSequent
 import java.awt.event.{ MouseMotionListener, MouseEvent }
 
 class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: String ) extends BorderPanel with MouseMotionListener {
@@ -29,7 +29,7 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
   private val tx = tree.vertex match {
     case PWeakC( seq )        => "w^{" + sequentToLatexString( seq ) + "}"
     case he: LambdaExpression => formulaToLatexString( he )
-    case seq: Sequent         => sequentToLatexString( seq )
+    case seq: OccSequent      => sequentToLatexString( seq )
     case _                    => tree.vertex.toString
   }
   private var drawLines = true

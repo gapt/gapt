@@ -44,12 +44,12 @@ object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
  * normalized struct. Does not work for Schema, for CERESomega only if all labels are empty (clauses are correct,
  * but labels forgotten).
  */
-class AlternativeStandardClauseSet( val optimize_plus: ( Set[FSequent], Set[FSequent] ) => ( Set[FSequent], Set[FSequent] ) ) {
-  def apply( struct: Struct ): Set[FSequent] = struct match {
-    case A( fo )                      => Set( FSequent( Nil, List( fo.formula ) ) )
-    case Dual( A( fo ) )              => Set( FSequent( List( fo.formula ), Nil ) )
+class AlternativeStandardClauseSet( val optimize_plus: ( Set[HOLSequent], Set[HOLSequent] ) => ( Set[HOLSequent], Set[HOLSequent] ) ) {
+  def apply( struct: Struct ): Set[HOLSequent] = struct match {
+    case A( fo )                      => Set( HOLSequent( Nil, List( fo.formula ) ) )
+    case Dual( A( fo ) )              => Set( HOLSequent( List( fo.formula ), Nil ) )
     case EmptyPlusJunction            => Set()
-    case EmptyTimesJunction           => Set( FSequent( Nil, Nil ) )
+    case EmptyTimesJunction           => Set( HOLSequent( Nil, Nil ) )
     case Plus( EmptyPlusJunction, x ) => apply( x )
     case Plus( x, EmptyPlusJunction ) => apply( x )
     case Plus( A( f1 ), Dual( A( f2 ) ) ) if f1.formula == f2.formula =>
@@ -69,7 +69,7 @@ class AlternativeStandardClauseSet( val optimize_plus: ( Set[FSequent], Set[FSeq
   }
 
   /* Like compose, but does not duplicate common terms */
-  private def delta_compose( fs1: FSequent, fs2: FSequent ) = FSequent(
+  private def delta_compose( fs1: HOLSequent, fs2: HOLSequent ) = HOLSequent(
     fs1.antecedent ++ fs2.antecedent.diff( fs1.antecedent ),
     fs1.succedent ++ fs2.succedent.diff( fs1.succedent )
   )
@@ -178,15 +178,15 @@ object StandardClauseSet extends Logger {
 
   private def isDual( s: Struct ): Boolean = s match { case x: Dual => true; case _ => false }
 
-  private def clausifyTimesJunctions( struct: Struct ): Sequent = {
+  private def clausifyTimesJunctions( struct: Struct ): OccSequent = {
     val literals = getLiterals( struct )
     val ( negative, positive ) = literals.partition( x => isDual( x ) )
     val negativeFO: Seq[FormulaOccurrence] = negative.map( x => x.asInstanceOf[Dual].sub.asInstanceOf[A].fo ) // extracting the formula occurrences from the negative literal structs
     val positiveFO: Seq[FormulaOccurrence] = positive.map( x => x.asInstanceOf[A].fo ) // extracting the formula occurrences from the positive atomic struct
-    Sequent( negativeFO, positiveFO )
+    OccSequent( negativeFO, positiveFO )
   }
 
-  def clausify( struct: Struct ): List[Sequent] = {
+  def clausify( struct: Struct ): List[OccSequent] = {
     val timesJunctions = getTimesJunctions( struct )
     timesJunctions.map( x => clausifyTimesJunctions( x ) )
   }
@@ -232,7 +232,7 @@ object SimplifyStruct {
 }
 
 object renameCLsymbols {
-  def createMap( cs: List[Sequent] ): Map[LambdaExpression, LambdaExpression] = {
+  def createMap( cs: List[OccSequent] ): Map[LambdaExpression, LambdaExpression] = {
     var i: Int = 1
     var map = Map.empty[LambdaExpression, LambdaExpression]
     cs.foreach( seq => {
@@ -251,7 +251,7 @@ object renameCLsymbols {
     return map
   }
 
-  def apply( cs: List[Sequent] ): ( List[FSequent], Map[LambdaExpression, LambdaExpression] ) = {
+  def apply( cs: List[OccSequent] ): ( List[HOLSequent], Map[LambdaExpression, LambdaExpression] ) = {
     val map = createMap( cs )
     val list = cs.map( seq => {
       val ant = seq.antecedent.map( fo => {
@@ -276,7 +276,7 @@ object renameCLsymbols {
           case _ => fo.formula
         }
       } )
-      FSequent( ant.asInstanceOf[List[HOLFormula]], succ.asInstanceOf[List[HOLFormula]] )
+      HOLSequent( ant.asInstanceOf[List[HOLFormula]], succ.asInstanceOf[List[HOLFormula]] )
     } )
     ( list, map )
   }

@@ -4,7 +4,7 @@ package at.logic.gapt.proofs.expansionTrees
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.utils.ds.trees._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import Utility._
 
 /**
@@ -355,8 +355,8 @@ class MultiExpansionSequent( val antecedent: Seq[MultiExpansionTree], val succed
    * @param f A function of type [[at.logic.gapt.proofs.expansionTrees.MultiExpansionTree]] → [[at.logic.gapt.expr.hol.HOLFormula]]
    * @return The result of the map.
    */
-  def map( f: MultiExpansionTree => HOLFormula ): FSequent = {
-    new FSequent( antecedent.map( f ), succedent.map( f ) )
+  def map( f: MultiExpansionTree => HOLFormula ): HOLSequent = {
+    new HOLSequent( antecedent.map( f ), succedent.map( f ) )
   }
 
   /**
@@ -443,11 +443,11 @@ class MultiExpansionSequent( val antecedent: Seq[MultiExpansionTree], val succed
   }
 
   def toShallow = map( ( t: MultiExpansionTree ) => t.toShallow )
-  def toDeep: FSequent = {
+  def toDeep: HOLSequent = {
     val newAnt = antecedent.map( t => t.toDeep( -1 ) )
     val newSuc = succedent.map( t => t.toDeep( 1 ) )
 
-    FSequent( newAnt, newSuc )
+    HOLSequent( newAnt, newSuc )
   }
 }
 object MultiExpansionSequent {

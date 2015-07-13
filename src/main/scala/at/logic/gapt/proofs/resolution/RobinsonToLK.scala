@@ -7,16 +7,16 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.robinson._
 
 object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
-  type mapT = scala.collection.mutable.Map[FClause, LKProof]
+  type mapT = scala.collection.mutable.Map[HOLClause, LKProof]
 
   //encapsulates a memo table s.t. subsequent runs of PCNF are not computed multiple times for the same c
-  private class PCNFMemoTable( val endsequent: FSequent ) {
-    val table: mapT = scala.collection.mutable.Map[FClause, LKProof]()
+  private class PCNFMemoTable( val endsequent: HOLSequent ) {
+    val table: mapT = scala.collection.mutable.Map[HOLClause, LKProof]()
     var hits: Int = 0
 
     def getHits() = this.hits
 
-    def getPCNF( c: FClause ) = {
+    def getPCNF( c: HOLClause ) = {
       if ( !( table contains c ) ) {
         table.put( c, PCNF( endsequent, c ) )
       } else {
@@ -27,42 +27,42 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
   }
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
-  def apply( resproof: RobinsonResolutionProof, s: FSequent ): LKProof = {
-    assert( resproof.root.toFSequent == FSequent( Nil, Nil ) )
+  def apply( resproof: RobinsonResolutionProof, s: HOLSequent ): LKProof = {
+    assert( resproof.root.toHOLSequent == HOLSequent( Nil, Nil ) )
     val memotable = new PCNFMemoTable( s )
-    WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[FClause, LKProof](), memotable.getPCNF ), s, strict = true )
+    WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[HOLClause, LKProof](), memotable.getPCNF ), s, strict = true )
   }
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
-  def apply( resproof: RobinsonResolutionProof, s: FSequent, map: mapT ): LKProof = {
+  def apply( resproof: RobinsonResolutionProof, s: HOLSequent, map: mapT ): LKProof = {
     val memotable = new PCNFMemoTable( s )
     WeakeningContractionMacroRule( recConvert( resproof, s, map, memotable.getPCNF ), s, strict = false )
   }
 
   def apply( resproof: RobinsonResolutionProof ): LKProof =
-    recConvert( resproof, FSequent( List(), List() ), scala.collection.mutable.Map[FClause, LKProof](), x => Axiom( x.neg, x.pos ) )
+    recConvert( resproof, HOLSequent( List(), List() ), scala.collection.mutable.Map[HOLClause, LKProof](), x => Axiom( x.negative, x.positive ) )
 
   /**
    * This method converts a RobinsonResolutionProof resproof, which is assumed to have the empty clause
    * as end-clause, into an LKProof of a sequent s. To do this, the provided createAxiom method is assumed
    * to return, on input c, an LKProof with end-sequent "s' merge c", where s' is a sub-sequent of s.
    */
-  def apply( resproof: RobinsonResolutionProof, s: FSequent, createAxiom: FClause => LKProof ): LKProof =
-    WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[FClause, LKProof](), createAxiom ), s, strict = true )
+  def apply( resproof: RobinsonResolutionProof, s: HOLSequent, createAxiom: HOLClause => LKProof ): LKProof =
+    WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[HOLClause, LKProof](), createAxiom ), s, strict = true )
 
   // Enforce the inductive invariant by contracting superfluous material.
-  private def contractDownTo( proof: LKProof, s: FSequent, c: FClause ) =
+  private def contractDownTo( proof: LKProof, s: HOLSequent, c: HOLClause ) =
     {
       val es_l = proof.root.antecedent.map( _.formula ).toSet
 
       val p_l = es_l.foldLeft( proof )( ( p, f ) => {
-        val max = s.antecedent.count( _ == f ) + c.neg.count( _ == f )
+        val max = s.antecedent.count( _ == f ) + c.negative.count( _ == f )
         ContractionLeftMacroRule( p, f, max )
       } )
 
       val es_r = proof.root.succedent.map( _.formula ).toSet
       es_r.foldLeft( p_l )( ( p, f ) => {
-        val max = s.succedent.count( _ == f ) + c.pos.count( _ == f )
+        val max = s.succedent.count( _ == f ) + c.positive.count( _ == f )
         ContractionRightMacroRule( p, f, max )
       } )
     }
@@ -70,13 +70,13 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
   // Inductive invariant of this method:
   // returns an LKProof of "s' merge c", where s' is a sub-sequent of seq, and
   // c is the end-clause of proof.
-  private def recConvert( proof: RobinsonResolutionProof, seq: FSequent, map: mapT, createAxiom: FClause => LKProof ): LKProof = {
-    if ( map.contains( proof.root.toFClause ) ) {
-      CloneLKProof( map( proof.root.toFClause ) )
+  private def recConvert( proof: RobinsonResolutionProof, seq: HOLSequent, map: mapT, createAxiom: HOLClause => LKProof ): LKProof = {
+    if ( map.contains( proof.root.toHOLSequent ) ) {
+      CloneLKProof( map( proof.root.toHOLSequent ) )
     } else {
       val ret: LKProof = proof match {
         case InitialClause( cls ) => //
-          createAxiom( cls.toFClause )
+          createAxiom( cls.toHOLSequent )
         case Factor( r, p, a, s ) => {
           // obtain the set of removed occurrences for each side
           val ( leftContracted, rightContracted ) =
@@ -121,7 +121,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
           //trace("u2: " + u2.root)
 
           val cut = CutRule( u1, u2, s( a1.formula.asInstanceOf[FOLFormula] ).asInstanceOf[FOLFormula] )
-          contractDownTo( cut, seq, proof.root.toFClause )
+          contractDownTo( cut, seq, proof.root.toHOLSequent )
         }
         case Paramodulation( r, p1, p2, a1, a2, _, s ) => {
 
@@ -142,7 +142,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
             val aux2 = u2.root.antecedent.find( _.formula == s( a2.formula.asInstanceOf[FOLExpression] ).asInstanceOf[FOLFormula] ).get
 
             if ( isTrivial( aux1.formula, aux2.formula, lof ) ) {
-              val newEndSequent = FSequent(
+              val newEndSequent = HOLSequent(
                 u1.root.antecedent.map( _.formula ) ++ u2.root.antecedent.map( _.formula ),
                 u1.root.succedent.filterNot( _ == aux1 ).map( _.formula ) ++ u2.root.succedent.map( _.formula )
               )
@@ -158,7 +158,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
             val aux2 = u2.root.succedent.find( _.formula == s( a2.formula.asInstanceOf[FOLExpression] ).asInstanceOf[FOLFormula] ).get
 
             if ( isTrivial( aux1.formula, aux2.formula, rof ) ) {
-              val newEndSequent = FSequent(
+              val newEndSequent = HOLSequent(
                 u1.root.antecedent.map( _.formula ) ++ u2.root.antecedent.map( _.formula ),
                 u1.root.succedent.filterNot( _ == aux1 ).map( _.formula ) ++ u2.root.succedent.map( _.formula )
               )
@@ -166,7 +166,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
             } else
               EquationRightRule( u1, u2, aux1, aux2, rof )
           }
-          contractDownTo( retProof, seq, proof.root.toFClause )
+          contractDownTo( retProof, seq, proof.root.toHOLSequent )
         }
         // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
         case Instance( root, p, s ) =>
@@ -178,7 +178,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
               throw new LKUnaryRuleCreationException( "Substitution errror: " + s + ":\n" + e.getMessage, rp, List( occf, formula ) )
           }
       }
-      map( proof.root.toFClause ) = ret
+      map( proof.root.toHOLSequent ) = ret
 
       //trace( "proof.root: " + proof.root )
       //trace( "ret.root: " + ret.root )

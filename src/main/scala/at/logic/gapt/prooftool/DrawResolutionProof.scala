@@ -12,7 +12,7 @@ import BorderPanel._
 import event._
 import java.awt.Font._
 import java.awt.event.{ MouseMotionListener, MouseEvent }
-import at.logic.gapt.proofs.lk.base.Sequent
+import at.logic.gapt.proofs.lk.base.OccSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import java.awt.RenderingHints
 import at.logic.gapt.proofs.proofs.{ NullaryProof, BinaryProof, UnaryProof, Proof }
@@ -35,7 +35,7 @@ class DrawResolutionProof( val proof: Proof[_], private val fSize: Int, private 
   // But then since def is a function, size of tx1 cannot be calculated and lines are not drawn correctly.
   private var tx = tx1
   private def tx1 = proof.root match {
-    case so: Sequent =>
+    case so: OccSequent =>
       val ds = DrawSequent( so, ft, visible_occurrences )
       ds.listenTo( mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher )
       ds.reactions += {

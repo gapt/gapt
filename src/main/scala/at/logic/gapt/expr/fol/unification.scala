@@ -1,7 +1,7 @@
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 /**
  * The interface for an unification algorithm of finitary type, i.e.
@@ -26,11 +26,11 @@ class UnificationException( msg: String ) extends Exception( msg )
  */
 object FOLUnificationAlgorithm extends UnificationAlgorithm {
 
-  def unify( seq1: FSequent, seq2: FSequent ): List[FOLSubstitution] = {
-    require( ( seq1._1 ++ seq1._2 ++ seq2._1 ++ seq2._2 ).forall( _.isInstanceOf[FOLFormula] ) )
+  def unify( seq1: HOLSequent, seq2: HOLSequent ): List[FOLSubstitution] = {
+    require( ( seq1.antecedent ++ seq1.succedent ++ seq2.antecedent ++ seq2.succedent ).forall( _.isInstanceOf[FOLFormula] ) )
 
-    val formseq1 = Or( ( seq1._1.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ seq1._2.map( x => x.asInstanceOf[FOLFormula] ) ).toList )
-    val formseq2 = Or( ( seq2._1.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ seq2._2.map( x => x.asInstanceOf[FOLFormula] ) ).toList )
+    val formseq1 = Or( ( seq1.antecedent.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ seq1.succedent.map( x => x.asInstanceOf[FOLFormula] ) ).toList )
+    val formseq2 = Or( ( seq2.antecedent.map( x => Neg( x.asInstanceOf[FOLFormula] ) ) ++ seq2.succedent.map( x => x.asInstanceOf[FOLFormula] ) ).toList )
 
     unify( formseq1, formseq2 )
   }

@@ -74,24 +74,24 @@ class name_replacementTest extends Specification {
 
   }
 
-  def checkClause( c: Clause, d: Clause ) = c.toFSequent multiSetEquals ( d.toFSequent )
-  def checkTree( r: AGraph[Clause], o: AGraph[Clause] ): Option[( AGraph[Clause], AGraph[Clause] )] = {
-    val pair: ( AGraph[Clause], AGraph[Clause] ) = ( r, o )
+  def checkClause( c: OccClause, d: OccClause ) = c.toHOLSequent multiSetEquals ( d.toHOLSequent )
+  def checkTree( r: AGraph[OccClause], o: AGraph[OccClause] ): Option[( AGraph[OccClause], AGraph[OccClause] )] = {
+    val pair: ( AGraph[OccClause], AGraph[OccClause] ) = ( r, o )
     pair match {
       case ( LeafAGraph( c ), LeafAGraph( d ) ) =>
-        if ( checkClause( c.asInstanceOf[Clause], d.asInstanceOf[Clause] ) ) None else Some( ( r, o ) )
+        if ( checkClause( c.asInstanceOf[OccClause], d.asInstanceOf[OccClause] ) ) None else Some( ( r, o ) )
       case ( UnaryAGraph( c, p ), UnaryAGraph( d, q ) ) =>
-        checkTree( p.asInstanceOf[AGraph[Clause]], q.asInstanceOf[AGraph[Clause]] ) match {
+        checkTree( p.asInstanceOf[AGraph[OccClause]], q.asInstanceOf[AGraph[OccClause]] ) match {
           case None =>
-            if ( checkClause( c.asInstanceOf[Clause], d.asInstanceOf[Clause] ) ) None else Some( ( r, o ) )
+            if ( checkClause( c.asInstanceOf[OccClause], d.asInstanceOf[OccClause] ) ) None else Some( ( r, o ) )
           case e @ Some( _ ) => e
         }
       case ( BinaryAGraph( c, p1, p2 ), BinaryAGraph( d, q1, q2 ) ) =>
-        checkTree( p1.asInstanceOf[AGraph[Clause]], q1.asInstanceOf[AGraph[Clause]] ) match {
+        checkTree( p1.asInstanceOf[AGraph[OccClause]], q1.asInstanceOf[AGraph[OccClause]] ) match {
           case None =>
-            checkTree( p2.asInstanceOf[AGraph[Clause]], q2.asInstanceOf[AGraph[Clause]] ) match {
+            checkTree( p2.asInstanceOf[AGraph[OccClause]], q2.asInstanceOf[AGraph[OccClause]] ) match {
               case None =>
-                if ( checkClause( c.asInstanceOf[Clause], d.asInstanceOf[Clause] ) ) None else Some( ( r, o ) )
+                if ( checkClause( c.asInstanceOf[OccClause], d.asInstanceOf[OccClause] ) ) None else Some( ( r, o ) )
               case Some( e ) => Some( e )
             }
           case Some( e ) => Some( e )

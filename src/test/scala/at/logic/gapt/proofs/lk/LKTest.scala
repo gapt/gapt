@@ -39,15 +39,15 @@ class LKTest extends Specification {
   val ap = Axiom( f1 :: f1 :: Nil, Nil )
   val a4 = ap
   val pr = WeakeningRightRule( ax, f1 )
+
   val pr1 = OrRightRule( pr, f1, f1 )
   val pr2 = WeakeningLeftRule( ax, f1 )
   val pr3 = AndLeftRule( pr2, f1, f1 )
-
   "The factories/extractors for LK" should {
 
     "work for Axioms" in {
       "- Formula occurrences have correct formulas" in {
-        ( a1 ) must beLike { case Axiom( Sequent( x, y ) ) => ( x( 0 ).formula == f1 ) && ( y( 0 ).formula == f1 ) must_== true }
+        ( a1 ) must beLike { case Axiom( OccSequent( x, y ) ) => ( x( 0 ).formula == f1 ) && ( y( 0 ).formula == f1 ) must_== true }
       }
       "- Same formulas on the same side must become different occurrences" in {
         val ant = a4.root.antecedent.toList
@@ -58,7 +58,7 @@ class LKTest extends Specification {
 
     "work for WeakeningLeftRule" in {
       val a = WeakeningLeftRule( a2, f1 )
-      val ( up1, Sequent( x, y ), prin1 ) = WeakeningLeftRule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), prin1 ) = WeakeningLeftRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( f1 )
       }
@@ -73,7 +73,7 @@ class LKTest extends Specification {
 
     "work for WeakeningRightRule" in {
       val a = WeakeningRightRule( a2, f1 )
-      val ( up1, Sequent( x, y ), prin1 ) = WeakeningRightRule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), prin1 ) = WeakeningRightRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( f1 )
       }
@@ -88,7 +88,7 @@ class LKTest extends Specification {
 
     "work for ContractionLeftRule" in {
       val a = ContractionLeftRule( a3, a3.root.antecedent( 0 ), a3.root.antecedent( 1 ) )
-      val ( up1, Sequent( x, y ), aux1, aux2, prin1 ) = ContractionLeftRule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, aux2, prin1 ) = ContractionLeftRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( f2 )
       }
@@ -106,7 +106,7 @@ class LKTest extends Specification {
 
     "work for ContractionRightRule" in {
       val a = ContractionRightRule( a3, a3.root.succedent( 0 ), a3.root.succedent( 1 ) )
-      val ( up1, Sequent( x, y ), aux1, aux2, prin1 ) = ContractionRightRule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, aux2, prin1 ) = ContractionRightRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( f2 )
       }
@@ -124,7 +124,7 @@ class LKTest extends Specification {
 
     "work for CutRule" in {
       val a = CutRule( a2, a3, a2.root.succedent( 0 ), a3.root.antecedent( 0 ) )
-      val ( up1, up2, Sequent( x, y ), aux1, aux2 ) = CutRule.unapply( a ).get
+      val ( up1, up2, OccSequent( x, y ), aux1, aux2 ) = CutRule.unapply( a ).get
       "- Lower sequent must not contain the auxiliary formulas" in {
         ( y.filter( z => z.formula == f2 ) ).size must beEqualTo( 2 )
         ( x.filter( z => z.formula == f2 ) ).size must beEqualTo( 2 )
@@ -137,7 +137,7 @@ class LKTest extends Specification {
 
     "work for AndRightRule" in {
       val a = AndRightRule( a1, a2, f1, f2 )
-      val ( up1, up2, Sequent( x, y ), aux1, aux2, prin1 ) = AndRightRule.unapply( a ).get
+      val ( up1, up2, OccSequent( x, y ), aux1, aux2, prin1 ) = AndRightRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( And( f1, f2 ) )
       }
@@ -156,7 +156,7 @@ class LKTest extends Specification {
 
     "work for AndLeft1Rule" in {
       val a = AndLeft1Rule( a2, f2, f1 )
-      val ( up1, Sequent( x, y ), aux1, prin1 ) = AndLeft1Rule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, prin1 ) = AndLeft1Rule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( And( f2, f1 ) )
       }
@@ -174,7 +174,7 @@ class LKTest extends Specification {
 
     "work for AndLeft2Rule" in {
       val a = AndLeft2Rule( a2, f1, f2 )
-      val ( up1, Sequent( x, y ), aux1, prin1 ) = AndLeft2Rule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, prin1 ) = AndLeft2Rule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( And( f1, f2 ) )
       }
@@ -215,7 +215,7 @@ class LKTest extends Specification {
 
     "work for OrLeftRule" in {
       val a = OrLeftRule( a1, a2, f1, f2 )
-      val ( up1, up2, Sequent( x, y ), aux1, aux2, prin1 ) = OrLeftRule.unapply( a ).get
+      val ( up1, up2, OccSequent( x, y ), aux1, aux2, prin1 ) = OrLeftRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( Or( f1, f2 ) )
       }
@@ -261,7 +261,7 @@ class LKTest extends Specification {
 
     "work for OrRight1Rule" in {
       val a = OrRight1Rule( a2, f2, f1 )
-      val ( up1, Sequent( x, y ), aux1, prin1 ) = OrRight1Rule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, prin1 ) = OrRight1Rule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( Or( f2, f1 ) )
       }
@@ -279,7 +279,7 @@ class LKTest extends Specification {
 
     "work for OrRight2Rule" in {
       val a = OrRight2Rule( a2, f1, f2 )
-      val ( up1, Sequent( x, y ), aux1, prin1 ) = OrRight2Rule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, prin1 ) = OrRight2Rule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( Or( f1, f2 ) )
       }
@@ -297,7 +297,7 @@ class LKTest extends Specification {
 
     "work for ImpLeftRule" in {
       val a = ImpLeftRule( a1, a2, f1, f2 )
-      val ( up1, up2, Sequent( x, y ), aux1, aux2, prin1 ) = ImpLeftRule.unapply( a ).get
+      val ( up1, up2, OccSequent( x, y ), aux1, aux2, prin1 ) = ImpLeftRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( Imp( f1, f2 ) )
       }
@@ -316,7 +316,7 @@ class LKTest extends Specification {
 
     "work for ImpRightRule" in {
       val a = ImpRightRule( a2, f2, f2 )
-      val ( up1, Sequent( x, y ), aux1, aux2, prin1 ) = ImpRightRule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, aux2, prin1 ) = ImpRightRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( Imp( f2, f2 ) )
       }
@@ -335,7 +335,7 @@ class LKTest extends Specification {
 
     "work for NegRightRule" in {
       val a = NegRightRule( a2, f2 )
-      val ( up1, Sequent( x, y ), aux1, prin1 ) = NegRightRule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, prin1 ) = NegRightRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( Neg( f2 ) )
       }
@@ -353,7 +353,7 @@ class LKTest extends Specification {
 
     "work for NegLeftRule" in {
       val a = NegLeftRule( a2, f2 )
-      val ( up1, Sequent( x, y ), aux1, prin1 ) = NegLeftRule.unapply( a ).get
+      val ( up1, OccSequent( x, y ), aux1, prin1 ) = NegLeftRule.unapply( a ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( Neg( f2 ) )
       }
@@ -384,7 +384,7 @@ class LKTest extends Specification {
       val main = All( z, Or( pz, za ) ) // forall lambda z. p(z) or z(a)
       val ax = Axiom( aux :: Nil, Nil )
       val rule = ForallLeftRule( ax, aux, main, subst )
-      val ( up1, Sequent( ant, succ ), aux1, prin1, term ) = ForallLeftRule.unapply( rule ).get
+      val ( up1, OccSequent( ant, succ ), aux1, prin1, term ) = ForallLeftRule.unapply( rule ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( main )
       }
@@ -409,7 +409,7 @@ class LKTest extends Specification {
       val main = All( z, Or( pz, za ) ) // forall lambda z. p(z) or z(a)
       val ax = Axiom( Nil, aux :: Nil )
       val rule = ForallRightRule( ax, aux, main, x )
-      val ( up1, Sequent( ant, succ ), aux1, prin1, ev ) = ForallRightRule.unapply( rule ).get
+      val ( up1, OccSequent( ant, succ ), aux1, prin1, ev ) = ForallRightRule.unapply( rule ).get
       "- Principal formula is created correctly" in {
         ( prin1.formula ) must beEqualTo( main )
       }
@@ -454,8 +454,8 @@ class LKTest extends Specification {
       val i2 = ForallRightRule( i1, i1.root.succedent( 0 ), allxpax, y )
       val i3 = OrRight1Rule( i2, i2.root.succedent( 0 ), pay )
 
-      i2.root.toFSequent match {
-        case FSequent( List( f1 ), List( f2 ) ) =>
+      i2.root.toHOLSequent match {
+        case HOLSequent( List( f1 ), List( f2 ) ) =>
           f1 mustEqual ( allxpax )
           f2 mustEqual ( allxpax )
           f1 must beAnInstanceOf[FOLFormula]
@@ -464,7 +464,7 @@ class LKTest extends Specification {
           ko( "Wrong result sequent " + fs )
       }
 
-      i3.root.toFSequent.formulas map ( _ must beAnInstanceOf[FOLFormula] )
+      i3.root.toHOLSequent.formulas map ( _ must beAnInstanceOf[FOLFormula] )
     }
 
     "work for first order proofs (2)" in {
@@ -476,8 +476,8 @@ class LKTest extends Specification {
       val ax = Axiom( List( pay ), List( pay ) )
       val i1 = ExistsRightRule( ax, ax.root.succedent( 0 ), allxpax, y )
       val i2 = ExistsLeftRule( i1, i1.root.antecedent( 0 ), allxpax, y )
-      i2.root.toFSequent match {
-        case FSequent( List( f1 ), List( f2 ) ) =>
+      i2.root.toHOLSequent match {
+        case HOLSequent( List( f1 ), List( f2 ) ) =>
           f1 mustEqual ( allxpax )
           f2 mustEqual ( allxpax )
           f1 must beAnInstanceOf[FOLFormula]
@@ -531,29 +531,29 @@ class LKTest extends Specification {
 
     "correctly perform replacements" in {
 
-      val sequent1 = FSequent( List( est, Qst ), List( Qss ) )
-      val sequent2 = FSequent( List( est, Qts ), List( Qss ) )
+      val sequent1 = HOLSequent( List( est, Qst ), List( Qss ) )
+      val sequent2 = HOLSequent( List( est, Qts ), List( Qss ) )
 
-      val sequent3 = FSequent( List( est, Qts ), List( Qtt ) )
-      val sequent4 = FSequent( List( est, Qst ), List( Qtt ) )
+      val sequent3 = HOLSequent( List( est, Qts ), List( Qtt ) )
+      val sequent4 = HOLSequent( List( est, Qst ), List( Qtt ) )
 
-      val sequent5 = FSequent( List( est, Qss ), List( Qst ) )
-      val sequent6 = FSequent( List( est, Qss ), List( Qts ) )
+      val sequent5 = HOLSequent( List( est, Qss ), List( Qst ) )
+      val sequent6 = HOLSequent( List( est, Qss ), List( Qts ) )
 
-      val sequent7 = FSequent( List( est, Qtt ), List( Qts ) )
-      val sequent8 = FSequent( List( est, Qtt ), List( Qst ) )
+      val sequent7 = HOLSequent( List( est, Qtt ), List( Qts ) )
+      val sequent8 = HOLSequent( List( est, Qtt ), List( Qst ) )
 
-      EquationLeft1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, HOLPosition( 2 ) ).root.toFSequent must beEqualTo( sequent1 )
-      EquationLeft1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, Qts ).root.toFSequent must beEqualTo( sequent2 )
+      EquationLeft1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent1 )
+      EquationLeft1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, Qts ).root.toHOLSequent must beEqualTo( sequent2 )
 
-      EquationLeft2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, HOLPosition( 2 ) ).root.toFSequent must beEqualTo( sequent3 )
-      EquationLeft2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, Qst ).root.toFSequent must beEqualTo( sequent4 )
+      EquationLeft2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent3 )
+      EquationLeft2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, Qst ).root.toHOLSequent must beEqualTo( sequent4 )
 
-      EquationRight1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, HOLPosition( 2 ) ).root.toFSequent must beEqualTo( sequent5 )
-      EquationRight1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, Qts ).root.toFSequent must beEqualTo( sequent6 )
+      EquationRight1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent5 )
+      EquationRight1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, Qts ).root.toHOLSequent must beEqualTo( sequent6 )
 
-      EquationRight2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, HOLPosition( 2 ) ).root.toFSequent must beEqualTo( sequent7 )
-      EquationRight2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, Qst ).root.toFSequent must beEqualTo( sequent8 )
+      EquationRight2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent7 )
+      EquationRight2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, Qst ).root.toHOLSequent must beEqualTo( sequent8 )
     }
   }
 
@@ -575,7 +575,7 @@ class LKTest extends Specification {
     "correctly perform multiple weakenings" in {
       val proof = WeakeningRightRule( WeakeningLeftRule( WeakeningLeftRule( ax, Py ), Neg( Py ) ), Py )
 
-      WeakeningMacroRule( ax, List( Neg( Py ), Py ), List( Py ) ).root.toFSequent.multiSetEquals( proof.root.toFSequent ) must beTrue
+      WeakeningMacroRule( ax, List( Neg( Py ), Py ), List( Py ) ).root.toHOLSequent.multiSetEquals( proof.root.toHOLSequent ) must beTrue
     }
   }
 
@@ -596,19 +596,19 @@ class LKTest extends Specification {
     }
 
     "return the original proof if there is nothing to do" in {
-      ContractionLeftMacroRule( ax, Px ).root.toFSequent must beEqualTo( ax.root.toFSequent )
-      ContractionLeftMacroRule( ax, Py ).root.toFSequent must beEqualTo( ax.root.toFSequent )
-      ContractionRightMacroRule( ax, Px ).root.toFSequent must beEqualTo( ax.root.toFSequent )
-      ContractionRightMacroRule( ax, Py ).root.toFSequent must beEqualTo( ax.root.toFSequent )
+      ContractionLeftMacroRule( ax, Px ).root.toHOLSequent must beEqualTo( ax.root.toHOLSequent )
+      ContractionLeftMacroRule( ax, Py ).root.toHOLSequent must beEqualTo( ax.root.toHOLSequent )
+      ContractionRightMacroRule( ax, Px ).root.toHOLSequent must beEqualTo( ax.root.toHOLSequent )
+      ContractionRightMacroRule( ax, Py ).root.toHOLSequent must beEqualTo( ax.root.toHOLSequent )
     }
 
     "correctly perform multiple contractions" in {
       val ax2 = Axiom( List( Px, Px, Py, Px ), List( Px, Neg( Px ), Neg( Px ) ) )
 
-      val sequent1 = FSequent( List( Py, Px ), List( Px, Neg( Px ), Neg( Px ) ) )
-      val sequent2 = FSequent( List( Px, Px, Py, Px ), List( Px, Neg( Px ) ) )
-      ContractionLeftMacroRule( ax2, Px ).root.toFSequent must beEqualTo( sequent1 )
-      ContractionRightMacroRule( ax2, Neg( Px ) ).root.toFSequent must beEqualTo( sequent2 )
+      val sequent1 = HOLSequent( List( Py, Px ), List( Px, Neg( Px ), Neg( Px ) ) )
+      val sequent2 = HOLSequent( List( Px, Px, Py, Px ), List( Px, Neg( Px ) ) )
+      ContractionLeftMacroRule( ax2, Px ).root.toHOLSequent must beEqualTo( sequent1 )
+      ContractionRightMacroRule( ax2, Neg( Px ) ).root.toHOLSequent must beEqualTo( sequent2 )
     }
   }
 
@@ -634,35 +634,35 @@ class LKTest extends Specification {
     val eq = ax1.root.succedent.head
 
     "choose the right rule to use" in {
-      val sequent1 = FSequent( List( est, Ps ), List( Pt ) )
-      val sequent2 = FSequent( List( est, Pt ), List( Ps ) )
+      val sequent1 = HOLSequent( List( est, Ps ), List( Pt ) )
+      val sequent2 = HOLSequent( List( est, Pt ), List( Ps ) )
 
-      EquationLeftRule( ax1, ax3, eq, ax3.root.antecedent.head, Ps ).root.toFSequent must beEqualTo( sequent1 )
-      EquationLeftRule( ax1, ax2, eq, ax2.root.antecedent.head, Pt ).root.toFSequent must beEqualTo( sequent2 )
+      EquationLeftRule( ax1, ax3, eq, ax3.root.antecedent.head, Ps ).root.toHOLSequent must beEqualTo( sequent1 )
+      EquationLeftRule( ax1, ax2, eq, ax2.root.antecedent.head, Pt ).root.toHOLSequent must beEqualTo( sequent2 )
 
-      EquationRightRule( ax1, ax2, eq, ax2.root.succedent.head, Pt ).root.toFSequent must beEqualTo( sequent1 )
-      EquationRightRule( ax1, ax3, eq, ax3.root.succedent.head, Ps ).root.toFSequent must beEqualTo( sequent2 )
+      EquationRightRule( ax1, ax2, eq, ax2.root.succedent.head, Pt ).root.toHOLSequent must beEqualTo( sequent1 )
+      EquationRightRule( ax1, ax3, eq, ax3.root.succedent.head, Ps ).root.toHOLSequent must beEqualTo( sequent2 )
 
-      EquationLeftRule( ax1, ax3, eq, ax3.root.antecedent.head, HOLPosition( 2 ) ).root.toFSequent must beEqualTo( sequent1 )
-      EquationLeftRule( ax1, ax2, eq, ax2.root.antecedent.head, HOLPosition( 2 ) ).root.toFSequent must beEqualTo( sequent2 )
+      EquationLeftRule( ax1, ax3, eq, ax3.root.antecedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent1 )
+      EquationLeftRule( ax1, ax2, eq, ax2.root.antecedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent2 )
 
-      EquationRightRule( ax1, ax2, eq, ax2.root.succedent.head, HOLPosition( 2 ) ).root.toFSequent must beEqualTo( sequent1 )
-      EquationRightRule( ax1, ax3, eq, ax3.root.succedent.head, HOLPosition( 2 ) ).root.toFSequent must beEqualTo( sequent2 )
+      EquationRightRule( ax1, ax2, eq, ax2.root.succedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent1 )
+      EquationRightRule( ax1, ax3, eq, ax3.root.succedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent2 )
     }
 
     "perform correctly if there is only one replacement to be made" in {
 
-      val sequent1 = FSequent( List( est, Qst ), List( Qss ) )
-      val sequent2 = FSequent( List( est, Qts ), List( Qss ) )
+      val sequent1 = HOLSequent( List( est, Qst ), List( Qss ) )
+      val sequent2 = HOLSequent( List( est, Qts ), List( Qss ) )
 
-      val sequent3 = FSequent( List( est, Qts ), List( Qtt ) )
-      val sequent4 = FSequent( List( est, Qst ), List( Qtt ) )
+      val sequent3 = HOLSequent( List( est, Qts ), List( Qtt ) )
+      val sequent4 = HOLSequent( List( est, Qst ), List( Qtt ) )
 
-      val sequent5 = FSequent( List( est, Qss ), List( Qst ) )
-      val sequent6 = FSequent( List( est, Qss ), List( Qts ) )
+      val sequent5 = HOLSequent( List( est, Qss ), List( Qst ) )
+      val sequent6 = HOLSequent( List( est, Qss ), List( Qts ) )
 
-      val sequent7 = FSequent( List( est, Qtt ), List( Qts ) )
-      val sequent8 = FSequent( List( est, Qtt ), List( Qst ) )
+      val sequent7 = HOLSequent( List( est, Qtt ), List( Qts ) )
+      val sequent8 = HOLSequent( List( est, Qtt ), List( Qst ) )
 
       val proof1 = EquationLeftMacroRule( ax1, ax4, eq, ax4.root.antecedent.head, Nil, List( HOLPosition( 2 ) ) )
       val proof2 = EquationLeftMacroRule( ax1, ax4, eq, ax4.root.antecedent.head, Qts )
@@ -673,32 +673,32 @@ class LKTest extends Specification {
       val proof7 = EquationRightMacroRule( ax1, ax5, eq, ax5.root.succedent.head, List( HOLPosition( 2 ) ), Nil )
       val proof8 = EquationRightMacroRule( ax1, ax5, eq, ax5.root.succedent.head, Qst )
 
-      proof1.root.toFSequent must beEqualTo( sequent1 )
-      proof2.root.toFSequent must beEqualTo( sequent2 )
+      proof1.root.toHOLSequent must beEqualTo( sequent1 )
+      proof2.root.toHOLSequent must beEqualTo( sequent2 )
 
-      proof3.root.toFSequent must beEqualTo( sequent3 )
-      proof4.root.toFSequent must beEqualTo( sequent4 )
+      proof3.root.toHOLSequent must beEqualTo( sequent3 )
+      proof4.root.toHOLSequent must beEqualTo( sequent4 )
 
-      proof5.root.toFSequent must beEqualTo( sequent5 )
-      proof6.root.toFSequent must beEqualTo( sequent6 )
+      proof5.root.toHOLSequent must beEqualTo( sequent5 )
+      proof6.root.toHOLSequent must beEqualTo( sequent6 )
 
-      proof7.root.toFSequent must beEqualTo( sequent7 )
-      proof8.root.toFSequent must beEqualTo( sequent8 )
+      proof7.root.toHOLSequent must beEqualTo( sequent7 )
+      proof8.root.toHOLSequent must beEqualTo( sequent8 )
     }
 
     "perform correctly when several replacements are made" in {
-      val sequent1 = FSequent( List( est, Qtt ), List( Qss ) )
-      val sequent2 = FSequent( List( est, Qss ), List( Qtt ) )
+      val sequent1 = HOLSequent( List( est, Qtt ), List( Qss ) )
+      val sequent2 = HOLSequent( List( est, Qss ), List( Qtt ) )
 
       val proof1 = EquationLeftMacroRule( ax1, ax4, eq, ax4.root.antecedent.head, Qtt )
       val proof2 = EquationLeftMacroRule( ax1, ax5, eq, ax5.root.antecedent.head, Qss )
       val proof3 = EquationRightMacroRule( ax1, ax4, eq, ax4.root.succedent.head, Qtt )
       val proof4 = EquationRightMacroRule( ax1, ax5, eq, ax5.root.succedent.head, Qss )
 
-      proof1.root.toFSequent must beEqualTo( sequent1 )
-      proof2.root.toFSequent must beEqualTo( sequent2 )
-      proof3.root.toFSequent must beEqualTo( sequent2 )
-      proof4.root.toFSequent must beEqualTo( sequent1 )
+      proof1.root.toHOLSequent must beEqualTo( sequent1 )
+      proof2.root.toHOLSequent must beEqualTo( sequent2 )
+      proof3.root.toHOLSequent must beEqualTo( sequent2 )
+      proof4.root.toHOLSequent must beEqualTo( sequent1 )
 
     }
   }
@@ -877,22 +877,22 @@ class LKTest extends Specification {
       val subProof1 = WeakeningLeftRule(ax2, est)
       val proof1 = UnaryEquationLeft1Rule(subProof1, subProof1.prin(0), subProof1.root.antecedent(0), HOLPosition(2))
 
-      (proof1.root.toFSequent multiSetEquals seq1) must beTrue
+      (proof1.root.toHOLSequent multiSetEquals seq1) must beTrue
 
       val subProof2 = WeakeningLeftRule(ax3, est)
       val proof2 = UnaryEquationLeft2Rule(subProof2, subProof2.prin(0), subProof2.root.antecedent(0), HOLPosition(2))
 
-      (proof2.root.toFSequent multiSetEquals seq2) must beTrue
+      (proof2.root.toHOLSequent multiSetEquals seq2) must beTrue
 
       val subProof3 = WeakeningLeftRule(ax2, est)
       val proof3 = UnaryEquationRight1Rule(subProof3, subProof3.prin(0), subProof3.root.succedent(0), HOLPosition(2))
 
-      (proof3.root.toFSequent multiSetEquals seq2) must beTrue
+      (proof3.root.toHOLSequent multiSetEquals seq2) must beTrue
 
       val subProof4 = WeakeningLeftRule(ax3, est)
       val proof4 = UnaryEquationRight2Rule(subProof4, subProof4.prin(0), subProof4.root.succedent(0), HOLPosition(2))
 
-      (proof4.root.toFSequent multiSetEquals seq1) must beTrue
+      (proof4.root.toHOLSequent multiSetEquals seq1) must beTrue
     }
 
     "be correctly converted to binary rules" in {
