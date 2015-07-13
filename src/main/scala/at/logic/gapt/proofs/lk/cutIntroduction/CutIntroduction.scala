@@ -222,12 +222,12 @@ object CutIntroduction extends Logger {
     } else {
       /** ******** Proof Construction **********/
       metrics.value( "mingrammar", smallestGrammars.head.size )
-      metrics.value( "num_mingram", smallestGrammars.size )
+      metrics.value( "num_mingrammars", smallestGrammars.size )
       if ( verbose ) println( "Smallest grammar-size: " + smallestGrammars.head.size )
       if ( verbose ) println( "Number of smallest grammars: " + smallestGrammars.length )
 
       val proofs = smallestGrammars.map { grammar =>
-        val ( cutFormulas, ehs1 ) = metrics.time( "sol" ) {
+        val ( cutFormulas, ehs1 ) = metrics.time( "minsol" ) {
           val cutFormulas = computeCanonicalSolutions( grammar )
 
           val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
@@ -344,14 +344,16 @@ object CutIntroduction extends Logger {
 
     // As an efficiency improvement, we treat the non-quantified part of the end-sequent
     // separately (since it never needs to be instantiated).
-    val quantPart = FSequent( endSequent.antecedent.filter {
+    val quantPart = FSequent(
+      endSequent.antecedent.filter {
       case All( _ ) => true
       case _        => false
     },
       endSequent.succedent.filter {
         case Ex( _ ) => true
         case _       => false
-      } )
+      }
+    )
 
     // In our setting, we work with a sequent instead of a formula F as in the paper.
     // The following sequent corresponds to that formula.
@@ -394,7 +396,8 @@ object CutIntroduction extends Logger {
     // define the sequent corresponding to F[x \ U_i]
     val FU = ( 0 to alphas.size ).map( i => FSequent(
       ( F.antecedent zip Uleft( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) },
-      ( F.succedent zip Uright( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) } ) )
+      ( F.succedent zip Uright( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) }
+    ) )
 
     trace( "FU: " + FU )
 
@@ -447,7 +450,8 @@ object CutIntroduction extends Logger {
     // define the R_i
     val R = ( 0 to alphas.size - 1 ).map( i =>
       FSequent( AprimeS( i ).toSeq ++ ehs.prop_l, Aprime.drop( i + 1 ) ++ ehs.prop_r ).compose(
-        FU( i + 1 ) ) )
+        FU( i + 1 )
+      ) )
 
     trace( "R: " + R )
 
