@@ -85,8 +85,10 @@ package trees {
     def leaves = t1.leaves ++ t2.leaves
     val node = vertex
     val children = List( ( t1, () ), ( t2, () ) )
-    def fold[T]( leafF: V => T )( unaryF: ( T, V ) => T )( binaryF: ( T, T, V ) => T ): T = binaryF( t1.fold( leafF )( unaryF )( binaryF ),
-      t2.fold( leafF )( unaryF )( binaryF ), vertex )
+    def fold[T]( leafF: V => T )( unaryF: ( T, V ) => T )( binaryF: ( T, T, V ) => T ): T = binaryF(
+      t1.fold( leafF )( unaryF )( binaryF ),
+      t2.fold( leafF )( unaryF )( binaryF ), vertex
+    )
   }
   object BinaryTree {
     def apply[V]( vertex: V, t1: Tree[V], t2: Tree[V] ) = new BinaryTree[V]( vertex, t1, t2 )

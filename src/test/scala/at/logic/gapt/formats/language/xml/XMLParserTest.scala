@@ -34,7 +34,8 @@ class XMLParserTest extends Specification {
   "XMLParser" should {
     "parse correctly a constant c" in {
       ( new NodeReader( <constant symbol="c"/> ) with XMLTermParser ).getTerm() must beEqualTo(
-        Const( "c", Ti ) )
+        Const( "c", Ti )
+      )
     }
     "parse correctly a constant c from a StringReader" in {
       ( new XMLReader( new BufferedSource( new ByteArrayInputStream( "<constant symbol=\"c\"/>".getBytes( "UTF8" ) ) ).reader ) with XMLTermParser ).getTerm() must beEqualTo( Const( "c", Ti ) )
@@ -43,11 +44,13 @@ class XMLParserTest extends Specification {
       ( new NodeReader( <function symbol="g">
                           <constant symbol="c"/>
                         </function> ) with XMLTermParser ).getTerm() must beEqualTo(
-        App( Const( "g", Ti -> Ti ), Const( "c", Ti ) ) )
+        App( Const( "g", Ti -> Ti ), Const( "c", Ti ) )
+      )
     }
     "parse correctly a variable x" in {
       ( new NodeReader( <variable symbol="x"></variable> ) with XMLTermParser ).getTerm() must beEqualTo(
-        Var( "x", Ti ) )
+        Var( "x", Ti )
+      )
 
     }
     "parse correctly a variablelist x,y,z" in {
@@ -56,15 +59,19 @@ class XMLParserTest extends Specification {
                           <variable symbol="y"/>
                           <variable symbol="z"/>
                         </variablelist> ) with XMLVariableListParser ).getVariableList() must beEqualTo(
-        Var( "x", Ti ) :: Var( "y", Ti ) :: Var( "z", Ti ) :: Nil )
+        Var( "x", Ti ) :: Var( "y", Ti ) :: Var( "z", Ti ) :: Nil
+      )
     }
     "parse correctly a term f(x,c)" in {
       ( new NodeReader( <function symbol="f">
                           <variable symbol="x"/>
                           <constant symbol="c"/>
                         </function> ) with XMLTermParser ).getTerm() must beEqualTo(
-        HOLFunction( Const( "f", Ti -> ( Ti -> Ti ) ),
-          Var( "x", Ti ) :: Const( "c", Ti ) :: Nil ) )
+        HOLFunction(
+          Const( "f", Ti -> ( Ti -> Ti ) ),
+          Var( "x", Ti ) :: Const( "c", Ti ) :: Nil
+        )
+      )
     }
     "parse correctly an atom formula P(f(x,c),y)" in {
       ( new NodeReader( <constantatomformula symbol="P">
@@ -74,10 +81,15 @@ class XMLParserTest extends Specification {
                           </function>
                           <variable symbol="y"/>
                         </constantatomformula> ) with XMLFormulaParser ).getFormula() must beEqualTo(
-        HOLAtom( Const( "P", Ti -> ( Ti -> To ) ),
-          HOLFunction( Const( "f", Ti -> ( Ti -> Ti ) ),
-            Var( "x", Ti ) :: Const( "c", Ti ) :: Nil )
-            :: Var( "y", Ti ) :: Nil ) )
+        HOLAtom(
+          Const( "P", Ti -> ( Ti -> To ) ),
+          HOLFunction(
+            Const( "f", Ti -> ( Ti -> Ti ) ),
+            Var( "x", Ti ) :: Const( "c", Ti ) :: Nil
+          )
+            :: Var( "y", Ti ) :: Nil
+        )
+      )
 
     }
     "parse correctly a conjunction of atoms P and Q" in {
@@ -85,7 +97,8 @@ class XMLParserTest extends Specification {
                           <constantatomformula symbol="P"/>
                           <constantatomformula symbol="Q"/>
                         </conjunctiveformula> ) with XMLFormulaParser ).getFormula() must beEqualTo(
-        And( pcf( "P" ), pcf( "Q" ) ) )
+        And( pcf( "P" ), pcf( "Q" ) )
+      )
     }
     "parse correctly a quantified formula (exists x) x = x" in {
       ( new NodeReader( <quantifiedformula type="exists">
@@ -95,8 +108,11 @@ class XMLParserTest extends Specification {
                             <variable symbol="x"/>
                           </constantatomformula>
                         </quantifiedformula> ) with XMLFormulaParser ).getFormula() must beEqualTo(
-        Ex( Var( "x", Ti ),
-          Eq( Var( "x", Ti ), Var( "x", Ti ) ) ) )
+        Ex(
+          Var( "x", Ti ),
+          Eq( Var( "x", Ti ), Var( "x", Ti ) )
+        )
+      )
     }
     "parse correctly a second-order variable X" in {
       ( new NodeReader( <secondordervariable symbol="X"/> ) with XMLSetTermParser ).getSetTerm() must
@@ -107,8 +123,11 @@ class XMLParserTest extends Specification {
                           <secondordervariable symbol="X"/>
                           <constant symbol="c"/>
                         </variableatomformula> ) with XMLFormulaParser ).getFormula() must beEqualTo(
-        HOLAtom( Var( "X", Ti -> To ),
-          Const( "c", Ti ) :: Nil ) )
+        HOLAtom(
+          Var( "X", Ti -> To ),
+          Const( "c", Ti ) :: Nil
+        )
+      )
     }
     "parse correctly a second-order quantified formula (all Z)Z(c)" in {
       ( new NodeReader( <secondorderquantifiedformula type="all">
@@ -118,9 +137,14 @@ class XMLParserTest extends Specification {
                             <constant symbol="c"/>
                           </variableatomformula>
                         </secondorderquantifiedformula> ) with XMLFormulaParser ).getFormula() must beEqualTo(
-        All( Var( "Z", Ti -> To ),
-          HOLAtom( Var( "Z", Ti -> To ),
-            Const( "c", Ti ) :: Nil ) ) )
+        All(
+          Var( "Z", Ti -> To ),
+          HOLAtom(
+            Var( "Z", Ti -> To ),
+            Const( "c", Ti ) :: Nil
+          )
+        )
+      )
     }
     "parse correctly a LambdaExpression lambda x . P(x)" in {
       ( new NodeReader( <lambdasubstitution>
@@ -131,7 +155,8 @@ class XMLParserTest extends Specification {
                             <variable symbol="x"/>
                           </constantatomformula>
                         </lambdasubstitution> ) with XMLSetTermParser ).getSetTerm() must beEqualTo(
-        Abs( Var( "x", Ti ), HOLAtom( Const( "P", Ti -> To ), Var( "x", Ti ) :: Nil ) ) )
+        Abs( Var( "x", Ti ), HOLAtom( Const( "P", Ti -> To ), Var( "x", Ti ) :: Nil ) )
+      )
     }
     "parse correctly a LambdaExpression lambda x,y. R(x,y)" in {
       ( new NodeReader( <lambdasubstitution>
@@ -144,19 +169,29 @@ class XMLParserTest extends Specification {
                             <variable symbol="y"/>
                           </constantatomformula>
                         </lambdasubstitution> ) with XMLSetTermParser ).getSetTerm() must beEqualTo(
-        Abs( Var( "x", Ti ),
-          Abs( Var( "y", Ti ),
-            HOLAtom( Const( "R", Ti -> ( Ti -> To ) ), Var( "x", Ti ) :: Var( "y", Ti ) :: Nil ) ) ) )
+        Abs(
+          Var( "x", Ti ),
+          Abs(
+            Var( "y", Ti ),
+            HOLAtom( Const( "R", Ti -> ( Ti -> To ) ), Var( "x", Ti ) :: Var( "y", Ti ) :: Nil )
+          )
+        )
+      )
     }
     "parse correctly a defined set \\cap(X, Y)" in {
       ( new NodeReader( <definedset symbol="\cap" definition="\cap">
                           <secondordervariable symbol="X"/>
                           <secondordervariable symbol="Y"/>
                         </definedset> ) with XMLSetTermParser ).getSetTerm() must beEqualTo(
-        HOLFunction( Const( "\\cap",
-          ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) ) ),
+        HOLFunction(
+          Const(
+            "\\cap",
+            ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) )
+          ),
           Var( "X", Ti -> To ) ::
-            Var( "Y", Ti -> To ) :: Nil ) )
+            Var( "Y", Ti -> To ) :: Nil
+        )
+      )
     }
     "parse correctly a defined set formula \\cup(X,Y)(c)" in {
       ( new NodeReader( <definedsetformula>
@@ -166,11 +201,18 @@ class XMLParserTest extends Specification {
                           </definedset>
                           <constant symbol="c"/>
                         </definedsetformula> ) with XMLFormulaParser ).getFormula() must beEqualTo(
-        App( HOLFunction( Const( "\\cup",
-          ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) ) ),
-          Var( "X", Ti -> To ) ::
-            Var( "Y", Ti -> To ) :: Nil ),
-          Const( "c", Ti ) ) )
+        App(
+          HOLFunction(
+            Const(
+              "\\cup",
+              ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) )
+            ),
+            Var( "X", Ti -> To ) ::
+              Var( "Y", Ti -> To ) :: Nil
+          ),
+          Const( "c", Ti )
+        )
+      )
     }
     "parse correctly a complex sentence (all X)(all Y)(all z) X(z) impl \\cup(X,Y)(z)" in {
       ( new NodeReader( <secondorderquantifiedformula type="all">
@@ -195,16 +237,30 @@ class XMLParserTest extends Specification {
                             </quantifiedformula>
                           </secondorderquantifiedformula>
                         </secondorderquantifiedformula> ) with XMLFormulaParser ).getFormula() must beEqualTo(
-        All( Var( "X", Ti -> To ),
-          All( Var( "Y", Ti -> To ),
-            All( Var( "z", Ti ),
-              Imp( HOLAtom( Var( "X", Ti -> To ), Var( "z", Ti ) :: Nil ),
-                ( App( HOLFunction( Const( "\\cup",
-                  ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) ) ),
-                  Var( "X", Ti -> To ) ::
-                    Var( "Y", Ti -> To ) :: Nil ),
-                  Var( "z", Ti ) ) ).asInstanceOf[HOLFormula] ) ) ) //TODO: cast should not be neccessary
-                  ) )
+        All(
+          Var( "X", Ti -> To ),
+          All(
+            Var( "Y", Ti -> To ),
+            All(
+              Var( "z", Ti ),
+              Imp(
+                HOLAtom( Var( "X", Ti -> To ), Var( "z", Ti ) :: Nil ),
+                ( App(
+                  HOLFunction(
+                    Const(
+                      "\\cup",
+                      ( Ti -> To ) -> ( ( Ti -> To ) -> ( Ti -> To ) )
+                    ),
+                    Var( "X", Ti -> To ) ::
+                      Var( "Y", Ti -> To ) :: Nil
+                  ),
+                  Var( "z", Ti )
+                ) ).asInstanceOf[HOLFormula]
+              )
+            )
+          ) //TODO: cast should not be neccessary
+        )
+      )
     }
     // BUG in specs2
     /*
@@ -236,8 +292,10 @@ class XMLParserTest extends Specification {
                           </rule>
                         </proof> ) with XMLProofParser ).getProof() must
         beLike {
-          case Axiom( conc ) if conc.syntacticMultisetEquals( Sequent( pc( "P" ) :: Nil,
-            pc( "P" ) :: Nil ) ) => ok
+          case Axiom( conc ) if conc.syntacticMultisetEquals( Sequent(
+            pc( "P" ) :: Nil,
+            pc( "P" ) :: Nil
+          ) ) => ok
         }
     }
     "parse a permutation parameter (1 2)" in {
@@ -299,7 +357,8 @@ class XMLParserTest extends Specification {
                               </sequent>
                             </rule>
                           </rule> ) with XMLProofParser ).getProof().root ) must beSyntacticMultisetEqual(
-        Sequent( pc( "A" ) :: Nil, Nil ) )
+        Sequent( pc( "A" ) :: Nil, Nil )
+      )
     }
     "parse an involved contraction rule" in {
       ( new NodeReader( <rule type="contrl" param="2,1,2,1,1">
@@ -328,7 +387,8 @@ class XMLParserTest extends Specification {
                             </sequent>
                           </rule>
                         </rule> ) with XMLProofParser ).getProof().root must beSyntacticMultisetEqual(
-        Sequent( pc( "A" ) :: pc( "B" ) :: pc( "C" ) :: pc( "C" ) :: pc( "D" ) :: Nil, Nil ) )
+        Sequent( pc( "A" ) :: pc( "B" ) :: pc( "C" ) :: pc( "C" ) :: pc( "D" ) :: Nil, Nil )
+      )
     }
     "parse correctly a proof of A, A :- A and A" in {
       ( new NodeReader( <proof symbol="p" calculus="LK">
@@ -367,7 +427,8 @@ class XMLParserTest extends Specification {
                             </rule>
                           </rule>
                         </proof> ) with XMLProofParser ).getProof().root must beSyntacticMultisetEqual(
-        Sequent( pc( "A" ) :: pc( "A" ) :: Nil, fo2occ( And( pcf( "A" ), pcf( "A" ) ) ) :: Nil ) )
+        Sequent( pc( "A" ) :: pc( "A" ) :: Nil, fo2occ( And( pcf( "A" ), pcf( "A" ) ) ) :: Nil )
+      )
     }
     "parse correctly a proof with one orr1 rule and one permr rule" in {
       ( new NodeReader( <proof symbol="p" calculus="LK">
@@ -402,7 +463,8 @@ class XMLParserTest extends Specification {
                             </rule>
                           </rule>
                         </proof> ) with XMLProofParser ).getProof().root must beSyntacticMultisetEqual(
-        Sequent( Nil, pc( "B" ) :: fo2occ( Or( pcf( "A" ), pcf( "C" ) ) ) :: Nil ) )
+        Sequent( Nil, pc( "B" ) :: fo2occ( Or( pcf( "A" ), pcf( "C" ) ) ) :: Nil )
+      )
     }
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
       val proofs = ( new XMLReader( Source.fromURL( getClass.getResource( "/xml/test3.xml" ) ).reader ) with XMLProofDatabaseParser ).getProofDatabase().proofs
@@ -411,7 +473,8 @@ class XMLParserTest extends Specification {
       proofs.head._2.root must beSyntacticMultisetEqual(
         Sequent( Nil, pc( "A" ) :: pc( "C" ) :: pc( "F" ) ::
           fo2occ( And( pcf( "B" ), pcf( "E" ) ) ) ::
-          fo2occ( Or( pcf( "D" ), pcf( "G" ) ) ) :: Nil ) )
+          fo2occ( Or( pcf( "D" ), pcf( "G" ) ) ) :: Nil )
+      )
     }
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
       val proofs = ( new XMLReader( Source.fromURL( getClass.getResource( "/xml/test2.xml" ) ).reader ) with XMLProofDatabaseParser ).getProofDatabase().proofs
@@ -419,7 +482,8 @@ class XMLParserTest extends Specification {
       proofs.size must beEqualTo( 1 )
       proofs.head._2.root must beSyntacticMultisetEqual(
         Sequent( Nil, fo2occ( Or( pcf( "A" ), pcf( "C" ) ) ) ::
-          fo2occ( Or( pcf( "B" ), pcf( "D" ) ) ) :: Nil ) )
+          fo2occ( Or( pcf( "B" ), pcf( "D" ) ) ) :: Nil )
+      )
     }
     "parse correctly an involved proof from a file" in {
       val proofs = ( new XMLReader( Source.fromURL( getClass.getResource( "/xml/test1.xml" ) ).reader ) with XMLProofDatabaseParser ).getProofDatabase().proofs
@@ -432,8 +496,10 @@ class XMLParserTest extends Specification {
       val x = Var( "x", Ti )
       val Rs = Const( "R", Ti -> ( Ti -> To ) )
       val f1 = All( X, And( HOLAtom( X, t :: Nil ), Neg( HOLAtom( X, s :: Nil ) ) ) )
-      val f2 = And( Imp( HOLAtom( Rs, r :: t :: Nil ), HOLAtom( Rs, r :: App( f, t ) :: Nil ) ),
-        Ex( x, And( HOLAtom( Rs, x :: s :: Nil ), Neg( HOLAtom( Rs, x :: App( f, s ) :: Nil ) ) ) ) )
+      val f2 = And(
+        Imp( HOLAtom( Rs, r :: t :: Nil ), HOLAtom( Rs, r :: App( f, t ) :: Nil ) ),
+        Ex( x, And( HOLAtom( Rs, x :: s :: Nil ), Neg( HOLAtom( Rs, x :: App( f, s ) :: Nil ) ) ) )
+      )
 
       proofs.size must beEqualTo( 1 )
       proofs.head._2.root must beSyntacticMultisetEqual( Sequent( f1 :: Nil, f2 :: Nil ) )

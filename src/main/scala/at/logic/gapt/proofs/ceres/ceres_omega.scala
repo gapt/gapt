@@ -65,7 +65,8 @@ class ceres_omega {
           val clause = filterEndsequent( sequentToLabelledSequent( subproof.root ), es, struct )
           val tocontract = LabelledSequent(
             diffModuloOccurrence( clause.l_antecedent, root.l_antecedent ),
-            diffModuloOccurrence( clause.l_succedent, root.l_succedent ) )
+            diffModuloOccurrence( clause.l_succedent, root.l_succedent )
+          )
           val acontr = tocontract.l_antecedent.foldLeft( subproof )( ( p, occ ) =>
             p.root.antecedent.find( x => x != occ && x.formula == occ.formula && x.asInstanceOf[LabelledFormulaOccurrence].skolem_label == occ.skolem_label ) match {
               case Some( c ) =>
@@ -110,12 +111,16 @@ class ceres_omega {
       val cutfleft = pickFOWithAncestor( cleft.root.succedent, c1 ).asInstanceOf[LabelledFormulaOccurrence]
       val cutfright = pickFOWithAncestor( cright.root.antecedent, c2 ).asInstanceOf[LabelledFormulaOccurrence]
 
-      require( cutfleft.formula == cutfright.formula,
-        "Found the wrong cut formulas:\n" + cutfleft.formula + "\n and\n" + cutfright.formula )
+      require(
+        cutfleft.formula == cutfright.formula,
+        "Found the wrong cut formulas:\n" + cutfleft.formula + "\n and\n" + cutfright.formula
+      )
       //      require(cutfleft.formula syntaxEquals  cutfright.formula,
       //        "Cut formulas are alpha equal, but not syntax:\n"+cutfleft.formula+"\n and\n"+cutfright.formula)
-      require( cutfleft.skolem_label == cutfright.skolem_label,
-        "Found the wrong cut labels:\n" + cutfleft.skolem_label + "\n and\n" + cutfright.skolem_label )
+      require(
+        cutfleft.skolem_label == cutfright.skolem_label,
+        "Found the wrong cut labels:\n" + cutfleft.skolem_label + "\n and\n" + cutfright.skolem_label
+      )
       val rule = CutRule( cleft, cright, cutfleft, cutfright )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
@@ -228,7 +233,8 @@ class ceres_omega {
       val root = sequentToLabelledSequent( sequent )
       LabelledSequent(
         root.l_antecedent.filter( x => anc.l_antecedent.exists( y => tranAncestors( x ).contains( y ) ) ),
-        root.l_succedent.filter( x => anc.l_succedent.exists( y => tranAncestors( x ).contains( y ) ) ) )
+        root.l_succedent.filter( x => anc.l_succedent.exists( y => tranAncestors( x ).contains( y ) ) )
+      )
     } catch {
       case e: Exception =>
         throw new Exception( "Could not filter " + sequent + " by ancestors " + anc + ": " + e.getMessage, e )
@@ -239,9 +245,11 @@ class ceres_omega {
    * Finds an occurrence in candidates - exclusion_list, which has the same formula and label as aux.
    * @return the first occurrence in candidates which matches
    */
-  def findAuxByFormulaAndLabel( aux: LabelledFormulaOccurrence,
-                                candidates: Seq[LabelledFormulaOccurrence],
-                                exclusion_list: Seq[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence = try {
+  def findAuxByFormulaAndLabel(
+    aux:            LabelledFormulaOccurrence,
+    candidates:     Seq[LabelledFormulaOccurrence],
+    exclusion_list: Seq[LabelledFormulaOccurrence]
+  ): LabelledFormulaOccurrence = try {
     findAux( candidates, x => x.skolem_label == aux.skolem_label && x.formula == aux.formula, exclusion_list )
   } catch {
     case e: IllegalArgumentException =>
@@ -252,10 +260,12 @@ class ceres_omega {
    * Finds an occurrence in candidates - exclusion_list, which has the same formula and label as aux.
    * @return the first occurrence in candidates which matches
    */
-  def findAuxByFormulaAndLabel( formula: HOLFormula,
-                                skolem_label: Label,
-                                candidates: Seq[LabelledFormulaOccurrence],
-                                exclusion_list: Seq[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence = try {
+  def findAuxByFormulaAndLabel(
+    formula:        HOLFormula,
+    skolem_label:   Label,
+    candidates:     Seq[LabelledFormulaOccurrence],
+    exclusion_list: Seq[LabelledFormulaOccurrence]
+  ): LabelledFormulaOccurrence = try {
     findAux( candidates, x => x.skolem_label == skolem_label && x.formula == formula, exclusion_list )
   } catch {
     case e: IllegalArgumentException =>
@@ -271,9 +281,11 @@ class ceres_omega {
    * @throws IllegalArgumentException if no candidate fulfills pred.
    * @return the first element of candidates which fulfills the criteria
    */
-  def findAux( candidates: Seq[LabelledFormulaOccurrence],
-               pred: LabelledFormulaOccurrence => Boolean,
-               exclusion_list: Seq[LabelledFormulaOccurrence] ): LabelledFormulaOccurrence =
+  def findAux(
+    candidates:     Seq[LabelledFormulaOccurrence],
+    pred:           LabelledFormulaOccurrence => Boolean,
+    exclusion_list: Seq[LabelledFormulaOccurrence]
+  ): LabelledFormulaOccurrence =
     candidates.diff( exclusion_list ).filter( pred ).toList match {
       case List( fo ) => fo
       case l @ ( fo :: _ ) =>
@@ -336,7 +348,8 @@ class ceres_omega {
     es.antecedent.foldLeft( root.l_antecedent.toList )( ( list, fo ) =>
       removeFirstWhere( list, ( x: LabelledFormulaOccurrence ) => fo.formula == x.formula ) ),
     es.succedent.foldLeft( root.l_succedent.toList )( ( list, fo ) =>
-      removeFirstWhere( list, ( x: LabelledFormulaOccurrence ) => fo.formula == x.formula ) ) )
+      removeFirstWhere( list, ( x: LabelledFormulaOccurrence ) => fo.formula == x.formula ) )
+  )
 
   /**
    * Computes the reflexive, transitive closure of the ancestor relation, ie. all ancestors.

@@ -36,7 +36,8 @@ class ClauseSetsTest extends Specification {
       val cs = StandardClauseSet.transformStructToClauseSet( struct )
       val res = cs.forall( seq => seq.antecedent.isEmpty && (
         seq =^ Sequent( Nil, List( fa, fc ) ) || seq =^ Sequent( Nil, List( fa, fd ) ) ||
-        seq =^ Sequent( Nil, List( fb, fc ) ) || seq =^ Sequent( Nil, List( fb, fd ) ) ) )
+        seq =^ Sequent( Nil, List( fb, fc ) ) || seq =^ Sequent( Nil, List( fb, fd ) )
+      ) )
       res must beTrue
     }
 

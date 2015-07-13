@@ -14,12 +14,16 @@ class compressTest extends Specification {
   val et1: ExpansionTree = merge(
     ETWeakQuantifier(
       All( x, HOLAtom( P, x :: Nil ) ),
-      List( ( ETAtom( HOLAtom( P, d :: Nil ) ), d ), ( ETAtom( HOLAtom( P, c :: Nil ) ), c ) ) ) )
+      List( ( ETAtom( HOLAtom( P, d :: Nil ) ), d ), ( ETAtom( HOLAtom( P, c :: Nil ) ), c ) )
+    )
+  )
 
   val et2: ExpansionTree = merge(
     ETWeakQuantifier(
       Ex( x, HOLAtom( P, x :: Nil ) ),
-      List( ( ETAtom( HOLAtom( P, d :: Nil ) ), d ), ( ETAtom( HOLAtom( P, c :: Nil ) ), c ) ) ) )
+      List( ( ETAtom( HOLAtom( P, d :: Nil ) ), d ), ( ETAtom( HOLAtom( P, c :: Nil ) ), c ) )
+    )
+  )
 
   val eSeq = ExpansionSequent( List( et1 ), List( et2 ) )
 

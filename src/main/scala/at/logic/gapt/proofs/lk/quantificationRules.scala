@@ -13,11 +13,13 @@ import at.logic.gapt.utils.ds.trees._
 import base._
 import BetaReduction._
 
-case class LKQuantifierException( main: HOLFormula,
-                                  aux: HOLFormula,
-                                  term: LambdaExpression,
-                                  calculated_formula: HOLFormula,
-                                  quantifier_var: Var ) extends Exception {
+case class LKQuantifierException(
+    main:               HOLFormula,
+    aux:                HOLFormula,
+    term:               LambdaExpression,
+    calculated_formula: HOLFormula,
+    quantifier_var:     Var
+) extends Exception {
   override def getMessage = "Substituting the variable " + quantifier_var +
     " with the term " + term + " in the formula " + main +
     " gives " + calculated_formula + " instead of " + aux
@@ -442,8 +444,10 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
         }
 
         // eigenvar condition
-        assert( context.forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
-          "Eigenvariable " + eigen_var + " occurs in context " + s1 )
+        assert(
+          context.forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
+          "Eigenvariable " + eigen_var + " occurs in context " + s1
+        )
 
         val back_substitiution = Substitution( x, eigen_var )
 
@@ -454,9 +458,11 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
         // "assert 2 in getTerms of String Quantifier Rule fails!\n"+betaNormalize( App( sub, eigen_var ) )+" != "+aux_fo.formula)
         val subterm = betaNormalize( back_substitiution( subformula ) )
         val normalized_aux = betaNormalize( aux_fo.formula )
-        assert( subterm == normalized_aux,
+        assert(
+          subterm == normalized_aux,
           "assert 2 in getTerms of Strong Quantifier Rule fails!\n" + subterm
-            + " != " + aux_fo.formula )
+            + " != " + aux_fo.formula
+        )
         aux_fo
 
     }

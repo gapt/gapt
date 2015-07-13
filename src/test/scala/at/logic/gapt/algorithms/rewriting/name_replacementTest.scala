@@ -104,7 +104,8 @@ class name_replacementTest extends Specification {
     "P" -> ( 2, "R" ),
     "f" -> ( 1, "h" ),
     "g" -> ( 2, "f" ),
-    "ladr0" -> ( 0, "c0" ) )
+    "ladr0" -> ( 0, "c0" )
+  )
 
   "The renaming interface " should {
     "rewrite fol formulas" in {
@@ -154,7 +155,8 @@ class name_replacementTest extends Specification {
         "P" -> ( 1, "R" ),
         "f" -> ( 1, "h" ),
         "g" -> ( 1, "f" ),
-        "ladr0" -> ( 0, "c0" ) )
+        "ladr0" -> ( 0, "c0" )
+      )
 
       val ( _, proof ) = NameReplacement.rename_resproof( proof1.p7, map )
       //println

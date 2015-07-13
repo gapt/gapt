@@ -193,8 +193,10 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
         require( mgus2.size < 2 )
         if ( !mgus1.isEmpty )
           if ( !mgus2.isEmpty )
-            List( Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ),
-              Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head ) )
+            List(
+              Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ),
+              Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head )
+            )
           else List( Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ) )
         else if ( !mgus2.isEmpty )
           List( Paramodulation( p1, p2, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head ) )
@@ -215,15 +217,18 @@ case class ParamodulationCommand( alg: UnificationAlgorithm ) extends DataComman
 
           if ( !mgus1.isEmpty )
             if ( !mgus2.isEmpty )
-              List( Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ),
-                Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head ) )
+              List(
+                Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ),
+                Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head )
+              )
             else List( Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, b ).asInstanceOf[FOLFormula], mgus1.head ) )
           else if ( !mgus2.isEmpty )
             List( Paramodulation( p2, p1, l1, l2, l2.formula.replace( subTermPosition, a ).asInstanceOf[FOLFormula], mgus2.head ) )
           else List()
         }
         case _ => List()
-      } )
+      }
+    )
     l foreach { x => debug( x toString ) }
     l
   }

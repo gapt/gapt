@@ -141,7 +141,8 @@ object rename {
     val v_list = vs.toList
     ( v_list zip
       v_list.foldLeft( Nil: List[FOLVar] )(
-        ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList ) ) ).toMap
+        ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList )
+      ) ).toMap
   }
 }
 

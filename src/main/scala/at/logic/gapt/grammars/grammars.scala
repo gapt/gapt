@@ -86,7 +86,8 @@ case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: S
 
   def toVectTratGrammar: VectTratGrammar = VectTratGrammar(
     axiom, nonTerminals map ( List( _ ) ),
-    productions map asVectTratGrammarProduction )
+    productions map asVectTratGrammarProduction
+  )
 
   def language: Set[FOLTerm] = toVectTratGrammar language
 

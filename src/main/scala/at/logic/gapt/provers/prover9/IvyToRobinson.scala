@@ -84,16 +84,20 @@ object IvyToRobinson {
             ( polarity1, polarity2 ) match {
               case ( true, false ) =>
                 require( rparent1.vertex.succedent( index1 ).formula == lit1.formula, "Left parent literal must be correctly found!" )
-                require( rparent2.vertex.antecedent( index2 ).formula == lit2.formula,
-                  "Right parent literal " + lit2 + " at pos " + index2 + " must be correctly found!" + rparent2.vertex )
+                require(
+                  rparent2.vertex.antecedent( index2 ).formula == lit2.formula,
+                  "Right parent literal " + lit2 + " at pos " + index2 + " must be correctly found!" + rparent2.vertex
+                )
 
                 val rproof = RResolution( rparent1, rparent2, rparent1.vertex.succedent( index1 ), rparent2.vertex.antecedent( index2 ), FOLSubstitution() )
                 require( rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating resolution rule, expected: " + clause.toFSequent + " result:" + rproof.root.toFSequent )
                 ( rproof, parentmap2 + ( ( id, rproof ) ) )
               case ( false, true ) =>
                 require( rparent1.vertex.antecedent( index1 ).formula == lit1.formula, "Left parent literal must be correctly found!" )
-                require( rparent2.vertex.succedent( index2 ).formula == lit2.formula,
-                  "Right parent literal " + lit2 + " at pos " + index2 + " must be correctly found!" + rparent2.vertex )
+                require(
+                  rparent2.vertex.succedent( index2 ).formula == lit2.formula,
+                  "Right parent literal " + lit2 + " at pos " + index2 + " must be correctly found!" + rparent2.vertex
+                )
 
                 val rproof = RResolution( rparent2, rparent1, rparent2.vertex.succedent( index2 ), rparent1.vertex.antecedent( index1 ), FOLSubstitution() )
                 require( rproof.root.toFSequent multiSetEquals clause.toFSequent, "Error translating resolution rule, expected: " + clause.toFSequent + " result:" + rproof.root.toFSequent )

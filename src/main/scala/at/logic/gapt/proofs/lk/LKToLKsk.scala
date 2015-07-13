@@ -82,9 +82,11 @@ object LKToLKsk extends Logger {
             // TODO: casts are only due to Set/Map not being covariant!?
             val composed_map = r._2.clone
             composed_map.transform( ( k, v ) => new_parent._2( v ) )
-            ( new_proof, computeMap( p.root.antecedent ++
-              p.root.succedent,
-              proof, new_proof, composed_map ) )
+            ( new_proof, computeMap(
+              p.root.antecedent ++
+                p.root.succedent,
+              proof, new_proof, composed_map
+            ) )
         }
       } else {
         val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
@@ -111,9 +113,11 @@ object LKToLKsk extends Logger {
             // TODO: casts are only due to Set/Map not being covariant!?
             val composed_map = r._2.clone
             composed_map.transform( ( k, v ) => new_parent._2( v ) )
-            ( new_proof, computeMap( p.root.antecedent ++
-              p.root.succedent,
-              proof, new_proof, composed_map ) )
+            ( new_proof, computeMap(
+              p.root.antecedent ++
+                p.root.succedent,
+              proof, new_proof, composed_map
+            ) )
 
         }
       } else {
@@ -307,15 +311,16 @@ object LKToLKsk extends Logger {
 
   def handleEquationRule(
     constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof,
-    p1: LKProof,
-    p2: LKProof,
-    s: Sequent,
-    a1: FormulaOccurrence,
-    a2: FormulaOccurrence,
-    m: HOLFormula,
-    old_proof: LKProof,
+    p1:          LKProof,
+    p2:          LKProof,
+    s:           Sequent,
+    a1:          FormulaOccurrence,
+    a2:          FormulaOccurrence,
+    m:           HOLFormula,
+    old_proof:   LKProof,
     subst_terms: Map[FormulaOccurrence, Label],
-    cut_occs: Set[FormulaOccurrence] ) = {
+    cut_occs:    Set[FormulaOccurrence]
+  ) = {
     val new_label_map = copyMapFromAncestor( s.antecedent ++ s.succedent, subst_terms )
     val r1 = rec( p1, new_label_map, cut_occs )
     val r2 = rec( p2, new_label_map, cut_occs )
@@ -338,8 +343,10 @@ object LKToLKsk extends Logger {
                   new_proof: LKProof, old_map: Map[FormulaOccurrence, LabelledFormulaOccurrence] ) =
     {
       val map = new HashMap[FormulaOccurrence, LabelledFormulaOccurrence]
-      occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get,
-        new_proof.getDescendantInLowerSequent( old_map( fo ) ).get.asInstanceOf[LabelledFormulaOccurrence] ) )
+      occs.foreach( fo => map.update(
+        old_proof.getDescendantInLowerSequent( fo ).get,
+        new_proof.getDescendantInLowerSequent( old_map( fo ) ).get.asInstanceOf[LabelledFormulaOccurrence]
+      ) )
       map
     }
 

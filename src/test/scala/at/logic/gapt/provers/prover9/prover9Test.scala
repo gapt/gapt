@@ -32,8 +32,10 @@ class Prover9Test extends Specification {
     }
 
     "handle quantified antecedents" in {
-      val seq = FSequent( Seq( "0+x=x", "s(x)+y=s(x+y)" ).map( s => univclosure( parseFormula( s ) ) ),
-        Seq( parseFormula( "s(0)+s(s(0)) = s(s(s(0)))" ) ) )
+      val seq = FSequent(
+        Seq( "0+x=x", "s(x)+y=s(x+y)" ).map( s => univclosure( parseFormula( s ) ) ),
+        Seq( parseFormula( "s(0)+s(s(0)) = s(s(s(0)))" ) )
+      )
       prover9.getLKProof( seq ) must beLike {
         case Some( p ) => p.root.toFSequent must_== seq
       }

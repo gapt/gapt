@@ -55,8 +55,10 @@ object normalFormsSipGrammar {
 
     val allTerms = instanceLanguages.flatMap( _._2 )
     val topLevelNFs = normalForms( allTerms, Seq( gamma, alpha, nu ) ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentNFs = normalForms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
-      Seq( gamma, alpha, nu ) )
+    val argumentNFs = normalForms(
+      FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
+      Seq( gamma, alpha, nu )
+    )
 
     val prods = Set.newBuilder[Production]
 
@@ -127,7 +129,8 @@ object minimizeSipGrammar {
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
       case Some( interp ) => SipGrammar(
-        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
+        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) }
+      )
       case None => throw new Exception( "Grammar does not cover language." )
     }
   }

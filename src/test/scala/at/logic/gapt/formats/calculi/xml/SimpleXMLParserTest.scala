@@ -27,7 +27,8 @@ class SimpleXMLParserTest extends Specification {
             <conclusion>\/_i=2..n P_i \/ P_1</conclusion>
           </rule>
         </rule>
-      </proof> ) with SimpleXMLProofParser ).getNamedTree()( Parser )
+      </proof>
+    ) with SimpleXMLProofParser ).getNamedTree()( Parser )
     name must beEqualTo( "\\pi" )
     tree.vertex must beLike {
       case x: String if x == """\/_i=1..n P_i""" => ok
@@ -49,7 +50,8 @@ class SimpleXMLParserTest extends Specification {
             </rule>
           </rule>
         </proof>
-      </prooftrees> ) with SimpleXMLProofParser ).getNamedTrees()( Parser )
+      </prooftrees>
+    ) with SimpleXMLProofParser ).getNamedTrees()( Parser )
     trees.size must beEqualTo( 1 )
     val ( name, tree ) = trees.head
     name must beEqualTo( "\\pi" )

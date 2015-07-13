@@ -372,7 +372,8 @@ object CutIntroduction extends Logger {
         ( None, Some( e ) )
     }
 
-    val tuple = ( rulesLKProof,
+    val tuple = (
+      rulesLKProof,
       quantRules,
       numCuts,
       rulesLKProofWithCut,
@@ -387,7 +388,8 @@ object CutIntroduction extends Logger {
       grammarFindingTime,
       improvingSolutionTime,
       buildProofTime,
-      cleanStructuralRulesTime )
+      cleanStructuralRulesTime
+    )
 
     if ( verbose && error == None ) {
       println( "Status: " + status );
@@ -530,7 +532,8 @@ object CutIntroduction extends Logger {
         ( None, Some( e ) )
     }
 
-    val tuple = ( rulesLKProof,
+    val tuple = (
+      rulesLKProof,
       quantRules,
       numCuts,
       rulesLKProofWithCut,
@@ -545,7 +548,8 @@ object CutIntroduction extends Logger {
       grammarFindingTime,
       improvingSolutionTime,
       buildProofTime,
-      cleanStructuralRulesTime )
+      cleanStructuralRulesTime
+    )
 
     if ( verbose && error == None ) {
       println( "Status: " + status );
@@ -626,14 +630,16 @@ object CutIntroduction extends Logger {
 
     // As an efficiency improvement, we treat the non-quantified part of the end-sequent
     // separately (since it never needs to be instantiated).
-    val quantPart = FSequent( endSequent.antecedent.filter {
-      case All( _ ) => true
-      case _        => false
-    },
+    val quantPart = FSequent(
+      endSequent.antecedent.filter {
+        case All( _ ) => true
+        case _        => false
+      },
       endSequent.succedent.filter {
         case Ex( _ ) => true
         case _       => false
-      } )
+      }
+    )
 
     // In our setting, we work with a sequent instead of a formula F as in the paper.
     // The following sequent corresponds to that formula.
@@ -676,7 +682,8 @@ object CutIntroduction extends Logger {
     // define the sequent corresponding to F[x \ U_i]
     val FU = ( 0 to alphas.size ).map( i => FSequent(
       ( F.antecedent zip Uleft( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) },
-      ( F.succedent zip Uright( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) } ) )
+      ( F.succedent zip Uright( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) }
+    ) )
 
     trace( "FU: " + FU )
 
@@ -729,7 +736,8 @@ object CutIntroduction extends Logger {
     // define the R_i
     val R = ( 0 to alphas.size - 1 ).map( i =>
       FSequent( AprimeS( i ).toSeq ++ ehs.prop_l, Aprime.drop( i + 1 ) ++ ehs.prop_r ).compose(
-        FU( i + 1 ) ) )
+        FU( i + 1 )
+      ) )
 
     trace( "R: " + R )
 

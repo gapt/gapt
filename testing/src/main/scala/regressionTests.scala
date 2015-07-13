@@ -113,7 +113,9 @@ object RegressionTests extends App {
     }
   }
 
-  XML.save( "target/regression-test-results.xml",
+  XML.save(
+    "target/regression-test-results.xml",
     <testsuite> { results flatMap ( _.child ) toList } </testsuite>,
-    "UTF-8" )
+    "UTF-8"
+  )
 }

@@ -10,14 +10,16 @@ class TermExtractionTest extends Specification {
   val esR = Ex( x, FOLAtom( "R", x ) )
   val endSequent = FSequent(
     Seq( esP ),
-    Seq( esR ) )
+    Seq( esR )
+  )
 
   val instP = All( x, FOLAtom( "P", x, FOLConst( "d" ) ) )
   val expTreeP = ETWeakQuantifier( instP, Seq(
     ETAtom( FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) )
       -> FOLConst( "c" ),
     ETAtom( FOLAtom( "P", FOLConst( "d" ), FOLConst( "d" ) ) )
-      -> FOLConst( "d" ) ) ).asInstanceOf[ExpansionTree]
+      -> FOLConst( "d" )
+  ) ).asInstanceOf[ExpansionTree]
 
   val expSeq = ExpansionSequent( Seq( expTreeP ), Seq() )
 
@@ -26,20 +28,23 @@ class TermExtractionTest extends Specification {
       val instanceTerms = extractInstanceTerms( expTreeP )
       instanceTerms must contain( exactly(
         instP -> Seq( FOLConst( "c" ).asInstanceOf[FOLTerm] ),
-        instP -> Seq( FOLConst( "d" ) ) ) )
+        instP -> Seq( FOLConst( "d" ) )
+      ) )
     }
     "expansion sequents" in {
       val instanceTerms = extractInstanceTerms( expSeq )
       instanceTerms must contain( exactly(
         ( instP -> Seq( FOLConst( "c" ).asInstanceOf[FOLTerm] ) ) -> true,
-        ( instP -> Seq( FOLConst( "d" ) ) ) -> true ) )
+        ( instP -> Seq( FOLConst( "d" ) ) ) -> true
+      ) )
     }
   }
 
   "extractInstances" in {
     extractInstances( expSeq ).antecedent must contain( exactly(
       FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ).asInstanceOf[HOLFormula],
-      FOLAtom( "P", FOLConst( "d" ), FOLConst( "d" ) ) ) )
+      FOLAtom( "P", FOLConst( "d" ), FOLConst( "d" ) )
+    ) )
   }
 
   "TermInstanceEncoding" should {

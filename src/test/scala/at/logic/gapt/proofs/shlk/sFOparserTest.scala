@@ -39,8 +39,8 @@ class sFOparserTest extends Specification {
       val map = sFOParser.parseProof( s )
 
       def f = Const( "f", Ti -> Ti )
-      def h = Const( "h", ->( Tindex, ->( Ti, Ti ) ) )
-      def g = Const( "g", ->( Tindex, ->( Ti, Ti ) ) )
+      def h = Const( "h", ( Tindex -> ( Ti -> Ti ) ) )
+      def g = Const( "g", ( Tindex -> ( Ti -> Ti ) ) )
       val k = IntVar( "k" )
       val x = foVar( "x" )
       val base2 = x
@@ -74,8 +74,8 @@ class sFOparserTest extends Specification {
       val map = sFOParser.parseProof( s )
 
       def f = Const( "f", Ti -> Ti )
-      def h = Const( "h", ->( Tindex, ->( Ti, Ti ) ) )
-      def g = Const( "g", ->( Tindex, ->( Ti, Ti ) ) )
+      def h = Const( "h", ( Tindex -> ( Ti -> Ti ) ) )
+      def g = Const( "g", ( Tindex -> ( Ti -> Ti ) ) )
       val k = IntVar( "k" )
       val x = foVar( "x" )
       val base2 = x

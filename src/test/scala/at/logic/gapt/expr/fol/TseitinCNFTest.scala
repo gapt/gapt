@@ -31,7 +31,8 @@ class TseitinCNFTest extends Specification {
         FClause( List( p ), List( x ) ),
         FClause( List( x2, x0 ), List( x1 ) ),
         FClause( List( x, r ), List( x0 ) ),
-        FClause( List( x ), List( p, q ) ) )
+        FClause( List( x ), List( p, q ) )
+      )
       expected.subsetOf( new TseitinCNF().apply( f ).toSet ) must beTrue
     }
   }

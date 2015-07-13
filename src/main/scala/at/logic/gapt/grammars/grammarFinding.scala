@@ -109,7 +109,8 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
         }
         possibleAssignments foreach { assignment =>
           if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) ) )
-            cs += Imp( And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( nt, value ) } ),
+            cs += Imp(
+              And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( nt, value ) } ),
               Or( g.productions( containingNonTerminalVect ) map {
                 case p @ ( _, rhss ) =>
                   And( containingNonTerminalVect.zip( assignment ).zip( rhss ) map {
@@ -117,16 +118,19 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
                     case ( ( nt, value ), rhs ) =>
                       FOLMatchingAlgorithm.matchTerms( rhs, value ) match {
                         case Some( matching ) =>
-                          And( vectProductionIsIncluded( p ),
+                          And(
+                            vectProductionIsIncluded( p ),
                             And( matching.folmap map {
                               case ( v, smallerValue: FOLTerm ) =>
                                 singleVariableAssignmentsToHandle enqueue ( v -> smallerValue )
                                 valueOfNonTerminal( v, smallerValue )
-                            } toList ) )
+                            } toList )
+                          )
                         case None => Bottom()
                       }
                   } )
-              } toList ) )
+              } toList )
+            )
 
           alreadyHandledAssignments += containingNonTerminalVect -> assignment
         }

@@ -35,7 +35,7 @@ class HigherOrderLogicTest extends Specification {
       result must beTrue
     }
     "mix correctly the formula trait (3)" in {
-      val at1 = HOLAtom( Var( "P", ->( c2.exptype, ->( a22.exptype, To ) ) ), c2 :: a22 :: Nil )
+      val at1 = HOLAtom( Var( "P", ( c2.exptype ->( a22.exptype -> To ) ) ), c2 :: a22 :: Nil )
       // Another way to construct P's type is: FunctionType(To, args.map(a => a.exptype) )
       val result = at1 match {
         case x: HOLFormula => true

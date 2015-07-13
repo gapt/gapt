@@ -94,7 +94,8 @@ object Cut {
       else {
         new BinaryAGraph[LabelledSequent]( new LabelledSequent(
           createContext( s1.root.antecedent ) ++ createContext( s2.root.antecedent filterNot ( term2s contains ( _ ) ) ),
-          createContext( s1.root.succedent filterNot ( term1s contains ( _ ) ) ) ++ createContext( s2.root.succedent ) ), s1, s2 ) with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
+          createContext( s1.root.succedent filterNot ( term1s contains ( _ ) ) ) ++ createContext( s2.root.succedent )
+        ), s1, s2 ) with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas {
           def rule = CutRalType
           def aux = ( term1s ) :: ( term2s ) :: Nil
           override def name = "Cut"
@@ -221,10 +222,13 @@ object ExistsT {
 
 object Sub {
   def apply[V <: LabelledSequent]( p: RalResolutionProof[V], sub: Substitution ) =
-    new UnaryAGraph[LabelledSequent]( new LabelledSequent(
-      p.root.antecedent.map( x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x :: Nil, sub ) ),
-      p.root.succedent.map( x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x :: Nil, sub ) ) ),
-      p ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AppliedSubstitution {
+    new UnaryAGraph[LabelledSequent](
+      new LabelledSequent(
+        p.root.antecedent.map( x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x :: Nil, sub ) ),
+        p.root.succedent.map( x => LKskFOFactory.createContextFormulaOccurrenceWithSubst( x.formula, x, x :: Nil, sub ) )
+      ),
+      p
+    ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AppliedSubstitution {
       def rule = SubType;
       def substitution = sub
       override def name = "Sub"
@@ -499,7 +503,8 @@ object ImpT {
         val prinFormula2 = term1.factory.createFormulaOccurrence( betaNormalize( r ), term1 :: Nil ).asInstanceOf[LabelledFormulaOccurrence]
         new UnaryAGraph[LabelledSequent]( new LabelledSequent(
           createContext( s1.root.antecedent ) :+ prinFormula1,
-          createContext( s1.root.succedent filterNot ( _ == term1 ) ) :+ prinFormula2 ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
+          createContext( s1.root.succedent filterNot ( _ == term1 ) ) :+ prinFormula2
+        ), s1 ) with RalResolutionProof[V] with UnaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas {
           def rule = ImpTRalType
           def aux = ( term1 :: Nil ) :: Nil
           def prin = prinFormula1 :: prinFormula2 :: Nil
@@ -614,7 +619,8 @@ object ParaT {
 
         new BinaryAGraph[LabelledSequent]( new LabelledSequent(
           createContext( s1.root.antecedent ) ++ createContext( s2.root.antecedent ),
-          createContext( s1.root.succedent filterNot ( _ == term1oc ) ) ++ createContext( s2.root.succedent filterNot ( _ == term2oc ) ) ++ List( para_occ ) ), s1, s2 ) with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with Flip {
+          createContext( s1.root.succedent filterNot ( _ == term1oc ) ) ++ createContext( s2.root.succedent filterNot ( _ == term2oc ) ) ++ List( para_occ )
+        ), s1, s2 ) with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with Flip {
           def rule = ParaTRalType
           def aux = List( term1oc, term2oc ) :: Nil
           val flipped = flip
@@ -664,7 +670,8 @@ object ParaF {
         val para_occ = new LabelledFormulaOccurrence( para_formula, List( occ1, occ2 ), label1 )
         new BinaryAGraph[LabelledSequent]( new LabelledSequent(
           createContext( s1.root.antecedent ) ++ createContext( s2.root.antecedent filterNot ( _ == term2oc ) ) ++ List( para_occ ),
-          createContext( s1.root.succedent filterNot ( _ == term1oc ) ) ++ createContext( s2.root.succedent ) ), s1, s2 ) with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with Flip {
+          createContext( s1.root.succedent filterNot ( _ == term1oc ) ) ++ createContext( s2.root.succedent )
+        ), s1, s2 ) with RalResolutionProof[V] with BinaryResolutionProof[V] with AuxiliaryFormulas with PrincipalFormulas with Flip {
           def rule = ParaFRalType
           def aux = List( term1oc, term2oc ) :: Nil
           def prin = List( para_occ )

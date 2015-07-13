@@ -13,7 +13,7 @@ import scala.util.parsing.combinator._
 class TypesTest extends Specification {
   "Types" should {
     "produce a binary function type ( i -> (i -> o ) )" in {
-      FunctionType( To, Ti :: Ti :: Nil ) must beEqualTo( ->( Ti, ->( Ti, To ) ) )
+      FunctionType( To, Ti :: Ti :: Nil ) must beEqualTo( Ti -> ( Ti -> To ) )
     }
     val p = new JavaTokenParsers with Parsers
     "parse correctly from string (1)" in {
@@ -23,21 +23,21 @@ class TypesTest extends Specification {
       ( p.parseAll( p.Type, "o" ).get ) must beEqualTo( To )
     }
     "parse correctly from string (3)" in {
-      ( p.parseAll( p.Type, "(i -> o)" ).get ) must beEqualTo( ->( Ti, To ) )
+      ( p.parseAll( p.Type, "(i -> o)" ).get ) must beEqualTo( Ti -> To )
     }
     "parse correctly from string (4)" in {
-      ( p.parseAll( p.Type, "((i -> o) -> o)" ).get ) must beEqualTo( ->( ->( Ti, To ), To ) )
+      ( p.parseAll( p.Type, "((i -> o) -> o)" ).get ) must beEqualTo( ( Ti -> To ) -> To )
     }
     "parse correctly from string (5)" in {
-      ( p.parseAll( p.Type, "(i -> (o -> o))" ).get ) must beEqualTo( ->( Ti, ->( To, To ) ) )
+      ( p.parseAll( p.Type, "(i -> (o -> o))" ).get ) must beEqualTo( Ti -> ( To -> To ) )
     }
     "use correctly the constructor for strings string (1)" in {
-      ( ->( "(i -> (o -> o))", To ) ) must beEqualTo( ->( ->( Ti, ->( To, To ) ), To ) )
+      ( `->`( "(i -> (o -> o))", To ) ) must beEqualTo( ( Ti -> ( To -> To ) ) -> To )
     }
     "extract from string (1)" in {
       ( "(i -> (o -> o))" match {
-        case StringExtractor( ->( Ti, ->( To, To ) ) ) => true
-        case _                                         => false
+        case StringExtractor( `->`( Ti, `->`( To, To ) ) ) => true
+        case _ => false
       } ) must beEqualTo( true )
     }
   }
@@ -48,7 +48,7 @@ class TypesTest extends Specification {
         FunctionType( To, Ti :: To :: Nil ) must beLike { case FunctionType( To, Ti :: To :: Nil ) => ok }
       }
       "(i -> ((o -> o) -> i))" in {
-        FunctionType( Ti, Ti :: ( ->( To, To ) ) :: Nil ) must beLike { case FunctionType( Ti, Ti :: ( ->( To, To ) ) :: Nil ) => ok }
+        FunctionType( Ti, Ti :: ( To -> To ) :: Nil ) must beLike { case FunctionType( Ti, Ti :: ( To -> To ) :: Nil ) => ok }
       }
       "(i)" in {
         FunctionType( Ti, Nil ) must beLike { case FunctionType( Ti, Nil ) => ok }
@@ -57,7 +57,7 @@ class TypesTest extends Specification {
         FunctionType( To, Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Nil ) must beLike { case FunctionType( To, Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Nil ) => ok }
       }
       "((i -> o) -> ((i -> o) -> (i -> o)))" in {
-        FunctionType( ->( Ti, To ), ( ->( Ti, To ) ) :: ( ->( Ti, To ) ) :: Nil ) must beLike { case FunctionType( To, ( ->( Ti, To ) ) :: ( ->( Ti, To ) ) :: Ti :: Nil ) => ok }
+        FunctionType( Ti -> To, ( Ti -> To ) :: ( Ti -> To ) :: Nil ) must beLike { case FunctionType( To, ( Ti -> To ) :: ( Ti -> To ) :: Ti :: Nil ) => ok }
       }
     }
   }

@@ -49,11 +49,16 @@ class InductionProverTest extends Specification {
     val et4 = merge( ETWeakQuantifier( All( x, fST( x ) ), List( ( ETAtom( fST( nu ) ), nu ) ) ) )
     val et5 = merge( ETWeakQuantifier( All( x, All( z, gST( x, z ) ) ), List(
       ( ETWeakQuantifier( All( z, gST( gamma, z ) ), List(
-        ( ETAtom( gST( gamma, nu ) ), nu ) ) ), gamma ) ) ) )
+        ( ETAtom( gST( gamma, nu ) ), nu )
+      ) ), gamma )
+    ) ) )
     val et6 = merge( ETWeakQuantifier( All( x, All( z, All( w, ASSO( x, z, w ) ) ) ), List(
       ( ETWeakQuantifier( All( z, All( w, ASSO( gamma, z, w ) ) ), List(
         ( ETWeakQuantifier( All( w, ASSO( gamma, s( nu ), w ) ), List(
-          ( ETAtom( ASSO( gamma, s( nu ), f( nu ) ) ), f( nu ) ) ) ), s( nu ) ) ) ), gamma ) ) ) )
+          ( ETAtom( ASSO( gamma, s( nu ), f( nu ) ) ), f( nu ) )
+        ) ), s( nu ) )
+      ) ), gamma )
+    ) ) )
 
     val t = List( m( gamma, s( nu ) ) )
 
@@ -62,7 +67,8 @@ class InductionProverTest extends Specification {
     // Conclusion
 
     val et7 = merge( ETWeakQuantifier( All( x, uL( x ) ), List(
-      ( ETAtom( uL( f( alpha ) ) ), f( alpha ) ) ) ) )
+      ( ETAtom( uL( f( alpha ) ) ), f( alpha ) )
+    ) ) )
 
     val et8 = ETAtom( Eq( g( s( zero ), alpha ), f( alpha ) ) )
 
@@ -116,7 +122,8 @@ class InductionProverTest extends Specification {
     def addS( u: FOLTerm, v: FOLTerm ) =
       Eq(
         plus( u, s( v ) ),
-        s( plus( u, v ) ) )
+        s( plus( u, v ) )
+      )
 
     // Instances of associativity and reflexivity
     def assoc( x: FOLTerm, y: FOLTerm, z: FOLTerm ) = Eq( plus( plus( x, y ), z ), plus( x, plus( y, z ) ) )
@@ -129,33 +136,54 @@ class InductionProverTest extends Specification {
 
     val et1 = merge( ETWeakQuantifier( ForAllAdd0, List(
       ( ETAtom( add0( beta ) ), beta ),
-      ( ETAtom( add0( plus( alpha, beta ) ) ), plus( alpha, beta ) ) ) ) )
+      ( ETAtom( add0( plus( alpha, beta ) ) ), plus( alpha, beta ) )
+    ) ) )
 
     val ExpSeq0 = ExpansionSequent( List( et1 ), Nil )
 
     val et2 = merge( ETWeakQuantifier(
       ForAllAddS,
       List(
-        ( ETWeakQuantifier(
-          All( y, addS( gamma, y ) ),
-          List(
-            ( ETAtom( addS( gamma, nu ) ),
-              nu ) ) ),
-          gamma ),
+        (
+          ETWeakQuantifier(
+            All( y, addS( gamma, y ) ),
+            List(
+              (
+                ETAtom( addS( gamma, nu ) ),
+                nu
+              )
+            )
+          ),
+            gamma
+        ),
 
-        ( ETWeakQuantifier(
-          All( y, addS( alpha, y ) ),
-          List(
-            ( ETAtom( addS( alpha, plus( gamma, nu ) ) ),
-              plus( gamma, nu ) ) ) ),
-          alpha ),
+        (
+          ETWeakQuantifier(
+            All( y, addS( alpha, y ) ),
+            List(
+              (
+                ETAtom( addS( alpha, plus( gamma, nu ) ) ),
+                plus( gamma, nu )
+              )
+            )
+          ),
+            alpha
+        ),
 
-        ( ETWeakQuantifier(
-          All( y, addS( plus( alpha, gamma ), y ) ),
-          List(
-            ( ETAtom( addS( plus( alpha, gamma ), nu ) ),
-              nu ) ) ),
-          plus( alpha, gamma ) ) ) ) )
+        (
+          ETWeakQuantifier(
+            All( y, addS( plus( alpha, gamma ), y ) ),
+            List(
+              (
+                ETAtom( addS( plus( alpha, gamma ), nu ) ),
+                nu
+              )
+            )
+          ),
+            plus( alpha, gamma )
+        )
+      )
+    ) )
 
     val t = List( gamma )
 

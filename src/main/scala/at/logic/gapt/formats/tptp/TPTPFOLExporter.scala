@@ -111,7 +111,8 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
         else
           "(" + tptp( args.head ) +
             args.tail.foldLeft( "" )( ( s, a ) => s + ", " + tptp( a ) )
-            + ")" )
+            + ")"
+      )
 
   def single_quote( s: String ) = "'" + s + "'"
 }

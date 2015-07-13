@@ -30,8 +30,10 @@ package robinson {
       apply( set, sub, Map[FormulaOccurrence, List[FormulaOccurrence]]() )
     def apply( set: Seq[FormulaOccurrence], sub: FOLSubstitution, additional_context: Map[FormulaOccurrence, Seq[FormulaOccurrence]] ): Seq[FormulaOccurrence] =
       set.map( x =>
-        x.factory.createFormulaOccurrence( sub( x.formula.asInstanceOf[FOLFormula] ).asInstanceOf[HOLFormula],
-          x :: additional_context.getOrElse( x, Nil ).toList ) )
+        x.factory.createFormulaOccurrence(
+          sub( x.formula.asInstanceOf[FOLFormula] ).asInstanceOf[HOLFormula],
+          x :: additional_context.getOrElse( x, Nil ).toList
+        ) )
   }
 
   case object VariantType extends UnaryRuleTypeA
@@ -90,7 +92,8 @@ package robinson {
           else {
             new BinaryAGraph[Clause]( Clause(
               createContext( p1.root.antecedent, sub ) ++ createContext( p2.root.antecedent.filterNot( _ == term2 ), sub ),
-              createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent, sub ) ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof {
+              createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent, sub )
+            ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof {
               def rule = ResolutionType
               def aux = ( term1 :: Nil ) :: ( term2 :: Nil ) :: Nil
               def substitution = sub
@@ -153,7 +156,8 @@ package robinson {
 
           new BinaryAGraph[Clause]( Clause(
             createContext( p1.root.antecedent, sub ) ++ createContext( p2.root.antecedent.filterNot( _ == term2 ), sub ) :+ prinFormula,
-            createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent, sub ) ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
+            createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent, sub )
+          ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
             def rule = ParamodulationType
             def aux = ( term1 :: Nil ) :: ( term2 :: Nil ) :: Nil
             def substitution = sub
@@ -180,7 +184,8 @@ package robinson {
 
           new BinaryAGraph[Clause]( Clause(
             createContext( p1.root.antecedent, sub ) ++ createContext( p2.root.antecedent, sub ),
-            createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent.filterNot( _ == term2 ), sub ) :+ prinFormula ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
+            createContext( p1.root.succedent.filterNot( _ == term1 ), sub ) ++ createContext( p2.root.succedent.filterNot( _ == term2 ), sub ) :+ prinFormula
+          ), p1, p2 ) with BinaryResolutionProof[Clause] with AppliedSubstitution with AuxiliaryFormulas with RobinsonResolutionProof with PrincipalFormulas {
 
             def rule = ParamodulationType
             def aux = ( term1 :: Nil ) :: ( term2 :: Nil ) :: Nil
@@ -244,9 +249,11 @@ package robinson {
      */
 
     /* creates a factorization of a single formula */
-    def apply( p: RobinsonResolutionProof,
-               a: FormulaOccurrence, occurrencesToRemove: Seq[FormulaOccurrence],
-               sub: FOLSubstitution ): RobinsonResolutionProof = {
+    def apply(
+      p: RobinsonResolutionProof,
+      a: FormulaOccurrence, occurrencesToRemove: Seq[FormulaOccurrence],
+      sub: FOLSubstitution
+    ): RobinsonResolutionProof = {
       assert( !occurrencesToRemove.contains( a ) )
       val r = p.root.removeFormulasAtOccurrences( occurrencesToRemove )
       val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() + ( ( a, occurrencesToRemove ) )
@@ -262,8 +269,10 @@ package robinson {
     }
 
     /* factors cnt occurrences of a literal into 1.*/
-    def apply( p: RobinsonResolutionProof,
-               a: HOLFormula, cnt: Int, pos: Boolean, sub: FOLSubstitution ): RobinsonResolutionProof = {
+    def apply(
+      p: RobinsonResolutionProof,
+      a: HOLFormula, cnt: Int, pos: Boolean, sub: FOLSubstitution
+    ): RobinsonResolutionProof = {
       val list = if ( pos ) p.root.positive else p.root.negative
       val occ = list.find( fo => fo.formula == a ).get
       val occs = list.filter( _ != occ ).foldLeft( List[FormulaOccurrence]() )( ( res, fo ) => if ( res.size < cnt - 1 && fo.formula == a )
@@ -274,10 +283,12 @@ package robinson {
     }
 
     /* creates a factorization of two formulas (intention: one positive and one negative) of the sequent */
-    def apply( p: RobinsonResolutionProof,
-               a: FormulaOccurrence, oc1: Seq[FormulaOccurrence],
-               b: FormulaOccurrence, oc2: Seq[FormulaOccurrence],
-               sub: FOLSubstitution ): RobinsonResolutionProof = {
+    def apply(
+      p: RobinsonResolutionProof,
+      a: FormulaOccurrence, oc1: Seq[FormulaOccurrence],
+      b: FormulaOccurrence, oc2: Seq[FormulaOccurrence],
+      sub: FOLSubstitution
+    ): RobinsonResolutionProof = {
       val r = p.root.removeFormulasAtOccurrences( oc1 ++ oc2 )
       val additional_ancestors = Map[FormulaOccurrence, List[FormulaOccurrence]]() ++ List( ( a, oc1 ), ( b, oc2 ) )
       val newCl = Clause( createContext( r.antecedent, sub, additional_ancestors ), createContext( r.succedent, sub, additional_ancestors ) )
@@ -293,9 +304,11 @@ package robinson {
 
     /* factors a_cnt occurrences of a (pos) and b_cnt occurrences of b (neg)
      into 1.*/
-    def apply( p: RobinsonResolutionProof,
-               a: HOLFormula, a_cnt: Int, b: HOLFormula, b_cnt: Int,
-               sub: FOLSubstitution ): RobinsonResolutionProof = {
+    def apply(
+      p: RobinsonResolutionProof,
+      a: HOLFormula, a_cnt: Int, b: HOLFormula, b_cnt: Int,
+      sub: FOLSubstitution
+    ): RobinsonResolutionProof = {
       val a_occ = p.root.negative.find( fo => fo.formula == a ).get
       val b_occ = p.root.positive.find( fo => fo.formula == b ).get
       val oc1 = p.root.negative.foldLeft( List[FormulaOccurrence]() )( ( res, fo ) => if ( res.size < a_cnt - 1 && fo.formula == a )

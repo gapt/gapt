@@ -117,7 +117,7 @@ object SCHOLParser {
       def OrdinalAtomNoArg: Parser[SchemaFormula] = regex( new Regex( "[A-Z]+" ) ) ~
         "(" ~ OrdinalTerms ~ ")" ^^ {
           case x ~ "(" ~ params1 ~ ")" =>
-            SchemaAtom( Const( x, ->( To, params1.exptype ) ), List( params1 ) )
+            SchemaAtom( Const( x, `->`( To, params1.exptype ) ), List( params1 ) )
         }
       def OrdinalAtomNoTwoArg: Parser[SchemaFormula] = regex( new Regex( "[A-Z]+" ) ) ~ "(" ~ OrdinalTerms ~ """,""".r ~ repsep( IndividualordinalExpressions, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params1 ~ "," ~ params2 ~ ")" =>

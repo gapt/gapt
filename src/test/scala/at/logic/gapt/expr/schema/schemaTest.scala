@@ -104,8 +104,8 @@ class SchemaTest extends Specification {
 
     "unfold a schematic term" in {
       def f = Const( "f", Ti -> Ti )
-      def h = Const( "h", ->( Tindex, ->( Ti, Ti ) ) )
-      def g = Const( "g", ->( Tindex, ->( Ti, Ti ) ) )
+      def h = Const( "h", Tindex -> ( Ti -> Ti ) )
+      def g = Const( "g", Tindex -> ( Ti -> Ti ) )
       val k = IntVar( "k" )
       val x = foVar( "x" )
       val z = indexedFOVar( "z", Succ( IntZero() ) )

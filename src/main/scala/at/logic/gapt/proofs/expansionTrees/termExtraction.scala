@@ -47,8 +47,10 @@ object extractInstances {
     }
 
   def apply( expansionSequent: ExpansionSequent ): FSequent =
-    FSequent( expansionSequent.antecedent flatMap apply,
-      expansionSequent.succedent flatMap apply )
+    FSequent(
+      expansionSequent.antecedent flatMap apply,
+      expansionSequent.succedent flatMap apply
+    )
 
 }
 

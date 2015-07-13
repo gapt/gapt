@@ -215,14 +215,18 @@ class HybridLatexExporter( val expandTex: Boolean ) {
 
   }
 
-  def generateRal[T <: LabelledSequent]( ralp: ral.RalResolutionProof[T],
-                                         s: String = "", escape_latex: Boolean ): String = ralp match {
+  def generateRal[T <: LabelledSequent](
+    ralp: ral.RalResolutionProof[T],
+    s:    String                    = "", escape_latex: Boolean
+  ): String = ralp match {
     case ral.InitialSequent( seq ) => "\\AX" + fsequentString( seq.toFSequent, escape_latex )
 
     case ral.Cut( root, p1, p2, aux1, aux2 ) =>
-      generateRal( p1,
+      generateRal(
+        p1,
         generateRal( p2, "\\CUT" + fsequentString( root.toFSequent, escape_latex ) + s, escape_latex ),
-        escape_latex )
+        escape_latex
+      )
 
   }
 
