@@ -99,6 +99,28 @@ object testCutIntro extends App {
     }
   }
 
+  def wrapParse[T]( thunk: => Option[T] ): Option[T] = {
+    try {
+      thunk orElse {
+        metrics.value( "status", "parsing_no_proof_found" )
+        None
+      }
+    } catch {
+      case e: ThreadDeath =>
+        metrics.value( "status", "parsing_timeout" )
+        None
+      case e: OutOfMemoryError =>
+        metrics.value( "status", "parsing_out_of_memory" )
+        None
+      case e: StackOverflowError =>
+        metrics.value( "status", "parsing_stack_overflow" )
+        None
+      case e: Exception =>
+        metrics.value( "status", "parsing_other_exception" )
+        None
+    }
+  }
+
   // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
   def compressTSTP( str: String, timeout: Int, method: GrammarFindingMethod ) = {
 
@@ -112,18 +134,8 @@ object testCutIntro extends App {
   /// compress the prover9-TSTP proof found in file fn
   def compressTSTPProof( fn: String, timeout: Int, method: GrammarFindingMethod ) = {
     metrics.value( "file", fn )
-    try {
-      val p = loadProver9LKProof( fn )
+    wrapParse { Some( loadProver9LKProof( fn ) ) } foreach { p =>
       compressLKProof( p, timeout, method )
-    } catch {
-      case e: TimeOutException =>
-        metrics.value( "status", "parsing_timeout" )
-      case e: OutOfMemoryError =>
-        metrics.value( "status", "parsing_out_of_memory" )
-      case e: StackOverflowError =>
-        metrics.value( "status", "parsing_stack_overflow" )
-      case e: Exception =>
-        metrics.value( "status", "parsing_other_exception" )
     }
   }
 
@@ -150,22 +162,9 @@ object testCutIntro extends App {
   def compressVeriTProof( str: String, timeout: Int, method: GrammarFindingMethod ) {
     metrics.value( "file", str )
 
-    try {
-      loadVeriTProof( str ) map { ep =>
-        // VeriT proofs have the equality axioms as formulas in the end-sequent
-        compressExpansionProof( ep, false, timeout, method )
-      } getOrElse {
-        metrics.value( "status", "parsing_no_proof_found" )
-      }
-    } catch {
-      case e: TimeOutException =>
-        metrics.value( "status", "parsing_timeout" )
-      case e: OutOfMemoryError =>
-        metrics.value( "status", "parsing_out_of_memory" )
-      case e: StackOverflowError =>
-        metrics.value( "status", "parsing_stack_overflow" )
-      case e: Exception =>
-        metrics.value( "status", "parsing_other_exception" )
+    wrapParse { loadVeriTProof( str ) } foreach { ep =>
+      // VeriT proofs have the equality axioms as formulas in the end-sequent
+      compressExpansionProof( ep, false, timeout, method )
     }
   }
 
@@ -181,21 +180,8 @@ object testCutIntro extends App {
 
   def compressLeanCoPProof( fn: String, timeout: Int, method: GrammarFindingMethod ) = saveMetrics( timeout ) {
     metrics.value( "file", fn )
-    try {
-      LeanCoPParser.getExpansionProof( fn ) map { proof =>
-        compressExpansionProof( proof, true, timeout, method )
-      } getOrElse {
-        metrics.value( "status", "parsing_no_proof_found" )
-      }
-    } catch {
-      case e: TimeOutException =>
-        metrics.value( "status", "parsing_timeout" )
-      case e: OutOfMemoryError =>
-        metrics.value( "status", "parsing_out_of_memory" )
-      case e: StackOverflowError =>
-        metrics.value( "status", "parsing_stack_overflow" )
-      case e: Exception =>
-        metrics.value( "status", "parsing_other_exception" )
+    wrapParse { LeanCoPParser.getExpansionProof( fn ) } foreach { proof =>
+      compressExpansionProof( proof, true, timeout, method )
     }
   }
 
