@@ -160,8 +160,10 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
 
   def normalizeFSequent( f: FSequent ) = {
     require( ( f.antecedent ++ f.succedent ).forall( _.isInstanceOf[FOLFormula] ), "normalization only works on FOL formulas" )
-    FSequent( f.antecedent.map( x => normalizeFormula( x.asInstanceOf[FOLFormula] ) ),
-      f.succedent.map( x => normalizeFormula( x.asInstanceOf[FOLFormula] ) ) )
+    FSequent(
+      f.antecedent.map( x => normalizeFormula( x.asInstanceOf[FOLFormula] ) ),
+      f.succedent.map( x => normalizeFormula( x.asInstanceOf[FOLFormula] ) )
+    )
   }
 
   def normalizeFormula( f: FOLFormula ): FOLFormula = {

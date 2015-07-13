@@ -19,7 +19,7 @@ lazy val commonSettings = Seq(
   sourcesInBase := false // people like to keep scripts lying around
 
 ) ++ defaultScalariformSettings :+
-  (ScalariformKeys.preferences := FormattingPreferences()
+  (ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignParameters, true)
     .setPreference(AlignSingleLineCaseStatements, true)
     .setPreference(DoubleIndentClassDeclaration, true)

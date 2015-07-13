@@ -99,11 +99,13 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
           // note that sub must be applied to all formulas in the lk proof
           if ( !leftContracted.isEmpty ) {
             res = leftContracted.foldLeft( res )( ( p, fo ) => ContractionLeftRule(
-              p, s( fo.formula ) ) )
+              p, s( fo.formula )
+            ) )
           }
           if ( !rightContracted.isEmpty ) {
             res = rightContracted.foldLeft( res )( ( p, fo ) => ContractionRightRule(
-              p, s( fo.formula ) ) )
+              p, s( fo.formula )
+            ) )
           }
           res
         }
@@ -140,8 +142,10 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
             val aux2 = u2.root.antecedent.find( _.formula == s( a2.formula.asInstanceOf[FOLExpression] ).asInstanceOf[FOLFormula] ).get
 
             if ( isTrivial( aux1.formula, aux2.formula, lof ) ) {
-              val newEndSequent = FSequent( u1.root.antecedent.map( _.formula ) ++ u2.root.antecedent.map( _.formula ),
-                u1.root.succedent.filterNot( _ == aux1 ).map( _.formula ) ++ u2.root.succedent.map( _.formula ) )
+              val newEndSequent = FSequent(
+                u1.root.antecedent.map( _.formula ) ++ u2.root.antecedent.map( _.formula ),
+                u1.root.succedent.filterNot( _ == aux1 ).map( _.formula ) ++ u2.root.succedent.map( _.formula )
+              )
               WeakeningMacroRule( u2, newEndSequent )
             } else
               EquationLeftRule( u1, u2, aux1, aux2, lof )
@@ -154,8 +158,10 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
             val aux2 = u2.root.succedent.find( _.formula == s( a2.formula.asInstanceOf[FOLExpression] ).asInstanceOf[FOLFormula] ).get
 
             if ( isTrivial( aux1.formula, aux2.formula, rof ) ) {
-              val newEndSequent = FSequent( u1.root.antecedent.map( _.formula ) ++ u2.root.antecedent.map( _.formula ),
-                u1.root.succedent.filterNot( _ == aux1 ).map( _.formula ) ++ u2.root.succedent.map( _.formula ) )
+              val newEndSequent = FSequent(
+                u1.root.antecedent.map( _.formula ) ++ u2.root.antecedent.map( _.formula ),
+                u1.root.succedent.filterNot( _ == aux1 ).map( _.formula ) ++ u2.root.succedent.map( _.formula )
+              )
               WeakeningMacroRule( u2, newEndSequent )
             } else
               EquationRightRule( u1, u2, aux1, aux2, rof )

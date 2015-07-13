@@ -81,8 +81,10 @@ object IvyParser extends Logger {
         val fclause = parse_clause( clause, is_variable_symbol )
 
         val inference = InitialClause( id, clause,
-          Clause( fclause.antecedent map ( occurrences.factory.createFormulaOccurrence( _, Nil ) ),
-            fclause.succedent map ( occurrences.factory.createFormulaOccurrence( _, Nil ) ) ) )
+          Clause(
+            fclause.antecedent map ( occurrences.factory.createFormulaOccurrence( _, Nil ) ),
+            fclause.succedent map ( occurrences.factory.createFormulaOccurrence( _, Nil ) )
+          ) )
 
         require( inference.root.toFSequent setEquals fclause, "Error in Atom parsing: required result=" + fclause + " but got: " + inference.root )
         ( id, found_steps + ( ( id, inference ) ) )
@@ -99,8 +101,10 @@ object IvyParser extends Logger {
             occurrences.factory.createFormulaOccurrence( v._2, List( v._1 ) ) )
 
         val inference = Instantiate( id, clause, sub,
-          Clause( connect( parent_proof.vertex.antecedent, fclause.antecedent ),
-            connect( parent_proof.vertex.succedent, fclause.succedent ) ), parent_proof )
+          Clause(
+            connect( parent_proof.vertex.antecedent, fclause.antecedent ),
+            connect( parent_proof.vertex.succedent, fclause.succedent )
+          ), parent_proof )
 
         require( inference.root.toFSequent setEquals fclause, "Error in Instance parsing: required result=" + fclause + " but got: " + inference.root )
         ( id, found_steps + ( ( id, inference ) ) )
@@ -199,9 +203,11 @@ object IvyParser extends Logger {
                 val ( pos1_, pos2_ ) = ( pos1 map connect_directly, pos2 map connect_directly )
                 val flipped = occ.factory.createFormulaOccurrence( Eq( right, left ), occ :: Nil )
                 val inference = Flip( id, clause, flipped, Clause( neglits, pos1_ ++ List( flipped ) ++ pos2_.tail ), parent_proof )
-                require( fclause setEquals inference.root.toFSequent,
+                require(
+                  fclause setEquals inference.root.toFSequent,
                   "Error parsing flip rule: inferred clause " + inference.root.toFSequent +
-                    " is not the same as given clause " + fclause )
+                    " is not the same as given clause " + fclause
+                )
                 ( id, found_steps + ( ( id, inference ) ) )
 
               case false =>
@@ -210,9 +216,11 @@ object IvyParser extends Logger {
                 val ( neg1_, neg2_ ) = ( neg1 map connect_directly, neg2 map connect_directly )
                 val flipped = occ.factory.createFormulaOccurrence( Eq( right, left ), occ :: Nil )
                 val inference = Flip( id, clause, flipped, Clause( neg1_ ++ List( flipped ) ++ neg2_.tail, poslits ), parent_proof )
-                require( fclause setEquals inference.root.toFSequent,
+                require(
+                  fclause setEquals inference.root.toFSequent,
                   "Error parsing flip rule: inferred clause " + inference.root.toFSequent +
-                    " is not the same as given clause " + fclause )
+                    " is not the same as given clause " + fclause
+                )
                 ( id, found_steps + ( ( id, inference ) ) )
             }
 
@@ -340,8 +348,10 @@ object IvyParser extends Logger {
         }
 
         val inference = Propositional( id, clause,
-          Clause( connect( parent_proof.vertex.antecedent.toList, fclause.antecedent.toList ),
-            connect( parent_proof.vertex.succedent.toList, fclause.succedent.toList ) ), parent_proof )
+          Clause(
+            connect( parent_proof.vertex.antecedent.toList, fclause.antecedent.toList ),
+            connect( parent_proof.vertex.succedent.toList, fclause.succedent.toList )
+          ), parent_proof )
 
         require( inference.root.toFSequent setEquals fclause, "Error in Propositional parsing: required result=" + fclause + " but got: " + inference.root )
         ( id, found_steps + ( ( id, inference ) ) )
@@ -587,12 +597,14 @@ object IvyParser extends Logger {
   }
 
   //some names are escaped for ivy, see also  LADR-2009-11A/ladr/ivy.c in the Prover9 source
-  val ivy_escape_table = Map[String, String]( ( "zero_for_ivy", "0" ),
+  val ivy_escape_table = Map[String, String](
+    ( "zero_for_ivy", "0" ),
     ( "one_for_ivy", "1" ),
     ( "quote_for_ivy", "'" ),
     ( "backslash_for_ivy", "\\\\" ),
     ( "at_for_ivy", "@" ),
-    ( "meet_for_ivy", "^" ) )
+    ( "meet_for_ivy", "^" )
+  )
   def rewrite_name( s: String ): String = if ( ivy_escape_table contains s ) ivy_escape_table( s ) else s
 
   def parse_term( ts: SExpression, is_variable_symbol: String => Boolean ): FOLTerm = ts match {

@@ -73,8 +73,10 @@ class DrawSingleSequentInference( var orientation: Orientation.Value ) extends S
       case Some( a: BinaryLKProof with AuxiliaryFormulas ) =>
         val r1 = a.uProof1.root
         val r2 = a.uProof2.root
-        List( Sequent( r1.antecedent.filter( a.aux( 0 ).contains ), r1.succedent.filter( a.aux( 0 ).contains ) ),
-          Sequent( r2.antecedent.filter( a.aux( 1 ).contains ), r2.succedent.filter( a.aux( 1 ).contains ) ) )
+        List(
+          Sequent( r1.antecedent.filter( a.aux( 0 ).contains ), r1.succedent.filter( a.aux( 0 ).contains ) ),
+          Sequent( r2.antecedent.filter( a.aux( 1 ).contains ), r2.succedent.filter( a.aux( 1 ).contains ) )
+        )
 
       case _ =>
         List()

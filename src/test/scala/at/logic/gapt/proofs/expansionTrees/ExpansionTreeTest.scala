@@ -23,32 +23,41 @@ class ExpansionTreeTest extends Specification {
 
   val et1 = ETWeakQuantifier(
     Ex( x, HOLAtom( eq, x :: x :: Nil ) ),
-    List( ( ETAtom( HOLAtom( eq, c :: c :: Nil ) ), c ) ) )
+    List( ( ETAtom( HOLAtom( eq, c :: c :: Nil ) ), c ) )
+  )
 
   val et2 = ETWeakQuantifier(
     Ex( x, HOLAtom( P, x :: y :: c :: Nil ) ),
-    List( ( ETAtom( HOLAtom( P, z :: y :: c :: Nil ) ), z ) ) )
+    List( ( ETAtom( HOLAtom( P, z :: y :: c :: Nil ) ), z ) )
+  )
 
   val et3 = ETStrongQuantifier(
     All( x, HOLAtom( P, x :: d :: z :: Nil ) ),
     z,
-    ETAtom( HOLAtom( P, z :: d :: z :: Nil ) ) )
+    ETAtom( HOLAtom( P, z :: d :: z :: Nil ) )
+  )
 
   val et4 = ETWeakQuantifier(
     Ex( x, HOLAtom( P, x :: c :: a :: Nil ) ),
     List(
       ( ETAtom( HOLAtom( P, z :: c :: a :: Nil ) ), z ),
-      ( ETAtom( HOLAtom( P, y :: c :: a :: Nil ) ), y ) ) )
+      ( ETAtom( HOLAtom( P, y :: c :: a :: Nil ) ), y )
+    )
+  )
 
   val et5 = ETImp(
     ETWeakQuantifier(
       All( x, HOLAtom( R, x :: Nil ) ),
       List(
         ( ETAtom( HOLAtom( R, c :: Nil ) ), c ),
-        ( ETAtom( HOLAtom( R, d :: Nil ) ), d ) ) ),
+        ( ETAtom( HOLAtom( R, d :: Nil ) ), d )
+      )
+    ),
     ETAnd(
       ETAtom( HOLAtom( R, c :: Nil ) ),
-      ETAtom( HOLAtom( R, d :: Nil ) ) ) )
+      ETAtom( HOLAtom( R, d :: Nil ) )
+    )
+  )
 
   "Expansion Trees substitution" should {
 
@@ -58,7 +67,8 @@ class ExpansionTreeTest extends Specification {
 
       etPrime mustEqual ETWeakQuantifier(
         Ex( x, HOLAtom( P, x :: d :: c :: Nil ) ),
-        List( ( ETAtom( HOLAtom( P, z :: d :: c :: Nil ) ), z ) ) )
+        List( ( ETAtom( HOLAtom( P, z :: d :: c :: Nil ) ), z ) )
+      )
     }
 
     "replace variables correctly 2" in {
@@ -67,7 +77,8 @@ class ExpansionTreeTest extends Specification {
 
       etPrime mustEqual ETWeakQuantifier(
         Ex( x, HOLAtom( P, x :: y :: c :: Nil ) ),
-        List( ( ETAtom( HOLAtom( P, d :: y :: c :: Nil ) ), d ) ) )
+        List( ( ETAtom( HOLAtom( P, d :: y :: c :: Nil ) ), d ) )
+      )
     }
 
     "replace variables correctly 3" in {
@@ -77,7 +88,8 @@ class ExpansionTreeTest extends Specification {
       etPrime mustEqual ETStrongQuantifier(
         All( x, HOLAtom( P, x :: d :: y :: Nil ) ),
         y,
-        ETAtom( HOLAtom( P, y :: d :: y :: Nil ) ) )
+        ETAtom( HOLAtom( P, y :: d :: y :: Nil ) )
+      )
     }
 
     "not replace const " in {
@@ -94,7 +106,9 @@ class ExpansionTreeTest extends Specification {
       etPrime mustEqual ETWeakQuantifier(
         Ex( x, HOLAtom( P, x :: c :: a :: Nil ) ),
         List(
-          ( ETMerge( ETAtom( HOLAtom( P, y :: c :: a :: Nil ) ), ETAtom( HOLAtom( P, y :: c :: a :: Nil ) ) ), y ) ) )
+          ( ETMerge( ETAtom( HOLAtom( P, y :: c :: a :: Nil ) ), ETAtom( HOLAtom( P, y :: c :: a :: Nil ) ) ), y )
+        )
+      )
     }
   }
 
@@ -128,7 +142,8 @@ class ExpansionTreeTest extends Specification {
         ETMerge( etSubst1, etSubst2 ) ::
         ETWeakQuantifier( Ex( x, HOLAtom( R, x :: Nil ) ), List(
           ( ETAtom( HOLAtom( R, fz :: Nil ) ), fz ),
-          ( ETAtom( HOLAtom( R, fy :: Nil ) ), fy ) ) ) ::
+          ( ETAtom( HOLAtom( R, fy :: Nil ) ), fy )
+        ) ) ::
         ETAtom( HOLAtom( R, z :: Nil ) ) ::
         ETAtom( HOLAtom( R, y :: Nil ) ) ::
         Nil )
@@ -136,12 +151,14 @@ class ExpansionTreeTest extends Specification {
 
       // merge will trigger a substitution y -> z
 
-      val testResult = new ExpansionSequent( Nil,
+      val testResult = new ExpansionSequent(
+        Nil,
         ( ETStrongQuantifier( All( x, HOLAtom( R, x :: Nil ) ), z, ETAtom( HOLAtom( R, z :: Nil ) ) ) ::
-          ETWeakQuantifier( Ex( x, HOLAtom( R, x :: Nil ) ), List( ( ETAtom( HOLAtom( R, fz :: Nil ) ), fz ) ) ) ::
-          ETAtom( HOLAtom( R, z :: Nil ) ) ::
-          ETAtom( HOLAtom( R, z :: Nil ) ) ::
-          Nil ).asInstanceOf[Seq[ExpansionTree]] )
+        ETWeakQuantifier( Ex( x, HOLAtom( R, x :: Nil ) ), List( ( ETAtom( HOLAtom( R, fz :: Nil ) ), fz ) ) ) ::
+        ETAtom( HOLAtom( R, z :: Nil ) ) ::
+        ETAtom( HOLAtom( R, z :: Nil ) ) ::
+        Nil ).asInstanceOf[Seq[ExpansionTree]]
+      )
 
       mergedSeq mustEqual testResult
     }
@@ -153,10 +170,13 @@ class ExpansionTreeTest extends Specification {
       val form = Imp(
         And(
           HOLAtom( R, c :: Nil ),
-          HOLAtom( R, d :: Nil ) ),
+          HOLAtom( R, d :: Nil )
+        ),
         And(
           HOLAtom( R, c :: Nil ),
-          HOLAtom( R, d :: Nil ) ) )
+          HOLAtom( R, d :: Nil )
+        )
+      )
 
       val deep = toDeep( et5, 1 )
 

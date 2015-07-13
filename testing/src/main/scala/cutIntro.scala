@@ -27,9 +27,12 @@ object testCutIntro extends App {
 
   resultsOut.close()
 
-  Files.write( Paths.get( "results.json" ),
+  Files.write(
+    Paths.get( "results.json" ),
     compact( render( JArray(
-      Source.fromFile( "result_lines.json" ).getLines().map( parse( _ ) ).toList ) ) ).getBytes )
+    Source.fromFile( "result_lines.json" ).getLines().map( parse( _ ) ).toList
+  ) ) ).getBytes
+  )
 
   def compressAll( timeout: Int ) {
     compressAll( DeltaTableMethod( false ), timeout )

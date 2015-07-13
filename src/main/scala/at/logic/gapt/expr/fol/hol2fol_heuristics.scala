@@ -24,20 +24,24 @@ object undoHol2Fol extends Logger {
    * @param abssymbol_map a mapping fol constant name to a lambda expression (obtained by replaceAbstractions)
    * @return the changed formula
    */
-  def backtranslate( e: LambdaExpression,
-                     sig_vars: Map[String, List[Var]],
-                     sig_consts: Map[String, List[Const]],
-                     abssymbol_map: Map[String, LambdaExpression] ): HOLFormula =
+  def backtranslate(
+    e:             LambdaExpression,
+    sig_vars:      Map[String, List[Var]],
+    sig_consts:    Map[String, List[Const]],
+    abssymbol_map: Map[String, LambdaExpression]
+  ): HOLFormula =
     backtranslate( e.asInstanceOf[LambdaExpression], sig_vars, sig_consts, abssymbol_map, Some( To ) ).asInstanceOf[HOLFormula]
   /**
    * We do some dirty stuff in here to translate a prover9 term back to the richer type signature of hol proofs, undoing
    * replace abstractions at the same time.
    */
-  def backtranslate( e: LambdaExpression,
-                     sig_vars: Map[String, List[Var]],
-                     sig_consts: Map[String, List[Const]],
-                     abssymbol_map: Map[String, LambdaExpression],
-                     expected_type: Option[TA] ): LambdaExpression = {
+  def backtranslate(
+    e:             LambdaExpression,
+    sig_vars:      Map[String, List[Var]],
+    sig_consts:    Map[String, List[Const]],
+    abssymbol_map: Map[String, LambdaExpression],
+    expected_type: Option[TA]
+  ): LambdaExpression = {
     e match {
       // --------------- logical structure ------------------------
       case HOLAtom( Const( name, _ ), args ) if sig_consts contains name.toString =>

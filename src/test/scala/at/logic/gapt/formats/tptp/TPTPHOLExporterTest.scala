@@ -18,8 +18,10 @@ class TPTPHOLExporterTest extends Specification {
 
       println( TPTPHOLExporter( List( FSequent( Nil, List( ax, ay ) ) ) ) )
 
-      println( TPTPHOLExporter( List( FSequent( List( ax ), Nil ),
-        FSequent( Nil, List( ay ) ) ) ) )
+      println( TPTPHOLExporter( List(
+        FSequent( List( ax ), Nil ),
+        FSequent( Nil, List( ay ) )
+      ) ) )
       ok
     }
   }

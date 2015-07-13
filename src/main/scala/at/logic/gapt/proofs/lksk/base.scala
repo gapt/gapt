@@ -21,9 +21,11 @@ object TypeSynonyms {
 
 import TypeSynonyms._
 
-class LabelledFormulaOccurrence( override val formula: HOLFormula,
-                                 override val parents: List[LabelledFormulaOccurrence],
-                                 val skolem_label: Label ) extends FormulaOccurrence( formula, parents, LKskFOFactory ) {
+class LabelledFormulaOccurrence(
+    override val formula: HOLFormula,
+    override val parents: List[LabelledFormulaOccurrence],
+    val skolem_label:     Label
+) extends FormulaOccurrence( formula, parents, LKskFOFactory ) {
   override def toString: String = formula.toString + " [label: " + skolem_label.toString + "]"
 }
 object LabelledFormulaOccurrence {
@@ -71,8 +73,10 @@ object LKskFOFactory extends FOFactory {
 
 // TODO: instead of l_antecedent, use override val antecedent
 // does not work right now because Set is not covariant!
-case class LabelledSequent( val l_antecedent: Seq[LabelledFormulaOccurrence],
-                            val l_succedent: Seq[LabelledFormulaOccurrence] )
+case class LabelledSequent(
+  val l_antecedent: Seq[LabelledFormulaOccurrence],
+  val l_succedent:  Seq[LabelledFormulaOccurrence]
+)
     extends Sequent( l_antecedent, l_succedent ) {
   override def toString: String = l_antecedent.mkString( ", " ) + " :- " + l_succedent.mkString( ", " )
 
@@ -81,6 +85,8 @@ case class LabelledSequent( val l_antecedent: Seq[LabelledFormulaOccurrence],
 }
 
 object sequentToLabelledSequent {
-  def apply( s: Sequent ) = new LabelledSequent( s.antecedent.asInstanceOf[Seq[LabelledFormulaOccurrence]],
-    s.succedent.asInstanceOf[Seq[LabelledFormulaOccurrence]] )
+  def apply( s: Sequent ) = new LabelledSequent(
+    s.antecedent.asInstanceOf[Seq[LabelledFormulaOccurrence]],
+    s.succedent.asInstanceOf[Seq[LabelledFormulaOccurrence]]
+  )
 }

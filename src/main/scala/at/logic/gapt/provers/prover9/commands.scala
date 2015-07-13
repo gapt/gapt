@@ -119,7 +119,8 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
         } )
         if ( !lastParents.isEmpty ) cmnds = cmnds ++ replay( lastParents, "-1", List() ) // try to obtain the empty clause if last rule in prover9 refutation does not initiate a replay
       },
-      stderr => { val err: String = scala.io.Source.fromInputStream( stderr ).mkString; if ( !err.isEmpty ) throw new Exception( err ) } )
+      stderr => { val err: String = scala.io.Source.fromInputStream( stderr ).mkString; if ( !err.isEmpty ) throw new Exception( err ) }
+    )
 
     //      val p  = "tptp_to_ladr" #| "prover9" #| "prooftrans xml expand"
     val p = "tptp_to_ladr" #| "prover9" #| "prooftrans xml"
@@ -145,17 +146,19 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
   }
 
   private def literals2FSequent( lits: Seq[FOLFormula] ): FSequent = {
-    FSequent( lits.filter( l => l match {
-      case Neg( _ ) => true
-      case _        => false
-    } )
-      .map( l => l match {
-        case Neg( f ) => f
-      } ),
+    FSequent(
+      lits.filter( l => l match {
+        case Neg( _ ) => true
+        case _        => false
+      } )
+        .map( l => l match {
+          case Neg( f ) => f
+        } ),
       lits.filter( l => l match {
         case Neg( _ ) => false
         case _        => true
-      } ) )
+      } )
+    )
   }
   val INTq_CHAR = 97
 
@@ -282,7 +285,8 @@ object InferenceExtractor {
     val str_ladr = Source.fromInputStream( new FileInputStream( fn ) ).mkString
 
     val ( assumptions, goals, _clausifies, _denials ) = str_ladr.split( System.getProperty( "line.separator" ) ).foldLeft(
-      ( List[FOLFormula](), List[FOLFormula](), List[String](), List[String]() ) )( ( m, l ) => {
+      ( List[FOLFormula](), List[FOLFormula](), List[String](), List[String]() )
+    )( ( m, l ) => {
 
         val ( as, gs, cs, g ) = m
 
@@ -380,8 +384,10 @@ object InferenceExtractor {
   *  instead. is an assumption is a conjunction A1,...,Am, put them into the antecedent instead.*/
   def createFSequent_( assumptions: Seq[FOLFormula], goals: Seq[FOLFormula] ) = {
     val fs = goals.map( implications ).foldLeft( FSequent( assumptions, Nil ) )( ( f: FSequent, g: FSequent ) => f.compose( g ) )
-    FSequent( fs.antecedent.asInstanceOf[Seq[FOLFormula]].map( conjunctions ).flatten,
-      fs.succedent.asInstanceOf[Seq[FOLFormula]].map( disjunctions ).flatten )
+    FSequent(
+      fs.antecedent.asInstanceOf[Seq[FOLFormula]].map( conjunctions ).flatten,
+      fs.succedent.asInstanceOf[Seq[FOLFormula]].map( disjunctions ).flatten
+    )
   }
 
   def implications( f: FOLFormula ): FSequent = f match {

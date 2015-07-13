@@ -346,9 +346,9 @@ object CutIntroduction extends Logger {
     // separately (since it never needs to be instantiated).
     val quantPart = FSequent(
       endSequent.antecedent.filter {
-      case All( _ ) => true
-      case _        => false
-    },
+        case All( _ ) => true
+        case _        => false
+      },
       endSequent.succedent.filter {
         case Ex( _ ) => true
         case _       => false

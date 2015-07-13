@@ -246,8 +246,10 @@ object NameReplacement {
     case ETSkolemQuantifier( f, v, selection ) =>
       ETSkolemQuantifier( apply( f, map ), v, apply( selection, map ) )
     case ETWeakQuantifier( f, instances ) =>
-      ETWeakQuantifier.applyWithoutMerge( apply( f, map ),
-        instances map { case ( t, term ) => apply( t, map ) -> apply( term, map ) } )
+      ETWeakQuantifier.applyWithoutMerge(
+        apply( f, map ),
+        instances map { case ( t, term ) => apply( t, map ) -> apply( term, map ) }
+      )
   }
 
   /* creates a mapping from elements in objects to targets. the predicate matches indicates when two elements should

@@ -44,7 +44,8 @@ class ProofNodeInfo[T] extends NodeInfo {
           Main.scrollToProof( x )
           try {
             ProofToolPublisher.publish(
-              ChangeSequentColor( x.asInstanceOf[LKProof].root, new Color( 0, 255, 255 ), reset = true ) )
+              ChangeSequentColor( x.asInstanceOf[LKProof].root, new Color( 0, 255, 255 ), reset = true )
+            )
           } catch { case _: Throwable => }
         case None =>
       }

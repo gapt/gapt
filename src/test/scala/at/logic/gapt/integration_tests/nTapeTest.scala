@@ -34,15 +34,18 @@ class nTapeTest extends Specification with ClasspathFileCopier {
 
   //sequential //skolemization is not thread safe - it shouldnt't make problems here, but in case there are issues, please uncomment
 
-  class Robinson2RalAndUndoHOL2Fol( sig_vars: Map[String, List[Var]],
-                                    sig_consts: Map[String, List[Const]],
-                                    cmap: replaceAbstractions.ConstantsMap ) extends RobinsonToRal {
+  class Robinson2RalAndUndoHOL2Fol(
+      sig_vars:   Map[String, List[Var]],
+      sig_consts: Map[String, List[Const]],
+      cmap:       replaceAbstractions.ConstantsMap
+  ) extends RobinsonToRal {
     val absmap = Map[String, LambdaExpression]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
     val cache = Map[LambdaExpression, LambdaExpression]()
 
     override def convert_formula( e: HOLFormula ): HOLFormula = {
       BetaReduction.betaNormalize(
-        undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap ) )
+        undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap )
+      )
     }
 
     override def convert_substitution( s: Substitution ): Substitution = {
@@ -50,7 +53,8 @@ class nTapeTest extends Specification with ClasspathFileCopier {
         case ( from, to ) =>
           (
             BetaReduction.betaNormalize( undoHol2Fol.backtranslate( from, sig_vars, sig_consts, absmap, None ) ).asInstanceOf[Var],
-            BetaReduction.betaNormalize( undoHol2Fol.backtranslate( to, sig_vars, sig_consts, absmap, None ) ) )
+            BetaReduction.betaNormalize( undoHol2Fol.backtranslate( to, sig_vars, sig_consts, absmap, None ) )
+          )
       }
 
       Substitution( mapping )
@@ -58,9 +62,11 @@ class nTapeTest extends Specification with ClasspathFileCopier {
   }
 
   object Robinson2RalAndUndoHOL2Fol {
-    def apply( sig_vars: Map[String, List[Var]],
-               sig_consts: Map[String, List[Const]],
-               cmap: replaceAbstractions.ConstantsMap ) =
+    def apply(
+      sig_vars:   Map[String, List[Var]],
+      sig_consts: Map[String, List[Const]],
+      cmap:       replaceAbstractions.ConstantsMap
+    ) =
       new Robinson2RalAndUndoHOL2Fol( sig_vars, sig_consts, cmap )
   }
 

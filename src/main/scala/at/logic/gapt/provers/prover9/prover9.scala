@@ -88,8 +88,10 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
       }
     }
 
-    val closure = FSequent( endSequent.antecedent.map( x => univclosure( x ) ),
-      endSequent.succedent.map( x => existsclosure( x ) ) )
+    val closure = FSequent(
+      endSequent.antecedent.map( x => univclosure( x ) ),
+      endSequent.succedent.map( x => existsclosure( x ) )
+    )
 
     val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
 

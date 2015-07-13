@@ -48,7 +48,8 @@ object Cut {
       else {
         new BinaryAGraph[Sequent]( Sequent(
           createContext( s1.root.antecedent ) ++ createContext( s2.root.antecedent.filterNot( _ == term2 ) ),
-          createContext( s1.root.succedent filterNot ( _ == term1 ) ) ++ createContext( s2.root.succedent ) ), s1, s2 ) with BinaryResolutionProof[V] with AuxiliaryFormulas {
+          createContext( s1.root.succedent filterNot ( _ == term1 ) ) ++ createContext( s2.root.succedent )
+        ), s1, s2 ) with BinaryResolutionProof[V] with AuxiliaryFormulas {
           def rule = CutType
           def aux = ( term1 :: Nil ) :: ( term2 :: Nil ) :: Nil
         }
@@ -438,10 +439,13 @@ object ExistsT {
 
 object Sub {
   def apply[V <: Sequent]( p: ResolutionProof[V], sub: Substitution ) =
-    new UnaryAGraph[Sequent]( Sequent(
-      p.root.antecedent.map( x => x.factory.createFormulaOccurrence( betaNormalize( sub( x.formula ) ), x :: Nil ) ),
-      p.root.succedent.map( x => x.factory.createFormulaOccurrence( betaNormalize( sub( x.formula ) ), x :: Nil ) ) ),
-      p ) with UnaryResolutionProof[V] with AppliedSubstitution { def rule = SubType; def substitution = sub }
+    new UnaryAGraph[Sequent](
+      Sequent(
+        p.root.antecedent.map( x => x.factory.createFormulaOccurrence( betaNormalize( sub( x.formula ) ), x :: Nil ) ),
+        p.root.succedent.map( x => x.factory.createFormulaOccurrence( betaNormalize( sub( x.formula ) ), x :: Nil ) )
+      ),
+      p
+    ) with UnaryResolutionProof[V] with AppliedSubstitution { def rule = SubType; def substitution = sub }
 
   def unapply[V <: Sequent]( proof: ResolutionProof[V] with AppliedSubstitution ) = if ( proof.rule == SubType ) {
     val pr = proof.asInstanceOf[UnaryResolutionProof[V] with AppliedSubstitution]

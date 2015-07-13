@@ -1209,8 +1209,10 @@ object ForallHyperRightRule {
       main match {
         case All( _, sub ) => {
           // eigenvar condition
-          assert( ( s1.antecedent ++ ( s1.succedent.filterNot( _ == aux_fo ) ) ).forall( fo => !freeVariables( fo.formula.asInstanceOf[SchemaFormula] ).contains( eigen_var ) ),
-            "Eigenvariable " + eigen_var.toString + " occurs in context " + s1.toString )
+          assert(
+            ( s1.antecedent ++ ( s1.succedent.filterNot( _ == aux_fo ) ) ).forall( fo => !freeVariables( fo.formula.asInstanceOf[SchemaFormula] ).contains( eigen_var ) ),
+            "Eigenvariable " + eigen_var.toString + " occurs in context " + s1.toString
+          )
           // correct auxiliary formula
           //            println("ForallRightRule")
           //            println("eigen_var = "+eigen_var)
@@ -1273,8 +1275,10 @@ object ExistsHyperLeftRule {
       main match {
         case Ex( _, sub ) => {
           // eigenvar condition
-          assert( ( ( s1.antecedent.filterNot( _ == aux_fo ) ) ++ s1.succedent ).forall( fo => !freeVariables( fo.formula.asInstanceOf[SchemaFormula] ).contains( eigen_var ) ),
-            "Eigenvariable " + eigen_var.toString + " occurs in context " + s1.toString )
+          assert(
+            ( ( s1.antecedent.filterNot( _ == aux_fo ) ) ++ s1.succedent ).forall( fo => !freeVariables( fo.formula.asInstanceOf[SchemaFormula] ).contains( eigen_var ) ),
+            "Eigenvariable " + eigen_var.toString + " occurs in context " + s1.toString
+          )
           // correct auxiliary formula
           //            assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
           aux_fo

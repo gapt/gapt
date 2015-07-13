@@ -15,9 +15,11 @@ object getStatistics {
 
     override def toString = {
       val as = _1.foldLeft( "antecedent:\n" )(
-        ( str, pair ) => str + "  " + pair._1 + ": " + pair._2 + "\n" )
+        ( str, pair ) => str + "  " + pair._1 + ": " + pair._2 + "\n"
+      )
       val ss = _2.foldLeft( "succedent:\n" )(
-        ( str, pair ) => str + "  " + pair._1 + ": " + pair._2 + "\n" )
+        ( str, pair ) => str + "  " + pair._1 + ": " + pair._2 + "\n"
+      )
 
       as + ss
     }
@@ -35,9 +37,11 @@ object getStatistics {
 
   def apply( mes: MultiExpansionSequent ) = {
     val a_stats = mes.antecedent.foldLeft( new HashMap[HOLFormula, Int]() )(
-      ( map, met ) => map + ( met.toShallow -> met.numberOfInstances ) )
+      ( map, met ) => map + ( met.toShallow -> met.numberOfInstances )
+    )
     val s_stats = mes.succedent.foldLeft( new HashMap[HOLFormula, Int]() )(
-      ( map, met ) => map + ( met.toShallow -> met.numberOfInstances ) )
+      ( map, met ) => map + ( met.toShallow -> met.numberOfInstances )
+    )
 
     new ESStats( a_stats, s_stats )
   }

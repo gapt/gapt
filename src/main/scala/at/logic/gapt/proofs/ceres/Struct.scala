@@ -339,24 +339,38 @@ object StructCreators extends Logger {
   def extractFormula( name: String, fresh_param: IntVar ): HOLFormula =
     {
       val cs_0_f = SchemaProofDB.foldLeft[HOLFormula]( Top() )( ( f, ps ) =>
-        And( cutConfigurations( ps._2.base ).foldLeft[HOLFormula]( Top() )( ( f2, cc ) =>
-          And( Imp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero() :: Nil ) ),
-            IntZero() :: Nil ),
-            toFormula( extractBaseWithCutConfig( ps._2, cc ) ) ), f2 ) ),
-          f ) )
+        And(
+          cutConfigurations( ps._2.base ).foldLeft[HOLFormula]( Top() )( ( f2, cc ) =>
+            And( Imp(
+              IndexedPredicate(
+                new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.base.root, cc, ps._2.seq, ps._2.vars, IntZero() :: Nil ) ),
+                IntZero() :: Nil
+              ),
+              toFormula( extractBaseWithCutConfig( ps._2, cc ) )
+            ), f2 ) ),
+          f
+        ) )
 
       // assumption: all proofs in the SchemaProofDB have the
       // same running variable "k".
       val k = IntVar( "k" )
       val cs_1_f = SchemaProofDB.foldLeft[HOLFormula]( Top() )( ( f, ps ) =>
-        And( cutConfigurations( ps._2.rec ).foldLeft[HOLFormula]( Top() )( ( f2, cc ) =>
-          And( Imp( IndexedPredicate( new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ( k ) :: Nil ) ),
-            Succ( k ) :: Nil ),
-            toFormula( extractStepWithCutConfig( ps._2, cc ) ) ), f2 ) ),
-          f ) )
+        And(
+          cutConfigurations( ps._2.rec ).foldLeft[HOLFormula]( Top() )( ( f2, cc ) =>
+            And( Imp(
+              IndexedPredicate(
+                new ClauseSetSymbol( ps._2.name, cutOccConfigToCutConfig( ps._2.rec.root, cc, ps._2.seq, ps._2.vars, Succ( k ) :: Nil ) ),
+                Succ( k ) :: Nil
+              ),
+              toFormula( extractStepWithCutConfig( ps._2, cc ) )
+            ), f2 ) ),
+          f
+        ) )
 
-      val cl_n = IndexedPredicate( new ClauseSetSymbol( name, ( HashMultiset[HOLFormula], HashMultiset[HOLFormula] ) ),
-        fresh_param :: Nil )
+      val cl_n = IndexedPredicate(
+        new ClauseSetSymbol( name, ( HashMultiset[HOLFormula], HashMultiset[HOLFormula] ) ),
+        fresh_param :: Nil
+      )
       And( cl_n, And( cs_0_f, BigAnd( k, cs_1_f.asInstanceOf[SchemaFormula], IntZero(), fresh_param ) ) )
     }
 
@@ -374,16 +388,20 @@ object StructCreators extends Logger {
 
   def extractRelevantStruct( name: String, fresh_param: IntVar ): Tuple2[List[( String, Struct, Set[FormulaOccurrence] )], List[( String, Struct, Set[FormulaOccurrence] )]] = {
     val rcc = RelevantCC( name )._1.flatten
-    val rez_step = rcc.map( pair => Tuple3( "Θ(" + pair._1 + "_step, (" +
-      cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get( pair._1 ).rec.root, pair._2, SchemaProofDB.get( pair._1 ).seq, SchemaProofDB.get( pair._1 ).vars, Succ( IntVar( "k" ) ) :: Nil ) ) + "))",
+    val rez_step = rcc.map( pair => Tuple3(
+      "Θ(" + pair._1 + "_step, (" +
+        cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get( pair._1 ).rec.root, pair._2, SchemaProofDB.get( pair._1 ).seq, SchemaProofDB.get( pair._1 ).vars, Succ( IntVar( "k" ) ) :: Nil ) ) + "))",
       extractStepWithCutConfig( SchemaProofDB.get( pair._1 ), pair._2 ),
-      pair._2 ) )
+      pair._2
+    ) )
 
     val rcc1 = RelevantCC( name )._2.flatten
-    val rez_base = rcc1.map( pair => Tuple3( "Θ(" + pair._1 + "_base, (" +
-      cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get( pair._1 ).base.root, pair._2, SchemaProofDB.get( pair._1 ).seq, SchemaProofDB.get( pair._1 ).vars, IntZero() :: Nil ) ) + "))",
+    val rez_base = rcc1.map( pair => Tuple3(
+      "Θ(" + pair._1 + "_base, (" +
+        cutConfToString( cutOccConfigToCutConfig( SchemaProofDB.get( pair._1 ).base.root, pair._2, SchemaProofDB.get( pair._1 ).seq, SchemaProofDB.get( pair._1 ).vars, IntZero() :: Nil ) ) + "))",
       extractBaseWithCutConfig( SchemaProofDB.get( pair._1 ), pair._2 ),
-      pair._2 ) )
+      pair._2
+    ) )
     Tuple2( rez_step, rez_base )
   }
 
@@ -398,34 +416,50 @@ object StructCreators extends Logger {
   def extractStruct( name: String, fresh_param: IntVar ): Struct = {
     val terms = extractRelevantStruct( name, fresh_param )
     val cs_0 = terms._2.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
-      Plus( Times( Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol( triple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
-        cutOccConfigToCutConfig( hackGettingProof( triple._1 ).base.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, IntZero() :: Nil ) ), IntZero() :: Nil ), hackGettingProof( triple._1 ).base.root ) ) ),
-        triple._2 ), result ) )
+      Plus( Times(
+        Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol(
+          triple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+          cutOccConfigToCutConfig( hackGettingProof( triple._1 ).base.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, IntZero() :: Nil )
+        ), IntZero() :: Nil ), hackGettingProof( triple._1 ).base.root ) ) ),
+        triple._2
+      ), result ) )
 
     // assumption: all proofs in the SchemaProofDB have the
     // same running variable "k".
     val k = IntVar( "k" )
     val cs_1 = terms._1.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
-      Plus( Times( Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol( triple._1.replace( "Θ(", "" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
-        cutOccConfigToCutConfig( hackGettingProof( triple._1 ).rec.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, Succ( k ) :: Nil ) ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
-        triple._2 ), result ) )
+      Plus( Times(
+        Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol(
+          triple._1.replace( "Θ(", "" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+          cutOccConfigToCutConfig( hackGettingProof( triple._1 ).rec.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, Succ( k ) :: Nil )
+        ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
+        triple._2
+      ), result ) )
 
-    val cl_n = IndexedPredicate( new ClauseSetSymbol( name, ( HashMultiset[HOLFormula], HashMultiset[HOLFormula] ) ),
-      fresh_param :: Nil )
+    val cl_n = IndexedPredicate(
+      new ClauseSetSymbol( name, ( HashMultiset[HOLFormula], HashMultiset[HOLFormula] ) ),
+      fresh_param :: Nil
+    )
     Plus( A( toOccurrence( cl_n, SchemaProofDB.get( name ).rec.root ) ), Plus( cs_0, cs_1 ) )
   }
 
   //extracts the struct given the relevant CC
   def extractStructRCCstep( name: String, fresh_param: IntVar, rcc: List[( String, Set[FormulaOccurrence] )] ): Struct = {
-    val relevant_struct_list_step = rcc.map( pair => Tuple3( "Θ(" + pair._1 + "_step, (" +
-      cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get( pair._1 ).rec.root, pair._2 ) ) + "))",
+    val relevant_struct_list_step = rcc.map( pair => Tuple3(
+      "Θ(" + pair._1 + "_step, (" +
+        cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get( pair._1 ).rec.root, pair._2 ) ) + "))",
       extractStepWithCutConfig( SchemaProofDB.get( pair._1 ), pair._2 ),
-      pair._2 ) )
+      pair._2
+    ) )
     val k = IntVar( "k" )
     val cs_0 = relevant_struct_list_step.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
-      Plus( Times( Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol( triple._1.replace( "Θ(", "" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
-        cutOccConfigToCutConfig.applyRCC( hackGettingProof( triple._1 ).rec.root, triple._3 ) ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
-        triple._2 ), result ) )
+      Plus( Times(
+        Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol(
+          triple._1.replace( "Θ(", "" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+          cutOccConfigToCutConfig.applyRCC( hackGettingProof( triple._1 ).rec.root, triple._3 )
+        ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
+        triple._2
+      ), result ) )
 
     return cs_0
   }
@@ -434,31 +468,45 @@ object StructCreators extends Logger {
   def extractStructRCCbase( name: String, rcc: List[( String, Set[FormulaOccurrence], Set[FormulaOccurrence] )] ): Struct = {
     val relevant_struct_list_base = rcc.map( triple =>
       if ( triple._2 == triple._3 )
-        Tuple4( "Θ(" + triple._1 + "_base, (" +
-        cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get( triple._1 ).base.root, triple._3 ) ) + "))",
+        Tuple4(
+        "Θ(" + triple._1 + "_base, (" +
+          cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get( triple._1 ).base.root, triple._3 ) ) + "))",
         extractBaseWithCutConfig( SchemaProofDB.get( triple._1 ), triple._2 ),
-        triple._2, triple._3 )
+        triple._2, triple._3
+      )
       else
-        Tuple4( "Θ(" + triple._1 + "_base, (" +
-          cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get( triple._1 ).rec.root, triple._3 ) ) + "))",
+        Tuple4(
+          "Θ(" + triple._1 + "_base, (" +
+            cutConfToString( cutOccConfigToCutConfig.applyRCC( SchemaProofDB.get( triple._1 ).rec.root, triple._3 ) ) + "))",
           extractBaseWithCutConfig( SchemaProofDB.get( triple._1 ), triple._2 ),
-          triple._2, triple._3 ) )
+          triple._2, triple._3
+        ) )
 
     println( "\nrelevant_struct_list_base : " + relevant_struct_list_base )
     //the triple is here 4-ple
     val cs_0 = relevant_struct_list_base.foldLeft[Struct]( EmptyPlusJunction )( ( result, fourple ) =>
       if ( fourple._3 == fourple._4 )
-        Plus( Times( Dual( A( toOccurrence(
-        IndexedPredicate( new ClauseSetSymbol( fourple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
-          cutOccConfigToCutConfig.applyRCC( hackGettingProof( fourple._1 ).base.root, fourple._4 ) ), IntZero() :: Nil ),
-        hackGettingProof( fourple._1 ).base.root ) ) ),
-        fourple._2 ), result )
+        Plus( Times(
+        Dual( A( toOccurrence(
+          IndexedPredicate( new ClauseSetSymbol(
+            fourple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+            cutOccConfigToCutConfig.applyRCC( hackGettingProof( fourple._1 ).base.root, fourple._4 )
+          ), IntZero() :: Nil ),
+          hackGettingProof( fourple._1 ).base.root
+        ) ) ),
+        fourple._2
+      ), result )
       else
-        Plus( Times( Dual( A( toOccurrence(
-          IndexedPredicate( new ClauseSetSymbol( fourple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
-            cutOccConfigToCutConfig.applyRCC( hackGettingProof( fourple._1 ).rec.root, fourple._4 ) ), IntZero() :: Nil ),
-          hackGettingProof( fourple._1 ).base.root ) ) ),
-          fourple._2 ), result ) )
+        Plus( Times(
+          Dual( A( toOccurrence(
+            IndexedPredicate( new ClauseSetSymbol(
+              fourple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+              cutOccConfigToCutConfig.applyRCC( hackGettingProof( fourple._1 ).rec.root, fourple._4 )
+            ), IntZero() :: Nil ),
+            hackGettingProof( fourple._1 ).base.root
+          ) ) ),
+          fourple._2
+        ), result ) )
     return cs_0
   }
 
@@ -546,9 +594,11 @@ object StructCreators extends Logger {
   //the original version:
   def handleSchemaProofLink( so: Sequent, name: String, indices: List[IntegerTerm], cut_occs: TypeSynonyms.CutOccurrenceConfiguration ) = {
     val schema = SchemaProofDB.get( name )
-    val sym = new ClauseSetSymbol( name,
+    val sym = new ClauseSetSymbol(
+      name,
       cutOccConfigToCutConfig( so, cut_occs.filter( occ => ( so.antecedent ++ so.succedent ).contains( occ ) ),
-        schema.seq, schema.vars, indices ) )
+        schema.seq, schema.vars, indices )
+    )
     val atom = IndexedPredicate( sym, indices )
     A( toOccurrence( atom, so ) )
   }

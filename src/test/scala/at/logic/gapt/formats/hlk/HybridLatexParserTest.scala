@@ -158,7 +158,8 @@ class HybridLatexParserTest extends Specification with ClasspathFileCopier {
       val instance = HLKHOLParser.ASTtoHOL( naming, HybridLatexParser.parseFormula( "a+((1+x)+y)=(a+(1+x))+y" ) )
       val t1 = HOLFunction( Const( "+", Ti -> ( Ti -> Ti ) ), List(
         Const( "1", Ti ),
-        Var( "x", Ti ) ) )
+        Var( "x", Ti )
+      ) )
       val t2 = Const( "a", Ti )
       val x = Var( "x", Ti )
       val y = Var( "y", Ti )

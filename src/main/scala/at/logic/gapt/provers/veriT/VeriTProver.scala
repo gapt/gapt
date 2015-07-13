@@ -44,7 +44,8 @@ class VeriTProver extends Prover with ExternalProgram {
       case Some( exp_seq ) =>
         val exp_seq_quant = new ExpansionSequent(
           exp_seq.antecedent.filter( f => isQuantified( f ) ),
-          exp_seq.succedent.filter( f => isQuantified( f ) ) )
+          exp_seq.succedent.filter( f => isQuantified( f ) )
+        )
 
         val ant_prop = s.antecedent.map( f => formulaToExpansionTree( f, false ) )
         val suc_prop = s.succedent.map( f => formulaToExpansionTree( f, true ) )

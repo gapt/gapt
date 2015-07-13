@@ -115,7 +115,8 @@ object VeriTExporter {
     "assert",
     "not", "and", "or", "xor",
     "as", "push",
-    "true", "false" )
+    "true", "false"
+  )
 
   // Transforms the string into ASCII and checks if 
   // it does not clash with veriT keywords.

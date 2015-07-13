@@ -73,11 +73,14 @@ class FixDerivationTest extends Specification {
       val q = FOLAtom( "q" )
       val r = FOLAtom( "r" )
 
-      val der = Resolution( InitialClause( Nil, q :: r :: Nil ),
+      val der = Resolution(
+        InitialClause( Nil, q :: r :: Nil ),
         Factor(
           InitialClause( q :: Nil, p :: p :: Nil ),
-          p, 2, true, FOLSubstitution() ),
-        q, q, FOLSubstitution() )
+          p, 2, true, FOLSubstitution()
+        ),
+        q, q, FOLSubstitution()
+      )
       val cq = FSequent( Nil, q :: Nil )
       val cqp = FSequent( q :: Nil, p :: Nil )
 
@@ -113,8 +116,10 @@ class FixDerivationTest extends Specification {
 
     "-p(x)|f(x,y)=y, p(a) := f(a,z)=z" in {
       val a = FClause( Seq(), Seq( parseFormula( "f(a,z)=z" ) ) )
-      val bs = Set( FClause( Seq( parseFormula( "p(x)" ) ), Seq( parseFormula( "f(x,y)=y" ) ) ),
-        FClause( Seq(), Seq( parseFormula( "p(a)" ) ) ) )
+      val bs = Set(
+        FClause( Seq( parseFormula( "p(x)" ) ), Seq( parseFormula( "f(x,y)=y" ) ) ),
+        FClause( Seq(), Seq( parseFormula( "p(a)" ) ) )
+      )
       check( a, bs )
     }
 
@@ -135,7 +140,8 @@ class FixDerivationTest extends Specification {
       val bs = Set(
         FClause( Seq( FOLAtom( "p" ), FOLAtom( "q" ) ), Seq( FOLAtom( "r" ) ) ),
         FClause( Seq( FOLAtom( "p" ) ), Seq( FOLAtom( "q" ), FOLAtom( "r" ) ) ),
-        FClause( Seq( FOLAtom( "p" ), FOLAtom( "r" ) ), Seq() ) )
+        FClause( Seq( FOLAtom( "p" ), FOLAtom( "r" ) ), Seq() )
+      )
       check( a, bs )
     }
   }

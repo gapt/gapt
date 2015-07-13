@@ -12,9 +12,11 @@ import scala.xml.dtd._
 object XMLExporter {
 
   def apply( path: String, proofName: String, proof: LKProof ): Unit =
-    apply( path, new ProofDatabase( Map[LambdaExpression, LambdaExpression](),
+    apply( path, new ProofDatabase(
+      Map[LambdaExpression, LambdaExpression](),
       List( ( proofName, proof ) ),
-      Nil, Nil ) )
+      Nil, Nil
+    ) )
 
   def apply( path: String, pdb: ProofDatabase ): Unit = { //try {
     val output = <proofdatabase>

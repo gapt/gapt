@@ -267,19 +267,23 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
   // ------ helper functions for rewriting
 
-  def handleWeakeningRule( rewrite: ( LambdaExpression => LambdaExpression ),
-                           uproof: LKProof, root: Sequent, prin: FormulaOccurrence,
-                           createRule: ( LKProof, HOLFormula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+  def handleWeakeningRule(
+    rewrite: ( LambdaExpression => LambdaExpression ),
+    uproof:  LKProof, root: Sequent, prin: FormulaOccurrence,
+    createRule: ( LKProof, HOLFormula ) => LKProof
+  ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, c( rewrite( prin.formula ) ) )
     val correspondences = calculateCorrespondences( root, dproof, rewrite )
     ( correspondences, dproof )
   }
 
-  def handleContractionRule( rewrite: ( LambdaExpression => LambdaExpression ),
-                             uproof: LKProof,
-                             root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
-                             createRule: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
+  def handleContractionRule(
+    rewrite: ( LambdaExpression => LambdaExpression ),
+    uproof:  LKProof,
+    root:    Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
+    createRule: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof
+  ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     debug( "Contracting from: " + aux1 + " and " + aux2 )
     debug( "Contracting to:   " + dmap( aux1 ) + " and " + dmap( aux2 ) )
@@ -296,7 +300,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
   }
 
   def handleNegationRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof: LKProof, root: Sequent,
-                          aux: FormulaOccurrence,
+                          aux:        FormulaOccurrence,
                           createRule: ( LKProof, FormulaOccurrence ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap, duproof ) = eliminate_in_proof_( rewrite, uproof )
     val dproof = createRule( duproof, dmap( aux ) )
@@ -316,7 +320,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
   def handleBinaryLogicalRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof1: LKProof, uproof2: LKProof,
                                root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
-                               prin: FormulaOccurrence,
+                               prin:       FormulaOccurrence,
                                createRule: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap1, duproof1 ) = eliminate_in_proof_( rewrite, uproof1 )
     val ( dmap2, duproof2 ) = eliminate_in_proof_( rewrite, uproof2 )
@@ -351,7 +355,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
   def handleEquationalRule( rewrite: ( LambdaExpression => LambdaExpression ), uproof1: LKProof, uproof2: LKProof,
                             root: Sequent, aux1: FormulaOccurrence, aux2: FormulaOccurrence,
-                            prin: FormulaOccurrence,
+                            prin:       FormulaOccurrence,
                             createRule: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof ): ( Map[FormulaOccurrence, FormulaOccurrence], LKProof ) = {
     val ( dmap1, duproof1 ) = eliminate_in_proof_( rewrite, uproof1 )
     val ( dmap2, duproof2 ) = eliminate_in_proof_( rewrite, uproof2 )

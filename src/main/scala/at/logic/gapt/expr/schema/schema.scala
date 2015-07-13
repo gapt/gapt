@@ -150,12 +150,12 @@ object SchemaFunction {
 
 /*************** OPERATORS *****************/
 
-object BigAndC extends MonomorphicLogicalC( BigAndSymbol.toString, ->( ->( Tindex, To ), ->( Tindex, ->( Tindex, To ) ) ) )
-object BigOrC extends MonomorphicLogicalC( BigOrSymbol.toString, ->( ->( Tindex, To ), ->( Tindex, ->( Tindex, To ) ) ) )
-object BiggerThanC extends MonomorphicLogicalC( BiggerThanSymbol.toString, ->( Tindex, ->( Tindex, To ) ) )
-object LessThanC extends MonomorphicLogicalC( LessThanSymbol.toString, ->( Tindex, ->( Tindex, To ) ) )
-object LeqC extends MonomorphicLogicalC( LeqSymbol.toString, ->( Tindex, ->( Tindex, To ) ) )
-object SuccC extends MonomorphicLogicalC( "s", ->( Tindex, Tindex ) )
+object BigAndC extends MonomorphicLogicalC( BigAndSymbol.toString, ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
+object BigOrC extends MonomorphicLogicalC( BigOrSymbol.toString, ( ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) ) )
+object BiggerThanC extends MonomorphicLogicalC( BiggerThanSymbol.toString, ( Tindex -> ( Tindex -> To ) ) )
+object LessThanC extends MonomorphicLogicalC( LessThanSymbol.toString, ( Tindex -> ( Tindex -> To ) ) )
+object LeqC extends MonomorphicLogicalC( LeqSymbol.toString, ( Tindex -> ( Tindex -> To ) ) )
+object SuccC extends MonomorphicLogicalC( "s", ( Tindex -> Tindex ) )
 
 object BigAnd {
   def apply( i: IntVar, iter: SchemaFormula, init: IntegerTerm, end: IntegerTerm ): SchemaFormula =
@@ -297,7 +297,7 @@ object foTerm {
   }
 
   def unapply( s: SchemaExpression ) = s match {
-    case a: App if a.arg.exptype == Ti && a.function.exptype == ->( Ti, Ti ) => Some( a.function.asInstanceOf[SchemaExpression], a.arg.asInstanceOf[SchemaExpression] )
+    case a: App if a.arg.exptype == Ti && a.function.exptype == Ti -> Ti => Some( a.function.asInstanceOf[SchemaExpression], a.arg.asInstanceOf[SchemaExpression] )
     case _ => None
   }
 }
@@ -309,10 +309,10 @@ object sTerm {
   def apply( f: String, i: SchemaExpression, l: List[SchemaExpression] ): SchemaExpression = {
     require( i.exptype == Tindex )
     if ( l.isEmpty ) {
-      val func = Const( f, ->( Tindex, Ti ) )
+      val func = Const( f, Tindex -> Ti )
       return App( func, i )
     } else {
-      val func = Const( f, ->( Tindex, ->( Ti, Ti ) ) )
+      val func = Const( f, Tindex -> ( Ti -> Ti ) )
       return App( App( func, i ), l.head )
     }
   }
@@ -334,7 +334,7 @@ object sTerm {
 object sIndTerm {
   //the i should be of type Tindex !
   def apply( f: String, i: IntegerTerm ): SchemaExpression = {
-    val func = Const( f, ->( Tindex, Tindex ) )
+    val func = Const( f, Tindex -> Tindex )
     return App( func, i )
   }
 

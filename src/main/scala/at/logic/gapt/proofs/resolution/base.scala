@@ -93,7 +93,8 @@ object FClause {
 // the boolean represent isPositive as the negation is stripped from the literals
 class Clause( val literals: Seq[Tuple2[FormulaOccurrence, Boolean]] ) extends Sequent(
   literals.filter( !_._2 ).map( _._1 ),
-  literals.filter( _._2 ).map( _._1 ) ) with CNF {
+  literals.filter( _._2 ).map( _._1 )
+) with CNF {
   def negative = antecedent
   def positive = succedent
   def toFClause = FClause( negative.map( _.formula ), positive.map( _.formula ) )

@@ -19,11 +19,13 @@ class SipTests extends Specification {
         tau -> FOLFunction( "r", List( beta ) ),
         tau -> FOLFunction( "r", List( nu ) ),
         gamma -> gamma,
-        gammaEnd -> parseTerm( "0" ) ) )
+        gammaEnd -> parseTerm( "0" )
+      ) )
       g.instanceGrammar( 0 ).productions.toSet must beEqualTo( Set(
         tau -> parseTerm( "r(0)" ),
         tau -> FOLFunction( "r", List( gamma_i( 0 ) ) ),
-        gamma_i( 0 ) -> parseTerm( "0" ) ) )
+        gamma_i( 0 ) -> parseTerm( "0" )
+      ) )
     }
   }
 
@@ -43,7 +45,8 @@ class SipTests extends Specification {
       val lang = ( 0 until n ) map { i => FOLFunction( "tuple1", List( Utils.numeral( i ) ) ) }
       val g = findMinimalSipGrammar( Seq( ( n, lang ) ) )
       g.productions must beEqualTo( Seq(
-        tau -> FOLFunction( "tuple1", List( nu ) ) ) )
+        tau -> FOLFunction( "tuple1", List( nu ) )
+      ) )
     }
 
     "find a grammar covering multiple instance languages" in {
@@ -56,7 +59,8 @@ class SipTests extends Specification {
       }
       val g = findMinimalSipGrammar( langs )
       g.productions must beEqualTo( Seq(
-        tau -> FOLFunction( "tuple1", List( nu ) ) ) )
+        tau -> FOLFunction( "tuple1", List( nu ) )
+      ) )
     }
 
   }

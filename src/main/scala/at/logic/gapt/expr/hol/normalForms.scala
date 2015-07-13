@@ -104,7 +104,8 @@ object CNFp {
         val neg = literals.filter( isNeg( _ ) ).map( removeNeg( _ ) )
         val pos = literals.filterNot( isNeg( _ ) )
         FClause( neg, pos )
-      } )
+      }
+    )
   }
 
   def toFormulaList( f: HOLFormula ): List[HOLFormula] = apply( f ).map( Or( _ ) )
@@ -141,7 +142,8 @@ object CNFn {
         val neg = literals.filter( isNeg( _ ) ).map( removeNeg( _ ) )
         val pos = literals.filterNot( isNeg( _ ) )
         FClause( neg, pos )
-      } )
+      }
+    )
   }
 
   def toFormulaList( f: HOLFormula ): List[HOLFormula] = apply( f ).map( Or( _ ) )

@@ -212,9 +212,11 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
    * @return Formula, but with each atom turned into a tuple. The 2nd component is the atom's index.
    */
   def numberAtoms( formula: List[MyFClause[FOLFormula]] ) =
-    ListSupport.mapAccumL( ( c: Int, cl: MyFClause[FOLFormula] ) => ( c + cl.neg.length + cl.pos.length,
-      new MyFClause( cl.neg zip ( Stream from c ), cl.pos zip ( Stream from ( c + cl.neg.length ) ) ) ),
-      0, formula )._2
+    ListSupport.mapAccumL(
+      ( c: Int, cl: MyFClause[FOLFormula] ) => ( c + cl.neg.length + cl.pos.length,
+        new MyFClause( cl.neg zip ( Stream from c ), cl.pos zip ( Stream from ( c + cl.neg.length ) ) ) ),
+      0, formula
+    )._2
 
   /**
    * Tries to minimize the canonical solution for one cut by removing as many atoms as
@@ -299,10 +301,12 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     //-----------------------------------------------------------------------
 
     // 4) let each node of the DFS be (R,V, F'), where R is the set of resolved pairs, V is the set of resolved atoms, and F' the resulting formula.
-    class ResNode( val appliedPairs: List[( ( Int, Int ), Int )],
-                   val remainingPairs: List[( ( Int, Int ), Int )],
-                   val resolvedVars: Set[Int],
-                   val currentFormula: List[MyFClause[( FOLFormula, Int )]] ) extends SetNode[( Int, Int )] {
+    class ResNode(
+        val appliedPairs:   List[( ( Int, Int ), Int )],
+        val remainingPairs: List[( ( Int, Int ), Int )],
+        val resolvedVars:   Set[Int],
+        val currentFormula: List[MyFClause[( FOLFormula, Int )]]
+    ) extends SetNode[( Int, Int )] {
 
       def includedElements: List[( ( Int, Int ), Int )] = appliedPairs
       def remainingElements: List[( ( Int, Int ), Int )] = remainingPairs

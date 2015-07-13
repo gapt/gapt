@@ -8,7 +8,7 @@ package at.logic.gapt.expr
 import scala.util.parsing.combinator._
 
 abstract class TA {
-  def ->( that: TA ) = new ->( this, that )
+  def -> ( that: TA ) = new -> ( this, that )
 }
 abstract class TAtomicA extends TA
 abstract class TComplexA extends TA
@@ -25,17 +25,17 @@ case object Tindex extends TAtomicA { override def toString = "ω" } // for inde
 case object Ti extends TAtomicA { override def toString = "ι" }
 case object To extends TAtomicA { override def toString = "ο" }
 
-case class ->( val in: TA, val out: TA ) extends TComplexA {
+case class -> ( val in: TA, val out: TA ) extends TComplexA {
   override def toString = "(" + in.toString + "->" + out.toString + ")"
 }
 // Overloading the apply method so that it takes strings.
 object -> {
   @deprecated
-  def apply( in: String, out: String ) = new ->( Type( in ), Type( out ) )
+  def apply( in: String, out: String ) = new -> ( Type( in ), Type( out ) )
   @deprecated
-  def apply( in: TA, out: String ) = new ->( in, Type( out ) )
+  def apply( in: TA, out: String ) = new -> ( in, Type( out ) )
   @deprecated
-  def apply( in: String, out: TA ) = new ->( Type( in ), out )
+  def apply( in: String, out: TA ) = new -> ( Type( in ), out )
   def unapply( ta: TA ) = ta match {
     case t: -> => Some( ( t.in, t.out ) )
     case _     => None
@@ -45,11 +45,11 @@ object -> {
 // convenience function to create function types
 // with argument types from and return type to
 object FunctionType {
-  def apply( to: TA, from: List[TA] ): TA = if ( !from.isEmpty ) from.foldRight( to )( ( t, acc ) => ->( t, acc ) ) else to
+  def apply( to: TA, from: List[TA] ): TA = if ( !from.isEmpty ) from.foldRight( to )( ( t, acc ) => t -> acc ) else to
   def unapply( ta: TA ): Option[Tuple2[TA, List[TA]]] = ta match {
-    case TAtomicA( _ )            => Some( ta, Nil )
-    case ->( t1, TAtomicA( t2 ) ) => Some( t2, t1 :: Nil )
-    case ->( t1, t2 ) => {
+    case TAtomicA( _ )              => Some( ta, Nil )
+    case `->`( t1, TAtomicA( t2 ) ) => Some( t2, t1 :: Nil )
+    case `->`( t1, t2 ) => {
       unapply( t2 ) match {
         case Some( ( ta, ls ) ) => Some( ta, t1 :: ls )
         case None               => None
@@ -70,9 +70,9 @@ object Arity {
 @deprecated
 object StringExtractor {
   def apply( t: TA ): String = t match {
-    case Ti            => "i"
-    case To            => "o"
-    case ->( in, out ) => "(" + apply( in ) + " -> " + apply( out ) + ")"
+    case Ti              => "i"
+    case To              => "o"
+    case `->`( in, out ) => "(" + apply( in ) + " -> " + apply( out ) + ")"
   }
   def unapply( s: String ): Option[TA] = {
     val p = new JavaTokenParsers with Parsers
@@ -96,7 +96,7 @@ trait Parsers extends JavaTokenParsers {
   def iType: Parser[TA] = "i" ^^ { x => Ti }
   def oType: Parser[TA] = "o" ^^ { x => To }
   def indexType: Parser[TA] = "e" ^^ { x => Tindex }
-  def arrowType: Parser[TA] = "(" ~> Type ~ "->" ~ Type <~ ")" ^^ { case in ~ "->" ~ out => ->( in, out ) }
+  def arrowType: Parser[TA] = "(" ~> Type ~ "->" ~ Type <~ ")" ^^ { case in ~ "->" ~ out => in -> out }
 }
 
 class TypeException( s: String ) extends Exception

@@ -642,8 +642,10 @@ object merge extends at.logic.gapt.utils.logging.Logger {
 
         assert( newContext.length == context.length )
 
-        applyRec( newContext.take( index ) ++ List( newTree ) ++ newContext.drop( index ),
-          index = if ( substitutionOccurred ) { 0 } else { index + 1 } )
+        applyRec(
+          newContext.take( index ) ++ List( newTree ) ++ newContext.drop( index ),
+          index = if ( substitutionOccurred ) { 0 } else { index + 1 }
+        )
       }
     }
 
@@ -653,7 +655,8 @@ object merge extends at.logic.gapt.utils.logging.Logger {
 
     return new ExpansionSequent(
       allNewTrees.take( antecedent.length ),
-      allNewTrees.drop( antecedent.length ) )
+      allNewTrees.drop( antecedent.length )
+    )
   }
 
   /**
@@ -690,7 +693,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
     // code which is required for all binary operators
     // @param leftPolarity: polarity of left child
     def start_op2( t1: ExpansionTreeWithMerges, t2: ExpansionTreeWithMerges,
-                   OpFactory: ( ExpansionTreeWithMerges, ExpansionTreeWithMerges ) => ExpansionTreeWithMerges,
+                   OpFactory:    ( ExpansionTreeWithMerges, ExpansionTreeWithMerges ) => ExpansionTreeWithMerges,
                    leftPolarity: Boolean ): ( Option[Substitution], ExpansionTreeWithMerges ) = {
       val ( subst1, res1 ) = detectAndMergeMergeNodes( t1, leftPolarity )
       subst1 match {
@@ -750,7 +753,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
     // similar as above, code which is required for all binary operators
     def start_op2( s1: ExpansionTreeWithMerges, t1: ExpansionTreeWithMerges,
                    s2: ExpansionTreeWithMerges, t2: ExpansionTreeWithMerges,
-                   OpFactory: ( ExpansionTreeWithMerges, ExpansionTreeWithMerges ) => ExpansionTreeWithMerges,
+                   OpFactory:    ( ExpansionTreeWithMerges, ExpansionTreeWithMerges ) => ExpansionTreeWithMerges,
                    leftPolarity: Boolean ): ( Option[Substitution], ExpansionTreeWithMerges ) = {
       val ( subst1, res1 ) = doApplyMerge( s1, s2, leftPolarity )
       subst1 match {

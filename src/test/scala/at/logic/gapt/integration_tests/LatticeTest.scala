@@ -95,10 +95,12 @@ class LatticeTest extends Specification {
 
       val projs = Projections( proof_sk )
       val path = "target" + separator + "lattice-sk.xml"
-      saveXML( Tuple2( "lattice-sk", proof_sk ) ::
-        projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+      saveXML(
+        Tuple2( "lattice-sk", proof_sk ) ::
+          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
         // projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Tuple2( "cs", cs ) :: Tuple2( "prf", prf ) :: Tuple2( "cs_prf_intersection", prf_cs_intersect ) :: Nil, path )
+        Tuple2( "cs", cs ) :: Tuple2( "prf", prf ) :: Tuple2( "cs_prf_intersection", prf_cs_intersect ) :: Nil, path
+      )
       ( new java.io.File( path ) ).exists() must beEqualTo( true )
     }
   }

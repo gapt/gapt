@@ -35,7 +35,7 @@ class HigherOrderLogicTest extends Specification {
       result must beTrue
     }
     "mix correctly the formula trait (3)" in {
-      val at1 = HOLAtom( Var( "P", ->( c2.exptype, ->( a22.exptype, To ) ) ), c2 :: a22 :: Nil )
+      val at1 = HOLAtom( Var( "P", ( c2.exptype -> ( a22.exptype -> To ) ) ), c2 :: a22 :: Nil )
       // Another way to construct P's type is: FunctionType(To, args.map(a => a.exptype) )
       val result = at1 match {
         case x: HOLFormula => true
@@ -170,15 +170,15 @@ class HigherOrderLogicTest extends Specification {
       val sCTn = HOLFunction( s0, HOLFunction( C, HOLFunction( T, Const( "n", Ti ) :: Nil ) :: Nil ) :: Nil )
       val u = Var( "u", Ti )
       val v = Var( "v", Ti )
-      val P1 = HOLAtom( Var( "P", ->( sCTn.exptype, ->( Ti, To ) ) ), sCTn :: u :: Nil )
-      val P2 = HOLAtom( Var( "P", ->( sCTn.exptype, ->( Ti, To ) ) ), sCTn :: v :: Nil )
+      val P1 = HOLAtom( Var( "P", sCTn.exptype -> ( Ti -> To ) ), sCTn :: u :: Nil )
+      val P2 = HOLAtom( Var( "P", sCTn.exptype -> ( Ti -> To ) ), sCTn :: v :: Nil )
       val q_form = All( u, Ex( v, Imp( P1, P2 ) ) )
 
       q_form match {
         case All( x, f ) => {
           val a = Const( "a", x.exptype )
           val sub = Substitution( x, a )
-          val P3 = HOLAtom( Var( "P", ->( sCTn.exptype, ->( a.exptype, To ) ) ), sCTn :: a :: Nil )
+          val P3 = HOLAtom( Var( "P", sCTn.exptype -> ( a.exptype -> To ) ), sCTn :: a :: Nil )
           val s = sub( f )
           val result = s match {
             case Ex( v, Imp( P3, P2 ) ) => true
@@ -193,7 +193,7 @@ class HigherOrderLogicTest extends Specification {
   "SkolemSymbolFactory" should {
     val x = Var( "x", Ti )
     val y = Var( "y", Ti )
-    val f = All( x, HOLAtom( Var( "P", ->( Ti, To ) ), x :: Nil ) )
+    val f = All( x, HOLAtom( Var( "P", Ti -> To ), x :: Nil ) )
     val s0 = new StringSymbol( "s_{0}" )
     val s1 = new StringSymbol( "s_{2}" )
     val s2 = new StringSymbol( "s_{4}" )
@@ -232,7 +232,7 @@ class HigherOrderLogicTest extends Specification {
     val y = Var( "y", Ti )
     val z = Var( "z", Ti )
 
-    val Pxyz = HOLAtom( Const( "P", ->( Ti, ->( Ti, ( ->( Ti, To ) ) ) ) ), List( x, y, z ) )
+    val Pxyz = HOLAtom( Const( "P", Ti -> ( Ti -> ( Ti -> To ) ) ), List( x, y, z ) )
     val allP = All( x, All( y, All( z, Pxyz ) ) )
     val exP = Ex( x, Ex( y, Ex( z, Pxyz ) ) )
 

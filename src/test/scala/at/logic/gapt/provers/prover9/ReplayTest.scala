@@ -134,7 +134,8 @@ class ReplayTest extends Specification {
         "f(X + Z0) = 0",
         "f(((X + Z0) + 1) + Z1) = 0",
         "f(X + Z0) = 1",
-        "f(((X + Z0) + 1) + Z1) = 1" ).map( parseFormula )
+        "f(((X + Z0) + 1) + Z1) = 1"
+      ).map( parseFormula )
 
       val c1 = FSequent( Nil, List( formulas( 0 ), formulas( 1 ) ) )
       val c2 = FSequent( List( formulas( 2 ), formulas( 3 ) ), Nil )
@@ -147,7 +148,8 @@ class ReplayTest extends Specification {
       prover.refute( Stream(
         SetTargetClause( FSequent( List(), List() ) ),
         Prover9InitCommand( ls ),
-        SetStreamCommand() ) ).next must beLike {
+        SetStreamCommand()
+      ) ).next must beLike {
         case Some( a ) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals ( FSequent( List(), List() ) ) =>
           ok
         case _ =>

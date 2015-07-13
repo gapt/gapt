@@ -13,11 +13,13 @@ import at.logic.gapt.utils.ds.trees._
 import base._
 import BetaReduction._
 
-case class LKQuantifierException( main: HOLFormula,
-                                  aux: HOLFormula,
-                                  term: LambdaExpression,
-                                  calculated_formula: HOLFormula,
-                                  quantifier_var: Var ) extends Exception {
+case class LKQuantifierException(
+    main:               HOLFormula,
+    aux:                HOLFormula,
+    term:               LambdaExpression,
+    calculated_formula: HOLFormula,
+    quantifier_var:     Var
+) extends Exception {
   override def getMessage = "Substituting the variable " + quantifier_var +
     " with the term " + term + " in the formula " + main +
     " gives " + calculated_formula + " instead of " + aux
@@ -433,37 +435,36 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
     foccs.find( _ == term1oc ) match {
       case None => throw new LKRuleCreationException( "Auxiliary formulas are not contained in the right part of the sequent" )
       case Some( aux_fo ) =>
-        main match {
+        val ( context, x, subformula ) = main match {
           case All( x, sub ) =>
-            // eigenvar condition
-            assert( ( s1.antecedent ++ ( s1.succedent.filterNot( _ == aux_fo ) ) ).forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
-              "Eigenvariable " + eigen_var + " occurs in context " + s1 )
-
-            val back_substitiution = Substitution( x, eigen_var )
-
-            //This check does the following: if we conclude exists x.A[x] from A[t] then A[x\t] must be A[t].
-            //If it fails, you are doing something seriously wrong!
-            //In any case do NOT remove it without telling everyone!
-            //assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula , "assert 2 in getTerms of String Quantifier Rule fails!\n"+betaNormalize( App( sub, eigen_var ) )+" != "+aux_fo.formula)
-            assert( betaNormalize( back_substitiution( sub ) ) == aux_fo.formula, "assert 2 in getTerms of String Quantifier Rule fails!\n" + betaNormalize( App( sub, eigen_var ) ) + " != " + aux_fo.formula )
-            aux_fo
-
+            ( s1.antecedent ++ s1.succedent.filterNot( _ == aux_fo ), x, sub )
           case Ex( x, sub ) =>
-            // eigenvar condition
-            assert( ( ( s1.antecedent.filterNot( _ == aux_fo ) ) ++ s1.succedent ).forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
-              "Eigenvariable " + eigen_var + " occurs in context " + s1 )
-
-            val back_substitiution = Substitution( x, eigen_var )
-
-            //This check does the following: if we conclude exists x.A[x] from A[t] then A[x\t] must be A[t].
-            //If it fails, you are doing something seriously wrong!
-            //In any case do NOT remove it without telling everyone!
-            //assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula )
-            assert( betaNormalize( back_substitiution( sub ) ) == aux_fo.formula, "assert 2 in getTerms of String Quantifier Rule fails!\n" + betaNormalize( App( sub, eigen_var ) ) + " != " + aux_fo.formula )
-            aux_fo
-
+            ( s1.antecedent.filterNot( _ == aux_fo ) ++ s1.succedent, x, sub )
           case _ => throw new LKRuleCreationException( "Main formula of a quantifier rule must start with a strong quantfier." )
         }
+
+        // eigenvar condition
+        assert(
+          context.forall( fo => !freeVariables( fo.formula ).contains( eigen_var ) ),
+          "Eigenvariable " + eigen_var + " occurs in context " + s1
+        )
+
+        val back_substitiution = Substitution( x, eigen_var )
+
+        //This check does the following: if we conclude exists x.A[x] from A[t] then A[x\t] must be A[t].
+        //If it fails, you are doing something seriously wrong!
+        //In any case do NOT remove it without telling everyone!
+        //assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula ,
+        // "assert 2 in getTerms of String Quantifier Rule fails!\n"+betaNormalize( App( sub, eigen_var ) )+" != "+aux_fo.formula)
+        val subterm = betaNormalize( back_substitiution( subformula ) )
+        val normalized_aux = betaNormalize( aux_fo.formula )
+        assert(
+          subterm == normalized_aux,
+          "assert 2 in getTerms of Strong Quantifier Rule fails!\n" + subterm
+            + " != " + aux_fo.formula
+        )
+        aux_fo
+
     }
   }
 }

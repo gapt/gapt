@@ -57,8 +57,8 @@ class SLKTest extends Specification {
 
     "work for sCutRule" in {
       def f = Const( "f", Ti -> Ti )
-      def h = Const( "h", ->( Tindex, ->( Ti, Ti ) ) )
-      def g = Const( "g", ->( Tindex, ->( Ti, Ti ) ) )
+      def h = Const( "h", ( Tindex -> ( Ti -> Ti ) ) )
+      def g = Const( "g", ( Tindex -> ( Ti -> Ti ) ) )
       val k = IntVar( "k" )
       val x = Var( "x", Ti )
       val base2 = x

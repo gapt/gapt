@@ -10,51 +10,62 @@ import at.logic.gapt.proofs.occurrences._
 object applySubstitution {
 
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
-  def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                       subst: Substitution,
-                       old_parent: LKProof,
-                       old_proof: LKProof,
-                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
-                       m: FormulaOccurrence ) = {
+  def handleWeakening(
+    new_parent:  ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    subst:       Substitution,
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
+    m:           FormulaOccurrence
+  ) = {
     val new_proof = constructor( new_parent._1, betaNormalize( subst( m.formula ) ) )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + ( ( m, new_proof.prin.head ) ) )
   }
-  def handleContraction( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                         old_parent: LKProof,
-                         old_proof: LKProof,
-                         a1: FormulaOccurrence,
-                         a2: FormulaOccurrence,
-                         constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ) = {
+  def handleContraction(
+    new_parent:  ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    a1:          FormulaOccurrence,
+    a2:          FormulaOccurrence,
+    constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof
+  ) = {
     val new_proof = constructor( new_parent._1, new_parent._2( a1 ), new_parent._2( a2 ) )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
-  def handleBinaryProp( new_parent_1: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                        new_parent_2: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                        a1: FormulaOccurrence,
-                        a2: FormulaOccurrence,
-                        old_parent_1: LKProof,
-                        old_parent_2: LKProof,
-                        old_proof: LKProof,
-                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ) = {
+  def handleBinaryProp(
+    new_parent_1: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    new_parent_2: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    a1:           FormulaOccurrence,
+    a2:           FormulaOccurrence,
+    old_parent_1: LKProof,
+    old_parent_2: LKProof,
+    old_proof:    LKProof,
+    constructor:  ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof
+  ) = {
     val new_proof = constructor( new_parent_1._1, new_parent_2._1, new_parent_1._2( a1 ), new_parent_2._2( a2 ) )
-    ( new_proof, computeMap( old_parent_1.root.antecedent ++ old_parent_1.root.succedent ++ old_parent_2.root.antecedent ++ old_parent_2.root.succedent,
-      old_proof, new_proof, new_parent_1._2 ++ new_parent_2._2 ) )
+    ( new_proof, computeMap(
+      old_parent_1.root.antecedent ++ old_parent_1.root.succedent ++ old_parent_2.root.antecedent ++ old_parent_2.root.succedent,
+      old_proof, new_proof, new_parent_1._2 ++ new_parent_2._2
+    ) )
   }
 
   def handleEquationRule(
     constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof,
-    p1: LKProof,
-    p2: LKProof,
-    old_proof: LKProof,
-    new_p1: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-    new_p2: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-    s: Sequent,
-    a1: FormulaOccurrence,
-    a2: FormulaOccurrence,
-    m: HOLFormula ) = {
+    p1:          LKProof,
+    p2:          LKProof,
+    old_proof:   LKProof,
+    new_p1:      ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    new_p2:      ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    s:           Sequent,
+    a1:          FormulaOccurrence,
+    a2:          FormulaOccurrence,
+    m:           HOLFormula
+  ) = {
     val new_proof = constructor( new_p1._1, new_p2._1, a1, a2, m )
-    ( new_proof, computeMap( p1.root.antecedent ++ p1.root.succedent ++ p2.root.antecedent ++ p2.root.succedent,
-      old_proof, new_proof, new_p1._2 ++ new_p2._2 ) )
+    ( new_proof, computeMap(
+      p1.root.antecedent ++ p1.root.succedent ++ p2.root.antecedent ++ p2.root.succedent,
+      old_proof, new_proof, new_p1._2 ++ new_p2._2
+    ) )
   }
 
   def handleRule( proof: LKProof, new_parents: List[( LKProof, Map[FormulaOccurrence, FormulaOccurrence] )],
@@ -63,8 +74,10 @@ object applySubstitution {
       case Axiom( so ) => {
         val ant_occs = so.antecedent
         val succ_occs = so.succedent
-        val a = Axiom( ant_occs.map( fo => betaNormalize( subst( fo.formula ) ) ),
-          succ_occs.map( fo => betaNormalize( subst( fo.formula ) ) ) )
+        val a = Axiom(
+          ant_occs.map( fo => betaNormalize( subst( fo.formula ) ) ),
+          succ_occs.map( fo => betaNormalize( subst( fo.formula ) ) )
+        )
         require( a.root.antecedent.length >= ant_occs.length, "cannot create translation map: old proof antecedent is shorter than new one" )
         require( a.root.succedent.length >= succ_occs.length, "cannot create translation map: old proof succedent is shorter than new one" )
         val map = Map[FormulaOccurrence, FormulaOccurrence]() ++
@@ -82,7 +95,8 @@ object applySubstitution {
         ( new_proof, computeMap(
           p1.root.antecedent ++ ( p1.root.succedent.filter( _ != a1 ) ) ++
             ( p2.root.antecedent.filter( _ != a2 ) ) ++ p2.root.succedent,
-          proof, new_proof, new_p1._2 ++ new_p2._2 ) )
+          proof, new_proof, new_p1._2 ++ new_p2._2
+        ) )
       }
       case AndRightRule( p1, p2, s, a1, a2, m ) => handleBinaryProp( new_parents.head, new_parents.last, a1, a2, p1, p2, proof, AndRightRule.apply )
       case AndLeft1Rule( p, s, a, m ) => {
@@ -114,14 +128,18 @@ object applySubstitution {
         val new_p1 = new_parents.head
         val new_p2 = new_parents.last
         val new_proof = ImpLeftRule( new_p1._1, new_p2._1, new_p1._2( a1 ), new_p2._2( a2 ) )
-        ( new_proof, computeMap( p1.root.antecedent ++ p1.root.succedent ++ p2.root.antecedent ++ p2.root.succedent,
-          proof, new_proof, new_p1._2 ++ new_p2._2 ) )
+        ( new_proof, computeMap(
+          p1.root.antecedent ++ p1.root.succedent ++ p2.root.antecedent ++ p2.root.succedent,
+          proof, new_proof, new_p1._2 ++ new_p2._2
+        ) )
       }
       case ImpRightRule( p, s, a1, a2, m ) => {
         val new_parent = new_parents.head
-        val new_proof = ImpRightRule( new_parent._1,
+        val new_proof = ImpRightRule(
+          new_parent._1,
           new_parent._2( a1 ),
-          new_parent._2( a2 ) )
+          new_parent._2( a2 )
+        )
         ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
       }
       case NegLeftRule( p, s, a, m ) => {

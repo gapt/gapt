@@ -25,13 +25,17 @@ class GrammarFindingTest extends Specification {
         Seq( List( FOLVar( "x" ) ) -> List( FOLConst( "a" ), FOLConst( "b" ) ) ) ) must throwA[IllegalArgumentException]
     }
     "correctly compute the language" in {
-      val g = vtg( Seq( "x", "y1,y2" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      val g = vtg(
+        Seq( "x", "y1,y2" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
+      )
       g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
     }
     "compute the language if a non-terminal has no productions" in {
-      val g = vtg( Seq( "x", "y1,y2", "z1,z2,z3" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      val g = vtg(
+        Seq( "x", "y1,y2", "z1,z2,z3" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
+      )
       g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
     }
   }
@@ -84,20 +88,26 @@ class GrammarFindingTest extends Specification {
 
   "TermGenerationFormula" should {
     "work for production vectors" in {
-      val g = vtg( Seq( "x", "y1,y2" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      val g = vtg(
+        Seq( "x", "y1,y2" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
+      )
       covers( g, "r(c,d)", "r(d,c)" )
       doesNotCover( g, "r(c,c)", "r(d,d)" )
     }
     "undefined values" in {
-      val g = vtg( Seq( "x", "y1,y2,y3" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d", "y3->d" ), Seq( "y1->d", "y2->c", "y3->e" ) )
+      val g = vtg(
+        Seq( "x", "y1,y2,y3" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d", "y3->d" ), Seq( "y1->d", "y2->c", "y3->e" )
+      )
       covers( g, "r(c,d)", "r(d,c)" )
       doesNotCover( g, "r(c,c)", "r(d,d)" )
     }
     "not require unnecessary productions" in {
-      val g = vtg( Seq( "x", "y", "z" ),
-        Seq( "x->r(y)" ), Seq( "x->r(z)" ), Seq( "y->c" ), Seq( "z->d" ) )
+      val g = vtg(
+        Seq( "x", "y", "z" ),
+        Seq( "x->r(y)" ), Seq( "x->r(z)" ), Seq( "y->c" ), Seq( "z->d" )
+      )
       val p = g.productions( 3 ) // z->d
       val f = new TermGenerationFormula( g, parseTerm( "r(c)" ) )
       new Sat4j().solve( And( f.formula, Neg( f.vectProductionIsIncluded( p ) ) ) ) must beSome
@@ -110,8 +120,10 @@ class GrammarFindingTest extends Specification {
       val g = tg( "x->c" )
       val p = g.productions( 0 )
       val formula = new GrammarMinimizationFormula( g )
-      new Sat4j().solve( And( formula.generatesTerm( parseTerm( "c" ) ),
-        Neg( formula.productionIsIncluded( p ) ) ) ) must beNone
+      new Sat4j().solve( And(
+        formula.generatesTerm( parseTerm( "c" ) ),
+        Neg( formula.productionIsIncluded( p ) )
+      ) ) must beNone
     }
     "Lang((x, {x -> c, y -> d})) = {c}" in {
       val g = tg( "x->c", "y->d" )
@@ -154,7 +166,9 @@ class GrammarFindingTest extends Specification {
           "f(e,c,c)", "f(e,d,c)", "f(e,e,c)",
           "f(c,c,d)", "f(c,d,d)", "f(c,e,d)",
           "f(d,c,d)", "f(d,d,d)", "f(d,e,d)",
-          "f(e,c,d)", "f(e,d,d)", "f(e,e,d)" ) -> 8 ) ) {
+          "f(e,c,d)", "f(e,d,d)", "f(e,e,d)"
+        ) -> 8
+      ) ) {
         case ( ( n, l_str ), sizeOfMinG ) =>
           val l = l_str map parseTerm
           s"for $l with $n non-terminals" in {

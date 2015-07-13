@@ -489,8 +489,11 @@ object CloneLKProof2 {
             else throw new Exception( "ERROR ProofLinks are wrong !\n" )
           }
         } else if ( version == 2 ) Tuple2( List(), FOSchemaProofLinkRule(
-          new FSequent( s.antecedent.map( x => cloneMySol( x.formula.asInstanceOf[SchemaFormula], proofSize ) ),
-            s.succedent.map( x => cloneMySol( x.formula.asInstanceOf[SchemaFormula], proofSize ) ) ), name2, l.map( x => cloneMyTerm( x, proofSize ) ) ) )
+          new FSequent(
+            s.antecedent.map( x => cloneMySol( x.formula.asInstanceOf[SchemaFormula], proofSize ) ),
+            s.succedent.map( x => cloneMySol( x.formula.asInstanceOf[SchemaFormula], proofSize ) )
+          ), name2, l.map( x => cloneMyTerm( x, proofSize ) )
+        ) )
         else Tuple2( List(), proof )
       }
       case _ => throw new Exception( "ERROR in unfolding: CloneLKProof2: missing rule !\n" + proof.rule + "\n" )
@@ -562,7 +565,7 @@ object genterm {
         case SchemaFunction( headi, li, Ti ) => SchemaFunction( head, li.map( x => apply( ii, x, t ) ) )
         case _                               => p
       }
-      case Var( head, ->( Tindex, Ti ) ) => p match {
+      case Var( head, `->`( Tindex, Ti ) ) => p match {
         case SchemaFunction( headi, li, Ti ) if headi == head => SchemaFunction( Const( "!" + ii + "!", FunctionType( Ti, li.map( _.exptype ) ) ), li )
         case _ => p
       }
@@ -832,9 +835,9 @@ object equalterms {
           l.zip( l2 ).foldLeft( Tuple2( true, true ) )( ( b, pair ) => if ( apply( pair._1, pair._2 ) && b._2 ) b else Tuple2( b._1, false ) )._1
         case _ => false
       }
-      case Var( n, ->( Tindex, Ti ) ) => term2 match {
-        case Var( n2, ->( Tindex, Ti ) ) if n2 == n => true
-        case _                                      => false
+      case Var( n, `->`( Tindex, Ti ) ) => term2 match {
+        case Var( n2, `->`( Tindex, Ti ) ) if n2 == n => true
+        case _                                        => false
       }
       case Var( n, Ti ) => term2 match {
         case Var( n2, Ti ) if n2 == n => true

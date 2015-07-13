@@ -35,18 +35,18 @@ trait HOLTermXMLExporter {
       <quantifiedformula type="exists">
         { exportList( vr :: f :: Nil ) }
       </quantifiedformula>
-    case All( vr @ Var( _, ->( Ti, To ) ), f ) =>
+    case All( vr @ Var( _, `->`( Ti, To ) ), f ) =>
       <secondorderquantifiedformula type="all">
         { exportList( vr :: f :: Nil ) }
       </secondorderquantifiedformula>
-    case Ex( vr @ Var( _, ->( Ti, To ) ), f ) =>
+    case Ex( vr @ Var( _, `->`( Ti, To ) ), f ) =>
       <secondorderquantifiedformula type="exists">
         { exportList( vr :: f :: Nil ) }
       </secondorderquantifiedformula>
     // TODO: variables and constants of other types
     case Var( a, Ti ) =>
       <variable symbol={ a.toString }/>
-    case Var( a, ->( Ti, To ) ) =>
+    case Var( a, `->`( Ti, To ) ) =>
       <secondordervariable symbol={ a.toString }/>
     case Const( a, Ti ) =>
       <constant symbol={ a.toString }/>

@@ -62,16 +62,21 @@ class hol2folTest extends Specification {
         val ( f2, scope2 ) = reduceHolToFol( new MyParserHOL( "g(Abs x:(i->i) A(x:(i->i), z:(o->i))):(o->o)" ).getTerm(), scope1, id )
 
         List( f1, f2 ) must beEqualTo(
-          List( new MyParserFOL( "f(q_{1}(y))" ).getTerm(), new MyParserFOL( "g(q_{1}(z))" ).getTerm() ) )
+          List( new MyParserFOL( "f(q_{1}(y))" ).getTerm(), new MyParserFOL( "g(q_{1}(z))" ).getTerm() )
+        )
       }
 
       "Correctly convert from type o to i on the termlevel" in {
         val List( sp, sq ) = List( "P", "Q" )
         val List( x, y ) = List( "x", "y" ).map( x => HOLAtom( Var( x, To ), List() ) )
         val f1 = HOLAtom( Const( sp, To -> To ), List( Imp( x, y ) ) )
-        val f2 = FOLAtom( sp, List( FOLFunction( ImpC.name,
-          List( FOLVar( "x" ),
-            FOLVar( "y" ) ) ) ) )
+        val f2 = FOLAtom( sp, List( FOLFunction(
+          ImpC.name,
+          List(
+            FOLVar( "x" ),
+            FOLVar( "y" )
+          )
+        ) ) )
 
         val red = reduceHolToFol( f1 )
         red must beEqualTo( f2 )
@@ -84,12 +89,19 @@ class hol2folTest extends Specification {
       skipped( "TODO: fix this!" )
       val fterm1 = FOLFunction( "f", List(
         FOLConst( "q_1" ),
-        FOLConst( "c" ) ) )
+        FOLConst( "c" )
+      ) )
 
-      val fterm2 = All( FOLVar( "x" ),
-        FOLAtom( "P",
-          List( FOLVar( "q_1" ),
-            FOLConst( "q_1" ) ) ) )
+      val fterm2 = All(
+        FOLVar( "x" ),
+        FOLAtom(
+          "P",
+          List(
+            FOLVar( "q_1" ),
+            FOLConst( "q_1" )
+          )
+        )
+      )
 
       val hterm1 = changeTypeIn( fterm1, Map[String, TA]( ( "q_1", Ti -> Ti ) ) )
       val hterm2 = changeTypeIn( fterm2, Map[String, TA]( ( "q_1", Ti -> Ti ) ) )
