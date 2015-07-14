@@ -112,7 +112,8 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
           case ( nt, assgs )                => assgs flatMap { assg => possibleSingleVariableAssignments( nt ) map ( _ :: assg ) }
         }
         possibleAssignments foreach { assignment =>
-          if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) ) )
+          if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) )
+            && assignment.exists( _ != Omega ) )
             cs += Imp(
               And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( nt, value ) } ),
               Or( g.productions( containingNonTerminalVect ) map {
