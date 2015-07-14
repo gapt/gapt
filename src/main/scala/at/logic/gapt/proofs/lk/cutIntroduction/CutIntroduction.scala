@@ -41,8 +41,9 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
       ComputeGrammars.findValidGrammars( lang.toList, deltatable, eigenvariable ).sortBy( _.size )
     }
 
-    val smallest = grammars.head.size
-    grammars.filter( g => g.size == smallest )
+    grammars.headOption map { smallest =>
+      grammars.filter( g => g.size == smallest.size )
+    } getOrElse Nil
   }
 
   override def name: String =
