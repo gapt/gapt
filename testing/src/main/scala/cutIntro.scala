@@ -39,6 +39,7 @@ object testCutIntro extends App {
     compressAll( DeltaTableMethod( false ), timeout )
     compressAll( DeltaTableMethod( true ), timeout )
     compressAll( MaxSATMethod( 1 ), timeout )
+    compressAll( MaxSATMethod( 1, 1 ), timeout )
     compressAll( MaxSATMethod( 2 ), timeout )
     compressAll( MaxSATMethod( 2, 2 ), timeout )
   }
