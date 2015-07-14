@@ -173,7 +173,7 @@ object testCutIntro extends App {
   def compressLeanCoP( timeout: Int, method: GrammarFindingMethod ) = {
     recursiveListFiles( "testing/TSTP/leanCoP" ) foreach { f =>
       if ( f.getName endsWith ".out" ) {
-        compressLeanCoPProof( f.getAbsolutePath, timeout, method )
+        compressLeanCoPProof( f.getPath, timeout, method )
       }
     }
   }
