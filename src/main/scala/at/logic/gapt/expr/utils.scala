@@ -133,6 +133,8 @@ object rename {
     apply( v.asInstanceOf[Var], blackList ).asInstanceOf[FOLVar]
   def apply( a: SymbolA, blackList: List[SymbolA] ): SymbolA = getRenaming( a, blackList )
   def apply( c: Const, blackList: List[Const] ): Const = Const( getRenaming( c.sym, blackList.map( c => c.sym ) ), c.exptype )
+  def apply( c: FOLConst, blackList: List[Const] ): FOLConst =
+    apply( c.asInstanceOf[Const], blackList ).asInstanceOf[FOLConst]
 
   /**
    * renames a set of variables to pairwise distinct variables while avoiding names from blackList.

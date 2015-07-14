@@ -86,12 +86,10 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
   def vectProductionIsIncluded( p: Production ): FOLFormula = FOLAtom( s"$p" )
   def valueOfNonTerminal( n: FOLVar, value: FOLTerm ): FOLFormula = FOLAtom( s"$n=$value" )
 
-  val Omega = FOLConst( "Ω" )
-
   def formula: FOLFormula = {
     val cs = List.newBuilder[FOLFormula]
 
-    // TODO: assert that Omega does not occur in g or t
+    val Omega = rename( FOLConst( "Ω" ), constants( t ).toList )
 
     // value of axiom must be t
     cs += valueOfNonTerminal( g.axiom, t )
