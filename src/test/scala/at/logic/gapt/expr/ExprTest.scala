@@ -16,16 +16,16 @@ class ExprTest extends Specification {
     }
 
     "be on formulas" in {
-      R must beAnInstanceOf[FOLLambdaTerm]
-      R.asInstanceOf[FOLLambdaTerm].numberOfArguments must be_==( 2 )
+      R must beAnInstanceOf[FOLPartialAtom]
+      R.asInstanceOf[FOLPartialAtom].numberOfArguments must be_==( 2 )
 
-      App( R, c ) must beAnInstanceOf[FOLLambdaTerm]
+      App( R, c ) must beAnInstanceOf[FOLPartialAtom]
       Apps( R, c, c ) must beAnInstanceOf[FOLFormula]
 
       Abs( x, Apps( R, x, x ) ) must beAnInstanceOf[FOLFormulaWithBoundVar]
       App( ForallC( Ti ), Abs( x, Apps( R, x, x ) ) ) must beAnInstanceOf[FOLFormula]
 
-      AndC() must beAnInstanceOf[FOLLambdaTerm]
+      AndC() must beAnInstanceOf[FOLPartialFormula]
       Apps( AndC(), Apps( R, c, c ), Apps( R, c, c ) ) must beAnInstanceOf[FOLFormula]
 
       TopC() must beAnInstanceOf[FOLFormula]
