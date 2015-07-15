@@ -3,8 +3,7 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.RobinsonToLK
-import at.logic.gapt.proofs.resolution.{ OccClause, ResolutionProof }
+import at.logic.gapt.proofs.resolution._
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
@@ -63,14 +62,14 @@ class TapeTest extends Specification {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toHOLSequent ) )
+      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toHOLClause ) )
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter( "target" + separator + "tape-prf.tptp" )
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLClause ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
       writer.write( tptp )
@@ -127,7 +126,7 @@ class TapeTest extends Specification {
 
       //get the refutation of the clause set, refute it
       val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( elp ) )
-      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLSequent ) )
+      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( oc => oc.toHOLClause ) )
       val lkref = RobinsonToLK( taperp )
 
       //get projections etc
@@ -151,7 +150,7 @@ class TapeTest extends Specification {
 
       //get the refutation of the clause set, refute it
       val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( elp ) )
-      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLSequent ) )
+      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLClause ) )
 
       //get projections etc
       val tapeproj = Projections( elp )

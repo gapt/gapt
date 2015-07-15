@@ -71,12 +71,12 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
   // returns an LKProof of "s' merge c", where s' is a sub-sequent of seq, and
   // c is the end-clause of proof.
   private def recConvert( proof: RobinsonResolutionProof, seq: HOLSequent, map: mapT, createAxiom: HOLClause => LKProof ): LKProof = {
-    if ( map.contains( proof.root.toHOLSequent ) ) {
-      CloneLKProof( map( proof.root.toHOLSequent ) )
+    if ( map.contains( proof.root.toHOLClause ) ) {
+      CloneLKProof( map( proof.root.toHOLClause ) )
     } else {
       val ret: LKProof = proof match {
         case InitialClause( cls ) => //
-          createAxiom( cls.toHOLSequent )
+          createAxiom( cls.toHOLClause )
         case Factor( r, p, a, s ) => {
           // obtain the set of removed occurrences for each side
           val ( leftContracted, rightContracted ) =
@@ -121,7 +121,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
           //trace("u2: " + u2.root)
 
           val cut = CutRule( u1, u2, s( a1.formula.asInstanceOf[FOLFormula] ).asInstanceOf[FOLFormula] )
-          contractDownTo( cut, seq, proof.root.toHOLSequent )
+          contractDownTo( cut, seq, proof.root.toHOLClause )
         }
         case Paramodulation( r, p1, p2, a1, a2, _, s ) => {
 
@@ -166,7 +166,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
             } else
               EquationRightRule( u1, u2, aux1, aux2, rof )
           }
-          contractDownTo( retProof, seq, proof.root.toHOLSequent )
+          contractDownTo( retProof, seq, proof.root.toHOLClause )
         }
         // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
         case Instance( root, p, s ) =>
@@ -178,7 +178,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
               throw new LKUnaryRuleCreationException( "Substitution errror: " + s + ":\n" + e.getMessage, rp, List( occf, formula ) )
           }
       }
-      map( proof.root.toHOLSequent ) = ret
+      map( proof.root.toHOLClause ) = ret
 
       //trace( "proof.root: " + proof.root )
       //trace( "ret.root: " + ret.root )

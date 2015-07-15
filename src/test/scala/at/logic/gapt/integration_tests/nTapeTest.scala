@@ -10,7 +10,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk.{ AtomicExpansion, regularize, LKToLKsk }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.proofs.resolution.RobinsonToRal
+import at.logic.gapt.proofs.resolution.{ HOLClause, RobinsonToRal }
 
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.proofs.ceres.clauseSets.AlternativeStandardClauseSet
@@ -155,7 +155,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     show_detail( "Calculated cmap: " )
     cmap.map( x => show_detail( x._1 + " := " + x._2 ) )
 
-    val folcl = reduceHolToFol( folcl_ )
+    val folcl = reduceHolToFol( folcl_ ).asInstanceOf[List[HOLClause]]
     folcl.map( x => show_detail( x.toString ) )
 
     show( "Refuting clause set" )

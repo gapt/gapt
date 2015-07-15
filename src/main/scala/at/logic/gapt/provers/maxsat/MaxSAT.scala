@@ -75,7 +75,7 @@ class WDIMACSHelper( val hard: List[HOLClause], val soft: List[( HOLClause, Int 
    * @param pol polarization (true, false)
    * @return a literal in .wcnf format
    */
-  protected def getWCNFString( atom: FOLFormula, pol: Boolean, atom_map: Map[HOLFormula, Int] ): String =
+  protected def getWCNFString( atom: FOLAtom, pol: Boolean, atom_map: Map[HOLAtom, Int] ): String =
     if ( pol ) atom_map.get( atom ).get.toString else "-" + atom_map.get( atom ).get
 
   /**
@@ -86,18 +86,18 @@ class WDIMACSHelper( val hard: List[HOLClause], val soft: List[( HOLClause, Int 
    * @param weight weight of clause
    * @return a clause in .wcnf format
    */
-  protected def getWCNFString( clause: HOLClause, weight: Int, atom_map: Map[HOLFormula, Int] ): String =
+  protected def getWCNFString( clause: HOLClause, weight: Int, atom_map: Map[HOLAtom, Int] ): String =
     {
       val sb = new StringBuilder()
 
       sb.append( weight + " " )
-      def atoms_to_str( as: Seq[FOLFormula], pol: Boolean ) = as.foreach( a => {
+      def atoms_to_str( as: Seq[FOLAtom], pol: Boolean ) = as.foreach( a => {
         sb.append( getWCNFString( a, pol, atom_map ) );
         sb.append( " " );
       } )
 
-      atoms_to_str( clause.positive.asInstanceOf[Seq[FOLFormula]], true )
-      atoms_to_str( clause.negative.asInstanceOf[Seq[FOLFormula]], false )
+      atoms_to_str( clause.positive.asInstanceOf[Seq[FOLAtom]], true )
+      atoms_to_str( clause.negative.asInstanceOf[Seq[FOLAtom]], false )
 
       sb.toString()
     }

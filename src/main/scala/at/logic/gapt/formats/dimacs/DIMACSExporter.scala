@@ -46,14 +46,14 @@ object readDIMACS {
 
 object writeDIMACS {
   def apply( helper: DIMACSHelper ) = {
-    def getDIMACSString1( atom: HOLFormula, pos: Boolean ): String =
+    def getDIMACSString1( atom: HOLAtom, pos: Boolean ): String =
       if ( pos ) helper.atom_map.get( atom ).get.toString else "-" + helper.atom_map.get( atom ).get
 
     def getDIMACSString( clause: HOLClause ): String =
       {
         val sb = new StringBuilder()
 
-        def atoms_to_str( as: Seq[HOLFormula], pol: Boolean ) = as.foreach( a => {
+        def atoms_to_str( as: Seq[HOLAtom], pol: Boolean ) = as.foreach( a => {
           sb.append( getDIMACSString1( a, pol ) );
           sb.append( " " );
         } )

@@ -5,10 +5,14 @@ import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.resolution.HOLClause
 
 object deleteTautologies {
   def apply( sequents: List[HOLSequent] ): List[HOLSequent] =
     sequents.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
+
+  def apply( clauses: List[HOLClause] )( implicit dummyImplicit: DummyImplicit ): List[HOLClause] =
+    clauses.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
 }
 
 object setNormalize {

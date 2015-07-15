@@ -304,7 +304,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
         val appliedPairs:   List[( ( Int, Int ), Int )],
         val remainingPairs: List[( ( Int, Int ), Int )],
         val resolvedVars:   Set[Int],
-        val currentFormula: List[Clause[( FOLFormula, Int )]]
+        val currentFormula: List[Clause[( FOLAtom, Int )]]
     ) extends SetNode[( Int, Int )] {
 
       def includedElements: List[( ( Int, Int ), Int )] = appliedPairs

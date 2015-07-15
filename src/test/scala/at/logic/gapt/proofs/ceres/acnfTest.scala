@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.proofs.resolution.RobinsonToLK
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
@@ -90,7 +90,7 @@ class acnfTest extends Specification {
 
       val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( es ) )
 
-      val rp = new Prover9Prover().getRobinsonProof( cs.toList.map( _.toHOLSequent ) )
+      val rp = new Prover9Prover().getRobinsonProof( cs.toList.map( _.toHOLClause ) )
       rp must not beEmpty
 
       val proj = Projections( es )

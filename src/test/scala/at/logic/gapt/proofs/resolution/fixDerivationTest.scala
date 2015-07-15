@@ -101,7 +101,7 @@ class FixDerivationTest extends Specification {
       findDerivationViaResolution( a, bs ) must beLike {
         case Some( p: RobinsonResolutionProof ) =>
           p.root.toHOLSequent.isSubMultisetOf( a ) aka s"${p.root} subclause of $a" must_== true
-          foreach( initialSequents( p ).map( _.toHOLSequent ) ) { initial =>
+          foreach( initialSequents( p ).map( _.toHOLClause ) ) { initial =>
             val inBsModRenaming = bs.exists( b => PCNF.getVariableRenaming( initial, b ).isDefined )
             ( isTautological( initial ) || inBsModRenaming ) aka s"$initial in $bs or tautology" must_== true
           }

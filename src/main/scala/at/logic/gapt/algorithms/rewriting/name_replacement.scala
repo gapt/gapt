@@ -20,6 +20,7 @@ object NameReplacement {
   def apply( exp: FOLFormula, map: SymbolMap ): FOLFormula = renameSymbols( exp, map )
 
   def apply( fs: HOLSequent, map: SymbolMap ) = renameHOLSequent( fs, map )
+  def apply( cls: HOLClause, map: SymbolMap )( implicit dummyImplicit: DummyImplicit ) = renameHOLSequent( cls, map ).asInstanceOf[HOLClause]
   def apply( p: RobinsonResolutionProof, map: SymbolMap ): RobinsonResolutionProof = {
     //don't process the proof if there is nothing to do
     if ( map.isEmpty ) p else rename_resproof( p, map )._2
@@ -221,8 +222,8 @@ object NameReplacement {
       }
   }
 
-  def apply( expSequent: ExpansionSequent, map: SymbolMap )( implicit dummyImplicit: DummyImplicit ): ExpansionSequent =
-    ExpansionSequent( expSequent.antecedent.map( apply( _, map ) ), expSequent.succedent.map( apply( _, map ) ) )
+  def apply( expSequent: ExpansionSequent, map: SymbolMap )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): ExpansionSequent =
+    expSequent map { et: ExpansionTree => apply( et, map ) }
 
   def apply( expTree: ExpansionTree, map: SymbolMap ): ExpansionTree = expTree match {
     case ETAtom( f )     => ETAtom( apply( f, map ) )

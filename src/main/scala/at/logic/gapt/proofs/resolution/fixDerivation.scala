@@ -153,7 +153,7 @@ object fixDerivation extends Logger {
   def tryDeriveByFactor( to: HOLClause, from_c: HOLSequent ): Option[RobinsonResolutionProof] =
     subsumption_alg.subsumes_by( from_c, to ) map { s =>
       val from = InitialClause( from_c.antecedent.map( _.asInstanceOf[FOLFormula] ), from_c.succedent.map( _.asInstanceOf[FOLFormula] ) )
-      val from_s = HOLClause( from_c.antecedent.map( s( _ ) ), from_c.succedent.map( s( _ ) ) )
+      val from_s = HOLClause( from_c.antecedent.map( s( _ ).asInstanceOf[HOLAtom] ), from_c.succedent.map( s( _ ).asInstanceOf[HOLAtom] ) )
       // make a first Factor inference that does not contract, but applies
       // the FOLSubstitution
       val first = if ( !from_c.antecedent.isEmpty )
@@ -225,7 +225,7 @@ object fixDerivation extends Logger {
  */
 object mapInitialClauses {
   def apply( p: RobinsonResolutionProof )( f: HOLClause => RobinsonResolutionProof ): RobinsonResolutionProof = p match {
-    case InitialClause( cls ) => f( cls.toHOLSequent )
+    case InitialClause( cls ) => f( cls.toHOLClause )
 
     case Factor( r, par, List( lit1 ), s ) =>
       val rp = apply( par )( f )
@@ -298,7 +298,7 @@ object tautologifyInitialClauses {
    */
   def apply( p: RobinsonResolutionProof, shouldTautologify: HOLClause => Boolean ): RobinsonResolutionProof =
     p match {
-      case InitialClause( clause ) if shouldTautologify( clause.toHOLSequent ) =>
+      case InitialClause( clause ) if shouldTautologify( clause.toHOLClause ) =>
         val allLiterals = ( clause.antecedent ++ clause.succedent ).map( _.formula ).map( _.asInstanceOf[FOLFormula] )
         InitialClause( allLiterals, allLiterals )
       case InitialClause( clause ) => p

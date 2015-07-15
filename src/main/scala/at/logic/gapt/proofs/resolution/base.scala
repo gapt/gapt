@@ -35,25 +35,15 @@ object Clause {
 }
 
 object HOLClause {
-  def apply( negative: Seq[HOLFormula], positive: Seq[HOLFormula] ): HOLClause = {
-
-    //FIXME: This requirement is a kludge; HOLClause should only admit HOLAtoms in the first place.
-    require( ( negative ++ positive ) forall {
-      case HOLAtom( _ ) => true
-      case _            => false
-    } )
-
+  def apply( negative: Seq[HOLAtom], positive: Seq[HOLAtom] ): HOLClause = {
     Clause( negative, positive )
   }
 
-  def apply( elements: Seq[( HOLFormula, Boolean )] ): HOLClause = {
+  def apply( negative: Seq[HOLFormula], positive: Seq[HOLFormula] )( implicit dummyImplicit: DummyImplicit ): HOLClause = {
+    HOLClause( negative map { _.asInstanceOf[FOLAtom] }, positive map { _.asInstanceOf[FOLAtom] } )
+  }
 
-    //FIXME: This requirement is a kludge; HOLClause should only admit HOLAtoms in the first place.
-    require( ( elements map { p => p._1 } ) forall {
-      case HOLAtom( _ ) => true
-      case _            => false
-    } )
-
+  def apply( elements: Seq[( HOLAtom, Boolean )] ): HOLClause = {
     Clause( elements )
   }
 
@@ -61,25 +51,15 @@ object HOLClause {
 }
 
 object FOLClause {
-  def apply( negative: Seq[FOLFormula], positive: Seq[FOLFormula] ): FOLClause = {
-
-    //FIXME: This requirement is a kludge; FOLClause should only admit HOLAtoms in the first place.
-    require( ( negative ++ positive ) forall {
-      case FOLAtom( _ ) => true
-      case _            => false
-    } )
-
+  def apply( negative: Seq[FOLAtom], positive: Seq[FOLAtom] ): FOLClause = {
     Clause( negative, positive )
   }
 
-  def apply( elements: Seq[( FOLFormula, Boolean )] ): FOLClause = {
+  def apply( negative: Seq[FOLFormula], positive: Seq[FOLFormula] )( implicit dummyImplicit: DummyImplicit ): FOLClause = {
+    FOLClause( negative map { _.asInstanceOf[FOLAtom] }, positive map { _.asInstanceOf[FOLAtom] } )
+  }
 
-    //FIXME: This requirement is a kludge; FOLClause should only admit HOLAtoms in the first place.
-    require( ( elements map { p => p._1 } ) forall {
-      case FOLAtom( _ ) => true
-      case _            => false
-    } )
-
+  def apply( elements: Seq[( FOLAtom, Boolean )] ): FOLClause = {
     Clause( elements )
   }
 
@@ -92,7 +72,7 @@ object FOLClause {
     }
 
   //FIXME: Maybe find a better place for this
-  def NumberedCNFtoFormula( cls: List[Clause[( FOLFormula, Int )]] ) = CNFtoFormula( cls map { c => c map { p => p._1 } } )
+  def NumberedCNFtoFormula( cls: List[Clause[( FOLAtom, Int )]] ) = CNFtoFormula( cls map { c => c map { p => p._1 } } )
 
   def unapply( clause: FOLClause ) = Some( clause.toTuple )
 }

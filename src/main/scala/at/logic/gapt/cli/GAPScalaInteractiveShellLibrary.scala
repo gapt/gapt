@@ -323,9 +323,9 @@ object refuteFOLI {
 }
 
 object prover9 {
-  def apply( clauses: Seq[HOLSequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses.toList )
+  def apply( clauses: Seq[HOLClause] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses.toList )
 
-  def apply( clauses: List[OccSequent] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses map ( _.toHOLSequent ) )
+  def apply( clauses: List[OccClause] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses map ( _.toHOLClause ) )
 
   //get the ground substitution of the ground resolution refutation
   //the ground substitution is a list of pairs, it can't be a map ! The reason is : a clause can be used several times in the resolution refutation.

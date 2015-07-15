@@ -75,14 +75,14 @@ object Paramodulants {
   }
 
   // Computes ground paramodulants without the trivial one
-  def apply( s: FOLTerm, t: FOLTerm, f: FOLFormula ): Set[FOLFormula] = {
+  def apply( s: FOLTerm, t: FOLTerm, f: FOLAtom ): Set[FOLAtom] = {
     val res = f match {
       case FOLAtom( x, args ) => {
         val margs = args.map( a => Paramodulants( s, t, a ) )
         getArgs( margs ).map( args => FOLAtom( x, args ) ) - f
       }
     }
-    res
+    res.asInstanceOf[Set[FOLAtom]]
   }
 
   // Computes ground paramodulants
@@ -101,10 +101,10 @@ object Paramodulants {
     res
   }
 
-  private def getParaLeft( eq: FOLFormula, aux: FOLFormula, main: FOLFormula, left: FOLClause, right: FOLClause ) =
+  private def getParaLeft( eq: FOLAtom, aux: FOLAtom, main: FOLAtom, left: FOLClause, right: FOLClause ) =
     new Clause( left.negative ++ right.negative.filterNot( f => f == aux ) :+ main, left.positive.filterNot( f => f == eq ) ++ right.positive )
 
-  private def getParaRight( eq: FOLFormula, aux: FOLFormula, main: FOLFormula, left: FOLClause, right: FOLClause ) =
+  private def getParaRight( eq: FOLAtom, aux: FOLAtom, main: FOLAtom, left: FOLClause, right: FOLClause ) =
     new Clause( left.negative ++ right.negative, left.positive.filterNot( f => f == eq ) ++ right.positive.filterNot( f => f == aux ) :+ main )
 
 }
@@ -121,30 +121,30 @@ object forgetfulResolve {
    * @param pair The two atom indices indicating the atoms to be resolved.
    * @return The original formula, with the two resolved clauses deleted and the new, resolved clause added.
    */
-  def apply( cls: List[Clause[( FOLFormula, Int )]], pair: ( Int, Int ) ): List[Clause[( FOLFormula, Int )]] = {
+  def apply( cls: List[Clause[( FOLAtom, Int )]], pair: ( Int, Int ) ): List[Clause[( FOLAtom, Int )]] = {
 
     /**
      * If either component of pair is present in clause, (clause',True)
      * is returned, where clause' is clause, with the occurring atoms deleted.
      * Otherwise, (clause,False) is returned.
      */
-    def resolveClause( clause: Clause[( FOLFormula, Int )], pair: ( Int, Int ) ) = {
+    def resolveClause( clause: Clause[( FOLAtom, Int )], pair: ( Int, Int ) ) = {
       val neg = clause.negative.filter( a => a._2 != pair._1 && a._2 != pair._2 )
       val pos = clause.positive.filter( a => a._2 != pair._1 && a._2 != pair._2 )
 
       ( new Clause( neg, pos ), neg.length != clause.negative.length || pos.length != clause.positive.length )
     }
 
-    val emptyClause = new Clause[( FOLFormula, Int )]( Nil, Nil )
+    val emptyClause = new Clause[( FOLAtom, Int )]( Nil, Nil )
 
-    def mergeClauses( clauses: List[Clause[( FOLFormula, Int )]] ): Clause[( FOLFormula, Int )] = {
+    def mergeClauses( clauses: List[Clause[( FOLAtom, Int )]] ): Clause[( FOLAtom, Int )] = {
       clauses.foldLeft( emptyClause )( ( c1, c2 ) => new Clause( c1.negative ++ c2.negative, c1.positive ++ c2.positive ) )
     }
 
-    val startVal = ( List[Clause[( FOLFormula, Int )]](), List[Clause[( FOLFormula, Int )]]() )
+    val startVal = ( List[Clause[( FOLAtom, Int )]](), List[Clause[( FOLAtom, Int )]]() )
 
     //Goes through all clauses with fold, trying to delete the atoms given by pair.
-    val ( f, rest ) = cls.foldLeft( startVal )( ( x: ( List[Clause[( FOLFormula, Int )]], List[Clause[( FOLFormula, Int )]] ), clause: Clause[( FOLFormula, Int )] ) => {
+    val ( f, rest ) = cls.foldLeft( startVal )( ( x: ( List[Clause[( FOLAtom, Int )]], List[Clause[( FOLAtom, Int )]] ), clause: Clause[( FOLAtom, Int )] ) => {
       val ( formula, mergingClause ) = x
       val ( clause2, resolved ) = resolveClause( clause, pair )
 
