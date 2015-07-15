@@ -45,9 +45,9 @@ object testCutIntro extends App {
   }
 
   def compressAll( method: GrammarFindingMethod, timeout: Int ) = {
-    compressLeanCoP( timeout, method )
     compressProofSequences( timeout, method )
     compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, method )
+    compressLeanCoP( timeout, method )
     compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, method )
   }
 
