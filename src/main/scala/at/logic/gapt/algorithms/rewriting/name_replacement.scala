@@ -221,7 +221,7 @@ object NameReplacement {
       }
   }
 
-  def apply( expSequent: ExpansionSequent, map: SymbolMap ): ExpansionSequent =
+  def apply( expSequent: ExpansionSequent, map: SymbolMap )( implicit dummyImplicit: DummyImplicit ): ExpansionSequent =
     ExpansionSequent( expSequent.antecedent.map( apply( _, map ) ), expSequent.succedent.map( apply( _, map ) ) )
 
   def apply( expTree: ExpansionTree, map: SymbolMap ): ExpansionTree = expTree match {

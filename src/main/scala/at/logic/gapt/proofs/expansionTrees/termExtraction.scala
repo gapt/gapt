@@ -124,7 +124,7 @@ case class InstanceTermEncoding( endSequent: HOLSequent ) {
    * The shallow formulas of the expansion sequents should be subsumed by formulas in the end-sequent.
    */
   // TODO: actually try to match the shallow formulas, and not the instances.
-  def encode( instance: ExpansionSequent ): Seq[FOLTerm] =
+  def encode( instance: ExpansionSequent )( implicit dummyImplicit: DummyImplicit ): Seq[FOLTerm] =
     encode( extractInstances( instance ) )
 
   /**

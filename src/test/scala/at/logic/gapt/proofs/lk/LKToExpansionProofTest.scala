@@ -69,7 +69,7 @@ class ExtractExpansionSequentTest extends Specification {
       val p4 = ExistsLeftRule( p3, HOLAtom( P, beta :: Nil ), Ex( x, HOLAtom( P, x :: Nil ) ), beta )
       val p5 = ContractionLeftRule( p4, Ex( x, HOLAtom( P, x :: Nil ) ) )
 
-      val ( ante, succ ) = LKToExpansionProof( p5 ).toTuple()
+      val ( ante, succ ) = LKToExpansionProof( p5 ).toTuple
 
       ante mustEqual ( List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), alpha, ETAtom( HOLAtom( P, alpha :: Nil ) ) ) ) )
       // this assumes that the first variable wins, f(beta) would also be valid
@@ -99,7 +99,7 @@ class ExtractExpansionSequentTest extends Specification {
       val p3 = WeakeningLeftRule( p2, Bottom() ) // weakened, hence top on left side
       val p4 = ContractionLeftRule( p3, Bottom() ) // negative polarity, bottom must win
 
-      val ( ante, succ ) = LKToExpansionProof( p4 ).toTuple()
+      val ( ante, succ ) = LKToExpansionProof( p4 ).toTuple
       ante mustEqual ETAtom( Bottom() ) :: Nil
       succ mustEqual ETAtom( Top() ) :: Nil
     }

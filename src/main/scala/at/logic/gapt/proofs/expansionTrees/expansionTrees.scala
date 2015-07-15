@@ -338,66 +338,9 @@ object isQuantified {
   }
 }
 
-class ExpansionSequent( val antecedent: Seq[ExpansionTree], val succedent: Seq[ExpansionTree] ) {
-  def toTuple(): ( Seq[ExpansionTree], Seq[ExpansionTree] ) = {
-    ( antecedent, succedent )
-  }
-
-  def polarizedTrees: Seq[( ExpansionTree, Boolean )] =
-    antecedent.map( _ -> true ) ++ succedent.map( _ -> false )
-
-  def map( f: ExpansionTree => ExpansionTree ): ExpansionSequent = {
-    new ExpansionSequent( antecedent.map( f ), succedent.map( f ) )
-  }
-
-  def addToAntecedent( et: ExpansionTree ): ExpansionSequent = {
-    new ExpansionSequent( et +: antecedent, succedent )
-  }
-
-  def addToSuccedent( et: ExpansionTree ): ExpansionSequent = {
-    new ExpansionSequent( antecedent, et +: succedent )
-  }
-
-  def removeFromAntecedent( et: ExpansionTree ): ExpansionSequent = {
-    require( antecedent.exists( _ eq et ) )
-    new ExpansionSequent( antecedent.filterNot( _ eq et ), succedent )
-  }
-
-  def removeFromSuccedent( et: ExpansionTree ): ExpansionSequent = {
-    require( succedent.exists( _ eq et ) )
-    new ExpansionSequent( antecedent, succedent.filterNot( _ eq et ) )
-  }
-
-  def replaceInAntecedent( from: ExpansionTree, to: ExpansionTree ): ExpansionSequent = {
-    require( antecedent.exists( _ eq from ) )
-    new ExpansionSequent( antecedent.map( et => if ( et eq from ) to else et ), succedent )
-  }
-
-  def replaceInSuccedent( from: ExpansionTree, to: ExpansionTree ): ExpansionSequent = {
-    require( succedent.exists( _ eq from ) )
-    new ExpansionSequent( antecedent, succedent.map( et => if ( et eq from ) to else et ) )
-  }
-
-  override def toString: String = "ExpansionSequent(" + antecedent + ", " + succedent + ")"
-
-  def canEqual( other: Any ): Boolean = other.isInstanceOf[ExpansionSequent]
-
-  override def equals( other: Any ): Boolean = other match {
-    case that: ExpansionSequent =>
-      ( that canEqual this ) &&
-        antecedent == that.antecedent &&
-        succedent == that.succedent
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq( antecedent, succedent )
-    state.map( _.hashCode() ).foldLeft( 0 )( ( a, b ) => 31 * a + b )
-  }
-}
 object ExpansionSequent {
   def apply( antecedent: Seq[ExpansionTree], succedent: Seq[ExpansionTree] ) = new ExpansionSequent( antecedent, succedent )
-  def unapply( etSeq: ExpansionSequent ) = Some( etSeq.toTuple() )
+  def unapply( etSeq: ExpansionSequent ) = Some( etSeq.toTuple )
 }
 
 object toDeep {
