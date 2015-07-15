@@ -908,3 +908,75 @@ object replace {
   }
 
 }
+
+object CleanStructure {
+  /**
+   * Shifts weakening nodes as far towards the root as possible.
+   *
+   * @param tree An ExpansionTree.
+   * @return
+   */
+  def apply( tree: ExpansionTree ): ExpansionTree =
+    tree match {
+      case ETAtom( _ ) | ETWeakening( _ ) => tree
+
+      case ETNeg( sub ) =>
+        val newSub = apply( sub )
+        newSub match {
+          case ETWeakening( _ ) => ETWeakening( toShallow( tree ) )
+          case _                => ETNeg( newSub )
+        }
+
+      case ETAnd( left, right ) =>
+        val newLeft = apply( left )
+        val newRight = apply( right )
+
+        ( newLeft, newRight ) match {
+          case ( ETWeakening( _ ), ETWeakening( _ ) ) =>
+            ETWeakening( toShallow( tree ) )
+          case _ => ETAnd( newLeft, newRight )
+        }
+
+      case ETOr( left, right ) =>
+        val newLeft = apply( left )
+        val newRight = apply( right )
+
+        ( newLeft, newRight ) match {
+          case ( ETWeakening( _ ), ETWeakening( _ ) ) =>
+            ETWeakening( toShallow( tree ) )
+          case _ => ETOr( newLeft, newRight )
+        }
+
+      case ETImp( left, right ) =>
+        val newLeft = apply( left )
+        val newRight = apply( right )
+
+        ( newLeft, newRight ) match {
+          case ( ETWeakening( _ ), ETWeakening( _ ) ) =>
+            ETWeakening( toShallow( tree ) )
+          case _ => ETImp( newLeft, newRight )
+        }
+
+      case ETStrongQuantifier( f, v, sub ) =>
+        val newSub = apply( sub )
+        newSub match {
+          case ETWeakening( _ ) => ETWeakening( f )
+          case _                => ETStrongQuantifier( f, v, newSub )
+        }
+
+      case ETSkolemQuantifier( f, v, sub ) =>
+        val newSub = apply( sub )
+        newSub match {
+          case ETWeakening( _ ) => ETWeakening( f )
+          case _                => ETSkolemQuantifier( f, v, newSub )
+        }
+
+      case ETWeakQuantifier( f, instances ) =>
+        val newInstances = instances map { p => ( apply( p._1 ), p._2 ) } filterNot { case ( ETWeakening( _ ), _ ) => true; case _ => false }
+
+        newInstances match {
+          case Seq() => ETWeakening( f )
+          case _     => merge( ETWeakQuantifier( f, newInstances ) )
+        }
+    }
+}

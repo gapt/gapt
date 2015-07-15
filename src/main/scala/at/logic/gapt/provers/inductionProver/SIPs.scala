@@ -67,10 +67,16 @@ class SimpleInductionProof(
 
   val Sequent0 = Gamma0 :+ F( alpha, zero, beta )
 
-  val Ft = t map { F( alpha, nu, _ ) }
+  val Ft = if ( t.isEmpty )
+    List( F( alpha, nu, gamma ) )
+  else
+    t map { F( alpha, nu, _ ) }
   val Sequent1 = Ft ++: Gamma1 :+ F( alpha, snu, gamma )
 
-  val Fu = u map { F( alpha, alpha, _ ) }
+  val Fu = if ( u.isEmpty )
+    List( F( alpha, alpha, gamma ) )
+  else
+    u map { F( alpha, alpha, _ ) }
   val Sequent2 = Fu ++: Gamma2
 
   /**

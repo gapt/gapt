@@ -111,7 +111,10 @@ lazy val testing = (project in file("testing")).
     name := "gapt-testing",
     description := "gapt extended regression tests",
 
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.11",
+
     baseDirectory in run := file("."),
+    javaOptions ++= Seq("-Xmx2g", "-Xss20m"),
     fork := true
   )
 

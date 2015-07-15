@@ -137,6 +137,10 @@ class GrammarFindingTest extends Specification {
       val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       new Sat4j().solve( And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) ) must beSome
     }
+    "work for vtrat grammar with only tau-productions" in {
+      val g = vtg( Seq( "x", "y1,y2" ), Seq( "x->a" ) )
+      covers( g, "a" )
+    }
   }
 
   "minimizeGrammar" should {

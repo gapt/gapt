@@ -160,6 +160,15 @@ val twoPlusDefsES = HOLSequent(
   )
 )
 
+val minusES = FSequent(List(
+  "p(0) = 0",
+  "x-s(y) = p(x-y)",
+  "x - 0 = x"
+) map {s => univclosure(parseFormula(s))},
+  List(
+    FOLSubstitution(FOLVar("x"),alpha)(parseFormula("0 - x = 0")))
+    )
+
 val endSequent = twoPlusDefsES
 
 println(s"Proving $endSequent")

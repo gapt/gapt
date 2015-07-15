@@ -100,7 +100,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       val p = LinearExampleProof( 4 )
-      val pi = CutIntroduction.one_cut_one_quantifier( p, false )
+      val Some( pi ) = CutIntroduction.one_cut_one_quantifier( p, false )
       val pe = ReductiveCutElim( pi )
 
       ReductiveCutElim.isCutFree( p ) must beEqualTo( true )
@@ -114,7 +114,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
       val testFilePath = tempCopyOfClasspathFile( "SYN726-1.out" )
       val p1 = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
-      val p2 = CutIntroduction.one_cut_many_quantifiers( p1, false )
+      val Some( p2 ) = CutIntroduction.one_cut_many_quantifiers( p1, false )
       val p3 = ReductiveCutElim( p2 )
 
       ReductiveCutElim.isCutFree( p2 ) must beEqualTo( false )

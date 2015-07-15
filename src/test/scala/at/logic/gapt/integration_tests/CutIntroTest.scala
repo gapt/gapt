@@ -21,7 +21,7 @@ class CutIntroTest extends Specification {
       val termset = TermsExtraction( proof )
       val set = termset.set.foldRight( List[FOLTerm]() )( ( t, acc ) => termset.getTermTuple( t ) ++ acc )
 
-      CutIntroduction.one_cut_one_quantifier( proof, false )
+      CutIntroduction.one_cut_one_quantifier( proof, false ) must beSome
 
       set must contain( exactly( LinearExampleTermset( 4 ): _* ) )
     }
