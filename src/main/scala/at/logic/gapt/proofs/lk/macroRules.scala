@@ -1384,7 +1384,7 @@ object proofFromInstances {
    * @param mes A MultiExpansionSequent in which all shallow formulas are prenex and which contains no strong or Skolem quantifiers.
    * @return A proof starting with s1 and ending with the deep sequent of mes.
    */
-  def apply( s1: LKProof, mes: MultiExpansionSequent ): LKProof = ( mes.antecedent ++ mes.succedent ).foldLeft( s1 )( apply )
+  def apply( s1: LKProof, mes: MultiExpansionSequent )( implicit dummyImplicit: DummyImplicit ): LKProof = ( mes.antecedent ++ mes.succedent ).foldLeft( s1 )( apply )
 
   /**
    *

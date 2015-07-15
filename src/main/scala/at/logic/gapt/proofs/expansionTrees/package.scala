@@ -7,8 +7,14 @@ import at.logic.gapt.proofs.lk.base.Sequent
  */
 package object expansionTrees {
   type ExpansionSequent = Sequent[ExpansionTree]
+  type MultiExpansionSequent = Sequent[MultiExpansionTree]
 
-  implicit class RichExpansionsequent( seq: ExpansionSequent ) {
+  implicit class RichExpansionSequent( seq: ExpansionSequent ) {
     def polarizedTrees = seq.polarizedElements
+  }
+
+  implicit class RichMultiExpansionSequent( seq: MultiExpansionSequent ) {
+    def toDeep = seq map ( _.toDeep( -1 ), _.toDeep( 1 ) )
+    def toShallow = seq map ( _.toShallow )
   }
 }
