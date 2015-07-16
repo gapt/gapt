@@ -8,7 +8,7 @@ package at.logic.gapt.prooftool
  */
 
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.lk.base.{ Sequent, BinaryLKProof, UnaryLKProof, NullaryLKProof }
+import at.logic.gapt.proofs.lk.base.{ OccSequent, BinaryLKProof, UnaryLKProof, NullaryLKProof }
 import at.logic.gapt.proofs.proofs.{ BinaryProof, UnaryProof, Proof, NullaryProof, TreeProof }
 
 object Search {
@@ -31,18 +31,18 @@ object Search {
 
   def inResolutionProof( str: String, tree: Proof[_] ): Set[FormulaOccurrence] = tree match {
     case p: NullaryProof[_] => p.root match {
-      case s: Sequent =>
+      case s: OccSequent =>
         ( s.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
           s.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
     }
     case p: UnaryProof[_] => p.root match {
-      case s: Sequent =>
+      case s: OccSequent =>
         inResolutionProof( str, p.uProof ) ++
           ( s.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
             s.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
     }
     case p: BinaryProof[_] => p.root match {
-      case s: Sequent =>
+      case s: OccSequent =>
         inResolutionProof( str, p.uProof1 ) ++ inResolutionProof( str, p.uProof2 ) ++
           ( s.antecedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ++
             s.succedent.filter( fo => DrawSequent.formulaToLatexString( fo.formula ).contains( str ) ) ).toSet

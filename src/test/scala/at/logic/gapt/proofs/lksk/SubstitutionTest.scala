@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms._
 import at.logic.gapt.proofs.lksk._
 import org.specs2.mutable._
@@ -18,7 +18,7 @@ class SubstitutionTest extends Specification {
     val exyRay = Ex( y, HOLAtom( R, a :: y :: Nil ) )
     val allxexy = All( x, Ex( y, HOLAtom( R, x :: y :: Nil ) ) )
 
-    val ax = Axiom.createDefault( new FSequent( Rafa :: Nil, Rafa :: Nil ), Tuple2( ( EmptyLabel() + a ) :: Nil, EmptyLabel() :: Nil ) )
+    val ax = Axiom.createDefault( new HOLSequent( Rafa :: Nil, Rafa :: Nil ), Tuple2( ( EmptyLabel() + a ) :: Nil, EmptyLabel() :: Nil ) )
     val r1 = ExistsSkLeftRule( ax._1, ax._2._1.head, exyRay, fa )
     val r2 = ForallSkLeftRule( r1, r1.prin.head, allxexy, a, true )
     r2.root.antecedent.toList.head must beLike { case o: LabelledFormulaOccurrence => ok }
@@ -30,7 +30,7 @@ class SubstitutionTest extends Specification {
       val c: LambdaExpression = Const( "c", Ti )
       val Pc = HOLAtom( P, c :: Nil )
 
-      val a = Axiom.createDefault( new FSequent( Px :: Nil, Px :: Nil ), Tuple2( ( EmptyLabel() + x ) :: Nil, ( EmptyLabel() + y ) :: Nil ) )
+      val a = Axiom.createDefault( new HOLSequent( Px :: Nil, Px :: Nil ), Tuple2( ( EmptyLabel() + x ) :: Nil, ( EmptyLabel() + y ) :: Nil ) )
       val subst = Substitution( x, c )
       val r = applySubstitution( a._1, subst )
       r._1.root.succedent.toList.head must beLike { case o: LabelledFormulaOccurrence => o.skolem_label == ( EmptyLabel() + y ) && o.formula == Pc must_== true }

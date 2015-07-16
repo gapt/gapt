@@ -4,7 +4,7 @@
 
 package at.logic.gapt.provers.vampire
 
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
 import java.io._
@@ -17,7 +17,7 @@ class VampireException( msg: String ) extends Exception( msg )
 
 object Vampire extends Logger {
 
-  def writeProblem( named_sequents: List[Tuple2[String, FSequent]], file_name: String ) =
+  def writeProblem( named_sequents: List[Tuple2[String, HOLSequent]], file_name: String ) =
     {
       val tptp = TPTPFOLExporter.tptp_problem_named( named_sequents )
       val writer = new FileWriter( file_name )
@@ -55,7 +55,7 @@ object Vampire extends Logger {
     ret
   }
 
-  def refuteNamed( named_sequents: List[Tuple2[String, FSequent]], input_file: String, output_file: String ): Boolean =
+  def refuteNamed( named_sequents: List[Tuple2[String, HOLSequent]], input_file: String, output_file: String ): Boolean =
     {
       writeProblem( named_sequents, input_file )
 
@@ -67,10 +67,10 @@ object Vampire extends Logger {
       }
     }
 
-  def refute( sequents: List[FSequent], input_file: String, output_file: String ): Boolean =
+  def refute( sequents: List[HOLSequent], input_file: String, output_file: String ): Boolean =
     refuteNamed( sequents.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ), input_file, output_file )
 
-  def refute( sequents: List[FSequent] ): Boolean = {
+  def refute( sequents: List[HOLSequent] ): Boolean = {
     val in_file = File.createTempFile( "gapt-vampire", ".tptp", null )
     val out_file = File.createTempFile( "gapt-vampire", "vampire", null )
     in_file.deleteOnExit()

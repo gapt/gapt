@@ -2,9 +2,9 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
-import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledSequent }
+import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledOccSequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.ral.{ InitialSequent => RalInitialSequent, _ }
@@ -24,7 +24,7 @@ object RobinsonToRal extends RobinsonToRal {
     Substitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
 }
 
-case class RalException[V <: LabelledSequent]( val message: String, val rp: List[RobinsonResolutionProof], val ralp: List[RalResolutionProof[V]], val exp: List[LambdaExpression] ) extends Exception( message );
+case class RalException[V <: LabelledOccSequent]( val message: String, val rp: List[RobinsonResolutionProof], val ralp: List[RalResolutionProof[V]], val exp: List[LambdaExpression] ) extends Exception( message );
 
 abstract class RobinsonToRal {
   type TranslationMap = Map[FormulaOccurrence, LabelledFormulaOccurrence]
@@ -36,17 +36,17 @@ abstract class RobinsonToRal {
   /* convert subsitution will be called on any substitution before translation */
   def convert_substitution( s: Substitution ): Substitution;
 
-  def convert_sequent( fs: FSequent ): FSequent = FSequent( fs.antecedent.map( convert_formula ), fs.succedent.map( convert_formula ) )
+  def convert_sequent( fs: HOLSequent ): HOLSequent = HOLSequent( fs.antecedent.map( convert_formula ), fs.succedent.map( convert_formula ) )
 
-  def apply( rp: RobinsonResolutionProof ): RalResolutionProof[LabelledSequent] = apply( rp, emptyTranslationMap )._2
+  def apply( rp: RobinsonResolutionProof ): RalResolutionProof[LabelledOccSequent] = apply( rp, emptyTranslationMap )._2
 
-  def apply( rp: RobinsonResolutionProof, map: TranslationMap ): ( TranslationMap, RalResolutionProof[LabelledSequent] ) =
+  def apply( rp: RobinsonResolutionProof, map: TranslationMap ): ( TranslationMap, RalResolutionProof[LabelledOccSequent] ) =
     rp match {
       case InitialClause( clause ) =>
-        val fc: FSequent = clause.toFSequent
+        val fc: HOLSequent = clause.toHOLSequent
         val rule = RalInitialSequent( convert_sequent( fc ), ( fc.antecedent.toList.map( x => EmptyLabel() ), fc.succedent.toList.map( x => EmptyLabel() ) ) )
-        my_require( rule.root.toFSequent, clause.toFSequent, "Error in initial translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
-        require( !rule.root.toFSequent.formulas.contains( ( x: HOLFormula ) => x.isInstanceOf[FOLFormula] ), "Formulas contain fol content!" )
+        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in initial translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
+        require( !rule.root.toHOLSequent.formulas.contains( ( x: HOLFormula ) => x.isInstanceOf[FOLFormula] ), "Formulas contain fol content!" )
 
         ( emptyTranslationMap, rule )
 
@@ -59,7 +59,7 @@ abstract class RobinsonToRal {
         val sub2 = if ( sub.isIdentity ) rp2 else Sub( rp2, sub )
         val rule = Cut( sub1, sub2, List( pickFOsucc( sub( convert_formula( aux1.formula ) ), sub1.root, Nil ) ),
           List( pickFOant( sub( convert_formula( aux2.formula ) ), sub2.root, Nil ) ) )
-        my_require( rule.root.toFSequent, clause.toFSequent, "Error in resolution translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
+        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in resolution translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
 
         ( rmap2, rule )
 
@@ -70,7 +70,7 @@ abstract class RobinsonToRal {
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
         val ( a :: aux ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant( sub( convert_formula( x.formula ) ), sub1.root, list ) :: list ).reverse
         val rule = AFactorF( sub1, a, aux )
-        my_require( rule.root.toFSequent, clause.toFSequent, "Error in factor translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
+        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in factor translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
 
         ( rmap1, rule )
 
@@ -81,7 +81,7 @@ abstract class RobinsonToRal {
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
         val ( a :: aux ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc( sub( convert_formula( x.formula ) ), sub1.root, list ) :: list ).reverse
         val rule = AFactorT( sub1, a, aux )
-        my_require( rule.root.toFSequent, clause.toFSequent, "Error in factor translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
+        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in factor translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
         ( rmap1, rule )
 
       case Paramodulation( clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.antecedent contains modulant =>
@@ -91,7 +91,7 @@ abstract class RobinsonToRal {
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
         val sub2 = if ( sub.isIdentity ) rp2 else Sub( rp2, sub )
         val rule = ParaF( sub1, sub2, pickFOsucc( sub( convert_formula( equation.formula ) ), sub1.root, List() ), pickFOant( sub( convert_formula( modulant.formula ) ), sub2.root, List() ), convert_formula( primary.formula ) )
-        my_require( rule.root.toFSequent, clause.toFSequent, "Error in para translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
+        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in para translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
         ( rmap2, rule )
 
       case Paramodulation( clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.succedent contains modulant =>
@@ -104,14 +104,14 @@ abstract class RobinsonToRal {
         val rule = ParaT( sub1, sub2, pickFOsucc( sub( convert_formula( equation.formula ) ), sub1.root, List() ),
           pickFOsucc( sub( convert_formula( modulant.formula ) ), sub2.root, List() ),
           convert_formula( primary.formula ) )
-        my_require( rule.root.toFSequent, clause.toFSequent, "Error in para translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
+        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in para translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
         ( rmap2, rule )
 
       case Variant( clause, parent, sub_ ) =>
         val sub = convert_substitution( sub_ )
         val ( rmap1, rp1 ) = apply( parent, map )
         val sub1 = Sub( rp1, sub )
-        my_require( sub1.root.toFSequent, clause.toFSequent, "Error in variant translation, translated root: " + sub1.root.toFSequent + " is not original root " + clause.toFSequent )
+        my_require( sub1.root.toHOLSequent, clause.toHOLSequent, "Error in variant translation, translated root: " + sub1.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
         ( rmap1, sub1 )
 
       case Instance( clause, parent, sub_ ) =>
@@ -120,12 +120,12 @@ abstract class RobinsonToRal {
         //        val subexps = sub.map.toList.flatMap(x => List(x._1,x._2)).filterNot(checkFactory(_, HOLFactory))
         //        my_require(subexps.isEmpty , "Substitution contains fol content: "+subexps.map(_.factory))
         val ( rmap1, rp1 ) = apply( parent, map )
-        //        val rootexps = rp1.root.toFSequent.formulas.filterNot(checkFactory(_,HOLFactory))
+        //        val rootexps = rp1.root.toHOLSequent.formulas.filterNot(checkFactory(_,HOLFactory))
         //        my_require(rootexps.isEmpty, "Formulas contain fol content: "+rootexps.mkString(" ::: "))
         val rule = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
 
         //println("inferring instance from parent:"+rp1.root+" to "+rule.root+" with sub "+sub)
-        my_require( rule.root.toFSequent, clause.toFSequent, "Error in instance translation, translated root: " + rule.root.toFSequent + " is not original root " + clause.toFSequent )
+        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in instance translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
         ( rmap1, rule )
 
       case Factor( clause, parent, List( aux1 @ ( f1 :: _ ), aux2 @ ( f2 :: _ ) ), sub_ ) =>
@@ -158,7 +158,7 @@ abstract class RobinsonToRal {
 
     }
 
-  def my_require( fs1: FSequent, fs2: FSequent, msg: String ) = {
+  def my_require( fs1: HOLSequent, fs2: HOLSequent, msg: String ) = {
     val cfs2 = convert_sequent( fs2 )
     require( fs1 multiSetEquals ( convert_sequent( fs2 ) ), msg + " (converted sequent is " + cfs2 + ")" ) //commented out, because the translation is too flexible now
   }
@@ -169,10 +169,10 @@ abstract class RobinsonToRal {
       case Some( focc ) => focc
     }
 
-  def pickFOant( f: HOLFormula, fs: LabelledSequent, exclusion_list: Seq[LabelledFormulaOccurrence] ) = pickFO( f, fs.l_antecedent, exclusion_list )
-  def pickFOsucc( f: HOLFormula, fs: LabelledSequent, exclusion_list: Seq[LabelledFormulaOccurrence] ) = pickFO( f, fs.l_succedent, exclusion_list )
+  def pickFOant( f: HOLFormula, fs: LabelledOccSequent, exclusion_list: Seq[LabelledFormulaOccurrence] ) = pickFO( f, fs.l_antecedent, exclusion_list )
+  def pickFOsucc( f: HOLFormula, fs: LabelledOccSequent, exclusion_list: Seq[LabelledFormulaOccurrence] ) = pickFO( f, fs.l_succedent, exclusion_list )
 
-  def updateMap( map: TranslationMap, root1: Clause, root2: Clause, nroot: LabelledSequent ): TranslationMap = {
+  def updateMap( map: TranslationMap, root1: OccClause, root2: OccClause, nroot: LabelledOccSequent ): TranslationMap = {
 
     val nmap1 = root1.occurrences.foldLeft( map )( ( recmap, fo ) => {
       nroot.occurrences.find( x => {
@@ -202,11 +202,11 @@ abstract class RobinsonToRal {
 
   }
 
-  def getOccFromAnteAncestor( ralp: RalResolutionProof[LabelledSequent], map: TranslationMap, occ: FormulaOccurrence ) =
+  def getOccFromAnteAncestor( ralp: RalResolutionProof[LabelledOccSequent], map: TranslationMap, occ: FormulaOccurrence ) =
     getOccFromAncestor( ralp, map, occ, false )
-  def getOccFromSuccAncestor( ralp: RalResolutionProof[LabelledSequent], map: TranslationMap, occ: FormulaOccurrence ) =
+  def getOccFromSuccAncestor( ralp: RalResolutionProof[LabelledOccSequent], map: TranslationMap, occ: FormulaOccurrence ) =
     getOccFromAncestor( ralp, map, occ, true )
-  def getOccFromAncestor( ralp: RalResolutionProof[LabelledSequent], map: TranslationMap, occ: FormulaOccurrence, side: Boolean ) = {
+  def getOccFromAncestor( ralp: RalResolutionProof[LabelledOccSequent], map: TranslationMap, occ: FormulaOccurrence, side: Boolean ) = {
     val occurrences = if ( side == false ) ralp.root.l_antecedent else ralp.root.l_succedent
     val ancocc = occurrences.find( x => {
       x.parents match {

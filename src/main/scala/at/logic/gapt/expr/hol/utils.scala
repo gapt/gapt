@@ -5,7 +5,7 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 /**
  * Returns true iff the given LambdaExpression consists of a logical constant.
@@ -135,7 +135,7 @@ object containsStrongQuantifier {
     case _                => throw new Exception( "Unhandled case!" )
   }
 
-  def apply( s: FSequent ): Boolean =
+  def apply( s: HOLSequent ): Boolean =
     s.antecedent.exists( x => containsStrongQuantifier( x, false ) ) ||
       s.succedent.exists( x => containsStrongQuantifier( x, true ) )
 }
@@ -168,7 +168,7 @@ object atoms {
     case HOLAtom( _, _ )  => List( f )
   }
 
-  def apply( s: FSequent ): List[HOLFormula] = {
+  def apply( s: HOLSequent ): List[HOLFormula] = {
     val all = s.antecedent ++ s.succedent
     all.foldLeft( List[HOLFormula]() ) { case ( acc, f ) => apply( f ) ++ acc }
   }
@@ -207,7 +207,7 @@ object lcomp {
     case HOLAtom( _, _ )  => 1
   }
 
-  def apply( seq: FSequent ): Int = seq.antecedent.foldLeft( 0 )( _ + lcomp( _ ) ) + seq.succedent.foldLeft( 0 )( _ + lcomp( _ ) )
+  def apply( seq: HOLSequent ): Int = seq.antecedent.foldLeft( 0 )( _ + lcomp( _ ) ) + seq.succedent.foldLeft( 0 )( _ + lcomp( _ ) )
 }
 
 object variablesAll {

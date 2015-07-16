@@ -3,8 +3,7 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.RobinsonToLK
-import at.logic.gapt.proofs.resolution.{ Clause, ResolutionProof }
+import at.logic.gapt.proofs.resolution._
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
@@ -63,14 +62,14 @@ class TapeTest extends Specification {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toFSequent ) )
+      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toHOLClause ) )
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter( "target" + separator + "tape-prf.tptp" )
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLClause ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
       writer.write( tptp )
@@ -109,14 +108,14 @@ class TapeTest extends Specification {
       val s = StructCreators.extract( proof_sk )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
 
-      object MyProver extends Prover[Clause]
+      object MyProver extends Prover[OccClause]
 
-      def getRefutation( ls: Iterable[FSequent] ): Boolean = MyProver.refute( Stream( SetTargetClause( FSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next must beLike {
-        case Some( a ) if a.asInstanceOf[ResolutionProof[Clause]].root syntacticMultisetEquals ( FSequent( List(), List() ) ) => ok
+      def getRefutation( ls: Iterable[HOLSequent] ): Boolean = MyProver.refute( Stream( SetTargetClause( HOLSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next must beLike {
+        case Some( a ) if a.asInstanceOf[ResolutionProof[OccClause]].root syntacticMultisetEquals ( HOLSequent( List(), List() ) ) => ok
         case _ => ko
       }
 
-      getRefutation( cs.map( _.toFSequent ) ) must beTrue
+      getRefutation( cs.map( _.toHOLSequent ) ) must beTrue
     }
 
     "create an acnf of the tape proof via ground proof" in {
@@ -127,18 +126,18 @@ class TapeTest extends Specification {
 
       //get the refutation of the clause set, refute it
       val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( elp ) )
-      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( _.toFSequent ) )
+      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( oc => oc.toHOLClause ) )
       val lkref = RobinsonToLK( taperp )
 
       //get projections etc
       val tapeproj = Projections( elp )
-      val refproj = CERES.refProjection( elp.root.toFSequent )
+      val refproj = CERES.refProjection( elp.root.toHOLSequent )
 
-      val acnf = CERES( elp.root.toFSequent, tapeproj + refproj, lkref )
+      val acnf = CERES( elp.root.toHOLSequent, tapeproj + refproj, lkref )
 
       //the acnf must not contain any quantified cuts
       acnf.nodes.collect( { case c @ CutRule( _, _, _, aux, _ ) if containsQuantifier( aux.formula ) => c } ) must beEmpty
-      acnf.root.toFSequent must beSyntacticFSequentEqual( elp.root.toFSequent )
+      acnf.root.toHOLSequent must beSyntacticFSequentEqual( elp.root.toHOLSequent )
 
     }
 
@@ -151,17 +150,17 @@ class TapeTest extends Specification {
 
       //get the refutation of the clause set, refute it
       val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( elp ) )
-      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( _.toFSequent ) )
+      val Some( taperp ) = new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLClause ) )
 
       //get projections etc
       val tapeproj = Projections( elp )
-      val refproj = CERES.refProjection( elp.root.toFSequent )
+      val refproj = CERES.refProjection( elp.root.toHOLSequent )
 
-      val acnf = CERESR2LK( elp.root.toFSequent, tapeproj + refproj, taperp )
+      val acnf = CERESR2LK( elp.root.toHOLSequent, tapeproj + refproj, taperp )
 
       //the acnf must not contain any quantified cuts
       acnf.nodes.collect( { case c @ CutRule( _, _, _, aux, _ ) if containsQuantifier( aux.formula ) => c } ) must beEmpty
-      acnf.root.toFSequent must beSyntacticFSequentEqual( elp.root.toFSequent )
+      acnf.root.toHOLSequent must beSyntacticFSequentEqual( elp.root.toHOLSequent )
 
     }
 

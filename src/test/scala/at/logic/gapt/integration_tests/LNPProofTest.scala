@@ -19,7 +19,7 @@ import org.specs2.execute.Success
 
 class LNPProofTest extends Specification {
 
-  def sequentToString( s: Sequent ) = {
+  def sequentToString( s: OccSequent ) = {
     var ret = ""
     s.antecedent.foreach( formula => ret += formula.toString + ", " )
     ret += " :- "
@@ -45,7 +45,7 @@ class LNPProofTest extends Specification {
       val proof_sk = LKToLKsk( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val cs = StandardClauseSet.transformStructToClauseSet( s ) map ( _.toFSequent )
+      val cs = StandardClauseSet.transformStructToClauseSet( s ) map ( _.toHOLSequent )
       val dcs = deleteTautologies( cs )
       //Console.println("dcs size: " + dcs.size)
       val css = dcs.distinct

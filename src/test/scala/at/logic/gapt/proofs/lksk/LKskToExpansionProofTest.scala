@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.expansionTrees.{ ETAtom, ETNeg, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp, ETWeakening }
 import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, _ }
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import org.specs2.mutable._
 
 /**
@@ -31,7 +31,7 @@ class LKskToExpansionProofTest extends Specification {
     val xatom = HOLAtom( x, Nil )
     val existsx = Ex( x, xatom )
 
-    val ( ax, _ ) = Axiom.createDefault( FSequent( List( p ), List( p ) ), ( List( Set( Neg( p ) ) ), List( Set( p ) ) ) )
+    val ( ax, _ ) = Axiom.createDefault( HOLSequent( List( p ), List( p ) ), ( List( Set( Neg( p ) ) ), List( Set( p ) ) ) )
     val i1 = ExistsSkRightRule( ax, ax.root.succedent( 0 ).asInstanceOf[LabelledFormulaOccurrence], existsx, p, true )
     val i2 = NegRightRule( i1, i1.root.antecedent( 0 ) )
     val i3 = ExistsSkRightRule( i2, i2.root.succedent( 1 ).asInstanceOf[LabelledFormulaOccurrence], existsx, Neg( p ), true )

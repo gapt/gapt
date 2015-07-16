@@ -2,17 +2,17 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import org.specs2.mutable._
 
 class SimplificationTest extends Specification {
   "Simplifications" should {
     val a = HOLAtom( Var( "a", To ) )
     val b = HOLAtom( Var( "b", To ) )
-    val s1 = FSequent( a :: Nil, a :: Nil )
-    val s2 = FSequent( b :: a :: b :: Nil, b :: b :: b :: a :: b :: Nil )
-    val s3 = FSequent( a :: Nil, b :: Nil )
-    val s4 = FSequent( b :: Nil, a :: Nil )
+    val s1 = HOLSequent( a :: Nil, a :: Nil )
+    val s2 = HOLSequent( b :: a :: b :: Nil, b :: b :: b :: a :: b :: Nil )
+    val s3 = HOLSequent( a :: Nil, b :: Nil )
+    val s4 = HOLSequent( b :: Nil, a :: Nil )
 
     val P = Const( "P", ( Ti -> Ti ) -> To )
     val Q = Const( "Q", ( Ti -> Ti ) -> To )
@@ -41,8 +41,8 @@ class SimplificationTest extends Specification {
     val a4 = HOLAtom( P1, b2 :: Nil )
     val a5 = HOLAtom( P1, fba :: Nil )
 
-    val s9 = FSequent( Nil, a1 :: a2 :: Nil )
-    val s10 = FSequent( f1a :: f1b :: Nil, a3 :: a4 :: a5 :: Nil )
+    val s9 = HOLSequent( Nil, a1 :: a2 :: Nil )
+    val s10 = HOLSequent( f1a :: f1b :: Nil, a3 :: a4 :: a5 :: Nil )
 
     "correctly delete tautologous sequents" in {
       val list = s1 :: s2 :: s3 :: s4 :: s1 :: Nil
@@ -68,10 +68,10 @@ class SimplificationTest extends Specification {
       val f4 = FOLAtom( "=", x :: x :: Nil )
       val f5 = FOLAtom( "=", x :: a :: Nil )
 
-      val seq1f = FSequent( Nil, f1 :: Nil )
-      val seq2f = FSequent( f2 :: Nil, f1 :: Nil )
-      val seq3f = FSequent( Nil, f3 :: Nil )
-      val seq4f = FSequent( Nil, f4 :: f5 :: Nil )
+      val seq1f = HOLSequent( Nil, f1 :: Nil )
+      val seq2f = HOLSequent( f2 :: Nil, f1 :: Nil )
+      val seq3f = HOLSequent( Nil, f3 :: Nil )
+      val seq4f = HOLSequent( Nil, f4 :: f5 :: Nil )
 
       "FOL" in {
         val ls = List( seq1f, seq2f, seq3f, seq4f )

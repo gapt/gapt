@@ -49,7 +49,7 @@ object sClauseVar {
 //usual clause : no schematic symbols and no schematic variables
 class nonVarSclause( val ant: List[SchemaFormula], val succ: List[SchemaFormula] ) extends sClause {
   override def toString = {
-    printSchemaProof.sequentToString( Sequent( ant.map( f => defaultFormulaOccurrenceFactory.createFormulaOccurrence( f, List() ) ), succ.map( f => defaultFormulaOccurrenceFactory.createFormulaOccurrence( f, List() ) ) ) )
+    printSchemaProof.sequentToString( OccSequent( ant.map( f => defaultFormulaOccurrenceFactory.createFormulaOccurrence( f, List() ) ), succ.map( f => defaultFormulaOccurrenceFactory.createFormulaOccurrence( f, List() ) ) ) )
     //    ant + " |- " + succ
   }
   override def equals( a: Any ) = a match {
@@ -710,7 +710,7 @@ object InstantiateResSchema {
 object GroundingProjections {
   def apply( p: LKProof, mapfo2: Map[fo2Var, SchemaExpression] ): LKProof = {
     p match {
-      case Axiom( seq ) => Axiom( Sequent(
+      case Axiom( seq ) => Axiom( OccSequent(
         seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( fo2VarSubstitution( fo.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], Nil ) ),
         seq.succedent.map( fo => fo.factory.createFormulaOccurrence( fo2VarSubstitution( fo.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], Nil ) )
       ) )

@@ -1,14 +1,14 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import org.specs2.mutable._
 
 class TermExtractionTest extends Specification {
   val Seq( x, y ) = Seq( "x", "y" ).map( FOLVar( _ ) )
   val esP = All( x, FOLAtom( "P", x, y ) )
   val esR = Ex( x, FOLAtom( "R", x ) )
-  val endSequent = FSequent(
+  val endSequent = HOLSequent(
     Seq( esP ),
     Seq( esR )
   )

@@ -8,26 +8,26 @@
 package at.logic.gapt.formats.xml
 
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
 import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule }
 
 import scala.xml.dtd._
 
 trait LKExporter extends HOLTermXMLExporter {
   //def exportSequent(seq : Sequent) = exportSequent(FSequent(seq))
-  implicit def seq2fseq( s: Sequent ) = s.toFSequent
+  implicit def seq2fseq( s: OccSequent ) = s.toHOLSequent
 
-  def exportSequent( seq: FSequent ) =
+  def exportSequent( seq: HOLSequent ) =
     <sequent>
       <formulalist>
-        { seq._1.map( exportTerm ) }
+        { seq.antecedent.map( exportTerm ) }
       </formulalist>
       <formulalist>
-        { seq._2.map( exportTerm ) }
+        { seq.succedent.map( exportTerm ) }
       </formulalist>
     </sequent>
 
-  def exportSequentList( name: String, ls: List[FSequent] ) =
+  def exportSequentList( name: String, ls: List[HOLSequent] ) =
     <sequentlist symbol={ name }>
       { ls.map( x => exportSequent( x ) ) }
     </sequentlist>
@@ -81,15 +81,15 @@ trait LKExporter extends HOLTermXMLExporter {
     case EquationRight2Rule( p1, p2, seq, _, _, _, _ ) => exportBinaryRule( p1, p2, seq, "eqr2" )
   }
 
-  def exportUnaryRule( parent: LKProof, conc: Sequent, rt: String ) =
+  def exportUnaryRule( parent: LKProof, conc: OccSequent, rt: String ) =
     <rule type={ rt }> { exportSequent( conc ) } { exportProof( parent ) } </rule>
 
-  def exportBinaryRule( p1: LKProof, p2: LKProof, conc: Sequent, rt: String ) =
+  def exportBinaryRule( p1: LKProof, p2: LKProof, conc: OccSequent, rt: String ) =
     <rule type={ rt }> { exportSequent( conc ) } { exportProof( p1 ) } { exportProof( p2 ) } </rule>
 }
 
 object saveXML {
-  def apply( proofs: List[Tuple2[String, LKProof]], sequentlists: List[Tuple2[String, List[FSequent]]], filename: String ) =
+  def apply( proofs: List[Tuple2[String, LKProof]], sequentlists: List[Tuple2[String, List[HOLSequent]]], filename: String ) =
     {
       val exporter = new LKExporter {}
       val p_xmls = proofs.map( p => exporter.exportProof( p._1, p._2 ) )

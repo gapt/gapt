@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toShallow, ETAtom, ETNeg, ETOr, ETStrongQuantifier, ETWeakQuantifier }
-import at.logic.gapt.proofs.lk.base.{ FSequent, beSyntacticFSequentEqual }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, beSyntacticFSequentEqual }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import org.specs2.mutable._
 
@@ -50,17 +50,17 @@ class SolveTest extends Specification {
       val biga2 = BigAnd( i, A, zero, two )
       val bigo2 = BigOr( i, A, zero, two )
 
-      val fseq = FSequent( A0 :: A1 :: Nil, bigo :: Nil )
+      val fseq = HOLSequent( A0 :: A1 :: Nil, bigo :: Nil )
 
       val p = solve.solvePropositional( fseq )
 
       // TODO: something with these...
-      solve.solvePropositional( FSequent( Neg( And( Neg( A ), Neg( B ) ) ) :: Nil, Or( A, B ) :: Nil ) )
-      solve.solvePropositional( FSequent( Or( Or( A, B ), C ) :: Nil, A :: B :: C :: Nil ) )
-      solve.solvePropositional( FSequent( And( A, B ) :: Nil, Neg( Or( Neg( A ), Neg( B ) ) ) :: Nil ) )
-      solve.solvePropositional( FSequent( A0 :: A1 :: A2 :: Nil, biga2 :: Nil ) )
-      solve.solvePropositional( FSequent( A :: B :: C :: Nil, And( And( A, B ), C ) :: Nil ) )
-      solve.solvePropositional( FSequent( bigo2 :: Nil, A0 :: A1 :: A2 :: Nil ) )
+      solve.solvePropositional( HOLSequent( Neg( And( Neg( A ), Neg( B ) ) ) :: Nil, Or( A, B ) :: Nil ) )
+      solve.solvePropositional( HOLSequent( Or( Or( A, B ), C ) :: Nil, A :: B :: C :: Nil ) )
+      solve.solvePropositional( HOLSequent( And( A, B ) :: Nil, Neg( Or( Neg( A ), Neg( B ) ) ) :: Nil ) )
+      solve.solvePropositional( HOLSequent( A0 :: A1 :: A2 :: Nil, biga2 :: Nil ) )
+      solve.solvePropositional( HOLSequent( A :: B :: C :: Nil, And( And( A, B ), C ) :: Nil ) )
+      solve.solvePropositional( HOLSequent( bigo2 :: Nil, A0 :: A1 :: A2 :: Nil ) )
 
       val c2 = Const( new StringSymbol( "c" ), Ti )
       val d2 = Const( new StringSymbol( "d" ), Ti )
@@ -75,12 +75,12 @@ class SolveTest extends Specification {
       val impPc2Pd2 = Imp( Pc2, Pd2 )
       val imp_andPc2Pd2_Pe2 = Imp( andPc2Pd2, Pe2 )
       val orPc2Pd2 = Or( Pc2, Pd2 )
-      val seq11 = FSequent( Pc2 :: Nil, Pc2 :: Nil )
-      val seq12 = FSequent( andPc2Pd2 :: Nil, Pc2 :: Nil )
-      val seq13 = FSequent( Pc2 :: Nil, orPc2Pd2 :: Nil )
-      val seq14 = FSequent( andPc2Pd2 :: Nil, orPc2Pd2 :: Nil )
-      val seq15 = FSequent( Pc2 :: impPc2Pd2 :: imp_andPc2Pd2_Pe2 :: Nil, Pe2 :: Nil )
-      val seq16 = FSequent( Pc2 :: Nil, Pd2 :: Nil )
+      val seq11 = HOLSequent( Pc2 :: Nil, Pc2 :: Nil )
+      val seq12 = HOLSequent( andPc2Pd2 :: Nil, Pc2 :: Nil )
+      val seq13 = HOLSequent( Pc2 :: Nil, orPc2Pd2 :: Nil )
+      val seq14 = HOLSequent( andPc2Pd2 :: Nil, orPc2Pd2 :: Nil )
+      val seq15 = HOLSequent( Pc2 :: impPc2Pd2 :: imp_andPc2Pd2_Pe2 :: Nil, Pe2 :: Nil )
+      val seq16 = HOLSequent( Pc2 :: Nil, Pd2 :: Nil )
 
       solve.solvePropositional( seq16 ) must beEqualTo( None )
     }
@@ -100,10 +100,10 @@ class SolveTest extends Specification {
       val xsx = HOLAtom( _X, List( HOLFunction( s, List( x ) ) ) )
 
       val ind = All( _X, Imp( And( xzero, All( x, Imp( xx, xsx ) ) ), All( x, xx ) ) )
-      val fs = FSequent( ind :: Nil, ind :: Nil )
+      val fs = HOLSequent( ind :: Nil, ind :: Nil )
       val proof = AtomicExpansion( fs )
       //check if the derived end-sequent is correct
-      proof.root.toFSequent must beSyntacticFSequentEqual( fs )
+      proof.root.toHOLSequent must beSyntacticFSequentEqual( fs )
 
       //check if three different eigenvariables were introduced and nothing more
       /* FIXME: replace toFormula.symbols call with call to getVars from utils
@@ -130,10 +130,10 @@ class SolveTest extends Specification {
       val xzero = HOLAtom( Q, List( y, HOLFunction( s, List( x ) ) ) )
 
       val formula = All( x, Neg( Ex( y, xzero ) ) )
-      val fs = FSequent( List( HOLAtom( P, x :: Nil ), formula ), List( formula, HOLAtom( P, y :: Nil ) ) )
+      val fs = HOLSequent( List( HOLAtom( P, x :: Nil ), formula ), List( formula, HOLAtom( P, y :: Nil ) ) )
       val proof = AtomicExpansion( fs )
       //check if the derived end-sequent is correct
-      proof.root.toFSequent must beSyntacticFSequentEqual( fs )
+      proof.root.toHOLSequent must beSyntacticFSequentEqual( fs )
 
       //check if two different eigenvariables were introduced and nothing more
       /* FIXME: replace toFormula.symbols call with call to getVars from utils
@@ -172,31 +172,31 @@ class SolveTest extends Specification {
     }
 
     "prove top" in {
-      solve.solvePropositional( FSequent( Seq(), Seq( Top() ) ) ) must beSome
+      solve.solvePropositional( HOLSequent( Seq(), Seq( Top() ) ) ) must beSome
     }
 
     "not prove bottom" in {
-      solve.solvePropositional( FSequent( Seq(), Seq( Bottom() ) ) ) must beNone
+      solve.solvePropositional( HOLSequent( Seq(), Seq( Bottom() ) ) ) must beNone
     }
 
     "not refute top" in {
-      solve.solvePropositional( FSequent( Seq( Top() ), Seq() ) ) must beNone
+      solve.solvePropositional( HOLSequent( Seq( Top() ), Seq() ) ) must beNone
     }
 
     "refute bottom" in {
-      solve.solvePropositional( FSequent( Seq( Bottom() ), Seq() ) ) must beSome
+      solve.solvePropositional( HOLSequent( Seq( Bottom() ), Seq() ) ) must beSome
     }
 
     "prove ( p ∨ p ) ⊃ ( p ∧ p )" in {
       val p = FOLAtom( "p" ) // TODO: should rather be PropAtom
       val F = Imp( Or( p, p ), And( p, p ) )
-      solve.solvePropositional( FSequent( Seq(), Seq( F ) ) ) must beSome
+      solve.solvePropositional( HOLSequent( Seq(), Seq( F ) ) ) must beSome
     }
 
     "prove ( p ∧ p ) ⊃ ( p ∨ p )" in {
       val p = FOLAtom( "p" ) // TODO: should rather be PropAtom
       val F = Imp( And( p, p ), Or( p, p ) )
-      solve.solvePropositional( FSequent( Seq(), Seq( F ) ) ) must beSome
+      solve.solvePropositional( HOLSequent( Seq(), Seq( F ) ) ) must beSome
     }
 
     "prove BussTautology(2)" in {

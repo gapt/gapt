@@ -12,7 +12,7 @@ import org.specs2.mutable._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 object SATProblems {
   val c = FOLConst( "c" )
@@ -22,19 +22,19 @@ object SATProblems {
   val pd = FOLAtom( "P", d :: Nil )
   val pe = FOLAtom( "P", e :: Nil )
 
-  def getProblem1() = FClause( Nil, pc :: Nil ) :: Nil
+  def getProblem1() = HOLClause( Nil, pc :: Nil ) :: Nil
   def getProblem2() = {
-    val c1 = FClause( Nil, pc :: Nil )
-    val c2 = FClause( pc :: Nil, Nil )
+    val c1 = HOLClause( Nil, pc :: Nil )
+    val c2 = HOLClause( pc :: Nil, Nil )
     c1 :: c2 :: Nil
   }
   def getProblem3a() = Or( pc, Neg( pc ) )
-  def getProblem3b() = new FSequent( Nil, Or( pc, Neg( pc ) ) :: Nil )
+  def getProblem3b() = new HOLSequent( Nil, Or( pc, Neg( pc ) ) :: Nil )
   def getProblem4() = pc
   def getProblem5() = {
-    val c1 = FClause( Nil, pc :: Nil )
-    val c2 = FClause( pc :: Nil, pd :: Nil )
-    val c3 = FClause( pd :: pe :: Nil, Nil )
+    val c1 = HOLClause( Nil, pc :: Nil )
+    val c2 = HOLClause( pc :: Nil, pd :: Nil )
+    val c3 = HOLClause( pd :: pe :: Nil, Nil )
     c1 :: c2 :: c3 :: Nil
   }
   def checkSolution5( model: Interpretation ) = model.interpret( pe ) == false

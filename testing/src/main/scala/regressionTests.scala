@@ -34,7 +34,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     new VeriTProver().isValid( deep ) !-- "verit validity"
 
-    if ( isFOLPrenexSigma1( p.root.toFSequent ) ) {
+    if ( isFOLPrenexSigma1( p.root.toHOLSequent ) ) {
       val qOption = CutIntroduction.one_cut_many_quantifiers( p, false ) --- "cut-introduction"
 
       qOption foreach { q =>

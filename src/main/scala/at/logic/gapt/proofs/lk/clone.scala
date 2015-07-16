@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema.SchemaFormula
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ LKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, _ }
 import at.logic.gapt.proofs.shlk._
 
@@ -207,7 +207,7 @@ object CloneLKProof {
         occMap = ( ro.antecedent, antNew ).zipped.foldLeft( occMap )( _ + _ )
         occMap = ( ro.succedent, sucNew ).zipped.foldLeft( occMap )( _ + _ )
 
-        ( Axiom( Sequent( antNew, sucNew ) ), occMap )
+        ( Axiom( OccSequent( antNew, sucNew ) ), occMap )
 
       case AndLeftEquivalenceRule1( p, _, a, m ) =>
         val ( pCloned, map ) = withMap( p )

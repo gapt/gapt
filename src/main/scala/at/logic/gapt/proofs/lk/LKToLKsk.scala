@@ -5,7 +5,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llk.{ HybridLatexExporter, toLatexString }
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
 import at.logic.gapt.proofs.lksk.{ Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule, applySubstitution => LKskapplySubstitution, _ }
 import at.logic.gapt.proofs.occurrences._
@@ -30,7 +30,7 @@ object LKToLKsk extends Logger {
 
   private def f( f: LambdaExpression ): String = toLatexString.apply( f )
 
-  private def f( s: Sequent ): String =
+  private def f( s: OccSequent ): String =
     s.antecedent.map( { case LabelledFormulaOccurrence( formula, _, l ) => f( formula ) + ":label" + l.map( f ).mkString( "{", ",", "}" ) } ).mkString( ";" ) + " :- " +
       s.succedent.map( { case LabelledFormulaOccurrence( formula, _, l ) => f( formula ) + ":label" + l.map( f ).mkString( "{", ",", "}" ) } ).mkString( ";" )
 
@@ -44,7 +44,7 @@ object LKToLKsk extends Logger {
       val labels_ant = so.antecedent.map( fo => subst_terms( fo ) ).toList
       val labels_succ = so.succedent.map( fo => subst_terms( fo ) ).toList
 
-      val a = LKskAxiom.createDefault( FSequent( ant, succ ), Tuple2( labels_ant, labels_succ ) )
+      val a = LKskAxiom.createDefault( HOLSequent( ant, succ ), Tuple2( labels_ant, labels_succ ) )
 
       //assert( a._1.root.isInstanceOf[LabelledSequent] )
       val map = new HashMap[FormulaOccurrence, LabelledFormulaOccurrence]
@@ -313,7 +313,7 @@ object LKToLKsk extends Logger {
     constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof,
     p1:          LKProof,
     p2:          LKProof,
-    s:           Sequent,
+    s:           OccSequent,
     a1:          FormulaOccurrence,
     a2:          FormulaOccurrence,
     m:           HOLFormula,
@@ -352,7 +352,7 @@ object LKToLKsk extends Logger {
 
   def copyWeakQuantRule( proof: LKProof, subst_terms: Map[FormulaOccurrence, Label],
                          parent: LKProof, aux: FormulaOccurrence, main: FormulaOccurrence,
-                         term: LambdaExpression, end_seq: Sequent, cut_occs: Set[FormulaOccurrence],
+                         term: LambdaExpression, end_seq: OccSequent, cut_occs: Set[FormulaOccurrence],
                          constructor: ( LKProof, FormulaOccurrence, HOLFormula, LambdaExpression ) => LKProof ) = {
     val new_label_map = copyMapFromAncestor( end_seq.antecedent ++ end_seq.succedent, subst_terms )
     val r = rec( parent, new_label_map, cut_occs )

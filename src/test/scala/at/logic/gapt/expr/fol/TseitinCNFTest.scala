@@ -20,18 +20,18 @@ class TseitinCNFTest extends Specification {
       val x2 = FOLAtom( "x4", Nil )
 
       val expected = Set(
-        FClause( List(), List( x2 ) ),
-        FClause( List( x1 ), List( x2 ) ),
-        FClause( List(), List( x2, x0 ) ),
-        FClause( List(), List( x1, s ) ),
-        FClause( List( x1, s ), List() ),
-        FClause( List( x0 ), List( r ) ),
-        FClause( List( x0 ), List( x ) ),
-        FClause( List( q ), List( x ) ),
-        FClause( List( p ), List( x ) ),
-        FClause( List( x2, x0 ), List( x1 ) ),
-        FClause( List( x, r ), List( x0 ) ),
-        FClause( List( x ), List( p, q ) )
+        HOLClause( List(), List( x2 ) ),
+        HOLClause( List( x1 ), List( x2 ) ),
+        HOLClause( List(), List( x2, x0 ) ),
+        HOLClause( List(), List( x1, s ) ),
+        HOLClause( List( x1, s ), List() ),
+        HOLClause( List( x0 ), List( r ) ),
+        HOLClause( List( x0 ), List( x ) ),
+        HOLClause( List( q ), List( x ) ),
+        HOLClause( List( p ), List( x ) ),
+        HOLClause( List( x2, x0 ), List( x1 ) ),
+        HOLClause( List( x, r ), List( x0 ) ),
+        HOLClause( List( x ), List( p, q ) )
       )
       expected.subsetOf( new TseitinCNF().apply( f ).toSet ) must beTrue
     }

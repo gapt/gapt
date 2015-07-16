@@ -338,66 +338,9 @@ object isQuantified {
   }
 }
 
-class ExpansionSequent( val antecedent: Seq[ExpansionTree], val succedent: Seq[ExpansionTree] ) {
-  def toTuple(): ( Seq[ExpansionTree], Seq[ExpansionTree] ) = {
-    ( antecedent, succedent )
-  }
-
-  def polarizedTrees: Seq[( ExpansionTree, Boolean )] =
-    antecedent.map( _ -> true ) ++ succedent.map( _ -> false )
-
-  def map( f: ExpansionTree => ExpansionTree ): ExpansionSequent = {
-    new ExpansionSequent( antecedent.map( f ), succedent.map( f ) )
-  }
-
-  def addToAntecedent( et: ExpansionTree ): ExpansionSequent = {
-    new ExpansionSequent( et +: antecedent, succedent )
-  }
-
-  def addToSuccedent( et: ExpansionTree ): ExpansionSequent = {
-    new ExpansionSequent( antecedent, et +: succedent )
-  }
-
-  def removeFromAntecedent( et: ExpansionTree ): ExpansionSequent = {
-    require( antecedent.exists( _ eq et ) )
-    new ExpansionSequent( antecedent.filterNot( _ eq et ), succedent )
-  }
-
-  def removeFromSuccedent( et: ExpansionTree ): ExpansionSequent = {
-    require( succedent.exists( _ eq et ) )
-    new ExpansionSequent( antecedent, succedent.filterNot( _ eq et ) )
-  }
-
-  def replaceInAntecedent( from: ExpansionTree, to: ExpansionTree ): ExpansionSequent = {
-    require( antecedent.exists( _ eq from ) )
-    new ExpansionSequent( antecedent.map( et => if ( et eq from ) to else et ), succedent )
-  }
-
-  def replaceInSuccedent( from: ExpansionTree, to: ExpansionTree ): ExpansionSequent = {
-    require( succedent.exists( _ eq from ) )
-    new ExpansionSequent( antecedent, succedent.map( et => if ( et eq from ) to else et ) )
-  }
-
-  override def toString: String = "ExpansionSequent(" + antecedent + ", " + succedent + ")"
-
-  def canEqual( other: Any ): Boolean = other.isInstanceOf[ExpansionSequent]
-
-  override def equals( other: Any ): Boolean = other match {
-    case that: ExpansionSequent =>
-      ( that canEqual this ) &&
-        antecedent == that.antecedent &&
-        succedent == that.succedent
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq( antecedent, succedent )
-    state.map( _.hashCode() ).foldLeft( 0 )( ( a, b ) => 31 * a + b )
-  }
-}
 object ExpansionSequent {
   def apply( antecedent: Seq[ExpansionTree], succedent: Seq[ExpansionTree] ) = new ExpansionSequent( antecedent, succedent )
-  def unapply( etSeq: ExpansionSequent ) = Some( etSeq.toTuple() )
+  def unapply( etSeq: ExpansionSequent ) = Some( etSeq.toTuple )
 }
 
 object toDeep {
@@ -418,8 +361,8 @@ object toDeep {
     case ETSkolemQuantifier( _, _, t ) => toDeep( t, pol ) //TODO: check if this is correct
   }
 
-  def apply( expansionSequent: ExpansionSequent ): FSequent = {
-    FSequent( expansionSequent.antecedent.map( toDeep.apply( _, -1 ) ), expansionSequent.succedent.map( toDeep.apply( _, 1 ) ) ) // compiler wants the applys here
+  def apply( expansionSequent: ExpansionSequent ): HOLSequent = {
+    HOLSequent( expansionSequent.antecedent.map( toDeep.apply( _, -1 ) ), expansionSequent.succedent.map( toDeep.apply( _, 1 ) ) ) // compiler wants the applys here
   }
 }
 
@@ -435,11 +378,11 @@ object toShallow {
     case ETStrongQuantifier( f, _, _ ) => f
   }
 
-  def apply( ep: ExpansionSequent ): FSequent = {
+  def apply( ep: ExpansionSequent ): HOLSequent = {
     val ant = ep.antecedent.map( et => toShallow( et ) )
     val succ = ep.succedent.map( et => toShallow( et ) )
 
-    FSequent( ant, succ )
+    HOLSequent( ant, succ )
   }
 }
 
@@ -539,9 +482,9 @@ object removeFromExpansionSequent {
    * @param seq: specifies formulas to remove; formulas in the antecedent/consequent will remove expansion trees in the antecedent/consequent of the expansion tree
    *             expansion trees are removed if Sh(e) \in seq (using default equality, which is alpha equality)
    */
-  def apply( etSeq: ExpansionSequent, seq: FSequent ): ExpansionSequent = {
-    val ante = etSeq.antecedent.filter( et => !seq._1.contains( toShallow( et ) ) )
-    val cons = etSeq.succedent.filter( et => !seq._2.contains( toShallow( et ) ) )
+  def apply( etSeq: ExpansionSequent, seq: HOLSequent ): ExpansionSequent = {
+    val ante = etSeq.antecedent.filterNot( et => seq.antecedent.contains( toShallow( et ) ) )
+    val cons = etSeq.succedent.filterNot( et => seq.succedent.contains( toShallow( et ) ) )
     new ExpansionSequent( ante, cons )
   }
 }
@@ -907,4 +850,76 @@ object replace {
       ETMerge( apply( what, by, l ), apply( what, by, r ) )
   }
 
+}
+
+object CleanStructure {
+  /**
+   * Shifts weakening nodes as far towards the root as possible.
+   *
+   * @param tree An ExpansionTree.
+   * @return
+   */
+  def apply( tree: ExpansionTree ): ExpansionTree =
+    tree match {
+      case ETAtom( _ ) | ETWeakening( _ ) => tree
+
+      case ETNeg( sub ) =>
+        val newSub = apply( sub )
+        newSub match {
+          case ETWeakening( _ ) => ETWeakening( toShallow( tree ) )
+          case _                => ETNeg( newSub )
+        }
+
+      case ETAnd( left, right ) =>
+        val newLeft = apply( left )
+        val newRight = apply( right )
+
+        ( newLeft, newRight ) match {
+          case ( ETWeakening( _ ), ETWeakening( _ ) ) =>
+            ETWeakening( toShallow( tree ) )
+          case _ => ETAnd( newLeft, newRight )
+        }
+
+      case ETOr( left, right ) =>
+        val newLeft = apply( left )
+        val newRight = apply( right )
+
+        ( newLeft, newRight ) match {
+          case ( ETWeakening( _ ), ETWeakening( _ ) ) =>
+            ETWeakening( toShallow( tree ) )
+          case _ => ETOr( newLeft, newRight )
+        }
+
+      case ETImp( left, right ) =>
+        val newLeft = apply( left )
+        val newRight = apply( right )
+
+        ( newLeft, newRight ) match {
+          case ( ETWeakening( _ ), ETWeakening( _ ) ) =>
+            ETWeakening( toShallow( tree ) )
+          case _ => ETImp( newLeft, newRight )
+        }
+
+      case ETStrongQuantifier( f, v, sub ) =>
+        val newSub = apply( sub )
+        newSub match {
+          case ETWeakening( _ ) => ETWeakening( f )
+          case _                => ETStrongQuantifier( f, v, newSub )
+        }
+
+      case ETSkolemQuantifier( f, v, sub ) =>
+        val newSub = apply( sub )
+        newSub match {
+          case ETWeakening( _ ) => ETWeakening( f )
+          case _                => ETSkolemQuantifier( f, v, newSub )
+        }
+
+      case ETWeakQuantifier( f, instances ) =>
+        val newInstances = instances map { p => ( apply( p._1 ), p._2 ) } filterNot { case ( ETWeakening( _ ), _ ) => true; case _ => false }
+
+        newInstances match {
+          case Seq() => ETWeakening( f )
+          case _     => merge( ETWeakQuantifier( f, newInstances ) )
+        }
+    }
 }

@@ -346,7 +346,7 @@ object CutIntroduction extends Logger {
 
     // As an efficiency improvement, we treat the non-quantified part of the end-sequent
     // separately (since it never needs to be instantiated).
-    val quantPart = FSequent(
+    val quantPart = HOLSequent(
       endSequent.antecedent.filter {
         case All( _ ) => true
         case _        => false
@@ -359,7 +359,7 @@ object CutIntroduction extends Logger {
 
     // In our setting, we work with a sequent instead of a formula F as in the paper.
     // The following sequent corresponds to that formula.
-    val F = FSequent( ehs.quant_l, ehs.quant_r )
+    val F = HOLSequent( ehs.quant_l, ehs.quant_r )
 
     // Define the U_i from the paper. Since our F is more general, also U is more general:
     // instead of a list of lists of terms (corresponding to the term instances of the quantifiers
@@ -396,7 +396,7 @@ object CutIntroduction extends Logger {
     trace( "A: " + A )
 
     // define the sequent corresponding to F[x \ U_i]
-    val FU = ( 0 to alphas.size ).map( i => FSequent(
+    val FU = ( 0 to alphas.size ).map( i => HOLSequent(
       ( F.antecedent zip Uleft( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) },
       ( F.succedent zip Uright( i ) ).flatMap { case ( f, terms ) => instantiate( f.asInstanceOf[FOLFormula], terms ) }
     ) )
@@ -426,11 +426,11 @@ object CutIntroduction extends Logger {
         } else // otherwise, compute interpolant I and set A_':= And( A_i, I )
         {
           trace( "does not fulfill the variable condition" )
-          val allf = FU( 0 ) compose ( new FSequent( ehs.prop_l, ehs.prop_r ) )
-          val posf = FU( i - 1 ) compose ( new FSequent( ehs.prop_l, ehs.prop_r ) )
+          val allf = FU( 0 ) compose ( new HOLSequent( ehs.prop_l, ehs.prop_r ) )
+          val posf = FU( i - 1 ) compose ( new HOLSequent( ehs.prop_l, ehs.prop_r ) )
           val negf = allf diff posf
-          val neg = negf compose ( new FSequent( cutImplications.take( i - 1 ), Nil ) )
-          val pos = posf compose ( new FSequent( AS( i - 1 ), acc ) )
+          val neg = negf compose ( new HOLSequent( cutImplications.take( i - 1 ), Nil ) )
+          val pos = posf compose ( new HOLSequent( AS( i - 1 ), acc ) )
           val interpolant = ExtractInterpolant( neg, pos, prover )
           val res = And( A( i - 1 ), interpolant )
           val res2 = simplify( res )
@@ -445,13 +445,13 @@ object CutIntroduction extends Logger {
     val AprimeS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiate( cutFormulasPrime( i ), s ) ) )
 
     // define L_1
-    val L1 = FSequent( ehs.antecedent ++ ehs.antecedent_alpha, Aprime ++ ehs.succedent ++ ehs.succedent_alpha )
+    val L1 = HOLSequent( ehs.antecedent ++ ehs.antecedent_alpha, Aprime ++ ehs.succedent ++ ehs.succedent_alpha )
 
     trace( "L1: " + L1 )
 
     // define the R_i
     val R = ( 0 to alphas.size - 1 ).map( i =>
-      FSequent( AprimeS( i ).toSeq ++ ehs.prop_l, Aprime.drop( i + 1 ) ++ ehs.prop_r ).compose(
+      HOLSequent( AprimeS( i ).toSeq ++ ehs.prop_l, Aprime.drop( i + 1 ) ++ ehs.prop_r ).compose(
         FU( i + 1 )
       ) )
 
@@ -484,8 +484,8 @@ object CutIntroduction extends Logger {
       trace( "right part ES: " + right.root )
       val cut = CutRule( left, right, cutFormulasPrime( i ) )
       val cont1 = ContractionMacroRule( cut, FU( i + 1 ), false )
-      val cont2 = ContractionMacroRule( cont1, FSequent( ehs.prop_l, ehs.prop_r ), false )
-      ContractionMacroRule( cont2, FSequent( Nil, Aprime.drop( i + 1 ) ), false )
+      val cont2 = ContractionMacroRule( cont1, HOLSequent( ehs.prop_l, ehs.prop_r ), false )
+      ContractionMacroRule( cont2, HOLSequent( Nil, Aprime.drop( i + 1 ) ), false )
     } )
 
     def finish( p: LKProof, fs: Seq[FOLFormula], instances: Seq[Seq[Seq[FOLTerm]]] ) =
@@ -508,7 +508,7 @@ object CutIntroduction extends Logger {
    * ----------------------------------------------------------------------------- \forall_r
    * \forall G, G[U_{i+1}] :- D[U_{i+1}], \exists D, (\forall x) A_{i}[x], ..., A_n
    */
-  private def buildLeftPart( i: Int, es: FSequent, A: Seq[FOLFormula], Uleft: Seq[Seq[Seq[Seq[FOLTerm]]]], Uright: Seq[Seq[Seq[Seq[FOLTerm]]]], alphas: Seq[Seq[FOLVar]], cf: FOLFormula, proof: LKProof ) =
+  private def buildLeftPart( i: Int, es: HOLSequent, A: Seq[FOLFormula], Uleft: Seq[Seq[Seq[Seq[FOLTerm]]]], Uright: Seq[Seq[Seq[Seq[FOLTerm]]]], alphas: Seq[Seq[FOLVar]], cf: FOLFormula, proof: LKProof ) =
     {
       trace( "in buildLeftPart" )
       trace( "Uleft( " + i + " ): " + Uleft( i ) )

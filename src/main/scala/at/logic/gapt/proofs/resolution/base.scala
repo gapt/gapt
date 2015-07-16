@@ -8,7 +8,7 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
-import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent, createContext => lkCreateContext }
+import at.logic.gapt.proofs.lk.base.{ createContext => lkCreateContext, Sequent, OccSequent, HOLSequent }
 import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
 import at.logic.gapt.expr.hol._
@@ -16,96 +16,84 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ TA, FunctionType }
 import at.logic.gapt.utils.ds.acyclicGraphs._
 
-trait ResolutionProof[V <: Sequent] extends AGraphProof[V]
+trait ResolutionProof[V <: OccSequent] extends AGraphProof[V]
 
-trait NullaryResolutionProof[V <: Sequent] extends NullaryAGraphProof[V] with ResolutionProof[V] with NullaryProof[V]
-trait UnaryResolutionProof[V <: Sequent] extends UnaryAGraphProof[V] with ResolutionProof[V] with UnaryProof[V] {
+trait NullaryResolutionProof[V <: OccSequent] extends NullaryAGraphProof[V] with ResolutionProof[V] with NullaryProof[V]
+trait UnaryResolutionProof[V <: OccSequent] extends UnaryAGraphProof[V] with ResolutionProof[V] with UnaryProof[V] {
   override def uProof = t.asInstanceOf[ResolutionProof[V]]
 }
-trait BinaryResolutionProof[V <: Sequent] extends BinaryAGraphProof[V] with ResolutionProof[V] with BinaryProof[V] {
+trait BinaryResolutionProof[V <: OccSequent] extends BinaryAGraphProof[V] with ResolutionProof[V] with BinaryProof[V] {
   override def uProof1 = t1.asInstanceOf[ResolutionProof[V]]
   override def uProof2 = t2.asInstanceOf[ResolutionProof[V]]
 }
 
-// FIXME: this should not be called 'CNF'. It does not describe a CNF but a clause.
-trait CNF extends Sequent {
-  require( ( antecedent ++ succedent ).forall( x =>
-    x.formula match {
-      case HOLAtom( _, _ ) => true;
-      case _               => false
-    } ) )
-}
-
-/**
- * the sequences are actually multisets, as can be seen from the equal method
- */
-// TODO: make a class out of this?? (That extends sequent, maybe) I did not manage to reuse it where I wanted... 
-// Too many castings and adaptations had to be done (seqs to sets or lists, Formulas to FOLFormulas, etc) :(
-trait FClause {
-  def neg: Seq[HOLFormula]
-  def pos: Seq[HOLFormula]
-  def multisetEquals( f: FClause, g: FClause ): Boolean =
-    f.neg.diff( g.neg ).isEmpty && f.pos.diff( g.pos ).isEmpty &&
-      g.neg.diff( f.neg ).isEmpty && g.pos.diff( f.pos ).isEmpty
-
-  override def equals( o: Any ) = o match {
-    case s: FClause => multisetEquals( this, s )
-    case _          => false
-  }
-  override def hashCode = neg.map( _.hashCode ).sum + 31 * pos.map( _.hashCode ).sum
-  override def toString = {
-    var sb = new scala.StringBuilder()
-    var first = true
-    for ( f <- neg ) {
-      if ( !first ) sb.append( ", " )
-      else first = false
-
-      sb.append( f )
-    }
-    sb.append( " :- " )
-    first = true
-    for ( f <- pos ) {
-      if ( !first ) sb.append( ", " )
-      else first = false
-      sb.append( f )
-
-    }
-    sb.toString
-  }
-
-  def isSubClauseOf( c: FClause ) = neg.diff( c.neg ).isEmpty && pos.diff( c.pos ).isEmpty
-
-  def toFSequent = FSequent( neg.map( _.asInstanceOf[HOLFormula] ), pos.map( _.asInstanceOf[HOLFormula] ) )
-
-  /*
-   compose constructs a sequent from two sequents. Corresponds to the 'o' operator in CERes
-   should be moved to FSequent once FSequent is called Sequent (see Issue 201)
-  */
-  def compose( other: FClause ) = new FClause { def neg = FClause.this.neg ++ other.neg; def pos = FClause.this.pos ++ other.pos }
-}
-
-// a default factory
-object FClause {
-  def apply( n: Seq[HOLFormula], p: Seq[HOLFormula] ): FClause = new FClause { def neg = n; def pos = p }
-  def unapply( fc: FClause ) = Some( ( fc.neg, fc.pos ) )
-}
-
-// the boolean represent isPositive as the negation is stripped from the literals
-class Clause( val literals: Seq[Tuple2[FormulaOccurrence, Boolean]] ) extends Sequent(
-  literals.filter( !_._2 ).map( _._1 ),
-  literals.filter( _._2 ).map( _._1 )
-) with CNF {
-  def negative = antecedent
-  def positive = succedent
-  def toFClause = FClause( negative.map( _.formula ), positive.map( _.formula ) )
-}
-
 object Clause {
-  def apply( literals: Seq[Tuple2[FormulaOccurrence, Boolean]] ) = new Clause( literals )
-  def apply( neg: Seq[FormulaOccurrence], pos: Seq[FormulaOccurrence] ) = new Clause( neg.map( ( _, false ) ) ++ pos.map( ( _, true ) ) )
-  def unapply( s: Sequent ) = s match {
-    case c: Clause => Some( c.negative, c.positive )
-    case _         => None
+  def apply[A]( negative: Seq[A], positive: Seq[A] ) = new Clause( negative, positive )
+  def apply[A]( elements: Seq[( A, Boolean )] ) = new Clause( elements.filterNot( _._2 ).map( _._1 ), elements.filter( _._2 ).map( _._1 ) )
+
+  def unapply[A]( clause: Clause[A] ) = Some( ( clause.negative, clause.positive ) )
+}
+
+object HOLClause {
+  def apply( negative: Seq[HOLAtom], positive: Seq[HOLAtom] ): HOLClause = {
+    Clause( negative, positive )
+  }
+
+  def apply( negative: Seq[HOLFormula], positive: Seq[HOLFormula] )( implicit dummyImplicit: DummyImplicit ): HOLClause = {
+    HOLClause( negative map { _.asInstanceOf[FOLAtom] }, positive map { _.asInstanceOf[FOLAtom] } )
+  }
+
+  def apply( elements: Seq[( HOLAtom, Boolean )] ): HOLClause = {
+    Clause( elements )
+  }
+
+  def unapply( clause: HOLClause ) = Some( clause.toTuple )
+}
+
+object FOLClause {
+  def apply( negative: Seq[FOLAtom], positive: Seq[FOLAtom] ): FOLClause = {
+    Clause( negative, positive )
+  }
+
+  def apply( negative: Seq[FOLFormula], positive: Seq[FOLFormula] )( implicit dummyImplicit: DummyImplicit ): FOLClause = {
+    FOLClause( negative map { _.asInstanceOf[FOLAtom] }, positive map { _.asInstanceOf[FOLAtom] } )
+  }
+
+  def apply( elements: Seq[( FOLAtom, Boolean )] ): FOLClause = {
+    Clause( elements )
+  }
+
+  def CNFtoFormula( cls: List[FOLClause] ): FOLFormula =
+    {
+      val nonEmptyClauses = cls.filter( c => c.negative.length > 0 || c.positive.length > 0 ).toList
+
+      if ( nonEmptyClauses.length == 0 ) { Top() }
+      else { And( nonEmptyClauses.map( c => Or( c.positive ++ c.negative.map( l => Neg( l ) ) ) ) ) }
+    }
+
+  //FIXME: Maybe find a better place for this
+  def NumberedCNFtoFormula( cls: List[Clause[( FOLAtom, Int )]] ) = CNFtoFormula( cls map { c => c map { p => p._1 } } )
+
+  def unapply( clause: FOLClause ) = Some( clause.toTuple )
+}
+
+object OccClause {
+  def apply( negative: Seq[FormulaOccurrence], positive: Seq[FormulaOccurrence] ): OccClause = {
+    require( ( negative ++ positive ).map( _.formula ) forall {
+      case HOLAtom( _ ) => true
+      case _            => false
+    } )
+
+    Clause( negative, positive )
+  }
+
+  def apply( elements: Seq[( FormulaOccurrence, Boolean )] ): OccClause = {
+    require( ( elements map { p => p._1.formula } ) forall {
+      case HOLAtom( _ ) => true
+      case _            => false
+    } )
+
+    Clause( elements )
   }
 }
 
@@ -119,13 +107,13 @@ trait AppliedSubstitution {
 case object InitialType extends NullaryRuleTypeA
 
 object InitialSequent {
-  def apply[V <: Sequent]( ant: Seq[HOLFormula], suc: Seq[HOLFormula] )( implicit factory: FOFactory ) = {
+  def apply[V <: OccSequent]( ant: Seq[HOLFormula], suc: Seq[HOLFormula] )( implicit factory: FOFactory ) = {
     val left: Seq[FormulaOccurrence] = ant.map( factory.createFormulaOccurrence( _, Nil ) )
     val right: Seq[FormulaOccurrence] = suc.map( factory.createFormulaOccurrence( _, Nil ) )
-    new LeafAGraph[Sequent]( Sequent( left, right ) ) with NullaryResolutionProof[V] { def rule = InitialType }
+    new LeafAGraph[OccSequent]( OccSequent( left, right ) ) with NullaryResolutionProof[V] { def rule = InitialType }
   }
 
-  def unapply[V <: Sequent]( proof: ResolutionProof[V] ) = if ( proof.rule == InitialType ) Some( ( proof.root ) ) else None
+  def unapply[V <: OccSequent]( proof: ResolutionProof[V] ) = if ( proof.rule == InitialType ) Some( ( proof.root ) ) else None
   // should be optimized as it was done now just to save coding time
 }
 
@@ -165,7 +153,7 @@ object computeSkolemTerm {
 }
 
 object initialSequents {
-  def apply[V <: Sequent]( p: ResolutionProof[V] ): Set[V] =
+  def apply[V <: OccSequent]( p: ResolutionProof[V] ): Set[V] =
     p.nodes.collect {
       case n: NullaryResolutionProof[V] if n.rule == InitialType => n.root
     }

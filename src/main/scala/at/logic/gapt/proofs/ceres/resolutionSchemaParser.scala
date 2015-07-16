@@ -3,7 +3,7 @@
 package at.logic.gapt.proofs.ceres.clauseSchema
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.{ Sequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ OccSequent, LKProof }
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema._

@@ -3,7 +3,7 @@ package at.logic.gapt.expr.fol
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 object reduceHolToFol extends reduceHolToFol
 /**
@@ -52,7 +52,7 @@ class reduceHolToFol {
    * @param fs an fsequent to convert
    * @return the reduced fsequent
    */
-  def apply( fs: FSequent ): FSequent = {
+  def apply( fs: HOLSequent ): HOLSequent = {
     val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
     val emptymap = Map[LambdaExpression, StringSymbol]()
     apply( fs, emptymap, counter )._1
@@ -64,7 +64,7 @@ class reduceHolToFol {
    * @param fs an fsequent to convert
    * @return the reduced fsequent
    */
-  def apply( fs: List[FSequent] ): List[FSequent] = {
+  def apply( fs: List[HOLSequent] ): List[HOLSequent] = {
     val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
     val emptymap = Map[LambdaExpression, StringSymbol]()
     apply( fs, emptymap, counter )._1
@@ -104,7 +104,7 @@ class reduceHolToFol {
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
-  def apply( s: FSequent, scope: Map[LambdaExpression, StringSymbol], id: { def nextId: Int } ): ( FSequent, Map[LambdaExpression, StringSymbol] ) = {
+  def apply( s: HOLSequent, scope: Map[LambdaExpression, StringSymbol], id: { def nextId: Int } ): ( HOLSequent, Map[LambdaExpression, StringSymbol] ) = {
     val ( scope1, ant ) = s.antecedent.foldLeft( ( scope, List[HOLFormula]() ) )( ( r, formula ) => {
       val ( scope_, f_ ) = replaceAbstractions( formula, r._1, id )
       ( scope_, f_.asInstanceOf[HOLFormula] :: r._2 )
@@ -114,7 +114,7 @@ class reduceHolToFol {
       ( scope_, f_.asInstanceOf[HOLFormula] :: r._2 )
     } )
 
-    ( FSequent( ant.reverse map apply_, succ.reverse map apply_ ), scope ++ scope2 )
+    ( HOLSequent( ant.reverse map apply_, succ.reverse map apply_ ), scope ++ scope2 )
   }
 
   /**
@@ -125,8 +125,8 @@ class reduceHolToFol {
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
-  def apply( fss: List[FSequent], scope: Map[LambdaExpression, StringSymbol], id: { def nextId: Int } ): ( List[FSequent], Map[LambdaExpression, StringSymbol] ) = {
-    fss.foldRight( ( List[FSequent](), scope ) )( ( fs, pair ) => {
+  def apply( fss: List[HOLSequent], scope: Map[LambdaExpression, StringSymbol], id: { def nextId: Int } ): ( List[HOLSequent], Map[LambdaExpression, StringSymbol] ) = {
+    fss.foldRight( ( List[HOLSequent](), scope ) )( ( fs, pair ) => {
       val ( list, scope ) = pair
       val ( fs_, scope_ ) = apply( fs, scope, id )
       ( fs_ :: list, scope_ )
@@ -247,15 +247,15 @@ object replaceAbstractions extends replaceAbstractions
 /**
  * Replace lambda-abstractions by constants.
  *
- * Each abstraction in an [[at.logic.gapt.proofs.lk.base.FSequent]] is replaced by a separate constant symbol; the used
+ * Each abstraction in an [[at.logic.gapt.proofs.lk.base.HOLSequent]] is replaced by a separate constant symbol; the used
  * constants are returned in a Map.
  */
 class replaceAbstractions {
   type ConstantsMap = Map[LambdaExpression, StringSymbol]
 
-  def apply( l: List[FSequent] ): ( ConstantsMap, List[FSequent] ) = {
+  def apply( l: List[HOLSequent] ): ( ConstantsMap, List[HOLSequent] ) = {
     val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
-    l.foldLeft( ( Map[LambdaExpression, StringSymbol](), List[FSequent]() ) )( ( rec, el ) => {
+    l.foldLeft( ( Map[LambdaExpression, StringSymbol](), List[HOLSequent]() ) )( ( rec, el ) => {
       val ( scope_, f ) = rec
       val ( nscope, rfs ) = replaceAbstractions( el, scope_, counter )
       ( nscope, rfs :: f )
@@ -263,7 +263,7 @@ class replaceAbstractions {
     } )
   }
 
-  def apply( f: FSequent, scope: ConstantsMap, id: { def nextId: Int } ): ( ConstantsMap, FSequent ) = {
+  def apply( f: HOLSequent, scope: ConstantsMap, id: { def nextId: Int } ): ( ConstantsMap, HOLSequent ) = {
     val ( scope1, ant ) = f.antecedent.foldLeft( ( scope, List[HOLFormula]() ) )( ( rec, formula ) => {
       val ( scope_, f ) = rec
       val ( nscope, nformula ) = replaceAbstractions( formula, scope_, id )
@@ -275,7 +275,7 @@ class replaceAbstractions {
       ( nscope, nformula.asInstanceOf[HOLFormula] :: f )
     } )
 
-    ( scope2, FSequent( ant.reverse, succ.reverse ) )
+    ( scope2, HOLSequent( ant.reverse, succ.reverse ) )
   }
 
   def apply( e: LambdaExpression ): LambdaExpression = {
@@ -343,7 +343,7 @@ object undoReplaceAbstractions extends undoReplaceAbstractions
 class undoReplaceAbstractions {
   import at.logic.gapt.expr.fol.replaceAbstractions.ConstantsMap
 
-  def apply( fs: FSequent, map: ConstantsMap ): FSequent = FSequent(
+  def apply( fs: HOLSequent, map: ConstantsMap ): HOLSequent = HOLSequent(
     fs.antecedent.map( apply( _, map ) ),
     fs.succedent.map( apply( _, map ) )
   )
@@ -420,7 +420,7 @@ object changeTypeIn {
   def apply( e: FOLTerm, tmap: TypeMap ): FOLTerm = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLTerm]
   def apply( e: HOLFormula, tmap: TypeMap ): HOLFormula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[HOLFormula]
   def apply( e: FOLFormula, tmap: TypeMap ): FOLFormula = apply( e.asInstanceOf[LambdaExpression], tmap ).asInstanceOf[FOLFormula]
-  def apply( fs: FSequent, tmap: TypeMap ): FSequent = FSequent(
+  def apply( fs: HOLSequent, tmap: TypeMap ): HOLSequent = HOLSequent(
     fs.antecedent.map( x => apply( x, tmap ) ),
     fs.succedent.map( x => apply( x, tmap ) )
   )

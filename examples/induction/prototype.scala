@@ -3,7 +3,7 @@ import at.logic.gapt.expr.fol.{Utils, FOLSubstitution}
 import at.logic.gapt.expr.hol.{instantiate, univclosure}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.formats.tip.TipParser
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
 import at.logic.gapt.provers.inductionProver._
 import org.apache.log4j.{Level, Logger}
@@ -11,14 +11,14 @@ import org.apache.log4j.{Level, Logger}
 import scala.io.Source
 
 // doesn't work: associativity instances are too complicated
-val assocES = FSequent(
+val assocES = HOLSequent(
   Seq("s(x+y) = x+s(y)", "x+0 = x")
     map (s => univclosure(parseFormula(s))),
   Seq(Eq(
     FOLFunction("+", FOLFunction("+", alpha, alpha), alpha),
     FOLFunction("+", alpha, FOLFunction("+", alpha, alpha)))))
 
-val commES = FSequent(
+val commES = HOLSequent(
   Seq("s(x+y) = x+s(y)", "s(x+y) = s(x)+y", "x+0 = x", "0+x = x")
     map (s => univclosure(parseFormula(s))),
   Seq(Eq(
@@ -26,7 +26,7 @@ val commES = FSequent(
     FOLFunction("+", alpha, FOLConst("k")))))
 
 // doesn't work: associativity instances are too complicated
-val factorialES = FSequent(
+val factorialES = HOLSequent(
   Seq(
     "f(0) = 1",
     "s(x)*f(x) = f(s(x))",
@@ -41,24 +41,24 @@ val factorialES = FSequent(
     FOLFunction("f", alpha))))
 
 // doesn't work: seems to require Sigma_1-induction
-val homES = FSequent(
+val homES = HOLSequent(
   Seq("f(s(x)) = s(f(x))",
     "0+x = x", "x+0 = x",
     "s(x)+y = s(x+y)", "x + s(y) = s(x+y)")
     map (s => univclosure(parseFormula(s))),
   Seq(Ex(FOLVar("x"), Eq(FOLFunction("+", FOLVar("x"), alpha), FOLFunction("f", alpha)))))
 
-val generalES = FSequent(
+val generalES = HOLSequent(
   Seq("P(0,x)", "P(x,f(y)) & P(x,g(y)) -> P(s(x),y)")
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("P", alpha, FOLConst("c"))))
 
-val generalDiffConclES = FSequent(
+val generalDiffConclES = HOLSequent(
   Seq("P(0,x)", "P(x,f(y)) & P(x,g(y)) -> P(s(x),y)", "P(x,y) -> Q(x)")
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("Q", alpha)))
 
-val linearES = FSequent(
+val linearES = HOLSequent(
   Seq("P(x) -> P(s(x))", "P(0)")
     map (s => univclosure(parseFormula(s))),
   Seq(FOLAtom("P", alpha)))
@@ -72,11 +72,11 @@ val linearES = FSequent(
 //   prod/prop_16.smt2
 lazy val tipES = TipParser.parse(Source.fromFile("/home/gebner/tip-benchs/benchmarks/isaplanner/prop_10.smt2").mkString) match {
   // the Imp-stripping is a workaround for issue 340
-  case FSequent(theory, Seq(All(v, Imp(_, concl)))) =>
-    FSequent(theory, Seq(Substitution(v -> alpha)(concl)))
+  case HOLSequent(theory, Seq(All(v, Imp(_, concl)))) =>
+    HOLSequent(theory, Seq(Substitution(v -> alpha)(concl)))
 }
 
-val sumES = FSequent(
+val sumES = HOLSequent(
   List(
     FOLAtom("P", List(alpha, FOLConst("0"))),
     univclosure(parseFormula("P(s(x),y) -> P(x,s(y))"))),
@@ -86,7 +86,7 @@ val sumES = FSequent(
 )
 
 // P(0,0), ∀x,y.(P(x,y) → P(s(x),y)), ∀x,y.(P(x,y) → P(x,s(y))) :- P(α,α)
-val squareES = FSequent(
+val squareES = HOLSequent(
   List(
     "P(0,0)",
     "P(x,y) -> P(s(x),y)",
@@ -98,7 +98,7 @@ val squareES = FSequent(
 )
 
 // ∀x.x+0 = x, ∀x,y. x+s(y) = s(x+y) :- α+s(α) = s(α) + α
-val commsxES = FSequent(
+val commsxES = HOLSequent(
   List(
     "x+0=x",
     "x+s(y)=s(x+y)"
@@ -109,7 +109,7 @@ val commsxES = FSequent(
 )
 
 // ∀x.x+0 = x, ∀x,y. x+s(y) = s(x+y) :- α+s(0) = s(0) + α
-val comm1ES = FSequent(
+val comm1ES = HOLSequent(
   List(
     "x+0=x",
     "x+s(y)=s(x+y)"
@@ -119,14 +119,14 @@ val comm1ES = FSequent(
   )
 )
 
-val assoc2ES = FSequent(
+val assoc2ES = HOLSequent(
   Seq("s(x+y) = x+s(y)", "x+0 = x")
     map (s => univclosure(parseFormula(s))),
   Seq(Eq(
     FOLFunction("+", FOLFunction("+", Utils.numeral(2), alpha), alpha),
     FOLFunction("+", Utils.numeral(2), FOLFunction("+", alpha, alpha)))))
 
-val evenES = FSequent(
+val evenES = HOLSequent(
   List(
     "x+s(y) = s(x+y)",
     "x+0 = x",
@@ -140,7 +140,7 @@ val evenES = FSequent(
 )
 
 // TODO: should be solvable with Q(y) <-> P(y) <-> -P(s(y))
-val twoEvenDefsES = FSequent(
+val twoEvenDefsES = HOLSequent(
   List(
     "P(0)", "-P(s(0))", "P(s(s(x))) <-> P(x)",
     "Q(0)", "Q(s(x)) <-> -Q(x)"
@@ -150,7 +150,7 @@ val twoEvenDefsES = FSequent(
   )
 )
 
-val twoPlusDefsES = FSequent(
+val twoPlusDefsES = HOLSequent(
   List(
     "x+s(y) = s(x+y)", "x+0 = x",
     "s(x)*y = s(x*y)", "0*x = x"

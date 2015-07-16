@@ -8,7 +8,7 @@ package at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.Sequent
+import at.logic.gapt.proofs.lk.base.OccSequent
 import at.logic.gapt.proofs.occurrences._
 import BetaReduction.betaNormalize
 
@@ -73,19 +73,19 @@ object LKskFOFactory extends FOFactory {
 
 // TODO: instead of l_antecedent, use override val antecedent
 // does not work right now because Set is not covariant!
-case class LabelledSequent(
+case class LabelledOccSequent(
   val l_antecedent: Seq[LabelledFormulaOccurrence],
   val l_succedent:  Seq[LabelledFormulaOccurrence]
 )
-    extends Sequent( l_antecedent, l_succedent ) {
+    extends OccSequent( l_antecedent, l_succedent ) {
   override def toString: String = l_antecedent.mkString( ", " ) + " :- " + l_succedent.mkString( ", " )
 
-  def compose( that: LabelledSequent ): LabelledSequent =
-    LabelledSequent( this.l_antecedent ++ that.l_antecedent, this.l_succedent ++ that.l_succedent )
+  def compose( that: LabelledOccSequent ): LabelledOccSequent =
+    LabelledOccSequent( this.l_antecedent ++ that.l_antecedent, this.l_succedent ++ that.l_succedent )
 }
 
 object sequentToLabelledSequent {
-  def apply( s: Sequent ) = new LabelledSequent(
+  def apply( s: OccSequent ) = new LabelledOccSequent(
     s.antecedent.asInstanceOf[Seq[LabelledFormulaOccurrence]],
     s.succedent.asInstanceOf[Seq[LabelledFormulaOccurrence]]
   )

@@ -12,8 +12,8 @@ trait RobinsonProofWithInstance extends RobinsonResolutionProof
 
 object Instance {
   def apply( p: RobinsonResolutionProof, sub: FOLSubstitution ): RobinsonResolutionProof = {
-    val newCl = Clause( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
-    new UnaryAGraph[Clause]( newCl, p ) with UnaryResolutionProof[Clause] with AppliedSubstitution with RobinsonProofWithInstance {
+    val newCl = OccClause( createContext( p.root.antecedent, sub ), createContext( p.root.succedent, sub ) )
+    new UnaryAGraph[OccClause]( newCl, p ) with UnaryResolutionProof[OccClause] with AppliedSubstitution with RobinsonProofWithInstance {
       def rule = InstanceType
       def substitution = sub
       override def toString = "Inst(" + root.toString + ", " + p.toString + ", " + substitution.toString + ")"
@@ -22,8 +22,8 @@ object Instance {
     }
   }
 
-  def unapply( proof: ResolutionProof[Clause] with AppliedSubstitution ) = if ( proof.rule == InstanceType ) {
-    val pr = proof.asInstanceOf[UnaryResolutionProof[Clause] with AppliedSubstitution]
+  def unapply( proof: ResolutionProof[OccClause] with AppliedSubstitution ) = if ( proof.rule == InstanceType ) {
+    val pr = proof.asInstanceOf[UnaryResolutionProof[OccClause] with AppliedSubstitution]
     Some( ( pr.root, pr.uProof.asInstanceOf[RobinsonResolutionProof], pr.substitution.asInstanceOf[FOLSubstitution] ) )
   } else None
 }

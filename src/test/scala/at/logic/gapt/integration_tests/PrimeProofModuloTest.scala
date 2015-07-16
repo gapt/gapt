@@ -72,7 +72,7 @@ class PrimeProofTest extends Specification {
       // convert struct DAG to tree
       structToExpressionTree( s )
 
-      val prf = deleteTautologies(proofProfile(s, proof_sk).map( _.toFSequent ))
+      val prf = deleteTautologies(proofProfile(s, proof_sk).map( _.toHOLSequent ))
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter("target" + separator + "prime1-" + n + "-prf.tptp")
@@ -81,7 +81,7 @@ class PrimeProofTest extends Specification {
 
 
 
-      val cs_hol = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
+      val cs_hol = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent ) )
 
       def is_folsequent(fs : FSequent) = fs._1.forall(_.isInstanceOf[FOLFormula]) && fs._2.forall(_.isInstanceOf[FOLFormula])
 
@@ -140,7 +140,7 @@ class PrimeProofTest extends Specification {
       // convert struct DAG to tree
       structToExpressionTree( s )
 
-      val prf = deleteTautologies(proofProfile(s, proof_sk).map( _.toFSequent ))
+      val prf = deleteTautologies(proofProfile(s, proof_sk).map( _.toHOLSequent ))
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter("target" + separator + "euclid-" + n + "-prf.tptp")
@@ -149,7 +149,7 @@ class PrimeProofTest extends Specification {
 
 
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter("target" + separator + "euclid-" + n + "-cs.tptp")
       writer.write( tptp )

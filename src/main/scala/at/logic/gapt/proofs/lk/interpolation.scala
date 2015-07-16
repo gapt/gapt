@@ -18,7 +18,7 @@ object ExtractInterpolant {
    * extract an interpolant I such that \Gamma |- \Delta, I and I, \Pi |- \Lambda
    * are valid.
    */
-  def apply( negative: FSequent, positive: FSequent, prover: Prover ): FOLFormula = {
+  def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): FOLFormula = {
     val seq = negative compose positive
     val p = prover.getLKProof( seq ).get
     val es = p.root

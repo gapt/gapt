@@ -625,9 +625,9 @@ object cutformulaExtraction {
    */
   def apply( p: LKProof ) = getCutFormulas( p )
 
-  private def getCutFormulas( p: LKProof ): List[Sequent] = {
+  private def getCutFormulas( p: LKProof ): List[OccSequent] = {
     getCutsAsProofs( p ) map ( ( x: LKProof ) =>
-      x match { case CutRule( _, _, _, aux, _ ) => Sequent( Nil, List( aux ) ) } )
+      x match { case CutRule( _, _, _, aux, _ ) => OccSequent( Nil, List( aux ) ) } )
   }
 }
 

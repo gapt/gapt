@@ -22,7 +22,7 @@ class LkExporterTest extends Specification {
 
   "LKExporter" should {
     "export correctly a sequent A, B :- C, D" in {
-      trim( exporter.exportSequent( FSequent( List( "A", "B" ) map ( pc ), List( "C", "D" ) map ( pc ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportSequent( HOLSequent( List( "A", "B" ) map ( pc ), List( "C", "D" ) map ( pc ) ) ) ) must beEqualTo( trim(
         <sequent>
           <formulalist>
             <constantatomformula symbol="A"/>
@@ -38,8 +38,8 @@ class LkExporterTest extends Specification {
 
     "export correctly a sequent list {A1, B1 :- C1, D1, A2, B2 :- C2, D2}" in {
       trim( exporter.exportSequentList( "testlist", List(
-        FSequent( List( "A1", "B1" ) map ( pc ), List( "C1", "D1" ) map ( pc ) ),
-        FSequent( List( "A2", "B2" ) map ( pc ), List( "C2", "D2" ) map ( pc ) )
+        HOLSequent( List( "A1", "B1" ) map ( pc ), List( "C1", "D1" ) map ( pc ) ),
+        HOLSequent( List( "A2", "B2" ) map ( pc ), List( "C2", "D2" ) map ( pc ) )
       ) ) ) must beEqualTo( trim(
         <sequentlist symbol="testlist">
           <sequent>

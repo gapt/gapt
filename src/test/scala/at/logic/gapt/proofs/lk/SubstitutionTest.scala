@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import org.specs2.mutable._
 
 class SubstitutionTest extends Specification {
@@ -41,16 +41,16 @@ class SubstitutionTest extends Specification {
     "apply correctly to a simple proof" in {
       val p_s = applySubstitution( proof1.proof, proof1.subst )
       val pfa = HOLAtom( proof1.p, proof1.fa :: Nil )
-      val new_seq = FSequent( pfa :: Nil, pfa :: Nil )
-      val seq = p_s._1.root.toFSequent
+      val new_seq = HOLSequent( pfa :: Nil, pfa :: Nil )
+      val seq = p_s._1.root.toHOLSequent
       seq must beEqualTo( new_seq )
     }
 
     "apply correctly to a proof with quantifiers" in {
       val p_s = applySubstitution( proof2.proof, proof2.subst )
       val pfa = All( proof2.x, HOLAtom( proof2.p, List( proof2.x, proof2.fa ) ) )
-      val new_seq = FSequent( pfa :: Nil, pfa :: Nil )
-      val seq = p_s._1.root.toFSequent
+      val new_seq = HOLSequent( pfa :: Nil, pfa :: Nil )
+      val seq = p_s._1.root.toHOLSequent
       seq must beEqualTo( new_seq )
     }
 

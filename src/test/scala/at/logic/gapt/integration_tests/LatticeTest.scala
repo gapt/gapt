@@ -13,6 +13,7 @@ import at.logic.gapt.proofs.ceres.projections.Projections
 import at.logic.gapt.proofs.ceres.struct.StructCreators
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.resolution.HOLClause
 import at.logic.gapt.provers.prover9._
 import java.io.File.separator
 import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
@@ -22,7 +23,7 @@ import org.specs2.mutable._
 class LatticeTest extends Specification {
   def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
 
-  def sequentToString( s: Sequent ) = {
+  def sequentToString( s: OccSequent ) = {
     var ret = ""
     s.antecedent.foreach( formula => ret += formula.toString + ", " )
     ret += " :- "
@@ -68,14 +69,14 @@ class LatticeTest extends Specification {
       val proof_sk = skolemize( proof )
       val s = StructCreators.extract( proof_sk )
 
-      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toFSequent ) )
+      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toHOLSequent ) ).asInstanceOf[List[HOLClause]]
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter( "target" + separator + "lattice-prf.tptp" )
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent ) ).asInstanceOf[List[HOLClause]]
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter( "target" + separator + "lattice-cs.tptp" )
       writer.write( tptp )

@@ -4,7 +4,7 @@ package at.logic.gapt.proofs.expansionTrees
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.utils.ds.trees._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import Utility._
 
 /**
@@ -328,128 +328,6 @@ case class METWeakening( formula: HOLFormula ) extends MultiExpansionTree with T
   override def numberOfQuantifiers = 0
 }
 
-/**
- * Implements sequents of MultiExpansionTrees, analogous to [[at.logic.gapt.proofs.expansionTrees.ExpansionSequent]]s.
- *
- * @param antecedent The antecedent of the sequent.
- * @param succedent The succedent of the sequent.
- */
-class MultiExpansionSequent( val antecedent: Seq[MultiExpansionTree], val succedent: Seq[MultiExpansionTree] ) {
-  def toTuple: ( Seq[MultiExpansionTree], Seq[MultiExpansionTree] ) = {
-    ( antecedent, succedent )
-  }
-
-  /**
-   * Maps a function over the sequent.
-   *
-   * @param f A function of type [[at.logic.gapt.proofs.expansionTrees.MultiExpansionTree]] → [[at.logic.gapt.proofs.expansionTrees.MultiExpansionTree]]
-   * @return The result of the map.
-   */
-  def map( f: MultiExpansionTree => MultiExpansionTree ): MultiExpansionSequent = {
-    new MultiExpansionSequent( antecedent.map( f ), succedent.map( f ) )
-  }
-
-  /**
-   * Maps a function over the sequent.
-   *
-   * @param f A function of type [[at.logic.gapt.proofs.expansionTrees.MultiExpansionTree]] → [[at.logic.gapt.expr.hol.HOLFormula]]
-   * @return The result of the map.
-   */
-  def map( f: MultiExpansionTree => HOLFormula ): FSequent = {
-    new FSequent( antecedent.map( f ), succedent.map( f ) )
-  }
-
-  /**
-   * Adds an expansion tree to the antecedent of the sequent.
-   *
-   * @param et The expansion tree to be added.
-   * @return The extended sequent.
-   */
-  def addToAntecedent( et: MultiExpansionTree ): MultiExpansionSequent = {
-    new MultiExpansionSequent( et +: antecedent, succedent )
-  }
-
-  /**
-   * Adds an expansion tree to the succedent of the sequent.
-   *
-   * @param et The expansion tree to be added.
-   * @return The extended sequent.
-   */
-  def addToSuccedent( et: MultiExpansionTree ): MultiExpansionSequent = {
-    new MultiExpansionSequent( antecedent, et +: succedent )
-  }
-
-  /**
-   * Removes an expansion tree from the antecedent of the sequent.
-   *
-   * @param et The expansion tree to be removed.
-   * @return The reduced sequent.
-   */
-  def removeFromAntecedent( et: MultiExpansionTree ): MultiExpansionSequent = {
-    require( antecedent.exists( _ eq et ) )
-    new MultiExpansionSequent( antecedent.filterNot( _ eq et ), succedent )
-  }
-
-  /**
-   * Removes an expansion tree from the succedent of the sequent.
-   *
-   * @param et The expansion tree to be removed.
-   * @return The reduced sequent.
-   */
-  def removeFromSuccedent( et: MultiExpansionTree ): MultiExpansionSequent = {
-    require( succedent.exists( _ eq et ) )
-    new MultiExpansionSequent( antecedent, succedent.filterNot( _ eq et ) )
-  }
-
-  /**
-   * Replaces an expansion in the antecedent.
-   *
-   * @param from The expansion tree to be replaced.
-   * @param to The replacement tree.
-   * @return The modified sequent.
-   */
-  def replaceInAntecedent( from: MultiExpansionTree, to: MultiExpansionTree ): MultiExpansionSequent = {
-    require( antecedent.exists( _ eq from ) )
-    new MultiExpansionSequent( antecedent.map( et => if ( et eq from ) to else et ), succedent )
-  }
-
-  /**
-   * Replaces an expansion in the succedent.
-   *
-   * @param from The expansion tree to be replaced.
-   * @param to The replacement tree.
-   * @return The modified sequent.
-   */
-  def replaceInSuccedent( from: MultiExpansionTree, to: MultiExpansionTree ): MultiExpansionSequent = {
-    require( succedent.exists( _ eq from ) )
-    new MultiExpansionSequent( antecedent, succedent.map( et => if ( et eq from ) to else et ) )
-  }
-
-  override def toString: String = "MultiExpansionSequent(" + antecedent + ", " + succedent + ")"
-
-  def canEqual( other: Any ): Boolean = other.isInstanceOf[MultiExpansionSequent]
-
-  override def equals( other: Any ): Boolean = other match {
-    case that: MultiExpansionSequent =>
-      ( that canEqual this ) &&
-        antecedent == that.antecedent &&
-        succedent == that.succedent
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq( antecedent, succedent )
-    state.map( _.hashCode() ).foldLeft( 0 )( ( a, b ) => 31 * a + b )
-  }
-
-  def toShallow = map( ( t: MultiExpansionTree ) => t.toShallow )
-  def toDeep: FSequent = {
-    val newAnt = antecedent.map( t => t.toDeep( -1 ) )
-    val newSuc = succedent.map( t => t.toDeep( 1 ) )
-
-    FSequent( newAnt, newSuc )
-  }
-}
 object MultiExpansionSequent {
   def apply( antecedent: Seq[MultiExpansionTree], succedent: Seq[MultiExpansionTree] ) = new MultiExpansionSequent( antecedent, succedent )
   def unapply( etSeq: MultiExpansionSequent ) = Some( etSeq.toTuple )

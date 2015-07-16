@@ -9,7 +9,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base.{ beSyntacticMultisetEqual, LKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ beSyntacticMultisetEqual, LKProof, OccSequent }
 import org.specs2.mutable._
 
 class SkolemizationTest extends Specification {
@@ -79,7 +79,7 @@ class SkolemizationTest extends Specification {
       val proof_sk = ForallLeftRule( ax_sk, Ps0, allxPx, cs5 )
 
       val res = skolemize( proof )
-      res.root.toFSequent must beEqualTo( proof_sk.root.toFSequent )
+      res.root.toHOLSequent must beEqualTo( proof_sk.root.toHOLSequent )
     }
 
     "work for a cut-free proof (1)" in {

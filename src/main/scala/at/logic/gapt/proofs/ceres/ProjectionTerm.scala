@@ -6,7 +6,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.utils.ds.Multisets
@@ -35,9 +35,9 @@ object pTimes {
   }
 }
 
-class pPlus( val seq1: Sequent, val seq2: Sequent, val left: ProjectionTerm, val right: ProjectionTerm, val w1: Sequent, val w2: Sequent ) extends ProjectionTerm
+class pPlus( val seq1: OccSequent, val seq2: OccSequent, val left: ProjectionTerm, val right: ProjectionTerm, val w1: OccSequent, val w2: OccSequent ) extends ProjectionTerm
 object pPlus {
-  def apply( seq1: Sequent, seq2: Sequent, left: ProjectionTerm, right: ProjectionTerm, w1: Sequent, w2: Sequent ): pPlus = {
+  def apply( seq1: OccSequent, seq2: OccSequent, left: ProjectionTerm, right: ProjectionTerm, w1: OccSequent, w2: OccSequent ): pPlus = {
     new pPlus( seq1, seq2, left, right, w1, w2 )
   }
   def unapply( term: ProjectionTerm ) = term match {
@@ -57,9 +57,9 @@ object pUnary {
   }
 }
 
-class pProofLinkTerm( val seq: Sequent, val omega: Set[FormulaOccurrence], val proof_name: String, val index: IntegerTerm, val ccanc: Set[FormulaOccurrence] ) extends ProjectionTerm
+class pProofLinkTerm( val seq: OccSequent, val omega: Set[FormulaOccurrence], val proof_name: String, val index: IntegerTerm, val ccanc: Set[FormulaOccurrence] ) extends ProjectionTerm
 object pProofLinkTerm {
-  def apply( seq: Sequent, omega: Set[FormulaOccurrence], proof_name: String, index: IntegerTerm, ccanc: Set[FormulaOccurrence] ) = {
+  def apply( seq: OccSequent, omega: Set[FormulaOccurrence], proof_name: String, index: IntegerTerm, ccanc: Set[FormulaOccurrence] ) = {
     new pProofLinkTerm( seq, omega, proof_name, index, ccanc )
 
   }
@@ -69,9 +69,9 @@ object pProofLinkTerm {
   }
 }
 
-class pAxiomTerm( val seq: Sequent ) extends ProjectionTerm
+class pAxiomTerm( val seq: OccSequent ) extends ProjectionTerm
 object pAxiomTerm {
-  def apply( seq: Sequent ) = {
+  def apply( seq: OccSequent ) = {
     new pAxiomTerm( seq )
   }
   def unapply( term: ProjectionTerm ) = term match {
@@ -214,11 +214,11 @@ object ProjectionTermCreators {
       }
       case CutRule( p1, p2, _, a1, a2 ) => {
         val omega_ancs = getAncestors( omega )
-        val w1 = Sequent(
+        val w1 = OccSequent(
           p2.root.antecedent.filter( fo => fo != a2 && !omega_ancs.contains( fo ) ),
           p2.root.succedent.filter( fo => !omega_ancs.contains( fo ) )
         )
-        val w2 = Sequent(
+        val w2 = OccSequent(
           p1.root.antecedent.filter( fo => !omega_ancs.contains( fo ) ),
           p1.root.succedent.filter( fo => fo != a1 && !omega_ancs.contains( fo ) )
         )
@@ -227,11 +227,11 @@ object ProjectionTermCreators {
       case OrLeftRule( p1, p2, _, a1, a2, m ) => {
         val omega_ancs = getAncestors( omega )
         if ( omega_ancs.contains( m ) || cut_ancs.contains( m ) ) {
-          val w1 = Sequent(
+          val w1 = OccSequent(
             p2.root.antecedent.filter( fo => fo != a2 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) ),
             p2.root.succedent.filter( fo => fo != a2 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) )
           )
-          val w2 = Sequent(
+          val w2 = OccSequent(
             p1.root.antecedent.filter( fo => fo != a1 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) ),
             p1.root.succedent.filter( fo => fo != a1 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) )
           )
@@ -242,11 +242,11 @@ object ProjectionTermCreators {
       case AndRightRule( p1, p2, _, a1, a2, m ) => {
         val omega_ancs = getAncestors( omega )
         if ( omega_ancs.contains( m ) || cut_ancs.contains( m ) ) {
-          val w1 = Sequent(
+          val w1 = OccSequent(
             p2.root.antecedent.filter( fo => fo != a2 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) ),
             p2.root.succedent.filter( fo => fo != a2 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) )
           )
-          val w2 = Sequent(
+          val w2 = OccSequent(
             p1.root.antecedent.filter( fo => fo != a1 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) ),
             p1.root.succedent.filter( fo => fo != a1 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) )
           )
@@ -299,11 +299,11 @@ object ProjectionTermCreators {
       case ImpLeftRule( p1, p2, _, a1, a2, m ) => {
         val omega_ancs = getAncestors( omega )
         if ( omega_ancs.contains( m ) || cut_ancs.contains( m ) ) {
-          val w1 = Sequent(
+          val w1 = OccSequent(
             p2.root.antecedent.filter( fo => fo != a2 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) ),
             p2.root.succedent.filter( fo => fo != a2 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) )
           )
-          val w2 = Sequent(
+          val w2 = OccSequent(
             p1.root.antecedent.filter( fo => fo != a1 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) ),
             p1.root.succedent.filter( fo => fo != a1 && !omega_ancs.contains( fo ) && !cut_ancs.contains( fo ) )
           )
@@ -471,7 +471,7 @@ object PStructToExpressionTree {
     def toCode = "PlusSymbol"
   }
 
-  case class PWeakSymbol( val seq: Sequent ) extends SymbolA {
+  case class PWeakSymbol( val seq: OccSequent ) extends SymbolA {
     def unique = "WeakSymbol"
     override def toString = "w^{" + seq.toString + "}"
     def toCode = "WeakSymbol"
@@ -494,7 +494,7 @@ object PStructToExpressionTree {
   object PPlusC extends MonomorphicLogicalC( PPlusSymbol.toString, Type( "( o -> (o -> o) )" ) )
 
   object PWeakC {
-    def apply( seq: Sequent ) = Const( PWeakSymbol( seq ), To -> To )
+    def apply( seq: OccSequent ) = Const( PWeakSymbol( seq ), To -> To )
 
     def unapply( e: LambdaExpression ) = e match {
       case c: Const => c.sym match {
@@ -584,7 +584,7 @@ object GroundingProjectionTerm {
         val wsucc1 = plus.w1.succedent.map( x => { x.factory.createFormulaOccurrence( subst( x.formula.asInstanceOf[SchemaFormula] ), Nil ) } )
         val want2 = plus.w2.antecedent.map( x => { x.factory.createFormulaOccurrence( subst( x.formula.asInstanceOf[SchemaFormula] ), Nil ) } )
         val wsucc2 = plus.w2.succedent.map( x => { x.factory.createFormulaOccurrence( subst( x.formula.asInstanceOf[SchemaFormula] ), Nil ) } )
-        pPlus( Sequent( ant1, succ1 ), Sequent( ant2, succ2 ), left, right, Sequent( want1, wsucc1 ), Sequent( want2, wsucc2 ) )
+        pPlus( OccSequent( ant1, succ1 ), OccSequent( ant2, succ2 ), left, right, OccSequent( want1, wsucc1 ), OccSequent( want2, wsucc2 ) )
       }
       case unary: pUnary => {
         pUnary( unary.rho, GroundingProjectionTerm( unary.upper, subst ), unary.auxl.map( f => subst( f.asInstanceOf[SchemaFormula] ) ) )
@@ -596,7 +596,7 @@ object GroundingProjectionTerm {
       case ax: pAxiomTerm => {
         val ant = ax.seq.antecedent.map( x => { x.factory.createFormulaOccurrence( subst( x.formula.asInstanceOf[SchemaFormula] ), Nil ) } )
         val succ = ax.seq.succedent.map( x => { x.factory.createFormulaOccurrence( subst( x.formula.asInstanceOf[SchemaFormula] ), Nil ) } )
-        pAxiomTerm( Sequent( ant, succ ) )
+        pAxiomTerm( OccSequent( ant, succ ) )
       }
     }
   }
@@ -626,16 +626,16 @@ object UnfoldProjectionTerm {
   }
 
   // Maybe this function can be used also in other places???
-  def getEndSequent( proof: String, number: Int ): FSequent = {
+  def getEndSequent( proof: String, number: Int ): HOLSequent = {
     val k = IntVar( "k" )
     val seq = SchemaProofDB.get( proof ).seq
     val new_map = Map.empty[Var, IntegerTerm] + Tuple2( k, toIntegerTerm( number ) )
     val sub = SchemaSubstitution( new_map )
-    FSequent( seq.antecedent.map( f => unfoldSFormula( sub( f.asInstanceOf[SchemaFormula] ) ) ), seq.succedent.map( f => unfoldSFormula( sub( f.asInstanceOf[SchemaFormula] ) ) ) )
+    HOLSequent( seq.antecedent.map( f => unfoldSFormula( sub( f.asInstanceOf[SchemaFormula] ) ) ), seq.succedent.map( f => unfoldSFormula( sub( f.asInstanceOf[SchemaFormula] ) ) ) )
   }
 
-  def filterProjectionSet( proofs: List[LKProof], end_seq: FSequent ): List[LKProof] = proofs.filter( proof => {
-    val proj_end_seq = proof.root.toFSequent
+  def filterProjectionSet( proofs: List[LKProof], end_seq: HOLSequent ): List[LKProof] = proofs.filter( proof => {
+    val proj_end_seq = proof.root.toHOLSequent
     proj_end_seq.antecedent.diff( end_seq.antecedent ).intersect( proj_end_seq.succedent.diff( end_seq.succedent ) ).isEmpty
   } )
 
@@ -703,7 +703,7 @@ object UnfoldProjectionTerm {
 
 //creates a set of proof projections from an unfolded (normalized) projection term
 object ProjectionTermToSetOfProofs {
-  private def WeakLeftRight( p: LKProof, seq: Sequent ): LKProof = {
+  private def WeakLeftRight( p: LKProof, seq: OccSequent ): LKProof = {
     val p1 = seq.antecedent.foldLeft( p )( ( res, fo ) => WeakeningLeftRule( res, fo.formula ) )
     seq.succedent.foldLeft( p1 )( ( res, fo ) => WeakeningRightRule( res, fo.formula ) )
   }
@@ -776,8 +776,8 @@ object ProjectionTermToSetOfProofs {
 
 //removes the ↠:l and ↠:r inferences, i.e. normalizes the formulas in term level
 object RemoveArrowRules {
-  private def NormalizeSequent( seq: Sequent ): Sequent = {
-    Sequent( seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( unfoldSFormula( fo.formula.asInstanceOf[SchemaFormula] ), Nil ) ), seq.succedent.map( fo => fo.factory.createFormulaOccurrence( unfoldSFormula( fo.formula.asInstanceOf[SchemaFormula] ), Nil ) ) )
+  private def NormalizeSequent( seq: OccSequent ): OccSequent = {
+    OccSequent( seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( unfoldSFormula( fo.formula.asInstanceOf[SchemaFormula] ), Nil ) ), seq.succedent.map( fo => fo.factory.createFormulaOccurrence( unfoldSFormula( fo.formula.asInstanceOf[SchemaFormula] ), Nil ) ) )
   }
   def apply( t: ProjectionTerm ): ProjectionTerm = {
     t match {

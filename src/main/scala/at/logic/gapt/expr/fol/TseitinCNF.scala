@@ -11,7 +11,7 @@ object TseitinCNF {
    * @param f formula which should be transformed
    * @return CNF satisfiability-equivalent to f
    */
-  def apply( f: FOLFormula ): List[FClause] = {
+  def apply( f: FOLFormula ): List[HOLClause] = {
     val tseitin = new TseitinCNF()
 
     simplify( toNNF( f ) ) match {
@@ -46,12 +46,12 @@ class TseitinCNF {
     case _                  => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 
-  def apply( f: FOLFormula ): List[FClause] = {
+  def apply( f: FOLFormula ): List[HOLClause] = {
     fsyms = getAtomSymbols( f ) toSet
 
     // processFormula and transform it via Tseitin-Transformation
     val pf = processFormula( f )
-    pf._2 :+ FClause( List(), List( pf._1 ) )
+    pf._2 :+ HOLClause( List(), List( pf._1 ) )
   }
 
   /**
@@ -89,22 +89,22 @@ class TseitinCNF {
    * @return a Tuple2, where 1st is the prop. variable representing f and 2nd is a clause
    *         containing all the equivalences required for the representation of f by 1st.
    */
-  def processFormula( f: FOLFormula ): Tuple2[FOLFormula, List[FClause]] = f match {
+  def processFormula( f: FOLFormula ): Tuple2[FOLFormula, List[HOLClause]] = f match {
     case FOLAtom( _, _ ) => ( f, List() )
 
     case Top() =>
       val x = addIfNotExists( f )
-      ( x, List( FClause( List(), List( x ) ) ) )
+      ( x, List( HOLClause( List(), List( x ) ) ) )
     case Bottom() =>
       val x = addIfNotExists( f )
-      ( x, List( FClause( List( x ), List() ) ) )
+      ( x, List( HOLClause( List( x ), List() ) ) )
 
     case Neg( f2 ) =>
       val pf = processFormula( f2 )
       val x = addIfNotExists( f )
       val x1 = pf._1
-      val c1 = FClause( List( x, x1 ), List() )
-      val c2 = FClause( List(), List( x, x1 ) )
+      val c1 = HOLClause( List( x, x1 ), List() )
+      val c2 = HOLClause( List(), List( x, x1 ) )
       ( x, pf._2 ++ List( c1, c2 ) )
 
     case And( f1, f2 ) =>
@@ -113,9 +113,9 @@ class TseitinCNF {
       val x = addIfNotExists( f )
       val x1 = pf1._1
       val x2 = pf2._1
-      val c1 = FClause( List( x ), List( x1 ) )
-      val c2 = FClause( List( x ), List( x2 ) )
-      val c3 = FClause( List( x1, x2 ), List( x ) )
+      val c1 = HOLClause( List( x ), List( x1 ) )
+      val c2 = HOLClause( List( x ), List( x2 ) )
+      val c3 = HOLClause( List( x1, x2 ), List( x ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
     case Or( f1, f2 ) =>
@@ -124,9 +124,9 @@ class TseitinCNF {
       val x = addIfNotExists( f )
       val x1 = pf1._1
       val x2 = pf2._1
-      val c1 = FClause( List( x1 ), List( x ) )
-      val c2 = FClause( List( x2 ), List( x ) )
-      val c3 = FClause( List( x ), List( x1, x2 ) )
+      val c1 = HOLClause( List( x1 ), List( x ) )
+      val c2 = HOLClause( List( x2 ), List( x ) )
+      val c3 = HOLClause( List( x ), List( x1, x2 ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
     case Imp( f1, f2 ) =>
@@ -135,9 +135,9 @@ class TseitinCNF {
       val x = addIfNotExists( f )
       val x1 = pf1._1
       val x2 = pf2._1
-      val c1 = FClause( List(), List( x, x1 ) )
-      val c2 = FClause( List( x2 ), List( x ) )
-      val c3 = FClause( List( x, x1 ), List( x2 ) )
+      val c1 = HOLClause( List(), List( x, x1 ) )
+      val c2 = HOLClause( List( x2 ), List( x ) )
+      val c3 = HOLClause( List( x, x1 ), List( x2 ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
     case _ => throw new IllegalArgumentException( "Formula not supported in Tseitin transformation: " + f.toString )

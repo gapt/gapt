@@ -8,7 +8,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.expr.hol.toPrettyString
-import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, OccSequent }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.ceres.struct.ClauseSetSymbol
@@ -27,10 +27,10 @@ import at.logic.gapt.expr.Tindex
 object DrawSequent {
   implicit val factory = defaultFormulaOccurrenceFactory
   implicit def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Seq[FormulaOccurrence]() )
-  implicit def fseq2seq( s: FSequent ) = Sequent( s._1 map fo2occ, s._2 map fo2occ )
+  implicit def fseq2seq( s: HOLSequent ) = s map fo2occ
 
   //used by DrawClList
-  def apply( seq: Sequent, ft: Font, str: String ): FlowPanel = if ( !str.isEmpty ) {
+  def apply( seq: OccSequent, ft: Font, str: String ): FlowPanel = if ( !str.isEmpty ) {
     val set: Set[FormulaOccurrence] = ( seq.antecedent.filter( fo => formulaToLatexString( fo.formula ).contains( str ) ) ++
       seq.succedent.filter( fo => formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
     val fp = apply( seq, ft, None ) // first create FlowPanel to pass the event
@@ -39,10 +39,10 @@ object DrawSequent {
   } else apply( seq, ft, None )
 
   //used by DrawClList to draw FSequents
-  def applyF( seq: FSequent, ft: Font, str: String ): FlowPanel = apply( fseq2seq( seq ), ft, str )
+  def applyF( seq: HOLSequent, ft: Font, str: String ): FlowPanel = apply( fseq2seq( seq ), ft, str )
 
   //used by DrawProof
-  def apply( seq: Sequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]] ) = new FlowPanel {
+  def apply( seq: OccSequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]] ) = new FlowPanel {
     opaque = false // Necessary to draw the proof properly
     hGap = 0 // no gap between components
 
@@ -78,7 +78,7 @@ object DrawSequent {
 
   // this method is used by DrawTree when drawing projections.
   // also by ProofToLatexExporter.
-  def sequentToLatexString( seq: Sequent ): String = {
+  def sequentToLatexString( seq: OccSequent ): String = {
     var s = " "
     var first = true
     for ( f <- seq.antecedent ) {

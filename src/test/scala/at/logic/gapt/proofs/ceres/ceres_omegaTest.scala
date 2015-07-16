@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
 
@@ -27,7 +27,7 @@ class ceres_omegaTest extends Specification with ClasspathFileCopier {
     ( selp, ls, struct, proj )
   }
 
-  def refutation1( cs: Set[FSequent] ) = {
+  def refutation1( cs: Set[HOLSequent] ) = {
     val Some( c1 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 1 ) )
     val Some( c2 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 0 ) )
     val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) )
@@ -53,7 +53,7 @@ class ceres_omegaTest extends Specification with ClasspathFileCopier {
     r6
   }
 
-  def refutation2( cs: Set[FSequent] ) = {
+  def refutation2( cs: Set[HOLSequent] ) = {
     val Some( c1 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 1 ) )
     val Some( c2 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 0 ) )
     val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) )

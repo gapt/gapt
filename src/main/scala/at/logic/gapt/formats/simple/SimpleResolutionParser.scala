@@ -6,7 +6,7 @@
 package at.logic.gapt.formats.simple
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 /*
  * In order to allow a complex inheritence structure where the resolutionParser trait is mixed
@@ -21,8 +21,8 @@ import at.logic.gapt.proofs.lk.base.FSequent
 trait SimpleResolutionParserFOL extends SimpleResolutionParser with SimpleFOLParser {
   override def formula = formula2
   override def neg = neg2
-  def clause: Parser[FSequent] = repsep( formula, "|" ) ~ "." ^^ {
-    case ls ~ "." => FSequent(
+  def clause: Parser[HOLSequent] = repsep( formula, "|" ) ~ "." ^^ {
+    case ls ~ "." => HOLSequent(
       ( ls.filter( filterPosFormulas ).map( stripNeg ) ),
       ( ls.filter( x => !filterPosFormulas( x ) ) )
     )
@@ -33,8 +33,8 @@ trait SimpleResolutionParser extends ResolutionParser {
   // used instead of inheritence so it can be combined with subclass of HOL (like FOL)
   this: SimpleHOLParser =>
 
-  def clauseList: Parser[List[FSequent]] = rep( clause )
-  protected def clause: Parser[FSequent]
+  def clauseList: Parser[List[HOLSequent]] = rep( clause )
+  protected def clause: Parser[HOLSequent]
 
   protected def formula2: Parser[HOLFormula] = ( neg | atom )
   protected def neg2: Parser[HOLFormula] = "-" ~ atom ^^ { case "-" ~ x => Neg( x ) }

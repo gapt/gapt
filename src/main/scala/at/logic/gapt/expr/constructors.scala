@@ -8,17 +8,6 @@ object NonLogicalConstant {
   }
 }
 
-object HOLAtom {
-  def apply( head: LambdaExpression, args: LambdaExpression* ): HOLFormula =
-    apply( head, args toList )
-  def apply( head: LambdaExpression, args: List[LambdaExpression] ): HOLFormula =
-    Apps( head, args ).asInstanceOf[HOLFormula]
-  def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
-    case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
-    case _ => None
-  }
-}
-
 object HOLFunction {
   def apply( head: LambdaExpression, args: List[LambdaExpression] ): LambdaExpression = {
     val res = Apps( head, args )
@@ -53,18 +42,6 @@ private[expr] class FOLHead( ret: TA ) {
 
 object FOLAtomHead extends FOLHead( To )
 object FOLFunctionHead extends FOLHead( Ti )
-
-object FOLAtom {
-  def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLFormula = FOLAtom( sym, args )
-  def apply( sym: String, args: Seq[FOLTerm] ): FOLFormula =
-    Apps( FOLAtomHead( sym, args.size ), args ).asInstanceOf[FOLFormula]
-
-  def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( FOLAtomHead( sym, _ ), args ) if e.isInstanceOf[FOLFormula] =>
-      Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
-    case _ => None
-  }
-}
 
 object FOLFunction {
   def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLTerm = FOLFunction( sym, args )

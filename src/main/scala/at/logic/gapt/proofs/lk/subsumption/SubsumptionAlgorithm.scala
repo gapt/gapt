@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.lk.subsumption
 
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 trait SubsumptionAlgorithm {
   /**
@@ -14,5 +14,5 @@ trait SubsumptionAlgorithm {
    * @param s2 a clause
    * @return true iff s1 subsumes s2
    */
-  def subsumes( s1: FSequent, s2: FSequent ): Boolean
+  def subsumes( s1: HOLSequent, s2: HOLSequent ): Boolean
 }

@@ -2,7 +2,7 @@ package at.logic.gapt.provers.maxsat
 
 import java.io.{ File, BufferedWriter, FileWriter }
 
-import at.logic.gapt.proofs.resolution.FClause
+import at.logic.gapt.proofs.resolution.HOLClause
 import at.logic.gapt.provers.sat4j.readSat4j
 import org.sat4j.maxsat.reader.WDimacsReader
 import org.sat4j.maxsat.WeightedMaxSatDecorator
@@ -13,7 +13,7 @@ import org.sat4j.specs.ContradictionException
  * Created by frain on 4/1/15.
  */
 class MaxSat4j extends MaxSATSolver {
-  def solve( hard: List[FClause], soft: List[( FClause, Int )] ) = {
+  def solve( hard: List[HOLClause], soft: List[( HOLClause, Int )] ) = {
     val helper = new WDIMACSHelper( hard, soft )
     val sat4j_in = helper.getWCNFInput().toString()
 

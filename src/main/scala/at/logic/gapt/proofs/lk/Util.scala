@@ -4,7 +4,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 
 object Util {
@@ -23,7 +23,7 @@ object Util {
   }
 
   //debugging stuff
-  def print_hashcodes( msg: String, s: Sequent ) = {
+  def print_hashcodes( msg: String, s: OccSequent ) = {
     println( msg )
     println( s )
     print( s.antecedent map ( ( x: FormulaOccurrence ) => x.id ) )
@@ -52,7 +52,7 @@ object Util {
   def check_map( map: Map[FormulaOccurrence, FormulaOccurrence], proof: LKProof, dproof: LKProof ): Boolean =
     check_map( map, proof.root, dproof.root )
 
-  def check_map( map: Map[FormulaOccurrence, FormulaOccurrence], root: Sequent, droot: Sequent ): Boolean = {
+  def check_map( map: Map[FormulaOccurrence, FormulaOccurrence], root: OccSequent, droot: OccSequent ): Boolean = {
     var error = false
     for ( fo <- root.antecedent ) {
       if ( !( map.keySet contains fo ) ) {
@@ -83,7 +83,7 @@ object Util {
   }
   //fsequent2sequent
   def f2focc( f: HOLFormula ) = new FormulaOccurrence( f, Nil, defaultFormulaOccurrenceFactory )
-  def fsequent2sequent( s: FSequent ) = Sequent( s._1 map f2focc, s._2 map f2focc )
+  def fsequent2sequent( s: HOLSequent ) = s map f2focc
 
 }
 

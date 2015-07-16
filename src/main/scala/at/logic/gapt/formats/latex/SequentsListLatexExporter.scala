@@ -16,15 +16,15 @@ import at.logic.gapt.formats.OutputExporter
 trait SequentsListLatexExporter extends HOLTermLatexExporter {
   val smskip = "\n\n"
   val mdskip = "\n\n" + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + "\n\n"
-  private def exportSequent( seq: FSequent ) = {
-    if ( seq._1.size > 0 ) exportTerm1( seq._1.head )
-    if ( seq._1.size > 1 ) seq._1.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportTerm1( x ) } )
+  private def exportSequent( seq: HOLSequent ) = {
+    if ( seq.antecedent.size > 0 ) exportTerm1( seq.antecedent.head )
+    if ( seq.antecedent.size > 1 ) seq.antecedent.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportTerm1( x ) } )
     getOutput.write( smskip ); getOutput.write( """ $\vdash$ """ ); getOutput.write( smskip )
-    if ( seq._2.size > 0 ) exportTerm1( seq._2.head )
-    if ( seq._2.size > 1 ) seq._2.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportTerm1( x ) } )
+    if ( seq.succedent.size > 0 ) exportTerm1( seq.succedent.head )
+    if ( seq.succedent.size > 1 ) seq.succedent.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportTerm1( x ) } )
   }
 
-  def exportSequentList( ls: List[FSequent], sections: List[Tuple2[String, List[Tuple2[Any, Any]]]] ): OutputExporter = {
+  def exportSequentList( ls: List[HOLSequent], sections: List[Tuple2[String, List[Tuple2[Any, Any]]]] ): OutputExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 
@@ -71,7 +71,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     this
   }
 
-  private def getFSVars( fs: FSequent ): Set[Var] = fs.formulas.toSet.flatMap( getVars )
+  private def getFSVars( fs: HOLSequent ): Set[Var] = fs.formulas.toSet.flatMap( getVars )
   private def getVars( l: LambdaExpression ): Set[Var] = l match {
     case v: Var      => Set( v )
     case c: Const    => Set()
@@ -79,7 +79,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     case App( s, t ) => getVars( s ) ++ getVars( t )
   }
 
-  private def getFSConsts( fs: FSequent ): Set[Const] = fs.formulas.toSet.flatMap( getConsts )
+  private def getFSConsts( fs: HOLSequent ): Set[Const] = fs.formulas.toSet.flatMap( getConsts )
   private def getConsts( l: LambdaExpression ): Set[Const] = l match {
     case v: Var      => Set()
     case c: Const    => Set( c )
@@ -87,7 +87,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     case App( s, t ) => getConsts( s ) ++ getConsts( t )
   }
 
-  def printTypes( l: List[FSequent] ) = {
+  def printTypes( l: List[HOLSequent] ) = {
     val ( vmap, cmap ) = getTypes( l )
     getOutput.write( "\\subsection{Variable Types}\n" )
 
@@ -139,7 +139,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
         ")"
   }
 
-  private def getTypes( l: List[FSequent] ) = {
+  private def getTypes( l: List[HOLSequent] ) = {
     val vars = l.foldLeft( Set[Var]() )( ( acc, fs ) => acc ++ getFSVars( fs ) )
     val consts = l.foldLeft( Set[Const]() )( ( acc, fs ) => acc ++ getFSConsts( fs ) )
     val svars = vars.map( _.name.toString() )
@@ -191,7 +191,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
   val smskip = "\n\n"
   val mdskip = "\n\n" + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + "\n\n"
-  private def exportSequent( seq: LabelledSequent ) = {
+  private def exportSequent( seq: LabelledOccSequent ) = {
     val ant = seq.l_antecedent.toList
     val suc = seq.l_succedent.toList
     if ( ant.size > 0 ) exportLabelledFormulaOccurrence( ant.head )
@@ -201,7 +201,7 @@ trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
     if ( suc.size > 1 ) suc.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportLabelledFormulaOccurrence( x ) } )
   }
 
-  def exportSequentList( ls: List[LabelledSequent], sections: List[Tuple2[String, List[Tuple2[Any, Any]]]] ): at.logic.gapt.formats.OutputExporter = {
+  def exportSequentList( ls: List[LabelledOccSequent], sections: List[Tuple2[String, List[Tuple2[Any, Any]]]] ): at.logic.gapt.formats.OutputExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 

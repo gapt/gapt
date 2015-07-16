@@ -1,8 +1,8 @@
 
 package at.logic.gapt.provers.prover9.commands
 
-import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, Clause }
+import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, OccClause }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.{ Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
@@ -60,7 +60,7 @@ import util.matching.Regex
  * xx(b) -- the second literal has been removed because it was an instance of x!=x.
  */
 
-case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extends SetSequentsCommand[Clause]( clauses ) with Logger {
+case class Prover9InitCommand( override val clauses: Iterable[HOLSequent] ) extends SetSequentsCommand[OccClause]( clauses ) with Logger {
   override def loggerName = "Prover9Logger"
 
   def apply( state: State, data: Any ) = {
@@ -70,7 +70,7 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
     val buffer = new Array[Byte]( 1024 )
     val tptpIS = new ByteArrayInputStream( tptp.getBytes )
 
-    var cmnds = Stream[Command[Clause]]()
+    var cmnds = Stream[Command[OccClause]]()
 
     // here we parse the given xml
     val pio = new ProcessIO(
@@ -129,7 +129,7 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
 
     tptpIS.close()
 
-    val l = List( ( state, cmnds ++ List( RefutationReachedCommand[Clause] ) ) )
+    val l = List( ( state, cmnds ++ List( RefutationReachedCommand[OccClause] ) ) )
     debug( "Parsed proof to:" )
     for ( cmd <- l( 0 )._2 ) {
       debug( "  cmd: " + cmd )
@@ -145,8 +145,8 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
     else ( e \\ "literal" ).map( l => Prover9TermParser.parseAll( Prover9TermParser.literal, l.text ).get )
   }
 
-  private def literals2FSequent( lits: Seq[FOLFormula] ): FSequent = {
-    FSequent(
+  private def literals2FSequent( lits: Seq[FOLFormula] ): HOLSequent = {
+    HOLSequent(
       lits.filter( l => l match {
         case Neg( _ ) => true
         case _        => false
@@ -164,42 +164,42 @@ case class Prover9InitCommand( override val clauses: Iterable[FSequent] ) extend
 
   private def getParents( e: Node ): Iterable[String] = { /*println((e \\ "@parents").foldLeft("")((s:String, n:Node) => if (s.isEmpty) n.text else s + " " + n.text)  );*/ ( e \\ "@parents" ).foldLeft( "" )( ( s: String, n: Node ) => if ( s.isEmpty ) n.text else s + " " + n.text ).split( " " ) }
 
-  private def assumption( id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[Clause]] = {
+  private def assumption( id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[OccClause]] = {
     //println("assumption")
-    List( AddGuidedInitialClauseCommand( id, cls ), InsertResolventCommand[Clause] )
+    List( AddGuidedInitialClauseCommand( id, cls ), InsertResolventCommand[OccClause] )
   }
   // here we just attach the parent to the new clause id as all other rules try to factorize the parents anyway
   //factor is copy, because we do factor when we have a replay. So, we ignore factor
-  private def factor( parentId: String, lit1: String, lit2: String, id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[Clause]] = {
+  private def factor( parentId: String, lit1: String, lit2: String, id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[OccClause]] = {
     //println("factor")
     List( GetGuidedClausesCommand( List( parentId ) ), AddGuidedClausesCommand( List( id ) ) )
   }
-  private def copy( parentId: String, id: String ): TraversableOnce[Command[Clause]] = {
+  private def copy( parentId: String, id: String ): TraversableOnce[Command[OccClause]] = {
     //println("copy")
     List( GetGuidedClausesCommand( List( parentId ) ), AddGuidedClausesCommand( List( id ) ) )
   }
 
   // we apply replay here because the order of literals might change in our proof
-  private def resolve( par1Id: String, lit1: String, par2Id: String, lit2: String, id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[Clause]] = {
+  private def resolve( par1Id: String, lit1: String, par2Id: String, lit2: String, id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[OccClause]] = {
     /*require(lit1.size == 1 && lit2.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
     List(GetGuidedClausesLiterals(List((par1Id, lit1.head.toInt - INT_CHAR), (par2Id, lit2.head.toInt - INT_CHAR))), VariantLiteralCommand, ResolveCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))
     */
     //List(ReplayCommand(List(par1Id,par2Id,"0"), id, literals2FSequent(cls)), SpawnCommand())
     //println("resolve")
-    List( ReplayCommand( List( par1Id, par2Id, "0" ), id, literals2FSequent( cls ) ), InsertResolventCommand[Clause] )
+    List( ReplayCommand( List( par1Id, par2Id, "0" ), id, literals2FSequent( cls ) ), InsertResolventCommand[OccClause] )
   }
   // we apply replay here because the order of literals might change in our proof
-  private def paramodulate( fromParentId: String, fromLiteral: Seq[Char], fromPos: Int, toParentId: String, toLiteral: Seq[Char], toPos: Iterable[Int], id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[Clause]] = {
+  private def paramodulate( fromParentId: String, fromLiteral: Seq[Char], fromPos: Int, toParentId: String, toLiteral: Seq[Char], toPos: Iterable[Int], id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[OccClause]] = {
     /*require(fromLiteral.size == 1 && toLiteral.size == 1) // the parsing should be changed if the arity of functions is bigger than the english alphabet
     List(GetGuidedClausesLiteralsPositions(List((fromParentId, fromLiteral.head.toInt - INT_CHAR, List(fromPos)), (toParentId, toLiteral.head.toInt - INT_CHAR, toPos))), VariantLiteralPositionCommand, ParamodulationLiteralPositionCommand(FOLUnificationAlgorithm), AddGuidedResolventCommand(id))*/
     //      List(ReplayCommand(List(fromParentId,toParentId, "0"), id, literals2FSequent(cls)), SpawnCommand())
     //println("paramodulate")
-    List( ReplayCommand( List( fromParentId, toParentId, "0" ), id, literals2FSequent( cls ) ), InsertResolventCommand[Clause] )
+    List( ReplayCommand( List( fromParentId, toParentId, "0" ), id, literals2FSequent( cls ) ), InsertResolventCommand[OccClause] )
   }
-  private def replay( parentIds: Iterable[String], id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[Clause]] = {
+  private def replay( parentIds: Iterable[String], id: String, cls: Seq[FOLFormula] ): TraversableOnce[Command[OccClause]] = {
     //println("replay")
     //      List(ReplayCommand("0" :: parentIds.toList, id, literals2FSequent(cls)), SpawnCommand())
-    List( ReplayCommand( "0" :: parentIds.toList, id, literals2FSequent( cls ) ), InsertResolventCommand[Clause] )
+    List( ReplayCommand( "0" :: parentIds.toList, id, literals2FSequent( cls ) ), InsertResolventCommand[OccClause] )
   }
 
 }
@@ -228,7 +228,7 @@ case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
 //TODO: refactor shared code with Prover9Init
 object InferenceExtractor {
 
-  def viaLADR( fn: String ): FSequent = {
+  def viaLADR( fn: String ): HOLSequent = {
     import scala.io.Source
 
     val variablestyle_matcher = """.*set.(prolog_style_variables).*""".r
@@ -263,7 +263,7 @@ object InferenceExtractor {
 
   }
 
-  def clausesViaLADR( fn: String ): FSequent = {
+  def clausesViaLADR( fn: String ): HOLSequent = {
     import scala.io.Source
 
     val variablestyle_matcher = """.*set.(prolog_style_variables).*""".r
@@ -371,7 +371,7 @@ object InferenceExtractor {
   }
 
   /* fixed point of createFSequent_ */
-  def createFSequent( assumptions: Seq[FOLFormula], goals: Seq[FOLFormula] ): FSequent = {
+  def createFSequent( assumptions: Seq[FOLFormula], goals: Seq[FOLFormula] ): HOLSequent = {
     val fs = createFSequent_( assumptions, goals )
     if ( ( assumptions.length >= fs.antecedent.length ) && ( goals.length >= fs.succedent.length ) )
       fs
@@ -383,16 +383,16 @@ object InferenceExtractor {
   *  antecedent and B into the succedent. if a goal is a disjunction B1,...,Bn, put B1 to Bn into the succedent
   *  instead. is an assumption is a conjunction A1,...,Am, put them into the antecedent instead.*/
   def createFSequent_( assumptions: Seq[FOLFormula], goals: Seq[FOLFormula] ) = {
-    val fs = goals.map( implications ).foldLeft( FSequent( assumptions, Nil ) )( ( f: FSequent, g: FSequent ) => f.compose( g ) )
-    FSequent(
+    val fs = goals.map( implications ).foldLeft( HOLSequent( assumptions, Nil ) )( ( f: HOLSequent, g: HOLSequent ) => f.compose( g ) )
+    HOLSequent(
       fs.antecedent.asInstanceOf[Seq[FOLFormula]].map( conjunctions ).flatten,
       fs.succedent.asInstanceOf[Seq[FOLFormula]].map( disjunctions ).flatten
     )
   }
 
-  def implications( f: FOLFormula ): FSequent = f match {
-    case Imp( f1, f2 ) => FSequent( conjunctions( f1 ), disjunctions( f2 ) )
-    case _             => FSequent( Nil, f :: Nil )
+  def implications( f: FOLFormula ): HOLSequent = f match {
+    case Imp( f1, f2 ) => HOLSequent( conjunctions( f1 ), disjunctions( f2 ) )
+    case _             => HOLSequent( Nil, f :: Nil )
   }
 
   def disjunctions( f: FOLFormula ): List[FOLFormula] = f match {

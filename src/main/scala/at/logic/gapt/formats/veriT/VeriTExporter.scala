@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import java.io._
 import org.apache.commons.lang3.StringEscapeUtils
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.expr.{ Ti, To }
 
 object VeriTExporter {
@@ -16,13 +16,13 @@ object VeriTExporter {
    * @param s Sequent to export.
    * @return VeriT input.
    */
-  def apply( s: FSequent ): String = {
+  def apply( s: HOLSequent ): String = {
     // Define the logic
     val logic = "(set-logic QF_UF)\n"
     // Declare the function and predicate symbols with arity
-    val symbols = getSymbolsDeclaration( ( s._1 ++ s._2 ).map( _.asInstanceOf[FOLFormula] ) )
+    val symbols = getSymbolsDeclaration( ( s.antecedent ++ s.succedent ).map( _.asInstanceOf[FOLFormula] ) )
     // Generate assertions for the antecedent and succedent formulas
-    val asserts = getAssertions( s._1.map( _.asInstanceOf[FOLFormula] ), s._2.map( _.asInstanceOf[FOLFormula] ) )
+    val asserts = getAssertions( s.antecedent.map( _.asInstanceOf[FOLFormula] ), s.succedent.map( _.asInstanceOf[FOLFormula] ) )
     // Generate the check_sat formula
     val check_sat = "(check-sat)"
 
@@ -36,7 +36,7 @@ object VeriTExporter {
    * @param fileName  Output file name.
    * @return File pointing to fileName.
    */
-  def apply( s: FSequent, fileName: String ): File = {
+  def apply( s: HOLSequent, fileName: String ): File = {
     val file = new File( fileName )
     val fw = new FileWriter( file.getAbsoluteFile )
     val bw = new BufferedWriter( fw )

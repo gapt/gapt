@@ -4,8 +4,8 @@ package at.logic.gapt.formats.ivy
 import at.logic.gapt.formats.lisp.{ List => LispList, Atom => LispAtom, Cons => LispCons, SExpression, SExpressionParser }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.resolution.Clause
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.occurrences
 import at.logic.gapt.utils.logging.Logger
@@ -81,12 +81,12 @@ object IvyParser extends Logger {
         val fclause = parse_clause( clause, is_variable_symbol )
 
         val inference = InitialClause( id, clause,
-          Clause(
+          OccClause(
             fclause.antecedent map ( occurrences.factory.createFormulaOccurrence( _, Nil ) ),
             fclause.succedent map ( occurrences.factory.createFormulaOccurrence( _, Nil ) )
           ) )
 
-        require( inference.root.toFSequent setEquals fclause, "Error in Atom parsing: required result=" + fclause + " but got: " + inference.root )
+        require( inference.root.toHOLSequent setEquals fclause, "Error in Atom parsing: required result=" + fclause + " but got: " + inference.root )
         ( id, found_steps + ( ( id, inference ) ) )
       }
 
@@ -94,19 +94,19 @@ object IvyParser extends Logger {
       case LispList( LispAtom( id ) :: LispList( LispAtom( "instantiate" ) :: LispAtom( parent_id ) :: subst_exp :: Nil ) :: clause :: rest ) => {
         val parent_proof = found_steps( parent_id )
         val sub: FOLSubstitution = parse_substitution( subst_exp, is_variable_symbol )
-        val fclause: FSequent = parse_clause( clause, is_variable_symbol )
+        val fclause: HOLSequent = parse_clause( clause, is_variable_symbol )
 
         def connect( ancestors: Seq[FormulaOccurrence], formulas: Seq[HOLFormula] ): Seq[FormulaOccurrence] =
           ( ancestors zip formulas ) map ( ( v: ( FormulaOccurrence, HOLFormula ) ) =>
             occurrences.factory.createFormulaOccurrence( v._2, List( v._1 ) ) )
 
         val inference = Instantiate( id, clause, sub,
-          Clause(
+          OccClause(
             connect( parent_proof.vertex.antecedent, fclause.antecedent ),
             connect( parent_proof.vertex.succedent, fclause.succedent )
           ), parent_proof )
 
-        require( inference.root.toFSequent setEquals fclause, "Error in Instance parsing: required result=" + fclause + " but got: " + inference.root )
+        require( inference.root.toHOLSequent setEquals fclause, "Error in Instance parsing: required result=" + fclause + " but got: " + inference.root )
         ( id, found_steps + ( ( id, inference ) ) )
 
       }
@@ -118,66 +118,66 @@ object IvyParser extends Logger {
         clause :: rest ) => {
         val parent_proof1 = found_steps( parent_id1 )
         val parent_proof2 = found_steps( parent_id2 )
-        val fclause: FSequent = parse_clause( clause, is_variable_symbol )
+        val fclause: HOLSequent = parse_clause( clause, is_variable_symbol )
 
         val ( occ1, polarity1, _ ) = get_literal_by_position( parent_proof1.vertex, position1, parent_proof1.clause_exp, is_variable_symbol )
         val ( occ2, polarity2, _ ) = get_literal_by_position( parent_proof2.vertex, position2, parent_proof2.clause_exp, is_variable_symbol )
 
         require( occ1.formula == occ2.formula, "Resolved formula " + occ1.formula + " must be equal to " + occ2.formula + " !" )
 
-        def connect( c1: Clause, c2: Clause, conclusion: FSequent ): Clause = {
+        def connect( c1: OccClause, c2: OccClause, conclusion: HOLSequent ): OccClause = {
           conclusion match {
             //process antecedent
-            case FSequent( x :: xs, ys ) =>
+            case HOLSequent( x :: xs, ys ) =>
               val pos1 = c1.antecedent indexWhere ( _.formula == x )
               if ( pos1 >= 0 ) {
                 val focc = c1.antecedent( pos1 ).factory.createFormulaOccurrence( x, c1.antecedent( pos1 ).parents )
-                val rec = connect( Clause( c1.antecedent.filterNot( _ == c1.antecedent( pos1 ) ), c1.succedent ), c2, FSequent( xs, ys ) )
-                Clause( focc :: rec.antecedent.toList, rec.succedent )
+                val rec = connect( OccClause( c1.antecedent.filterNot( _ == c1.antecedent( pos1 ) ), c1.succedent ), c2, HOLSequent( xs, ys ) )
+                OccClause( focc :: rec.antecedent.toList, rec.succedent )
               } else {
                 val pos2 = c2.antecedent indexWhere ( _.formula == x )
                 if ( pos2 >= 0 ) {
                   val focc = c2.antecedent( pos2 ).factory.createFormulaOccurrence( x, c2.antecedent( pos2 ).parents )
-                  val rec = connect( c1, Clause( c2.antecedent.filterNot( _ == c2.antecedent( pos2 ) ), c2.succedent ), FSequent( xs, ys ) )
-                  Clause( focc :: rec.antecedent.toList, rec.succedent )
+                  val rec = connect( c1, OccClause( c2.antecedent.filterNot( _ == c2.antecedent( pos2 ) ), c2.succedent ), HOLSequent( xs, ys ) )
+                  OccClause( focc :: rec.antecedent.toList, rec.succedent )
                 } else throw new Exception( "Error in parsing resolution inference: resolved literal " + x + " not found!" )
               }
             //then succedent
-            case FSequent( Nil, y :: ys ) =>
+            case HOLSequent( Nil, y :: ys ) =>
               val pos1 = c1.succedent indexWhere ( _.formula == y )
               if ( pos1 >= 0 ) {
                 val focc = c1.succedent( pos1 ).factory.createFormulaOccurrence( y, c1.succedent( pos1 ).parents )
-                val rec = connect( Clause( c1.antecedent, c1.succedent.filterNot( _ == c1.succedent( pos1 ) ) ), c2, FSequent( Nil, ys ) )
-                Clause( rec.antecedent, focc :: rec.succedent.toList )
+                val rec = connect( OccClause( c1.antecedent, c1.succedent.filterNot( _ == c1.succedent( pos1 ) ) ), c2, HOLSequent( Nil, ys ) )
+                OccClause( rec.antecedent, focc :: rec.succedent.toList )
               } else {
                 val pos2 = c2.succedent indexWhere ( _.formula == y )
                 if ( pos2 >= 0 ) {
                   val focc = c2.succedent( pos2 ).factory.createFormulaOccurrence( y, c2.succedent( pos2 ).parents )
-                  val rec = connect( c1, Clause( c2.antecedent, c2.succedent.filterNot( _ == c2.succedent( pos2 ) ) ), FSequent( Nil, ys ) )
-                  Clause( rec.antecedent, focc :: rec.succedent.toList )
+                  val rec = connect( c1, OccClause( c2.antecedent, c2.succedent.filterNot( _ == c2.succedent( pos2 ) ) ), HOLSequent( Nil, ys ) )
+                  OccClause( rec.antecedent, focc :: rec.succedent.toList )
                 } else throw new Exception( "Error in parsing resolution inference: resolved literal " + y + " not found!" )
               }
             //base case
-            case FSequent( Nil, Nil ) => Clause( Nil, Nil )
-            case _                    => throw new Exception( "Unhandled case in calculation of ancestor relationship during creation of a resolution iference!" )
+            case HOLSequent( Nil, Nil ) => OccClause( Nil, Nil )
+            case _                      => throw new Exception( "Unhandled case in calculation of ancestor relationship during creation of a resolution iference!" )
           }
         }
 
         ( polarity1, polarity2 ) match {
           case ( true, false ) =>
-            val clause1 = Clause( parent_proof1.vertex.antecedent, parent_proof1.vertex.succedent filterNot ( _ == occ1 ) )
-            val clause2 = Clause( parent_proof2.vertex.antecedent filterNot ( _ == occ2 ), parent_proof2.vertex.succedent )
+            val clause1 = OccClause( parent_proof1.vertex.antecedent, parent_proof1.vertex.succedent filterNot ( _ == occ1 ) )
+            val clause2 = OccClause( parent_proof2.vertex.antecedent filterNot ( _ == occ2 ), parent_proof2.vertex.succedent )
             val inference = Resolution( id, clause, occ1, occ2, connect( clause1, clause2, fclause ), parent_proof1, parent_proof2 )
 
-            require( inference.root.toFSequent setEquals fclause, "Error in Resolution parsing: required result=" + fclause + " but got: " + inference.root )
+            require( inference.root.toHOLSequent setEquals fclause, "Error in Resolution parsing: required result=" + fclause + " but got: " + inference.root )
             ( id, found_steps + ( ( id, inference ) ) )
 
           case ( false, true ) =>
-            val clause1 = Clause( parent_proof1.vertex.antecedent filterNot ( _ == occ1 ), parent_proof1.vertex.succedent )
-            val clause2 = Clause( parent_proof2.vertex.antecedent, parent_proof2.vertex.succedent filterNot ( _ == occ2 ) )
+            val clause1 = OccClause( parent_proof1.vertex.antecedent filterNot ( _ == occ1 ), parent_proof1.vertex.succedent )
+            val clause2 = OccClause( parent_proof2.vertex.antecedent, parent_proof2.vertex.succedent filterNot ( _ == occ2 ) )
             val inference = Resolution( id, clause, occ1, occ2, connect( clause1, clause2, fclause ), parent_proof1, parent_proof2 )
 
-            require( inference.root.toFSequent setEquals fclause, "Error in Resolution parsing: required result=" + fclause + " but got: " + inference.root )
+            require( inference.root.toHOLSequent setEquals fclause, "Error in Resolution parsing: required result=" + fclause + " but got: " + inference.root )
             ( id, found_steps + ( ( id, inference ) ) )
 
           case _ =>
@@ -202,10 +202,10 @@ object IvyParser extends Logger {
                 val ( pos1, pos2 ) = parent_proof.root.positive.splitAt( parent_proof.root.positive.indexOf( occ ) )
                 val ( pos1_, pos2_ ) = ( pos1 map connect_directly, pos2 map connect_directly )
                 val flipped = occ.factory.createFormulaOccurrence( Eq( right, left ), occ :: Nil )
-                val inference = Flip( id, clause, flipped, Clause( neglits, pos1_ ++ List( flipped ) ++ pos2_.tail ), parent_proof )
+                val inference = Flip( id, clause, flipped, OccClause( neglits, pos1_ ++ List( flipped ) ++ pos2_.tail ), parent_proof )
                 require(
-                  fclause setEquals inference.root.toFSequent,
-                  "Error parsing flip rule: inferred clause " + inference.root.toFSequent +
+                  fclause setEquals inference.root.toHOLSequent,
+                  "Error parsing flip rule: inferred clause " + inference.root.toHOLSequent +
                     " is not the same as given clause " + fclause
                 )
                 ( id, found_steps + ( ( id, inference ) ) )
@@ -215,10 +215,10 @@ object IvyParser extends Logger {
                 val ( neg1, neg2 ) = parent_proof.root.negative.splitAt( parent_proof.root.negative.indexOf( occ ) )
                 val ( neg1_, neg2_ ) = ( neg1 map connect_directly, neg2 map connect_directly )
                 val flipped = occ.factory.createFormulaOccurrence( Eq( right, left ), occ :: Nil )
-                val inference = Flip( id, clause, flipped, Clause( neg1_ ++ List( flipped ) ++ neg2_.tail, poslits ), parent_proof )
+                val inference = Flip( id, clause, flipped, OccClause( neg1_ ++ List( flipped ) ++ neg2_.tail, poslits ), parent_proof )
                 require(
-                  fclause setEquals inference.root.toFSequent,
-                  "Error parsing flip rule: inferred clause " + inference.root.toFSequent +
+                  fclause setEquals inference.root.toHOLSequent,
+                  "Error parsing flip rule: inferred clause " + inference.root.toHOLSequent +
                     " is not the same as given clause " + fclause
                 )
                 ( id, found_steps + ( ( id, inference ) ) )
@@ -259,10 +259,10 @@ object IvyParser extends Logger {
                   replaceTerm_by_in_at( right, left, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
                 val para = pocc.factory.createFormulaOccurrence( paraformula, mocc :: pocc :: Nil )
 
-                val inferred_clause = Clause( pneg ++ neglits, ppos ++ pos1_ ++ List( para ) ++ pos2_.tail )
+                val inferred_clause = OccClause( pneg ++ neglits, ppos ++ pos1_ ++ List( para ) ++ pos2_.tail )
 
                 val inference = Paramodulation( id, clause, int_position, para, orientation, inferred_clause, modulant_proof, parent_proof )
-                require( inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result=" + fclause + " but got: " + inference.root )
+                require( inference.root.toHOLSequent setEquals fclause, "Error in Paramodulation parsing: required result=" + fclause + " but got: " + inference.root )
 
                 ( id, found_steps + ( ( id, inference ) ) )
 
@@ -278,11 +278,11 @@ object IvyParser extends Logger {
                   replaceTerm_by_in_at( right, left, pocc.formula.asInstanceOf[FOLFormula], int_position ).asInstanceOf[FOLFormula]
 
                 val para = pocc.factory.createFormulaOccurrence( paraformula, mocc :: pocc :: Nil )
-                val inferred_clause = Clause( pneg ++ neg1_ ++ List( para ) ++ neg2_.tail, ppos ++ poslits )
+                val inferred_clause = OccClause( pneg ++ neg1_ ++ List( para ) ++ neg2_.tail, ppos ++ poslits )
 
                 val inference = Paramodulation( id, clause, int_position, para, orientation, inferred_clause, modulant_proof, parent_proof )
 
-                require( inference.root.toFSequent setEquals fclause, "Error in Paramodulation parsing: required result=" + fclause + " but got: " + inference.root )
+                require( inference.root.toHOLSequent setEquals fclause, "Error in Paramodulation parsing: required result=" + fclause + " but got: " + inference.root )
                 ( id, found_steps + ( ( id, inference ) ) )
             }
 
@@ -294,7 +294,7 @@ object IvyParser extends Logger {
       /* ================== Propositional ========================== */
       case LispList( LispAtom( id ) :: LispList( LispAtom( "propositional" ) :: LispAtom( parent_id ) :: Nil ) :: clause :: rest ) => {
         val parent_proof = found_steps( parent_id )
-        val fclause: FSequent = parse_clause( clause, is_variable_symbol )
+        val fclause: HOLSequent = parse_clause( clause, is_variable_symbol )
 
         def list_withoutn[A]( l: List[A], n: Int ): List[A] = l match {
           case x :: xs =>
@@ -348,12 +348,12 @@ object IvyParser extends Logger {
         }
 
         val inference = Propositional( id, clause,
-          Clause(
+          OccClause(
             connect( parent_proof.vertex.antecedent.toList, fclause.antecedent.toList ),
             connect( parent_proof.vertex.succedent.toList, fclause.succedent.toList )
           ), parent_proof )
 
-        require( inference.root.toFSequent setEquals fclause, "Error in Propositional parsing: required result=" + fclause + " but got: " + inference.root )
+        require( inference.root.toHOLSequent setEquals fclause, "Error in Propositional parsing: required result=" + fclause + " but got: " + inference.root )
         ( id, found_steps + ( ( id, inference ) ) )
 
       }
@@ -364,13 +364,13 @@ object IvyParser extends Logger {
         clause :: rest ) =>
 
         val parent_proof = found_steps( parent_id )
-        val fclause: FSequent = parse_clause( clause, is_variable_symbol )
+        val fclause: HOLSequent = parse_clause( clause, is_variable_symbol )
         require( fclause.antecedent.isEmpty, "Expecting only positive equations in parsing of new_symbol rule " + id )
         require( fclause.succedent.size == 1, "Expecting exactly one positive equation in parsing of new_symbol rule " + id )
 
         val Eq( l: FOLTerm, r ) = fclause.succedent( 0 )
 
-        val nclause = Clause( Nil, List( parent_proof.root.occurrences( 0 ).factory.createFormulaOccurrence( fclause.succedent( 0 ), Nil ) ) )
+        val nclause = OccClause( Nil, List( parent_proof.root.occurrences( 0 ).factory.createFormulaOccurrence( fclause.succedent( 0 ), Nil ) ) )
         val const: FOLConst = r match {
           case f @ FOLConst( _ ) => f.asInstanceOf[FOLConst]
           case _                 => throw new Exception( "Expecting right hand side of new_symbol equation to be the introduced symbol!" )
@@ -389,7 +389,7 @@ object IvyParser extends Logger {
   // paramodulation continues inside the term, so we return the remaining position together with the occurrence
   // the boolean indicates a positive or negative formula
 
-  def get_literal_by_position( c: Clause, pos: List[SExpression],
+  def get_literal_by_position( c: OccClause, pos: List[SExpression],
                                clauseexp: SExpression, is_variable_symbol: String => Boolean ): ( FormulaOccurrence, Boolean, List[Int] ) = {
     val ipos = parse_position( pos )
     val ( iformula, termpos ) = parse_clause_frompos( clauseexp, ipos, is_variable_symbol )
@@ -503,7 +503,7 @@ object IvyParser extends Logger {
   }
 
   /* parses a clause sexpression to a fclause -- the structure is (or lit1 (or lit2 .... (or litn-1 litn)...)) */
-  def parse_clause( exp: SExpression, is_variable_symbol: String => Boolean ): FSequent = {
+  def parse_clause( exp: SExpression, is_variable_symbol: String => Boolean ): HOLSequent = {
     val clauses = parse_clause_( exp, is_variable_symbol )
     var pos: List[HOLFormula] = Nil
     var neg: List[HOLFormula] = Nil
@@ -523,7 +523,7 @@ object IvyParser extends Logger {
     }
 
     //the literals were prepended to the list, so we have to reverse them to get the original order
-    FSequent( neg.reverse, pos.reverse )
+    HOLSequent( neg.reverse, pos.reverse )
   }
 
   //TODO: merge code with parse_clause_

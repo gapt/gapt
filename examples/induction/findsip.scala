@@ -4,7 +4,7 @@ import at.logic.gapt.expr.hol.{toNNF, simplify, lcomp}
 import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, normalFormsSipGrammar, GrammarMinimizationFormula}
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 
@@ -20,7 +20,7 @@ def removeEqAxioms( eseq: ExpansionSequent ) = {
   val CgR = parse.fol( "Forall x Forall y Forall z Imp =(y,z) =(g(x,y),g(x,z))" ) // congruence of g on the right
   val CMultR = parse.fol( "Forall x Forall y Forall z Imp =(x,y) =(*(z,x),*(z,y))" ) // congruence of mult right
 
-  val eqaxioms = new FSequent( R::S::T::Tprime::CSuc::CPlus::CPlusL::CgR::CMultR::Nil, Nil )
+  val eqaxioms = new HOLSequent( R::S::T::Tprime::CSuc::CPlus::CPlusL::CgR::CMultR::Nil, Nil )
 
   removeFromExpansionSequent( eseq, eqaxioms )
 }
@@ -33,7 +33,7 @@ var instanceSequents = (1 until N) map { n =>
   n -> removeEqAxioms(LKToExpansionProof(instanceProof))
 }
 
-val endSequent = FSequent(
+val endSequent = HOLSequent(
   instanceSequents.flatMap{ case (n,seq) => toShallow(seq).antecedent }.distinct,
   Seq(parseFormula("(x + x) + x = x + (x + x)"))
 )

@@ -7,7 +7,7 @@ package at.logic.gapt.proofs.ceres.struct
 
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lksk.{ LabelledSequent, UnaryLKskProof, LabelledFormulaOccurrence }
+import at.logic.gapt.proofs.lksk.{ LabelledOccSequent, UnaryLKskProof, LabelledFormulaOccurrence }
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr.hol._
@@ -253,32 +253,32 @@ object cutConfToString {
 // by, for each o in cc, taking the element f from seq such that
 // f, where param goes to term, is equal to o.formula.
 object cutOccConfigToCutConfig {
-  def apply( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration, seq: FSequent, params: List[IntVar], terms: List[IntegerTerm] ): ( Multiset[HOLFormula], Multiset[HOLFormula] ) = {
+  def apply( so: OccSequent, cc: TypeSynonyms.CutOccurrenceConfiguration, seq: HOLSequent, params: List[IntVar], terms: List[IntegerTerm] ): ( Multiset[HOLFormula], Multiset[HOLFormula] ) = {
     cc.foldLeft( ( HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( ( res, fo ) => {
       val cca = res._1
       val ccs = res._2
       if ( so.antecedent.map( x => x.formula ).contains( fo.formula ) )
-        ( cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[HOLFormula]], params, terms ), ccs )
+        ( cca + getFormulaForCC( fo, seq.antecedent.asInstanceOf[List[HOLFormula]], params, terms ), ccs )
       else if ( so.succedent.map( x => x.formula ).contains( fo.formula ) )
-        ( cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[HOLFormula]], params, terms ) )
+        ( cca, ccs + getFormulaForCC( fo, seq.succedent.asInstanceOf[List[HOLFormula]], params, terms ) )
       else
         throw new Exception( "\nError in cutOccConfigToCutConfig !\n" )
     } )
   }
 
-  def applyRCC( so: Sequent, cc: TypeSynonyms.CutOccurrenceConfiguration ): ( Multiset[HOLFormula], Multiset[HOLFormula] ) = {
+  def applyRCC( so: OccSequent, cc: TypeSynonyms.CutOccurrenceConfiguration ): ( Multiset[HOLFormula], Multiset[HOLFormula] ) = {
     if ( cc.isEmpty )
       return ( HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() )
-    val seq = so.toFSequent
+    val seq = so.toHOLSequent
     val params = IntVar( "k" ) :: Nil
     val terms = IntVar( "k" ) :: Nil
     cc.foldLeft( ( HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( ( res, fo ) => {
       val cca = res._1
       val ccs = res._2
       if ( so.antecedent.map( x => x.formula ).contains( fo.formula ) )
-        ( cca + getFormulaForCC( fo, seq._1.asInstanceOf[List[HOLFormula]], params, terms ), ccs )
+        ( cca + getFormulaForCC( fo, seq.antecedent.asInstanceOf[List[HOLFormula]], params, terms ), ccs )
       else if ( so.succedent.map( x => x.formula ).contains( fo.formula ) )
-        ( cca, ccs + getFormulaForCC( fo, seq._2.asInstanceOf[List[HOLFormula]], params, terms ) )
+        ( cca, ccs + getFormulaForCC( fo, seq.succedent.asInstanceOf[List[HOLFormula]], params, terms ) )
       else
         throw new Exception( "\nError in cutOccConfigToCutConfigRCC !\n" )
     } )
@@ -383,7 +383,7 @@ object StructCreators extends Logger {
   // constants are not created by the factories, and hence
   // do not work across language-levels, but the constants
   // are neede to transform a sequent to a formula in general.
-  def toFormula( s: Sequent ): HOLFormula =
+  def toFormula( s: OccSequent ): HOLFormula =
     Or( s.antecedent.map( f => Neg( f.formula.asInstanceOf[HOLFormula] ) ).toList ++ ( s.succedent map ( _.formula.asInstanceOf[HOLFormula] ) ) )
 
   def extractRelevantStruct( name: String, fresh_param: IntVar ): Tuple2[List[( String, Struct, Set[FormulaOccurrence] )], List[( String, Struct, Set[FormulaOccurrence] )]] = {
@@ -540,7 +540,7 @@ object StructCreators extends Logger {
     }
 
   // TODO this should really disappear.
-  def toOccurrence( f: HOLFormula, so: Sequent ) =
+  def toOccurrence( f: HOLFormula, so: OccSequent ) =
     {
       defaultFormulaOccurrenceFactory.createFormulaOccurrence( f, Nil )
     }
@@ -553,7 +553,7 @@ object StructCreators extends Logger {
       {
         debug( "0 " + cut_occs + "  " );
         so match {
-          case lso: LabelledSequent if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 =>
+          case lso: LabelledOccSequent if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 =>
             handleLabelledAxiom( lso, cut_occs )
           case _ => handleAxiom( so, cut_occs )
         }
@@ -592,7 +592,7 @@ object StructCreators extends Logger {
   }
 
   //the original version:
-  def handleSchemaProofLink( so: Sequent, name: String, indices: List[IntegerTerm], cut_occs: TypeSynonyms.CutOccurrenceConfiguration ) = {
+  def handleSchemaProofLink( so: OccSequent, name: String, indices: List[IntegerTerm], cut_occs: TypeSynonyms.CutOccurrenceConfiguration ) = {
     val schema = SchemaProofDB.get( name )
     val sym = new ClauseSetSymbol(
       name,
@@ -625,7 +625,7 @@ object StructCreators extends Logger {
       A( toOccurrence( atom, so ) )
     }*/
 
-  def handleLabelledAxiom( lso: LabelledSequent, cut_occs: Set[FormulaOccurrence] ) = {
+  def handleLabelledAxiom( lso: LabelledOccSequent, cut_occs: Set[FormulaOccurrence] ) = {
     val left = lso.l_antecedent.toList.head
     val right = lso.l_succedent.toList.head
     val ant = if ( cut_occs.contains( left ) )
@@ -639,7 +639,7 @@ object StructCreators extends Logger {
     makeTimesJunction( ant ::: suc, Nil )
   }
 
-  def handleAxiom( so: Sequent, cut_occs: Set[FormulaOccurrence] ) = {
+  def handleAxiom( so: OccSequent, cut_occs: Set[FormulaOccurrence] ) = {
     val cutAncInAntecedent = so.antecedent.toList.filter( x => cut_occs.contains( x ) ).map( x => Dual( A( x ) ) ) //
     val cutAncInSuccedent = so.succedent.toList.filter( x => cut_occs.contains( x ) ).map( x => A( x ) )
     makeTimesJunction( cutAncInAntecedent ::: cutAncInSuccedent, Nil )

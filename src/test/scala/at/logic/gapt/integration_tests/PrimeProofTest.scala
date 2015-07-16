@@ -14,6 +14,7 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.writers.FileWriter
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
@@ -35,7 +36,7 @@ import org.specs2.mutable._
 class PrimeProofTest extends Specification {
   def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
 
-  def sequentToString( s: Sequent ) = {
+  def sequentToString( s: OccSequent ) = {
     var ret = ""
     s.antecedent.foreach( formula => ret += formula.toString + ", " )
     ret += " :- "
@@ -50,7 +51,7 @@ class PrimeProofTest extends Specification {
     print( "cuts: " + stats.cuts + "\n" )
   }
 
-  def mySort( x: Sequent, y: Sequent ) = ( x.toString < y.toString ) // lexicographically
+  def mySort( x: OccSequent, y: OccSequent ) = ( x.toString < y.toString ) // lexicographically
 
   "The system" should {
     //    "parse correctly the second-order prime proof" in {
@@ -160,14 +161,14 @@ class PrimeProofTest extends Specification {
       // convert struct DAG to tree
       structToExpressionTree( s )
 
-      val prf = deleteTautologies( proofProfile( s, proof_sk ) map ( _.toFSequent ) )
+      val prf = deleteTautologies( proofProfile( s, proof_sk ) map ( _.toHOLClause ) ).asInstanceOf[List[HOLClause]]
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-prf.tptp" )
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLClause ) ).asInstanceOf[List[HOLClause]]
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-cs.tptp" )
       writer.write( tptp )
@@ -211,14 +212,14 @@ class PrimeProofTest extends Specification {
       // convert struct DAG to tree
       structToExpressionTree( s )
 
-      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toFSequent ) )
+      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toHOLSequent ) )
 
       val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
       val writer_prf = new java.io.FileWriter( "target" + separator + "euclid-" + n + "-prf.tptp" )
       writer_prf.write( tptp_prf )
       writer_prf.flush
 
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toFSequent ) )
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs )
       val writer = new java.io.FileWriter( "target" + separator + "euclid-" + n + "-cs.tptp" )
       writer.write( tptp )

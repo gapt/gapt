@@ -7,7 +7,7 @@
 
 package at.logic.gapt.formats.simple
 
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.readers.StringReader
@@ -28,7 +28,7 @@ class SimpleResolutionParserTest extends Specification {
   val px_fol = FOLAtom( "P", FOLVar( "x" ) :: Nil )
   val pffa_fol = FOLAtom( "P", FOLFunction( "f", FOLFunction( "f", FOLConst( "a" ) :: Nil ) :: Nil ) :: Nil )
 
-  def clause_to_lists( cl: Clause ): ( Seq[HOLFormula], Seq[HOLFormula] ) = ( cl.negative map ( _.formula ), cl.positive map ( _.formula ) )
+  def clause_to_lists( cl: OccClause ): ( Seq[HOLFormula], Seq[HOLFormula] ) = ( cl.negative map ( _.formula ), cl.positive map ( _.formula ) )
 
   "SimpleResolutionParser" should {
     /*
@@ -55,23 +55,23 @@ class SimpleResolutionParserTest extends Specification {
     }
     */
     "return an empty clause when given ." in {
-      ( new MyParser2( "." ).getClauseList ) must beEqualTo( Seq( FSequent( Nil, Nil ) ) )
+      ( new MyParser2( "." ).getClauseList ) must beEqualTo( Seq( HOLSequent( Nil, Nil ) ) )
     }
     "return an empty list when given nothing" in {
       ( new MyParser2( "" ).getClauseList ) must beEqualTo( Nil )
     }
     "return the correct clause of -p(x). fol" in {
-      ( new MyParser2( "-P(x)." ).getClauseList ) must beEqualTo( Seq( FSequent( px_fol :: Nil, Nil ) ) )
+      ( new MyParser2( "-P(x)." ).getClauseList ) must beEqualTo( Seq( HOLSequent( px_fol :: Nil, Nil ) ) )
     }
     "return the correct clauses for p(a). -p(x) | p(f(x)). -p(f(f(a))). in fol" in {
-      ( new MyParser2( "P(a). -P(x) | P(f(x)). -P(f(f(a)))." ).getClauseList ) must beEqualTo( Seq( FSequent( Nil, pa_fol :: Nil ), FSequent( px_fol :: Nil, pfx_fol :: Nil ), FSequent( pffa_fol :: Nil, Nil ) ) )
+      ( new MyParser2( "P(a). -P(x) | P(f(x)). -P(f(f(a)))." ).getClauseList ) must beEqualTo( Seq( HOLSequent( Nil, pa_fol :: Nil ), HOLSequent( px_fol :: Nil, pfx_fol :: Nil ), HOLSequent( pffa_fol :: Nil, Nil ) ) )
     }
     /*
     "return the correct clause for p(x) | -p(x) in hol" in {
       (new MyParser("p(x:i) | -p(x:i).").getClauseList) must beEqualTo (Clause(px::Nil,px::Nil)::Nil)
     }*/
     "return the correct clause for p(x) | -p(x) in fol" in {
-      ( new MyParser2( "P(x) | -P(x)." ).getClauseList ) must beEqualTo( Seq( FSequent( px_fol :: Nil, px_fol :: Nil ) ) )
+      ( new MyParser2( "P(x) | -P(x)." ).getClauseList ) must beEqualTo( Seq( HOLSequent( px_fol :: Nil, px_fol :: Nil ) ) )
     }
 
     /*

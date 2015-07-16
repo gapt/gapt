@@ -22,7 +22,7 @@ import at.logic.gapt.provers.minisat.MiniSAT
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGrammar, cf: List[FOLFormula] = Nil ) {
+class ExtendedHerbrandSequent( val endSequent: HOLSequent, val grammar: MultiGrammar, cf: List[FOLFormula] = Nil ) {
   // TODO: do we even want to allow cf == Nil?
   val cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( grammar ) else cf
 
@@ -68,9 +68,9 @@ class ExtendedHerbrandSequent( val endSequent: FSequent, val grammar: MultiGramm
     Imp( ant, succ )
   }
 
-  def getDeep: FSequent = {
-    val s1 = new FSequent( prop_l ++ inst_l, prop_r ++ inst_r )
-    val s2 = new FSequent( ( cutFormulas zip grammar.ss ).map { case ( cf, ( alpha, ts ) ) => getCutImpl( cf, alpha, ts ) }, Nil )
+  def getDeep: HOLSequent = {
+    val s1 = new HOLSequent( prop_l ++ inst_l, prop_r ++ inst_r )
+    val s2 = new HOLSequent( ( cutFormulas zip grammar.ss ).map { case ( cf, ( alpha, ts ) ) => getCutImpl( cf, alpha, ts ) }, Nil )
     s1 compose s2
   }
 

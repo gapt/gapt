@@ -4,7 +4,7 @@ import at.logic.gapt.algorithms.rewriting.{ NameReplacement, RenameResproof }
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.provers.atp.SearchDerivation
@@ -60,7 +60,7 @@ object fixDerivation extends Logger {
     else
       Some( ( neg_map, pos_map ) )
   }
-  private def convertSequent( seq: FSequent ) =
+  private def convertSequent( seq: HOLSequent ) =
     ( seq.antecedent.map( f => f.asInstanceOf[FOLFormula] ), seq.succedent.map( f => f.asInstanceOf[FOLFormula] ) )
   private def applySymm( p: RobinsonResolutionProof, f: FOLFormula, pos: Boolean ) =
     {
@@ -81,11 +81,11 @@ object fixDerivation extends Logger {
         Factor( eq2, newe, 3, pos, s )
       }
     }
-  def tryDeriveBySymmetry( to: FClause, from: FSequent ): Option[RobinsonResolutionProof] =
-    getSymmetryMap( convertSequent( to.toFSequent ), convertSequent( from ) ) map {
+  def tryDeriveBySymmetry( to: HOLClause, from: HOLSequent ): Option[RobinsonResolutionProof] =
+    getSymmetryMap( convertSequent( to ), convertSequent( from ) ) map {
       case ( neg_map, pos_map ) =>
         trace( "deriving " + to + " from " + from + " by symmetry" )
-        val my_to = convertSequent( to.toFSequent )
+        val my_to = convertSequent( to )
         val my_from = convertSequent( from )
         val ( neg_map, pos_map ) = getSymmetryMap( my_to, my_from ).get
         val init = InitialClause( from.antecedent.map( _.asInstanceOf[FOLFormula] ), from.succedent.map( _.asInstanceOf[FOLFormula] ) )
@@ -126,7 +126,7 @@ object fixDerivation extends Logger {
           }
         } )
 
-        assert( to.isSubClauseOf( s_pos.root.toFClause ) )
+        assert( to.isSubMultisetOf( s_pos.root.toHOLSequent ) )
 
         // contract some formulas if the maps are not injective
         val c_neg = neg_map_s.values.toSeq.distinct.foldLeft( s_pos )( ( p, i ) => {
@@ -150,44 +150,44 @@ object fixDerivation extends Logger {
     }
 
   private val subsumption_alg = StillmanSubsumptionAlgorithmFOL
-  def tryDeriveByFactor( to: FClause, from_c: FSequent ): Option[RobinsonResolutionProof] =
-    subsumption_alg.subsumes_by( from_c, to.toFSequent ) map { s =>
+  def tryDeriveByFactor( to: HOLClause, from_c: HOLSequent ): Option[RobinsonResolutionProof] =
+    subsumption_alg.subsumes_by( from_c, to ) map { s =>
       val from = InitialClause( from_c.antecedent.map( _.asInstanceOf[FOLFormula] ), from_c.succedent.map( _.asInstanceOf[FOLFormula] ) )
-      val from_s = FClause( from_c.antecedent.map( s( _ ) ), from_c.succedent.map( s( _ ) ) )
+      val from_s = HOLClause( from_c.antecedent.map( s( _ ).asInstanceOf[HOLAtom] ), from_c.succedent.map( s( _ ).asInstanceOf[HOLAtom] ) )
       // make a first Factor inference that does not contract, but applies
       // the FOLSubstitution
       val first = if ( !from_c.antecedent.isEmpty )
         Factor( from, from_c.antecedent.head, 1, false, s )
       else
         Factor( from, from_c.succedent.head, 1, true, s )
-      val proof = from_s.neg.toSet.foldLeft( first )( ( proof, atom ) => {
-        val cnt = from_s.neg.count( _ == atom ) - to.neg.count( _ == atom ) + 1
+      val proof = from_s.negative.toSet.foldLeft( first )( ( proof, atom ) => {
+        val cnt = from_s.negative.count( _ == atom ) - to.negative.count( _ == atom ) + 1
         Factor( proof, atom, cnt, false, FOLSubstitution() )
       } )
-      from_s.pos.toSet.foldLeft( proof )( ( proof, atom ) => {
-        val cnt = from_s.pos.count( _ == atom ) - to.pos.count( _ == atom ) + 1
+      from_s.positive.toSet.foldLeft( proof )( ( proof, atom ) => {
+        val cnt = from_s.positive.count( _ == atom ) - to.positive.count( _ == atom ) + 1
         Factor( proof, atom, cnt, true, FOLSubstitution() )
       } )
     }
 
-  private def isReflexivity( c: FClause ) =
-    c.pos.exists( a => a match {
+  private def isReflexivity( c: HOLClause ) =
+    c.positive.exists( a => a match {
       case Eq( x, y ) if x == y => true
       case _                    => false
     } )
-  private def isTautology( c: FClause ) = c.pos.exists( a => c.neg.exists( b => a == b ) )
-  def tryDeriveTrivial( to: FClause, from: Seq[FSequent] ) = {
-    val cls_sequent = FSequent( to.neg.map( _.asInstanceOf[FOLFormula] ), to.pos.map( _.asInstanceOf[FOLFormula] ) )
+  private def isTautology( c: HOLClause ) = c.positive.exists( a => c.negative.exists( b => a == b ) )
+  def tryDeriveTrivial( to: HOLClause, from: Seq[HOLSequent] ) = {
+    val cls_sequent = HOLSequent( to.negative.map( _.asInstanceOf[FOLFormula] ), to.positive.map( _.asInstanceOf[FOLFormula] ) )
     if ( from.contains( cls_sequent ) || isReflexivity( to ) || isTautology( to ) ) Some( InitialClause( to ) )
     else None
   }
 
-  def tryDeriveViaSearchDerivation( to: FClause, from: Seq[FSequent] ) = {
-    val cls_sequent = FSequent( to.neg.map( _.asInstanceOf[FOLFormula] ), to.pos.map( _.asInstanceOf[FOLFormula] ) )
+  def tryDeriveViaSearchDerivation( to: HOLClause, from: Seq[HOLSequent] ) = {
+    val cls_sequent = HOLSequent( to.negative.map( _.asInstanceOf[FOLFormula] ), to.positive.map( _.asInstanceOf[FOLFormula] ) )
     SearchDerivation( from, cls_sequent, true ) flatMap { d =>
       val ret = d.asInstanceOf[RobinsonResolutionProof]
-      if ( ret.root.toFClause != to ) {
-        val ret_seq = FSequent( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) )
+      if ( ret.root.toHOLSequent != to ) {
+        val ret_seq = HOLSequent( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) )
         tryDeriveByFactor( to, ret_seq )
       } else {
         Some( ret )
@@ -196,16 +196,16 @@ object fixDerivation extends Logger {
   }
 
   private val prover9 = new Prover9Prover
-  def tryDeriveViaResolution( to: FClause, from: Seq[FSequent] ) =
+  def tryDeriveViaResolution( to: HOLClause, from: Seq[HOLSequent] ) =
     if ( prover9 isInstalled )
-      findDerivationViaResolution( to, from.map { seq => FClause( seq.antecedent, seq.succedent ) }.toSet )
+      findDerivationViaResolution( to, from.map { seq => HOLClause( seq.antecedent, seq.succedent ) }.toSet )
     else
       None
 
   private def findFirstSome[A, B]( seq: Seq[A] )( f: A => Option[B] ): Option[B] =
     seq.view.flatMap( f( _ ) ).headOption
 
-  def apply( p: RobinsonResolutionProof, cs: Seq[FSequent] ): RobinsonResolutionProof =
+  def apply( p: RobinsonResolutionProof, cs: Seq[HOLSequent] ): RobinsonResolutionProof =
     mapInitialClauses( p ) { cls =>
       tryDeriveTrivial( cls, cs ).
         orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
@@ -224,8 +224,8 @@ object fixDerivation extends Logger {
  * The resulting proof may prove a smaller clause than the original one.
  */
 object mapInitialClauses {
-  def apply( p: RobinsonResolutionProof )( f: FClause => RobinsonResolutionProof ): RobinsonResolutionProof = p match {
-    case InitialClause( cls ) => f( cls.toFClause )
+  def apply( p: RobinsonResolutionProof )( f: HOLClause => RobinsonResolutionProof ): RobinsonResolutionProof = p match {
+    case InitialClause( cls ) => f( cls.toHOLClause )
 
     case Factor( r, par, List( lit1 ), s ) =>
       val rp = apply( par )( f )
@@ -283,7 +283,7 @@ object mapInitialClauses {
 }
 
 object tautologifyInitialClauses {
-  private def findMatchingOccurrences( occ: FormulaOccurrence, from: Clause, to: Clause ): Seq[FormulaOccurrence] =
+  private def findMatchingOccurrences( occ: FormulaOccurrence, from: OccClause, to: OccClause ): Seq[FormulaOccurrence] =
     if ( from.negative.contains( occ ) )
       to.negative.filter( _.formula == occ.formula )
     else
@@ -296,9 +296,9 @@ object tautologifyInitialClauses {
    * resulting resolution proof has the same structure as the original proof, and will hence contain many duplicate
    * literals originating from the new initial clauses as the new literals are not factored away.
    */
-  def apply( p: RobinsonResolutionProof, shouldTautologify: FClause => Boolean ): RobinsonResolutionProof =
+  def apply( p: RobinsonResolutionProof, shouldTautologify: HOLClause => Boolean ): RobinsonResolutionProof =
     p match {
-      case InitialClause( clause ) if shouldTautologify( clause.toFClause ) =>
+      case InitialClause( clause ) if shouldTautologify( clause.toHOLClause ) =>
         val allLiterals = ( clause.antecedent ++ clause.succedent ).map( _.formula ).map( _.asInstanceOf[FOLFormula] )
         InitialClause( allLiterals, allLiterals )
       case InitialClause( clause ) => p
@@ -328,7 +328,7 @@ object containedVariables {
   def apply( p: RobinsonResolutionProof ): Set[FOLVar] =
     p.nodes.flatMap {
       case node: RobinsonResolutionProof =>
-        freeVariables( node.root.toFSequent ).map( _.asInstanceOf[FOLVar] )
+        freeVariables( node.root.toHOLSequent ).map( _.asInstanceOf[FOLVar] )
     }
 }
 
@@ -351,15 +351,15 @@ object findDerivationViaResolution {
    * @param bs Set of initial clauses for the resulting proof.
    * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
    */
-  def apply( a: FClause, bs: Set[FClause] ): Option[RobinsonResolutionProof] = {
+  def apply( a: HOLClause, bs: Set[HOLClause] ): Option[RobinsonResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
-      freeVariables( a.toFSequent ),
-      ( a.toFSequent.formulas ++ bs.flatMap( _.toFSequent.formulas ) ).flatMap( constants( _ ) ).toSet
+      freeVariables( a ),
+      ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet
     )
 
     val groundingSubst = FOLSubstitution( grounding )
-    val negatedClausesA = a.neg.map { f => FClause( Seq(), Seq( groundingSubst( f ) ) ) } ++
-      a.pos.map { f => FClause( Seq( groundingSubst( f ) ), Seq() ) }
+    val negatedClausesA = a.negative.map { f => HOLClause( Seq(), Seq( groundingSubst( f ) ) ) } ++
+      a.positive.map { f => HOLClause( Seq( groundingSubst( f ) ), Seq() ) }
 
     new Prover9Prover().getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
       val tautologified = tautologifyInitialClauses( refutation, negatedClausesA.toSet )

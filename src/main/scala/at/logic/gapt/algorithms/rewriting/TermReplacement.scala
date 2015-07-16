@@ -3,7 +3,8 @@ package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.utils.logging.Logger
@@ -50,14 +51,14 @@ object TermReplacement extends Logger {
 
   // FIXME: these polymorphic functions do not have the types you think they have...
 
-  def rename_fsequent( fs: FSequent, what: LambdaExpression, by: LambdaExpression ): FSequent =
-    FSequent(
+  def rename_fsequent( fs: HOLSequent, what: LambdaExpression, by: LambdaExpression ): HOLSequent =
+    HOLSequent(
       fs.antecedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] ),
       fs.succedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] )
     )
 
-  def rename_fsequent( fs: FSequent, p: Map[LambdaExpression, LambdaExpression] ): FSequent = {
-    FSequent(
+  def rename_fsequent( fs: HOLSequent, p: Map[LambdaExpression, LambdaExpression] ): HOLSequent = {
+    HOLSequent(
       fs.antecedent.map( apply( _, p ) ),
       fs.succedent.map( apply( _, p ) )
     )
@@ -122,7 +123,7 @@ object RenameResproof extends Logger {
     if ( pmap contains p ) add_pmap( pmap, p ) else
       p match {
         case InitialClause( clause ) =>
-          val FSequent( fnegp, fposp ) = rename_fsequent( clause.toFSequent, smap.asInstanceOf[Map[LambdaExpression, LambdaExpression]] )
+          val HOLSequent( fnegp, fposp ) = rename_fsequent( clause.toHOLSequent, smap.asInstanceOf[Map[LambdaExpression, LambdaExpression]] )
           val negp = fnegp.toList.asInstanceOf[List[FOLFormula]]
           val posp = fposp.toList.asInstanceOf[List[FOLFormula]]
 

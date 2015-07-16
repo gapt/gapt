@@ -4,7 +4,7 @@ import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import java.io.InputStreamReader
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.lk.base.{ FSequent, Sequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, OccSequent, LKProof }
 import collection.mutable.{ Map => MMap }
 import at.logic.gapt.proofs.shlk._
 import scala.Tuple4
@@ -25,12 +25,12 @@ object SHLK {
 
   //--------------------------------- parse SLK sequent ----------------------
 
-  def parseSequent( txt: String ): FSequent = {
+  def parseSequent( txt: String ): HOLSequent = {
     lazy val sp = new SequentParser
     sp.parseAll( sp.sequent, txt ) match {
       case res @ sp.Success( result, input ) => {
         //        println("\n\nSUCCESS parse :) \n")
-        return res.result.toFSequent
+        return res.result.toHOLSequent
       }
       case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
         throw new Exception( "Error in SHLK.parseSequent : " + x.toString )
@@ -146,7 +146,7 @@ object SHLK {
       protected def symbol: Parser[String] = symbols.r
       def symbols: String = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073\0173\0175]+""" // +-*/\^<>=`~?@&|!#{}';
 
-      def sequent: Parser[Sequent] = repsep( formula, "," ) ~ "|-" ~ repsep( formula, "," ) ^^ {
+      def sequent: Parser[OccSequent] = repsep( formula, "," ) ~ "|-" ~ repsep( formula, "," ) ^^ {
         case lfs ~ "|-" ~ rfs => {
           Axiom( lfs, rfs ).root
         }
@@ -227,7 +227,7 @@ object SHLK {
         case "proof" ~ str ~ str1 ~ seq ~ "base" ~ "{" ~ line1 ~ "}" ~ "step" ~ "{" ~ line2 ~ "}" => {
           //          proofName = str
           bigMMap.put( str, Tuple2( mapBase, mapStep ) )
-          SchemaProofDB.put( new SchemaProof( str, IntVar( "k" ) :: Nil, seq.toFSequent, mapBase.get( "root" ).get, mapStep.get( "root" ).get ) )
+          SchemaProofDB.put( new SchemaProof( str, IntVar( "k" ) :: Nil, seq.toHOLSequent, mapBase.get( "root" ).get, mapStep.get( "root" ).get ) )
           mapBase = MMap.empty[String, LKProof]
           mapStep = MMap.empty[String, LKProof]
           //          println("\n\nParsing is SUCCESSFUL : "+str)
@@ -374,7 +374,7 @@ object SHLK {
       def symbols: String = """[\053\055\052\057\0134\0136\074\076\075\0140\0176\077\0100\046\0174\041\043\047\073\0173\0175]+""" // +-*/\^<>=`~?@&|!#{}';
 
       //      def sequent: Parser[Sequent] = formula ~ "|-" ~ formula ^^ { case lf ~ "|-" ~ rf => {
-      def sequent: Parser[Sequent] = repsep( formula, "," ) ~ "|-" ~ repsep( formula, "," ) ^^ {
+      def sequent: Parser[OccSequent] = repsep( formula, "," ) ~ "|-" ~ repsep( formula, "," ) ^^ {
         case lfs ~ "|-" ~ rfs => {
           //          println("\n\nSEQUENT")
           Axiom( lfs, rfs ).root
@@ -394,7 +394,7 @@ object SHLK {
       def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")" ~ sequent ~ ")" ^^ {
         case "pLink(" ~ "(" ~ name ~ "," ~ v ~ ")" ~ sequent ~ ")" => {
           //          println("\n\npLink")
-          SchemaProofLinkRule( sequent.toFSequent, name, v :: Nil )
+          SchemaProofLinkRule( sequent.toHOLSequent, name, v :: Nil )
         }
       }
 

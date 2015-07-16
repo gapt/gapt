@@ -6,7 +6,7 @@ import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.findMinimalSipGrammar
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
+import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.prover9.Prover9Prover
@@ -27,10 +27,10 @@ class SipProver(
 )
     extends Prover with Logger {
 
-  override def getLKProof( endSequent: FSequent ): Option[LKProof] =
+  override def getLKProof( endSequent: HOLSequent ): Option[LKProof] =
     getSimpleInductionProof( endSequent ).map( _.toLKProof )
 
-  def getSimpleInductionProof( endSequent: FSequent ): Option[SimpleInductionProof] = {
+  def getSimpleInductionProof( endSequent: HOLSequent ): Option[SimpleInductionProof] = {
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
       case singleton if singleton.size == 1 => singleton.head
     }
@@ -40,7 +40,7 @@ class SipProver(
 
   }
 
-  def getSimpleInductionProof( endSequent: FSequent, instanceProofs: Seq[( Int, ExpansionSequent )] ): Option[SimpleInductionProof] = {
+  def getSimpleInductionProof( endSequent: HOLSequent, instanceProofs: Seq[( Int, ExpansionSequent )] ): Option[SimpleInductionProof] = {
 
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
       case singleton if singleton.size == 1 => singleton.head
@@ -96,7 +96,7 @@ class SipProver(
     }
   }
 
-  def generateInstanceProofs( endSequent: FSequent, inductionVariable: FOLVar ): Seq[( Int, ExpansionSequent )] = {
+  def generateInstanceProofs( endSequent: HOLSequent, inductionVariable: FOLVar ): Seq[( Int, ExpansionSequent )] = {
     var instanceProofs = instances map { n =>
       val instanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )( endSequent )
       debug( s"[n=$n] Proving $instanceSequent" )

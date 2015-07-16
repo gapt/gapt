@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.Clause
+import at.logic.gapt.proofs.resolution.OccClause
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr.hol._
@@ -20,20 +20,20 @@ import clauseSchema._
  * For first-order CERES, the CERES object does a grounding on its own.
  */
 object ACNF {
-  def plugProjections( resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: FSequent ): LKProof = {
+  def plugProjections( resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: HOLSequent ): LKProof = {
     resRefutation match {
-      case Axiom( Sequent( Nil, Nil ) ) =>
-        groun_proj_set.find( p => p.root.toFSequent == end_seq ).get
-      case Axiom( Sequent( Nil, succedent ) ) =>
+      case Axiom( OccSequent( Nil, Nil ) ) =>
+        groun_proj_set.find( p => p.root.toHOLSequent == end_seq ).get
+      case Axiom( OccSequent( Nil, succedent ) ) =>
         val set = groun_proj_set.filter( p => {
           p.root.succedent.map( fo => fo.formula ).intersect( succedent.map( fo => fo.formula ) ).nonEmpty
         } )
         set.head
-      case Axiom( Sequent( antecedent, Nil ) ) =>
+      case Axiom( OccSequent( antecedent, Nil ) ) =>
         val set = groun_proj_set.filter( p => p.root.antecedent.map( fo =>
           fo.formula ).intersect( antecedent.map( fo => fo.formula ) ).nonEmpty )
         set.head
-      case Axiom( Sequent( antecedent, succedent ) ) =>
+      case Axiom( OccSequent( antecedent, succedent ) ) =>
         val set = groun_proj_set.filter( p =>
           p.root.antecedent.map( fo => fo.formula ).intersect( antecedent.map( fo => fo.formula ) ).nonEmpty &&
             p.root.succedent.map( fo => fo.formula ).intersect( succedent.map( fo => fo.formula ) ).nonEmpty )
@@ -72,7 +72,7 @@ object ACNF {
 
   //for the usual CERES method
   //TODO: The way it constructs the ACNF should be slightly changed in a way that it should use mapping from a clause to a projection
-  def apply( resRefutation: LKProof, ground_proj_set: Set[LKProof], end_seq: FSequent ): LKProof = {
+  def apply( resRefutation: LKProof, ground_proj_set: Set[LKProof], end_seq: HOLSequent ): LKProof = {
     val filtered_ground_proj_set = filterProjectionSet( ground_proj_set.toList, end_seq ).toSet
     //    val p = plugProjections(resRefutation, filtered_ground_proj_set, end_seq)
     val p = plugProjections( resRefutation, ground_proj_set, end_seq )
@@ -106,12 +106,12 @@ object ACNF {
       val ro = p1base.root
       val new_map1 = Map.empty[Var, SchemaExpression] + Tuple2( k, IntZero() )
       var subst = SchemaSubstitution( new_map1 )
-      FSequent( ro.antecedent.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ), ro.succedent.toList.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ) )
+      HOLSequent( ro.antecedent.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ), ro.succedent.toList.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ) )
     } else {
       val ro = p1rec.root
       val new_map1 = Map.empty[Var, SchemaExpression] + Tuple2( k, toIntegerTerm( n - 1 ) )
       var subst = SchemaSubstitution( new_map1 )
-      FSequent( ro.antecedent.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ), ro.succedent.toList.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ) )
+      HOLSequent( ro.antecedent.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ), ro.succedent.toList.map( fo => unfoldSFormula( subst( fo.formula.asInstanceOf[SchemaFormula] ) ) ) )
     }
     apply( resDeduction, ground_proj_set, end_seq )
   }
@@ -142,7 +142,7 @@ object contractionNormalForm {
 object renameIndexedVarInProjection {
   def apply( p: LKProof, pair: Tuple2[Var, LambdaExpression] ): LKProof = {
     p match {
-      case Axiom( seq )                             => Axiom( Sequent( seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( renameVar( fo.formula, pair ), Nil ) ), seq.succedent.map( fo => fo.factory.createFormulaOccurrence( renameVar( fo.formula, pair ), Nil ) ) ) )
+      case Axiom( seq )                             => Axiom( OccSequent( seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( renameVar( fo.formula, pair ), Nil ) ), seq.succedent.map( fo => fo.factory.createFormulaOccurrence( renameVar( fo.formula, pair ), Nil ) ) ) )
       case WeakeningLeftRule( up, _, p1 )           => WeakeningLeftRule( apply( up, pair ), renameVar( p1.formula, pair ) )
       case WeakeningRightRule( up, _, p1 )          => WeakeningRightRule( apply( up, pair ), renameVar( p1.formula, pair ) )
       case ContractionLeftRule( up, _, a1, a2, _ )  => ContractionLeftRule( apply( up, pair ), renameVar( a1.formula, pair ) )
@@ -215,7 +215,7 @@ object SubstituteProof {
   def apply(proof: LKProof, sub:Substitution) : LKProof =
     proof match {
       case Axiom(s) =>
-        val fs = s.toFSequent
+        val fs = s.toHOLSequent
         val ant = fs.antecedent.map(sub(_))
         val suc = fs.succedent.map(sub(_))
         val inf = Axiom(ant, suc )

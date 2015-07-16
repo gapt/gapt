@@ -204,11 +204,11 @@ object checkProofLinks1 {
       val sub_ant = ps.seq.antecedent.map( f => sub( f.asInstanceOf[SchemaFormula] ) )
       val sub_suc = ps.seq.succedent.map( f => sub( f.asInstanceOf[SchemaFormula] ) )
 
-      if ( sub_ant.toSet != so.toFSequent._1.toSet || sub_suc.toSet != so.toFSequent._2.toSet ) {
+      if ( sub_ant.toSet != so.toHOLSequent.antecedent.toSet || sub_suc.toSet != so.toHOLSequent.succedent.toSet ) {
         println( "\n checkProofLinks1 for proof " + name + " FAIL" )
-        ps.seq._1.foreach( f => println( "\n" + f ) )
+        ps.seq.antecedent.foreach( f => println( "\n" + f ) )
         println( "\n\n" )
-        val ant = so.toFSequent.antecedent.map( f => sub( f.asInstanceOf[SchemaFormula] ) )
+        val ant = so.toHOLSequent.antecedent.map( f => sub( f.asInstanceOf[SchemaFormula] ) )
         ant.foreach( f => println( "\n" + f ) )
       } else {
         println( "checkProofLinks1 for proof " + name + " SUCCESS" )
@@ -286,8 +286,8 @@ object StepMinusOne {
       minusMore( minusOne( e, k ), k, times - 1 )
   }
 
-  def minusOneFSeq( fseq: FSequent, k: IntVar ): FSequent = {
-    FSequent( fseq._1.map( f => minusOne( f.asInstanceOf[SchemaFormula], k ) ), fseq._2.map( f => minusOne( f.asInstanceOf[SchemaFormula], k ) ) )
+  def minusOneFSeq( fseq: HOLSequent, k: IntVar ): HOLSequent = {
+    HOLSequent( fseq.antecedent.map( f => minusOne( f.asInstanceOf[SchemaFormula], k ) ), fseq.succedent.map( f => minusOne( f.asInstanceOf[SchemaFormula], k ) ) )
   }
 
   def intTermPlus( t: IntegerTerm, times: Int ): IntegerTerm = {
@@ -313,7 +313,7 @@ object StepMinusOne {
       case Axiom( ro ) => Axiom( ro.antecedent.map( fo => minusOne( fo.formula.asInstanceOf[SchemaFormula], k ) ), ro.succedent.map( fo => minusOne( fo.formula.asInstanceOf[SchemaFormula], k ) ) )
 
       case SchemaProofLinkRule( seq, link, ind :: _ ) => {
-        SchemaProofLinkRule( minusOneFSeq( seq.toFSequent, k ), link, intTermMinusOne( ind.asInstanceOf[IntegerTerm], k ) :: Nil )
+        SchemaProofLinkRule( minusOneFSeq( seq.toHOLSequent, k ), link, intTermMinusOne( ind.asInstanceOf[IntegerTerm], k ) :: Nil )
       }
 
       case AndLeftEquivalenceRule1( p, s, a, m ) => {

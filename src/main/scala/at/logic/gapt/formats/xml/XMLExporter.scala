@@ -34,7 +34,7 @@ object XMLExporter {
     //      throw new ExportingException("Can't save file: "+ path + "\n\n" + "Error:" + e.toString )
   }
 
-  def exportAxioms( axioms: List[FSequent] ) = if ( axioms.isEmpty ) <axiomset/>
+  def exportAxioms( axioms: List[HOLSequent] ) = if ( axioms.isEmpty ) <axiomset/>
   else <axiomset> { axioms.map( x => exportFSequent( x ) ) } </axiomset>
 
   def exportProof( name: String, proof: LKProof ) =
@@ -42,7 +42,7 @@ object XMLExporter {
       { exportRule( proof ) }
     </proof>
 
-  def exportSequentList( name: String, sequentList: List[FSequent] ) =
+  def exportSequentList( name: String, sequentList: List[HOLSequent] ) =
     <sequentlist symbol={ name }>
       { sequentList.map( x => exportFSequent( x ) ) }
     </sequentlist>
@@ -68,13 +68,13 @@ object XMLExporter {
       </rule>
   }
 
-  def exportSequent( s: Sequent ) = exportFSequent( s.toFSequent )
+  def exportSequent( s: OccSequent ) = exportFSequent( s.toHOLSequent )
 
-  def exportFSequent( fs: FSequent ) =
+  def exportFSequent( fs: HOLSequent ) =
     <sequent>
       { println( fs.toString ) }
-      <formulalist> { fs._1.map( x => exportFormula( x ) ) } </formulalist>
-      <formulalist> { fs._2.map( x => exportFormula( x ) ) } </formulalist>
+      <formulalist> { fs.antecedent.map( x => exportFormula( x ) ) } </formulalist>
+      <formulalist> { fs.succedent.map( x => exportFormula( x ) ) } </formulalist>
     </sequent>
 
   def exportFormula( formula: HOLFormula ): Node = formula match {

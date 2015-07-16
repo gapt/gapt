@@ -98,15 +98,17 @@ object CNFp {
     case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 
-  def toFClauseList( f: HOLFormula ): List[FClause] = {
+  def toClauseList( f: HOLFormula ): List[HOLClause] = {
     apply( f ).distinct.map(
       literals => {
         val neg = literals.filter( isNeg( _ ) ).map( removeNeg( _ ) )
         val pos = literals.filterNot( isNeg( _ ) )
-        FClause( neg, pos )
+        HOLClause( neg, pos )
       }
     )
   }
+
+  def toClauseList( f: FOLFormula ): List[FOLClause] = toClauseList( f.asInstanceOf[HOLFormula] ).asInstanceOf[List[FOLClause]]
 
   def toFormulaList( f: HOLFormula ): List[HOLFormula] = apply( f ).map( Or( _ ) )
 
@@ -136,12 +138,12 @@ object CNFn {
     case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 
-  def toFClauseList( f: HOLFormula ): List[FClause] = {
+  def toFClauseList( f: HOLFormula ): List[HOLClause] = {
     apply( f ).distinct.map(
       literals => {
         val neg = literals.filter( isNeg( _ ) ).map( removeNeg( _ ) )
         val pos = literals.filterNot( isNeg( _ ) )
-        FClause( neg, pos )
+        HOLClause( neg, pos )
       }
     )
   }

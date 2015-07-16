@@ -7,7 +7,7 @@ import at.logic.gapt.formats.lisp.SExpression
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.Clause
+import at.logic.gapt.proofs.resolution.OccClause
 
 /**
  * ** Implementation of Ivy's Resolution Calculus ***
@@ -26,7 +26,7 @@ case object FlipType extends UnaryRuleTypeA { override def toString = "Flip" };
 case object PropositionalType extends UnaryRuleTypeA { override def toString = "Propositional" };
 case object NewSymbolType extends UnaryRuleTypeA { override def toString = "NewSymbol" };
 
-abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
+abstract sealed trait IvyResolutionProof extends AGraphProof[OccClause] {
   val id: String;
   val clause_exp: SExpression;
   //  val vertex : Clause;
@@ -86,9 +86,9 @@ abstract sealed trait IvyResolutionProof extends AGraphProof[Clause] {
 case class InitialClause(
   id:                  String,
   clause_exp:          SExpression,
-  override val vertex: Clause
+  override val vertex: OccClause
 )
-    extends LeafAGraph[Clause]( vertex ) with NullaryAGraphProof[Clause] with IvyResolutionProof {
+    extends LeafAGraph[OccClause]( vertex ) with NullaryAGraphProof[OccClause] with IvyResolutionProof {
 
   def rule = InitialClauseType;
   //  override def name = "Initial Clause"
@@ -98,9 +98,9 @@ case class Instantiate(
   id:                  String,
   clause_exp:          SExpression,
   substitution:        FOLSubstitution,
-  override val vertex: Clause, override val t: IvyResolutionProof
+  override val vertex: OccClause, override val t: IvyResolutionProof
 )
-    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[Clause] with IvyResolutionProof {
+    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[OccClause] with IvyResolutionProof {
   def rule = InstantiateType
   //  override def name = "Instantiate"
 };
@@ -108,15 +108,15 @@ case class Instantiate(
 case class Flip(
   id:         String,
   clause_exp: SExpression, flipped: FormulaOccurrence,
-  override val vertex: Clause, override val t: IvyResolutionProof
+  override val vertex: OccClause, override val t: IvyResolutionProof
 )
-    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[Clause] with IvyResolutionProof {
+    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[OccClause] with IvyResolutionProof {
   def rule = FlipType
   //  override def name = "Flip"
 };
 
-case class Propositional( id: String, clause_exp: SExpression, override val vertex: Clause, override val t: IvyResolutionProof )
-    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[Clause] with IvyResolutionProof {
+case class Propositional( id: String, clause_exp: SExpression, override val vertex: OccClause, override val t: IvyResolutionProof )
+    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[OccClause] with IvyResolutionProof {
   def rule = PropositionalType
 
 };
@@ -127,11 +127,11 @@ case class Paramodulation(
   position:            List[Int],
   lit:                 FormulaOccurrence,
   is_demodulation:     Boolean, // if the formula should be left to right or right to left
-  override val vertex: Clause,
+  override val vertex: OccClause,
   override val t1:     IvyResolutionProof,
   override val t2:     IvyResolutionProof
 )
-    extends BinaryAGraph( vertex, t1, t2 ) with BinaryAGraphProof[Clause] with IvyResolutionProof {
+    extends BinaryAGraph( vertex, t1, t2 ) with BinaryAGraphProof[OccClause] with IvyResolutionProof {
   def rule = ParamodulationType
   //  override def name = "Paramodulation"
 };
@@ -141,11 +141,11 @@ case class Resolution(
   clause_exp:          SExpression,
   lit1:                FormulaOccurrence, //resolved literal in t1
   lit2:                FormulaOccurrence, //resolved literal in t2
-  override val vertex: Clause,
+  override val vertex: OccClause,
   override val t1:     IvyResolutionProof,
   override val t2:     IvyResolutionProof
 )
-    extends BinaryAGraph( vertex, t1, t2 ) with BinaryAGraphProof[Clause] with IvyResolutionProof {
+    extends BinaryAGraph( vertex, t1, t2 ) with BinaryAGraphProof[OccClause] with IvyResolutionProof {
   def rule = ResolutionType
   //  override def name = "Resolution"
 };
@@ -156,9 +156,9 @@ case class NewSymbol(
   lit:                 FormulaOccurrence,
   new_symbol:          FOLConst,
   replacement_term:    FOLTerm,
-  override val vertex: Clause, override val t: IvyResolutionProof
+  override val vertex: OccClause, override val t: IvyResolutionProof
 )
-    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[Clause] with IvyResolutionProof {
+    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[OccClause] with IvyResolutionProof {
   def rule = NewSymbolType
   //  override def name = "Instantiate"
 }; /** end of calculus defintion **/ 

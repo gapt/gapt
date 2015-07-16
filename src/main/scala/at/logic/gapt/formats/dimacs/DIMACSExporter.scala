@@ -2,14 +2,14 @@ package at.logic.gapt.formats.dimacs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.models.MapBasedInterpretation
-import at.logic.gapt.proofs.resolution.FClause
+import at.logic.gapt.proofs.resolution._
 
 /**
  * A helper class that provides core functionality for both DIMACSExporter (SAT)
  * as well as WDIMACSExporter (MaxSAT).
  */
-class DIMACSHelper( val clauses: List[FClause] ) {
-  val atoms = clauses.flatMap( c => c.neg ++ c.pos ).distinct
+class DIMACSHelper( val clauses: List[HOLClause] ) {
+  val atoms = clauses.flatMap( c => c.negative ++ c.positive ).distinct
   val atom_map = atoms.zip( 1 to atoms.size ).toMap
   val reverseAtomMap = atom_map.map( _.swap )
   val nl = System.getProperty( "line.separator" )
@@ -46,20 +46,20 @@ object readDIMACS {
 
 object writeDIMACS {
   def apply( helper: DIMACSHelper ) = {
-    def getDIMACSString1( atom: HOLFormula, pos: Boolean ): String =
+    def getDIMACSString1( atom: HOLAtom, pos: Boolean ): String =
       if ( pos ) helper.atom_map.get( atom ).get.toString else "-" + helper.atom_map.get( atom ).get
 
-    def getDIMACSString( clause: FClause ): String =
+    def getDIMACSString( clause: HOLClause ): String =
       {
         val sb = new StringBuilder()
 
-        def atoms_to_str( as: Seq[HOLFormula], pol: Boolean ) = as.foreach( a => {
+        def atoms_to_str( as: Seq[HOLAtom], pol: Boolean ) = as.foreach( a => {
           sb.append( getDIMACSString1( a, pol ) );
           sb.append( " " );
         } )
 
-        atoms_to_str( clause.pos, true )
-        atoms_to_str( clause.neg, false )
+        atoms_to_str( clause.positive, true )
+        atoms_to_str( clause.negative, false )
 
         sb.toString()
       }

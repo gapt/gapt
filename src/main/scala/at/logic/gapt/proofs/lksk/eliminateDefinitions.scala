@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lksk._
 import scala.collection.mutable
 
 object eliminateDefinitions {
-  def toLabelledSequent( so: Sequent ) = new LabelledSequent(
+  def toLabelledSequent( so: OccSequent ) = new LabelledOccSequent(
     so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
     so.succedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] )
   )
@@ -55,7 +55,7 @@ object eliminateDefinitions {
           val ant_occs = ls.l_antecedent.toList
           val succ_occs = ls.l_succedent.toList
           val ( a, labels ) = Axiom.createDefault(
-            new FSequent( ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ) ),
+            new HOLSequent( ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ) ),
             Tuple2(
               ant_occs.map( fo => fo.skolem_label ).toList,
               succ_occs.map( fo => fo.skolem_label ).toList

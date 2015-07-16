@@ -38,18 +38,18 @@ class ForgetfulResolutionTest extends Specification {
       val pba = FOLAtom( ps, b :: a :: Nil )
       val pbb = FOLAtom( ps, b :: b :: Nil )
       val q = FOLAtom( "Q", Nil )
-      val cq = new MyFClause( Nil, q :: Nil )
-      val cpaa = new MyFClause( Nil, paa :: Nil )
-      val cpab = new MyFClause( Nil, pab :: Nil )
-      val cpba = new MyFClause( Nil, pba :: Nil )
-      val cpbb = new MyFClause( Nil, pbb :: Nil )
+      val cq = new Clause( Nil, q :: Nil )
+      val cpaa = new Clause( Nil, paa :: Nil )
+      val cpab = new Clause( Nil, pab :: Nil )
+      val cpba = new Clause( Nil, pba :: Nil )
+      val cpbb = new Clause( Nil, pbb :: Nil )
 
       val r1 = Set( cpab, cq )
       val r2 = Set( cpba, cq )
       val r3 = Set( cpbb, cq )
       val real = Set( r1, r2, r3 )
 
-      val res = ForgetfulParamodulate( CNFp.toFClauseList( And( Eq( a, b ) :: paa :: q :: Nil ) ).map( MyFClause.toMyFClause ) )
+      val res = ForgetfulParamodulate( CNFp.toClauseList( And( Eq( a, b ) :: paa :: q :: Nil ) ) )
 
       val setres = res.map( cnf => cnf.toSet ).toSet
 

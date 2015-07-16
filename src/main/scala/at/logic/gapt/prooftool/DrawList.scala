@@ -9,7 +9,7 @@ package at.logic.gapt.prooftool
 
 import java.awt.{ Font, Color }
 import Font._
-import at.logic.gapt.proofs.lk.base.{ Sequent, FSequent }
+import at.logic.gapt.proofs.lk.base.{ OccSequent, HOLSequent }
 import at.logic.gapt.expr._
 import swing.{ FlowPanel, GridPanel, Label }
 
@@ -41,8 +41,8 @@ class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1
     }
 
     def drawMember( x: Any ) = x match {
-      case s: Sequent                                     => DrawSequent( s, ft, str )
-      case fs: FSequent                                   => DrawSequent.applyF( fs, ft, str )
+      case s: OccSequent                                  => DrawSequent( s, ft, str )
+      case fs: HOLSequent                                 => DrawSequent.applyF( fs, ft, str )
       case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
       case _ => new Label( x.toString ) {
         background = new Color( 255, 255, 255 )

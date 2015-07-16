@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.hoare
 
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils.numeral
 
@@ -15,11 +15,11 @@ object unrollLoop {
 }
 
 case class SimpleInductionProblem( val gamma: Seq[FOLFormula], val alphaVar: FOLVar, val B: FOLFormula ) {
-  def sequent = FSequent( gamma, List( B ) )
+  def sequent = HOLSequent( gamma, List( B ) )
 
   def instanceSequent( n: Int ) = {
     val instSubst = FOLSubstitution( alphaVar, numeral( n ) )
-    FSequent( gamma map ( instSubst( _ ) ), List( instSubst( B ) ) )
+    HOLSequent( gamma map ( instSubst( _ ) ), List( instSubst( B ) ) )
   }
 }
 

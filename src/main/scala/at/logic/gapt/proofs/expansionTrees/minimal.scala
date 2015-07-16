@@ -26,7 +26,7 @@ object minimalExpansionSequents {
    * @param prover The prover used for the evaluation.
    * @return A sequence of minimal expansion sequents.
    */
-  def apply( sequent: ExpansionSequent, prover: Prover ): Seq[ExpansionSequent] =
+  def apply( sequent: ExpansionSequent, prover: Prover )( implicit dummyImplicit: DummyImplicit ): Seq[ExpansionSequent] =
     apply( compressQuantifiers( sequent ), prover ).map( decompressQuantifiers.apply )
 }
 
@@ -51,7 +51,7 @@ object minimalExpansionSequent {
    * @param prover The prover used for the evaluation.
    * @return A sequence of minimal expansion sequents.
    */
-  def apply( sequent: ExpansionSequent, prover: Prover ): Option[ExpansionSequent] =
+  def apply( sequent: ExpansionSequent, prover: Prover )( implicit dummyImplicit: DummyImplicit ): Option[ExpansionSequent] =
     apply( compressQuantifiers( sequent ), prover ).map( decompressQuantifiers.apply )
 }
 

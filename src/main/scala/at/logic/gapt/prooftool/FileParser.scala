@@ -24,7 +24,7 @@ import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema.dbTRS
 import at.logic.gapt.proofs.ceres.clauseSchema._
-import at.logic.gapt.proofs.lk.base.{ FSequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
 import at.logic.gapt.proofs.proofs.{ Proof, TreeProof }
 import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.utils.ds.trees.{ BinaryTree, LeafTree, Tree }
@@ -160,11 +160,11 @@ class FileParser {
     proofdb = new ProofDatabase( proofdb.Definitions, proofdb.proofs ::: proofs, proofdb.axioms, proofdb.sequentLists )
   }
 
-  def addSeqList( seqList: List[FSequent] ) {
+  def addSeqList( seqList: List[HOLSequent] ) {
     addSeqList( "sequentList ", seqList )
   }
 
-  def addSeqList( name: String, seqList: List[FSequent] ) {
+  def addSeqList( name: String, seqList: List[HOLSequent] ) {
     proofdb = new ProofDatabase( proofdb.Definitions, proofdb.proofs, proofdb.axioms,
       ( name + proofdb.sequentLists.size.toString, seqList ) :: proofdb.sequentLists )
   }

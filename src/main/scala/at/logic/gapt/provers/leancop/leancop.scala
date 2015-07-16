@@ -8,7 +8,7 @@ import at.logic.gapt.expr.{ Const, FOLHeadType, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
-import at.logic.gapt.proofs.lk.base.{ LKProof, FSequent }
+import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.provers.renameConstantsToFi
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.utils.traits.ExternalProgram
@@ -18,10 +18,10 @@ import scala.sys.process._
 
 class LeanCoPProver extends Prover with ExternalProgram {
 
-  override def isValid( s: FSequent ): Boolean =
+  override def isValid( s: HOLSequent ): Boolean =
     getExpansionSequent( s ).isDefined
 
-  override def getExpansionSequent( s: FSequent ): Option[ExpansionSequent] =
+  override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] =
     withRenamedConstants( s ) { seq =>
       require( seq.succedent.size == 1 )
 
@@ -39,12 +39,12 @@ class LeanCoPProver extends Prover with ExternalProgram {
       LeanCoPParser.getExpansionProof( new StringReader( tptpProof ) )
     }
 
-  override def getLKProof( seq: FSequent ): Option[LKProof] =
+  override def getLKProof( seq: HOLSequent ): Option[LKProof] =
     throw new UnsupportedOperationException
 
   override val isInstalled: Boolean = ( Seq( "which", "leancop" ) #> new ByteArrayOutputStream ! ) == 0
 
-  private def withRenamedConstants( seq: FSequent )( f: FSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
+  private def withRenamedConstants( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
     val ( renamedSeq, _, invertRenaming ) = renameConstantsToFi( seq )
     f( renamedSeq ) map { renamedExpSeq =>
       NameReplacement( renamedExpSeq, invertRenaming )

@@ -11,8 +11,8 @@ import at.logic.gapt.formats.InputParser
 import at.logic.gapt.proofs.lk.base._
 
 trait ResolutionParser extends InputParser {
-  def clauseList: Parser[List[FSequent]]
-  def getClauseList(): List[FSequent] = {
+  def clauseList: Parser[List[HOLSequent]]
+  def getClauseList(): List[HOLSequent] = {
     val reader = getInput()
     try {
       parseAll( clauseList, reader ).get

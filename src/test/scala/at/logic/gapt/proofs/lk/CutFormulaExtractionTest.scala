@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.{ BinaryLKProof, Sequent }
+import at.logic.gapt.proofs.lk.base.{ BinaryLKProof, OccSequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import org.specs2.mutable._
 
@@ -18,7 +18,7 @@ class CutFormulaExtractionTest extends Specification {
     val ax2_ = Axiom( List( px ), List( px ) )
     val proof_ = CutRule( ax1_, ax2_, ax1_.root.succedent.toList.head, ax2_.root.antecedent.toList.head )
 
-    def toSequent( aux: FormulaOccurrence ) = Sequent( Nil, List( aux ) )
+    def toSequent( aux: FormulaOccurrence ) = OccSequent( Nil, List( aux ) )
 
     "apply correctly to a proof with one cut" in {
       val cutproofs = getCutsAsProofs( proof )

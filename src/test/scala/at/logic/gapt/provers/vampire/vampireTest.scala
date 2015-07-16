@@ -7,7 +7,7 @@ package at.logic.gapt.provers.vampire
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.FSequent
+import at.logic.gapt.proofs.lk.base.HOLSequent
 
 class VampireTest extends Specification {
 
@@ -16,8 +16,8 @@ class VampireTest extends Specification {
   "The Vampire interface" should {
     "refute { :- P; P :- }" in {
       val p = FOLAtom( "P", Nil )
-      val s1 = FSequent( Nil, p :: Nil )
-      val s2 = FSequent( p :: Nil, Nil )
+      val s1 = HOLSequent( Nil, p :: Nil )
+      val s2 = HOLSequent( p :: Nil, Nil )
       val result: Boolean = Vampire.refute( s1 :: s2 :: Nil )
       result must beEqualTo( true )
     }
@@ -47,10 +47,10 @@ class VampireTest extends Specification {
       val k = Eq( ffcxy, x )
       val skk_i = Eq( fffbccx, fax )
 
-      val s1 = FSequent( Nil, List( i ) )
-      val s2 = FSequent( Nil, List( k ) )
-      val s3 = FSequent( Nil, List( s ) )
-      val t1 = FSequent( List( skk_i ), Nil )
+      val s1 = HOLSequent( Nil, List( i ) )
+      val s2 = HOLSequent( Nil, List( k ) )
+      val s3 = HOLSequent( Nil, List( s ) )
+      val t1 = HOLSequent( List( skk_i ), Nil )
       val result: Boolean = Vampire.refute( List( s1, s2, s3, t1 ) )
       result must beEqualTo( true )
     }
@@ -58,8 +58,8 @@ class VampireTest extends Specification {
 
   "The Vampire interface" should {
     "not refute { :- P; Q :- }" in {
-      val s1 = FSequent( Nil, List( FOLAtom( "P", Nil ) ) )
-      val t1 = FSequent( List( FOLAtom( "Q", Nil ) ), Nil )
+      val s1 = HOLSequent( Nil, List( FOLAtom( "P", Nil ) ) )
+      val t1 = HOLSequent( List( FOLAtom( "Q", Nil ) ), Nil )
       val result: Boolean = Vampire.refute( List( s1, t1 ) )
       result must beEqualTo( false )
     }

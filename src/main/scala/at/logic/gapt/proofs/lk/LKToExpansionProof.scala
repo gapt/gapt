@@ -30,7 +30,7 @@ class LKToExpansionProof extends Logger {
     case _ => throw new IllegalArgumentException( "unsupported proof rule: " + proof )
   }
 
-  protected def handleAxiom( r: Sequent ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
+  protected def handleAxiom( r: OccSequent ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     // guess the axiom: must be an atom and appear left as well as right
     // can't use set intersection, but lists are small enough to do it manually
     val axiomCandidates = r.antecedent.filter( elem => r.succedent.exists( elem2 => elem syntaxEquals elem2 ) ).filter( o => isExtendedAtom( o.formula ) )
@@ -65,7 +65,7 @@ class LKToExpansionProof extends Logger {
   //occurs in handleAxiom
   private def allExtendedAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isExtendedAtom( o.formula ) )
 
-  protected def handleUnary( r: Sequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
+  protected def handleUnary( r: OccSequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
       case WeakeningRightRule( _, _, _ )           => ETWeakening( p.formula )
       case WeakeningLeftRule( _, _, _ )            => ETWeakening( p.formula )
@@ -96,7 +96,7 @@ class LKToExpansionProof extends Logger {
     } )
   }
 
-  protected def handleBinary( r: Sequent, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, p: FormulaOccurrence ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
+  protected def handleBinary( r: OccSequent, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, p: FormulaOccurrence ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
       case ImpLeftRule( _, _, _, _, _, _ )           => ETImp( map( a1 ), map( a2 ) )
       case OrLeftRule( _, _, _, _, _, _ )            => ETOr( map( a1 ), map( a2 ) )
