@@ -91,6 +91,11 @@ case class InstanceTermEncoding( endSequent: HOLSequent ) {
     case ( f, false ) => s"-{$f}"
   }
 
+  def getSymbol( esFormula: PolarizedFormula ) = esFormula match {
+    case ( All.Block( vars, _ ), true ) => FOLFunctionHead( mkSym( esFormula ), vars.size )
+    case ( Ex.Block( vars, _ ), false ) => FOLFunctionHead( mkSym( esFormula ), vars.size )
+  }
+
   private def instanceTerms( instance: PolarizedFormula, esFormula: PolarizedFormula ) = ( instance, esFormula ) match {
     case ( ( instf: FOLFormula, true ), ( All.Block( vars, esf ), true ) ) =>
       FOLMatchingAlgorithm.matchTerms( esf, instf ).map { subst => vars.map( subst.apply ) }

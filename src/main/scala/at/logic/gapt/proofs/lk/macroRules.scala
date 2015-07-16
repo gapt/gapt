@@ -282,6 +282,14 @@ object ForallRightBlock {
 
     series._1
   }
+
+  def unapply( p: LKProof ): Option[( LKProof, FormulaOccurrence, FormulaOccurrence, List[Var] )] = p match {
+    case ForallRightRule( ForallRightBlock( q, aux2, main2, eigenvars ), sequent, aux, main, eigenvar ) if main2 == aux =>
+      Some( ( q, aux2, main, eigenvar :: eigenvars ) )
+    case ForallRightRule( q, sequent, aux, main, eigenvar ) =>
+      Some( ( q, aux, main, List( eigenvar ) ) )
+    case _ => None
+  }
 }
 
 /**
