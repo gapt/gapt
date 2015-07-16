@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLSubstitution }
 import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.expr.hol.{ toNNF, lcomp, simplify }
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 import at.logic.gapt.utils.logging.Logger
 
 object SipGrammar {
@@ -57,8 +57,10 @@ object normalFormsSipGrammar {
 
     val allTerms = instanceLanguages.flatMap( _._2 )
     val topLevelNFs = normalForms( allTerms, Seq( gamma, alpha, nu ) ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentNFs = normalForms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
-      Seq( gamma, alpha, nu ) )
+    val argumentNFs = normalForms(
+      FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
+      Seq( gamma, alpha, nu )
+    )
 
     val prods = Set.newBuilder[Production]
 
@@ -122,7 +124,7 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
 }
 
 object minimizeSipGrammar extends Logger {
-  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new QMaxSAT ): SipGrammar = {
+  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
@@ -130,14 +132,15 @@ object minimizeSipGrammar extends Logger {
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     maxSATSolver.solveWPM( List( hard ), soft toList ) match {
       case Some( interp ) => SipGrammar(
-        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
+        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) }
+      )
       case None => throw new Exception( "Grammar does not cover language." )
     }
   }
 }
 
 object findMinimalSipGrammar {
-  def apply( langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
+  def apply( langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
     val polynomialSizedCoveringGrammar = normalFormsSipGrammar( langs )
     minimizeSipGrammar( polynomialSizedCoveringGrammar, langs, maxSATSolver )
   }

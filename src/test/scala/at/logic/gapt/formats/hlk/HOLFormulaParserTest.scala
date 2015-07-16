@@ -26,7 +26,8 @@ class HOLASTParserTest extends Specification {
         "P(X)", "a", "-P(y)", "-P(Y)",
         "P(x) & P(b)", "q(x) &q(x) & p(y)", "A&B", "X&Y&Z",
         "(P(x) & P(b))", "(q(x) &q(x) & p(y))", "(A&B)", "(X&Y&Z)",
-        "q(x) &(q(x) & p(y))", "(X&Y)&Z" )
+        "q(x) &(q(x) & p(y))", "(X&Y)&Z"
+      )
 
       var good: List[ast.LambdaAST] = List[ast.LambdaAST]()
       var bad: List[( String, Position )] = List[( String, Position )]()
@@ -63,7 +64,8 @@ class HOLASTParserTest extends Specification {
         "q(x) &(q(x) & p(y))", "(X&Y)&Z",
         "(all X p(X))", "(exists X p(X))",
         "-(all X p(X))", "-(exists X p(X))",
-        "-(all X --p(X))", "--(exists X p(X))" )
+        "-(all X --p(X))", "--(exists X p(X))"
+      )
 
       cases map ( ( s: String ) =>
         HOLASTParser.parseAll( HOLASTParser.formula, s ) match {
@@ -82,7 +84,8 @@ class HOLASTParserTest extends Specification {
         "(all X ((\\Y => P(X,Y)) & Q(X)))", "(\\Y => (all X (P(X) & Q(X) & R(Y,Y))))",
         "(\\X=>X)", "(\\X=>X(X))",
         "(all X ((\\\\Y => P(X,\\Y)) & Q(X)))", "(\\\\Y => (all X (P(X) & Q(X) & R(\\Y,\\Y))))",
-        "(\\\\X=>\\X)", "(\\\\X=>\\X(\\X))" )
+        "(\\\\X=>\\X)", "(\\\\X=>\\X(\\X))"
+      )
 
       cases map ( ( s: String ) =>
         HOLASTParser.parseAll( HOLASTParser.formula, s ) match {
@@ -96,7 +99,8 @@ class HOLASTParserTest extends Specification {
 
     "handle applications" in {
       val cases = List(
-        "(@ P x y)", "(@ P(x,y) z)", "(@ P x y(z))" )
+        "(@ P x y)", "(@ P(x,y) z)", "(@ P x y(z))"
+      )
 
       cases map ( ( s: String ) =>
         HOLASTParser.parseAll( HOLASTParser.formula, s ) match {
@@ -115,7 +119,8 @@ class HOLASTParserTest extends Specification {
         "(all X (P(X) | Q(X)))", "(all X (P(X) | Q(X) | R(X,X)))",
         "(exists X (P(X) | Q(X)))", "(exists X (P(X) | Q(X) | R(X,X)))",
         //"(all x (q(x,f(x)) | q(x,g(x))))",
-        "(all X (q(X,f(X)) | q(X,g(X))))" )
+        "(all X (q(X,f(X)) | q(X,g(X))))"
+      )
 
       cases map ( ( s: String ) =>
         HOLASTParser.parseAll( HOLASTParser.formula, s ) match {
@@ -249,7 +254,8 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
   "The HLK HOL Parser " should {
     "parse declared formulas" in {
       val str = List(
-        "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))" )
+        "const P : i>o; const Q : i>i>o; var x,y:i; (all x (P(x) -> (exists y Q(x,y) )))"
+      )
 
       str map { x =>
         val f = HLKHOLParser.parseFormula( x )

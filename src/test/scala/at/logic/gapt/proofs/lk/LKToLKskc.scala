@@ -33,8 +33,10 @@ class LKskcTest extends Specification {
       val proof = ForallLeftRule(
         ForallLeftRule(
           LKAxiom( Rcc :: Nil, Nil ),
-          Rcc, allxRcx, c ),
-        allxRcx, allyallxRyx, c )
+          Rcc, allxRcx, c
+        ),
+        allxRcx, allyallxRyx, c
+      )
       val lkskc_proof = LKToLKsk( proof, Set() )
 
       lkskc_proof.root.antecedent.toList.head must beLike {

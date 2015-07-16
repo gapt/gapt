@@ -9,26 +9,32 @@ import at.logic.gapt.proofs.resolution.FClause
 
 object renameConstantsToFi {
   private def mkName( i: Int ) = s"f$i"
-  private def getRenaming( seq: FSequent ): SymbolMap = getRenaming( constants( seq ) )
-  private def getRenaming( cnf: List[FClause] ): SymbolMap =
+  private def getRenaming( seq: FSequent ): Map[Const, String] = getRenaming( constants( seq ) )
+  private def getRenaming( cnf: List[FClause] ): Map[Const, String] =
     getRenaming( cnf.flatMap( constants( _ ) ).toSet )
-  private def getRenaming( constants: Set[Const] ): SymbolMap =
+  private def getRenaming( constants: Set[Const] ): Map[Const, String] =
     constants.toSeq.zipWithIndex.map {
-      case ( Const( c, FOLHeadType( _, arity ) ), i ) =>
-        c -> ( arity, mkName( i ) )
+      case ( c, i ) => c -> mkName( i )
     }.toMap
+  private def renamingToSymbolMap( renaming: Map[Const, String] ): SymbolMap =
+    renaming.map {
+      case ( FOLAtomHead( c, arity ), newName )     => c -> ( arity, newName )
+      case ( FOLFunctionHead( c, arity ), newName ) => c -> ( arity, newName )
+    }
   private def invertRenaming( map: SymbolMap ) =
     map.map { case ( from, ( arity, to ) ) => ( to, ( arity, from ) ) }
 
-  def apply( seq: FSequent ): ( FSequent, SymbolMap ) = {
-    val map = getRenaming( seq )
+  def apply( seq: FSequent ): ( FSequent, Map[Const, String], SymbolMap ) = {
+    val renaming = getRenaming( seq )
+    val map = renamingToSymbolMap( renaming )
     val renamedSeq = NameReplacement( seq, map )
-    ( renamedSeq, invertRenaming( map ) )
+    ( renamedSeq, renaming, invertRenaming( map ) )
   }
-  def apply( cnf: List[FClause] ): ( List[FClause], SymbolMap ) = {
-    val map = getRenaming( cnf )
+  def apply( cnf: List[FClause] ): ( List[FClause], Map[Const, String], SymbolMap ) = {
+    val renaming = getRenaming( cnf )
+    val map = renamingToSymbolMap( renaming )
     val renamedCNF = cnf.map( clause => NameReplacement( clause, map ) )
-    ( renamedCNF, invertRenaming( map ) )
+    ( renamedCNF, renaming, invertRenaming( map ) )
   }
 }
 

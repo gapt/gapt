@@ -36,7 +36,8 @@ object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
     //println("Set1: "+set1.size+" - "+(set1.size-set1_.size))
     //println("Set2: "+set2.size+" - "+(set2.size-set2_.size))
     ( set1_, set2_ )
-  } )
+  }
+)
 
 /**
  * Should calculate the same clause set as [[StandardClauseSet]], but without the intermediate representation of a
@@ -70,7 +71,8 @@ class AlternativeStandardClauseSet( val optimize_plus: ( Set[FSequent], Set[FSeq
   /* Like compose, but does not duplicate common terms */
   private def delta_compose( fs1: FSequent, fs2: FSequent ) = FSequent(
     fs1.antecedent ++ fs2.antecedent.diff( fs1.antecedent ),
-    fs1.succedent ++ fs2.succedent.diff( fs1.succedent ) )
+    fs1.succedent ++ fs2.succedent.diff( fs1.succedent )
+  )
 }
 
 /**
@@ -97,9 +99,11 @@ object StandardClauseSet extends Logger {
     transformStructToClauseSet( struct ).map( so => sequentToLabelledSequent( so ) )
 
   @tailrec
-  def transformCartesianProductToStruct( cp: List[Tuple2[Struct, Struct]],
-                                         aux: List[FormulaOccurrence],
-                                         acc: List[Struct => Struct] ): Struct = cp match {
+  def transformCartesianProductToStruct(
+    cp:  List[Tuple2[Struct, Struct]],
+    aux: List[FormulaOccurrence],
+    acc: List[Struct => Struct]
+  ): Struct = cp match {
     case ( i, j ) :: Nil =>
       acc.reverse.foldLeft[Struct]( Times( i, j, aux ) )( ( struct, fun ) => fun( struct ) )
     case ( i, j ) :: rest =>

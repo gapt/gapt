@@ -423,9 +423,11 @@ class LKTest extends Specification {
 
     "work for weak quantifier rules" in {
       val List( x, y, z ) = List( ( "x", Ti -> Ti ), ( "y", Ti -> Ti ), ( "z", Ti -> Ti ) ) map ( u => Var( u._1, u._2 ) )
-      val List( p, a, b ) = List( ( "P", ( Ti -> Ti ) -> ( ( Ti -> Ti ) -> ( ( Ti -> Ti ) -> To ) ) ),
+      val List( p, a, b ) = List(
+        ( "P", ( Ti -> Ti ) -> ( ( Ti -> Ti ) -> ( ( Ti -> Ti ) -> To ) ) ),
         ( "a", Ti -> Ti ),
-        ( "b", Ti -> Ti ) ) map ( u => Const( u._1, u._2 ) )
+        ( "b", Ti -> Ti )
+      ) map ( u => Const( u._1, u._2 ) )
       val paba = HOLAtom( p, List( a, b, a ) )
       val pxba = HOLAtom( p, List( x, b, a ) )
       val expxba = Ex( x, pxba )
@@ -797,25 +799,43 @@ class LKTest extends Specification {
     def F( x1: FOLTerm, x2: FOLTerm ) = FOLAtom( "F", List( x1, x2 ) )
     def G( x1: FOLTerm, x2: FOLTerm ) = FOLAtom( "G", List( x1, x2 ) )
 
-    val et1 = merge( ETWeakQuantifier( All( x, All( y, F( x, y ) ) ),
+    val et1 = merge( ETWeakQuantifier(
+      All( x, All( y, F( x, y ) ) ),
       List(
-        ( ETWeakQuantifier( All( y, F( s1, y ) ),
+        ( ETWeakQuantifier(
+          All( y, F( s1, y ) ),
           List(
             ( ETAtom( F( s1, t11 ) ), t11 ),
-            ( ETAtom( F( s1, t12 ) ), t12 ) ) ), s1 ),
-        ( ETWeakQuantifier( All( y, F( s2, y ) ),
+            ( ETAtom( F( s1, t12 ) ), t12 )
+          )
+        ), s1 ),
+        ( ETWeakQuantifier(
+          All( y, F( s2, y ) ),
           List(
-            ( ETAtom( F( s2, t21 ) ), t21 ) ) ), s2 ) ) ) )
+            ( ETAtom( F( s2, t21 ) ), t21 )
+          )
+        ), s2 )
+      )
+    ) )
 
-    val et2 = merge( ETWeakQuantifier( Ex( x, Ex( y, G( x, y ) ) ),
+    val et2 = merge( ETWeakQuantifier(
+      Ex( x, Ex( y, G( x, y ) ) ),
       List(
-        ( ETWeakQuantifier( Ex( y, G( s1, y ) ),
+        ( ETWeakQuantifier(
+          Ex( y, G( s1, y ) ),
           List(
             ( ETAtom( G( s1, t11 ) ), t11 ),
-            ( ETAtom( G( s1, t12 ) ), t12 ) ) ), s1 ),
-        ( ETWeakQuantifier( Ex( y, G( s2, y ) ),
+            ( ETAtom( G( s1, t12 ) ), t12 )
+          )
+        ), s1 ),
+        ( ETWeakQuantifier(
+          Ex( y, G( s2, y ) ),
           List(
-            ( ETAtom( G( s2, t21 ) ), t21 ) ) ), s2 ) ) ) )
+            ( ETAtom( G( s2, t21 ) ), t21 )
+          )
+        ), s2 )
+      )
+    ) )
 
     "correctly compute a small proof" in {
       val es = ExpansionSequent( List( et1 ), List( et2 ) )

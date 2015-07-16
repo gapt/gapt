@@ -37,7 +37,8 @@ class LeanCoPProverTest extends Specification {
     "x + 0 = x, x + s(y) = s(x+y) |- x + s(0) = s(x)" in {
       val seq = FSequent(
         Seq( "x+0 = x", "x+s(y) = s(x+y)" ).map( s => univclosure( parseFormula( s ) ) ),
-        Seq( parseFormula( "k+s(0) = s(k)" ) ) )
+        Seq( parseFormula( "k+s(0) = s(k)" ) )
+      )
 
       leanCoP.getExpansionSequent( seq ) must beSome
     }

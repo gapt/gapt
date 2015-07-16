@@ -23,6 +23,7 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
       t.flatMap( freeVariables( _ ) ) foreach { fv =>
         require( allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals" )
       }
+      require( a.size == t.size, s"vector production $p has sides of different length" )
   }
   require( nonTerminals contains axiomVect, s"axiom is unknown non-terminal vector $axiom" )
 
@@ -85,7 +86,8 @@ case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: S
 
   def toVectTratGrammar: VectTratGrammar = VectTratGrammar(
     axiom, nonTerminals map ( List( _ ) ),
-    productions map asVectTratGrammarProduction )
+    productions map asVectTratGrammarProduction
+  )
 
   def language: Set[FOLTerm] = toVectTratGrammar language
 

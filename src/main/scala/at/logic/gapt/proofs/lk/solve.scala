@@ -575,7 +575,13 @@ class PropositionalProofStrategy extends ProofStrategy with at.logic.gapt.utils.
                   {
                     debug( "PropositionalProofStrategy is unable to find a rule to apply on: " + seq )
                     None
-                  } ) ) ) ) ) )
+                  }
+                )
+              )
+            )
+          )
+        )
+      )
     }
   }
 
@@ -651,7 +657,13 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
                   {
                     debug( "ExpansionTreeProofStrategy is unable to find a rule to apply on: " + seq )
                     None
-                  } ) ) ) ) ) )
+                  }
+                )
+              )
+            )
+          )
+        )
+      )
     }
   }
 
@@ -791,7 +803,8 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
           val newEtSeq = expansionSequent.replaceInSuccedent( et, selection.asInstanceOf[ExpansionTree] )
           new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Succedent, Some( variable ),
             List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
-      } ) )
+      } )
+    )
   }
 
   /**

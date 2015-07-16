@@ -13,9 +13,11 @@ import scala.util.parsing.input.PagedSeqReader
  *  An extended proof database allows to label subproofs by formulas. It provides mappings from formulas to proofs
  * additionally to the list of pairs.
  */
-case class ExtendedProofDatabase( eproofs: Map[HOLFormula, LKProof],
-                                  eaxioms: Map[HOLFormula, HOLFormula],
-                                  edefinitions: Map[LambdaExpression, LambdaExpression] )
+case class ExtendedProofDatabase(
+  eproofs:      Map[HOLFormula, LKProof],
+  eaxioms:      Map[HOLFormula, HOLFormula],
+  edefinitions: Map[LambdaExpression, LambdaExpression]
+)
     extends ProofDatabase( Map(), Nil, Nil, Nil ) {
   override val proofs: List[( String, LKProof )] = eproofs.map( x =>
     x._1 match {
@@ -133,7 +135,8 @@ trait LatexReplacementParser extends DeclarationParser {
   lazy val reservedset = Set( "\\neg", "\\land", "\\lor", "\\impl", "\\forall", "\\exists" )
   override lazy val atomsymb: Parser[String] = atomsymb2 ^? (
     { case x if !( reservedset contains x ) => x },
-    ( x => "error: \\neg,\\land,\\lor,\\impl,\\forall,\\exists are reserved names" ) )
+    ( x => "error: \\neg,\\land,\\lor,\\impl,\\forall,\\exists are reserved names" )
+  )
 
   lazy val atomsymb2: Parser[String] = atomregexp
 

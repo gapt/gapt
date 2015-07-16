@@ -73,15 +73,19 @@ case class ReplayCommand( parentIds: Iterable[String], id: String, cls: FSequent
 
     def stream1: Stream[Command[Clause]] = cons( SequentsMacroCommand[Clause](
       SimpleRefinementGetCommand[Clause],
-      List( VariantsCommand,
+      List(
+        VariantsCommand,
         DeterministicAndCommand[Clause]( (
           List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
-          List( ParamodulationCommand( FOLUnificationAlgorithm ) ) ) ),
+          List( ParamodulationCommand( FOLUnificationAlgorithm ) )
+        ) ),
         SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
         SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
         //        PrintStateCommand,
-        InsertResolventCommand[Clause] ),
-      RefutationReachedCommand[Clause] ), stream1 )
+        InsertResolventCommand[Clause]
+      ),
+      RefutationReachedCommand[Clause]
+    ), stream1 )
     //RefutationReachedCommand is replaced by SubsumedTargedReachedCommand
     //        SubsumedTargedReachedCommand[Clause]), stream1)
 
@@ -105,23 +109,39 @@ case class OldReplayCommand( parentIds: Iterable[String], id: String, cls: FSequ
   def apply( state: State, data: Any ) = {
     //println("replay: " + parentIds + " - " + id + " - target: " + cls)
     def stream1: Stream[Command[Clause]] =
-      Stream.cons( SimpleRefinementGetCommand[Clause],
-        Stream.cons( VariantsCommand,
-          Stream.cons( ClauseFactorCommand( FOLUnificationAlgorithm ),
-            Stream.cons( DeterministicAndCommand[Clause]( (
-              List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ) ),
-              List( ParamodulationCommand( FOLUnificationAlgorithm ) ) ) ),
-              Stream.cons( IsGuidedNotFoundCommand,
-                Stream.cons( InsertResolventCommand[Clause],
-                  Stream.cons( PrependOnCondCommand[Clause](
-                    ( s: State, d: Any ) => {
-                      val gtf = s.isDefinedAt( "guided_target_found" )
-                      val fveq = fvarInvariantMSEquality( d.asInstanceOf[RobinsonResolutionProof].root, s( "targetClause" ).asInstanceOf[FSequent] )
-                      if ( fveq ) s( "guided_target_found" ) = true
-                      !gtf && fveq
-                    },
-                    RestoreCommand[Clause]( AddGuidedResolventCommand( id ) :: InsertResolventCommand[Clause] :: RefutationReachedCommand[Clause] :: Nil ) :: Nil ),
-                    stream1 ) ) ) ) ) ) )
+      Stream.cons(
+        SimpleRefinementGetCommand[Clause],
+        Stream.cons(
+          VariantsCommand,
+          Stream.cons(
+            ClauseFactorCommand( FOLUnificationAlgorithm ),
+            Stream.cons(
+              DeterministicAndCommand[Clause]( (
+                List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ) ),
+                List( ParamodulationCommand( FOLUnificationAlgorithm ) )
+              ) ),
+              Stream.cons(
+                IsGuidedNotFoundCommand,
+                Stream.cons(
+                  InsertResolventCommand[Clause],
+                  Stream.cons(
+                    PrependOnCondCommand[Clause](
+                      ( s: State, d: Any ) => {
+                        val gtf = s.isDefinedAt( "guided_target_found" )
+                        val fveq = fvarInvariantMSEquality( d.asInstanceOf[RobinsonResolutionProof].root, s( "targetClause" ).asInstanceOf[FSequent] )
+                        if ( fveq ) s( "guided_target_found" ) = true
+                        !gtf && fveq
+                      },
+                      RestoreCommand[Clause]( AddGuidedResolventCommand( id ) :: InsertResolventCommand[Clause] :: RefutationReachedCommand[Clause] :: Nil ) :: Nil
+                    ),
+                    stream1
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
     List( ( state, Stream.cons( GetGuidedClausesCommand( parentIds ), Stream.cons( SetClausesFromDataCommand, Stream.cons( SetTargetClause( cls ), stream1 ) ) ) ) )
   }
 

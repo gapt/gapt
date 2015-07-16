@@ -153,18 +153,20 @@ class TPTPHOLExporter {
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
   def thf_formula( f: LambdaExpression, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
     f match {
-      case Neg( x )      => addparens( " ~(" + thf_formula( x, vmap, cmap ) + ")", outermost ) //negation of atoms needs parenthesis!
-      case And( x, y )   => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
-      case Or( x, y )    => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
-      case Imp( x, y )   => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )
-      case All( x, t )   => addparens( "![" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case Ex( x, t )    => addparens( "?[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case Eq( x, y )    => addparens( thf_formula( x, vmap, cmap ) + " = " + thf_formula( y, vmap, cmap ), !outermost )
-      case Abs( x, t )   => addparens( "^[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case App( s, t )   => addparens( thf_formula( s, vmap, cmap ) + " @ " + thf_formula( t, vmap, cmap ), !outermost )
-      case Var( _, _ )   => vmap( f.asInstanceOf[Var] )
-      case Const( _, _ ) => cmap( f.asInstanceOf[Const] )
-      case _             => throw new Exception( "TPTP export does not support outermost connective of " + f )
+      case Top()                      => "$true"
+      case Bottom()                   => "$false"
+      case Neg( x )                   => addparens( " ~(" + thf_formula( x, vmap, cmap ) + ")", outermost ) //negation of atoms needs parenthesis!
+      case And( x, y )                => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
+      case Or( x, y )                 => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
+      case Imp( x, y )                => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )
+      case All( x, t )                => addparens( "![" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case Ex( x, t )                 => addparens( "?[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case Eq( x, y )                 => addparens( thf_formula( x, vmap, cmap ) + " = " + thf_formula( y, vmap, cmap ), !outermost )
+      case Abs( x, t )                => addparens( "^[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case App( s, t )                => addparens( thf_formula( s, vmap, cmap ) + " @ " + thf_formula( t, vmap, cmap ), !outermost )
+      case Var( _, _ )                => vmap( f.asInstanceOf[Var] )
+      case NonLogicalConstant( _, _ ) => cmap( f.asInstanceOf[Const] )
+      case _                          => throw new Exception( "TPTP export does not support outermost connective of " + f )
     }
   }
 

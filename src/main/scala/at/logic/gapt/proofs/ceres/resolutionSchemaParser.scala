@@ -209,12 +209,12 @@ object ParseResSchema {
       def eq_prefix: Parser[SchemaFormula] = "=" ~ "(" ~ term ~ "," ~ term ~ ")" ^^ { case "=" ~ "(" ~ x ~ "," ~ y ~ ")" => Eq( x, y ) }
       def var_func: Parser[SchemaExpression] = regex( new Regex( "[u-z]" + word ) ) ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params ~ ")" =>
-          val h = Var( x, ->( Tindex, Tindex ) )
+          val h = Var( x, `->`( Tindex, Tindex ) )
           SchemaFunction( h, params )
       }
       def const_func: Parser[SchemaExpression] = regex( new Regex( "[" + symbols + "a-tA-Z0-9]" + word ) ) ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params ~ ")" =>
-          val h = Const( x, ->( Tindex, Tindex ) )
+          val h = Const( x, `->`( Tindex, Tindex ) )
           SchemaFunction( h, params )
       }
       protected def word: String = """[a-zA-Z0-9$_{}]*"""
@@ -437,12 +437,12 @@ object ParseResSchemaDavid {
       def eq_prefix: Parser[SchemaFormula] = "=" ~ "(" ~ term ~ "," ~ term ~ ")" ^^ { case "=" ~ "(" ~ x ~ "," ~ y ~ ")" => Eq( x, y ) }
       def var_func: Parser[SchemaExpression] = regex( new Regex( "[u-z]" + word ) ) ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params ~ ")" =>
-          val h = Var( x, ->( Tindex, Tindex ) )
+          val h = Var( x, Tindex -> Tindex )
           SchemaFunction( h, params )
       }
       def const_func: Parser[SchemaExpression] = regex( new Regex( "[" + symbols + "a-tA-Z0-9]" + word ) ) ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params ~ ")" =>
-          val h = Const( x, ->( Tindex, Tindex ) )
+          val h = Const( x, Tindex -> Tindex )
           SchemaFunction( h, params )
       }
       protected def word: String = """[a-zA-Z0-9$_{}]*"""
@@ -464,19 +464,19 @@ object ParseResSchemaDavid {
       }
       def MULTterm: Parser[SchemaExpression] = "(" ~ term ~ "*" ~ term ~ ")" ^^ {
         case "(" ~ t1 ~ "*" ~ t2 ~ ")" => {
-          val func = Const( "*", ->( Tindex, ->( Tindex, Tindex ) ) )
+          val func = Const( "*", Tindex -> ( Tindex -> Tindex ) )
           SchemaFunction( func, t1 :: t2 :: Nil )
         }
       }
       def PLUSterm: Parser[SchemaExpression] = "(" ~ term ~ "+" ~ term ~ ")" ^^ {
         case "(" ~ t1 ~ "+" ~ t2 ~ ")" => {
-          val func = Const( "+", ->( Tindex, ->( Tindex, Tindex ) ) )
+          val func = Const( "+", Tindex -> ( Tindex -> Tindex ) )
           SchemaFunction( func, t1 :: t2 :: Nil )
         }
       }
       def MINUSterm: Parser[SchemaExpression] = "(" ~ term ~ "-" ~ term ~ ")" ^^ {
         case "(" ~ t1 ~ "-" ~ t2 ~ ")" => {
-          val func = Const( "-", ->( Tindex, ->( Tindex, Tindex ) ) )
+          val func = Const( "-", Tindex -> ( Tindex -> Tindex ) )
           SchemaFunction( func, t1 :: t2 :: Nil )
         }
       }

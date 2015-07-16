@@ -54,10 +54,12 @@ class LNPProofTest extends Specification {
       //Console.println("cssv size: " + cssv.size)
       //(new FileWriter("target" + separator + "lnp-cs.tex") with SequentsListLatexExporter
       //  with HOLTermArithmeticalExporter).exportSequentList(cssv.sortWith((x,y) => x.toString < y.toString), List()).close
-      saveXML( List(),
+      saveXML(
+        List(),
         List( ( "cs", cs ), ( "dcs", dcs ), ( "css", ( css ) ) //("cssv", (cssv))
         ),
-        "target" + separator + "lnp-cs.xml" )
+        "target" + separator + "lnp-cs.xml"
+      )
       // specs2 require a least one Result, see org.specs2.specification.Example 
       Success()
     }

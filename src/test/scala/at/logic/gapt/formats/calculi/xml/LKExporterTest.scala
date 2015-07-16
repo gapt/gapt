@@ -32,12 +32,15 @@ class LkExporterTest extends Specification {
             <constantatomformula symbol="C"/>
             <constantatomformula symbol="D"/>
           </formulalist>
-        </sequent> ) )
+        </sequent>
+      ) )
     }
 
     "export correctly a sequent list {A1, B1 :- C1, D1, A2, B2 :- C2, D2}" in {
-      trim( exporter.exportSequentList( "testlist", List( FSequent( List( "A1", "B1" ) map ( pc ), List( "C1", "D1" ) map ( pc ) ),
-        FSequent( List( "A2", "B2" ) map ( pc ), List( "C2", "D2" ) map ( pc ) ) ) ) ) must beEqualTo( trim(
+      trim( exporter.exportSequentList( "testlist", List(
+        FSequent( List( "A1", "B1" ) map ( pc ), List( "C1", "D1" ) map ( pc ) ),
+        FSequent( List( "A2", "B2" ) map ( pc ), List( "C2", "D2" ) map ( pc ) )
+      ) ) ) must beEqualTo( trim(
         <sequentlist symbol="testlist">
           <sequent>
             <formulalist>
@@ -59,7 +62,8 @@ class LkExporterTest extends Specification {
               <constantatomformula symbol="D2"/>
             </formulalist>
           </sequent>
-        </sequentlist> ) )
+        </sequentlist>
+      ) )
     }
   }
 }

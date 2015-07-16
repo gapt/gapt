@@ -832,10 +832,20 @@ object UniformAssociativity3ExampleProof {
   def ax2_ax(x: FOLTerm): FOLFormula = All(y, ax2_ax(x, y) )
   def ax2_ax(x: FOLTerm, y: FOLTerm): FOLFormula = Eq( f1(s, f2(x, p, y)), f2( x, p, f1(s, y)) )
 
+  def addAllAxioms(proof: LKProof): LKProof =
+    Seq(Trans, cp.get_axiom(), Symm, ax2_ax(), cs_ax(), refl_ax(), Ax1).foldLeft(proof)(WeakeningLeftRule(_, _))
+
   def apply(n: Int): LKProof = {
-    assert (n>=1, "n must be >= 1")
-    val p = gen_proof_step(0, n)
-    induction_start(n, p)
+    assert (n>=0, "n must be >= 0")
+    val proof = if (n > 0) {
+      gen_proof_step(0, n)
+    } else {
+      val zero = Utils.numeral(0)
+      val c1 = f2(f2(zero, p, zero), p, zero)
+      val e1 = f2(zero, p, f2(zero, p, zero))
+      addAllAxioms(Axiom(Eq(c1, e1)))
+    }
+    induction_start(n, proof)
   }
 
   /**
@@ -884,19 +894,10 @@ object UniformAssociativity3ExampleProof {
 
     val p0 =
       if (i+1 >= n) {
-        // start, add axioms
-        val all_axioms = Trans::cp.get_axiom()::Symm::ax2_ax()::cs_ax()::refl_ax()::Ax1::Nil
-        def add_ax(start: LKProof, axioms : List[FOLFormula]): LKProof = {
-          axioms match {
-            case Nil => start
-            case head::tail => WeakeningLeftRule(add_ax(start, tail), head)
-          }
-        }
-
         val final_expression = Eq( a1, a2 )
 
         val top = Axiom( final_expression::Nil, final_expression::Nil )
-        add_ax(top, all_axioms)
+        addAllAxioms(top)
       } else {
         gen_proof_step(i+1, n)
       }

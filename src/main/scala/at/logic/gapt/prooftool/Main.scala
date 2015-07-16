@@ -821,8 +821,10 @@ object Main extends SimpleSwingApplication {
       specifyResolutionSchema()
     } else try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val result = ACNFDialog( SchemaProofDB.proofs.map( pair => pair._1 ).toSeq.reverse,
-        resolutionProofSchemaDB.map.map( pair => pair._1 ).toSeq.reverse )
+      val result = ACNFDialog(
+        SchemaProofDB.proofs.map( pair => pair._1 ).toSeq.reverse,
+        resolutionProofSchemaDB.map.map( pair => pair._1 ).toSeq.reverse
+      )
       if ( result != None ) {
         val input = result.get
         val proof = ACNF( input._1, input._2, input._3 )
@@ -873,7 +875,8 @@ object Main extends SimpleSwingApplication {
           else false
         }
         def getDescription = fe
-      } ) )
+      }
+    ) )
 
     fileFilter = acceptAllFileFilter
   }

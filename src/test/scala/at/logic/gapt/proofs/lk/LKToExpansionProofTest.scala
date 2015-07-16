@@ -23,13 +23,17 @@ class ExtractExpansionSequentTest extends Specification {
         ETAtom( FOLAtom( p, Utils.numeral( 0 ) :: Nil ) ),
         ETWeakQuantifier( ass, List(
           ( ETImp( ETAtom( FOLAtom( p, Utils.numeral( 0 ) :: Nil ) ), ETAtom( FOLAtom( p, Utils.numeral( 1 ) :: Nil ) ) ), Utils.numeral( 0 ) ),
-          ( ETImp( ETAtom( FOLAtom( p, Utils.numeral( 1 ) :: Nil ) ), ETAtom( FOLAtom( p, Utils.numeral( 2 ) :: Nil ) ) ), Utils.numeral( 1 ) ) ) ) )
+          ( ETImp( ETAtom( FOLAtom( p, Utils.numeral( 1 ) :: Nil ) ), ETAtom( FOLAtom( p, Utils.numeral( 2 ) :: Nil ) ) ), Utils.numeral( 1 ) )
+        ) )
+      )
 
       val equal_permut_2 = etSeq.antecedent equals List(
         ETAtom( FOLAtom( p, Utils.numeral( 0 ) :: Nil ) ),
         ETWeakQuantifier( ass, List(
           ( ETImp( ETAtom( FOLAtom( p, Utils.numeral( 1 ) :: Nil ) ), ETAtom( FOLAtom( p, Utils.numeral( 2 ) :: Nil ) ) ), Utils.numeral( 1 ) ),
-          ( ETImp( ETAtom( FOLAtom( p, Utils.numeral( 0 ) :: Nil ) ), ETAtom( FOLAtom( p, Utils.numeral( 1 ) :: Nil ) ) ), Utils.numeral( 0 ) ) ) ) )
+          ( ETImp( ETAtom( FOLAtom( p, Utils.numeral( 0 ) :: Nil ) ), ETAtom( FOLAtom( p, Utils.numeral( 1 ) :: Nil ) ) ), Utils.numeral( 0 ) )
+        ) )
+      )
 
       ( equal_permut_1 || equal_permut_2 ) must beTrue
 
@@ -49,8 +53,10 @@ class ExtractExpansionSequentTest extends Specification {
       val P = Const( "P", Ti -> To )
       val Q = Const( "Q", Ti -> ( Ti -> To ) )
 
-      val p0 = Axiom( List( HOLAtom( P, alpha :: Nil ), HOLAtom( P, beta :: Nil ) ), // P(a), P(b)
-        List( HOLAtom( Q, HOLFunction( f, alpha :: Nil ) :: c :: Nil ), HOLAtom( Q, HOLFunction( f, beta :: Nil ) :: d :: Nil ) ) ) // Q(f(a), c), Q(f(b), d)
+      val p0 = Axiom(
+        List( HOLAtom( P, alpha :: Nil ), HOLAtom( P, beta :: Nil ) ), // P(a), P(b)
+        List( HOLAtom( Q, HOLFunction( f, alpha :: Nil ) :: c :: Nil ), HOLAtom( Q, HOLFunction( f, beta :: Nil ) :: d :: Nil ) )
+      ) // Q(f(a), c), Q(f(b), d)
       val p1 = ExistsRightRule( p0, HOLAtom( Q, HOLFunction( f, alpha :: Nil ) :: c :: Nil ), Ex( z, HOLAtom( Q, HOLFunction( f, alpha :: Nil ) :: z :: Nil ) ), c )
       val p2 = ExistsRightRule( p1, HOLAtom( Q, HOLFunction( f, beta :: Nil ) :: d :: Nil ), Ex( z, HOLAtom( Q, HOLFunction( f, beta :: Nil ) :: z :: Nil ) ), d )
 
@@ -68,12 +74,21 @@ class ExtractExpansionSequentTest extends Specification {
       ante mustEqual ( List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), alpha, ETAtom( HOLAtom( P, alpha :: Nil ) ) ) ) )
       // this assumes that the first variable wins, f(beta) would also be valid
       val f_alpha = HOLFunction( f, alpha :: Nil )
-      succ mustEqual ( List( ETWeakQuantifier( Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ),
+      succ mustEqual ( List( ETWeakQuantifier(
+        Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ),
         List(
-          ( ETWeakQuantifier( Ex( z, HOLAtom( Q, f_alpha :: z :: Nil ) ),
-            List( ( ETAtom( HOLAtom( Q, f_alpha :: c :: Nil ) ), c ),
-              ( ETAtom( HOLAtom( Q, f_alpha :: d :: Nil ) ), d ) ) ),
-            f_alpha ) ) ) ) )
+          (
+            ETWeakQuantifier(
+              Ex( z, HOLAtom( Q, f_alpha :: z :: Nil ) ),
+              List(
+                ( ETAtom( HOLAtom( Q, f_alpha :: c :: Nil ) ), c ),
+                ( ETAtom( HOLAtom( Q, f_alpha :: d :: Nil ) ), d )
+              )
+            ),
+              f_alpha
+          )
+        )
+      ) ) )
 
     }
 

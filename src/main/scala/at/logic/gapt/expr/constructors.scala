@@ -42,25 +42,37 @@ object FOLHeadType {
   }
 }
 
+private[expr] class FOLHead( ret: TA ) {
+  def apply( sym: String, arity: Int ): Const =
+    Const( sym, FOLHeadType( ret, arity ) )
+  def unapply( e: LambdaExpression ): Option[( String, Int )] = e match {
+    case NonLogicalConstant( sym, FOLHeadType( `ret`, arity ) ) => Some( ( sym, arity ) )
+    case _ => None
+  }
+}
+
+object FOLAtomHead extends FOLHead( To )
+object FOLFunctionHead extends FOLHead( Ti )
+
 object FOLAtom {
-  def apply( sym: String, args: FOLTerm* ): FOLFormula = FOLAtom( sym, args toList )
-  def apply( sym: String, args: List[FOLTerm] ): FOLFormula =
-    Apps( Const( sym, FOLHeadType( To, args.length ) ), args ).asInstanceOf[FOLFormula]
+  def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLFormula = FOLAtom( sym, args )
+  def apply( sym: String, args: Seq[FOLTerm] ): FOLFormula =
+    Apps( FOLAtomHead( sym, args.size ), args ).asInstanceOf[FOLFormula]
 
   def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( NonLogicalConstant( sym, FOLHeadType( To, _ ) ), args ) if e.isInstanceOf[FOLFormula] =>
+    case Apps( FOLAtomHead( sym, _ ), args ) if e.isInstanceOf[FOLFormula] =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
 }
 
 object FOLFunction {
-  def apply( sym: String, args: FOLTerm* ): FOLTerm = FOLFunction( sym, args toList )
-  def apply( sym: String, args: List[FOLTerm] ): FOLTerm =
-    Apps( Const( sym, FOLHeadType( Ti, args.length ) ), args ).asInstanceOf[FOLTerm]
+  def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLTerm = FOLFunction( sym, args )
+  def apply( sym: String, args: Seq[FOLTerm] ): FOLTerm =
+    Apps( FOLFunctionHead( sym, args.size ), args ).asInstanceOf[FOLTerm]
 
   def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( NonLogicalConstant( sym, FOLHeadType( Ti, _ ) ), args ) if e.isInstanceOf[FOLTerm] =>
+    case Apps( FOLFunctionHead( sym, _ ), args ) if e.isInstanceOf[FOLTerm] =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }

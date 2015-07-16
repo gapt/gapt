@@ -17,12 +17,14 @@ trait SolutionFinder {
   def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula]
 }
 
-class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1 ),
-                 instanceProver: Prover = new Prover9Prover(),
-                 instances: Seq[Int] = 0 until 3,
-                 testInstances: Seq[Int] = 0 until 15,
-                 minimizeInstanceLanguages: Boolean = false,
-                 quasiTautProver: Prover = new VeriTProver() )
+class SipProver(
+  solutionFinder:            SolutionFinder = new HeuristicSolutionFinder( 1 ),
+  instanceProver:            Prover         = new Prover9Prover(),
+  instances:                 Seq[Int]       = 0 until 3,
+  testInstances:             Seq[Int]       = 0 until 15,
+  minimizeInstanceLanguages: Boolean        = false,
+  quasiTautProver:           Prover         = new VeriTProver()
+)
     extends Prover with Logger {
 
   override def getLKProof( endSequent: FSequent ): Option[LKProof] =
@@ -67,7 +69,8 @@ class SipProver( solutionFinder: SolutionFinder = new HeuristicSolutionFinder( 1
 
     if ( testInstances.forall { n =>
       val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
-        termEncoding.decodeToFSequent( grammar.instanceGrammar( n ).language ) )
+        termEncoding.decodeToFSequent( grammar.instanceGrammar( n ).language )
+      )
       val isQuasiTaut = quasiTautProver.isValid( generatedInstanceSequent )
       debug( s"[n=$n] Instance language is quasi-tautological: $isQuasiTaut" )
       isQuasiTaut

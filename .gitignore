@@ -9,6 +9,9 @@ testing/TSTP/prover9
 testing/TSTP/leanCoP
 testing/veriT-SMT-LIB/QF_UF
 
+# cut-intro experiments
+/*.json
+
 # latex
 doc/*.aux
 doc/*.bbl
@@ -39,3 +42,6 @@ language-proposal/*.out
 .project
 .classpath
 .cache
+
+# emacs
+/.ensime*

@@ -60,7 +60,8 @@ object simpleToMultiGrammar {
       groupBy { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }.
       mapValues( _.map { case FOLFunction( _, as ) => as }.toList )
     val slist = g.nonTerminals.filter( _ != g.axiomVect ).
-      map { a => a -> g.rightHandSides( a ).toList }.toList
+      map { a => a -> g.rightHandSides( a ).toList }.
+      filter( _._2.nonEmpty ).toList
 
     new MultiGrammar( us, slist )
   }

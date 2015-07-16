@@ -9,45 +9,53 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk._
 
 object applySchemaSubstitution {
-  def handleSchemaEquivalenceRule( new_parent: LKProof,
-                                   subst: SchemaSubstitution,
-                                   old_parent: LKProof,
-                                   old_proof: LKProof,
-                                   constructor: ( LKProof, SchemaFormula ) => LKProof with PrincipalFormulas,
-                                   m: FormulaOccurrence ) = {
+  def handleSchemaEquivalenceRule(
+    new_parent:  LKProof,
+    subst:       SchemaSubstitution,
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    constructor: ( LKProof, SchemaFormula ) => LKProof with PrincipalFormulas,
+    m:           FormulaOccurrence
+  ) = {
     val new_proof = constructor( new_parent, subst( m.formula.asInstanceOf[SchemaFormula] ) )
     new_proof
   }
 
   // TODO: finish refactoring rules like this! there is still redundancy in handleRule!
-  def handleWeakening( new_parent: LKProof,
-                       subst: SchemaSubstitution,
-                       old_parent: LKProof,
-                       old_proof: LKProof,
-                       constructor: ( LKProof, SchemaFormula ) => LKProof with PrincipalFormulas,
-                       m: FormulaOccurrence ) = {
+  def handleWeakening(
+    new_parent:  LKProof,
+    subst:       SchemaSubstitution,
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    constructor: ( LKProof, SchemaFormula ) => LKProof with PrincipalFormulas,
+    m:           FormulaOccurrence
+  ) = {
     val new_proof = constructor( new_parent, subst( m.formula.asInstanceOf[SchemaFormula] ) )
     new_proof
   }
-  def handleContraction( new_parent: LKProof,
-                         subst: SchemaSubstitution,
-                         old_parent: LKProof,
-                         old_proof: LKProof,
-                         a1: FormulaOccurrence,
-                         a2: FormulaOccurrence,
-                         constructor: ( LKProof, SchemaFormula ) => LKProof ) = {
+  def handleContraction(
+    new_parent:  LKProof,
+    subst:       SchemaSubstitution,
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    a1:          FormulaOccurrence,
+    a2:          FormulaOccurrence,
+    constructor: ( LKProof, SchemaFormula ) => LKProof
+  ) = {
 
     constructor( new_parent, subst( a1.formula.asInstanceOf[SchemaFormula] ) )
   }
-  def handleBinaryProp( new_parent_1: LKProof,
-                        new_parent_2: LKProof,
-                        subst: SchemaSubstitution,
-                        a1: FormulaOccurrence,
-                        a2: FormulaOccurrence,
-                        old_parent_1: LKProof,
-                        old_parent_2: LKProof,
-                        old_proof: LKProof,
-                        constructor: ( LKProof, LKProof, SchemaFormula, SchemaFormula ) => LKProof ) = {
+  def handleBinaryProp(
+    new_parent_1: LKProof,
+    new_parent_2: LKProof,
+    subst:        SchemaSubstitution,
+    a1:           FormulaOccurrence,
+    a2:           FormulaOccurrence,
+    old_parent_1: LKProof,
+    old_parent_2: LKProof,
+    old_proof:    LKProof,
+    constructor:  ( LKProof, LKProof, SchemaFormula, SchemaFormula ) => LKProof
+  ) = {
 
     constructor( new_parent_1, new_parent_2, subst( a1.formula.asInstanceOf[SchemaFormula] ), subst( a2.formula.asInstanceOf[SchemaFormula] ) )
   }

@@ -66,7 +66,8 @@ trait MaxSATSolver extends Logger {
   }
 }
 
-class WDIMACSHelper( val hard: List[FClause], val soft: List[Tuple2[FClause, Int]] ) extends DIMACSHelper( soft.foldLeft( hard )( ( acc, c ) => acc :+ c._1 ) ) {
+class WDIMACSHelper( val hard: List[FClause], val soft: List[( FClause, Int )] )
+    extends DIMACSHelper( hard ++ soft.map( _._1 ) ) {
   /**
    * Returns for a given atom and
    * polarization a String for a propositional Variable in .wcnf format
@@ -375,7 +376,8 @@ trait MaxSATSolverBinary extends MaxSATSolver {
       val processIO = new ProcessIO(
         _ => (), // stdin does not matter
         stdout => scala.io.Source.fromInputStream( stdout, "ISO-8859-1" ).getLines.foreach( s => output.append( s + "\n" ) ),
-        stderr => scala.io.Source.fromInputStream( stderr, "ISO-8859-1" ).getLines.foreach( s => error.append( s + "\n" ) ) )
+        stderr => scala.io.Source.fromInputStream( stderr, "ISO-8859-1" ).getLines.foreach( s => error.append( s + "\n" ) )
+      )
 
       val proc = Process( command_ ) run processIO
       var value: Int = -1
@@ -404,7 +406,8 @@ trait MaxSATSolverBinary extends MaxSATSolver {
       trace( "ERR:\n" + error.toString );
       // parse maxsat output and construct map
       val in = new BufferedReader( new InputStreamReader(
-        new FileInputStream( stdout ) ) );
+        new FileInputStream( stdout )
+      ) );
 
       //val str = Stream.continually(in.readLine()).takeWhile(_ != null).mkString("\n")
 

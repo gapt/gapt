@@ -140,27 +140,27 @@ object sFOParserCNT {
       }
       def PLUSterm: Parser[SchemaExpression] = "(" ~ term ~ "+" ~ term ~ ")" ^^ {
         case "(" ~ t1 ~ "+" ~ t2 ~ ")" => {
-          val func = Const( "+", ->( Tindex, ->( Tindex, Tindex ) ) )
+          val func = Const( "+", Tindex -> ( Tindex -> Tindex ) )
           App( App( func, t1 ), t2 )
         }
       }
       def MINUSterm: Parser[SchemaExpression] = "(" ~ term ~ "-" ~ term ~ ")" ^^ {
         case "(" ~ t1 ~ "-" ~ t2 ~ ")" => {
-          val func = Const( "-", ->( Tindex, ->( Tindex, Tindex ) ) )
+          val func = Const( "-", Tindex -> ( Tindex -> Tindex ) )
           App( App( func, t1 ), t2 )
         }
       }
 
       def MULTterm: Parser[SchemaExpression] = "(" ~ term ~ "*" ~ term ~ ")" ^^ {
         case "(" ~ t1 ~ "*" ~ t2 ~ ")" => {
-          val func = Const( "*", ->( Tindex, ->( Tindex, Tindex ) ) )
+          val func = Const( "*", Tindex -> ( Tindex -> Tindex ) )
           App( App( func, t1 ), t2 )
         }
       }
 
       def POWterm: Parser[SchemaExpression] = "EXP(" ~ index ~ "," ~ term ~ ")" ^^ {
         case "EXP(" ~ t1 ~ "," ~ t2 ~ ")" => {
-          val func = Const( "EXP", ->( Tindex, ->( Tindex, Tindex ) ) )
+          val func = Const( "EXP", Tindex -> ( Tindex -> Tindex ) )
           App( App( func, t1 ), t2 )
         }
       }

@@ -51,12 +51,16 @@ object TermReplacement extends Logger {
   // FIXME: these polymorphic functions do not have the types you think they have...
 
   def rename_fsequent( fs: FSequent, what: LambdaExpression, by: LambdaExpression ): FSequent =
-    FSequent( fs.antecedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] ),
-      fs.succedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] ) )
+    FSequent(
+      fs.antecedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] ),
+      fs.succedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] )
+    )
 
   def rename_fsequent( fs: FSequent, p: Map[LambdaExpression, LambdaExpression] ): FSequent = {
-    FSequent( fs.antecedent.map( apply( _, p ) ),
-      fs.succedent.map( apply( _, p ) ) )
+    FSequent(
+      fs.antecedent.map( apply( _, p ) ),
+      fs.succedent.map( apply( _, p ) )
+    )
   }
 
   def rename_term( term: LambdaExpression, what: LambdaExpression, by: LambdaExpression ): LambdaExpression = {
@@ -100,17 +104,21 @@ object RenameResproof extends Logger {
   def extendw_pmap( index: RobinsonResolutionProof, p: ProofMap, o: OccMap, i: RobinsonResolutionProof ) = ( p + ( ( index, ( o, i ) ) ), o, i )
   def add_pmap( pmap: ProofMap, parent: RobinsonResolutionProof ): ( ProofMap, OccMap, RobinsonResolutionProof ) = { val x = pmap( parent ); ( pmap, x._1, x._2 ) }
 
-  def rename_resproof( p: RobinsonResolutionProof,
-                       irules: Set[RobinsonResolutionProof],
-                       smap: SymbolMap ): RobinsonResolutionProof = {
+  def rename_resproof(
+    p:      RobinsonResolutionProof,
+    irules: Set[RobinsonResolutionProof],
+    smap:   SymbolMap
+  ): RobinsonResolutionProof = {
     //don't process the prove if there is nothing to do
     if ( smap.isEmpty ) p else rename_resproof( p, irules, smap, emptyProofMap )._1( p )._2
   }
 
-  def rename_resproof( p: RobinsonResolutionProof,
-                       irules: Set[RobinsonResolutionProof],
-                       smap: SymbolMap,
-                       pmap: ProofMap ): ( ProofMap, OccMap, RobinsonResolutionProof ) = {
+  def rename_resproof(
+    p:      RobinsonResolutionProof,
+    irules: Set[RobinsonResolutionProof],
+    smap:   SymbolMap,
+    pmap:   ProofMap
+  ): ( ProofMap, OccMap, RobinsonResolutionProof ) = {
     if ( pmap contains p ) add_pmap( pmap, p ) else
       p match {
         case InitialClause( clause ) =>

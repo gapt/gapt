@@ -12,8 +12,10 @@ import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 object applySubstitution extends at.logic.gapt.utils.logging.Logger {
   import at.logic.gapt.proofs.lk.ProofTransformationUtils.computeMap
 
-  def toLabelledSequent( so: Sequent ) = new LabelledSequent( so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
-    so.succedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ) )
+  def toLabelledSequent( so: Sequent ) = new LabelledSequent(
+    so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
+    so.succedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] )
+  )
 
   def apply( proof: LKProof, subst: Substitution ): ( LKProof, Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ) =
     proof match {
@@ -71,8 +73,10 @@ object applySubstitution extends at.logic.gapt.utils.logging.Logger {
         ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
       }
       // casting is necessary, since Map is not covariant
-      case UnaryLKProof( _, p, _, _, _ ) => LKapplySubstitution.handleRule( proof,
-        apply( p, subst ).asInstanceOf[( LKProof, Map[FormulaOccurrence, FormulaOccurrence] )] :: Nil, subst ).asInstanceOf[( LKProof, Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] )]
+      case UnaryLKProof( _, p, _, _, _ ) => LKapplySubstitution.handleRule(
+        proof,
+        apply( p, subst ).asInstanceOf[( LKProof, Map[FormulaOccurrence, FormulaOccurrence] )] :: Nil, subst
+      ).asInstanceOf[( LKProof, Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] )]
       case BinaryLKProof( _, p1, p2, _, _, _, _ ) =>
         LKapplySubstitution.handleRule( proof, ( apply( p1, subst ) :: apply( p2, subst ) :: Nil ).asInstanceOf[List[( LKProof, Map[FormulaOccurrence, FormulaOccurrence] )]], subst ).asInstanceOf[( LKProof, Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] )]
     }

@@ -1,12 +1,12 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol.{ isFOLPrenexSigma1, FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.{ containsQuantifier, instantiate, isPrenex }
 import at.logic.gapt.proofs.lk.base._
 
 /**
- * Extracts the instance terms used in a prenex FOL Pi_1 expansion tree/sequent.
+ * Extracts the instance terms used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.
  *
  * Each expansion tree is transformed into a list of pairs of its shallow formula and a tuple containing the terms
  * used to instantiate the outermost weak quantifier block.
@@ -27,7 +27,7 @@ object extractInstanceTerms {
 }
 
 /**
- * Extracts the instances used in a prenex FOL Pi_1 expansion tree/sequent.
+ * Extracts the instances used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.
  *
  * Each expansion tree is transformed into a list of instances of its shallow formula.
  *
@@ -47,8 +47,10 @@ object extractInstances {
     }
 
   def apply( expansionSequent: ExpansionSequent ): FSequent =
-    FSequent( expansionSequent.antecedent flatMap apply,
-      expansionSequent.succedent flatMap apply )
+    FSequent(
+      expansionSequent.antecedent flatMap apply,
+      expansionSequent.succedent flatMap apply
+    )
 
 }
 
@@ -61,7 +63,7 @@ object groundTerms {
 }
 
 /**
- * Encodes instances of a prenex FOL Pi_1 end-sequent as FOL terms.
+ * Encodes instances of a prenex FOL Sigma_1 end-sequent as FOL terms.
  *
  * In the case of cut-introduction, the end-sequent has no free variables and we're encoding a Herbrand sequent as a
  * set of terms.  A term r_i(t_1,...,t_n) encodes an instance of the formula "forall x_1 ... x_n, phi(x_1,...,x_n)"
@@ -74,10 +76,7 @@ object groundTerms {
  */
 case class InstanceTermEncoding( endSequent: FSequent ) {
 
-  endSequent.formulas.foreach { f =>
-    require( f.isInstanceOf[FOLFormula] )
-    require( isPrenex( f ) )
-  }
+  require( isFOLPrenexSigma1( endSequent ), s"$endSequent is not a prenex FOL Sigma_1 sequent" )
 
   /**
    * Formula together with its polarity in a sequent, which is true if it is in the antecedent.

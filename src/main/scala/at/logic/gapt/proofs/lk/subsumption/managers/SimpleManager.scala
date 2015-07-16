@@ -9,11 +9,13 @@ import at.logic.gapt.utils.patterns.listeners.ListenerManager
 import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.proofs.lk.base.FSequent
 
-class SimpleManager( listener: ListenerManager[SubsumptionDSEvent],
-                     sbsmpAlg: SubsumptionAlgorithm,
-                     iterator: () => Iterator[FSequent], // get the current iterator in every application
-                     exists: ( FSequent => Boolean ) => Boolean,
-                     remove: FSequent => Unit ) extends SubsumptionManager( listener, sbsmpAlg, iterator, exists, remove ) {
+class SimpleManager(
+    listener: ListenerManager[SubsumptionDSEvent],
+    sbsmpAlg: SubsumptionAlgorithm,
+    iterator: () => Iterator[FSequent], // get the current iterator in every application
+    exists:   ( FSequent => Boolean ) => Boolean,
+    remove:   FSequent => Unit
+) extends SubsumptionManager( listener, sbsmpAlg, iterator, exists, remove ) {
   init
   protected def addSequent( s: FSequent ) = ()
   protected def removeSequent( s: FSequent ) = ()

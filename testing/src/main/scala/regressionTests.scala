@@ -3,6 +3,7 @@ package at.logic.gapt.testing
 import java.io.File
 
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
+import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep, ExpansionProofToLK }
@@ -33,17 +34,13 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     new VeriTProver().isValid( deep ) !-- "verit validity"
 
-    val q_opt = {
-      try {
-        Some( CutIntroduction.one_cut_many_quantifiers( p, false ) )
-      } catch {
-        // do not count uncompressibility as failure of test
-        case e: CutIntroUncompressibleException => None
-      }
-    } --- "cut-introduction"
+    if ( isFOLPrenexSigma1( p.root.toFSequent ) ) {
+      val qOption = CutIntroduction.one_cut_many_quantifiers( p, false ) --- "cut-introduction"
 
-    if ( q_opt.isDefined && !containsEqualityReasoning( q_opt.get ) ) {
-      ReductiveCutElim( q_opt.get ) --? "cut-elim (cut-intro)"
+      qOption foreach { q =>
+        if ( !containsEqualityReasoning( q ) )
+          ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
+      }
     }
   }
 }
@@ -109,7 +106,9 @@ object RegressionTests extends App {
     }
   }
 
-  XML.save( "target/regression-test-results.xml",
+  XML.save(
+    "target/regression-test-results.xml",
     <testsuite> { results flatMap ( _.child ) toList } </testsuite>,
-    "UTF-8" )
+    "UTF-8"
+  )
 }

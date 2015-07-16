@@ -24,7 +24,8 @@ trait SimpleResolutionParserFOL extends SimpleResolutionParser with SimpleFOLPar
   def clause: Parser[FSequent] = repsep( formula, "|" ) ~ "." ^^ {
     case ls ~ "." => FSequent(
       ( ls.filter( filterPosFormulas ).map( stripNeg ) ),
-      ( ls.filter( x => !filterPosFormulas( x ) ) ) )
+      ( ls.filter( x => !filterPosFormulas( x ) ) )
+    )
   }
 }
 

@@ -8,8 +8,10 @@ import at.logic.gapt.proofs.lksk._
 import scala.collection.mutable
 
 object eliminateDefinitions {
-  def toLabelledSequent( so: Sequent ) = new LabelledSequent( so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
-    so.succedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ) )
+  def toLabelledSequent( so: Sequent ) = new LabelledSequent(
+    so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),
+    so.succedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] )
+  )
 
   def apply( p: LKProof ) = rec( p )._1
 
@@ -52,9 +54,13 @@ object eliminateDefinitions {
           val ls = toLabelledSequent( so )
           val ant_occs = ls.l_antecedent.toList
           val succ_occs = ls.l_succedent.toList
-          val ( a, labels ) = Axiom.createDefault( new FSequent( ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ) ),
-            Tuple2( ant_occs.map( fo => fo.skolem_label ).toList,
-              succ_occs.map( fo => fo.skolem_label ).toList ) )
+          val ( a, labels ) = Axiom.createDefault(
+            new FSequent( ant_occs.map( fo => fo.formula ), succ_occs.map( fo => fo.formula ) ),
+            Tuple2(
+              ant_occs.map( fo => fo.skolem_label ).toList,
+              succ_occs.map( fo => fo.skolem_label ).toList
+            )
+          )
           val map = new mutable.HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
           val las = toLabelledSequent( a.root )
           las.l_antecedent.zip( ant_occs ).foreach( p => { println( p ); map.update( p._2, p._1 ) } )
@@ -107,9 +113,11 @@ object eliminateDefinitions {
         }
         case ImpRightRule( p, s, a1, a2, m ) => {
           val new_parent = rec( p )
-          val new_proof = ImpRightRule( new_parent._1,
+          val new_proof = ImpRightRule(
+            new_parent._1,
             new_parent._2( a1.asInstanceOf[LabelledFormulaOccurrence] ),
-            new_parent._2( a2.asInstanceOf[LabelledFormulaOccurrence] ) )
+            new_parent._2( a2.asInstanceOf[LabelledFormulaOccurrence] )
+          )
           val ls = toLabelledSequent( p.root )
           ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, proof, new_proof, new_parent._2 ) )
         }
@@ -200,22 +208,26 @@ object eliminateDefinitions {
     ( newProof, map )
   }
 
-  def handleWeakening( new_parent: ( LKProof, mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ),
-                       old_parent: LKProof,
-                       old_proof: LKProof,
-                       constructor: ( LKProof, HOLFormula, TypeSynonyms.Label ) => LKProof with PrincipalFormulas,
-                       m: LabelledFormulaOccurrence ) = {
+  def handleWeakening(
+    new_parent:  ( LKProof, mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ),
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    constructor: ( LKProof, HOLFormula, TypeSynonyms.Label ) => LKProof with PrincipalFormulas,
+    m:           LabelledFormulaOccurrence
+  ) = {
     val new_proof = constructor( new_parent._1, m.formula, m.skolem_label )
     val ls = toLabelledSequent( old_parent.root )
     ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, old_proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head.asInstanceOf[LabelledFormulaOccurrence] ) )
   }
 
-  def handleContraction( new_parent: ( LKProof, mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ),
-                         old_parent: LKProof,
-                         old_proof: LKProof,
-                         a1: LabelledFormulaOccurrence,
-                         a2: LabelledFormulaOccurrence,
-                         constructor: ( LKProof, LabelledFormulaOccurrence, LabelledFormulaOccurrence ) => LKProof ) = {
+  def handleContraction(
+    new_parent:  ( LKProof, mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ),
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    a1:          LabelledFormulaOccurrence,
+    a2:          LabelledFormulaOccurrence,
+    constructor: ( LKProof, LabelledFormulaOccurrence, LabelledFormulaOccurrence ) => LKProof
+  ) = {
     val new_proof = constructor( new_parent._1, new_parent._2( a1 ), new_parent._2( a2 ) )
     val ls = toLabelledSequent( old_parent.root )
     ( new_proof, computeMap( ls.l_antecedent ++ ls.l_succedent, old_proof, new_proof, new_parent._2 ) )
@@ -249,8 +261,10 @@ object eliminateDefinitions {
                   new_proof: LKProof, old_map: mutable.Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ) =
     {
       val map = new mutable.HashMap[LabelledFormulaOccurrence, LabelledFormulaOccurrence]
-      occs.foreach( fo => map.update( old_proof.getDescendantInLowerSequent( fo ).get.asInstanceOf[LabelledFormulaOccurrence],
-        new_proof.getDescendantInLowerSequent( old_map( fo ) ).get.asInstanceOf[LabelledFormulaOccurrence] ) )
+      occs.foreach( fo => map.update(
+        old_proof.getDescendantInLowerSequent( fo ).get.asInstanceOf[LabelledFormulaOccurrence],
+        new_proof.getDescendantInLowerSequent( old_map( fo ) ).get.asInstanceOf[LabelledFormulaOccurrence]
+      ) )
       map
     }
 

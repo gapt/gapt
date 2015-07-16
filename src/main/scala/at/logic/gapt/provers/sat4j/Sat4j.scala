@@ -27,7 +27,8 @@ object readSat4j extends Logger {
     temp_out.deleteOnExit()
 
     val writer = new BufferedWriter( new OutputStreamWriter(
-      new FileOutputStream( temp_out ), "UTF-8" ) )
+      new FileOutputStream( temp_out ), "UTF-8"
+    ) )
 
     if ( problem.isSatisfiable() ) {
       writer.write( "SAT\n" )

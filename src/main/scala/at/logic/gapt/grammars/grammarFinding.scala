@@ -2,8 +2,12 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, Utils, FOLMatchingAlgorithm }
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
+import at.logic.gapt.expr.hol.lcomp
+import at.logic.gapt.expr.hol.simplify
+import at.logic.gapt.expr.hol.toNNF
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 import at.logic.gapt.utils.dssupport.ListSupport
+import at.logic.gapt.utils.logging.metrics
 
 import scala.collection.{ GenTraversable, Set, mutable }
 
@@ -33,12 +37,6 @@ private class antiUnificator {
 
 object antiUnificator {
   def apply( terms: Seq[FOLTerm] ): FOLTerm = new antiUnificator().apply( terms )
-}
-
-object characteristicPartition {
-  def apply( term: FOLTerm ): List[List[LambdaPosition]] =
-    LambdaPosition.getPositions( term, st => st.isInstanceOf[FOLTerm] && freeVariables( st ).nonEmpty ).
-      groupBy( term.get ).values.toList
 }
 
 object termSize {
@@ -88,12 +86,10 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
   def vectProductionIsIncluded( p: Production ): FOLFormula = FOLAtom( s"$p" )
   def valueOfNonTerminal( n: FOLVar, value: FOLTerm ): FOLFormula = FOLAtom( s"$n=$value" )
 
-  val Omega = FOLConst( "Ω" )
-
   def formula: FOLFormula = {
     val cs = List.newBuilder[FOLFormula]
 
-    // TODO: assert that Omega does not occur in g or t
+    val Omega = rename( FOLConst( "Ω" ), constants( t ).toList )
 
     // value of axiom must be t
     cs += valueOfNonTerminal( g.axiom, t )
@@ -114,8 +110,10 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
           case ( nt, assgs )                => assgs flatMap { assg => possibleSingleVariableAssignments( nt ) map ( _ :: assg ) }
         }
         possibleAssignments foreach { assignment =>
-          if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) ) )
-            cs += Imp( And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( nt, value ) } ),
+          if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) )
+            && assignment.exists( _ != Omega ) )
+            cs += Imp(
+              And( containingNonTerminalVect.zip( assignment ) map { case ( nt, value ) => valueOfNonTerminal( nt, value ) } ),
               Or( g.productions( containingNonTerminalVect ) map {
                 case p @ ( _, rhss ) =>
                   And( containingNonTerminalVect.zip( assignment ).zip( rhss ) map {
@@ -123,16 +121,19 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
                     case ( ( nt, value ), rhs ) =>
                       FOLMatchingAlgorithm.matchTerms( rhs, value ) match {
                         case Some( matching ) =>
-                          And( vectProductionIsIncluded( p ),
+                          And(
+                            vectProductionIsIncluded( p ),
                             And( matching.folmap map {
                               case ( v, smallerValue: FOLTerm ) =>
                                 singleVariableAssignmentsToHandle enqueue ( v -> smallerValue )
                                 valueOfNonTerminal( v, smallerValue )
-                            } toList ) )
+                            } toList )
+                          )
                         case None => Bottom()
                       }
                   } )
-              } toList ) )
+              } toList )
+            )
 
           alreadyHandledAssignments += containingNonTerminalVect -> assignment
         }
@@ -189,7 +190,7 @@ object normalFormsProofGrammar {
 }
 
 object minimizeGrammar {
-  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new QMaxSAT ): TratGrammar = {
+  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j ): TratGrammar = {
     val formula = new GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
@@ -203,7 +204,7 @@ object minimizeGrammar {
 }
 
 object findMinimalGrammar {
-  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
+  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
     val polynomialSizedCoveringGrammar = normalFormsProofGrammar( lang, numberOfNonTerminals )
     minimizeGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
@@ -243,12 +244,13 @@ object normalFormsProofVectGrammar {
 }
 
 object minimizeVectGrammar {
-  def apply( g: VectTratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new QMaxSAT ): VectTratGrammar = {
+  def apply( g: VectTratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j ): VectTratGrammar = {
     val formula = new VectGrammarMinimizationFormula( g )
-    val hard = formula.coversLanguage( lang )
+    val hard = metrics.time( "minform" ) { formula.coversLanguage( lang ) }
+    metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.vectProductionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
-    maxSATSolver.solveWPM( List( hard ), soft toList ) match {
+    metrics.time( "maxsat" ) { maxSATSolver.solveWPM( List( hard ), soft toList ) } match {
       case Some( interp ) => VectTratGrammar( g.axiom, g.nonTerminals,
         g.productions filter { p => interp.interpret( formula.vectProductionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
@@ -257,8 +259,9 @@ object minimizeVectGrammar {
 }
 
 object findMinimalVectGrammar {
-  def apply( lang: Seq[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = new QMaxSAT ) = {
-    val polynomialSizedCoveringGrammar = normalFormsProofVectGrammar( lang, aritiesOfNonTerminals )
+  def apply( lang: Seq[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
+    val polynomialSizedCoveringGrammar = metrics.time( "nfgrammar" ) { normalFormsProofVectGrammar( lang, aritiesOfNonTerminals ) }
+    metrics.value( "nfgrammar", polynomialSizedCoveringGrammar.size )
     minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
 }

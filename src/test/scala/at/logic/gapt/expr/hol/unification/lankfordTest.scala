@@ -31,7 +31,8 @@ class LankfordSolverTest extends Specification {
         Vector( 1, 0, 1, 0 ),
         Vector( 1, 0, 0, 1 ),
         Vector( 0, 1, 1, 0 ),
-        Vector( 0, 1, 0, 1 ) )
+        Vector( 0, 1, 0, 1 )
+      )
 
       val r = LankfordSolver solve ( lhs, rhs )
 
@@ -48,7 +49,8 @@ class LankfordSolverTest extends Specification {
         Vector( 1, 0, 0, 0, 1 ),
         Vector( 0, 1, 1, 0, 0 ),
         Vector( 0, 1, 0, 1, 0 ),
-        Vector( 0, 1, 0, 0, 1 ) )
+        Vector( 0, 1, 0, 0, 1 )
+      )
 
       val r = LankfordSolver solve ( lhs, rhs )
       ( r ) must contain( exactly( expected_result: _* ) )
@@ -65,7 +67,8 @@ class LankfordSolverTest extends Specification {
         Vector( 1, 0, 0, 0, 2 ),
         Vector( 0, 2, 0, 1, 0 ),
         Vector( 0, 1, 1, 1, 0 ),
-        Vector( 0, 0, 2, 1, 0 ) )
+        Vector( 0, 0, 2, 1, 0 )
+      )
 
       val r = LankfordSolver solve ( lhs, rhs )
       //      println("===")
@@ -82,7 +85,8 @@ class LankfordSolverTest extends Specification {
 
       val expected_result = List(
         Vector( 1, 1, 0 ),
-        Vector( 1, 0, 1 ) )
+        Vector( 1, 0, 1 )
+      )
 
       val r = LankfordSolver solve ( lhs, rhs )
       ( r ) must contain( exactly( expected_result: _* ) )

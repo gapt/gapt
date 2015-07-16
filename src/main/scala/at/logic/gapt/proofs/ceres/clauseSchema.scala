@@ -165,7 +165,7 @@ object sTermN {
   //the l.head should be of type Tindex() !
   def apply( f: String, l: List[SchemaExpression] ): SchemaExpression = {
     require( l.head.exptype == Tindex )
-    val typ = l.map( x => x.exptype ).foldRight( Ti.asInstanceOf[TA] )( ( x, t ) => ->( x, t ) )
+    val typ = l.map( x => x.exptype ).foldRight( Ti.asInstanceOf[TA] )( ( x, t ) => x -> t )
     val func = Const( f, typ )
     return SchemaFunction( func, l )
   }
@@ -174,7 +174,7 @@ object sTermN {
   }
   def unapply( s: SchemaExpression ) = s match {
     case SchemaFunction( name: Const, args, typ ) if typ == Ti && args.length != 0 && args.head.exptype == Tindex => {
-      val typ = args.map( x => x.exptype ).foldLeft( Ti.asInstanceOf[TA] )( ( x, t ) => ->( x, t ) )
+      val typ = args.map( x => x.exptype ).foldLeft( Ti.asInstanceOf[TA] )( ( x, t ) => x -> t )
       val f = Const( name.name, typ )
       Some( ( f.name.toString(), args.head.asInstanceOf[SchemaExpression], args.tail.asInstanceOf[List[SchemaExpression]] ) )
     }
@@ -580,7 +580,7 @@ object fo2VarSubstitution {
     //    rTerm(apply(r.left, mapfo2).asInstanceOf[sResolutionTerm], apply(r.right, mapfo2).asInstanceOf[sResolutionTerm], apply(r.atom, mapfo2).asInstanceOf[SchemaFormula])
 
     case SchemaAtom( name, args ) =>
-      val newAtomName = Const( name.toString, args.reverse.map( x => x.exptype ).foldRight( To.asInstanceOf[TA] )( ( x, t ) => ->( x, t ) ) )
+      val newAtomName = Const( name.toString, args.reverse.map( x => x.exptype ).foldRight( To.asInstanceOf[TA] )( ( x, t ) => x -> t ) )
       unfoldGroundAtom( SchemaAtom( newAtomName, args.map( x =>
         apply( apply( x, mapfo2 ), mapfo2 ) ) ) )
 
@@ -594,9 +594,9 @@ object fo2VarSubstitution {
       val beta = betaReduce( exp )
       unfoldSTerm( beta )
     }
-    case foTerm( v, arg ) if v.exptype == ->( Ti, Ti ) => foTerm( v, apply( arg, mapfo2 ) :: Nil )
+    case foTerm( v, arg ) if v.exptype == Ti -> Ti => foTerm( v, apply( arg, mapfo2 ) :: Nil )
 
-    case sTerm( v, i, args )                           => unfoldSTerm( o )
+    case sTerm( v, i, args )                       => unfoldSTerm( o )
 
     //case non: nonVarSclause => nonVarSclause(non.ant.map(f => apply(f, mapfo2).asInstanceOf[SchemaFormula]), non.succ.map(f => apply(f, mapfo2).asInstanceOf[SchemaFormula]))
     case indexedFOVar( name, index ) =>
@@ -712,7 +712,8 @@ object GroundingProjections {
     p match {
       case Axiom( seq ) => Axiom( Sequent(
         seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( fo2VarSubstitution( fo.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], Nil ) ),
-        seq.succedent.map( fo => fo.factory.createFormulaOccurrence( fo2VarSubstitution( fo.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], Nil ) ) ) )
+        seq.succedent.map( fo => fo.factory.createFormulaOccurrence( fo2VarSubstitution( fo.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], Nil ) )
+      ) )
       case WeakeningLeftRule( up, _, p1 )           => WeakeningLeftRule( apply( up, mapfo2 ), fo2VarSubstitution( p1.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula] )
       case WeakeningRightRule( up, _, p1 )          => WeakeningRightRule( apply( up, mapfo2 ), fo2VarSubstitution( p1.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula] )
       case ContractionLeftRule( up, _, a1, a2, _ )  => ContractionLeftRule( apply( up, mapfo2 ), fo2VarSubstitution( a1.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula] )

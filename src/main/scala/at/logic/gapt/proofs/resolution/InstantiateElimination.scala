@@ -25,8 +25,10 @@ object ResolutionSubstitution {
       p match {
         case InitialClause( clause ) =>
           val nclause = substitute_clause( clause, sub )
-          val np = InitialClause( nclause.negative map ( _.formula.asInstanceOf[FOLFormula] ),
-            nclause.positive map ( _.formula.asInstanceOf[FOLFormula] ) )
+          val np = InitialClause(
+            nclause.negative map ( _.formula.asInstanceOf[FOLFormula] ),
+            nclause.positive map ( _.formula.asInstanceOf[FOLFormula] )
+          )
           extend_pmap( pmap, p, sub, np )
 
         case Factor( clause, p1, List( as ), subst ) =>
@@ -214,7 +216,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rmap ) )
+          occmatcher( _, _, rmap )
+        )
 
         extend_pmap( nmap, rforbidden ++ getVars( clause ), inference, rpmap )
 
@@ -231,7 +234,8 @@ object InstantiateElimination {
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               rparent.root.occurrences.toList,
               inference.root.occurrences.toList,
-              occancmatcher( _, _, rmap ) )
+              occancmatcher( _, _, rmap )
+            )
             extend_pmap( nmap, rforbidden ++ nvars ++ getVars( ivariant.root ), inference, rpmap )
 
           case List( a :: as, b :: bs ) =>
@@ -239,7 +243,8 @@ object InstantiateElimination {
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               clause.occurrences.toList,
               inference.root.occurrences.toList,
-              occancmatcher( _, _, rmap ) )
+              occancmatcher( _, _, rmap )
+            )
             extend_pmap( nmap, rforbidden ++ nvars ++ getVars( ivariant.root ), inference, rpmap )
           case _ =>
             throw new Exception( "Unexpected auxiliary occurrences in handling of Factor rule during instantiation removal!" )
@@ -254,7 +259,8 @@ object InstantiateElimination {
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               rparent.root.occurrences.toList,
               inference.root.occurrences.toList,
-              occancmatcher( _, _, rmap ) )
+              occancmatcher( _, _, rmap )
+            )
             extend_pmap( nmap, rforbidden ++ getVars( clause ), inference, rpmap )
 
           case List( a :: as, b :: bs ) =>
@@ -262,7 +268,8 @@ object InstantiateElimination {
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               clause.occurrences.toList,
               inference.root.occurrences.toList,
-              occancmatcher( _, _, rmap ) )
+              occancmatcher( _, _, rmap )
+            )
             extend_pmap( nmap, rforbidden ++ getVars( clause ), inference, rpmap )
           case _ =>
             throw new Exception( "Unexpected auxiliary occurrences in handling of Factor rule during instantiation removal!" )
@@ -292,7 +299,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rsmap1 ++ rsmap2 ) )
+          occmatcher( _, _, rsmap1 ++ rsmap2 )
+        )
 
         extend_pmap( nmap, rforbidden ++ nvars1 ++ nvars2 ++ getVars( clause ), inference, rpmap2 )
 
@@ -315,7 +323,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rsmap1 ++ rmap2 ) )
+          occmatcher( _, _, rsmap1 ++ rmap2 )
+        )
 
         extend_pmap( nmap, rforbidden ++ nvars1 ++ getVars( clause ), inference, rpmap2 )
 
@@ -338,7 +347,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rmap1 ++ rsmap2 ) )
+          occmatcher( _, _, rmap1 ++ rsmap2 )
+        )
 
         extend_pmap( nmap, rforbidden ++ nvars2 ++ getVars( clause ), inference, rpmap2 )
 
@@ -357,7 +367,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rmap1 ++ rmap2 ) )
+          occmatcher( _, _, rmap1 ++ rmap2 )
+        )
 
         extend_pmap( nmap, rforbidden ++ getVars( clause ), inference, rpmap2 )
 
@@ -388,7 +399,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rsmap1 ++ rsmap2 ) )
+          occmatcher( _, _, rsmap1 ++ rsmap2 )
+        )
 
         extend_pmap( nmap, rforbidden ++ nvars1 ++ nvars2 ++ getVars( clause ), inference, rpmap2 )
 
@@ -424,7 +436,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rsmap1 ++ rmap2 ) )
+          occmatcher( _, _, rsmap1 ++ rmap2 )
+        )
 
         extend_pmap( nmap, rforbidden ++ nvars1 ++ getVars( clause ), inference, rpmap2 )
 
@@ -449,7 +462,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rmap1 ++ rsmap2 ) )
+          occmatcher( _, _, rmap1 ++ rsmap2 )
+        )
 
         extend_pmap( nmap, rforbidden ++ nvars2 ++ getVars( clause ), inference, rpmap2 )
 
@@ -470,7 +484,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rmap1 ++ rmap2 ) )
+          occmatcher( _, _, rmap1 ++ rmap2 )
+        )
 
         extend_pmap( nmap, rforbidden ++ getVars( clause ), inference, rpmap2 )
 
@@ -530,7 +545,8 @@ object InstantiateElimination {
           val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
             clause.occurrences.toList,
             rparent.root.occurrences.toList,
-            _.formula syntaxEquals _.formula )
+            _.formula syntaxEquals _.formula
+          )
 
           return ( rpmap + ( ( p, ( nmap, f, rparent ) ) ), nmap, f, rparent )
         }
@@ -543,7 +559,8 @@ object InstantiateElimination {
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               clause.occurrences.toList,
               inference.root.occurrences.toList,
-              _.formula syntaxEquals _.formula )
+              _.formula syntaxEquals _.formula
+            )
 
             extend_pmap( nmap, emptyVarSet, inference, rpmap )
 
@@ -553,7 +570,8 @@ object InstantiateElimination {
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               clause.occurrences.toList,
               inference.root.occurrences.toList,
-              _.formula syntaxEquals _.formula )
+              _.formula syntaxEquals _.formula
+            )
 
             extend_pmap( nmap, emptyVarSet, inference, rpmap )
 
@@ -568,7 +586,8 @@ object InstantiateElimination {
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               clause.occurrences.toList,
               inference.root.occurrences.toList,
-              occmatcher( _, _, rmap ) )
+              occmatcher( _, _, rmap )
+            )
             extend_pmap( nmap, emptyVarSet, inference, rpmap )
 
           case 2 =>
@@ -576,7 +595,8 @@ object InstantiateElimination {
             val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
               clause.occurrences.toList,
               inference.root.occurrences.toList,
-              occmatcher( _, _, rmap ) )
+              occmatcher( _, _, rmap )
+            )
             extend_pmap( nmap, emptyVarSet, inference, rpmap )
 
           case _ => throw new Exception( "Unexpected auxiliary occurrences in handling of Factor rule during instantiation merge!" )
@@ -589,7 +609,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rmap ) )
+          occmatcher( _, _, rmap )
+        )
         extend_pmap( nmap, emptyVarSet, inference, rpmap )
 
       case Resolution( clause, parent1, parent2, occ1, occ2, sub ) =>
@@ -603,7 +624,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rmap1 ++ rmap2 ) )
+          occmatcher( _, _, rmap1 ++ rmap2 )
+        )
         extend_pmap( nmap, emptyVarSet, inference, rpmap2 )
 
       case Paramodulation( clause, parent1, parent2, occ1, occ2, _, sub ) =>
@@ -621,7 +643,8 @@ object InstantiateElimination {
         val nmap = find_matching[FormulaOccurrence, FormulaOccurrence](
           clause.occurrences.toList,
           inference.root.occurrences.toList,
-          occmatcher( _, _, rmap1 ++ rmap2 ) )
+          occmatcher( _, _, rmap1 ++ rmap2 )
+        )
         extend_pmap( nmap, emptyVarSet, inference, rpmap2 )
 
     }

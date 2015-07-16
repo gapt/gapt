@@ -139,14 +139,43 @@ val evenES = FSequent(
   )
 )
 
+// TODO: should be solvable with Q(y) <-> P(y) <-> -P(s(y))
+val twoEvenDefsES = FSequent(
+  List(
+    "P(0)", "-P(s(0))", "P(s(s(x))) <-> P(x)",
+    "Q(0)", "Q(s(x)) <-> -Q(x)"
+  ) map (s => univclosure(parseFormula(s))),
+  List(
+    FOLSubstitution(FOLVar("x"),FOLVar("α"))(parseFormula("P(x) <-> Q(x)"))
+  )
+)
 
-val endSequent = commES
+val twoPlusDefsES = FSequent(
+  List(
+    "x+s(y) = s(x+y)", "x+0 = x",
+    "s(x)*y = s(x*y)", "0*x = x"
+  ) map (s => univclosure(parseFormula(s))),
+  List(
+    FOLSubstitution(FOLVar("x"),FOLVar("α"))(parseFormula("x+x = x*x"))
+  )
+)
+
+val minusES = FSequent(List(
+  "p(0) = 0",
+  "x-s(y) = p(x-y)",
+  "x - 0 = x"
+) map {s => univclosure(parseFormula(s))},
+  List(
+    FOLSubstitution(FOLVar("x"),alpha)(parseFormula("0 - x = 0")))
+    )
+
+val endSequent = twoPlusDefsES
 
 println(s"Proving $endSequent")
 
 Logger.getLogger(classOf[SipProver].getName).setLevel(Level.DEBUG)
 
-val sipProver = new SipProver(solutionFinder = new HeuristicSolutionFinder(0), instances = 0 until 3)
+val sipProver = new SipProver(solutionFinder = new HeuristicSolutionFinder(1), instances = 0 until 3)
 
 val maybeIndProof = sipProver.getSimpleInductionProof(endSequent)
 

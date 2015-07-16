@@ -228,8 +228,10 @@ object FSequent {
   def apply( ant: Seq[HOLFormula], succ: Seq[HOLFormula] ): FSequent = new FSequent( ant, succ )
 
   def apply( polarizedFormulas: Seq[( HOLFormula, Boolean )] ): FSequent =
-    FSequent( polarizedFormulas.filter( _._2 == true ).map( _._1 ),
-      polarizedFormulas.filter( _._2 == false ).map( _._1 ) )
+    FSequent(
+      polarizedFormulas.filter( _._2 == true ).map( _._1 ),
+      polarizedFormulas.filter( _._2 == false ).map( _._1 )
+    )
 
   /**
    * Constructs an [[FSequent]] from a [[Sequent]], by ignoring where the formulas occur.
@@ -293,7 +295,8 @@ class Sequent( val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formul
    */
   def removeFormulasAtOccurrences( occs: Seq[FormulaOccurrence] ): Sequent = Sequent(
     antecedent.filterNot( x => occs.contains( x ) ),
-    succedent.filterNot( x => occs.contains( x ) ) )
+    succedent.filterNot( x => occs.contains( x ) )
+  )
 
   /**
    * Finds the first occurrence in this sequent having the given ancestor.
@@ -327,7 +330,8 @@ class Sequent( val antecedent: Seq[FormulaOccurrence], val succedent: Seq[Formul
     succedent.head.formula match {
       case Eq( s, t ) => ( s == t )
       case _          => false
-    } )
+    }
+  )
 
   /**
    * Composes with the other sequent.  The result is the concatenation of the two antecedents as antecedent, and the

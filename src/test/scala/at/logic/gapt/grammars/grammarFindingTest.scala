@@ -4,7 +4,6 @@ import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
-import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.sat4j.Sat4j
 import org.specs2.specification.core.Fragments
 
@@ -21,14 +20,22 @@ class GrammarFindingTest extends Specification {
     "check that productions start with defined non-terminals" in {
       vtg( Seq( "x" ), Seq( "y->c" ) ) must throwA[IllegalArgumentException]
     }
+    "check that production sides have same length" in {
+      VectTratGrammar( FOLVar( "x" ), Seq( List( FOLVar( "x" ) ) ),
+        Seq( List( FOLVar( "x" ) ) -> List( FOLConst( "a" ), FOLConst( "b" ) ) ) ) must throwA[IllegalArgumentException]
+    }
     "correctly compute the language" in {
-      val g = vtg( Seq( "x", "y1,y2" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      val g = vtg(
+        Seq( "x", "y1,y2" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
+      )
       g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
     }
     "compute the language if a non-terminal has no productions" in {
-      val g = vtg( Seq( "x", "y1,y2", "z1,z2,z3" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      val g = vtg(
+        Seq( "x", "y1,y2", "z1,z2,z3" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
+      )
       g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
     }
   }
@@ -81,20 +88,26 @@ class GrammarFindingTest extends Specification {
 
   "TermGenerationFormula" should {
     "work for production vectors" in {
-      val g = vtg( Seq( "x", "y1,y2" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
+      val g = vtg(
+        Seq( "x", "y1,y2" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
+      )
       covers( g, "r(c,d)", "r(d,c)" )
       doesNotCover( g, "r(c,c)", "r(d,d)" )
     }
     "undefined values" in {
-      val g = vtg( Seq( "x", "y1,y2,y3" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d", "y3->d" ), Seq( "y1->d", "y2->c", "y3->e" ) )
+      val g = vtg(
+        Seq( "x", "y1,y2,y3" ),
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d", "y3->d" ), Seq( "y1->d", "y2->c", "y3->e" )
+      )
       covers( g, "r(c,d)", "r(d,c)" )
       doesNotCover( g, "r(c,c)", "r(d,d)" )
     }
     "not require unnecessary productions" in {
-      val g = vtg( Seq( "x", "y", "z" ),
-        Seq( "x->r(y)" ), Seq( "x->r(z)" ), Seq( "y->c" ), Seq( "z->d" ) )
+      val g = vtg(
+        Seq( "x", "y", "z" ),
+        Seq( "x->r(y)" ), Seq( "x->r(z)" ), Seq( "y->c" ), Seq( "z->d" )
+      )
       val p = g.productions( 3 ) // z->d
       val f = new TermGenerationFormula( g, parseTerm( "r(c)" ) )
       new Sat4j().solve( And( f.formula, Neg( f.vectProductionIsIncluded( p ) ) ) ) must beSome
@@ -107,8 +120,10 @@ class GrammarFindingTest extends Specification {
       val g = tg( "x->c" )
       val p = g.productions( 0 )
       val formula = new GrammarMinimizationFormula( g )
-      new Sat4j().solve( And( formula.generatesTerm( parseTerm( "c" ) ),
-        Neg( formula.productionIsIncluded( p ) ) ) ) must beNone
+      new Sat4j().solve( And(
+        formula.generatesTerm( parseTerm( "c" ) ),
+        Neg( formula.productionIsIncluded( p ) )
+      ) ) must beNone
     }
     "Lang((x, {x -> c, y -> d})) = {c}" in {
       val g = tg( "x->c", "y->d" )
@@ -122,11 +137,14 @@ class GrammarFindingTest extends Specification {
       val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       new Sat4j().solve( And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) ) must beSome
     }
+    "work for vtrat grammar with only tau-productions" in {
+      val g = vtg( Seq( "x", "y1,y2" ), Seq( "x->a" ) )
+      covers( g, "a" )
+    }
   }
 
   "minimizeGrammar" should {
     "remove redundant productions" in {
-      if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
       val g = tg( "x->c", "x->d" )
       val minG = minimizeGrammar( g, Seq( "c" ) map parseTerm )
       minG.productions must beEqualTo( Seq( "x->c" ) map parseProduction )
@@ -135,10 +153,8 @@ class GrammarFindingTest extends Specification {
 
   "findMinimalGrammar" should {
     "find covering grammar of minimal size" in {
-      if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
-
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" )
-      val g = findMinimalGrammar( l map parseTerm, 1, new QMaxSAT )
+      val g = findMinimalGrammar( l map parseTerm, 1 )
       covers( g, l: _* )
       g.productions.size must beEqualTo( 2 + 3 )
       g.language must_== l.map( parseTerm ).toSet
@@ -154,13 +170,13 @@ class GrammarFindingTest extends Specification {
           "f(e,c,c)", "f(e,d,c)", "f(e,e,c)",
           "f(c,c,d)", "f(c,d,d)", "f(c,e,d)",
           "f(d,c,d)", "f(d,d,d)", "f(d,e,d)",
-          "f(e,c,d)", "f(e,d,d)", "f(e,e,d)" ) -> 8 ) ) {
+          "f(e,c,d)", "f(e,d,d)", "f(e,e,d)"
+        ) -> 8
+      ) ) {
         case ( ( n, l_str ), sizeOfMinG ) =>
           val l = l_str map parseTerm
           s"for $l with $n non-terminals" in {
-            if ( !new QMaxSAT().isInstalled ) skipped( "does not work with maxsat4j" )
-
-            val g = findMinimalGrammar( l, n, new QMaxSAT )
+            val g = findMinimalGrammar( l, n )
             g.productions.size must_== sizeOfMinG
             ( l.toSet diff g.language ) must_== Set()
           }

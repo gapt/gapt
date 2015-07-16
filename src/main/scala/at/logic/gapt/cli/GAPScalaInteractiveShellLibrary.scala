@@ -172,9 +172,11 @@ object loadProofs {
 
 object loadProver9Proof {
   def apply( filename: String ): ( RobinsonResolutionProof, FSequent, FSequent ) =
-    ( new Prover9Prover().reconstructRobinsonProofFromFile( filename ),
+    (
+      new Prover9Prover().reconstructRobinsonProofFromFile( filename ),
       InferenceExtractor.viaLADR( filename ),
-      InferenceExtractor.clausesViaLADR( filename ) )
+      InferenceExtractor.clausesViaLADR( filename )
+    )
 }
 
 object loadProver9LKProof {
@@ -207,12 +209,14 @@ object exportXML {
   def apply( ls: List[LKProof], names: List[String], outputFile: String ) = {
     val exporter = new LKExporter {}
     val pairs = ls.zip( names )
-    scala.xml.XML.save( outputFile,
+    scala.xml.XML.save(
+      outputFile,
       <proofdatabase>
         <definitionlist/>
         <axiomset/>{ pairs.map( p => exporter.exportProof( p._2, p._1 ) ) }<variabledefinitions/>
       </proofdatabase>, "UTF-8", true,
-      scala.xml.dtd.DocType( "proofdatabase", scala.xml.dtd.SystemID( "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd" ), Nil ) )
+      scala.xml.dtd.DocType( "proofdatabase", scala.xml.dtd.SystemID( "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd" ), Nil )
+    )
   }
 }
 
@@ -272,11 +276,13 @@ object refuteFOL {
     SimpleRefinementGetCommand[Clause],
     List( VariantsCommand, DeterministicAndCommand[Clause](
       List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
-      List( ParamodulationCommand( FOLUnificationAlgorithm ) ) ),
+      List( ParamodulationCommand( FOLUnificationAlgorithm ) )
+    ),
       SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
       SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
       InsertResolventCommand[Clause] ),
-    RefutationReachedCommand[Clause] ), stream1 )
+    RefutationReachedCommand[Clause]
+  ), stream1 )
 
   def stream: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1 ) )
 
@@ -286,15 +292,28 @@ object refuteFOL {
 }
 
 object refuteFOLI {
-  def stream1: Stream[Command[Clause]] = Stream.cons( getTwoClausesFromUICommand[Clause]( PromptTerminal.GetTwoClauses ),
-    Stream.cons( VariantsCommand,
-      Stream.cons( DeterministicAndCommand[Clause]( (
-        List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
-        List( ParamodulationCommand( FOLUnificationAlgorithm ) ) ) ),
-        Stream.cons( SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
-          Stream.cons( SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
-            Stream.cons( InsertResolventCommand[Clause],
-              Stream.cons( RefutationReachedCommand[Clause], stream1 ) ) ) ) ) ) )
+  def stream1: Stream[Command[Clause]] = Stream.cons(
+    getTwoClausesFromUICommand[Clause]( PromptTerminal.GetTwoClauses ),
+    Stream.cons(
+      VariantsCommand,
+      Stream.cons(
+        DeterministicAndCommand[Clause]( (
+          List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
+          List( ParamodulationCommand( FOLUnificationAlgorithm ) )
+        ) ),
+        Stream.cons(
+          SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+          Stream.cons(
+            SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+            Stream.cons(
+              InsertResolventCommand[Clause],
+              Stream.cons( RefutationReachedCommand[Clause], stream1 )
+            )
+          )
+        )
+      )
+    )
+  )
 
   def stream: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1 ) )
 
@@ -1320,11 +1339,15 @@ object philsci {
 object equation_example {
   def apply: ( LKProof, FOLSubstitution ) = {
     val List(
-      uv, fuu, fuv, ab, fab ) = List( "u = v",
-      "f(u)=f(u)", "f(u)=f(v)", "a=b", "f(a)=f(b)" ) map ( Prover9TermParserLadrStyle.parseFormula )
-    val List( uy, xy, ay ) = List( "(all y (u = y -> f(u) = f(y)))",
+      uv, fuu, fuv, ab, fab ) = List(
+      "u = v",
+      "f(u)=f(u)", "f(u)=f(v)", "a=b", "f(a)=f(b)"
+    ) map ( Prover9TermParserLadrStyle.parseFormula )
+    val List( uy, xy, ay ) = List(
+      "(all y (u = y -> f(u) = f(y)))",
       "(all x all y (x = y -> f(x) = f(y)))",
-      "(all y (a = y -> f(a) = f(y)))" ) map ( Prover9TermParserLadrStyle
+      "(all y (a = y -> f(a) = f(y)))"
+    ) map ( Prover9TermParserLadrStyle
         .parseFormula )
     val List( u, v ) = List( "u", "v" ).map( s => FOLVar( s ) )
 

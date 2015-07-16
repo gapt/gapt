@@ -207,9 +207,11 @@ object eliminateDefinitions {
         }
         case ImpRightRule( p, s, a1, a2, m ) => {
           val new_parent = rec( p )
-          val new_proof = ImpRightRule( new_parent._1,
+          val new_proof = ImpRightRule(
+            new_parent._1,
             new_parent._2( a1 ),
-            new_parent._2( a2 ) )
+            new_parent._2( a2 )
+          )
           ( new_proof, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._2 ) )
         }
 
@@ -265,21 +267,25 @@ object eliminateDefinitions {
     ( newProof, fullmap )
   }
 
-  def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                       old_parent: LKProof,
-                       old_proof: LKProof,
-                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
-                       m: FormulaOccurrence ) = {
+  def handleWeakening(
+    new_parent:  ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
+    m:           FormulaOccurrence
+  ) = {
     val new_proof = constructor( new_parent._1, m.formula )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
   }
 
-  def handleContraction( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                         old_parent: LKProof,
-                         old_proof: LKProof,
-                         a1: FormulaOccurrence,
-                         a2: FormulaOccurrence,
-                         constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ) = {
+  def handleContraction(
+    new_parent:  ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    a1:          FormulaOccurrence,
+    a2:          FormulaOccurrence,
+    constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof
+  ) = {
     val new_proof = constructor( new_parent._1, new_parent._2( a1 ), new_parent._2( a2 ) )
     ( new_proof, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
@@ -400,9 +406,11 @@ object regularize {
         }
         case ImpRightRule( p, s, a1, a2, m ) => {
           val new_parent = recApply( p, vars )
-          val new_proof = ImpRightRule( new_parent._1,
+          val new_proof = ImpRightRule(
+            new_parent._1,
             new_parent._3( a1 ),
-            new_parent._3( a2 ) )
+            new_parent._3( a2 )
+          )
           ( new_proof, new_parent._2, computeMap( p.root.antecedent ++ p.root.succedent, proof, new_proof, new_parent._3 ) )
         }
 
@@ -467,32 +475,38 @@ object regularize {
       }
     }
 
-  def handleWeakening( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                       old_parent: LKProof,
-                       old_proof: LKProof,
-                       vars: List[Var],
-                       constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
-                       m: FormulaOccurrence ) = {
+  def handleWeakening(
+    new_parent:  ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    vars:        List[Var],
+    constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
+    m:           FormulaOccurrence
+  ) = {
     val new_proof = constructor( new_parent._1, m.formula )
     ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
   }
 
-  def handleContraction( new_parent: ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
-                         old_parent: LKProof,
-                         old_proof: LKProof,
-                         a1: FormulaOccurrence,
-                         a2: FormulaOccurrence,
-                         vars: List[Var],
-                         constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ) = {
+  def handleContraction(
+    new_parent:  ( LKProof, Map[FormulaOccurrence, FormulaOccurrence] ),
+    old_parent:  LKProof,
+    old_proof:   LKProof,
+    a1:          FormulaOccurrence,
+    a2:          FormulaOccurrence,
+    vars:        List[Var],
+    constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof
+  ) = {
     val new_proof = constructor( new_parent._1, new_parent._2( a1 ), new_parent._2( a2 ) )
     ( new_proof, vars, computeMap( old_parent.root.antecedent ++ old_parent.root.succedent, old_proof, new_proof, new_parent._2 ) )
   }
 
-  def handleEquational( r: BinaryLKProof with AuxiliaryFormulas,
-                        p1: LKProof, p2: LKProof,
-                        a1: FormulaOccurrence, a2: FormulaOccurrence,
-                        m: HOLFormula, vars: List[Var],
-                        constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => BinaryLKProof with AuxiliaryFormulas ) = {
+  def handleEquational(
+    r:  BinaryLKProof with AuxiliaryFormulas,
+    p1: LKProof, p2: LKProof,
+    a1: FormulaOccurrence, a2: FormulaOccurrence,
+    m: HOLFormula, vars: List[Var],
+    constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => BinaryLKProof with AuxiliaryFormulas
+  ) = {
     // first left, then right
     val rec1 = recApply( p1, vars )
     val rec2 = recApply( p2, rec1._2 )

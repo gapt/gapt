@@ -37,15 +37,28 @@ import Definitions._
 
 object Main {
 
-  def stream1: Stream[Command[Clause]] = Stream.cons( getTwoClausesFromUICommand[Clause]( PromptTerminal.GetTwoClauses ),
-    Stream.cons( VariantsCommand,
-      Stream.cons( DeterministicAndCommand[Clause]( (
-        List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
-        List( ParamodulationCommand( FOLUnificationAlgorithm ) ) ) ),
-        Stream.cons( SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
-          Stream.cons( SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
-            Stream.cons( InsertResolventCommand[Clause],
-              Stream.cons( RefutationReachedCommand[Clause], stream1 ) ) ) ) ) ) )
+  def stream1: Stream[Command[Clause]] = Stream.cons(
+    getTwoClausesFromUICommand[Clause]( PromptTerminal.GetTwoClauses ),
+    Stream.cons(
+      VariantsCommand,
+      Stream.cons(
+        DeterministicAndCommand[Clause]( (
+          List( ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( FOLUnificationAlgorithm ), FactorCommand( FOLUnificationAlgorithm ) ),
+          List( ParamodulationCommand( FOLUnificationAlgorithm ) )
+        ) ),
+        Stream.cons(
+          SimpleForwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+          Stream.cons(
+            SimpleBackwardSubsumptionCommand[Clause]( StillmanSubsumptionAlgorithmFOL ),
+            Stream.cons(
+              InsertResolventCommand[Clause],
+              Stream.cons( RefutationReachedCommand[Clause], stream1 )
+            )
+          )
+        )
+      )
+    )
+  )
   def stream: Stream[Command[Clause]] = Stream.cons( SetTargetClause( FSequent( List(), List() ) ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1 ) )
   def main( args: Array[String] ) {
     if ( args.length < 1 ) {
@@ -87,7 +100,8 @@ object SearchDerivation extends at.logic.gapt.utils.logging.Logger {
     SimpleRefinementGetCommand[Clause],
     List( ClauseFactorCommand( alg ), ApplyOnAllPolarizedLiteralPairsCommand[Clause], ResolveCommand( alg ),
       InsertResolventCommand[Clause] ),
-    SubsumedTargedReachedCommand[Clause] ), stream1( alg ) )
+    SubsumedTargedReachedCommand[Clause]
+  ), stream1( alg ) )
   def stream( f: FSequent, alg: UnificationAlgorithm ): Stream[Command[Clause]] = Stream.cons( SetTargetClause( f ), Stream.cons( SearchForEmptyClauseCommand[Clause], stream1( alg ) ) )
 
   object MyProver extends Prover[Clause]

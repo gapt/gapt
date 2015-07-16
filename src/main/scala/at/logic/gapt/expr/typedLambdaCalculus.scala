@@ -8,6 +8,8 @@ package at.logic.gapt.expr
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.expr.hol.HOLPosition._
 
+import scala.annotation.tailrec
+
 // Collects all methods that operate on LambdaExpressions
 abstract class LambdaExpression {
 
@@ -181,7 +183,8 @@ class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpress
     function.exptype match {
       case ( in -> out ) if in == arg.exptype => out
       case _ => throw new IllegalArgumentException(
-        s"Types don't fit while constructing application ($function : ${function.exptype}) ($arg : ${arg.exptype})" )
+        s"Types don't fit while constructing application ($function : ${function.exptype}) ($arg : ${arg.exptype})"
+      )
     }
 
   def syntaxEquals( e: LambdaExpression ) = e match {
@@ -238,7 +241,7 @@ object App {
   def apply( f: LambdaExpression, a: LambdaExpression ) = determineTraits.forApp( f, a )
 
   @deprecated( "This constructor has moved to Apps" )
-  def apply( function: LambdaExpression, arguments: List[LambdaExpression] ): LambdaExpression = Apps( function, arguments )
+  def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression = Apps( function, arguments )
 
   def unapply( e: LambdaExpression ) = e match {
     case a: App => Some( ( a.function, a.arg ) )
@@ -246,26 +249,27 @@ object App {
   }
 }
 object Apps {
-  def apply( function: LambdaExpression, arguments: LambdaExpression* ): LambdaExpression =
-    apply( function, arguments toList )
+  def apply( function: LambdaExpression, arguments: LambdaExpression* )( implicit dummyImplicit: DummyImplicit ): LambdaExpression =
+    apply( function, arguments )
 
   // create an n-ary application with left-associative parentheses
-  def apply( function: LambdaExpression, arguments: List[LambdaExpression] ): LambdaExpression = arguments match {
-    case Nil     => function
-    case x :: ls => apply( App( function, x ), ls )
-  }
+  def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression =
+    arguments.foldLeft( function )( App( _, _ ) )
 
-  def unapply( e: LambdaExpression ): Some[( LambdaExpression, List[LambdaExpression] )] = e match {
-    case App( Apps( hd, args ), arg ) => Some( ( hd, args ::: List( arg ) ) )
-    case e                            => Some( ( e, List() ) )
-  }
+  def unapply( e: LambdaExpression ): Some[( LambdaExpression, List[LambdaExpression] )] =
+    Some( decompose( e, Nil ) )
+
+  @tailrec
+  private def decompose( e: LambdaExpression, restArgs: List[LambdaExpression] ): ( LambdaExpression, List[LambdaExpression] ) =
+    e match {
+      case App( head, arg ) => decompose( head, arg :: restArgs )
+      case head             => ( head, restArgs )
+    }
 }
 object Abs {
   def apply( v: Var, t: LambdaExpression ) = determineTraits.forAbs( v, t )
-  def apply( variables: List[Var], expression: LambdaExpression ): LambdaExpression = variables match {
-    case Nil     => expression
-    case x :: ls => Abs( x, apply( ls, expression ) )
-  }
+  def apply( variables: Seq[Var], expression: LambdaExpression ): LambdaExpression =
+    variables.foldRight( expression )( Abs( _, _ ) )
 
   def unapply( e: LambdaExpression ) = e match {
     case a: Abs => Some( ( a.variable, a.term ) )

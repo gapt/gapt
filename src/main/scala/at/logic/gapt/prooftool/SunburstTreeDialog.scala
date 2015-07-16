@@ -97,11 +97,13 @@ class SunburstTreeDialog[T]( name: String, proof: TreeProof[T] ) extends Frame {
         if ( node == null || model.sunroot.getRoot.children().contains( node ) ) {
           sunView.setSelectedNode( null )
           model.getInfo.asInstanceOf[ProofNodeInfo[T]].genShowAction(
-            model.root.asInstanceOf[ProofNode[T]].proof ).apply()
+            model.root.asInstanceOf[ProofNode[T]].proof
+          ).apply()
         } else {
           sunView.setSelectedNode( model.sunroot.getRoot.findNode( node.getDepth - 2, node.getLeft ) )
           model.getInfo.asInstanceOf[ProofNodeInfo[T]].genShowAction(
-            sunView.selected_proof.get.asInstanceOf[ProofNode[T]].proof ).apply()
+            sunView.selected_proof.get.asInstanceOf[ProofNode[T]].proof
+          ).apply()
         }
         sunView.repaintView()
       case KeyPressed( _, Key.Left, Key.Modifier.Control, _ ) =>

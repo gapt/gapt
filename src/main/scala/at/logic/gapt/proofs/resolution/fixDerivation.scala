@@ -303,8 +303,10 @@ object tautologifyInitialClauses {
         InitialClause( allLiterals, allLiterals )
       case InitialClause( clause ) => p
       case Factor( clause, p1, List( occurrences ), subst ) =>
-        Factor( apply( p1, shouldTautologify ),
-          occurrences.head.formula, occurrences.size, p1.root.positive.contains( occurrences.head ), subst )
+        Factor(
+          apply( p1, shouldTautologify ),
+          occurrences.head.formula, occurrences.size, p1.root.positive.contains( occurrences.head ), subst
+        )
       case Variant( clause, p1, subst )  => Variant( apply( p1, shouldTautologify ), subst )
       case Instance( clause, p1, subst ) => Instance( apply( p1, shouldTautologify ), subst )
       case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
@@ -350,8 +352,10 @@ object findDerivationViaResolution {
    * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
    */
   def apply( a: FClause, bs: Set[FClause] ): Option[RobinsonResolutionProof] = {
-    val grounding = groundFreeVariables.getGroundingMap( freeVariables( a.toFSequent ),
-      ( a.toFSequent.formulas ++ bs.flatMap( _.toFSequent.formulas ) ).flatMap( constants( _ ) ).toSet )
+    val grounding = groundFreeVariables.getGroundingMap(
+      freeVariables( a.toFSequent ),
+      ( a.toFSequent.formulas ++ bs.flatMap( _.toFSequent.formulas ) ).flatMap( constants( _ ) ).toSet
+    )
 
     val groundingSubst = FOLSubstitution( grounding )
     val negatedClausesA = a.neg.map { f => FClause( Seq(), Seq( groundingSubst( f ) ) ) } ++

@@ -56,8 +56,10 @@ object TargetFilter {
     }
 }
 
-class RecSchemGenLangFormula( val recursionScheme: RecursionScheme,
-                              val targetFilter: TargetFilter.Type = TargetFilter.default ) {
+class RecSchemGenLangFormula(
+  val recursionScheme: RecursionScheme,
+  val targetFilter:    TargetFilter.Type = TargetFilter.default
+) {
 
   def ruleIncluded( rule: Rule ) = FOLAtom( s"${rule.lhs}->${rule.rhs}" )
   def derivable( from: FOLTerm, to: FOLTerm ) = FOLAtom( s"$from=>$to" )
@@ -123,7 +125,8 @@ class RecSchemGenLangFormula( val recursionScheme: RecursionScheme,
           edges collect {
             case ( `t`, r, b ) if goals contains b                      => ruleIncluded( r )
             case ( `t`, r, b @ ( from_, to_ ) ) if reachable contains b => And( ruleIncluded( r ), derivable( from_, to_ ) )
-          } ) )
+          }
+        ) )
     } ) )
   }
 }
@@ -131,7 +134,7 @@ class RecSchemGenLangFormula( val recursionScheme: RecursionScheme,
 object minimizeRecursionScheme extends Logger {
   def apply( recSchem: RecursionScheme, targets: Seq[( FOLTerm, FOLTerm )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
-             solver: MaxSATSolver = new QMaxSAT ) = {
+             solver:       MaxSATSolver      = new QMaxSAT ) = {
     val formula = new RecSchemGenLangFormula( recSchem, targetFilter )
     val hard = formula( targets )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )

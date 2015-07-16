@@ -32,7 +32,8 @@ class MyMenubar extends MenuBar {
       history_menu.contents += new MenuItem(
         Action( name + " (" + size + ")" ) {
           Main.updateLauncher( name, obj, size )
-        } )
+        }
+      )
   }
 
   focusable = true

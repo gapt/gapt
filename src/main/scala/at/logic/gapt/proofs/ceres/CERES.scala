@@ -164,8 +164,10 @@ class CERES {
           case Some( proj ) =>
             val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.root.toFSequent diff endsequent, axfs )
             val ( subproj, _ ) = applySubstitution( proj, sub )
-            require( ( subproj.root.toFSequent diff endsequent ).multiSetEquals( axfs ),
-              "Instance of projection with end-sequent " + subproj.root + " is not equal to " + axfs + " x " + endsequent )
+            require(
+              ( subproj.root.toFSequent diff endsequent ).multiSetEquals( axfs ),
+              "Instance of projection with end-sequent " + subproj.root + " is not equal to " + axfs + " x " + endsequent
+            )
             subproj
         }
       }

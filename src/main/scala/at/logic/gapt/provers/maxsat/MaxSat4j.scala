@@ -29,7 +29,7 @@ class MaxSat4j extends MaxSATSolver {
     // run Sat4j
 
     debug( "Starting sat4j..." )
-    val solver = org.sat4j.maxsat.SolverFactory.newDefault()
+    val solver = org.sat4j.pb.SolverFactory.newDefaultOptimizer()
     val res = try {
       val problem = new WDimacsReader( new WeightedMaxSatDecorator( solver ) ).parseInstance( temp_in.getAbsolutePath )
       readSat4j( problem, helper )

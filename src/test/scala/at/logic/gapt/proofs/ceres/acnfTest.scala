@@ -65,9 +65,11 @@ class acnfTest extends Specification {
       }
 
       val List( uv, fuu, fuv, ab, fab ) = List( "u = v", "f(u)=f(u)", "f(u)=f(v)", "a=b", "f(a)=f(b)" ) map ( Prover9TermParserLadrStyle.parseFormula )
-      val List( uy, xy, ay ) = List( "(all y (u = y -> f(u) = f(y)))",
+      val List( uy, xy, ay ) = List(
+        "(all y (u = y -> f(u) = f(y)))",
         "(all x all y (x = y -> f(x) = f(y)))",
-        "(all y (a = y -> f(a) = f(y)))" ) map ( Prover9TermParserLadrStyle.parseFormula )
+        "(all y (a = y -> f(a) = f(y)))"
+      ) map ( Prover9TermParserLadrStyle.parseFormula )
       val List( u, v ) = List( "u", "v" ).map( s => FOLVar( s ) )
       val List( a, b ) = List( "a", "b" ).map( s => FOLConst( s ) )
       val ax1 = Axiom( List( uv ), List( uv ) )

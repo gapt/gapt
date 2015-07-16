@@ -1,5 +1,6 @@
 package at.logic.gapt.provers.inductionProver
 
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.expr.hol.CNFp
@@ -26,12 +27,14 @@ import scala.collection.mutable
  * @param u Terms used in the conclusion
  * @param inductionFormula The formula induced over. This argument defaults to X(α, ν, γ) with X a second-order variable, i.e. an unknown induction formula.
  */
-class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
-                            val ExpSeq1: ExpansionSequent,
-                            val ExpSeq2: ExpansionSequent,
-                            val t: List[FOLTerm],
-                            val u: List[FOLTerm],
-                            val inductionFormula: HOLFormula = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) ) ) {
+class SimpleInductionProof(
+    val ExpSeq0:          ExpansionSequent,
+    val ExpSeq1:          ExpansionSequent,
+    val ExpSeq2:          ExpansionSequent,
+    val t:                List[FOLTerm],
+    val u:                List[FOLTerm],
+    val inductionFormula: HOLFormula       = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) )
+) {
   import SimpleInductionProof._
 
   val Gamma0 = extractInstances( ExpSeq0 )
@@ -57,13 +60,32 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
     sub( inductionFormula )
   }
 
+  private def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula =
+    if ( indFormIsQuantified )
+      All( y, F( x1, x2, y ) ).asInstanceOf[FOLFormula]
+    else
+      F( x1, x2, gamma ).asInstanceOf[FOLFormula]
+
   val Sequent0 = Gamma0 :+ F( alpha, zero, beta )
 
-  val Ft = t map { F( alpha, nu, _ ) }
+  val Ft = if ( t.isEmpty )
+    List( F( alpha, nu, gamma ) )
+  else
+    t map { F( alpha, nu, _ ) }
   val Sequent1 = Ft ++: Gamma1 :+ F( alpha, snu, gamma )
 
-  val Fu = u map { F( alpha, alpha, _ ) }
+  val Fu = if ( u.isEmpty )
+    List( F( alpha, alpha, gamma ) )
+  else
+    u map { F( alpha, alpha, _ ) }
   val Sequent2 = Fu ++: Gamma2
+
+  /**
+   * Returns true iff the induction formula needs to be quantified over.
+   *
+   * @return
+   */
+  def indFormIsQuantified = freeVariables( inductionFormula ) contains gamma
 
   /**
    *
@@ -94,14 +116,6 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @return The LKProof represented by this object.
    */
   def toLKProof( pi0: LKProof, pi1: LKProof, pi2: LKProof ): LKProof = {
-    val indFormIsQuantified = freeVariables( inductionFormula ) contains gamma
-
-    def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula =
-      if ( indFormIsQuantified )
-        All( y, F( x1, x2, y ) ).asInstanceOf[FOLFormula]
-      else
-        F( x1, x2, gamma ).asInstanceOf[FOLFormula]
-
     if ( indFormIsQuantified ) {
       require( t.nonEmpty, "Induction formula contains γ, but no step terms have been supplied." )
       require( u.nonEmpty, "Induction formula contains γ, but no cut terms have been supplied." )
@@ -113,7 +127,8 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
       if ( indFormIsQuantified )
         ForallRightRule( inductionBase1, F( alpha, zero, beta ), Fprime( alpha, zero ), beta )
       else
-        inductionBase1 )
+        inductionBase1
+    )
 
     // Induction step
     val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
@@ -129,7 +144,8 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
       if ( indFormIsQuantified )
         ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
       else
-        inductionStep2 )
+        inductionStep2
+    )
 
     // Conclusion
     val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
@@ -139,28 +155,31 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
           ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
         }
       } else
-        conclusion1 )
+        conclusion1
+    )
 
     // Combining the proofs
-    val inductionProof = ContractionMacroRule( InductionRule( inductionBase2,
+    val inductionProof = ContractionMacroRule( InductionRule(
+      inductionBase2,
       inductionStep3, Fprime( alpha, zero ).asInstanceOf[FOLFormula],
       Fprime( alpha, nu ).asInstanceOf[FOLFormula],
       Fprime( alpha, snu ).asInstanceOf[FOLFormula],
-      alpha ) )
+      alpha
+    ) )
 
     CleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusion2, Fprime( alpha, alpha ) ) ) )
   }
 
   /**
    *
-   * @param prover
+   * @param prover The prover used to generate π,,0,, ,…,π,,2,,.
    * @return
    */
   def toLKProof( prover: Prover ): LKProof = {
 
     val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
     ( pi0Op, pi1Op, pi2Op ) match {
-      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toLKProof( pi0, pi1, pi2 )
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toLKProof( CleanStructuralRules( pi0 ), CleanStructuralRules( pi1 ), CleanStructuralRules( pi2 ) )
       case _                                         => throw new Exception( "Not a correct LKProof." )
     }
   }
@@ -171,6 +190,101 @@ class SimpleInductionProof( val ExpSeq0: ExpansionSequent,
    * @return The LKProof represented by this object
    */
   def toLKProof: LKProof = toLKProof( new Prover9Prover )
+
+  /**
+   * Computes the nth instance proof. Uses prover9 to compute the subproofs.
+   *
+   * @param n A natural number
+   * @return The nth instance of this sip.
+   */
+  def toInstanceLKProof( n: Int, rename: Boolean ): LKProof = toInstanceLKProof( n, new Prover9Prover(), rename )
+
+  /**
+   * Computes the nth instance proof,
+   *
+   * @param n A natural number
+   * @param prover The prover used to generate π,,0,, ,…,π,,2,,.
+   * @return The nth instance of this sip.
+   */
+  def toInstanceLKProof( n: Int, prover: Prover, rename: Boolean ): LKProof = {
+
+    val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
+    ( pi0Op, pi1Op, pi2Op ) match {
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toInstanceLKProof( n, CleanStructuralRules( pi0 ), CleanStructuralRules( pi1 ), CleanStructuralRules( pi2 ), rename )
+      case _                                         => throw new Exception( "Not a correct LKProof." )
+    }
+  }
+
+  /**
+   * Computes the nth instance proof, with user-supplied proofs π,,0,,, π,,1,,, π,,2,,.
+   *
+   * @param n A natural number
+   * @param pi0 Proof of the induction base.
+   * @param pi1 Proof of the induction step.
+   * @param pi2 Proof of the conclusion.
+   * @return The nth instance of this sip.
+   */
+  def toInstanceLKProof( n: Int, pi0: LKProof, pi1: LKProof, pi2: LKProof, rename: Boolean ): LKProof = {
+    def num( k: Int ) = Utils.numeral( k )
+    def gam( k: Int ) = FOLVar( "γ_" + k )
+
+    val baseSub = if ( rename )
+      FOLSubstitution( List( alpha -> num( n ), beta -> gam( 0 ) ) )
+    else
+      FOLSubstitution( alpha, num( n ) )
+
+    val inductionBase1 = applySubstitution( proofFromInstances( pi0, ExpSeq0 ), baseSub )._1
+    val inductionBase = ContractionMacroRule(
+      if ( indFormIsQuantified )
+        ForallRightRule( inductionBase1, baseSub( F( alpha, zero, beta ) ), baseSub( Fprime( alpha, zero ) ), baseSub( beta ).asInstanceOf[FOLVar] )
+      else
+        inductionBase1
+    )
+
+    def inductionStep( k: Int ) = {
+      val sub =
+        if ( rename )
+          FOLSubstitution( List( alpha -> num( n ), nu -> num( k ), gamma -> gam( k + 1 ) ) )
+        else
+          FOLSubstitution( List( alpha -> num( n ), nu -> num( k ) ) )
+
+      val inductionStep1 = applySubstitution( proofFromInstances( pi1, ExpSeq1 ), sub )._1
+      val inductionStep2 =
+        if ( indFormIsQuantified ) {
+          t.foldLeft( inductionStep1 ) {
+            ( acc, ti ) => ForallLeftRule( acc, sub( F( alpha, nu, ti ) ), sub( All( y, F( alpha, nu, y ) ) ), sub( ti ) )
+          }
+        } else
+          inductionStep1
+
+      ContractionMacroRule(
+        if ( indFormIsQuantified )
+          ForallRightRule( inductionStep2, sub( F( alpha, snu, gamma ) ), sub( All( y, F( alpha, snu, y ) ) ), sub( gamma ).asInstanceOf[FOLVar] )
+        else
+          inductionStep2
+      )
+    }
+
+    val stepsProof = ( inductionBase /: ( 0 until n ) ) { ( acc, i ) =>
+      CutRule( acc, inductionStep( i ), Fprime( num( n ), num( i ) ) )
+    }
+
+    val conclusionSub = FOLSubstitution( alpha, num( n ) )
+
+    val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
+    val conclusion2 = ContractionMacroRule(
+      if ( indFormIsQuantified ) {
+        u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
+          ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
+        }
+      } else
+        conclusion1
+    )
+
+    val conclusion = applySubstitution( conclusion2, conclusionSub )._1
+
+    CutRule( stepsProof, conclusion, Fprime( num( n ), num( n ) ) )
+  }
 
   /**
    * Extracts a SIP grammar from the SIP according to the paper.
@@ -227,10 +341,12 @@ object decodeSipGrammar {
     if ( ts isEmpty ) ts += FOLConst( "0" )
     if ( us isEmpty ) us += FOLConst( "0" )
 
-    new SimpleInductionProof( encoding.decodeToExpansionSequent( seq0 ),
+    new SimpleInductionProof(
+      encoding.decodeToExpansionSequent( seq0 ),
       encoding.decodeToExpansionSequent( seq1 ),
       encoding.decodeToExpansionSequent( seq2 ),
-      ts.toList, us.toList )
+      ts.toList, us.toList
+    )
   }
 }
 
@@ -242,11 +358,13 @@ object canonicalSolution {
     case i =>
       val C_ = apply( sip, i - 1 )
       val nuSubst = FOLSubstitution( nu -> Utils.numeral( i - 1 ) )
-      And( nuSubst( sip.Gamma1.toNegFormula ).asInstanceOf[FOLFormula],
+      And(
+        nuSubst( sip.Gamma1.toNegFormula ).asInstanceOf[FOLFormula],
         if ( sip.t.isEmpty )
           C_
         else
-          And( sip.t map { t => FOLSubstitution( gamma -> nuSubst( t ) )( C_ ) } ) )
+          And( sip.t map { t => FOLSubstitution( gamma -> nuSubst( t ) )( C_ ) } )
+      )
   }
 }
 
