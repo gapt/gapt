@@ -131,6 +131,8 @@ object ETWeakQuantifier {
   def apply( formula: HOLFormula, instances: Seq[( ExpansionTreeWithMerges, LambdaExpression )] ) =
     if ( instances.forall( { case ( et, _ ) => et.isInstanceOf[ExpansionTree] } ) ) new ETWeakQuantifier( formula, instances ) with ExpansionTree
     else new ETWeakQuantifier( formula, instances )
+
+  def apply( formula: HOLFormula, instances: (ExpansionTreeWithMerges, LambdaExpression)*)(implicit dummyImplicit: DummyImplicit): ETWeakQuantifier = apply(formula, instances)
   // user of this functions must take care that no merges are passed here
   def applyWithoutMerge( formula: HOLFormula, instances: Seq[( ExpansionTree, LambdaExpression )] ) = new ETWeakQuantifier( formula, instances ) with ExpansionTree
   def unapply( et: ExpansionTreeWithMerges ) = et match {
