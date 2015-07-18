@@ -2,11 +2,38 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ toNNF, simplify, lcomp }
+import at.logic.gapt.expr.hol.{ NaiveIncompleteMatchingAlgorithm, toNNF, simplify, lcomp }
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
+
+case class HORule( lhs: LambdaExpression, rhs: LambdaExpression ) {
+  require( freeVariables( rhs ) subsetOf freeVariables( lhs ) )
+  require( lhs.exptype == rhs.exptype )
+
+  def apply( term: LambdaExpression ): Option[LambdaExpression] =
+    NaiveIncompleteMatchingAlgorithm.matchTerm( lhs, term ).map( _( rhs ) )
+
+  def apply( subst: Substitution ): HORule =
+    HORule( subst( lhs ), subst( rhs ) )
+
+  override def toString: String =
+    s"$lhs -> $rhs"
+}
+
+case class HORS( rules: Set[HORule] ) {
+  def alphaLanguage( from: LambdaExpression ): Set[LambdaExpression] =
+    rules flatMap ( _( from ) ) match {
+      case irreducible if irreducible.isEmpty => Set( from )
+      case oneStepReductions                  => oneStepReductions flatMap language
+    }
+
+  def language( from: LambdaExpression ): Set[LambdaExpression] =
+    alphaLanguage( from ) map BetaReduction.betaNormalize
+
+  override def toString: String = rules.toSeq.sortBy( _.toString ) mkString "\n"
+}
 
 case class Rule( lhs: FOLTerm, rhs: FOLTerm ) {
   require( freeVariables( rhs ) subsetOf freeVariables( lhs ) )
@@ -29,6 +56,8 @@ case class RecursionScheme( rules: Set[Rule] ) {
     }
 
   override def toString: String = rules.toSeq.sortBy( _.toString ) mkString "\n"
+
+  def toHORS: HORS = HORS( rules map { case Rule( lhs, rhs ) => HORule( lhs, rhs ) } )
 }
 
 object preOrderTraversal {
@@ -57,8 +86,8 @@ object TargetFilter {
 }
 
 class RecSchemGenLangFormula(
-  val recursionScheme: RecursionScheme,
-  val targetFilter:    TargetFilter.Type = TargetFilter.default
+    val recursionScheme: RecursionScheme,
+    val targetFilter:    TargetFilter.Type = TargetFilter.default
 ) {
 
   def ruleIncluded( rule: Rule ) = FOLAtom( s"${rule.lhs}->${rule.rhs}" )
