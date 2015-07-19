@@ -30,21 +30,34 @@ object extractRecSchem {
   private val freshSymbols = Stream.from( 1 ).map( i => s"B$i" ).iterator
   private def mkFreshSymbol(): String = freshSymbols.next()
 
-  def getRules( p: LKProof, axiom: LambdaExpression, symbols: Map[FormulaOccurrence, LambdaExpression], context: List[FOLVar] ): Set[HORule] = p match {
+  def getRules( p: LKProof, axiom: LambdaExpression, symbols: Map[FormulaOccurrence, LambdaExpression], context: List[Var] ): Set[HORule] = p match {
     case Axiom( sequent ) => sequent.occurrences.flatMap( symbols.get ).map { sym => HORule( axiom, sym ) } toSet
-    case ForallLeftRule( q, sequent, aux, main, term ) =>
-      getRules( q, axiom,
-        followSymbols( symbols - main, q )
-          ++ symbols.get( main ).map { sym => aux -> App( sym, term ) },
-        context )
-    case ForallRightRule( q, sequent, aux, main, eigenvar: FOLVar ) =>
-      App( symbols( main ), eigenvar ) match {
-        case newAxiom if newAxiom.exptype == To => getRules( q, newAxiom, followSymbols( symbols - main, q ), eigenvar :: context )
-        case newSymbol                          => getRules( q, axiom, followSymbols( symbols - main, q ) + ( aux -> newSymbol ), eigenvar :: context )
+    case WeakQuantifierRule( q, sequent, aux, main, term ) =>
+      val appSym = App( symbols( main ), term )
+      appSym.exptype match {
+        case FunctionType( To, argtypes ) -> To =>
+          val cpsSym = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.exptype ) ++ argtypes ) ), context )
+          getRules( q, axiom, followSymbols( symbols - main, q ) + ( aux -> cpsSym ), context ) +
+            HORule( axiom, App( appSym, cpsSym ) )
+        case _ =>
+          getRules( q, axiom, followSymbols( symbols - main, q ) + ( aux -> appSym ), context )
+      }
+    case StrongQuantifierRule( q, sequent, aux, main, eigenvar: FOLVar ) =>
+      val appSym = App( symbols( main ), eigenvar )
+      appSym.exptype match {
+        case FunctionType( To, argtypes ) -> To =>
+          val introSym = Var( mkFreshSymbol(), FunctionType( To, argtypes ) )
+          val fullyAppSym = App( appSym, introSym )
+          getRules( q, fullyAppSym, followSymbols( symbols - main, q ) + ( aux -> introSym ), introSym :: eigenvar :: context )
+        case To => getRules( q, appSym, followSymbols( symbols - main, q ), eigenvar :: context )
+        case _  => getRules( q, axiom, followSymbols( symbols - main, q ) + ( aux -> appSym ), eigenvar :: context )
       }
     case CutRule( q1, q2, sequent, aux1, aux2 ) if containsQuantifier( aux1.formula ) =>
-      val All.Block( vars, _ ) = aux1.formula
-      val symbol = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.exptype ) ++ vars.map( _.exptype ) ) ), context )
+      val All.Block( u, Ex.Block( v, _ ) ) = aux1.formula
+      val symType = if ( v.isEmpty )
+        FunctionType( To, context.map( _.exptype ) ++ u.map( _.exptype ) )
+      else FunctionType( To, context.map( _.exptype ) ++ u.map( _.exptype ) :+ FunctionType( To, v.map( _.exptype ) ) )
+      val symbol = Apps( Const( mkFreshSymbol(), symType ), context )
       val rules1 = getRules( q1, axiom, followSymbols( symbols, q1 ) + ( aux1 -> symbol ), context )
       val rules2 = getRules( q2, axiom, followSymbols( symbols, q2 ) + ( aux2 -> symbol ), context )
       rules1 ++ rules2
@@ -52,7 +65,7 @@ object extractRecSchem {
       val All.Block( vars, _ ) = stepl.formula.asInstanceOf[FOLFormula]
       val indVar = FOLMatchingAlgorithm.matchTerms( stepl.formula.asInstanceOf[FOLFormula], stepr.formula.asInstanceOf[FOLFormula] ).get.domain.head.asInstanceOf[FOLVar]
       val symbol = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.exptype ) ++ Seq( Ti ) ++ vars.map( _.exptype ) ) ), context )
-      val renaming = rename( vars.toSet, context.toSet )
+      val renaming = rename( vars.toSet, context.map( _.asInstanceOf[FOLVar] ).toSet )
 
       val baseAxiom = Apps( App( symbol, FOLConst( "0" ) ), vars map renaming )
       val rules1 = getRules( q1, baseAxiom, followSymbols( symbols - main, q1 ) + ( base -> App( symbol, FOLConst( "0" ) ) ), context )

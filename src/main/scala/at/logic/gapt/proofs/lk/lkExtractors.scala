@@ -50,3 +50,10 @@ object BinaryLKProof {
   }
 }
 
+object WeakQuantifierRule {
+  def unapply( p: LKProof ) = ForallLeftRule.unapply( p ).orElse( ExistsRightRule.unapply( p ) )
+}
+
+object StrongQuantifierRule {
+  def unapply( p: LKProof ) = ForallRightRule.unapply( p ).orElse( ExistsLeftRule.unapply( p ) )
+}

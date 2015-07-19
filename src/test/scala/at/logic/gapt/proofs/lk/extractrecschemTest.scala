@@ -1,8 +1,11 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
+import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.sat4j.Sat4jProver
 import org.specs2.mutable._
 
 class ExtractRecSchemTest extends Specification {
@@ -32,7 +35,20 @@ class ExtractRecSchemTest extends Specification {
     val p = CutRule( p5, q4, cutf )
 
     val recSchem = extractRecSchem( p )
-    val lang = recSchem.language( FOLConst( "A" ) )
-    ok
+    val lang = recSchem.language( FOLAtom( "A" ) ).map( _.asInstanceOf[HOLFormula] )
+
+    new Sat4jProver().isValid( HOLSequent( lang.toSeq, Seq() ) ) must beTrue
+  }
+
+  "pi2 pigeonhole" in {
+    val p9 = new Prover9Prover
+    if ( !p9.isInstalled ) skipped
+
+    val p = Pi2Pigeonhole()
+    val recSchem = extractRecSchem( p )
+
+    val lang = recSchem.language( FOLAtom( "A" ) ).map( _.asInstanceOf[HOLFormula] )
+
+    p9.isValid( HOLSequent( lang.toSeq, Seq() ) ) must beTrue
   }
 }
