@@ -110,7 +110,7 @@ object Paramodulants {
 }
 
 // TODO: I honestly have no idea what the relationship of this algorithm to the other one (ForgetfulResolve) is supposed to be.
-object forgetfulResolve {
+object ForgetfulResolveIndexed {
   /**
    * Given a formula and a pair of indices (i,j), resolves the two clauses which contain i & j.
    * The original two clauses are deleted and the new, merged clauses is added to the formula.
