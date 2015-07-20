@@ -9,8 +9,8 @@ import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable
 
 case class HORule( lhs: LambdaExpression, rhs: LambdaExpression ) {
-  require( freeVariables( rhs ) subsetOf freeVariables( lhs ) )
-  require( lhs.exptype == rhs.exptype )
+  require( freeVariables( rhs ) subsetOf freeVariables( lhs ), s"$rhs has more free variables than $lhs" )
+  require( lhs.exptype == rhs.exptype, s"$lhs has different type than $rhs" )
 
   def apply( term: LambdaExpression ): Option[LambdaExpression] =
     NaiveIncompleteMatchingAlgorithm.matchTerm( lhs, term ).map( _( rhs ) )
