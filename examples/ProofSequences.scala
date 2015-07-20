@@ -1041,7 +1041,24 @@ object FactorialFunctionEqualityExampleProof {
   // this second axiom saves us from adding commutativity of multiplication
   val mul_neutral_axiom_2 = new AllQuantifiedConditionalAxiomHelper(x::Nil, Nil, Eq( f2(Utils.numeral(1), m, x), x))
 
-  def apply(n :Int): LKProof = induction_steps(n)
+  def apply(n :Int): LKProof = n match {
+    case 0 =>
+      val targetEquation = Eq( f1(f, Utils.numeral(0)), f2(g, Utils.numeral(0), Utils.numeral(1)))
+      val g0 = Eq(Utils.numeral(1), f2(g, Utils.numeral(0), Utils.numeral(1)))
+      val ax1 = Axiom(f_ax_1)
+      val ax2 = Axiom(g0)
+      val ax3 = Axiom(targetEquation)
+      val p1 = ImpLeftRule(ax2, ax3, g0, targetEquation)
+      val p2 = ImpLeftRule(ax1, p1, f_ax_1, Imp(g0, targetEquation))
+      val p3 = ForallLeftBlock(p2, trans_axiom.get_axiom(), Seq(f1(f,Utils.numeral(0)), Utils.numeral(1), f2(g, Utils.numeral(0), Utils.numeral(1))))
+      val p4 = ForallLeftRule(p3, g0, g_ax_1.get_axiom(), Utils.numeral(1))
+      WeakeningLeftMacroRule(p4,
+      List(f_ax_2, g_ax_2, symm_axiom, refl_axiom.get_axiom(),
+        compat_mul_axiom.get_axiom(), assoc_mul_axiom.get_axiom(), g_compat_2.get_axiom(),
+        mul_neutral_axiom.get_axiom(), mul_neutral_axiom_2.get_axiom())
+      )
+    case _ => induction_steps(n)
+  }
 
   def induction_steps(n: Int): LKProof = {
     val axiom_formulae = Eq( f1(f, Utils.numeral(n)), f2(g, Utils.numeral(n), Utils.numeral(1)))::Nil
