@@ -393,7 +393,7 @@ object findConseq extends Logger {
   def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF] ): Set[CNF] =
     apply( S, n, CNFp.toClauseList( A ), M )
 
-  def ForgetOne( A: CNF ) = ( 0 until A.length ) map { i =>
+  def ForgetOne( A: CNF ) = A.indices map { i =>
     val B = A.splitAt( i )
     B._1 ++ B._2.tail
   }

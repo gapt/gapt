@@ -54,16 +54,16 @@ object RunOnProofSequence {
   def removeEqAxioms( eseq: ExpansionSequent ) = {
     val eqaxioms = Sequent(
       List(
-      "x = x",
-      "x = y -> y = x",
-      "(x = y & y = z) -> x = z",
-      "x = y -> (y = z -> x = z)",
-      "x = y -> s(x) = s(y)",
-      "x = y -> (u = v -> x+u = y+v)",
-      "x = z -> y + x = z + x", // congruence plus left
-      "(all x (all y (all z (y = z -> g(x, y) = g(x, z)))))", // congruence of g on the right
-      "x = y -> z*x = z*y"
-    ), // congruence of mult right
+        "x = x",
+        "x = y -> y = x",
+        "(x = y & y = z) -> x = z",
+        "x = y -> (y = z -> x = z)",
+        "x = y -> s(x) = s(y)",
+        "x = y -> (u = v -> x+u = y+v)",
+        "x = z -> y + x = z + x", // congruence plus left
+        "(all x (all y (all z (y = z -> g(x, y) = g(x, z)))))", // congruence of g on the right
+        "x = y -> z*x = z*y"
+      ), // congruence of mult right
       Nil
     ) map { s => univclosure( parseFormula( s ) ) }
 
