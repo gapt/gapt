@@ -16,12 +16,21 @@ object extractRecSchem {
           case ( Ex.Block( vars, matrix ), false ) => occ -> Abs( vars, Neg( matrix ) )
         }
     }
-    val context = freeVariables( p.root.toFormula.asInstanceOf[FOLFormula] ).toList
+    val context = freeVarsInProof( p ).toList.sortBy( _.toString )
     val axiom = Apps( Const( "A", FunctionType( To, context.map( _.exptype ) ) ), context )
     HORS( getRules( p, axiom, symbols.toMap, context ) map {
       case HORule( lhs, rhs ) => HORule( lhs, BetaReduction.betaNormalize( rhs ) )
     } )
   }
+
+  def freeVarsInProof( p: LKProof ): Set[Var] = freeVarsInProof( p, Set() )
+
+  def freeVarsInProof( p: LKProof, bound: Set[Var] ): Set[Var] = ( p match {
+    case StrongQuantifierRule( q, _, aux, main, eigenvar ) => freeVarsInProof( q, bound + eigenvar )
+    case UnaryLKProof( rule, q, sequent, auxs, main ) => freeVarsInProof( q, bound )
+    case BinaryLKProof( rule, q1, q2, sequent, aux1, aux2, main ) => freeVarsInProof( q1, bound ) ++ freeVarsInProof( q2, bound )
+    case _ => Set()
+  } ) ++ ( freeVariables( p.root.toFormula ) diff bound )
 
   private def followSymbols( symbols: Map[FormulaOccurrence, LambdaExpression], q: LKProof ) =
     for ( ( lowerOcc, sym ) <- symbols; occ <- q.root.occurrences if lowerOcc.isDescendantOf( occ, true ) )
