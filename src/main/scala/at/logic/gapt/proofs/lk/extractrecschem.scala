@@ -33,6 +33,20 @@ object extractRecSchem {
   private val freshVars = Stream.from( 1 ).map( i => s"X$i" ).iterator
   private def mkFreshVar(): String = freshVars.next()
 
+  private object QuantifiedPi2Cut {
+    def unapply( p: LKProof ) = p match {
+      case CutRule( q1, q2, sequent, aux1, aux2 ) =>
+        aux1.formula match {
+          case All.Block( u, Ex.Block( v, f ) ) if u.nonEmpty && !containsQuantifier( f ) =>
+            Some( ( q1, q2, sequent, aux1, aux2, u, v ) )
+          case Ex.Block( u, All.Block( v, f ) ) if u.nonEmpty && !containsQuantifier( f ) =>
+            Some( ( q2, q1, sequent, aux2, aux1, u, v ) )
+          case _ => None
+        }
+      case _ => None
+    }
+  }
+
   def getRules( p: LKProof, axiom: LambdaExpression, symbols: Map[FormulaOccurrence, LambdaExpression], context: List[Var] ): Set[HORule] = p match {
     case Axiom( sequent ) => sequent.occurrences.flatMap( symbols.get ).map { sym => HORule( axiom, sym ) } toSet
     case WeakQuantifierRule( q, sequent, aux, main, term ) =>
@@ -55,8 +69,7 @@ object extractRecSchem {
         case To => getRules( q, appSym, followSymbols( symbols - main, q ), eigenvar :: context )
         case _  => getRules( q, axiom, followSymbols( symbols - main, q ) + ( aux -> appSym ), eigenvar :: context )
       }
-    case CutRule( q1, q2, sequent, aux1, aux2 ) if containsQuantifier( aux1.formula ) =>
-      val All.Block( u, Ex.Block( v, _ ) ) = aux1.formula
+    case QuantifiedPi2Cut( q1, q2, sequent, aux1, aux2, u, v ) =>
       val symType = if ( v.isEmpty )
         FunctionType( To, context.map( _.exptype ) ++ u.map( _.exptype ) )
       else FunctionType( To, context.map( _.exptype ) ++ u.map( _.exptype ) :+ FunctionType( To, v.map( _.exptype ) ) )
