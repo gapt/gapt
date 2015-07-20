@@ -30,6 +30,9 @@ object extractRecSchem {
   private val freshSymbols = Stream.from( 1 ).map( i => s"B$i" ).iterator
   private def mkFreshSymbol(): String = freshSymbols.next()
 
+  private val freshVars = Stream.from( 1 ).map( i => s"X$i" ).iterator
+  private def mkFreshVar(): String = freshVars.next()
+
   def getRules( p: LKProof, axiom: LambdaExpression, symbols: Map[FormulaOccurrence, LambdaExpression], context: List[Var] ): Set[HORule] = p match {
     case Axiom( sequent ) => sequent.occurrences.flatMap( symbols.get ).map { sym => HORule( axiom, sym ) } toSet
     case WeakQuantifierRule( q, sequent, aux, main, term ) =>
@@ -46,7 +49,7 @@ object extractRecSchem {
       val appSym = App( symbols( main ), eigenvar )
       appSym.exptype match {
         case FunctionType( To, argtypes ) -> To =>
-          val introSym = Var( mkFreshSymbol(), FunctionType( To, argtypes ) )
+          val introSym = Var( mkFreshVar(), FunctionType( To, argtypes ) )
           val fullyAppSym = App( appSym, introSym )
           getRules( q, fullyAppSym, followSymbols( symbols - main, q ) + ( aux -> introSym ), introSym :: eigenvar :: context )
         case To => getRules( q, appSym, followSymbols( symbols - main, q ), eigenvar :: context )
