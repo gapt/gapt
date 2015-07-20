@@ -1,7 +1,14 @@
 package at.logic.gapt.proofs.lk
 
+import java.io.InputStreamReader
+import java.util.zip.GZIPInputStream
+
+import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.formats.readers.XMLReaders.XMLReader
+import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.provers.prover9.Prover9Prover
@@ -50,5 +57,26 @@ class ExtractRecSchemTest extends Specification {
     val lang = recSchem.language( FOLAtom( "A" ) ).map( _.asInstanceOf[HOLFormula] )
 
     p9.isValid( HOLSequent( lang.toSeq, Seq() ) ) must beTrue
+  }
+
+  "tape proof" in {
+    val pdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+    val proof = DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "the-proof" ) ) )
+
+    val recSchem = extractRecSchem(proof)
+
+    val p9 = new Prover9Prover
+    if ( !p9.isInstalled ) skipped
+
+    val lang = recSchem.language( FOLAtom( "A", FOLConst("n_0") ) ).map( _.asInstanceOf[HOLFormula] )
+    // the following formulas are not present in the end-sequent...
+    val additionalAxioms = Seq(
+      "x+(y+z) = (x+y)+z",
+      "x+y = y+x",
+      "x != x+(y+1)"
+    ).map { s => univclosure(parseFormula(s)) }
+    p9.isValid( HOLSequent( additionalAxioms ++ lang, Seq() ) ) must beTrue
+
+    ok
   }
 }
