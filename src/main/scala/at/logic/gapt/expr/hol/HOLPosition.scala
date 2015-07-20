@@ -231,7 +231,7 @@ object HOLPosition {
   }
 }
 /**
- * Represents a position in a [[at.logic.gapt.language.hol.LambdaExpression]].
+ *
  *
  * Positions are given as lists of Integers. The empty list denotes the current expression itself.
  * A list starting with k denotes a subexpression in the k^th^ argument of the current expression.
