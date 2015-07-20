@@ -44,8 +44,8 @@ object Interpolate {
    * @param ppart the positive part of the partition of the end-sequent of p
    * @return      a triple consisting of ( a proof of \Gamma |- \Delta, I,
    *              a proof of I, \Pi |- \Lambda, the FOLFormula I )
-   * @throws InterpolationException if the input proof is not propositional
-   *         and cut-free or if (npart,ppart) is not a partition of its
+   * @throws InterpolationException if the input proof is not propositional,
+   *         contains non-atomic cuts or if (npart,ppart) is not a partition of its
    *         end-sequent.
    */
   def apply( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ): ( LKProof, LKProof, FOLFormula ) = p match {
@@ -61,7 +61,7 @@ object Interpolate {
       else if ( npart.contains( oant ) && ppart.contains( osuc ) ) ( p, p, form.asInstanceOf[FOLFormula] )
       else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), Neg( form.asInstanceOf[FOLFormula] ) )
       else if ( ppart.contains( oant ) && ppart.contains( osuc ) ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
-      else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     // structural rules
@@ -71,7 +71,7 @@ object Interpolate {
 
       if ( npart.contains( m ) ) ( WeakeningLeftRule( up_nproof, m.formula ), up_pproof, up_I )
       else if ( ppart.contains( m ) ) ( up_nproof, WeakeningLeftRule( up_pproof, m.formula ), up_I )
-      else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case WeakeningRightRule( p, s, m ) => {
@@ -79,7 +79,7 @@ object Interpolate {
 
       if ( npart.contains( m ) ) ( WeakeningRightRule( up_nproof, m.formula ), up_pproof, up_I )
       else if ( ppart.contains( m ) ) ( up_nproof, WeakeningRightRule( up_pproof, m.formula ), up_I )
-      else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case ContractionLeftRule( p, s, a1, a2, m ) => {
@@ -87,7 +87,7 @@ object Interpolate {
 
       if ( npart.contains( m ) ) ( ContractionLeftRule( up_nproof, m.formula ), up_pproof, up_I )
       else if ( ppart.contains( m ) ) ( up_nproof, ContractionLeftRule( up_pproof, m.formula ), up_I )
-      else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case ContractionRightRule( p, s, a1, a2, m ) => {
@@ -95,7 +95,35 @@ object Interpolate {
 
       if ( npart.contains( m ) ) ( ContractionRightRule( up_nproof, m.formula ), up_pproof, up_I )
       else if ( ppart.contains( m ) ) ( up_nproof, ContractionRightRule( up_pproof, m.formula ), up_I )
-      else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
+    }
+
+    case CutRule( p1, p2, s, a1, a2 ) => {
+      val ( up1_nproof, up1_pproof, up1_I ) = applyUpCutLeft( p1, p2, npart, ppart, a1 )
+      val ( up2_nproof, up2_pproof, up2_I ) = applyUpCutRight( p1, p2, npart, ppart, a2 )
+
+      val npart1Fold = up1_nproof.root.occurrences.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
+      val ppart1Fold = up1_pproof.root.occurrences.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
+      val npart2Fold = up2_nproof.root.occurrences.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
+      val ppart2Fold = up2_pproof.root.occurrences.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
+
+      if ( npart1Fold.contains( a1.formula ) || npart2Fold.contains( a2.formula )
+        && !( ppart1Fold.contains( a1.formula ) || ppart2Fold.contains( a2.formula ) ) ) {
+        val ipl = Or( up1_I, up2_I )
+        val np = OrRightRule( CutRule( up1_nproof, up2_nproof, a1 ), up1_I, up2_I )
+        val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
+
+        ( np, pp, ipl )
+
+      } else if ( ppart1Fold.contains( a1.formula ) && ppart2Fold.contains( a2.formula )
+        && !( npart1Fold.contains( a1.formula ) || npart2Fold.contains( a2.formula ) ) ) {
+        val ipl = And( up1_I, up2_I )
+        val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
+        val pp = AndLeftRule( CutRule( up1_pproof, up2_pproof, a1 ), up1_I, up2_I )
+
+        ( np, pp, ipl )
+
+      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     // propositional rules
@@ -116,7 +144,7 @@ object Interpolate {
         val pp = AndLeftRule( AndRightRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 
         ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case AndLeft1Rule( p, s, a, m ) => {
@@ -126,7 +154,7 @@ object Interpolate {
         case And( l, r ) => // TODO - is this possible in a less ugly way, i.e. without matching? -- analogously below
           if ( npart.contains( m ) ) ( AndLeft1Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, AndLeft1Rule( up_pproof, l, r ), up_I )
-          else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+          else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
       }
     }
 
@@ -137,7 +165,7 @@ object Interpolate {
         case And( l, r ) =>
           if ( npart.contains( m ) ) ( AndLeft2Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, AndLeft2Rule( up_pproof, l, r ), up_I )
-          else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+          else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
       }
     }
 
@@ -157,7 +185,7 @@ object Interpolate {
         val pp = AndLeftRule( OrLeftRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 
         ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case OrRight1Rule( p, s, a, m ) => {
@@ -167,7 +195,7 @@ object Interpolate {
         case Or( l, r ) =>
           if ( npart.contains( m ) ) ( OrRight1Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, OrRight1Rule( up_pproof, l, r ), up_I )
-          else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+          else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
       }
     }
 
@@ -178,7 +206,7 @@ object Interpolate {
         case Or( l, r ) =>
           if ( npart.contains( m ) ) ( OrRight2Rule( up_nproof, l, r ), up_pproof, up_I )
           else if ( ppart.contains( m ) ) ( up_nproof, OrRight2Rule( up_pproof, l, r ), up_I )
-          else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+          else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
       }
     }
 
@@ -187,7 +215,7 @@ object Interpolate {
 
       if ( npart.contains( m ) ) ( NegLeftRule( up_nproof, a.formula ), up_pproof, up_I )
       else if ( ppart.contains( m ) ) ( up_nproof, NegLeftRule( up_pproof, a.formula ), up_I )
-      else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case NegRightRule( p, s, a, m ) => {
@@ -195,7 +223,7 @@ object Interpolate {
 
       if ( npart.contains( m ) ) ( NegRightRule( up_nproof, a.formula ), up_pproof, up_I )
       else if ( ppart.contains( m ) ) ( up_nproof, NegRightRule( up_pproof, a.formula ), up_I )
-      else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case ImpLeftRule( p1, p2, s, a1, a2, m ) => {
@@ -214,7 +242,7 @@ object Interpolate {
         val pp = AndLeftRule( ImpLeftRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
 
         ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case ImpRightRule( p, s, a1, a2, m ) => {
@@ -222,7 +250,7 @@ object Interpolate {
 
       if ( npart.contains( m ) ) ( ImpRightRule( up_nproof, a1.formula, a2.formula ), up_pproof, up_I )
       else if ( ppart.contains( m ) ) ( up_nproof, ImpRightRule( up_pproof, a1.formula, a2.formula ), up_I )
-      else throw new InterpolationException( "Negative part and positive part must form a partition of the end-sequent." )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case _ => throw new InterpolationException( "Unknown inference rule." )
@@ -249,6 +277,46 @@ object Interpolate {
     val up_ppart = ppart.foldLeft( Set[FormulaOccurrence]() )( ( s, o ) => s ++ o.parents )
     val up2_npart = up_npart.filter( o => p2.root.antecedent.contains( o ) || p2.root.succedent.contains( o ) )
     val up2_ppart = up_ppart.filter( o => p2.root.antecedent.contains( o ) || p2.root.succedent.contains( o ) )
+
+    apply( p2, up2_npart, up2_ppart )
+  }
+
+  private def applyUpCutLeft( p1: LKProof, p2: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence], a1: FormulaOccurrence ) = {
+    val up_npart = npart.foldLeft( Set[FormulaOccurrence]() )( ( s, o ) => s ++ o.parents )
+    val up_ppart = ppart.foldLeft( Set[FormulaOccurrence]() )( ( s, o ) => s ++ o.parents )
+    var up1_npart = up_npart.filter( o => p1.root.antecedent.contains( o ) || p1.root.succedent.contains( o ) )
+    var up1_ppart = up_ppart.filter( o => p1.root.antecedent.contains( o ) || p1.root.succedent.contains( o ) )
+
+    val up_npartFold = up_npart.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
+    val up_ppartFold = up_ppart.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
+
+    if ( up_npartFold.contains( a1.formula ) ) {
+      up1_npart += a1
+    } else if ( up_ppartFold.contains( a1.formula ) ) {
+      up1_ppart += a1
+    } else {
+      up1_npart += a1
+    }
+
+    apply( p1, up1_npart, up1_ppart )
+  }
+
+  private def applyUpCutRight( p1: LKProof, p2: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence], a2: FormulaOccurrence ) = {
+    val up_npart = npart.foldLeft( Set[FormulaOccurrence]() )( ( s, o ) => s ++ o.parents )
+    val up_ppart = ppart.foldLeft( Set[FormulaOccurrence]() )( ( s, o ) => s ++ o.parents )
+    var up2_npart = up_npart.filter( o => p2.root.antecedent.contains( o ) || p2.root.succedent.contains( o ) )
+    var up2_ppart = up_ppart.filter( o => p2.root.antecedent.contains( o ) || p2.root.succedent.contains( o ) )
+
+    val npartFold = up_npart.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
+    val ppartFold = up_ppart.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
+
+    if ( npartFold.contains( a2.formula ) ) {
+      up2_npart += a2
+    } else if ( ppartFold.contains( a2.formula ) ) {
+      up2_ppart += a2
+    } else {
+      up2_npart += a2
+    }
 
     apply( p2, up2_npart, up2_ppart )
   }
