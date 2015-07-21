@@ -210,10 +210,10 @@ object CutIntroduction extends Logger {
           val ehs1 =
             if ( hasEquality && cutFormulas.size == 1 )
               MinimizeSolution.applyEq( ehs, prover )
-            else if ( !hasEquality && cutFormulas.size == 1 )
+            else if ( !hasEquality )
               MinimizeSolution.apply( ehs, prover )
             else
-              ehs // TODO: minimize solution for multiple cuts
+              ehs // TODO: minimize solution for multiple cuts with equality
 
           ( cutFormulas, ehs1 )
         }
@@ -242,7 +242,8 @@ object CutIntroduction extends Logger {
       if ( verbose ) {
         println( s"Size of the canonical solution: ${sorted.head._3}" )
         println( s"Size of the minimized solution: ${sorted.head._4}" )
-        println( s"Minimized cut formula: ${ehs.cutFormulas.head}" )
+        println( "Minimized cut formulas:" )
+        ehs.cutFormulas foreach println
         println( s"Number of cuts introduced: ${getStatistics( smallestProof ).cuts}" )
         println( s"Total inferences in the proof with cut(s): ${rulesNumber( smallestProof )}" )
         println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( smallestProof )}" )
