@@ -63,18 +63,18 @@ class ExtractRecSchemTest extends Specification {
     val pdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
     val proof = DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "the-proof" ) ) )
 
-    val recSchem = extractRecSchem(proof)
+    val recSchem = extractRecSchem( proof )
 
     val p9 = new Prover9Prover
     if ( !p9.isInstalled ) skipped
 
-    val lang = recSchem.language( FOLAtom( "A", FOLConst("n_0") ) ).map( _.asInstanceOf[HOLFormula] )
+    val lang = recSchem.language( FOLAtom( "A", FOLConst( "n_0" ) ) ).map( _.asInstanceOf[HOLFormula] )
     // the following formulas are not present in the end-sequent...
     val additionalAxioms = Seq(
       "x+(y+z) = (x+y)+z",
       "x+y = y+x",
       "x != x+(y+1)"
-    ).map { s => univclosure(parseFormula(s)) }
+    ).map { s => univclosure( parseFormula( s ) ) }
     p9.isValid( HOLSequent( additionalAxioms ++ lang, Seq() ) ) must beTrue
 
     ok

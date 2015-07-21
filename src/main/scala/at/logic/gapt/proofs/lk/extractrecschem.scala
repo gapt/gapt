@@ -60,13 +60,13 @@ object extractRecSchem {
     case StrongQuantifierRule( q, _, aux, main, eigenvar ) if main == occ =>
       eigenvar :: findEigenVars( aux, q )
     case InductionRule( q1, q2, sequent, base, stepl, stepr, main, term ) if main == occ =>
-      findEigenVars(stepr, q2).map{ case Var(s,t) => Var(s"${s}_end", t) } // hacky...
+      findEigenVars( stepr, q2 ).map { case Var( s, t ) => Var( s"${s}_end", t ) } // hacky...
     case UnaryLKProof( rule, q, sequent, auxs, main ) if main != occ =>
-      findEigenVars(q.root.occurrences.find( _.isAncestorOf( occ, false ) ).get, q)
+      findEigenVars( q.root.occurrences.find( _.isAncestorOf( occ, false ) ).get, q )
     case BinaryLKProof( rule, q1, q2, sequent, aux1, aux2, main ) if !main.contains( occ ) =>
       Seq( q1, q2 ).
         flatMap { q => q.root.occurrences.find( _.isAncestorOf( occ, false ) ).map( findEigenVars( _, q ) ) }.
-        maxBy(_.size)
+        maxBy( _.size )
     case _ => Nil
   }
 
@@ -105,13 +105,13 @@ object extractRecSchem {
       val indVar = FOLMatchingAlgorithm.matchTerms( stepl.formula.asInstanceOf[FOLFormula], stepr.formula.asInstanceOf[FOLFormula] ).get.domain.head.asInstanceOf[FOLVar]
       val symbol = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.exptype ) ++ Seq( Ti ) ++ vars.map( _.exptype ) ) ), context )
 
-      val baseAxiom = Apps( App( symbol, FOLConst( "0" ) ), findEigenVars(base, q1) )
+      val baseAxiom = Apps( App( symbol, FOLConst( "0" ) ), findEigenVars( base, q1 ) )
       val rules1 = getRules( q1, baseAxiom, followSymbols( symbols - main, q1 ), context )
 
-      val stepAxiom = Apps( App( symbol, FOLFunction("s", indVar) ), findEigenVars(stepr, q2) )
+      val stepAxiom = Apps( App( symbol, FOLFunction( "s", indVar ) ), findEigenVars( stepr, q2 ) )
       val rules2 = getRules( q2, stepAxiom, followSymbols( symbols - main, q2 ) + ( stepl -> App( symbol, indVar ) ), indVar :: context )
 
-      rules1 ++ rules2 + HORule( axiom, Apps( symbol, term :: findEigenVars(main, p) ) )
+      rules1 ++ rules2 + HORule( axiom, Apps( symbol, term :: findEigenVars( main, p ) ) )
     case BinaryLKProof( rule, q1, q2, sequent, aux1, aux2, main ) =>
       getRules( q1, axiom, followSymbols( symbols, q1 ), context ) ++ getRules( q2, axiom, followSymbols( symbols, q2 ), context )
     case UnaryLKProof( rule, q, sequent, auxs, main ) =>
