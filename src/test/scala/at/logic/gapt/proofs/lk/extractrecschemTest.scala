@@ -6,14 +6,18 @@ import java.util.zip.GZIPInputStream
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
+import at.logic.gapt.grammars.{ HORS, HORule }
 import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.sat4j.Sat4jProver
+import at.logic.gapt.provers.veriT.VeriTProver
 import org.specs2.mutable._
+import org.specs2.specification.core.Fragment
 
 class ExtractRecSchemTest extends Specification {
   "simple" in {
@@ -78,5 +82,47 @@ class ExtractRecSchemTest extends Specification {
     p9.isValid( HOLSequent( additionalAxioms ++ lang, Seq() ) ) must beTrue
 
     ok
+  }
+}
+
+class Pi2FactorialPOC extends Specification {
+  val A = Const( "A", Ti -> To )
+  val B = Const( "B", Ti -> ( Ti -> ( ( Ti -> To ) -> To ) ) )
+  val C = Const( "C", Ti -> To )
+  val D = Const( "D", ( Ti -> To ) -> ( Ti -> ( Ti -> ( Ti -> To ) ) ) )
+  val X = Var( "X", Ti -> To )
+
+  val hors = HORS( Set(
+    HORule( parseFormula( "A(z)" ), Apps( B, FOLVar( "z" ), Utils.numeral( 1 ), C ) ),
+    HORule( parseFormula( "A(z)" ), parseFormula( "s(0)*z = z" ) ),
+    HORule( parseFormula( "A(z)" ), parseFormula( "f(z) != g(s(0),z)" ) ),
+    HORule( parseFormula( "C(w)" ), Top() ), // FIXME: NF != generated word
+    HORule(
+      Apps( B, parseTerm( "s(x)" ), FOLVar( "y" ), X ),
+      Apps( B, FOLVar( "x" ), parseTerm( "y*s(x)" ), Apps( D, X, FOLVar( "x" ), FOLVar( "y" ) ) )
+    ),
+    HORule( Apps( D, X, FOLVar( "x" ), FOLVar( "y" ), FOLVar( "w" ) ), parseFormula( "(y*s(x))*w = y*(s(x)*w)" ) ),
+    HORule( Apps( D, X, FOLVar( "x" ), FOLVar( "y" ), FOLVar( "w" ) ), parseFormula( "g(y,s(x)) = g(y*s(x),x)" ) ),
+    HORule( Apps( D, X, FOLVar( "x" ), FOLVar( "y" ), FOLVar( "w" ) ), parseFormula( "f(s(x)) = s(x)*f(x)" ) ),
+    HORule( Apps( D, X, FOLVar( "x" ), FOLVar( "y" ), FOLVar( "w" ) ), App( X, parseTerm( "s(x)*w" ) ) ),
+    HORule( Apps( B, FOLConst( "0" ), FOLVar( "y" ), X ), parseFormula( "g(y,0)=y" ) ),
+    HORule( Apps( B, FOLConst( "0" ), FOLVar( "y" ), X ), parseFormula( "f(0)=s(0)" ) ),
+    HORule( Apps( B, FOLConst( "0" ), FOLVar( "y" ), X ), parseFormula( "s(0)*s(0)=s(0)" ) ),
+    HORule( Apps( B, FOLConst( "0" ), FOLVar( "y" ), X ), Apps( X, Utils.numeral( 1 ) ) )
+  ) )
+
+  def lang( i: Int ) = hors.language( Apps( A, Utils.numeral( i ) ) ).map( _.asInstanceOf[HOLFormula] )
+
+  println( hors )
+  println()
+  lang( 3 ).toSeq.sortBy( _.toString ) foreach println
+  println()
+
+  "languages should be tautologies" in {
+    Fragment.foreach( 0 to 5 ) { i =>
+      s"n = $i" in {
+        new VeriTProver().isValid( HOLSequent( lang( i ).toSeq, Seq() ) ) must beTrue
+      }
+    }
   }
 }
