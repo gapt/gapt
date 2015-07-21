@@ -118,10 +118,17 @@ class Pi2FactorialPOC extends Specification {
   lang( 3 ).toSeq.sortBy( _.toString ) foreach println
   println()
 
+  "termination" in {
+    lang( 10 )
+    ok
+  }
+
   "languages should be tautologies" in {
+    val verit = new VeriTProver
     Fragment.foreach( 0 to 5 ) { i =>
       s"n = $i" in {
-        new VeriTProver().isValid( HOLSequent( lang( i ).toSeq, Seq() ) ) must beTrue
+        if ( !verit.isInstalled ) skipped
+        verit.isValid( HOLSequent( lang( i ).toSeq, Seq() ) ) must beTrue
       }
     }
   }
