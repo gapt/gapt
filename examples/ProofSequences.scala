@@ -1226,18 +1226,7 @@ object FactorialFunctionEqualityExampleProof2 {
   def ASSO( x: FOLTerm, y: FOLTerm, z: FOLTerm ) = Eq( m( m( x, y ), z ), m( x, m( y, z ) ) )
   def target( x: FOLTerm ) = Eq(f(x), g(s(zero), x))
 
-  def apply(n: Int): LKProof = n match {
-    case 0 =>
-      val ax1 = Axiom(f0)
-      val ax2 = Axiom(g0(one))
-
-      val p1 = EquationRightRule(ax2, ax1, g0(one), f0, target(zero))
-      val p2 = ForallLeftRule(p1, g0(one), univclosure(g0(x)), one)
-
-      WeakeningMacroRule(p2, endSequent(0))
-
-    case n =>
-
+  def apply(n: Int): LKProof = {
       /** Computes 1 * n * (n- 1) * … * k, associated to the left.
        *
        */
@@ -1265,7 +1254,7 @@ object FactorialFunctionEqualityExampleProof2 {
       }
 
       val p7 = EquationRightRule(Axiom(uL(f(num(n)))), p6, uL(f(num(n))), Eq(m(one, f(num(n))), g(one, num(n))), target(num(n)))
-      ForallLeftRule(p7, uL(f(num(n))), All(x, uL(x)), f(num(n)))
+      WeakeningContractionMacroRule(ForallLeftRule(p7, uL(f(num(n))), All(x, uL(x)), f(num(n))), endSequent(n))
   }
 
   def endSequent(n: Int): HOLSequent = HOLSequent(
