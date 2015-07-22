@@ -927,7 +927,7 @@ object CleanStructure {
 }
 
 object replaceAtHOLPosition {
-  def apply( et: ExpansionTree, pos: HOLPosition, exp: LambdaExpression ): ExpansionTree = {
+  def apply( et: ExpansionTreeWithMerges, pos: HOLPosition, exp: LambdaExpression ): ExpansionTreeWithMerges = {
     val rest = pos.tail
     ( et, pos.head ) match {
       case ( ETAtom( formula ), _ )                     => ETAtom( formula.replace( pos, exp ) )
@@ -951,9 +951,11 @@ object replaceAtHOLPosition {
 
       case ( ETWeakQuantifier( formula, instances ), 1 ) =>
         val newInstances = instances map { p => ( replaceAtHOLPosition( p._1, rest, exp ), p._2 ) }
-        merge( ETWeakQuantifier( formula.replace( pos, exp ), newInstances ) )
+        ETWeakQuantifier( formula.replace( pos, exp ), newInstances )
 
-      case _ => throw new Exception( s"Can't perform replacement at position $pos in tree $et" )
+      case ( ETMerge( left, right ), _ ) => ETMerge( replaceAtHOLPosition( left, pos, exp ), replaceAtHOLPosition( right, pos, exp ) )
+
+      case _                             => throw new Exception( s"Can't perform replacement at position $pos in tree $et" )
 
     }
   }
