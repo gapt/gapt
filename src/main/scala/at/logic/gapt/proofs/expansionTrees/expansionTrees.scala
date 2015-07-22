@@ -471,7 +471,7 @@ object formulaToExpansionTree {
         ETStrongQuantifier( form, ev, apply_( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
     }
     case HOLAtom( _, _ )  => ETAtom( form )
-    case Top() | Bottom() => ETAtom( form ) // FIXME: add top/bottom to expansion trees
+    case Top() | Bottom() => ETAtom( form ) // FIXME: add top/bottom to expansion trees. TOP and BOTTOM are not atoms in our current framework!
     case _                => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
   }
 }
@@ -924,4 +924,37 @@ object CleanStructure {
           case _     => merge( ETWeakQuantifier( f, newInstances ) )
         }
     }
+}
+
+object replaceAtHOLPosition {
+  def apply( et: ExpansionTree, pos: HOLPosition, exp: LambdaExpression ): ExpansionTree = {
+    val rest = pos.tail
+    ( et, pos.head ) match {
+      case ( ETAtom( formula ), _ )                     => ETAtom( formula.replace( pos, exp ) )
+
+      case ( ETWeakening( formula ), _ )                => ETWeakening( formula.replace( pos, exp ) )
+
+      case ( ETNeg( sub ), 1 )                          => ETNeg( replaceAtHOLPosition( sub, rest, exp ) )
+
+      case ( ETAnd( left, right ), 1 )                  => ETAnd( replaceAtHOLPosition( left, rest, exp ), right )
+      case ( ETAnd( left, right ), 2 )                  => ETAnd( left, replaceAtHOLPosition( right, rest, exp ) )
+
+      case ( ETOr( left, right ), 1 )                   => ETOr( replaceAtHOLPosition( left, rest, exp ), right )
+      case ( ETOr( left, right ), 2 )                   => ETOr( left, replaceAtHOLPosition( right, rest, exp ) )
+
+      case ( ETImp( left, right ), 1 )                  => ETImp( replaceAtHOLPosition( left, rest, exp ), right )
+      case ( ETImp( left, right ), 2 )                  => ETImp( left, replaceAtHOLPosition( right, rest, exp ) )
+
+      //FIXME: Quantifier cases are not entirely safe: What if the eigenvariable or the instances are replaced?
+      case ( ETStrongQuantifier( formula, v, sub ), 1 ) => ETStrongQuantifier( formula.replace( pos, exp ), v, replaceAtHOLPosition( sub, rest, exp ) )
+      case ( ETSkolemQuantifier( formula, v, sub ), 1 ) => ETSkolemQuantifier( formula.replace( pos, exp ), v, replaceAtHOLPosition( sub, rest, exp ) )
+
+      case ( ETWeakQuantifier( formula, instances ), 1 ) =>
+        val newInstances = instances map { p => ( replaceAtHOLPosition( p._1, rest, exp ), p._2 ) }
+        merge( ETWeakQuantifier( formula.replace( pos, exp ), newInstances ) )
+
+      case _ => throw new Exception( s"Can't perform replacement at position $pos in tree $et" )
+
+    }
+  }
 }
