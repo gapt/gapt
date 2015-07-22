@@ -354,7 +354,7 @@ object canonicalSolution {
 
   def apply( sip: SimpleInductionProof, i: Int ): FOLFormula = i match {
     case 0 => FOLSubstitution( beta -> gamma )( sip.Gamma0.toNegFormula ).asInstanceOf[FOLFormula]
-    case i =>
+    case _ =>
       val C_ = apply( sip, i - 1 )
       val nuSubst = FOLSubstitution( nu -> Utils.numeral( i - 1 ) )
       And(
@@ -369,34 +369,37 @@ object canonicalSolution {
 
 object findConseq extends Logger {
   import SimpleInductionProof._
+  type CNF = List[FOLClause]
 
   val veriTProver = new VeriTProver()
 
-  def apply( S: SimpleInductionProof, n: Int, A: List[FOLClause] ): Set[List[FOLClause]] = {
-    debug( "findConseq called on A = " + A )
+  def apply( S: SimpleInductionProof, n: Int, A: CNF, M: Set[CNF] ): Set[CNF] = {
     val num = Utils.numeral( n )
     val Gamma2n = FOLSubstitution( alpha, num )( S.Gamma2 )
-    var M = Set( A )
 
-    ( ForgetfulResolve( A ) union ForgetfulParamodulate( A ) union ForgetOne( A ) ).foreach { F: List[FOLClause] =>
-      val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( FOLClause.CNFtoFormula( F ) ) ) )
-      if ( veriTProver.isValid( Fu ++: Gamma2n ) )
-        M = M union apply( S, n, F )
+    ( ( M + A ) /: ( ForgetfulResolve( A ) union ForgetfulParamodulate( A ) union ForgetOne( A ) ) ) { ( acc: Set[CNF], F: CNF ) =>
+      if ( acc contains F ) {
+        acc
+      } else {
+        val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( FOLClause.CNFtoFormula( F ) ) ) )
+        if ( veriTProver.isValid( Fu ++: Gamma2n ) )
+          apply( S, n, F, acc )
+        else
+          acc
+      }
     }
-
-    M
   }
 
-  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula ): Set[List[FOLClause]] =
-    apply( S, n, CNFp.toClauseList( A ) )
+  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF] ): Set[CNF] =
+    apply( S, n, CNFp.toClauseList( A ), M )
 
-  def ForgetOne( A: List[FOLClause] ) = ( 0 until A.length ) map { i =>
+  def ForgetOne( A: CNF ) = ( 0 until A.length ) map { i =>
     val B = A.splitAt( i )
     B._1 ++ B._2.tail
   }
 }
 
-object FindFormulaH {
+object FindFormulaH extends Logger {
   import SimpleInductionProof._
 
   val veriTProver = new VeriTProver()
@@ -405,7 +408,9 @@ object FindFormulaH {
     val num = Utils.numeral( n )
     val CSn = canonicalSolution( S, n )
 
-    val M = findConseq( S, n, CSn ).toList.sortBy( l => ( l map ( _.length ) ).sum )
+    debug( "Calling findConseq …" )
+    val M = findConseq( S, n, CSn, Set.empty[List[FOLClause]] ).toList.sortBy( l => ( l map ( _.length ) ).sum )
+    debug( s"FindConseq found ${M.size} consequences." )
 
     val proofs = M.view.flatMap { F =>
       val C = FOLClause.CNFtoFormula( F )
