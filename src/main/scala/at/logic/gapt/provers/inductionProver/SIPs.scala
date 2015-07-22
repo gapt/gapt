@@ -378,7 +378,7 @@ object findConseq extends Logger {
     val Gamma2n = FOLSubstitution( alpha, num )( S.Gamma2 )
     var M = Set( A )
 
-    ( ForgetfulResolve( A ) union ForgetfulParamodulate( A ) ).foreach { F: List[FOLClause] =>
+    ( ForgetfulResolve( A ) union ForgetfulParamodulate( A ) union ForgetOne( A ) ).foreach { F: List[FOLClause] =>
       val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( FOLClause.CNFtoFormula( F ) ) ) )
       if ( veriTProver.isValid( Fu ++: Gamma2n ) )
         M = M union apply( S, n, F )
@@ -389,6 +389,11 @@ object findConseq extends Logger {
 
   def apply( S: SimpleInductionProof, n: Int, A: FOLFormula ): Set[List[FOLClause]] =
     apply( S, n, CNFp.toClauseList( A ) )
+
+  def ForgetOne( A: List[FOLClause] ) = ( 0 until A.length ) map { i =>
+    val B = A.splitAt( i )
+    B._1 ++ B._2.tail
+  }
 }
 
 object FindFormulaH {
@@ -400,12 +405,12 @@ object FindFormulaH {
     val num = Utils.numeral( n )
     val CSn = canonicalSolution( S, n )
 
-    val M = findConseq( S, n, CSn ).toList.sortBy( _.length )
+    val M = findConseq( S, n, CSn ).toList.sortBy( l => ( l map ( _.length ) ).sum )
 
     val proofs = M.view.flatMap { F =>
       val C = FOLClause.CNFtoFormula( F )
       val pos = C.find( num ).toSet // If I understand the paper correctly, an improvement can be made here
-      val posSets = pos.subsets().toList
+      val posSets = pos.subsets().toList.sortBy( _.size ).reverse
 
       posSets.view.flatMap { P =>
         val Ctilde = ( C /: P )( ( acc, p ) => acc.replace( p, nu ).asInstanceOf[FOLFormula] )

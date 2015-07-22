@@ -160,7 +160,7 @@ val twoPlusDefsES = HOLSequent(
   )
 )
 
-val minusES = FSequent(List(
+val minusES = HOLSequent(List(
   "p(0) = 0",
   "x-s(y) = p(x-y)",
   "x - 0 = x"

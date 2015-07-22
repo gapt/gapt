@@ -1,10 +1,10 @@
 package at.logic.gapt.examples
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.parse
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{prooftool, parse}
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
-import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.expr.hol.{univclosure, instantiate}
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lk.base.{HOLSequent, LKProof}
 
 // Functions to construct cut-free FOL LK proofs of the sequents
 //
@@ -1041,7 +1041,24 @@ object FactorialFunctionEqualityExampleProof {
   // this second axiom saves us from adding commutativity of multiplication
   val mul_neutral_axiom_2 = new AllQuantifiedConditionalAxiomHelper(x::Nil, Nil, Eq( f2(Utils.numeral(1), m, x), x))
 
-  def apply(n :Int): LKProof = induction_steps(n)
+  def apply(n :Int): LKProof = n match {
+    case 0 =>
+      val targetEquation = Eq( f1(f, Utils.numeral(0)), f2(g, Utils.numeral(0), Utils.numeral(1)))
+      val g0 = Eq(Utils.numeral(1), f2(g, Utils.numeral(0), Utils.numeral(1)))
+      val ax1 = Axiom(f_ax_1)
+      val ax2 = Axiom(g0)
+      val ax3 = Axiom(targetEquation)
+      val p1 = ImpLeftRule(ax2, ax3, g0, targetEquation)
+      val p2 = ImpLeftRule(ax1, p1, f_ax_1, Imp(g0, targetEquation))
+      val p3 = ForallLeftBlock(p2, trans_axiom.get_axiom(), Seq(f1(f,Utils.numeral(0)), Utils.numeral(1), f2(g, Utils.numeral(0), Utils.numeral(1))))
+      val p4 = ForallLeftRule(p3, g0, g_ax_1.get_axiom(), Utils.numeral(1))
+      WeakeningLeftMacroRule(p4,
+      List(f_ax_2, g_ax_2, symm_axiom, refl_axiom.get_axiom(),
+        compat_mul_axiom.get_axiom(), assoc_mul_axiom.get_axiom(), g_compat_2.get_axiom(),
+        mul_neutral_axiom.get_axiom(), mul_neutral_axiom_2.get_axiom())
+      )
+    case _ => induction_steps(n)
+  }
 
   def induction_steps(n: Int): LKProof = {
     val axiom_formulae = Eq( f1(f, Utils.numeral(n)), f2(g, Utils.numeral(n), Utils.numeral(1)))::Nil
@@ -1178,4 +1195,80 @@ object FactorialFunctionEqualityExampleProof {
 
     induction_step_rec(p1, n)
   }
+}
+
+object FactorialFunctionEqualityExampleProof2 {
+  import at.logic.gapt.expr.fol.Utils.{numeral => num}
+
+  val zero = FOLConst( "0" )
+  val one = s(zero)
+  val alpha = FOLVar( "α" )
+  val beta = FOLVar( "β" )
+  val nu = FOLVar( "ν" )
+  val gamma = FOLVar( "γ" )
+
+  val x = FOLVar( "x" )
+  val y = FOLVar( "y" )
+  val z = FOLVar( "z" )
+  val w = FOLVar( "w" )
+
+  def s( x: FOLTerm ) = FOLFunction( "s", List( x ) )
+  def m( x: FOLTerm, y: FOLTerm ) = FOLFunction( "*", x, y )
+  def f( x: FOLTerm ) = FOLFunction( "f", List( x ) )
+  def g( x: FOLTerm, y: FOLTerm ) = FOLFunction( "g", x, y )
+
+  def f0 = Eq( f( zero ), s( zero ) )
+  def fST( x: FOLTerm ) = Eq( f( s( x ) ), m( s( x ), f( x ) ) )
+  def g0( x: FOLTerm ) = Eq( g( x, zero ), x )
+  def gST( x: FOLTerm, y: FOLTerm ) = Eq( g( x, s( y ) ), g( m( x, s( y ) ), y ) )
+  def uR( x: FOLTerm ) = Eq( m( x, s( zero ) ), x )
+  def uL( x: FOLTerm ) = Eq( m( s( zero ), x ), x )
+  def ASSO( x: FOLTerm, y: FOLTerm, z: FOLTerm ) = Eq( m( m( x, y ), z ), m( x, m( y, z ) ) )
+  def target( x: FOLTerm ) = Eq(f(x), g(s(zero), x))
+
+  def apply(n: Int): LKProof = {
+      /** Computes 1 * n * (n- 1) * … * k, associated to the left.
+       *
+       */
+      def product(k: Int) =
+          (one /: (k until n + 1).reverse) { (acc: FOLTerm, i: Int) =>
+            m(acc, num(i))
+      }
+
+      val axiom = Axiom(Nil, List(Eq(product(1), product(1))))
+
+      val p1 = EquationRightRule(Axiom(uR(product(1))), axiom, uR(product(1)), Eq(product(1), product(1)), Eq(m(product(1),one), product(1)))
+      val p2 = EquationRightRule(Axiom(f0), p1, f0, Eq(m(product(1),one), product(1)), Eq(m(product(1), f(zero)), product(1)))
+      val p3 = EquationRightRule(Axiom(g0(product(1))), p2, g0(product(1)), Eq(m(product(1), f(zero)), product(1)), Eq(m(product(1), f(zero)), g(product(1), zero)))
+      val p4 = ForallLeftRule(p3, uR(product(1)), All(x,uR(x)), product(1))
+      val p5 = ForallLeftRule(p4, g0(product(1)), All(x, g0(x)), product(1))
+
+      val p6 = (0 until n).foldLeft[LKProof](p5) {(acc: LKProof, i: Int) =>
+        val tmp1 = EquationRightRule(Axiom(ASSO(product(i+2), num(i+1), f(num(i)))), acc, ASSO(product(i+2), num(i+1), f(num(i))), Eq(m(product(i+1), f(num(i))), g(product(i+1), num(i))), Eq(m(product(i+2),m(num(i+1), f(num(i)))), g(product(i+1), num(i))))
+        val tmp2 = ForallLeftBlock(tmp1, univclosure(ASSO(x,y,z)), List(product(i+2),num(i+1),f(num(i))))
+        val tmp3 = EquationRightRule(Axiom(fST(num(i))), tmp2, fST(num(i)), Eq(m(product(i+2),m(num(i+1), f(num(i)))), g(product(i+1), num(i))), Eq(m(product(i+2), f(num(i+1))), g(product(i+1), num(i))))
+        val tmp4 = EquationRightRule(Axiom(gST(product(i+2), num(i))), tmp3, gST(product(i+2), num(i)), Eq(m(product(i+2), f(num(i+1))), g(product(i+1), num(i))), Eq(m(product(i+2), f(num(i+1))), g(product(i+2), num(i+1))))
+        val tmp5 = ForallLeftRule(tmp4, fST(num(i)), univclosure(fST(x)), num(i))
+        val tmp6 = ForallLeftBlock(tmp5, univclosure(gST(x,y)), List(product(i+2), num(i)))
+        ContractionMacroRule(tmp6)
+      }
+
+      val p7 = EquationRightRule(Axiom(uL(f(num(n)))), p6, uL(f(num(n))), Eq(m(one, f(num(n))), g(one, num(n))), target(num(n)))
+      WeakeningContractionMacroRule(ForallLeftRule(p7, uL(f(num(n))), All(x, uL(x)), f(num(n))), endSequent(n))
+  }
+
+  def endSequent(n: Int): HOLSequent = HOLSequent(
+  List(
+  f0,
+  fST(x),
+  g0(x),
+  gST(x,y),
+  uR(x),
+  uL(x),
+  ASSO(x,y,z)
+  ) map univclosure.apply,
+  List(
+  target(num(n))
+  )
+  )
 }
