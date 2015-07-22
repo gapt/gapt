@@ -25,6 +25,16 @@ object HOLPosition {
   }
 
   /**
+   * Replaces a a subexpression in a HOLFormula. This function is actually a wrapper around [[at.logic.gapt.expr.LambdaPosition.replace]].
+   *
+   * @param f The formula in which to perform the replacement.
+   * @param pos The position at which to replace.
+   * @param repTerm The expression that f(pos) should be replaced with.
+   * @return
+   */
+  def replace( f: HOLFormula, pos: HOLPosition, repTerm: LambdaExpression ): HOLFormula = replace( f.asInstanceOf[LambdaExpression], pos, repTerm ).asInstanceOf[HOLFormula]
+
+  /**
    * Replaces a a subexpression in a LambdaExpression. This function is actually a wrapper around [[at.logic.gapt.expr.LambdaPosition.replace]].
    *
    * @param exp The expression in which to perform the replacement.
@@ -32,7 +42,7 @@ object HOLPosition {
    * @param repTerm The expression that exp(pos) should be replaced with.
    * @return
    */
-  def replace( exp: LambdaExpression, pos: HOLPosition, repTerm: LambdaExpression ) = LambdaPosition.replace( exp, toLambdaPosition( exp )( pos ), repTerm ).asInstanceOf[LambdaExpression]
+  def replace( exp: LambdaExpression, pos: HOLPosition, repTerm: LambdaExpression ): LambdaExpression = LambdaPosition.replace( exp, toLambdaPosition( exp )( pos ), repTerm )
 
   /**
    * Compares to LambdaExpressions and returns the list of outermost positions where they differ.
