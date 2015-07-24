@@ -384,7 +384,7 @@ trait MaxSATSolverBinary extends MaxSATSolver {
 
       try {
         // run MaxSATSOlver process
-        value = proc exitValue
+        value = metrics.time( "maxsat_solver" ) { proc exitValue }
       } catch {
         // catch ThreadDeath if the procedure is interrupted by a Timeout
         // and kill the external MaxSATSolver process
