@@ -14,8 +14,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * Equality treating each side of the sequent as list, i.e. respecting order and multiplicity.
    */
   override def equals( other: Any ): Boolean = other match {
-    case seq: Sequent => ( antecedent equals seq.antecedent ) && ( succedent equals seq.succedent )
-    case _            => false
+    case seq: Sequent[Any] => ( antecedent equals seq.antecedent ) && ( succedent equals seq.succedent )
+    case _                 => false
   }
 
   override def hashCode: Int = 31 * antecedent.hashCode() + succedent.hashCode()
