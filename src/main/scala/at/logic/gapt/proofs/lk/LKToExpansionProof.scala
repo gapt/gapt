@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.expansionTrees.{ ETWeakQuantifier, ETStrongQuantifier, ETAnd, ETOr, ETImp, ETNeg, ETAtom, ETWeakening, ETMerge, ExpansionSequent, ExpansionTreeWithMerges, merge => mergeTree }
+import at.logic.gapt.proofs.expansionTrees.{ merge => mergeTree, _ }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.logging.Logger
@@ -97,14 +97,22 @@ class LKToExpansionProof extends Logger {
   }
 
   protected def handleBinary( r: OccSequent, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, p: FormulaOccurrence ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
-    getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
-      case ImpLeftRule( _, _, _, _, _, _ )           => ETImp( map( a1 ), map( a2 ) )
-      case OrLeftRule( _, _, _, _, _, _ )            => ETOr( map( a1 ), map( a2 ) )
-      case AndRightRule( _, _, _, _, _, _ )          => ETAnd( map( a1 ), map( a2 ) )
-      case EquationLeft1Rule( _, _, _, _, _, _, _ )  => map( a2 )
-      case EquationLeft2Rule( _, _, _, _, _, _, _ )  => map( a2 )
-      case EquationRight1Rule( _, _, _, _, _, _, _ ) => map( a2 )
-      case EquationRight2Rule( _, _, _, _, _, _, _ ) => map( a2 )
+    getMapOfContext( r.elements.toSet - p, map ) + Tuple2( p, proof match {
+      case ImpLeftRule( _, _, _, _, _, _ )  => ETImp( map( a1 ), map( a2 ) )
+      case OrLeftRule( _, _, _, _, _, _ )   => ETOr( map( a1 ), map( a2 ) )
+      case AndRightRule( _, _, _, _, _, _ ) => ETAnd( map( a1 ), map( a2 ) )
+      case EquationLeft1Rule( _, _, _, _, _, pos, _ ) =>
+        val repTerm = p( pos.head )
+        replaceAtHOLPosition( map( a2 ), pos.head, repTerm )
+      case EquationLeft2Rule( _, _, _, _, _, pos, _ ) =>
+        val repTerm = p( pos.head )
+        replaceAtHOLPosition( map( a2 ), pos.head, repTerm )
+      case EquationRight1Rule( _, _, _, _, _, pos, _ ) =>
+        val repTerm = p( pos.head )
+        replaceAtHOLPosition( map( a2 ), pos.head, repTerm )
+      case EquationRight2Rule( _, _, _, _, _, pos, _ ) =>
+        val repTerm = p( pos.head )
+        replaceAtHOLPosition( map( a2 ), pos.head, repTerm )
     } )
   }
 

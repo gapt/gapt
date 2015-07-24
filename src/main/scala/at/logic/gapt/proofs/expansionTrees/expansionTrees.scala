@@ -131,6 +131,8 @@ object ETWeakQuantifier {
   def apply( formula: HOLFormula, instances: Seq[( ExpansionTreeWithMerges, LambdaExpression )] ) =
     if ( instances.forall( { case ( et, _ ) => et.isInstanceOf[ExpansionTree] } ) ) new ETWeakQuantifier( formula, instances ) with ExpansionTree
     else new ETWeakQuantifier( formula, instances )
+
+  def apply( formula: HOLFormula, instances: ( ExpansionTreeWithMerges, LambdaExpression )* )( implicit dummyImplicit: DummyImplicit ): ETWeakQuantifier = apply( formula, instances )
   // user of this functions must take care that no merges are passed here
   def applyWithoutMerge( formula: HOLFormula, instances: Seq[( ExpansionTree, LambdaExpression )] ) = new ETWeakQuantifier( formula, instances ) with ExpansionTree
   def unapply( et: ExpansionTreeWithMerges ) = et match {
@@ -469,7 +471,7 @@ object formulaToExpansionTree {
         ETStrongQuantifier( form, ev, apply_( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
     }
     case HOLAtom( _, _ )  => ETAtom( form )
-    case Top() | Bottom() => ETAtom( form ) // FIXME: add top/bottom to expansion trees
+    case Top() | Bottom() => ETAtom( form ) // FIXME: add top/bottom to expansion trees. TOP and BOTTOM are not atoms in our current framework!
     case _                => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
   }
 }
@@ -922,4 +924,39 @@ object CleanStructure {
           case _     => merge( ETWeakQuantifier( f, newInstances ) )
         }
     }
+}
+
+object replaceAtHOLPosition {
+  def apply( et: ExpansionTreeWithMerges, pos: HOLPosition, exp: LambdaExpression ): ExpansionTreeWithMerges = {
+    val rest = pos.tail
+    ( et, pos.head ) match {
+      case ( ETAtom( formula ), _ )                     => ETAtom( formula.replace( pos, exp ) )
+
+      case ( ETWeakening( formula ), _ )                => ETWeakening( formula.replace( pos, exp ) )
+
+      case ( ETNeg( sub ), 1 )                          => ETNeg( replaceAtHOLPosition( sub, rest, exp ) )
+
+      case ( ETAnd( left, right ), 1 )                  => ETAnd( replaceAtHOLPosition( left, rest, exp ), right )
+      case ( ETAnd( left, right ), 2 )                  => ETAnd( left, replaceAtHOLPosition( right, rest, exp ) )
+
+      case ( ETOr( left, right ), 1 )                   => ETOr( replaceAtHOLPosition( left, rest, exp ), right )
+      case ( ETOr( left, right ), 2 )                   => ETOr( left, replaceAtHOLPosition( right, rest, exp ) )
+
+      case ( ETImp( left, right ), 1 )                  => ETImp( replaceAtHOLPosition( left, rest, exp ), right )
+      case ( ETImp( left, right ), 2 )                  => ETImp( left, replaceAtHOLPosition( right, rest, exp ) )
+
+      //FIXME: Quantifier cases are not entirely safe: What if the eigenvariable or the instances are replaced?
+      case ( ETStrongQuantifier( formula, v, sub ), 1 ) => ETStrongQuantifier( formula.replace( pos, exp ), v, replaceAtHOLPosition( sub, rest, exp ) )
+      case ( ETSkolemQuantifier( formula, v, sub ), 1 ) => ETSkolemQuantifier( formula.replace( pos, exp ), v, replaceAtHOLPosition( sub, rest, exp ) )
+
+      case ( ETWeakQuantifier( formula, instances ), 1 ) =>
+        val newInstances = instances map { p => ( replaceAtHOLPosition( p._1, rest, exp ), p._2 ) }
+        ETWeakQuantifier( formula.replace( pos, exp ), newInstances )
+
+      case ( ETMerge( left, right ), _ ) => ETMerge( replaceAtHOLPosition( left, pos, exp ), replaceAtHOLPosition( right, pos, exp ) )
+
+      case _                             => throw new Exception( s"Can't perform replacement at position $pos in tree $et" )
+
+    }
+  }
 }

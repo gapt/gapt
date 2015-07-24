@@ -41,14 +41,15 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
       ComputeGrammars.findValidGrammars( lang.toList, deltatable, eigenvariable ).sortBy( _.size )
     }
 
-    grammars.headOption map { smallest =>
-      grammars.filter( g => g.size == smallest.size )
-    } getOrElse Nil
+    if ( grammars.isEmpty ) {
+      Nil
+    } else {
+      val smallestSize = grammars.map( _.size ).min
+      grammars.filter( _.size == smallestSize )
+    }
   }
 
-  override def name: String =
-    if ( manyQuantifiers ) "one_cut_many_quant"
-    else "one_cut_one_quant"
+  override def name: String = if ( manyQuantifiers ) "many_dtable" else "1_dtable"
 }
 
 case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod {
@@ -56,11 +57,7 @@ case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod
     Seq( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, new QMaxSAT ) )
   }
 
-  override def name: String =
-    if ( nonTerminalLengths.forall( _ == 1 ) )
-      s"many_cuts_one_quant_${nonTerminalLengths.size}"
-    else
-      s"many_cuts_many_quant_${nonTerminalLengths.mkString( "_" )}"
+  override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
 }
 
 /**
@@ -71,8 +68,6 @@ case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod
 class CutIntroEHSUnprovableException( msg: String ) extends CutIntroException( msg )
 
 object CutIntroduction extends Logger {
-
-  // Public methods: timeout of one hour
 
   /**
    * Tries to introduce one cut with one quantifier to the LKProof.
@@ -151,42 +146,12 @@ object CutIntroduction extends Logger {
   def execute( proof: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ): Option[LKProof] =
     execute( proof, hasEquality, method, false )
 
-  /*
-   * ATTENTION
-   * Actual implementation of cut introduction.
-   * Here all the work is done and logging/time information is collected.
-   * All other methods should call these execute methods and process the return values
-   * according to the usage.
-   * The two first 'execute' methods use the delta-table (by Stefan Hetzl) for computing grammars.
-   * The two last methods use a maxsat formulation (by Sebastian Eberhard) for computing grammars.
-   * Consequently, the two first methods will introduce one cut (with one or many quantifiers)
-   * while the two last methods will introduce many cuts with one quantifier each.
-   *
-   */
-
-  type LogTuple = ( Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Long, Long, Long, Long, Long, Long )
-  def print_log_tuple( log: LogTuple ) = {
-    println( "Total inferences in the input proof: " + log._1 );
-    println( "Quantifier inferences in the input proof: " + log._2 );
-    println( "Number of cuts introduced: " + log._3 );
-    println( "Total inferences in the proof with cut(s): " + ( if ( log._4 == -1 ) "n/a" else log._4 ) );
-    println( "Quantifier inferences in the proof with cut(s): " + ( if ( log._5 == -1 ) "n/a" else log._5 ) );
-    println( "Size of the term set: " + log._6 );
-    println( "Size of the minimal grammar: " + log._7 );
-    println( "Number of minimal grammars: " + ( if ( log._8 == -1 ) "n/a" else log._8 ) );
-    println( "Size of the canonical solution: " + ( if ( log._9 == -1 ) "n/a" else log._9 ) );
-    println( "Size of the minimized solution: " + ( if ( log._10 == -1 ) "n/a" else log._10 ) );
-    println( "Time for extracting the term set: " + log._11 );
-    println( "Time for generating the delta-table: " + ( if ( log._12 == -1 ) "n/a" else log._12 ) );
-    println( "Time for finding the grammar: " + log._13 );
-    println( "Time for improving the solution: " + ( if ( log._14 == -1 ) "n/a" else log._14 ) );
-    println( "Time for building the final proof: " + ( if ( log._15 == -1 ) "n/a" else log._15 ) );
-    println( "Time for cleaning the structural rules of the final proof: " + ( if ( log._16 == -1 ) "n/a" else log._16 ) );
-  }
-
   def execute( proof: LKProof, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] = {
     val clean_proof = CleanStructuralRules( proof )
     metrics.value( "inf_input", rulesNumber( clean_proof ) )
+
+    if ( verbose )
+      println( s"Total inferences in the input proof: ${rulesNumber( clean_proof )}" )
 
     val ep = LKToExpansionProof( clean_proof )
     val hasEquality = containsEqualityReasoning( clean_proof )
@@ -203,21 +168,25 @@ object CutIntroduction extends Logger {
 
     metrics.value( "quant_input", quantRulesNumberET( ep ) )
 
+    if ( verbose )
+      println( s"Quantifier inferences in the input proof: ${quantRulesNumberET( ep )}" )
+
     val endSequent = toShallow( ep )
-    if ( verbose ) println( "\nEnd sequent: " + endSequent )
+    if ( verbose ) println( s"End sequent: $endSequent" )
 
     /********** Term set Extraction **********/
     val termset = metrics.time( "termset" ) { TermsExtraction( ep ) }
 
     metrics.value( "termset", termset.set.size )
-    if ( verbose ) println( "Size of term set: " + termset.set.size )
+    if ( verbose ) println( s"Size of term set: ${termset.set.size}" )
 
     /********** Grammar finding **********/
-    val smallestVtratGrammars = method.findGrammars( termset.set.toSet )
-    val smallestGrammars = smallestVtratGrammars collect {
-      case g if g.productions.exists( _._1 != g.axiomVect ) =>
-        simpleToMultiGrammar( termset.encoding, g )
+    val smallestVtratGrammars = method.findGrammars( termset.set.toSet ) filter { g => g.productions.exists( _._1 != g.axiomVect ) }
+    if ( verbose ) {
+      println( "Smallest grammars:" )
+      smallestVtratGrammars foreach println
     }
+    val smallestGrammars = smallestVtratGrammars map { simpleToMultiGrammar( termset.encoding, _ ) }
 
     if ( smallestGrammars.isEmpty ) {
       None
@@ -225,8 +194,10 @@ object CutIntroduction extends Logger {
       /** ******** Proof Construction **********/
       metrics.value( "mingrammar", smallestGrammars.head.size )
       metrics.value( "num_mingrammars", smallestGrammars.size )
-      if ( verbose ) println( "Smallest grammar-size: " + smallestGrammars.head.size )
-      if ( verbose ) println( "Number of smallest grammars: " + smallestGrammars.length )
+      if ( verbose ) {
+        println( s"Smallest grammar-size: ${smallestGrammars.head.size}" )
+        println( s"Number of smallest grammars: ${smallestGrammars.length}" )
+      }
 
       val proofs = smallestGrammars.map { grammar =>
         val ( cutFormulas, ehs1 ) = metrics.time( "minsol" ) {
@@ -236,10 +207,10 @@ object CutIntroduction extends Logger {
           val ehs1 =
             if ( hasEquality && cutFormulas.size == 1 )
               MinimizeSolution.applyEq( ehs, prover )
-            else if ( !hasEquality && cutFormulas.size == 1 )
+            else if ( !hasEquality )
               MinimizeSolution.apply( ehs, prover )
             else
-              ehs // TODO: minimize solution for multiple cuts
+              ehs // TODO: minimize solution for multiple cuts with equality
 
           ( cutFormulas, ehs1 )
         }
@@ -265,10 +236,14 @@ object CutIntroduction extends Logger {
       metrics.value( "min_sol", sorted.head._4 )
       metrics.value( "inf_output", rulesNumber( smallestProof ) )
       metrics.value( "quant_output", quantRulesNumber( smallestProof ) )
-      if ( verbose ) println( "\nMinimized cut formula: " + ehs.cutFormulas.head + "\n" )
-
       if ( verbose ) {
-        //      print_log_tuple( tuple );
+        println( s"Size of the canonical solution: ${sorted.head._3}" )
+        println( s"Size of the minimized solution: ${sorted.head._4}" )
+        println( "Minimized cut formulas:" )
+        ehs.cutFormulas foreach println
+        println( s"Number of cuts introduced: ${getStatistics( smallestProof ).cuts}" )
+        println( s"Total inferences in the proof with cut(s): ${rulesNumber( smallestProof )}" )
+        println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( smallestProof )}" )
       }
 
       Some( smallestProof )
