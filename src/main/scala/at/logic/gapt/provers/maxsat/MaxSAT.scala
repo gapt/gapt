@@ -7,7 +7,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.utils.logging.{ Logger, Stopwatch }
+import at.logic.gapt.utils.logging.{ metrics, Logger, Stopwatch }
 
 import scala.collection.immutable.Map
 import scala.sys.process.{ Process, ProcessIO }
@@ -45,7 +45,7 @@ trait MaxSATSolver extends Logger {
 
     // Hard CNF transformation
     watch.start()
-    val hardCNF = TseitinCNF( And( hard ) )
+    val hardCNF = metrics.time( "tseitin" ) { TseitinCNF( And( hard ) ) }
     val hardCNFTime = watch.lap( "hardCNF" )
     logTime( "[Runtime]<hard CNF-Generation> ", hardCNFTime )
     trace( "produced hard cnf: " + hardCNF )
