@@ -223,5 +223,173 @@ class interpolationTest extends Specification {
       pproof.root.toHOLSequent must beEqualTo( HOLSequent( I :: Nil, Imp( Neg( Neg( p ) ), p ) :: Nil ) )
     }
 
+    "correctly interpolate a proof with two cuts and two equality right rules" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = Axiom( pa )
+      val axpb = Axiom( pb )
+      val axab1 = Axiom( aeqb )
+      val axab2 = Axiom( aeqb )
+      val axab3 = Axiom( aeqb )
+      val axab4 = Axiom( aeqb )
+
+      val p1 = EquationRight1Rule( axab1, axpa, axab1.root.succedent.head, axpa.root.succedent.head, pb )
+
+      val p2 = CutRule( axab2, p1, aeqb )
+      val p3 = ImpRightRule( p2, pa, pb )
+
+      val p4 = EquationRight2Rule( axab3, axpb, axab3.root.succedent.head, axpb.root.succedent.head, pa )
+
+      val p5 = CutRule( axab4, p4, aeqb )
+      val p6 = ImpRightRule( p5, pb, pa )
+
+      val p7 = AndRightRule( p3, p6, Imp( pa, pb ), Imp( pb, pa ) )
+      val p8 = ContractionLeftRule( p7, aeqb )
+      val p9 = ImpRightRule( p8, aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) )
+
+      val npart = Set( p9.root.succedent( 0 ) )
+      val ppart = Set.empty[FormulaOccurrence]
+
+      val ( nproof, pproof, ipl ) = Interpolate( p9, npart, ppart )
+
+      val Il = Or( Bottom(), Or( Bottom(), And( aeqb, Bottom() ) ) )
+      val Ir = Or( Bottom(), Or( Bottom(), And( aeqb, Bottom() ) ) )
+      val I = Or( Il, Ir )
+
+      ipl must beEqualTo( I )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( Nil, List( I, Imp( aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) ) ) ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( List( I ), Nil ) )
+    }
+
+    "correctly interpolate a proof with two cuts and two equality right rules (different partition)" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = Axiom( pa )
+      val axpb = Axiom( pb )
+      val axab1 = Axiom( aeqb )
+      val axab2 = Axiom( aeqb )
+      val axab3 = Axiom( aeqb )
+      val axab4 = Axiom( aeqb )
+
+      val p1 = EquationRight1Rule( axab1, axpa, axab1.root.succedent.head, axpa.root.succedent.head, pb )
+
+      val p2 = CutRule( axab2, p1, aeqb )
+      val p3 = ImpRightRule( p2, pa, pb )
+
+      val p4 = EquationRight2Rule( axab3, axpb, axab3.root.succedent.head, axpb.root.succedent.head, pa )
+
+      val p5 = CutRule( axab4, p4, aeqb )
+      val p6 = ImpRightRule( p5, pb, pa )
+
+      val p7 = AndRightRule( p3, p6, Imp( pa, pb ), Imp( pb, pa ) )
+      val p8 = ContractionLeftRule( p7, aeqb )
+      val p9 = ImpRightRule( p8, aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) )
+
+      val npart = Set.empty[FormulaOccurrence]
+      val ppart = Set( p9.root.succedent( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( p9, npart, ppart )
+
+      val Il = And( Top(), Or( Neg( aeqb ), And( aeqb, Top() ) ) )
+      val Ir = And( Top(), Or( Neg( aeqb ), And( aeqb, Top() ) ) )
+      val I = And( Il, Ir )
+
+      ipl must beEqualTo( I )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( Nil, List( I ) ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( List( I ), List( Imp( aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) ) ) ) )
+    }
+
+    "correctly interpolate a proof with two cuts and two equality left rules" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = Axiom( pa )
+      val axpb = Axiom( pb )
+      val axab1 = Axiom( aeqb )
+      val axab2 = Axiom( aeqb )
+      val axab3 = Axiom( aeqb )
+      val axab4 = Axiom( aeqb )
+
+      val p1 = EquationLeft2Rule( axab1, axpb, axab1.root.succedent.head, axpb.root.antecedent.head, pa )
+
+      val p2 = CutRule( axab2, p1, aeqb )
+      val p3 = ImpRightRule( p2, pa, pb )
+
+      val p4 = EquationLeft1Rule( axab3, axpa, axab3.root.succedent.head, axpa.root.antecedent.head, pb )
+
+      val p5 = CutRule( axab4, p4, aeqb )
+      val p6 = ImpRightRule( p5, pb, pa )
+
+      val p7 = AndRightRule( p3, p6, Imp( pa, pb ), Imp( pb, pa ) )
+      val p8 = ContractionLeftRule( p7, aeqb )
+      val p9 = ImpRightRule( p8, aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) )
+
+      val npart = Set( p9.root.succedent( 0 ) )
+      val ppart = Set.empty[FormulaOccurrence]
+
+      val ( nproof, pproof, ipl ) = Interpolate( p9, npart, ppart )
+
+      val Il = Or( Bottom(), And( aeqb, Imp( aeqb, Bottom() ) ) )
+      val Ir = Or( Bottom(), And( aeqb, Imp( aeqb, Bottom() ) ) )
+      val I = Or( Il, Ir )
+
+      ipl must beEqualTo( I )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( Nil, List( I, Imp( aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) ) ) ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( List( I ), Nil ) )
+    }
+
+    "correctly interpolate a proof with two cuts and two equality left rules (different partition)" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = Axiom( pa )
+      val axpb = Axiom( pb )
+      val axab1 = Axiom( aeqb )
+      val axab2 = Axiom( aeqb )
+      val axab3 = Axiom( aeqb )
+      val axab4 = Axiom( aeqb )
+
+      val p1 = EquationLeft2Rule( axab1, axpb, axab1.root.succedent.head, axpb.root.antecedent.head, pa )
+
+      val p2 = CutRule( axab2, p1, aeqb )
+      val p3 = ImpRightRule( p2, pa, pb )
+
+      val p4 = EquationLeft1Rule( axab3, axpa, axab3.root.succedent.head, axpa.root.antecedent.head, pb )
+
+      val p5 = CutRule( axab4, p4, aeqb )
+      val p6 = ImpRightRule( p5, pb, pa )
+
+      val p7 = AndRightRule( p3, p6, Imp( pa, pb ), Imp( pb, pa ) )
+      val p8 = ContractionLeftRule( p7, aeqb )
+      val p9 = ImpRightRule( p8, aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) )
+
+      val npart = Set.empty[FormulaOccurrence]
+      val ppart = Set( p9.root.succedent( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( p9, npart, ppart )
+
+      val Il = And( Top(), And( Top(), Top() ) )
+      val Ir = And( Top(), And( Top(), Top() ) )
+      val I = And( Il, Ir )
+
+      ipl must beEqualTo( I )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( Nil, List( I ) ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( List( I ), List( Imp( aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) ) ) ) )
+    }
+
   }
 }

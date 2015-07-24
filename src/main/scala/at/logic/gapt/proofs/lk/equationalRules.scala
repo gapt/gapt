@@ -936,7 +936,7 @@ object EquationRight2Rule extends EquationRuleLogger {
             val succedent = suc1 ++ suc2 :+ prinOcc
 
             new BinaryTree[OccSequent]( OccSequent( antecedent, succedent ), s1, s2 ) with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions {
-              def rule = EquationRight1RuleType
+              def rule = EquationRight2RuleType
 
               def aux = ( eqocc :: Nil ) :: ( auxocc :: Nil ) :: Nil
 
