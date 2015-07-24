@@ -44,6 +44,7 @@ language-proposal/*.out
 .cache
 .cache-main
 .cache-test
+.cache-tests
 
 # emacs
 /.ensime*
