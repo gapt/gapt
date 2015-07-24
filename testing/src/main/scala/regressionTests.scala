@@ -54,7 +54,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val E = LeanCoPParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
 
     val deep = toDeep( E ) --- "toDeep"
-    new MiniSATProver().isValid( deep.toFormula ) !-- "minisat validity"
+    new VeriTProver().isValid( deep.toFormula ) !-- "verit validity"
   }
 }
 
