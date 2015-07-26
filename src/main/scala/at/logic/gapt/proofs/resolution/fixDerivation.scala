@@ -188,7 +188,9 @@ object fixDerivation extends Logger {
       val ret = d.asInstanceOf[RobinsonResolutionProof]
       if ( ret.root.toHOLSequent != to ) {
         val ret_seq = HOLSequent( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) )
-        tryDeriveByFactor( to, ret_seq )
+        // FIXME: replace InitialClause(ret_seq) by ret in the following proof
+        // tryDeriveByFactor( to, ret_seq )
+        None
       } else {
         Some( ret )
       }
