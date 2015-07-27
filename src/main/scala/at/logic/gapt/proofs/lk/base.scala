@@ -172,6 +172,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 }
 
 object Sequent {
+  def apply[A](): Sequent[A] = new Sequent( Seq(), Seq() )
+
   def apply[A]( ant: Seq[A], succ: Seq[A] ): Sequent[A] = new Sequent( ant, succ )
 
   def apply[A]( polarizedElements: Seq[( A, Boolean )] ): Sequent[A] =
