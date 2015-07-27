@@ -138,6 +138,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   def expansionSequent: Parser[Option[ExpansionSequent]] =
+    rep( comment ) ^^ { case _ => None } |
     rep( comment ) ~> rep( input ) ~ rep( comment ) ~ rep( clauses ) ~ rep( comment ) ~ rep( inferences ) <~ rep( comment ) ^^ {
       case input ~ _ ~ clauses_lst ~ _ ~ bindings_opt =>
 
@@ -224,7 +225,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
         }
 
         Some( new ExpansionSequent( ant, succ ) )
-    } | rep( comment ) ^^ { case _ => None } // No TPTP proof
+    }
 
   def input: Parser[( String, String, FOLFormula )] = language ~ "(" ~> name ~ "," ~ role ~ "," ~ formula <~ ", file(" ~ "[^()]*".r ~ "))." ^^ {
     case n ~ _ ~ r ~ _ ~ f => ( n, r, f )
