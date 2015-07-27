@@ -291,12 +291,12 @@ case class METNeg( tree: MultiExpansionTree ) extends MultiExpansionTree with T1
  * Models an atomic expansion tree.
  *
  * Atom(f)
- * @param formula The formula f.
+ * @param atom The formula f.
  */
-case class METAtom( formula: HOLFormula ) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula], Option[Seq[LambdaExpression]]] {
-  lazy val node = Some( formula )
-  override def toDeep( pol: Int ): HOLFormula = formula
-  override def toShallow = formula
+case class METAtom( atom: HOLAtom ) extends MultiExpansionTree with TerminalNodeA[Option[HOLFormula], Option[Seq[LambdaExpression]]] {
+  lazy val node = Some( atom )
+  override def toDeep( pol: Int ): HOLFormula = atom
+  override def toShallow = atom
 
   override def containsWeakQuantifiers = false
 
@@ -304,7 +304,39 @@ case class METAtom( formula: HOLFormula ) extends MultiExpansionTree with Termin
 
   override def getVars = Nil
 
-  override def getSubformula = formula
+  override def getSubformula = atom
+
+  override def numberOfQuantifiers = 0
+}
+
+case object METTop extends MultiExpansionTree {
+  lazy val node = Some( Top() )
+  override def toDeep( pol: Int ) = Top()
+  override def toShallow = Top()
+
+  override def containsWeakQuantifiers = false
+
+  override def numberOfInstances = 1
+
+  override def getVars = Nil
+
+  override def getSubformula = Top()
+
+  override def numberOfQuantifiers = 0
+}
+
+case object METBottom extends MultiExpansionTree {
+  lazy val node = Some( Bottom() )
+  override def toDeep( pol: Int ) = Bottom()
+  override def toShallow = Bottom()
+
+  override def containsWeakQuantifiers = false
+
+  override def numberOfInstances = 1
+
+  override def getVars = Nil
+
+  override def getSubformula = Bottom()
 
   override def numberOfQuantifiers = 0
 }

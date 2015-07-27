@@ -201,9 +201,9 @@ object Top extends NullaryPropConnectiveHelper( TopC )
 object Bottom extends NullaryPropConnectiveHelper( BottomC )
 
 object Eq {
-  def apply( a: LambdaExpression, b: LambdaExpression ): HOLFormula = Apps( EqC( a.exptype ), a, b ).asInstanceOf[HOLFormula]
-  def apply( a: FOLTerm, b: FOLTerm ): FOLFormula =
-    apply( a, b.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
+  def apply( a: LambdaExpression, b: LambdaExpression ): HOLAtom = Apps( EqC( a.exptype ), a, b ).asInstanceOf[HOLAtom]
+  def apply( a: FOLTerm, b: FOLTerm ): FOLAtom =
+    apply( a, b.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLAtom]
 
   def unapply( e: LambdaExpression ): Option[( LambdaExpression, LambdaExpression )] = e match {
     case App( App( EqC( _ ), a ), b ) => Some( a, b )

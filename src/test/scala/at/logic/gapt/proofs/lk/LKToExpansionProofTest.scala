@@ -4,7 +4,7 @@ import at.logic.gapt.examples.LinearExampleProof
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.proofs.expansionTrees.{ ETStrongQuantifier, ETWeakQuantifier, ETAtom, ETImp }
+import at.logic.gapt.proofs.expansionTrees._
 
 class ExtractExpansionSequentTest extends Specification {
 
@@ -100,8 +100,10 @@ class ExtractExpansionSequentTest extends Specification {
       val p4 = ContractionLeftRule( p3, Bottom() ) // negative polarity, bottom must win
 
       val ( ante, succ ) = LKToExpansionProof( p4 ).toTuple
-      ante mustEqual ETAtom( Bottom() ) :: Nil
-      succ mustEqual ETAtom( Top() ) :: Nil
+      println( ante )
+      println( succ )
+      ante mustEqual ETBottom :: Nil
+      succ mustEqual ETTop :: Nil
     }
 
     "handle multiple formulas in axiom" in {

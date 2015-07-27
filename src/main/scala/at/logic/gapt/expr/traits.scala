@@ -223,22 +223,22 @@ object FOLConst {
 }
 
 object FOLAtom {
-  def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLFormula = FOLAtom( sym, args )
-  def apply( sym: String, args: Seq[FOLTerm] ): FOLFormula =
-    Apps( FOLAtomHead( sym, args.size ), args ).asInstanceOf[FOLFormula]
+  def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLAtom = FOLAtom( sym, args )
+  def apply( sym: String, args: Seq[FOLTerm] ): FOLAtom =
+    Apps( FOLAtomHead( sym, args.size ), args ).asInstanceOf[FOLAtom]
 
   def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( FOLAtomHead( sym, _ ), args ) if e.isInstanceOf[FOLFormula] =>
+    case Apps( FOLAtomHead( sym, _ ), args ) if e.isInstanceOf[FOLAtom] =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
 }
 
 object HOLAtom {
-  def apply( head: LambdaExpression, args: LambdaExpression* ): HOLFormula =
+  def apply( head: LambdaExpression, args: LambdaExpression* ): HOLAtom =
     apply( head, args toList )
-  def apply( head: LambdaExpression, args: List[LambdaExpression] ): HOLFormula =
-    Apps( head, args ).asInstanceOf[HOLFormula]
+  def apply( head: LambdaExpression, args: List[LambdaExpression] ): HOLAtom =
+    Apps( head, args ).asInstanceOf[HOLAtom]
   def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
     case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
     case _ => None
