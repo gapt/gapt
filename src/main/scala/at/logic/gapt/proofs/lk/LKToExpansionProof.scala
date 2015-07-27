@@ -45,20 +45,20 @@ class LKToExpansionProof extends Logger {
           //only print the warning for non reflexivity atoms
           debug( "Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: " + r )
         }
-        Map( r.antecedent.map( fo => ( fo, ETAtom( fo.formula ) ) ) ++
-          r.succedent.map( fo => ( fo, ETAtom( fo.formula ) ) ): _* )
+        Map( r.antecedent.map( fo => ( fo, ETInitialNode( fo.formula ) ) ) ++
+          r.succedent.map( fo => ( fo, ETInitialNode( fo.formula ) ) ): _* )
       } else {
         throw new IllegalArgumentException( "Error: Axiom sequent in expansion tree extraction contains no atom A on left and right side and contains non-atomic formulas: " + r )
       }
 
       // this behaviour is convenient for development, as it allows to work reasonably with invalid axioms
-      Map( r.antecedent.map( fo => ( fo, ETAtom( fo.formula ) ) ) ++
-        r.succedent.map( fo => ( fo, ETAtom( fo.formula ) ) ): _* )
+      Map( r.antecedent.map( fo => ( fo, ETInitialNode( fo.formula ) ) ) ++
+        r.succedent.map( fo => ( fo, ETInitialNode( fo.formula ) ) ): _* )
     } else {
       val axiomFormula = axiomCandidates( 0 )
 
-      Map( r.antecedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETAtom( fo.formula ) else ETWeakening( fo.formula ) ) ) ++
-        r.succedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETAtom( fo.formula ) else ETWeakening( fo.formula ) ) ): _* )
+      Map( r.antecedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETInitialNode( fo.formula ) else ETWeakening( fo.formula ) ) ) ++
+        r.succedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETInitialNode( fo.formula ) else ETWeakening( fo.formula ) ) ): _* )
     }
   }
 
