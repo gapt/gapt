@@ -169,6 +169,10 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
     case Ant( k ) => antecedent( k )
     case Suc( k ) => succedent( k )
   }
+
+  def indices: Seq[SequentIndex] = ( antecedent.indices map { i => Ant( i ) } ) ++ ( succedent.indices map { i => Suc( i ) } )
+
+  def indicesWhere( p: A => Boolean ): Seq[SequentIndex] = indices filter { i => p( this( i ) ) }
 }
 
 object Sequent {
