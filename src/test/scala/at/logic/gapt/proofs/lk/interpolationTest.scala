@@ -6,6 +6,9 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
 import org.specs2.mutable._
+import at.logic.gapt.formats.prover9.Prover9TermParser.parseFormula
+import at.logic.gapt.proofs.lk.base.OccSequent
+import at.logic.gapt.provers.eqProver.EquationalProver
 
 class interpolationTest extends Specification {
   "interpolation" should {
@@ -389,6 +392,44 @@ class interpolationTest extends Specification {
       ipl must beEqualTo( I )
       nproof.root.toHOLSequent must beEqualTo( HOLSequent( Nil, List( I ) ) )
       pproof.root.toHOLSequent must beEqualTo( HOLSequent( List( I ), List( Imp( aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) ) ) ) )
+    }
+
+    "correctly interpolate an axiom of the form Bottom() :- " in {
+      val ax = Axiom( Bottom() :: Nil, Nil )
+
+      val npart = Set( ax.root.antecedent( 0 ) )
+      val ppart = Set.empty[FormulaOccurrence]
+
+      val ( nproof, pproof, ipl ) = Interpolate( ax, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Bottom() :: Nil ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+
+      val ( nproof2, pproof2, ipl2 ) = Interpolate( ax, ppart, npart )
+
+      ipl2 must beEqualTo( Top() )
+      nproof2.root.toHOLSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof2.root.toHOLSequent must beEqualTo( HOLSequent( Bottom() :: Top() :: Nil, Nil ) )
+    }
+
+    "correctly interpolate an axiom of the form :- Top()" in {
+      val ax = Axiom( Nil, Top() :: Nil )
+
+      val npart = Set( ax.root.succedent( 0 ) )
+      val ppart = Set.empty[FormulaOccurrence]
+
+      val ( nproof, pproof, ipl ) = Interpolate( ax, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.root.toHOLSequent must beEqualTo( HOLSequent( Nil, Top() :: Bottom() :: Nil ) )
+      pproof.root.toHOLSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+
+      val ( nproof2, pproof2, ipl2 ) = Interpolate( ax, ppart, npart )
+
+      ipl2 must beEqualTo( Top() )
+      nproof2.root.toHOLSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof2.root.toHOLSequent must beEqualTo( HOLSequent( Top() :: Nil, Top() :: Nil ) )
     }
 
   }

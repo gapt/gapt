@@ -52,16 +52,32 @@ object Interpolate {
 
     case Axiom( s ) => {
       // we assume here that s has exactly one formula in the antecedent and exactly one in the succedent
-      //            and that these two formulas are identical
-      val oant = s.antecedent( 0 )
-      val osuc = s.succedent( 0 )
-      val form = oant.formula
+      // and that these two formulas are identical or that s is an instance of the reflexivity axiom.
+      if ( s.antecedent.size == 1 && s.succedent.size == 1 ) {
+        val oant = s.antecedent( 0 )
+        val osuc = s.succedent( 0 )
+        val form = oant.formula
 
-      if ( npart.contains( oant ) && npart.contains( osuc ) ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
-      else if ( npart.contains( oant ) && ppart.contains( osuc ) ) ( p, p, form.asInstanceOf[FOLFormula] )
-      else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), Neg( form.asInstanceOf[FOLFormula] ) )
-      else if ( ppart.contains( oant ) && ppart.contains( osuc ) ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
+        if ( npart.contains( oant ) && npart.contains( osuc ) ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
+        else if ( npart.contains( oant ) && ppart.contains( osuc ) ) ( p, p, form.asInstanceOf[FOLFormula] )
+        else if ( ppart.contains( oant ) && npart.contains( osuc ) ) ( NegRightRule( p, form ), NegLeftRule( p, form ), Neg( form.asInstanceOf[FOLFormula] ) )
+        else if ( ppart.contains( oant ) && ppart.contains( osuc ) ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
+        else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
+      } else if ( s.antecedent.size == 0 && s.succedent.size == 1 ) {
+        // here, we handle reflexivity axioms and axioms of the form :- Top()
+        val osuc = s.succedent( 0 )
+
+        if ( npart.contains( osuc ) ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
+        else if ( ppart.contains( osuc ) ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
+        else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
+      } else if ( s.antecedent.size == 1 && s.succedent.size == 0 ) {
+        // here, we handle axioms of the form Bottom() :- 
+        val oant = s.antecedent( 0 )
+
+        if ( npart.contains( oant ) ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
+        else if ( ppart.contains( oant ) ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
+        else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
+      } else throw new InterpolationException( "Axiom has context or the rule is not an axiom." )
     }
 
     // structural rules
@@ -100,7 +116,6 @@ object Interpolate {
 
     case CutRule( p1, p2, s, a1, a2 ) => {
       val ( up1_nproof, up1_pproof, up1_I ) = applyUpCutLeft( p1, npart, ppart, a1 )
-
       val ( up2_nproof, up2_pproof, up2_I ) = applyUpCutRight( p2, s, npart, ppart, a2 )
 
       val npart1Fold = up1_nproof.root.occurrences.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
@@ -433,9 +448,9 @@ object Interpolate {
     val up_npartFold = up_npart.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
     val up_ppartFold = up_ppart.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
 
-    if ( up_npartFold.contains( a1.formula ) /*&& !up_ppartFold.contains( a1.formula ) */ ) {
+    if ( up_npartFold.contains( a1.formula ) && !up_ppartFold.contains( a1.formula ) ) {
       up1_npart += a1
-    } else if ( up_ppartFold.contains( a1.formula ) /*&& !up_npartFold.contains( a1.formula ) */ ) {
+    } else if ( up_ppartFold.contains( a1.formula ) && !up_npartFold.contains( a1.formula ) ) {
       up1_ppart += a1
     } else {
       up1_npart += a1
@@ -453,9 +468,9 @@ object Interpolate {
     val up_npartFold = up_npart.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
     val up_ppartFold = up_ppart.foldLeft( Seq[HOLFormula]() )( ( s, o ) => s :+ o.formula )
 
-    if ( up_npartFold.contains( a2.formula ) ) {
+    if ( up_npartFold.contains( a2.formula ) && !up_ppartFold.contains( a2.formula ) ) {
       up2_npart += a2
-    } else if ( up_ppartFold.contains( a2.formula ) ) {
+    } else if ( up_ppartFold.contains( a2.formula ) && !up_npartFold.contains( a2.formula ) ) {
       up2_ppart += a2
     } else {
       up2_npart += a2
