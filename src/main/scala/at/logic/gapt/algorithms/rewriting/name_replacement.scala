@@ -226,7 +226,7 @@ object NameReplacement {
     expSequent map { et: ExpansionTree => apply( et, map ) }
 
   def apply( expTree: ExpansionTree, map: SymbolMap ): ExpansionTree = expTree match {
-    case ETAtom( f )     => ETAtom( apply( f, map ) )
+    case ETAtom( f )     => ETAtom( apply( f, map ).asInstanceOf[HOLAtom] )
     case ETNeg( t1 )     => ETNeg( apply( t1, map ) )
     case ETAnd( t1, t2 ) => ETAnd( apply( t1, map ), apply( t2, map ) )
     case ETOr( t1, t2 )  => ETOr( apply( t1, map ), apply( t2, map ) )

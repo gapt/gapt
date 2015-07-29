@@ -2,6 +2,8 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
+import at.logic.gapt.expr.fol.FOLPosition._
+import at.logic.gapt.expr.fol.FOLPosition
 import at.logic.gapt.expr.hol.HOLPosition
 
 trait HOLFormula extends LambdaExpression {
@@ -19,6 +21,46 @@ trait LogicalConstant extends Const
 
 trait FOLExpression extends LambdaExpression {
   def renameSymbols( map: SymbolMap ): FOLExpression = NameReplacement( this, map )
+
+  /**
+   * Retrieves this expression's subexpression at a given position.
+   *
+   * @param pos The position to be retrieved.
+   * @return The subexpression at pos.
+   */
+  def apply( pos: FOLPosition ): FOLExpression = get( pos ) match {
+    case Some( f ) => f
+    case None      => throw new Exception( "Position " + pos + " does not exist in expression " + this + "." )
+  }
+
+  /**
+   * Retrieves this expression's subexpression at a given position, if there is one.
+   *
+   * @param pos The position to be retrieved.
+   * @return If there is a subexpression at that position, return Some(that expression). Otherwise None.
+   */
+  def get( pos: FOLPosition ): Option[FOLExpression] =
+    FOLPosition.toHOLPositionOption( this )( pos ).flatMap( get ).asInstanceOf[Option[FOLExpression]]
+
+  def replace( pos: FOLPosition, replacement: FOLExpression ): FOLExpression =
+    FOLPosition.replace( this, pos, replacement )
+
+  /**
+   * Tests whether this expression has a subexpression at a given position.
+   *
+   * @param pos The position to be tested.
+   * @return Whether this(pos) is defined.
+   */
+  def isDefinedAt( pos: FOLPosition ): Boolean = get( pos ).isDefined
+
+  /**
+   * Finds all HOL positions of a subexpression in this expression.
+   *
+   * @param exp The subexpression to be found.
+   * @return A list containing all positions where exp occurs.
+   */
+  def find( exp: FOLExpression ): List[FOLPosition] = getPositions( this, _ == exp )
+
 }
 
 private[expr] trait FOLPartialAtom extends HOLPartialAtom
@@ -181,22 +223,22 @@ object FOLConst {
 }
 
 object FOLAtom {
-  def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLFormula = FOLAtom( sym, args )
-  def apply( sym: String, args: Seq[FOLTerm] ): FOLFormula =
-    Apps( FOLAtomHead( sym, args.size ), args ).asInstanceOf[FOLFormula]
+  def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLAtom = FOLAtom( sym, args )
+  def apply( sym: String, args: Seq[FOLTerm] ): FOLAtom =
+    Apps( FOLAtomHead( sym, args.size ), args ).asInstanceOf[FOLAtom]
 
   def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( FOLAtomHead( sym, _ ), args ) if e.isInstanceOf[FOLFormula] =>
+    case Apps( FOLAtomHead( sym, _ ), args ) if e.isInstanceOf[FOLAtom] =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
 }
 
 object HOLAtom {
-  def apply( head: LambdaExpression, args: LambdaExpression* ): HOLFormula =
+  def apply( head: LambdaExpression, args: LambdaExpression* ): HOLAtom =
     apply( head, args toList )
-  def apply( head: LambdaExpression, args: List[LambdaExpression] ): HOLFormula =
-    Apps( head, args ).asInstanceOf[HOLFormula]
+  def apply( head: LambdaExpression, args: List[LambdaExpression] ): HOLAtom =
+    Apps( head, args ).asInstanceOf[HOLAtom]
   def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
     case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
     case _ => None

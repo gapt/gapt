@@ -42,6 +42,9 @@ language-proposal/*.out
 .project
 .classpath
 .cache
+.cache-main
+.cache-test
+.cache-tests
 
 # emacs
 /.ensime*

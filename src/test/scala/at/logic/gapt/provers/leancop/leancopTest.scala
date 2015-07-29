@@ -14,11 +14,11 @@ class LeanCoPProverTest extends Specification {
   args( skipAll = !leanCoP.isInstalled )
 
   "LeanCoP" should {
-    //    "LEM" in {
-    //      val a = FOLAtom( "a" )
-    //      val f = Or( a, Neg( a ) )
-    //      leanCoP.isValid( f ) must beTrue
-    //    }
+    "LEM" in {
+      val a = FOLAtom( "a" )
+      val f = Or( a, Neg( a ) )
+      leanCoP.isValid( f ) must beTrue
+    }
 
     "a |- a" in {
       val a = FOLAtom( "a" )

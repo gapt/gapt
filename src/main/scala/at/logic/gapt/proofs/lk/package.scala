@@ -35,6 +35,8 @@ package object base {
   }
 
   object HOLSequent {
+    def apply(): HOLSequent = Sequent()
+
     def apply( ant: Seq[HOLFormula], succ: Seq[HOLFormula] ): HOLSequent = Sequent( ant, succ )
 
     def apply( polarizedElements: Seq[( HOLFormula, Boolean )] ): HOLSequent = Sequent( polarizedElements )

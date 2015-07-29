@@ -41,14 +41,15 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
       ComputeGrammars.findValidGrammars( lang.toList, deltatable, eigenvariable ).sortBy( _.size )
     }
 
-    grammars.headOption map { smallest =>
-      grammars.filter( g => g.size == smallest.size )
-    } getOrElse Nil
+    if ( grammars.isEmpty ) {
+      Nil
+    } else {
+      val smallestSize = grammars.map( _.size ).min
+      grammars.filter( _.size == smallestSize )
+    }
   }
 
-  override def name: String =
-    if ( manyQuantifiers ) "one_cut_many_quant"
-    else "one_cut_one_quant"
+  override def name: String = if ( manyQuantifiers ) "many_dtable" else "1_dtable"
 }
 
 case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod {
@@ -56,11 +57,7 @@ case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod
     Seq( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, new QMaxSAT ) )
   }
 
-  override def name: String =
-    if ( nonTerminalLengths.forall( _ == 1 ) )
-      s"many_cuts_one_quant_${nonTerminalLengths.size}"
-    else
-      s"many_cuts_many_quant_${nonTerminalLengths.mkString( "_" )}"
+  override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
 }
 
 /**

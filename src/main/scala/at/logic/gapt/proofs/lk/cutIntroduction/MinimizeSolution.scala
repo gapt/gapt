@@ -320,7 +320,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
       override def addElem( p: ( ( Int, Int ), Int ) ): ResNode = {
         val ( pair, index ) = p
         new ResNode( p :: appliedPairs, remainingPairs.filter( x => x._2 != index ),
-          resolvedVars + ( pair._1, pair._2 ), forgetfulResolve( currentFormula, pair ) )
+          resolvedVars + ( pair._1, pair._2 ), ForgetfulResolveIndexed( currentFormula, pair ) )
       }
     }
 

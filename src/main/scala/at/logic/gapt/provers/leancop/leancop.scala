@@ -32,8 +32,8 @@ class LeanCoPProver extends Prover with ExternalProgram {
 
       // extract the part between the %----- delimiters
       val tptpProof = leanCopOutput.split( "\n" ).
-        dropWhile( !_.startsWith( "%" ) ).drop( 1 ).
-        takeWhile( !_.startsWith( "%" ) ).
+        dropWhile( !_.startsWith( "%-" ) ).drop( 1 ).
+        takeWhile( !_.startsWith( "%-" ) ).
         mkString( "\n" )
 
       LeanCoPParser.getExpansionProof( new StringReader( tptpProof ) )

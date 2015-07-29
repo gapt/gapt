@@ -6,7 +6,7 @@ import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
-import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep, ExpansionProofToLK }
+import at.logic.gapt.proofs.expansionTrees.{ toShallow, addSymmetry, toDeep, ExpansionProofToLK }
 import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof }
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
@@ -24,6 +24,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E ) --- "toDeep"
+
+    ( toShallow( E ) == p.root.toHOLSequent ) !-- "shallow sequent of expansion proof"
 
     if ( !containsEqualityReasoning( p ) ) {
       new MiniSATProver().isValid( deep ) !-- "minisat validity"
@@ -52,7 +54,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val E = LeanCoPParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
 
     val deep = toDeep( E ) --- "toDeep"
-    new MiniSATProver().isValid( deep.toFormula ) !-- "minisat validity"
+    new VeriTProver().isValid( deep.toFormula ) !-- "verit validity"
   }
 }
 

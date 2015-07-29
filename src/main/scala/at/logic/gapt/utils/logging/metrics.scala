@@ -3,12 +3,12 @@ package at.logic.gapt.utils.logging
 import scala.collection.mutable
 import scala.util.DynamicVariable
 
-trait Metrics {
+trait MetricsCollector {
   def time[T]( key: String )( f: => T ): T
   def value( key: String, value: => Any )
 }
 
-class CollectMetrics extends Metrics {
+class CollectMetrics extends MetricsCollector {
   var currentPhase: String = ""
   val data = mutable.Map[String, Any]()
 
@@ -30,13 +30,13 @@ class CollectMetrics extends Metrics {
   override def value( key: String, value: => Any ) = data( key ) = value
 }
 
-class IgnoreMetrics extends Metrics {
+class IgnoreMetrics extends MetricsCollector {
   override def time[T]( key: String )( f: => T ): T = f
   override def value( key: String, value: => Any ) = ()
 }
 
-object metrics extends Metrics {
-  val current = new DynamicVariable[Metrics]( new IgnoreMetrics )
+object metrics extends MetricsCollector {
+  val current = new DynamicVariable[MetricsCollector]( new IgnoreMetrics )
 
   override def time[T]( key: String )( toTime: => T ): T = current.value.time( key )( toTime )
   override def value( key: String, value: => Any ) = current.value.value( key, value )

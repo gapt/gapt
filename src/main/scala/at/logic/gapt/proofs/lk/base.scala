@@ -9,13 +9,18 @@ import at.logic.gapt.utils.ds.trees._
 
 import scala.collection.GenTraversable
 
+sealed abstract class SequentIndex
+
+case class Ant( k: Int ) extends SequentIndex
+
+case class Suc( k: Int ) extends SequentIndex
+
 class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
-  def canEqual( other: Any ): Boolean = other.isInstanceOf[Sequent[A]]
   /**
    * Equality treating each side of the sequent as list, i.e. respecting order and multiplicity.
    */
   override def equals( other: Any ): Boolean = other match {
-    case seq: Sequent[Any] => canEqual( seq ) && ( antecedent equals seq.antecedent ) && ( succedent equals seq.succedent )
+    case seq: Sequent[Any] => ( antecedent equals seq.antecedent ) && ( succedent equals seq.succedent )
     case _                 => false
   }
 
@@ -95,8 +100,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 
   /**
    *
-   * @param f A HOLFormula
-   * @return The sequent with f added to the antecedent
+   * @param e An element
+   * @return The sequent with e added to the antecedent
    */
   def +:[B >: A]( e: B ) = addToAntecedent( e )
 
@@ -154,12 +159,21 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 
   def length = antecedent.length + succedent.length
 
+  def size = length
+
   def sorted[B >: A]( implicit ordering: Ordering[B] ) = new Sequent( antecedent.sorted( ordering ), succedent.sorted( ordering ) )
 
   def contains[B]( el: B ): Boolean = elements contains el
+
+  def apply( i: SequentIndex ): A = i match {
+    case Ant( k ) => antecedent( k )
+    case Suc( k ) => succedent( k )
+  }
 }
 
 object Sequent {
+  def apply[A](): Sequent[A] = new Sequent( Seq(), Seq() )
+
   def apply[A]( ant: Seq[A], succ: Seq[A] ): Sequent[A] = new Sequent( ant, succ )
 
   def apply[A]( polarizedElements: Seq[( A, Boolean )] ): Sequent[A] =
