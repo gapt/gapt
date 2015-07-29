@@ -102,7 +102,7 @@ object SmtLibExporter {
 
   private def toSMTFormat( head: String, args: Seq[FOLTerm] ): String =
     if ( args.isEmpty )
-      head
+      toSMTString( head, false )
     else
       s"(${toSMTString( head, false )} ${args.map( toSMTFormat ).mkString( " " )})"
 
