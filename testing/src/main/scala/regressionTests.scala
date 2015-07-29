@@ -7,7 +7,7 @@ import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.expansionTrees.{ toShallow, addSymmetry, toDeep, ExpansionProofToLK }
-import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof }
+import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof, ExtractInterpolant }
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
@@ -24,6 +24,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E ) --- "toDeep"
+
+    ExtractInterpolant( p, p.root.antecedent.toSet, p.root.succedent.toSet ) --? "extractInterpolant"
 
     ( toShallow( E ) == p.root.toHOLSequent ) !-- "shallow sequent of expansion proof"
 
