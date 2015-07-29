@@ -8,13 +8,13 @@ import org.apache.commons.lang3.StringEscapeUtils
 import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.expr.{ Ti, To }
 
-object VeriTExporter {
+object SmtLibExporter {
 
   /**
-   *  Takes a sequent and generates the input for VeriT as a string.
+   *  Takes a sequent and generates the SMT-LIB benchmark as a string.
    *
    * @param s Sequent to export.
-   * @return VeriT input.
+   * @return SMT-LIB benchmark.
    */
   def apply( s: HOLSequent ): String = {
     // Define the logic
@@ -30,7 +30,7 @@ object VeriTExporter {
   }
 
   /**
-   * Takes a sequent and generates the input for VeriT as a file
+   * Takes a sequent and generates the SMT-LIB benchmark as a file
    *
    * @param s Sequent to export.
    * @param fileName  Output file name.
@@ -40,7 +40,7 @@ object VeriTExporter {
     val file = new File( fileName )
     val fw = new FileWriter( file.getAbsoluteFile )
     val bw = new BufferedWriter( fw )
-    bw.write( VeriTExporter( s ) )
+    bw.write( SmtLibExporter( s ) )
     bw.close()
 
     file
@@ -70,8 +70,9 @@ object VeriTExporter {
   // (Note: here we would only use propositional formulas, but it is already
   // implemented for quantifiers just in case...)
   private def getSymbols( f: FOLExpression ): Set[( String, Int, TA )] = f match {
-    case FOLVar( s )   => Set( ( toSMTString( s, true ), 0, Ti ) )
-    case FOLConst( s ) => Set( ( toSMTString( s, false ), 0, Ti ) )
+    case Eq( lhs, rhs ) => Set( lhs, rhs ) flatMap getSymbols
+    case FOLVar( s )    => Set( ( toSMTString( s, true ), 0, Ti ) )
+    case FOLConst( s )  => Set( ( toSMTString( s, false ), 0, Ti ) )
     case FOLAtom( pred, args ) =>
       Set( ( toSMTString( pred, false ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
     case FOLFunction( fun, args ) =>
@@ -119,7 +120,7 @@ object VeriTExporter {
   )
 
   // Transforms the string into ASCII and checks if 
-  // it does not clash with veriT keywords.
+  // it does not clash with SMT-LIB keywords.
   private def toSMTString( s: SymbolA, isVar: Boolean ): String = toSMTString( s.toString, isVar )
   private def toSMTString( s: String, isVar: Boolean ): String = {
     // It's a number, append a character before it.

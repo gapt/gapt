@@ -15,7 +15,7 @@ class VeriTProver extends Prover with ExternalProgram {
   override def isValid( s: HOLSequent ): Boolean = {
 
     // Generate the input file for veriT
-    val veritInput = VeriTExporter( s )
+    val veritInput = SmtLibExporter( s )
 
     val veritOutput = withTempFile.fromString( veritInput ) { veritInputFile =>
       Seq( "veriT", veritInputFile ) !!
@@ -34,7 +34,7 @@ class VeriTProver extends Prover with ExternalProgram {
    * merging them with the original end-sequent.
    */
   override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] = {
-    val smtBenchmark = VeriTExporter( s )
+    val smtBenchmark = SmtLibExporter( s )
 
     val output = withTempFile.fromString( smtBenchmark ) { smtFile =>
       Seq( "veriT", "--proof=-", "--proof-version=1", smtFile ) !!
