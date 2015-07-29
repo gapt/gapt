@@ -565,23 +565,17 @@ class PropositionalProofStrategy extends ProofStrategy with at.logic.gapt.utils.
     } else {
 
       // rule preference:
-      // NOTE: getOrElse uses call by name, i.e. functions below are only evaluated if really needed
-      findNullaryLeft( seq ).orElse(
-        findNullaryRight( seq ).orElse(
-          findUnaryLeft( seq ).orElse(
-            findUnaryRight( seq ).orElse(
-              findBinaryLeft( seq ).orElse(
-                findBinaryRight( seq ).orElse(
-                  {
-                    debug( "PropositionalProofStrategy is unable to find a rule to apply on: " + seq )
-                    None
-                  }
-                )
-              )
-            )
-          )
-        )
-      )
+      None.
+        orElse( findNullaryLeft( seq ) ).
+        orElse( findNullaryRight( seq ) ).
+        orElse( findUnaryLeft( seq ) ).
+        orElse( findUnaryRight( seq ) ).
+        orElse( findBinaryLeft( seq ) ).
+        orElse( findBinaryRight( seq ) ).
+        orElse {
+          debug( "PropositionalProofStrategy is unable to find a rule to apply on: " + seq )
+          None
+        }
     }
   }
 
@@ -645,25 +639,19 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       val goal_pruned = removeWeakFormulas( seq )
 
       // rule preference:
-      // NOTE: getOrElse uses call by name, i.e. functions below are only evaluated if really needed
-      findUnaryLeft( goal_pruned ).orElse(
-        findUnaryRight( goal_pruned ).orElse(
-
-          findStrongQuantifier( goal_pruned ).orElse( // can always apply strong quantifier
-            findWeakQuantifier( goal_pruned ).orElse( // weak before binary rules since it's unary
-
-              findBinaryLeft( goal_pruned ).orElse(
-                findBinaryRight( goal_pruned ).orElse(
-                  {
-                    debug( "ExpansionTreeProofStrategy is unable to find a rule to apply on: " + seq )
-                    None
-                  }
-                )
-              )
-            )
-          )
-        )
-      )
+      None.
+        orElse( findNullaryLeft( goal_pruned ) ).
+        orElse( findNullaryRight( goal_pruned ) ).
+        orElse( findUnaryLeft( goal_pruned ) ).
+        orElse( findUnaryRight( goal_pruned ) ).
+        orElse( findStrongQuantifier( goal_pruned ) ). // can always apply strong quantifier
+        orElse( findWeakQuantifier( goal_pruned ) ). // weak before binary rules since it's unary
+        orElse( findBinaryLeft( goal_pruned ) ).
+        orElse( findBinaryRight( goal_pruned ) ).
+        orElse {
+          debug( "ExpansionTreeProofStrategy is unable to find a rule to apply on: " + seq )
+          None
+        }
     }
   }
 

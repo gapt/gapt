@@ -4,7 +4,7 @@ import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, toShallow, ETAtom, ETNeg, ETOr, ETStrongQuantifier, ETWeakQuantifier }
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.base.{ HOLSequent, beSyntacticFSequentEqual }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import org.specs2.mutable._
@@ -201,6 +201,15 @@ class SolveTest extends Specification {
 
     "prove BussTautology(2)" in {
       solve.solvePropositional( BussTautology( 2 ) ) must beSome
+    }
+  }
+
+  "ExpansionProofToLK" should {
+    "top" in {
+      ExpansionProofToLK( ExpansionSequent() :+ ETTop ).root.toHOLSequent must_== ( HOLSequent() :+ Top() )
+    }
+    "bottom" in {
+      ExpansionProofToLK( ETBottom +: ExpansionSequent() ).root.toHOLSequent must_== ( Bottom() +: HOLSequent() )
     }
   }
 }

@@ -364,7 +364,9 @@ object isQuantified {
 }
 
 object ExpansionSequent {
-  def apply( antecedent: Seq[ExpansionTree], succedent: Seq[ExpansionTree] ) = new ExpansionSequent( antecedent, succedent )
+  def apply(): ExpansionSequent = Sequent()
+  def apply( antecedent: Seq[ExpansionTree], succedent: Seq[ExpansionTree] ): ExpansionSequent =
+    new ExpansionSequent( antecedent, succedent )
   def unapply( etSeq: ExpansionSequent ) = Some( etSeq.toTuple )
 }
 
