@@ -373,25 +373,30 @@ object findConseq extends Logger {
 
   val veriTProver = new VeriTProver()
 
-  def apply( S: SimpleInductionProof, n: Int, A: CNF, M: Set[CNF] ): Set[CNF] = {
+  def apply( S: SimpleInductionProof, n: Int, A: CNF, M: Set[CNF], forgetClauses: Boolean ): Set[CNF] = {
     val num = Utils.numeral( n )
     val Gamma2n = FOLSubstitution( alpha, num )( S.Gamma2 )
 
-    ( ( M + A ) /: ( ForgetfulResolve( A ) union ForgetfulParamodulate( A ) union ForgetOne( A ) ) ) { ( acc: Set[CNF], F: CNF ) =>
+    val newCNFs = if ( forgetClauses )
+      ForgetfulResolve( A ) union ForgetfulParamodulate( A ) union ForgetOne( A )
+    else
+      ForgetfulResolve( A ) union ForgetfulParamodulate( A )
+
+    ( ( M + A ) /: newCNFs ) { ( acc: Set[CNF], F: CNF ) =>
       if ( acc contains F ) {
         acc
       } else {
         val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( FOLClause.CNFtoFormula( F ) ) ) )
         if ( veriTProver.isValid( Fu ++: Gamma2n ) )
-          apply( S, n, F, acc )
+          apply( S, n, F, acc, forgetClauses )
         else
           acc
       }
     }
   }
 
-  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF] ): Set[CNF] =
-    apply( S, n, CNFp.toClauseList( A ), M )
+  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false ): Set[CNF] =
+    apply( S, n, CNFp.toClauseList( A ), M, forgetClauses )
 
   def ForgetOne( A: CNF ) = A.indices map { i =>
     val B = A.splitAt( i )
@@ -404,12 +409,12 @@ object FindFormulaH extends Logger {
 
   val veriTProver = new VeriTProver()
 
-  def apply( S: SimpleInductionProof, n: Int ): Option[( SimpleInductionProof, FOLFormula )] = {
+  def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false ): Option[( SimpleInductionProof, FOLFormula )] = {
     val num = Utils.numeral( n )
     val CSn = canonicalSolution( S, n )
 
     debug( "Calling findConseq …" )
-    val M = findConseq( S, n, CSn, Set.empty[List[FOLClause]] ).toList.sortBy( l => ( l map ( _.length ) ).sum )
+    val M = findConseq( S, n, CSn, Set.empty[List[FOLClause]], forgetClauses ).toList.sortBy( l => ( l map ( _.length ) ).sum )
     debug( s"FindConseq found ${M.size} consequences." )
 
     val proofs = M.view.flatMap { F =>
@@ -430,7 +435,7 @@ object FindFormulaH extends Logger {
   }
 }
 
-class HeuristicSolutionFinder( n: Int ) extends SolutionFinder {
+class HeuristicSolutionFinder( n: Int, forgetClauses: Boolean = false ) extends SolutionFinder {
   override def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula] =
-    FindFormulaH( schematicSIP, n ) map ( _._2 )
+    FindFormulaH( schematicSIP, n, forgetClauses ) map ( _._2 )
 }
