@@ -88,24 +88,23 @@ object SmtLibExporter {
   }
 
   private def toSMTFormat( f: FOLExpression ): String = f match {
-    case Top()         => "true"
-    case Bottom()      => "false"
-    case FOLVar( s )   => toSMTString( s, true )
-    case FOLConst( s ) => toSMTString( s, false )
-    case FOLAtom( pred, args ) =>
-      if ( args.size == 0 ) {
-        toSMTString( pred, false )
-      } else {
-        "(" + toSMTString( pred, false ) + " " + args.foldLeft( "" )( ( acc, t ) => toSMTFormat( t ) + " " + acc ) + ")"
-      }
-    // Functions should have arguments.
-    case FOLFunction( fun, args ) => "(" + toSMTString( fun, false ) + " " + args.foldRight( "" )( ( t, acc ) => toSMTFormat( t ) + " " + acc ) + ")"
+    case Top()                    => "true"
+    case Bottom()                 => "false"
+    case FOLVar( s )              => toSMTString( s, true )
+    case FOLAtom( pred, args )    => toSMTFormat( pred, args )
+    case FOLFunction( fun, args ) => toSMTFormat( fun, args )
     case And( f1, f2 )            => "(and " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
     case Or( f1, f2 )             => "(or " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
     case Imp( f1, f2 )            => "(=> " + toSMTFormat( f1 ) + " " + toSMTFormat( f2 ) + ")"
     case Neg( f1 )                => "(not " + toSMTFormat( f1 ) + ")"
     case _                        => throw new Exception( "Undefined formula for SMT: " + f )
   }
+
+  private def toSMTFormat( head: String, args: Seq[FOLTerm] ): String =
+    if ( args.isEmpty )
+      head
+    else
+      s"(${toSMTString( head, false )} ${args.map( toSMTFormat ).mkString( " " )})"
 
   // Note: not an exhaustive list
   private val smt_keywords = List(
