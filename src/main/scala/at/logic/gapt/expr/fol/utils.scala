@@ -213,3 +213,51 @@ object toAbbreviatedString {
   }
 
 }
+
+/**
+ * Matcher for Sigma,,n,,
+ * A FOLFormula f will match Sigma(k) if f is Sigma,,k,,, but not Sigma,,k-1,,.
+ */
+object Sigma {
+  def unapply( f: FOLFormula ): Option[Int] = f match {
+    case FOLAtom( _ ) => Some( 0 )
+    case Neg( g )     => unapply( g )
+    case And( g, h )  => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Or( g, h )   => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Imp( g, h )  => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Ex.Block( vars, g ) =>
+      println( s"$vars, $g" )
+      g match {
+        case Pi( i ) => Some( i + 1 )
+      }
+  }
+}
+
+/**
+ * Matcher for Pi,,n,,
+ * A FOLFormula f will match Pi(k) if f is Pi,,k,,, but not Pi,,k-1,,.
+ */
+object Pi {
+  def unapply( f: FOLFormula ): Option[Int] = f match {
+    case FOLAtom( _ ) => Some( 0 )
+    case Neg( g )     => unapply( g )
+    case And( g, h )  => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Or( g, h )   => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Imp( g, h )  => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case All.Block( _, g ) => g match {
+      case Sigma( i ) => Some( i + 1 )
+    }
+  }
+}
+
+/**
+ * Matcher for Delta,,n,,
+ * A FOLFormula f will match Delta(k) if it is both Sigma,,k,, and Pi,,k,,, but not Sigma,,k-1,, or Pi,,k-1,,.
+ */
+object Delta {
+  def unapply( f: FOLFormula ): Option[Int] = f match {
+    case Sigma( k ) => f match {
+      case Pi( j ) => Some( Math.min( k, j ) )
+    }
+  }
+}
