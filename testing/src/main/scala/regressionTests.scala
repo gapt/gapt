@@ -27,12 +27,6 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E ) --- "toDeep"
 
-    val prover = new Prover9Prover()
-    val ip = prover.getLKProof( deep ) --- "getLKProof( deep )"
-
-    ExtractInterpolant( ip.get, ip.get.root.antecedent.toSet, ip.get.root.succedent.toSet ) --? "extractInterpolant"
-    ExtractInterpolant( ip.get, ip.get.root.succedent.toSet, ip.get.root.antecedent.toSet ) --? "extractInterpolant diff partition"
-
     ( toShallow( E ) == p.root.toHOLSequent ) !-- "shallow sequent of expansion proof"
 
     if ( !containsEqualityReasoning( p ) ) {
@@ -52,6 +46,11 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
           ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
       }
     }
+
+    val ip = ( new Prover9Prover() ).getLKProof( deep ) --- "getLKProof( deep )"
+
+    ExtractInterpolant( ip.get, ip.get.root.antecedent.toSet, ip.get.root.succedent.toSet ) --? "extractInterpolant"
+    ExtractInterpolant( ip.get, ip.get.root.succedent.toSet, ip.get.root.antecedent.toSet ) --? "extractInterpolant diff partition"
   }
 }
 
