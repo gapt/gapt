@@ -11,6 +11,8 @@ import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutE
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.expr.HOLFormula
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -25,7 +27,11 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E ) --- "toDeep"
 
-    ExtractInterpolant( p, p.root.antecedent.toSet, p.root.succedent.toSet ) --? "extractInterpolant"
+    val prover = new Prover9Prover()
+    val ip = prover.getLKProof( deep ) --- "getLKProof( deep )"
+
+    ExtractInterpolant( ip.get, ip.get.root.antecedent.toSet, ip.get.root.succedent.toSet ) --? "extractInterpolant"
+    ExtractInterpolant( ip.get, ip.get.root.succedent.toSet, ip.get.root.antecedent.toSet ) --? "extractInterpolant diff partition"
 
     ( toShallow( E ) == p.root.toHOLSequent ) !-- "shallow sequent of expansion proof"
 
