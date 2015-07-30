@@ -1,8 +1,9 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.lk.base.Sequent
 import at.logic.gapt.provers.FailSafeProver
+import at.logic.gapt.provers.sat4j.Sat4jProver
 import org.specs2.mutable._
 
 class minimalExpansionSequentTest extends Specification {
@@ -56,6 +57,12 @@ class minimalExpansionSequentTest extends Specification {
   "Minimal expansion trees" should {
     "be computed correctly by the smart algorithm" in {
       minESeq mustEqual minimalExpansionSequents( eSeq, FailSafeProver.getProver() )
+    }
+
+    "handle weakening" in {
+      val E = ETAtom( FOLAtom( "Q" ) ) +: Sequent() :+ ETImp( ETWeakening( FOLAtom( "P" ) ), ETAtom( FOLAtom( "Q" ) ) )
+      val Some( minSeq ) = minimalExpansionSequent( E, new Sat4jProver )
+      new Sat4jProver().isValid( toDeep( minSeq ) ) must_== true
     }
   }
 }
