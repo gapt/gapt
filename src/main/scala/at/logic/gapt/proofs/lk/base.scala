@@ -277,6 +277,25 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @return
    */
   def indicesWhere( p: A => Boolean ): Seq[SequentIndex] = indices filter { i => p( this( i ) ) }
+
+  /**
+   * "Focuses on one element of the seuqent, i.e. returns element at index and the rest of the sequent.
+   *
+   * @param i A SequentIndex.
+   * @return A pair consisting of this(i) and the rest of this.
+   */
+  def focus( i: SequentIndex ): ( A, Sequent[A] ) = {
+    def listFocus( xs: Seq[A] )( i: Int ): ( A, Seq[A] ) = ( xs( i ), xs.take( i ) ++ xs.drop( i + 1 ) )
+
+    i match {
+      case Ant( k ) =>
+        val ( x, antNew ) = listFocus( antecedent )( k )
+        ( x, new Sequent( antNew, succedent ) )
+      case Suc( k ) =>
+        val ( x, sucNew ) = listFocus( succedent )( k )
+        ( x, new Sequent( antecedent, sucNew ) )
+    }
+  }
 }
 
 object Sequent {
