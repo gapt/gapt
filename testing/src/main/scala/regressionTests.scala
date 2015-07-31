@@ -47,10 +47,10 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       }
     }
 
-    val ip = ( new Prover9Prover() ).getLKProof( deep ) --- "getLKProof( deep )"
+    val ip = new Prover9Prover().getLKProof( deep ).get --- "getLKProof( deep )"
 
-    ExtractInterpolant( ip.get, ip.get.root.antecedent.toSet, ip.get.root.succedent.toSet ) --? "extractInterpolant"
-    ExtractInterpolant( ip.get, ip.get.root.succedent.toSet, ip.get.root.antecedent.toSet ) --? "extractInterpolant diff partition"
+    ExtractInterpolant( ip, ip.root.antecedent.toSet, ip.root.succedent.toSet ) --? "extractInterpolant"
+    ExtractInterpolant( ip, ip.root.succedent.toSet, ip.root.antecedent.toSet ) --? "extractInterpolant diff partition"
   }
 }
 
