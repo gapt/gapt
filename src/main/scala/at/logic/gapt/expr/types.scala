@@ -13,17 +13,14 @@ abstract class TA {
 abstract class TAtomicA extends TA
 abstract class TComplexA extends TA
 object TAtomicA {
-  def unapply( ta: TA ) = ta match {
-    case Tindex => Some( ta )
-    case Ti     => Some( ta )
-    case To     => Some( ta )
-    case _      => None
-  }
+  def unapply( ta: TAtomicA ) = Some( ta )
 }
 
 case object Tindex extends TAtomicA { override def toString = "ω" } // for indexed propositions in schema
 case object Ti extends TAtomicA { override def toString = "ι" }
 case object To extends TAtomicA { override def toString = "ο" }
+
+case class Tdata( name: String ) extends TAtomicA { override def toString = name }
 
 case class -> ( val in: TA, val out: TA ) extends TComplexA {
   override def toString = "(" + in.toString + "->" + out.toString + ")"
@@ -45,17 +42,10 @@ object -> {
 // convenience function to create function types
 // with argument types from and return type to
 object FunctionType {
-  def apply( to: TA, from: Seq[TA] ): TA = if ( !from.isEmpty ) from.foldRight( to )( ( t, acc ) => t -> acc ) else to
-  def unapply( ta: TA ): Option[Tuple2[TA, List[TA]]] = ta match {
-    case TAtomicA( _ )              => Some( ta, Nil )
-    case `->`( t1, TAtomicA( t2 ) ) => Some( t2, t1 :: Nil )
-    case `->`( t1, t2 ) => {
-      unapply( t2 ) match {
-        case Some( ( ta, ls ) ) => Some( ta, t1 :: ls )
-        case None               => None
-      }
-    }
-    case _ => None
+  def apply( to: TA, from: Seq[TA] ): TA = from.foldRight( to )( _ -> _ )
+  def unapply( ta: TA ): Option[( TA, List[TA] )] = ta match {
+    case `->`( from, FunctionType( to, froms ) ) => Some( to, from :: froms )
+    case _                                       => Some( ta, Nil )
   }
 }
 //gives the arity of a function - simple types have arity 0, complex types have 1 + arity of return value (because
