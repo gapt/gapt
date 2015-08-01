@@ -15,6 +15,13 @@ case class Ant( k: Int ) extends SequentIndex
 
 case class Suc( k: Int ) extends SequentIndex
 
+/**
+ * A sequent is a pair of sequences of elements of type A, typically written as a,,1,,,…,a,,m,, :- b,,1,,,…,b,,n,,.
+ *
+ * @param antecedent The first list.
+ * @param succedent The second list.
+ * @tparam A The type of the elements of the sequent.
+ */
 class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   /**
    * Equality treating each side of the sequent as list, i.e. respecting order and multiplicity.
@@ -39,10 +46,26 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    */
   def multiSetEquals[B]( other: Sequent[B] ): Boolean = ( other isSubMultisetOf this ) && ( this isSubMultisetOf other )
 
+  /**
+   * Sequence of elements of the sequent.
+   *
+   * @return Antecedent concatenated with succedent.
+   */
   def elements: Seq[A] = antecedent ++ succedent
 
+  /**
+   * Sequence of elements together with polarities of type Boolean signifying whether an element is in the antecedent or succedent.
+   *
+   * FIXME: Make polarities consistent throughout the system (IMO: false = antecedent, true = succedent)
+   * @return
+   */
   def polarizedElements: Seq[( A, Boolean )] = antecedent.map( _ -> true ) ++ succedent.map( _ -> false )
 
+  /**
+   * Returns true iff both cedents are empty.
+   *
+   * @return
+   */
   def isEmpty: Boolean = antecedent.isEmpty && succedent.isEmpty
 
   def nonEmpty: Boolean = !isEmpty
@@ -50,7 +73,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   /**
    * Takes the multiset difference between two sequents, i.e. each side separately.
    */
-  def diff[B >: A]( other: Sequent[B] ) = Sequent( this.antecedent diff other.antecedent, this.succedent diff other.succedent )
+  def diff[B >: A]( other: Sequent[B] ) = new Sequent( this.antecedent diff other.antecedent, this.succedent diff other.succedent )
 
   /**
    * Computes the intersection of two sequents.
@@ -58,7 +81,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param other
    * @return
    */
-  def intersect[B >: A]( other: Sequent[B] ) = Sequent( antecedent intersect other.antecedent, succedent intersect other.succedent )
+  def intersect[B >: A]( other: Sequent[B] ) = new Sequent( antecedent intersect other.antecedent, succedent intersect other.succedent )
 
   /**
    * Computes the union of two sequents.
@@ -66,9 +89,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param other
    * @return
    */
-  def union[B >: A]( other: Sequent[B] ) = Sequent( antecedent union other.antecedent, succedent union other.succedent )
+  def union[B >: A]( other: Sequent[B] ) = new Sequent( antecedent union other.antecedent, succedent union other.succedent )
 
-  def compose[B >: A]( other: Sequent[B] ) = Sequent( antecedent ++ other.antecedent, succedent ++ other.succedent )
+  def compose[B >: A]( other: Sequent[B] ) = new Sequent( antecedent ++ other.antecedent, succedent ++ other.succedent )
 
   /**
    * Removes duplicate formulas from both cedents.
@@ -80,7 +103,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def isSubMultisetOf[B >: A]( other: Sequent[B] ) = ( this diff other ).isEmpty
 
   /**
-   * @param other Another HOLSequent.
+   * @param other Another Sequent.
    * @return True iff other contains this pair of sets.
    */
   def isSubsetOf[B >: A]( other: Sequent[B] ) = ( this.distinct diff other.distinct ).isEmpty
@@ -92,44 +115,50 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def toTuple = ( antecedent, succedent )
 
   /**
+   * Adds an element to the antecedent. New elements are always outermost, i.e. on the very left.
    *
-   * @param e An element of type A
+   * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
   def addToAntecedent[B >: A]( e: B ): Sequent[B] = new Sequent( e +: antecedent, succedent )
 
   /**
+   * Adds an element to the antecedent. New elements are always outermost, i.e. on the very left.
    *
-   * @param e An element
+   * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
   def +:[B >: A]( e: B ) = addToAntecedent( e )
 
   /**
+   * Adds a sequent of elements to the antecedent. New elements are always outermost, i.e. on the very left.
    *
-   * @param fs A collection of HOLFormulas.
-   * @return The sequent with fs added to the antecedent.
+   * @param es A collection of elements of type B > A.
+   * @return The sequent with es added to the antecedent.
    */
   def ++:[B >: A]( es: GenTraversable[B] ): Sequent[B] = ( es :\ this.asInstanceOf[Sequent[B]] )( ( e, acc ) => acc.addToAntecedent( e ) )
 
   /**
+   * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
    *
-   * @param e An element of type A
-   * @return The sequent with e added to the antecedent
+   * @param e An element of type B > A
+   * @return The sequent with e added to the succedent
    */
   def addToSuccedent[B >: A]( e: B ): Sequent[B] = new Sequent( antecedent, succedent :+ e )
 
   /**
+   * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
    *
-   * @param f A HOLFormula
-   * @return The sequent with f added to the succedent
+   * @param e An element of type B > A
+   * @return The sequent with e added to the succedent
    */
   def :+[B >: A]( e: B ) = addToSuccedent( e )
 
   /**
+   * Adds a sequence of elements to the succedent. New elements are always outermost, i.e. on the very right.
    *
-   * @param fs A collection of HOLFormulas.
-   * @return The sequent with fs added to the succedent.
+   * @param es A collection of elements of type B > A.
+   * @return The sequent with es added to the succedent.
    */
   def :++[B >: A]( es: GenTraversable[B] ): Sequent[B] = ( this.asInstanceOf[Sequent[B]] /: es )( ( acc, e ) => acc.addToSuccedent( e ) )
 
@@ -149,25 +178,123 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
     new Sequent( antecedent, succedent.map( e => if ( e == from ) to else e ) )
   }
 
+  /**
+   * Maps a function over both cedents
+   *
+   * @param f A function of type A => B
+   * @tparam B The return type of f
+   * @return The sequent of type B that results from mapping f over both cedents.
+   */
   def map[B]( f: ( A ) => B ): Sequent[B] = this map ( f, f )
 
+  /**
+   * Maps two functions over the antecedent and succedent, respectively.
+   *
+   * @param f The function to map over the antecedent.
+   * @param g The function to map over the succedent.
+   * @tparam B The return type of f and g.
+   * @return The sequent of type B that results from mapping f and g over the antecedent and succedent, respectively.
+   */
   def map[B]( f: ( A ) => B, g: ( A ) => B ) = new Sequent( antecedent map f, succedent map g )
 
+  /**
+   * The sub-sequent of elements satisfying some predicate.
+   *
+   * @param p A function of type A => Boolean.
+   * @return The sequent consisting of only those elements satisfying p.
+   */
   def filter( p: A => Boolean ): Sequent[A] = new Sequent( antecedent filter p, succedent filter p )
 
+  /**
+   * The sub-sequent of elements not satisfying some predicate.
+   *
+   * @param p A function of type A => Boolean.
+   * @return The sequent consisting of only those elements not satisfying p.
+   */
   def filterNot( p: A => Boolean ): Sequent[A] = this filter ( !p( _ ) )
 
+  /**
+   * The number of elements in the sequent.
+   *
+   * @return
+   */
   def length = antecedent.length + succedent.length
 
+  /**
+   * Synonym for length.
+   *
+   * @return
+   */
   def size = length
+
+  /**
+   * A pair consisting of the lengths of the cedents.
+   *
+   * @return
+   */
+  def lengths = ( antecedent.length, succedent.length )
+
+  /**
+   * Synonym for lengths.
+   *
+   * @return
+   */
+  def sizes = lengths
 
   def sorted[B >: A]( implicit ordering: Ordering[B] ) = new Sequent( antecedent.sorted( ordering ), succedent.sorted( ordering ) )
 
+  /**
+   * Returns true iff the sequent contains some element in either cedent.
+   *
+   * @param el
+   * @tparam B
+   * @return
+   */
   def contains[B]( el: B ): Boolean = elements contains el
 
+  /**
+   * Returns the element at some SequentIndex.
+   *
+   * @param i A SequentIndex, i.e. Ant(k) or Suc(k)
+   * @return The k-th element of the antecedent or succedent, depending on the type of i.
+   */
   def apply( i: SequentIndex ): A = i match {
     case Ant( k ) => antecedent( k )
     case Suc( k ) => succedent( k )
+  }
+
+  /**
+   * Returns the range of indices of the sequent.
+   *
+   * @return
+   */
+  def indices: Seq[SequentIndex] = ( antecedent.indices map { i => Ant( i ) } ) ++ ( succedent.indices map { i => Suc( i ) } )
+
+  /**
+   * Returns the list of indices of elements satisfying some predicate.
+   *
+   * @param p A function of type A => Boolean.
+   * @return
+   */
+  def indicesWhere( p: A => Boolean ): Seq[SequentIndex] = indices filter { i => p( this( i ) ) }
+
+  /**
+   * "Focuses on one element of the seuqent, i.e. returns element at index and the rest of the sequent.
+   *
+   * @param i A SequentIndex.
+   * @return A pair consisting of this(i) and the rest of this.
+   */
+  def focus( i: SequentIndex ): ( A, Sequent[A] ) = {
+    def listFocus( xs: Seq[A] )( i: Int ): ( A, Seq[A] ) = ( xs( i ), xs.take( i ) ++ xs.drop( i + 1 ) )
+
+    i match {
+      case Ant( k ) =>
+        val ( x, antNew ) = listFocus( antecedent )( k )
+        ( x, new Sequent( antNew, succedent ) )
+      case Suc( k ) =>
+        val ( x, sucNew ) = listFocus( succedent )( k )
+        ( x, new Sequent( antecedent, sucNew ) )
+    }
   }
 }
 

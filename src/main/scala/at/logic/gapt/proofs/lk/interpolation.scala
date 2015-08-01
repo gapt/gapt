@@ -393,7 +393,7 @@ object Interpolate {
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
-    case _ => throw new InterpolationException( "Unknown inference rule." )
+    case _ => throw new InterpolationException( "Unknown inference rule of type: " + p.rule.toString() + "." )
   }
 
   private def applyUpUnary( p: LKProof, npart: Set[FormulaOccurrence], ppart: Set[FormulaOccurrence] ) = {

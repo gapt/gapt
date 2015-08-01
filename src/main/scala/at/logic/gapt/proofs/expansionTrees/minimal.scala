@@ -228,8 +228,9 @@ private[expansionTrees] class Minimizer( val sequent: MultiExpansionSequent, val
    * @return All trees that have exactly one fewer instance than the input.
    */
   def generateSuccessorTrees( tree: MultiExpansionTree ): Seq[MultiExpansionTree] = tree match {
-    case METAtom( f ) => Nil
-    case METNeg( s )  => generateSuccessorTrees( s ).map( METNeg.apply )
+    case METAtom( f )      => Nil
+    case METWeakening( _ ) => Nil
+    case METNeg( s )       => generateSuccessorTrees( s ).map( METNeg.apply )
     case METAnd( left, right ) =>
       val sLeft = generateSuccessorTrees( left )
       val sRight = generateSuccessorTrees( right )

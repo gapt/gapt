@@ -7,10 +7,12 @@ import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.expansionTrees.{ toShallow, addSymmetry, toDeep, ExpansionProofToLK }
-import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof }
+import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof, ExtractInterpolant }
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.expr.HOLFormula
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -44,6 +46,11 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
           ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
       }
     }
+
+    val ip = new Prover9Prover().getLKProof( deep ).get --- "getLKProof( deep )"
+
+    ExtractInterpolant( ip, ip.root.antecedent.toSet, ip.root.succedent.toSet ) --? "extractInterpolant"
+    ExtractInterpolant( ip, ip.root.succedent.toSet, ip.root.antecedent.toSet ) --? "extractInterpolant diff partition"
   }
 }
 

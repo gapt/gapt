@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.provers.maxsat.QMaxSAT
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.utils.logging.Logger
@@ -23,7 +23,8 @@ class SipProver(
   instances:                 Seq[Int]       = 0 until 3,
   testInstances:             Seq[Int]       = 0 until 15,
   minimizeInstanceLanguages: Boolean        = false,
-  quasiTautProver:           Prover         = new VeriTProver()
+  quasiTautProver:           Prover         = new VeriTProver,
+  maxSATSolver:              MaxSATSolver   = new QMaxSAT
 )
     extends Prover with Logger {
 
@@ -64,7 +65,7 @@ class SipProver(
     }
 
     debug( "Finding grammar..." )
-    val grammar = findMinimalSipGrammar( instanceLanguages, new QMaxSAT )
+    val grammar = findMinimalSipGrammar( instanceLanguages, maxSATSolver )
     debug( s"Grammar:\n$grammar" )
 
     if ( testInstances.forall { n =>
@@ -105,7 +106,7 @@ class SipProver(
     if ( minimizeInstanceLanguages ) {
       instanceProofs = instanceProofs map {
         case ( n, expProof ) =>
-          val minExpProof = minimalExpansionSequent( expProof, new VeriTProver ).get
+          val minExpProof = minimalExpansionSequent( expProof, quasiTautProver ).get
           debug {
             val removedInstances = extractInstances( expProof ) diff extractInstances( minExpProof )
             s"[n=$n] Removing unnecessary instances $removedInstances"

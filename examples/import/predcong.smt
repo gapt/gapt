@@ -1,0 +1,15 @@
+
+(set-logic QF_UF)
+(set-info :smt-lib-version 2.0)
+(declare-sort U 0)
+(declare-fun f (U U) U)
+(declare-fun a () U)
+(declare-fun b () U)
+(declare-fun p (U) Bool)
+(assert (p a))
+(assert (and (= (f a b) (f (f a b) b))
+         (= (p (f (f a b) b)) (p a))))
+(assert (not (p (f a b))))
+(check-sat)
+(exit)
+

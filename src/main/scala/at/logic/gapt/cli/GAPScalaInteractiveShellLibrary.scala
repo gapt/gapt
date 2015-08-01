@@ -691,7 +691,7 @@ object loadPrime {
 }
 
 object exportVeriT {
-  def apply( f: HOLSequent, fileName: String ) = VeriTExporter( f, fileName )
+  def apply( f: HOLSequent, fileName: String ) = SmtLibExporter( f, fileName )
 }
 
 object exportLLK {
