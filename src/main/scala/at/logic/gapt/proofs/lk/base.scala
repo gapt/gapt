@@ -296,6 +296,19 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
         ( x, new Sequent( antecedent, sucNew ) )
     }
   }
+
+  def zipWithIndex: Sequent[( A, SequentIndex )] =
+    Sequent(
+      antecedent.zipWithIndex.map { case ( a, i ) => a -> Ant( i ) },
+      succedent.zipWithIndex.map { case ( b, i ) => b -> Suc( i ) }
+    )
+
+  def find( pred: A => Boolean ): Option[SequentIndex] = indicesWhere( pred ).headOption
+
+  def updated[B >: A]( index: SequentIndex, elem: B ): Sequent[B] = index match {
+    case Ant( i ) => Sequent( antecedent.updated( i, elem ), succedent )
+    case Suc( j ) => Sequent( antecedent, succedent.updated( j, elem ) )
+  }
 }
 
 object Sequent {
