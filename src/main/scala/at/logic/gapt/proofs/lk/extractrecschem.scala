@@ -32,6 +32,18 @@ object extractRecSchem {
     case _ => Set()
   } ) ++ ( freeVariables( p.root.toFormula ) diff bound )
 
+  def symbolTypeP( f: HOLFormula ): TA = f match {
+    case All( v, g )                   => v.exptype -> symbolTypeP( g )
+    case Ex( v, g )                    => ( v.exptype -> symbolTypeN( g ) ) -> To
+    case _ if !containsQuantifier( f ) => To
+  }
+
+  def symbolTypeN( f: HOLFormula ): TA = f match {
+    case Ex( v, g )                    => v.exptype -> symbolTypeN( g )
+    case All( v, g )                   => ( v.exptype -> symbolTypeP( g ) ) -> To
+    case _ if !containsQuantifier( f ) => To
+  }
+
   private def followSymbols( symbols: Map[FormulaOccurrence, LambdaExpression], q: LKProof ) =
     for ( ( lowerOcc, sym ) <- symbols; occ <- q.root.occurrences if lowerOcc.isDescendantOf( occ, true ) )
       yield occ -> sym
@@ -42,14 +54,14 @@ object extractRecSchem {
   private val freshVars = Stream.from( 1 ).map( i => s"X$i" ).iterator
   private def mkFreshVar(): String = freshVars.next()
 
-  private object QuantifiedPi2Cut {
+  private object QuantifiedCut {
     def unapply( p: LKProof ) = p match {
       case CutRule( q1, q2, sequent, aux1, aux2 ) =>
         aux1.formula match {
-          case All.Block( u, Ex.Block( v, f ) ) if u.nonEmpty && !containsQuantifier( f ) =>
-            Some( ( q1, q2, sequent, aux1, aux2, u, v ) )
-          case Ex.Block( u, All.Block( v, f ) ) if u.nonEmpty && !containsQuantifier( f ) =>
-            Some( ( q2, q1, sequent, aux2, aux1, u, v ) )
+          case All.Block( u, f ) if u.nonEmpty =>
+            Some( ( q1, q2, sequent, aux1, aux2, aux1.formula, true ) )
+          case Ex.Block( u, f ) if u.nonEmpty =>
+            Some( ( q2, q1, sequent, aux2, aux1, aux1.formula, false ) )
           case _ => None
         }
       case _ => None
@@ -72,35 +84,42 @@ object extractRecSchem {
 
   def getRules( p: LKProof, axiom: LambdaExpression, symbols: Map[FormulaOccurrence, LambdaExpression], context: List[Var] ): Set[HORule] = p match {
     case Axiom( sequent ) => sequent.occurrences.flatMap( symbols.get ).map { sym => HORule( axiom, sym ) } toSet
-    case WeakQuantifierRule( q, sequent, aux, main, term ) =>
+    case WeakQuantifierRule( q, _, aux, main, term ) =>
       val appSym = App( symbols( main ), term )
       appSym.exptype match {
         case FunctionType( To, argtypes ) -> To =>
           val eigenvars = findEigenVars( aux, q )
           val cpsSym = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.exptype ) ++ argtypes ) ), context )
           val expCpsSym = Apps( cpsSym, eigenvars )
-          getRules( q, expCpsSym, followSymbols( symbols - main, q ), eigenvars ++ context ) +
-            HORule( axiom, App( appSym, cpsSym ) )
+          expCpsSym.exptype match {
+            case To =>
+              getRules( q, expCpsSym, followSymbols( symbols - main, q ), eigenvars ++ context ) +
+                HORule( axiom, App( appSym, cpsSym ) )
+            case nextCpsType -> To =>
+              val nextCpsSym = Var( mkFreshVar(), nextCpsType )
+              getRules( q, App( expCpsSym, nextCpsSym ), followSymbols( symbols - main, q ) + ( aux -> nextCpsSym ), nextCpsSym :: eigenvars ++ context ) +
+                HORule( axiom, App( appSym, cpsSym ) )
+          }
         case _ =>
           getRules( q, axiom, followSymbols( symbols - main, q ) + ( aux -> appSym ), context )
       }
-    case QuantifiedPi2Cut( q1, q2, sequent, aux1, aux2, u, v ) =>
-      val symType = if ( v.isEmpty )
-        FunctionType( To, context.map( _.exptype ) ++ u.map( _.exptype ) )
-      else FunctionType( To, context.map( _.exptype ) ++ u.map( _.exptype ) :+ FunctionType( To, v.map( _.exptype ) ) )
+    case QuantifiedCut( q1, q2, _, aux1, aux2, f, pol ) =>
+      val symType = FunctionType( if ( pol ) symbolTypeP( f ) else symbolTypeN( f ), context.map( _.exptype ) )
       val symbol = Apps( Const( mkFreshSymbol(), symType ), context )
 
       val eigenvars = findEigenVars( aux1, q1 )
       val hypSym = Apps( symbol, eigenvars )
-      val rules1 = if ( v.nonEmpty ) {
-        val introSym = Var( mkFreshVar(), FunctionType( To, v.map( _.exptype ) ) )
-        val fullHypSym = Apps( hypSym, introSym )
-        getRules( q1, fullHypSym, followSymbols( symbols, q1 ) + ( aux1 -> introSym ), introSym :: eigenvars ++ context )
-      } else getRules( q1, hypSym, followSymbols( symbols, q1 ), eigenvars ++ context )
+      val rules1 = hypSym.exptype match {
+        case To => getRules( q1, hypSym, followSymbols( symbols, q1 ), eigenvars ++ context )
+        case introType -> To =>
+          val introSym = Var( mkFreshVar(), introType )
+          val fullHypSym = App( hypSym, introSym )
+          getRules( q1, fullHypSym, followSymbols( symbols, q1 ) + ( aux1 -> introSym ), introSym :: eigenvars ++ context )
+      }
 
       val rules2 = getRules( q2, axiom, followSymbols( symbols, q2 ) + ( aux2 -> symbol ), context )
       rules1 ++ rules2
-    case InductionRule( q1, q2, sequent, base, stepl, stepr, main, term ) =>
+    case InductionRule( q1, q2, _, base, stepl, stepr, main, term ) =>
       val All.Block( vars, _ ) = stepl.formula.asInstanceOf[FOLFormula]
       val indVar = FOLMatchingAlgorithm.matchTerms( stepl.formula.asInstanceOf[FOLFormula], stepr.formula.asInstanceOf[FOLFormula] ).get.domain.head.asInstanceOf[FOLVar]
       val symbol = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.exptype ) ++ Seq( Ti ) ++ vars.map( _.exptype ) ) ), context )
@@ -112,9 +131,9 @@ object extractRecSchem {
       val rules2 = getRules( q2, stepAxiom, followSymbols( symbols - main, q2 ) + ( stepl -> App( symbol, indVar ) ), indVar :: context )
 
       rules1 ++ rules2 + HORule( axiom, Apps( symbol, term :: findEigenVars( main, p ) ) )
-    case BinaryLKProof( rule, q1, q2, sequent, aux1, aux2, main ) =>
+    case BinaryLKProof( rule, q1, q2, _, aux1, aux2, main ) =>
       getRules( q1, axiom, followSymbols( symbols, q1 ), context ) ++ getRules( q2, axiom, followSymbols( symbols, q2 ), context )
-    case UnaryLKProof( rule, q, sequent, auxs, main ) =>
+    case UnaryLKProof( rule, q, _, auxs, main ) =>
       getRules( q, axiom, followSymbols( symbols, q ), context )
   }
 }
