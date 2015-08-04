@@ -9,7 +9,14 @@ import at.logic.gapt.utils.ds.trees._
 
 import scala.collection.GenTraversable
 
-sealed abstract class SequentIndex
+sealed abstract class SequentIndex extends Ordered[SequentIndex] {
+  def compare( that: SequentIndex ) = ( this, that ) match {
+    case ( Ant( _ ), Suc( _ ) ) => -1
+    case ( Suc( _ ), Ant( _ ) ) => 1
+    case ( Ant( i ), Ant( j ) ) => i - j
+    case ( Suc( i ), Suc( j ) ) => i - j
+  }
+}
 
 case class Ant( k: Int ) extends SequentIndex
 
@@ -261,6 +268,17 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def apply( i: SequentIndex ): A = i match {
     case Ant( k ) => antecedent( k )
     case Suc( k ) => succedent( k )
+  }
+
+  /**
+   * Tests whether the sequent is defined at the supplied SequentIndex.
+   *
+   * @param i
+   * @return
+   */
+  def isDefinedAt( i: SequentIndex ): Boolean = i match {
+    case Ant( k ) => antecedent.isDefinedAt( k )
+    case Suc( k ) => succedent.isDefinedAt( k )
   }
 
   /**
