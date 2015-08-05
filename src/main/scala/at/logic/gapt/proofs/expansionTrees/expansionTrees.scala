@@ -592,8 +592,9 @@ object merge extends at.logic.gapt.utils.logging.Logger {
   def apply( etSeq: ( Seq[ExpansionTreeWithMerges], Seq[ExpansionTreeWithMerges] ) ): ExpansionSequent = {
     val ( antecedent, succedent ) = etSeq
     val allTrees = antecedent ++ succedent
+    val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
 
-    trace( "\n\nmerge seq in: " + antecedent + " |- " + succedent )
+    trace( dnLine + "merge seq in: " + antecedent + " |- " + succedent )
 
     // apply main to all trees. if a substitution occurs, apply it to all trees and restart whole process as
     // substitutions can create merges (potentially everywhere).
@@ -601,7 +602,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       if ( index == trees.length ) {
         trees
       } else {
-        trace( "\n\nmerge on index: " + index + " tree: " + trees( index ) + " trees: " + trees )
+        trace( dnLine + "merge on index: " + index + " tree: " + trees( index ) + " trees: " + trees )
         // define current tree and context, apply main and rebuild later
         val context = trees.take( index ) ++ trees.drop( index + 1 )
         val curTree = trees( index )
@@ -724,7 +725,8 @@ object merge extends at.logic.gapt.utils.logging.Logger {
    * Call with children of merge node
    */
   private def doApplyMerge( tree1: ExpansionTreeWithMerges, tree2: ExpansionTreeWithMerges, polarity: Boolean ): ( Option[Substitution], ExpansionTreeWithMerges ) = {
-    trace( "apply merge called on: \n" + tree1 + "\n" + tree2 )
+    val nLine = sys.props( "line.separator" )
+    trace( "apply merge called on: " + nLine + tree1 + nLine + tree2 )
 
     // similar as above, code which is required for all binary operators
     def start_op2( s1: ExpansionTreeWithMerges, t1: ExpansionTreeWithMerges,
@@ -793,7 +795,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
           case None                    => doApplyMerge( tree1, res, polarity )
         }
       }
-      case _ => throw new IllegalArgumentException( "Bug in merge in LKToExpansionProof. By Construction, the trees to be merge should have the same structure, which is violated for:\n" + tree1 + "\n" + tree2 )
+      case _ => throw new IllegalArgumentException( "Bug in merge in LKToExpansionProof. By Construction, the trees to be merge should have the same structure, which is violated for:" + nLine + tree1 + nLine + tree2 )
     }
   }
 }

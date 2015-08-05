@@ -332,6 +332,7 @@ package robinson {
   }
 
   object Formatter {
+    val nLine = sys.props( "line.separator" )
     //TODO: replace this by the standard scala io
     def printToFile( f: java.io.File )( op: java.io.PrintWriter => Unit ) {
       val p = new java.io.PrintWriter( f )
@@ -343,7 +344,7 @@ package robinson {
     }
 
     def asGraphViz( p: LKProof ): String = {
-      asGraphViz( "digraph lkproof {\n", p, 0 )._1 + "\n}\n"
+      asGraphViz( "digraph lkproof {" + nLine, p, 0 )._1 + nLine + "}" + nLine
     }
 
     def asGraphViz( s: String, p: LKProof, i: Int ): ( String, Int ) = {
@@ -351,35 +352,35 @@ package robinson {
         case UnaryLKProof( rule, parent, root, _, _ ) =>
           val ( t, j ) = asGraphViz( s, parent, i )
           val k = j + 1
-          ( t + "n" + k + " -> n" + j + ";\n", k )
+          ( t + "n" + k + " -> n" + j + ";" + nLine, k )
         case UnaryLKskProof( rule, parent, root, _, _ ) =>
           val ( t, j ) = asGraphViz( s, parent, i )
           val k = j + 1
-          ( t + "n" + k + " -> n" + j + ";\n", k )
+          ( t + "n" + k + " -> n" + j + ";" + nLine, k )
         case BinaryLKProof( rule, p1, p2, root, _, _, _ ) =>
           val ( t1, j1 ) = asGraphViz( s, p1, i )
           val ( t2, j2 ) = asGraphViz( t1, p2, j1 )
           val k = j2 + 1
-          ( t2 + "n" + k + " -> n" + j1 + ";\n" + "n" + k + " -> n" + j2 + ";\n\n", k )
+          ( t2 + "n" + k + " -> n" + j1 + ";" + nLine + "n" + k + " -> n" + j2 + ";" + nLine + nLine, k )
         case p: NullaryLKProof =>
           ( s, i + 1 )
       }
     }
 
-    def asXml( p: LKProof ): String = asXml( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", p )
+    def asXml( p: LKProof ): String = asXml( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + nLine, p )
     def toInt( s: RuleTypeA ) = s.toString.foldLeft( 0 )( ( i, c ) => i + c.toInt )
     def asXml( s: String, p: LKProof ): String = {
       p match {
         case UnaryLKProof( rule, parent, root, _, _ ) =>
-          asXml( s + "<unary rule=\"" + toInt( rule ) + "\">\n", parent ) + "</unary>\n"
+          asXml( s + "<unary rule=\"" + toInt( rule ) + "\">" + nLine, parent ) + "</unary>" + nLine
         case UnaryLKskProof( rule, parent, root, _, _ ) =>
-          asXml( s + "<unary rule=\"" + toInt( rule ) + "\">\n", parent ) + "</unary>\n"
+          asXml( s + "<unary rule=\"" + toInt( rule ) + "\">" + nLine, parent ) + "</unary>" + nLine
         case BinaryLKProof( rule, p1, p2, root, _, _, _ ) =>
-          val t1 = asXml( s + "<binary rule=\"" + toInt( rule ) + "\">\n", p1 )
+          val t1 = asXml( s + "<binary rule=\"" + toInt( rule ) + "\">" + nLine, p1 )
           val t2 = asXml( t1, p2 )
-          t2 + "</binary>\n"
+          t2 + "</binary>" + nLine
         case p: NullaryLKProof =>
-          s + "<leaf rule=\"" + toInt( p.rule ) + "\"/>\n"
+          s + "<leaf rule=\"" + toInt( p.rule ) + "\"/>" + nLine
       }
     }
 
@@ -447,7 +448,7 @@ package robinson {
 \newcommand{\RL}[1]{\RightLabel{\footnotesize \ensuremath{#1}}}
 
 \begin{document}""" +
-        tex( p, ids, List() )._1 + "\n\\DisplayProof\n\\end{document}"
+        tex( p, ids, List() )._1 + nLine + "\\DisplayProof" + nLine + "\\end{document}"
     }
 
     def escapeTex( s: String ) = {
@@ -470,23 +471,23 @@ package robinson {
         case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
           val ( str1, e1 ) = tex( p1, ids, edges )
           val ( str2, e2 ) = tex( p2, ids, e1 )
-          ( str1 + str2 + "\\RL{Resolve} \n\\BI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
+          ( str1 + str2 + "\\RL{Resolve} " + nLine + "\\BI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
 
         case Paramodulation( clause, p1, p2, occ1, occ2, _, subst ) =>
           val ( str1, e1 ) = tex( p1, ids, edges )
           val ( str2, e2 ) = tex( p2, ids, e1 )
-          ( str1 + str2 + "\\RL{Para} \n\\BI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
+          ( str1 + str2 + "\\RL{Para} " + nLine + "\\BI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
 
         case Factor( clause, p1, _, sub ) =>
           val ( str1, e1 ) = tex( p1, ids, edges )
 
-          ( str1 + "\\RL{Factor} \n\\UI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
+          ( str1 + "\\RL{Factor} " + nLine + "\\UI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
         case Variant( clause, p1, sub ) =>
           val ( str1, e1 ) = tex( p1, ids, edges )
 
-          ( str1 + "\\RL{Variant} \n\\UI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
+          ( str1 + "\\RL{Variant} " + nLine + "\\UI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
 
-        case InitialClause( clause ) => ( "\\AX{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}\n", edges )
+        case InitialClause( clause ) => ( "\\AX{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}" + nLine, edges )
 
         case _                       => ( "", edges )
       }
@@ -495,10 +496,10 @@ package robinson {
     def asGraphViz( p: ResolutionProof[OccClause] ): String = {
       val ids = createMap( p, 1, Map[OccClause, Int]() )._1
 
-      "digraph resproof {\n graph [rankdir=TB]; node [shape=box];\n" +
-        ( ids.keys.foldLeft( "" )( ( str, clause ) => str + "v" + ids( clause ) + " [label=\"" + clause + "\"];\n" ) ) +
+      "digraph resproof {" + nLine + " graph [rankdir=TB]; node [shape=box];" + nLine +
+        ( ids.keys.foldLeft( "" )( ( str, clause ) => str + "v" + ids( clause ) + " [label=\"" + clause + "\"];" + nLine ) ) +
         gv( p, ids, List() )._1 +
-        "}\n"
+        "}" + nLine
     }
     def gv( p: ResolutionProof[OccClause], ids: Map[OccClause, Int], edges: List[List[Int]] ): ( String, List[List[Int]] ) = p match {
       case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
@@ -509,8 +510,8 @@ package robinson {
           ( str1 + str2, e2 )
         else
           ( str1 + str2 +
-            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Res " + occ1 + "\"];\n" +
-            "v" + ids( p2.vertex ) + " -> v" + ids( clause ) + "[label=\"Res " + occ2 + "\"];\n\n",
+            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Res " + occ1 + "\"];" + nLine +
+            "v" + ids( p2.vertex ) + " -> v" + ids( clause ) + "[label=\"Res " + occ2 + "\"];" + nLine + nLine,
             triple :: e2 )
 
       case Paramodulation( clause, p1, p2, occ1, occ2, _, subst ) =>
@@ -521,8 +522,8 @@ package robinson {
           ( str1 + str2, e2 )
         else
           ( str1 + str2 +
-            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Para " + occ1 + "\"];\n" +
-            "v" + ids( p2.vertex ) + " -> v" + ids( clause ) + "[label=\"Para " + occ2 + "\"];\n\n",
+            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Para " + occ1 + "\"];" + nLine +
+            "v" + ids( p2.vertex ) + " -> v" + ids( clause ) + "[label=\"Para " + occ2 + "\"];" + nLine + nLine,
             triple :: e2 )
 
       case Factor( clause, p1, occs, sub ) =>
@@ -532,7 +533,7 @@ package robinson {
           ( str1, e1 )
         else
           ( str1 +
-            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Factor " + occs.map( _.mkString( ", " ) ).mkString( "(", "; ", ")" ) + "\"];\n\n",
+            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Factor " + occs.map( _.mkString( ", " ) ).mkString( "(", "; ", ")" ) + "\"];" + nLine + nLine,
             triple :: e1 )
       case Variant( clause, p1, sub ) =>
         val ( str1, e1 ) = gv( p1, ids, edges )
@@ -541,7 +542,7 @@ package robinson {
           ( str1, e1 )
         else
           ( str1 +
-            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Variant " + sub.toString().replaceFirst( "Map", "" ) + "\"];\n\n",
+            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Variant " + sub.toString().replaceFirst( "Map", "" ) + "\"];" + nLine + nLine,
             triple :: e1 )
 
       case Instance( clause, p1, sub ) =>
@@ -551,33 +552,33 @@ package robinson {
           ( str1, e1 )
         else
           ( str1 +
-            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Instance " + sub.toString().replaceFirst( "Map", "" ) + "\"];\n\n",
+            "v" + ids( p1.vertex ) + " -> v" + ids( clause ) + "[label=\"Instance " + sub.toString().replaceFirst( "Map", "" ) + "\"];" + nLine + nLine,
             triple :: e1 )
 
-      case InitialClause( clause ) => ( "", edges ) //"v" + ids(clause) +" [label=\""+clause+"\"];\n\n"
+      case InitialClause( clause ) => ( "", edges ) //"v" + ids(clause) +" [label=\""+clause+"\"];" + nLine + nLine
 
       case _                       => ( "", edges )
     }
 
     def apply( indent: String, p: ResolutionProof[OccClause], ids: Map[OccClause, Int] ): String = p match {
       case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
-        indent + "(" + ids( clause ) + ") Resolution([" + clause + "] aux1=[" + occ1.formula + "] aux2=[" + occ2.formula + "] sub=" + subst + ")\n" +
+        indent + "(" + ids( clause ) + ") Resolution([" + clause + "] aux1=[" + occ1.formula + "] aux2=[" + occ2.formula + "] sub=" + subst + ")" + nLine +
           apply( "  " + indent, p1, ids ) + apply( "  " + indent, p2, ids )
       case Paramodulation( clause, p1, p2, occ1, occ2, main, subst ) =>
-        indent + "(" + ids( clause ) + ") Paramodulation([" + clause + "] aux1=[" + occ1.formula + "] aux2=[" + occ2.formula + "])\n" +
+        indent + "(" + ids( clause ) + ") Paramodulation([" + clause + "] aux1=[" + occ1.formula + "] aux2=[" + occ2.formula + "])" + nLine +
           apply( "  " + indent, p1, ids ) + apply( "  " + indent, p2, ids )
       case Factor( clause, p1, occs, sub ) =>
-        indent + "(" + ids( clause ) + ") Factor([" + clause + "] auxs=" + occs.map( _.map( ( x: FormulaOccurrence ) => x.formula ) ).mkString( "[", "; ", "]" ) + ")\n" +
+        indent + "(" + ids( clause ) + ") Factor([" + clause + "] auxs=" + occs.map( _.map( ( x: FormulaOccurrence ) => x.formula ) ).mkString( "[", "; ", "]" ) + ")" + nLine +
           apply( "  " + indent, p1, ids )
       case Variant( clause, p1, sub ) =>
-        indent + "(" + ids( clause ) + ") Variant([" + clause + "])\n" +
+        indent + "(" + ids( clause ) + ") Variant([" + clause + "])" + nLine +
           apply( "  " + indent, p1, ids )
       case Instance( clause, p1, sub ) =>
-        indent + "(" + ids( clause ) + ") Instance([" + clause + "] sub=" + sub + ")\n" +
+        indent + "(" + ids( clause ) + ") Instance([" + clause + "] sub=" + sub + ")" + nLine +
           apply( "  " + indent, p1, ids )
-      case InitialClause( clause ) => indent + "(" + ids( clause ) + ") InitialClause([" + clause + "])\n\n"
+      case InitialClause( clause ) => indent + "(" + ids( clause ) + ") InitialClause([" + clause + "])" + nLine + nLine
 
-      case _                       => indent + "(need to handle " + p.getClass + " -- " + "" + ")\n"
+      case _                       => indent + "(need to handle " + p.getClass + " -- " + "" + ")" + nLine
     }
   }
 

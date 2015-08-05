@@ -18,48 +18,50 @@ import at.logic.gapt.prooftool.DrawSequent
 
 object ProofToLatexExporter {
 
+  val nLine = sys.props("line.separator")
+  
   def apply( proof: LKProof ) = document( proofToLatex( proof ) )
 
   def apply( list: List[( String, LKProof )] ) =
-    document( list.foldLeft( "" )( ( s, pair ) => s + "\n The proof $" + pair._1 + "$ is:\n\n" + proofToLatex( pair._2 ) ) )
+    document( list.foldLeft( "" )( ( s, pair ) => s + nLine + " The proof $" + pair._1 + "$ is:" + nLine + nLine + proofToLatex( pair._2 ) ) )
 
   def document( body: String ) =
-    "\\documentclass{memoir} \n \n" +
-      "% Change the values to fit the proof in one 'page'. \n" +
-      "% Default size is A4 paper. \n" +
-      "\\setstocksize{297mm}{210mm} \n" +
-      "\\settrimmedsize{\\stockheight}{\\stockwidth}{*} \n \n" +
-      "\\usepackage{fullpage} \n" +
-      "\\usepackage{amssymb} \n" +
-      "\\usepackage{bussproofs} \n" +
-      "\\pagestyle{empty} \n" +
-      "\\begin{document} \n" +
+    "\\documentclass{memoir} " + nLine + " " + nLine +
+      "% Change the values to fit the proof in one 'page'. " + nLine +
+      "% Default size is A4 paper. " + nLine +
+      "\\setstocksize{297mm}{210mm} " + nLine +
+      "\\settrimmedsize{\\stockheight}{\\stockwidth}{*} " + nLine + " " + nLine +
+      "\\usepackage{fullpage} " + nLine +
+      "\\usepackage{amssymb} " + nLine +
+      "\\usepackage{bussproofs} " + nLine +
+      "\\pagestyle{empty} " + nLine +
+      "\\begin{document} " + nLine +
       body +
       "\\end{document}"
 
   def proofToLatex( proof: LKProof ) =
-    "\\begin{prooftree} \n" +
+    "\\begin{prooftree} " + nLine +
       rulesToLatex( proof ) +
-      "\\end{prooftree} \n"
+      "\\end{prooftree} " + nLine
 
   def rulesToLatex( proof: LKProof ): String = proof match {
     case p: NullaryLKProof => p match {
       case SchemaProofLinkRule( root, link, indices ) =>
-        "\\AxiomC{$(" + link + "(" + DrawSequent.formulaToLatexString( indices.head ) + "))$} \n" +
-          "\\dashedLine \n" +
-          "\\UnaryInfC{$" + DrawSequent.sequentToLatexString( root ) + "$} \n"
+        "\\AxiomC{$(" + link + "(" + DrawSequent.formulaToLatexString( indices.head ) + "))$} " + nLine +
+          "\\dashedLine " + nLine +
+          "\\UnaryInfC{$" + DrawSequent.sequentToLatexString( root ) + "$} " +nLine
       case _ =>
-        "\\AxiomC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} \n"
+        "\\AxiomC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} " +nLine
     }
     case p: UnaryLKProof =>
       rulesToLatex( p.uProof ) +
-        "\\RightLabel{$" + ruleNameToLatex( p.rule ) + "$} \n" +
-        "\\UnaryInfC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} \n"
+        "\\RightLabel{$" + ruleNameToLatex( p.rule ) + "$} " + nLine +
+        "\\UnaryInfC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} " + nLine
     case p: BinaryLKProof =>
-      rulesToLatex( p.uProof1 ) + "\n" +
-        rulesToLatex( p.uProof2 ) + "\n" +
-        "\\RightLabel{$" + ruleNameToLatex( p.rule ) + "$} \n" +
-        "\\BinaryInfC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} \n"
+      rulesToLatex( p.uProof1 ) + nLine +
+        rulesToLatex( p.uProof2 ) + nLine +
+        "\\RightLabel{$" + ruleNameToLatex( p.rule ) + "$} " + nLine +
+        "\\BinaryInfC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} " + nLine
   }
 
   def ruleNameToLatex( name: RuleTypeA ) = name match {
