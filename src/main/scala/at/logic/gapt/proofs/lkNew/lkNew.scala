@@ -45,6 +45,13 @@ abstract class LKProof {
    * @return
    */
   def premises: Seq[HOLSequent] = subProofs map ( _.endSequent )
+
+  /**
+   * Returns the subproofs of this in post order.
+   *
+   * @return
+   */
+  def postOrder: Seq[LKProof]
 }
 
 /**
@@ -79,6 +86,12 @@ abstract class UnaryLKProof extends LKProof {
   def premise = subProof.endSequent
 
   override def subProofs = Seq( subProof )
+
+  override def postOrder = subProof.postOrder :+ this
+}
+
+object UnaryLKProof {
+  def unapply( p: UnaryLKProof ) = Some( p.endSequent, p.subProof )
 }
 
 /**
@@ -134,6 +147,12 @@ abstract class BinaryLKProof extends LKProof {
   def rightPremise = rightSubProof.endSequent
 
   override def subProofs = Seq( leftSubProof, rightSubProof )
+
+  override def postOrder = leftSubProof.postOrder ++ rightSubProof.postOrder :+ this
+}
+
+object BinaryLKProof {
+  def unapply( p: BinaryLKProof ) = Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }
 
 // <editor-fold desc="Axioms">
@@ -154,6 +173,8 @@ abstract class InitialSequent extends LKProof {
   override def auxFormulas = Seq()
 
   override def subProofs = Seq()
+
+  override def postOrder = Seq( this )
 }
 
 object InitialSequent {
@@ -485,6 +506,138 @@ case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula ) extends 
 
       case _                                   => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
     }
+  }
+}
+
+/**
+ * An LKProof ending with a cut:
+ *
+ *      (π1)         (π2)
+ *    Γ :- Δ, A   A, Π :- Λ
+ *   ------------------------
+ *        Γ, Π :- Δ, Λ
+ *
+ * @param leftSubProof The proof π,,1,,.
+ * @param aux1 The index of A in π,,1,,.
+ * @param rightSubProof The proof π,,2,,.
+ * @param aux2 The index of A in π,,2,,.
+ */
+case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
+  // <editor-fold desc="Sanity checks">
+  ( aux1, aux2 ) match {
+    case ( Suc( _ ), Ant( _ ) ) =>
+    case _                      => throw new LKRuleCreationException( s"Cannot create CutRule: One of $aux1 and $aux2 is in the wrong cedent." )
+  }
+
+  if ( !( leftPremise isDefinedAt aux1 ) )
+    throw new LKRuleCreationException( s"Cannot create AndRightRule: Sequent $leftPremise is not defined at index $aux1." )
+
+  if ( !( rightPremise isDefinedAt aux2 ) )
+    throw new LKRuleCreationException( s"Cannot create AndRightRule: Sequent $leftPremise is not defined at index $aux2." )
+
+  if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
+    throw new LKRuleCreationException( s"Cannot create CutRule: Auxiliar formulas are not the same." )
+  // </editor-fold>
+
+  val ( leftContext, rightContext ) = ( leftPremise.focus( aux1 )._2, rightPremise.focus( aux2 )._2 )
+  val ( leftAntLength, leftSucLength ) = leftContext.sizes
+  def endSequent = leftContext ++ rightContext
+
+  def name = "cut"
+
+  def auxFormulas = Seq( Seq( aux1 ), Seq( aux2 ) )
+
+  def mainFormulas = Seq()
+
+  def getLeftOccConnector = new OccConnector {
+    /**
+     * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def children( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( _ ) if leftPremise isDefinedAt idx => Seq( idx )
+
+      case Suc( _ ) if idx < aux1                  => Seq( idx )
+      case `aux1`                                  => Seq()
+      case Suc( _ ) if leftPremise isDefinedAt idx => Seq( idx - 1 )
+
+      case _                                       => throw new NoSuchElementException( s"Sequent $leftPremise not defined at index $idx." )
+    }
+
+    /**
+     * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def parents( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( _ ) if leftPremise isDefinedAt idx => Seq( idx )
+      case Ant( _ ) if endSequent isDefinedAt idx  => Seq()
+
+      case Suc( _ ) if idx < aux1                  => Seq( idx )
+      case Suc( _ ) if leftPremise isDefinedAt idx => Seq( idx + 1 )
+      case Suc( _ ) if endSequent isDefinedAt idx  => Seq()
+
+      case _                                       => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+  }
+
+  def getRightOccConnector = new OccConnector {
+    /**
+     * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def children( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( _ ) if idx < aux2                   => Seq( idx + leftAntLength )
+      case `aux2`                                   => Seq()
+      case Ant( _ ) if rightPremise isDefinedAt idx => Seq( idx + leftAntLength - 1 )
+
+      case Suc( _ ) if rightPremise isDefinedAt idx => Seq( idx + leftSucLength )
+
+      case _                                        => throw new NoSuchElementException( s"Sequent $rightPremise not defined at index $idx." )
+    }
+
+    /**
+     * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def parents( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( k ) if k < leftAntLength          => Seq()
+      case Ant( _ ) if idx < aux2 + leftAntLength => Seq( idx - leftAntLength )
+      case Ant( _ ) if endSequent isDefinedAt idx => Seq( idx - leftAntLength + 1 )
+
+      case Suc( _ ) if endSequent isDefinedAt idx => Seq( idx - leftSucLength )
+    }
+  }
+}
+
+object CutRule {
+  /**
+   * Convenience constructor for cut that, given a formula A, will attempt to create a cut inference with that cut formula.
+   *
+   * @param leftSubProof
+   * @param rightSubProof
+   * @param A
+   * @return
+   */
+  def apply( leftSubProof: LKProof, rightSubProof: LKProof, A: HOLFormula ): CutRule = {
+    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
+    val i = leftPremise.succedent indexOf A
+    if ( i == -1 )
+      throw new LKRuleCreationException( s"Cannot create CutRule: Aux formula $A not found in succedent of $leftPremise." )
+
+    val j = rightPremise.antecedent indexOf ( A )
+
+    if ( j == -1 )
+      throw new LKRuleCreationException( s"Cannot create CutRule: Aux formula $A not found in antecedent of $rightPremise." )
+
+    new CutRule( leftSubProof, Suc( i ), rightSubProof, Ant( j ) )
   }
 }
 
@@ -1069,5 +1222,40 @@ abstract class OccConnector {
     def parents( i: SequentIndex ) =
       outer.parents( i ) flatMap that.parents
     def children( i: SequentIndex ) = that.children( i ) flatMap outer.children
+  }
+}
+
+object prettyString {
+  /**
+   * Produces a console-readable string representation of the lowermost rule.
+   *
+   * @param p The rule to be printed.
+   * @return
+   */
+  def apply( p: LKProof ): String = p match {
+
+    case InitialSequent( seq ) =>
+      produceString( "", seq.toString, p.name )
+
+    case UnaryLKProof( endSequent, subProof ) =>
+      val ( upperString, lowerString ) = ( p.premises.head.toString, p.endSequent.toString )
+      produceString( upperString, lowerString, p.name )
+
+    case BinaryLKProof( endSequent, leftSubproof, rightSubProof ) =>
+      val upperString = leftSubproof.endSequent.toString + "    " + rightSubProof.endSequent.toString
+      val lowerString = endSequent.toString
+      produceString( upperString, lowerString, p.name )
+  }
+
+  private def produceString( upperString: String, lowerString: String, ruleName: String ): String = {
+
+    val n = Math.max( upperString.length, lowerString.length ) + 2
+    val line = "-" * n
+    val ( upperDiff, lowerDiff ) = ( n - upperString.length, n - lowerString.length )
+
+    val upperNew = " " * Math.floor( upperDiff / 2 ).toInt + upperString + " " * Math.ceil( upperDiff / 2 ).toInt
+    val lowerNew = " " * Math.floor( lowerDiff / 2 ).toInt + lowerString + " " * Math.ceil( lowerDiff / 2 ).toInt
+
+    upperNew + "\n" + line + ruleName + "\n" + lowerNew
   }
 }
