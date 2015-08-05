@@ -571,6 +571,357 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   // </editor-fold>
 }
 
+object AndLeftRule {
+  /**
+   * Convenience constructor for ∧:l that, given two formulas on the left, will automatically pick the respective first instances of these formulas.
+   *
+   * @param subProof
+   * @param A
+   * @param B
+   * @return
+   */
+  def apply( subProof: LKProof, A: HOLFormula, B: HOLFormula ): AndLeftRule = {
+    val premise = subProof.endSequent
+    val i = premise.antecedent indexOf A
+    if ( i == -1 )
+      throw new LKRuleCreationException( s"Cannot create AndLeftRule: Aux formula $A not found in antecedent of $premise." )
+
+    val j =
+      if ( A == B )
+        premise.antecedent indexOf ( B, i + 1 )
+      else
+        premise.antecedent indexOf B
+
+    if ( j == -1 )
+      throw new LKRuleCreationException( s"Cannot create AndLeftRule: Aux formula $B not found in antecedent of $premise." )
+
+    new AndLeftRule( subProof, Ant( i ), Ant( j ) )
+  }
+
+  /**
+   * Convenience constructor for ∧:l that, given a proposed main formula A ∧ B, will attempt to create an inference with this main formula.
+   *
+   * @param subProof
+   * @param F
+   * @return
+   */
+  def apply( subProof: LKProof, F: HOLFormula ): AndLeftRule = F match {
+    case And( f, g ) => apply( subProof, f, g )
+    case _           => throw new LKRuleCreationException( s"Cannot create AndLeftRule: Proposed main formula $F is not a conjunction." )
+  }
+}
+
+/**
+ * An LKProof ending with a conjunction on the right:
+ *
+ *    (π1)         (π2)
+ *   Γ :- Δ, A    Π :- Λ, B
+ * --------------------------
+ *     Γ, Π :- Δ, Λ, A∧B
+ *
+ * @param leftSubProof The proof π,,1,,.
+ * @param aux1 The index of A.
+ * @param rightSubProof The proof π,,2,,
+ * @param aux2 The index of B.
+ */
+case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
+
+  // <editor-fold desc="Sanity checks">
+  ( aux1, aux2 ) match {
+    case ( Suc( _ ), Suc( _ ) ) =>
+    case _                      => throw new LKRuleCreationException( s"Cannot create AndRightRule: One of $aux1 and $aux2 is in the antecedent." )
+  }
+
+  if ( !( leftPremise isDefinedAt aux1 ) )
+    throw new LKRuleCreationException( s"Cannot create AndRightRule: Sequent $leftPremise is not defined at index $aux1." )
+
+  if ( !( rightPremise isDefinedAt aux2 ) )
+    throw new LKRuleCreationException( s"Cannot create AndRightRule: Sequent $leftPremise is not defined at index $aux2." )
+
+  // </editor-fold>
+
+  val ( leftConjunct, leftContext ) = leftPremise focus aux1
+  val ( leftAntLength, leftSucLength ) = leftContext.sizes
+  val ( rightConjunct, rightContext ) = rightPremise focus aux2
+  val rightAntLength = rightContext.antecedent.length
+
+  val formula = And( leftConjunct, rightConjunct )
+
+  def endSequent = leftContext ++ rightContext :+ formula
+
+  private val n = endSequent.sizes._2
+
+  def mainFormulas = Seq( Suc( n ) )
+
+  def auxFormulas = Seq( Seq( aux1 ), Seq( aux2 ) )
+
+  def name = "∧:r"
+
+  def getLeftOccConnector = new OccConnector {
+    /**
+     * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def children( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( _ ) if leftPremise isDefinedAt idx => Seq( idx )
+
+      case Suc( _ ) if idx < aux1                  => Seq( idx )
+      case `aux1`                                  => Seq( Suc( n ) )
+      case Suc( _ ) if leftPremise isDefinedAt idx => Seq( idx - 1 )
+
+      case _                                       => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+
+    /**
+     * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def parents( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( _ ) if leftPremise isDefinedAt idx => Seq( idx )
+      case Ant( _ ) if endSequent isDefinedAt idx  => Seq()
+
+      case Suc( k ) if k < leftSucLength           => Seq( idx )
+      case Suc( _ ) if idx < Suc( n )              => Seq()
+      case Suc( `n` )                              => Seq( aux1 )
+
+      case _                                       => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+  }
+
+  def getRightOccConnector = new OccConnector {
+    /**
+     * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def children( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( _ ) if rightPremise isDefinedAt idx => Seq( idx + leftAntLength )
+
+      case Suc( _ ) if idx < aux2                   => Seq( idx + leftSucLength )
+      case `aux2`                                   => Seq( Suc( n ) )
+      case Suc( _ ) if rightPremise isDefinedAt idx => Seq( idx + leftSucLength - 1 )
+
+      case _                                        => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+
+    /**
+     * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def parents( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( k ) if k < leftAntLength => Seq()
+      case Ant( _ ) if leftPremise isDefinedAt ( idx - leftSucLength ) => Seq( idx - leftSucLength )
+
+      case Suc( k ) if k < leftSucLength => Seq()
+      case Suc( _ ) if idx < Suc( n ) => Seq( idx - leftSucLength )
+      case Suc( `n` ) => Seq( aux2 )
+
+      case _ => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+  }
+}
+
+object AndRightRule {
+  /**
+   * Convenience constructor for ∧:r that, given formulas on the right, will automatically pick their respective first occurrences.
+   *
+   * @param leftSubProof
+   * @param A
+   * @param rightSubProof
+   * @param B
+   * @return
+   */
+  def apply( leftSubProof: LKProof, A: HOLFormula, rightSubProof: LKProof, B: HOLFormula ): AndRightRule = {
+    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
+
+    val i = leftPremise.succedent indexOf A
+    if ( i == -1 )
+      throw new LKRuleCreationException( s"Cannot create AndRightRule: Aux formula $A not found in succedent of $leftPremise." )
+
+    val j = rightPremise.succedent indexOf B
+
+    if ( j == -1 )
+      throw new LKRuleCreationException( s"Cannot create AndRightRule: Aux formula $B not found in antecedent of $rightPremise." )
+
+    new AndRightRule( leftSubProof, Suc( i ), rightSubProof, Suc( j ) )
+  }
+
+  /**
+   * Convenience constructor for ∧:r that, given a proposed main formula A ∧ B, will attempt to create an inference with this main formula.
+   *
+   * @param leftSubProof
+   * @param rightSubProof
+   * @param F
+   * @return
+   */
+  def apply( leftSubProof: LKProof, rightSubProof: LKProof, F: HOLFormula ): AndRightRule = F match {
+    case And( f, g ) => apply( leftSubProof, f, rightSubProof, g )
+    case _           => throw new LKRuleCreationException( s"Cannot create AndRightRule: Proposed main formula $F is not a conjunction." )
+  }
+}
+
+/**
+ * An LKProof ending with a disjunction on the left:
+ *
+ *     (π1)         (π2)
+ *   A, Γ :- Δ    B, Π :- Λ
+ * --------------------------
+ *     A∨B, Γ, Π :- Δ, Λ
+ *
+ * @param leftSubProof The proof π,,1,,.
+ * @param aux1 The index of A.
+ * @param rightSubProof The proof π,,2,,
+ * @param aux2 The index of B.
+ */
+case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
+
+  // <editor-fold desc="Sanity checks">
+  ( aux1, aux2 ) match {
+    case ( Ant( _ ), Ant( _ ) ) =>
+    case _                      => throw new LKRuleCreationException( s"Cannot create OrLeftRule: One of $aux1 and $aux2 is in the succedent." )
+  }
+
+  if ( !( leftPremise isDefinedAt aux1 ) )
+    throw new LKRuleCreationException( s"Cannot create OrLeftRule: Sequent $leftPremise is not defined at index $aux1." )
+
+  if ( !( rightPremise isDefinedAt aux2 ) )
+    throw new LKRuleCreationException( s"Cannot create OrLeftRule: Sequent $leftPremise is not defined at index $aux2." )
+
+  // </editor-fold>
+
+  val ( leftDisjunct, leftContext ) = leftPremise focus aux1
+  val ( leftAntLength, leftSucLength ) = leftContext.sizes
+  val ( rightDisjunct, rightContext ) = rightPremise focus aux2
+
+  val formula = Or( leftDisjunct, rightDisjunct )
+
+  def endSequent = formula +: ( leftContext ++ rightContext )
+
+  def mainFormulas = Seq( Ant( 0 ) )
+
+  def auxFormulas = Seq( Seq( aux1 ), Seq( aux2 ) )
+
+  def name = "∨:l"
+
+  def getLeftOccConnector = new OccConnector {
+    /**
+     * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def children( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( _ ) if idx < aux1                  => Seq( idx + 1 )
+      case `aux1`                                  => Seq( Ant( 0 ) )
+      case Ant( _ ) if leftPremise isDefinedAt idx => Seq( idx )
+
+      case Suc( _ ) if leftPremise isDefinedAt idx => Seq( idx )
+
+      case _                                       => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+
+    /**
+     * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def parents( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( 0 )                                => Seq( aux1 )
+      case Ant( _ ) if idx <= aux1                 => Seq( idx - 1 )
+      case Ant( _ ) if leftPremise isDefinedAt idx => Seq( idx )
+      case Ant( _ ) if endSequent isDefinedAt idx  => Seq()
+
+      case Suc( _ ) if leftPremise isDefinedAt idx => Seq( idx )
+      case Suc( _ ) if endSequent isDefinedAt idx  => Seq()
+
+      case _                                       => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+  }
+
+  def getRightOccConnector = new OccConnector {
+    /**
+     * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def children( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( _ ) if idx < aux2                   => Seq( idx + leftAntLength + 1 )
+      case `aux2`                                   => Seq( Ant( 0 ) )
+      case Ant( _ ) if rightPremise isDefinedAt idx => Seq( idx + leftAntLength )
+
+      case Suc( _ ) if rightPremise isDefinedAt idx => Seq( idx + leftSucLength )
+
+      case _                                        => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+
+    /**
+     * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
+     *
+     * @param idx
+     * @return
+     */
+    override def parents( idx: SequentIndex ): Seq[SequentIndex] = idx match {
+      case Ant( 0 )                                => Seq( aux2 )
+      case Ant( k ) if k <= leftAntLength          => Seq()
+      case Ant( _ ) if idx <= aux2 + leftAntLength => Seq( idx - leftAntLength - 1 )
+      case Ant( _ ) if endSequent isDefinedAt idx  => Seq( idx - leftAntLength )
+
+      case Suc( k ) if k < leftSucLength           => Seq()
+      case Suc( _ ) if endSequent isDefinedAt idx  => Seq( idx - leftSucLength )
+
+      case _                                       => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+  }
+}
+
+object OrLeftRule {
+  /**
+   * Convenience constructor for ∨:r that, given formulas on the left, will automatically pick their respective first occurrences.
+   *
+   * @param leftSubProof
+   * @param A
+   * @param rightSubProof
+   * @param B
+   * @return
+   */
+  def apply( leftSubProof: LKProof, A: HOLFormula, rightSubProof: LKProof, B: HOLFormula ): OrLeftRule = {
+    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
+
+    val i = leftPremise.antecedent indexOf A
+    if ( i == -1 )
+      throw new LKRuleCreationException( s"Cannot create OrLeftRule: Aux formula $A not found in antecedent of $leftPremise." )
+
+    val j = rightPremise.antecedent indexOf B
+
+    if ( j == -1 )
+      throw new LKRuleCreationException( s"Cannot create OrLeftRule: Aux formula $B not found in succedent of $rightPremise." )
+
+    new OrLeftRule( leftSubProof, Suc( i ), rightSubProof, Suc( j ) )
+  }
+
+  /**
+   * Convenience constructor for ∨:r that, given a proposed main formula A ∨ B, will attempt to create an inference with this main formula.
+   *
+   * @param leftSubProof
+   * @param rightSubProof
+   * @param F
+   * @return
+   */
+  def apply( leftSubProof: LKProof, rightSubProof: LKProof, F: HOLFormula ): OrLeftRule = F match {
+    case Or( f, g ) => apply( leftSubProof, f, rightSubProof, g )
+    case _          => throw new LKRuleCreationException( s"Cannot create OrLeftRule: Proposed main formula $F is not a disjunction." )
+  }
+}
+
 /**
  * An LKProof ending with a disjunction on the right:
  *
@@ -624,38 +975,71 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   override def getOccConnector = new OccConnector {
 
     def children( idx: SequentIndex ): Seq[SequentIndex] =
-      ( ( a1, a2 ): @unchecked ) match {
-        case ( Ant( i ), Ant( j ) ) =>
-          idx match {
-            case Suc( k ) if k < i                   => Seq( Suc( k ) )
-            case Suc( `i` )                          => Seq( Suc( n ) )
-            case Suc( k ) if k < j                   => Seq( Suc( k - 1 ) )
-            case Suc( `j` )                          => Seq( Suc( n ) )
-            case Suc( k ) if premise isDefinedAt idx => Seq( Suc( k - 2 ) )
-            case Suc( _ )                            => throw new NoSuchElementException( s"Sequent $premise not defined at index $idx." )
+      idx match {
+        case Suc( _ ) if idx < a1                => Seq( idx )
+        case `a1`                                => Seq( Suc( n ) )
+        case Suc( _ ) if idx < a2                => Seq( idx - 1 )
+        case `a2`                                => Seq( Suc( n ) )
+        case Suc( _ ) if premise isDefinedAt idx => Seq( idx - 2 )
 
-            case Ant( k ) if premise isDefinedAt idx => Seq( idx )
-            case Ant( _ )                            => throw new NoSuchElementException( s"Sequent $premise not defined at index $idx." )
-          }
+        case Ant( _ ) if premise isDefinedAt idx => Seq( idx )
+
+        case _                                   => throw new NoSuchElementException( s"Sequent $premise not defined at index $idx." )
       }
 
     def parents( idx: SequentIndex ): Seq[SequentIndex] =
-      ( ( a1, a2 ): @unchecked ) match {
-        case ( Ant( i ), Ant( j ) ) =>
-          idx match {
-            case Suc( k ) if k < i                      => Seq( Suc( k ) )
-            case Suc( k ) if k < j                      => Seq( Suc( k + 1 ) )
-            case Suc( k ) if k < n                      => Seq( Suc( k + 2 ) )
-            case Suc( `n` )                             => Seq( aux1, aux2 )
-            case Suc( _ )                               => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+      idx match {
+        case Suc( _ ) if idx < a1                   => Seq( idx )
+        case Suc( _ ) if idx < a2                   => Seq( idx + 1 )
+        case Suc( k ) if k < n                      => Seq( idx + 2 )
+        case Suc( `n` )                             => Seq( aux1, aux2 )
 
-            case Ant( _ ) if endSequent isDefinedAt idx => Seq( idx )
-            case Ant( _ )                               => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
-          }
+        case Ant( _ ) if endSequent isDefinedAt idx => Seq( idx )
+
+        case _                                      => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
       }
   }
-
   // </editor-fold>
+}
+
+object OrRightRule {
+  /**
+   * Convenience constructor for ∨:r that, given two formulas on the right, will automatically pick the respective first instances of these formulas.
+   *
+   * @param subProof
+   * @param A
+   * @param B
+   * @return
+   */
+  def apply( subProof: LKProof, A: HOLFormula, B: HOLFormula ): OrRightRule = {
+    val premise = subProof.endSequent
+    val i = premise.succedent indexOf A
+    if ( i == -1 )
+      throw new LKRuleCreationException( s"Cannot create OrRightRule: Aux formula $A not found in succedent of $premise." )
+
+    val j =
+      if ( A == B )
+        premise.succedent indexOf ( B, i + 1 )
+      else
+        premise.succedent indexOf B
+
+    if ( j == -1 )
+      throw new LKRuleCreationException( s"Cannot create OrRightRule: Aux formula $B not found in succedent of $premise." )
+
+    new OrRightRule( subProof, Ant( i ), Ant( j ) )
+  }
+
+  /**
+   * Convenience constructor for ∨:r that, given a proposed main formula A ∨ B, will attempt to create an inference with this main formula.
+   *
+   * @param subProof
+   * @param F
+   * @return
+   */
+  def apply( subProof: LKProof, F: HOLFormula ): OrRightRule = F match {
+    case Or( f, g ) => apply( subProof, f, g )
+    case _          => throw new LKRuleCreationException( s"Cannot create OrRightRule: Proposed main formula $F is not a disjunction." )
+  }
 }
 // </editor-fold>
 
@@ -668,18 +1052,18 @@ abstract class OccConnector {
   /**
    * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
    *
-   * @param i
+   * @param idx
    * @return
    */
-  def parents( i: SequentIndex ): Seq[SequentIndex]
+  def parents( idx: SequentIndex ): Seq[SequentIndex]
 
   /**
    * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
    *
-   * @param i
+   * @param idx
    * @return
    */
-  def children( i: SequentIndex ): Seq[SequentIndex]
+  def children( idx: SequentIndex ): Seq[SequentIndex]
 
   def *( that: OccConnector ) = new OccConnector {
     def parents( i: SequentIndex ) =
