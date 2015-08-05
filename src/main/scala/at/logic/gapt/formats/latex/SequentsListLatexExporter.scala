@@ -14,8 +14,9 @@ import at.logic.gapt.formats.ExportingException
 import at.logic.gapt.formats.OutputExporter
 
 trait SequentsListLatexExporter extends HOLTermLatexExporter {
-  val smskip = "\n\n"
-  val mdskip = "\n\n" + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + "\n\n"
+  val nLine = sys.props("line.separator")
+  val smskip = nLine + nLine
+  val mdskip = smskip + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + smskip
   private def exportSequent( seq: HOLSequent ) = {
     if ( seq.antecedent.size > 0 ) exportTerm1( seq.antecedent.head )
     if ( seq.antecedent.size > 1 ) seq.antecedent.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportTerm1( x ) } )
@@ -29,42 +30,42 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     // Also describe the types of all constants
 
     getOutput.write( """\documentclass[10pt, a4paper]{article}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\""" )
     getOutput.write( """usepackage{color}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\topmargin}{-1.5cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\headheight}{0cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\headsep}{0cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\textheight}{1.25\textheight}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\oddsidemargin}{-1.5cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\evensidemargin}{-1.5cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\textwidth}{1.4\textwidth}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\begin{document}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     sections.foreach( x => {
       getOutput.write( """\section{""" + x._1 + "}" )
-      getOutput.write( "\n" )
+      getOutput.write( nLine )
       getOutput.write( """\begin{tabular}{ll}""" )
       x._2.foreach( y => {
         printOnMatch( y._1 )
         getOutput.write( " & " )
         printOnMatch( y._2 )
         getOutput.write( """ \\ """ )
-        getOutput.write( "\n" )
+        getOutput.write( nLine )
       } )
       getOutput.write( """\end{tabular}""" )
-      getOutput.write( "\n" )
+      getOutput.write( nLine )
     } )
     getOutput.write( """\section{Clauses}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     ls.foreach( x => { exportSequent( x ); getOutput.write( mdskip ) } )
     printTypes( ls )
     getOutput.write( """\end{document}""" )
@@ -89,28 +90,28 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 
   def printTypes( l: List[HOLSequent] ) = {
     val ( vmap, cmap ) = getTypes( l )
-    getOutput.write( "\\subsection{Variable Types}\n" )
+    getOutput.write( "\\subsection{Variable Types}" + nLine )
 
-    getOutput.write( "\\[\\begin{array}{ll}\n" )
+    getOutput.write( "\\[\\begin{array}{ll}" + nLine )
     for ( ( key, set ) <- vmap.toList.sortBy( _._1 )( TAOrdering ) ) {
       var set_ = set.toList.sorted
       while ( set_.nonEmpty ) {
         val ( ten, rest ) = set_.splitAt( 10 )
         getOutput.write( ten.mkString( "", ", ", " & " ) + typeToString( key ) )
-        getOutput.write( " \\\\\n" )
+        getOutput.write( " \\\\" + nLine )
         set_ = rest
       }
     }
     getOutput.write( """\end{array}\]""" )
 
-    getOutput.write( "\\subsection{Constant Types}\n" )
-    getOutput.write( "\\[\\begin{array}{ll}\n" )
+    getOutput.write( "\\subsection{Constant Types}" + nLine )
+    getOutput.write( "\\[\\begin{array}{ll}" + nLine )
     for ( ( key, set ) <- cmap.toList.sortBy( _._1 )( TAOrdering ) ) {
       var set_ = set.toList.sorted
       while ( set_.nonEmpty ) {
         val ( ten, rest ) = set_.splitAt( 10 )
         getOutput.write( ten.mkString( "", ", ", " & " ) + typeToString( key ) )
-        getOutput.write( " \\\\\n" )
+        getOutput.write( " \\\\" + nLine )
         set_ = rest
       }
     }
@@ -189,8 +190,9 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 }
 
 trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
-  val smskip = "\n\n"
-  val mdskip = "\n\n" + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + "\n\n"
+  val nLine = sys.props("line.separator")
+  val smskip = nLine + nLine
+  val mdskip = smskip + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + smskip
   private def exportSequent( seq: LabelledOccSequent ) = {
     val ant = seq.l_antecedent.toList
     val suc = seq.l_succedent.toList
@@ -206,39 +208,39 @@ trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
     // Also describe the types of all constants
 
     getOutput.write( """\documentclass[10pt, a4paper]{article}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\topmargin}{-1.5cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\headheight}{0cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\headsep}{0cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\textheight}{1.25\textheight}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\oddsidemargin}{-1.5cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\evensidemargin}{-1.5cm}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\setlength{\textwidth}{1.4\textwidth}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     getOutput.write( """\begin{document}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     sections.foreach( x => {
       getOutput.write( """\section{""" + x._1 + "}" )
-      getOutput.write( "\n" )
+      getOutput.write( nLine )
       getOutput.write( """\begin{tabular}{ll}""" )
       x._2.foreach( y => {
         printOnMatch( y._1 )
         getOutput.write( " & " )
         printOnMatch( y._2 )
         getOutput.write( """ \\ """ )
-        getOutput.write( "\n" )
+        getOutput.write( nLine )
       } )
       getOutput.write( """\end{tabular}""" )
-      getOutput.write( "\n" )
+      getOutput.write( nLine )
     } )
     getOutput.write( """\section{Clauses}""" )
-    getOutput.write( "\n" )
+    getOutput.write( nLine )
     ls.foreach( x => { exportSequent( x ); getOutput.write( mdskip ) } )
     getOutput.write( """\end{document}""" )
     this

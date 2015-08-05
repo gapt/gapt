@@ -42,8 +42,8 @@ object CLIMain {
     val settings = new Settings
     settings.Yreplsync.value = true
     settings.usejavacp.value = true
-
-    new SystemProperties += ( "scala.shell.prompt" -> "\ngapt> " )
+    
+    new SystemProperties += ( "scala.shell.prompt" -> (sys.props("line.separator") + "gapt> ") )
 
     val repl = new ILoop {
       override def printWelcome = {

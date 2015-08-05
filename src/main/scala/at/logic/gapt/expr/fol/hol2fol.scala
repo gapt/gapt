@@ -206,14 +206,16 @@ class reduceHolToFol {
       //this case is added for schema
       /*
       case App(func,arg) => {
+        val nLine = sys.props("line.separator")
+      
         func match {
           case Var(sym,_) => {
             val new_arg = apply_(arg).asInstanceOf[FOLTerm]
             return at.logic.gapt.language.fol.Function(new ConstantStringSymbol(sym.toString), new_arg::Nil)
           }
-          case _ => println("\nWARNING: FO schema term!\n")
+          case _ => println( nLine + "WARNING: FO schema term!" + nLine)
         }
-        throw new Exception("\nProbably unrecognized object from schema!\n")
+        throw new Exception( nLine + "Probably unrecognized object from schema!" + nLine)
       }
       */
 
@@ -238,7 +240,7 @@ class reduceHolToFol {
   private def intTermLength( t: IntegerTerm ): Int = t match {
     case IntZero()  => 0
     case Succ( t1 ) => 1 + intTermLength( t1 )
-    case _          => throw new Exception( "\nError in reduceHolToFol.length(...) !\n" )
+    case _          => throw new Exception( sys.props("line.separator") + "Error in reduceHolToFol.length(...) !" + sys.props("line.separator") )
   }
 }
 

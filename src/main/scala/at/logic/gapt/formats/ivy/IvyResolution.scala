@@ -30,48 +30,49 @@ abstract sealed trait IvyResolutionProof extends AGraphProof[OccClause] {
   val id: String;
   val clause_exp: SExpression;
   //  val vertex : Clause;
+  val nLine = sys.props("line.separator")
 
   override def toString = { val b = new StringBuilder; printNodes( this, Nil, b ); b.toString }
   def printNodes( p: IvyResolutionProof, m: List[String], out: StringBuilder ): List[String] = p match {
     case InitialClause( id, _, clause ) =>
       if ( !m.contains( id ) ) {
-        out.append( id + " : Input(" + clause + ")\n" ); id :: m
+        out.append( id + " : Input(" + clause + ")" + nLine ); id :: m
       } else m
     case Instantiate( id, _, sub, clause, parent ) =>
       if ( !m.contains( id ) ) {
         val l = printNodes( parent, m, out );
-        out.append( id + " : Instance(" + clause + ") by " + parent.id + "\n" ); id :: l
+        out.append( id + " : Instance(" + clause + ") by " + parent.id + nLine ); id :: l
       } else m
     case Propositional( id, _, clause, parent ) =>
       if ( !m.contains( id ) ) {
         val l1 = printNodes( parent, m, out );
-        out.append( id + " : Propositional(" + clause + ") by " + parent.id + "\n" );
+        out.append( id + " : Propositional(" + clause + ") by " + parent.id + nLine );
         id :: l1
       } else m
     case Flip( id, _, flipped, clause, parent ) =>
       if ( !m.contains( id ) ) {
         val l1 = printNodes( parent, m, out );
-        out.append( id + " : Flip(" + clause + ") by " + parent.id + "\n" );
+        out.append( id + " : Flip(" + clause + ") by " + parent.id + nLine );
         id :: l1
       } else m
     case Resolution( id, _, lit1, lit2, clause, parent1, parent2 ) =>
       if ( !m.contains( id ) ) {
         val l1 = printNodes( parent1, m, out );
         val l2 = printNodes( parent2, l1, out );
-        out.append( id + " : Resolution(" + clause + ") by " + parent1.id + " and " + parent2.id + "\n" );
+        out.append( id + " : Resolution(" + clause + ") by " + parent1.id + " and " + parent2.id + nLine );
         id :: l2
       } else m
     case Paramodulation( id, _, pos, lit, orientation, clause, parent1, parent2 ) =>
       if ( !m.contains( id ) ) {
         val l1 = printNodes( parent1, m, out );
         val l2 = printNodes( parent2, l1, out );
-        out.append( id + " : Paramodulation(" + clause + ") by " + parent1.id + " and " + parent2.id + "\n" )
+        out.append( id + " : Paramodulation(" + clause + ") by " + parent1.id + " and " + parent2.id + nLine )
         id :: l2
       } else m
     case NewSymbol( id, _, lit, symbol, term, clause, parent ) =>
       if ( !m.contains( id ) ) {
         val l1 = printNodes( parent, m, out );
-        out.append( id + " : NewSymbol(" + clause + ") by " + parent.id + "\n" );
+        out.append( id + " : NewSymbol(" + clause + ") by " + parent.id + nLine );
         id :: l1
       } else m
 

@@ -18,6 +18,8 @@ import at.logic.gapt.prooftool.DrawSequent
 
 object ProofToLatexExporter {
 
+  val nLine = sys.props("line.separator")
+  
   def apply( proof: LKProof ) = document( proofToLatex( proof ) )
 
   def apply( list: List[( String, LKProof )] ) =

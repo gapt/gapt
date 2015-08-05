@@ -16,6 +16,8 @@ class LeanCoPLeanPredWrongArityException( msg: String ) extends Exception( msg: 
 
 object LeanCoPParser extends RegexParsers with PackratParsers {
 
+  val nLine = sys.props("line.separator")
+  
   def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
     getExpansionProof( new FileReader( filename ) )
   }
@@ -24,9 +26,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     parseAll( expansionSequent, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new LeanCoPParserException( "leanCoP parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new LeanCoPParserException( "leanCoP parsing: syntax failure " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
       case Error( msg, next ) =>
-        throw new LeanCoPParserException( "leanCoP parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new LeanCoPParserException( "leanCoP parsing: syntax error " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
     }
   }
 
