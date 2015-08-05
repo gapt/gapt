@@ -30,7 +30,7 @@ abstract sealed trait IvyResolutionProof extends AGraphProof[OccClause] {
   val id: String;
   val clause_exp: SExpression;
   //  val vertex : Clause;
-  val nLine = sys.props("line.separator")
+  val nLine = sys.props( "line.separator" )
 
   override def toString = { val b = new StringBuilder; printNodes( this, Nil, b ); b.toString }
   def printNodes( p: IvyResolutionProof, m: List[String], out: StringBuilder ): List[String] = p match {

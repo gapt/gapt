@@ -332,7 +332,7 @@ package robinson {
   }
 
   object Formatter {
-    val nLine = sys.props("line.separator")
+    val nLine = sys.props( "line.separator" )
     //TODO: replace this by the standard scala io
     def printToFile( f: java.io.File )( op: java.io.PrintWriter => Unit ) {
       val p = new java.io.PrintWriter( f )
@@ -448,7 +448,7 @@ package robinson {
 \newcommand{\RL}[1]{\RightLabel{\footnotesize \ensuremath{#1}}}
 
 \begin{document}""" +
-        tex( p, ids, List() )._1 + nLine + "\\DisplayProof" + nLine +"\\end{document}"
+        tex( p, ids, List() )._1 + nLine + "\\DisplayProof" + nLine + "\\end{document}"
     }
 
     def escapeTex( s: String ) = {
@@ -471,7 +471,7 @@ package robinson {
         case Resolution( clause, p1, p2, occ1, occ2, subst ) =>
           val ( str1, e1 ) = tex( p1, ids, edges )
           val ( str2, e2 ) = tex( p2, ids, e1 )
-          ( str1 + str2 + "\\RL{Resolve} " + nLine +"\\BI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
+          ( str1 + str2 + "\\RL{Resolve} " + nLine + "\\BI{" + f( clause.negative ) + "}{" + f( clause.positive ) + "}", e1 )
 
         case Paramodulation( clause, p1, p2, occ1, occ2, _, subst ) =>
           val ( str1, e1 ) = tex( p1, ids, edges )

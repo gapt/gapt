@@ -592,9 +592,9 @@ object merge extends at.logic.gapt.utils.logging.Logger {
   def apply( etSeq: ( Seq[ExpansionTreeWithMerges], Seq[ExpansionTreeWithMerges] ) ): ExpansionSequent = {
     val ( antecedent, succedent ) = etSeq
     val allTrees = antecedent ++ succedent
-    val dnLine = sys.props("line.separator")+sys.props("line.separator")
-    
-    trace( dnLine+"merge seq in: " + antecedent + " |- " + succedent )
+    val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
+
+    trace( dnLine + "merge seq in: " + antecedent + " |- " + succedent )
 
     // apply main to all trees. if a substitution occurs, apply it to all trees and restart whole process as
     // substitutions can create merges (potentially everywhere).
@@ -602,7 +602,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       if ( index == trees.length ) {
         trees
       } else {
-        trace( dnLine+"merge on index: " + index + " tree: " + trees( index ) + " trees: " + trees )
+        trace( dnLine + "merge on index: " + index + " tree: " + trees( index ) + " trees: " + trees )
         // define current tree and context, apply main and rebuild later
         val context = trees.take( index ) ++ trees.drop( index + 1 )
         val curTree = trees( index )
@@ -725,7 +725,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
    * Call with children of merge node
    */
   private def doApplyMerge( tree1: ExpansionTreeWithMerges, tree2: ExpansionTreeWithMerges, polarity: Boolean ): ( Option[Substitution], ExpansionTreeWithMerges ) = {
-    val nLine = sys.props("line.separator")
+    val nLine = sys.props( "line.separator" )
     trace( "apply merge called on: " + nLine + tree1 + nLine + tree2 )
 
     // similar as above, code which is required for all binary operators

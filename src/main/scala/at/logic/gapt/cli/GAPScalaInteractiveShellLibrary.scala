@@ -469,8 +469,8 @@ object cutIntro {
 }
 
 object extractTerms {
-  val nLine = sys.props("line.separator")
-  
+  val nLine = sys.props( "line.separator" )
+
   def apply( p: LKProof ) = {
     val ts = TermsExtraction( p )
     println( nLine + "Term set: {" + ts.set + "}" )
@@ -487,8 +487,8 @@ object extractTerms {
 }
 
 object computeGrammars {
-  val nLine = sys.props("line.separator")
-  
+  val nLine = sys.props( "line.separator" )
+
   def apply( terms: TermSet ) = {
     val g = ComputeGrammars( terms, new Deltas.UnboundedVariableDelta() )
     g.size match {
@@ -534,8 +534,8 @@ object buildProofWithCut {
  */
 
 object time {
-  val nLine = sys.props("line.separator")
-  
+  val nLine = sys.props( "line.separator" )
+
   def apply[T]( f: => T ): T = {
     val start = java.lang.System.currentTimeMillis()
     val r = f
@@ -1089,8 +1089,8 @@ object lkproof {
   */
 
 object normalizeSub {
-  val nLine = sys.props("line.separator")
-  
+  val nLine = sys.props( "line.separator" )
+
   def apply( sub: Substitution ): Unit = {
     sub.map.foreach( x => println( nLine + "<" + ( BetaReduction.betaNormalize( x._1 ) ).toString + " -> " + ( BetaReduction.betaNormalize( x._2 ) ).toString + ">" ) )
   }

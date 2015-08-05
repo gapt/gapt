@@ -240,7 +240,7 @@ class reduceHolToFol {
   private def intTermLength( t: IntegerTerm ): Int = t match {
     case IntZero()  => 0
     case Succ( t1 ) => 1 + intTermLength( t1 )
-    case _          => throw new Exception( sys.props("line.separator") + "Error in reduceHolToFol.length(...) !" + sys.props("line.separator") )
+    case _          => throw new Exception( sys.props( "line.separator" ) + "Error in reduceHolToFol.length(...) !" + sys.props( "line.separator" ) )
   }
 }
 
