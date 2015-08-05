@@ -144,28 +144,20 @@ abstract class BinaryLKProof extends LKProof {
  *     --------ax
  *      Γ :- Δ
  *
- * @param seq The sequent Γ :- Δ.
  */
-class InitialSequent( seq: HOLSequent ) extends LKProof {
-  def this( ant: Seq[HOLFormula], suc: Seq[HOLFormula] ) {
-    this( Sequent( ant, suc ) )
-  }
+abstract class InitialSequent extends LKProof {
 
   override def name = "ax"
 
-  override def mainFormulas = seq.indices
+  override def mainFormulas = endSequent.indices
 
   override def auxFormulas = Seq()
-
-  override def endSequent = seq
 
   override def subProofs = Seq()
 }
 
 object InitialSequent {
-  def apply( seq: HOLSequent ): InitialSequent = new InitialSequent( seq )
-
-  def apply( ant: Seq[HOLFormula], suc: Seq[HOLFormula] ): InitialSequent = apply( HOLSequent( ant, suc ) )
+  def unapply( proof: InitialSequent ) = Some( proof.endSequent )
 }
 
 /**
@@ -174,7 +166,7 @@ object InitialSequent {
  *       --------⊤:r
  *         :- ⊤
  */
-case object TopAxiom extends InitialSequent( Nil, Seq( Top() ) ) { override def name: String = "⊤:r" }
+case object TopAxiom extends InitialSequent { override def name: String = "⊤:r"; override def endSequent = HOLSequent( Nil, Seq( Top() ) ) }
 
 /**
  * An LKProof introducing ⊥ on the left:
@@ -182,7 +174,7 @@ case object TopAxiom extends InitialSequent( Nil, Seq( Top() ) ) { override def 
  *       --------⊥:l
  *         ⊥ :-
  */
-case object BottomAxiom extends InitialSequent( Seq( Bottom() ), Nil ) { override def name: String = "⊥:l" }
+case object BottomAxiom extends InitialSequent { override def name: String = "⊥:l"; override def endSequent = HOLSequent( Seq( Bottom() ), Nil ) }
 
 /**
  * An LKProof consisting of a logical axiom:
@@ -194,19 +186,19 @@ case object BottomAxiom extends InitialSequent( Seq( Bottom() ), Nil ) { overrid
  *
  * @param A The atom A.
  */
-case class LogicalAxiom( A: HOLAtom ) extends InitialSequent( HOLSequent( Seq( A ), Seq( A ) ) )
+case class LogicalAxiom( A: HOLAtom ) extends InitialSequent { override def endSequent = HOLSequent( Seq( A ), Seq( A ) ) }
 
 /**
  * An LKProof consisting of a reflexivity axiom:
  *
- *    ------------case Suc( 0 )                               => Seq( aux1, aux2 )
+ *    ------------ax
  *      :- s = s
  *
  * with s a term.
  *
  * @param s The term s.
  */
-case class ReflexivityAxiom( s: LambdaExpression ) extends InitialSequent( HOLSequent( Seq(), Seq( Eq( s, s ) ) ) )
+case class ReflexivityAxiom( s: LambdaExpression ) extends InitialSequent { override def endSequent = HOLSequent( Seq(), Seq( Eq( s, s ) ) ) }
 
 // </editor-fold>
 
@@ -259,41 +251,33 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
 
   override def auxFormulas = Seq( Seq( aux1, aux2 ) )
 
-  override def subProofs = Seq( subProof )
-
   override def name = "c:l"
 
   override def getOccConnector = new OccConnector {
 
     def children( idx: SequentIndex ): Seq[SequentIndex] =
-      ( ( a1, a2 ): @unchecked ) match {
-        case ( Ant( i ), Ant( j ) ) =>
-          idx match {
-            case Ant( k ) if k < i                   => Seq( Ant( k + 1 ) )
-            case Ant( `i` )                          => Seq( Ant( 0 ) )
-            case Ant( k ) if k < j                   => Seq( Ant( k ) )
-            case Ant( `j` )                          => Seq( Ant( 0 ) )
-            case Ant( k ) if premise isDefinedAt idx => Seq( Ant( k - 1 ) )
-            case Ant( _ )                            => throw new NoSuchElementException( s"Sequent $premise not defined at index $idx." )
+      idx match {
+        case Ant( _ ) if idx < a1                => Seq( idx + 1 )
+        case `a1`                                => Seq( Ant( 0 ) )
+        case Ant( _ ) if idx < a2                => Seq( idx )
+        case `a2`                                => Seq( Ant( 0 ) )
+        case Ant( _ ) if premise isDefinedAt idx => Seq( idx - 1 )
 
-            case Suc( k ) if premise isDefinedAt idx => Seq( idx )
-            case Suc( _ )                            => throw new NoSuchElementException( s"Sequent $premise not defined at index $idx." )
-          }
+        case Suc( _ ) if premise isDefinedAt idx => Seq( idx )
+
+        case _                                   => throw new NoSuchElementException( s"Sequent $premise not defined at index $idx." )
       }
 
     def parents( idx: SequentIndex ): Seq[SequentIndex] =
-      ( ( a1, a2 ): @unchecked ) match {
-        case ( Ant( i ), Ant( j ) ) =>
-          idx match {
-            case Ant( 0 )                               => Seq( aux1, aux2 )
-            case Ant( k ) if k <= i                     => Seq( Ant( k - 1 ) )
-            case Ant( k ) if k < j                      => Seq( Ant( k ) )
-            case Ant( k ) if endSequent isDefinedAt idx => Seq( Ant( k + 1 ) )
-            case Ant( _ )                               => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+      idx match {
+        case Ant( 0 )                               => Seq( aux1, aux2 )
+        case Ant( _ ) if idx <= a1                  => Seq( idx - 1 )
+        case Ant( _ ) if idx < a2                   => Seq( idx )
+        case Ant( _ ) if endSequent isDefinedAt idx => Seq( idx + 1 )
 
-            case Suc( _ ) if endSequent isDefinedAt idx => Seq( idx )
-            case Suc( _ )                               => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
-          }
+        case Suc( _ ) if endSequent isDefinedAt idx => Seq( idx )
+
+        case _                                      => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
       }
   }
 
@@ -373,9 +357,269 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
 
   override def auxFormulas = Seq( Seq( aux1, aux2 ) )
 
-  override def subProofs = Seq( subProof )
-
   override def name = "c:r"
+
+  override def getOccConnector = new OccConnector {
+
+    def children( idx: SequentIndex ): Seq[SequentIndex] =
+      idx match {
+        case Suc( _ ) if idx < a1                => Seq( idx )
+        case `a1`                                => Seq( Suc( n ) )
+        case Suc( _ ) if idx < a2                => Seq( idx - 1 )
+        case `a2`                                => Seq( Suc( n ) )
+        case Suc( _ ) if premise isDefinedAt idx => Seq( idx - 2 )
+
+        case Ant( _ ) if premise isDefinedAt idx => Seq( idx )
+
+        case _                                   => throw new NoSuchElementException( s"Sequent $premise not defined at index $idx." )
+      }
+
+    def parents( idx: SequentIndex ): Seq[SequentIndex] =
+      idx match {
+        case Suc( _ ) if idx < a1                   => Seq( idx )
+        case Suc( _ ) if idx < a2                   => Seq( idx + 1 )
+        case Suc( k ) if k < n                      => Seq( idx + 2 )
+        case Suc( `n` )                             => Seq( aux1, aux2 )
+
+        case Ant( _ ) if endSequent isDefinedAt idx => Seq( idx )
+
+        case _                                      => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+      }
+  }
+
+  // </editor-fold>
+}
+
+object ContractionRightRule {
+  /**
+   * Convenience constructor for c:r that, given a formula to contract on the right, will automatically pick the first two occurrences of that formula.
+   *
+   * @param subProof The subproof π.
+   * @param f The formula to contract.
+   * @return
+   */
+  def apply( subProof: LKProof, f: HOLFormula ): ContractionRightRule = {
+    val premise = subProof.endSequent
+    val i = premise.succedent indexOf f
+    if ( i == -1 )
+      throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Aux formula $f not found in succedent of $premise." )
+
+    val j = premise.succedent indexOf ( f, i + 1 )
+
+    if ( j == -1 )
+      throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Aux formula $f only found once in succedent of $premise." )
+
+    new ContractionRightRule( subProof, Suc( i ), Suc( j ) )
+  }
+
+}
+
+/**
+ * An LKProof ending with a left weakening:
+ *
+ *        (π)
+ *       Γ :- Δ
+ *     ---------w:l
+ *     A, Γ :- Δ
+ *
+ * @param subProof The subproof π.
+ * @param formula The formula A.
+ */
+case class WeakeningLeftRule( subProof: LKProof, formula: HOLFormula ) extends UnaryLKProof {
+  def endSequent = formula +: premise
+  def auxFormulas = Seq( Seq() )
+  def name = "w:l"
+  def mainFormulas = Seq( Ant( 0 ) )
+
+  def getOccConnector = new OccConnector {
+    def children( idx: SequentIndex ) = idx match {
+      case Ant( _ ) if premise isDefinedAt idx => Seq( idx + 1 )
+
+      case Suc( _ ) if premise isDefinedAt idx => Seq( idx )
+
+      case _                                   => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+
+    def parents( idx: SequentIndex ) = idx match {
+      case Ant( 0 )                            => Seq()
+      case Ant( _ ) if premise isDefinedAt idx => Seq( idx - 1 )
+
+      case Suc( _ ) if premise isDefinedAt idx => Seq( idx )
+
+      case _                                   => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+  }
+}
+
+/**
+ * An LKProof ending with a right weakening:
+ *
+ *        (π)
+ *       Γ :- Δ
+ *     ---------w:r
+ *     Γ :- Δ, A
+ *
+ * @param subProof The subproof π.
+ * @param formula The formula A.
+ */
+case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula ) extends UnaryLKProof {
+  def endSequent = premise :+ formula
+  def auxFormulas = Seq( Seq() )
+  def name = "w:r"
+
+  private val n = endSequent.succedent.length
+  def mainFormulas = Seq( Suc( n ) )
+
+  def getOccConnector = new OccConnector {
+
+    def children( idx: SequentIndex ) = idx match {
+      case _ if premise isDefinedAt idx => Seq( idx )
+      case _                            => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+
+    def parents( idx: SequentIndex ) = idx match {
+      case Ant( k ) if premise isDefinedAt idx => Seq( Ant( k - 1 ) )
+
+      case Suc( k ) if k < n                   => Seq( Suc( k ) )
+      case Suc( `n` )                          => Seq()
+
+      case _                                   => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+    }
+  }
+}
+
+// </editor-fold>
+
+// <editor-fold desc="Propositional rules>
+
+/**
+ * An LKProof ending with a conjunction on the left:
+ *
+ *         (π)
+ *     A, B, Γ :- Δ
+ *    --------------
+ *    A ∧ B, Γ :- Δ
+ *
+ * @param subProof The subproof π.
+ * @param aux1 The index of A.
+ * @param aux2 The index of B.
+ */
+case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
+
+  // <editor-fold desc="Sanity checks">
+
+  ( aux1, aux2 ) match {
+    case ( Ant( _ ), Ant( _ ) ) =>
+    case _                      => throw new LKRuleCreationException( s"Cannot create ContractionLeftRule: One of $aux1 and $aux2 is in the succedent." )
+  }
+
+  if ( aux1 == aux2 )
+    throw new LKRuleCreationException( s"Cannot create ContractionLeftRule: Indices of aux formulas are equal." )
+
+  if ( !( premise isDefinedAt aux1 ) )
+    throw new LKRuleCreationException( s"Cannot create ContractionLeftRule: Sequent $premise is not defined at index $aux1." )
+
+  if ( !( premise isDefinedAt aux2 ) )
+    throw new LKRuleCreationException( s"Cannot create ContractionLeftRule: Sequent $premise is not defined at index $aux2." )
+  // </editor-fold>
+
+  val leftConjunct = premise( aux1 )
+  val rightConjunct = premise( aux2 )
+  val formula = And( leftConjunct, rightConjunct )
+  val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
+
+  val newContext = premise.focus( a2 )._2.focus( a1 )._2
+
+  // <editor-fold desc="Overrides">
+
+  override def endSequent = formula +: newContext
+
+  override def mainFormulas = Seq( Ant( 0 ) )
+
+  override def auxFormulas = Seq( Seq( aux1, aux2 ) )
+
+  override def name = "∧:l"
+
+  override def getOccConnector = new OccConnector {
+
+    def children( idx: SequentIndex ): Seq[SequentIndex] =
+      idx match {
+        case Ant( _ ) if idx < a1                => Seq( idx + 1 )
+        case `a1`                                => Seq( Ant( 0 ) )
+        case Ant( _ ) if idx < a2                => Seq( idx )
+        case `a2`                                => Seq( Ant( 0 ) )
+        case Ant( _ ) if premise isDefinedAt idx => Seq( idx - 1 )
+
+        case Suc( _ ) if premise isDefinedAt idx => Seq( idx )
+
+        case _                                   => throw new NoSuchElementException( s"Sequent $premise not defined at index $idx." )
+      }
+
+    def parents( idx: SequentIndex ): Seq[SequentIndex] =
+      idx match {
+        case Ant( 0 )                               => Seq( aux1, aux2 )
+        case Ant( _ ) if idx <= a1                  => Seq( idx - 1 )
+        case Ant( _ ) if idx < a2                   => Seq( idx )
+        case Ant( _ ) if endSequent isDefinedAt idx => Seq( idx + 1 )
+
+        case Suc( _ ) if endSequent isDefinedAt idx => Seq( idx )
+
+        case _                                      => throw new NoSuchElementException( s"Sequent $endSequent not defined at index $idx." )
+      }
+  }
+
+  // </editor-fold>
+}
+
+/**
+ * An LKProof ending with a disjunction on the right:
+ *
+ *         (π)
+ *     Γ :- Δ, A, B
+ *    --------------
+ *     Γ :- Δ, A ∨ B
+ *
+ * @param subProof The subproof π.
+ * @param aux1 The index of A.
+ * @param aux2 The index of B.
+ */
+case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
+
+  // <editor-fold desc="Sanity checks">
+
+  ( aux1, aux2 ) match {
+    case ( Suc( _ ), Suc( _ ) ) =>
+    case _                      => throw new LKRuleCreationException( s"Cannot create ContractionRightRule: One of $aux1 and $aux2 is in the antecedent." )
+  }
+
+  if ( aux1 == aux2 )
+    throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Indices of aux formulas are equal." )
+
+  if ( !( premise isDefinedAt aux1 ) )
+    throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Sequent $premise is not defined at index $aux1." )
+
+  if ( !( premise isDefinedAt aux2 ) )
+    throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Sequent $premise is not defined at index $aux2." )
+  // </editor-fold>
+
+  val leftDisjunct = premise( aux1 )
+  val rightDisjunct = premise( aux2 )
+  val formula = Or( leftDisjunct, rightDisjunct )
+  val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
+
+  val newContext = premise.focus( a2 )._2.focus( a1 )._2
+
+  // <editor-fold desc="Overrides">
+
+  override def endSequent = newContext :+ formula
+
+  private val n = endSequent.succedent.length
+
+  override def mainFormulas = Seq( Suc( n ) )
+
+  override def auxFormulas = Seq( Seq( aux1, aux2 ) )
+
+  override def name = "∨:r"
 
   override def getOccConnector = new OccConnector {
 
@@ -413,31 +657,6 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
 
   // </editor-fold>
 }
-
-object ContractionRightRule {
-  /**
-   * Convenience constructor for c:r that, given a formula to contract on the right, will automatically pick the first two occurrences of that formula.
-   *
-   * @param subProof The subproof π.
-   * @param f The formula to contract.
-   * @return
-   */
-  def apply( subProof: LKProof, f: HOLFormula ): ContractionRightRule = {
-    val premise = subProof.endSequent
-    val i = premise.succedent indexOf f
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Aux formula $f not found in succedent of $premise." )
-
-    val j = premise.succedent indexOf ( f, i + 1 )
-
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Aux formula $f only found once in succedent of $premise." )
-
-    new ContractionRightRule( subProof, Suc( i ), Suc( j ) )
-  }
-
-}
-
 // </editor-fold>
 
 /**

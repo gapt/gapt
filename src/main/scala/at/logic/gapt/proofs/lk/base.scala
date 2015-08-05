@@ -16,11 +16,35 @@ sealed abstract class SequentIndex extends Ordered[SequentIndex] {
     case ( Ant( i ), Ant( j ) ) => i - j
     case ( Suc( i ), Suc( j ) ) => i - j
   }
+
+  /**
+   * Increments the index by a natural number.
+   *
+   * @param i
+   */
+  def +( i: Int ): SequentIndex
+
+  /**
+   * Decrements the index by a natural number.
+   *
+   * @param i
+   */
+  def -( i: Int ): SequentIndex
 }
 
-case class Ant( k: Int ) extends SequentIndex
+case class Ant( k: Int ) extends SequentIndex {
+  require( k >= 0, "Indices < 0 are not supported." )
 
-case class Suc( k: Int ) extends SequentIndex
+  def +( i: Int ) = Ant( k + i )
+  def -( i: Int ) = Ant( k - i )
+}
+
+case class Suc( k: Int ) extends SequentIndex {
+  require( k >= 0, "Indices < 0 are not supported." )
+
+  def +( i: Int ) = Suc( k + i )
+  def -( i: Int ) = Suc( k - i )
+}
 
 /**
  * A sequent is a pair of sequences of elements of type A, typically written as a,,1,,,…,a,,m,, :- b,,1,,,…,b,,n,,.
