@@ -470,8 +470,7 @@ gapt> val q = skolemize( p )
 
 \subsection{Interpolation}
 
-The command \texttt{extractInterpolant} extracts an interpolant from a cut-free
-sequent calculus proof. The implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
+The command \texttt{extractInterpolant} extracts an interpolant from a sequent calculus proof which may contain atomic cuts and/or equality rules. Currently, we allow only reflexivity axioms or axioms of the form $A \seq A$. The implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
 a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a 
 ``negative part'' $\Gamma_1\seq\Delta_1$ and a ``positive part'' $\Gamma_2 \seq \Delta_2$.
 It returns a formula $I$ s.t.\ $\Gamma_1\seq\Delta_1, I$ and $I,\Gamma_2\seq\Delta_2$
