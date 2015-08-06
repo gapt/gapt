@@ -515,13 +515,14 @@ object CutRule {
   private def getTerms( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence ) = {
     val term1op = s1.succedent.find( _ == term1oc )
     val term2op = s2.antecedent.find( _ == term2oc )
+    val nLine = sys.props( "line.separator" )
     if ( term1op == None || term2op == None ) {
       val s1str = s1.succedent.head.toString()
       val s2str = s2.antecedent.head.toString()
       val t1str = term1oc.asInstanceOf[FormulaOccurrence].formula.toString()
       val t2str = term2oc.asInstanceOf[FormulaOccurrence].formula.toString()
-      val str = "s1: " + s1str + "\ns2: " + s2str + "\nt1: " + t1str + "\nt2: " + t2str + "\n"
-      throw new LKRuleCreationException( "Auxialiary formulas are not contained in the right part of the sequent\n" + str )
+      val str = "s1: " + s1str + nLine + "s2: " + s2str + nLine + "t1: " + t1str + nLine + "t2: " + t2str + nLine
+      throw new LKRuleCreationException( "Auxialiary formulas are not contained in the right part of the sequent" + nLine + str )
     } else {
       val term1 = term1op.get
       val term2 = term2op.get

@@ -156,11 +156,13 @@ class CERES {
   }
 
   def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] ): ( HOLSequent => LKProof ) = {
+    val nLine = sys.props( "line.separator" )
+
     ( axfs: HOLSequent ) =>
       {
         projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.root.toHOLSequent diff endsequent, axfs ) ) match {
           case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
-            projections.map( _.root ).mkString( "{\n", ",\n", "\n}" ) )
+            projections.map( _.root ).mkString( "{" + nLine, "," + nLine, nLine + "}" ) )
           case Some( proj ) =>
             val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.root.toHOLSequent diff endsequent, axfs )
             val ( subproj, _ ) = applySubstitution( proj, sub )

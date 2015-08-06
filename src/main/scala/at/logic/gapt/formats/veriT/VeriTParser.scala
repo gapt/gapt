@@ -16,6 +16,8 @@ object VeriTParser extends RegexParsers {
 
   type Instances = ( FOLFormula, List[FOLFormula] )
 
+  val nLine = sys.props( "line.separator" )
+
   def getEqReflInstances( f: List[FOLFormula] ): Instances = {
     val x = FOLVar( "x" )
     val eq_refl = All( x, Eq( x, x ) )
@@ -96,7 +98,7 @@ object VeriTParser extends RegexParsers {
         case Neg( ( Eq( x2, x3 ) ) ) =>
           throw new VeriTUnfoldingTransitivityException( "ERROR: the conclusion of the previous terms have" +
             " no literal in common with the next one. Are the literals out of order?" +
-            "\nconclusion: " + c + "\nsecond literal: " + l.head )
+            nLine + "conclusion: " + c + nLine + "second literal: " + l.head )
 
         case _ =>
           throw new VeriTUnfoldingTransitivityException( "ERROR: wrong format for negated equality: " + c )
@@ -235,9 +237,9 @@ object VeriTParser extends RegexParsers {
     parseAll( proof, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new VeriTParserException( "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException( "VeriT parsing: syntax failure " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
       case Error( msg, next ) =>
-        throw new VeriTParserException( "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException( "VeriT parsing: syntax error " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
     }
   }
 
@@ -247,9 +249,9 @@ object VeriTParser extends RegexParsers {
     parseAll( parseUnsat, reader ) match {
       case Success( r, _ ) => r
       case Failure( msg, next ) =>
-        throw new VeriTParserException( "VeriT parsing: syntax failure " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException( "VeriT parsing: syntax failure " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
       case Error( msg, next ) =>
-        throw new VeriTParserException( "VeriT parsing: syntax error " + msg + "\nat line " + next.pos.line + " and column " + next.pos.column )
+        throw new VeriTParserException( "VeriT parsing: syntax error " + msg + nLine + "at line " + next.pos.line + " and column " + next.pos.column )
     }
   }
 

@@ -11,11 +11,11 @@ object getListOfFOccsInStruct {
   def apply( s: Struct ): List[FormulaOccurrence] = s match {
     case Plus( s1, s2 )     => apply( s1 ) ++ apply( s2 )
     case Times( s1, s2, _ ) => apply( s1 ) ++ apply( s2 )
-    case A( fo )            => fo :: Nil //{ println("\n\nA(fo) = "+fo);fo::Nil}
+    case A( fo )            => fo :: Nil //{ println( sys.props("line.separator") + sys.props("line.separator") + "A(fo) = "+fo);fo::Nil}
     case Dual( sub )        => apply( sub )
     case EmptyTimesJunction => Nil
     case EmptyPlusJunction  => Nil
-    case _                  => { println( "\n\nERROR in getListOfFOccsInStruct" ); List() }
+    case _                  => { println( sys.props( "line.separator" ) + sys.props( "line.separator" ) + "ERROR in getListOfFOccsInStruct" ); List() }
   }
 }
 

@@ -27,6 +27,6 @@ class MapBasedInterpretation( val model: Map[HOLFormula, Boolean] ) extends Inte
   }
 
   override def toString = {
-    model.foldLeft( "" ) { case ( s, ( atom, value ) ) => s + atom + " -> " + value + "\n" }
+    model.foldLeft( "" ) { case ( s, ( atom, value ) ) => s + atom + " -> " + value + sys.props( "line.separator" ) }
   }
 }

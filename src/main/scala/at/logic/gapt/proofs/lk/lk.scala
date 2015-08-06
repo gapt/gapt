@@ -28,6 +28,8 @@ object ProofTransformationUtils {
  * Extracts the cut-ancestor formulas from a proof.
  */
 object getCutAncestors {
+  val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
+
   /**
    * Extracts the cut-ancestors from a given LK proof.
    * @param p an arbitrary LK proof
@@ -50,7 +52,7 @@ object getCutAncestors {
       case ExistsHyperRightRule( p1, r, a, p, _ ) => getCutAncestors( p1 )
       case ForallHyperRightRule( p1, r, a, p, _ ) => getCutAncestors( p1 )
       case ExistsHyperLeftRule( p1, r, a, p, _ )  => getCutAncestors( p1 )
-      case _                                      => throw new Exception( "\n\nMissing rule in getCutAncestors(...) : " + p.name + "\n\n" )
+      case _                                      => throw new Exception( dnLine + "Missing rule in getCutAncestors(...) : " + p.name + dnLine )
     }
   }
 
@@ -74,7 +76,7 @@ object getCutAncestors {
     // support SLK
     case UnarySchemaProof( _, p, _, _, _ )      => getCutAncestors( p, predicate )
     case SchemaProofLinkRule( _, _, _ )         => Set[FormulaOccurrence]()
-    case _                                      => throw new Exception( "\n\nMissing rule in getCutAncestors(...) : " + p.name + "\n\n" )
+    case _                                      => throw new Exception( dnLine + "Missing rule in getCutAncestors(...) : " + p.name + dnLine )
   }
 }
 

@@ -15,6 +15,7 @@ import java.io.InputStreamReader
 import scala.collection.mutable.{ Map => MMap }
 
 object SCHOLParser {
+  val nLine = sys.props( "line.separator" )
 
   def parseProofs( input: InputStreamReader ): List[( String, LKProof )] = {
     val m = SCHOLParser.parseProof( input )
@@ -224,7 +225,7 @@ object SCHOLParser {
       }
       def orR1: Parser[LKProof] = "orR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\norR1")
+          //          println( nLine + nLine + "orR1")
           OrRight1Rule( map.get( l ).get, f1, f2 )
         }
       }
@@ -250,26 +251,26 @@ object SCHOLParser {
       }
       def negR: Parser[LKProof] = "negR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "negR(" ~ label ~ "," ~ formula ~ ")" => {
-          //          println("\n\n"+map.get(label).get.root.toString)
-          //          println("\n\nnegR")
+          //          println( nLine + nLine + map.get(label).get.root.toString)
+          //          println( nLine + nLine + "negR")
           NegRightRule( map.get( label ).get, formula )
         }
       }
       def weakR: Parser[LKProof] = "weakR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "weakR(" ~ label ~ "," ~ formula ~ ")" => {
-          //          println("\n\nweakR")
+          //          println( nLine + nLine + "weakR")
           WeakeningRightRule( map.get( label ).get, formula )
         }
       }
       def weakL: Parser[LKProof] = "weakL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "weakL(" ~ label ~ "," ~ formula ~ ")" => {
-          //          println("\n\nweakL")
+          //          println( nLine + nLine + "weakL")
           WeakeningLeftRule( map.get( label ).get, formula )
         }
       }
       def andL1: Parser[LKProof] = "andL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\nandL1")
+          //          println( nLine + nLine + "andL1")
           AndLeft1Rule( map.get( l ).get, f1, f2 )
         }
       }
@@ -435,11 +436,13 @@ object SCHOLParser {
   }
 }
 object PutPlusTogether {
+  val nLine = sys.props( "line.separator" )
+
   def apply( iI: SchemaExpression, iC: SchemaExpression ): SchemaExpression = {
     iC match {
       case Const( n, t ) if n == "0" && t == Tindex => iI
       case SchemaFunction( n, l, t ) if getName( n ) == "schS" && t == Tindex => SchemaFunction( n, List( apply( iI, l.head ) ) )
-      case _ => throw new Exception( "Why?\n" + iC.toString + "\n" )
+      case _ => throw new Exception( "Why?" + nLine + iC.toString + nLine )
     }
   }
 }
@@ -457,11 +460,13 @@ object maketogether {
 }
 
 object backToInt {
+  val nLine = sys.props( "line.separator" )
+
   def apply( i: SchemaExpression ): Int = {
     i match {
       case Const( n, t ) if n == "0" && t == Tindex => 0
       case SchemaFunction( n, l, t ) if getName( n ) == "schS" && t == Tindex => 1 + apply( l.head )
-      case _ => throw new Exception( "Why?\n" + i.toString + "\n" )
+      case _ => throw new Exception( "Why?" + nLine + i.toString + nLine )
     }
   }
 }

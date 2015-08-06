@@ -169,6 +169,7 @@ trait TokenToLKConverter extends Logger {
       val ant = antecedent.map( x => c( HLKHOLParser.ASTtoHOL( naming, x ) ) )
       val suc = succedent.map( x => c( HLKHOLParser.ASTtoHOL( naming, x ) ) )
       val fs = HOLSequent( ant, suc )
+      val nLine = sys.props( "line.separator" )
       name match {
         case "AX" =>
           proofstack = Axiom( ant, suc ) :: proofstack
@@ -196,8 +197,8 @@ trait TokenToLKConverter extends Logger {
             )
           } catch {
             case e: Exception =>
-              throw new HybridLatexParserException( "Autopropositional failed with the message: " + e.getMessage + "\nStack Trace:\n" +
-                e.getStackTrace.mkString( "", "\n", "\n" ), e )
+              throw new HybridLatexParserException( "Autopropositional failed with the message: " + e.getMessage + nLine + "Stack Trace:" + nLine +
+                e.getStackTrace.mkString( "", nLine, nLine ), e )
           }
         // --- quantifier rules ---
         case "ALLL" =>
@@ -520,7 +521,7 @@ trait TokenToLKConverter extends Logger {
           }
       }
     } catch {
-      case e: Exception => throw new HybridLatexParserException( "Error in handling binary rule with end-sequent: " + f( fs ) + "\nProblem: " + e.getMessage, e )
+      case e: Exception => throw new HybridLatexParserException( "Error in handling binary rule with end-sequent: " + f( fs ) + sys.props( "line.separator" ) + "Problem: " + e.getMessage, e )
     }
   }
 
@@ -1173,7 +1174,7 @@ trait TokenToLKConverter extends Logger {
           require(
             freeVariables( lformula ) == freeVariables( rformula ),
             "Definition formulas " + lformula + " and " + rformula + " do not have the same set of free variables!" +
-              "\n" + freeVariables( lformula ) + "\n" + freeVariables( rformula )
+              sys.props( "line.separator" ) + freeVariables( lformula ) + sys.props( "line.separator" ) + freeVariables( rformula )
           )
           map + ( ( lformula, rformula ) )
         case _ => throw new HybridLatexParserException( "Left hand side of a definition must be an atom, but is " + lformula )
@@ -1257,7 +1258,7 @@ trait TokenToLKConverter extends Logger {
 
       case _ =>
         throw new Exception( "Could not create a proof for inference AX :- " +
-          instance + "\n " + name + " does not occur in " + axiomconj )
+          instance + sys.props( "line.separator" ) + " " + name + " does not occur in " + axiomconj )
     }
   }
 

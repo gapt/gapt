@@ -16,9 +16,11 @@ object SmtLibExporter {
    * @param s Sequent to export.
    * @return SMT-LIB benchmark.
    */
+  val nLine = sys.props( "line.separator" )
+
   def apply( s: HOLSequent ): String = {
     // Define the logic
-    val logic = "(set-logic QF_UF)\n"
+    val logic = "(set-logic QF_UF)" + nLine
     // Declare the function and predicate symbols with arity
     val symbols = getSymbolsDeclaration( ( s.antecedent ++ s.succedent ).map( _.asInstanceOf[FOLFormula] ) )
     // Generate assertions for the antecedent and succedent formulas
@@ -48,19 +50,19 @@ object SmtLibExporter {
 
   private def getAssertions( ant: Seq[FOLFormula], succ: Seq[FOLFormula] ) =
     ( ant ++ succ.map( Neg( _ ) ) ).map { formula =>
-      s"(assert ${toSMTFormat( formula )})\n"
+      s"(assert ${toSMTFormat( formula )})" + nLine
     }.mkString
 
   // Gets all the symbols and arities that occur in the formulas of the list
   private def getSymbolsDeclaration( flst: Seq[FOLFormula] ) = {
     val symbols = flst.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) =>
       getSymbols( f ) ++ acc )
-    symbols.foldLeft( "(declare-sort S 0)\n" ) {
+    symbols.foldLeft( "(declare-sort S 0)" + nLine ) {
       case ( acc, t ) => t._3 match {
         // It is an atom
-        case To => acc ++ "(declare-fun " + t._1 + " (" + "S " * t._2 + ") Bool)\n"
+        case To => acc ++ "(declare-fun " + t._1 + " (" + "S " * t._2 + ") Bool)" + nLine
         // It is a function
-        case Ti => acc ++ "(declare-fun " + t._1 + " (" + "S " * t._2 + ") S)\n"
+        case Ti => acc ++ "(declare-fun " + t._1 + " (" + "S " * t._2 + ") S)" + nLine
         case _  => throw new Exception( "Unexpected type for function or predicate: " + t._3 )
       }
     }

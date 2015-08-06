@@ -31,7 +31,7 @@ object XMLExporter {
     XML.save( filename, output, "UTF-8", true, docType )
     // } catch {
     //   case e: Exception =>
-    //      throw new ExportingException("Can't save file: "+ path + "\n\n" + "Error:" + e.toString )
+    //      throw new ExportingException("Can't save file: "+ path + sys.props("line.separator") + sys.props("line.separator") + "Error:" + e.toString )
   }
 
   def exportAxioms( axioms: List[HOLSequent] ) = if ( axioms.isEmpty ) <axiomset/>

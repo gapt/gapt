@@ -18,8 +18,8 @@ import at.logic.gapt.prooftool.DrawSequent
 
 object ProofToLatexExporter {
 
-  val nLine = sys.props("line.separator")
-  
+  val nLine = sys.props( "line.separator" )
+
   def apply( proof: LKProof ) = document( proofToLatex( proof ) )
 
   def apply( list: List[( String, LKProof )] ) =
@@ -49,9 +49,9 @@ object ProofToLatexExporter {
       case SchemaProofLinkRule( root, link, indices ) =>
         "\\AxiomC{$(" + link + "(" + DrawSequent.formulaToLatexString( indices.head ) + "))$} " + nLine +
           "\\dashedLine " + nLine +
-          "\\UnaryInfC{$" + DrawSequent.sequentToLatexString( root ) + "$} " +nLine
+          "\\UnaryInfC{$" + DrawSequent.sequentToLatexString( root ) + "$} " + nLine
       case _ =>
-        "\\AxiomC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} " +nLine
+        "\\AxiomC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} " + nLine
     }
     case p: UnaryLKProof =>
       rulesToLatex( p.uProof ) +

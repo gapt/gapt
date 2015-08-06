@@ -272,7 +272,7 @@ import at.logic.gapt.expr.BetaReduction
           })
           ls
         }
-        case _ => { println( sys.props("line.separator") + " ERROR in getListOfZs \n"); l1}
+        case _ => { println( sys.props("line.separator") + " ERROR in getListOfZs " + sys.props("line.separator") ); l1}
       }
     }
 
@@ -299,7 +299,7 @@ import at.logic.gapt.expr.BetaReduction
             val newConfNode = (new MyConfiguration((applySubToListOfPairs(uprobl, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[LambdaExpression, LambdaExpression]]) :::((funcVar,part_bind_t) ::Nil), None, false))
             Pair(part_bind_t, newConfNode::Nil)
           }
-      case _ => println( sys.props("line.separator") + "Error in 4a\n") ; sys.exit(0)
+      case _ => println( sys.props("line.separator") + "Error in 4a" + sys.props("line.separator") ) ; sys.exit(0)
         }
     }
 

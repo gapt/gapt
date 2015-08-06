@@ -26,8 +26,8 @@ object ParseResSchema {
     lazy val sp = new SimpleResolutionSchemaParser
 
     sp.parseAll( sp.resSchema, txt ) match {
-      case sp.Success( result, input ) => // println("\n\nSUCCESS parse :) \n")
-      case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
+      case sp.Success( result, input ) => // println(sys.props("line.separator")+sys.props("line.separator")+"SUCCESS parse :) "+sys.props("line.separator"))
+      case x: AnyRef => // { println(sys.props("line.separator")+sys.props("line.separator")"FAIL parse : "+sys.props("line.separator")+error_buffer); throw new Exception(sys.props("line.separator")+sys.props("line.separator")+"FAIL parse :( "+sys.props("line.separator")); }
         throw new Exception( x.toString )
     }
 
@@ -361,7 +361,7 @@ object ParseResSchemaDavid {
       }
 
       def intVar: Parser[IntVar] = "[i,j,n,k,x]".r ^^ {
-        case x => { /*println("\n\nintVar");*/ IntVar( x ) }
+        case x => { /*println(sys.props("line.separator")+sys.props("line.separator")+"intVar");*/ IntVar( x ) }
       }
       def succ: Parser[SchemaExpression] = "s(" ~ intTerm ~ ")" ^^ {
         case "s(" ~ intTerm ~ ")" => Succ( intTerm )

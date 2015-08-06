@@ -257,10 +257,11 @@ object ReductiveCutElim {
       case ( ax: NullaryLKProof, proof: BinaryLKProof ) => reduceBinaryRight( ax, proof, cutFormula1 )
       case ( unary: UnaryLKProof, proof: LKProof ) =>
         if ( unary.rule == WeakeningRightRuleType ) {
+          val nLine = sys.props( "line.separator" )
           val unap = WeakeningRightRule.unapply( unary )
           if ( unap == None )
-            throw new ReductiveCutElimException( "Can't match case: \n cut left premice is: " + unary.toString.replaceAll( ",", "\n" ) +
-              "\n\n cut right premice is: " + proof.toString.replaceAll( ",", "\n" ) )
+            throw new ReductiveCutElimException( "Can't match case: " + nLine + " cut left premice is: " + unary.toString.replaceAll( ",", nLine ) +
+              nLine + nLine + " cut right premice is: " + proof.toString.replaceAll( ",", nLine ) )
           val up = unap.get._1
           val prin = unap.get._3
           if ( prin.formula == cutFormula1 ) {
@@ -274,9 +275,10 @@ object ReductiveCutElim {
           } else WeakeningRightRule( CutRule( up, proof, cutFormula1 ), prin.formula )
         } else if ( unary.rule == ContractionRightRuleType ) {
           val unap = ContractionRightRule.unapply( unary )
+          val nLine = sys.props( "line.separator" )
           if ( unap == None )
-            throw new ReductiveCutElimException( "Can't match case: \n cut left premice is: " + unary.toString.replaceAll( ",", "\n" ) +
-              "\n\n cut right premice is: " + proof.toString.replaceAll( ",", "\n" ) )
+            throw new ReductiveCutElimException( "Can't match case: " + nLine + " cut left premice is: " + unary.toString.replaceAll( ",", nLine ) +
+              nLine + nLine + " cut right premice is: " + proof.toString.replaceAll( ",", nLine ) )
           val up = unap.get._1
           val aux1 = unap.get._3
           val aux2 = unap.get._4

@@ -482,6 +482,8 @@ object XMLParser {
 
           val root: HOLSequent = HOLSequent( triple._1.root.antecedent map ( _.formula ), triple._1.root.succedent map ( _.formula ) )
 
+          val nLine = sys.props( "line.separator" )
+
           // check whether conclusion has been correctly constructed
           assert( root multiSetEquals conc, triple._1.root.toString + " does not equal " + conc.toString + "(rule type " + rt + ")" )
           // check whether the permutation of the formula occurrences corresponds to the conclusion
@@ -490,8 +492,8 @@ object XMLParser {
               p._1.formula == list.apply( p._2 ),
               "formula at occurrence " + p._1.formula.toString +
                 " is not equal to formula in list position " + p._2 + ": " +
-                list.apply( p._2 ).toString + " after creating rule of type " + rt + ".\n" +
-                "Conclusion sequent: " + conc.toString + "\n" +
+                list.apply( p._2 ).toString + " after creating rule of type " + rt + "." + nLine +
+                "Conclusion sequent: " + conc.toString + nLine +
                 {
                   param match {
                     case Some( s ) => "permutation parameter: " + s
@@ -795,7 +797,8 @@ object XMLParser {
               if ( subst == None ) {
                 throw new TestException( ( subsub, auxf.formula ) )
               }
-              assert( subst != None, "Couldn't match\n" + subsub.toString + "\nagainst\n" + auxf.formula.toString )
+              val nLine = sys.props( "line.separator" )
+              assert( subst != None, "Couldn't match" + nLine + subsub.toString + nLine + "against" + nLine + auxf.formula.toString )
               val subst_ = subst.get
               assert( subst_.map.size <= 1 )
               assert( subst_.map.contains( v ) || subst_.map.size == 0 )
