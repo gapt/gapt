@@ -372,7 +372,7 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
 
   override def endSequent = newContext :+ formula
 
-  private val n = endSequent.succedent.length
+  private val n = endSequent.succedent.length - 1
 
   override def mainFormulas = Seq( Suc( n ) )
 
@@ -488,7 +488,7 @@ case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula ) extends 
   def auxFormulas = Seq( Seq() )
   def name = "w:r"
 
-  private val n = endSequent.succedent.length
+  private val n = endSequent.succedent.length - 1
   def mainFormulas = Seq( Suc( n ) )
 
   def getOccConnector = new OccConnector {
@@ -802,7 +802,7 @@ case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProo
 
   def endSequent = leftContext ++ rightContext :+ formula
 
-  private val n = endSequent.sizes._2
+  private val n = endSequent.sizes._2 - 1
 
   def mainFormulas = Seq( Suc( n ) )
 
@@ -1058,7 +1058,7 @@ object OrLeftRule {
     if ( j == -1 )
       throw new LKRuleCreationException( s"Cannot create OrLeftRule: Aux formula $B not found in succedent of $rightPremise." )
 
-    new OrLeftRule( leftSubProof, Suc( i ), rightSubProof, Suc( j ) )
+    new OrLeftRule( leftSubProof, Ant( i ), rightSubProof, Ant( j ) )
   }
 
   /**
@@ -1117,7 +1117,7 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
 
   override def endSequent = newContext :+ formula
 
-  private val n = endSequent.succedent.length
+  private val n = endSequent.succedent.length - 1
 
   override def mainFormulas = Seq( Suc( n ) )
 
@@ -1179,7 +1179,7 @@ object OrRightRule {
     if ( j == -1 )
       throw new LKRuleCreationException( s"Cannot create OrRightRule: Aux formula $B not found in succedent of $premise." )
 
-    new OrRightRule( subProof, Ant( i ), Ant( j ) )
+    new OrRightRule( subProof, Suc( i ), Suc( j ) )
   }
 
   /**
@@ -1238,12 +1238,16 @@ object prettyString {
       produceString( "", seq.toString, p.name )
 
     case UnaryLKProof( endSequent, subProof ) =>
-      val ( upperString, lowerString ) = ( p.premises.head.toString, p.endSequent.toString )
+      val upperString = sequentToString( subProof.endSequent, p.auxFormulas.head )
+      val lowerString = sequentToString( endSequent, p.mainFormulas )
       produceString( upperString, lowerString, p.name )
 
     case BinaryLKProof( endSequent, leftSubproof, rightSubProof ) =>
-      val upperString = leftSubproof.endSequent.toString + "    " + rightSubProof.endSequent.toString
-      val lowerString = endSequent.toString
+      val upperString = sequentToString( leftSubproof.endSequent, p.auxFormulas.head ) +
+        "    " +
+        sequentToString( rightSubProof.endSequent, p.auxFormulas.tail.head )
+
+      val lowerString = sequentToString( endSequent, p.mainFormulas )
       produceString( upperString, lowerString, p.name )
   }
 
@@ -1257,5 +1261,15 @@ object prettyString {
     val lowerNew = " " * Math.floor( lowerDiff / 2 ).toInt + lowerString + " " * Math.ceil( lowerDiff / 2 ).toInt
 
     upperNew + "\n" + line + ruleName + "\n" + lowerNew
+  }
+
+  private def sequentToString( sequent: HOLSequent, auxFormulas: Seq[SequentIndex] ): String = {
+    val stringSequent = sequent map { _.toString() }
+    auxFormulas.foldLeft( stringSequent ) { ( acc, i ) =>
+      val currentString = acc( i )
+      val newString = "[" + currentString + "]"
+      acc.updated( i, newString )
+    }.toString
+
   }
 }
