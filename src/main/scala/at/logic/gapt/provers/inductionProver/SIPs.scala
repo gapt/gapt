@@ -407,9 +407,12 @@ object FindFormulaH extends Logger {
   import SimpleInductionProof._
 
   def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false, prover: Prover = new VeriTProver ): Option[FOLFormula] = {
-    val num = Utils.numeral( n )
     val CSn = canonicalSolution( S, n )
+    apply( CSn, S, n, forgetClauses, prover )
+  }
 
+  def apply( CSn: FOLFormula, S: SimpleInductionProof, n: Int, forgetClauses: Boolean, prover: Prover ): Option[FOLFormula] = {
+    val num = Utils.numeral( n )
     debug( "Calling findConseq …" )
     val M = findConseq( S, n, CSn, Set.empty[List[FOLClause]], forgetClauses, prover ).toList.sortBy( l => ( l map ( _.length ) ).sum )
     debug( s"FindConseq found ${M.size} consequences." )
