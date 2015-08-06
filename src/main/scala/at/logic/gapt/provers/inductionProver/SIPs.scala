@@ -406,7 +406,7 @@ object findConseq extends Logger {
 object FindFormulaH extends Logger {
   import SimpleInductionProof._
 
-  def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false, prover: Prover = new VeriTProver ): Option[( SimpleInductionProof, FOLFormula )] = {
+  def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false, prover: Prover = new VeriTProver ): Option[FOLFormula] = {
     val num = Utils.numeral( n )
     val CSn = canonicalSolution( S, n )
 
@@ -422,7 +422,7 @@ object FindFormulaH extends Logger {
       posSets.view.flatMap { P =>
         val Ctilde = ( C /: P )( ( acc, p ) => acc.replace( p, nu ).asInstanceOf[FOLFormula] )
         if ( S.solve( Ctilde ).isSolved( prover ) )
-          Some( ( S.solve( Ctilde ), Ctilde ) )
+          Some( Ctilde )
         else
           None
       }
@@ -434,5 +434,5 @@ object FindFormulaH extends Logger {
 
 class HeuristicSolutionFinder( n: Int, forgetClauses: Boolean = false, prover: Prover = new VeriTProver ) extends SolutionFinder {
   override def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula] =
-    FindFormulaH( schematicSIP, n, forgetClauses, prover ) map ( _._2 )
+    FindFormulaH( schematicSIP, n, forgetClauses, prover )
 }
