@@ -9,6 +9,7 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk._
 
 object applySchemaSubstitution {
+  val nLine = sys.props( "line.separator" )
   def handleSchemaEquivalenceRule(
     new_parent:  LKProof,
     subst:       SchemaSubstitution,
@@ -183,7 +184,7 @@ object applySchemaSubstitution {
         val res = handleRule( proof, apply( p1, subst, cnt ) :: apply( p2, subst, cnt ) :: Nil, subst )
         res
       }
-      case _ => { println( "\n\n\nERROR in apply schema substitution\n" ); proof }
+      case _ => { println( nLine + nLine + nLine + "RROR in apply schema substitution" + nLine ); proof }
     }
   }
 }
@@ -191,6 +192,7 @@ object applySchemaSubstitution {
 //substitution end
 
 object checkProofLinks1 {
+  val nLine = sys.props( "line.separator" )
   def apply( p: LKProof ): Unit = p match {
     case Axiom( so )                            => {}
     case UnaryLKProof( _, upperProof, _, _, _ ) => checkProofLinks1( upperProof )
@@ -205,17 +207,17 @@ object checkProofLinks1 {
       val sub_suc = ps.seq.succedent.map( f => sub( f.asInstanceOf[SchemaFormula] ) )
 
       if ( sub_ant.toSet != so.toHOLSequent.antecedent.toSet || sub_suc.toSet != so.toHOLSequent.succedent.toSet ) {
-        println( "\n checkProofLinks1 for proof " + name + " FAIL" )
-        ps.seq.antecedent.foreach( f => println( "\n" + f ) )
-        println( "\n\n" )
+        println( nLine + " checkProofLinks1 for proof " + name + " FAIL" )
+        ps.seq.antecedent.foreach( f => println( nLine + f ) )
+        println( nLine + nLine )
         val ant = so.toHOLSequent.antecedent.map( f => sub( f.asInstanceOf[SchemaFormula] ) )
-        ant.foreach( f => println( "\n" + f ) )
+        ant.foreach( f => println( nLine + f ) )
       } else {
         println( "checkProofLinks1 for proof " + name + " SUCCESS" )
       }
     }
 
-    case _ => throw new Exception( "\nNo such rule in checkProofLinks1" )
+    case _ => throw new Exception( nLine + "No such rule in checkProofLinks1" )
   }
 }
 
@@ -307,7 +309,7 @@ object StepMinusOne {
   //----------------------
 
   def apply( p: LKProof, k: IntVar ): LKProof = {
-    println( "\nStepMinusOne : " + p.rule )
+    println( sys.props( "line.separator" ) + "StepMinusOne : " + p.rule )
     p match {
 
       case Axiom( ro ) => Axiom( ro.antecedent.map( fo => minusOne( fo.formula.asInstanceOf[SchemaFormula], k ) ), ro.succedent.map( fo => minusOne( fo.formula.asInstanceOf[SchemaFormula], k ) ) )

@@ -49,7 +49,7 @@ var instanceLanguages = instanceSequents.map { case (n, seq) =>
 instanceLanguages = instanceLanguages ++
   Seq(0 -> Seq(encoding.encode(parseFormula("0+0=0") -> true)))
 instanceLanguages foreach { case (n, l) =>
-  println(s"Instance language for n=$n:" + nLine + "${l.mkString(nLine)}" + nLine )
+  println(s"Instance language for n=$n:$nLine${l.mkString(nLine)}" + nLine )
 }
 
 println(s"Covering grammar consisting of all normal forms:")

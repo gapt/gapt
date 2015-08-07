@@ -117,9 +117,10 @@ object SearchDerivation extends at.logic.gapt.utils.logging.Logger {
 class ProverException( msg: String ) extends Exception( msg )
 
 trait Prover[V <: OccSequent] extends Logger {
+  val nLine = sys.props( "line.separator" )
 
   def refute( commands: Stream[Command[V]] ): NDStream[ResolutionProof[V]] = {
-    //println("\nrefute")
+    //println( nLine + "refute" )
     new NDStream( new MyConfiguration( new State(), commands, () ), myFun ) with BFSAlgorithm
   }
 
@@ -132,7 +133,7 @@ trait Prover[V <: OccSequent] extends Logger {
     val conf = c.asInstanceOf[MyConfiguration]
     //Console.println("debug -- command: " + Console.RED + conf.commands.head.getClass + Console.RESET +", data: " + conf.data + ", next Command: " + conf.commands.tail.head.getClass)
     if ( conf.commands.isEmpty ) {
-      println( "\nconf.commands.isEmpty !\n" )
+      println( nLine + "conf.commands.isEmpty !" + nLine )
       List()
     } else {
       //if (!conf.commands.head.toString.matches("(VariantsCommand|IsGuidedNotFoundCommand|SimpleRefinementGetCommand|ClauseFactorCommand).*"))

@@ -43,6 +43,8 @@ import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
 object Main extends SimpleSwingApplication {
+  val nLine = sys.props( "line.separator" )
+  val dnLine = nLine + nLine
   var DEBUG = false
   val body = new MyScrollPane
   val db = new FileParser
@@ -170,7 +172,7 @@ object Main extends SimpleSwingApplication {
                 file.write( ProofToLatexExporter( proof ) )
                 file.close()
               } else infoMessage( "Proofs cannot be saved in this format." )
-            } catch { case e: Throwable => errorMessage( "Cannot save the proof! \n\n" + getExceptionString( e ) ) }
+            } catch { case e: Throwable => errorMessage( "Cannot save the proof! " + dnLine + getExceptionString( e ) ) }
             finally { body.cursor = java.awt.Cursor.getDefaultCursor }
           case list: List[_] =>
             try {
@@ -191,7 +193,7 @@ object Main extends SimpleSwingApplication {
                 file.write( TPTPFOLExporter.tptp_problem( ls ) )
                 file.close()
               } else infoMessage( "Lists cannot be saved in this format." )
-            } catch { case e: Throwable => errorMessage( "Cannot save the list! \n\n" + getExceptionString( e ) ) }
+            } catch { case e: Throwable => errorMessage( "Cannot save the list! " + dnLine + getExceptionString( e ) ) }
             finally { body.cursor = java.awt.Cursor.getDefaultCursor }
           case _ => infoMessage( "Cannot save this kind of objects." )
         }
@@ -215,7 +217,7 @@ object Main extends SimpleSwingApplication {
             file.close()
           } else infoMessage( "Proofs cannot be saved in this format." )
         } catch {
-          case e: Throwable => errorMessage( "Cannot save the file! \n\n" + getExceptionString( e ) )
+          case e: Throwable => errorMessage( "Cannot save the file! " + dnLine + getExceptionString( e ) )
         } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
       case _ =>
     }
@@ -247,7 +249,7 @@ object Main extends SimpleSwingApplication {
           content.addTemplate( template, 0, 10 )
           document.close()
         } catch {
-          case e: Throwable => errorMessage( "Can't export to pdf! \n\n" + getExceptionString( e ) )
+          case e: Throwable => errorMessage( "Can't export to pdf! " + dnLine + getExceptionString( e ) )
         } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
         case _ =>
       }
@@ -273,7 +275,7 @@ object Main extends SimpleSwingApplication {
           val path = if ( result.endsWith( ".png" ) ) result else result + ".png"
           ImageIO.write( img, "png", new File( path ) )
         } catch {
-          case e: Throwable => errorMessage( "Can't export to png! \n\n" + getExceptionString( e ) )
+          case e: Throwable => errorMessage( "Can't export to png! " + dnLine + getExceptionString( e ) )
         } finally { body.cursor = java.awt.Cursor.getDefaultCursor }
         case _ =>
       }
@@ -453,7 +455,7 @@ object Main extends SimpleSwingApplication {
       ProofToolPublisher.publish( ProofDbChanged )
     } catch {
       case e: Throwable =>
-        errorMessage( "Cannot parse the specified resolution schema!\n\n" + getExceptionString( e ) )
+        errorMessage( "Cannot parse the specified resolution schema!" + dnLine + getExceptionString( e ) )
     }
   }
 
@@ -465,7 +467,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Cannot extract Expansion Tree!\n\n" + getExceptionString( e ) )
+        errorMessage( "Cannot extract Expansion Tree!" + dnLine + getExceptionString( e ) )
     }
   }
 
@@ -479,7 +481,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Cannot skolemize the proof!\n\n" + getExceptionString( e ) )
+        errorMessage( "Cannot skolemize the proof!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -493,7 +495,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Cannot regularize the proof!\n\n" + getExceptionString( e ) )
+        errorMessage( "Cannot regularize the proof!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -506,7 +508,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't extract CutFormula List!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't extract CutFormula List!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -522,7 +524,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Cannot compute Projections!\n\n" + getExceptionString( e ) )
+        errorMessage( "Cannot compute Projections!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -538,7 +540,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't compute ClList!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't compute ClList!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -557,7 +559,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't compute clause set!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't compute clause set!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -573,7 +575,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't compute Struct!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't compute Struct!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -587,7 +589,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't compute Projection Terms!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't compute Projection Terms!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -602,7 +604,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't compute clause list!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't compute clause list!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -616,7 +618,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't compute Struct!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't compute Struct!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -631,7 +633,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't compute Struct!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't compute Struct!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -645,7 +647,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't eliminate definitions!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't eliminate definitions!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -659,7 +661,7 @@ object Main extends SimpleSwingApplication {
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't eliminate definitions!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't eliminate definitions!" + dnLine + getExceptionString( e ) )
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
@@ -680,7 +682,7 @@ object Main extends SimpleSwingApplication {
 
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't eliminate all cuts!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't eliminate all cuts!" + dnLine + getExceptionString( e ) )
     } finally {
       db.addProofs( ReductiveCutElim.proofs.map( x => ( x.name, x ) ) )
       body.cursor = java.awt.Cursor.getDefaultCursor
@@ -702,7 +704,7 @@ object Main extends SimpleSwingApplication {
       updateLauncher( "Gentzen Result:", newProof, 14 )
     } catch {
       case e: Throwable =>
-        errorMessage( "Couldn't eliminate all cuts!\n\n" + getExceptionString( e ) )
+        errorMessage( "Couldn't eliminate all cuts!" + dnLine + getExceptionString( e ) )
     } finally {
       db.addProofs( ReductiveCutElim.proofs.map( x => ( x.name, x ) ) )
       body.cursor = java.awt.Cursor.getDefaultCursor
@@ -796,7 +798,7 @@ object Main extends SimpleSwingApplication {
           db.addTermTree( gterm_name, term )
           db.addProofs( list )
           updateLauncher( gterm_name, term, defaultFontSize )
-          infoMessage( "The proof projections, corresponding to this term, are also computed.\n" +
+          infoMessage( "The proof projections, corresponding to this term, are also computed." + nLine +
             "They can be found in the View Proof menu!" )
         case ( name: String, pt: Tree[_] ) if db.getTermTrees.exists( p => name == p._1 && p._2 == db.TermType.ClauseTerm ) => errorMessage( "Not yet implemented!" )
         case ( name: String, pt: Tree[_] ) if db.getTermTrees.exists( p => name == p._1 && p._2 == db.TermType.ResolutionTerm ) =>
@@ -809,7 +811,7 @@ object Main extends SimpleSwingApplication {
       ProofToolPublisher.publish( ProofDbChanged )
     } catch {
       case e: Throwable =>
-        errorMessage( "Could not construct the instance!\n\n" + getExceptionString( e ) )
+        errorMessage( "Could not construct the instance!" + dnLine + getExceptionString( e ) )
     }
   }
 
@@ -835,7 +837,7 @@ object Main extends SimpleSwingApplication {
       ProofToolPublisher.publish( ProofDbChanged )
     } catch {
       case e: Throwable =>
-        errorMessage( "Could not construct the ACNF!\n\n" + getExceptionString( e ) )
+        errorMessage( "Could not construct the ACNF!" + dnLine + getExceptionString( e ) )
     }
   }
 
@@ -859,10 +861,10 @@ object Main extends SimpleSwingApplication {
     Dialog.showConfirmation( body, question, "ProofTool Question", Dialog.Options.YesNo, Message.Question )
 
   def getExceptionString( e: Throwable ): String = {
-    val st = e.toString.replaceAll( ",", ",\n" ) + "\n"
+    val st = e.toString.replaceAll( ",", "," + nLine ) + nLine
     val trace = e.getStackTrace
     if ( trace.length > 10 )
-      Range( 0, 10 ).map( i => trace.apply( i ) ).foldLeft( st )( ( s, x ) => s + "\n   at " + x.toString ) + "\n   ......."
+      Range( 0, 10 ).map( i => trace.apply( i ) ).foldLeft( st )( ( s, x ) => s + nLine + "   at " + x.toString ) + nLine + "   ......."
     else e.getStackTrace.toString
   }
 

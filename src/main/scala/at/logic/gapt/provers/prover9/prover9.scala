@@ -122,7 +122,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
     commands ++= cnf map toP9Input
     commands += "end_of_list"
 
-    commands.map( _ + ".\n" ).mkString
+    commands.map( _ + "." + sys.props( "line.separator" ) ).mkString
   }
 
   def renameVars( formula: LambdaExpression ): LambdaExpression =

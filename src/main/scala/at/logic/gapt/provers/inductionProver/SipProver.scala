@@ -28,6 +28,8 @@ class SipProver(
 )
     extends Prover with Logger {
 
+  val nLine = sys.props( "line.separator" )
+
   override def getLKProof( endSequent: HOLSequent ): Option[LKProof] =
     getSimpleInductionProof( endSequent ).map( _.toLKProof )
 
@@ -61,12 +63,12 @@ class SipProver(
 
     instanceLanguages foreach {
       case ( n, l ) =>
-        debug( s"Instance language for n=$n:\n${l.map( _.toString ).sorted.mkString( "\n" )}" )
+        debug( s"Instance language for n=$n:$nLine${l.map( _.toString ).sorted.mkString( nLine )}" )
     }
 
     debug( "Finding grammar..." )
     val grammar = findMinimalSipGrammar( instanceLanguages, maxSATSolver )
-    debug( s"Grammar:\n$grammar" )
+    debug( s"Grammar:$nLine$grammar" )
 
     if ( testInstances.forall { n =>
       val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
@@ -88,7 +90,7 @@ class SipProver(
 
       ( 0 until 3 ) foreach { i =>
         lazy val C_i = canonicalSolution( schematicSip, i )
-        debug( s"C_$i =\n${CNFp( C_i ).map( _.mkString( ", " ) ).mkString( "\n" )}" )
+        debug( s"C_$i =$nLine${CNFp( C_i ).map( _.mkString( ", " ) ).mkString( nLine )}" )
       }
 
       solutionFinder.findSolution( schematicSip ).map( schematicSip.solve )

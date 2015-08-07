@@ -175,7 +175,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
             applySub( rp, s )._1
           } catch {
             case e @ LKQuantifierException( root, occf, term, formula, qvar ) =>
-              throw new LKUnaryRuleCreationException( "Substitution errror: " + s + ":\n" + e.getMessage, rp, List( occf, formula ) )
+              throw new LKUnaryRuleCreationException( "Substitution errror: " + s + ":" + sys.props( "line.separator" ) + e.getMessage, rp, List( occf, formula ) )
           }
       }
       map( proof.root.toHOLClause ) = ret
