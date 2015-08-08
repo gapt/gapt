@@ -45,17 +45,15 @@ val modThProver = new Prover {
 }
 
 object patchingSolFinder extends SolutionFinder {
-  val base = new HeuristicSolutionFinder(0, forgetClauses = true, prover = modThProver)
+  val n = 0
 
   override def findSolution( sip: SimpleInductionProof ): Option[FOLFormula] = {
     // We could pass the whole theory here, but ForgetfulParamodulate only does ground
     // paramodulation--so we give just the correct instance.
-    val addClause = FOLSubstitution(FOLVar("x") -> beta)(parseFormula("x*s(0)=x"))
+    val canSolModTh = canonicalSolution( sip, n )
+    val canSol = And(canSolModTh, FOLSubstitution(FOLVar("x") -> gamma)(parseFormula("x*s(0)=x")))
 
-    val patchedSip = new SimpleInductionProof(
-      formulaToExpansionTree(addClause, false) +: sip.ExpSeq0,
-      sip.ExpSeq1, sip.ExpSeq2, sip.t, sip.u)
-    base.findSolution(patchedSip)
+    FindFormulaH(canSol, sip, n, forgetClauses = true, prover = modThProver)
   }
 }
 

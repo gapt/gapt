@@ -33,6 +33,8 @@ object PCNF {
     else
       s.succedent.tail.foldLeft( Neg( s.succedent.head ) )( ( f1, f2 ) => And( f1, Neg( f2 ) ) )
 
+    val nLine = sys.props( "line.separator" )
+
     // compute CNF and confirm a <- CNF(-s) up to variable renaming
     val cnf = CNFp.toClauseList( form )
     var sub = Substitution()
@@ -66,7 +68,7 @@ object PCNF {
               case _                    => false
             } ) match {
               case Some( f ) => ( Axiom( List(), List( f ) ), f.asInstanceOf[HOLFormula], false )
-              case _         => throw new ResolutionException( "Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [\n" + cnf.mkString( ";\n" ) + "\n]", Nil, a :: cnf.toList )
+              case _         => throw new ResolutionException( "Clause [" + a.toString + "] is not reflexivity and not contained in CNF(-s) [" + nLine + cnf.mkString( ";" + nLine ) + nLine + "]", Nil, a :: cnf.toList )
             }
         }
     }

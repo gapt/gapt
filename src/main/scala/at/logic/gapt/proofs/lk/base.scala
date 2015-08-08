@@ -9,11 +9,42 @@ import at.logic.gapt.utils.ds.trees._
 
 import scala.collection.GenTraversable
 
-sealed abstract class SequentIndex
+sealed abstract class SequentIndex extends Ordered[SequentIndex] {
+  def compare( that: SequentIndex ) = ( this, that ) match {
+    case ( Ant( _ ), Suc( _ ) ) => -1
+    case ( Suc( _ ), Ant( _ ) ) => 1
+    case ( Ant( i ), Ant( j ) ) => i - j
+    case ( Suc( i ), Suc( j ) ) => i - j
+  }
 
-case class Ant( k: Int ) extends SequentIndex
+  /**
+   * Increments the index by a natural number.
+   *
+   * @param i
+   */
+  def +( i: Int ): SequentIndex
 
-case class Suc( k: Int ) extends SequentIndex
+  /**
+   * Decrements the index by a natural number.
+   *
+   * @param i
+   */
+  def -( i: Int ): SequentIndex
+}
+
+case class Ant( k: Int ) extends SequentIndex {
+  require( k >= 0, "Indices < 0 are not supported." )
+
+  def +( i: Int ) = Ant( k + i )
+  def -( i: Int ) = Ant( k - i )
+}
+
+case class Suc( k: Int ) extends SequentIndex {
+  require( k >= 0, "Indices < 0 are not supported." )
+
+  def +( i: Int ) = Suc( k + i )
+  def -( i: Int ) = Suc( k - i )
+}
 
 /**
  * A sequent is a pair of sequences of elements of type A, typically written as a,,1,,,…,a,,m,, :- b,,1,,,…,b,,n,,.
@@ -264,6 +295,17 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   }
 
   /**
+   * Tests whether the sequent is defined at the supplied SequentIndex.
+   *
+   * @param i
+   * @return
+   */
+  def isDefinedAt( i: SequentIndex ): Boolean = i match {
+    case Ant( k ) => antecedent.isDefinedAt( k )
+    case Suc( k ) => succedent.isDefinedAt( k )
+  }
+
+  /**
    * Returns the range of indices of the sequent.
    *
    * @return
@@ -295,6 +337,19 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
         val ( x, sucNew ) = listFocus( succedent )( k )
         ( x, new Sequent( antecedent, sucNew ) )
     }
+  }
+
+  def zipWithIndex: Sequent[( A, SequentIndex )] =
+    Sequent(
+      antecedent.zipWithIndex.map { case ( a, i ) => a -> Ant( i ) },
+      succedent.zipWithIndex.map { case ( b, i ) => b -> Suc( i ) }
+    )
+
+  def find( pred: A => Boolean ): Option[SequentIndex] = indicesWhere( pred ).headOption
+
+  def updated[B >: A]( index: SequentIndex, elem: B ): Sequent[B] = index match {
+    case Ant( i ) => Sequent( antecedent.updated( i, elem ), succedent )
+    case Suc( j ) => Sequent( antecedent, succedent.updated( j, elem ) )
   }
 }
 

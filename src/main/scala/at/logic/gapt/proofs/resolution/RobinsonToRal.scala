@@ -64,7 +64,7 @@ abstract class RobinsonToRal {
         ( rmap2, rule )
 
       case Factor( clause, parent, List( aux1 @ ( f1 :: _ ) ), sub_ ) if parent.root.antecedent.contains( f1 ) =>
-        //        println("antecedent factor 1: "+aux1+"\n"+parent.root+"\n"+clause)
+        //        println( "antecedent factor 1: " + aux1 + sys.props("line.separator") + parent.root + sys.props("line.separator") + clause )
         val sub = convert_substitution( sub_ )
         val ( rmap1, rp1 ) = apply( parent, map )
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
@@ -75,7 +75,7 @@ abstract class RobinsonToRal {
         ( rmap1, rule )
 
       case Factor( clause, parent, List( aux1 @ ( f1 :: _ ) ), sub_ ) if parent.root.succedent.contains( f1 ) =>
-        //println( "succedent factor 1: " + aux1 + "\n" + parent.root + "\n" + clause )
+        //println( "succedent factor 1: " + aux1 + sys.props("line.separator") + parent.root + sys.props("line.separator") + clause )
         val sub = convert_substitution( sub_ )
         val ( rmap1, rp1 ) = apply( parent, map )
         val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )

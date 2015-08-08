@@ -21,6 +21,8 @@ object ceres_omega extends ceres_omega
 class ceres_omega {
   import at.logic.gapt.formats.llk.LLKFormatter._
 
+  val nLine = sys.props( "line.separator" )
+
   private def check_es( s: LabelledOccSequent, c: LabelledOccSequent, es: LabelledOccSequent ): LabelledOccSequent = {
 
     s
@@ -87,7 +89,7 @@ class ceres_omega {
           require( ( nclause.occurrences diff scontr.root.occurrences ).isEmpty )
           ( scontr, nclause )
         case Nil =>
-          throw new Exception( "Could not find a projection for the clause " + f( root ) + " in " + projections.map( x => filterEndsequent( sequentToLabelledSequent( x.root ), es, struct ) ).map( f( _ ) ).mkString( "\n" ) )
+          throw new Exception( "Could not find a projection for the clause " + f( root ) + " in " + projections.map( x => filterEndsequent( sequentToLabelledSequent( x.root ), es, struct ) ).map( f( _ ) ).mkString( nLine ) )
       }
 
     case Cut( root, parent1, parent2, p1occs, p2occs ) =>
@@ -113,18 +115,18 @@ class ceres_omega {
 
       require(
         cutfleft.formula == cutfright.formula,
-        "Found the wrong cut formulas:\n" + cutfleft.formula + "\n and\n" + cutfright.formula
+        "Found the wrong cut formulas:" + nLine + cutfleft.formula + nLine + " and" + nLine + cutfright.formula
       )
       //      require(cutfleft.formula syntaxEquals  cutfright.formula,
-      //        "Cut formulas are alpha equal, but not syntax:\n"+cutfleft.formula+"\n and\n"+cutfright.formula)
+      //        "Cut formulas are alpha equal, but not syntax:" nLine + cutfleft.formula + nLine + " and" nLine + cutfright.formula)
       require(
         cutfleft.skolem_label == cutfright.skolem_label,
-        "Found the wrong cut labels:\n" + cutfleft.skolem_label + "\n and\n" + cutfright.skolem_label
+        "Found the wrong cut labels:" + nLine + cutfleft.skolem_label + nLine + " and" + nLine + cutfright.skolem_label
       )
       val rule = CutRule( cleft, cright, cutfleft, cutfright )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
-      require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+      require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:" + nLine + " calculated clause: " + f( nclauses ) + nLine + " real clause: " + f( root ) )
       require( crule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent " + rule.root + " is not the size of the end-sequent " + es + " + the size of the clause " + nclauses )
       ( crule, nclauses )
 
@@ -138,7 +140,7 @@ class ceres_omega {
           val c2 = findAuxByFormulaAndLabel( contr, clause1.l_antecedent, c1 :: Nil )
           val rule = ContractionLeftRule( lkparent, c1, c2 )
           val nclauses = filterByAncestor( rule.root, clause1 )
-          require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+          require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:" + nLine + " calculated clause: " + f( nclauses ) + nLine + " real clause: " + f( root ) )
           require( rule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent " + rule.root + " is not the size of the end-sequent " + es + " + the size of the clause " + nclauses )
           ( rule, nclauses )
         case _ => throw new Exception( "Factor of more than two literals not supported yet!" )
@@ -154,7 +156,7 @@ class ceres_omega {
           val c2 = findAuxByFormulaAndLabel( contr, clause1.l_succedent, c1 :: Nil )
           val rule = ContractionRightRule( lkparent, c1, c2 )
           val nclauses = filterByAncestor( rule.root, clause1 )
-          require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+          require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:" + nLine + " calculated clause: " + f( nclauses ) + nLine + " real clause: " + f( root ) )
           require( rule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent " + root + " is not the size of the end-sequent " + es + " + the size of the clause " + nclauses )
           ( rule, nclauses )
         case 0 => ( lkparent, clause1 ) //trivial, skipping factor inference
@@ -171,7 +173,7 @@ class ceres_omega {
       val rule = EquationLeftMacroRule( lkparent1, lkparent2, eqn, modulant, principial.formula )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
-      require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+      require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:" + nLine + " calculated clause: " + f( nclauses ) + nLine + " real clause: " + f( root ) )
       require( crule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent " + rule.root + " is not the size of the end-sequent " + es + " + the size of the clause " + nclauses )
       ( crule, nclauses )
 
@@ -185,7 +187,7 @@ class ceres_omega {
       val rule = EquationRightMacroRule( lkparent1, lkparent2, eqn, modulant, principial.formula )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
-      require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) )
+      require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:" + nLine + " calculated clause: " + f( nclauses ) + nLine + " real clause: " + f( root ) )
       require( crule.root.occurrences.size == es.occurrences.size + nclauses.occurrences.size, "The size of the generated end-sequent " + rule.root + " is not the size of the end-sequent " + es + " + the size of the clause " + nclauses )
       ( crule, nclauses )
 
@@ -215,7 +217,7 @@ class ceres_omega {
 
       //val nclauses = LabelledSequent( nclauses_a.reverse, nclauses_s.reverse )
 
-      require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:\n calculated clause: " + f( nclauses ) + "\n real clause: " + f( root ) + " parent rule " + parent.rule )
+      require( nclauses.toHOLSequent multiSetEquals root.toHOLSequent, "We tracked the clauses wrong:" + nLine + " calculated clause: " + f( nclauses ) + nLine + " real clause: " + f( root ) + " parent rule " + parent.rule )
 
       val rootsize = rule.root.occurrences.size
       val essize = es.occurrences.size

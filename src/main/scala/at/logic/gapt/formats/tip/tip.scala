@@ -19,7 +19,7 @@ object TipParser {
     val formulaParser = Prover9TermParser
     val formulaLine = """([^#.]+)#.*""".r
 
-    contents.split( "\n" ) foreach {
+    contents.split( sys.props( "line.separator" ) ) foreach {
       case "formulas(assumptions)." => currentBuffer = antecedent
       case "formulas(goals)."       => currentBuffer = succedent
       case formulaLine( formula )   => currentBuffer += formulaParser.parseFormula( formula )

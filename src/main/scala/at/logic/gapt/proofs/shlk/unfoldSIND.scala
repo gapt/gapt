@@ -29,6 +29,7 @@ object applySchemaSubstitution2 {
   }
 }
 object CloneLKProof2 {
+  val nLine = sys.props( "line.separator" )
   def apply( proof: LKProof, name: String, rewriterules: List[Tuple2[SchemaFormula, SchemaFormula]], proofSize: Int, version: Int, ProofLinkPassing: List[Tuple2[SchemaExpression, SchemaExpression]] ): Tuple2[List[Tuple2[SchemaFormula, SchemaFormula]], LKProof] = {
     proof match {
       case trsArrowLeftRule( p, s, a, m )  => if ( version == 0 ) Tuple2( List(), proof ) else if ( version == 1 ) apply( p, name, rewriterules, proofSize, version, ProofLinkPassing ) else if ( version == 2 ) Tuple2( List(), proof ) else Tuple2( List(), proof )
@@ -479,14 +480,14 @@ object CloneLKProof2 {
               CloneLKProof2( SchemaProofDB.get( name2 ).base, name2, rewriterules, 0, version, ProofLinkPassingNew )
             } else if ( SchemaProofDB.getLinkTerms( name2 ).length == 0 && SchemaProofDB.getLinkTerms( name2 ).length == newList.length )
               CloneLKProof2( SchemaProofDB.get( name2 ).base, name2, rewriterules, 0, version, List() )
-            else throw new Exception( "ERROR ProofLinks are wrong !\n" )
+            else throw new Exception( "ERROR ProofLinks are wrong !" + nLine )
           } else {
             if ( SchemaProofDB.getLinkTerms( name2 ).length != 0 && SchemaProofDB.getLinkTerms( name2 ).length == newList.length ) {
               val ProofLinkPassingNew = SchemaProofDB.getLinkTerms( name2 ).zip( newList )
               applySchemaSubstitution2.function001( name2, next, ProofLinkPassingNew )
             } else if ( SchemaProofDB.getLinkTerms( name2 ).length == 0 && SchemaProofDB.getLinkTerms( name2 ).length == newList.length )
               applySchemaSubstitution2.function001( name2, next, List() )
-            else throw new Exception( "ERROR ProofLinks are wrong !\n" )
+            else throw new Exception( "ERROR ProofLinks are wrong !" + nLine )
           }
         } else if ( version == 2 ) Tuple2( List(), FOSchemaProofLinkRule(
           new HOLSequent(
@@ -496,7 +497,7 @@ object CloneLKProof2 {
         ) )
         else Tuple2( List(), proof )
       }
-      case _ => throw new Exception( "ERROR in unfolding: CloneLKProof2: missing rule !\n" + proof.rule + "\n" )
+      case _ => throw new Exception( "ERROR in unfolding: CloneLKProof2: missing rule !" + nLine + proof.rule + nLine )
     }
   }
 }
@@ -516,6 +517,7 @@ object iterateOnFormula {
   def apply( term: SchemaExpression, ProofLinkPassing: List[Tuple2[SchemaExpression, SchemaExpression]] ): SchemaExpression = ProofLinkPassing.foldLeft( term )( ( t, pair ) => { cloneMyTerm( t, pair._1, pair._2 ) } )
 }
 object genterm {
+  val nLine = sys.props( "line.separator" )
   def apply( n: Int, p: SchemaFormula, t: SchemaExpression ): SchemaFormula = {
     p match {
       case Neg( nF ) => {
@@ -551,7 +553,7 @@ object genterm {
       case leq( l, r ) => leq( apply( n, l, t ), apply( n, r, t ) )
       case SchemaAtom( x, y ) if isIndexSort( y.head ) => SchemaAtom( x, List( y.head ) ++ y.map( x => apply( n, x, t ) ) )
       case SchemaAtom( x, y ) => SchemaAtom( x, y.map( x => apply( n, x, t ) ) )
-      case _ => throw new Exception( "ERROR in unfolding missing formula !\n" + p.toString + "\n" )
+      case _ => throw new Exception( "ERROR in unfolding missing formula !" + nLine + p.toString + nLine )
     }
   }
   def apply( ii: Int, p: SchemaExpression, t: SchemaExpression ): SchemaExpression = {
@@ -578,13 +580,14 @@ object genterm {
         case _ => p
       }
       case Abs( x, tt ) => p match { case Abs( x2, t2 ) if x == x2 && equalterms( tt, t2 ) => apply( ii, t2, t ) }
-      case _            => throw new Exception( "ERROR in unfolding missing formula !\n" + t.toString + "\n" )
+      case _            => throw new Exception( "ERROR in unfolding missing formula !" + nLine + t.toString + nLine )
 
     }
   }
 }
 
 object cloneMySol {
+  val nLine = sys.props( "line.separator" )
   def apply( form: SchemaFormula, proofSize: Int ): SchemaFormula = {
     form match {
       case Neg( nF ) => {
@@ -622,7 +625,7 @@ object cloneMySol {
         val finSOLList = sollist.map( x => cloneMyTerm( x, proofSize ) )
         SchemaAtom( head, finSOLList )
       }
-      case _ => throw new Exception( "ERROR in unfolding missing formula !\n" + form.toString + "\n" )
+      case _ => throw new Exception( "ERROR in unfolding missing formula !" + nLine + form.toString + nLine )
     }
   }
   def apply( form: SchemaFormula, IN: SchemaExpression, OUT: SchemaExpression ): SchemaFormula = {
@@ -662,7 +665,7 @@ object cloneMySol {
         val finSOLList = sollist.map( x => cloneMyTerm( x, IN, OUT ) )
         SchemaAtom( head, finSOLList )
       }
-      case _ => throw new Exception( "ERROR in unfolding missing formula !\n" + form.toString + "\n" )
+      case _ => throw new Exception( "ERROR in unfolding missing formula !" + nLine + form.toString + nLine )
     }
   }
   def apply( form: SchemaFormula, rewriterules: List[Tuple2[SchemaFormula, SchemaFormula]] ): SchemaFormula = {
@@ -699,7 +702,7 @@ object cloneMySol {
       case sims( l, r )       => sims( l, r )
       case leq( l, r )        => leq( l, r )
       case SchemaAtom( _, _ ) => defineremove( form, rewriterules )
-      case _                  => throw new Exception( "ERROR in unfolding missing formula !\n" + form.toString + "\n" )
+      case _                  => throw new Exception( "ERROR in unfolding missing formula !" + nLine + form.toString + nLine )
     }
   }
 }
@@ -717,6 +720,7 @@ object getName {
 }
 
 object cloneMyTerm {
+  val nLine = sys.props( "line.separator" )
   def apply( term: SchemaExpression, proofSize: Int ): SchemaExpression = {
     term match {
       case SchemaFunction( n, l, t ) if getName( n ) == "schS" && t == Tindex => SchemaFunction( n, l.map( x => apply( x, proofSize ) ) )
@@ -754,13 +758,14 @@ object cloneMyTerm {
         case _                                     => Const( n, t )
       }
       case Abs( x, t ) => Abs( x, apply( t, IN, OUT ) )
-      case _           => throw new Exception( "ERROR in unfolding missing formula !\n" + term.toString + "\n" )
+      case _           => throw new Exception( "ERROR in unfolding missing formula !" + nLine + term.toString + nLine )
 
     }
   }
 }
 
 object equalforms {
+  val nLine = sys.props( "line.separator" )
   def apply( form: SchemaFormula, form2: SchemaFormula ): Boolean = {
     form match {
       case Neg( nF ) => form2 match {
@@ -808,12 +813,13 @@ object equalforms {
           y.zip( y2 ).foldLeft( Tuple2( true, true ) )( ( b, pair ) => if ( equalterms( pair._1, pair._2 ) && b._2 ) b else Tuple2( b._1, false ) )._1
         case _ => false
       }
-      case _ => throw new Exception( "ERROR in unfolding missing formula !\n" + form.toString + "\n" )
+      case _ => throw new Exception( "ERROR in unfolding missing formula !" + nLine + form.toString + nLine )
     }
   }
 }
 
 object equalterms {
+  val nLine = sys.props( "line.separator" )
   def apply( term: SchemaExpression, term2: SchemaExpression ): Boolean = {
     term match {
       case SchemaFunction( head, l, Tindex ) if getName( head ) == "schS" => term2 match {
@@ -848,7 +854,7 @@ object equalterms {
         case _                                     => false
       }
       case Abs( x, t ) => term2 match { case Abs( x2, t2 ) if x == x2 => apply( t, t2 ) }
-      case _           => throw new Exception( "ERROR in unfolding missing formula !\n" + term.toString + "\n" )
+      case _           => throw new Exception( "ERROR in unfolding missing formula !" + nLine + term.toString + nLine )
 
     }
   }

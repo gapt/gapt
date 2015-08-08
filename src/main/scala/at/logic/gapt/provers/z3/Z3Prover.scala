@@ -11,12 +11,16 @@ import at.logic.gapt.utils.withTempFile
 import scala.sys.process._
 
 class Z3Prover extends Prover with ExternalProgram {
+  val nLine = sys.props( "line.separator" )
+  val unsat = "unsat" + nLine
+  val sat = "sat" + nLine
+
   override def isValid( seq: HOLSequent ): Boolean = {
     withTempFile.fromString( SmtLibExporter( seq ) ) { input =>
       Seq( "z3", "-smt2", input ) !!
     } match {
-      case "unsat\n" => true
-      case "sat\n"   => false
+      case `unsat` => true
+      case `sat`   => false
     }
   }
 

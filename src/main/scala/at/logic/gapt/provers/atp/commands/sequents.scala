@@ -97,12 +97,13 @@ case class SubsumedTargedReachedCommand[V <: OccSequent]() extends ResultCommand
 
 //cvetan - kommutativity of the equality
 object fvarInvariantMSEqualityEQ {
+  val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
   def apply[V <: OccSequent]( c1: V, f2: HOLSequent ): Boolean = {
     if ( f2.succedent.length == 0 )
       return false
     f2.succedent.head match {
       case Eq( a, b ) => {
-        println( "\n\nVutre sum !\n\n" )
+        println( dnLine + "Vutre sum !" + dnLine )
         val f3 = HOLSequent( f2.antecedent, Eq( b, a ) +: f2.succedent.tail )
         return fvarInvariantMSEquality( c1, f3 )
       }

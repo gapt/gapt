@@ -15,6 +15,8 @@ class TPTPHOLExporter {
    *
    * @note In contrast to prover9, for multiple conjectures, each of them has to be proved.
    */
+  val nLine = sys.props( "line.separator" )
+
   def apply( l: List[HOLSequent], positive: Boolean = false ): String = {
     require( l.nonEmpty, "Cannot export an empty sequent list!" )
     val ( vs, vnames, cs, cnames ) = createNamesFromSequent( l )
@@ -22,14 +24,14 @@ class TPTPHOLExporter {
     var index = 0
     val vdecs_ = for ( v <- vs ) yield {
       index = index + 1
-      thf_type_dec( index, v, vnames ) + "\n"
+      thf_type_dec( index, v, vnames ) + nLine
     }
 
     val vdecs = vdecs_.foldLeft( "" )( _ ++ _ )
 
     val cdecs_ = for ( c <- cs if c.name != "=" ) yield {
       index = index + 1
-      thf_type_dec( index, c, cnames ) + "\n"
+      thf_type_dec( index, c, cnames ) + nLine
     }
     val cdecs = cdecs_.foldLeft( "" )( _ ++ _ )
 
@@ -37,8 +39,8 @@ class TPTPHOLExporter {
       case true =>
         for ( fs <- l ) yield {
           index = index + 1
-          //thf_sequent_dec( index, fs, vnames, cnames ) + "\n" //leo doesn't support sequents?
-          thf_formula_dec( index, fs.toImplication, vnames, cnames ) + "\n"
+          //thf_sequent_dec( index, fs, vnames, cnames ) + nLine //leo doesn't support sequents?
+          thf_formula_dec( index, fs.toImplication, vnames, cnames ) + nLine
         }
       case false =>
         val negClauses = Neg( And( l.map( closedFormula ) ) )
@@ -48,9 +50,9 @@ class TPTPHOLExporter {
 
     }
 
-    //"% variable type declarations\n" + vdecs +
-    "% constant type declarations\n" + cdecs +
-      "% sequents\n" + sdecs.foldLeft( "" )( ( s, x ) => s + x + "\n" )
+    //"% variable type declarations" + nLine + vdecs +
+    "% constant type declarations" + nLine + cdecs +
+      "% sequents" + nLine + sdecs.foldLeft( "" )( ( s, x ) => s + x + nLine )
 
   }
 

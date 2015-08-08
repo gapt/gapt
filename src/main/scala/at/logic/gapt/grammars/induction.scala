@@ -42,7 +42,7 @@ object SipGrammar {
 case class SipGrammar( productions: Seq[SipGrammar.Production] ) {
   import SipGrammar._
 
-  override def toString: String = productions.map { case ( a, t ) => s"$a -> $t" }.sorted.mkString( "\n" )
+  override def toString: String = productions.map { case ( a, t ) => s"$a -> $t" }.sorted.mkString( sys.props( "line.separator" ) )
 
   def instanceGrammar( n: Int ) =
     TratGrammar( tau, tau +: ( 0 until n ).inclusive.map( gamma_i ),

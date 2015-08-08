@@ -39,6 +39,8 @@ val endSequent = HOLSequent(
 )
 println(s"End-sequent of the sip: $endSequent")
 
+val nLine = sys.props("line.separator")
+
 val encoding = InstanceTermEncoding(endSequent)
 var instanceLanguages = instanceSequents.map { case (n, seq) =>
   n -> encoding.encode(seq)
@@ -47,7 +49,7 @@ var instanceLanguages = instanceSequents.map { case (n, seq) =>
 instanceLanguages = instanceLanguages ++
   Seq(0 -> Seq(encoding.encode(parseFormula("0+0=0") -> true)))
 instanceLanguages foreach { case (n, l) =>
-  println(s"Instance language for n=$n:\n${l.mkString("\n")}\n")
+  println(s"Instance language for n=$n:$nLine${l.mkString(nLine)}" + nLine )
 }
 
 println(s"Covering grammar consisting of all normal forms:")
@@ -66,5 +68,5 @@ println()
 instanceLanguages foreach { case (n, instanceLanguage) =>
   val instanceGrammar = minGrammar.instanceGrammar(n)
   println(s"Instance language for n=$n covered? " + (instanceLanguage.toSet diff instanceGrammar.language).isEmpty)
-//  println(s"Instance grammar:\n$instanceGrammar")
+//  println(s"Instance grammar:" + nLine + "$instanceGrammar")
 }

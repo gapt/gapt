@@ -17,6 +17,7 @@ import at.logic.gapt.expr.{ To, FunctionType, Tindex, Ti }
 import at.logic.gapt.proofs.lk._
 
 object sFOParser {
+  val nLine = sys.props( "line.separator" )
 
   def parseProofs( input: InputStreamReader ): List[( String, LKProof )] = {
     //    ("p",parseProof(input, "root"))::Nil
@@ -30,10 +31,10 @@ object sFOParser {
     lazy val sp = new SequentParser
     sp.parseAll( sp.sequent, txt ) match {
       case res @ sp.Success( result, input ) => {
-        //        println("\n\nSUCCESS parse :) \n")
+        //        println( nLine + nLine + "SUCCESS parse :) " + nLine )
         return res.result.toHOLSequent
       }
-      case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
+      case x: AnyRef => // { println( nLine + nLine + "FAIL parse : " + nLine + error_buffer ); throw new Exception( nLine + nLine + "FAIL parse :( " + nLine ); }
         throw new Exception( "Error in sFOParser.parseSequent : " + x.toString )
     }
     class SequentParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
@@ -51,7 +52,7 @@ object sFOParser {
       }
       def sum: Parser[IntegerTerm] = intVar ~ "+" ~ intConst ^^ {
         case indV ~ "+" ~ indC => {
-          //        println("\n\nsum")
+          //        println( nLine + nLine + "sum")
           indC match {
             case Succ( IntZero() )                 => Succ( indV )
             case Succ( Succ( IntZero() ) )         => Succ( Succ( indV ) )
@@ -60,7 +61,7 @@ object sFOParser {
         }
       }
       def intVar: Parser[IntVar] = "[i,j,m,n,k,x]".r ^^ {
-        case x => { /*println("\n\nintVar");*/ IntVar( x ) }
+        case x => { /*println( nLine + nLine + "intVar");*/ IntVar( x ) }
       }
       def succ: Parser[IntegerTerm] = "s(" ~ intTerm ~ ")" ^^ {
         case "s(" ~ intTerm ~ ")" => Succ( intTerm.asInstanceOf[IntegerTerm] )
@@ -68,7 +69,7 @@ object sFOParser {
       def schemaFormula = formula
       def indPred: Parser[SchemaFormula] = """[A-Z]*[a-z]*[0-9]*""".r ~ "(" ~ index ~ "," ~ s_term ~ ")" ^^ {
         case x ~ "(" ~ l ~ "," ~ t ~ ")" => {
-          //println("\n\nt = "+t)
+          //println( nLine + nLine + "t = "+t)
           IndexedPredicate( x, l )
         }
       }
@@ -95,7 +96,7 @@ object sFOParser {
       def non_formula: Parser[SchemaExpression] = ( fo_term | s_term | indexedVar | abs | variable | constant | var_func | const_func )
       def s_term: Parser[SchemaExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ variable ~ ")" ^^ {
         case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
-          //println("\n\nsTerm\n")
+          //println( nLine + nLine + "sTerm" + nLine )
           sTerm( name, i.asInstanceOf[IntegerTerm], args :: Nil )
         }
       }
@@ -128,7 +129,7 @@ object sFOParser {
       def const_atom: Parser[SchemaFormula] = regex( new Regex( "P" ) ) ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params ~ ")" => {
 
-          //        println("\n\nconst_atom")
+          //        println( nLine + nLine + "const_atom")
           SchemaAtom( Const( x, FunctionType( To, params map ( _.exptype ) ) ), params )
         }
       }
@@ -152,7 +153,7 @@ object sFOParser {
         }
       }
     }
-    throw new Exception( "\nError in sFOParser.parseSequent function !\n" )
+    throw new Exception( nLine + "Error in sFOParser.parseSequent function !" + nLine )
   }
 
   //--------------------------------- parse SLK proof -----------------------
@@ -187,14 +188,14 @@ object sFOParser {
     //    var proofName = ""
     //    sp.parseAll(sp.line, txt)
     sp.parseAll( sp.slkProofs, txt ) match {
-      case sp.Success( result, input ) => // println("\n\nSUCCESS parse :) \n")
-      case x: AnyRef => // { println("\n\nFAIL parse : \n"+error_buffer); throw new Exception("\n\nFAIL parse :( \n"); }
+      case sp.Success( result, input ) => // println( nLine + nLine + "SUCCESS parse :) " + nLine )
+      case x: AnyRef => // { println( nLine + nLine + "FAIL parse : " + nLine + error_buffer ); throw new Exception( nLine + nLine + "FAIL parse :( " + nLine ); }
         throw new Exception( x.toString )
     }
 
     //    class ParserTxt extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
     //
-    //      def line: Parser[List[Unit]] = repsep(mapping,"\n")
+    //      def line: Parser[List[Unit]] = repsep(mapping, nLine)
     //
     //      def mapping: Parser[Unit] = """*""".r ^^ {
     //        case t => {
@@ -239,7 +240,7 @@ object sFOParser {
           SchemaProofDB.put( new SchemaProof( str, IntVar( "k" ) :: Nil, seq.toHOLSequent, mapBase.get( "root" ).get, mapStep.get( "root" ).get ) )
           mapBase = MMap.empty[String, LKProof]
           mapStep = MMap.empty[String, LKProof]
-          //          println("\n\nParsing is SUCCESSFUL : "+str)
+          //          println( nLine + nLine + "Parsing is SUCCESSFUL : "+str)
         }
       }
 
@@ -281,7 +282,7 @@ object sFOParser {
 
       def sum: Parser[IntegerTerm] = intVar ~ "+" ~ intConst ^^ {
         case indV ~ "+" ~ indC => {
-          //        println("\n\nsum")
+          //        println( nLine + nLine + "sum")
           indC match {
             case Succ( IntZero() )                 => Succ( indV )
             case Succ( Succ( IntZero() ) )         => Succ( Succ( indV ) )
@@ -291,7 +292,7 @@ object sFOParser {
       }
 
       def intVar: Parser[IntVar] = "[i,j,m,n,k,x]".r ^^ {
-        case x => { /*println("\n\nintVar");*/ IntVar( x ) }
+        case x => { /*println( nLine + nLine + "intVar");*/ IntVar( x ) }
       }
       def succ: Parser[IntegerTerm] = "s(" ~ intTerm ~ ")" ^^ {
         case "s(" ~ intTerm ~ ")" => Succ( intTerm.asInstanceOf[IntegerTerm] )
@@ -304,10 +305,10 @@ object sFOParser {
           if ( !mapPredicateToArity.isDefinedAt( x.toString ) )
             mapPredicateToArity.put( x.toString, l.size )
           else if ( mapPredicateToArity.get( x.toString ).get != l.size ) {
-            //println("\nInput ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !\n\n")
-            throw new Exception( "\nInput ERROR : Indexed Predicate '" + x.toString + "' should have arity " + mapPredicateToArity.get( x.toString ).get + ", but not " + l.size + " !\n" )
+            //println( nLine + "Input ERROR : Indexed Predicate '"+x.toString+"' should have arity "+mapPredicateToArity.get(x.toString).get+ ", but not "+l.size+" !" + nLine + nLine )
+            throw new Exception( nLine + "Input ERROR : Indexed Predicate '" + x.toString + "' should have arity " + mapPredicateToArity.get( x.toString ).get + ", but not " + l.size + " !" + nLine )
           }
-          //          println("\n\nIndexedPredicate");
+          //          println( nLine + nLine + "IndexedPredicate");
 
           //          val map: MMap[Var, T])
           //          val subst: SchemaSubstitution1[SchemaExpression] = new SchemaSubstitution1[SchemaExpression]()
@@ -332,11 +333,11 @@ object sFOParser {
       // nested bigAnd bigOr....           ("""BigAnd""".r | """BigOr""".r)
       def prefix: Parser[Tuple4[Boolean, IntVar, IntegerTerm, IntegerTerm]] = """[BigAnd]*[BigOr]*""".r ~ "(" ~ intVar ~ "=" ~ index ~ ".." ~ index ~ ")" ^^ {
         case "BigAnd" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")" => {
-          //          println("\n\nprefix\n\n")
+          //          println( nLine + nLine + "prefix" + nLine + nLine )
           Tuple4( true, intVar1, ind1, ind2 )
         }
         case "BigOr" ~ "(" ~ intVar1 ~ "=" ~ ind1 ~ ".." ~ ind2 ~ ")" => {
-          //          println("\n\nprefix\n\n")
+          //          println( nLine + nLine + "prefix" + nLine + nLine )
           Tuple4( false, intVar1, ind1, ind2 )
         }
       }
@@ -355,7 +356,7 @@ object sFOParser {
       def non_formula: Parser[SchemaExpression] = ( fo_term | s_term | indexedVar | abs | variable | constant | var_func | const_func )
       def s_term: Parser[SchemaExpression] = "[g,h]".r ~ "(" ~ intTerm ~ "," ~ non_formula ~ ")" ^^ {
         case name ~ "(" ~ i ~ "," ~ args ~ ")" => {
-          //          println("\nsTerm : "+name+"("+i+","+args+")")
+          //          println( nLine + "sTerm : "+name+"("+i+","+args+")")
           //          println("args = "+args)
           //          println("args.extype = "+args.exptype)
           sTerm( name, i, args :: Nil )
@@ -363,7 +364,7 @@ object sFOParser {
       }
       def fo_term: Parser[SchemaExpression] = "[f]".r ~ "(" ~ non_formula ~ ")" ^^ {
         case name ~ "(" ~ arg ~ ")" => {
-          //          println("\n\nfoTerm\n arg.extype = "+arg.exptype)
+          //          println( nLine + nLine + "foTerm" + nLine + " arg.extype = "+arg.exptype)
           foTerm( name, arg :: Nil )
         }
       }
@@ -388,7 +389,7 @@ object sFOParser {
       def exists: Parser[SchemaFormula] = "Exists" ~ variable ~ formula ^^ { case "Exists" ~ v ~ x => Ex( v, x ) }
       def var_atom: Parser[SchemaFormula] = regex( new Regex( "[u-z]" + word ) ) ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params ~ ")" => {
-          //        println("\n\nvar_atom")
+          //        println( nLine + nLine + "var_atom")
           SchemaAtom( Var( x, FunctionType( To, params map ( _.exptype ) ) ), params )
         }
       }
@@ -397,7 +398,7 @@ object sFOParser {
       def const_atom: Parser[SchemaFormula] = regex( new Regex( "P" ) ) ~ "(" ~ repsep( term, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params ~ ")" => {
 
-          //        println("\n\nconst_atom")
+          //        println( nLine + nLine + "const_atom")
           SchemaAtom( Const( x, FunctionType( To, params map ( _.exptype ) ) ), params )
         }
       }
@@ -423,14 +424,14 @@ object sFOParser {
       //      def sequent: Parser[Sequent] = formula ~ "|-" ~ formula ^^ { case lf ~ "|-" ~ rf => {
       def sequent: Parser[OccSequent] = repsep( formula, "," ) ~ "|-" ~ repsep( formula, "," ) ^^ {
         case lfs ~ "|-" ~ rfs => {
-          //          println("\n\nSEQUENT")
+          //          println( nLine + nLine + "SEQUENT")
           Axiom( lfs, rfs ).root
         }
       }
 
       def ax: Parser[LKProof] = "ax(" ~ sequent ~ ")" ^^ {
         case "ax(" ~ sequent ~ ")" => {
-          //          println("\n\nAXIOM")
+          //          println( nLine + nLine + "AXIOM")
           Axiom( sequent )
         }
         case _ => { println( "ERROR" ); Axiom( List(), List() ) }
@@ -440,55 +441,55 @@ object sFOParser {
 
       //      def pLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")"  ~ sequent ~ ")" ^^ {
       //        case                       "pLink(" ~ "(" ~ name ~       "," ~   v   ~ ")"  ~ sequent ~ ")" => {
-      ////          println("\n\npLink")
+      ////          println( nLine + nLine + "pLink")
       //          SchemaProofLinkRule(sequent.toHOLSequent, name, v::Nil)
       //        }
       //      }
 
       def pFOLink: Parser[LKProof] = "pLink(" ~ "(" ~ proof_name ~ "," ~ index ~ ")" ~ sequent ~ ")" ^^ {
         case "pLink(" ~ "(" ~ name ~ "," ~ v ~ ")" ~ sequent ~ ")" => {
-          //          println("\n\npLink")
+          //          println( nLine + nLine + "pLink")
           FOSchemaProofLinkRule( sequent.toHOLSequent, name, v :: Nil )
         }
       }
 
       def orR1: Parser[LKProof] = "orR1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orR1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\norR1")
+          //          println( nLine + nLine + "orR1")
           OrRight1Rule( map.get( l ).get, f1, f2 )
         }
       }
 
       def orR2: Parser[LKProof] = "orR2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orR2(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\norR2")
+          //          println( nLine + nLine + "orR2")
           OrRight2Rule( map.get( label ).get, f1, f2 )
         }
       }
 
       def orR: Parser[LKProof] = "orR(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orR(" ~ label ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\norR")
+          //          println( nLine + nLine + "orR")
           OrRightRule( map.get( label ).get, f1, f2 )
         }
       }
 
       def orL: Parser[LKProof] = "orL(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "orL(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\norL")
+          //          println( nLine + nLine + "orL")
           OrLeftRule( map.get( l1 ).get, map.get( l2 ).get, f1, f2 )
         }
       }
 
       def andR: Parser[LKProof] = "andR(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andR(" ~ l1 ~ "," ~ l2 ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\nandR")
-          //          println("\nerror_buffer = "+error_buffer)
-          //          println("\n"+map.get(l).get.root.toString)
+          //          println( nLine + nLine + "andR")
+          //          println( nLine + "error_buffer = "+error_buffer)
+          //          println( nLine + map.get(l).get.root.toString)
           //          println(map.get(l1).get.root)
-          //          println("\n\n")
+          //          println( nLine + nLine )
           //          println(map.get(l2).get.root)
-          //          println("\n\n")
+          //          println( nLine + nLine )
           val p = AndRightRule( map.get( l1 ).get, map.get( l2 ).get, f1, f2 )
           //          println(p.root)
           p
@@ -497,8 +498,8 @@ object sFOParser {
 
       def cut: Parser[LKProof] = "cut(" ~ label.r ~ "," ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "cut(" ~ l1 ~ "," ~ l2 ~ "," ~ f ~ ")" => {
-          //          println("\n\ncut")
-          //          println("\nerror_buffer = "+error_buffer)
+          //          println( nLine + nLine + "cut")
+          //          println( nLine + "error_buffer = "+error_buffer)
 
           CutRule( map.get( l1 ).get, map.get( l2 ).get, f )
         }
@@ -506,33 +507,33 @@ object sFOParser {
 
       def negL: Parser[LKProof] = "negL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "negL(" ~ label ~ "," ~ formula ~ ")" => {
-          //          println("\n\nnegL")
+          //          println( nLine + nLine + "negL")
           NegLeftRule( map.get( label ).get, formula )
         }
         case _ => {
-          println( "\n\nError!" )
+          println( nLine + nLine + "Error!" )
           sys.exit( 10 )
         }
       }
 
       def negR: Parser[LKProof] = "negR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "negR(" ~ label ~ "," ~ formula ~ ")" => {
-          //          println("\n\n"+map.get(label).get.root.toString)
-          //          println("\n\nnegR")
+          //          println( nLine + nLine + map.get(label).get.root.toString )
+          //          println( nLine + nLine + "negR" )
           NegRightRule( map.get( label ).get, formula )
         }
       }
 
       def weakR: Parser[LKProof] = "weakR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "weakR(" ~ label ~ "," ~ formula ~ ")" => {
-          //          println("\n\nweakR")
+          //          println( nLine + nLine + "weakR" )
           WeakeningRightRule( map.get( label ).get, formula )
         }
       }
 
       def weakL: Parser[LKProof] = "weakL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "weakL(" ~ label ~ "," ~ formula ~ ")" => {
-          //          println("\n\nweakL")
+          //          println( nLine + nLine + "weakL" )
           WeakeningLeftRule( map.get( label ).get, formula )
         }
       }
@@ -544,38 +545,38 @@ object sFOParser {
 
       def andL1: Parser[LKProof] = "andL1(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andL1(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\nandL1")
+          //          println( nLine + nLine + "andL1")
           AndLeft1Rule( map.get( l ).get, f1, f2 )
         }
       }
 
       def andL2: Parser[LKProof] = "andL2(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andL2(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\nandL2")
+          //          println( nLine + nLine + "andL2")
           AndLeft2Rule( map.get( l ).get, f1, f2 )
         }
       }
 
       def andL: Parser[LKProof] = "andL(" ~ label.r ~ "," ~ formula ~ "," ~ formula ~ ")" ^^ {
         case "andL(" ~ l ~ "," ~ f1 ~ "," ~ f2 ~ ")" => {
-          //          println("\n\nandL")
-          //          println("\nerror_buffer = "+error_buffer)
-          //          println("\n"+map.get(l).get.root.toString)
+          //          println( nLine + nLine + "andL")
+          //          println( nLine + "error_buffer = " + error_buffer )
+          //          println( nLine + map.get(l).get.root.toString )
           val p = AndLeftRule( map.get( l ).get, f1, f2 )
           p
           //          val and = And(f1,f2)
           //          val aux = p.root.antecedent.tail.head.formula
-          //          println("\np   = "+aux)
-          //          println("\nand = "+and)
-          //          println("\n\n"+aux.syntaxEquals(and))
-          //          println("\nf1 = "+f1)
+          //          println( nLine + "p   = "+aux )
+          //          println( nLine + "and = "+and)
+          //          println( nLine + nLine + aux.syntaxEquals(and))
+          //          println( nLine + "f1 = "+f1)
           //          var res = p
           //          f1 match {
           //            case BigAnd(ind,f,lb,ub) => {
           //              println("ERROR 5")
           ////              sys.exit(1)
           //              res = AndEquivalenceRule1(p, and.asInstanceOf[SchemaFormula], BigAnd(ind,f,lb,Succ(ub)).asInstanceOf[SchemaFormula])
-          //              println("\n\nres = "+res.root.antecedent.head.formula)
+          //              println( nLine + nLine + "res = "+res.root.antecedent.head.formula)
           ////              return res
           //              res
           //            }
@@ -665,14 +666,14 @@ object sFOParser {
 
       def contrL: Parser[LKProof] = "contrL(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "contrL(" ~ l ~ "," ~ f ~ ")" => {
-          //          println("\n\ncontrL")
+          //          println( nLine + nLine + "contrL")
           ContractionLeftRule( map.get( l ).get, f )
         }
       }
 
       def contrR: Parser[LKProof] = "contrR(" ~ label.r ~ "," ~ formula ~ ")" ^^ {
         case "contrR(" ~ l ~ "," ~ f ~ ")" => {
-          //          println("\n\ncontrR")
+          //          println( nLine + nLine + "contrR")
           ContractionRightRule( map.get( l ).get, f )
         }
       }
@@ -729,15 +730,15 @@ object sFOParser {
         }
       }
     }
-    //    println("\n\nnumber of SLK-proofs = "+bigMMap.size)
-    //    println("\ndefMMapr size = "+defMMap.size)
+    //    println( nLine + nLine + "number of SLK-proofs = "+bigMMap.size)
+    //    println( nLine + "defMMapr size = "+defMMap.size)
 
-    //    println("\n\n\nlist = "+list)
-    //    if (!bigMMap.get("chi").get._2.isDefinedAt(plabel)) println("\n\n\nSyntax ERROR after ID : " + error_buffer +"\n\n")
+    //    println( nLine + nLine + nLine + "list = "+list)
+    //    if (!bigMMap.get("chi").get._2.isDefinedAt(plabel)) println( nLine + nLine + nLine + "Syntax ERROR after ID : " + error_buffer + nLine + nLine )
     //    val m = bigMMap.get("chi").get._2.get(plabel).get
     ////    println(m.root.antecedent.head+" |- "+m.root.succedent.head)
     //    m
-    //  println("\nSchemaProofDB.size = "+SchemaProofDB.size+"\n")
+    //  println( nLine + "SchemaProofDB.size = "+SchemaProofDB.size + nLine )
     bigMMap
   }
 }

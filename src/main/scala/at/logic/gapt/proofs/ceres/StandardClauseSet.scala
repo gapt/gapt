@@ -253,6 +253,7 @@ object renameCLsymbols {
   }
 
   def apply( cs: List[OccSequent] ): ( List[HOLSequent], Map[LambdaExpression, LambdaExpression] ) = {
+    val nLine = sys.props( "line.separator" )
     val map = createMap( cs )
     val list = cs.map( seq => {
       val ant = seq.antecedent.map( fo => {
@@ -261,7 +262,7 @@ object renameCLsymbols {
             if ( map.contains( constant ) ) {
               App( map( constant ), indices.head )
             } else
-              throw new Exception( "\nError in renameCLsymbols.apply !\n" )
+              throw new Exception( nLine + "Error in renameCLsymbols.apply !" + nLine )
           }
           case _ => fo.formula
         }
@@ -272,7 +273,7 @@ object renameCLsymbols {
             if ( map.contains( constant ) ) {
               App( map( constant ), indices.head )
             } else
-              throw new Exception( "\nError in renameCLsymbols.apply !\n" )
+              throw new Exception( nLine + "Error in renameCLsymbols.apply !" + nLine )
           }
           case _ => fo.formula
         }

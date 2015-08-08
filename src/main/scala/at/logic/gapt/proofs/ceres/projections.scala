@@ -136,7 +136,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         //throw ProjectionException(e.getMessage, proof, Nil, null)
         throw e
       case e: Exception =>
-        throw ProjectionException( "Error computing projection: " + e.getMessage + "\n" + e.getStackTrace, proof, Nil, e )
+        throw ProjectionException( "Error computing projection: " + e.getMessage + sys.props( "line.separator" ) + e.getStackTrace, proof, Nil, e )
     }
   }
 
@@ -468,7 +468,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val new_cut_ancs = copySetToAncestor( cut_ancs )
     val s1 = apply( p1, new_cut_ancs, pred )
     val s2 = apply( p2, new_cut_ancs, pred )
-    //println("Binary rule on:\n"+s1.map(_.root)+"\n"+s2.map(_.root))
+    // val nLine = sys.props("line.separator")
+    //println("Binary rule on:"+nLine+s1.map(_.root)+nLine+s2.map(_.root))
     if ( cut_ancs.contains( m ) )
       handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs )
     else

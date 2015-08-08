@@ -24,18 +24,19 @@ object skolemize extends Logger {
 
       // TODO: make this a parameter?
       var cur_stream = SkolemSymbolFactory.getSkolemSymbols
-      //println("\n\n\n"+cur_stream+" , "+cur_stream.tail+" , "+cur_stream.tail.tail+" , "+cur_stream.tail.tail.tail)
+      // val nLine = sys.props("line.separator")
+      //println(nLine + nLine + nLine + cur_stream+" , "+cur_stream.tail+" , "+cur_stream.tail.tail+" , "+cur_stream.tail.tail.tail)
 
       val symbol_map = fos.foldLeft( new HashMap[FormulaOccurrence, Stream[SymbolA]] )( ( m, fo ) => {
         val s = even( cur_stream )
-        //        println("\n\nfo -> s : "+(fo -> s).toString())
-        //        println("\n\n\n"+cur_stream+" , "+s+" , "+s.tail+" , "+s.tail.tail)
+        //        println(nLine + nLine + "fo -> s : "+(fo -> s).toString())
+        //        println(nLine + nLine + nLine +cur_stream+" , "+s+" , "+s.tail+" , "+s.tail.tail)
         cur_stream = odd( cur_stream )
 
         m + ( fo -> s )
       } )
 
-      //println(Console.RED+"\n===== Start Skolemizing ====\n"+Console.RESET)
+      //println(Console.RED+ nLine + "===== Start Skolemizing ====" + nLine + Console.RESET)
 
       skolemize( p, symbol_map, inst_map, new HashSet[FormulaOccurrence] )._1
     }
@@ -286,8 +287,10 @@ object skolemize extends Logger {
                            constructor: ( LKProof, FormulaOccurrence, HOLFormula, LambdaExpression ) => LKProof )( implicit
     symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
                                                                                                                    inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
+
                                                                                                                    cut_ancs: Set[FormulaOccurrence] ) = {
-    //println("\nentering weak quant rule for "+proof.root.toStringSimple)
+    // val nLine = sys.props("line.separator")  
+    //println( nLine + "entering weak quant rule for "+proof.root.toStringSimple)
     //inst_map map println
     //println
     //symbol_map map println
@@ -328,7 +331,9 @@ object skolemize extends Logger {
     symbol_map: Map[FormulaOccurrence, Stream[SymbolA]],
                                                                                                         inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
                                                                                                         cut_ancs: Set[FormulaOccurrence] ) = {
-    //println("\nentering strong quant rule for "+proof.root.toStringSimple)
+
+    // val nLine = sys.props("line.separator") 
+    //println(nLine + "entering strong quant rule for "+proof.root.toStringSimple)
     if ( !cut_ancs.contains( m ) ) {
       val sym_stream = symbol_map( m )
       val sym = Const( sym_stream.head, FunctionType( v.exptype, inst_map( m ).map( _.exptype ) ) )

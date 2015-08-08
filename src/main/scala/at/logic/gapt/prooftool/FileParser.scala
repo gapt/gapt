@@ -121,6 +121,7 @@ class FileParser {
   }
 
   def parseFile( path: String ) {
+    val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
     try {
       if ( path.endsWith( ".llk" ) ) llkFileReader( path )
       else if ( path.endsWith( ".lksc" ) ) lksCNTFileReader( fileStreamReader( path ) )
@@ -132,7 +133,7 @@ class FileParser {
         ceresFileReader( fileStreamReader( path ) )
       } catch {
         case pe: ParsingException =>
-          Main.questionMessage( "There was a parsing exception:\n\n \t " + pe.getMessage + "\n\nContinue with another parser?" ) match {
+          Main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
             case Dialog.Result.Yes => stabFileReader( fileStreamReader( path ) )
             case _                 =>
           }
@@ -141,7 +142,7 @@ class FileParser {
         ceresFileReader( gzFileStreamReader( path ) )
       } catch {
         case pe: ParsingException =>
-          Main.questionMessage( "There was a parsing exception:\n\n \t " + pe.getMessage + "\n\nContinue with another parser?" ) match {
+          Main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
             case Dialog.Result.Yes => stabFileReader( gzFileStreamReader( path ) )
             case _                 =>
           }
@@ -152,7 +153,7 @@ class FileParser {
       ProofToolPublisher.publish( ProofDbChanged )
     } catch {
       case err: Throwable =>
-        Main.errorMessage( "Could not load file: " + path + "!\n\n" + Main.getExceptionString( err ) )
+        Main.errorMessage( "Could not load file: " + path + "!" + dnLine + Main.getExceptionString( err ) )
     }
   }
 

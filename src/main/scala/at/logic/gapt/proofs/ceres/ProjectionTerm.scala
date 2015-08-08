@@ -82,6 +82,8 @@ object pAxiomTerm {
 
 object ProjectionTermCreators {
 
+  val nLine = sys.props( "line.separator" )
+
   def relevantProj( main_proof: String ): List[( String, Tree[AnyRef] )] = {
     val s = SchemaProofDB.toList.map( pair => genCC( pair._1 ) ) //for console
     val spt = ListSupport.distinct3rd( SchemaProofDB.toList.map( pair => genCCProofTool( pair._1 ) ).flatten )
@@ -143,7 +145,7 @@ object ProjectionTermCreators {
     val cclist = getCC( p_rec, List.empty[FormulaOccurrence], p_rec )
     val cclistproof_name = cclist.filter( pair => pair._1 == proof_name )
     val cclist1 = cclistproof_name.map( pair => getCC( p_rec, pair._2._1 ::: pair._2._2, p_rec ) ).flatten
-    println( "\ncclist1 = " + cclist1 )
+    println( sys.props( "line.separator" ) + "cclist1 = " + cclist1 )
     val cclistbase = ( cclist1 ::: cclist ).distinct.map( pair => {
       val seq = SchemaProofDB.get( pair._1 ).base.root
       val k = IntVar( "k" )
@@ -333,13 +335,13 @@ object ProjectionTermCreators {
         if ( getAncestors( omega ).contains( m ) || cut_ancs.contains( m ) )
           extract( p, omega, cut_ancs )
         else
-          throw new Exception( "\nProjection term can not be computed - the proof is not skolemized!\n" )
+          throw new Exception( nLine + "Projection term can not be computed - the proof is not skolemized!" + nLine )
       }
       case ExistsLeftRule( p, _, a, m, _ ) => {
         if ( getAncestors( omega ).contains( m ) || cut_ancs.contains( m ) )
           extract( p, omega, cut_ancs )
         else
-          throw new Exception( "\nProjection term can not be computed - the proof is not skolemized!\n" )
+          throw new Exception( nLine + "Projection term can not be computed - the proof is not skolemized!" + nLine )
       }
       case ExistsRightRule( p, _, a, m, t ) =>
         if ( getAncestors( omega ).contains( m ) || cut_ancs.contains( m ) )
@@ -369,6 +371,8 @@ object ProjectionTermCreators {
 }
 
 object PStructToExpressionTree {
+
+  val nLine = sys.props( "line.separator" )
 
   def apply( s: ProjectionTerm ): Tree[AnyRef] = s match {
     case pTimes( rho, left, right, aux1, aux2 ) => BinaryTree( PTimesC( rho ), apply( left ), apply( right ) )
@@ -529,7 +533,7 @@ object PStructToExpressionTree {
       printTree( up1.asInstanceOf[Tree[String]] )
       if ( vert == PPlusSymbol.toString ) {
         print( Console.BLUE )
-        print( "\n\n                                   " + vert + "\n\n" )
+        print( nLine + nLine + "                                   " + vert + nLine + nLine )
       } else {
         print( Console.RED )
         print( " " + vert + " " )
@@ -550,10 +554,12 @@ object PStructToExpressionTree {
 
 // returns a ground projection term for a given instance of the parameter k
 object GroundingProjectionTerm {
+  val nLine = sys.props( "line.separator" )
+
   def apply( pair: Tuple2[ProjectionTerm, ProjectionTerm], i: Int ): ProjectionTerm = {
     val k = IntVar( "k" )
     if ( i < 0 )
-      throw new Exception( "\n\nThe instance for computing projections is not a natural number !\n" )
+      throw new Exception( nLine + nLine + "The instance for computing projections is not a natural number !" + nLine )
     if ( i == 0 ) {
       val new_map = Map.empty[Var, IntegerTerm] + Tuple2( IntVar( "k" ), IntZero() )
       val subst = SchemaSubstitution( new_map )
@@ -612,6 +618,9 @@ object ProjectionTermDB extends Iterable[( String, ProjectionTerm )] with Traver
 
 //unfolds (normalizes) a projection term, i.e. removes the "pr" symbols according to the rewriting rules (see the journal paper)
 object UnfoldProjectionTerm {
+
+  val nLine = sys.props( "line.separator" )
+
   // This method is used in ProofTool.
   // It should return unfolded term as a tree and the list of projections
   def apply( name: String, number: Int ): ( Tree[_], List[( String, LKProof )] ) = {
@@ -619,7 +628,7 @@ object UnfoldProjectionTerm {
     val pt = RemoveArrowRules( UnfoldProjectionTerm( gr ) )
     val tree = PStructToExpressionTree( pt )
     val l = ProjectionTermToSetOfProofs( pt ).toList
-    val proof_name = name.replace( "Ξ(", "" ).replace( "_base", "\n" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) )
+    val proof_name = name.replace( "Ξ(", "" ).replace( "_base", nLine ).replace( "_step", nLine ).takeWhile( c => !c.equals( nLine.charAt( nLine.length - 1 ) ) )
     val fl = filterProjectionSet( l, getEndSequent( proof_name, number ) )
     val list = fl.map( p => ( proof_name + "↓" + number + "_proj_" + fl.indexOf( p ), p ) )
     ( tree, list )
@@ -696,13 +705,15 @@ object UnfoldProjectionTerm {
       }
       case unary: pUnary  => pUnary( unary.rho, UnfoldProjectionTerm( unary.upper ), unary.auxl )
       case ax: pAxiomTerm => ax
-      case _              => throw new Exception( "\n\nERROR in UnfoldProjectionTerm !\n" )
+      case _              => throw new Exception( nLine + nLine + "ERROR in UnfoldProjectionTerm !" + nLine )
     }
   }
 }
 
 //creates a set of proof projections from an unfolded (normalized) projection term
 object ProjectionTermToSetOfProofs {
+  val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
+
   private def WeakLeftRight( p: LKProof, seq: OccSequent ): LKProof = {
     val p1 = seq.antecedent.foldLeft( p )( ( res, fo ) => WeakeningLeftRule( res, fo.formula ) )
     seq.succedent.foldLeft( p1 )( ( res, fo ) => WeakeningRightRule( res, fo.formula ) )
@@ -754,7 +765,7 @@ object ProjectionTermToSetOfProofs {
           }
           case "\u21A0:l" => set.map( p => trsArrowLeftRule( p, unary.auxl.head.asInstanceOf[SchemaFormula], unary.auxl.last.asInstanceOf[SchemaFormula] ) )
           case "\u21A0:r" => set.map( p => trsArrowRightRule( p, unary.auxl.head.asInstanceOf[SchemaFormula], unary.auxl.last.asInstanceOf[SchemaFormula] ) )
-          case _          => throw new Exception( "\n\nmissing case in pUnary in ProjectionTermToSetOfProofs !\n\n" )
+          case _          => throw new Exception( dnLine + "missing case in pUnary in ProjectionTermToSetOfProofs !" + dnLine )
         }
       }
       case times: pTimes => {
@@ -766,16 +777,18 @@ object ProjectionTermToSetOfProofs {
           case "\u2283:l" => S1xS2.map( pair => ImpLeftRule( pair._1, pair._2, times.aux1, times.aux2 ) )
           case "\u2228:l" => S1xS2.map( pair => OrLeftRule( pair._1, pair._2, times.aux1, times.aux2 ) )
           case "\u2227:r" => S1xS2.map( pair => AndRightRule( pair._1, pair._2, times.aux1, times.aux2 ) )
-          case _          => throw new Exception( "\n\n missing case in times in ProjectionTermToSetOfProofs !\n\n" )
+          case _          => throw new Exception( dnLine + " missing case in times in ProjectionTermToSetOfProofs !" + dnLine )
         }
       }
-      case _ => throw new Exception( "\n\nThe projection term is not normalized/unfolded !\n\n" )
+      case _ => throw new Exception( dnLine + "The projection term is not normalized/unfolded !" + dnLine )
     }
   }
 }
 
 //removes the ↠:l and ↠:r inferences, i.e. normalizes the formulas in term level
 object RemoveArrowRules {
+  val nLine = sys.props( "line.separator" )
+
   private def NormalizeSequent( seq: OccSequent ): OccSequent = {
     OccSequent( seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( unfoldSFormula( fo.formula.asInstanceOf[SchemaFormula] ), Nil ) ), seq.succedent.map( fo => fo.factory.createFormulaOccurrence( unfoldSFormula( fo.formula.asInstanceOf[SchemaFormula] ), Nil ) ) )
   }
@@ -807,7 +820,7 @@ object RemoveArrowRules {
               }
             } :: Nil )
       }
-      case _ => throw new Exception( "\n\nERROR in UnfoldProjectionTerm !\n" )
+      case _ => throw new Exception( nLine + nLine + "ERROR in UnfoldProjectionTerm !" + nLine )
     }
   }
 }

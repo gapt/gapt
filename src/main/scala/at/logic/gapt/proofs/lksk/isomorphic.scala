@@ -9,6 +9,7 @@ import at.logic.gapt.proofs.proofs.RuleTypeA
  */
 object rule_isomorphic extends rule_isomorphic
 class rule_isomorphic {
+  val nLine = sys.props( "line.separator" )
   def apply( p1: LKProof, p2: LKProof, pred: ( RuleTypeA, RuleTypeA ) => Boolean ): Boolean =
     ( p1, p2 ) match {
       case ( a1: NullaryLKProof, a2: NullaryLKProof ) =>
@@ -24,6 +25,6 @@ class rule_isomorphic {
       case ( BinaryLKProof( t1, up1a, up1b, _, _, _, _ ), BinaryLKProof( t2, up2a, up2b, _, _, _, _ ) ) =>
         pred( t1, t2 ) && apply( up1a, up2a, pred ) && apply( up1b, up2b, pred )
       case _ =>
-        throw new Exception( "can not compare " + p1.rule + " and " + p2.rule + "\np1= " + p1 + "\np2= " + p2 )
+        throw new Exception( "can not compare " + p1.rule + " and " + p2.rule + nLine + "p1= " + p1 + nLine + "p2= " + p2 )
     }
 }

@@ -683,6 +683,7 @@ object sCutRule {
     }
   }
   private def getTerms( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence ) = {
+    val nLine = sys.props( "line.separator" )
     val term1op = s1.succedent.find( _ == term1oc )
     val term2op = s2.antecedent.find( _ == term2oc )
     if ( term1op == None || term2op == None ) {
@@ -690,8 +691,8 @@ object sCutRule {
       val s2str = s2.antecedent.head.toString()
       val t1str = term1oc.asInstanceOf[FormulaOccurrence].formula.toString()
       val t2str = term2oc.asInstanceOf[FormulaOccurrence].formula.toString()
-      val str = "s1: " + s1str + "\ns2: " + s2str + "\nt1: " + t1str + "\nt2: " + t2str + "\n"
-      throw new LKRuleCreationException( "Auxialiary formulas are not contained in the right part of the sequent\n" + str )
+      val str = "s1: " + s1str + nLine + "s2: " + s2str + nLine + "t1: " + t1str + nLine + "t2: " + t2str + nLine
+      throw new LKRuleCreationException( "Auxialiary formulas are not contained in the right part of the sequent" + nLine + str )
     } else {
       val term1 = term1op.get
       val term2 = term2op.get
@@ -1214,11 +1215,12 @@ object ForallHyperRightRule {
             "Eigenvariable " + eigen_var.toString + " occurs in context " + s1.toString
           )
           // correct auxiliary formula
+          //            val dnLine = sys.props("line.separator") + sys.props("line.separator")
           //            println("ForallRightRule")
           //            println("eigen_var = "+eigen_var)
           //            println("betaNormalize( App( sub, eigen_var ): " + betaNormalize( App( sub, eigen_var )))
           //            println("aux_fo: " + aux_fo.formula)
-          // TODO: uncomment assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula , "\n\nassert 2 in getTerms of ForallRight fails!\n\n")
+          // TODO: uncomment assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula , dnLine + "assert 2 in getTerms of ForallRight fails!" + dnLine)
           aux_fo
         }
         case _ => throw new LKRuleCreationException( "Main formula of ForallRightRule must have a universal quantifier as head symbol." )

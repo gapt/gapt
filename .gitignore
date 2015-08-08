@@ -22,15 +22,15 @@ doc/*.toc
 doc/*.fdb_latexmk
 doc/*.fls
 doc/*.out
-language-proposal/*.aux
-language-proposal/*.bbl
-language-proposal/*.blg
-language-proposal/*.log
-language-proposal/*.pdf
-language-proposal/*.toc
-language-proposal/*.fdb_latexmk
-language-proposal/*.fls
-language-proposal/*.out
+*-proposal/*.aux
+*-proposal/*.bbl
+*-proposal/*.blg
+*-proposal/*.log
+*-proposal/*.pdf
+*-proposal/*.toc
+*-proposal/*.fdb_latexmk
+*-proposal/*.fls
+*-proposal/*.out
 
 # vim
 .*.sw?

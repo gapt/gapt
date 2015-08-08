@@ -28,6 +28,7 @@ trait BinaryResolutionProof[V <: OccSequent] extends BinaryAGraphProof[V] with R
 }
 
 object Clause {
+  def apply[A](): Clause[A] = new Clause( Seq(), Seq() )
   def apply[A]( negative: Seq[A], positive: Seq[A] ) = new Clause( negative, positive )
   def apply[A]( elements: Seq[( A, Boolean )] ) = new Clause( elements.filterNot( _._2 ).map( _._1 ), elements.filter( _._2 ).map( _._1 ) )
 
@@ -35,6 +36,8 @@ object Clause {
 }
 
 object HOLClause {
+  def apply(): HOLClause = Clause()
+
   def apply( negative: Seq[HOLAtom], positive: Seq[HOLAtom] ): HOLClause = {
     Clause( negative, positive )
   }
@@ -51,6 +54,8 @@ object HOLClause {
 }
 
 object FOLClause {
+  def apply(): FOLClause = Clause()
+
   def apply( negative: Seq[FOLAtom], positive: Seq[FOLAtom] ): FOLClause = {
     Clause( negative, positive )
   }

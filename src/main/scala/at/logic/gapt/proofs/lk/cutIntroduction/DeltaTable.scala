@@ -178,18 +178,20 @@ class DeltaTable( terms: List[FOLTerm], eigenvariable: String, delta: DeltaVecto
     def SVectorToString( ss: types.SVector ): String = { "〈" + ss.mkString( ", " ) + "〉" }
     def SToString( s: types.S ): String = { "{" + s.map( SVectorToString( _ ) ).mkString( ", " ) + "}" }
 
-    var rv = "number of lines: " + table.size + "\n"
+    val nLine = sys.props( "line.separator" )
+
+    var rv = "number of lines: " + table.size + nLine
 
     val display = table.filter( e => e._2.size >= k )
 
-    rv += "number of lines with at least " + k + " pairs: " + display.size + "\n"
+    rv += "number of lines with at least " + k + " pairs: " + display.size + nLine
 
     display.foreach {
       case ( s, pairs ) => {
-        rv += SToString( s ) + ":\n"
+        rv += SToString( s ) + ":" + nLine
         pairs.foreach {
           case ( u, ti ) => {
-            rv += "  " + u + ": " + ti.mkString( ", " ) + "\n"
+            rv += "  " + u + ": " + ti.mkString( ", " ) + nLine
           }
         }
       }

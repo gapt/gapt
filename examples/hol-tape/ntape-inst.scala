@@ -34,8 +34,9 @@ import at.logic.gapt.proofs.ceres.ceres_omega
 import at.logic.gapt.proofs.lksk.LKskToExpansionProof
 import at.logic.gapt.proofs.lk.LKToLKsk
 
+ val nLine = sys.props("line.separator")
 
- def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
+ def show(s:String) = println( nLine + nLine + "+++++++++ "+s+" ++++++++++" + nLine )
 
  show("Loading file")
  val pdb = loadLLK(filename)
