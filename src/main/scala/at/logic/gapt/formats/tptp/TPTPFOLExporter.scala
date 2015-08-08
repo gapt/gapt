@@ -12,19 +12,21 @@ import at.logic.gapt.expr._
 import scala.collection.mutable
 
 object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
+  val nLine = sys.props( "line.separator" )
+
   // convert a named list of clauses to a CNF refutation problem.
   // TODO: have to give a different name because of erasure :-(
   def tptp_problem_named( ss: List[Tuple2[String, HOLSequent]] ) =
-    ss.foldLeft( "" )( ( s, p ) => s + sequentToProblem( p._2, p._1 ) + "\n" )
+    ss.foldLeft( "" )( ( s, p ) => s + sequentToProblem( p._2, p._1 ) + nLine )
 
   // Convert a sequent into a tptp proof problem.
   def tptp_proof_problem( seq: HOLSequent ) =
-    "fof( to_prove, conjecture, " + exportFormula( seq.toFormula.asInstanceOf[FOLFormula] ) + ").\n"
+    "fof( to_prove, conjecture, " + exportFormula( seq.toFormula.asInstanceOf[FOLFormula] ) + ")." + nLine
 
   def tptp_proof_problem_split( seq: HOLSequent ) =
     ( seq.antecedent.map( _ -> "axiom" ) ++ seq.succedent.map( _ -> "conjecture" ) ).zipWithIndex.map {
       case ( ( formula: FOLFormula, role ), index ) =>
-        s"fof( formula$index, $role, ${exportFormula( formula )} ).\n"
+        s"fof( formula$index, $role, ${exportFormula( formula )} )." + nLine
     }.mkString
 
   // convert a list of clauses to a CNF refutation problem.

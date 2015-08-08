@@ -113,9 +113,10 @@ object deComposeSClause {
 
 //replace "v" with the sClause from the Map
 object replace {
+  val nLine = sys.props( "line.separator" )
   def apply( c: sClause, varList: Map[sClauseVar, sClause] ): sClause = c match {
     case v: sClauseVar if varList.keySet.contains( v )  => varList.get( v ).get
-    case v: sClauseVar if !varList.keySet.contains( v ) => throw new Exception( "\nERROR 112\n!" )
+    case v: sClauseVar if !varList.keySet.contains( v ) => throw new Exception( nLine + "ERROR 112" + nLine + "!" )
     case non: nonVarSclause                             => c
     case comp: sClauseComposition =>
       sClauseComposition( apply( comp.sclause1, varList ), apply( comp.sclause2, varList ) )
@@ -125,6 +126,7 @@ object replace {
 //applies sub to a sClauseTerm or sClause
 //the sub is of type Var -> SchemaExpression
 object applySubToSclauseOrSclauseTerm {
+  val nLine = sys.props( "line.separator" )
   def apply( sub: SchemaSubstitution, c: sClauseTerm ): sClauseTerm = {
     c match {
       case v: sClauseVar => c
@@ -155,13 +157,14 @@ object applySubToSclauseOrSclauseTerm {
       case t: sclTimes   => sclTimes( apply( sub, t.left ), apply( sub, t.right ) )
       case t: sclPlus    => sclPlus( apply( sub, t.left ), apply( sub, t.right ) )
       case t: sclTermVar => t
-      case _             => throw new Exception( "\nERROR in applySubToSclauseOrSclauseTerm ! \n" )
+      case _             => throw new Exception( nLine + "ERROR in applySubToSclauseOrSclauseTerm ! " + nLine )
     }
   }
 }
 
 // σ(k+1, x, l)
 object sTermN {
+  val nLine = sys.props( "line.separator" )
   //the l.head should be of type Tindex() !
   def apply( f: String, l: List[SchemaExpression] ): SchemaExpression = {
     require( l.head.exptype == Tindex )
@@ -184,11 +187,13 @@ object sTermN {
 
 // dbTRS for σ(k+1, x, l), i.e. sTermN
 class dbTRSsTermN( val map: Map[String, Tuple2[Tuple2[SchemaExpression, SchemaExpression], Tuple2[SchemaExpression, SchemaExpression]]] ) {
+  val nLine = sys.props( "line.separator" )
+
   def add( term: String, base: Tuple2[SchemaExpression, SchemaExpression], step: Tuple2[SchemaExpression, SchemaExpression] ): dbTRSsTermN = {
     val newMap = map + Tuple2( term, Tuple2( base, step ) )
     return new dbTRSsTermN( newMap )
   }
-  override def toString() = map.keySet.foldLeft( "\n\n" )( ( acc, s ) => map.get( s ).get._1._1 + "  →  " + map.get( s ).get._1._2 + "\n" + map.get( s ).get._2._1 + "  →  " + map.get( s ).get._2._2 + "\n\n" + acc )
+  override def toString() = map.keySet.foldLeft( nLine + nLine )( ( acc, s ) => map.get( s ).get._1._1 + "  →  " + map.get( s ).get._1._2 + nLine + map.get( s ).get._2._1 + "  →  " + map.get( s ).get._2._2 + nLine + nLine + acc )
 }
 object dbTRSsTermN {
   def apply( term: String, base: Tuple2[SchemaExpression, SchemaExpression], step: Tuple2[SchemaExpression, SchemaExpression] ): dbTRSsTermN = {
@@ -200,7 +205,7 @@ object dbTRSsTermN {
 
 // dbTRS for c(k+1, x, X)clauseSchema
 class dbTRSclauseSchema( val map: Map[String, Tuple2[Tuple2[sClause, sClause], Tuple2[sClause, sClause]]] ) {
-  override def toString() = map.keySet.foldLeft( "" )( ( acc, s ) => map.get( s ).get._1._1 + "  →  " + map.get( s ).get._1._2 + "\n" + map.get( s ).get._2._1 + "  →  " + map.get( s ).get._2._2 + acc )
+  override def toString() = map.keySet.foldLeft( "" )( ( acc, s ) => map.get( s ).get._1._1 + "  →  " + map.get( s ).get._1._2 + sys.props( "line.separator" ) + map.get( s ).get._2._1 + "  →  " + map.get( s ).get._2._2 + acc )
 }
 object dbTRSclauseSchema {
   def apply( term: String, base: Tuple2[sClause, sClause], step: Tuple2[sClause, sClause] ): dbTRSclauseSchema = {
@@ -399,7 +404,7 @@ class dbTRSclauseSetTerm( var map: Map[String, Tuple2[Tuple2[sClauseTerm, sClaus
     val newMap = map + Tuple2( term, Tuple2( base, step ) )
     map = newMap
   }
-  override def toString() = map.keySet.foldLeft( "" )( ( acc, s ) => map.get( s ).get._1._1 + "  →  " + map.get( s ).get._1._2 + "\n" + map.get( s ).get._2._1 + "  →  " + map.get( s ).get._2._2 + acc )
+  override def toString() = map.keySet.foldLeft( "" )( ( acc, s ) => map.get( s ).get._1._1 + "  →  " + map.get( s ).get._1._2 + sys.props( "line.separator" ) + map.get( s ).get._2._1 + "  →  " + map.get( s ).get._2._2 + acc )
 }
 //the t.r.s. for the clause schema
 object dbTRSclauseSetTerm {
@@ -451,7 +456,7 @@ object resolutionDeduction {
       }
       case c: clauseSchema => deComposeSClause( replace( unfoldSchemaClause( c, trsSclause, trsSterms, subst ), mapX ) )
       case _ => {
-        println( "\n case _ => in resolutionDeduction 2 : " + t )
+        println( sys.props( "line.separator" ) + " case _ => in resolutionDeduction 2 : " + t )
         t
       }
     }
@@ -480,7 +485,7 @@ object resolutionProofSchemaDB extends Iterable[( String, Tuple2[Tuple2[sResolut
   def add( term: String, base: Tuple2[sResolutionTerm, sResolutionTerm], step: Tuple2[sResolutionTerm, sResolutionTerm] ) = {
     map.put( term, Tuple2( base, step ) )
   }
-  override def toString() = map.keySet.foldLeft( "" )( ( acc, s ) => map.get( s ).get._1._1 + "  →  " + map.get( s ).get._1._2 + "\n" + map.get( s ).get._2._1 + "  →  " + map.get( s ).get._2._2 + acc )
+  override def toString() = map.keySet.foldLeft( "" )( ( acc, s ) => map.get( s ).get._1._1 + "  →  " + map.get( s ).get._1._2 + sys.props( "line.separator" ) + map.get( s ).get._2._1 + "  →  " + map.get( s ).get._2._2 + acc )
   def iterator = map.iterator
 }
 
@@ -608,6 +613,8 @@ object fo2VarSubstitution {
 }
 
 object ResDeductionToLKTree {
+  val nLine = sys.props( "line.separator" )
+
   def apply( r: sResolutionTerm ): LKProof = r match {
     case non: nonVarSclause =>
       Axiom( non.ant, non.succ )
@@ -637,7 +644,7 @@ object ResDeductionToLKTree {
         CutRule( right, left, t.atom )
       }
     }
-    case _ => throw new Exception( "\nError in ResDeductionToLKTree !\n" )
+    case _ => throw new Exception( nLine + "Error in ResDeductionToLKTree !" + nLine )
   }
 }
 
@@ -708,6 +715,8 @@ object InstantiateResSchema {
 
 //grounds a LKS-proof with respect to the variables of type: ω->ι
 object GroundingProjections {
+  val nLine = sys.props( "line.separator" )
+
   def apply( p: LKProof, mapfo2: Map[fo2Var, SchemaExpression] ): LKProof = {
     p match {
       case Axiom( seq ) => Axiom( OccSequent(
@@ -730,7 +739,7 @@ object GroundingProjections {
       case NegRightRule( up, _, a, p )              => NegRightRule( apply( up, mapfo2 ), fo2VarSubstitution( a.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula] )
       case ForallLeftRule( up, _, a, p, t )         => ForallLeftRule( apply( up, mapfo2 ), fo2VarSubstitution( a.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], fo2VarSubstitution( p.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], unfoldSTerm( fo2VarSubstitution( t.asInstanceOf[SchemaExpression], mapfo2 ).asInstanceOf[SchemaExpression] ) )
       case ExistsRightRule( up, _, a, p, t )        => ExistsRightRule( apply( up, mapfo2 ), fo2VarSubstitution( a.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], fo2VarSubstitution( p.formula.asInstanceOf[SchemaFormula], mapfo2 ).asInstanceOf[SchemaFormula], unfoldSTerm( fo2VarSubstitution( t.asInstanceOf[SchemaExpression], mapfo2 ).asInstanceOf[SchemaExpression] ) )
-      case _                                        => throw new Exception( "\nMissing case in GroundingProjections !\n" + p.rule )
+      case _                                        => throw new Exception( nLine + "Missing case in GroundingProjections !" + nLine + p.rule )
     }
   }
 }

@@ -283,6 +283,7 @@ object readWDIMACS {
  * by calling an OS-level binary.
  */
 trait MaxSATSolverBinary extends MaxSATSolver {
+  val nLine = sys.props( "line.separator" )
 
   /**
    * Constructs the input command list for Process from the
@@ -375,8 +376,8 @@ trait MaxSATSolverBinary extends MaxSATSolver {
       var error = new StringBuilder()
       val processIO = new ProcessIO(
         _ => (), // stdin does not matter
-        stdout => scala.io.Source.fromInputStream( stdout, "ISO-8859-1" ).getLines.foreach( s => output.append( s + "\n" ) ),
-        stderr => scala.io.Source.fromInputStream( stderr, "ISO-8859-1" ).getLines.foreach( s => error.append( s + "\n" ) )
+        stdout => scala.io.Source.fromInputStream( stdout, "ISO-8859-1" ).getLines.foreach( s => output.append( s + nLine ) ),
+        stderr => scala.io.Source.fromInputStream( stderr, "ISO-8859-1" ).getLines.foreach( s => error.append( s + nLine ) )
       )
 
       val proc = Process( command_ ) run processIO
@@ -400,16 +401,16 @@ trait MaxSATSolverBinary extends MaxSATSolver {
       debug( "maxsat finished" )
       logTime( "[Runtime]<maxsat> ", ( System.currentTimeMillis() - startTimeMaxSAT ) )
 
-      trace( "IN_FILE:\n" + scala.io.Source.fromFile( temp_in, "UTF-8" ).mkString );
+      trace( "IN_FILE:" + nLine + scala.io.Source.fromFile( temp_in, "UTF-8" ).mkString );
       //debug("OUT_FILE:\n"+TextFileSlurper(temp_out));
-      trace( "OUT:\n" + output.toString );
-      trace( "ERR:\n" + error.toString );
+      trace( "OUT:" + nLine + output.toString );
+      trace( "ERR:" + nLine + error.toString );
       // parse maxsat output and construct map
       val in = new BufferedReader( new InputStreamReader(
         new FileInputStream( stdout )
       ) );
 
-      //val str = Stream.continually(in.readLine()).takeWhile(_ != null).mkString("\n")
+      //val str = Stream.continually(in.readLine()).takeWhile(_ != null).mkString(nLine)
 
       readWDIMACS( output.toString(), format(), helper ) match {
         case Some( model ) => Some( new MapBasedInterpretation( model.asInstanceOf[Map[HOLFormula, Boolean]] ) )

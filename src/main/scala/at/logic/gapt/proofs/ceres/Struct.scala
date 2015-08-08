@@ -253,6 +253,8 @@ object cutConfToString {
 // by, for each o in cc, taking the element f from seq such that
 // f, where param goes to term, is equal to o.formula.
 object cutOccConfigToCutConfig {
+  val nLine = sys.props( "line.separator" )
+
   def apply( so: OccSequent, cc: TypeSynonyms.CutOccurrenceConfiguration, seq: HOLSequent, params: List[IntVar], terms: List[IntegerTerm] ): ( Multiset[HOLFormula], Multiset[HOLFormula] ) = {
     cc.foldLeft( ( HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( ( res, fo ) => {
       val cca = res._1
@@ -262,7 +264,7 @@ object cutOccConfigToCutConfig {
       else if ( so.succedent.map( x => x.formula ).contains( fo.formula ) )
         ( cca, ccs + getFormulaForCC( fo, seq.succedent.asInstanceOf[List[HOLFormula]], params, terms ) )
       else
-        throw new Exception( "\nError in cutOccConfigToCutConfig !\n" )
+        throw new Exception( nLine + "Error in cutOccConfigToCutConfig !" + nLine )
     } )
   }
 
@@ -280,7 +282,7 @@ object cutOccConfigToCutConfig {
       else if ( so.succedent.map( x => x.formula ).contains( fo.formula ) )
         ( cca, ccs + getFormulaForCC( fo, seq.succedent.asInstanceOf[List[HOLFormula]], params, terms ) )
       else
-        throw new Exception( "\nError in cutOccConfigToCutConfigRCC !\n" )
+        throw new Exception( nLine + "Error in cutOccConfigToCutConfigRCC !" + nLine )
     } )
   }
 
@@ -331,6 +333,8 @@ object StructCreators extends Logger {
     case EmptyPlusJunction  => n
     case EmptyTimesJunction => n
   }
+
+  val nLine = sys.props( "line.separator" )
 
   // this is for proof schemata: it extracts the characteristic
   // clause set for the proof called "name"
@@ -407,9 +411,9 @@ object StructCreators extends Logger {
 
   private def hackGettingProof( s: String ): SchemaProof = {
     val s1 = s.replace( "Θ(", "" )
-    val s2 = s1.replace( "_base", "\n" )
-    val s3 = s2.replace( "_step", "\n" )
-    val s4 = s3.takeWhile( c => !c.equals( '\n' ) )
+    val s2 = s1.replace( "_base", sys.props( "line.separator" ) )
+    val s3 = s2.replace( "_step", sys.props( "line.separator" ) )
+    val s4 = s3.takeWhile( c => !c.equals( nLine.charAt( nLine.length - 1 ) ) )
     SchemaProofDB.get( s4 )
   }
 
@@ -418,7 +422,7 @@ object StructCreators extends Logger {
     val cs_0 = terms._2.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
       Plus( Times(
         Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol(
-          triple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+          triple._1.replace( "Θ(", "" ).replace( "_base", nLine ).takeWhile( c => !c.equals( nLine.charAt( nLine.length - 1 ) ) ),
           cutOccConfigToCutConfig( hackGettingProof( triple._1 ).base.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, IntZero() :: Nil )
         ), IntZero() :: Nil ), hackGettingProof( triple._1 ).base.root ) ) ),
         triple._2
@@ -430,7 +434,7 @@ object StructCreators extends Logger {
     val cs_1 = terms._1.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
       Plus( Times(
         Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol(
-          triple._1.replace( "Θ(", "" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+          triple._1.replace( "Θ(", "" ).replace( "_step", nLine ).takeWhile( c => !c.equals( nLine.charAt( nLine.length - 1 ) ) ),
           cutOccConfigToCutConfig( hackGettingProof( triple._1 ).rec.root, triple._3, hackGettingProof( triple._1 ).seq, hackGettingProof( triple._1 ).vars, Succ( k ) :: Nil )
         ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
         triple._2
@@ -455,7 +459,7 @@ object StructCreators extends Logger {
     val cs_0 = relevant_struct_list_step.foldLeft[Struct]( EmptyPlusJunction )( ( result, triple ) =>
       Plus( Times(
         Dual( A( toOccurrence( IndexedPredicate( new ClauseSetSymbol(
-          triple._1.replace( "Θ(", "" ).replace( "_step", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+          triple._1.replace( "Θ(", "" ).replace( "_step", nLine ).takeWhile( c => !c.equals( nLine.charAt( nLine.length - 1 ) ) ),
           cutOccConfigToCutConfig.applyRCC( hackGettingProof( triple._1 ).rec.root, triple._3 )
         ), Succ( k ) :: Nil ), hackGettingProof( triple._1 ).rec.root ) ) ),
         triple._2
@@ -482,14 +486,14 @@ object StructCreators extends Logger {
           triple._2, triple._3
         ) )
 
-    println( "\nrelevant_struct_list_base : " + relevant_struct_list_base )
+    println( nLine + "relevant_struct_list_base : " + relevant_struct_list_base )
     //the triple is here 4-ple
     val cs_0 = relevant_struct_list_base.foldLeft[Struct]( EmptyPlusJunction )( ( result, fourple ) =>
       if ( fourple._3 == fourple._4 )
         Plus( Times(
         Dual( A( toOccurrence(
           IndexedPredicate( new ClauseSetSymbol(
-            fourple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+            fourple._1.replace( "Θ(", "" ).replace( "_base", nLine ).takeWhile( c => !c.equals( nLine.charAt( nLine.length - 1 ) ) ),
             cutOccConfigToCutConfig.applyRCC( hackGettingProof( fourple._1 ).base.root, fourple._4 )
           ), IntZero() :: Nil ),
           hackGettingProof( fourple._1 ).base.root
@@ -500,7 +504,7 @@ object StructCreators extends Logger {
         Plus( Times(
           Dual( A( toOccurrence(
             IndexedPredicate( new ClauseSetSymbol(
-              fourple._1.replace( "Θ(", "" ).replace( "_base", "\n" ).takeWhile( c => !c.equals( '\n' ) ),
+              fourple._1.replace( "Θ(", "" ).replace( "_base", nLine ).takeWhile( c => !c.equals( nLine.charAt( nLine.length - 1 ) ) ),
               cutOccConfigToCutConfig.applyRCC( hackGettingProof( fourple._1 ).rec.root, fourple._4 )
             ), IntZero() :: Nil ),
             hackGettingProof( fourple._1 ).base.root
@@ -614,7 +618,7 @@ object StructCreators extends Logger {
       val root = SchemaProofDB.get( name ).rec.root
       val root_focc = root.antecedent++root.succedent
       val cutsInPLink = cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ)).map(fo => if(FixedFOccs.PLinksMap.contains(fo)) FixedFOccs.PLinksMap.get(fo).get else fo)
-      //println("\ncutsInPLink = "+cutsInPLink)
+      //println( sys.props("line.separator") + "cutsInPLink = "+cutsInPLink)
 //      root_focc.filter(fo => getAncestors(fo).intersect(cutsInPLink).nonEmpty)
 //      val sym = new ClauseSetSymbol( name, cutOccConfigToCutConfig.applyRCC( so, cut_occs.filter( occ => (so.antecedent ++ so.succedent).contains(occ))))
       val sym = if ((so.antecedent ++ so.succedent).intersect(FixedFOccs.PLinksMap.keySet.toList).nonEmpty)

@@ -26,22 +26,24 @@ object readSat4j extends Logger {
     val temp_out = File.createTempFile( "gapt_sat4j_out", ".sat" )
     temp_out.deleteOnExit()
 
+    val nLine = sys.props( "line.separator" )
+
     val writer = new BufferedWriter( new OutputStreamWriter(
       new FileOutputStream( temp_out ), "UTF-8"
     ) )
 
     if ( problem.isSatisfiable() ) {
-      writer.write( "SAT\n" )
+      writer.write( "SAT" + nLine )
       val model = problem.model()
       val sb = new StringBuffer()
       for ( i <- 0 until model.length ) {
         sb.append( model( i ) )
         sb.append( " " );
       }
-      sb.append( "0\n" );
+      sb.append( "0" + nLine );
       writer.write( sb.toString )
     } else {
-      writer.write( "UNSAT\n" )
+      writer.write( "UNSAT" + nLine )
     }
     writer.close()
 

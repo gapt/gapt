@@ -8,15 +8,16 @@ import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 
 object Util {
+  val nLine = sys.props( "line.separator" )
   class ElimEx( val uproofs: List[LKProof], val aux: List[FormulaOccurrence], val prim: HOLFormula, val defs: Option[Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
     override def getMessage = {
-      var s = "proofs:\n\n"
+      var s = "proofs:" + nLine + nLine
       for ( p <- uproofs )
-        s = s + p.toString() + "\n"
-      s = s + "\nauxiliary formulas:\n\n"
+        s = s + p.toString() + nLine
+      s = s + nLine + "auxiliary formulas:" + nLine + nLine
       for ( p <- aux )
-        s = s + p.toString() + "\n"
-      s = s + "\nprimary formula:\n" + prim + "\n"
+        s = s + p.toString() + nLine
+      s = s + nLine + "primary formula:" + nLine + prim + nLine
 
       s
     }

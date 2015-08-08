@@ -14,6 +14,8 @@ val f = parse.p9("k + y = x")
 
 val slp = SimpleLoopProblem(p.asInstanceOf[ForLoop], g, A, B)
 
+val nLine = sys.props("line.separator")
+
 println(slp.loop.body)
 println(slp.programVariables)
 println(slp.pi)
@@ -22,7 +24,7 @@ val instanceSeq = slp.instanceSequent(2)
 println(instanceSeq)
 val proof = prover9.getProof(instanceSeq).get
 
-println("\nExpansion sequent:")
+println( nLine + "Expansion sequent:")
 val expansionSequent = compressExpansionSequent(LKToExpansionProof(proof))
 expansionSequent.antecedent.foreach {
   case MWeakQuantifier(formula, instances) =>
@@ -31,7 +33,7 @@ expansionSequent.antecedent.foreach {
   case _ => Nil
 }
 
-println("\nDeep sequent:")
+println( nLine + "Deep sequent:")
 val deepSequent = expansionSequent.toDeep
 deepSequent.antecedent.foreach(println(_))
 deepSequent.succedent.foreach(f => println(Neg(f)))

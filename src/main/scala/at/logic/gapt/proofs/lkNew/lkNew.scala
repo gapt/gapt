@@ -1116,11 +1116,12 @@ object prettyString {
     val n = Math.max( upperString.length, lowerString.length ) + 2
     val line = "-" * n
     val ( upperDiff, lowerDiff ) = ( n - upperString.length, n - lowerString.length )
+    val nLine = sys.props( "line.separator" )
 
     val upperNew = " " * Math.floor( upperDiff / 2 ).toInt + upperString + " " * Math.ceil( upperDiff / 2 ).toInt
     val lowerNew = " " * Math.floor( lowerDiff / 2 ).toInt + lowerString + " " * Math.ceil( lowerDiff / 2 ).toInt
 
-    upperNew + "\n" + line + ruleName + "\n" + lowerNew
+    upperNew + nLine + line + ruleName + nLine + lowerNew
   }
 
   private def sequentToString( sequent: HOLSequent, auxFormulas: Seq[SequentIndex] ): String = {

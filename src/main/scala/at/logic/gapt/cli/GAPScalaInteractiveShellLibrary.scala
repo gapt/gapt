@@ -469,27 +469,31 @@ object cutIntro {
 }
 
 object extractTerms {
+  val nLine = sys.props( "line.separator" )
+
   def apply( p: LKProof ) = {
     val ts = TermsExtraction( p )
-    println( "\nTerm set: {" + ts.set + "}" )
+    println( nLine + "Term set: {" + ts.set + "}" )
     println( "Size of term set: " + ts.set.size )
     ts
   }
 
   def apply( ep: ExpansionSequent ) = {
     val ts = TermsExtraction( ep )
-    println( "\nTerm set: {" + ts.set + "}" )
+    println( nLine + "Term set: {" + ts.set + "}" )
     println( "Size of term set: " + ts.set.size )
     ts
   }
 }
 
 object computeGrammars {
+  val nLine = sys.props( "line.separator" )
+
   def apply( terms: TermSet ) = {
     val g = ComputeGrammars( terms, new Deltas.UnboundedVariableDelta() )
     g.size match {
       case 0 => throw new Exception( "No grammars found for this list of terms." )
-      case n => println( n + " grammars found.\n" ); g
+      case n => println( n + " grammars found." + nLine ); g
     }
   }
 }
@@ -530,10 +534,12 @@ object buildProofWithCut {
  */
 
 object time {
+  val nLine = sys.props( "line.separator" )
+
   def apply[T]( f: => T ): T = {
     val start = java.lang.System.currentTimeMillis()
     val r = f
-    println( "\ntime: " + ( java.lang.System.currentTimeMillis() - start ) + " ms\n" )
+    println( nLine + "time: " + ( java.lang.System.currentTimeMillis() - start ) + " ms" + nLine )
     r
   }
 }
@@ -965,7 +971,9 @@ object format {
   }
 
   /*
-  def dot[T](p:AGraph[T]) = "digraph resproof {\n graph [rankdir=TB]; node [shape=box];\n" + dot1(p:AGraph,0, Map[AGraph, Int]()) + "\n}"
+  val nLine = sys.props("line.separator")
+  
+  def dot[T](p:AGraph[T]) = "digraph resproof {" + nLine + " graph [rankdir=TB]; node [shape=box];" + nLine + dot1(p:AGraph,0, Map[AGraph, Int]()) + nLine + "}"
 
   def dot1[T](p:AGraph, idx : Int, map : Map[AGraph,Int]) : (String, Int) =
     if (map contains p) ("", idx) else p match {
@@ -1081,9 +1089,10 @@ object lkproof {
   */
 
 object normalizeSub {
+  val nLine = sys.props( "line.separator" )
 
   def apply( sub: Substitution ): Unit = {
-    sub.map.foreach( x => println( "\n<" + ( BetaReduction.betaNormalize( x._1 ) ).toString + " -> " + ( BetaReduction.betaNormalize( x._2 ) ).toString + ">" ) )
+    sub.map.foreach( x => println( nLine + "<" + ( BetaReduction.betaNormalize( x._1 ) ).toString + " -> " + ( BetaReduction.betaNormalize( x._2 ) ).toString + ">" ) )
   }
 }
 

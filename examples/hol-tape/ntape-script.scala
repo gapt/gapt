@@ -36,7 +36,9 @@ import at.logic.gapt.proofs.ceres.ceres_omega
 import at.logic.gapt.proofs.lksk.LKskToExpansionProof
 import at.logic.gapt.proofs.lk.LKToLKsk
 
- def show(s:String) = println("\n\n+++++++++ "+s+" ++++++++++\n")
+ val nLine = sys.props("line.separator")
+
+ def show(s:String) = println( nLine + nLine + "+++++++++ "+s+" ++++++++++" + nLine)
 
  class Robinson2RalAndUndoHOL2Fol( sig_vars: Map[String, List[Var]],
                                     sig_consts: Map[String, List[Const]],

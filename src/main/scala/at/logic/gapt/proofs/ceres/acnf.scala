@@ -20,6 +20,8 @@ import clauseSchema._
  * For first-order CERES, the CERES object does a grounding on its own.
  */
 object ACNF {
+  val nLine = sys.props( "line.separator" )
+
   def plugProjections( resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: HOLSequent ): LKProof = {
     resRefutation match {
       case Axiom( OccSequent( Nil, Nil ) ) =>
@@ -66,7 +68,7 @@ object ACNF {
       }
       case ContractionLeftRule( up1, _, a1, a2, p )  => ContractionLeftRule( plugProjections( up1, groun_proj_set, end_seq ), a1.formula )
       case ContractionRightRule( up1, _, a1, a2, p ) => ContractionRightRule( plugProjections( up1, groun_proj_set, end_seq ), a1.formula )
-      case _                                         => throw new Exception( "\nMissing case in acnf !\n" )
+      case _                                         => throw new Exception( nLine + "Missing case in acnf !" + nLine )
     }
   }
 
@@ -160,7 +162,7 @@ object renameIndexedVarInProjection {
       case ForallLeftRule( up, seq, a, p, t )       => ForallLeftRule( apply( up, pair ), renameVar( a.formula, pair ), renameVar( p.formula, pair ), renameVar( t, pair ) )
       case ExistsRightRule( up, _, a, p, t )        => ExistsRightRule( apply( up, pair ), renameVar( a.formula, pair ), renameVar( p.formula, pair ), renameVar( t, pair ) )
       //TODO: Implement ForallRight and ExistsLeft! Cvetan please fix it!
-      case _                                        => throw new Exception( "\nMissing case in GroundingProjections !\n" + p.rule )
+      case _                                        => throw new Exception( nLine + "Missing case in GroundingProjections !" + nLine + p.rule )
     }
   }
 }

@@ -59,8 +59,9 @@ case class ReplayCommand( parentIds: Iterable[String], id: String, cls: HOLSeque
     //get guided clauses mapping from id to resolution proof of id
     debug( "ReplayCommand: Target clause :" + id + " from " + parentIds.toList )
     val gmap = state( "gmap" ).asInstanceOf[MMap[String, ResolutionProof[OccClause]]]
-    //println("\nData="+data)
-    //println("\nTarget clause="+cls)
+    // val nLine = sys.props("line.separator")
+    //println( nLine + "Data="+data )
+    //println( nLine + "Target clause="+cls )
 
     val gproofs = ( parentIds.toList ).filterNot( _ == "-1" ) map gmap
 

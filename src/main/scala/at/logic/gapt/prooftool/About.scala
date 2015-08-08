@@ -12,6 +12,7 @@ import event._
 import java.awt.Point
 
 object About {
+  val nLine = sys.props( "line.separator" )
   private lazy val d = new Dialog {
     title = "About Prooftool"
     resizable = false
@@ -38,7 +39,7 @@ object About {
           new ImageIcon( Main.getClass.getClassLoader.getResource( path ) )
         } catch {
           case e: Exception =>
-            Main.errorMessage( "Couldn't load image: " + path + "\n\n" + Main.getExceptionString( e ) )
+            Main.errorMessage( "Couldn't load image: " + path + nLine + nLine + Main.getExceptionString( e ) )
             Swing.EmptyIcon
         }
       }

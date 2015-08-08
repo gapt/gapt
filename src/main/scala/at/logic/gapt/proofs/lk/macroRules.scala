@@ -289,6 +289,7 @@ object ForallRightBlock {
  *
  */
 object EquationLeftRule extends EquationRuleLogger {
+  val nLine = sys.props( "line.separator" )
 
   /**
    *
@@ -384,7 +385,7 @@ object EquationLeftRule extends EquationRuleLogger {
             if ( mainNew == main ) {
               EquationLeft2Rule( s1, s2, term1oc, term2oc, p )
             } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position.\n Eq: " + eqocc.formula )
+          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position." + nLine + " Eq: " + eqocc.formula )
         }
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
     }
@@ -448,7 +449,7 @@ object EquationLeftRule extends EquationRuleLogger {
             if ( mainNew == main ) {
               EquationLeft2Rule( s1, s2, term1oc, term2oc, p )
             } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position.\n Eq: " + eqocc.formula )
+          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position." + nLine + " Eq: " + eqocc.formula )
         }
 
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
@@ -534,6 +535,7 @@ object EquationLeftRule extends EquationRuleLogger {
  *
  */
 object EquationRightRule extends EquationRuleLogger {
+  val nLine = sys.props( "line.separator" )
 
   /**
    *
@@ -629,7 +631,7 @@ object EquationRightRule extends EquationRuleLogger {
             if ( mainNew == main ) {
               EquationRight2Rule( s1, s2, term1oc, term2oc, p )
             } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position.\n Eq: " + eqocc.formula )
+          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position." + nLine + " Eq: " + eqocc.formula )
         }
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
     }
@@ -693,7 +695,7 @@ object EquationRightRule extends EquationRuleLogger {
             if ( mainNew == main ) {
               EquationRight2Rule( s1, s2, term1oc, term2oc, p )
             } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position.\n Eq: " + eqocc.formula )
+          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position." + nLine + " Eq: " + eqocc.formula )
         }
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
     }

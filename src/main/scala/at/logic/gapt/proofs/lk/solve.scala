@@ -16,6 +16,7 @@ import at.logic.gapt.provers.Prover
  * Currently supports propositional logic as well as proof construction using expansion trees.
  */
 object solve extends at.logic.gapt.utils.logging.Logger {
+  val nLine = sys.props( "line.separator" )
 
   /**
    * Main method for solving propositional sequents
@@ -45,7 +46,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
    * "Solving" for FOL: Use instances from expansion sequent to create LK proof for a sequent
    */
   def expansionProofToLKProof( seq: HOLSequent, expansionSequent: ExpansionSequent, throwOnError: Boolean = false ): Option[LKProof] = {
-    debug( "\nrunning expansionProofToLKProof" )
+    debug( nLine + "running expansionProofToLKProof" )
     startProving( seq, new ExpansionTreeProofStrategy( expansionSequent ), throwOnError )
   }
 
@@ -88,7 +89,7 @@ object solve extends at.logic.gapt.utils.logging.Logger {
       // main step: ask strategy what to do
       strategy.calcNextStep( seq ) match {
         case Some( action ) => {
-          trace( "strategy has selected: " + action + " action.form: " + action.formula + "\n" )
+          trace( "strategy has selected: " + action + " action.form: " + action.formula + nLine )
 
           // apply whatever rule matches to this formula
           action.loc match {
@@ -893,6 +894,8 @@ object ExpansionTreeProofStrategy {
 }
 
 private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
+  val nLine = sys.props( "line.separator" )
+
   // Checks if the sequent is of the form A, \Gamma |- A, \Delta
   def isAxiom( seq: HOLSequent ): Boolean = {
     seq.antecedent.exists( f =>
@@ -933,8 +936,8 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
       seq.antecedent.foreach( f => if ( seq.succedent.contains( f ) ) {
         return ( f, removeFfromSeqAnt( removeFfromSeqSucc( seq, f ), f ) )
       } )
-      throw new Exception( "\nError in if-autoprop.getAxiomfromSeq !\n" )
-    } else throw new Exception( "\nError in else-autoprop.getAxiomfromSeq !\n" )
+      throw new Exception( nLine + "Error in if-autoprop.getAxiomfromSeq !" + nLine )
+    } else throw new Exception( nLine + "Error in else-autoprop.getAxiomfromSeq !" + nLine )
   }
 
   def removeFfromSeqAnt( seq: HOLSequent, f: HOLFormula ): HOLSequent = {

@@ -55,7 +55,8 @@ import at.logic.gapt.expr.BetaReduction
       def apply(conf2: Configuration[Substitution[LambdaExpression]]): List[Configuration[Substitution[LambdaExpression]]] = {
         implicit val disAllowedVars: MSet[Var] = MSet[Var]()
         val conf = conf2.asInstanceOf[MyConfiguration]
-//        println("\n\nconf = "+conf.toStr)
+        val nLine = sys.props("line.separator")      
+//        println( nLine + nLine + "conf = "+conf.toStr)
         if (inPreSolvedForm(conf.uproblems)) {
 //          println("terminal+result")
           (new MyConfiguration(Some(createSub(conf.uproblems))))::Nil
@@ -98,13 +99,13 @@ import at.logic.gapt.expr.BetaReduction
 
                 ( //4b
                   if (isFunctionConstantSymbol(a.asInstanceOf[LambdaExpression]) || args2.contains(a)) {
-//                    println("\nimitation + projection")
+//                    println( nLine + "imitation + projection")
                     val rez = imitation ::: listOfProjections((t1, t2)::rest)
 //                    rez.foreach(x => println(x.asInstanceOf[MyConfiguration].toStr))
                     rez
                   }
                   else {
-//                    println("\nonly imitation ")
+//                    println( nLine + "only imitation ")
                     imitation.foreach(x => println(x.asInstanceOf[MyConfiguration].toStr))
                     imitation ::: List()
                   }
@@ -118,13 +119,13 @@ import at.logic.gapt.expr.BetaReduction
 
               ( //4b
                 if (isFunctionConstantSymbol(a.asInstanceOf[LambdaExpression]) || args2.contains(a)) {
-  //                  println("\nimitation + projection")
+  //                  println( nLine + "imitation + projection")
                   val rez = imitation ::: listOfProjections((t1, t2)::rest)
                   rez.foreach(x => println(x.asInstanceOf[MyConfiguration].toStr))
                   rez
                 }
                 else {
-  //                  println("\nonly imitation ")
+  //                  println( nLine + "only imitation ")
                   imitation.foreach(x => println(x.asInstanceOf[MyConfiguration].toStr))
                   imitation ::: List()
                 }
@@ -271,7 +272,7 @@ import at.logic.gapt.expr.BetaReduction
           })
           ls
         }
-        case _ => { println("\n ERROR in getListOfZs \n"); l1}
+        case _ => { println( sys.props("line.separator") + " ERROR in getListOfZs " + sys.props("line.separator") ); l1}
       }
     }
 
@@ -298,7 +299,7 @@ import at.logic.gapt.expr.BetaReduction
             val newConfNode = (new MyConfiguration((applySubToListOfPairs(uprobl, sigma)).map(x => (x._1, BetaReduction.betaNormalize(x._2 )(Outermost)).asInstanceOf[Pair[LambdaExpression, LambdaExpression]]) :::((funcVar,part_bind_t) ::Nil), None, false))
             Pair(part_bind_t, newConfNode::Nil)
           }
-      case _ => println("\nError in 4a\n") ; sys.exit(0)
+      case _ => println( sys.props("line.separator") + "Error in 4a" + sys.props("line.separator") ) ; sys.exit(0)
         }
     }
 
@@ -323,8 +324,8 @@ import at.logic.gapt.expr.BetaReduction
              case Nil => List[Var]()
              case _ => {
                x._2.exptype match {
-                 case FunctionType(to, lsArgs ) =>  (x._1.zip(lsArgs)).map(y => {val zs = getListOfZs(y._2) ;val h = AbsN(zs, AppN(AppN(y._1, newVarList), zs)); println("\nh = "+h.toString1+"  :  "+h.exptype.toString ); h})
-                 case Ti() => {println("\nERROR in 2\n"); List[Var]()}
+                 case FunctionType(to, lsArgs ) =>  (x._1.zip(lsArgs)).map(y => {val zs = getListOfZs(y._2) ;val h = AbsN(zs, AppN(AppN(y._1, newVarList), zs)); println( sys.props("line.separator") + "h = "+h.toString1+"  :  "+h.exptype.toString ); h})
+                 case Ti() => {println( sys.props("line.separator") + "ERROR in 2" + sys.props("line.separator") ); List[Var]()}
                  }
              }
            }
@@ -332,7 +333,7 @@ import at.logic.gapt.expr.BetaReduction
          val listOfY_i = (newVarList.zip(listOfArgsOfY_i)).map(x => {
            x._2 match {
              case List() => x._1
-             case _   => {println("\nx._1.exptype = "+x._1.exptype); println("\nx._2 list = "+x._2.head.exptype.toString); AppN(x._1,x._2)}
+             case _   => {println( sys.props("line.separator") + "x._1.exptype = "+x._1.exptype); println( sys.props("line.separator") + "x._2 list = "+x._2.head.exptype.toString); AppN(x._1,x._2)}
            }
          })
          val listOfPartBindings = (newVarList.zip(listOfY_i)).map(x => {
@@ -349,7 +350,7 @@ import at.logic.gapt.expr.BetaReduction
            })
          return newl
         }
-      case _ =>  println("\nError in 4b\n"); sys.exit(1)
+      case _ =>  println( sys.props("line.separator") + "Error in 4b" + sys.props("line.separator") ); sys.exit(1)
       }
     }
   }

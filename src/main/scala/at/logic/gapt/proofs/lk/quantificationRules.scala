@@ -450,17 +450,18 @@ class StrongRuleHelper( polarity: Boolean ) extends QuantifierRuleHelper( polari
         )
 
         val back_substitiution = Substitution( x, eigen_var )
+        val nLine = sys.props( "line.separator" )
 
         //This check does the following: if we conclude exists x.A[x] from A[t] then A[x\t] must be A[t].
         //If it fails, you are doing something seriously wrong!
         //In any case do NOT remove it without telling everyone!
         //assert( betaNormalize( App( sub, eigen_var ) ) == aux_fo.formula ,
-        // "assert 2 in getTerms of String Quantifier Rule fails!\n"+betaNormalize( App( sub, eigen_var ) )+" != "+aux_fo.formula)
+        // "assert 2 in getTerms of String Quantifier Rule fails!"+nLine+betaNormalize( App( sub, eigen_var ) )+" != "+aux_fo.formula)
         val subterm = betaNormalize( back_substitiution( subformula ) )
         val normalized_aux = betaNormalize( aux_fo.formula )
         assert(
           subterm == normalized_aux,
-          "assert 2 in getTerms of Strong Quantifier Rule fails!\n" + subterm
+          "assert 2 in getTerms of Strong Quantifier Rule fails!" + nLine + subterm
             + " != " + aux_fo.formula
         )
         aux_fo

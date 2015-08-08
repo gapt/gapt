@@ -17,6 +17,7 @@ import at.logic.gapt.utils.withTempFile
 import scala.sys.process._
 
 class LeanCoPProver extends Prover with ExternalProgram {
+  val nLine = sys.props( "line.separator" )
 
   override def isValid( s: HOLSequent ): Boolean =
     getExpansionSequent( s ).isDefined
@@ -31,10 +32,10 @@ class LeanCoPProver extends Prover with ExternalProgram {
       }
 
       // extract the part between the %----- delimiters
-      val tptpProof = leanCopOutput.split( "\n" ).
+      val tptpProof = leanCopOutput.split( nLine ).
         dropWhile( !_.startsWith( "%-" ) ).drop( 1 ).
         takeWhile( !_.startsWith( "%-" ) ).
-        mkString( "\n" )
+        mkString( nLine )
 
       LeanCoPParser.getExpansionProof( new StringReader( tptpProof ) )
     }
