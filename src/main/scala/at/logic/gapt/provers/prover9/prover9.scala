@@ -13,7 +13,7 @@ import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
-import at.logic.gapt.provers.{ groundFreeVariables, renameConstantsToFi, Prover }
+import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.withTempFile
 
@@ -21,21 +21,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.sys.process._
 
-class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends Prover with ExternalProgram {
-  override def getLKProof( seq: HOLSequent ): Option[LKProof] =
-    withGroundVariables( seq ) { seq =>
-      getRobinsonProof( seq ) map { robinsonProof =>
-        RobinsonToLK( robinsonProof, seq )
-      }
-    }
-
-  override def isValid( seq: HOLSequent ): Boolean =
-    getRobinsonProof( groundFreeVariables( seq )._1 ).isDefined
-
-  def getRobinsonProof( seq: HOLSequent ): Option[RobinsonResolutionProof] =
-    getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
-
-  def getRobinsonProof( cnf: List[HOLClause] ): Option[RobinsonResolutionProof] =
+class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends ResolutionProver with ExternalProgram {
+  def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[RobinsonResolutionProof] =
     withRenamedConstants( cnf ) {
       case ( renaming, cnf ) =>
         val p9Input = toP9Input( cnf, renaming )
@@ -96,21 +83,6 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
 
     RobinsonToLK( fixedResProof, closure )
   }
-
-  private def withRenamedConstants( cnf: List[HOLClause] )( f: ( Map[Const, String], List[HOLClause] ) => Option[RobinsonResolutionProof] ): Option[RobinsonResolutionProof] = {
-    val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf )
-    f( renaming, renamedCNF ) map { renamedProof =>
-      NameReplacement( renamedProof, invertRenaming )
-    }
-  }
-
-  private def withGroundVariables( seq: HOLSequent )( f: HOLSequent => Option[LKProof] ): Option[LKProof] = {
-    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq ) map { renamedProof =>
-      applyReplacement( renamedProof, invertRenaming )._1
-    }
-  }
-
   def toP9Input( cnf: List[HOLClause], renaming: Map[Const, String] ): String = {
     val commands = ArrayBuffer[String]()
 
