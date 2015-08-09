@@ -808,7 +808,7 @@ object replace {
    * @param where in which expression
    * @return the resulting expression
    */
-  def replaceAll( what: Const, by: Const, where: HOLFormula ): HOLFormula = {
+  def replaceAll( what: Const, by: LambdaExpression, where: HOLFormula ): HOLFormula = {
     replaceAll( what, by, where.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
   }
 
@@ -819,14 +819,14 @@ object replace {
    * @param where in which expression
    * @return the resulting expression
    */
-  def replaceAll( what: Const, by: Const, where: LambdaExpression ): LambdaExpression = {
+  def replaceAll( what: Const, by: LambdaExpression, where: LambdaExpression ): LambdaExpression = {
     if ( what != by ) //prevent cycles in replaceAllRec
       replaceAllRec( what, by, where )
     else
       where
   }
   @tailrec
-  private def replaceAllRec( what: Const, by: Const, where: LambdaExpression ): LambdaExpression = {
+  private def replaceAllRec( what: Const, by: LambdaExpression, where: LambdaExpression ): LambdaExpression = {
     HOLPosition.getPositions( where, _ == what ) match {
       case Nil => where
       case p :: _ =>
@@ -842,7 +842,7 @@ object replace {
    * @param where expansion tree where to replace
    * @return an et with all constants what replaced by constants by
    */
-  def apply( what: Const, by: Const, where: ExpansionTree ): ExpansionTree = where match {
+  def apply( what: Const, by: LambdaExpression, where: ExpansionTree ): ExpansionTree = where match {
     case ETTop | ETBottom => where
     case ETAtom( f )      => ETAtom( replaceAll( what, by, f ).asInstanceOf[HOLAtom] )
     case ETWeakening( f ) => ETWeakening( replaceAll( what, by, f ) )
@@ -867,7 +867,7 @@ object replace {
    * @param where expansion tree where to replace
    * @return an et with all constants what replaced by constants by
    */
-  def apply( what: Const, by: Const, where: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = where match {
+  def apply( what: Const, by: LambdaExpression, where: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = where match {
     case ETTop | ETBottom => where
     case ETAtom( f )      => ETAtom( replaceAll( what, by, f ).asInstanceOf[HOLAtom] )
     case ETWeakening( f ) => ETWeakening( replaceAll( what, by, f ) )
