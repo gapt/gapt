@@ -3,9 +3,10 @@ package at.logic.gapt.provers
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr.Const
 import at.logic.gapt.expr.hol.CNFn
+import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.applyReplacement
 import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
-import at.logic.gapt.proofs.resolution.{ HOLClause, RobinsonToLK }
+import at.logic.gapt.proofs.resolution.{ RobinsonToExpansionProof, HOLClause, RobinsonToLK }
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 
 abstract class ResolutionProver extends Prover {
@@ -38,5 +39,8 @@ abstract class ResolutionProver extends Prover {
     getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
 
   def getRobinsonProof( seq: Traversable[HOLClause] ): Option[RobinsonResolutionProof]
+
+  override def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
+    getRobinsonProof( seq ).map( RobinsonToExpansionProof( _, seq ) )
 
 }
