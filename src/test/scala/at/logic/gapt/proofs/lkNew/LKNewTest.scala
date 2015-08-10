@@ -570,7 +570,7 @@ class LKNewTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      // end sequent of p: A, B, C :- A, B
+      // end sequent of p: A∧A, B, C :- A, B
       val p = AndLeftRule( ArbitraryAxiom( B +: A +: C +: A +: Sequent() :+ A :+ B ), A, A )
 
       val o = p.getOccConnector
@@ -794,4 +794,243 @@ class LKNewTest extends Specification {
       )
     }
   }
+
+  "OrRightRule" should {
+
+    "correctly create a proof" in {
+      OrRightRule( WeakeningRightRule( LogicalAxiom( A ), B ), Suc( 0 ), Suc( 1 ) )
+      OrRightRule( WeakeningRightRule( LogicalAxiom( A ), B ), A, B )
+      OrRightRule( WeakeningRightRule( LogicalAxiom( A ), B ), Or( A, B ) )
+
+      success
+    }
+
+    "refuse to construct a proof" in {
+      OrRightRule( LogicalAxiom( A ), Suc( 0 ), Suc( 1 ) ) must throwAn[LKRuleCreationException]
+      OrRightRule( LogicalAxiom( A ), Suc( 0 ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
+      OrRightRule( LogicalAxiom( B ), A ) must throwAn[LKRuleCreationException]
+      OrRightRule( LogicalAxiom( A ), Or( A, B ) ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val p = OrRightRule( WeakeningRightRule( LogicalAxiom( A ), B ), A, B )
+
+      if ( p.mainIndices.length != 1 )
+        failure
+
+      val i = p.mainIndices.head
+
+      p.endSequent( i ) must beEqualTo( Or( A, B ) )
+    }
+
+    "correctly return its aux formulas" in {
+      val p = OrRightRule( WeakeningRightRule( LogicalAxiom( A ), B ), A, B )
+
+      if ( p.auxIndices.length != 1 )
+        failure
+      if ( p.auxIndices.head.length != 2 )
+        failure
+
+      p.premise( p.auxIndices.head.head ) must beEqualTo( A )
+      p.premise( p.auxIndices.head.tail.head ) must beEqualTo( B )
+      success
+    }
+
+    "correctly connect occurrences" in {
+      // end sequent of p: A :- B, D, B, C∨E
+      val p = OrRightRule( ArbitraryAxiom( A +: Sequent() :+ B :+ C :+ D :+ E :+ B ), Or( C, E ) )
+
+      val o = p.getOccConnector
+
+      testParents( o, "∨:r" )(
+        p.endSequent,
+        Seq( Ant( 0 ) ),
+        Seq( Suc( 0 ) ),
+        Seq( Suc( 2 ) ),
+        Seq( Suc( 4 ) ),
+        Seq( Suc( 1 ), Suc( 3 ) )
+      )
+
+      testChildren( o, "∨:r" )(
+        p.premise,
+        Seq( Ant( 0 ) ),
+
+        Seq( Suc( 0 ) ),
+        Seq( Suc( 3 ) ),
+        Seq( Suc( 1 ) ),
+        Seq( Suc( 3 ) ),
+        Seq( Suc( 2 ) )
+      )
+    }
+  }
+
+  "ImpLeftRule" should {
+
+    "correctly construct a proof" in {
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Suc( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), C, ArbitraryAxiom( B +: Sequent() :+ D ), B )
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), ArbitraryAxiom( B +: Sequent() :+ D ), Imp( C, B ) )
+      success
+    }
+
+    "refuse to construct a proof" in {
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Ant( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Suc( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Suc( 2 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Suc( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 2 ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), B, ArbitraryAxiom( B +: Sequent() :+ D ), B ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), C, ArbitraryAxiom( B +: Sequent() :+ D ), D ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), ArbitraryAxiom( B +: Sequent() :+ D ), And( A, B ) ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val p = ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Suc( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+
+      if ( p.mainIndices.length != 1 )
+        failure
+
+      p.endSequent( p.mainIndices.head ) must beEqualTo( Imp( C, B ) )
+    }
+
+    "correctly return its aux formulas" in {
+      val p = ImpLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Suc( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+
+      if ( p.auxIndices.length != 2 )
+        failure
+
+      if ( p.auxIndices.head.length != 1 )
+        failure
+
+      if ( p.auxIndices.tail.head.length != 1 )
+        failure
+
+      p.leftPremise( p.auxIndices.head.head ) must beEqualTo( C )
+      p.rightPremise( p.auxIndices.tail.head.head ) must beEqualTo( B )
+      success
+    }
+
+    "correctly connect occurrences" in {
+      val ax1 = ArbitraryAxiom( A +: Sequent() :+ B :+ C :+ D )
+      val ax2 = ArbitraryAxiom( A +: E +: F +: Sequent() :+ C )
+
+      // end sequent of p: C -> E, A, A, F :- B, D, C
+      val p = ImpLeftRule( ax1, ax2, Imp( C, E ) )
+
+      val oL = p.getLeftOccConnector
+      val oR = p.getRightOccConnector
+
+      testChildren( oL, "→:l" )(
+        p.leftPremise,
+        Seq( Ant( 1 ) ),
+
+        Seq( Suc( 0 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Suc( 1 ) )
+      )
+
+      testParents( oL, "→:l" )(
+        p.endSequent,
+        Seq( Suc( 1 ) ),
+        Seq( Ant( 0 ) ),
+        Seq(),
+        Seq(),
+
+        Seq( Suc( 0 ) ),
+        Seq( Suc( 2 ) ),
+        Seq()
+      )
+
+      testChildren( oR, "→:l" )(
+        p.rightPremise,
+        Seq( Ant( 2 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 3 ) ),
+
+        Seq( Suc( 2 ) )
+      )
+
+      testParents( oR, "→:l" )(
+        p.endSequent,
+        Seq( Ant( 1 ) ),
+        Seq(),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 2 ) ),
+
+        Seq(),
+        Seq(),
+        Seq( Suc( 0 ) )
+      )
+    }
+  }
+
+  "ImpRightRule" should {
+
+    "correctly create a proof" in {
+      ImpRightRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), Ant( 0 ), Suc( 1 ) )
+      ImpRightRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), B, D )
+      ImpRightRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), Imp( A, C ) )
+
+      success
+    }
+
+    "refuse to construct a proof" in {
+      ImpRightRule( LogicalAxiom( A ), Suc( 0 ), Suc( 1 ) ) must throwAn[LKRuleCreationException]
+      ImpRightRule( LogicalAxiom( A ), Ant( 0 ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      ImpRightRule( LogicalAxiom( B ), A, B ) must throwAn[LKRuleCreationException]
+      ImpRightRule( LogicalAxiom( A ), Imp( A, B ) ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val p = ImpRightRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), A, D )
+
+      if ( p.mainIndices.length != 1 )
+        failure
+
+      val i = p.mainIndices.head
+
+      p.endSequent( i ) must beEqualTo( Imp( A, D ) )
+    }
+
+    "correctly return its aux formulas" in {
+      val p = ImpRightRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), A, D )
+
+      if ( p.auxIndices.length != 1 )
+        failure
+      if ( p.auxIndices.head.length != 2 )
+        failure
+
+      p.premise( p.auxIndices.head.head ) must beEqualTo( A )
+      p.premise( p.auxIndices.head.tail.head ) must beEqualTo( D )
+      success
+    }
+
+    "correctly connect occurrences" in {
+      // end sequent of p: A, C :- D, F, B→E
+      val p = ImpRightRule( ArbitraryAxiom( A +: B +: C +: Sequent() :+ D :+ E :+ F ), Imp( B, E ) )
+
+      val o = p.getOccConnector
+
+      testParents( o, "→:r" )(
+        p.endSequent,
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 2 ) ),
+
+        Seq( Suc( 0 ) ),
+        Seq( Suc( 2 ) ),
+        Seq( Ant( 1 ), Suc( 1 ) )
+      )
+
+      testChildren( o, "→:r" )(
+        p.premise,
+        Seq( Ant( 0 ) ),
+        Seq( Suc( 2 ) ),
+        Seq( Ant( 1 ) ),
+
+        Seq( Suc( 0 ) ),
+        Seq( Suc( 2 ) ),
+        Seq( Suc( 1 ) )
+      )
+    }
+  }
+
 }
