@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lkNew
 
-import at.logic.gapt.expr.{ Eq, And, FOLConst, FOLAtom }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base._
 import org.specs2.execute.Success
 import org.specs2.mutable._
@@ -389,6 +389,74 @@ class LKNewTest extends Specification {
         Seq(),
         Seq( Suc( 0 ) ),
         Seq( Suc( 1 ) )
+      )
+    }
+  }
+
+  "NegLeftRule" should {
+
+    "correctly create a proof" in {
+      NegLeftRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), Suc( 0 ) )
+      NegLeftRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), C )
+
+      success
+    }
+
+    "refuse to create a proof" in {
+      NegLeftRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      NegLeftRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), Suc( 2 ) ) must throwAn[LKRuleCreationException]
+      NegLeftRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), A ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val p = NegLeftRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D ), C )
+
+      if ( p.mainIndices.length != 1 )
+        failure
+
+      val i = p.mainIndices.head
+
+      p.endSequent( i ) must beEqualTo( Neg( C ) )
+    }
+
+    "correctly return its aux formulas" in {
+      val p = NegLeftRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D :+ E ), C )
+
+      if ( p.auxIndices.length != 1 )
+        failure
+      if ( p.auxIndices.head.length != 1 )
+        failure
+
+      for ( i <- p.auxIndices.head ) {
+        p.premise( i ) must beEqualTo( C )
+      }
+      success
+    }
+
+    "correctly connect occurrences" in {
+      // end sequent of p: ¬D, A, B :- C, E
+      val p = NegLeftRule( ArbitraryAxiom( A +: B +: Sequent() :+ C :+ D :+ E ), D )
+
+      val o = p.getOccConnector
+
+      testChildren( o, "¬:l" )(
+        p.premise,
+        Seq( Ant( 1 ) ),
+        Seq( Ant( 2 ) ),
+
+        Seq( Suc( 0 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Suc( 1 ) )
+      )
+
+      testParents( o, "¬:l" )(
+        p.endSequent,
+        Seq( Suc( 1 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 1 ) ),
+
+        Seq( Suc( 0 ) ),
+        Seq( Suc( 2 ) )
       )
     }
   }
