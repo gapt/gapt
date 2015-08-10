@@ -695,4 +695,103 @@ class LKNewTest extends Specification {
       )
     }
   }
+
+  "OrLeftRule" should {
+
+    "correctly construct a proof" in {
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Ant( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), A, ArbitraryAxiom( B +: Sequent() :+ D ), B )
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), ArbitraryAxiom( B +: Sequent() :+ D ), Or( A, B ) )
+      success
+    }
+
+    "refuse to construct a proof" in {
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Suc( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Ant( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Ant( 2 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Ant( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 2 ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), B, ArbitraryAxiom( B +: Sequent() :+ D ), B ) must throwAn[LKRuleCreationException]
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), A, ArbitraryAxiom( B +: Sequent() :+ D ), D ) must throwAn[LKRuleCreationException]
+      OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), ArbitraryAxiom( B +: Sequent() :+ D ), And( A, B ) ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val p = OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Ant( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+
+      if ( p.mainIndices.length != 1 )
+        failure
+
+      p.endSequent( p.mainIndices.head ) must beEqualTo( Or( A, B ) )
+    }
+
+    "correctly return its aux formulas" in {
+      val p = OrLeftRule( ArbitraryAxiom( A +: Sequent() :+ C ), Ant( 0 ), ArbitraryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+
+      if ( p.auxIndices.length != 2 )
+        failure
+
+      if ( p.auxIndices.head.length != 1 )
+        failure
+
+      if ( p.auxIndices.tail.head.length != 1 )
+        failure
+
+      p.leftPremise( p.auxIndices.head.head ) must beEqualTo( A )
+      p.rightPremise( p.auxIndices.tail.head.head ) must beEqualTo( B )
+      success
+    }
+
+    "correctly connect occurrences" in {
+      val ax1 = ArbitraryAxiom( A +: B +: C +: Sequent() :+ D )
+      val ax2 = ArbitraryAxiom( A +: E +: F +: Sequent() :+ C )
+
+      // end sequent of p: B∨E, A, C, A, F :- D, C
+      val p = OrLeftRule( ax1, ax2, Or( B, E ) )
+
+      val oL = p.getLeftOccConnector
+      val oR = p.getRightOccConnector
+
+      testChildren( oL, "∨:l" )(
+        p.leftPremise,
+        Seq( Ant( 1 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 2 ) ),
+
+        Seq( Suc( 0 ) )
+      )
+
+      testParents( oL, "∨:l" )(
+        p.endSequent,
+        Seq( Ant( 1 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 2 ) ),
+        Seq(),
+        Seq(),
+
+        Seq( Suc( 0 ) ),
+        Seq()
+      )
+
+      testChildren( oR, "∨:l" )(
+        p.rightPremise,
+        Seq( Ant( 3 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 4 ) ),
+
+        Seq( Suc( 1 ) )
+      )
+
+      testParents( oR, "∨:l" )(
+        p.endSequent,
+        Seq( Ant( 1 ) ),
+        Seq(),
+        Seq(),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 2 ) ),
+
+        Seq(),
+        Seq( Suc( 0 ) )
+      )
+    }
+  }
 }
