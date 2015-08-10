@@ -730,7 +730,7 @@ object cloneMyTerm {
       case Var( n, t ) if t == Ti | t == Tindex -> Ti => Var( n, t )
       case Const( n, t ) => Const( n, t )
       case Abs( x, t ) => Abs( x, apply( t, proofSize ) )
-      case _ => throw new Exception( "ERROR in unfolding missing formula !\n" + term.toString + "\n" )
+      case _ => throw new Exception( "ERROR in unfolding missing formula !" + nLine + term.toString + nLine )
 
     }
   }

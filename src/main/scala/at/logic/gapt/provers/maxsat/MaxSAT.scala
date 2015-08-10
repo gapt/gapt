@@ -402,7 +402,7 @@ trait MaxSATSolverBinary extends MaxSATSolver {
       logTime( "[Runtime]<maxsat> ", ( System.currentTimeMillis() - startTimeMaxSAT ) )
 
       trace( "IN_FILE:" + nLine + scala.io.Source.fromFile( temp_in, "UTF-8" ).mkString );
-      //debug("OUT_FILE:\n"+TextFileSlurper(temp_out));
+      //debug("OUT_FILE:" + nLine +TextFileSlurper(temp_out));
       trace( "OUT:" + nLine + output.toString );
       trace( "ERR:" + nLine + error.toString );
       // parse maxsat output and construct map

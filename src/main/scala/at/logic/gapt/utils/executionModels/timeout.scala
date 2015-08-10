@@ -43,10 +43,12 @@ package timeout {
       t.join( duration toMillis )
       t.stop()
 
+      val nLine = sys.props( "line.separator" )
+
       // wait until variable result has been written
       t.join( 1.second toMillis )
       if ( t.isAlive ) {
-        warn( "Worker thread still alive; stacktrace:\n" + t.getStackTrace.mkString( "\n" ) )
+        warn( "Worker thread still alive; stacktrace:" + nLine + t.getStackTrace.mkString( nLine ) )
       }
 
       result match {

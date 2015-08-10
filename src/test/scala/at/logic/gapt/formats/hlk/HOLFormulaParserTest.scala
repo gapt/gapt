@@ -180,7 +180,7 @@ class HOLASTParserTest extends Specification {
           case HOLASTParser.Success( result, _ ) =>
             ( s, "" )
           case HOLASTParser.NoSuccess( msg, input ) =>
-            ( s, ( input.pos.toString + ": " + msg + "\nproblem is:" + s ) )
+            ( s, ( input.pos.toString + ": " + msg + sys.props( "line.separator" ) + "problem is:" + s ) )
         } ).filterNot( _._2 == "" )
 
       res.map( ( x: ( String, String ) ) => "" mustEqual ( x._2 ) )

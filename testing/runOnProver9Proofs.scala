@@ -97,10 +97,11 @@ object runOnProver9Proofs {
     // The catch block is the interesting part of this function. My use case was to log only LKRuleCreationExceptions and disregard all others.
     catch {
       case e: LKRuleCreationException =>
+        val nLine = sys.props( "line.separator" )
         val logFileName = logDirPath + currentDir + ".txt"
         val writer = new FileWriter(logFileName, true)
-        writer.append(path+"\n")
-        writer.append(e.toString+"\n\n")
+        writer.append(path+ nLine )
+        writer.append(e.toString+ nLine + nLine )
         writer.close()
 
       case _: Throwable =>

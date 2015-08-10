@@ -19,7 +19,9 @@ object testVeriTImport {
   var syntax_error = 0
   var unfold_error = 0
   var success = 0
-
+  
+  val nLine = sys.props("line.separator")
+  
   def apply( str: String, timeout: Int ) = {
     
     val top_dir = new File( str )
@@ -33,13 +35,13 @@ object testVeriTImport {
       } } catch {
 	case e: VeriTParserException =>
 	  syntax_error += 1;
-	  VeriTImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	  VeriTImportLogger.warn( "File: " + f.getPath + nLine + e )
 	case e: VeriTUnfoldingTransitivityException =>
 	  unfold_error += 1;
-	  VeriTImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	  VeriTImportLogger.warn( "File: " + f.getPath + nLine + e )
 	case e: Throwable => 
 	  fail += 1; 
-	  VeriTImportLogger.error( "File: " + f.getPath + "\n" + e )
+	  VeriTImportLogger.error( "File: " + f.getPath + nLine + e )
       }
     }
 
