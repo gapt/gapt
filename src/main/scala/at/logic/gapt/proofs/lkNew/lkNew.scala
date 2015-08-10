@@ -630,7 +630,7 @@ case class NegRightRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKP
   val ( auxFormula, context ) = premise.focus( aux )
   val mainFormula = Neg( auxFormula )
 
-  private val n = endSequent.length - 1
+  private val n = endSequent.succedent.length - 1
   override def auxIndices = Seq( Seq( aux ) )
   override def mainIndices = Seq( Suc( n ) )
   override def endSequent = context :+ mainFormula
