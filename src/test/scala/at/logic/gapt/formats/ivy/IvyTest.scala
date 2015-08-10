@@ -11,6 +11,8 @@ import lisp.{ SExpressionParser }
  * Test for the Ivy interface.
  */
 class IvyTest extends Specification with ClasspathFileCopier {
+  val nLine = sys.props( "line.separator" )
+
   def dumpreader[T]( r: Reader[T] ) = {
     var reader = r
     println( "=== dumping reader! ===" )
@@ -122,9 +124,9 @@ class IvyTest extends Specification with ClasspathFileCopier {
       }
     }
 
-    " parse the comments ;;comment 1\n;;comment 2" in {
+    " parse the comments ;;comment 1" + nLine + ";;comment 2" in {
       val parser = new SExpressionParser
-      parser.parse( ";;comment 1\n;;comment 2\n" ) match {
+      parser.parse( ";;comment 1" + nLine + ";;comment 2" + nLine ) match {
         case parser.Success( result, rest ) =>
           result match {
             case Nil =>
@@ -141,10 +143,10 @@ class IvyTest extends Specification with ClasspathFileCopier {
       }
     }
 
-    " parse the list ;;comment\nc5" in {
+    " parse the list ;;comment" + nLine + "c5" in {
       //debug(" parse the list ;;comment\nc5")
       val parser = new SExpressionParser
-      parser.parse( ";;comment\nc5" ) match {
+      parser.parse( ";;comment" + nLine + "c5" ) match {
         case parser.Success( result, rest ) =>
           result match {
             case lisp.Atom( "c5" ) :: Nil =>
@@ -178,7 +180,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       }
     }
 
-    " parse the list (c1 (c2 c2)  ;;comment\nc)" in {
+    " parse the list (c1 (c2 c2)  ;;comment" + nLine + "c)" in {
       val parser = new SExpressionParser
       parser.parse( "(c1 (c2 c2) c);;comment" ) match {
         case parser.Success( result, rest ) =>
@@ -220,9 +222,9 @@ class IvyTest extends Specification with ClasspathFileCopier {
       }
     }
 
-    " parse the list ;;comment 1\n(c1 (c2 c2)  ;;comment 2\nc)" in {
+    " parse the list ;;comment 1" + nLine + "(c1 (c2 c2)  ;;comment 2" + nLine + "c)" in {
       val parser = new SExpressionParser
-      parser.parse( "(\n;;comment 1\nc1 (c2 c2) c);;comment 2" ) match {
+      parser.parse( "(" + nLine + ";;comment 1" + nLine + "c1 (c2 c2) c);;comment 2" ) match {
         case parser.Success( result, rest ) =>
           result match {
             case lisp.List( lisp.Atom( "c1" ) ::

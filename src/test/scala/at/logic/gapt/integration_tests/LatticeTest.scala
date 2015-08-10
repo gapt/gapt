@@ -32,10 +32,11 @@ class LatticeTest extends Specification {
   }
 
   def printStats( p: LKProof ) = {
+    val nLine = sys.props( "line.separator" )
     val stats = getStatistics( p )
-    print( "unary: " + stats.unary + "\n" )
-    print( "binary: " + stats.binary + "\n" )
-    print( "cuts: " + stats.cuts + "\n" )
+    print( "unary: " + stats.unary + nLine )
+    print( "binary: " + stats.binary + nLine )
+    print( "cuts: " + stats.cuts + nLine )
   }
 
   sequential

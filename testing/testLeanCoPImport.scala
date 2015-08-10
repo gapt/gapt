@@ -27,6 +27,7 @@ object testLeanCoPImport {
 
   def apply( str: String, timeout: Int ) = {
     
+    val nLine = sys.props("line.separator")
     val top_dir = new File( str )
     val proof_files = getAllProofFiles( top_dir )
 
@@ -39,25 +40,25 @@ object testLeanCoPImport {
       } } catch {
 	case e: LeanCoPParserException =>
 	  syntax_error += 1;
-	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	  LeanCoPImportLogger.warn( "File: " + f.getPath + nLine + e )
 	case e: LeanCoPNoMatchException =>
 	  no_match += 1;
-	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	  LeanCoPImportLogger.warn( "File: " + f.getPath + nLine + e )
 	case e: LeanCoPNoLeanPredException =>
 	  no_lean_pred += 1
-	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	  LeanCoPImportLogger.warn( "File: " + f.getPath + nLine + e )
 	case e: LeanCoPLeanPredWrongArityException =>
 	  lean_pred_error += 1
-	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	  LeanCoPImportLogger.warn( "File: " + f.getPath + nLine + e )
 	case e: NoSuchElementException =>
 	  sk_fun_error += 1
-	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	  LeanCoPImportLogger.warn( "File: " + f.getPath + nLine + e )
 	case e: TimeOutException =>
 	  timeout_error += 1;
-	  LeanCoPImportLogger.warn( "File: " + f.getPath + "\n" + e )
+	  LeanCoPImportLogger.warn( "File: " + f.getPath + nLine + e )
 	case e: Throwable => 
 	  fail += 1; 
-	  LeanCoPImportLogger.error( "File: " + f.getPath + "\n" + e )
+	  LeanCoPImportLogger.error( "File: " + f.getPath + nLine + e )
       }
     }
 

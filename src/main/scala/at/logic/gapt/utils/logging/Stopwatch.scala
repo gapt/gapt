@@ -21,6 +21,7 @@ object StopwatchStatus extends Enumeration {
  */
 class Stopwatch() extends Logger {
 
+  val nLine = sys.props( "line.separator" )
   var status = STOPPED
   var startTime = System.currentTimeMillis()
   var times = mutable.MutableList[( String, Long )]()
@@ -97,7 +98,7 @@ class Stopwatch() extends Logger {
    * @return all times as string
    */
   override def toString(): String = {
-    times.toList.foldLeft( "" )( ( acc, t ) => acc + "\n" + t._1 + " @ " + t._2 )
+    times.toList.foldLeft( "" )( ( acc, t ) => acc + nLine + t._1 + " @ " + t._2 )
   }
 
   /**
@@ -105,7 +106,7 @@ class Stopwatch() extends Logger {
    * @return all times as string
    */
   def toFormattedString(): String = {
-    times.toList.foldLeft( "" )( ( acc, t ) => acc + "\n" + t._1 + " @ " + getHours( t._2 ) + "h " + getMin( t._2 ) + "min " + getSec( t._2 ) + "sec " + getMSec( t._2 ) + "msec" )
+    times.toList.foldLeft( "" )( ( acc, t ) => acc + nLine + t._1 + " @ " + getHours( t._2 ) + "h " + getMin( t._2 ) + "min " + getSec( t._2 ) + "sec " + getMSec( t._2 ) + "msec" )
   }
 
   /**
@@ -141,7 +142,7 @@ class Stopwatch() extends Logger {
    * @return all times in .xml
    */
   def toXML(): String = {
-    times.toList.foldLeft( "<times>" )( ( acc, t ) => "\n<time name='" + t._1 + "'>" +
+    times.toList.foldLeft( "<times>" )( ( acc, t ) => nLine + "<time name='" + t._1 + "'>" +
       "<hours>" + getHours( t._2 ) + "</hours>" +
       "<minutes>" + getMin( t._2 ) + "</minutes>" +
       "<seconds>" + getSec( t._2 ) + "</seconds>" +
@@ -155,7 +156,7 @@ class Stopwatch() extends Logger {
    * @return all times in .csv
    */
   def toCSV(): String = {
-    times.toList.foldLeft( "" )( ( acc, t ) => "\n" + t._1 + ";" + t._2 + ";" )
+    times.toList.foldLeft( "" )( ( acc, t ) => nLine + t._1 + ";" + t._2 + ";" )
   }
 
 }

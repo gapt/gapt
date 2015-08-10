@@ -192,7 +192,7 @@ class ReplayTest extends Specification {
       ( getRefutation2( List( s1, s2, s3, s4 ) ) match {
         case Some( a ) if a.asInstanceOf[RobinsonResolutionProof].root.toHOLSequent multiSetEquals ( HOLSequent( List(), List() ) ) =>
           //println(Formatter.asHumanReadableString(a)   )
-          //println("======= GraphViz output: =======\n" + Formatter.asGraphViz(a)   )
+          //println("======= GraphViz output: =======" + sys.props("line.separator") + Formatter.asGraphViz(a)   )
           true
         case _ => false
       } ) must beTrue
