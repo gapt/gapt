@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.lk.base._
 
 abstract class LKProof {
@@ -1239,6 +1240,330 @@ object ImpRightRule {
   }
 }
 // </editor-fold>
+
+// <editor-fold desc="Quantifier rules">
+
+/**
+ * An LKProof ending with a universal quantifier on the left:
+ *
+ *            (π)
+ *      A[x\t], Γ :- Δ
+ *     ----------------∀:l
+ *       ∀x.A, Γ :- Δ
+ *
+ * @param subProof The proof π.
+ * @param aux The index of A[x\t].
+ * @param A The formula A.
+ * @param term The term t.
+ * @param v The variable x.
+ */
+case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, term: LambdaExpression, v: Var ) extends UnaryLKProof {
+  // <editor-fold desc="Sanity checks">
+
+  aux match {
+    case Ant( _ ) =>
+    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Aux formula $aux is in the succedent." )
+  }
+
+  if ( !premise.isDefinedAt( aux ) )
+    throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Sequent $premise is not defined at index $aux." )
+
+  val ( auxFormula, context ) = premise focus aux
+
+  if ( auxFormula != Substitution( v, term )( A ) )
+    throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Substituting $term for $v in $A does not result in $auxFormula." )
+
+  // </editor-fold>
+
+  val mainFormula = All( v, A )
+
+  def name = "∀:l"
+
+  def endSequent = mainFormula +: context
+
+  def mainIndices = Seq( Ant( 0 ) )
+
+  def auxIndices = Seq( Seq( aux ) )
+
+  def getOccConnector = new OccConnector(
+    endSequent,
+    premise,
+    Seq( aux ) +: ( premise.indicesSequent delete aux map { i => Seq( i ) } )
+  )
+}
+
+object ForallLeftRule {
+  /**
+   * Convenience constructor for ∀:l that, a main formula and a term, will try to construct an inference with these formulas.
+   *
+   * @param subProof
+   * @param mainFormula
+   * @param term
+   * @return
+   */
+  def apply( subProof: LKProof, mainFormula: HOLFormula, term: LambdaExpression ): ForallLeftRule = {
+    val premise = subProof.endSequent
+
+    mainFormula match {
+      case All( v, subFormula ) =>
+        val auxFormula = Substitution( v, term )( subFormula )
+        val i = premise.antecedent indexOf auxFormula
+
+        if ( i == -1 )
+          throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Formula $auxFormula not found in antecedent of $premise." )
+
+        ForallLeftRule( subProof, Ant( i ), subFormula, term, v )
+
+      case _ => throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Proposed main formula $mainFormula is not universally quantified." )
+    }
+  }
+
+  def apply( subProof: LKProof, mainFormula: HOLFormula ): ForallLeftRule = mainFormula match {
+    case All( v, subFormula ) => apply( subProof, mainFormula, v )
+
+    case _                    => throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Proposed main formula $mainFormula is not universally quantified." )
+  }
+}
+
+/**
+ * An LKProof ending with a universal quantifier on the right:
+ *
+ *           (π)
+ *      Γ :- Δ, A[x\α]
+ *     ---------------∀:r
+ *      Γ :- Δ, ∀x.A
+ *
+ * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ :- Δ.
+ *
+ * @param subProof The proof π.
+ * @param aux The index of A[x\α].
+ * @param eigenVariable The variable α.
+ * @param quantifiedVariable The variable x.
+ */
+case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var ) extends UnaryLKProof {
+
+  // <editor-fold desc="Sanity checks">
+  aux match {
+    case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create ForallRightRule: Aux formula $aux is in the antecedent." )
+    case Suc( _ ) =>
+  }
+
+  if ( !premise.isDefinedAt( aux ) )
+    throw new LKRuleCreationException( s"Cannot create ForallRightRule: Sequent $premise is not defined at index $aux." )
+
+  val ( auxFormula, context ) = premise focus aux
+
+  //eigenvariable condition
+  if ( freeVariables( context ) contains eigenVariable )
+    throw new LKRuleCreationException( s"Cannot create ForallRightRule: Eigenvariable condition is violated." )
+
+  // </editor-fold>
+
+  val mainFormula = All( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+
+  def endSequent = context :+ mainFormula
+
+  def name = "∀:r"
+
+  private val n = endSequent.succedent.length - 1
+
+  def mainIndices = Seq( Suc( n ) )
+
+  def auxIndices = Seq( Seq( aux ) )
+
+  def getOccConnector = new OccConnector(
+    endSequent,
+    premise,
+    ( premise.indicesSequent delete aux map { i => Seq( i ) } ) :+ Seq( aux )
+  )
+}
+
+object ForallRightRule {
+  def apply( subProof: LKProof, mainFormula: HOLFormula, eigenVariable: Var ): ForallRightRule = mainFormula match {
+    case All( v, subFormula ) =>
+      val auxFormula = Substitution( v, eigenVariable )( mainFormula )
+
+      val premise = subProof.endSequent
+      val i = premise.succedent indexOf auxFormula
+
+      if ( i == -1 )
+        throw new LKRuleCreationException( s"Cannot create ForallRightRule: Formula $auxFormula not found in succedent of $premise." )
+
+      ForallRightRule( subProof, Suc( i ), eigenVariable, v )
+
+    case _ => throw new LKRuleCreationException( s"Cannot create ForallRightRule: Proposed main formula $mainFormula is not universally quantified." )
+  }
+
+  def apply( subProof: LKProof, mainFormula: HOLFormula ): ForallRightRule = mainFormula match {
+    case All( v, subFormula ) => apply( subProof, mainFormula, v )
+
+    case _                    => throw new LKRuleCreationException( s"Cannot create ForallRightRule: Proposed main formula $mainFormula is not universally quantified." )
+  }
+}
+
+/**
+ * An LKProof ending with an existential quantifier on the left:
+ *
+ *           (π)
+ *      A[x\α], Γ :- Δ
+ *     ---------------∀:r
+ *       ∃x.A Γ :- Δ
+ *
+ * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ :- Δ.
+ *
+ * @param subProof The proof π.
+ * @param aux The index of A[x\α].
+ * @param eigenVariable The variable α.
+ * @param quantifiedVariable The variable x.
+ */
+case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var ) extends UnaryLKProof {
+
+  // <editor-fold desc="Sanity checks">
+  aux match {
+    case Ant( _ ) =>
+    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Aux formula $aux is in the succedent." )
+  }
+
+  if ( !premise.isDefinedAt( aux ) )
+    throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Sequent $premise is not defined at index $aux." )
+
+  val ( auxFormula, context ) = premise focus aux
+
+  //eigenvariable condition
+  if ( freeVariables( context ) contains eigenVariable )
+    throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Eigenvariable condition is violated." )
+
+  // </editor-fold>
+
+  val mainFormula = Ex( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+
+  def endSequent = mainFormula +: context
+
+  def name = "∃:l"
+
+  def mainIndices = Seq( Ant( 0 ) )
+
+  def auxIndices = Seq( Seq( aux ) )
+
+  def getOccConnector = new OccConnector(
+    endSequent,
+    premise,
+    Seq( aux ) +: ( premise.indicesSequent delete aux map { i => Seq( i ) } )
+  )
+}
+
+object ExistsLeftRule {
+  def apply( subProof: LKProof, mainFormula: HOLFormula, eigenVariable: Var ): ExistsLeftRule = mainFormula match {
+    case Ex( v, subFormula ) =>
+      val auxFormula = Substitution( v, eigenVariable )( mainFormula )
+
+      val premise = subProof.endSequent
+      val i = premise.antecedent indexOf auxFormula
+
+      if ( i == -1 )
+        throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Formula $auxFormula not found in antecedent of $premise." )
+
+      ExistsLeftRule( subProof, Suc( i ), eigenVariable, v )
+
+    case _ => throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Proposed main formula $mainFormula is not existentially quantified." )
+  }
+
+  def apply( subProof: LKProof, mainFormula: HOLFormula ): ExistsLeftRule = mainFormula match {
+    case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
+
+    case _                   => throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Proposed main formula $mainFormula is not existentially quantified." )
+  }
+}
+
+/**
+ * An LKProof ending with an existential quantifier on the right:
+ *
+ *            (π)
+ *      Γ :- Δ, A[x\t]
+ *     ----------------∃:r
+ *       Γ :- Δ, ∃x.A
+ *
+ * @param subProof The proof π.
+ * @param aux The index of A[x\t].
+ * @param A The formula A.
+ * @param term The term t.
+ * @param v The variable x.
+ */
+case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, term: LambdaExpression, v: Var ) extends UnaryLKProof {
+  // <editor-fold desc="Sanity checks">
+
+  aux match {
+    case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Aux formula $aux is in the antecedent." )
+    case Suc( _ ) =>
+  }
+
+  if ( !premise.isDefinedAt( aux ) )
+    throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Sequent $premise is not defined at index $aux." )
+
+  val ( auxFormula, context ) = premise focus aux
+
+  if ( auxFormula != Substitution( v, term )( A ) )
+    throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Substituting $term for $v in $A does not result in $auxFormula." )
+
+  // </editor-fold>
+
+  val mainFormula = Ex( v, A )
+
+  def name = "∃:r"
+
+  def endSequent = context :+ mainFormula
+
+  private val n = endSequent.succedent.length - 1
+
+  def mainIndices = Seq( Suc( n ) )
+
+  def auxIndices = Seq( Seq( aux ) )
+
+  def getOccConnector = new OccConnector(
+    endSequent,
+    premise,
+    ( premise.indicesSequent delete aux map { i => Seq( i ) } ) :+ Seq( aux )
+  )
+}
+
+object ExistsRightRule {
+  /**
+   * Convenience constructor for ∃:r that, a main formula and a term, will try to construct an inference with these formulas.
+   *
+   * @param subProof
+   * @param mainFormula
+   * @param term
+   * @return
+   */
+  def apply( subProof: LKProof, mainFormula: HOLFormula, term: LambdaExpression ): ExistsRightRule = {
+    val premise = subProof.endSequent
+
+    mainFormula match {
+      case Ex( v, subFormula ) =>
+        val auxFormula = Substitution( v, term )( subFormula )
+        val i = premise.succedent indexOf auxFormula
+
+        if ( i == -1 )
+          throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Formula $auxFormula not found in antecedent of $premise." )
+
+        ExistsRightRule( subProof, Suc( i ), subFormula, term, v )
+
+      case _ => throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Proposed main formula $mainFormula is not existentially quantified." )
+    }
+  }
+
+  def apply( subProof: LKProof, mainFormula: HOLFormula ): ExistsRightRule = mainFormula match {
+    case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
+
+    case _                   => throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Proposed main formula $mainFormula is not existentially quantified." )
+  }
+}
+
+// </editor-fold>
+
+//<editor-fold desc="Equality rules>
+
+//</editor-fold>
 
 /**
  * This class models the connection of formula occurrences between two sequents in a proof.

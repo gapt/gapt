@@ -31,7 +31,6 @@ package object base {
     def toImplication: HOLFormula = Imp( And( sequent.antecedent.toList ), Or( sequent.succedent ) )
 
     def renameSymbols( map: SymbolMap ) = sequent map ( NameReplacement( _, map ) )
-
   }
 
   object HOLSequent {
