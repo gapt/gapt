@@ -10,6 +10,11 @@ import org.specs2.mutable._
  */
 class LKNewTest extends Specification {
   val s = FOLConst( "s" )
+  val alpha = FOLVar( "α" )
+  val x = FOLVar( "x" )
+  val y = FOLVar( "y" )
+
+  def P( t: FOLTerm ) = FOLAtom( "P", t )
 
   val A = FOLAtom( "A", Nil )
   val B = FOLAtom( "B", Nil )
@@ -1033,4 +1038,151 @@ class LKNewTest extends Specification {
     }
   }
 
+  "ForallRightRule" should {
+    "correctly construct a proof" in {
+      val ax = ArbitraryAxiom( Sequent() :+ P( alpha ) :+ P( x ) )
+      ForallRightRule( ax, Suc( 0 ), alpha, x )
+      ForallRightRule( ax, All( x, P( x ) ), alpha )
+      ForallRightRule( ax, All( x, P( x ) ) )
+
+      success
+    }
+
+    "refuse to construct a proof" in {
+      val ax = ArbitraryAxiom( P( alpha ) +: Sequent() :+ P( alpha ) :+ P( x ) )
+
+      ForallRightRule( ax, Ant( 0 ), alpha, x ) must throwAn[LKRuleCreationException]
+      ForallRightRule( ax, Suc( 2 ), alpha, x ) must throwAn[LKRuleCreationException]
+      ForallRightRule( ax, Suc( 0 ), alpha, x ) must throwAn[LKRuleCreationException]
+      ForallRightRule( ax, P( x ), alpha ) must throwAn[LKRuleCreationException]
+      ForallRightRule( ax, All( x, P( x ) ), y ) must throwAn[LKRuleCreationException]
+      ForallRightRule( ax, All( y, P( y ) ) ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val ax = ArbitraryAxiom( Sequent() :+ P( alpha ) :+ P( x ) )
+
+      val p = ForallRightRule( ax, Suc( 0 ), alpha, x )
+
+      if ( p.mainIndices.length != 1 )
+        failure
+
+      p.mainFormulas.head must beEqualTo( All( x, P( x ) ) )
+    }
+
+    "correctly return its aux formula" in {
+      val ax = ArbitraryAxiom( Sequent() :+ P( alpha ) :+ P( x ) )
+
+      val p = ForallRightRule( ax, Suc( 0 ), alpha, x )
+
+      if ( p.auxIndices.length != 1 )
+        failure
+
+      if ( p.auxIndices.head.length != 1 )
+        failure
+
+      p.auxFormulas.head.head must beEqualTo( P( alpha ) )
+    }
+
+    "correctly connect occurrences" in {
+      val ax = ArbitraryAxiom( A +: Sequent() :+ B :+ P( alpha ) :+ C )
+
+      // end sequent of p: A :- B, C, ∀x.P
+      val p = ForallRightRule( ax, All( x, P( x ) ), alpha )
+
+      val o = p.getOccConnector
+
+      testChildren( o, "∀:r" )(
+        p.premise,
+        Seq( Ant( 0 ) ),
+
+        Seq( Suc( 0 ) ),
+        Seq( Suc( 2 ) ),
+        Seq( Suc( 1 ) )
+      )
+
+      testParents( o, "∀:r" )(
+        p.endSequent,
+        Seq( Ant( 0 ) ),
+
+        Seq( Suc( 0 ) ),
+        Seq( Suc( 2 ) ),
+        Seq( Suc( 1 ) )
+      )
+    }
+  }
+
+  "ExistsLeftRule" should {
+    "correctly construct a proof" in {
+      val ax = ArbitraryAxiom( P( alpha ) +: P( x ) +: Sequent() )
+      ExistsLeftRule( ax, Ant( 0 ), alpha, x )
+      ExistsLeftRule( ax, Ex( x, P( x ) ), alpha )
+      ExistsLeftRule( ax, Ex( x, P( x ) ) )
+
+      success
+    }
+
+    "refuse to construct a proof" in {
+      val ax = ArbitraryAxiom( P( alpha ) +: P( x ) +: Sequent() :+ P( alpha ) )
+
+      ExistsLeftRule( ax, Suc( 0 ), alpha, x ) must throwAn[LKRuleCreationException]
+      ExistsLeftRule( ax, Ant( 2 ), alpha, x ) must throwAn[LKRuleCreationException]
+      ExistsLeftRule( ax, Suc( 0 ), alpha, x ) must throwAn[LKRuleCreationException]
+      ExistsLeftRule( ax, P( x ), alpha ) must throwAn[LKRuleCreationException]
+      ExistsLeftRule( ax, Ex( x, P( x ) ), y ) must throwAn[LKRuleCreationException]
+      ExistsLeftRule( ax, Ex( y, P( y ) ) ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val ax = ArbitraryAxiom( P( alpha ) +: P( x ) +: Sequent() )
+
+      val p = ExistsLeftRule( ax, Ant( 0 ), alpha, x )
+
+      if ( p.mainIndices.length != 1 )
+        failure
+
+      p.mainFormulas.head must beEqualTo( Ex( x, P( x ) ) )
+    }
+
+    "correctly return its aux formula" in {
+      val ax = ArbitraryAxiom( P( alpha ) +: P( x ) +: Sequent() )
+
+      val p = ExistsLeftRule( ax, Ant( 0 ), alpha, x )
+
+      if ( p.auxIndices.length != 1 )
+        failure
+
+      if ( p.auxIndices.head.length != 1 )
+        failure
+
+      p.auxFormulas.head.head must beEqualTo( P( alpha ) )
+    }
+
+    "correctly connect occurrences" in {
+      val ax = ArbitraryAxiom( A +: P( alpha ) +: B +: Sequent() :+ C )
+
+      // end sequent of p: ∀x.P, A, B :- C
+      val p = ExistsLeftRule( ax, Ex( x, P( x ) ), alpha )
+
+      val o = p.getOccConnector
+
+      testChildren( o, "∃:l" )(
+        p.premise,
+        Seq( Ant( 1 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 2 ) ),
+
+        Seq( Suc( 0 ) )
+      )
+
+      testParents( o, "∃:l" )(
+        p.endSequent,
+        Seq( Ant( 1 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 2 ) ),
+
+        Seq( Suc( 0 ) )
+      )
+    }
+  }
 }

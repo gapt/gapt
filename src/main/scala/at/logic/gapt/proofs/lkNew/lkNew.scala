@@ -1381,7 +1381,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
 object ForallRightRule {
   def apply( subProof: LKProof, mainFormula: HOLFormula, eigenVariable: Var ): ForallRightRule = mainFormula match {
     case All( v, subFormula ) =>
-      val auxFormula = Substitution( v, eigenVariable )( mainFormula )
+      val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
       val premise = subProof.endSequent
       val i = premise.succedent indexOf auxFormula
@@ -1455,7 +1455,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
 object ExistsLeftRule {
   def apply( subProof: LKProof, mainFormula: HOLFormula, eigenVariable: Var ): ExistsLeftRule = mainFormula match {
     case Ex( v, subFormula ) =>
-      val auxFormula = Substitution( v, eigenVariable )( mainFormula )
+      val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
       val premise = subProof.endSequent
       val i = premise.antecedent indexOf auxFormula
@@ -1463,7 +1463,7 @@ object ExistsLeftRule {
       if ( i == -1 )
         throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Formula $auxFormula not found in antecedent of $premise." )
 
-      ExistsLeftRule( subProof, Suc( i ), eigenVariable, v )
+      ExistsLeftRule( subProof, Ant( i ), eigenVariable, v )
 
     case _ => throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Proposed main formula $mainFormula is not existentially quantified." )
   }
