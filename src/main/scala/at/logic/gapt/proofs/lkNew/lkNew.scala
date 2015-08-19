@@ -242,6 +242,17 @@ case class LogicalAxiom( A: HOLAtom ) extends InitialSequent { override def endS
  */
 case class ReflexivityAxiom( s: LambdaExpression ) extends InitialSequent { override def endSequent = HOLSequent( Seq(), Seq( Eq( s, s ) ) ); def mainFormula = Eq( s, s ) }
 
+object Axiom {
+  def apply( sequent: HOLSequent ): InitialSequent = sequent match {
+    case Sequent( Seq( f: HOLAtom ), Seq( g: HOLAtom ) ) if f == g => LogicalAxiom( f )
+    case Sequent( Seq(), Seq( Top() ) ) => TopAxiom
+    case Sequent( Seq( Bottom() ), Seq() ) => BottomAxiom
+    case Sequent( Seq(), Seq( Eq( s: LambdaExpression, t: LambdaExpression ) ) ) if s == t => ReflexivityAxiom( s )
+    case _ => ArbitraryAxiom( sequent )
+  }
+
+  def apply( ant: Seq[HOLFormula], suc: Seq[HOLFormula] ): InitialSequent = apply( Sequent( ant, suc ) )
+}
 // </editor-fold>
 
 // <editor-fold desc="Structural rules">
