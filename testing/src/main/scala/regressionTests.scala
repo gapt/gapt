@@ -2,17 +2,16 @@ package at.logic.gapt.testing
 
 import java.io.File
 
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
-import at.logic.gapt.proofs.expansionTrees.{ toShallow, addSymmetry, toDeep, ExpansionProofToLK }
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof, ExtractInterpolant }
 import at.logic.gapt.proofs.lk.cutIntroduction._
+import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.expr.HOLFormula
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -22,10 +21,10 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def timeout = Some( 10 minutes )
 
   override def test( implicit testRun: TestRun ) = {
-    val p = loadProver9LKProof( f.getAbsolutePath ) --- "import"
+    val p = new Prover9Prover().reconstructLKProofFromFile( f.getAbsolutePath ) --- "import"
 
     val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
-    val deep = toDeep( E ) --- "toDeep"
+    val deep = toDeep( E )
 
     ( toShallow( E ) == p.root.toHOLSequent ) !-- "shallow sequent of expansion proof"
 
@@ -45,6 +44,12 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
         if ( !containsEqualityReasoning( q ) )
           ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
       }
+    }
+
+    val robinson = new Prover9Prover().reconstructRobinsonProofFromFile( f getAbsolutePath ) --- "robinson import"
+    RobinsonToExpansionProof( robinson ) --? "RobinsonToExpansionProof" map { E2 =>
+      new VeriTProver().isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
+      new VeriTProver().isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
     val ip = new Prover9Prover().getLKProof( deep ).get --- "getLKProof( deep )"
