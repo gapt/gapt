@@ -73,12 +73,12 @@ abstract class LKProof {
 
 /**
  * An LKProof deriving a sequent from another sequent:
- *
+ *<pre>
  *        (π)
  *      Γ :- Δ
  *    ----------
  *     Γ' :- Δ'
- *
+ *</pre>
  */
 abstract class UnaryLKProof extends LKProof {
   /**
@@ -113,12 +113,12 @@ object UnaryLKProof {
 
 /**
  * An LKProof deriving a sequent from two other sequents:
- *
+ *<pre>
  *     (π1)     (π2)
  *    Γ :- Δ   Γ' :- Δ'
  *   ------------------
  *        Π :- Λ
- *
+ *</pre>
  */
 abstract class BinaryLKProof extends LKProof {
   /**
@@ -176,10 +176,10 @@ object BinaryLKProof {
 
 /**
  * An LKProof consisting of a single sequent:
- *
+ *<pre>
  *     --------ax
  *      Γ :- Δ
- *
+ *</pre>
  */
 abstract class InitialSequent extends LKProof {
 
@@ -204,26 +204,28 @@ case class ArbitraryAxiom( endSequent: HOLSequent ) extends InitialSequent {
 
 /**
  * An LKProof introducing ⊤ on the right:
- *
+ *<pre>
  *       --------⊤:r
  *         :- ⊤
+ *</pre>
  */
 case object TopAxiom extends InitialSequent { override def name: String = "⊤:r"; override def endSequent = HOLSequent( Nil, Seq( Top() ) ); def mainFormula = Top() }
 
 /**
  * An LKProof introducing ⊥ on the left:
- *
+ *<pre>
  *       --------⊥:l
  *         ⊥ :-
+ *</pre>
  */
 case object BottomAxiom extends InitialSequent { override def name: String = "⊥:l"; override def endSequent = HOLSequent( Seq( Bottom() ), Nil ); def mainFormula = Top() }
 
 /**
  * An LKProof consisting of a logical axiom:
- *
+ *<pre>
  *    --------ax
  *     A :- A
- *
+ *</pre>
  * with A atomic.
  *
  * @param A The atom A.
@@ -232,10 +234,10 @@ case class LogicalAxiom( A: HOLAtom ) extends InitialSequent { override def endS
 
 /**
  * An LKProof consisting of a reflexivity axiom:
- *
+ *<pre>
  *    ------------ax
  *      :- s = s
- *
+ *</pre>
  * with s a term.
  *
  * @param s The term s.
@@ -259,12 +261,12 @@ object Axiom {
 
 /**
  * An LKProof ending with a left contraction:
- *
+ *<pre>
  *         (π)
  *     A, A, Γ :- Δ
  *    --------------
  *      A, Γ :- Δ
- *
+ *</pre>
  * @param subProof The subproof π.
  * @param aux1 The index of one occurrence of A.
  * @param aux2 The index of the other occurrence of A.
@@ -341,12 +343,12 @@ object ContractionLeftRule {
 
 /**
  * An LKProof ending with a right contraction:
- *
+ *<pre>
  *         (π)
  *     Γ :- Δ, A, A
  *    --------------
  *      Γ :- Δ, A
- *
+ *</pre>
  * @param subProof The subproof π.
  * @param aux1 The index of one occurrence of A.
  * @param aux2 The index of the other occurrence of A.
@@ -425,12 +427,12 @@ object ContractionRightRule {
 
 /**
  * An LKProof ending with a left weakening:
- *
+ *<pre>
  *        (π)
  *       Γ :- Δ
  *     ---------w:l
  *     A, Γ :- Δ
- *
+ *</pre>
  * @param subProof The subproof π.
  * @param formula The formula A.
  */
@@ -450,12 +452,12 @@ case class WeakeningLeftRule( subProof: LKProof, formula: HOLFormula ) extends U
 
 /**
  * An LKProof ending with a right weakening:
- *
+ *<pre>
  *        (π)
  *       Γ :- Δ
  *     ---------w:r
  *     Γ :- Δ, A
- *
+ *</pre>
  * @param subProof The subproof π.
  * @param formula The formula A.
  */
@@ -477,12 +479,12 @@ case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula ) extends 
 
 /**
  * An LKProof ending with a cut:
- *
+ *<pre>
  *      (π1)         (π2)
  *    Γ :- Δ, A   A, Π :- Λ
  *   ------------------------
  *        Γ, Π :- Δ, Λ
- *
+ *</pre>
  * @param leftSubProof The proof π,,1,,.
  * @param aux1 The index of A in π,,1,,.
  * @param rightSubProof The proof π,,2,,.
@@ -558,12 +560,12 @@ object CutRule {
 
 /**
  * An LKProof ending with a negation on the left:
- *
+ *<pre>
  *       (π)
  *    Γ :- Δ, A
  *   -----------¬:l
  *   ¬A, Γ :- Δ
- *
+ *</pre>
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.
  */
@@ -617,12 +619,12 @@ object NegLeftRule {
 
 /**
  * An LKProof ending with a negation on the right:
- *
+ *<pre>
  *       (π)
  *    A, Γ :- Δ
  *   -----------¬:r
  *   Γ :- Δ, ¬A
- *
+ *</pre>
  * @param subProof The proof π.
  * @param aux The index of A in the antecedent.
  */
@@ -677,12 +679,12 @@ object NegRightRule {
 
 /**
  * An LKProof ending with a conjunction on the left:
- *
+ *<pre>
  *         (π)
  *     A, B, Γ :- Δ
  *    --------------
  *    A ∧ B, Γ :- Δ
- *
+ *</pre>
  * @param subProof The subproof π.
  * @param aux1 The index of A.
  * @param aux2 The index of B.
@@ -774,12 +776,12 @@ object AndLeftRule {
 
 /**
  * An LKProof ending with a conjunction on the right:
- *
+ *<pre>
  *    (π1)         (π2)
  *   Γ :- Δ, A    Π :- Λ, B
  * --------------------------
  *     Γ, Π :- Δ, Λ, A∧B
- *
+ *</pre>
  * @param leftSubProof The proof π,,1,,.
  * @param aux1 The index of A.
  * @param rightSubProof The proof π,,2,,
@@ -871,12 +873,12 @@ object AndRightRule {
 
 /**
  * An LKProof ending with a disjunction on the left:
- *
+ *<pre>
  *     (π1)         (π2)
  *   A, Γ :- Δ    B, Π :- Λ
  * --------------------------
  *     A∨B, Γ, Π :- Δ, Λ
- *
+ *</pre>
  * @param leftSubProof The proof π,,1,,.
  * @param aux1 The index of A.
  * @param rightSubProof The proof π,,2,,
@@ -965,12 +967,12 @@ object OrLeftRule {
 
 /**
  * An LKProof ending with a disjunction on the right:
- *
+ *<pre>
  *         (π)
  *     Γ :- Δ, A, B
  *    --------------
  *     Γ :- Δ, A ∨ B
- *
+ *</pre>
  * @param subProof The subproof π.
  * @param aux1 The index of A.
  * @param aux2 The index of B.
@@ -1064,12 +1066,12 @@ object OrRightRule {
 
 /**
  * An LKProof ending with an implication on the left:
- *
+ *<pre>
  *     (π1)         (π2)
  *   Γ :- Δ, A    B, Π :- Λ
  * --------------------------
  *     A→B, Γ, Π :- Δ, Λ
- *
+ *</pre>
  * @param leftSubProof The proof π,,1,,.
  * @param aux1 The index of A.
  * @param rightSubProof The proof π,,2,,
@@ -1157,12 +1159,12 @@ object ImpLeftRule {
 
 /**
  * An LKProof ending with an implication on the right:
- *
+ *<pre>
  *         (π)
  *     A, Γ :- Δ, B
  *    --------------
  *     Γ :- Δ, A → B
- *
+ *</pre>
  * @param subProof The subproof π.
  * @param aux1 The index of A.
  * @param aux2 The index of B.
@@ -1256,12 +1258,12 @@ object ImpRightRule {
 
 /**
  * An LKProof ending with a universal quantifier on the left:
- *
+ *<pre>
  *            (π)
  *      A[x\t], Γ :- Δ
  *     ----------------∀:l
  *       ∀x.A, Γ :- Δ
- *
+ *</pre>
  * @param subProof The proof π.
  * @param aux The index of A[x\t].
  * @param A The formula A.
@@ -1338,12 +1340,12 @@ object ForallLeftRule {
 
 /**
  * An LKProof ending with a universal quantifier on the right:
- *
+ *<pre>
  *           (π)
  *      Γ :- Δ, A[x\α]
  *     ---------------∀:r
  *      Γ :- Δ, ∀x.A
- *
+ *</pre>
  * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ :- Δ.
  *
  * @param subProof The proof π.
@@ -1414,12 +1416,12 @@ object ForallRightRule {
 
 /**
  * An LKProof ending with an existential quantifier on the left:
- *
+ *<pre>
  *           (π)
  *      A[x\α], Γ :- Δ
  *     ---------------∀:r
  *       ∃x.A Γ :- Δ
- *
+ *</pre>
  * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ :- Δ.
  *
  * @param subProof The proof π.
@@ -1488,12 +1490,12 @@ object ExistsLeftRule {
 
 /**
  * An LKProof ending with an existential quantifier on the right:
- *
+ *<pre>
  *            (π)
  *      Γ :- Δ, A[x\t]
  *     ----------------∃:r
  *       Γ :- Δ, ∃x.A
- *
+ *</pre>
  * @param subProof The proof π.
  * @param aux The index of A[x\t].
  * @param A The formula A.
