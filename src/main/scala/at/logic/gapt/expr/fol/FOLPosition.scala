@@ -13,7 +13,7 @@ object FOLPosition {
   /**
    * Returns a list of positions of subexpressions that satisfy some predicate.
    *
-   * This function is a wrapper around [[at.logic.gapt.expr.HOLPosition.getPositions]].
+   * This function is a wrapper around [[at.logic.gapt.expr.hol.HOLPosition.getPositions]].
    * @param exp The expression under consideration.
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
    * @return Positions of subexpressions satisfying pred.
