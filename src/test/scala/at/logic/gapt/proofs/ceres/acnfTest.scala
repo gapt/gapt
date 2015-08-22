@@ -37,14 +37,15 @@ class acnfTest extends Specification {
     //TODO: fix it ! The problem is that it needs cloning before plugging in a projection into the skeleton resolution proof.
     //
     //    "should create correctly the ACNF for journal_example.lks" in {
-    //      //println(Console.BLUE+"\n\n\n\n------- ACNF for the journal example instance = 0 ------- \n\n"+Console.RESET)
+    //      val dnLine = sys.props( "line.separator" ) + sys.props("line.separator")
+    //      //println(Console.BLUE+ dnLine + dnLine + "------- ACNF for the journal example instance = 0 ------- " + dnLine +Console.RESET)
     //      val s1 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("ceres-journal_example.lks"))
     //      val s2 = new InputStreamReader(getClass.getClassLoader.getResourceAsStream("resSchema1.rs"))
     //      val map = sFOParser.parseProof(s1)
     //      ParseResSchema(s2)
     //      val p = ACNF("\\varphi", "\\rho_1", 0)
     ////      printSchemaProof(p)
-    //      //println("\n\n--- END ---\n\n")
+    //      //println( dnLine + "--- END ---" + dnLine )
     //      ok
     //    }
 

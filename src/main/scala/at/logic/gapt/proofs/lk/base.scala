@@ -289,10 +289,18 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param i A SequentIndex, i.e. Ant(k) or Suc(k)
    * @return The k-th element of the antecedent or succedent, depending on the type of i.
    */
-  def apply( i: SequentIndex ): A = i match {
-    case Ant( k ) => antecedent( k )
-    case Suc( k ) => succedent( k )
+  def apply( i: SequentIndex ): A = {
+    try {
+      i match {
+        case Ant( k ) => antecedent( k )
+        case Suc( k ) => succedent( k )
+      }
+    } catch {
+      case _: IndexOutOfBoundsException => throw new IndexOutOfBoundsException( s"Sequent $this not defined at index $i." )
+    }
   }
+
+  def apply( is: Seq[SequentIndex] ): Seq[A] = is map this.apply
 
   /**
    * Tests whether the sequent is defined at the supplied SequentIndex.
@@ -306,11 +314,18 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   }
 
   /**
-   * Returns the range of indices of the sequent.
+   * Returns the range of indices of the sequent as a sequence.
    *
    * @return
    */
-  def indices: Seq[SequentIndex] = ( antecedent.indices map { i => Ant( i ) } ) ++ ( succedent.indices map { i => Suc( i ) } )
+  def indices: Seq[SequentIndex] = indicesSequent.elements
+
+  /**
+   * Returns the range of indices of the sequent as a sequent.
+   *
+   * @return
+   */
+  def indicesSequent: Sequent[SequentIndex] = new Sequent( antecedent.indices map { i => Ant( i ) }, succedent.indices map { i => Suc( i ) } )
 
   /**
    * Returns the list of indices of elements satisfying some predicate.
@@ -338,6 +353,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
         ( x, new Sequent( antecedent, sucNew ) )
     }
   }
+
+  def delete( i: SequentIndex ) = focus( i )._2
 
   def zipWithIndex: Sequent[( A, SequentIndex )] =
     Sequent(

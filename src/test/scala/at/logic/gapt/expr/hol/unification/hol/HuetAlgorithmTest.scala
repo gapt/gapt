@@ -95,13 +95,14 @@ class HuetAlgorithmTest extends Specification with org.specs2.ScalaCheck {
 //              val h = Huet((xFx,xgax)::Nil)
 
 
+      val dnLine = sys.props("line.separator") + sys.props("line.separator")
 //              val h = Huet((Fa, gaa)::Nil)
 //              val nxt = h.next
 //              nxt match {
-//                case None => println("\n\n None!")
-//                case _ => println("\n\nrez = "+nxt.get.toString)
+//                case None => println( dnLine + " None!")
+//                case _ => println( dnLine + "rez = "+nxt.get.toString)
 //              }
-//              println("\n\n"+h.next.get.toString)// ; "+ st.next.get.toString)
+//              println(dnLine+h.next.get.toString)// ; "+ st.next.get.toString)
 
       "fail on unifying two different constants" in {
        Huet(c,d).next must beEqualTo (None    )
@@ -196,11 +197,11 @@ class HuetAlgorithmTest extends Specification with org.specs2.ScalaCheck {
 //        val uprobl = Tuple2(Ffa, gFa)::Nil
 //        val h = Huet(uprobl)
 //        val sub = h.next.get
-//        println("\n\nsub = "+sub.toString)
+//        println( dnLine + "sub = "+sub.toString)
 ////        val rez = Huet.applySubToListOfPairs(uprobl, sub)
-////        println("\n\nrez after sub = "+rez.toString)
-//        println("\n\nrez = "+h.next.get.toString)
-//        println("\n\nrez = "+h.next.toString)
+////        println( dnLine + "rez after sub = "+rez.toString)
+//        println( dnLine + "rez = "+h.next.get.toString)
+//        println( dnLine + "rez = "+h.next.toString)
 ////        println("eta <F,ga> = "+Huet.etaBetaNormalization(Tuple2(F,ga)::Nil))
 ////        Huet.applySubToListOfPairs(Pair(Ffa,Ffa)::Nil, nx) must beEqualTo (Huet.applySubToListOfPairs(Pair(fFa,fFa)::Nil, nx))
 //        0 must beEqualTo (0)
@@ -221,7 +222,7 @@ class HuetAlgorithmTest extends Specification with org.specs2.ScalaCheck {
         val uprobl = Tuple2(FX, gFa)::Nil
         val h = Huet(uprobl)
         val nx = h.next.get
-//        println("\n\nsub = "+sub.toString)
+//        println( dnLine + "sub = "+sub.toString)
 
         Huet.applySubToListOfPairs(Pair(FX,FX)::Nil, nx) must beEqualTo (Huet.applySubToListOfPairs(Pair(gFa,gFa)::Nil, nx))
       }

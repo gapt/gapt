@@ -8,8 +8,9 @@ package at.logic.gapt.utils.ds.mutable.trees
 // V is a vertex - a set of clauses
 
 class TreeNode[V]( var seqList: List[V] ) {
+  val nLine = sys.props( "line.separator" )
   var children: Map[Int, TreeNode[V]] = Map()
-  def print: Unit = { println( "\n\nTreeNode:\nseqList  = " + seqList.toString ); printMap }
+  def print: Unit = { println( nLine + nLine + "TreeNode:" + nLine + "seqList  = " + seqList.toString ); printMap }
   def printMap: Unit = {
     Console.print( "children = { " )
     children.foreach( child => println( child._1.toString + "  -->  " + child._2.toString ) )
@@ -18,15 +19,15 @@ class TreeNode[V]( var seqList: List[V] ) {
 }
 
 class Trie[V]( val seqSet: List[V], val features: List[V => Int] ) {
-
+  val nLine = sys.props( "line.separator" )
   var root = new TreeNode( seqSet )
   def print = printTrie( root )
 
   def printTrie( vert: TreeNode[V] ): Unit = vert.children.size match {
-    case 0 => { println( "\nleaf = " + vert.seqList.toString ) }
+    case 0 => { println( nLine + "leaf = " + vert.seqList.toString ) }
     case _ => {
-      println( "\nnode = " + vert.seqList.toString )
-      vert.children.foreach( x => println( "\n" + x._1 + "   ->   " + x._2.seqList.toString ) )
+      println( nLine + "node = " + vert.seqList.toString )
+      vert.children.foreach( x => println( nLine + x._1 + "   ->   " + x._2.seqList.toString ) )
       vert.children.foreach( x => printTrie( x._2 ) )
     }
   }

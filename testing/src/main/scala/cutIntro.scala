@@ -238,6 +238,8 @@ object findNonTrivialTSTPExamples extends App {
     val fw_s = new FileWriter( summary.getAbsoluteFile )
     val bw_s = new BufferedWriter( fw_s )
 
+    val nLine = sys.props( "line.separator" )
+
     var instance_per_formula = 0.0
     var ts_size = 0
     val data = termsets.foldLeft( "" ) {
@@ -246,7 +248,7 @@ object findNonTrivialTSTPExamples extends App {
         val n_functions = v.formulas.distinct.size
         instance_per_formula += tssize.toFloat / n_functions.toFloat
         ts_size += tssize
-        k + "," + n_functions + "," + tssize + "\n" + acc
+        k + "," + n_functions + "," + tssize + nLine + acc
     }
 
     val avg_inst_per_form = instance_per_formula / termsets.size
@@ -255,13 +257,13 @@ object findNonTrivialTSTPExamples extends App {
     bw.write( data )
     bw.close()
 
-    bw_s.write( "Total number of proofs: " + total + "\n" )
-    bw_s.write( "Total number of proofs with trivial termsets: " + num_trivial_termset + "\n" )
-    bw_s.write( "Total number of proofs with non-trivial termsets: " + termsets.size + "\n" )
-    bw_s.write( "Time limit exceeded or exception during parsing: " + error_parser + "\n" )
-    bw_s.write( "Time limit exceeded or exception during terms extraction: " + error_term_extraction + "\n" )
-    bw_s.write( "Average instances per quantified formula: " + avg_inst_per_form + "\n" )
-    bw_s.write( "Average termset size: " + avg_ts_size + "\n" )
+    bw_s.write( "Total number of proofs: " + total + nLine )
+    bw_s.write( "Total number of proofs with trivial termsets: " + num_trivial_termset + nLine )
+    bw_s.write( "Total number of proofs with non-trivial termsets: " + termsets.size + nLine )
+    bw_s.write( "Time limit exceeded or exception during parsing: " + error_parser + nLine )
+    bw_s.write( "Time limit exceeded or exception during terms extraction: " + error_term_extraction + nLine )
+    bw_s.write( "Average instances per quantified formula: " + avg_inst_per_form + nLine )
+    bw_s.write( "Average termset size: " + avg_ts_size + nLine )
     bw_s.close()
 
   }

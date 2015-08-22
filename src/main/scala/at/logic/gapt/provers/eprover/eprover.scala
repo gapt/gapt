@@ -31,7 +31,7 @@ class EProverProver extends ResolutionProver with ExternalProgram {
     cnf.zipWithIndex.map {
       case ( clause, index ) =>
         s"cnf(formula$index, axiom, ${TPTPFOLExporter.exportFormula( clause.toFormula.asInstanceOf[FOLFormula] )})."
-    }.mkString( "\n" )
+    }.mkString( sys.props( "line.separator" ) )
 
   override val isInstalled: Boolean =
     try {

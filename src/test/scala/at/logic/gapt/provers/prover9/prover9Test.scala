@@ -2,7 +2,7 @@ package at.logic.gapt.provers.prover9
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.lk.base.{ Sequent, HOLSequent }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.proofs.resolution.{ initialSequents, HOLClause }
 
@@ -51,6 +51,11 @@ class Prover9Test extends Specification {
       prover9.getLKProof( seq ) must beLike {
         case Some( p ) => p.root.toHOLSequent must_== seq
       }
+    }
+
+    "treat variables in sequents as constants" in {
+      val seq = "P(x)" +: Sequent() :+ "P(c)" map parseFormula
+      prover9.getExpansionSequent( seq ) must beNone
     }
 
     "handle exit code 2" in {
