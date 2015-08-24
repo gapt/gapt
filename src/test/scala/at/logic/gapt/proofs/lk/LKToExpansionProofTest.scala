@@ -100,8 +100,6 @@ class ExtractExpansionSequentTest extends Specification {
       val p4 = ContractionLeftRule( p3, Bottom() ) // negative polarity, bottom must win
 
       val ( ante, succ ) = LKToExpansionProof( p4 ).toTuple
-      println( ante )
-      println( succ )
       ante mustEqual ETBottom :: Nil
       succ mustEqual ETTop :: Nil
     }
