@@ -1,7 +1,8 @@
 package at.logic.gapt.provers.veriT
 
+import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.formats.veriT._
-import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, ExpansionSequent, isQuantified, formulaToExpansionTree }
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.withTempFile
 import scala.sys.process._
@@ -15,7 +16,7 @@ class VeriTProver extends Prover with ExternalProgram {
   override def isValid( s: HOLSequent ): Boolean = {
 
     // Generate the input file for veriT
-    val veritInput = SmtLibExporter( s )
+    val veritInput = SmtLibExporter( renameConstantsToFi( s )._1 )
 
     val veritOutput = withTempFile.fromString( veritInput ) { veritInputFile =>
       Seq( "veriT", veritInputFile ) !!
@@ -23,6 +24,13 @@ class VeriTProver extends Prover with ExternalProgram {
 
     // Parse the output
     VeriTParser.isUnsat( new StringReader( veritOutput ) )
+  }
+
+  private def withRenamedConstants( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
+    val ( renamedSeq, _, invertRenaming ) = renameConstantsToFi( seq )
+    f( renamedSeq ) map { renamedExpSeq =>
+      NameReplacement( renamedExpSeq, invertRenaming )
+    }
   }
 
   /*
@@ -33,7 +41,7 @@ class VeriTProver extends Prover with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] = {
+  override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] = withRenamedConstants( s ) { s =>
     val smtBenchmark = SmtLibExporter( s )
 
     val output = withTempFile.fromString( smtBenchmark ) { smtFile =>
