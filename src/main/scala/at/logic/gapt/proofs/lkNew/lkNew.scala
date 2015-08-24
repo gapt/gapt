@@ -4,6 +4,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.lk.base._
 
+import scala.collection.immutable.HashMap
+
 abstract class LKProof {
   /**
    * The name of the rule (in symbols).
@@ -1663,32 +1665,56 @@ case class EqualityLeft1Rule( subProof: LKProof, eq: SequentIndex, aux: SequentI
 
   val ( auxFormula, context ) = premise focus aux
 
-  equation match {
+  val mainFormula = equation match {
     case Eq( s, t ) =>
       if ( auxFormula( pos ) != s )
         throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $s, but is ${auxFormula( pos )}." )
 
-      val mainFormula = auxFormula.replace( pos, t )
-
-      def endSequent = mainFormula +: context
-
-      def auxIndices = Seq( Seq( aux ) )
-
-      def mainIndices = Seq( Ant( 0 ) )
-
-      def getOccConnector = new OccConnector(
-        endSequent,
-        premise,
-        Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
-      )
+      auxFormula.replace( pos, t )
     case _ => throw new LKRuleCreationException( s"Cannot create $longName: Formula $equation is not an equation." )
   }
 
-  // FIXME
-  def auxIndices = ???
-  def endSequent = ???
-  def mainIndices = ???
-  def getOccConnector = ???
+  def endSequent = mainFormula +: context
+
+  def auxIndices = Seq( Seq( eq, aux ) )
+
+  def mainIndices = Seq( Ant( 0 ) )
+
+  def getOccConnector = new OccConnector(
+    endSequent,
+    premise,
+    Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
+  )
+}
+
+object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
+  def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, main: HOLFormula ): EqualityLeft1Rule = eqFormula match {
+    case Eq( s, t ) =>
+      val premise = subProof.endSequent
+
+      val ( indices, _ ) = findFormulasInPremise( premise, Seq( eqFormula, auxFormula ), Seq() )
+
+      val ( i, j ) = indices match {
+        case -1 +: _      => throw exception( s"Formula $eqFormula not found in antecedent of $premise." )
+        case _ +: -1 +: _ => throw exception( s"Formula $auxFormula not found in antecedent of $premise." )
+        case x +: y +: _  => ( x, y )
+      }
+
+      val diffPos = HOLPosition.differingPositions( auxFormula, main )
+
+      diffPos match {
+        case p +: Seq() =>
+          if ( main( p ) != t )
+            throw exception( s"Position $p in $main should be $t, but is ${main( p )}." )
+
+          EqualityLeft1Rule( subProof, Ant( i ), Ant( j ), p )
+
+        case _ => throw exception( s"Formulas $eqFormula and $auxFormula don't differ in exactly one position." )
+
+      }
+
+    case _ => throw exception( s"Formula $eqFormula is not an equation." )
+  }
 }
 //</editor-fold>
 
@@ -1773,5 +1799,38 @@ object prettyString {
       acc.updated( i, newString )
     }.toString
 
+  }
+}
+
+private[lkNew] class RuleConvenienceObject( val longName: String ) {
+  def exception( text: String ): LKRuleCreationException = new LKRuleCreationException( s"Cannot create $longName: " + text )
+
+  def findFormulasInPremise( premise: HOLSequent, antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
+    val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
+    val sucMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
+
+    val antIndices = for ( f <- antFormulas ) yield if ( antMap contains f ) {
+      val i = antMap( f )
+      val iNew = premise.antecedent.indexOf( f, i + 1 )
+      antMap += ( f -> iNew )
+      iNew
+    } else {
+      val iNew = premise.antecedent.indexOf( f )
+      antMap += ( f -> iNew )
+      iNew
+    }
+
+    val sucIndices = for ( f <- sucFormulas ) yield if ( sucMap contains f ) {
+      val i = sucMap( f )
+      val iNew = premise.succedent.indexOf( f, i + 1 )
+      sucMap += ( f -> iNew )
+      iNew
+    } else {
+      val iNew = premise.succedent.indexOf( f )
+      sucMap += ( f -> iNew )
+      iNew
+    }
+
+    ( antIndices, sucIndices )
   }
 }

@@ -62,7 +62,7 @@ class VeriTProverTest extends Specification {
       val sequent = ( Eq( FOLConst( "α" ), FOLConst( "β" ) ) +:
         Sequent()
         :+ Eq( FOLFunction( "f", FOLConst( "α" ) ), FOLFunction( "f", FOLConst( "β" ) ) ) )
-      new Sat4jProver().isValid( toDeep(veriT getExpansionSequent sequent get) ) must_== true
+      new Sat4jProver().isValid( toDeep( veriT getExpansionSequent sequent get ) ) must_== true
     }
   }
 }
