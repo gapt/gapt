@@ -205,7 +205,8 @@ object InitialSequent {
 }
 
 case class ArbitraryAxiom( endSequent: HOLSequent ) extends InitialSequent {
-
+  // FIXME
+  override def longName = ???
 }
 
 /**
@@ -249,7 +250,8 @@ case object BottomAxiom extends InitialSequent {
 case class LogicalAxiom( A: HOLAtom ) extends InitialSequent {
   override def endSequent = HOLSequent( Seq( A ), Seq( A ) )
   override def longName = "LogicalAxiom"
-  def mainFormula = A }
+  def mainFormula = A
+}
 
 /**
  * An LKProof consisting of a reflexivity axiom:
@@ -1629,7 +1631,7 @@ object ExistsRightRule {
 
 //<editor-fold desc="Equality rules>
 
-case class EqualityLeft1Rule(subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition) extends UnaryLKProof {
+case class EqualityLeft1Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
   // <editor-fold desc="Sanity checks">
 
   eq match {
@@ -1642,14 +1644,14 @@ case class EqualityLeft1Rule(subProof: LKProof, eq: SequentIndex, aux: SequentIn
     case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
   }
 
-  if ( !premise.isDefinedAt( eq) )
+  if ( !premise.isDefinedAt( eq ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $eq." )
 
   if ( !premise.isDefinedAt( aux ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
 
-  if (eq == aux)
-    throw new LKRuleCreationException(s"Cannot create $longName: Equation and aux formula coincide.")
+  if ( eq == aux )
+    throw new LKRuleCreationException( s"Cannot create $longName: Equation and aux formula coincide." )
 
   // </editor-fold>
 
@@ -1657,28 +1659,36 @@ case class EqualityLeft1Rule(subProof: LKProof, eq: SequentIndex, aux: SequentIn
 
   def longName = "EqualityLeft1Rule"
 
-  val equation = premise(eq)
+  val equation = premise( eq )
 
   val ( auxFormula, context ) = premise focus aux
 
   equation match {
-    case Eq(s, t) =>
-      if (auxFormula(pos) != s)
-        throw new LKRuleCreationException(s"Cannot create $longName: Position $pos in $auxFormula should be $s, but is ${auxFormula(pos)}.")
+    case Eq( s, t ) =>
+      if ( auxFormula( pos ) != s )
+        throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $s, but is ${auxFormula( pos )}." )
 
-      val mainFormula = auxFormula.replace(pos, t)
+      val mainFormula = auxFormula.replace( pos, t )
 
       def endSequent = mainFormula +: context
 
-      def auxIndices = Seq(Seq(aux))
+      def auxIndices = Seq( Seq( aux ) )
 
-      def mainIndices = Seq(Ant(0))
+      def mainIndices = Seq( Ant( 0 ) )
 
-      def getOccConnector = new OccConnector(endSequent,
+      def getOccConnector = new OccConnector(
+        endSequent,
         premise,
-      Seq(aux) +: premise.indicesSequent.delete(aux).map(i => Seq(i)))
-    case _ => throw new LKRuleCreationException(s"Cannot create $longName: Formula $equation is not an equation.")
+        Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
+      )
+    case _ => throw new LKRuleCreationException( s"Cannot create $longName: Formula $equation is not an equation." )
   }
+
+  // FIXME
+  def auxIndices = ???
+  def endSequent = ???
+  def mainIndices = ???
+  def getOccConnector = ???
 }
 //</editor-fold>
 
