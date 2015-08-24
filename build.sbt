@@ -82,6 +82,9 @@ lazy val root = (project in file(".")).
       archiveFile
     },
 
+    javaOptions in Test += "-Xss20m",
+    fork in Test := true,
+
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
