@@ -84,6 +84,7 @@ lazy val root = (project in file(".")).
 
     javaOptions in Test += "-Xss20m",
     fork in Test := true,
+    testForkedParallel in Test := true,
 
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
