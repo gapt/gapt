@@ -4,7 +4,7 @@ import java.io.IOException
 
 import at.logic.gapt.formats.veriT.SmtLibExporter
 import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.{ renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.withTempFile
 
@@ -16,7 +16,7 @@ class Z3Prover extends Prover with ExternalProgram {
   val sat = "sat" + nLine
 
   override def isValid( seq: HOLSequent ): Boolean = {
-    withTempFile.fromString( SmtLibExporter( seq ) ) { input =>
+    withTempFile.fromString( SmtLibExporter( renameConstantsToFi( seq )._1 ) ) { input =>
       Seq( "z3", "-smt2", input ) !!
     } match {
       case `unsat` => true
