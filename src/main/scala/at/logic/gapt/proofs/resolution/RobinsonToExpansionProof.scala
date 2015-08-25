@@ -29,7 +29,7 @@ object RobinsonToExpansionProof {
             ) map { subst =>
               ( pol, formula,
                 variables( formula ).map( _.asInstanceOf[FOLVar] -> dummyConstant ).toMap
-                ++ subst.folmap )
+                ++ variables( cnfClause ).map( _.asInstanceOf[FOLVar] ).map( v => v -> subst( v ) ) )
             }
         }.head )
     } )
