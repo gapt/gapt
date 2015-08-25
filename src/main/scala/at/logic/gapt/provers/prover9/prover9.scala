@@ -145,7 +145,7 @@ object Prover9Importer extends ExternalProgram {
     RobinsonToLK( fixedResProof, endSequent )
   }
 
-  def expansionProof( p9File: File ): ExpansionSequent =
+  def expansionProofFromFile( p9File: String ): ExpansionSequent =
     expansionProof( Source.fromFile( p9File ).mkString )
 
   def expansionProof( p9Output: String ): ExpansionSequent = {
