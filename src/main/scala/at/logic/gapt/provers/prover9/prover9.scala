@@ -120,15 +120,15 @@ object Prover9Importer extends ExternalProgram {
 
   def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( RobinsonResolutionProof, HOLSequent ) = {
     val resProof = robinsonProof( p9Output )
-    val endSequent = withTempFile.fromString( p9Output ) { p9File =>
+    val endSequent = existsclosure( withTempFile.fromString( p9Output ) { p9File =>
       val tptpEndSequent = InferenceExtractor.viaLADR( p9File )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
-        existsclosure( InferenceExtractor.clausesViaLADR( p9File ) )
+        InferenceExtractor.clausesViaLADR( p9File )
       } else {
         tptpEndSequent
       }
-    }
+    } )
 
     val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
 
