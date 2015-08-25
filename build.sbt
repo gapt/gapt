@@ -100,7 +100,7 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "jline" % "jline" % "2.13",
-      "org.scala-lang.modules" %% "scala-swing" % "1.0.2",
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
       "com.itextpdf" % "itextpdf" % "5.5.6",
       "org.scilab.forge" % "jlatexmath" % "1.0.2")
   )
