@@ -66,7 +66,7 @@ package acyclicGraphs {
   }
 
   class LeafAGraph[+V]( val vertex: V ) extends VertexGraph[V]( vertex, EmptyGraph[V] ) with AGraph[V] {
-    override def hashCode = vertex.hashCode
+    override val hashCode = vertex.hashCode
     override def toString = vertex.toString
     def name = "Leaf"
     def contains[T >: AGraph[V]]( sub: T ) = this == sub
@@ -79,7 +79,7 @@ package acyclicGraphs {
     }
   }
   class UnaryAGraph[+V]( val vertex: V, val t: AGraph[V] ) extends EdgeGraph[V]( t.vertex, vertex, VertexGraph[V]( vertex, t ) ) with AGraph[V] {
-    override def hashCode = vertex.hashCode + t.hashCode
+    override val hashCode = vertex.hashCode + t.hashCode
     override def toString = vertex.toString + " (" + t.toString + ")"
     def name = "Unary"
     def latexQAGraph = "[{." + vertex.toString + "} ({" + name + ")}"
@@ -93,7 +93,7 @@ package acyclicGraphs {
     }
   }
   class BinaryAGraph[+V]( val vertex: V, val t1: AGraph[V], val t2: AGraph[V] ) extends EdgeGraph[V]( t2.vertex, vertex, UnionGraph[V]( EdgeGraph[V]( t1.vertex, vertex, VertexGraph[V]( vertex, t1 ) ), t2 ) ) with AGraph[V] {
-    override def hashCode = vertex.hashCode + t1.hashCode + t2.hashCode
+    override val hashCode = vertex.hashCode + t1.hashCode + t2.hashCode
     override def toString = vertex.toString + " (" + t1.toString + ", " + t2.toString + ")"
     def name = "Binary"
     def contains[T >: AGraph[V]]( sub: T ) = ( this == sub ) || t1.contains( sub ) || t2.contains( sub )
@@ -107,7 +107,7 @@ package acyclicGraphs {
   }
   class ArbitraryAGraph[+V] protected ( val vertex: V, val lastParent: AGraph[V], val restParents: List[AGraph[V]], graph: Graph[V] )
       extends EdgeGraph[V]( lastParent.vertex, vertex, UnionGraph[V]( graph, lastParent ) ) with AGraph[V] {
-    override def hashCode = vertex.hashCode + ( lastParent :: restParents ).hashCode
+    override val hashCode = vertex.hashCode + ( lastParent :: restParents ).hashCode
     override def toString = vertex.toString + " (" + ( lastParent :: restParents ) + ")"
     def name = "Arbitrary"
     def contains[T >: AGraph[V]]( sub: T ) = this == sub || lastParent.contains( sub ) || restParents.exists( x => x.contains( sub ) )
