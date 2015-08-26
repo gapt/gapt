@@ -13,6 +13,7 @@ import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.immutable.HashMap
+import scala.collection.mutable
 
 /**
  *  Sometimes, we have a resolution refutation R of a set of clauses C
@@ -207,18 +208,23 @@ object fixDerivation extends Logger {
   private def findFirstSome[A, B]( seq: Seq[A] )( f: A => Option[B] ): Option[B] =
     seq.view.flatMap( f( _ ) ).headOption
 
-  def apply( p: RobinsonResolutionProof, cs: Seq[HOLSequent] ): RobinsonResolutionProof =
+  def apply( p: RobinsonResolutionProof, cs: Seq[HOLSequent] ): RobinsonResolutionProof = {
+    val initialClauseDerivationCache = mutable.Map[HOLClause, RobinsonResolutionProof]()
     mapInitialClauses( p ) { cls =>
-      tryDeriveTrivial( cls, cs ).
-        orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
-        orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
-        orElse( tryDeriveViaSearchDerivation( cls, cs ) ).
-        orElse( tryDeriveViaResolution( cls, cs ) ).
-        getOrElse {
-          warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
-          InitialClause( cls )
-        }
+      initialClauseDerivationCache.getOrElseUpdate(
+        cls,
+        tryDeriveTrivial( cls, cs ).
+          orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
+          orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
+          orElse( tryDeriveViaSearchDerivation( cls, cs ) ).
+          orElse( tryDeriveViaResolution( cls, cs ) ).
+          getOrElse {
+            warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
+            InitialClause( cls )
+          }
+      )
     }
+  }
 }
 
 /**
