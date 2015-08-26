@@ -18,6 +18,7 @@ object NameReplacement {
   def apply( exp: FOLExpression, map: SymbolMap ): FOLExpression = renameSymbols( exp, map )
   def apply( exp: HOLFormula, map: SymbolMap ): HOLFormula = renameSymbols( exp, map )
   def apply( exp: FOLFormula, map: SymbolMap ): FOLFormula = renameSymbols( exp, map )
+  def apply( exp: FOLTerm, map: SymbolMap ): FOLTerm = renameSymbols( exp, map ).asInstanceOf[FOLTerm]
 
   def apply( fs: HOLSequent, map: SymbolMap ) = renameHOLSequent( fs, map )
   def apply( cls: HOLClause, map: SymbolMap )( implicit dummyImplicit: DummyImplicit ) = renameHOLSequent( cls, map ).asInstanceOf[HOLClause]
