@@ -189,30 +189,18 @@ object testCutIntro extends App {
   /***************************** Proof Sequences ******************************/
 
   def compressProofSequences( timeout: Int, method: GrammarFindingMethod ) = {
-
-    def run( name: Int => String, p: Int => LKProof ) = {
+    proofSequences foreach { proofSeq =>
       var i = 0
       var status = ""
       while ( !status.endsWith( "timeout" ) ) {
         i = i + 1
-        val pn = name( i )
+        val pn = s"${proofSeq.name}($i)"
         status = saveMetrics( timeout ) {
           metrics.value( "file", pn )
-          compressLKProof( p( i ), timeout, method )
+          compressLKProof( proofSeq( i ), timeout, method )
         }.data( "status" ).toString
       }
     }
-
-    run( i => s"LinearExampleProof($i)", LinearExampleProof( _ ) )
-    run( i => s"SquareDiagonalExampleProof($i)", SquareDiagonalExampleProof( _ ) )
-    run( i => s"SquareEdgesExampleProof($i)", SquareEdgesExampleProof( _ ) )
-    run( i => s"SquareEdges2DimExampleProof($i)", SquareEdges2DimExampleProof( _ ) )
-    run( i => s"LinearEqExampleProof($i)", LinearEqExampleProof( _ ) )
-    run( i => s"SumOfOnesF2ExampleProof($i)", SumOfOnesF2ExampleProof( _ ) )
-    run( i => s"SumOfOnesFExampleProof($i)", SumOfOnesFExampleProof( _ ) )
-    run( i => s"SumOfOnesExampleProof($i)", SumOfOnesExampleProof( _ ) )
-    run( i => s"UniformAssociativity3ExampleProof($i)", UniformAssociativity3ExampleProof( _ ) )
-    run( i => s"FactorialFunctionEqualityExampleProof($i)", FactorialFunctionEqualityExampleProof( _ ) )
   }
 }
 
