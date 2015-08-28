@@ -50,6 +50,11 @@ object FOLMatchingAlgorithm {
         case ( Neg( a ), Neg( b ) ) =>
           computeSubstitution( ( a, b ) :: rest, alreadyFixedSubst )
 
+        case ( All( v1, f1 ), All( v2, f2 ) ) =>
+          computeSubstitution( ( v1, v2 ) :: ( f1, f2 ) :: rest, alreadyFixedSubst )
+        case ( Ex( v1, f1 ), Ex( v2, f2 ) ) =>
+          computeSubstitution( ( v1, v2 ) :: ( f1, f2 ) :: rest, alreadyFixedSubst )
+
         case ( v: FOLVar, exp ) if alreadyFixedSubst.get( v ).contains( exp ) =>
           computeSubstitution( rest, alreadyFixedSubst )
 
