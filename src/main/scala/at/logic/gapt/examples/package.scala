@@ -8,10 +8,10 @@ package object examples {
     SquareEdgesExampleProof,
     SquareEdges2DimExampleProof,
     SumExampleProof,
-    LinearEqExampleProof,
     SumOfOnesF2ExampleProof,
     SumOfOnesFExampleProof,
     SumOfOnesExampleProof,
+    UniformAssociativity3ExampleProof,
     FactorialFunctionEqualityExampleProof,
     FactorialFunctionEqualityExampleProof2
   )
