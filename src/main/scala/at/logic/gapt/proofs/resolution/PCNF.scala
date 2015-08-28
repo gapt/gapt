@@ -73,33 +73,12 @@ object PCNF {
         }
     }
 
-    //val missing_literals = s diff p.root.toHOLSequent
-    val p1 = if ( inAntecedent ) {
-      WeakeningMacroRule( p, HOLSequent( sub( f ) :: Nil, Nil ) compose a )
-    } else {
-      WeakeningMacroRule( p, HOLSequent( Nil, sub( f ) :: Nil ) compose a )
-    }
-    val p2 = ContractionMacroRule( p1, s compose a, strict = false )
-    p2
-
-    // apply contractions on the formulas of a, since we duplicate the context on every binary rule
-    //introduceContractions(p_,a)
+    ContractionMacroRule( p, s compose a, strict = false )
   }
 
   def containsMatchingClause( what: HOLClause, where: List[HOLClause] ): Boolean = {
     //TODO: check for symmetry applications during prover9's cnf construction
     where.find( _ equals what ).isDefined
-  }
-
-  def introduceContractions( resp: LKProof, s: HOLClause ): LKProof = {
-    // for each formula F in s, count its occurrences in s and resp and apply contractions on resp until we reach the same number
-    val p1 = s.negative.toSet.foldLeft( resp )( ( p, f ) =>
-      ( ( 1 ).to( p.root.antecedent.filter( _.formula == f ).size - s.negative.filter( _ == f ).size ) ).foldLeft( p )( ( q, n ) =>
-        ContractionLeftRule( q, f.asInstanceOf[HOLFormula] ) ) )
-    val p2 = s.positive.toSet.foldLeft( p1 )( ( p, f ) =>
-      ( ( 1 ).to( p.root.succedent.filter( _.formula == f ).size - s.positive.filter( _ == f ).size ) ).foldLeft( p )( ( q, n ) =>
-        ContractionRightRule( q, f.asInstanceOf[HOLFormula] ) ) )
-    p2
   }
 
   /**
