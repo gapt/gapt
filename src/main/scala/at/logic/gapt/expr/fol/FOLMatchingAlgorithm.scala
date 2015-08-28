@@ -54,9 +54,7 @@ object FOLMatchingAlgorithm {
           computeSubstitution( rest, alreadyFixedSubst )
 
         case ( v: FOLVar, exp: FOLTerm ) if !alreadyFixedSubst.contains( v ) =>
-          val sub = FOLSubstitution( v, exp )
-          val restNew = rest map { case ( f, t ) => sub( f ) -> t }
-          computeSubstitution( restNew, alreadyFixedSubst + ( v -> exp ) )
+          computeSubstitution( rest, alreadyFixedSubst + ( v -> exp ) )
 
         case _ => None
       }
