@@ -246,3 +246,6 @@ object SipRecSchem {
   }
 
 }
+
+case class RecSchemTemplate(template: RecursionScheme) {
+}

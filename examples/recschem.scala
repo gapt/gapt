@@ -8,9 +8,8 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.expansionTrees.{removeFromExpansionSequent, ExpansionSequent, InstanceTermEncoding}
 import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.proofs.lk.base.FSequent
-import at.logic.gapt.proofs.lk.cutIntroduction.TermsExtraction
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.proofs.lk.base.Sequent
 import at.logic.gapt.provers.inductionProver.{SipProver, SimpleInductionProof}
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
@@ -95,11 +94,11 @@ if (true) {
     val CgR = parse.fol( "Forall x Forall y Forall z Imp =(y,z) =(g(x,y),g(x,z))" ) // congruence of g on the right
     val CMultR = parse.fol( "Forall x Forall y Forall z Imp =(x,y) =(*(z,x),*(z,y))" ) // congruence of mult right
 
-    val eqaxioms = new FSequent( R::S::T::Tprime::CSuc::CPlus::CPlusL::CgR::CMultR::Nil, Nil )
+    val eqaxioms = Sequent( R::S::T::Tprime::CSuc::CPlus::CPlusL::CgR::CMultR::Nil, Nil )
 
     removeFromExpansionSequent( eseq, eqaxioms )
   }
-  val endSequent = FSequent(
+  val endSequent = Sequent(
     Seq("s(x+y) = x+s(y)", "x+0 = x")
       map (s => univclosure(parseFormula(s))),
     Seq(parseFormula("(x+x)+x = x+(x+x)")))
