@@ -82,9 +82,13 @@ lazy val root = (project in file(".")).
       archiveFile
     },
 
+    javaOptions in Test += "-Xss20m",
+    fork in Test := true,
+    testForkedParallel in Test := true,
+
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.4",
+      "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
       "org.slf4j" % "slf4j-api" % "1.7.12",
       "org.slf4j" % "slf4j-log4j12" % "1.7.12",
@@ -95,8 +99,8 @@ lazy val root = (project in file(".")).
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "jline" % "jline" % "2.12.1",
-      "org.scala-lang.modules" %% "scala-swing" % "1.0.2",
+      "jline" % "jline" % "2.13",
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
       "com.itextpdf" % "itextpdf" % "5.5.6",
       "org.scilab.forge" % "jlatexmath" % "1.0.2")
   )
@@ -121,9 +125,9 @@ lazy val testing = (project in file("testing")).
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
 
 lazy val testDependencies = Seq(
-  "org.specs2" %% "specs2-core" % "3.6.2",
-  "org.specs2" %% "specs2-junit" % "3.6.2",  // needed for junitxml output
-  "org.specs2" %% "specs2-matcher" % "3.6.2")
+  "org.specs2" %% "specs2-core" % "3.6.4",
+  "org.specs2" %% "specs2-junit" % "3.6.4",  // needed for junitxml output
+  "org.specs2" %% "specs2-matcher" % "3.6.4")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =
   tests map { test =>

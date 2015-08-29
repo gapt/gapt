@@ -6,7 +6,9 @@ package at.logic.gapt.provers.veriT
 
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.expansionTrees.toDeep
+import at.logic.gapt.proofs.lk.base.{ Sequent, HOLSequent }
+import at.logic.gapt.provers.sat4j.Sat4jProver
 import org.specs2.mutable._
 
 class VeriTProverTest extends Specification {
@@ -48,6 +50,19 @@ class VeriTProverTest extends Specification {
 
     "validate the buss tautology for n=1" in {
       veriT.isValid( BussTautology( 1 ) ) must beTrue
+    }
+
+    "handle predicate named exists" in {
+      val seq = FOLAtom( "exists" ) +: Sequent() :+ FOLAtom( "exists" )
+      veriT isValid seq must_== true
+      veriT getExpansionSequent seq must beSome
+    }
+
+    "handle unicode names" in {
+      val sequent = ( Eq( FOLConst( "α" ), FOLConst( "β" ) ) +:
+        Sequent()
+        :+ Eq( FOLFunction( "f", FOLConst( "α" ) ), FOLFunction( "f", FOLConst( "β" ) ) ) )
+      new Sat4jProver().isValid( toDeep( veriT getExpansionSequent sequent get ) ) must_== true
     }
   }
 }

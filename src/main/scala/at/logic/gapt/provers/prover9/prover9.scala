@@ -8,6 +8,7 @@ import at.logic.gapt.expr.hol.{ containsStrongQuantifier, existsclosure, univclo
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.IvyParser.IvyStyleVariables
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.applyReplacement
 import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.proofs.resolution._
@@ -45,44 +46,22 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
     IvyToRobinson( ivyProof )
   }
 
+  @deprecated( "Use Prover9Importer.robinsonProof instead" )
   def reconstructRobinsonProofFromFile( p9File: String ): RobinsonResolutionProof =
-    reconstructRobinsonProofFromOutput( Source.fromFile( p9File ).mkString )
+    Prover9Importer robinsonProofFromFile p9File
 
-  def reconstructRobinsonProofFromOutput( p9Output: String ): RobinsonResolutionProof = {
-    // The TPTP prover9 output files can't be read by prooftrans ivy directly...
-    val fixedP9Output = withTempFile.fromString( p9Output ) { p9OutputFile =>
-      Seq( "prooftrans", "-f", p9OutputFile ) !!
-    }
+  @deprecated( "Use Prover9Importer.robinsonProof instead" )
+  def reconstructRobinsonProofFromOutput( p9Output: String ): RobinsonResolutionProof =
+    Prover9Importer robinsonProof p9Output
 
-    parseProof( fixedP9Output )
-  }
-
+  @deprecated( "Use Prover9Importer.lkProof instead" )
   def reconstructLKProofFromFile( p9File: String ): LKProof =
-    reconstructLKProofFromOutput( Source.fromFile( p9File ).mkString )
+    Prover9Importer lkProofFromFile p9File
 
-  def reconstructLKProofFromOutput( p9Output: String ): LKProof = {
-    val resProof = reconstructRobinsonProofFromOutput( p9Output )
-    val endSequent = withTempFile.fromString( p9Output ) { p9File =>
-      val tptpEndSequent = InferenceExtractor.viaLADR( p9File )
-      if ( containsStrongQuantifier( tptpEndSequent ) ) {
-        // in this case the prover9 proof contains skolem symbols which we do not try to match
-        InferenceExtractor.clausesViaLADR( p9File )
-      } else {
-        tptpEndSequent
-      }
-    }
+  @deprecated( "Use Prover9Importer.lkProof instead" )
+  def reconstructLKProofFromOutput( p9Output: String ): LKProof =
+    Prover9Importer lkProof p9Output
 
-    val closure = HOLSequent(
-      endSequent.antecedent.map( x => univclosure( x ) ),
-      endSequent.succedent.map( x => existsclosure( x ) )
-    )
-
-    val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
-
-    val fixedResProof = fixDerivation( resProof, ourCNF )
-
-    RobinsonToLK( fixedResProof, closure )
-  }
   def toP9Input( cnf: List[HOLClause], renaming: Map[Const, String] ): String = {
     val commands = ArrayBuffer[String]()
 
@@ -118,4 +97,59 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
     try {
       ( "prover9 --help" ! ProcessLogger( _ => () ) ) == 1
     } catch { case _: IOException => false }
+}
+
+object Prover9Importer extends ExternalProgram {
+  private val p9 = new Prover9Prover
+  override val isInstalled: Boolean = p9.isInstalled
+
+  def robinsonProofFromFile( p9File: String ): RobinsonResolutionProof =
+    robinsonProof( Source fromFile p9File mkString )
+
+  def robinsonProof( p9Output: String ): RobinsonResolutionProof = {
+    // The TPTP prover9 output files can't be read by prooftrans ivy directly...
+    val fixedP9Output = withTempFile.fromString( p9Output ) { p9OutputFile =>
+      Seq( "prooftrans", "-f", p9OutputFile ) !!
+    }
+
+    p9 parseProof fixedP9Output
+  }
+
+  def robinsonProofWithReconstructedEndSequentFromFile( p9File: String ): ( RobinsonResolutionProof, HOLSequent ) =
+    robinsonProofWithReconstructedEndSequent( Source fromFile p9File mkString )
+
+  def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( RobinsonResolutionProof, HOLSequent ) = {
+    val resProof = robinsonProof( p9Output )
+    val endSequent = existsclosure( withTempFile.fromString( p9Output ) { p9File =>
+      val tptpEndSequent = InferenceExtractor.viaLADR( p9File )
+      if ( containsStrongQuantifier( tptpEndSequent ) ) {
+        // in this case the prover9 proof contains skolem symbols which we do not try to match
+        InferenceExtractor.clausesViaLADR( p9File )
+      } else {
+        tptpEndSequent
+      }
+    } )
+
+    val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
+
+    val fixedResProof = fixDerivation( resProof, ourCNF )
+
+    ( fixedResProof, endSequent )
+  }
+
+  def lkProofFromFile( p9File: String ): LKProof =
+    lkProof( Source fromFile p9File mkString )
+
+  def lkProof( p9Output: String ): LKProof = {
+    val ( fixedResProof, endSequent ) = robinsonProofWithReconstructedEndSequent( p9Output )
+    RobinsonToLK( fixedResProof, endSequent )
+  }
+
+  def expansionProofFromFile( p9File: String ): ExpansionSequent =
+    expansionProof( Source.fromFile( p9File ).mkString )
+
+  def expansionProof( p9Output: String ): ExpansionSequent = {
+    val ( fixedResProof, endSequent ) = robinsonProofWithReconstructedEndSequent( p9Output )
+    RobinsonToExpansionProof( fixedResProof, endSequent )
+  }
 }

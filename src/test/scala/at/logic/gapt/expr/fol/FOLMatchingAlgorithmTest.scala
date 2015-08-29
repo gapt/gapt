@@ -127,6 +127,18 @@ class FOLMatchingAlgorithmTest extends Specification {
       val sub = FOLMatchingAlgorithm.matchTerms( term, posInstance, freeVariables( posInstance ) )
       sub.get( term ) must beEqualTo( posInstance )
     }
+
+    "not match f(x1,x2,x1) with f(x1,x2,x2)" in {
+      FOLMatchingAlgorithm.matchTerms( FOLFunction( "f", x1, x2, x1 ), FOLFunction( "f", x1, x2, x2 ) ) must beNone
+    }
+
+    "not match f(x,g(x)) with f(g(x),g(x))" in {
+      FOLMatchingAlgorithm.matchTerms( FOLFunction( "f", x, FOLFunction( "g", x ) ), FOLFunction( "f", FOLFunction( "g", x ), FOLFunction( "g", x ) ) ) must beNone
+    }
+
+    "match f(x,g(x)) with f(g(x),g(g(x)))" in {
+      FOLMatchingAlgorithm.matchTerms( FOLFunction( "f", x, FOLFunction( "g", x ) ), FOLFunction( "f", FOLFunction( "g", x ), FOLFunction( "g", FOLFunction( "g", x ) ) ) ) must beSome
+    }
   }
 }
 

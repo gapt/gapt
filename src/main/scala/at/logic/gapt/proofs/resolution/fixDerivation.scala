@@ -13,6 +13,7 @@ import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.immutable.HashMap
+import scala.collection.mutable
 
 /**
  *  Sometimes, we have a resolution refutation R of a set of clauses C
@@ -226,11 +227,18 @@ object fixDerivation extends Logger {
  * The resulting proof may prove a smaller clause than the original one.
  */
 object mapInitialClauses {
-  def apply( p: RobinsonResolutionProof )( f: HOLClause => RobinsonResolutionProof ): RobinsonResolutionProof = p match {
+  def apply( p: RobinsonResolutionProof )( f: HOLClause => RobinsonResolutionProof ): RobinsonResolutionProof =
+    apply( p, f, mutable.Map[RobinsonResolutionProof, RobinsonResolutionProof]() )
+
+  private def apply(
+    p:     RobinsonResolutionProof,
+    f:     HOLClause => RobinsonResolutionProof,
+    cache: mutable.Map[RobinsonResolutionProof, RobinsonResolutionProof]
+  ): RobinsonResolutionProof = cache.getOrElseUpdate( p, p match {
     case InitialClause( cls ) => f( cls.toHOLClause )
 
     case Factor( r, par, List( lit1 ), s ) =>
-      val rp = apply( par )( f )
+      val rp = apply( par, f, cache )
       val form = lit1.head.formula
       val pos = par.root.succedent.contains( lit1.head )
       val cnt_ = if ( pos ) rp.root.succedent.count( _.formula == form ) - p.root.succedent.count( _.formula == form ) + 1
@@ -242,7 +250,7 @@ object mapInitialClauses {
         Factor( rp, form, cnt, pos, s )
 
     case Factor( r, par, List( lit1, lit2 ), s ) =>
-      val rp = apply( par )( f )
+      val rp = apply( par, f, cache )
       val form_left = lit1.head.formula
       val form_right = lit2.head.formula
       val cnt_left_ = rp.root.antecedent.count( _.formula == form_left ) - p.root.antecedent.count( _.formula == form_left )
@@ -254,11 +262,11 @@ object mapInitialClauses {
       else
         Factor( rp, form_left, cnt_left, form_right, cnt_right, s )
 
-    case Variant( r, p, s ) => Variant( apply( p )( f ), s )
+    case Variant( r, p, s ) => Variant( apply( p, f, cache ), s )
 
     case Resolution( r, p1, p2, a1, a2, s ) =>
-      val rp1 = apply( p1 )( f )
-      val rp2 = apply( p2 )( f )
+      val rp1 = apply( p1, f, cache )
+      val rp2 = apply( p2, f, cache )
       if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
         rp1
       else if ( !rp2.root.antecedent.exists( _.formula == a2.formula ) )
@@ -267,8 +275,8 @@ object mapInitialClauses {
         Resolution( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], s )
 
     case Paramodulation( r, p1, p2, a1, a2, p, s ) =>
-      val rp1 = apply( p1 )( f )
-      val rp2 = apply( p2 )( f )
+      val rp1 = apply( p1, f, cache )
+      val rp2 = apply( p2, f, cache )
       val right = p2.root.succedent.contains( a2 )
       if ( !rp1.root.succedent.exists( _.formula == a1.formula ) )
         rp1
@@ -280,8 +288,8 @@ object mapInitialClauses {
         Paramodulation( rp1, rp2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], p.formula.asInstanceOf[FOLFormula], s, right )
 
     // this case is applicable only if the proof is an instance of RobinsonProofWithInstance
-    case Instance( _, p, s ) => Instance( apply( p )( f ), s )
-  }
+    case Instance( _, p, s ) => Instance( apply( p, f, cache ), s )
+  } )
 }
 
 object tautologifyInitialClauses {

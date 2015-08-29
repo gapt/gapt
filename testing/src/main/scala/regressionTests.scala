@@ -8,10 +8,10 @@ import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof, ExtractInterpolant }
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
+import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9Prover }
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -21,7 +21,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def timeout = Some( 10 minutes )
 
   override def test( implicit testRun: TestRun ) = {
-    val p = new Prover9Prover().reconstructLKProofFromFile( f.getAbsolutePath ) --- "import"
+    val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( f getAbsolutePath ) --- "import"
+    val p = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
 
     val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E )
@@ -46,8 +47,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       }
     }
 
-    val robinson = new Prover9Prover().reconstructRobinsonProofFromFile( f getAbsolutePath ) --- "robinson import"
-    RobinsonToExpansionProof( robinson ) --? "RobinsonToExpansionProof" map { E2 =>
+    RobinsonToExpansionProof( robinson, reconstructedEndSequent ) --? "RobinsonToExpansionProof" map { E2 =>
       new VeriTProver().isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
       new VeriTProver().isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }

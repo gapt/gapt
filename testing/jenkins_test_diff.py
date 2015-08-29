@@ -45,5 +45,5 @@ for (old_state, new_state), test_names in sorted(transitions.items()):
 for (old_state, new_state), test_names in sorted(transitions.items()):
     if old_state != new_state:
         print('\n{0} -> {1}:'.format(old_state, new_state))
-        for n in test_names:
+        for n in sorted(test_names):
             print('  - {0}'.format(n))

@@ -85,9 +85,6 @@ class ForgetfulResolutionTest extends Specification {
 
       val res = ForgetfulResolve( f )
 
-      println( "Formula (in CNF): " + f )
-      println( "Resolvent: " + res )
-
       res.size must beEqualTo( 1 )
     }
 

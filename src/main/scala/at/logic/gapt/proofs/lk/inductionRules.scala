@@ -51,23 +51,23 @@ object InductionRule {
       case None      => throw new LKRuleCreationException( "Formula " + aX + " can't be matched to formula " + aSx + "." )
     }
 
+    val x = ( sub1.folmap ++ sub2.folmap ).collect { case ( v, e ) if v != e => v }.headOption.getOrElse {
+      throw new LKRuleCreationException( "Cannot determine induction variable." )
+    }
+
     // Some safety checks
-    if ( sub1.domain.length != 1 )
+    if ( ( sub1.domain.toSet - x ).exists( v => sub1( v ) != v ) )
       throw new LKRuleCreationException( "Formula " + aX + " can't be matched to formula " + aZero + " by substituting a single variable." )
 
-    if ( sub2.domain.length != 1 )
+    if ( ( sub2.domain.toSet - x ).exists( v => sub1( v ) != v ) )
       throw new LKRuleCreationException( "Formula " + aX + " can't be matched to formula " + aSx + " by substituting a single variable." )
 
-    if ( sub1.domain != sub2.domain )
-      throw new LKRuleCreationException( "Formula " + aX + " can't be matched to formulas " + aZero + " and " + aSx + " by substituting a single variable." )
-
-    val x = sub1.domain.head.asInstanceOf[FOLVar]
     val sX = s( x )
 
-    if ( sub1 != FOLSubstitution( x, zero ) )
+    if ( sub1( x ) != zero )
       throw new LKRuleCreationException( sub1 + " doesn't replace " + x + " by 0." )
 
-    if ( sub2 != FOLSubstitution( x, sX ) )
+    if ( sub2( x ) != sX )
       throw new LKRuleCreationException( sub2 + " doesn't replace " + x + " by " + sX + "." )
 
     // Test the eigenvariable condition

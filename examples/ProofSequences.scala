@@ -6,12 +6,18 @@ import at.logic.gapt.expr.hol.{univclosure, instantiate}
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.{HOLSequent, LKProof}
 
+trait ProofSequence {
+  def apply(n: Int): LKProof
+
+  def name = getClass.getSimpleName.replace("$", "")
+}
+
 // Functions to construct cut-free FOL LK proofs of the sequents
 //
 // P(0), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
 //
 // where n is an Integer parameter >= 0.
-object LinearExampleProof {
+object LinearExampleProof extends ProofSequence {
   val s = "s"
   val p = "P"
   val c = "0"
@@ -45,7 +51,7 @@ object LinearExampleProof {
 // where n is an Integer parameter >= 0.
 //
 // The proofs constructed here go along the diagonal of P, i.e. one X-step, then one Y-step, etc.
-object SquareDiagonalExampleProof {
+object SquareDiagonalExampleProof extends ProofSequence {
   val s = "s"
   val p = "P"
   val c = "0"
@@ -99,7 +105,7 @@ object SquareDiagonalExampleProof {
 // where n is an Integer parameter >= 0.
 //
 // The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed
-object SquareEdgesExampleProof {
+object SquareEdgesExampleProof extends ProofSequence {
   val s = "s"
   val p = "P"
   val c = "0"
@@ -169,7 +175,7 @@ object SquareEdgesExampleProof {
 //
 // The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed,
 // but unlike SquareEdgesExampleProof, different functions are used for the X- and the Y-directions.
-object SquareEdges2DimExampleProof {
+object SquareEdges2DimExampleProof extends ProofSequence {
   //separate sucessor for the x- and y-directions
   val sx = "s_x"
   val sy = "s_y"
@@ -258,7 +264,7 @@ object SquareEdges2DimExampleProof {
 // P(s^n(0),0), \ALL x \ALL y . P(s(x),y) -> P(x,s(y)) :- P(0,s^n(0))
 //
 // where n is an Integer parameter >= 0.
-object SumExampleProof {
+object SumExampleProof extends ProofSequence {
   val s = "s"
   val p = "P"
 
@@ -303,7 +309,7 @@ object SumExampleProof {
 // Refl, Trans, \ALL x. f(x) = x :- f^n(a) = a
 //
 // where n is an Integer parameter >= 0.
-object LinearEqExampleProof {
+object LinearEqExampleProof extends ProofSequence {
   val a = "a"
   val f = "f"
 
@@ -369,7 +375,7 @@ object LinearEqExampleProof {
   }
 }
 
-object SumOfOnesF2ExampleProof {
+object SumOfOnesF2ExampleProof extends ProofSequence {
   val s = "s"
   val zero = "0"
   val p = "+"
@@ -453,7 +459,7 @@ object SumOfOnesF2ExampleProof {
   * Where AUX is {Transitivity, Symmetry, Reflexity of =,
   *               Forall xy.x=y -> s(x) = s(y), f(0) = 0, Forall x.f(s(x)) = f(x) + s(0)}
   */
-object SumOfOnesFExampleProof {
+object SumOfOnesFExampleProof extends ProofSequence {
   val s = "s"
   val zero = "0"
   val p = "+"
@@ -551,7 +557,7 @@ object SumOfOnesFExampleProof {
 // Refl, Trans, CongSuc, ABase, ASuc, :- sum( n ) = s^n(0)
 //
 // where n is an Integer parameter >= 0.
-object SumOfOnesExampleProof {
+object SumOfOnesExampleProof extends ProofSequence {
   val s = "s"
   val zero = "0"
   val p = "+"
@@ -786,7 +792,7 @@ class AllQuantifiedConditionalAxiomHelper(variables: List[FOLVar], conditions: L
   }
 }
 
-object UniformAssociativity3ExampleProof {
+object UniformAssociativity3ExampleProof extends ProofSequence {
 
   val s = "s"
   val p = "+"
@@ -1007,7 +1013,7 @@ object UniformAssociativity3ExampleProof {
 /**
  * Proof of f(n) = g(n, 1), where f is the head recursive and g the tail recursive formulation of the factorial function
  */
-object FactorialFunctionEqualityExampleProof {
+object FactorialFunctionEqualityExampleProof extends ProofSequence {
 
   val p = "+"
   val m = "*"
@@ -1197,7 +1203,7 @@ object FactorialFunctionEqualityExampleProof {
   }
 }
 
-object FactorialFunctionEqualityExampleProof2 {
+object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
   import at.logic.gapt.expr.fol.Utils.{numeral => num}
 
   val zero = FOLConst( "0" )

@@ -18,6 +18,7 @@ object NameReplacement {
   def apply( exp: FOLExpression, map: SymbolMap ): FOLExpression = renameSymbols( exp, map )
   def apply( exp: HOLFormula, map: SymbolMap ): HOLFormula = renameSymbols( exp, map )
   def apply( exp: FOLFormula, map: SymbolMap ): FOLFormula = renameSymbols( exp, map )
+  def apply( exp: FOLTerm, map: SymbolMap ): FOLTerm = renameSymbols( exp, map ).asInstanceOf[FOLTerm]
 
   def apply( fs: HOLSequent, map: SymbolMap ) = renameHOLSequent( fs, map )
   def apply( cls: HOLClause, map: SymbolMap )( implicit dummyImplicit: DummyImplicit ) = renameHOLSequent( cls, map ).asInstanceOf[HOLClause]
@@ -226,6 +227,8 @@ object NameReplacement {
     expSequent map { et: ExpansionTree => apply( et, map ) }
 
   def apply( expTree: ExpansionTree, map: SymbolMap ): ExpansionTree = expTree match {
+    case ETTop           => ETTop
+    case ETBottom        => ETBottom
     case ETAtom( f )     => ETAtom( apply( f, map ).asInstanceOf[HOLAtom] )
     case ETNeg( t1 )     => ETNeg( apply( t1, map ) )
     case ETAnd( t1, t2 ) => ETAnd( apply( t1, map ), apply( t2, map ) )
