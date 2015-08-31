@@ -103,8 +103,7 @@ if (true) {
       map (s => univclosure(parseFormula(s))),
     Seq(parseFormula("(x+x)+x = x+(x+x)")))
   val instanceProofs =
-    (0 -> new Prover9Prover().getExpansionSequent(FOLSubstitution(FOLVar("x") -> Utils.numeral(0))(endSequent)).get) +:
-      (1 until 5).map { n => n -> removeEqAxioms(LKToExpansionProof(UniformAssociativity3ExampleProof(n))) }
+      (0 until 5).map { n => n -> removeEqAxioms(LKToExpansionProof(UniformAssociativity3ExampleProof(n))) }
 
   val termEncoding = InstanceTermEncoding( endSequent )
   var instanceLanguages = instanceProofs map {
@@ -126,7 +125,10 @@ if (true) {
   println(minimized);println
 
   (0 until 10) foreach { i =>
-    val instanceLang = minimized.language(FOLFunction(SipRecSchem.A, Numeral(i)))
+    val instanceLang = minimized.language(FOLFunction(SipRecSchem.A, Numeral(i))) filter {
+      case FOLFunction("A" | "G", _) => false
+      case _ => true
+    }
     val instanceSeq = FOLSubstitution(FOLVar("x") -> Numeral(i))(termEncoding.decodeToFSequent(instanceLang))
     val isCovered = instanceLanguages.find(_._1 == i).map(_._2.toSet subsetOf instanceLang)
     val isTaut = new VeriTProver().isValid(instanceSeq)
