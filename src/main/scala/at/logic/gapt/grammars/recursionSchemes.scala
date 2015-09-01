@@ -98,16 +98,18 @@ class RecSchemGenLangFormula(
   def ruleIncluded( rule: Rule ) = FOLAtom( s"${rule.lhs}->${rule.rhs}" )
   def derivable( from: FOLTerm, to: FOLTerm ) = FOLAtom( s"$from=>$to" )
 
-  def reverseMatch( rule: Rule, against: FOLTerm ) =
-    ( rule, against ) match {
-      case ( Rule( _, FOLFunction( f, _ ) ), FOLFunction( f_, _ ) ) if f != f_ => None
-      case _ =>
+  private val rulesPerToHeadSymbol = recursionScheme.rules.
+    groupBy { case Rule( _, FOLFunction( f, _ ) ) => f }.mapValues( _.toSeq )
+  def reverseMatches( against: FOLTerm ) =
+    against match {
+      case FOLFunction( f, _ ) => rulesPerToHeadSymbol( f ).flatMap { rule =>
         val ( fvsRule, fvsAgainst ) = ( freeVariables( rule.lhs ), freeVariables( against ) )
         val rule_ = if ( fvsRule intersect fvsAgainst nonEmpty )
           rule( FOLSubstitution( rename( freeVariables( rule.lhs ), freeVariables( against ) ) ) )
         else
           rule
-        FOLUnificationAlgorithm.unify( rule_.rhs, against ).headOption.map( _( rule_.lhs ) )
+        FOLUnificationAlgorithm.unify( rule_.rhs, against ).headOption.map { unifier => canonicalVars(unifier( rule_.lhs )) -> rule }
+      }
     }
 
   type Target = ( FOLTerm, FOLTerm )
@@ -121,8 +123,8 @@ class RecSchemGenLangFormula(
       val target @ ( from, to ) = queue.dequeue()
 
       if ( !alreadyDone( target ) )
-        recursionScheme.rules foreach { rule =>
-          reverseMatch( rule, to ).map( canonicalVars( _ ) ).foreach { newTo =>
+        reverseMatches( to ).foreach {
+          case ( newTo, rule ) =>
             targetFilter( from, newTo ) match {
               case Some( true ) =>
                 goals += ( from -> newTo )
@@ -132,7 +134,6 @@ class RecSchemGenLangFormula(
                 edges += ( ( target, rule, from -> newTo ) )
                 queue enqueue ( from -> newTo )
             }
-          }
         }
 
       alreadyDone += target
@@ -151,17 +152,21 @@ class RecSchemGenLangFormula(
       }
     }
 
-    require( targets.toSet subsetOf reachable.result() )
+    require( targets.toSet subsetOf reachable )
 
+    val edgesPerFrom = edges.groupBy( _._1 )
     And( targets.map { case ( from, to ) => derivable( from, to ) } ++ ( reachable collect {
       case t @ ( from, to ) if !( goals contains t ) =>
         Imp( derivable( from, to ), Or(
-          edges collect {
-            case ( `t`, r, b ) if goals contains b                      => ruleIncluded( r )
-            case ( `t`, r, b @ ( from_, to_ ) ) if reachable contains b => And( ruleIncluded( r ), derivable( from_, to_ ) )
+          edgesPerFrom( t ) collect {
+            case ( _, r, b ) if goals contains b                      => ruleIncluded( r )
+            case ( _, r, b @ ( from_, to_ ) ) if reachable contains b => And( ruleIncluded( r ), derivable( from_, to_ ) )
           }
         ) )
-    } ) )
+    } ) ++ ( for (
+      ( from1, to1 ) <- reachable;
+      ( from2, to2 ) <- reachable if from1 == from2 && to1 != to2 if FOLMatchingAlgorithm.matchTerms( to2, to1 ).isDefined
+    ) yield Imp( derivable( from1, to1 ), derivable( from1, to2 ) ) ) )
   }
 }
 
