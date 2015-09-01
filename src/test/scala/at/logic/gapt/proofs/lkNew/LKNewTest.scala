@@ -1274,4 +1274,90 @@ class LKNewTest extends Specification {
       )
     }
   }
+
+  "EqualityLeft2Rule" should {
+    "correctly construct a proof" in {
+      val ax = Axiom( Eq( c, d ) +: Pd +: Sequent() )
+
+      EqualityLeft2Rule( ax, Ant( 0 ), Ant( 1 ), HOLPosition( 2 ) )
+      EqualityLeft2Rule( ax, Eq( c, d ), Pd, Pc )
+
+      success
+    }
+
+    "refuse to construct a proof" in {
+      val ax = Axiom( Eq( c, d ) +: Pc +: A +: Sequent() )
+
+      EqualityLeft2Rule( ax, Ant( 0 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Suc( 0 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Ant( 0 ), Suc( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Ant( 3 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Ant( 0 ), Ant( 3 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Ant( 2 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Suc( 0 ), Ant( 1 ), HOLPosition( 1 ) ) must throwAn[LKRuleCreationException]
+
+      EqualityLeft2Rule( ax, Eq( c, d ), Pc, Pd ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Eq( d, c ), Pc, Pd ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Eq( c, d ), Pd, Pc ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, A, Pd, Pc ) must throwAn[LKRuleCreationException]
+      EqualityLeft2Rule( ax, Eq( c, d ), Pc, Pc ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val ax = Axiom( Eq( c, d ) +: Pd +: Sequent() )
+
+      val p = EqualityLeft2Rule( ax, Eq( c, d ), Pd, Pc )
+
+      if ( p.mainIndices.length != 1 )
+        failure
+
+      p.mainFormulas.head must beEqualTo( Pc )
+    }
+
+    "correctly return its aux formulas" in {
+      val ax = Axiom( Eq( c, d ) +: Pd +: Sequent() )
+
+      val p = EqualityLeft2Rule( ax, Eq( c, d ), Pd, Pc )
+
+      if ( p.auxIndices.length != 1 )
+        failure
+
+      if ( p.auxIndices.head.length != 2 )
+        failure
+
+      p.auxFormulas.head.head must beEqualTo( Eq( c, d ) )
+      p.auxFormulas.head.tail.head must beEqualTo( Pd )
+    }
+
+    "correctly connect occurrences" in {
+      val ax = Axiom( A +: Eq( c, d ) +: B +: Pd +: C +: Sequent() :+ D )
+
+      // end sequent of p: P(d), A, c = d, B, C :- D
+      val p = EqualityLeft2Rule( ax, Eq( c, d ), Pd, Pc )
+
+      val o = p.getOccConnector
+
+      testChildren( o, "eq:l2" )(
+        p.premise,
+        Seq( Ant( 1 ) ),
+        Seq( Ant( 2 ) ),
+        Seq( Ant( 3 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 4 ) ),
+
+        Seq( Suc( 0 ) )
+      )
+
+      testParents( o, "eq:l2" )(
+        p.endSequent,
+        Seq( Ant( 3 ) ),
+        Seq( Ant( 0 ) ),
+        Seq( Ant( 1 ) ),
+        Seq( Ant( 2 ) ),
+        Seq( Ant( 4 ) ),
+
+        Seq( Suc( 0 ) )
+      )
+    }
+  }
 }

@@ -1636,6 +1636,84 @@ object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
     case _ => throw exception( s"Formula $eqFormula is not an equation." )
   }
 }
+
+case class EqualityLeft2Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
+  // <editor-fold desc="Sanity checks">
+
+  eq match {
+    case Ant( _ ) =>
+    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Equation $eq is in the succedent." )
+  }
+
+  aux match {
+    case Ant( _ ) =>
+    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
+  }
+
+  if ( !premise.isDefinedAt( eq ) )
+    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $eq." )
+
+  if ( !premise.isDefinedAt( aux ) )
+    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+
+  if ( eq == aux )
+    throw new LKRuleCreationException( s"Cannot create $longName: Equation and aux formula coincide." )
+
+  // </editor-fold>
+
+  def name = "eq:l2"
+
+  def longName = "EqualityLeft2Rule"
+
+  val equation = premise( eq )
+
+  val ( auxFormula, context ) = premise focus aux
+
+  val mainFormula = equation match {
+    case Eq( s, t ) =>
+      if ( auxFormula( pos ) != t )
+        throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $t, but is ${auxFormula( pos )}." )
+
+      auxFormula.replace( pos, s )
+    case _ => throw new LKRuleCreationException( s"Cannot create $longName: Formula $equation is not an equation." )
+  }
+
+  def endSequent = mainFormula +: context
+
+  def auxIndices = Seq( Seq( eq, aux ) )
+
+  def mainIndices = Seq( Ant( 0 ) )
+
+  def getOccConnector = new OccConnector(
+    endSequent,
+    premise,
+    Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
+  )
+}
+
+object EqualityLeft2Rule extends RuleConvenienceObject( "EqualityLeft2Rule" ) {
+  def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, main: HOLFormula ): EqualityLeft2Rule = eqFormula match {
+    case Eq( s, t ) =>
+      val premise = subProof.endSequent
+
+      val ( indices, _ ) = findFormulasInPremise( premise, Seq( eqFormula, auxFormula ), Seq() )
+
+      val diffPos = HOLPosition.differingPositions( auxFormula, main )
+
+      diffPos match {
+        case p +: Seq() =>
+          if ( main( p ) != s )
+            throw exception( s"Position $p in $main should be $s, but is ${main( p )}." )
+
+          EqualityLeft2Rule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), p )
+
+        case _ => throw exception( s"Formulas $eqFormula and $auxFormula don't differ in exactly one position." )
+
+      }
+
+    case _ => throw exception( s"Formula $eqFormula is not an equation." )
+  }
+}
 //</editor-fold>
 
 /**
