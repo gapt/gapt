@@ -11,6 +11,7 @@ import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.proofs.lk.base.Sequent
 import at.logic.gapt.provers.inductionProver.{SipProver, SimpleInductionProof}
+import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import org.apache.log4j.{Logger, Level}
@@ -46,7 +47,7 @@ if (false) {
   println(minimized)
 
   val minG = time {
-    minimizeVectGrammar(nfG, terms)
+    minimizeVectGrammar(nfG, terms, new QMaxSAT)
   }
   println(minG)
 
@@ -103,7 +104,7 @@ if (true) {
       map (s => univclosure(parseFormula(s))),
     Seq(parseFormula("(x+x)+x = x+(x+x)")))
   val instanceProofs =
-      (0 until 5).map { n => n -> removeEqAxioms(LKToExpansionProof(UniformAssociativity3ExampleProof(n))) }
+      (0 until 6).map { n => n -> removeEqAxioms(LKToExpansionProof(UniformAssociativity3ExampleProof(n))) }
 
   val termEncoding = InstanceTermEncoding( endSequent )
   var instanceLanguages = instanceProofs map {
@@ -121,7 +122,7 @@ if (true) {
 
   val nfRecSchem = SipRecSchem.normalForms(instanceLanguages)
   println(nfRecSchem.rules.size)
-  val minimized = time{minimizeRecursionScheme(nfRecSchem, SipRecSchem.toTargets(instanceLanguages), SipRecSchem.targetFilter)}
+  val minimized = time{minimizeRecursionScheme(nfRecSchem, SipRecSchem.toTargets(instanceLanguages), SipRecSchem.targetFilter, new QMaxSAT)}
   println(minimized);println
 
   (0 until 10) foreach { i =>
@@ -140,5 +141,5 @@ if (true) {
 
   val nfSipG = normalFormsSipGrammar(instanceLanguages)
   println(nfSipG.productions.size)
-  println(time{minimizeSipGrammar(nfSipG, instanceLanguages)})
+  println(time{minimizeSipGrammar(nfSipG, instanceLanguages, new QMaxSAT)})
 }
