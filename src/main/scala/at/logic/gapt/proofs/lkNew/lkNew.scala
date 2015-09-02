@@ -1397,13 +1397,17 @@ object ExistsRightRule {
   }
 }
 
-case class EqualityLeft1Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
+case class EqualityRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
 
-  validateIndices( premise, Seq( eq, aux ), Seq() )
+  aux match {
+    case Ant( _ ) =>
+      validateIndices( premise, Seq( eq, aux ), Seq() )
+    case Suc( _ ) =>
+      validateIndices( premise, Seq( eq ), Seq( aux ) )
+  }
+  def name = "eq"
 
-  def name = "eq:l1"
-
-  def longName = "EqualityLeft1Rule"
+  def longName = "EqualityRule"
 
   val equation = premise( eq )
 
@@ -1411,27 +1415,52 @@ case class EqualityLeft1Rule( subProof: LKProof, eq: SequentIndex, aux: SequentI
 
   val mainFormula = equation match {
     case Eq( s, t ) =>
-      if ( auxFormula( pos ) != s )
-        throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $s, but is ${auxFormula( pos )}." )
+      auxFormula( pos ) match {
+        case `s` =>
+          auxFormula.replace( pos, t )
+        case `t` =>
+          auxFormula.replace( pos, s )
+        case _ =>
+          throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $s or $t, but is ${auxFormula( pos )}." )
+      }
 
-      auxFormula.replace( pos, t )
     case _ => throw new LKRuleCreationException( s"Cannot create $longName: Formula $equation is not an equation." )
   }
 
-  def endSequent = mainFormula +: context
+  def endSequent = aux match {
+    case Ant( _ ) => mainFormula +: context
+    case Suc( _ ) => context :+ mainFormula
+  }
 
   def auxIndices = Seq( Seq( eq, aux ) )
 
-  def mainIndices = Seq( Ant( 0 ) )
+  def mainIndices = aux match {
+    case Ant( _ ) => Seq( Ant( 0 ) )
+    case Suc( _ ) =>
+      val n = endSequent.succedent.length - 1
+      Seq( Suc( n ) )
+  }
 
-  def getOccConnector = new OccConnector(
-    endSequent,
-    premise,
-    Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
-  )
+  def getOccConnector = aux match {
+    case Ant( _ ) =>
+      new OccConnector(
+        endSequent,
+        premise,
+        Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
+      )
+
+    case Suc( _ ) =>
+      new OccConnector(
+        endSequent,
+        premise,
+        premise.indicesSequent.delete( aux ).map( i => Seq( i ) ) :+ Seq( aux )
+      )
+  }
 }
 
-object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
+//FIXME: How do we handle convenience constructors if there's only one equality rule?
+/*
+object EqualityRule extends RuleConvenienceObject( "EqualityRule" ) {
   def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, main: HOLFormula ): EqualityLeft1Rule = eqFormula match {
     case Eq( s, t ) =>
       val premise = subProof.endSequent
@@ -1453,65 +1482,7 @@ object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
 
     case _ => throw exception( s"Formula $eqFormula is not an equation." )
   }
-}
-
-case class EqualityLeft2Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
-
-  validateIndices( premise, Seq( eq, aux ), Seq() )
-
-  def name = "eq:l2"
-
-  def longName = "EqualityLeft2Rule"
-
-  val equation = premise( eq )
-
-  val ( auxFormula, context ) = premise focus aux
-
-  val mainFormula = equation match {
-    case Eq( s, t ) =>
-      if ( auxFormula( pos ) != t )
-        throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $t, but is ${auxFormula( pos )}." )
-
-      auxFormula.replace( pos, s )
-    case _ => throw new LKRuleCreationException( s"Cannot create $longName: Formula $equation is not an equation." )
-  }
-
-  def endSequent = mainFormula +: context
-
-  def auxIndices = Seq( Seq( eq, aux ) )
-
-  def mainIndices = Seq( Ant( 0 ) )
-
-  def getOccConnector = new OccConnector(
-    endSequent,
-    premise,
-    Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
-  )
-}
-
-object EqualityLeft2Rule extends RuleConvenienceObject( "EqualityLeft2Rule" ) {
-  def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, main: HOLFormula ): EqualityLeft2Rule = eqFormula match {
-    case Eq( s, t ) =>
-      val premise = subProof.endSequent
-
-      val ( indices, _ ) = findFormulasInPremise( premise, Seq( eqFormula, auxFormula ), Seq() )
-
-      val diffPos = HOLPosition.differingPositions( auxFormula, main )
-
-      diffPos match {
-        case p +: Seq() =>
-          if ( main( p ) != s )
-            throw exception( s"Position $p in $main should be $s, but is ${main( p )}." )
-
-          EqualityLeft2Rule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), p )
-
-        case _ => throw exception( s"Formulas $eqFormula and $auxFormula don't differ in exactly one position." )
-
-      }
-
-    case _ => throw exception( s"Formula $eqFormula is not an equation." )
-  }
-}
+}*/
 
 /**
  * This class models the connection of formula occurrences between two sequents in a proof.
