@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.lk.base._
 
@@ -1483,6 +1484,80 @@ object EqualityRule extends RuleConvenienceObject( "EqualityRule" ) {
     case _ => throw exception( s"Formula $eqFormula is not an equation." )
   }
 }*/
+
+case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex, aux3: SequentIndex, term: FOLTerm ) extends BinaryLKProof {
+  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
+  validateIndices( rightPremise, Seq( aux2 ), Seq( aux3 ) )
+
+  private val zero = FOLConst( "0" )
+  private def s( t: FOLTerm ) = FOLFunction( "s", List( t ) )
+
+  def name = "ind"
+
+  def longName = "InductionRule"
+
+  // FIXME: Is there a better way than type casting?
+  val ( aZero, aX, aSx ) = ( leftPremise( aux1 ).asInstanceOf[FOLFormula], rightPremise( aux2 ).asInstanceOf[FOLFormula], rightPremise( aux3 ).asInstanceOf[FOLFormula] )
+
+  // Find a FOLSubstitution for A[x] and A[0], if possible.
+  val sub1 = FOLMatchingAlgorithm.matchTerms( aX, aZero ) match {
+    case Some( s ) => s
+    case None      => throw new LKRuleCreationException( s"Cannot create $longName: Formula $aX can't be matched to formula $aZero." )
+  }
+
+  // Find a substitution for A[x] and A[Sx], if possible.
+  val sub2 = FOLMatchingAlgorithm.matchTerms( aX, aSx ) match {
+    case Some( s ) => s
+    case None      => throw new LKRuleCreationException( s"Cannot create $longName: Formula $aX can't be matched to formula $aSx." )
+  }
+
+  val x = ( sub1.folmap ++ sub2.folmap ).collect { case ( v, e ) if v != e => v }.headOption.getOrElse {
+    throw new LKRuleCreationException( "Cannot create $longName: Cannot determine induction variable." )
+  }
+
+  // Some safety checks
+  if ( ( sub1.domain.toSet - x ).exists( v => sub1( v ) != v ) )
+    throw new LKRuleCreationException( s"Cannot create $longName: Formula " + aX + " can't be matched to formula " + aZero + " by substituting a single variable." )
+
+  if ( ( sub2.domain.toSet - x ).exists( v => sub1( v ) != v ) )
+    throw new LKRuleCreationException( s"Cannot create $longName: Formula " + aX + " can't be matched to formula " + aSx + " by substituting a single variable." )
+
+  val sX = s( x )
+
+  if ( sub1( x ) != zero )
+    throw new LKRuleCreationException( s"Cannot create $longName: $sub1 doesn't replace $x by 0." )
+
+  if ( sub2( x ) != sX )
+    throw new LKRuleCreationException( s"Cannot create $longName: $sub2 doesn't replace $x by $sX." )
+
+  // Test the eigenvariable condition
+  if ( ( rightPremise.delete( aux2 ).antecedent ++ rightPremise.delete( aux3 ).succedent ) map ( _.asInstanceOf[FOLFormula] ) flatMap freeVariables.apply contains x )
+    throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition not satisified for sequent $rightPremise and variable $x." )
+
+  // Construct the main formula
+  val mainSub = FOLSubstitution( x, term )
+  val mainFormula = mainSub( aX )
+
+  def auxIndices = Seq( Seq( aux1 ), Seq( aux2, aux3 ) )
+
+  def endSequent = ( leftPremise delete aux1 ) ++ ( rightPremise delete aux2 delete aux3 ) :+ mainFormula
+
+  private val n = endSequent.succedent.length - 1
+
+  def mainIndices = Seq( Suc( n ) )
+
+  def getLeftOccConnector = new OccConnector(
+    endSequent,
+    leftPremise,
+    ( ( leftPremise.indicesSequent delete aux1 map { Seq.apply( _ ) } ) ++ ( rightPremise delete aux2 delete aux3 map { i => Seq() } ) ) :+ Seq( aux1 )
+  )
+
+  def getRightOccConnector = new OccConnector(
+    endSequent,
+    rightPremise,
+    Seq( aux2 ) +: ( ( leftPremise delete aux1 map { i => Seq() } ) ++ ( rightPremise.indicesSequent delete aux2 delete aux3 map { Seq.apply( _ ) } ) ) :+ Seq( aux2, aux3 )
+  )
+}
 
 /**
  * This class models the connection of formula occurrences between two sequents in a proof.
