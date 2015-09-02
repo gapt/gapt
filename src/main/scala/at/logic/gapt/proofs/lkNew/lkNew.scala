@@ -4,7 +4,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.lk.base._
 
-import scala.collection.immutable.HashMap
+import scala.collection.mutable
+
+//<editor-fold desc="Base proof classes">
 
 abstract class LKProof {
   /**
@@ -77,6 +79,46 @@ abstract class LKProof {
    * @return
    */
   def postOrder: Seq[LKProof]
+
+  /**
+   * Checks whether indices are in the right place and premise is defined at all of them.
+   *
+   * @param premise The sequent to be checked.
+   * @param antecedentIndices Indices that should be in the antecedent.
+   * @param succedentIndices Indices that should be in the succedent.
+   */
+  protected def validateIndices( premise: HOLSequent, antecedentIndices: Seq[SequentIndex], succedentIndices: Seq[SequentIndex] ): Unit = {
+    val antSet = mutable.HashSet[SequentIndex]()
+    val sucSet = mutable.HashSet[SequentIndex]()
+
+    for ( i <- antecedentIndices ) i match {
+      case Ant( _ ) =>
+
+        if ( !premise.isDefinedAt( i ) )
+          throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $i." )
+
+        if ( antSet contains i )
+          throw new LKRuleCreationException( s"Cannot create $longName: Duplicate index $i for sequent $premise." )
+
+        antSet += i
+
+      case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Index $i should be in the antecedent." )
+    }
+
+    for ( i <- succedentIndices ) i match {
+      case Suc( _ ) =>
+
+        if ( !premise.isDefinedAt( i ) )
+          throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $i." )
+
+        if ( sucSet contains i )
+          throw new LKRuleCreationException( s"Cannot create $longName: Duplicate index $i for sequent $premise." )
+
+        sucSet += i
+
+      case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Index $i should be in the succedent." )
+    }
+  }
 }
 
 /**
@@ -113,6 +155,7 @@ abstract class UnaryLKProof extends LKProof {
   override def subProofs = Seq( subProof )
 
   override def postOrder = subProof.postOrder :+ this
+
 }
 
 object UnaryLKProof {
@@ -179,6 +222,8 @@ abstract class BinaryLKProof extends LKProof {
 object BinaryLKProof {
   def unapply( p: BinaryLKProof ) = Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }
+
+//</editor-fold>
 
 // <editor-fold desc="Axioms">
 
@@ -301,19 +346,7 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
 
   // <editor-fold desc="Sanity checks">
 
-  ( aux1, aux2 ) match {
-    case ( Ant( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the succedent." )
-  }
-
-  if ( aux1 == aux2 )
-    throw new LKRuleCreationException( s"Cannot create $longName: Indices of aux formulas are equal." )
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
+  validateIndices( premise, Seq( aux1, aux2 ), Seq() )
 
   if ( premise( aux1 ) != premise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
@@ -379,19 +412,7 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
 
   // <editor-fold desc="Sanity checks">
 
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Suc( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the antecedent." )
-  }
-
-  if ( aux1 == aux2 )
-    throw new LKRuleCreationException( s"Cannot create $longName: Indices of aux formulas are equal." )
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
+  validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
 
   if ( premise( aux1 ) != premise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
@@ -511,16 +532,9 @@ case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula ) extends 
  */
 case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
   // <editor-fold desc="Sanity checks">
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the wrong cedent." )
-  }
 
-  if ( !( leftPremise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $leftPremise is not defined at index $aux1." )
-
-  if ( !( rightPremise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $rightPremise is not defined at index $aux2." )
+  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
+  validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas are not the same." )
@@ -572,7 +586,7 @@ object CutRule extends RuleConvenienceObject( "CutRule" ) {
 
 // </editor-fold>
 
-// <editor-fold desc="Propositional rules>
+// <editor-fold desc="Propositional rules">
 
 /**
  * An LKProof ending with a negation on the left:
@@ -588,14 +602,7 @@ object CutRule extends RuleConvenienceObject( "CutRule" ) {
 case class NegLeftRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKProof {
 
   // <editor-fold desc="Sanity checks">
-  aux match {
-    case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: $aux is in the antecedent." )
-    case Suc( _ ) =>
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
-
+  validateIndices( premise, Seq(), Seq( aux ) )
   // </editor-fold>
 
   val ( auxFormula, context ) = premise.focus( aux )
@@ -645,14 +652,7 @@ object NegLeftRule extends RuleConvenienceObject( "NegLeftRule" ) {
 case class NegRightRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKProof {
 
   // <editor-fold desc="Sanity checks">
-  aux match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: $aux is in the succedent." )
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
-
+  validateIndices( premise, Seq( aux ), Seq() )
   // </editor-fold>
 
   val ( auxFormula, context ) = premise.focus( aux )
@@ -705,19 +705,8 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
 
   // <editor-fold desc="Sanity checks">
 
-  ( aux1, aux2 ) match {
-    case ( Ant( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the succedent." )
-  }
+  validateIndices( premise, Seq( aux1, aux2 ), Seq() )
 
-  if ( aux1 == aux2 )
-    throw new LKRuleCreationException( s"Cannot create $longName: Indices of aux formulas are equal." )
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
   // </editor-fold>
 
   val leftConjunct = premise( aux1 )
@@ -794,17 +783,8 @@ object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
 case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
 
   // <editor-fold desc="Sanity checks">
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Suc( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the antecedent." )
-  }
-
-  if ( !( leftPremise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $leftPremise is not defined at index $aux1." )
-
-  if ( !( rightPremise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $rightPremise is not defined at index $aux2." )
-
+  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
+  validateIndices( rightPremise, Seq(), Seq( aux2 ) )
   // </editor-fold>
 
   val ( leftConjunct, leftContext ) = leftPremise focus aux1
@@ -887,17 +867,8 @@ object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
 case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
 
   // <editor-fold desc="Sanity checks">
-  ( aux1, aux2 ) match {
-    case ( Ant( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the succedent." )
-  }
-
-  if ( !( leftPremise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $leftPremise is not defined at index $aux1." )
-
-  if ( !( rightPremise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $rightPremise is not defined at index $aux2." )
-
+  validateIndices( leftPremise, Seq( aux1 ), Seq() )
+  validateIndices( rightPremise, Seq( aux2 ), Seq() )
   // </editor-fold>
 
   val ( leftDisjunct, leftContext ) = leftPremise focus aux1
@@ -977,19 +948,8 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
 
   // <editor-fold desc="Sanity checks">
 
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Suc( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the antecedent." )
-  }
+  validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
 
-  if ( aux1 == aux2 )
-    throw new LKRuleCreationException( s"Cannot create $longName: Indices of aux formulas are equal." )
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
   // </editor-fold>
 
   val leftDisjunct = premise( aux1 )
@@ -1067,16 +1027,9 @@ object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
  */
 case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
   // <editor-fold desc="Sanity checks">
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the wrong cedent." )
-  }
 
-  if ( !( leftPremise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $leftPremise is not defined at index $aux1." )
-
-  if ( !( rightPremise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $rightPremise is not defined at index $aux2." )
+  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
+  validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   // </editor-fold>
 
@@ -1157,21 +1110,8 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
 
   // <editor-fold desc="Sanity checks">
 
-  aux1 match {
-    case Ant( _ ) =>
-    case _        => throw new LKRuleCreationException( s"Cannot create $longName: $aux1 is in the succedent." )
-  }
+  validateIndices( premise, Seq( aux1 ), Seq( aux2 ) )
 
-  aux2 match {
-    case Suc( _ ) =>
-    case _        => throw new LKRuleCreationException( s"Cannot create $longName: $aux2 is in the antecedent." )
-  }
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
   // </editor-fold>
 
   val impPremise = premise( aux1 )
@@ -1253,13 +1193,7 @@ object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
 case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, term: LambdaExpression, v: Var ) extends UnaryLKProof {
   // <editor-fold desc="Sanity checks">
 
-  aux match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+  validateIndices( premise, Seq( aux ), Seq() )
 
   val ( auxFormula, context ) = premise focus aux
 
@@ -1338,13 +1272,8 @@ object ForallLeftRule {
 case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var ) extends UnaryLKProof {
 
   // <editor-fold desc="Sanity checks">
-  aux match {
-    case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the antecedent." )
-    case Suc( _ ) =>
-  }
 
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+  validateIndices( premise, Seq(), Seq( aux ) )
 
   val ( auxFormula, context ) = premise focus aux
 
@@ -1414,13 +1343,8 @@ object ForallRightRule extends RuleConvenienceObject( "ForallRightRule" ) {
 case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var ) extends UnaryLKProof {
 
   // <editor-fold desc="Sanity checks">
-  aux match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
-  }
 
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+  validateIndices( premise, Seq( aux ), Seq() )
 
   val ( auxFormula, context ) = premise focus aux
 
@@ -1486,13 +1410,7 @@ object ExistsLeftRule extends RuleConvenienceObject( "ExistsLeftRule" ) {
 case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, term: LambdaExpression, v: Var ) extends UnaryLKProof {
   // <editor-fold desc="Sanity checks">
 
-  aux match {
-    case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the antecedent." )
-    case Suc( _ ) =>
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+  validateIndices( premise, Seq(), Seq( aux ) )
 
   val ( auxFormula, context ) = premise focus aux
 
@@ -1557,29 +1475,12 @@ object ExistsRightRule {
 
 // </editor-fold>
 
-//<editor-fold desc="Equality rules>
+//<editor-fold desc="Equality rules">
 
 case class EqualityLeft1Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
   // <editor-fold desc="Sanity checks">
 
-  eq match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Equation $eq is in the succedent." )
-  }
-
-  aux match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
-  }
-
-  if ( !premise.isDefinedAt( eq ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $eq." )
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
-
-  if ( eq == aux )
-    throw new LKRuleCreationException( s"Cannot create $longName: Equation and aux formula coincide." )
+  validateIndices( premise, Seq( eq, aux ), Seq() )
 
   // </editor-fold>
 
@@ -1640,24 +1541,7 @@ object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
 case class EqualityLeft2Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
   // <editor-fold desc="Sanity checks">
 
-  eq match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Equation $eq is in the succedent." )
-  }
-
-  aux match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
-  }
-
-  if ( !premise.isDefinedAt( eq ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $eq." )
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
-
-  if ( eq == aux )
-    throw new LKRuleCreationException( s"Cannot create $longName: Equation and aux formula coincide." )
+  validateIndices( premise, Seq( eq, aux ), Seq() )
 
   // </editor-fold>
 
@@ -1715,6 +1599,8 @@ object EqualityLeft2Rule extends RuleConvenienceObject( "EqualityLeft2Rule" ) {
   }
 }
 //</editor-fold>
+
+//<editor-fold desc="Utility classes">
 
 /**
  * This class models the connection of formula occurrences between two sequents in a proof.
@@ -1869,3 +1755,5 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
     ( antIndices, sucIndices )
   }
 }
+
+//</editor-fold>
