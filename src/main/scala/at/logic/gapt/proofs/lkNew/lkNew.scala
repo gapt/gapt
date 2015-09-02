@@ -6,8 +6,6 @@ import at.logic.gapt.proofs.lk.base._
 
 import scala.collection.mutable
 
-//<editor-fold desc="Base proof classes">
-
 abstract class LKProof {
   /**
    * The name of the rule (in symbols).
@@ -223,10 +221,6 @@ object BinaryLKProof {
   def unapply( p: BinaryLKProof ) = Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }
 
-//</editor-fold>
-
-// <editor-fold desc="Axioms">
-
 /**
  * An LKProof consisting of a single sequent:
  * <pre>
@@ -326,9 +320,6 @@ object Axiom {
 
   def apply( ant: Seq[HOLFormula], suc: Seq[HOLFormula] ): InitialSequent = apply( Sequent( ant, suc ) )
 }
-// </editor-fold>
-
-// <editor-fold desc="Structural rules">
 
 /**
  * An LKProof ending with a left contraction:
@@ -344,20 +335,15 @@ object Axiom {
  */
 case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
   validateIndices( premise, Seq( aux1, aux2 ), Seq() )
 
   if ( premise( aux1 ) != premise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
-  // </editor-fold>
 
   val mainFormula = premise( aux1 )
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
 
   private val newContext = premise delete a2 delete a1
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = mainFormula +: newContext
 
@@ -375,7 +361,6 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
     Seq( aux1, aux2 ) +: ( premise.indicesSequent delete a2 delete a1 map { i => Seq( i ) } )
   )
 
-  // </editor-fold>
 }
 
 object ContractionLeftRule extends RuleConvenienceObject( "ContractionLeftRule" ) {
@@ -410,20 +395,15 @@ object ContractionLeftRule extends RuleConvenienceObject( "ContractionLeftRule" 
  */
 case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
   validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
 
   if ( premise( aux1 ) != premise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
-  // </editor-fold>
 
   val mainFormula = premise( aux1 )
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
 
   private val newContext = premise.delete( a2 ).delete( a1 )
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = newContext :+ mainFormula
 
@@ -443,7 +423,6 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
     ( premise.indicesSequent delete a2 delete a1 map { i => Seq( i ) } ) :+ Seq( aux1, aux2 )
   )
 
-  // </editor-fold>
 }
 
 object ContractionRightRule extends RuleConvenienceObject( "ContractionRightRule" ) {
@@ -531,14 +510,12 @@ case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula ) extends 
  * @param aux2 The index of A in π,,2,,.
  */
 case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
-  // <editor-fold desc="Sanity checks">
 
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas are not the same." )
-  // </editor-fold>
 
   private val ( leftContext, rightContext ) = ( leftPremise delete aux1, rightPremise delete aux2 )
   def endSequent = leftContext ++ rightContext
@@ -584,10 +561,6 @@ object CutRule extends RuleConvenienceObject( "CutRule" ) {
   }
 }
 
-// </editor-fold>
-
-// <editor-fold desc="Propositional rules">
-
 /**
  * An LKProof ending with a negation on the left:
  * <pre>
@@ -601,9 +574,7 @@ object CutRule extends RuleConvenienceObject( "CutRule" ) {
  */
 case class NegLeftRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
   validateIndices( premise, Seq(), Seq( aux ) )
-  // </editor-fold>
 
   val ( auxFormula, context ) = premise.focus( aux )
   val mainFormula = Neg( auxFormula )
@@ -651,9 +622,7 @@ object NegLeftRule extends RuleConvenienceObject( "NegLeftRule" ) {
  */
 case class NegRightRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
   validateIndices( premise, Seq( aux ), Seq() )
-  // </editor-fold>
 
   val ( auxFormula, context ) = premise.focus( aux )
   val mainFormula = Neg( auxFormula )
@@ -698,16 +667,12 @@ object NegRightRule extends RuleConvenienceObject( "NegRightRule" ) {
  *    A ∧ B, Γ :- Δ
  * </pre>
  * @param subProof The subproof π.
- * @param aux1 The index of A.
+ * @param aux1 The index of A.//<editor-fold desc="Base proof classes">
  * @param aux2 The index of B.
  */
 case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
   validateIndices( premise, Seq( aux1, aux2 ), Seq() )
-
-  // </editor-fold>
 
   val leftConjunct = premise( aux1 )
   val rightConjunct = premise( aux2 )
@@ -715,8 +680,6 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
 
   val newContext = premise delete a2 delete a1
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = formula +: newContext
 
@@ -734,7 +697,6 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
     Seq( aux1, aux2 ) +: ( premise.indicesSequent delete a2 delete a1 map { i => Seq( i ) } )
   )
 
-  // </editor-fold>
 }
 
 object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
@@ -782,10 +744,8 @@ object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
  */
 case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq(), Seq( aux2 ) )
-  // </editor-fold>
 
   val ( leftConjunct, leftContext ) = leftPremise focus aux1
   val ( rightConjunct, rightContext ) = rightPremise focus aux2
@@ -866,10 +826,8 @@ object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
  */
 case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
   validateIndices( leftPremise, Seq( aux1 ), Seq() )
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
-  // </editor-fold>
 
   val ( leftDisjunct, leftContext ) = leftPremise focus aux1
   val ( rightDisjunct, rightContext ) = rightPremise focus aux2
@@ -946,11 +904,7 @@ object OrLeftRule extends RuleConvenienceObject( "OrLeftRule" ) {
  */
 case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
   validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
-
-  // </editor-fold>
 
   val leftDisjunct = premise( aux1 )
   val rightDisjunct = premise( aux2 )
@@ -958,8 +912,6 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
 
   val newContext = premise.focus( a2 )._2.focus( a1 )._2
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = newContext :+ formula
 
@@ -979,7 +931,6 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
     ( premise.indicesSequent delete a2 delete a1 map { i => Seq( i ) } ) :+ Seq( aux1, aux2 )
   )
 
-  // </editor-fold>
 }
 
 object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
@@ -1026,12 +977,9 @@ object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
  * @param aux2 The index of B.
  */
 case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
-  // <editor-fold desc="Sanity checks">
 
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
-
-  // </editor-fold>
 
   val ( impPremise, leftContext ) = leftPremise focus aux1
   val ( impConclusion, rightContext ) = rightPremise focus aux2
@@ -1108,19 +1056,13 @@ object ImpLeftRule extends RuleConvenienceObject( "ImpLeftRule" ) {
  */
 case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
   validateIndices( premise, Seq( aux1 ), Seq( aux2 ) )
-
-  // </editor-fold>
 
   val impPremise = premise( aux1 )
   val impConclusion = premise( aux2 )
   val formula = Imp( impPremise, impConclusion )
 
   val newContext = premise delete aux1 delete aux2
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = newContext :+ formula
 
@@ -1140,7 +1082,6 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
     ( premise.indicesSequent delete aux1 delete aux2 map { i => Seq( i ) } ) :+ Seq( aux1, aux2 )
   )
 
-  // </editor-fold>
 }
 
 object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
@@ -1172,9 +1113,6 @@ object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
     case _           => throw exception( s"Proposed main formula $F is not an implication." )
   }
 }
-// </editor-fold>
-
-// <editor-fold desc="Quantifier rules">
 
 /**
  * An LKProof ending with a universal quantifier on the left:
@@ -1191,7 +1129,6 @@ object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
  * @param v The variable x.
  */
 case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, term: LambdaExpression, v: Var ) extends UnaryLKProof {
-  // <editor-fold desc="Sanity checks">
 
   validateIndices( premise, Seq( aux ), Seq() )
 
@@ -1199,8 +1136,6 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, 
 
   if ( auxFormula != Substitution( v, term )( A ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Substituting $term for $v in $A does not result in $auxFormula." )
-
-  // </editor-fold>
 
   val mainFormula = All( v, A )
 
@@ -1271,8 +1206,6 @@ object ForallLeftRule {
  */
 case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
   validateIndices( premise, Seq(), Seq( aux ) )
 
   val ( auxFormula, context ) = premise focus aux
@@ -1280,8 +1213,6 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
     throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition is violated." )
-
-  // </editor-fold>
 
   val mainFormula = All( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
@@ -1342,8 +1273,6 @@ object ForallRightRule extends RuleConvenienceObject( "ForallRightRule" ) {
  */
 case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
   validateIndices( premise, Seq( aux ), Seq() )
 
   val ( auxFormula, context ) = premise focus aux
@@ -1351,8 +1280,6 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
     throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition is violated." )
-
-  // </editor-fold>
 
   val mainFormula = Ex( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
@@ -1408,7 +1335,6 @@ object ExistsLeftRule extends RuleConvenienceObject( "ExistsLeftRule" ) {
  * @param v The variable x.
  */
 case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, term: LambdaExpression, v: Var ) extends UnaryLKProof {
-  // <editor-fold desc="Sanity checks">
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
@@ -1416,8 +1342,6 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula,
 
   if ( auxFormula != Substitution( v, term )( A ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Substituting $term for $v in $A does not result in $auxFormula." )
-
-  // </editor-fold>
 
   val mainFormula = Ex( v, A )
 
@@ -1473,16 +1397,9 @@ object ExistsRightRule {
   }
 }
 
-// </editor-fold>
-
-//<editor-fold desc="Equality rules">
-
 case class EqualityLeft1Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
-  // <editor-fold desc="Sanity checks">
 
   validateIndices( premise, Seq( eq, aux ), Seq() )
-
-  // </editor-fold>
 
   def name = "eq:l1"
 
@@ -1539,11 +1456,8 @@ object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
 }
 
 case class EqualityLeft2Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
-  // <editor-fold desc="Sanity checks">
 
   validateIndices( premise, Seq( eq, aux ), Seq() )
-
-  // </editor-fold>
 
   def name = "eq:l2"
 
@@ -1598,9 +1512,6 @@ object EqualityLeft2Rule extends RuleConvenienceObject( "EqualityLeft2Rule" ) {
     case _ => throw exception( s"Formula $eqFormula is not an equation." )
   }
 }
-//</editor-fold>
-
-//<editor-fold desc="Utility classes">
 
 /**
  * This class models the connection of formula occurrences between two sequents in a proof.
@@ -1756,4 +1667,3 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
   }
 }
 
-//</editor-fold>
