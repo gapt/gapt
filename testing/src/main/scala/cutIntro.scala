@@ -279,25 +279,21 @@ object findNonTrivialTSTPExamples extends App {
       val children = file.listFiles
       children.foreach( f => nonTrivialTermset( f.getAbsolutePath, timeout ) )
     } else if ( file.getName.endsWith( ".out" ) ) {
+      println( file )
       total += 1
       try {
-        withTimeout( timeout * 1000 ) {
-          loadProver9LKProof( file.getAbsolutePath ) match {
-            case p: LKProof => try {
-              withTimeout( timeout * 1000 ) {
-                val ts = extractTerms( p )
-                val tssize = ts.set.size
-                val n_functions = ts.formulas.distinct.size
+        withTimeout( timeout seconds ) {
+          val p = Prover9Importer.expansionProofFromFile( file.getAbsolutePath )
+          try {
+            val ts = TermsExtraction( p )
+            val tssize = ts.set.size
+            val n_functions = ts.formulas.distinct.size
 
-                if ( tssize > n_functions )
-                  termsets += ( file.getAbsolutePath -> ts )
-                else num_trivial_termset += 1
-
-              }
-            } catch {
-              case e: Throwable => error_term_extraction += 1
-            }
-
+            if ( tssize > n_functions )
+              termsets += ( file.getAbsolutePath -> ts )
+            else num_trivial_termset += 1
+          } catch {
+            case e: Throwable => error_term_extraction += 1
           }
         }
       } catch {
