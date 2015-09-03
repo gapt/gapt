@@ -69,6 +69,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
+  @deprecated
   def one_cut_one_quantifier( proof: LKProof, verbose: Boolean ) =
     execute( proof, DeltaTableMethod( false ), verbose )
   /**
@@ -82,6 +83,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
+  @deprecated
   def one_cut_one_quantifier( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, DeltaTableMethod( false ), verbose )
 
@@ -93,6 +95,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
+  @deprecated
   def one_cut_many_quantifiers( proof: LKProof, verbose: Boolean ) =
     execute( proof, DeltaTableMethod( true ), verbose )
   /**
@@ -106,6 +109,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
+  @deprecated
   def one_cut_many_quantifiers( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, DeltaTableMethod( true ), verbose )
   /**
@@ -117,6 +121,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A list of cut-formulas.
    */
+  @deprecated
   def many_cuts_one_quantifier( proof: LKProof, numcuts: Int, verbose: Boolean ) =
     execute( proof, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose )
   /**
@@ -131,27 +136,25 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A list of cut-formulas.
    */
+  @deprecated
   def many_cuts_one_quantifier( es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose )
 
+  @deprecated
   def execute( proof: LKProof, method: GrammarFindingMethod ): Option[LKProof] = execute( proof, method, false )
+  @deprecated
   def execute( proof: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ): Option[LKProof] =
     execute( proof, hasEquality, method, false )
 
-  def execute( proof: LKProof, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] = {
-    val clean_proof = CleanStructuralRules( proof )
-    metrics.value( "lkinf_input", rulesNumber( clean_proof ) )
+  @deprecated
+  def execute( proof: LKProof, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
+    compressLKProof( proof, method, verbose )
 
-    if ( verbose )
-      println( s"Total inferences in the input proof: ${rulesNumber( clean_proof )}" )
+  @deprecated
+  def execute( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
+    compressToLK( ep, hasEquality, method, verbose )
 
-    val ep = LKToExpansionProof( clean_proof )
-    val hasEquality = containsEqualityReasoning( clean_proof )
-
-    execute( ep, hasEquality, method, verbose )
-  }
-
-  def execute( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] = {
+  def compressToEHS( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[ExtendedHerbrandSequent] = {
 
     val prover = hasEquality match {
       case true  => new EquationalProver()
@@ -188,8 +191,6 @@ object CutIntroduction extends Logger {
 
       val grammar = simpleToMultiGrammar( termset.encoding, vtratGrammar )
 
-      /** ******** Proof Construction **********/
-
       val canonicalEHS = new ExtendedHerbrandSequent( endSequent, grammar, computeCanonicalSolutions( grammar ) )
 
       val minimizedEHS = metrics.time( "minsol" ) {
@@ -201,37 +202,64 @@ object CutIntroduction extends Logger {
           canonicalEHS // TODO: minimize solution for multiple cuts with equality
       }
 
-      val Some( proofWithStructuralRules ) = metrics.time( "prcons" ) {
-        buildProofWithCut( minimizedEHS, prover )
-      }
-
-      val proof = metrics.time( "cleanproof" ) {
-        CleanStructuralRules( proofWithStructuralRules )
-      }
-
       val lcompCanonicalSol = canonicalEHS.cutFormulas.map( lcomp( _ ) ).sum
       val lcompMinSol = minimizedEHS.cutFormulas.map( lcomp( _ ) ).sum
 
-      metrics.value( "lkcuts_output", getStatistics( proof ).cuts )
       metrics.value( "cansol_lcomp", lcompCanonicalSol )
       metrics.value( "minsol_lcomp", lcompMinSol )
-      metrics.value( "lkinf_output", rulesNumber( proof ) )
-      metrics.value( "lkquant_output", quantRulesNumber( proof ) )
       if ( verbose ) {
         println( s"Size of the canonical solution: $lcompCanonicalSol" )
         println( s"Size of the minimized solution: $lcompMinSol" )
         println( "Minimized cut formulas:" )
         minimizedEHS.cutFormulas foreach println
-        println( s"Number of cuts introduced: ${getStatistics( proof ).cuts}" )
-        println( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
-        println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )
       }
 
-      proof
+      minimizedEHS
     } orElse {
       if ( verbose ) println( "No grammar found." )
       None
     }
+  }
+
+  def constructLKProof( ehs: ExtendedHerbrandSequent, hasEquality: Boolean, verbose: Boolean = false ): LKProof = {
+    val prover = hasEquality match {
+      case true  => new EquationalProver()
+      case false => new BasicProver()
+    }
+
+    val Some( proofWithStructuralRules ) = metrics.time( "prcons" ) {
+      buildProofWithCut( ehs, prover )
+    }
+
+    val proof = metrics.time( "cleanproof" ) {
+      CleanStructuralRules( proofWithStructuralRules )
+    }
+
+    metrics.value( "lkcuts_output", getStatistics( proof ).cuts )
+    metrics.value( "lkinf_output", rulesNumber( proof ) )
+    metrics.value( "lkquant_output", quantRulesNumber( proof ) )
+    if ( verbose ) {
+      println( s"Number of cuts introduced: ${getStatistics( proof ).cuts}" )
+      println( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
+      println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )
+    }
+
+    proof
+  }
+
+  def compressToLK( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
+    compressToEHS( ep, hasEquality, method, verbose ) map { constructLKProof( _, hasEquality, verbose ) }
+
+  def compressLKProof( p: LKProof, method: GrammarFindingMethod = DeltaTableMethod( manyQuantifiers = false ), verbose: Boolean = false ): Option[LKProof] = {
+    val clean_proof = CleanStructuralRules( p )
+
+    if ( verbose )
+      println( s"Total inferences in the input proof: ${rulesNumber( clean_proof )}" )
+
+    val ep = LKToExpansionProof( clean_proof )
+    val hasEquality = containsEqualityReasoning( clean_proof )
+
+    compressToLK( ep, hasEquality, method, verbose )
   }
 
   /**

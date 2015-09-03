@@ -1,5 +1,6 @@
 package at.logic.gapt.testing
 
+import at.logic.gapt.expr.{ EqC, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
 import java.nio.file.{ Paths, Files }
@@ -7,13 +8,15 @@ import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{ loadVeriTProof, extra
 import at.logic.gapt.examples._
 import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
 import at.logic.gapt.proofs.lk.cutIntroduction._
+import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
+import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
 import scala.io.Source
 import scala.collection.immutable.HashMap
 
 import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
+import at.logic.gapt.proofs.expansionTrees.{ toShallow, ExpansionSequent }
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -88,17 +91,9 @@ object testCutIntro extends App {
     collectedMetrics
   }
 
-  def compressLKProof( proof: LKProof, method: GrammarFindingMethod ) = {
-    metrics.value( "method", method.name )
-    CutIntroduction.execute( proof, method ) match {
-      case Some( _ ) => metrics.value( "status", "ok" )
-      case None      => metrics.value( "status", "cutintro_uncompressible" )
-    }
-  }
-
   def compressExpansionProof( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ) = {
     metrics.value( "method", method.name )
-    CutIntroduction.execute( ep, hasEquality, method ) match {
+    CutIntroduction.compressToLK( ep, hasEquality, method, verbose = false ) match {
       case Some( _ ) => metrics.value( "status", "ok" )
       case None      => metrics.value( "status", "cutintro_uncompressible" )
     }
@@ -139,8 +134,14 @@ object testCutIntro extends App {
   /// compress the prover9-TSTP proof found in file fn
   def compressTSTPProof( fn: String, method: GrammarFindingMethod ) = {
     metrics.value( "file", fn )
-    wrapParse { Some( loadProver9LKProof( fn ) ) } foreach { p =>
-      compressLKProof( p, method )
+    wrapParse { Some( Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fn ) ) } foreach {
+      case ( resProof, endSequent ) =>
+        val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
+        val containsEquations = constants( toShallow( expansionProof ) ) exists {
+          case EqC( _ ) => true
+          case _        => false
+        }
+        compressExpansionProof( expansionProof, containsEquations, method )
     }
   }
 
