@@ -53,6 +53,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 //    */
 
     "perform cut introduction on an example proof" in {
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
       val p = LinearExampleProof( 7 )
       CutIntroduction.one_cut_one_quantifier( p, false )
       Success()
@@ -99,6 +100,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
       val p = LinearExampleProof( 4 )
       val Some( pi ) = CutIntroduction.one_cut_one_quantifier( p, false )
       val pe = ReductiveCutElim( pi )

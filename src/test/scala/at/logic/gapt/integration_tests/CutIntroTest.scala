@@ -5,6 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.provers.basicProver.BasicProver
+import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.mutable._
 
 class CutIntroTest extends Specification {
@@ -16,6 +17,7 @@ class CutIntroTest extends Specification {
 
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
+      if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
       val proof = LinearExampleProof( 4 )
 
       val termset = TermsExtraction( proof )
