@@ -24,12 +24,12 @@ import scala.collection.immutable.HashSet
 class CutIntroException( msg: String ) extends Exception( msg )
 
 trait GrammarFindingMethod {
-  def findGrammars( lang: Set[FOLTerm] ): Seq[VectTratGrammar]
+  def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar]
   def name: String
 }
 
 case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMethod {
-  override def findGrammars( lang: Set[FOLTerm] ): Seq[VectTratGrammar] = {
+  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = {
     val delta = manyQuantifiers match {
       case true  => new UnboundedVariableDelta()
       case false => new OneVariableDelta()
@@ -37,15 +37,8 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
     val eigenvariable = "α"
     val deltatable = metrics.time( "dtable" ) { new DeltaTable( lang.toList, eigenvariable, delta ) }
 
-    val grammars = metrics.time( "grammar" ) {
-      ComputeGrammars.findValidGrammars( lang.toList, deltatable, eigenvariable ).sortBy( _.size )
-    }
-
-    if ( grammars.isEmpty ) {
-      Nil
-    } else {
-      val smallestSize = grammars.map( _.size ).min
-      grammars.filter( _.size == smallestSize )
+    metrics.time( "grammar" ) {
+      ComputeGrammars.findValidGrammars( lang.toList, deltatable, eigenvariable ).sortBy( _.size ).headOption
     }
   }
 
@@ -53,8 +46,8 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
 }
 
 case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod {
-  override def findGrammars( lang: Set[FOLTerm] ): Seq[VectTratGrammar] = metrics.time( "grammar" ) {
-    Seq( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, new QMaxSAT ) )
+  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = metrics.time( "grammar" ) {
+    Some( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, new QMaxSAT ) )
   }
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
@@ -181,72 +174,62 @@ object CutIntroduction extends Logger {
     if ( verbose ) println( s"Size of term set: ${termset.set.size}" )
 
     /********** Grammar finding **********/
-    val smallestVtratGrammars = method.findGrammars( termset.set.toSet ) filter { g => g.productions.exists( _._1 != g.axiomVect ) }
-    if ( verbose ) {
-      println( "Smallest grammars:" )
-      smallestVtratGrammars foreach println
-    }
-    val smallestGrammars = smallestVtratGrammars map { simpleToMultiGrammar( termset.encoding, _ ) }
+    method.findGrammars( termset.set.toSet ).filter { g =>
+      g.productions.exists( _._1 != g.axiomVect )
+    }.map { vtratGrammar =>
 
-    if ( smallestGrammars.isEmpty ) {
-      None
-    } else {
+      metrics.value( "grammar_size", vtratGrammar.size )
+
+      if ( verbose ) {
+        println( s"Smallest grammar of size ${vtratGrammar.size}:" )
+        println( vtratGrammar )
+      }
+
+      val grammar = simpleToMultiGrammar( termset.encoding, vtratGrammar )
+
       /** ******** Proof Construction **********/
-      metrics.value( "mingrammar", smallestGrammars.head.size )
-      metrics.value( "num_mingrammars", smallestGrammars.size )
-      if ( verbose ) {
-        println( s"Smallest grammar-size: ${smallestGrammars.head.size}" )
-        println( s"Number of smallest grammars: ${smallestGrammars.length}" )
+
+      val canonicalEHS = new ExtendedHerbrandSequent( endSequent, grammar, computeCanonicalSolutions( grammar ) )
+
+      val minimizedEHS = metrics.time( "minsol" ) {
+        if ( hasEquality && canonicalEHS.cutFormulas.size == 1 )
+          MinimizeSolution.applyEq( canonicalEHS, prover )
+        else if ( !hasEquality )
+          MinimizeSolution.apply( canonicalEHS, prover )
+        else
+          canonicalEHS // TODO: minimize solution for multiple cuts with equality
       }
 
-      val proofs = smallestGrammars.map { grammar =>
-        val ( cutFormulas, ehs1 ) = metrics.time( "minsol" ) {
-          val cutFormulas = computeCanonicalSolutions( grammar )
-
-          val ehs = new ExtendedHerbrandSequent( endSequent, grammar, cutFormulas )
-          val ehs1 =
-            if ( hasEquality && cutFormulas.size == 1 )
-              MinimizeSolution.applyEq( ehs, prover )
-            else if ( !hasEquality )
-              MinimizeSolution.apply( ehs, prover )
-            else
-              ehs // TODO: minimize solution for multiple cuts with equality
-
-          ( cutFormulas, ehs1 )
-        }
-
-        val proof = metrics.time( "prcons" ) {
-          buildProofWithCut( ehs1, prover )
-        }
-
-        val pruned_proof = metrics.time( "cleanproof" ) {
-          CleanStructuralRules( proof.get )
-        }
-
-        ( pruned_proof, ehs1, lcomp( cutFormulas.head ), lcomp( ehs1.cutFormulas.head ) )
+      val Some( proofWithStructuralRules ) = metrics.time( "prcons" ) {
+        buildProofWithCut( minimizedEHS, prover )
       }
 
-      // Sort the list by size of proofs
-      val sorted = proofs.sortWith( ( p1, p2 ) => rulesNumber( p1._1 ) < rulesNumber( p2._1 ) )
-      val smallestProof = sorted.head._1
-      val ehs = sorted.head._2
+      val proof = metrics.time( "cleanproof" ) {
+        CleanStructuralRules( proofWithStructuralRules )
+      }
 
-      metrics.value( "cuts_in", getStatistics( smallestProof ).cuts )
-      metrics.value( "can_sol", sorted.head._3 )
-      metrics.value( "min_sol", sorted.head._4 )
-      metrics.value( "inf_output", rulesNumber( smallestProof ) )
-      metrics.value( "quant_output", quantRulesNumber( smallestProof ) )
+      val lcompCanonicalSol = canonicalEHS.cutFormulas.map( lcomp( _ ) ).sum
+      val lcompMinSol = minimizedEHS.cutFormulas.map( lcomp( _ ) ).sum
+
+      metrics.value( "cuts_in", getStatistics( proof ).cuts )
+      metrics.value( "can_sol", lcompCanonicalSol )
+      metrics.value( "min_sol", lcompMinSol )
+      metrics.value( "inf_output", rulesNumber( proof ) )
+      metrics.value( "quant_output", quantRulesNumber( proof ) )
       if ( verbose ) {
-        println( s"Size of the canonical solution: ${sorted.head._3}" )
-        println( s"Size of the minimized solution: ${sorted.head._4}" )
+        println( s"Size of the canonical solution: $lcompCanonicalSol" )
+        println( s"Size of the minimized solution: $lcompMinSol" )
         println( "Minimized cut formulas:" )
-        ehs.cutFormulas foreach println
-        println( s"Number of cuts introduced: ${getStatistics( smallestProof ).cuts}" )
-        println( s"Total inferences in the proof with cut(s): ${rulesNumber( smallestProof )}" )
-        println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( smallestProof )}" )
+        minimizedEHS.cutFormulas foreach println
+        println( s"Number of cuts introduced: ${getStatistics( proof ).cuts}" )
+        println( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
+        println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )
       }
 
-      Some( smallestProof )
+      proof
+    } orElse {
+      if ( verbose ) println( "No grammar found." )
+      None
     }
   }
 
