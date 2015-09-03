@@ -24,7 +24,10 @@ object testCutIntro extends App {
 
   val resultsOut = new PrintWriter( "result_lines.json" )
 
-  compressAll( 60 )
+  val timeOut = 60 seconds
+  val veritTimeOut = 5 minutes
+
+  compressAll()
 
   resultsOut.close()
 
@@ -35,27 +38,27 @@ object testCutIntro extends App {
     ) ) ).getBytes
   )
 
-  def compressAll( timeout: Int ) {
-    compressAll( DeltaTableMethod( false ), timeout )
-    compressAll( DeltaTableMethod( true ), timeout )
-    compressAll( MaxSATMethod( 1 ), timeout )
-    compressAll( MaxSATMethod( 1, 1 ), timeout )
-    compressAll( MaxSATMethod( 2 ), timeout )
-    compressAll( MaxSATMethod( 2, 2 ), timeout )
+  def compressAll() {
+    compressAll( DeltaTableMethod( false ) )
+    compressAll( DeltaTableMethod( true ) )
+    compressAll( MaxSATMethod( 1 ) )
+    compressAll( MaxSATMethod( 1, 1 ) )
+    compressAll( MaxSATMethod( 2 ) )
+    compressAll( MaxSATMethod( 2, 2 ) )
   }
 
-  def compressAll( method: GrammarFindingMethod, timeout: Int ) = {
-    compressProofSequences( timeout, method )
-    compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", timeout, method )
-    compressLeanCoP( timeout, method )
-    compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", timeout * 5, method )
+  def compressAll( method: GrammarFindingMethod ) = {
+    compressProofSequences( method )
+    compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", method )
+    compressLeanCoP( method )
+    compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", method )
   }
 
-  def saveMetrics( timeout: Int )( f: => Unit ): CollectMetrics = {
+  def saveMetrics( timeout: Duration )( f: => Unit ): CollectMetrics = {
     val collectedMetrics = new CollectMetrics
     metrics.current.withValue( collectedMetrics ) {
       try {
-        withTimeout( timeout seconds ) {
+        withTimeout( timeout ) {
           metrics.time( "total" )( f )
         }
       } catch {
@@ -85,7 +88,7 @@ object testCutIntro extends App {
     collectedMetrics
   }
 
-  def compressLKProof( proof: LKProof, timeout: Int, method: GrammarFindingMethod ) = {
+  def compressLKProof( proof: LKProof, method: GrammarFindingMethod ) = {
     metrics.value( "method", method.name )
     CutIntroduction.execute( proof, method ) match {
       case Some( _ ) => metrics.value( "status", "ok" )
@@ -93,7 +96,7 @@ object testCutIntro extends App {
     }
   }
 
-  def compressExpansionProof( ep: ExpansionSequent, hasEquality: Boolean, timeout: Int, method: GrammarFindingMethod ) = {
+  def compressExpansionProof( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ) = {
     metrics.value( "method", method.name )
     CutIntroduction.execute( ep, hasEquality, method ) match {
       case Some( _ ) => metrics.value( "status", "ok" )
@@ -124,29 +127,29 @@ object testCutIntro extends App {
   }
 
   // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
-  def compressTSTP( str: String, timeout: Int, method: GrammarFindingMethod ) = {
+  def compressTSTP( str: String, method: GrammarFindingMethod ) = {
 
     // Process each file in parallel
     Source.fromFile( str ).getLines() foreach { l =>
       val data = l.split( "," )
-      saveMetrics( timeout ) { compressTSTPProof( data( 0 ), timeout, method ) }
+      saveMetrics( timeOut ) { compressTSTPProof( data( 0 ), method ) }
     }
   }
 
   /// compress the prover9-TSTP proof found in file fn
-  def compressTSTPProof( fn: String, timeout: Int, method: GrammarFindingMethod ) = {
+  def compressTSTPProof( fn: String, method: GrammarFindingMethod ) = {
     metrics.value( "file", fn )
     wrapParse { Some( loadProver9LKProof( fn ) ) } foreach { p =>
-      compressLKProof( p, timeout, method )
+      compressLKProof( p, method )
     }
   }
 
   /****************************** VeriT SMT-LIB ******************************/
 
   // Compress all veriT-proofs found in the directory str and beyond
-  def compressVeriT( str: String, timeout: Int, method: GrammarFindingMethod ) = {
+  def compressVeriT( str: String, method: GrammarFindingMethod ) = {
     getVeriTProofs( str ) foreach { p =>
-      saveMetrics( timeout ) { compressVeriTProof( p, timeout, method ) }
+      saveMetrics( veritTimeOut ) { compressVeriTProof( p, method ) }
     }
   }
 
@@ -161,44 +164,44 @@ object testCutIntro extends App {
   }
 
   // Compress the veriT-proof in file str
-  def compressVeriTProof( str: String, timeout: Int, method: GrammarFindingMethod ) {
+  def compressVeriTProof( str: String, method: GrammarFindingMethod ) {
     metrics.value( "file", str )
 
     wrapParse { loadVeriTProof( str ) } foreach { ep =>
       // VeriT proofs have the equality axioms as formulas in the end-sequent
-      compressExpansionProof( ep, false, timeout, method )
+      compressExpansionProof( ep, false, method )
     }
   }
 
   // leancop
 
-  def compressLeanCoP( timeout: Int, method: GrammarFindingMethod ) = {
+  def compressLeanCoP( method: GrammarFindingMethod ) = {
     recursiveListFiles( "testing/TSTP/leanCoP" ) foreach { f =>
       if ( f.getName endsWith ".out" ) {
-        compressLeanCoPProof( f.getPath, timeout, method )
+        compressLeanCoPProof( f.getPath, method )
       }
     }
   }
 
-  def compressLeanCoPProof( fn: String, timeout: Int, method: GrammarFindingMethod ) = saveMetrics( timeout ) {
+  def compressLeanCoPProof( fn: String, method: GrammarFindingMethod ) = saveMetrics( timeOut ) {
     metrics.value( "file", fn )
     wrapParse { LeanCoPParser.getExpansionProof( fn ) } foreach { proof =>
-      compressExpansionProof( proof, true, timeout, method )
+      compressExpansionProof( proof, true, method )
     }
   }
 
   /***************************** Proof Sequences ******************************/
 
-  def compressProofSequences( timeout: Int, method: GrammarFindingMethod ) = {
+  def compressProofSequences( method: GrammarFindingMethod ) = {
     proofSequences foreach { proofSeq =>
       var i = 0
       var status = ""
       while ( !status.endsWith( "timeout" ) ) {
         i = i + 1
         val pn = s"${proofSeq.name}($i)"
-        status = saveMetrics( timeout ) {
+        status = saveMetrics( timeOut ) {
           metrics.value( "file", pn )
-          compressLKProof( proofSeq( i ), timeout, method )
+          compressLKProof( proofSeq( i ), method )
         }.data( "status" ).toString
       }
     }
