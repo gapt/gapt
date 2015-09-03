@@ -1,4 +1,5 @@
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
+import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 
 lazy val commonSettings = Seq(
