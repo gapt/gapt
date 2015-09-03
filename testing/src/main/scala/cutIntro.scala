@@ -7,8 +7,9 @@ import java.nio.file.{ Paths, Files }
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{ loadVeriTProof, extractTerms, loadProver9LKProof }
 import at.logic.gapt.examples._
 import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
+import at.logic.gapt.proofs.lk.{ LKToExpansionProof, rulesNumber, containsEqualityReasoning }
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
+import at.logic.gapt.proofs.resolution.{ numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
@@ -81,18 +82,29 @@ object testCutIntro extends App {
       metrics.value( "phase", collectedMetrics.currentPhase )
     }
 
-    val json = JObject( collectedMetrics.data.mapValues {
-      case l: Long => JInt( l )
-      case l: Int  => JInt( l )
-      case s       => JString( s toString )
-    }.toList )
+    def jsonify( v: Any ): JValue = v match {
+      case l: Long    => JInt( l )
+      case l: Int     => JInt( l )
+      case b: Boolean => JBool( b )
+      case l: Seq[_]  => JArray( l map jsonify toList )
+      case s          => JString( s toString )
+    }
+
+    val json = JObject( collectedMetrics.data mapValues jsonify toList )
     resultsOut.println( compact( render( json ) ) ); resultsOut.flush()
 
     collectedMetrics
   }
 
+  def compressLKProof( p: LKProof, method: GrammarFindingMethod ) = {
+    val hasEquality = containsEqualityReasoning( p )
+    metrics.value( "lkinf_input", rulesNumber( p ) )
+    compressExpansionProof( LKToExpansionProof( p ), hasEquality, method )
+  }
+
   def compressExpansionProof( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ) = {
     metrics.value( "method", method.name )
+    metrics.value( "has_equality", hasEquality )
     CutIntroduction.compressToLK( ep, hasEquality, method, verbose = false ) match {
       case Some( _ ) => metrics.value( "status", "ok" )
       case None      => metrics.value( "status", "cutintro_uncompressible" )
@@ -136,6 +148,7 @@ object testCutIntro extends App {
     metrics.value( "file", fn )
     wrapParse { Some( Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fn ) ) } foreach {
       case ( resProof, endSequent ) =>
+        metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( resProof ) )
         val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
         val containsEquations = constants( toShallow( expansionProof ) ) exists {
           case EqC( _ ) => true

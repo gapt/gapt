@@ -121,6 +121,14 @@ object subTerms {
   }
 }
 
+object expressionSize {
+  def apply( e: LambdaExpression ): Int = e match {
+    case Var( _ ) | Const( _ ) => 1
+    case Abs( _, f )           => 1 + expressionSize( f )
+    case App( a, b )           => 1 + expressionSize( a ) + expressionSize( b )
+  }
+}
+
 /**
  * get a new variable/constant (similar to the current and) different from all
  * variables/constants in the blackList, returns this variable if this variable

@@ -9,14 +9,16 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.{ findMinimalVectGrammar, VectTratGrammar }
-import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, toShallow, ExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, extractInstances, toShallow, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
+import at.logic.gapt.proofs.resolution.numberOfResolutionsAndParamodulations
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
 import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
+import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.utils.logging.{ CollectMetrics, metrics, Logger }
 import scala.collection.immutable.HashSet
@@ -161,6 +163,12 @@ object CutIntroduction extends Logger {
       case false => new BasicProver()
     }
 
+    val herbrandSequent = extractInstances( ep )
+    val Some( herbrandSequentResolutionProof ) = new Prover9Prover().getRobinsonProof( herbrandSequent )
+    metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
+    metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
+    metrics.value( "hs_resinf", numberOfResolutionsAndParamodulations( herbrandSequentResolutionProof ) )
+
     metrics.value( "quant_input", quantRulesNumberET( ep ) )
 
     if ( verbose )
@@ -207,12 +215,21 @@ object CutIntroduction extends Logger {
 
       metrics.value( "cansol_lcomp", lcompCanonicalSol )
       metrics.value( "minsol_lcomp", lcompMinSol )
+      metrics.value( "cansol_scomp", canonicalEHS.cutFormulas.map( expressionSize( _ ) ).sum )
+      metrics.value( "minsol_scomp", minimizedEHS.cutFormulas.map( expressionSize( _ ) ).sum )
+      metrics.value( "minsol", minimizedEHS.cutFormulas.map( _.toString ) )
       if ( verbose ) {
         println( s"Size of the canonical solution: $lcompCanonicalSol" )
         println( s"Size of the minimized solution: $lcompMinSol" )
         println( "Minimized cut formulas:" )
         minimizedEHS.cutFormulas foreach println
       }
+
+      val ehsSequent = minimizedEHS.getDeep
+      val Some( ehsResolutionProof ) = new Prover9Prover().getRobinsonProof( ehsSequent )
+      metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
+      metrics.value( "ehs_scomp", expressionSize( ehsSequent.toFormula ) )
+      metrics.value( "ehs_resinf", numberOfResolutionsAndParamodulations( ehsResolutionProof ) )
 
       minimizedEHS
     } orElse {
