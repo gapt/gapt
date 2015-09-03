@@ -37,7 +37,7 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
     val eigenvariable = "α"
     val deltatable = metrics.time( "dtable" ) { new DeltaTable( lang.toList, eigenvariable, delta ) }
 
-    metrics.time( "grammar" ) {
+    metrics.time( "dtable2grammar" ) {
       ComputeGrammars.findValidGrammars( lang.toList, deltatable, eigenvariable ).sortBy( _.size ).headOption
     }
   }
@@ -46,9 +46,8 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
 }
 
 case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod {
-  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = metrics.time( "grammar" ) {
+  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] =
     Some( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, new QMaxSAT ) )
-  }
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
 }
@@ -141,7 +140,7 @@ object CutIntroduction extends Logger {
 
   def execute( proof: LKProof, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] = {
     val clean_proof = CleanStructuralRules( proof )
-    metrics.value( "inf_input", rulesNumber( clean_proof ) )
+    metrics.value( "lkinf_input", rulesNumber( clean_proof ) )
 
     if ( verbose )
       println( s"Total inferences in the input proof: ${rulesNumber( clean_proof )}" )
@@ -174,7 +173,9 @@ object CutIntroduction extends Logger {
     if ( verbose ) println( s"Size of term set: ${termset.set.size}" )
 
     /********** Grammar finding **********/
-    method.findGrammars( termset.set.toSet ).filter { g =>
+    metrics.time( "grammar" ) {
+      method.findGrammars( termset.set.toSet )
+    }.filter { g =>
       g.productions.exists( _._1 != g.axiomVect )
     }.map { vtratGrammar =>
 
@@ -211,11 +212,11 @@ object CutIntroduction extends Logger {
       val lcompCanonicalSol = canonicalEHS.cutFormulas.map( lcomp( _ ) ).sum
       val lcompMinSol = minimizedEHS.cutFormulas.map( lcomp( _ ) ).sum
 
-      metrics.value( "cuts_in", getStatistics( proof ).cuts )
-      metrics.value( "can_sol", lcompCanonicalSol )
-      metrics.value( "min_sol", lcompMinSol )
-      metrics.value( "inf_output", rulesNumber( proof ) )
-      metrics.value( "quant_output", quantRulesNumber( proof ) )
+      metrics.value( "lkcuts_output", getStatistics( proof ).cuts )
+      metrics.value( "cansol_lcomp", lcompCanonicalSol )
+      metrics.value( "minsol_lcomp", lcompMinSol )
+      metrics.value( "lkinf_output", rulesNumber( proof ) )
+      metrics.value( "lkquant_output", quantRulesNumber( proof ) )
       if ( verbose ) {
         println( s"Size of the canonical solution: $lcompCanonicalSol" )
         println( s"Size of the minimized solution: $lcompMinSol" )

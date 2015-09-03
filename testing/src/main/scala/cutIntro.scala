@@ -60,7 +60,7 @@ object testCutIntro extends App {
         }
       } catch {
         case e: TimeOutException =>
-          metrics.value( "status", collectedMetrics.currentPhase + "_timeout" )
+          metrics.value( "status", "cutintro_timeout" )
         case e: OutOfMemoryError =>
           metrics.value( "status", "cutintro_out_of_memory" )
         case e: StackOverflowError =>
@@ -72,6 +72,7 @@ object testCutIntro extends App {
         case e: Throwable =>
           metrics.value( "status", "cutintro_other_exception" )
       }
+      metrics.value( "phase", collectedMetrics.currentPhase )
     }
 
     val json = JObject( collectedMetrics.data.mapValues {
