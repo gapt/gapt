@@ -9,6 +9,7 @@ import at.logic.gapt.proofs.lk.base.{ OccSequent, HOLSequent, LKProof }
 import at.logic.gapt.proofs.resolution.HOLClause
 
 import scala.collection.GenTraversable
+import scala.collection.mutable
 
 /**
  * Matches constants and variables, but nothing else.
@@ -48,6 +49,30 @@ object isInVNF {
 
       ( ok, vars )
     }
+  }
+}
+
+/**
+ * Transforms an expression into an alpha-equivalent expression in
+ * variable-normal form, where no two binders bind the same variable.
+ */
+object toVNF {
+  def apply( e: LambdaExpression ): LambdaExpression = {
+    val seen = mutable.Set[Var]()
+
+    def makeDistinct( e: LambdaExpression ): LambdaExpression = e match {
+      case Var( _ )    => e
+      case Const( _ )  => e
+      case App( a, b ) => App( makeDistinct( a ), makeDistinct( b ) )
+      case Abs( v, a ) if seen contains v =>
+        val newVar = rename( v, seen toList )
+        makeDistinct( Abs( newVar, Substitution( v -> newVar )( a ) ) )
+      case Abs( v, a ) if !( seen contains v ) =>
+        seen += v
+        Abs( v, makeDistinct( a ) )
+    }
+
+    makeDistinct( e )
   }
 }
 
