@@ -67,7 +67,6 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
 
     commands += "set(quiet)" // suppresses noisy output on stderr
     commands += "clear(auto_denials)" // prevents prover9 from exiting with error code 2 even though a proof was found
-    commands += "set(auto2)"
     commands ++= extraCommands( renaming )
 
     commands += "formulas(sos)"
