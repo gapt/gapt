@@ -4,12 +4,13 @@ import at.logic.gapt.expr.{ EqC, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
 import java.nio.file.{ Paths, Files }
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{ loadVeriTProof, extractTerms, loadProver9LKProof }
 import at.logic.gapt.examples._
+import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
 import at.logic.gapt.proofs.lk.{ LKToExpansionProof, rulesNumber, containsEqualityReasoning }
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.proofs.resolution.{ numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
+import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
@@ -17,7 +18,7 @@ import scala.io.Source
 import scala.collection.immutable.HashMap
 
 import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.proofs.expansionTrees.{ toShallow, ExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toShallow, ExpansionSequent }
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -45,10 +46,12 @@ object testCutIntro extends App {
   def compressAll() {
     compressAll( DeltaTableMethod( false ) )
     compressAll( DeltaTableMethod( true ) )
-    compressAll( MaxSATMethod( 1 ) )
-    compressAll( MaxSATMethod( 1, 1 ) )
-    compressAll( MaxSATMethod( 2 ) )
-    compressAll( MaxSATMethod( 2, 2 ) )
+
+    val solver = new OpenWBO
+    compressAll( MaxSATMethod( solver, 1 ) )
+    compressAll( MaxSATMethod( solver, 1, 1 ) )
+    compressAll( MaxSATMethod( solver, 2 ) )
+    compressAll( MaxSATMethod( solver, 2, 2 ) )
   }
 
   def compressAll( method: GrammarFindingMethod ) = {
@@ -181,9 +184,9 @@ object testCutIntro extends App {
   def compressVeriTProof( str: String, method: GrammarFindingMethod ) {
     metrics.value( "file", str )
 
-    wrapParse { loadVeriTProof( str ) } foreach { ep =>
+    wrapParse { VeriTParser.getExpansionProof( str ) } foreach { ep =>
       // VeriT proofs have the equality axioms as formulas in the end-sequent
-      compressExpansionProof( ep, false, method )
+      compressExpansionProof( addSymmetry( ep ), hasEquality = false, method )
     }
   }
 
@@ -209,8 +212,8 @@ object testCutIntro extends App {
   def compressProofSequences( method: GrammarFindingMethod ) = {
     proofSequences foreach { proofSeq =>
       var i = 0
-      var status = ""
-      while ( !status.endsWith( "timeout" ) ) {
+      var status = "ok"
+      while ( status == "ok" || status == "cutintro_uncompressible" ) {
         i = i + 1
         val pn = s"${proofSeq.name}($i)"
         status = saveMetrics( timeOut ) {

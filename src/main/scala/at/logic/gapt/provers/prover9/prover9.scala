@@ -46,19 +46,19 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
     IvyToRobinson( ivyProof )
   }
 
-  @deprecated( "Use Prover9Importer.robinsonProof instead" )
+  @deprecated( "Use Prover9Importer.robinsonProof instead", "2015-08-25" )
   def reconstructRobinsonProofFromFile( p9File: String ): RobinsonResolutionProof =
     Prover9Importer robinsonProofFromFile p9File
 
-  @deprecated( "Use Prover9Importer.robinsonProof instead" )
+  @deprecated( "Use Prover9Importer.robinsonProof instead", "2015-08-25" )
   def reconstructRobinsonProofFromOutput( p9Output: String ): RobinsonResolutionProof =
     Prover9Importer robinsonProof p9Output
 
-  @deprecated( "Use Prover9Importer.lkProof instead" )
+  @deprecated( "Use Prover9Importer.lkProof instead", "2015-08-25" )
   def reconstructLKProofFromFile( p9File: String ): LKProof =
     Prover9Importer lkProofFromFile p9File
 
-  @deprecated( "Use Prover9Importer.lkProof instead" )
+  @deprecated( "Use Prover9Importer.lkProof instead", "2015-08-25" )
   def reconstructLKProofFromOutput( p9Output: String ): LKProof =
     Prover9Importer lkProof p9Output
 

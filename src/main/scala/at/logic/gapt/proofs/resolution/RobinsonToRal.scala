@@ -14,9 +14,9 @@ import at.logic.gapt.proofs.resolution.ral.{ InitialSequent => RalInitialSequent
  */
 
 object RobinsonToRal extends RobinsonToRal {
-  @deprecated
+  @deprecated( "No idea what this should do", "2015-05-03" )
   override def convert_formula( e: HOLFormula ): HOLFormula = e
-  @deprecated
+  @deprecated( "No idea what this should do", "2015-05-03" )
   override def convert_substitution( s: Substitution ): Substitution = s
 
   //TODO: this is somehow dirty....

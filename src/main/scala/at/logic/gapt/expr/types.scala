@@ -30,11 +30,11 @@ case class -> ( val in: TA, val out: TA ) extends TComplexA {
 }
 // Overloading the apply method so that it takes strings.
 object -> {
-  @deprecated
+  @deprecated( "Build your types without parsing strings!", "2015-05-13" )
   def apply( in: String, out: String ) = new -> ( Type( in ), Type( out ) )
-  @deprecated
+  @deprecated( "Build your types without parsing strings!", "2015-05-13" )
   def apply( in: TA, out: String ) = new -> ( in, Type( out ) )
-  @deprecated
+  @deprecated( "Build your types without parsing strings!", "2015-05-13" )
   def apply( in: String, out: TA ) = new -> ( Type( in ), out )
   def unapply( ta: TA ) = ta match {
     case t: -> => Some( ( t.in, t.out ) )
@@ -67,7 +67,7 @@ object Arity {
   }
 }
 
-@deprecated
+@deprecated( "Build your types without parsing strings!", "2015-05-13" )
 object StringExtractor {
   def apply( t: TA ): String = t match {
     case Ti              => "i"
@@ -83,7 +83,7 @@ object StringExtractor {
   }
 }
 
-@deprecated
+@deprecated( "Build your types without parsing strings!", "2015-05-13" )
 object Type {
   def apply( s: String ): TA = StringExtractor.unapply( s ) match {
     case Some( result ) => result

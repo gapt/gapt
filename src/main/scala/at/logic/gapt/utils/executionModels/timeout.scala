@@ -23,7 +23,7 @@ package timeout {
    * }
    */
   object withTimeout extends Logger {
-    @deprecated
+    @deprecated( "Use Durations as argument", "2015-05-15" )
     def apply[T]( to: Long )( f: => T ): T = apply( to millis )( f )
 
     def apply[T]( duration: Duration )( f: => T ): T = {

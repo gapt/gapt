@@ -17,7 +17,7 @@ import at.logic.gapt.proofs.resolution.numberOfResolutionsAndParamodulations
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
-import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
+import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.utils.logging.{ CollectMetrics, metrics, Logger }
@@ -47,11 +47,15 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
   override def name: String = if ( manyQuantifiers ) "many_dtable" else "1_dtable"
 }
 
-case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod {
+case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extends GrammarFindingMethod {
   override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] =
-    Some( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, new QMaxSAT ) )
+    Some( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, solver ) )
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
+}
+object MaxSATMethod {
+  def apply( nonTerminalLengths: Int* ): MaxSATMethod =
+    MaxSATMethod( bestAvailableMaxSatSolver, nonTerminalLengths: _* )
 }
 
 /**
@@ -71,7 +75,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def one_cut_one_quantifier( proof: LKProof, verbose: Boolean ) =
     execute( proof, DeltaTableMethod( false ), verbose )
   /**
@@ -85,7 +89,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def one_cut_one_quantifier( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, DeltaTableMethod( false ), verbose )
 
@@ -97,7 +101,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def one_cut_many_quantifiers( proof: LKProof, verbose: Boolean ) =
     execute( proof, DeltaTableMethod( true ), verbose )
   /**
@@ -111,7 +115,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def one_cut_many_quantifiers( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, DeltaTableMethod( true ), verbose )
   /**
@@ -123,7 +127,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A list of cut-formulas.
    */
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def many_cuts_one_quantifier( proof: LKProof, numcuts: Int, verbose: Boolean ) =
     execute( proof, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose )
   /**
@@ -138,21 +142,21 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A list of cut-formulas.
    */
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def many_cuts_one_quantifier( es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose )
 
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def execute( proof: LKProof, method: GrammarFindingMethod ): Option[LKProof] = execute( proof, method, false )
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def execute( proof: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ): Option[LKProof] =
     execute( proof, hasEquality, method, false )
 
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def execute( proof: LKProof, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
     compressLKProof( proof, method, verbose )
 
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def execute( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
     compressToLK( ep, hasEquality, method, verbose )
 
