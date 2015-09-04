@@ -212,8 +212,8 @@ object testCutIntro extends App {
   def compressProofSequences( method: GrammarFindingMethod ) = {
     proofSequences foreach { proofSeq =>
       var i = 0
-      var status = ""
-      while ( !status.endsWith( "timeout" ) ) {
+      var status = "ok"
+      while ( status == "ok" || status == "cutintro_uncompressible" ) {
         i = i + 1
         val pn = s"${proofSeq.name}($i)"
         status = saveMetrics( timeOut ) {
