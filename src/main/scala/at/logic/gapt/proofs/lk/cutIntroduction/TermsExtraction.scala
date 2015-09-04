@@ -34,7 +34,7 @@ import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 
-@deprecated( "Use InstanceTermEncoding instead." )
+@deprecated( "Use InstanceTermEncoding instead.", "2015-07-01" )
 object TermsExtraction {
   def apply( proof: LKProof ): TermSet = apply( LKToExpansionProof( proof ) )
 
@@ -49,7 +49,7 @@ object TermsExtraction {
 // this represents a set of terms containing, for every such key, the terms g_F( t_1 ), ..., g_F( t_n ),
 // where g_F is a function symbol associated with the formula F. Functions to go back and forth
 // between the input map and the representation are provided.
-@deprecated( "Use InstanceTermEncoding instead." )
+@deprecated( "Use InstanceTermEncoding instead.", "2015-07-01" )
 class TermSet( val encoding: InstanceTermEncoding, val set: List[FOLTerm] ) {
 
   def formulas = set.map { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }

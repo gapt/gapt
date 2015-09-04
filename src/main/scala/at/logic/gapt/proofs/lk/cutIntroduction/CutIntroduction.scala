@@ -75,7 +75,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def one_cut_one_quantifier( proof: LKProof, verbose: Boolean ) =
     execute( proof, DeltaTableMethod( false ), verbose )
   /**
@@ -89,7 +89,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def one_cut_one_quantifier( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, DeltaTableMethod( false ), verbose )
 
@@ -101,7 +101,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def one_cut_many_quantifiers( proof: LKProof, verbose: Boolean ) =
     execute( proof, DeltaTableMethod( true ), verbose )
   /**
@@ -115,7 +115,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A proof with one quantified cut.
    */
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def one_cut_many_quantifiers( es: ExpansionSequent, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, DeltaTableMethod( true ), verbose )
   /**
@@ -127,7 +127,7 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A list of cut-formulas.
    */
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def many_cuts_one_quantifier( proof: LKProof, numcuts: Int, verbose: Boolean ) =
     execute( proof, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose )
   /**
@@ -142,21 +142,21 @@ object CutIntroduction extends Logger {
    *        should be printed on screen.
    * @return A list of cut-formulas.
    */
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def many_cuts_one_quantifier( es: ExpansionSequent, numcuts: Int, hasEquality: Boolean, verbose: Boolean ) =
     execute( es, hasEquality, MaxSATMethod( Seq.fill( numcuts )( 1 ): _* ), verbose )
 
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def execute( proof: LKProof, method: GrammarFindingMethod ): Option[LKProof] = execute( proof, method, false )
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def execute( proof: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ): Option[LKProof] =
     execute( proof, hasEquality, method, false )
 
-  @deprecated
+  @deprecated( "Use compressLKProof instead", "2015-09-03" )
   def execute( proof: LKProof, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
     compressLKProof( proof, method, verbose )
 
-  @deprecated
+  @deprecated( "Use compressToLK instead", "2015-09-03" )
   def execute( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
     compressToLK( ep, hasEquality, method, verbose )
 

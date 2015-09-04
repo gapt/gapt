@@ -240,7 +240,6 @@ object Const {
 object App {
   def apply( f: LambdaExpression, a: LambdaExpression ) = determineTraits.forApp( f, a )
 
-  @deprecated( "This constructor has moved to Apps" )
   def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression = Apps( function, arguments )
 
   def unapply( e: LambdaExpression ) = e match {
