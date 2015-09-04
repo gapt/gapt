@@ -17,7 +17,7 @@ import at.logic.gapt.proofs.resolution.numberOfResolutionsAndParamodulations
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
-import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
+import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.utils.logging.{ CollectMetrics, metrics, Logger }
@@ -47,11 +47,15 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
   override def name: String = if ( manyQuantifiers ) "many_dtable" else "1_dtable"
 }
 
-case class MaxSATMethod( nonTerminalLengths: Int* ) extends GrammarFindingMethod {
+case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extends GrammarFindingMethod {
   override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] =
-    Some( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, new QMaxSAT ) )
+    Some( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, solver ) )
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
+}
+object MaxSATMethod {
+  def apply( nonTerminalLengths: Int* ): MaxSATMethod =
+    MaxSATMethod( bestAvailableMaxSatSolver, nonTerminalLengths: _* )
 }
 
 /**
