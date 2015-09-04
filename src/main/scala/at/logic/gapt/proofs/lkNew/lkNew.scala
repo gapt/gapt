@@ -1,10 +1,11 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.lk.base._
 
-import scala.collection.immutable.HashMap
+import scala.collection.mutable
 
 abstract class LKProof {
   /**
@@ -77,6 +78,46 @@ abstract class LKProof {
    * @return
    */
   def postOrder: Seq[LKProof]
+
+  /**
+   * Checks whether indices are in the right place and premise is defined at all of them.
+   *
+   * @param premise The sequent to be checked.
+   * @param antecedentIndices Indices that should be in the antecedent.
+   * @param succedentIndices Indices that should be in the succedent.
+   */
+  protected def validateIndices( premise: HOLSequent, antecedentIndices: Seq[SequentIndex], succedentIndices: Seq[SequentIndex] ): Unit = {
+    val antSet = mutable.HashSet[SequentIndex]()
+    val sucSet = mutable.HashSet[SequentIndex]()
+
+    for ( i <- antecedentIndices ) i match {
+      case Ant( _ ) =>
+
+        if ( !premise.isDefinedAt( i ) )
+          throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $i." )
+
+        if ( antSet contains i )
+          throw new LKRuleCreationException( s"Cannot create $longName: Duplicate index $i for sequent $premise." )
+
+        antSet += i
+
+      case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Index $i should be in the antecedent." )
+    }
+
+    for ( i <- succedentIndices ) i match {
+      case Suc( _ ) =>
+
+        if ( !premise.isDefinedAt( i ) )
+          throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $i." )
+
+        if ( sucSet contains i )
+          throw new LKRuleCreationException( s"Cannot create $longName: Duplicate index $i for sequent $premise." )
+
+        sucSet += i
+
+      case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Index $i should be in the succedent." )
+    }
+  }
 }
 
 /**
@@ -113,6 +154,7 @@ abstract class UnaryLKProof extends LKProof {
   override def subProofs = Seq( subProof )
 
   override def postOrder = subProof.postOrder :+ this
+
 }
 
 object UnaryLKProof {
@@ -180,8 +222,6 @@ object BinaryLKProof {
   def unapply( p: BinaryLKProof ) = Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }
 
-// <editor-fold desc="Axioms">
-
 /**
  * An LKProof consisting of a single sequent:
  * <pre>
@@ -207,8 +247,7 @@ object InitialSequent {
 }
 
 case class ArbitraryAxiom( endSequent: HOLSequent ) extends InitialSequent {
-  // FIXME
-  override def longName = ???
+  override def longName = "ArbitraryAxiom"
 }
 
 /**
@@ -282,9 +321,6 @@ object Axiom {
 
   def apply( ant: Seq[HOLFormula], suc: Seq[HOLFormula] ): InitialSequent = apply( Sequent( ant, suc ) )
 }
-// </editor-fold>
-
-// <editor-fold desc="Structural rules">
 
 /**
  * An LKProof ending with a left contraction:
@@ -300,32 +336,15 @@ object Axiom {
  */
 case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
-  ( aux1, aux2 ) match {
-    case ( Ant( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the succedent." )
-  }
-
-  if ( aux1 == aux2 )
-    throw new LKRuleCreationException( s"Cannot create $longName: Indices of aux formulas are equal." )
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
+  validateIndices( premise, Seq( aux1, aux2 ), Seq() )
 
   if ( premise( aux1 ) != premise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
-  // </editor-fold>
 
   val mainFormula = premise( aux1 )
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
 
   private val newContext = premise delete a2 delete a1
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = mainFormula +: newContext
 
@@ -343,10 +362,9 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
     Seq( aux1, aux2 ) +: ( premise.indicesSequent delete a2 delete a1 map { i => Seq( i ) } )
   )
 
-  // </editor-fold>
 }
 
-object ContractionLeftRule {
+object ContractionLeftRule extends RuleConvenienceObject( "ContractionLeftRule" ) {
   /**
    * Convenience constructor for c:l that, given a formula to contract on the left, will automatically pick the first two occurrences of that formula.
    *
@@ -356,16 +374,10 @@ object ContractionLeftRule {
    */
   def apply( subProof: LKProof, f: HOLFormula ): ContractionLeftRule = {
     val premise = subProof.endSequent
-    val i = premise.antecedent indexOf f
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create ContractionLeftRule: Aux formula $f not found in antecedent of $premise." )
 
-    val j = premise.antecedent indexOf ( f, i + 1 )
+    val ( indices, _ ) = findFormulasInPremise( premise, Seq( f, f ), Seq() )
 
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create ContractionLeftRule: Aux formula $f only found once in antecedent of $premise." )
-
-    new ContractionLeftRule( subProof, Ant( i ), Ant( j ) )
+    new ContractionLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
   }
 
 }
@@ -384,32 +396,15 @@ object ContractionLeftRule {
  */
 case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Suc( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the antecedent." )
-  }
-
-  if ( aux1 == aux2 )
-    throw new LKRuleCreationException( s"Cannot create $longName: Indices of aux formulas are equal." )
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
+  validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
 
   if ( premise( aux1 ) != premise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
-  // </editor-fold>
 
   val mainFormula = premise( aux1 )
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
 
   private val newContext = premise.delete( a2 ).delete( a1 )
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = newContext :+ mainFormula
 
@@ -429,10 +424,9 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
     ( premise.indicesSequent delete a2 delete a1 map { i => Seq( i ) } ) :+ Seq( aux1, aux2 )
   )
 
-  // </editor-fold>
 }
 
-object ContractionRightRule {
+object ContractionRightRule extends RuleConvenienceObject( "ContractionRightRule" ) {
   /**
    * Convenience constructor for c:r that, given a formula to contract on the right, will automatically pick the first two occurrences of that formula.
    *
@@ -442,16 +436,9 @@ object ContractionRightRule {
    */
   def apply( subProof: LKProof, f: HOLFormula ): ContractionRightRule = {
     val premise = subProof.endSequent
-    val i = premise.succedent indexOf f
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Aux formula $f not found in succedent of $premise." )
 
-    val j = premise.succedent indexOf ( f, i + 1 )
-
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create ContractionRightRule: Aux formula $f only found once in succedent of $premise." )
-
-    new ContractionRightRule( subProof, Suc( i ), Suc( j ) )
+    val ( _, indices ) = findFormulasInPremise( premise, Seq(), Seq( f, f ) )
+    new ContractionRightRule( subProof, Suc( indices( 0 ) ), Suc( indices( 1 ) ) )
   }
 
 }
@@ -524,21 +511,12 @@ case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula ) extends 
  * @param aux2 The index of A in π,,2,,.
  */
 case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
-  // <editor-fold desc="Sanity checks">
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the wrong cedent." )
-  }
 
-  if ( !( leftPremise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $leftPremise is not defined at index $aux1." )
-
-  if ( !( rightPremise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $rightPremise is not defined at index $aux2." )
+  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
+  validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas are not the same." )
-  // </editor-fold>
 
   private val ( leftContext, rightContext ) = ( leftPremise delete aux1, rightPremise delete aux2 )
   def endSequent = leftContext ++ rightContext
@@ -565,7 +543,7 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
   )
 }
 
-object CutRule {
+object CutRule extends RuleConvenienceObject( "CutRule" ) {
   /**
    * Convenience constructor for cut that, given a formula A, will attempt to create a cut inference with that cut formula.
    *
@@ -576,22 +554,13 @@ object CutRule {
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, A: HOLFormula ): CutRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
-    val i = leftPremise.succedent indexOf A
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create CutRule: Aux formula $A not found in succedent of $leftPremise." )
 
-    val j = rightPremise.antecedent indexOf A
+    val ( _, sucIndices ) = findFormulasInPremise( leftPremise, Seq(), Seq( A ) )
+    val ( antIndices, _ ) = findFormulasInPremise( rightPremise, Seq( A ), Seq() )
 
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create CutRule: Aux formula $A not found in antecedent of $rightPremise." )
-
-    new CutRule( leftSubProof, Suc( i ), rightSubProof, Ant( j ) )
+    new CutRule( leftSubProof, Suc( sucIndices( 0 ) ), rightSubProof, Ant( antIndices( 0 ) ) )
   }
 }
-
-// </editor-fold>
-
-// <editor-fold desc="Propositional rules>
 
 /**
  * An LKProof ending with a negation on the left:
@@ -606,16 +575,7 @@ object CutRule {
  */
 case class NegLeftRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-  aux match {
-    case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: $aux is in the antecedent." )
-    case Suc( _ ) =>
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
-
-  // </editor-fold>
+  validateIndices( premise, Seq(), Seq( aux ) )
 
   val ( auxFormula, context ) = premise.focus( aux )
   val mainFormula = Neg( auxFormula )
@@ -633,7 +593,7 @@ case class NegLeftRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKPr
   )
 }
 
-object NegLeftRule {
+object NegLeftRule extends RuleConvenienceObject( "NegLeftRule" ) {
   /**
    * Convenience constructor that automatically uses the first occurrence of supplied aux formula.
    *
@@ -644,12 +604,9 @@ object NegLeftRule {
   def apply( subProof: LKProof, formula: HOLFormula ): NegLeftRule = {
     val premise = subProof.endSequent
 
-    val i = premise.succedent indexOf formula
+    val ( _, indices ) = findFormulasInPremise( premise, Seq(), Seq( formula ) )
 
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create NegLeftRule: $formula not found in succedent of $premise." )
-
-    new NegLeftRule( subProof, Suc( i ) )
+    new NegLeftRule( subProof, Suc( indices( 0 ) ) )
   }
 }
 
@@ -666,16 +623,7 @@ object NegLeftRule {
  */
 case class NegRightRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-  aux match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: $aux is in the succedent." )
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
-
-  // </editor-fold>
+  validateIndices( premise, Seq( aux ), Seq() )
 
   val ( auxFormula, context ) = premise.focus( aux )
   val mainFormula = Neg( auxFormula )
@@ -694,7 +642,7 @@ case class NegRightRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKP
   )
 }
 
-object NegRightRule {
+object NegRightRule extends RuleConvenienceObject( "NegRightRule" ) {
   /**
    * Convenience constructor that automatically uses the first occurrence of supplied aux formula.
    *
@@ -705,12 +653,9 @@ object NegRightRule {
   def apply( subProof: LKProof, formula: HOLFormula ): NegRightRule = {
     val premise = subProof.endSequent
 
-    val i = premise.antecedent indexOf formula
+    val ( indices, _ ) = findFormulasInPremise( premise, Seq( formula ), Seq() )
 
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create NegRightRule: $formula not found in antecedent of $premise." )
-
-    new NegRightRule( subProof, Ant( i ) )
+    new NegRightRule( subProof, Ant( indices( 0 ) ) )
   }
 }
 
@@ -723,27 +668,12 @@ object NegRightRule {
  *    A ∧ B, Γ :- Δ
  * </pre>
  * @param subProof The subproof π.
- * @param aux1 The index of A.
+ * @param aux1 The index of A.//<editor-fold desc="Base proof classes">
  * @param aux2 The index of B.
  */
 case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
-  ( aux1, aux2 ) match {
-    case ( Ant( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the succedent." )
-  }
-
-  if ( aux1 == aux2 )
-    throw new LKRuleCreationException( s"Cannot create $longName: Indices of aux formulas are equal." )
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
-  // </editor-fold>
+  validateIndices( premise, Seq( aux1, aux2 ), Seq() )
 
   val leftConjunct = premise( aux1 )
   val rightConjunct = premise( aux2 )
@@ -751,8 +681,6 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
 
   val newContext = premise delete a2 delete a1
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = formula +: newContext
 
@@ -770,10 +698,9 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
     Seq( aux1, aux2 ) +: ( premise.indicesSequent delete a2 delete a1 map { i => Seq( i ) } )
   )
 
-  // </editor-fold>
 }
 
-object AndLeftRule {
+object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
   /**
    * Convenience constructor for ∧:l that, given two formulas on the left, will automatically pick the respective first instances of these formulas.
    *
@@ -784,20 +711,10 @@ object AndLeftRule {
    */
   def apply( subProof: LKProof, A: HOLFormula, B: HOLFormula ): AndLeftRule = {
     val premise = subProof.endSequent
-    val i = premise.antecedent indexOf A
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create AndLeftRule: Aux formula $A not found in antecedent of $premise." )
 
-    val j =
-      if ( A == B )
-        premise.antecedent indexOf ( B, i + 1 )
-      else
-        premise.antecedent indexOf B
+    val ( indices, _ ) = findFormulasInPremise( premise, Seq( A, B ), Seq() )
 
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create AndLeftRule: Aux formula $B not found in antecedent of $premise." )
-
-    new AndLeftRule( subProof, Ant( i ), Ant( j ) )
+    new AndLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
   }
 
   /**
@@ -809,7 +726,7 @@ object AndLeftRule {
    */
   def apply( subProof: LKProof, F: HOLFormula ): AndLeftRule = F match {
     case And( f, g ) => apply( subProof, f, g )
-    case _           => throw new LKRuleCreationException( s"Cannot create AndLeftRule: Proposed main formula $F is not a conjunction." )
+    case _           => throw exception( s"Proposed main formula $F is not a conjunction." )
   }
 }
 
@@ -828,19 +745,8 @@ object AndLeftRule {
  */
 case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Suc( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the antecedent." )
-  }
-
-  if ( !( leftPremise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $leftPremise is not defined at index $aux1." )
-
-  if ( !( rightPremise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $rightPremise is not defined at index $aux2." )
-
-  // </editor-fold>
+  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
+  validateIndices( rightPremise, Seq(), Seq( aux2 ) )
 
   val ( leftConjunct, leftContext ) = leftPremise focus aux1
   val ( rightConjunct, rightContext ) = rightPremise focus aux2
@@ -873,7 +779,7 @@ case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProo
 
 }
 
-object AndRightRule {
+object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
   /**
    * Convenience constructor for ∧:r that, given formulas on the right, will automatically pick their respective first occurrences.
    *
@@ -886,16 +792,10 @@ object AndRightRule {
   def apply( leftSubProof: LKProof, A: HOLFormula, rightSubProof: LKProof, B: HOLFormula ): AndRightRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val i = leftPremise.succedent indexOf A
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create AndRightRule: Aux formula $A not found in succedent of $leftPremise." )
+    val ( _, leftIndices ) = findFormulasInPremise( leftPremise, Seq(), Seq( A ) )
+    val ( _, rightIndices ) = findFormulasInPremise( rightPremise, Seq(), Seq( B ) )
 
-    val j = rightPremise.succedent indexOf B
-
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create AndRightRule: Aux formula $B not found in succedent of $rightPremise." )
-
-    new AndRightRule( leftSubProof, Suc( i ), rightSubProof, Suc( j ) )
+    new AndRightRule( leftSubProof, Suc( leftIndices( 0 ) ), rightSubProof, Suc( rightIndices( 0 ) ) )
   }
 
   /**
@@ -908,7 +808,7 @@ object AndRightRule {
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, F: HOLFormula ): AndRightRule = F match {
     case And( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _           => throw new LKRuleCreationException( s"Cannot create AndRightRule: Proposed main formula $F is not a conjunction." )
+    case _           => throw exception( s"Proposed main formula $F is not a conjunction." )
   }
 }
 
@@ -927,19 +827,8 @@ object AndRightRule {
  */
 case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-  ( aux1, aux2 ) match {
-    case ( Ant( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the succedent." )
-  }
-
-  if ( !( leftPremise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $leftPremise is not defined at index $aux1." )
-
-  if ( !( rightPremise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $rightPremise is not defined at index $aux2." )
-
-  // </editor-fold>
+  validateIndices( leftPremise, Seq( aux1 ), Seq() )
+  validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   val ( leftDisjunct, leftContext ) = leftPremise focus aux1
   val ( rightDisjunct, rightContext ) = rightPremise focus aux2
@@ -969,7 +858,7 @@ case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof:
   )
 }
 
-object OrLeftRule {
+object OrLeftRule extends RuleConvenienceObject( "OrLeftRule" ) {
   /**
    * Convenience constructor for ∨:l that, given formulas on the left, will automatically pick their respective first occurrences.
    *
@@ -982,16 +871,10 @@ object OrLeftRule {
   def apply( leftSubProof: LKProof, A: HOLFormula, rightSubProof: LKProof, B: HOLFormula ): OrLeftRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val i = leftPremise.antecedent indexOf A
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create OrLeftRule: Aux formula $A not found in antecedent of $leftPremise." )
+    val ( leftIndices, _ ) = findFormulasInPremise( leftPremise, Seq( A ), Seq() )
+    val ( rightIndices, _ ) = findFormulasInPremise( rightPremise, Seq( B ), Seq() )
 
-    val j = rightPremise.antecedent indexOf B
-
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create OrLeftRule: Aux formula $B not found in antecedent of $rightPremise." )
-
-    new OrLeftRule( leftSubProof, Ant( i ), rightSubProof, Ant( j ) )
+    new OrLeftRule( leftSubProof, Ant( leftIndices( 0 ) ), rightSubProof, Ant( rightIndices( 0 ) ) )
   }
 
   /**
@@ -1004,7 +887,7 @@ object OrLeftRule {
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, F: HOLFormula ): OrLeftRule = F match {
     case Or( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _          => throw new LKRuleCreationException( s"Cannot create OrLeftRule: Proposed main formula $F is not a disjunction." )
+    case _          => throw exception( s"Proposed main formula $F is not a disjunction." )
   }
 }
 
@@ -1022,22 +905,7 @@ object OrLeftRule {
  */
 case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Suc( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the antecedent." )
-  }
-
-  if ( aux1 == aux2 )
-    throw new LKRuleCreationException( s"Cannot create $longName: Indices of aux formulas are equal." )
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
-  // </editor-fold>
+  validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
 
   val leftDisjunct = premise( aux1 )
   val rightDisjunct = premise( aux2 )
@@ -1045,8 +913,6 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
 
   val newContext = premise.focus( a2 )._2.focus( a1 )._2
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = newContext :+ formula
 
@@ -1066,10 +932,9 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
     ( premise.indicesSequent delete a2 delete a1 map { i => Seq( i ) } ) :+ Seq( aux1, aux2 )
   )
 
-  // </editor-fold>
 }
 
-object OrRightRule {
+object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
   /**
    * Convenience constructor for ∨:r that, given two formulas on the right, will automatically pick the respective first instances of these formulas.
    *
@@ -1080,20 +945,10 @@ object OrRightRule {
    */
   def apply( subProof: LKProof, A: HOLFormula, B: HOLFormula ): OrRightRule = {
     val premise = subProof.endSequent
-    val i = premise.succedent indexOf A
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create OrRightRule: Aux formula $A not found in succedent of $premise." )
 
-    val j =
-      if ( A == B )
-        premise.succedent indexOf ( B, i + 1 )
-      else
-        premise.succedent indexOf B
+    val ( _, indices ) = findFormulasInPremise( premise, Seq(), Seq( A, B ) )
 
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create OrRightRule: Aux formula $B not found in succedent of $premise." )
-
-    new OrRightRule( subProof, Suc( i ), Suc( j ) )
+    new OrRightRule( subProof, Suc( indices( 0 ) ), Suc( indices( 1 ) ) )
   }
 
   /**
@@ -1105,7 +960,7 @@ object OrRightRule {
    */
   def apply( subProof: LKProof, F: HOLFormula ): OrRightRule = F match {
     case Or( f, g ) => apply( subProof, f, g )
-    case _          => throw new LKRuleCreationException( s"Cannot create OrRightRule: Proposed main formula $F is not a disjunction." )
+    case _          => throw exception( s"Proposed main formula $F is not a disjunction." )
   }
 }
 
@@ -1123,19 +978,9 @@ object OrRightRule {
  * @param aux2 The index of B.
  */
 case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex ) extends BinaryLKProof {
-  // <editor-fold desc="Sanity checks">
-  ( aux1, aux2 ) match {
-    case ( Suc( _ ), Ant( _ ) ) =>
-    case _                      => throw new LKRuleCreationException( s"Cannot create $longName: One of $aux1 and $aux2 is in the wrong cedent." )
-  }
 
-  if ( !( leftPremise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $leftPremise is not defined at index $aux1." )
-
-  if ( !( rightPremise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $rightPremise is not defined at index $aux2." )
-
-  // </editor-fold>
+  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
+  validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   val ( impPremise, leftContext ) = leftPremise focus aux1
   val ( impConclusion, rightContext ) = rightPremise focus aux2
@@ -1165,7 +1010,7 @@ case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof
   )
 }
 
-object ImpLeftRule {
+object ImpLeftRule extends RuleConvenienceObject( "ImpLeftRule" ) {
   /**
    * Convenience constructor for →:l that, given aux formulas, will automatically pick their respective first occurrences.
    *
@@ -1178,16 +1023,10 @@ object ImpLeftRule {
   def apply( leftSubProof: LKProof, A: HOLFormula, rightSubProof: LKProof, B: HOLFormula ): ImpLeftRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val i = leftPremise.succedent indexOf A
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create ImpLeftRule: Aux formula $A not found in succedent of $leftPremise." )
+    val ( _, leftIndices ) = findFormulasInPremise( leftPremise, Seq(), Seq( A ) )
+    val ( rightIndices, _ ) = findFormulasInPremise( rightPremise, Seq( B ), Seq() )
 
-    val j = rightPremise.antecedent indexOf B
-
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create ImpLeftRule: Aux formula $B not found in antecedent of $rightPremise." )
-
-    new ImpLeftRule( leftSubProof, Suc( i ), rightSubProof, Ant( j ) )
+    new ImpLeftRule( leftSubProof, Suc( leftIndices( 0 ) ), rightSubProof, Ant( rightIndices( 0 ) ) )
   }
 
   /**
@@ -1200,7 +1039,7 @@ object ImpLeftRule {
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, F: HOLFormula ): ImpLeftRule = F match {
     case Imp( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _           => throw new LKRuleCreationException( s"Cannot create ImpLeftRule: Proposed main formula $F is not a implication." )
+    case _           => throw exception( s"Proposed main formula $F is not a implication." )
   }
 }
 
@@ -1218,32 +1057,13 @@ object ImpLeftRule {
  */
 case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-
-  aux1 match {
-    case Ant( _ ) =>
-    case _        => throw new LKRuleCreationException( s"Cannot create $longName: $aux1 is in the succedent." )
-  }
-
-  aux2 match {
-    case Suc( _ ) =>
-    case _        => throw new LKRuleCreationException( s"Cannot create $longName: $aux2 is in the antecedent." )
-  }
-
-  if ( !( premise isDefinedAt aux1 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux1." )
-
-  if ( !( premise isDefinedAt aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux2." )
-  // </editor-fold>
+  validateIndices( premise, Seq( aux1 ), Seq( aux2 ) )
 
   val impPremise = premise( aux1 )
   val impConclusion = premise( aux2 )
   val formula = Imp( impPremise, impConclusion )
 
   val newContext = premise delete aux1 delete aux2
-
-  // <editor-fold desc="Overrides">
 
   override def endSequent = newContext :+ formula
 
@@ -1263,10 +1083,9 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
     ( premise.indicesSequent delete aux1 delete aux2 map { i => Seq( i ) } ) :+ Seq( aux1, aux2 )
   )
 
-  // </editor-fold>
 }
 
-object ImpRightRule {
+object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
   /**
    * Convenience constructor for →:r that, given two aux formulas, will automatically pick the respective first instances of these formulas.
    *
@@ -1277,16 +1096,10 @@ object ImpRightRule {
    */
   def apply( subProof: LKProof, A: HOLFormula, B: HOLFormula ): ImpRightRule = {
     val premise = subProof.endSequent
-    val i = premise.antecedent indexOf A
-    if ( i == -1 )
-      throw new LKRuleCreationException( s"Cannot create ImpRightRule: Aux formula $A not found in antecedent of $premise." )
 
-    val j = premise.succedent indexOf B
+    val ( antIndices, sucIndices ) = findFormulasInPremise( premise, Seq( A ), Seq( B ) )
 
-    if ( j == -1 )
-      throw new LKRuleCreationException( s"Cannot create ImpRightRule: Aux formula $B not found in succedent of $premise." )
-
-    new ImpRightRule( subProof, Ant( i ), Suc( j ) )
+    new ImpRightRule( subProof, Ant( antIndices( 0 ) ), Suc( sucIndices( 0 ) ) )
   }
 
   /**
@@ -1298,12 +1111,9 @@ object ImpRightRule {
    */
   def apply( subProof: LKProof, F: HOLFormula ): ImpRightRule = F match {
     case Imp( f, g ) => apply( subProof, f, g )
-    case _           => throw new LKRuleCreationException( s"Cannot create ImpRightRule: Proposed main formula $F is not an implication." )
+    case _           => throw exception( s"Proposed main formula $F is not an implication." )
   }
 }
-// </editor-fold>
-
-// <editor-fold desc="Quantifier rules">
 
 /**
  * An LKProof ending with a universal quantifier on the left:
@@ -1320,22 +1130,13 @@ object ImpRightRule {
  * @param v The variable x.
  */
 case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, term: LambdaExpression, v: Var ) extends UnaryLKProof {
-  // <editor-fold desc="Sanity checks">
 
-  aux match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+  validateIndices( premise, Seq( aux ), Seq() )
 
   val ( auxFormula, context ) = premise focus aux
 
   if ( auxFormula != Substitution( v, term )( A ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Substituting $term for $v in $A does not result in $auxFormula." )
-
-  // </editor-fold>
 
   val mainFormula = All( v, A )
 
@@ -1406,22 +1207,13 @@ object ForallLeftRule {
  */
 case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-  aux match {
-    case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the antecedent." )
-    case Suc( _ ) =>
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+  validateIndices( premise, Seq(), Seq( aux ) )
 
   val ( auxFormula, context ) = premise focus aux
 
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
     throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition is violated." )
-
-  // </editor-fold>
 
   val mainFormula = All( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
@@ -1444,26 +1236,24 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   )
 }
 
-object ForallRightRule {
+object ForallRightRule extends RuleConvenienceObject( "ForallRightRule" ) {
   def apply( subProof: LKProof, mainFormula: HOLFormula, eigenVariable: Var ): ForallRightRule = mainFormula match {
     case All( v, subFormula ) =>
       val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
       val premise = subProof.endSequent
-      val i = premise.succedent indexOf auxFormula
 
-      if ( i == -1 )
-        throw new LKRuleCreationException( s"Cannot create ForallRightRule: Formula $auxFormula not found in succedent of $premise." )
+      val ( _, indices ) = findFormulasInPremise( premise, Seq(), Seq( auxFormula ) )
 
-      ForallRightRule( subProof, Suc( i ), eigenVariable, v )
+      ForallRightRule( subProof, Suc( indices( 0 ) ), eigenVariable, v )
 
-    case _ => throw new LKRuleCreationException( s"Cannot create ForallRightRule: Proposed main formula $mainFormula is not universally quantified." )
+    case _ => throw exception( s"Proposed main formula $mainFormula is not universally quantified." )
   }
 
   def apply( subProof: LKProof, mainFormula: HOLFormula ): ForallRightRule = mainFormula match {
     case All( v, subFormula ) => apply( subProof, mainFormula, v )
 
-    case _                    => throw new LKRuleCreationException( s"Cannot create ForallRightRule: Proposed main formula $mainFormula is not universally quantified." )
+    case _                    => throw exception( s"Proposed main formula $mainFormula is not universally quantified." )
   }
 }
 
@@ -1484,22 +1274,13 @@ object ForallRightRule {
  */
 case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var ) extends UnaryLKProof {
 
-  // <editor-fold desc="Sanity checks">
-  aux match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+  validateIndices( premise, Seq( aux ), Seq() )
 
   val ( auxFormula, context ) = premise focus aux
 
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
     throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition is violated." )
-
-  // </editor-fold>
 
   val mainFormula = Ex( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
@@ -1520,26 +1301,23 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   )
 }
 
-object ExistsLeftRule {
+object ExistsLeftRule extends RuleConvenienceObject( "ExistsLeftRule" ) {
   def apply( subProof: LKProof, mainFormula: HOLFormula, eigenVariable: Var ): ExistsLeftRule = mainFormula match {
     case Ex( v, subFormula ) =>
       val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
       val premise = subProof.endSequent
-      val i = premise.antecedent indexOf auxFormula
 
-      if ( i == -1 )
-        throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Formula $auxFormula not found in antecedent of $premise." )
+      val ( indices, _ ) = findFormulasInPremise( premise, Seq( auxFormula ), Seq() )
+      ExistsLeftRule( subProof, Ant( indices( 0 ) ), eigenVariable, v )
 
-      ExistsLeftRule( subProof, Ant( i ), eigenVariable, v )
-
-    case _ => throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Proposed main formula $mainFormula is not existentially quantified." )
+    case _ => throw exception( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 
   def apply( subProof: LKProof, mainFormula: HOLFormula ): ExistsLeftRule = mainFormula match {
     case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
 
-    case _                   => throw new LKRuleCreationException( s"Cannot create ExistsLeftRule: Proposed main formula $mainFormula is not existentially quantified." )
+    case _                   => throw exception( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 }
 
@@ -1558,22 +1336,13 @@ object ExistsLeftRule {
  * @param v The variable x.
  */
 case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, term: LambdaExpression, v: Var ) extends UnaryLKProof {
-  // <editor-fold desc="Sanity checks">
 
-  aux match {
-    case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the antecedent." )
-    case Suc( _ ) =>
-  }
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
+  validateIndices( premise, Seq(), Seq( aux ) )
 
   val ( auxFormula, context ) = premise focus aux
 
   if ( auxFormula != Substitution( v, term )( A ) )
     throw new LKRuleCreationException( s"Cannot create $longName: Substituting $term for $v in $A does not result in $auxFormula." )
-
-  // </editor-fold>
 
   val mainFormula = Ex( v, A )
 
@@ -1629,37 +1398,17 @@ object ExistsRightRule {
   }
 }
 
-// </editor-fold>
-
-//<editor-fold desc="Equality rules>
-
-case class EqualityLeft1Rule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
-  // <editor-fold desc="Sanity checks">
-
-  eq match {
-    case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Equation $eq is in the succedent." )
-  }
+case class EqualityRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
 
   aux match {
     case Ant( _ ) =>
-    case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Aux formula $aux is in the succedent." )
+      validateIndices( premise, Seq( eq, aux ), Seq() )
+    case Suc( _ ) =>
+      validateIndices( premise, Seq( eq ), Seq( aux ) )
   }
+  def name = "eq"
 
-  if ( !premise.isDefinedAt( eq ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $eq." )
-
-  if ( !premise.isDefinedAt( aux ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $aux." )
-
-  if ( eq == aux )
-    throw new LKRuleCreationException( s"Cannot create $longName: Equation and aux formula coincide." )
-
-  // </editor-fold>
-
-  def name = "eq:l1"
-
-  def longName = "EqualityLeft1Rule"
+  def longName = "EqualityRule"
 
   val equation = premise( eq )
 
@@ -1667,38 +1416,57 @@ case class EqualityLeft1Rule( subProof: LKProof, eq: SequentIndex, aux: SequentI
 
   val mainFormula = equation match {
     case Eq( s, t ) =>
-      if ( auxFormula( pos ) != s )
-        throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $s, but is ${auxFormula( pos )}." )
+      auxFormula( pos ) match {
+        case `s` =>
+          auxFormula.replace( pos, t )
+        case `t` =>
+          auxFormula.replace( pos, s )
+        case _ =>
+          throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $s or $t, but is ${auxFormula( pos )}." )
+      }
 
-      auxFormula.replace( pos, t )
     case _ => throw new LKRuleCreationException( s"Cannot create $longName: Formula $equation is not an equation." )
   }
 
-  def endSequent = mainFormula +: context
+  def endSequent = aux match {
+    case Ant( _ ) => mainFormula +: context
+    case Suc( _ ) => context :+ mainFormula
+  }
 
   def auxIndices = Seq( Seq( eq, aux ) )
 
-  def mainIndices = Seq( Ant( 0 ) )
+  def mainIndices = aux match {
+    case Ant( _ ) => Seq( Ant( 0 ) )
+    case Suc( _ ) =>
+      val n = endSequent.succedent.length - 1
+      Seq( Suc( n ) )
+  }
 
-  def getOccConnector = new OccConnector(
-    endSequent,
-    premise,
-    Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
-  )
+  def getOccConnector = aux match {
+    case Ant( _ ) =>
+      new OccConnector(
+        endSequent,
+        premise,
+        Seq( aux ) +: premise.indicesSequent.delete( aux ).map( i => Seq( i ) )
+      )
+
+    case Suc( _ ) =>
+      new OccConnector(
+        endSequent,
+        premise,
+        premise.indicesSequent.delete( aux ).map( i => Seq( i ) ) :+ Seq( aux )
+      )
+  }
 }
 
-object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
+//FIXME: How do we handle convenience constructors if there's only one equality rule?
+/*
+object EqualityRule extends RuleConvenienceObject( "EqualityRule" ) {
   def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, main: HOLFormula ): EqualityLeft1Rule = eqFormula match {
     case Eq( s, t ) =>
       val premise = subProof.endSequent
 
       val ( indices, _ ) = findFormulasInPremise( premise, Seq( eqFormula, auxFormula ), Seq() )
-
-      val ( i, j ) = indices match {
-        case -1 +: _      => throw exception( s"Formula $eqFormula not found in antecedent of $premise." )
-        case _ +: -1 +: _ => throw exception( s"Formula $auxFormula not found in antecedent of $premise." )
-        case x +: y +: _  => ( x, y )
-      }
 
       val diffPos = HOLPosition.differingPositions( auxFormula, main )
 
@@ -1707,7 +1475,7 @@ object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
           if ( main( p ) != t )
             throw exception( s"Position $p in $main should be $t, but is ${main( p )}." )
 
-          EqualityLeft1Rule( subProof, Ant( i ), Ant( j ), p )
+          EqualityLeft1Rule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), p )
 
         case _ => throw exception( s"Formulas $eqFormula and $auxFormula don't differ in exactly one position." )
 
@@ -1715,8 +1483,81 @@ object EqualityLeft1Rule extends RuleConvenienceObject( "EqualityLeft1Rule" ) {
 
     case _ => throw exception( s"Formula $eqFormula is not an equation." )
   }
+}*/
+
+case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex, aux3: SequentIndex, term: FOLTerm ) extends BinaryLKProof {
+  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
+  validateIndices( rightPremise, Seq( aux2 ), Seq( aux3 ) )
+
+  private val zero = FOLConst( "0" )
+  private def s( t: FOLTerm ) = FOLFunction( "s", List( t ) )
+
+  def name = "ind"
+
+  def longName = "InductionRule"
+
+  // FIXME: Is there a better way than type casting?
+  val ( aZero, aX, aSx ) = ( leftPremise( aux1 ).asInstanceOf[FOLFormula], rightPremise( aux2 ).asInstanceOf[FOLFormula], rightPremise( aux3 ).asInstanceOf[FOLFormula] )
+
+  // Find a FOLSubstitution for A[x] and A[0], if possible.
+  val sub1 = FOLMatchingAlgorithm.matchTerms( aX, aZero ) match {
+    case Some( s ) => s
+    case None      => throw new LKRuleCreationException( s"Cannot create $longName: Formula $aX can't be matched to formula $aZero." )
+  }
+
+  // Find a substitution for A[x] and A[Sx], if possible.
+  val sub2 = FOLMatchingAlgorithm.matchTerms( aX, aSx ) match {
+    case Some( s ) => s
+    case None      => throw new LKRuleCreationException( s"Cannot create $longName: Formula $aX can't be matched to formula $aSx." )
+  }
+
+  val x = ( sub1.folmap ++ sub2.folmap ).collect { case ( v, e ) if v != e => v }.headOption.getOrElse {
+    throw new LKRuleCreationException( "Cannot create $longName: Cannot determine induction variable." )
+  }
+
+  // Some safety checks
+  if ( ( sub1.domain.toSet - x ).exists( v => sub1( v ) != v ) )
+    throw new LKRuleCreationException( s"Cannot create $longName: Formula " + aX + " can't be matched to formula " + aZero + " by substituting a single variable." )
+
+  if ( ( sub2.domain.toSet - x ).exists( v => sub1( v ) != v ) )
+    throw new LKRuleCreationException( s"Cannot create $longName: Formula " + aX + " can't be matched to formula " + aSx + " by substituting a single variable." )
+
+  val sX = s( x )
+
+  if ( sub1( x ) != zero )
+    throw new LKRuleCreationException( s"Cannot create $longName: $sub1 doesn't replace $x by 0." )
+
+  if ( sub2( x ) != sX )
+    throw new LKRuleCreationException( s"Cannot create $longName: $sub2 doesn't replace $x by $sX." )
+
+  // Test the eigenvariable condition
+  if ( ( rightPremise.delete( aux2 ).antecedent ++ rightPremise.delete( aux3 ).succedent ) map ( _.asInstanceOf[FOLFormula] ) flatMap freeVariables.apply contains x )
+    throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition not satisified for sequent $rightPremise and variable $x." )
+
+  // Construct the main formula
+  val mainSub = FOLSubstitution( x, term )
+  val mainFormula = mainSub( aX )
+
+  def auxIndices = Seq( Seq( aux1 ), Seq( aux2, aux3 ) )
+
+  def endSequent = ( leftPremise delete aux1 ) ++ ( rightPremise delete aux2 delete aux3 ) :+ mainFormula
+
+  private val n = endSequent.succedent.length - 1
+
+  def mainIndices = Seq( Suc( n ) )
+
+  def getLeftOccConnector = new OccConnector(
+    endSequent,
+    leftPremise,
+    ( ( leftPremise.indicesSequent delete aux1 map { Seq.apply( _ ) } ) ++ ( rightPremise delete aux2 delete aux3 map { i => Seq() } ) ) :+ Seq( aux1 )
+  )
+
+  def getRightOccConnector = new OccConnector(
+    endSequent,
+    rightPremise,
+    Seq( aux2 ) +: ( ( leftPremise delete aux1 map { i => Seq() } ) ++ ( rightPremise.indicesSequent delete aux2 delete aux3 map { Seq.apply( _ ) } ) ) :+ Seq( aux2, aux3 )
+  )
 }
-//</editor-fold>
 
 /**
  * This class models the connection of formula occurrences between two sequents in a proof.
@@ -1802,35 +1643,73 @@ object prettyString {
   }
 }
 
+/**
+ * Class for reducing boilerplate code in LK companion objects.
+ *
+ * @param longName The long name of the rule.
+ */
 private[lkNew] class RuleConvenienceObject( val longName: String ) {
+  /**
+   * Create an LKRuleCreationException with a message starting with "Cannot create $longName: ..."
+   *
+   * @param text The rest of the message.
+   * @return
+   */
   def exception( text: String ): LKRuleCreationException = new LKRuleCreationException( s"Cannot create $longName: " + text )
 
+  /**
+   * Method to determine the indices of formulas in a sequent.
+   *
+   * If either list contains duplicate formulas, they must occur that many times in the respective cedent.
+   *
+   * @param premise The sequent to find formulas in.
+   * @param antFormulas Formulas to be found in the antecedent.
+   * @param sucFormulas Formulas to be found in the succedent.
+   * @return
+   */
   def findFormulasInPremise( premise: HOLSequent, antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
-    val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
-    val sucMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
+    val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, ( Int, Int )]
+    val sucMap = scala.collection.mutable.HashMap.empty[HOLFormula, ( Int, Int )]
 
     val antIndices = for ( f <- antFormulas ) yield if ( antMap contains f ) {
-      val i = antMap( f )
+      val ( i, count ) = antMap( f )
       val iNew = premise.antecedent.indexOf( f, i + 1 )
-      antMap += ( f -> iNew )
+
+      if ( iNew == -1 )
+        throw exception( s"Formula $f only found $count time(s) in antecedent of $premise." )
+
+      antMap += ( f -> ( iNew, count + 1 ) )
       iNew
     } else {
       val iNew = premise.antecedent.indexOf( f )
-      antMap += ( f -> iNew )
+
+      if ( iNew == -1 )
+        throw exception( s"Formula $f not found in antecedent of $premise." )
+
+      antMap += ( f -> ( iNew, 1 ) )
       iNew
     }
 
     val sucIndices = for ( f <- sucFormulas ) yield if ( sucMap contains f ) {
-      val i = sucMap( f )
+      val ( i, count ) = sucMap( f )
       val iNew = premise.succedent.indexOf( f, i + 1 )
-      sucMap += ( f -> iNew )
+
+      if ( iNew == -1 )
+        throw exception( s"Formula $f only found $count time(s) in succedent of $premise." )
+
+      sucMap += ( f -> ( iNew, count + 1 ) )
       iNew
     } else {
       val iNew = premise.succedent.indexOf( f )
-      sucMap += ( f -> iNew )
+
+      if ( iNew == -1 )
+        throw exception( s"Formula $f not found in succedent of $premise." )
+
+      sucMap += ( f -> ( iNew, 1 ) )
       iNew
     }
 
     ( antIndices, sucIndices )
   }
 }
+

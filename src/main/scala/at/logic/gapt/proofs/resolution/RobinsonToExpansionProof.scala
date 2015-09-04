@@ -13,7 +13,7 @@ object RobinsonToExpansionProof {
   def apply( p: RobinsonResolutionProof, es: HOLSequent ): ExpansionSequent = {
     val dummyConstant = rename( FOLConst( "arbitrary" ), constants( es ).toList )
     val cnfMap: Seq[( HOLClause, Boolean, FOLFormula )] =
-      es.map( _.asInstanceOf[FOLFormula] ).map(
+      es.map( f => toVNF( f ).asInstanceOf[FOLFormula] ).map(
         ant => CNFp.toClauseList( ant ).map( ( _, false, ant ) ),
         suc => CNFn.toFClauseList( suc ).map { case Clause( n, p ) => ( Clause( n, p ), true, suc ) }
       ).elements.flatten

@@ -49,7 +49,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     RobinsonToExpansionProof( robinson, reconstructedEndSequent ) --? "RobinsonToExpansionProof" map { E2 =>
       new VeriTProver().isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
-      new VeriTProver().isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
+      if ( isFOLPrenexSigma1( reconstructedEndSequent ) )
+        new VeriTProver().isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
     val ip = new Prover9Prover().getLKProof( deep ).get --- "getLKProof( deep )"
