@@ -108,7 +108,7 @@ class RecSchemGenLangFormula(
           rule( FOLSubstitution( rename( freeVariables( rule.lhs ), freeVariables( against ) ) ) )
         else
           rule
-        FOLUnificationAlgorithm.unify( rule_.rhs, against ).headOption.map { unifier => canonicalVars(unifier( rule_.lhs )) -> rule }
+        FOLUnificationAlgorithm.unify( rule_.rhs, against ).headOption.map { unifier => canonicalVars( unifier( rule_.lhs ) ) -> rule }
       }
     }
 
