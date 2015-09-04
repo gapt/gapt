@@ -3,24 +3,12 @@ package at.logic.gapt.proofs.lkNew
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.proofs.DagProof
 import at.logic.gapt.proofs.lk.base._
 
 import scala.collection.mutable
 
-abstract class LKProof {
-  /**
-   * The name of the rule (in symbols).
-   *
-   * @return
-   */
-  def name: String
-
-  /**
-   * The name of the rule (in words).
-   * @return
-   */
-  def longName: String
-
+abstract class LKProof extends DagProof[LKProof] {
   /**
    * A list of SequentIndices denoting the main formula(s) of the rule.
    *
@@ -51,18 +39,11 @@ abstract class LKProof {
   def endSequent: HOLSequent
 
   /**
-   * The immediate subproofs of the rule.
-   *
-   * @return
-   */
-  def subProofs: Seq[LKProof]
-
-  /**
    * The upper sequents of the rule.
    *
    * @return
    */
-  def premises: Seq[HOLSequent] = subProofs map ( _.endSequent )
+  def premises: Seq[HOLSequent] = immediateSubProofs map ( _.endSequent )
 
   /**
    * A list of lists containing the auxiliary formulas of the rule.
@@ -71,13 +52,6 @@ abstract class LKProof {
    * @return
    */
   def auxFormulas: Seq[Seq[HOLFormula]] = for ( ( p, is ) <- premises zip auxIndices ) yield p( is )
-
-  /**
-   * Returns the subproofs of this in post order.
-   *
-   * @return
-   */
-  def postOrder: Seq[LKProof]
 
   /**
    * Checks whether indices are in the right place and premise is defined at all of them.
@@ -118,6 +92,9 @@ abstract class LKProof {
       case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Index $i should be in the succedent." )
     }
   }
+
+  override protected def stepString( subProofLabels: Map[Any, String] ) =
+    s"$endSequent    (${super.stepString( subProofLabels )})"
 }
 
 /**
@@ -151,10 +128,7 @@ abstract class UnaryLKProof extends LKProof {
    */
   def premise = subProof.endSequent
 
-  override def subProofs = Seq( subProof )
-
-  override def postOrder = subProof.postOrder :+ this
-
+  override def immediateSubProofs = Seq( subProof )
 }
 
 object UnaryLKProof {
@@ -213,9 +187,7 @@ abstract class BinaryLKProof extends LKProof {
    */
   def rightPremise = rightSubProof.endSequent
 
-  override def subProofs = Seq( leftSubProof, rightSubProof )
-
-  override def postOrder = leftSubProof.postOrder ++ rightSubProof.postOrder :+ this
+  override def immediateSubProofs = Seq( leftSubProof, rightSubProof )
 }
 
 object BinaryLKProof {
@@ -237,9 +209,7 @@ abstract class InitialSequent extends LKProof {
 
   override def auxIndices = Seq()
 
-  override def subProofs = Seq()
-
-  override def postOrder = Seq( this )
+  override def immediateSubProofs = Seq()
 }
 
 object InitialSequent {
@@ -247,7 +217,6 @@ object InitialSequent {
 }
 
 case class ArbitraryAxiom( endSequent: HOLSequent ) extends InitialSequent {
-  override def longName = "ArbitraryAxiom"
 }
 
 /**
@@ -259,7 +228,6 @@ case class ArbitraryAxiom( endSequent: HOLSequent ) extends InitialSequent {
  */
 case object TopAxiom extends InitialSequent {
   override def name: String = "⊤:r"
-  override def longName = "TopAxiom"
   override def endSequent = HOLSequent( Nil, Seq( Top() ) )
   def mainFormula = Top()
 }
@@ -273,7 +241,6 @@ case object TopAxiom extends InitialSequent {
  */
 case object BottomAxiom extends InitialSequent {
   override def name: String = "⊥:l"
-  override def longName = "BottomAxiom"
   override def endSequent = HOLSequent( Seq( Bottom() ), Nil )
   def mainFormula = Top()
 }
@@ -290,7 +257,6 @@ case object BottomAxiom extends InitialSequent {
  */
 case class LogicalAxiom( A: HOLAtom ) extends InitialSequent {
   override def endSequent = HOLSequent( Seq( A ), Seq( A ) )
-  override def longName = "LogicalAxiom"
   def mainFormula = A
 }
 
@@ -306,7 +272,6 @@ case class LogicalAxiom( A: HOLAtom ) extends InitialSequent {
  */
 case class ReflexivityAxiom( s: LambdaExpression ) extends InitialSequent {
   override def endSequent = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
-  override def longName = "ReflexivityAxiom"
   def mainFormula = Eq( s, s )
 }
 
@@ -353,8 +318,6 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
   override def auxIndices = Seq( Seq( aux1, aux2 ) )
 
   override def name = "c:l"
-
-  override def longName = "ContractionLeftRule"
 
   override def getOccConnector = new OccConnector(
     endSequent,
@@ -416,8 +379,6 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
 
   override def name = "c:r"
 
-  override def longName = "ContractionRightRule"
-
   override def getOccConnector = new OccConnector(
     endSequent,
     premise,
@@ -457,8 +418,7 @@ object ContractionRightRule extends RuleConvenienceObject( "ContractionRightRule
 case class WeakeningLeftRule( subProof: LKProof, formula: HOLFormula ) extends UnaryLKProof {
   def endSequent = formula +: premise
   def auxIndices = Seq( Seq() )
-  def name = "w:l"
-  override def longName = "WeakeningLeftRule"
+  override def name = "w:l"
   def mainIndices = Seq( Ant( 0 ) )
   def mainFormula = formula
 
@@ -483,7 +443,7 @@ case class WeakeningLeftRule( subProof: LKProof, formula: HOLFormula ) extends U
 case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula ) extends UnaryLKProof {
   def endSequent = premise :+ formula
   def auxIndices = Seq( Seq() )
-  def name = "w:r"
+  override def name = "w:r"
   override def longName = "WeakeningRightRule"
 
   private val n = endSequent.succedent.length - 1
@@ -521,9 +481,7 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
   private val ( leftContext, rightContext ) = ( leftPremise delete aux1, rightPremise delete aux2 )
   def endSequent = leftContext ++ rightContext
 
-  def name = "cut"
-
-  def longName = "CutRule"
+  override def name = "cut"
 
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
 
@@ -584,7 +542,6 @@ case class NegLeftRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKPr
   override def mainIndices = Seq( Ant( 0 ) )
   override def endSequent = mainFormula +: context
   override def name = "¬:l"
-  override def longName = "NegLeftRule"
 
   override def getOccConnector = new OccConnector(
     endSequent,
@@ -633,7 +590,6 @@ case class NegRightRule( subProof: LKProof, aux: SequentIndex ) extends UnaryLKP
   override def mainIndices = Seq( Suc( n ) )
   override def endSequent = context :+ mainFormula
   override def name = "¬:r"
-  override def longName = "NegRightRule"
 
   override def getOccConnector = new OccConnector(
     endSequent,
@@ -689,8 +645,6 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   override def auxIndices = Seq( Seq( aux1, aux2 ) )
 
   override def name = "∧:l"
-
-  override def longName = "AndLeftRule"
 
   override def getOccConnector = new OccConnector(
     endSequent,
@@ -761,9 +715,7 @@ case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProo
 
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  def name = "∧:r"
-
-  def longName = "AndRightRule"
+  override def name = "∧:r"
 
   def getLeftOccConnector = new OccConnector(
     endSequent,
@@ -841,9 +793,7 @@ case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof:
 
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  def name = "∨:l"
-
-  def longName = "OrLeftRule"
+  override def name = "∨:l"
 
   def getLeftOccConnector = new OccConnector(
     endSequent,
@@ -924,8 +874,6 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
 
   override def name = "∨:r"
 
-  override def longName = "OrRightRule"
-
   override def getOccConnector = new OccConnector(
     endSequent,
     premise,
@@ -993,9 +941,7 @@ case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof
 
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
 
-  def name = "\u2283:l"
-
-  def longName = "ImpLeftRule"
+  override def name = "\u2283:l"
 
   def getLeftOccConnector = new OccConnector(
     endSequent,
@@ -1075,8 +1021,6 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
 
   override def name = "\u2283:r"
 
-  override def longName = "ImpRightRule"
-
   override def getOccConnector = new OccConnector(
     endSequent,
     premise,
@@ -1140,9 +1084,7 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, 
 
   val mainFormula = All( v, A )
 
-  def name = "∀:l"
-
-  def longName = "ForallLeftRule"
+  override def name = "∀:l"
 
   def endSequent = mainFormula +: context
 
@@ -1219,9 +1161,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
 
   def endSequent = context :+ mainFormula
 
-  def name = "∀:r"
-
-  def longName = "ForallRightRule"
+  override def name = "∀:r"
 
   private val n = endSequent.succedent.length - 1
 
@@ -1286,9 +1226,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
 
   def endSequent = mainFormula +: context
 
-  def name = "∃:l"
-
-  def longName = "ExistsLeftRule"
+  override def name = "∃:l"
 
   def mainIndices = Seq( Ant( 0 ) )
 
@@ -1346,9 +1284,7 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula,
 
   val mainFormula = Ex( v, A )
 
-  def name = "∃:r"
-
-  def longName = "ExistsRightRule"
+  override def name = "∃:r"
 
   def endSequent = context :+ mainFormula
 
@@ -1406,9 +1342,7 @@ case class EqualityRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex,
     case Suc( _ ) =>
       validateIndices( premise, Seq( eq ), Seq( aux ) )
   }
-  def name = "eq"
-
-  def longName = "EqualityRule"
+  override def name = "eq"
 
   val equation = premise( eq )
 
@@ -1492,9 +1426,7 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
   private val zero = FOLConst( "0" )
   private def s( t: FOLTerm ) = FOLFunction( "s", List( t ) )
 
-  def name = "ind"
-
-  def longName = "InductionRule"
+  override def name = "ind"
 
   // FIXME: Is there a better way than type casting?
   val ( aZero, aX, aSx ) = ( leftPremise( aux1 ).asInstanceOf[FOLFormula], rightPremise( aux2 ).asInstanceOf[FOLFormula], rightPremise( aux3 ).asInstanceOf[FOLFormula] )
