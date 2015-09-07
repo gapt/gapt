@@ -1462,9 +1462,7 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
  * This class models the connection of formula occurrences between two sequents in a proof.
  *
  */
-class OccConnector( val lowerSequent: HOLSequent, val upperSequent: HOLSequent, val parentsSequent: Sequent[Seq[SequentIndex]] ) {
-  outer =>
-
+case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, parentsSequent: Sequent[Seq[SequentIndex]] ) {
   val childrenSequent = upperSequent.indicesSequent map { i => parentsSequent.indicesWhere( is => is contains i ) }
 
   /**
@@ -1484,12 +1482,18 @@ class OccConnector( val lowerSequent: HOLSequent, val upperSequent: HOLSequent, 
   def children( idx: SequentIndex ): Seq[SequentIndex] = childrenSequent( idx )
 
   def *( that: OccConnector ) = {
+    require( this.upperSequent == that.lowerSequent )
+
     val newAnt = for ( is <- parentsSequent.antecedent; i <- is ) yield that.parents( i )
 
     val newSuc = for ( is <- parentsSequent.succedent; i <- is ) yield that.parents( i )
 
     new OccConnector( this.lowerSequent, that.upperSequent, Sequent( newAnt, newSuc ) )
   }
+}
+
+object OccConnector {
+  def apply( sequent: HOLSequent ): OccConnector = OccConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
 }
 
 object prettyString {

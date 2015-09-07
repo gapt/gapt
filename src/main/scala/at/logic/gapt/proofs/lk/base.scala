@@ -30,6 +30,16 @@ sealed abstract class SequentIndex extends Ordered[SequentIndex] {
    * @param i
    */
   def -( i: Int ): SequentIndex
+
+  def isAnt: Boolean
+  def isSuc: Boolean
+
+  def sameSideAs( that: SequentIndex ): Boolean =
+    ( this, that ) match {
+      case ( Ant( _ ), Ant( _ ) ) => true
+      case ( Suc( _ ), Suc( _ ) ) => true
+      case _                      => false
+    }
 }
 
 case class Ant( k: Int ) extends SequentIndex {
@@ -37,6 +47,9 @@ case class Ant( k: Int ) extends SequentIndex {
 
   def +( i: Int ) = Ant( k + i )
   def -( i: Int ) = Ant( k - i )
+
+  override def isAnt: Boolean = true
+  override def isSuc: Boolean = false
 }
 
 case class Suc( k: Int ) extends SequentIndex {
@@ -44,6 +57,9 @@ case class Suc( k: Int ) extends SequentIndex {
 
   def +( i: Int ) = Suc( k + i )
   def -( i: Int ) = Suc( k - i )
+
+  override def isAnt: Boolean = false
+  override def isSuc: Boolean = true
 }
 
 /**
@@ -368,6 +384,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
     case Ant( i ) => Sequent( antecedent.updated( i, elem ), succedent )
     case Suc( j ) => Sequent( antecedent, succedent.updated( j, elem ) )
   }
+
+  def indexOfOption[B >: A]( elem: B ): Option[SequentIndex] = find( _ == elem )
+  def indexOf[B >: A]( elem: B ): SequentIndex = indexOfOption( elem ) get
 }
 
 object Sequent {
