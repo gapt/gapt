@@ -8,7 +8,10 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.proofs.resolutionNew
 import NameReplacement.find_matching
+
+import scala.collection.mutable
 
 /**
  * ***** Term Replacement **********
@@ -49,6 +52,9 @@ object TermReplacement extends Logger {
   def apply( f: FOLFormula, map: Map[FOLTerm, FOLTerm] ): FOLFormula =
     apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLFormula]
 
+  def apply( f: FOLAtom, map: Map[FOLTerm, FOLTerm] ): FOLAtom =
+    apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLAtom]
+
   // FIXME: these polymorphic functions do not have the types you think they have...
 
   def rename_fsequent( fs: HOLSequent, what: LambdaExpression, by: LambdaExpression ): HOLSequent =
@@ -80,6 +86,25 @@ object TermReplacement extends Logger {
           val t_ = rename_term( t, what, by )
           Abs( x, t_ )
       }
+  }
+
+  def apply( proof: resolutionNew.ResolutionProof, repl: Map[FOLTerm, FOLTerm] ): resolutionNew.ResolutionProof = {
+    import resolutionNew._
+    val memo = mutable.Map[ResolutionProof, ResolutionProof]()
+
+    def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
+      case InputClause( clause )     => InputClause( clause map { TermReplacement( _, repl ) } )
+      case ReflexivityClause( term ) => ReflexivityClause( TermReplacement( term, repl ) )
+      case TautologyClause( atom )   => TautologyClause( TermReplacement( atom, repl ) )
+      case Factor( q, i1, i2 )       => Factor( f( q ), i1, i2 )
+      case Instance( q, subst ) =>
+        Instance( f( q ), FOLSubstitution( subst.folmap.map { case ( f, t ) => f -> TermReplacement( t, repl ) } ) )
+      case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
+      case Paramodulation( q1, l1, q2, l2, pos, dir ) =>
+        Paramodulation( f( q1 ), l1, f( q2 ), l2, pos, dir )
+    } )
+
+    f( proof )
   }
 }
 
