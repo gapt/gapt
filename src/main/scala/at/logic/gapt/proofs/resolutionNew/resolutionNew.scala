@@ -7,8 +7,26 @@ import at.logic.gapt.proofs.lk.base.{ Ant, Suc, Sequent, SequentIndex }
 import at.logic.gapt.proofs.lkNew.OccConnector
 import at.logic.gapt.proofs.resolution.{ FOLClause, HOLClause, Clause }
 
+/**
+ * First-order resolution proof.
+ *
+ * Clauses are stored as sequents of FOLAtoms; the succedent consists of the
+ * positive literals, the antecedent of the negative literals.
+ *
+ * Substitutions are not absorbed into resolution, factoring, and
+ * paramodulation; they are explicitly represented using [[Instance]].
+ */
 trait ResolutionProof extends SequentProof[FOLAtom, ResolutionProof]
 
+/**
+ * Initial clause of a resolution proof.
+ *
+ * This also includes some initial clauses which arise during proof
+ * transformations, e.g. [[ReflexivityClause]] or [[TautologyClause]].
+ *
+ * Clauses that come from the input CNF we're refuting are stored as
+ * [[InputClause]].
+ */
 trait InitialClause extends ResolutionProof {
   override def mainIndices = conclusion.indices
   override def occConnectors = Seq()
@@ -16,14 +34,48 @@ trait InitialClause extends ResolutionProof {
   override def immediateSubProofs = Seq()
 }
 
+/**
+ * Input clause from the CNF that we're refuting.
+ *
+ * <pre>
+ *   ----------
+ *   conclusion
+ * </pre>
+ */
 case class InputClause( conclusion: FOLClause ) extends InitialClause
+/**
+ * Reflexivity.
+ *
+ * <pre>
+ *   -----------
+ *   term = term
+ * </pre>
+ */
 case class ReflexivityClause( term: FOLTerm ) extends InitialClause {
   override def conclusion = FOLClause() :+ Eq( term, term )
 }
+/**
+ * Tautology.
+ *
+ * <pre>
+ *   -------------
+ *   -atom \/ atom
+ * </pre>
+ */
 case class TautologyClause( atom: FOLAtom ) extends InitialClause {
   override def conclusion = atom +: FOLClause() :+ atom
 }
 
+/**
+ * Instantiation.
+ *
+ * <pre>
+ *        (subProof)
+ *         premise
+ *   ---------------------
+ *   substitution(premise)
+ * </pre>
+ */
 case class Instance( subProof: ResolutionProof, substitution: FOLSubstitution ) extends ResolutionProof {
   override def conclusion = subProof.conclusion.map { substitution( _ ) }
   override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
@@ -35,6 +87,19 @@ case class Instance( subProof: ResolutionProof, substitution: FOLSubstitution ) 
   override def immediateSubProofs = Seq( subProof )
 }
 
+/**
+ * Factoring.
+ *
+ * This rule merges two literals that have the same polarity, i.e. which
+ * are on the same side of the sequent.
+ *
+ * <pre>
+ *            (subProof)
+ *   premise \/ literal1 \/ literal2
+ *   -------------------------------
+ *        premise \/ literal1
+ * </pre>
+ */
 case class Factor( subProof: ResolutionProof, literal1: SequentIndex, literal2: SequentIndex ) extends ResolutionProof {
   require( literal1 sameSideAs literal2 )
   require( literal1 < literal2 )
@@ -60,10 +125,23 @@ object Factor {
   }
 }
 
+/**
+ * Resolution.
+ *
+ * The positive literal can be in either sub-proof.
+ *
+ * <pre>
+ *       (subProof1)               (subProof2)
+ *   premise1 \/ literal     -literal \/ premise2
+ *   --------------------------------------------
+ *             premise1 \/ premise2
+ * </pre>
+ */
 case class Resolution( subProof1: ResolutionProof, literal1: SequentIndex,
                        subProof2: ResolutionProof, literal2: SequentIndex ) extends ResolutionProof {
   require( subProof1.conclusion isDefinedAt literal1, s"$literal1 not a valid index in ${subProof1.conclusion}" )
   require( subProof2.conclusion isDefinedAt literal2, s"$literal2 not a valid index in ${subProof2.conclusion}" )
+  require( subProof1.conclusion( literal1 ) == subProof2.conclusion( literal2 ) )
   require( !( literal1 sameSideAs literal2 ) )
 
   override def conclusion = ( subProof1.conclusion delete literal1 ) ++ ( subProof2.conclusion delete literal2 )
@@ -80,6 +158,18 @@ case class Resolution( subProof1: ResolutionProof, literal1: SequentIndex,
   override def immediateSubProofs = Seq( subProof1, subProof2 )
 }
 
+/**
+ * Paramodulation.
+ *
+ * We allow rewriting any number of positions inside a single literal.
+ *
+ * <pre>
+ *     (subProof1)            (subProof2)
+ *   premise1 \/ t=s      premise2 \/ literal[t]
+ *   -------------------------------------------
+ *        premise1 \/ premise2 \/ literal[s]
+ * </pre>
+ */
 case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
                            subProof2: ResolutionProof, literal: SequentIndex,
                            positions: Seq[LambdaPosition], leftToRight: Boolean ) extends ResolutionProof {
