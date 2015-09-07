@@ -13,7 +13,7 @@ import scala.collection.mutable
 
 object RobinsonToExpansionProof {
   def apply( p: RobinsonResolutionProof, es: HOLSequent ): ExpansionSequent =
-    apply( resOld2New( p )._1, es )
+    apply( resOld2New( p ), es )
 
   def apply( p: resolutionNew.ResolutionProof, es: HOLSequent ): ExpansionSequent = {
     val dummyConstant = rename( FOLConst( "arbitrary" ), constants( es ).toList )
@@ -36,7 +36,7 @@ object RobinsonToExpansionProof {
       }.head ) )
   }
 
-  def apply( p: RobinsonResolutionProof ): ExpansionSequent = apply( resOld2New( p )._1 )
+  def apply( p: RobinsonResolutionProof ): ExpansionSequent = apply( resOld2New( p ) )
   def apply( p: resolutionNew.ResolutionProof ): ExpansionSequent =
     apply_( p, {
       case Clause( Seq( f ), Seq( f_ ) ) if f == f_       => Set()

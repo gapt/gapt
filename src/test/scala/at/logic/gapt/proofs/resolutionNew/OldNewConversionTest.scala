@@ -16,32 +16,32 @@ class OldNewConversionTest extends Specification {
 
   "GEO037m4" in {
     val o = load( "GEO037-2.out" )
-    val ( n, _ ) = resOld2New( o )
-    val ( o_, _ ) = resNew2Old( n )
+    val n = resOld2New( o )
+    val o_ = resNew2Old( n )
     n.conclusion.isEmpty must_== true
     o_.root.isEmpty must_== true
   }
 
   "goat puzzle" in {
     val o = load( "PUZ047+1.out" )
-    val ( n, _ ) = resOld2New( o )
-    val ( o_, _ ) = resNew2Old( n )
+    val n = resOld2New( o )
+    val o_ = resNew2Old( n )
     n.conclusion.isEmpty must_== true
     o_.root.isEmpty must_== true
   }
 
   "cade13example.out" in {
     val o = load( "cade13example.out" )
-    val ( n, _ ) = resOld2New( o )
-    val ( o_, _ ) = resNew2Old( n )
+    val n = resOld2New( o )
+    val o_ = resNew2Old( n )
     n.conclusion.isEmpty must_== true
     o_.root.isEmpty must_== true
   }
 
   "proof with new_symbol" in {
     val o = load( "ALG138+1.out" )
-    val ( n, _ ) = resOld2New( o )
-    val ( o_, _ ) = resNew2Old( n )
+    val n = resOld2New( o )
+    val o_ = resNew2Old( n )
     n.conclusion.isEmpty must_== true
     o_.root.isEmpty must_== true
   }
