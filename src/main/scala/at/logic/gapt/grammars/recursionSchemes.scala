@@ -393,4 +393,9 @@ case class RecSchemTemplate( template: Set[( FOLTerm, FOLTerm )] ) {
 
     RecursionScheme( rules )
   }
+
+  def findMinimalCover( targets: Set[( FOLTerm, FOLTerm )], solver: MaxSATSolver ): RecursionScheme = {
+    val nfRecSchem = normalFormRecSchem( targets )
+    minimizeRecursionScheme( nfRecSchem, targets toSeq, targetFilter, solver )
+  }
 }
