@@ -1463,6 +1463,7 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
  *
  */
 case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, parentsSequent: Sequent[Seq[SequentIndex]] ) {
+  require( parentsSequent.sizes == lowerSequent.sizes )
   val childrenSequent = upperSequent.indicesSequent map { i => parentsSequent.indicesWhere( is => is contains i ) }
 
   /**
@@ -1483,12 +1484,7 @@ case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, par
 
   def *( that: OccConnector ) = {
     require( this.upperSequent == that.lowerSequent )
-
-    val newAnt = for ( is <- parentsSequent.antecedent; i <- is ) yield that.parents( i )
-
-    val newSuc = for ( is <- parentsSequent.succedent; i <- is ) yield that.parents( i )
-
-    new OccConnector( this.lowerSequent, that.upperSequent, Sequent( newAnt, newSuc ) )
+    OccConnector( this.lowerSequent, that.upperSequent, this.lowerSequent.indicesSequent.map( this.parents( _ ).flatMap( that.parents ) ) )
   }
 }
 
