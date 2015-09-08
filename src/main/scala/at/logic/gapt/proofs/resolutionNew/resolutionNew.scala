@@ -123,6 +123,29 @@ object Factor {
         subProof__ -> ( subProof__.occConnectors.head * occConn )
     }
   }
+
+  def apply( subProof: ResolutionProof, newConclusion: FOLClause ): ( ResolutionProof, OccConnector ) = {
+    var ( p, occConn ) = ( subProof, OccConnector( subProof.conclusion ) )
+
+    newConclusion.polarizedElements.toSet[( FOLAtom, Boolean )] foreach {
+      case ( atom, pol ) =>
+        val countInNewConcl = newConclusion.polarizedElements.count( _ == ( atom, pol ) )
+        val countInOldConcl = subProof.conclusion.polarizedElements.count( _ == ( atom, pol ) )
+        if ( countInOldConcl > countInNewConcl ) {
+          val ( p_, occConn_ ) = Factor( p, p.conclusion.
+            indicesWhere( _ == atom ).
+            filter( _.isAnt == pol ).
+            take( countInOldConcl - countInNewConcl + 1 ) )
+          p = p_
+          occConn = occConn_ * occConn
+        }
+    }
+
+    ( p, occConn )
+  }
+
+  def apply( subProof: ResolutionProof ): ( ResolutionProof, OccConnector ) =
+    Factor( subProof, subProof.conclusion.distinct )
 }
 
 /**
@@ -208,12 +231,9 @@ object Paramodulation {
     }
 
     val oldAtom = subProof2.conclusion( literal )
-    val positions = LambdaPosition.getPositions( oldAtom, _ == t ).filter { newAtom( _ ) == s }
-    val newAtom_ = positions.foldLeft( oldAtom ) { _.replace( _, s ).asInstanceOf[FOLAtom] }
-    if ( newAtom == newAtom_ )
-      Some( Paramodulation( subProof1, equation, subProof2, literal, positions, leftToRight ) )
-    else
-      None
+    val positions = LambdaPosition.getPositions( oldAtom, _ == t ).filter { newAtom.get( _ ) == Some( s ) }
+    val proof = Paramodulation( subProof1, equation, subProof2, literal, positions, leftToRight )
+    if ( proof.mainFormulas.head == newAtom ) Some( proof ) else None
   }
   def apply( subProof1: ResolutionProof, equation: SequentIndex,
              subProof2: ResolutionProof, literal: SequentIndex,

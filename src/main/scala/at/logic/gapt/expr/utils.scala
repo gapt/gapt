@@ -5,7 +5,7 @@
 package at.logic.gapt.expr
 
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
-import at.logic.gapt.proofs.lk.base.{ OccSequent, HOLSequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ Sequent, OccSequent, HOLSequent, LKProof }
 import at.logic.gapt.proofs.resolution.HOLClause
 
 import scala.collection.GenTraversable
@@ -107,6 +107,8 @@ object freeVariables {
   def apply( es: GenTraversable[FOLExpression] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = ( Set.empty[FOLVar] /: es ) { ( acc, e ) => acc union apply( e ) }
 
   def apply( seq: HOLSequent ): Set[Var] = apply( seq.antecedent ++ seq.succedent )
+
+  def apply( seq: Sequent[FOLFormula] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = apply( seq.elements )
 
   private def apply_( e: LambdaExpression, boundvars: Set[Var] ): Set[Var] = e match {
     case v: Var          => if ( !boundvars.contains( v ) ) Set( v ) else Set()

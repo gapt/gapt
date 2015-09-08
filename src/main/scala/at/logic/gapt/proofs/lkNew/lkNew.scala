@@ -1486,6 +1486,14 @@ case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, par
     require( this.upperSequent == that.lowerSequent )
     OccConnector( this.lowerSequent, that.upperSequent, this.lowerSequent.indicesSequent.map( this.parents( _ ).flatMap( that.parents ) ) )
   }
+
+  def inv: OccConnector = OccConnector( upperSequent, lowerSequent, childrenSequent )
+
+  def +( that: OccConnector ) = {
+    require( this.lowerSequent == that.lowerSequent )
+    require( this.upperSequent == that.upperSequent )
+    OccConnector( lowerSequent, upperSequent, lowerSequent.indicesSequent map { i => this.parents( i ) ++ that.parents( i ) } )
+  }
 }
 
 object OccConnector {

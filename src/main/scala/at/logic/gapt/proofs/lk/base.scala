@@ -234,6 +234,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    */
   def map[B]( f: ( A ) => B ): Sequent[B] = this map ( f, f )
 
+  def flatMap[B]( f: A => TraversableOnce[B] ): Sequent[B] = flatMap( f, f )
+
   /**
    * Maps two functions over the antecedent and succedent, respectively.
    *
@@ -243,6 +245,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @return The sequent of type B that results from mapping f and g over the antecedent and succedent, respectively.
    */
   def map[B]( f: ( A ) => B, g: ( A ) => B ) = new Sequent( antecedent map f, succedent map g )
+
+  def flatMap[B]( f: A => TraversableOnce[B], g: A => TraversableOnce[B] ): Sequent[B] =
+    Sequent( antecedent flatMap f, succedent flatMap g )
 
   /**
    * The sub-sequent of elements satisfying some predicate.
