@@ -1494,7 +1494,7 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
   def getRightOccConnector = new OccConnector(
     endSequent,
     rightPremise,
-    Seq( aux2 ) +: ( ( leftPremise delete aux1 map { i => Seq() } ) ++ ( rightPremise.indicesSequent delete aux2 delete aux3 map { Seq.apply( _ ) } ) ) :+ Seq( aux2, aux3 )
+    ( ( leftPremise delete aux1 map { i => Seq() } ) ++ ( rightPremise.indicesSequent delete aux2 delete aux3 map { Seq.apply( _ ) } ) ) :+ Seq( aux2, aux3 )
   )
 }
 
