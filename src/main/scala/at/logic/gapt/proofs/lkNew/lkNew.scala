@@ -1500,7 +1500,7 @@ object OccConnector {
   def apply( sequent: HOLSequent ): OccConnector = OccConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
 }
 
-object prettyString {
+object consoleString {
   /**
    * Produces a console-readable string representation of the lowermost rule.
    *
