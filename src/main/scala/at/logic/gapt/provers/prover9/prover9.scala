@@ -13,6 +13,7 @@ import at.logic.gapt.proofs.lk.applyReplacement
 import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionNew.fixDerivation
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram

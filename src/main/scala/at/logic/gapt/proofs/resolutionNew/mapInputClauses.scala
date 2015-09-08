@@ -22,15 +22,22 @@ object mapInputClauses {
       } )
     }
 
-    def doMap( p: ResolutionProof ): ( ResolutionProof, OccConnector ) = memo.getOrElseUpdate( p, p match {
+    def check( p: ResolutionProof, res: ( ResolutionProof, OccConnector ) ): ( ResolutionProof, OccConnector ) = {
+      val ( newP, conn ) = res
+      require( conn.lowerSequent == newP.conclusion )
+      require( conn.upperSequent == p.conclusion )
+      res
+    }
+
+    def doMap( p: ResolutionProof ): ( ResolutionProof, OccConnector ) = check( p, memo.getOrElseUpdate( p, p match {
       case TautologyClause( _ ) | ReflexivityClause( _ ) => p -> OccConnector( p.conclusion )
       case InputClause( clause ) =>
         val q = f( clause )
         q -> guessConn( clause, q.conclusion )
       case Factor( p1, i1, i2 ) =>
         val ( q1, conn1 ) = doMap( p1 )
-        ( for ( j1 <- conn1 parents i1 headOption; j2 <- conn1 parents i2 headOption; res <- Some( Factor( q1, j1, j2 ) ) )
-          yield res -> ( res.occConnectors.head * conn1 * p.occConnectors.head.inv ) ) getOrElse { q1 -> conn1 * p1.occConnectors.head.inv }
+        ( for ( j1 <- conn1 children i1 headOption; j2 <- conn1 children i2 headOption; res <- Some( Factor( q1, j1, j2 ) ) )
+          yield res -> ( res.occConnectors.head * conn1 * p.occConnectors.head.inv ) ) getOrElse { q1 -> conn1 * p.occConnectors.head.inv }
       case Instance( p1, subst ) =>
         val ( q1, conn1 ) = doMap( p1 )
         val res = Instance( q1, subst )
@@ -38,8 +45,8 @@ object mapInputClauses {
       case Resolution( p1, i1, p2, i2 ) =>
         val ( q1, conn1 ) = doMap( p1 )
         val ( q2, conn2 ) = doMap( p2 )
-        conn1.parents( i1 ).headOption map { j1 =>
-          conn2.parents( i2 ).headOption map { j2 =>
+        conn1.children( i1 ).headOption map { j1 =>
+          conn2.children( i2 ).headOption map { j2 =>
             val res = Resolution( q1, j1, q2, j2 )
             res -> ( ( res.occConnectors( 0 ) * conn1 * p.occConnectors( 0 ).inv ) + ( res.occConnectors( 1 ) * conn2 * p.occConnectors( 1 ).inv ) )
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
@@ -47,13 +54,13 @@ object mapInputClauses {
       case Paramodulation( p1, i1, p2, i2, pos, dir ) =>
         val ( q1, conn1 ) = doMap( p1 )
         val ( q2, conn2 ) = doMap( p2 )
-        conn1.parents( i1 ).headOption map { j1 =>
-          conn2.parents( i2 ).headOption map { j2 =>
+        conn1.children( i1 ).headOption map { j1 =>
+          conn2.children( i2 ).headOption map { j2 =>
             val res = Paramodulation( q1, j1, q2, j2, pos, dir )
             res -> ( ( res.occConnectors( 0 ) * conn1 * p.occConnectors( 0 ).inv ) + ( res.occConnectors( 1 ) * conn2 * p.occConnectors( 1 ).inv ) )
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
         } getOrElse { q1 -> conn1 * p.occConnectors( 0 ).inv }
-    } )
+    } ) )
 
     doMap( proof )._1
   }
