@@ -2,12 +2,14 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.lk.base.{ Suc, Ant, HOLSequent }
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledOccSequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution.ral.{ InitialSequent => RalInitialSequent, _ }
+import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionNew
+import at.logic.gapt.proofs.resolutionNew._
 
 /**
  * Created by marty on 9/9/14.
@@ -33,119 +35,78 @@ abstract class RobinsonToRal {
 
   def convert_sequent( fs: HOLSequent ): HOLSequent = HOLSequent( fs.antecedent.map( convert_formula ), fs.succedent.map( convert_formula ) )
 
-  def apply( rp: RobinsonResolutionProof ): RalResolutionProof[LabelledOccSequent] =
+  def apply( rp: RobinsonResolutionProof ): RalResolutionProof[LabelledOccSequent] = applyNew( resOld2New( rp ) )
+
+  def applyNew( rp: resolutionNew.ResolutionProof ): RalResolutionProof[LabelledOccSequent] =
     rp match {
-      case InitialClause( clause ) =>
-        val fc: HOLSequent = clause.toHOLSequent
-        val rule = RalInitialSequent( convert_sequent( fc ), ( fc.antecedent.toList.map( x => EmptyLabel() ), fc.succedent.toList.map( x => EmptyLabel() ) ) )
-        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in initial translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
+      case _: InitialClause =>
+        val clause = rp.conclusion
+        val rule = RalInitialSequent( convert_sequent( clause ), ( clause.antecedent.toList.map( x => EmptyLabel() ), clause.succedent.toList.map( x => EmptyLabel() ) ) )
+        my_require( rule.root.toHOLSequent, clause, "Error in initial translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause )
         require( !rule.root.toHOLSequent.formulas.contains( ( x: HOLFormula ) => x.isInstanceOf[FOLFormula] ), "Formulas contain fol content!" )
 
         rule
 
-      case Resolution( clause, p1, p2, aux1, aux2, sub_ ) =>
+      case Resolution( p1, aux1, p2, aux2 ) =>
         //println("Resolution on "+aux1+" in "+p1.root.succedent+" and "+aux2+" in "+p2.root.antecedent+ " with sub "+sub_)
-        val sub = convert_substitution( sub_ )
-        val rp1 = apply( p1 )
-        val rp2 = apply( p2 )
-        val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
-        val sub2 = if ( sub.isIdentity ) rp2 else Sub( rp2, sub )
-        val rule = Cut( sub1, sub2, List( pickFOsucc( sub( convert_formula( aux1.formula ) ), sub1.root, Nil ) ),
-          List( pickFOant( sub( convert_formula( aux2.formula ) ), sub2.root, Nil ) ) )
-        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in resolution translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
+        val rp1 = applyNew( p1 )
+        val rp2 = applyNew( p2 )
+        val rule = Cut( rp1, rp2, List( pickFOsucc( convert_formula( p1.conclusion( aux1 ) ), rp1.root, Nil ) ),
+          List( pickFOant( convert_formula( p2.conclusion( aux2 ) ), rp2.root, Nil ) ) )
+        my_require( rule.root.toHOLSequent, rp.conclusion, "Error in resolution translation, translated root: " + rule.root.toHOLSequent + " is not original root " + rp.conclusion )
 
         rule
 
-      case Factor( clause, parent, List( aux1 @ ( f1 :: _ ) ), sub_ ) if parent.root.antecedent.contains( f1 ) =>
+      case Factor( parent, aux1 @ Ant( _ ), aux2 ) =>
         //        println( "antecedent factor 1: " + aux1 + sys.props("line.separator") + parent.root + sys.props("line.separator") + clause )
-        val sub = convert_substitution( sub_ )
-        val rp1 = apply( parent )
-        val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
-        val ( a :: aux ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant( sub( convert_formula( x.formula ) ), sub1.root, list ) :: list ).reverse
-        val rule = AFactorF( sub1, a, aux )
-        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in factor translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
+        val rp1 = applyNew( parent )
+        val ( a :: aux ) = Seq( aux1, aux2 ).foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) =>
+          pickFOant( convert_formula( parent.conclusion( x ) ), rp1.root, list ) :: list ).reverse
+        val rule = AFactorF( rp1, a, aux )
+        my_require( rule.root.toHOLSequent, rp.conclusion, "Error in factor translation, translated root: " + rule.root.toHOLSequent + " is not original root " + rp.conclusion )
 
         rule
 
-      case Factor( clause, parent, List( aux1 @ ( f1 :: _ ) ), sub_ ) if parent.root.succedent.contains( f1 ) =>
+      case Factor( parent, aux1 @ Suc( _ ), aux2 ) =>
         //println( "succedent factor 1: " + aux1 + sys.props("line.separator") + parent.root + sys.props("line.separator") + clause )
-        val sub = convert_substitution( sub_ )
-        val rp1 = apply( parent )
-        val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
-        val ( a :: aux ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc( sub( convert_formula( x.formula ) ), sub1.root, list ) :: list ).reverse
-        val rule = AFactorT( sub1, a, aux )
-        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in factor translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
+        val rp1 = applyNew( parent )
+        val ( a :: aux ) = Seq( aux1, aux2 ).foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) =>
+          pickFOsucc( convert_formula( parent.conclusion( x ) ), rp1.root, list ) :: list ).reverse
+        val rule = AFactorT( rp1, a, aux )
+        my_require( rule.root.toHOLSequent, rp.conclusion, "Error in factor translation, translated root: " + rule.root.toHOLSequent + " is not original root " + rp.conclusion )
         rule
 
-      case Paramodulation( clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.antecedent contains modulant =>
-        val sub = convert_substitution( sub_ )
-        val rp1 = apply( paraparent )
-        val rp2 = apply( parent )
-        val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
-        val sub2 = if ( sub.isIdentity ) rp2 else Sub( rp2, sub )
-        val rule = ParaF( sub1, sub2, pickFOsucc( sub( convert_formula( equation.formula ) ), sub1.root, List() ), pickFOant( sub( convert_formula( modulant.formula ) ), sub2.root, List() ), convert_formula( primary.formula ) )
-        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in para translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
+      case Paramodulation( paraparent, equation, parent, modulant @ Ant( _ ), pos, dir ) =>
+        val rp1 = applyNew( paraparent )
+        val rp2 = applyNew( parent )
+        val rule = ParaF( rp1, rp2, pickFOsucc( convert_formula( paraparent.conclusion( equation ) ), rp1.root, List() ),
+          pickFOant( convert_formula( parent.conclusion( modulant ) ), rp2.root, List() ), convert_formula( rp.mainFormulas.head ) )
+        my_require( rule.root.toHOLSequent, rp.conclusion, "Error in para translation, translated root: " + rule.root.toHOLSequent + " is not original root " + rp.conclusion )
         rule
 
-      case Paramodulation( clause, paraparent, parent, equation, modulant, primary, sub_ ) if parent.root.succedent contains modulant =>
+      case Paramodulation( paraparent, equation, parent, modulant @ Suc( _ ), pos, dir ) =>
         //   println("translating instance from para parent:"+paraparent.root+" and "+ parent.root +" to "+clause+" with sub "+sub_)
-        val sub = convert_substitution( sub_ )
-        val rp1 = apply( paraparent )
-        val rp2 = apply( parent )
-        val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
-        val sub2 = if ( sub.isIdentity ) rp2 else Sub( rp2, sub )
-        val rule = ParaT( sub1, sub2, pickFOsucc( sub( convert_formula( equation.formula ) ), sub1.root, List() ),
-          pickFOsucc( sub( convert_formula( modulant.formula ) ), sub2.root, List() ),
-          convert_formula( primary.formula ) )
-        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in para translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
+        val rp1 = applyNew( paraparent )
+        val rp2 = applyNew( parent )
+        val rule = ParaT( rp1, rp2, pickFOsucc( convert_formula( paraparent.conclusion( equation ) ), rp1.root, List() ),
+          pickFOsucc( convert_formula( parent.conclusion( modulant ) ), rp2.root, List() ),
+          convert_formula( rp.mainFormulas.head ) )
+        my_require( rule.root.toHOLSequent, rp.conclusion, "Error in para translation, translated root: " + rule.root.toHOLSequent + " is not original root " + rp.conclusion )
         rule
 
-      case Variant( clause, parent, sub_ ) =>
-        val sub = convert_substitution( sub_ )
-        val rp1 = apply( parent )
-        val sub1 = Sub( rp1, sub )
-        my_require( sub1.root.toHOLSequent, clause.toHOLSequent, "Error in variant translation, translated root: " + sub1.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
-        sub1
-
-      case Instance( clause, parent, sub_ ) =>
+      case Instance( parent, sub_ ) =>
 
         val sub = convert_substitution( sub_ )
         //        val subexps = sub.map.toList.flatMap(x => List(x._1,x._2)).filterNot(checkFactory(_, HOLFactory))
         //        my_require(subexps.isEmpty , "Substitution contains fol content: "+subexps.map(_.factory))
-        val rp1 = apply( parent )
+        val rp1 = applyNew( parent )
         //        val rootexps = rp1.root.toHOLSequent.formulas.filterNot(checkFactory(_,HOLFactory))
         //        my_require(rootexps.isEmpty, "Formulas contain fol content: "+rootexps.mkString(" ::: "))
         val rule = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
 
         //println("inferring instance from parent:"+rp1.root+" to "+rule.root+" with sub "+sub)
-        my_require( rule.root.toHOLSequent, clause.toHOLSequent, "Error in instance translation, translated root: " + rule.root.toHOLSequent + " is not original root " + clause.toHOLSequent )
+        my_require( rule.root.toHOLSequent, rp.conclusion, "Error in instance translation, translated root: " + rule.root.toHOLSequent + " is not original root " + rp.conclusion )
         rule
-
-      case Factor( clause, parent, List( aux1 @ ( f1 :: _ ), aux2 @ ( f2 :: _ ) ), sub_ ) =>
-        //      println("factor 2")
-
-        val sub = convert_substitution( sub_ )
-        val rp1 = apply( parent )
-        val sub1 = if ( sub.isIdentity ) rp1 else Sub( rp1, sub )
-
-        val rule1 = if ( aux1.forall( parent.root.antecedent.contains( _ ) ) ) {
-          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant( sub( convert_formula( x.formula ) ), rp1.root, list ) :: list ).reverse
-          AFactorF( rp1, a1, auxs1 )
-        } else if ( aux1.forall( parent.root.succedent.contains( _ ) ) ) {
-          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc( sub( convert_formula( x.formula ) ), rp1.root, list ) :: list ).reverse
-          AFactorT( rp1, a1, auxs1 )
-        } else throw new Exception( "Could not find all auxiliary occurrences of a factor rule!" )
-
-        val rule2 = if ( aux2.forall( parent.root.antecedent.contains( _ ) ) ) {
-          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOant( sub( convert_formula( x.formula ) ), rule1.root, list ) :: list ).reverse
-          AFactorF( rule1, a1, auxs1 )
-        } else if ( aux1.forall( parent.root.succedent.contains( _ ) ) ) {
-          val ( a1 :: auxs1 ) = aux1.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, x ) => pickFOsucc( sub( convert_formula( x.formula ) ), rule1.root, list ) :: list ).reverse
-          AFactorT( rule1, a1, auxs1 )
-        } else throw new Exception( "Could not find all auxiliary occurrences of a factor rule!" )
-
-        rule2
-
     }
 
   def my_require( fs1: HOLSequent, fs2: HOLSequent, msg: String ) = {
