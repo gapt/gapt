@@ -52,7 +52,7 @@ case class InputClause( conclusion: FOLClause ) extends InitialClause
  * </pre>
  */
 case class ReflexivityClause( term: FOLTerm ) extends InitialClause {
-  override def conclusion = FOLClause() :+ Eq( term, term )
+  override val conclusion = FOLClause() :+ Eq( term, term )
 }
 /**
  * Tautology.
@@ -63,7 +63,7 @@ case class ReflexivityClause( term: FOLTerm ) extends InitialClause {
  * </pre>
  */
 case class TautologyClause( atom: FOLAtom ) extends InitialClause {
-  override def conclusion = atom +: FOLClause() :+ atom
+  override val conclusion = atom +: FOLClause() :+ atom
 }
 
 /**
@@ -77,7 +77,7 @@ case class TautologyClause( atom: FOLAtom ) extends InitialClause {
  * </pre>
  */
 case class Instance( subProof: ResolutionProof, substitution: FOLSubstitution ) extends ResolutionProof {
-  override def conclusion = subProof.conclusion.map { substitution( _ ) }
+  override val conclusion = subProof.conclusion.map { substitution( _ ) }
   override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
     subProof.conclusion.indicesSequent map { Seq( _ ) } ) )
 
@@ -104,7 +104,7 @@ case class Factor( subProof: ResolutionProof, literal1: SequentIndex, literal2: 
   require( literal1 sameSideAs literal2 )
   require( literal1 < literal2 )
 
-  override def conclusion = subProof.conclusion delete literal2
+  override val conclusion = subProof.conclusion delete literal2
   override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
     subProof.conclusion.indicesSequent.delete( literal2 ).map { Seq( _ ) }.updated( literal1, Seq( literal1, literal2 ) ) ) )
 
@@ -167,7 +167,7 @@ case class Resolution( subProof1: ResolutionProof, literal1: SequentIndex,
   require( subProof1.conclusion( literal1 ) == subProof2.conclusion( literal2 ) )
   require( !( literal1 sameSideAs literal2 ) )
 
-  override def conclusion = ( subProof1.conclusion delete literal1 ) ++ ( subProof2.conclusion delete literal2 )
+  override val conclusion = ( subProof1.conclusion delete literal1 ) ++ ( subProof2.conclusion delete literal2 )
   override def occConnectors = Seq(
     OccConnector( conclusion, subProof1.conclusion,
       ( subProof1.conclusion.indicesSequent delete literal1 map { Seq( _ ) } ) ++ ( subProof2.conclusion.indicesSequent delete literal2 map { _ => Seq() } ) ),
@@ -206,7 +206,7 @@ case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
     require( subProof2.conclusion( literal )( position ) == t )
   }
 
-  override def conclusion = subProof1.conclusion.delete( equation ) ++
+  override val conclusion = subProof1.conclusion.delete( equation ) ++
     subProof2.conclusion.updated( literal, positions.foldLeft( subProof2.conclusion( literal ) ) { _.replace( _, s ).asInstanceOf[FOLAtom] } )
   override def occConnectors = Seq(
     OccConnector( conclusion, subProof1.conclusion,
