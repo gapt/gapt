@@ -1301,6 +1301,29 @@ object ExistsRightRule {
   }
 }
 
+/**
+ * An LKProof ending with an equality rule. There are four possible cases according to the side the equation is applied
+ * on and the direction that is used:
+ *
+ * <pre>
+ *            (π)                            (π)
+ *    A[s], s = t, Γ :- Δ            A[t], s = t, Γ :- Δ
+ *   ---------------------eq        ---------------------eq
+ *    A[t], s = t, Γ :- Δ            A[s], s = t, Γ :- Δ
+ *
+ *            (π)                            (π)
+ *    s = t, Γ :- Δ, A[s]            s = t, Γ :- Δ, A[t]
+ *   ---------------------eq        ---------------------eq
+ *    s = t, Γ :- Δ, A[t]            s = t, Γ :- Δ, A[s]
+ * </pre>
+ *
+ * In any case, the rule only replaces a single term occurrence. The position of this occurrence is given by the pos argument.
+ *
+ * @param subProof The subproof π.
+ * @param eq The index of s = t.
+ * @param aux The index of the formula in which the replacement is to be performed.
+ * @param pos The position of the term to be replaced within A. FIXME: I think it would be convenient to allow FOLPositions here.
+ */
 case class EqualityRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition ) extends UnaryLKProof {
 
   aux match {
@@ -1386,6 +1409,23 @@ object EqualityRule extends RuleConvenienceObject( "EqualityRule" ) {
   }
 }*/
 
+/**
+ * An LKProof ending with an induction rule:
+ *
+ * <pre>
+ *      (π1)                (π2)
+ *  Γ :- Δ, A[0]    A[x], Π :- Λ, A[sx]
+ * ------------------------------------ind
+ *           Γ, Π :- Δ, Λ, A[t]
+ * </pre>
+ *
+ * @param leftSubProof The subproof π,,1,,
+ * @param aux1 The index of A[0].
+ * @param rightSubProof The subproof π,,2,,
+ * @param aux2 The index of A[x].
+ * @param aux3 The index of A[sx].
+ * @param term The term t in the conclusion.
+ */
 case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex, aux3: SequentIndex, term: FOLTerm ) extends BinaryLKProof {
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ), Seq( aux3 ) )
