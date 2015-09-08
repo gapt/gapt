@@ -21,7 +21,7 @@ private object followOccs {
         ( upperCorr, newOccConn ) <- ( upperCorrs, newOccConns ).zipped;
         oldUpperOcc <- newOccConn.parents( newLowerIdx ).map( upperCorr( _ ) );
         oldLowerOcc <- if ( newLowerIdx.isAnt ) oldLower.antecedent else oldLower.succedent;
-        if oldLowerOcc.isDescendantOf( oldUpperOcc, reflexive = true )
+        if oldLowerOcc.parents contains oldUpperOcc
       ) yield oldLowerOcc ).head
     }
 }
@@ -78,8 +78,16 @@ object resNew2Old {
   def apply( res: ResolutionProof ): robinson.RobinsonResolutionProof = {
     val memo = mutable.Map[ResolutionProof, ( robinson.RobinsonResolutionProof, Sequent[FormulaOccurrence] )]()
 
+    def check( res: ResolutionProof, ret: ( robinson.RobinsonResolutionProof, Sequent[FormulaOccurrence] ) ): ( robinson.RobinsonResolutionProof, Sequent[FormulaOccurrence] ) = {
+      val ( oldRes, corr ) = ret
+      require( corr == corr.distinct )
+      require( corr.toHOLClause multiSetEquals res.conclusion )
+      require( corr multiSetEquals oldRes.root )
+      ret
+    }
+
     def f( res: ResolutionProof ): ( robinson.RobinsonResolutionProof, Sequent[FormulaOccurrence] ) =
-      memo.getOrElseUpdate( res, res match {
+      check( res, memo.getOrElseUpdate( res, res match {
         case _: InitialClause =>
           val resOld = robinson.InitialClause( res.conclusion )
           resOld -> resOld.root
@@ -106,7 +114,7 @@ object resNew2Old {
           val ( subProofOld2, corr2 ) = f( subProof2 )
           val resOld = robinson.Paramodulation( subProofOld1, subProofOld2, corr1( equation ), corr2( literal ), res.mainFormulas.head, FOLSubstitution() )
           resOld -> followOccs( Seq( corr1, corr2 ), resOld.root, res.occConnectors )
-      } )
+      } ) )
 
     f( res )._1
   }
