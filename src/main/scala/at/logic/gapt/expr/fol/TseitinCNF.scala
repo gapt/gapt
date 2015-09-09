@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ toNNF, simplify }
+import at.logic.gapt.proofs.HOLClause
 import scala.annotation.tailrec
 import scala.collection.mutable
 

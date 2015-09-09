@@ -2,7 +2,8 @@ package at.logic.gapt.proofs.resolutionNew
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.{ Ant, Suc, PrincipalFormulas, Sequent }
+import at.logic.gapt.proofs.{ Ant, Suc, Sequent, Clause }
+import at.logic.gapt.proofs.lk.base.{ PrincipalFormulas }
 import at.logic.gapt.proofs.lkNew.OccConnector
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolution.robinson

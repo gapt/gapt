@@ -4,7 +4,7 @@ import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr.hol.isPrenex
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParser
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.utils.withTempFile
 import scala.collection.mutable
 import scala.sys.process._

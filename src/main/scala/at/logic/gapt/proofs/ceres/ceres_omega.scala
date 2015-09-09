@@ -9,7 +9,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.Ti
 import at.logic.gapt.proofs.ceres.struct.Struct
 import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.proofs.lk.base.{ OccSequent, LKProof }
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.lksk.{ Axiom => LKSKAxiom, _ }
 import at.logic.gapt.proofs.resolution.ral._

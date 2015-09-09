@@ -5,7 +5,7 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 
 /**
  * Returns true iff the given LambdaExpression consists of a logical constant.

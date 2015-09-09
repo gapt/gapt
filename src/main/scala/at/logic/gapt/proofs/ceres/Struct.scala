@@ -5,6 +5,7 @@
 
 package at.logic.gapt.proofs.ceres.struct
 
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk.{ LabelledOccSequent, UnaryLKskProof, LabelledFormulaOccurrence }

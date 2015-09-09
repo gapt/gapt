@@ -23,6 +23,8 @@ import scala.collection.immutable.HashSet
 
 package robinson {
 
+  import at.logic.gapt.proofs.HOLClause
+
   /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
 * additional_context  may add additional ancestors, needed e.g. for factoring */
   object createContext {

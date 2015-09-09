@@ -4,9 +4,9 @@
 
 package at.logic.gapt.expr
 
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
-import at.logic.gapt.proofs.lk.base.{ Sequent, OccSequent, HOLSequent, LKProof }
-import at.logic.gapt.proofs.resolution.HOLClause
+import at.logic.gapt.proofs.lk.base._
 
 import scala.collection.GenTraversable
 import scala.collection.mutable

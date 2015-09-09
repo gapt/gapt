@@ -5,12 +5,13 @@ package at.logic.gapt.provers.atp
 
 import at.logic.gapt.expr.fol.FOLUnificationAlgorithm
 import at.logic.gapt.expr.schema.SchemaAtom
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lk.base.RichOccSequent
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ BranchCommand, Command }
 import at.logic.gapt.provers.atp.commands.logical.DeterministicAndCommand
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.provers.atp.commands.refinements.simple._
 import at.logic.gapt.provers.atp.commands.refinements.base._
 import at.logic.gapt.provers.atp.commands.sequents._

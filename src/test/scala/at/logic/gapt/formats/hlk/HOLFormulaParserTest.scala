@@ -3,7 +3,6 @@ package at.logic.gapt.formats.hlk
 /**
  * Tests for FormulaParser
  */
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import org.specs2.mutable._
 import java.io.IOException
 import at.logic.gapt.proofs.resolution.robinson.Formatter

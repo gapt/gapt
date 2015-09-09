@@ -8,9 +8,9 @@ import at.logic.gapt.expr.hol.{ containsStrongQuantifier, existsclosure, univclo
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.IvyParser.IvyStyleVariables
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
-import at.logic.gapt.proofs.lk.applyReplacement
-import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
+import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.resolutionNew.fixDerivation

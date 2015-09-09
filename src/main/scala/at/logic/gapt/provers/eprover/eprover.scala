@@ -6,7 +6,7 @@ import at.logic.gapt.expr.{ FOLAtom, HOLAtom, Bottom, FOLFormula }
 import at.logic.gapt.expr.hol.{ CNFp, dualize, CNFn }
 import at.logic.gapt.formats.leanCoP.LeanCoPParserException
 import at.logic.gapt.formats.tptp.{ TPTPParser, TPTPFOLExporter }
-import at.logic.gapt.proofs.resolution.{ HOLClause, Clause, FOLClause }
+import at.logic.gapt.proofs.{ HOLClause, FOLClause }
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.sketch.{ RefutationSketchToRobinson, RefutationSketch }
 import at.logic.gapt.provers.ResolutionProver

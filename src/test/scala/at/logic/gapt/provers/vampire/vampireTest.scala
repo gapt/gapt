@@ -4,10 +4,10 @@
 
 package at.logic.gapt.provers.vampire
 
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 
 class VampireTest extends Specification {
 

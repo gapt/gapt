@@ -1,14 +1,8 @@
 package at.logic.gapt.proofs.ceres.clauseSchema
 
-import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema._
-import java.io.File.separator
-import org.specs2.execute.Success
 import org.specs2.mutable._
-import scala.io._
 
 class clauseSchemaTest extends Specification {
   "clauseSchemaTest" should {

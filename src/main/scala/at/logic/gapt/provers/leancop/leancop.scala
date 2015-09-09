@@ -7,8 +7,9 @@ import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
 import at.logic.gapt.expr.{ Const, FOLHeadType, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
-import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
+import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.renameConstantsToFi
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.utils.traits.ExternalProgram

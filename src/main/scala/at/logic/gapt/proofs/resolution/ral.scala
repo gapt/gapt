@@ -8,6 +8,7 @@
 package at.logic.gapt.proofs.resolution.ral
 
 import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.EquationVerifier
 import at.logic.gapt.proofs.lk.EquationVerifier.{ Different, EqualModuloEquality }
 import at.logic.gapt.proofs.resolution._

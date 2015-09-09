@@ -8,9 +8,9 @@
 
 package at.logic.gapt.proofs.lk.subsumption.managers
 
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.utils.patterns.listeners._
 import at.logic.gapt.proofs.lk.subsumption._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 
 // this is used in order to make the manager listen for changes on data structures using the manager, so it will be updated accordingly
 case class SubsumptionDSEvent( ar: SAddRemove, elem: HOLSequent )

@@ -5,8 +5,8 @@
 
 package at.logic.gapt.proofs.lk.subsumption
 
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.mutable._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.expr._
 
 class StillmanSubsumptionAlgorithmFOLTest extends Specification {

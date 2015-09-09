@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.{ applySubstitution => applySub, _ }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.proofs.resolutionNew
+import at.logic.gapt.proofs.{ Sequent, HOLSequent, HOLClause, resolutionNew }
 import at.logic.gapt.proofs.resolutionNew._
 
 object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {

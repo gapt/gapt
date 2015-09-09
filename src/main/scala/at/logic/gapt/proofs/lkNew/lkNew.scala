@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lkNew
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
-import at.logic.gapt.proofs.{ SequentProof, DagProof }
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.base._
 
 import scala.collection.mutable

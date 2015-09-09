@@ -3,10 +3,11 @@ package at.logic.gapt.provers
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr.{ FOLConst, Const }
 import at.logic.gapt.expr.hol.CNFn
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees.{ replace, InstanceTermEncoding, ExpansionSequent }
 import at.logic.gapt.proofs.lk.applyReplacement
-import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
-import at.logic.gapt.proofs.resolution.{ RobinsonToExpansionProof, HOLClause, RobinsonToLK }
+import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.resolution.{ RobinsonToExpansionProof, RobinsonToLK }
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 
 abstract class ResolutionProver extends Prover {

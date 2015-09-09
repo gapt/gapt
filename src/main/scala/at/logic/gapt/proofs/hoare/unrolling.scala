@@ -1,9 +1,9 @@
 package at.logic.gapt.proofs.hoare
 
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils.numeral
+import at.logic.gapt.proofs.HOLSequent
 
 object unrollLoop {
   def apply( p: Program, actualN: Int ): Program = p match {

@@ -5,6 +5,7 @@
 package at.logic.gapt.provers.maxsat
 
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
+import at.logic.gapt.proofs.HOLClause
 import org.specs2.mutable._
 
 import at.logic.gapt.proofs.resolution._

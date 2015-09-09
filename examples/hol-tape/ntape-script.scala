@@ -16,6 +16,8 @@ val filename = "./examples/hol-tape/ntape.llk"
 
 /* begin of proof script  */
 
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadLLK
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{undoHol2Fol, replaceAbstractions, reduceHolToFol}
 import at.logic.gapt.expr.hol._
 
@@ -23,6 +25,8 @@ import at.logic.gapt.expr.fol.undoHol2Fol
 
 import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
+import at.logic.gapt.proofs.FOLClause
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize, LKToLKsk}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
 import at.logic.gapt.proofs.resolution.RobinsonToRal
@@ -96,7 +100,7 @@ import at.logic.gapt.proofs.lk.LKToLKsk
       val folcl = reduceHolToFol(folcl_)
 
       show("Refuting clause set")
-      val Some(rp) = new Prover9Prover().getRobinsonProof(folcl)
+      val Some(rp) = new Prover9Prover().getRobinsonProof(folcl.map(_.asInstanceOf[FOLClause]))
 
       show("Getting formulas")
       val proofformulas = selp.nodes.flatMap(_.asInstanceOf[LKProof].root.toHOLSequent.formulas  ).toList.distinct

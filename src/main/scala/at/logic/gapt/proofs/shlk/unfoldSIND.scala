@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.shlk
 import at.logic.gapt.formats.shlk.{ backToInt, maketogether }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema.{ leq, lessThan, sims, _ }
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._

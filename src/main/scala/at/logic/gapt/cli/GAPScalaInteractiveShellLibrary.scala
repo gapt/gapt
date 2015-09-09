@@ -29,6 +29,7 @@ import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.formats.xml.{ XMLParser, ProofDatabase, LKExporter }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
 import at.logic.gapt.proofs.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
 import at.logic.gapt.proofs.ceres.projections.Projections

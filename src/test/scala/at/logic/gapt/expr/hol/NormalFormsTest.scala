@@ -1,6 +1,7 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.resolution._
 import org.specs2.mutable._
 

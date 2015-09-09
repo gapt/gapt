@@ -6,8 +6,8 @@ package at.logic.gapt.provers.veriT
 
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees.toDeep
-import at.logic.gapt.proofs.lk.base.{ Sequent, HOLSequent }
 import at.logic.gapt.provers.sat4j.Sat4jProver
 import org.specs2.mutable._
 

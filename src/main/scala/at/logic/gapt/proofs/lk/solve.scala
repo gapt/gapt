@@ -4,8 +4,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr.hol.isAtom
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET, ETWeakening }
-import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.provers.Prover

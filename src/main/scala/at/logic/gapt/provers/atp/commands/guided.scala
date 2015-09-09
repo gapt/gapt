@@ -7,7 +7,6 @@ package at.logic.gapt.provers.atp.commands.guided
 
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.robinson.{ InitialClause }
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.Definitions._

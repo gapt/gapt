@@ -6,7 +6,7 @@
 package at.logic.gapt.formats.simple
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 
 /*
  * In order to allow a complex inheritence structure where the resolutionParser trait is mixed

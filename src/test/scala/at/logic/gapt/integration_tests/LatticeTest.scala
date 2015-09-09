@@ -7,13 +7,13 @@ import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.formats.xml.XMLParser._
+import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.ceres.clauseSets.profile._
 import at.logic.gapt.proofs.ceres.projections.Projections
 import at.logic.gapt.proofs.ceres.struct.StructCreators
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolution.HOLClause
 import at.logic.gapt.provers.prover9._
 import java.io.File.separator
 import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }

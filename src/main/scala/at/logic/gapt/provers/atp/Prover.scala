@@ -5,6 +5,7 @@
 package at.logic.gapt.provers.atp
 
 import at.logic.gapt.expr.FOLExpression
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.expr.fol.{ UnificationAlgorithm, FOLMatchingAlgorithm, FOLUnificationAlgorithm }
 import at.logic.gapt.proofs.resolution.{ OccClause, ResolutionProof }

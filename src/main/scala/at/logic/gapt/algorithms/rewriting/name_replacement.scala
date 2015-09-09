@@ -2,8 +2,8 @@ package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence

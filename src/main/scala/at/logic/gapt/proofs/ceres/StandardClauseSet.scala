@@ -5,6 +5,7 @@
 
 package at.logic.gapt.proofs.ceres.clauseSets
 
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.gapt.proofs.ceres.struct._
 import at.logic.gapt.proofs.lk.base._

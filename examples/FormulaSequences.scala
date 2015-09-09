@@ -1,5 +1,6 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.base._
 
 /*

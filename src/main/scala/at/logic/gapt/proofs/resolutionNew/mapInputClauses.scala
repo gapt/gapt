@@ -1,8 +1,7 @@
 package at.logic.gapt.proofs.resolutionNew
 
-import at.logic.gapt.proofs.lk.base.SequentIndex
+import at.logic.gapt.proofs.{ FOLClause, SequentIndex }
 import at.logic.gapt.proofs.lkNew.OccConnector
-import at.logic.gapt.proofs.resolution.FOLClause
 import scala.collection.mutable
 
 object mapInputClauses {

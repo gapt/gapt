@@ -2,10 +2,8 @@ package at.logic.gapt.proofs.resolutionNew
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.SequentProof
-import at.logic.gapt.proofs.lk.base.{ Ant, Suc, Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ FOLClause, SequentIndex, SequentProof }
 import at.logic.gapt.proofs.lkNew.OccConnector
-import at.logic.gapt.proofs.resolution.{ FOLClause, HOLClause, Clause }
 
 /**
  * First-order resolution proof.

@@ -1,10 +1,8 @@
 package at.logic.gapt.formats.tptp
 
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.mutable._
-import org.specs2.execute.Success
 import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 
 class TPTPHOLExporterTest extends Specification {
   "Export to TPTP thf" should {

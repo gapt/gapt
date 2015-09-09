@@ -7,8 +7,10 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
+import at.logic.gapt.proofs.{ HOLSequent, FOLClause }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr.hol._

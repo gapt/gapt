@@ -1,7 +1,7 @@
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 
 /**
  * The interface for an unification algorithm of finitary type, i.e.

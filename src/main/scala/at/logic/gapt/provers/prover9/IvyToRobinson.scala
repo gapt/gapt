@@ -2,12 +2,12 @@ package at.logic.gapt.formats.ivy.conversion
 
 import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.resolution.HOLClause
+import at.logic.gapt.proofs.{ HOLClause, Suc, Ant }
+import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.resolutionNew._
 import at.logic.gapt.expr._
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.proofs.lk.base.{ Suc, Ant }
 import scala.collection.mutable
 
 /**

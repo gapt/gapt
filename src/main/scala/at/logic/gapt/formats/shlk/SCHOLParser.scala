@@ -2,7 +2,7 @@ package at.logic.gapt.formats.shlk
 
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.solve
-import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.proofs.shlk.getName
 

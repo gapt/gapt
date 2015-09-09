@@ -8,7 +8,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.formats.dimacs.{ writeDIMACS, readDIMACS, DIMACSHelper }
 import at.logic.gapt.models._
-import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
+import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.utils.logging.{ Stopwatch, Logger }

@@ -2,9 +2,10 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.{ applySubstitution => applySub }
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
+import at.logic.gapt.proofs.lk.base.{ LKProof }
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
 
 /**

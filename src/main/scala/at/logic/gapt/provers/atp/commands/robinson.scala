@@ -4,9 +4,10 @@ package at.logic.gapt.provers.atp.commands.robinson
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.fol.UnificationAlgorithm
 import at.logic.gapt.expr.hol.HOLPosition
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.proofs.resolution.OccClause
+import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.ProverException

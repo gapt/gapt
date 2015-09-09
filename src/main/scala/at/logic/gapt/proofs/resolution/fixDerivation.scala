@@ -3,18 +3,16 @@ package at.logic.gapt.proofs.resolutionNew
 import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement, RenameResproof }
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ HOLSequent, FOLClause, Suc }
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
-import at.logic.gapt.proofs.lk.base.{ Suc, HOLSequent }
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.resolution.{ FOLClause, RichClause, OccClause }
-import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.provers.atp.SearchDerivation
 import at.logic.gapt.provers.groundFreeVariables
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.immutable.HashMap
-import scala.collection.mutable
 
 /**
  *  Sometimes, we have a resolution refutation R of a set of clauses C

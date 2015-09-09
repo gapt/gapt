@@ -3,8 +3,9 @@ import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{prooftool, parse}
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.expr.hol.{univclosure, instantiate}
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{HOLSequent, LKProof}
+import at.logic.gapt.proofs.lk.base.LKProof
 
 trait ProofSequence {
   def apply(n: Int): LKProof

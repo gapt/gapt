@@ -1,6 +1,7 @@
 
 package at.logic.gapt.provers.atp.commands.sequents
 
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.subsumption.managers._
 import at.logic.gapt.proofs.lk.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
 import at.logic.gapt.expr.fol.FOLMatchingAlgorithm

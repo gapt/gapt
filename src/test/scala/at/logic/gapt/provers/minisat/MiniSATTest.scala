@@ -8,11 +8,11 @@ import java.io.IOException
 
 import at.logic.gapt.examples.PigeonHolePrinciple
 import at.logic.gapt.models.Interpretation
+import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 
 object SATProblems {
   val c = FOLConst( "c" )

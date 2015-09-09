@@ -2,6 +2,7 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
+import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
 import at.logic.gapt.proofs.lk._

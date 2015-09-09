@@ -4,14 +4,13 @@
 
 package at.logic.gapt.provers.vampire
 
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
 import java.io._
 import at.logic.gapt.utils.logging.Logger
 
 import scala.io.Source
-import java.nio.file.{ Paths, Files }
 
 class VampireException( msg: String ) extends Exception( msg )
 

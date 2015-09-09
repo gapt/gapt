@@ -5,11 +5,11 @@
 
 package at.logic.gapt.proofs.lksk
 
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom, _ }
 import TypeSynonyms._
 import at.logic.gapt.proofs.occurrences.FOFactory

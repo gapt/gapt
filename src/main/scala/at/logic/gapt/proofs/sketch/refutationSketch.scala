@@ -3,8 +3,8 @@ package at.logic.gapt.proofs.sketch
 import at.logic.gapt.expr.{ FOLAtom, FOLFormula, Eq }
 import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
+import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.resolution.{ FOLClause, HOLClause }
 import at.logic.gapt.proofs.resolutionNew._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.resolutionNew.{ mapInputClauses, resNew2Old, findDerivationViaResolution }
