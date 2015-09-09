@@ -7,7 +7,8 @@ import at.logic.gapt.proofs.lk.{ applySubstitution => applySub, _ }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 
 /**
- * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)
+ * Given a sequent s and a clause a in CNF(-s), PCNF computes an LK proof of s ++ a
+ *
  * Note about checking containment up to variables renaming:
  * we compute the variable renaming from the lk proof to the resolution proof for a specific clause. We cannot apply it to the formula in s
  * as it might be quantified over this variables so we apply it to the resulted lk proof. We must apply it as otherwise the substitution in
