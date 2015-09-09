@@ -91,10 +91,6 @@ class FixDerivationTest extends Specification {
   }
 
   "findDerivationViaResolution" should {
-    def isTautological( f: FOLClause ): Boolean =
-      ( f.negative intersect f.positive ).nonEmpty ||
-        f.positive.collect { case Eq( FOLVar( x ), FOLVar( x_ ) ) if x == x_ => () }.nonEmpty
-
     def check( a: FOLClause, bs: Set[FOLClause] ) = {
       if ( !new Prover9Prover().isInstalled ) skipped
       findDerivationViaResolution( a, bs ) must beLike {
@@ -102,8 +98,7 @@ class FixDerivationTest extends Specification {
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true
           foreach( inputClauses( p ) ) { initial =>
             val inBsModRenaming = bs.exists( b => PCNF.getVariableRenaming( initial, b ).isDefined )
-            // FIXME: input clauses should not be tautological
-            ( isTautological( initial ) || inBsModRenaming ) aka s"$initial in $bs or tautology" must_== true
+            inBsModRenaming aka s"$initial in $bs" must_== true
           }
       }
     }

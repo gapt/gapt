@@ -192,8 +192,7 @@ object tautologifyInitialClauses {
    */
   def apply( p: ResolutionProof, shouldTautologify: FOLClause => Boolean ): ResolutionProof =
     p match {
-      // FIXME: TautologyClause should be generalized to handle this.
-      case InputClause( clause ) if shouldTautologify( clause )             => InputClause( clause ++ clause.swapped )
+      case InputClause( clause ) if shouldTautologify( clause )             => TautologyClause( clause ++ clause.swapped )
       case InputClause( _ ) | ReflexivityClause( _ ) | TautologyClause( _ ) => p
       case Factor( p1, i1, i2 ) =>
         val newP1 = apply( p1, shouldTautologify )

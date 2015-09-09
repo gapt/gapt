@@ -87,7 +87,7 @@ object NameReplacement {
     def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
       case InputClause( clause )     => InputClause( clause map { NameReplacement( _, repl ) } )
       case ReflexivityClause( term ) => ReflexivityClause( NameReplacement( term, repl ) )
-      case TautologyClause( atom )   => TautologyClause( NameReplacement( atom, repl ) )
+      case TautologyClause( clause ) => TautologyClause( clause map { NameReplacement( _, repl ) } )
       case Factor( q, i1, i2 )       => Factor( f( q ), i1, i2 )
       case Instance( q, subst ) =>
         Instance( f( q ), FOLSubstitution( subst.folmap.map { case ( f, t ) => f -> NameReplacement( t, repl ) } ) )
