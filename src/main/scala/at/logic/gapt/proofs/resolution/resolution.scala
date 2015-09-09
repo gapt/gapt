@@ -107,6 +107,7 @@ case class Instance( subProof: ResolutionProof, substitution: FOLSubstitution ) 
 case class Factor( subProof: ResolutionProof, literal1: SequentIndex, literal2: SequentIndex ) extends ResolutionProof {
   require( literal1 sameSideAs literal2 )
   require( literal1 < literal2 )
+  require( subProof.conclusion( literal1 ) == subProof.conclusion( literal2 ) )
 
   override val conclusion = subProof.conclusion delete literal2
   override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
