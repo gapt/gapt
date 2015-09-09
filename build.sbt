@@ -36,14 +36,6 @@ lazy val root = (project in file(".")).
 
     mainClass := Some("at.logic.cli.CLIMain"),
 
-    sourceGenerators in Compile += Def.task {
-      Seq("ProofSequences.scala", "FormulaSequences.scala") map { fn =>
-        val dest = (sourceManaged in Compile).value / fn
-        IO.copyFile(baseDirectory.value / "examples" / fn, dest)
-        dest
-      }
-    }.taskValue,
-
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
     releaseDist := {
