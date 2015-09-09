@@ -4,7 +4,7 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ applySubstitution => applySub, _ }
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent, resolution }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 
 object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
   type mapT = scala.collection.mutable.Map[HOLClause, LKProof]
@@ -47,7 +47,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
    * as end-clause, into an LKProof of a sequent s. To do this, the provided createAxiom method is assumed
    * to return, on input c, an LKProof with end-sequent "s' merge c", where s' is a sub-sequent of s.
    */
-  def apply( resproof: resolution.ResolutionProof, s: HOLSequent, createAxiom: HOLClause => LKProof ): LKProof =
+  def apply( resproof: ResolutionProof, s: HOLSequent, createAxiom: HOLClause => LKProof ): LKProof =
     WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[HOLClause, LKProof](), createAxiom ), s, strict = true )
 
   // Enforce the inductive invariant by contracting superfluous material.
@@ -70,15 +70,15 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
   // Inductive invariant of this method:
   // returns an LKProof of "s' merge c", where s' is a sub-sequent of seq, and
   // c is the end-clause of proof.
-  private def recConvert( proof: resolution.ResolutionProof, seq: HOLSequent, map: mapT, createAxiom: HOLClause => LKProof ): LKProof = {
+  private def recConvert( proof: ResolutionProof, seq: HOLSequent, map: mapT, createAxiom: HOLClause => LKProof ): LKProof = {
     if ( map.contains( proof.conclusion ) ) {
       CloneLKProof( map( proof.conclusion ) )
     } else {
       val ret: LKProof = proof match {
-        case resolution.TautologyClause( atom )   => Axiom( atom )
-        case resolution.ReflexivityClause( term ) => Axiom( Sequent() :+ Eq( term, term ) )
-        case resolution.InputClause( cls )        => createAxiom( cls )
-        case resolution.Factor( p, idx1, idx2 ) => {
+        case TautologyClause( atom )   => Axiom( atom )
+        case ReflexivityClause( term ) => Axiom( Sequent() :+ Eq( term, term ) )
+        case InputClause( cls )        => createAxiom( cls )
+        case Factor( p, idx1, idx2 ) => {
           val res = recConvert( p, seq, map, createAxiom )
 
           if ( idx1.isAnt )
@@ -86,14 +86,14 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
           else
             ContractionRightRule( res, p.conclusion( idx1 ) )
         }
-        case resolution.Instance( p, s ) => applySub( recConvert( p, seq, map, createAxiom ), s )._1
-        case resolution.Resolution( p1, idx1, p2, idx2 ) => {
+        case Instance( p, s ) => applySub( recConvert( p, seq, map, createAxiom ), s )._1
+        case Resolution( p1, idx1, p2, idx2 ) => {
           val u1 = recConvert( p1, seq, map, createAxiom )
           val u2 = recConvert( p2, seq, map, createAxiom )
           val cut = CutRule( u1, u2, p1.conclusion( idx1 ) )
           contractDownTo( cut, seq, proof.conclusion )
         }
-        case resolution.Paramodulation( p1, eq, p2, lit, poss, dir ) => {
+        case Paramodulation( p1, eq, p2, lit, poss, dir ) => {
           val u1 = recConvert( p1, seq, map, createAxiom )
           val u2 = recConvert( p2, seq, map, createAxiom )
           val Some( eqOcc ) = u1.root.succedent.find( _.formula == p1.conclusion( eq ) )

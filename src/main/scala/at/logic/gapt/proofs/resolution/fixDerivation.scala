@@ -212,8 +212,7 @@ object tautologifyInitialUnitClauses {
 }
 
 object containedVariables {
-  import at.logic.gapt.proofs.resolution
-  def apply( p: resolution.ResolutionProof ): Set[FOLVar] =
+  def apply( p: ResolutionProof ): Set[FOLVar] =
     p.subProofs.flatMap { subProof => freeVariables( subProof.conclusion ) }
 }
 
