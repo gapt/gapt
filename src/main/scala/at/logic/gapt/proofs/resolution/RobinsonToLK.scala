@@ -75,9 +75,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
       CloneLKProof( map( proof.conclusion ) )
     } else {
       val ret: LKProof = proof match {
-        case resolution.TautologyClause( clause ) =>
-          val atom = ( clause.antecedent intersect clause.succedent ).head
-          WeakeningMacroRule( Axiom( atom ), clause )
+        case resolution.TautologyClause( atom )   => Axiom( atom )
         case resolution.ReflexivityClause( term ) => Axiom( Sequent() :+ Eq( term, term ) )
         case resolution.InputClause( cls )        => createAxiom( cls )
         case resolution.Factor( p, idx1, idx2 ) => {

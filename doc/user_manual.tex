@@ -906,6 +906,8 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 
 \section{The Resolution Calculus}
 
+\subsection*{Initial clauses}
+
 \begin{prooftree}
 \AxiomC{}\RightLabel{InputClause}
 \UnaryInfC{$C$}
@@ -918,8 +920,10 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 
 \begin{prooftree}
 \AxiomC{}\RightLabel{TautologyClause}
-\UnaryInfC{$a \lor \neg a \lor C$}
+\UnaryInfC{$a \lor \neg a$}
 \end{prooftree}
+
+\subsection*{Structural rules}
 
 \begin{prooftree}
 \AxiomC{$a \lor a \lor C$}\RightLabel{Factor}
@@ -930,6 +934,8 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 \AxiomC{$C$}\RightLabel{Instance}
 \UnaryInfC{$C \sigma$}
 \end{prooftree}
+
+\subsection*{Logical rules}
 
 \begin{prooftree}
 \AxiomC{$C \lor a$}

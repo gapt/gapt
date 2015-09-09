@@ -98,7 +98,7 @@ class FixDerivationTest extends Specification {
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true
           foreach( inputClauses( p ) ) { initial =>
             val inBsModRenaming = bs.exists( b => PCNF.getVariableRenaming( initial, b ).isDefined )
-            inBsModRenaming aka s"$initial in $bs" must_== true
+            inBsModRenaming aka s"$initial in $bs or tautology" must_== true
           }
       }
     }

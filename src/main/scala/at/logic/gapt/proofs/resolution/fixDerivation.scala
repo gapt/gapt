@@ -182,18 +182,18 @@ object fixDerivation extends Logger {
     }
 }
 
-object tautologifyInitialClauses {
+object tautologifyInitialUnitClauses {
   /**
    * Replace matching initial clauses by tautologies.
    *
-   * If shouldTautologify is true for an initial clause Γ:-Δ, then it is replaced by the tautology Γ,Δ:-Γ,Δ.  The
+   * If shouldTautologify is true for an initial unit clause +-a, then it is replaced by the tautology a:-a.  The
    * resulting resolution proof has the same structure as the original proof, and will hence contain many duplicate
    * literals originating from the new initial clauses as the new literals are not factored away.
    */
   def apply( p: ResolutionProof, shouldTautologify: FOLClause => Boolean ): ResolutionProof =
     p match {
-      case InputClause( clause ) if shouldTautologify( clause )             => TautologyClause( clause ++ clause.swapped )
-      case InputClause( _ ) | ReflexivityClause( _ ) | TautologyClause( _ ) => p
+      case InputClause( clause ) if shouldTautologify( clause ) && clause.size == 1 => TautologyClause( clause.elements.head )
+      case InputClause( _ ) | ReflexivityClause( _ ) | TautologyClause( _ )         => p
       case Factor( p1, i1, i2 ) =>
         val newP1 = apply( p1, shouldTautologify )
         Factor( newP1, newP1.conclusion.indicesWhere( _ == p1.conclusion( i1 ) ).filter( _ sameSideAs i1 ).take( 2 ) )._1
@@ -239,7 +239,7 @@ object findDerivationViaResolution {
       a.positive.map { f => FOLClause( Seq( groundingSubst( f ) ), Seq() ) }
 
     new Prover9Prover().getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
-      val tautologified = tautologifyInitialClauses( refutation, negatedClausesA.toSet )
+      val tautologified = tautologifyInitialUnitClauses( refutation, negatedClausesA.toSet )
 
       val toUnusedVars = rename( grounding.map( _._1 ).toSet, containedVariables( tautologified ) )
       val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }.toMap[FOLTerm, FOLTerm]

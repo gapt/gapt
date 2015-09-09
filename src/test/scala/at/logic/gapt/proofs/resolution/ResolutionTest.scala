@@ -19,14 +19,7 @@ class ResolutionTest extends Specification {
   }
 
   "TautologyClause" in {
-    val Seq( a, b ) = Seq( "a", "b" ) map { FOLAtom( _ ) }
-    TautologyClause( a +: Clause() :+ b ) must throwAn[IllegalArgumentException]
-    TautologyClause( a +: a +: b +: Clause() :+ b :+ a )
-    ok
-  }
-
-  "TautologyClause companion" in {
-    val Seq( a, b ) = Seq( "a", "b" ) map { FOLAtom( _ ) }
+    val a = FOLAtom( "a" )
     TautologyClause( a ).conclusion must_== ( a +: Clause() :+ a )
   }
 

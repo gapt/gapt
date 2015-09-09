@@ -55,19 +55,13 @@ case class ReflexivityClause( term: FOLTerm ) extends InitialClause {
 /**
  * Tautology.
  *
- * The conclusion needs to contain one atom in both polarities.
- *
  * <pre>
- *   ----------
- *   conclusion
+ *   -------------
+ *   -atom \/ atom
  * </pre>
  */
-case class TautologyClause( conclusion: FOLClause ) extends InitialClause {
-  require( conclusion.antecedent intersect conclusion.succedent nonEmpty )
-}
-
-object TautologyClause {
-  def apply( atom: FOLAtom ): TautologyClause = TautologyClause( atom +: FOLClause() :+ atom )
+case class TautologyClause( atom: FOLAtom ) extends InitialClause {
+  override val conclusion = atom +: FOLClause() :+ atom
 }
 
 /**

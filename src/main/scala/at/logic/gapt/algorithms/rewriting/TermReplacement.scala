@@ -95,7 +95,7 @@ object TermReplacement extends Logger {
     def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
       case InputClause( clause )     => InputClause( clause map { TermReplacement( _, repl ) } )
       case ReflexivityClause( term ) => ReflexivityClause( TermReplacement( term, repl ) )
-      case TautologyClause( clause ) => TautologyClause( clause map { TermReplacement( _, repl ) } )
+      case TautologyClause( atom )   => TautologyClause( TermReplacement( atom, repl ) )
       case Factor( q, i1, i2 )       => Factor( f( q ), i1, i2 )
       case Instance( q, subst ) =>
         Instance( f( q ), FOLSubstitution( subst.folmap.map { case ( f, t ) => f -> TermReplacement( t, repl ) } ) )
