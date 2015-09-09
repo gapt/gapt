@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolutionNew
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement, RenameResproof }
 import at.logic.gapt.expr.fol.FOLSubstitution
@@ -215,8 +215,8 @@ object tautologifyInitialClauses {
 }
 
 object containedVariables {
-  import at.logic.gapt.proofs.resolutionNew
-  def apply( p: resolutionNew.ResolutionProof ): Set[FOLVar] =
+  import at.logic.gapt.proofs.resolution
+  def apply( p: resolution.ResolutionProof ): Set[FOLVar] =
     p.subProofs.flatMap { subProof => freeVariables( subProof.conclusion ) }
 }
 

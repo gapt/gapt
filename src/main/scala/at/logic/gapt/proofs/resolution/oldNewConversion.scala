@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolutionNew
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution

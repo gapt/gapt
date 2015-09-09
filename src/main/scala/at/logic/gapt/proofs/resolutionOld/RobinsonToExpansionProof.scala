@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionSe
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.resolutionNew._
+import at.logic.gapt.proofs.resolution._
 
 import scala.collection.mutable
 
@@ -15,7 +15,7 @@ object RobinsonToExpansionProof {
   def apply( p: RobinsonResolutionProof, es: HOLSequent ): ExpansionSequent =
     apply( resOld2New( p ), es )
 
-  def apply( p: resolutionNew.ResolutionProof, es: HOLSequent ): ExpansionSequent = {
+  def apply( p: resolution.ResolutionProof, es: HOLSequent ): ExpansionSequent = {
     val dummyConstant = rename( FOLConst( "arbitrary" ), constants( es ).toList )
     val cnfMap: Seq[( HOLClause, Boolean, FOLFormula )] =
       es.map( f => toVNF( f ).asInstanceOf[FOLFormula] ).map(
@@ -37,14 +37,14 @@ object RobinsonToExpansionProof {
   }
 
   def apply( p: RobinsonResolutionProof ): ExpansionSequent = apply( resOld2New( p ) )
-  def apply( p: resolutionNew.ResolutionProof ): ExpansionSequent =
+  def apply( p: resolution.ResolutionProof ): ExpansionSequent =
     apply_( p, {
       case Clause( Seq( f ), Seq( f_ ) ) if f == f_       => Set()
       case Clause( Seq(), Seq( Eq( a, a_ ) ) ) if a == a_ => Set()
       case clause                                         => Set( ( false, univclosure( clause.toFormula.asInstanceOf[FOLFormula] ), freeVariables( clause.toFormula.asInstanceOf[FOLFormula] ).map { v => v -> v }.toMap ) )
     } )
 
-  private def apply_( p: resolutionNew.ResolutionProof, instForIC: FOLClause => Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] ): ExpansionSequent = {
+  private def apply_( p: resolution.ResolutionProof, instForIC: FOLClause => Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] ): ExpansionSequent = {
     val inst = getInstances( p, instForIC )
     val dummyConstant = rename( FOLConst( "arbitrary" ), inst.map( _._2 ).flatMap( constants( _ ) ).toList )
 
@@ -70,8 +70,8 @@ object RobinsonToExpansionProof {
     )
   }
 
-  private def getInstances( p: resolutionNew.ResolutionProof, instForIC: FOLClause => Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] ): Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] = {
-    val substMap = mutable.Map[resolutionNew.ResolutionProof, Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )]]()
+  private def getInstances( p: resolution.ResolutionProof, instForIC: FOLClause => Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] ): Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] = {
+    val substMap = mutable.Map[resolution.ResolutionProof, Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )]]()
 
     def applySubst( instances: Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )], subst: FOLSubstitution ) =
       instances map {
@@ -79,7 +79,7 @@ object RobinsonToExpansionProof {
           ( pol, formula, instSubst.map { case ( v, r ) => v -> subst( r ) } )
       }
 
-    def getInst( node: resolutionNew.ResolutionProof ): Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] =
+    def getInst( node: resolution.ResolutionProof ): Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] =
       substMap.getOrElseUpdate(
         node,
         node match {

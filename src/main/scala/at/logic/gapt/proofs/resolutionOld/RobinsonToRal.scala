@@ -8,8 +8,8 @@ import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledOccSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolutionOld.ral.{ InitialSequent => RalInitialSequent, _ }
 import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent, resolutionNew }
-import at.logic.gapt.proofs.resolutionNew._
+import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent, resolution }
+import at.logic.gapt.proofs.resolution._
 
 /**
  * Created by marty on 9/9/14.
@@ -37,7 +37,7 @@ abstract class RobinsonToRal {
 
   def apply( rp: RobinsonResolutionProof ): RalResolutionProof[LabelledOccSequent] = applyNew( resOld2New( rp ) )
 
-  def applyNew( rp: resolutionNew.ResolutionProof ): RalResolutionProof[LabelledOccSequent] =
+  def applyNew( rp: resolution.ResolutionProof ): RalResolutionProof[LabelledOccSequent] =
     rp match {
       case _: InitialClause =>
         val clause = rp.conclusion

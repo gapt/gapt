@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.resolutionOld.robinson._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
-import at.logic.gapt.proofs.resolutionNew.{ findDerivationViaResolution, fixDerivation }
+import at.logic.gapt.proofs.resolution.{ findDerivationViaResolution, fixDerivation }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.mutable._
 

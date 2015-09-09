@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolutionNew
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.proofs.{ FOLClause, SequentIndex }
 import at.logic.gapt.proofs.lkNew.OccConnector

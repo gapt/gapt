@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolutionNew
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.provers.prover9.Prover9Importer
 import org.specs2.mutable._

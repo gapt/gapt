@@ -5,9 +5,9 @@ import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.resolutionNew._
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.proofs.resolutionNew.{ mapInputClauses, resNew2Old, findDerivationViaResolution }
+import at.logic.gapt.proofs.resolution.{ mapInputClauses, resNew2Old, findDerivationViaResolution }
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
