@@ -90,7 +90,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
         case resolution.Resolution( p1, idx1, p2, idx2 ) => {
           val u1 = recConvert( p1, seq, map, createAxiom )
           val u2 = recConvert( p2, seq, map, createAxiom )
-          val cut = if ( idx1.isSuc ) CutRule( u1, u2, p1.conclusion( idx1 ) ) else CutRule( u2, u1, p1.conclusion( idx1 ) )
+          val cut = CutRule( u1, u2, p1.conclusion( idx1 ) )
           contractDownTo( cut, seq, proof.conclusion )
         }
         case resolution.Paramodulation( p1, eq, p2, lit, poss, dir ) => {

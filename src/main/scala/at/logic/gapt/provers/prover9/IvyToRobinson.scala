@@ -23,8 +23,8 @@ object IvyToRobinson {
         val q2 = convert( parent2 )
         if ( parent1.root.antecedent contains lit1 )
           Resolution(
-            q1, Ant( q1.conclusion.antecedent indexOf lit1.formula ),
-            q2, Suc( q2.conclusion.succedent indexOf lit2.formula )
+            q2, Suc( q2.conclusion.succedent indexOf lit2.formula ),
+            q1, Ant( q1.conclusion.antecedent indexOf lit1.formula )
           )
         else
           Resolution(
