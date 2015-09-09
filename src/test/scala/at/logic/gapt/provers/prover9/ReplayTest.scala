@@ -203,7 +203,7 @@ class ReplayTest extends Specification {
       val p = FOLAtom( "P", Nil )
       val s1 = FOLClause( Nil, p :: Nil )
       val s2 = FOLClause( p :: Nil, Nil )
-      val result: Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( s1 :: s2 :: Nil )
+      val result = new Prover9Prover().getRobinsonProof( s1 :: s2 :: Nil )
       result match {
         case Some( proof ) =>
           //println(Formatter.asHumanReadableString(proof))

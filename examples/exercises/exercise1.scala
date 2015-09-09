@@ -2,7 +2,7 @@
 import at.logic.gapt.examples._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.resolutionOld.TseitinCNF
+import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.provers.minisat.MiniSATProver
 val minisat = new MiniSATProver
 

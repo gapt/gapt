@@ -2,7 +2,6 @@ package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ FOLClause, HOLClause }
-import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.utils.dssupport.ListSupport
 
 /**

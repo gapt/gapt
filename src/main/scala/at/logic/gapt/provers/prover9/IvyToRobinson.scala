@@ -4,7 +4,6 @@ import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate 
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.{ HOLClause, Suc, Ant }
 import at.logic.gapt.proofs.lk.base.RichOccSequent
-import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
 import at.logic.gapt.algorithms.rewriting.TermReplacement
@@ -14,10 +13,7 @@ import scala.collection.mutable
  * Converts Ivy Proofs into Robinson Resolution Proofs
  */
 object IvyToRobinson {
-  def apply( iproof: IvyResolutionProof ): RobinsonResolutionProof =
-    resNew2Old( applyNew( iproof ) )
-
-  def applyNew( ivy: IvyResolutionProof ): ResolutionProof = {
+  def apply( ivy: IvyResolutionProof ): ResolutionProof = {
     val memo = mutable.Map[String, ResolutionProof]()
     def convert( p: IvyResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p.id, p match {
       case IInitialClause( id, exp, clause )            => InputClause( clause.toHOLSequent.map( _.asInstanceOf[FOLAtom] ) )

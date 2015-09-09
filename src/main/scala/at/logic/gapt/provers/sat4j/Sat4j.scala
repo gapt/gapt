@@ -5,12 +5,12 @@
 package at.logic.gapt.provers.sat4j
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.formats.dimacs.{ writeDIMACS, readDIMACS, DIMACSHelper }
 import at.logic.gapt.models._
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
-import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.utils.logging.{ Stopwatch, Logger }
 import java.io.BufferedWriter

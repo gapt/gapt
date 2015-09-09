@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolutionOld
+package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ toNNF, simplify }

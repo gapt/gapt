@@ -4,8 +4,6 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ applySubstitution => applySub, _ }
-import at.logic.gapt.proofs.resolutionOld.PCNF
-import at.logic.gapt.proofs.resolutionOld.robinson._
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent, resolution }
 
 object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
@@ -29,22 +27,19 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
   }
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
-  def apply( resproof: RobinsonResolutionProof, s: HOLSequent ): LKProof = apply( resOld2New( resproof ), s )
-  def apply( resproof: resolution.ResolutionProof, s: HOLSequent ): LKProof = {
+  def apply( resproof: ResolutionProof, s: HOLSequent ): LKProof = {
     assert( resproof.conclusion.isEmpty )
     val memotable = new PCNFMemoTable( s )
     WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[HOLClause, LKProof](), memotable.getPCNF ), s, strict = true )
   }
 
   // if the proof can be obtained from the CNF(-s) then we compute an LKProof of |- s
-  def apply( resproof: RobinsonResolutionProof, s: HOLSequent, map: mapT ): LKProof = apply( resOld2New( resproof ), s, map )
-  def apply( resproof: resolution.ResolutionProof, s: HOLSequent, map: mapT ): LKProof = {
+  def apply( resproof: ResolutionProof, s: HOLSequent, map: mapT ): LKProof = {
     val memotable = new PCNFMemoTable( s )
     WeakeningContractionMacroRule( recConvert( resproof, s, map, memotable.getPCNF ), s, strict = false )
   }
 
-  def apply( resproof: RobinsonResolutionProof ): LKProof = apply( resOld2New( resproof ) )
-  def apply( resproof: resolution.ResolutionProof ): LKProof =
+  def apply( resproof: ResolutionProof ): LKProof =
     recConvert( resproof, HOLSequent( List(), List() ), scala.collection.mutable.Map[HOLClause, LKProof](), x => Axiom( x.negative, x.positive ) )
 
   /**
@@ -52,7 +47,6 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
    * as end-clause, into an LKProof of a sequent s. To do this, the provided createAxiom method is assumed
    * to return, on input c, an LKProof with end-sequent "s' merge c", where s' is a sub-sequent of s.
    */
-  def apply( resproof: RobinsonResolutionProof, s: HOLSequent, createAxiom: HOLClause => LKProof ): LKProof = apply( resOld2New( resproof ), s, createAxiom )
   def apply( resproof: resolution.ResolutionProof, s: HOLSequent, createAxiom: HOLClause => LKProof ): LKProof =
     WeakeningContractionMacroRule( recConvert( resproof, s, scala.collection.mutable.Map[HOLClause, LKProof](), createAxiom ), s, strict = true )
 
@@ -96,7 +90,7 @@ object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
         case resolution.Resolution( p1, idx1, p2, idx2 ) => {
           val u1 = recConvert( p1, seq, map, createAxiom )
           val u2 = recConvert( p2, seq, map, createAxiom )
-          val cut = CutRule( u1, u2, p1.conclusion( idx1 ) )
+          val cut = if ( idx1.isSuc ) CutRule( u1, u2, p1.conclusion( idx1 ) ) else CutRule( u2, u1, p1.conclusion( idx1 ) )
           contractDownTo( cut, seq, proof.conclusion )
         }
         case resolution.Paramodulation( p1, eq, p2, lit, poss, dir ) => {

@@ -6,11 +6,11 @@
 package at.logic.gapt.provers.minisat
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.dimacs.{ readDIMACS, writeDIMACS, DIMACSHelper }
 import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
-import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.provers.Prover
 import java.io._
 import scala.collection.immutable.HashMap

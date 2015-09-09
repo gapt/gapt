@@ -4,7 +4,6 @@ import at.logic.gapt.expr.{ FOLAtom, FOLFormula, Eq }
 import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.FOLClause
-import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.resolution.{ mapInputClauses, resNew2Old, findDerivationViaResolution }
@@ -25,9 +24,7 @@ case class RefutationSketch( steps: Seq[RefutationSketch.Step] )
 object RefutationSketchToRobinson extends Logger {
   import RefutationSketch._
 
-  def apply( sketch: RefutationSketch ): Option[RobinsonResolutionProof] = applyNew( sketch ) map { resNew2Old( _ ) }
-
-  def applyNew( sketch: RefutationSketch ): Option[ResolutionProof] = {
+  def apply( sketch: RefutationSketch ): Option[ResolutionProof] = {
     val solvedSteps = mutable.Map[FOLClause, ResolutionProof]()
     sketch.steps foreach {
       case Step( step, _ ) if solvedSteps.contains( step ) => ()
@@ -39,7 +36,7 @@ object RefutationSketchToRobinson extends Logger {
           case Inference( from )  => from.map( sketch.steps( _ ) ).map( _.clause ).toSet
           case ArbitraryInference => solvedSteps.keys.toSet
         }
-        findDerivationViaResolution.applyNew( step, relevantPrevSteps ) match {
+        findDerivationViaResolution( step, relevantPrevSteps ) match {
           case Some( deriv ) =>
             val filledInDeriv = mapInputClauses( deriv ) { other =>
               relevantPrevSteps.view.flatMap {

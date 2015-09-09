@@ -15,35 +15,39 @@ class OldNewConversionTest extends Specification {
   if ( !Prover9Importer.isInstalled ) args( skipAll = true )
 
   "GEO037m4" in {
-    val o = load( "GEO037-2.out" )
-    val n = resOld2New( o )
-    val o_ = resNew2Old( n )
+    val n = load( "GEO037-2.out" )
+    val o = resNew2Old( n )
+    val n_ = resOld2New( o )
     n.conclusion.isEmpty must_== true
-    o_.root.isEmpty must_== true
+    o.root.isEmpty must_== true
+    n_.conclusion.isEmpty must_== true
   }
 
   "goat puzzle" in {
-    val o = load( "PUZ047+1.out" )
-    val n = resOld2New( o )
-    val o_ = resNew2Old( n )
+    val n = load( "PUZ047+1.out" )
+    val o = resNew2Old( n )
+    val n_ = resOld2New( o )
     n.conclusion.isEmpty must_== true
-    o_.root.isEmpty must_== true
+    o.root.isEmpty must_== true
+    n_.conclusion.isEmpty must_== true
   }
 
   "cade13example.out" in {
-    val o = load( "cade13example.out" )
-    val n = resOld2New( o )
-    val o_ = resNew2Old( n )
+    val n = load( "cade13example.out" )
+    val o = resNew2Old( n )
+    val n_ = resOld2New( o )
     n.conclusion.isEmpty must_== true
-    o_.root.isEmpty must_== true
+    o.root.isEmpty must_== true
+    n_.conclusion.isEmpty must_== true
   }
 
   "proof with new_symbol" in {
-    val o = load( "ALG138+1.out" )
-    val n = resOld2New( o )
-    val o_ = resNew2Old( n )
+    val n = load( "ALG138+1.out" )
+    val o = resNew2Old( n )
+    val n_ = resOld2New( o )
     n.conclusion.isEmpty must_== true
-    o_.root.isEmpty must_== true
+    o.root.isEmpty must_== true
+    n_.conclusion.isEmpty must_== true
   }
 
 }

@@ -2,12 +2,12 @@ package at.logic.gapt.provers.maxsat
 
 import java.io._
 
+import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.formats.dimacs.DIMACSHelper
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.utils.logging.{ metrics, Logger, Stopwatch }
 
 import scala.collection.immutable.Map

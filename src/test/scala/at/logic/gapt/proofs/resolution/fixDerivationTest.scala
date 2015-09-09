@@ -1,12 +1,8 @@
-package at.logic.gapt.proofs.resolutionOld
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.FOLClause
-import at.logic.gapt.proofs.resolutionOld.robinson._
-import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
-import at.logic.gapt.proofs.resolution.{ findDerivationViaResolution, fixDerivation }
+import at.logic.gapt.proofs.{ Ant, Clause, FOLClause, Suc }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.mutable._
 
@@ -61,13 +57,13 @@ class FixDerivationTest extends Specification {
       val q = FOLAtom( "q" )
       val r = FOLAtom( "r" )
 
-      val der = Resolution( InitialClause( Nil, q :: r :: Nil ), InitialClause( q :: Nil, p :: Nil ), q, q, FOLSubstitution() )
+      val der = Resolution( InputClause( Clause() :+ q :+ r ), Suc( 0 ), InputClause( q +: Clause() :+ p ), Ant( 0 ) )
       val cq = FOLClause( Nil, q :: Nil )
       val cqp = FOLClause( q :: Nil, p :: Nil )
 
       val cp = FOLClause( Nil, p :: Nil )
 
-      fixDerivation( der, cq :: cqp :: Nil ).root.toHOLSequent must beEqualTo( cp )
+      fixDerivation( der, cq :: cqp :: Nil ).conclusion must beEqualTo( cp )
     }
 
     "obtain a derivation of :- p from { :- q; q :- p } from a derivation of :- p, r from { :- q, r; q :- p, p }" in {
@@ -76,19 +72,20 @@ class FixDerivationTest extends Specification {
       val r = FOLAtom( "r" )
 
       val der = Resolution(
-        InitialClause( Nil, q :: r :: Nil ),
+        InputClause( Clause() :+ q :+ r ),
+        Suc( 0 ),
         Factor(
-          InitialClause( q :: Nil, p :: p :: Nil ),
-          p, 2, true, FOLSubstitution()
+          InputClause( q +: Clause() :+ p :+ p ),
+          Suc( 0 ), Suc( 1 )
         ),
-        q, q, FOLSubstitution()
+        Ant( 0 )
       )
       val cq = FOLClause( Nil, q :: Nil )
       val cqp = FOLClause( q :: Nil, p :: Nil )
 
       val cp = FOLClause( Nil, p :: Nil )
 
-      fixDerivation( der, cq :: cqp :: Nil ).root.toHOLSequent must beEqualTo( cp )
+      fixDerivation( der, cq :: cqp :: Nil ).conclusion must beEqualTo( cp )
     }
 
   }
@@ -101,11 +98,12 @@ class FixDerivationTest extends Specification {
     def check( a: FOLClause, bs: Set[FOLClause] ) = {
       if ( !new Prover9Prover().isInstalled ) skipped
       findDerivationViaResolution( a, bs ) must beLike {
-        case Some( p: RobinsonResolutionProof ) =>
-          p.root.toHOLSequent.isSubMultisetOf( a ) aka s"${p.root} subclause of $a" must_== true
-          foreach( initialSequents( p ).map( _.toHOLClause ) ) { initial =>
+        case Some( p ) =>
+          p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true
+          foreach( inputClauses( p ) ) { initial =>
             val inBsModRenaming = bs.exists( b => PCNF.getVariableRenaming( initial, b ).isDefined )
-            ( isTautological( initial.map( _.asInstanceOf[FOLAtom] ) ) || inBsModRenaming ) aka s"$initial in $bs or tautology" must_== true
+            // FIXME: input clauses should not be tautological
+            ( isTautological( initial ) || inBsModRenaming ) aka s"$initial in $bs or tautology" must_== true
           }
       }
     }

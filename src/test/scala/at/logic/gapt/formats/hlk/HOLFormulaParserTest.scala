@@ -4,17 +4,8 @@ package at.logic.gapt.formats.hlk
  * Tests for FormulaParser
  */
 import org.specs2.mutable._
-import java.io.IOException
-import at.logic.gapt.proofs.resolutionOld.robinson.Formatter
-import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.resolutionOld.robinson.{ Formatter, RobinsonResolutionProof }
-
-import at.logic.gapt.proofs.occurrences.factory
 import util.parsing.input.Position
-import org.specs2.execute.Success
-
 import at.logic.gapt.expr._
-import java.io.File.separator
 
 class HOLASTParserTest extends Specification {
 

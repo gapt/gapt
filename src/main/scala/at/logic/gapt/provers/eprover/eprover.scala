@@ -6,8 +6,8 @@ import at.logic.gapt.expr.{ FOLAtom, HOLAtom, Bottom, FOLFormula }
 import at.logic.gapt.expr.hol.{ CNFp, dualize, CNFn }
 import at.logic.gapt.formats.leanCoP.LeanCoPParserException
 import at.logic.gapt.formats.tptp.{ TPTPParser, TPTPFOLExporter }
+import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ HOLClause, FOLClause }
-import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.sketch.{ RefutationSketchToRobinson, RefutationSketch }
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.utils.traits.ExternalProgram
@@ -17,7 +17,7 @@ import scala.sys.process._
 import scala.util.parsing.combinator._
 
 class EProverProver extends ResolutionProver with ExternalProgram {
-  override def getRobinsonProof( seq: Traversable[HOLClause] ): Option[RobinsonResolutionProof] =
+  override def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( seq ) {
       case ( renaming, cnf ) =>
         val tptpIn = toTPTP( cnf.map( _.map( _.asInstanceOf[FOLAtom] ) ) )

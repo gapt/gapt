@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
-import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld
 import at.logic.gapt.proofs.{ FOLClause, HOLSequent, Suc }
 import at.logic.gapt.provers.atp.SearchDerivation
 import at.logic.gapt.provers.groundFreeVariables
@@ -146,7 +146,7 @@ object fixDerivation extends Logger {
   def tryDeriveViaSearchDerivation( to: FOLClause, from: Seq[FOLClause] ) = {
     val cls_sequent = FOLClause( to.negative.map( _.asInstanceOf[FOLFormula] ), to.positive.map( _.asInstanceOf[FOLFormula] ) )
     SearchDerivation( from, cls_sequent, true ) flatMap { d =>
-      val ret = d.asInstanceOf[RobinsonResolutionProof]
+      val ret = d.asInstanceOf[resolutionOld.robinson.RobinsonResolutionProof]
       if ( ret.root.toHOLSequent != to ) {
         //        val ret_seq = FOLClause( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) )
         // FIXME: replace InitialClause(ret_seq) by ret in the following proof
@@ -161,17 +161,14 @@ object fixDerivation extends Logger {
   private val prover9 = new Prover9Prover
   def tryDeriveViaResolution( to: FOLClause, from: Seq[FOLClause] ) =
     if ( prover9 isInstalled )
-      findDerivationViaResolution.applyNew( to, from.map { seq => FOLClause( seq.antecedent, seq.succedent ) }.toSet )
+      findDerivationViaResolution( to, from.map { seq => FOLClause( seq.antecedent, seq.succedent ) }.toSet )
     else
       None
 
   private def findFirstSome[A, B]( seq: Seq[A] )( f: A => Option[B] ): Option[B] =
     seq.view.flatMap( f( _ ) ).headOption
 
-  def apply( p: RobinsonResolutionProof, cs: Seq[HOLSequent] ): RobinsonResolutionProof =
-    resNew2Old( applyNew( resOld2New( p ), cs.map( _.asInstanceOf[FOLClause] ) ) )
-
-  def applyNew( p: ResolutionProof, cs: Seq[FOLClause] ): ResolutionProof =
+  def apply( p: ResolutionProof, cs: Seq[FOLClause] ): ResolutionProof =
     mapInputClauses( p ) { cls =>
       tryDeriveTrivial( cls, cs ).
         orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
@@ -195,6 +192,7 @@ object tautologifyInitialClauses {
    */
   def apply( p: ResolutionProof, shouldTautologify: FOLClause => Boolean ): ResolutionProof =
     p match {
+      // FIXME: TautologyClause should be generalized to handle this.
       case InputClause( clause ) if shouldTautologify( clause )             => InputClause( clause ++ clause.swapped )
       case InputClause( _ ) | ReflexivityClause( _ ) | TautologyClause( _ ) => p
       case Factor( p1, i1, i2 ) =>
@@ -221,9 +219,6 @@ object containedVariables {
 }
 
 object findDerivationViaResolution {
-  def apply( a: FOLClause, bs: Set[FOLClause] ): Option[RobinsonResolutionProof] =
-    applyNew( a, bs ) map { resNew2Old( _ ) }
-
   /**
    * Finds a resolution derivation of a clause from a set of clauses.
    *
@@ -234,7 +229,7 @@ object findDerivationViaResolution {
    * @param bs Set of initial clauses for the resulting proof.
    * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
    */
-  def applyNew( a: FOLClause, bs: Set[FOLClause] ): Option[ResolutionProof] = {
+  def apply( a: FOLClause, bs: Set[FOLClause] ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
       ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet
@@ -245,7 +240,7 @@ object findDerivationViaResolution {
       a.positive.map { f => FOLClause( Seq( groundingSubst( f ) ), Seq() ) }
 
     new Prover9Prover().getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
-      val tautologified = tautologifyInitialClauses( resOld2New( refutation ), negatedClausesA.toSet )
+      val tautologified = tautologifyInitialClauses( refutation, negatedClausesA.toSet )
 
       val toUnusedVars = rename( grounding.map( _._1 ).toSet, containedVariables( tautologified ) )
       val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }.toMap[FOLTerm, FOLTerm]

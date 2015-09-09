@@ -11,9 +11,7 @@ import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.resolutionOld._
-import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof, fixDerivation }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof, fixDerivation }
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
@@ -24,7 +22,7 @@ import scala.io.Source
 import scala.sys.process._
 
 class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends ResolutionProver with ExternalProgram {
-  def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[RobinsonResolutionProof] =
+  def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( cnf ) {
       case ( renaming, cnf ) =>
         val p9Input = toP9Input( cnf, renaming )
@@ -48,11 +46,11 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
   }
 
   @deprecated( "Use Prover9Importer.robinsonProof instead", "2015-08-25" )
-  def reconstructRobinsonProofFromFile( p9File: String ): RobinsonResolutionProof =
+  def reconstructRobinsonProofFromFile( p9File: String ): ResolutionProof =
     Prover9Importer robinsonProofFromFile p9File
 
   @deprecated( "Use Prover9Importer.robinsonProof instead", "2015-08-25" )
-  def reconstructRobinsonProofFromOutput( p9Output: String ): RobinsonResolutionProof =
+  def reconstructRobinsonProofFromOutput( p9Output: String ): ResolutionProof =
     Prover9Importer robinsonProof p9Output
 
   @deprecated( "Use Prover9Importer.lkProof instead", "2015-08-25" )
@@ -104,10 +102,10 @@ object Prover9Importer extends ExternalProgram {
   private val p9 = new Prover9Prover
   override val isInstalled: Boolean = p9.isInstalled
 
-  def robinsonProofFromFile( p9File: String ): RobinsonResolutionProof =
+  def robinsonProofFromFile( p9File: String ): ResolutionProof =
     robinsonProof( Source fromFile p9File mkString )
 
-  def robinsonProof( p9Output: String ): RobinsonResolutionProof = {
+  def robinsonProof( p9Output: String ): ResolutionProof = {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
     val fixedP9Output = withTempFile.fromString( p9Output ) { p9OutputFile =>
       Seq( "prooftrans", "-f", p9OutputFile ) !!
@@ -116,10 +114,10 @@ object Prover9Importer extends ExternalProgram {
     p9 parseProof fixedP9Output
   }
 
-  def robinsonProofWithReconstructedEndSequentFromFile( p9File: String ): ( RobinsonResolutionProof, HOLSequent ) =
+  def robinsonProofWithReconstructedEndSequentFromFile( p9File: String ): ( ResolutionProof, HOLSequent ) =
     robinsonProofWithReconstructedEndSequent( Source fromFile p9File mkString )
 
-  def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( RobinsonResolutionProof, HOLSequent ) = {
+  def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( ResolutionProof, HOLSequent ) = {
     val resProof = robinsonProof( p9Output )
     val endSequent = existsclosure( withTempFile.fromString( p9Output ) { p9File =>
       val tptpEndSequent = InferenceExtractor.viaLADR( p9File )
@@ -133,7 +131,7 @@ object Prover9Importer extends ExternalProgram {
 
     val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
 
-    val fixedResProof = fixDerivation( resProof, ourCNF )
+    val fixedResProof = fixDerivation( resProof, ourCNF.map( _.asInstanceOf[FOLClause] ) )
 
     ( fixedResProof, endSequent )
   }

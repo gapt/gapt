@@ -12,7 +12,6 @@ import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolutionOld._
 
 object SATProblems {
   val c = FOLConst( "c" )

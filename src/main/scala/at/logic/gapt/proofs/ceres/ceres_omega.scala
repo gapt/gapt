@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
+
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
 import at.logic.gapt.proofs.lksk.applySubstitution
