@@ -18,7 +18,7 @@ import at.logic.gapt.provers.atp.commands.sequents._
 import at.logic.gapt.provers.atp.commands.robinson._
 import at.logic.gapt.formats.simple.{ SimpleFOLParser, SimpleResolutionParserFOL }
 import at.logic.gapt.formats.readers.StringReader
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 
 private class MyParser( str: String ) extends StringReader( str ) with SimpleResolutionParserFOL

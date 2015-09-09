@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle

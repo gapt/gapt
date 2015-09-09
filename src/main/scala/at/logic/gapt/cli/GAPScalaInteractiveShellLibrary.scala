@@ -47,8 +47,8 @@ import at.logic.gapt.proofs.lk.{ deleteTautologies => deleteTaut, _ }
 import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, LabelledOccSequent }
 import at.logic.gapt.proofs.lksk.{ applySubstitution, LKskToExpansionProof }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson._
+import at.logic.gapt.proofs.resolutionOld._
+import at.logic.gapt.proofs.resolutionOld.robinson._
 import at.logic.gapt.proofs.shlk.applySchemaSubstitution2
 import at.logic.gapt.prooftool.Main
 import at.logic.gapt.provers.atp.Prover

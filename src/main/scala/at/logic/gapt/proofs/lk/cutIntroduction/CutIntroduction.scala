@@ -14,7 +14,7 @@ import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumbe
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
-import at.logic.gapt.proofs.resolution.numberOfResolutionsAndParamodulations
+import at.logic.gapt.proofs.resolutionOld.numberOfResolutionsAndParamodulations
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._

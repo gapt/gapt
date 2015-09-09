@@ -11,8 +11,8 @@ import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld._
+import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.resolutionNew.fixDerivation
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }

@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, ForgetfulResolve }
+import at.logic.gapt.proofs.resolutionOld.{ ForgetfulParamodulate, ForgetfulResolve }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver

@@ -1,6 +1,6 @@
-package at.logic.gapt.proofs.resolution
+package at.logic.gapt.proofs.resolutionOld
 
-import at.logic.gapt.proofs.resolution.robinson.{ Paramodulation, Resolution, RobinsonResolutionProof }
+import at.logic.gapt.proofs.resolutionOld.robinson.{ Paramodulation, Resolution, RobinsonResolutionProof }
 
 object numberOfResolutionsAndParamodulations {
   def apply( p: RobinsonResolutionProof ): Int =

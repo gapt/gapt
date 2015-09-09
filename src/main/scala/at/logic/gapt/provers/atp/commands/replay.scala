@@ -7,11 +7,11 @@ package at.logic.gapt.provers.atp.commands.replay
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLUnificationAlgorithm }
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, OccClause }
-import at.logic.gapt.proofs.resolution.robinson.{ RobinsonResolutionProof }
+import at.logic.gapt.proofs.resolutionOld.{ ResolutionProof, OccClause }
+import at.logic.gapt.proofs.resolutionOld.robinson.{ RobinsonResolutionProof }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.robinson.InitialClause._
+import at.logic.gapt.proofs.resolutionOld.robinson.InitialClause._
 import at.logic.gapt.provers.atp.Definitions._
 import at.logic.gapt.provers.atp.Prover
 import at.logic.gapt.utils.ds.PublishingBuffer

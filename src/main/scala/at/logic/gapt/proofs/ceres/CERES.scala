@@ -6,8 +6,8 @@ import at.logic.gapt.expr._
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld._
+import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet

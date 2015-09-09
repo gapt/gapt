@@ -1,7 +1,7 @@
 
-package at.logic.gapt.proofs.resolution.robinson
+package at.logic.gapt.proofs.resolutionOld.robinson
 
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.utils.ds.acyclicGraphs._

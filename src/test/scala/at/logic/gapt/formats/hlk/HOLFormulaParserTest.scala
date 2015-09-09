@@ -5,9 +5,9 @@ package at.logic.gapt.formats.hlk
  */
 import org.specs2.mutable._
 import java.io.IOException
-import at.logic.gapt.proofs.resolution.robinson.Formatter
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.resolution.robinson.{ Formatter, RobinsonResolutionProof }
+import at.logic.gapt.proofs.resolutionOld.robinson.Formatter
+import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld.robinson.{ Formatter, RobinsonResolutionProof }
 
 import at.logic.gapt.proofs.occurrences.factory
 import util.parsing.input.Position

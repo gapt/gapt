@@ -2,7 +2,7 @@
 package at.logic.gapt.provers.atp.commands.refinements.simple
 
 import at.logic.gapt.proofs.lk.base.{ OccSequent, RichOccSequent }
-import at.logic.gapt.proofs.resolution.ResolutionProof
+import at.logic.gapt.proofs.resolutionOld.ResolutionProof
 import at.logic.gapt.provers.atp.commands.base.InitialCommand
 import at.logic.gapt.provers.atp.commands.refinements.base.{ Refinement, RefinementID }
 import at.logic.gapt.provers.atp.Definitions._

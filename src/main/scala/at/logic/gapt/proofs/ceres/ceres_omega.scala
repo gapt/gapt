@@ -12,7 +12,7 @@ import at.logic.gapt.utils.dssupport.ListSupport._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.lksk.{ Axiom => LKSKAxiom, _ }
-import at.logic.gapt.proofs.resolution.ral._
+import at.logic.gapt.proofs.resolutionOld.ral._
 
 /**
  * Created by marty on 10/6/14.

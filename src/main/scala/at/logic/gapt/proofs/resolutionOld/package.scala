@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 /**
  * Created by sebastian on 7/13/15.
  */
-package object resolution {
+package object resolutionOld {
   type OccClause = Clause[FormulaOccurrence]
 
   implicit class RichOccClause( clause: OccClause ) extends RichClause[FormulaOccurrence]( clause ) {

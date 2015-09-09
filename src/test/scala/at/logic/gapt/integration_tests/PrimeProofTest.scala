@@ -15,7 +15,7 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet

@@ -4,7 +4,7 @@ import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate 
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.{ HOLClause, Suc, Ant }
 import at.logic.gapt.proofs.lk.base.RichOccSequent
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.resolutionNew._
 import at.logic.gapt.expr._
 import at.logic.gapt.algorithms.rewriting.TermReplacement

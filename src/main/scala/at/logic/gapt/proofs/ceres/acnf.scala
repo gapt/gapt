@@ -6,8 +6,8 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.OccClause
-import at.logic.gapt.proofs.resolution.robinson._
+import at.logic.gapt.proofs.resolutionOld.OccClause
+import at.logic.gapt.proofs.resolutionOld.robinson._
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._

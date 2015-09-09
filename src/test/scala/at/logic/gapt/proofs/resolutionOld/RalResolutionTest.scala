@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolution.ral
+package at.logic.gapt.proofs.resolutionOld.ral
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent

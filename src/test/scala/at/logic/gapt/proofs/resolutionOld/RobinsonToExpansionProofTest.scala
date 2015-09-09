@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolution
+package at.logic.gapt.proofs.resolutionOld
 
 import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.proofs.Sequent

@@ -1,11 +1,11 @@
-package at.logic.gapt.proofs.resolution
+package at.logic.gapt.proofs.resolutionOld
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
 import at.logic.gapt.expr.hol.{ CNFp, CNFn, univclosure }
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionSequent, ExpansionTree }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolutionNew._
 

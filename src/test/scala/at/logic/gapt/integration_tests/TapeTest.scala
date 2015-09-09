@@ -4,7 +4,7 @@ import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld._
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter

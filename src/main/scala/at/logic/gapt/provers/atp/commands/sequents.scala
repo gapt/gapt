@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lk.subsumption.managers._
 import at.logic.gapt.proofs.lk.subsumption.{ StillmanSubsumptionAlgorithmFOL, SubsumptionAlgorithm }
 import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, OccClause }
+import at.logic.gapt.proofs.resolutionOld.{ ResolutionProof, OccClause }
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.commands.base.{ ResultCommand, DataCommand }
 import at.logic.gapt.provers.atp.Definitions._

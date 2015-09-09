@@ -6,7 +6,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, FOLClause, Suc }
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.provers.atp.SearchDerivation
 import at.logic.gapt.provers.groundFreeVariables
 import at.logic.gapt.provers.prover9.Prover9Prover

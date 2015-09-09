@@ -8,7 +8,7 @@ import at.logic.gapt.expr.FOLExpression
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.expr.fol.{ UnificationAlgorithm, FOLMatchingAlgorithm, FOLUnificationAlgorithm }
-import at.logic.gapt.proofs.resolution.{ OccClause, ResolutionProof }
+import at.logic.gapt.proofs.resolutionOld.{ OccClause, ResolutionProof }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.simple.SimpleResolutionParserFOL
 import at.logic.gapt.formats.readers.FileReader

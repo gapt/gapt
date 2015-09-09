@@ -5,10 +5,10 @@
  * for additional connectives.
  */
 
-package at.logic.gapt.proofs.resolution.andrews
+package at.logic.gapt.proofs.resolutionOld.andrews
 
 import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr.hol._

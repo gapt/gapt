@@ -4,7 +4,7 @@ package at.logic.gapt.provers.atp.commands.refinements.base
 import at.logic.gapt.provers.atp.commands.base.{ InitialCommand, DataCommand, ResultCommand }
 import at.logic.gapt.provers.atp.commands.logical.DeterministicMacroCommand
 import at.logic.gapt.proofs.lk.base.OccSequent
-import at.logic.gapt.proofs.resolution.ResolutionProof
+import at.logic.gapt.proofs.resolutionOld.ResolutionProof
 import at.logic.gapt.utils.ds.{ PublishingBuffer, PublishingBufferEvent, Remove, Add }
 import at.logic.gapt.provers.atp.Definitions._
 

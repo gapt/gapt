@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolution
+package at.logic.gapt.proofs.resolutionOld
 
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.{ applySubstitution => applySub }
 import at.logic.gapt.proofs.lk.base.{ LKProof }
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 
 /**
  * Given a formula f and a clause a in CNF(-f), PCNF computes a proof of s o a (see logic.at/ceres for the definition of o)

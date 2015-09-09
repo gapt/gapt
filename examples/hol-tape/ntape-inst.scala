@@ -26,7 +26,7 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.base.HOLSequentOrdering
 import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize, subsumedClausesRemovalHOL}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
-import at.logic.gapt.proofs.resolution.RobinsonToRal
+import at.logic.gapt.proofs.resolutionOld.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.proofs.ceres.clauseSets._

@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.gapt.proofs.resolution
+package at.logic.gapt.proofs.resolutionOld
 
 import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
 import at.logic.gapt.proofs.Clause

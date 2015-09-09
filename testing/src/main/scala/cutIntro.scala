@@ -9,7 +9,7 @@ import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
 import at.logic.gapt.proofs.lk.{ LKToExpansionProof, rulesNumber, containsEqualityReasoning }
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.resolution.{ numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolutionOld.{ numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }

@@ -8,7 +8,7 @@ import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof, ExtractInterpolant }
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolutionOld.{ RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9Prover }
