@@ -2,7 +2,7 @@ package at.logic.gapt.formats.ivy.conversion
 
 import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.{ HOLClause, Suc, Ant }
+import at.logic.gapt.proofs.{ Clause, HOLClause, Suc, Ant }
 import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
@@ -16,7 +16,13 @@ object IvyToRobinson {
   def apply( ivy: IvyResolutionProof ): ResolutionProof = {
     val memo = mutable.Map[String, ResolutionProof]()
     def convert( p: IvyResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p.id, p match {
-      case IInitialClause( id, exp, clause )            => InputClause( clause.toHOLSequent.map( _.asInstanceOf[FOLAtom] ) )
+      case IInitialClause( id, exp, clause ) =>
+        clause.toHOLSequent.map( _.asInstanceOf[FOLAtom] ) match {
+          case Clause( Seq(), Seq( Eq( t, t_ ) ) ) if t == t_ =>
+            // prooftrans ivy adds reflexivity as input clauses
+            ReflexivityClause( t )
+          case cls => InputClause( cls )
+        }
       case IInstantiate( id, exp, sub, clause, parent ) => Instance( convert( parent ), sub )
       case IResolution( id, exp, lit1, lit2, clause, parent1, parent2 ) =>
         val q1 = convert( parent1 )
