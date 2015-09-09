@@ -8,6 +8,7 @@ package at.logic.gapt.proofs.resolutionOld
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Clause
+import at.logic.gapt.proofs.resolution.{ Paramodulants, ForgetfulParamodulate, ForgetfulResolve }
 import org.specs2.mutable._
 
 class ForgetfulResolutionTest extends Specification {

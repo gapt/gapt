@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
+import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.expr._

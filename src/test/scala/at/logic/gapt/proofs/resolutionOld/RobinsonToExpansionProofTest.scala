@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.resolutionOld
 import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansionTrees.{ toShallow, toDeep }
+import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._

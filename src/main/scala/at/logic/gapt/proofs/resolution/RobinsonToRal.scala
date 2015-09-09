@@ -1,15 +1,12 @@
-package at.logic.gapt.proofs.resolutionOld
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledOccSequent }
-import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.resolutionOld.ral.{ InitialSequent => RalInitialSequent, _ }
 import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent, resolution }
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.{ Ant, HOLSequent, Suc, resolution }
 
 /**
  * Created by marty on 9/9/14.

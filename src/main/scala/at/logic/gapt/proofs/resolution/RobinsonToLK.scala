@@ -1,12 +1,12 @@
 
-package at.logic.gapt.proofs.resolutionOld
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.{ applySubstitution => applySub, _ }
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lk.{ applySubstitution => applySub, _ }
+import at.logic.gapt.proofs.resolutionOld.PCNF
 import at.logic.gapt.proofs.resolutionOld.robinson._
-import at.logic.gapt.proofs.{ Sequent, HOLSequent, HOLClause, resolution }
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent, resolution }
 
 object RobinsonToLK extends at.logic.gapt.utils.logging.Logger {
   type mapT = scala.collection.mutable.Map[HOLClause, LKProof]

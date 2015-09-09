@@ -7,6 +7,7 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
+import at.logic.gapt.proofs.resolution.{ ForgetfulResolveIndexed, ForgetfulParamodulate, ForgetfulResolve }
 import at.logic.gapt.proofs.{ HOLSequent, FOLClause }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolutionOld._

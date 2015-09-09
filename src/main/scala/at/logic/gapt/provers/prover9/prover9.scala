@@ -13,7 +13,7 @@ import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
-import at.logic.gapt.proofs.resolution.fixDerivation
+import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof, fixDerivation }
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
