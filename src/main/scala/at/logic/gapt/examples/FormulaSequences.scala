@@ -63,7 +63,7 @@ object PigeonHolePrinciple {
     assert( ps > 1 )
     Imp(
       And( ( 1 to ps ).map( p =>
-      Or( ( 1 to hs ).map( h => atom( p, h ) ).toList ) ).toList ),
+        Or( ( 1 to hs ).map( h => atom( p, h ) ).toList ) ).toList ),
       Or( ( 1 to hs ).map( h =>
         Or( ( 2 to ps ).map( p =>
           Or( ( ( 1 to p - 1 ) ).map( pp =>
