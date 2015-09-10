@@ -2,15 +2,14 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
 
 import at.logic.gapt.proofs.lksk._
-import TypeSynonyms._
-import at.logic.gapt.proofs.resolutionOld.ral._
+import at.logic.gapt.proofs.ralNew._
 import at.logic.gapt.proofs.ceres.clauseSets._
 
 /**
@@ -43,14 +42,14 @@ class ceres_omegaTest extends Specification with ClasspathFileCopier {
     val sub1 = Substitution( y0, Abs( y, HOLAtom( p, List( s, y ) ) ) )
     val sub2 = Substitution( x0, s )
 
-    val r1 = InitialSequent( c1, ( List( EmptyLabel() ), List( EmptyLabel() ) ) )
-    val r2 = InitialSequent( c2, ( List( EmptyLabel() ), List() ) )
-    val r3 = InitialSequent( c3, ( List(), List( EmptyLabel() ) ) )
+    val r1 = RalInitial( c1 map { Set[LambdaExpression]() -> _ } )
+    val r2 = RalInitial( c2 map { Set[LambdaExpression]() -> _ } )
+    val r3 = RalInitial( c3 map { Set[LambdaExpression]() -> _ } )
 
-    val r4 = Sub( r1, sub1 )
-    val r3a = Sub( r3, sub2 )
-    val r5 = Cut( r3a, r4, r3a.root.succedent( 0 ) :: Nil, r4.root.antecedent( 0 ) :: Nil )
-    val r6 = Cut( r5, r2, r5.root.succedent( 0 ) :: Nil, r2.root.antecedent( 0 ) :: Nil )
+    val r4 = RalSub( r1, sub1 )
+    val r3a = RalSub( r3, sub2 )
+    val r5 = RalCut( r3a, Seq( Suc( 0 ) ), r4, Seq( Ant( 0 ) ) )
+    val r6 = RalCut( r5, Seq( Suc( 0 ) ), r2, Seq( Ant( 0 ) ) )
     r6
   }
 
@@ -59,9 +58,9 @@ class ceres_omegaTest extends Specification with ClasspathFileCopier {
     val Some( c2 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 0 ) )
     val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) )
 
-    val r1 = InitialSequent( c1, ( List( EmptyLabel() ), List( EmptyLabel() ) ) )
-    val r2 = InitialSequent( c2, ( List( EmptyLabel() ), List() ) )
-    val r3 = InitialSequent( c3, ( List(), List( EmptyLabel() ) ) )
+    val r1 = RalInitial( c1 map { Set[LambdaExpression]() -> _ } )
+    val r2 = RalInitial( c2 map { Set[LambdaExpression]() -> _ } )
+    val r3 = RalInitial( c3 map { Set[LambdaExpression]() -> _ } )
 
   }
 

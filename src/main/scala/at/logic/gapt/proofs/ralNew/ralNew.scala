@@ -63,7 +63,8 @@ case class RalCut( subProof1: RalProof, indices1: Seq[SequentIndex],
 case class RalSub( subProof: RalProof, substitution: Substitution ) extends RalProof {
   override val labelledConclusion = subProof.labelledConclusion map {
     case ( label, formula ) =>
-      ( label map { substitution( _ ) } ) -> substitution( formula )
+      ( label map { sk => BetaReduction.betaNormalize( substitution( sk ) ) } ) ->
+        BetaReduction.betaNormalize( substitution( formula ) )
   }
 
   override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
