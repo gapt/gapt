@@ -8,10 +8,6 @@ import at.logic.gapt.expr.hol.HOLPosition
 
 trait HOLFormula extends LambdaExpression {
   override def replace( pos: HOLPosition, exp: LambdaExpression ) = HOLPosition.replace( this, pos, exp )
-  def &( that: HOLFormula ): HOLFormula = And( this, that )
-  def |( that: HOLFormula ): HOLFormula = Or( this, that )
-  def unary_- : HOLFormula = Neg( this )
-  def -->( that: HOLFormula ) = Imp( this, that )
 }
 trait HOLAtom extends HOLFormula with HOLPartialAtom {
   private[expr] override def numberOfArguments: Int = 0

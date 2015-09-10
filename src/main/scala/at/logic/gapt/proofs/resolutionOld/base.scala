@@ -94,12 +94,6 @@ object computeSkolemTerm {
     val tp = FunctionType( t, fv.map( v => v.exptype ) )
     HOLFunction( Const( sk, tp ), fv )
   }
-
-  // used in ral
-  def apply( sk: SkolemSymbol, t: TA, label: Label ) = {
-    val tp = FunctionType( t, label.toList.map( v => v.exptype ) )
-    HOLFunction( Const( sk, tp ), label.toList )
-  }
 }
 
 object initialSequents {
