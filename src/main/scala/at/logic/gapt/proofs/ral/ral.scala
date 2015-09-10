@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.ralNew
+package at.logic.gapt.proofs.ral
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
@@ -129,7 +129,7 @@ case class RalPara( subProof1: RalProof, equation: SequentIndex,
   override def immediateSubProofs = Seq( subProof1, subProof2 )
 }
 
-private[ralNew] trait OneFormulaRule extends RalProof {
+private[ral] trait OneFormulaRule extends RalProof {
   def subProof: RalProof
   def idx: SequentIndex
 
@@ -146,12 +146,12 @@ private[ralNew] trait OneFormulaRule extends RalProof {
   override def immediateSubProofs = Seq( subProof )
 }
 
-private[ralNew] trait SimpleOneFormulaRule extends OneFormulaRule {
+private[ral] trait SimpleOneFormulaRule extends OneFormulaRule {
   def newFormulas: Sequent[HOLFormula]
   override def newLabelledFormulas = newFormulas map { subProof.labels( idx ) -> _ }
 }
 
-private[ralNew] object computeSkolemTerm {
+private[ral] object computeSkolemTerm {
   def apply( sk: SkolemSymbol, t: TA, label: Label ) = {
     val labelList = label.toList
     val tp = FunctionType( t, labelList map { _.exptype } )

@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.ralNew
+package at.logic.gapt.proofs.ral
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Ant, Suc, Sequent }

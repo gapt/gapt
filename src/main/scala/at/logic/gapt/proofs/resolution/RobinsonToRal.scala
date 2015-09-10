@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ralNew._
+import at.logic.gapt.proofs.ral._
 
 object RobinsonToRal extends RobinsonToRal {
   @deprecated( "No idea what this should do", "2015-05-03" )

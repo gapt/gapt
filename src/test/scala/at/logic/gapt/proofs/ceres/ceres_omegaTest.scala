@@ -9,7 +9,7 @@ import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
 
 import at.logic.gapt.proofs.lksk._
-import at.logic.gapt.proofs.ralNew._
+import at.logic.gapt.proofs.ral._
 import at.logic.gapt.proofs.ceres.clauseSets._
 
 /**
