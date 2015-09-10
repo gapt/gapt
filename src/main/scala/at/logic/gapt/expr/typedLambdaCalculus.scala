@@ -137,6 +137,12 @@ abstract class LambdaExpression {
     case Var( x, t )                     => s"$x"
     case Const( x, t )                   => s"$x"
   }
+
+  def &( that: LambdaExpression ): HOLFormula = And( this, that )
+  def |( that: LambdaExpression ): HOLFormula = Or( this, that )
+  def unary_- : HOLFormula = Neg( this )
+  def -->( that: LambdaExpression ) = Imp( this, that )
+  def apply( that: LambdaExpression* ) = App( this, that )
 }
 
 // Defines the elements that generate lambda-expressions: variables,
