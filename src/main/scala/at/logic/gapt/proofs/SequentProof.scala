@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.proofs.lk.base.{ Sequent, SequentIndex }
 import at.logic.gapt.proofs.lkNew.OccConnector
 
 trait SequentProof[Formula <: HOLFormula, This <: SequentProof[Formula, This]] extends DagProof[This] { self: This =>

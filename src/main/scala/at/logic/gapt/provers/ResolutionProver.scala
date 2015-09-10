@@ -3,15 +3,15 @@ package at.logic.gapt.provers
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr.{ FOLConst, Const }
 import at.logic.gapt.expr.hol.CNFn
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees.{ replace, InstanceTermEncoding, ExpansionSequent }
 import at.logic.gapt.proofs.lk.applyReplacement
-import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
-import at.logic.gapt.proofs.resolution.{ RobinsonToExpansionProof, HOLClause, RobinsonToLK }
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.lk.base.LKProof
 
 abstract class ResolutionProver extends Prover {
 
-  protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, String], List[HOLClause] ) => Option[RobinsonResolutionProof] ): Option[RobinsonResolutionProof] = {
+  protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, String], List[HOLClause] ) => Option[ResolutionProof] ): Option[ResolutionProof] = {
     val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf.toList )
     f( renaming, renamedCNF ) map { renamedProof =>
       NameReplacement( renamedProof, invertRenaming )
@@ -45,10 +45,10 @@ abstract class ResolutionProver extends Prover {
   override def isValid( seq: HOLSequent ): Boolean =
     getRobinsonProof( groundFreeVariables( seq )._1 ).isDefined
 
-  def getRobinsonProof( seq: HOLSequent ): Option[RobinsonResolutionProof] =
+  def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] =
     getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
 
-  def getRobinsonProof( seq: Traversable[HOLClause] ): Option[RobinsonResolutionProof]
+  def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
   override def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
     withGroundVariables2( seq ) { seq =>

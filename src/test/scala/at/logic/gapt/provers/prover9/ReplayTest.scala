@@ -4,10 +4,11 @@
 
 package at.logic.gapt.provers.prover9
 
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.{ HOLSequent, FOLClause }
+import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.proofs.occurrences.factory
-import at.logic.gapt.proofs.resolution.{ FOLClause, OccClause, ResolutionProof }
-import at.logic.gapt.proofs.resolution.robinson.{ Formatter, RobinsonResolutionProof }
+import at.logic.gapt.proofs.resolutionOld.{ OccClause, ResolutionProof }
+import at.logic.gapt.proofs.resolutionOld.robinson.{ Formatter, RobinsonResolutionProof }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.simple.{ SimpleFOLParser, SimpleResolutionParserFOL }
@@ -202,7 +203,7 @@ class ReplayTest extends Specification {
       val p = FOLAtom( "P", Nil )
       val s1 = FOLClause( Nil, p :: Nil )
       val s2 = FOLClause( p :: Nil, Nil )
-      val result: Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( s1 :: s2 :: Nil )
+      val result = new Prover9Prover().getRobinsonProof( s1 :: s2 :: Nil )
       result match {
         case Some( proof ) =>
           //println(Formatter.asHumanReadableString(proof))

@@ -1,12 +1,13 @@
-package at.logic.gapt.proofs.resolutionNew
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.{ Ant, Suc, PrincipalFormulas, Sequent }
+import at.logic.gapt.proofs.{ Ant, Suc, Sequent, Clause }
+import at.logic.gapt.proofs.lk.base.{ PrincipalFormulas }
 import at.logic.gapt.proofs.lkNew.OccConnector
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.robinson
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld.robinson
+import at.logic.gapt.proofs.resolutionOld._
 
 import scala.collection.mutable
 
@@ -99,16 +100,11 @@ object resNew2Old {
           val ( subProofOld, corr ) = f( subProof )
           val resOld = robinson.Factor( subProofOld, corr( idx1 ), Seq( corr( idx2 ) ), FOLSubstitution() )
           resOld -> followOccs( Seq( corr ), resOld.root, res.occConnectors )
-        case Resolution( subProof1, idx1 @ Suc( _ ), subProof2, idx2 ) =>
+        case Resolution( subProof1, idx1, subProof2, idx2 ) =>
           val ( subProofOld1, corr1 ) = f( subProof1 )
           val ( subProofOld2, corr2 ) = f( subProof2 )
           val resOld = robinson.Resolution( subProofOld1, subProofOld2, corr1( idx1 ), corr2( idx2 ), FOLSubstitution() )
           resOld -> followOccs( Seq( corr1, corr2 ), resOld.root, res.occConnectors )
-        case Resolution( subProof2, idx2 @ Ant( _ ), subProof1, idx1 ) =>
-          val ( subProofOld1, corr1 ) = f( subProof1 )
-          val ( subProofOld2, corr2 ) = f( subProof2 )
-          val resOld = robinson.Resolution( subProofOld1, subProofOld2, corr1( idx1 ), corr2( idx2 ), FOLSubstitution() )
-          resOld -> followOccs( Seq( corr1, corr2 ), resOld.root, res.occConnectors.reverse )
         case Paramodulation( subProof1, equation, subProof2, literal, positions, leftToRight ) =>
           val ( subProofOld1, corr1 ) = f( subProof1 )
           val ( subProofOld2, corr2 ) = f( subProof2 )

@@ -5,18 +5,19 @@
  * are defined.
  */
 
-package at.logic.gapt.proofs.resolution.ral
+package at.logic.gapt.proofs.resolutionOld.ral
 
 import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.EquationVerifier
 import at.logic.gapt.proofs.lk.EquationVerifier.{ Different, EqualModuloEquality }
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.lksk.TypeSynonyms._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolution.createContext
+import at.logic.gapt.proofs.resolutionOld.createContext
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr._

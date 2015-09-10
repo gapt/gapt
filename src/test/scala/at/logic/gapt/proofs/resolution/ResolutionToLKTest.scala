@@ -4,10 +4,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolution.robinson._
+import at.logic.gapt.proofs.{ Ant, Clause, HOLSequent, Suc }
 import org.specs2.mutable._
-
-import scala.collection.immutable.Map.{ Map1, Map2 }
 
 // we compare toStrings as proofs have only pointer equality. This needs to be changed by allowing syntaxEquals in graphs and vertices should
 // have syntaxEquals as well
@@ -37,10 +35,10 @@ class ResolutionToLKTest extends Specification {
 
     val sub = FOLSubstitution( Map( ( v0, v2 ), ( v1, add01 ) ) )
 
-    val p1 = InitialClause( Nil, c1 :: Nil )
+    val p1 = InputClause( Clause() :+ c1 )
     val p2 = Instance( p1, sub )
-    val p3 = InitialClause( Nil, c2 :: Nil )
-    val p4 = Paramodulation( p2, p3, p2.root.succedent( 0 ), p3.root.succedent( 0 ), c3, FOLSubstitution() )
+    val p3 = InputClause( Clause() :+ c2 )
+    val p4 = Paramodulation( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
 
   }
   object UNSproofFreshvars {
@@ -68,11 +66,10 @@ class ResolutionToLKTest extends Specification {
 
     val sub = FOLSubstitution( Map( ( v0, v2 ), ( v1, add01 ) ) )
 
-    val p1 = InitialClause( Nil, c1 :: Nil )
+    val p1 = InputClause( Clause() :+ c1 )
     val p2 = Instance( p1, sub )
-    val p3 = InitialClause( Nil, c2 :: Nil )
-    val p4 = Paramodulation( p2, p3, p2.root.succedent( 0 ), p3.root.succedent( 0 ), c3, FOLSubstitution() )
-
+    val p3 = InputClause( Clause() :+ c2 )
+    val p4 = Paramodulation( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
   }
   object UNSproofVariant {
     val v0 = FOLVar( "v0" )
@@ -100,11 +97,11 @@ class ResolutionToLKTest extends Specification {
     val sub1 = FOLSubstitution( Map( ( v0, v0u ), ( v1, v1u ) ) )
     val sub2 = FOLSubstitution( Map( ( v0u, v2 ), ( v1u, add01 ) ) )
 
-    val p1 = InitialClause( Nil, c1 :: Nil )
-    val p1_ = Variant( p1, sub1 )
+    val p1 = InputClause( Clause() :+ c1 )
+    val p1_ = Instance( p1, sub1 )
     val p2 = Instance( p1, sub2 )
-    val p3 = InitialClause( Nil, c2 :: Nil )
-    val p4 = Paramodulation( p2, p3, p2.root.succedent( 0 ), p3.root.succedent( 0 ), c3, FOLSubstitution() )
+    val p3 = InputClause( Clause() :+ c2 )
+    val p4 = Paramodulation( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
 
   }
 
@@ -112,7 +109,7 @@ class ResolutionToLKTest extends Specification {
     "transform the following resolution proof into an LK proof of the empty sequent" in {
       "containing only an initial clause" in {
         val Pa = FOLAtom( "P", FOLConst( "a" ) :: Nil )
-        val resProof = InitialClause( Pa :: List.empty, Pa :: List.empty )
+        val resProof = TautologyClause( Pa )
         val lkProof = Axiom( Pa :: List.empty, Pa :: List.empty )
         RobinsonToLK( resProof ).toString must beEqualTo( lkProof.toString )
       }
@@ -126,8 +123,8 @@ class ResolutionToLKTest extends Specification {
         val Pfy = FOLAtom( "P", fy :: Nil )
         val Px = FOLAtom( "P", x :: Nil )
 
-        val p1 = InitialClause( Pfa :: Px :: Pfy :: List.empty, List.empty )
-        val resProof = Factor( p1, p1.root.negative( 1 ), List( p1.root.negative( 0 ), p1.root.negative( 2 ) ), FOLSubstitution( new Map2( x, fa, y, a ) ) )
+        val p1 = InputClause( Pfa +: Px +: Pfy +: Clause() )
+        val resProof = Factor( Instance( p1, FOLSubstitution( x -> fa, y -> a ) ), Seq( Ant( 1 ), Ant( 0 ), Ant( 2 ) ) )._1
 
         val l1 = Axiom( List( Pfa, Pfa, Pfa ), List() )
         val l2 = ContractionLeftRule( l1, l1.root.antecedent( 1 ), l1.root.antecedent( 0 ) )
@@ -140,8 +137,8 @@ class ResolutionToLKTest extends Specification {
         val Px = FOLAtom( "P", x :: Nil )
         val Py = FOLAtom( "P", y :: Nil )
 
-        val p1 = InitialClause( List( Px ), List.empty )
-        val resProof = Variant( p1, FOLSubstitution( new Map1( x, y ) ) )
+        val p1 = InputClause( Px +: Clause() )
+        val resProof = Instance( p1, FOLSubstitution( x -> y ) )
 
         val lkProof = Axiom( List( Py ), List() )
         RobinsonToLK( resProof ).toString must beEqualTo( lkProof.toString )
@@ -157,9 +154,9 @@ class ResolutionToLKTest extends Specification {
         val Pfa = FOLAtom( "P", fa :: Nil )
         val Pffa = FOLAtom( "P", ffa :: Nil )
 
-        val p1 = InitialClause( List( Px ), List( Pfx ) )
-        val p2 = InitialClause( List( Pffa ), List( Pfa ) )
-        val resProof = Resolution( p2, p1, p2.root.positive( 0 ), p1.root.negative( 0 ), FOLSubstitution( new Map1( x, fa ) ) )
+        val p1 = InputClause( Px +: Clause() :+ Pfx )
+        val p2 = InputClause( Pffa +: Clause() :+ Pfa )
+        val resProof = Resolution( p2, Suc( 0 ), Instance( p1, FOLSubstitution( x -> fa ) ), Ant( 0 ) )
 
         val l1 = Axiom( List( Pfa ), List( Pffa ) )
         val l2 = Axiom( List( Pffa ), List( Pfa ) )
@@ -175,9 +172,9 @@ class ResolutionToLKTest extends Specification {
         val Pfa = FOLAtom( "P", FOLFunction( "f", a :: Nil ) :: Nil )
         val Pfb = FOLAtom( "P", FOLFunction( "f", b :: Nil ) :: Nil )
 
-        val p1 = InitialClause( List(), List( exb ) )
-        val p2 = InitialClause( List( Pfa ), List() )
-        val resProof = Paramodulation( p1, p2, p1.root.positive( 0 ), p2.root.negative( 0 ), Pfb, FOLSubstitution( new Map1( x, a ) ) )
+        val p1 = InputClause( Clause() :+ exb )
+        val p2 = InputClause( Pfa +: Clause() )
+        val resProof = Paramodulation( Instance( p1, FOLSubstitution( x -> a ) ), Suc( 0 ), p2, Ant( 0 ), Pfb )
 
         val l1 = Axiom( List(), List( eab ) )
         val l2 = Axiom( List( Pfa ), List() )
@@ -193,9 +190,9 @@ class ResolutionToLKTest extends Specification {
         val Pfa = FOLAtom( "P", FOLFunction( "f", a :: Nil ) :: Nil )
         val Pfb = FOLAtom( "P", FOLFunction( "f", b :: Nil ) :: Nil )
 
-        val p1 = InitialClause( List(), List( ebx ) )
-        val p2 = InitialClause( List( Pfa ), List() )
-        val resProof = Paramodulation( p1, p2, p1.root.positive( 0 ), p2.root.negative( 0 ), Pfb, FOLSubstitution( new Map1( x, a ) ) )
+        val p1 = InputClause( Clause() :+ ebx )
+        val p2 = InputClause( Pfa +: Clause() )
+        val resProof = Paramodulation( Instance( p1, FOLSubstitution( x -> a ) ), Suc( 0 ), p2, Ant( 0 ), Pfb )
 
         val l1 = Axiom( List(), List( eba ) )
         val l2 = Axiom( List( Pfa ), List() )
@@ -213,10 +210,10 @@ class ResolutionToLKTest extends Specification {
         val f1 = All( x, Px )
 
         val seq = HOLSequent( List( f1 ), List( Pa ) )
-        val p1 = InitialClause( List(), List( Px ) )
-        val p2 = InitialClause( List( Pa ), List() )
-        val v1 = Variant( p1, FOLSubstitution( new Map1( x, y ) ) )
-        val resProof = Resolution( v1, p2, v1.root.positive( 0 ), p2.root.negative( 0 ), FOLSubstitution( new Map1( y, a ) ) )
+        val p1 = InputClause( Clause() :+ Px )
+        val p2 = InputClause( Pa +: Clause() )
+        val v1 = Instance( p1, FOLSubstitution( x -> y ) )
+        val resProof = Resolution( Instance( v1, FOLSubstitution( y -> a ) ), Suc( 0 ), p2, Ant( 0 ) )
         RobinsonToLK( resProof, seq ).root.toHOLSequent.toString must beEqualTo( HOLSequent( List( f1 ), List( Pa ) ).toString )
       }
       "transform the original subproof of the UNS example" in {

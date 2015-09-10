@@ -2,12 +2,14 @@ package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lk.base.HOLSequent
-import at.logic.gapt.proofs.resolution.robinson._
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld.robinson._
+import at.logic.gapt.proofs.resolutionOld._
+import at.logic.gapt.proofs.resolution
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.expr.StringSymbol
+import scala.collection.mutable
 
 /**
  * performs renaming of constants, functions and predicate symbols
@@ -19,6 +21,7 @@ object NameReplacement {
   def apply( exp: HOLFormula, map: SymbolMap ): HOLFormula = renameSymbols( exp, map )
   def apply( exp: FOLFormula, map: SymbolMap ): FOLFormula = renameSymbols( exp, map )
   def apply( exp: FOLTerm, map: SymbolMap ): FOLTerm = renameSymbols( exp, map ).asInstanceOf[FOLTerm]
+  def apply( exp: FOLAtom, map: SymbolMap ): FOLAtom = renameSymbols( exp, map ).asInstanceOf[FOLAtom]
 
   def apply( fs: HOLSequent, map: SymbolMap ) = renameHOLSequent( fs, map )
   def apply( cls: HOLClause, map: SymbolMap )( implicit dummyImplicit: DummyImplicit ) = renameHOLSequent( cls, map ).asInstanceOf[HOLClause]
@@ -76,6 +79,25 @@ object NameReplacement {
     renameSymbols( exp.asInstanceOf[LambdaExpression], map ).asInstanceOf[FOLFormula]
 
   def renameHOLSequent( fs: HOLSequent, map: SymbolMap ) = fs map ( renameSymbols( _, map ) )
+
+  def apply( proof: resolution.ResolutionProof, repl: SymbolMap ): resolution.ResolutionProof = {
+    import resolution._
+    val memo = mutable.Map[ResolutionProof, ResolutionProof]()
+
+    def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
+      case InputClause( clause )     => InputClause( clause map { NameReplacement( _, repl ) } )
+      case ReflexivityClause( term ) => ReflexivityClause( NameReplacement( term, repl ) )
+      case TautologyClause( atom )   => TautologyClause( NameReplacement( atom, repl ) )
+      case Factor( q, i1, i2 )       => Factor( f( q ), i1, i2 )
+      case Instance( q, subst ) =>
+        Instance( f( q ), FOLSubstitution( subst.folmap.map { case ( f, t ) => f -> NameReplacement( t, repl ) } ) )
+      case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
+      case Paramodulation( q1, l1, q2, l2, pos, dir ) =>
+        Paramodulation( f( q1 ), l1, f( q2 ), l2, pos, dir )
+    } )
+
+    f( proof )
+  }
 
   //def rename_substitution(sub : Substitution, map : SymbolMap) : Substitution = {
   //  Substitution(for ( (key,value) <- sub.map) yield { (key, apply(value, map)) } )

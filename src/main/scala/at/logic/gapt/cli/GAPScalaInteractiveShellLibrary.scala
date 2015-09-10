@@ -29,6 +29,9 @@ import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TPTPHOLExporter }
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.formats.xml.{ XMLParser, ProofDatabase, LKExporter }
+import at.logic.gapt.proofs.resolution.{ RobinsonToRal, RobinsonToLK }
+import at.logic.gapt.proofs.resolutionOld.{ InstantiateElimination, OccClause }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.ceres.ACNF.{ ACNF, renameIndexedVarInProjection }
 import at.logic.gapt.proofs.ceres.clauseSets.{ StandardClauseSet, SimplifyStruct }
 import at.logic.gapt.proofs.ceres.projections.Projections
@@ -47,7 +50,6 @@ import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSk
 import at.logic.gapt.proofs.lksk.{ applySubstitution, LKskToExpansionProof }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson._
 import at.logic.gapt.proofs.shlk.applySchemaSubstitution2
 import at.logic.gapt.prooftool.Main
 import at.logic.gapt.provers.atp.Prover
@@ -171,7 +173,7 @@ object loadProofs {
 }
 
 object loadProver9Proof {
-  def apply( filename: String ): ( RobinsonResolutionProof, HOLSequent, HOLSequent ) =
+  def apply( filename: String ): ( ResolutionProof, HOLSequent, HOLSequent ) =
     (
       new Prover9Prover().reconstructRobinsonProofFromFile( filename ),
       InferenceExtractor.viaLADR( filename ),
@@ -272,6 +274,9 @@ object exportLabelledSequentListLatex {
  */
 
 object refuteFOL {
+  import at.logic.gapt.proofs.resolutionOld._
+  import at.logic.gapt.proofs.resolutionOld.robinson._
+
   def stream1: Stream[Command[OccClause]] = Stream.cons( SequentsMacroCommand[OccClause](
     SimpleRefinementGetCommand[OccClause],
     List( VariantsCommand, DeterministicAndCommand[OccClause](
@@ -292,6 +297,9 @@ object refuteFOL {
 }
 
 object refuteFOLI {
+  import at.logic.gapt.proofs.resolutionOld._
+  import at.logic.gapt.proofs.resolutionOld.robinson._
+
   def stream1: Stream[Command[OccClause]] = Stream.cons(
     getTwoClausesFromUICommand[OccClause]( PromptTerminal.GetTwoClauses ),
     Stream.cons(
@@ -323,13 +331,11 @@ object refuteFOLI {
 }
 
 object prover9 {
-  def apply( clauses: Seq[HOLClause] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses.toList )
-
-  def apply( clauses: List[OccClause] ): Option[RobinsonResolutionProof] = new Prover9Prover().getRobinsonProof( clauses map ( _.toHOLClause ) )
+  def apply( clauses: Seq[HOLClause] ): Option[ResolutionProof] = new Prover9Prover().getRobinsonProof( clauses.toList )
 
   //get the ground substitution of the ground resolution refutation
   //the ground substitution is a list of pairs, it can't be a map ! The reason is : a clause can be used several times in the resolution refutation.
-  //def getGroundSubstitution(rrp: RobinsonResolutionProof): List[(Var, LambdaExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
+  //def getGroundSubstitution(rrp: ResolutionProof): List[(Var, LambdaExpression)] = getInstantiationsOfTheIndexedFOVars(rrp)
   def getProof( seq: HOLSequent ): Option[LKProof] = new Prover9Prover().getLKProof( seq )
 }
 
@@ -573,7 +579,7 @@ object help {
         | File Input / Output:
         |   loadProofDB: String => ProofDatabase - load proofdatabase from xml file
         |   loadProofs: String => List[(String, LKProof)] - load proofs from xml file as name/value pairs
-        |   loadProver9Proof: String => (RobinsonResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
+        |   loadProver9Proof: String => (ResolutionProof, FSequent) - load a proof in the ivy proof checker format and extract its endsequent
         |   loadProver9LKProof: String => LKProof - load a proof in the ivy proof checker format and convert it to a LK Proof
         |   loadLLK : String => LKProof - load a proof in the LLK format from given filename
         |   loadSLK: String => Map[String, Tuple2[LKProof, LKProof]] - loads an SLK file
@@ -656,7 +662,7 @@ object simplifyStruct {
 }
 
 object refuteClauseList {
-  def apply( cl: List[OccSequent] ): Option[RobinsonResolutionProof] = prover9( cl )
+  def apply( cl: List[OccSequent] ): Option[ResolutionProof] = prover9( cl.map( _.toHOLSequent.map( _.asInstanceOf[FOLAtom] ) ) )
 }
 
 object computeProjections {
@@ -711,9 +717,8 @@ object exportLLK {
 }
 
 object escape_underscore {
-  def escape_constants( r: RobinsonResolutionProof, fs: List[HOLSequent] ): ( RobinsonResolutionProof, List[HOLSequent] ) = {
-    val names: Set[( Int, String )] = r.nodes.map( _.asInstanceOf[RobinsonResolutionProof].root.occurrences.map( fo =>
-      getArityOfConstants( fo.formula.asInstanceOf[FOLFormula] ) ) ).flatten.flatten
+  def escape_constants( r: ResolutionProof, fs: List[HOLSequent] ): ( ResolutionProof, List[HOLSequent] ) = {
+    val names: Set[( Int, String )] = r.subProofs.flatMap( _.conclusion.elements.flatMap( getArityOfConstants( _ ) ) )
 
     val pairs: Set[( String, ( Int, String ) )] = ( names.map( ( x: ( Int, String ) ) =>
       ( x._2, ( ( x._1, x._2.replaceAll( "_", "\\\\_" ) ) ) ) ) )
@@ -908,10 +913,12 @@ object parse {
 /*****************************************************************************************/
 
 object eliminateInstaces {
-  def apply( p: RobinsonResolutionProof ) = InstantiateElimination.apply( p )
+  def apply( p: ResolutionProof ) = InstantiateElimination.apply( resNew2Old( p ) )
 }
 
 object replay {
+  import at.logic.gapt.proofs.resolutionOld._
+  import at.logic.gapt.proofs.resolutionOld.robinson._
 
   private class MyParser( str: String ) extends StringReader( str ) with SimpleResolutionParserFOL
 
@@ -937,12 +944,14 @@ object replay {
 }
 
 object Robinson2LK {
-  def apply( resProof: ResolutionProof[OccClause] ): LKProof = RobinsonToLK( resProof.asInstanceOf[RobinsonResolutionProof] )
+  def apply( resProof: ResolutionProof ): LKProof = RobinsonToLK( resProof )
 
-  def apply( resProof: ResolutionProof[OccClause], seq: HOLSequent ): LKProof = RobinsonToLK( resProof.asInstanceOf[RobinsonResolutionProof], seq )
+  def apply( resProof: ResolutionProof, seq: HOLSequent ): LKProof = RobinsonToLK( resProof, seq )
 }
 
 object format {
+  import at.logic.gapt.proofs.resolutionOld._
+  import at.logic.gapt.proofs.resolutionOld.robinson._
   def apply( p: ResolutionProof[OccClause] ) = asHumanReadableString( p )
 
   def asHumanReadableString( p: ResolutionProof[OccClause] ) = Formatter.asHumanReadableString( p )
@@ -999,7 +1008,7 @@ object rename {
     """
       | rename(exp: LambdaExpression, map: SymbolMap): LambdaExpression
       | rename(fs: FSequent, map: SymbolMap) : LambdaExpression
-      | rename(p: RobinsonResolutionProof, map: SymbolMap): RobinsonResolutionProof
+      | rename(p: ResolutionProof, map: SymbolMap): ResolutionProof
       |
       | The symbol map is a map from oldname:String to pairs of (a:Int,newname). Applying
       | rename will replace every occurrence of a symbol with oldname and arity a by newname.
@@ -1008,7 +1017,7 @@ object rename {
 
   def apply(fs: FSequent, map: NameReplacement.SymbolMap) = NameReplacement(fs, map)
 
-  def apply(p: RobinsonResolutionProof, map: NameReplacement.SymbolMap): RobinsonResolutionProof = NameReplacement(p, map)
+  def apply(p: ResolutionProof, map: NameReplacement.SymbolMap): ResolutionProof = NameReplacement(p, map)
 }
 
 */

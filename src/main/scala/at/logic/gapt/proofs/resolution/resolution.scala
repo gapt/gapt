@@ -1,11 +1,9 @@
-package at.logic.gapt.proofs.resolutionNew
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.SequentProof
-import at.logic.gapt.proofs.lk.base.{ Ant, Suc, Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ FOLClause, SequentIndex, SequentProof }
 import at.logic.gapt.proofs.lkNew.OccConnector
-import at.logic.gapt.proofs.resolution.{ FOLClause, HOLClause, Clause }
 
 /**
  * First-order resolution proof.
@@ -103,6 +101,7 @@ case class Instance( subProof: ResolutionProof, substitution: FOLSubstitution ) 
 case class Factor( subProof: ResolutionProof, literal1: SequentIndex, literal2: SequentIndex ) extends ResolutionProof {
   require( literal1 sameSideAs literal2 )
   require( literal1 < literal2 )
+  require( subProof.conclusion( literal1 ) == subProof.conclusion( literal2 ) )
 
   override val conclusion = subProof.conclusion delete literal2
   override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
@@ -151,7 +150,7 @@ object Factor {
 /**
  * Resolution.
  *
- * The positive literal can be in either sub-proof.
+ * The positive literal must be in the first sub-proof.
  *
  * <pre>
  *       (subProof1)               (subProof2)
@@ -165,7 +164,8 @@ case class Resolution( subProof1: ResolutionProof, literal1: SequentIndex,
   require( subProof1.conclusion isDefinedAt literal1, s"$literal1 not a valid index in ${subProof1.conclusion}" )
   require( subProof2.conclusion isDefinedAt literal2, s"$literal2 not a valid index in ${subProof2.conclusion}" )
   require( subProof1.conclusion( literal1 ) == subProof2.conclusion( literal2 ) )
-  require( !( literal1 sameSideAs literal2 ) )
+  require( literal1 isSuc )
+  require( literal2 isAnt )
 
   override val conclusion = ( subProof1.conclusion delete literal1 ) ++ ( subProof2.conclusion delete literal2 )
   override def occConnectors = Seq(

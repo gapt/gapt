@@ -5,8 +5,9 @@ import at.logic.gapt.expr.SymbolA
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, IntegerTerm, IntVar, IndexedPredicate, IntZero, unfoldSFormula, Succ, Pred, sIndTerm, unfoldSINDTerm, sTerm, unfoldSTerm, toIntegerTerm }
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.utils.ds.Multisets

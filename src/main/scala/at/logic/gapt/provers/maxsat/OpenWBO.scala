@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.maxsat
 
-import at.logic.gapt.proofs.resolution.HOLClause
+import at.logic.gapt.proofs.HOLClause
 
 class OpenWBO extends MaxSATSolverBinary {
   def format() = Format.MultiVLine

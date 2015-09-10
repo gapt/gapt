@@ -8,7 +8,7 @@ package at.logic.gapt.proofs.lk.subsumption
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 
 // TODO: find a smart way (without reaching out to the lambda layer!!) to not duplicate this code.
 

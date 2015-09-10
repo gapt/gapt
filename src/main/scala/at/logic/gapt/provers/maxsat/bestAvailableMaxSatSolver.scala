@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.maxsat
 
 import at.logic.gapt.models.Interpretation
-import at.logic.gapt.proofs.resolution.HOLClause
+import at.logic.gapt.proofs.HOLClause
 
 object bestAvailableMaxSatSolver extends MaxSATSolver {
   val bestAvailableSolver =

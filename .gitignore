@@ -23,6 +23,9 @@ doc/*.toc
 doc/*.fdb_latexmk
 doc/*.fls
 doc/*.out
+doc/auto
+doc/_region_.*
+doc/prv_user_manual.fmt
 *-proposal/*.aux
 *-proposal/*.bbl
 *-proposal/*.blg

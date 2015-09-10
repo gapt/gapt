@@ -1,9 +1,9 @@
 // setup
-:load examples/FormulaSequences.scala
-import at.logic.gapt.language.hol._
+import at.logic.gapt.examples._
+import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.provers.minisat.MiniSATProver
-import at.logic.gapt.proofs.resolution.algorithms.CNFp
-import at.logic.gapt.proofs.resolution.algorithms.TseitinCNF
 val minisat = new MiniSATProver
 
 println( """

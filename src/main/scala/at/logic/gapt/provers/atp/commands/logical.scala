@@ -2,7 +2,7 @@
 package at.logic.gapt.provers.atp.commands.logical
 
 import at.logic.gapt.proofs.lk.base.OccSequent
-import at.logic.gapt.proofs.resolution.ResolutionProof
+import at.logic.gapt.proofs.resolutionOld.ResolutionProof
 import at.logic.gapt.provers.atp.commands.base.{ Command, ResultCommand, InitialCommand, DataCommand }
 import at.logic.gapt.provers.atp.Definitions._
 

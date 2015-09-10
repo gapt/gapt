@@ -5,6 +5,7 @@
 
 package at.logic.gapt.proofs.ceres.clauseSets
 
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.gapt.proofs.ceres.struct._
 import at.logic.gapt.proofs.lk.base._
@@ -12,7 +13,7 @@ import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr.schema.IndexedPredicate
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.OccClause
+import at.logic.gapt.proofs.resolutionOld.OccClause
 import at.logic.gapt.utils.logging.Logger
 import scala.annotation.tailrec
 import scala.util.control.TailCalls._

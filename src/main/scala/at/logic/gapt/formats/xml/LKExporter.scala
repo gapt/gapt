@@ -7,8 +7,9 @@
 
 package at.logic.gapt.formats.xml
 
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRule, ExistsSkRightRule, ForallSkLeftRule, ForallSkRightRule, Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule }
 
 import scala.xml.dtd._

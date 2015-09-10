@@ -14,6 +14,7 @@ val filename = "examples/hol-tape/tape3-3.llk"
 
 /* begin of proof script  */
 
+import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
 import at.logic.gapt.expr.fol.{undoHol2Fol, replaceAbstractions, reduceHolToFol}
 import at.logic.gapt.expr.hol._
 
@@ -21,6 +22,8 @@ import at.logic.gapt.expr.fol.undoHol2Fol
 
 import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lk.base.HOLSequentOrdering
 import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize, subsumedClausesRemovalHOL}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
 import at.logic.gapt.proofs.resolution.RobinsonToRal
@@ -45,7 +48,7 @@ import at.logic.gapt.proofs.lk.LKToLKsk
  val elp = AtomicExpansion(DefinitionElimination(pdb.Definitions, regularize(pdb.proof("TAPEPROOF"))))
 
  show("Skolemizing")
- val selp = LKtoLKskc(elp)
+ val selp = LKToLKsk(elp)
 
  show("Extracting struct")
  val struct = StructCreators.extract(selp, x => containsQuantifierOnLogicalLevel(x) || freeHOVariables(x).nonEmpty)
@@ -61,8 +64,8 @@ import at.logic.gapt.proofs.lk.LKToLKsk
  val tcl = deleteTautologies(rcl)
 
  show("exporting to THF and Tex")
- exportTHF(tcl.sorted(FSequentOrdering), filename+".tptp")
- exportLatex(tcl.sorted(FSequentOrdering), filename+".tex")
+ exportTHF(tcl.sorted(HOLSequentOrdering), filename+".tptp")
+ exportLatex(tcl.sorted(HOLSequentOrdering), filename+".tex")
 
  show("statistics")
  println("Clause set:"+cl.size)

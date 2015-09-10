@@ -2,8 +2,8 @@ import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lk.base.{Sequent, LKProof, HOLSequent}
+import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.{HOLSequent, Sequent}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.inductionProver._

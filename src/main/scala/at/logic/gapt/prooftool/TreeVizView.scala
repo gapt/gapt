@@ -1,6 +1,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.formats.simple.{ BinaryRuleType, UnaryRuleType, NullaryRuleType }
+import at.logic.gapt.proofs.HOLSequent
 
 import scala.swing.{ Action, BorderPanel }
 import at.logic.gapt.proofs.proofs.TreeProof

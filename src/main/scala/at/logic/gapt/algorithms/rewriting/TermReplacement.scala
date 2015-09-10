@@ -3,12 +3,12 @@ package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.HOLSequent
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson._
+import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.resolutionOld._
+import at.logic.gapt.proofs.resolutionOld.robinson._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.utils.logging.Logger
-import at.logic.gapt.proofs.resolutionNew
+import at.logic.gapt.proofs.{ HOLSequent, resolution }
 import NameReplacement.find_matching
 
 import scala.collection.mutable
@@ -88,8 +88,8 @@ object TermReplacement extends Logger {
       }
   }
 
-  def apply( proof: resolutionNew.ResolutionProof, repl: Map[FOLTerm, FOLTerm] ): resolutionNew.ResolutionProof = {
-    import resolutionNew._
+  def apply( proof: resolution.ResolutionProof, repl: Map[FOLTerm, FOLTerm] ): resolution.ResolutionProof = {
+    import resolution._
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
     def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {

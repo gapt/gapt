@@ -4,8 +4,7 @@ import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.lk.base.HOLSequent
-import at.logic.gapt.proofs.resolution.HOLClause
+import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 
 object renameConstantsToFi {
   private def mkName( i: Int ) = s"f$i"

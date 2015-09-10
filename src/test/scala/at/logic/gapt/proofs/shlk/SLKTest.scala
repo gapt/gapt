@@ -5,6 +5,7 @@
 
 package at.logic.gapt.proofs.shlk
 
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.mutable._
 import org.specs2.execute.Success
 

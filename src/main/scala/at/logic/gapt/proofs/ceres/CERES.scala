@@ -1,16 +1,13 @@
 package at.logic.gapt.proofs.ceres
 
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
+import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import at.logic.gapt.proofs.lk.applySubstitution
-import at.logic.gapt.proofs.resolution.HOLClause
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 
-import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolutionOld.RichOccClause
 import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmHOL
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
@@ -61,7 +58,7 @@ class CERESR2LK {
    * @param rp A resolution refutation
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: RobinsonResolutionProof ) = {
+  def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: ResolutionProof ) = {
     RobinsonToLK( rp, endsequent, fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) )
   }
 

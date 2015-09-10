@@ -906,8 +906,60 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 
 \section{The Resolution Calculus}
 
+\subsection*{Initial clauses}
+
+\begin{prooftree}
+\AxiomC{}\RightLabel{InputClause}
+\UnaryInfC{$C$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}\RightLabel{ReflexivityClause}
+\UnaryInfC{$t=t$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}\RightLabel{TautologyClause}
+\UnaryInfC{$a \lor \neg a$}
+\end{prooftree}
+
+\subsection*{Structural rules}
+
+\begin{prooftree}
+\AxiomC{$a \lor a \lor C$}\RightLabel{Factor}
+\UnaryInfC{$a \lor C$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$C$}\RightLabel{Instance}
+\UnaryInfC{$C \sigma$}
+\end{prooftree}
+
+\subsection*{Logical rules}
+
+\begin{prooftree}
+\AxiomC{$C \lor a$}
+\AxiomC{$\neg a \lor D$}
+\RightLabel{Resolution}
+\BinaryInfC{$C \lor D$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$C \lor t=s$}
+\AxiomC{$l[t] \lor D$}
+\RightLabel{Paramodulation}
+\BinaryInfC{$C \lor l[s] \lor D$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$C \lor t=s$}
+\AxiomC{$l[s] \lor D$}
+\RightLabel{Paramodulation}
+\BinaryInfC{$C \lor l[t] \lor D$}
+\end{prooftree}
+
 \begin{meta}
- TODO: give formal definition of our resolution calculus
+TODO: RAL
 \end{meta}
 
 % \section{Command Reference}

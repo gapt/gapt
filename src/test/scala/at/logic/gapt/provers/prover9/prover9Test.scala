@@ -2,9 +2,10 @@ package at.logic.gapt.provers.prover9
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.proofs.lk.base.{ Sequent, HOLSequent }
+import at.logic.gapt.proofs.resolution.inputClauses
+import at.logic.gapt.proofs.{ Sequent, HOLSequent, HOLClause }
+import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
-import at.logic.gapt.proofs.resolution.{ initialSequents, HOLClause }
 
 import org.specs2.mutable._
 
@@ -61,7 +62,7 @@ class Prover9Test extends Specification {
     "handle exit code 2" in {
       val cnf = List( HOLClause( Seq(), Seq() ), HOLClause( Seq( FOLAtom( "a" ) ), Seq() ) )
       prover9.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) => initialSequents( p ).map( _.toHOLSequent.asInstanceOf[HOLClause] ) must contain( atMost( cnf.toSet ) )
+        case Some( p ) => inputClauses( p ) must contain( atMost( cnf.toSet ) )
       }
     }
   }

@@ -7,13 +7,12 @@
 
 package at.logic.gapt.proofs.lk.cutIntroduction
 
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolution.{ ForgetfulResolveIndexed, ForgetfulParamodulate, ForgetfulResolve }
+import at.logic.gapt.proofs.{ HOLSequent, FOLClause }
+import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.provers.minisat.MiniSAT
 import at.logic.gapt.utils.dssupport.ListSupport
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch

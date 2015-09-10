@@ -1,8 +1,7 @@
 package at.logic.gapt.provers.maxsat
 
 import java.io.{ File, BufferedWriter, FileWriter }
-
-import at.logic.gapt.proofs.resolution.HOLClause
+import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.provers.sat4j.readSat4j
 import org.sat4j.maxsat.reader.WDimacsReader
 import org.sat4j.maxsat.WeightedMaxSatDecorator

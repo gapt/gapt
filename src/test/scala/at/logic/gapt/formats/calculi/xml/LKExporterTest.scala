@@ -5,6 +5,7 @@
 package at.logic.gapt.formats.calculi.xml
 
 import at.logic.gapt.formats.xml.{ HOLTermXMLExporter, LKExporter }
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.mutable._
 
 import scala.xml.Utility.trim

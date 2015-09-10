@@ -2,9 +2,10 @@
 package at.logic.gapt.provers.basicProver
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.LKProver
+import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.{ FailSafeProver, Prover }
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
 
 class BasicProver extends Prover {
 

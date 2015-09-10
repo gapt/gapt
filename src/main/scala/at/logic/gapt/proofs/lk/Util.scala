@@ -4,7 +4,8 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 
 object Util {

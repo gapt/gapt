@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.maxsat
 
-import at.logic.gapt.proofs.resolution.HOLClause
+import at.logic.gapt.proofs.HOLClause
 
 /**
  * Created by frain on 3/31/15.
