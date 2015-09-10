@@ -370,7 +370,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
     }
   }
 
-  def delete( i: SequentIndex ) = focus( i )._2
+  def delete( i: SequentIndex ): Sequent[A] = focus( i )._2
+
+  def delete( is: SequentIndex* ): Sequent[A] = ( this /: is.sorted.reverse )( ( acc, i ) => acc delete i )
 
   def zipWithIndex: Sequent[( A, SequentIndex )] =
     Sequent(
@@ -389,6 +391,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def indexOf[B >: A]( elem: B ): SequentIndex = indexOfOption( elem ) get
 
   def swapped: Sequent[A] = Sequent( succedent, antecedent )
+
+  def forall( p: A => Boolean ): Boolean = antecedent.forall( p ) && succedent.forall( p )
 }
 
 object Sequent {

@@ -183,8 +183,7 @@ object InitialSequent {
   def unapply( proof: InitialSequent ) = Some( proof.endSequent )
 }
 
-case class ArbitraryAxiom( endSequent: HOLSequent ) extends InitialSequent {
-}
+case class ArbitraryAxiom( endSequent: Sequent[HOLAtom] ) extends InitialSequent
 
 /**
  * An LKProof introducing ⊤ on the right:
@@ -248,7 +247,9 @@ object Axiom {
     case Sequent( Seq(), Seq( Top() ) ) => TopAxiom
     case Sequent( Seq( Bottom() ), Seq() ) => BottomAxiom
     case Sequent( Seq(), Seq( Eq( s: LambdaExpression, t: LambdaExpression ) ) ) if s == t => ReflexivityAxiom( s )
-    case _ => ArbitraryAxiom( sequent )
+    case _ if sequent.forall( _.isInstanceOf[HOLAtom] ) => ArbitraryAxiom( sequent.asInstanceOf[Sequent[HOLAtom]] )
+
+    case _ => throw new IllegalArgumentException( s"Cannot create axiom from sequent $sequent." )
   }
 
   def apply( ant: Seq[HOLFormula], suc: Seq[HOLFormula] ): InitialSequent = apply( Sequent( ant, suc ) )
