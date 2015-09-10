@@ -3,9 +3,7 @@ package at.logic.gapt.proofs.ralNew
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
 import at.logic.gapt.expr.hol.isAtom
-import at.logic.gapt.proofs.lk.base.Eigenvariable
 import at.logic.gapt.proofs.lkNew.OccConnector
-import at.logic.gapt.proofs.resolutionOld.computeSkolemTerm
 import at.logic.gapt.proofs._
 import RalProof._
 
@@ -151,6 +149,14 @@ private[ralNew] trait OneFormulaRule extends RalProof {
 private[ralNew] trait SimpleOneFormulaRule extends OneFormulaRule {
   def newFormulas: Sequent[HOLFormula]
   override def newLabelledFormulas = newFormulas map { subProof.labels( idx ) -> _ }
+}
+
+private[ralNew] object computeSkolemTerm {
+  def apply( sk: SkolemSymbol, t: TA, label: Label ) = {
+    val labelList = label.toList
+    val tp = FunctionType( t, labelList map { _.exptype } )
+    HOLFunction( Const( sk, tp ), labelList )
+  }
 }
 
 case class RalAllT( subProof: RalProof, idx: SequentIndex, eigenVariable: Var ) extends OneFormulaRule {
