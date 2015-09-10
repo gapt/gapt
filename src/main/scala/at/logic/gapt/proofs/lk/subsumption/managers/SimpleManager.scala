@@ -5,9 +5,9 @@
 
 package at.logic.gapt.proofs.lk.subsumption.managers
 
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.utils.patterns.listeners.ListenerManager
 import at.logic.gapt.proofs.lk.subsumption._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 
 class SimpleManager(
     listener: ListenerManager[SubsumptionDSEvent],

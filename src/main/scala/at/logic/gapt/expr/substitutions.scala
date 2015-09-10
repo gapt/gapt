@@ -1,8 +1,7 @@
 
 package at.logic.gapt.expr
 
-import at.logic.gapt.proofs.lk.base.HOLSequent
-import at.logic.gapt.proofs.resolution.HOLClause
+import at.logic.gapt.proofs.HOLSequent
 
 import scala.collection.GenTraversable
 
@@ -56,7 +55,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   }
 
   def apply( t: HOLFormula ): HOLFormula = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
-  def apply( sequent: HOLSequent ): HOLSequent = HOLSequent( sequent.antecedent.map( apply ), sequent.succedent.map( apply ) )
+  def apply( sequent: HOLSequent ): HOLSequent = sequent map apply
 
   // TODO: why lists? why not sets?
   def domain: List[Var] = map.keys.toList
@@ -65,6 +64,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   def ::( sub: ( Var, LambdaExpression ) ) = new Substitution( map + sub )
   def ::( otherSubstitution: Substitution ) = new Substitution( map ++ otherSubstitution.map )
 
+  override def hashCode = map.hashCode
   override def equals( a: Any ) = a match {
     case s: Substitution => map.equals( s.map )
     case _               => false

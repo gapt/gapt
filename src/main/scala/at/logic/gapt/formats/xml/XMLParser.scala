@@ -15,8 +15,9 @@ import at.logic.gapt.formats.ParsingException
 import at.logic.gapt.formats.readers.XMLReaders.NodeReader
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, _ }
+import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.proofs.occurrences._
 
 import scala.Predef._

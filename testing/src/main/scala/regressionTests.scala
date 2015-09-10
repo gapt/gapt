@@ -12,6 +12,7 @@ import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof 
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9Prover }
+import at.logic.gapt.proofs.lk.base.RichOccSequent
 import scala.concurrent.duration._
 import scala.util.Random
 

@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.mutable._
 
 class TermExtractionTest extends Specification {

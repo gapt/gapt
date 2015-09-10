@@ -1,14 +1,14 @@
 package at.logic.gapt.provers.inductionProver
 
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.SipGrammar
+import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.resolution.{ FOLClause, ForgetfulParamodulate, ForgetfulResolve }
+import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, ForgetfulResolve }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver

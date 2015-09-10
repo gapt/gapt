@@ -3,46 +3,13 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.HOLOrdering
-import at.logic.gapt.proofs.lk.base.{ Sequent, HOLSequent }
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
 /**
  * Created by sebastian on 7/13/15.
  */
 package object base {
-  type HOLSequent = Sequent[HOLFormula]
-
-  implicit class RichFormulaSequent( val sequent: Sequent[HOLFormula] ) {
-
-    def formulas = sequent.elements
-
-    def polarizedFormulas = sequent.polarizedElements
-
-    /**
-     * Interpretation of the sequent as a formula.
-     * Why is this not the definition of a sequent (/\ F -> \/ G)? The current implementation (\/-F \/ G) is
-     * only classically equivalent (In IL a -> b :/- -a \/ b).
-     */
-    def toFormula: HOLFormula = Or( sequent.antecedent.toList.map( f => Neg( f ) ) ++ sequent.succedent )
-
-    def toNegFormula: HOLFormula = And( sequent.antecedent ++ sequent.succedent.map( Neg( _ ) ) )
-
-    def toImplication: HOLFormula = Imp( And( sequent.antecedent.toList ), Or( sequent.succedent ) )
-
-    def renameSymbols( map: SymbolMap ) = sequent map ( NameReplacement( _, map ) )
-  }
-
-  object HOLSequent {
-    def apply(): HOLSequent = Sequent()
-
-    def apply( ant: Seq[HOLFormula], succ: Seq[HOLFormula] ): HOLSequent = Sequent( ant, succ )
-
-    def apply( polarizedElements: Seq[( HOLFormula, Boolean )] ): HOLSequent = Sequent( polarizedElements )
-
-    def unapply( f: HOLSequent ): Option[( Seq[HOLFormula], Seq[HOLFormula] )] = Some( ( f.antecedent, f.succedent ) )
-
-  }
 
   type OccSequent = Sequent[FormulaOccurrence]
 
@@ -58,7 +25,7 @@ package object base {
     def getChildOf( ancestor: FormulaOccurrence ): Option[FormulaOccurrence] = sequent.elements find { _.parents.contains( ancestor ) }
 
     /**
-     * Converts to a [[HOLSequent]], ignoring where the formulas occur.
+     * Converts to a [[at.logic.gapt.proofs.HOLSequent]], ignoring where the formulas occur.
      */
     def toHOLSequent: HOLSequent = sequent map { _.formula }
 

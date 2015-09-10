@@ -27,6 +27,7 @@ object CLIMain {
   import at.logic.gapt.expr.hol._
   import at.logic.gapt.proofs.expansionTrees._
   import at.logic.gapt.proofs.hoare._
+  import at.logic.gapt.proofs._
   import at.logic.gapt.proofs.lk._
   import at.logic.gapt.proofs.lk.base._
   import at.logic.gapt.proofs.lk.cutIntroduction.Deltas._

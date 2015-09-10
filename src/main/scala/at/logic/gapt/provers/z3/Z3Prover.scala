@@ -3,7 +3,8 @@ package at.logic.gapt.provers.z3
 import java.io.IOException
 
 import at.logic.gapt.formats.veriT.SmtLibExporter
-import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.{ renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.withTempFile

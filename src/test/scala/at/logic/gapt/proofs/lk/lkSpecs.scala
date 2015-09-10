@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk.base
 
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.matcher._
 
 case class beSyntacticMultisetEqual( s: OccSequent ) extends Matcher[OccSequent]() {

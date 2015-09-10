@@ -2,12 +2,12 @@ package at.logic.gapt.provers.eprover
 
 import java.io.IOException
 
-import at.logic.gapt.expr.{ HOLAtom, Bottom, FOLFormula }
+import at.logic.gapt.expr.{ FOLAtom, HOLAtom, Bottom, FOLFormula }
 import at.logic.gapt.expr.hol.{ CNFp, dualize, CNFn }
 import at.logic.gapt.formats.leanCoP.LeanCoPParserException
 import at.logic.gapt.formats.tptp.{ TPTPParser, TPTPFOLExporter }
-import at.logic.gapt.proofs.resolution.{ Clause, FOLClause, HOLClause }
-import at.logic.gapt.proofs.resolution.robinson.RobinsonResolutionProof
+import at.logic.gapt.proofs.resolution.ResolutionProof
+import at.logic.gapt.proofs.{ HOLClause, FOLClause }
 import at.logic.gapt.proofs.sketch.{ RefutationSketchToRobinson, RefutationSketch }
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.utils.traits.ExternalProgram
@@ -17,17 +17,17 @@ import scala.sys.process._
 import scala.util.parsing.combinator._
 
 class EProverProver extends ResolutionProver with ExternalProgram {
-  override def getRobinsonProof( seq: Traversable[HOLClause] ): Option[RobinsonResolutionProof] =
+  override def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( seq ) {
       case ( renaming, cnf ) =>
-        val tptpIn = toTPTP( cnf )
+        val tptpIn = toTPTP( cnf.map( _.map( _.asInstanceOf[FOLAtom] ) ) )
         val output = withTempFile.fromString( tptpIn ) { tptpInFile =>
           Seq( "eproof-tptp", tptpInFile ) !!
         }
         RefutationSketchToRobinson( EProverOutputParser.parse( output ) )
     }
 
-  private def toTPTP( cnf: List[HOLClause] ): String =
+  private def toTPTP( cnf: List[FOLClause] ): String =
     cnf.zipWithIndex.map {
       case ( clause, index ) =>
         s"cnf(formula$index, axiom, ${TPTPFOLExporter.exportFormula( clause.toFormula.asInstanceOf[FOLFormula] )})."
@@ -45,7 +45,7 @@ class EProverProver extends ResolutionProver with ExternalProgram {
 class EProverOutputParser extends TPTPParser {
   def comment: Parser[Unit] = """# (.*)\n""".r ^^ { _ => () }
 
-  def step: Parser[( String, HOLClause )] = "cnf(" ~ integer ~ "," ~ name ~ "," ~ formula ~ ( "," ~> general_term ).* ~ ")." ^^ {
+  def step: Parser[( String, FOLClause )] = "cnf(" ~ integer ~ "," ~ name ~ "," ~ formula ~ ( "," ~> general_term ).* ~ ")." ^^ {
     case _ ~ num ~ _ ~ name ~ _ ~ clause ~ just ~ _ =>
       name -> CNFp.toClauseList( clause ).head
   }
@@ -53,7 +53,7 @@ class EProverOutputParser extends TPTPParser {
   def general_term: Parser[Any] = "[" ~> repsep( general_term, "," ) <~ "]" |
     name ~ opt( "(" ~> repsep( general_term, "," ) <~ ")" ) | integer
 
-  def eproverOutput: Parser[Seq[( String, HOLClause )]] = ( comment ^^ { _ => Seq() } | step ^^ { Seq( _ ) } ).* ^^ { _.flatten }
+  def eproverOutput: Parser[Seq[( String, FOLClause )]] = ( comment ^^ { _ => Seq() } | step ^^ { Seq( _ ) } ).* ^^ { _.flatten }
 }
 
 object EProverOutputParser extends EProverOutputParser {

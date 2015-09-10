@@ -1,7 +1,7 @@
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.HOLClause
 import org.specs2.mutable._
 
 class TseitinCNFTest extends Specification {

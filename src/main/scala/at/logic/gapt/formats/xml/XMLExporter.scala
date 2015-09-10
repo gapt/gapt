@@ -2,7 +2,7 @@ package at.logic.gapt.formats.xml
 
 import at.logic.gapt.formats.ExportingException
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol._
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 

@@ -1,8 +1,8 @@
 package at.logic.gapt.provers.inductionProver
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionSequent }
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.sat4j.Sat4jProver
 import org.specs2.mutable._

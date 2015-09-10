@@ -3,9 +3,10 @@ package at.logic.gapt.proofs.ceres.ACNF
 import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.applySubstitution
-import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolution.RobinsonToLK
+import at.logic.gapt.proofs.resolutionOld.RichOccClause
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle

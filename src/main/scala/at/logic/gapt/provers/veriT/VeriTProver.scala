@@ -2,6 +2,7 @@ package at.logic.gapt.provers.veriT
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.formats.veriT._
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.withTempFile
@@ -9,7 +10,6 @@ import scala.sys.process._
 import java.io._
 import at.logic.gapt.provers._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 
 class VeriTProver extends Prover with ExternalProgram {
 

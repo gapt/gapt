@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences._

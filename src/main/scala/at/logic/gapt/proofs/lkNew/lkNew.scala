@@ -3,55 +3,19 @@ package at.logic.gapt.proofs.lkNew
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
-import at.logic.gapt.proofs.DagProof
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.base._
 
 import scala.collection.mutable
 
-abstract class LKProof extends DagProof[LKProof] {
-  /**
-   * A list of SequentIndices denoting the main formula(s) of the rule.
-   *
-   * @return
-   */
-  def mainIndices: Seq[SequentIndex]
-
-  /**
-   * The list of main formulas of the rule.
-   *
-   * @return
-   */
-  def mainFormulas: Seq[HOLFormula] = mainIndices map { endSequent( _ ) }
-
-  /**
-   * A list of lists of SequentIndices denoting the auxiliary formula(s) of the rule.
-   * The first list contains the auxiliary formulas in the first premise and so on.
-   *
-   * @return
-   */
-  def auxIndices: Seq[Seq[SequentIndex]]
+abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
 
   /**
    * The end-sequent of the rule.
-   *
-   * @return
    */
   def endSequent: HOLSequent
 
-  /**
-   * The upper sequents of the rule.
-   *
-   * @return
-   */
-  def premises: Seq[HOLSequent] = immediateSubProofs map ( _.endSequent )
-
-  /**
-   * A list of lists containing the auxiliary formulas of the rule.
-   * The first list constains the auxiliary formulas in the first premise and so on.
-   *
-   * @return
-   */
-  def auxFormulas: Seq[Seq[HOLFormula]] = for ( ( p, is ) <- premises zip auxIndices ) yield p( is )
+  override def conclusion = endSequent
 
   /**
    * Checks whether indices are in the right place and premise is defined at all of them.
@@ -92,9 +56,6 @@ abstract class LKProof extends DagProof[LKProof] {
       case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Index $i should be in the succedent." )
     }
   }
-
-  override protected def stepString( subProofLabels: Map[Any, String] ) =
-    s"$endSequent    (${super.stepString( subProofLabels )})"
 }
 
 /**
@@ -129,6 +90,8 @@ abstract class UnaryLKProof extends LKProof {
   def premise = subProof.endSequent
 
   override def immediateSubProofs = Seq( subProof )
+
+  override def occConnectors = Seq( getOccConnector )
 }
 
 object UnaryLKProof {
@@ -188,6 +151,8 @@ abstract class BinaryLKProof extends LKProof {
   def rightPremise = rightSubProof.endSequent
 
   override def immediateSubProofs = Seq( leftSubProof, rightSubProof )
+
+  override def occConnectors = Seq( getLeftOccConnector, getRightOccConnector )
 }
 
 object BinaryLKProof {
@@ -210,6 +175,8 @@ abstract class InitialSequent extends LKProof {
   override def auxIndices = Seq()
 
   override def immediateSubProofs = Seq()
+
+  override def occConnectors = Seq()
 }
 
 object InitialSequent {
@@ -1495,9 +1462,8 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
  * This class models the connection of formula occurrences between two sequents in a proof.
  *
  */
-class OccConnector( val lowerSequent: HOLSequent, val upperSequent: HOLSequent, val parentsSequent: Sequent[Seq[SequentIndex]] ) {
-  outer =>
-
+case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, parentsSequent: Sequent[Seq[SequentIndex]] ) {
+  require( parentsSequent.sizes == lowerSequent.sizes )
   val childrenSequent = upperSequent.indicesSequent map { i => parentsSequent.indicesWhere( is => is contains i ) }
 
   /**
@@ -1517,12 +1483,21 @@ class OccConnector( val lowerSequent: HOLSequent, val upperSequent: HOLSequent, 
   def children( idx: SequentIndex ): Seq[SequentIndex] = childrenSequent( idx )
 
   def *( that: OccConnector ) = {
-    val newAnt = for ( is <- parentsSequent.antecedent; i <- is ) yield that.parents( i )
-
-    val newSuc = for ( is <- parentsSequent.succedent; i <- is ) yield that.parents( i )
-
-    new OccConnector( this.lowerSequent, that.upperSequent, Sequent( newAnt, newSuc ) )
+    require( this.upperSequent == that.lowerSequent )
+    OccConnector( this.lowerSequent, that.upperSequent, this.lowerSequent.indicesSequent.map( this.parents( _ ).flatMap( that.parents ) ) )
   }
+
+  def inv: OccConnector = OccConnector( upperSequent, lowerSequent, childrenSequent )
+
+  def +( that: OccConnector ) = {
+    require( this.lowerSequent == that.lowerSequent )
+    require( this.upperSequent == that.upperSequent )
+    OccConnector( lowerSequent, upperSequent, lowerSequent.indicesSequent map { i => this.parents( i ) ++ that.parents( i ) } )
+  }
+}
+
+object OccConnector {
+  def apply( sequent: HOLSequent ): OccConnector = OccConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
 }
 
 object prettyString {

@@ -1,11 +1,11 @@
 package at.logic.gapt.formats.llk
 
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
+import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, LabelledOccSequent }
-import at.logic.gapt.proofs.resolution.ral
+import at.logic.gapt.proofs.ral.{ RalCut, RalProof, RalInitial }
 
 object LatexProofExporter extends HybridLatexExporter( true )
 object HybridLatexExporter extends HybridLatexExporter( false )
@@ -216,16 +216,16 @@ class HybridLatexExporter( val expandTex: Boolean ) {
 
   }
 
-  def generateRal[T <: LabelledOccSequent](
-    ralp: ral.RalResolutionProof[T],
-    s:    String                    = "", escape_latex: Boolean
+  def generateRal(
+    ralp: RalProof,
+    s:    String   = "", escape_latex: Boolean
   ): String = ralp match {
-    case ral.InitialSequent( seq ) => "\\AX" + fsequentString( seq.toHOLSequent, escape_latex )
+    case RalInitial( seq ) => "\\AX" + fsequentString( ralp.conclusion, escape_latex )
 
-    case ral.Cut( root, p1, p2, aux1, aux2 ) =>
+    case RalCut( p1, aux1, p2, aux2 ) =>
       generateRal(
         p1,
-        generateRal( p2, "\\CUT" + fsequentString( root.toHOLSequent, escape_latex ) + s, escape_latex ),
+        generateRal( p2, "\\CUT" + fsequentString( ralp.conclusion, escape_latex ) + s, escape_latex ),
         escape_latex
       )
 

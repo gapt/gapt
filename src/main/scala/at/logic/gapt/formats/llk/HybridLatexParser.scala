@@ -4,7 +4,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.hlk.ast.LambdaAST
 import at.logic.gapt.formats.hlk.{ ast, DeclarationParser }
 import at.logic.gapt.formats.xml.ProofDatabase
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof }
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lk.base.LKProof
 import java.io.FileReader
 import scala.collection.immutable.PagedSeq
 import scala.util.parsing.input.PagedSeqReader

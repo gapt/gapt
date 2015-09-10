@@ -1,8 +1,8 @@
 
 package at.logic.gapt.provers.prover9.commands
 
-import at.logic.gapt.proofs.lk.base.HOLSequent
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, OccClause }
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.resolutionOld.{ ResolutionProof, OccClause }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.{ Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter

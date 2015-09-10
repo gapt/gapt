@@ -7,7 +7,7 @@ lazy val commonSettings = Seq(
   organizationHomepage := Some(url("https://gapt.github.io/")),
   licenses += ("GNU GPL v3", url("http://www.gnu.org/licenses/gpl.html")),
   startYear := Some(2008),
-  version := "1.10-SNAPSHOT",
+  version := "1.11-SNAPSHOT",
 
   scalaVersion := "2.11.7",
   scalacOptions in (Compile, doc) ++= Seq("-diagrams", "-implicits"),
@@ -35,14 +35,6 @@ lazy val root = (project in file(".")).
     description := "General Architecture for Proofs",
 
     mainClass := Some("at.logic.cli.CLIMain"),
-
-    sourceGenerators in Compile += Def.task {
-      Seq("ProofSequences.scala", "FormulaSequences.scala") map { fn =>
-        val dest = (sourceManaged in Compile).value / fn
-        IO.copyFile(baseDirectory.value / "examples" / fn, dest)
-        dest
-      }
-    }.taskValue,
 
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar

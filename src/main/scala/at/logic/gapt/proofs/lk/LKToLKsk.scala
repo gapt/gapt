@@ -5,7 +5,8 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llk.{ HybridLatexExporter, toLatexString }
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, LKProof, OccSequent }
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
 import at.logic.gapt.proofs.lksk.TypeSynonyms.{ EmptyLabel, Label }
 import at.logic.gapt.proofs.lksk.{ Axiom => LKskAxiom, WeakeningLeftRule => LKskWeakeningLeftRule, WeakeningRightRule => LKskWeakeningRightRule, applySubstitution => LKskapplySubstitution, _ }
 import at.logic.gapt.proofs.occurrences._

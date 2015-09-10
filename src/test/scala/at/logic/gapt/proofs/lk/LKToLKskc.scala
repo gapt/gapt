@@ -9,7 +9,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom }
 import at.logic.gapt.proofs.lksk.TypeSynonyms.EmptyLabel
 import at.logic.gapt.proofs.lksk._

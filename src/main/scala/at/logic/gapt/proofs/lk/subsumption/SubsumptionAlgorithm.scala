@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.lk.subsumption
 
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 
 trait SubsumptionAlgorithm {
   /**

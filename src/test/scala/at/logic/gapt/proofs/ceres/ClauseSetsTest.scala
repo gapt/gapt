@@ -2,7 +2,7 @@
 package at.logic.gapt.proofs.ceres.clauseSets
 
 import at.logic.gapt.proofs.lk.getCutAncestors
-import at.logic.gapt.proofs.lk.base.OccSequent
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.expr._

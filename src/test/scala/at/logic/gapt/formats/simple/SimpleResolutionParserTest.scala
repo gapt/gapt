@@ -7,11 +7,11 @@
 
 package at.logic.gapt.formats.simple
 
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.readers.StringReader
-import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.expr._
 
 class SimpleResolutionParserTest extends Specification {

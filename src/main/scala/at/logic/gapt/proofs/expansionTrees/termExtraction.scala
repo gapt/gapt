@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.expansionTrees
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ isFOLPrenexSigma1, FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.{ containsQuantifier, instantiate, isPrenex }
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.base._
 
 /**

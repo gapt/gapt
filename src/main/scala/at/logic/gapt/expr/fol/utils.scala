@@ -6,7 +6,7 @@ package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.containsQuantifier
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 import scala.collection.{ GenTraversable, mutable }
 
 object isFOLFunction {

@@ -3,11 +3,10 @@ package at.logic.gapt.provers.atp
 import at.logic.gapt.expr.fol.FOLUnificationAlgorithm
 import at.logic.gapt.provers.atp.commands.robinson.ParamodulationCommand
 import org.specs2.mutable._
-import at.logic.gapt.proofs.resolution.robinson._
+import at.logic.gapt.proofs.resolutionOld.robinson._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.formats.prover9.Prover9TermParser.parseFormula
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, OccClause }
+import at.logic.gapt.proofs.resolutionOld.{ ResolutionProof, OccClause }
 import at.logic.gapt.provers.atp.commands.sequents._
 import at.logic.gapt.provers.atp.commands.base._
 

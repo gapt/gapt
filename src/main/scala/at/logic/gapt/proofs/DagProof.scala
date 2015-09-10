@@ -76,7 +76,7 @@ trait DagProof[A <: DagProof[A]] extends Product { self: A =>
     val subProofLabels: Map[Any, String] = steps.toMap
 
     val output = new StringBuilder()
-    steps foreach {
+    steps.reverse foreach {
       case ( step, number ) =>
         output ++= s"[$number] ${step.stepString( subProofLabels )}\n"
     }

@@ -4,10 +4,10 @@ package at.logic.gapt.formats.ivy
 import at.logic.gapt.formats.lisp.{ List => LispList, Atom => LispAtom, Cons => LispCons, SExpression, SExpressionParser }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.resolutionOld._
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.occurrences
+import at.logic.gapt.proofs.{ HOLSequent, occurrences }
 import at.logic.gapt.utils.logging.Logger
 
 /**

@@ -2,7 +2,7 @@ package at.logic.gapt.provers.leancop
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 
 import org.specs2.mutable._

@@ -4,8 +4,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import java.io._
+import at.logic.gapt.proofs.HOLSequent
 import org.apache.commons.lang3.StringEscapeUtils
-import at.logic.gapt.proofs.lk.base.HOLSequent
 import at.logic.gapt.expr.{ Ti, To }
 
 object SmtLibExporter {

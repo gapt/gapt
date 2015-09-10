@@ -9,7 +9,8 @@ package at.logic.gapt.prooftool
 
 import java.awt.{ Font, Color }
 import Font._
-import at.logic.gapt.proofs.lk.base.{ OccSequent, HOLSequent }
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.expr._
 import swing.{ FlowPanel, GridPanel, Label }
 

@@ -3,7 +3,7 @@
  *
  * Traditional resolution calculus with factors and para modulation. Using clauses
  */
-package at.logic.gapt.proofs.resolution
+package at.logic.gapt.proofs.resolutionOld
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution }
@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.immutable.HashSet
 
 package robinson {
+
+  import at.logic.gapt.proofs.HOLClause
 
   /* creates new formula occurrences where sub is applied to each element x in the given set and which has x as an ancestor
 * additional_context  may add additional ancestors, needed e.g. for factoring */

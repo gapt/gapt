@@ -8,6 +8,7 @@
 package at.logic.gapt.formats.simple
 
 import at.logic.gapt.formats.InputParser
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.base._
 
 trait ResolutionParser extends InputParser {

@@ -4,6 +4,7 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.expr.fol.Utils
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination

@@ -8,6 +8,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.eliminateDefinitions
 import at.logic.gapt.proofs.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }

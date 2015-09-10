@@ -5,9 +5,8 @@ package at.logic.gapt.provers.atp.commands.guided
  * this file contains command for a guided search using ids for clauses,as for example when parsing the output of theorem provers and using the rules from there
  */
 
-import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.robinson.{ InitialClause }
-import at.logic.gapt.proofs.lk.base.HOLSequent
+import at.logic.gapt.proofs.resolutionOld._
+import at.logic.gapt.proofs.resolutionOld.robinson.{ InitialClause }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.atp.Definitions._

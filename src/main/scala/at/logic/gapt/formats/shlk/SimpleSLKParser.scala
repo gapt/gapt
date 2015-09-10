@@ -1,10 +1,12 @@
 package at.logic.gapt.formats.shlk_parsing
 
+import at.logic.gapt.proofs.HOLSequent
+
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import java.io.InputStreamReader
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.lk.base.{ HOLSequent, OccSequent, LKProof }
+import at.logic.gapt.proofs.lk.base._
 import collection.mutable.{ Map => MMap }
 import at.logic.gapt.proofs.shlk._
 import scala.Tuple4

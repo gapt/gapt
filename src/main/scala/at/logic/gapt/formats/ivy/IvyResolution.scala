@@ -7,7 +7,7 @@ import at.logic.gapt.formats.lisp.SExpression
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolution.OccClause
+import at.logic.gapt.proofs.resolutionOld.OccClause
 
 /**
  * ** Implementation of Ivy's Resolution Calculus ***
