@@ -1418,6 +1418,7 @@ object EqualityRule extends RuleConvenienceObject( "EqualityRule" ) {
  * ------------------------------------ind
  *           Γ, Π :- Δ, Λ, A[t]
  * </pre>
+ * Note that there is an eigenvariable condition on x, i.e. x must not occur freely in Π :- Λ.
  *
  * @param leftSubProof The subproof π,,1,,
  * @param aux1 The index of A[0].
@@ -1496,6 +1497,20 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
     rightPremise,
     ( ( leftPremise delete aux1 map { i => Seq() } ) ++ ( rightPremise.indicesSequent delete aux2 delete aux3 map { Seq.apply( _ ) } ) ) :+ Seq( aux2, aux3 )
   )
+}
+
+object InductionRule extends RuleConvenienceObject( "InductionRule" ) {
+  /**
+   * Convenience constructor that finds appropriate formula occurrences on its own.
+   */
+  def apply( leftSubProof: LKProof, inductionBase: FOLFormula, rightSubProof: LKProof, inductionHypo: FOLFormula, inductionStep: FOLFormula, term: FOLTerm ): InductionRule = {
+    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
+
+    val ( _, indicesLeft ) = findFormulasInPremise( leftPremise, Seq(), Seq( inductionBase ) )
+    val ( indicesRightAnt, indicesRightSuc ) = findFormulasInPremise( rightPremise, Seq( inductionHypo ), Seq( inductionStep ) )
+
+    apply( leftSubProof, Suc( indicesLeft.head ), rightSubProof, Ant( indicesRightAnt.head ), Suc( indicesRightSuc.head ), term )
+  }
 }
 
 /**
@@ -1602,7 +1617,7 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
    * @param text The rest of the message.
    * @return
    */
-  def exception( text: String ): LKRuleCreationException = new LKRuleCreationException( s"Cannot create $longName: " + text )
+  protected def exception( text: String ): LKRuleCreationException = new LKRuleCreationException( s"Cannot create $longName: " + text )
 
   /**
    * Method to determine the indices of formulas in a sequent.
@@ -1614,7 +1629,7 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
    * @param sucFormulas Formulas to be found in the succedent.
    * @return
    */
-  def findFormulasInPremise( premise: HOLSequent, antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
+  protected def findFormulasInPremise( premise: HOLSequent, antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
     val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, ( Int, Int )]
     val sucMap = scala.collection.mutable.HashMap.empty[HOLFormula, ( Int, Int )]
 
