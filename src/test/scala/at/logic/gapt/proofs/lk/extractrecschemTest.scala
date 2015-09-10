@@ -11,8 +11,9 @@ import at.logic.gapt.expr.hol.{ instantiate, univclosure }
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.grammars.{ HORS, HORule }
-import at.logic.gapt.proofs.lk.base.{ LKProof, HOLSequent }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.sat4j.Sat4jProver
 import at.logic.gapt.provers.veriT.VeriTProver

@@ -6,10 +6,10 @@ import at.logic.gapt.expr.fol.{FOLSubTerms, Numeral, FOLSubstitution, Utils}
 import at.logic.gapt.expr.hol.{univclosure, toNNF, simplify, lcomp}
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.grammars._
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansionTrees.{removeFromExpansionSequent, ExpansionSequent, InstanceTermEncoding}
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
-import at.logic.gapt.proofs.lk.base.Sequent
 import at.logic.gapt.provers.inductionProver.{SipProver, SimpleInductionProof}
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.provers.prover9.Prover9Prover
