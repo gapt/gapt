@@ -7,12 +7,12 @@ import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.expr.hol.{ instantiate, univclosure }
+import at.logic.gapt.expr.hol.{ existsclosure, instantiate, univclosure }
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.grammars.{ HORS, HORule }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.sat4j.Sat4jProver
@@ -22,26 +22,37 @@ import org.specs2.specification.core.Fragment
 
 class ExtractRecSchemTest extends Specification {
   "simple" in {
-    val g0 = parseFormula( "P(c)" )
-    val g1 = parseFormula( "(all y (P(y) -> P(f(y))))" )
-    val g2 = parseFormula( "P(f(f(f(f(c)))))" )
+    val P = FOLAtomHead( "P", 1 )
+    val c = FOLConst( "c" )
+    val f = FOLFunctionHead( "f", 1 )
+    val x = FOLVar( "x" )
+    val y = FOLVar( "y" )
+    val z = FOLVar( "z" )
 
-    val p1 = solve.solvePropositional( HOLSequent(
-      Seq( "P(x) -> P(f(x))", "P(f(x)) -> P(f(f(x)))" ) map parseFormula,
-      Seq( "P(x) -> P(f(f(x)))" ) map parseFormula
-    ) ).get
-    val cutf = parseFormula( "(all z (P(z) -> P(f(f(z)))))" )
-    val p2 = ForallLeftRule( p1, parseFormula( "P(x) -> P(f(x))" ), g1, parseTerm( "x" ) )
-    val p3 = ForallLeftRule( p2, parseFormula( "P(f(x)) -> P(f(f(x)))" ), g1, parseTerm( "f(x)" ) )
+    val g0 = P( c )
+    val g1 = All( y, P( y ) --> P( f( y ) ) )
+    val g2 = P( f( f( f( f( c ) ) ) ) )
+
+    val p1 = solve.solvePropositional(
+      ( P( x ) --> P( f( x ) ) ) +:
+        ( P( f( x ) ) --> P( f( f( x ) ) ) ) +:
+        Sequent()
+        :+ ( P( x ) --> P( f( f( x ) ) ) )
+    ).get
+    val cutf = All( z, P( z ) --> P( f( f( z ) ) ) )
+    val p2 = ForallLeftRule( p1, P( x ) --> P( f( x ) ), g1, x )
+    val p3 = ForallLeftRule( p2, P( f( x ) ) --> P( f( f( x ) ) ), g1, f( x ) )
     val p4 = ContractionMacroRule( p3 )
-    val p5 = ForallRightRule( p4, parseFormula( "P(x) -> P(f(f(x)))" ), cutf, FOLVar( "x" ) )
+    val p5 = ForallRightRule( p4, P( x ) --> P( f( f( x ) ) ), cutf, x )
 
-    val q1 = solve.solvePropositional( HOLSequent(
-      Seq( "P(c) -> P(f(f(c)))", "P(f(f(c))) -> P(f(f(f(f(c)))))" ) map parseFormula,
-      Seq( "P(c) -> P(f(f(f(f(c)))))" ) map parseFormula
-    ) ).get
-    val q2 = ForallLeftRule( q1, parseFormula( "P(c) -> P(f(f(c)))" ), cutf, parseTerm( "c" ) )
-    val q3 = ForallLeftRule( q2, parseFormula( "P(f(f(c))) -> P(f(f(f(f(c)))))" ), cutf, parseTerm( "f(f(c))" ) )
+    val q1 = solve.solvePropositional(
+      ( P( c ) --> P( f( f( c ) ) ) ) +:
+        ( P( f( f( c ) ) ) --> P( f( f( f( f( c ) ) ) ) ) ) +:
+        Sequent()
+        :+ ( P( c ) --> P( f( f( f( f( c ) ) ) ) ) )
+    ).get
+    val q2 = ForallLeftRule( q1, P( c ) --> P( f( f( c ) ) ), cutf, c )
+    val q3 = ForallLeftRule( q2, P( f( f( c ) ) ) --> P( f( f( f( f( c ) ) ) ) ), cutf, f( f( c ) ) )
     val q4 = ContractionMacroRule( q3 )
 
     val p = CutRule( p5, q4, cutf )
@@ -49,7 +60,7 @@ class ExtractRecSchemTest extends Specification {
     val recSchem = extractRecSchem( p )
     val lang = recSchem.language( FOLAtom( "A" ) ).map( _.asInstanceOf[HOLFormula] )
 
-    new Sat4jProver().isValid( HOLSequent( lang.toSeq, Seq() ) ) must beTrue
+    new Sat4jProver().isValid( lang ++: Sequent() ) must beTrue
   }
 
   "pi2 pigeonhole" in {
@@ -61,7 +72,7 @@ class ExtractRecSchemTest extends Specification {
 
     val lang = recSchem.language( FOLAtom( "A" ) ).map( _.asInstanceOf[HOLFormula] )
 
-    p9.isValid( HOLSequent( lang.toSeq, Seq() ) ) must beTrue
+    p9.isValid( lang ++: Sequent() ) must beTrue
   }
 
   "tape proof" in {
@@ -75,12 +86,14 @@ class ExtractRecSchemTest extends Specification {
 
     val lang = recSchem.language( FOLAtom( "A", FOLConst( "n_0" ) ) ).map( _.asInstanceOf[HOLFormula] )
     // the following formulas are not present in the end-sequent...
-    val additionalAxioms = Seq(
-      "x+(y+z) = (x+y)+z",
-      "x+y = y+x",
-      "x != x+(y+1)"
-    ).map { s => univclosure( parseFormula( s ) ) }
-    p9.isValid( HOLSequent( additionalAxioms ++ lang, Seq() ) ) must beTrue
+    val additionalAxioms = existsclosure(
+      "x+(y+z) = (x+y)+z" +:
+        "x+y = y+x" +:
+        "x != x+(y+1)" +:
+        Sequent()
+        map parseFormula
+    )
+    p9.isValid( lang ++: additionalAxioms ) must beTrue
 
     ok
   }
@@ -120,28 +133,37 @@ class Pi2FactorialPOC extends Specification {
   val B = Const( "B", Ti -> ( Ti -> ( ( Ti -> To ) -> To ) ) )
   val C = Const( "C", Ti -> To )
   val D = Const( "D", ( Ti -> To ) -> ( Ti -> ( Ti -> ( Ti -> To ) ) ) )
+
+  val O = Const( "0", Ti )
+  val s = Const( "s", Ti -> Ti )
+  val plus = Const( "+", Ti -> ( Ti -> Ti ) )
+  val times = Const( "+", Ti -> ( Ti -> Ti ) )
+  val g = Const( "g", Ti -> ( Ti -> Ti ) )
+  val f = Const( "f", Ti -> Ti )
+
   val X = Var( "X", Ti -> To )
+  val x = Var( "x", Ti )
+  val y = Var( "y", Ti )
+  val z = Var( "z", Ti )
+  val w = Var( "w", Ti )
 
   val hors = HORS( Set(
-    HORule( parseFormula( "A(z)" ), Apps( B, FOLVar( "z" ), Utils.numeral( 1 ), C ) ),
-    HORule( parseFormula( "A(z)" ), parseFormula( "s(0)*z = z" ) ),
-    HORule( parseFormula( "A(z)" ), parseFormula( "f(z) != g(s(0),z)" ) ),
-    HORule( parseFormula( "C(w)" ), Top() ), // FIXME: NF != generated word
-    HORule(
-      Apps( B, parseTerm( "s(x)" ), FOLVar( "y" ), X ),
-      Apps( B, FOLVar( "x" ), parseTerm( "y*s(x)" ), Apps( D, X, FOLVar( "x" ), FOLVar( "y" ) ) )
-    ),
-    HORule( Apps( D, X, FOLVar( "x" ), FOLVar( "y" ), FOLVar( "w" ) ), parseFormula( "(y*s(x))*w = y*(s(x)*w)" ) ),
-    HORule( Apps( D, X, FOLVar( "x" ), FOLVar( "y" ), FOLVar( "w" ) ), parseFormula( "g(y,s(x)) = g(y*s(x),x)" ) ),
-    HORule( Apps( D, X, FOLVar( "x" ), FOLVar( "y" ), FOLVar( "w" ) ), parseFormula( "f(s(x)) = s(x)*f(x)" ) ),
-    HORule( Apps( D, X, FOLVar( "x" ), FOLVar( "y" ), FOLVar( "w" ) ), App( X, parseTerm( "s(x)*w" ) ) ),
-    HORule( Apps( B, FOLConst( "0" ), FOLVar( "y" ), X ), parseFormula( "g(y,0)=y" ) ),
-    HORule( Apps( B, FOLConst( "0" ), FOLVar( "y" ), X ), parseFormula( "f(0)=s(0)" ) ),
-    HORule( Apps( B, FOLConst( "0" ), FOLVar( "y" ), X ), parseFormula( "s(0)*s(0)=s(0)" ) ),
-    HORule( Apps( B, FOLConst( "0" ), FOLVar( "y" ), X ), Apps( X, Utils.numeral( 1 ) ) )
+    HORule( A( z ), B( z, s( O ), C ) ),
+    HORule( A( z ), Eq( times( s( O ), z ), z ) ),
+    HORule( A( z ), Neg( Eq( f( z ), g( s( O ), z ) ) ) ),
+    HORule( C( w ), Top() ), // FIXME: NF != generated word
+    HORule( B( s( x ), y, X ), B( x, times( y, s( x ) ), D( X, x, y ) ) ),
+    HORule( D( X, x, y, w ), Eq( times( times( y, s( x ) ), w ), times( y, times( s( x ), w ) ) ) ),
+    HORule( D( X, x, y, w ), Eq( g( y, s( x ) ), g( times( y, s( x ) ), x ) ) ),
+    HORule( D( X, x, y, w ), Eq( f( s( x ) ), times( s( x ), f( x ) ) ) ),
+    HORule( D( X, x, y, w ), X( times( s( x ), w ) ) ),
+    HORule( B( O, y, X ), Eq( g( y, O ), y ) ),
+    HORule( B( O, y, X ), Eq( f( O ), s( O ) ) ),
+    HORule( B( O, y, X ), Eq( times( s( O ), s( O ) ), s( O ) ) ),
+    HORule( B( O, y, X ), X( s( O ) ) )
   ) )
 
-  def lang( i: Int ) = hors.language( Apps( A, Utils.numeral( i ) ) ).map( _.asInstanceOf[HOLFormula] )
+  def lang( i: Int ) = hors.language( A( Utils.numeral( i ) ) ).map( _.asInstanceOf[HOLFormula] )
 
   println( hors )
   println()
@@ -158,7 +180,7 @@ class Pi2FactorialPOC extends Specification {
     Fragment.foreach( 0 to 5 ) { i =>
       s"n = $i" in {
         if ( !verit.isInstalled ) skipped
-        verit.isValid( HOLSequent( lang( i ).toSeq, Seq() ) ) must beTrue
+        verit.isValid( lang( i ) ++: Sequent() ) must beTrue
       }
     }
   }
