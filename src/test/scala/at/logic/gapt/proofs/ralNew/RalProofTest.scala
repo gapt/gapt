@@ -35,4 +35,32 @@ class RalProofTest extends Specification {
     p10.conclusion.isEmpty must_== true
   }
 
+  "work on simple proofs" in {
+    val x = Var( "X", To )
+    val p = Const( "P", To )
+
+    // FIXME: the old RalResolutionTest used (exists x, x) as an axiom and then applied forall-right...
+    // I've got no idea what that was supposed to do. --Gabriel
+    val i1 = RalInitial( Sequent() :+ ( Set() -> All( x, x ) ) )
+    val i2 = RalAllT( i1, Suc( 0 ), x )
+    val i3 = RalSub( i2, Substitution( x -> ( p & -p ) ) )
+    val i4 = RalAndT1( i3, Suc( 0 ) )
+    val i5 = RalAndT2( i3, Suc( 0 ) )
+    val i6 = RalNegT( i5, Suc( 0 ) )
+    val i7 = RalCut( i4, Seq( Suc( 0 ) ), i6, Seq( Ant( 0 ) ) )
+
+    i7.conclusion.isEmpty must_== true
+  }
+
+  "work on non-idempotent substitutions" in {
+    val x = Var( "x", Ti )
+    val f = Const( "f", Ti -> Ti )
+    val p = Const( "P", Ti -> To )
+
+    val i1 = RalInitial( Sequent() :+ ( Set() -> p( x ) ) )
+    val i2 = RalSub( i1, Substitution( x -> f( x ) ) )
+
+    i2.conclusion must_== ( Sequent() :+ p( f( x ) ) )
+  }
+
 }
