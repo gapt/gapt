@@ -143,7 +143,10 @@ trait LatexReplacementParser extends DeclarationParser {
 
 }
 
-object HybridLatexParser extends HybridLatexParser
+object HybridLatexParser extends HybridLatexParser {
+  def apply( fileName: String ): ExtendedProofDatabase = createLKProof( parseFile( fileName ) )
+}
+
 class HybridLatexParser extends DeclarationParser with LatexReplacementParser with TokenToLKConverter {
 
   def parseFile( fn: String ): List[Token] = {

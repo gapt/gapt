@@ -1,6 +1,6 @@
 import java.io.{FileWriter, File}
 import at.logic.gapt.proofs.lk.base.LKRuleCreationException
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.loadProver9LKProof
+import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.executionModels.timeout._
 
 object runOnProver9Proofs {
@@ -91,7 +91,7 @@ object runOnProver9Proofs {
     // Try importing the given file for at most timeOut seconds
     try {
       withTimeout(1000 * timeOut)
-      {loadProver9LKProof(path)}
+      {Prover9Importer.lkProofFromFile(path)}
     }
 
     // The catch block is the interesting part of this function. My use case was to log only LKRuleCreationExceptions and disregard all others.

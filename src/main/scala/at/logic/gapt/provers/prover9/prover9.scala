@@ -21,6 +21,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import scala.sys.process._
 
+object Prover9Prover extends Prover9Prover( extraCommands = _ => Seq() )
 class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends ResolutionProver with ExternalProgram {
   def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( cnf ) {

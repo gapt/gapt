@@ -16,6 +16,7 @@ import java.io._
 import scala.collection.immutable.HashMap
 
 // Call MiniSAT to solve quantifier-free Formulas.
+object MiniSAT extends MiniSAT
 class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 
   var atom_map: Map[HOLFormula, Int] = new HashMap[HOLFormula, Int]

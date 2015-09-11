@@ -1,4 +1,6 @@
 import java.io._
+import at.logic.gapt.provers.prover9.Prover9Importer
+
 import scala.io.Source
 
 /**********
@@ -61,7 +63,7 @@ object testProver9Import {
       out.println(n_total + " - " +( file.toString) + " - " + ((System.currentTimeMillis - cur) / 1000))
 
       val suc_import = runWithTimeout( to * 1000 ) {
-      loadProver9LKProof( file.getCanonicalPath() )
+      Prover9Importer.lkProofFromFile( file.getCanonicalPath() )
       }
       suc_import match {
         case MyNone => {
