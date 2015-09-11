@@ -5,6 +5,7 @@ import java.io.File
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof, ExtractInterpolant }
 import at.logic.gapt.proofs.lk.cutIntroduction._
@@ -45,6 +46,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       qOption foreach { q =>
         if ( !containsEqualityReasoning( q ) )
           ReductiveCutElim( q ) --? "cut-elim (cut-intro)"
+        CERES( q ) --? "CERES (cut-intro)"
       }
     }
 
