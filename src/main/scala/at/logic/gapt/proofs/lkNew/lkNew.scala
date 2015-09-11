@@ -306,7 +306,7 @@ object ContractionLeftRule extends RuleConvenienceObject( "ContractionLeftRule" 
   def apply( subProof: LKProof, f: HOLFormula ): ContractionLeftRule = {
     val premise = subProof.endSequent
 
-    val ( indices, _ ) = findFormulasInPremise( premise, Seq( f, f ), Seq() )
+    val ( indices, _ ) = findAndValidate( premise )( Seq( f, f ), Seq() )
 
     new ContractionLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
   }
@@ -366,7 +366,7 @@ object ContractionRightRule extends RuleConvenienceObject( "ContractionRightRule
   def apply( subProof: LKProof, f: HOLFormula ): ContractionRightRule = {
     val premise = subProof.endSequent
 
-    val ( _, indices ) = findFormulasInPremise( premise, Seq(), Seq( f, f ) )
+    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( f, f ) )
     new ContractionRightRule( subProof, Suc( indices( 0 ) ), Suc( indices( 1 ) ) )
   }
 
@@ -481,8 +481,8 @@ object CutRule extends RuleConvenienceObject( "CutRule" ) {
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, A: HOLFormula ): CutRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val ( _, sucIndices ) = findFormulasInPremise( leftPremise, Seq(), Seq( A ) )
-    val ( antIndices, _ ) = findFormulasInPremise( rightPremise, Seq( A ), Seq() )
+    val ( _, sucIndices ) = findAndValidate( leftPremise )( Seq(), Seq( A ) )
+    val ( antIndices, _ ) = findAndValidate( rightPremise )( Seq( A ), Seq() )
 
     new CutRule( leftSubProof, Suc( sucIndices( 0 ) ), rightSubProof, Ant( antIndices( 0 ) ) )
   }
@@ -529,7 +529,7 @@ object NegLeftRule extends RuleConvenienceObject( "NegLeftRule" ) {
   def apply( subProof: LKProof, formula: HOLFormula ): NegLeftRule = {
     val premise = subProof.endSequent
 
-    val ( _, indices ) = findFormulasInPremise( premise, Seq(), Seq( formula ) )
+    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( formula ) )
 
     new NegLeftRule( subProof, Suc( indices( 0 ) ) )
   }
@@ -577,7 +577,7 @@ object NegRightRule extends RuleConvenienceObject( "NegRightRule" ) {
   def apply( subProof: LKProof, formula: HOLFormula ): NegRightRule = {
     val premise = subProof.endSequent
 
-    val ( indices, _ ) = findFormulasInPremise( premise, Seq( formula ), Seq() )
+    val ( indices, _ ) = findAndValidate( premise )( Seq( formula ), Seq() )
 
     new NegRightRule( subProof, Ant( indices( 0 ) ) )
   }
@@ -634,7 +634,7 @@ object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
   def apply( subProof: LKProof, A: HOLFormula, B: HOLFormula ): AndLeftRule = {
     val premise = subProof.endSequent
 
-    val ( indices, _ ) = findFormulasInPremise( premise, Seq( A, B ), Seq() )
+    val ( indices, _ ) = findAndValidate( premise )( Seq( A, B ), Seq() )
 
     new AndLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
   }
@@ -712,8 +712,8 @@ object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
   def apply( leftSubProof: LKProof, A: HOLFormula, rightSubProof: LKProof, B: HOLFormula ): AndRightRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val ( _, leftIndices ) = findFormulasInPremise( leftPremise, Seq(), Seq( A ) )
-    val ( _, rightIndices ) = findFormulasInPremise( rightPremise, Seq(), Seq( B ) )
+    val ( _, leftIndices ) = findAndValidate( leftPremise )( Seq(), Seq( A ) )
+    val ( _, rightIndices ) = findAndValidate( rightPremise )( Seq(), Seq( B ) )
 
     new AndRightRule( leftSubProof, Suc( leftIndices( 0 ) ), rightSubProof, Suc( rightIndices( 0 ) ) )
   }
@@ -789,8 +789,8 @@ object OrLeftRule extends RuleConvenienceObject( "OrLeftRule" ) {
   def apply( leftSubProof: LKProof, A: HOLFormula, rightSubProof: LKProof, B: HOLFormula ): OrLeftRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val ( leftIndices, _ ) = findFormulasInPremise( leftPremise, Seq( A ), Seq() )
-    val ( rightIndices, _ ) = findFormulasInPremise( rightPremise, Seq( B ), Seq() )
+    val ( leftIndices, _ ) = findAndValidate( leftPremise )( Seq( A ), Seq() )
+    val ( rightIndices, _ ) = findAndValidate( rightPremise )( Seq( B ), Seq() )
 
     new OrLeftRule( leftSubProof, Ant( leftIndices( 0 ) ), rightSubProof, Ant( rightIndices( 0 ) ) )
   }
@@ -862,7 +862,7 @@ object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
   def apply( subProof: LKProof, A: HOLFormula, B: HOLFormula ): OrRightRule = {
     val premise = subProof.endSequent
 
-    val ( _, indices ) = findFormulasInPremise( premise, Seq(), Seq( A, B ) )
+    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( A, B ) )
 
     new OrRightRule( subProof, Suc( indices( 0 ) ), Suc( indices( 1 ) ) )
   }
@@ -937,8 +937,8 @@ object ImpLeftRule extends RuleConvenienceObject( "ImpLeftRule" ) {
   def apply( leftSubProof: LKProof, A: HOLFormula, rightSubProof: LKProof, B: HOLFormula ): ImpLeftRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val ( _, leftIndices ) = findFormulasInPremise( leftPremise, Seq(), Seq( A ) )
-    val ( rightIndices, _ ) = findFormulasInPremise( rightPremise, Seq( B ), Seq() )
+    val ( _, leftIndices ) = findAndValidate( leftPremise )( Seq(), Seq( A ) )
+    val ( rightIndices, _ ) = findAndValidate( rightPremise )( Seq( B ), Seq() )
 
     new ImpLeftRule( leftSubProof, Suc( leftIndices( 0 ) ), rightSubProof, Ant( rightIndices( 0 ) ) )
   }
@@ -1009,7 +1009,7 @@ object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
   def apply( subProof: LKProof, A: HOLFormula, B: HOLFormula ): ImpRightRule = {
     val premise = subProof.endSequent
 
-    val ( antIndices, sucIndices ) = findFormulasInPremise( premise, Seq( A ), Seq( B ) )
+    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( A ), Seq( B ) )
 
     new ImpRightRule( subProof, Ant( antIndices( 0 ) ), Suc( sucIndices( 0 ) ) )
   }
@@ -1151,7 +1151,7 @@ object ForallRightRule extends RuleConvenienceObject( "ForallRightRule" ) {
 
       val premise = subProof.endSequent
 
-      val ( _, indices ) = findFormulasInPremise( premise, Seq(), Seq( auxFormula ) )
+      val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
 
       ForallRightRule( subProof, Suc( indices( 0 ) ), eigenVariable, v )
 
@@ -1214,7 +1214,7 @@ object ExistsLeftRule extends RuleConvenienceObject( "ExistsLeftRule" ) {
 
       val premise = subProof.endSequent
 
-      val ( indices, _ ) = findFormulasInPremise( premise, Seq( auxFormula ), Seq() )
+      val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
       ExistsLeftRule( subProof, Ant( indices( 0 ) ), eigenVariable, v )
 
     case _ => throw exception( s"Proposed main formula $mainFormula is not existentially quantified." )
@@ -1391,7 +1391,7 @@ object EqualityRule extends RuleConvenienceObject( "EqualityRule" ) {
     case Eq( s, t ) =>
       val premise = subProof.endSequent
 
-      val ( indices, _ ) = findFormulasInPremise( premise, Seq( eqFormula, auxFormula ), Seq() )
+      val ( indices, _ ) = findAndValidate( premise) (Seq( eqFormula, auxFormula ), Seq() )
 
       val diffPos = HOLPosition.differingPositions( auxFormula, main )
 
@@ -1507,8 +1507,8 @@ object InductionRule extends RuleConvenienceObject( "InductionRule" ) {
   def apply( leftSubProof: LKProof, inductionBase: FOLFormula, rightSubProof: LKProof, inductionHypo: FOLFormula, inductionStep: FOLFormula, term: FOLTerm ): InductionRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val ( _, indicesLeft ) = findFormulasInPremise( leftPremise, Seq(), Seq( inductionBase ) )
-    val ( indicesRightAnt, indicesRightSuc ) = findFormulasInPremise( rightPremise, Seq( inductionHypo ), Seq( inductionStep ) )
+    val ( _, indicesLeft ) = findAndValidate( leftPremise )( Seq(), Seq( inductionBase ) )
+    val ( indicesRightAnt, indicesRightSuc ) = findAndValidate( rightPremise )( Seq( inductionHypo ), Seq( inductionStep ) )
 
     apply( leftSubProof, Suc( indicesLeft.head ), rightSubProof, Ant( indicesRightAnt.head ), Suc( indicesRightSuc.head ), term )
   }
@@ -1623,55 +1623,92 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
   /**
    * Method to determine the indices of formulas in a sequent.
    *
-   * If either list contains duplicate formulas, they must occur that many times in the respective cedent.
+   * If either list contains duplicate formulas, each duplicate that can't be found will induce a -1 in the output.
    *
    * @param premise The sequent to find formulas in.
    * @param antFormulas Formulas to be found in the antecedent.
    * @param sucFormulas Formulas to be found in the succedent.
    * @return
    */
-  protected def findFormulasInPremise( premise: HOLSequent, antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
-    val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, ( Int, Int )]
-    val sucMap = scala.collection.mutable.HashMap.empty[HOLFormula, ( Int, Int )]
+  protected def findFormulasInPremise( premise: HOLSequent )( antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
+    val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
+    val sucMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
 
     val antIndices = for ( f <- antFormulas ) yield if ( antMap contains f ) {
-      val ( i, count ) = antMap( f )
+      val i = antMap( f )
       val iNew = premise.antecedent.indexOf( f, i + 1 )
 
-      if ( iNew == -1 )
-        throw exception( s"Formula $f only found $count time(s) in antecedent of $premise." )
-
-      antMap += ( f -> ( iNew, count + 1 ) )
+      antMap += ( f -> iNew )
       iNew
     } else {
       val iNew = premise.antecedent.indexOf( f )
 
-      if ( iNew == -1 )
-        throw exception( s"Formula $f not found in antecedent of $premise." )
-
-      antMap += ( f -> ( iNew, 1 ) )
+      antMap += ( f -> iNew )
       iNew
     }
 
     val sucIndices = for ( f <- sucFormulas ) yield if ( sucMap contains f ) {
-      val ( i, count ) = sucMap( f )
+      val i = sucMap( f )
       val iNew = premise.succedent.indexOf( f, i + 1 )
 
-      if ( iNew == -1 )
-        throw exception( s"Formula $f only found $count time(s) in succedent of $premise." )
-
-      sucMap += ( f -> ( iNew, count + 1 ) )
+      sucMap += ( f -> iNew )
       iNew
     } else {
       val iNew = premise.succedent.indexOf( f )
 
-      if ( iNew == -1 )
-        throw exception( s"Formula $f not found in succedent of $premise." )
-
-      sucMap += ( f -> ( iNew, 1 ) )
+      sucMap += ( f -> iNew )
       iNew
     }
 
+    ( antIndices, sucIndices )
+  }
+
+  /**
+   * Throws an exception if the output of findFormulasInPremise contains any -1 entries.
+   *
+   * @param premise The sequent in question.
+   * @param antFormulas The list of formulas in the antecedent.
+   * @param antIndices The list of indices corresponding to antFormulas.
+   * @param sucFormulas The list of formulas in the succedent.
+   * @param sucIndices The list indices corresponding to sucFormulas.
+   * @return
+   */
+  protected def validateIndices( premise: HOLSequent )( antFormulas: Seq[HOLFormula], antIndices: Seq[Int], sucFormulas: Seq[HOLFormula], sucIndices: Seq[Int] ) = {
+    val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
+    val sucMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
+
+    for ( ( f, i ) <- antFormulas zip antIndices ) {
+      val count = antMap.getOrElse( f, 0 )
+
+      if ( i == -1 )
+        throw exception( s"Formula $f only found $count times in antecedent of $premise." )
+
+      antMap += f -> ( count + 1 )
+    }
+
+    for ( ( f, i ) <- sucFormulas zip sucIndices ) {
+      val count = sucMap.getOrElse( f, 0 )
+
+      if ( i == -1 )
+        throw exception( s"Formula $f only found $count times in succedent of $premise." )
+
+      sucMap += f -> ( count + 1 )
+    }
+
+  }
+
+  /**
+   * Combines findFormulasInPremise and validateIndices. That is, it will return a pair of lists of indices and throw an exception if either
+   * list contains a -1.
+   *
+   * @param premise
+   * @param antFormulas
+   * @param sucFormulas
+   * @return
+   */
+  protected def findAndValidate( premise: HOLSequent )( antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
+    val ( antIndices, sucIndices ) = findFormulasInPremise( premise )( antFormulas, sucFormulas )
+    validateIndices( premise )( antFormulas, antIndices, sucFormulas, sucIndices )
     ( antIndices, sucIndices )
   }
 }
