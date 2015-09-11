@@ -249,11 +249,11 @@ class IvyTest extends Specification with ClasspathFileCopier {
       val proof = result.head
       proof match {
         case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil ) =>
-          val pinput1 = IvyParser.parse( lisp.List( input1 :: Nil ), IvyParser.is_ivy_variable )
+          val pinput1 = IvyParser.parse( lisp.List( input1 :: Nil ) )
           //debug(pinput1)
-          val pinput2 = IvyParser.parse( lisp.List( input2 :: Nil ), IvyParser.is_ivy_variable )
+          val pinput2 = IvyParser.parse( lisp.List( input2 :: Nil ) )
           //debug(pinput2)
-          val pinput3 = IvyParser.parse( lisp.List( input1 :: instantiate8 :: Nil ), IvyParser.is_ivy_variable )
+          val pinput3 = IvyParser.parse( lisp.List( input1 :: instantiate8 :: Nil ) )
         //debug(pinput3)
 
         case _ =>
@@ -269,9 +269,9 @@ class IvyTest extends Specification with ClasspathFileCopier {
       val proof = result.head
       proof match {
         case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: instantiate10 :: Nil ) =>
-          val pinput3 = IvyParser.parse( lisp.List( paramod3 :: instantiate9 :: Nil ), IvyParser.is_ivy_variable )
+          val pinput3 = IvyParser.parse( lisp.List( paramod3 :: instantiate9 :: Nil ) )
           //debug(pinput3)
-          val pinput4 = IvyParser.parse( lisp.List( instantiate10 :: Nil ), IvyParser.is_ivy_variable )
+          val pinput4 = IvyParser.parse( lisp.List( instantiate10 :: Nil ) )
         //debug(pinput4)
         /*
             pinput4 match {
@@ -294,9 +294,9 @@ class IvyTest extends Specification with ClasspathFileCopier {
       val proof = result.head
       proof match {
         case l @ lisp.List( input0 :: input1 :: flip2 :: input3 :: para4a :: inst6 :: resolve4 :: Nil ) =>
-          val pinput3 = IvyParser.parse( lisp.List( input1 :: flip2 :: Nil ), IvyParser.is_ivy_variable )
+          val pinput3 = IvyParser.parse( lisp.List( input1 :: flip2 :: Nil ) )
           //debug(pinput3)
-          val pinput4 = IvyParser.parse( l, IvyParser.is_ivy_variable )
+          val pinput4 = IvyParser.parse( l )
         //println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         //println(pinput4)
         //println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -317,7 +317,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       val proof = result.head
       proof match {
         case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil ) =>
-          val pinput = IvyParser.parse( proof, IvyParser.is_ivy_variable )
+          val pinput = IvyParser.parse( proof )
         //debug("resolution: "+pinput)
 
         case _ =>
@@ -333,7 +333,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       val proof = result.head
       proof match {
         case lisp.List( _ ) =>
-          val pinput = IvyParser.parse( proof, IvyParser.is_ivy_variable )
+          val pinput = IvyParser.parse( proof )
         //debug("resolution: "+pinput)
 
         case _ =>
@@ -345,7 +345,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       val proof2 = result2.head
       proof2 match {
         case lisp.List( _ ) =>
-          val pinput = IvyParser.parse( proof2, IvyParser.is_ivy_variable )
+          val pinput = IvyParser.parse( proof2 )
         //debug("resolution: "+pinput)
 
         case _ =>
@@ -360,7 +360,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       val proof = result.head
       proof match {
         case lisp.List( _ ) =>
-          val pinput = IvyParser.parse( proof, IvyParser.is_ivy_variable )
+          val pinput = IvyParser.parse( proof )
         //debug("resolution: "+pinput)
 
         case _ =>
@@ -382,7 +382,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     val proof = result.head
     proof match {
       case lisp.List( _ ) =>
-        val pinput = IvyParser.parse( proof, IvyParser.is_ivy_variable )
+        val pinput = IvyParser.parse( proof )
       //debug("resolution: "+pinput)
 
       case _ =>
@@ -398,7 +398,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     val proof = result.head
     proof match {
       case lisp.List( _ ) =>
-        val pinput = IvyParser.parse( proof, IvyParser.is_ivy_variable )
+        val pinput = IvyParser.parse( proof )
       //debug("resolution: "+pinput)
 
       case _ =>
@@ -414,7 +414,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     val proof = result.head
     proof match {
       case lisp.List( _ ) =>
-        val pinput = IvyParser.parse( proof, IvyParser.is_ivy_variable )
+        val pinput = IvyParser.parse( proof )
       //debug("resolution: "+pinput)
 
       case _ =>
@@ -430,7 +430,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     val proof = result.head
     proof match {
       case lisp.List( _ ) =>
-        val pinput = IvyParser.parse( proof, IvyParser.is_ivy_variable )
+        val pinput = IvyParser.parse( proof )
       //debug("resolution: "+pinput)
 
       case _ =>

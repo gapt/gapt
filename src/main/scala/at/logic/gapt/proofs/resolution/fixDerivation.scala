@@ -173,7 +173,7 @@ object fixDerivation extends Logger {
       tryDeriveTrivial( cls, cs ).
         orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
         orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
-        orElse( tryDeriveViaSearchDerivation( cls, cs ) ).
+        // orElse( tryDeriveViaSearchDerivation( cls, cs ) ).  // runs easily out of memory
         orElse( tryDeriveViaResolution( cls, cs ) ).
         getOrElse {
           warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
