@@ -4,11 +4,12 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lk.base._
 
 import scala.collection.mutable
 
 abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
+
+  def LKRuleCreationException( message: String ): LKRuleCreationException = new LKRuleCreationException( longName, message )
 
   /**
    * The end-sequent of the rule.
@@ -32,28 +33,28 @@ abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
       case Ant( _ ) =>
 
         if ( !premise.isDefinedAt( i ) )
-          throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $i." )
+          throw LKRuleCreationException( s"Sequent $premise is not defined at index $i." )
 
         if ( antSet contains i )
-          throw new LKRuleCreationException( s"Cannot create $longName: Duplicate index $i for sequent $premise." )
+          throw LKRuleCreationException( s"Duplicate index $i for sequent $premise." )
 
         antSet += i
 
-      case Suc( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Index $i should be in the antecedent." )
+      case Suc( _ ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
     }
 
     for ( i <- succedentIndices ) i match {
       case Suc( _ ) =>
 
         if ( !premise.isDefinedAt( i ) )
-          throw new LKRuleCreationException( s"Cannot create $longName: Sequent $premise is not defined at index $i." )
+          throw LKRuleCreationException( s"Sequent $premise is not defined at index $i." )
 
         if ( sucSet contains i )
-          throw new LKRuleCreationException( s"Cannot create $longName: Duplicate index $i for sequent $premise." )
+          throw LKRuleCreationException( s"Duplicate index $i for sequent $premise." )
 
         sucSet += i
 
-      case Ant( _ ) => throw new LKRuleCreationException( s"Cannot create $longName: Index $i should be in the succedent." )
+      case Ant( _ ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
     }
   }
 }
@@ -272,7 +273,7 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
   validateIndices( premise, Seq( aux1, aux2 ), Seq() )
 
   if ( premise( aux1 ) != premise( aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
+    throw LKRuleCreationException( s"Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
 
   val mainFormula = premise( aux1 )
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
@@ -330,7 +331,7 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
   validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
 
   if ( premise( aux1 ) != premise( aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
+    throw LKRuleCreationException( s"Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
 
   val mainFormula = premise( aux1 )
   val ( a1, a2 ) = if ( aux1 <= aux2 ) ( aux1, aux2 ) else ( aux2, aux1 )
@@ -444,7 +445,7 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Auxiliar formulas are not the same." )
+    throw LKRuleCreationException( s"Auxiliar formulas are not the same." )
 
   private val ( leftContext, rightContext ) = ( leftPremise delete aux1, rightPremise delete aux2 )
   def endSequent = leftContext ++ rightContext
@@ -648,7 +649,7 @@ object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
    */
   def apply( subProof: LKProof, F: HOLFormula ): AndLeftRule = F match {
     case And( f, g ) => apply( subProof, f, g )
-    case _           => throw exception( s"Proposed main formula $F is not a conjunction." )
+    case _           => throw LKRuleCreationException( s"Proposed main formula $F is not a conjunction." )
   }
 }
 
@@ -728,7 +729,7 @@ object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, F: HOLFormula ): AndRightRule = F match {
     case And( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _           => throw exception( s"Proposed main formula $F is not a conjunction." )
+    case _           => throw LKRuleCreationException( s"Proposed main formula $F is not a conjunction." )
   }
 }
 
@@ -805,7 +806,7 @@ object OrLeftRule extends RuleConvenienceObject( "OrLeftRule" ) {
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, F: HOLFormula ): OrLeftRule = F match {
     case Or( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _          => throw exception( s"Proposed main formula $F is not a disjunction." )
+    case _          => throw LKRuleCreationException( s"Proposed main formula $F is not a disjunction." )
   }
 }
 
@@ -876,7 +877,7 @@ object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
    */
   def apply( subProof: LKProof, F: HOLFormula ): OrRightRule = F match {
     case Or( f, g ) => apply( subProof, f, g )
-    case _          => throw exception( s"Proposed main formula $F is not a disjunction." )
+    case _          => throw LKRuleCreationException( s"Proposed main formula $F is not a disjunction." )
   }
 }
 
@@ -953,7 +954,7 @@ object ImpLeftRule extends RuleConvenienceObject( "ImpLeftRule" ) {
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, F: HOLFormula ): ImpLeftRule = F match {
     case Imp( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _           => throw exception( s"Proposed main formula $F is not a implication." )
+    case _           => throw LKRuleCreationException( s"Proposed main formula $F is not a implication." )
   }
 }
 
@@ -1023,7 +1024,7 @@ object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
    */
   def apply( subProof: LKProof, F: HOLFormula ): ImpRightRule = F match {
     case Imp( f, g ) => apply( subProof, f, g )
-    case _           => throw exception( s"Proposed main formula $F is not an implication." )
+    case _           => throw LKRuleCreationException( s"Proposed main formula $F is not an implication." )
   }
 }
 
@@ -1048,7 +1049,7 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, 
   val ( auxFormula, context ) = premise focus aux
 
   if ( auxFormula != Substitution( v, term )( A ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Substituting $term for $v in $A does not result in $auxFormula." )
+    throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in $auxFormula." )
 
   val mainFormula = All( v, A )
 
@@ -1067,7 +1068,7 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, 
   )
 }
 
-object ForallLeftRule {
+object ForallLeftRule extends RuleConvenienceObject( "ForallLeftRule" ) {
   /**
    * Convenience constructor for ∀:l that, a main formula and a term, will try to construct an inference with these formulas.
    *
@@ -1085,18 +1086,18 @@ object ForallLeftRule {
         val i = premise.antecedent indexOf auxFormula
 
         if ( i == -1 )
-          throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Formula $auxFormula not found in antecedent of $premise." )
+          throw LKRuleCreationException( s"Formula $auxFormula not found in antecedent of $premise." )
 
         ForallLeftRule( subProof, Ant( i ), subFormula, term, v )
 
-      case _ => throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Proposed main formula $mainFormula is not universally quantified." )
+      case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
     }
   }
 
   def apply( subProof: LKProof, mainFormula: HOLFormula ): ForallLeftRule = mainFormula match {
     case All( v, subFormula ) => apply( subProof, mainFormula, v )
 
-    case _                    => throw new LKRuleCreationException( s"Cannot create ForallLeftRule: Proposed main formula $mainFormula is not universally quantified." )
+    case _                    => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
   }
 }
 
@@ -1123,7 +1124,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
 
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
-    throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition is violated." )
+    throw LKRuleCreationException( s"Eigenvariable condition is violated." )
 
   val mainFormula = All( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
@@ -1155,13 +1156,13 @@ object ForallRightRule extends RuleConvenienceObject( "ForallRightRule" ) {
 
       ForallRightRule( subProof, Suc( indices( 0 ) ), eigenVariable, v )
 
-    case _ => throw exception( s"Proposed main formula $mainFormula is not universally quantified." )
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
   }
 
   def apply( subProof: LKProof, mainFormula: HOLFormula ): ForallRightRule = mainFormula match {
     case All( v, subFormula ) => apply( subProof, mainFormula, v )
 
-    case _                    => throw exception( s"Proposed main formula $mainFormula is not universally quantified." )
+    case _                    => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
   }
 }
 
@@ -1188,7 +1189,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
 
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
-    throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition is violated." )
+    throw LKRuleCreationException( s"Eigenvariable condition is violated." )
 
   val mainFormula = Ex( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
 
@@ -1217,13 +1218,13 @@ object ExistsLeftRule extends RuleConvenienceObject( "ExistsLeftRule" ) {
       val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
       ExistsLeftRule( subProof, Ant( indices( 0 ) ), eigenVariable, v )
 
-    case _ => throw exception( s"Proposed main formula $mainFormula is not existentially quantified." )
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 
   def apply( subProof: LKProof, mainFormula: HOLFormula ): ExistsLeftRule = mainFormula match {
     case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
 
-    case _                   => throw exception( s"Proposed main formula $mainFormula is not existentially quantified." )
+    case _                   => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 }
 
@@ -1248,7 +1249,7 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula,
   val ( auxFormula, context ) = premise focus aux
 
   if ( auxFormula != Substitution( v, term )( A ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Substituting $term for $v in $A does not result in $auxFormula." )
+    throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in $auxFormula." )
 
   val mainFormula = Ex( v, A )
 
@@ -1269,7 +1270,7 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula,
   )
 }
 
-object ExistsRightRule {
+object ExistsRightRule extends RuleConvenienceObject( "ExistsRightRule" ) {
   /**
    * Convenience constructor for ∃:r that, a main formula and a term, will try to construct an inference with these formulas.
    *
@@ -1287,18 +1288,18 @@ object ExistsRightRule {
         val i = premise.succedent indexOf auxFormula
 
         if ( i == -1 )
-          throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Formula $auxFormula not found in antecedent of $premise." )
+          throw LKRuleCreationException( s"Formula $auxFormula not found in antecedent of $premise." )
 
         ExistsRightRule( subProof, Suc( i ), subFormula, term, v )
 
-      case _ => throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Proposed main formula $mainFormula is not existentially quantified." )
+      case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
     }
   }
 
   def apply( subProof: LKProof, mainFormula: HOLFormula ): ExistsRightRule = mainFormula match {
     case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
 
-    case _                   => throw new LKRuleCreationException( s"Cannot create ExistsRightRule: Proposed main formula $mainFormula is not existentially quantified." )
+    case _                   => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 }
 
@@ -1347,10 +1348,10 @@ case class EqualityRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex,
         case `t` =>
           auxFormula.replace( pos, s )
         case _ =>
-          throw new LKRuleCreationException( s"Cannot create $longName: Position $pos in $auxFormula should be $s or $t, but is ${auxFormula( pos )}." )
+          throw LKRuleCreationException( s"Position $pos in $auxFormula should be $s or $t, but is ${auxFormula( pos )}." )
       }
 
-    case _ => throw new LKRuleCreationException( s"Cannot create $longName: Formula $equation is not an equation." )
+    case _ => throw LKRuleCreationException( s"Formula $equation is not an equation." )
   }
 
   def endSequent = aux match {
@@ -1443,37 +1444,37 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
   // Find a FOLSubstitution for A[x] and A[0], if possible.
   val sub1 = FOLMatchingAlgorithm.matchTerms( aX, aZero ) match {
     case Some( s ) => s
-    case None      => throw new LKRuleCreationException( s"Cannot create $longName: Formula $aX can't be matched to formula $aZero." )
+    case None      => throw LKRuleCreationException( s"Formula $aX can't be matched to formula $aZero." )
   }
 
   // Find a substitution for A[x] and A[Sx], if possible.
   val sub2 = FOLMatchingAlgorithm.matchTerms( aX, aSx ) match {
     case Some( s ) => s
-    case None      => throw new LKRuleCreationException( s"Cannot create $longName: Formula $aX can't be matched to formula $aSx." )
+    case None      => throw LKRuleCreationException( s"Formula $aX can't be matched to formula $aSx." )
   }
 
   val x = ( sub1.folmap ++ sub2.folmap ).collect { case ( v, e ) if v != e => v }.headOption.getOrElse {
-    throw new LKRuleCreationException( "Cannot create $longName: Cannot determine induction variable." )
+    throw LKRuleCreationException( "Cannot determine induction variable." )
   }
 
   // Some safety checks
   if ( ( sub1.domain.toSet - x ).exists( v => sub1( v ) != v ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Formula " + aX + " can't be matched to formula " + aZero + " by substituting a single variable." )
+    throw LKRuleCreationException( s"Formula " + aX + " can't be matched to formula " + aZero + " by substituting a single variable." )
 
   if ( ( sub2.domain.toSet - x ).exists( v => sub1( v ) != v ) )
-    throw new LKRuleCreationException( s"Cannot create $longName: Formula " + aX + " can't be matched to formula " + aSx + " by substituting a single variable." )
+    throw LKRuleCreationException( s"Formula " + aX + " can't be matched to formula " + aSx + " by substituting a single variable." )
 
   val sX = s( x )
 
   if ( sub1( x ) != zero )
-    throw new LKRuleCreationException( s"Cannot create $longName: $sub1 doesn't replace $x by 0." )
+    throw LKRuleCreationException( s"$sub1 doesn't replace $x by 0." )
 
   if ( sub2( x ) != sX )
-    throw new LKRuleCreationException( s"Cannot create $longName: $sub2 doesn't replace $x by $sX." )
+    throw LKRuleCreationException( s"$sub2 doesn't replace $x by $sX." )
 
   // Test the eigenvariable condition
   if ( ( rightPremise.delete( aux2 ).antecedent ++ rightPremise.delete( aux3 ).succedent ) map ( _.asInstanceOf[FOLFormula] ) flatMap freeVariables.apply contains x )
-    throw new LKRuleCreationException( s"Cannot create $longName: Eigenvariable condition not satisified for sequent $rightPremise and variable $x." )
+    throw LKRuleCreationException( s"Eigenvariable condition not satisified for sequent $rightPremise and variable $x." )
 
   // Construct the main formula
   val mainSub = FOLSubstitution( x, term )
@@ -1618,7 +1619,7 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
    * @param text The rest of the message.
    * @return
    */
-  protected def exception( text: String ): LKRuleCreationException = new LKRuleCreationException( s"Cannot create $longName: " + text )
+  protected def LKRuleCreationException( text: String ): LKRuleCreationException = new LKRuleCreationException( longName, text )
 
   /**
    * Method to determine the indices of formulas in a sequent.
@@ -1681,7 +1682,7 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
       val count = antMap.getOrElse( f, 0 )
 
       if ( i == -1 )
-        throw exception( s"Formula $f only found $count times in antecedent of $premise." )
+        throw LKRuleCreationException( s"Formula $f only found $count times in antecedent of $premise." )
 
       antMap += f -> ( count + 1 )
     }
@@ -1690,7 +1691,7 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
       val count = sucMap.getOrElse( f, 0 )
 
       if ( i == -1 )
-        throw exception( s"Formula $f only found $count times in succedent of $premise." )
+        throw LKRuleCreationException( s"Formula $f only found $count times in succedent of $premise." )
 
       sucMap += f -> ( count + 1 )
     }
@@ -1713,3 +1714,4 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
   }
 }
 
+class LKRuleCreationException( name: String, message: String ) extends Exception( s"Cannot create $name: " + message )

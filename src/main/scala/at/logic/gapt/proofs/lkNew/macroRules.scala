@@ -7,7 +7,7 @@ object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
   def apply( subProof: LKProof, leftConjunct: HOLFormula, rightConjunct: HOLFormula ): LKProof = {
     val ( indices, _ ) = findFormulasInPremise( subProof.endSequent )( Seq( leftConjunct, rightConjunct ), Seq() )
     indices match {
-      case -1 +: -1 +: _ => throw exception( s"Neither $leftConjunct nor $rightConjunct has been found in antecedent of ${subProof.endSequent}." )
+      case -1 +: -1 +: _ => throw LKRuleCreationException( s"Neither $leftConjunct nor $rightConjunct has been found in antecedent of ${subProof.endSequent}." )
 
       case -1 +: _ +: _ => // The right conjunct has been found.
         AndLeftRule( WeakeningLeftRule( subProof, leftConjunct ), leftConjunct, rightConjunct )
@@ -24,7 +24,7 @@ object OrRightMacroRule extends RuleConvenienceObject( "OrRightMacroRule" ) {
   def apply( subProof: LKProof, leftDisjunct: HOLFormula, rightDisjunct: HOLFormula ): LKProof = {
     val ( indices, _ ) = findFormulasInPremise( subProof.endSequent )( Seq(), Seq( leftDisjunct, rightDisjunct ) )
     indices match {
-      case -1 +: -1 +: _ => throw exception( s"Neither $leftDisjunct nor $rightDisjunct has been found in succedent of ${subProof.endSequent}." )
+      case -1 +: -1 +: _ => throw LKRuleCreationException( s"Neither $leftDisjunct nor $rightDisjunct has been found in succedent of ${subProof.endSequent}." )
 
       case -1 +: _ +: _ => // The right disjunct has been found.
         OrRightRule( WeakeningRightRule( subProof, leftDisjunct ), leftDisjunct, rightDisjunct )
