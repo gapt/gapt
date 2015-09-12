@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.proofs.{ HOLSequent, Suc, Ant, SequentIndex }
 
 object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
   def apply( subProof: LKProof, leftConjunct: HOLFormula, rightConjunct: HOLFormula ): LKProof = {
@@ -154,6 +155,120 @@ object ForallRightBlock {
 }
 
 /**
+ * This macro rule simulates a series of contractions in the antecedent.
+ *
+ */
+object ContractionLeftMacroRule {
+
+  /**
+   *
+   * @param p A proof.
+   * @param occs A list of occurrences of a Formula in the antecedent of s1.
+   * @return A proof ending with as many contraction rules as necessary to contract occs into a single occurrence.
+   */
+  def apply( p: LKProof, occs: Seq[SequentIndex] ): LKProof = occs match {
+    case Nil | _ :: Nil => p
+    case occ1 :: occ2 :: rest =>
+      val subProof = ContractionLeftRule( p, occ1, occ2 )
+      ContractionLeftMacroRule( subProof, p.mainIndices.head +: rest )
+  }
+
+  /**
+   * Contracts one formula in the antecedent down to n occurrences. Use with care!
+   *
+   * @param p A proof.
+   * @param form A formula.
+   * @param n Maximum number of occurrences of form in the antecedent of the end sequent. Defaults to 1, i.e. all occurrences are contracted.
+   * @return
+   */
+  def apply( p: LKProof, form: HOLFormula, n: Int = 1 ): LKProof = {
+    if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
+    val list = p.endSequent.indicesWhere( _ == form ).collect { case i: Ant => i }.drop( n - 1 )
+
+    apply( p, list )
+  }
+}
+
+/**
+ * This macro rule simulates a series of contractions in the succedent.
+ *
+ */
+object ContractionRightMacroRule {
+
+  /**
+   *
+   * @param p A proof.
+   * @param occs A list of occurrences of a formula in the succedent of s1.
+   * @return A proof ending with as many contraction rules as necessary to contract occs into a single occurrence.
+   */
+  def apply( p: LKProof, occs: Seq[SequentIndex] ): LKProof = occs match {
+    case Nil | _ :: Nil => p
+    case occ1 :: occ2 :: rest =>
+      val subProof = ContractionRightRule( p, occ1, occ2 )
+      ContractionRightMacroRule( subProof, p.mainIndices.head +: rest )
+  }
+
+  /**
+   * Contracts one formula in the succedent down to n occurrences. Use with care!
+   *
+   * @param p A proof.
+   * @param form A formula.
+   * @param n Maximum number of occurrences of form in the succedent of the end sequent. Defaults to 1, i.e. all occurrences are contracted.
+   * @return
+   */
+  def apply( p: LKProof, form: HOLFormula, n: Int = 1 ): LKProof = {
+    if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
+    val list = p.endSequent.indicesWhere( _ == form ).collect { case i: Suc => i }.drop( n - 1 )
+
+    apply( p, list )
+  }
+}
+
+/**
+ * This macro rule simulates a series of contractions in both cedents.
+ *
+ */
+object ContractionMacroRule extends RuleConvenienceObject( "ContractionMacroRule" ) {
+
+  /**
+   * Contracts the current proof down to a given sequent.
+   *
+   * @param p An LKProof.
+   * @param targetSequent The target sequent.
+   * @param strict If true, the end sequent of p must 1.) contain every formula at least as often as targetSequent
+   *               and 2.) contain no formula that isn't contained at least once in targetSequent.
+   * @return s1 with its end sequent contracted down to targetSequent.
+   */
+  def apply( p: LKProof, targetSequent: HOLSequent, strict: Boolean = true ): LKProof = {
+    val currentSequent = p.endSequent
+    val targetAnt = targetSequent.antecedent
+    val targetSuc = targetSequent.succedent
+
+    val assertion = ( ( targetSequent isSubMultisetOf currentSequent )
+      && ( currentSequent isSubsetOf targetSequent ) )
+
+    if ( strict & !assertion ) {
+      throw LKRuleCreationException( "Sequent " + targetSequent + " cannot be reached from " + currentSequent + " by contractions." )
+    }
+
+    val subProof = targetAnt.distinct.foldLeft( p )( ( acc, x ) => { ContractionLeftMacroRule( acc, x, targetAnt.count( _ == x ) ) } )
+    targetSuc.distinct.foldLeft( subProof )( ( acc, x ) => { ContractionRightMacroRule( acc, x, targetSuc.count( _ == x ) ) } )
+  }
+
+  /**
+   * Performs all possible contractions. Use with care!
+   *
+   * @param p A proof.
+   * @return A proof with all duplicate formulas in the end sequent contracted.
+   */
+  def apply( p: LKProof ): LKProof = {
+    val targetSequent = p.endSequent.distinct
+    apply( p, targetSequent )
+  }
+
+}
+
+/**
  * This macro rule simulates a series of weakenings in the antecedent.
  *
  */
@@ -161,24 +276,156 @@ object WeakeningLeftMacroRule {
 
   /**
    *
-   * @param subProof A Proof.
-   * @param formulas A list of Formulas.
-   * @return A new proof whose antecedent contains new occurrences of the formulas in list.
+   * @param p A proof.
+   * @param formulas A list of formulas.
+   * @return A new proof whose antecedent contains new occurrences of the formulas in formulas.
    */
-  def apply( subProof: LKProof, formulas: Seq[HOLFormula] ): LKProof =
-    formulas.foldLeft( subProof ) { ( acc, x ) => WeakeningLeftRule( acc, x ) }
+  def apply( p: LKProof, formulas: Seq[HOLFormula] ): LKProof =
+    formulas.foldLeft( p ) { ( acc, x ) => WeakeningLeftRule( acc, x ) }
 
   /**
    *
-   * @param s1 An LKProof.
-   * @param form A Formula.
+   * @param p An LKProof.
+   * @param formula A Formula.
    * @param n A natural number.
-   * @return s1 extended with weakenings such that form occurs at least n times in the antecedent of the end sequent.
+   * @return p extended with weakenings such that formula occurs at least n times in the antecedent of the end sequent.
    */
-  def apply( s1: LKProof, form: HOLFormula, n: Int ): LKProof = {
-    val nCurrent = s1.endSequent.antecedent.count( _ == form )
+  def apply( p: LKProof, formula: HOLFormula, n: Int ): LKProof = {
+    val nCurrent = p.endSequent.antecedent.count( _ == formula )
 
-    WeakeningLeftMacroRule( s1, Seq.fill( n - nCurrent )( form ) )
+    WeakeningLeftMacroRule( p, Seq.fill( n - nCurrent )( formula ) )
   }
 }
 
+/**
+ * This macro rule simulates a series of weakenings in the succedent.
+ *
+ */
+object WeakeningRightMacroRule {
+
+  /**
+   *
+   * @param p A proof.
+   * @param formulas A list of formulas.
+   * @return A new proof whose succedent contains new occurrences of the formulas in formulas.
+   */
+  def apply( p: LKProof, formulas: Seq[HOLFormula] ): LKProof =
+    formulas.foldLeft( p ) { ( acc, x ) => WeakeningRightRule( acc, x ) }
+
+  /**
+   *
+   * @param p An LKProof.
+   * @param formula A Formula.
+   * @param n A natural number.
+   * @return p extended with weakenings such that formula occurs at least n times in the succedent of the end sequent.
+   */
+  def apply( p: LKProof, formula: HOLFormula, n: Int ): LKProof = {
+    val nCurrent = p.endSequent.succedent.count( _ == formula )
+
+    WeakeningRightMacroRule( p, Seq.fill( n - nCurrent )( formula ) )
+  }
+}
+
+/**
+ * This macro rule simulates a series of weakenings in both cedents.
+ *
+ */
+object WeakeningMacroRule extends RuleConvenienceObject( "WeakeningMacroRule" ) {
+
+  /**
+   *
+   * @param p A proof.
+   * @param antList A list of formulas.
+   * @param sucList A list of formulas.
+   * @return A new proof whose antecedent and succedent contain new occurrences of the formulas in antList and sucList, respectively.
+   */
+  def apply( p: LKProof, antList: Seq[HOLFormula], sucList: Seq[HOLFormula] ): LKProof =
+    WeakeningRightMacroRule( WeakeningLeftMacroRule( p, antList ), sucList )
+
+  /**
+   *
+   * @param p A proof.
+   * @param targetSequent A sequent of formulas.
+   * @param strict If true, will require that targetSequent contains the end sequent of p.
+   * @return A proof whose end sequent is targetSequent.
+   */
+  def apply( p: LKProof, targetSequent: HOLSequent, strict: Boolean = true ): LKProof = {
+    val currentSequent = p.endSequent
+
+    if ( strict & !( currentSequent isSubMultisetOf targetSequent ) )
+      throw LKRuleCreationException( "Sequent " + targetSequent + " cannot be reached from " + currentSequent + " by weakenings." )
+
+    val ( antDiff, sucDiff ) = ( targetSequent diff currentSequent ).toTuple
+
+    WeakeningMacroRule( p, antDiff, sucDiff )
+  }
+}
+
+/**
+ * This macro rule simulates multiple weakenings and contractions in both cedents.
+ *
+ */
+object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningContractionMacroRule" ) {
+
+  /**
+   *
+   * @param p An LKProof.
+   * @param antList List of pairs (f,n) of type (Formula, Int) that express “f should occur n times in the antecedent”.
+   * @param sucList List of pairs (f,n) of type (Formula, Int) that express “f should occur n times in the succedent”.
+   * @param strict If true: requires that for (f,n) in antList or sucList, if f occurs in the root of s1, then n > 0.
+   * @return
+   */
+  def apply( p: LKProof, antList: Seq[( HOLFormula, Int )], sucList: Seq[( HOLFormula, Int )], strict: Boolean ): LKProof = {
+    val currentAnt = p.endSequent.antecedent
+    val currentSuc = p.endSequent.succedent
+
+    val subProof = antList.foldLeft( p )( ( acc, p ) => {
+      val ( f, n ) = p
+      val nCurrent = currentAnt.count( _ == f )
+      if ( n == 0 && nCurrent != 0 && strict )
+        throw LKRuleCreationException( "Cannot erase formula occurrences." )
+
+      if ( n > nCurrent )
+        WeakeningLeftMacroRule( acc, f, n - nCurrent )
+      else if ( n == nCurrent )
+        acc
+      else // n < nCurrent
+        ContractionLeftMacroRule( acc, f, n )
+    } )
+
+    sucList.foldLeft( subProof )( ( acc, p ) => {
+      val ( f, n ) = p
+      val nCurrent = currentSuc.count( _ == f )
+      if ( n == 0 && nCurrent != 0 && strict )
+        throw LKRuleCreationException( "Cannot erase formula occurrences." )
+
+      if ( n > nCurrent )
+        WeakeningRightMacroRule( acc, f, n - nCurrent )
+      else if ( n == nCurrent )
+        acc
+      else // n < nCurrent
+        ContractionRightMacroRule( acc, f, n )
+    } )
+  }
+
+  /**
+   *
+   * @param p An LKProof.
+   * @param targetSequent The proposed end sequent.
+   * @param strict If true, will require that the end sequent of p contains no formula that doesn't appear at least once in targetSequent.
+   * @return p with its end sequent modified to targetSequent by means of weakening and contraction.
+   */
+  def apply( p: LKProof, targetSequent: HOLSequent, strict: Boolean = true ): LKProof = {
+    val currentSequent = p.endSequent
+    val targetAnt = targetSequent.antecedent
+    val targetSuc = targetSequent.succedent
+
+    if ( strict && !( currentSequent isSubsetOf targetSequent ) )
+      throw LKRuleCreationException( "Sequent " + targetSequent + " cannot be reached from " + currentSequent + " by weakenings and contractions." )
+
+    val antList = targetAnt.distinct map ( f => ( f, targetAnt.count( _ == f ) ) )
+    val sucList = targetSuc.distinct map ( f => ( f, targetSuc.count( _ == f ) ) )
+
+    apply( p, antList, sucList, strict )
+  }
+}
