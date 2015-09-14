@@ -93,12 +93,17 @@ object EProverOutputParser extends EProverOutputParser {
       case Success( result, _ ) =>
         val steps = result.toMap
 
+        def getParents(justification: GeneralTerm): Seq[String] = justification match {
+          case GTFun("inference", List(_, _, GTList(parents))) => parents flatMap getParents
+          case GTFun(parent, List()) => Seq(parent)
+        }
+
         val memo = mutable.Map[String, RefutationSketch]()
         def convert( stepName: String ): RefutationSketch = memo.getOrElseUpdate( stepName, steps( stepName ) match {
           case ( "axiom", axiom, List( GTFun( "file", List( _, GTFun( label, _ ) ) ) ) ) =>
             SketchInference( axiom, Seq( SketchAxiom( labelledCNF( label ) ) ) )
-          case ( "plain", conclusion, List( GTFun( "inference", List( _, _, GTList( parents ) ) ) ) ) =>
-            val sketchParents = parents map { case GTFun( parentName, List() ) => convert( parentName ) }
+          case ( "plain", conclusion, List(justification) ) =>
+            val sketchParents = getParents(justification) map convert
             SketchInference( conclusion, sketchParents )
           case ( "plain", _, List( GTFun( parent, _ ), GTList( List( GTFun( "proof", _ ) ) ) ) ) =>
             convert( parent )
