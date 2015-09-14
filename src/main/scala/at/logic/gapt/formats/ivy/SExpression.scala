@@ -1,6 +1,8 @@
 package at.logic.gapt.formats.lisp
 
-import java.io.FileReader
+import java.io.{ File, FileReader }
+import scala.io.Source
+import scala.util.Try
 import util.parsing.input.{ NoPosition, Position, Reader, PagedSeqReader }
 import util.parsing.combinator.Parsers
 import util.parsing.combinator.RegexParsers
@@ -9,6 +11,7 @@ import util.parsing.combinator.PackratParsers
 import scala.collection.immutable.PagedSeq
 import scala.collection.mutable
 import scala.collection.immutable
+import org.parboiled2._
 
 /**
  * ** Lisp SExpression Datatypes and Parser
@@ -43,55 +46,36 @@ case class Cons( car: SExpression, cdr: SExpression ) extends SExpression {
 }
 
 /* Parser for SExpressions  */
-object SExpressionParser extends SExpressionParser {
-  def dumpreader[T]( r: Reader[T] ): String = dumpreader_( r ).mkString( " " )
-  private def dumpreader_[T]( r: Reader[T] ): immutable.List[T] = {
-    var reader = r
-    if ( reader.atEnd ) Nil
-    else reader.first :: dumpreader_( reader.rest )
-  }
-
+object SExpressionParser {
   def apply( fn: String ): immutable.List[SExpression] = parseFile( fn )
 
-  def parseFile( fn: String ): immutable.List[SExpression] = {
-    val r = new PagedSeqReader( new PagedSeq[Char]( new FileReader( fn ).read ) )
-    parseAll( rep( sexpr ), r ) match {
-      case Success( sexp, _ ) =>
-        sexp
-      case NoSuccess( msg, in ) =>
-        println( dumpreader( in.rest ) )
-        throw new Exception( "S-Expression Parser Failed: " + msg + " at " + in.pos + " with remaning input:" + dumpreader( in.rest ) )
-    }
-  }
+  def parseFile( fn: String ): immutable.List[SExpression] =
+    parseString( Source.fromFile( fn ).mkString )
 
-  def parseString( s: String ): immutable.List[SExpression] = {
-    parseAll( rep( sexpr ), s ) match {
-      case Success( sexp, _ ) =>
-        sexp
-      case NoSuccess( msg, in ) =>
-        throw new Exception( "S-Expression Parser Failed: " + msg + " at " + in.pos + " with remaning input: " + dumpreader( in.rest ) )
-    }
+  def parseString( s: String ): immutable.List[SExpression] =
+    tryParseString( s ).get
 
-  }
+  def tryParseString( s: String ): Try[immutable.List[SExpression]] =
+    new SExpressionParser( s ).File.run().map { _.toList }
 
 }
 
-class SExpressionParser extends RegexParsers with PackratParsers {
-  // This override takes care of comments
-  override val whiteSpace = """(\s|;.*)+""".r
+class SExpressionParser( val input: ParserInput ) extends Parser {
 
-  lazy val nil = """(?i)\Qnil\E""".r ^^ { _ => lisp.List( Nil ) }
-  lazy val quotedAtom = """"[^"]*"""".r ^^ lisp.Atom
-  lazy val atom =
-    """[a-zA-Z0-9=_+\-*/<>:.]*[a-zA-Z0-9=_+\-*/<>:]+[a-zA-Z0-9=_+\-*/<>:.]*""".r ^^ lisp.Atom
+  def WhiteSpace = rule { zeroOrMore( anyOf( " \n\r\t\f" ) | ( ';' ~ zeroOrMore( noneOf( "\n" ) ) ) ) }
 
-  lazy val cons = "(" ~ sexpr ~ "." ~ sexpr ~ ")" ^^ { case ( _ ~ l ~ _ ~ r ~ _ ) => lisp.Cons( l, r ) }
-  lazy val list = "(" ~> rep( sexpr ) <~ ")" ^^ lisp.List
+  def Nl = rule { anyOf( "Nn" ) ~ anyOf( "Ii" ) ~ anyOf( "Ll" ) ~ WhiteSpace ~ push( lisp.List( Nil ) ) }
+  def Str = rule { '"' ~ capture( zeroOrMore( noneOf( "\"" ) ) ) ~ '"' ~ WhiteSpace ~> lisp.Atom }
+  def Atom = rule { capture( oneOrMore( noneOf( "() \n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.Atom }
 
-  lazy val sexpr: PackratParser[lisp.SExpression] = nil | quotedAtom | atom | cons | list
+  def SExpr: Rule1[lisp.SExpression] = rule { Nl | Str | Atom | Parens }
 
-  def parse( in: String ) =
-    parseAll( rep( sexpr ), in )
+  def Parens = rule {
+    '(' ~ WhiteSpace ~ optional( SExpr ~ (
+      ( '.' ~ WhiteSpace ~ SExpr ~> lisp.Cons ) |
+      ( zeroOrMore( SExpr ) ~> ( ( car: lisp.SExpression, cdr: Seq[lisp.SExpression] ) => lisp.List( car :: cdr.toList ) ) )
+    ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( lisp.List( Nil ) ) }
+  }
 
+  def File = rule { WhiteSpace ~ zeroOrMore( SExpr ) ~ EOI }
 }
-
