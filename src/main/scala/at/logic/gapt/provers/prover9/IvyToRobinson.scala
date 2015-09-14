@@ -110,7 +110,5 @@ object IvyToRobinson {
     mapInputClauses( proofWithoutNewSymbols ) { cls =>
       justifications.find { _.conclusion == cls } getOrElse { InputClause( cls ) }
     }
-
-    convert( ivy )
   }
 }
