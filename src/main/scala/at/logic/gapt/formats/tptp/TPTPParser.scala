@@ -10,7 +10,7 @@ class TPTPParser extends RegexParsers with PackratParsers {
   lazy val dbl_impl: PackratParser[FOLFormula] = (
     impl ~ "<=>" ~ dbl_impl ^^ {
       case f1 ~ _ ~ f2 =>
-        And( Imp( f1, f2 ), Imp( f1, f2 ) )
+        And( Imp( f1, f2 ), Imp( f2, f1 ) )
     }
     | impl
   )
@@ -64,7 +64,7 @@ class TPTPParser extends RegexParsers with PackratParsers {
   def term: Parser[FOLTerm] = variable | function | constant
   def function: Parser[FOLTerm] = name ~ "(" ~ repsep( term, "," ) <~ ")" ^^ { case f ~ _ ~ args => FOLFunction( f, args ) }
   def constant: Parser[FOLConst] = name ^^ { case n => FOLConst( n ) }
-  def variable: Parser[FOLVar] = """[_A-Z0-9]+""".r ^^ { case n => FOLVar( n ) }
+  def variable: Parser[FOLVar] = """[_A-Z0-9][_A-Z0-9$a-z]*""".r ^^ { case n => FOLVar( n ) }
 
   def name: Parser[String] = lower_word_or_integer | single_quoted
   def lower_word_or_integer: Parser[String] = """[a-z0-9_-][A-Za-z0-9_-]*""".r

@@ -54,4 +54,24 @@ class TptpProofParserTest extends Specification {
     }
   }
 
+  "GEO008m3 from iprover" in {
+    def output = load( "GEO008-3_iprover-1.4.tptp" )
+
+    "parse as refutation sketch" in {
+      TptpProofParser.parse( output )._2.conclusion must_== Clause()
+    }
+
+    "convert to expansion proof and lk" in {
+      if ( !p9.isInstalled ) skipped
+      val ( endSequent, sketch ) = TptpProofParser.parse( output )
+      val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
+      robinson.conclusion must_== Clause()
+      RobinsonToExpansionProof( robinson, endSequent )
+      val expansion = RobinsonToExpansionProof( robinson, endSequent )
+      veriT.isValid( toDeep( expansion ) ) must_== true
+      //      RobinsonToLK( robinson, endSequent )
+      ok
+    }
+  }
+
 }

@@ -49,6 +49,8 @@ object TptpProofParser extends TptpProofParser {
   def inventSources( stepList: StepList ): StepList = stepList map {
     case ( label, ( lang, role @ ( "axiom" | "hypothesis" | "conjecture" | "negated_conjecture" ), formula, Seq() ) ) =>
       label -> ( lang, role, formula, List( GTFun( "file", List( GTFun( "", List() ), GTFun( s"source_$label", List() ) ) ) ) )
+    case ( label, ( lang, role @ ( "axiom" | "hypothesis" | "conjecture" | "negated_conjecture" ), formula, Seq( GTFun( "file", List( _, GTFun( "unknown", _ ) ) ) ) ) ) =>
+      label -> ( lang, role, formula, List( GTFun( "file", List( GTFun( "", List() ), GTFun( s"source_$label", List() ) ) ) ) )
     case other => other
   }
 
@@ -57,12 +59,12 @@ object TptpProofParser extends TptpProofParser {
     var labelledCNF = Map[String, Seq[FOLClause]]()
 
     stepList.map( _._2 ) foreach {
-      case ( lang, "axiom" | "hypothesis" | "negated_conjecture", formula, List( GTFun( "file", List( _, GTFun( label, List() ) ) ) ) ) =>
-        endSequent +:= ( if ( lang == "cnf" ) univclosure( formula ) else formula )
-        labelledCNF += label -> CNFp.toClauseList( formula )
       case ( "fof", "conjecture", formula, List( GTFun( "file", List( _, GTFun( label, List() ) ) ) ) ) =>
         endSequent :+= formula
         labelledCNF += label -> CNFn.toClauseList( formula )
+      case ( lang, _, formula, List( GTFun( "file", List( _, GTFun( label, List() ) ) ) ) ) =>
+        endSequent +:= ( if ( lang == "cnf" ) univclosure( formula ) else formula )
+        labelledCNF += label -> CNFp.toClauseList( formula )
       case _ =>
     }
 
@@ -80,7 +82,9 @@ object TptpProofParser extends TptpProofParser {
 
     val memo = mutable.Map[String, Seq[RefutationSketch]]()
     def convert( stepName: String ): Seq[RefutationSketch] = memo.getOrElseUpdate( stepName, steps( stepName ) match {
-      case ( lang, "axiom" | "hypothesis" | "negated_conjecture", axiom, List( GTFun( "file", List( _, GTFun( label, _ ) ) ) ) ) =>
+      case ( "fof", "conjecture", _, List( GTFun( "file", List( _, GTFun( label, _ ) ) ) ) ) =>
+        labelledCNF( label ) map SketchAxiom
+      case ( _, _, axiom, List( GTFun( "file", List( _, GTFun( label, _ ) ) ) ) ) =>
         CNFp.toClauseList( axiom ) match {
           case Seq( axiomClause ) =>
             Seq( SketchInference(
@@ -89,16 +93,14 @@ object TptpProofParser extends TptpProofParser {
             ) )
           case clauses => labelledCNF( label ) map SketchAxiom
         }
-      case ( lang, "conjecture", _, List( GTFun( "file", List( _, GTFun( label, _ ) ) ) ) ) =>
-        labelledCNF( label ) map SketchAxiom
-      case ( lang, "plain" | "negated_conjecture" | "hypothesis", conclusion, List( justification ) ) =>
+      case ( _, _, conclusion, List( justification ) ) =>
         CNFp.toClauseList( conclusion ) match {
           case Seq( conclusionClause ) =>
             val sketchParents = getParents( justification ) flatMap convert
             Seq( SketchInference( conclusionClause, sketchParents ) )
           case clauses => getParents( justification ) flatMap convert
         }
-      case ( lang, "plain" | "negated_conjecture" | "hypothesis", _, List( justification, GTList( List( GTFun( "proof", _ ) ) ) ) ) =>
+      case ( _, _, _, List( justification, GTList( List( GTFun( "proof", _ ) ) ) ) ) =>
         Seq( SketchInference( FOLClause(), getParents( justification ) flatMap convert ) )
     } )
 
