@@ -1,8 +1,9 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
-import at.logic.gapt.proofs.{ Ant, Clause, FOLClause, Suc }
+import at.logic.gapt.proofs._
 import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.mutable._
 
@@ -88,6 +89,28 @@ class FixDerivationTest extends Specification {
       fixDerivation( der, cq :: cqp :: Nil ).conclusion must beEqualTo( cp )
     }
 
+  }
+
+  "mapInputClauses" should {
+    implicit def expr2atom( expr: LambdaExpression ): FOLAtom = expr.asInstanceOf[FOLAtom]
+    implicit def seq2cls[T <: LambdaExpression]( seq: Sequent[T] ): FOLClause = seq map { _.asInstanceOf[FOLAtom] }
+    implicit def sub2fol( sub: Substitution ): FOLSubstitution = FOLSubstitution( sub.map.asInstanceOf[Map[FOLVar, FOLTerm]] )
+
+    "factor reordered clauses" in {
+      val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
+      val c = FOLConst( "c" )
+      val p = FOLAtomHead( "p", 1 )
+
+      val p1 = InputClause( Clause() :+ p( x ) :+ p( y ) )
+      val p2 = InputClause( p( c ) +: Clause() )
+      val p3 = Instance( p1, Substitution( x -> c, y -> c ) )
+      val p4 = Factor( p3, Suc( 0 ), Suc( 1 ) )
+      val p5 = Resolution( p4, Suc( 0 ), p2, Ant( 0 ) )
+
+      mapInputClauses( p5 ) {
+        case Clause( ant, suc ) => InputClause( Clause( ant.reverse, suc.reverse ) )
+      }.conclusion must_== Clause()
+    }
   }
 
   "findDerivationViaResolution" should {

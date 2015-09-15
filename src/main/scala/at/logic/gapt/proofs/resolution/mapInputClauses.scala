@@ -35,8 +35,8 @@ object mapInputClauses {
         q -> guessConn( clause, q.conclusion )
       case Factor( p1, i1, i2 ) =>
         val ( q1, conn1 ) = doMap( p1 )
-        ( for ( j1 <- conn1 children i1 headOption; j2 <- conn1 children i2 headOption; res <- Some( Factor( q1, j1, j2 ) ) )
-          yield res -> ( res.occConnectors.head * conn1 * p.occConnectors.head.inv ) ) getOrElse { q1 -> conn1 * p.occConnectors.head.inv }
+        ( for ( j1 <- conn1 children i1 headOption; j2 <- conn1 children i2 headOption; ( res, resConn ) <- Some( Factor( q1, List( j1, j2 ) ) ) )
+          yield res -> ( resConn * conn1 * p.occConnectors.head.inv ) ) getOrElse { q1 -> conn1 * p.occConnectors.head.inv }
       case Instance( p1, subst ) =>
         val ( q1, conn1 ) = doMap( p1 )
         val res = Instance( q1, subst )
