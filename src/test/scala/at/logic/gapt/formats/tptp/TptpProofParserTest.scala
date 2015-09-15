@@ -18,80 +18,56 @@ class TptpProofParserTest extends Specification {
   val veriT = new VeriTProver
 
   "RNG103p2 from eprover" in {
-    def output = load( "RNG103+2_E---1.9.THM-CRf.s" )
+    val ( endSequent, sketch ) = TptpProofParser.parse( load( "RNG103+2_E---1.9.THM-CRf.s" ) )
+    sketch.conclusion must_== Clause()
 
-    "parse as refutation sketch" in {
-      TptpProofParser.parse( output )._2.conclusion must_== Clause()
-    }
-
-    "convert to expansion proof" in {
-      if ( !p9.isInstalled || !veriT.isInstalled ) skipped
-      val ( endSequent, sketch ) = TptpProofParser.parse( output )
-      val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
-      robinson.conclusion must_== Clause()
-      val expansion = RobinsonToExpansionProof( robinson, endSequent )
-      veriT.isValid( toDeep( expansion ) ) must_== true
-    }
+    if ( !p9.isInstalled || !veriT.isInstalled ) skipped
+    val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
+    robinson.conclusion must_== Clause()
+    val expansion = RobinsonToExpansionProof( robinson, endSequent )
+    veriT.isValid( toDeep( expansion ) ) must_== true
   }
 
   "ALG011m1 from metis" in {
-    def output = load( "ALG011-1_Metis---2.3.UNS-CRf.s" )
+    val ( endSequent, sketch ) = TptpProofParser.parse( load( "ALG011-1_Metis---2.3.UNS-CRf.s" ) )
+    sketch.conclusion must_== Clause()
 
-    "parse as refutation sketch" in {
-      TptpProofParser.parse( output )._2.conclusion must_== Clause()
-    }
-
-    "convert to expansion proof and lk" in {
-      if ( !p9.isInstalled ) skipped
-      val ( endSequent, sketch ) = TptpProofParser.parse( output )
-      val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
-      robinson.conclusion must_== Clause()
-      RobinsonToExpansionProof( robinson, endSequent )
-      val expansion = RobinsonToExpansionProof( robinson, endSequent )
-      veriT.isValid( toDeep( expansion ) ) must_== true
-      RobinsonToLK( robinson, endSequent )
-      ok
-    }
+    if ( !p9.isInstalled || !veriT.isInstalled ) skipped
+    val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
+    robinson.conclusion must_== Clause()
+    RobinsonToExpansionProof( robinson, endSequent )
+    val expansion = RobinsonToExpansionProof( robinson, endSequent )
+    veriT.isValid( toDeep( expansion ) ) must_== true
+    RobinsonToLK( robinson, endSequent )
+    ok
   }
 
   "GEO008m3 from iprover" in {
-    def output = load( "GEO008-3_iprover-1.4.tptp" )
+    val ( endSequent, sketch ) = TptpProofParser.parse( load( "GEO008-3_iprover-1.4.tptp" ) )
+    sketch.conclusion must_== Clause()
 
-    "parse as refutation sketch" in {
-      TptpProofParser.parse( output )._2.conclusion must_== Clause()
-    }
-
-    "convert to expansion proof and lk" in {
-      if ( !p9.isInstalled ) skipped
-      val ( endSequent, sketch ) = TptpProofParser.parse( output )
-      val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
-      robinson.conclusion must_== Clause()
-      RobinsonToExpansionProof( robinson, endSequent )
-      val expansion = RobinsonToExpansionProof( robinson, endSequent )
-      veriT.isValid( toDeep( expansion ) ) must_== true
-      RobinsonToLK( robinson, endSequent )
-      ok
-    }
+    if ( !p9.isInstalled || !veriT.isInstalled ) skipped
+    val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
+    robinson.conclusion must_== Clause()
+    RobinsonToExpansionProof( robinson, endSequent )
+    val expansion = RobinsonToExpansionProof( robinson, endSequent )
+    veriT.isValid( toDeep( expansion ) ) must_== true
+    RobinsonToLK( robinson, endSequent )
+    ok
   }
 
   "LCL101m1 from vampire" in {
-    def output = load( "LCL101-1_Vampire---4.0.UNS-REF.s" )
+    val ( endSequent, sketch ) = TptpProofParser.parse( load( "LCL101-1_Vampire---4.0.UNS-REF.s" ) )
+    sketch.conclusion must_== Clause()
 
-    "parse as refutation sketch" in {
-      TptpProofParser.parse( output )._2.conclusion must_== Clause()
-    }
-
-    "convert to expansion proof and lk" in {
-      if ( !p9.isInstalled ) skipped
-      val ( endSequent, sketch ) = TptpProofParser.parse( output )
-      val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
-      robinson.conclusion must_== Clause()
-      RobinsonToExpansionProof( robinson, endSequent )
-      val expansion = RobinsonToExpansionProof( robinson, endSequent )
-      veriT.isValid( toDeep( expansion ) ) must_== true
-      RobinsonToLK( robinson, endSequent )
-      ok
-    }
+    if ( !p9.isInstalled || !veriT.isInstalled ) skipped
+    val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
+    robinson.conclusion must_== Clause()
+    RobinsonToExpansionProof( robinson, endSequent )
+    val expansion = RobinsonToExpansionProof( robinson, endSequent )
+    veriT.isValid( toDeep( expansion ) ) must_== true
+    RobinsonToLK( robinson, endSequent )
+    ok
   }
 
 }
