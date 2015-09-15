@@ -53,7 +53,7 @@ class TPTPParser extends RegexParsers with PackratParsers {
     case pred ~ Some( args ) => FOLAtom( pred, args )
     case pred ~ None         => FOLAtom( pred )
   }
-  lazy val equal = "$equal(" ~> term ~ "," ~ term <~ ")" ^^ { case ( t ~ _ ~ s ) => Eq( t, s ) }
+  lazy val equal = ( "$equal(" | "equal(" ) ~> term ~ "," ~ term <~ ")" ^^ { case ( t ~ _ ~ s ) => Eq( t, s ) }
   lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
     case t1 ~ _ ~ t2 => Eq( t1, t2 )
   }

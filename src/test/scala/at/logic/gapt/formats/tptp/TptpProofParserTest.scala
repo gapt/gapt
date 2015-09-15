@@ -70,4 +70,18 @@ class TptpProofParserTest extends Specification {
     ok
   }
 
+  "HEN005m1 from spass" in {
+    val ( endSequent, sketch ) = TptpProofParser.parse( load( "HEN005-6_SPASS-3.7.UNS-Ref.s" ) )
+    sketch.conclusion must_== Clause()
+
+    if ( !p9.isInstalled || !veriT.isInstalled ) skipped
+    val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
+    robinson.conclusion must_== Clause()
+    RobinsonToExpansionProof( robinson, endSequent )
+    val expansion = RobinsonToExpansionProof( robinson, endSequent )
+    veriT.isValid( toDeep( expansion ) ) must_== true
+    RobinsonToLK( robinson, endSequent )
+    ok
+  }
+
 }
