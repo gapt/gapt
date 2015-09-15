@@ -69,7 +69,7 @@ class TptpProofParserTest extends Specification {
       RobinsonToExpansionProof( robinson, endSequent )
       val expansion = RobinsonToExpansionProof( robinson, endSequent )
       veriT.isValid( toDeep( expansion ) ) must_== true
-      //      RobinsonToLK( robinson, endSequent )
+      RobinsonToLK( robinson, endSequent )
       ok
     }
   }
