@@ -14,14 +14,33 @@ class TptpProofParserTest extends Specification {
 
   val p9 = new Prover9Prover
 
-  "RNG103p2" in {
+  "RNG103p2 from eprover" in {
+    def output = load( "RNG103+2_E---1.9.THM-CRf.s" )
+
     "parse as refutation sketch" in {
-      TptpProofParser.parse( load( "RNG103+2_E---1.9.THM-CRf.s" ) )._2.conclusion must_== Clause()
+      TptpProofParser.parse( output )._2.conclusion must_== Clause()
     }
 
     "convert to expansion proof" in {
       if ( !p9.isInstalled ) skipped
-      val ( endSequent, sketch ) = TptpProofParser.parse( load( "RNG103+2_E---1.9.THM-CRf.s" ) )
+      val ( endSequent, sketch ) = TptpProofParser.parse( output )
+      val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
+      robinson.conclusion must_== Clause()
+      RobinsonToExpansionProof( robinson, endSequent )
+      ok
+    }
+  }
+
+  "ALG011m1 from metis" in {
+    def output = load( "ALG011-1_Metis---2.3.UNS-CRf.s" )
+
+    "parse as refutation sketch" in {
+      TptpProofParser.parse( output )._2.conclusion must_== Clause()
+    }
+
+    "convert to expansion proof" in {
+      if ( !p9.isInstalled ) skipped
+      val ( endSequent, sketch ) = TptpProofParser.parse( output )
       val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
       robinson.conclusion must_== Clause()
       RobinsonToExpansionProof( robinson, endSequent )

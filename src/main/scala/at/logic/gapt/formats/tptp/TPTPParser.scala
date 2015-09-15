@@ -47,12 +47,13 @@ class TPTPParser extends RegexParsers with PackratParsers {
     | neg | atom
   )
 
-  lazy val atom: PackratParser[FOLFormula] = falseTrue | not_eq | eq | real_atom | quantified | "(" ~> formula <~ ")"
+  lazy val atom: PackratParser[FOLFormula] = falseTrue | equal | not_eq | eq | real_atom | quantified | "(" ~> formula <~ ")"
   lazy val falseTrue = "$" ~> ( "false" ^^ { _ => Bottom() } | "true" ^^ { _ => Top() } )
   lazy val real_atom: PackratParser[FOLFormula] = name ~ opt( "(" ~> repsep( term, "," ) <~ ")" ) ^^ {
     case pred ~ Some( args ) => FOLAtom( pred, args )
     case pred ~ None         => FOLAtom( pred )
   }
+  lazy val equal = "$equal(" ~> term ~ "," ~ term <~ ")" ^^ { case ( t ~ _ ~ s ) => Eq( t, s ) }
   lazy val eq: PackratParser[FOLFormula] = term ~ "=" ~ term ^^ {
     case t1 ~ _ ~ t2 => Eq( t1, t2 )
   }
