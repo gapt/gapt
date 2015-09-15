@@ -54,6 +54,6 @@ object RefutationSketchToRobinson extends Logger {
           None
         }
     } )
-    solve( sketch )
+    solve( sketch ) map { simplifyResolutionProof( _ ) }
   }
 }
