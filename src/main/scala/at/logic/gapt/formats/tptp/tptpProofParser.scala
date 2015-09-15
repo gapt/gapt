@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.tptp
 
-import at.logic.gapt.expr.FOLFormula
+import at.logic.gapt.expr.{ Bottom, FOLFormula }
 import at.logic.gapt.expr.hol.{ univclosure, CNFn, CNFp }
 import at.logic.gapt.proofs.{ Sequent, FOLClause }
 import at.logic.gapt.proofs.sketch.{ SketchAxiom, SketchInference, RefutationSketch }
@@ -104,7 +104,7 @@ object TptpProofParser extends TptpProofParser {
         Seq( SketchInference( FOLClause(), getParents( justification ) flatMap convert ) )
     } )
 
-    convert( stepList.last._1 ).head
+    convert( stepList.find( _._2._3 == Bottom() ).get._1 ).head
 
   }
 }
