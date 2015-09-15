@@ -148,6 +148,8 @@ object CNFn {
     )
   }
 
+  def toClauseList( f: FOLFormula ): List[FOLClause] = toFClauseList( f.asInstanceOf[HOLFormula] ).asInstanceOf[List[FOLClause]]
+
   def toFormulaList( f: HOLFormula ): List[HOLFormula] = apply( f ).map( Or( _ ) )
 
   def toFormula( f: HOLFormula ): HOLFormula = And( toFormulaList( f ) )

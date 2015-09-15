@@ -4,7 +4,7 @@ import java.io.IOException
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.formats.tptp.TPTPParser
+import at.logic.gapt.formats.tptp.{ TptpProofParser, TPTPParser }
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ HOLClause, FOLClause }
 import at.logic.gapt.proofs.sketch.{ SketchInference, SketchAxiom, RefutationSketchToRobinson, RefutationSketch }
@@ -28,7 +28,7 @@ class EProverProver extends ResolutionProver with ExternalProgram {
           Seq( "eproof", "--tptp3-format", tptpInFile ) !!
         }
         if ( output.split( "\n" ).contains( "# SZS status Unsatisfiable" ) )
-          RefutationSketchToRobinson( EProverOutputParser.parse( output, labelledCNF ), backgroundProver )
+          RefutationSketchToRobinson( TptpProofParser.parse( output, labelledCNF mapValues { Seq( _ ) } ), backgroundProver )
         else None
     }
 
@@ -66,49 +66,4 @@ class EProverProver extends ResolutionProver with ExternalProgram {
     } catch {
       case ex: IOException => false
     } )
-}
-
-class EProverOutputParser extends TPTPParser {
-  def comment: Parser[Unit] = """# (.*)\n""".r ^^ { _ => () }
-
-  def step: Parser[( String, ( String, FOLClause, List[GeneralTerm] ) )] = "cnf(" ~ name ~ "," ~ name ~ "," ~ formula ~ ( "," ~> general_term ).* ~ ")." ^^ {
-    case _ ~ num ~ _ ~ name ~ _ ~ clause ~ just ~ _ =>
-      num -> ( name, CNFp.toClauseList( clause ).head, just )
-  }
-
-  sealed trait GeneralTerm
-  case class GTList( elements: Seq[GeneralTerm] ) extends GeneralTerm
-  case class GTFun( name: String, args: Seq[GeneralTerm] ) extends GeneralTerm
-  case class GTInt( int: Int ) extends GeneralTerm
-
-  def general_term: Parser[GeneralTerm] = "[" ~> repsep( general_term, "," ).^^ { GTList( _ ) } <~ "]" |
-    ( name ~ opt( "(" ~> repsep( general_term, "," ) <~ ")" ) ^^ { case ( f ~ a ) => GTFun( f, a.getOrElse( Nil ) ) } ) | integer.^^ { GTInt }
-
-  def eproverOutput: Parser[Seq[( String, ( String, FOLClause, List[GeneralTerm] ) )]] = ( comment ^^ { _ => Seq() } | step ^^ { Seq( _ ) } ).* ^^ { _.flatten }
-}
-
-object EProverOutputParser extends EProverOutputParser {
-  def parse( out: String, labelledCNF: Map[String, FOLClause] ): RefutationSketch =
-    parseAll( eproverOutput, out ) match {
-      case Success( result, _ ) =>
-        val steps = result.toMap
-
-        def getParents( justification: GeneralTerm ): Seq[String] = justification match {
-          case GTFun( "inference", List( _, _, GTList( parents ) ) ) => parents flatMap getParents
-          case GTFun( parent, List() )                               => Seq( parent )
-        }
-
-        val memo = mutable.Map[String, RefutationSketch]()
-        def convert( stepName: String ): RefutationSketch = memo.getOrElseUpdate( stepName, steps( stepName ) match {
-          case ( "axiom", axiom, List( GTFun( "file", List( _, GTFun( label, _ ) ) ) ) ) =>
-            SketchInference( axiom, Seq( SketchAxiom( labelledCNF( label ) ) ) )
-          case ( "plain", conclusion, List( justification ) ) =>
-            val sketchParents = getParents( justification ) map convert
-            SketchInference( conclusion, sketchParents )
-          case ( "plain", _, List( GTFun( parent, _ ), GTList( List( GTFun( "proof", _ ) ) ) ) ) =>
-            convert( parent )
-        } )
-
-        convert( result.last._1 )
-    }
 }

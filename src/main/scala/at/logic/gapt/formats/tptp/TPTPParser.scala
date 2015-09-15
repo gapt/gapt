@@ -36,12 +36,12 @@ class TPTPParser extends RegexParsers with PackratParsers {
   )
 
   lazy val quantified: PackratParser[FOLFormula] = (
-    "!" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
-      case vars ~ _ ~ form =>
+    "!" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ ":" ~ quantified ^^ {
+      case vars ~ _ ~ _ ~ form =>
         vars.foldLeft( form )( ( f, v ) => All( v, f ) )
     }
-    | "?" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
-      case vars ~ _ ~ form =>
+    | "?" ~ "[" ~> repsep( variable, "," ) ~ "]" ~ ":" ~ quantified ^^ {
+      case vars ~ _ ~ _ ~ form =>
         vars.foldLeft( form )( ( f, v ) => Ex( v, f ) )
     }
     | neg | atom
