@@ -103,7 +103,7 @@ class FileParser {
   }
 
   def ivyFileReader( path: String ) {
-    val ivy = IvyToRobinson( IvyParser.apply( path, IvyParser.IvyStyleVariables ) )
+    val ivy = IvyToRobinson( IvyParser( path ) )
     proofs = Nil
     termTrees = Nil
     // proofdb = new ProofDatabase(Map(), ("ivy_proof", RobinsonToLK(ivy))::Nil, Nil, Nil)

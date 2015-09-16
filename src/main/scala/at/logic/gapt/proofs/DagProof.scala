@@ -46,6 +46,26 @@ trait DagProof[A <: DagProof[A]] extends Product { self: A =>
   }
 
   /**
+   * Iterate over all sub-proofs including this breadth-first, ignoring duplicates.
+   * @return Set of all visited sub-proofs including this.
+   */
+  def dagLikeBreadthFirstForeach( f: A => Unit ): Set[A] = {
+    val seen = mutable.Set[A]()
+    val queue = mutable.Queue[A]( self )
+
+    while ( queue.nonEmpty ) {
+      val next = queue.dequeue()
+      if ( !( seen contains next ) ) {
+        seen += next
+        f( next )
+        queue ++= next.immediateSubProofs
+      }
+    }
+
+    seen.toSet
+  }
+
+  /**
    * A sequence of all sub-proofs including this in post-order.
    */
   def postOrder: Seq[A] = {
@@ -64,6 +84,15 @@ trait DagProof[A <: DagProof[A]] extends Product { self: A =>
   }
 
   /**
+   * A sequence of all sub-proofs including this in post-order, ignoring duplicates.
+   */
+  def dagLikeBreadthFirst: Seq[A] = {
+    val subProofs = Seq.newBuilder[A]
+    dagLikeBreadthFirstForeach { subProofs += _ }
+    subProofs.result()
+  }
+
+  /**
    *  Set of all sub-proofs including this.
    */
   def subProofs: Set[A] = dagLikeForeach { _ => () }
@@ -72,7 +101,7 @@ trait DagProof[A <: DagProof[A]] extends Product { self: A =>
     s"$longName(${productIterator.map { param => subProofLabels.getOrElse( param, param.toString ) }.mkString( ", " )})"
 
   override def toString: String = {
-    val steps = dagLikePostOrder.zipWithIndex map { case ( p, i ) => ( p, s"p${i + 1}" ) }
+    val steps = dagLikeBreadthFirst.reverse.zipWithIndex map { case ( p, i ) => ( p, s"p${i + 1}" ) }
     val subProofLabels: Map[Any, String] = steps.toMap
 
     val output = new StringBuilder()

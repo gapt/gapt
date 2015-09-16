@@ -9,6 +9,8 @@ package at.logic.gapt.prooftool
 
 import java.awt.Font._
 import java.awt.event.{ MouseEvent, MouseMotionListener }
+import at.logic.gapt.proofs.SequentProof
+
 import scala.swing._
 import event.{ MouseWheelMoved, MouseReleased, MouseDragged }
 import at.logic.gapt.utils.ds.trees.Tree
@@ -65,9 +67,15 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
   this.peer.addMouseMotionListener( this )
 
   def setWindowContent( obj: AnyRef, c: Constraints ): Option[String] = obj match {
+    case Some( x: AnyRef ) => setWindowContent( x, c )
     case ( s: String, p: AnyRef ) =>
       setWindowContent( p, c )
       Some( s )
+    case proof: SequentProof[_, _] =>
+      layout( new DrawSequentProof( proof, fSize, None, "" ) ) = c
+      ProofToolPublisher.publish( Loaded )
+      StructPublisher.publish( UnLoaded )
+      None
     case proof: TreeProof[_] =>
       layout( new DrawProof( proof, fSize, None, "" ) ) = c
       ProofToolPublisher.publish( Loaded )

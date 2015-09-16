@@ -18,27 +18,12 @@ import at.logic.gapt.utils.logging.Logger
 object IvyParser extends Logger {
   override def loggerName = "IvyParserLogger"
 
-  //easy parametrization to choose naming conventions (there is no information about this in the ivy format)
-  sealed abstract class VariableNamingConvention;
-  case object PrologStyleVariables extends VariableNamingConvention;
-  case object LadrStyleVariables extends VariableNamingConvention;
-  case object IvyStyleVariables extends VariableNamingConvention;
-
   //calls the sexpression parser on the given file and parses it, needs a naming convention
-  def apply( fn: String, naming_convention: VariableNamingConvention ): IvyResolutionProof = {
-    naming_convention match {
-      case PrologStyleVariables => apply_( fn, is_prologstyle_variable )
-      case LadrStyleVariables   => apply_( fn, is_ladrstyle_variable )
-      case IvyStyleVariables    => apply_( fn, is_ivy_variable )
-    }
-  }
-
-  //calls the sexpression parser on the given file and parses it, needs a naming convention
-  def apply_( fn: String, is_variable_symbol: ( String => Boolean ) ): IvyResolutionProof = {
+  def apply( fn: String ): IvyResolutionProof = {
     val exp = SExpressionParser( fn )
     require( exp.length >= 1, "An ivy proof must contain at least one proof object, not " + exp.length + "! " )
     if ( exp.length > 1 ) warn( "WARNING: Ivy proof in " + fn + " contains more than one proof, taking the first one." )
-    parse( exp( 0 ), is_variable_symbol )
+    parse( exp( 0 ) )
   }
 
   // the type synoyms should make the parsing functions more readable
@@ -47,30 +32,30 @@ object IvyParser extends Logger {
   type Position = List[Int]
 
   //decompose the proof object to a list and hand it to parse(exp: List[SExpression], found_steps : ProofMap )
-  def parse( exp: SExpression, is_variable_symbol: ( String => Boolean ) ): IvyResolutionProof = exp match {
+  def parse( exp: SExpression ): IvyResolutionProof = exp match {
     case LispList( Nil ) => throw new Exception( "Trying to parse an empty proof!" )
-    case LispList( l )   => parse( l, Map[String, IvyResolutionProof](), is_variable_symbol ) // extract the list of inferences from exp
+    case LispList( l )   => parse( l, Map[String, IvyResolutionProof]() ) // extract the list of inferences from exp
     case _               => throw new Exception( "Parsing error: The proof object is not a list!" )
   }
 
   /* traverses the list of inference sexpressions and returns an IvyResolution proof - this can then be translated to
    * our resolution calculus (i.e. where instantiation is contained in the substitution)
    * note: requires that an if inference a references inference b, then a occurs before b in the list */
-  def parse( exp: List[SExpression], found_steps: ProofMap, is_variable_symbol: String => Boolean ): IvyResolutionProof = {
+  def parse( exp: List[SExpression], found_steps: ProofMap ): IvyResolutionProof = {
     exp match {
       case List( last ) =>
-        val ( lastid, found_steps_ ) = parse_step( last, found_steps, is_variable_symbol );
+        val ( lastid, found_steps_ ) = parse_step( last, found_steps );
         found_steps_( lastid )
 
       case head :: tail =>
-        val ( _, found_steps_ ) = parse_step( head, found_steps, is_variable_symbol );
-        parse( tail, found_steps_, is_variable_symbol );
+        val ( _, found_steps_ ) = parse_step( head, found_steps );
+        parse( tail, found_steps_ );
       case _ => throw new Exception( "Cannot create an object for an empty proof (list of inferences is empty)." )
     }
   }
 
   /* parses an inference step and updates the proof map  */
-  def parse_step( exp: SExpression, found_steps: ProofMap, is_variable_symbol: String => Boolean ): ( ProofId, ProofMap ) = {
+  def parse_step( exp: SExpression, found_steps: ProofMap ): ( ProofId, ProofMap ) = {
     exp match {
       case LispList( LispAtom( id ) :: _ ) => ()
       case _                               => ()
@@ -78,7 +63,7 @@ object IvyParser extends Logger {
     exp match {
       /* ================== Atom ========================== */
       case LispList( LispAtom( id ) :: LispList( LispAtom( "input" ) :: Nil ) :: clause :: _ ) => {
-        val fclause = parse_clause( clause, is_variable_symbol )
+        val fclause = parse_clause( clause )
 
         val inference = InitialClause( id, clause,
           OccClause(
@@ -93,8 +78,8 @@ object IvyParser extends Logger {
       /* ================== Instance ========================== */
       case LispList( LispAtom( id ) :: LispList( LispAtom( "instantiate" ) :: LispAtom( parent_id ) :: subst_exp :: Nil ) :: clause :: rest ) => {
         val parent_proof = found_steps( parent_id )
-        val sub: FOLSubstitution = parse_substitution( subst_exp, is_variable_symbol )
-        val fclause: HOLSequent = parse_clause( clause, is_variable_symbol )
+        val sub: FOLSubstitution = parse_substitution( subst_exp )
+        val fclause: HOLSequent = parse_clause( clause )
 
         def connect( ancestors: Seq[FormulaOccurrence], formulas: Seq[HOLFormula] ): Seq[FormulaOccurrence] =
           ( ancestors zip formulas ) map ( ( v: ( FormulaOccurrence, HOLFormula ) ) =>
@@ -118,10 +103,10 @@ object IvyParser extends Logger {
         clause :: rest ) => {
         val parent_proof1 = found_steps( parent_id1 )
         val parent_proof2 = found_steps( parent_id2 )
-        val fclause: HOLSequent = parse_clause( clause, is_variable_symbol )
+        val fclause: HOLSequent = parse_clause( clause )
 
-        val ( occ1, polarity1, _ ) = get_literal_by_position( parent_proof1.vertex, position1, parent_proof1.clause_exp, is_variable_symbol )
-        val ( occ2, polarity2, _ ) = get_literal_by_position( parent_proof2.vertex, position2, parent_proof2.clause_exp, is_variable_symbol )
+        val ( occ1, polarity1, _ ) = get_literal_by_position( parent_proof1.vertex, position1, parent_proof1.clause_exp )
+        val ( occ2, polarity2, _ ) = get_literal_by_position( parent_proof2.vertex, position2, parent_proof2.clause_exp )
 
         require( occ1.formula == occ2.formula, "Resolved formula " + occ1.formula + " must be equal to " + occ2.formula + " !" )
 
@@ -188,8 +173,8 @@ object IvyParser extends Logger {
       /* ================== Flip ========================== */
       case LispList( LispAtom( id ) :: LispList( LispAtom( "flip" ) :: LispAtom( parent_id ) :: LispList( position ) :: Nil ) :: clause :: rest ) =>
         val parent_proof = found_steps( parent_id )
-        val fclause = parse_clause( clause, is_variable_symbol )
-        val ( occ, polarity, _ ) = get_literal_by_position( parent_proof.root, position, parent_proof.clause_exp, is_variable_symbol )
+        val fclause = parse_clause( clause )
+        val ( occ, polarity, _ ) = get_literal_by_position( parent_proof.root, position, parent_proof.clause_exp )
 
         occ.formula match {
           case Eq( left, right ) =>
@@ -235,13 +220,13 @@ object IvyParser extends Logger {
         clause :: rest ) =>
         val modulant_proof = found_steps( modulant_id )
         val parent_proof = found_steps( parent_id )
-        val fclause = parse_clause( clause, is_variable_symbol )
-        val ( mocc, mpolarity, direction ) = get_literal_by_position( modulant_proof.root, mposition, modulant_proof.clause_exp, is_variable_symbol )
+        val fclause = parse_clause( clause )
+        val ( mocc, mpolarity, direction ) = get_literal_by_position( modulant_proof.root, mposition, modulant_proof.clause_exp )
         require( direction == List( 1 ) || direction == List( 2 ), "Must indicate if paramod or demod!" )
         val orientation = if ( direction.head == 1 ) true else false //true = paramod (left to right), false = demod (right to left)
 
         require( mpolarity == true, "Paramodulated literal must be positive!" )
-        val ( pocc, polarity, int_position ) = get_literal_by_position( parent_proof.root, pposition, parent_proof.clause_exp, is_variable_symbol )
+        val ( pocc, polarity, int_position ) = get_literal_by_position( parent_proof.root, pposition, parent_proof.clause_exp )
 
         mocc.formula match {
           case Eq( left: FOLTerm, right: FOLTerm ) =>
@@ -294,7 +279,7 @@ object IvyParser extends Logger {
       /* ================== Propositional ========================== */
       case LispList( LispAtom( id ) :: LispList( LispAtom( "propositional" ) :: LispAtom( parent_id ) :: Nil ) :: clause :: rest ) => {
         val parent_proof = found_steps( parent_id )
-        val fclause: HOLSequent = parse_clause( clause, is_variable_symbol )
+        val fclause: HOLSequent = parse_clause( clause )
 
         def list_withoutn[A]( l: List[A], n: Int ): List[A] = l match {
           case x :: xs =>
@@ -364,7 +349,7 @@ object IvyParser extends Logger {
         clause :: rest ) =>
 
         val parent_proof = found_steps( parent_id )
-        val fclause: HOLSequent = parse_clause( clause, is_variable_symbol )
+        val fclause: HOLSequent = parse_clause( clause )
         require( fclause.antecedent.isEmpty, "Expecting only positive equations in parsing of new_symbol rule " + id )
         require( fclause.succedent.size == 1, "Expecting exactly one positive equation in parsing of new_symbol rule " + id )
 
@@ -390,9 +375,9 @@ object IvyParser extends Logger {
   // the boolean indicates a positive or negative formula
 
   def get_literal_by_position( c: OccClause, pos: List[SExpression],
-                               clauseexp: SExpression, is_variable_symbol: String => Boolean ): ( FormulaOccurrence, Boolean, List[Int] ) = {
+                               clauseexp: SExpression ): ( FormulaOccurrence, Boolean, List[Int] ) = {
     val ipos = parse_position( pos )
-    val ( iformula, termpos ) = parse_clause_frompos( clauseexp, ipos, is_variable_symbol )
+    val ( iformula, termpos ) = parse_clause_frompos( clauseexp, ipos )
     //Remark: we actually return the first occurrence of the formula, not the one at the position indicated as
     //        it should not make a difference. (if f occurs twice in the clause, it might be derived differently
     //        but we usually don't care for that)
@@ -446,32 +431,32 @@ object IvyParser extends Logger {
     case _      => throw new Exception( "Error parsing position: unexpected expression " + l )
   }
 
-  def parse_substitution( exp: SExpression, is_variable_symbol: String => Boolean ): FOLSubstitution = exp match {
+  def parse_substitution( exp: SExpression ): FOLSubstitution = exp match {
     case LispList( list ) =>
-      FOLSubstitution( parse_substitution_( list, is_variable_symbol ) )
+      FOLSubstitution( parse_substitution_( list ) )
     case _ => throw new Exception( "Error parsing substitution expression " + exp + " (not a list)" )
   }
 
   //Note:substitution are sometimes given as lists of cons and sometimes as two-element list...
-  def parse_substitution_( exp: List[SExpression], is_variable_symbol: String => Boolean ): List[( FOLVar, FOLTerm )] = exp match {
+  def parse_substitution_( exp: List[SExpression] ): List[( FOLVar, FOLTerm )] = exp match {
     case LispList( vexp :: texp ) :: xs =>
-      val v = parse_term( vexp, is_variable_symbol )
-      val t = parse_term( LispList( texp ), is_variable_symbol )
+      val v = parse_term( vexp )
+      val t = parse_term( LispList( texp ) )
 
       v match {
         case v_ : FOLVar =>
-          ( v_, t ) :: parse_substitution_( xs, is_variable_symbol )
+          ( v_, t ) :: parse_substitution_( xs )
         case _ =>
           throw new Exception( "Error parsing substitution expression " + exp + ": substiution variable was not parsed as variable!" )
       }
 
     case LispCons( vexp, texp ) :: xs =>
-      val v = parse_term( vexp, is_variable_symbol )
-      val t = parse_term( texp, is_variable_symbol )
+      val v = parse_term( vexp )
+      val t = parse_term( texp )
 
       v match {
         case v_ : FOLVar =>
-          ( v_, t ) :: parse_substitution_( xs, is_variable_symbol )
+          ( v_, t ) :: parse_substitution_( xs )
         case _ =>
           throw new Exception( "Error parsing substitution expression " + exp + ": substiution variable was not parsed as variable!" )
       }
@@ -480,31 +465,9 @@ object IvyParser extends Logger {
     case _ => throw new Exception( "Error parsing substitution expression " + exp + " (could not match substitution term!)" )
   }
 
-  /* create_ladrstyle_symbol and create_prologstyle_symbol implement the logic for the prover9 and prolog style
-   * variable naming convention -- both are possible in prover9;
-   * see also http://www.cs.unm.edu/~mccune/mace4/manual/2009-11A/syntax.html
-   */
-  val ladr_variable_regexp = """^[u-z].*$""".r
-  def is_ladrstyle_variable( s: String ) = ladr_variable_regexp.findFirstIn( s ) match {
-    case None => false
-    case _    => true
-  }
-
-  val prolog_variable_regexp = """^[A-Z].*$""".r
-  def is_prologstyle_variable( s: String ) = prolog_variable_regexp.findFirstIn( s ) match {
-    case None => false
-    case _    => true
-  }
-
-  val ivy_variable_regexp = """^v[0-9]+$""".r
-  def is_ivy_variable( s: String ) = ivy_variable_regexp.findFirstIn( s ) match {
-    case None => false
-    case _    => true
-  }
-
   /* parses a clause sexpression to a fclause -- the structure is (or lit1 (or lit2 .... (or litn-1 litn)...)) */
-  def parse_clause( exp: SExpression, is_variable_symbol: String => Boolean ): HOLSequent = {
-    val clauses = parse_clause_( exp, is_variable_symbol )
+  def parse_clause( exp: SExpression ): HOLSequent = {
+    val clauses = parse_clause_( exp )
     var pos: List[HOLFormula] = Nil
     var neg: List[HOLFormula] = Nil
 
@@ -527,29 +490,29 @@ object IvyParser extends Logger {
   }
 
   //TODO: merge code with parse_clause_
-  def parse_clause_frompos( exp: SExpression, pos: List[Int], is_variable_symbol: String => Boolean ): ( HOLFormula, List[Int] ) = exp match {
+  def parse_clause_frompos( exp: SExpression, pos: List[Int] ): ( HOLFormula, List[Int] ) = exp match {
     case LispList( LispAtom( "or" ) :: left :: right :: Nil ) =>
       pos match {
         case 1 :: rest =>
           left match {
             case LispList( LispAtom( "not" ) :: LispList( LispAtom( name ) :: args ) :: Nil ) =>
               val npos = if ( rest.isEmpty ) rest else rest.tail //if we point to a term we have to strip the indicator for neg
-              ( Neg( parse_atom( name, args, is_variable_symbol ) ), npos )
+              ( Neg( parse_atom( name, args ) ), npos )
             case LispList( LispAtom( name ) :: args ) =>
-              ( parse_atom( name, args, is_variable_symbol ), rest )
+              ( parse_atom( name, args ), rest )
             case _ => throw new Exception( "Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object." )
           }
         case 2 :: rest =>
-          parse_clause_frompos( right, rest, is_variable_symbol )
+          parse_clause_frompos( right, rest )
         case _ => throw new Exception( "pos " + pos + " did not point to a literal!" )
       }
 
     case LispList( LispAtom( "not" ) :: LispList( LispAtom( name ) :: args ) :: Nil ) =>
       val npos = if ( pos.isEmpty ) pos else pos.tail //if we point to a term we have to strip the indicator for neg
-      ( Neg( parse_atom( name, args, is_variable_symbol ) ), npos )
+      ( Neg( parse_atom( name, args ) ), npos )
 
     case LispList( LispAtom( name ) :: args ) =>
-      ( parse_atom( name, args, is_variable_symbol ), pos )
+      ( parse_atom( name, args ), pos )
 
     //the empty clause is denoted by false
     case LispAtom( "false" ) =>
@@ -559,23 +522,23 @@ object IvyParser extends Logger {
   }
 
   //directly converts a clause as nested or expression into a list with the literals in the same order
-  def parse_clause_( exp: SExpression, is_variable_symbol: String => Boolean ): List[HOLFormula] = exp match {
+  def parse_clause_( exp: SExpression ): List[HOLFormula] = exp match {
     case LispList( LispAtom( "or" ) :: left :: right :: Nil ) =>
-      val rightclause = parse_clause_( right, is_variable_symbol )
+      val rightclause = parse_clause_( right )
 
       left match {
         case LispList( LispAtom( "not" ) :: LispList( LispAtom( name ) :: args ) :: Nil ) =>
-          Neg( parse_atom( name, args, is_variable_symbol ) ) :: rightclause
+          Neg( parse_atom( name, args ) ) :: rightclause
         case LispList( LispAtom( name ) :: args ) =>
-          parse_atom( name, args, is_variable_symbol ) :: rightclause
+          parse_atom( name, args ) :: rightclause
         case _ => throw new Exception( "Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object." )
       }
 
     case LispList( LispAtom( "not" ) :: LispList( LispAtom( name ) :: args ) :: Nil ) =>
-      Neg( parse_atom( name, args, is_variable_symbol ) ) :: Nil
+      Neg( parse_atom( name, args ) ) :: Nil
 
     case LispList( LispAtom( name ) :: args ) =>
-      parse_atom( name, args, is_variable_symbol ) :: Nil
+      parse_atom( name, args ) :: Nil
 
     //the empty clause is denoted by false
     case LispAtom( "false" ) =>
@@ -584,9 +547,8 @@ object IvyParser extends Logger {
     case _ => throw new Exception( "Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object." )
   }
 
-  def parse_atom( name: String, args: List[SExpression], is_variable_symbol: String => Boolean ) = {
-    if ( is_variable_symbol( name ) ) throw new Exception( "Parsing Error: Predicate name " + name + " does not conform to naming conventions." )
-    val argterms = args map ( parse_term( _, is_variable_symbol ) )
+  def parse_atom( name: String, args: List[SExpression] ) = {
+    val argterms = args map parse_term
     if ( name == "=" ) {
       require( args.length == 2, "Error parsing equality: = must be a binary predicate!" )
       Eq( argterms( 0 ), argterms( 1 ) )
@@ -607,21 +569,17 @@ object IvyParser extends Logger {
   )
   def rewrite_name( s: String ): String = if ( ivy_escape_table contains s ) ivy_escape_table( s ) else s
 
-  def parse_term( ts: SExpression, is_variable_symbol: String => Boolean ): FOLTerm = ts match {
+  def parse_term( ts: SExpression ): FOLTerm = ts match {
     case LispAtom( name ) =>
       val rname = rewrite_name( name )
-      if ( is_variable_symbol( rname ) )
-        FOLVar( rname )
-      else
-        FOLConst( rname )
+      FOLVar( rname )
     //the proof might contain the constant nil which is parsed to an empty LispList. in this case the empty list
     //corresponds to a constant
     case LispList( LispList( Nil ) :: Nil ) =>
       FOLConst( "nil" )
     case LispList( LispAtom( name ) :: args ) =>
       val rname = rewrite_name( name )
-      if ( is_variable_symbol( rname ) ) throw new Exception( "Parsing Error: Function name " + rname + " does not conform to naming conventions." )
-      FOLFunction( rname, args.map( parse_term( _, is_variable_symbol ) ) )
+      FOLFunction( rname, args.map( parse_term( _ ) ) )
     case _ =>
       throw new Exception( "Parsing Error: Unexpected expression " + ts + " in parsing of a term." )
   }

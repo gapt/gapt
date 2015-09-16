@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.resolutionOld
 import at.logic.gapt.proofs.{ FOLClause, HOLSequent, Suc }
 import at.logic.gapt.provers.atp.SearchDerivation
-import at.logic.gapt.provers.groundFreeVariables
+import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.logging.Logger
 
@@ -173,7 +173,7 @@ object fixDerivation extends Logger {
       tryDeriveTrivial( cls, cs ).
         orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
         orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
-        orElse( tryDeriveViaSearchDerivation( cls, cs ) ).
+        // orElse( tryDeriveViaSearchDerivation( cls, cs ) ).  // runs easily out of memory
         orElse( tryDeriveViaResolution( cls, cs ) ).
         getOrElse {
           warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
@@ -225,9 +225,10 @@ object findDerivationViaResolution {
    *
    * @param a Consequence to prove.
    * @param bs Set of initial clauses for the resulting proof.
+   * @param prover Prover to obtain a resolution refutation of the consequence bs |= a from.
    * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
    */
-  def apply( a: FOLClause, bs: Set[FOLClause] ): Option[ResolutionProof] = {
+  def apply( a: FOLClause, bs: Set[FOLClause], prover: ResolutionProver = new Prover9Prover ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
       ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet
@@ -237,7 +238,7 @@ object findDerivationViaResolution {
     val negatedClausesA = a.negative.map { f => FOLClause( Seq(), Seq( groundingSubst( f ) ) ) } ++
       a.positive.map { f => FOLClause( Seq( groundingSubst( f ) ), Seq() ) }
 
-    new Prover9Prover().getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
+    prover.getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
       val tautologified = tautologifyInitialUnitClauses( refutation, negatedClausesA.toSet )
 
       val toUnusedVars = rename( grounding.map( _._1 ).toSet, containedVariables( tautologified ) )

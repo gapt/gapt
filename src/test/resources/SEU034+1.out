@@ -1,0 +1,209 @@
+%------------------------------------------------------------------------------
+File       : Prover9---1109a
+Problem    : SEU034+1 : TPTP v5.3.0. Released v3.2.0.
+Transform  : none
+Format     : tptp:raw
+Command    : run_prover9 %d %s
+
+Computer   : antietam.cs.miami.edu
+Model      : x86_64 x86_64
+CPU        : Intel(R) Core(TM)2 CPU          6600  @ 2.40GHz @ 2400MHz
+Memory     : 1003MB
+OS         : Linux 2.6.32.26-175.fc12.x86_64
+CPULimit   : 300s
+DateTime   : Thu Jun 14 09:04:05 EDT 2012
+
+Result     : Theorem 0.51s
+Output     : Refutation 0.51s
+Verified   : 
+Statistics : -
+
+Comments   : 
+%------------------------------------------------------------------------------
+%----ERROR: Could not form TPTP format derivation
+%------------------------------------------------------------------------------
+%----ORIGINAL SYSTEM OUTPUT
+============================== Prover9 ===============================
+Prover9 (32) version 2009-11A, November 2009.
+Process 22281 was started by tptp on antietam.cs.miami.edu,
+Thu Jun 14 09:04:06 2012
+The command was "/home/graph/tptp/Systems/Prover9---1109a/prover9 -t 300 -f /tmp/Prover9_22247_antietam.cs.miami.edu".
+============================== end of head ===========================
+============================== INPUT =================================
+% Reading from file /tmp/Prover9_22247_antietam.cs.miami.edu
+set(prolog_style_variables).
+set(auto2).
+    % set(auto2) -> set(auto).
+    % set(auto) -> set(auto_inference).
+    % set(auto) -> set(auto_setup).
+    % set(auto_setup) -> set(predicate_elim).
+    % set(auto_setup) -> assign(eq_defs, unfold).
+    % set(auto) -> set(auto_limits).
+    % set(auto_limits) -> assign(max_weight, "100.000").
+    % set(auto_limits) -> assign(sos_limit, 20000).
+    % set(auto) -> set(auto_denials).
+    % set(auto) -> set(auto_process).
+    % set(auto2) -> assign(new_constants, 1).
+    % set(auto2) -> assign(fold_denial_max, 3).
+    % set(auto2) -> assign(max_weight, "200.000").
+    % set(auto2) -> assign(max_hours, 1).
+    % assign(max_hours, 1) -> assign(max_seconds, 3600).
+    % set(auto2) -> assign(max_seconds, 0).
+    % set(auto2) -> assign(max_minutes, 5).
+    % assign(max_minutes, 5) -> assign(max_seconds, 300).
+    % set(auto2) -> set(sort_initial_sos).
+    % set(auto2) -> assign(sos_limit, -1).
+    % set(auto2) -> assign(lrs_ticks, 3000).
+    % set(auto2) -> assign(max_megs, 400).
+    % set(auto2) -> assign(stats, some).
+    % set(auto2) -> clear(echo_input).
+    % set(auto2) -> set(quiet).
+    % set(auto2) -> clear(print_initial_clauses).
+    % set(auto2) -> clear(print_given).
+assign(lrs_ticks,-1).
+assign(sos_limit,10000).
+assign(order,kbo).
+set(lex_order_vars).
+clear(print_given).
+% formulas(sos).  % not echoed (48 formulas)
+============================== end of input ==========================
+% From the command line: assign(max_seconds, 300).
+============================== PROCESS NON-CLAUSAL FORMULAS ==========
+% Formulas that are not ordinary clauses:
+1 (all A all B (in(A,B) -> -in(B,A))) # label(antisymmetry_r2_hidden) # label(axiom) # label(non_clause).  [assumption].
+2 (all A (empty(A) -> function(A))) # label(cc1_funct_1) # label(axiom) # label(non_clause).  [assumption].
+3 (all A (empty(A) -> relation(A))) # label(cc1_relat_1) # label(axiom) # label(non_clause).  [assumption].
+4 (all A (relation(A) & empty(A) & function(A) -> relation(A) & function(A) & one_to_one(A))) # label(cc2_funct_1) # label(axiom) # label(non_clause).  [assumption].
+5 (all A (relation(A) & function(A) -> relation(function_inverse(A)) & function(function_inverse(A)))) # label(dt_k2_funct_1) # label(axiom) # label(non_clause).  [assumption].
+6 (all A all B (relation(A) & relation(B) -> relation(relation_composition(A,B)))) # label(dt_k5_relat_1) # label(axiom) # label(non_clause).  [assumption].
+7 (all A relation(identity_relation(A))) # label(dt_k6_relat_1) # label(axiom) # label(non_clause).  [assumption].
+8 (all A exists B element(B,A)) # label(existence_m1_subset_1) # label(axiom) # label(non_clause).  [assumption].
+9 (all A all B (empty(A) & relation(B) -> empty(relation_composition(B,A)) & relation(relation_composition(B,A)))) # label(fc10_relat_1) # label(axiom) # label(non_clause).  [assumption].
+10 (all A all B (relation(A) & function(A) & relation(B) & function(B) -> relation(relation_composition(A,B)) & function(relation_composition(A,B)))) # label(fc1_funct_1) # label(axiom) # label(non_clause).  [assumption].
+11 (all A -empty(powerset(A))) # label(fc1_subset_1) # label(axiom) # label(non_clause).  [assumption].
+12 (all A (relation(identity_relation(A)) & function(identity_relation(A)))) # label(fc2_funct_1) # label(axiom) # label(non_clause).  [assumption].
+13 (all A (-empty(A) & relation(A) -> -empty(relation_dom(A)))) # label(fc5_relat_1) # label(axiom) # label(non_clause).  [assumption].
+14 (all A (-empty(A) & relation(A) -> -empty(relation_rng(A)))) # label(fc6_relat_1) # label(axiom) # label(non_clause).  [assumption].
+15 (all A (empty(A) -> empty(relation_dom(A)) & relation(relation_dom(A)))) # label(fc7_relat_1) # label(axiom) # label(non_clause).  [assumption].
+16 (all A (empty(A) -> empty(relation_rng(A)) & relation(relation_rng(A)))) # label(fc8_relat_1) # label(axiom) # label(non_clause).  [assumption].
+17 (all A all B (empty(A) & relation(B) -> empty(relation_composition(A,B)) & relation(relation_composition(A,B)))) # label(fc9_relat_1) # label(axiom) # label(non_clause).  [assumption].
+18 (exists A (relation(A) & function(A))) # label(rc1_funct_1) # label(axiom) # label(non_clause).  [assumption].
+19 (exists A (empty(A) & relation(A))) # label(rc1_relat_1) # label(axiom) # label(non_clause).  [assumption].
+20 (all A (-empty(A) -> (exists B (element(B,powerset(A)) & -empty(B))))) # label(rc1_subset_1) # label(axiom) # label(non_clause).  [assumption].
+21 (exists A empty(A)) # label(rc1_xboole_0) # label(axiom) # label(non_clause).  [assumption].
+22 (exists A (relation(A) & empty(A) & function(A))) # label(rc2_funct_1) # label(axiom) # label(non_clause).  [assumption].
+23 (exists A (-empty(A) & relation(A))) # label(rc2_relat_1) # label(axiom) # label(non_clause).  [assumption].
+24 (all A exists B (element(B,powerset(A)) & empty(B))) # label(rc2_subset_1) # label(axiom) # label(non_clause).  [assumption].
+25 (exists A -empty(A)) # label(rc2_xboole_0) # label(axiom) # label(non_clause).  [assumption].
+26 (exists A (relation(A) & function(A) & one_to_one(A))) # label(rc3_funct_1) # label(axiom) # label(non_clause).  [assumption].
+27 (exists A (relation(A) & relation_empty_yielding(A))) # label(rc3_relat_1) # label(axiom) # label(non_clause).  [assumption].
+28 (all A all B subset(A,A)) # label(reflexivity_r1_tarski) # label(axiom) # label(non_clause).  [assumption].
+29 (all A all B (in(A,B) -> element(A,B))) # label(t1_subset) # label(axiom) # label(non_clause).  [assumption].
+30 (all A all B (element(A,B) -> empty(B) | in(A,B))) # label(t2_subset) # label(axiom) # label(non_clause).  [assumption].
+31 (all A all B (element(A,powerset(B)) <-> subset(A,B))) # label(t3_subset) # label(axiom) # label(non_clause).  [assumption].
+32 (all A (relation(A) & function(A) -> (all B (relation(B) & function(B) -> (relation_rng(A) = relation_dom(B) & relation_composition(A,B) = A -> B = identity_relation(relation_dom(B))))))) # label(t44_funct_1) # label(axiom) # label(non_clause).  [assumption].
+33 (all A all B all C (in(A,B) & element(B,powerset(C)) -> element(A,C))) # label(t4_subset) # label(axiom) # label(non_clause).  [assumption].
+34 (all A one_to_one(identity_relation(A))) # label(t52_funct_1) # label(axiom) # label(non_clause).  [assumption].
+35 (all A (relation(A) & function(A) -> (one_to_one(A) -> relation_rng(A) = relation_dom(function_inverse(A)) & relation_dom(A) = relation_rng(function_inverse(A))))) # label(t55_funct_1) # label(axiom) # label(non_clause).  [assumption].
+36 (all A all B all C -(in(A,B) & element(B,powerset(C)) & empty(C))) # label(t5_subset) # label(axiom) # label(non_clause).  [assumption].
+37 (all A (relation(A) & function(A) -> (one_to_one(A) -> relation_composition(A,function_inverse(A)) = identity_relation(relation_dom(A)) & relation_composition(function_inverse(A),A) = identity_relation(relation_rng(A))))) # label(t61_funct_1) # label(axiom) # label(non_clause).  [assumption].
+38 (all A (empty(A) -> A = empty_set)) # label(t6_boole) # label(axiom) # label(non_clause).  [assumption].
+39 (all A (relation_dom(identity_relation(A)) = A & relation_rng(identity_relation(A)) = A)) # label(t71_relat_1) # label(axiom) # label(non_clause).  [assumption].
+40 (all A all B -(in(A,B) & empty(B))) # label(t7_boole) # label(axiom) # label(non_clause).  [assumption].
+41 (all A all B -(empty(A) & A != B & empty(B))) # label(t8_boole) # label(axiom) # label(non_clause).  [assumption].
+42 -(all A function_inverse(identity_relation(A)) = identity_relation(A)) # label(t67_funct_1) # label(negated_conjecture) # label(non_clause).  [assumption].
+============================== end of process non-clausal formulas ===
+============================== PROCESS INITIAL CLAUSES ===============
+============================== PREDICATE ELIMINATION =================
+43 -relation(A) | -function(A) | -one_to_one(A) | relation_rng(A) = relation_dom(function_inverse(A)) # label(t55_funct_1) # label(axiom).  [clausify(35)].
+44 one_to_one(c7) # label(rc3_funct_1) # label(axiom).  [clausify(26)].
+45 one_to_one(identity_relation(A)) # label(t52_funct_1) # label(axiom).  [clausify(34)].
+46 -relation(A) | -empty(A) | -function(A) | one_to_one(A) # label(cc2_funct_1) # label(axiom).  [clausify(4)].
+Derived: -relation(c7) | -function(c7) | relation_rng(c7) = relation_dom(function_inverse(c7)).  [resolve(43,c,44,a)].
+Derived: -relation(identity_relation(A)) | -function(identity_relation(A)) | relation_rng(identity_relation(A)) = relation_dom(function_inverse(identity_relation(A))).  [resolve(43,c,45,a)].
+Derived: -relation(A) | -function(A) | relation_rng(A) = relation_dom(function_inverse(A)) | -relation(A) | -empty(A) | -function(A).  [resolve(43,c,46,d)].
+47 -relation(A) | -function(A) | -one_to_one(A) | relation_rng(function_inverse(A)) = relation_dom(A) # label(t55_funct_1) # label(axiom).  [clausify(35)].
+Derived: -relation(c7) | -function(c7) | relation_rng(function_inverse(c7)) = relation_dom(c7).  [resolve(47,c,44,a)].
+Derived: -relation(identity_relation(A)) | -function(identity_relation(A)) | relation_rng(function_inverse(identity_relation(A))) = relation_dom(identity_relation(A)).  [resolve(47,c,45,a)].
+Derived: -relation(A) | -function(A) | relation_rng(function_inverse(A)) = relation_dom(A) | -relation(A) | -empty(A) | -function(A).  [resolve(47,c,46,d)].
+48 -relation(A) | -function(A) | -one_to_one(A) | identity_relation(relation_dom(A)) = relation_composition(A,function_inverse(A)) # label(t61_funct_1) # label(axiom).  [clausify(37)].
+Derived: -relation(c7) | -function(c7) | identity_relation(relation_dom(c7)) = relation_composition(c7,function_inverse(c7)).  [resolve(48,c,44,a)].
+Derived: -relation(identity_relation(A)) | -function(identity_relation(A)) | identity_relation(relation_dom(identity_relation(A))) = relation_composition(identity_relation(A),function_inverse(identity_relation(A))).  [resolve(48,c,45,a)].
+Derived: -relation(A) | -function(A) | identity_relation(relation_dom(A)) = relation_composition(A,function_inverse(A)) | -relation(A) | -empty(A) | -function(A).  [resolve(48,c,46,d)].
+49 -relation(A) | -function(A) | -one_to_one(A) | identity_relation(relation_rng(A)) = relation_composition(function_inverse(A),A) # label(t61_funct_1) # label(axiom).  [clausify(37)].
+Derived: -relation(c7) | -function(c7) | identity_relation(relation_rng(c7)) = relation_composition(function_inverse(c7),c7).  [resolve(49,c,44,a)].
+Derived: -relation(identity_relation(A)) | -function(identity_relation(A)) | identity_relation(relation_rng(identity_relation(A))) = relation_composition(function_inverse(identity_relation(A)),identity_relation(A)).  [resolve(49,c,45,a)].
+Derived: -relation(A) | -function(A) | identity_relation(relation_rng(A)) = relation_composition(function_inverse(A),A) | -relation(A) | -empty(A) | -function(A).  [resolve(49,c,46,d)].
+50 element(A,powerset(B)) | -subset(A,B) # label(t3_subset) # label(axiom).  [clausify(31)].
+51 subset(A,A) # label(reflexivity_r1_tarski) # label(axiom).  [clausify(28)].
+52 -element(A,powerset(B)) | subset(A,B) # label(t3_subset) # label(axiom).  [clausify(31)].
+Derived: element(A,powerset(A)).  [resolve(50,b,51,a)].
+============================== end predicate elimination =============
+Auto_denials:  (non-Horn, no changes).
+Term ordering decisions:
+Function symbol KB weights:  empty_set=1. c1=1. c2=1. c3=1. c4=1. c5=1. c6=1. c7=1. c8=1. c9=1. relation_composition=1. identity_relation=1. relation_dom=1. function_inverse=1. relation_rng=1. powerset=1. f1=1. f2=1. f3=1.
+============================== end of process initial clauses ========
+============================== CLAUSES FOR SEARCH ====================
+============================== end of clauses for search =============
+============================== SEARCH ================================
+% Starting search at 0.01 seconds.
+============================== PROOF =================================
+% Proof 1 at 0.23 (+ 0.00) seconds.
+% Length of proof is 40.
+% Level of proof is 6.
+% Maximum clause weight is 23.000.
+% Given clauses 315.
+5 (all A (relation(A) & function(A) -> relation(function_inverse(A)) & function(function_inverse(A)))) # label(dt_k2_funct_1) # label(axiom) # label(non_clause).  [assumption].
+7 (all A relation(identity_relation(A))) # label(dt_k6_relat_1) # label(axiom) # label(non_clause).  [assumption].
+12 (all A (relation(identity_relation(A)) & function(identity_relation(A)))) # label(fc2_funct_1) # label(axiom) # label(non_clause).  [assumption].
+32 (all A (relation(A) & function(A) -> (all B (relation(B) & function(B) -> (relation_rng(A) = relation_dom(B) & relation_composition(A,B) = A -> B = identity_relation(relation_dom(B))))))) # label(t44_funct_1) # label(axiom) # label(non_clause).  [assumption].
+34 (all A one_to_one(identity_relation(A))) # label(t52_funct_1) # label(axiom) # label(non_clause).  [assumption].
+35 (all A (relation(A) & function(A) -> (one_to_one(A) -> relation_rng(A) = relation_dom(function_inverse(A)) & relation_dom(A) = relation_rng(function_inverse(A))))) # label(t55_funct_1) # label(axiom) # label(non_clause).  [assumption].
+37 (all A (relation(A) & function(A) -> (one_to_one(A) -> relation_composition(A,function_inverse(A)) = identity_relation(relation_dom(A)) & relation_composition(function_inverse(A),A) = identity_relation(relation_rng(A))))) # label(t61_funct_1) # label(axiom) # label(non_clause).  [assumption].
+39 (all A (relation_dom(identity_relation(A)) = A & relation_rng(identity_relation(A)) = A)) # label(t71_relat_1) # label(axiom) # label(non_clause).  [assumption].
+42 -(all A function_inverse(identity_relation(A)) = identity_relation(A)) # label(t67_funct_1) # label(negated_conjecture) # label(non_clause).  [assumption].
+43 -relation(A) | -function(A) | -one_to_one(A) | relation_rng(A) = relation_dom(function_inverse(A)) # label(t55_funct_1) # label(axiom).  [clausify(35)].
+45 one_to_one(identity_relation(A)) # label(t52_funct_1) # label(axiom).  [clausify(34)].
+47 -relation(A) | -function(A) | -one_to_one(A) | relation_rng(function_inverse(A)) = relation_dom(A) # label(t55_funct_1) # label(axiom).  [clausify(35)].
+48 -relation(A) | -function(A) | -one_to_one(A) | identity_relation(relation_dom(A)) = relation_composition(A,function_inverse(A)) # label(t61_funct_1) # label(axiom).  [clausify(37)].
+67 relation(identity_relation(A)) # label(dt_k6_relat_1) # label(axiom).  [clausify(7)].
+68 function(identity_relation(A)) # label(fc2_funct_1) # label(axiom).  [clausify(12)].
+72 relation_dom(identity_relation(A)) = A # label(t71_relat_1) # label(axiom).  [clausify(39)].
+73 relation_rng(identity_relation(A)) = A # label(t71_relat_1) # label(axiom).  [clausify(39)].
+80 identity_relation(c9) != function_inverse(identity_relation(c9)) # label(t67_funct_1) # label(negated_conjecture).  [clausify(42)].
+81 function_inverse(identity_relation(c9)) != identity_relation(c9).  [copy(80),flip(a)].
+92 -relation(A) | -function(A) | relation(function_inverse(A)) # label(dt_k2_funct_1) # label(axiom).  [clausify(5)].
+93 -relation(A) | -function(A) | function(function_inverse(A)) # label(dt_k2_funct_1) # label(axiom).  [clausify(5)].
+105 -relation(A) | -function(A) | -relation(B) | -function(B) | relation_rng(A) != relation_dom(B) | relation_composition(A,B) != A | identity_relation(relation_dom(B)) = B # label(t44_funct_1) # label(axiom).  [clausify(32)].
+108 -relation(identity_relation(A)) | -function(identity_relation(A)) | relation_rng(identity_relation(A)) = relation_dom(function_inverse(identity_relation(A))).  [resolve(43,c,45,a)].
+109 relation_dom(function_inverse(identity_relation(A))) = A.  [copy(108),rewrite([73(6)]),flip(c),unit_del(a,67),unit_del(b,68)].
+114 -relation(identity_relation(A)) | -function(identity_relation(A)) | relation_rng(function_inverse(identity_relation(A))) = relation_dom(identity_relation(A)).  [resolve(47,c,45,a)].
+115 relation_rng(function_inverse(identity_relation(A))) = A.  [copy(114),rewrite([72(9)]),unit_del(a,67),unit_del(b,68)].
+120 -relation(identity_relation(A)) | -function(identity_relation(A)) | identity_relation(relation_dom(identity_relation(A))) = relation_composition(identity_relation(A),function_inverse(identity_relation(A))).  [resolve(48,c,45,a)].
+121 relation_composition(identity_relation(A),function_inverse(identity_relation(A))) = identity_relation(A).  [copy(120),rewrite([72(6)]),flip(c),unit_del(a,67),unit_del(b,68)].
+132 function_inverse(identity_relation(c9)) = c_0.  [new_symbol(81)].
+136 identity_relation(c9) != c_0.  [back_rewrite(81),rewrite([132(3)]),flip(a)].
+181 relation(function_inverse(identity_relation(A))).  [resolve(92,b,68,a),unit_del(a,67)].
+184 function(function_inverse(identity_relation(A))).  [resolve(93,b,68,a),unit_del(a,67)].
+212 -relation(A) | -function(A) | relation_dom(A) != B | relation_composition(identity_relation(B),A) != identity_relation(B) | identity_relation(relation_dom(A)) = A.  [resolve(105,b,68,a),rewrite([73(6)]),flip(d),unit_del(a,67)].
+228 relation_dom(c_0) = c9.  [para(132(a,1),109(a,1,1))].
+229 relation_rng(c_0) = c9.  [para(132(a,1),115(a,1,1))].
+230 relation_composition(identity_relation(c9),c_0) = identity_relation(c9).  [para(132(a,1),121(a,1,2))].
+349 relation(c_0).  [para(132(a,1),181(a,1))].
+365 function(c_0).  [para(132(a,1),184(a,1))].
+1933 c9 != A | relation_composition(identity_relation(A),c_0) != identity_relation(A).  [resolve(212,b,365,a),rewrite([228(4),228(11)]),unit_del(a,349),unit_del(d,136)].
+1944 $F.  [ur(1933,a,229,a(flip)),rewrite([229(2),230(4),229(4)]),xx(a)].
+============================== end of proof ==========================
+============================== STATISTICS ============================
+Given=315. Generated=2844. Kept=1878. proofs=1.
+Usable=273. Sos=1172. Demods=35. Limbo=0, Disabled=515. Hints=0.
+Megabytes=1.15.
+User_CPU=0.23, System_CPU=0.00, Wall_clock=0.
+============================== end of statistics =====================
+============================== end of search =========================
+THEOREM PROVED
+Exiting with 1 proof.
+Process 22281 exit (max_proofs) Thu Jun 14 09:04:06 2012
+Prover9 interrupted
+
+%------------------------------------------------------------------------------

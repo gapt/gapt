@@ -20,7 +20,7 @@ class IvyToRobinsonTest extends Specification with ClasspathFileCopier {
     val proof = result.head
     proof match {
       case lisp.List( _ ) =>
-        val pinput = IvyParser.parse( proof, IvyParser.is_ivy_variable )
+        val pinput = IvyParser.parse( proof )
         val rinput = IvyToRobinson( pinput )
         ok
       case _ =>

@@ -1,0 +1,204 @@
+cnf(c_37,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| ~ between(X0_$i,X3_$i,X2_$i)
+| ~ between(X0_$i,X1_$i,X3_$i) ),
+file('', b9) ).
+
+cnf(c_181748,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| ~ between(X0_$i,X3_$i,X2_$i)
+| ~ between(X0_$i,X1_$i,X3_$i) ),
+inference(subtyping,[status(esa)],[c_37]) ).
+
+cnf(c_26,plain,
+( between(X0_$i,X1_$i,X2_$i) | ~ between(X2_$i,X1_$i,X0_$i) ),
+file('', t1) ).
+
+cnf(c_181750,plain,
+( between(X0_$i,X1_$i,X2_$i) | ~ between(X2_$i,X1_$i,X0_$i) ),
+inference(subtyping,[status(esa)],[c_26]) ).
+
+cnf(c_62,plain,( between(a,d,e) ),file('', d_between_a_and_e) ).
+
+cnf(c_181820,plain,
+( between(a,d,e) ),
+inference(subtyping,[status(esa)],[c_62]) ).
+
+cnf(c_181875,plain,
+( between(e,d,a) ),
+inference(resolution,[status(thm)],[c_181750,c_181820]) ).
+
+cnf(c_182806,plain,
+( ~ between(e,a,X0_$i) | between(e,d,X0_$i) ),
+inference(resolution,[status(thm)],[c_181748,c_181875]) ).
+
+cnf(c_183087,plain,
+( ~ between(e,a,X0_$i) | between(X0_$i,d,e) ),
+inference(resolution,[status(thm)],[c_182806,c_181750]) ).
+
+cnf(c_61,plain,( between(a,c,e) ),file('', c_between_a_and_e) ).
+
+cnf(c_111,plain,
+( between(a,c,e) ),
+inference(subtyping,[status(esa)],[c_61]) ).
+
+cnf(c_63,plain,( between(c,b,d) ),file('', b_between_c_and_d) ).
+
+cnf(c_109,plain,
+( between(c,b,d) ),
+inference(subtyping,[status(esa)],[c_63]) ).
+
+cnf(c_64,plain,( ~ between(a,b,e) ),file('', prove_betweenness) ).
+
+cnf(c_88,plain,
+( ~ between(a,b,e) ),
+inference(subtyping,[status(esa)],[c_64]) ).
+
+cnf(c_36,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| ~ between(X3_$i,X1_$i,X2_$i)
+| ~ between(X0_$i,X3_$i,X2_$i) ),
+file('', b8) ).
+
+cnf(c_521,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| ~ between(X3_$i,X1_$i,X2_$i)
+| ~ between(X0_$i,X3_$i,X2_$i) ),
+inference(subtyping,[status(esa)],[c_36]) ).
+
+cnf(c_624,plain,
+( between(a,b,e) | ~ between(a,X0_$i,e) | ~ between(X0_$i,b,e) ),
+inference(instantiation,[status(thm)],[c_521]) ).
+
+cnf(c_796,plain,
+( ~ between(a,c,e) | between(a,b,e) | ~ between(c,b,e) ),
+inference(instantiation,[status(thm)],[c_624]) ).
+
+cnf(c_522,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| ~ between(X0_$i,X3_$i,X2_$i)
+| ~ between(X0_$i,X1_$i,X3_$i) ),
+inference(subtyping,[status(esa)],[c_37]) ).
+
+cnf(c_2553,plain,
+( between(c,b,e) | ~ between(c,b,X0_$i) | ~ between(c,X0_$i,e) ),
+inference(instantiation,[status(thm)],[c_522]) ).
+
+cnf(c_11829,plain,
+( ~ between(c,d,e) | between(c,b,e) | ~ between(c,b,d) ),
+inference(instantiation,[status(thm)],[c_2553]) ).
+
+cnf(c_524,plain,
+( between(X0_$i,X1_$i,X2_$i) | ~ between(X2_$i,X1_$i,X0_$i) ),
+inference(subtyping,[status(esa)],[c_26]) ).
+
+cnf(c_8858,plain,
+( ~ between(e,X0_$i,X1_$i) | between(X1_$i,X0_$i,e) ),
+inference(instantiation,[status(thm)],[c_524]) ).
+
+cnf(c_26026,plain,
+( ~ between(e,c,X0_$i) | between(X0_$i,c,e) ),
+inference(instantiation,[status(thm)],[c_8858]) ).
+
+cnf(c_60,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| between(X1_$i,X0_$i,X2_$i)
+| ~ between(X3_$i,X0_$i,X2_$i)
+| ~ between(X3_$i,X1_$i,X2_$i) ),
+file('', b14) ).
+
+cnf(c_54335,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| between(X1_$i,X0_$i,X2_$i)
+| ~ between(X3_$i,X0_$i,X2_$i)
+| ~ between(X3_$i,X1_$i,X2_$i) ),
+inference(subtyping,[status(esa)],[c_60]) ).
+
+cnf(c_61319,plain,
+( between(c,d,e)
+| between(d,c,e)
+| ~ between(X0_$i,c,e)
+| ~ between(X0_$i,d,e) ),
+inference(instantiation,[status(thm)],[c_54335]) ).
+
+cnf(c_181819,plain,
+( between(a,c,e) ),
+inference(subtyping,[status(esa)],[c_61]) ).
+
+cnf(c_181876,plain,
+( between(e,c,a) ),
+inference(resolution,[status(thm)],[c_181750,c_181819]) ).
+
+cnf(c_182807,plain,
+( ~ between(e,a,X0_$i) | between(e,c,X0_$i) ),
+inference(resolution,[status(thm)],[c_181748,c_181876]) ).
+
+cnf(c_181821,plain,
+( between(c,b,d) ),
+inference(subtyping,[status(esa)],[c_63]) ).
+
+cnf(c_181874,plain,
+( between(d,b,c) ),
+inference(resolution,[status(thm)],[c_181750,c_181821]) ).
+
+cnf(c_182797,plain,
+( ~ between(d,c,X0_$i) | between(d,b,X0_$i) ),
+inference(resolution,[status(thm)],[c_181748,c_181874]) ).
+
+cnf(c_181747,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| ~ between(X3_$i,X1_$i,X2_$i)
+| ~ between(X0_$i,X3_$i,X2_$i) ),
+inference(subtyping,[status(esa)],[c_36]) ).
+
+cnf(c_182645,plain,
+( between(a,X0_$i,e) | ~ between(d,X0_$i,e) ),
+inference(resolution,[status(thm)],[c_181747,c_181820]) ).
+
+cnf(c_183076,plain,
+( between(a,b,e) | ~ between(d,c,e) ),
+inference(resolution,[status(thm)],[c_182797,c_182645]) ).
+
+cnf(c_183858,plain,
+( ~ between(e,a,X0_$i) ),
+inference(global_propositional_subsumption,
+[status(thm)],
+[c_183087,c_111,c_109,c_88,c_796,c_11829,c_26026,c_61319,
+c_182807,c_183076]) ).
+
+cnf(c_33,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| ~ between(X3_$i,X1_$i,X2_$i)
+| ~ between(X3_$i,X0_$i,X1_$i) ),
+file('', b5) ).
+
+cnf(c_181742,plain,
+( between(X0_$i,X1_$i,X2_$i)
+| ~ between(X3_$i,X1_$i,X2_$i)
+| ~ between(X3_$i,X0_$i,X1_$i) ),
+inference(subtyping,[status(esa)],[c_33]) ).
+
+cnf(c_11,plain,
+( between(X0_$i,X1_$i,reflection(X0_$i,X1_$i)) ),
+file('', r2_1) ).
+
+cnf(c_181780,plain,
+( between(X0_$i,X1_$i,reflection(X0_$i,X1_$i)) ),
+inference(subtyping,[status(esa)],[c_11]) ).
+
+cnf(c_181870,plain,
+( between(reflection(X0_$i,X1_$i),X1_$i,X0_$i) ),
+inference(resolution,[status(thm)],[c_181750,c_181780]) ).
+
+cnf(c_181964,plain,
+( ~ between(reflection(X0_$i,X1_$i),X0_$i,X2_$i)
+| between(X1_$i,X0_$i,X2_$i) ),
+inference(resolution,[status(thm)],[c_181742,c_181870]) ).
+
+cnf(c_182302,plain,
+( between(X0_$i,X1_$i,reflection(reflection(X1_$i,X0_$i),X1_$i)) ),
+inference(resolution,[status(thm)],[c_181964,c_181780]) ).
+
+cnf(c_183861,plain,
+( $false ),
+inference(resolution,[status(thm)],[c_183858,c_182302]) ).

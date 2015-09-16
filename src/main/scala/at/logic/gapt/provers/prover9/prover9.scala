@@ -6,7 +6,6 @@ import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ containsStrongQuantifier, existsclosure, univclosure, CNFn }
 import at.logic.gapt.formats.ivy.IvyParser
-import at.logic.gapt.formats.ivy.IvyParser.IvyStyleVariables
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
@@ -40,7 +39,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
       Seq( "prooftrans", "ivy", "-f", p9OutputFile ) !!
     }
 
-    val ivyProof = withTempFile.fromString( ivy ) { ivyFile => IvyParser( ivyFile, IvyStyleVariables ) }
+    val ivyProof = withTempFile.fromString( ivy ) { ivyFile => IvyParser( ivyFile ) }
 
     IvyToRobinson( ivyProof )
   }
