@@ -10,6 +10,7 @@ import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
+import scalaz._, Scalaz._
 
 trait RefutationSketch extends SequentProof[FOLAtom, RefutationSketch] {
   override def occConnectors = immediateSubProofs map { p => OccConnector( conclusion, p.conclusion, p.conclusion map { _ => Seq() } ) }
@@ -36,22 +37,23 @@ object RefutationSketchToRobinson extends Logger {
       case SketchAxiom( axiom ) => Some( InputClause( axiom ) )
       case SketchInference( conclusion, from ) =>
         debug( s"Proving $conclusion" )
-        val solvedFrom = from.flatMap { c => solve( c ) map { sol => c.conclusion -> sol } }.toMap
-        findDerivationViaResolution( conclusion, solvedFrom.keySet, prover ) map { deriv =>
-          val filledInDeriv = mapInputClauses( deriv ) { other =>
-            solvedFrom.view.flatMap {
-              case ( prevStep, solution ) =>
-                // the prover9 interface and hence findDerivationViaResolution doesn't use the variables from the passed CNF...
-                FOLMatchingAlgorithm.matchTerms( prevStep.toFormula.asInstanceOf[FOLFormula], other.toFormula.asInstanceOf[FOLFormula] ) map { subst =>
-                  Instance( solution, subst )
-                }
-            }.head
+        from.toList traverse solve flatMap { solvedFrom =>
+          findDerivationViaResolution( conclusion, solvedFrom.map( _.conclusion ).toSet, prover ) map { deriv =>
+            val filledInDeriv = mapInputClauses( deriv ) { other =>
+              solvedFrom.view.flatMap {
+                case prevStep =>
+                  // the prover9 interface and hence findDerivationViaResolution doesn't use the variables from the passed CNF...
+                  FOLMatchingAlgorithm.matchTerms( prevStep.conclusion.toFormula.asInstanceOf[FOLFormula], other.toFormula.asInstanceOf[FOLFormula] ) map { subst =>
+                    Instance( prevStep, subst )
+                  }
+              }.head
+            }
+            require( filledInDeriv.conclusion isSubMultisetOf conclusion )
+            filledInDeriv
+          } orElse {
+            warn( s"Could not derive $conclusion" )
+            None
           }
-          require( filledInDeriv.conclusion isSubMultisetOf conclusion )
-          filledInDeriv
-        } orElse {
-          warn( s"Could not derive $conclusion" )
-          None
         }
     } )
     solve( sketch ) map { simplifyResolutionProof( _ ) }
