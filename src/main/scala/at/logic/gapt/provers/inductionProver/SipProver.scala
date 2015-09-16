@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT }
+import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.utils.logging.Logger
@@ -25,7 +25,7 @@ class SipProver(
   testInstances:             Seq[Int]       = 0 until 15,
   minimizeInstanceLanguages: Boolean        = false,
   quasiTautProver:           Prover         = new VeriTProver,
-  maxSATSolver:              MaxSATSolver   = new QMaxSAT
+  maxSATSolver:              MaxSATSolver   = bestAvailableMaxSatSolver
 )
     extends Prover with Logger {
 
