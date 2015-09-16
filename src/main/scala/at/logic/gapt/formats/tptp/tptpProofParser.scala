@@ -77,6 +77,7 @@ object TptpProofParser extends TptpProofParser {
     def getParents( justification: GeneralTerm ): Seq[String] = justification match {
       case GTFun( "inference", List( _, _, GTList( parents ) ) )     => parents flatMap getParents
       case GTFun( "introduced", List( GTFun( "tautology", _ ), _ ) ) => Seq()
+      case GTFun( "theory", GTFun( "equality", _ ) +: _ )            => Seq()
       case GTFun( parent, List() )                                   => Seq( parent )
     }
 

@@ -12,6 +12,10 @@ class TPTPParser extends RegexParsers with PackratParsers {
       case f1 ~ _ ~ f2 =>
         And( Imp( f1, f2 ), Imp( f2, f1 ) )
     }
+    | impl ~ "<~>" ~ impl ^^ {
+      case f1 ~ _ ~ f2 =>
+        And( Or( f1, f2 ), Or( Neg( f2 ), Neg( f1 ) ) )
+    }
     | impl
   )
 
