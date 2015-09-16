@@ -28,6 +28,13 @@ class CollectMetrics extends MetricsCollector {
   }
 
   override def value( key: String, value: => Any ) = data( key ) = value
+
+  def copy: CollectMetrics = {
+    val clone = new CollectMetrics
+    clone.currentPhase = currentPhase
+    clone.data ++= data
+    clone
+  }
 }
 
 class IgnoreMetrics extends MetricsCollector {

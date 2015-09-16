@@ -1,12 +1,14 @@
 package at.logic.gapt.testing
 
+import java.util.concurrent.TimeoutException
+
 import at.logic.gapt.expr.{ EqC, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
 import java.nio.file.{ Paths, Files }
 import at.logic.gapt.examples._
 import at.logic.gapt.formats.veriT.VeriTParser
-import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
+import at.logic.gapt.proofs.lk.base.LKRuleCreationException
 import at.logic.gapt.proofs.lk.{ LKToExpansionProof, rulesNumber, containsEqualityReasoning }
 import at.logic.gapt.proofs.lk.cutIntroduction._
 import at.logic.gapt.proofs.resolution.{ numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
@@ -14,76 +16,122 @@ import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
-import scala.io.Source
 import scala.collection.immutable.HashMap
 
 import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toShallow, ExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toShallow }
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.Random
 
 object testCutIntro extends App {
 
-  val resultsOut = new PrintWriter( "result_lines.json" )
-
-  val timeOut = 60 seconds
-  val veritTimeOut = 5 minutes
-
-  compressAll()
-
-  resultsOut.close()
-
-  Files.write(
-    Paths.get( "results.json" ),
-    compact( render( JArray(
-      Source.fromFile( "result_lines.json" ).getLines().map( parse( _ ) ).toList
-    ) ) ).getBytes
-  )
-
-  def compressAll() {
-    compressAll( DeltaTableMethod( false ) )
-    compressAll( DeltaTableMethod( true ) )
-
-    val solver = new OpenWBO
-    compressAll( MaxSATMethod( solver, 1 ) )
-    compressAll( MaxSATMethod( solver, 1, 1 ) )
-    compressAll( MaxSATMethod( solver, 2 ) )
-    compressAll( MaxSATMethod( solver, 2, 2 ) )
-  }
-
-  def compressAll( method: GrammarFindingMethod ) = {
-    compressProofSequences( method )
-    compressTSTP( "testing/resultsCutIntro/tstp_non_trivial_termset.csv", method )
-    compressLeanCoP( method )
-    compressVeriT( "testing/veriT-SMT-LIB/QF_UF/", method )
-  }
-
-  def saveMetrics( timeout: Duration )( f: => Unit ): CollectMetrics = {
-    val collectedMetrics = new CollectMetrics
-    metrics.current.withValue( collectedMetrics ) {
-      try {
-        withTimeout( timeout ) {
-          metrics.time( "total" )( f )
-        }
-      } catch {
-        case e: TimeOutException =>
-          metrics.value( "status", "cutintro_timeout" )
-        case e: OutOfMemoryError =>
-          metrics.value( "status", "cutintro_out_of_memory" )
-        case e: StackOverflowError =>
-          metrics.value( "status", "cutintro_stack_overflow" )
-        case e: CutIntroEHSUnprovableException =>
-          metrics.value( "status", "cutintro_ehs_unprovable" )
-        case e: LKRuleCreationException =>
-          metrics.value( "status", "lk_rule_creation_exception" )
-        case e: Throwable =>
-          metrics.value( "status", "cutintro_other_exception" )
+  lazy val proofSeqRegex = """\w+\((\d+)\)""".r
+  def loadProof( fileName: String ) = fileName match {
+    case proofSeqRegex( name, n ) =>
+      val p = proofSequences.find( _.name == name ).get( n.toInt )
+      val hasEquality = containsEqualityReasoning( p )
+      metrics.value( "lkinf_input", rulesNumber( p ) )
+      Some( LKToExpansionProof( p ) -> hasEquality )
+    case _ if fileName endsWith ".proof_flat" =>
+      VeriTParser.getExpansionProof( fileName ) map { ep => addSymmetry( ep ) -> false }
+    case _ if fileName contains "/leanCoP/" =>
+      LeanCoPParser.getExpansionProof( fileName ) map { _ -> true }
+    case _ if fileName contains "/prover9/" =>
+      val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fileName )
+      metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( resProof ) )
+      val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
+      val containsEquations = constants( toShallow( expansionProof ) ) exists {
+        case EqC( _ ) => true
+        case _        => false
       }
-      metrics.value( "phase", collectedMetrics.currentPhase )
+      Some( expansionProof -> containsEquations )
+  }
+
+  def getMethod( methodName: String ) = methodName match {
+    case "1_dtable"    => DeltaTableMethod( manyQuantifiers = false )
+    case "many_dtable" => DeltaTableMethod( manyQuantifiers = true )
+    case _ if methodName endsWith "_maxsat" =>
+      val vectorSizes = methodName.dropRight( "_maxsat".length ).split( "_" ).map( _.toInt )
+      MaxSATMethod( new OpenWBO, vectorSizes: _* )
+  }
+
+  lazy val proofs =
+    ( for ( n <- 0 to 100; proofSequence <- proofSequences ) yield s"${proofSequence.name}($n)" ) ++
+      recursiveListFiles( "testing/TSTP/prover9" ).map( _.getPath ).filter( _ endsWith ".s.out" ) ++
+      recursiveListFiles( "testing/veriT-SMT-LIB-QF_UF" ).map( _.getPath ).filter( _ endsWith ".proof_flat" ) ++
+      recursiveListFiles( "testing/TSTP/leanCoP" ).map( _.getPath ).filter( _ endsWith ".s.out" ) ++
+      Nil
+
+  lazy val methods = Seq( "1_dtable", "many_dtable", "1_maxsat", "1_1_maxsat", "2_maxsat", "2_2_maxsat" )
+
+  lazy val experiments = for ( p <- proofs; m <- methods ) yield ( p, m )
+
+  def timeout = 60 seconds
+
+  def runExperiment( fileName: String, methodName: String ): JValue = {
+    val collectedMetrics = new CollectMetrics
+    val f = Future {
+      metrics.current.withValue( collectedMetrics ) {
+        metrics.value( "file", fileName )
+        metrics.value( "method", methodName )
+        val parseResult = try metrics.time( "parse" ) {
+          loadProof( fileName ) orElse {
+            metrics.value( "status", "parsing_proof_not_found" )
+            None
+          }
+        } catch {
+          case e: OutOfMemoryError =>
+            metrics.value( "status", "parsing_out_of_memory" )
+            None
+          case e: StackOverflowError =>
+            metrics.value( "status", "parsing_stack_overflow" )
+            None
+          case e: Throwable =>
+            metrics.value( "status", "parsing_other_exception" )
+            None
+        }
+
+        parseResult foreach {
+          case ( expansionProof, hasEquality ) =>
+            metrics.value( "has_equality", hasEquality )
+            try metrics.time( "cutintro" ) {
+              CutIntroduction.compressToLK( expansionProof, hasEquality, getMethod( methodName ), verbose = false ) match {
+                case Some( _ ) => metrics.value( "status", "ok" )
+                case None      => metrics.value( "status", "cutintro_uncompressible" )
+              }
+            }
+            catch {
+              case e: OutOfMemoryError =>
+                metrics.value( "status", "cutintro_out_of_memory" )
+              case e: StackOverflowError =>
+                metrics.value( "status", "cutintro_stack_overflow" )
+              case e: CutIntroEHSUnprovableException =>
+                metrics.value( "status", "cutintro_ehs_unprovable" )
+              case e: LKRuleCreationException =>
+                metrics.value( "status", "lk_rule_creation_exception" )
+              case e: Throwable =>
+                metrics.value( "status", "cutintro_other_exception" )
+            }
+        }
+      }
     }
+
+    val results = try {
+      Await.result( f, timeout )
+      collectedMetrics.copy
+    } catch {
+      case _: TimeoutException =>
+        val res = collectedMetrics.copy
+        res.value( "status", if ( res.currentPhase == "parsing" ) "parsing_timeout" else "cutintro_timeout" )
+        res
+    }
+    results.value( "phase", results.currentPhase )
 
     def jsonify( v: Any ): JValue = v match {
       case l: Long    => JInt( l )
@@ -93,136 +141,40 @@ object testCutIntro extends App {
       case s          => JString( s toString )
     }
 
-    val json = JObject( collectedMetrics.data mapValues jsonify toList )
-    resultsOut.println( compact( render( json ) ) ); resultsOut.flush()
-
-    collectedMetrics
+    JObject( results.data mapValues jsonify toList )
   }
 
-  def compressLKProof( p: LKProof, method: GrammarFindingMethod ) = {
-    val hasEquality = containsEqualityReasoning( p )
-    metrics.value( "lkinf_input", rulesNumber( p ) )
-    compressExpansionProof( LKToExpansionProof( p ), hasEquality, method )
-  }
+  println( s"Running ${experiments.size} experiments." )
 
-  def compressExpansionProof( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod ) = {
-    metrics.value( "method", method.name )
-    metrics.value( "has_equality", hasEquality )
-    CutIntroduction.compressToLK( ep, hasEquality, method, verbose = false ) match {
-      case Some( _ ) => metrics.value( "status", "ok" )
-      case None      => metrics.value( "status", "cutintro_uncompressible" )
-    }
-  }
-
-  def wrapParse[T]( thunk: => Option[T] ): Option[T] = {
-    try {
-      thunk orElse {
-        metrics.value( "status", "parsing_no_proof_found" )
-        None
+  val partialResultsOut = new PrintWriter( "partial_results.json" )
+  var done = 0
+  val experimentResults = Random.shuffle( experiments ).par flatMap {
+    case ( p, m ) =>
+      try {
+        done += 1
+        println( s"$done/${experiments.size}\t$p\t$m" )
+        val beginTime = System.currentTimeMillis()
+        val JObject( resultEntries ) =
+          parse( runOutOfProcess[String]( Seq( "-Xmx1G", "-Xss30m" ) ) { compact( render( runExperiment( p, m ) ) ) } )
+        val totalTime = System.currentTimeMillis() - beginTime
+        val result = JObject( resultEntries :+ ( "time_total" -> JInt( totalTime ) ) )
+        partialResultsOut.println( compact( render( result ) ) )
+        partialResultsOut.flush()
+        Some( result )
+      } catch {
+        case t: Throwable =>
+          println( s"$p $m failed" )
+          t.printStackTrace()
+          None
       }
-    } catch {
-      case e: ThreadDeath =>
-        metrics.value( "status", "parsing_timeout" )
-        None
-      case e: OutOfMemoryError =>
-        metrics.value( "status", "parsing_out_of_memory" )
-        None
-      case e: StackOverflowError =>
-        metrics.value( "status", "parsing_stack_overflow" )
-        None
-      case e: Exception =>
-        metrics.value( "status", "parsing_other_exception" )
-        None
-    }
   }
 
-  // Compress the prover9-TSTP proofs whose names are in the csv-file passed as parameter str
-  def compressTSTP( str: String, method: GrammarFindingMethod ) = {
+  Files.write(
+    Paths.get( "results.json" ),
+    compact( render( JArray( experimentResults.toList ) ) ).getBytes
+  )
 
-    // Process each file in parallel
-    Source.fromFile( str ).getLines() foreach { l =>
-      val data = l.split( "," )
-      saveMetrics( timeOut ) { compressTSTPProof( data( 0 ), method ) }
-    }
-  }
-
-  /// compress the prover9-TSTP proof found in file fn
-  def compressTSTPProof( fn: String, method: GrammarFindingMethod ) = {
-    metrics.value( "file", fn )
-    wrapParse { Some( Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fn ) ) } foreach {
-      case ( resProof, endSequent ) =>
-        metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( resProof ) )
-        val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
-        val containsEquations = constants( toShallow( expansionProof ) ) exists {
-          case EqC( _ ) => true
-          case _        => false
-        }
-        compressExpansionProof( expansionProof, containsEquations, method )
-    }
-  }
-
-  /****************************** VeriT SMT-LIB ******************************/
-
-  // Compress all veriT-proofs found in the directory str and beyond
-  def compressVeriT( str: String, method: GrammarFindingMethod ) = {
-    getVeriTProofs( str ) foreach { p =>
-      saveMetrics( veritTimeOut ) { compressVeriTProof( p, method ) }
-    }
-  }
-
-  def getVeriTProofs( str: String ): List[String] = {
-    val file = new File( str )
-    if ( file.isDirectory ) {
-      val children = file.listFiles
-      children.foldLeft( List[String]() )( ( acc, f ) => acc ::: getVeriTProofs( f.getPath ) )
-    } else if ( file.getName.endsWith( ".proof_flat" ) ) {
-      List( file.getPath )
-    } else List()
-  }
-
-  // Compress the veriT-proof in file str
-  def compressVeriTProof( str: String, method: GrammarFindingMethod ) {
-    metrics.value( "file", str )
-
-    wrapParse { VeriTParser.getExpansionProof( str ) } foreach { ep =>
-      // VeriT proofs have the equality axioms as formulas in the end-sequent
-      compressExpansionProof( addSymmetry( ep ), hasEquality = false, method )
-    }
-  }
-
-  // leancop
-
-  def compressLeanCoP( method: GrammarFindingMethod ) = {
-    recursiveListFiles( "testing/TSTP/leanCoP" ) foreach { f =>
-      if ( f.getName endsWith ".out" ) {
-        compressLeanCoPProof( f.getPath, method )
-      }
-    }
-  }
-
-  def compressLeanCoPProof( fn: String, method: GrammarFindingMethod ) = saveMetrics( timeOut ) {
-    metrics.value( "file", fn )
-    wrapParse { LeanCoPParser.getExpansionProof( fn ) } foreach { proof =>
-      compressExpansionProof( proof, true, method )
-    }
-  }
-
-  /***************************** Proof Sequences ******************************/
-
-  def compressProofSequences( method: GrammarFindingMethod ) = {
-    proofSequences foreach { proofSeq =>
-      var i = 0
-      var status = "ok"
-      while ( status == "ok" || status == "cutintro_uncompressible" ) {
-        i = i + 1
-        val pn = s"${proofSeq.name}($i)"
-        status = saveMetrics( timeOut ) {
-          metrics.value( "file", pn )
-          compressLKProof( proofSeq( i ), method )
-        }.data( "status" ).toString
-      }
-    }
-  }
+  partialResultsOut.close()
 }
 
 object findNonTrivialTSTPExamples extends App {
