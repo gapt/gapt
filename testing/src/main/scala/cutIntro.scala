@@ -2,7 +2,7 @@ package at.logic.gapt.testing
 
 import java.util.concurrent.TimeoutException
 
-import at.logic.gapt.expr.{ EqC, constants }
+import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
 import java.nio.file.{ Paths, Files }
@@ -16,10 +16,8 @@ import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
-import scala.collection.immutable.HashMap
-
 import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toShallow }
+import at.logic.gapt.proofs.expansionTrees.{ InstanceTermEncoding, addSymmetry, toShallow }
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -27,7 +25,7 @@ import org.json4s.native.JsonMethods._
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.Random
+import scala.util.{ Success, Failure, Random }
 
 object testCutIntro extends App {
 
@@ -178,83 +176,43 @@ object testCutIntro extends App {
 }
 
 object findNonTrivialTSTPExamples extends App {
-  var total = 0
-  var num_trivial_termset = 0
-  var error_parser = 0
-  var error_term_extraction = 0
-  // Hashmap containing proofs with non-trivial termsets
-  var termsets = HashMap[String, TermSet]()
+  case class TermSetStats( fileName: String, size: Int, numFuns: Int )
 
-  findNonTrivialTSTPExamples( "testing/TSTP/prover9", 60 )
+  val p9Files = recursiveListFiles( "testing/TSTP/prover9" ).map( _.getPath ).filter( _ endsWith ".s.out" )
 
-  def findNonTrivialTSTPExamples( str: String, timeout: Int ) = {
+  val stats = p9Files map { fn =>
+    try {
+      println( fn )
+      withTimeout( 60 seconds ) {
+        val p = Prover9Importer.expansionProofFromFile( fn )
+        val terms = new InstanceTermEncoding( toShallow( p ) ).encode( p ).toSet
+        val functions = terms map { case FOLFunction( f, _ ) => f }
 
-    nonTrivialTermset( str, timeout )
-    val file = new File( "testing/resultsCutIntro/tstp_non_trivial_termset.csv" )
-    val summary = new File( "testing/resultsCutIntro/tstp_non_trivial_summary.txt" )
-    file.createNewFile()
-    summary.createNewFile()
-    val fw = new FileWriter( file.getAbsoluteFile )
-    val bw = new BufferedWriter( fw )
-    val fw_s = new FileWriter( summary.getAbsoluteFile )
-    val bw_s = new BufferedWriter( fw_s )
-
-    val nLine = sys.props( "line.separator" )
-
-    var instance_per_formula = 0.0
-    var ts_size = 0
-    val data = termsets.foldLeft( "" ) {
-      case ( acc, ( k, v ) ) =>
-        val tssize = v.set.size
-        val n_functions = v.formulas.distinct.size
-        instance_per_formula += tssize.toFloat / n_functions.toFloat
-        ts_size += tssize
-        k + "," + n_functions + "," + tssize + nLine + acc
-    }
-
-    val avg_inst_per_form = instance_per_formula / termsets.size
-    val avg_ts_size = ts_size.toFloat / termsets.size.toFloat
-
-    bw.write( data )
-    bw.close()
-
-    bw_s.write( "Total number of proofs: " + total + nLine )
-    bw_s.write( "Total number of proofs with trivial termsets: " + num_trivial_termset + nLine )
-    bw_s.write( "Total number of proofs with non-trivial termsets: " + termsets.size + nLine )
-    bw_s.write( "Time limit exceeded or exception during parsing: " + error_parser + nLine )
-    bw_s.write( "Time limit exceeded or exception during terms extraction: " + error_term_extraction + nLine )
-    bw_s.write( "Average instances per quantified formula: " + avg_inst_per_form + nLine )
-    bw_s.write( "Average termset size: " + avg_ts_size + nLine )
-    bw_s.close()
-
-  }
-  def nonTrivialTermset( str: String, timeout: Int ): Unit = {
-    val file = new File( str )
-    if ( file.isDirectory ) {
-      val children = file.listFiles
-      children.foreach( f => nonTrivialTermset( f.getAbsolutePath, timeout ) )
-    } else if ( file.getName.endsWith( ".out" ) ) {
-      println( file )
-      total += 1
-      try {
-        withTimeout( timeout seconds ) {
-          val p = Prover9Importer.expansionProofFromFile( file.getAbsolutePath )
-          try {
-            val ts = TermsExtraction( p )
-            val tssize = ts.set.size
-            val n_functions = ts.formulas.distinct.size
-
-            if ( tssize > n_functions )
-              termsets += ( file.getAbsolutePath -> ts )
-            else num_trivial_termset += 1
-          } catch {
-            case e: Throwable => error_term_extraction += 1
-          }
-        }
-      } catch {
-        case e: Throwable => error_parser += 1
+        Success( TermSetStats( fn, terms.size, functions.size ) )
       }
-    }
+    } catch { case t: Throwable => Failure( t ) }
   }
 
+  val interesting = stats flatMap { _.toOption } filter { s => s.size > s.numFuns }
+  val trivial = stats flatMap { _.toOption } filter { s => s.size <= s.numFuns }
+
+  val csv = new PrintWriter( "testing/resultsCutIntro/tstp_non_trivial_termset.csv" )
+  interesting.sortBy( _.fileName ) foreach { s =>
+    csv.println( s"${s.fileName},${s.numFuns},${s.size}" )
+  }
+  csv.close()
+
+  var instance_per_formula = interesting map { s => s.size.toFloat / s.numFuns } sum
+  var ts_size = interesting map { _.size } sum
+  val avg_inst_per_form = instance_per_formula / interesting.size
+  val avg_ts_size = ts_size.toFloat / interesting.size.toFloat
+
+  val summary = new PrintWriter( "testing/resultsCutIntro/tstp_non_trivial_summary.txt" )
+  summary.println( "Total number of proofs: " + stats.size )
+  summary.println( "Total number of proofs with trivial termsets: " + trivial.size )
+  summary.println( "Total number of proofs with non-trivial termsets: " + interesting.size )
+  summary.println( "Time limit exceeded or exception: " + stats.collect { case Failure( t ) => t }.size )
+  summary.println( "Average instances per quantified formula: " + avg_inst_per_form )
+  summary.println( "Average termset size: " + avg_ts_size )
+  summary.close()
 }
