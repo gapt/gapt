@@ -26,8 +26,8 @@ case class SketchAxiom( axiom: FOLClause ) extends RefutationSketch {
 case class SketchInference( conclusion: FOLClause, from: Seq[RefutationSketch] ) extends RefutationSketch {
   override def immediateSubProofs = from
 
-  override protected def stepString( subProofLabels: Map[Any, String] ) =
-    s"$conclusion    (SketchInference(${from map subProofLabels mkString ", "})"
+  override def productArity = 1 + from.size
+  override def productElement( n: Int ) = if ( n == 0 ) conclusion else from( n - 1 )
 }
 
 object RefutationSketchToRobinson extends Logger {
