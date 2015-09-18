@@ -187,6 +187,7 @@ object CutIntroduction extends Logger {
 
     metrics.value( "termset", termset.size )
     metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
+    metrics.value( "termset_trivial", termset.size == termset.map { case FOLFunction( r, _ ) => r }.size )
     if ( verbose ) println( s"Size of term set: ${termset.size}" )
 
     /********** Grammar finding **********/

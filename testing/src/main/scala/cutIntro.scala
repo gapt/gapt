@@ -2,6 +2,7 @@ package at.logic.gapt.testing
 
 import java.util.concurrent.TimeoutException
 
+import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
@@ -29,7 +30,7 @@ import scala.util.{ Success, Failure, Random }
 
 object testCutIntro extends App {
 
-  lazy val proofSeqRegex = """\w+\((\d+)\)""".r
+  lazy val proofSeqRegex = """(\w+)\((\d+)\)""".r
   def loadProof( fileName: String ) = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
@@ -96,7 +97,15 @@ object testCutIntro extends App {
             None
         }
 
-        parseResult foreach {
+        parseResult flatMap {
+          case ( proof, hasEquality ) =>
+            if ( isFOLPrenexSigma1( toShallow( proof ) ) ) {
+              Some( proof -> hasEquality )
+            } else {
+              metrics.value( "status", "parsing_not_prenex_sigma1" )
+              None
+            }
+        } foreach {
           case ( expansionProof, hasEquality ) =>
             metrics.value( "has_equality", hasEquality )
             try metrics.time( "cutintro" ) {
