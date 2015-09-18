@@ -14,7 +14,7 @@ import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumbe
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
-import at.logic.gapt.proofs.resolution.numberOfResolutionsAndParamodulations
+import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
@@ -173,6 +173,7 @@ object CutIntroduction extends Logger {
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
     metrics.value( "hs_resinf", numberOfResolutionsAndParamodulations( herbrandSequentResolutionProof ) )
+    metrics.value( "hs_resinf_simp", numberOfResolutionsAndParamodulations( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
 
     metrics.value( "quant_input", quantRulesNumberET( ep ) )
 
@@ -235,6 +236,7 @@ object CutIntroduction extends Logger {
       metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
       metrics.value( "ehs_scomp", expressionSize( ehsSequent.toFormula ) )
       metrics.value( "ehs_resinf", numberOfResolutionsAndParamodulations( ehsResolutionProof ) )
+      metrics.value( "ehs_resinf_simp", numberOfResolutionsAndParamodulations( simplifyResolutionProof( ehsResolutionProof ) ) )
 
       minimizedEHS
     } orElse {

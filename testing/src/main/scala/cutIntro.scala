@@ -11,7 +11,7 @@ import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.lk.base.LKRuleCreationException
 import at.logic.gapt.proofs.lk.{ LKToExpansionProof, rulesNumber, containsEqualityReasoning }
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.resolution.{ numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
@@ -43,6 +43,7 @@ object testCutIntro extends App {
     case _ if fileName contains "/prover9/" =>
       val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fileName )
       metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( resProof ) )
+      metrics.value( "resinf_input_simp", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
       val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
       val containsEquations = constants( toShallow( expansionProof ) ) exists {
         case EqC( _ ) => true
