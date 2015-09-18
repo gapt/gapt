@@ -186,6 +186,7 @@ object CutIntroduction extends Logger {
     val termset = encoding encode ep
 
     metrics.value( "termset", termset.size )
+    metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
     if ( verbose ) println( s"Size of term set: ${termset.size}" )
 
     /********** Grammar finding **********/
@@ -196,6 +197,7 @@ object CutIntroduction extends Logger {
     }.map { vtratGrammar =>
 
       metrics.value( "grammar_size", vtratGrammar.size )
+      metrics.value( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
 
       if ( verbose ) {
         println( s"Smallest grammar of size ${vtratGrammar.size}:" )
