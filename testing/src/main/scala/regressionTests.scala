@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof, ExtractInterpolant }
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9Prover }
@@ -28,6 +28,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E )
+
+    simplifyResolutionProof( robinson ).conclusion.isEmpty !-- "simplifyResolutionProof"
 
     ( toShallow( E ) == p.root.toHOLSequent ) !-- "shallow sequent of expansion proof"
 
