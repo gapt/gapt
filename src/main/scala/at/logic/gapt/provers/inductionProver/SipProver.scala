@@ -64,7 +64,7 @@ class SipProver(
 
     instanceLanguages foreach {
       case ( n, l ) =>
-        debug( s"Instance language for n=$n:$nLine${l.map( _.toString ).sorted.mkString( nLine )}" )
+        debug( s"Instance language for n=$n:$nLine${l.toSeq.map( _.toString ).sorted.mkString( nLine )}" )
     }
 
     debug( "Finding grammar..." )

@@ -200,7 +200,7 @@ object ComputeGrammars {
             coverings.foldLeft( grammars ) {
               case ( acc, u ) =>
                 VectTratGrammar( axiom, Seq( List( axiom ), evs ),
-                  u.map( List( axiom ) -> List( _ ) ) ++ s.map( evs -> _ ) ) :: acc
+                  u.map( List( axiom ) -> List( _ ) ).toSet ++ s.map( evs -> _ ) ) :: acc
             }
           } else grammars
 

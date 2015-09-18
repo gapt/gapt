@@ -50,7 +50,7 @@ case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMe
 
 case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extends GrammarFindingMethod {
   override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] =
-    Some( findMinimalVectGrammar( lang.toSeq, nonTerminalLengths, solver ) )
+    Some( findMinimalVectGrammar( lang, nonTerminalLengths, solver ) )
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
 }
