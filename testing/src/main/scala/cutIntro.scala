@@ -1,7 +1,5 @@
 package at.logic.gapt.testing
 
-import java.util.concurrent.TimeoutException
-
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
@@ -23,8 +21,6 @@ import at.logic.gapt.proofs.expansionTrees.{ InstanceTermEncoding, addSymmetry, 
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
-import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.{ Success, Failure, Random }
 
@@ -76,7 +72,7 @@ object testCutIntro extends App {
 
   def runExperiment( fileName: String, methodName: String ): JValue = {
     val collectedMetrics = new CollectMetrics
-    val f = Future {
+    withTimeout( timeout ) {
       metrics.current.withValue( collectedMetrics ) {
         metrics.value( "file", fileName )
         metrics.value( "method", methodName )
@@ -86,6 +82,9 @@ object testCutIntro extends App {
             None
           }
         } catch {
+          case e: ThreadDeath =>
+            metrics.value( "status", "parsing_timeout" )
+            None
           case e: OutOfMemoryError =>
             metrics.value( "status", "parsing_out_of_memory" )
             None
@@ -115,6 +114,8 @@ object testCutIntro extends App {
               }
             }
             catch {
+              case e: ThreadDeath =>
+                metrics.value( "status", "cutintro_timeout" )
               case e: OutOfMemoryError =>
                 metrics.value( "status", "cutintro_out_of_memory" )
               case e: StackOverflowError =>
@@ -130,15 +131,8 @@ object testCutIntro extends App {
       }
     }
 
-    val results = try {
-      Await.result( f, timeout )
-      collectedMetrics.copy
-    } catch {
-      case _: TimeoutException =>
-        val res = collectedMetrics.copy
-        res.value( "status", if ( res.currentPhase == "parsing" ) "parsing_timeout" else "cutintro_timeout" )
-        res
-    }
+    val results = collectedMetrics.copy
+    results.data.getOrElseUpdate( "status", "cutintro_timeout" )
     results.value( "phase", results.currentPhase )
 
     def jsonify( v: Any ): JValue = v match {

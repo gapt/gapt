@@ -14,30 +14,24 @@ import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, Robinson
 import at.logic.gapt.provers.prover9.commands.InferenceExtractor
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.withTempFile
+import at.logic.gapt.utils.{ runProcess, withTempFile }
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import scala.sys.process._
 
 class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends ResolutionProver with ExternalProgram {
   def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( cnf ) {
       case ( renaming, cnf ) =>
         val p9Input = toP9Input( cnf, renaming )
-        withTempFile.fromString( p9Input ) { p9InputFile =>
-          val out = new ByteArrayOutputStream
-          Seq( "prover9", "-f", p9InputFile ) #> out ! match {
-            case 0 => Some( out toString )
-            case 2 => None
-          }
-        } map parseProof
+        runProcess.withExitValue( Seq( "prover9" ), p9Input ) match {
+          case ( 0, out ) => Some( parseProof( out ) )
+          case ( 2, _ )   => None
+        }
     }
 
   def parseProof( p9Output: String ) = {
-    val ivy = withTempFile.fromString( p9Output ) { p9OutputFile =>
-      Seq( "prooftrans", "ivy", "-f", p9OutputFile ) !!
-    }
+    val ivy = runProcess( Seq( "prooftrans", "ivy" ), p9Output )
 
     val ivyProof = withTempFile.fromString( ivy ) { ivyFile => IvyParser( ivyFile ) }
 
@@ -93,7 +87,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
 
   override val isInstalled: Boolean =
     try {
-      ( "prover9 --help" ! ProcessLogger( _ => () ) ) == 1
+      runProcess.withExitValue( Seq( "prover9", "--help" ), "", true )._1 == 1
     } catch { case _: IOException => false }
 }
 
@@ -106,9 +100,7 @@ object Prover9Importer extends ExternalProgram {
 
   def robinsonProof( p9Output: String ): ResolutionProof = {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
-    val fixedP9Output = withTempFile.fromString( p9Output ) { p9OutputFile =>
-      Seq( "prooftrans", "-f", p9OutputFile ) !!
-    }
+    val fixedP9Output = runProcess( Seq( "prooftrans" ), p9Output )
 
     p9 parseProof fixedP9Output
   }

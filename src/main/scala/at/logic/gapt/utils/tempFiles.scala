@@ -5,6 +5,7 @@ import java.io.{ FileWriter, File }
 object withTempFile {
   def apply[T]( block: String => T ): T = {
     val tempFile = File.createTempFile( "gapt-", ".tmp" )
+    tempFile.deleteOnExit()
     try block( tempFile getAbsolutePath ) finally tempFile.delete()
   }
 

@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.HOLClause
 class ToySolver extends MaxSATSolverBinary {
   def format() = Format.MultiVLine
   def noBinaryWarn() = "Please put the toysolver binary (available at https://github.com/msakai/toysolver) into PATH"
-  def command( in: String, out: String ) = List( "toysolver", "--maxsat", in )
+  def command = List( "toysolver", "--maxsat" )
   def solve( hard: List[HOLClause], soft: List[Tuple2[HOLClause, Int]] ) =
     getFromMaxSATBinary( hard, soft )
 }
