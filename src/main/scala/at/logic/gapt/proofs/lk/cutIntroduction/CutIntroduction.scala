@@ -10,7 +10,7 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.{ findMinimalVectGrammar, VectTratGrammar }
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, extractInstances, toShallow, ExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, InstanceTermEncoding, extractInstances, toShallow, ExpansionSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
@@ -20,9 +20,7 @@ import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.utils.logging.{ CollectMetrics, metrics, Logger }
-import scala.collection.immutable.HashSet
+import at.logic.gapt.utils.logging.{ metrics, Logger }
 
 class CutIntroException( msg: String ) extends Exception( msg )
 
@@ -184,14 +182,15 @@ object CutIntroduction extends Logger {
     if ( verbose ) println( s"End sequent: $endSequent" )
 
     /********** Term set Extraction **********/
-    val termset = metrics.time( "termset" ) { TermsExtraction( ep ) }
+    val encoding = InstanceTermEncoding( endSequent )
+    val termset = encoding encode ep
 
-    metrics.value( "termset", termset.set.size )
-    if ( verbose ) println( s"Size of term set: ${termset.set.size}" )
+    metrics.value( "termset", termset.size )
+    if ( verbose ) println( s"Size of term set: ${termset.size}" )
 
     /********** Grammar finding **********/
     metrics.time( "grammar" ) {
-      method.findGrammars( termset.set.toSet )
+      method.findGrammars( termset )
     }.filter { g =>
       g.productions.exists( _._1 != g.axiomVect )
     }.map { vtratGrammar =>
@@ -203,7 +202,7 @@ object CutIntroduction extends Logger {
         println( vtratGrammar )
       }
 
-      val grammar = simpleToMultiGrammar( termset.encoding, vtratGrammar )
+      val grammar = simpleToMultiGrammar( encoding, vtratGrammar )
 
       val canonicalEHS = new ExtendedHerbrandSequent( endSequent, grammar, computeCanonicalSolutions( grammar ) )
 
