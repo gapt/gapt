@@ -9,12 +9,9 @@ import scala.io.Source
 
 object runProcess {
 
-  def withTempInputFile( cmd: Seq[String], input: String = "", catchStderr: Boolean = false ): String =
-    withTempInputFileAndExitValue( cmd, input, catchStderr )._2
-
-  def withTempInputFileAndExitValue( cmd: Seq[String], input: String = "", catchStderr: Boolean = false ): ( Int, String ) =
+  def withTempInputFile( cmd: Seq[String], input: String, catchStderr: Boolean = false ): String =
     withTempFile.fromString( input ) { tempFile =>
-      withExitValue( cmd :+ tempFile, "", catchStderr )
+      apply( cmd :+ tempFile, "", catchStderr )
     }
 
   def apply( cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false ): String =

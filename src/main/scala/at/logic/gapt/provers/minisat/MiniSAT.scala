@@ -59,7 +59,7 @@ class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 
     val sat = withTempFile { out =>
       withTempFile.fromString( minisat_in ) { in =>
-        runProcess.withTempInputFile( Seq( "minisat", in, out ) )
+        runProcess( Seq( "minisat", in, out ) )
         Source.fromFile( out ).mkString
       }
     }
