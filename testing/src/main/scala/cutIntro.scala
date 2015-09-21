@@ -60,7 +60,7 @@ object testCutIntro extends App {
   lazy val proofs =
     ( for ( n <- 0 to 100; proofSequence <- proofSequences ) yield s"${proofSequence.name}($n)" ) ++
       recursiveListFiles( "testing/TSTP/prover9" ).map( _.getPath ).filter( _ endsWith ".s.out" ) ++
-      recursiveListFiles( "testing/veriT-SMT-LIB-QF_UF" ).map( _.getPath ).filter( _ endsWith ".proof_flat" ) ++
+      recursiveListFiles( "testing/veriT-SMT-LIB/QF_UF" ).map( _.getPath ).filter( _ endsWith ".proof_flat" ) ++
       recursiveListFiles( "testing/TSTP/leanCoP" ).map( _.getPath ).filter( _ endsWith ".s.out" ) ++
       Nil
 
