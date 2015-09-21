@@ -38,10 +38,14 @@ object simplifyResolutionProof {
         }
       }
 
-      simplified( p.conclusion ) =
+      val result =
         simplified.get( p.conclusion ).
           orElse( simplified.get( q.conclusion ) ).
           getOrElse( q )
+      simplified( p.conclusion ) = result
+
+      require( result.conclusion == result.conclusion.distinct )
+      require( result.conclusion isSubMultisetOf p.conclusion )
     }
 
     simplified( proof.conclusion )
