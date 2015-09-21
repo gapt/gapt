@@ -10,8 +10,9 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.{ findMinimalVectGrammar, VectTratGrammar }
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, InstanceTermEncoding, extractInstances, toShallow, ExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, _ }
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lk.getStatistics
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
@@ -182,7 +183,7 @@ object CutIntroduction extends Logger {
 
     /********** Term set Extraction **********/
     val encoding = InstanceTermEncoding( endSequent )
-    val termset = encoding encode ep
+    val termset = groundTerms( encoding encode ep )
 
     metrics.value( "termset", termset.size )
     metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
