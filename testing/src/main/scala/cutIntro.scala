@@ -111,7 +111,11 @@ object testCutIntro extends App {
             try metrics.time( "cutintro" ) {
               CutIntroduction.compressToLK( expansionProof, hasEquality, getMethod( methodName ), verbose = false ) match {
                 case Some( _ ) => metrics.value( "status", "ok" )
-                case None      => metrics.value( "status", "cutintro_uncompressible" )
+                case None =>
+                  if ( collectedMetrics.data( "termset_trivial" ) == true )
+                    metrics.value( "status", "cutintro_termset_trivial" )
+                  else
+                    metrics.value( "status", "cutintro_uncompressible" )
               }
             }
             catch {
