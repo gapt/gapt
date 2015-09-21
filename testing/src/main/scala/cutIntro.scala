@@ -21,7 +21,9 @@ import at.logic.gapt.proofs.expansionTrees.{ InstanceTermEncoding, addSymmetry, 
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.duration._
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.{ Success, Failure, Random }
 
 object testCutIntro extends App {
@@ -150,14 +152,17 @@ object testCutIntro extends App {
 
   val partialResultsOut = new PrintWriter( "partial_results.json" )
   var done = 0
-  val experimentResults = Random.shuffle( experiments ).par flatMap {
+
+  val parExperiments = Random.shuffle( experiments ).par
+  parExperiments.tasksupport = new ForkJoinTaskSupport( new ForkJoinPool( Runtime.getRuntime.availableProcessors / 2 ) )
+  val experimentResults = parExperiments flatMap {
     case ( p, m ) =>
       try {
         done += 1
         println( s"$done/${experiments.size}\t$p\t$m" )
         val beginTime = System.currentTimeMillis()
         val JObject( resultEntries ) =
-          parse( runOutOfProcess[String]( Seq( "-Xmx1G", "-Xss30m" ) ) { compact( render( runExperiment( p, m ) ) ) } )
+          parse( runOutOfProcess[String]( Seq( "-Xmx2G", "-Xss30m" ) ) { compact( render( runExperiment( p, m ) ) ) } )
         val totalTime = System.currentTimeMillis() - beginTime
         val result = JObject( resultEntries :+ ( "time_total" -> JInt( totalTime ) ) )
         partialResultsOut.println( compact( render( result ) ) )
