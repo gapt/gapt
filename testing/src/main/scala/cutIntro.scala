@@ -41,8 +41,7 @@ object testCutIntro extends App {
       LeanCoPParser.getExpansionProof( fileName ) map { _ -> true }
     case _ if fileName contains "/prover9/" =>
       val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fileName )
-      metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( resProof ) )
-      metrics.value( "resinf_input_simp", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
+      metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
       val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
       val containsEquations = constants( toShallow( expansionProof ) ) exists {
         case EqC( _ ) => true

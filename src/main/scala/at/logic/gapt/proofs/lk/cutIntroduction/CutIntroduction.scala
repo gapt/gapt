@@ -170,8 +170,7 @@ object CutIntroduction extends Logger {
     val Some( herbrandSequentResolutionProof ) = new Prover9Prover().getRobinsonProof( herbrandSequent )
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
-    metrics.value( "hs_resinf", numberOfResolutionsAndParamodulations( herbrandSequentResolutionProof ) )
-    metrics.value( "hs_resinf_simp", numberOfResolutionsAndParamodulations( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
+    metrics.value( "hs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
 
     metrics.value( "quant_input", quantRulesNumberET( ep ) )
 
@@ -237,8 +236,7 @@ object CutIntroduction extends Logger {
       val Some( ehsResolutionProof ) = new Prover9Prover().getRobinsonProof( ehsSequent )
       metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
       metrics.value( "ehs_scomp", expressionSize( ehsSequent.toFormula ) )
-      metrics.value( "ehs_resinf", numberOfResolutionsAndParamodulations( ehsResolutionProof ) )
-      metrics.value( "ehs_resinf_simp", numberOfResolutionsAndParamodulations( simplifyResolutionProof( ehsResolutionProof ) ) )
+      metrics.value( "ehs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( ehsResolutionProof ) ) )
 
       minimizedEHS
     } orElse {
