@@ -33,7 +33,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
   def parseProof( p9Output: String ) = {
     val ivy = runProcess( Seq( "prooftrans", "ivy" ), p9Output )
 
-    val ivyProof = withTempFile.fromString( ivy ) { ivyFile => IvyParser( ivyFile ) }
+    val ivyProof = IvyParser.parseString( ivy )
 
     IvyToRobinson( ivyProof )
   }
@@ -110,15 +110,15 @@ object Prover9Importer extends ExternalProgram {
 
   def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( ResolutionProof, HOLSequent ) = {
     val resProof = robinsonProof( p9Output )
-    val endSequent = existsclosure( withTempFile.fromString( p9Output ) { p9File =>
-      val tptpEndSequent = InferenceExtractor.viaLADR( p9File )
+    val endSequent = existsclosure {
+      val tptpEndSequent = InferenceExtractor.viaLADR( p9Output )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
-        InferenceExtractor.clausesViaLADR( p9File )
+        InferenceExtractor.clausesViaLADR( p9Output )
       } else {
         tptpEndSequent
       }
-    } )
+    }
 
     val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
 

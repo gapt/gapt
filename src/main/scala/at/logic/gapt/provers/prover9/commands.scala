@@ -228,7 +228,7 @@ case object Prover92GAPTPositionsCommand extends DataCommand[Clause] {
 //TODO: refactor shared code with Prover9Init
 object InferenceExtractor {
 
-  def viaLADR( fn: String ): HOLSequent = {
+  def viaLADR( str_ladr: String ): HOLSequent = {
     import scala.io.Source
 
     val variablestyle_matcher = """.*set.(prolog_style_variables).*""".r
@@ -240,8 +240,6 @@ object InferenceExtractor {
     // because there might be more than one proof in the file
     var within_proof = 0
     var parser: Prover9TermParserA = Prover9TermParserLadrStyle
-
-    val str_ladr = Source.fromInputStream( new FileInputStream( fn ) ).mkString
 
     val ( assumptions, goals ) = str_ladr.split( System.getProperty( "line.separator" ) ).foldLeft( ( List[FOLFormula](), List[FOLFormula]() ) )( ( m, l ) => {
 
@@ -263,7 +261,7 @@ object InferenceExtractor {
 
   }
 
-  def clausesViaLADR( fn: String ): HOLSequent = {
+  def clausesViaLADR( str_ladr: String ): HOLSequent = {
     import scala.io.Source
 
     val variablestyle_matcher = """.*set.(prolog_style_variables).*""".r
@@ -281,8 +279,6 @@ object InferenceExtractor {
     // because there might be more than one proof in the file
     var within_proof = 0
     var parser: Prover9TermParserA = Prover9TermParserLadrStyle
-
-    val str_ladr = Source.fromInputStream( new FileInputStream( fn ) ).mkString
 
     val ( assumptions, goals, _clausifies, _denials ) = str_ladr.split( System.getProperty( "line.separator" ) ).foldLeft(
       ( List[FOLFormula](), List[FOLFormula](), List[String](), List[String]() )

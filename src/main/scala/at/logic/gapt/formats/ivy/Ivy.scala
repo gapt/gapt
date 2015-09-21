@@ -19,10 +19,15 @@ object IvyParser extends Logger {
   override def loggerName = "IvyParserLogger"
 
   //calls the sexpression parser on the given file and parses it, needs a naming convention
-  def apply( fn: String ): IvyResolutionProof = {
-    val exp = SExpressionParser( fn )
+  def apply( fn: String ): IvyResolutionProof =
+    parse( SExpressionParser.parseFile( fn ) )
+
+  def parseString( sexpr: String ): IvyResolutionProof =
+    parse( SExpressionParser.parseString( sexpr ) )
+
+  def parse( exp: Seq[SExpression] ): IvyResolutionProof = {
     require( exp.length >= 1, "An ivy proof must contain at least one proof object, not " + exp.length + "! " )
-    if ( exp.length > 1 ) warn( "WARNING: Ivy proof in " + fn + " contains more than one proof, taking the first one." )
+    if ( exp.length > 1 ) warn( "WARNING: Ivy proof contains more than one proof, taking the first one." )
     parse( exp( 0 ) )
   }
 

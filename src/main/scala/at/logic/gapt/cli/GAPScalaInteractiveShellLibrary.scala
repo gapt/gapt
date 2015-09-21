@@ -176,8 +176,8 @@ object loadProver9Proof {
   def apply( filename: String ): ( ResolutionProof, HOLSequent, HOLSequent ) =
     (
       new Prover9Prover().reconstructRobinsonProofFromFile( filename ),
-      InferenceExtractor.viaLADR( filename ),
-      InferenceExtractor.clausesViaLADR( filename )
+      InferenceExtractor.viaLADR( Source fromFile filename mkString ),
+      InferenceExtractor.clausesViaLADR( Source fromFile filename mkString )
     )
 }
 
