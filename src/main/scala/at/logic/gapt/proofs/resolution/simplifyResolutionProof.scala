@@ -10,7 +10,7 @@ object simplifyResolutionProof {
 
     proof dagLikeForeach { p =>
       val q = p match {
-        case _: InitialClause => p
+        case _: InitialClause => Factor( p )._1
         case Instance( p1, subst1 ) => simplified( p1.conclusion ) match {
           case Instance( q2, subst2 )    => Factor( Instance( q2, subst1 compose subst2 ) )._1
           case TautologyClause( atom )   => TautologyClause( subst1( atom ) )
