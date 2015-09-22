@@ -1464,7 +1464,9 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
  */
 case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, parentsSequent: Sequent[Seq[SequentIndex]] ) {
   require( parentsSequent.sizes == lowerSequent.sizes )
-  val childrenSequent = upperSequent.indicesSequent map { i => parentsSequent.indicesWhere( is => is contains i ) }
+  require( parentsSequent.elements.flatten.toSet subsetOf upperSequent.indices.toSet )
+
+  def childrenSequent = upperSequent.indicesSequent map children
 
   /**
    * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
@@ -1480,11 +1482,15 @@ case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, par
    * @param idx
    * @return
    */
-  def children( idx: SequentIndex ): Seq[SequentIndex] = childrenSequent( idx )
+  def children( idx: SequentIndex ): Seq[SequentIndex] =
+    if ( upperSequent isDefinedAt idx )
+      parentsSequent indicesWhere { _ contains idx }
+    else
+      throw new IndexOutOfBoundsException
 
   def *( that: OccConnector ) = {
     require( this.upperSequent == that.lowerSequent )
-    OccConnector( this.lowerSequent, that.upperSequent, this.lowerSequent.indicesSequent.map( this.parents( _ ).flatMap( that.parents ) ) )
+    OccConnector( this.lowerSequent, that.upperSequent, this.parentsSequent map { _ flatMap that.parents distinct } )
   }
 
   def inv: OccConnector = OccConnector( upperSequent, lowerSequent, childrenSequent )
