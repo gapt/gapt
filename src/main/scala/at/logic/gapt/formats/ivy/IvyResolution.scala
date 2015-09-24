@@ -1,13 +1,10 @@
 package at.logic.gapt.formats.ivy
 
-import at.logic.gapt.proofs.proofs.{ BinaryRuleTypeA, UnaryRuleTypeA, NullaryRuleTypeA }
-import at.logic.gapt.proofs.proofs.{ NullaryAGraphProof, UnaryAGraphProof, BinaryAGraphProof, AGraphProof }
-import at.logic.gapt.utils.ds.acyclicGraphs.{ LeafAGraph, UnaryAGraph, BinaryAGraph }
+import at.logic.gapt.proofs.lkNew.OccConnector
+import at.logic.gapt.proofs.{ FOLClause, Sequent, SequentIndex, SequentProof }
 import at.logic.gapt.formats.lisp.SExpression
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.resolutionOld.OccClause
 
 /**
  * ** Implementation of Ivy's Resolution Calculus ***
@@ -16,150 +13,90 @@ import at.logic.gapt.proofs.resolutionOld.OccClause
  * many applications.
  */
 
-/*****  Define Ivy Proofs in a way that Prooftool can display them  *****/
-// rule types
-case object InitialClauseType extends NullaryRuleTypeA { override def toString = "Initial Clause" };
-case object InstantiateType extends UnaryRuleTypeA { override def toString = "Instantiation" };
-case object ParamodulationType extends BinaryRuleTypeA { override def toString = "Paramodulation" };
-case object ResolutionType extends BinaryRuleTypeA { override def toString = "Resolution" };
-case object FlipType extends UnaryRuleTypeA { override def toString = "Flip" };
-case object PropositionalType extends UnaryRuleTypeA { override def toString = "Propositional" };
-case object NewSymbolType extends UnaryRuleTypeA { override def toString = "NewSymbol" };
+sealed trait IvyResolutionProof extends SequentProof[FOLAtom, IvyResolutionProof] {
+  val id: String
+  val clause_exp: SExpression
 
-abstract sealed trait IvyResolutionProof extends AGraphProof[OccClause] {
-  val id: String;
-  val clause_exp: SExpression;
-  //  val vertex : Clause;
-  val nLine = sys.props( "line.separator" )
+  // FIXME: provide a SequentProof trait without OccConnectors
+  override def mainIndices: Seq[SequentIndex] = ???
+  override def occConnectors: Seq[OccConnector] = ???
+  override def auxIndices: Seq[Seq[SequentIndex]] = ???
+}
 
-  override def toString = { val b = new StringBuilder; printNodes( this, Nil, b ); b.toString }
-  def printNodes( p: IvyResolutionProof, m: List[String], out: StringBuilder ): List[String] = p match {
-    case InitialClause( id, _, clause ) =>
-      if ( !m.contains( id ) ) {
-        out.append( id + " : Input(" + clause + ")" + nLine ); id :: m
-      } else m
-    case Instantiate( id, _, sub, clause, parent ) =>
-      if ( !m.contains( id ) ) {
-        val l = printNodes( parent, m, out );
-        out.append( id + " : Instance(" + clause + ") by " + parent.id + nLine ); id :: l
-      } else m
-    case Propositional( id, _, clause, parent ) =>
-      if ( !m.contains( id ) ) {
-        val l1 = printNodes( parent, m, out );
-        out.append( id + " : Propositional(" + clause + ") by " + parent.id + nLine );
-        id :: l1
-      } else m
-    case Flip( id, _, flipped, clause, parent ) =>
-      if ( !m.contains( id ) ) {
-        val l1 = printNodes( parent, m, out );
-        out.append( id + " : Flip(" + clause + ") by " + parent.id + nLine );
-        id :: l1
-      } else m
-    case Resolution( id, _, lit1, lit2, clause, parent1, parent2 ) =>
-      if ( !m.contains( id ) ) {
-        val l1 = printNodes( parent1, m, out );
-        val l2 = printNodes( parent2, l1, out );
-        out.append( id + " : Resolution(" + clause + ") by " + parent1.id + " and " + parent2.id + nLine );
-        id :: l2
-      } else m
-    case Paramodulation( id, _, pos, lit, orientation, clause, parent1, parent2 ) =>
-      if ( !m.contains( id ) ) {
-        val l1 = printNodes( parent1, m, out );
-        val l2 = printNodes( parent2, l1, out );
-        out.append( id + " : Paramodulation(" + clause + ") by " + parent1.id + " and " + parent2.id + nLine )
-        id :: l2
-      } else m
-    case NewSymbol( id, _, lit, symbol, term, clause, parent ) =>
-      if ( !m.contains( id ) ) {
-        val l1 = printNodes( parent, m, out );
-        out.append( id + " : NewSymbol(" + clause + ") by " + parent.id + nLine );
-        id :: l1
-      } else m
-
-    //case _ => out.append("rule not implemented"); m
-  }
-
-};
-
-//inheritance of BinaryAGraph is necessary because BinaryAGraphProof does not provide a constructor
-//  adding the constructor would introduce another override and use up unneccessary memory, we probably need
-//  to discuss this
 case class InitialClause(
-  id:                  String,
-  clause_exp:          SExpression,
-  override val vertex: OccClause
-)
-    extends LeafAGraph[OccClause]( vertex ) with NullaryAGraphProof[OccClause] with IvyResolutionProof {
-
-  def rule = InitialClauseType;
-  //  override def name = "Initial Clause"
-};
+    id:         String,
+    clause_exp: SExpression,
+    conclusion: FOLClause
+) extends IvyResolutionProof {
+  override def immediateSubProofs = Seq()
+}
 
 case class Instantiate(
-  id:                  String,
-  clause_exp:          SExpression,
-  substitution:        FOLSubstitution,
-  override val vertex: OccClause, override val t: IvyResolutionProof
-)
-    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[OccClause] with IvyResolutionProof {
-  def rule = InstantiateType
-  //  override def name = "Instantiate"
-};
+    id:           String,
+    clause_exp:   SExpression,
+    substitution: FOLSubstitution,
+    conclusion:   FOLClause, t: IvyResolutionProof
+) extends IvyResolutionProof {
+  override def immediateSubProofs = Seq( t )
+}
 
 case class Flip(
+    id:         String,
+    clause_exp: SExpression, flipped: SequentIndex,
+    conclusion: FOLClause, t: IvyResolutionProof
+) extends IvyResolutionProof {
+  override def immediateSubProofs = Seq( t )
+}
+
+case class Propositional(
   id:         String,
-  clause_exp: SExpression, flipped: FormulaOccurrence,
-  override val vertex: OccClause, override val t: IvyResolutionProof
+  clause_exp: SExpression,
+  conclusion: FOLClause,
+  t:          IvyResolutionProof
 )
-    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[OccClause] with IvyResolutionProof {
-  def rule = FlipType
-  //  override def name = "Flip"
-};
-
-case class Propositional( id: String, clause_exp: SExpression, override val vertex: OccClause, override val t: IvyResolutionProof )
-    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[OccClause] with IvyResolutionProof {
-  def rule = PropositionalType
-
-};
+    extends IvyResolutionProof {
+  override def immediateSubProofs = Seq( t )
+}
 
 case class Paramodulation(
-  id:                  String,
-  clause_exp:          SExpression,
-  position:            List[Int],
-  lit:                 FormulaOccurrence,
-  is_demodulation:     Boolean, // if the formula should be left to right or right to left
-  override val vertex: OccClause,
-  override val t1:     IvyResolutionProof,
-  override val t2:     IvyResolutionProof
+  id:              String,
+  clause_exp:      SExpression,
+  position:        List[Int],
+  eq:              SequentIndex,
+  lit:             SequentIndex,
+  newLit:          FOLAtom,
+  is_demodulation: Boolean, // if the formula should be left to right or right to left
+  conclusion:      FOLClause,
+  t1:              IvyResolutionProof,
+  t2:              IvyResolutionProof
 )
-    extends BinaryAGraph( vertex, t1, t2 ) with BinaryAGraphProof[OccClause] with IvyResolutionProof {
-  def rule = ParamodulationType
-  //  override def name = "Paramodulation"
-};
+    extends IvyResolutionProof {
+  override def immediateSubProofs = Seq( t1, t2 )
+}
 
 case class Resolution(
-  id:                  String,
-  clause_exp:          SExpression,
-  lit1:                FormulaOccurrence, //resolved literal in t1
-  lit2:                FormulaOccurrence, //resolved literal in t2
-  override val vertex: OccClause,
-  override val t1:     IvyResolutionProof,
-  override val t2:     IvyResolutionProof
+  id:         String,
+  clause_exp: SExpression,
+  lit1:       SequentIndex, //resolved literal in t1
+  lit2:       SequentIndex, //resolved literal in t2
+  conclusion: FOLClause,
+  t1:         IvyResolutionProof,
+  t2:         IvyResolutionProof
 )
-    extends BinaryAGraph( vertex, t1, t2 ) with BinaryAGraphProof[OccClause] with IvyResolutionProof {
-  def rule = ResolutionType
-  //  override def name = "Resolution"
-};
+    extends IvyResolutionProof {
+  require( t1.conclusion( lit1 ) == t2.conclusion( lit2 ) )
+  require( !( lit1 sameSideAs lit2 ) )
+  override def immediateSubProofs = Seq( t1, t2 )
+}
 
 case class NewSymbol(
-  id:                  String,
-  clause_exp:          SExpression,
-  lit:                 FormulaOccurrence,
-  new_symbol:          FOLConst,
-  replacement_term:    FOLTerm,
-  override val vertex: OccClause, override val t: IvyResolutionProof
-)
-    extends UnaryAGraph( vertex, t ) with UnaryAGraphProof[OccClause] with IvyResolutionProof {
-  def rule = NewSymbolType
-  //  override def name = "Instantiate"
-}; /** end of calculus defintion **/ 
+    id:               String,
+    clause_exp:       SExpression,
+    lit:              SequentIndex,
+    new_symbol:       FOLConst,
+    replacement_term: FOLTerm,
+    conclusion:       FOLClause,
+    t:                IvyResolutionProof
+) extends IvyResolutionProof {
+  override def immediateSubProofs = Seq( t )
+}

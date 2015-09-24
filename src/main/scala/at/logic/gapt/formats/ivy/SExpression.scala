@@ -20,7 +20,7 @@ import org.parboiled2._
  * Namespace collisions in scala.*.List
  * Printing a Datastructure should output valid Lisp.
  */
-sealed class SExpression
+sealed abstract class SExpression
 
 case class LAtom( name: String ) extends SExpression {
   override def toString = name
