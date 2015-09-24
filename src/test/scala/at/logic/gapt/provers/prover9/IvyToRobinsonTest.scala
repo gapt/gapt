@@ -18,7 +18,7 @@ class IvyToRobinsonTest extends Specification with ClasspathFileCopier {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case LList( _ ) =>
+      case LList( _* ) =>
         val pinput = IvyParser.parse( proof )
         val rinput = IvyToRobinson( pinput )
         ok

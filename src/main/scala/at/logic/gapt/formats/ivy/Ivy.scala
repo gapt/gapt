@@ -38,36 +38,32 @@ object IvyParser extends Logger {
 
   //decompose the proof object to a list and hand it to parse(exp: List[SExpression], found_steps : ProofMap )
   def parse( exp: SExpression ): IvyResolutionProof = exp match {
-    case LList( Nil ) => throw new Exception( "Trying to parse an empty proof!" )
-    case LList( l )   => parse( l, Map[String, IvyResolutionProof]() ) // extract the list of inferences from exp
-    case _            => throw new Exception( "Parsing error: The proof object is not a list!" )
+    case LList()         => throw new Exception( "Trying to parse an empty proof!" )
+    case LList( l @ _* ) => parse_steps( l ) // extract the list of inferences from exp
+    case _               => throw new Exception( "Parsing error: The proof object is not a list!" )
   }
 
   /* traverses the list of inference sexpressions and returns an IvyResolution proof - this can then be translated to
    * our resolution calculus (i.e. where instantiation is contained in the substitution)
    * note: requires that an if inference a references inference b, then a occurs before b in the list */
-  def parse( exp: List[SExpression], found_steps: ProofMap ): IvyResolutionProof = {
-    exp match {
-      case List( last ) =>
-        val ( lastid, found_steps_ ) = parse_step( last, found_steps );
-        found_steps_( lastid )
+  def parse_steps( exp: Seq[SExpression] ): IvyResolutionProof = {
+    var lastid: ProofId = null
+    var found_steps: ProofMap = Map[String, IvyResolutionProof]()
 
-      case head :: tail =>
-        val ( _, found_steps_ ) = parse_step( head, found_steps );
-        parse( tail, found_steps_ );
-      case _ => throw new Exception( "Cannot create an object for an empty proof (list of inferences is empty)." )
+    exp foreach { step =>
+      val ( new_lastid, new_found_steps ) = parse_step( step, found_steps )
+      lastid = new_lastid
+      found_steps = new_found_steps
     }
+
+    found_steps( lastid )
   }
 
   /* parses an inference step and updates the proof map  */
   def parse_step( exp: SExpression, found_steps: ProofMap ): ( ProofId, ProofMap ) = {
     exp match {
-      case LList( LAtom( id ) :: _ ) => ()
-      case _                         => ()
-    }
-    exp match {
       /* ================== Atom ========================== */
-      case LList( LAtom( id ) :: LList( LAtom( "input" ) :: Nil ) :: clause :: _ ) => {
+      case LFun( id, LFun( "input" ), clause, _* ) => {
         val fclause = parse_clause( clause )
 
         val inference = InitialClause( id, clause,
@@ -81,7 +77,7 @@ object IvyParser extends Logger {
       }
 
       /* ================== Instance ========================== */
-      case LList( LAtom( id ) :: LList( LAtom( "instantiate" ) :: LAtom( parent_id ) :: subst_exp :: Nil ) :: clause :: rest ) => {
+      case LFun( id, LFun( "instantiate", LAtom( parent_id ), subst_exp ), clause, _* ) => {
         val parent_proof = found_steps( parent_id )
         val sub: FOLSubstitution = parse_substitution( subst_exp )
         val fclause: HOLSequent = parse_clause( clause )
@@ -102,10 +98,9 @@ object IvyParser extends Logger {
       }
 
       /* ================== Resolution ========================== */
-      case LList( LAtom( id ) :: LList( LAtom( "resolve" ) ::
-        LAtom( parent_id1 ) :: LList( position1 ) ::
-        LAtom( parent_id2 ) :: LList( position2 ) :: Nil ) ::
-        clause :: rest ) => {
+      case LFun( id, LFun( "resolve",
+        LAtom( parent_id1 ), LList( position1 @ _* ),
+        LAtom( parent_id2 ), LList( position2 @ _* ) ), clause, _* ) => {
         val parent_proof1 = found_steps( parent_id1 )
         val parent_proof2 = found_steps( parent_id2 )
         val fclause: HOLSequent = parse_clause( clause )
@@ -176,7 +171,7 @@ object IvyParser extends Logger {
       }
 
       /* ================== Flip ========================== */
-      case LList( LAtom( id ) :: LList( LAtom( "flip" ) :: LAtom( parent_id ) :: LList( position ) :: Nil ) :: clause :: rest ) =>
+      case LFun( id, LFun( "flip", LAtom( parent_id ), LList( position @ _* ) ), clause, _* ) =>
         val parent_proof = found_steps( parent_id )
         val fclause = parse_clause( clause )
         val ( occ, polarity, _ ) = get_literal_by_position( parent_proof.root, position, parent_proof.clause_exp )
@@ -219,10 +214,10 @@ object IvyParser extends Logger {
         }
 
       /* ================== Paramodulation ========================== */
-      case LList( LAtom( id ) ::
-        LList( LAtom( "paramod" ) :: LAtom( modulant_id ) :: LList( mposition ) ::
-          LAtom( parent_id ) :: LList( pposition ) :: Nil ) ::
-        clause :: rest ) =>
+      case LFun( id, LFun( "paramod",
+        LAtom( modulant_id ), LList( mposition @ _* ),
+        LAtom( parent_id ), LList( pposition @ _* )
+        ), clause, _* ) =>
         val modulant_proof = found_steps( modulant_id )
         val parent_proof = found_steps( parent_id )
         val fclause = parse_clause( clause )
@@ -282,7 +277,7 @@ object IvyParser extends Logger {
         }
 
       /* ================== Propositional ========================== */
-      case LList( LAtom( id ) :: LList( LAtom( "propositional" ) :: LAtom( parent_id ) :: Nil ) :: clause :: rest ) => {
+      case LFun( id, LFun( "propositional", LAtom( parent_id ) ), clause, _* ) => {
         val parent_proof = found_steps( parent_id )
         val fclause: HOLSequent = parse_clause( clause )
 
@@ -349,9 +344,7 @@ object IvyParser extends Logger {
       }
 
       // new symbol
-      case LList( LAtom( id ) ::
-        LList( LAtom( "new_symbol" ) :: LAtom( parent_id ) :: Nil ) ::
-        clause :: rest ) =>
+      case LFun( id, LFun( "new_symbol", LAtom( parent_id ) ), clause, _* ) =>
 
         val parent_proof = found_steps( parent_id )
         val fclause: HOLSequent = parse_clause( clause )
@@ -379,7 +372,7 @@ object IvyParser extends Logger {
   // paramodulation continues inside the term, so we return the remaining position together with the occurrence
   // the boolean indicates a positive or negative formula
 
-  def get_literal_by_position( c: OccClause, pos: List[SExpression],
+  def get_literal_by_position( c: OccClause, pos: Seq[SExpression],
                                clauseexp: SExpression ): ( FormulaOccurrence, Boolean, List[Int] ) = {
     val ipos = parse_position( pos )
     val ( iformula, termpos ) = parse_clause_frompos( clauseexp, ipos )
@@ -425,49 +418,26 @@ object IvyParser extends Logger {
       if ( exp == what ) by else throw new Exception( "Error in parsing replacement: (sub)term " + exp + " is not the expected term " + what )
   }
 
-  def parse_position( l: List[SExpression] ): List[Int] = l match {
-    case LAtom( x ) :: xs => try {
-      x.toInt :: parse_position( xs )
-    } catch {
-      case e: Exception => throw new Exception( "Error parsing position: cannot convert atom " + x + " to integer!" )
-    }
-    case Nil    => Nil
-    case x :: _ => throw new Exception( "Error parsing position: unexpected expression " + x )
-    case _      => throw new Exception( "Error parsing position: unexpected expression " + l )
-  }
+  def parse_position( l: Seq[SExpression] ): List[Int] = l.toList map { case LAtom( s ) => s.toInt }
 
   def parse_substitution( exp: SExpression ): FOLSubstitution = exp match {
-    case LList( list ) =>
+    case LList( list @ _* ) =>
       FOLSubstitution( parse_substitution_( list ) )
     case _ => throw new Exception( "Error parsing substitution expression " + exp + " (not a list)" )
   }
 
   //Note:substitution are sometimes given as lists of cons and sometimes as two-element list...
-  def parse_substitution_( exp: List[SExpression] ): List[( FOLVar, FOLTerm )] = exp match {
-    case LList( vexp :: texp ) :: xs =>
+  def parse_substitution_( exp: Seq[SExpression] ): List[( FOLVar, FOLTerm )] = exp.toList map {
+    case LList( vexp, texp @ _* ) =>
       val v = parse_term( vexp )
-      val t = parse_term( LList( texp ) )
+      val t = parse_term( LList( texp: _* ) )
 
-      v match {
-        case v_ : FOLVar =>
-          ( v_, t ) :: parse_substitution_( xs )
-        case _ =>
-          throw new Exception( "Error parsing substitution expression " + exp + ": substiution variable was not parsed as variable!" )
-      }
-
-    case LCons( vexp, texp ) :: xs =>
+      v.asInstanceOf[FOLVar] -> t
+    case LCons( vexp, texp ) =>
       val v = parse_term( vexp )
       val t = parse_term( texp )
 
-      v match {
-        case v_ : FOLVar =>
-          ( v_, t ) :: parse_substitution_( xs )
-        case _ =>
-          throw new Exception( "Error parsing substitution expression " + exp + ": substiution variable was not parsed as variable!" )
-      }
-    case Nil =>
-      Nil
-    case _ => throw new Exception( "Error parsing substitution expression " + exp + " (could not match substitution term!)" )
+      v.asInstanceOf[FOLVar] -> t
   }
 
   /* parses a clause sexpression to a fclause -- the structure is (or lit1 (or lit2 .... (or litn-1 litn)...)) */
@@ -496,14 +466,14 @@ object IvyParser extends Logger {
 
   //TODO: merge code with parse_clause_
   def parse_clause_frompos( exp: SExpression, pos: List[Int] ): ( HOLFormula, List[Int] ) = exp match {
-    case LList( LAtom( "or" ) :: left :: right :: Nil ) =>
+    case LFun( "or", left, right ) =>
       pos match {
         case 1 :: rest =>
           left match {
-            case LList( LAtom( "not" ) :: LList( LAtom( name ) :: args ) :: Nil ) =>
+            case LFun( "not", LFun( name, args @ _* ) ) =>
               val npos = if ( rest.isEmpty ) rest else rest.tail //if we point to a term we have to strip the indicator for neg
               ( Neg( parse_atom( name, args ) ), npos )
-            case LList( LAtom( name ) :: args ) =>
+            case LFun( name, args @ _* ) =>
               ( parse_atom( name, args ), rest )
             case _ => throw new Exception( "Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object." )
           }
@@ -512,11 +482,11 @@ object IvyParser extends Logger {
         case _ => throw new Exception( "pos " + pos + " did not point to a literal!" )
       }
 
-    case LList( LAtom( "not" ) :: LList( LAtom( name ) :: args ) :: Nil ) =>
+    case LFun( "not", LFun( name, args @ _* ) ) =>
       val npos = if ( pos.isEmpty ) pos else pos.tail //if we point to a term we have to strip the indicator for neg
       ( Neg( parse_atom( name, args ) ), npos )
 
-    case LList( LAtom( name ) :: args ) =>
+    case LFun( name, args @ _* ) =>
       ( parse_atom( name, args ), pos )
 
     //the empty clause is denoted by false
@@ -528,21 +498,21 @@ object IvyParser extends Logger {
 
   //directly converts a clause as nested or expression into a list with the literals in the same order
   def parse_clause_( exp: SExpression ): List[HOLFormula] = exp match {
-    case LList( LAtom( "or" ) :: left :: right :: Nil ) =>
+    case LFun( "or", left, right ) =>
       val rightclause = parse_clause_( right )
 
       left match {
-        case LList( LAtom( "not" ) :: LList( LAtom( name ) :: args ) :: Nil ) =>
+        case LFun( "not", LFun( name, args @ _* ) ) =>
           Neg( parse_atom( name, args ) ) :: rightclause
-        case LList( LAtom( name ) :: args ) =>
+        case LFun( name, args @ _* ) =>
           parse_atom( name, args ) :: rightclause
         case _ => throw new Exception( "Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object." )
       }
 
-    case LList( LAtom( "not" ) :: LList( LAtom( name ) :: args ) :: Nil ) =>
+    case LFun( "not", LFun( name, args @ _* ) ) =>
       Neg( parse_atom( name, args ) ) :: Nil
 
-    case LList( LAtom( name ) :: args ) =>
+    case LFun( name, args @ _* ) =>
       parse_atom( name, args ) :: Nil
 
     //the empty clause is denoted by false
@@ -552,7 +522,7 @@ object IvyParser extends Logger {
     case _ => throw new Exception( "Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object." )
   }
 
-  def parse_atom( name: String, args: List[SExpression] ) = {
+  def parse_atom( name: String, args: Seq[SExpression] ) = {
     val argterms = args map parse_term
     if ( name == "=" ) {
       require( args.length == 2, "Error parsing equality: = must be a binary predicate!" )
@@ -580,9 +550,9 @@ object IvyParser extends Logger {
       FOLVar( rname )
     //the proof might contain the constant nil which is parsed to an empty LList. in this case the empty list
     //corresponds to a constant
-    case LList( LList( Nil ) :: Nil ) =>
+    case LList( LList() ) =>
       FOLConst( "nil" )
-    case LList( LAtom( name ) :: args ) =>
+    case LFun( name, args @ _* ) =>
       val rname = rewrite_name( name )
       FOLFunction( rname, args.map( parse_term( _ ) ) )
     case _ =>

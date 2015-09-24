@@ -26,11 +26,19 @@ case class LAtom( name: String ) extends SExpression {
   override def toString = name
 }
 
-case class LList( elements: List[SExpression] ) extends SExpression {
-  def ::( head: SExpression ) = LList( head :: elements )
-  def ++( list2: LList ) = LList( elements ++ list2.elements )
+case class LList( elements: SExpression* ) extends SExpression {
+  def ::( head: SExpression ) = LList( head +: elements: _* )
+  def ++( list2: LList ) = LList( elements ++ list2.elements: _* )
 
   override def toString = "(" + elements.mkString( " " ) + ")"
+}
+object LFun {
+  def apply( head: String, args: SExpression* ): LList =
+    LList( ( LAtom( head ) +: args ): _* )
+  def unapplySeq( list: LList ): Option[( String, Seq[SExpression] )] = list match {
+    case LList( LAtom( head ), args @ _* ) => Some( head, args )
+    case _                                 => None
+  }
 }
 
 case class LCons( car: SExpression, cdr: SExpression ) extends SExpression {
@@ -56,7 +64,7 @@ class SExpressionParser( val input: ParserInput ) extends Parser {
 
   def WhiteSpace = rule { zeroOrMore( anyOf( " \n\r\t\f" ) | ( ';' ~ zeroOrMore( noneOf( "\n" ) ) ) ) }
 
-  def Nl = rule { anyOf( "Nn" ) ~ anyOf( "Ii" ) ~ anyOf( "Ll" ) ~ WhiteSpace ~ push( LList( Nil ) ) }
+  def Nl = rule { anyOf( "Nn" ) ~ anyOf( "Ii" ) ~ anyOf( "Ll" ) ~ WhiteSpace ~ push( LList() ) }
   def Str = rule { '"' ~ capture( zeroOrMore( noneOf( "\"" ) ) ) ~ '"' ~ WhiteSpace ~> lisp.LAtom }
   def Atom = rule { capture( oneOrMore( noneOf( "() \n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LAtom }
 
@@ -65,8 +73,8 @@ class SExpressionParser( val input: ParserInput ) extends Parser {
   def Parens = rule {
     '(' ~ WhiteSpace ~ optional( SExpr ~ (
       ( '.' ~ WhiteSpace ~ SExpr ~> LCons ) |
-      ( zeroOrMore( SExpr ) ~> ( ( car: lisp.SExpression, cdr: Seq[lisp.SExpression] ) => LList( car :: cdr.toList ) ) )
-    ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( LList( Nil ) ) }
+      ( zeroOrMore( SExpr ) ~> ( ( car: lisp.SExpression, cdr: Seq[lisp.SExpression] ) => LList( ( car +: cdr ): _* ) ) )
+    ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( LList() ) }
   }
 
   def File = rule { WhiteSpace ~ zeroOrMore( SExpr ) ~ EOI }
