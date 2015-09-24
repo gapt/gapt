@@ -7,6 +7,8 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.logging.Logger
 
+import scala.collection.mutable
+
 /**
  * Implements parsing of ivy format: https://www.cs.unm.edu/~mccune/papers/ivy/ into Ivy's Resolution calculus.
  */
@@ -30,7 +32,6 @@ object IvyParser extends Logger {
 
   // the type synoyms should make the parsing functions more readable
   type ProofId = String
-  type ProofMap = Map[ProofId, IvyResolutionProof]
   type Position = List[Int]
 
   //decompose the proof object to a list and hand it to parse(exp: List[SExpression], found_steps : ProofMap )
@@ -44,39 +45,30 @@ object IvyParser extends Logger {
    * our resolution calculus (i.e. where instantiation is contained in the substitution)
    * note: requires that an if inference a references inference b, then a occurs before b in the list */
   def parse_steps( exp: Seq[SExpression] ): IvyResolutionProof = {
-    var lastid: ProofId = null
-    var found_steps: ProofMap = Map[String, IvyResolutionProof]()
+    var lastStep: IvyResolutionProof = null
+    val found_steps = mutable.Map[ProofId, IvyResolutionProof]()
 
     exp foreach { step =>
-      val ( new_lastid, new_found_steps ) = parse_step( step, found_steps )
-      lastid = new_lastid
-      found_steps = new_found_steps
+      lastStep = parse_step( step, found_steps )
+      found_steps( lastStep.id ) = lastStep
     }
 
-    found_steps( lastid )
+    lastStep
   }
 
   /* parses an inference step and updates the proof map  */
-  def parse_step( exp: SExpression, found_steps: ProofMap ): ( ProofId, ProofMap ) = {
+  def parse_step( exp: SExpression, found_steps: ProofId => IvyResolutionProof ): IvyResolutionProof =
     exp match {
       /* ================== Atom ========================== */
-      case LFun( id, LFun( "input" ), clause, _* ) => {
-        val fclause = parse_clause( clause )
-
-        val inference = InitialClause( id, clause, fclause )
-
-        ( id, found_steps + ( ( id, inference ) ) )
-      }
+      case LFun( id, LFun( "input" ), clause, _* ) =>
+        InitialClause( id, clause, parse_clause( clause ) )
 
       /* ================== Instance ========================== */
       case LFun( id, LFun( "instantiate", LAtom( parent_id ), subst_exp ), clause, _* ) =>
         val parent_proof = found_steps( parent_id )
         val sub: FOLSubstitution = parse_substitution( subst_exp )
-        val fclause = parse_clause( clause )
 
-        val inference = Instantiate( id, clause, sub, fclause, parent_proof )
-
-        ( id, found_steps + ( ( id, inference ) ) )
+        Instantiate( id, clause, sub, parse_clause( clause ), parent_proof )
 
       /* ================== Resolution ========================== */
       case LFun( id, LFun( "resolve",
@@ -89,7 +81,7 @@ object IvyParser extends Logger {
         val ( occ1, _ ) = get_literal_by_position( parent_proof1.conclusion, position1, parent_proof1.clause_exp )
         val ( occ2, _ ) = get_literal_by_position( parent_proof2.conclusion, position2, parent_proof2.clause_exp )
 
-        ( id, found_steps + ( ( id, Resolution( id, clause, occ1, occ2, fclause, parent_proof1, parent_proof2 ) ) ) )
+        Resolution( id, clause, occ1, occ2, fclause, parent_proof1, parent_proof2 )
 
       /* ================== Flip ========================== */
       case LFun( id, LFun( "flip", LAtom( parent_id ), LList( position @ _* ) ), clause, _* ) =>
@@ -99,7 +91,7 @@ object IvyParser extends Logger {
 
         parent_proof.conclusion( occ ) match {
           case Eq( left, right ) =>
-            ( id, found_steps + ( ( id, Flip( id, clause, occ, fclause, parent_proof ) ) ) )
+            Flip( id, clause, occ, fclause, parent_proof )
         }
 
       /* ================== Paramodulation ========================== */
@@ -124,10 +116,7 @@ object IvyParser extends Logger {
             else
               replaceTerm_by_in_at( right, left, parent_proof.conclusion( pocc ), int_position ).asInstanceOf[FOLAtom]
 
-            ( id, found_steps + ( (
-              id,
-              Paramodulation( id, clause, int_position, mocc, pocc, paraformula, orientation, fclause, modulant_proof, parent_proof )
-            ) ) )
+            Paramodulation( id, clause, int_position, mocc, pocc, paraformula, orientation, fclause, modulant_proof, parent_proof )
 
         }
 
@@ -136,10 +125,7 @@ object IvyParser extends Logger {
         val parent_proof = found_steps( parent_id )
         val fclause = parse_clause( clause )
 
-        val inference = Propositional( id, clause, fclause, parent_proof )
-
-        ( id, found_steps + ( ( id, inference ) ) )
-
+        Propositional( id, clause, fclause, parent_proof )
       }
 
       // new symbol
@@ -152,13 +138,10 @@ object IvyParser extends Logger {
 
         val Eq( l: FOLTerm, r: FOLConst ) = fclause( Suc( 0 ) )
 
-        val inference = NewSymbol( id, clause, Suc( 0 ), r, l, fclause, parent_proof )
-
-        ( id, found_steps + ( ( id, inference ) ) )
+        NewSymbol( id, clause, Suc( 0 ), r, l, fclause, parent_proof )
 
       case _ => throw new Exception( "Error parsing inference rule in expression " + exp )
     }
-  }
 
   //extracts a literal from a clause - since the clause seperates positive and negative clauses,
   // we also need the original SEXpression to make sense of the position.
