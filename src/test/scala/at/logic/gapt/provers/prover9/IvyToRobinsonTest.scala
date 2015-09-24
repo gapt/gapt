@@ -6,8 +6,7 @@ import org.specs2.specification.core.Fragments
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import conversion.IvyToRobinson
 import org.specs2.mutable._
-import at.logic.gapt.formats.lisp
-import lisp.{ SExpressionParser }
+import at.logic.gapt.formats.lisp.{ LList, SExpressionParser }
 
 /**
  * Test for the Ivy interface.
@@ -19,7 +18,7 @@ class IvyToRobinsonTest extends Specification with ClasspathFileCopier {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case lisp.List( _ ) =>
+      case LList( _ ) =>
         val pinput = IvyParser.parse( proof )
         val rinput = IvyToRobinson( pinput )
         ok

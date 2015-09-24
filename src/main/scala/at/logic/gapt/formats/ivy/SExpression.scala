@@ -1,15 +1,8 @@
 package at.logic.gapt.formats.lisp
 
-import java.io.{ File, FileReader }
 import scala.io.Source
 import scala.util.Try
-import util.parsing.input.{ NoPosition, Position, Reader, PagedSeqReader }
-import util.parsing.combinator.Parsers
-import util.parsing.combinator.RegexParsers
 import at.logic.gapt.formats.lisp
-import util.parsing.combinator.PackratParsers
-import scala.collection.immutable.PagedSeq
-import scala.collection.mutable
 import scala.collection.immutable
 import org.parboiled2._
 
@@ -29,33 +22,32 @@ import org.parboiled2._
  */
 sealed class SExpression
 
-case class Atom( name: String ) extends SExpression {
+case class LAtom( name: String ) extends SExpression {
   override def toString = name
 }
 
-case class List( elements: immutable.List[SExpression] ) extends SExpression {
-  def ::( head: SExpression ) = lisp.List( head :: elements )
-  def ++( list2: lisp.List ) = lisp.List( elements ++ list2.elements )
+case class LList( elements: List[SExpression] ) extends SExpression {
+  def ::( head: SExpression ) = LList( head :: elements )
+  def ++( list2: LList ) = LList( elements ++ list2.elements )
 
   override def toString = "(" + elements.mkString( " " ) + ")"
-  //def prepend(head : SExpression, list : lisp.List) = lisp.List(head::list.list)
 }
 
-case class Cons( car: SExpression, cdr: SExpression ) extends SExpression {
+case class LCons( car: SExpression, cdr: SExpression ) extends SExpression {
   override def toString = "( " + car + " . " + cdr + ")"
 }
 
 /* Parser for SExpressions  */
 object SExpressionParser {
-  def apply( fn: String ): immutable.List[SExpression] = parseFile( fn )
+  def apply( fn: String ): List[SExpression] = parseFile( fn )
 
-  def parseFile( fn: String ): immutable.List[SExpression] =
+  def parseFile( fn: String ): List[SExpression] =
     parseString( Source.fromFile( fn ).mkString )
 
-  def parseString( s: String ): immutable.List[SExpression] =
+  def parseString( s: String ): List[SExpression] =
     tryParseString( s ).get
 
-  def tryParseString( s: String ): Try[immutable.List[SExpression]] =
+  def tryParseString( s: String ): Try[List[SExpression]] =
     new SExpressionParser( s ).File.run().map { _.toList }
 
 }
@@ -64,17 +56,17 @@ class SExpressionParser( val input: ParserInput ) extends Parser {
 
   def WhiteSpace = rule { zeroOrMore( anyOf( " \n\r\t\f" ) | ( ';' ~ zeroOrMore( noneOf( "\n" ) ) ) ) }
 
-  def Nl = rule { anyOf( "Nn" ) ~ anyOf( "Ii" ) ~ anyOf( "Ll" ) ~ WhiteSpace ~ push( lisp.List( Nil ) ) }
-  def Str = rule { '"' ~ capture( zeroOrMore( noneOf( "\"" ) ) ) ~ '"' ~ WhiteSpace ~> lisp.Atom }
-  def Atom = rule { capture( oneOrMore( noneOf( "() \n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.Atom }
+  def Nl = rule { anyOf( "Nn" ) ~ anyOf( "Ii" ) ~ anyOf( "Ll" ) ~ WhiteSpace ~ push( LList( Nil ) ) }
+  def Str = rule { '"' ~ capture( zeroOrMore( noneOf( "\"" ) ) ) ~ '"' ~ WhiteSpace ~> lisp.LAtom }
+  def Atom = rule { capture( oneOrMore( noneOf( "() \n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LAtom }
 
   def SExpr: Rule1[lisp.SExpression] = rule { Nl | Str | Atom | Parens }
 
   def Parens = rule {
     '(' ~ WhiteSpace ~ optional( SExpr ~ (
-      ( '.' ~ WhiteSpace ~ SExpr ~> lisp.Cons ) |
-      ( zeroOrMore( SExpr ) ~> ( ( car: lisp.SExpression, cdr: Seq[lisp.SExpression] ) => lisp.List( car :: cdr.toList ) ) )
-    ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( lisp.List( Nil ) ) }
+      ( '.' ~ WhiteSpace ~ SExpr ~> LCons ) |
+      ( zeroOrMore( SExpr ) ~> ( ( car: lisp.SExpression, cdr: Seq[lisp.SExpression] ) => LList( car :: cdr.toList ) ) )
+    ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( LList( Nil ) ) }
   }
 
   def File = rule { WhiteSpace ~ zeroOrMore( SExpr ) ~ EOI }

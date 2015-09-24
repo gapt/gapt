@@ -2,11 +2,10 @@ package at.logic.gapt.formats.ivy
 
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
-import at.logic.gapt.formats.lisp
+import at.logic.gapt.formats.lisp._
 import java.io.File.separator
 import scala.util.{ Success, Failure }
 import util.parsing.input.Reader
-import lisp.{ SExpressionParser }
 
 /**
  * Test for the Ivy interface.
@@ -14,7 +13,7 @@ import lisp.{ SExpressionParser }
 class IvyTest extends Specification with ClasspathFileCopier {
   "The Ivy Parser " should {
     " parse an empty list " in {
-      SExpressionParser.tryParseString( "()" ) must_== Success( List( lisp.List( Nil ) ) )
+      SExpressionParser.tryParseString( "()" ) must_== Success( List( LList( Nil ) ) )
     }
 
     " not parse an empty list + garbage" in {
@@ -22,28 +21,28 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the atom a1" in {
-      SExpressionParser.tryParseString( "a1" ) must_== Success( List( lisp.Atom( "a1" ) ) )
+      SExpressionParser.tryParseString( "a1" ) must_== Success( List( LAtom( "a1" ) ) )
     }
 
     " parse the atom a2(space)" in {
-      SExpressionParser.tryParseString( "a2    " ) must_== Success( List( lisp.Atom( "a2" ) ) )
+      SExpressionParser.tryParseString( "a2    " ) must_== Success( List( LAtom( "a2" ) ) )
     }
 
     """ parse the atom "a b c" """ in {
-      SExpressionParser.tryParseString( """"a b c"""" ) must_== Success( List( lisp.Atom( "a b c" ) ) )
+      SExpressionParser.tryParseString( """"a b c"""" ) must_== Success( List( LAtom( "a b c" ) ) )
     }
 
     " parse the list (c1 (c2 c2) c) " in {
       SExpressionParser.tryParseString( "(c1 (c2 c2) c)" ) must_== Success(
-        lisp.List( lisp.Atom( "c1" ) ::
-          lisp.List( lisp.Atom( "c2" ) :: lisp.Atom( "c2" ) :: Nil ) ::
-          lisp.Atom( "c" ) :: Nil ) :: Nil
+        LList( LAtom( "c1" ) ::
+          LList( LAtom( "c2" ) :: LAtom( "c2" ) :: Nil ) ::
+          LAtom( "c" ) :: Nil ) :: Nil
       )
     }
 
     " parse the list c4;;comment" in {
       SExpressionParser.tryParseString( "c4;;comment" ) must_== Success(
-        lisp.Atom( "c4" ) :: Nil
+        LAtom( "c4" ) :: Nil
       )
     }
 
@@ -52,38 +51,38 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the list ;;comment<newline>c5" in {
-      SExpressionParser.tryParseString( ";;comment\nc5" ) must_== Success( List( lisp.Atom( "c5" ) ) )
+      SExpressionParser.tryParseString( ";;comment\nc5" ) must_== Success( List( LAtom( "c5" ) ) )
     }
 
     " parse the list (c1 (c2 c2) c) ;;comment" in {
       SExpressionParser.tryParseString( "(c1 (c2 c2) c);;comment" ) must_== Success(
-        lisp.List( lisp.Atom( "c1" ) ::
-          lisp.List( lisp.Atom( "c2" ) :: lisp.Atom( "c2" ) :: Nil ) ::
-          lisp.Atom( "c" ) :: Nil ) :: Nil
+        LList( LAtom( "c1" ) ::
+          LList( LAtom( "c2" ) :: LAtom( "c2" ) :: Nil ) ::
+          LAtom( "c" ) :: Nil ) :: Nil
       )
     }
 
     " parse the list (c1 (c2 c2)  ;;comment<newline>c)" in {
       SExpressionParser.tryParseString( "(c1 (c2 c2) c);;comment" ) must_== Success(
-        lisp.List( lisp.Atom( "c1" ) ::
-          lisp.List( lisp.Atom( "c2" ) :: lisp.Atom( "c2" ) :: Nil ) ::
-          lisp.Atom( "c" ) :: Nil ) :: Nil
+        LList( LAtom( "c1" ) ::
+          LList( LAtom( "c2" ) :: LAtom( "c2" ) :: Nil ) ::
+          LAtom( "c" ) :: Nil ) :: Nil
       )
     }
 
     " parse the list (c1 \"c2 c2\" c) " in {
-      SExpressionParser.tryParseString( "(c1 \"c2 c2\" c)" ) must_== Success( List( lisp.List( List( lisp.Atom( "c1" ), lisp.Atom( "c2 c2" ), lisp.Atom( "c" ) ) ) ) )
+      SExpressionParser.tryParseString( "(c1 \"c2 c2\" c)" ) must_== Success( List( LList( List( LAtom( "c1" ), LAtom( "c2 c2" ), LAtom( "c" ) ) ) ) )
     }
 
     " parse the list_ a1 b " in {
-      SExpressionParser.tryParseString( "a1 b" ) must_== Success( List( lisp.Atom( "a1" ), lisp.Atom( "b" ) ) )
+      SExpressionParser.tryParseString( "a1 b" ) must_== Success( List( LAtom( "a1" ), LAtom( "b" ) ) )
     }
 
     " parse the list ;;comment 1\n(c1 (c2 c2)  ;;comment 2\nc)" in {
       SExpressionParser.tryParseString( "(\n;;comment 1\nc1 (c2 c2) c);;comment 2" ) must_== Success(
-        lisp.List( lisp.Atom( "c1" ) ::
-          lisp.List( lisp.Atom( "c2" ) :: lisp.Atom( "c2" ) :: Nil ) ::
-          lisp.Atom( "c" ) :: Nil ) :: Nil
+        LList( LAtom( "c1" ) ::
+          LList( LAtom( "c2" ) :: LAtom( "c2" ) :: Nil ) ::
+          LAtom( "c" ) :: Nil ) :: Nil
       )
     }
 
@@ -92,12 +91,12 @@ class IvyTest extends Specification with ClasspathFileCopier {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil ) =>
-          val pinput1 = IvyParser.parse( lisp.List( input1 :: Nil ) )
+        case LList( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil ) =>
+          val pinput1 = IvyParser.parse( LList( input1 :: Nil ) )
           //debug(pinput1)
-          val pinput2 = IvyParser.parse( lisp.List( input2 :: Nil ) )
+          val pinput2 = IvyParser.parse( LList( input2 :: Nil ) )
           //debug(pinput2)
-          val pinput3 = IvyParser.parse( lisp.List( input1 :: instantiate8 :: Nil ) )
+          val pinput3 = IvyParser.parse( LList( input1 :: instantiate8 :: Nil ) )
         //debug(pinput3)
 
         case _ =>
@@ -112,10 +111,10 @@ class IvyTest extends Specification with ClasspathFileCopier {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: instantiate10 :: Nil ) =>
-          val pinput3 = IvyParser.parse( lisp.List( paramod3 :: instantiate9 :: Nil ) )
+        case LList( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: instantiate10 :: Nil ) =>
+          val pinput3 = IvyParser.parse( LList( paramod3 :: instantiate9 :: Nil ) )
           //debug(pinput3)
-          val pinput4 = IvyParser.parse( lisp.List( instantiate10 :: Nil ) )
+          val pinput4 = IvyParser.parse( LList( instantiate10 :: Nil ) )
         //debug(pinput4)
         /*
             pinput4 match {
@@ -137,15 +136,15 @@ class IvyTest extends Specification with ClasspathFileCopier {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case l @ lisp.List( input0 :: input1 :: flip2 :: input3 :: para4a :: inst6 :: resolve4 :: Nil ) =>
-          val pinput3 = IvyParser.parse( lisp.List( input1 :: flip2 :: Nil ) )
+        case l @ LList( input0 :: input1 :: flip2 :: input3 :: para4a :: inst6 :: resolve4 :: Nil ) =>
+          val pinput3 = IvyParser.parse( LList( input1 :: flip2 :: Nil ) )
           //debug(pinput3)
           val pinput4 = IvyParser.parse( l )
         //println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         //println(pinput4)
         //println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
-        case lisp.List( list ) =>
+        case LList( list ) =>
           //println(list)
           //println(list.length)
           "The proof in flip.ivy must have 7, not " + list.length + " inferences" must beEqualTo( "failed" )
@@ -160,7 +159,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case lisp.List( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil ) =>
+        case LList( input1 :: input2 :: instantiate8 :: paramod3 :: input4 :: input5 :: instantiate9 :: resolve6 :: resolve7 :: Nil ) =>
           val pinput = IvyParser.parse( proof )
         //debug("resolution: "+pinput)
 
@@ -176,7 +175,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case lisp.List( _ ) =>
+        case LList( _ ) =>
           val pinput = IvyParser.parse( proof )
         //debug("resolution: "+pinput)
 
@@ -188,7 +187,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       result2 must not beEmpty
       val proof2 = result2.head
       proof2 match {
-        case lisp.List( _ ) =>
+        case LList( _ ) =>
           val pinput = IvyParser.parse( proof2 )
         //debug("resolution: "+pinput)
 
@@ -203,7 +202,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
       result must not beEmpty
       val proof = result.head
       proof match {
-        case lisp.List( _ ) =>
+        case LList( _ ) =>
           val pinput = IvyParser.parse( proof )
         //debug("resolution: "+pinput)
 
@@ -225,7 +224,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case lisp.List( _ ) =>
+      case LList( _ ) =>
         val pinput = IvyParser.parse( proof )
       //debug("resolution: "+pinput)
 
@@ -241,7 +240,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case lisp.List( _ ) =>
+      case LList( _ ) =>
         val pinput = IvyParser.parse( proof )
       //debug("resolution: "+pinput)
 
@@ -257,7 +256,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case lisp.List( _ ) =>
+      case LList( _ ) =>
         val pinput = IvyParser.parse( proof )
       //debug("resolution: "+pinput)
 
@@ -273,7 +272,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     result must not beEmpty
     val proof = result.head
     proof match {
-      case lisp.List( _ ) =>
+      case LList( _ ) =>
         val pinput = IvyParser.parse( proof )
       //debug("resolution: "+pinput)
 
