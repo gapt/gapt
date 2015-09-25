@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.lk.subsumedClausesRemoval
 
 import scala.collection.mutable
 
-object css {
+object CharacteristicSequentSet {
   def apply( s: Struct ): ( List[HOLSequent], List[HOLSequent], List[HOLSequent], FOLConstantsMap ) = {
     val clauselist = StandardClauseSet.transformStructToClauseSet( SimplifyStruct( s ) )
     val ( fcmap, fol, hol ) = apply( clauselist )
