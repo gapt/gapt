@@ -4,14 +4,14 @@ import java.io.{ IOException, ByteArrayInputStream, ByteArrayOutputStream }
 
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ containsStrongQuantifier, existsclosure, univclosure, CNFn }
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.formats.prover9.{ Prover9TermParserLadrStyle, Prover9TermParser }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof, fixDerivation }
-import at.logic.gapt.provers.prover9.commands.InferenceExtractor
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.{ runProcess, withTempFile }
@@ -109,15 +109,44 @@ object Prover9Importer extends ExternalProgram {
   def robinsonProofWithReconstructedEndSequentFromFile( p9File: String ): ( ResolutionProof, HOLSequent ) =
     robinsonProofWithReconstructedEndSequent( Source fromFile p9File mkString )
 
+  def reconstructEndSequent( p9Output: String ): HOLSequent = {
+    val lines = p9Output split "\n" toSeq
+
+    val parser = if ( lines contains "set(prolog_style_variables)." )
+      Prover9TermParser
+    else
+      Prover9TermParserLadrStyle
+
+    val proof_start = """=+ (PROOF) =+""".r
+    val proof_end = """=+ (end) of proof =+""".r
+    val linesInProof = lines dropWhile {
+      case proof_start( _ ) => false
+      case _                => true
+    } drop 1 takeWhile {
+      case proof_end( _ ) => false
+      case _              => true
+    }
+    val assumption = """(\d+) ([^#.]+).*\[assumption\]\.""".r
+    val assumptions = linesInProof collect {
+      case assumption( id, formula ) => parser parseFormula formula
+    }
+    val goal = """(\d+) ([^#.]+).*\[goal\]\.""".r
+    val goals = linesInProof collect {
+      case goal( id, formula ) => parser parseFormula formula
+    }
+
+    assumptions ++: Sequent() :++ goals distinct
+  }
+
   def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( ResolutionProof, HOLSequent ) = {
     val resProof = robinsonProof( p9Output )
     val endSequent = existsclosure {
-      val tptpEndSequent = InferenceExtractor.viaLADR( p9Output )
+      val tptpEndSequent = reconstructEndSequent( p9Output )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
-        InferenceExtractor.clausesViaLADR( p9Output )
+        inputClauses( resProof ).map( _.toFormula ) ++: Sequent()
       } else {
-        tptpEndSequent
+        prenexify.pos( tptpEndSequent.toFormula )
       }
     }
 
