@@ -900,3 +900,7 @@ object Main extends SimpleSwingApplication {
   */
 }
 
+object prooftool {
+  def apply( x: AnyRef ) = Main.display( "From CLI", x )
+}
+

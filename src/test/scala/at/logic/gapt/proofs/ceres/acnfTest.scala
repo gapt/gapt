@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.ceres.ACNF
 
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.proofs.lk.base._

@@ -1,8 +1,8 @@
 package at.logic.gapt.examples
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{ prooftool, parse }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.expr.hol.{ univclosure, instantiate }
+import at.logic.gapt.formats.simple.SimpleFOLParser
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof
@@ -1022,10 +1022,10 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
   def f2( arg1: FOLTerm, sym: String, arg2: FOLTerm ): FOLTerm = f2( sym, arg1, arg2 )
 
   val f_ax_1 = Eq( f1( f, Utils.numeral( 0 ) ), f1( s, Utils.numeral( 0 ) ) )
-  val f_ax_2 = parse.fol( "Forall x =(f(s(x)), *(s(x) , f(x)))" )
+  val f_ax_2 = SimpleFOLParser( "Forall x =(f(s(x)), *(s(x) , f(x)))" )
 
   val g_ax_1 = new AllQuantifiedConditionalAxiomHelper( y :: Nil, Nil, Eq( y, f2( g, Utils.numeral( 0 ), y ) ) )
-  val g_ax_2 = parse.fol( "Forall x Forall y =( g(s(x), y), g(x, *(y , s(x))) )" )
+  val g_ax_2 = SimpleFOLParser( "Forall x Forall y =( g(s(x), y), g(x, *(y , s(x))) )" )
 
   val g_compat_2 = new AllQuantifiedConditionalAxiomHelper( x :: y :: z :: Nil, Eq( y, z ) :: Nil, Eq( f2( g, x, y ), f2( g, x, z ) ) )
 

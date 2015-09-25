@@ -90,7 +90,20 @@ trait LKExporter extends HOLTermXMLExporter {
 }
 
 object saveXML {
-  def apply( proofs: List[Tuple2[String, LKProof]], sequentlists: List[Tuple2[String, List[HOLSequent]]], filename: String ) =
+  def apply( ls: List[LKProof], names: List[String], outputFile: String )( implicit dummyImplicit: DummyImplicit ): Unit = {
+    val exporter = new LKExporter {}
+    val pairs = ls.zip( names )
+    scala.xml.XML.save(
+      outputFile,
+      <proofdatabase>
+        <definitionlist/>
+        <axiomset/>{ pairs.map( p => exporter.exportProof( p._2, p._1 ) ) }<variabledefinitions/>
+      </proofdatabase>, "UTF-8", true,
+      scala.xml.dtd.DocType( "proofdatabase", scala.xml.dtd.SystemID( "http://www.logic.at/ceres/xml/5.0/proofdatabase.dtd" ), Nil )
+    )
+  }
+
+  def apply( proofs: List[Tuple2[String, LKProof]], sequentlists: List[Tuple2[String, List[HOLSequent]]], filename: String ): Unit =
     {
       val exporter = new LKExporter {}
       val p_xmls = proofs.map( p => exporter.exportProof( p._1, p._2 ) )

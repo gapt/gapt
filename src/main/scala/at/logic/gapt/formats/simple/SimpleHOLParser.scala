@@ -10,6 +10,7 @@ package at.logic.gapt.formats.simple
 import at.logic.gapt.expr.{ To, FunctionType }
 import at.logic.gapt.formats.HOLParser
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.readers.StringReader
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator._
@@ -55,3 +56,8 @@ trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.gapt
 
 }
 
+object SimpleHOLParser {
+  private class StringHOLParser( input: String ) extends StringReader( input ) with SimpleHOLParser
+
+  def apply( s: String ) = new StringHOLParser( s ).getTerm
+}

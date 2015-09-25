@@ -19,6 +19,7 @@ import at.logic.gapt.utils.{ runProcess, withTempFile }
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
+object Prover9Prover extends Prover9Prover( extraCommands = _ => Seq() )
 class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends ResolutionProver with ExternalProgram {
   def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( cnf ) {
