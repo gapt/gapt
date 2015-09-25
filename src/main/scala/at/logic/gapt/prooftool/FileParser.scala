@@ -7,7 +7,7 @@
 
 package at.logic.gapt.prooftool
 
-import java.io.{ FileInputStream, InputStreamReader }
+import java.io.{ InputStream, FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
 import at.logic.gapt.formats.llk.HybridLatexParser
@@ -39,7 +39,7 @@ class FileParser {
 
   def gzFileStreamReader( f: String ) = new InputStreamReader( new GZIPInputStream( new FileInputStream( f ) ), "UTF8" )
 
-  def ceresFileReader( input: InputStreamReader ) =
+  def ceresFileReader( input: InputStream ) =
     loadProofDatabase( ( new XMLReader( input ) with XMLProofDatabaseParser ).getProofDatabase() )
 
   def loadProofDatabase( db: ProofDatabase ) {
@@ -50,7 +50,7 @@ class FileParser {
     proofdb = db
   }
 
-  def stabFileReader( input: InputStreamReader ) {
+  def stabFileReader( input: InputStream ) {
     SchemaProofDB.clear
     resolutionProofSchemaDB.clear
     termTrees = Nil
@@ -132,20 +132,20 @@ class FileParser {
       else if ( path.endsWith( ".rs" ) ) rsFileReader( fileStreamReader( path ) )
       else if ( path.endsWith( ".rs.gz" ) ) rsFileReader( gzFileStreamReader( path ) )
       else if ( path.endsWith( ".xml" ) ) try {
-        ceresFileReader( fileStreamReader( path ) )
+        ceresFileReader( new FileInputStream( path ) )
       } catch {
         case pe: ParsingException =>
           Main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
-            case Dialog.Result.Yes => stabFileReader( fileStreamReader( path ) )
+            case Dialog.Result.Yes => stabFileReader( new FileInputStream( path ) )
             case _                 =>
           }
       }
       else if ( path.endsWith( ".xml.gz" ) ) try {
-        ceresFileReader( gzFileStreamReader( path ) )
+        ceresFileReader( new GZIPInputStream( new FileInputStream( path ) ) )
       } catch {
         case pe: ParsingException =>
           Main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
-            case Dialog.Result.Yes => stabFileReader( gzFileStreamReader( path ) )
+            case Dialog.Result.Yes => stabFileReader( new GZIPInputStream( new FileInputStream( path ) ) )
             case _                 =>
           }
       }

@@ -13,7 +13,7 @@ object XMLReaders {
     def getInput(): Node = n
   }
 
-  abstract class XMLReader( r: java.io.InputStreamReader ) extends XMLNodeParser {
+  abstract class XMLReader( r: java.io.InputStream ) extends XMLNodeParser {
     val reader = OfflineXMLWithoutCatalog.parser.getXMLReader()
     def getInput(): Node = scala.xml.Utility.trim( OfflineXMLWithoutCatalog.load( r ) )
   }

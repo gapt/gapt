@@ -355,7 +355,7 @@ object XMLParser {
   }
   object XMLProofDatabaseParser {
     def apply( in: InputStream ): ProofDatabase =
-      ( new XMLReader( new InputStreamReader( in ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      ( new XMLReader( in ) with XMLProofDatabaseParser ).getProofDatabase()
     def apply( file: String ): ProofDatabase =
       try { apply( new GZIPInputStream( new FileInputStream( file ) ) ) }
       catch {

@@ -39,7 +39,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
   "The system" should {
     /*
 //    "parse, skolemize, extract clause set for a simple induction proof" in {
-//      val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("simple_ind.xml"))) with XMLProofDatabaseParser)..getProofDatabase()
+//      val proofs = (new XMLReader((getClass.getClassLoader.getResourceAsStream("simple_ind.xml"))) with XMLProofDatabaseParser)..getProofDatabase()
 //      proofs.size must beEqualTo(1)
 //      val proof = proofs.first
 //      val proof_sk = LKToLKsk( proof )
@@ -61,7 +61,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "skolemize a simple proof" in {
-      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "sk2.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk2.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
@@ -69,7 +69,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "skolemize a proof with a simple definition" in {
-      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "sk3.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk3.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
@@ -77,7 +77,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "skolemize a proof with a complex definition" in {
-      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "sk4.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk4.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( proof )
@@ -85,7 +85,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "extract projections and clause set from a skolemized proof" in {
-      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "test1p.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "test1p.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
