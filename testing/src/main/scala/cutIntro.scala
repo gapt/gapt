@@ -42,7 +42,11 @@ object testCutIntro extends App {
     case _ if fileName contains "/prover9/" =>
       val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fileName )
       metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
-      val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
+      val expansionProof =
+        if ( isFOLPrenexSigma1( endSequent ) )
+          RobinsonToExpansionProof( resProof, endSequent )
+        else
+          RobinsonToExpansionProof( resProof )
       val containsEquations = constants( toShallow( expansionProof ) ) exists {
         case EqC( _ ) => true
         case _        => false

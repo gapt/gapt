@@ -4,9 +4,11 @@ import java.nio.file._
 import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.examples.proofSequences
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.proofs.expansionTrees.{ toShallow, InstanceTermEncoding, ExpansionSequent }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
+import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.executionModels.timeout.withTimeout
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -65,9 +67,16 @@ object dumpTermsets extends App {
 
   println( "Prover9 proofs" )
   betterForeach( RegressionTests.prover9Proofs.map( _.toPath ) ) { p9File =>
+    val ( resProof, endSequent ) = Prover9Importer robinsonProofWithReconstructedEndSequentFromFile p9File.toString
+    val expansionProof =
+      if ( isFOLPrenexSigma1( endSequent ) )
+        RobinsonToExpansionProof( resProof, endSequent )
+      else
+        RobinsonToExpansionProof( resProof )
+
     writeTermset(
       outDir resolve s"p9-${p9File.getParent.getFileName}.termset",
-      termsetFromExpansionProof( Prover9Importer expansionProofFromFile p9File.toString )
+      termsetFromExpansionProof( expansionProof )
     )
   }
 
