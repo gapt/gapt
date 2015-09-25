@@ -108,7 +108,7 @@ object RegressionTests extends App {
     case Array( limit ) =>
       println( s"Only running $limit random tests." )
       Random.shuffle( allTestCases ).take( limit toInt )
-    case _ => allTestCases
+    case _ => Random.shuffle( allTestCases )
   }
 
   val total = testCases.length
