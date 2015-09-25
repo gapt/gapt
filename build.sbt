@@ -36,6 +36,9 @@ lazy val root = (project in file(".")).
 
     mainClass := Some("at.logic.cli.CLIMain"),
 
+    fork in console := true,
+    initialCommands in console := IO.read((resourceDirectory in Compile).value / "gapt-cli-prelude.scala"),
+
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
     releaseDist := {
