@@ -4,7 +4,7 @@
 
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.algorithms.fol.hol2fol._
+import at.logic.gapt.algorithms.fol.reduceHolToFol._
 import at.logic.gapt.algorithms.lk._
 import at.logic.gapt.algorithms.lk.statistics._
 import at.logic.gapt.proofs.lk.algorithms.subsumption._

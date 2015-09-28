@@ -11,8 +11,11 @@
 
 package at.logic.gapt.formats.xml
 
+import java.io.{ InputStream, FileInputStream, InputStreamReader }
+import java.util.zip.GZIPInputStream
+
 import at.logic.gapt.formats.ParsingException
-import at.logic.gapt.formats.readers.XMLReaders.NodeReader
+import at.logic.gapt.formats.readers.XMLReaders.{ XMLReader, NodeReader }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
@@ -349,6 +352,16 @@ object XMLParser {
         ( new NodeReader( ( pdb \ "axiomset" ).head ) with XMLSequentParser ).getAxiomSet(),
         ( pdb \ "sequentlist" ).map( n => ( new NodeReader( n ) with XMLSequentParser ).getNamedSequentList() ).toList
       )
+  }
+  object XMLProofDatabaseParser {
+    def apply( in: InputStream ): ProofDatabase =
+      ( new XMLReader( in ) with XMLProofDatabaseParser ).getProofDatabase()
+    def apply( file: String ): ProofDatabase =
+      try { apply( new GZIPInputStream( new FileInputStream( file ) ) ) }
+      catch {
+        case _: Exception =>
+          apply( new FileInputStream( file ) )
+      }
   }
   trait XMLDefinitionParser extends XMLNodeParser {
 

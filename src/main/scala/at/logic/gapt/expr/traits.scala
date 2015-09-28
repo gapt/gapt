@@ -223,7 +223,7 @@ object FOLAtom {
   def apply( sym: String, args: Seq[FOLTerm] ): FOLAtom =
     Apps( FOLAtomHead( sym, args.size ), args ).asInstanceOf[FOLAtom]
 
-  def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
+  def unapply( e: FOLAtom ): Option[( String, List[FOLTerm] )] = e match {
     case Apps( FOLAtomHead( sym, _ ), args ) if e.isInstanceOf[FOLAtom] =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None

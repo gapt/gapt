@@ -39,7 +39,7 @@ class XMLParserTest extends Specification {
       )
     }
     "parse correctly a constant c from a StringReader" in {
-      ( new XMLReader( new BufferedSource( new ByteArrayInputStream( "<constant symbol=\"c\"/>".getBytes( "UTF8" ) ) ).reader ) with XMLTermParser ).getTerm() must beEqualTo( Const( "c", Ti ) )
+      ( new XMLReader( new ByteArrayInputStream( "<constant symbol=\"c\"/>".getBytes( "UTF8" ) ) ) with XMLTermParser ).getTerm() must beEqualTo( Const( "c", Ti ) )
     }
     "parse correctly a term g(c)" in {
       ( new NodeReader( <function symbol="g">
@@ -468,7 +468,7 @@ class XMLParserTest extends Specification {
       )
     }
     "parse correctly a proof with some permutations, an andr, and an orr1 rule from a file" in {
-      val proofs = ( new XMLReader( Source.fromURL( getClass.getResource( "/xml/test3.xml" ) ).reader ) with XMLProofDatabaseParser ).getProofDatabase().proofs
+      val proofs = ( new XMLReader( getClass.getResourceAsStream( "/xml/test3.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase().proofs
 
       proofs.size must beEqualTo( 1 )
       proofs.head._2.root must beSyntacticMultisetEqual(
@@ -478,7 +478,7 @@ class XMLParserTest extends Specification {
       )
     }
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
-      val proofs = ( new XMLReader( Source.fromURL( getClass.getResource( "/xml/test2.xml" ) ).reader ) with XMLProofDatabaseParser ).getProofDatabase().proofs
+      val proofs = ( new XMLReader( getClass.getResourceAsStream( "/xml/test2.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase().proofs
 
       proofs.size must beEqualTo( 1 )
       proofs.head._2.root must beSyntacticMultisetEqual(
@@ -487,7 +487,7 @@ class XMLParserTest extends Specification {
       )
     }
     "parse correctly an involved proof from a file" in {
-      val proofs = ( new XMLReader( Source.fromURL( getClass.getResource( "/xml/test1.xml" ) ).reader ) with XMLProofDatabaseParser ).getProofDatabase().proofs
+      val proofs = ( new XMLReader( getClass.getResourceAsStream( "/xml/test1.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase().proofs
 
       val X = Var( "X", Ti -> To )
       val t = Const( "t", Ti )
@@ -507,12 +507,12 @@ class XMLParserTest extends Specification {
     }
 
     "parse correctly a sequentlist from a gzipped file" in {
-      val proofdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "xml" + separator + "slist.xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "xml" + separator + "slist.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
 
       proofdb.sequentLists.size must beEqualTo( 1 )
     }
     "parse correctly a proof with definitions from a gzipped file" in {
-      val proofdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "xml" + separator + "prime1-0.xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "xml" + separator + "prime1-0.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
 
       proofdb.Definitions.size must beEqualTo( 21 )
     }

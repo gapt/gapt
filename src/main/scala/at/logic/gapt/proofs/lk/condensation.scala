@@ -12,17 +12,3 @@ class condensation {
   //TODO: implement
 
 }
-
-/**
- * Factoring removes duplicate literals from fsequents
- */
-object factoring extends factoring
-class factoring {
-  def apply( fs: HOLSequent ): HOLSequent = {
-    val ant = fs.antecedent.foldLeft( List[HOLFormula]() )( ( a_, f ) => if ( a_.contains( f ) ) a_ else f :: a_ )
-    val suc = fs.succedent.foldLeft( List[HOLFormula]() )( ( a_, f ) => if ( a_.contains( f ) ) a_ else f :: a_ )
-    HOLSequent( ant.reverse, suc.reverse )
-  }
-
-  def apply( l: List[HOLSequent] ): List[HOLSequent] = l.map( factoring.apply )
-}

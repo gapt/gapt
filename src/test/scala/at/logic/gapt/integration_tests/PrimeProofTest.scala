@@ -140,7 +140,7 @@ class PrimeProofTest extends Specification {
     def prime1( n: Int, refute: Boolean ) = {
       checkForProverOrSkip
 
-      val proofdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "prime1-" + n + ".xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "prime1-" + n + ".xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
@@ -203,7 +203,7 @@ class PrimeProofTest extends Specification {
     def euclid( n: Int ) = {
       checkForProverOrSkip
 
-      val proofdb = ( new XMLReader( new InputStreamReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "euclid-" + n + ".xml.gz" ) ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "euclid-" + n + ".xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 

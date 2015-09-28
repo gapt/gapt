@@ -1,4 +1,3 @@
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol.univclosure
@@ -14,25 +13,9 @@ import org.apache.log4j.{Logger, Level}
 for (n <- Seq(classOf[SipProver].getName, FindFormulaH.getClass.getName))
   Logger.getLogger(n).setLevel(Level.DEBUG)
 
-val factorialES =
-  ("s(0) = f(0)" +:
-    "s(x)*f(x) = f(s(x))" +:
-    "g(x,0) = x" +:
-    "g(x*s(y),y) = g(x,s(y))" +:
-    "x*s(0) = x" +:
-    "s(0)*x = x" +:
-    "(x*y)*z = x*(y*z)" +:
-    Sequent()
-    :+ "g(s(0), x) = f(x)"
+val factorialES = ( ( ( "s(0) = f(0)" +: "s(x)*f(x) = f(s(x))" +: "g(x,0) = x" +: "g(x*s(y),y) = g(x,s(y))" +: "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula ) map univclosure.apply ) :+ FOLSubstitution( FOLVar("x") -> alpha )( parseFormula( "g(s(0), x) = f(x)" ) )
 
-    map parseFormula
-    map(univclosure(_), FOLSubstitution(FOLVar("x") -> alpha).apply))
-
-val theory =
-  "x*s(0) = x" +:
-  "s(0)*x = x" +:
-  "(x*y)*z = x*(y*z)" +:
-  Sequent() map parseFormula map univclosure.apply
+val theory = ( "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula map univclosure.apply
 
 val modThProver = new Prover {
   val p9 = new Prover9Prover

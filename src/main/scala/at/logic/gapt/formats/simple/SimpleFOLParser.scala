@@ -8,6 +8,7 @@
 package at.logic.gapt.formats.simple
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.readers.StringReader
 
 import scala.util.matching.Regex
 
@@ -44,5 +45,12 @@ trait SimpleFOLParser extends SimpleHOLParser {
   override def atom: Parser[HOLFormula] = ( equality | var_atom | const_atom )
   override def forall: Parser[HOLFormula] = "Forall" ~ variable ~ formula ^^ { case "Forall" ~ v ~ x => All( v.asInstanceOf[FOLVar], x.asInstanceOf[FOLFormula] ) }
   override def exists: Parser[HOLFormula] = "Exists" ~ variable ~ formula ^^ { case "Exists" ~ v ~ x => Ex( v.asInstanceOf[FOLVar], x.asInstanceOf[FOLFormula] ) }
+}
+
+object SimpleFOLParser {
+  private class StringFOLParser( input: String ) extends StringReader( input ) with SimpleFOLParser
+
+  def apply( s: String ) = new StringFOLParser( s ).getTerm().asInstanceOf[FOLFormula]
+  def term( s: String ) = apply( s ).asInstanceOf[FOLTerm]
 }
 

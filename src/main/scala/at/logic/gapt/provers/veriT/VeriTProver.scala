@@ -5,8 +5,7 @@ import at.logic.gapt.formats.veriT._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.withTempFile
-import scala.sys.process._
+import at.logic.gapt.utils.runProcess
 import java.io._
 import at.logic.gapt.provers._
 import at.logic.gapt.expr._
@@ -18,9 +17,7 @@ class VeriTProver extends Prover with ExternalProgram {
     // Generate the input file for veriT
     val veritInput = SmtLibExporter( renameConstantsToFi( s )._1 )
 
-    val veritOutput = withTempFile.fromString( veritInput ) { veritInputFile =>
-      Seq( "veriT", veritInputFile ) !!
-    }
+    val veritOutput = runProcess( Seq( "veriT" ), veritInput )
 
     // Parse the output
     VeriTParser.isUnsat( new StringReader( veritOutput ) )
@@ -44,9 +41,7 @@ class VeriTProver extends Prover with ExternalProgram {
   override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] = withRenamedConstants( s ) { s =>
     val smtBenchmark = SmtLibExporter( s )
 
-    val output = withTempFile.fromString( smtBenchmark ) { smtFile =>
-      Seq( "veriT", "--proof=-", "--proof-version=1", smtFile ) !!
-    }
+    val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
 
     VeriTParser.getExpansionProof( new StringReader( output ) ) match {
       case Some( exp_seq ) =>
@@ -77,7 +72,7 @@ class VeriTProver extends Prover with ExternalProgram {
 
   val isInstalled: Boolean =
     try {
-      "veriT --version".!!
+      runProcess( Seq( "veriT", "--version" ) )
       true
     } catch {
       case ex: IOException => false

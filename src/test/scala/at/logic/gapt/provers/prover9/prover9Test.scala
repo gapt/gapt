@@ -85,6 +85,11 @@ class Prover9Test extends Specification {
       ok
     }
 
+    "other proof with new_symbol" in {
+      Prover9Importer.expansionProof( load( "SEU034+1.out" ) )
+      ok
+    }
+
     "strong quantifiers" in {
       prover9.reconstructLKProofFromOutput( load( "GEO200+1.out" ) )
       ok

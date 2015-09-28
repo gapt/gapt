@@ -9,7 +9,7 @@ import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
 import at.logic.gapt.utils.dssupport.ListSupport
 import at.logic.gapt.utils.logging.metrics
 
-import scala.collection.{ GenTraversable, Set, mutable }
+import scala.collection.{ GenTraversable, mutable }
 
 object SameRootSymbol {
   def unapply( terms: Seq[FOLTerm] ): Option[( String, List[List[FOLTerm]] )] =
@@ -71,12 +71,12 @@ object nfsSubsumedByAU {
 }
 
 object normalForms {
-  def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] ): Seq[FOLTerm] = {
+  def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] ): Set[FOLTerm] = {
     lang foreach { term => require( freeVariables( term ) isEmpty ) }
 
     val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ).
       map( antiUnificator( _ ) ).toSet[FOLTerm]
-    antiUnifiers.flatMap { au => nfsSubsumedByAU( au, nonTerminals.toSet ) }.toSeq
+    antiUnifiers flatMap { au => nfsSubsumedByAU( au, nonTerminals.toSet ) }
   }
 }
 
@@ -167,7 +167,7 @@ class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
       VectGrammarMinimizationFormula.this.valueOfNonTerminal( t, n, value )
   }.formula
 
-  def coversLanguage( lang: Seq[FOLTerm] ) = And( lang map generatesTerm toList )
+  def coversLanguage( lang: Traversable[FOLTerm] ) = And( lang map generatesTerm toList )
 }
 
 class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizationFormula( g toVectTratGrammar ) {
@@ -176,7 +176,7 @@ class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizati
 }
 
 object normalFormsProofGrammar {
-  def apply( lang: Seq[FOLTerm], n: Int ) = {
+  def apply( lang: Set[FOLTerm], n: Int ) = {
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
     val topLevelNFs = normalForms( lang, rhsNonTerminals ).filter( !_.isInstanceOf[FOLVar] )
     val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), rhsNonTerminals.tail )
@@ -190,7 +190,7 @@ object normalFormsProofGrammar {
 }
 
 object minimizeGrammar {
-  def apply( g: TratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j ): TratGrammar = {
+  def apply( g: TratGrammar, lang: Set[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j ): TratGrammar = {
     val formula = new GrammarMinimizationFormula( g )
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
@@ -204,14 +204,14 @@ object minimizeGrammar {
 }
 
 object findMinimalGrammar {
-  def apply( lang: Seq[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
-    val polynomialSizedCoveringGrammar = normalFormsProofGrammar( lang, numberOfNonTerminals )
-    minimizeGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
+  def apply( lang: Traversable[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
+    val polynomialSizedCoveringGrammar = normalFormsProofGrammar( lang toSet, numberOfNonTerminals )
+    minimizeGrammar( polynomialSizedCoveringGrammar, lang toSet, maxSATSolver )
   }
 }
 
 object takeN {
-  def apply[A]( n: Int, from: Seq[A] ): Seq[List[A]] = n match {
+  def apply[A]( n: Int, from: Set[A] ): Seq[List[A]] = n match {
     case 0 => Seq( Nil )
     case _ =>
       takeN( n - 1, from ) flatMap { rest =>
@@ -223,12 +223,12 @@ object takeN {
 object normalFormsProofVectGrammar {
   import VectTratGrammar._
 
-  def apply( lang: Seq[FOLTerm], arities: Seq[Int] ): VectTratGrammar = {
+  def apply( lang: Set[FOLTerm], arities: Seq[Int] ): VectTratGrammar = {
     val rhsNonTerminals = arities.zipWithIndex map { case ( arity, i ) => ( 0 until arity ).map( j => FOLVar( s"α_${i}_$j" ) ).toList }
     apply( lang, FOLVar( "τ" ), rhsNonTerminals )
   }
 
-  def apply( lang: Seq[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {
+  def apply( lang: Set[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {
     val topLevelNFs = normalForms( lang, nonTermVects flatten ).filter( !_.isInstanceOf[FOLVar] )
     val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), nonTermVects.tail flatten )
 
@@ -244,7 +244,7 @@ object normalFormsProofVectGrammar {
 }
 
 object minimizeVectGrammar {
-  def apply( g: VectTratGrammar, lang: Seq[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j ): VectTratGrammar = {
+  def apply( g: VectTratGrammar, lang: Set[FOLTerm], maxSATSolver: MaxSATSolver = new MaxSat4j ): VectTratGrammar = {
     val formula = new VectGrammarMinimizationFormula( g )
     val hard = metrics.time( "minform" ) { formula.coversLanguage( lang ) }
     metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
@@ -259,7 +259,7 @@ object minimizeVectGrammar {
 }
 
 object findMinimalVectGrammar {
-  def apply( lang: Seq[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
+  def apply( lang: Set[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
     val polynomialSizedCoveringGrammar = metrics.time( "nfgrammar" ) { normalFormsProofVectGrammar( lang, aritiesOfNonTerminals ) }
     metrics.value( "nfgrammar", polynomialSizedCoveringGrammar.size )
     minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
