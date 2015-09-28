@@ -1190,14 +1190,14 @@ class LKNewTest extends Specification {
     }
   }
 
-  "EqualityRule" should {
+  "EqualityLeftRule" should {
     "correctly construct a proof" in {
       val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
-      EqualityRule( ax, Ant( 0 ), Ant( 1 ), HOLPosition( 2 ) )
-      EqualityRule( ax, Ant( 0 ), Ant( 2 ), HOLPosition( 2 ) )
-      EqualityRule( ax, Ant( 0 ), Suc( 0 ), HOLPosition( 2 ) )
-      EqualityRule( ax, Ant( 0 ), Suc( 1 ), HOLPosition( 2 ) )
+      EqualityLeftRule( ax, Ant( 0 ), Ant( 1 ), HOLPosition( 2 ) )
+      EqualityLeftRule( ax, Ant( 0 ), Ant( 2 ), HOLPosition( 2 ) )
+      EqualityLeftRule( ax, Eq( c, d ), Pc, Pd )
+      EqualityLeftRule( ax, Eq( c, d ), Pd, Pc )
 
       success
     }
@@ -1205,19 +1205,19 @@ class LKNewTest extends Specification {
     "refuse to construct a proof" in {
       val ax = Axiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
 
-      EqualityRule( ax, Ant( 0 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EqualityRule( ax, Suc( 0 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EqualityRule( ax, Ant( 0 ), Suc( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EqualityRule( ax, Ant( 3 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EqualityRule( ax, Ant( 0 ), Ant( 3 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EqualityRule( ax, Ant( 2 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EqualityRule( ax, Suc( 0 ), Ant( 1 ), HOLPosition( 1 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeftRule( ax, Ant( 0 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeftRule( ax, Suc( 0 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeftRule( ax, Ant( 0 ), Suc( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeftRule( ax, Ant( 3 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeftRule( ax, Ant( 0 ), Ant( 3 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeftRule( ax, Ant( 2 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityLeftRule( ax, Suc( 0 ), Ant( 1 ), HOLPosition( 1 ) ) must throwAn[LKRuleCreationException]
     }
 
     "correctly return its main formula" in {
       val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
-      val proofs = for ( ( i, f ) <- List( Ant( 1 ) -> Pd, Ant( 2 ) -> Pc, Suc( 0 ) -> Pd, Suc( 1 ) -> Pc ) ) yield ( EqualityRule( ax, Ant( 0 ), i, HOLPosition( 2 ) ), f )
+      val proofs = for ( ( i, f ) <- List( Ant( 1 ) -> Pd, Ant( 2 ) -> Pc ) ) yield ( EqualityLeftRule( ax, Ant( 0 ), i, HOLPosition( 2 ) ), f )
 
       for ( ( p, f ) <- proofs ) {
         if ( p.mainIndices.length != 1 )
@@ -1232,7 +1232,7 @@ class LKNewTest extends Specification {
     "correctly return its aux formulas" in {
       val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
-      val proofs = for ( ( i, f ) <- List( Ant( 1 ) -> Pc, Ant( 2 ) -> Pd, Suc( 0 ) -> Pc, Suc( 1 ) -> Pd ) ) yield ( EqualityRule( ax, Ant( 0 ), i, HOLPosition( 2 ) ), f )
+      val proofs = for ( ( i, f ) <- List( Ant( 1 ) -> Pc, Ant( 2 ) -> Pd ) ) yield ( EqualityLeftRule( ax, Ant( 0 ), i, HOLPosition( 2 ) ), f )
 
       for ( ( p, f ) <- proofs ) {
         if ( p.auxIndices.length != 1 )
@@ -1252,12 +1252,12 @@ class LKNewTest extends Specification {
       val ax = Axiom( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
 
       // end sequent of p1: P(d), A, c = d, B, C :- D, P(d), E
-      val p1 = EqualityRule( ax, Ant( 1 ), Ant( 3 ), HOLPosition( 2 ) )
+      val p = EqualityLeftRule( ax, Ant( 1 ), Ant( 3 ), HOLPosition( 2 ) )
 
-      val o1 = p1.getOccConnector
+      val o = p.getOccConnector
 
-      testChildren( o1, "eq" )(
-        p1.premise,
+      testChildren( o, "eq" )(
+        p.premise,
         Seq( Ant( 1 ) ),
         Seq( Ant( 2 ) ),
         Seq( Ant( 3 ) ),
@@ -1269,8 +1269,8 @@ class LKNewTest extends Specification {
         Seq( Suc( 2 ) )
       )
 
-      testParents( o1, "eq" )(
-        p1.endSequent,
+      testParents( o, "eq" )(
+        p.endSequent,
         Seq( Ant( 3 ) ),
         Seq( Ant( 0 ) ),
         Seq( Ant( 1 ) ),
@@ -1281,13 +1281,77 @@ class LKNewTest extends Specification {
         Seq( Suc( 1 ) ),
         Seq( Suc( 2 ) )
       )
+    }
+  }
+
+  "EqualityRightRule" should {
+    "correctly construct a proof" in {
+      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+
+      EqualityRightRule( ax, Ant( 0 ), Suc( 0 ), HOLPosition( 2 ) )
+      EqualityRightRule( ax, Ant( 0 ), Suc( 1 ), HOLPosition( 2 ) )
+      EqualityRightRule( ax, Eq( c, d ), Pc, Pd )
+      EqualityRightRule( ax, Eq( c, d ), Pd, Pc )
+
+      success
+    }
+
+    "refuse to construct a proof" in {
+      val ax = Axiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
+
+      EqualityRightRule( ax, Ant( 0 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityRightRule( ax, Suc( 0 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityRightRule( ax, Ant( 0 ), Suc( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityRightRule( ax, Ant( 3 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityRightRule( ax, Ant( 0 ), Ant( 3 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityRightRule( ax, Ant( 2 ), Ant( 1 ), HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EqualityRightRule( ax, Suc( 0 ), Ant( 1 ), HOLPosition( 1 ) ) must throwAn[LKRuleCreationException]
+    }
+
+    "correctly return its main formula" in {
+      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+
+      val proofs = for ( ( i, f ) <- List( Suc( 0 ) -> Pd, Suc( 1 ) -> Pc ) ) yield ( EqualityRightRule( ax, Ant( 0 ), i, HOLPosition( 2 ) ), f )
+
+      for ( ( p, f ) <- proofs ) {
+        if ( p.mainIndices.length != 1 )
+          failure
+
+        p.mainFormulas.head must beEqualTo( f )
+      }
+
+      success
+    }
+
+    "correctly return its aux formulas" in {
+      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+
+      val proofs = for ( ( i, f ) <- List( Suc( 0 ) -> Pc, Suc( 1 ) -> Pd ) ) yield ( EqualityRightRule( ax, Ant( 0 ), i, HOLPosition( 2 ) ), f )
+
+      for ( ( p, f ) <- proofs ) {
+        if ( p.auxIndices.length != 1 )
+          failure
+
+        if ( p.auxIndices.head.length != 2 )
+          failure
+
+        p.auxFormulas.head.head must beEqualTo( Eq( c, d ) )
+        p.auxFormulas.head.tail.head must beEqualTo( f )
+      }
+
+      success
+    }
+
+    "correctly connect occurrences" in {
+      val ax = Axiom( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
+
       // end sequent of p2: A, c = d, B, C :- D, E, P(c)
-      val p2 = EqualityRule( ax, Ant( 1 ), Suc( 1 ), HOLPosition( 2 ) )
+      val p = EqualityRightRule( ax, Ant( 1 ), Suc( 1 ), HOLPosition( 2 ) )
 
-      val o2 = p2.getOccConnector
+      val o = p.getOccConnector
 
-      testChildren( o2, "eq" )(
-        p2.premise,
+      testChildren( o, "eq" )(
+        p.premise,
         Seq( Ant( 0 ) ),
         Seq( Ant( 1 ) ),
         Seq( Ant( 2 ) ),
@@ -1299,8 +1363,8 @@ class LKNewTest extends Specification {
         Seq( Suc( 1 ) )
       )
 
-      testParents( o2, "eq" )(
-        p2.endSequent,
+      testParents( o, "eq" )(
+        p.endSequent,
         Seq( Ant( 0 ) ),
         Seq( Ant( 1 ) ),
         Seq( Ant( 2 ) ),

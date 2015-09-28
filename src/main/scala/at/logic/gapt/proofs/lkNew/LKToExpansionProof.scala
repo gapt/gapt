@@ -102,15 +102,18 @@ object LKToExpansionProof extends Logger {
       val ( subTree, subSequent ) = apply( subProof ).focus( aux )
       subSequent :+ merge( ETWeakQuantifier( proof.mainFormulas.head, Seq( subTree -> t ) ) )
 
-    // Equality rule(s)
-    case EqualityRule( subProof, eq, aux, pos ) =>
+    // Equality rules
+    case EqualityLeftRule( subProof, eq, aux, pos ) =>
       val ( subTree, subSequent ) = apply( subProof ).focus( aux )
       val repTerm = proof.mainFormulas.head( pos )
       val newTree = merge( replaceAtHOLPosition( subTree, pos, repTerm ) )
-      aux match {
-        case Ant( _ ) => newTree +: subSequent
-        case Suc( _ ) => subSequent :+ newTree
-      }
+      newTree +: subSequent
+
+    case EqualityRightRule( subProof, eq, aux, pos ) =>
+      val ( subTree, subSequent ) = apply( subProof ).focus( aux )
+      val repTerm = proof.mainFormulas.head( pos )
+      val newTree = merge( replaceAtHOLPosition( subTree, pos, repTerm ) )
+      subSequent :+ newTree
 
     case _ => throw new IllegalArgumentException( s"Unsupported inference rule: ${proof.longName}." )
   }
