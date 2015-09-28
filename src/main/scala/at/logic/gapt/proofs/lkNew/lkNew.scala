@@ -160,6 +160,28 @@ object BinaryLKProof {
   def unapply( p: BinaryLKProof ) = Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }
 
+trait CommonRule extends LKProof {
+
+  protected def formulasToBeDeleted = auxIndices
+
+  protected def mainFormulaSequent: HOLSequent
+
+  protected def contexts = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.delete( is )
+
+  override def endSequent = mainFormulaSequent.antecedent ++: contexts.reduce( _ ++ _ ) :++ mainFormulaSequent.succedent
+
+  override def occConnectors = for ( i <- contexts.indices ) yield {
+    val ( leftContexts, currentContext, rightContexts ) = ( contexts.take( i ), contexts( i ), contexts.drop( i + 1 ) )
+    val leftContextIndices = leftContexts.map( c => c.indicesSequent.map( _ => Seq() ) )
+    val currentContextIndices = currentContext.indicesSequent.map( i => Seq( i ) )
+    val rightContextIndices = rightContexts.map( c => c.indicesSequent.map( _ => Seq() ) )
+    val auxIndicesAntecedent = mainFormulaSequent.antecedent.map( _ => auxIndices( i ) )
+    val auxIndicesSuccedent = mainFormulaSequent.succedent.map( _ => auxIndices( i ) )
+    new OccConnector( endSequent, premises( i ),
+      auxIndicesAntecedent ++: ( leftContextIndices.reduce( _ ++ _ ) ++ currentContextIndices ++ rightContextIndices.reduce( _ ++ _ ) ) :++ auxIndicesSuccedent )
+  }
+}
+
 /**
  * An LKProof consisting of a single sequent:
  * <pre>
