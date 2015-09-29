@@ -26,7 +26,7 @@ class FOLMatchingAlgorithmTest extends Specification {
       sub must beEqualTo( sub )
     }
 
-    "match correctly the lambda expressions f(x1, x2, c) and f(a,b,c)" in {
+    "match correctly the" in {
       val term = FOLFunction( "f", x1 :: x2 :: c :: Nil )
       val posInstance = FOLFunction( "f", a :: b :: c :: Nil )
       val sub = FOLMatchingAlgorithm.matchTerms( term, posInstance, freeVariables( posInstance ) )

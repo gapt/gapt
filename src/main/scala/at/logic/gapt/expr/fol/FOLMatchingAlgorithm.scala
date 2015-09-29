@@ -1,7 +1,3 @@
-/*
- * FOLMatchingAlgorithm.scala
- *
- */
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
@@ -16,55 +12,8 @@ object FOLMatchingAlgorithm {
    * @return If there is a variable FOLSubstitution that turns from into to And doesn't contain any elements of forbiddenVars, it is returned. Otherwise None.
    */
   def matchTerms( from: FOLExpression, to: FOLExpression, forbiddenVars: Set[FOLVar] = Set() ): Option[FOLSubstitution] =
-    computeSubstitution( List( from -> to ), forbiddenVars map { v => v -> v } toMap )
+    syntacticMatching( List( from -> to ), forbiddenVars map { v => v -> v } toMap )
 
   def matchTerms( pairs: List[( FOLExpression, FOLExpression )] ): Option[FOLSubstitution] =
-    computeSubstitution( pairs, Map() )
-
-  /**
-   * Recursively looks for a FOLSubstitution σ such that for each (a, b) ∈ pairs, σ(a) = b.
-   *
-   * @param pairs A list of pairs of FOLExpressions.
-   * @param alreadyFixedSubst The partial substition which is already fixed, and can no longer be changed.
-   * @return
-   */
-  private def computeSubstitution( pairs: List[( FOLExpression, FOLExpression )], alreadyFixedSubst: Map[FOLVar, FOLTerm] ): Option[FOLSubstitution] = pairs match {
-    case Nil => Some( FOLSubstitution( alreadyFixedSubst ) )
-    case first :: rest =>
-      first match {
-        case ( FOLFunction( f1, args1 ), FOLFunction( f2, args2 ) ) if f1 == f2 && args1.length == args2.length =>
-          computeSubstitution( ( args1 zip args2 ) ++ rest, alreadyFixedSubst )
-
-        case ( FOLAtom( f1, args1 ), FOLAtom( f2, args2 ) ) if f1 == f2 && args1.length == args2.length =>
-          computeSubstitution( ( args1 zip args2 ) ++ rest, alreadyFixedSubst )
-
-        case ( Top(), Top() )       => computeSubstitution( rest, alreadyFixedSubst )
-        case ( Bottom(), Bottom() ) => computeSubstitution( rest, alreadyFixedSubst )
-
-        case ( And( a, b ), And( c, d ) ) =>
-          computeSubstitution( ( a, c ) :: ( b, d ) :: rest, alreadyFixedSubst )
-
-        case ( Or( a, b ), Or( c, d ) ) =>
-          computeSubstitution( ( a, c ) :: ( b, d ) :: rest, alreadyFixedSubst )
-
-        case ( Imp( a, b ), Imp( c, d ) ) =>
-          computeSubstitution( ( a, c ) :: ( b, d ) :: rest, alreadyFixedSubst )
-
-        case ( Neg( a ), Neg( b ) ) =>
-          computeSubstitution( ( a, b ) :: rest, alreadyFixedSubst )
-
-        case ( All( v1, f1 ), All( v2, f2 ) ) =>
-          computeSubstitution( ( v1, v2 ) :: ( f1, f2 ) :: rest, alreadyFixedSubst )
-        case ( Ex( v1, f1 ), Ex( v2, f2 ) ) =>
-          computeSubstitution( ( v1, v2 ) :: ( f1, f2 ) :: rest, alreadyFixedSubst )
-
-        case ( v: FOLVar, exp ) if alreadyFixedSubst.get( v ).contains( exp ) =>
-          computeSubstitution( rest, alreadyFixedSubst )
-
-        case ( v: FOLVar, exp: FOLTerm ) if !alreadyFixedSubst.contains( v ) =>
-          computeSubstitution( rest, alreadyFixedSubst + ( v -> exp ) )
-
-        case _ => None
-      }
-  }
+    syntacticMatching( pairs )
 }
