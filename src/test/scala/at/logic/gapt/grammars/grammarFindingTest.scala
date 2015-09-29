@@ -1,5 +1,7 @@
 package at.logic.gapt.grammars
 
+import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 import at.logic.gapt.expr._
@@ -8,6 +10,17 @@ import at.logic.gapt.provers.sat4j.Sat4j
 import org.specs2.specification.core.Fragments
 
 class GrammarFindingTest extends Specification {
+
+  def beUnsat = beNone ^^ { ( f: FOLFormula ) => new Sat4j().solve( f ) }
+
+  val p9 = new Prover9Prover
+  def beSat =
+    if ( p9 isInstalled )
+      beNone ^^ { ( f: FOLFormula ) => p9.getRobinsonProof( f +: Sequent() ) } and
+        beSome ^^ { ( f: FOLFormula ) => new Sat4j().solve( f ) }
+    else
+      beSome ^^ { ( f: FOLFormula ) => new Sat4j().solve( f ) }
+
   "VectTratGrammar" should {
     "not accept cyclic grammars" in {
       vtg( Seq( "x" ), Seq( "x->x" ) ) must throwA[IllegalArgumentException]
@@ -111,7 +124,7 @@ class GrammarFindingTest extends Specification {
       val p = List( "z->d" ) map parseProduction unzip
 
       val f = new TermGenerationFormula( g, parseTerm( "r(c)" ) )
-      new Sat4j().solve( And( f.formula, Neg( f.vectProductionIsIncluded( p ) ) ) ) must beSome
+      And( f.formula, Neg( f.vectProductionIsIncluded( p ) ) ) must beSat
     }
     "generate term with 2 productions" in {
       val g = tg( "x->f(y)", "y->c" )
@@ -121,10 +134,10 @@ class GrammarFindingTest extends Specification {
       val g = tg( "x->c" )
       val p = g.productions.head
       val formula = new GrammarMinimizationFormula( g )
-      new Sat4j().solve( And(
+      And(
         formula.generatesTerm( parseTerm( "c" ) ),
         Neg( formula.productionIsIncluded( p ) )
-      ) ) must beNone
+      ) must beUnsat
     }
     "Lang((x, {x -> c, y -> d})) = {c}" in {
       val g = tg( "x->c", "y->d" )
@@ -136,7 +149,7 @@ class GrammarFindingTest extends Specification {
       val g = normalFormsProofGrammar( l toSet, 4 )
       val formula = new GrammarMinimizationFormula( g )
       val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
-      new Sat4j().solve( And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) ) must beSome
+      And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) must beSat
     }
     "work for vtrat grammar with only tau-productions" in {
       val g = vtg( Seq( "x", "y1,y2" ), Seq( "x->a" ) )
@@ -203,14 +216,14 @@ class GrammarFindingTest extends Specification {
 
   def covers( g: VectTratGrammar, terms: String* ): MatchResult[Any] = {
     terms foreach { term =>
-      new Sat4j().solve( new TermGenerationFormula( g, parseTerm( term ) ).formula ) aka s"$g generates $term" must beSome
+      new TermGenerationFormula( g, parseTerm( term ) ).formula aka s"$g generates $term" must beSat
     }
     ok
   }
 
   def doesNotCover( g: VectTratGrammar, terms: String* ): MatchResult[Any] = {
     terms foreach { term =>
-      new Sat4j().solve( new TermGenerationFormula( g, parseTerm( term ) ).formula ) aka s"$g does NOT generate $term" must beNone
+      new TermGenerationFormula( g, parseTerm( term ) ).formula aka s"$g does NOT generate $term" must beUnsat
     }
     ok
   }
