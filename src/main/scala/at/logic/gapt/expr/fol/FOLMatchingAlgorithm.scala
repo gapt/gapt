@@ -18,6 +18,9 @@ object FOLMatchingAlgorithm {
   def matchTerms( from: FOLExpression, to: FOLExpression, forbiddenVars: Set[FOLVar] = Set() ): Option[FOLSubstitution] =
     computeSubstitution( List( from -> to ), forbiddenVars map { v => v -> v } toMap )
 
+  def matchTerms( pairs: List[( FOLExpression, FOLExpression )] ): Option[FOLSubstitution] =
+    computeSubstitution( pairs, Map() )
+
   /**
    * Recursively looks for a FOLSubstitution σ such that for each (a, b) ∈ pairs, σ(a) = b.
    *
