@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.expr.hol.{isPrenex, instantiate}
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.{ HOLSequent, Suc, Ant, SequentIndex }
 
 object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
@@ -107,15 +108,18 @@ object ForallLeftBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof π.
    */
-  def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = {
+  def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = withOccConnector( subProof, main, terms )._1
+
+  def withOccConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, OccConnector ) = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) )
 
-    val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains ) ) { ( acc, ai ) =>
-
-      ( ForallLeftRule( acc._1, acc._2.tail.head, ai ), acc._2.tail )
+    val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
+      val newSubProof = ForallLeftRule( acc._1, acc._2.tail.head, ai )
+      val newOccConnector = acc._3 * newSubProof.getOccConnector
+      ( newSubProof, acc._2.tail, newOccConnector )
     }
 
-    series._1
+    ( series._1, series._3 )
   }
 }
 
@@ -137,20 +141,100 @@ object ForallRightBlock {
    * where y1,...,yN are eigenvariables.
    * </pre>
    *
-   * @param subProof The proof π with (sL :- sR, A[x1\y1,...,xN\yN]) as the bottommost sequent.
+   * @param subProof The proof π with (Γ :- Δ, A[x1\y1,...,xN\yN]) as the bottommost sequent.
    * @param main A formula of the form (∀ x1,...,xN.A).
    * @param eigenvariables The list of eigenvariables with which to instantiate main. The caller of this
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
    */
-  def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = {
+  def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = withOccConnector( subProof, main, eigenvariables )._1
+
+  def withOccConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, OccConnector ) = {
     val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) )
 
-    val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains ) ) { ( acc, ai ) =>
-      ( ForallRightRule( acc._1, acc._2.tail.head, ai ), acc._2.tail )
+    val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
+      val newSubProof = ForallRightRule( acc._1, acc._2.tail.head, ai )
+      val newOccConnector = acc._3 * newSubProof.getOccConnector
+      ( newSubProof, acc._2.tail, newOccConnector )
     }
 
-    series._1
+    ( series._1, series._3 )
+  }
+}
+
+object ExistsLeftBlock {
+  /**
+   * Applies the ExistsLeft-rule n times.
+   * This method expects a formula main with
+   * a quantifier block, and a proof s1 which has a fully
+   * instantiated version of main on the left side of its
+   * bottommost sequent.
+   *
+   * The rule:
+   * <pre>
+   *              (π)
+   *    A[x1\y1,...,xN\yN], Γ :- Δ
+   * ---------------------------------- (∀_r x n)
+   *     ∃x1,..,xN.A, Γ :- Δ
+   *
+   * where y1,...,yN are eigenvariables.
+   * </pre>
+   *
+   * @param subProof The proof π with (A[x1\y1,...,xN\yN], Γ :- Δ) as the bottommost sequent.
+   * @param main A formula of the form (∃ x1,...,xN.A).
+   * @param eigenvariables The list of eigenvariables with which to instantiate main. The caller of this
+   * method has to ensure the correctness of these terms, and, specifically, that
+   * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
+   */
+  def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = withOccConnector( subProof, main, eigenvariables )._1
+
+  def withOccConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, OccConnector ) = {
+    val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) )
+
+    val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
+      val newSubProof = ExistsLeftRule( acc._1, acc._2.tail.head, ai )
+      val newOccConnector = acc._3 * newSubProof.getOccConnector
+      ( newSubProof, acc._2.tail, newOccConnector )
+    }
+
+    ( series._1, series._3 )
+  }
+}
+
+object ExistsRightBlock {
+  /**
+   * Applies the ExistsRight-rule n times.
+   * This method expects a formula main with
+   * a quantifier block, and a proof s1 which has a fully
+   * instantiated version of main on the right side of its
+   * bottommost sequent.
+   *
+   * The rule:
+   * <pre>
+   *                (π)
+   *  Γ :- Δ, A[x1\term1,...,xN\termN]
+   * ---------------------------------- (∀_l x n)
+   *       Γ :- Δ, ∃ x1,..,xN.A
+   * </pre>
+   *
+   * @param subProof The top proof with (Γ :- Δ, A[x1\term1,...,xN\termN]) as the bottommost sequent.
+   * @param main A formula of the form (∃ x1,...,xN.A).
+   * @param terms The list of terms with which to instantiate main. The caller of this
+   * method has to ensure the correctness of these terms, and, specifically, that
+   * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof π.
+   */
+  def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = withOccConnector( subProof, main, terms )._1
+
+  def withOccConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, OccConnector ) = {
+    val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) )
+
+    val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
+      val newSubProof = ExistsRightRule( acc._1, acc._2.tail.head, ai )
+      val newOccConnector = acc._3 * newSubProof.getOccConnector
+      ( newSubProof, acc._2.tail, newOccConnector )
+    }
+
+    ( series._1, series._3 )
   }
 }
 
@@ -427,5 +511,66 @@ object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningCo
     val sucList = targetSuc.distinct map ( f => ( f, targetSuc.count( _ == f ) ) )
 
     apply( p, antList, sucList, strict )
+  }
+}
+
+/**
+ * Computes a proof of F from a proof of some instances of F
+ *
+ */
+object proofFromInstances {
+  /**
+   *
+   * @param s1 An LKProof containing the instances in es in its end sequent.
+   * @param es An ExpansionSequent in which all shallow formulas are prenex and which contains no strong or Skolem quantifiers.
+   * @return A proof starting with s1 and ending with the deep sequent of es.
+   */
+  def apply( s1: LKProof, es: ExpansionSequent ): LKProof =
+    ( es.antecedent ++ es.succedent ).foldLeft( s1 )( apply )
+
+  /**
+   *
+   * @param s1 An LKProof containing the instances in et in its end sequent
+   * @param et An ExpansionTree whose shallow formula is prenex and which contains no strong or Skolem quantifiers.
+   * @return A proof starting with s1 and ending with the deep formula of et.
+   */
+  def apply( s1: LKProof, et: ExpansionTree ): LKProof = apply( s1, compressQuantifiers( et ) )
+
+  /**
+   *
+   * @param s1 An LKProof containing the instances in mes in its end sequent.
+   * @param mes A MultiExpansionSequent in which all shallow formulas are prenex and which contains no strong or Skolem quantifiers.
+   * @return A proof starting with s1 and ending with the deep sequent of mes.
+   */
+  def apply( s1: LKProof, mes: MultiExpansionSequent )( implicit dummyImplicit: DummyImplicit ): LKProof = ( mes.antecedent ++ mes.succedent ).foldLeft( s1 )( apply )
+
+  /**
+   *
+   * @param s1 An LKProof containing the instances in et in its end sequent
+   * @param met A MultiExpansionTree whose shallow formula is prenex and which contains no strong or Skolem quantifiers.
+   * @return A proof starting with s1 and ending with the deep formula of met.
+   */
+  def apply( s1: LKProof, met: MultiExpansionTree ): LKProof = {
+    require( isPrenex( met.toShallow ), "Shallow formula of " + met + " is not prenex" )
+
+    met match {
+      case METWeakQuantifier( f @ All( _, _ ), instances ) =>
+        val tmp = instances.foldLeft( s1 ) {
+          ( acc, i ) => ForallLeftBlock( acc, f, i._2 )
+        }
+
+        ContractionLeftMacroRule( tmp, f )
+
+      case METWeakQuantifier( f @ Ex( _, _ ), instances ) =>
+        val tmp = instances.foldLeft( s1 ) {
+          ( acc, i ) => ExistsRightBlock( acc, f, i._2 )
+        }
+
+        ContractionRightMacroRule( tmp, f )
+
+      case METSkolemQuantifier( _, _, _ ) | METStrongQuantifier( _, _, _ ) =>
+        throw new UnsupportedOperationException( "This case is not handled at this time." )
+      case _ => s1
+    }
   }
 }
