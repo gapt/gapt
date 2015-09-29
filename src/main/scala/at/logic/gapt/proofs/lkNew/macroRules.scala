@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{isPrenex, instantiate}
+import at.logic.gapt.expr.hol.{ HOLPosition, isPrenex, instantiate }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.{ HOLSequent, Suc, Ant, SequentIndex }
 
@@ -115,7 +115,7 @@ object ForallLeftBlock {
 
     val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
       val newSubProof = ForallLeftRule( acc._1, acc._2.tail.head, ai )
-      val newOccConnector = acc._3 * newSubProof.getOccConnector
+      val newOccConnector = newSubProof.getOccConnector * acc._3
       ( newSubProof, acc._2.tail, newOccConnector )
     }
 
@@ -154,7 +154,7 @@ object ForallRightBlock {
 
     val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
       val newSubProof = ForallRightRule( acc._1, acc._2.tail.head, ai )
-      val newOccConnector = acc._3 * newSubProof.getOccConnector
+      val newOccConnector = newSubProof.getOccConnector * acc._3
       ( newSubProof, acc._2.tail, newOccConnector )
     }
 
@@ -193,7 +193,7 @@ object ExistsLeftBlock {
 
     val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
       val newSubProof = ExistsLeftRule( acc._1, acc._2.tail.head, ai )
-      val newOccConnector = acc._3 * newSubProof.getOccConnector
+      val newOccConnector = newSubProof.getOccConnector * acc._3
       ( newSubProof, acc._2.tail, newOccConnector )
     }
 
@@ -230,7 +230,7 @@ object ExistsRightBlock {
 
     val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
       val newSubProof = ExistsRightRule( acc._1, acc._2.tail.head, ai )
-      val newOccConnector = acc._3 * newSubProof.getOccConnector
+      val newOccConnector = newSubProof.getOccConnector * acc._3
       ( newSubProof, acc._2.tail, newOccConnector )
     }
 
@@ -251,8 +251,8 @@ object ContractionLeftMacroRule {
    * @return A proof ending with as many contraction rules as necessary to contract occs into a single occurrence.
    */
   def apply( p: LKProof, occs: Seq[SequentIndex] ): LKProof = occs match {
-    case Nil | _ :: Nil => p
-    case occ1 :: occ2 :: rest =>
+    case Seq() | _ +: Seq() => p
+    case occ1 +: occ2 +: rest =>
       val subProof = ContractionLeftRule( p, occ1, occ2 )
       ContractionLeftMacroRule( subProof, p.mainIndices.head +: rest )
   }
@@ -286,8 +286,8 @@ object ContractionRightMacroRule {
    * @return A proof ending with as many contraction rules as necessary to contract occs into a single occurrence.
    */
   def apply( p: LKProof, occs: Seq[SequentIndex] ): LKProof = occs match {
-    case Nil | _ :: Nil => p
-    case occ1 :: occ2 :: rest =>
+    case Seq() | _ +: Seq() => p
+    case occ1 +: occ2 +: rest =>
       val subProof = ContractionRightRule( p, occ1, occ2 )
       ContractionRightMacroRule( subProof, p.mainIndices.head +: rest )
   }
@@ -512,6 +512,39 @@ object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningCo
 
     apply( p, antList, sucList, strict )
   }
+}
+
+object ParamodulationLeftRule {
+  def apply(
+    leftSubProof:  LKProof,
+    eqFormula:     HOLFormula,
+    rightSubProof: LKProof,
+    auxFormula:    HOLFormula,
+    mainFormula:   HOLFormula
+  ) =
+    ( ProofBuilder
+      c leftSubProof
+      c rightSubProof
+      u ( WeakeningLeftRule( _, eqFormula ) )
+      u ( EqualityLeftRule( _, eqFormula, auxFormula, mainFormula ) )
+      b ( CutRule( _, _, eqFormula ) ) qed )
+
+}
+
+object ParamodulationRightRule {
+  def apply(
+    leftSubProof:  LKProof,
+    eqFormula:     HOLFormula,
+    rightSubProof: LKProof,
+    auxFormula:    HOLFormula,
+    mainFormula:   HOLFormula
+  ) =
+    ( ProofBuilder
+      c leftSubProof
+      c rightSubProof
+      u ( WeakeningLeftRule( _, eqFormula ) )
+      u ( EqualityRightRule( _, eqFormula, auxFormula, mainFormula ) )
+      b ( CutRule( _, _, eqFormula ) ) qed )
 }
 
 /**
