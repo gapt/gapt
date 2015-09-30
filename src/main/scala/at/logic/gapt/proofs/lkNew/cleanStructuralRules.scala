@@ -60,38 +60,38 @@ object cleanStructuralRules {
             leftWeakSuc ++ rightWeakSuc )
       }
 
-    /* case InductionRule(leftSubProof, aux1, rightSubProof, aux2, aux3, term) =>
-      val (inductionBase, inductionHypo, inductionStep) = (proof.auxFormulas(0), proof.auxFormulas(1), proof.auxFormulas(2))
-      val (leftSubproofNew, leftWeakAnt, leftWeakSuc) = applyRecursive(leftSubProof)
-      val (rightSubproofNew, rightWeakAnt, rightWeakSuc) = applyRecursive(rightSubProof)
+    case InductionRule( leftSubProof, aux1, rightSubProof, aux2, aux3, term ) =>
+      val ( inductionBase, inductionHypo, inductionStep ) = ( proof.auxFormulas( 0 )( 0 ), proof.auxFormulas( 1 )( 0 ), proof.auxFormulas( 1 )( 1 ) )
+      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = applyRecursive( leftSubProof )
+      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = applyRecursive( rightSubProof )
 
-      (leftWeakSuc contains inductionBase, rightWeakAnt contains inductionHypo, rightWeakSuc contains inductionStep) match {
-        case (true, _, _) => //In this case, we delete the right subproof (i.e. the induction step).
-          (leftSubproofNew,
-            leftWeakAnt ++ rightWeakAnt.diff(Seq(inductionHypo)) ++ rightSubproofNew.endSequent.antecedent,
-            leftWeakSuc.diff(Seq(inductionBase)) ++ rightWeakSuc.diff(Seq(inductionStep)) ++ rightSubproofNew.endSequent.succedent)
+      ( leftWeakSuc contains inductionBase, rightWeakAnt contains inductionHypo, rightWeakSuc contains inductionStep ) match {
+        case ( true, _, _ ) => //In this case, we delete the right subproof (i.e. the induction step).
+          ( leftSubproofNew,
+            leftWeakAnt ++ rightWeakAnt.diff( Seq( inductionHypo ) ) ++ rightSubproofNew.endSequent.antecedent,
+            leftWeakSuc.diff( Seq( inductionBase ) ) ++ rightWeakSuc.diff( Seq( inductionStep ) ) ++ rightSubproofNew.endSequent.succedent )
 
-        case (false, true, true) => //In this case, we delete the left subproof (i.e. the induction base).
-          (rightSubproofNew,
-            leftWeakAnt ++ rightWeakAnt.diff(Seq(inductionHypo)) ++ leftSubproofNew.endSequent.antecedent,
-            leftWeakSuc.diff(Seq(inductionBase)) ++ rightWeakSuc.diff(Seq(inductionStep)) ++ leftSubproofNew.endSequent.succedent)
+        case ( false, true, true ) => //In this case, we delete the left subproof (i.e. the induction base).
+          ( rightSubproofNew,
+            leftWeakAnt ++ rightWeakAnt.diff( Seq( inductionHypo ) ) ++ leftSubproofNew.endSequent.antecedent,
+            leftWeakSuc.diff( Seq( inductionBase ) ) ++ rightWeakSuc.diff( Seq( inductionStep ) ) ++ leftSubproofNew.endSequent.succedent )
 
-        case (false, true, false) =>
-          (InductionRule(leftSubproofNew, inductionBase, WeakeningLeftRule(rightSubproofNew, inductionHypo), inductionHypo, inductionStep, term),
-            leftWeakAnt ++ rightWeakAnt.diff(Seq(inductionHypo)),
-            leftWeakSuc ++ rightWeakSuc)
+        case ( false, true, false ) =>
+          ( InductionRule( leftSubproofNew, inductionBase.asInstanceOf[FOLFormula], WeakeningLeftRule( rightSubproofNew, inductionHypo ), inductionHypo.asInstanceOf[FOLFormula], inductionStep.asInstanceOf[FOLFormula], term ),
+            leftWeakAnt ++ rightWeakAnt.diff( Seq( inductionHypo ) ),
+            leftWeakSuc ++ rightWeakSuc )
 
-        case (false, false, true) =>
-          (InductionRule(leftSubproofNew, inductionBase, WeakeningRightRule(rightSubproofNew, inductionStep), inductionHypo, inductionStep, term),
+        case ( false, false, true ) =>
+          ( InductionRule( leftSubproofNew, inductionBase.asInstanceOf[FOLFormula], WeakeningRightRule( rightSubproofNew, inductionStep ), inductionHypo.asInstanceOf[FOLFormula], inductionStep.asInstanceOf[FOLFormula], term ),
             leftWeakAnt ++ rightWeakAnt,
-            leftWeakSuc ++ rightWeakSuc.diff(Seq(inductionStep)))
+            leftWeakSuc ++ rightWeakSuc.diff( Seq( inductionStep ) ) )
 
-        case (false, false, false) =>
-          (InductionRule(leftSubproofNew, inductionBase, rightSubproofNew, inductionHypo, inductionStep, term),
+        case ( false, false, false ) =>
+          ( InductionRule( leftSubproofNew, inductionBase.asInstanceOf[FOLFormula], rightSubproofNew, inductionHypo.asInstanceOf[FOLFormula], inductionStep.asInstanceOf[FOLFormula], term ),
             leftWeakAnt ++ rightWeakAnt,
-            leftWeakSuc ++ rightWeakSuc)
+            leftWeakSuc ++ rightWeakSuc )
 
-      }*/
+      }
 
     case NegLeftRule( subProof, aux ) =>
       val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
