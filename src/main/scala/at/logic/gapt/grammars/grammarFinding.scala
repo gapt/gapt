@@ -1,7 +1,7 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLSubTerms, Utils, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.lcomp
 import at.logic.gapt.expr.hol.simplify
 import at.logic.gapt.expr.hol.toNNF
@@ -164,13 +164,11 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
       }
     }
 
-    // values are unique
-    for ( ( d, vs ) <- possibleSingleVariableAssignments; v1 <- vs; v2 <- vs if v1.toString < v2.toString )
-      cs += ( -valueOfNonTerminal( d, v1 ) | -valueOfNonTerminal( d, v2 ) )
-
-    // values exist
-    for ( ( d, vs ) <- possibleSingleVariableAssignments if vs contains notASubTerm )
-      cs += Or( vs.toSeq map { valueOfNonTerminal( d, _ ) } )
+    for ( ( d, vs ) <- possibleSingleVariableAssignments )
+      if ( vs contains notASubTerm )
+        cs += exactly oneOf ( vs.toSeq map { valueOfNonTerminal( d, _ ) } )
+      else
+        cs += atMost oneOf ( vs.toSeq map { valueOfNonTerminal( d, _ ) } )
 
     And( cs.result() )
   }

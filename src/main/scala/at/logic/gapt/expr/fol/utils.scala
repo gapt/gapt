@@ -261,3 +261,33 @@ object Delta {
     }
   }
 }
+
+package thresholds {
+
+  object exactly {
+
+    def noneOf( fs: Seq[FOLFormula] ): FOLFormula = -Or( fs )
+
+    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = fs match {
+      case Seq()    => Bottom()
+      case Seq( f ) => f
+      case _ =>
+        val ( a, b ) = fs.splitAt( fs.size / 2 )
+        ( noneOf( a ) & oneOf( b ) ) | ( oneOf( a ) & noneOf( b ) )
+    }
+
+  }
+
+  object atMost {
+
+    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = fs match {
+      case Seq()    => Bottom()
+      case Seq( f ) => Top()
+      case _ =>
+        val ( a, b ) = fs.splitAt( fs.size / 2 )
+        ( exactly.noneOf( a ) & atMost.oneOf( b ) ) | ( atMost.oneOf( a ) & exactly.noneOf( b ) )
+    }
+
+  }
+
+}

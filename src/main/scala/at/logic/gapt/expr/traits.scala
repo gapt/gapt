@@ -89,6 +89,7 @@ trait FOLFormula extends FOLPartialFormula with HOLFormula with FOLExpression {
   def |( that: FOLFormula ): FOLFormula = Or( this, that )
   override def unary_- : FOLFormula = Neg( this )
   def -->( that: FOLFormula ): FOLFormula = Imp( this, that )
+  def <->( that: FOLFormula ) = And( Imp( this, that ), Imp( that, this ) )
 }
 trait FOLAtom extends FOLPartialAtom with HOLAtom with FOLFormula {
   private[expr] override val numberOfArguments: Int = 0

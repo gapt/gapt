@@ -2,6 +2,7 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 import at.logic.gapt.expr._
@@ -9,17 +10,7 @@ import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
 import at.logic.gapt.provers.sat4j.Sat4j
 import org.specs2.specification.core.Fragments
 
-class GrammarFindingTest extends Specification {
-
-  def beUnsat = beNone ^^ { ( f: FOLFormula ) => new Sat4j().solve( f ) }
-
-  val p9 = new Prover9Prover
-  def beSat =
-    if ( p9 isInstalled )
-      beNone ^^ { ( f: FOLFormula ) => p9.getRobinsonProof( f +: Sequent() ) } and
-        beSome ^^ { ( f: FOLFormula ) => new Sat4j().solve( f ) }
-    else
-      beSome ^^ { ( f: FOLFormula ) => new Sat4j().solve( f ) }
+class GrammarFindingTest extends Specification with SatMatchers {
 
   "VectTratGrammar" should {
     "not accept cyclic grammars" in {
