@@ -197,6 +197,8 @@ object CutIntroduction extends Logger {
       g.productions.exists( _._1 != g.axiomVect )
     }.map { vtratGrammar =>
 
+      require( termset subsetOf vtratGrammar.language )
+
       metrics.value( "grammar_size", vtratGrammar.size )
       metrics.value( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
 
