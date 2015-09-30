@@ -46,13 +46,13 @@ object cleanStructuralRules {
       ( leftWeakSuc contains cutFormula, rightWeakAnt contains cutFormula ) match {
         case ( true, _ ) =>
           ( leftSubproofNew,
-            leftWeakAnt ++ rightWeakAnt.diff( Seq( cutFormula ) ) ++ rightSubproofNew.endSequent.antecedent,
+            leftWeakAnt ++ rightWeakAnt ++ rightSubproofNew.endSequent.antecedent.diff( Seq( cutFormula ) ),
             leftWeakSuc.diff( Seq( cutFormula ) ) ++ rightWeakSuc ++ rightSubproofNew.endSequent.succedent )
 
         case ( false, true ) =>
           ( rightSubproofNew,
             leftWeakAnt ++ rightWeakAnt.diff( Seq( cutFormula ) ) ++ leftSubproofNew.endSequent.antecedent,
-            leftWeakSuc.diff( Seq( cutFormula ) ) ++ rightWeakSuc ++ leftSubproofNew.endSequent.succedent )
+            leftWeakSuc ++ rightWeakSuc ++ leftSubproofNew.endSequent.succedent.diff( Seq( cutFormula ) ) )
 
         case ( false, false ) =>
           ( CutRule( leftSubproofNew, rightSubproofNew, cutFormula ),
@@ -68,13 +68,13 @@ object cleanStructuralRules {
       ( leftWeakSuc contains inductionBase, rightWeakAnt contains inductionHypo, rightWeakSuc contains inductionStep ) match {
         case ( true, _, _ ) => //In this case, we delete the right subproof (i.e. the induction step).
           ( leftSubproofNew,
-            leftWeakAnt ++ rightWeakAnt.diff( Seq( inductionHypo ) ) ++ rightSubproofNew.endSequent.antecedent,
-            leftWeakSuc.diff( Seq( inductionBase ) ) ++ rightWeakSuc.diff( Seq( inductionStep ) ) ++ rightSubproofNew.endSequent.succedent )
+            leftWeakAnt ++ rightWeakAnt ++ rightSubproofNew.endSequent.antecedent.diff( Seq( inductionHypo ) ),
+            leftWeakSuc.diff( Seq( inductionBase ) ) ++ rightWeakSuc ++ rightSubproofNew.endSequent.succedent.diff( Seq( inductionStep ) ) )
 
         case ( false, true, true ) => //In this case, we delete the left subproof (i.e. the induction base).
           ( rightSubproofNew,
             leftWeakAnt ++ rightWeakAnt.diff( Seq( inductionHypo ) ) ++ leftSubproofNew.endSequent.antecedent,
-            leftWeakSuc.diff( Seq( inductionBase ) ) ++ rightWeakSuc.diff( Seq( inductionStep ) ) ++ leftSubproofNew.endSequent.succedent )
+            leftWeakSuc ++ rightWeakSuc.diff( Seq( inductionStep ) ) ++ leftSubproofNew.endSequent.succedent.diff( Seq( inductionBase ) ) )
 
         case ( false, true, false ) =>
           ( InductionRule( leftSubproofNew, inductionBase.asInstanceOf[FOLFormula], WeakeningLeftRule( rightSubproofNew, inductionHypo ), inductionHypo.asInstanceOf[FOLFormula], inductionStep.asInstanceOf[FOLFormula], term ),
@@ -171,12 +171,12 @@ object cleanStructuralRules {
         case ( true, _ ) =>
           ( leftSubproofNew,
             leftWeakAnt ++ rightWeakAnt ++ rightSubproofNew.endSequent.antecedent,
-            And( leftConjunct, rightConjunct ) +: ( leftWeakSuc.diff( Seq( leftConjunct ) ) ++ rightWeakSuc.diff( Seq( rightConjunct ) ) ++ rightSubproofNew.endSequent.succedent ) )
+            And( leftConjunct, rightConjunct ) +: ( leftWeakSuc.diff( Seq( leftConjunct ) ) ++ rightWeakSuc ++ rightSubproofNew.endSequent.succedent.diff( Seq( rightConjunct ) ) ) )
 
         case ( false, true ) =>
           ( rightSubproofNew,
             leftWeakAnt ++ rightWeakAnt ++ leftSubproofNew.endSequent.antecedent,
-            And( leftConjunct, rightConjunct ) +: ( leftWeakSuc ++ rightWeakSuc.diff( Seq( rightConjunct ) ) ++ leftSubproofNew.endSequent.succedent ) )
+            And( leftConjunct, rightConjunct ) +: ( leftWeakSuc ++ rightWeakSuc.diff( Seq( rightConjunct ) ) ++ leftSubproofNew.endSequent.succedent.diff( Seq( leftConjunct ) ) ) )
 
         case ( false, false ) =>
           ( AndRightRule( leftSubproofNew, leftConjunct, rightSubproofNew, rightConjunct ),
@@ -194,12 +194,12 @@ object cleanStructuralRules {
       ( leftWeakAnt contains leftDisjunct, rightWeakAnt contains rightDisjunct ) match {
         case ( true, _ ) =>
           ( leftSubproofNew,
-            Or( leftDisjunct, rightDisjunct ) +: ( leftWeakAnt.diff( Seq( leftDisjunct ) ) ++ rightWeakAnt.diff( Seq( rightDisjunct ) ) ++ rightSubproofNew.endSequent.antecedent ),
+            Or( leftDisjunct, rightDisjunct ) +: ( leftWeakAnt.diff( Seq( leftDisjunct ) ) ++ rightWeakAnt ++ rightSubproofNew.endSequent.antecedent.diff( Seq( rightDisjunct ) ) ),
             leftWeakSuc ++ rightWeakSuc ++ rightSubproofNew.endSequent.succedent )
 
         case ( false, true ) =>
           ( rightSubproofNew,
-            Or( leftDisjunct, rightDisjunct ) +: ( leftWeakAnt ++ rightWeakAnt.diff( Seq( rightDisjunct ) ) ++ leftSubproofNew.endSequent.antecedent ),
+            Or( leftDisjunct, rightDisjunct ) +: ( leftWeakAnt ++ rightWeakAnt.diff( Seq( rightDisjunct ) ) ++ leftSubproofNew.endSequent.antecedent.diff( Seq( leftDisjunct ) ) ),
             leftWeakSuc ++ rightWeakSuc ++ leftSubproofNew.endSequent.succedent )
 
         case ( false, false ) =>
@@ -253,13 +253,13 @@ object cleanStructuralRules {
       ( leftWeakSuc contains impPremise, rightWeakAnt contains impConclusion ) match {
         case ( true, _ ) =>
           ( leftSubproofNew,
-            Imp( impPremise, impConclusion ) +: ( leftWeakAnt ++ rightWeakAnt.diff( Seq( impConclusion ) ) ++ rightSubproofNew.endSequent.antecedent ),
+            Imp( impPremise, impConclusion ) +: ( leftWeakAnt ++ rightWeakAnt ++ rightSubproofNew.endSequent.antecedent.diff( Seq( impConclusion ) ) ),
             leftWeakSuc.diff( Seq( impPremise ) ) ++ rightWeakSuc ++ rightSubproofNew.endSequent.succedent )
 
         case ( false, true ) =>
           ( rightSubproofNew,
             Imp( impPremise, impConclusion ) +: ( leftWeakAnt ++ rightWeakAnt.diff( Seq( impConclusion ) ) ++ leftSubproofNew.endSequent.antecedent ),
-            leftWeakSuc ++ rightWeakSuc ++ leftSubproofNew.endSequent.succedent )
+            leftWeakSuc ++ rightWeakSuc ++ leftSubproofNew.endSequent.succedent.diff( Seq( impPremise ) ) )
 
         case ( false, false ) =>
           ( ImpLeftRule( leftSubproofNew, impPremise, rightSubproofNew, impConclusion ),
