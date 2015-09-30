@@ -517,34 +517,55 @@ object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningCo
 object ParamodulationLeftRule {
   def apply(
     leftSubProof:  LKProof,
-    eqFormula:     HOLFormula,
+    eq:            SequentIndex,
     rightSubProof: LKProof,
-    auxFormula:    HOLFormula,
-    mainFormula:   HOLFormula
-  ) =
-    ( ProofBuilder
-      c leftSubProof
-      c rightSubProof
-      u ( WeakeningLeftRule( _, eqFormula ) )
-      u ( EqualityLeftRule( _, eqFormula, auxFormula, mainFormula ) )
-      b ( CutRule( _, _, eqFormula ) ) qed )
+    aux:           SequentIndex,
+    pos:           HOLPosition
+  ): LKProof = {
+    val eqFormula = leftSubProof.endSequent( eq )
+    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
+    val p2 = EqualityLeftRule( p1, Ant( 0 ), aux + 1, pos )
+    CutRule( leftSubProof, eq, p2, p2.getOccConnector.children( Ant( 0 ) ).head )
+  }
 
-}
-
-object ParamodulationRightRule {
   def apply(
     leftSubProof:  LKProof,
     eqFormula:     HOLFormula,
     rightSubProof: LKProof,
     auxFormula:    HOLFormula,
     mainFormula:   HOLFormula
-  ) =
-    ( ProofBuilder
-      c leftSubProof
-      c rightSubProof
-      u ( WeakeningLeftRule( _, eqFormula ) )
-      u ( EqualityRightRule( _, eqFormula, auxFormula, mainFormula ) )
-      b ( CutRule( _, _, eqFormula ) ) qed )
+  ): LKProof = {
+    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
+    val p2 = EqualityLeftRule( p1, eqFormula, auxFormula, mainFormula )
+    CutRule( leftSubProof, p2, eqFormula )
+  }
+}
+
+object ParamodulationRightRule {
+  def apply(
+    leftSubProof:  LKProof,
+    eq:            SequentIndex,
+    rightSubProof: LKProof,
+    aux:           SequentIndex,
+    pos:           HOLPosition
+  ): LKProof = {
+    val eqFormula = leftSubProof.endSequent( eq )
+    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
+    val p2 = EqualityRightRule( p1, Ant( 0 ), aux, pos )
+    CutRule( leftSubProof, eq, p2, p2.getOccConnector.children( Ant( 0 ) ).head )
+  }
+
+  def apply(
+    leftSubProof:  LKProof,
+    eqFormula:     HOLFormula,
+    rightSubProof: LKProof,
+    auxFormula:    HOLFormula,
+    mainFormula:   HOLFormula
+  ): LKProof = {
+    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
+    val p2 = EqualityRightRule( p1, eqFormula, auxFormula, mainFormula )
+    CutRule( leftSubProof, p2, eqFormula )
+  }
 }
 
 /**

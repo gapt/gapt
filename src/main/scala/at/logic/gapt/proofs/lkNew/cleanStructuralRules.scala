@@ -314,7 +314,7 @@ object cleanStructuralRules {
         )
       else
         (
-          ForallLeftRule( subProofNew, All( v, f ) ),
+          ForallLeftRule( subProofNew, All( v, f ), term ),
           weakAnt,
           weakSuc
         )
@@ -331,7 +331,7 @@ object cleanStructuralRules {
         )
       else
         (
-          ForallRightRule( subProofNew, All( quant, auxFormula ) ),
+          ForallRightRule( subProofNew, All( quant, auxFormula ), eigen ),
           weakAnt,
           weakSuc
         )
@@ -348,7 +348,7 @@ object cleanStructuralRules {
         )
       else
         (
-          ExistsRightRule( subProofNew, All( quant, auxFormula ) ),
+          ExistsRightRule( subProofNew, All( quant, auxFormula ), eigen ),
           weakAnt,
           weakSuc
         )
@@ -365,7 +365,7 @@ object cleanStructuralRules {
         )
       else
         (
-          ExistsRightRule( subProofNew, Ex( v, f ) ),
+          ExistsRightRule( subProofNew, Ex( v, f ), term ),
           weakAnt,
           weakSuc
         )
