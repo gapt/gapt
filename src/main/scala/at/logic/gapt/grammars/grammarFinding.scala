@@ -2,6 +2,7 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol.thresholds._
 import at.logic.gapt.expr.hol.lcomp
 import at.logic.gapt.expr.hol.simplify
 import at.logic.gapt.expr.hol.toNNF
