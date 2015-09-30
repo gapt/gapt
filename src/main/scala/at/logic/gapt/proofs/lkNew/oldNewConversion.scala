@@ -3,8 +3,7 @@ package at.logic.gapt.proofs.lkNew
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.{ SequentIndex, Sequent, Ant, lk }
-import at.logic.gapt.proofs.lk.base.OccSequent
-import at.logic.gapt.proofs.lk.base.RichOccSequent
+import at.logic.gapt.proofs.lk.base.{ PrincipalFormulas, OccSequent, RichOccSequent }
 
 import scala.collection.immutable.HashMap
 
@@ -124,13 +123,13 @@ object lkNew2Old {
       val ( subProofOld, sequent ) = apply_( subProof )
       val proofOld = lk.ForallRightRule( subProofOld, sequent( aux ), proof.mainFormulas.head, eigen )
 
-      ( proofOld, sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) :+ proofOld.prin.head )
+      ( proofOld, sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) :+ proofOld.asInstanceOf[PrincipalFormulas].prin.head )
 
     case ExistsLeftRule( subProof, aux, eigen, quant ) =>
       val ( subProofOld, sequent ) = apply_( subProof )
       val proofOld = lk.ExistsLeftRule( subProofOld, sequent( aux ), proof.mainFormulas.head, eigen )
 
-      ( proofOld, proofOld.prin.head +: sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) )
+      ( proofOld, proofOld.asInstanceOf[PrincipalFormulas].prin.head +: sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) )
 
     case ExistsRightRule( subProof, aux, f, t, v ) =>
       val ( subProofOld, sequent ) = apply_( subProof )

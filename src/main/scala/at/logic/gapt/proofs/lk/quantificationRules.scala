@@ -230,7 +230,7 @@ object ForallRightRule extends StrongRuleHelper( true ) {
    * @param eigen_var The eigenvariable to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: Var ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm =
+  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: Var ): LKProof =
     s1.root.succedent.filter( x => x.formula == aux ).toList match {
       case ( x :: _ ) => apply( s1, x, main, eigen_var )
       case _          => throw new LKUnaryRuleCreationException( "all:r", s1, aux :: Nil )
@@ -252,7 +252,7 @@ object ForallRightRule extends StrongRuleHelper( true ) {
    * @param eigen_var The eigenvariable to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ): LKProof = {
     try {
       val aux_fo = getTerms( s1.root, term1oc, main, eigen_var )
       val prinFormula = getPrinFormula( main, aux_fo )
@@ -271,7 +271,7 @@ object ForallRightRule extends StrongRuleHelper( true ) {
     }
   }
 
-  def apply( s1: LKProof, aux: HOLFormula, quantifiedVar: Var, eigenVar: Var ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm = {
+  def apply( s1: LKProof, aux: HOLFormula, quantifiedVar: Var, eigenVar: Var ): LKProof = {
     val sub = Substitution( eigenVar, quantifiedVar )
     val main = All( quantifiedVar, sub( aux ) )
 
@@ -327,7 +327,7 @@ object ExistsLeftRule extends StrongRuleHelper( false ) {
    * @param eigen_var The eigenvariable to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: Var ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable =
+  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula, eigen_var: Var ): LKProof =
     s1.root.antecedent.filter( x => x.formula == aux ).toList match {
       case ( x :: _ ) => apply( s1, x, main, eigen_var )
       case _          => throw new LKUnaryRuleCreationException( "ex:l", s1, aux :: Nil )
@@ -349,7 +349,7 @@ object ExistsLeftRule extends StrongRuleHelper( false ) {
    * @param eigen_var The eigenvariable to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula, eigen_var: Var ): LKProof = {
     try {
       val aux_fo = getTerms( s1.root, term1oc, main, eigen_var )
       val prinFormula = getPrinFormula( main, aux_fo )
@@ -368,7 +368,7 @@ object ExistsLeftRule extends StrongRuleHelper( false ) {
     }
   }
 
-  def apply( s1: LKProof, aux: HOLFormula, quantifiedVar: Var, eigenVar: Var ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with Eigenvariable = {
+  def apply( s1: LKProof, aux: HOLFormula, quantifiedVar: Var, eigenVar: Var ): LKProof = {
     val sub = Substitution( eigenVar, quantifiedVar )
     val main = Ex( quantifiedVar, sub( aux ) )
 
