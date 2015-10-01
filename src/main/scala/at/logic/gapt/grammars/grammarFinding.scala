@@ -95,7 +95,7 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
     val containingNTIdx = g.nonTerminals.zipWithIndex.flatMap { case ( ns, i ) => ns map { _ -> i } }.toMap
     val handledPAs = mutable.Set[Map[FOLVar, FOLTerm]]()
     def discoverAssignments( pa: Map[FOLVar, FOLTerm] ): Unit =
-      if ( pa.nonEmpty && !handledPAs.contains(pa)) {
+      if ( pa.nonEmpty && !handledPAs.contains( pa ) ) {
         val lowestNTVectIdx = pa.keys.map( containingNTIdx ).min
         val lowestNTVect = g.nonTerminals( lowestNTVectIdx )
         g.productions( lowestNTVect ) foreach { p =>
