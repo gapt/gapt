@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
 object extractRecSchem {
-  def apply( p: LKProof ): HORS = {
+  def apply( p: LKProof ): RecursionScheme = {
     val symbols = p.root.polarizedElements map {
       case ( occ, inAntecedent ) =>
         ( occ.formula, inAntecedent ) match {
@@ -18,8 +18,8 @@ object extractRecSchem {
     }
     val context = freeVarsInProof( p ).toList.sortBy( _.toString )
     val axiom = Apps( Const( "A", FunctionType( To, context.map( _.exptype ) ) ), context )
-    HORS( getRules( p, axiom, symbols.toMap, context ) map {
-      case HORule( lhs, rhs ) => HORule( lhs, BetaReduction.betaNormalize( rhs ) )
+    RecursionScheme( getRules( p, axiom, symbols.toMap, context ) map {
+      case Rule( lhs, rhs ) => Rule( lhs, BetaReduction.betaNormalize( rhs ) )
     } )
   }
 
@@ -82,8 +82,8 @@ object extractRecSchem {
     case _ => Nil
   }
 
-  def getRules( p: LKProof, axiom: LambdaExpression, symbols: Map[FormulaOccurrence, LambdaExpression], context: List[Var] ): Set[HORule] = p match {
-    case Axiom( sequent ) => sequent.occurrences.flatMap( symbols.get ).map { sym => HORule( axiom, sym ) } toSet
+  def getRules( p: LKProof, axiom: LambdaExpression, symbols: Map[FormulaOccurrence, LambdaExpression], context: List[Var] ): Set[Rule] = p match {
+    case Axiom( sequent ) => sequent.occurrences.flatMap( symbols.get ).map { sym => Rule( axiom, sym ) } toSet
     case WeakQuantifierRule( q, _, aux, main, term ) =>
       val appSym = App( symbols( main ), term )
       appSym.exptype match {
@@ -94,11 +94,11 @@ object extractRecSchem {
           expCpsSym.exptype match {
             case To =>
               getRules( q, expCpsSym, followSymbols( symbols - main, q ), eigenvars ++ context ) +
-                HORule( axiom, App( appSym, cpsSym ) )
+                Rule( axiom, App( appSym, cpsSym ) )
             case nextCpsType -> To =>
               val nextCpsSym = Var( mkFreshVar(), nextCpsType )
               getRules( q, App( expCpsSym, nextCpsSym ), followSymbols( symbols - main, q ) + ( aux -> nextCpsSym ), nextCpsSym :: eigenvars ++ context ) +
-                HORule( axiom, App( appSym, cpsSym ) )
+                Rule( axiom, App( appSym, cpsSym ) )
           }
         case _ =>
           getRules( q, axiom, followSymbols( symbols - main, q ) + ( aux -> appSym ), context )
@@ -130,7 +130,7 @@ object extractRecSchem {
       val stepAxiom = Apps( App( symbol, FOLFunction( "s", indVar ) ), findEigenVars( stepr, q2 ) )
       val rules2 = getRules( q2, stepAxiom, followSymbols( symbols - main, q2 ) + ( stepl -> App( symbol, indVar ) ), indVar :: context )
 
-      rules1 ++ rules2 + HORule( axiom, Apps( symbol, term :: findEigenVars( main, p ) ) )
+      rules1 ++ rules2 + Rule( axiom, Apps( symbol, term :: findEigenVars( main, p ) ) )
     case BinaryLKProof( rule, q1, q2, _, aux1, aux2, main ) =>
       getRules( q1, axiom, followSymbols( symbols, q1 ), context ) ++ getRules( q2, axiom, followSymbols( symbols, q2 ), context )
     case UnaryLKProof( rule, q, _, auxs, main ) =>

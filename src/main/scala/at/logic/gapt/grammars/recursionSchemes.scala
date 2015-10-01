@@ -8,40 +8,14 @@ import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
 
-case class HORule( lhs: LambdaExpression, rhs: LambdaExpression ) {
+case class Rule( lhs: LambdaExpression, rhs: LambdaExpression ) {
   require( freeVariables( rhs ) subsetOf freeVariables( lhs ), s"$rhs has more free variables than $lhs" )
   require( lhs.exptype == rhs.exptype, s"$lhs has different type than $rhs" )
 
   def apply( term: LambdaExpression ): Option[LambdaExpression] =
-    NaiveIncompleteMatchingAlgorithm.matchTerm( lhs, term ).map( _( rhs ) )
+    syntacticMatching( lhs, term ).map( _( rhs ) )
 
-  def apply( subst: Substitution ): HORule =
-    HORule( subst( lhs ), subst( rhs ) )
-
-  override def toString: String =
-    s"$lhs -> $rhs"
-}
-
-case class HORS( rules: Set[HORule] ) {
-  def alphaLanguage( from: LambdaExpression ): Set[LambdaExpression] =
-    rules flatMap ( _( from ) ) match {
-      case irreducible if irreducible.isEmpty => Set( from )
-      case oneStepReductions                  => oneStepReductions flatMap language
-    }
-
-  def language( from: LambdaExpression ): Set[LambdaExpression] =
-    alphaLanguage( from ) map BetaReduction.betaNormalize
-
-  override def toString: String = rules.toSeq.sortBy( _.toString ) mkString "\n"
-}
-
-case class Rule( lhs: FOLTerm, rhs: FOLTerm ) {
-  require( freeVariables( rhs ) subsetOf freeVariables( lhs ) )
-
-  def apply( term: FOLTerm ): Option[FOLTerm] =
-    FOLMatchingAlgorithm.matchTerms( lhs, term ).map( _( rhs ) )
-
-  def apply( subst: FOLSubstitution ): Rule =
+  def apply( subst: Substitution ): Rule =
     Rule( subst( lhs ), subst( rhs ) )
 
   override def toString: String =
@@ -49,15 +23,13 @@ case class Rule( lhs: FOLTerm, rhs: FOLTerm ) {
 }
 
 case class RecursionScheme( rules: Set[Rule] ) {
-  def language( from: FOLTerm ): Set[FOLTerm] =
+  def language( from: LambdaExpression ): Set[LambdaExpression] =
     rules flatMap ( _( from ) ) match {
       case irreducible if irreducible.isEmpty => Set( from )
       case oneStepReductions                  => oneStepReductions flatMap language
     }
 
   override def toString: String = rules.toSeq.sortBy( _.toString ) mkString "\n"
-
-  def toHORS: HORS = HORS( rules map { case Rule( lhs, rhs ) => HORule( lhs, rhs ) } )
 }
 
 object RecursionScheme {
@@ -66,14 +38,14 @@ object RecursionScheme {
 }
 
 object preOrderTraversal {
-  def apply( term: FOLTerm ): Seq[FOLTerm] = term match {
-    case FOLFunction( _, as ) => term +: ( as flatMap apply )
-    case FOLVar( _ )          => Seq( term )
+  def apply( term: LambdaExpression ): Seq[LambdaExpression] = term match {
+    case App( a, b )       => term +: ( apply( a ) ++ apply( b ) )
+    case _: Const | _: Var => Seq( term )
   }
 }
 
 object canonicalVars {
-  def apply( term: FOLTerm ): FOLTerm =
+  def apply( term: LambdaExpression ): LambdaExpression =
     FOLSubstitution( preOrderTraversal( term ).
       collect { case v: FOLVar => v }.
       distinct.
@@ -81,13 +53,10 @@ object canonicalVars {
 }
 
 object TargetFilter {
-  type Type = ( FOLTerm, FOLTerm ) => Option[Boolean]
+  type Type = ( LambdaExpression, LambdaExpression ) => Option[Boolean]
 
-  def default: Type = ( from: FOLTerm, to: FOLTerm ) =>
-    FOLMatchingAlgorithm.matchTerms( to, from ) match {
-      case Some( _ ) => Some( true )
-      case _         => None
-    }
+  def default: Type = ( from: LambdaExpression, to: LambdaExpression ) =>
+    syntacticMatching( to, from ) map { _ => true }
 }
 
 class RecSchemGenLangFormula(
@@ -96,23 +65,23 @@ class RecSchemGenLangFormula(
 ) {
 
   def ruleIncluded( rule: Rule ) = FOLAtom( s"${rule.lhs}->${rule.rhs}" )
-  def derivable( from: FOLTerm, to: FOLTerm ) = FOLAtom( s"$from=>$to" )
+  def derivable( from: LambdaExpression, to: LambdaExpression ) = FOLAtom( s"$from=>$to" )
 
   private val rulesPerToHeadSymbol = recursionScheme.rules.
     groupBy { case Rule( _, FOLFunction( f, _ ) ) => f }.mapValues( _.toSeq )
-  def reverseMatches( against: FOLTerm ) =
+  def reverseMatches( against: LambdaExpression ) =
     against match {
       case FOLFunction( f, _ ) => rulesPerToHeadSymbol( f ).flatMap { rule =>
         val ( fvsRule, fvsAgainst ) = ( freeVariables( rule.lhs ), freeVariables( against ) )
         val rule_ = if ( fvsRule intersect fvsAgainst nonEmpty )
-          rule( FOLSubstitution( rename( freeVariables( rule.lhs ), freeVariables( against ) ) ) )
+          rule( Substitution( rename( freeVariables( rule.lhs ), freeVariables( against ) ) ) )
         else
           rule
-        FOLUnificationAlgorithm.unify( rule_.rhs, against ).headOption.map { unifier => canonicalVars( unifier( rule_.lhs ) ) -> rule }
+        syntacticMGU( rule_.rhs, against ).headOption.map { unifier => canonicalVars( unifier( rule_.lhs ) ) -> rule }
       }
     }
 
-  type Target = ( FOLTerm, FOLTerm )
+  type Target = ( LambdaExpression, LambdaExpression )
   def apply( targets: Seq[Target] ): FOLFormula = {
     val edges = mutable.ArrayBuffer[( Target, Rule, Target )]()
     val goals = mutable.Set[Target]()
@@ -165,7 +134,7 @@ class RecSchemGenLangFormula(
         ) )
     } ) ++ ( for (
       ( from1, to1 ) <- reachable;
-      ( from2, to2 ) <- reachable if from1 == from2 && to1 != to2 if FOLMatchingAlgorithm.matchTerms( to2, to1 ).isDefined
+      ( from2, to2 ) <- reachable if from1 == from2 && to1 != to2 if syntacticMatching( to2, to1 ).isDefined
     ) yield Imp( derivable( from1, to1 ), derivable( from1, to2 ) ) ) )
   }
 }
@@ -210,7 +179,7 @@ object SipRecSchem extends RecSchemTemplate(
         SipGrammar.tau -> FOLSubstitution( x -> SipGrammar.nu, y -> SipGrammar.gamma, z -> SipGrammar.alpha )( r )
       case Rule( FOLFunction( G, List( FOLFunction( "0", List() ), y: FOLVar, z: FOLVar ) ), r ) =>
         SipGrammar.tau -> FOLSubstitution( y -> SipGrammar.beta, z -> SipGrammar.alpha )( r )
-    } )
+    } map { p => p._1 -> p._2.asInstanceOf[FOLTerm] } )
 
   def toTargets( instanceLanguages: Seq[normalFormsSipGrammar.InstanceLanguage] ) =
     instanceLanguages flatMap {

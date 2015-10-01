@@ -1,17 +1,16 @@
 package at.logic.gapt.proofs.lk
 
-import java.io.InputStreamReader
 import java.util.zip.GZIPInputStream
 
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.expr.hol.{ existsclosure, instantiate, univclosure }
+import at.logic.gapt.expr.hol.{ existsclosure, instantiate }
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
-import at.logic.gapt.grammars.{ HORS, HORule }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
+import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.prover9.Prover9Prover
@@ -119,7 +118,7 @@ class ExtractRecSchemTest extends Specification {
     println( recschem )
     recschem.language( FOLAtom( "A" ) ) foreach println
     recschem.rules map {
-      case HORule( HOLAtom( head, _ ), _ ) => head
+      case Rule( HOLAtom( head, _ ), _ ) => head
     } foreach { case Const( name, ty ) => println( s"$name: $ty" ) }
 
     new Sat4jProver().isValid(
@@ -147,20 +146,20 @@ class Pi2FactorialPOC extends Specification {
   val z = Var( "z", Ti )
   val w = Var( "w", Ti )
 
-  val hors = HORS( Set(
-    HORule( A( z ), B( z, s( O ), C ) ),
-    HORule( A( z ), Eq( times( s( O ), z ), z ) ),
-    HORule( A( z ), Neg( Eq( f( z ), g( s( O ), z ) ) ) ),
-    HORule( C( w ), Top() ), // FIXME: NF != generated word
-    HORule( B( s( x ), y, X ), B( x, times( y, s( x ) ), D( X, x, y ) ) ),
-    HORule( D( X, x, y, w ), Eq( times( times( y, s( x ) ), w ), times( y, times( s( x ), w ) ) ) ),
-    HORule( D( X, x, y, w ), Eq( g( y, s( x ) ), g( times( y, s( x ) ), x ) ) ),
-    HORule( D( X, x, y, w ), Eq( f( s( x ) ), times( s( x ), f( x ) ) ) ),
-    HORule( D( X, x, y, w ), X( times( s( x ), w ) ) ),
-    HORule( B( O, y, X ), Eq( g( y, O ), y ) ),
-    HORule( B( O, y, X ), Eq( f( O ), s( O ) ) ),
-    HORule( B( O, y, X ), Eq( times( s( O ), s( O ) ), s( O ) ) ),
-    HORule( B( O, y, X ), X( s( O ) ) )
+  val hors = RecursionScheme( Set(
+    Rule( A( z ), B( z, s( O ), C ) ),
+    Rule( A( z ), Eq( times( s( O ), z ), z ) ),
+    Rule( A( z ), Neg( Eq( f( z ), g( s( O ), z ) ) ) ),
+    Rule( C( w ), Top() ), // FIXME: NF != generated word
+    Rule( B( s( x ), y, X ), B( x, times( y, s( x ) ), D( X, x, y ) ) ),
+    Rule( D( X, x, y, w ), Eq( times( times( y, s( x ) ), w ), times( y, times( s( x ), w ) ) ) ),
+    Rule( D( X, x, y, w ), Eq( g( y, s( x ) ), g( times( y, s( x ) ), x ) ) ),
+    Rule( D( X, x, y, w ), Eq( f( s( x ) ), times( s( x ), f( x ) ) ) ),
+    Rule( D( X, x, y, w ), X( times( s( x ), w ) ) ),
+    Rule( B( O, y, X ), Eq( g( y, O ), y ) ),
+    Rule( B( O, y, X ), Eq( f( O ), s( O ) ) ),
+    Rule( B( O, y, X ), Eq( times( s( O ), s( O ) ), s( O ) ) ),
+    Rule( B( O, y, X ), X( s( O ) ) )
   ) )
 
   def lang( i: Int ) = hors.language( A( Utils.numeral( i ) ) ).map( _.asInstanceOf[HOLFormula] )
