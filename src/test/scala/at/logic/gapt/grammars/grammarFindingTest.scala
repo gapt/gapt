@@ -146,6 +146,15 @@ class GrammarFindingTest extends Specification with SatMatchers {
       val g = vtg( Seq( "x", "y1,y2" ), Seq( "x->a" ) )
       covers( g, "a" )
     }
+    "vtrat grammars with unused non-terminals" in {
+      val g = vtg(
+        Seq( "x", "y1,y2" ),
+        Seq( "x->f(y1,y2)" ),
+        Seq( "x->f(y2,y1)" ),
+        Seq( "x->f(c,y2)" )
+      )
+      doesNotCover( g, "f(c,d)" )
+    }
   }
 
   "minimizeGrammar" should {

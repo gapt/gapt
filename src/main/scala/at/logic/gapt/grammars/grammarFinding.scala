@@ -91,79 +91,56 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
     val notASubTerm = rename( FOLConst( "⊥" ), constants( t ).toList )
 
     // we try not generate the formulas for all subterms, but only for those which are needed
-    val matchingsToHandle = mutable.Queue[Map[FOLVar, FOLTerm]]()
+    val possibleAssignments = mutable.Set[( Int, List[FOLTerm] )]()
+    val containingNTIdx = g.nonTerminals.zipWithIndex.flatMap { case ( ns, i ) => ns map { _ -> i } }.toMap
+    val handledPAs = mutable.Set[Map[FOLVar, FOLTerm]]()
+    def discoverAssignments( pa: Map[FOLVar, FOLTerm] ): Unit =
+      if ( pa.nonEmpty && !handledPAs.contains(pa)) {
+        val lowestNTVectIdx = pa.keys.map( containingNTIdx ).min
+        val lowestNTVect = g.nonTerminals( lowestNTVectIdx )
+        g.productions( lowestNTVect ) foreach { p =>
+          val pairs = for ( ( nt, s ) <- p.zipped; t <- pa.get( nt ) ) yield s -> t
+          syntacticMatching( pairs toList, pa ) foreach { matching =>
+            discoverAssignments( matching.folmap -- lowestNTVect )
+          }
+        }
+        possibleAssignments += ( lowestNTVectIdx -> lowestNTVect.map { pa.getOrElse( _, notASubTerm ) } )
+        handledPAs += pa
+      }
+    discoverAssignments( Map( g.axiom -> t ) )
 
-    def Match( t: List[FOLTerm], s: List[FOLTerm] ) =
+    def Match( ntIdx: Int, t: List[FOLTerm], s: List[FOLTerm] ) =
       FOLMatchingAlgorithm.matchTerms( s zip t filter { _._2 != notASubTerm } ) match {
+        case Some( matching ) if matching isIdentity => Top()
         case Some( matching ) =>
-          matchingsToHandle += matching.folmap
-          And( matching.folmap.toSeq map {
+          val lowestNTVectIdx = matching.folmap.keys.map( containingNTIdx ).min
+          val equations = ( for ( i <- ( ntIdx + 1 ) to lowestNTVectIdx; nt <- g.nonTerminals( i ) ) yield nt -> notASubTerm ).toMap ++ matching.folmap
+          And( equations.toSeq map {
             case ( beta, r ) =>
               valueOfNonTerminal( beta, r )
           } )
         case None => Bottom()
       }
 
-    def Case( ntVect: NonTerminalVect, t: List[FOLTerm] ) =
-      And( ( ntVect, t ).zipped map valueOfNonTerminal ) --> Or( g.productions( ntVect ).toSeq map {
+    def Case( ntIdx: Int, t: List[FOLTerm] ) =
+      And( ( g.nonTerminals( ntIdx ), t ).zipped map valueOfNonTerminal ) --> Or( g.productions( g.nonTerminals( ntIdx ) ).toSeq map {
         case p @ ( _, s ) =>
-          vectProductionIsIncluded( p ) & Match( t, s )
+          vectProductionIsIncluded( p ) & Match( ntIdx, t, s )
       } )
-
-    val possibleSingleVariableAssignments = mutable.Map[FOLVar, Set[FOLTerm]]().withDefaultValue( Set() )
 
     val cs = Seq.newBuilder[FOLFormula]
 
     // value of axiom must be t
     cs += valueOfNonTerminal( g.axiom, t )
 
-    // add base cases for subterm discovery
-    matchingsToHandle += Map( g.axiom -> t )
-
-    val alreadyHandledAssignments = mutable.Set[( NonTerminalVect, List[FOLTerm] )]()
-    if ( g.nonTerminals.size == 2 ) {
-      matchingsToHandle dequeueAll { newPartialAssg =>
-        val assignment = if ( newPartialAssg contains g.axiom )
-          List( g.axiom ) -> List( newPartialAssg( g.axiom ) )
-        else
-          g.nonTerminals( 1 ) -> g.nonTerminals( 1 ).map( newPartialAssg.getOrElse( _, notASubTerm ) )
-
-        if ( !( alreadyHandledAssignments contains assignment )
-          && assignment._2.exists( _ != notASubTerm ) )
-          cs += simplify( Case( assignment._1, assignment._2 ) )
-
-        alreadyHandledAssignments += assignment
-
-        assignment.zipped foreach { possibleSingleVariableAssignments( _ ) += _ }
-
-        true // remove this value from the queue
-      }
-    } else {
-      matchingsToHandle ++=
-        g.nonTerminals.filter( _.size > 1 ).flatten.map( _ -> notASubTerm ).map( Map( _ ) )
-
-      val alreadyHandledAssignments = mutable.Set[( NonTerminalVect, List[FOLTerm] )]()
-      matchingsToHandle dequeueAll { newSingleVarAssgs =>
-        newSingleVarAssgs foreach { newSingleVarAssg =>
-          val ( newNT, newValue ) = newSingleVarAssg
-          val containingNonTerminalVect = g.nonTerminals.find( _ contains newNT ).get
-          val possibleAssignments = containingNonTerminalVect.foldRight( List[List[FOLTerm]]( Nil ) ) {
-            case ( nt, assgs ) if nt == newNT => assgs.map( newValue :: _ )
-            case ( nt, assgs )                => assgs flatMap { assg => possibleSingleVariableAssignments( nt ) map ( _ :: assg ) }
-          }
-          possibleAssignments foreach { assignment =>
-            if ( !( alreadyHandledAssignments contains ( containingNonTerminalVect -> assignment ) )
-              && assignment.exists( _ != notASubTerm ) )
-              cs += simplify( Case( containingNonTerminalVect, assignment ) )
-
-            alreadyHandledAssignments += containingNonTerminalVect -> assignment
-          }
-          possibleSingleVariableAssignments( newNT ) += newValue
-        }
-
-        true // remove this value from the queue
-      }
+    possibleAssignments foreach { assignment =>
+      cs += simplify( Case( assignment._1, assignment._2 ) )
     }
+
+    val possibleSingleVariableAssignments = possibleAssignments flatMap {
+      case ( ntVectIdx, assg ) =>
+        g.nonTerminals( ntVectIdx ) zip assg
+    } groupBy { _._1 } mapValues { _ map { _._2 } }
 
     for ( ( d, vs ) <- possibleSingleVariableAssignments )
       if ( vs contains notASubTerm )
