@@ -36,13 +36,13 @@ object extractInstanceTerms {
  * number of formulas in the antecedent/succedent.
  */
 object extractInstances {
-  def apply( expansionTree: ExpansionTree ): Seq[FOLFormula] =
+  def apply( expansionTree: ExpansionTree ): Set[FOLFormula] =
     if ( !containsQuantifier( toShallow( expansionTree ) ) )
-      Seq( toShallow( expansionTree ).asInstanceOf[FOLFormula] )
+      Set( toShallow( expansionTree ).asInstanceOf[FOLFormula] )
     else expansionTree match {
-      case ETWeakening( _ ) => Seq()
+      case ETWeakening( _ ) => Set()
       case ETWeakQuantifier( _, instances ) =>
-        instances flatMap { i => extractInstances( i._1 ) }
+        instances flatMap { i => extractInstances( i._1 ) } toSet
       case ETStrongQuantifier( _, _, t ) => extractInstances( t )
       case ETSkolemQuantifier( _, _, t ) => extractInstances( t )
     }
@@ -60,7 +60,7 @@ object groundTerms {
     FOLSubstitution( freeVariables( term ).
       map { c => FOLVar( c.name ) -> FOLConst( c.name ) }.toSeq )( term )
 
-  def apply( lang: Seq[FOLTerm] ): Seq[FOLTerm] = lang map apply
+  def apply( lang: Set[FOLTerm] ): Set[FOLTerm] = lang map apply
 }
 
 /**
@@ -121,8 +121,8 @@ case class InstanceTermEncoding( endSequent: HOLSequent ) {
   /**
    * Encodes a sequent consisting of instances of an instance sequent.
    */
-  def encode( instance: HOLSequent ): Seq[FOLTerm] =
-    instance.polarizedFormulas.map { instf => encode( instf.asInstanceOf[PolarizedFormula] ) }
+  def encode( instance: HOLSequent ): Set[FOLTerm] =
+    instance.polarizedFormulas.map { instf => encode( instf.asInstanceOf[PolarizedFormula] ) } toSet
 
   /**
    * Encodes an expansion sequent (of an instance proof).
@@ -130,7 +130,7 @@ case class InstanceTermEncoding( endSequent: HOLSequent ) {
    * The shallow formulas of the expansion sequents should be subsumed by formulas in the end-sequent.
    */
   // TODO: actually try to match the shallow formulas, and not the instances.
-  def encode( instance: ExpansionSequent )( implicit dummyImplicit: DummyImplicit ): Seq[FOLTerm] =
+  def encode( instance: ExpansionSequent )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
     encode( extractInstances( instance ) )
 
   /**

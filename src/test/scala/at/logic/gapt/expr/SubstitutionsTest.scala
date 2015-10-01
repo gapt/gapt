@@ -178,5 +178,14 @@ class SubstitutionsTest extends Specification {
 
       result must beTrue
     }
+
+    "issue 383" in {
+      val p = Const( "p", Ti -> To )
+      val x0 = Var( VariantSymbol( "x", 0 ), Ti )
+      val x = Var( StringSymbol( "x" ), Ti )
+
+      val formula = All( x, p( x ) )
+      Substitution( x0 -> x )( formula ) must_== formula
+    }
   }
 }

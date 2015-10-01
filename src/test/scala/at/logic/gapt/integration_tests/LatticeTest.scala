@@ -42,7 +42,7 @@ class LatticeTest extends Specification {
   sequential
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
-      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
       //printStats( proof )
@@ -63,7 +63,7 @@ class LatticeTest extends Specification {
     "parse and skolemize the lattice proof" in {
       checkForProverOrSkip
 
-      val proofdb = ( new XMLReader( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 

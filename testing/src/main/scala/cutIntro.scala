@@ -1,7 +1,6 @@
 package at.logic.gapt.testing
 
-import java.util.concurrent.TimeoutException
-
+import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
@@ -11,7 +10,7 @@ import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.lk.base.LKRuleCreationException
 import at.logic.gapt.proofs.lk.{ LKToExpansionProof, rulesNumber, containsEqualityReasoning }
 import at.logic.gapt.proofs.lk.cutIntroduction._
-import at.logic.gapt.proofs.resolution.{ numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
@@ -22,14 +21,14 @@ import at.logic.gapt.proofs.expansionTrees.{ InstanceTermEncoding, addSymmetry, 
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
-import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.duration._
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.{ Success, Failure, Random }
 
 object testCutIntro extends App {
 
-  lazy val proofSeqRegex = """\w+\((\d+)\)""".r
+  lazy val proofSeqRegex = """(\w+)\((\d+)\)""".r
   def loadProof( fileName: String ) = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
@@ -42,8 +41,12 @@ object testCutIntro extends App {
       LeanCoPParser.getExpansionProof( fileName ) map { _ -> true }
     case _ if fileName contains "/prover9/" =>
       val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fileName )
-      metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( resProof ) )
-      val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
+      metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
+      val expansionProof =
+        if ( isFOLPrenexSigma1( endSequent ) )
+          RobinsonToExpansionProof( resProof, endSequent )
+        else
+          RobinsonToExpansionProof( resProof )
       val containsEquations = constants( toShallow( expansionProof ) ) exists {
         case EqC( _ ) => true
         case _        => false
@@ -62,7 +65,7 @@ object testCutIntro extends App {
   lazy val proofs =
     ( for ( n <- 0 to 100; proofSequence <- proofSequences ) yield s"${proofSequence.name}($n)" ) ++
       recursiveListFiles( "testing/TSTP/prover9" ).map( _.getPath ).filter( _ endsWith ".s.out" ) ++
-      recursiveListFiles( "testing/veriT-SMT-LIB-QF_UF" ).map( _.getPath ).filter( _ endsWith ".proof_flat" ) ++
+      recursiveListFiles( "testing/veriT-SMT-LIB/QF_UF" ).map( _.getPath ).filter( _ endsWith ".proof_flat" ) ++
       recursiveListFiles( "testing/TSTP/leanCoP" ).map( _.getPath ).filter( _ endsWith ".s.out" ) ++
       Nil
 
@@ -74,7 +77,7 @@ object testCutIntro extends App {
 
   def runExperiment( fileName: String, methodName: String ): JValue = {
     val collectedMetrics = new CollectMetrics
-    val f = Future {
+    withTimeout( timeout ) {
       metrics.current.withValue( collectedMetrics ) {
         metrics.value( "file", fileName )
         metrics.value( "method", methodName )
@@ -84,6 +87,9 @@ object testCutIntro extends App {
             None
           }
         } catch {
+          case e: ThreadDeath =>
+            metrics.value( "status", "parsing_timeout" )
+            None
           case e: OutOfMemoryError =>
             metrics.value( "status", "parsing_out_of_memory" )
             None
@@ -95,16 +101,30 @@ object testCutIntro extends App {
             None
         }
 
-        parseResult foreach {
+        parseResult flatMap {
+          case ( proof, hasEquality ) =>
+            if ( isFOLPrenexSigma1( toShallow( proof ) ) ) {
+              Some( proof -> hasEquality )
+            } else {
+              metrics.value( "status", "parsing_not_prenex_sigma1" )
+              None
+            }
+        } foreach {
           case ( expansionProof, hasEquality ) =>
             metrics.value( "has_equality", hasEquality )
             try metrics.time( "cutintro" ) {
               CutIntroduction.compressToLK( expansionProof, hasEquality, getMethod( methodName ), verbose = false ) match {
                 case Some( _ ) => metrics.value( "status", "ok" )
-                case None      => metrics.value( "status", "cutintro_uncompressible" )
+                case None =>
+                  if ( collectedMetrics.data( "termset_trivial" ) == true )
+                    metrics.value( "status", "cutintro_termset_trivial" )
+                  else
+                    metrics.value( "status", "cutintro_uncompressible" )
               }
             }
             catch {
+              case e: ThreadDeath =>
+                metrics.value( "status", "cutintro_timeout" )
               case e: OutOfMemoryError =>
                 metrics.value( "status", "cutintro_out_of_memory" )
               case e: StackOverflowError =>
@@ -120,15 +140,8 @@ object testCutIntro extends App {
       }
     }
 
-    val results = try {
-      Await.result( f, timeout )
-      collectedMetrics.copy
-    } catch {
-      case _: TimeoutException =>
-        val res = collectedMetrics.copy
-        res.value( "status", if ( res.currentPhase == "parsing" ) "parsing_timeout" else "cutintro_timeout" )
-        res
-    }
+    val results = collectedMetrics.copy
+    results.data.getOrElseUpdate( "status", "cutintro_timeout" )
     results.value( "phase", results.currentPhase )
 
     def jsonify( v: Any ): JValue = v match {
@@ -146,14 +159,17 @@ object testCutIntro extends App {
 
   val partialResultsOut = new PrintWriter( "partial_results.json" )
   var done = 0
-  val experimentResults = Random.shuffle( experiments ).par flatMap {
+
+  val parExperiments = Random.shuffle( experiments ).par
+  parExperiments.tasksupport = new ForkJoinTaskSupport( new ForkJoinPool( Runtime.getRuntime.availableProcessors / 2 ) )
+  val experimentResults = parExperiments flatMap {
     case ( p, m ) =>
       try {
         done += 1
         println( s"$done/${experiments.size}\t$p\t$m" )
         val beginTime = System.currentTimeMillis()
         val JObject( resultEntries ) =
-          parse( runOutOfProcess[String]( Seq( "-Xmx1G", "-Xss30m" ) ) { compact( render( runExperiment( p, m ) ) ) } )
+          parse( runOutOfProcess[String]( Seq( "-Xmx2G", "-Xss30m" ) ) { compact( render( runExperiment( p, m ) ) ) } )
         val totalTime = System.currentTimeMillis() - beginTime
         val result = JObject( resultEntries :+ ( "time_total" -> JInt( totalTime ) ) )
         partialResultsOut.println( compact( render( result ) ) )

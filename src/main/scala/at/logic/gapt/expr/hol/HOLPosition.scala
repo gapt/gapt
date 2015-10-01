@@ -272,7 +272,6 @@ object BinaryConnective {
     case And( l, r ) => Some( l, r )
     case Or( l, r )  => Some( l, r )
     case Imp( l, r ) => Some( l, r )
-    case Eq( l, r )  => Some( l, r )
     case _           => None
   }
 }

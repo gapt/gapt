@@ -1,4 +1,3 @@
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.prooftool
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol.univclosure

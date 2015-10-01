@@ -1,24 +1,25 @@
-import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary.{time, parse}
 import at.logic.gapt.examples.UniformAssociativity3ExampleProof
 import at.logic.gapt.expr.hol.{toNNF, simplify, lcomp}
+import at.logic.gapt.formats.simple.SimpleFOLParser
 import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, normalFormsSipGrammar, GrammarMinimizationFormula}
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.maxsat.QMaxSAT
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.utils.time
 
 def removeEqAxioms( eseq: ExpansionSequent ) = {
   // removes all equality axioms that appear in examples/ProofSequences.scala
-  val R = parse.fol( "Forall x =(x,x)" )
-  val S = parse.fol( "Forall x Forall y Imp =(x,y) =(y,x)" )
-  val T = parse.fol( "Forall x Forall y Forall z Imp And =(x,y) =(y,z) =(x,z)" )
-  val Tprime = parse.fol( "Forall x Forall y Forall z Imp =(x,y) Imp =(y,z) =(x,z)" )
-  val CSuc = parse.fol( "Forall x Forall y Imp =(x,y) =(s(x),s(y))" )
-  val CPlus = parse.fol( "Forall x Forall y Forall u Forall v Imp =(x,y) Imp =(u,v) =(+(x,u),+(y,v))" )
-  val CPlusL = parse.fol( "Forall x Forall y Forall z Imp =(y,z) =(+(y,x),+(z,x))" ) // congruence plus left
-  val CgR = parse.fol( "Forall x Forall y Forall z Imp =(y,z) =(g(x,y),g(x,z))" ) // congruence of g on the right
-  val CMultR = parse.fol( "Forall x Forall y Forall z Imp =(x,y) =(*(z,x),*(z,y))" ) // congruence of mult right
+  val R = SimpleFOLParser( "Forall x =(x,x)" )
+  val S = SimpleFOLParser( "Forall x Forall y Imp =(x,y) =(y,x)" )
+  val T = SimpleFOLParser( "Forall x Forall y Forall z Imp And =(x,y) =(y,z) =(x,z)" )
+  val Tprime = SimpleFOLParser( "Forall x Forall y Forall z Imp =(x,y) Imp =(y,z) =(x,z)" )
+  val CSuc = SimpleFOLParser( "Forall x Forall y Imp =(x,y) =(s(x),s(y))" )
+  val CPlus = SimpleFOLParser( "Forall x Forall y Forall u Forall v Imp =(x,y) Imp =(u,v) =(+(x,u),+(y,v))" )
+  val CPlusL = SimpleFOLParser( "Forall x Forall y Forall z Imp =(y,z) =(+(y,x),+(z,x))" ) // congruence plus left
+  val CgR = SimpleFOLParser( "Forall x Forall y Forall z Imp =(y,z) =(g(x,y),g(x,z))" ) // congruence of g on the right
+  val CMultR = SimpleFOLParser( "Forall x Forall y Forall z Imp =(x,y) =(*(z,x),*(z,y))" ) // congruence of mult right
 
   val eqaxioms = new HOLSequent( R::S::T::Tprime::CSuc::CPlus::CPlusL::CgR::CMultR::Nil, Nil )
 

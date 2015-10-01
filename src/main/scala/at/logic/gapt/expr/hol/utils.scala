@@ -5,7 +5,7 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 
 /**
  * Returns true iff the given LambdaExpression consists of a logical constant.
@@ -448,5 +448,28 @@ object normalizeFreeVariables {
 
     val sub = Substitution( map )
     ( sub( f ), sub )
+  }
+}
+
+/**
+ * Removes top-level connectives from a formula.
+ */
+object prenexify {
+  /**
+   * Returns a sequent that is equivalent to :- formula.
+   */
+  def pos( formula: HOLFormula ): HOLSequent = formula match {
+    case Or( a, b )  => pos( a ) ++ pos( b )
+    case Imp( a, b ) => neg( a ) ++ pos( b )
+    case Neg( a )    => neg( a )
+    case _           => Sequent() :+ formula
+  }
+  /**
+   * Returns a sequent that is equivalent to formula :-.
+   */
+  def neg( formula: HOLFormula ): HOLSequent = formula match {
+    case And( a, b ) => neg( a ) ++ neg( b )
+    case Neg( a )    => pos( a )
+    case _           => formula +: Sequent()
   }
 }

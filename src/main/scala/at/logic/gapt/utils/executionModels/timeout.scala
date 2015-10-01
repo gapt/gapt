@@ -1,5 +1,6 @@
 package at.logic.gapt.utils.executionModels
 import at.logic.gapt.utils.logging.Logger
+import scala.concurrent._
 import scala.concurrent.duration._
 
 package timeout {
@@ -40,7 +41,7 @@ package timeout {
 
       t.setDaemon( true )
       t.start()
-      t.join( duration toMillis )
+      blocking { t.join( duration toMillis ) }
       t.stop()
 
       val nLine = sys.props( "line.separator" )

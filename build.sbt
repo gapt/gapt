@@ -36,6 +36,9 @@ lazy val root = (project in file(".")).
 
     mainClass := Some("at.logic.cli.CLIMain"),
 
+    fork in console := true,
+    initialCommands in console := IO.read((resourceDirectory in Compile).value / "gapt-cli-prelude.scala"),
+
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
     releaseDist := {
@@ -83,7 +86,7 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.parboiled" %% "parboiled" % "2.1.0",
-      "org.scalaz" %% "scalaz-core" % "7.1.3",
+      "org.scalaz" %% "scalaz-core" % "7.1.4",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
       "org.slf4j" % "slf4j-api" % "1.7.12",
@@ -97,7 +100,7 @@ lazy val root = (project in file(".")).
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "jline" % "jline" % "2.13",
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
-      "com.itextpdf" % "itextpdf" % "5.5.6",
+      "com.itextpdf" % "itextpdf" % "5.5.7",
       "org.scilab.forge" % "jlatexmath" % "1.0.2")
   )
 

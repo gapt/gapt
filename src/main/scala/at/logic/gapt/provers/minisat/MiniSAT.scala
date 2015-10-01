@@ -13,9 +13,13 @@ import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.provers.Prover
 import java.io._
+import at.logic.gapt.utils.{ withTempFile, runProcess }
+
 import scala.collection.immutable.HashMap
+import scala.io.Source
 
 // Call MiniSAT to solve quantifier-free Formulas.
+object MiniSAT extends MiniSAT
 class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 
   var atom_map: Map[HOLFormula, Int] = new HashMap[HOLFormula, Int]
@@ -49,43 +53,20 @@ class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 
   // Returns a model of the set of clauses obtained from the MiniSAT SAT solver.
   // Returns None if unsatisfiable.
-  def solve( clauses: List[HOLClause] ): Option[Interpretation] =
-    {
-      val helper = new DIMACSHelper( clauses )
+  def solve( clauses: List[HOLClause] ): Option[Interpretation] = {
+    val helper = new DIMACSHelper( clauses )
 
-      val minisat_in = writeDIMACS( helper )
-      trace( "Generated MiniSAT input: " )
-      trace( minisat_in );
+    val minisat_in = writeDIMACS( helper )
 
-      val temp_in = File.createTempFile( "gapt_minisat_in", ".sat" )
-      temp_in.deleteOnExit()
-
-      val temp_out = File.createTempFile( "gapt_minisat_out", ".sat" )
-      temp_out.deleteOnExit()
-
-      val out = new BufferedWriter( new FileWriter( temp_in ) )
-      out.append( minisat_in )
-      out.close()
-
-      // run minisat
-
-      val bin = "minisat";
-      val run = bin + " " + temp_in.getAbsolutePath() + " " + temp_out.getAbsolutePath();
-      debug( "Starting minisat..." );
-      val p = Runtime.getRuntime().exec( run );
-      p.waitFor();
-      debug( "minisat finished." );
-
-      // parse minisat output and construct map
-      val sat = scala.io.Source.fromFile( temp_out ).mkString;
-
-      trace( "MiniSAT result: " + sat )
-
-      temp_in.delete()
-      temp_out.delete()
-
-      readDIMACS( sat, helper )
+    val sat = withTempFile { out =>
+      withTempFile.fromString( minisat_in ) { in =>
+        runProcess.withExitValue( Seq( "minisat", in, out ) )
+        Source.fromFile( out ).mkString
+      }
     }
+
+    readDIMACS( sat, helper )
+  }
 }
 
 class MiniSATProver extends Prover with at.logic.gapt.utils.logging.Logger with at.logic.gapt.utils.traits.ExternalProgram {

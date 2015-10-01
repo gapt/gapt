@@ -94,4 +94,20 @@ class ResolutionTest extends Specification {
     ).conclusion must_== ( "a" +: Clause() :+ "p(f(c), g(d))" map parseAtom )
   }
 
+  "daglike performance" in {
+    def proof( n: Int ) = {
+      var p: ResolutionProof = TautologyClause( FOLAtom( "a" ) )
+      0 until n foreach { i =>
+        p = Resolution( p, Suc( 0 ), p, Ant( 0 ) )
+      }
+      p
+    }
+
+    val n = 10000
+    val copy1 = proof( n )
+    val copy2 = proof( n )
+
+    copy1 == copy2 must_== true
+  }
+
 }

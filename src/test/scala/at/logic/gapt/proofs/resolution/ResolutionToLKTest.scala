@@ -214,7 +214,7 @@ class ResolutionToLKTest extends Specification {
         val p2 = InputClause( Pa +: Clause() )
         val v1 = Instance( p1, FOLSubstitution( x -> y ) )
         val resProof = Resolution( Instance( v1, FOLSubstitution( y -> a ) ), Suc( 0 ), p2, Ant( 0 ) )
-        RobinsonToLK( resProof, seq ).root.toHOLSequent.toString must beEqualTo( HOLSequent( List( f1 ), List( Pa ) ).toString )
+        RobinsonToLK( resProof, seq ).root.toHOLSequent must beSyntacticFSequentEqual( HOLSequent( List( f1 ), List( Pa ) ) )
       }
       "transform the original subproof of the UNS example" in {
         val r = RobinsonToLK( UNSproof.p4 ).root

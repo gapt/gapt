@@ -251,7 +251,7 @@ class HLKHOLParser {
 
   }
 
-  def parseFormula( s: String ): LambdaExpression = f( parse( s ) )
+  def parseFormula( s: String ): HOLFormula = f( parse( s ) )
 
 }
 

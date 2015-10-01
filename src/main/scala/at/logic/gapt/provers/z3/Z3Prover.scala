@@ -7,9 +7,7 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.{ renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.withTempFile
-
-import scala.sys.process._
+import at.logic.gapt.utils.{ runProcess, withTempFile }
 
 class Z3Prover extends Prover with ExternalProgram {
   val nLine = sys.props( "line.separator" )
@@ -17,9 +15,7 @@ class Z3Prover extends Prover with ExternalProgram {
   val sat = "sat" + nLine
 
   override def isValid( seq: HOLSequent ): Boolean = {
-    withTempFile.fromString( SmtLibExporter( renameConstantsToFi( seq )._1 ) ) { input =>
-      Seq( "z3", "-smt2", input ) !!
-    } match {
+    runProcess( Seq( "z3", "-smt2", "-in" ), SmtLibExporter( renameConstantsToFi( seq )._1 ) ) match {
       case `unsat` => true
       case `sat`   => false
     }
@@ -30,7 +26,7 @@ class Z3Prover extends Prover with ExternalProgram {
 
   override val isInstalled: Boolean =
     try {
-      Seq( "z3", "-version" ).!!
+      runProcess( Seq( "z3", "-version" ) )
       true
     } catch {
       case _: IOException => false

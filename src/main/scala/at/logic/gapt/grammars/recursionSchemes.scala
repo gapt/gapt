@@ -199,7 +199,7 @@ object SipRecSchem extends RecSchemTemplate(
   val G = "G"
 
   def toSipGrammar( recSchem: RecursionScheme ) =
-    SipGrammar( recSchem.rules.toSeq map {
+    SipGrammar( recSchem.rules map {
       case Rule( FOLFunction( A, List( x: FOLVar ) ), FOLFunction( G, List( x_, u, x__ ) ) ) if x == x_ && x == x__ =>
         SipGrammar.gammaEnd -> FOLSubstitution( x -> SipGrammar.alpha )( u )
       case Rule( FOLFunction( A, List( x: FOLVar ) ), r ) =>

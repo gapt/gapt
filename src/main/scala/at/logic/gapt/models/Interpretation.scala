@@ -26,7 +26,7 @@ class MapBasedInterpretation( val model: Map[HOLFormula, Boolean] ) extends Inte
     case None      => false
   }
 
-  override def toString = {
-    model.foldLeft( "" ) { case ( s, ( atom, value ) ) => s + atom + " -> " + value + sys.props( "line.separator" ) }
-  }
+  override def toString = model.toSeq.
+    map { case ( atom, value ) => s"$atom -> $value" }.
+    sorted.mkString( sys.props( "line.separator" ) )
 }

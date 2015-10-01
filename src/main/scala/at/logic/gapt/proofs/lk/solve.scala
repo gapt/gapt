@@ -35,6 +35,8 @@ object solve extends at.logic.gapt.utils.logging.Logger {
     startProving( seq, new PropositionalProofStrategy, throwOnError )
   }
 
+  def solvePropositional( formula: HOLFormula ): Option[LKProof] = solvePropositional( Sequent() :+ formula )
+
   /**
    * Transform expansion proof to LK proof (assumes that deep formula of expansionSequent is a tautology)
    */

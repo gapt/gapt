@@ -1,8 +1,9 @@
 package at.logic.gapt.provers.maxsat
 
-import java.io.{ File, BufferedWriter, FileWriter }
+import java.io.{ ByteArrayInputStream, File, BufferedWriter, FileWriter }
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.provers.sat4j.readSat4j
+import org.parboiled2.ParserInput.ByteArrayBasedParserInput
 import org.sat4j.maxsat.reader.WDimacsReader
 import org.sat4j.maxsat.WeightedMaxSatDecorator
 import org.sat4j.pb.IPBSolver
@@ -16,21 +17,9 @@ class MaxSat4j extends MaxSATSolver {
     val helper = new WDIMACSHelper( hard, soft )
     val sat4j_in = helper.getWCNFInput().toString()
 
-    trace( "Generated Sat4j input: " )
-
-    val temp_in = File.createTempFile( "gapt_sat4j_in", ".sat" )
-    temp_in.deleteOnExit()
-
-    val out = new BufferedWriter( new FileWriter( temp_in ) )
-    out.append( sat4j_in )
-    out.close()
-
-    // run Sat4j
-
-    debug( "Starting sat4j..." )
     val solver = org.sat4j.pb.SolverFactory.newDefaultOptimizer()
     val res = try {
-      val problem = new WDimacsReader( new WeightedMaxSatDecorator( solver ) ).parseInstance( temp_in.getAbsolutePath )
+      val problem = new WDimacsReader( new WeightedMaxSatDecorator( solver ) ).parseInstance( new ByteArrayInputStream( sat4j_in.getBytes ) )
       readSat4j( problem, helper )
     } catch {
       case e: ContradictionException => None

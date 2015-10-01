@@ -20,9 +20,9 @@ object SipGrammar {
 
   def gamma_i( i: Int ) = FOLVar( s"γ_$i" )
 
-  def instantiate( prod: Production, n: Int ): Seq[Production] = prod match {
+  def instantiate( prod: Production, n: Int ): Set[Production] = prod match {
     case ( `tau`, r ) =>
-      var instanceProductions = Seq[Production]()
+      var instanceProductions = Set[Production]()
       if ( !freeVariables( r ).contains( gamma ) )
         instanceProductions ++= Seq( tau ->
           FOLSubstitution( alpha -> numeral( n ), nu -> numeral( 0 ), beta -> gamma_i( 0 ) )( r ) )
@@ -34,23 +34,23 @@ object SipGrammar {
       instanceProductions
     case ( `gamma`, r ) => ( 0 until n ) map { i =>
       gamma_i( i ) -> FOLSubstitution( alpha -> numeral( n ), nu -> numeral( i ), gamma -> gamma_i( i + 1 ) )( r )
-    }
-    case ( `gammaEnd`, r ) => Seq( gamma_i( n ) -> FOLSubstitution( alpha -> numeral( n ) )( r ) )
+    } toSet
+    case ( `gammaEnd`, r ) => Set( gamma_i( n ) -> FOLSubstitution( alpha -> numeral( n ) )( r ) )
   }
 }
 
-case class SipGrammar( productions: Seq[SipGrammar.Production] ) {
+case class SipGrammar( productions: Set[SipGrammar.Production] ) {
   import SipGrammar._
 
-  override def toString: String = productions.map { case ( a, t ) => s"$a -> $t" }.sorted.mkString( sys.props( "line.separator" ) )
+  override def toString: String = productions.map { case ( a, t ) => s"$a -> $t" }.toSeq.sorted.mkString( sys.props( "line.separator" ) )
 
   def instanceGrammar( n: Int ) =
     TratGrammar( tau, tau +: ( 0 until n ).inclusive.map( gamma_i ),
-      productions flatMap { p => instantiate( p, n ) } distinct )
+      productions flatMap { p => instantiate( p, n ) } )
 }
 
 object normalFormsSipGrammar {
-  type InstanceLanguage = ( Int, Seq[FOLTerm] )
+  type InstanceLanguage = ( Int, Set[FOLTerm] )
 
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
     import SipGrammar._
@@ -78,7 +78,7 @@ object normalFormsSipGrammar {
       if ( !fv.contains( nu ) && !fv.contains( gamma ) ) prods += gammaEnd -> nf
     }
 
-    SipGrammar( prods.result.toSeq )
+    SipGrammar( prods.result )
   }
 }
 

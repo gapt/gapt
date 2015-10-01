@@ -7,12 +7,12 @@ object VectTratGrammar {
   type Production = ( NonTerminalVect, List[FOLTerm] )
 }
 
-case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.NonTerminalVect], productions: Seq[VectTratGrammar.Production] ) {
+case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.NonTerminalVect], productions: Set[VectTratGrammar.Production] ) {
   import VectTratGrammar._
 
   def axiomVect: NonTerminalVect = List( axiom )
 
-  def productions( nonTerminalVect: NonTerminalVect ): Seq[Production] = productions filter ( _._1 == nonTerminalVect )
+  def productions( nonTerminalVect: NonTerminalVect ): Set[Production] = productions filter ( _._1 == nonTerminalVect )
   def rightHandSides( nonTerminal: NonTerminalVect ) = productions( nonTerminal ) map ( _._2 )
 
   val nLine = sys.props( "line.separator" )
@@ -37,8 +37,8 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
       val P_a = productions( a )
       if ( P_a.nonEmpty )
         lang = P_a.flatMap { p =>
-          lang.map( FOLSubstitution( p.zipped toSeq ).apply )
-        } toSet
+          lang.map( FOLSubstitution( p.zipped ).apply )
+        }
     }
     lang filter ( freeVariables( _ ).isEmpty )
   }
@@ -51,7 +51,7 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
       s append s"  (${a.mkString( ", " )})" + nLine
     }
     s append s"Productions:" + nLine
-    productions.sortBy { case ( as, ts ) => nonTerminals.indexOf( as ) } foreach {
+    productions.toSeq.sortBy { case ( as, ts ) => ( nonTerminals.indexOf( as ), ts.toString() ) } foreach {
       case ( as, ts ) =>
         ( as, ts ).zipped foreach {
           case ( a, t ) =>
@@ -70,12 +70,12 @@ object TratGrammar {
     List( p._1 ) -> List( p._2 )
 }
 
-case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: Seq[TratGrammar.Production] ) {
+case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: Set[TratGrammar.Production] ) {
   import TratGrammar._
 
   val nLine = sys.props( "line.separator" )
 
-  def productions( nonTerminal: FOLVar ): Seq[Production] = productions filter ( _._1 == nonTerminal )
+  def productions( nonTerminal: FOLVar ): Set[Production] = productions filter ( _._1 == nonTerminal )
   def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
 
   productions foreach {
@@ -100,7 +100,7 @@ case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: S
     s append s"Axiom: $axiom" + nLine
     s append s"Non-terminals: ${nonTerminals.mkString( ", " )}" + nLine
     s append s"Productions:" + nLine
-    productions.sortBy { case ( a, t ) => ( nonTerminals.indexOf( a ), t.toString() ) } foreach {
+    productions.toSeq.sortBy { case ( a, t ) => ( nonTerminals.indexOf( a ), t.toString ) } foreach {
       case ( a, t ) =>
         s append s"  $a -> $t" + nLine
     }

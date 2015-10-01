@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.utils.ds.trees._
-import base._
+import at.logic.gapt.proofs.lk.base._
 import BetaReduction._
 
 case class LKQuantifierException(
@@ -49,7 +49,7 @@ object ForallLeftRule extends WeakRuleHelper( false ) {
    * @param term The term to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula, term: LambdaExpression ): LKProof = {
+  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula, term: LambdaExpression ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm = {
     s1.root.antecedent.filter( x => x.formula == aux ).toList match {
       case ( x :: _ ) => apply( s1, x, main, term )
       case _          => throw new LKUnaryRuleCreationException( "all:l", s1, aux :: Nil )
@@ -72,7 +72,7 @@ object ForallLeftRule extends WeakRuleHelper( false ) {
    * @param term The term to be all-quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ): LKProof = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm = {
     try {
       val aux_fo = getTerms( s1.root, term1oc, main, term )
       val prinFormula = getPrinFormula( main, aux_fo )
@@ -140,7 +140,7 @@ object ExistsRightRule extends WeakRuleHelper( true ) {
    * @param term The term to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula, term: LambdaExpression ): LKProof = {
+  def apply( s1: LKProof, aux: HOLFormula, main: HOLFormula, term: LambdaExpression ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm = {
     s1.root.succedent.filter( x => x.formula == aux ).toList match {
       case ( x :: _ ) => apply( s1, x, main, term )
       case _          => throw new LKUnaryRuleCreationException( "ex:r", s1, aux :: Nil )
@@ -163,7 +163,7 @@ object ExistsRightRule extends WeakRuleHelper( true ) {
    * @param term The term to be existentially quantified & whose substitution into the main formula yields the auxiliary formula.
    * @return An LK Proof ending with the new inference.
    */
-  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ): LKProof = {
+  def apply( s1: LKProof, term1oc: FormulaOccurrence, main: HOLFormula, term: LambdaExpression ): UnaryTree[OccSequent] with UnaryLKProof with AuxiliaryFormulas with PrincipalFormulas with SubstitutionTerm = {
     try {
       val aux_fo = getTerms( s1.root, term1oc, main, term )
       val prinFormula = getPrinFormula( main, aux_fo )

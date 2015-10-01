@@ -9,6 +9,15 @@
 //   w1          ... witness for sc
 //   w2          ... witness for sc2
 
+import java.io._
+
+object exportTHF {
+  def apply( ls: List[HOLSequent], filename: String, positive: Boolean = false ) = {
+    val file = new BufferedWriter( new FileWriter( filename ) )
+    file.write( TPTPHOLExporter( ls, positive ) )
+    file.close
+  }
+}
 
 val decl = """var X:o; var U,V:i; var H:i>i; var x,y:i;
               const zero:i; const s:i>i;  const h:i>i;
@@ -27,7 +36,7 @@ val sc1 = "(exists H (H(zero)=s(zero) & H(s(zero))=zero & H(s(s(zero))) = zero))
 val sc2 = "(exists H (H(zero)=s(zero) & H(s(zero))=zero & H(s(s(zero))) = s(zero)))"
 
 val List(f1,f2,f3,f4,w1,w2,w3,conclusion0,conclusion1,conclusion2) =
-    List(s1,s2,s3,s4,s5,s6,s7,sc,sc1,sc2).map(str => parseLLKFormula(decl+str))
+    List(s1,s2,s3,s4,s5,s6,s7,sc,sc1,sc2).map(str => HLKHOLParser.parseFormula(decl+str))
 
 val s0a = FSequent(f1::f2::Nil,     conclusion0::Nil)
 val s0b = FSequent(f1::f2::w1::Nil, conclusion0::Nil)

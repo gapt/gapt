@@ -125,6 +125,8 @@ object UnaryExpansionTree {
  */
 class ETWeakQuantifier( val formula: HOLFormula, val instances: Seq[( ExpansionTreeWithMerges, LambdaExpression )] )
     extends ExpansionTreeWithMerges with NonTerminalNodeAWithEquality[Option[HOLFormula], Option[LambdaExpression]] {
+  require( instances.map( _._2 ) == instances.map( _._2 ).distinct, "terms are not pairwise distinct" )
+
   lazy val node = Some( formula )
   lazy val children = instances.map( x => ( x._1, Some( x._2 ) ) )
 
@@ -476,22 +478,18 @@ object formulaToExpansionTree {
         val ev = valid_subs.head( v ).asInstanceOf[Var]
         ETStrongQuantifier( form, ev, apply_( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
       case false => // Weak quantifier
-        val valid_subs = subs.filter( s => s.domain.contains( v ) )
-        ETWeakQuantifier( form, valid_subs.map {
-          case s =>
-            val next_f = s( f )
-            val t = s( v )
-            ( apply_( next_f, List( s ), pos ), t )
+        ETWeakQuantifier( form, subs.filter( _.domain.contains( v ) ).groupBy( _( v ) ).toSeq map {
+          case ( t, subsWithT ) =>
+            val next_f = Substitution( v -> t )( f )
+            ( apply_( next_f, subsWithT, pos ), t )
         } ).asInstanceOf[ExpansionTree]
     }
     case Ex( v, f ) => pos match {
       case true => // Weak quantifier
-        val valid_subs = subs.filter( s => s.domain.contains( v ) )
-        ETWeakQuantifier( form, valid_subs.map {
-          case s =>
-            val next_f = s( f )
-            val t = s( v )
-            ( apply_( next_f, List( s ), pos ), t )
+        ETWeakQuantifier( form, subs.filter( _.domain.contains( v ) ).groupBy( _( v ) ).toSeq map {
+          case ( t, subsWithT ) =>
+            val next_f = Substitution( v -> t )( f )
+            ( apply_( next_f, subsWithT, pos ), t )
         } ).asInstanceOf[ExpansionTree]
       case false => // Strong quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )

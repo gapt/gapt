@@ -142,6 +142,7 @@ abstract class LambdaExpression {
   def |( that: LambdaExpression ): HOLFormula = Or( this, that )
   def unary_- : HOLFormula = Neg( this )
   def -->( that: LambdaExpression ) = Imp( this, that )
+  def <->( that: LambdaExpression ) = And( Imp( this, that ), Imp( that, this ) )
   def apply( that: LambdaExpression* ) = App( this, that )
 }
 

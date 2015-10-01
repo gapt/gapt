@@ -1,5 +1,6 @@
 package at.logic.gapt.cli
 
+import scala.io.Source
 import scala.sys.SystemProperties
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
@@ -20,24 +21,7 @@ object CLIMain {
  conditions; type `copying' for details.
 """
 
-  val imports = """
-  import at.logic.gapt.cli.GAPScalaInteractiveShellLibrary._
-  import at.logic.gapt.expr._
-  import at.logic.gapt.expr.fol._
-  import at.logic.gapt.expr.hol._
-  import at.logic.gapt.proofs.expansionTrees._
-  import at.logic.gapt.proofs.hoare._
-  import at.logic.gapt.proofs._
-  import at.logic.gapt.proofs.lk._
-  import at.logic.gapt.proofs.lk.base._
-  import at.logic.gapt.proofs.lk.cutIntroduction.Deltas._
-  import at.logic.gapt.proofs.lksk
-  import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-  import at.logic.gapt.provers.minisat.MiniSATProver
-  import at.logic.gapt.prooftool.{Main => PT}
-  import help.{apply => help}
-  import at.logic.gapt.cli.GPL.{apply => copying, printLicense => license}
-  """
+  val imports = Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( "gapt-cli-prelude.scala" ) ).mkString
 
   def main( args: Array[String] ) {
     val settings = new Settings

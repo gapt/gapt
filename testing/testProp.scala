@@ -1,5 +1,6 @@
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lk.algorithms._
+import at.logic.gapt.proofs.lk.{LKToExpansionProof, LKProver}
+import at.logic.gapt.provers.prover9.Prover9Importer
 
 // list of files without equality reasoning randomly chosen all over prover9-TSTP
 val fns = List(
@@ -44,7 +45,7 @@ var t_total : Long = 0
 val prover = new LKProver
 
 fns.foreach( fn => {
-  val p = loadProver9LKProof( "testing/TSTP/prover9/" + fn )
+  val p = Prover9Importer.lkProofFromFile( "testing/TSTP/prover9/" + fn )
   val E = LKToExpansionProof( p )
   val F = toDeep( E )
 

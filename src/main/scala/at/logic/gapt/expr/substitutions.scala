@@ -33,7 +33,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
     case App( t1, t2 ) =>
       App( apply( t1 ), apply( t2 ) )
     case Abs( v, t1 ) =>
-      val fv = range
+      val fv = range union domain
       val dom = domain
 
       val newSub = if ( domain.contains( v ) ) {

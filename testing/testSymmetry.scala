@@ -1,6 +1,8 @@
 import java.io._
-import at.logic.gapt.proofs.expansionTrees.removeFromExpansionSequent
-import at.logic.gapt.proofs.expansionTrees.algorithms.{ getStatistics, minimalExpansionSequent }
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
+import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.expansionTrees.{compressQuantifiers, minimalExpansionSequent, getStatistics, removeFromExpansionSequent}
 import org.slf4j.LoggerFactory
 
 /**********
@@ -35,16 +37,16 @@ object testSymmetry {
    **/
   def testMinimization( str: String ) = {
     val minisat = new at.logic.gapt.provers.minisat.MiniSATProver
-    val symm = parseProver9( "( all x all y ( x = y -> y = x))" )
+    val symm = Prover9TermParserLadrStyle.parseFormula( "( all x all y ( x = y -> y = x))" )
     TestSymmetryDataLogger.trace( "<filename>: <nsymm_import>, <nsymm_min>" )
 
     getVeriTProofs( str ).foreach { case fn =>
-      val es = loadVeriTProof( fn ).get
-      val stats_import = getStatistics( compressExpansionSequent( es ))
+      val es = VeriTParser.getExpansionProofWithSymmetry( fn ).get
+      val stats_import = getStatistics( compressQuantifiers( es ))
       val nsymm_import = if ( stats_import._1.contains( symm )) stats_import._1( symm ) else 0
 
       val min = minimalExpansionSequent( es, minisat ).get
-      val stats_min = getStatistics( compressExpansionSequent( min ))
+      val stats_min = getStatistics( compressQuantifiers( min ))
       val nsymm_min = if ( stats_min._1.contains( symm )) stats_min._1( symm ) else 0
 
       TestSymmetryDataLogger.trace( fn + ": " + nsymm_import + ", " + nsymm_min )
@@ -52,14 +54,14 @@ object testSymmetry {
   }
 
   def testSizes( str: String ) = {
-    val symm = parseProver9( "( all x all y ( x = y -> y = x))" )
+    val symm = Prover9TermParserLadrStyle.parseFormula( "( all x all y ( x = y -> y = x))" )
     TestSymmetryDataLogger.trace( "<filename>: <expseq_size>, <expseq_wosym_size>" )
 
     getVeriTProofs( str ).foreach { case fn =>
-      val es = loadVeriTProof( fn ).get
-      val es_wosym = removeFromExpansionSequent( es, FSequent( symm::Nil, Nil ))
-      val stats_import = getStatistics( compressExpansionSequent( es ))
-      val stats_wosym = getStatistics( compressExpansionSequent( es_wosym ))
+      val es = VeriTParser.getExpansionProofWithSymmetry( fn ).get
+      val es_wosym = removeFromExpansionSequent( es, Sequent( symm::Nil, Nil ))
+      val stats_import = getStatistics( compressQuantifiers( es ))
+      val stats_wosym = getStatistics( compressQuantifiers( es_wosym ))
       TestSymmetryDataLogger.trace( fn + ": " + stats_import.total + ", " + stats_wosym.total )
     }
   }

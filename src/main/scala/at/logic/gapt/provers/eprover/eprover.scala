@@ -3,18 +3,14 @@ package at.logic.gapt.provers.eprover
 import java.io.IOException
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.formats.tptp.{ TptpProofParser, TPTPParser }
+import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ HOLClause, FOLClause }
-import at.logic.gapt.proofs.sketch.{ SketchInference, SketchAxiom, RefutationSketchToRobinson, RefutationSketch }
+import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.withTempFile
-
-import scala.sys.process._
-import scala.collection.mutable
+import at.logic.gapt.utils.{ runProcess, withTempFile }
 
 class EProverProver extends ResolutionProver with ExternalProgram {
   val backgroundProver = new Prover9Prover
@@ -24,9 +20,7 @@ class EProverProver extends ResolutionProver with ExternalProgram {
       case ( renaming, cnf ) =>
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = toTPTP( labelledCNF )
-        val output = withTempFile.fromString( tptpIn ) { tptpInFile =>
-          Seq( "eproof", "--tptp3-format", tptpInFile ) !!
-        }
+        val output = runProcess.withTempInputFile( Seq( "eproof", "--tptp3-format" ), tptpIn )
         if ( output.split( "\n" ).contains( "# SZS status Unsatisfiable" ) )
           RefutationSketchToRobinson( TptpProofParser.parse( output, labelledCNF mapValues { Seq( _ ) } ), backgroundProver )
         else None
@@ -61,7 +55,7 @@ class EProverProver extends ResolutionProver with ExternalProgram {
 
   override val isInstalled: Boolean = backgroundProver.isInstalled &&
     ( try {
-      "eproof --version".!!
+      runProcess( Seq( "eproof", "--version" ) )
       true
     } catch {
       case ex: IOException => false

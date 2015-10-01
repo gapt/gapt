@@ -9,9 +9,9 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.utils.logging.{ metrics, Logger, Stopwatch }
+import at.logic.gapt.utils.{ withTempFile, runProcess }
 
 import scala.collection.immutable.Map
-import scala.sys.process.{ Process, ProcessIO }
 
 /**
  * This trait provides an interface to solvers for the Weighted Partial MaxSat problem.
@@ -290,11 +290,9 @@ trait MaxSATSolverBinary extends MaxSATSolver {
    * Constructs the input command list for Process from the
    * names of the input and output files for the MaxSAT solver.
    *  For examples, have a look at implementations of this trait.
-   * @param in The name of the input file.
-   * @param out The name of the output file.
    * @return The command list.
    */
-  def command( in: String, out: String ): List[String]
+  def command: List[String]
 
   /**
    * A warning message to be displayed if the binary is not found.
@@ -339,83 +337,13 @@ trait MaxSATSolverBinary extends MaxSATSolver {
    */
   protected def getFromMaxSATBinary( hard: List[HOLClause], soft: List[Tuple2[HOLClause, Int]] ): Option[Interpretation] =
     {
-      debug( "Generating wcnf file..." )
       val helper = new WDIMACSHelper( hard, soft )
-      val startTimeGenerate = System.currentTimeMillis()
-      val input = helper.getWCNFInput()
-      val endTimeGenerate = System.currentTimeMillis()
-      logTime( "[Runtime]<wcnf-Generation> ", ( endTimeGenerate - startTimeGenerate ) )
+      val input = helper.getWCNFInput().result()
 
-      val temp_in = File.createTempFile( "maxsat_in", ".wcnf" )
-      temp_in.deleteOnExit()
+      val output = withTempFile.fromString( input ) { inFile => runProcess.withExitValue( command :+ inFile, "" )._2 }
 
-      val temp_out = File.createTempFile( "maxsat_out", ".sol" )
-      temp_out.deleteOnExit()
-
-      val stdout = File.createTempFile( "maxsat", ".stdout" )
-      stdout.deleteOnExit()
-
-      val stderr = File.createTempFile( "maxsat", ".stderr" )
-      stderr.deleteOnExit()
-
-      val startTimeWriteInput = System.currentTimeMillis()
-      val out = new BufferedWriter( new FileWriter( temp_in ) )
-      out.append( input.toString() )
-      out.close()
-      val endTimeWriteInput = System.currentTimeMillis()
-      logTime( "[Runtime]<wcnf-IO> ", ( endTimeWriteInput - startTimeWriteInput ) )
-
-      debug( "Starting maxsat..." )
-      val startTimeMaxSAT = System.currentTimeMillis()
-
-      var options = scala.collection.mutable.MutableList[String]()
-      var command_ = command( temp_in.getAbsolutePath(), temp_out.getAbsolutePath() )
-
-      debug( "Command: " + command_ )
-
-      var output = new StringBuilder()
-      var error = new StringBuilder()
-      val processIO = new ProcessIO(
-        _ => (), // stdin does not matter
-        stdout => scala.io.Source.fromInputStream( stdout, "ISO-8859-1" ).getLines.foreach( s => output.append( s + nLine ) ),
-        stderr => scala.io.Source.fromInputStream( stderr, "ISO-8859-1" ).getLines.foreach( s => error.append( s + nLine ) )
-      )
-
-      val proc = Process( command_ ) run processIO
-      var value: Int = -1
-
-      try {
-        // run MaxSATSOlver process
-        value = metrics.time( "maxsat_solver" ) { proc exitValue }
-      } catch {
-        // catch ThreadDeath if the procedure is interrupted by a Timeout
-        // and kill the external MaxSATSolver process
-        case tde: ThreadDeath => {
-          debug( "Process interrupted by timeout: Killing MaxSATSolver process" );
-          proc.destroy();
-          value = proc.exitValue();
-          throw tde;
-        }
-      }
-
-      debug( "Exit Value = " + value )
-      debug( "maxsat finished" )
-      logTime( "[Runtime]<maxsat> ", ( System.currentTimeMillis() - startTimeMaxSAT ) )
-
-      trace( "IN_FILE:" + nLine + scala.io.Source.fromFile( temp_in, "UTF-8" ).mkString );
-      //debug("OUT_FILE:" + nLine +TextFileSlurper(temp_out));
-      trace( "OUT:" + nLine + output.toString );
-      trace( "ERR:" + nLine + error.toString );
-      // parse maxsat output and construct map
-      val in = new BufferedReader( new InputStreamReader(
-        new FileInputStream( stdout )
-      ) );
-
-      //val str = Stream.continually(in.readLine()).takeWhile(_ != null).mkString(nLine)
-
-      readWDIMACS( output.toString(), format(), helper ) match {
-        case Some( model ) => Some( new MapBasedInterpretation( model.asInstanceOf[Map[HOLFormula, Boolean]] ) )
-        case None          => None
+      readWDIMACS( output, format(), helper ) map { model =>
+        new MapBasedInterpretation( model.asInstanceOf[Map[HOLFormula, Boolean]] )
       }
     }
 }
