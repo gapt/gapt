@@ -180,6 +180,13 @@ object rename {
         ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList )
       ) ).toMap
   }
+  def apply( vs: Set[Var], blackList: Set[Var] )( implicit dummyImplicit: DummyImplicit ): Map[Var, Var] = {
+    val v_list = vs.toList
+    ( v_list zip
+      v_list.foldLeft( Nil: List[Var] )(
+        ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList )
+      ) ).toMap
+  }
 }
 
 object toImplications {
