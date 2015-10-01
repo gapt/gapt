@@ -220,11 +220,11 @@ object toAbbreviatedString {
  */
 object Sigma {
   def unapply( f: FOLFormula ): Option[Int] = f match {
-    case FOLAtom( _ ) => Some( 0 )
-    case Neg( g )     => unapply( g )
-    case And( g, h )  => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Or( g, h )   => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Imp( g, h )  => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case FOLAtom( _, _ ) => Some( 0 )
+    case Neg( g )        => unapply( g )
+    case And( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Or( g, h )      => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Imp( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
     case Ex.Block( vars, g ) =>
       println( s"$vars, $g" )
       g match {
@@ -239,11 +239,11 @@ object Sigma {
  */
 object Pi {
   def unapply( f: FOLFormula ): Option[Int] = f match {
-    case FOLAtom( _ ) => Some( 0 )
-    case Neg( g )     => unapply( g )
-    case And( g, h )  => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Or( g, h )   => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
-    case Imp( g, h )  => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case FOLAtom( _, _ ) => Some( 0 )
+    case Neg( g )        => unapply( g )
+    case And( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Or( g, h )      => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
+    case Imp( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
     case All.Block( _, g ) => g match {
       case Sigma( i ) => Some( i + 1 )
     }

@@ -71,17 +71,17 @@ class Prover9Test extends Specification {
     def load( fn: String ) = Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( fn ) ).mkString
 
     "goat puzzle PUZ047+1.out" in {
-      prover9.reconstructLKProofFromOutput( load( "PUZ047+1.out" ) )
+      Prover9Importer.lkProof( load( "PUZ047+1.out" ) )
       ok
     }
 
     "expansion proof paper example cade13example.out" in {
-      prover9.reconstructLKProofFromOutput( load( "cade13example.out" ) )
+      Prover9Importer.lkProof( load( "cade13example.out" ) )
       ok
     }
 
     "proof with new_symbol" in {
-      prover9.reconstructLKProofFromOutput( load( "ALG138+1.out" ) )
+      Prover9Importer.lkProof( load( "ALG138+1.out" ) )
       ok
     }
 
@@ -91,12 +91,12 @@ class Prover9Test extends Specification {
     }
 
     "strong quantifiers" in {
-      prover9.reconstructLKProofFromOutput( load( "GEO200+1.out" ) )
+      Prover9Importer.lkProof( load( "GEO200+1.out" ) )
       ok
     }
 
     "cnf with different equation order" in {
-      prover9.reconstructLKProofFromOutput( load( "NUM561+2.out" ) )
+      Prover9Importer.lkProof( load( "NUM561+2.out" ) )
       ok
     }
   }
