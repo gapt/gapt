@@ -17,7 +17,6 @@ class LKNewOldConvTest extends Specification {
   if ( !Prover9Importer.isInstalled ) args( skipAll = true )
 
   "GEO037m4" in {
-    skipped
 
     val o = load( "GEO037-2.out" )
     val n = lkOld2New( o )
@@ -27,7 +26,6 @@ class LKNewOldConvTest extends Specification {
   }
 
   "goat puzzle" in {
-    skipped
 
     val o = load( "PUZ047+1.out" )
     val n = lkOld2New( o )
@@ -37,7 +35,6 @@ class LKNewOldConvTest extends Specification {
   }
 
   "cade1example.out" in {
-    skipped
 
     val o = load( "cade13example.out" )
     val n = lkOld2New( o )
@@ -47,7 +44,6 @@ class LKNewOldConvTest extends Specification {
   }
 
   "proof with new_symbol" in {
-    skipped
 
     val o = load( "ALG138+1.out" )
     val n = lkOld2New( o )
