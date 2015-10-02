@@ -169,7 +169,7 @@ trait CommonRule extends LKProof {
 
   protected def contexts = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.delete( is )
 
-  override def endSequent = mainFormulaSequent.antecedent ++: concat( contexts ) :++ mainFormulaSequent.succedent
+  override lazy val endSequent = mainFormulaSequent.antecedent ++: concat( contexts ) :++ mainFormulaSequent.succedent
 
   override def mainIndices = ( mainFormulaSequent.antecedent.map( _ => true ) ++: concat( contexts ).map( _ => false ) :++ mainFormulaSequent.succedent.map( _ => true ) ).indicesWhere( _ == true )
 
