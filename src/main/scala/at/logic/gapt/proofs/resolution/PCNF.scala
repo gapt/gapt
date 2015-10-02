@@ -131,30 +131,7 @@ object PCNF {
     case _               => throw new IllegalArgumentException( "unknown head of formula: " + a.toString )
   }
 
-  def getVariableRenaming( f1: HOLClause, f2: HOLClause ): Option[Substitution] = {
-    if ( f1.negative.size != f2.negative.size || f1.positive.size != f2.positive.size ) None
-    else {
-      val pairs = ( f1.negative.asInstanceOf[Seq[LambdaExpression]].zip( f2.negative.asInstanceOf[Seq[LambdaExpression]] )
-        ++ f1.positive.asInstanceOf[Seq[LambdaExpression]].zip( f2.positive.asInstanceOf[Seq[LambdaExpression]] ) )
-      try {
-        val sub = pairs.foldLeft( Substitution() )( ( sb, p ) => Substitution( sb.map ++ computeSub( p ).map ) )
-        if ( pairs.forall( p => sub( p._1 ) == p._2 ) ) Some( sub ) else None
-      } catch {
-        case e: Exception => None
-      }
-    }
-  }
-  def computeSub( p: ( LambdaExpression, LambdaExpression ) ): Substitution = ( p._1, p._2 ) match {
-    case ( Var( a, _ ), Var( b, _ ) ) if a == b => Substitution()
-    case ( v1: Var, v2: Var )                   => Substitution( v1, v2 )
-    case ( c1: Const, c2: Const )               => Substitution()
-    case ( App( a1, b1 ), App( a2, b2 ) ) =>
-      val s1 = computeSub( a1, a2 )
-      val s2 = computeSub( b1, b2 )
-      Substitution( s1.map ++ s2.map )
-    case ( Abs( v1, a1 ), Abs( v2, a2 ) ) => Substitution( computeSub( a1, a2 ).map - v1 )
-    case _                                => throw new Exception()
-  }
+  def getVariableRenaming( f1: HOLClause, f2: HOLClause ): Option[Substitution] = syntacticMatching( f1.toFormula, f2.toFormula )
 
   def containsSubsequent( set: List[HOLClause], fc: HOLClause ): Boolean = {
     val fs = fc

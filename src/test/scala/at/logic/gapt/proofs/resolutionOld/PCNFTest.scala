@@ -70,7 +70,7 @@ class projectionsTest extends Specification {
       "an atom Px in the CNF(-f(s)) where s is the sequent" in {
         "∀xPx |-" in {
           val Px = FOLAtom( "P", FOLVar( "x" ) :: Nil )
-          val x = FOLVar( "x" )
+          val x = FOLVar( "x0" )
           val axPx = All( x, Px )
           val lkProof = ForallLeftRule( Axiom( List( Px ), List( Px ) ), Px, axPx, x )
           val cPx = HOLClause( List(), List( Px ) )
@@ -78,7 +78,7 @@ class projectionsTest extends Specification {
         }
         "|- ∃xPx" in {
           val Px = FOLAtom( "P", FOLVar( "x" ) :: Nil )
-          val x = FOLVar( "x" )
+          val x = FOLVar( "x0" )
           val exPx = Ex( x, Px )
           val lkProof = ExistsRightRule( Axiom( List( Px ), List( Px ) ), Px, exPx, x )
           val cPx = HOLClause( List( Px ), List() )
