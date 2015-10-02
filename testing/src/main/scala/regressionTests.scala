@@ -2,6 +2,7 @@ package at.logic.gapt.testing
 
 import java.io.File
 
+import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
@@ -9,6 +10,7 @@ import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.{ solve, containsEqualityReasoning, ReductiveCutElim, LKToExpansionProof, ExtractInterpolant }
 import at.logic.gapt.proofs.lk.cutIntroduction._
+import at.logic.gapt.proofs.{ Sequent, lkNew }
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.veriT.VeriTProver
@@ -25,6 +27,19 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def test( implicit testRun: TestRun ) = {
     val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( f getAbsolutePath ) --- "import"
     val p = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
+
+    lkNew.lkOld2New( p ) --? "lkOld2New" map { pNew =>
+      ( p.root.toHOLSequent multiSetEquals pNew.endSequent ) !-- "lkOld2New end-sequent"
+      lkNew.cleanStructuralRules( pNew ) --? "cleanStructuralRules lkNew"
+      lkNew.LKToExpansionProof( pNew ) --? "LKToExpansionProof lkNew"
+      lkNew.lkNew2Old( pNew ) --? "lkNew2Old" map { pOld =>
+        ( pOld.root.toHOLSequent multiSetEquals pNew.endSequent ) !-- "lkNew2Old end-sequent"
+      }
+      if ( isFOLPrenexSigma1( pNew.endSequent ) )
+        lkNew.extractRecSchem( pNew ) --? "extractRecSchem" map { recSchem =>
+          new VeriTProver().isValid( recSchem.language.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
+        }
+    }
 
     val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
     val deep = toDeep( E )
