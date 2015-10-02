@@ -1136,6 +1136,26 @@ object ExistsRightRule extends RuleConvenienceObject( "ExistsRightRule" ) {
   }
 }
 
+object WeakQuantifierRule {
+  def unapply( p: LKProof ) = p match {
+    case ForallLeftRule( subProof, aux, f, t, v ) =>
+      Some( ( subProof, aux, f, t, v, false ) )
+    case ExistsRightRule( subProof, aux, f, t, v ) =>
+      Some( ( subProof, aux, f, t, v, true ) )
+    case _ => None
+  }
+}
+
+object StrongQuantifierRule {
+  def unapply( p: LKProof ) = p match {
+    case ExistsLeftRule( subProof, aux, eigen, quant ) =>
+      Some( ( subProof, aux, eigen, quant, false ) )
+    case ForallRightRule( subProof, aux, eigen, quant ) =>
+      Some( ( subProof, aux, eigen, quant, true ) )
+    case _ => None
+  }
+}
+
 /**
  * Abstract class that performs most of the construction of left and right equality rules.
  *
@@ -1442,6 +1462,9 @@ case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, par
    * @return
    */
   def parents( idx: SequentIndex ): Seq[SequentIndex] = parentsSequent( idx )
+
+  def parents[A]( lowerAs: Sequent[A] ): Sequent[Seq[A]] =
+    childrenSequent map { _ map { lowerAs( _ ) } }
 
   /**
    * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
