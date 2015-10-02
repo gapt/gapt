@@ -116,11 +116,14 @@ class ExtractRecSchemTest extends Specification {
     val p = CutRule( p1, p2, cutf )
 
     val recschem = extractRecSchem( p )
-    println( recschem )
-    recschem.language foreach println
+    // println( recschem )
+    // recschem.language foreach println
     recschem.rules map {
       case Rule( HOLAtom( head, _ ), _ ) => head
-    } foreach { case Const( name, ty ) => println( s"$name: $ty" ) }
+    } foreach {
+      case Const( name, ty ) =>
+      // println( s"$name: $ty" )
+    }
 
     new Sat4jProver().isValid(
       recschem.language.map( _.asInstanceOf[FOLFormula] ).toSeq ++: HOLSequent()
@@ -167,10 +170,10 @@ class Pi2FactorialPOC extends Specification {
 
   def lang( i: Int ) = hors.parametricLanguage( Numeral( i ) ).map( _.asInstanceOf[HOLFormula] )
 
-  println( hors )
-  println()
-  lang( 3 ).toSeq.sortBy( _.toString ) foreach println
-  println()
+  // println( hors )
+  // println()
+  // lang( 3 ).toSeq.sortBy( _.toString ) foreach println
+  // println()
 
   "termination" in {
     lang( 10 )
