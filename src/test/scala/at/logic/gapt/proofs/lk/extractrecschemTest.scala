@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.lk
+package at.logic.gapt.proofs.lkNew
 
 import java.util.zip.GZIPInputStream
 
@@ -11,9 +11,8 @@ import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
-import at.logic.gapt.proofs.lkNew.extractRecSchem
+import at.logic.gapt.proofs.lk.{ regularize, solve }
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.sat4j.Sat4jProver
 import at.logic.gapt.provers.veriT.VeriTProver
@@ -38,21 +37,21 @@ class ExtractRecSchemTest extends Specification {
         ( P( f( x ) ) --> P( f( f( x ) ) ) ) +:
         Sequent()
         :+ ( P( x ) --> P( f( f( x ) ) ) )
-    ).get
+    ).map( lkOld2New( _ ) ).get
     val cutf = All( z, P( z ) --> P( f( f( z ) ) ) )
-    val p2 = ForallLeftRule( p1, P( x ) --> P( f( x ) ), g1, x )
-    val p3 = ForallLeftRule( p2, P( f( x ) ) --> P( f( f( x ) ) ), g1, f( x ) )
+    val p2 = ForallLeftRule( p1, g1, x )
+    val p3 = ForallLeftRule( p2, g1, f( x ) )
     val p4 = ContractionMacroRule( p3 )
-    val p5 = ForallRightRule( p4, P( x ) --> P( f( f( x ) ) ), cutf, x )
+    val p5 = ForallRightRule( p4, cutf, x )
 
     val q1 = solve.solvePropositional(
       ( P( c ) --> P( f( f( c ) ) ) ) +:
         ( P( f( f( c ) ) ) --> P( f( f( f( f( c ) ) ) ) ) ) +:
         Sequent()
         :+ ( P( c ) --> P( f( f( f( f( c ) ) ) ) ) )
-    ).get
-    val q2 = ForallLeftRule( q1, P( c ) --> P( f( f( c ) ) ), cutf, c )
-    val q3 = ForallLeftRule( q2, P( f( f( c ) ) ) --> P( f( f( f( f( c ) ) ) ) ), cutf, f( f( c ) ) )
+    ).map( lkOld2New( _ ) ).get
+    val q2 = ForallLeftRule( q1, cutf, c )
+    val q3 = ForallLeftRule( q2, cutf, f( f( c ) ) )
     val q4 = ContractionMacroRule( q3 )
 
     val p = CutRule( p5, q4, cutf )
@@ -99,19 +98,23 @@ class ExtractRecSchemTest extends Specification {
   }
 
   "simple pi3" in {
-    val cutf = parseFormula( "(all x (exists y (all z (P(x,y,z)))))" )
+    val P = FOLAtomHead( "P", 3 )
+    val Seq( c, d ) = Seq( "c", "d" ) map { FOLConst( _ ) }
+    val Seq( x, y, z, w1, w2, w3 ) = Seq( "x", "y", "z", "w1", "w2", "w3" ) map { FOLVar( _ ) }
 
-    var p1: LKProof = Axiom( parseFormula( "P(w1,w1,w2)" ) )
-    p1 = ForallLeftBlock( p1, parseFormula( "(all x (all y (P(x,x,y))))" ), Seq( "w1", "w2" ) map parseTerm )
-    p1 = ForallRightBlock( p1, instantiate( cutf, Seq( "w1", "w1" ) map parseTerm ), Seq( FOLVar( "w2" ) ) )
-    p1 = ExistsRightBlock( p1, instantiate( cutf, Seq( "w1" ) map parseTerm ), Seq( FOLVar( "w1" ) ) )
-    p1 = ForallRightBlock( p1, cutf, Seq( FOLVar( "w1" ) ) )
+    val cutf = All( x, Ex( y, All( z, P( x, y, z ) ) ) )
 
-    var p2: LKProof = Axiom( parseFormula( "P(c,w3,d)" ) )
-    p2 = ExistsRightBlock( p2, parseFormula( "(exists x (P(c,x,d)))" ), Seq( parseTerm( "w3" ) ) )
-    p2 = ForallLeftBlock( p2, instantiate( cutf, Seq( "c", "w3" ) map parseTerm ), Seq( parseTerm( "d" ) ) )
-    p2 = ExistsLeftRule( p2, instantiate( cutf, Seq( "c", "w3" ) map parseTerm ), FOLVar( "y" ), FOLVar( "w3" ) )
-    p2 = ForallLeftBlock( p2, cutf, Seq( parseTerm( "c" ) ) )
+    var p1: LKProof = LogicalAxiom( P( w1, w1, w2 ).asInstanceOf[HOLAtom] )
+    p1 = ForallLeftBlock( p1, All( x, All( y, P( x, x, y ) ) ), Seq( w1, w2 ) )
+    p1 = ForallRightRule( p1, instantiate( cutf, Seq( w1, w1 ) ), w2 )
+    p1 = ExistsRightRule( p1, instantiate( cutf, w1 ), w1 )
+    p1 = ForallRightRule( p1, cutf, w1 )
+
+    var p2: LKProof = LogicalAxiom( P( c, w3, d ).asInstanceOf[HOLAtom] )
+    p2 = ExistsRightRule( p2, Ex( x, P( c, x, d ) ), w3 )
+    p2 = ForallLeftRule( p2, instantiate( cutf, Seq( c, w3 ) ), d )
+    p2 = ExistsLeftRule( p2, instantiate( cutf, c ), w3 )
+    p2 = ForallLeftRule( p2, cutf, c )
 
     val p = CutRule( p1, p2, cutf )
 
