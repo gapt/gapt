@@ -84,7 +84,7 @@ object normalFormsSipGrammar {
 
 object atoms {
   def apply( f: FOLFormula ): Set[FOLFormula] = f match {
-    case FOLAtom( _ )     => Set( f )
+    case FOLAtom( _, _ )  => Set( f )
     case And( x, y )      => apply( x ) union apply( y )
     case Or( x, y )       => apply( x ) union apply( y )
     case Imp( x, y )      => apply( x ) union apply( y )

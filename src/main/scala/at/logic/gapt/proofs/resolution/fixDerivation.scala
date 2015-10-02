@@ -35,7 +35,7 @@ import scala.collection.immutable.HashMap
  */
 
 object fixDerivation extends Logger {
-  private def getSymmetryMap( to: Pair[Seq[FOLFormula], Seq[FOLFormula]], from: Pair[Seq[FOLFormula], Seq[FOLFormula]] ) = {
+  private def getSymmetryMap( to: Tuple2[Seq[FOLFormula], Seq[FOLFormula]], from: Tuple2[Seq[FOLFormula], Seq[FOLFormula]] ) = {
     var err = false
     def createMap( from: Seq[FOLFormula], to: Seq[FOLFormula] ) = {
       ( from zip from.indices ).foldLeft( HashMap[Int, Int]() ) {

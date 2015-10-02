@@ -25,9 +25,9 @@ import scala.collection.immutable.HashSet
 import scala.math.max
 
 trait Struct {
-  def formula_equal( that: Struct ): Boolean;
-  def size(): Int; //total number of nodes
-  def alternations(): Int; //number of alternations (includes duals)
+  def formula_equal( that: Struct ): Boolean
+  def size(): Int //total number of nodes
+  def alternations(): Int //number of alternations (includes duals)
 }
 
 // Times is done as an object instead of a case class since
@@ -209,9 +209,9 @@ object structToExpressionTree {
     def toCode = "EmptyPlusSymbol"
   }
 
-  object TimesC extends MonomorphicLogicalC( TimesSymbol.toString, Type( "( o -> (o -> o) )" ) )
-  object PlusC extends MonomorphicLogicalC( PlusSymbol.toString, Type( "( o -> (o -> o) )" ) )
-  object DualC extends MonomorphicLogicalC( DualSymbol.toString, Type( "(o -> o)" ) )
+  object TimesC extends MonomorphicLogicalC( TimesSymbol.toString, To -> ( To -> To ) )
+  object PlusC extends MonomorphicLogicalC( PlusSymbol.toString, To -> ( To -> To ) )
+  object DualC extends MonomorphicLogicalC( DualSymbol.toString, To -> To )
   object EmptyTimesC extends MonomorphicLogicalC( EmptyTimesSymbol.toString, To )
   object EmptyPlusC extends MonomorphicLogicalC( EmptyPlusSymbol.toString, To )
 }

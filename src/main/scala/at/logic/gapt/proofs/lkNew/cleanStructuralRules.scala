@@ -22,7 +22,7 @@ object cleanStructuralRules {
 
     case ContractionLeftRule( subProof, aux1, aux2 ) =>
       val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
-      val mainFormula = subProof.mainFormulas.head
+      val mainFormula = proof.mainFormulas.head
 
       weakAnt.count( _ == mainFormula ) match {
         case 0 => ( ContractionLeftRule( subProofNew, mainFormula ), weakAnt, weakSuc )
@@ -31,7 +31,7 @@ object cleanStructuralRules {
 
     case ContractionRightRule( subProof, aux1, aux2 ) =>
       val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
-      val mainFormula = subProof.mainFormulas.head
+      val mainFormula = proof.mainFormulas.head
 
       weakSuc.count( _ == mainFormula ) match {
         case 0 => ( ContractionRightRule( subProofNew, mainFormula ), weakAnt, weakSuc )

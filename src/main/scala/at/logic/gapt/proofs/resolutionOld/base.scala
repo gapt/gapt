@@ -30,8 +30,8 @@ trait BinaryResolutionProof[V <: OccSequent] extends BinaryAGraphProof[V] with R
 object OccClause {
   def apply( negative: Seq[FormulaOccurrence], positive: Seq[FormulaOccurrence] ): OccClause = {
     require( ( negative ++ positive ).map( _.formula ) forall {
-      case HOLAtom( _ ) => true
-      case _            => false
+      case HOLAtom( _, _ ) => true
+      case _               => false
     } )
 
     Clause( negative, positive )
@@ -39,8 +39,8 @@ object OccClause {
 
   def apply( elements: Seq[( FormulaOccurrence, Boolean )] ): OccClause = {
     require( ( elements map { p => p._1.formula } ) forall {
-      case HOLAtom( _ ) => true
-      case _            => false
+      case HOLAtom( _, _ ) => true
+      case _               => false
     } )
 
     Clause( elements )

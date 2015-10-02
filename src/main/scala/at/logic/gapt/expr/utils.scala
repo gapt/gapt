@@ -61,9 +61,9 @@ object toVNF {
     val seen = mutable.Set[Var]()
 
     def makeDistinct( e: LambdaExpression ): LambdaExpression = e match {
-      case Var( _ )    => e
-      case Const( _ )  => e
-      case App( a, b ) => App( makeDistinct( a ), makeDistinct( b ) )
+      case Var( _, _ )   => e
+      case Const( _, _ ) => e
+      case App( a, b )   => App( makeDistinct( a ), makeDistinct( b ) )
       case Abs( v, a ) if seen contains v =>
         val newVar = rename( v, seen toList )
         makeDistinct( Abs( newVar, Substitution( v -> newVar )( a ) ) )
@@ -150,9 +150,9 @@ object subTerms {
 
 object expressionSize {
   def apply( e: LambdaExpression ): Int = e match {
-    case Var( _ ) | Const( _ ) => 1
-    case Abs( _, f )           => 1 + expressionSize( f )
-    case App( a, b )           => 1 + expressionSize( a ) + expressionSize( b )
+    case Var( _, _ ) | Const( _, _ ) => 1
+    case Abs( _, f )                 => 1 + expressionSize( f )
+    case App( a, b )                 => 1 + expressionSize( a ) + expressionSize( b )
   }
 }
 

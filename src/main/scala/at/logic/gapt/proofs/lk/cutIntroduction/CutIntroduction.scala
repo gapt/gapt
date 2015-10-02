@@ -310,8 +310,8 @@ object CutIntroduction extends Logger {
             if ( freeVars.intersect( variables ).nonEmpty ) {
               val i_f = instantiate( formula, termlist )
               val f = formula match {
-                case Ex( _ )  => Neg( i_f )
-                case All( _ ) => i_f
+                case Ex( _, _ )  => Neg( i_f )
+                case All( _, _ ) => i_f
               }
               f :: acc
             } else acc
@@ -362,12 +362,12 @@ object CutIntroduction extends Logger {
     // separately (since it never needs to be instantiated).
     val quantPart = HOLSequent(
       endSequent.antecedent.filter {
-        case All( _ ) => true
-        case _        => false
+        case All( _, _ ) => true
+        case _           => false
       },
       endSequent.succedent.filter {
-        case Ex( _ ) => true
-        case _       => false
+        case Ex( _, _ ) => true
+        case _          => false
       }
     )
 
