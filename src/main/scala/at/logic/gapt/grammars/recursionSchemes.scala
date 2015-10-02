@@ -31,6 +31,9 @@ case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[R
 
   def language: Set[LambdaExpression] = parametricLanguage()
 
+  def rulesFrom( nonTerminal: Const ) =
+    rules filter { _.lhs == nonTerminal }
+
   def parametricLanguage( params: LambdaExpression* ): Set[LambdaExpression] = {
     require( params.size == Arity( axiom.exptype ) )
     generatedTerms( axiom( params: _* ) )
@@ -224,7 +227,7 @@ object SipRecSchem extends RecSchemTemplate(
     normalFormRecSchem( toTargets( instanceLanguages ) toSet )
 }
 
-case class RecSchemTemplate( axiom: Const, template: Set[( FOLTerm, FOLTerm )] ) {
+case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, LambdaExpression )] ) {
   val nonTerminalsWithArities: Set[( String, Int )] = template map { case ( FOLFunction( nt, args ), _ ) => nt -> args.size }
   val nonTerminals: Set[String] = nonTerminalsWithArities.map( _._1 )
 
@@ -352,18 +355,18 @@ case class RecSchemTemplate( axiom: Const, template: Set[( FOLTerm, FOLTerm )] )
     }
 
   def normalFormRecSchem( targets: Set[( FOLTerm, FOLTerm )] ) = {
-    val neededVars = template flatMap { case ( from, to ) => freeVariables( from ) }
+    val neededVars = template flatMap { case ( from: FOLTerm, to ) => freeVariables( from ) }
 
     val allTerms = targets map { _._2 }
     val topLevelNFs = normalForms( allTerms, neededVars.toSeq ).filter( !_.isInstanceOf[FOLVar] )
     val argumentNFs = normalForms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ), neededVars.toSeq )
 
     var rules = template.flatMap {
-      case ( from, to: FOLVar ) =>
+      case ( from: FOLTerm, to: FOLVar ) =>
         val allowedVars = freeVariables( from )
         topLevelNFs.filter { nf => freeVariables( nf ) subsetOf allowedVars }.
           map { Rule( from, _ ) }
-      case ( from, to ) =>
+      case ( from: FOLTerm, to: FOLTerm ) =>
         val allowedVars = freeVariables( from )
         val templateVars = freeVariables( to ).diff( freeVariables( from ) )
         templateVars.
@@ -399,5 +402,40 @@ case class RecSchemTemplate( axiom: Const, template: Set[( FOLTerm, FOLTerm )] )
   def findMinimalCover( targets: Set[( FOLTerm, FOLTerm )], solver: MaxSATSolver ): RecursionScheme = {
     val nfRecSchem = normalFormRecSchem( targets )
     minimizeRecursionScheme( nfRecSchem, targets toSeq, targetFilter, solver )
+  }
+}
+
+object recSchemToVTRATG {
+  def orderedNonTerminals( rs: RecursionScheme ): Seq[Const] = {
+    val ntDeps = rs.nonTerminals map { nt =>
+      nt -> ( rs rulesFrom nt map { _.rhs } flatMap { constants( _ ) } intersect rs.nonTerminals )
+    } toMap
+
+    var nts = Seq[Const]()
+    while ( rs.nonTerminals -- nts nonEmpty ) {
+      val Some( next ) = rs.nonTerminals -- nts find { nt => ntDeps( nt ) subsetOf nts.toSet }
+      nts = next +: nts
+    }
+    nts
+  }
+
+  def apply( recSchem: RecursionScheme ): VectTratGrammar = {
+    val ntCorrespondence = orderedNonTerminals( recSchem ).reverse map {
+      case nt @ Const( name, FOLHeadType( Ti, n ) ) =>
+        nt -> ( 0 until n ).map { i => FOLVar( s"${name}_$i" ) }.toList
+    }
+    val ntMap = ntCorrespondence.toMap
+
+    val axiom = FOLVar( "τ" )
+    val nonTerminals = List( axiom ) +: ( ntCorrespondence map { _._2 } filter { _.nonEmpty } )
+    val productions = recSchem.rules map {
+      case Rule( Apps( nt1: Const, vars1 ), Apps( nt2: Const, args2 ) ) if recSchem.nonTerminals.contains( nt1 ) && recSchem.nonTerminals.contains( nt2 ) =>
+        val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
+        ntMap( nt2 ) -> args2.map( subst( _ ) ).map( _.asInstanceOf[FOLTerm] )
+      case Rule( Apps( nt1: Const, vars1 ), rhs ) if recSchem.nonTerminals.contains( nt1 ) =>
+        val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
+        List( axiom ) -> List( subst( rhs ).asInstanceOf[FOLTerm] )
+    }
+    VectTratGrammar( axiom, nonTerminals, productions )
   }
 }

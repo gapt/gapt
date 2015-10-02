@@ -5,17 +5,19 @@ import at.logic.gapt.grammars._
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
 import at.logic.gapt.utils.time
 
-val N = 8
+val N = 13
 val terms = (0 until N).map { i =>
   FOLFunction("r", Numeral(i), Numeral(N - i))
 }.toSet
 
 val A = FOLConst("A")
 val B = FOLFunctionHead("B", 2)
-val Seq(x, y, z) = Seq("x", "y", "z") map {
-  FOLVar(_)
-}
-val rst = RecSchemTemplate(A, Set(A -> B(x, y).asInstanceOf[FOLTerm], B(x, y).asInstanceOf[FOLTerm] -> z))
+val Seq(x, y, z) = Seq("x", "y", "z") map { FOLVar(_) }
+val rst = RecSchemTemplate(A, Set(
+  A -> B(x, y),
+  A -> z,
+  B(x, y) -> z
+))
 val targets = terms.map(A.asInstanceOf[FOLTerm] -> _)
 val nfRecSchem = rst.normalFormRecSchem(targets)
 
@@ -29,6 +31,7 @@ val minimized = time {
 }
 println(minimized)
 println(terms.toSet diff minimized.language)
+println(recSchemToVTRATG(minimized))
 
 val minG = time {
   minimizeVectGrammar(nfG, terms, bestAvailableMaxSatSolver)
