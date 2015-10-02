@@ -1,51 +1,51 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.provers.prover9.Prover9Prover
 
 object Pi2Pigeonhole {
-  def zero = FOLConst( "0" )
-  def one = FOLFunction( "s", zero )
+  val zero = FOLConst( "0" )
+  val s = FOLFunctionHead( "s", 1 )
+  val one = s( zero )
 
-  def T: FOLFormula = parseFormula( "(exists x (exists y (s(x) <= y & f(x) = f(y))))" )
-  def I( i: FOLTerm ): FOLFormula = FOLSubstitution( FOLVar( "z" ) -> i )( parseFormula(
-    "(all x (exists y (x <= y & f(y) = z)))"
-  ) )
-  def Gamma = HOLSequent( Seq(
-    "(all x (all y (x <= M(x,y) & y <= M(x,y))))",
-    "(all x (f(x) = 0 | f(x) = s(0)))"
-  ) map parseFormula, Seq() )
-  def Delta = HOLSequent( Seq(
-    "(all x (all y (s(x) <= y -> x <= y)))"
-  ) map parseFormula, Seq() )
+  val M = FOLFunctionHead( "M", 2 )
 
-  def I( i: FOLTerm, s: FOLTerm ): FOLFormula = instantiate( I( i ), s )
-  def I( i: FOLTerm, s: FOLTerm, t: FOLTerm ): FOLFormula = instantiate( I( i ), Seq( s, t ) )
-  def T( s: FOLTerm, t: FOLTerm ): FOLFormula = instantiate( T, Seq( s, t ) )
+  val f = FOLFunctionHead( "f", 1 )
+  val lteq = FOLAtomHead( "<=", 2 )
 
-  def alpha = FOLVar( "α" )
-  def alphahat = FOLVar( "α^" )
-  def beta = FOLVar( "β" )
-  def betaprime = FOLVar( "β'" )
-  def betahat = FOLVar( "β^" )
-  def betahatprime = FOLVar( "β^'" )
+  val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
 
-  def Delta_T_I_i( i: FOLTerm, beta: FOLVar, betaprime: FOLVar, prover: Prover9Prover ): LKProof = {
+  val T = Ex( x, Ex( y, lteq( s( x ), y ) & Eq( f( x ), f( y ) ) ) )
+  def I( i: LambdaExpression ): HOLFormula = All( x, Ex( y, lteq( x, y ) & Eq( f( y ), i ) ) )
+  val Gamma =
+    All( x, All( y, lteq( x, M( x, y ) ) & lteq( y, M( x, y ) ) ) ) +:
+      All( x, Eq( f( x ), zero ) | Eq( f( x ), s( zero ) ) ) +: Sequent()
+  val Delta = All( x, All( y, lteq( s( x ), y ) --> lteq( x, y ) ) ) +: Sequent()
+
+  def I( i: LambdaExpression, s: LambdaExpression ): HOLFormula = instantiate( I( i ), s )
+  def I( i: LambdaExpression, s: LambdaExpression, t: LambdaExpression ): HOLFormula = instantiate( I( i ), Seq( s, t ) )
+  def T( s: LambdaExpression, t: LambdaExpression ): HOLFormula = instantiate( T, Seq( s, t ) )
+
+  val alpha = FOLVar( "α" )
+  val alphahat = FOLVar( "α^" )
+  val beta = FOLVar( "β" )
+  val betaprime = FOLVar( "β'" )
+  val betahat = FOLVar( "β^" )
+  val betahatprime = FOLVar( "β^'" )
+
+  def Delta_T_I_i( i: LambdaExpression, beta: Var, betaprime: Var, prover: Prover9Prover ): LKProof = {
     var Some( p ) = prover.getLKProof( I( i, zero, beta ) +:
-      I( i, FOLFunction( "s", beta ), betaprime ) +:
+      I( i, s( beta ), betaprime ) +:
       Delta :+
-      T( beta, betaprime ) )
+      T( beta, betaprime ) ) map { lkOld2New( _ ) }
     p = ExistsRightBlock( p, T, Seq( beta, betaprime ) )
-    p = ExistsLeftRule( p, I( i, FOLFunction( "s", beta ), betaprime ), I( i, FOLFunction( "s", beta ) ), betaprime )
-    p = ForallLeftRule( p, I( i, FOLFunction( "s", beta ) ), I( i ), FOLFunction( "s", beta ) )
-    p = ExistsLeftRule( p, I( i, zero, beta ), I( i, zero ), beta )
-    p = ForallLeftRule( p, I( i, zero ), I( i ), zero )
+    p = ExistsLeftRule( p, I( i, s( beta ) ), betaprime )
+    p = ForallLeftRule( p, I( i ), s( beta ) )
+    p = ExistsLeftRule( p, I( i, zero ), beta )
+    p = ForallLeftRule( p, I( i ), zero )
     p = ContractionMacroRule( p )
     p
   }
@@ -54,22 +54,20 @@ object Pi2Pigeonhole {
     val prover = new Prover9Prover
 
     var Some( p1 ) = prover.getLKProof( Gamma :+
-      I( zero, alpha, FOLFunction( "M", alpha, alphahat ) ) :+
-      I( one, alphahat, FOLFunction( "M", alpha, alphahat ) ) )
-    p1 = ExistsRightRule( p1, I( zero, alpha, FOLFunction( "M", alpha, alphahat ) ), I( zero, alpha ),
-      FOLFunction( "M", alpha, alphahat ) )
-    p1 = ExistsRightRule( p1, I( one, alphahat, FOLFunction( "M", alpha, alphahat ) ), I( one, alphahat ),
-      FOLFunction( "M", alpha, alphahat ) )
-    p1 = ForallRightRule( p1, I( one, alphahat ), I( one ), alphahat )
+      I( zero, alpha, M( alpha, alphahat ) ) :+
+      I( one, alphahat, M( alpha, alphahat ) ) ) map { lkOld2New( _ ) }
+    p1 = ExistsRightRule( p1, I( zero, alpha ), M( alpha, alphahat ) )
+    p1 = ExistsRightRule( p1, I( one, alphahat ), M( alpha, alphahat ) )
+    p1 = ForallRightRule( p1, I( one ), alphahat )
 
     val p2 = Delta_T_I_i( one, betahat, betahatprime, prover )
 
-    var p3 = CutRule( p1, p2, I( one ) ).asInstanceOf[LKProof]
-    p3 = ForallRightRule( p3, I( zero, alpha ), I( zero ), alpha )
+    var p3: LKProof = CutRule( p1, p2, I( one ) )
+    p3 = ForallRightRule( p3, I( zero ), alpha )
 
     val p4 = Delta_T_I_i( zero, beta, betaprime, prover )
 
-    val p5 = CutRule( p3, p4, I( zero ) ).asInstanceOf[LKProof]
+    val p5 = CutRule( p3, p4, I( zero ) )
 
     ContractionMacroRule( p5 )
   }

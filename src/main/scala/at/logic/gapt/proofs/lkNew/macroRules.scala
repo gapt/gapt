@@ -254,7 +254,7 @@ object ContractionLeftMacroRule {
     case Seq() | _ +: Seq() => p
     case occ1 +: occ2 +: rest =>
       val subProof = ContractionLeftRule( p, occ1, occ2 )
-      ContractionLeftMacroRule( subProof, p.mainIndices.head +: rest )
+      ContractionLeftMacroRule( subProof, subProof.mainIndices.head +: rest )
   }
 
   /**
@@ -267,7 +267,7 @@ object ContractionLeftMacroRule {
    */
   def apply( p: LKProof, form: HOLFormula, n: Int = 1 ): LKProof = {
     if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
-    val list = p.endSequent.indicesWhere( _ == form ).collect { case i: Ant => i }.drop( n - 1 )
+    val list = p.endSequent.indicesWhere( _ == form ).collect { case i: Ant => i }.drop( n - 1 ).reverse
 
     apply( p, list )
   }
@@ -289,7 +289,7 @@ object ContractionRightMacroRule {
     case Seq() | _ +: Seq() => p
     case occ1 +: occ2 +: rest =>
       val subProof = ContractionRightRule( p, occ1, occ2 )
-      ContractionRightMacroRule( subProof, p.mainIndices.head +: rest )
+      ContractionRightMacroRule( subProof, subProof.mainIndices.head +: rest )
   }
 
   /**
@@ -302,7 +302,7 @@ object ContractionRightMacroRule {
    */
   def apply( p: LKProof, form: HOLFormula, n: Int = 1 ): LKProof = {
     if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
-    val list = p.endSequent.indicesWhere( _ == form ).collect { case i: Suc => i }.drop( n - 1 )
+    val list = p.endSequent.indicesWhere( _ == form ).collect { case i: Suc => i }.drop( n - 1 ).reverse
 
     apply( p, list )
   }
