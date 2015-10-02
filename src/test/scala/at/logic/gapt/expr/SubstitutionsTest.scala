@@ -161,22 +161,12 @@ class SubstitutionsTest extends Specification {
       val f = Var( "f", Ti -> Ti )
       val e = App( f, x )
       val g = Var( "g", Ti )
-      val result = try { Substitution( f, g ); false } catch {
-        case ex: IllegalArgumentException => true
-        case _: Throwable                 => false
-      }
-
-      result must beTrue
+      Substitution( f -> g ) must throwAn[IllegalArgumentException]
     }
     "not substitute variables with different types" in {
       val x = Var( "x", Ti -> Ti )
       val c = Var( "c", Ti )
-      val result = try { Substitution( x, c ); false } catch {
-        case ex: IllegalArgumentException => true
-        case _: Throwable                 => false
-      }
-
-      result must beTrue
+      Substitution( x -> c ) must throwAn[IllegalArgumentException]
     }
 
     "issue 383" in {
