@@ -5,7 +5,7 @@ import java.util.zip.GZIPInputStream
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.Utils
+import at.logic.gapt.expr.fol.{ Numeral, Utils }
 import at.logic.gapt.expr.hol.{ existsclosure, instantiate }
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
@@ -57,7 +57,7 @@ class ExtractRecSchemTest extends Specification {
     val p = CutRule( p5, q4, cutf )
 
     val recSchem = extractRecSchem( p )
-    val lang = recSchem.language( FOLAtom( "A" ) ).map( _.asInstanceOf[HOLFormula] )
+    val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
 
     new Sat4jProver().isValid( lang ++: Sequent() ) must beTrue
   }
@@ -69,7 +69,7 @@ class ExtractRecSchemTest extends Specification {
     val p = Pi2Pigeonhole()
     val recSchem = extractRecSchem( p )
 
-    val lang = recSchem.language( FOLAtom( "A" ) ).map( _.asInstanceOf[HOLFormula] )
+    val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
 
     p9.isValid( lang ++: Sequent() ) must beTrue
   }
@@ -83,7 +83,7 @@ class ExtractRecSchemTest extends Specification {
     val p9 = new Prover9Prover
     if ( !p9.isInstalled ) skipped
 
-    val lang = recSchem.language( FOLAtom( "A", FOLConst( "n_0" ) ) ).map( _.asInstanceOf[HOLFormula] )
+    val lang = recSchem.parametricLanguage( FOLConst( "n_0" ) ).map( _.asInstanceOf[HOLFormula] )
     // the following formulas are not present in the end-sequent...
     val additionalAxioms = existsclosure(
       "x+(y+z) = (x+y)+z" +:
@@ -116,13 +116,13 @@ class ExtractRecSchemTest extends Specification {
 
     val recschem = extractRecSchem( p )
     println( recschem )
-    recschem.language( FOLAtom( "A" ) ) foreach println
+    recschem.language foreach println
     recschem.rules map {
       case Rule( HOLAtom( head, _ ), _ ) => head
     } foreach { case Const( name, ty ) => println( s"$name: $ty" ) }
 
     new Sat4jProver().isValid(
-      recschem.language( FOLAtom( "A" ) ).map( _.asInstanceOf[FOLFormula] ).toSeq ++: HOLSequent()
+      recschem.language.map( _.asInstanceOf[FOLFormula] ).toSeq ++: HOLSequent()
     ) must_== true
   }
 }
@@ -146,23 +146,25 @@ class Pi2FactorialPOC extends Specification {
   val z = Var( "z", Ti )
   val w = Var( "w", Ti )
 
-  val hors = RecursionScheme( Set(
-    Rule( A( z ), B( z, s( O ), C ) ),
-    Rule( A( z ), Eq( times( s( O ), z ), z ) ),
-    Rule( A( z ), Neg( Eq( f( z ), g( s( O ), z ) ) ) ),
-    Rule( C( w ), Top() ), // FIXME: NF != generated word
-    Rule( B( s( x ), y, X ), B( x, times( y, s( x ) ), D( X, x, y ) ) ),
-    Rule( D( X, x, y, w ), Eq( times( times( y, s( x ) ), w ), times( y, times( s( x ), w ) ) ) ),
-    Rule( D( X, x, y, w ), Eq( g( y, s( x ) ), g( times( y, s( x ) ), x ) ) ),
-    Rule( D( X, x, y, w ), Eq( f( s( x ) ), times( s( x ), f( x ) ) ) ),
-    Rule( D( X, x, y, w ), X( times( s( x ), w ) ) ),
-    Rule( B( O, y, X ), Eq( g( y, O ), y ) ),
-    Rule( B( O, y, X ), Eq( f( O ), s( O ) ) ),
-    Rule( B( O, y, X ), Eq( times( s( O ), s( O ) ), s( O ) ) ),
-    Rule( B( O, y, X ), X( s( O ) ) )
-  ) )
+  val hors = RecursionScheme(
+    A,
+    Set( A, B, C, D ),
 
-  def lang( i: Int ) = hors.language( A( Utils.numeral( i ) ) ).map( _.asInstanceOf[HOLFormula] )
+    A( z ) -> B( z, s( O ), C ),
+    A( z ) -> Eq( times( s( O ), z ), z ),
+    A( z ) -> Neg( Eq( f( z ), g( s( O ), z ) ) ),
+    B( s( x ), y, X ) -> B( x, times( y, s( x ) ), D( X, x, y ) ),
+    D( X, x, y, w ) -> Eq( times( times( y, s( x ) ), w ), times( y, times( s( x ), w ) ) ),
+    D( X, x, y, w ) -> Eq( g( y, s( x ) ), g( times( y, s( x ) ), x ) ),
+    D( X, x, y, w ) -> Eq( f( s( x ) ), times( s( x ), f( x ) ) ),
+    D( X, x, y, w ) -> X( times( s( x ), w ) ),
+    B( O, y, X ) -> Eq( g( y, O ), y ),
+    B( O, y, X ) -> Eq( f( O ), s( O ) ),
+    B( O, y, X ) -> Eq( times( s( O ), s( O ) ), s( O ) ),
+    B( O, y, X ) -> X( s( O ) )
+  )
+
+  def lang( i: Int ) = hors.parametricLanguage( Numeral( i ) ).map( _.asInstanceOf[HOLFormula] )
 
   println( hors )
   println()
@@ -176,7 +178,7 @@ class Pi2FactorialPOC extends Specification {
 
   "languages should be tautologies" in {
     val verit = new VeriTProver
-    Fragment.foreach( 0 to 5 ) { i =>
+    Fragment.foreach( 0 to 7 ) { i =>
       s"n = $i" in {
         if ( !verit.isInstalled ) skipped
         verit.isValid( lang( i ) ++: Sequent() ) must beTrue

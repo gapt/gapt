@@ -17,8 +17,8 @@ object extractRecSchem {
         }
     }
     val context = freeVarsInProof( p ).toList.sortBy( _.toString )
-    val axiom = Apps( Const( "A", FunctionType( To, context.map( _.exptype ) ) ), context )
-    RecursionScheme( getRules( p, axiom, symbols.toMap, context ) map {
+    val axiom = Const( "A", FunctionType( To, context.map( _.exptype ) ) )
+    RecursionScheme( axiom, getRules( p, axiom( context: _* ), symbols.toMap, context ) map {
       case Rule( lhs, rhs ) => Rule( lhs, BetaReduction.betaNormalize( rhs ) )
     } )
   }

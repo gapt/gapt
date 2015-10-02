@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.expansionTrees.{toShallow, removeFromExpansionSequen
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.provers.inductionProver.{SipProver, SimpleInductionProof}
-import at.logic.gapt.provers.maxsat.QMaxSAT
+import at.logic.gapt.provers.maxsat.{bestAvailableMaxSatSolver, QMaxSAT}
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.utils.time
@@ -22,31 +22,30 @@ if (true) {
 
   //val terms = TermsExtraction(SumExampleProof(7)).set
   val N = 8
-  val terms = (0 until N) map { i =>
+  val terms = (0 until N).map { i =>
     FOLFunction("r", Utils.numeral(i), Utils.numeral(N - i))
-  }
+  }.toSet
 
-  val nfs = normalForms(FOLSubTerms(terms), Seq(FOLVar("x"), FOLVar("y")))
+  val A = FOLConst("A")
+  val B = FOLFunctionHead("B", 2)
+  val Seq(x,y,z) = Seq("x","y","z") map {FOLVar(_)}
+  val rst = RecSchemTemplate(A, Set(A -> B(x,y).asInstanceOf[FOLTerm], B(x,y).asInstanceOf[FOLTerm] -> z))
+  val targets = terms.map(A.asInstanceOf[FOLTerm] -> _)
+  val nfRecSchem = rst.normalFormRecSchem(targets)
 
-  val nfRecSchem = RecursionScheme(
-    (for (arg1 <- nfs; arg2 <- nfs; if freeVariables(Seq(arg1, arg2)).isEmpty)
-      yield Rule(FOLFunction("A"), FOLFunction("B", arg1, arg2))).toSet ++
-      (for (nf <- nfs; if !nf.isInstanceOf[FOLVar]) yield Rule(FOLFunction("B", FOLVar("x"), FOLVar("y")), nf))
-  )
-
-  val targets = terms.map(FOLFunction("A") -> _)
   println(lcomp(simplify(toNNF((new RecSchemGenLangFormula(nfRecSchem))(targets)))))
 
-  val nfG = normalFormsProofVectGrammar(terms.toSet, Seq(2))
+  val nfG = normalFormsProofVectGrammar(terms, Seq(2))
   println(lcomp(simplify(toNNF(new VectGrammarMinimizationFormula(nfG).coversLanguage(terms)))))
 
   val minimized = time {
     minimizeRecursionScheme(nfRecSchem, targets)
   }
   println(minimized)
+  println(terms.toSet diff minimized.language)
 
   val minG = time {
-    minimizeVectGrammar(nfG, terms.toSet, new QMaxSAT)
+    minimizeVectGrammar(nfG, terms, bestAvailableMaxSatSolver)
   }
   println(minG)
 
@@ -111,14 +110,11 @@ if (true) {
 
   val nfRecSchem = SipRecSchem.normalForms(instanceLanguages)
   println(nfRecSchem.rules.size)
-  val minimized = time{minimizeRecursionScheme(nfRecSchem, SipRecSchem.toTargets(instanceLanguages), SipRecSchem.targetFilter, new QMaxSAT)}
+  val minimized = time{minimizeRecursionScheme(nfRecSchem, SipRecSchem.toTargets(instanceLanguages), SipRecSchem.targetFilter, bestAvailableMaxSatSolver)}
   println(minimized);println
 
   (0 until 10) foreach { i =>
-    val instanceLang = minimized.language(FOLFunction(SipRecSchem.A, Numeral(i))) filter {
-      case FOLFunction("A" | "G", _) => false
-      case _ => true
-    }
+    val instanceLang = minimized.parametricLanguage(Numeral(i))
     val instanceSeq = FOLSubstitution(FOLVar("x") -> Numeral(i))(termEncoding.decodeToFSequent(instanceLang map {_.asInstanceOf[FOLTerm]}))
     val isCovered = instanceLanguages.find(_._1 == i).map(_._2.toSet subsetOf instanceLang)
     val isTaut = new VeriTProver().isValid(instanceSeq)
@@ -130,5 +126,5 @@ if (true) {
 
   val nfSipG = normalFormsSipGrammar(instanceLanguages)
   println(nfSipG.productions.size)
-  println(time{minimizeSipGrammar(nfSipG, instanceLanguages, new QMaxSAT)})
+  println(time{minimizeSipGrammar(nfSipG, instanceLanguages, bestAvailableMaxSatSolver)})
 }

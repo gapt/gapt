@@ -8,13 +8,15 @@ import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
 
 object extractRecSchemFromResProof {
   def apply( p: ResolutionProof ): ( RecursionScheme, InstanceTermEncoding ) = {
-    val endSequent = existsclosure( Top() +: inputClauses( p ).map( _.toFormula ) ++: Sequent() )
+    val endSequent = existsclosure( inputClauses( p ).map( _.toFormula ) ++: Sequent() )
     val encoding = new InstanceTermEncoding( endSequent )
-    apply( p, encoding.encode( Top() -> true ),
-      clause => encoding.encodeOption( clause.toFormula.asInstanceOf[FOLFormula] -> true ) ) -> encoding
+    apply(
+      p,
+      clause => encoding.encodeOption( clause.toFormula.asInstanceOf[FOLFormula] -> true )
+    ) -> encoding
   }
 
-  def apply( root: ResolutionProof, emptyTerm: FOLTerm, clauseTerm: FOLClause => Option[FOLTerm] ): RecursionScheme = {
+  def apply( root: ResolutionProof, clauseTerm: FOLClause => Option[FOLTerm] ): RecursionScheme = {
     val nodeMap = root.dagLikePostOrder.reverse.zipWithIndex.map {
       case ( p, i ) =>
         val fvs = freeVariables( p.conclusion )
@@ -25,11 +27,14 @@ object extractRecSchemFromResProof {
         clauseTerm( clause ).map { term => Rule( nt, term ) }.toSeq
       case ( Instance( p1, subst ), nt ) =>
         Seq( Rule( nt, subst( nodeMap( p1 ) ) ) )
-      case ( p, nt ) if p.immediateSubProofs.isEmpty =>
-        Seq( Rule( nt, emptyTerm ) )
-      case ( p, nt ) if p.immediateSubProofs.nonEmpty =>
+      case ( p, nt ) =>
         p.immediateSubProofs map { sp => Rule( nt, nodeMap( sp ) ) }
     }
-    RecursionScheme( rules.toSet + Rule( FOLFunction( "A" ), nodeMap( root ) ) )
+    val axiom = FOLConst( "A" )
+    RecursionScheme(
+      axiom,
+      nodeMap map { case ( _, Apps( nonTerminal: Const, _ ) ) => nonTerminal } toSet,
+      rules.toSet + Rule( axiom, nodeMap( root ) )
+    )
   }
 }

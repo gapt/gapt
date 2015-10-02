@@ -22,19 +22,51 @@ case class Rule( lhs: LambdaExpression, rhs: LambdaExpression ) {
     s"$lhs -> $rhs"
 }
 
-case class RecursionScheme( rules: Set[Rule] ) {
-  def language( from: LambdaExpression ): Set[LambdaExpression] =
-    rules flatMap ( _( from ) ) match {
-      case irreducible if irreducible.isEmpty => Set( from )
-      case oneStepReductions                  => oneStepReductions flatMap language
+case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[Rule] ) {
+  require( nonTerminals contains axiom )
+  rules foreach {
+    case Rule( Apps( leftHead: Const, _ ), _ ) =>
+      require( nonTerminals contains leftHead )
+  }
+
+  def language: Set[LambdaExpression] = parametricLanguage()
+
+  def parametricLanguage( params: LambdaExpression* ): Set[LambdaExpression] = {
+    require( params.size == Arity( axiom.exptype ) )
+    generatedTerms( axiom( params: _* ) )
+  }
+
+  def generatedTerms( from: LambdaExpression ): Set[LambdaExpression] = {
+    val seen = mutable.Set[LambdaExpression]()
+    val gen = mutable.Set[LambdaExpression]()
+
+    def rewrite( t: LambdaExpression ): Unit = t match {
+      case _ if seen contains t => ()
+      case Apps( head: Const, args ) if nonTerminals contains head =>
+        rules foreach { _( t ) foreach rewrite }
+        seen += t
+      case _ =>
+        gen += t
     }
+
+    rewrite( from )
+    gen.toSet
+  }
 
   override def toString: String = rules.toSeq.sortBy( _.toString ) mkString "\n"
 }
 
 object RecursionScheme {
-  def apply( rules: ( FOLTerm, FOLTerm )* ): RecursionScheme =
-    RecursionScheme( rules map { case ( f, t ) => Rule( f, t ) } toSet )
+  def apply( axiom: Const, rules: ( LambdaExpression, LambdaExpression )* ): RecursionScheme =
+    apply( axiom, rules map { case ( from, to ) => Rule( from, to ) } toSet )
+
+  def apply( axiom: Const, nonTerminals: Set[Const], rules: ( LambdaExpression, LambdaExpression )* ): RecursionScheme =
+    RecursionScheme( axiom, nonTerminals, rules map { case ( from, to ) => Rule( from, to ) } toSet )
+
+  def apply( axiom: Const, rules: Set[Rule] ): RecursionScheme = {
+    val nonTerminals = rules.map { case Rule( Apps( head: Const, _ ), _ ) => head } + axiom
+    RecursionScheme( axiom, nonTerminals, rules )
+  }
 }
 
 object preOrderTraversal {
@@ -82,11 +114,11 @@ class RecSchemGenLangFormula(
     }
 
   type Target = ( LambdaExpression, LambdaExpression )
-  def apply( targets: Seq[Target] ): FOLFormula = {
+  def apply( targets: Traversable[Target] ): FOLFormula = {
     val edges = mutable.ArrayBuffer[( Target, Rule, Target )]()
     val goals = mutable.Set[Target]()
 
-    val queue = mutable.Queue( targets: _* )
+    val queue = mutable.Queue( targets.toSeq: _* )
     val alreadyDone = mutable.Set[Target]()
     while ( queue nonEmpty ) {
       val target @ ( from, to ) = queue.dequeue()
@@ -124,7 +156,7 @@ class RecSchemGenLangFormula(
     require( targets.toSet subsetOf reachable )
 
     val edgesPerFrom = edges.groupBy( _._1 )
-    And( targets.map { case ( from, to ) => derivable( from, to ) } ++ ( reachable collect {
+    And( targets.toSeq.map { case ( from, to ) => derivable( from, to ) } ++ ( reachable collect {
       case t @ ( from, to ) if !( goals contains t ) =>
         Imp( derivable( from, to ), Or(
           edgesPerFrom( t ) collect {
@@ -140,7 +172,7 @@ class RecSchemGenLangFormula(
 }
 
 object minimizeRecursionScheme extends Logger {
-  def apply( recSchem: RecursionScheme, targets: Seq[( FOLTerm, FOLTerm )],
+  def apply( recSchem: RecursionScheme, targets: Traversable[( FOLTerm, FOLTerm )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
              solver:       MaxSATSolver      = new QMaxSAT ) = {
     val formula = new RecSchemGenLangFormula( recSchem, targetFilter )
@@ -148,11 +180,12 @@ object minimizeRecursionScheme extends Logger {
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> 1 }
     val interp = solver.solveWPM( List( hard ), soft toList ).get
-    RecursionScheme( recSchem.rules.filter { rule => interp.interpret( formula.ruleIncluded( rule ) ) } )
+    RecursionScheme( recSchem.axiom, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
   }
 }
 
 object SipRecSchem extends RecSchemTemplate(
+  FOLFunctionHead( "A", 1 ),
   Set(
     FOLFunction( "A", FOLVar( "x" ) ) -> FOLVar( "t1" ),
     FOLFunction( "A", FOLVar( "x" ) ) ->
@@ -191,7 +224,7 @@ object SipRecSchem extends RecSchemTemplate(
     normalFormRecSchem( toTargets( instanceLanguages ) toSet )
 }
 
-case class RecSchemTemplate( template: Set[( FOLTerm, FOLTerm )] ) {
+case class RecSchemTemplate( axiom: Const, template: Set[( FOLTerm, FOLTerm )] ) {
   val nonTerminalsWithArities: Set[( String, Int )] = template map { case ( FOLFunction( nt, args ), _ ) => nt -> args.size }
   val nonTerminals: Set[String] = nonTerminalsWithArities.map( _._1 )
 
@@ -360,7 +393,7 @@ case class RecSchemTemplate( template: Set[( FOLTerm, FOLTerm )] ) {
         }
     }
 
-    RecursionScheme( rules )
+    RecursionScheme( axiom, nonTerminalsWithArities map { case ( n, i ) => FOLFunctionHead( n, i ) }, rules )
   }
 
   def findMinimalCover( targets: Set[( FOLTerm, FOLTerm )], solver: MaxSATSolver ): RecursionScheme = {
