@@ -24,6 +24,8 @@ import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.utils.logging.{ metrics, Logger }
 
 class CutIntroException( msg: String ) extends Exception( msg )
+class CutIntroNonCoveringGrammarException( grammar: VectTratGrammar, term: FOLTerm )
+  extends CutIntroException( s"Grammar does not cover the following term in the Herbrand set:\n$term\n\n$grammar" )
 
 trait GrammarFindingMethod {
   def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar]
@@ -197,7 +199,12 @@ object CutIntroduction extends Logger {
       g.productions.exists( _._1 != g.axiomVect )
     }.map { vtratGrammar =>
 
-      require( termset subsetOf vtratGrammar.language )
+      val generatedLanguage = vtratGrammar.language
+      metrics.value( "grammar_lang_size", generatedLanguage.size )
+      termset foreach { term =>
+        if ( !( generatedLanguage contains term ) )
+          throw new CutIntroNonCoveringGrammarException( vtratGrammar, term )
+      }
 
       metrics.value( "grammar_size", vtratGrammar.size )
       metrics.value( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )

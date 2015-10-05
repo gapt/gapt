@@ -131,6 +131,8 @@ object testCutIntro extends App {
                 metrics.value( "status", "cutintro_stack_overflow" )
               case e: CutIntroEHSUnprovableException =>
                 metrics.value( "status", "cutintro_ehs_unprovable" )
+              case e: CutIntroNonCoveringGrammarException =>
+                metrics.value( "status", "cutintro_noncovering_grammar" )
               case e: LKRuleCreationException =>
                 metrics.value( "status", "lk_rule_creation_exception" )
               case e: Throwable =>
