@@ -275,7 +275,17 @@ object Delta {
   }
 }
 
-package thresholds {
+trait CountingFormulas {
+  def exactly: {
+    def noneOf( fs: Seq[FOLFormula] ): FOLFormula
+    def oneOf( fs: Seq[FOLFormula] ): FOLFormula
+  }
+  def atMost: {
+    def oneOf( fs: Seq[FOLFormula] ): FOLFormula
+  }
+}
+
+object thresholds extends CountingFormulas {
 
   object exactly {
 
@@ -300,6 +310,24 @@ package thresholds {
         val ( a, b ) = fs.splitAt( fs.size / 2 )
         ( exactly.noneOf( a ) & atMost.oneOf( b ) ) | ( atMost.oneOf( a ) & exactly.noneOf( b ) )
     }
+
+  }
+
+}
+
+object naive extends CountingFormulas {
+
+  object exactly {
+
+    def noneOf( fs: Seq[FOLFormula] ): FOLFormula = -Or( fs )
+
+    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = Or( fs ) & atMost.oneOf( fs )
+
+  }
+
+  object atMost {
+
+    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
 
   }
 
