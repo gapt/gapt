@@ -1446,6 +1446,50 @@ object InductionRule extends RuleConvenienceObject( "InductionRule" ) {
 }
 
 /**
+ * An LKProof ending with a definition on the left:
+ *
+ * <pre>
+ *       (π)
+ *    A, Γ :- Δ
+ *   -----------d:l
+ *    B, Γ :- Δ
+ * </pre>
+ *
+ * Currently, the formulas A and B can be completely arbitrary.
+ *
+ * @param subProof The proof π.
+ * @param aux The index of A in the antecedent.
+ * @param main The formula B that A is to be replaced with.
+ */
+case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: HOLFormula ) extends UnaryLKProof with CommonRule {
+  override def name = "d:l"
+  override def auxIndices = Seq( Seq( aux ) )
+  override def mainFormulaSequent = main +: Sequent()
+}
+
+/**
+ * An LKProof ending with a definition on the right:
+ *
+ * <pre>
+ *       (π)
+ *    Γ :- Δ, A
+ *   -----------d:l
+ *    Γ :- Δ, B
+ * </pre>
+ *
+ * Currently, the formulas A and B can be completely arbitrary.
+ *
+ * @param subProof The proof π.
+ * @param aux The index of A in the succedent.
+ * @param main The formula B that A is to be replaced with.
+ */
+case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, main: HOLFormula ) extends UnaryLKProof with CommonRule {
+  override def name = "d:r"
+  override def auxIndices = Seq( Seq( aux ) )
+  override def mainFormulaSequent = Sequent() :+ main
+}
+
+/**
  * This class models the connection of formula occurrences between two sequents in a proof.
  *
  */
