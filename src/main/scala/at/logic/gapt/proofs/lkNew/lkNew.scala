@@ -1121,7 +1121,7 @@ object ExistsRightRule extends RuleConvenienceObject( "ExistsRightRule" ) {
         val i = premise.succedent indexOf auxFormula
 
         if ( i == -1 )
-          throw LKRuleCreationException( s"Formula $auxFormula not found in antecedent of $premise." )
+          throw LKRuleCreationException( s"Formula $auxFormula not found in succedent of $premise." )
 
         ExistsRightRule( subProof, Suc( i ), subFormula, term, v )
 

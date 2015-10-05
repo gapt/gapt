@@ -44,7 +44,12 @@ object cleanStructuralRules {
       val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = applyRecursive( rightSubProof )
 
       ( leftWeakSuc contains cutFormula, rightWeakAnt contains cutFormula ) match {
-        case ( true, _ ) =>
+        case ( true, true ) =>
+          ( leftSubproofNew,
+            leftWeakAnt ++ rightWeakAnt.diff( Seq( cutFormula ) ) ++ rightSubproofNew.endSequent.antecedent,
+            leftWeakSuc.diff( Seq( cutFormula ) ) ++ rightWeakSuc ++ rightSubproofNew.endSequent.succedent )
+
+        case ( true, false ) =>
           ( leftSubproofNew,
             leftWeakAnt ++ rightWeakAnt ++ rightSubproofNew.endSequent.antecedent.diff( Seq( cutFormula ) ),
             leftWeakSuc.diff( Seq( cutFormula ) ) ++ rightWeakSuc ++ rightSubproofNew.endSequent.succedent )
@@ -309,7 +314,7 @@ object cleanStructuralRules {
       if ( weakSuc contains auxFormula )
         (
           subProofNew,
-          All( v, auxFormula ) +: weakAnt.diff( Seq( auxFormula ) ),
+          All( v, f ) +: weakAnt.diff( Seq( auxFormula ) ),
           weakSuc
         )
       else
@@ -361,7 +366,7 @@ object cleanStructuralRules {
         (
           subProofNew,
           weakAnt,
-          Ex( v, auxFormula ) +: weakSuc.diff( Seq( auxFormula ) )
+          Ex( v, f ) +: weakSuc.diff( Seq( auxFormula ) )
         )
       else
         (
