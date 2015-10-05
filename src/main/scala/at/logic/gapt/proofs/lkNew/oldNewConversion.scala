@@ -163,6 +163,18 @@ object lkNew2Old {
       val proofOld = lk.InductionRule( leftSubProofOld, rightSubProofOld, leftSequent( aux1 ), rightSequent( aux2 ), rightSequent( aux3 ), term )
 
       testCorrectness( proofOld, proof, leftSequent.delete( aux1 ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux2, aux3 ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) :+ proofOld.prin.head )
+
+    case DefinitionLeftRule( subProof, aux, main ) =>
+      val ( subProofOld, sequent ) = apply_( subProof )
+      val proofOld = lk.DefinitionLeftRule( subProofOld, sequent( aux ), main )
+
+      testCorrectness( proofOld, proof, proofOld.prin.head +: sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) )
+
+    case DefinitionRightRule( subProof, aux, main ) =>
+      val ( subProofOld, sequent ) = apply_( subProof )
+      val proofOld = lk.DefinitionRightRule( subProofOld, sequent( aux ), main )
+
+      testCorrectness( proofOld, proof, sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) :+ proofOld.prin.head )
   }
 
   def testCorrectness( oldProof: lk.base.LKProof, newProof: LKProof, sequent: OccSequent ): ( lk.base.LKProof, OccSequent ) = {
@@ -383,6 +395,20 @@ object lkOld2New {
       val proofNew = InductionRule( leftSubProofNew, aux1, rightSubProofNew, aux2, aux3, term )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( aux1 ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux2, aux3 ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) :+ mainOcc )
+
+    case lk.DefinitionLeftRule( subProof, endSequent, auxOcc, mainOcc ) =>
+      val ( subProofNew, sequent ) = apply_( subProof )
+      val aux = sequent indexOf auxOcc
+      val proofNew = DefinitionLeftRule( subProofNew, aux, mainOcc.formula )
+
+      testCorrectness( proof, proofNew, mainOcc +: sequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) )
+
+    case lk.DefinitionRightRule( subProof, endSequent, auxOcc, mainOcc ) =>
+      val ( subProofNew, sequent ) = apply_( subProof )
+      val aux = sequent indexOf auxOcc
+      val proofNew = DefinitionRightRule( subProofNew, aux, mainOcc.formula )
+
+      testCorrectness( proof, proofNew, sequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) :+ mainOcc )
   }
 
   def testCorrectness( oldProof: lk.base.LKProof, newProof: LKProof, sequent: OccSequent ): ( LKProof, OccSequent ) = {
