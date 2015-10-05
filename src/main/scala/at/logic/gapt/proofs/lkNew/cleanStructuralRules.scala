@@ -4,24 +4,24 @@ import at.logic.gapt.expr._
 
 object cleanStructuralRules {
   def apply( proof: LKProof ) = {
-    val ( subProof, weakAnt, weakSuc ) = applyRecursive( proof )
+    val ( subProof, weakAnt, weakSuc ) = apply_( proof )
     WeakeningMacroRule( subProof, weakAnt, weakSuc )
   }
 
-  private def applyRecursive( proof: LKProof ): ( LKProof, Seq[HOLFormula], Seq[HOLFormula] ) = proof match {
+  private def apply_( proof: LKProof ): ( LKProof, Seq[HOLFormula], Seq[HOLFormula] ) = proof match {
     case LogicalAxiom( _ ) | ReflexivityAxiom( _ ) | BottomAxiom | TopAxiom =>
       ( proof, Seq(), Seq() )
 
     case WeakeningLeftRule( subProof, formula ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       ( subProofNew, formula +: weakAnt, weakSuc )
 
     case WeakeningRightRule( subProof, formula ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       ( subProofNew, weakAnt, formula +: weakSuc )
 
     case ContractionLeftRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val mainFormula = proof.mainFormulas.head
 
       weakAnt.count( _ == mainFormula ) match {
@@ -30,7 +30,7 @@ object cleanStructuralRules {
       }
 
     case ContractionRightRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val mainFormula = proof.mainFormulas.head
 
       weakSuc.count( _ == mainFormula ) match {
@@ -40,8 +40,8 @@ object cleanStructuralRules {
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val cutFormula = leftSubProof.endSequent( aux1 )
-      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = applyRecursive( leftSubProof )
-      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = applyRecursive( rightSubProof )
+      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = apply_( leftSubProof )
+      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = apply_( rightSubProof )
 
       ( leftWeakSuc contains cutFormula, rightWeakAnt contains cutFormula ) match {
         case ( true, true ) =>
@@ -67,8 +67,8 @@ object cleanStructuralRules {
 
     case InductionRule( leftSubProof, aux1, rightSubProof, aux2, aux3, term ) =>
       val ( inductionBase, inductionHypo, inductionStep ) = ( proof.auxFormulas( 0 )( 0 ), proof.auxFormulas( 1 )( 0 ), proof.auxFormulas( 1 )( 1 ) )
-      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = applyRecursive( leftSubProof )
-      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = applyRecursive( rightSubProof )
+      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = apply_( leftSubProof )
+      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = apply_( rightSubProof )
 
       ( leftWeakSuc contains inductionBase, rightWeakAnt contains inductionHypo, rightWeakSuc contains inductionStep ) match {
         case ( true, _, _ ) => //In this case, we delete the right subproof (i.e. the induction step).
@@ -99,7 +99,7 @@ object cleanStructuralRules {
       }
 
     case NegLeftRule( subProof, aux ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val auxFormula = proof.auxFormulas.head.head
 
       if ( weakSuc contains auxFormula )
@@ -116,7 +116,7 @@ object cleanStructuralRules {
         )
 
     case NegRightRule( subProof, aux ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val auxFormula = proof.auxFormulas.head.head
 
       if ( weakAnt contains auxFormula )
@@ -131,7 +131,7 @@ object cleanStructuralRules {
         )
 
     case AndLeftRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val leftConjunct = proof.auxFormulas.head( 0 )
       val rightConjunct = proof.auxFormulas.head( 1 )
 
@@ -169,8 +169,8 @@ object cleanStructuralRules {
       val leftConjunct = proof.auxFormulas.head( 0 )
       val rightConjunct = proof.auxFormulas.tail.head( 0 )
 
-      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = applyRecursive( leftSubProof )
-      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = applyRecursive( rightSubProof )
+      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = apply_( leftSubProof )
+      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = apply_( rightSubProof )
 
       ( leftWeakSuc contains leftConjunct, rightWeakSuc contains rightConjunct ) match {
         case ( true, _ ) =>
@@ -193,8 +193,8 @@ object cleanStructuralRules {
       val leftDisjunct = proof.auxFormulas.head( 0 )
       val rightDisjunct = proof.auxFormulas.tail.head( 0 )
 
-      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = applyRecursive( leftSubProof )
-      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = applyRecursive( rightSubProof )
+      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = apply_( leftSubProof )
+      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = apply_( rightSubProof )
 
       ( leftWeakAnt contains leftDisjunct, rightWeakAnt contains rightDisjunct ) match {
         case ( true, _ ) =>
@@ -214,7 +214,7 @@ object cleanStructuralRules {
       }
 
     case OrRightRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val leftDisjunct = proof.auxFormulas.head( 0 )
       val rightDisjunct = proof.auxFormulas.head( 1 )
 
@@ -252,8 +252,8 @@ object cleanStructuralRules {
       val impPremise = proof.auxFormulas.head( 0 )
       val impConclusion = proof.auxFormulas.tail.head( 0 )
 
-      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = applyRecursive( leftSubProof )
-      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = applyRecursive( rightSubProof )
+      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = apply_( leftSubProof )
+      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = apply_( rightSubProof )
 
       ( leftWeakSuc contains impPremise, rightWeakAnt contains impConclusion ) match {
         case ( true, _ ) =>
@@ -273,7 +273,7 @@ object cleanStructuralRules {
       }
 
     case ImpRightRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val impPremise = proof.auxFormulas.head( 0 )
       val impConclusion = proof.auxFormulas.head( 1 )
 
@@ -308,7 +308,7 @@ object cleanStructuralRules {
       }
 
     case ForallLeftRule( subProof, aux, f, term, v ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val auxFormula = proof.auxFormulas.head.head
 
       if ( weakSuc contains auxFormula )
@@ -325,7 +325,7 @@ object cleanStructuralRules {
         )
 
     case ForallRightRule( subProof, aux, eigen, quant ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val auxFormula = proof.auxFormulas.head.head
 
       if ( weakSuc contains auxFormula )
@@ -342,7 +342,7 @@ object cleanStructuralRules {
         )
 
     case ExistsLeftRule( subProof, aux, eigen, quant ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val auxFormula = proof.auxFormulas.head.head
 
       if ( weakSuc contains auxFormula )
@@ -359,7 +359,7 @@ object cleanStructuralRules {
         )
 
     case ExistsRightRule( subProof, aux, f, term, v ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val auxFormula = proof.auxFormulas.head.head
 
       if ( weakSuc contains auxFormula )
@@ -376,7 +376,7 @@ object cleanStructuralRules {
         )
 
     case EqualityLeftRule( subProof, eq, aux, pos ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val equation = proof.auxFormulas.head( 0 )
       val auxFormula = proof.auxFormulas.head( 1 )
       val mainFormula = proof.mainFormulas.head
@@ -406,7 +406,7 @@ object cleanStructuralRules {
       }
 
     case EqualityRightRule( subProof, eq, aux, pos ) =>
-      val ( subProofNew, weakAnt, weakSuc ) = applyRecursive( subProof )
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val equation = proof.auxFormulas.head( 0 )
       val auxFormula = proof.auxFormulas.head( 1 )
       val mainFormula = proof.mainFormulas.head
@@ -434,6 +434,40 @@ object cleanStructuralRules {
             weakSuc
           )
       }
+
+    case DefinitionLeftRule( subProof, aux, main ) =>
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
+      val auxFormula = proof.auxFormulas.head.head
+
+      if ( weakAnt contains auxFormula )
+        (
+          subProofNew,
+          main +: weakAnt.diff( Seq( auxFormula ) ),
+          weakSuc
+        )
+      else
+        (
+          DefinitionLeftRule( subProofNew, auxFormula, main ),
+          weakAnt,
+          weakSuc
+        )
+
+    case DefinitionRightRule( subProof, aux, main ) =>
+      val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
+      val auxFormula = proof.auxFormulas.head.head
+
+      if ( weakSuc contains auxFormula )
+        (
+          subProofNew,
+          weakAnt,
+          main +: weakSuc.diff( Seq( auxFormula ) )
+        )
+      else
+        (
+          DefinitionRightRule( subProofNew, auxFormula, main ),
+          weakAnt,
+          weakSuc
+        )
 
     case _ => throw new IllegalArgumentException( "This rule is not supported at this time." )
   }

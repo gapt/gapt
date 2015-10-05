@@ -1467,6 +1467,15 @@ case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: HOLFo
   override def mainFormulaSequent = main +: Sequent()
 }
 
+object DefinitionLeftRule extends RuleConvenienceObject( "DefinitionLeftRule" ) {
+  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula ): DefinitionLeftRule = {
+    val premise = subProof.endSequent
+    val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
+
+    DefinitionLeftRule( subProof, Ant( indices( 0 ) ), mainFormula )
+  }
+}
+
 /**
  * An LKProof ending with a definition on the right:
  *
@@ -1487,6 +1496,15 @@ case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, main: HOLF
   override def name = "d:r"
   override def auxIndices = Seq( Seq( aux ) )
   override def mainFormulaSequent = Sequent() :+ main
+}
+
+object DefinitionRightRule extends RuleConvenienceObject( "DefinitionRightRule" ) {
+  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula ): DefinitionRightRule = {
+    val premise = subProof.endSequent
+    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
+
+    DefinitionRightRule( subProof, Suc( indices( 0 ) ), mainFormula )
+  }
 }
 
 /**
