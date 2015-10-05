@@ -400,11 +400,14 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def zip[B]( that: Sequent[B] ): Sequent[( A, B )] =
     Sequent( this.antecedent zip that.antecedent, this.succedent zip that.succedent )
 
-  def replaceAtIndex[B >: A]( i: SequentIndex, el: B ) = i match {
+  def replaceAt[B >: A]( i: SequentIndex, el: B ) = delete( i ).insertAt( i, el )
+
+  def insertAt[B >: A]( i: SequentIndex, el: B ) = i match {
     case Ant( j ) =>
-      Sequent( antecedent.take( j ) ++ Seq( el ) ++ antecedent.drop( j + 1 ), succedent )
+      Sequent( antecedent.take( j ) ++ Seq( el ) ++ antecedent.drop( j ), succedent )
+
     case Suc( j ) =>
-      Sequent( antecedent, succedent.take( j ) ++ Seq( el ) ++ succedent.drop( j + 1 ) )
+      Sequent( antecedent, succedent.take( j ) ++ Seq( el ) ++ succedent.drop( j ) )
   }
 }
 

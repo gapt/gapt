@@ -7,6 +7,7 @@ package at.logic.gapt.expr
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkNew.InitialSequent
 
 import scala.collection.GenTraversable
 import scala.collection.mutable
@@ -92,6 +93,11 @@ object variables {
   def apply( s: HOLSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: OccSequent )( implicit dummy: DummyImplicit ): Set[Var] = apply( s.toHOLSequent )
   def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
+  def apply( p: lkNew.LKProof ): Set[Var] = p match {
+    case lkNew.InitialSequent( sequent )                             => apply( sequent )
+    case lkNew.UnaryLKProof( sequent, subProof )                     => apply( sequent ) ++ apply( subProof )
+    case lkNew.BinaryLKProof( sequent, leftSubProof, rightSubProof ) => apply( sequent ) ++ apply( leftSubProof ) ++ apply( rightSubProof )
+  }
 }
 
 /**
