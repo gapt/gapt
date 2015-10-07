@@ -236,7 +236,7 @@ case object TopAxiom extends InitialSequent {
 case object BottomAxiom extends InitialSequent {
   override def name: String = "⊥:l"
   override def endSequent = HOLSequent( Seq( Bottom() ), Nil )
-  def mainFormula = Top()
+  def mainFormula = Bottom()
 }
 
 /**
