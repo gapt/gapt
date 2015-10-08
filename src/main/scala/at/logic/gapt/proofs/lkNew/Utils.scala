@@ -5,9 +5,10 @@ import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 
 object containsEqualityReasoning {
   /**
+   * @param proof An LKProof.
    * @return true iff this proof contains a reflexivity axiom or an equational inference
    */
-  def apply( p: LKProof ): Boolean = p match {
+  def apply( proof: LKProof ): Boolean = proof match {
     case ReflexivityAxiom( _ )                           => true
     case EqualityLeftRule( _, _, _, _ )                  => true
     case EqualityRightRule( _, _, _, _ )                 => true
@@ -17,9 +18,57 @@ object containsEqualityReasoning {
   }
 }
 
+object isRegular {
+  /**
+   * Tests for regularity by checking whether all eigenvariables are distinct.
+   *
+   * @param proof An LKProof.
+   * @return true iff proof is regular.
+   */
+  def apply( proof: LKProof ): Boolean = {
+    val eigenVars = proof.postOrder.collect( { case Eigenvariable( v ) => v } )
+    eigenVars == eigenVars.distinct
+  }
+}
+
+/**
+ * Proof regularization
+ *
+ */
 object regularize {
+  /**
+   * Renames all eigenvariables in a proof so that it becomes regular.
+   *
+   * @param proof An LKProof.
+   * @return A regular LKProof.
+   */
   def apply( proof: LKProof ) = apply_( proof, variables( proof ) )._1
 
+  /**
+   * Renames at least the eigenvariables contains in blacklist so that proof becomes regular.
+   *
+   * @param proof An LKProof.
+   * @param blacklist A set of variables that must be renamed if they occur as eigenvariables.
+   * @return A regular LKProof.
+   */
+  def apply( proof: LKProof, blacklist: Set[Var] ): LKProof = apply_( proof, blacklist )._1
+
+  /**
+   * Renames at least the eigenvariables contains in blacklist so that proof becomes regular.
+   *
+   * @param proof An LKProof.
+   * @param blacklist A sequence of variables that must be renamed if they occur as eigenvariables.
+   * @return A regular LKProof.
+   */
+  def apply( proof: LKProof, blacklist: Seq[Var] ): LKProof = apply_( proof, blacklist.toSet )._1
+
+  /**
+   * Performs the actual regularization.
+   *
+   * @param proof An LKProof.
+   * @param blacklist A set of variables that must be renamed if they occur as eigenvariables.
+   * @return A regular LKProof and the final blacklist.
+   */
   def apply_( proof: LKProof, blacklist: Set[Var] ): ( LKProof, Set[Var] ) = proof match {
     case InitialSequent( sequent ) =>
       ( proof, blacklist )

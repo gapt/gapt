@@ -187,8 +187,25 @@ trait CommonRule extends LKProof {
   }
 }
 
+/**
+ * Use this trait for rules that use eigenvariables.
+ *
+ */
 trait Eigenvariable {
   val eigenVariable: Var
+}
+
+object Eigenvariable {
+  /**
+   * A proof matches Eigenvariable(v) if its bottommost inference uses the eigenvariable v.
+   *
+   * @param proof An LKProof
+   * @return
+   */
+  def unapply( proof: LKProof ) = proof match {
+    case p: Eigenvariable => Some( p.eigenVariable )
+    case _                => None
+  }
 }
 
 /**
@@ -1054,7 +1071,7 @@ object ForallRightRule extends RuleConvenienceObject( "ForallRightRule" ) {
  * @param quantifiedVariable The variable x.
  */
 case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var )
-    extends UnaryLKProof with CommonRule {
+    extends UnaryLKProof with CommonRule with Eigenvariable {
 
   validateIndices( premise, Seq( aux ), Seq() )
 
