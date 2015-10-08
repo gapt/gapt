@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkNew.lkNew2Old
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.expr.To
@@ -21,7 +22,7 @@ object ExtractInterpolant {
    */
   def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): FOLFormula = {
     val seq = negative compose positive
-    val p = prover.getLKProof( seq ).get
+    val p = lkNew2Old( prover.getLKProof( seq ).get )
     val es = p.root
     val npart = es.antecedent.filter( fo => negative.antecedent.contains( fo.formula ) ) ++
       es.succedent.filter( fo => negative.succedent.contains( fo.formula ) )

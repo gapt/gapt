@@ -8,6 +8,7 @@ import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkNew.lkNew2Old
 import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, ForgetfulResolve }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.Prover9Prover
@@ -179,7 +180,7 @@ class SimpleInductionProof(
 
     val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
     ( pi0Op, pi1Op, pi2Op ) match {
-      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toLKProof( CleanStructuralRules( pi0 ), CleanStructuralRules( pi1 ), CleanStructuralRules( pi2 ) )
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toLKProof( CleanStructuralRules( lkNew2Old( pi0 ) ), CleanStructuralRules( lkNew2Old( pi1 ) ), CleanStructuralRules( lkNew2Old( pi2 ) ) )
       case _                                         => throw new Exception( "Not a correct LKProof." )
     }
   }
@@ -210,7 +211,7 @@ class SimpleInductionProof(
 
     val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
     ( pi0Op, pi1Op, pi2Op ) match {
-      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toInstanceLKProof( n, CleanStructuralRules( pi0 ), CleanStructuralRules( pi1 ), CleanStructuralRules( pi2 ), rename )
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toInstanceLKProof( n, CleanStructuralRules( lkNew2Old( pi0 ) ), CleanStructuralRules( lkNew2Old( pi1 ) ), CleanStructuralRules( lkNew2Old( pi2 ) ), rename )
       case _                                         => throw new Exception( "Not a correct LKProof." )
     }
   }

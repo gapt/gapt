@@ -7,7 +7,7 @@ import at.logic.gapt.grammars.findMinimalSipGrammar
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkNew.{ lkOld2New, LKProof }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.provers.prover9.Prover9Prover
@@ -32,7 +32,7 @@ class SipProver(
   val nLine = sys.props( "line.separator" )
 
   override def getLKProof( endSequent: HOLSequent ): Option[LKProof] =
-    getSimpleInductionProof( endSequent ).map( _.toLKProof )
+    getSimpleInductionProof( endSequent ).map( _.toLKProof ).map( lkOld2New( _ ) )
 
   def getSimpleInductionProof( endSequent: HOLSequent ): Option[SimpleInductionProof] = {
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {

@@ -7,6 +7,7 @@ import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET, ETWeakening }
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkNew.lkOld2New
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.provers.Prover
 
@@ -981,7 +982,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
 }
 
 class LKProver extends Prover {
-  def getLKProof( seq: HOLSequent ): Option[LKProof] = solve.solvePropositional( seq )
+  def getLKProof( seq: HOLSequent ): Option[lkNew.LKProof] = solve.solvePropositional( seq ) map { lkOld2New( _ ) }
 }
 
 object AtomicExpansion {

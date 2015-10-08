@@ -15,6 +15,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.getStatistics
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
+import at.logic.gapt.proofs.lkNew.lkNew2Old
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
@@ -479,10 +480,10 @@ object CutIntroduction extends Logger {
     trace( "R: " + R )
 
     // we need a proof of L_1
-    val Lproof = prover.getLKProof( L1 )
+    val Lproof = prover.getLKProof( L1 ) map { lkNew2Old( _ ) }
 
     // we need proofs of R_1, ..., R_n
-    val Rproofs = R.map( s => prover.getLKProof( s ) )
+    val Rproofs = R.map( s => prover.getLKProof( s ) map { lkNew2Old( _ ) } )
 
     ( ( Rproofs :+ Lproof ) zip ( R :+ L1 ) ).foreach {
       case ( None, seq ) => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )

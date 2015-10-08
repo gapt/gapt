@@ -40,7 +40,7 @@ object Pi2Pigeonhole {
     var Some( p ) = prover.getLKProof( I( i, zero, beta ) +:
       I( i, s( beta ), betaprime ) +:
       Delta :+
-      T( beta, betaprime ) ) map { lkOld2New( _ ) }
+      T( beta, betaprime ) )
     p = ExistsRightBlock( p, T, Seq( beta, betaprime ) )
     p = ExistsLeftRule( p, I( i, s( beta ) ), betaprime )
     p = ForallLeftRule( p, I( i ), s( beta ) )
@@ -55,7 +55,7 @@ object Pi2Pigeonhole {
 
     var Some( p1 ) = prover.getLKProof( Gamma :+
       I( zero, alpha, M( alpha, alphahat ) ) :+
-      I( one, alphahat, M( alpha, alphahat ) ) ) map { lkOld2New( _ ) }
+      I( one, alphahat, M( alpha, alphahat ) ) )
     p1 = ExistsRightRule( p1, I( zero, alpha ), M( alpha, alphahat ) )
     p1 = ExistsRightRule( p1, I( one, alphahat ), M( alpha, alphahat ) )
     p1 = ForallRightRule( p1, I( one ), alphahat )

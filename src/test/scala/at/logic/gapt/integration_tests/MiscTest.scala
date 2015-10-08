@@ -16,6 +16,8 @@ import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.formats.prover9.Prover9TermParser
+import at.logic.gapt.proofs.lkNew.lkNew2Old
+import at.logic.gapt.proofs.lkNew
 import at.logic.gapt.provers.FailSafeProver
 import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.prover9.Prover9Prover
@@ -117,7 +119,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
       val testFilePath = tempCopyOfClasspathFile( "SYN726-1.out" )
       val p1 = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
-      val Some( p2 ) = CutIntroduction.one_cut_many_quantifiers( p1, false )
+      val Some( p2 ) = CutIntroduction.one_cut_many_quantifiers( lkNew2Old( p1 ), false )
       val p3 = ReductiveCutElim( p2 )
 
       ReductiveCutElim.isCutFree( p2 ) must beEqualTo( false )
@@ -169,7 +171,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
       val p = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
-      val q = ReductiveCutElim( p )
+      val q = ReductiveCutElim( lkNew2Old( p ) )
 
       ReductiveCutElim.isCutFree( q ) must beEqualTo( true )
     }
@@ -219,7 +221,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
       val lkproof = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
-      val expseq = LKToExpansionProof( lkproof )
+      val expseq = lkNew.LKToExpansionProof( lkproof )
       val deep = ETtoDeep( expseq )
 
       fsprover.isValid( deep ) must beTrue
@@ -236,7 +238,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val testFilePath = tempCopyOfClasspathFile( "ALG004-1.out" )
 
       val lkProof = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
-      val expansionSequent = LKToExpansionProof( lkProof )
+      val expansionSequent = lkNew.LKToExpansionProof( lkProof )
       val deep = ETtoDeep( expansionSequent )
 
       veriT.isValid( deep ) must beTrue
@@ -248,7 +250,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
       val lkproof1 = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
-      val expseq = LKToExpansionProof( lkproof1 )
+      val expseq = lkNew.LKToExpansionProof( lkproof1 )
       val deep = ETtoDeep( expseq )
 
       solve.solvePropositional( deep ).isDefined must beTrue
@@ -258,7 +260,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
       val testFilePath = tempCopyOfClasspathFile( "NUM484+3.out" )
       val lkproof1 = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
-      val expseq = LKToExpansionProof( lkproof1 )
+      val expseq = lkNew.LKToExpansionProof( lkproof1 )
       val deep = ETtoDeep( expseq )
       success( "everything worked fine" )
     }

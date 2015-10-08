@@ -3,8 +3,8 @@ package at.logic.gapt.provers
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
-import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkNew.LKToExpansionProof
+import at.logic.gapt.proofs.lkNew.LKProof
 
 /**
  * A prover that is able to refute HOL sequents/formulas (or subsets
