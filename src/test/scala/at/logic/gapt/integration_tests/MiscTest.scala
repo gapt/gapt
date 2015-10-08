@@ -66,7 +66,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk2.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
-      val proof_sk = skolemize( proof )
+      val proof_sk = lkNew.skolemize( lkNew.lkOld2New( proof ) )
       Success()
     }
 
@@ -74,7 +74,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk3.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
-      val proof_sk = skolemize( proof )
+      val proof_sk = lkNew.skolemize( lkNew.lkOld2New( proof ) )
       Success()
     }
 
@@ -82,7 +82,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk4.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
-      val proof_sk = skolemize( proof )
+      val proof_sk = lkNew.skolemize( lkNew.lkOld2New( proof ) )
       Success()
     }
 

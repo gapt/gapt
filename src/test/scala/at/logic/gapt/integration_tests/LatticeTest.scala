@@ -12,8 +12,9 @@ import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.ceres.clauseSets.profile._
 import at.logic.gapt.proofs.ceres.projections.Projections
 import at.logic.gapt.proofs.ceres.struct.StructCreators
-import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lk.{ deleteTautologies, LKToLKsk, getStatistics }
+import at.logic.gapt.proofs.lkNew.{ skolemize, lkOld2New, lkNew2Old }
 import at.logic.gapt.provers.prover9._
 import java.io.File.separator
 import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
@@ -67,7 +68,8 @@ class LatticeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
-      val proof_sk = skolemize( proof )
+      val proof_sk_new = skolemize( lkOld2New( proof ) )
+      val proof_sk = lkNew2Old( proof_sk_new )
       val s = StructCreators.extract( proof_sk )
 
       val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toHOLSequent ) ).asInstanceOf[List[HOLClause]]

@@ -15,6 +15,8 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.writers.FileWriter
+import at.logic.gapt.proofs.lkNew
+import at.logic.gapt.proofs.lkNew.{ lkNew2Old, lkOld2New }
 import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriTProver
@@ -157,7 +159,7 @@ class PrimeProofTest extends Specification {
       }
 
       //val proof_sk = skolemize( regularize( proof )._1 )
-      val proof_sk = skolemize( proof )
+      val proof_sk = lkNew2Old( lkNew.skolemize( lkOld2New( proof ) ) )
       val s = StructCreators.extract( proof_sk )
 
       // convert struct DAG to tree
@@ -208,7 +210,7 @@ class PrimeProofTest extends Specification {
       val proof = proofdb.proofs.head._2
 
       //val proof_sk = skolemize( regularize( proof )._1 )
-      val proof_sk = skolemize( proof )
+      val proof_sk = lkNew2Old( lkNew.skolemize( lkOld2New( proof ) ) )
       val s = StructCreators.extract( proof_sk )
 
       // convert struct DAG to tree

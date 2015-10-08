@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base.beSyntacticFSequentEqual
 import org.specs2.mutable._
 
 class SkolemizationTest extends Specification {
@@ -71,7 +70,7 @@ class SkolemizationTest extends Specification {
       val ax_sk = Axiom( Ps0 :: Nil, Ps0 :: Nil )
       val proof_sk = ForallLeftRule( ax_sk, allxPx, cs5 )
 
-      cleanStructuralRules( skolemize( proof ) ) must_== proof_sk
+      skolemize( proof ) must_== proof_sk
     }
 
     "work for a cut-free proof (1)" in {
@@ -121,7 +120,7 @@ class SkolemizationTest extends Specification {
 
       SkolemSymbolFactory.reset
 
-      cleanStructuralRules( skolemize( proof ) ) must_== proof_sk
+      skolemize( proof ) must_== proof_sk
     }
 
   }

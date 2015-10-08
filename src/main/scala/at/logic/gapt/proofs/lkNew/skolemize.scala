@@ -30,7 +30,7 @@ object skolemize {
 
   def apply( proof: LKProof ): LKProof = {
     val contextAndSymbols = proof.endSequent.map { _ => Some( Seq() -> SkolemSymbolFactory.getSkolemSymbols ) }
-    apply( proof, contextAndSymbols )
+    cleanStructuralRules( apply( proof, contextAndSymbols ) )
   }
 
   def apply( proof: LKProof, contextAndSymbols: Sequent[Option[( Seq[LambdaExpression], Stream[SymbolA] )]] ): LKProof = proof match {
@@ -52,8 +52,8 @@ object skolemize {
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
       ContractionRightRule( subProof_, aux1, aux2 )
     case proof @ CutRule( subProof1, aux1, subProof2, aux2 ) =>
-      val subProof1_ = apply( subProof1, proof.getLeftOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      val subProof2_ = apply( subProof2, proof.getRightOccConnector.parents( contextAndSymbols ).map( _.head ) )
+      val subProof1_ = apply( subProof1, proof.getLeftOccConnector.parents( contextAndSymbols ).map( _.headOption.flatten ) )
+      val subProof2_ = apply( subProof2, proof.getRightOccConnector.parents( contextAndSymbols ).map( _.headOption.flatten ) )
       CutRule( subProof1_, aux1, subProof2_, aux2 )
 
     // Propositional rules (non-nullary):
@@ -117,10 +117,10 @@ object skolemize {
     // We do it as in the old LK: skolemize both the before and after formulas using the same stream of skolem symbols.
     case proof @ DefinitionLeftRule( subProof, aux, main ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      DefinitionLeftRule( subProof, aux, maybeSkolemize( main, false, contextAndSymbols( proof.mainIndices.head ) ) )
+      DefinitionLeftRule( subProof_, aux, maybeSkolemize( main, false, contextAndSymbols( proof.mainIndices.head ) ) )
     case proof @ DefinitionRightRule( subProof, aux, main ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      DefinitionRightRule( subProof, aux, maybeSkolemize( main, true, contextAndSymbols( proof.mainIndices.head ) ) )
+      DefinitionRightRule( subProof_, aux, maybeSkolemize( main, true, contextAndSymbols( proof.mainIndices.head ) ) )
 
     // Weak quantifier rules:
     case proof @ ForallLeftRule( subProof, aux, matrix, term, v ) =>
