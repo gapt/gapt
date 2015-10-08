@@ -33,9 +33,5 @@ class PCNFTest extends Specification {
       "∀xPx |-" in { checkPCNF( All( x, p( x ) ) +: Sequent(), Clause() :+ p( x ) ) }
       "|- ∃xPx" in { checkPCNF( Sequent() :+ Ex( x, -p( x ) ), Clause() :+ p( x ) ) }
     }
-    "variable renamings" in {
-      val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
-      "∀xPx |-" in { checkPCNF( All( x, p( x ) ) +: Sequent(), Clause() :+ p( y ) ) }
-    }
   }
 }

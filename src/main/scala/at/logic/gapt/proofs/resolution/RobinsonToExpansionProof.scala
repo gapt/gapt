@@ -11,23 +11,19 @@ import scala.collection.mutable
 object RobinsonToExpansionProof {
   def apply( p: ResolutionProof, es: HOLSequent ): ExpansionSequent = {
     val dummyConstant = rename( FOLConst( "arbitrary" ), constants( es ).toList )
-    val cnfMap: Seq[( HOLClause, Boolean, FOLFormula )] =
+    val cnfMap: Map[FOLClause, Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )]] =
       es.map( f => toVNF( f ).asInstanceOf[FOLFormula] ).map(
         ant => CNFp.toClauseList( ant ).map { ( _, false, ant ) },
-        suc => CNFn.toFClauseList( suc ).map { ( _, true, suc ) }
-      ).elements.flatten
-    apply_( p, clause =>
-      Set( cnfMap.view.flatMap {
-        case ( cnfClause, pol, formula ) =>
-          FOLMatchingAlgorithm.matchTerms(
-            cnfClause.toFormula.asInstanceOf[FOLFormula],
-            clause.toFormula.asInstanceOf[FOLFormula]
-          ) map { subst =>
-            ( pol, formula,
-              variables( formula ).map( _.asInstanceOf[FOLVar] -> dummyConstant ).toMap
-              ++ variables( cnfClause ).map( _.asInstanceOf[FOLVar] ).map( v => v -> subst( v ) ) )
-          }
-      }.head ) )
+        suc => CNFn.toClauseList( suc ).map { ( _, true, suc ) }
+      ).elements.flatten.groupBy( _._1 ).mapValues {
+          _ map {
+            case ( cnfClause, pol, formula ) =>
+              ( pol, formula,
+                variables( formula ).map( _ -> dummyConstant ).toMap
+                ++ variables( cnfClause ).map( v => v -> v ) )
+          } toSet
+        }
+    apply_( p, cnfMap )
   }
 
   def apply( p: ResolutionProof ): ExpansionSequent =

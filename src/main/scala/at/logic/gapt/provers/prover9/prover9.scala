@@ -28,6 +28,14 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
           case ( 0, out ) => Some( parseProof( out ) )
           case ( 2, _ )   => None
         }
+    } map {
+      mapInputClauses( _ ) { clause =>
+        cnf.view flatMap { ourClause =>
+          syntacticMatching( ourClause.toFormula.asInstanceOf[FOLFormula], clause.toFormula.asInstanceOf[FOLFormula] ) map { matching =>
+            Instance( InputClause( ourClause.map { _.asInstanceOf[FOLAtom] } ), matching )
+          }
+        } head
+      }
     }
 
   private[prover9] def parseProof( p9Output: String ) = {

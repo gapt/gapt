@@ -119,9 +119,8 @@ class FixDerivationTest extends Specification {
       findDerivationViaResolution( a, bs ) must beLike {
         case Some( p ) =>
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true
-          foreach( inputClauses( p ) ) { initial =>
-            val inBsModRenaming = bs.exists( b => syntacticMatching( initial toFormula, b toFormula ).isDefined )
-            inBsModRenaming aka s"$initial in $bs or tautology" must_== true
+          foreach( inputClauses( p ) ) { inputClause =>
+            bs must contain( inputClause )
           }
       }
     }
