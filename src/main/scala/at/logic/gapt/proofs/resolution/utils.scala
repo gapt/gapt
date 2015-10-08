@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.proofs.FOLClause
+import at.logic.gapt.proofs.HOLClause
 
 object numberOfResolutionsAndParamodulations {
   def apply( p: ResolutionProof ): Int =
@@ -12,5 +12,5 @@ object numberOfResolutionsAndParamodulations {
 }
 
 object inputClauses {
-  def apply( p: ResolutionProof ): Set[FOLClause] = p.subProofs.collect { case InputClause( clause ) => clause }
+  def apply( p: ResolutionProof ): Set[HOLClause] = p.subProofs.collect { case InputClause( clause ) => clause }
 }

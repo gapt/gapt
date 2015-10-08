@@ -55,6 +55,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   }
 
   def apply( t: HOLFormula ): HOLFormula = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+  def apply( t: HOLAtom ): HOLAtom = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLAtom]
   def apply( sequent: HOLSequent ): HOLSequent = sequent map apply
 
   // TODO: why lists? why not sets?

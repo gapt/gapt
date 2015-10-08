@@ -84,7 +84,7 @@ object TermReplacement extends Logger {
       }
   }
 
-  def apply( proof: resolution.ResolutionProof, repl: Map[FOLTerm, FOLTerm] ): resolution.ResolutionProof = {
+  def apply( proof: resolution.ResolutionProof, repl: Map[LambdaExpression, LambdaExpression] ): resolution.ResolutionProof = {
     import resolution._
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
@@ -94,7 +94,7 @@ object TermReplacement extends Logger {
       case TautologyClause( atom )   => TautologyClause( TermReplacement( atom, repl ) )
       case Factor( q, i1, i2 )       => Factor( f( q ), i1, i2 )
       case Instance( q, subst ) =>
-        Instance( f( q ), FOLSubstitution( subst.folmap.map { case ( f, t ) => f -> TermReplacement( t, repl ) } ) )
+        Instance( f( q ), Substitution( subst.map.map { case ( f, t ) => f -> TermReplacement( t, repl ) } ) )
       case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
       case Paramodulation( q1, l1, q2, l2, pos, dir ) =>
         Paramodulation( f( q1 ), l1, f( q2 ), l2, pos, dir )

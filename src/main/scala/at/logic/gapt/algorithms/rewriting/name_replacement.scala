@@ -85,12 +85,12 @@ object NameReplacement {
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
     def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
-      case InputClause( clause )     => InputClause( clause map { NameReplacement( _, repl ) } )
+      case InputClause( clause )     => InputClause( clause map { NameReplacement( _, repl ).asInstanceOf[HOLAtom] } )
       case ReflexivityClause( term ) => ReflexivityClause( NameReplacement( term, repl ) )
-      case TautologyClause( atom )   => TautologyClause( NameReplacement( atom, repl ) )
+      case TautologyClause( atom )   => TautologyClause( NameReplacement( atom, repl ).asInstanceOf[HOLAtom] )
       case Factor( q, i1, i2 )       => Factor( f( q ), i1, i2 )
       case Instance( q, subst ) =>
-        Instance( f( q ), FOLSubstitution( subst.folmap.map { case ( f, t ) => f -> NameReplacement( t, repl ) } ) )
+        Instance( f( q ), Substitution( subst.map.map { case ( f, t ) => f -> NameReplacement( t, repl ) } ) )
       case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
       case Paramodulation( q1, l1, q2, l2, pos, dir ) =>
         Paramodulation( f( q1 ), l1, f( q2 ), l2, pos, dir )

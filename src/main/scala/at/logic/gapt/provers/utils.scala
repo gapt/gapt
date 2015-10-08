@@ -38,7 +38,7 @@ object renameConstantsToFi {
 }
 
 object groundFreeVariables {
-  def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( FOLVar, FOLConst )] = {
+  def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( Var, Const )] = {
     val varList = vars.toList
     ( varList, getRenaming( varList.map( _.sym ), consts.map( _.sym ).toList ) ).zipped.map {
       case ( v: FOLVar, cs ) =>
@@ -46,13 +46,13 @@ object groundFreeVariables {
     }
   }
 
-  def getGroundingMap( seq: HOLSequent ): Seq[( FOLVar, FOLConst )] =
+  def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =
     getGroundingMap( variables( seq ), constants( seq ) )
 
-  def apply( seq: HOLSequent ): ( HOLSequent, Map[FOLTerm, FOLTerm] ) = {
+  def apply( seq: HOLSequent ): ( HOLSequent, Map[LambdaExpression, LambdaExpression] ) = {
     val groundingMap = getGroundingMap( seq )
-    val groundSeq = FOLSubstitution( groundingMap )( seq )
-    val unground = groundingMap.map { case ( f, t ) => ( t, f ) }.toMap[FOLTerm, FOLTerm]
-    ( groundSeq, unground )
+    val groundSeq = Substitution( groundingMap )( seq )
+    val unground = groundingMap.map { case ( f, t ) => ( t, f ) }
+    ( groundSeq, unground.toMap )
   }
 }

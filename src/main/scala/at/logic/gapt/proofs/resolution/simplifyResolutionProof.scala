@@ -1,12 +1,12 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.proofs.FOLClause
+import at.logic.gapt.proofs.HOLClause
 
 import scala.collection.mutable
 
 object simplifyResolutionProof {
   def apply( proof: ResolutionProof ): ResolutionProof = {
-    val simplified = mutable.Map[FOLClause, ResolutionProof]()
+    val simplified = mutable.Map[HOLClause, ResolutionProof]()
 
     proof dagLikeForeach { p =>
       val q = p match {

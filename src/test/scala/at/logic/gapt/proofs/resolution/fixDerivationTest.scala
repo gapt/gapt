@@ -12,8 +12,8 @@ class FixDerivationTest extends Specification {
     "not say that p :- is derivable from p :- p, r by symmetry" in {
       val p = FOLAtom( "p", Nil )
       val r = FOLAtom( "r", Nil )
-      val to = FOLClause( p :: Nil, Nil )
-      val from = FOLClause( p :: Nil, p :: r :: Nil )
+      val to = HOLClause( p :: Nil, Nil )
+      val from = HOLClause( p :: Nil, p :: r :: Nil )
 
       fixDerivation.tryDeriveBySymmetry( to, from ) must beNone
     }
@@ -28,8 +28,8 @@ class FixDerivationTest extends Specification {
       val cd = Eq( c, d )
       val cb = Eq( c, b )
       val dc = Eq( d, c )
-      val from = FOLClause( ab :: bc :: Nil, cd :: Nil )
-      val to = FOLClause( cb :: ab :: Nil, dc :: Nil )
+      val from = HOLClause( ab :: bc :: Nil, cd :: Nil )
+      val to = HOLClause( cb :: ab :: Nil, dc :: Nil )
 
       fixDerivation.tryDeriveBySymmetry( to, from ) must beSome
     }
@@ -47,8 +47,8 @@ class FixDerivationTest extends Specification {
       val qu = FOLAtom( "q", u :: Nil )
       val qv = FOLAtom( "q", v :: Nil )
 
-      val to = FOLClause( pa :: Nil, qx :: Nil )
-      val from = FOLClause( px :: py :: Nil, qu :: qv :: Nil )
+      val to = HOLClause( pa :: Nil, qx :: Nil )
+      val from = HOLClause( px :: py :: Nil, qu :: qv :: Nil )
 
       fixDerivation.tryDeriveByFactor( to, from ) must beSome
     }
@@ -59,10 +59,10 @@ class FixDerivationTest extends Specification {
       val r = FOLAtom( "r" )
 
       val der = Resolution( InputClause( Clause() :+ q :+ r ), Suc( 0 ), InputClause( q +: Clause() :+ p ), Ant( 0 ) )
-      val cq = FOLClause( Nil, q :: Nil )
-      val cqp = FOLClause( q :: Nil, p :: Nil )
+      val cq = HOLClause( Nil, q :: Nil )
+      val cqp = HOLClause( q :: Nil, p :: Nil )
 
-      val cp = FOLClause( Nil, p :: Nil )
+      val cp = HOLClause( Nil, p :: Nil )
 
       fixDerivation( der, cq :: cqp :: Nil ).conclusion must beEqualTo( cp )
     }
@@ -81,10 +81,10 @@ class FixDerivationTest extends Specification {
         ),
         Ant( 0 )
       )
-      val cq = FOLClause( Nil, q :: Nil )
-      val cqp = FOLClause( q :: Nil, p :: Nil )
+      val cq = HOLClause( Nil, q :: Nil )
+      val cqp = HOLClause( q :: Nil, p :: Nil )
 
-      val cp = FOLClause( Nil, p :: Nil )
+      val cp = HOLClause( Nil, p :: Nil )
 
       fixDerivation( der, cq :: cqp :: Nil ).conclusion must beEqualTo( cp )
     }
@@ -93,7 +93,7 @@ class FixDerivationTest extends Specification {
 
   "mapInputClauses" should {
     implicit def expr2atom( expr: LambdaExpression ): FOLAtom = expr.asInstanceOf[FOLAtom]
-    implicit def seq2cls[T <: LambdaExpression]( seq: Sequent[T] ): FOLClause = seq map { _.asInstanceOf[FOLAtom] }
+    implicit def seq2cls[T <: LambdaExpression]( seq: Sequent[T] ): HOLClause = seq map { _.asInstanceOf[FOLAtom] }
     implicit def sub2fol( sub: Substitution ): FOLSubstitution = FOLSubstitution( sub.map.asInstanceOf[Map[FOLVar, FOLTerm]] )
 
     "factor reordered clauses" in {
@@ -114,7 +114,7 @@ class FixDerivationTest extends Specification {
   }
 
   "findDerivationViaResolution" should {
-    def check( a: FOLClause, bs: Set[FOLClause] ) = {
+    def check( a: HOLClause, bs: Set[HOLClause] ) = {
       if ( !new Prover9Prover().isInstalled ) skipped
       findDerivationViaResolution( a, bs ) must beLike {
         case Some( p ) =>
@@ -126,38 +126,38 @@ class FixDerivationTest extends Specification {
     }
 
     "-q|p, q := p" in {
-      val a = FOLClause( Seq(), Seq( FOLAtom( "p" ) ) )
-      val bs = Set( FOLClause( Seq(), Seq( FOLAtom( "q" ) ) ), FOLClause( Seq( FOLAtom( "q" ) ), Seq( FOLAtom( "p" ) ) ) )
+      val a = HOLClause( Seq(), Seq( FOLAtom( "p" ) ) )
+      val bs = Set( HOLClause( Seq(), Seq( FOLAtom( "q" ) ) ), HOLClause( Seq( FOLAtom( "q" ) ), Seq( FOLAtom( "p" ) ) ) )
       check( a, bs )
     }
 
     "-p(x)|f(x,y)=y, p(a) := f(a,z)=z" in {
-      val a = FOLClause( Seq(), Seq( parseFormula( "f(a,z)=z" ) ) )
+      val a = HOLClause( Seq(), Seq( parseFormula( "f(a,z)=z" ) ) )
       val bs = Set(
-        FOLClause( Seq( parseFormula( "p(x)" ) ), Seq( parseFormula( "f(x,y)=y" ) ) ),
-        FOLClause( Seq(), Seq( parseFormula( "p(a)" ) ) )
+        HOLClause( Seq( parseFormula( "p(x)" ) ), Seq( parseFormula( "f(x,y)=y" ) ) ),
+        HOLClause( Seq(), Seq( parseFormula( "p(a)" ) ) )
       )
       check( a, bs )
     }
 
     "p|p|q := p|q" in {
-      val a = FOLClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "q" ) ) )
-      val bs = Set( FOLClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "p" ), FOLAtom( "q" ) ) ) )
+      val a = HOLClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "q" ) ) )
+      val bs = Set( HOLClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "p" ), FOLAtom( "q" ) ) ) )
       check( a, bs )
     }
 
     "p|q := p|p|q" in {
-      val a = FOLClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "p" ), FOLAtom( "q" ) ) )
-      val bs = Set( FOLClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "q" ) ) ) )
+      val a = HOLClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "p" ), FOLAtom( "q" ) ) )
+      val bs = Set( HOLClause( Seq(), Seq( FOLAtom( "p" ), FOLAtom( "q" ) ) ) )
       check( a, bs )
     }
 
     "requires factoring" in {
-      val a = FOLClause( Seq( FOLAtom( "p" ) ), Seq() )
+      val a = HOLClause( Seq( FOLAtom( "p" ) ), Seq() )
       val bs = Set(
-        FOLClause( Seq( FOLAtom( "p" ), FOLAtom( "q" ) ), Seq( FOLAtom( "r" ) ) ),
-        FOLClause( Seq( FOLAtom( "p" ) ), Seq( FOLAtom( "q" ), FOLAtom( "r" ) ) ),
-        FOLClause( Seq( FOLAtom( "p" ), FOLAtom( "r" ) ), Seq() )
+        HOLClause( Seq( FOLAtom( "p" ), FOLAtom( "q" ) ), Seq( FOLAtom( "r" ) ) ),
+        HOLClause( Seq( FOLAtom( "p" ) ), Seq( FOLAtom( "q" ), FOLAtom( "r" ) ) ),
+        HOLClause( Seq( FOLAtom( "p" ), FOLAtom( "r" ) ), Seq() )
       )
       check( a, bs )
     }
