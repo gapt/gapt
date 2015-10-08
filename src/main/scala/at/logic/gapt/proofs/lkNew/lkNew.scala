@@ -461,6 +461,8 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
   if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
     throw LKRuleCreationException( s"Auxiliar formulas are not the same." )
 
+  def cutFormula = leftPremise( aux1 )
+
   override def name = "cut"
 
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )

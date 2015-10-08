@@ -1,14 +1,14 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.proofs.{ FOLClause, SequentIndex }
+import at.logic.gapt.proofs.{ HOLClause, SequentIndex }
 import at.logic.gapt.proofs.lkNew.OccConnector
 import scala.collection.mutable
 
 object mapInputClauses {
-  def apply( proof: ResolutionProof )( f: FOLClause => ResolutionProof ): ResolutionProof = {
+  def apply( proof: ResolutionProof )( f: HOLClause => ResolutionProof ): ResolutionProof = {
     val memo = mutable.Map[ResolutionProof, ( ResolutionProof, OccConnector )]()
 
-    def guessConn( oldConcl: FOLClause, newConcl: FOLClause ): OccConnector = {
+    def guessConn( oldConcl: HOLClause, newConcl: HOLClause ): OccConnector = {
       val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
       OccConnector( newConcl, oldConcl, newConcl.zipWithIndex.map {
         case ( atom, newIdx ) =>

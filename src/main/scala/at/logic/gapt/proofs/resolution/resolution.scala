@@ -1,20 +1,19 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkNew.OccConnector
 
 /**
  * First-order resolution proof.
  *
- * Clauses are stored as sequents of FOLAtoms; the succedent consists of the
+ * Clauses are stored as sequents of HOLAtoms; the succedent consists of the
  * positive literals, the antecedent of the negative literals.
  *
  * Substitutions are not absorbed into resolution, factoring, and
  * paramodulation; they are explicitly represented using [[Instance]].
  */
-trait ResolutionProof extends SequentProof[FOLAtom, ResolutionProof]
+trait ResolutionProof extends SequentProof[HOLAtom, ResolutionProof]
 
 /**
  * Initial clause of a resolution proof.
@@ -40,7 +39,7 @@ trait InitialClause extends ResolutionProof {
  *   conclusion
  * </pre>
  */
-case class InputClause( conclusion: FOLClause ) extends InitialClause
+case class InputClause( conclusion: HOLClause ) extends InitialClause
 /**
  * Reflexivity.
  *
@@ -49,8 +48,8 @@ case class InputClause( conclusion: FOLClause ) extends InitialClause
  *   term = term
  * </pre>
  */
-case class ReflexivityClause( term: FOLTerm ) extends InitialClause {
-  override val conclusion = FOLClause() :+ Eq( term, term )
+case class ReflexivityClause( term: LambdaExpression ) extends InitialClause {
+  override val conclusion = Clause() :+ Eq( term, term )
 }
 /**
  * Tautology.
@@ -60,8 +59,8 @@ case class ReflexivityClause( term: FOLTerm ) extends InitialClause {
  *   -atom \/ atom
  * </pre>
  */
-case class TautologyClause( atom: FOLAtom ) extends InitialClause {
-  override val conclusion = atom +: FOLClause() :+ atom
+case class TautologyClause( atom: HOLAtom ) extends InitialClause {
+  override val conclusion = atom +: Clause() :+ atom
 }
 
 /**
@@ -74,8 +73,8 @@ case class TautologyClause( atom: FOLAtom ) extends InitialClause {
  *   substitution(premise)
  * </pre>
  */
-case class Instance( subProof: ResolutionProof, substitution: FOLSubstitution ) extends ResolutionProof {
-  override val conclusion = subProof.conclusion.map { substitution( _ ) }
+case class Instance( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
+  override val conclusion = subProof.conclusion.map { substitution( _ ).asInstanceOf[HOLAtom] }
   override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
     subProof.conclusion.indicesSequent map { Seq( _ ) } ) )
 
@@ -123,10 +122,10 @@ object Factor {
     }
   }
 
-  def apply( subProof: ResolutionProof, newConclusion: FOLClause ): ( ResolutionProof, OccConnector ) = {
+  def apply( subProof: ResolutionProof, newConclusion: HOLClause ): ( ResolutionProof, OccConnector ) = {
     var ( p, occConn ) = ( subProof, OccConnector( subProof.conclusion ) )
 
-    newConclusion.polarizedElements.toSet[( FOLAtom, Boolean )] foreach {
+    newConclusion.polarizedElements.toSet[( HOLAtom, Boolean )] foreach {
       case ( atom, pol ) =>
         val countInNewConcl = newConclusion.polarizedElements.count( _ == ( atom, pol ) )
         val countInOldConcl = subProof.conclusion.polarizedElements.count( _ == ( atom, pol ) )
@@ -220,15 +219,15 @@ case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
                            positions: Seq[LambdaPosition], leftToRight: Boolean ) extends ResolutionProof {
   require( equation isSuc )
   val ( t, s ) = ( subProof1.conclusion( equation ), leftToRight ) match {
-    case ( Eq( a: FOLTerm, b: FOLTerm ), true )  => ( a, b )
-    case ( Eq( a: FOLTerm, b: FOLTerm ), false ) => ( b, a )
+    case ( Eq( a, b ), true )  => ( a, b )
+    case ( Eq( a, b ), false ) => ( b, a )
   }
 
   positions foreach { position =>
     require( subProof2.conclusion( literal )( position ) == t )
   }
 
-  val rewrittenAtom = positions.foldLeft( subProof2.conclusion( literal ) ) { _.replace( _, s ).asInstanceOf[FOLAtom] }
+  val rewrittenAtom = positions.foldLeft( subProof2.conclusion( literal ) ) { _.replace( _, s ).asInstanceOf[HOLAtom] }
 
   override val conclusion = subProof1.conclusion.delete( equation ) ++
     subProof2.conclusion.updated( literal, rewrittenAtom )
@@ -248,7 +247,7 @@ case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
 object Paramodulation {
   def applyOption( subProof1: ResolutionProof, equation: SequentIndex,
                    subProof2: ResolutionProof, literal: SequentIndex,
-                   newAtom: FOLAtom, leftToRight: Boolean ): Option[Paramodulation] = {
+                   newAtom: HOLAtom, leftToRight: Boolean ): Option[Paramodulation] = {
     val ( t, s ) = ( subProof1.conclusion( equation ), leftToRight ) match {
       case ( Eq( a, b ), true )  => a -> b
       case ( Eq( a, b ), false ) => b -> a
@@ -261,7 +260,7 @@ object Paramodulation {
   }
   def apply( subProof1: ResolutionProof, equation: SequentIndex,
              subProof2: ResolutionProof, literal: SequentIndex,
-             newAtom: FOLAtom ): Paramodulation =
+             newAtom: HOLAtom ): Paramodulation =
     applyOption( subProof1, equation, subProof2, literal, newAtom, leftToRight = true ).
       orElse( applyOption( subProof1, equation, subProof2, literal, newAtom, leftToRight = false ) ).
       getOrElse {

@@ -9,7 +9,7 @@ object cleanStructuralRules {
   }
 
   private def apply_( proof: LKProof ): ( LKProof, Seq[HOLFormula], Seq[HOLFormula] ) = proof match {
-    case LogicalAxiom( _ ) | ReflexivityAxiom( _ ) | BottomAxiom | TopAxiom =>
+    case InitialSequent( _ ) =>
       ( proof, Seq(), Seq() )
 
     case WeakeningLeftRule( subProof, formula ) =>
@@ -353,7 +353,7 @@ object cleanStructuralRules {
         )
       else
         (
-          ExistsRightRule( subProofNew, All( quant, auxFormula ), eigen ),
+          ExistsLeftRule( subProofNew, Ex( quant, auxFormula ), eigen ),
           weakAnt,
           weakSuc
         )
@@ -468,8 +468,6 @@ object cleanStructuralRules {
           weakAnt,
           weakSuc
         )
-
-    case _ => throw new IllegalArgumentException( "This rule is not supported at this time." )
   }
 
 }

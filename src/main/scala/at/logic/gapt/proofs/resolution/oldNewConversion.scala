@@ -94,7 +94,7 @@ object resNew2Old {
           resOld -> resOld.root
         case Instance( subProof, subst ) =>
           val ( subProofOld, corr ) = f( subProof )
-          val resOld = robinson.Instance( subProofOld, subst )
+          val resOld = robinson.Instance( subProofOld, FOLSubstitution( subst.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } ) )
           resOld -> followOccs( Seq( corr ), resOld.root, res.occConnectors )
         case Factor( subProof, idx1, idx2 ) =>
           val ( subProofOld, corr ) = f( subProof )
@@ -108,7 +108,7 @@ object resNew2Old {
         case Paramodulation( subProof1, equation, subProof2, literal, positions, leftToRight ) =>
           val ( subProofOld1, corr1 ) = f( subProof1 )
           val ( subProofOld2, corr2 ) = f( subProof2 )
-          val resOld = robinson.Paramodulation( subProofOld1, subProofOld2, corr1( equation ), corr2( literal ), res.mainFormulas.head, FOLSubstitution() )
+          val resOld = robinson.Paramodulation( subProofOld1, subProofOld2, corr1( equation ), corr2( literal ), res.mainFormulas.head.asInstanceOf[FOLFormula], FOLSubstitution() )
           resOld -> followOccs( Seq( corr1, corr2 ), resOld.root, res.occConnectors )
       } ) )
 

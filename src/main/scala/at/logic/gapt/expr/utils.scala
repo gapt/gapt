@@ -9,6 +9,7 @@ import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lkNew.InitialSequent
 
+import scala.Predef
 import scala.collection.GenTraversable
 import scala.collection.mutable
 
@@ -89,8 +90,9 @@ object variables {
     case Abs( v, t ) => apply( v ) ++ apply( t )
   }
 
-  def apply( t: FOLTerm ): Set[FOLVar] = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
+  def apply( t: FOLExpression ): Set[FOLVar] = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
   def apply( s: HOLSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
+  def apply( s: Sequent[FOLFormula] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Set[FOLVar] = s.elements flatMap apply toSet
   def apply( s: OccSequent )( implicit dummy: DummyImplicit ): Set[Var] = apply( s.toHOLSequent )
   def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
   def apply( p: lkNew.LKProof ): Set[Var] = p match {

@@ -88,14 +88,14 @@ object IvyToRobinson {
         justification.conclusion match {
           case _ if freeVariables( rt ).isEmpty =>
             ( sym -> rt, ReflexivityClause( rt ) )
-          case HOLClause( Seq(), Seq( Eq( lhs: FOLTerm, rhs: FOLTerm ) ) ) if lhs == rt =>
+          case HOLClause( Seq(), Seq( Eq( lhs, rhs ) ) ) if lhs == rt =>
             // FIXME: probably still has name clashes if there are multiple new_symbol inferences
-            val subst = FOLSubstitution( rename( freeVariables( rhs ), variablesInProof ) )
+            val subst = Substitution( rename( freeVariables( rhs ), variablesInProof ) )
             ( sym -> subst( rhs ), Instance( justification, subst ) )
         }
     }.unzip
 
-    val proofWithoutNewSymbols = TermReplacement( proof, newSymbols.toMap[FOLTerm, FOLTerm] )
+    val proofWithoutNewSymbols = TermReplacement( proof, newSymbols.toMap[LambdaExpression, LambdaExpression] )
 
     mapInputClauses( proofWithoutNewSymbols ) { cls =>
       justifications.find { _.conclusion == cls } getOrElse { InputClause( cls ) }

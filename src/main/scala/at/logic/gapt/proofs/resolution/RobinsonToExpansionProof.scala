@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
 import at.logic.gapt.expr.hol.{ CNFn, CNFp, univclosure }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, formulaToExpansionTree }
@@ -10,44 +9,38 @@ import scala.collection.mutable
 
 object RobinsonToExpansionProof {
   def apply( p: ResolutionProof, es: HOLSequent ): ExpansionSequent = {
-    val dummyConstant = rename( FOLConst( "arbitrary" ), constants( es ).toList )
-    val cnfMap: Seq[( HOLClause, Boolean, FOLFormula )] =
-      es.map( f => toVNF( f ).asInstanceOf[FOLFormula] ).map(
+    val cnfMap: Map[HOLClause, Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )]] =
+      es.map( f => toVNF( f ).asInstanceOf[HOLFormula] ).map(
         ant => CNFp.toClauseList( ant ).map { ( _, false, ant ) },
         suc => CNFn.toFClauseList( suc ).map { ( _, true, suc ) }
-      ).elements.flatten
-    apply_( p, clause =>
-      Set( cnfMap.view.flatMap {
-        case ( cnfClause, pol, formula ) =>
-          FOLMatchingAlgorithm.matchTerms(
-            cnfClause.toFormula.asInstanceOf[FOLFormula],
-            clause.toFormula.asInstanceOf[FOLFormula]
-          ) map { subst =>
-            ( pol, formula,
-              variables( formula ).map( _.asInstanceOf[FOLVar] -> dummyConstant ).toMap
-              ++ variables( cnfClause ).map( _.asInstanceOf[FOLVar] ).map( v => v -> subst( v ) ) )
-          }
-      }.head ) )
+      ).elements.flatten.groupBy( _._1 ).mapValues {
+          _ map {
+            case ( cnfClause, pol, formula ) =>
+              ( pol, formula,
+                variables( formula ).map( v => v -> Const( "arbitrary", v.exptype ) ).toMap
+                ++ variables( cnfClause ).map( v => v -> v ) )
+          } toSet
+        }
+    apply_( p, cnfMap )
   }
 
   def apply( p: ResolutionProof ): ExpansionSequent =
     apply_( p, clause => Set(
       ( false,
-        univclosure( clause.toFormula.asInstanceOf[FOLFormula] ),
-        freeVariables( clause.toFormula.asInstanceOf[FOLFormula] ).map { v => v -> v }.toMap )
+        univclosure( clause.toFormula ),
+        freeVariables( clause.toFormula ).map { v => v -> v }.toMap )
     ) )
 
-  private def apply_( p: ResolutionProof, instForIC: FOLClause => Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] ): ExpansionSequent = {
+  private def apply_( p: ResolutionProof, instForIC: HOLClause => Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )] ): ExpansionSequent = {
     val inst = getInstances( p, instForIC )
-    val dummyConstant = rename( FOLConst( "arbitrary" ), inst.map( _._2 ).flatMap( constants( _ ) ).toList )
 
     // Expansion trees require instance terms not to contain the quantified variables.
     // Hence we ground the instance substitutions here.
     // FIXME: maybe just rename the variables?
     val instSubsts = inst.map {
       case ( pol, formula, subst ) =>
-        val ground = FOLSubstitution( freeVariables( subst.values ).map( _ -> dummyConstant ) )
-        ( pol, formula, FOLSubstitution( subst mapValues { ground( _ ) } ) )
+        val ground = Substitution( freeVariables( subst.values ).map( v => v -> Const( "arbitrary", v.exptype ) ) )
+        ( pol, formula, Substitution( subst mapValues { ground( _ ) } ) )
     }
 
     Sequent(
@@ -62,10 +55,10 @@ object RobinsonToExpansionProof {
     )
   }
 
-  private def getInstances( p: ResolutionProof, instForIC: FOLClause => Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] ): Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] = {
-    val substMap = mutable.Map[ResolutionProof, Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )]]()
+  private def getInstances( p: ResolutionProof, instForIC: HOLClause => Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )] ): Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )] = {
+    val substMap = mutable.Map[ResolutionProof, Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )]]()
 
-    def getInst( node: ResolutionProof ): Set[( Boolean, FOLFormula, Map[FOLVar, FOLTerm] )] =
+    def getInst( node: ResolutionProof ): Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )] =
       substMap.getOrElseUpdate( node, node match {
         case InputClause( clause ) =>
           instForIC( clause )

@@ -7,13 +7,6 @@ import at.logic.gapt.proofs._
 
 /**
  * Given a sequent s and a clause a in CNF(-s), PCNF computes an LK proof of a subsequent of s ++ a containing at least a
- *
- * Note about checking containment up to variables renaming:
- * we compute the variable renaming from the lk proof to the resolution proof for a specific clause. We cannot apply it to the formula in s
- * as it might be quantified over this variables so we apply it to the resulted lk proof. We must apply it as otherwise the substitution in
- * the resolution to lk transformation will not be applied to these clauses. In the weakenings application at the end of this method we try
- * to apply it to the formulas as well as if it is quantified over these variables, it will be also quantified in the proof so no damage
- * done.
  */
 object PCNF {
   /**
@@ -25,11 +18,10 @@ object PCNF {
     ( for (
       ( f, idx ) <- s.zipWithIndex.elements;
       cnfClause <- if ( idx isAnt ) CNFp.toClauseList( f ) else CNFn.toFClauseList( f );
-      matching <- syntacticMatching( cnfClause toFormula, a toFormula )
+      if cnfClause == a
     ) yield {
       val pcnf = if ( idx isAnt ) PCNFp( f, cnfClause ) else PCNFn( f, cnfClause )
-      val p = applySubstitution( matching )( pcnf )
-      ContractionMacroRule( p, s ++ a, strict = false )
+      ContractionMacroRule( pcnf, s ++ a, strict = false )
     } ) head
 
   /**
