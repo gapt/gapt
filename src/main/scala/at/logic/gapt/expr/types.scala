@@ -45,7 +45,7 @@ object -> {
 // convenience function to create function types
 // with argument types from and return type to
 object FunctionType {
-  def apply( to: TA, from: List[TA] ): TA = if ( !from.isEmpty ) from.foldRight( to )( ( t, acc ) => t -> acc ) else to
+  def apply( to: TA, from: Seq[TA] ): TA = if ( !from.isEmpty ) from.foldRight( to )( ( t, acc ) => t -> acc ) else to
   def unapply( ta: TA ): Option[Tuple2[TA, List[TA]]] = ta match {
     case TAtomicA( _ )              => Some( ta, Nil )
     case `->`( t1, TAtomicA( t2 ) ) => Some( t2, t1 :: Nil )
