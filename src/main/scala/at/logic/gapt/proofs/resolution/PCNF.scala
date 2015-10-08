@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs._
 
 /**
- * Given a sequent s and a clause a in CNF(-s), PCNF computes an LK proof of s ++ a
+ * Given a sequent s and a clause a in CNF(-s), PCNF computes an LK proof of a subsequent of s ++ a containing at least a
  *
  * Note about checking containment up to variables renaming:
  * we compute the variable renaming from the lk proof to the resolution proof for a specific clause. We cannot apply it to the formula in s
@@ -19,7 +19,7 @@ object PCNF {
   /**
    * @param s a sequent not containing strong quantifiers
    * @param a a clause in the CNF of -s
-   * @return an LK proof of s ++ a
+   * @return an LK proof of a subsequent of s ++ a containing at least a
    */
   def apply( s: HOLSequent, a: HOLClause ): LKProof =
     ( for (
@@ -29,7 +29,7 @@ object PCNF {
     ) yield {
       val pcnf = if ( idx isAnt ) PCNFp( f, cnfClause ) else PCNFn( f, cnfClause )
       val p = applySubstitution( matching )( pcnf )
-      WeakeningContractionMacroRule( p, s ++ a, strict = true )
+      ContractionMacroRule( p, s ++ a, strict = false )
     } ) head
 
   /**

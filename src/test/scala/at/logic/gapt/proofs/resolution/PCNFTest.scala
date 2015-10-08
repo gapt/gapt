@@ -11,7 +11,7 @@ class PCNFTest extends Specification {
 
   def checkPCNF( sequent: HOLSequent, clause: HOLClause ) = {
     val projection = PCNF( sequent, clause )
-    projection.endSequent multiSetEquals ( sequent ++ clause ) aka s"${projection.endSequent} multiSetEquals ($sequent ++ $clause)" must_== true
+    projection.endSequent isSubMultisetOf ( sequent ++ clause ) aka s"${projection.endSequent} isSubMultisetOf ($sequent ++ $clause)" must_== true
     projection.subProofs filter { _.isInstanceOf[ArbitraryAxiom] } must beEmpty
   }
 
