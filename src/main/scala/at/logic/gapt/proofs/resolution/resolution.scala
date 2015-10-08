@@ -74,7 +74,7 @@ case class TautologyClause( atom: HOLAtom ) extends InitialClause {
  * </pre>
  */
 case class Instance( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
-  override val conclusion = subProof.conclusion.map { substitution( _ ) }
+  override val conclusion = subProof.conclusion.map { substitution( _ ).asInstanceOf[HOLAtom] }
   override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
     subProof.conclusion.indicesSequent map { Seq( _ ) } ) )
 

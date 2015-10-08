@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
+import at.logic.gapt.expr.HOLAtom
 import at.logic.gapt.proofs.HOLClause
 
 import scala.collection.mutable
@@ -13,7 +14,7 @@ object simplifyResolutionProof {
         case _: InitialClause => Factor( p )._1
         case Instance( p1, subst1 ) => simplified( p1.conclusion ) match {
           case Instance( q2, subst2 )    => Factor( Instance( q2, subst1 compose subst2 ) )._1
-          case TautologyClause( atom )   => TautologyClause( subst1( atom ) )
+          case TautologyClause( atom )   => TautologyClause( subst1( atom ).asInstanceOf[HOLAtom] )
           case ReflexivityClause( term ) => ReflexivityClause( subst1( term ) )
           case q1                        => Factor( Instance( q1, subst1 ) )._1
         }
