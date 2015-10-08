@@ -311,7 +311,7 @@ object cleanStructuralRules {
       val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val auxFormula = proof.auxFormulas.head.head
 
-      if ( weakSuc contains auxFormula )
+      if ( weakAnt contains auxFormula )
         (
           subProofNew,
           All( v, f ) +: weakAnt.diff( Seq( auxFormula ) ),
@@ -345,7 +345,7 @@ object cleanStructuralRules {
       val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )
       val auxFormula = proof.auxFormulas.head.head
 
-      if ( weakSuc contains auxFormula )
+      if ( weakAnt contains auxFormula )
         (
           subProofNew,
           Ex( quant, auxFormula ) +: weakAnt.diff( Seq( auxFormula ) ),
