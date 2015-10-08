@@ -1,7 +1,7 @@
 
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.examples.LinearExampleProof
+import at.logic.gapt.examples.{ LinearExampleProofNew, LinearExampleProof }
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.HOLSequent
@@ -57,7 +57,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
     "perform cut introduction on an example proof" in {
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
-      val p = LinearExampleProof( 7 )
+      val p = LinearExampleProofNew( 7 )
       CutIntroduction.one_cut_one_quantifier( p, false )
       Success()
     }
@@ -104,12 +104,12 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
-      val p = LinearExampleProof( 4 )
+      val p = LinearExampleProofNew( 4 )
       val Some( pi ) = CutIntroduction.one_cut_one_quantifier( p, false )
-      val pe = ReductiveCutElim( pi )
+      val pe = ReductiveCutElim( lkNew2Old( pi ) )
 
-      ReductiveCutElim.isCutFree( p ) must beEqualTo( true )
-      ReductiveCutElim.isCutFree( pi ) must beEqualTo( false )
+      ReductiveCutElim.isCutFree( lkNew2Old( p ) ) must beEqualTo( true )
+      ReductiveCutElim.isCutFree( lkNew2Old( pi ) ) must beEqualTo( false )
       ReductiveCutElim.isCutFree( pe ) must beEqualTo( true )
     }
 
@@ -119,10 +119,10 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
       val testFilePath = tempCopyOfClasspathFile( "SYN726-1.out" )
       val p1 = new Prover9Prover().reconstructLKProofFromFile( testFilePath )
-      val Some( p2 ) = CutIntroduction.one_cut_many_quantifiers( lkNew2Old( p1 ), false )
-      val p3 = ReductiveCutElim( p2 )
+      val Some( p2 ) = CutIntroduction.one_cut_many_quantifiers( p1, false )
+      val p3 = ReductiveCutElim( lkNew2Old( p2 ) )
 
-      ReductiveCutElim.isCutFree( p2 ) must beEqualTo( false )
+      ReductiveCutElim.isCutFree( lkNew2Old( p2 ) ) must beEqualTo( false )
       ReductiveCutElim.isCutFree( p3 ) must beEqualTo( true )
     }
 

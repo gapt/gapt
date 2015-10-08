@@ -1,10 +1,12 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.examples.LinearExampleProof
+import at.logic.gapt.examples.LinearExampleProofNew
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.Ant
+import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
 import at.logic.gapt.proofs.lk.cutIntroduction._
+import at.logic.gapt.proofs.lkNew.quantRulesNumber
 import at.logic.gapt.provers.basicProver.BasicProver
 import at.logic.gapt.provers.prover9.Prover9Prover
 import org.specs2.mutable._
@@ -19,20 +21,20 @@ class CutIntroTest extends Specification {
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
-      val proof = LinearExampleProof( 4 )
+      val proof = LinearExampleProofNew( 4 )
 
-      val termset = TermsExtraction( proof )
-      val set = termset.set.foldRight( List[FOLTerm]() )( ( t, acc ) => termset.getTermTuple( t ) ++ acc )
+      val ( termset, _ ) = InstanceTermEncoding( proof )
+      val set = termset collect { case FOLFunction( _, List( arg ) ) => arg }
 
       CutIntroduction.one_cut_one_quantifier( proof, false ) must beSome
 
       set must contain( exactly( LinearExampleTermset( 4 ): _* ) )
     }
 
-    "introduce two cuts into linear example proof (n = 8)" in {
+    "introduce two cuts into linear example proof" in {
       def fun( n: Int, t: FOLTerm ): FOLTerm = if ( n == 0 ) t else FOLFunction( "s", fun( n - 1, t ) :: Nil )
-      val proof = LinearExampleProof( 8 )
-      val f = proof.root.antecedent.tail.head.formula.asInstanceOf[FOLFormula]
+      val proof = LinearExampleProofNew( 8 )
+      val f = proof.endSequent( Ant( 0 ) ).asInstanceOf[FOLFormula]
       val a1 = FOLVar( "α_1" )
       val a2 = FOLVar( "α_2" )
       val zero = FOLConst( "0" )
@@ -47,7 +49,7 @@ class CutIntroTest extends Specification {
 
       val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
       val grammar = new MultiGrammar( us, ss )
-      val endSequent = proof.root.toHOLSequent
+      val endSequent = proof.endSequent
       val ehs = new ExtendedHerbrandSequent( endSequent, grammar )
       val prover = new BasicProver()
       val result_new = MinimizeSolution( ehs, prover )
@@ -59,7 +61,7 @@ class CutIntroTest extends Specification {
 
       result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
 
-      at.logic.gapt.proofs.lk.quantRulesNumber( r_proof.get ) must beEqualTo( grammar.size + ss.size )
+      quantRulesNumber( r_proof.get ) must beEqualTo( grammar.size + ss.size )
     }
   }
 }

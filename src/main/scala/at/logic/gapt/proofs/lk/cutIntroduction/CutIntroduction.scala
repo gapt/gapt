@@ -6,11 +6,9 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.{ findMinimalVectGrammar, VectTratGrammar }
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, _ }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.getStatistics
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lk.ExtractInterpolant
+import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
-import at.logic.gapt.proofs.lkNew.lkNew2Old
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
@@ -262,14 +260,14 @@ object CutIntroduction extends Logger {
     }
 
     val proof = metrics.time( "cleanproof" ) {
-      CleanStructuralRules( proofWithStructuralRules )
+      cleanStructuralRules( proofWithStructuralRules )
     }
 
-    metrics.value( "lkcuts_output", getStatistics( proof ).cuts )
+    metrics.value( "lkcuts_output", cutsNumber( proof ) )
     metrics.value( "lkinf_output", rulesNumber( proof ) )
     metrics.value( "lkquant_output", quantRulesNumber( proof ) )
     if ( verbose ) {
-      println( s"Number of cuts introduced: ${getStatistics( proof ).cuts}" )
+      println( s"Number of cuts introduced: ${cutsNumber( proof )}" )
       println( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
       println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )
     }
@@ -281,7 +279,7 @@ object CutIntroduction extends Logger {
     compressToEHS( ep, hasEquality, method, verbose ) map { constructLKProof( _, hasEquality, verbose ) }
 
   def compressLKProof( p: LKProof, method: GrammarFindingMethod = DeltaTableMethod( manyQuantifiers = false ), verbose: Boolean = false ): Option[LKProof] = {
-    val clean_proof = CleanStructuralRules( p )
+    val clean_proof = cleanStructuralRules( p )
 
     if ( verbose )
       println( s"Total inferences in the input proof: ${rulesNumber( clean_proof )}" )
@@ -475,10 +473,10 @@ object CutIntroduction extends Logger {
     trace( "R: " + R )
 
     // we need a proof of L_1
-    val Lproof = prover.getLKProof( L1 ) map { lkNew2Old( _ ) }
+    val Lproof = prover.getLKProof( L1 )
 
     // we need proofs of R_1, ..., R_n
-    val Rproofs = R.map( s => prover.getLKProof( s ) map { lkNew2Old( _ ) } )
+    val Rproofs = R.map( s => prover.getLKProof( s ) )
 
     ( ( Rproofs :+ Lproof ) zip ( R :+ L1 ) ).foreach {
       case ( None, seq ) => throw new CutIntroEHSUnprovableException( "ERROR: propositional part is not provable: " + seq )
@@ -496,9 +494,7 @@ object CutIntroduction extends Logger {
     // of L_1, R_1, ..., R_n with appropriate inference rules as in the paper.
     val proof = ( 0 to alphas.size - 1 ).foldLeft( Lproof_ )( ( lproof, i ) => {
       val left = buildLeftPart( i, quantPart, Aprime, Uleft, Uright, alphas, cutFormulasPrime( i ), lproof )
-      trace( " Rproofs_( " + i + " ).root: " + Rproofs_( i ).root )
       val right = buildRightPart( Rproofs_( i ), cutFormulasPrime( i ), grammar.ss( i )._2 )
-      trace( "right part ES: " + right.root )
       val cut = CutRule( left, right, cutFormulasPrime( i ) )
       val cont1 = ContractionMacroRule( cut, FU( i + 1 ), false )
       val cont2 = ContractionMacroRule( cont1, HOLSequent( ehs.prop_l, ehs.prop_r ), false )
@@ -510,8 +506,6 @@ object CutIntroduction extends Logger {
 
     val proof_ = finish( proof, quantPart.antecedent.asInstanceOf[Seq[FOLFormula]], Uleft( alphas.size ) )
     val proof__ = finish( proof_, quantPart.succedent.asInstanceOf[Seq[FOLFormula]], Uright( alphas.size ) )
-
-    trace( "proof__.root: " + proof__.root )
 
     Some( proof__ )
   }
@@ -527,18 +521,9 @@ object CutIntroduction extends Logger {
    */
   private def buildLeftPart( i: Int, es: HOLSequent, A: Seq[FOLFormula], Uleft: Seq[Seq[Seq[Seq[FOLTerm]]]], Uright: Seq[Seq[Seq[Seq[FOLTerm]]]], alphas: Seq[Seq[FOLVar]], cf: FOLFormula, proof: LKProof ) =
     {
-      trace( "in buildLeftPart" )
-      trace( "Uleft( " + i + " ): " + Uleft( i ) )
-      trace( "Uleft( " + ( i + 1 ) + " ): " + Uleft( i + 1 ) )
-      trace( "es: " + proof.root )
       def myWeakQuantRules( proof: LKProof, fs: Seq[FOLFormula], instances: Seq[Tuple2[Seq[Seq[FOLTerm]], Seq[Seq[FOLTerm]]]] ) =
         ( fs zip instances ).foldLeft( proof ) {
           case ( proof, ( f, ( ui, uip ) ) ) => {
-            trace( "in myWeakQuantRules" )
-            trace( "f: " + f )
-            trace( "ui: " + ui )
-            trace( "uip: " + uip )
-            trace( "ui diff uip: " + ( ui diff uip ) )
             genWeakQuantRules( f, ui diff uip, proof )
           }
         }
