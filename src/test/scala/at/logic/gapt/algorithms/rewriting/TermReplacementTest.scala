@@ -1,10 +1,9 @@
 package at.logic.gapt.algorithms.rewriting
 
+import at.logic.gapt.proofs.{ Ant, Suc, Clause }
 import org.specs2.mutable._
 import at.logic.gapt.expr.fol._
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolutionOld._
-import at.logic.gapt.proofs.resolutionOld.robinson._
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
 
 /**
@@ -29,48 +28,39 @@ class TermReplacementTest extends Specification {
   val hc = FOLFunction( "h", FOLConst( "c0" ) :: Nil )
 
   object proof1 {
-    val s1 = FOLSubstitution( Map( x -> a ) )
-    val s2 = FOLSubstitution( Map( x -> fl ) )
-    val p1 = InitialClause( List( c1, c1 ), List( c3 ) )
-    val p2 = InitialClause( Nil, List( c2 ) )
-    val p3 = InitialClause( List( c4 ), Nil )
-    val p5 = Resolution( p2, p1, p2.root.positive( 0 ), p1.root.negative( 1 ), s1 )
-    val p6 = Resolution( p5, p3, p5.root.positive( 0 ), p3.root.negative( 0 ), s2 )
-    val p7 = Resolution( p2, p6, p2.root.positive( 0 ), p6.root.negative( 0 ), s1 )
+    val p1 = InputClause( c1 +: c1 +: Clause() :+ c3 )
+    val p2 = InputClause( Clause() :+ c2 )
+    val p3 = InputClause( c4 +: Clause() )
+    val p5 = MguResolution( p2, Suc( 0 ), p1, Ant( 1 ) )
+    val p6 = MguResolution( p5, Suc( 0 ), p3, Ant( 0 ) )
+    val p7 = MguResolution( p2, Suc( 0 ), p6, Ant( 0 ) )
   }
 
   object proof2 {
-    val r1 = FOLSubstitution( Map( x -> a ) )
-    val r2 = FOLSubstitution( Map( x -> hc ) )
-    val q1 = InitialClause( List( d1, d1 ), List( d3 ) )
-    val q2 = InitialClause( Nil, List( d2 ) )
-    val q3 = InitialClause( List( d4 ), Nil )
-    val q5 = Resolution( q2, q1, q2.root.positive( 0 ), q1.root.negative( 1 ), r1 )
-    val q6 = Resolution( q5, q3, q5.root.positive( 0 ), q3.root.negative( 0 ), r2 )
-    val q7 = Resolution( q2, q6, q2.root.positive( 0 ), q6.root.negative( 0 ), r1 )
+    val q1 = InputClause( d1 +: d1 +: Clause() :+ d3 )
+    val q2 = InputClause( Clause() :+ d2 )
+    val q3 = InputClause( d4 +: Clause() )
+    val q5 = MguResolution( q2, Suc( 0 ), q1, Ant( 1 ) )
+    val q6 = MguResolution( q5, Suc( 0 ), q3, Ant( 0 ) )
+    val q7 = MguResolution( q2, Suc( 0 ), q6, Ant( 0 ) )
   }
 
   object proof3 {
-    val s1 = FOLSubstitution( Map( x -> a ) )
-    val s2 = FOLSubstitution( Map( x -> fl ) )
-    val p0 = InitialClause( List( c1, c2 ), List( c3 ) )
-    val p1 = Factor( p0, p0.root.negative( 1 ), p0.root.negative( 0 ) :: Nil, FOLSubstitution() )
-    val p2 = InitialClause( Nil, List( c2 ) )
-    val p3 = InitialClause( List( c4 ), Nil )
-    val p5 = Resolution( p2, p1, p2.root.positive( 0 ), p1.root.negative( 0 ), s1 )
-    val p6 = Resolution( p5, p3, p5.root.positive( 0 ), p3.root.negative( 0 ), s2 )
+    val p0 = InputClause( c1 +: c2 +: Clause() :+ c3 )
+    val p1 = Factor( p0, Ant( 0 ), Ant( 1 ) )
+    val p2 = InputClause( Clause() :+ c2 )
+    val p3 = InputClause( c4 +: Clause() )
+    val p5 = MguResolution( p2, Suc( 0 ), p1, Ant( 0 ) )
+    val p6 = MguResolution( p5, Suc( 0 ), p3, Ant( 0 ) )
   }
 
   object proof4 {
-    val r1 = FOLSubstitution( Map( x -> a ) )
-    val r2 = FOLSubstitution( Map( x -> hc ) )
-    val r3 = FOLSubstitution()
-    val q0 = InitialClause( List( d1, d2 ), List( d3 ) )
-    val q1 = Factor( q0, q0.root.negative( 0 ), q0.root.negative( 1 ) :: Nil, r2 )
-    val q2 = InitialClause( Nil, List( d2 ) )
-    val q3 = InitialClause( List( d4 ), Nil )
-    val q5 = Resolution( q2, q1, q2.root.positive( 0 ), q1.root.negative( 0 ), r1 )
-    val q6 = Resolution( q5, q3, q5.root.positive( 0 ), q3.root.negative( 0 ), r2 )
+    val q0 = InputClause( d1 +: d2 +: Clause() :+ d3 )
+    val q1 = MguFactor( q0, Ant( 0 ), Ant( 1 ) )
+    val q2 = InputClause( Clause() :+ d2 )
+    val q3 = InputClause( d4 +: Clause() )
+    val q5 = MguResolution( q2, Suc( 0 ), q1, Ant( 0 ) )
+    val q6 = MguResolution( q5, Suc( 0 ), q3, Ant( 0 ) )
 
   }
 
@@ -107,19 +97,19 @@ class TermReplacementTest extends Specification {
       val t1 = FOLFunction( "replacement", FOLVar( "x0" ) :: FOLVar( "y0" ) :: Nil )
       val t2 = FOLFunction( "really", FOLVar( "x1" ) :: Nil )
 
-      val map: RenameResproof.SymbolMap = RenameResproof.emptySymbolMap ++ List( ( a, t1 ), ( hc, t2 ) )
+      val map = Map( a -> t1, hc -> t2 )
 
-      val initial = RenameResproof.rename_resproof( proof4.q0, Set[RobinsonResolutionProof](), map )
+      val initial = TermReplacement( proof4.q0, map )
 
       val r1 = FOLAtom( "R", FOLFunction( "f", t1 :: Nil ) :: Nil )
       val r2 = FOLAtom( "R", FOLFunction( "f", FOLVar( "x" ) :: Nil ) :: Nil )
       val r3 = FOLAtom( "Q", t2 :: Nil )
 
-      initial.root.occurrences.toList.map( _.formula ) must_== ( List( r1, r2, r3 ) )
+      initial.conclusion must_== ( r1 +: r2 +: Clause() :+ r3 )
 
-      val more = RenameResproof.rename_resproof( proof4.q6, Set[RobinsonResolutionProof](), map )
+      val more = TermReplacement( proof4.q6, map )
 
-      true must beTrue
+      ok
     }
   }
 }
