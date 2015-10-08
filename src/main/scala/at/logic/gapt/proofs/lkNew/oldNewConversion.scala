@@ -27,7 +27,7 @@ object lkNew2Old {
       val ax = lk.Axiom( Seq( Bottom() ), Seq() )
       testCorrectness( ax, proof, ax.root )
 
-    case ArbitraryAxiom( sequent ) =>
+    case TheoryAxiom( sequent ) =>
       val ax = lk.Axiom( sequent )
       testCorrectness( ax, proof, ax.root )
 

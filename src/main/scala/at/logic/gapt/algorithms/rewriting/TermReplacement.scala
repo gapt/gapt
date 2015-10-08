@@ -111,7 +111,7 @@ object TermReplacement extends Logger {
       case BottomAxiom => BottomAxiom
       case ReflexivityAxiom( term ) => ReflexivityAxiom( apply( term, repl ) )
       case LogicalAxiom( atom ) => LogicalAxiom( apply( atom, repl ) )
-      case ArbitraryAxiom( clause ) => ArbitraryAxiom( clause map { apply( _, repl ) } )
+      case TheoryAxiom( clause ) => TheoryAxiom( clause map { apply( _, repl ) } )
 
       case WeakeningLeftRule( subProof, formula ) => WeakeningLeftRule( f( subProof ), apply( formula, repl ) )
       case WeakeningRightRule( subProof, formula ) => WeakeningRightRule( f( subProof ), apply( formula, repl ) )

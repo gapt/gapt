@@ -28,7 +28,7 @@ object RobinsonToLK {
    *          where all ArbitraryAxioms occur as InputClauses in resolutionDerivation.
    */
   def apply( resolutionDerivation: ResolutionProof ): LKProof =
-    apply( resolutionDerivation, resolutionDerivation.conclusion, ArbitraryAxiom )
+    apply( resolutionDerivation, resolutionDerivation.conclusion, TheoryAxiom )
 
   /**
    * Converts a resolution derivation into an LK proof.

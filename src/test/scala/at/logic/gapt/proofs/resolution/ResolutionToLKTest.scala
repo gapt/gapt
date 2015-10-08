@@ -120,7 +120,7 @@ class ResolutionToLKTest extends Specification {
         val p1 = InputClause( Pfa +: Px +: Pfy +: Clause() )
         val resProof = Factor( Instance( p1, FOLSubstitution( x -> fa, y -> a ) ), Seq( Ant( 1 ), Ant( 0 ), Ant( 2 ) ) )._1
 
-        val l1 = ArbitraryAxiom( Pfa +: Pfa +: Pfa +: Sequent() )
+        val l1 = TheoryAxiom( Pfa +: Pfa +: Pfa +: Sequent() )
         val l2 = ContractionLeftRule( l1, Ant( 0 ), Ant( 1 ) )
         val lkProof = ContractionLeftRule( l2, Ant( 0 ), Ant( 1 ) )
         RobinsonToLK( resProof ) must_== lkProof
@@ -134,7 +134,7 @@ class ResolutionToLKTest extends Specification {
         val p1 = InputClause( Px +: Clause() )
         val resProof = Instance( p1, FOLSubstitution( x -> y ) )
 
-        val lkProof = ArbitraryAxiom( Py +: Sequent() )
+        val lkProof = TheoryAxiom( Py +: Sequent() )
         RobinsonToLK( resProof ) must_== lkProof
       }
       "containing a resolution clause" in {
@@ -152,8 +152,8 @@ class ResolutionToLKTest extends Specification {
         val p2 = InputClause( Pffa +: Clause() :+ Pfa )
         val resProof = Resolution( p2, Suc( 0 ), Instance( p1, FOLSubstitution( x -> fa ) ), Ant( 0 ) )
 
-        val l1 = ArbitraryAxiom( Pfa +: Sequent() :+ Pffa )
-        val l2 = ArbitraryAxiom( Pffa +: Sequent() :+ Pfa )
+        val l1 = TheoryAxiom( Pfa +: Sequent() :+ Pffa )
+        val l2 = TheoryAxiom( Pffa +: Sequent() :+ Pfa )
         val lkProof = CutRule( l2, Suc( 0 ), l1, Ant( 0 ) )
         RobinsonToLK( resProof ) must_== lkProof
       }
@@ -170,8 +170,8 @@ class ResolutionToLKTest extends Specification {
         val p2 = InputClause( Pfa +: Clause() )
         val resProof = Paramodulation( Instance( p1, FOLSubstitution( x -> a ) ), Suc( 0 ), p2, Ant( 0 ), Pfb )
 
-        val l1 = ArbitraryAxiom( Sequent() :+ eab )
-        val l2 = ArbitraryAxiom( Pfa +: Sequent() )
+        val l1 = TheoryAxiom( Sequent() :+ eab )
+        val l2 = TheoryAxiom( Pfa +: Sequent() )
         val lkProof = ParamodulationLeftRule( l1, l1.conclusion( Suc( 0 ) ), l2, l2.conclusion( Ant( 0 ) ), Pfb )
         RobinsonToLK( resProof ) must_== lkProof
       }
@@ -188,8 +188,8 @@ class ResolutionToLKTest extends Specification {
         val p2 = InputClause( Pfa +: Clause() )
         val resProof = Paramodulation( Instance( p1, FOLSubstitution( x -> a ) ), Suc( 0 ), p2, Ant( 0 ), Pfb )
 
-        val l1 = ArbitraryAxiom( Sequent() :+ eba )
-        val l2 = ArbitraryAxiom( Pfa +: Sequent() )
+        val l1 = TheoryAxiom( Sequent() :+ eba )
+        val l2 = TheoryAxiom( Pfa +: Sequent() )
         val lkProof = ParamodulationLeftRule( l1, l1.conclusion( Suc( 0 ) ), l2, l2.conclusion( Ant( 0 ) ), Pfb )
         RobinsonToLK( resProof ) must_== lkProof
       }

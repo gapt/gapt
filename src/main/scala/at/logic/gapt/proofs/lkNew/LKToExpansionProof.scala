@@ -29,7 +29,7 @@ object LKToExpansionProof extends Logger {
 
     case BottomAxiom                             => Sequent( Seq( ETBottom ), Seq() )
 
-    case ArbitraryAxiom( sequent )               => sequent map { i => ETAtom( i ) }
+    case TheoryAxiom( sequent )                  => sequent map { i => ETAtom( i ) }
 
     // Structural rules
     case WeakeningLeftRule( subProof, formula )  => ETWeakening( formula ) +: apply( subProof )
