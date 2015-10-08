@@ -11,6 +11,7 @@ import at.logic.gapt.formats.prover9.{ Prover9TermParserLadrStyle, Prover9TermPa
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkNew.lkNew2Old
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
@@ -162,7 +163,7 @@ object Prover9Importer extends ExternalProgram {
 
   def lkProof( p9Output: String ): LKProof = {
     val ( fixedResProof, endSequent ) = robinsonProofWithReconstructedEndSequent( p9Output )
-    RobinsonToLK( fixedResProof, endSequent )
+    lkNew2Old( RobinsonToLK( fixedResProof, endSequent ) )
   }
 
   def expansionProofFromFile( p9File: String ): ExpansionSequent =

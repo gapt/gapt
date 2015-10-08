@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
+import at.logic.gapt.proofs.lkNew.{ lkOld2New, lkNew2Old }
+import at.logic.gapt.proofs.resolution.{ resNew2Old, ResolutionProof, RobinsonToLK }
 import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.expr._
@@ -59,7 +60,7 @@ class CERESR2LK {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: ResolutionProof ) = {
-    RobinsonToLK( rp, endsequent, fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) )
+    lkNew2Old( RobinsonToLK( rp, endsequent, fc => lkOld2New( CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) ) ) )
   }
 
 }
@@ -92,7 +93,7 @@ class CERES {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         val lkproof = RobinsonToLK( rp )
-        apply( es, proj + refl, lkproof )
+        apply( es, proj + refl, lkNew2Old( lkproof ) )
     }
   }
 
@@ -108,6 +109,9 @@ class CERES {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( endsequent: HOLSequent, projections: Set[LKProof], refutation: LKProof ): LKProof = refutation match {
+    case Axiom( OccSequent( Seq( a ), Seq( a_ ) ) ) if a.formula == a_.formula =>
+      CloneLKProof( refutation )
+
     case Axiom( root ) =>
       findMatchingProjection( endsequent, projections )( root.toHOLSequent )
 
@@ -180,11 +184,7 @@ class CERES {
     WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq compose es )
   }
 
-  def contractEndsequent( p: LKProof, es: HOLSequent ) = {
-    val left = es.antecedent.foldLeft( p )( ( proof, f ) => ContractionLeftRule( proof, f ) )
-    val right = es.succedent.foldLeft( left )( ( proof, f ) => ContractionRightRule( proof, f ) )
-    right
-  }
+  def contractEndsequent( p: LKProof, es: HOLSequent ) = ContractionMacroRule( p, es, strict = false )
 
 }
 

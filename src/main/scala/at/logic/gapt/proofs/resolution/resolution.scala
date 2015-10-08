@@ -206,8 +206,10 @@ case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
     require( subProof2.conclusion( literal )( position ) == t )
   }
 
+  val rewrittenAtom = positions.foldLeft( subProof2.conclusion( literal ) ) { _.replace( _, s ).asInstanceOf[FOLAtom] }
+
   override val conclusion = subProof1.conclusion.delete( equation ) ++
-    subProof2.conclusion.updated( literal, positions.foldLeft( subProof2.conclusion( literal ) ) { _.replace( _, s ).asInstanceOf[FOLAtom] } )
+    subProof2.conclusion.updated( literal, rewrittenAtom )
   override def occConnectors = Seq(
     OccConnector( conclusion, subProof1.conclusion,
       subProof1.conclusion.indicesSequent.delete( equation ).map { Seq( _ ) } ++ subProof2.conclusion.indicesSequent.map { _ => Seq() } ),

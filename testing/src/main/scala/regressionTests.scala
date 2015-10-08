@@ -26,27 +26,27 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
   override def test( implicit testRun: TestRun ) = {
     val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( f getAbsolutePath ) --- "import"
-    val p = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
+    val pNew = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
+
+    lkNew.cleanStructuralRules( pNew ) --? "cleanStructuralRules"
+    if ( isFOLPrenexSigma1( pNew.endSequent ) )
+      lkNew.extractRecSchem( pNew ) --? "extractRecSchem" map { recSchem =>
+        new VeriTProver().isValid( recSchem.language.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
+      }
+
+    val p = lkNew.lkNew2Old( pNew ) --- "lkNew2Old"
+    ( p.root.toHOLSequent multiSetEquals pNew.endSequent ) !-- "lkNew2Old end-sequent"
 
     lkNew.lkOld2New( p ) --? "lkOld2New" map { pNew =>
       ( p.root.toHOLSequent multiSetEquals pNew.endSequent ) !-- "lkOld2New end-sequent"
-      lkNew.cleanStructuralRules( pNew ) --? "cleanStructuralRules lkNew"
-      lkNew.LKToExpansionProof( pNew ) --? "LKToExpansionProof lkNew"
-      lkNew.lkNew2Old( pNew ) --? "lkNew2Old" map { pOld =>
-        ( pOld.root.toHOLSequent multiSetEquals pNew.endSequent ) !-- "lkNew2Old end-sequent"
-      }
-      if ( isFOLPrenexSigma1( pNew.endSequent ) )
-        lkNew.extractRecSchem( pNew ) --? "extractRecSchem" map { recSchem =>
-          new VeriTProver().isValid( recSchem.language.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
-        }
     }
 
-    val E = LKToExpansionProof( p ) --- "extractExpansionSequent"
+    val E = lkNew.LKToExpansionProof( pNew ) --- "LKToExpansionProof"
     val deep = toDeep( E )
 
     simplifyResolutionProof( robinson ).conclusion.isEmpty !-- "simplifyResolutionProof"
 
-    ( toShallow( E ) == p.root.toHOLSequent ) !-- "shallow sequent of expansion proof"
+    ( toShallow( E ) == pNew.endSequent ) !-- "shallow sequent of expansion proof"
 
     if ( !containsEqualityReasoning( p ) ) {
       new MiniSATProver().isValid( deep ) !-- "minisat validity"

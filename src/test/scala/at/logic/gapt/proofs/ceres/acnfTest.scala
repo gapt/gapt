@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.ceres.ACNF
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkNew.lkNew2Old
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.proofs.resolutionOld.RichOccClause
@@ -101,7 +102,7 @@ class acnfTest extends Specification {
       val rlkp = RobinsonToLK( rp.get )
       val gproj = proj map ( applySubstitution( _, FOLSubstitution( u -> a, v -> a ) )._1 )
       //gproj map (x => println(" "+x))
-      val acnf = ACNF.plugProjections( rlkp, gproj, es.root.toHOLSequent )
+      val acnf = ACNF.plugProjections( lkNew2Old( rlkp ), gproj, es.root.toHOLSequent )
       //println(acnf)
 
       true must beEqualTo( true )
