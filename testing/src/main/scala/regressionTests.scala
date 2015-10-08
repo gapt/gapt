@@ -73,7 +73,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
         new VeriTProver().isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
-    val ip = new Prover9Prover().getLKProof( deep ).get --- "getLKProof( deep )"
+    val ip = lkNew.lkNew2Old( new Prover9Prover().getLKProof( deep ).get ) --- "getLKProof( deep )"
 
     ExtractInterpolant( ip, ip.root.antecedent.toSet, ip.root.succedent.toSet ) --? "extractInterpolant"
     ExtractInterpolant( ip, ip.root.succedent.toSet, ip.root.antecedent.toSet ) --? "extractInterpolant diff partition"
