@@ -1,8 +1,3 @@
-/**
- * Cut introduction algorithm
- *
- *
- */
 package at.logic.gapt.proofs.lk.cutIntroduction
 
 import at.logic.gapt.expr._
