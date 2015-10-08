@@ -30,7 +30,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
         }
     }
 
-  def parseProof( p9Output: String ) = {
+  private[prover9] def parseProof( p9Output: String ) = {
     val ivy = runProcess( Seq( "prooftrans", "ivy" ), p9Output )
 
     val ivyProof = IvyParser.parseString( ivy )
@@ -54,7 +54,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
   def reconstructLKProofFromOutput( p9Output: String ): LKProof =
     Prover9Importer lkProof p9Output
 
-  def toP9Input( cnf: List[HOLClause], renaming: Map[Const, String] ): String = {
+  private def toP9Input( cnf: List[HOLClause], renaming: Map[Const, String] ): String = {
     val commands = ArrayBuffer[String]()
 
     commands += "set(quiet)" // suppresses noisy output on stderr
@@ -68,13 +68,13 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
     commands.map( _ + "." + sys.props( "line.separator" ) ).mkString
   }
 
-  def renameVars( formula: LambdaExpression ): LambdaExpression =
+  private def renameVars( formula: LambdaExpression ): LambdaExpression =
     Substitution( freeVariables( formula ).
       toSeq.zipWithIndex.map {
         case ( v, i ) => v -> FOLVar( s"x$i" )
       } )( formula )
-  def toP9Input( clause: HOLClause ): String = toP9Input( renameVars( clause.toFormula ) )
-  def toP9Input( expr: LambdaExpression ): String = expr match {
+  private def toP9Input( clause: HOLClause ): String = toP9Input( renameVars( clause.toFormula ) )
+  private def toP9Input( expr: LambdaExpression ): String = expr match {
     case Neg( a )             => s"-${toP9Input( a )}"
     case Or( a, b )           => s"${toP9Input( a )} | ${toP9Input( b )}"
     case Bottom()             => "$F"
@@ -82,7 +82,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
     case FOLFunction( f, as ) => toP9Input( f, as )
     case FOLVar( v )          => v
   }
-  def toP9Input( function: String, args: Seq[LambdaExpression] ): String =
+  private def toP9Input( function: String, args: Seq[LambdaExpression] ): String =
     if ( args.isEmpty ) function else s"$function(${args.map( toP9Input ).mkString( "," )})"
 
   override val isInstalled: Boolean =
