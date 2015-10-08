@@ -17,7 +17,7 @@ object RobinsonToLK {
    */
   def apply( resolutionProof: ResolutionProof, endSequent: HOLSequent ): LKProof = {
     assert( resolutionProof.conclusion.isEmpty )
-    apply( resolutionProof, endSequent, clause => lkOld2New( PCNF( endSequent, clause ) ) )
+    apply( resolutionProof, endSequent, PCNF( endSequent, _ ) )
   }
 
   /**
