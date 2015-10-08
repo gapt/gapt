@@ -5,6 +5,14 @@ import BetaReduction._
 import at.logic.gapt.proofs.SequentIndex
 
 object applySubstitution {
+  /**
+   * Applies a substitution to an LKProof.
+   *
+   * @param substitution The substitution to be applied.
+   * @param preserveEigenvariables If true, eigenvariables will be treated as bound.
+   * @param proof The proof to apply the substitution to.
+   * @return
+   */
   def apply( substitution: Substitution, preserveEigenvariables: Boolean = false )( proof: LKProof ): LKProof = proof match {
     case InitialSequent( sequent ) =>
       Axiom( sequent.map { f => betaNormalize( substitution( f ) ) } )
