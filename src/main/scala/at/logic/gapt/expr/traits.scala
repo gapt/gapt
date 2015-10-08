@@ -236,7 +236,7 @@ object HOLAtom {
     apply( head, args toList )
   def apply( head: LambdaExpression, args: List[LambdaExpression] ): HOLAtom =
     Apps( head, args ).asInstanceOf[HOLAtom]
-  def unapply( e: LambdaExpression ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
+  def unapply( e: HOLAtom ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
     case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
     case _ => None
   }

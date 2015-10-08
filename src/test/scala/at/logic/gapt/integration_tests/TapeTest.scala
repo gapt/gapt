@@ -4,6 +4,7 @@ import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkNew.lkNew2Old
 import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.proofs.resolutionOld._
 
@@ -135,7 +136,7 @@ class TapeTest extends Specification {
       val tapeproj = Projections( elp )
       val refproj = CERES.refProjection( elp.root.toHOLSequent )
 
-      val acnf = CERES( elp.root.toHOLSequent, tapeproj + refproj, lkref )
+      val acnf = CERES( elp.root.toHOLSequent, tapeproj + refproj, lkNew2Old( lkref ) )
 
       //the acnf must not contain any quantified cuts
       acnf.nodes.collect( { case c @ CutRule( _, _, _, aux, _ ) if containsQuantifier( aux.formula ) => c } ) must beEmpty

@@ -3,11 +3,11 @@ package at.logic.gapt.proofs.lkNew
 import at.logic.gapt.expr.{ Substitution, rename, variables, Var }
 import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 
-object Utils {
+object containsEqualityReasoning {
   /**
    * @return true iff this proof contains a reflexivity axiom or an equational inference
    */
-  def containsEqualityReasoning( p: LKProof ): Boolean = p match {
+  def apply( p: LKProof ): Boolean = p match {
     case ReflexivityAxiom( _ )                           => true
     case EqualityLeftRule( _, _, _, _ )                  => true
     case EqualityRightRule( _, _, _, _ )                 => true

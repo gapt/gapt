@@ -10,6 +10,7 @@ import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.dimacs.{ readDIMACS, writeDIMACS, DIMACSHelper }
 import at.logic.gapt.models.Interpretation
+import at.logic.gapt.proofs.lkNew.LKProof
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.provers.Prover
 import java.io._
@@ -70,7 +71,7 @@ class MiniSAT extends at.logic.gapt.utils.logging.Stopwatch {
 }
 
 class MiniSATProver extends Prover with at.logic.gapt.utils.logging.Logger with at.logic.gapt.utils.traits.ExternalProgram {
-  def getLKProof( seq: HOLSequent ): Option[at.logic.gapt.proofs.lk.base.LKProof] =
+  def getLKProof( seq: HOLSequent ): Option[LKProof] =
     throw new Exception( "MiniSAT does not produce proofs!" )
 
   override def isValid( f: HOLFormula ): Boolean = {

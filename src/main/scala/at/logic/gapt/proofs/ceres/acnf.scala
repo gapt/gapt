@@ -31,16 +31,18 @@ object ACNF {
         val set = groun_proj_set.filter( p => {
           p.root.succedent.map( fo => fo.formula ).intersect( succedent.map( fo => fo.formula ) ).nonEmpty
         } )
-        set.head
+        CloneLKProof( set.head )
       case Axiom( OccSequent( antecedent, Nil ) ) =>
         val set = groun_proj_set.filter( p => p.root.antecedent.map( fo =>
           fo.formula ).intersect( antecedent.map( fo => fo.formula ) ).nonEmpty )
-        set.head
+        CloneLKProof( set.head )
+      case Axiom( OccSequent( Seq( a ), Seq( a_ ) ) ) if a.formula == a_.formula =>
+        CloneLKProof( resRefutation )
       case Axiom( OccSequent( antecedent, succedent ) ) =>
         val set = groun_proj_set.filter( p =>
           p.root.antecedent.map( fo => fo.formula ).intersect( antecedent.map( fo => fo.formula ) ).nonEmpty &&
             p.root.succedent.map( fo => fo.formula ).intersect( succedent.map( fo => fo.formula ) ).nonEmpty )
-        set.head
+        CloneLKProof( set.head )
 
       case EquationLeft1Rule( p1, p2, root, occ1, occ2, _, main ) =>
         val pr1 = plugProjections( p1, groun_proj_set, end_seq )
@@ -69,6 +71,8 @@ object ACNF {
       }
       case ContractionLeftRule( up1, _, a1, a2, p )  => ContractionLeftRule( plugProjections( up1, groun_proj_set, end_seq ), a1.formula )
       case ContractionRightRule( up1, _, a1, a2, p ) => ContractionRightRule( plugProjections( up1, groun_proj_set, end_seq ), a1.formula )
+      case WeakeningLeftRule( up1, _, p )            => WeakeningLeftRule( plugProjections( up1, groun_proj_set, end_seq ), p.formula )
+      case WeakeningRightRule( up1, _, p )           => WeakeningRightRule( plugProjections( up1, groun_proj_set, end_seq ), p.formula )
       case _                                         => throw new Exception( nLine + "Missing case in acnf !" + nLine )
     }
   }

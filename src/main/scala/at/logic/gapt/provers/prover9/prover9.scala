@@ -1,8 +1,7 @@
 package at.logic.gapt.provers.prover9
 
-import java.io.{ IOException, ByteArrayInputStream, ByteArrayOutputStream }
+import java.io.IOException
 
-import at.logic.gapt.algorithms.rewriting.NameReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.ivy.IvyParser
@@ -10,11 +9,11 @@ import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
 import at.logic.gapt.formats.prover9.{ Prover9TermParserLadrStyle, Prover9TermParser }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkNew.LKProof
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables, renameConstantsToFi, Prover }
+import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.{ runProcess, withTempFile }
+import at.logic.gapt.utils.runProcess
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source

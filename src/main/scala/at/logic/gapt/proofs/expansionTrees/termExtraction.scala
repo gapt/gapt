@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ isFOLPrenexSigma1, FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.{ containsQuantifier, instantiate, isPrenex }
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkNew.{ LKToExpansionProof, LKProof }
 
 /**
  * Extracts the instance terms used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.
@@ -171,5 +171,17 @@ case class InstanceTermEncoding( endSequent: HOLSequent ) {
           formulaToExpansionTree( esFormula, instances.map( _._2 ).map { terms => FOLSubstitution( ( vars, terms ).zipped.toList ) }.toList, !pol ) -> pol
       }
     ExpansionSequent( polExpTrees.filter( _._2 == true ).map( _._1 ).toList, polExpTrees.filter( _._2 == false ).map( _._1 ).toList )
+  }
+}
+
+object InstanceTermEncoding {
+  def apply( expansionSequent: ExpansionSequent ): ( Set[FOLTerm], InstanceTermEncoding ) = {
+    val encoding = InstanceTermEncoding( toShallow( expansionSequent ) )
+    encoding.encode( expansionSequent ) -> encoding
+  }
+
+  def apply( lkProof: LKProof ): ( Set[FOLTerm], InstanceTermEncoding ) = {
+    val encoding = InstanceTermEncoding( lkProof.endSequent )
+    encoding.encode( LKToExpansionProof( lkProof ) ) -> encoding
   }
 }

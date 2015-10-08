@@ -24,7 +24,7 @@ object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
 
 object OrRightMacroRule extends RuleConvenienceObject( "OrRightMacroRule" ) {
   def apply( subProof: LKProof, leftDisjunct: HOLFormula, rightDisjunct: HOLFormula ): LKProof = {
-    val ( indices, _ ) = findFormulasInPremise( subProof.endSequent )( Seq(), Seq( leftDisjunct, rightDisjunct ) )
+    val ( _, indices ) = findFormulasInPremise( subProof.endSequent )( Seq(), Seq( leftDisjunct, rightDisjunct ) )
     indices match {
       case -1 +: -1 +: _ => throw LKRuleCreationException( s"Neither $leftDisjunct nor $rightDisjunct has been found in succedent of ${subProof.endSequent}." )
 

@@ -2,9 +2,9 @@ package at.logic.gapt.provers.prover9
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.proofs.lk.base.beSyntacticFSequentEqual
 import at.logic.gapt.proofs.resolution.inputClauses
 import at.logic.gapt.proofs.{ Sequent, HOLSequent, HOLClause }
-import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 
 import org.specs2.mutable._
@@ -20,7 +20,7 @@ class Prover9Test extends Specification {
       val k = FOLConst( "k" )
       val s = HOLSequent( Seq(), Seq( Eq( k, k ) ) )
       prover9.getLKProof( s ) must beLike {
-        case Some( p ) => p.root.toHOLSequent must_== s
+        case Some( p ) => p.endSequent must beSyntacticFSequentEqual( s )
       }
     }
 
@@ -28,7 +28,7 @@ class Prover9Test extends Specification {
       val Seq( a, b ) = Seq( "A", "B" ).map( FOLAtom( _ ) )
       val s = HOLSequent( Seq( Or( a, b ) ), Seq( Neg( And( Neg( a ), Neg( b ) ) ) ) )
       prover9.getLKProof( s ) must beLike {
-        case Some( p ) => p.root.toHOLSequent must_== s
+        case Some( p ) => p.endSequent must_== s
       }
     }
 
@@ -38,7 +38,7 @@ class Prover9Test extends Specification {
         Seq( parseFormula( "s(0)+s(s(0)) = s(s(s(0)))" ) )
       )
       prover9.getLKProof( seq ) must beLike {
-        case Some( p ) => p.root.toHOLSequent must_== seq
+        case Some( p ) => p.endSequent must beSyntacticFSequentEqual( seq )
       }
     }
 
@@ -50,7 +50,7 @@ class Prover9Test extends Specification {
     "ground sequents" in {
       val seq = HOLSequent( Seq( parseFormula( "x=y" ) ), Seq( parseFormula( "y=x" ) ) )
       prover9.getLKProof( seq ) must beLike {
-        case Some( p ) => p.root.toHOLSequent must_== seq
+        case Some( p ) => p.endSequent must beSyntacticFSequentEqual( seq )
       }
     }
 

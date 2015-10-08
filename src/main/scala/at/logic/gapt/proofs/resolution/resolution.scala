@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.{ FOLClause, SequentIndex, SequentProof }
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkNew.OccConnector
 
 /**
@@ -147,6 +147,15 @@ object Factor {
     Factor( subProof, subProof.conclusion.distinct )
 }
 
+object MguFactor {
+  def apply( subProof: ResolutionProof, literal1: SequentIndex, literal2: SequentIndex ): Factor = {
+    val Some( ( mgu1, mgu2 ) ) = syntacticMGU.twoSubstitutions(
+      subProof.conclusion( literal1 ), subProof.conclusion( literal2 )
+    )
+    Factor( Instance( subProof, mgu1 ), literal1, literal2 )
+  }
+}
+
 /**
  * Resolution.
  *
@@ -181,6 +190,19 @@ case class Resolution( subProof1: ResolutionProof, literal1: SequentIndex,
   override def immediateSubProofs = Seq( subProof1, subProof2 )
 }
 
+object MguResolution {
+  def apply( subProof1: ResolutionProof, literal1: Suc,
+             subProof2: ResolutionProof, literal2: Ant ): Resolution = {
+    val Some( ( mgu1, mgu2 ) ) = syntacticMGU.twoSubstitutions(
+      subProof1.conclusion( literal1 ), subProof2.conclusion( literal2 )
+    )
+    Resolution(
+      Instance( subProof1, mgu1 ), literal1,
+      Instance( subProof2, mgu2 ), literal2
+    )
+  }
+}
+
 /**
  * Paramodulation.
  *
@@ -206,8 +228,10 @@ case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
     require( subProof2.conclusion( literal )( position ) == t )
   }
 
+  val rewrittenAtom = positions.foldLeft( subProof2.conclusion( literal ) ) { _.replace( _, s ).asInstanceOf[FOLAtom] }
+
   override val conclusion = subProof1.conclusion.delete( equation ) ++
-    subProof2.conclusion.updated( literal, positions.foldLeft( subProof2.conclusion( literal ) ) { _.replace( _, s ).asInstanceOf[FOLAtom] } )
+    subProof2.conclusion.updated( literal, rewrittenAtom )
   override def occConnectors = Seq(
     OccConnector( conclusion, subProof1.conclusion,
       subProof1.conclusion.indicesSequent.delete( equation ).map { Seq( _ ) } ++ subProof2.conclusion.indicesSequent.map { _ => Seq() } ),

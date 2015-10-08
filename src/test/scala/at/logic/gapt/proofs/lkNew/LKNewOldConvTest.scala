@@ -18,38 +18,38 @@ class LKNewOldConvTest extends Specification {
 
   "GEO037m4" in {
 
-    val o = load( "GEO037-2.out" )
-    val n = lkOld2New( o )
-    val o_ = lkNew2Old( n )
+    val n = load( "GEO037-2.out" )
+    val o = lkNew2Old( n )
+    val n_ = lkOld2New( o )
     n.endSequent must beSyntacticFSequentEqual( o.root.toHOLSequent )
-    o_.root.toHOLSequent must beSyntacticFSequentEqual( o.root.toHOLSequent )
+    n_.endSequent must beSyntacticFSequentEqual( n.endSequent )
   }
 
   "goat puzzle" in {
 
-    val o = load( "PUZ047+1.out" )
-    val n = lkOld2New( o )
-    val o_ = lkNew2Old( n )
+    val n = load( "PUZ047+1.out" )
+    val o = lkNew2Old( n )
+    val n_ = lkOld2New( o )
     n.endSequent must beSyntacticFSequentEqual( o.root.toHOLSequent )
-    o_.root.toHOLSequent must beSyntacticFSequentEqual( o.root.toHOLSequent )
+    n_.endSequent must beSyntacticFSequentEqual( n.endSequent )
   }
 
   "cade1example.out" in {
 
-    val o = load( "cade13example.out" )
-    val n = lkOld2New( o )
-    val o_ = lkNew2Old( n )
+    val n = load( "cade13example.out" )
+    val o = lkNew2Old( n )
+    val n_ = lkOld2New( o )
     n.endSequent must beSyntacticFSequentEqual( o.root.toHOLSequent )
-    o_.root.toHOLSequent must beSyntacticFSequentEqual( o.root.toHOLSequent )
+    n_.endSequent must beSyntacticFSequentEqual( n.endSequent )
   }
 
   "proof with new_symbol" in {
 
-    val o = load( "ALG138+1.out" )
-    val n = lkOld2New( o )
-    val o_ = lkNew2Old( n )
+    val n = load( "ALG138+1.out" )
+    val o = lkNew2Old( n )
+    val n_ = lkOld2New( o )
     n.endSequent must beSyntacticFSequentEqual( o.root.toHOLSequent )
-    o_.root.toHOLSequent must beSyntacticFSequentEqual( o.root.toHOLSequent )
+    n_.endSequent must beSyntacticFSequentEqual( n.endSequent )
   }
 
 }
