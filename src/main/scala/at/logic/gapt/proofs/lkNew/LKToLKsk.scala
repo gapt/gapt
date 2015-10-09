@@ -71,12 +71,12 @@ object LKToLKsk {
 
       case p @ ForallLeftRule( subProof, aux: Ant, formula, term, v ) =>
         AllLeft(
-          apply( subProof, p.getOccConnector.parents( labels ).map( _.head ).updated( aux, labels( aux ) :+ term ) ),
+          apply( subProof, p.getOccConnector.parents( labels ).map( _.head ).updated( aux, labels( p.mainIndices.head ) :+ term ) ),
           aux, All( v, formula ), term
         )
       case p @ ExistsRightRule( subProof, aux: Suc, formula, term, v ) =>
         ExRight(
-          apply( subProof, p.getOccConnector.parents( labels ).map( _.head ).updated( aux, labels( aux ) :+ term ) ),
+          apply( subProof, p.getOccConnector.parents( labels ).map( _.head ).updated( aux, labels( p.mainIndices.head ) :+ term ) ),
           aux, Ex( v, formula ), term
         )
 
