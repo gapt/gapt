@@ -16,7 +16,7 @@ import at.logic.gapt.proofs.ceres.clauseSets._
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.cutintro._
-import at.logic.gapt.cutintro.Deltas._
+import Deltas._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence

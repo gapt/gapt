@@ -1,19 +1,16 @@
 /*
  * Grammar that generates a list of terms T
- * 
+ *
  * NOTE: This is not the implementation of a grammar in the usual sense.
  * Here we keep only two sets, U and S, for the grammar with start symbol 'τ',
- * non-terminal 'α' and production rules 
- * P = { τ -> u | u in U} union { α -> s | s in S } 
+ * non-terminal 'α' and production rules
+ * P = { τ -> u | u in U} union { α -> s | s in S }
  */
 
-package at.logic.gapt.cutintro
+package at.logic.gapt.grammars
 
-import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.VectTratGrammar
-import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
-import at.logic.gapt.utils.dssupport.ListSupport._
+import at.logic.gapt.expr.fol._
 
 // For cut-introduction, we consider sequents
 // \forall x_1 F_1(x_1), ..., \forall x_n F_n(x_n) :- \exists x_{n+1} F_{n+1}(x_{n+1}), ..., \exists x_m F(x_m)
@@ -54,25 +51,10 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
   }
 }
 
-object simpleToMultiGrammar {
-  def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): MultiGrammar = {
-    val us = g.rightHandSides( g.axiomVect ).map( _.head ).
-      groupBy { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }.
-      mapValues( _.map { case FOLFunction( _, as ) => as }.toList )
-    val slist = g.nonTerminals.filter( _ != g.axiomVect ).
-      map { a => a -> g.rightHandSides( a ).toList }.
-      filter( _._2.nonEmpty ).toList
-
-    new MultiGrammar( us, slist )
-  }
-}
-
 /**
  * Takes a set of terms and, using DeltaG, computes the set of smallest grammars that generate it.
  */
 object ComputeGrammars {
-
-  def apply( terms: TermSet, delta: DeltaVector ): List[VectTratGrammar] = ComputeGrammars( terms.set, delta )
 
   def apply( terms: List[FOLTerm], delta: DeltaVector ): List[VectTratGrammar] = {
     // TODO: when iterating for the case of multiple cuts, change this variable.
@@ -80,18 +62,6 @@ object ComputeGrammars {
     val deltatable = new DeltaTable( terms, eigenvariable, delta )
 
     findValidGrammars( terms, deltatable, eigenvariable ).sortWith( ( g1, g2 ) => g1.size < g2.size )
-  }
-  /**
-   * Finds valid, minimum-size MultiGrammars based on a TermSet and a generalized delta table.
-   *
-   *
-   * @param terms The TermSet to be compressed.
-   * @param deltatable A generalized delta table for terms.
-   * @param eigenvariable The name of eigenvariables to introduce.
-   */
-  def findValidGrammars( terms: TermSet, deltatable: DeltaTable, eigenvariable: String ): List[MultiGrammar] = {
-    val gs = findValidGrammars( terms.set, deltatable, eigenvariable )
-    gs.map( g => simpleToMultiGrammar( terms.encoding, g ) )
   }
 
   /**

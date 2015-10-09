@@ -3,6 +3,7 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.examples.LinearExampleProofNew
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
+import at.logic.gapt.grammars.MultiGrammar
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
 import at.logic.gapt.cutintro._

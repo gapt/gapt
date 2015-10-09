@@ -3,17 +3,14 @@
 *
 */
 
-package at.logic.gapt.cutintro
+package at.logic.gapt.grammars
 
-import org.specs2.mutable._
-import scala.collection.immutable.HashMap
 import at.logic.gapt.expr._
-import TermsExtraction._
-import ComputeGrammars._
-import Deltas._
-import types._
+import at.logic.gapt.grammars.Deltas._
+import at.logic.gapt.grammars.types._
+import org.specs2.mutable._
 
-class GrammarTest extends Specification {
+class DeltaTableTest extends Specification {
 
   // On the comments of the examples below, consider A as α
 
