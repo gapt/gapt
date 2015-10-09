@@ -1,14 +1,15 @@
 package at.logic.gapt.proofs.resolution
 
+import at.logic.gapt.expr.HOLAtom
 import at.logic.gapt.proofs.{ HOLClause, SequentIndex }
 import at.logic.gapt.proofs.lkNew.OccConnector
 import scala.collection.mutable
 
 object mapInputClauses {
   def apply( proof: ResolutionProof )( f: HOLClause => ResolutionProof ): ResolutionProof = {
-    val memo = mutable.Map[ResolutionProof, ( ResolutionProof, OccConnector )]()
+    val memo = mutable.Map[ResolutionProof, ( ResolutionProof, OccConnector[HOLAtom] )]()
 
-    def guessConn( oldConcl: HOLClause, newConcl: HOLClause ): OccConnector = {
+    def guessConn( oldConcl: HOLClause, newConcl: HOLClause ): OccConnector[HOLAtom] = {
       val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
       OccConnector( newConcl, oldConcl, newConcl.zipWithIndex.map {
         case ( atom, newIdx ) =>
@@ -21,14 +22,14 @@ object mapInputClauses {
       } )
     }
 
-    def check( p: ResolutionProof, res: ( ResolutionProof, OccConnector ) ): ( ResolutionProof, OccConnector ) = {
+    def check( p: ResolutionProof, res: ( ResolutionProof, OccConnector[HOLAtom] ) ): ( ResolutionProof, OccConnector[HOLAtom] ) = {
       val ( newP, conn ) = res
       require( conn.lowerSequent == newP.conclusion )
       require( conn.upperSequent == p.conclusion )
       res
     }
 
-    def doMap( p: ResolutionProof ): ( ResolutionProof, OccConnector ) = check( p, memo.getOrElseUpdate( p, p match {
+    def doMap( p: ResolutionProof ): ( ResolutionProof, OccConnector[HOLAtom] ) = check( p, memo.getOrElseUpdate( p, p match {
       case TautologyClause( _ ) | ReflexivityClause( _ ) => p -> OccConnector( p.conclusion )
       case InputClause( clause ) =>
         val q = f( clause )

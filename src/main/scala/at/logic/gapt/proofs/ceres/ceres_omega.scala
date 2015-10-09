@@ -41,7 +41,7 @@ class ceres_omega {
     //reflexivity as initial rule
     case RalInitial( Sequent( Seq(), Seq( ( label, Eq( x, y ) ) ) ) ) if ( x == y ) && ( x.exptype == Ti ) =>
 
-      val rule = LKSKAxiom( ralproof.conclusion, ( List(), List( label ) ) )
+      val rule = LKSKAxiom( ralproof.formulas, ( List(), List( label ) ) )
       val reflexivity_occ = rule.root.succedent( 0 ).asInstanceOf[LabelledFormulaOccurrence]
       val weakened_left = es.l_antecedent.foldLeft( rule )( ( r, fo ) => lksk.WeakeningLeftRule( r, fo.formula, fo.skolem_label ) )
       val weakened_right = es.l_succedent.foldLeft( weakened_left )( ( r, fo ) => lksk.WeakeningRightRule( r, fo.formula, fo.skolem_label ) )
@@ -94,13 +94,13 @@ class ceres_omega {
       }
 
     case RalCut( parent1, p1occs, parent2, p2occs ) =>
-      val root = ralproof.conclusion
+      val root = ralproof.formulas
       val ( lkparent1, clause1 ) = ceres_omega( projections, parent1, es, struct )
       val ( lkparent2, clause2 ) = ceres_omega( projections, parent2, es, struct )
       require( ( clause1.occurrences diff lkparent1.root.occurrences ).isEmpty )
       require( ( clause2.occurrences diff lkparent2.root.occurrences ).isEmpty )
-      val leftcutformulas = p1occs.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, fo ) => findAuxByFormulaAndLabel( parent1.labelledConclusion( fo ), clause1.l_succedent, list ) :: list ).reverse
-      val rightcutformulas = p2occs.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, fo ) => findAuxByFormulaAndLabel( parent2.labelledConclusion( fo ), clause2.l_antecedent, list ) :: list ).reverse
+      val leftcutformulas = p1occs.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, fo ) => findAuxByFormulaAndLabel( parent1.conclusion( fo ), clause1.l_succedent, list ) :: list ).reverse
+      val rightcutformulas = p2occs.foldLeft( List[LabelledFormulaOccurrence]() )( ( list, fo ) => findAuxByFormulaAndLabel( parent2.conclusion( fo ), clause2.l_antecedent, list ) :: list ).reverse
       val ( c1, caux1, c2, caux2 ) = ( leftcutformulas, rightcutformulas ) match {
         case ( x :: xs, y :: ys ) => ( x, xs, y, ys )
         case ( Nil, _ )           => throw new Exception( "Could not find the cut formula " + parent1.conclusion( p1occs( 0 ) ) + " in left parent " + lkparent1.root )
@@ -133,11 +133,11 @@ class ceres_omega {
       ( crule, nclauses )
 
     case RalFactor( parent, contr @ Ant( _ ), aux ) =>
-      val root = ralproof.conclusion
+      val root = ralproof.formulas
       val ( lkparent, clause1 ) = ceres_omega( projections, parent, es, struct )
       require( ( clause1.occurrences diff lkparent.root.occurrences ).isEmpty )
-      val c1 = findAuxByFormulaAndLabel( parent.labelledConclusion( contr ), clause1.l_antecedent, Nil )
-      val c2 = findAuxByFormulaAndLabel( parent.labelledConclusion( contr ), clause1.l_antecedent, c1 :: Nil )
+      val c1 = findAuxByFormulaAndLabel( parent.conclusion( contr ), clause1.l_antecedent, Nil )
+      val c2 = findAuxByFormulaAndLabel( parent.conclusion( contr ), clause1.l_antecedent, c1 :: Nil )
       val rule = ContractionLeftRule( lkparent, c1, c2 )
       val nclauses = filterByAncestor( rule.root, clause1 )
       require( nclauses.toHOLSequent multiSetEquals root, "We tracked the clauses wrong:" + nLine + " calculated clause: " + f( nclauses ) + nLine + " real clause: " + f( root ) )
@@ -145,11 +145,11 @@ class ceres_omega {
       ( rule, nclauses )
 
     case RalFactor( parent, contr @ Suc( _ ), aux ) =>
-      val root = ralproof.conclusion
+      val root = ralproof.formulas
       val ( lkparent, clause1 ) = ceres_omega( projections, parent, es, struct )
       require( ( clause1.occurrences diff lkparent.root.occurrences ).isEmpty )
-      val c1 = findAuxByFormulaAndLabel( parent.labelledConclusion( contr ), clause1.l_succedent, Nil )
-      val c2 = findAuxByFormulaAndLabel( parent.labelledConclusion( contr ), clause1.l_succedent, c1 :: Nil )
+      val c1 = findAuxByFormulaAndLabel( parent.conclusion( contr ), clause1.l_succedent, Nil )
+      val c2 = findAuxByFormulaAndLabel( parent.conclusion( contr ), clause1.l_succedent, c1 :: Nil )
       val rule = ContractionRightRule( lkparent, c1, c2 )
       val nclauses = filterByAncestor( rule.root, clause1 )
       require( nclauses.toHOLSequent multiSetEquals root, "We tracked the clauses wrong:" + nLine + " calculated clause: " + f( nclauses ) + nLine + " real clause: " + f( root ) )
@@ -157,14 +157,14 @@ class ceres_omega {
       ( rule, nclauses )
 
     case RalPara( parent1, p1occ, parent2, p2occ @ Ant( _ ), pos, flipped ) =>
-      val root = ralproof.conclusion
-      val principial = ralproof.mainFormulas.head
+      val root = ralproof.formulas
+      val principial = ralproof.mainFormulas.head._2
       val ( lkparent1, clause1 ) = ceres_omega( projections, parent1, es, struct )
       val ( lkparent2, clause2 ) = ceres_omega( projections, parent2, es, struct )
       require( ( clause1.occurrences diff lkparent1.root.occurrences ).isEmpty )
       require( ( clause2.occurrences diff lkparent2.root.occurrences ).isEmpty )
-      val eqn: FormulaOccurrence = findAuxByFormulaAndLabel( parent1.labelledConclusion( p1occ ), clause1.l_succedent, Nil )
-      val modulant: FormulaOccurrence = findAuxByFormulaAndLabel( parent2.labelledConclusion( p2occ ), clause2.l_antecedent, Nil )
+      val eqn: FormulaOccurrence = findAuxByFormulaAndLabel( parent1.conclusion( p1occ ), clause1.l_succedent, Nil )
+      val modulant: FormulaOccurrence = findAuxByFormulaAndLabel( parent2.conclusion( p2occ ), clause2.l_antecedent, Nil )
       val rule = EquationLeftMacroRule( lkparent1, lkparent2, eqn, modulant, principial )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
@@ -173,14 +173,14 @@ class ceres_omega {
       ( crule, nclauses )
 
     case RalPara( parent1, p1occ, parent2, p2occ, pos, flipped ) =>
-      val root = ralproof.conclusion
-      val principial = ralproof.mainFormulas.head
+      val root = ralproof.formulas
+      val principial = ralproof.mainFormulas.head._2
       val ( lkparent1, clause1 ) = ceres_omega( projections, parent1, es, struct )
       val ( lkparent2, clause2 ) = ceres_omega( projections, parent2, es, struct )
       require( ( clause1.occurrences diff lkparent1.root.occurrences ).isEmpty )
       require( ( clause2.occurrences diff lkparent2.root.occurrences ).isEmpty )
-      val eqn: FormulaOccurrence = findAuxByFormulaAndLabel( parent1.labelledConclusion( p1occ ), clause1.l_succedent, Nil )
-      val modulant: FormulaOccurrence = findAuxByFormulaAndLabel( parent2.labelledConclusion( p2occ ), clause2.l_succedent, Nil )
+      val eqn: FormulaOccurrence = findAuxByFormulaAndLabel( parent1.conclusion( p1occ ), clause1.l_succedent, Nil )
+      val modulant: FormulaOccurrence = findAuxByFormulaAndLabel( parent2.conclusion( p2occ ), clause2.l_succedent, Nil )
       val rule = EquationRightMacroRule( lkparent1, lkparent2, eqn, modulant, principial )
       val crule = contractEndsequent( rule, es )
       val nclauses = filterByAncestor( crule.root, clause1 compose clause2 )
@@ -189,7 +189,7 @@ class ceres_omega {
       ( crule, nclauses )
 
     case RalSub( parent, sub ) =>
-      val root = ralproof.conclusion
+      val root = ralproof.formulas
       val ( lkparent, clauses ) = ceres_omega( projections, parent, es, struct )
       require( ( clauses.occurrences diff lkparent.root.occurrences ).isEmpty )
       val ( rule, mapping ) = applySubstitution( lkparent, sub )

@@ -29,7 +29,7 @@ class LKNewTest extends Specification {
   val Pc = FOLAtom( "P", c )
   val Pd = FOLAtom( "P", d )
 
-  private def testParents( o: OccConnector, ruleName: String )( sequent: HOLSequent, parents: Seq[SequentIndex]* ): Success = {
+  private def testParents( o: OccConnector[HOLFormula], ruleName: String )( sequent: HOLSequent, parents: Seq[SequentIndex]* ): Success = {
     val ( m, n ) = sequent.sizes
     for ( ( i, ps ) <- sequent.indices zip parents ) {
       o.parents( i ) aka s"$ruleName: Parents of $i in $sequent should be $ps" must beEqualTo( ps )
@@ -39,7 +39,7 @@ class LKNewTest extends Specification {
     success
   }
 
-  private def testChildren( o: OccConnector, ruleName: String )( sequent: HOLSequent, children: Seq[SequentIndex]* ): Success = {
+  private def testChildren( o: OccConnector[HOLFormula], ruleName: String )( sequent: HOLSequent, children: Seq[SequentIndex]* ): Success = {
     val ( m, n ) = sequent.sizes
     for ( ( i, cs ) <- sequent.indices zip children ) {
       o.children( i ) aka s"$ruleName: Children of $i in $sequent should be $cs" must beEqualTo( cs )

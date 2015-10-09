@@ -19,7 +19,7 @@ sealed trait IvyResolutionProof extends SequentProof[FOLAtom, IvyResolutionProof
 
   // FIXME: provide a SequentProof trait without OccConnectors
   override def mainIndices: Seq[SequentIndex] = ???
-  override def occConnectors: Seq[OccConnector] = ???
+  override def occConnectors: Seq[OccConnector[FOLAtom]] = ???
   override def auxIndices: Seq[Seq[SequentIndex]] = ???
 }
 

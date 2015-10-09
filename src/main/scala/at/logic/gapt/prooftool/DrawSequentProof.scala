@@ -11,7 +11,7 @@ import scala.swing.BorderPanel._
 import scala.swing._
 import scala.swing.event._
 
-class DrawSequentProof[F <: HOLFormula, T <: SequentProof[F, T]](
+class DrawSequentProof[F, T <: SequentProof[F, T]](
     val proof:                       SequentProof[F, T],
     private val fSize:               Int,
     private var visible_occurrences: Option[Set[SequentIndex]],
@@ -33,7 +33,12 @@ class DrawSequentProof[F <: HOLFormula, T <: SequentProof[F, T]](
   // But then since def is a function, size of tx1 cannot be calculated and lines are not drawn correctly.
   private var tx = tx1
   private def tx1 = {
-    val ds = DrawSequent.applyF( proof.conclusion, ft, "" /*visible_occurrences*/ )
+    val ds = DrawSequent.applyF(
+      proof.conclusion map {
+        case f: HOLFormula            => f
+        case ( label, f: HOLFormula ) => f
+      },
+      ft, "" /*visible_occurrences*/ )
     ds.listenTo( mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher )
     ds.reactions += {
       case e: MouseEntered => ds.contents.foreach( x => x.foreground = blue )

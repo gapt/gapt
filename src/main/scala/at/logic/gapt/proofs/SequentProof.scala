@@ -1,9 +1,8 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.lkNew.OccConnector
 
-trait SequentProof[Formula <: HOLFormula, This <: SequentProof[Formula, This]] extends DagProof[This] { self: This =>
+trait SequentProof[Formula, This <: SequentProof[Formula, This]] extends DagProof[This] { self: This =>
   /**
    * A list of SequentIndices denoting the main formula(s) of the rule.
    */
@@ -39,7 +38,7 @@ trait SequentProof[Formula <: HOLFormula, This <: SequentProof[Formula, This]] e
   /**
    * A list of occurrence connectors, one for each immediate subproof.
    */
-  def occConnectors: Seq[OccConnector]
+  def occConnectors: Seq[OccConnector[Formula]]
 
   override protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$conclusion    (${super.stepString( subProofLabels )})"

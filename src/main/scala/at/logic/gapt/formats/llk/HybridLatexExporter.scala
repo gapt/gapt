@@ -220,12 +220,12 @@ class HybridLatexExporter( val expandTex: Boolean ) {
     ralp: RalProof,
     s:    String   = "", escape_latex: Boolean
   ): String = ralp match {
-    case RalInitial( seq ) => "\\AX" + fsequentString( ralp.conclusion, escape_latex )
+    case RalInitial( seq ) => "\\AX" + fsequentString( ralp.formulas, escape_latex )
 
     case RalCut( p1, aux1, p2, aux2 ) =>
       generateRal(
         p1,
-        generateRal( p2, "\\CUT" + fsequentString( ralp.conclusion, escape_latex ) + s, escape_latex ),
+        generateRal( p2, "\\CUT" + fsequentString( ralp.formulas, escape_latex ) + s, escape_latex ),
         escape_latex
       )
 

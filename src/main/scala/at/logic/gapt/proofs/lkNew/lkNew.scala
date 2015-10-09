@@ -81,7 +81,7 @@ abstract class UnaryLKProof extends LKProof {
    *
    * @return
    */
-  def getOccConnector: OccConnector = occConnectors.head
+  def getOccConnector: OccConnector[HOLFormula] = occConnectors.head
 
   /**
    * The upper sequent of the rule.
@@ -126,14 +126,14 @@ abstract class BinaryLKProof extends LKProof {
    *
    * @return
    */
-  def getLeftOccConnector: OccConnector = occConnectors.head
+  def getLeftOccConnector: OccConnector[HOLFormula] = occConnectors.head
 
   /**
    * The object connecting the lower and right upper sequents.
    *
    * @return
    */
-  def getRightOccConnector: OccConnector = occConnectors.tail.head
+  def getRightOccConnector: OccConnector[HOLFormula] = occConnectors.tail.head
 
   /**
    * The left upper sequent of the rule.
@@ -1559,7 +1559,7 @@ object DefinitionRightRule extends RuleConvenienceObject( "DefinitionRightRule" 
  * This class models the connection of formula occurrences between two sequents in a proof.
  *
  */
-case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, parentsSequent: Sequent[Seq[SequentIndex]] ) {
+case class OccConnector[A]( lowerSequent: Sequent[A], upperSequent: Sequent[A], parentsSequent: Sequent[Seq[SequentIndex]] ) {
   require( parentsSequent.sizes == lowerSequent.sizes )
   require( parentsSequent.elements.flatten.toSet subsetOf upperSequent.indices.toSet )
 
@@ -1573,7 +1573,7 @@ case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, par
    */
   def parents( idx: SequentIndex ): Seq[SequentIndex] = parentsSequent( idx )
 
-  def parents[A]( lowerAs: Sequent[A] ): Sequent[Seq[A]] =
+  def parents[T]( lowerAs: Sequent[T] ): Sequent[Seq[T]] =
     childrenSequent map { _ map { lowerAs( _ ) } }
 
   /**
@@ -1588,14 +1588,14 @@ case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, par
     else
       throw new IndexOutOfBoundsException
 
-  def *( that: OccConnector ) = {
+  def *[B >: A]( that: OccConnector[B] ) = {
     require( this.upperSequent == that.lowerSequent )
     OccConnector( this.lowerSequent, that.upperSequent, this.parentsSequent map { _ flatMap that.parents distinct } )
   }
 
-  def inv: OccConnector = OccConnector( upperSequent, lowerSequent, childrenSequent )
+  def inv: OccConnector[A] = OccConnector( upperSequent, lowerSequent, childrenSequent )
 
-  def +( that: OccConnector ) = {
+  def +[B >: A]( that: OccConnector[B] ) = {
     require( this.lowerSequent == that.lowerSequent )
     require( this.upperSequent == that.upperSequent )
     OccConnector( lowerSequent, upperSequent, lowerSequent.indicesSequent map { i => this.parents( i ) ++ that.parents( i ) } )
@@ -1603,7 +1603,7 @@ case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, par
 }
 
 object OccConnector {
-  def apply( sequent: HOLSequent ): OccConnector = OccConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
+  def apply[A]( sequent: Sequent[A] ): OccConnector[A] = OccConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
 }
 
 object consoleString {

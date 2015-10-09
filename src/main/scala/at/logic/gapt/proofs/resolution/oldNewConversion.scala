@@ -15,7 +15,7 @@ private object followOccs {
   def apply(
     upperCorrs:  Seq[Sequent[FormulaOccurrence]],
     oldLower:    OccClause,
-    newOccConns: Seq[OccConnector]
+    newOccConns: Seq[OccConnector[HOLAtom]]
   ): Sequent[FormulaOccurrence] =
     newOccConns.head.lowerSequent.indicesSequent map { newLowerIdx =>
       ( for (
