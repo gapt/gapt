@@ -253,7 +253,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val expseq = lkNew.LKToExpansionProof( lkproof1 )
       val deep = ETtoDeep( expseq )
 
-      solve.solvePropositional( deep ).isDefined must beTrue
+      lkNew.solve.solvePropositional( deep ).isDefined must beTrue
     }
 
     "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {
