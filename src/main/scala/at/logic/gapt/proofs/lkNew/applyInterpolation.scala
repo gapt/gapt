@@ -412,14 +412,14 @@ object Interpolate {
     case _ => throw new InterpolationException( "Unknown inference rule of type: " + p.name.toString() + "." )
   }
 
-  private def applyUpUnary( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
+  /*private def applyUpUnary( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
     p.occConnectors
     val up_npart = npart.foldLeft( Seq[SequentIndex]() )( ( s, o ) => s ++ o.parents )
     val up_ppart = ppart.foldLeft( Seq[SequentIndex]() )( ( s, o ) => s ++ o.parents )
     apply( p, up_npart, up_ppart )
   }
 
-  /*// TODO - is there a better way to get the ancestors of a set in the left or right subproof respectively?
+  // TODO - is there a better way to get the ancestors of a set in the left or right subproof respectively?
   private def applyUpBinaryLeft( p1: LKProof, npart: Set[SequentIndex], ppart: Set[SequentIndex] ) = {
     val up_npart = npart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
     val up_ppart = ppart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
