@@ -12,6 +12,9 @@ object LKskProof {
 trait LKskProof extends SequentProof[LabelledFormula, LKskProof] with ContextRule[LabelledFormula, LKskProof] {
   def labels = conclusion map { _._1 }
   def formulas = conclusion map { _._2 }
+
+  protected def requireEq[T]( a: T, b: T ) =
+    require( a == b, s"$a == $b" )
 }
 
 trait InitialSequent extends LKskProof {
@@ -19,9 +22,8 @@ trait InitialSequent extends LKskProof {
   def auxIndices = Seq()
 }
 
-case class LogicalAxiom( label: Label, atom: HOLAtom ) extends InitialSequent {
-  val labelledAtom = label -> atom
-  def mainFormulaSequent = labelledAtom +: Sequent() :+ labelledAtom
+case class Axiom( antLabel: Label, sucLabel: Label, atom: HOLAtom ) extends InitialSequent {
+  def mainFormulaSequent = ( antLabel -> atom ) +: Sequent() :+ ( sucLabel -> atom )
 }
 
 case class BottomLeft( label: Label ) extends InitialSequent {
@@ -49,14 +51,14 @@ case class WeakeningRight( subProof: LKskProof, weakLabelledFormula: LabelledFor
 
 case class ContractionLeft( subProof: LKskProof, aux1: Ant, aux2: Ant ) extends UnaryRule {
   require( aux1 != aux2 )
-  require( subProof.conclusion( aux1 ) == subProof.conclusion( aux2 ) )
+  requireEq( subProof.conclusion( aux1 ), subProof.conclusion( aux2 ) )
   val mainFormulaSequent = subProof.conclusion( aux1 ) +: Sequent()
   def auxIndices = Seq( Seq( aux1, aux2 ) )
 }
 
 case class ContractionRight( subProof: LKskProof, aux1: Suc, aux2: Suc ) extends UnaryRule {
   require( aux1 != aux2 )
-  require( subProof.conclusion( aux1 ) == subProof.conclusion( aux2 ) )
+  requireEq( subProof.conclusion( aux1 ), subProof.conclusion( aux2 ) )
   val mainFormulaSequent = Sequent() :+ subProof.conclusion( aux1 )
   def auxIndices = Seq( Seq( aux1, aux2 ) )
 }
@@ -69,7 +71,7 @@ trait SameLabel extends LKskProof {
   } head
 
   ( immediateSubProofs zip auxIndices ) foreach {
-    case ( p, auxs ) => auxs foreach { aux => require( p.labels( aux ) == label ) }
+    case ( p, auxs ) => auxs foreach { aux => requireEq( p.labels( aux ), label ) }
   }
 
   val mainFormulaSequent = newFormulas map { label -> _ }
@@ -124,7 +126,7 @@ case class ImpLeft( subProof1: LKskProof, aux1: Suc, subProof2: LKskProof, aux2:
 }
 
 case class Cut( subProof1: LKskProof, aux1: Suc, subProof2: LKskProof, aux2: Ant ) extends BinaryRule {
-  require( subProof1.formulas( aux1 ) == subProof2.formulas( aux2 ) ) // labels are not required to be equal
+  requireEq( subProof1.formulas( aux1 ), subProof2.formulas( aux2 ) ) // labels are not required to be equal
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
   def mainFormulaSequent = Sequent()
 }
@@ -132,7 +134,7 @@ case class Cut( subProof1: LKskProof, aux1: Suc, subProof2: LKskProof, aux2: Ant
 case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
   val All( quantVar, formula ) = mainFormula
   val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
-  require( subProof.formulas( aux ) == BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
 
   val mainFormulaSequent = ( otherLabels -> mainFormula ) +: Sequent()
 
@@ -142,7 +144,7 @@ case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, subs
 case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
   val Ex( quantVar, formula ) = mainFormula
   val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
-  require( subProof.formulas( aux ) == BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
 
   val mainFormulaSequent = Sequent() :+ ( otherLabels -> mainFormula )
   def auxIndices = Seq( Seq( aux ) )
@@ -153,7 +155,7 @@ case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, subs
 case class AllRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
-  require( subProof.formulas( aux ) == BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
 
   lazy val newFormulas = Sequent() :+ mainFormula
   def auxIndices = Seq( Seq( aux ) )
@@ -162,7 +164,7 @@ case class AllRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, sko
 case class ExLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
   val Ex( quantVar, formula ) = mainFormula
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
-  require( subProof.formulas( aux ) == BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
 
   lazy val newFormulas = mainFormula +: Sequent()
   def auxIndices = Seq( Seq( aux ) )

@@ -14,7 +14,8 @@ class LKskNewTest extends Specification {
     val Y = Var( "Y", Ti -> To )
     val X = Var( "X", Ti -> To )
 
-    val p1 = LogicalAxiom(
+    val p1 = Axiom(
+      Seq( Abs( x, -S( x ) ) ),
       Seq( Abs( x, -S( x ) ) ),
       S( f( Abs( x, -S( x ) ) ) ).asInstanceOf[HOLAtom]
     )
@@ -30,9 +31,10 @@ class LKskNewTest extends Specification {
 
   "and left" should {
     "require the same labels" in {
-      val Seq( p, q ) = Seq( "p", "q" ) map { FOLAtom( _ ) }
-      val p1 = LogicalAxiom( Seq( p ), p )
-      val p2 = WeakeningLeft( p1, Seq( q ) -> p )
+      val p = FOLAtom( "p" )
+      val Seq( c, d ) = Seq( "c", "d" ) map { FOLConst( _ ) }
+      val p1 = Axiom( Seq( c ), Seq( d ), p )
+      val p2 = NegLeft( p1, Suc( 0 ) )
       AndLeft( p2, Ant( 0 ), Ant( 1 ) ) should throwAn[IllegalArgumentException]
     }
   }
