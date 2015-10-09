@@ -49,6 +49,7 @@ doc/prv_user_manual.fmt
 .cache-main
 .cache-test
 .cache-tests
+.settings
 
 # emacs
 /.ensime*
