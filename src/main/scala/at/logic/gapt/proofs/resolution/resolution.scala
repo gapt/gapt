@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lkNew.OccConnector
 
 /**
  * First-order resolution proof.

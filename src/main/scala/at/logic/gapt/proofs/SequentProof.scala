@@ -1,7 +1,5 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.proofs.lkNew.OccConnector
-
 trait SequentProof[Formula, This <: SequentProof[Formula, This]] extends DagProof[This] { self: This =>
   /**
    * A list of SequentIndices denoting the main formula(s) of the rule.

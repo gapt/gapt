@@ -3,7 +3,6 @@ package at.logic.gapt.proofs.ral
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
 import at.logic.gapt.expr.hol.isAtom
-import at.logic.gapt.proofs.lkNew.OccConnector
 import at.logic.gapt.proofs._
 import RalProof._
 

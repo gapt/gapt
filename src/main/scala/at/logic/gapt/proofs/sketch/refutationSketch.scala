@@ -2,8 +2,7 @@ package at.logic.gapt.proofs.sketch
 
 import at.logic.gapt.expr.{ FOLAtom, FOLFormula }
 import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
-import at.logic.gapt.proofs.lkNew.OccConnector
-import at.logic.gapt.proofs.{ SequentProof, FOLClause }
+import at.logic.gapt.proofs.{ OccConnector, SequentProof, FOLClause }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.{ mapInputClauses, findDerivationViaResolution }
 import at.logic.gapt.provers.ResolutionProver

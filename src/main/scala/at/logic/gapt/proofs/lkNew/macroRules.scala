@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lkNew
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, isPrenex, instantiate }
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.{ HOLSequent, Suc, Ant, SequentIndex }
+import at.logic.gapt.proofs._
 
 object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
   def apply( subProof: LKProof, leftConjunct: HOLFormula, rightConjunct: HOLFormula ): LKProof = {

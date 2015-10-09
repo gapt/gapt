@@ -1,8 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr.HOLAtom
-import at.logic.gapt.proofs.{ HOLClause, SequentIndex }
-import at.logic.gapt.proofs.lkNew.OccConnector
+import at.logic.gapt.proofs.{ OccConnector, HOLClause, SequentIndex }
 import scala.collection.mutable
 
 object mapInputClauses {
