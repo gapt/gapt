@@ -569,6 +569,40 @@ object ParamodulationRightRule {
 }
 
 /**
+ * Move a formula to the beginning of the antecedent, where the main formula is customarily placed.
+ * <pre>
+ *          (π)
+ *     Γ, A, Γ' :- Δ
+ *    --------------
+ *     A, Γ, Γ' :- Δ
+ * </pre>
+ */
+object ExchangeLeftMacroRule {
+  def apply( subProof: LKProof, aux: SequentIndex ) = {
+    require( aux isAnt )
+    require( subProof.endSequent isDefinedAt aux )
+    ContractionLeftRule( WeakeningLeftRule( subProof, subProof.endSequent( aux ) ), Ant( 0 ), aux + 1 )
+  }
+}
+
+/**
+ * Move a formula to the end of the succedent, where the main formula is customarily placed.
+ * <pre>
+ *          (π)
+ *     Γ :- Δ, A, Δ'
+ *    --------------
+ *     Γ :- Δ, Δ', A
+ * </pre>
+ */
+object ExchangeRightMacroRule {
+  def apply( subProof: LKProof, aux: SequentIndex ) = {
+    require( aux isSuc )
+    require( subProof.endSequent isDefinedAt aux )
+    ContractionRightRule( WeakeningRightRule( subProof, subProof.endSequent( aux ) ), aux, Suc( subProof.endSequent.succedent.size ) )
+  }
+}
+
+/**
  * Computes a proof of F from a proof of some instances of F
  *
  */

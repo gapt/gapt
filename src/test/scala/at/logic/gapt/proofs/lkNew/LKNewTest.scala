@@ -1525,4 +1525,20 @@ class LKNewTest extends Specification {
     }
   }
 
+  "exchange rules" should {
+    val Seq( a, b ) = Seq( "a", "b" ) map { FOLAtom( _ ) }
+    "ExchangeLeftMacroRule" in {
+      val p1 = LogicalAxiom( a )
+      val p2 = WeakeningLeftRule( p1, b )
+      val p3 = ExchangeLeftMacroRule( p1, Ant( 1 ) )
+      p3.endSequent must_== ( a +: b +: Sequent() :+ a )
+    }
+    "ExchangeRightMacroRule" in {
+      val p1 = LogicalAxiom( a )
+      val p2 = WeakeningRightRule( p1, b )
+      val p3 = ExchangeRightMacroRule( p1, Suc( 0 ) )
+      p3.endSequent must_== ( a +: Sequent() :+ b :+ a )
+    }
+  }
+
 }

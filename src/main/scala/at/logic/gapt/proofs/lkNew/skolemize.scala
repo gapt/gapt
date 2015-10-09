@@ -144,9 +144,7 @@ object skolemize {
           val skolemFunction = sym( context: _* )
           val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head )
             .updated( aux, Some( context -> skolemSymbols.tail ) ) )
-          val subProof__ = applySubstitution( Substitution( eigen -> skolemFunction ) )( subProof_ )
-          // FIXME: I want exchange rules!
-          ContractionLeftRule( WeakeningLeftRule( subProof__, subProof__.conclusion( aux ) ), Ant( 0 ), aux + 1 )
+          ExchangeLeftMacroRule( applySubstitution( Substitution( eigen -> skolemFunction ) )( subProof_ ), aux )
         case None =>
           val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
           ExistsLeftRule( subProof_, aux, eigen, quant )
@@ -158,10 +156,7 @@ object skolemize {
           val skolemFunction = sym( context: _* )
           val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head )
             .updated( aux, Some( context -> skolemSymbols.tail ) ) )
-          val subProof__ = applySubstitution( Substitution( eigen -> skolemFunction ) )( subProof_ )
-          // FIXME: I want exchange rules!
-          val subProof___ = WeakeningRightRule( subProof__, subProof__.conclusion( aux ) )
-          ContractionRightRule( subProof___, aux, subProof___.mainIndices.head )
+          ExchangeRightMacroRule( applySubstitution( Substitution( eigen -> skolemFunction ) )( subProof_ ), aux )
         case None =>
           val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
           ForallRightRule( subProof_, aux, eigen, quant )
