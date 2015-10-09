@@ -1,9 +1,13 @@
 package at.logic.gapt.proofs.lkNew
 
+import java.util.zip.GZIPInputStream
+
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr.{ All, FOLVar, FOLAtom }
 import at.logic.gapt.formats.llk.HybridLatexParser
+import at.logic.gapt.formats.readers.XMLReaders.XMLReader
+import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.provers.prover9.Prover9Prover
 
 import org.specs2.mutable._
@@ -28,6 +32,20 @@ class LKToLKskTest extends Specification {
 
     LKToLKsk( Pi2Pigeonhole() )
     ok
+  }
+
+  "lattice proof" in {
+    val pdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
+    val lk = lkOld2New( DefinitionElimination( pdb.Definitions, at.logic.gapt.proofs.lk.regularize( pdb.proofs.head._2 ) ) )
+    val lksk = LKToLKsk( lk )
+    lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
+  }
+
+  "tape proof" in {
+    val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+    val lk = lkOld2New( DefinitionElimination( pdb.Definitions, at.logic.gapt.proofs.lk.regularize( pdb.proof( "the-proof" ) ) ) )
+    val lksk = LKToLKsk( lk )
+    lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }
 
   "higher order tape proof" in {
