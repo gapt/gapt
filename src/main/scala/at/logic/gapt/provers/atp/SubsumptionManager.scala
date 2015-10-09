@@ -8,6 +8,7 @@
 
 package at.logic.gapt.proofs.lk.subsumption.managers
 
+import at.logic.gapt.expr.SubsumptionAlgorithm
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.utils.patterns.listeners._
 import at.logic.gapt.proofs.lk.subsumption._
