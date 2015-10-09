@@ -9,9 +9,11 @@ object applySubstitution {
    * Applies a substitution to an LKProof.
    *
    * @param substitution The substitution to be applied.
-   * @param preserveEigenvariables If true, eigenvariables will be treated as bound.
+   * @param preserveEigenvariables  If true, preserve eigenvariables and never change them.  If false (the default),
+   *                                treat eigenvariables as variables bound by their strong quantifier inferences and
+   *                                perform capture-avoiding substitution.
    * @param proof The proof to apply the substitution to.
-   * @return
+   * @return The substituted proof.
    */
   def apply( substitution: Substitution, preserveEigenvariables: Boolean = false )( proof: LKProof ): LKProof = proof match {
     case InitialSequent( sequent ) =>
