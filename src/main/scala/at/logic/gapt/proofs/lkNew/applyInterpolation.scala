@@ -98,7 +98,7 @@ object Interpolate {
 
     // structural rules
 
-    case WeakeningLeftRule( proof , formula ) => {
+    /*case WeakeningLeftRule( proof, formula ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
 
       if ( npart.contains( m ) ) ( WeakeningLeftRule( up_nproof, m.formula ), up_pproof, up_I )
@@ -112,7 +112,7 @@ object Interpolate {
       if ( npart.contains( m ) ) ( WeakeningRightRule( up_nproof, m.formula ), up_pproof, up_I )
       else if ( ppart.contains( m ) ) ( up_nproof, WeakeningRightRule( up_pproof, m.formula ), up_I )
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+    }*/
 
     /*case ContractionLeftRule( p, s, a1, a2, m ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
