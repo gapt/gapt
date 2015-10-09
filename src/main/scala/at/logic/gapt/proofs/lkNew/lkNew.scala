@@ -1167,14 +1167,13 @@ object StrongQuantifierRule {
 
 /**
  * Abstract class that performs most of the construction of left and right equality rules.
- *
- * @param subProof
- * @param eq
- * @param aux
- * @param pos
  */
-abstract class EqualityRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition )
-    extends UnaryLKProof with CommonRule {
+abstract class EqualityRule extends UnaryLKProof with CommonRule {
+
+  def subProof: LKProof
+  def eq: SequentIndex
+  def aux: SequentIndex
+  def pos: HOLPosition
 
   aux match {
     case Ant( _ ) => validateIndices( premise, Seq( eq, aux ), Seq() )
@@ -1185,13 +1184,13 @@ abstract class EqualityRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
 
   val auxFormula = premise( aux )
 
-  val mainFormula = equation match {
+  val ( mainFormula, leftToRight ) = equation match {
     case Eq( s, t ) =>
       auxFormula( pos ) match {
         case `s` =>
-          auxFormula.replace( pos, t )
+          auxFormula.replace( pos, t ) -> true
         case `t` =>
-          auxFormula.replace( pos, s )
+          auxFormula.replace( pos, s ) -> false
         case _ =>
           throw LKRuleCreationException( s"Position $pos in $auxFormula should be $s or $t, but is ${auxFormula( pos )}." )
       }
@@ -1225,7 +1224,7 @@ abstract class EqualityRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
  * @param pos The position of the term to be replaced within A. FIXME: I think it would be convenient to allow FOLPositions here.
  */
 case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition )
-    extends EqualityRule( subProof, eq, aux, pos ) {
+    extends EqualityRule {
 
   validateIndices( premise, Seq( eq, aux ), Seq() )
 
@@ -1306,7 +1305,7 @@ object EqualityLeftRule extends RuleConvenienceObject( "EqualityLeftRule" ) {
  * @param pos The position of the term to be replaced within A. FIXME: I think it would be convenient to allow FOLPositions here.
  */
 case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition )
-    extends EqualityRule( subProof, eq, aux, pos ) {
+    extends EqualityRule {
 
   validateIndices( premise, Seq( eq ), Seq( aux ) )
 

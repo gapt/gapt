@@ -26,6 +26,10 @@ case class Axiom( antLabel: Label, sucLabel: Label, atom: HOLAtom ) extends Init
   def mainFormulaSequent = ( antLabel -> atom ) +: Sequent() :+ ( sucLabel -> atom )
 }
 
+case class Reflexivity( label: Label, term: LambdaExpression ) extends InitialSequent {
+  def mainFormulaSequent = Sequent() :+ ( label -> Eq( term, term ) )
+}
+
 case class BottomLeft( label: Label ) extends InitialSequent {
   def mainFormulaSequent = ( label -> Bottom() ) +: Sequent()
 }
@@ -102,6 +106,20 @@ case class OrRight( subProof: LKskProof, aux1: Suc, aux2: Suc ) extends UnaryRul
 case class ImpRight( subProof: LKskProof, aux1: Ant, aux2: Suc ) extends UnaryRule with SameLabel {
   lazy val newFormulas = Sequent() :+ ( subProof.formulas( aux1 ) --> subProof.formulas( aux2 ) )
   def auxIndices = Seq( Seq( aux1, aux2 ) )
+}
+
+case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRight: Boolean, pos: LambdaPosition ) extends UnaryRule with SameLabel {
+  require( eq != aux )
+
+  lazy val ( s, t ) = subProof.formulas( eq ) match {
+    case Eq( s_, t_ ) => if ( leftToRight ) s_ -> t_ else t_ -> s_
+  }
+  require( subProof.formulas( aux )( pos ) == s )
+  lazy val mainFormula = subProof.formulas( aux ).replace( pos, t ).asInstanceOf[HOLFormula]
+
+  lazy val newFormulas = if ( aux isAnt ) mainFormula +: Sequent() else Sequent() :+ mainFormula
+
+  def auxIndices = Seq( Seq( aux ) )
 }
 
 trait BinaryRule extends LKskProof {

@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.SkolemSymbolFactory
+import at.logic.gapt.expr.hol.{ HOLPosition, SkolemSymbolFactory }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkskNew.LKskProof._
 import at.logic.gapt.proofs.lkskNew
@@ -13,7 +13,7 @@ object LKToLKsk {
   def apply( p: LKProof, labels: Sequent[Label] ): LKskProof = {
     val res = p match {
       case LogicalAxiom( atom )     => lkskNew.Axiom( labels( Ant( 0 ) ), labels( Suc( 0 ) ), atom )
-      case ReflexivityAxiom( term ) => ???
+      case ReflexivityAxiom( term ) => Reflexivity( labels( Suc( 0 ) ), term )
       case TopAxiom                 => TopRight( labels( Suc( 0 ) ) )
       case BottomAxiom              => BottomLeft( labels( Ant( 0 ) ) )
 
@@ -62,7 +62,12 @@ object LKToLKsk {
           apply( subProof2, p.getRightOccConnector.parents( labels ).updated( aux2, Seq( Seq() ) ).map( _.head ) ), aux2
         )
 
-      // TODO: equation rules
+      case p: EqualityRule =>
+        val lambdaPos = HOLPosition.toLambdaPosition( p.auxFormula )( p.pos )
+        Equality(
+          apply( p.subProof, p.getOccConnector.parents( labels ).map( _.head ) ),
+          p.eq.asInstanceOf[Ant], p.aux, p.leftToRight, lambdaPos
+        )
 
       case p @ ForallLeftRule( subProof, aux: Ant, formula, term, v ) =>
         AllLeft(
@@ -76,12 +81,14 @@ object LKToLKsk {
         )
 
       case p @ ForallRightRule( subProof, aux: Suc, eigen, quant ) =>
-        val skolemSymbol = Const( SkolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, labels( aux ).map( _.exptype ) ) )
-        val subProof_ = applySubstitution( Substitution( eigen -> skolemSymbol( labels( aux ): _* ) ) )( subProof )
+        val ls = labels( p.mainIndices.head )
+        val skolemSymbol = Const( SkolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
+        val subProof_ = applySubstitution( Substitution( eigen -> skolemSymbol( ls: _* ) ) )( subProof )
         AllRight( apply( subProof_, p.getOccConnector.parents( labels ).map( _.head ) ), aux, p.mainFormula, skolemSymbol )
       case p @ ExistsLeftRule( subProof, aux: Ant, eigen, quant ) =>
-        val skolemSymbol = Const( SkolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, labels( aux ).map( _.exptype ) ) )
-        val subProof_ = applySubstitution( Substitution( eigen -> skolemSymbol( labels( aux ): _* ) ) )( subProof )
+        val ls = labels( p.mainIndices.head )
+        val skolemSymbol = Const( SkolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
+        val subProof_ = applySubstitution( Substitution( eigen -> skolemSymbol( ls: _* ) ) )( subProof )
         ExLeft( apply( subProof_, p.getOccConnector.parents( labels ).map( _.head ) ), aux, p.mainFormula, skolemSymbol )
     }
     require( res.labels == labels, s"${res.labels} == $labels" )

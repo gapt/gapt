@@ -1,6 +1,8 @@
 package at.logic.gapt.proofs.lkNew
 
+import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr.{ All, FOLVar, FOLAtom }
+import at.logic.gapt.provers.prover9.Prover9Prover
 
 import org.specs2.mutable._
 
@@ -15,5 +17,12 @@ class LKToLKskTest extends Specification {
 
     val pSk = LKToLKsk( p3 )
     pSk.conclusion must_== ( p3.endSequent map { Seq() -> _ } )
+  }
+
+  "pigeonhole" in {
+    if ( !new Prover9Prover().isInstalled ) skipped
+
+    LKToLKsk( Pi2Pigeonhole() )
+    ok
   }
 }
