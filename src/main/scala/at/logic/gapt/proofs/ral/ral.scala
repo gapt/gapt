@@ -123,18 +123,14 @@ case class RalPara( subProof1: RalProof, equation: SequentIndex,
   override def immediateSubProofs = Seq( subProof1, subProof2 )
 }
 
-private[ral] trait OneFormulaRule extends RalProof {
+private[ral] trait OneFormulaRule extends RalProof with ContextRule[( Label, HOLFormula ), RalProof] {
   def subProof: RalProof
   def idx: SequentIndex
 
   def newLabelledFormulas: Sequent[( Label, HOLFormula )]
 
-  override val conclusion = ( subProof.conclusion delete idx ) ++ newLabelledFormulas
+  override def mainFormulaSequent = newLabelledFormulas
 
-  override def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion,
-    ( subProof.conclusion.indicesSequent delete idx map { Seq( _ ) } ) ++ ( newLabelledFormulas map { _ => Seq( idx ) } ) ) )
-
-  override def mainIndices = occConnectors.head.children( idx )
   override def auxIndices = Seq( Seq( idx ) )
 
   override def immediateSubProofs = Seq( subProof )
@@ -157,7 +153,7 @@ case class RalAllT( subProof: RalProof, idx: SequentIndex, eigenVariable: Var ) 
   require( idx isSuc )
   lazy val App( ForallC( _ ), sub ) = subProof.formulas( idx )
 
-  override def newLabelledFormulas = Sequent() :+
+  override val newLabelledFormulas = Sequent() :+
     ( subProof.labels( idx ) + eigenVariable ) ->
     BetaReduction.betaNormalize( App( sub, eigenVariable ).asInstanceOf[HOLFormula] )
 }
@@ -167,14 +163,14 @@ case class RalAllF( subProof: RalProof, idx: SequentIndex, skolemSymbol: SkolemS
   lazy val App( ForallC( quantifiedType ), sub ) = subProof.formulas( idx )
 
   lazy val skolemTerm = computeSkolemTerm( skolemSymbol, quantifiedType, subProof.labels( idx ) )
-  override def newFormulas = BetaReduction.betaNormalize( App( sub, skolemTerm ).asInstanceOf[HOLFormula] ) +: Sequent()
+  override val newFormulas = BetaReduction.betaNormalize( App( sub, skolemTerm ).asInstanceOf[HOLFormula] ) +: Sequent()
 }
 
 case class RalExF( subProof: RalProof, idx: SequentIndex, eigenVariable: Var ) extends OneFormulaRule {
   require( idx isAnt )
   lazy val App( ExistsC( _ ), sub ) = subProof.formulas( idx )
 
-  override def newLabelledFormulas =
+  override val newLabelledFormulas =
     ( ( subProof.labels( idx ) + eigenVariable ) ->
       BetaReduction.betaNormalize( App( sub, eigenVariable ).asInstanceOf[HOLFormula] ) ) +: Sequent()
 }
@@ -184,82 +180,82 @@ case class RalExT( subProof: RalProof, idx: SequentIndex, skolemSymbol: SkolemSy
   lazy val App( ExistsC( quantifiedType ), sub ) = subProof.formulas( idx )
 
   lazy val skolemTerm = computeSkolemTerm( skolemSymbol, quantifiedType, subProof.labels( idx ) )
-  override def newFormulas = Sequent() :+ BetaReduction.betaNormalize( App( sub, skolemTerm ).asInstanceOf[HOLFormula] )
+  override val newFormulas = Sequent() :+ BetaReduction.betaNormalize( App( sub, skolemTerm ).asInstanceOf[HOLFormula] )
 }
 
 case class RalNegF( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isAnt )
   lazy val Neg( sub ) = subProof.formulas( idx )
 
-  override def newFormulas = Sequent() :+ sub
+  override val newFormulas = Sequent() :+ sub
 }
 
 case class RalNegT( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isSuc )
   lazy val Neg( sub ) = subProof.formulas( idx )
 
-  override def newFormulas = sub +: Sequent()
+  override val newFormulas = sub +: Sequent()
 }
 
 case class RalAndT1( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isSuc )
   lazy val And( sub1, _ ) = subProof.formulas( idx )
 
-  override def newFormulas = Sequent() :+ sub1
+  override val newFormulas = Sequent() :+ sub1
 }
 
 case class RalAndT2( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isSuc )
   lazy val And( _, sub2 ) = subProof.formulas( idx )
 
-  override def newFormulas = Sequent() :+ sub2
+  override val newFormulas = Sequent() :+ sub2
 }
 
 case class RalOrF1( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isAnt )
   lazy val Or( sub1, _ ) = subProof.formulas( idx )
 
-  override def newFormulas = sub1 +: Sequent()
+  override val newFormulas = sub1 +: Sequent()
 }
 
 case class RalOrF2( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isAnt )
   lazy val Or( _, sub2 ) = subProof.formulas( idx )
 
-  override def newFormulas = sub2 +: Sequent()
+  override val newFormulas = sub2 +: Sequent()
 }
 
 case class RalImpF1( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isAnt )
   lazy val Imp( l, _ ) = subProof.formulas( idx )
 
-  override def newFormulas = Sequent() :+ l
+  override val newFormulas = Sequent() :+ l
 }
 
 case class RalImpF2( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isAnt )
   lazy val Imp( _, r ) = subProof.formulas( idx )
 
-  override def newFormulas = r +: Sequent()
+  override val newFormulas = r +: Sequent()
 }
 
 case class RalAndF( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isAnt )
   lazy val And( l, r ) = subProof.formulas( idx )
 
-  override def newFormulas = l +: r +: Sequent()
+  override val newFormulas = l +: r +: Sequent()
 }
 
 case class RalOrT( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isSuc )
   lazy val Or( l, r ) = subProof.formulas( idx )
 
-  override def newFormulas = Sequent() :+ l :+ r
+  override val newFormulas = Sequent() :+ l :+ r
 }
 
 case class RalImpT( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isSuc )
   lazy val Imp( l, r ) = subProof.formulas( idx )
 
-  override def newFormulas = l +: Sequent() :+ r
+  override val newFormulas = l +: Sequent() :+ r
 }

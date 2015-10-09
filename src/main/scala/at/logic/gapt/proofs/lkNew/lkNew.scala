@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
-import at.logic.gapt.expr.hol._
 
 import scala.collection.mutable
 
@@ -15,9 +14,7 @@ abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
   /**
    * The end-sequent of the rule.
    */
-  def endSequent: HOLSequent
-
-  override def conclusion = endSequent
+  final def endSequent = conclusion
 
   /**
    * Checks whether indices are in the right place and premise is defined at all of them.
@@ -157,43 +154,14 @@ object BinaryLKProof {
   def unapply( p: BinaryLKProof ) = Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }
 
-trait CommonRule extends LKProof {
-
-  private def concat[A]( sequents: Seq[Sequent[A]] ) = sequents match {
-    case Seq() => Sequent()
-    case _     => sequents.reduce( _ ++ _ )
-  }
-
-  protected def formulasToBeDeleted = auxIndices
-
-  protected def mainFormulaSequent: HOLSequent
-
-  protected def contexts = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.delete( is )
-
-  override lazy val endSequent = mainFormulaSequent.antecedent ++: concat( contexts ) :++ mainFormulaSequent.succedent
-
-  override def mainIndices = ( mainFormulaSequent.antecedent.map( _ => true ) ++: concat( contexts ).map( _ => false ) :++ mainFormulaSequent.succedent.map( _ => true ) ).indicesWhere( _ == true )
-
-  private val contextIndices = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.indicesSequent.delete( is )
-
-  override def occConnectors = for ( i <- contextIndices.indices ) yield {
-    val ( leftContexts, currentContext, rightContext ) = ( contextIndices.take( i ), contextIndices( i ), contextIndices.drop( i + 1 ) )
-    val leftContextIndices = leftContexts.map( c => c.map( _ => Seq() ) )
-    val currentContextIndices = currentContext.map( i => Seq( i ) )
-    val rightContextIndices = rightContext.map( c => c.map( _ => Seq() ) )
-    val auxIndicesAntecedent = mainFormulaSequent.antecedent.map( _ => formulasToBeDeleted( i ) )
-    val auxIndicesSuccedent = mainFormulaSequent.succedent.map( _ => formulasToBeDeleted( i ) )
-    new OccConnector( endSequent, premises( i ),
-      auxIndicesAntecedent ++: ( concat( leftContextIndices ) ++ currentContextIndices ++ concat( rightContextIndices ) ) :++ auxIndicesSuccedent )
-  }
-}
+trait CommonRule extends LKProof with ContextRule[HOLFormula, LKProof]
 
 /**
  * Use this trait for rules that use eigenvariables.
  *
  */
 trait Eigenvariable {
-  val eigenVariable: Var
+  def eigenVariable: Var
 }
 
 object Eigenvariable {
@@ -233,7 +201,7 @@ object InitialSequent {
   def unapply( proof: InitialSequent ) = Some( proof.endSequent )
 }
 
-case class TheoryAxiom( endSequent: Sequent[HOLAtom] ) extends InitialSequent
+case class TheoryAxiom( conclusion: Sequent[HOLAtom] ) extends InitialSequent
 
 /**
  * An LKProof introducing ⊤ on the right:
@@ -244,7 +212,7 @@ case class TheoryAxiom( endSequent: Sequent[HOLAtom] ) extends InitialSequent
  */
 case object TopAxiom extends InitialSequent {
   override def name: String = "⊤:r"
-  override def endSequent = HOLSequent( Nil, Seq( Top() ) )
+  override def conclusion = HOLSequent( Nil, Seq( Top() ) )
   def mainFormula = Top()
 }
 
@@ -257,7 +225,7 @@ case object TopAxiom extends InitialSequent {
  */
 case object BottomAxiom extends InitialSequent {
   override def name: String = "⊥:l"
-  override def endSequent = HOLSequent( Seq( Bottom() ), Nil )
+  override def conclusion = HOLSequent( Seq( Bottom() ), Nil )
   def mainFormula = Bottom()
 }
 
@@ -272,7 +240,7 @@ case object BottomAxiom extends InitialSequent {
  * @param A The atom A.
  */
 case class LogicalAxiom( A: HOLAtom ) extends InitialSequent {
-  override def endSequent = HOLSequent( Seq( A ), Seq( A ) )
+  override def conclusion = HOLSequent( Seq( A ), Seq( A ) )
   def mainFormula = A
 }
 
@@ -287,7 +255,7 @@ case class LogicalAxiom( A: HOLAtom ) extends InitialSequent {
  * @param s The term s.
  */
 case class ReflexivityAxiom( s: LambdaExpression ) extends InitialSequent {
-  override def endSequent = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
+  override def conclusion = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
   def mainFormula = Eq( s, s )
 }
 
