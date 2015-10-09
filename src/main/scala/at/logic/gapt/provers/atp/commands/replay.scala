@@ -4,8 +4,8 @@ package at.logic.gapt.provers.atp.commands.replay
  * this file contains command for a guided search using ids for clauses,as for example when parsing the output of theorem provers and using the rules from there
  */
 
+import at.logic.gapt.expr.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLUnificationAlgorithm }
 import at.logic.gapt.proofs.resolutionOld.{ ResolutionProof, OccClause }
 import at.logic.gapt.proofs.resolutionOld.robinson.{ RobinsonResolutionProof }

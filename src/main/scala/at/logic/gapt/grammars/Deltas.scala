@@ -1,18 +1,7 @@
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.grammars
 
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
-import at.logic.gapt.provers.Prover
-import at.logic.gapt.provers.eqProver.EquationalProver
-import at.logic.gapt.provers.minisat.MiniSATProver
-import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.utils.executionModels.timeout._
-
-import scala.collection.immutable.HashMap
 
 /**
  * Represents the vector Delta(t_1,...,t_n), i.e. one row of the Delta-table

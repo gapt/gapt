@@ -2,9 +2,9 @@
  * Implements the Delta Table used to store and find valid decompositions (grammars) of a
  * term set.
  *
- * Implements the delta-different of a set of terms 
+ * Implements the delta-different of a set of terms
  * (E.g.: delta(f(a), f(b)) = [f(alpha)], [a, b]
- * 
+ *
  *
  * !NOTE!
  * The delta-table method of cut-introduction is sound but NOT complete!
@@ -25,15 +25,11 @@
  *
  * */
 
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.grammars
 
-import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.Utils._
-import at.logic.gapt.proofs.occurrences._
+
 import scala.collection.immutable.HashMap
-import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.proofs.lk.cutIntroduction.Deltas._
 
 //package-global definitions
 package object types {

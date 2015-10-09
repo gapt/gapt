@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lkNew.OccConnector
 
 /**
  * First-order resolution proof.
@@ -113,7 +112,7 @@ case class Factor( subProof: ResolutionProof, literal1: SequentIndex, literal2: 
 }
 
 object Factor {
-  def apply( subProof: ResolutionProof, literals: Traversable[SequentIndex] ): ( ResolutionProof, OccConnector ) = {
+  def apply( subProof: ResolutionProof, literals: Traversable[SequentIndex] ): ( ResolutionProof, OccConnector[HOLAtom] ) = {
     val lit0 :: lits = literals.toList.sorted
     lits.reverse.foldLeft( subProof -> OccConnector( subProof.conclusion ) ) {
       case ( ( subProof_, occConn ), lit ) =>
@@ -122,7 +121,7 @@ object Factor {
     }
   }
 
-  def apply( subProof: ResolutionProof, newConclusion: HOLClause ): ( ResolutionProof, OccConnector ) = {
+  def apply( subProof: ResolutionProof, newConclusion: HOLClause ): ( ResolutionProof, OccConnector[HOLAtom] ) = {
     var ( p, occConn ) = ( subProof, OccConnector( subProof.conclusion ) )
 
     newConclusion.polarizedElements.toSet[( HOLAtom, Boolean )] foreach {
@@ -142,7 +141,7 @@ object Factor {
     ( p, occConn )
   }
 
-  def apply( subProof: ResolutionProof ): ( ResolutionProof, OccConnector ) =
+  def apply( subProof: ResolutionProof ): ( ResolutionProof, OccConnector[HOLAtom] ) =
     Factor( subProof, subProof.conclusion.distinct )
 }
 

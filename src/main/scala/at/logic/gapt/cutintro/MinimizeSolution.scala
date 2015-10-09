@@ -5,8 +5,9 @@
  * Takes an extended Herbrand sequent with an associated solution and returns another one with an improved solution.
  */
 
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.cutintro
 
+import at.logic.gapt.grammars.MultiGrammar
 import at.logic.gapt.proofs.resolution.{ ForgetfulResolveIndexed, ForgetfulParamodulate, ForgetfulResolve }
 import at.logic.gapt.proofs.{ HOLSequent, FOLClause }
 import at.logic.gapt.proofs._

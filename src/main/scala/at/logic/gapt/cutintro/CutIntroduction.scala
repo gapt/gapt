@@ -1,14 +1,13 @@
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.grammars.{ findMinimalVectGrammar, VectTratGrammar }
+import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, _ }
 import at.logic.gapt.proofs.lk.ExtractInterpolant
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
@@ -29,8 +28,8 @@ trait GrammarFindingMethod {
 case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMethod {
   override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = {
     val delta = manyQuantifiers match {
-      case true  => new UnboundedVariableDelta()
-      case false => new OneVariableDelta()
+      case true  => new Deltas.UnboundedVariableDelta()
+      case false => new Deltas.OneVariableDelta()
     }
     val eigenvariable = "α"
     val deltatable = metrics.time( "dtable" ) { new DeltaTable( lang.toList, eigenvariable, delta ) }
@@ -52,6 +51,19 @@ case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extend
 object MaxSATMethod {
   def apply( nonTerminalLengths: Int* ): MaxSATMethod =
     MaxSATMethod( bestAvailableMaxSatSolver, nonTerminalLengths: _* )
+}
+
+object simpleToMultiGrammar {
+  def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): MultiGrammar = {
+    val us = g.rightHandSides( g.axiomVect ).map( _.head ).
+      groupBy { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }.
+      mapValues( _.map { case FOLFunction( _, as ) => as }.toList )
+    val slist = g.nonTerminals.filter( _ != g.axiomVect ).
+      map { a => a -> g.rightHandSides( a ).toList }.
+      filter( _._2.nonEmpty ).toList
+
+    new MultiGrammar( us, slist )
+  }
 }
 
 /**

@@ -14,9 +14,7 @@ abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
   /**
    * The end-sequent of the rule.
    */
-  def endSequent: HOLSequent
-
-  override def conclusion = endSequent
+  final def endSequent = conclusion
 
   /**
    * Checks whether indices are in the right place and premise is defined at all of them.
@@ -81,7 +79,7 @@ abstract class UnaryLKProof extends LKProof {
    *
    * @return
    */
-  def getOccConnector: OccConnector = occConnectors.head
+  def getOccConnector: OccConnector[HOLFormula] = occConnectors.head
 
   /**
    * The upper sequent of the rule.
@@ -126,14 +124,14 @@ abstract class BinaryLKProof extends LKProof {
    *
    * @return
    */
-  def getLeftOccConnector: OccConnector = occConnectors.head
+  def getLeftOccConnector: OccConnector[HOLFormula] = occConnectors.head
 
   /**
    * The object connecting the lower and right upper sequents.
    *
    * @return
    */
-  def getRightOccConnector: OccConnector = occConnectors.tail.head
+  def getRightOccConnector: OccConnector[HOLFormula] = occConnectors.tail.head
 
   /**
    * The left upper sequent of the rule.
@@ -156,43 +154,14 @@ object BinaryLKProof {
   def unapply( p: BinaryLKProof ) = Some( p.endSequent, p.leftSubProof, p.rightSubProof )
 }
 
-trait CommonRule extends LKProof {
-
-  private def concat[A]( sequents: Seq[Sequent[A]] ) = sequents match {
-    case Seq() => Sequent()
-    case _     => sequents.reduce( _ ++ _ )
-  }
-
-  protected def formulasToBeDeleted = auxIndices
-
-  protected def mainFormulaSequent: HOLSequent
-
-  protected def contexts = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.delete( is )
-
-  override lazy val endSequent = mainFormulaSequent.antecedent ++: concat( contexts ) :++ mainFormulaSequent.succedent
-
-  override def mainIndices = ( mainFormulaSequent.antecedent.map( _ => true ) ++: concat( contexts ).map( _ => false ) :++ mainFormulaSequent.succedent.map( _ => true ) ).indicesWhere( _ == true )
-
-  private val contextIndices = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.indicesSequent.delete( is )
-
-  override def occConnectors = for ( i <- contextIndices.indices ) yield {
-    val ( leftContexts, currentContext, rightContext ) = ( contextIndices.take( i ), contextIndices( i ), contextIndices.drop( i + 1 ) )
-    val leftContextIndices = leftContexts.map( c => c.map( _ => Seq() ) )
-    val currentContextIndices = currentContext.map( i => Seq( i ) )
-    val rightContextIndices = rightContext.map( c => c.map( _ => Seq() ) )
-    val auxIndicesAntecedent = mainFormulaSequent.antecedent.map( _ => formulasToBeDeleted( i ) )
-    val auxIndicesSuccedent = mainFormulaSequent.succedent.map( _ => formulasToBeDeleted( i ) )
-    new OccConnector( endSequent, premises( i ),
-      auxIndicesAntecedent ++: ( concat( leftContextIndices ) ++ currentContextIndices ++ concat( rightContextIndices ) ) :++ auxIndicesSuccedent )
-  }
-}
+trait CommonRule extends LKProof with ContextRule[HOLFormula, LKProof]
 
 /**
  * Use this trait for rules that use eigenvariables.
  *
  */
 trait Eigenvariable {
-  val eigenVariable: Var
+  def eigenVariable: Var
 }
 
 object Eigenvariable {
@@ -232,7 +201,7 @@ object InitialSequent {
   def unapply( proof: InitialSequent ) = Some( proof.endSequent )
 }
 
-case class TheoryAxiom( endSequent: Sequent[HOLAtom] ) extends InitialSequent
+case class TheoryAxiom( conclusion: Sequent[HOLAtom] ) extends InitialSequent
 
 /**
  * An LKProof introducing ⊤ on the right:
@@ -243,7 +212,7 @@ case class TheoryAxiom( endSequent: Sequent[HOLAtom] ) extends InitialSequent
  */
 case object TopAxiom extends InitialSequent {
   override def name: String = "⊤:r"
-  override def endSequent = HOLSequent( Nil, Seq( Top() ) )
+  override def conclusion = HOLSequent( Nil, Seq( Top() ) )
   def mainFormula = Top()
 }
 
@@ -256,7 +225,7 @@ case object TopAxiom extends InitialSequent {
  */
 case object BottomAxiom extends InitialSequent {
   override def name: String = "⊥:l"
-  override def endSequent = HOLSequent( Seq( Bottom() ), Nil )
+  override def conclusion = HOLSequent( Seq( Bottom() ), Nil )
   def mainFormula = Bottom()
 }
 
@@ -271,7 +240,7 @@ case object BottomAxiom extends InitialSequent {
  * @param A The atom A.
  */
 case class LogicalAxiom( A: HOLAtom ) extends InitialSequent {
-  override def endSequent = HOLSequent( Seq( A ), Seq( A ) )
+  override def conclusion = HOLSequent( Seq( A ), Seq( A ) )
   def mainFormula = A
 }
 
@@ -286,7 +255,7 @@ case class LogicalAxiom( A: HOLAtom ) extends InitialSequent {
  * @param s The term s.
  */
 case class ReflexivityAxiom( s: LambdaExpression ) extends InitialSequent {
-  override def endSequent = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
+  override def conclusion = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
   def mainFormula = Eq( s, s )
 }
 
@@ -1553,57 +1522,6 @@ object DefinitionRightRule extends RuleConvenienceObject( "DefinitionRightRule" 
 
     DefinitionRightRule( subProof, Suc( indices( 0 ) ), mainFormula )
   }
-}
-
-/**
- * This class models the connection of formula occurrences between two sequents in a proof.
- *
- */
-case class OccConnector( lowerSequent: HOLSequent, upperSequent: HOLSequent, parentsSequent: Sequent[Seq[SequentIndex]] ) {
-  require( parentsSequent.sizes == lowerSequent.sizes )
-  require( parentsSequent.elements.flatten.toSet subsetOf upperSequent.indices.toSet )
-
-  def childrenSequent = upperSequent.indicesSequent map children
-
-  /**
-   * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
-   *
-   * @param idx
-   * @return
-   */
-  def parents( idx: SequentIndex ): Seq[SequentIndex] = parentsSequent( idx )
-
-  def parents[A]( lowerAs: Sequent[A] ): Sequent[Seq[A]] =
-    childrenSequent map { _ map { lowerAs( _ ) } }
-
-  /**
-   * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
-   *
-   * @param idx
-   * @return
-   */
-  def children( idx: SequentIndex ): Seq[SequentIndex] =
-    if ( upperSequent isDefinedAt idx )
-      parentsSequent indicesWhere { _ contains idx }
-    else
-      throw new IndexOutOfBoundsException
-
-  def *( that: OccConnector ) = {
-    require( this.upperSequent == that.lowerSequent )
-    OccConnector( this.lowerSequent, that.upperSequent, this.parentsSequent map { _ flatMap that.parents distinct } )
-  }
-
-  def inv: OccConnector = OccConnector( upperSequent, lowerSequent, childrenSequent )
-
-  def +( that: OccConnector ) = {
-    require( this.lowerSequent == that.lowerSequent )
-    require( this.upperSequent == that.upperSequent )
-    OccConnector( lowerSequent, upperSequent, lowerSequent.indicesSequent map { i => this.parents( i ) ++ that.parents( i ) } )
-  }
-}
-
-object OccConnector {
-  def apply( sequent: HOLSequent ): OccConnector = OccConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
 }
 
 object consoleString {

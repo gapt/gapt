@@ -1,7 +1,6 @@
 package at.logic.gapt.formats.ivy
 
-import at.logic.gapt.proofs.lkNew.OccConnector
-import at.logic.gapt.proofs.{ FOLClause, Sequent, SequentIndex, SequentProof }
+import at.logic.gapt.proofs._
 import at.logic.gapt.formats.lisp.SExpression
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
@@ -19,7 +18,7 @@ sealed trait IvyResolutionProof extends SequentProof[FOLAtom, IvyResolutionProof
 
   // FIXME: provide a SequentProof trait without OccConnectors
   override def mainIndices: Seq[SequentIndex] = ???
-  override def occConnectors: Seq[OccConnector] = ???
+  override def occConnectors: Seq[OccConnector[FOLAtom]] = ???
   override def auxIndices: Seq[Seq[SequentIndex]] = ???
 }
 

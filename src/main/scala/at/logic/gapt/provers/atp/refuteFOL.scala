@@ -1,9 +1,9 @@
 package at.logic.gapt.provers.atp
 
+import at.logic.gapt.expr.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.expr.fol.FOLUnificationAlgorithm
 import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lk.subsumption.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.provers.atp.commands.base.Command
 import at.logic.gapt.provers.atp.commands.logical.DeterministicAndCommand
 import at.logic.gapt.provers.atp.commands.refinements.base.SequentsMacroCommand

@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lkNew
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, isPrenex, instantiate }
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.{ HOLSequent, Suc, Ant, SequentIndex }
+import at.logic.gapt.proofs._
 
 object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
   def apply( subProof: LKProof, leftConjunct: HOLFormula, rightConjunct: HOLFormula ): LKProof = {
@@ -110,7 +110,7 @@ object ForallLeftBlock {
    */
   def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = withOccConnector( subProof, main, terms )._1
 
-  def withOccConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, OccConnector ) = {
+  def withOccConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, OccConnector[HOLFormula] ) = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) )
 
     val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
@@ -149,7 +149,7 @@ object ForallRightBlock {
    */
   def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = withOccConnector( subProof, main, eigenvariables )._1
 
-  def withOccConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, OccConnector ) = {
+  def withOccConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, OccConnector[HOLFormula] ) = {
     val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) )
 
     val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
@@ -188,7 +188,7 @@ object ExistsLeftBlock {
    */
   def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = withOccConnector( subProof, main, eigenvariables )._1
 
-  def withOccConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, OccConnector ) = {
+  def withOccConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, OccConnector[HOLFormula] ) = {
     val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) )
 
     val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
@@ -225,7 +225,7 @@ object ExistsRightBlock {
    */
   def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = withOccConnector( subProof, main, terms )._1
 
-  def withOccConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, OccConnector ) = {
+  def withOccConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, OccConnector[HOLFormula] ) = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) )
 
     val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, OccConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
@@ -565,6 +565,40 @@ object ParamodulationRightRule {
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = EqualityRightRule( p1, eqFormula, auxFormula, mainFormula )
     CutRule( leftSubProof, p2, eqFormula )
+  }
+}
+
+/**
+ * Move a formula to the beginning of the antecedent, where the main formula is customarily placed.
+ * <pre>
+ *          (π)
+ *     Γ, A, Γ' :- Δ
+ *    --------------
+ *     A, Γ, Γ' :- Δ
+ * </pre>
+ */
+object ExchangeLeftMacroRule {
+  def apply( subProof: LKProof, aux: SequentIndex ) = {
+    require( aux isAnt )
+    require( subProof.endSequent isDefinedAt aux )
+    ContractionLeftRule( WeakeningLeftRule( subProof, subProof.endSequent( aux ) ), Ant( 0 ), aux + 1 )
+  }
+}
+
+/**
+ * Move a formula to the end of the succedent, where the main formula is customarily placed.
+ * <pre>
+ *          (π)
+ *     Γ :- Δ, A, Δ'
+ *    --------------
+ *     Γ :- Δ, Δ', A
+ * </pre>
+ */
+object ExchangeRightMacroRule {
+  def apply( subProof: LKProof, aux: SequentIndex ) = {
+    require( aux isSuc )
+    require( subProof.endSequent isDefinedAt aux )
+    ContractionRightRule( WeakeningRightRule( subProof, subProof.endSequent( aux ) ), aux, Suc( subProof.endSequent.succedent.size ) )
   }
 }
 

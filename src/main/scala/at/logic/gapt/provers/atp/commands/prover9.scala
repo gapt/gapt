@@ -1,27 +1,26 @@
 
-package at.logic.gapt.provers.prover9.commands
+package at.logic.gapt.provers.atp.commands
 
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.resolutionOld.{ ResolutionProof, OccClause }
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.prover9.{ Prover9TermParserA, Prover9TermParser, Prover9TermParserLadrStyle }
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.provers.atp.Definitions._
-import at.logic.gapt.provers.atp.commands.base._
-import at.logic.gapt.provers.atp.commands.guided.GetGuidedClausesCommand._
-import at.logic.gapt.provers.atp.commands.guided.{ AddGuidedClausesCommand, GetGuidedClausesCommand, AddGuidedResolventCommand, AddGuidedInitialClauseCommand }
-import at.logic.gapt.provers.atp.commands.replay.ReplayCommand
-import at.logic.gapt.provers.atp.commands.robinson.{ ResolveCommand, VariantLiteralPositionCommand, VariantLiteralCommand }
-import at.logic.gapt.provers.atp.commands.sequents.{ RefutationReachedCommand, fvarInvariantMSEquality, InsertResolventCommand, SetSequentsCommand }
-import at.logic.gapt.utils.logging.Logger
-
-import collection.mutable.{ ListBuffer, Map }
 import java.io._
 import javax.xml.parsers.SAXParserFactory
+
+import at.logic.gapt.expr._
+import at.logic.gapt.formats.prover9.Prover9TermParser
+import at.logic.gapt.formats.tptp.TPTPFOLExporter
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.resolutionOld.OccClause
+import at.logic.gapt.provers.atp.Definitions._
+import at.logic.gapt.provers.atp.commands.base._
+import at.logic.gapt.provers.atp.commands.guided.{ AddGuidedClausesCommand, AddGuidedInitialClauseCommand, GetGuidedClausesCommand }
+import at.logic.gapt.provers.atp.commands.replay.ReplayCommand
+import at.logic.gapt.provers.atp.commands.sequents.{ InsertResolventCommand, RefutationReachedCommand, SetSequentsCommand }
+import at.logic.gapt.utils.logging.Logger
 import org.xml.sax.InputSource
+
+import scala.collection.mutable.ListBuffer
+import scala.sys.process._
+import scala.util.matching.Regex
 import scala.xml._
-import sys.process._
-import util.matching.Regex
 
 /**
  * Should translate prover9 justifications into a robinson resolution proof. The justifications are:

@@ -5,9 +5,9 @@ import java.io.IOException
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolutionOld.{ OccClause, ResolutionProof }
+import at.logic.gapt.provers.atp.commands.Prover9InitCommand
 import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
 import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
-import at.logic.gapt.provers.prover9.commands.Prover9InitCommand
 
 object replay {
 

@@ -2,31 +2,22 @@
  * Tests for the prover9 interface.
 **/
 
-package at.logic.gapt.provers.prover9
+package at.logic.gapt.provers.atp
 
-import at.logic.gapt.proofs.{ HOLSequent, FOLClause }
+import at.logic.gapt.expr._
+import at.logic.gapt.formats.prover9.Prover9TermParser.parseFormula
+import at.logic.gapt.formats.readers.StringReader
+import at.logic.gapt.formats.simple.SimpleFOLParser
 import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.proofs.occurrences.factory
+import at.logic.gapt.proofs.resolutionOld.robinson.RobinsonResolutionProof
 import at.logic.gapt.proofs.resolutionOld.{ OccClause, ResolutionProof }
-import at.logic.gapt.proofs.resolutionOld.robinson.{ Formatter, RobinsonResolutionProof }
-import at.logic.gapt.expr._
-import at.logic.gapt.expr._
-import at.logic.gapt.formats.simple.{ SimpleFOLParser, SimpleResolutionParserFOL }
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.formats.readers.StringReader
-import at.logic.gapt.provers.atp.Prover
-import at.logic.gapt.provers.atp.commands.base.{ SetStreamCommand, PrependCommand }
-import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
-import at.logic.gapt.provers.prover9.commands.Prover9InitCommand
-import java.io.File.separator
-import java.io.IOException
-
-import org.specs2.mutable._
-import at.logic.gapt.formats.prover9.Prover9TermParser.parseFormula
-import at.logic.gapt.provers.prover9.commands.Prover9InitCommand
-import scala.Some
-import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
+import at.logic.gapt.proofs.{ FOLClause, HOLSequent }
+import at.logic.gapt.provers.atp.commands.Prover9InitCommand
 import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
+import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
+import at.logic.gapt.provers.prover9.Prover9Prover
+import org.specs2.mutable._
 
 class ReplayTest extends Specification {
   def parse( str: String ): FOLFormula = ( new StringReader( str ) with SimpleFOLParser getTerm ).asInstanceOf[FOLFormula]

@@ -6,9 +6,10 @@
  *
  */
 
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr.hol.{ instantiate, containsQuantifier }
+import at.logic.gapt.grammars.MultiGrammar
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.lk._

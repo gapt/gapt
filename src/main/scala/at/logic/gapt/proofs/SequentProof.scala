@@ -1,9 +1,6 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.proofs.lkNew.OccConnector
-
-trait SequentProof[Formula <: HOLFormula, This <: SequentProof[Formula, This]] extends DagProof[This] { self: This =>
+trait SequentProof[Formula, This <: SequentProof[Formula, This]] extends DagProof[This] { self: This =>
   /**
    * A list of SequentIndices denoting the main formula(s) of the rule.
    */
@@ -39,8 +36,39 @@ trait SequentProof[Formula <: HOLFormula, This <: SequentProof[Formula, This]] e
   /**
    * A list of occurrence connectors, one for each immediate subproof.
    */
-  def occConnectors: Seq[OccConnector]
+  def occConnectors: Seq[OccConnector[Formula]]
 
   override protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$conclusion    (${super.stepString( subProofLabels )})"
+}
+
+trait ContextRule[Formula, This <: SequentProof[Formula, This]] extends SequentProof[Formula, This] { self: This =>
+
+  private def concat[A]( sequents: Seq[Sequent[A]] ) = sequents match {
+    case Seq() => Sequent()
+    case _     => sequents.reduce( _ ++ _ )
+  }
+
+  protected def formulasToBeDeleted = auxIndices
+
+  protected def mainFormulaSequent: Sequent[Formula]
+
+  protected def contexts = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.delete( is )
+
+  override lazy val conclusion = mainFormulaSequent.antecedent ++: concat( contexts ) :++ mainFormulaSequent.succedent
+
+  override def mainIndices = ( mainFormulaSequent.antecedent.map( _ => true ) ++: concat( contexts ).map( _ => false ) :++ mainFormulaSequent.succedent.map( _ => true ) ).indicesWhere( _ == true )
+
+  private val contextIndices = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.indicesSequent.delete( is )
+
+  override def occConnectors = for ( i <- contextIndices.indices ) yield {
+    val ( leftContexts, currentContext, rightContext ) = ( contextIndices.take( i ), contextIndices( i ), contextIndices.drop( i + 1 ) )
+    val leftContextIndices = leftContexts.map( c => c.map( _ => Seq() ) )
+    val currentContextIndices = currentContext.map( i => Seq( i ) )
+    val rightContextIndices = rightContext.map( c => c.map( _ => Seq() ) )
+    val auxIndicesAntecedent = mainFormulaSequent.antecedent.map( _ => formulasToBeDeleted( i ) )
+    val auxIndicesSuccedent = mainFormulaSequent.succedent.map( _ => formulasToBeDeleted( i ) )
+    new OccConnector( conclusion, premises( i ),
+      auxIndicesAntecedent ++: ( concat( leftContextIndices ) ++ currentContextIndices ++ concat( rightContextIndices ) ) :++ auxIndicesSuccedent )
+  }
 }

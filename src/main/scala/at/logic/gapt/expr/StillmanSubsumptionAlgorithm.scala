@@ -3,14 +3,23 @@
  *
  */
 
-package at.logic.gapt.proofs.lk.subsumption
+package at.logic.gapt.expr
 
-import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.HOLSequent
 
 // TODO: find a smart way (without reaching out to the lambda layer!!) to not duplicate this code.
+
+trait SubsumptionAlgorithm {
+  /**
+   * A predicate which is true iff s2 is subsumed by s1.
+   * @param s1 a clause
+   * @param s2 a clause
+   * @return true iff s1 subsumes s2
+   */
+  def subsumes( s1: HOLSequent, s2: HOLSequent ): Boolean
+}
 
 object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
   val matchAlg = NaiveIncompleteMatchingAlgorithm

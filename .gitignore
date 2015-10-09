@@ -35,6 +35,7 @@ doc/prv_user_manual.fmt
 *-proposal/*.fdb_latexmk
 *-proposal/*.fls
 *-proposal/*.out
+*-proposal/*.synctex.gz
 
 # vim
 .*.sw?
@@ -49,6 +50,8 @@ doc/prv_user_manual.fmt
 .cache-main
 .cache-test
 .cache-tests
+*.settings
+
 
 # emacs
 /.ensime*
