@@ -6,7 +6,7 @@
  *
  */
 
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr.hol.{ instantiate, containsQuantifier }
 import at.logic.gapt.proofs.HOLSequent

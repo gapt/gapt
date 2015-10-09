@@ -3,7 +3,7 @@
 *
 */
 
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.cutintro
 
 import org.specs2.mutable._
 import scala.collection.immutable.HashMap

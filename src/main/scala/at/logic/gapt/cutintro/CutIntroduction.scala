@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, _ }
 import at.logic.gapt.proofs.lk.ExtractInterpolant
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.proofs.lk.cutIntroduction.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
+import at.logic.gapt.cutintro.Deltas.{ OneVariableDelta, UnboundedVariableDelta }
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._

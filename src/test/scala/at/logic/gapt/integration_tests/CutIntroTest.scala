@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
-import at.logic.gapt.proofs.lk.cutIntroduction._
+import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lkNew.quantRulesNumber
 import at.logic.gapt.provers.basicProver.BasicProver
 import at.logic.gapt.provers.prover9.Prover9Prover

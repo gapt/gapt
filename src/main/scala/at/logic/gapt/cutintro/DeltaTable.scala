@@ -25,7 +25,7 @@
  *
  * */
 
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
@@ -33,7 +33,7 @@ import at.logic.gapt.expr.fol.Utils._
 import at.logic.gapt.proofs.occurrences._
 import scala.collection.immutable.HashMap
 import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.proofs.lk.cutIntroduction.Deltas._
+import at.logic.gapt.cutintro.Deltas._
 
 //package-global definitions
 package object types {

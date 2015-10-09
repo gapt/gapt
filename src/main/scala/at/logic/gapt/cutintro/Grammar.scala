@@ -7,7 +7,7 @@
  * P = { τ -> u | u in U} union { α -> s | s in S } 
  */
 
-package at.logic.gapt.proofs.lk.cutIntroduction
+package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
