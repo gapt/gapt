@@ -65,7 +65,6 @@ object Interpolate {
     }
 
     case TopAxiom => {
-      // consider method for this part
       assert( npart.size + ppart.size == 1 )
       val inNpart = npart.filter( ind => p.endSequent( ind ) == Top() )
       val inPpart = ppart.filter( ind => p.endSequent( ind ) == Top() )
@@ -98,21 +97,25 @@ object Interpolate {
 
     // structural rules
 
-    /*case WeakeningLeftRule( proof, formula ) => {
+    case WeakeningLeftRule( proof, formula ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
+      val inNpart = npart.filter( ind => p.endSequent( ind ) == formula )
+      val inPpart = ppart.filter( ind => p.endSequent( ind ) == formula )
 
-      if ( npart.contains( m ) ) ( WeakeningLeftRule( up_nproof, m.formula ), up_pproof, up_I )
-      else if ( ppart.contains( m ) ) ( up_nproof, WeakeningLeftRule( up_pproof, m.formula ), up_I )
+      if ( !inNpart.isEmpty ) ( WeakeningLeftRule( up_nproof, formula ), up_pproof, up_I )
+      else if ( !inPpart.isEmpty ) ( up_nproof, WeakeningLeftRule( up_pproof, formula ), up_I )
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
     case WeakeningRightRule( proof, formula ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
+      val inNpart = npart.filter( ind => p.endSequent( ind ) == formula )
+      val inPpart = ppart.filter( ind => p.endSequent( ind ) == formula )
 
-      if ( npart.contains( m ) ) ( WeakeningRightRule( up_nproof, m.formula ), up_pproof, up_I )
-      else if ( ppart.contains( m ) ) ( up_nproof, WeakeningRightRule( up_pproof, m.formula ), up_I )
+      if ( !inNpart.isEmpty ) ( WeakeningRightRule( up_nproof, formula ), up_pproof, up_I )
+      else if ( !inPpart.isEmpty ) ( up_nproof, WeakeningRightRule( up_pproof, formula ), up_I )
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }*/
+    }
 
     /*case ContractionLeftRule( p, s, a1, a2, m ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
@@ -412,14 +415,13 @@ object Interpolate {
     case _ => throw new InterpolationException( "Unknown inference rule of type: " + p.name.toString() + "." )
   }
 
-  /*private def applyUpUnary( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
-    p.occConnectors
-    val up_npart = npart.foldLeft( Seq[SequentIndex]() )( ( s, o ) => s ++ o.parents )
-    val up_ppart = ppart.foldLeft( Seq[SequentIndex]() )( ( s, o ) => s ++ o.parents )
-    apply( p, up_npart, up_ppart )
+  private def applyUpUnary( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
+    val up_npart = npart.filter( ind => p.occConnectors( 0 ).upperSequent.indices.contains( ind ) )
+    val up_ppart = ppart.filter( ind => p.occConnectors( 0 ).upperSequent.indices.contains( ind ) )
+    apply( p.immediateSubProofs( 0 ), up_npart, up_ppart )
   }
 
-  // TODO - is there a better way to get the ancestors of a set in the left or right subproof respectively?
+  /*// TODO - is there a better way to get the ancestors of a set in the left or right subproof respectively?
   private def applyUpBinaryLeft( p1: LKProof, npart: Set[SequentIndex], ppart: Set[SequentIndex] ) = {
     val up_npart = npart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
     val up_ppart = ppart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
