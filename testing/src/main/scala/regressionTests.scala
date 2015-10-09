@@ -34,6 +34,11 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
         new VeriTProver().isValid( recSchem.language.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
       }
 
+    lkNew.regularize( pNew ) --? "regularize lkNew"
+    lkNew.skolemize( pNew ) --? "skolemize lkNew"
+    lkNew.LKToLKsk( pNew ) --? "LKToLKsk lkNew"
+    lkNew.ReductiveCutElimination( pNew ) --? "cut-elim lkNew"
+
     val p = lkNew.lkNew2Old( pNew ) --- "lkNew2Old"
     ( p.root.toHOLSequent multiSetEquals pNew.endSequent ) !-- "lkNew2Old end-sequent"
 
