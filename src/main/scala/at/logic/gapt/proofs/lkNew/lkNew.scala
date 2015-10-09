@@ -925,7 +925,7 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, 
 
   validateIndices( premise, Seq( aux ), Seq() )
 
-  if ( premise( aux ) != Substitution( v, term )( A ) )
+  if ( premise( aux ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
   val mainFormula = All( v, A )
@@ -996,7 +996,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   if ( freeVariables( context ) contains eigenVariable )
     throw LKRuleCreationException( s"Eigenvariable condition is violated." )
 
-  val mainFormula = All( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+  val mainFormula = All( quantifiedVariable, BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) ) )
 
   override def name = "∀:r"
 
@@ -1052,7 +1052,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   if ( freeVariables( context ) contains eigenVariable )
     throw LKRuleCreationException( s"Eigenvariable condition is violated." )
 
-  val mainFormula = Ex( quantifiedVariable, Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+  val mainFormula = Ex( quantifiedVariable, BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) ) )
 
   override def name = "∃:l"
 
@@ -1100,7 +1100,7 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula,
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
-  if ( premise( aux ) != Substitution( v, term )( A ) )
+  if ( premise( aux ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
   val mainFormula = Ex( v, A )
