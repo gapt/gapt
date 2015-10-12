@@ -43,6 +43,8 @@ class LatticeTest extends Specification {
   sequential
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
+      checkForProverOrSkip
+
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
@@ -50,15 +52,8 @@ class LatticeTest extends Specification {
 
       val proof_sk = LKToLKsk( proof )
       val s = StructCreators.extract( proof_sk )
-      /*
-      val cs = StandardClauseSet.transformStructToClauseSet( s )
-      val dcs = deleteTautologies( cs )
-      val css = setNormalize( dcs )
-      val cs_path = "target" + separator + "lattice-cs.xml"
-      saveXML( Nil, Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::Nil, cs_path )
-      (new java.io.File( cs_path ) ).exists() must beEqualTo( true )
-*/
-      ok
+      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent.asInstanceOf[HOLClause] ) )
+      new Prover9Prover().getRobinsonProof( cs ) must beSome
     }
 
     "parse and skolemize the lattice proof" in {
