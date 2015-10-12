@@ -36,7 +36,6 @@ lazy val root = (project in file(".")).
 
     mainClass := Some("at.logic.cli.CLIMain"),
 
-    fork in console := true,
     initialCommands in console := IO.read((resourceDirectory in Compile).value / "gapt-cli-prelude.scala"),
 
     // Release stuff
@@ -78,10 +77,6 @@ lazy val root = (project in file(".")).
 
       archiveFile
     },
-
-    javaOptions in Test += "-Xss20m",
-    fork in Test := true,
-    testForkedParallel in Test := true,
 
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
