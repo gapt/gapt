@@ -3,8 +3,7 @@ package at.logic.gapt.provers.basicProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.LKProver
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.provers.{ FailSafeProver, Prover }
 
 class BasicProver extends Prover {
