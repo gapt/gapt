@@ -2,9 +2,10 @@ package at.logic.gapt.proofs.lkNew
 
 import java.util.zip.GZIPInputStream
 
-import at.logic.gapt.algorithms.rewriting.DefinitionElimination
+import at.logic.gapt.algorithms.rewriting
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr.{ All, FOLVar, FOLAtom }
+import at.logic.gapt.proofs.lk.{ regularize => lkRegularize }
 import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
@@ -36,14 +37,14 @@ class LKToLKskTest extends Specification {
 
   "lattice proof" in {
     val pdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val lk = lkOld2New( DefinitionElimination( pdb.Definitions, at.logic.gapt.proofs.lk.regularize( pdb.proofs.head._2 ) ) )
+    val lk = ( DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proofs.head._2 ) ) ) )
     val lksk = LKToLKsk( lk )
     lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }
 
   "tape proof" in {
     val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val lk = lkOld2New( DefinitionElimination( pdb.Definitions, at.logic.gapt.proofs.lk.regularize( pdb.proof( "the-proof" ) ) ) )
+    val lk = DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) )
     val lksk = LKToLKsk( lk )
     lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }
@@ -52,7 +53,7 @@ class LKToLKskTest extends Specification {
     def load( fn: String ): LKProof = {
       val tokens = HybridLatexParser.parse( Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( fn ) ).mkString )
       val pdb = HybridLatexParser.createLKProof( tokens )
-      val pLKOld = at.logic.gapt.proofs.lk.AtomicExpansion( DefinitionElimination( pdb.Definitions, at.logic.gapt.proofs.lk.regularize( pdb.proof( "TAPEPROOF" ) ) ) )
+      val pLKOld = at.logic.gapt.proofs.lk.AtomicExpansion( at.logic.gapt.algorithms.rewriting.DefinitionElimination( pdb.Definitions, at.logic.gapt.proofs.lk.regularize( pdb.proof( "TAPEPROOF" ) ) ) )
       lkOld2New( pLKOld )
     }
 

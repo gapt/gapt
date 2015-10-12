@@ -1234,53 +1234,67 @@ case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
 }
 
 object EqualityLeftRule extends RuleConvenienceObject( "EqualityLeftRule" ) {
+
+  def apply( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, main: HOLFormula ): EqualityLeftRule = {
+    val premise = subProof.endSequent
+    val ( eqFormula, auxFormula ) = ( premise( eq ), premise( aux ) )
+
+    eqFormula match {
+      case Eq( s, t ) =>
+        val premise = subProof.endSequent
+
+        if ( s == t && auxFormula == main ) {
+          val sAux = auxFormula.find( s )
+
+          if ( sAux.isEmpty )
+            throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
+
+          EqualityLeftRule( subProof, eq, aux, sAux.head )
+
+        } else if ( s == t && auxFormula != main ) {
+          throw LKRuleCreationException( "Eq is trivial, but aux formula " + auxFormula + " and main formula " + main + "differ." )
+
+        } else if ( s != t && auxFormula == main ) {
+          throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
+
+        } else {
+          val sAux = auxFormula.find( s )
+          val sMain = main.find( s )
+
+          val tAux = auxFormula.find( t )
+          val tMain = main.find( t )
+
+          if ( sAux.isEmpty && tAux.isEmpty )
+            throw LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + auxFormula + "." )
+
+          val tToS = sMain intersect tAux
+          val sToT = tMain intersect sAux
+
+          if ( sToT.length == 1 && tToS.isEmpty ) {
+            val p = sToT.head
+            val mainNew = HOLPosition.replace( auxFormula, p, t )
+            if ( mainNew == main ) {
+              EqualityLeftRule( subProof, eq, aux, p )
+            } else throw LKRuleCreationException( "Replacement (" + auxFormula + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
+          } else if ( tToS.length == 1 && sToT.isEmpty ) {
+            val p = tToS.head
+            val mainNew = HOLPosition.replace( auxFormula, p, s )
+            if ( mainNew == main ) {
+              EqualityLeftRule( subProof, eq, aux, p )
+            } else throw LKRuleCreationException( "Replacement (" + auxFormula + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
+          } else throw LKRuleCreationException( "Formulas " + auxFormula + " and " + main + " don't differ in exactly one position." )
+        }
+
+      case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
+    }
+  }
   def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, main: HOLFormula ): EqualityLeftRule = eqFormula match {
-    case Eq( s, t ) =>
+    case Eq( _, _ ) =>
       val premise = subProof.endSequent
 
       val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
 
-      if ( s == t && auxFormula == main ) {
-        val sAux = auxFormula.find( s )
-
-        if ( sAux.isEmpty )
-          throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
-
-        EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), sAux.head )
-
-      } else if ( s == t && auxFormula != main ) {
-        throw LKRuleCreationException( "Eq is trivial, but aux formula " + auxFormula + " and main formula " + main + "differ." )
-
-      } else if ( s != t && auxFormula == main ) {
-        throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
-
-      } else {
-        val sAux = auxFormula.find( s )
-        val sMain = main.find( s )
-
-        val tAux = auxFormula.find( t )
-        val tMain = main.find( t )
-
-        if ( sAux.isEmpty && tAux.isEmpty )
-          throw LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + auxFormula + "." )
-
-        val tToS = sMain intersect tAux
-        val sToT = tMain intersect sAux
-
-        if ( sToT.length == 1 && tToS.isEmpty ) {
-          val p = sToT.head
-          val mainNew = HOLPosition.replace( auxFormula, p, t )
-          if ( mainNew == main ) {
-            EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), p )
-          } else throw LKRuleCreationException( "Replacement (" + auxFormula + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-        } else if ( tToS.length == 1 && sToT.isEmpty ) {
-          val p = tToS.head
-          val mainNew = HOLPosition.replace( auxFormula, p, s )
-          if ( mainNew == main ) {
-            EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), p )
-          } else throw LKRuleCreationException( "Replacement (" + auxFormula + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-        } else throw LKRuleCreationException( "Formulas " + auxFormula + " and " + main + " don't differ in exactly one position." )
-      }
+      EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), main )
 
     case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
   }
@@ -1315,53 +1329,67 @@ case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentI
 }
 
 object EqualityRightRule extends RuleConvenienceObject( "EqualityRightRule" ) {
+
+  def apply( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, main: HOLFormula ): EqualityRightRule = {
+    val premise = subProof.endSequent
+    val ( eqFormula, auxFormula ) = ( premise( eq ), premise( aux ) )
+
+    eqFormula match {
+      case Eq( s, t ) =>
+        val premise = subProof.endSequent
+
+        if ( s == t && auxFormula == main ) {
+          val sAux = auxFormula.find( s )
+
+          if ( sAux.isEmpty )
+            throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
+
+          EqualityRightRule( subProof, eq, aux, sAux.head )
+
+        } else if ( s == t && auxFormula != main ) {
+          throw LKRuleCreationException( "Eq is trivial, but aux formula " + auxFormula + " and main formula " + main + "differ." )
+
+        } else if ( s != t && auxFormula == main ) {
+          throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
+
+        } else {
+          val sAux = auxFormula.find( s )
+          val sMain = main.find( s )
+
+          val tAux = auxFormula.find( t )
+          val tMain = main.find( t )
+
+          if ( sAux.isEmpty && tAux.isEmpty )
+            throw LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + auxFormula + "." )
+
+          val tToS = sMain intersect tAux
+          val sToT = tMain intersect sAux
+
+          if ( sToT.length == 1 && tToS.isEmpty ) {
+            val p = sToT.head
+            val mainNew = HOLPosition.replace( auxFormula, p, t )
+            if ( mainNew == main ) {
+              EqualityRightRule( subProof, eq, aux, p )
+            } else throw LKRuleCreationException( "Replacement (" + auxFormula + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
+          } else if ( tToS.length == 1 && sToT.isEmpty ) {
+            val p = tToS.head
+            val mainNew = HOLPosition.replace( auxFormula, p, s )
+            if ( mainNew == main ) {
+              EqualityRightRule( subProof, eq, aux, p )
+            } else throw LKRuleCreationException( "Replacement (" + auxFormula + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
+          } else throw LKRuleCreationException( "Formulas " + auxFormula + " and " + main + " don't differ in exactly one position." )
+        }
+
+      case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
+    }
+  }
   def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, main: HOLFormula ): EqualityRightRule = eqFormula match {
-    case Eq( s, t ) =>
+    case Eq( _, _ ) =>
       val premise = subProof.endSequent
 
       val ( leftIndices, rightIndices ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
 
-      if ( s == t && auxFormula == main ) {
-        val sAux = auxFormula.find( s )
-
-        if ( sAux.isEmpty )
-          throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
-
-        EqualityRightRule( subProof, Ant( leftIndices( 0 ) ), Suc( rightIndices( 0 ) ), sAux.head )
-
-      } else if ( s == t && auxFormula != main ) {
-        throw LKRuleCreationException( "Eq is trivial, but aux formula " + auxFormula + " and main formula " + main + "differ." )
-
-      } else if ( s != t && auxFormula == main ) {
-        throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
-
-      } else {
-        val sAux = auxFormula.find( s )
-        val sMain = main.find( s )
-
-        val tAux = auxFormula.find( t )
-        val tMain = main.find( t )
-
-        if ( sAux.isEmpty && tAux.isEmpty )
-          throw LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + auxFormula + "." )
-
-        val tToS = sMain intersect tAux
-        val sToT = tMain intersect sAux
-
-        if ( sToT.length == 1 && tToS.isEmpty ) {
-          val p = sToT.head
-          val mainNew = HOLPosition.replace( auxFormula, p, t )
-          if ( mainNew == main ) {
-            EqualityRightRule( subProof, Ant( leftIndices( 0 ) ), Suc( rightIndices( 0 ) ), p )
-          } else throw LKRuleCreationException( "Replacement (" + auxFormula + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-        } else if ( tToS.length == 1 && sToT.isEmpty ) {
-          val p = tToS.head
-          val mainNew = HOLPosition.replace( auxFormula, p, s )
-          if ( mainNew == main ) {
-            EqualityRightRule( subProof, Ant( leftIndices( 0 ) ), Suc( rightIndices( 0 ) ), p )
-          } else throw LKRuleCreationException( "Replacement (" + auxFormula + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-        } else throw LKRuleCreationException( "Formulas " + auxFormula + " and " + main + " don't differ in exactly one position." )
-      }
+      EqualityRightRule( subProof, Ant( leftIndices( 0 ) ), Suc( rightIndices( 0 ) ), main )
 
     case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
   }
