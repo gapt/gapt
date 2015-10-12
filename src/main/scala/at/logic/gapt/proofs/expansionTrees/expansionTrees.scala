@@ -439,7 +439,7 @@ object getETOfFormula {
 
   private def getFromExpansionTreeList( ets: Seq[ExpansionTree], f: HOLFormula ): Option[ExpansionTree] = ets match {
     case head :: tail =>
-      if ( toShallow( head ) syntaxEquals f ) Some( head )
+      if ( toShallow( head ) == f ) Some( head )
       else getFromExpansionTreeList( tail, f )
     case Nil => None
   }

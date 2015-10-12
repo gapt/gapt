@@ -53,7 +53,7 @@ object Deltas {
         // If the variables are reached
         case FOLVar( _ ) | FOLConst( _ ) =>
           // If all variables are equal
-          if ( terms.forall( t => t.syntaxEquals( terms.head ) ) ) { return ( terms.head, Nil ) }
+          if ( terms.distinct.size == 1 ) { return ( terms.head, Nil ) }
           // If there are different variables 
           else { return ( eigenvariable, terms ) }
 
@@ -154,7 +154,7 @@ object Deltas {
       //   The second & third case are chosen partly non-deterministically:
       //   recursing with a unary function symbol is "free" (in the sense of not increasing the number of needed variables)
       //   but otherwise, we have to choose both the 2nd and 3rd cases.
-      else if ( terms.tail.forall( t => ( t.syntaxEquals( terms.head ) ) ) ) {
+      else if ( terms.distinct.size == 1 ) {
         Set( ( terms.head, Nil, curInd ) )
       } else {
         //Compute Delta_G(u_i) for all u_i
@@ -256,7 +256,7 @@ object Deltas {
       //   First case: all terms are equal -> take one and put it into u (with no variables and curInd unchanged).
       //   Second case: all terms begin with the same function symbol -> recurse.
       //   Third case: otherwise -> create a new variable with the terms as s-vector and increment curInd.
-      else if ( terms.tail.forall( t => ( t.syntaxEquals( terms.head ) ) ) ) {
+      else if ( terms.distinct.size == 1 ) {
         ( ( terms.head, Nil ), curInd )
       } else if ( commonFuncHead( terms ) ) {
         //Compute Delta_G(u_i) for all u_i

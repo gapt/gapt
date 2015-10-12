@@ -905,12 +905,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   val nLine = sys.props( "line.separator" )
 
   // Checks if the sequent is of the form A, \Gamma |- A, \Delta
-  def isAxiom( seq: HOLSequent ): Boolean = {
-    seq.antecedent.exists( f =>
-      isAtom( f ) &&
-        seq.succedent.exists( f2 =>
-          f.syntaxEquals( f2 ) ) )
-  }
+  def isAxiom( seq: HOLSequent ): Boolean = seq.antecedent intersect seq.succedent exists { isAtom( _ ) }
 
   def findNonschematicAxiom( seq: HOLSequent ): Option[( HOLFormula, HOLFormula )] = {
     val axs = for (
