@@ -11,7 +11,6 @@ import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
-import at.logic.gapt.proofs.lk.{ regularize, solve }
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.sat4j.Sat4jProver
@@ -37,7 +36,7 @@ class ExtractRecSchemTest extends Specification {
         ( P( f( x ) ) --> P( f( f( x ) ) ) ) +:
         Sequent()
         :+ ( P( x ) --> P( f( f( x ) ) ) )
-    ).map( lkOld2New( _ ) ).get
+    ).get
     val cutf = All( z, P( z ) --> P( f( f( z ) ) ) )
     val p2 = ForallLeftRule( p1, g1, x )
     val p3 = ForallLeftRule( p2, g1, f( x ) )
@@ -49,7 +48,7 @@ class ExtractRecSchemTest extends Specification {
         ( P( f( f( c ) ) ) --> P( f( f( f( f( c ) ) ) ) ) ) +:
         Sequent()
         :+ ( P( c ) --> P( f( f( f( f( c ) ) ) ) ) )
-    ).map( lkOld2New( _ ) ).get
+    ).get
     val q2 = ForallLeftRule( q1, cutf, c )
     val q3 = ForallLeftRule( q2, cutf, f( f( c ) ) )
     val q4 = ContractionMacroRule( q3 )
