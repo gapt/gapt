@@ -4,9 +4,10 @@ import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkNew.{ BottomAxiom, TopAxiom }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import org.specs2.mutable._
 
@@ -207,10 +208,10 @@ class SolveTest extends Specification {
 
   "ExpansionProofToLK" should {
     "top" in {
-      ExpansionProofToLK( ExpansionSequent() :+ ETTop ).root.toHOLSequent must_== ( HOLSequent() :+ Top() )
+      ExpansionProofToLK( Sequent() :+ ETTop ) must_== TopAxiom
     }
     "bottom" in {
-      ExpansionProofToLK( ETBottom +: ExpansionSequent() ).root.toHOLSequent must_== ( Bottom() +: HOLSequent() )
+      ExpansionProofToLK( ETBottom +: Sequent() ) must_== BottomAxiom
     }
   }
 }
