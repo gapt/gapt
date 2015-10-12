@@ -149,6 +149,7 @@ case class ImpLeft( subProof1: LKskProof, aux1: Suc, subProof2: LKskProof, aux2:
 
 case class Cut( subProof1: LKskProof, aux1: Suc, subProof2: LKskProof, aux2: Ant ) extends BinaryRule {
   requireEq( subProof1.formulas( aux1 ), subProof2.formulas( aux2 ) ) // labels are not required to be equal
+  def cutFormula = subProof1.formulas( aux1 )
   def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
   def mainFormulaSequent = Sequent()
 }

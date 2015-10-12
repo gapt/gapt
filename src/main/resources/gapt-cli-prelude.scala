@@ -6,6 +6,7 @@ import at.logic.gapt.formats.simple._
 import at.logic.gapt.formats.prover9._
 import at.logic.gapt.formats.hlk._
 import at.logic.gapt.formats.xml._
+import XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.llk._
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.expansionTrees._
