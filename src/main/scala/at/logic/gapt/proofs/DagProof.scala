@@ -97,6 +97,36 @@ trait DagProof[A <: DagProof[A]] extends Product { self: A =>
    */
   def subProofs: Set[A] = dagLikeForeach { _ => () }
 
+  /**
+   * Number of sub-proofs including this, not counting duplicates.
+   */
+  def dagSize: Int = subProofs.size
+
+  /**
+   * Number of sub-proofs including this, counting duplicates.
+   */
+  def treeSize: BigInt = {
+    val memo = mutable.Map[A, BigInt]()
+    def f( subProof: A ): BigInt =
+      memo.getOrElseUpdate(
+        subProof,
+        subProof.immediateSubProofs.map( f ).sum + 1
+      )
+    f( this )
+  }
+
+  /**
+   * Depth of the proof, i.e. the maximum length of a path you can take via immediateSubProofs.
+   */
+  def depth: Int = {
+    val memo = mutable.Map[A, Int]()
+    def f( subProof: A ): Int = memo.getOrElseUpdate(
+      subProof,
+      ( subProof.immediateSubProofs.map( f ) :+ 0 ).max + 1
+    )
+    f( this )
+  }
+
   protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$longName(${productIterator.map { param => subProofLabels.getOrElse( param, param.toString ) }.mkString( ", " )})"
 
