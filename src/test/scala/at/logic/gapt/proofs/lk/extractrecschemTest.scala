@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.lkNew
 
 import java.util.zip.GZIPInputStream
 
-import at.logic.gapt.algorithms.rewriting
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Numeral, Utils }
@@ -12,7 +11,6 @@ import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.proofs.lk.{ regularize => lkRegularize }
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.sat4j.Sat4jProver
 import at.logic.gapt.provers.veriT.VeriTProver
@@ -76,7 +74,7 @@ class ExtractRecSchemTest extends Specification {
 
   "tape proof" in {
     val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val proof = rewriting.DefinitionElimination( pdb.Definitions, lkRegularize( pdb.proof( "the-proof" ) ) )
+    val proof = cleanStructuralRules( DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) ) )
 
     val recSchem = extractRecSchem( proof )
 
