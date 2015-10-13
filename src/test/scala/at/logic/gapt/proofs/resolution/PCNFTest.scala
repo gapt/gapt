@@ -33,5 +33,11 @@ class PCNFTest extends Specification {
       "∀xPx |-" in { checkPCNF( All( x, p( x ) ) +: Sequent(), Clause() :+ p( x ) ) }
       "|- ∃xPx" in { checkPCNF( Sequent() :+ Ex( x, -p( x ) ), Clause() :+ p( x ) ) }
     }
+    "weird bug" in {
+      val Seq( a, b, c, d, e, f, g, h, i, j ) = 'a' to 'j' map { _.toString } map { FOLAtom( _ ) }
+      val formula = ( ( ( ( ( ( ( a & b ) & ( ( c | -d ) | -e ) ) & d ) & f ) & g ) & e ) & h ) & ( ( ( i | -f ) | -i ) | -j )
+      val clause = d +: e +: Clause() :+ c
+      checkPCNF( formula +: Sequent(), clause )
+    }
   }
 }
