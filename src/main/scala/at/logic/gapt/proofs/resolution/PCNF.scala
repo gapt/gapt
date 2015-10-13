@@ -33,9 +33,9 @@ object PCNF {
     case Neg( f2 )              => NegRightRule( PCNFp( f2, a ), f2 )
     case And( f1, f2 )          => AndRightRule( PCNFn( f1, a ), f1, PCNFn( f2, a ), f2 )
     case Or( f1, f2 ) if containsClauseN( f1, a ) =>
-      OrRightMacroRule( PCNFn( f1, a ), f1, f2 )
+      OrRightRule( WeakeningRightRule( PCNFn( f1, a ), f2 ), f1, f2 )
     case Or( f1, f2 ) if containsClauseN( f2, a ) =>
-      OrRightMacroRule( PCNFn( f2, a ), f1, f2 )
+      OrRightRule( WeakeningRightRule( PCNFn( f2, a ), f1 ), f1, f2 )
     case Imp( f1, f2 ) if containsClauseP( f1, a ) =>
       ImpRightRule( WeakeningRightRule( PCNFp( f1, a ), f2 ), f )
     case Imp( f1, f2 ) if containsClauseN( f2, a ) =>
@@ -52,9 +52,9 @@ object PCNF {
     case atom @ HOLAtom( _, _ ) => LogicalAxiom( atom )
     case Neg( f2 )              => NegLeftRule( PCNFn( f2, a ), f2 )
     case And( f1, f2 ) if containsClauseP( f1, a ) =>
-      AndLeftMacroRule( PCNFp( f1, a ), f1, f2 )
+      AndLeftRule( WeakeningLeftRule( PCNFp( f1, a ), f2 ), f1, f2 )
     case And( f1, f2 ) if containsClauseP( f2, a ) =>
-      AndLeftMacroRule( PCNFp( f2, a ), f1, f2 )
+      AndLeftRule( WeakeningLeftRule( PCNFp( f2, a ), f1 ), f1, f2 )
     case Or( f1, f2 ) =>
       OrLeftRule( PCNFp( f1, a ), f1, PCNFp( f2, a ), f2 )
     case Imp( f1, f2 ) =>
