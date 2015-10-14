@@ -13,20 +13,12 @@ object extractRecSchem {
       case ( All.Block( vars, matrix ), Ant( _ ) ) => Abs( vars, matrix )
       case ( Ex.Block( vars, matrix ), Suc( _ ) )  => Abs( vars, Neg( matrix ) )
     }
-    val context = freeVarsInProof( p ).toList.sortBy( _.toString )
+    val context = freeVariablesLK( p ).toList.sortBy( _.toString )
     val axiom = Const( "A", FunctionType( To, context.map( _.exptype ) ) )
-    RecursionScheme( axiom, getRules( p, axiom( context: _* ), symbols, context ) map {
+    RecursionScheme( axiom, getRules( regularize( moveStrongQuantifierRulesDown( p ) ), axiom( context: _* ), symbols, context ) map {
       case Rule( lhs, rhs ) => Rule( lhs, BetaReduction.betaNormalize( rhs ) )
     } )
   }
-
-  def freeVarsInProof( p: LKProof ): Set[Var] = freeVarsInProof( p, Set() )
-
-  def freeVarsInProof( p: LKProof, bound: Set[Var] ): Set[Var] = ( p match {
-    case StrongQuantifierRule( subProof, aux, eigen, quant, pol ) =>
-      freeVarsInProof( subProof, bound + eigen )
-    case _ => p.immediateSubProofs.flatMap { freeVarsInProof( _, bound ) } toSet
-  } ) ++ ( freeVariables( p.endSequent ) diff bound )
 
   def symbolTypeP( f: HOLFormula ): TA = f match {
     case All( v, g )                   => v.exptype -> symbolTypeP( g )
@@ -65,11 +57,6 @@ object extractRecSchem {
       eigen :: findEigenVars( aux, subProof )
     case InductionRule( q1, base, q2, stepl, stepr, term ) if occ == p.mainIndices.head =>
       findEigenVars( stepr, q2 ).map { case Var( s, t ) => Var( s"${s}_end", t ) } // hacky...
-    case _ if !p.mainIndices.contains( occ ) =>
-      ( for (
-        ( q, occConn ) <- p.immediateSubProofs zip p.occConnectors;
-        qOcc <- occConn.parents( occ )
-      ) yield findEigenVars( qOcc, q ) ).maxBy( _.size )
     case _ => Nil
   }
 

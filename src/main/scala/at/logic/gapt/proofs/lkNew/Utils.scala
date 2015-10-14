@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lkNew
 
-import at.logic.gapt.expr.{ Substitution, rename, variables, Var }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 
 object containsEqualityReasoning {
@@ -15,6 +15,15 @@ object containsEqualityReasoning {
     case InitialSequent( seq )                           => false
     case UnaryLKProof( _, subProof )                     => containsEqualityReasoning( subProof )
     case BinaryLKProof( _, leftSubProof, rightSubProof ) => containsEqualityReasoning( leftSubProof ) || containsEqualityReasoning( rightSubProof )
+  }
+}
+
+object freeVariablesLK {
+  def apply( p: LKProof ): Set[Var] = p match {
+    case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
+      apply( subProof ) - eigen
+    case _ =>
+      freeVariables( p.conclusion ) ++ p.immediateSubProofs.flatMap( apply )
   }
 }
 

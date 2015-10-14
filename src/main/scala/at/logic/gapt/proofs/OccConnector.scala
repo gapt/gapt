@@ -34,7 +34,7 @@ case class OccConnector[A]( lowerSequent: Sequent[A], upperSequent: Sequent[A], 
       throw new IndexOutOfBoundsException
 
   def *[B >: A]( that: OccConnector[B] ) = {
-    require( this.upperSequent == that.lowerSequent )
+    require( this.upperSequent.sizes == that.lowerSequent.sizes )
     OccConnector( this.lowerSequent, that.upperSequent, this.parentsSequent map { _ flatMap that.parents distinct } )
   }
 
@@ -43,7 +43,14 @@ case class OccConnector[A]( lowerSequent: Sequent[A], upperSequent: Sequent[A], 
   def +[B >: A]( that: OccConnector[B] ) = {
     require( this.lowerSequent == that.lowerSequent )
     require( this.upperSequent == that.upperSequent )
-    OccConnector( lowerSequent, upperSequent, lowerSequent.indicesSequent map { i => this.parents( i ) ++ that.parents( i ) } )
+    OccConnector( lowerSequent, upperSequent, lowerSequent.indicesSequent map { i => this.parents( i ) ++ that.parents( i ) distinct } )
+  }
+
+  def +( child: SequentIndex, parent: SequentIndex ) = {
+    require( lowerSequent isDefinedAt child )
+    require( upperSequent isDefinedAt parent )
+    OccConnector( lowerSequent, upperSequent,
+      parentsSequent.updated( child, parents( child ) :+ parent distinct ) )
   }
 }
 
