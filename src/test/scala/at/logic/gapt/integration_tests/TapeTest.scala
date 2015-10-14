@@ -39,7 +39,7 @@ class TapeTest extends Specification {
   sequential
   "The system" should {
     "parse correctly the tape proof" in {
-      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
@@ -58,7 +58,7 @@ class TapeTest extends Specification {
     "parse, skolemize and extract the profile of the tape proof" in {
       checkForProverOrSkip
 
-      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
@@ -103,7 +103,7 @@ class TapeTest extends Specification {
     "apply prover9 to the tape proof clause set" in {
       checkForProverOrSkip
 
-      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
@@ -124,7 +124,7 @@ class TapeTest extends Specification {
     "create an acnf of the tape proof via ground proof" in {
       checkForProverOrSkip
       //get the proof
-      val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "the-proof" ) ) ) )
 
       //get the refutation of the clause set, refute it
@@ -148,7 +148,7 @@ class TapeTest extends Specification {
       checkForProverOrSkip
 
       //get the proof
-      val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( pdb.proof( "the-proof" ) ) ) )
 
       //get the refutation of the clause set, refute it
