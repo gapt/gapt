@@ -14,6 +14,7 @@ import scala.collection.mutable
 /**
  * performs renaming of constants, functions and predicate symbols
  */
+@deprecated("Use TermReplacement instead", "2015-10-14")
 object NameReplacement {
 
   def apply( exp: LambdaExpression, map: SymbolMap ): LambdaExpression = renameSymbols( exp, map )
