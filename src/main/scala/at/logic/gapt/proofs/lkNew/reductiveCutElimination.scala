@@ -242,9 +242,8 @@ object ReductiveCutElimination {
         CutRule( tmp, o.children( a2 ).head, rrSubProof, a4 )
 
       case ( ImpRightRule( lSubProof, a1, a2 ), ImpLeftRule( rlSubProof, a3, rrSubProof, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
-        val tmp = CutRule( lSubProof, a1, rlSubProof, a3 )
-        val o = tmp.getLeftOccConnector
-        CutRule( tmp, o.children( a2 ).head, rrSubProof, a4 )
+        val tmp = CutRule( rlSubProof, a3, lSubProof, a1 )
+        CutRule( tmp, tmp.getRightOccConnector.children( a2 ).head, rrSubProof, a4 )
 
       case ( NegRightRule( lSubProof, a1 ), NegLeftRule( rSubProof, a2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         CutRule( rSubProof, a2, lSubProof, a1 )
