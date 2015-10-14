@@ -74,7 +74,7 @@ class ExtractRecSchemTest extends Specification {
 
   "tape proof" in {
     val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val proof = cleanStructuralRules( DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) ) )
+    val proof = DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) )
 
     val recSchem = extractRecSchem( proof )
 

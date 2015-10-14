@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs.{ OccConnector, Ant, Suc, Sequent }
 
 /**
@@ -39,11 +40,11 @@ object moveStrongQuantifierRulesDown {
 
       case p @ WeakeningLeftRule( subProof, formula ) =>
         val ( q1, oc ) = apply( subProof, p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ) )
-        val q = WeakeningLeftRule( q1, formula )
+        val q = WeakeningLeftRule( q1, instantiate( formula, eigenVariables( p.mainIndices.head ) ) )
         ( q, q.getOccConnector * oc * p.getOccConnector.inv + ( q.mainIndices.head, p.mainIndices.head ) )
       case p @ WeakeningRightRule( subProof, formula ) =>
         val ( q1, oc ) = apply( subProof, p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ) )
-        val q = WeakeningRightRule( q1, formula )
+        val q = WeakeningRightRule( q1, instantiate( formula, eigenVariables( p.mainIndices.head ) ) )
         ( q, q.getOccConnector * oc * p.getOccConnector.inv + ( q.mainIndices.head, p.mainIndices.head ) )
 
       case _ =>
