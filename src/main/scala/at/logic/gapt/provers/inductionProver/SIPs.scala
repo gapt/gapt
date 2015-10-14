@@ -6,9 +6,7 @@ import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.SipGrammar
 import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.lkNew.lkNew2Old
+import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, ForgetfulResolve }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.Prover9Prover
@@ -126,7 +124,7 @@ class SimpleInductionProof(
     val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
     val inductionBase2 = ContractionMacroRule(
       if ( indFormIsQuantified )
-        ForallRightRule( inductionBase1, F( alpha, zero, beta ), Fprime( alpha, zero ), beta )
+        ForallRightRule( inductionBase1, Fprime( alpha, zero ), beta )
       else
         inductionBase1
     )
@@ -136,14 +134,14 @@ class SimpleInductionProof(
     val inductionStep2 =
       if ( indFormIsQuantified ) {
         t.foldLeft( inductionStep1 ) {
-          ( acc, ti ) => ForallLeftRule( acc, F( alpha, nu, ti ), All( y, F( alpha, nu, y ) ), ti )
+          ( acc, ti ) => ForallLeftRule( acc, All( y, F( alpha, nu, y ) ), ti )
         }
       } else
         inductionStep1
 
     val inductionStep3 = ContractionMacroRule(
       if ( indFormIsQuantified )
-        ForallRightRule( inductionStep2, F( alpha, snu, gamma ), All( y, F( alpha, snu, y ) ), gamma )
+        ForallRightRule( inductionStep2, All( y, F( alpha, snu, y ) ), gamma )
       else
         inductionStep2
     )
@@ -153,7 +151,7 @@ class SimpleInductionProof(
     val conclusion2 = ContractionMacroRule(
       if ( indFormIsQuantified ) {
         u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
-          ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
+          ( acc: LKProof, ui ) => ForallLeftRule( acc, All( y, F( alpha, alpha, y ) ), ui )
         }
       } else
         conclusion1
@@ -162,13 +160,14 @@ class SimpleInductionProof(
     // Combining the proofs
     val inductionProof = ContractionMacroRule( InductionRule(
       inductionBase2,
-      inductionStep3, Fprime( alpha, zero ).asInstanceOf[FOLFormula],
-      Fprime( alpha, nu ).asInstanceOf[FOLFormula],
-      Fprime( alpha, snu ).asInstanceOf[FOLFormula],
+      Fprime( alpha, zero ),
+      inductionStep3,
+      Fprime( alpha, nu ),
+      Fprime( alpha, snu ),
       alpha
     ) )
 
-    CleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusion2, Fprime( alpha, alpha ) ) ) )
+    cleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusion2, Fprime( alpha, alpha ) ) ) )
   }
 
   /**
@@ -180,7 +179,7 @@ class SimpleInductionProof(
 
     val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
     ( pi0Op, pi1Op, pi2Op ) match {
-      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toLKProof( CleanStructuralRules( lkNew2Old( pi0 ) ), CleanStructuralRules( lkNew2Old( pi1 ) ), CleanStructuralRules( lkNew2Old( pi2 ) ) )
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toLKProof( cleanStructuralRules( pi0 ), cleanStructuralRules( pi1 ), cleanStructuralRules( pi2 ) )
       case _                                         => throw new Exception( "Not a correct LKProof." )
     }
   }
@@ -211,7 +210,7 @@ class SimpleInductionProof(
 
     val ( pi0Op, pi1Op, pi2Op ) = ( prover.getLKProof( Sequent0 ), prover.getLKProof( Sequent1 ), prover.getLKProof( Sequent2 ) )
     ( pi0Op, pi1Op, pi2Op ) match {
-      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toInstanceLKProof( n, CleanStructuralRules( lkNew2Old( pi0 ) ), CleanStructuralRules( lkNew2Old( pi1 ) ), CleanStructuralRules( lkNew2Old( pi2 ) ), rename )
+      case ( Some( pi0 ), Some( pi1 ), Some( pi2 ) ) => toInstanceLKProof( n, cleanStructuralRules( pi0 ), cleanStructuralRules( pi1 ), cleanStructuralRules( pi2 ), rename )
       case _                                         => throw new Exception( "Not a correct LKProof." )
     }
   }
@@ -234,10 +233,10 @@ class SimpleInductionProof(
     else
       FOLSubstitution( alpha, num( n ) )
 
-    val inductionBase1 = applySubstitution( proofFromInstances( pi0, ExpSeq0 ), baseSub )._1
+    val inductionBase1 = applySubstitution( baseSub )( proofFromInstances( pi0, ExpSeq0 ) )
     val inductionBase = ContractionMacroRule(
       if ( indFormIsQuantified )
-        ForallRightRule( inductionBase1, baseSub( F( alpha, zero, beta ) ), baseSub( Fprime( alpha, zero ) ), baseSub( beta ).asInstanceOf[FOLVar] )
+        ForallRightRule( inductionBase1, baseSub( Fprime( alpha, zero ) ), baseSub( beta ).asInstanceOf[FOLVar] )
       else
         inductionBase1
     )
@@ -249,18 +248,18 @@ class SimpleInductionProof(
         else
           FOLSubstitution( List( alpha -> num( n ), nu -> num( k ) ) )
 
-      val inductionStep1 = applySubstitution( proofFromInstances( pi1, ExpSeq1 ), sub )._1
+      val inductionStep1 = applySubstitution( sub )( proofFromInstances( pi1, ExpSeq1 ) )
       val inductionStep2 =
         if ( indFormIsQuantified ) {
           t.foldLeft( inductionStep1 ) {
-            ( acc, ti ) => ForallLeftRule( acc, sub( F( alpha, nu, ti ) ), sub( All( y, F( alpha, nu, y ) ) ), sub( ti ) )
+            ( acc, ti ) => ForallLeftRule( acc, sub( All( y, F( alpha, nu, y ) ) ), sub( ti ) )
           }
         } else
           inductionStep1
 
       ContractionMacroRule(
         if ( indFormIsQuantified )
-          ForallRightRule( inductionStep2, sub( F( alpha, snu, gamma ) ), sub( All( y, F( alpha, snu, y ) ) ), sub( gamma ).asInstanceOf[FOLVar] )
+          ForallRightRule( inductionStep2, sub( All( y, F( alpha, snu, y ) ) ), sub( gamma ).asInstanceOf[FOLVar] )
         else
           inductionStep2
       )
@@ -276,13 +275,13 @@ class SimpleInductionProof(
     val conclusion2 = ContractionMacroRule(
       if ( indFormIsQuantified ) {
         u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
-          ( acc: LKProof, ui ) => ForallLeftRule( acc, F( alpha, alpha, ui ), All( y, F( alpha, alpha, y ) ), ui )
+          ( acc: LKProof, ui ) => ForallLeftRule( acc, All( y, F( alpha, alpha, y ) ), ui )
         }
       } else
         conclusion1
     )
 
-    val conclusion = applySubstitution( conclusion2, conclusionSub )._1
+    val conclusion = applySubstitution( conclusionSub )( conclusion2 )
 
     CutRule( stepsProof, conclusion, Fprime( num( n ), num( n ) ) )
   }

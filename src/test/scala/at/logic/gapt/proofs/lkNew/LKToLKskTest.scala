@@ -37,7 +37,7 @@ class LKToLKskTest extends Specification {
 
   "lattice proof" in {
     val pdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val lk = ( DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proofs.head._2 ) ) ) )
+    val lk = DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proofs.head._2 ) ) )
     val lksk = LKToLKsk( lk )
     lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }

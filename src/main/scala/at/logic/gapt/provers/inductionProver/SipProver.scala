@@ -32,7 +32,7 @@ class SipProver(
   val nLine = sys.props( "line.separator" )
 
   override def getLKProof( endSequent: HOLSequent ): Option[LKProof] =
-    getSimpleInductionProof( endSequent ).map( _.toLKProof ).map( lkOld2New( _ ) )
+    getSimpleInductionProof( endSequent ).map( _.toLKProof )
 
   def getSimpleInductionProof( endSequent: HOLSequent ): Option[SimpleInductionProof] = {
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {

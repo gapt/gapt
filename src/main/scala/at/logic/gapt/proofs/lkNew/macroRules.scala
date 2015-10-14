@@ -250,11 +250,12 @@ object ContractionLeftMacroRule {
    * @param occs A list of occurrences of a Formula in the antecedent of s1.
    * @return A proof ending with as many contraction rules as necessary to contract occs into a single occurrence.
    */
-  def apply( p: LKProof, occs: Seq[SequentIndex] ): LKProof = occs match {
+  def apply( p: LKProof, occs: Seq[SequentIndex] ): LKProof = occs.sorted match {
     case Seq() | _ +: Seq() => p
     case occ1 +: occ2 +: rest =>
       val subProof = ContractionLeftRule( p, occ1, occ2 )
-      ContractionLeftMacroRule( subProof, subProof.mainIndices.head +: rest )
+      val restNew = rest.map( i => i - 1 )
+      ContractionLeftMacroRule( subProof, subProof.mainIndices.head +: restNew )
   }
 
   /**
@@ -267,7 +268,7 @@ object ContractionLeftMacroRule {
    */
   def apply( p: LKProof, form: HOLFormula, n: Int = 1 ): LKProof = {
     if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
-    val list = p.endSequent.indicesWhere( _ == form ).collect { case i: Ant => i }.drop( n - 1 ).reverse
+    val list = p.endSequent.indicesWhere( _ == form ).collect { case i: Ant => i }.drop( n - 1 )
 
     apply( p, list )
   }
@@ -285,7 +286,7 @@ object ContractionRightMacroRule {
    * @param occs A list of occurrences of a formula in the succedent of s1.
    * @return A proof ending with as many contraction rules as necessary to contract occs into a single occurrence.
    */
-  def apply( p: LKProof, occs: Seq[SequentIndex] ): LKProof = occs match {
+  def apply( p: LKProof, occs: Seq[SequentIndex] ): LKProof = occs.sorted.reverse match {
     case Seq() | _ +: Seq() => p
     case occ1 +: occ2 +: rest =>
       val subProof = ContractionRightRule( p, occ1, occ2 )
