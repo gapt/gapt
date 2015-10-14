@@ -15,16 +15,37 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
   type DefinitionsMap = Map[LambdaExpression, LambdaExpression]
   type ProcessedDefinitionsMap = Map[SymbolA, ( List[Var], HOLFormula )]
 
+  /**
+   * Eliminates definitions in a HOLFormula.
+   *
+   * @param dmap A DefinitionsMap.
+   * @param f A HOLFormula.
+   * @return f with all definitions in dmap eliminated.
+   */
   def apply( dmap: DefinitionsMap, f: HOLFormula ): HOLFormula = {
     val edmap = expand_dmap( dmap )
     BetaReduction.betaNormalize( replaceAll_informula( edmap, f ) )
   }
 
+  /**
+   * Eliminates definitions in a LambdaExpression.
+   *
+   * @param dmap A DefinitionsMap.
+   * @param f A LambdaExpression.
+   * @return f with all definitions in dmap eliminated.
+   */
   def apply( dmap: DefinitionsMap, f: LambdaExpression ): LambdaExpression = {
     val edmap = expand_dmap( dmap )
     BetaReduction.betaNormalize( replaceAll_in( edmap, f ) )
   }
 
+  /**
+   * Eliminates definitions in an LKProof.
+   *
+   * @param dmap A DefinitionsMap.
+   * @param p An LKProof.
+   * @return p with all definitions in dmap eliminated.
+   */
   def apply( dmap: DefinitionsMap, p: LKProof ): LKProof = {
     val edmap = expand_dmap( dmap )
     eliminate_in_proof( x => BetaReduction.betaNormalize( replaceAll_in( edmap, x ) ), p )
@@ -40,7 +61,13 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
     if ( r == l ) r else fixedpoint_seq( f, r )
   }
 
-  def hol( f: LambdaExpression => LambdaExpression ): HOLFormula => HOLFormula = e => f( e ).asInstanceOf[HOLFormula]
+  /**
+   * Converts a function of type LambdaExpression => LambdaExpression to type HOLFormula => HOLFormula.
+   *
+   * @param f
+   * @return
+   */
+  private def hol( f: LambdaExpression => LambdaExpression ): HOLFormula => HOLFormula = e => f( e ).asInstanceOf[HOLFormula]
 
   def replaceAll_informula( dmap: DefinitionsMap, e: HOLFormula ): HOLFormula = replaceAll_in( dmap, e ).asInstanceOf[HOLFormula]
 
@@ -97,7 +124,7 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
       case And( f1, f2 ) => And( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
       case Imp( f1, f2 ) => Imp( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
       case Or( f1, f2 )  => Or( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case HOLAtom( e, args ) => {
+      case HOLAtom( e, args ) =>
         val sym = e match {
           case v: Var   => v.sym
           case c: Const => c.sym
@@ -120,7 +147,6 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
             }
           case _ => f
         }
-      }
       case _ => println( "Warning: unhandled case in definition elimination!" ); f
     }
   }
@@ -130,8 +156,15 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
   def eliminate_in_proof( rewrite: ( LambdaExpression => LambdaExpression ), proof: LKProof ): LKProof =
     eliminate_in_proof_( rewrite, proof )
 
-  //eliminates defs in proof and returns a mapping from the old aux formulas to the new aux formulas
-  // + the proof with the definition removed
+  /**
+   * Applies a function of type LambdaExpression => LambdaExpression to an LKProof.
+   *
+   * The only case where anything really happens is with definition rules.
+   *
+   * @param rewrite A function of type LambdaExpression => LambdaExpression.
+   * @param proof An LKProof.
+   * @return The result of applying rewrite everywhere in proof.
+   */
   def eliminate_in_proof_( rewrite: ( LambdaExpression => LambdaExpression ), proof: LKProof ): LKProof = {
     def recCall( proof: LKProof ) = eliminate_in_proof_( rewrite, proof )
 
@@ -278,7 +311,10 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
         EqualityRightRule( subProofNew, eq, aux, mainNew )
 
-      //definition rules
+      /* The cases for definition rules employ a trick: The removal of the rule would change the order of the end
+        sequent. We use exchange macro rules to artificially replicate the movement of formulas that the definition
+         rule would have performed.*/
+
       case DefinitionLeftRule( subProof, aux, main ) =>
         debug( "Def Left!" )
         val subProofNew = recCall( subProof )
