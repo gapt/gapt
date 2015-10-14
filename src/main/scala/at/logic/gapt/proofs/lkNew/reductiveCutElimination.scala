@@ -132,7 +132,14 @@ object ReductiveCutElimination {
       isCutFree( leftSubProof ) && isCutFree( rightSubProof )
   }
 
-  // Implements the Gentzen cut-reduction rules.
+  // TODO: Implement this properly, i.e. with SequentIndices.
+  /**
+   * Recursively traverses a proof until it finds a cut to reduce.
+   *
+   * @param proof An LKProof.
+   * @param pred If true on a cut, reduce this cut.
+   * @return A proof with one less cut.
+   */
   private def cutElim( proof: LKProof )( implicit pred: LKProof => Boolean ): LKProof = proof match {
     case InitialSequent( _ ) =>
       proof
@@ -193,26 +200,29 @@ object ReductiveCutElimination {
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       if ( pred( proof ) )
-        reduceCut( leftSubProof, aux1, rightSubProof, aux2 )
+        reduceGrade( leftSubProof, aux1, rightSubProof, aux2 )
       else
         CutRule( cutElim( leftSubProof ), cutElim( rightSubProof ), proof.auxFormulas.head.head )
   }
 
-  private def reduceCut( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof =
-    reduceGrade( left, aux1, right, aux2 )
-
-  // Grade reduction rules:
+  /**
+   * Grade reduction rules, i.e. rules that reduce the complexity of a cut formula or remove a cut altogether.
+   *
+   * @param left The left subproof of the cut inference.
+   * @param aux1 The index of the cut formula in the left subproof.
+   * @param right The right subproof of the cut inference.
+   * @param aux2 The index of the cut formula in the right subproof.
+   * @return
+   */
   private def reduceGrade( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof =
     ( left, right ) match {
 
+      // If either cut formula is introduced in an axiom, return the other proof.
       case ( LogicalAxiom( _ ), _ ) => right
 
       case ( _, LogicalAxiom( _ ) ) => left
 
       //FIXME: What do we actually do in case of reflexivity axioms?
-      case ( ReflexivityAxiom( s ), LogicalAxiom( _ ) ) =>
-        ReflexivityAxiom( s )
-
       case ( ReflexivityAxiom( s ), TheoryAxiom( sequent ) ) =>
         TheoryAxiom( sequent.delete( aux2 ) )
 
@@ -222,14 +232,19 @@ object ReductiveCutElimination {
       case ( WeakeningRightRule( subProof, Bottom() ), BottomAxiom ) if left.mainIndices.head == aux1 =>
         subProof
 
+      // If both cut rules are introduced in theory axiom, replace them by one theory axiom.
       case ( TheoryAxiom( leftSequent ), TheoryAxiom( rightSequent ) ) =>
         TheoryAxiom( leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
+
+      // If either cut rule is introduced by weakening, delete one subproof and perform lots of weakenings instead.
 
       case ( l @ WeakeningRightRule( subProof, main ), r ) if l.mainIndices.head == aux1 => // The left cut formula is introduced by weakening
         WeakeningMacroRule( subProof, subProof.endSequent ++ r.endSequent )
 
       case ( l, r @ WeakeningLeftRule( subProof, main ) ) if aux2 == right.mainIndices.head => // The right cut formula is introduced by weakening
         WeakeningMacroRule( subProof, l.endSequent.antecedent, l.endSequent.succedent )
+
+      // The propositional rules replace the cut with simpler cuts.
 
       case ( AndRightRule( llSubProof, a1, lrSubProof, a2 ), AndLeftRule( rSubProof, a3, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val tmp = CutRule( lrSubProof, a2, rSubProof, a4 )
@@ -259,9 +274,20 @@ object ReductiveCutElimination {
       case ( DefinitionRightRule( lSubProof, a1, main1 ), DefinitionLeftRule( rSubProof, a2, main2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         CutRule( lSubProof, a1, rSubProof, a2 )
 
+      // If no grade reduction rule can be applied -- in particular, if one of the cut formulas is not introduced directly above the cut
+      // -- we attempt to reduce the rank, starting on the left.
       case _ => reduceRankLeft( left, aux1, right, aux2 )
     }
 
+  /**
+   * Reduces the rank of the cut by permuting it upwards on the left-hand side.
+   *
+   * @param left The left subproof of the cut inference.
+   * @param aux1 The index of the cut formula in the left subproof.
+   * @param right The right subproof of the cut inference.
+   * @param aux2 The index of the cut formula in the right subproof.
+   * @return
+   */
   private def reduceRankLeft( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof = {
 
     left match {
@@ -429,10 +455,21 @@ object ReductiveCutElimination {
         val aNew = cutSub.getLeftOccConnector.child( a )
         ExistsRightRule( cutSub, aNew, f, term, quant )
 
+      // If no rank reduction is possible on the left, we attempt one on the right.
       case _ =>
         reduceRankRight( left, aux1, right, aux2 )
     }
   }
+
+  /**
+   * Reduces the rank of the cut by permuting it upwards on the right-hand side.
+   *
+   * @param left The left subproof of the cut inference.
+   * @param aux1 The index of the cut formula in the left subproof.
+   * @param right The right subproof of the cut inference.
+   * @param aux2 The index of the cut formula in the right subproof.
+   * @return
+   */
   private def reduceRankRight( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof = {
 
     right match {
