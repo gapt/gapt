@@ -14,13 +14,13 @@ object moveStrongQuantifierRulesDown {
     case ( All.Block( vs, f ), i @ Suc( _ ) ) if vs.size > eigenVariables( i ).size =>
       val v = vs( eigenVariables( i ).size )
       val eigen = rename( v, freeVariablesLK( p ).toList ++ eigenVariables.elements.flatten )
-      val ( q, oc ) = apply( p, eigenVariables.updated( i, eigen +: eigenVariables( i ) ) )
+      val ( q, oc ) = apply( p, eigenVariables.updated( i, eigenVariables( i ) :+ eigen ) )
       val q_ = ForallRightRule( q, oc.children( i ).head, eigen, v )
       ( q_, q_.getOccConnector * oc )
     case ( Ex.Block( vs, f ), i @ Ant( _ ) ) if vs.size > eigenVariables( i ).size =>
       val v = vs( eigenVariables( i ).size )
       val eigen = rename( v, freeVariablesLK( p ).toList ++ eigenVariables.elements.flatten )
-      val ( q, oc ) = apply( p, eigenVariables.updated( i, eigen +: eigenVariables( i ) ) )
+      val ( q, oc ) = apply( p, eigenVariables.updated( i, eigenVariables( i ) :+ eigen ) )
       val q_ = ExistsLeftRule( q, oc.children( i ).head, eigen, v )
       ( q_, q_.getOccConnector * oc )
   }.headOption getOrElse {
