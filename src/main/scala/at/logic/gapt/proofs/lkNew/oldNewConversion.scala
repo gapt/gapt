@@ -7,9 +7,27 @@ import at.logic.gapt.proofs.lk.base.{ PrincipalFormulas, OccSequent, RichOccSequ
 
 import scala.collection.immutable.HashMap
 
+/**
+ * Conversion algorithm for new LK => old LK
+ *
+ */
 object lkNew2Old {
+
+  /**
+   * Converts a proof from new to old LK.
+   *
+   * @param proof A new LKProof.
+   * @return The corresponding old LKProof.
+   */
   def apply( proof: LKProof ): lk.base.LKProof = apply_( proof )._1
 
+  /**
+   * Does the actual converting.
+   *
+   * @param proof A new LKProof.
+   * @return A pair (old LKProof, OccSequent), where the sequent contains the formula occurrences in the old proof that
+   *         correspond to indices in the new proof.
+   */
   private def apply_( proof: LKProof ): ( lk.base.LKProof, OccSequent ) = proof match {
     case LogicalAxiom( atom ) =>
       val ax = lk.Axiom( atom )
@@ -177,7 +195,15 @@ object lkNew2Old {
       testCorrectness( proofOld, proof, sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) :+ proofOld.prin.head )
   }
 
-  def testCorrectness( oldProof: lk.base.LKProof, newProof: LKProof, sequent: OccSequent ): ( lk.base.LKProof, OccSequent ) = {
+  /**
+   * Tests whether the conversion has been performed correctly. Was used for debugging.
+   *
+   * @param oldProof
+   * @param newProof
+   * @param sequent
+   * @return
+   */
+  private def testCorrectness( oldProof: lk.base.LKProof, newProof: LKProof, sequent: OccSequent ): ( lk.base.LKProof, OccSequent ) = {
     oldProof.root.elements.foreach { o =>
       val i = try {
         sequent indexOf o
@@ -192,10 +218,27 @@ object lkNew2Old {
   }
 }
 
+/**
+ * Conversion algorithm for old LK => new LK.
+ *
+ */
 object lkOld2New {
 
+  /**
+   * Converts a proof from old to new LK.
+   *
+   * @param proof An old LKProof.
+   * @return The corresponding new LKProof.
+   */
   def apply( proof: lk.base.LKProof ): LKProof = apply_( proof )._1
 
+  /**
+   * Does the actual converting.
+   *
+   * @param proof An old LKProof.
+   * @return A pair (new LKProof, OccSequent), where the sequent contains the formula occurrences in the old proof that
+   *         correspond to indices in the new proof.
+   */
   private def apply_( proof: lk.base.LKProof ): ( LKProof, OccSequent ) = proof match {
     case lk.Axiom( sequent ) =>
       val proofNew = Axiom( sequent.toHOLSequent )
@@ -411,6 +454,14 @@ object lkOld2New {
       testCorrectness( proof, proofNew, sequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) :+ mainOcc )
   }
 
+  /**
+   * Tests whether the conversion has been performed correctly. Was used for debugging.
+   *
+   * @param oldProof
+   * @param newProof
+   * @param sequent
+   * @return
+   */
   def testCorrectness( oldProof: lk.base.LKProof, newProof: LKProof, sequent: OccSequent ): ( LKProof, OccSequent ) = {
     require( oldProof.root.sizes == newProof.endSequent.sizes )
     require( newProof.endSequent.sizes == sequent.sizes )
