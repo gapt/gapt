@@ -15,13 +15,13 @@ object moveStrongQuantifierRulesDown {
       val v = vs( eigenVariables( i ).size )
       val eigen = rename( v, freeVariablesLK( p ).toList ++ eigenVariables.elements.flatten )
       val ( q, oc ) = apply( p, eigenVariables.updated( i, eigenVariables( i ) :+ eigen ) )
-      val q_ = ForallRightRule( q, oc.children( i ).head, eigen, v )
+      val q_ = ForallRightRule( q, oc.child( i ), eigen, v )
       ( q_, q_.getOccConnector * oc )
     case ( Ex.Block( vs, f ), i @ Ant( _ ) ) if vs.size > eigenVariables( i ).size =>
       val v = vs( eigenVariables( i ).size )
       val eigen = rename( v, freeVariablesLK( p ).toList ++ eigenVariables.elements.flatten )
       val ( q, oc ) = apply( p, eigenVariables.updated( i, eigenVariables( i ) :+ eigen ) )
-      val q_ = ExistsLeftRule( q, oc.children( i ).head, eigen, v )
+      val q_ = ExistsLeftRule( q, oc.child( i ), eigen, v )
       ( q_, q_.getOccConnector * oc )
   }.headOption getOrElse {
     p match {
@@ -51,28 +51,28 @@ object moveStrongQuantifierRulesDown {
         val ( qs, oc ) = ( for ( ( subProof, occConn ) <- p.immediateSubProofs zip p.occConnectors )
           yield apply( subProof, occConn.parents( eigenVariables ).map( _.headOption getOrElse Seq() ) ) ).unzip
         val q = p match {
-          case ContractionLeftRule( _, aux1, aux2 )        => ContractionLeftRule( qs( 0 ), oc( 0 ).children( aux1 ).head, oc( 0 ).children( aux2 ).head )
-          case ContractionRightRule( _, aux1, aux2 )       => ContractionRightRule( qs( 0 ), oc( 0 ).children( aux1 ).head, oc( 0 ).children( aux2 ).head )
+          case ContractionLeftRule( _, aux1, aux2 )        => ContractionLeftRule( qs( 0 ), oc( 0 ).child( aux1 ), oc( 0 ).child( aux2 ) )
+          case ContractionRightRule( _, aux1, aux2 )       => ContractionRightRule( qs( 0 ), oc( 0 ).child( aux1 ), oc( 0 ).child( aux2 ) )
 
-          case CutRule( _, aux1, _, aux2 )                 => CutRule( qs( 0 ), oc( 0 ).children( aux1 ).head, qs( 1 ), oc( 1 ).children( aux2 ).head )
+          case CutRule( _, aux1, _, aux2 )                 => CutRule( qs( 0 ), oc( 0 ).child( aux1 ), qs( 1 ), oc( 1 ).child( aux2 ) )
 
-          case NegLeftRule( _, aux )                       => NegLeftRule( qs( 0 ), oc( 0 ).children( aux ).head )
-          case NegRightRule( _, aux )                      => NegRightRule( qs( 0 ), oc( 0 ).children( aux ).head )
+          case NegLeftRule( _, aux )                       => NegLeftRule( qs( 0 ), oc( 0 ).child( aux ) )
+          case NegRightRule( _, aux )                      => NegRightRule( qs( 0 ), oc( 0 ).child( aux ) )
 
-          case AndLeftRule( _, aux1, aux2 )                => AndLeftRule( qs( 0 ), oc( 0 ).children( aux1 ).head, oc( 0 ).children( aux2 ).head )
-          case AndRightRule( _, aux1, _, aux2 )            => AndRightRule( qs( 0 ), oc( 0 ).children( aux1 ).head, qs( 1 ), oc( 1 ).children( aux2 ).head )
+          case AndLeftRule( _, aux1, aux2 )                => AndLeftRule( qs( 0 ), oc( 0 ).child( aux1 ), oc( 0 ).child( aux2 ) )
+          case AndRightRule( _, aux1, _, aux2 )            => AndRightRule( qs( 0 ), oc( 0 ).child( aux1 ), qs( 1 ), oc( 1 ).child( aux2 ) )
 
-          case OrLeftRule( _, aux1, _, aux2 )              => OrLeftRule( qs( 0 ), oc( 0 ).children( aux1 ).head, qs( 1 ), oc( 1 ).children( aux2 ).head )
-          case OrRightRule( _, aux1, aux2 )                => OrRightRule( qs( 0 ), oc( 0 ).children( aux1 ).head, oc( 0 ).children( aux2 ).head )
+          case OrLeftRule( _, aux1, _, aux2 )              => OrLeftRule( qs( 0 ), oc( 0 ).child( aux1 ), qs( 1 ), oc( 1 ).child( aux2 ) )
+          case OrRightRule( _, aux1, aux2 )                => OrRightRule( qs( 0 ), oc( 0 ).child( aux1 ), oc( 0 ).child( aux2 ) )
 
-          case ImpLeftRule( _, aux1, _, aux2 )             => ImpLeftRule( qs( 0 ), oc( 0 ).children( aux1 ).head, qs( 1 ), oc( 1 ).children( aux2 ).head )
-          case ImpRightRule( _, aux1, aux2 )               => ImpRightRule( qs( 0 ), oc( 0 ).children( aux1 ).head, oc( 0 ).children( aux2 ).head )
+          case ImpLeftRule( _, aux1, _, aux2 )             => ImpLeftRule( qs( 0 ), oc( 0 ).child( aux1 ), qs( 1 ), oc( 1 ).child( aux2 ) )
+          case ImpRightRule( _, aux1, aux2 )               => ImpRightRule( qs( 0 ), oc( 0 ).child( aux1 ), oc( 0 ).child( aux2 ) )
 
-          case ForallLeftRule( _, aux, formula, term, v )  => ForallLeftRule( qs( 0 ), oc( 0 ).children( aux ).head, formula, term, v )
-          case ExistsRightRule( _, aux, formula, term, v ) => ExistsRightRule( qs( 0 ), oc( 0 ).children( aux ).head, formula, term, v )
+          case ForallLeftRule( _, aux, formula, term, v )  => ForallLeftRule( qs( 0 ), oc( 0 ).child( aux ), formula, term, v )
+          case ExistsRightRule( _, aux, formula, term, v ) => ExistsRightRule( qs( 0 ), oc( 0 ).child( aux ), formula, term, v )
 
-          case EqualityLeftRule( _, eq, aux, pos )         => EqualityLeftRule( qs( 0 ), oc( 0 ).children( eq ).head, oc( 0 ).children( aux ).head, pos )
-          case EqualityRightRule( _, eq, aux, pos )        => EqualityRightRule( qs( 0 ), oc( 0 ).children( eq ).head, oc( 0 ).children( aux ).head, pos )
+          case EqualityLeftRule( _, eq, aux, pos )         => EqualityLeftRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), pos )
+          case EqualityRightRule( _, eq, aux, pos )        => EqualityRightRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), pos )
         }
         ( q, ( q.occConnectors, oc, p.occConnectors ).zipped map { _ * _ * _.inv } reduce { _ + _ } )
     }

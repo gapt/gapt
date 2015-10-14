@@ -258,7 +258,7 @@ object lkOld2New {
       val ( leftConjunct, rightConjunct ) = mainOcc.formula match { case And( f, g ) => ( f, g ) }
       val proofNew_ = WeakeningLeftRule( subProofNew, rightConjunct )
       val conn1 = proofNew_.getOccConnector
-      val proofNew = AndLeftRule( proofNew_, conn1.children( aux ).head, proofNew_.mainIndices.head )
+      val proofNew = AndLeftRule( proofNew_, conn1.child( aux ), proofNew_.mainIndices.head )
 
       testCorrectness( proof, proofNew, mainOcc +: sequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) )
 
@@ -268,7 +268,7 @@ object lkOld2New {
       val ( leftConjunct, rightConjunct ) = mainOcc.formula match { case And( f, g ) => ( f, g ) }
       val proofNew_ = WeakeningLeftRule( subProofNew, leftConjunct )
       val conn1 = proofNew_.getOccConnector
-      val proofNew = AndLeftRule( proofNew_, proofNew_.mainIndices.head, conn1.children( aux ).head )
+      val proofNew = AndLeftRule( proofNew_, proofNew_.mainIndices.head, conn1.child( aux ) )
 
       testCorrectness( proof, proofNew, mainOcc +: sequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) )
 
@@ -294,7 +294,7 @@ object lkOld2New {
       val ( leftDisjunct, rightDisjunct ) = mainOcc.formula match { case Or( f, g ) => ( f, g ) }
       val proofNew_ = WeakeningRightRule( subProofNew, rightDisjunct )
       val conn1 = proofNew_.getOccConnector
-      val proofNew = OrRightRule( proofNew_, conn1.children( aux ).head, proofNew_.mainIndices.head )
+      val proofNew = OrRightRule( proofNew_, conn1.child( aux ), proofNew_.mainIndices.head )
 
       testCorrectness( proof, proofNew, sequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) :+ mainOcc )
 
@@ -304,7 +304,7 @@ object lkOld2New {
       val ( leftDisjunct, rightDisjunct ) = mainOcc.formula match { case Or( f, g ) => ( f, g ) }
       val proofNew_ = WeakeningRightRule( subProofNew, leftDisjunct )
       val conn1 = proofNew_.getOccConnector
-      val proofNew = OrRightRule( proofNew_, proofNew_.mainIndices.head, conn1.children( aux ).head )
+      val proofNew = OrRightRule( proofNew_, proofNew_.mainIndices.head, conn1.child( aux ) )
 
       testCorrectness( proof, proofNew, sequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) :+ mainOcc )
 

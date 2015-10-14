@@ -234,16 +234,16 @@ object ReductiveCutElimination {
       case ( AndRightRule( llSubProof, a1, lrSubProof, a2 ), AndLeftRule( rSubProof, a3, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val tmp = CutRule( lrSubProof, a2, rSubProof, a4 )
         val o = tmp.getRightOccConnector
-        CutRule( llSubProof, a1, tmp, o.children( a3 ).head )
+        CutRule( llSubProof, a1, tmp, o.child( a3 ) )
 
       case ( OrRightRule( lSubProof, a1, a2 ), OrLeftRule( rlSubProof, a3, rrSubProof, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val tmp = CutRule( lSubProof, a1, rlSubProof, a3 )
         val o = tmp.getLeftOccConnector
-        CutRule( tmp, o.children( a2 ).head, rrSubProof, a4 )
+        CutRule( tmp, o.child( a2 ), rrSubProof, a4 )
 
       case ( ImpRightRule( lSubProof, a1, a2 ), ImpLeftRule( rlSubProof, a3, rrSubProof, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val tmp = CutRule( rlSubProof, a3, lSubProof, a1 )
-        CutRule( tmp, tmp.getRightOccConnector.children( a2 ).head, rrSubProof, a4 )
+        CutRule( tmp, tmp.getRightOccConnector.child( a2 ), rrSubProof, a4 )
 
       case ( NegRightRule( lSubProof, a1 ), NegLeftRule( rSubProof, a2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         CutRule( rSubProof, a2, lSubProof, a1 )
@@ -266,32 +266,32 @@ object ReductiveCutElimination {
 
     left match {
       case l @ WeakeningLeftRule( subProof, main ) =>
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
 
         WeakeningLeftRule( cutSub, main )
 
       case l @ WeakeningRightRule( subProof, main ) =>
-        WeakeningRightRule( CutRule( subProof, l.getOccConnector.parents( aux1 ).head, right, aux2 ), main )
+        WeakeningRightRule( CutRule( subProof, l.getOccConnector.parent( aux1 ), right, aux2 ), main )
 
       case l @ ContractionLeftRule( subProof, a1, a2 ) =>
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
 
-        val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.children( a1 ).head, cutSub.getLeftOccConnector.children( a2 ).head )
+        val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.child( a1 ), cutSub.getLeftOccConnector.child( a2 ) )
         ContractionLeftRule( cutSub, a1New, a2New )
 
       case l @ ContractionRightRule( subProof, a1, a2 ) =>
         if ( l.mainIndices.head == aux1 ) { // The left cut formula is the main formula of the contraction: Duplicate right proof
           val rReg = regularize( right )
           val tmp = CutRule( subProof, a1, right, aux2 )
-          val tmp2 = CutRule( tmp, tmp.getLeftOccConnector.children( a2 ).head, rReg, aux2 )
+          val tmp2 = CutRule( tmp, tmp.getLeftOccConnector.child( a2 ), rReg, aux2 )
           val tmp3 = ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
           regularize( tmp3 )
         } else { // The contraction operates on the context: Swap the inferences
-          val aux1Sub = l.getOccConnector.parents( aux1 ).head
+          val aux1Sub = l.getOccConnector.parent( aux1 )
           val cutSub = CutRule( subProof, aux1Sub, right, aux2 )
-          val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.children( a1 ).head, cutSub.getLeftOccConnector.children( a2 ).head )
+          val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.child( a1 ), cutSub.getLeftOccConnector.child( a2 ) )
           ContractionRightRule( cutSub, a1New, a2New )
         }
 
@@ -303,32 +303,32 @@ object ReductiveCutElimination {
         ( aux1Left, aux1Right ) match {
           case ( Seq( aux1Sub ), Seq() ) => // The left cut formula is in the left subproof of the binary inference
             val cutSub = CutRule( leftSubProof, aux1Sub, right, aux2 )
-            CutRule( cutSub, cutSub.getLeftOccConnector.children( a1 ).head, rightSubProof, a2 )
+            CutRule( cutSub, cutSub.getLeftOccConnector.child( a1 ), rightSubProof, a2 )
 
           case ( Seq(), Seq( aux1Sub ) ) => // The left cut formula is in the right subproof of the binary inference
             val cutSub = CutRule( rightSubProof, aux1Sub, right, aux2 )
-            CutRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.children( a2 ).head )
+            CutRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.child( a2 ) )
         }
 
       case l @ DefinitionLeftRule( subProof, a, main ) =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val aNew = cutSub.getLeftOccConnector.children( a ).head
+        val aNew = cutSub.getLeftOccConnector.child( a )
         DefinitionLeftRule( cutSub, aNew, main )
 
       case l @ DefinitionRightRule( subProof, a, main ) if left.mainIndices.head != aux1 =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val aNew = cutSub.getLeftOccConnector.children( a ).head
+        val aNew = cutSub.getLeftOccConnector.child( a )
         DefinitionRightRule( cutSub, aNew, main )
 
       case l @ AndLeftRule( subProof, a1, a2 ) =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.children( a1 ).head, cutSub.getLeftOccConnector.children( a2 ).head )
+        val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.child( a1 ), cutSub.getLeftOccConnector.child( a2 ) )
         AndLeftRule( cutSub, a1New, a2New )
 
       case l @ AndRightRule( leftSubProof, a1, rightSubProof, a2 ) if left.mainIndices.head != aux1 =>
@@ -338,11 +338,11 @@ object ReductiveCutElimination {
         ( aux1Left, aux1Right ) match {
           case ( Seq( aux1Sub ), Seq() ) => // The left cut formula is in the left subproof of the binary inference
             val cutSub = CutRule( leftSubProof, aux1Sub, right, aux2 )
-            AndRightRule( cutSub, cutSub.getLeftOccConnector.children( a1 ).head, rightSubProof, a2 )
+            AndRightRule( cutSub, cutSub.getLeftOccConnector.child( a1 ), rightSubProof, a2 )
 
           case ( Seq(), Seq( aux1Sub ) ) => // The left cut formula is in the right subproof of the binary inference
             val cutSub = CutRule( rightSubProof, aux1Sub, right, aux2 )
-            AndRightRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.children( a2 ).head )
+            AndRightRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.child( a2 ) )
         }
 
       case l @ OrLeftRule( leftSubProof, a1, rightSubProof, a2 ) =>
@@ -352,18 +352,18 @@ object ReductiveCutElimination {
         ( aux1Left, aux1Right ) match {
           case ( Seq( aux1Sub ), Seq() ) => // The left cut formula is in the left subproof of the binary inference
             val cutSub = CutRule( leftSubProof, aux1Sub, right, aux2 )
-            OrLeftRule( cutSub, cutSub.getLeftOccConnector.children( a1 ).head, rightSubProof, a2 )
+            OrLeftRule( cutSub, cutSub.getLeftOccConnector.child( a1 ), rightSubProof, a2 )
 
           case ( Seq(), Seq( aux1Sub ) ) => // The left cut formula is in the right subproof of the binary inference
             val cutSub = CutRule( rightSubProof, aux1Sub, right, aux2 )
-            OrLeftRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.children( a2 ).head )
+            OrLeftRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.child( a2 ) )
         }
 
       case l @ OrRightRule( subProof, a1, a2 ) if left.mainIndices.head != aux1 =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.children( a1 ).head, cutSub.getLeftOccConnector.children( a2 ).head )
+        val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.child( a1 ), cutSub.getLeftOccConnector.child( a2 ) )
         OrRightRule( cutSub, a1New, a2New )
 
       case l @ ImpLeftRule( leftSubProof, a1, rightSubProof, a2 ) =>
@@ -373,60 +373,60 @@ object ReductiveCutElimination {
         ( aux1Left, aux1Right ) match {
           case ( Seq( aux1Sub ), Seq() ) => // The left cut formula is in the left subproof of the binary inference
             val cutSub = CutRule( leftSubProof, aux1Sub, right, aux2 )
-            ImpLeftRule( cutSub, cutSub.getLeftOccConnector.children( a1 ).head, rightSubProof, a2 )
+            ImpLeftRule( cutSub, cutSub.getLeftOccConnector.child( a1 ), rightSubProof, a2 )
 
           case ( Seq(), Seq( aux1Sub ) ) => // The left cut formula is in the right subproof of the binary inference
             val cutSub = CutRule( rightSubProof, aux1Sub, right, aux2 )
-            ImpLeftRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.children( a2 ).head )
+            ImpLeftRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.child( a2 ) )
         }
 
       case l @ ImpRightRule( subProof, a1, a2 ) if left.mainIndices.head != aux1 =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.children( a1 ).head, cutSub.getLeftOccConnector.children( a2 ).head )
+        val ( a1New, a2New ) = ( cutSub.getLeftOccConnector.child( a1 ), cutSub.getLeftOccConnector.child( a2 ) )
         ImpRightRule( cutSub, a1New, a2New )
 
       case l @ NegLeftRule( subProof, a ) =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val aNew = cutSub.getLeftOccConnector.children( a ).head
+        val aNew = cutSub.getLeftOccConnector.child( a )
         NegLeftRule( cutSub, aNew )
 
       case l @ NegRightRule( subProof, a ) if left.mainIndices.head != aux1 =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val aNew = cutSub.getLeftOccConnector.children( a ).head
+        val aNew = cutSub.getLeftOccConnector.child( a )
         NegRightRule( cutSub, aNew )
 
       case l @ ForallLeftRule( subProof, a, f, term, quant ) =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val aNew = cutSub.getLeftOccConnector.children( a ).head
+        val aNew = cutSub.getLeftOccConnector.child( a )
         ForallLeftRule( cutSub, aNew, f, term, quant )
 
       case l @ ForallRightRule( subProof, a, eigen, quant ) if left.mainIndices.head != aux1 =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val aNew = cutSub.getLeftOccConnector.children( a ).head
+        val aNew = cutSub.getLeftOccConnector.child( a )
         ForallRightRule( cutSub, aNew, eigen, quant )
 
       case l @ ExistsLeftRule( subProof, a, eigen, quant ) =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val aNew = cutSub.getLeftOccConnector.children( a ).head
+        val aNew = cutSub.getLeftOccConnector.child( a )
         ExistsLeftRule( cutSub, aNew, eigen, quant )
 
       case l @ ExistsRightRule( subProof, a, f, term, quant ) if left.mainIndices.head != aux1 =>
 
-        val aux1Sub = l.getOccConnector.parents( aux1 ).head
+        val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val aNew = cutSub.getLeftOccConnector.children( a ).head
+        val aNew = cutSub.getLeftOccConnector.child( a )
         ExistsRightRule( cutSub, aNew, f, term, quant )
 
       case _ =>
@@ -441,12 +441,12 @@ object ReductiveCutElimination {
         if ( aux2 == right.mainIndices.head ) {
           WeakeningMacroRule( subProof, left.endSequent.antecedent, left.endSequent.succedent )
         } else {
-          WeakeningLeftRule( CutRule( left, aux1, subProof, r.getOccConnector.parents( aux2 ).head ), main )
+          WeakeningLeftRule( CutRule( left, aux1, subProof, r.getOccConnector.parent( aux2 ) ), main )
         }
 
       case r @ WeakeningRightRule( subProof, main ) =>
 
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
         WeakeningRightRule( cutSub, main )
 
@@ -455,21 +455,21 @@ object ReductiveCutElimination {
           // The right cut formula is the main formula of the contraction: Duplicate left proof
           val proofReg = regularize( left )
           val tmp = CutRule( left, aux1, subProof, a1 )
-          val tmp2 = CutRule( proofReg, aux1, tmp, tmp.getRightOccConnector.children( a2 ).head )
+          val tmp2 = CutRule( proofReg, aux1, tmp, tmp.getRightOccConnector.child( a2 ) )
           val tmp3 = ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
           regularize( tmp3 )
         } else {
           // The contraction operates on the context: Swap the inferences
-          val aux2Sub = r.getOccConnector.parents( aux2 ).head
+          val aux2Sub = r.getOccConnector.parent( aux2 )
           val cutSub = CutRule( left, aux1, subProof, aux2Sub )
-          val ( a1New, a2New ) = ( cutSub.getRightOccConnector.children( a1 ).head, cutSub.getRightOccConnector.children( a2 ).head )
+          val ( a1New, a2New ) = ( cutSub.getRightOccConnector.child( a1 ), cutSub.getRightOccConnector.child( a2 ) )
           ContractionLeftRule( cutSub, a1New, a2New )
         }
 
       case r @ ContractionRightRule( subProof, a1, a2 ) =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val ( a1New, a2New ) = ( cutSub.getRightOccConnector.children( a1 ).head, cutSub.getRightOccConnector.children( a2 ).head )
+        val ( a1New, a2New ) = ( cutSub.getRightOccConnector.child( a1 ), cutSub.getRightOccConnector.child( a2 ) )
         ContractionRightRule( cutSub, a1New, a2New )
 
       //Following line is redundant when eliminating uppermost cut
@@ -480,29 +480,29 @@ object ReductiveCutElimination {
         ( aux2Left, aux2Right ) match {
           case ( Seq( aux2Sub ), Seq() ) => // The right cut formula is in the left subproof of the binary inference
             val cutSub = CutRule( left, aux1, leftSubProof, aux2Sub )
-            CutRule( cutSub, cutSub.getRightOccConnector.children( a1 ).head, rightSubProof, a2 )
+            CutRule( cutSub, cutSub.getRightOccConnector.child( a1 ), rightSubProof, a2 )
 
           case ( Seq(), Seq( aux2Sub ) ) => // The right cut formula is in the right subproof of the binary inference
             val cutSub = CutRule( left, aux1, rightSubProof, aux2Sub )
-            CutRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.children( a2 ).head )
+            CutRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.child( a2 ) )
         }
 
       case r @ DefinitionLeftRule( subProof, a, main ) if right.mainIndices.head != aux2 =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val aNew = cutSub.getRightOccConnector.children( a ).head
+        val aNew = cutSub.getRightOccConnector.child( a )
         DefinitionLeftRule( cutSub, aNew, main )
 
       case r @ DefinitionRightRule( subProof, a, main ) =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val aNew = cutSub.getRightOccConnector.children( a ).head
+        val aNew = cutSub.getRightOccConnector.child( a )
         DefinitionLeftRule( cutSub, aNew, main )
 
       case r @ AndLeftRule( subProof, a1, a2 ) if right.mainIndices.head != aux2 =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val ( a1New, a2New ) = ( cutSub.getRightOccConnector.children( a1 ).head, cutSub.getRightOccConnector.children( a2 ).head )
+        val ( a1New, a2New ) = ( cutSub.getRightOccConnector.child( a1 ), cutSub.getRightOccConnector.child( a2 ) )
         AndLeftRule( cutSub, a1New, a2New )
 
       case r @ AndRightRule( leftSubProof, a1, rightSubProof, a2 ) =>
@@ -512,11 +512,11 @@ object ReductiveCutElimination {
         ( aux2Left, aux2Right ) match {
           case ( Seq( aux2Sub ), Seq() ) => // The right cut formula is in the left subproof of the binary inference
             val cutSub = CutRule( left, aux1, leftSubProof, aux2Sub )
-            AndRightRule( cutSub, cutSub.getRightOccConnector.children( a1 ).head, rightSubProof, a2 )
+            AndRightRule( cutSub, cutSub.getRightOccConnector.child( a1 ), rightSubProof, a2 )
 
           case ( Seq(), Seq( aux2Sub ) ) => // The right cut formula is in the right subproof of the binary inference
             val cutSub = CutRule( left, aux1, rightSubProof, aux2Sub )
-            AndRightRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.children( a2 ).head )
+            AndRightRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.child( a2 ) )
         }
 
       case r @ OrLeftRule( leftSubProof, a1, rightSubProof, a2 ) if right.mainIndices.head != aux2 =>
@@ -526,17 +526,17 @@ object ReductiveCutElimination {
         ( aux2Left, aux2Right ) match {
           case ( Seq( aux2Sub ), Seq() ) => // The right cut formula is in the left subproof of the binary inference
             val cutSub = CutRule( left, aux1, leftSubProof, aux2Sub )
-            OrLeftRule( cutSub, cutSub.getRightOccConnector.children( a1 ).head, rightSubProof, a2 )
+            OrLeftRule( cutSub, cutSub.getRightOccConnector.child( a1 ), rightSubProof, a2 )
 
           case ( Seq(), Seq( aux2Sub ) ) => // The right cut formula is in the right subproof of the binary inference
             val cutSub = CutRule( left, aux1, rightSubProof, aux2Sub )
-            OrLeftRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.children( a2 ).head )
+            OrLeftRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.child( a2 ) )
         }
 
       case r @ OrRightRule( subProof, a1, a2 ) =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val ( a1New, a2New ) = ( cutSub.getRightOccConnector.children( a1 ).head, cutSub.getRightOccConnector.children( a2 ).head )
+        val ( a1New, a2New ) = ( cutSub.getRightOccConnector.child( a1 ), cutSub.getRightOccConnector.child( a2 ) )
         OrRightRule( cutSub, a1New, a2New )
 
       case r @ ImpLeftRule( leftSubProof, a1, rightSubProof, a2 ) if right.mainIndices.head != aux2 =>
@@ -546,53 +546,53 @@ object ReductiveCutElimination {
         ( aux2Left, aux2Right ) match {
           case ( Seq( aux2Sub ), Seq() ) => // The right cut formula is in the left subproof of the binary inference
             val cutSub = CutRule( left, aux1, leftSubProof, aux2Sub )
-            ImpLeftRule( cutSub, cutSub.getRightOccConnector.children( a1 ).head, rightSubProof, a2 )
+            ImpLeftRule( cutSub, cutSub.getRightOccConnector.child( a1 ), rightSubProof, a2 )
 
           case ( Seq(), Seq( aux2Sub ) ) => // The right cut formula is in the right subproof of the binary inference
             val cutSub = CutRule( left, aux1, rightSubProof, aux2Sub )
-            ImpLeftRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.children( a2 ).head )
+            ImpLeftRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.child( a2 ) )
         }
 
       case r @ ImpRightRule( subProof, a1, a2 ) =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val ( a1New, a2New ) = ( cutSub.getRightOccConnector.children( a1 ).head, cutSub.getRightOccConnector.children( a2 ).head )
+        val ( a1New, a2New ) = ( cutSub.getRightOccConnector.child( a1 ), cutSub.getRightOccConnector.child( a2 ) )
         ImpRightRule( cutSub, a1New, a2New )
 
       case r @ NegLeftRule( subProof, a ) if right.mainIndices.head != aux2 =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val aNew = cutSub.getRightOccConnector.children( a ).head
+        val aNew = cutSub.getRightOccConnector.child( a )
         NegLeftRule( cutSub, aNew )
 
       case r @ NegRightRule( subProof, a ) =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val aNew = cutSub.getRightOccConnector.children( a ).head
+        val aNew = cutSub.getRightOccConnector.child( a )
         NegRightRule( cutSub, aNew )
 
       case r @ ForallLeftRule( subProof, a, f, term, quant ) if right.mainIndices.head != aux2 =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val aNew = cutSub.getRightOccConnector.children( a ).head
+        val aNew = cutSub.getRightOccConnector.child( a )
         ForallLeftRule( cutSub, aNew, f, term, quant )
 
       case r @ ForallRightRule( subProof, a, eigen, quant ) =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val aNew = cutSub.getRightOccConnector.children( a ).head
+        val aNew = cutSub.getRightOccConnector.child( a )
         ForallRightRule( cutSub, aNew, eigen, quant )
 
       case r @ ExistsLeftRule( subProof, a, eigen, quant ) if right.mainIndices.head != aux2 =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val aNew = cutSub.getRightOccConnector.children( a ).head
+        val aNew = cutSub.getRightOccConnector.child( a )
         ExistsLeftRule( cutSub, aNew, eigen, quant )
 
       case r @ ExistsRightRule( subProof, a, f, term, quant ) =>
-        val aux2Sub = r.getOccConnector.parents( aux2 ).head
+        val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val aNew = cutSub.getRightOccConnector.children( a ).head
+        val aNew = cutSub.getRightOccConnector.child( a )
         ExistsRightRule( cutSub, aNew, f, term, quant )
 
       case _ =>

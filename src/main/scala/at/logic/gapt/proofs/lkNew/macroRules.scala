@@ -526,7 +526,7 @@ object ParamodulationLeftRule {
     val eqFormula = leftSubProof.endSequent( eq )
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = EqualityLeftRule( p1, Ant( 0 ), aux + 1, pos )
-    CutRule( leftSubProof, eq, p2, p2.getOccConnector.children( Ant( 0 ) ).head )
+    CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
   }
 
   def apply(
@@ -553,7 +553,7 @@ object ParamodulationRightRule {
     val eqFormula = leftSubProof.endSequent( eq )
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = EqualityRightRule( p1, Ant( 0 ), aux, pos )
-    CutRule( leftSubProof, eq, p2, p2.getOccConnector.children( Ant( 0 ) ).head )
+    CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
   }
 
   def apply(
