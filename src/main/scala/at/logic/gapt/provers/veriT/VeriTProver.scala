@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.veriT
 
-import at.logic.gapt.algorithms.rewriting.NameReplacement
+import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement }
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
@@ -26,7 +26,7 @@ class VeriTProver extends Prover with ExternalProgram {
   private def withRenamedConstants( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
     val ( renamedSeq, _, invertRenaming ) = renameConstantsToFi( seq )
     f( renamedSeq ) map { renamedExpSeq =>
-      NameReplacement( renamedExpSeq, invertRenaming )
+      renamedExpSeq map { TermReplacement( _, invertRenaming.toMap[LambdaExpression, LambdaExpression] ) }
     }
   }
 

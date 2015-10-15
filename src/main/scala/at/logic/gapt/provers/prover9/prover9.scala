@@ -19,7 +19,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 object Prover9Prover extends Prover9Prover( extraCommands = _ => Seq() )
-class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = ( _ => Seq() ) ) extends ResolutionProver with ExternalProgram {
+class Prover9Prover( val extraCommands: ( Map[Const, Const] => Seq[String] ) = ( _ => Seq() ) ) extends ResolutionProver with ExternalProgram {
   def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( cnf ) {
       case ( renaming, cnf ) =>
@@ -62,7 +62,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, String] => Seq[String] ) = 
   def reconstructLKProofFromOutput( p9Output: String ): LKProof =
     Prover9Importer lkProof p9Output
 
-  private def toP9Input( cnf: List[HOLClause], renaming: Map[Const, String] ): String = {
+  private def toP9Input( cnf: List[HOLClause], renaming: Map[Const, Const] ): String = {
     val commands = ArrayBuffer[String]()
 
     commands += "set(quiet)" // suppresses noisy output on stderr

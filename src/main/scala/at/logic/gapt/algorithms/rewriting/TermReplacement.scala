@@ -3,6 +3,7 @@ package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.utils.logging.Logger
 import at.logic.gapt.proofs.{ HOLSequent, resolution, lkNew }
 
@@ -15,18 +16,14 @@ import scala.collection.mutable
  *
  * usable on subclasses of lambda expressions and fsequents
  */
-object TermReplacement extends Logger {
+object TermReplacement {
   //TODO: this should go into the language layer (blocked because of the dependency on name replacement)
 
-  def apply( term: LambdaExpression, what: LambdaExpression, by: LambdaExpression ): LambdaExpression = {
-    require( what.exptype == by.exptype )
-    rename_term( term, what, by )
-  }
+  def apply( term: LambdaExpression, what: LambdaExpression, by: LambdaExpression ): LambdaExpression =
+    apply( term, Map( what -> by ) )
 
-  def apply( f: HOLFormula, what: LambdaExpression, by: LambdaExpression ): HOLFormula = {
-    require( what.exptype == by.exptype )
-    rename_term( f.asInstanceOf[LambdaExpression], what, by ).asInstanceOf[HOLFormula]
-  }
+  def apply( f: HOLFormula, what: LambdaExpression, by: LambdaExpression ): HOLFormula =
+    apply( f, Map( what -> by ) )
 
   def apply( term: HOLFormula, p: Map[LambdaExpression, LambdaExpression] ): HOLFormula =
     apply( term.asInstanceOf[LambdaExpression], p ).asInstanceOf[HOLFormula]
@@ -34,15 +31,17 @@ object TermReplacement extends Logger {
   def apply( term: HOLAtom, p: Map[LambdaExpression, LambdaExpression] ): HOLAtom =
     apply( term.asInstanceOf[LambdaExpression], p ).asInstanceOf[HOLAtom]
 
-  def apply( term: LambdaExpression, p: Map[LambdaExpression, LambdaExpression] ): LambdaExpression =
-    p.foldLeft( term )( ( t, x ) => {
-      /*debug(1,"looking for "+x+" in "+t);*/ apply( t, x._1, x._2 )
+  def apply( term: LambdaExpression, map: Map[LambdaExpression, LambdaExpression] ): LambdaExpression =
+    map.getOrElse( term, term match {
+      case App( s, t ) =>
+        App( apply( s, map ), apply( t, map ) )
+      case Abs( x, t ) =>
+        Abs( x, apply( t, map ) )
+      case _ => term
     } )
 
-  def apply( term: FOLExpression, p: Map[FOLExpression, FOLExpression] ): FOLExpression =
-    p.foldLeft( term )( ( t, x ) => {
-      /*debug(1,"looking for "+x+" in "+t);*/ apply( t, x._1, x._2 ).asInstanceOf[FOLExpression]
-    } )
+  def apply( term: FOLExpression, map: Map[FOLExpression, FOLExpression] ): FOLExpression =
+    apply( term.asInstanceOf[LambdaExpression], map.toMap[LambdaExpression, LambdaExpression] ).asInstanceOf[FOLExpression]
 
   def apply( t: FOLTerm, map: Map[FOLTerm, FOLTerm] ): FOLTerm =
     apply( t.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLTerm]
@@ -52,37 +51,6 @@ object TermReplacement extends Logger {
 
   def apply( f: FOLAtom, map: Map[FOLTerm, FOLTerm] ): FOLAtom =
     apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLAtom]
-
-  def rename_fsequent( fs: HOLSequent, what: LambdaExpression, by: LambdaExpression ): HOLSequent =
-    HOLSequent(
-      fs.antecedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] ),
-      fs.succedent.map( apply( what, by, _ ).asInstanceOf[HOLFormula] )
-    )
-
-  def rename_fsequent( fs: HOLSequent, p: Map[LambdaExpression, LambdaExpression] ): HOLSequent = {
-    HOLSequent(
-      fs.antecedent.map( apply( _, p ) ),
-      fs.succedent.map( apply( _, p ) )
-    )
-  }
-
-  def rename_term( term: LambdaExpression, what: LambdaExpression, by: LambdaExpression ): LambdaExpression = {
-    if ( term == what ) by
-    else
-      term match {
-        case Var( s, t ) =>
-          if ( what == term ) by else term
-        case Const( s, t ) =>
-          if ( what == term ) by else term
-        case App( s, t ) =>
-          val s_ = rename_term( s, what, by )
-          val t_ = rename_term( t, what, by )
-          App( s_, t_ )
-        case Abs( x, t ) =>
-          val t_ = rename_term( t, what, by )
-          Abs( x, t_ )
-      }
-  }
 
   def apply( proof: resolution.ResolutionProof, repl: Map[LambdaExpression, LambdaExpression] ): resolution.ResolutionProof = {
     import resolution._
@@ -150,6 +118,25 @@ object TermReplacement extends Logger {
     }
 
     f( proof )
+  }
+
+  def apply( expTree: ExpansionTree, map: Map[LambdaExpression, LambdaExpression] ): ExpansionTree = expTree match {
+    case ETTop           => ETTop
+    case ETBottom        => ETBottom
+    case ETAtom( f )     => ETAtom( apply( f, map ) )
+    case ETNeg( t1 )     => ETNeg( apply( t1, map ) )
+    case ETAnd( t1, t2 ) => ETAnd( apply( t1, map ), apply( t2, map ) )
+    case ETOr( t1, t2 )  => ETOr( apply( t1, map ), apply( t2, map ) )
+    case ETImp( t1, t2 ) => ETImp( apply( t1, map ), apply( t2, map ) )
+    case ETStrongQuantifier( f, v, selection ) =>
+      ETStrongQuantifier( apply( f, map ), v, apply( selection, map ) )
+    case ETSkolemQuantifier( f, v, selection ) =>
+      ETSkolemQuantifier( apply( f, map ), v, apply( selection, map ) )
+    case ETWeakQuantifier( f, instances ) =>
+      ETWeakQuantifier.applyWithoutMerge(
+        apply( f, map ),
+        instances map { case ( t, term ) => apply( t, map ) -> apply( term, map ) }
+      )
   }
 }
 

@@ -2,7 +2,7 @@ package at.logic.gapt.provers.leancop
 
 import java.io.{ IOException, ByteArrayOutputStream, StringReader }
 
-import at.logic.gapt.algorithms.rewriting.NameReplacement
+import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.HOLSequent
@@ -44,7 +44,7 @@ class LeanCoPProver extends Prover with ExternalProgram {
   private def withRenamedConstants( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
     val ( renamedSeq, _, invertRenaming ) = renameConstantsToFi( seq )
     f( renamedSeq ) map { renamedExpSeq =>
-      NameReplacement( renamedExpSeq, invertRenaming )
+      renamedExpSeq map { TermReplacement( _, invertRenaming toMap ) }
     }
   }
 }

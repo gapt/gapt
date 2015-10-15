@@ -10,10 +10,10 @@ import at.logic.gapt.proofs.lkNew.LKProof
 
 abstract class ResolutionProver extends Prover {
 
-  protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, String], List[HOLClause] ) => Option[ResolutionProof] ): Option[ResolutionProof] = {
+  protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, Const], List[HOLClause] ) => Option[ResolutionProof] ): Option[ResolutionProof] = {
     val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf.toList )
     f( renaming, renamedCNF ) map { renamedProof =>
-      NameReplacement( renamedProof, invertRenaming )
+      TermReplacement( renamedProof, invertRenaming toMap )
     }
   }
 
