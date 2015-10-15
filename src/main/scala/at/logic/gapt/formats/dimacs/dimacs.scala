@@ -48,9 +48,9 @@ class DIMACSEncoding {
     Clause( clause.filter( _ < 0 ), clause.filter( _ > 0 ) ).map( l => decodeAtom( math.abs( l ) ) )
 
   def decodeModel( model: DIMACS.Model ) =
-    new MapBasedInterpretation( model map {
-      case l if l > 0 => decodeAtom( l ) -> true
-      case l if l < 0 => decodeAtom( -l ) -> false
+    new MapBasedInterpretation( model flatMap {
+      case l if l > 0 => decodeAtomOption( l ) map { _ -> true }
+      case l if l < 0 => decodeAtomOption( -l ) map { _ -> false }
     } toMap )
 }
 
