@@ -19,9 +19,8 @@ import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.formats.prover9.Prover9TermParser
 import at.logic.gapt.proofs.lkNew.{ lkOld2New, lkNew2Old, ReductiveCutElimination }
-import at.logic.gapt.provers.FailSafeProver
-import at.logic.gapt.provers.minisat.MiniSATProver
 import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.ceres.clauseSets.profile._
@@ -114,7 +113,6 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "load Prover9 proof without equality reasoning, introduce a cut and eliminate it via Gentzen" in {
-      val fsprover = FailSafeProver.getProver()
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "SYN726-1.out" )
@@ -166,7 +164,6 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "load Prover9 proof without equality reasoning and eliminate cuts via Gentzen" in {
-      val fsprover = FailSafeProver.getProver()
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
@@ -176,20 +173,18 @@ class MiscTest extends Specification with ClasspathFileCopier {
       ReductiveCutElimination.isCutFree( q ) must beEqualTo( true )
     }
 
-    "load veriT proofs pi and verify the validity of Deep(pi) using minisat or sat4j" in {
-      val fsprover = FailSafeProver.getProver()
+    "load veriT proofs pi and verify the validity of Deep(pi) using sat4j" in {
       for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
         val p = VeriTParser.getExpansionProof( tempCopyOfClasspathFile( s"test${i}.verit" ) ).get
         val taut_p = addSymmetry( p )
         val seq = ETtoDeep( taut_p )
 
-        fsprover.isValid( seq ) must beTrue
+        Sat4j.isValid( seq ) must beTrue
       }
       ok
     }
 
-    "prove quasi-tautology by veriT and verify validity using minisat or sat4j (1/2)" in {
-      val fsprover = FailSafeProver.getProver()
+    "prove quasi-tautology by veriT and verify validity using sat4j (1/2)" in {
       val veriT = new VeriTProver()
       if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
 
@@ -197,11 +192,10 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val E = veriT.getExpansionSequent( HOLSequent( Nil, F :: Nil ) ).get
 
       val Edeep = ETtoDeep( E )
-      fsprover.isValid( Edeep ) must beTrue
+      Sat4j.isValid( Edeep ) must beTrue
     }
 
-    "prove quasi-tautology by veriT and verify validity using minisat or sat4j (2/2)" in {
-      val fsprover = FailSafeProver.getProver()
+    "prove quasi-tautology by veriT and verify validity using sat4j (2/2)" in {
       val veriT = new VeriTProver()
       if ( !veriT.isInstalled ) skipped( "VeriT is not installed" )
 
@@ -211,11 +205,10 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val E = veriT.getExpansionSequent( s ).get
 
       val Edeep = ETtoDeep( E )
-      fsprover.isValid( Edeep ) must beTrue
+      Sat4j.isValid( Edeep ) must beTrue
     }
 
-    "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using minisat or sat4j and readback E to LK" in {
-      val fsprover = FailSafeProver.getProver()
+    "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using sat4j and readback E to LK" in {
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
 
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
@@ -224,7 +217,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val expseq = lkNew.LKToExpansionProof( lkproof )
       val deep = ETtoDeep( expseq )
 
-      fsprover.isValid( deep ) must beTrue
+      Sat4j.isValid( deep ) must beTrue
 
       ExpansionProofToLK( expseq ) // must not throw exception
       ok

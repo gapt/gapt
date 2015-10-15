@@ -20,7 +20,6 @@ import at.logic.gapt.utils.dssupport.ListSupport.mapAccumL
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.DFS
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SearchAlgorithms.setSearch
 import at.logic.gapt.utils.executionModels.searchAlgorithms.SetNode
-import at.logic.gapt.provers.minisat.MiniSAT
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 

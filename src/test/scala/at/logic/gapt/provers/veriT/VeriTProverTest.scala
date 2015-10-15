@@ -8,7 +8,7 @@ import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees.toDeep
-import at.logic.gapt.provers.sat4j.Sat4jProver
+import at.logic.gapt.provers.sat.Sat4j
 import org.specs2.mutable._
 
 class VeriTProverTest extends Specification {
@@ -62,7 +62,7 @@ class VeriTProverTest extends Specification {
       val sequent = ( Eq( FOLConst( "α" ), FOLConst( "β" ) ) +:
         Sequent()
         :+ Eq( FOLFunction( "f", FOLConst( "α" ) ), FOLFunction( "f", FOLConst( "β" ) ) ) )
-      new Sat4jProver().isValid( toDeep( veriT getExpansionSequent sequent get ) ) must_== true
+      Sat4j.isValid( toDeep( veriT getExpansionSequent sequent get ) ) must_== true
     }
   }
 }

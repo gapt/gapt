@@ -4,7 +4,7 @@ import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionSequent }
 import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.provers.sat4j.Sat4jProver
+import at.logic.gapt.provers.sat.Sat4j
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
 
@@ -41,7 +41,7 @@ class CanonicalSolutionTest extends Specification {
       "have induction formula as consequence" in {
         val imp = Imp( C_i, FOLSubstitution( nu -> Utils.numeral( i ) )( sol ) )
         // we don't use equalities in this example, so we can use SAT.
-        new Sat4jProver().isValid( imp ) must beTrue
+        Sat4j.isValid( imp ) must beTrue
       }
       "be provable from the background theory" in {
         if ( !p9.isInstalled ) skipped

@@ -2,7 +2,22 @@ package at.logic.gapt.formats.dimacs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.models.MapBasedInterpretation
-import at.logic.gapt.proofs.HOLClause
+import at.logic.gapt.proofs.{ Clause, HOLClause }
+
+import scala.collection.mutable
+
+object DIMACS {
+  type Atom = Int
+  type Literal = Int
+  type Clause = Seq[Literal]
+  type CNF = Seq[Clause]
+  type Model = Seq[Literal]
+
+  def maxAtom( cnf: CNF ) = {
+    val atoms = cnf.flatten.map( math.abs )
+    if ( atoms.nonEmpty ) atoms.max else 0
+  }
+}
 
 /**
  * A helper class that provides core functionality for both DIMACSExporter (SAT)
@@ -15,6 +30,41 @@ class DIMACSHelper( val clauses: List[HOLClause] ) {
   val nl = System.getProperty( "line.separator" )
 
   def getAtom( i: Int ): Option[HOLFormula] = reverseAtomMap get i
+}
+
+class DIMACSEncoding {
+  private val atomMap = mutable.Map[HOLAtom, DIMACS.Atom]()
+  private val reverseAtomMap = mutable.Map[DIMACS.Atom, HOLAtom]()
+  private var atomIndex = 1
+
+  def encodeAtom( atom: HOLAtom ): DIMACS.Atom =
+    atomMap.getOrElse( atom, {
+      val idx = atomIndex
+      atomIndex += 1
+
+      atomMap( atom ) = idx
+      reverseAtomMap( idx ) = atom
+
+      idx
+    } )
+
+  def encodeClause( clause: HOLClause ): DIMACS.Clause =
+    clause.map( encodeAtom ).map( -_, +_ ).elements
+
+  def encodeCNF( cnf: TraversableOnce[HOLClause] ): DIMACS.CNF =
+    cnf.map( encodeClause ).toSeq
+
+  def decodeAtom( i: DIMACS.Atom ) = reverseAtomMap( i )
+  def decodeAtomOption( i: DIMACS.Atom ) = reverseAtomMap.get( i )
+
+  def decodeClause( clause: DIMACS.Clause ) =
+    Clause( clause.filter( _ < 0 ), clause.filter( _ > 0 ) ).map( l => decodeAtom( math.abs( l ) ) )
+
+  def decodeModel( model: DIMACS.Model ) =
+    new MapBasedInterpretation( model map {
+      case l if l > 0 => decodeAtom( l ) -> true
+      case l if l < 0 => decodeAtom( -l ) -> false
+    } toMap )
 }
 
 object readDIMACS {
@@ -40,6 +90,15 @@ object readDIMACS {
     res match {
       case Some( model ) => Some( new MapBasedInterpretation( model ) )
       case None          => None
+    }
+  }
+
+  def applyNew( dimacsOutput: String ): Option[DIMACS.Model] = {
+    val lines = dimacsOutput.split( "\n" )
+    if ( lines.nonEmpty && lines( 0 ) == "SAT" ) {
+      Some( lines.tail.flatMap( _.trim split " " ).takeWhile( _ != "0" ).map( _.toInt ) )
+    } else {
+      None
     }
   }
 }
@@ -77,6 +136,17 @@ object writeDIMACS {
       } )
 
     sb.toString()
+  }
+
+  def applyNew( cnf: DIMACS.CNF ): String = {
+    val dimacsInput = new StringBuilder
+
+    dimacsInput ++= s"p cnf ${DIMACS maxAtom cnf} ${cnf size}\n"
+    cnf foreach { clause =>
+      dimacsInput ++= s"${clause mkString " "} 0\n"
+    }
+
+    dimacsInput.result()
   }
 }
 

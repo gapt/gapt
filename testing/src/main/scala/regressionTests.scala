@@ -12,7 +12,7 @@ import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
-import at.logic.gapt.provers.minisat.MiniSATProver
+import at.logic.gapt.provers.sat.MiniSAT
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9Prover }
 import scala.concurrent.duration._
@@ -45,7 +45,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     ( toShallow( E ) == p.endSequent ) !-- "shallow sequent of expansion proof"
 
     if ( !containsEqualityReasoning( p ) ) {
-      new MiniSATProver().isValid( deep ) !-- "minisat validity"
+      MiniSAT.isValid( deep ) !-- "minisat validity"
       solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
       ExpansionProofToLK( E ) --- "expansionProofToLKProof"
     }
@@ -95,7 +95,7 @@ class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
     val E = addSymmetry( VeriTParser.getExpansionProof( f.getAbsolutePath ).get ) --- "import"
 
     val deep = toDeep( E ) --- "toDeep"
-    new MiniSATProver().isValid( deep.toFormula ) !-- "minisat validity"
+    MiniSAT.isValid( deep.toFormula ) !-- "minisat validity"
   }
 }
 

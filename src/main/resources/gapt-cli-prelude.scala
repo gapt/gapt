@@ -21,13 +21,12 @@ import Deltas._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.provers.minisat._
+import at.logic.gapt.provers.sat._
 import at.logic.gapt.provers.leancop._
 import at.logic.gapt.provers.inductionProver._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.maxsat._
 import at.logic.gapt.provers.eprover._
-import at.logic.gapt.provers.sat4j._
 import at.logic.gapt.provers.veriT._
 import at.logic.gapt.provers.z3._
 import at.logic.gapt.prooftool.prooftool

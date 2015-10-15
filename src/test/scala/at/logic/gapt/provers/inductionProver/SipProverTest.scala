@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.lkNew.LKProver
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import SimpleInductionProof._
 import at.logic.gapt.provers.maxsat.MaxSat4j
-import at.logic.gapt.provers.sat4j.Sat4jProver
+import at.logic.gapt.provers.sat.Sat4j
 import org.specs2.mutable._
 
 class SipProverTest extends Specification {
@@ -29,7 +29,7 @@ class SipProverTest extends Specification {
       instP0 +: instPs +: Sequent() :+ instPa
     }
 
-    val tautP = new Sat4jProver
+    val tautP = Sat4j
 
     val sipProver = new SipProver(
       quasiTautProver = tautP,

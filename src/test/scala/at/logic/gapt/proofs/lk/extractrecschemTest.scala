@@ -12,7 +12,7 @@ import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, 
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.provers.sat4j.Sat4jProver
+import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.veriT.VeriTProver
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
@@ -57,7 +57,7 @@ class ExtractRecSchemTest extends Specification {
     val recSchem = extractRecSchem( p )
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
 
-    new Sat4jProver().isValid( lang ++: Sequent() ) must beTrue
+    Sat4j.isValid( lang ++: Sequent() ) must beTrue
   }
 
   "pi2 pigeonhole" in {
@@ -126,7 +126,7 @@ class ExtractRecSchemTest extends Specification {
       // println( s"$name: $ty" )
     }
 
-    new Sat4jProver().isValid(
+    Sat4j.isValid(
       recschem.language.map( _.asInstanceOf[FOLFormula] ).toSeq ++: HOLSequent()
     ) must_== true
   }
