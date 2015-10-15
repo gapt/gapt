@@ -43,8 +43,8 @@ val s0b = FSequent(f1::f2::w1::Nil, conclusion0::Nil)
 
 val s1a = FSequent(f1::f2::Nil,         conclusion1::Nil)
 val s1b = FSequent(f1::f2::w1::Nil,     conclusion1::Nil)
-val s1c = FSequent(f1::f2::f4::w1::Nil, conclusion1::Nil)
-val s1d = FSequent(f1::f2::f4::Nil,     conclusion1::Nil)
+val s1c = FSequent(f1::f2::f3::f4::w1::Nil, conclusion1::Nil)
+val s1d = FSequent(f1::f2::f3::f4::Nil,     conclusion1::Nil)
 
 val s2b = FSequent(f1::f2::f4::w2::Nil,     conclusion2::Nil)
 val s2c = FSequent(f1::f2::f4::Nil,         conclusion2::Nil)

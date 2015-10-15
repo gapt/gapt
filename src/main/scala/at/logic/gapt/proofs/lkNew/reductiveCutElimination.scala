@@ -10,7 +10,9 @@ package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, SequentIndex }
-import at.logic.gapt.prooftool.prooftool
+import ReductiveCutElimination._
+
+import scala.collection.mutable
 
 class ReductiveCutElimException( msg: String ) extends Exception( msg )
 
@@ -19,23 +21,36 @@ class ReductiveCutElimException( msg: String ) extends Exception( msg )
  * proof for our sequent calculus LK. For details, please
  * refer to the documentation of the apply methods.
  */
-
 object ReductiveCutElimination {
-  // This list stores a list of subproofs that are reduced
-  // during the run of the algorithm.
-  private var proofList: List[LKProof] = Nil
-  private var steps = false
+  /**
+   * This methods implements a version of Gentzen's cut-elimination
+   * proof using the (known to be terminating) strategy of reducing
+   * a left-uppermost cut. The algorithm terminates when all cuts
+   * have been eliminated.
+   *
+   * @param proof The proof to subject to cut-elimination.
+   * @return The cut-free proof.
+   */
+  def apply( proof: LKProof ) = new ReductiveCutElimination().eliminateAllByUppermost( proof )
 
   /**
-   * After calling apply with steps = true, the list of
-   * proofs arising during cut-elimination can be obtained
-   * from this method.
+   * This method checks whether a proof is cut-free.
    *
-   * @return The list of proofs arising during cut-elimination
-   * after apply() has been called. Nil otherwise.
+   * @param proof The proof to check for cut-freeness.
+   * @return True if proof does not contain the cut rule, False otherwise.
    */
-  def proofs = proofList
-  def proofs_=( plist: List[LKProof] ) = proofList = plist
+  def isCutFree( proof: LKProof ): Boolean = proof match {
+    case InitialSequent( _ )         => true
+    case UnaryLKProof( _, subProof ) => isCutFree( subProof )
+    case p: CutRule                  => false
+    case BinaryLKProof( _, leftSubProof, rightSubProof ) =>
+      isCutFree( leftSubProof ) && isCutFree( rightSubProof )
+  }
+}
+
+class ReductiveCutElimination {
+  val steps = mutable.Buffer[LKProof]()
+  var recordSteps: Boolean = false
 
   /**
    * This methods implements a version of Gentzen's cut-elimination
@@ -58,32 +73,30 @@ object ReductiveCutElimination {
    * left-uppermost cuts until the proof is cut-free) is provided by another
    * apply method in this class.
    *
-   * Note: We assume that proof is regular, i.e. that an eigenvariable
-   * of a quantifier rule in proof is used by exactly one such quantifier rule.
-   * Further regularization is done during cut-elimination whenever necessary.
-   *
    * @param proof The proof to subject to cut-elimination.
-   * @param _steps Collect the list of subproofs arising during cut-elimination.
-   * This list can be obtained by the proofs method.
    * @param pred_done A predicate deciding when to terminate the algorithm.
    * @param pred_cut A predicate deciding whether or not to reduce a cut encountered
    * when traversing the proof.
    *
    * @return The proof as it is after pred_done returns true.
    */
-  def apply( proof: LKProof, _steps: Boolean, pred_done: LKProof => Boolean, pred_cut: ( LKProof, LKProof ) => Boolean ): LKProof = {
-    steps = _steps
+  def apply( proof: LKProof, pred_done: LKProof => Boolean, pred_cut: ( LKProof, LKProof ) => Boolean ): LKProof = {
 
-    proofList = proof :: Nil
-    // var pr = regularize(proof)
-    var pr = proof
+    steps += proof
+
+    // For rank-reduction of strong quantifier inferences, we need to either:
+    // 1) rename eigenvariables during rank-reduction, or
+    // 2) maintain the invariant that the proof is regular
+    // Here, we choose 2).
+    var pr = regularize( proof )
+
     do {
       def pred( local: LKProof ) = pred_cut( pr, local )
       val p = cutElim( pr )( pred )
       pr = cleanStructuralRules( p )
-      if ( steps ) proofList = proofList ::: ( pr :: Nil )
+      if ( recordSteps ) steps += pr
     } while ( !pred_done( pr ) && !isCutFree( pr ) )
-    if ( !steps ) proofList = proofList ::: ( pr :: Nil )
+    if ( !recordSteps ) steps += pr
     pr
   }
 
@@ -94,43 +107,16 @@ object ReductiveCutElimination {
    * have been eliminated.
    *
    * @param proof The proof to subject to cut-elimination.
-   * @param steps Collect the list of subproofs arising during cut-elimination.
    * @return The cut-free proof.
    */
-  def apply( proof: LKProof, steps: Boolean = false ) = eliminateAllByUppermost( proof, steps )
-
-  /**
-   * This methods implements a version of Gentzen's cut-elimination
-   * proof using the (known to be terminating) strategy of reducing
-   * a left-uppermost cut. The algorithm terminates when all cuts
-   * have been eliminated.
-   *
-   * @param proof The proof to subject to cut-elimination.
-   * @param steps Collect the list of subproofs arising during cut-elimination.
-   * @return The cut-free proof.
-   */
-  def eliminateAllByUppermost( proof: LKProof, steps: Boolean ): LKProof =
-    apply( proof, steps, { x => false },
+  def eliminateAllByUppermost( proof: LKProof ): LKProof =
+    apply( proof, { x => false },
       { ( _, cut ) =>
         cut match {
           case CutRule( leftSubProof, _, rightSubProof, _ ) =>
             isCutFree( leftSubProof ) && isCutFree( rightSubProof )
         }
       } )
-
-  /**
-   * This method checks whether a proof is cut-free.
-   *
-   * @param proof The proof to check for cut-freeness.
-   * @return True if proof does not contain the cut rule, False otherwise.
-   */
-  def isCutFree( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ )         => true
-    case UnaryLKProof( _, subProof ) => isCutFree( subProof )
-    case p: CutRule                  => false
-    case BinaryLKProof( _, leftSubProof, rightSubProof ) =>
-      isCutFree( leftSubProof ) && isCutFree( rightSubProof )
-  }
 
   // TODO: Implement this properly, i.e. with SequentIndices.
   /**
@@ -309,11 +295,9 @@ object ReductiveCutElimination {
 
       case l @ ContractionRightRule( subProof, a1, a2 ) =>
         if ( l.mainIndices.head == aux1 ) { // The left cut formula is the main formula of the contraction: Duplicate right proof
-          val rReg = regularize( right )
           val tmp = CutRule( subProof, a1, right, aux2 )
-          val tmp2 = CutRule( tmp, tmp.getLeftOccConnector.child( a2 ), rReg, aux2 )
-          val tmp3 = ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
-          regularize( tmp3 )
+          val tmp2 = CutRule( tmp, tmp.getLeftOccConnector.child( a2 ), right, aux2 )
+          regularize( ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) ) )
         } else { // The contraction operates on the context: Swap the inferences
           val aux1Sub = l.getOccConnector.parent( aux1 )
           val cutSub = CutRule( subProof, aux1Sub, right, aux2 )
@@ -490,11 +474,9 @@ object ReductiveCutElimination {
       case r @ ContractionLeftRule( subProof, a1, a2 ) =>
         if ( r.mainIndices.head == aux2 ) {
           // The right cut formula is the main formula of the contraction: Duplicate left proof
-          val proofReg = regularize( left )
           val tmp = CutRule( left, aux1, subProof, a1 )
-          val tmp2 = CutRule( proofReg, aux1, tmp, tmp.getRightOccConnector.child( a2 ) )
-          val tmp3 = ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
-          regularize( tmp3 )
+          val tmp2 = CutRule( left, aux1, tmp, tmp.getRightOccConnector.child( a2 ) )
+          regularize( ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) ) )
         } else {
           // The contraction operates on the context: Swap the inferences
           val aux2Sub = r.getOccConnector.parent( aux2 )

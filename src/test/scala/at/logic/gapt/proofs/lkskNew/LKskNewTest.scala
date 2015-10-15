@@ -22,9 +22,9 @@ class LKskNewTest extends Specification {
     val p2 = NegLeft( p1, Suc( 0 ) )
     val p3 = NegRight( p2, Ant( 0 ) )
     val p4 = ImpRight( p3, Ant( 0 ), Suc( 0 ) )
-    val p5 = AllRight( p4, Suc( 0 ), All( z, S( z ) --> -( -S( z ) ) ), f )
+    val p5 = AllSkRight( p4, Suc( 0 ), All( z, S( z ) --> -( -S( z ) ) ), f )
     val p6 = ExRight( p5, Suc( 0 ), Ex( Y, All( z, S( z ) --> -Y( z ) ) ), Abs( x, -S( x ) ) )
-    val p7 = AllRight( p6, Suc( 0 ), All( X, Ex( Y, All( z, X( z ) --> -Y( z ) ) ) ), S )
+    val p7 = AllSkRight( p6, Suc( 0 ), All( X, Ex( Y, All( z, X( z ) --> -Y( z ) ) ) ), S )
     p7.conclusion must_== ( Sequent() :+ ( Seq() ->
       All( X, Ex( Y, All( z, X( z ) --> -Y( z ) ) ) ) ) )
   }

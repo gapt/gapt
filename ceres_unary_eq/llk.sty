@@ -1,0 +1,190 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{llk}
+
+\RequirePackage{bussproofs}
+
+\newcommand{\lkproves}[0]{\ensuremath{\vdash}}
+\renewcommand{\fCenter}{\lkproves}
+\newcommand{\apply}[1]{#1}
+
+\newcommand{\AX}[2]{\AxiomC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\UI}[2]{\UnaryInfC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\BI}[2]{\BinaryInfC{\ensuremath{#1} \fCenter \ensuremath{#2}}}
+\newcommand{\LL}[1]{\LeftLabel{\footnotesize \ensuremath{#1}}}
+\newcommand{\RL}[1]{\RightLabel{\footnotesize \ensuremath{#1}}}
+\newcommand{\RLN}[1]{\RightLabel{#1}}
+
+% labels
+\newcommand{\SALLL}{\RL{\forall:l}}
+\newcommand{\SALLR}{\RL{\forall:r}}
+\newcommand{\SEXL}{\RL{\exists:l}}
+\newcommand{\SEXR}{\RL{\exists:r}}
+\newcommand{\SALLSKL}{\RL{\forall^{sk}:l}}
+\newcommand{\SALLSKR}{\RL{\forall^{sk}:r}}
+\newcommand{\SEXSKL}{\RL{\exists^{sk}:l}}
+\newcommand{\SEXSKR}{\RL{\exists^{sk}:r}}
+\newcommand{\SANDL}{\RL{\land:l}}
+\newcommand{\SANDR}{\RL{\land:r}}
+\newcommand{\SORL}{\RL{\lor:l}}
+\newcommand{\SORR}{\RL{\lor:r}}
+\newcommand{\SIMPL}{\RL{\impl:l}}
+\newcommand{\SIMPR}{\RL{\impl:r}}
+\newcommand{\SNEGL}{\RL{\neg:l}}
+\newcommand{\SNEGR}{\RL{\neg:r}}
+\newcommand{\SEQL}{\RL{=:l}}
+\newcommand{\SEQLA}{\RL{=:l_1}}
+\newcommand{\SEQLB}{\RL{=:l_2}}
+\newcommand{\SEQR}{\RL{=:r}}
+\newcommand{\SEQRA}{\RL{=:r_1}}
+\newcommand{\SEQRB}{\RL{=:r_2}}
+\newcommand{\SWEAKL}{\RL{w:l}}
+\newcommand{\SWEAKR}{\RL{w:r}}
+\newcommand{\SCONTRL}{\RL{c:l}}
+\newcommand{\SCONTRR}{\RL{c:r}}
+\newcommand{\SCUT}{\RL{cut}}
+\newcommand{\SDEF}{\RL{def}}
+\newcommand{\SBETA}{\RL{\beta}}
+\newcommand{\SINSTLEMMA}[1]{\RL{LEMMA: #1}}
+\newcommand{\SINSTAXIOM}[1]{\RL{AXIOM: #1}}
+\newcommand{\SEQAXIOM}[1]{\RL{EQAX: #1}}
+
+%lk rules
+\newcommand{\ALLL}     [3]{\SALLL \UI{#2}{#3} }
+\newcommand{\ALLR}     [3]{\SALLR \UI{#2}{#3} }
+\newcommand{\EXL}      [3]{\SEXL  \UI{#2}{#3} }
+\newcommand{\EXR}      [3]{\SEXR  \UI{#2}{#3} }
+\newcommand{\ALLSKL}     [3]{\SALLSKL \UI{#2}{#3} }
+\newcommand{\ALLSKR}     [3]{\SALLSKR \UI{#2}{#3} }
+\newcommand{\EXSKL}      [3]{\SEXSKL  \UI{#2}{#3} }
+\newcommand{\EXSKR}      [3]{\SEXSKR  \UI{#2}{#3} }
+\newcommand{\ANDL}     [2]{\SANDL \UI{#1}{#2} }
+\newcommand{\ANDR}     [2]{\SANDR \BI{#1}{#2} }
+\newcommand{\ORL}      [2]{\SORL  \BI{#1}{#2} }
+\newcommand{\ORR}      [2]{\SORR  \UI{#1}{#2} }
+\newcommand{\IMPL}     [2]{\SIMPL \BI{#1}{#2}}
+\newcommand{\IMPR}     [2]{\SIMPR \UI{#1}{#2}}
+\newcommand{\NEGL}     [2]{\SNEGL \UI{#1}{#2}}
+\newcommand{\NEGR}     [2]{\SNEGR \UI{#1}{#2}}
+\newcommand{\EQL}      [2]{\SEQL  \BI{#1}{#2}}
+\newcommand{\EQLA}     [2]{\SEQLA  \BI{#1}{#2}}
+\newcommand{\EQLB}     [2]{\SEQLB  \BI{#1}{#2}}
+\newcommand{\EQR}      [2]{\SEQR  \BI{#1}{#2}}
+\newcommand{\EQRA}     [2]{\SEQRA  \BI{#1}{#2}}
+\newcommand{\EQRB}     [2]{\SEQRB  \BI{#1}{#2}}
+\newcommand{\WEAKL}    [2]{\SWEAKL \UI{#1}{#2}}
+\newcommand{\WEAKR}    [2]{\SWEAKR \UI{#1}{#2}}
+\newcommand{\CONTRL}   [2]{\SCONTRL \UI{#1}{#2}}
+\newcommand{\CONTRR}   [2]{\SCONTRR \UI{#1}{#2}}
+\newcommand{\CUT}      [2]{\SCUT    \BI{#1}{#2}}
+\newcommand{\DEF}      [2]{\SDEF    \UI{#1}{#2}}
+\newcommand{\BETA}     [2]{\SBETA   \UI{#1}{#2}}
+\newcommand{\INSTLEMMA}[3]{\SINSTLEMMA{#1} \UI{#2}{#3}}
+\newcommand{\INSTAXIOM}[3]{\SINSTAXIOM{#1} \UI{#2}{#3}}
+\newcommand{\EQAXIOM}  [3]{\SEQAXIOM{#1}   \UI{#2}{#3}}
+
+
+\newcommand{\CONTINUEWITH}[1]{
+ \noLine
+ \UnaryInfC{\ensuremath{(#1)}}
+}
+
+\newcommand{\CONTINUEFROM}[3]{
+ \AxiomC{\ensuremath{(#1)}}
+ \noLine
+ \UI{#2}{#3}
+}
+
+
+% environments
+\newenvironment{declaration}[0]{
+\section{Type Declarations}
+$
+\begin{array}{ll@{: }l}
+}{
+\end{array}
+$
+}
+\newenvironment{theoryaxioms}[0]{
+\section{Theory Axioms}
+}{
+}
+
+\newenvironment{definitions}[0]{
+\section{Definitions}
+$
+\begin{array}{l@{\;\equiv\; }l}
+}{
+\end{array}
+$
+}
+
+\newcommand{\TYPEDEC}[3]{ #1 & #2 & #3 \\}
+\newcommand{\CONSTDEC}[2]{\TYPEDEC{const}{#1}{#2}}
+\newcommand{\VARDEC}[2]{\TYPEDEC{var}{#1}{#2}}
+
+\newcommand{\AXIOMDEC}[3]{#1 & #2 & #3 \\}
+\newcommand{\SEQUENT}[2]{\ensuremath{#1 \lkproves #2} }
+\newcommand{\SEQUENTLINE}[2]{\ensuremath{#1 \lkproves #2};\\ }
+
+\newcommand{\PREDDEF}[2]{#1 & #2 \\}
+\newcommand{\FUNDEF}[2]{#1 & #2 \\}
+
+\newcommand{\ienc}[1]{\ensuremath{\ulcorner{#1}\urcorner}}
+\newcommand{\benc}[1]{\ensuremath{\llcorner{#1}\lrcorner}}
+\newcommand{\impl}{\ensuremath{\rightarrow}}
+\newcommand{\dimpl}{\ensuremath{\leftrightarrow}}
+\newcommand{\bm}{\ensuremath{\dotdiv}}
+\newcommand{\spc}[0]{\mbox{ }}
+\newcommand{\ite}[3]{\ensuremath{if\spc #1\spc then\spc #2\spc else\spc #3}}
+
+\newcommand{\MON}[2]{(\forall i \forall j (i<#2+1 \land j<#2+1 \land i<j \impl #1(i)<#1(j))) }
+\newcommand{\NOCC}[3]{(\forall i (i<#2+1 \impl f(#1(i))=#3)) }
+
+
+
+% Ral  %
+
+\newcommand{\SSUB}[0]{\RL{Sub}}
+\newcommand{\SNEGT}[0]{\RL{\neg^T}}
+\newcommand{\SORT}[0]{\RL{\lor^T}}
+\newcommand{\SANDLT}[0]{\RL{\land^T_l}}
+\newcommand{\SANDRT}[0]{\RL{\land^T_r}}
+\newcommand{\SIMPT}[0]{\RL{\impl^T}}
+\newcommand{\SALLT}[0]{\RL{\forall^T}}
+\newcommand{\SEXISTST}[0]{\RL{\exists^T}}
+\newcommand{\SNEGF}[0]{\RL{\neg^F}}
+\newcommand{\SORLF}[0]{\RL{\lor^F_l}}
+\newcommand{\SORRF}[0]{\RL{\lor^F_r}}
+\newcommand{\SANDF}[0]{\RL{\land^F}}
+\newcommand{\SIMPLF}[0]{\RL{\impl^F_l}}
+\newcommand{\SIMPRF}[0]{\RL{\impl^F_r}}
+\newcommand{\SALLF}[0]{\RL{\forall^F}}
+\newcommand{\SEXISTSF}[0]{\RL{\exists^F}}
+\newcommand{\SEQF}[0]{\RL{=^F}}
+\newcommand{\SEQT}[0]{\RL{=^T}}
+\newcommand{\SEQFF}[0]{\RL{=^F_{flip}}}
+\newcommand{\SEQFT}[0]{\RL{=^T_{flip}}}
+
+\newcommand{\SUB}[2]{\SSUB \UI{#1}{#2}}
+\newcommand{\NEGT}[2]{\SNEGT \UI{#1}{#2}}
+\newcommand{\ORT}[2]{\SORT \UI{#1}{#2} }
+\newcommand{\ANDLT}[2]{\SANDLT \UI{#1}{#2}}
+\newcommand{\ANDRT}[2]{\SANDRT \UI{#1}{#2}}
+\newcommand{\IMPT}[2]{\SIMPT \UI{#1}{#2}}
+\newcommand{\ALLT}[3]{\SALLT \UI{#2}{#3}}
+\newcommand{\EXISTST}[3]{\SEXISTST \UI{#2}{#3}}
+\newcommand{\NEGF}[2]{\SNEGF \UI{#1}{#2}}
+\newcommand{\ORLF}[2]{\SORLF \UI{#1}{#2}}
+\newcommand{\ORRF}[2]{\SORRF \UI{#1}{#2}}
+\newcommand{\ANDF}[2]{\SANDF \UI{#1}{#2}}
+\newcommand{\IMPLF}[2]{\SIMPLF \UI{#1}{#2}}
+\newcommand{\IMPRF}[2]{\SIMPRF \UI{#1}{#2}}
+\newcommand{\ALLF}[3]{\SALLF \UI{#2}{#3}}
+\newcommand{\EXISTSF}[3]{\SEXISTSF \UI{#2}{#3}}
+\newcommand{\EQF}[2]{\SEQF \BI{#1}{#2}}
+\newcommand{\EQT}[2]{\SEQF \BI{#1}{#2}}
+\newcommand{\EQFF}[2]{\SEQFF \BI{#1}{#2}}
+\newcommand{\EQFT}[2]{\SEQFT \BI{#1}{#2}}
+
+
+\endinput

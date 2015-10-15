@@ -10,11 +10,12 @@ import at.logic.gapt.formats.xml.XMLParser._
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.ceres.clauseSets.profile._
+import at.logic.gapt.proofs.ceres.extractStructFromLKsk
 import at.logic.gapt.proofs.ceres.projections.Projections
 import at.logic.gapt.proofs.ceres.struct.StructCreators
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk.{ deleteTautologies, LKToLKsk, getStatistics }
-import at.logic.gapt.proofs.lkNew.{ skolemize, lkOld2New, lkNew2Old }
+import at.logic.gapt.proofs.lkNew.{ DefinitionElimination, skolemize, lkOld2New, lkNew2Old }
 import at.logic.gapt.provers.prover9._
 import java.io.File.separator
 import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
@@ -45,13 +46,12 @@ class LatticeTest extends Specification {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
       checkForProverOrSkip
 
-      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) )
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
-      //printStats( proof )
+      val proof = DefinitionElimination( proofdb.Definitions, lkOld2New( proofdb.proofs.head._2 ) )
 
-      val proof_sk = LKToLKsk( proof )
-      val s = StructCreators.extract( proof_sk )
+      val proof_sk = at.logic.gapt.proofs.lkNew.LKToLKsk( proof )
+      val s = extractStructFromLKsk( proof_sk )
       val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent.asInstanceOf[HOLClause] ) )
       new Prover9Prover().getRobinsonProof( cs ) must beSome
     }

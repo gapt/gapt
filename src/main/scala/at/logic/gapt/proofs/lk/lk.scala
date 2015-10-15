@@ -314,9 +314,38 @@ object eliminateDefinitions {
 
 }
 
-// TODO: please scaladocument this
+/**
+ * An implementation of LK proof regularization. In a regular LK proof, an eigenvariable is globally unique to the proof.
+ * E.g.
+ *     P(u) :- P(u)                       P(u) :- P(u)
+ *  ----------------- fa:l            ------------------- fa:l
+ *  \A x:P(x) :- P(u)                 \A x:P(x) :- P(u)
+ *  ----------------------- fa:r      ------------------- fa:r
+ *  \A x:P(x) :- \E x:P(x)            \A x:P(x) :- \E x: P(x)
+ *  --------------------------------------------------------- conj:r
+ *          \A x:P(x), \A x:P(x) :- \E x:P(x) /\ \E x:P(x)
+ *  --------------------------------------------------------- contr:l
+ *                     \A x:P(x) :- \E x:P(x) /\ \E x:P(x)
+ *
+ * is not regular, but
+ *     P(i) :- P(i)                       P(u) :- P(u)
+ *  ----------------- fa:l            ------------------- fa:l
+ *  \A x:P(x) :- P(i)                 \A x:P(x) :- P(u)
+ *  ----------------------- fa:r      ------------------- fa:r
+ *  \A x:P(x) :- \E x:P(x)            \A x:P(x) :- \E x: P(x)
+ *  --------------------------------------------------------- conj:r
+ *          \A x:P(x), \A x:P(x) :- \E x:P(x) /\ \E x:P(x)
+ *  --------------------------------------------------------- contr:l
+ *                     \A x:P(x) :- \E x:P(x) /\ \E x:P(x)
+ *
+ * is.
+ */
 object regularize {
-
+  /**
+   * Make the LK proof p regular.
+   * @param p An LK proof.
+   * @return The regular version of proof p.
+   */
   def apply( p: LKProof ): LKProof = recApply( p )._1
 
   def recApply( proof: LKProof ): ( LKProof, List[Var], Map[FormulaOccurrence, FormulaOccurrence] ) = recApply( proof, variables( proof ).toList )

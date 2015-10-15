@@ -1,0 +1,11 @@
+\CONSTDEC{s,t}{i}
+\CONSTDEC{\Gamma,\Delta, PROOF}{o}
+\CONSTDEC{F}{i>o}
+
+\AX{s=t}{s=t}
+\AX{s=t}{s=t}
+\AX{\Gamma,s=t}{F(s),\Delta}
+\EQR{\Gamma,s=t,s=t}{F(t),\Delta}
+\CONTRR{\Gamma,s=t}{F(t),\Delta}
+\CUT{\Gamma,s=t}{F(t),\Delta}
+\CONTINUEWITH{PROOF}

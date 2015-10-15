@@ -1064,7 +1064,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
 
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
-    throw LKRuleCreationException( s"Eigenvariable condition is violated." )
+    throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
 
   val mainFormula = All( quantifiedVariable, BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) ) )
 
@@ -1136,7 +1136,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
 
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
-    throw LKRuleCreationException( s"Eigenvariable condition is violated." )
+    throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
 
   val mainFormula = Ex( quantifiedVariable, BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) ) )
 

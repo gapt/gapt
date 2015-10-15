@@ -125,6 +125,9 @@ class HybridLatexExporter( val expandTex: Boolean ) {
     case Abs( x, t ) =>
       val ( vm, cm ) = getTypes( t, vmap, cmap )
       getTypes( x, vm, cm )
+
+    case _: LogicalConstant =>
+      ( vmap, cmap )
   }
 
   def getTypeString( t: TA, outermost: Boolean = true ): String = t match {

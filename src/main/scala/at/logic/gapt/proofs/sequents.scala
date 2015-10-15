@@ -75,8 +75,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 
   override def hashCode: Int = 31 * antecedent.hashCode() + succedent.hashCode()
 
-  override def toString: String =
-    this.antecedent.mkString( "," ) + " :- " + this.succedent.mkString( "," )
+  override def toString: String = s"${antecedent mkString ", "} :- ${succedent mkString ", "}"
 
   /**
    * Equality treating each side of the sequent as a set.

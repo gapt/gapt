@@ -175,7 +175,7 @@ case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, subs
 
 // TODO: how to verify skolem symbols?
 
-case class AllRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
+case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
@@ -184,10 +184,28 @@ case class AllRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, sko
   def auxIndices = Seq( Seq( aux ) )
 }
 
-case class ExLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
+case class ExSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
   val Ex( quantVar, formula ) = mainFormula
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
+
+  lazy val newFormulas = mainFormula +: Sequent()
+  def auxIndices = Seq( Seq( aux ) )
+}
+
+case class AllRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, eigenVar: Var ) extends UnaryRule with SameLabel {
+  val All( quantVar, formula ) = mainFormula
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> eigenVar )( formula ) ) )
+  require( !( freeVariables( contexts.flatMap( _.elements ).map( _._2 ) ) contains eigenVar ) )
+
+  lazy val newFormulas = Sequent() :+ mainFormula
+  def auxIndices = Seq( Seq( aux ) )
+}
+
+case class ExLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, eigenVar: Var ) extends UnaryRule with SameLabel {
+  val Ex( quantVar, formula ) = mainFormula
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> eigenVar )( formula ) ) )
+  require( !( freeVariables( contexts.flatMap( _.elements ).map( _._2 ) ) contains eigenVar ) )
 
   lazy val newFormulas = mainFormula +: Sequent()
   def auxIndices = Seq( Seq( aux ) )

@@ -354,13 +354,17 @@ object XMLParser {
       )
   }
   object XMLProofDatabaseParser {
-    def apply( in: InputStream ): ProofDatabase =
-      ( new XMLReader( in ) with XMLProofDatabaseParser ).getProofDatabase()
+    def apply( in: InputStream, enable_compression: Boolean = false ): ProofDatabase =
+      if ( enable_compression )
+        ( new XMLReader( new GZIPInputStream( in ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      else
+        ( new XMLReader( in ) with XMLProofDatabaseParser ).getProofDatabase()
+
     def apply( file: String ): ProofDatabase =
-      try { apply( new GZIPInputStream( new FileInputStream( file ) ) ) }
+      try { apply( new FileInputStream( file ), true ) }
       catch {
         case _: Exception =>
-          apply( new FileInputStream( file ) )
+          apply( new FileInputStream( file ), false )
       }
   }
   trait XMLDefinitionParser extends XMLNodeParser {
