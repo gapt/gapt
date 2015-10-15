@@ -73,10 +73,6 @@ class ReductiveCutElimination {
    * left-uppermost cuts until the proof is cut-free) is provided by another
    * apply method in this class.
    *
-   * Note: We assume that proof is regular, i.e. that an eigenvariable
-   * of a quantifier rule in proof is used by exactly one such quantifier rule.
-   * Further regularization is done during cut-elimination whenever necessary.
-   *
    * @param proof The proof to subject to cut-elimination.
    * @param pred_done A predicate deciding when to terminate the algorithm.
    * @param pred_cut A predicate deciding whether or not to reduce a cut encountered
@@ -87,7 +83,6 @@ class ReductiveCutElimination {
   def apply( proof: LKProof, pred_done: LKProof => Boolean, pred_cut: ( LKProof, LKProof ) => Boolean ): LKProof = {
 
     steps += proof
-    // var pr = regularize(proof)
     var pr = proof
     do {
       def pred( local: LKProof ) = pred_cut( pr, local )
@@ -268,11 +263,9 @@ class ReductiveCutElimination {
 
       case l @ ContractionRightRule( subProof, a1, a2 ) =>
         if ( l.mainIndices.head == aux1 ) { // The left cut formula is the main formula of the contraction: Duplicate right proof
-          val rReg = regularize( right )
           val tmp = CutRule( subProof, a1, right, aux2 )
-          val tmp2 = CutRule( tmp, tmp.getLeftOccConnector.child( a2 ), rReg, aux2 )
-          val tmp3 = ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
-          regularize( tmp3 )
+          val tmp2 = CutRule( tmp, tmp.getLeftOccConnector.child( a2 ), right, aux2 )
+          ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
         } else { // The contraction operates on the context: Swap the inferences
           val aux1Sub = l.getOccConnector.parent( aux1 )
           val cutSub = CutRule( subProof, aux1Sub, right, aux2 )
@@ -438,11 +431,9 @@ class ReductiveCutElimination {
       case r @ ContractionLeftRule( subProof, a1, a2 ) =>
         if ( r.mainIndices.head == aux2 ) {
           // The right cut formula is the main formula of the contraction: Duplicate left proof
-          val proofReg = regularize( left )
           val tmp = CutRule( left, aux1, subProof, a1 )
-          val tmp2 = CutRule( proofReg, aux1, tmp, tmp.getRightOccConnector.child( a2 ) )
-          val tmp3 = ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
-          regularize( tmp3 )
+          val tmp2 = CutRule( left, aux1, tmp, tmp.getRightOccConnector.child( a2 ) )
+          ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
         } else {
           // The contraction operates on the context: Swap the inferences
           val aux2Sub = r.getOccConnector.parent( aux2 )
