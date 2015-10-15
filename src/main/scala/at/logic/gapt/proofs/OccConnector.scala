@@ -45,9 +45,29 @@ case class OccConnector[A]( lowerSequent: Sequent[A], upperSequent: Sequent[A], 
     case _        => throw new Exception( s"Index $idx has more than one parent in sequent $upperSequent." )
   }
 
-  //FIXME: Please document this. I don't understand it.
-  def parents[T]( lowerAs: Sequent[T] ): Sequent[Seq[T]] =
-    childrenSequent map { _ map { lowerAs( _ ) } }
+  /**
+   * Given a sequent lowerTs of the same size as the lower sequent, return a sequent of the same size as the upper
+   * sequent that contains the parents of the Ts in lowerTs.
+   *
+   * If we call the returned sequent upperTs, then lowerTs(i) in upperTs(j) for all j in parents(i).
+   *
+   * The intended use-case is that lowerTs is a sequent of labels for the formulas in the lower sequent.
+   * parents(lowerTs) will then contain the correct labels for the formulas in the upper sequent.
+   */
+  def parents[T]( lowerTs: Sequent[T] ): Sequent[Seq[T]] = {
+    require( lowerTs.sizes == lowerSequent.sizes )
+    childrenSequent map { _ map { lowerTs( _ ) } }
+  }
+
+  /**
+   * Given a sequent lowerTs of the same size as the lower sequent, return a sequent of the same size as the upper
+   * sequent that contains the unique parent of the Ts in lowerTs, or default otherwise.
+   */
+  def parent[T]( lowerTs: Sequent[T], default: => T = ??? ): Sequent[T] =
+    parents( lowerTs ) map {
+      case Seq( t ) => t
+      case _        => default
+    }
 
   /**
    * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
