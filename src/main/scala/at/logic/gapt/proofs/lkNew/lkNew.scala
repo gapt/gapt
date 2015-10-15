@@ -75,7 +75,7 @@ abstract class UnaryLKProof extends LKProof {
   def subProof: LKProof
 
   /**
-   * The object connecting the lower and upper sequents.
+   * The object connecting the lower and upper sequents.auxFormulas
    *
    * @return
    */
@@ -457,8 +457,31 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
 }
 
 object CutRule extends RuleConvenienceObject( "CutRule" ) {
+
   /**
-   * Convenience constructor for cut that, given a cut formula, will attempt to create a cut inference with that formula.
+   * Convenience constructor for cut.
+   * Each of the cut formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param leftSubProof The left subproof.
+   * @param leftCutFormula Index of the left cut formula or the formula itself.
+   * @param rightSubProof The right subproof.
+   * @param rightCutFormula Index of the right cut formula or the formula itself.
+   * @return
+   */
+  def apply( leftSubProof: LKProof, leftCutFormula: IndexOrFormula, rightSubProof: LKProof, rightCutFormula: IndexOrFormula ): CutRule = {
+    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
+
+    val ( _, sucIndices ) = findAndValidate( leftPremise )( Seq(), Seq( leftCutFormula ) )
+    val ( antIndices, _ ) = findAndValidate( rightPremise )( Seq( rightCutFormula ), Seq() )
+
+    new CutRule( leftSubProof, Suc( sucIndices( 0 ) ), rightSubProof, Ant( antIndices( 0 ) ) )
+
+  }
+
+  /**
+   * Convenience constructor for cut.
+   * Given a cut formula, it will attempt to create a cut inference with that formula.
    *
    * @param leftSubProof The left subproof.
    * @param rightSubProof The right subproof.
@@ -476,6 +499,7 @@ object CutRule extends RuleConvenienceObject( "CutRule" ) {
 }
 
 /**
+ * Index of the left cut formula or the formula itself.
  * An LKProof ending with a negation on the left:
  * <pre>
  *       (π)
@@ -517,7 +541,7 @@ object NegLeftRule extends RuleConvenienceObject( "NegLeftRule" ) {
 }
 
 /**
- * An LKProof ending with a negation on the right:
+ * An LKProof ending with a negation on the right:Index of the left cut formula or the formula itself.
  * <pre>
  *       (π)
  *    A, Γ :- Δ
@@ -586,24 +610,28 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
 }
 
 object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
+
   /**
-   * Convenience constructor for ∧:l that, given two formulas on the left, will automatically pick the respective first instances of these formulas.
+   * Convenience constructor for ∧:l.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param subProof The subproof.
-   * @param leftConjunct The left conjunct.
-   * @param rightConjunct The right conjunct.
+   * @param leftConjunct Index of the left conjunct or the conjunct itself.
+   * @param rightConjunct Index of the right conjunct or the conjunct itself.
    * @return
    */
-  def apply( subProof: LKProof, leftConjunct: HOLFormula, rightConjunct: HOLFormula ): AndLeftRule = {
+  def apply( subProof: LKProof, leftConjunct: Either[SequentIndex, HOLFormula], rightConjunct: Either[SequentIndex, HOLFormula] ): AndLeftRule = {
     val premise = subProof.endSequent
 
     val ( indices, _ ) = findAndValidate( premise )( Seq( leftConjunct, rightConjunct ), Seq() )
 
-    new AndLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
+    AndLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
   }
 
   /**
-   * Convenience constructor for ∧:l that, given a proposed main formula A ∧ B, will attempt to create an inference with this main formula.
+   * Convenience constructor for ∧:l.
+   * Given a proposed main formula A ∧ B, it will attempt to create an inference with this main formula.
    *
    * @param subProof The subproof.
    * @param mainFormula The main formula to be inferred. Must be of the form A ∧ B.
@@ -647,16 +675,19 @@ case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProo
 }
 
 object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
+
   /**
-   * Convenience constructor for ∧:r that, given formulas on the right, will automatically pick their respective first occurrences.
+   * Convenience constructor for ∧:r.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param leftSubProof The left subproof.
-   * @param leftConjunct The left conjunct.
+   * @param leftConjunct Index of the left conjunct or the conjunct itself.
    * @param rightSubProof The right subproof.
-   * @param rightConjunct The right conjunct.
+   * @param rightConjunct Index of the right conjunct or the conjunct itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, leftConjunct: HOLFormula, rightSubProof: LKProof, rightConjunct: HOLFormula ): AndRightRule = {
+  def apply( leftSubProof: LKProof, leftConjunct: IndexOrFormula, rightSubProof: LKProof, rightConjunct: IndexOrFormula ): AndRightRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
     val ( _, leftIndices ) = findAndValidate( leftPremise )( Seq(), Seq( leftConjunct ) )
@@ -666,7 +697,8 @@ object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
   }
 
   /**
-   * Convenience constructor for ∧:r that, given a proposed main formula A ∧ B, will attempt to create an inference with this main formula.
+   * Convenience constructor for ∧:r.
+   * Given a proposed main formula A ∧ B, it will attempt to create an inference with this main formula.
    *
    * @param leftSubProof The left subproof.
    * @param rightSubProof The right subproof.
@@ -711,16 +743,19 @@ case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof:
 }
 
 object OrLeftRule extends RuleConvenienceObject( "OrLeftRule" ) {
+
   /**
-   * Convenience constructor for ∨:l that, given formulas on the left, will automatically pick their respective first occurrences.
+   * Convenience constructor for ∨:l.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param leftSubProof The left subproof.
-   * @param leftDisjunct The left disjunct.
+   * @param leftDisjunct Index of the left disjunct or the disjunct itself.
    * @param rightSubProof The right subproof.
-   * @param rightDisjunct The right disjunct.
+   * @param rightDisjunct Index of the right disjunct or the disjunct itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, leftDisjunct: HOLFormula, rightSubProof: LKProof, rightDisjunct: HOLFormula ): OrLeftRule = {
+  def apply( leftSubProof: LKProof, leftDisjunct: IndexOrFormula, rightSubProof: LKProof, rightDisjunct: IndexOrFormula ): OrLeftRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
     val ( leftIndices, _ ) = findAndValidate( leftPremise )( Seq( leftDisjunct ), Seq() )
@@ -730,7 +765,8 @@ object OrLeftRule extends RuleConvenienceObject( "OrLeftRule" ) {
   }
 
   /**
-   * Convenience constructor for ∨:r that, given a proposed main formula A ∨ B, will attempt to create an inference with this main formula.
+   * Convenience constructor for ∨:r.
+   * Given a proposed main formula A ∨ B, it will attempt to create an inference with this main formula.
    *
    * @param leftSubProof The left subproof.
    * @param rightSubProof The right subproof.
@@ -772,15 +808,18 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
 }
 
 object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
+
   /**
-   * Convenience constructor for ∨:r that, given two formulas on the right, will automatically pick the respective first instances of these formulas.
+   * Convenience constructor for ∨:r.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param subProof The subproof.
-   * @param leftDisjunct The left disjunct.
-   * @param rightDisjunct The right disjunct.
+   * @param leftDisjunct Index of the left disjunct or the disjunct itself.
+   * @param rightDisjunct Index of the right disjunct or the disjunct itself.
    * @return
    */
-  def apply( subProof: LKProof, leftDisjunct: HOLFormula, rightDisjunct: HOLFormula ): OrRightRule = {
+  def apply( subProof: LKProof, leftDisjunct: IndexOrFormula, rightDisjunct: IndexOrFormula ): OrRightRule = {
     val premise = subProof.endSequent
 
     val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( leftDisjunct, rightDisjunct ) )
@@ -833,16 +872,19 @@ case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof
 }
 
 object ImpLeftRule extends RuleConvenienceObject( "ImpLeftRule" ) {
+
   /**
-   * Convenience constructor for →:l that, given aux formulas, will automatically pick their respective first occurrences.
+   * Convenience constructor for →:l.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param leftSubProof The left subproof.
-   * @param impPremise The premise of the implication.
+   * @param impPremise Index of the premise of the implication or the premise itself.
    * @param rightSubProof The right subproof.
-   * @param impConclusion The conclusion of the implication.
+   * @param impConclusion Index of the conclusion of the implication or the conclusion itself.
    * @return
    */
-  def apply( leftSubProof: LKProof, impPremise: HOLFormula, rightSubProof: LKProof, impConclusion: HOLFormula ): ImpLeftRule = {
+  def apply( leftSubProof: LKProof, impPremise: IndexOrFormula, rightSubProof: LKProof, impConclusion: IndexOrFormula ): ImpLeftRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
     val ( _, leftIndices ) = findAndValidate( leftPremise )( Seq(), Seq( impPremise ) )
@@ -852,7 +894,8 @@ object ImpLeftRule extends RuleConvenienceObject( "ImpLeftRule" ) {
   }
 
   /**
-   * Convenience constructor for →:l that, given a proposed main formula A → B, will attempt to create an inference with this main formula.
+   * Convenience constructor for →:l.
+   * Given a proposed main formula A → B, it will attempt to create an inference with this main formula.
    *
    * @param leftSubProof The left subproof.
    * @param rightSubProof The right subproof.
@@ -894,15 +937,18 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
 }
 
 object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
+
   /**
-   * Convenience constructor for →:r that, given two aux formulas, will automatically pick the respective first instances of these formulas.
+   * Convenience constructor for →:r.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param subProof The subproof.
-   * @param impPremise The premise of the implication.
-   * @param impConclusion The conclusion of the implication.
+   * @param impPremise Index of the premise of the implication or the premise itself.
+   * @param impConclusion Index of the conclusion of the implication or the conclusion itself.
    * @return
    */
-  def apply( subProof: LKProof, impPremise: HOLFormula, impConclusion: HOLFormula ): ImpRightRule = {
+  def apply( subProof: LKProof, impPremise: IndexOrFormula, impConclusion: IndexOrFormula ): ImpRightRule = {
     val premise = subProof.endSequent
 
     val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( impPremise ), Seq( impConclusion ) )
@@ -1300,22 +1346,43 @@ case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
 object EqualityLeftRule extends RuleConvenienceObject( "EqualityLeftRule" ) {
 
   /**
-   * Convenience constructor for eq:l that, given indices of the equation and aux formula, will attempt to infer the main formula.
+   * Convenience constructor for eq:l.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param subProof The subproof.
-   * @param eq The index of the equation.
-   * @param aux The index of the aux formula.
-   * @param mainFormula The proposed main formula
+   * @param eqFormula The index of the equation or the equation itself.
+   * @param auxFormula The index of the auxiliary formula or the formula itself.
+   * @param pos The position of the term to be replaced within A.
    * @return
    */
-  def apply( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, mainFormula: HOLFormula ): EqualityLeftRule = {
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: HOLPosition ): EqualityLeftRule = {
     val premise = subProof.endSequent
-    val ( eqFormula, auxFormula ) = ( premise( eq ), premise( aux ) )
+
+    val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
+
+    EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), pos )
+
+  }
+
+  /**
+   * Convenience constructor for eq:l.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param eq The index of the equation or the equation itself.
+   * @param aux The index of the auxiliary formula or the formula itself.
+   * @param mainFormula The proposed main formula.
+   * @return
+   */
+  def apply( subProof: LKProof, eq: IndexOrFormula, aux: IndexOrFormula, mainFormula: HOLFormula ): EqualityLeftRule = {
+    val premise = subProof.endSequent
+    val ( indices, _ ) = findAndValidate( premise )( Seq( eq, aux ), Seq() )
+    val ( eqFormula, auxFormula ) = ( premise( Ant( indices( 0 ) ) ), premise( Ant( indices( 1 ) ) ) )
 
     eqFormula match {
       case Eq( s, t ) =>
-        val premise = subProof.endSequent
-
         if ( s == t && auxFormula == mainFormula ) {
           val sAux = auxFormula.find( s )
 
@@ -1361,26 +1428,6 @@ object EqualityLeftRule extends RuleConvenienceObject( "EqualityLeftRule" ) {
       case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
     }
   }
-
-  /**
-   * Convenience constructor for eq:l that, given an equation and aux formula, will attempt to infer the main formula.
-   *
-   * @param subProof The subproof.
-   * @param eqFormula The equation.
-   * @param auxFormula The aux formula.
-   * @param mainFormula The proposed main formula
-   * @return
-   */
-  def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, mainFormula: HOLFormula ): EqualityLeftRule = eqFormula match {
-    case Eq( _, _ ) =>
-      val premise = subProof.endSequent
-
-      val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
-
-      EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), mainFormula )
-
-    case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
-  }
 }
 
 /**
@@ -1414,22 +1461,43 @@ case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentI
 object EqualityRightRule extends RuleConvenienceObject( "EqualityRightRule" ) {
 
   /**
-   * Convenience constructor for eq:r that, given indices of the equation and aux formula, will attempt to infer the main formula.
+   * Convenience constructor for eq:r.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param subProof The subproof.
-   * @param eq The index of the equation.
-   * @param aux The index of the aux formula.
-   * @param mainFormula The proposed main formula
+   * @param eqFormula The index of the equation or the equation itself.
+   * @param auxFormula The index of the auxiliary formula or the formula itself.
+   * @param pos The position of the term to be replaced within A.
    * @return
    */
-  def apply( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, mainFormula: HOLFormula ): EqualityRightRule = {
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: HOLPosition ): EqualityRightRule = {
     val premise = subProof.endSequent
-    val ( eqFormula, auxFormula ) = ( premise( eq ), premise( aux ) )
+
+    val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
+
+    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), pos )
+
+  }
+
+  /**
+   * Convenience constructor for eq:r.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param eq The index of the equation or the equation itself.
+   * @param aux The index of the auxiliary formula or the formula itself.
+   * @param mainFormula The proposed main formula.
+   * @return
+   */
+  def apply( subProof: LKProof, eq: IndexOrFormula, aux: IndexOrFormula, mainFormula: HOLFormula ): EqualityRightRule = {
+    val premise = subProof.endSequent
+    val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eq ), Seq( aux ) )
+    val ( eqFormula, auxFormula ) = ( premise( Ant( indicesAnt( 0 ) ) ), premise( Suc( indicesSuc( 0 ) ) ) )
 
     eqFormula match {
       case Eq( s, t ) =>
-        val premise = subProof.endSequent
-
         if ( s == t && auxFormula == mainFormula ) {
           val sAux = auxFormula.find( s )
 
@@ -1475,27 +1543,6 @@ object EqualityRightRule extends RuleConvenienceObject( "EqualityRightRule" ) {
       case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
     }
   }
-
-  /**
-   * Convenience constructor for eq:r that, given an equation and aux formula, will attempt to infer the main formula.
-   *
-   * @param subProof The subproof.
-   * @param eqFormula The equation.
-   * @param auxFormula The aux formula.
-   * @param mainFormula The proposed main formula
-   * @return
-   */
-  def apply( subProof: LKProof, eqFormula: HOLFormula, auxFormula: HOLFormula, mainFormula: HOLFormula ): EqualityRightRule = eqFormula match {
-    case Eq( _, _ ) =>
-      val premise = subProof.endSequent
-
-      val ( leftIndices, rightIndices ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
-
-      EqualityRightRule( subProof, Ant( leftIndices( 0 ) ), Suc( rightIndices( 0 ) ), mainFormula )
-
-    case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
-  }
-
 }
 
 /**
@@ -1578,23 +1625,25 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
 object InductionRule extends RuleConvenienceObject( "InductionRule" ) {
 
   /**
-   * Convenience constructor for ind that will attempt to find the correct indices on its own.
+   * Convenience constructor for ind.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
    *
    * @param leftSubProof The left subproof.
-   * @param inductionBase The induction base (A[0]).
+   * @param inductionBase The index of the induction base (A[0]) or the induction base itself.
    * @param rightSubProof The right subproof.
-   * @param inductionHypo The induction hypothesis (A[x]).
-   * @param inductionStep The induction step (A[sx]).
+   * @param inductionHypo The index of the induction hypothesis (A[x]) or the induction hypothesis itself.
+   * @param inductionStep The index of the induction step (A[sx]) or the induction step itself.
    * @param term The term in the conclusion.
    * @return
    */
-  def apply( leftSubProof: LKProof, inductionBase: FOLFormula, rightSubProof: LKProof, inductionHypo: FOLFormula, inductionStep: FOLFormula, term: FOLTerm ): InductionRule = {
+  def apply( leftSubProof: LKProof, inductionBase: IndexOrFormula, rightSubProof: LKProof, inductionHypo: IndexOrFormula, inductionStep: IndexOrFormula, term: FOLTerm ): InductionRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
-    val ( _, indicesLeft ) = findAndValidate( leftPremise )( Seq(), Seq( inductionBase ) )
+    val ( _, indicesLeftSuc ) = findAndValidate( leftPremise )( Seq(), Seq( inductionBase ) )
     val ( indicesRightAnt, indicesRightSuc ) = findAndValidate( rightPremise )( Seq( inductionHypo ), Seq( inductionStep ) )
 
-    InductionRule( leftSubProof, Suc( indicesLeft.head ), rightSubProof, Ant( indicesRightAnt.head ), Suc( indicesRightSuc.head ), term )
+    InductionRule( leftSubProof, Suc( indicesLeftSuc.head ), rightSubProof, Ant( indicesRightAnt.head ), Suc( indicesRightSuc.head ), term )
   }
 }
 
@@ -1719,9 +1768,9 @@ object consoleString {
     upperNew + nLine + line + ruleName + nLine + lowerNew
   }
 
-  private def sequentToString( sequent: HOLSequent, auxFormulas: Seq[SequentIndex] ): String = {
+  private def sequentToString( sequent: HOLSequent, highlightedFormulas: Seq[SequentIndex] ): String = {
     val stringSequent = sequent map { _.toString() }
-    auxFormulas.foldLeft( stringSequent ) { ( acc, i ) =>
+    highlightedFormulas.foldLeft( stringSequent ) { ( acc, i ) =>
       val currentString = acc( i )
       val newString = "[" + currentString + "]"
       acc.updated( i, newString )
@@ -1735,7 +1784,9 @@ object consoleString {
  *
  * @param longName The long name of the rule.
  */
-private[lkNew] class RuleConvenienceObject( val longName: String ) {
+class RuleConvenienceObject( val longName: String ) {
+  type IndexOrFormula = Either[SequentIndex, HOLFormula]
+
   /**
    * Create an LKRuleCreationException with a message starting with "Cannot create $longName: ..."
    *
@@ -1744,47 +1795,73 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
    */
   protected def LKRuleCreationException( text: String ): LKRuleCreationException = new LKRuleCreationException( longName, text )
 
-  /**
-   * Method to determine the indices of formulas in a sequent.
-   *
-   * If either list contains duplicate formulas, each duplicate that can't be found will induce a -1 in the output.
-   *
-   * @param premise The sequent to find formulas in.
-   * @param antFormulas Formulas to be found in the antecedent.
-   * @param sucFormulas Formulas to be found in the succedent.
-   * @return
-   */
-  protected def findFormulasInPremise( premise: HOLSequent )( antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
-    val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
-    val sucMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
-
-    val antIndices = for ( f <- antFormulas ) yield if ( antMap contains f ) {
-      val i = antMap( f )
-      val iNew = premise.antecedent.indexOf( f, i + 1 )
-
-      antMap += ( f -> iNew )
-      iNew
-    } else {
-      val iNew = premise.antecedent.indexOf( f )
-
-      antMap += ( f -> iNew )
-      iNew
+  def findIndicesOrFormulasInPremise( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndicesFormulas: Seq[IndexOrFormula] ): ( Seq[HOLFormula], Seq[Int], Seq[HOLFormula], Seq[Int] ) = {
+    val antReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: antIndicesFormulas ) { ( acc, e ) =>
+      e match {
+        case Left( Ant( i ) ) => acc + i
+        case Left( i: Suc )   => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+        case Right( _ )       => acc
+      }
     }
 
-    val sucIndices = for ( f <- sucFormulas ) yield if ( sucMap contains f ) {
-      val i = sucMap( f )
-      val iNew = premise.succedent.indexOf( f, i + 1 )
+    val ant = for ( e <- antIndicesFormulas ) yield {
+      e match {
+        case Left( idx @ Ant( i ) ) =>
+          antReservedIndices += i
+          val f = premise( idx )
 
-      sucMap += ( f -> iNew )
-      iNew
-    } else {
-      val iNew = premise.succedent.indexOf( f )
+          ( f, i )
 
-      sucMap += ( f -> iNew )
-      iNew
+        case Right( f: HOLFormula ) =>
+          var i = premise.antecedent.indexOf( f )
+
+          while ( antReservedIndices contains i )
+            i = premise.antecedent.indexOf( f, i + 1 )
+
+          if ( i != -1 )
+            antReservedIndices += i
+
+          ( f, i )
+
+        case Left( i: Suc ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+      }
     }
 
-    ( antIndices, sucIndices )
+    val sucReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: sucIndicesFormulas ) { ( acc, e ) =>
+      e match {
+        case Left( Suc( i ) ) => acc + i
+        case Left( i: Ant )   => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+        case Right( _ )       => acc
+      }
+    }
+
+    val suc = for ( e <- sucIndicesFormulas ) yield {
+      e match {
+        case Left( Suc( i: Int ) ) =>
+          sucReservedIndices += i
+
+          ( premise( Suc( i ) ), i )
+
+        case Right( f: HOLFormula ) =>
+          var i = premise.succedent.indexOf( f )
+
+          while ( sucReservedIndices contains i )
+            i = premise.succedent.indexOf( f, i + 1 )
+
+          if ( i != -1 )
+            sucReservedIndices += i
+
+          ( f, i )
+
+        case Left( i: Ant ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+      }
+    }
+
+    val ( antFormulas, antIndices ) = ant.unzip
+
+    val ( sucFormulas, sucIndices ) = suc.unzip
+
+    ( antFormulas, antIndices, sucFormulas, sucIndices )
   }
 
   /**
@@ -1822,16 +1899,16 @@ private[lkNew] class RuleConvenienceObject( val longName: String ) {
   }
 
   /**
-   * Combines findFormulasInPremise and validateIndices. That is, it will return a pair of lists of indices and throw an exception if either
+   * Combines findIndicesOrFormulasInPremise and validateIndices. That is, it will return a pair of lists of indices and throw an exception if either
    * list contains a -1.
    *
    * @param premise The sequent in question.
-   * @param antFormulas The list of formulas in the antecedent.
-   * @param sucFormulas The list of formulas in the succedent.
+   * @param antIndicesFormulas The list of indices or formulas in the antecedent.
+   * @param sucIndicesFormulas The list of indices or formulas in the succedent.
    * @return
    */
-  protected def findAndValidate( premise: HOLSequent )( antFormulas: Seq[HOLFormula], sucFormulas: Seq[HOLFormula] ): ( Seq[Int], Seq[Int] ) = {
-    val ( antIndices, sucIndices ) = findFormulasInPremise( premise )( antFormulas, sucFormulas )
+  protected def findAndValidate( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndicesFormulas: Seq[IndexOrFormula] ): ( Seq[Int], Seq[Int] ) = {
+    val ( antFormulas, antIndices, sucFormulas, sucIndices ) = findIndicesOrFormulasInPremise( premise )( antIndicesFormulas, sucIndicesFormulas )
     validateIndices( premise )( antFormulas, antIndices, sucFormulas, sucIndices )
     ( antIndices, sucIndices )
   }

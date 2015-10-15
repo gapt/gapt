@@ -6,35 +6,71 @@ import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs._
 
 object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
-  def apply( subProof: LKProof, leftConjunct: HOLFormula, rightConjunct: HOLFormula ): LKProof = {
-    val ( indices, _ ) = findFormulasInPremise( subProof.endSequent )( Seq( leftConjunct, rightConjunct ), Seq() )
+
+  /**
+   * This simulates an additive ∧:l-rule: if either aux formula (but not both) is missing, it will be added to the
+   * premise by weakening before creating the ∧:l inference.
+   *
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param leftConjunct Index of the left conjunct or the conjunct itself.
+   * @param rightConjunct Index of the right conjunct or the conjunct itself.
+   * @return
+   */
+  def apply( subProof: LKProof, leftConjunct: IndexOrFormula, rightConjunct: IndexOrFormula ): LKProof = {
+    val ( _, indices, _, _ ) = findIndicesOrFormulasInPremise( subProof.endSequent )( Seq( leftConjunct, rightConjunct ), Seq() )
+
     indices match {
-      case -1 +: -1 +: _ => throw LKRuleCreationException( s"Neither $leftConjunct nor $rightConjunct has been found in antecedent of ${subProof.endSequent}." )
+      case -1 +: -1 +: _ => // Neither conjunct has been found. We don't allow this case.
+        throw LKRuleCreationException( s"Neither $leftConjunct nor $rightConjunct has been found in antecedent of ${subProof.endSequent}." )
 
       case -1 +: _ +: _ => // The right conjunct has been found.
-        AndLeftRule( WeakeningLeftRule( subProof, leftConjunct ), leftConjunct, rightConjunct )
+        val lc = ( leftConjunct: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of leftConjunct is -1, it cannot have been passed as an index.
+        AndLeftRule( WeakeningLeftRule( subProof, lc ), leftConjunct, rightConjunct )
 
       case _ +: -1 +: _ => // The left conjunct has been found.
-        AndLeftRule( WeakeningLeftRule( subProof, rightConjunct ), leftConjunct, rightConjunct )
+        val rc = ( rightConjunct: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of rightConjunct is -1, it cannot have been passed as an index.
+        AndLeftRule( WeakeningLeftRule( subProof, rc ), leftConjunct, rightConjunct )
 
-      case _ => AndLeftRule( subProof, leftConjunct, rightConjunct )
+      case _ => // Both conjuncts have been found. Simply construct the inference.
+        AndLeftRule( subProof, leftConjunct, rightConjunct )
     }
   }
 }
 
 object OrRightMacroRule extends RuleConvenienceObject( "OrRightMacroRule" ) {
-  def apply( subProof: LKProof, leftDisjunct: HOLFormula, rightDisjunct: HOLFormula ): LKProof = {
-    val ( _, indices ) = findFormulasInPremise( subProof.endSequent )( Seq(), Seq( leftDisjunct, rightDisjunct ) )
+
+  /**
+   * This simulates an additive ∨:r-rule: if either aux formula (but not both) is missing, it will be added to the
+   * premise by weakening before creating the ∨:r inference.
+   *
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param leftDisjunct Index of the left disjunct or the disjunct itself.
+   * @param rightDisjunct Index of the right disjunct or the disjunct itself.
+   * @return
+   */
+  def apply( subProof: LKProof, leftDisjunct: IndexOrFormula, rightDisjunct: IndexOrFormula ): LKProof = {
+    val ( _, _, _, indices ) = findIndicesOrFormulasInPremise( subProof.endSequent )( Seq(), Seq( leftDisjunct, rightDisjunct ) )
+
     indices match {
-      case -1 +: -1 +: _ => throw LKRuleCreationException( s"Neither $leftDisjunct nor $rightDisjunct has been found in succedent of ${subProof.endSequent}." )
+      case -1 +: -1 +: _ => // Neither disjunct has been found. We don't allow this case.
+        throw LKRuleCreationException( s"Neither $leftDisjunct nor $rightDisjunct has been found in succedent of ${subProof.endSequent}." )
 
       case -1 +: _ +: _ => // The right disjunct has been found.
-        OrRightRule( WeakeningRightRule( subProof, leftDisjunct ), leftDisjunct, rightDisjunct )
+        val ld = ( leftDisjunct: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of leftDisjunct is -1, it cannot have been passed as an index.
+        OrRightRule( WeakeningRightRule( subProof, ld ), leftDisjunct, rightDisjunct )
 
       case _ +: -1 +: _ => // The left conjunct has been found.
-        OrRightRule( WeakeningRightRule( subProof, rightDisjunct ), leftDisjunct, rightDisjunct )
+        val rd = ( rightDisjunct: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of rightDisjunct is -1, it cannot have been passed as an index.
+        OrRightRule( WeakeningRightRule( subProof, rd ), leftDisjunct, rightDisjunct )
 
-      case _ => OrRightRule( subProof, leftDisjunct, rightDisjunct )
+      case _ => // Both disjuncts have been found. Simply construct the inference.
+        OrRightRule( subProof, leftDisjunct, rightDisjunct )
     }
   }
 }
@@ -110,6 +146,30 @@ object ForallLeftBlock {
    */
   def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = withOccConnector( subProof, main, terms )._1
 
+  /**
+   * Applies the ForallLeft-rule n times.
+   * This method expects a formula main with
+   * a quantifier block, and a proof s1 which has a fully
+   * instantiated version of main on the left side of its
+   * bottommost sequent.
+   *
+   * The rule:
+   * <pre>
+   *                (π)
+   *  A[x1\term1,...,xN\termN], Γ :- Δ
+   * ---------------------------------- (∀_l x n)
+   *       ∀ x1,..,xN.A, Γ :- Δ
+   * </pre>
+   *
+   *
+   *
+   * @param subProof The top proof with (sL, A[x1\term1,...,xN\termN] :- sR) as the bottommost sequent.
+   * @param main A formula of the form (Forall x1,...,xN.A).
+   * @param terms The list of terms with which to instantiate main. The caller of this
+   * method has to ensure the correctness of these terms, and, specifically, that
+   * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof π.
+   * @return A pair consisting of an LKProof and an OccConnector.
+   */
   def withOccConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, OccConnector[HOLFormula] ) = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) )
 
@@ -124,6 +184,7 @@ object ForallLeftBlock {
 }
 
 object ForallRightBlock {
+
   /**
    * Applies the ForallRight-rule n times.
    * This method expects a formula main with
@@ -149,6 +210,30 @@ object ForallRightBlock {
    */
   def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = withOccConnector( subProof, main, eigenvariables )._1
 
+  /**
+   * Applies the ForallRight-rule n times.
+   * This method expects a formula main with
+   * a quantifier block, and a proof s1 which has a fully
+   * instantiated version of main on the right side of its
+   * bottommost sequent.
+   *
+   * The rule:
+   * <pre>
+   *              (π)
+   *    Γ :- Δ, A[x1\y1,...,xN\yN]
+   * ---------------------------------- (∀_r x n)
+   *     Γ :- Δ, ∀x1,..,xN.A
+   *
+   * where y1,...,yN are eigenvariables.
+   * </pre>
+   *
+   * @param subProof The proof π with (Γ :- Δ, A[x1\y1,...,xN\yN]) as the bottommost sequent.
+   * @param main A formula of the form (∀ x1,...,xN.A).
+   * @param eigenvariables The list of eigenvariables with which to instantiate main. The caller of this
+   * method has to ensure the correctness of these terms, and, specifically, that
+   * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
+   * @return A pair consisting of an LKProof and an OccConnector.
+   */
   def withOccConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, OccConnector[HOLFormula] ) = {
     val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) )
 
@@ -188,6 +273,30 @@ object ExistsLeftBlock {
    */
   def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = withOccConnector( subProof, main, eigenvariables )._1
 
+  /**
+   * Applies the ExistsLeft-rule n times.
+   * This method expects a formula main with
+   * a quantifier block, and a proof s1 which has a fully
+   * instantiated version of main on the left side of its
+   * bottommost sequent.
+   *
+   * The rule:
+   * <pre>
+   *              (π)
+   *    A[x1\y1,...,xN\yN], Γ :- Δ
+   * ---------------------------------- (∀_r x n)
+   *     ∃x1,..,xN.A, Γ :- Δ
+   *
+   * where y1,...,yN are eigenvariables.
+   * </pre>
+   *
+   * @param subProof The proof π with (A[x1\y1,...,xN\yN], Γ :- Δ) as the bottommost sequent.
+   * @param main A formula of the form (∃ x1,...,xN.A).
+   * @param eigenvariables The list of eigenvariables with which to instantiate main. The caller of this
+   * method has to ensure the correctness of these terms, and, specifically, that
+   * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
+   * @return A pair consisting of an LKProof and an OccConnector.
+   */
   def withOccConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, OccConnector[HOLFormula] ) = {
     val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) )
 
@@ -225,6 +334,28 @@ object ExistsRightBlock {
    */
   def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = withOccConnector( subProof, main, terms )._1
 
+  /**
+   * Applies the ExistsRight-rule n times.
+   * This method expects a formula main with
+   * a quantifier block, and a proof s1 which has a fully
+   * instantiated version of main on the right side of its
+   * bottommost sequent.
+   *
+   * The rule:
+   * <pre>
+   *                (π)
+   *  Γ :- Δ, A[x1\term1,...,xN\termN]
+   * ---------------------------------- (∀_l x n)
+   *       Γ :- Δ, ∃ x1,..,xN.A
+   * </pre>
+   *
+   * @param subProof The top proof with (Γ :- Δ, A[x1\term1,...,xN\termN]) as the bottommost sequent.
+   * @param main A formula of the form (∃ x1,...,xN.A).
+   * @param terms The list of terms with which to instantiate main. The caller of this
+   * method has to ensure the correctness of these terms, and, specifically, that
+   * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof π.
+   * @return A pair consisting of an LKProof and an OccConnector.
+   */
   def withOccConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, OccConnector[HOLFormula] ) = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) )
 
@@ -455,16 +586,16 @@ object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningCo
   /**
    *
    * @param p An LKProof.
-   * @param antList List of pairs (f,n) of type (Formula, Int) that express “f should occur n times in the antecedent”.
-   * @param sucList List of pairs (f,n) of type (Formula, Int) that express “f should occur n times in the succedent”.
-   * @param strict If true: requires that for (f,n) in antList or sucList, if f occurs in the root of s1, then n > 0.
+   * @param antMap Map of type HOLFormula => Int that expresses “f should occur n times in the antecedent”.
+   * @param sucMap Map of type HOLFormula => Int that expresses “f should occur n times in the succedent”.
+   * @param strict If true: requires that for f -> n in antMap or sucMap, if f occurs in the root of s1, then n > 0.
    * @return
    */
-  def apply( p: LKProof, antList: Seq[( HOLFormula, Int )], sucList: Seq[( HOLFormula, Int )], strict: Boolean ): LKProof = {
+  def apply( p: LKProof, antMap: Map[HOLFormula, Int], sucMap: Map[HOLFormula, Int], strict: Boolean ): LKProof = {
     val currentAnt = p.endSequent.antecedent
     val currentSuc = p.endSequent.succedent
 
-    val subProof = antList.foldLeft( p )( ( acc, p ) => {
+    val subProof = antMap.foldLeft( p )( ( acc, p ) => {
       val ( f, n ) = p
       val nCurrent = currentAnt.count( _ == f )
       if ( n == 0 && nCurrent != 0 && strict )
@@ -478,7 +609,7 @@ object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningCo
         ContractionLeftMacroRule( acc, f, n )
     } )
 
-    sucList.foldLeft( subProof )( ( acc, p ) => {
+    sucMap.foldLeft( subProof )( ( acc, p ) => {
       val ( f, n ) = p
       val nCurrent = currentSuc.count( _ == f )
       if ( n == 0 && nCurrent != 0 && strict )
@@ -511,61 +642,233 @@ object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningCo
     val antList = targetAnt.distinct map ( f => ( f, targetAnt.count( _ == f ) ) )
     val sucList = targetSuc.distinct map ( f => ( f, targetSuc.count( _ == f ) ) )
 
-    apply( p, antList, sucList, strict )
+    apply( p, Map( antList: _* ), Map( sucList: _* ), strict )
   }
 }
 
-object ParamodulationLeftRule {
+object ParamodulationLeftRule extends RuleConvenienceObject( "ParamodulationLeftRule" ) {
+
+  /**
+   * Simulates a binary equation rule, aka paramodulation.
+   *
+   * A binary rule of the form
+   * <pre>
+   *        (π1)              (π2)
+   *     Γ,Δ :- s = t   A[s], Π :- Λ
+   *   ------------------------------par:l
+   *         A[t], Γ, Π :- Δ, Λ
+   * </pre>
+   * is expressed as a series of inferences:
+   * <pre>
+   *                               (π2)
+   *                         A[s], Π :- Λ
+   *                     --------------------w:l
+   *                     s = t, A[s], Π :- Λ
+   *       (π1)         ---------------------:eq:l
+   *   Γ, Δ :- s = t     A[t], s = t, Π :- Λ
+   *   -------------------------------------cut
+   *            A[t], Γ, Π :- Δ, Λ
+   * </pre>
+   *
+   *
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param leftSubProof The left subproof π1.
+   * @param eq The index of the equation or the equation itself.
+   * @param rightSubProof The right subproof π2.
+   * @param aux The index of the aux formula or the aux formula itself.
+   * @param pos The position of the term to be replaced within A.
+   * @return
+   */
   def apply(
     leftSubProof:  LKProof,
-    eq:            SequentIndex,
+    eq:            IndexOrFormula,
     rightSubProof: LKProof,
-    aux:           SequentIndex,
+    aux:           IndexOrFormula,
     pos:           HOLPosition
   ): LKProof = {
-    val eqFormula = leftSubProof.endSequent( eq )
+
+    val eqFormula = eq match {
+      case Left( i )  => leftSubProof.endSequent( i )
+      case Right( f ) => f
+    }
+
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
-    val p2 = EqualityLeftRule( p1, Ant( 0 ), aux + 1, pos )
+    val p2 = aux match {
+      case Left( i ) =>
+        EqualityLeftRule( p1, Ant( 0 ), i + 1, pos )
+
+      case Right( f ) =>
+        EqualityLeftRule( p1, Ant( 0 ), f, pos )
+    }
+
     CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
   }
 
+  /**
+   * Simulates a binary equation rule, aka paramodulation.
+   *
+   * A binary rule of the form
+   * <pre>
+   *        (π1)              (π2)
+   *     Γ,Δ :- s = t   A[s], Π :- Λ
+   *   ------------------------------par:l
+   *         A[t], Γ, Π :- Δ, Λ
+   * </pre>
+   * is expressed as a series of inferences:
+   * <pre>
+   *                               (π2)
+   *                         A[s], Π :- Λ
+   *                     --------------------w:l
+   *                     s = t, A[s], Π :- Λ
+   *       (π1)         ---------------------:eq:l
+   *   Γ, Δ :- s = t     A[t], s = t, Π :- Λ
+   *   -------------------------------------cut
+   *            A[t], Γ, Π :- Δ, Λ
+   * </pre>
+   *
+   *
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param leftSubProof The left subproof π1.
+   * @param eq The index of the equation or the equation itself.
+   * @param rightSubProof The right subproof π2.
+   * @param aux The index of the aux formula or the aux formula itself.
+   * @param mainFormula The proposed main formula.
+   * @return
+   */
   def apply(
     leftSubProof:  LKProof,
-    eqFormula:     HOLFormula,
+    eq:            IndexOrFormula,
     rightSubProof: LKProof,
-    auxFormula:    HOLFormula,
+    aux:           IndexOrFormula,
     mainFormula:   HOLFormula
   ): LKProof = {
+
+    val eqFormula = eq match {
+      case Left( i )  => leftSubProof.endSequent( i )
+      case Right( f ) => f
+    }
+
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
-    val p2 = EqualityLeftRule( p1, eqFormula, auxFormula, mainFormula )
-    CutRule( leftSubProof, p2, eqFormula )
+    val p2 = aux match {
+      case Left( i ) =>
+        EqualityLeftRule( p1, Ant( 0 ), i + 1, mainFormula )
+
+      case Right( f ) =>
+        EqualityLeftRule( p1, Ant( 0 ), f, mainFormula )
+    }
+
+    CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
   }
 }
 
-object ParamodulationRightRule {
+object ParamodulationRightRule extends RuleConvenienceObject( "ParamodulationLeftRule" ) {
+
+  /**
+   * Simulates a binary equation rule, aka paramodulation.
+   *
+   * A binary rule of the form
+   * <pre>
+   *        (π1)              (π2)
+   *     Γ,Δ :- s = t   Π :- Λ, A[s]
+   *   ------------------------------par:r
+   *         Γ, Π :- Δ, Λ, A[t]
+   * </pre>
+   * is expressed as a series of inferences:
+   * <pre>
+   *                               (π2)
+   *                         Π :- Λ, A[s]
+   *                     --------------------w:l
+   *                     s = t, Π :- Λ, A[s]
+   *       (π1)         ---------------------:eq:r
+   *   Γ, Δ :- s = t     s = t, Π :- Λ, A[t]
+   *   -------------------------------------cut
+   *            Γ, Π :- Δ, Λ, A[t]
+   * </pre>
+   *
+   *
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param leftSubProof The left subproof π1.
+   * @param eq The index of the equation or the equation itself.
+   * @param rightSubProof The right subproof π2.
+   * @param aux The index of the aux formula or the aux formula itself.
+   * @param pos The position of the term to be replaced within A.
+   * @return
+   */
   def apply(
     leftSubProof:  LKProof,
-    eq:            SequentIndex,
+    eq:            IndexOrFormula,
     rightSubProof: LKProof,
-    aux:           SequentIndex,
+    aux:           IndexOrFormula,
     pos:           HOLPosition
   ): LKProof = {
-    val eqFormula = leftSubProof.endSequent( eq )
+
+    val eqFormula = eq match {
+      case Left( i )  => leftSubProof.endSequent( i )
+      case Right( f ) => f
+    }
+
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = EqualityRightRule( p1, Ant( 0 ), aux, pos )
+
     CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
   }
 
+  /**
+   * Simulates a binary equation rule, aka paramodulation.
+   *
+   * A binary rule of the form
+   * <pre>
+   *        (π1)              (π2)
+   *     Γ,Δ :- s = t   Π :- Λ, A[s]
+   *   ------------------------------par:r
+   *         Γ, Π :- Δ, Λ, A[t]
+   * </pre>
+   * is expressed as a series of inferences:
+   * <pre>
+   *                               (π2)
+   *                         Π :- Λ, A[s]
+   *                     --------------------w:l
+   *                     s = t, Π :- Λ, A[s]
+   *       (π1)         ---------------------:eq:r
+   *   Γ, Δ :- s = t     s = t, Π :- Λ, A[t]
+   *   -------------------------------------cut
+   *            Γ, Π :- Δ, Λ, A[t]
+   * </pre>
+   *
+   *
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param leftSubProof The left subproof π1.
+   * @param eq The index of the equation or the equation itself.
+   * @param rightSubProof The right subproof π2.
+   * @param aux The index of the aux formula or the aux formula itself.
+   * @param mainFormula The proposed main formula.
+   * @return
+   */
   def apply(
     leftSubProof:  LKProof,
-    eqFormula:     HOLFormula,
+    eq:            IndexOrFormula,
     rightSubProof: LKProof,
-    auxFormula:    HOLFormula,
+    aux:           IndexOrFormula,
     mainFormula:   HOLFormula
   ): LKProof = {
+
+    val eqFormula = eq match {
+      case Left( i )  => leftSubProof.endSequent( i )
+      case Right( f ) => f
+    }
+
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
-    val p2 = EqualityRightRule( p1, eqFormula, auxFormula, mainFormula )
-    CutRule( leftSubProof, p2, eqFormula )
+    val p2 = EqualityRightRule( p1, Ant( 0 ), aux, mainFormula )
+
+    CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
   }
 }
 
