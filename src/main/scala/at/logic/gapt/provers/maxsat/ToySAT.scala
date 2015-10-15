@@ -1,14 +1,5 @@
 package at.logic.gapt.provers.maxsat
 
-import at.logic.gapt.proofs.HOLClause
-
-/**
- * Created by frain on 3/31/15.
- */
-class ToySAT extends MaxSATSolverBinary {
-  def format() = Format.ToySAT
-  def noBinaryWarn() = "Please put the toysat binary (available at https://github.com/msakai/toysolver) into PATH"
+class ToySAT extends ExternalMaxSATSolver {
   def command = List( "toysat", "--maxsat" )
-  def solve( hard: List[HOLClause], soft: List[Tuple2[HOLClause, Int]] ) =
-    getFromMaxSATBinary( hard, soft )
 }

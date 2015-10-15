@@ -1,14 +1,5 @@
 package at.logic.gapt.provers.maxsat
 
-import at.logic.gapt.proofs.HOLClause
-
-/**
- * Created by frain on 3/31/15.
- */
-class MiniMaxSAT extends MaxSATSolverBinary {
-  def format() = Format.SingleVLine
-  def noBinaryWarn() = "Please put the minimaxsat binary (available at https://github.com/izquierdo/tesis_postgrado/tree/master/src/MiniMaxSat) into PATH"
+class MiniMaxSAT extends ExternalMaxSATSolver {
   def command = List( "minimaxsat", "-F=2" )
-  def solve( hard: List[HOLClause], soft: List[Tuple2[HOLClause, Int]] ) =
-    getFromMaxSATBinary( hard, soft )
 }

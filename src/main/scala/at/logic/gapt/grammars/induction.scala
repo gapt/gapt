@@ -130,7 +130,7 @@ object minimizeSipGrammar extends Logger {
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
-    maxSATSolver.solveWPM( List( hard ), soft toList ) match {
+    maxSATSolver.solve( hard, soft ) match {
       case Some( interp ) => SipGrammar(
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) }
       )

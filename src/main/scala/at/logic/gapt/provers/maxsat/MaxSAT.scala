@@ -3,37 +3,41 @@ package at.logic.gapt.provers.maxsat
 import java.io._
 
 import at.logic.gapt.expr.fol.TseitinCNF
-import at.logic.gapt.formats.dimacs.DIMACSHelper
+import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.utils.logging.{ metrics, Logger, Stopwatch }
+import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.{ withTempFile, runProcess }
 
 import scala.collection.immutable.Map
 
 /**
- * This trait provides an interface to solvers for the Weighted Partial MaxSat problem.
+ * Solver for Weighted Partial MaxSAT problems.
  */
-
-trait MaxSATSolver extends Logger {
-
-  protected def logTime( msg: String, millisec: Long ): Unit = {
-    val msec = millisec % 1000
-    val sec = ( millisec / 1000 ) % 60
-    val minutes = ( ( millisec / 1000 ) / 60 ) % 60
-    val hours = ( ( ( millisec / 1000 ) / 60 ) / 60 )
-    debug( msg + " " + hours + "h " + minutes + "min " + sec + "sec " + msec + "msec" )
-  }
+abstract class MaxSATSolver {
 
   /**
+   * Solves a weighted partial MaxSAT problem.
+   *
    * @param hard Hard constraints in CNF.
    * @param soft Soft constraints in CNF along with their weights.
    * @return None if hard is unsatisfiable, otherwise Some(model), where model is a model
    * of hard maximizing the sum of the weights of soft.
    */
-  def solve( hard: List[HOLClause], soft: List[( HOLClause, Int )] ): Option[Interpretation]
+  def solve( hard: DIMACS.CNF, soft: Seq[( DIMACS.Clause, Int )] ): Option[DIMACS.Model]
+
+  def solve( hard: TraversableOnce[HOLClause], soft: TraversableOnce[( HOLClause, Int )] ): Option[Interpretation] = {
+    val encoding = new DIMACSEncoding
+    solve(
+      encoding.encodeCNF( hard ),
+      soft map { case ( clause, weight ) => encoding.encodeClause( clause ) -> weight } toSeq
+    ) map { dimacsModel =>
+        encoding.decodeModel( dimacsModel )
+      }
+  }
 
   /**
    * @param hard Hard constraints.
@@ -41,30 +45,28 @@ trait MaxSATSolver extends Logger {
    * @return None if hard is unsatisfiable, otherwise Some(model), where model is a model
    * of hard maximizing the sum of the weights of soft.
    */
-  def solveWPM( hard: List[FOLFormula], soft: List[Tuple2[FOLFormula, Int]], watch: Stopwatch = new Stopwatch() ) = {
-    debug( "Generating clauses..." )
-
-    // Hard CNF transformation
-    watch.start()
-    val hardCNF = metrics.time( "tseitin" ) { TseitinCNF( And( hard ) ) }
-    val hardCNFTime = watch.lap( "hardCNF" )
-    logTime( "[Runtime]<hard CNF-Generation> ", hardCNFTime )
-    trace( "produced hard cnf: " + hardCNF )
-
-    // Soft CNF transformation
-    watch.start()
-    val softCNFs = soft.map( s => CNFp.toClauseList( s._1 ).map( f => ( f, s._2 ) ) ).flatten
-    val softCNFTime = watch.lap( "softCNF" )
-    logTime( "[Runtime]<soft CNF-Generation> ", softCNFTime )
-    trace( "produced soft cnf: " + softCNFs )
-
-    watch.start()
-    val interpretation = solve( hardCNF, softCNFs )
-    val solveTime = watch.lap( "MaxSAT" )
-    logTime( "[Runtime]<solveMaxSAT> ", solveTime )
-
-    interpretation
+  def solve( hard: HOLFormula, soft: TraversableOnce[( HOLFormula, Int )] ): Option[Interpretation] = {
+    solve(
+      metrics.time( "tseitin" ) { TseitinCNF( hard.asInstanceOf[FOLFormula] ) },
+      soft.map( s => CNFp.toClauseList( s._1 ).map( f => ( f, s._2 ) ) ).flatten
+    )
   }
+}
+
+abstract class ExternalMaxSATSolver extends MaxSATSolver with ExternalProgram {
+  def command: Seq[String]
+
+  protected def runProgram( dimacsInput: String ): String =
+    withTempFile.fromString( dimacsInput ) { inFile =>
+      runProcess.withExitValue( command :+ inFile )._2
+    }
+
+  def solve( hard: DIMACS.CNF, soft: Seq[( DIMACS.Clause, Int )] ): Option[DIMACS.Model] =
+    readWDIMACS( runProgram( writeWDIMACS( hard, soft ) ) )
+
+  val isInstalled =
+    try solve( FOLAtom( "p" ), Seq( -FOLAtom( "p" ) -> 10 ) ).isDefined
+    catch { case _: IOException => false }
 }
 
 class WDIMACSHelper( val hard: List[HOLClause], val soft: List[( HOLClause, Int )] )
@@ -131,7 +133,7 @@ class WDIMACSHelper( val hard: List[HOLClause], val soft: List[( HOLClause, Int 
   }
 }
 
-object readWDIMACS {
+object readWDIMACSOld {
   /**
    * A delegator to treat outputformats of different MaxSAT Solvers differently
    * @param in output of sepcific MaxSAT Solver
@@ -278,96 +280,6 @@ object readWDIMACS {
     return None
   }
 }
-
-/**
- * A trait for such WCNF-based MaxSAT solvers that are invoked
- * by calling an OS-level binary.
- */
-trait MaxSATSolverBinary extends MaxSATSolver {
-  val nLine = sys.props( "line.separator" )
-
-  /**
-   * Constructs the input command list for Process from the
-   * names of the input and output files for the MaxSAT solver.
-   *  For examples, have a look at implementations of this trait.
-   * @return The command list.
-   */
-  def command: List[String]
-
-  /**
-   * A warning message to be displayed if the binary is not found.
-   * @return A warning message to be displayed if the binary is not found.
-   */
-  def noBinaryWarn(): String
-
-  /**
-   * The output format of this prover.
-   * @return
-   */
-  def format(): Format.Format
-
-  /**
-   * Checks if a particular Max SAT Solver is installed properly
-   * @return true if it is installed, false otherwise
-   */
-  val isInstalled: Boolean = {
-    try {
-      val clause = HOLClause( List(), List( FOLAtom( "P" ) ) )
-      solve( List( clause ), List( clause -> 1 ) ) match {
-        case Some( _ ) => true
-        case None      => throw new IOException()
-      }
-    } catch {
-      case ex: IOException => {
-        warn( "It seems that the MaxSAT solver is not installed properly" )
-        warn( noBinaryWarn() )
-        false
-      }
-    }
-  }
-
-  /**
-   * Converts a given partial weighted MaxSAT instance
-   * into wcnf format and invokes the solver via the supplied command.
-   * If the instance is satisfiable a model is returned, otherwise None
-   *
-   * @param hard clause set of hardconstraints
-   * @param soft clause set (+ weights) of soft constraints
-   * @return None if UNSAT, Some(minimal model) otherwise
-   */
-  protected def getFromMaxSATBinary( hard: List[HOLClause], soft: List[Tuple2[HOLClause, Int]] ): Option[Interpretation] =
-    {
-      val helper = new WDIMACSHelper( hard, soft )
-      val input = helper.getWCNFInput().result()
-
-      val output = withTempFile.fromString( input ) { inFile => runProcess.withExitValue( command :+ inFile, "" )._2 }
-
-      readWDIMACS( output, format(), helper ) map { model =>
-        new MapBasedInterpretation( model.asInstanceOf[Map[HOLFormula, Boolean]] )
-      }
-    }
-}
-
-/*
- * Remark: input format of wcnf
- * Weigthed Partial Max-SAT input format
- *
- *   In Weighted Partial Max-SAT, the parameters line is "p wcnf nbvar nbclauses top". We associate a weight with each clause, which is the first integer in the clause.
- *   Weights must be greater than or equal to 1, and the sum of all soft clauses smaller than 2^63.
- *   Hard clauses have weight top and soft clauses have a weight smaller than top. We assure that top is a weight always greater than the sum of the weights of violated soft clauses.
- *
- *   Example of Weighted Partial Max-SAT formula:
- *
- *   c
- *   c comments Weighted Partial Max-SAT
- *   c
- *   p wcnf 4 5 16
- *   16 1 -2 4 0
- *   16 -1 -2 3 0
- *   8 -2 -4 0
- *   4 -3 2 0
- *   3 1 3 0
- */
 
 /**
  * An enumeration to distinguish different output formats of

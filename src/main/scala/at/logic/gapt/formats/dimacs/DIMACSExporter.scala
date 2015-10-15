@@ -150,3 +150,35 @@ object writeDIMACS {
   }
 }
 
+object writeWDIMACS {
+  def apply( wcnf: Seq[( DIMACS.Clause, Int )], threshold: Int ): String = {
+    val dimacsInput = new StringBuilder
+    dimacsInput ++= s"p wcnf ${DIMACS maxAtom wcnf.map( _._1 )} ${wcnf size} $threshold\n"
+    wcnf foreach {
+      case ( clause, weight ) =>
+        dimacsInput ++= s"$weight ${clause mkString " "} 0\n"
+    }
+    dimacsInput.result()
+  }
+
+  def apply( hard: DIMACS.CNF, soft: Seq[( DIMACS.Clause, Int )] ): String = {
+    val threshold = soft.map( _._2 ).sum + 1
+    writeWDIMACS( hard.map( _ -> threshold ) ++ soft, threshold )
+  }
+}
+
+object readWDIMACS {
+  def apply( dimacsOutput: String ): Option[DIMACS.Model] = {
+    val lines = dimacsOutput.split( "\n" )
+    if ( lines exists { _ startsWith "o " } ) {
+      Some( lines
+        filter { _ startsWith "v " }
+        map { _ substring 2 trim }
+        flatMap { _ split " " }
+        map { _ replace ( "x", "" ) } // toysat :-(
+        map { _ toInt } )
+    } else {
+      None
+    }
+  }
+}

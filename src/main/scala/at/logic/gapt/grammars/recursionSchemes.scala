@@ -182,7 +182,7 @@ object minimizeRecursionScheme extends Logger {
     val hard = formula( targets )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> 1 }
-    val interp = solver.solveWPM( List( hard ), soft toList ).get
+    val interp = solver.solve( hard, soft ).get
     RecursionScheme( recSchem.axiom, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
   }
 }

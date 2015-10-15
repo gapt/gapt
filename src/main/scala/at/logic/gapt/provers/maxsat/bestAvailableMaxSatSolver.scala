@@ -1,7 +1,6 @@
 package at.logic.gapt.provers.maxsat
 
-import at.logic.gapt.models.Interpretation
-import at.logic.gapt.proofs.HOLClause
+import at.logic.gapt.formats.dimacs.DIMACS.{ Model, Clause, CNF }
 
 object bestAvailableMaxSatSolver extends MaxSATSolver {
   val bestAvailableSolver =
@@ -9,6 +8,6 @@ object bestAvailableMaxSatSolver extends MaxSATSolver {
       find( _.isInstalled ).
       getOrElse( new MaxSat4j )
 
-  override def solve( hard: List[HOLClause], soft: List[( HOLClause, Int )] ): Option[Interpretation] =
+  override def solve( hard: CNF, soft: Seq[( Clause, Int )] ): Option[Model] =
     bestAvailableSolver.solve( hard, soft )
 }

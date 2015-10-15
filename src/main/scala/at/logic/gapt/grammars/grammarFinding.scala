@@ -193,7 +193,7 @@ object minimizeGrammar {
     val hard = formula.coversLanguage( lang )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
-    maxSATSolver.solveWPM( List( hard ), soft toList ) match {
+    maxSATSolver.solve( hard, soft ) match {
       case Some( interp ) => TratGrammar( g.axiom, g.nonTerminals,
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
@@ -248,7 +248,7 @@ object minimizeVectGrammar {
     metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
     val atomsInHard = atoms( hard )
     val soft = g.productions map formula.vectProductionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
-    metrics.time( "maxsat" ) { maxSATSolver.solveWPM( List( hard ), soft toList ) } match {
+    metrics.time( "maxsat" ) { maxSATSolver.solve( hard, soft ) } match {
       case Some( interp ) => VectTratGrammar( g.axiom, g.nonTerminals,
         g.productions filter { p => interp.interpret( formula.vectProductionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )

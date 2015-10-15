@@ -47,7 +47,7 @@ class MaxSATTest extends Specification {
       val hard = List( h1, h2, h3 )
       val soft = List( s1, s2, s3 )
 
-      ( hard, soft )
+      ( And( hard ), soft )
     }
   }
 
@@ -65,7 +65,7 @@ class MaxSATTest extends Specification {
       if ( !new QMaxSAT().isInstalled ) skipped( "qmaxsat not installed" )
 
       val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new QMaxSAT() ).solveWPM( hard, soft ) ) must beTrue
+      check( ( new QMaxSAT() ).solve( hard, soft ) ) must beTrue
     }
   }
 
@@ -75,7 +75,7 @@ class MaxSATTest extends Specification {
       if ( !new ToySAT().isInstalled ) skipped( "toysat not installed" )
 
       val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new ToySAT() ).solveWPM( hard, soft ) ) must beTrue
+      check( ( new ToySAT() ).solve( hard, soft ) ) must beTrue
     }
   }
 
@@ -85,7 +85,7 @@ class MaxSATTest extends Specification {
       if ( !new ToySolver().isInstalled ) skipped( "toysolver not installed" )
 
       val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new ToySolver() ).solveWPM( hard, soft ) ) must beTrue
+      check( ( new ToySolver() ).solve( hard, soft ) ) must beTrue
     }
   }
 
@@ -95,7 +95,7 @@ class MaxSATTest extends Specification {
       if ( !new MiniMaxSAT().isInstalled ) skipped( "minimaxsat not installed" )
 
       val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new MiniMaxSAT() ).solveWPM( hard, soft ) ) must beTrue
+      check( ( new MiniMaxSAT() ).solve( hard, soft ) ) must beTrue
     }
   }
 
@@ -103,7 +103,7 @@ class MaxSATTest extends Specification {
 
     "deal correctly with a simple instance" in {
       val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new MaxSat4j() ).solveWPM( hard, soft ) ) must beTrue
+      check( ( new MaxSat4j() ).solve( hard, soft ) ) must beTrue
     }
   }
 }
