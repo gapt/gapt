@@ -314,7 +314,6 @@ object eliminateDefinitions {
 
 }
 
-
 /**
  * An implementation of LK proof regularization. In a regular LK proof, an eigenvariable is globally unique to the proof.
  * E.g.
