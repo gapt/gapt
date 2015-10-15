@@ -83,7 +83,13 @@ class ReductiveCutElimination {
   def apply( proof: LKProof, pred_done: LKProof => Boolean, pred_cut: ( LKProof, LKProof ) => Boolean ): LKProof = {
 
     steps += proof
-    var pr = proof
+
+    // For rank-reduction of strong quantifier inferences, we need to either:
+    // 1) rename eigenvariables during rank-reduction, or
+    // 2) maintain the invariant that the proof is regular
+    // Here, we choose 2).
+    var pr = regularize( proof )
+
     do {
       def pred( local: LKProof ) = pred_cut( pr, local )
       val p = cutElim( pr )( pred )
@@ -265,7 +271,7 @@ class ReductiveCutElimination {
         if ( l.mainIndices.head == aux1 ) { // The left cut formula is the main formula of the contraction: Duplicate right proof
           val tmp = CutRule( subProof, a1, right, aux2 )
           val tmp2 = CutRule( tmp, tmp.getLeftOccConnector.child( a2 ), right, aux2 )
-          ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
+          regularize( ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) ) )
         } else { // The contraction operates on the context: Swap the inferences
           val aux1Sub = l.getOccConnector.parent( aux1 )
           val cutSub = CutRule( subProof, aux1Sub, right, aux2 )
@@ -433,7 +439,7 @@ class ReductiveCutElimination {
           // The right cut formula is the main formula of the contraction: Duplicate left proof
           val tmp = CutRule( left, aux1, subProof, a1 )
           val tmp2 = CutRule( left, aux1, tmp, tmp.getRightOccConnector.child( a2 ) )
-          ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
+          regularize( ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) ) )
         } else {
           // The contraction operates on the context: Swap the inferences
           val aux2Sub = r.getOccConnector.parent( aux2 )
