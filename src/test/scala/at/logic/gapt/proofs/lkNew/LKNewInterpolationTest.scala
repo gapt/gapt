@@ -234,5 +234,135 @@ class LKNewInterpolationTest extends Specification {
       pproof.endSequent must beEqualTo( HOLSequent( Top() :: p :: Nil, p :: q :: Nil ) )
       success
     }
+
+    "correctly create a proof containing ContractionLeft" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = ContractionLeftRule( proof, p )
+      val npart = proof1.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Bottom() :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ContractionLeft (different partition)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = ContractionLeftRule( proof, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( p )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ContractionLeft (with yet another partition)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = ContractionLeftRule( proof, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Neg( p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, p :: Neg( p ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Neg( p ) :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ContractionLeft (and another partition)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = ContractionLeftRule( proof, p )
+      val npart = Seq[SequentIndex]()
+      val ppart = proof1.endSequent.indices
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Top() )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Top() :: Nil, p :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ContractionRight" in {
+      val proof = WeakeningRightRule( ax, p )
+      val proof1 = ContractionRightRule( proof, p )
+      val npart = proof1.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, Bottom() :: p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ContractionRight (different partition)" in {
+      val proof = WeakeningRightRule( ax, p )
+      val proof1 = ContractionRightRule( proof, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( p )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ContractionRight (with yet another partition)" in {
+      val proof = WeakeningRightRule( ax, p )
+      val proof1 = ContractionRightRule( proof, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Neg( p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Neg( p ) :: p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: p :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ContractionRight (and another partition)" in {
+      val proof = WeakeningRightRule( ax, p )
+      val proof1 = ContractionRightRule( proof, p )
+      val npart = Seq[SequentIndex]()
+      val ppart = proof1.endSequent.indices
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Top() )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Top() :: p :: Nil, p :: Nil ) )
+      success
+    }
+
+    /*"correctly create a proof containing NegRight" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = NegRightRule( proof, p )
+      val npart = proof1.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Bottom() :: Neg( p ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing NegRight (with yet another partition)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = NegRightRule( proof, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Neg( p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, p :: Neg( p ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: p :: Nil, Neg( p ) :: Nil ) )
+      success
+    }*/
   }
 }
