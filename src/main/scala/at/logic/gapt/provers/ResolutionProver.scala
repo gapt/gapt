@@ -1,6 +1,6 @@
 package at.logic.gapt.provers
 
-import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement }
+import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr.{ FOLConst, Const }
 import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }

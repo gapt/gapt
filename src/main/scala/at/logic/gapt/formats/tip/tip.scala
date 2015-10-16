@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.tip
 
-import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement }
+import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr.hol.isPrenex
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParser

@@ -1,7 +1,5 @@
 package at.logic.gapt.expr
 
-import at.logic.gapt.algorithms.rewriting.NameReplacement
-import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
 import at.logic.gapt.expr.fol.FOLPosition._
 import at.logic.gapt.expr.fol.FOLPosition
 import at.logic.gapt.expr.hol.HOLPosition
@@ -16,8 +14,6 @@ trait HOLAtom extends HOLFormula with HOLPartialAtom {
 trait LogicalConstant extends Const
 
 trait FOLExpression extends LambdaExpression {
-  def renameSymbols( map: SymbolMap ): FOLExpression = NameReplacement( this, map )
-
   /**
    * Retrieves this expression's subexpression at a given position.
    *
@@ -75,15 +71,11 @@ private[expr] trait HOLPartialAtom extends LambdaExpression {
 
 trait FOLTerm extends FOLPartialTerm with FOLExpression {
   private[expr] override val numberOfArguments = 0
-
-  override def renameSymbols( map: SymbolMap ): FOLTerm = NameReplacement( this, map ).asInstanceOf[FOLTerm]
 }
 trait FOLVar extends Var with FOLTerm
 trait FOLConst extends Const with FOLTerm
 trait FOLFormula extends FOLPartialFormula with HOLFormula with FOLExpression {
   private[expr] override val numberOfArguments = 0
-
-  override def renameSymbols( map: SymbolMap ): FOLFormula = NameReplacement( this, map )
 
   def &( that: FOLFormula ): FOLFormula = And( this, that )
   def |( that: FOLFormula ): FOLFormula = Or( this, that )

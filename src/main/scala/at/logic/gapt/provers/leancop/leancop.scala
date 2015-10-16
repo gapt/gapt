@@ -2,7 +2,7 @@ package at.logic.gapt.provers.leancop
 
 import java.io.{ IOException, ByteArrayOutputStream, StringReader }
 
-import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement }
+import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.HOLSequent

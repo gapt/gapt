@@ -1,7 +1,5 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.algorithms.rewriting.NameReplacement
-import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence

@@ -1,7 +1,5 @@
 package at.logic.gapt
 
-import at.logic.gapt.algorithms.rewriting.NameReplacement
-import at.logic.gapt.algorithms.rewriting.NameReplacement.SymbolMap
 import at.logic.gapt.expr._
 
 package object proofs {
@@ -22,8 +20,6 @@ package object proofs {
     def toNegFormula: HOLFormula = And( sequent.antecedent ++ sequent.succedent.map( Neg( _ ) ) )
 
     def toImplication: HOLFormula = Imp( And( sequent.antecedent.toList ), Or( sequent.succedent ) )
-
-    def renameSymbols( map: SymbolMap ) = sequent map ( NameReplacement( _, map ) )
   }
 
   object HOLSequent {

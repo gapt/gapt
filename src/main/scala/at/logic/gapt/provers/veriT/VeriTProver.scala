@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.veriT
 
-import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement }
+import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
