@@ -192,13 +192,3 @@ object runOutOfProcess {
     }
   }
 }
-
-object recursiveListFiles {
-  def apply( fn: String ): List[File] = apply( new File( fn ) )
-
-  def apply( f: File ): List[File] =
-    if ( f.isDirectory )
-      f.listFiles.toList.flatMap( apply )
-    else
-      List( f )
-}

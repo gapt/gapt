@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.executionModels.timeout.withTimeout
-import org.apache.commons.lang3.exception.ExceptionUtils
+import at.logic.gapt.utils.glob
 
 import scala.App
 
@@ -66,7 +66,7 @@ object dumpTermsets extends App {
   }
 
   println( "Prover9 proofs" )
-  betterForeach( RegressionTests.prover9Proofs.map( _.toPath ) ) { p9File =>
+  betterForeach( glob paths "testing/**/prover9/**/*.s.out" ) { p9File =>
     val ( resProof, endSequent ) = Prover9Importer robinsonProofWithReconstructedEndSequentFromFile p9File.toString
     val expansionProof =
       if ( isFOLPrenexSigma1( endSequent ) )
@@ -81,7 +81,7 @@ object dumpTermsets extends App {
   }
 
   println( "LeanCoP proofs" )
-  betterForeach( RegressionTests.leancopProofs.map( _.toPath ) ) { leanCoPFile =>
+  betterForeach( glob paths "testing/**/leanCoP/**/*.out" ) { leanCoPFile =>
     writeTermset(
       outDir resolve s"leancop-${leanCoPFile.getParent.getFileName}.termset",
       termsetFromExpansionProof( LeanCoPParser getExpansionProof leanCoPFile.toString get )

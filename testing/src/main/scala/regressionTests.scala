@@ -15,6 +15,7 @@ import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, RobinsonToLK, 
 import at.logic.gapt.provers.sat.MiniSAT
 import at.logic.gapt.provers.veriT.VeriTProver
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9Prover }
+import at.logic.gapt.utils.glob
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -103,18 +104,13 @@ class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
 
 // Usage: RegressionTests [<test number limit>]
 object RegressionTests extends App {
-  def prover9Proofs = recursiveListFiles( "testing/TSTP/prover9" )
-    .filter( _.getName.endsWith( ".out" ) )
+  def prover9Proofs = glob( "testing/TSTP/prover9/**/*.s.out" )
+  def leancopProofs = glob( "testing/TSTP/leanCoP/**/*.out" )
+  def veritProofs = glob( "testing/veriT-SMT-LIB/**/*.proof_flat" )
 
-  def leancopProofs = recursiveListFiles( "testing/TSTP/leanCoP" )
-    .filter( _.getName.endsWith( ".out" ) )
-
-  def veritProofs = recursiveListFiles( "testing/veriT-SMT-LIB" )
-    .filter( _.getName.endsWith( ".proof_flat" ) )
-
-  def prover9TestCases = prover9Proofs.map( new Prover9TestCase( _ ) )
-  def leancopTestCases = leancopProofs.map( new LeanCoPTestCase( _ ) )
-  def veritTestCases = veritProofs.map( new VeriTTestCase( _ ) )
+  def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( new File( fn ) ) }
+  def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( new File( fn ) ) }
+  def veritTestCases = veritProofs map { fn => new VeriTTestCase( new File( fn ) ) }
 
   def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases
 

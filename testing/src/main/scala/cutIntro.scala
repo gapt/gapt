@@ -13,6 +13,7 @@ import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
+import at.logic.gapt.utils.glob
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
 import at.logic.gapt.utils.executionModels.timeout._
@@ -64,9 +65,9 @@ object testCutIntro extends App {
 
   lazy val proofs =
     ( for ( n <- 0 to 100; proofSequence <- proofSequences ) yield s"${proofSequence.name}($n)" ) ++
-      recursiveListFiles( "testing/TSTP/prover9" ).map( _.getPath ).filter( _ endsWith ".s.out" ) ++
-      recursiveListFiles( "testing/veriT-SMT-LIB/QF_UF" ).map( _.getPath ).filter( _ endsWith ".proof_flat" ) ++
-      recursiveListFiles( "testing/TSTP/leanCoP" ).map( _.getPath ).filter( _ endsWith ".s.out" ) ++
+      glob( "testing/TSTP/prover9/**/*.s.out" ) ++
+      glob( "testing/veriT-SMT-LIB/QF_UF/**/*.proof_flat" ) ++
+      glob( "testing/TSTP/leanCoP/**/*.s.out" ) ++
       Nil
 
   lazy val methods = Seq( "1_dtable", "many_dtable", "1_maxsat", "1_1_maxsat", "2_maxsat", "2_2_maxsat" )
@@ -196,7 +197,7 @@ object testCutIntro extends App {
 object findNonTrivialTSTPExamples extends App {
   case class TermSetStats( fileName: String, size: Int, numFuns: Int )
 
-  val p9Files = recursiveListFiles( "testing/TSTP/prover9" ).map( _.getPath ).filter( _ endsWith ".s.out" )
+  val p9Files = glob( "testing/TSTP/prover9/**/*.s.out" )
 
   val stats = p9Files map { fn =>
     try {
