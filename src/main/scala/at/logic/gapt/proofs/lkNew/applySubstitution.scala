@@ -71,9 +71,9 @@ object applySubstitution {
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
       ImpRightRule( subProofNew, aux1, aux2 )
 
-    case ForallLeftRule( subProof, aux, f, term, v ) =>
+    case p @ ForallLeftRule( subProof, aux, f, term, v ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
-      val All( newV, newF ) = substitution( All( v, f ) )
+      val All( newV, newF ) = substitution( p.mainFormula )
       ForallLeftRule( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
 
     case ForallRightRule( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
@@ -85,25 +85,24 @@ object applySubstitution {
       ) )
 
     case p @ ForallRightRule( subProof, aux, eigen, quant ) =>
-      val All( newQuant, _ ) = Substitution( substitution.map - eigen )( p.mainFormula )
+      val All( newQuant, _ ) = substitution( p.mainFormula )
       ForallRightRule( apply( Substitution( substitution.map - eigen ) )( subProof ), aux, eigen, newQuant )
 
     case ExistsLeftRule( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
       val renamedEigen = rename( eigen, substitution.range )
-      renamedEigen -> apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof )
       apply( substitution, preserveEigenvariables )( ExistsLeftRule(
         apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof ),
         aux, renamedEigen, quant
       ) )
 
     case p @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
-      val Ex( newQuant, _ ) = Substitution( substitution.map - eigen )( p.mainFormula )
+      val Ex( newQuant, _ ) = substitution( p.mainFormula )
       ExistsLeftRule( apply( Substitution( substitution.map - eigen ) )( subProof ), aux, eigen, newQuant )
 
-    case ExistsRightRule( subProof, aux, f, term, v ) =>
+    case p @ ExistsRightRule( subProof, aux, f, term, v ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
-      val Ex( newV, newF ) = substitution( Ex( v, f ) )
+      val Ex( newV, newF ) = substitution( p.mainFormula )
       ExistsRightRule( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
 
     case EqualityLeftRule( subProof, eq, aux, pos ) =>
