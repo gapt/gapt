@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.tip
 
-import at.logic.gapt.algorithms.rewriting.NameReplacement
+import at.logic.gapt.algorithms.rewriting.{ TermReplacement, NameReplacement }
 import at.logic.gapt.expr.hol.isPrenex
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParser
@@ -29,8 +29,8 @@ object TipParser {
     HOLSequent( antecedent, succedent )
   }
 
-  private def fixupConstants( seq: HOLSequent ) =
-    NameReplacement( seq, Map( "z" -> ( 0, "0" ) ) )
+  private def fixupConstants( seq: HOLSequent ): HOLSequent =
+    seq map { TermReplacement( _, Map( FOLConst( "z" ) -> FOLConst( "0" ) ).toMap[LambdaExpression, LambdaExpression] ) }
 
   private def fixupNonPrenex( f: HOLFormula ): Seq[HOLFormula] = f match {
     case _ if isPrenex( f ) => Seq( f )
