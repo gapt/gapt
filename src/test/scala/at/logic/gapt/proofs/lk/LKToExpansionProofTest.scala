@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples.LinearExampleProof
+import at.logic.gapt.proofs.lkNew.lkNew2Old
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
@@ -11,7 +12,7 @@ class ExtractExpansionSequentTest extends Specification {
   "The expansion tree extraction" should {
 
     "handle successive contractions " in {
-      val etSeq = LKToExpansionProof( LinearExampleProof( 2 ) )
+      val etSeq = LKToExpansionProof( lkNew2Old( LinearExampleProof( 2 ) ) )
 
       val p = "P"
       val x = FOLVar( "x" )

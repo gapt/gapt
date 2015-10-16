@@ -1,13 +1,12 @@
 package at.logic.gapt.provers.inductionProver
 
-import at.logic.gapt.examples.{ FactorialFunctionEqualityExampleProof2, FactorialFunctionEqualityExampleProof, UniformAssociativity3ExampleProof }
+import at.logic.gapt.examples._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.expr.{ Eq, FOLConst, FOLFunction }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
 import org.apache.log4j.{ Level, Logger }
 

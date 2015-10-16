@@ -1,7 +1,7 @@
 
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.examples.{ LinearExampleProofNew, LinearExampleProof }
+import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.HOLSequent
@@ -56,7 +56,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
     "perform cut introduction on an example proof" in {
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
-      val p = LinearExampleProofNew( 7 )
+      val p = LinearExampleProof( 7 )
       CutIntroduction.one_cut_one_quantifier( p, false )
       Success()
     }
@@ -103,7 +103,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
-      val p = LinearExampleProofNew( 4 )
+      val p = LinearExampleProof( 4 )
       val Some( pi ) = CutIntroduction.one_cut_one_quantifier( p, false )
       val pe = ReductiveCutElimination( pi )
 
@@ -159,7 +159,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     "construct proof with expansion sequent extracted from proof (2/2)" in {
       val proof = LinearExampleProof( 4 )
 
-      val proofPrime = ExpansionProofToLK( lk.LKToExpansionProof( proof ) ) // must not throw exception
+      val proofPrime = ExpansionProofToLK( lkNew.LKToExpansionProof( proof ) ) // must not throw exception
       ok
     }
 

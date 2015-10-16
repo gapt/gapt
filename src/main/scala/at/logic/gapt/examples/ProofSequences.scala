@@ -1,11 +1,11 @@
 package at.logic.gapt.examples
+
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.expr.hol.{ univclosure, instantiate }
 import at.logic.gapt.formats.simple.SimpleFOLParser
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkNew._
 
 trait ProofSequence {
   def apply( n: Int ): LKProof
@@ -33,12 +33,12 @@ object LinearExampleProof extends ProofSequence {
       if ( k == n ) // leaf proof
       {
         val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
-        WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
+        WeakeningLeftRule( LogicalAxiom( a ), ass )
       } else {
         val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
         val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
         val aux = Imp( p1, p2 )
-        ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( p1 :: Nil, p1 :: Nil ), proof( k + 1, n ), p1, p2 ), aux, ass, Utils.numeral( k ) ), ass )
+        ContractionLeftRule( ForallLeftRule( ImpLeftRule( LogicalAxiom( p1 ), p1, proof( k + 1, n ), p2 ), ass, Utils.numeral( k ) ), ass )
       }
     }
 }
@@ -72,24 +72,24 @@ object SquareDiagonalExampleProof extends ProofSequence {
       if ( k == n ) // leaf proof
       {
         val a = FOLAtom( p, Utils.numeral( n ) :: Utils.numeral( n ) :: Nil )
-        WeakeningLeftRule( WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), assx ), assy )
+        WeakeningLeftRule( WeakeningLeftRule( LogicalAxiom( a ), assx ), assy )
       } else {
         val ayl = FOLAtom( p, Utils.numeral( k + 1 ) :: Utils.numeral( k ) :: Nil ) // atom y left
         val ayr = FOLAtom( p, Utils.numeral( k + 1 ) :: Utils.numeral( k + 1 ) :: Nil )
         val auxy = Imp( ayl, ayr )
 
-        val p1 = ImpLeftRule( Axiom( ayl :: Nil, ayl :: Nil ), proof( k + 1, n ), ayl, ayr )
-        val p2 = ForallLeftRule( p1, auxy, assy_aux( k + 1 ), Utils.numeral( k ) )
-        val p3 = ForallLeftRule( p2, assy_aux( k + 1 ), assy, Utils.numeral( k + 1 ) )
+        val p1 = ImpLeftRule( LogicalAxiom( ayl ), ayl, proof( k + 1, n ), ayr )
+        val p2 = ForallLeftRule( p1, assy_aux( k + 1 ), Utils.numeral( k ) )
+        val p3 = ForallLeftRule( p2, assy, Utils.numeral( k + 1 ) )
         val p4 = ContractionLeftRule( p3, assy )
 
         val axl = FOLAtom( p, Utils.numeral( k ) :: Utils.numeral( k ) :: Nil ) // atom x left
         val axr = FOLAtom( p, Utils.numeral( k + 1 ) :: Utils.numeral( k ) :: Nil )
         val auxx = Imp( axl, axr )
 
-        val p5 = ImpLeftRule( Axiom( axl :: Nil, axl :: Nil ), p4, axl, axr )
-        val p6 = ForallLeftRule( p5, auxx, assx_aux( k ), Utils.numeral( k ) )
-        val p7 = ForallLeftRule( p6, assx_aux( k ), assx, Utils.numeral( k ) )
+        val p5 = ImpLeftRule( LogicalAxiom( axl ), axl, p4, axr )
+        val p6 = ForallLeftRule( p5, assx_aux( k ), Utils.numeral( k ) )
+        val p7 = ForallLeftRule( p6, assx, Utils.numeral( k ) )
         ContractionLeftRule( p7, assx )
       }
     }
@@ -122,7 +122,7 @@ object SquareEdgesExampleProof extends ProofSequence {
   def proof( k: Int, n: Int ): LKProof =
     {
       if ( k == n ) {
-        val p1 = ForallLeftRule( upper_proof( 0, n ), assy_aux( n ), assy, Utils.numeral( n ) )
+        val p1 = ForallLeftRule( upper_proof( 0, n ), assy, Utils.numeral( n ) )
         WeakeningLeftRule( p1, assx )
       } else {
         val pk = FOLAtom( p, Utils.numeral( k ) :: Utils.numeral( 0 ) :: Nil )
@@ -133,13 +133,12 @@ object SquareEdgesExampleProof extends ProofSequence {
           ForallLeftRule(
             ForallLeftRule(
               ImpLeftRule(
-                Axiom( pk :: Nil, pk :: Nil ),
-                proof( k + 1, n ),
-                pk, pkp1
+                Axiom( pk :: Nil, pk :: Nil ), pk,
+                proof( k + 1, n ), pkp1
               ),
-              impl, assx_aux( k ), Utils.numeral( 0 )
+              assx_aux( k ), Utils.numeral( 0 )
             ),
-            assx_aux( k ), assx, Utils.numeral( k )
+            assx, Utils.numeral( k )
           ),
           assx
         )
@@ -152,13 +151,13 @@ object SquareEdgesExampleProof extends ProofSequence {
       if ( k == n ) // leaf proof
       {
         val a = FOLAtom( p, Utils.numeral( n ) :: Utils.numeral( n ) :: Nil )
-        WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), assy_aux( n ) )
+        WeakeningLeftRule( LogicalAxiom( a ), assy_aux( n ) )
       } else {
         val pk = FOLAtom( p, Utils.numeral( n ) :: Utils.numeral( k ) :: Nil )
         val pkp1 = FOLAtom( p, Utils.numeral( n ) :: Utils.numeral( k + 1 ) :: Nil )
         val impl = Imp( pk, pkp1 )
 
-        ContractionLeftRule( ForallLeftRule( ImpLeftRule( Axiom( pk :: Nil, pk :: Nil ), upper_proof( k + 1, n ), pk, pkp1 ), impl, assy_aux( n ), Utils.numeral( k ) ), assy_aux( n ) )
+        ContractionLeftRule( ForallLeftRule( ImpLeftRule( LogicalAxiom( pk ), pk, upper_proof( k + 1, n ), pkp1 ), assy_aux( n ), Utils.numeral( k ) ), assy_aux( n ) )
       }
     }
 }
@@ -201,7 +200,7 @@ object SquareEdges2DimExampleProof extends ProofSequence {
   def proof( k: Int, n: Int ): LKProof =
     {
       if ( k == n ) {
-        val p1 = ForallLeftRule( upper_proof( 0, n ), assy_aux( n ), assy, numeralX( n ) )
+        val p1 = ForallLeftRule( upper_proof( 0, n ), assy, numeralX( n ) )
         WeakeningLeftRule( p1, assx )
       } else {
         val pk = FOLAtom( p, numeralX( k ) :: numeralY( 0 ) :: Nil )
@@ -212,13 +211,12 @@ object SquareEdges2DimExampleProof extends ProofSequence {
           ForallLeftRule(
             ForallLeftRule(
               ImpLeftRule(
-                Axiom( pk :: Nil, pk :: Nil ),
-                proof( k + 1, n ),
-                pk, pkp1
+                LogicalAxiom( pk ), pk,
+                proof( k + 1, n ), pkp1
               ),
-              impl, assx_aux( k ), numeralY( 0 )
+              assx_aux( k ), numeralY( 0 )
             ), //possibly not correct -> switch?
-            assx_aux( k ), assx, numeralX( k )
+            assx, numeralX( k )
           ), //same
           assx
         )
@@ -241,12 +239,11 @@ object SquareEdges2DimExampleProof extends ProofSequence {
         ContractionLeftRule(
           ForallLeftRule(
             ImpLeftRule(
-              Axiom( pk :: Nil, pk :: Nil ),
-              upper_proof( k + 1, n ),
+              LogicalAxiom( pk ),
               pk,
+              upper_proof( k + 1, n ),
               pkp1
             ),
-            impl,
             assy_aux( n ),
             numeralY( k )
           ), //possibly not correct: switch or maybe restructure.
@@ -280,7 +277,7 @@ object SumExampleProof extends ProofSequence {
       if ( k == n ) // leaf proof
       {
         val a = FOLAtom( p, Utils.numeral( 0 ) :: Utils.numeral( n ) :: Nil )
-        WeakeningLeftRule( Axiom( a :: Nil, a :: Nil ), ass )
+        WeakeningLeftRule( LogicalAxiom( a ), ass )
       } else {
         val a1 = FOLAtom( p, Utils.numeral( n - k ) :: Utils.numeral( k ) :: Nil )
         val a2 = FOLAtom( p, Utils.numeral( n - ( k + 1 ) ) :: Utils.numeral( k + 1 ) :: Nil )
@@ -289,13 +286,14 @@ object SumExampleProof extends ProofSequence {
           ForallLeftRule(
             ForallLeftRule(
               ImpLeftRule(
-                Axiom( a1 :: Nil, a1 :: Nil ),
+                LogicalAxiom( a1 ),
+                a1,
                 proof( k + 1, n ),
-                a1, a2
+                a2
               ),
-              ass_inst_inst( n - ( k + 1 ), k ), ass_inst( n - ( k + 1 ) ), Utils.numeral( k )
+              ass_inst( n - ( k + 1 ) ), Utils.numeral( k )
             ),
-            ass_inst( n - ( k + 1 ) ), ass, Utils.numeral( n - ( k + 1 ) )
+            ass, Utils.numeral( n - ( k + 1 ) )
           ),
           ass
         )
@@ -327,7 +325,7 @@ object LinearEqExampleProof extends ProofSequence {
     if ( k == 0 ) // leaf proof
     {
       val a_eq_a = Eq( Utils.iterateTerm( FOLConst( a ), f, 0 ), Utils.iterateTerm( FOLConst( a ), f, 0 ) )
-      WeakeningLeftRule( WeakeningLeftRule( ForallLeftRule( Axiom( a_eq_a :: Nil, a_eq_a :: Nil ), a_eq_a, Refl, FOLConst( a ) ), Trans ), Ass )
+      WeakeningLeftRule( WeakeningLeftRule( ForallLeftRule( LogicalAxiom( a_eq_a ), Refl, FOLConst( a ) ), Trans ), Ass )
     } else {
       // atoms
       val ka_eq_a = Eq( Utils.iterateTerm( FOLConst( a ), f, k ), Utils.iterateTerm( FOLConst( a ), f, 0 ) )
@@ -351,18 +349,18 @@ object LinearEqExampleProof extends ProofSequence {
       val Trans3_3 = All( x, All( y, All( z, Imp( x_eq_y, Imp( y_eq_z, x_eq_z ) ) ) ) )
 
       // prop. proofs
-      val p1 = ImpLeftRule( proof( k - 1 ), Axiom( ka_eq_a :: Nil, ka_eq_a :: Nil ), kma_eq_a, ka_eq_a )
+      val p1 = ImpLeftRule( proof( k - 1 ), kma_eq_a, Axiom( ka_eq_a :: Nil, ka_eq_a :: Nil ), ka_eq_a )
 
-      val p0 = Axiom( ka_eq_kma :: Nil, ka_eq_kma :: Nil )
+      val p0 = LogicalAxiom( ka_eq_kma )
 
-      val p2 = ImpLeftRule( p0, p1, ka_eq_kma, Trans2 )
+      val p2 = ImpLeftRule( p0, ka_eq_kma, p1, Trans2 )
 
       // proofs containing quantifiers
-      val p3 = ForallLeftRule( p2, Trans3, Trans3_1, Utils.iterateTerm( FOLConst( a ), f, 0 ) )
-      val p4 = ForallLeftRule( p3, Trans3_1, Trans3_2, Utils.iterateTerm( FOLConst( a ), f, k - 1 ) )
-      val p5 = ForallLeftRule( p4, Trans3_2, Trans3_3, Utils.iterateTerm( FOLConst( a ), f, k ) )
+      val p3 = ForallLeftRule( p2, Trans3_1, Utils.iterateTerm( FOLConst( a ), f, 0 ) )
+      val p4 = ForallLeftRule( p3, Trans3_2, Utils.iterateTerm( FOLConst( a ), f, k - 1 ) )
+      val p5 = ForallLeftRule( p4, Trans3_3, Utils.iterateTerm( FOLConst( a ), f, k ) )
 
-      val p6 = ForallLeftRule( p5, ka_eq_kma, Ass, Utils.iterateTerm( FOLConst( a ), f, k - 1 ) )
+      val p6 = ForallLeftRule( p5, Ass, Utils.iterateTerm( FOLConst( a ), f, k - 1 ) )
 
       val p7 = ContractionLeftRule( p6, Ass )
       val p8 = ContractionLeftRule( p7, Trans )
@@ -425,14 +423,14 @@ object SumOfOnesF2ExampleProof extends ProofSequence {
 
       val tr2 = TransRule( Fn( n ), fn_s0, n_s0, tr )
 
-      val impl = ImpLeftRule( Axiom( fn_eq_n :: Nil, fn_eq_n :: Nil ), tr2, fn_eq_n, Eq( fn_s0, n_s0 ) )
+      val impl = ImpLeftRule( LogicalAxiom( fn_eq_n ), fn_eq_n, tr2, Eq( fn_s0, n_s0 ) )
 
       //Instantiate FSucc
-      val allQFSucc = ForallLeftRule( impl, FSuccX( Utils.numeral( n - 1 ) ), FSucc, Utils.numeral( n - 1 ) )
+      val allQFSucc = ForallLeftRule( impl, FSucc, Utils.numeral( n - 1 ) )
       val clFSucc = ContractionLeftRule( allQFSucc, FSucc )
 
       //Instantiate Plus
-      val allQPlus = ForallLeftRule( clFSucc, PlusX( Utils.numeral( n - 1 ) ), Plus, Utils.numeral( n - 1 ) )
+      val allQPlus = ForallLeftRule( clFSucc, Plus, Utils.numeral( n - 1 ) )
       val clPlus = ContractionLeftRule( allQPlus, Plus )
 
       //Instantiare EqPlus (x=(s0), y=Fn(n-1), z=n-1)
@@ -440,9 +438,9 @@ object SumOfOnesF2ExampleProof extends ProofSequence {
       val eqy = Fn( n - 1 )
       val eqz = Utils.numeral( n - 1 )
 
-      val allQEqPlusZ = ForallLeftRule( clPlus, EqPlusXYZ( eqx, eqy, eqz ), EqPlusXY( eqx, eqy ), eqz )
-      val allQEqPlusYZ = ForallLeftRule( allQEqPlusZ, EqPlusXY( eqx, eqy ), EqPlusX( eqx ), eqy )
-      val allQEqPlusXYZ = ForallLeftRule( allQEqPlusYZ, EqPlusX( eqx ), EqPlus, eqx )
+      val allQEqPlusZ = ForallLeftRule( clPlus, EqPlusXY( eqx, eqy ), eqz )
+      val allQEqPlusYZ = ForallLeftRule( allQEqPlusZ, EqPlusX( eqx ), eqy )
+      val allQEqPlusXYZ = ForallLeftRule( allQEqPlusYZ, EqPlus, eqx )
       val clEqPlus = ContractionLeftRule( allQEqPlusXYZ, EqPlus )
 
       RecProof( clEqPlus, n - 1 )
@@ -507,14 +505,14 @@ object SumOfOnesFExampleProof extends ProofSequence {
     else {
       val tr = TransRule( Fn( n ), Utils.iterateTerm( Fn( n - 1 ), s, 1 ), Utils.numeral( n ), s1 )
 
-      val ax2 = Axiom( Eq( Fn( n - 1 ), Utils.numeral( n - 1 ) ) :: Nil, Eq( Fn( n - 1 ), Utils.numeral( n - 1 ) ) :: Nil )
+      val ax2 = LogicalAxiom( Eq( Fn( n - 1 ), Utils.numeral( n - 1 ) ) )
 
       //Introduces the instantiated form of CongSuc
-      val impl = ImpLeftRule( ax2, tr, Eq( Fn( n - 1 ), Utils.numeral( n - 1 ) ), Eq( Utils.iterateTerm( Fn( n - 1 ), s, 1 ), Utils.numeral( n ) ) )
+      val impl = ImpLeftRule( ax2, Eq( Fn( n - 1 ), Utils.numeral( n - 1 ) ), tr, Eq( Utils.iterateTerm( Fn( n - 1 ), s, 1 ), Utils.numeral( n ) ) )
 
       //Quantify CongSucc
-      val cong1 = ForallLeftRule( impl, CongSuccXY( Fn( n - 1 ), Utils.numeral( n - 1 ) ), CongSuccX( Fn( n - 1 ) ), Utils.numeral( n - 1 ) )
-      val cong2 = ForallLeftRule( cong1, CongSuccX( Fn( n - 1 ) ), CongSucc, Fn( n - 1 ) )
+      val cong1 = ForallLeftRule( impl, CongSuccX( Fn( n - 1 ) ), Utils.numeral( n - 1 ) )
+      val cong2 = ForallLeftRule( cong1, CongSucc, Fn( n - 1 ) )
 
       val cl = ContractionLeftRule( cong2, CongSucc )
 
@@ -536,11 +534,11 @@ object SumOfOnesFExampleProof extends ProofSequence {
       val tr = TransRule( Fn( n + 1 ), FOLFunction( p, Fn( n ) :: Utils.numeral( 1 ) :: Nil ), Utils.iterateTerm( Fn( n ), s, 1 ), s1 )
 
       //Quantify plus
-      val plus = ForallLeftRule( tr, PlusX( Fn( n ) ), Plus, Fn( n ) )
+      val plus = ForallLeftRule( tr, Plus, Fn( n ) )
       val clPlus = ContractionLeftRule( plus, Plus )
 
       //Quantify fsucc
-      val fsucc = ForallLeftRule( clPlus, FSuccX( Utils.numeral( n ) ), FSucc, Utils.numeral( n ) )
+      val fsucc = ForallLeftRule( clPlus, FSucc, Utils.numeral( n ) )
       val clFSucc = ContractionLeftRule( fsucc, FSucc )
 
       TermGenProof( clFSucc, n + 1, targetN )
@@ -580,14 +578,14 @@ object SumOfOnesExampleProof extends ProofSequence {
   def proof( k: Int ): LKProof = {
     if ( k == 0 ) {
       val zero_eq_zero = Eq( Utils.numeral( 0 ), Utils.numeral( 0 ) )
-      val p1 = ForallLeftRule( Axiom( zero_eq_zero :: Nil, zero_eq_zero :: Nil ), zero_eq_zero, Refl, Utils.numeral( 0 ) )
+      val p1 = ForallLeftRule( LogicalAxiom( zero_eq_zero ), Refl, Utils.numeral( 0 ) )
       val p2 = WeakeningLeftRule( p1, Trans )
       val p3 = WeakeningLeftRule( p2, CongSuc )
       val p4 = WeakeningLeftRule( p3, ABase )
       WeakeningLeftRule( p4, ASuc )
     } else if ( k == 1 ) {
       val one_eq_one = Eq( Utils.numeral( 1 ), Utils.numeral( 1 ) )
-      val p1 = ForallLeftRule( Axiom( one_eq_one :: Nil, one_eq_one :: Nil ), one_eq_one, Refl, Utils.numeral( 1 ) )
+      val p1 = ForallLeftRule( LogicalAxiom( one_eq_one ), Refl, Utils.numeral( 1 ) )
       val p2 = WeakeningLeftRule( p1, Trans )
       val p3 = WeakeningLeftRule( p2, CongSuc )
       val p4 = WeakeningLeftRule( p3, ABase )
@@ -617,25 +615,25 @@ object SumOfOnesExampleProof extends ProofSequence {
 
       /// proof
       // transitivity (using aux_proof)
-      val p1 = Axiom( ssumkm1_eq_k :: Nil, ssumkm1_eq_k :: Nil )
-      val p2 = Axiom( sumk_eq_k :: Nil, sumk_eq_k :: Nil )
-      val p3 = ImpLeftRule( p1, p2, ssumkm1_eq_k, sumk_eq_k )
+      val p1 = LogicalAxiom( ssumkm1_eq_k )
+      val p2 = LogicalAxiom( sumk_eq_k )
+      val p3 = ImpLeftRule( p1, ssumkm1_eq_k, p2, sumk_eq_k )
       val p4 = aux_proof( k - 1 )
-      val p5 = ImpLeftRule( p4, p3, sumk_eq_ssumkm1, Trans2 )
-      val p6 = ForallLeftRule( p5, Trans3, Trans3_1, Utils.numeral( k ) )
-      val p7 = ForallLeftRule( p6, Trans3_1, Trans3_2, FOLFunction( s, sum( k - 1 ) :: Nil ) )
-      val p8 = ForallLeftRule( p7, Trans3_2, Trans, sum( k ) )
+      val p5 = ImpLeftRule( p4, sumk_eq_ssumkm1, p3, Trans2 )
+      val p6 = ForallLeftRule( p5, Trans3_1, Utils.numeral( k ) )
+      val p7 = ForallLeftRule( p6, Trans3_2, FOLFunction( s, sum( k - 1 ) :: Nil ) )
+      val p8 = ForallLeftRule( p7, Trans, sum( k ) )
       val p9 = ContractionLeftRule( p8, Trans )
 
       // congruence sucessor (using IH)
       val p10 = proof( k - 1 )
-      val p11 = ImpLeftRule( p10, p9, sumkm1_eq_km1, ssumkm1_eq_k )
+      val p11 = ImpLeftRule( p10, sumkm1_eq_km1, p9, ssumkm1_eq_k )
       val p12 = ContractionLeftRule( p11, Trans )
       val p13 = ContractionLeftRule( p12, CongSuc )
       val p14 = ContractionLeftRule( p13, ASuc )
       val p15 = ContractionLeftRule( p14, ABase )
-      val p16 = ForallLeftRule( p15, CongSuc2, CongSuc2_1, Utils.numeral( k - 1 ) )
-      val p17 = ForallLeftRule( p16, CongSuc2_1, CongSuc, sum( k - 1 ) )
+      val p16 = ForallLeftRule( p15, CongSuc2_1, Utils.numeral( k - 1 ) )
+      val p17 = ForallLeftRule( p16, CongSuc, sum( k - 1 ) )
       ContractionLeftRule( p17, CongSuc )
     }
   }
@@ -669,27 +667,27 @@ object SumOfOnesExampleProof extends ProofSequence {
 
     /// proof
     // transitivity
-    val p1 = Axiom( ssumkp0_eq_ssumk :: Nil, ssumkp0_eq_ssumk :: Nil )
-    val p2 = Axiom( sumkp1_eq_ssumk :: Nil, sumkp1_eq_ssumk :: Nil )
-    val p3 = ImpLeftRule( p1, p2, ssumkp0_eq_ssumk, sumkp1_eq_ssumk )
-    val p4 = Axiom( sumkp1_eq_ssumkp0 :: Nil, sumkp1_eq_ssumkp0 :: Nil )
-    val p5 = ImpLeftRule( p4, p3, sumkp1_eq_ssumkp0, Trans2 )
-    val p6 = ForallLeftRule( p5, Trans3, Trans3_1, FOLFunction( s, sum( k ) :: Nil ) )
-    val p7 = ForallLeftRule( p6, Trans3_1, Trans3_2, FOLFunction( s, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) :: Nil ) )
-    val p8 = ForallLeftRule( p7, Trans3_2, Trans, sum( k + 1 ) )
+    val p1 = LogicalAxiom( ssumkp0_eq_ssumk )
+    val p2 = LogicalAxiom( sumkp1_eq_ssumk )
+    val p3 = ImpLeftRule( p1, ssumkp0_eq_ssumk, p2, sumkp1_eq_ssumk )
+    val p4 = LogicalAxiom( sumkp1_eq_ssumkp0 )
+    val p5 = ImpLeftRule( p4, sumkp1_eq_ssumkp0, p3, Trans2 )
+    val p6 = ForallLeftRule( p5, Trans3_1, FOLFunction( s, sum( k ) :: Nil ) )
+    val p7 = ForallLeftRule( p6, Trans3_2, FOLFunction( s, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) :: Nil ) )
+    val p8 = ForallLeftRule( p7, Trans, sum( k + 1 ) )
 
     // congruence sucessor
-    val p9 = Axiom( sumkp0_eq_sumk :: Nil, sumkp0_eq_sumk :: Nil )
-    val p10 = ImpLeftRule( p9, p8, sumkp0_eq_sumk, ssumkp0_eq_ssumk )
-    val p11 = ForallLeftRule( p10, Cong2, Cong2_1, sum( k ) )
-    val p12 = ForallLeftRule( p11, Cong2_1, CongSuc, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) )
+    val p9 = LogicalAxiom( sumkp0_eq_sumk )
+    val p10 = ImpLeftRule( p9, sumkp0_eq_sumk, p8, ssumkp0_eq_ssumk )
+    val p11 = ForallLeftRule( p10, Cong2_1, sum( k ) )
+    val p12 = ForallLeftRule( p11, CongSuc, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) )
 
     // addition sucessor case
-    val p13 = ForallLeftRule( p12, sumkp1_eq_ssumkp0, ASuc_1, Utils.numeral( 0 ) )
-    val p14 = ForallLeftRule( p13, ASuc_1, ASuc, sum( k ) )
+    val p13 = ForallLeftRule( p12, ASuc_1, Utils.numeral( 0 ) )
+    val p14 = ForallLeftRule( p13, ASuc, sum( k ) )
 
     // addition base case
-    ForallLeftRule( p14, sumkp0_eq_sumk, ABase, sum( k ) )
+    ForallLeftRule( p14, ABase, sum( k ) )
   }
 
   // the term (.((1 + 1) + 1 ) + ... + 1 ), k must be at least 1
@@ -704,25 +702,15 @@ object SumOfOnesExampleProof extends ProofSequence {
  * Auxiliary structure to deal with axioms of the schema:
  * Forall variables cond1 -> cond2 -> ... -> condn -> consequence |- ...
  */
-class AllQuantifiedConditionalAxiomHelper( variables: List[FOLVar], conditions: List[FOLFormula], consequence: FOLFormula ) {
+class AllQuantifiedConditionalAxiomHelper( variables: List[FOLVar], conditions: List[FOLAtom], consequence: FOLFormula ) {
   /**
    * Returns the full axiom
    */
-  def get_axiom(): FOLFormula = {
+  def getAxiom: FOLFormula = {
     // TODO: refactor apply_conditional_equality, combine duplicate code
-    var impl_chain = consequence
-    for ( elem <- conditions.reverse ) {
-      impl_chain = Imp( elem, impl_chain )
-    }
+    val impl_chain = ( conditions :\ consequence )( ( c, acc ) => Imp( c, acc ) )
 
-    def quantify( variables: List[FOLVar], body: FOLFormula ): FOLFormula = {
-      variables match {
-        case Nil          => body
-        case head :: tail => All( head, quantify( tail, body ) )
-      }
-    }
-
-    quantify( variables, impl_chain )
+    All.Block( variables, impl_chain )
   }
 
   /**
@@ -734,12 +722,9 @@ class AllQuantifiedConditionalAxiomHelper( variables: List[FOLVar], conditions: 
     assert( expressions.length == variables.length, "Number of expressions doesn't equal number of variables" )
 
     // construct implication with instantiated conditions and consequence
-    var instantiated_conditions = conditions
-    var instantiated_consequence = consequence
-    for ( i <- 0 to variables.length - 1 ) {
+    val ( instantiated_conditions, instantiated_consequence ) = ( ( conditions -> consequence ) /: variables.indices ) { ( acc, i ) =>
       val substitute = ( x: FOLFormula ) => FOLSubstitution( variables( i ), expressions( i ) )( x )
-      instantiated_conditions = instantiated_conditions.map( substitute )
-      instantiated_consequence = substitute( instantiated_consequence )
+      ( acc._1.map( substitute ).asInstanceOf[List[FOLAtom]], substitute( acc._2 ) )
     }
 
     val p1 = apply_conditional_equality( instantiated_conditions, instantiated_consequence, p )
@@ -748,39 +733,37 @@ class AllQuantifiedConditionalAxiomHelper( variables: List[FOLVar], conditions: 
     def instantiate_axiom( expressions: List[FOLTerm], axiom: FOLFormula, p: LKProof ): LKProof = {
       expressions match {
         case Nil => p
-        case head :: tail => {
+        case head :: tail =>
           val new_axiom = instantiate( axiom, head )
           val new_p = instantiate_axiom( tail, new_axiom, p )
 
-          ForallLeftRule( new_p, new_axiom, axiom, head )
-        }
+          ForallLeftRule( new_p, axiom, head )
+
       }
     }
 
-    val ax = get_axiom()
+    val ax = getAxiom
     val p2 = instantiate_axiom( expressions, ax, p1 )
 
     ContractionLeftRule( p2, ax )
   }
 
-  private def apply_conditional_equality( equalities: List[FOLFormula], result: FOLFormula, p: LKProof ): LKProof = {
+  private def apply_conditional_equality( equalities: List[FOLAtom], result: FOLFormula, p: LKProof ): LKProof = {
     equalities match {
-      case Nil => {
+      case Nil =>
         p // no conditions at all
-      }
-      case head :: Nil => {
-        val ax = Axiom( head :: Nil, head :: Nil )
-        ImpLeftRule( ax, p, head, result )
-      }
-      case head :: tail => {
-        val ax = Axiom( head :: Nil, head :: Nil )
-        var impl_chain = result
-        for ( elem <- tail.reverse ) {
-          impl_chain = Imp( elem, impl_chain )
-        }
+
+      case head :: Nil =>
+        val ax = LogicalAxiom( head )
+        ImpLeftRule( ax, head, p, result )
+
+      case head :: tail =>
+        val ax = LogicalAxiom( head )
+        val impl_chain = ( tail :\ result )( ( c, acc ) => Imp( c, acc ) )
+
         val s2 = apply_conditional_equality( tail, result, p )
-        ImpLeftRule( ax, s2, head, impl_chain )
-      }
+        ImpLeftRule( ax, head, s2, impl_chain )
+
     }
   }
 }
@@ -832,7 +815,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
   def ax2_ax( x: FOLTerm, y: FOLTerm ): FOLFormula = Eq( f1( s, f2( x, p, y ) ), f2( x, p, f1( s, y ) ) )
 
   def addAllAxioms( proof: LKProof ): LKProof =
-    Seq( Trans, cp.get_axiom(), Symm, ax2_ax(), cs_ax(), refl_ax(), Ax1 ).foldLeft( proof )( WeakeningLeftRule( _, _ ) )
+    Seq( Trans, cp.getAxiom, Symm, ax2_ax(), cs_ax(), refl_ax(), Ax1 ).foldLeft( proof )( WeakeningLeftRule( _, _ ) )
 
   def apply( n: Int ): LKProof = {
     assert( n >= 0, "n must be >= 0" )
@@ -842,7 +825,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
       val zero = Utils.numeral( 0 )
       val c1 = f2( f2( zero, p, zero ), p, zero )
       val e1 = f2( zero, p, f2( zero, p, zero ) )
-      addAllAxioms( Axiom( Eq( c1, e1 ) ) )
+      addAllAxioms( LogicalAxiom( Eq( c1, e1 ) ) )
     }
     induction_start( n, proof )
   }
@@ -860,19 +843,19 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     val p1 = TransRule( c1, d1, e1, p0 )
 
     // show (n + n) + 0 = (n + n) directly via ax1
-    val p2 = ForallLeftRule( p1, Eq( c1, d1 ), Ax1, d1 )
+    val p2 = ForallLeftRule( p1, Ax1, d1 )
     val p3 = ContractionLeftRule( p2, Ax1 )
 
     // show (n + n) = n + (n + 0) 
     val p4 = cp( n_num :: n_num :: n_num :: f2( n_num, p, zero ) :: Nil, p3 )
 
     // show n = n and n = n + 0
-    val p5 = ForallLeftRule( p4, Eq( n_num, n_num ), Symm, n_num )
+    val p5 = ForallLeftRule( p4, Symm, n_num )
     val p6 = ContractionLeftRule( p5, Symm )
 
     val p7 = reflect( f2( n_num, p, zero ), n_num, p6 )
 
-    val p8 = ForallLeftRule( p7, Eq( f2( n_num, p, zero ), n_num ), Ax1, n_num )
+    val p8 = ForallLeftRule( p7, Ax1, n_num )
     ContractionLeftRule( p8, Ax1 )
   }
 
@@ -916,7 +899,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     val p8 = cp( x1_1 :: x2_1 :: y1_1 :: y2_1 :: Nil, p1 )
 
     // show x1 = x2 by symmetry
-    val p9 = ForallLeftRule( p8, Eq( x1_1, x2_1 ), Symm, n_num )
+    val p9 = ForallLeftRule( p8, Symm, n_num )
     val p10 = ContractionLeftRule( p9, Symm )
 
     // show y1 = y2 by Ax2 (i.e. s(n + i) = (n + s(i)) )
@@ -955,16 +938,16 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
   }
 
   def show_by_ax2( x: FOLTerm, y: FOLTerm, p: LKProof ): LKProof = {
-    val p1 = ForallLeftRule( p, ax2_ax( x, y ), ax2_ax( x ), y )
-    val p2 = ForallLeftRule( p1, ax2_ax( x ), ax2_ax(), x )
+    val p1 = ForallLeftRule( p, ax2_ax( x ), y )
+    val p2 = ForallLeftRule( p1, ax2_ax(), x )
     ContractionLeftRule( p2, ax2_ax() )
   }
 
   def show_by_cs( x: FOLTerm, y: FOLTerm, p: LKProof ): LKProof = {
     val p1 = apply_conditional_equality( Eq( x, y ) :: Nil, Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) ), p )
 
-    val p2 = ForallLeftRule( p1, cs_ax( x, y ), cs_ax( x ), y )
-    val p3 = ForallLeftRule( p2, cs_ax( x ), cs_ax(), x )
+    val p2 = ForallLeftRule( p1, cs_ax( x ), y )
+    val p3 = ForallLeftRule( p2, cs_ax(), x )
     ContractionLeftRule( p3, cs_ax() )
   }
 
@@ -977,8 +960,8 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
   def reflect( x: FOLTerm, y: FOLTerm, p: LKProof ): LKProof = {
     val p1 = apply_conditional_equality( Eq( x, y ) :: Nil, Eq( y, x ), p )
 
-    val p2 = ForallLeftRule( p1, refl_ax( x, y ), refl_ax( x ), y )
-    val p3 = ForallLeftRule( p2, refl_ax( x ), refl_ax(), x )
+    val p2 = ForallLeftRule( p1, refl_ax( x ), y )
+    val p3 = ForallLeftRule( p2, refl_ax(), x )
     ContractionLeftRule( p3, refl_ax() )
   }
 
@@ -987,7 +970,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
       case Nil => p
       case head :: Nil => {
         val ax = Axiom( head :: Nil, head :: Nil )
-        ImpLeftRule( ax, p, head, result )
+        ImpLeftRule( ax, head, p, result )
       }
       case head :: tail => {
         val ax = Axiom( head :: Nil, head :: Nil )
@@ -996,7 +979,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
           impl_chain = Imp( elem, impl_chain )
         }
         val s2 = apply_conditional_equality( tail, result, p )
-        ImpLeftRule( ax, s2, head, impl_chain )
+        ImpLeftRule( ax, head, s2, impl_chain )
       }
     }
   }
@@ -1043,18 +1026,18 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
     case 0 =>
       val targetEquation = Eq( f1( f, Utils.numeral( 0 ) ), f2( g, Utils.numeral( 0 ), Utils.numeral( 1 ) ) )
       val g0 = Eq( Utils.numeral( 1 ), f2( g, Utils.numeral( 0 ), Utils.numeral( 1 ) ) )
-      val ax1 = Axiom( f_ax_1 )
-      val ax2 = Axiom( g0 )
-      val ax3 = Axiom( targetEquation )
-      val p1 = ImpLeftRule( ax2, ax3, g0, targetEquation )
-      val p2 = ImpLeftRule( ax1, p1, f_ax_1, Imp( g0, targetEquation ) )
-      val p3 = ForallLeftBlock( p2, trans_axiom.get_axiom(), Seq( f1( f, Utils.numeral( 0 ) ), Utils.numeral( 1 ), f2( g, Utils.numeral( 0 ), Utils.numeral( 1 ) ) ) )
-      val p4 = ForallLeftRule( p3, g0, g_ax_1.get_axiom(), Utils.numeral( 1 ) )
+      val ax1 = LogicalAxiom( f_ax_1 )
+      val ax2 = LogicalAxiom( g0 )
+      val ax3 = LogicalAxiom( targetEquation )
+      val p1 = ImpLeftRule( ax2, g0, ax3, targetEquation )
+      val p2 = ImpLeftRule( ax1, f_ax_1, p1, Imp( g0, targetEquation ) )
+      val p3 = ForallLeftBlock( p2, trans_axiom.getAxiom, Seq( f1( f, Utils.numeral( 0 ) ), Utils.numeral( 1 ), f2( g, Utils.numeral( 0 ), Utils.numeral( 1 ) ) ) )
+      val p4 = ForallLeftRule( p3, g_ax_1.getAxiom, Utils.numeral( 1 ) )
       WeakeningLeftMacroRule(
         p4,
-        List( f_ax_2, g_ax_2, symm_axiom, refl_axiom.get_axiom(),
-          compat_mul_axiom.get_axiom(), assoc_mul_axiom.get_axiom(), g_compat_2.get_axiom(),
-          mul_neutral_axiom.get_axiom(), mul_neutral_axiom_2.get_axiom() )
+        List( f_ax_2, g_ax_2, symm_axiom, refl_axiom.getAxiom,
+          compat_mul_axiom.getAxiom, assoc_mul_axiom.getAxiom, g_compat_2.getAxiom,
+          mul_neutral_axiom.getAxiom, mul_neutral_axiom_2.getAxiom )
       )
     case _ => induction_steps( n )
   }
@@ -1064,9 +1047,9 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
     val axiom: LKProof = Axiom( axiom_formulae, axiom_formulae )
 
     // add axioms
-    val all_axioms = List[FOLFormula]( f_ax_1, f_ax_2, g_ax_1.get_axiom(), g_ax_2, symm_axiom, refl_axiom.get_axiom(),
-      trans_axiom.get_axiom(), compat_mul_axiom.get_axiom(), assoc_mul_axiom.get_axiom(), g_compat_2.get_axiom(),
-      mul_neutral_axiom.get_axiom(), mul_neutral_axiom_2.get_axiom() )
+    val all_axioms = List[FOLFormula]( f_ax_1, f_ax_2, g_ax_1.getAxiom, g_ax_2, symm_axiom, refl_axiom.getAxiom,
+      trans_axiom.getAxiom, compat_mul_axiom.getAxiom, assoc_mul_axiom.getAxiom, g_compat_2.getAxiom,
+      mul_neutral_axiom.getAxiom, mul_neutral_axiom_2.getAxiom )
     val p1 = all_axioms.foldLeft( axiom )( ( proof, elem ) => WeakeningLeftRule( proof, elem ) )
 
     val n_num = Utils.numeral( n )
@@ -1116,7 +1099,7 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
         // the formula actually says n! * 1 = n!, we have to get rid of the 1
         val p6 = trans_axiom( List( f2( part_fac, m, one ), part_fac, part_fac ), p5 )
         val p7 = mul_neutral_axiom( List( part_fac ), p6 )
-        val p8 = ForallLeftRule( p7, Eq( part_fac, part_fac ), symm_axiom, part_fac )
+        val p8 = ForallLeftRule( p7, symm_axiom, part_fac )
         val p9 = ContractionLeftRule( p8, symm_axiom )
 
         p9
@@ -1133,7 +1116,7 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
         val p3 =
           if ( n == k ) {
             // use axiom directly, part_fac is empty
-            val p1_0 = ForallLeftRule( p1, Eq( f_k_term, f_km1_term ), f_ax_2, km1_num )
+            val p1_0 = ForallLeftRule( p1, f_ax_2, km1_num )
             ContractionLeftRule( p1_0, f_ax_2 )
           } else {
             // the antecedent contains something along the lines of:
@@ -1150,7 +1133,7 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
             val f_k = f1( f, k_num )
             val k_f_km1 = f2( k_num, m, f1( f, km1_num ) )
             val p1_1 = compat_mul_axiom( List( f_k, k_f_km1, part_fac ), p1_0 )
-            val p1_2 = ForallLeftRule( p1_1, Eq( f_k, k_f_km1 ), f_ax_2, km1_num )
+            val p1_2 = ForallLeftRule( p1_1, f_ax_2, km1_num )
             val p1_3 = ContractionLeftRule( p1_2, f_ax_2 )
             // show by assoc: part_fac * (k * f(k-1)) = (part_fac * k) * f(k-1)
             val p1_4 = assoc_mul_axiom( List( part_fac, k_num, f1( f, km1_num ) ), p1_3 )
@@ -1171,8 +1154,8 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
             val p5_1 = trans_axiom( g_k_term :: g_intermed :: g_km1_term :: Nil, p4_2 )
             // show g(n, 1) = g(n-1, 1*n) by g_ax_2
             val intermed = All( y, Eq( f2( g, k_num, y ), f2( g, km1_num, f2( y, m, k_num ) ) ) )
-            val p5_2 = ForallLeftRule( p5_1, Eq( g_k_term, g_intermed ), intermed, one )
-            val p5_3 = ForallLeftRule( p5_2, intermed, g_ax_2, km1_num )
+            val p5_2 = ForallLeftRule( p5_1, intermed, one )
+            val p5_3 = ForallLeftRule( p5_2, g_ax_2, km1_num )
             val p5_4 = ContractionLeftRule( p5_3, g_ax_2 )
 
             // show g(n-1, 1*n) = g(n-1, n) by g_compat_2
@@ -1182,8 +1165,8 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
             p5_6
           } else {
             val intermed = All( y, Eq( f2( g, f1( s, km1_num ), y ), f2( g, km1_num, f2( m, y, f1( s, km1_num ) ) ) ) )
-            val p6 = ForallLeftRule( p4_2, Eq( g_k_term, g_km1_term ), intermed, part_fac )
-            val p7 = ForallLeftRule( p6, intermed, g_ax_2, km1_num )
+            val p6 = ForallLeftRule( p4_2, intermed, part_fac )
+            val p7 = ForallLeftRule( p6, g_ax_2, km1_num )
             val p8 = ContractionLeftRule( p7, g_ax_2 )
             p8
           }
@@ -1235,26 +1218,55 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
         m( acc, num( i ) )
       }
 
-    val axiom = Axiom( Nil, List( Eq( product( 1 ), product( 1 ) ) ) )
+    /*val axiom = ReflexivityAxiom( product( 1 ) )
 
-    val p1 = EquationRightRule( Axiom( uR( product( 1 ) ) ), axiom, uR( product( 1 ) ), Eq( product( 1 ), product( 1 ) ), Eq( m( product( 1 ), one ), product( 1 ) ) )
-    val p2 = EquationRightRule( Axiom( f0 ), p1, f0, Eq( m( product( 1 ), one ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), product( 1 ) ) )
-    val p3 = EquationRightRule( Axiom( g0( product( 1 ) ) ), p2, g0( product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), g( product( 1 ), zero ) ) )
-    val p4 = ForallLeftRule( p3, uR( product( 1 ) ), All( x, uR( x ) ), product( 1 ) )
-    val p5 = ForallLeftRule( p4, g0( product( 1 ) ), All( x, g0( x ) ), product( 1 ) )
+    val p1 = ParamodulationRightRule( LogicalAxiom( uR( product( 1 ) ) ), uR( product( 1 ) ), axiom, Eq( product( 1 ), product( 1 ) ), Eq( m( product( 1 ), one ), product( 1 ) ) )
+    val p2 = ParamodulationRightRule( LogicalAxiom( f0 ), f0, p1, Eq( m( product( 1 ), one ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), product( 1 ) ) )
+    val p3 = ParamodulationRightRule( LogicalAxiom( g0( product( 1 ) ) ), g0( product( 1 ) ), p2, Eq( m( product( 1 ), f( zero ) ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), g( product( 1 ), zero ) ) )
+    val p4 = ForallLeftRule( p3, All( x, uR( x ) ), product( 1 ) )
+    val p5 = ForallLeftRule( p4, All( x, g0( x ) ), product( 1 ) )
 
     val p6 = ( 0 until n ).foldLeft[LKProof]( p5 ) { ( acc: LKProof, i: Int ) =>
-      val tmp1 = EquationRightRule( Axiom( ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ), acc, ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) )
+      val tmp1 = ParamodulationRightRule( LogicalAxiom( ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ), ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), acc, Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) )
       val tmp2 = ForallLeftBlock( tmp1, univclosure( ASSO( x, y, z ) ), List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) )
-      val tmp3 = EquationRightRule( Axiom( fST( num( i ) ) ), tmp2, fST( num( i ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) )
-      val tmp4 = EquationRightRule( Axiom( gST( product( i + 2 ), num( i ) ) ), tmp3, gST( product( i + 2 ), num( i ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 2 ), num( i + 1 ) ) ) )
-      val tmp5 = ForallLeftRule( tmp4, fST( num( i ) ), univclosure( fST( x ) ), num( i ) )
+      val tmp3 = ParamodulationRightRule( LogicalAxiom( fST( num( i ) ) ), fST( num( i ) ), tmp2, Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) )
+      val tmp4 = ParamodulationRightRule( LogicalAxiom( gST( product( i + 2 ), num( i ) ) ), gST( product( i + 2 ), num( i ) ), tmp3, Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 2 ), num( i + 1 ) ) ) )
+      val tmp5 = ForallLeftRule( tmp4, univclosure( fST( x ) ), num( i ) )
       val tmp6 = ForallLeftBlock( tmp5, univclosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) )
       ContractionMacroRule( tmp6 )
     }
 
-    val p7 = EquationRightRule( Axiom( uL( f( num( n ) ) ) ), p6, uL( f( num( n ) ) ), Eq( m( one, f( num( n ) ) ), g( one, num( n ) ) ), target( num( n ) ) )
-    WeakeningContractionMacroRule( ForallLeftRule( p7, uL( f( num( n ) ) ), All( x, uL( x ) ), f( num( n ) ) ), endSequent( n ) )
+    val p7 = ParamodulationRightRule( LogicalAxiom( uL( f( num( n ) ) ) ), uL( f( num( n ) ) ), p6, Eq( m( one, f( num( n ) ) ), g( one, num( n ) ) ), target( num( n ) ) )
+    WeakeningContractionMacroRule( ForallLeftRule( p7, All( x, uL( x ) ), f( num( n ) ) ), endSequent( n ) )
+*/
+    val p1 = ( ProofBuilder
+      c ReflexivityAxiom( product( 1 ) )
+      u ( WeakeningLeftMacroRule( _, Seq( uR( product( 1 ) ), f0, g0( product( 1 ) ) ) ) )
+      u ( EqualityRightRule( _, uR( product( 1 ) ), Eq( product( 1 ), product( 1 ) ), Eq( m( product( 1 ), one ), product( 1 ) ) ) )
+      u ( EqualityRightRule( _, f0, Eq( m( product( 1 ), one ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), product( 1 ) ) ) )
+      u ( EqualityRightRule( _, g0( product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), g( product( 1 ), zero ) ) ) )
+      u ( ForallLeftRule( _, All( x, uR( x ) ), product( 1 ) ) )
+      u ( ForallLeftRule( _, All( x, g0( x ) ), product( 1 ) ) ) qed )
+
+    val p2 = ( 0 until n ).foldLeft[LKProof]( p1 ) { ( acc: LKProof, i: Int ) =>
+      ( ProofBuilder
+        c acc
+        u ( WeakeningLeftMacroRule( _, Seq( ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), fST( num( i ) ), gST( product( i + 2 ), num( i ) ) ) ) )
+        u ( EqualityRightRule( _, ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
+        u ( ForallLeftBlock( _, univclosure( ASSO( x, y, z ) ), List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ) )
+        u ( EqualityRightRule( _, fST( num( i ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
+        u ( EqualityRightRule( _, gST( product( i + 2 ), num( i ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 2 ), num( i + 1 ) ) ) ) )
+        u ( ForallLeftRule( _, univclosure( fST( x ) ), num( i ) ) )
+        u ( ForallLeftBlock( _, univclosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) ) )
+        u ( ContractionMacroRule( _ ) ) qed )
+    }
+
+    ( ProofBuilder
+      c p2
+      u ( WeakeningLeftRule( _, uL( f( num( n ) ) ) ) )
+      u ( EqualityRightRule( _, uL( f( num( n ) ) ), Eq( m( one, f( num( n ) ) ), g( one, num( n ) ) ), target( num( n ) ) ) )
+      u ( ForallLeftRule( _, All( x, uL( x ) ), f( num( n ) ) ) )
+      u ( WeakeningContractionMacroRule( _, endSequent( n ) ) ) qed )
   }
 
   def endSequent( n: Int ): HOLSequent = HOLSequent(
@@ -1272,3 +1284,4 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
     )
   )
 }
+

@@ -1,6 +1,6 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.examples.LinearExampleProofNew
+import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.grammars.MultiGrammar
@@ -22,7 +22,7 @@ class CutIntroTest extends Specification {
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
       if ( !new Prover9Prover().isInstalled ) skipped( "Prover9 is not installed" )
-      val proof = LinearExampleProofNew( 4 )
+      val proof = LinearExampleProof( 4 )
 
       val ( termset, _ ) = InstanceTermEncoding( proof )
       val set = termset collect { case FOLFunction( _, List( arg ) ) => arg }
@@ -34,7 +34,7 @@ class CutIntroTest extends Specification {
 
     "introduce two cuts into linear example proof" in {
       def fun( n: Int, t: FOLTerm ): FOLTerm = if ( n == 0 ) t else FOLFunction( "s", fun( n - 1, t ) :: Nil )
-      val proof = LinearExampleProofNew( 8 )
+      val proof = LinearExampleProof( 8 )
       val f = proof.endSequent( Ant( 0 ) ).asInstanceOf[FOLFormula]
       val a1 = FOLVar( "α_1" )
       val a2 = FOLVar( "α_2" )
