@@ -25,16 +25,16 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
   override def test( implicit testRun: TestRun ) = {
     val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( f getAbsolutePath ) --- "import"
+
+    RobinsonToExpansionProof( robinson, reconstructedEndSequent ) --? "RobinsonToExpansionProof" map { E2 =>
+      new VeriTProver().isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
+      if ( isFOLPrenexSigma1( reconstructedEndSequent ) )
+        new VeriTProver().isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
+    }
+
     val p = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
 
-    cleanStructuralRules( p ) --? "cleanStructuralRules"
-    if ( isFOLPrenexSigma1( p.endSequent ) )
-      extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
-        new VeriTProver().isValid( recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
-      }
-
     regularize( p ) --? "regularize"
-    skolemize( p ) --? "skolemize"
     LKToLKsk( p ) --? "LKToLKsk"
 
     val E = LKToExpansionProof( p ) --- "LKToExpansionProof"
@@ -44,18 +44,29 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     ( toShallow( E ) == p.endSequent ) !-- "shallow sequent of expansion proof"
 
+    val ip = new Prover9Prover().getLKProof( deep ).get --- "getLKProof( deep )"
+    val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
+    ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
+    ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+
     if ( !containsEqualityReasoning( p ) ) {
       MiniSAT.isValid( deep ) !-- "minisat validity"
       solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
       ExpansionProofToLK( E ) --- "expansionProofToLKProof"
     }
+    new VeriTProver().isValid( deep ) !-- "verit validity"
+
+    if ( isFOLPrenexSigma1( p.endSequent ) )
+      extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
+        new VeriTProver().isValid( recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
+      }
 
     // FIXME: extend to equality
     if ( !containsEqualityReasoning( p ) ) {
       ReductiveCutElimination( p ) --? "cut-elim (input)"
     }
 
-    new VeriTProver().isValid( deep ) !-- "verit validity"
+    cleanStructuralRules( p ) --? "cleanStructuralRules"
 
     if ( isFOLPrenexSigma1( p.endSequent ) ) {
       ( CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers = true ), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
@@ -66,16 +77,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       }
     }
 
-    RobinsonToExpansionProof( robinson, reconstructedEndSequent ) --? "RobinsonToExpansionProof" map { E2 =>
-      new VeriTProver().isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
-      if ( isFOLPrenexSigma1( reconstructedEndSequent ) )
-        new VeriTProver().isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
-    }
-
-    val ip = new Prover9Prover().getLKProof( deep ).get --- "getLKProof( deep )"
-    val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
-    ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
-    ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+    skolemize( p ) --? "skolemize"
   }
 }
 
