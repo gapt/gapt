@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.ceres
+package at.logic.gapt.proofs.ceres_schema
 
 import at.logic.gapt.proofs.lk.{ getAncestors, getCutAncestors }
 import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }

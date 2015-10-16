@@ -1,11 +1,11 @@
-package at.logic.gapt.proofs.ceres
+package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
 import at.logic.gapt.proofs.lksk.applySubstitution
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ceres.struct.Struct
+import at.logic.gapt.proofs.ceres_omega.struct.Struct
 import at.logic.gapt.utils.dssupport.ListSupport._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.{ Suc, Ant, Sequent, lksk }
@@ -42,7 +42,7 @@ class ceres_omega {
       val reflexivity_occ = rule.root.succedent( 0 ).asInstanceOf[LabelledFormulaOccurrence]
       val weakened_left = es.l_antecedent.foldLeft( rule )( ( r, fo ) => lksk.WeakeningLeftRule( r, fo.formula, fo.skolem_label ) )
       val weakened_right = es.l_succedent.foldLeft( weakened_left )( ( r, fo ) => lksk.WeakeningRightRule( r, fo.formula, fo.skolem_label ) )
-      val reflexivity_successor = pickFOWithAncestor( sequentToLabelledSequent( weakened_right.root ).l_succedent, reflexivity_occ )
+      val reflexivity_successor = pickFOWithAncestor( LabelledOccSequent( weakened_right.root ).l_succedent, reflexivity_occ )
       val clause = LabelledOccSequent( Nil, List( reflexivity_successor ) )
 
       require( weakened_right.root.occurrences.size == es.occurrences.size + clause.occurrences.size, "The size of the generated end-sequent " + rule.root + " is not the size of the end-sequent " + es + " + the size of the clause " + clause )
@@ -52,7 +52,7 @@ class ceres_omega {
 
     case RalInitial( root ) =>
       val candidates = projections.toList.flatMap( x => {
-        val pes = filterEndsequent( sequentToLabelledSequent( x.root ), es, struct )
+        val pes = filterEndsequent( LabelledOccSequent( x.root ), es, struct )
         StillmanSubsumptionAlgorithmHOL.subsumes_by( pes.toHOLSequent, root.map( _._2 ) ) match {
           case None        => Nil
           case Some( sub ) => List( ( x, sub ) )
@@ -62,7 +62,7 @@ class ceres_omega {
       candidates match {
         case ( proof, sub ) :: _ =>
           val subproof = applySubstitution( proof, sub )._1
-          val clause = filterEndsequent( sequentToLabelledSequent( subproof.root ), es, struct )
+          val clause = filterEndsequent( LabelledOccSequent( subproof.root ), es, struct )
           val tocontract = LabelledOccSequent(
             diffModuloOccurrence( clause.l_antecedent, root.antecedent ),
             diffModuloOccurrence( clause.l_succedent, root.succedent )
@@ -79,7 +79,7 @@ class ceres_omega {
                 ContractionRightRule( p, occ, c )
               case None => throw new Exception( "Could not find an element to contract for " + f( occ ) + " in " + root )
             } )
-          val nclause = filterEndsequent( sequentToLabelledSequent( scontr.root ), es, struct )
+          val nclause = filterEndsequent( LabelledOccSequent( scontr.root ), es, struct )
 
           require( scontr.root.toHOLSequent.multiSetEquals( ( nclause compose es ).toHOLSequent ), "The root " + f( scontr.root ) + " must consist of the clause " + f( nclause ) + " plus the end-sequent " + f( es ) )
           require( scontr.root.occurrences.size == es.occurrences.size + nclause.occurrences.size, "The size of the generated end-sequent " + root + " is not the size of the end-sequent " + f( es ) + " + the size of the clause " + nclause )
@@ -87,7 +87,8 @@ class ceres_omega {
           require( ( nclause.occurrences diff scontr.root.occurrences ).isEmpty )
           ( scontr, nclause )
         case Nil =>
-          throw new Exception( "Could not find a projection for the clause " + root + " in " + projections.map( x => filterEndsequent( sequentToLabelledSequent( x.root ), es, struct ) ).map( f( _ ) ).mkString( nLine ) )
+          throw new Exception( "Could not find a projection for the clause " + root + " in " +
+            projections.map( x => filterEndsequent( LabelledOccSequent( x.root ), es, struct ) ).map( f( _ ) ).mkString( nLine ) )
       }
 
     case RalCut( parent1, p1occs, parent2, p2occs ) =>
@@ -192,7 +193,7 @@ class ceres_omega {
       val ( rule, mapping ) = applySubstitution( lkparent, sub )
 
       //val axiomformulas = rule.leaves.flatMap( _.vertex.occurrences )
-      val lruleroot = sequentToLabelledSequent( rule.root )
+      val lruleroot = LabelledOccSequent( rule.root )
 
       /* find the sub-sequent of the substituted proof which was introduced only by axioms */
       //val axiomancestoroccs_a = lruleroot.l_antecedent.filter( x => firstAncestors( x ).forall( y => axiomformulas.contains( y ) ) )
@@ -227,7 +228,7 @@ class ceres_omega {
 
   def filterByAncestor( sequent: OccSequent, anc: LabelledOccSequent ): LabelledOccSequent = {
     try {
-      val root = sequentToLabelledSequent( sequent )
+      val root = LabelledOccSequent( sequent )
       LabelledOccSequent(
         root.l_antecedent.filter( x => anc.l_antecedent.exists( y => tranAncestors( x ).contains( y ) ) ),
         root.l_succedent.filter( x => anc.l_succedent.exists( y => tranAncestors( x ).contains( y ) ) )
@@ -315,10 +316,10 @@ class ceres_omega {
    */
   def contractEndsequent( p: LKProof, es: LabelledOccSequent ): LKProof = {
     val contr_left = es.l_antecedent.foldLeft( p )( ( rp, fo ) => {
-      sequentToLabelledSequent( rp.root ).l_antecedent.find( x =>
+      LabelledOccSequent( rp.root ).l_antecedent.find( x =>
         x.formula == fo.formula && x.skolem_label == fo.skolem_label ) match {
         case Some( occ1 ) =>
-          sequentToLabelledSequent( rp.root ).l_antecedent.find( x =>
+          LabelledOccSequent( rp.root ).l_antecedent.find( x =>
             occ1 != x && x.formula == fo.formula && x.skolem_label == fo.skolem_label ) match {
             case Some( occ2 ) =>
               ContractionLeftRule( rp, occ1, occ2 )
@@ -333,10 +334,10 @@ class ceres_omega {
       }
     } )
     val contr_right = es.l_succedent.foldLeft( contr_left )( ( rp, fo ) => {
-      sequentToLabelledSequent( rp.root ).l_succedent.find( x =>
+      LabelledOccSequent( rp.root ).l_succedent.find( x =>
         x.formula == fo.formula && x.skolem_label == fo.skolem_label ) match {
         case Some( occ1 ) =>
-          sequentToLabelledSequent( rp.root ).l_succedent.find( x =>
+          LabelledOccSequent( rp.root ).l_succedent.find( x =>
             occ1 != x && x.formula == fo.formula && x.skolem_label == fo.skolem_label ) match {
             case Some( occ2 ) =>
               ContractionRightRule( rp, occ1, occ2 )

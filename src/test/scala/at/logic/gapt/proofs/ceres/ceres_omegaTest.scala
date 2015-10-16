@@ -1,10 +1,10 @@
-package at.logic.gapt.proofs.ceres
+package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llk.HybridLatexParser
-import at.logic.gapt.proofs.ceres.projections.Projections
-import at.logic.gapt.proofs.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres_omega.projections.Projections
+import at.logic.gapt.proofs.ceres_omega.struct.StructCreators
 import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
@@ -13,7 +13,9 @@ import org.specs2.mutable._
 
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ral._
-import at.logic.gapt.proofs.ceres.clauseSets._
+import at.logic.gapt.proofs.ceres_omega.clauseSets._
+
+//TODO: Fix the test!
 
 /**
  * Created by marty on 6/18/15.
@@ -25,7 +27,8 @@ class ceres_omegaTest extends Specification with ClasspathFileCopier {
     val elp = AtomicExpansion( DefinitionElimination( p.Definitions, regularize( p.proof( proofname ) ) ) )
     val selp = LKToLKsk( elp )
     val struct = StructCreators.extract( selp )
-    val ls = SimpleStandardClauseSet( struct )
+    val csgenerator = SimpleStandardClauseSet
+    val ls = csgenerator( struct )
     val proj = Projections( selp )
     ( selp, ls, struct, proj )
   }
@@ -72,7 +75,7 @@ class ceres_omegaTest extends Specification with ClasspathFileCopier {
       val ( p, cs, struct, proj ) = prepareProof( "llk/simple-leibnizeq.llk", "THEPROOF" )
       val rp = refutation1( cs )
 
-      val ( acnf, _ ) = ceres_omega( proj, rp, sequentToLabelledSequent( p.root ), struct )
+      val ( acnf, _ ) = ceres_omega( proj, rp, LabelledOccSequent( p.root ), struct )
       val et = LKskToExpansionProof( acnf )
       ok
     }

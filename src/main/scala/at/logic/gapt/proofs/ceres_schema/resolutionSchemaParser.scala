@@ -1,6 +1,6 @@
 // TODO: shouldn't this go to parsing?
 
-package at.logic.gapt.proofs.ceres.clauseSchema
+package at.logic.gapt.proofs.ceres_schema.clauseSchema
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base.{ OccSequent, LKProof }

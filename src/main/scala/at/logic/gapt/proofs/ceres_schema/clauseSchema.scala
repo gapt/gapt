@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.ceres.clauseSchema
+package at.logic.gapt.proofs.ceres_schema.clauseSchema
 
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._

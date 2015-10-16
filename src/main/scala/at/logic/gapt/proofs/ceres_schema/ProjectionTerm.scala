@@ -1,5 +1,5 @@
 
-package at.logic.gapt.proofs.ceres
+package at.logic.gapt.proofs.ceres_schema
 
 import at.logic.gapt.expr.SymbolA
 import at.logic.gapt.expr._

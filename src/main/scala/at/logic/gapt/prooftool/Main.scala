@@ -27,13 +27,13 @@ import at.logic.gapt.expr.schema.IntVar
 import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
 import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.proofs.ceres.clauseSets.{ renameCLsymbols, StandardClauseSet }
-import at.logic.gapt.proofs.ceres.struct.{ structToExpressionTree, StructCreators }
-import at.logic.gapt.proofs.ceres.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
-import at.logic.gapt.proofs.ceres.{ UnfoldProjectionTerm, ProjectionTermCreators }
+import at.logic.gapt.proofs.ceres_schema.clauseSets.{ renameCLsymbols, StandardClauseSet }
+import at.logic.gapt.proofs.ceres_schema.struct.{ structToExpressionTree, StructCreators }
+import at.logic.gapt.proofs.ceres_schema.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
+import at.logic.gapt.proofs.ceres_schema.{ UnfoldProjectionTerm, ProjectionTermCreators }
 import at.logic.gapt.utils.ds.trees.Tree
-import at.logic.gapt.proofs.ceres.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
-import at.logic.gapt.proofs.ceres.ACNF.ACNF
+import at.logic.gapt.proofs.ceres_schema.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
+import at.logic.gapt.proofs.ceres_schema.ACNF.ACNF
 import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.proofs.proofs.Proof
 import java.awt.image.BufferedImage

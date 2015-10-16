@@ -1,19 +1,12 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.lkNew.{ lkOld2New, lkNew2Old }
-import at.logic.gapt.proofs.resolution.{ resNew2Old, ResolutionProof, RobinsonToLK }
-import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
-import at.logic.gapt.proofs.lk.applySubstitution
+import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
+import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.expr._
-
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolutionOld.RichOccClause
-import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 
-import at.logic.gapt.proofs.ceres.projections.Projections
-import at.logic.gapt.proofs.ceres.struct.StructCreators
+import at.logic.gapt.provers.prover9.Prover9Prover
 
 /**
  * Two implementations of first-order CERES, one (CERES) grounding the proof before the transformation, the other (CERESR2LK)
@@ -38,12 +31,12 @@ class CERESR2LK {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
-    val es = p.root.toHOLSequent
+    val es = p.endSequent
     val proj = Projections( p, pred ) + CERES.refProjection( es )
 
     val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( p, pred ) )
 
-    new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLClause ) ) match {
+    new Prover9Prover().getRobinsonProof( tapecl ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         apply( es, proj, rp )
@@ -59,7 +52,7 @@ class CERESR2LK {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: ResolutionProof ) = {
-    lkNew2Old( RobinsonToLK( rp, endsequent, fc => lkOld2New( CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) ) ) )
+    RobinsonToLK( rp, endsequent, fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) )
   }
 
 }
@@ -83,21 +76,21 @@ class CERES {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
-    val es = p.root.toHOLSequent
+    val es = p.endSequent
     val proj = Projections( p, pred )
 
     val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( p, pred ) )
     val refl = refProjection( es )
-    new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLClause ) ) match {
+    new Prover9Prover().getRobinsonProof( tapecl ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         val lkproof = RobinsonToLK( rp )
-        apply( es, proj + refl, lkNew2Old( lkproof ) )
+        apply( es, proj + refl, lkproof )
     }
   }
 
   def apply( lkproof: LKProof, refutation: LKProof, pred: HOLFormula => Boolean ): LKProof = {
-    CERES( lkproof.root.toHOLSequent, Projections( lkproof, pred ) + refProjection( lkproof.root.toHOLSequent ), refutation )
+    CERES( lkproof.endSequent, Projections( lkproof, pred ) + refProjection( lkproof.endSequent ), refutation )
   }
 
   /**
@@ -108,47 +101,34 @@ class CERES {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( endsequent: HOLSequent, projections: Set[LKProof], refutation: LKProof ): LKProof = refutation match {
-    case Axiom( OccSequent( Seq( a ), Seq( a_ ) ) ) if a.formula == a_.formula =>
-      CloneLKProof( refutation )
+    case InitialSequent( root ) =>
+      findMatchingProjection( endsequent, projections )( root )
 
-    case Axiom( root ) =>
-      findMatchingProjection( endsequent, projections )( root.toHOLSequent )
-
-    case CutRule( p1, p2, root, aux1, aux2 ) =>
+    case rule @ CutRule( p1, aux1, p2, aux2 ) =>
       val rp1 = CERES( endsequent, projections, p1 )
       val rp2 = CERES( endsequent, projections, p2 )
-      contractEndsequent( CutRule( rp1, rp2, aux1.formula ), endsequent )
+      contractEndsequent( CutRule( rp1, rp2, rule.cutFormula ), endsequent )
 
-    case ContractionLeftRule( p1, root, aux1, aux2, _ ) =>
+    case ContractionLeftRule( p1, aux1, aux2 ) =>
       val rp1 = CERES( endsequent, projections, p1 )
-      ContractionLeftRule( rp1, aux1.formula )
-    case ContractionRightRule( p1, root, aux1, aux2, _ ) =>
+      ContractionLeftRule( rp1, p1.endSequent( aux1 ) )
+    case ContractionRightRule( p1, aux1, aux2 ) =>
       val rp1 = CERES( endsequent, projections, p1 )
-      ContractionRightRule( rp1, aux1.formula )
+      ContractionRightRule( rp1, p1.endSequent( aux1 ) )
 
-    case WeakeningLeftRule( p1, root, aux1 ) =>
+    case WeakeningLeftRule( p1, aux1 ) =>
       val rp1 = CERES( endsequent, projections, p1 )
-      WeakeningLeftRule( rp1, aux1.formula )
-    case WeakeningRightRule( p1, root, aux1 ) =>
+      WeakeningLeftRule( rp1, aux1 )
+    case WeakeningRightRule( p1, aux1 ) =>
       val rp1 = CERES( endsequent, projections, p1 )
-      WeakeningRightRule( rp1, aux1.formula )
+      WeakeningRightRule( rp1, aux1 )
 
-    case EquationLeft1Rule( p1, p2, root, aux1, aux2, _, main ) =>
+    case EqualityLeftRule( p1, aux1, aux2, pos ) =>
       val rp1 = CERES( endsequent, projections, p1 )
-      val rp2 = CERES( endsequent, projections, p2 )
-      contractEndsequent( EquationLeftRule( rp1, rp2, aux1.formula, aux2.formula, main.formula ), endsequent )
-    case EquationLeft2Rule( p1, p2, root, aux1, aux2, _, main ) =>
+      contractEndsequent( EqualityLeftRule( rp1, p1.endSequent( aux1 ), p1.endSequent( aux2 ), pos ), endsequent )
+    case EqualityRightRule( p1, aux1, aux2, pos ) =>
       val rp1 = CERES( endsequent, projections, p1 )
-      val rp2 = CERES( endsequent, projections, p2 )
-      contractEndsequent( EquationLeftRule( rp1, rp2, aux1.formula, aux2.formula, main.formula ), endsequent )
-    case EquationRight1Rule( p1, p2, root, aux1, aux2, _, main ) =>
-      val rp1 = CERES( endsequent, projections, p1 )
-      val rp2 = CERES( endsequent, projections, p2 )
-      contractEndsequent( EquationRightRule( rp1, rp2, aux1.formula, aux2.formula, main.formula ), endsequent )
-    case EquationRight2Rule( p1, p2, root, aux1, aux2, _, main ) =>
-      val rp1 = CERES( endsequent, projections, p1 )
-      val rp2 = CERES( endsequent, projections, p2 )
-      contractEndsequent( EquationRightRule( rp1, rp2, aux1.formula, aux2.formula, main.formula ), endsequent )
+      contractEndsequent( EqualityRightRule( rp1, p1.endSequent( aux1 ), p1.endSequent( aux2 ), pos ), endsequent )
 
     case _ =>
       throw new Exception( "Refutation is expected to contain only cut, contraction and equality rules!" )
@@ -160,15 +140,15 @@ class CERES {
 
     ( axfs: HOLSequent ) =>
       {
-        projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.root.toHOLSequent diff endsequent, axfs ) ) match {
+        projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.endSequent diff endsequent, axfs ) ) match {
           case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
-            projections.map( _.root ).mkString( "{" + nLine, "," + nLine, nLine + "}" ) )
+            projections.map( _.endSequent ).mkString( "{" + nLine, "," + nLine, nLine + "}" ) )
           case Some( proj ) =>
-            val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.root.toHOLSequent diff endsequent, axfs )
-            val ( subproj, _ ) = applySubstitution( proj, sub )
+            val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.endSequent diff endsequent, axfs )
+            val subproj = applySubstitution( sub )( proj )
             require(
-              ( subproj.root.toHOLSequent diff endsequent ).multiSetEquals( axfs ),
-              "Instance of projection with end-sequent " + subproj.root + " is not equal to " + axfs + " x " + endsequent
+              ( subproj.endSequent diff endsequent ).multiSetEquals( axfs ),
+              "Instance of projection with end-sequent " + subproj.endSequent + " is not equal to " + axfs + " x " + endsequent
             )
             subproj
         }

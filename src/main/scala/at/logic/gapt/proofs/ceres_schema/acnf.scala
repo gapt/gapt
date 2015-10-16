@@ -1,5 +1,5 @@
 
-package at.logic.gapt.proofs.ceres.ACNF
+package at.logic.gapt.proofs.ceres_schema.ACNF
 
 import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.proofs.HOLSequent
@@ -12,8 +12,8 @@ import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ceres.UnfoldProjectionTerm._
-import at.logic.gapt.proofs.ceres._
+import at.logic.gapt.proofs.ceres_schema.UnfoldProjectionTerm._
+import at.logic.gapt.proofs.ceres_schema._
 import clauseSchema._
 
 /**

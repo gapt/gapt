@@ -15,8 +15,8 @@ import java.awt.{ RenderingHints, BasicStroke }
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.expr._
 import DrawSequent._
-import at.logic.gapt.proofs.ceres.struct.structToExpressionTree.{ TimesC, PlusC }
-import at.logic.gapt.proofs.ceres.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
+import at.logic.gapt.proofs.ceres_schema.struct.structToExpressionTree.{ TimesC, PlusC }
+import at.logic.gapt.proofs.ceres_schema.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
 import at.logic.gapt.proofs.lk.base.OccSequent
 import java.awt.event.{ MouseMotionListener, MouseEvent }
 

@@ -1,31 +1,34 @@
-package at.logic.gapt.proofs.ceres
+package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.ceres.clauseSets.{ SimplifyStruct, StandardClauseSet }
-import at.logic.gapt.proofs.ceres.struct.Struct
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk.subsumedClausesRemoval
+import at.logic.gapt.proofs.ceres.Struct
+import at.logic.gapt.proofs.ceres.clauseSets.SimplifyStruct
+import at.logic.gapt.proofs.lk.subsumedClausesRemovalHOL
+import at.logic.gapt.proofs.lkskNew.LKskProof.{LabelledSequent, Label}
+import at.logic.gapt.proofs.ceres_omega.clauseSets.StandardClauseSet
 
 import scala.collection.mutable
 
+//TODO: this is actually some glue code for interaction with first order provers -- rename and check if it is even used
+
 object CharacteristicSequentSet {
-  def apply( s: Struct ): ( List[HOLSequent], List[HOLSequent], List[HOLSequent], FOLConstantsMap ) = {
+  def apply( s: Struct[Label] ): ( List[LabelledSequent], List[HOLSequent], List[HOLSequent], FOLConstantsMap ) = {
     val clauselist = StandardClauseSet.transformStructToClauseSet( SimplifyStruct( s ) )
     val ( fcmap, fol, hol ) = apply( clauselist )
-    ( clauselist.map( _.toHOLSequent ), fol, hol, fcmap )
+    ( clauselist, fol, hol, fcmap )
   }
 
-  def apply( l: List[OccSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) =
+  def apply( l: List[LabelledSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) =
     prunes( l )
 
-  def prunes( l: List[OccSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) = {
-    prunefs( l map ( _.toHOLSequent ) )
+  def prunes( l: List[LabelledSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) = {
+    prunefs( l map (_.map( _._2 )) )
   }
 
   def prunefs( l: List[HOLSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) = {
     val ( fcmap, fol ) = extractFOL( l )
-    ( fcmap, subsumedClausesRemoval( fol ).sorted( HOLSequentOrdering ), extractHOL( l ).toSet.toList.sorted( HOLSequentOrdering ) )
+    ( fcmap, subsumedClausesRemovalHOL( fol ), extractHOL( l ).toSet.toList )
   }
 
   type FOLConstantsMap = Map[String, FOLExpression]

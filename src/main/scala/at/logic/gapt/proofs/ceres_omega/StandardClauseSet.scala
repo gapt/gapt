@@ -3,9 +3,11 @@
  *
  */
 
-package at.logic.gapt.proofs.ceres.clauseSets
+package at.logic.gapt.proofs.ceres_omega.clauseSets
 
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
+
+import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.lkskNew.LKskProof.{LabelledFormula, LabelledSequent, Label}
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.logging.Logger
 import scala.annotation.tailrec
@@ -16,36 +18,24 @@ import at.logic.gapt.proofs.ceres._
  * This implements the clause set transformation of the original CERES method. Specialized extractors exist for
  * CERES_omega and schematic CERES.
  */
-object SimpleStandardClauseSet extends AlternativeStandardClauseSet( ( x, y ) => ( x, y ) )
+object SimpleStandardClauseSet extends SimpleStandardClauseSet
 
-/**
- * The idea here is that we use subsumption during clause set generation
- * But take care, this clause set generation is incomplete!
- * Take e.g. S1 = :- F(x) < :-F(a) and S2 = :- G(x) < :- G(b) but
- * S1 x S2 = :- F(x), G(x) does not subsume :- F(a), G(b).
- * TODO: make a safe version (e.g. disjoint variables are safe)
- */
-object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
-  ( set1, set2 ) => {
-    val set1_ = set1.filterNot( s1 => set2.exists( s2 => StillmanSubsumptionAlgorithmHOL.subsumes( s2, s1 ) ) )
-    val set2_ = set2.filterNot( s2 => set1_.exists( s1 => StillmanSubsumptionAlgorithmHOL.subsumes( s1, s2 ) ) )
-    //println("Set1: "+set1.size+" - "+(set1.size-set1_.size))
-    //println("Set2: "+set2.size+" - "+(set2.size-set2_.size))
-    ( set1_, set2_ )
-  }
-)
 
 /**
  * Should calculate the same clause set as [[StandardClauseSet]], but without the intermediate representation of a
  * normalized struct. Does not work for Schema, for CERESomega only if all labels are empty (clauses are correct,
  * but labels forgotten).
  */
-class AlternativeStandardClauseSet[Data]( val optimize_plus: ( Set[HOLSequent], Set[HOLSequent] ) => ( Set[HOLSequent], Set[HOLSequent] ) ) {
-  def apply( struct: Struct[Data] ): Set[HOLSequent] = struct match {
-    case A( fo, _ )                     => Set( HOLSequent( Nil, List( fo ) ) )
-    case Dual( A( fo, _ ) )             => Set( HOLSequent( List( fo ), Nil ) )
+class SimpleStandardClauseSet {
+  def apply( struct: Struct[Label] ): Set[LabelledSequent] = struct match {
+    case A( fo, label :: Nil )                     =>
+      val x : LabelledFormula = (label, fo)
+      Set( Sequent( Nil, List( x ) ) )
+    case Dual( A( fo, label::Nil ) )             =>
+      val x : LabelledFormula = (label, fo)
+      Set( Sequent( List( x ), Nil ) )
     case EmptyPlusJunction()            => Set()
-    case EmptyTimesJunction()           => Set( HOLSequent( Nil, Nil ) )
+    case EmptyTimesJunction()           => Set( Sequent( Nil, Nil ) )
     case Plus( EmptyPlusJunction(), x ) => apply( x )
     case Plus( x, EmptyPlusJunction() ) => apply( x )
     case Plus( A( f1, _ ), Dual( A( f2, _ ) ) ) if f1 == f2 =>
@@ -53,8 +43,7 @@ class AlternativeStandardClauseSet[Data]( val optimize_plus: ( Set[HOLSequent], 
     case Plus( Dual( A( f2, _ ) ), A( f1, _ ) ) if f1 == f2 =>
       Set()
     case Plus( x, y ) =>
-      val ( x_, y_ ) = optimize_plus( apply( x ), apply( y ) )
-      x_ ++ y_
+      apply( x ) ++ apply( y )
     case Times( EmptyTimesJunction(), x, _ ) => apply( x )
     case Times( x, EmptyTimesJunction(), _ ) => apply( x )
     case Times( x, y, _ ) =>
@@ -65,7 +54,7 @@ class AlternativeStandardClauseSet[Data]( val optimize_plus: ( Set[HOLSequent], 
   }
 
   /* Like compose, but does not duplicate common terms */
-  private def delta_compose( fs1: HOLSequent, fs2: HOLSequent ) = HOLSequent(
+  private def delta_compose( fs1: LabelledSequent, fs2: LabelledSequent ) = Sequent (
     fs1.antecedent ++ fs2.antecedent.diff( fs1.antecedent ),
     fs1.succedent ++ fs2.succedent.diff( fs1.succedent )
   )
@@ -74,28 +63,28 @@ class AlternativeStandardClauseSet[Data]( val optimize_plus: ( Set[HOLSequent], 
 /**
  * This implements the standard clause set from Bruno's thesis. It has a computational drawback: we create the normalized
  * struct first, which is later on converted to a clause set. The normalized struct easily becomes so big that recursive
- * functions run out of stack. The [[AlternativeStandardClauseSet]] performs a direct conversion, which can handle bigger
+ * functions run out of stack. The [[SimpleStandardClauseSet]] performs a direct conversion, which can handle bigger
  * sizes.
  */
 object StandardClauseSet extends Logger {
   override def loggerName = "CeresLogger"
 
-  def normalize[Data]( struct: Struct[Data] ): Struct[Data] = struct match {
-    case s: A[Data]           => s
-    case s: Dual[Data]        => s
+  def normalize( struct: Struct[Label] ): Struct[Label] = struct match {
+    case s: A[Label]           => s
+    case s: Dual[Label]        => s
     case EmptyTimesJunction() => struct
     case EmptyPlusJunction()  => struct
     case Plus( s1, s2 )       => Plus( normalize( s1 ), normalize( s2 ) )
     case Times( s1, s2, aux ) => merge( normalize( s1 ), normalize( s2 ) )
   }
 
-  def transformStructToClauseSet[Data]( struct: Struct[Data] ): List[HOLClause] = clausify( normalize( struct ) )
+  def transformStructToClauseSet( struct: Struct[Label] ): List[LabelledSequent] = clausify( normalize( struct ) )
 
   @tailrec
   def transformCartesianProductToStruct[Data](
-    cp:  List[Tuple2[Struct[Data], Struct[Data]]],
-    acc: List[Struct[Data] => Struct[Data]]
-  ): Struct[Data] = cp match {
+                                               cp:  List[Tuple2[Struct[Data], Struct[Data]]],
+                                               acc: List[Struct[Data] => Struct[Data]]
+                                               ): Struct[Data] = cp match {
     case ( i, j ) :: Nil =>
       acc.reverse.foldLeft[Struct[Data]]( Times( i, j, Nil ) )( ( struct, fun ) => fun( struct ) )
     case ( i, j ) :: rest =>
@@ -169,63 +158,22 @@ object StandardClauseSet extends Logger {
     case Times( s1, s2, _ )   => slowgetLiterals( s1 ) ::: slowgetLiterals( s2 )
   }
 
-  private def clausifyTimesJunctions[Data]( struct: Struct[Data] ): HOLClause = {
+  private def clausifyTimesJunctions( struct: Struct[Label] ): LabelledSequent = {
     val literals = getLiterals( struct )
     val ( negative, positive ) =
-      literals.foldLeft( List[HOLFormula](), List[HOLFormula]() )( ( pair, s ) => {
+      literals.foldLeft( List[LabelledFormula](), List[LabelledFormula]() )( ( pair, s ) => {
         val ( ns, ps ) = pair
         s match {
-          case Dual( A( f, _ ) ) => ( f :: ns, ps )
-          case A( f, _ )         => ( ns, f :: ps )
+          case Dual( A( f, label ::Nil ) ) => ( (label, f) :: ns, ps )
+          case A( f, label :: Nil )         => ( ns, (label, f) :: ps )
         }
       } )
 
-    HOLClause( negative, positive )
+    Sequent( negative, positive )
   }
 
-  def clausify[Data]( struct: Struct[Data] ): List[HOLClause] = {
+  def clausify( struct: Struct[Label] ): List[LabelledSequent] = {
     val timesJunctions = getTimesJunctions( struct )
     timesJunctions.map( x => clausifyTimesJunctions( x ) )
   }
 }
-
-object SimplifyStruct {
-  def apply[Data]( s: Struct[Data] ): Struct[Data] = s match {
-    case EmptyPlusJunction()                 => s
-    case EmptyTimesJunction()                => s
-    case A( _, _ )                           => s
-    case Dual( EmptyPlusJunction() )         => EmptyTimesJunction()
-    case Dual( EmptyTimesJunction() )        => EmptyPlusJunction()
-    case Dual( x )                           => Dual( SimplifyStruct( x ) )
-    case Times( x, EmptyTimesJunction(), _ ) => SimplifyStruct( x )
-    case Times( EmptyTimesJunction(), x, _ ) => SimplifyStruct( x )
-    case Times( x, Dual( y: Struct[Data] ), aux ) if x.formula_equal( y ) =>
-      //println("tautology deleted")
-      EmptyPlusJunction()
-    case Times( Dual( x: Struct[Data] ), y, aux ) if x.formula_equal( y ) =>
-      //println("tautology deleted")
-      EmptyPlusJunction()
-    case Times( x, y, aux ) =>
-      //TODO: adjust aux formulas, they are not needed for the css construction, so we can drop them,
-      // but this method should be as general as possible
-      Times( SimplifyStruct( x ), SimplifyStruct( y ), aux )
-    case PlusN( terms ) =>
-      //println("Checking pluses of "+terms)
-      assert( terms.nonEmpty, "Implementation Error: PlusN always unapplies to at least one struct!" )
-      val nonrendundant_terms = terms.foldLeft[List[Struct[Data]]]( Nil )( ( x, term ) => {
-        val simple = SimplifyStruct( term )
-        if ( x.filter( _.formula_equal( simple ) ).nonEmpty )
-          x
-        else
-          simple :: x
-      } )
-      /*
-      val saved = nonrendundant_terms.size - terms.size
-      if (saved >0)
-        println("Removed "+ saved + " terms from the struct!")
-        */
-      PlusN( nonrendundant_terms.reverse )
-
-  }
-}
-

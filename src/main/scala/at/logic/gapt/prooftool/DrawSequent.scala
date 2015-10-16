@@ -12,8 +12,8 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
-import at.logic.gapt.proofs.ceres.struct.ClauseSetSymbol
-import at.logic.gapt.proofs.ceres.PStructToExpressionTree.ProjectionSetSymbol
+import at.logic.gapt.proofs.ceres_schema.struct.ClauseSetSymbol
+import at.logic.gapt.proofs.ceres_schema.PStructToExpressionTree.ProjectionSetSymbol
 import org.scilab.forge.jlatexmath.{ TeXIcon, TeXConstants, TeXFormula }
 import java.awt.{ Color, Font }
 import java.awt.image.BufferedImage

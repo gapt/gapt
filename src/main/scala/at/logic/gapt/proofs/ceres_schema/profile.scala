@@ -1,13 +1,11 @@
-/* commented out since the algorithm relies on ancestor information in formula occurrences which are traced via the
-   removed formula occurrences. 
-package at.logic.gapt.proofs.ceres.clauseSets.profile
+package at.logic.gapt.proofs.ceres_schema.clauseSets.profile
 
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.{ LabelledOccSequent, LabelledFormulaOccurrence, UnaryLKskProof }
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet._
-import at.logic.gapt.proofs.ceres.struct._
+import at.logic.gapt.proofs.ceres_schema.clauseSets.StandardClauseSet._
+import at.logic.gapt.proofs.ceres_schema.struct._
 
 object getListOfFOccsInStruct {
   def apply( s: Struct ): List[FormulaOccurrence] = s match {
@@ -152,4 +150,3 @@ object printCutAncs {
     getCutAncestors( p ).foreach( fo => println( fo.formula.toString ) )
   }
 }
-*/ 

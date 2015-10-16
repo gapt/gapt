@@ -53,7 +53,6 @@ object LKskFOFactory extends FOFactory {
     assert( ancestors.forall( a => a.skolem_label == l ) )
     new LabelledFormulaOccurrence( formula, ancestors, l )
   }
-
   // when creating a main formula for a weak quantifier inference in LKsk, we may choose
   // whether to delete the term from the label, or not. If deletion is not desired,
   // term should be set to None.
@@ -84,7 +83,7 @@ case class LabelledOccSequent(
     LabelledOccSequent( this.l_antecedent ++ that.l_antecedent, this.l_succedent ++ that.l_succedent )
 }
 
-object sequentToLabelledSequent {
+object LabelledOccSequent {
   def apply( s: OccSequent ) = new LabelledOccSequent(
     s.antecedent.asInstanceOf[Seq[LabelledFormulaOccurrence]],
     s.succedent.asInstanceOf[Seq[LabelledFormulaOccurrence]]

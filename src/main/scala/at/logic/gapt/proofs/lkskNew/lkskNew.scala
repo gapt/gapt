@@ -7,6 +7,7 @@ import LKskProof._
 object LKskProof {
   type Label = Seq[LambdaExpression]
   type LabelledFormula = ( Label, HOLFormula )
+  type LabelledSequent = Sequent[LabelledFormula]
 }
 
 trait LKskProof extends SequentProof[LabelledFormula, LKskProof] with ContextRule[LabelledFormula, LKskProof] {
