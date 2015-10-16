@@ -24,34 +24,16 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
       " but subterm " + s._2 + " has type " + s._2.exptype
   )
 
-  // Substitution (capture-avoiding)
-  // as in http://en.wikipedia.org/wiki/Lambda_calculus#Capture-avoiding_substitutions   
   def apply( t: LambdaExpression ): LambdaExpression = t match {
-    case v: Var if map.contains( v )  => map( v )
-    case v: Var if !map.contains( v ) => v
-    case Const( _, _ )                => t
-    case App( t1, t2 ) =>
-      App( apply( t1 ), apply( t2 ) )
-    case Abs( v, t1 ) =>
-      val fv = range union domain
-      val dom = domain
-
-      val newSub = if ( domain.contains( v ) ) {
-        // Abs(x, t) [x -> u] = Abs(x, t)
-        // The replacement of v is not done, removing it from the substitution and applying to t1
-        val newMap = map - v
-        Substitution( newMap )
-      } else this
-
-      val ( freshVar, newTerm ) = if ( fv.contains( v ) ) {
-        // Variable captured, renaming the abstracted variable
-        val freshVar = rename( v, fv )
-        val sub = Substitution( v, freshVar )
-        val newTerm = sub( t1 )
-        ( freshVar, newTerm )
-      } else ( v, t1 )
-
-      Abs( freshVar, newSub( newTerm ) )
+    case v: Var                           => map.getOrElse( v, v )
+    case c: Const                         => c
+    case App( a, b )                      => App( apply( a ), apply( b ) )
+    case Abs( v, s ) if domain contains v => Substitution( map - v )( t )
+    case Abs( v, s ) if range contains v =>
+      // It is safe to rename the bound variable to any variable that is not in freeVariables(s).
+      val newV = rename( v, freeVariables( s ) ++ range toList )
+      apply( Abs( newV, Substitution( v -> newV )( s ) ) )
+    case Abs( v, s ) => Abs( v, apply( s ) )
   }
 
   def apply( t: HOLFormula ): HOLFormula = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]

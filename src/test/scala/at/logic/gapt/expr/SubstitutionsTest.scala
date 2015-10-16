@@ -177,5 +177,15 @@ class SubstitutionsTest extends Specification {
       val formula = All( x, p( x ) )
       Substitution( x0 -> x )( formula ) must_== formula
     }
+
+    "yet another renaming bug" in {
+      val p = FOLFunctionHead( "p", 2 )
+      val x = Var( StringSymbol( "x" ), Ti )
+      val x0 = Var( VariantSymbol( "x", 0 ), Ti ) // the fresh variable that we rename x to
+      val y = Var( StringSymbol( "y" ), Ti )
+
+      val formula = Abs( x, p( x, x0 ) )
+      Substitution( y -> x )( formula ) must_== formula
+    }
   }
 }
