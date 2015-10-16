@@ -157,9 +157,7 @@ object Prover9Importer extends ExternalProgram {
       }
     }
 
-    val ourCNF = CNFn.toFClauseList( endSequent.toFormula )
-
-    val fixedResProof = fixDerivation( resProof, ourCNF.map( _.asInstanceOf[FOLClause] ) )
+    val fixedResProof = fixDerivation( resProof, endSequent )
 
     ( fixedResProof, endSequent )
   }

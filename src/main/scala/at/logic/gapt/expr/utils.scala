@@ -76,6 +76,8 @@ object toVNF {
 
     makeDistinct( e )
   }
+
+  def apply( f: HOLFormula ): HOLFormula = apply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 }
 
 /**

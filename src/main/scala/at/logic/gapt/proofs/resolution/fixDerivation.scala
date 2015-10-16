@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolutionOld
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Suc }
@@ -178,6 +179,9 @@ object fixDerivation extends Logger {
           InputClause( cls )
         }
     }
+
+  def apply( p: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
+    fixDerivation( p, CNFn toFClauseList endSequent.toFormula )
 }
 
 object tautologifyInitialUnitClauses {

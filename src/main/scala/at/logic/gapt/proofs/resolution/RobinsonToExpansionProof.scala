@@ -8,21 +8,25 @@ import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, formulaToExpansio
 import scala.collection.mutable
 
 object RobinsonToExpansionProof {
-  def apply( p: ResolutionProof, es: HOLSequent ): ExpansionSequent = {
-    val cnfMap: Map[HOLClause, Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )]] =
-      es.map( f => toVNF( f ).asInstanceOf[HOLFormula] ).map(
-        ant => CNFp.toClauseList( ant ).map { ( _, false, ant ) },
-        suc => CNFn.toFClauseList( suc ).map { ( _, true, suc ) }
-      ).elements.flatten.groupBy( _._1 ).mapValues {
-          _ map {
-            case ( cnfClause, pol, formula ) =>
-              ( pol, formula,
-                variables( formula ).map( v => v -> Const( "arbitrary", v.exptype ) ).toMap
-                ++ variables( cnfClause ).map( v => v -> v ) )
-          } toSet
-        }
-    apply_( p, cnfMap )
-  }
+  def apply( p: ResolutionProof, es: HOLSequent ): ExpansionSequent =
+    if ( !es.forall( isInVNF( _ ) ) ) {
+      val vnfES = es map { toVNF( _ ) }
+      apply( fixDerivation( p, vnfES ), vnfES )
+    } else {
+      val cnfMap: Map[HOLClause, Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )]] =
+        es.map(
+          ant => CNFp.toClauseList( ant ).map { ( _, false, ant ) },
+          suc => CNFn.toFClauseList( suc ).map { ( _, true, suc ) }
+        ).elements.flatten.groupBy( _._1 ).mapValues {
+            _ map {
+              case ( cnfClause, pol, formula ) =>
+                ( pol, formula,
+                  variables( formula ).map( v => v -> Const( "arbitrary", v.exptype ) ).toMap
+                  ++ variables( cnfClause ).map( v => v -> v ) )
+            } toSet
+          }
+      apply_( p, cnfMap )
+    }
 
   def apply( p: ResolutionProof ): ExpansionSequent =
     apply_( p, clause => Set(
