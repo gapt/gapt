@@ -25,34 +25,35 @@ object TermReplacement {
   def apply( f: HOLFormula, what: LambdaExpression, by: LambdaExpression ): HOLFormula =
     apply( f, Map( what -> by ) )
 
-  def apply( term: HOLFormula, p: Map[LambdaExpression, LambdaExpression] ): HOLFormula =
+  def apply( term: HOLFormula, p: PartialFunction[LambdaExpression, LambdaExpression] ): HOLFormula =
     apply( term.asInstanceOf[LambdaExpression], p ).asInstanceOf[HOLFormula]
 
-  def apply( term: HOLAtom, p: Map[LambdaExpression, LambdaExpression] ): HOLAtom =
+  def apply( term: HOLAtom, p: PartialFunction[LambdaExpression, LambdaExpression] ): HOLAtom =
     apply( term.asInstanceOf[LambdaExpression], p ).asInstanceOf[HOLAtom]
 
-  def apply( term: LambdaExpression, map: Map[LambdaExpression, LambdaExpression] ): LambdaExpression =
-    map.getOrElse( term, term match {
+  def apply( term: LambdaExpression, map: PartialFunction[LambdaExpression, LambdaExpression] ): LambdaExpression =
+    term match {
+      case _ if map isDefinedAt term => map( term )
       case App( s, t ) =>
         App( apply( s, map ), apply( t, map ) )
       case Abs( x, t ) =>
         Abs( x, apply( t, map ) )
       case _ => term
-    } )
+    }
 
-  def apply( term: FOLExpression, map: Map[FOLExpression, FOLExpression] ): FOLExpression =
-    apply( term.asInstanceOf[LambdaExpression], map.toMap[LambdaExpression, LambdaExpression] ).asInstanceOf[FOLExpression]
+  def apply( term: FOLExpression, map: PartialFunction[FOLExpression, FOLExpression] ): FOLExpression =
+    apply( term.asInstanceOf[LambdaExpression], map.asInstanceOf[PartialFunction[LambdaExpression, LambdaExpression]] ).asInstanceOf[FOLExpression]
 
-  def apply( t: FOLTerm, map: Map[FOLTerm, FOLTerm] ): FOLTerm =
-    apply( t.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLTerm]
+  def apply( t: FOLTerm, map: PartialFunction[FOLTerm, FOLTerm] ): FOLTerm =
+    apply( t.asInstanceOf[FOLExpression], map.asInstanceOf[PartialFunction[FOLExpression, FOLExpression]] ).asInstanceOf[FOLTerm]
 
-  def apply( f: FOLFormula, map: Map[FOLTerm, FOLTerm] ): FOLFormula =
-    apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula, map: PartialFunction[FOLTerm, FOLTerm] ): FOLFormula =
+    apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[PartialFunction[FOLExpression, FOLExpression]] ).asInstanceOf[FOLFormula]
 
-  def apply( f: FOLAtom, map: Map[FOLTerm, FOLTerm] ): FOLAtom =
-    apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[Map[FOLExpression, FOLExpression]] ).asInstanceOf[FOLAtom]
+  def apply( f: FOLAtom, map: PartialFunction[FOLTerm, FOLTerm] ): FOLAtom =
+    apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[PartialFunction[FOLExpression, FOLExpression]] ).asInstanceOf[FOLAtom]
 
-  def apply( proof: resolution.ResolutionProof, repl: Map[LambdaExpression, LambdaExpression] ): resolution.ResolutionProof = {
+  def apply( proof: resolution.ResolutionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): resolution.ResolutionProof = {
     import resolution._
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
@@ -71,7 +72,7 @@ object TermReplacement {
     f( proof )
   }
 
-  def apply( proof: lkNew.LKProof, repl: Map[LambdaExpression, LambdaExpression] ): lkNew.LKProof = {
+  def apply( proof: lkNew.LKProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): lkNew.LKProof = {
     import lkNew._
 
     def f( p: LKProof ): LKProof = p match {
@@ -120,7 +121,7 @@ object TermReplacement {
     f( proof )
   }
 
-  def apply( expTree: ExpansionTree, map: Map[LambdaExpression, LambdaExpression] ): ExpansionTree = expTree match {
+  def apply( expTree: ExpansionTree, map: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionTree = expTree match {
     case ETTop           => ETTop
     case ETBottom        => ETBottom
     case ETAtom( f )     => ETAtom( apply( f, map ) )
