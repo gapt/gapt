@@ -339,7 +339,59 @@ class LKNewInterpolationTest extends Specification {
       success
     }
 
-    /*"correctly create a proof containing NegRight" in {
+    /*"correctly create a proof containing NegationLeft" in {
+      val proof = WeakeningRightRule( ax, p )
+      val proof1 = NegLeftRule( proof, p )
+      val npart = proof1.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: p :: Nil, Bottom() :: p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing NegationLeft (different partition)" in {
+      val proof = WeakeningRightRule( ax, p )
+      val proof1 = NegLeftRule( proof, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( p )
+      nproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: p :: Nil, p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing NegationLeft (with yet another partition)" in {
+      val proof = WeakeningRightRule( ax, p )
+      val proof1 = NegLeftRule( proof, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Neg( p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, p :: Neg( p ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: Neg( p ) :: p :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing NegationLeft (and another partition)" in {
+      val proof = WeakeningRightRule( ax, p )
+      val proof1 = NegLeftRule( proof, p )
+      val npart = Seq[SequentIndex]()
+      val ppart = proof1.endSequent.indices
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Top() )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: Top() :: p :: Nil, p :: Nil ) )
+      success
+    }*/
+
+    "correctly create a proof containing NegationRight" in {
       val proof = WeakeningLeftRule( ax, p )
       val proof1 = NegRightRule( proof, p )
       val npart = proof1.endSequent.indices
@@ -352,7 +404,20 @@ class LKNewInterpolationTest extends Specification {
       success
     }
 
-    "correctly create a proof containing NegRight (with yet another partition)" in {
+    "correctly create a proof containing NegationRight (different partition)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = NegRightRule( proof, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( p )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Neg( p ) :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing NegationRight (with yet another partition)" in {
       val proof = WeakeningLeftRule( ax, p )
       val proof1 = NegRightRule( proof, p )
       val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
@@ -360,9 +425,22 @@ class LKNewInterpolationTest extends Specification {
       val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
 
       ipl must beEqualTo( Neg( p ) )
-      nproof.endSequent must beEqualTo( HOLSequent( Nil, p :: Neg( p ) :: Nil ) )
-      pproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: p :: Nil, Neg( p ) :: Nil ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, p :: Neg( p ) :: Neg( p ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: p :: Nil, Nil ) )
       success
-    }*/
+    }
+
+    "correctly create a proof containing NegationRight (and another partition)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = NegRightRule( proof, p )
+      val npart = Seq[SequentIndex]()
+      val ppart = proof1.endSequent.indices
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Top() )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Top() :: p :: Nil, p :: Neg( p ) :: Nil ) )
+      success
+    }
   }
 }

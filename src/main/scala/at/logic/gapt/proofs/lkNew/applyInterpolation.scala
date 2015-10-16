@@ -55,6 +55,16 @@ object Interpolate {
       val inNpart = npart.filter( ind => p.endSequent( ind ) == atom )
       val inPpart = ppart.filter( ind => p.endSequent( ind ) == atom )
 
+      println( "###################" )
+      println( "LogicalAxiom" )
+      println( "npart: " + npart )
+      println( "ppart: " + ppart )
+      println( "inNpart" + inNpart )
+      println( "inPpart" + inPpart )
+      println( "mainIndices: " + p.mainIndices )
+      println( "mainFormulas: " + p.mainFormulas )
+      println( "###################" )
+
       if ( inNpart.size == 2 ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
       else if ( inNpart.size == 1 && inPpart.size == 1 ) {
         if ( inNpart( 0 ).isInstanceOf[Ant] && inPpart( 0 ).isInstanceOf[Suc] ) ( p, p, atom )
@@ -111,9 +121,21 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
       val inNpart = npart.filter( ind => p.endSequent( ind ) == formula )
       val inPpart = ppart.filter( ind => p.endSequent( ind ) == formula )
-
-      if ( inNpart.contains( p.mainIndices( 0 ) ) ) ( WeakeningRightRule( up_nproof, formula ), up_pproof, up_I )
-      else if ( inPpart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, WeakeningRightRule( up_pproof, formula ), up_I )
+      println( "###################" )
+      println( "WeakRightRule" )
+      println( "npart: " + npart )
+      println( "ppart: " + ppart )
+      println( "inNpart" + inNpart )
+      println( "inPpart" + inPpart )
+      println( "p.parents: " + p.occConnectors( 0 ) )
+      println( "mainIndices: " + p.mainIndices )
+      println( "mainFormula: " + p.mainFormulas )
+      println( "subProof mainIndices: " + subProof.mainIndices )
+      println( "subProof mainFormulas: " + subProof.mainFormulas )
+      println( "###################" )
+      //val parentIndex = p.occConnectors( 0 ).parent( p.mainIndices( 0 ) )
+      if ( !inNpart.intersect( p.mainIndices ).isEmpty ) ( WeakeningRightRule( up_nproof, formula ), up_pproof, up_I )
+      else if ( !inPpart.intersect( p.mainIndices ).isEmpty ) ( up_nproof, WeakeningRightRule( up_pproof, formula ), up_I )
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
@@ -257,27 +279,39 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
       val inNpart = npart.filter( ind => p.endSequent.indices.contains( ind ) )
       val inPpart = ppart.filter( ind => p.endSequent.indices.contains( ind ) )
-
-      if ( inNpart.contains( p.mainIndices( 0 ) ) ) ( NegLeftRule( up_nproof, aux ), up_pproof, up_I )
-      else if ( inPpart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, NegLeftRule( up_pproof, aux ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      val formula = p.endSequent( aux )
+      println( "###################" )
+      println( "NetLeftRule" )
+      println( "npart: " + npart )
+      println( "ppart: " + ppart )
+      println( "inNpart" + inNpart )
+      println( "inPpart" + inPpart )
+      println( "mainIndices: " + p.mainIndices )
+      println( "mainFormulas: " + p.mainFormulas )
+      println( "subProof mainIndices: " + subProof.mainIndices )
+      println( "subProof mainFormulas: " + subProof.mainFormulas )
+      println( "p.occConnectors(0).parent(p.mainIndices(0)):" + p.occConnectors( 0 ).parent( p.mainIndices( 0 ) ) )
+      println( "###################" )
+      //val parentIndex = p.occConnectors( 0 ).parent( p.mainIndices( 0 ) )
+      if ( inNpart.contains( p.mainIndices( 0 ) ) ) {
+        println( "inNpart" )
+        ( NegLeftRule( up_nproof, aux ), up_pproof, up_I )
+      } else if ( inPpart.contains( p.mainIndices( 0 ) ) ) {
+        println( "inPpart" )
+        ( up_nproof, NegLeftRule( up_pproof, aux ), up_I )
+      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
+    }*/
 
     case NegRightRule( subProof, aux ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
       val inNpart = npart.filter( ind => p.endSequent.indices.contains( ind ) )
       val inPpart = ppart.filter( ind => p.endSequent.indices.contains( ind ) )
       val formula = p.endSequent( aux )
-      println( "###################" )
-      println( "NetRightRule" )
-      println( "inNpart" + inNpart )
-      println( "inPpart" + inPpart )
-      println( "mainIndices: " + p.mainIndices )
-      println( "###################" )
-      if ( inNpart.contains( p.mainIndices( 0 ) ) ) ( NegRightRule( up_nproof, formula ), up_pproof, up_I )
-      else if ( inPpart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, NegRightRule( up_pproof, formula ), up_I )
+
+      if ( inNpart.contains( p.mainIndices( 0 ) ) ) ( NegRightRule( up_nproof, aux ), up_pproof, up_I )
+      else if ( inPpart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, NegRightRule( up_pproof, aux ), up_I )
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }*/
+    }
 
     /*case ImpLeftRule( p1, p2, s, a1, a2, m ) => {
       val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p1, npart, ppart )
