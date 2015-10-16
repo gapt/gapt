@@ -30,6 +30,11 @@ case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[R
   }
 
   def language: Set[LambdaExpression] = parametricLanguage()
+  def languageWithDummyParameters: Set[LambdaExpression] =
+    axiom.exptype match {
+      case FunctionType( _, argtypes ) =>
+        parametricLanguage( argtypes.zipWithIndex.map { case ( t, i ) => Const( s"dummy$i", t ) }: _* )
+    }
 
   def rulesFrom( nonTerminal: Const ) =
     rules filter { _.lhs == nonTerminal }

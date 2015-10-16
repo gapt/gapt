@@ -30,7 +30,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     cleanStructuralRules( p ) --? "cleanStructuralRules"
     if ( isFOLPrenexSigma1( p.endSequent ) )
       extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
-        new VeriTProver().isValid( recSchem.language.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
+        new VeriTProver().isValid( recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
       }
 
     regularize( p ) --? "regularize"
