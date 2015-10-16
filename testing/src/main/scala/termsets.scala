@@ -1,7 +1,7 @@
 package at.logic.gapt.testing
 import java.nio.file._
 
-import at.logic.gapt.algorithms.rewriting.NameReplacement
+import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.examples.proofSequences
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
@@ -22,13 +22,13 @@ object dumpTermsets extends App {
   Files createDirectories outDir
 
   def termsetFromExpansionProof( e: ExpansionSequent ): Set[FOLTerm] =
-    simplifyNames( new InstanceTermEncoding( toShallow( e ) ) encode e toSet )
+    simplifyNames( new InstanceTermEncoding( toShallow( e ) ) encode e )
 
   def simplifyNames( termset: Set[FOLTerm] ): Set[FOLTerm] = {
     val renaming = constants( termset ).toSeq.sortBy( _.toString ).
-      zipWithIndex.map { case ( FOLFunctionHead( sym, arity ), i ) => sym -> ( arity, s"f$i" ) }.
+      zipWithIndex.map { case ( c: FOLTerm, i ) => c -> Const( s"f$i", c.exptype ).asInstanceOf[FOLTerm] }.
       toMap
-    termset.map( NameReplacement( _, renaming ) )
+    termset.map( TermReplacement( _, renaming.toMap[FOLTerm, FOLTerm] ) )
   }
 
   def termToString( t: FOLTerm ): String = t match {
