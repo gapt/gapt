@@ -46,7 +46,7 @@ abstract class ExternalSATSolver extends SATSolver with ExternalProgram {
     }
 
   override def solve( cnf: DIMACS.CNF ): Option[DIMACS.Model] =
-    readDIMACS.applyNew( runProgram( writeDIMACS.applyNew( cnf ) ) )
+    readDIMACS( runProgram( writeDIMACS( cnf ) ) )
 
   override val isInstalled: Boolean =
     try solve( Top() ).isDefined catch { case _: IOException => false }

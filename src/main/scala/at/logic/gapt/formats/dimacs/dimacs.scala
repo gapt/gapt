@@ -55,7 +55,7 @@ class DIMACSEncoding {
 }
 
 object readDIMACS {
-  def applyNew( dimacsOutput: String ): Option[DIMACS.Model] = {
+  def apply( dimacsOutput: String ): Option[DIMACS.Model] = {
     val lines = dimacsOutput.split( "\n" )
     if ( lines.nonEmpty && lines( 0 ) == "SAT" ) {
       Some( lines.tail.flatMap( _.trim split " " ).takeWhile( _ != "0" ).map( _.toInt ) )
@@ -66,7 +66,7 @@ object readDIMACS {
 }
 
 object writeDIMACS {
-  def applyNew( cnf: DIMACS.CNF ): String = {
+  def apply( cnf: DIMACS.CNF ): String = {
     val dimacsInput = new StringBuilder
 
     dimacsInput ++= s"p cnf ${DIMACS maxAtom cnf} ${cnf size}\n"
