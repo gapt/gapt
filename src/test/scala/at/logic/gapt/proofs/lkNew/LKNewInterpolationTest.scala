@@ -442,5 +442,117 @@ class LKNewInterpolationTest extends Specification {
       pproof.endSequent must beEqualTo( HOLSequent( Top() :: p :: Nil, p :: Neg( p ) :: Nil ) )
       success
     }
+
+    "correctly create a proof containing AndLeft" in {
+      val proof = WeakeningRightRule( ax, q )
+      val proof1 = WeakeningLeftRule( proof, q )
+      val proof2 = AndLeftRule( proof1, p, q )
+      val npart = proof2.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+      val ( nproof, pproof, ipl ) = Interpolate( proof2, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.endSequent must beEqualTo( HOLSequent( And( p, q ) :: Nil, p :: Bottom() :: q :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing AndLeft (different partition)" in {
+      val proof = WeakeningRightRule( ax, q )
+      val proof1 = WeakeningLeftRule( proof, q )
+      val proof2 = AndLeftRule( proof1, p, q )
+      val npart = proof2.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof2.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof2, npart, ppart )
+
+      ipl must beEqualTo( p )
+      nproof.endSequent must beEqualTo( HOLSequent( And( p, q ) :: Nil, p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: q :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing AndLeft (yet another partition)" in {
+      val proof = WeakeningRightRule( ax, q )
+      val proof1 = WeakeningLeftRule( proof, q )
+      val proof2 = AndLeftRule( proof1, p, q )
+      val npart = proof2.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof2.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof2, npart, ppart )
+
+      ipl must beEqualTo( Neg( p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, p :: Neg( p ) :: q :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( And( p, q ) :: Neg( p ) :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing AndLeft (and another partition)" in {
+      val proof = WeakeningRightRule( ax, q )
+      val proof1 = WeakeningLeftRule( proof, q )
+      val proof2 = AndLeftRule( proof1, p, q )
+      val npart = Seq[SequentIndex]()
+      val ppart = proof2.endSequent.indices
+      val ( nproof, pproof, ipl ) = Interpolate( proof2, npart, ppart )
+
+      ipl must beEqualTo( Top() )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( And( p, q ) :: Top() :: Nil, p :: q :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing OrRight" in {
+      val proof = WeakeningRightRule( ax, q )
+      val proof1 = WeakeningLeftRule( proof, q )
+      val proof2 = OrRightRule( proof1, p, q )
+      val npart = proof2.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+      val ( nproof, pproof, ipl ) = Interpolate( proof2, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.endSequent must beEqualTo( HOLSequent( q :: p :: Nil, Bottom() :: Or( p, q ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing OrRight (different partition)" in {
+      val proof = WeakeningRightRule( ax, q )
+      val proof1 = WeakeningLeftRule( proof, q )
+      val proof2 = OrRightRule( proof1, p, q )
+      val npart = proof2.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof2.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof2, npart, ppart )
+
+      ipl must beEqualTo( p )
+      nproof.endSequent must beEqualTo( HOLSequent( q :: p :: Nil, p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Nil, Or( p, q ) :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing OrRight (yet another partition)" in {
+      val proof = WeakeningRightRule( ax, q )
+      val proof1 = WeakeningLeftRule( proof, q )
+      val proof2 = OrRightRule( proof1, p, q )
+      val npart = proof2.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof2.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof2, npart, ppart )
+
+      ipl must beEqualTo( Neg( p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Neg( p ) :: Or( p, q ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( q :: Neg( p ) :: p :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing OrRight (and another partition)" in {
+      val proof = WeakeningRightRule( ax, q )
+      val proof1 = WeakeningLeftRule( proof, q )
+      val proof2 = OrRightRule( proof1, p, q )
+      val npart = Seq[SequentIndex]()
+      val ppart = proof2.endSequent.indices
+      val ( nproof, pproof, ipl ) = Interpolate( proof2, npart, ppart )
+
+      ipl must beEqualTo( Top() )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( q :: Top() :: p :: Nil, Or( p, q ) :: Nil ) )
+      success
+    }
   }
 }
