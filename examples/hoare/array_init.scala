@@ -1,4 +1,4 @@
-import at.logic.gapt.expr.Neg
+import at.logic.gapt.expr.{FOLAtom, Neg}
 import at.logic.gapt.formats.hoare.ProgramParser
 import at.logic.gapt.formats.simple.SimpleFOLParser
 import at.logic.gapt.proofs.expansionTrees.{compressQuantifiers, METWeakQuantifier}
@@ -19,7 +19,7 @@ val g_ge = parseFormula("(all x (all y (all z (get(set(x,y,z),y) = z))))")
 val g_gn = parseFormula("(all x (all y (all z (all w (w != y -> get(set(x,y,z),w) = get(x,w))))))")
 val g = List(g_s, g_lr, g_0l, g_l0, g_sl, g_ls, g_ge, g_gn)
 
-val slp = SimpleLoopProblem(p.asInstanceOf[ForLoop], g, SimpleFOLParser("T()"), f)
+val slp = SimpleLoopProblem(p.asInstanceOf[ForLoop], g, FOLAtom("T"), f)
 
 println(slp.loop.body)
 println(slp.programVariables)

@@ -26,6 +26,7 @@ doc/*.out
 doc/auto
 doc/_region_.*
 doc/prv_user_manual.fmt
+doc/*.tex.backup
 *-proposal/*.aux
 *-proposal/*.bbl
 *-proposal/*.blg
