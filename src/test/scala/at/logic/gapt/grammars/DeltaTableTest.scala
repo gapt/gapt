@@ -5,6 +5,7 @@
 
 package at.logic.gapt.grammars
 
+import at.logic.gapt.cutintro.MultiGrammar
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars.Deltas._
 import at.logic.gapt.grammars.types._
