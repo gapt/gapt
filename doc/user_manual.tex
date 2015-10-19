@@ -326,20 +326,7 @@ gapt> saveXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
 %{\color{red}TODO}
 
 \section{Entering Formulas}\label{sec.entering_formulas}
-
-Formulas can be entered as strings which are parsed as follows:
-%
-\begin{lstlisting}
-gapt> val F = SimpleFOLParser( "Imp A Imp B And A B" )
-\end{lstlisting}
-%
-For a proper first-order formula consider for example:
-%
-\begin{lstlisting}
-gapt> val G = SimpleFOLParser( "Forall x Imp P(x,f(x)) Exists y P(x,y)" )
-\end{lstlisting}
-%
-Also prover9 syntax\cite{Prover9Input} is supported: 
+You can enter formulas by parsing them with the prover9\cite{Prover9Input} parser:
 %
 \begin{lstlisting}
 gapt> val H = Prover9TermParserLadrStyle.parseFormula( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
@@ -1154,47 +1141,6 @@ TODO: RAL
 
 \section{Formula Syntax}
 \label{app:formulasyntax}
-
-\subsection{Simple FOL Parsing (SimpleFOLParser)}
-
-The simple FOL parser interpretes names strings built over the alphabet
- $[\mathtt{a, \ldots, z, A ,\ldots, Z, 0, \ldots 9,-,\_,\{,\} } ]$. Also the
- equality symbol $=$ is a name.
-
-Names starting with lower case letters from \texttt{a} to \texttt{t} are
- interpeted as constant symbols. Likewise, names starting with lower case
- letters from \texttt{u} to \texttt{z} are interpreted as variables.
- Function symbols start with a lower case letter and predicate symbols
- start with an upper case letter.
-
-Arguments are always seperated by commas and put in parenthesis. Terms are
- built from variable, constant symbols and function symbols applied
- to a number of arguments, which are terms. Likewise, atoms are
- predicate symbols, possibly with arguments which are again terms.
-
-For example, the following are terms:
-
- \begin{lstlisting}
-   "constant", "variable", "function(constant,variable)", "s_{21}"
- \end{lstlisting}
-
-And the following are atoms:
-
- \begin{lstlisting}
-   "P_1(alpha, beta(x))", "=(25,v)"
- \end{lstlisting}
-
-The logical connectives are called $\{\mathtt{And,Or,Neg,Imp,Forall,Exists}\}$
- and are written in prefix form.
-
-For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
- is parsed as:
-
- \begin{lstlisting}
-gapt> SimpleFOLParser("Forall x Imp P(x,f(x)) Exists y P(x,y)")
-res0: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
- \end{lstlisting}
-
 \subsection{Prover 9 parser (Prover9TermParserLadrStyle.parseFormula)}
 
 The Prover9 parser interpretes names strings built over the alphabet
