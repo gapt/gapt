@@ -993,7 +993,7 @@ object AtomicExpansion {
     //find a formula occurring on both sides
     SolveUtils.findNonschematicAxiom( fs ) match {
       case ( Some( ( f, g ) ) ) =>
-        apply( fs, f, g )
+        WeakeningMacroRule( apply( f ), fs )
       case None =>
         throw new Exception( "Could not find a (non-schematic) formula in " + fs + " which occurs on both sides!" )
     }
@@ -1001,78 +1001,20 @@ object AtomicExpansion {
 
   def apply( p: LKProof ): LKProof = expandProof( p )
 
-  /* Same as apply(fs:FSequent) but you can specify the formula on the lhs (f1) and rhs (f2) */
-  def apply( fs: HOLSequent, f1: HOLFormula, f2: HOLFormula ) = {
+  def apply( f: HOLFormula ): LKProof = f match {
+    case a: HOLAtom  => LogicalAxiom( a )
 
-    val atomic_proof = atomicExpansion_( f1, f2 )
+    case Bottom()    => WeakeningRightRule( BottomAxiom, Bottom() )
+    case Top()       => WeakeningLeftRule( TopAxiom, Top() )
 
-    WeakeningMacroRule( atomic_proof, fs )
-  }
+    case Neg( l )    => NegLeftRule( NegRightRule( apply( l ), Ant( 0 ) ), Suc( 0 ) )
 
-  // assumes f1 == f2
-  // FIXME: If this assumes f1 == f2, then why are there 2 arguments?
-  private def atomicExpansion_( f1: HOLFormula, f2: HOLFormula ): LKProof = {
-    try {
-      ( f1, f2 ) match {
-        case ( Bottom(), Bottom() ) => Axiom( HOLSequent( Seq( Bottom() ), Seq( Bottom() ) ) )
-        case ( Top(), Top() )       => Axiom( HOLSequent( Seq( Top() ), Seq( Top() ) ) )
+    case And( l, r ) => AndLeftRule( AndRightRule( apply( l ), Suc( 0 ), apply( r ), Suc( 0 ) ), Ant( 0 ), Ant( 1 ) )
+    case Or( l, r )  => OrRightRule( OrLeftRule( apply( l ), Ant( 0 ), apply( r ), Ant( 0 ) ), Suc( 0 ), Suc( 1 ) )
+    case Imp( l, r ) => ImpRightRule( ImpLeftRule( apply( l ), Suc( 0 ), apply( r ), Ant( 0 ) ), Ant( 1 ), Suc( 0 ) )
 
-        case ( Neg( l1 ), Neg( l2 ) ) =>
-          val parent = atomicExpansion_( l1, l2 )
-          NegLeftRule( NegRightRule( parent, l1 ), l2 )
-
-        case ( And( l1, r1 ), And( l2, r2 ) ) =>
-          val parent1 = atomicExpansion_( l1, l2 )
-          val parent2 = atomicExpansion_( r1, r2 )
-          val i1 = AndRightRule( parent1, l1, parent2, r1 )
-          AndLeftRule( i1, l2, r2 )
-
-        case ( Or( l1, r1 ), Or( l2, r2 ) ) =>
-          val parent1 = atomicExpansion_( l1, l2 )
-          val parent2 = atomicExpansion_( r1, r2 )
-          val i1 = OrLeftRule( parent1, l1, parent2, r1 )
-          OrRightRule( i1, l2, r2 )
-
-        case ( Imp( l1, r1 ), Imp( l2, r2 ) ) =>
-          val parent1 = atomicExpansion_( l1, l2 )
-          val parent2 = atomicExpansion_( r1, r2 )
-          val i1 = ImpLeftRule( parent1, l1, parent2, r1 )
-          ImpRightRule( i1, l2, r2 )
-
-        case ( All( x1: Var, l1 ), All( x2: Var, l2 ) ) =>
-          val eigenvar = rename( x1, freeVariables( l1 ).toList ++ freeVariables( l2 ).toList )
-          val sub1 = Substitution( List( ( x1, eigenvar ) ) )
-          val sub2 = Substitution( List( ( x2, eigenvar ) ) )
-          val aux1 = sub1( l1 )
-          val aux2 = sub2( l2 )
-
-          val parent = atomicExpansion_( aux1, aux2 )
-          val i1 = ForallLeftRule( parent, f1, eigenvar )
-          ForallRightRule( i1, f2, eigenvar )
-
-        case ( Ex( x1: Var, l1 ), Ex( x2: Var, l2 ) ) =>
-          val eigenvar = rename( x1, freeVariables( l1 ).toList ++ freeVariables( l2 ).toList )
-          val sub1 = Substitution( List( ( x1, eigenvar ) ) )
-          val sub2 = Substitution( List( ( x2, eigenvar ) ) )
-          val aux1 = sub1( l1 )
-          val aux2 = sub2( l2 )
-
-          val parent = atomicExpansion_( aux1, aux2 )
-          val i1 = ExistsRightRule( parent, f2, eigenvar )
-          ExistsLeftRule( i1, f1, eigenvar )
-
-        case ( a1, a2 ) if isAtom( a1 ) && isAtom( a2 ) =>
-          Axiom( a1 :: Nil, a2 :: Nil )
-
-        case _ =>
-          throw new Exception( "" + f1 + " and "
-            + f2 + " do not have the same outermost operator or operator unhandled!" )
-
-      }
-    } catch {
-      case e: Exception =>
-        throw new Exception( "Error in non-atomic axiom expansion handling " + f1 + " and " + f2 + ": " + e.getMessage, e )
-    }
+    case All( x, l ) => ForallRightRule( ForallLeftRule( apply( l ), Ant( 0 ), l, x, x ), Suc( 0 ), x, x )
+    case Ex( x, l )  => ExistsLeftRule( ExistsRightRule( apply( l ), Suc( 0 ), l, x, x ), Ant( 0 ), x, x )
   }
 
   def expandProof( p: LKProof ): LKProof = p match {
@@ -1081,7 +1023,7 @@ object AtomicExpansion {
       if ( tautology_formulas.nonEmpty ) {
         val tf = tautology_formulas( 0 )
         //println("Expanding "+tf)
-        AtomicExpansion( seq, tf, tf )
+        WeakeningMacroRule( AtomicExpansion( tf ), seq )
       } else {
         p
       }
