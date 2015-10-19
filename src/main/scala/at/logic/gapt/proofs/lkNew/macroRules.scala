@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol.{ HOLPosition, isPrenex, instantiate }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs._
 
-object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
+object AndLeftMacroRule extends ConvenienceConstructor( "AndLeftMacroRule" ) {
 
   /**
    * This simulates an additive ∧:l-rule: if either aux formula (but not both) is missing, it will be added to the
@@ -40,7 +40,7 @@ object AndLeftMacroRule extends RuleConvenienceObject( "AndLeftMacroRule" ) {
   }
 }
 
-object OrRightMacroRule extends RuleConvenienceObject( "OrRightMacroRule" ) {
+object OrRightMacroRule extends ConvenienceConstructor( "OrRightMacroRule" ) {
 
   /**
    * This simulates an additive ∨:r-rule: if either aux formula (but not both) is missing, it will be added to the
@@ -444,7 +444,7 @@ object ContractionRightMacroRule {
  * This macro rule simulates a series of contractions in both cedents.
  *
  */
-object ContractionMacroRule extends RuleConvenienceObject( "ContractionMacroRule" ) {
+object ContractionMacroRule extends ConvenienceConstructor( "ContractionMacroRule" ) {
 
   /**
    * Contracts the current proof down to a given sequent.
@@ -546,7 +546,7 @@ object WeakeningRightMacroRule {
  * This macro rule simulates a series of weakenings in both cedents.
  *
  */
-object WeakeningMacroRule extends RuleConvenienceObject( "WeakeningMacroRule" ) {
+object WeakeningMacroRule extends ConvenienceConstructor( "WeakeningMacroRule" ) {
 
   /**
    *
@@ -581,7 +581,7 @@ object WeakeningMacroRule extends RuleConvenienceObject( "WeakeningMacroRule" ) 
  * This macro rule simulates multiple weakenings and contractions in both cedents.
  *
  */
-object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningContractionMacroRule" ) {
+object WeakeningContractionMacroRule extends ConvenienceConstructor( "WeakeningContractionMacroRule" ) {
 
   /**
    *
@@ -646,7 +646,7 @@ object WeakeningContractionMacroRule extends RuleConvenienceObject( "WeakeningCo
   }
 }
 
-object ParamodulationLeftRule extends RuleConvenienceObject( "ParamodulationLeftRule" ) {
+object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLeftRule" ) {
 
   /**
    * Simulates a binary equation rule, aka paramodulation.
@@ -765,7 +765,7 @@ object ParamodulationLeftRule extends RuleConvenienceObject( "ParamodulationLeft
   }
 }
 
-object ParamodulationRightRule extends RuleConvenienceObject( "ParamodulationLeftRule" ) {
+object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLeftRule" ) {
 
   /**
    * Simulates a binary equation rule, aka paramodulation.

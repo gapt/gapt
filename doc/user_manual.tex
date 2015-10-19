@@ -117,19 +117,19 @@ simple type theory.  Terms and formulas of first-order logic and schematic
 first-order logic are hence encoded as lambda terms, these form regular
 subsets.
 
-The focus of GAPT are proof transformations (in contrast to proof assistants
-whose focus is proof formalization and automated deduction systems whose focus
-is proof search). GAPT is used from a shell which provides access to the functionality
+The focus of GAPT are proof transformations (in contrast to proof assistants,
+whose focus is proof formalization, and automated deduction systems, whose focus
+is proof search). GAPT is used from a shell that provides access to the functionality
 in the system in a way that is inspired by computer algebra systems: the basic
 objects are formulas and (different kinds of) proofs which can be modified
-by calling GAPT-commands from the command-line. In addition, there
-is a graphical user interface which allows to view (and up to a certain extent:
-also to modify) proofs in a flexible and visually appealing way.
+by calling GAPT commands from the command line. In addition, there
+is a graphical user interface that allows the user to view (and—to a certain extent—
+modify) proofs in a flexible and visually appealing way.
 
 The current functionality of GAPT includes data structures for formulas,
 sequents, resolution proofs, sequent calculus proofs, expansion tree proofs
-and algorithms for e.g.\ unification, proof skolemization, cut-elimination,
-cut-elimination by resolution~\cite{Baaz00CutElimination}, cut-introducton~\cite{Hetzl2012}, etc.
+and algorithms for e.g.\ unification, proof skolemization, cut elimination,
+cut elimination by resolution~\cite{Baaz00CutElimination}, cut introducton~\cite{Hetzl2012}, etc.
 
 This document describes the system from the perspective of a user who has
 downloaded a jar-file. For information on how to get started as a developer,
@@ -160,24 +160,28 @@ are available.
 \section{Downloading and Running the System}
 
 You can download a pre-packaged jar-file of the current version of GAPT
-at~\url{http://www.logic.at/gapt/downloads}. After having downloaded
-the gapt-cli zip-file you will find a shellscript \texttt{cli.sh}.
+at~\url{http://www.logic.at/gapt/downloads}. After extracting 
+the gapt-cli zip-file, you will find a shell script \texttt{cli.sh}.
 
 Running this script
 \begin{lstlisting}[mathescape=false]
  ./cli.sh
 \end{lstlisting}
-will start the command-line interface of GAPT.
+will start the command line interface of GAPT.
 
-The command-line interface of GAPT runs in an interactive Scala-shell. This
-has the consequence that all functionality of Scala is available to you. In
-particular it is easy to write Scala-scripts that use the functionality of GAPT.
+The command line interface of GAPT runs in an interactive Scala shell. This
+means that all functionality of Scala is available to you. In
+particular it is easy to write Scala scripts that use the functionality of GAPT.
 
 Here are some useful things you should know about the Scala shell.
 
-If you want to assign the result of a method to a variable, use: 
-\texttt{var v = method(args)}. Otherwise, the system will create a variable by 
-itself. You can see it's name and type before the description, like this:
+Scala uses both mutable and immutable variables. They are instantiated
+with the keywords \texttt{var} and \texttt{val}, respectively.
+
+If you want to assign the result of an expression to a variable, use
+\texttt{var v = expr}. If you just write the expression, the system will 
+automatically assign its value to a new variable.
+You can see its name and type before the description, like this:
 
 With a variable name:
 
@@ -193,15 +197,67 @@ gapt> 12
 res12: Int = 12
 \end{lstlisting}
 
-To see the value of a variable, just type it’s name and press enter.
+To see the value and type of a variable, just type its name and press enter.
 
-The elements of a list in Scala are indexed using parenthesis. So if \texttt{lst} 
-is a list, the first element is obtained by \texttt{lst(0)}. It is also possible 
-to use the methods \texttt{lst.head} (for the first element) and \texttt{lst.tail} 
-(for the rest of the list).
+Linked lists are implemented as the \texttt{List} type. The empty list is called \texttt{Nil}.
+Lists are constructed like this:
+\begin{lstlisting}
+gapt> List(1,2,3,4)
+res0: List[Int] = List(1, 2, 3, 4)
+\end{lstlisting}
 
-The elements of a tuple \texttt{t} of size $n$ are accessed by the methods 
-\texttt{t.\_1}, \texttt{t.\_2}, … , \texttt{t.\_n}.
+The ``cons'' operator \texttt{::} adds an item to the front of a list:
+\begin{lstlisting}
+gapt> 0 :: List(1,2,3,4)
+res1: List[Int] = List(0, 1, 2, 3, 4)
+\end{lstlisting}
+
+You can use the \texttt{head} and \texttt{tail} methods to return the first
+element and everything but the first element, respectively:
+
+\begin{lstlisting}
+gapt> val l = List(1,2,3)
+l: List[Int] = List(1, 2, 3)
+
+gapt> l.head
+res0: Int = 1
+
+gapt> l.tail
+res1: List[Int] = List(2, 3)
+\end{lstlisting}
+
+It is also possible to refer to an element of a list directly by its index. Indices are
+written in parentheses and begin at 0.
+
+\begin{lstlisting}
+ gapt> l(1)
+res3: Int = 2
+
+gapt> l(3)
+java.lang.IndexOutOfBoundsException: 3
+\end{lstlisting}
+
+Unlike lists, tuples have a fixed length: While, for example, a list of integers may contain
+any number of elements, a pair of integers always contains exactly two. Tuples are created
+by enclosing their contents in parentheses:
+
+\begin{lstlisting}
+gapt> val t = (1, 2, "hello")
+t: (Int, Int, String) = (1,2,hello)
+\end{lstlisting}
+
+As you can see, the type of t is \texttt{(Int, Int, String)}, indicating that it contains
+exactly three elements, of which the first two are integers and the last is a string.
+
+The $i$-th element of a tuple is accessed with the method \texttt{\_i}, like this:
+
+\begin{lstlisting}
+gapt> t._1
+res0: Int = 1
+
+gapt> t._3
+res1: String = hello
+\end{lstlisting}
 
 To quit the interactive shell, just type \texttt{:quit} and press enter.
 
@@ -213,12 +269,12 @@ proofs.
 \end{meta}
 
 This method \texttt{XMLProofDatabaseParser} will take as an argument a string that represents the path of a file
-containing a proofdatabase in the xml format (generated by HLK for example), and
+containing a proof database in the xml format (generated by HLK, for example) and
 will return a proof database containing a list 
 of pairs. It expects a file (the string of a proof will not work) and you can use 
-the relative path. On the list returned, each pair is composed of a string and 
+the relative path. In the list returned, each pair is composed of a string and 
 an object representing a proof within the system. The string is the name of the 
-proof defined on the xml file. For example:
+proof defined in the xml file. For example:
 %
 \begin{lstlisting}
 gapt> val proofs = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs
@@ -243,7 +299,7 @@ and the proof itself by
 gapt> val proof = proofs(0)._2
 \end{lstlisting}
 %
-You can then view this proof in the graphical user interface prooftool by 
+You can then view this proof in the graphical user interface \texttt{prooftool} by 
 entering
 %
 \begin{lstlisting}
@@ -478,7 +534,7 @@ in various ways and for viewing them in a comfortable way in the graphical user 
 An expansion tree contains the instances of the quantifiers for a formula. In order
 to represent an LK-proof we use {\em expansion sequents}, i.e.~sequents of expansion trees.
 
-Suppose we are in the command-line interface and have a value \cli{p} which is a cut-free \cli{LKProof}.
+Suppose we are in the command line interface and have a value \cli{p} which is a cut-free \cli{LKProof}.
 We can then extract the expansion sequent of \cli{p} by:
 \begin{lstlisting}
 gapt> val E = extractExpansionSequent( p )

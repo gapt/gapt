@@ -320,7 +320,7 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
 
 }
 
-object ContractionLeftRule extends RuleConvenienceObject( "ContractionLeftRule" ) {
+object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule" ) {
   /**
    * Convenience constructor for c:l that, given a formula to contract on the left, will automatically pick the first two occurrences of that formula.
    *
@@ -368,7 +368,7 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
 
 }
 
-object ContractionRightRule extends RuleConvenienceObject( "ContractionRightRule" ) {
+object ContractionRightRule extends ConvenienceConstructor( "ContractionRightRule" ) {
   /**
    * Convenience constructor for c:r that, given a formula to contract on the right, will automatically pick the first two occurrences of that formula.
    *
@@ -456,7 +456,7 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
   override def mainFormulaSequent = Sequent()
 }
 
-object CutRule extends RuleConvenienceObject( "CutRule" ) {
+object CutRule extends ConvenienceConstructor( "CutRule" ) {
 
   /**
    * Convenience constructor for cut.
@@ -523,7 +523,7 @@ case class NegLeftRule( subProof: LKProof, aux: SequentIndex )
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object NegLeftRule extends RuleConvenienceObject( "NegLeftRule" ) {
+object NegLeftRule extends ConvenienceConstructor( "NegLeftRule" ) {
   /**
    * Convenience constructor that automatically uses the first occurrence of supplied aux formula.
    *
@@ -564,7 +564,7 @@ case class NegRightRule( subProof: LKProof, aux: SequentIndex )
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object NegRightRule extends RuleConvenienceObject( "NegRightRule" ) {
+object NegRightRule extends ConvenienceConstructor( "NegRightRule" ) {
   /**
    * Convenience constructor that automatically uses the first occurrence of supplied aux formula.
    *
@@ -609,7 +609,7 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
+object AndLeftRule extends ConvenienceConstructor( "AndLeftRule" ) {
 
   /**
    * Convenience constructor for ∧:l.
@@ -674,7 +674,7 @@ case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProo
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
+object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
 
   /**
    * Convenience constructor for ∧:r.
@@ -742,7 +742,7 @@ case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof:
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object OrLeftRule extends RuleConvenienceObject( "OrLeftRule" ) {
+object OrLeftRule extends ConvenienceConstructor( "OrLeftRule" ) {
 
   /**
    * Convenience constructor for ∨:l.
@@ -807,7 +807,7 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
+object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
 
   /**
    * Convenience constructor for ∨:r.
@@ -871,7 +871,7 @@ case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object ImpLeftRule extends RuleConvenienceObject( "ImpLeftRule" ) {
+object ImpLeftRule extends ConvenienceConstructor( "ImpLeftRule" ) {
 
   /**
    * Convenience constructor for →:l.
@@ -936,7 +936,7 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
+object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
 
   /**
    * Convenience constructor for →:r.
@@ -1000,7 +1000,7 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, 
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object ForallLeftRule extends RuleConvenienceObject( "ForallLeftRule" ) {
+object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
   /**
    * Convenience constructor for ∀:l that, given a main formula and a term, will try to construct an inference with that instantiation.
    *
@@ -1075,7 +1075,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object ForallRightRule extends RuleConvenienceObject( "ForallRightRule" ) {
+object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
 
   /**
    * Convenience constructor for ∀:r that, given a main formula and an eigenvariable, will try to construct an inference with that instantiation.
@@ -1147,7 +1147,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object ExistsLeftRule extends RuleConvenienceObject( "ExistsLeftRule" ) {
+object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
 
   /**
    * Convenience constructor for ∃:l that, given a main formula and an eigenvariable, will try to construct an inference with that instantiation.
@@ -1214,7 +1214,7 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula,
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object ExistsRightRule extends RuleConvenienceObject( "ExistsRightRule" ) {
+object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
 
   /**
    * Convenience constructor for ∃:r that, given a main formula and a term, will try to construct an inference with that instantiation.
@@ -1343,7 +1343,7 @@ case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object EqualityLeftRule extends RuleConvenienceObject( "EqualityLeftRule" ) {
+object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
 
   /**
    * Convenience constructor for eq:l.
@@ -1458,7 +1458,7 @@ case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentI
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object EqualityRightRule extends RuleConvenienceObject( "EqualityRightRule" ) {
+object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
 
   /**
    * Convenience constructor for eq:r.
@@ -1622,7 +1622,7 @@ case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubPro
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object InductionRule extends RuleConvenienceObject( "InductionRule" ) {
+object InductionRule extends ConvenienceConstructor( "InductionRule" ) {
 
   /**
    * Convenience constructor for ind.
@@ -1670,7 +1670,7 @@ case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: HOLFo
   override def mainFormulaSequent = main +: Sequent()
 }
 
-object DefinitionLeftRule extends RuleConvenienceObject( "DefinitionLeftRule" ) {
+object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" ) {
 
   /**
    * Convenience constructor for d:l that, given an aux and main formula, will attempt to infer the main formula.
@@ -1711,7 +1711,7 @@ case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, main: HOLF
   override def mainFormulaSequent = Sequent() :+ main
 }
 
-object DefinitionRightRule extends RuleConvenienceObject( "DefinitionRightRule" ) {
+object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule" ) {
 
   /**
    * Convenience constructor for d:r that, given an aux and main formula, will attempt to infer the main formula.
@@ -1784,7 +1784,7 @@ object consoleString {
  *
  * @param longName The long name of the rule.
  */
-class RuleConvenienceObject( val longName: String ) {
+class ConvenienceConstructor( val longName: String ) {
   type IndexOrFormula = Either[SequentIndex, HOLFormula]
 
   /**
