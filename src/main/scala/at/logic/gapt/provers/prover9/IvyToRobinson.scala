@@ -5,6 +5,7 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.{ Clause, HOLClause, Suc, Ant }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
+import at.logic.gapt.utils.ResultChecker
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import scala.collection.mutable
 
@@ -33,8 +34,11 @@ object IvyToRobinson {
             q1, Suc( q1.conclusion.succedent indexOf parent1.conclusion( lit1 ) ),
             q2, Ant( q2.conclusion.antecedent indexOf parent2.conclusion( lit2 ) )
           )
-      case IPropositional( id, exp, clause, parent ) =>
+      case IPropositional( id, exp, clause, parent ) if clause isSubMultisetOf parent.conclusion =>
         Factor( convert( parent ), clause )._1
+      case IPropositional( id, exp, clause, parent ) =>
+        val Some( subst ) = StillmanSubsumptionAlgorithmFOL.subsumes_by( parent.conclusion, clause )
+        Factor( Instance( convert( parent ), subst ), clause )._1
       case Flip( id, exp, unflipped, clause, parent ) =>
         val q = convert( parent )
         val Eq( s: FOLTerm, t: FOLTerm ) = parent.conclusion( unflipped )
@@ -77,7 +81,9 @@ object IvyToRobinson {
       case NewSymbol( id, exp, lit, new_symbol, replacement_term, clause, parent ) =>
         // insert a new axiom, will be later removed
         InputClause( clause )
-    } )
+    } ) check { res =>
+      require( res.conclusion multiSetEquals p.conclusion )
+    }
 
     val proof = convert( ivy )
 
