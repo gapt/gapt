@@ -14,6 +14,7 @@ class AtomicExpansionTest extends Specification {
     val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
 
     "atom" in { test( p ) }
+    "equality" in { test( Eq( x, x ) ) }
     "top" in { test( Top() ) }
     "bottom" in { test( Bottom() ) }
     "neg" in { test( -p ) }
