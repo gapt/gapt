@@ -34,9 +34,7 @@ object moveStrongQuantifierRulesDown {
         )
         ( q, oc * p.occConnectors( 0 ).inv )
 
-      case LogicalAxiom( atom )     => ( p, OccConnector( p.endSequent ) )
-      case ReflexivityAxiom( term ) => ( p, OccConnector( p.endSequent ) )
-      case TheoryAxiom( sequent )   => ( p, OccConnector( p.endSequent ) )
+      case _: InitialSequent => ( p, OccConnector( p.endSequent ) )
 
       case p @ WeakeningLeftRule( subProof, formula ) =>
         val ( q1, oc ) = apply( subProof, p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ) )
