@@ -55,14 +55,10 @@ class DIMACSEncoding {
 }
 
 object readDIMACS {
-  def apply( dimacsOutput: String ): Option[DIMACS.Model] = {
-    val lines = dimacsOutput.split( "\n" )
-    if ( lines.nonEmpty && lines( 0 ) == "SAT" ) {
-      Some( lines.tail.flatMap( _.trim split " " ).takeWhile( _ != "0" ).map( _.toInt ) )
-    } else {
-      None
-    }
-  }
+  private val whitespace = """\s""".r
+
+  def apply( dimacsOutput: String ): DIMACS.Model =
+    whitespace split dimacsOutput.trim diff Seq( "SAT", "0", "" ) map { _.toInt }
 }
 
 object writeDIMACS {

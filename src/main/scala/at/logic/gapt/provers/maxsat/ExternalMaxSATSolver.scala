@@ -7,7 +7,7 @@ import at.logic.gapt.formats.dimacs.{ writeWDIMACS, readWDIMACS, DIMACS }
 import at.logic.gapt.utils.{ withTempFile, runProcess }
 import at.logic.gapt.utils.traits.ExternalProgram
 
-abstract class ExternalMaxSATSolver( val command: String* ) extends MaxSATSolver with ExternalProgram {
+class ExternalMaxSATSolver( val command: String* ) extends MaxSATSolver with ExternalProgram {
   protected def runProgram( dimacsInput: String ): String =
     withTempFile.fromString( dimacsInput ) { inFile =>
       runProcess.withExitValue( command :+ inFile )._2
