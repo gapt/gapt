@@ -145,8 +145,7 @@ Meta-comments about this user guide are printed like this.
 \section{System Requirements}
 \label{sec:sysreq}
 
-To run GAPT you need to have the Java runtime environment 1.6.0 or higher installed. We had
-problems with OpenJDK, but you can use it at your own risk.
+To run GAPT you need to have Java 7 (or higher) installed.
 
 GAPT contains interfaces to the following automated reasoning systems. Installing
 them is optional. If GAPT does not find the executables in the path, the
@@ -156,8 +155,14 @@ functionality of these systems will not be available.
 \item Prover9 (\url{http://www.cs.unm.edu/~mccune/mace4/download/}) - make sure
 the commands \texttt{prover9}, \texttt{prooftrans} and \texttt{tptp\_to\_ladr}
 are available.
+\item E theorem prover (\url{http://eprover.org/})
+\item LeanCoP (\url{http://leancop.de/})
 \item VeriT (\url{http://www.verit-solver.org/})
-\item Minisat (\url{http://minisat.se/})
+\item Z3 (\url{https://github.com/Z3Prover/z3})
+\item MiniSAT (\url{http://minisat.se/})
+\item Glucose (\url{http://www.labri.fr/perso/lsimon/glucose/})
+\item Sat4J (\url{http://sat4j.org/})
+\item OpenWBO (\url{http://sat.inesc-id.pt/open-wbo/})
 \end{itemize}
 
 \section{Downloading and Running the System}
@@ -397,7 +402,7 @@ gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 3))
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
 \begin{lstlisting}
-gapt> val m = miniSATsolve(Neg(PigeonHolePrinciple(3, 3))).get
+gapt> val Some(m) = MiniSAT.solve(Neg(PigeonHolePrinciple(3, 3)))
 \end{lstlisting}
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
 \begin{lstlisting}
