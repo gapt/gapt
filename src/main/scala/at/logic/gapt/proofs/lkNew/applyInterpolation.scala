@@ -192,28 +192,30 @@ object Interpolate {
         ( np, pp, ipl )
 
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+    }*/
 
     // propositional rules
 
-    case AndRightRule( p1, p2, s, a1, a2, m ) => {
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p1, npart, ppart )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
+    case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) => {
+      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p, npart, ppart )
+      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p, npart, ppart )
+      val formula1 = p.auxFormulas( 0 )( 0 )
+      val formula2 = p.auxFormulas( 1 )( 0 )
 
-      if ( npart.contains( m ) ) {
+      if ( npart.contains( p.mainIndices( 0 ) ) ) {
         val ipl = Or( up1_I, up2_I )
-        val np = OrRightRule( AndRightRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
-        val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
+        val np = OrRightRule( AndRightRule( up1_nproof, formula1, up2_nproof, formula2 ), up1_I, up2_I )
+        val pp = OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I )
 
         ( np, pp, ipl )
-      } else if ( ppart.contains( m ) ) {
+      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
         val ipl = And( up1_I, up2_I )
-        val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
-        val pp = AndLeftRule( AndRightRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
+        val np = AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I )
+        val pp = AndLeftRule( AndRightRule( up1_pproof, formula1, up2_pproof, formula2 ), up1_I, up2_I )
 
         ( np, pp, ipl )
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }*/
+    }
 
     case AndLeftRule( subProof, aux1, aux2 ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
@@ -225,24 +227,26 @@ object Interpolate {
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
-    /*case OrLeftRule( p1, p2, s, a1, a2, m ) => {
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p1, npart, ppart )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
+    case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) => {
+      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p, npart, ppart )
+      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p, npart, ppart )
+      val formula1 = p.auxFormulas( 0 )( 0 )
+      val formula2 = p.auxFormulas( 1 )( 0 )
 
-      if ( npart.contains( m ) ) {
+      if ( npart.contains( p.mainIndices( 0 ) ) ) {
         val ipl = Or( up1_I, up2_I )
-        val np = OrRightRule( OrLeftRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
-        val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
+        val np = OrRightRule( OrLeftRule( up1_nproof, formula1, up2_nproof, formula2 ), up1_I, up2_I )
+        val pp = OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I )
 
         ( np, pp, ipl )
-      } else if ( ppart.contains( m ) ) {
+      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
         val ipl = And( up1_I, up2_I )
-        val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
-        val pp = AndLeftRule( OrLeftRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
+        val np = AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I )
+        val pp = AndLeftRule( OrLeftRule( up1_pproof, formula1, up2_pproof, formula2 ), up1_I, up2_I )
 
         ( np, pp, ipl )
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }*/
+    }
 
     case OrRightRule( subProof, aux1, aux2 ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
@@ -433,26 +437,21 @@ object Interpolate {
     apply( p.immediateSubProofs( 0 ), up_npart, up_ppart )
   }
 
-  /*// TODO - is there a better way to get the ancestors of a set in the left or right subproof respectively?
-  private def applyUpBinaryLeft( p1: LKProof, npart: Set[SequentIndex], ppart: Set[SequentIndex] ) = {
-    val up_npart = npart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
-    val up_ppart = ppart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
-    val up1_npart = up_npart.filter( o => p1.root.antecedent.contains( o ) || p1.root.succedent.contains( o ) )
-    val up1_ppart = up_ppart.filter( o => p1.root.antecedent.contains( o ) || p1.root.succedent.contains( o ) )
+  private def applyUpBinaryLeft( p1: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
+    val up_npart = npart.flatMap { ind => p1.occConnectors( 0 ).parents( ind ) }
+    val up_ppart = ppart.flatMap { ind => p1.occConnectors( 0 ).parents( ind ) }
 
-    apply( p1, up1_npart, up1_ppart )
+    apply( p1.immediateSubProofs( 0 ), up_npart, up_ppart )
   }
 
-  private def applyUpBinaryRight( p2: LKProof, npart: Set[SequentIndex], ppart: Set[SequentIndex] ) = {
-    val up_npart = npart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
-    val up_ppart = ppart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
-    val up2_npart = up_npart.filter( o => p2.root.antecedent.contains( o ) || p2.root.succedent.contains( o ) )
-    val up2_ppart = up_ppart.filter( o => p2.root.antecedent.contains( o ) || p2.root.succedent.contains( o ) )
+  private def applyUpBinaryRight( p2: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
+    val up_npart = npart.flatMap { ind => p2.occConnectors( 1 ).parents( ind ) }
+    val up_ppart = ppart.flatMap { ind => p2.occConnectors( 1 ).parents( ind ) }
 
-    apply( p2, up2_npart, up2_ppart )
+    apply( p2.immediateSubProofs( 1 ), up_npart, up_ppart )
   }
 
-  private def applyUpEqualityLeft( p1: LKProof, a1: SequentIndex, npart: Set[SequentIndex], ppart: Set[SequentIndex], isRightRule: Boolean ) = {
+  /*private def applyUpEqualityLeft( p1: LKProof, a1: SequentIndex, npart: Set[SequentIndex], ppart: Set[SequentIndex], isRightRule: Boolean ) = {
     val up_npart = npart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
     val up_ppart = ppart.foldLeft( Set[SequentIndex]() )( ( s, o ) => s ++ o.parents )
     var up1_npart = up_npart.filter( o => p1.root.antecedent.contains( o ) || p1.root.succedent.contains( o ) )
