@@ -18,7 +18,7 @@ import at.logic.gapt.proofs.lkNew
 import at.logic.gapt.proofs.lkNew.{ lkNew2Old, lkOld2New }
 import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.provers.prover9._
-import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.ceres.clauseSets.profile._
 import at.logic.gapt.proofs.ceres.projections.Projections
@@ -36,7 +36,7 @@ import java.util.zip.GZIPInputStream
 import org.specs2.mutable._
 
 class PrimeProofTest extends Specification {
-  def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
+  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   def sequentToString( s: OccSequent ) = {
     var ret = ""
@@ -145,15 +145,13 @@ class PrimeProofTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
-      val veriT = new VeriTProver()
-
       if ( false ) { // run this code as soon as issue 260 is fixed:
-        if ( veriT.isInstalled ) {
+        if ( VeriT.isInstalled ) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
           val definitionFreeProof = eliminateDefinitions( proof ) // can't extract ETs in the presence of definitions currently
           val etSeq = LKToExpansionProof( definitionFreeProof )
           val fSequent = toDeep( etSeq )
-          veriT.isValid( fSequent ) must beTrue
+          VeriT.isValid( fSequent ) must beTrue
         }
       }
 
@@ -182,11 +180,11 @@ class PrimeProofTest extends Specification {
       val prf_cs_intersect = prf.filter( seq => cs.contains( seq ) )
 
       if ( refute ) {
-        new Prover9Prover().getRobinsonProof( prf ) match {
+        Prover9.getRobinsonProof( prf ) match {
           case None      => "" must beEqualTo( "refutation of proof profile failed" )
           case Some( _ ) => true must beEqualTo( true )
         }
-        new Prover9Prover().getRobinsonProof( cs ) match {
+        Prover9.getRobinsonProof( cs ) match {
           case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
           case Some( _ ) => true must beEqualTo( true )
         }
@@ -232,8 +230,8 @@ class PrimeProofTest extends Specification {
 
       val prf_cs_intersect = prf.filter( seq => cs.contains( seq ) )
 
-      //new Prover9Prover().getRobinsonProof( cs ) must beEqualTo( true )
-      //new Prover9Prover().getRobinsonProof( prf ) must beEqualTo( true )
+      //Prover9.getRobinsonProof( cs ) must beEqualTo( true )
+      //Prover9.getRobinsonProof( prf ) must beEqualTo( true )
 
       saveXML(
         Tuple2( "euclid-" + n + "-sk", proof_sk ) ::

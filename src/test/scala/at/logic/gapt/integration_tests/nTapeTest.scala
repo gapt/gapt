@@ -26,7 +26,7 @@ import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETS
 import org.specs2.mutable._
 
 class nTapeTest extends Specification with ClasspathFileCopier {
-  def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
+  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   def show( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
   def show_detail( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
@@ -160,7 +160,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     folcl.map( x => show_detail( x.toString ) )
 
     show( "Refuting clause set" )
-    new Prover9Prover().getRobinsonProof( folcl ) match {
+    Prover9.getRobinsonProof( folcl ) match {
       case None =>
         Some( "could not refute clause set" )
       case Some( rp ) =>

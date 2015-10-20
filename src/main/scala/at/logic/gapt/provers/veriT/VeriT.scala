@@ -10,7 +10,8 @@ import java.io._
 import at.logic.gapt.provers._
 import at.logic.gapt.expr._
 
-class VeriTProver extends Prover with ExternalProgram {
+object VeriT extends VeriT
+class VeriT extends Prover with ExternalProgram {
 
   override def isValid( s: HOLSequent ): Boolean = {
 

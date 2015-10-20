@@ -6,6 +6,7 @@ import at.logic.gapt.provers.sat.Sat4j
 import org.sat4j.maxsat.WeightedMaxSatDecorator
 import org.sat4j.specs.ContradictionException
 
+object MaxSat4j extends MaxSat4j
 class MaxSat4j extends MaxSATSolver {
   import Sat4j._
 

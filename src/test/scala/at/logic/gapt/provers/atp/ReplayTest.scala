@@ -16,7 +16,7 @@ import at.logic.gapt.proofs.{ FOLClause, HOLSequent }
 import at.logic.gapt.provers.atp.commands.Prover9InitCommand
 import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
 import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 
 class ReplayTest extends Specification {
@@ -33,12 +33,12 @@ class ReplayTest extends Specification {
 
   def getRefutation2( ls: Iterable[HOLSequent] ) = MyProver.refute( Stream( SetTargetClause( HOLSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next
 
-  args( skipAll = !new Prover9Prover().isInstalled )
+  args( skipAll = !Prover9.isInstalled )
   "replay" should {
     /*"prove (with para) SKKx = Ix : { :- f(a,x) = x; :- f(f(f(b,x),y),z) = f(f(x,z), f(y,z)); :- f(f(c,x),y) = x; f(f(f(b,c),c),x) = f(a,x) :- }" in {
 
       //checks, if the execution of prover9 works, o.w. skip test
-      new Prover9Prover().getRobinsonProof(box ) must not(throwA[IOException]).orSkip
+      Prover9.getRobinsonProof(box ) must not(throwA[IOException]).orSkip
 
 
       val i = parse("=(f(a,x),x)")
@@ -194,7 +194,7 @@ class ReplayTest extends Specification {
       val p = FOLAtom( "P", Nil )
       val s1 = FOLClause( Nil, p :: Nil )
       val s2 = FOLClause( p :: Nil, Nil )
-      val result = new Prover9Prover().getRobinsonProof( s1 :: s2 :: Nil )
+      val result = Prover9.getRobinsonProof( s1 :: s2 :: Nil )
       result match {
         case Some( proof ) =>
           //println(Formatter.asHumanReadableString(proof))

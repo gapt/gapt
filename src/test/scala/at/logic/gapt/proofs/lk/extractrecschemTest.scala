@@ -11,9 +11,9 @@ import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.veriT.VeriT
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
 
@@ -61,7 +61,7 @@ class ExtractRecSchemTest extends Specification {
   }
 
   "pi2 pigeonhole" in {
-    val p9 = new Prover9Prover
+    val p9 = Prover9
     if ( !p9.isInstalled ) skipped
 
     val p = Pi2Pigeonhole()
@@ -78,7 +78,7 @@ class ExtractRecSchemTest extends Specification {
 
     val recSchem = extractRecSchem( proof )
 
-    val p9 = new Prover9Prover
+    val p9 = Prover9
     if ( !p9.isInstalled ) skipped
 
     val lang = recSchem.parametricLanguage( FOLConst( "n_0" ) ).map( _.asInstanceOf[HOLFormula] )
@@ -182,7 +182,7 @@ class Pi2FactorialPOC extends Specification {
   }
 
   "languages should be tautologies" in {
-    val verit = new VeriTProver
+    val verit = VeriT
     Fragment.foreach( 0 to 7 ) { i =>
       s"n = $i" in {
         if ( !verit.isInstalled ) skipped

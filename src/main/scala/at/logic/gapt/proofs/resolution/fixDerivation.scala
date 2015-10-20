@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.resolutionOld
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Suc }
 import at.logic.gapt.provers.atp.SearchDerivation
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.immutable.HashMap
@@ -157,10 +157,9 @@ object fixDerivation extends Logger {
     }
   }
 
-  private val prover9 = new Prover9Prover
   def tryDeriveViaResolution( to: HOLClause, from: Seq[HOLClause] ) =
-    if ( prover9 isInstalled )
-      findDerivationViaResolution( to, from.map { seq => HOLClause( seq.antecedent, seq.succedent ) }.toSet )
+    if ( Prover9 isInstalled )
+      findDerivationViaResolution( to, from.map { seq => HOLClause( seq.antecedent, seq.succedent ) }.toSet, Prover9 )
     else
       None
 
@@ -230,7 +229,7 @@ object findDerivationViaResolution {
    * @param prover Prover to obtain a resolution refutation of the consequence bs |= a from.
    * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
    */
-  def apply( a: HOLClause, bs: Set[HOLClause], prover: ResolutionProver = new Prover9Prover ): Option[ResolutionProof] = {
+  def apply( a: HOLClause, bs: Set[HOLClause], prover: ResolutionProver = Prover9 ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
       ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet

@@ -10,8 +10,8 @@ import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lkNew.{ lkOld2New, LKProof }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
-import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.utils.logging.Logger
 
 trait SolutionFinder {
@@ -20,11 +20,11 @@ trait SolutionFinder {
 
 class SipProver(
   solutionFinder:            SolutionFinder = new HeuristicSolutionFinder( 1 ),
-  instanceProver:            Prover         = new Prover9Prover(),
+  instanceProver:            Prover         = Prover9,
   instances:                 Seq[Int]       = 0 until 3,
   testInstances:             Seq[Int]       = 0 until 15,
   minimizeInstanceLanguages: Boolean        = false,
-  quasiTautProver:           Prover         = new VeriTProver,
+  quasiTautProver:           Prover         = VeriT,
   maxSATSolver:              MaxSATSolver   = bestAvailableMaxSatSolver
 )
     extends Prover with Logger {

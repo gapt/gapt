@@ -9,7 +9,8 @@ import at.logic.gapt.provers.{ renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.{ runProcess, withTempFile }
 
-class Z3Prover extends Prover with ExternalProgram {
+object Z3 extends Z3
+class Z3 extends Prover with ExternalProgram {
   val nLine = sys.props( "line.separator" )
   val unsat = "unsat" + nLine
   val sat = "sat" + nLine

@@ -1,13 +1,13 @@
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkNew.LKProof
 import at.logic.gapt.proofs.{HOLSequent, Sequent}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.inductionProver._
 import SimpleInductionProof._
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import org.apache.log4j.{Logger, Level}
 
 for (n <- Seq(classOf[SipProver].getName, FindFormulaH.getClass.getName))
@@ -18,13 +18,11 @@ val factorialES = ( ( ( "s(0) = f(0)" +: "s(x)*f(x) = f(s(x))" +: "g(x,0) = x" +
 val theory = ( "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula map univclosure.apply
 
 val modThProver = new Prover {
-  val p9 = new Prover9Prover
-
   override def getLKProof(seq: HOLSequent): Option[LKProof] =
-    p9.getLKProof(theory ++ seq)
+    Prover9.getLKProof(theory ++ seq)
 
   override def isValid(seq: HOLSequent): Boolean =
-    p9.isValid(theory ++ seq)
+    Prover9.isValid(theory ++ seq)
 }
 
 object patchingSolFinder extends SolutionFinder {

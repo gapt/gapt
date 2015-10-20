@@ -4,8 +4,8 @@ import at.logic.gapt.proofs.Clause
 import at.logic.gapt.proofs.expansionTrees.toDeep
 import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
-import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.veriT.VeriT
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
 
@@ -14,9 +14,6 @@ import scala.io.Source
 class TptpProofParserTest extends Specification {
 
   def load( fn: String ): String = Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( fn ) ).mkString
-
-  val p9 = new Prover9Prover
-  val veriT = new VeriTProver
 
   Fragments.foreach( Seq(
     "RNG103+2_E---1.9.THM-CRf.s",
@@ -29,9 +26,9 @@ class TptpProofParserTest extends Specification {
       val ( endSequent, sketch ) = TptpProofParser.parse( load( fn ) )
       sketch.conclusion must_== Clause()
 
-      if ( !p9.isInstalled || !veriT.isInstalled ) skipped
+      if ( !Prover9.isInstalled || !VeriT.isInstalled ) skipped
 
-      val Some( robinson ) = RefutationSketchToRobinson( sketch, p9 )
+      val Some( robinson ) = RefutationSketchToRobinson( sketch, Prover9 )
       robinson.conclusion must_== Clause()
 
       // not converting that one to LK because it takes too long
@@ -39,7 +36,7 @@ class TptpProofParserTest extends Specification {
         RobinsonToLK( robinson, endSequent )
 
       val expansion = RobinsonToExpansionProof( robinson, endSequent )
-      veriT.isValid( toDeep( expansion ) ) must_== true
+      VeriT.isValid( toDeep( expansion ) ) must_== true
     }
   }
 }

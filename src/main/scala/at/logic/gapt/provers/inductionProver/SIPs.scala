@@ -9,8 +9,8 @@ import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, ForgetfulResolve }
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
@@ -96,7 +96,7 @@ class SimpleInductionProof(
    * @return True if the induction formula is in fact a solution.
    */
   def isSolved( prover: Prover ): Boolean = prover.isValid( Sequent0 ) && prover.isValid( Sequent1 ) && prover.isValid( Sequent2 )
-  def isSolved: Boolean = isSolved( new VeriTProver )
+  def isSolved: Boolean = isSolved( VeriT )
 
   /**
    * TODO: Find a better name for this
@@ -189,7 +189,7 @@ class SimpleInductionProof(
    *
    * @return The LKProof represented by this object
    */
-  def toLKProof: LKProof = toLKProof( new Prover9Prover )
+  def toLKProof: LKProof = toLKProof( Prover9 )
 
   /**
    * Computes the nth instance proof. Uses prover9 to compute the subproofs.
@@ -197,7 +197,7 @@ class SimpleInductionProof(
    * @param n A natural number
    * @return The nth instance of this sip.
    */
-  def toInstanceLKProof( n: Int, rename: Boolean ): LKProof = toInstanceLKProof( n, new Prover9Prover(), rename )
+  def toInstanceLKProof( n: Int, rename: Boolean ): LKProof = toInstanceLKProof( n, Prover9, rename )
 
   /**
    * Computes the nth instance proof,
@@ -394,7 +394,7 @@ object findConseq extends Logger {
     }
   }
 
-  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false, prover: Prover = new VeriTProver ): Set[CNF] =
+  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false, prover: Prover = VeriT ): Set[CNF] =
     apply( S, n, CNFp.toClauseList( A ), M, forgetClauses, prover )
 
   def ForgetOne( A: CNF ) = A.indices map { i =>
@@ -406,7 +406,7 @@ object findConseq extends Logger {
 object FindFormulaH extends Logger {
   import SimpleInductionProof._
 
-  def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false, prover: Prover = new VeriTProver ): Option[FOLFormula] = {
+  def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false, prover: Prover = VeriT ): Option[FOLFormula] = {
     val CSn = canonicalSolution( S, n )
     apply( CSn, S, n, forgetClauses, prover )
   }
@@ -435,7 +435,7 @@ object FindFormulaH extends Logger {
   }
 }
 
-class HeuristicSolutionFinder( n: Int, forgetClauses: Boolean = false, prover: Prover = new VeriTProver ) extends SolutionFinder {
+class HeuristicSolutionFinder( n: Int, forgetClauses: Boolean = false, prover: Prover = VeriT ) extends SolutionFinder {
   override def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula] =
     FindFormulaH( schematicSIP, n, forgetClauses, prover )
 }

@@ -59,7 +59,7 @@ object testCutIntro extends App {
     case "many_dtable" => DeltaTableMethod( manyQuantifiers = true )
     case _ if methodName endsWith "_maxsat" =>
       val vectorSizes = methodName.dropRight( "_maxsat".length ).split( "_" ).map( _.toInt )
-      MaxSATMethod( new OpenWBO, vectorSizes: _* )
+      MaxSATMethod( OpenWBO, vectorSizes: _* )
   }
 
   lazy val proofs =

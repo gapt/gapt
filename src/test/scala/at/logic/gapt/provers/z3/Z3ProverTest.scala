@@ -11,39 +11,37 @@ import org.specs2.mutable._
 
 class Z3ProverTest extends Specification {
 
-  val z3 = new Z3Prover()
-
-  args( skipAll = !z3.isInstalled )
+  args( skipAll = !Z3.isInstalled )
 
   "z3" should {
     "prove a v not a" in {
       val a = FOLAtom( "a" )
-      z3.isValid( Or( a, Neg( a ) ) ) must_== true
+      Z3.isValid( Or( a, Neg( a ) ) ) must_== true
     }
 
     "a |- a" in {
       val a = FOLAtom( "a" )
-      z3.isValid( a +: HOLSequent() :+ a ) must_== true
+      Z3.isValid( a +: HOLSequent() :+ a ) must_== true
     }
 
     "prove top" in {
-      z3.isValid( HOLSequent() :+ Top() ) must_== true
+      Z3.isValid( HOLSequent() :+ Top() ) must_== true
     }
 
     "not prove bottom" in {
-      z3.isValid( HOLSequent() :+ Bottom() ) must_== false
+      Z3.isValid( HOLSequent() :+ Bottom() ) must_== false
     }
 
     "not refute top" in {
-      z3.isValid( Top() +: HOLSequent() ) must_== false
+      Z3.isValid( Top() +: HOLSequent() ) must_== false
     }
 
     "refute bottom" in {
-      z3.isValid( Bottom() +: HOLSequent() ) must_== true
+      Z3.isValid( Bottom() +: HOLSequent() ) must_== true
     }
 
     "validate the buss tautology for n=1" in {
-      z3.isValid( BussTautology( 1 ) ) must_== true
+      Z3.isValid( BussTautology( 1 ) ) must_== true
     }
   }
 }

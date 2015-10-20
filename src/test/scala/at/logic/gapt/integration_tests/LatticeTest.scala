@@ -23,7 +23,7 @@ import java.util.zip.GZIPInputStream
 import org.specs2.mutable._
 
 class LatticeTest extends Specification {
-  def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
+  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   def sequentToString( s: OccSequent ) = {
     var ret = ""
@@ -53,7 +53,7 @@ class LatticeTest extends Specification {
       val proof_sk = at.logic.gapt.proofs.lkNew.LKToLKsk( proof )
       val s = extractStructFromLKsk( proof_sk )
       val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent.asInstanceOf[HOLClause] ) )
-      new Prover9Prover().getRobinsonProof( cs ) must beSome
+      Prover9.getRobinsonProof( cs ) must beSome
     }
 
     "parse and skolemize the lattice proof" in {
@@ -83,11 +83,11 @@ class LatticeTest extends Specification {
       val prf_cs_intersect = prf.filter( seq => cs.contains( seq ) )
 
       // refute it with prover9
-      new Prover9Prover().getRobinsonProof( prf ) match {
+      Prover9.getRobinsonProof( prf ) match {
         case None      => "" must beEqualTo( "refutation of proof profile failed" )
         case Some( _ ) => true must beEqualTo( true )
       }
-      new Prover9Prover().getRobinsonProof( cs ) match {
+      Prover9.getRobinsonProof( cs ) match {
         case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
         case Some( _ ) => true must beEqualTo( true )
       }

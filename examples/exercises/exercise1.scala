@@ -1,11 +1,3 @@
-// setup
-import at.logic.gapt.examples._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol._
-import at.logic.gapt.expr.fol.TseitinCNF
-import at.logic.gapt.provers.minisat.MiniSATProver
-val minisat = new MiniSATProver
-
 println( """
 * Exercise A
  Get the formula φ_3 from Example 2.1 of the course notes by:
@@ -37,8 +29,8 @@ println( """
   gapt> PigeonHolePrinciple( n, n-1 )
 
   Apply minisat to these by:
-  gapt> minisat.isValid( PigeonHolePrinciple( 5, 4 ))
-  gapt> minisat.isValid( BussTautology( 5 ))
+  gapt> MiniSAT.isValid( PigeonHolePrinciple( 5, 4 ))
+  gapt> MiniSAT.isValid( BussTautology( 5 ))
 
  * What are (approximately) the largest n s.t. minisat finishes on the respective tautology within 5 seconds?
 

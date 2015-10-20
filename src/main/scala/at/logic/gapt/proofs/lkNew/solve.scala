@@ -980,7 +980,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   }
 }
 
-class LKProver extends Prover {
+object LKProver extends Prover {
   def getLKProof( seq: HOLSequent ): Option[LKProof] = solve.solvePropositional( seq )
 }
 

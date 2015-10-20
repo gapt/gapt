@@ -8,12 +8,13 @@ import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ HOLClause, FOLClause }
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.{ runProcess, withTempFile }
 
-class EProverProver extends ResolutionProver with ExternalProgram {
-  val backgroundProver = new Prover9Prover
+object EProver extends EProver
+class EProver extends ResolutionProver with ExternalProgram {
+  val backgroundProver = Prover9
 
   override def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( seq ) {

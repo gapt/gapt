@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.proofs._
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 
 class FixDerivationTest extends Specification {
@@ -115,7 +115,7 @@ class FixDerivationTest extends Specification {
 
   "findDerivationViaResolution" should {
     def check( a: HOLClause, bs: Set[HOLClause] ) = {
-      if ( !new Prover9Prover().isInstalled ) skipped
+      if ( !Prover9.isInstalled ) skipped
       findDerivationViaResolution( a, bs ) must beLike {
         case Some( p ) =>
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true

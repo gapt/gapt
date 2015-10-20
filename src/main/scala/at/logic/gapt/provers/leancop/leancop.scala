@@ -13,7 +13,8 @@ import at.logic.gapt.provers.Prover
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.{ runProcess, withTempFile }
 
-class LeanCoPProver extends Prover with ExternalProgram {
+object LeanCoP extends LeanCoP
+class LeanCoP extends Prover with ExternalProgram {
   val nLine = sys.props( "line.separator" )
 
   override def isValid( s: HOLSequent ): Boolean =

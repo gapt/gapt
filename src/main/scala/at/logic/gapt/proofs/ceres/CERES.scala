@@ -9,7 +9,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolutionOld.RichOccClause
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
 
 import at.logic.gapt.proofs.ceres.projections.Projections
@@ -43,7 +43,7 @@ class CERESR2LK {
 
     val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( p, pred ) )
 
-    new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLClause ) ) match {
+    Prover9.getRobinsonProof( tapecl.map( _.toHOLClause ) ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         apply( es, proj, rp )
@@ -88,7 +88,7 @@ class CERES {
 
     val tapecl = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( p, pred ) )
     val refl = refProjection( es )
-    new Prover9Prover().getRobinsonProof( tapecl.map( _.toHOLClause ) ) match {
+    Prover9.getRobinsonProof( tapecl.map( _.toHOLClause ) ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         val lkproof = RobinsonToLK( rp )

@@ -43,7 +43,7 @@ class SipProverTest extends Specification {
     tautP.isValid( sip.Sequent1 ) must_== true
     tautP.isValid( sip.Sequent2 ) must_== true
 
-    sip.toLKProof( new LKProver )
+    sip.toLKProof( LKProver )
 
     ok
   }

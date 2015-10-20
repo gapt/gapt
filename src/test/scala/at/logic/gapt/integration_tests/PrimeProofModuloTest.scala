@@ -37,7 +37,7 @@ import org.specs2.mutable._
 
 class PrimeProofTest extends Specification {
   val box = List()
-  def checkForProverOrSkip = new Prover9Prover().getRobinsonProof(box) must not(throwA[IOException]).orSkip
+  def checkForProverOrSkip = Prover9.getRobinsonProof(box) must not(throwA[IOException]).orSkip
 
   def sequentToString( s: Sequent ) = {
     var ret = ""
@@ -110,11 +110,11 @@ class PrimeProofTest extends Specification {
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
 
       if (refute) {
-        new Prover9Prover().getRobinsonProof( prf ) match {
+        Prover9.getRobinsonProof( prf ) match {
           case None => "" must beEqualTo("refutation of proof profile failed")
           case Some(_) => true must beEqualTo(true)
         }
-        new Prover9Prover().getRobinsonProof( cs ) match {
+        Prover9.getRobinsonProof( cs ) match {
           case None => "" must beEqualTo("refutation of struct cs in tptp format failed")
           case Some(_) => true must beEqualTo(true)
         }
@@ -161,8 +161,8 @@ class PrimeProofTest extends Specification {
       val prf_cs_intersect = prf.filter(seq => cs.contains(seq))
 
 
-      //new Prover9Prover().getRobinsonProof( cs ) must beEqualTo( true )
-      //new Prover9Prover().getRobinsonProof( prf ) must beEqualTo( true )
+      //Prover9.getRobinsonProof( cs ) must beEqualTo( true )
+      //Prover9.getRobinsonProof( prf ) must beEqualTo( true )
 
       saveXML( Tuple2("euclid-" + n + "-sk", proof_sk) ::
         projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),

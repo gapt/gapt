@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.lk.{ regularize => lkRegularize }
 import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 
 import org.specs2.mutable._
 
@@ -29,7 +29,7 @@ class LKToLKskTest extends Specification {
   }
 
   "pigeonhole" in {
-    if ( !new Prover9Prover().isInstalled ) skipped
+    if ( !Prover9.isInstalled ) skipped
 
     LKToLKsk( Pi2Pigeonhole() )
     ok

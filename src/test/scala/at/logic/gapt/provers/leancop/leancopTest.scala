@@ -8,30 +8,27 @@ import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import org.specs2.mutable._
 
 class LeanCoPProverTest extends Specification {
-
-  val leanCoP = new LeanCoPProver()
-
-  args( skipAll = !leanCoP.isInstalled )
+  args( skipAll = !LeanCoP.isInstalled )
 
   "LeanCoP" should {
     "LEM" in {
       val a = FOLAtom( "a" )
       val f = Or( a, Neg( a ) )
-      leanCoP.isValid( f ) must beTrue
+      LeanCoP.isValid( f ) must beTrue
     }
 
     "a |- a" in {
       val a = FOLAtom( "a" )
       val s = HOLSequent( Seq( a ), Seq( a ) )
 
-      leanCoP.getExpansionSequent( s ) must beSome
+      LeanCoP.getExpansionSequent( s ) must beSome
     }
 
     "forall x, P(x) |- P(0)" in {
       val f = All( FOLVar( "x" ), FOLAtom( "P", FOLVar( "x" ) ) )
       val g = FOLAtom( "P", FOLConst( "0" ) )
 
-      leanCoP.getExpansionSequent( HOLSequent( Seq( f ), Seq( g ) ) ) must beSome
+      LeanCoP.getExpansionSequent( HOLSequent( Seq( f ), Seq( g ) ) ) must beSome
     }
 
     "x + 0 = x, x + s(y) = s(x+y) |- x + s(0) = s(x)" in {
@@ -40,12 +37,12 @@ class LeanCoPProverTest extends Specification {
         Seq( parseFormula( "k+s(0) = s(k)" ) )
       )
 
-      leanCoP.getExpansionSequent( seq ) must beSome
+      LeanCoP.getExpansionSequent( seq ) must beSome
     }
 
     "P,P->Q |- Q" in {
       val seq = HOLSequent( Seq( FOLAtom( "P" ), Imp( FOLAtom( "P" ), FOLAtom( "Q" ) ) ), Seq( FOLAtom( "Q" ) ) )
-      leanCoP.getExpansionSequent( seq ) must beSome
+      LeanCoP.getExpansionSequent( seq ) must beSome
     }
 
     //    "validate the buss tautology for n=1" in { leanCoP.isValid( BussTautology( 1 ) ) must beTrue }

@@ -10,17 +10,8 @@ import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT._
 
-class EquationalProver extends Prover {
-
-  // Use prover9 to get LK proof and veriT for validity check.
-
-  override def isValid( s: HOLSequent ): Boolean = {
-    val p = new VeriTProver()
-    p.isValid( s )
-  }
-
-  override def getLKProof( s: HOLSequent ) = {
-    val p = new Prover9Prover()
-    p.getLKProof( s )
-  }
+/** Use prover9 to get LK proof and veriT for validity check. */
+object EquationalProver extends Prover {
+  override def isValid( s: HOLSequent ): Boolean = VeriT isValid s
+  override def getLKProof( s: HOLSequent ) = Prover9 getLKProof s
 }

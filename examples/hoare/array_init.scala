@@ -1,11 +1,10 @@
 import at.logic.gapt.expr.{FOLAtom, Neg}
 import at.logic.gapt.formats.hoare.ProgramParser
-import at.logic.gapt.formats.simple.SimpleFOLParser
 import at.logic.gapt.proofs.expansionTrees.{compressQuantifiers, METWeakQuantifier}
 import at.logic.gapt.proofs.hoare.{ForLoop, SimpleLoopProblem}
-import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.proofs.lkNew.LKToExpansionProof
+import at.logic.gapt.provers.prover9.Prover9
 
 val p = ProgramParser.parseProgram("for y < z do x := set(x, s(y), get(x, y)) od")
 val f = parseFormula("k <= z -> get(x,k) = get(x,0)")
@@ -27,7 +26,7 @@ println(slp.pi)
 
 val instanceSeq = slp.instanceSequent(1)
 println(instanceSeq)
-val proof = Prover9Prover.getLKProof(instanceSeq).get
+val proof = Prover9.getLKProof(instanceSeq).get
 
 val expansionSequent = compressQuantifiers(LKToExpansionProof(proof))
 expansionSequent.antecedent.foreach {

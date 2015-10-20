@@ -18,8 +18,8 @@ import at.logic.gapt.utils.runProcess
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
-object Prover9Prover extends Prover9Prover( extraCommands = _ => Seq() )
-class Prover9Prover( val extraCommands: ( Map[Const, Const] => Seq[String] ) = ( _ => Seq() ) ) extends ResolutionProver with ExternalProgram {
+object Prover9 extends Prover9( extraCommands = _ => Seq() )
+class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Seq() ) extends ResolutionProver with ExternalProgram {
   def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( cnf ) {
       case ( renaming, cnf ) =>
@@ -45,22 +45,6 @@ class Prover9Prover( val extraCommands: ( Map[Const, Const] => Seq[String] ) = (
 
     IvyToRobinson( ivyProof )
   }
-
-  @deprecated( "Use Prover9Importer.robinsonProof instead", "2015-08-25" )
-  def reconstructRobinsonProofFromFile( p9File: String ): ResolutionProof =
-    Prover9Importer robinsonProofFromFile p9File
-
-  @deprecated( "Use Prover9Importer.robinsonProof instead", "2015-08-25" )
-  def reconstructRobinsonProofFromOutput( p9Output: String ): ResolutionProof =
-    Prover9Importer robinsonProof p9Output
-
-  @deprecated( "Use Prover9Importer.lkProof instead", "2015-08-25" )
-  def reconstructLKProofFromFile( p9File: String ): LKProof =
-    Prover9Importer lkProofFromFile p9File
-
-  @deprecated( "Use Prover9Importer.lkProof instead", "2015-08-25" )
-  def reconstructLKProofFromOutput( p9Output: String ): LKProof =
-    Prover9Importer lkProof p9Output
 
   private def toP9Input( cnf: List[HOLClause], renaming: Map[Const, Const] ): String = {
     val commands = ArrayBuffer[String]()
@@ -100,8 +84,7 @@ class Prover9Prover( val extraCommands: ( Map[Const, Const] => Seq[String] ) = (
 }
 
 object Prover9Importer extends ExternalProgram {
-  private val p9 = new Prover9Prover
-  override val isInstalled: Boolean = p9.isInstalled
+  override val isInstalled: Boolean = Prover9 isInstalled
 
   def robinsonProofFromFile( p9File: String ): ResolutionProof =
     robinsonProof( Source fromFile p9File mkString )
@@ -110,7 +93,7 @@ object Prover9Importer extends ExternalProgram {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
     val fixedP9Output = runProcess( Seq( "prooftrans" ), p9Output )
 
-    p9 parseProof fixedP9Output
+    Prover9 parseProof fixedP9Output
   }
 
   def robinsonProofWithReconstructedEndSequentFromFile( p9File: String ): ( ResolutionProof, HOLSequent ) =

@@ -13,7 +13,7 @@ import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.{ metrics, Logger }
 
 class CutIntroException( msg: String ) extends Exception( msg )
@@ -209,13 +209,10 @@ object CutIntroduction extends Logger {
 
   def compressToEHS( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[ExtendedHerbrandSequent] = {
 
-    val prover = hasEquality match {
-      case true  => new EquationalProver()
-      case false => new BasicProver()
-    }
+    val prover = if ( hasEquality ) EquationalProver else BasicProver
 
     val herbrandSequent = extractInstances( ep )
-    val Some( herbrandSequentResolutionProof ) = new Prover9Prover().getRobinsonProof( herbrandSequent )
+    val Some( herbrandSequentResolutionProof ) = Prover9.getRobinsonProof( herbrandSequent )
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
     metrics.value( "hs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
@@ -288,7 +285,7 @@ object CutIntroduction extends Logger {
       }
 
       val ehsSequent = minimizedEHS.getDeep
-      val Some( ehsResolutionProof ) = new Prover9Prover().getRobinsonProof( ehsSequent )
+      val Some( ehsResolutionProof ) = Prover9.getRobinsonProof( ehsSequent )
       metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
       metrics.value( "ehs_scomp", expressionSize( ehsSequent.toFormula ) )
       metrics.value( "ehs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( ehsResolutionProof ) ) )
@@ -301,10 +298,7 @@ object CutIntroduction extends Logger {
   }
 
   def constructLKProof( ehs: ExtendedHerbrandSequent, hasEquality: Boolean, verbose: Boolean = false ): LKProof = {
-    val prover = hasEquality match {
-      case true  => new EquationalProver()
-      case false => new BasicProver()
-    }
+    val prover = if ( hasEquality ) EquationalProver else BasicProver
 
     val Some( proofWithStructuralRules ) = metrics.time( "prcons" ) {
       buildProofWithCut( ehs, prover )

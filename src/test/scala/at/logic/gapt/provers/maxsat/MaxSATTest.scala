@@ -9,6 +9,7 @@ import at.logic.gapt.proofs.HOLClause
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
+import org.specs2.specification.core.Fragment
 
 class MaxSATTest extends Specification {
   val box: List[HOLClause] = List()
@@ -51,51 +52,21 @@ class MaxSATTest extends Specification {
     }
   }
 
-  def check( model: Option[Interpretation] ) = model match {
-    case Some( model ) => if ( model.interpret( SimpleMaxSATFormula.x2 ) == true &&
-      model.interpret( SimpleMaxSATFormula.x1 ) == false &&
-      model.interpret( SimpleMaxSATFormula.x3 ) == false ) true
-    else false
-    case None => false
+  def check( model: Option[Interpretation] ) = model must beLike {
+    case Some( model ) =>
+      model.interpret( SimpleMaxSATFormula.x2 ) must_== true
+      model.interpret( SimpleMaxSATFormula.x1 ) must_== false
+      model.interpret( SimpleMaxSATFormula.x3 ) must_== false
   }
 
-  "QMaxSAT" should {
+  Fragment.foreach( Seq( QMaxSAT, ToySAT, ToySolver, MiniMaxSAT, MiFuMaX, OpenWBO ) ) { p =>
+    p.getClass.getSimpleName should {
+      "deal correctly with a simple instance" in {
+        if ( !p.isInstalled ) skipped
 
-    "deal correctly with a simple instance" in {
-      if ( !new QMaxSAT().isInstalled ) skipped( "qmaxsat not installed" )
-
-      val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new QMaxSAT() ).solve( hard, soft ) ) must beTrue
-    }
-  }
-
-  "ToySAT" should {
-
-    "deal correctly with a simple instance" in {
-      if ( !new ToySAT().isInstalled ) skipped( "toysat not installed" )
-
-      val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new ToySAT() ).solve( hard, soft ) ) must beTrue
-    }
-  }
-
-  "ToySolver" should {
-
-    "deal correctly with a simple instance" in {
-      if ( !new ToySolver().isInstalled ) skipped( "toysolver not installed" )
-
-      val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new ToySolver() ).solve( hard, soft ) ) must beTrue
-    }
-  }
-
-  "MiniMaxSAT" should {
-
-    "deal correctly with a simple instance" in {
-      if ( !new MiniMaxSAT().isInstalled ) skipped( "minimaxsat not installed" )
-
-      val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new MiniMaxSAT() ).solve( hard, soft ) ) must beTrue
+        val ( hard, soft ) = SimpleMaxSATFormula()
+        check( p.solve( hard, soft ) )
+      }
     }
   }
 
@@ -103,7 +74,7 @@ class MaxSATTest extends Specification {
 
     "deal correctly with a simple instance" in {
       val ( hard, soft ) = SimpleMaxSATFormula()
-      check( ( new MaxSat4j() ).solve( hard, soft ) ) must beTrue
+      check( MaxSat4j.solve( hard, soft ) )
     }
   }
 }

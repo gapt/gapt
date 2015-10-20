@@ -12,14 +12,12 @@ import org.specs2.mutable._
 import scala.io.Source
 
 class Prover9Test extends Specification {
-  val prover9 = new Prover9Prover
-
-  args( skipAll = !new Prover9Prover().isInstalled )
+  args( skipAll = !Prover9.isInstalled )
   "The Prover9 interface" should {
     "prove identity" in {
       val k = FOLConst( "k" )
       val s = HOLSequent( Seq(), Seq( Eq( k, k ) ) )
-      prover9.getLKProof( s ) must beLike {
+      Prover9.getLKProof( s ) must beLike {
         case Some( p ) => p.endSequent must beSyntacticFSequentEqual( s )
       }
     }
@@ -27,7 +25,7 @@ class Prover9Test extends Specification {
     "prove { A or B :- -(-A and -B)  }" in {
       val Seq( a, b ) = Seq( "A", "B" ).map( FOLAtom( _ ) )
       val s = HOLSequent( Seq( Or( a, b ) ), Seq( Neg( And( Neg( a ), Neg( b ) ) ) ) )
-      prover9.getLKProof( s ) must beLike {
+      Prover9.getLKProof( s ) must beLike {
         case Some( p ) => p.endSequent must_== s
       }
     }
@@ -37,31 +35,31 @@ class Prover9Test extends Specification {
         Seq( "0+x=x", "s(x)+y=s(x+y)" ).map( s => univclosure( parseFormula( s ) ) ),
         Seq( parseFormula( "s(0)+s(s(0)) = s(s(s(0)))" ) )
       )
-      prover9.getLKProof( seq ) must beLike {
+      Prover9.getLKProof( seq ) must beLike {
         case Some( p ) => p.endSequent must beSyntacticFSequentEqual( seq )
       }
     }
 
-    "prove top" in { prover9.getLKProof( HOLSequent( Seq(), Seq( Top() ) ) ) must beSome }
-    "not prove bottom" in { prover9.getLKProof( HOLSequent( Seq(), Seq( Bottom() ) ) ) must beNone }
-    "not refute top" in { prover9.getLKProof( HOLSequent( Seq( Top() ), Seq() ) ) must beNone }
-    "refute bottom" in { prover9.getLKProof( HOLSequent( Seq( Bottom() ), Seq() ) ) must beSome }
+    "prove top" in { Prover9.getLKProof( HOLSequent( Seq(), Seq( Top() ) ) ) must beSome }
+    "not prove bottom" in { Prover9.getLKProof( HOLSequent( Seq(), Seq( Bottom() ) ) ) must beNone }
+    "not refute top" in { Prover9.getLKProof( HOLSequent( Seq( Top() ), Seq() ) ) must beNone }
+    "refute bottom" in { Prover9.getLKProof( HOLSequent( Seq( Bottom() ), Seq() ) ) must beSome }
 
     "ground sequents" in {
       val seq = HOLSequent( Seq( parseFormula( "x=y" ) ), Seq( parseFormula( "y=x" ) ) )
-      prover9.getLKProof( seq ) must beLike {
+      Prover9.getLKProof( seq ) must beLike {
         case Some( p ) => p.endSequent must beSyntacticFSequentEqual( seq )
       }
     }
 
     "treat variables in sequents as constants" in {
       val seq = "P(x)" +: Sequent() :+ "P(c)" map parseFormula
-      prover9.getExpansionSequent( seq ) must beNone
+      Prover9.getExpansionSequent( seq ) must beNone
     }
 
     "handle exit code 2" in {
       val cnf = List( HOLClause( Seq(), Seq() ), HOLClause( Seq( FOLAtom( "a" ) ), Seq() ) )
-      prover9.getRobinsonProof( cnf ) must beLike {
+      Prover9.getRobinsonProof( cnf ) must beLike {
         case Some( p ) => inputClauses( p ) must contain( atMost( cnf.toSet ) )
       }
     }

@@ -3,7 +3,7 @@ package at.logic.gapt.grammars
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.provers.maxsat.{ QMaxSAT, MaxSATSolver }
+import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, QMaxSAT, MaxSATSolver }
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
@@ -182,7 +182,7 @@ class RecSchemGenLangFormula(
 object minimizeRecursionScheme extends Logger {
   def apply( recSchem: RecursionScheme, targets: Traversable[( FOLTerm, FOLTerm )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
-             solver:       MaxSATSolver      = new QMaxSAT ) = {
+             solver:       MaxSATSolver      = bestAvailableMaxSatSolver ) = {
     val formula = new RecSchemGenLangFormula( recSchem, targetFilter )
     val hard = formula( targets )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
