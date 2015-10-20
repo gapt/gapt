@@ -10,7 +10,6 @@ lazy val commonSettings = Seq(
   version := "1.11-SNAPSHOT",
 
   scalaVersion := "2.11.7",
-  scalacOptions in (Compile, doc) ++= Seq("-diagrams", "-implicits"),
   scalacOptions in Compile ++= Seq("-deprecation"),
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test),
@@ -33,6 +32,15 @@ lazy val root = (project in file(".")).
   settings(
     name := "gapt",
     description := "General Architecture for Proofs",
+
+    scalacOptions in (Compile, doc) ++= Seq(
+      "-doc-title", "gapt",
+      "-doc-version", version.value,
+      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
+      "-sourcepath", baseDirectory.value.getAbsolutePath,
+      "-diagrams",
+      "-implicits"
+    ),
 
     mainClass := Some("at.logic.cli.CLIMain"),
 
