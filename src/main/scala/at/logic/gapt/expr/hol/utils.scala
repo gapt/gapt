@@ -5,7 +5,8 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.proofs.{ Sequent, HOLSequent, FOLClause }
 
 /**
  * Returns true iff the given LambdaExpression consists of a logical constant.
@@ -374,6 +375,29 @@ object instantiate {
   def apply( f: FOLFormula, t: FOLTerm ): FOLFormula = apply( f.asInstanceOf[HOLFormula], t.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
   def apply( f: FOLFormula, ts: Seq[FOLTerm] ): FOLFormula = apply( f.asInstanceOf[HOLFormula], ts.asInstanceOf[Seq[LambdaExpression]] ).asInstanceOf[FOLFormula]
   def apply( f: FOLFormula, tss: Seq[Seq[FOLTerm]] ): Seq[FOLFormula] = apply( f.asInstanceOf[HOLFormula], tss.asInstanceOf[Seq[Seq[FOLTerm]]] ).asInstanceOf[Seq[FOLFormula]]
+
+  /**
+   * Compute all clauses obtainable from substituting terms from the given set for variables in the given clause.
+   */
+  def apply( cl: FOLClause, ts: Set[FOLTerm] ): Set[FOLClause] = {
+    val vars = freeVariables( cl )
+    val mappings = vars.foldLeft( Set( Map[FOLVar, FOLTerm]() ) )( ( ms, x ) => {
+      for { m <- ms; t <- ts } yield m + ( x -> t )
+    } )
+    mappings.map( m => { FOLSubstitution( m )( cl ) } ).asInstanceOf[Set[FOLClause]] //TODO: get rid of this cast (see issue 425)
+  }
+
+  /**
+   * Compute all clauses obtainable from substituting terms from the given set for variables in one of the given clauses.
+   */
+  def apply( cls: Set[FOLClause], ts: Set[FOLTerm] ): Set[FOLClause] = {
+    cls.flatMap( apply( _, ts ) )
+  }
+
+  /**
+   * Compute all clauses obtainable from substituting terms from the given set for variables in one of the given clauses.
+   */
+  def apply( cls: List[FOLClause], ts: Set[FOLTerm] ): List[FOLClause] = apply( cls.toSet, ts ).toList
 }
 
 object normalizeFreeVariables {

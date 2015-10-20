@@ -2,17 +2,17 @@ package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ toNNF, simplify }
-import at.logic.gapt.proofs.HOLClause
+import at.logic.gapt.proofs.FOLClause
 import scala.annotation.tailrec
 import scala.collection.mutable
 
 object TseitinCNF {
   /**
-   * Generates from a formula f a List of FClauses in CNF by using Tseitin's Transformation
+   * Generates from a formula f a List of clauses in CNF by using Tseitin's Transformation
    * @param f formula which should be transformed
    * @return CNF satisfiability-equivalent to f
    */
-  def apply( f: FOLFormula ): List[HOLClause] = {
+  def apply( f: FOLFormula ): List[FOLClause] = {
     val tseitin = new TseitinCNF()
 
     simplify( toNNF( f ) ) match {
@@ -47,12 +47,12 @@ class TseitinCNF {
     case _                  => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
   }
 
-  def apply( f: FOLFormula ): List[HOLClause] = {
+  def apply( f: FOLFormula ): List[FOLClause] = {
     fsyms = getAtomSymbols( f ) toSet
 
     // processFormula and transform it via Tseitin-Transformation
     val pf = processFormula( f )
-    pf._2 :+ HOLClause( List(), List( pf._1 ) )
+    pf._2 :+ FOLClause( List(), List( pf._1 ) )
   }
 
   /**
@@ -90,22 +90,22 @@ class TseitinCNF {
    * @return a Tuple2, where 1st is the prop. variable representing f and 2nd is a clause
    *         containing all the equivalences required for the representation of f by 1st.
    */
-  def processFormula( f: FOLFormula ): Tuple2[FOLFormula, List[HOLClause]] = f match {
+  def processFormula( f: FOLFormula ): Tuple2[FOLFormula, List[FOLClause]] = f match {
     case FOLAtom( _, _ ) => ( f, List() )
 
     case Top() =>
       val x = addIfNotExists( f )
-      ( x, List( HOLClause( List(), List( x ) ) ) )
+      ( x, List( FOLClause( List(), List( x ) ) ) )
     case Bottom() =>
       val x = addIfNotExists( f )
-      ( x, List( HOLClause( List( x ), List() ) ) )
+      ( x, List( FOLClause( List( x ), List() ) ) )
 
     case Neg( f2 ) =>
       val pf = processFormula( f2 )
       val x = addIfNotExists( f )
       val x1 = pf._1
-      val c1 = HOLClause( List( x, x1 ), List() )
-      val c2 = HOLClause( List(), List( x, x1 ) )
+      val c1 = FOLClause( List( x, x1 ), List() )
+      val c2 = FOLClause( List(), List( x, x1 ) )
       ( x, pf._2 ++ List( c1, c2 ) )
 
     case And( f1, f2 ) =>
@@ -114,9 +114,9 @@ class TseitinCNF {
       val x = addIfNotExists( f )
       val x1 = pf1._1
       val x2 = pf2._1
-      val c1 = HOLClause( List( x ), List( x1 ) )
-      val c2 = HOLClause( List( x ), List( x2 ) )
-      val c3 = HOLClause( List( x1, x2 ), List( x ) )
+      val c1 = FOLClause( List( x ), List( x1 ) )
+      val c2 = FOLClause( List( x ), List( x2 ) )
+      val c3 = FOLClause( List( x1, x2 ), List( x ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
     case Or( f1, f2 ) =>
@@ -125,9 +125,9 @@ class TseitinCNF {
       val x = addIfNotExists( f )
       val x1 = pf1._1
       val x2 = pf2._1
-      val c1 = HOLClause( List( x1 ), List( x ) )
-      val c2 = HOLClause( List( x2 ), List( x ) )
-      val c3 = HOLClause( List( x ), List( x1, x2 ) )
+      val c1 = FOLClause( List( x1 ), List( x ) )
+      val c2 = FOLClause( List( x2 ), List( x ) )
+      val c3 = FOLClause( List( x ), List( x1, x2 ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
     case Imp( f1, f2 ) =>
@@ -136,9 +136,9 @@ class TseitinCNF {
       val x = addIfNotExists( f )
       val x1 = pf1._1
       val x2 = pf2._1
-      val c1 = HOLClause( List(), List( x, x1 ) )
-      val c2 = HOLClause( List( x2 ), List( x ) )
-      val c3 = HOLClause( List( x, x1 ), List( x2 ) )
+      val c1 = FOLClause( List(), List( x, x1 ) )
+      val c2 = FOLClause( List( x2 ), List( x ) )
+      val c3 = FOLClause( List( x, x1 ), List( x2 ) )
       ( x, pf1._2 ++ pf2._2 ++ List( c1, c2, c3 ) )
 
     case _ => throw new IllegalArgumentException( "Formula not supported in Tseitin transformation: " + f.toString )

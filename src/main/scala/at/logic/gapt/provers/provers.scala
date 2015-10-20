@@ -25,7 +25,7 @@ trait Prover {
   def isValid( formula: HOLFormula ): Boolean = isValid( HOLSequent( Nil, formula :: Nil ) )
 
   /**
-   * @param seq The formula whose validity should be checked.
+   * @param seq The sequent whose validity should be checked.
    * @return True if the formula is valid.
    */
   def isValid( seq: HOLSequent ): Boolean = getLKProof( seq ) match {

@@ -465,6 +465,9 @@ object FOLClause {
     Clause( elements )
   }
 
+  /**
+   * transforms a list of clauses into the corresponding conjunction of disjunctions of literals.
+   */
   def CNFtoFormula( cls: List[FOLClause] ): FOLFormula =
     {
       val nonEmptyClauses = cls.filter( c => c.negative.length > 0 || c.positive.length > 0 ).toList

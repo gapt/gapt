@@ -1,12 +1,11 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ FOLClause, HOLSequent }
 import at.logic.gapt.proofs.lk.base._
 
 /*
  * Creates the n-th formula of a sequence where distributivity-based
  * algorithm produces only exponential CNFs.
- *
  */
 object PQPairs {
   def apply( n: Int ): FOLFormula = {
@@ -22,12 +21,44 @@ object PQPairs {
 }
 
 /*
+ * Given n >= 2 creates an unsatisfiable first-order clause set based on a
+ * statement about the permutations in S_n.
+ */
+object Permutations {
+  def apply( n: Int ): List[FOLClause] = {
+    assert( n >= 2 )
+    val Rord = FOLAtom( "R", List.range( 1, n + 1 ).map( x( _ ) ) )
+    val Rtransp = FOLAtom( "R", x( 2 ) :: x( 1 ) :: List.range( 3, n + 1 ).map( x( _ ) ) )
+    val Rrot = FOLAtom( "R", x( n ) :: List.range( 1, n ).map( x( _ ) ) )
+
+    val Rord_c = FOLAtom( "R", List.range( 1, n + 1 ).map( c( _ ) ) )
+    val even = List.range( 2, n + 1 ).sliding( 1, 2 ).flatten.toList
+    val odd = List.range( 1, n + 1 ).sliding( 1, 2 ).flatten.toList
+    val Revenodd_c = FOLAtom( "R", ( odd ++ even ).map( c( _ ) ) )
+
+    val Ctransp = FOLClause( Rord :: Nil, Rtransp :: Nil )
+    val Crot = FOLClause( Rord :: Nil, Rrot :: Nil )
+    val Goalpos = FOLClause( Nil, Rord_c :: Nil )
+    val Goalneg = FOLClause( Revenodd_c :: Nil, Nil )
+
+    Ctransp :: Crot :: Goalpos :: Goalneg :: Nil
+  }
+
+  /*
+   * return the set of constants which occur in the n-th clause set
+   */
+  def constants( n: Int ): Set[FOLTerm] = List.range( 1, n + 1 ).map( c( _ ) ).toSet
+
+  private def x( i: Int ) = FOLVar( "x_" + i )
+  private def c( i: Int ) = FOLConst( "c_" + i )
+}
+
+/*
  * Creates the n-th tautology of a sequence that has only exponential-size cut-free proofs
  *
  * This sequence is taken from: S. Buss. "Weak Formal Systems and Connections to
  * Computational Complexity". Lecture Notes for a Topics Course, UC Berkeley, 1988,
  * available from: http://www.math.ucsd.edu/~sbuss/ResearchWeb/index.html
- *
  */
 object BussTautology {
   def apply( n: Int ): HOLSequent = HOLSequent( Ant( n ), c( n ) :: d( n ) :: Nil )
@@ -49,7 +80,6 @@ object BussTautology {
  * is a tautology iff p > h.
  *
  * Since we want to avoid empty disjunctions, we assume > 1 pigeons.
- *
  */
 object PigeonHolePrinciple {
   // The binary relation symbol.
