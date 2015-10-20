@@ -34,8 +34,11 @@
 % 
 % activate meta-comments only when working on the user manual
 %
-%\newenvironment{meta}{\color{red}}{\color{black}} % display meta-comments
-\excludecomment{meta} % do not display meta-comments
+\newenvironment{meta}{\color{red}}{\color{black}} % display meta-comments
+%\excludecomment{meta} % do not display meta-comments
+%
+% import package for fixme notes
+\usepackage[draft]{fixme}
 
 \definecolor{LightGray}{rgb}{0.9,0.9,0.9}
 \lstset{
@@ -74,7 +77,7 @@
 
 \vspace*{5mm}
 
-{\huge Generic Architecture for Proof Transformations}
+{\huge General Architecture for Proof Theory}
 
 \vspace*{20mm}
 
@@ -86,17 +89,17 @@
 
 \vspace*{20mm}
 
-{\Large
-% Whenever you contribute for this manual, include your name here
-% (alphabetically by last name) :)
-Stefan Hetzl - \texttt{stefan.hetzl@tuwien.ac.at}\\
-Bernhard Mallinger - \texttt{bernhard@logic.at}\\
-Giselle Reis - \texttt{giselle@logic.at}\\
-Janos Tapolczai - \texttt{e0825077@student.tuwien.ac.at}\\
-Daniel Weller - \texttt{weller@logic.at}
-}
+% {\Large
+% % Whenever you contribute for this manual, include your name here
+% % (alphabetically by last name) :)
+% Stefan Hetzl - \texttt{stefan.hetzl@tuwien.ac.at}\\
+% Bernhard Mallinger - \texttt{bernhard@logic.at}\\
+% Giselle Reis - \texttt{giselle@logic.at}\\
+% Janos Tapolczai - \texttt{e0825077@student.tuwien.ac.at}\\
+% Daniel Weller - \texttt{weller@logic.at}
+% }
 
-\vspace*{20mm}
+\vspace*{60mm}
 
 \hrule
 \end{center}
@@ -261,6 +264,8 @@ res1: String = hello
 
 To quit the interactive shell, just type \texttt{:quit} and press enter.
 
+\fxnote{TODO: explain help command}
+
 \section{File Input/Output}\label{sec.fileio}
 
 \begin{meta}
@@ -280,7 +285,7 @@ proof defined in the xml file. For example:
 gapt> val proofs = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs
 \end{lstlisting}
 %
-returns a list of length 1 as shown by entering
+returns a list of length 1 as shown by entering\fxnote{does not work}
 %
 \begin{lstlisting}
 gapt> proofs.length
@@ -310,7 +315,29 @@ In the folder \cli{../examples/simple} you can find a number of further simple
 examples that illustrate different aspects of GAPT.
 
 
-The command \texttt{saveXML} Exports several proofs to an XML file. The first argument is the list of proofs,
+The command \texttt{saveXML} exports several proofs to an XML file.\fxnote{Fails (see latex comment)}
+% 
+% 
+% scala> val p = LinearExampleProof( 3 )
+% p: at.logic.gapt.proofs.lkNew.LKProof =
+% [p14] ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(0))))    (ContractionLeftRule(p13, Ant(0), Ant(2)))
+% [p13] ∀x.(P(x)⊃P(s(x))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ForallLeftRule(p12, Ant(0), (P(x)⊃P(s(x))), 0, x))
+% [p12] (P(0)⊃P(s(0))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ImpLeftRule(p11, Suc(0), p10, Ant(1)))
+% [p11] P(0) :- P(0)    (LogicalAxiom(P(0)))
+% [p10] ∀x.(P(x)⊃P(s(x))), P(s(0)) :- P(s(s(s(0))))    (ContractionLeftRule(p9, Ant(0), Ant(2)))
+% [p9] ∀x.(P(x)⊃P(s(x))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ForallLeftRule(p8, Ant(0), (P(x)⊃P(s(x))), s(0), x))
+% [p8] (P(s(0))⊃P(s(s(0)))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ImpLeftRule(p7, Suc(0), p6, Ant(1)))
+% [p7] P(s(0)) :- P(s(0))    (LogicalAxiom(P(s(0))))
+% [p6] ∀x.(P(...
+% scala> saveXML( p::Nil, "first proof"::Nil, "result.xml" )
+% <console>:102: error: overloaded method value apply with alternatives:
+%   (proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)],sequentlists: List[(String, List[at.logic.gapt.proofs.HOLSequent])],filename: String)Unit <and>
+%   (ls: List[at.logic.gapt.proofs.lk.base.LKProof],names: List[String],outputFile: String)(implicit dummyImplicit: DummyImplicit)Unit
+%  cannot be applied to (List[at.logic.gapt.proofs.lkNew.LKProof], List[String], String)
+%        saveXML( p::Nil, "first proof"::Nil, "result.xml" )
+% 
+% 
+The first argument is the list of proofs,
 the second is the list of the names of the proofs and the third is the name of
 the file that will be written. The file path can also be specified and it's
 relative to where the program is being executed.
@@ -340,13 +367,9 @@ gapt> val I = HLKHOLParser.parseFormula ( "var P:o>i>o; const f:o>i; var x:o; va
 
 Please refere to Appendix~\ref{app:formulasyntax} for a full description of the languages the parsers accept.
 
-\begin{meta}
-TODO: add the other parsers
-\end{meta}
-
-A collection of formula sequences can be found in the file \cli{examples/FormulaSequence.scala}.
+A collection of formula sequences can be found in the file \cli{examples/FormulaSequences.scala}.
 Have a look at this code to see how to compose formulas without the parser.
-You can generate instances of these formula sequences by entering e.g.
+You can generate instances of these formula sequences by entering, e.g.,
 %
 \begin{lstlisting}
 gapt> val f = BussTautology( 5 )
@@ -356,7 +379,7 @@ gapt> val f = BussTautology( 5 )
 
 \section{Automated Deduction}
   
-\subsection{SAT Solving using MiniSAT}
+\subsection{SAT Solving}
 %
 The following shows an example session, using the MiniSAT solver
 to verify valdity and satisfiability, and query the thus obtained models.
@@ -366,12 +389,10 @@ iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
 \begin{lstlisting}
 gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 2))
-res12: Boolean = true
 \end{lstlisting}
 shows that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{lstlisting}
 gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 3))
-res13: Boolean = false
 \end{lstlisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
@@ -392,23 +413,32 @@ We can also interpret quantifier-free formulas:
 gapt> m.interpret( And(p1, p2) )
 \end{lstlisting}
 
-\subsection{SMT Solving using VeriT}
+\fxnote{explain how to use DIMACS export -- reader will ask: how can I use my favourite SAT solver}
 
+\subsection{SMT Solving}
 
-\subsection{First-Order Resolution Proving using Prover9}
+\fxnote{similar example as above for veriT}
 
-\subsection{Built-In Resolution Prover}
+\fxnote{explain how to use SMT-LIB export -- reader will ask: how can I use my favourite SMT-solver}
 
-GAPT contains a built-in resultion prover that can be called with the command:
-\texttt{refuteFOL: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
-and with the command
-\texttt{refuteFOLI: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
-for interactive mode.
+\subsection{First-Order Theorem Proving}
+
+\fxnote{similar example as in SAT-case for prover9}
+
+\fxnote{explain how to use TPTP export -- reader will ask: how can I use my favourite resolution theorem prover}
+
+% \subsection{Built-In Resolution Prover}
+% 
+% GAPT contains a built-in resultion prover that can be called with the command:
+% \texttt{refuteFOL: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
+% and with the command
+% \texttt{refuteFOLI: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
+% for interactive mode.
 
 \subsection{Built-In Tableaux Prover}
 
 GAPT contains a  built-in tableaux prover for propositional logic
-which can be called with the command \texttt{solve.solvePropositional}, for example as in:
+which can be called with the command \texttt{solve.solvePropositional}, for example as in\fxnote{do not use SimpleFOLParser}:
 \begin{lstlisting}
 gapt> solve.solvePropositional( SimpleFOLParser( "Imp A Imp B And A B" ))
 \end{lstlisting}
@@ -418,8 +448,9 @@ gapt> solve.solvePropositional( SimpleFOLParser( "Imp A Imp B And A B" ))
 There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
 of the inference rules. For example, continuing in the environment of
-Section~\ref{sec.entering_formulas}, suppose that we want to enter a
-proof of \texttt{F}. It is convenient to prepare the subformulas first.
+Section~\ref{sec.entering_formulas}\fxnote{sections should be self-contained,
+Section~\ref{sec.entering_formulas} does not contain $F$}, suppose that we want to enter a
+proof of \texttt{F}. It is convenient to prepare the subformulas first\fxnote{do not use SimpleFOLParser}.
 \begin{lstlisting}
 gapt> val F1 = SimpleFOLParser( "Imp B And A B" )
 gapt> val F2 = SimpleFOLParser( "And A B" )
@@ -435,8 +466,14 @@ gapt> val p2 = Axiom( B::Nil, B::Nil )
 \end{lstlisting}
 %
 These are joined by an $\land:\mathrm{right}$-inference. See Appendix~\ref{app:sequent_calculus}
-for the formal definition of the sequent calculus used in GAPT.
+for the formal definition of the sequent calculus used in GAPT\fxnote{fails, see latex comment}.
 %
+% scala> val p3 = AndRightRule( p1, p2, A, B )
+% <console>:104: error: overloaded method value apply with alternatives:
+%   (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux1: at.logic.gapt.proofs.SequentIndex,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux2: at.logic.gapt.proofs.SequentIndex)at.logic.gapt.proofs.lkNew.AndRightRule <and>
+%   (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,leftConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,rightConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula)at.logic.gapt.proofs.lkNew.AndRightRule
+%  cannot be applied to (at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.expr.FOLFormula, at.logic.gapt.expr.FOLFormula)
+%        val p3 = AndRightRule( p1, p2, A, B )
 \begin{lstlisting}
 gapt> val p3 = AndRightRule( p1, p2, A, B )
 \end{lstlisting}
@@ -457,10 +494,6 @@ The system comes with a collection of example proof sequences in the file
 \cli{examples/ProofSequences.scala} which are generated in the above style.
 Have a look at this code for more complicated proof constructions.
 
-\begin{meta}
-TODO: mention shlk! and llk -- at least: give a short example for each
-\end{meta}
-
 
 \section{Proof Theory}
 
@@ -474,7 +507,7 @@ with cuts (as in Section~\ref{sec.fileio}).
 gapt> val p = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs(0)._2
 \end{lstlisting}
 %
-and then call the cut-elimination procedure:
+and then call the cut-elimination procedure\fxnote{fails: command not found}:
 \begin{lstlisting}
 gapt> val q = ReductiveCutElim( p )
 \end{lstlisting}
@@ -520,10 +553,9 @@ in various ways and for viewing them in a comfortable way in the graphical user 
 
 An expansion tree contains the instances of the quantifiers for a formula. In order
 to represent an LK-proof we use {\em expansion sequents}, i.e.~sequents of expansion trees.
-
-Suppose we are in the command line interface and have a value \cli{p} which is a cut-free \cli{LKProof}.
-We can then extract the expansion sequent of \cli{p} by:
+We can obtain an expansion sequent for example by\fxnote{fails: extractExpansionSequent not found}:
 \begin{lstlisting}
+gapt> val p = SquareEdgesExampleProof( 4 )
 gapt> val E = extractExpansionSequent( p )
 \end{lstlisting}
 This expansion sequent can then be viewed in the graphical user interface by simply calling:
@@ -541,15 +573,14 @@ for a detailed description.
 \subsection{First-Order Logic}
 
 \begin{meta}
-The ceres-functionality should be demonstrated by an example
-session using StructCreators.extract, StandardClauseSet.transformStructToClauseSet, prover9 etc.
+The ceres-functionality should be demonstrated by an short example
 \end{meta}
-
 
 \subsection{Higher-Order Logic}
 
-
-\subsection{Schematic First-Order Logic}
+\begin{meta}
+TODO
+\end{meta}
 
 
 \section{Cut-Introduction}
@@ -563,12 +594,11 @@ and input them to the cut-introduction algorithm.
 
 Take an example proof:
 \begin{lstlisting}
-gapt> val p = LinearExampleProof(9)
+gapt> val p = LinearExampleProof( 9 )
 \end{lstlisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{lstlisting}
-gapt> val q = CutIntroduction.compressLKProof(p,
-  DeltaTableMethod(manyQuantifiers=false), verbose=true)
+gapt> val q = CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers=false ), verbose=true )
 \end{lstlisting}
 You can also try \texttt{DeltaTableMethod(manyQuantifiers=true)}, this will proceed as above but will
 compute a single cut with a block of quantifiers.  The method \texttt{MaxSATMethod(1,2)}
@@ -701,7 +731,9 @@ Quantifier complexity: 6
 This section defines the rule systems used in GAPT. The rules can be constructed
 via Scala-classes, which create the underlying data structure.
 
-\subsection{First-order LK}
+\subsection{LK}
+
+\fxnote{update sequent calculus to new LK, describe higher-order LK directly here}
 
 The rules of first-order LK are listed below. Proof trees are constructed top-down, starting with axioms and with each rule introducing new inferences. The constructing functions do perform sporadic checks, but in general, these do not guarantee well-formed proofs and the burden of correctness lies upon the programmer using them. Due to the top-down construction, quantification and equational rules are {\em especially} brittle and the programmer must himself take care to replace only the desired terms in a formula. Specifically, the programmer must supply the result of the replacement (the \texttt{main}-argument), which is accepted by the rule constructors without question.
 
@@ -921,8 +953,10 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
   \end{prooftree}
 
 
+\subsection{LKsk}
+  
 \begin{meta}
- TODO: what about LKsk? higher order LK?
+ TODO: give brief description of LKsk
 \end{meta}
 
 \section{The Resolution Calculus}
