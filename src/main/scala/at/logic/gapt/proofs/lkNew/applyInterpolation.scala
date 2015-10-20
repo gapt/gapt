@@ -287,17 +287,19 @@ object Interpolate {
 
         ( np, pp, ipl )
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+    }*/
 
-    case ImpRightRule( p, s, a1, a2, m ) => {
+    case ImpRightRule( subProof, aux1, aux2 ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
+      val formula1 = p.auxFormulas( 0 )( 0 )
+      val formula2 = p.auxFormulas( 0 )( 1 )
 
-      if ( npart.contains( m ) ) ( ImpRightRule( up_nproof, a1.formula, a2.formula ), up_pproof, up_I )
-      else if ( ppart.contains( m ) ) ( up_nproof, ImpRightRule( up_pproof, a1.formula, a2.formula ), up_I )
+      if ( npart.contains( p.mainIndices( 0 ) ) ) ( ImpRightRule( up_nproof, formula1, formula2 ), up_pproof, up_I )
+      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, ImpRightRule( up_pproof, formula1, formula2 ), up_I )
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
-    // equality rules
+    /*// equality rules
 
     case EquationRight1Rule( p1, p2, s, a1, a2, pos, m ) => {
       val a1F: FOLFormula = a1.formula.asInstanceOf[FOLFormula]

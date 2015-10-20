@@ -554,5 +554,57 @@ class LKNewInterpolationTest extends Specification {
       pproof.endSequent must beEqualTo( HOLSequent( q :: Top() :: p :: Nil, Or( p, q ) :: Nil ) )
       success
     }
+
+    "correctly create a proof containing ImpRight" in {
+      val proof = WeakeningLeftRule( ax, q )
+      val proof1 = ImpRightRule( proof, q, p )
+      val npart = proof1.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Bottom() )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, Bottom() :: Imp( q, p ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Bottom() :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ImpRight (another partition)" in {
+      val proof = WeakeningLeftRule( ax, q )
+      val proof1 = ImpRightRule( proof, q, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( p )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( p :: Nil, Imp( q, p ) :: Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ImpRight (yet another partition)" in {
+      val proof = WeakeningLeftRule( ax, q )
+      val proof1 = ImpRightRule( proof, q, p )
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Neg( p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Neg( p ) :: Imp( q, p ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Neg( p ) :: p :: Nil, Nil ) )
+      success
+    }
+
+    "correctly create a proof containing ImpRight (and another partition)" in {
+      val proof = WeakeningLeftRule( ax, q )
+      val proof1 = ImpRightRule( proof, q, p )
+      val npart = Seq[SequentIndex]()
+      val ppart = proof1.endSequent.indices
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Top() )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, Top() :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Top() :: p :: Nil, Imp( q, p ) :: Nil ) )
+      success
+    }
   }
 }
