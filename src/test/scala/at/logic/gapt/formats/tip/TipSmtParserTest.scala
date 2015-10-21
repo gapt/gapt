@@ -12,6 +12,13 @@ class TipSmtParserTest extends Specification {
 
   "bin_distrib.smt2" in {
     val problem = TipSmtParser( Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( "bin_distrib.smt2" ) ).mkString )
+    problem.toSequent
+    ok
+  }
+
+  "bin_distrib.smt2 instance validity" in {
+    if ( !Prover9.isInstalled ) skipped
+    val problem = TipSmtParser( Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( "bin_distrib.smt2" ) ).mkString )
     val one = Const( "One", Tdata( "Bin" ) )
     val oneAnd = Const( "OneAnd", Tdata( "Bin" ) -> Tdata( "Bin" ) )
     val instanceSequent = problem.toSequent.map( identity, instantiate( _, Seq( one, one, oneAnd( oneAnd( one ) ) ) ) )
