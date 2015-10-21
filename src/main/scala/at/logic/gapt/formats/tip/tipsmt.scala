@@ -3,8 +3,10 @@ package at.logic.gapt.formats.tip
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.formats.lisp._
+import at.logic.gapt.utils.runProcess
 
 import scala.collection.mutable
+import scala.io.Source
 
 class TipSmtParser {
   val typeDecls = mutable.Map[String, TA]()
@@ -99,9 +101,30 @@ class TipSmtParser {
 }
 
 object TipSmtParser {
-  def apply( tipBench: String ): TipProblem = {
+  def parse( tipBench: String ): TipProblem = {
     val tipSmtParser = new TipSmtParser
     SExpressionParser.parseString( tipBench ) foreach tipSmtParser.parse
     tipSmtParser.toProblem
   }
+
+  def parseFile( filename: String ): TipProblem =
+    parse( Source fromFile filename mkString )
+
+  def fixupAndParse( contents: String ): TipProblem =
+    parse( runProcess(
+      Seq(
+        "tip",
+        "--type-skolem-conjecture",
+        "--add-match", "--commute-match",
+        "--lambda-lift", "--axiomatize-lambdas",
+        "--monomorphise",
+        "--if-to-bool-op",
+        "--uncurry-theory",
+        "--let-lift"
+      ),
+      contents
+    ) )
+
+  def fixupAndParseFile( filename: String ): TipProblem =
+    fixupAndParse( Source fromFile filename mkString )
 }
