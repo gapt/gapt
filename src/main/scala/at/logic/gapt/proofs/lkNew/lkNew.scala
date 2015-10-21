@@ -1066,7 +1066,12 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   if ( freeVariables( context ) contains eigenVariable )
     throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
 
-  val mainFormula = All( quantifiedVariable, BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) ) )
+  val subFormula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+
+  if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
+    throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = ${BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )}, but is $auxFormula." )
+
+  val mainFormula = All( quantifiedVariable, subFormula )
 
   override def name = "∀:r"
 
@@ -1138,7 +1143,12 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   if ( freeVariables( context ) contains eigenVariable )
     throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
 
-  val mainFormula = Ex( quantifiedVariable, BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) ) )
+  val subFormula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+
+  if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
+    throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = ${BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )}, but is $auxFormula." )
+
+  val mainFormula = Ex( quantifiedVariable, subFormula )
 
   override def name = "∃:l"
 
