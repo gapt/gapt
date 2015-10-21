@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.FOLPosition
 import at.logic.gapt.expr.hol.{ HOLPosition, isPrenex, instantiate }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs._
@@ -736,6 +737,65 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
    * @param eq The index of the equation or the equation itself.
    * @param rightSubProof The right subproof π2.
    * @param aux The index of the aux formula or the aux formula itself.
+   * @param pos The position of the term to be replaced within A.
+   * @return
+   */
+  def apply(
+    leftSubProof:  LKProof,
+    eq:            IndexOrFormula,
+    rightSubProof: LKProof,
+    aux:           IndexOrFormula,
+    pos:           FOLPosition
+  ): LKProof = {
+
+    val eqFormula = eq match {
+      case Left( i )  => leftSubProof.endSequent( i )
+      case Right( f ) => f
+    }
+
+    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
+    val p2 = aux match {
+      case Left( i ) =>
+        EqualityLeftRule( p1, Ant( 0 ), i + 1, pos )
+
+      case Right( f ) =>
+        EqualityLeftRule( p1, Ant( 0 ), f, pos )
+
+    }
+
+    CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
+  }
+
+  /**
+   * Simulates a binary equation rule, aka paramodulation.
+   *
+   * A binary rule of the form
+   * <pre>
+   *        (π1)              (π2)
+   *     Γ,Δ :- s = t   A[s], Π :- Λ
+   *   ------------------------------par:l
+   *         A[t], Γ, Π :- Δ, Λ
+   * </pre>
+   * is expressed as a series of inferences:
+   * <pre>
+   *                               (π2)
+   *                         A[s], Π :- Λ
+   *                     --------------------w:l
+   *                     s = t, A[s], Π :- Λ
+   *       (π1)         ---------------------:eq:l
+   *   Γ, Δ :- s = t     A[t], s = t, Π :- Λ
+   *   -------------------------------------cut
+   *            A[t], Γ, Π :- Δ, Λ
+   * </pre>
+   *
+   *
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param leftSubProof The left subproof π1.
+   * @param eq The index of the equation or the equation itself.
+   * @param rightSubProof The right subproof π2.
+   * @param aux The index of the aux formula or the aux formula itself.
    * @param mainFormula The proposed main formula.
    * @return
    */
@@ -806,6 +866,58 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
     pos:           HOLPosition
+  ): LKProof = {
+
+    val eqFormula = eq match {
+      case Left( i )  => leftSubProof.endSequent( i )
+      case Right( f ) => f
+    }
+
+    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
+    val p2 = EqualityRightRule( p1, Ant( 0 ), aux, pos )
+
+    CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
+  }
+
+  /**
+   * Simulates a binary equation rule, aka paramodulation.
+   *
+   * A binary rule of the form
+   * <pre>
+   *        (π1)              (π2)
+   *     Γ,Δ :- s = t   Π :- Λ, A[s]
+   *   ------------------------------par:r
+   *         Γ, Π :- Δ, Λ, A[t]
+   * </pre>
+   * is expressed as a series of inferences:
+   * <pre>
+   *                               (π2)
+   *                         Π :- Λ, A[s]
+   *                     --------------------w:l
+   *                     s = t, Π :- Λ, A[s]
+   *       (π1)         ---------------------:eq:r
+   *   Γ, Δ :- s = t     s = t, Π :- Λ, A[t]
+   *   -------------------------------------cut
+   *            Γ, Π :- Δ, Λ, A[t]
+   * </pre>
+   *
+   *
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param leftSubProof The left subproof π1.
+   * @param eq The index of the equation or the equation itself.
+   * @param rightSubProof The right subproof π2.
+   * @param aux The index of the aux formula or the aux formula itself.
+   * @param pos The position of the term to be replaced within A.
+   * @return
+   */
+  def apply(
+    leftSubProof:  LKProof,
+    eq:            IndexOrFormula,
+    rightSubProof: LKProof,
+    aux:           IndexOrFormula,
+    pos:           FOLPosition
   ): LKProof = {
 
     val eqFormula = eq match {

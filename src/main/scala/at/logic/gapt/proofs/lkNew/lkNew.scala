@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol.{ FOLPosition, FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 
@@ -1331,7 +1331,7 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
- * @param pos The position of the term to be replaced within A. FIXME: I think it would be convenient to allow FOLPositions here.
+ * @param pos The position of the term to be replaced within A.
  */
 case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition )
     extends EqualityRule {
@@ -1363,6 +1363,32 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
 
     EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), pos )
 
+  }
+
+  /**
+   * Convenience constructor for eq:l.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param eqFormula The index of the equation or the equation itself.
+   * @param auxFormula The index of the auxiliary formula or the formula itself.
+   * @param pos The position of the term to be replaced within A.
+   * @return
+   */
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: FOLPosition ): EqualityLeftRule = {
+    val premise = subProof.endSequent
+
+    val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
+
+    val aF = premise( Ant( indices( 1 ) ) ) match {
+      case f: FOLFormula =>
+        f
+      case _ =>
+        throw LKRuleCreationException( s"Proposed aux formula ${premise( Ant( indices( 1 ) ) )} is not FOL." )
+    }
+
+    EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), FOLPosition.toHOLPosition( aF )( pos ) )
   }
 
   /**
@@ -1446,7 +1472,7 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
- * @param pos The position of the term to be replaced within A. FIXME: I think it would be convenient to allow FOLPositions here.
+ * @param pos The position of the term to be replaced within A.
  */
 case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition )
     extends EqualityRule {
@@ -1477,6 +1503,33 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
     val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
 
     EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), pos )
+
+  }
+
+  /**
+   * Convenience constructor for eq:r.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param eqFormula The index of the equation or the equation itself.
+   * @param auxFormula The index of the auxiliary formula or the formula itself.
+   * @param pos The position of the term to be replaced within A.
+   * @return
+   */
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: FOLPosition ): EqualityRightRule = {
+    val premise = subProof.endSequent
+
+    val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
+
+    val aF = premise( Suc( indicesSuc( 0 ) ) ) match {
+      case f: FOLFormula =>
+        f
+      case _ =>
+        throw LKRuleCreationException( s"Proposed aux formula ${premise( Suc( indicesSuc( 0 ) ) )} is not FOL." )
+    }
+
+    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), FOLPosition.toHOLPosition( aF )( pos ) )
 
   }
 
