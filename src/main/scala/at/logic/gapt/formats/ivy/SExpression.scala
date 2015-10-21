@@ -40,6 +40,13 @@ object LFun {
     case _                                 => None
   }
 }
+object LFunOrAtom {
+  def unapplySeq( expression: SExpression ): Option[( String, Seq[SExpression] )] = expression match {
+    case LFun( name, args @ _* ) => Some( name, args )
+    case LAtom( name )           => Some( name, Seq() )
+    case _                       => None
+  }
+}
 
 case class LCons( car: SExpression, cdr: SExpression ) extends SExpression {
   override def toString = "( " + car + " . " + cdr + ")"

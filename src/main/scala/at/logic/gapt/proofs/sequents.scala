@@ -440,7 +440,7 @@ object HOLClause {
   }
 
   def apply( negative: Seq[HOLFormula], positive: Seq[HOLFormula] )( implicit dummyImplicit: DummyImplicit ): HOLClause = {
-    HOLClause( negative map { _.asInstanceOf[FOLAtom] }, positive map { _.asInstanceOf[FOLAtom] } )
+    HOLClause( negative map { _.asInstanceOf[HOLAtom] }, positive map { _.asInstanceOf[HOLAtom] } )
   }
 
   def apply( elements: Seq[( HOLAtom, Boolean )] ): HOLClause = {
