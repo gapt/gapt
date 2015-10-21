@@ -47,6 +47,18 @@ object Interpolate {
    *         contains non-atomic cuts or if (npart,ppart) is not a partition of its
    *         end-sequent.
    */
+  /**
+   * @param p
+   * @param npart
+   * @param ppart
+   * @return
+   */
+  /**
+   * @param p
+   * @param npart
+   * @param ppart
+   * @return
+   */
   def apply( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ): ( LKProof, LKProof, HOLFormula ) = p match {
 
     // axioms
@@ -274,24 +286,26 @@ object Interpolate {
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
-    /*case ImpLeftRule( p1, p2, s, a1, a2, m ) => {
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p1, npart, ppart )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
+    case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) => {
+      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p, npart, ppart )
+      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p, npart, ppart )
+      val formula1 = p.auxFormulas( 0 )( 0 )
+      val formula2 = p.auxFormulas( 1 )( 0 )
 
-      if ( npart.contains( m ) ) {
+      if ( npart.contains( p.mainIndices( 0 ) ) ) {
         val ipl = Or( up1_I, up2_I )
-        val np = OrRightRule( ImpLeftRule( up1_nproof, up2_nproof, a1.formula, a2.formula ), up1_I, up2_I )
-        val pp = OrLeftRule( up1_pproof, up2_pproof, up1_I, up2_I )
+        val np = OrRightRule( ImpLeftRule( up1_nproof, formula1, up2_nproof, formula2 ), up1_I, up2_I )
+        val pp = OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I )
 
         ( np, pp, ipl )
-      } else if ( ppart.contains( m ) ) {
+      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
         val ipl = And( up1_I, up2_I )
-        val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
-        val pp = AndLeftRule( ImpLeftRule( up1_pproof, up2_pproof, a1.formula, a2.formula ), up1_I, up2_I )
+        val np = AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I )
+        val pp = AndLeftRule( ImpLeftRule( up1_pproof, formula1, up2_pproof, formula2 ), up1_I, up2_I )
 
         ( np, pp, ipl )
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }*/
+    }
 
     case ImpRightRule( subProof, aux1, aux2 ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )

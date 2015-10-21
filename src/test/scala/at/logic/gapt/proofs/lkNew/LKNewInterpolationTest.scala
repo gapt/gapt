@@ -875,5 +875,133 @@ class LKNewInterpolationTest extends Specification {
       pproof.endSequent must beEqualTo( HOLSequent( Or( Bottom(), Neg( q ) ) :: q :: Nil, Nil ) )
       success
     }
+
+    "correctly interpolate a proof containing ImpLeftRule with (Bottom ∨ Bottom)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = WeakeningRightRule( ax2, q )
+      val proof2 = ContractionRightRule( proof1, q )
+      val proof3 = ContractionLeftRule( proof, p )
+      val proof4 = ImpLeftRule( proof3, p, ax2, q )
+      val npart = proof4.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+      val ( nproof, pproof, ipl ) = Interpolate( proof4, npart, ppart )
+
+      ipl must beEqualTo( Or( Bottom(), Bottom() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Imp( p, q ) :: p :: Nil, q :: Or( Bottom(), Bottom() ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Or( Bottom(), Bottom() ) :: Nil, Nil ) )
+      success
+    }
+
+    "correctly interpolate a proof containing ImpLeftRule (different partition) with (Bottom ∨ q)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = WeakeningRightRule( ax2, q )
+      val proof2 = ContractionRightRule( proof1, q )
+      val proof3 = ContractionLeftRule( proof, p )
+      val proof4 = ImpLeftRule( proof3, p, ax2, q )
+      val npart = proof4.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof4.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof4, npart, ppart )
+
+      ipl must beEqualTo( Or( Bottom(), q ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Imp( p, q ) :: p :: Nil, Or( Bottom(), q ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Or( Bottom(), q ) :: Nil, q :: Nil ) )
+      success
+    }
+
+    "correctly interpolate a proof containing ImpLefttRule (yet another partition) with (Top ∧ Neg( q ))" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = WeakeningRightRule( ax2, q )
+      val proof2 = ContractionRightRule( proof1, q )
+      val proof3 = ContractionLeftRule( proof, p )
+      val proof4 = ImpLeftRule( proof3, p, ax2, q )
+      val npart = proof4.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof4.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ( nproof, pproof, ipl ) = Interpolate( proof4, npart, ppart )
+
+      ipl must beEqualTo( And( Top(), Neg( q ) ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, q :: And( Top(), Neg( q ) ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( And( Top(), Neg( q ) ) :: Imp( p, q ) :: p :: Nil, Nil ) )
+      success
+    }
+
+    "correctly interpolate a proof containing ImpLeftRule (and another partition) with (Top ∧ Top)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = WeakeningRightRule( ax2, q )
+      val proof2 = ContractionRightRule( proof1, q )
+      val proof3 = ContractionLeftRule( proof, p )
+      val proof4 = ImpLeftRule( proof3, p, ax2, q )
+      val npart = Seq[SequentIndex]()
+      val ppart = proof4.endSequent.indices
+      val ( nproof, pproof, ipl ) = Interpolate( proof4, npart, ppart )
+
+      ipl must beEqualTo( And( Top(), Top() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, And( Top(), Top() ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( And( Top(), Top() ) :: Imp( p, q ) :: p :: Nil, q :: Nil ) )
+      success
+    }
+
+    "correctly interpolate a proof containing ImpLeftRule (and again another partition) with (p ∧ Neg( q ))" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = WeakeningRightRule( ax2, q )
+      val proof2 = ContractionRightRule( proof1, q )
+      val proof3 = ContractionLeftRule( proof, p )
+      val proof4 = ImpLeftRule( proof3, p, ax2, q )
+      val npart = Seq( Ant( 1 ), Suc( 0 ) )
+      val ppart = Seq( Ant( 0 ) )
+      val ( nproof, pproof, ipl ) = Interpolate( proof4, npart, ppart )
+
+      ipl must beEqualTo( And( p, Neg( q ) ) )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, q :: And( p, Neg( q ) ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( And( p, Neg( q ) ) :: Imp( p, q ) :: Nil, Nil ) )
+      success
+    }
+
+    "correctly interpolate a proof containing ImpLeftRule (and again and again...) with (p ∧ Top)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = WeakeningRightRule( ax2, q )
+      val proof2 = ContractionRightRule( proof1, q )
+      val proof3 = ContractionLeftRule( proof, p )
+      val proof4 = ImpLeftRule( proof3, p, ax2, q )
+      val npart = Seq( Ant( 1 ) )
+      val ppart = Seq( Ant( 0 ), Suc( 0 ) )
+      val ( nproof, pproof, ipl ) = Interpolate( proof4, npart, ppart )
+
+      ipl must beEqualTo( And( p, Top() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, And( p, Top() ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( And( p, Top() ) :: Imp( p, q ) :: Nil, q :: Nil ) )
+      success
+    }
+
+    "correctly interpolate a proof containing ImpLeftRule (and again and again...) with (Neg( p ) ∨ q)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = WeakeningRightRule( ax2, q )
+      val proof2 = ContractionRightRule( proof1, q )
+      val proof3 = ContractionLeftRule( proof, p )
+      val proof4 = ImpLeftRule( proof3, p, ax2, q )
+      val npart = Seq( Ant( 0 ) )
+      val ppart = Seq( Ant( 1 ), Suc( 0 ) )
+      val ( nproof, pproof, ipl ) = Interpolate( proof4, npart, ppart )
+
+      ipl must beEqualTo( Or( Neg( p ), q ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Imp( p, q ) :: Nil, Or( Neg( p ), q ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Or( Neg( p ), q ) :: p :: Nil, q :: Nil ) )
+      success
+    }
+
+    "correctly interpolate a proof containing ImpLeftRule (and again and again...) with (Neg( p ) ∨ Bottom)" in {
+      val proof = WeakeningLeftRule( ax, p )
+      val proof1 = WeakeningRightRule( ax2, q )
+      val proof2 = ContractionRightRule( proof1, q )
+      val proof3 = ContractionLeftRule( proof, p )
+      val proof4 = ImpLeftRule( proof3, p, ax2, q )
+      val npart = Seq( Ant( 0 ), Suc( 0 ) )
+      val ppart = Seq( Ant( 1 ) )
+      val ( nproof, pproof, ipl ) = Interpolate( proof4, npart, ppart )
+
+      ipl must beEqualTo( Or( Neg( p ), Bottom() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Imp( p, q ) :: Nil, q :: Or( Neg( p ), Bottom() ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( Or( Neg( p ), Bottom() ) :: p :: Nil, Nil ) )
+      success
+    }
   }
 }
