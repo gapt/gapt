@@ -16,7 +16,7 @@ case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
     ( projectors, fieldVars ).zipped map { ( p, f ) => p( constr( fieldVars: _* ) ) === f }
   }
 }
-case class TipDatatype( t: TA, constructors: Seq[TipConstructor] ) {
+case class TipDatatype( t: Ty, constructors: Seq[TipConstructor] ) {
   constructors foreach { ctr => require( ctr.datatype == t ) }
 }
 

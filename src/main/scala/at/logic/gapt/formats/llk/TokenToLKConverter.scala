@@ -50,17 +50,17 @@ trait TokenToLKConverter extends Logger {
 
   /* Extracts type declarations from the tokens and creates a function to create atomic terms by name */
   def createNaming( r: List[Token] ): ( String => LambdaExpression ) = {
-    val ctypes: List[( String, TA )] = r.flatMap( _ match {
+    val ctypes: List[( String, Ty )] = r.flatMap( _ match {
       case TToken( "CONST", names, t ) => names map ( ( _, t ) )
       case _                           => Nil
     } )
-    val constmap = Map[String, TA]() ++ ctypes
+    val constmap = Map[String, Ty]() ++ ctypes
 
-    val vtypes: List[( String, TA )] = r.flatMap( _ match {
+    val vtypes: List[( String, Ty )] = r.flatMap( _ match {
       case TToken( "VAR", names, t ) => names map ( ( _, t ) )
       case _                         => Nil
     } )
-    val varmap = Map[String, TA]() ++ vtypes
+    val varmap = Map[String, Ty]() ++ vtypes
 
     { ( s: String ) =>
       {

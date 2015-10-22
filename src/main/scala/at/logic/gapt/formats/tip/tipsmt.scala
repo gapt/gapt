@@ -9,10 +9,10 @@ import scala.collection.mutable
 import scala.io.Source
 
 class TipSmtParser {
-  val typeDecls = mutable.Map[String, TA]()
+  val typeDecls = mutable.Map[String, Ty]()
   val funDecls = mutable.Map[String, Const]()
 
-  def declare( t: Tdata ): Unit = typeDecls( t.name ) = t
+  def declare( t: TBase ): Unit = typeDecls( t.name ) = t
   def declare( f: Const ): Unit = funDecls( f.name ) = f
 
   val datatypes = mutable.Buffer[TipDatatype]()
@@ -24,9 +24,9 @@ class TipSmtParser {
 
   def parse( sexp: SExpression ) = sexp match {
     case LFun( "declare-sort", LAtom( name ), LAtom( "0" ) ) =>
-      declare( Tdata( name ) )
+      declare( TBase( name ) )
     case LFun( "declare-datatypes", LList(), LList( LFun( name, constructors @ _* ) ) ) =>
-      val t = Tdata( name )
+      val t = TBase( name )
       declare( t )
       val dt = TipDatatype( t, constructors map { parseConstructor( _, t ) } )
       datatypes += dt
@@ -50,14 +50,14 @@ class TipSmtParser {
     case LFun( "check-sat" ) => ()
   }
 
-  def parseConstructor( sexp: SExpression, ofType: TA ) = sexp match {
+  def parseConstructor( sexp: SExpression, ofType: Ty ) = sexp match {
     case LFun( name, fields @ _* ) =>
       val projectors = fields map { parseField( _, ofType ) }
       val fieldTypes = projectors map { _.exptype } map { case FunctionType( to, _ ) => to }
       TipConstructor( Const( name, FunctionType( ofType, fieldTypes ) ), projectors )
   }
 
-  def parseField( sexp: SExpression, ofType: TA ) = sexp match {
+  def parseField( sexp: SExpression, ofType: Ty ) = sexp match {
     case LFun( projector, LAtom( typename ) ) =>
       Const( projector, ofType -> typeDecls( typename ) )
   }

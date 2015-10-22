@@ -40,7 +40,7 @@ case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[R
     rules filter { _.lhs == nonTerminal }
 
   def parametricLanguage( params: LambdaExpression* ): Set[LambdaExpression] = {
-    require( params.size == Arity( axiom.exptype ) )
+    require( params.size == arity( axiom ) )
     generatedTerms( axiom( params: _* ) )
   }
 

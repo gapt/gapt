@@ -55,7 +55,7 @@ object SmtLibExporter {
 
   // Gets all the symbols and arities that occur in the formulas of the list
   private def getSymbolsDeclaration( flst: Seq[FOLFormula] ) = {
-    val symbols = flst.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) =>
+    val symbols = flst.foldLeft( Set[( String, Int, Ty )]() )( ( acc, f ) =>
       getSymbols( f ) ++ acc )
     symbols.foldLeft( "(declare-sort S 0)" + nLine ) {
       case ( acc, t ) => t._3 match {
@@ -71,14 +71,14 @@ object SmtLibExporter {
   // TODO: Implement in hol/fol??
   // (Note: here we would only use propositional formulas, but it is already
   // implemented for quantifiers just in case...)
-  private def getSymbols( f: FOLExpression ): Set[( String, Int, TA )] = f match {
+  private def getSymbols( f: FOLExpression ): Set[( String, Int, Ty )] = f match {
     case Eq( lhs, rhs ) => Set( lhs, rhs ) flatMap getSymbols
     case FOLVar( s )    => Set( ( toSMTString( s, true ), 0, Ti ) )
     case FOLConst( s )  => Set( ( toSMTString( s, false ), 0, Ti ) )
     case FOLAtom( pred, args ) =>
-      Set( ( toSMTString( pred, false ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
+      Set( ( toSMTString( pred, false ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, Ty )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
     case FOLFunction( fun, args ) =>
-      Set( ( toSMTString( fun, false ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, TA )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
+      Set( ( toSMTString( fun, false ), args.size, f.exptype ) ) ++ args.foldLeft( Set[( String, Int, Ty )]() )( ( acc, f ) => getSymbols( f ) ++ acc )
     case And( f1, f2 )    => getSymbols( f1 ) ++ getSymbols( f2 )
     case Or( f1, f2 )     => getSymbols( f1 ) ++ getSymbols( f2 )
     case Imp( f1, f2 )    => getSymbols( f1 ) ++ getSymbols( f2 )

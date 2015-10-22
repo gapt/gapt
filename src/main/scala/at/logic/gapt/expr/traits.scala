@@ -106,28 +106,28 @@ trait PropAtom extends Const with PropFormula with FOLAtom
  * determineTraits$$anon$27, which is not particularly readable.
  */
 private[expr] object determineTraits {
-  private class Var_with_FOLVar( s: SymbolA, t: TA ) extends Var( s, t ) with FOLVar
-  private class Var_with_HOLFormula( s: SymbolA, t: TA ) extends Var( s, t ) with HOLFormula
-  private class Var_with_HOLAtom( s: SymbolA, t: TA ) extends Var( s, t ) with HOLAtom
-  private class Var_with_HOLPartialAtom( s: SymbolA, t: TA, override val numberOfArguments: Int ) extends Var( s, t ) with HOLPartialAtom
+  private class Var_with_FOLVar( s: SymbolA, t: Ty ) extends Var( s, t ) with FOLVar
+  private class Var_with_HOLFormula( s: SymbolA, t: Ty ) extends Var( s, t ) with HOLFormula
+  private class Var_with_HOLAtom( s: SymbolA, t: Ty ) extends Var( s, t ) with HOLAtom
+  private class Var_with_HOLPartialAtom( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Var( s, t ) with HOLPartialAtom
 
-  def forVar( sym: SymbolA, exptype: TA ): Var = exptype match {
+  def forVar( sym: SymbolA, exptype: Ty ): Var = exptype match {
     case Ti                     => new Var_with_FOLVar( sym, exptype )
     case To                     => new Var_with_HOLAtom( sym, exptype )
     case FunctionType( To, ts ) => new Var_with_HOLPartialAtom( sym, exptype, ts.length )
     case _                      => new Var( sym, exptype )
   }
 
-  private class Const_with_FOLQuantifier( s: SymbolA, t: TA ) extends Const( s, t ) with FOLQuantifier
-  private class Const_with_PropConnective_with_PropFormula( s: SymbolA, t: TA ) extends Const( s, t ) with PropConnective with PropFormula
-  private class Const_with_FOLConst( s: SymbolA, t: TA ) extends Const( s, t ) with FOLConst
-  private class Const_with_PropAtom( s: SymbolA, t: TA ) extends Const( s, t ) with PropAtom
-  private class Const_with_PropConnective( s: SymbolA, t: TA, override val numberOfArguments: Int ) extends Const( s, t ) with PropConnective
-  private class Const_with_PropPartialFormula( s: SymbolA, t: TA, override val numberOfArguments: Int ) extends Const( s, t ) with PropPartialFormula
-  private class Const_with_FOLPartialTerm( s: SymbolA, t: TA, override val numberOfArguments: Int ) extends Const( s, t ) with FOLPartialTerm
-  private class Const_with_FOLPartialAtom( s: SymbolA, t: TA, override val numberOfArguments: Int ) extends Const( s, t ) with FOLPartialAtom
-  private class Const_with_HOLPartialAtom( s: SymbolA, t: TA, override val numberOfArguments: Int ) extends Const( s, t ) with HOLPartialAtom
-  def forConst( sym: SymbolA, exptype: TA ): Const = ( sym, exptype ) match {
+  private class Const_with_FOLQuantifier( s: SymbolA, t: Ty ) extends Const( s, t ) with FOLQuantifier
+  private class Const_with_PropConnective_with_PropFormula( s: SymbolA, t: Ty ) extends Const( s, t ) with PropConnective with PropFormula
+  private class Const_with_FOLConst( s: SymbolA, t: Ty ) extends Const( s, t ) with FOLConst
+  private class Const_with_PropAtom( s: SymbolA, t: Ty ) extends Const( s, t ) with PropAtom
+  private class Const_with_PropConnective( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with PropConnective
+  private class Const_with_PropPartialFormula( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with PropPartialFormula
+  private class Const_with_FOLPartialTerm( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with FOLPartialTerm
+  private class Const_with_FOLPartialAtom( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with FOLPartialAtom
+  private class Const_with_HOLPartialAtom( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with HOLPartialAtom
+  def forConst( sym: SymbolA, exptype: Ty ): Const = ( sym, exptype ) match {
     case ForallC( Ti ) | ExistsC( Ti ) => new Const_with_FOLQuantifier( sym, exptype )
     case AndC() | OrC() | ImpC()       => new Const_with_PropConnective( sym, exptype, 2 )
     case NegC()                        => new Const_with_PropConnective( sym, exptype, 1 )

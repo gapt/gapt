@@ -183,8 +183,8 @@ class TPTPHOLExporter {
     "thf(" + i + ", type, " + cmap( c ) + ": " + getTypeString( c.exptype ) + " )."
   }
 
-  def getTypeString( t: TA ): String = getTypeString( t, true )
-  def getTypeString( t: TA, outer: Boolean ): String = t match {
+  def getTypeString( t: Ty ): String = getTypeString( t, true )
+  def getTypeString( t: Ty, outer: Boolean ): String = t match {
     case Ti                => "$i"
     case To                => "$o"
     case t1 -> t2 if outer => getTypeString( t1, false ) + " > " + getTypeString( t2, false )

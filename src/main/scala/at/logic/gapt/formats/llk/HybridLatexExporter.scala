@@ -1,5 +1,6 @@
 package at.logic.gapt.formats.llk
 
+import at.logic.gapt.expr.schema.Tindex
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
@@ -11,7 +12,7 @@ object LatexProofExporter extends HybridLatexExporter( true )
 object HybridLatexExporter extends HybridLatexExporter( false )
 
 class HybridLatexExporter( val expandTex: Boolean ) {
-  val emptyTypeMap = Map[String, TA]()
+  val emptyTypeMap = Map[String, Ty]()
   val nLine = sys.props( "line.separator" )
 
   def apply( db: ExtendedProofDatabase, escape_latex: Boolean ) = {
@@ -43,7 +44,7 @@ class HybridLatexExporter( val expandTex: Boolean ) {
     declarations + nLine + "\\CONSTDEC{THEPROOF}{o}" + nLine + nLine + proofs + "\\CONTINUEWITH{THEPROOF}"
   }
 
-  def generateDeclarations( vars: Map[String, TA], consts: Map[String, TA] ): String = {
+  def generateDeclarations( vars: Map[String, Ty], consts: Map[String, Ty] ): String = {
 
     val svars = vars.foldLeft( Map[String, String]() )( ( map, p ) => {
       val vname = toLatexString.nameToLatexString( p._1.toString )
@@ -85,17 +86,17 @@ class HybridLatexExporter( val expandTex: Boolean ) {
     sv.mkString( nLine ) + nLine + sc.mkString( nLine )
   }
 
-  def getTypes( p: LKProof, vacc: Map[String, TA], cacc: Map[String, TA] ): ( Map[String, TA], Map[String, TA] ) = {
+  def getTypes( p: LKProof, vacc: Map[String, Ty], cacc: Map[String, Ty] ): ( Map[String, Ty], Map[String, Ty] ) = {
     val formulas = p.nodes.flatMap( _.asInstanceOf[LKProof].root.toHOLSequent.formulas )
     formulas.foldLeft( ( vacc, cacc ) )( ( map, f ) =>
       getTypes( f, map._1, map._2 ) )
   }
 
-  def getTypes( p: HOLSequent, vacc: Map[String, TA], cacc: Map[String, TA] ): ( Map[String, TA], Map[String, TA] ) = {
+  def getTypes( p: HOLSequent, vacc: Map[String, Ty], cacc: Map[String, Ty] ): ( Map[String, Ty], Map[String, Ty] ) = {
     p.formulas.foldLeft( ( vacc, cacc ) )( ( m, f ) => getTypes( f, m._1, m._2 ) )
   }
 
-  def getTypes( exp: LambdaExpression, vmap: Map[String, TA], cmap: Map[String, TA] ): ( Map[String, TA], Map[String, TA] ) = exp match {
+  def getTypes( exp: LambdaExpression, vmap: Map[String, Ty], cmap: Map[String, Ty] ): ( Map[String, Ty], Map[String, Ty] ) = exp match {
     case Var( name, exptype ) =>
       //      if ( sym.isInstanceOf[LogicalSymbolA] || sym == EqSymbol ) {
       if ( name == "=" ) { // FIXME: variable with logical symbol name?????
@@ -130,7 +131,7 @@ class HybridLatexExporter( val expandTex: Boolean ) {
       ( vmap, cmap )
   }
 
-  def getTypeString( t: TA, outermost: Boolean = true ): String = t match {
+  def getTypeString( t: Ty, outermost: Boolean = true ): String = t match {
     case Ti     => "i"
     case To     => "o"
     case Tindex => "w"

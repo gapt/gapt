@@ -60,8 +60,8 @@ object CharacteristicSequentSet {
     case e: Exception => x :: Nil
   } )
 
-  type Symboltable = ( Map[TA, Set[String]], Map[TA, Set[String]] )
-  val emptysmboltable = ( Map[TA, Set[String]](), Map[TA, Set[String]]() )
+  type Symboltable = ( Map[Ty, Set[String]], Map[Ty, Set[String]] )
+  val emptysmboltable = ( Map[Ty, Set[String]](), Map[Ty, Set[String]]() )
 
   def extractSymbolTable( l: List[HOLSequent] ): Symboltable =
     l.foldLeft( emptysmboltable )( ( table, x ) => {

@@ -21,17 +21,17 @@ object HOLFunction {
 }
 
 object FOLHeadType {
-  def apply( ret: TA, arity: Int ): TA = arity match {
+  def apply( ret: Ty, arity: Int ): Ty = arity match {
     case 0 => ret
     case n => Ti -> FOLHeadType( ret, n - 1 )
   }
-  def unapply( t: TA ): Option[( TA, Int )] = t match {
+  def unapply( t: Ty ): Option[( Ty, Int )] = t match {
     case Ti -> FOLHeadType( t, n ) => Some( ( t, n + 1 ) )
     case _                         => Some( ( t, 0 ) )
   }
 }
 
-private[expr] class FOLHead( ret: TA ) {
+private[expr] class FOLHead( ret: Ty ) {
   def apply( sym: String, arity: Int ): Const =
     Const( sym, FOLHeadType( ret, arity ) )
   def unapply( e: LambdaExpression ): Option[( String, Int )] = e match {

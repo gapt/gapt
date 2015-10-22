@@ -23,7 +23,6 @@ import java.awt.event.MouseEvent
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.utils.latex.nameToLatexString
 import collection.mutable
-import at.logic.gapt.expr.Tindex
 
 object DrawSequent {
   implicit val factory = defaultFormulaOccurrenceFactory

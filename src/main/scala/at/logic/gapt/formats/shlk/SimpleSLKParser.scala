@@ -15,7 +15,7 @@ import at.logic.gapt.expr.schema.IntZero
 import scala.Tuple2
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ To, FunctionType, Tindex, Ti }
+import at.logic.gapt.expr.{ To, FunctionType, Ti }
 import at.logic.gapt.proofs.lk._
 
 object SHLK {

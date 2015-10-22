@@ -55,24 +55,15 @@ class HOLOrdering extends Ordering[LambdaExpression] {
  * Ordering on types.
  */
 object TAOrdering extends TAOrdering
-class TAOrdering extends Ordering[TA] {
-  override def compare( x: TA, y: TA ): Int = ( x, y ) match {
+class TAOrdering extends Ordering[Ty] {
+  override def compare( x: Ty, y: Ty ): Int = ( x, y ) match {
     case ( x, y ) if x == y => 0
     case ( t1 -> t2, t3 -> t4 ) =>
       val r = compare( t1, t3 )
       if ( r == 0 ) compare( t2, t4 ) else r
-    case ( _, _ -> _ )  => -1
-    case ( _ -> _, _ )  => 1
+    case ( _, _ -> _ )                => -1
+    case ( _ -> _, _ )                => 1
 
-    //o < i < index
-    case ( To, Ti )     => -1
-    case ( To, Tindex ) => -1
-
-    case ( Ti, To )     => 1
-    case ( Ti, Tindex ) => -1
-
-    case ( Tindex, Ti ) => 1
-    case ( Tindex, To ) => 1
-    case _              => throw new Exception( "Unhandled case in type comparison: " + x + " ? " + y )
+    case ( TBase( x_ ), TBase( y_ ) ) => x_ compare y_
   }
 }

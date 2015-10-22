@@ -17,7 +17,7 @@ import scala.collection.mutable
  * Matches constants and variables, but nothing else.
  */
 object VarOrConst {
-  def unapply( e: LambdaExpression ): Option[( String, TA )] = e match {
+  def unapply( e: LambdaExpression ): Option[( String, Ty )] = e match {
     case Var( name, et )   => Some( ( name, et ) )
     case Const( name, et ) => Some( ( name, et ) )
     case _                 => None

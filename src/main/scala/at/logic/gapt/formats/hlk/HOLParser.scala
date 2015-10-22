@@ -160,10 +160,10 @@ class DeclarationParser extends HOLASTParser {
   lazy val symbolnames = atomregexp | """((<|>)=?)|(!?=)|[+\-*]""".r
 
   // simple and complex types
-  lazy val ti: PackratParser[TA] = "i" ^^ { _ => Ti }
-  lazy val to: PackratParser[TA] = "o" ^^ { _ => To }
-  lazy val simpleType: PackratParser[TA] = ti | to
-  lazy val complexType: PackratParser[TA] = ( ( complexType | parens( complexType ) ) ~ ">" ~ ( complexType | parens( complexType ) ) ) ^^ { case t1 ~ _ ~ t2 => t1 -> t2 } | simpleType
+  lazy val ti: PackratParser[Ty] = "i" ^^ { _ => Ti }
+  lazy val to: PackratParser[Ty] = "o" ^^ { _ => To }
+  lazy val simpleType: PackratParser[Ty] = ti | to
+  lazy val complexType: PackratParser[Ty] = ( ( complexType | parens( complexType ) ) ~ ">" ~ ( complexType | parens( complexType ) ) ) ^^ { case t1 ~ _ ~ t2 => t1 -> t2 } | simpleType
 
   lazy val constdecl: PackratParser[Map[String, LambdaExpression]] = "const" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
     case _ ~ varnames ~ _ ~ exptype => Map[String, LambdaExpression]() ++ ( varnames map ( x => ( x, Const( x, exptype ) ) ) )

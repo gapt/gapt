@@ -149,8 +149,8 @@ class HybridLatexParserTest extends Specification with ClasspathFileCopier {
 
   "Tactics" should {
     "correctly prove the instance of an axiom" in {
-      val vmap = Map[String, TA]( "x" -> Ti, "y" -> Ti, "z" -> Ti )
-      val cmap = Map[String, TA]( "a" -> Ti, "1" -> Ti, "+" -> ( Ti -> ( Ti -> Ti ) ) )
+      val vmap = Map[String, Ty]( "x" -> Ti, "y" -> Ti, "z" -> Ti )
+      val cmap = Map[String, Ty]( "a" -> Ti, "1" -> Ti, "+" -> ( Ti -> ( Ti -> Ti ) ) )
       val naming: String => LambdaExpression = x => {
         if ( vmap contains x ) Var( x, vmap( x ) ) else
           Const( x, cmap( x ) )

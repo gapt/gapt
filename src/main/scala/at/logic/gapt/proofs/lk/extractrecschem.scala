@@ -20,13 +20,13 @@ object extractRecSchem {
     } )
   }
 
-  def symbolTypeP( f: HOLFormula ): TA = f match {
+  def symbolTypeP( f: HOLFormula ): Ty = f match {
     case All( v, g )                   => v.exptype -> symbolTypeP( g )
     case Ex( v, g )                    => ( v.exptype -> symbolTypeN( g ) ) -> To
     case _ if !containsQuantifier( f ) => To
   }
 
-  def symbolTypeN( f: HOLFormula ): TA = f match {
+  def symbolTypeN( f: HOLFormula ): Ty = f match {
     case Ex( v, g )                    => v.exptype -> symbolTypeN( g )
     case All( v, g )                   => ( v.exptype -> symbolTypeP( g ) ) -> To
     case _ if !containsQuantifier( f ) => To

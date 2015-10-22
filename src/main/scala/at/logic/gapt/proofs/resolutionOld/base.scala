@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.proofs.lk.base.{ createContext => lkCreateContext, OccSequent }
 import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ TA, FunctionType }
+import at.logic.gapt.expr.{ Ty, FunctionType }
 import at.logic.gapt.utils.ds.acyclicGraphs._
 
 trait ResolutionProof[V <: OccSequent] extends AGraphProof[V]
@@ -88,7 +88,7 @@ object createContext {
 
 object computeSkolemTerm {
   // used in andrews
-  def apply( sk: SkolemSymbol, t: TA, sub: LambdaExpression ) = {
+  def apply( sk: SkolemSymbol, t: Ty, sub: LambdaExpression ) = {
     val fv = freeVariables( sub ).toList
     val tp = FunctionType( t, fv.map( v => v.exptype ) )
     HOLFunction( Const( sk, tp ), fv )

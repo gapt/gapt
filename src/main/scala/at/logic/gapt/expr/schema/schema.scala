@@ -10,6 +10,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema.logicSymbols._
 
+object Tindex extends TBase( "ω" )
+
 /******************** SPECIAL INTEGERS ************************************/
 
 object IntVar {

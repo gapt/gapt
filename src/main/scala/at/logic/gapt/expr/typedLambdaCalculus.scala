@@ -14,7 +14,7 @@ import scala.annotation.tailrec
 abstract class LambdaExpression {
 
   // Expression type [should it be here?]
-  def exptype: TA
+  def exptype: Ty
 
   def hashCode: Int
   override def equals( a: Any ) = a match {
@@ -150,7 +150,7 @@ abstract class LambdaExpression {
 // Defines the elements that generate lambda-expressions: variables,
 // applications and abstractions (and constants).
 
-class Var private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
+class Var private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpression {
 
   // The name of the variable should be obtained with this method.
   def name: String = sym.toString
@@ -171,7 +171,7 @@ class Var private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpr
   override def hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
 
-class Const private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaExpression {
+class Const private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpression {
 
   def name: String = sym.toString
 
@@ -187,7 +187,7 @@ class Const private[expr] ( val sym: SymbolA, val exptype: TA ) extends LambdaEx
 }
 
 class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpression ) extends LambdaExpression {
-  val exptype: TA =
+  val exptype: Ty =
     function.exptype match {
       case ( in -> out ) if in == arg.exptype => out
       case _ => throw new IllegalArgumentException(
@@ -211,7 +211,7 @@ class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpress
 }
 
 class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extends LambdaExpression {
-  val exptype: TA = variable.exptype -> term.exptype
+  val exptype: Ty = variable.exptype -> term.exptype
 
   def syntaxEquals( e: LambdaExpression ) = e match {
     case Abs( v, exp ) => v.syntaxEquals( variable ) && exp.syntaxEquals( term ) && e.exptype == exptype
@@ -228,8 +228,8 @@ class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extend
 }
 
 object Var {
-  def apply( name: String, exptype: TA ): Var = Var( StringSymbol( name ), exptype )
-  def apply( sym: SymbolA, exptype: TA ): Var = determineTraits.forVar( sym, exptype )
+  def apply( name: String, exptype: Ty ): Var = Var( StringSymbol( name ), exptype )
+  def apply( sym: SymbolA, exptype: Ty ): Var = determineTraits.forVar( sym, exptype )
 
   def unapply( e: LambdaExpression ) = e match {
     case v: Var => Some( v.name, v.exptype )
@@ -237,8 +237,8 @@ object Var {
   }
 }
 object Const {
-  def apply( name: String, exptype: TA ): Const = Const( StringSymbol( name ), exptype )
-  def apply( sym: SymbolA, exptype: TA ): Const = determineTraits.forConst( sym, exptype )
+  def apply( name: String, exptype: Ty ): Const = Const( StringSymbol( name ), exptype )
+  def apply( sym: SymbolA, exptype: Ty ): Const = determineTraits.forConst( sym, exptype )
 
   def unapply( e: LambdaExpression ) = e match {
     case c: Const => Some( c.name, c.exptype )

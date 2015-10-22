@@ -5,6 +5,7 @@
 
 package at.logic.gapt.formats.latex
 
+import at.logic.gapt.expr.schema.Tindex
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
@@ -119,7 +120,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     getOutput.write( """\end{array}\]""" )
   }
 
-  def typeToString( t: TA, outermost: Boolean = true ): String = t match {
+  def typeToString( t: Ty, outermost: Boolean = true ): String = t match {
     case Ti     => "i"
     case To     => "o"
     case Tindex => "w"
@@ -129,7 +130,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
         typeToString_( t2 )
   }
 
-  def typeToString_( t: TA ): String = t match {
+  def typeToString_( t: Ty ): String = t match {
     case Ti     => "i"
     case To     => "o"
     case Tindex => "w"
@@ -149,7 +150,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     if ( cvars.exists( svars.contains( _ ) ) || svars.exists( cvars.contains( _ ) ) )
       println( "WARNING: exported const and varset are not disjunct!" )
 
-    val varmap = vars.foldLeft( Map[TA, Set[String]]() )( ( map, v ) => {
+    val varmap = vars.foldLeft( Map[Ty, Set[String]]() )( ( map, v ) => {
       if ( map contains v.exptype ) {
         val nset = map( v.exptype ) + v.name.toString()
         map + ( ( v.exptype, nset ) )
@@ -157,7 +158,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
         map + ( ( v.exptype, Set( v.name.toString() ) ) )
       }
     } )
-    val constmap = consts.foldLeft( Map[TA, Set[String]]() )( ( map, v ) => {
+    val constmap = consts.foldLeft( Map[Ty, Set[String]]() )( ( map, v ) => {
       if ( map contains v.exptype ) {
         val nset = map( v.exptype ) + v.name.toString()
         map + ( ( v.exptype, nset ) )
@@ -171,7 +172,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 
   private def printOnMatch( a: Any ) = a match {
     case le: LambdaExpression => exportTerm1( le )
-    case ta: TA               => getOutput.write( "$" + latexType( ta ) + "$" )
+    case ta: Ty               => getOutput.write( "$" + latexType( ta ) + "$" )
     case _                    => getOutput.write( a.toString )
   }
 
@@ -250,7 +251,7 @@ trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
   private def printOnMatch( a: Any ) = a match {
     case le: LambdaExpression          => exportTerm1( le )
     case fo: LabelledFormulaOccurrence => exportLabelledFormulaOccurrence( fo )
-    case ta: TA                        => getOutput.write( "$" + latexType( ta ) + "$" )
+    case ta: Ty                        => getOutput.write( "$" + latexType( ta ) + "$" )
     case _                             => getOutput.write( a.toString )
   }
 

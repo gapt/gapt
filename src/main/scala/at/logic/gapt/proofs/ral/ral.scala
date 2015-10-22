@@ -142,7 +142,7 @@ private[ral] trait SimpleOneFormulaRule extends OneFormulaRule {
 }
 
 private[ral] object computeSkolemTerm {
-  def apply( sk: SkolemSymbol, t: TA, label: Label ) = {
+  def apply( sk: SkolemSymbol, t: Ty, label: Label ) = {
     val labelList = label.toList
     val tp = FunctionType( t, labelList map { _.exptype } )
     HOLFunction( Const( sk, tp ), labelList )

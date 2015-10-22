@@ -78,7 +78,9 @@ class nTapeTest extends Specification with ClasspathFileCopier {
 
   //prints the interesting terms from the expansion sequent
   def printStatistics( et: ExpansionSequent ) = {
-    val indet = decompose( ( et.antecedent( 1 ) ) )( 2 )
+    val conjuncts = decompose( et.antecedent( 1 ) )
+    // FIXME: use a less fragile method to find the induction formula...
+    val indet = conjuncts( 19 )
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
       case ETWeakQuantifier( _, List(
         ( inst1, et1 ),

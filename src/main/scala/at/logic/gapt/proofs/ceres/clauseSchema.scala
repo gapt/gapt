@@ -168,7 +168,7 @@ object sTermN {
   //the l.head should be of type Tindex() !
   def apply( f: String, l: List[SchemaExpression] ): SchemaExpression = {
     require( l.head.exptype == Tindex )
-    val typ = l.map( x => x.exptype ).foldRight( Ti.asInstanceOf[TA] )( ( x, t ) => x -> t )
+    val typ = l.map( x => x.exptype ).foldRight( Ti.asInstanceOf[Ty] )( ( x, t ) => x -> t )
     val func = Const( f, typ )
     return SchemaFunction( func, l )
   }
@@ -177,7 +177,7 @@ object sTermN {
   }
   def unapply( s: SchemaExpression ) = s match {
     case SchemaFunction( name: Const, args, typ ) if typ == Ti && args.length != 0 && args.head.exptype == Tindex => {
-      val typ = args.map( x => x.exptype ).foldLeft( Ti.asInstanceOf[TA] )( ( x, t ) => x -> t )
+      val typ = args.map( x => x.exptype ).foldLeft( Ti.asInstanceOf[Ty] )( ( x, t ) => x -> t )
       val f = Const( name.name, typ )
       Some( ( f.name.toString(), args.head.asInstanceOf[SchemaExpression], args.tail.asInstanceOf[List[SchemaExpression]] ) )
     }
@@ -585,7 +585,7 @@ object fo2VarSubstitution {
     //    rTerm(apply(r.left, mapfo2).asInstanceOf[sResolutionTerm], apply(r.right, mapfo2).asInstanceOf[sResolutionTerm], apply(r.atom, mapfo2).asInstanceOf[SchemaFormula])
 
     case SchemaAtom( name, args ) =>
-      val newAtomName = Const( name.toString, args.reverse.map( x => x.exptype ).foldRight( To.asInstanceOf[TA] )( ( x, t ) => x -> t ) )
+      val newAtomName = Const( name.toString, args.reverse.map( x => x.exptype ).foldRight( To.asInstanceOf[Ty] )( ( x, t ) => x -> t ) )
       unfoldGroundAtom( SchemaAtom( newAtomName, args.map( x =>
         apply( apply( x, mapfo2 ), mapfo2 ) ) ) )
 

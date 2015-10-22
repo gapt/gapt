@@ -42,7 +42,7 @@ abstract class Token
  * @param names a list of symbol names
  * @param types the assigned type
  */
-case class TToken( decltype: String, names: List[String], types: TA ) extends Token
+case class TToken( decltype: String, names: List[String], types: Ty ) extends Token
 
 /**
  * An AToken represents an Axiom declaration or Definition declaration.
@@ -217,8 +217,8 @@ class HybridLatexParser extends DeclarationParser with LatexReplacementParser wi
   lazy val decl: PackratParser[TToken] = ( "\\" ~> "(CONSTDEC|VARDEC)".r <~ "{" ) ~
     ( rep1sep( symbolnames, "," ) <~ "}" ) ~ ( "{" ~> complexType <~ "}" ) ^^ {
       _ match {
-        case "CONSTDEC" ~ namest ~ ( types: TA ) => TToken( "CONST", namest, types )
-        case "VARDEC" ~ namest ~ ( types: TA )   => TToken( "VAR", namest, types )
+        case "CONSTDEC" ~ namest ~ ( types: Ty ) => TToken( "CONST", namest, types )
+        case "VARDEC" ~ namest ~ ( types: Ty )   => TToken( "VAR", namest, types )
       }
     }
 

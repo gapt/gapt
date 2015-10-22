@@ -1,5 +1,4 @@
 package at.logic.gapt.expr
-import at.logic.gapt.expr._
 import org.specs2.mutable._
 
 class LogicalConstantsTest extends Specification {
@@ -15,9 +14,9 @@ class LogicalConstantsTest extends Specification {
         case ForallC( Ti ) => ok
       }
 
-      ExistsC( Tindex ) must beLike {
-        case ForallC( _ )      => ko
-        case ExistsC( Tindex ) => ok
+      ExistsC( TBase( "foo" ) ) must beLike {
+        case ForallC( _ )              => ko
+        case ExistsC( TBase( "foo" ) ) => ok
       }
     }
   }

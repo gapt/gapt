@@ -17,14 +17,14 @@ abstract class LogicalC( val name: String ) {
   val symbol = StringSymbol( name )
 
   protected type MatchResult
-  protected def matchType( exptype: TA ): MatchResult
+  protected def matchType( exptype: Ty ): MatchResult
   protected def noMatch: MatchResult
 
   def unapply( exp: LambdaExpression ): MatchResult = exp match {
     case Const( `name`, exptype ) => matchType( exptype )
     case _                        => noMatch
   }
-  private[expr] def unapply( pair: ( SymbolA, TA ) ): MatchResult = pair match {
+  private[expr] def unapply( pair: ( SymbolA, Ty ) ): MatchResult = pair match {
     case ( `symbol`, ty ) => matchType( ty )
     case _                => noMatch
   }
@@ -36,11 +36,11 @@ abstract class LogicalC( val name: String ) {
  * @param name  The name of this logical constant, e.g. "∧"
  * @param ty  The fixed type of this logical constant, e.g. To->To->To
  */
-class MonomorphicLogicalC( name: String, val ty: TA ) extends LogicalC( name ) {
+class MonomorphicLogicalC( name: String, val ty: Ty ) extends LogicalC( name ) {
   def apply() = Const( symbol, ty )
 
   protected type MatchResult = Boolean
-  protected override def matchType( exptype: TA ) = exptype == ty
+  protected override def matchType( exptype: Ty ) = exptype == ty
   protected override def noMatch = false
 }
 
@@ -50,10 +50,10 @@ class MonomorphicLogicalC( name: String, val ty: TA ) extends LogicalC( name ) {
  * @param name  The name of this logical constant, e.g. "∀"
  */
 class QuantifierC( name: String ) extends LogicalC( name ) {
-  def apply( qtype: TA ) = Const( symbol, ( qtype -> To ) -> To )
+  def apply( qtype: Ty ) = Const( symbol, ( qtype -> To ) -> To )
 
-  protected type MatchResult = Option[TA]
-  protected override def matchType( exptype: TA ) = exptype match {
+  protected type MatchResult = Option[Ty]
+  protected override def matchType( exptype: Ty ) = exptype match {
     case ( qtype -> To ) -> To => Some( qtype )
     case _                     => None
   }
@@ -71,10 +71,10 @@ object ExistsC extends QuantifierC( "∃" )
 object ForallC extends QuantifierC( "∀" )
 
 object EqC extends LogicalC( "=" ) {
-  def apply( ty: TA ) = Const( symbol, ty -> ( ty -> To ) )
+  def apply( ty: Ty ) = Const( symbol, ty -> ( ty -> To ) )
 
-  protected type MatchResult = Option[TA]
-  protected override def matchType( exptype: TA ) = exptype match {
+  protected type MatchResult = Option[Ty]
+  protected override def matchType( exptype: Ty ) = exptype match {
     case ty -> ( ty_ -> To ) if ty == ty_ => Some( ty )
     case _                                => None
   }
