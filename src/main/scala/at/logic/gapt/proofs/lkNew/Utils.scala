@@ -182,6 +182,10 @@ object regularize {
 
     case proof @ InductionRule( cases, main ) =>
       var blacklistNew = blacklist
+
+      val newQuant = rename( proof.quant, blacklistNew.toList )
+      blacklistNew += newQuant
+
       val newCases = cases map { c =>
         val renaming = rename( c.eigenVars.toSet, blacklistNew )
         blacklistNew ++= renaming.values
@@ -189,7 +193,8 @@ object regularize {
         blacklistNew = blacklistNew_
         c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming )
       }
-      proof.copy( newCases ) -> blacklistNew
+
+      InductionRule( newCases, All( newQuant, Substitution( proof.quant -> newQuant )( proof.qfFormula ) ) ) -> blacklistNew
 
     case DefinitionLeftRule( subProof, aux, main ) =>
       val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )

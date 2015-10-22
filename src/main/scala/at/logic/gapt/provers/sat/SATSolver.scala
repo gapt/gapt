@@ -1,5 +1,6 @@
 package at.logic.gapt.provers.sat
 
+import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.expr.{ FOLFormula, HOLFormula }
 import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.formats.dimacs.{ DIMACSEncoding, DIMACS }
@@ -21,7 +22,10 @@ abstract class SATSolver extends Prover {
 
   // FIXME: rewrite CNF transformation and support non-FOL clauses...
   def solve( formula: HOLFormula ): Option[Interpretation] =
-    solve( TseitinCNF( formula.asInstanceOf[FOLFormula] ) )
+    formula match {
+      case formula: FOLFormula => solve( TseitinCNF( formula.asInstanceOf[FOLFormula] ) )
+      case _                   => solve( CNFp.toClauseList( formula ) )
+    }
 
   def getLKProof( seq: HOLSequent ): Option[LKProof] = throw new UnsupportedOperationException
   override def isValid( f: HOLFormula ): Boolean = solve( -f ).isEmpty

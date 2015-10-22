@@ -97,11 +97,8 @@ object variables {
   def apply( s: Sequent[FOLFormula] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Set[FOLVar] = s.elements flatMap apply toSet
   def apply( s: OccSequent )( implicit dummy: DummyImplicit ): Set[Var] = apply( s.toHOLSequent )
   def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
-  def apply( p: lkNew.LKProof ): Set[Var] = p match {
-    case lkNew.InitialSequent( sequent )                             => apply( sequent )
-    case lkNew.UnaryLKProof( sequent, subProof )                     => apply( sequent ) ++ apply( subProof )
-    case lkNew.BinaryLKProof( sequent, leftSubProof, rightSubProof ) => apply( sequent ) ++ apply( leftSubProof ) ++ apply( rightSubProof )
-  }
+  def apply[Expr <: LambdaExpression, Proof <: SequentProof[Expr, Proof]]( p: SequentProof[Expr, Proof] ): Set[Var] =
+    p.subProofs flatMap { _.conclusion.elements } flatMap { variables( _ ) }
 }
 
 /**

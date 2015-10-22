@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.proofs.{ OccConnector, Ant, Suc, Sequent }
+import at.logic.gapt.proofs._
 
 /**
  * Modifies an LK proof to introduce strong quantifiers as soon as possible.
@@ -10,8 +10,20 @@ import at.logic.gapt.proofs.{ OccConnector, Ant, Suc, Sequent }
 object moveStrongQuantifierRulesDown {
   def apply( p: LKProof ): LKProof = apply( p, p.conclusion map { _ => Seq() } )._1
 
+  private def isUnderInduction( p: LKProof, idx: Suc, quantNum: Int ): Boolean = p match {
+    case p @ ForallRightRule( subProof, aux: Suc, _, _ ) if p.mainIndices contains idx =>
+      if ( quantNum == 0 ) false
+      else isUnderInduction( subProof, aux, quantNum - 1 )
+    case p @ InductionRule( _, _ ) if p.mainIndices contains idx => true
+    case _ =>
+      ( for (
+        ( q, o ) <- p.immediateSubProofs zip p.occConnectors;
+        aux <- o.parents( idx )
+      ) yield isUnderInduction( q, aux.asInstanceOf[Suc], quantNum ) ) exists identity
+  }
+
   private def apply( p: LKProof, eigenVariables: Sequent[Seq[Var]] ): ( LKProof, OccConnector[HOLFormula] ) = p.conclusion.zipWithIndex.elements.view.collect {
-    case ( All.Block( vs, f ), i @ Suc( _ ) ) if vs.size > eigenVariables( i ).size =>
+    case ( All.Block( vs, f ), i @ Suc( _ ) ) if vs.size > eigenVariables( i ).size && !isUnderInduction( p, i, eigenVariables( i ).size ) =>
       val v = vs( eigenVariables( i ).size )
       val eigen = rename( v, freeVariablesLK( p ).toList ++ eigenVariables.elements.flatten )
       val ( q, oc ) = apply( p, eigenVariables.updated( i, eigenVariables( i ) :+ eigen ) )
@@ -71,6 +83,11 @@ object moveStrongQuantifierRulesDown {
 
           case EqualityLeftRule( _, eq, aux, pos )         => EqualityLeftRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), pos )
           case EqualityRightRule( _, eq, aux, pos )        => EqualityRightRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), pos )
+
+          case p @ InductionRule( cases, main ) =>
+            p.copy( ( cases, qs, oc ).zipped map { ( c, q, o ) =>
+              c.copy( proof = q, hypotheses = c.hypotheses map o.child, conclusion = o.child( c.conclusion ) )
+            } )
         }
         ( q, ( q.occConnectors, oc, p.occConnectors ).zipped map { _ * _ * _.inv } reduce { _ + _ } )
     }

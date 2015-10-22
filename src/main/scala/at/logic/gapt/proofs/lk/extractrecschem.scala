@@ -55,8 +55,8 @@ object extractRecSchem {
   private def findEigenVars( occ: SequentIndex, p: LKProof ): List[Var] = p match {
     case StrongQuantifierRule( subProof, aux, eigen, quant, pol ) if occ == p.mainIndices.head =>
       eigen :: findEigenVars( aux, subProof )
-    //    case InductionRule( q1, base, q2, stepl, stepr, term ) if occ == p.mainIndices.head =>
-    //      findEigenVars( stepr, q2 ).map { case Var( s, t ) => Var( s"${s}_end", t ) } // hacky...
+    case p @ InductionRule( _, _ ) if p.mainIndices contains occ =>
+      p.quant :: findEigenVars( p.cases.head.conclusion, p.cases.head.proof )
     case _ => Nil
   }
 
@@ -101,18 +101,23 @@ object extractRecSchem {
 
       val rules2 = getRules( q2, axiom, occConn2.parents( symbols ).updated( aux2, Seq( symbol ) ).map( _.head ), context )
       rules1 ++ rules2
-    //    case p @ InductionRule( q1, base, q2, stepl, stepr, term ) =>
-    //      val All.Block( vars, _ ) = q2.endSequent( stepl )
-    //      val indVar = p.x
-    //      val symbol = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.exptype ) ++ Seq( Ti ) ++ vars.map( _.exptype ) ) ), context )
-    //
-    //      val baseAxiom = Apps( App( symbol, FOLConst( "0" ) ), findEigenVars( base, q1 ) )
-    //      val rules1 = getRules( q1, baseAxiom, p.getLeftOccConnector.parents( symbols ).map( _.head ), context )
-    //
-    //      val stepAxiom = Apps( App( symbol, FOLFunction( "s", indVar ) ), findEigenVars( stepr, q2 ) )
-    //      val rules2 = getRules( q2, stepAxiom, p.getRightOccConnector.parents( symbols ).updated( stepl, Seq( App( symbol, indVar ) ) ).map( _.head ), indVar :: context )
-    //
-    //      rules1 ++ rules2 + Rule( axiom, Apps( symbol, term :: findEigenVars( p.mainIndices.head, p ) ) )
+    case p @ InductionRule( cases, main ) =>
+      val ( indVar :: eigenVars ) = findEigenVars( p.mainIndices.head, p )
+      val symbol = axiom match { case Apps( head, args ) => head( args.dropRight( eigenVars.size + 1 ): _* ) }
+
+      val caseRules = ( cases, p.occConnectors ).zipped flatMap { ( c, o ) =>
+        val caseAxiom = symbol( c.constructor( c.eigenVars: _* ) )( findEigenVars( c.conclusion, c.proof ): _* )
+
+        var caseSymbols = o.parents( symbols ).map( _.head )
+        ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, hypVar ) =>
+          caseSymbols = caseSymbols.updated( hyp, symbol( hypVar ) )
+        }
+        caseSymbols = caseSymbols.updated( c.conclusion, Top() ) // FIXME: pi2-induction
+
+        getRules( c.proof, caseAxiom, caseSymbols, context ++ c.eigenVars )
+      }
+
+      caseRules.toSet
     case _ =>
       ( for (
         ( q, occConn ) <- p.immediateSubProofs zip p.occConnectors;

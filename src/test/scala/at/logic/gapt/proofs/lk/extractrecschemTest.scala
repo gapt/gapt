@@ -4,20 +4,21 @@ import java.util.zip.GZIPInputStream
 
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ Numeral, Utils }
+import at.logic.gapt.expr.fol.{ reduceHolToFol, Numeral, Utils }
 import at.logic.gapt.expr.hol.{ existsclosure, instantiate }
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
-import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.proofs.{ Suc, Ant, Sequent, HOLSequent }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
 
-class ExtractRecSchemTest extends Specification {
+class ExtractRecSchemTest extends Specification with SatMatchers {
   "simple" in {
     val P = FOLAtomHead( "P", 1 )
     val c = FOLConst( "c" )
@@ -129,6 +130,45 @@ class ExtractRecSchemTest extends Specification {
     Sat4j.isValid(
       recschem.language.map( _.asInstanceOf[FOLFormula] ).toSeq ++: HOLSequent()
     ) must_== true
+  }
+
+  "numeral induction" in {
+    val nat = TBase( "Nat" )
+    val o = Const( "Zero", nat )
+    val s = Const( "Suc", nat -> nat )
+
+    val witness = TBase( "Witness" )
+    val p = Const( "p", nat -> ( witness -> To ) )
+    val g = Const( "g", witness -> witness )
+    val c = Const( "c", witness )
+    val x = Var( "x", nat )
+    val y = Var( "y", witness )
+
+    val proof = ( ProofBuilder
+      c LogicalAxiom( HOLAtom( p( o, y ) ) )
+      u ( ForallLeftRule( _, All( y, p( o, y ) ), y ) )
+      u ( ForallRightRule( _, All( y, p( o, y ) ) ) )
+
+      c LogicalAxiom( HOLAtom( p( x, g( y ) ) ) )
+      c LogicalAxiom( HOLAtom( p( s( x ), y ) ) )
+      b ( ImpLeftRule( _, Suc( 0 ), _, Ant( 0 ) ) )
+      u ( ForallLeftBlock( _, All( x, All( y, p( x, g( y ) ) --> p( s( x ), y ) ) ), Seq( x, y ) ) )
+      u ( ForallLeftRule( _, All( y, p( x, y ) ), g( y ) ) )
+      u ( ForallRightRule( _, All( y, p( s( x ), y ) ) ) )
+
+      b { ( base, step ) =>
+        val baseCase = InductionCase( base, o, Seq(), Seq(), Suc( 0 ) )
+        val stepCase = InductionCase( step, s, Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+        InductionRule( Seq( baseCase, stepCase ), All( x, All( y, p( x, y ) ) ) )
+      }
+
+      c LogicalAxiom( HOLAtom( p( x, c ) ) )
+      u ( ForallLeftBlock( _, All( x, All( y, p( x, y ) ) ), Seq( x, c ) ) )
+
+      b ( CutRule( _, Suc( 0 ), _, Ant( 0 ) ) ) qed )
+
+    val recSchem = extractRecSchem( proof )
+    And( recSchem.parametricLanguage( s( s( o ) ) ).toSeq map { _.asInstanceOf[HOLFormula] } ) must beUnsat
   }
 }
 
