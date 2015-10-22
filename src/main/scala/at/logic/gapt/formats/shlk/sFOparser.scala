@@ -1,5 +1,6 @@
 package at.logic.gapt.formats.shlk_parsing
 
+import at.logic.gapt.formats.simple.TypeParsers
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.solve
 
@@ -38,7 +39,7 @@ object sFOParser {
       case x: AnyRef => // { println( nLine + nLine + "FAIL parse : " + nLine + error_buffer ); throw new Exception( nLine + nLine + "FAIL parse :( " + nLine ); }
         throw new Exception( "Error in sFOParser.parseSequent : " + x.toString )
     }
-    class SequentParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
+    class SequentParser extends JavaTokenParsers with TypeParsers {
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
       def term: Parser[SchemaExpression] = ( non_formula | formula )
       def formula: Parser[SchemaFormula] = ( atom | neg | big | and | or | indPred | imp | forall | exists | variable | constant ) ^? { case trm: SchemaFormula => trm }
@@ -205,7 +206,7 @@ object sFOParser {
     //      }
     //    }
 
-    class SimpleSLKParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
+    class SimpleSLKParser extends JavaTokenParsers with TypeParsers {
       def line: Parser[List[Unit]] = rep( mappingBase )
       def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {
         case l ~ ":" ~ p => {

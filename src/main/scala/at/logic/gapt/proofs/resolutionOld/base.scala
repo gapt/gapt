@@ -11,7 +11,6 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.proofs.lk.base.{ createContext => lkCreateContext, OccSequent }
 import at.logic.gapt.proofs.lksk.LabelledFormulaOccurrence
-import at.logic.gapt.proofs.lksk.TypeSynonyms.Label
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ TA, FunctionType }
 import at.logic.gapt.utils.ds.acyclicGraphs._

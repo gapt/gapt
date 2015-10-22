@@ -496,7 +496,7 @@ object PStructToExpressionTree {
       case _ => None
     }
   }
-  object PPlusC extends MonomorphicLogicalC( PPlusSymbol.toString, Type( "( o -> (o -> o) )" ) )
+  object PPlusC extends MonomorphicLogicalC( PPlusSymbol.toString, ( To -> ( To -> To ) ) )
 
   object PWeakC {
     def apply( seq: OccSequent ) = Const( PWeakSymbol( seq ), To -> To )

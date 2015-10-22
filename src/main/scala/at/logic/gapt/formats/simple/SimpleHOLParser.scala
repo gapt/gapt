@@ -15,7 +15,15 @@ import at.logic.gapt.formats.readers.StringReader
 import scala.util.matching.Regex
 import scala.util.parsing.combinator._
 
-trait SimpleHOLParser extends HOLParser with JavaTokenParsers with at.logic.gapt.expr.Parsers {
+trait TypeParsers extends JavaTokenParsers {
+  def Type: Parser[TA] = ( arrowType | iType | oType )
+  def iType: Parser[TA] = "i" ^^ { x => Ti }
+  def oType: Parser[TA] = "o" ^^ { x => To }
+  def indexType: Parser[TA] = "e" ^^ { x => Tindex }
+  def arrowType: Parser[TA] = "(" ~> Type ~ "->" ~ Type <~ ")" ^^ { case in ~ "->" ~ out => in -> out }
+}
+
+trait SimpleHOLParser extends HOLParser with JavaTokenParsers with TypeParsers {
   def goal = term
 
   def term: Parser[LambdaExpression] = ( non_formula | formula )

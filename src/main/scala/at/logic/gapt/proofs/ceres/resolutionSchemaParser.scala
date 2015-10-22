@@ -3,6 +3,7 @@
 package at.logic.gapt.proofs.ceres.clauseSchema
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.simple.TypeParsers
 import at.logic.gapt.proofs.lk.base.{ OccSequent, LKProof }
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr._
@@ -31,7 +32,7 @@ object ParseResSchema {
         throw new Exception( x.toString )
     }
 
-    class SimpleResolutionSchemaParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
+    class SimpleResolutionSchemaParser extends JavaTokenParsers with TypeParsers {
 
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
 
@@ -258,7 +259,7 @@ object ParseResSchemaDavid {
         throw new Exception( x.toString )
     }
 
-    class SimpleResolutionSchemaParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
+    class SimpleResolutionSchemaParser extends JavaTokenParsers with TypeParsers {
 
       def name = """[\\]*[a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,_,0,1,2,3,4,5,6,7,8,9]*""".r
 

@@ -15,31 +15,6 @@ class TypesTest extends Specification {
     "produce a binary function type ( i -> (i -> o ) )" in {
       FunctionType( To, Ti :: Ti :: Nil ) must beEqualTo( Ti -> ( Ti -> To ) )
     }
-    val p = new JavaTokenParsers with Parsers
-    "parse correctly from string (1)" in {
-      ( p.parseAll( p.Type, "i" ).get ) must beEqualTo( Ti )
-    }
-    "parse correctly from string (2)" in {
-      ( p.parseAll( p.Type, "o" ).get ) must beEqualTo( To )
-    }
-    "parse correctly from string (3)" in {
-      ( p.parseAll( p.Type, "(i -> o)" ).get ) must beEqualTo( Ti -> To )
-    }
-    "parse correctly from string (4)" in {
-      ( p.parseAll( p.Type, "((i -> o) -> o)" ).get ) must beEqualTo( ( Ti -> To ) -> To )
-    }
-    "parse correctly from string (5)" in {
-      ( p.parseAll( p.Type, "(i -> (o -> o))" ).get ) must beEqualTo( Ti -> ( To -> To ) )
-    }
-    "use correctly the constructor for strings string (1)" in {
-      ( `->`( "(i -> (o -> o))", To ) ) must beEqualTo( ( Ti -> ( To -> To ) ) -> To )
-    }
-    "extract from string (1)" in {
-      ( "(i -> (o -> o))" match {
-        case StringExtractor( `->`( Ti, `->`( To, To ) ) ) => true
-        case _ => false
-      } ) must beEqualTo( true )
-    }
   }
 
   "FunctionType" should {

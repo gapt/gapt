@@ -1,5 +1,6 @@
 package at.logic.gapt.formats.shlk_parsing
 
+import at.logic.gapt.formats.simple.TypeParsers
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.solve
 
@@ -65,7 +66,7 @@ object sFOParserCNT {
         throw new Exception( x.toString )
     }
 
-    class SimpleSLKParser extends JavaTokenParsers with at.logic.gapt.expr.Parsers {
+    class SimpleSLKParser extends JavaTokenParsers with TypeParsers {
       def line: Parser[List[Unit]] = rep( cmappingBase )
       def cmappingBase: Parser[Unit] = ( "comment" ~ "\"[\"]*\"" ) ^^ { x => () } | mappingBase
       def mappingBase: Parser[Unit] = label.r ~ ":" ~ proof ^^ {

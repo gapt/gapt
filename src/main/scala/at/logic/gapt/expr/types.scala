@@ -25,14 +25,7 @@ case class Tdata( name: String ) extends TAtomicA { override def toString = name
 case class -> ( val in: TA, val out: TA ) extends TComplexA {
   override def toString = "(" + in.toString + "->" + out.toString + ")"
 }
-// Overloading the apply method so that it takes strings.
 object -> {
-  @deprecated( "Build your types without parsing strings!", "2015-05-13" )
-  def apply( in: String, out: String ) = new -> ( Type( in ), Type( out ) )
-  @deprecated( "Build your types without parsing strings!", "2015-05-13" )
-  def apply( in: TA, out: String ) = new -> ( in, Type( out ) )
-  @deprecated( "Build your types without parsing strings!", "2015-05-13" )
-  def apply( in: String, out: TA ) = new -> ( Type( in ), out )
   def unapply( ta: TA ) = ta match {
     case t: -> => Some( ( t.in, t.out ) )
     case _     => None
@@ -56,37 +49,3 @@ object Arity {
     case _        => 0
   }
 }
-
-@deprecated( "Build your types without parsing strings!", "2015-05-13" )
-object StringExtractor {
-  def apply( t: TA ): String = t match {
-    case Ti              => "i"
-    case To              => "o"
-    case `->`( in, out ) => "(" + apply( in ) + " -> " + apply( out ) + ")"
-  }
-  def unapply( s: String ): Option[TA] = {
-    val p = new JavaTokenParsers with Parsers
-    p.parseAll( p.Type, s ) match {
-      case p.Success( result, _ ) => Some( result )
-      case _                      => None
-    }
-  }
-}
-
-@deprecated( "Build your types without parsing strings!", "2015-05-13" )
-object Type {
-  def apply( s: String ): TA = StringExtractor.unapply( s ) match {
-    case Some( result ) => result
-    case None           => throw new IllegalArgumentException( "Bad syntax for types: " + s )
-  }
-}
-
-trait Parsers extends JavaTokenParsers {
-  def Type: Parser[TA] = ( arrowType | iType | oType )
-  def iType: Parser[TA] = "i" ^^ { x => Ti }
-  def oType: Parser[TA] = "o" ^^ { x => To }
-  def indexType: Parser[TA] = "e" ^^ { x => Tindex }
-  def arrowType: Parser[TA] = "(" ~> Type ~ "->" ~ Type <~ ")" ^^ { case in ~ "->" ~ out => in -> out }
-}
-
-class TypeException( s: String ) extends Exception
