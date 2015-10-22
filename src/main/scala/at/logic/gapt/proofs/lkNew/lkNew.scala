@@ -1609,105 +1609,63 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
 }
 
 /**
- * An LKProof ending with an induction rule:
+ * Case of an induction rule
  *
- * <pre>
- *      (π1)                (π2)
- *  Γ :- Δ, A[0]    A[x], Π :- Λ, A[sx]
- * ------------------------------------ind
- *           Γ, Π :- Δ, Λ, A[t]
- * </pre>
- * Note that there is an eigenvariable condition on x, i.e. x must not occur freely in Π :- Λ.
+ *                                  (proof)
+ * F(x_1), F(x_2), ..., F(x_n), Gamma :- Delta, F(c(x_1,...,x_n,y_1,...,y_n))
  *
- * @param leftSubProof The subproof π,,1,,
- * @param aux1 The index of A[0].
- * @param rightSubProof The subproof π,,2,,
- * @param aux2 The index of A[x].
- * @param aux3 The index of A[sx].
- * @param term The term t in the conclusion.
+ * The variables x_i and y_i are eigenvariables; x_i are the eigenvariables of the same type as the inductive data
+ * type, y_i are the other arguments of the constructor c.  They can come in any order in the constructor.
+ *
+ * @param proof  The LKProof ending in the sequent of this case.
+ * @param constructor  The constructor c of the inductive data type that we're considering.
+ * @param hypotheses  Indices of F(x_1), ..., F(x_n)
+ * @param eigenVars  The eigenvariables of this case: x_1, ..., x_n, y_1, ..., y_n  (these need to correspond to the order in c)
+ * @param conclusion  Index of F(c(x_1,...,x_n,y_1,...,y_n))
  */
-case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex, aux3: SequentIndex, term: FOLTerm )
-    extends BinaryLKProof with CommonRule with Eigenvariable {
-  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
-  validateIndices( rightPremise, Seq( aux2 ), Seq( aux3 ) )
+case class InductionCase( proof: LKProof, constructor: Const,
+                          hypotheses: Seq[SequentIndex], eigenVars: Seq[Var],
+                          conclusion: SequentIndex ) {
+  val FunctionType( indTy, fieldTypes ) = constructor.exptype
+  require( fieldTypes == eigenVars.map( _.exptype ) )
 
-  private val zero = FOLConst( "0" )
-  private def s( t: FOLTerm ) = FOLFunction( "s", List( t ) )
+  val hypVars = eigenVars filter { _.exptype == indTy }
+  require( hypotheses.size == hypVars.size )
 
-  override def name = "ind"
-
-  // FIXME: Is there a better way than type casting?
-  val ( aZero, aX, aSx ) = ( leftPremise( aux1 ).asInstanceOf[FOLFormula], rightPremise( aux2 ).asInstanceOf[FOLFormula], rightPremise( aux3 ).asInstanceOf[FOLFormula] )
-
-  // Find a FOLSubstitution for A[x] and A[0], if possible.
-  val sub1 = FOLMatchingAlgorithm.matchTerms( aX, aZero ) match {
-    case Some( s ) => s
-    case None      => throw LKRuleCreationException( s"Formula $aX can't be matched to formula $aZero." )
+  hypotheses foreach { hyp =>
+    require( hyp.isAnt && proof.endSequent.isDefinedAt( hyp ) )
   }
 
-  // Find a substitution for A[x] and A[Sx], if possible.
-  val sub2 = FOLMatchingAlgorithm.matchTerms( aX, aSx ) match {
-    case Some( s ) => s
-    case None      => throw LKRuleCreationException( s"Formula $aX can't be matched to formula $aSx." )
-  }
-
-  val x = ( sub1.folmap ++ sub2.folmap ).collect { case ( v, e ) if v != e => v }.headOption.getOrElse {
-    throw LKRuleCreationException( "Cannot determine induction variable." )
-  }
-
-  override val eigenVariable = x
-
-  // Some safety checks
-  if ( ( sub1.domain.toSet - x ).exists( v => sub1( v ) != v ) )
-    throw LKRuleCreationException( s"Formula " + aX + " can't be matched to formula " + aZero + " by substituting a single variable." )
-
-  if ( ( sub2.domain.toSet - x ).exists( v => sub1( v ) != v ) )
-    throw LKRuleCreationException( s"Formula " + aX + " can't be matched to formula " + aSx + " by substituting a single variable." )
-
-  val sX = s( x )
-
-  if ( sub1( x ) != zero )
-    throw LKRuleCreationException( s"$sub1 doesn't replace $x by 0." )
-
-  if ( sub2( x ) != sX )
-    throw LKRuleCreationException( s"$sub2 doesn't replace $x by $sX." )
-
-  // Test the eigenvariable condition
-  if ( ( rightPremise.delete( aux2 ).antecedent ++ rightPremise.delete( aux3 ).succedent ) map ( _.asInstanceOf[FOLFormula] ) flatMap freeVariables.apply contains x )
-    throw LKRuleCreationException( s"Eigenvariable condition not satisified for sequent $rightPremise and variable $x." )
-
-  // Construct the main formula
-  val mainSub = FOLSubstitution( x, term )
-  val mainFormula = mainSub( aX )
-
-  def auxIndices = Seq( Seq( aux1 ), Seq( aux2, aux3 ) )
-
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  require( conclusion.isSuc && proof.endSequent.isDefinedAt( conclusion ) )
 }
 
-object InductionRule extends ConvenienceConstructor( "InductionRule" ) {
-
-  /**
-   * Convenience constructor for ind.
-   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-   * will attempt to find an appropriate index on its own.
-   *
-   * @param leftSubProof The left subproof.
-   * @param inductionBase The index of the induction base (A[0]) or the induction base itself.
-   * @param rightSubProof The right subproof.
-   * @param inductionHypo The index of the induction hypothesis (A[x]) or the induction hypothesis itself.
-   * @param inductionStep The index of the induction step (A[sx]) or the induction step itself.
-   * @param term The term in the conclusion.
-   * @return
-   */
-  def apply( leftSubProof: LKProof, inductionBase: IndexOrFormula, rightSubProof: LKProof, inductionHypo: IndexOrFormula, inductionStep: IndexOrFormula, term: FOLTerm ): InductionRule = {
-    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
-
-    val ( _, indicesLeftSuc ) = findAndValidate( leftPremise )( Seq(), Seq( inductionBase ) )
-    val ( indicesRightAnt, indicesRightSuc ) = findAndValidate( rightPremise )( Seq( inductionHypo ), Seq( inductionStep ) )
-
-    InductionRule( leftSubProof, Suc( indicesLeftSuc.head ), rightSubProof, Ant( indicesRightAnt.head ), Suc( indicesRightSuc.head ), term )
+/**
+ * Induction rule.
+ *
+ * case_1      case_2     ...     case_n
+ * -------------------------------------
+ * Gamma :- Delta, forall x: indTy, F(x)
+ */
+case class InductionRule( cases: Seq[InductionCase], mainFormula: HOLFormula ) extends CommonRule {
+  val All( quant @ Var( _, indTy ), qfFormula ) = mainFormula
+  cases foreach { c =>
+    require( c.indTy == indTy )
+    ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, eigen ) =>
+      require( c.proof.endSequent( hyp ) == Substitution( quant -> eigen )( qfFormula ) )
+    }
+    require( c.proof.endSequent( c.conclusion ) == Substitution( quant -> c.constructor( c.eigenVars: _* ) )( qfFormula ) )
   }
+  require( freeVariables( contexts.flatMap( _.elements ) :+ mainFormula ) intersect cases.flatMap( _.eigenVars ).toSet isEmpty )
+
+  override protected def mainFormulaSequent = Sequent() :+ mainFormula
+  override def auxIndices: Seq[Seq[SequentIndex]] = cases map { c => c.hypotheses :+ c.conclusion }
+  override def immediateSubProofs: Seq[LKProof] = cases map { _.proof }
+
+  private lazy val product = cases.flatMap { _.productIterator } :+ mainFormula
+  override def productArity = product.size
+  override def productElement( n: Int ) = product( n )
+
+  override def name = "ind"
 }
 
 /**

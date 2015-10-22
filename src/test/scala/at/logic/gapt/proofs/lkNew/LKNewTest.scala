@@ -1391,138 +1391,17 @@ class LKNewTest extends Specification {
 
       val ax2 = TheoryAxiom( Pxy +: Sequent() :+ PSxy )
 
-      InductionRule( ax1, Suc( 0 ), ax2, Ant( 0 ), Suc( 0 ), x )
+      println( InductionRule(
+        Seq(
+          InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
+          InductionCase( ax2, FOLFunctionHead( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+        ),
+        All( x, Pxy )
+      ) )
 
       success
     }
 
-    "fail if S does not occur in the right place" in {
-      val Tx = FOLFunction( "T", List( x ) )
-      val PTxy = FOLAtom( "P", List( Tx, y ) )
-
-      val ax1 = LogicalAxiom( P0y )
-
-      val ax2 = TheoryAxiom( Sequent( List( Pxy ), List( PTxy ) ) )
-      InductionRule( ax1, Suc( 0 ), ax2, Ant( 0 ), Suc( 0 ), x ) must throwAn[LKRuleCreationException]
-    }
-
-    "fail if more than one variable needs to be substituted" in {
-      val z = FOLVar( "z" )
-      val P0z = FOLAtom( "P", List( zero, z ) )
-
-      val ax1 = LogicalAxiom( P0z )
-
-      val ax2 = TheoryAxiom( Sequent( List( Pxy ), List( PSxy ) ) )
-      InductionRule( ax1, Suc( 0 ), ax2, Ant( 0 ), Suc( 0 ), x ) must throwAn[LKRuleCreationException]
-    }
-
-    "fail if different variables need to be substituted" in {
-      val Sy = FOLFunction( "S", List( y ) )
-      val PxSy = FOLAtom( "P", List( x, Sy ) )
-
-      val ax1 = LogicalAxiom( P0y )
-
-      val ax2 = TheoryAxiom( Sequent( List( Pxy ), List( PxSy ) ) )
-      InductionRule( ax1, Suc( 0 ), ax2, Ant( 0 ), Suc( 0 ), x ) must throwAn[LKRuleCreationException]
-    }
-
-    "fail if the eigenvariable condition is not satisfied" in {
-      val Qx = FOLAtom( "Q", List( x ) )
-      val ax1 = LogicalAxiom( P0y )
-
-      val ax2 = TheoryAxiom( Sequent( List( Pxy, Qx ), List( PSxy ) ) )
-
-      InductionRule( ax1, Suc( 0 ), ax2, Ant( 0 ), Suc( 0 ), x ) must throwAn[LKRuleCreationException]
-
-      val ax2_ = TheoryAxiom( Sequent( List( Pxy ), List( PSxy, Qx ) ) )
-      InductionRule( ax1, Suc( 0 ), ax2, Ant( 0 ), Suc( 0 ), x ) must throwAn[LKRuleCreationException]
-    }
-
-    "correctly return its main formula" in {
-      val ax1 = TheoryAxiom( A +: Sequent() :+ B :+ P0y :+ C )
-      val ax2 = TheoryAxiom( D +: Pxy +: E +: Sequent() :+ A :+ PSxy :+ F )
-      val p = InductionRule( ax1, Suc( 1 ), ax2, Ant( 1 ), Suc( 1 ), x )
-
-      if ( p.mainIndices.length != 1 )
-        failure
-
-      p.endSequent( p.mainIndices.head ) must beEqualTo( Pxy )
-    }
-
-    "correctly return its aux formulas" in {
-      val ax1 = TheoryAxiom( A +: Sequent() :+ B :+ P0y :+ C )
-      val ax2 = TheoryAxiom( D +: Pxy +: E +: Sequent() :+ A :+ PSxy :+ F )
-      val p = InductionRule( ax1, Suc( 1 ), ax2, Ant( 1 ), Suc( 1 ), x )
-
-      if ( p.auxIndices.length != 2 )
-        failure
-
-      if ( p.auxIndices.head.length != 1 )
-        failure
-
-      if ( p.auxIndices( 1 ).length != 2 )
-        failure
-
-      p.leftPremise( p.auxIndices.head.head ) must beEqualTo( P0y )
-      p.rightPremise( p.auxIndices( 1 ).head ) must beEqualTo( Pxy )
-      p.rightPremise( p.auxIndices( 1 )( 1 ) ) must beEqualTo( PSxy )
-    }
-
-    "correctly connect occurrences" in {
-      val ax1 = TheoryAxiom( A +: Sequent() :+ B :+ P0y :+ C )
-      val ax2 = TheoryAxiom( D +: Pxy +: E +: Sequent() :+ A :+ PSxy :+ F )
-
-      // end sequent of p: A, D, E :- B, C, A, F, P(x,y)
-      val p = InductionRule( ax1, Suc( 1 ), ax2, Ant( 1 ), Suc( 1 ), x )
-
-      val ( oL, oR ) = ( p.getLeftOccConnector, p.getRightOccConnector )
-
-      testChildren( oL, "ind" )(
-        p.leftPremise,
-        Seq( Ant( 0 ) ),
-
-        Seq( Suc( 0 ) ),
-        Seq( Suc( 4 ) ),
-        Seq( Suc( 1 ) )
-      )
-
-      testParents( oL, "ind" )(
-        p.endSequent,
-        Seq( Ant( 0 ) ),
-        Seq(),
-        Seq(),
-
-        Seq( Suc( 0 ) ),
-        Seq( Suc( 2 ) ),
-        Seq(),
-        Seq(),
-        Seq( Suc( 1 ) )
-      )
-
-      testChildren( oR, "ind" )(
-        p.rightPremise,
-        Seq( Ant( 1 ) ),
-        Seq( Suc( 4 ) ),
-        Seq( Ant( 2 ) ),
-
-        Seq( Suc( 2 ) ),
-        Seq( Suc( 4 ) ),
-        Seq( Suc( 3 ) )
-      )
-
-      testParents( oR, "ind" )(
-        p.endSequent,
-        Seq(),
-        Seq( Ant( 0 ) ),
-        Seq( Ant( 2 ) ),
-
-        Seq(),
-        Seq(),
-        Seq( Suc( 0 ) ),
-        Seq( Suc( 2 ) ),
-        Seq( Ant( 1 ), Suc( 1 ) )
-      )
-    }
   }
 
   "exchange rules" should {

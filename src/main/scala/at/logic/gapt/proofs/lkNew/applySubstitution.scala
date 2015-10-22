@@ -113,9 +113,8 @@ object applySubstitution {
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
       EqualityRightRule( subProofNew, eq, aux, pos )
 
-    case InductionRule( leftSubProof, aux1, rightSubProof, aux2, aux3, term ) =>
-      val ( leftSubProofNew, rightSubProofNew ) = ( apply( substitution, preserveEigenvariables )( leftSubProof ), apply( substitution, preserveEigenvariables )( rightSubProof ) )
-      InductionRule( leftSubProofNew, aux1, rightSubProofNew, aux2, aux3, betaNormalize( substitution( term ) ).asInstanceOf[FOLTerm] )
+    case InductionRule( cases, main ) =>
+      InductionRule( cases map { indCase( substitution, _, preserveEigenvariables ) }, substitution( main ) )
 
     case DefinitionLeftRule( subProof, aux, main ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
@@ -127,4 +126,18 @@ object applySubstitution {
 
     case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
   }
+
+  private def indCase( subst: Substitution, c: InductionCase, preserveEigenvariables: Boolean ): InductionCase =
+    if ( subst.domain.toSet intersect c.eigenVars.toSet nonEmpty ) {
+      indCase( Substitution( subst.map -- c.eigenVars.toSet ), c, preserveEigenvariables )
+    } else if ( subst.range.toSet intersect c.eigenVars.toSet nonEmpty ) {
+      require( !preserveEigenvariables )
+      val renaming = rename( c.eigenVars.toSet, freeVariables( c.proof.endSequent ) -- c.eigenVars.toSet ++ subst.range )
+      indCase( subst, c.copy(
+        applySubstitution( Substitution( renaming ), preserveEigenvariables )( c.proof ),
+        eigenVars = c.eigenVars map renaming
+      ), preserveEigenvariables )
+    } else {
+      c.copy( applySubstitution( subst, preserveEigenvariables )( c.proof ) )
+    }
 }

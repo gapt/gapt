@@ -392,6 +392,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def indexOfOption[B >: A]( elem: B ): Option[SequentIndex] = find( _ == elem )
   def indexOf[B >: A]( elem: B ): SequentIndex = indexOfOption( elem ) get
 
+  def indexOfInAnt[B >: A]( elem: B ): SequentIndex = Ant( antecedent indexOf elem )
+  def indexOfInSuc[B >: A]( elem: B ): SequentIndex = Suc( succedent indexOf elem )
+
   def swapped: Sequent[A] = Sequent( succedent, antecedent )
 
   def forall( p: A => Boolean ): Boolean = antecedent.forall( p ) && succedent.forall( p )

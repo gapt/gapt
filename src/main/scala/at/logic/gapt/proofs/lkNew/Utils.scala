@@ -180,11 +180,16 @@ object regularize {
       val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
       ( EqualityRightRule( subProofNew, eq, aux, pos ), blacklistNew )
 
-    //FIXME: This should probably be treated properly
-    case InductionRule( leftSubProof, aux1, rightSubProof, aux2, aux3, term ) =>
-      val ( leftSubProofNew, blacklistNew_ ) = apply_( leftSubProof, blacklist )
-      val ( rightSubProofNew, blacklistNew ) = apply_( rightSubProof, blacklistNew_ )
-      ( InductionRule( leftSubProofNew, aux1, rightSubProofNew, aux2, aux3, term ), blacklistNew )
+    case proof @ InductionRule( cases, main ) =>
+      var blacklistNew = blacklist
+      val newCases = cases map { c =>
+        val renaming = rename( c.eigenVars.toSet, blacklistNew )
+        blacklistNew ++= renaming.values
+        val ( subProofNew, blacklistNew_ ) = apply_( applySubstitution( Substitution( renaming ) )( c.proof ), blacklistNew )
+        blacklistNew = blacklistNew_
+        c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming )
+      }
+      proof.copy( newCases ) -> blacklistNew
 
     case DefinitionLeftRule( subProof, aux, main ) =>
       val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )

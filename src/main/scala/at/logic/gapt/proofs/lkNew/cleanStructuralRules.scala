@@ -65,38 +65,17 @@ object cleanStructuralRules {
             leftWeakSuc ++ rightWeakSuc )
       }
 
-    case InductionRule( leftSubProof, aux1, rightSubProof, aux2, aux3, term ) =>
-      val ( inductionBase, inductionHypo, inductionStep ) = ( proof.auxFormulas( 0 )( 0 ), proof.auxFormulas( 1 )( 0 ), proof.auxFormulas( 1 )( 1 ) )
-      val ( leftSubproofNew, leftWeakAnt, leftWeakSuc ) = apply_( leftSubProof )
-      val ( rightSubproofNew, rightWeakAnt, rightWeakSuc ) = apply_( rightSubProof )
-
-      ( leftWeakSuc contains inductionBase, rightWeakAnt contains inductionHypo, rightWeakSuc contains inductionStep ) match {
-        case ( true, _, _ ) => //In this case, we delete the right subproof (i.e. the induction step).
-          ( leftSubproofNew,
-            leftWeakAnt ++ rightWeakAnt ++ rightSubproofNew.endSequent.antecedent.diff( Seq( inductionHypo ) ),
-            leftWeakSuc.diff( Seq( inductionBase ) ) ++ rightWeakSuc ++ rightSubproofNew.endSequent.succedent.diff( Seq( inductionStep ) ) )
-
-        case ( false, true, true ) => //In this case, we delete the left subproof (i.e. the induction base).
-          ( rightSubproofNew,
-            leftWeakAnt ++ rightWeakAnt.diff( Seq( inductionHypo ) ) ++ leftSubproofNew.endSequent.antecedent,
-            leftWeakSuc ++ rightWeakSuc.diff( Seq( inductionStep ) ) ++ leftSubproofNew.endSequent.succedent.diff( Seq( inductionBase ) ) )
-
-        case ( false, true, false ) =>
-          ( InductionRule( leftSubproofNew, inductionBase.asInstanceOf[FOLFormula], WeakeningLeftRule( rightSubproofNew, inductionHypo ), inductionHypo.asInstanceOf[FOLFormula], inductionStep.asInstanceOf[FOLFormula], term ),
-            leftWeakAnt ++ rightWeakAnt.diff( Seq( inductionHypo ) ),
-            leftWeakSuc ++ rightWeakSuc )
-
-        case ( false, false, true ) =>
-          ( InductionRule( leftSubproofNew, inductionBase.asInstanceOf[FOLFormula], WeakeningRightRule( rightSubproofNew, inductionStep ), inductionHypo.asInstanceOf[FOLFormula], inductionStep.asInstanceOf[FOLFormula], term ),
-            leftWeakAnt ++ rightWeakAnt,
-            leftWeakSuc ++ rightWeakSuc.diff( Seq( inductionStep ) ) )
-
-        case ( false, false, false ) =>
-          ( InductionRule( leftSubproofNew, inductionBase.asInstanceOf[FOLFormula], rightSubproofNew, inductionHypo.asInstanceOf[FOLFormula], inductionStep.asInstanceOf[FOLFormula], term ),
-            leftWeakAnt ++ rightWeakAnt,
-            leftWeakSuc ++ rightWeakSuc )
-
-      }
+    case InductionRule( cases, main ) =>
+      val proofNew = InductionRule( cases map {
+        case InductionCase( subProof, constructor, hypotheses, eigenVars, conclusion ) =>
+          val subProofNew = WeakeningMacroRule( apply_( subProof )._1, subProof.endSequent.zipWithIndex.filter { case ( _, i ) => i == conclusion || hypotheses.contains( i ) }.map { _._1 }, strict = false )
+          InductionCase( subProofNew, constructor,
+            hypotheses map { h => subProofNew.endSequent indexOfInAnt subProof.endSequent( h ) },
+            eigenVars,
+            subProofNew.endSequent indexOfInSuc subProof.endSequent( conclusion ) )
+      }, main )
+      ( proofNew, proof.endSequent.antecedent diff proofNew.endSequent.antecedent,
+        proof.endSequent.succedent diff proofNew.endSequent.succedent )
 
     case NegLeftRule( subProof, aux ) =>
       val ( subProofNew, weakAnt, weakSuc ) = apply_( subProof )

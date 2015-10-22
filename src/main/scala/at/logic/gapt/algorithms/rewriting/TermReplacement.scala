@@ -111,8 +111,10 @@ object TermReplacement {
       case EqualityLeftRule( subProof, eq, aux, pos ) => EqualityLeftRule( f( subProof ), eq, aux, pos )
       case EqualityRightRule( subProof, eq, aux, pos ) => EqualityRightRule( f( subProof ), eq, aux, pos )
 
-      case InductionRule( leftSubProof, aux1, rightSubProof, aux2, aux3, term ) =>
-        InductionRule( f( leftSubProof ), aux1, f( rightSubProof ), aux2, aux3, apply( term, repl ).asInstanceOf[FOLTerm] )
+      case InductionRule( cases, main ) =>
+        InductionRule( cases map { c =>
+          c.copy( apply( c.proof, repl ), constructor = apply( c.constructor, repl ).asInstanceOf[Const] )
+        }, apply( main, repl ) )
 
       case DefinitionLeftRule( subProof, aux, main )  => DefinitionLeftRule( f( subProof ), aux, apply( main, repl ) )
       case DefinitionRightRule( subProof, aux, main ) => DefinitionRightRule( f( subProof ), aux, apply( main, repl ) )
