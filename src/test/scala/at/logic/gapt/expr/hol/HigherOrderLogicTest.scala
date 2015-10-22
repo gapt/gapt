@@ -199,8 +199,7 @@ class HigherOrderLogicTest extends Specification {
     val s2 = new StringSymbol( "s_{4}" )
     val s3 = new StringSymbol( "s_{6}" )
 
-    SkolemSymbolFactory.reset
-    val stream = SkolemSymbolFactory.getSkolemSymbols
+    val stream = new SkolemSymbolFactory().getSkolemSymbols
 
     "return a correct stream of Skolem symbols" in {
       stream.head must beEqualTo( s0 )

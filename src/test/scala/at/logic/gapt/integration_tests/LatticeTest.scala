@@ -41,7 +41,6 @@ class LatticeTest extends Specification {
     print( "cuts: " + stats.cuts + nLine )
   }
 
-  sequential
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
       checkForProverOrSkip

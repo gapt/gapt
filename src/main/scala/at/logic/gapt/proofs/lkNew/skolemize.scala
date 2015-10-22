@@ -29,7 +29,8 @@ object skolemize {
     }
 
   def apply( proof: LKProof ): LKProof = {
-    val contextAndSymbols = proof.endSequent.map { _ => Some( Seq() -> SkolemSymbolFactory.getSkolemSymbols ) }
+    val factory = new SkolemSymbolFactory
+    val contextAndSymbols = proof.endSequent.map { _ => Some( Seq() -> factory.getSkolemSymbols ) }
     cleanStructuralRules( apply( proof, contextAndSymbols ) )
   }
 

@@ -26,14 +26,10 @@ import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETS
 import org.specs2.mutable._
 
 class nTapeTest extends Specification with ClasspathFileCopier {
-  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
-
   def show( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
   def show_detail( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
 
   def f( e: LambdaExpression ): String = toLLKString( e )
-
-  //sequential //skolemization is not thread safe - it shouldnt't make problems here, but in case there are issues, please uncomment
 
   class Robinson2RalAndUndoHOL2Fol(
       sig_vars:   Map[String, List[Var]],
@@ -190,11 +186,10 @@ class nTapeTest extends Specification with ClasspathFileCopier {
 
   }
 
-  sequential
+  args( skipAll = !Prover9.isInstalled )
   "The higher-order tape proof" should {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
       //skipped("works but takes a bit time")
-      checkForProverOrSkip
       doCutelim( tempCopyOfClasspathFile( "tape3.llk" ) ) match {
         case Some( error ) => ko( error )
         case None          => ok
@@ -203,7 +198,6 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     }
 
     "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
-      checkForProverOrSkip
       doCutelim( tempCopyOfClasspathFile( "tape3ex.llk" ) ) match {
         case Some( error ) => ko( error )
         case None          => ok

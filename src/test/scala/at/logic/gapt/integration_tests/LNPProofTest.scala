@@ -35,7 +35,6 @@ class LNPProofTest extends Specification {
     print( "cuts: " + stats.cuts + nLine )
   }
 
-  sequential
   "The system" should {
     "parse correctly the LNP proof" in {
       val proofs = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lnp.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase().proofs

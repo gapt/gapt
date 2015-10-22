@@ -36,7 +36,6 @@ import org.specs2.mutable._
 
 class MiscTest extends Specification with ClasspathFileCopier {
 
-  sequential
   "The system" should {
     /*
 //    "parse, skolemize, extract clause set for a simple induction proof" in {

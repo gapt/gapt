@@ -36,7 +36,6 @@ import org.specs2.mutable._
 class TapeTest extends Specification {
   def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
-  sequential
   "The system" should {
     "parse correctly the tape proof" in {
       val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
