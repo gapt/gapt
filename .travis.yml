@@ -4,6 +4,6 @@ jdk:
 scala: 
 - 2.11.5
 
-script: "sbt -J-Xms2048M -J-Xmx2048M clean coverage test testing/test:compile"
+script: "sbt -J-Xmx1024M clean coverage test testing/test:compile"
 after_success: "sbt coveralls"
 
