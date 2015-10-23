@@ -24,7 +24,7 @@ object SameRootSymbol {
   }
 }
 
-private class antiUnificator {
+private class antiUnifier {
   private var varIndex = 0
   private val vars = mutable.Map[Seq[FOLTerm], FOLVar]()
   private def getVar( terms: Seq[FOLTerm] ) =
@@ -36,8 +36,8 @@ private class antiUnificator {
   }
 }
 
-object antiUnificator {
-  def apply( terms: Seq[FOLTerm] ): FOLTerm = new antiUnificator().apply( terms )
+object antiUnifier {
+  def apply( terms: Seq[FOLTerm] ): FOLTerm = new antiUnifier().apply( terms )
 }
 
 object termSize {
@@ -76,7 +76,7 @@ object normalForms {
     lang foreach { term => require( freeVariables( term ) isEmpty ) }
 
     val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ).
-      map( antiUnificator( _ ) ).toSet[FOLTerm]
+      map( antiUnifier( _ ) ).toSet[FOLTerm]
     antiUnifiers flatMap { au => nfsSubsumedByAU( au, nonTerminals.toSet ) }
   }
 }
