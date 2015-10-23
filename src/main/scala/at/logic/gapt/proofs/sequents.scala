@@ -124,14 +124,16 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def intersect[B >: A]( other: Sequent[B] ) = new Sequent( antecedent intersect other.antecedent, succedent intersect other.succedent )
 
   /**
-   * Computes the union of two sequents.
+   * Concatenate two sequents.  This is equivalent to ++.
    *
    * @param other
    * @return
    */
-  def union[B >: A]( other: Sequent[B] ) = new Sequent( antecedent union other.antecedent, succedent union other.succedent )
+  @deprecated( "Beware: this is the same as ++.", "2015-10-23" )
+  def union[B >: A]( other: Sequent[B] ) = this ++ other
 
-  def compose[B >: A]( other: Sequent[B] ) = new Sequent( antecedent ++ other.antecedent, succedent ++ other.succedent )
+  @deprecated( "Use ++ instead.", "2015-10-23" )
+  def compose[B >: A]( other: Sequent[B] ) = this ++ other
 
   /**
    * Removes duplicate formulas from both cedents.
@@ -160,7 +162,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
-  def addToAntecedent[B >: A]( e: B ): Sequent[B] = new Sequent( e +: antecedent, succedent )
+  @deprecated( "Use +: instead.", "2015-10-23" )
+  def addToAntecedent[B >: A]( e: B ): Sequent[B] = e +: this
 
   /**
    * Adds an element to the antecedent. New elements are always outermost, i.e. on the very left.
@@ -168,7 +171,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
-  def +:[B >: A]( e: B ) = addToAntecedent( e )
+  def +:[B >: A]( e: B ) = new Sequent( e +: antecedent, succedent )
 
   /**
    * Adds a sequent of elements to the antecedent. New elements are always outermost, i.e. on the very left.
@@ -176,7 +179,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param es A collection of elements of type B > A.
    * @return The sequent with es added to the antecedent.
    */
-  def ++:[B >: A]( es: GenTraversable[B] ): Sequent[B] = ( es :\ this.asInstanceOf[Sequent[B]] )( ( e, acc ) => acc.addToAntecedent( e ) )
+  def ++:[B >: A]( es: GenTraversable[B] ): Sequent[B] = es.foldRight[Sequent[B]]( this )( _ +: _ )
 
   /**
    * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
@@ -184,7 +187,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the succedent
    */
-  def addToSuccedent[B >: A]( e: B ): Sequent[B] = new Sequent( antecedent, succedent :+ e )
+  @deprecated( "Use :+ instead.", "2015-10-23" )
+  def addToSuccedent[B >: A]( e: B ): Sequent[B] = this :+ e
 
   /**
    * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
@@ -192,7 +196,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the succedent
    */
-  def :+[B >: A]( e: B ) = addToSuccedent( e )
+  def :+[B >: A]( e: B ) = new Sequent( antecedent, succedent :+ e )
 
   /**
    * Adds a sequence of elements to the succedent. New elements are always outermost, i.e. on the very right.
@@ -200,9 +204,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param es A collection of elements of type B > A.
    * @return The sequent with es added to the succedent.
    */
-  def :++[B >: A]( es: GenTraversable[B] ): Sequent[B] = ( this.asInstanceOf[Sequent[B]] /: es )( ( acc, e ) => acc.addToSuccedent( e ) )
+  def :++[B >: A]( es: GenTraversable[B] ): Sequent[B] = es.foldLeft[Sequent[B]]( this )( _ :+ _ )
 
-  def ++[B >: A]( that: Sequent[B] ) = this union that
+  def ++[B >: A]( that: Sequent[B] ) = new Sequent( this.antecedent ++ that.antecedent, this.succedent ++ that.succedent )
 
   def removeFromAntecedent[B]( e: B ) = new Sequent( antecedent filterNot ( _ == e ), succedent )
 
