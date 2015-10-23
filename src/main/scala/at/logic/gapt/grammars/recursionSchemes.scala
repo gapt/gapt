@@ -111,7 +111,7 @@ class RecSchemGenLangFormula(
     groupBy { case Rule( _, FOLFunction( f, _ ) ) => f }.mapValues( _.toSeq )
   def reverseMatches( against: LambdaExpression ) =
     against match {
-      case FOLFunction( f, _ ) => rulesPerToHeadSymbol( f ).flatMap { rule =>
+      case FOLFunction( f, _ ) => rulesPerToHeadSymbol.getOrElse( f, Seq() ).flatMap { rule =>
         val ( fvsRule, fvsAgainst ) = ( freeVariables( rule.lhs ), freeVariables( against ) )
         val rule_ = if ( fvsRule intersect fvsAgainst nonEmpty )
           rule( Substitution( rename( freeVariables( rule.lhs ), freeVariables( against ) ) ) )
@@ -161,7 +161,7 @@ class RecSchemGenLangFormula(
       }
     }
 
-    require( targets.toSet subsetOf reachable )
+    if ( !( targets.toSet subsetOf reachable ) ) return Bottom()
 
     val edgesPerFrom = edges.groupBy( _._1 )
     And( targets.toSeq.map { case ( from, to ) => derivable( from, to ) } ++ ( reachable collect {
