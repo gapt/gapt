@@ -160,12 +160,12 @@ class SimpleInductionProof(
     val conclusion3 = ForallLeftRule( conclusion2, All( x, Fprime( alpha, x ) ), alpha )
 
     // Combining the proofs
-    val inductionProof = ContractionMacroRule( InductionRule(
-      Seq(
-        InductionCase( inductionBase2, FOLConst( "0" ), Seq(), Seq(), inductionBase2.endSequent.indexOfInSuc( Fprime( alpha, zero ) ) ),
-        InductionCase( inductionStep3, FOLFunctionHead( "s", 1 ), Seq( inductionStep3.endSequent.indexOfInAnt( Fprime( alpha, nu ) ) ), Seq( nu ),
-          inductionStep3.endSequent.indexOfInSuc( Fprime( alpha, snu ) ) )
-      ),
+    val inductionProof = ContractionMacroRule( NaturalNumberInductionRule(
+      inductionBase2,
+      Fprime( alpha, zero ),
+      inductionStep3,
+      Fprime( alpha, nu ),
+      Fprime( alpha, snu ),
       All( x, Fprime( alpha, x ) )
     ) )
 
