@@ -97,6 +97,20 @@ class GrammarFindingTest extends Specification with SatMatchers {
       stsSubsumedByAU( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
         Set( "y", "z", "r(y, f(y))", "r(z, f(z))" ).map( parseTerm )
     }
+    "many-sorted stable terms" in {
+      val Seq( a, b, c, d ) = Seq( "A", "B", "C", "D" ) map { TBase( _ ) }
+      val r = Const( "r", a -> ( b -> c ) )
+      val f = Const( "f", a -> b )
+      val x = Var( "x", a )
+
+      val ya1 = Var( "ya1", a )
+      val ya2 = Var( "ya2", a )
+      val yb = Var( "yb", b )
+      val yc = Var( "yc", c )
+      val yd = Var( "yd", d )
+      stsSubsumedByAU( r( x, f( x ) ), Set( ya1, ya2, yb, yc, yd ) ) must_==
+        Set( yc, r( ya1, f( ya1 ) ), r( ya2, f( ya2 ) ) )
+    }
   }
 
   "normal forms grammars" should {

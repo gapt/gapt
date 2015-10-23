@@ -48,21 +48,20 @@ object termSize {
 }
 
 object stsSubsumedByAU {
-  def apply( au: FOLTerm, nts: Set[FOLVar] ): Set[FOLTerm] = apply( au, nts, nts,
-    LambdaPosition.getPositions( au, _.isInstanceOf[FOLTerm] ).
-      groupBy( au( _ ).asInstanceOf[FOLTerm] ).toList.
-      sortBy { case ( st, _ ) => termSize( st ) }.
+  def apply( au: LambdaExpression, nts: Set[Var] ): Set[LambdaExpression] = apply( au, nts, nts,
+    LambdaPosition.getPositions( au, _.exptype.isInstanceOf[TBase] ).
+      groupBy( au( _ ) ).toList.
+      sortBy { case ( st, _ ) => expressionSize( st ) }.
       map( _._2 ) )
 
-  private def apply( au: FOLTerm, ntsToDo: Set[FOLVar], nts: Set[FOLVar], allPositions: List[List[LambdaPosition]] ): Set[FOLTerm] = allPositions match {
+  private def apply( au: LambdaExpression, ntsToDo: Set[Var], nts: Set[Var], allPositions: List[List[LambdaPosition]] ): Set[LambdaExpression] = allPositions match {
     case positions :: otherPositions =>
       positions.flatMap { au.get( _ ) }.headOption.
-        map( _.asInstanceOf[FOLTerm] ).
         filterNot( freeVariables( _ ) subsetOf nts ).
         map { st =>
-          ntsToDo flatMap { nt =>
+          ntsToDo filter { _.exptype == st.exptype } flatMap { nt =>
             var generalization = au
-            for ( pos <- positions ) generalization = generalization.replace( pos, nt ).asInstanceOf[FOLTerm]
+            for ( pos <- positions ) generalization = generalization.replace( pos, nt )
             apply( generalization, ntsToDo - nt, nts, otherPositions )
           }
         }.getOrElse( Set() ) ++ apply( au, ntsToDo, nts, otherPositions )
@@ -72,11 +71,14 @@ object stsSubsumedByAU {
 }
 
 object stableTerms {
-  def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] ): Set[FOLTerm] = {
+  def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
+    apply( lang.asInstanceOf[GenTraversable[LambdaExpression]], nonTerminals.asInstanceOf[Seq[Var]] ).map( _.asInstanceOf[FOLTerm] )
+
+  def apply( lang: GenTraversable[LambdaExpression], nonTerminals: Seq[Var] ): Set[LambdaExpression] = {
     lang foreach { term => require( freeVariables( term ) isEmpty ) }
 
     val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ).
-      map( antiUnifier( _ ).asInstanceOf[FOLTerm] ).toSet
+      map( antiUnifier( _ ) ).toSet
     antiUnifiers flatMap { au => stsSubsumedByAU( au, nonTerminals.toSet ) }
   }
 }
