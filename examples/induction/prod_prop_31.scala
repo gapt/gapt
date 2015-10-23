@@ -72,6 +72,7 @@ val z = Var("z", encoding.instanceTermType)
 
 val template = RecSchemTemplate(A,
   A(x) -> G(x, w2), A(x) -> z,
+  G(x, w) -> z,
   G(cons(y, x), w) -> G(x, w2),
   G(cons(y, x), w) -> z,
   G(nil, w) -> z)
@@ -92,3 +93,11 @@ val inst = mkList(8)
 val lang = Substitution(alpha -> inst)(encoding decodeToInstanceSequent rs.parametricLanguage(inst))
 lang.elements foreach println
 println(VeriT isValid reduceHolToFol(lang))
+
+// qrev(x,w) = rev(x) ++ w
+
+// qrev(qrev(x,w),nil) = qrev(w,x)
+
+// recursion scheme solvable with: qrev(qrev(x,w),nil)=qrev(w,x) & qrev(nil,x)=x
+
+// TODO: find solution
