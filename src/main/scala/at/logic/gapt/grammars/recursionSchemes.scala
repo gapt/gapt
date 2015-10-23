@@ -180,7 +180,7 @@ class RecSchemGenLangFormula(
 }
 
 object minimizeRecursionScheme extends Logger {
-  def apply( recSchem: RecursionScheme, targets: Traversable[( FOLTerm, FOLTerm )],
+  def apply( recSchem: RecursionScheme, targets: Traversable[( LambdaExpression, LambdaExpression )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver ) = {
     val formula = new RecSchemGenLangFormula( recSchem, targetFilter )
@@ -222,7 +222,7 @@ object SipRecSchem extends RecSchemTemplate(
         SipGrammar.tau -> FOLSubstitution( y -> SipGrammar.beta, z -> SipGrammar.alpha )( r )
     } map { p => p._1 -> p._2.asInstanceOf[FOLTerm] } )
 
-  def toTargets( instanceLanguages: Seq[stableSipGrammar.InstanceLanguage] ) =
+  def toTargets( instanceLanguages: Seq[stableSipGrammar.InstanceLanguage] ): Seq[( LambdaExpression, LambdaExpression )] =
     instanceLanguages flatMap {
       case ( n, l ) =>
         l map ( FOLFunction( A, Numeral( n ) ) -> _ )
@@ -233,22 +233,23 @@ object SipRecSchem extends RecSchemTemplate(
 }
 
 case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, LambdaExpression )] ) {
-  val nonTerminalsWithArities: Set[( String, Int )] = template map { case ( FOLFunction( nt, args ), _ ) => nt -> args.size }
-  val nonTerminals: Set[String] = nonTerminalsWithArities.map( _._1 )
+  val nonTerminals: Set[Const] = template map { case ( Apps( nt: Const, _ ), _ ) => nt }
 
-  val isSubterm = "is_subterm"
+  val isSubtermC = "is_subterm"
+  def isSubterm( v: LambdaExpression, t: LambdaExpression ): HOLFormula =
+    Const( isSubtermC, v.exptype -> ( t.exptype -> To ) )( v, t ).asInstanceOf[HOLFormula]
 
-  val canonicalArgs = nonTerminalsWithArities map { case ( nt, arity ) => nt -> ( 0 until arity ).map { i => FOLVar( s"${nt}_$i" ) } } toMap
-  val states = canonicalArgs map { case ( nt, args ) => FOLFunction( nt, args ) }
-  val constraints: Map[( String, String ), FOLFormula] = {
-    val cache = mutable.Map[( String, String ), FOLFormula]()
+  val canonicalArgs = nonTerminals map { case nt @ Const( _, FunctionType( _, argTypes ) ) => nt -> argTypes.zipWithIndex.map { case ( t, i ) => Var( s"${nt}_$i", t ) } } toMap
+  val states = canonicalArgs map { case ( nt, args ) => nt( args: _* ) }
+  val constraints: Map[( Const, Const ), HOLFormula] = {
+    val cache = mutable.Map[( Const, Const ), HOLFormula]()
 
-    def get( from: String, to: String ): FOLFormula =
+    def get( from: Const, to: Const ): HOLFormula =
       cache.getOrElseUpdate( from -> to, {
         var postCond = if ( from == to )
           And( ( canonicalArgs( from ), canonicalArgs( to ) ).zipped map { Eq( _, _ ) } ) else Or( template collect {
-          case ( FOLFunction( prev, prevArgs ), FOLFunction( `to`, toArgs ) ) if prev != to =>
-            def postCondition( preCond: FOLFormula ): FOLFormula = preCond match {
+          case ( Apps( prev: Const, prevArgs ), Apps( `to`, toArgs ) ) if prev != to =>
+            def postCondition( preCond: HOLFormula ): HOLFormula = preCond match {
               case Top()       => Top()
               case Bottom()    => Bottom()
               case And( a, b ) => And( postCondition( a ), postCondition( b ) )
@@ -256,32 +257,32 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
 
               case Eq( a, b ) =>
                 prevArgs( canonicalArgs( prev ).indexOf( a ) ) match {
-                  case v: FOLVar =>
-                    And( for ( ( toArg, canToArg: FOLVar ) <- ( toArgs, canonicalArgs( to ) ).zipped.toSeq if v == toArg )
+                  case v: Var =>
+                    And( for ( ( toArg, canToArg: Var ) <- ( toArgs, canonicalArgs( to ) ).zipped.toSeq if v == toArg )
                       yield Eq( canToArg, b ) )
                   case constr =>
                     val vars = freeVariables( constr )
                     And( ( toArgs.toSeq zip canonicalArgs( to ) ).
                       collect {
-                        case ( toArg: FOLVar, canToArg ) if vars contains toArg =>
-                          FOLAtom( isSubterm, canToArg, b )
+                        case ( toArg: Var, canToArg ) if vars contains toArg =>
+                          isSubterm( canToArg, b )
                       } )
                 }
 
-              case FOLAtom( `isSubterm`, Seq( a, b ) ) =>
+              case Apps( Const( `isSubtermC`, _ ), Seq( a, b ) ) =>
                 val vars = freeVariables( prevArgs( canonicalArgs( prev ).indexOf( a ) ) )
                 And( ( toArgs.toSeq zip canonicalArgs( to ) ).
                   collect {
-                    case ( toArg: FOLVar, canToArg ) if vars contains toArg =>
-                      FOLAtom( isSubterm, canToArg, b )
+                    case ( toArg: Var, canToArg ) if vars contains toArg =>
+                      isSubterm( canToArg, b )
                   } )
             }
             postCondition( get( from, prev ) )
         } toSeq )
 
         val recCalls = template filter {
-          case ( FOLFunction( `to`, _ ), FOLFunction( `to`, _ ) ) => true
-          case _ => false
+          case ( Apps( `to`, _ ), Apps( `to`, _ ) ) => true
+          case _                                    => false
         }
         if ( recCalls nonEmpty ) {
           val constArgs = canonicalArgs( to ).zipWithIndex filter {
@@ -300,15 +301,15 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
               }
           } map { _._1 }
 
-          def appRecConstr( p: FOLFormula ): FOLFormula = p match {
+          def appRecConstr( p: HOLFormula ): HOLFormula = p match {
             case Top()                                  => Top()
             case Bottom()                               => Bottom()
             case Or( a, b )                             => Or( appRecConstr( a ), appRecConstr( b ) )
             case And( a, b )                            => And( appRecConstr( a ), appRecConstr( b ) )
             case Eq( a, b ) if constArgs contains a     => Eq( a, b )
-            case Eq( a, b ) if structRecArgs contains a => FOLAtom( isSubterm, a, b )
-            case FOLAtom( `isSubterm`, Seq( a, b ) ) if ( constArgs contains a ) || ( structRecArgs contains a ) =>
-              FOLAtom( isSubterm, a, b )
+            case Eq( a, b ) if structRecArgs contains a => isSubterm( a, b )
+            case Apps( Const( `isSubtermC`, _ ), Seq( a, b ) ) if ( constArgs contains a ) || ( structRecArgs contains a ) =>
+              isSubterm( a, b )
             case _ => Top()
           }
 
@@ -322,10 +323,10 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
       yield ( from, to ) -> get( from, to ) ) toMap
   }
 
-  val constraintEvaluators: Map[( String, String ), ( Seq[FOLTerm], Seq[FOLTerm] ) => Boolean] =
+  val constraintEvaluators: Map[( Const, Const ), ( Seq[LambdaExpression], Seq[LambdaExpression] ) => Boolean] =
     constraints map {
       case ( ( from, to ), constr ) =>
-        def mkEval( f: FOLFormula ): ( ( Seq[FOLTerm], Seq[FOLTerm] ) => Boolean ) = f match {
+        def mkEval( f: HOLFormula ): ( ( Seq[LambdaExpression], Seq[LambdaExpression] ) => Boolean ) = f match {
           case Top() => ( _, _ ) => true
           case Bottom() => ( _, _ ) => false
           case And( a, b ) =>
@@ -340,12 +341,12 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
             val aIdx = canonicalArgs( from ).indexOf( a )
             val bIdx = canonicalArgs( to ).indexOf( b )
             require( aIdx >= 0 && bIdx >= 0 )
-            ( x, y ) => FOLMatchingAlgorithm.matchTerms( y( bIdx ), x( aIdx ) ).isDefined
-          case FOLAtom( `isSubterm`, Seq( b, a ) ) =>
+            ( x, y ) => syntacticMatching( y( bIdx ), x( aIdx ) ).isDefined
+          case Apps( Const( `isSubtermC`, _ ), Seq( b, a ) ) =>
             val aIdx = canonicalArgs( from ).indexOf( a )
             val bIdx = canonicalArgs( to ).indexOf( b )
             require( aIdx >= 0 && bIdx >= 0 )
-            ( x, y ) => ( termSize( y( bIdx ) ) <= termSize( x( aIdx ) ) + 1 ) &&
+            ( x, y ) => ( expressionSize( y( bIdx ) ) <= expressionSize( x( aIdx ) ) + 1 ) &&
               constants( y( bIdx ) ).subsetOf( constants( x( aIdx ) ) )
         }
         ( from -> to ) -> mkEval( constr )
@@ -353,38 +354,38 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
 
   val targetFilter: TargetFilter.Type = ( from, to ) =>
     TargetFilter.default( from, to ).orElse {
-      val FOLFunction( fromNt, fromArgs ) = from
-      val FOLFunction( toNt, toArgs ) = to
+      val Apps( fromNt: Const, fromArgs ) = from
+      val Apps( toNt: Const, toArgs ) = to
       val constrValue = constraintEvaluators( fromNt -> toNt )( fromArgs, toArgs )
       if ( constrValue ) None else Some( false )
     }
 
-  def stableRecSchem( targets: Set[( FOLTerm, FOLTerm )] ): RecursionScheme = {
-    val neededVars = template flatMap { case ( from: FOLTerm, to ) => freeVariables( from ) }
+  def stableRecSchem( targets: Set[( LambdaExpression, LambdaExpression )] ): RecursionScheme = {
+    val neededVars = template flatMap { case ( from, to ) => freeVariables( from ) }
 
     val allTerms = targets map { _._2 }
-    val topLevelStableTerms = stableTerms( allTerms, neededVars.toSeq ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentStableTerms = stableTerms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ), neededVars.toSeq )
+    val topLevelStableTerms = stableTerms( allTerms, neededVars.toSeq ).filter( !_.isInstanceOf[Var] )
+    val argumentStableTerms = stableTerms( allTerms flatMap { case Apps( _, as ) => as } flatMap { subTerms( _ ) } filter { _.exptype.isInstanceOf[TBase] }, neededVars.toSeq )
 
     var rules = template.flatMap {
-      case ( from: FOLTerm, to: FOLVar ) =>
+      case ( from, to: Var ) =>
         val allowedVars = freeVariables( from )
         topLevelStableTerms.filter { st => freeVariables( st ) subsetOf allowedVars }.
           map { Rule( from, _ ) }
-      case ( from: FOLTerm, to: FOLTerm ) =>
+      case ( from, to ) =>
         val allowedVars = freeVariables( from )
         val templateVars = freeVariables( to ).diff( freeVariables( from ) )
         templateVars.
-          foldLeft( Seq[Map[FOLVar, FOLTerm]]( Map() ) )( ( chosenValues, nextVar ) =>
+          foldLeft( Seq[Map[Var, LambdaExpression]]( Map() ) )( ( chosenValues, nextVar ) =>
             for (
               subst <- chosenValues;
               st <- argumentStableTerms if freeVariables( st ) subsetOf allowedVars
             ) yield subst + ( nextVar -> st ) ).
-          map( s => Rule( from, FOLSubstitution( s )( to ) ) )
+          map( s => Rule( from, Substitution( s )( to ) ) )
     }
 
     // Filter out rules that only used variables that are passed unchanged from the axiom.
-    targets.map { case ( FOLFunction( nt, _ ), _ ) => nt }.toSeq match {
+    targets.map { case ( Apps( nt: Const, _ ), _ ) => nt }.toSeq match {
       case Seq( axiom ) =>
         ( nonTerminals - axiom ) foreach { nt =>
           constraints( axiom -> nt ) match {
@@ -393,18 +394,18 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
                 case Eq( ntArg, axiomArg ) => canonicalArgs( nt ).indexOf( ntArg )
               }.toSet
               rules = rules filter {
-                case Rule( FOLFunction( `nt`, args ), to ) =>
-                  !freeVariables( to ).subsetOf( identicalArgs map { args( _ ).asInstanceOf[FOLVar] } )
+                case Rule( Apps( `nt`, args ), to ) =>
+                  !freeVariables( to ).subsetOf( identicalArgs map { args( _ ).asInstanceOf[Var] } )
                 case _ => true
               }
           }
         }
     }
 
-    RecursionScheme( axiom, nonTerminalsWithArities map { case ( n, i ) => FOLFunctionHead( n, i ) }, rules )
+    RecursionScheme( axiom, nonTerminals, rules )
   }
 
-  def findMinimalCover( targets: Set[( FOLTerm, FOLTerm )], solver: MaxSATSolver = bestAvailableMaxSatSolver ): RecursionScheme = {
+  def findMinimalCover( targets: Set[( LambdaExpression, LambdaExpression )], solver: MaxSATSolver = bestAvailableMaxSatSolver ): RecursionScheme = {
     minimizeRecursionScheme( stableRecSchem( targets ), targets toSeq, targetFilter, solver )
   }
 }

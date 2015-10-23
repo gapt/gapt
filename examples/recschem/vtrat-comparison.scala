@@ -18,7 +18,7 @@ val rst = RecSchemTemplate(A, Set(
   A -> z,
   B(x, y) -> z
 ))
-val targets = terms.map(A.asInstanceOf[FOLTerm] -> _)
+val targets = terms.map(A -> _).toSet[(LambdaExpression,LambdaExpression)]
 val nfRecSchem = rst.stableRecSchem(targets)
 
 println(lcomp(simplify(toNNF((new RecSchemGenLangFormula(nfRecSchem))(targets)))))

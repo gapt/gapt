@@ -128,6 +128,21 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       covers( rs, terms: _* )
       rs.rules must haveSize( 4 + 4 )
     }
+    "minimize two-sorted linear example" in {
+      val o = FOLConst( "o" )
+      val s = FOLFunctionHead( "s", 1 )
+      val r = FOLAtomHead( "r", 1 )
+      val terms = 0 until ( 4 * 4 ) map { Stream.iterate[LambdaExpression]( o )( s( _ ) )( _ ) } map { r( _ ) }
+
+      val A = FOLAtomHead( "A", 0 )
+      val B = FOLAtomHead( "B", 1 )
+      val x = FOLVar( "x" )
+      val y = Var( "y", To )
+      val template = RecSchemTemplate( A, A -> y, A -> B( x ), B( x ) -> y )
+      val rs = template.findMinimalCover( terms map { A -> _ } toSet )
+      covers( rs, terms: _* )
+      rs.rules must haveSize( 4 + 4 )
+    }
   }
 
 }
