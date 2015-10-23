@@ -1,11 +1,13 @@
 import at.logic.gapt.algorithms.rewriting.TermReplacement
+import at.logic.gapt.expr.fol.reduceHolToFol
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.grammars.RecSchemTemplate
-import at.logic.gapt.proofs.expansionTrees.extractInstances
+import at.logic.gapt.proofs.expansionTrees.{InstanceTermEncoding, extractInstances}
 import at.logic.gapt.proofs.lkNew.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.veriT.VeriT
 
 val tipProblem = TipSmtParser parse """
   (declare-sort sk_a 0)
@@ -28,7 +30,9 @@ val sk_a = TBase("sk_a")
 val nil = Const("nil", list)
 val cons = Const("cons", sk_a -> (list -> list))
 
-val instances = 0 to 4 map { i => (0 until i).foldRight[LambdaExpression](nil) { (j, l) => cons(Const(s"a$j", sk_a), l) } }
+def mkList(i: Int) = (0 until i).foldRight[LambdaExpression](nil) { (j, l) => cons(Const(s"a$j", sk_a), l) }
+
+val instances = 0 to 3 map mkList
 
 // Compute many-sorted expansion sequents
 val instanceProofs = instances map { inst =>
@@ -55,16 +59,29 @@ instanceProofs foreach { case (inst, es) =>
   println()
 }
 
-val A = Const("A", list -> To)
-val G = Const("G", list -> To)
+val alpha = Var("alpha", list)
+val encoding = InstanceTermEncoding(sequent.map(identity, instantiate(_, alpha)))
+
+val A = Const("A", list -> encoding.instanceTermType)
+val G = Const("G", list -> (list -> encoding.instanceTermType))
 val x = Var("x", list)
 val y = Var("y", sk_a)
-val z = Var("z", To)
+val w = Var("w", list)
+val w2 = Var("w2", list)
+val z = Var("z", encoding.instanceTermType)
 
 val template = RecSchemTemplate(A,
-  A(x) -> G(x), A(x) -> z,
-  G(cons(y, x)) -> G(x),
-  G(cons(y, x)) -> z,
-  G(nil) -> z)
+  A(x) -> G(x, w2), A(x) -> z,
+  G(cons(y, x), w) -> G(x, w2),
+  G(cons(y, x), w) -> z,
+  G(nil, w) -> z)
 
-println(template.constraints(A,G))
+val targets = for ((inst, es) <- instanceProofs; term <- encoding encode es) yield A(inst) -> term
+val rs = template.findMinimalCover(targets.toSet)
+println(rs)
+println()
+
+val inst = mkList(10)
+val lang = Substitution(alpha -> inst)(encoding decodeToInstanceSequent rs.parametricLanguage(inst))
+lang.elements foreach println
+println(VeriT isValid reduceHolToFol(lang))

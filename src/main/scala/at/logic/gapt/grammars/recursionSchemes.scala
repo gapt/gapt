@@ -379,7 +379,7 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
           foldLeft( Seq[Map[Var, LambdaExpression]]( Map() ) )( ( chosenValues, nextVar ) =>
             for (
               subst <- chosenValues;
-              st <- argumentStableTerms if freeVariables( st ) subsetOf allowedVars
+              st <- argumentStableTerms if st.exptype == nextVar.exptype && freeVariables( st ).subsetOf(allowedVars)
             ) yield subst + ( nextVar -> st ) ).
           map( s => Rule( from, Substitution( s )( to ) ) )
     }
