@@ -92,6 +92,25 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       }
     }
 
+    "many-sorted terms" in {
+      "simple example" in {
+        val Seq( ta, tb, tc ) = Seq( "ta", "tb", "tc" ) map TBase
+        val A = Const( "A", ta )
+        val B = Const( "B", tb -> ta )
+        val r = Const( "r", tb -> ( tc -> ta ) )
+        val f = Const( "f", tb -> tc )
+        val b1 = Const( "b1", tb )
+        val b2 = Const( "b2", tb )
+        val c = Const( "c", tc )
+        val x = Var( "x", tb )
+
+        val rs = RecursionScheme( A, A -> B( b1 ), A -> B( b2 ), B( x ) -> r( x, f( x ) ), B( x ) -> r( x, c ) )
+
+        covers( rs, r( b1, f( b1 ) ), r( b2, f( b2 ) ), r( b1, c ), r( b2, c ) )
+        doesNotCover( rs, r( b1, f( b2 ) ) )
+      }
+    }
+
   }
 
 }
