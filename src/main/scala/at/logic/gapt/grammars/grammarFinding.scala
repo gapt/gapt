@@ -47,7 +47,7 @@ object termSize {
   }
 }
 
-object nfsSubsumedByAU {
+object stsSubsumedByAU {
   def apply( au: FOLTerm, nts: Set[FOLVar] ): Set[FOLTerm] = apply( au, nts, nts,
     LambdaPosition.getPositions( au, _.isInstanceOf[FOLTerm] ).
       groupBy( au( _ ).asInstanceOf[FOLTerm] ).toList.
@@ -71,13 +71,13 @@ object nfsSubsumedByAU {
   }
 }
 
-object normalForms {
+object stableTerms {
   def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] ): Set[FOLTerm] = {
     lang foreach { term => require( freeVariables( term ) isEmpty ) }
 
     val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ).
       map( antiUnifier( _ ).asInstanceOf[FOLTerm] ).toSet
-    antiUnifiers flatMap { au => nfsSubsumedByAU( au, nonTerminals.toSet ) }
+    antiUnifiers flatMap { au => stsSubsumedByAU( au, nonTerminals.toSet ) }
   }
 }
 
@@ -173,16 +173,16 @@ class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizati
   override def vectProductionIsIncluded( p: VectTratGrammar.Production ) = productionIsIncluded( p._1( 0 ), p._2( 0 ) )
 }
 
-object normalFormsProofGrammar {
+object stableProofGrammar {
   def apply( lang: Set[FOLTerm], n: Int ) = {
     val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
-    val topLevelNFs = normalForms( lang, rhsNonTerminals ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), rhsNonTerminals.tail )
+    val topLevelStableTerms = stableTerms( lang, rhsNonTerminals ).filter( !_.isInstanceOf[FOLVar] )
+    val argumentStableTerms = stableTerms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), rhsNonTerminals.tail )
     val axiom = FOLVar( "τ" )
-    TratGrammar( axiom, axiom +: rhsNonTerminals, topLevelNFs.map( axiom -> _ ) ++ argumentNFs.flatMap { nf =>
-      val fvs = freeVariables( nf )
+    TratGrammar( axiom, axiom +: rhsNonTerminals, topLevelStableTerms.map( axiom -> _ ) ++ argumentStableTerms.flatMap { st =>
+      val fvs = freeVariables( st )
       val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
-      ( 0 until lowestIndex ) map { i => rhsNonTerminals( i ) -> nf }
+      ( 0 until lowestIndex ) map { i => rhsNonTerminals( i ) -> st }
     } )
   }
 }
@@ -203,7 +203,7 @@ object minimizeGrammar {
 
 object findMinimalGrammar {
   def apply( lang: Traversable[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
-    val polynomialSizedCoveringGrammar = normalFormsProofGrammar( lang toSet, numberOfNonTerminals )
+    val polynomialSizedCoveringGrammar = stableProofGrammar( lang toSet, numberOfNonTerminals )
     minimizeGrammar( polynomialSizedCoveringGrammar, lang toSet, maxSATSolver )
   }
 }
@@ -218,7 +218,7 @@ object takeN {
   }
 }
 
-object normalFormsProofVectGrammar {
+object stableProofVectGrammar {
   import VectTratGrammar._
 
   def apply( lang: Set[FOLTerm], arities: Seq[Int] ): VectTratGrammar = {
@@ -227,15 +227,15 @@ object normalFormsProofVectGrammar {
   }
 
   def apply( lang: Set[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {
-    val topLevelNFs = normalForms( lang, nonTermVects flatten ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentNFs = normalForms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), nonTermVects.tail flatten )
+    val topLevelNFs = stableTerms( lang, nonTermVects flatten ).filter( !_.isInstanceOf[FOLVar] )
+    val argumentNFs = stableTerms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), nonTermVects.tail flatten )
 
     VectTratGrammar( axiom, List( axiom ) +: nonTermVects,
       topLevelNFs.map( List( axiom ) -> List( _ ) ) ++
         nonTermVects.zipWithIndex.flatMap {
           case ( a, i ) =>
             val allowedNonTerms = nonTermVects.drop( i + 1 ).flatten.toSet
-            val allowedRHS = argumentNFs filter { nf => freeVariables( nf ) subsetOf allowedNonTerms }
+            val allowedRHS = argumentNFs filter { st => freeVariables( st ) subsetOf allowedNonTerms }
             takeN( a.size, allowedRHS ).map( a -> _ )
         } )
   }
@@ -258,8 +258,8 @@ object minimizeVectGrammar {
 
 object findMinimalVectGrammar {
   def apply( lang: Set[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
-    val polynomialSizedCoveringGrammar = metrics.time( "nfgrammar" ) { normalFormsProofVectGrammar( lang, aritiesOfNonTerminals ) }
-    metrics.value( "nfgrammar", polynomialSizedCoveringGrammar.size )
+    val polynomialSizedCoveringGrammar = metrics.time( "stabgrammar" ) { stableProofVectGrammar( lang, aritiesOfNonTerminals ) }
+    metrics.value( "stabgrammar", polynomialSizedCoveringGrammar.size )
     minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
   }
 }

@@ -74,27 +74,27 @@ class GrammarFindingTest extends Specification with SatMatchers {
 
   "normalForms" should {
     "find strong normal forms" in {
-      val nfs = normalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
+      val nfs = stableTerms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs must beEqualTo( Set( "f(c)", "f(d)", "f(x)", "x" ) map parseTerm )
     }
     "not find half-weak normal forms" in {
-      val nfs = normalForms( Seq( "r(c,f(c))", "r(d,f(d))" ) map parseTerm, Seq( FOLVar( "x" ) ) )
+      val nfs = stableTerms( Seq( "r(c,f(c))", "r(d,f(d))" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs must beEqualTo( Set( "x", "r(x,f(x))", "r(c,f(c))", "r(d,f(d))" ) map parseTerm )
     }
     "not introduce equations between non-terminals" in {
-      val nfs = normalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
+      val nfs = stableTerms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x" ) map parseTerm )
     }
     "not fall prey to replacements bug" in {
       val l = Seq( "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
       val nfs = Set( "x", "tuple2(x)", "tuple2(x + x)", "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
-      normalForms( l map parseTerm, Seq( FOLVar( "x" ) ) ) must beEqualTo( nfs map parseTerm )
+      stableTerms( l map parseTerm, Seq( FOLVar( "x" ) ) ) must beEqualTo( nfs map parseTerm )
     }
   }
 
   "nfsSubsumedByAU" should {
     "r(x, f(x)) with variables y,z" in {
-      nfsSubsumedByAU( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
+      stsSubsumedByAU( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
         Set( "y", "z", "r(y, f(y))", "r(z, f(z))" ).map( parseTerm )
     }
   }
@@ -103,10 +103,10 @@ class GrammarFindingTest extends Specification with SatMatchers {
     "not contain tau->alpha" in {
       val l = Set( "r(c)", "r(d)" ) map parseTerm
 
-      val g = normalFormsProofGrammar( l, 1 )
+      val g = stableProofGrammar( l, 1 )
       g.productions must not contain ( g.axiom -> g.nonTerminals( 1 ) )
 
-      val vg = normalFormsProofVectGrammar( l, Seq( 1 ) )
+      val vg = stableProofVectGrammar( l, Seq( 1 ) )
       vg.productions must not contain ( List( vg.axiom ) -> vg.nonTerminals( 1 ) )
     }
   }
@@ -158,7 +158,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
     }
     "generate term if only tau-productions are allowed" in {
       val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
-      val g = normalFormsProofGrammar( l toSet, 4 )
+      val g = stableProofGrammar( l toSet, 4 )
       val formula = new GrammarMinimizationFormula( g )
       val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) must beSat

@@ -2,7 +2,7 @@ import at.logic.gapt.examples.UniformAssociativity3ExampleProof
 import at.logic.gapt.expr.fol.{Numeral, FOLSubstitution}
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.grammars.{minimizeSipGrammar, normalFormsSipGrammar, minimizeRecursionScheme, SipRecSchem}
+import at.logic.gapt.grammars.{minimizeSipGrammar, stableSipGrammar, minimizeRecursionScheme, SipRecSchem}
 import at.logic.gapt.proofs.lkNew.LKToExpansionProof
 import at.logic.gapt.proofs.{Suc, Sequent, Ant}
 import at.logic.gapt.proofs.expansionTrees.{InstanceTermEncoding, toShallow, ExpansionSequent}
@@ -38,7 +38,7 @@ instanceLanguages = instanceLanguages map {
     n -> lang.map(groundingSubst.apply)
 }
 
-val nfRecSchem = SipRecSchem.normalForms(instanceLanguages)
+val nfRecSchem = SipRecSchem.stableRecSchem(instanceLanguages)
 println(nfRecSchem.rules.size)
 val minimized = time {
   minimizeRecursionScheme(nfRecSchem, SipRecSchem.toTargets(instanceLanguages), SipRecSchem.targetFilter, bestAvailableMaxSatSolver)
@@ -59,7 +59,7 @@ println
 val sipG = SipRecSchem.toSipGrammar(minimized)
 println(sipG)
 
-val nfSipG = normalFormsSipGrammar(instanceLanguages)
+val nfSipG = stableSipGrammar(instanceLanguages)
 println(nfSipG.productions.size)
 println(time {
   minimizeSipGrammar(nfSipG, instanceLanguages, bestAvailableMaxSatSolver)

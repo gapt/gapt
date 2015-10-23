@@ -33,7 +33,7 @@ class SipTests extends Specification {
     "not contain tau->gamma" in {
       val l = Set( "r(c)", "r(d)" ) map parseTerm
 
-      val g = normalFormsSipGrammar( Seq( 1 -> l ) )
+      val g = stableSipGrammar( Seq( 1 -> l ) )
       g.productions must not contain ( tau -> gamma )
     }
   }

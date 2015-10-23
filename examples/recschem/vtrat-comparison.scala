@@ -19,11 +19,11 @@ val rst = RecSchemTemplate(A, Set(
   B(x, y) -> z
 ))
 val targets = terms.map(A.asInstanceOf[FOLTerm] -> _)
-val nfRecSchem = rst.normalFormRecSchem(targets)
+val nfRecSchem = rst.stableRecSchem(targets)
 
 println(lcomp(simplify(toNNF((new RecSchemGenLangFormula(nfRecSchem))(targets)))))
 
-val nfG = normalFormsProofVectGrammar(terms, Seq(2))
+val nfG = stableProofVectGrammar(terms, Seq(2))
 println(lcomp(simplify(toNNF(new VectGrammarMinimizationFormula(nfG).coversLanguage(terms)))))
 
 val minimized = time {

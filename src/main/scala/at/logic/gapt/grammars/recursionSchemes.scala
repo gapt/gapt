@@ -222,14 +222,14 @@ object SipRecSchem extends RecSchemTemplate(
         SipGrammar.tau -> FOLSubstitution( y -> SipGrammar.beta, z -> SipGrammar.alpha )( r )
     } map { p => p._1 -> p._2.asInstanceOf[FOLTerm] } )
 
-  def toTargets( instanceLanguages: Seq[normalFormsSipGrammar.InstanceLanguage] ) =
+  def toTargets( instanceLanguages: Seq[stableSipGrammar.InstanceLanguage] ) =
     instanceLanguages flatMap {
       case ( n, l ) =>
         l map ( FOLFunction( A, Numeral( n ) ) -> _ )
     }
 
-  def normalForms( instanceLanguages: Seq[normalFormsSipGrammar.InstanceLanguage] ) =
-    normalFormRecSchem( toTargets( instanceLanguages ) toSet )
+  def stableRecSchem( instanceLanguages: Seq[stableSipGrammar.InstanceLanguage] ): RecursionScheme =
+    stableRecSchem( toTargets( instanceLanguages ) toSet )
 }
 
 case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, LambdaExpression )] ) {
@@ -359,17 +359,17 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
       if ( constrValue ) None else Some( false )
     }
 
-  def normalFormRecSchem( targets: Set[( FOLTerm, FOLTerm )] ) = {
+  def stableRecSchem( targets: Set[( FOLTerm, FOLTerm )] ): RecursionScheme = {
     val neededVars = template flatMap { case ( from: FOLTerm, to ) => freeVariables( from ) }
 
     val allTerms = targets map { _._2 }
-    val topLevelNFs = normalForms( allTerms, neededVars.toSeq ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentNFs = normalForms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ), neededVars.toSeq )
+    val topLevelStableTerms = stableTerms( allTerms, neededVars.toSeq ).filter( !_.isInstanceOf[FOLVar] )
+    val argumentStableTerms = stableTerms( FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ), neededVars.toSeq )
 
     var rules = template.flatMap {
       case ( from: FOLTerm, to: FOLVar ) =>
         val allowedVars = freeVariables( from )
-        topLevelNFs.filter { nf => freeVariables( nf ) subsetOf allowedVars }.
+        topLevelStableTerms.filter { st => freeVariables( st ) subsetOf allowedVars }.
           map { Rule( from, _ ) }
       case ( from: FOLTerm, to: FOLTerm ) =>
         val allowedVars = freeVariables( from )
@@ -378,8 +378,8 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
           foldLeft( Seq[Map[FOLVar, FOLTerm]]( Map() ) )( ( chosenValues, nextVar ) =>
             for (
               subst <- chosenValues;
-              nf <- argumentNFs if freeVariables( nf ) subsetOf allowedVars
-            ) yield subst + ( nextVar -> nf ) ).
+              st <- argumentStableTerms if freeVariables( st ) subsetOf allowedVars
+            ) yield subst + ( nextVar -> st ) ).
           map( s => Rule( from, FOLSubstitution( s )( to ) ) )
     }
 
@@ -405,8 +405,7 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
   }
 
   def findMinimalCover( targets: Set[( FOLTerm, FOLTerm )], solver: MaxSATSolver ): RecursionScheme = {
-    val nfRecSchem = normalFormRecSchem( targets )
-    minimizeRecursionScheme( nfRecSchem, targets toSeq, targetFilter, solver )
+    minimizeRecursionScheme( stableRecSchem( targets ), targets toSeq, targetFilter, solver )
   }
 }
 
