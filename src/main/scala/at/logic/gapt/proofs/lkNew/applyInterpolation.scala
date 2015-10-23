@@ -323,13 +323,6 @@ object Interpolate {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
       val auxFormula = subProof.endSequent( aux )
 
-      println( " ### EqualityRightRule ### " )
-      println( "up_nproof: " + up_nproof )
-      println( "up_pproof: " + up_pproof )
-      println( "auxFormula: " + auxFormula )
-      println( "p.mainIndices: " + p.mainIndices( 0 ) )
-      println( "ax: " + LogicalAxiom( p.endSequent( eq ).asInstanceOf[FOLAtom] ) )
-      println( " ### end EqualityRightRule ### " )
       var ipl = up_I
 
       if ( npart.contains( eq ) && npart.contains( aux ) ) ( EqualityRightRule( up_nproof, eq, auxFormula, pos ), up_pproof, up_I )
@@ -362,12 +355,6 @@ object Interpolate {
     case EqualityLeftRule( subProof, eq, aux, pos ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
       val auxFormula = subProof.endSequent( aux )
-
-      println( " ### EqualityLeftRule ### " )
-      println( "up_nproof: " + up_nproof )
-      println( "up_pproof: " + up_pproof )
-      println( "auxFormula: " + auxFormula )
-      println( " ### end EqualityLeftRule ### " )
 
       if ( npart.contains( p.mainIndices( 0 ) ) ) ( EqualityLeftRule( up_nproof, eq, auxFormula, pos ), up_pproof, up_I )
       else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, EqualityLeftRule( up_pproof, eq, auxFormula, pos ), up_I )
