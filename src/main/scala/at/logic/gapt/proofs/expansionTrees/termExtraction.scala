@@ -63,20 +63,21 @@ object groundTerms {
 /**
  * Encodes instances of an end-sequent as terms.
  *
- * The end-sequent must contain no strong quantifiers and each of its formulas must be in variable normal form.
+ * Only instances of weak quantifiers are recorded, instances of strong quantifiers or free variables are ignored.
  *
- * In the case of cut-introduction, the end-sequent has no free variables and we're encoding a Herbrand sequent as a
+ * The end-sequent will be internally transformed into one which is in variable normal form.
+ *
+ * In the case of cut-introduction, the end-sequent has no free variables and no strong quantifiers and we're encoding a Herbrand sequent as a
  * set of terms.  A term r_i(t_1,...,t_n) encodes an instance of the formula "forall x_1 ... x_n, phi(x_1,...,x_n)"
  * using the instances (t_1,...,t_n).
  *
- * In the case of simple inductive proofs, the end-sequent contains one free variable (alpha).  Here, we consider
- * proofs of instance sequents, which are obtained by substituting a numeral for alpha.  Hence the formulas occuring
+ * In the case of inductive proofs, the end-sequent contains strong quantifiers variable (alpha).  Here, we consider
+ * proofs of instance sequents, which are obtained by e.g. substituting a numeral for alpha.  Hence the formulas occurring
  * in the end-sequents of instance proofs are substitution instances of [[endSequent]]; the encoded terms still only
  * capture the instances used in the instance proofs--i.e. not alpha.
  */
 class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTermType: Ty ) {
 
-  require( !containsStrongQuantifier( endSequent ), s"$endSequent contains strong quantifiers" )
   endSequent.elements foreach { formula =>
     require( isInVNF( formula ), s"$formula is not in variable normal form" )
   }
@@ -91,20 +92,22 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
    */
   val signedMatrices = matrices.map( -_, identity )
 
-  // we don't use variables() diff freeVariables() here as we would like the correct order
-  private def getQuantVars( esFormula: HOLFormula ): Seq[Var] = esFormula match {
-    case All( x, t )                        => x +: getQuantVars( t )
-    case Ex( x, t )                         => x +: getQuantVars( t )
-    case And( t, s )                        => getQuantVars( t ) ++ getQuantVars( s )
-    case Or( t, s )                         => getQuantVars( t ) ++ getQuantVars( s )
-    case Imp( t, s )                        => getQuantVars( t ) ++ getQuantVars( s )
-    case Neg( t )                           => getQuantVars( t )
-    case Top() | Bottom() | HOLAtom( _, _ ) => Seq()
+  private def getWeakQuantVars( esFormula: HOLFormula, pol: Boolean ): Seq[Var] = esFormula match {
+    case All( x, t ) if !pol => x +: getWeakQuantVars( t, pol )
+    case Ex( x, t ) if pol   => x +: getWeakQuantVars( t, pol )
+    case All( x, t ) if pol  => getWeakQuantVars( t, pol )
+    case Ex( x, t ) if !pol  => getWeakQuantVars( t, pol )
+    case And( t, s )         => getWeakQuantVars( t, pol ) ++ getWeakQuantVars( s, pol )
+    case Or( t, s )          => getWeakQuantVars( t, pol ) ++ getWeakQuantVars( s, pol )
+    case Imp( t, s )         => getWeakQuantVars( t, !pol ) ++ getWeakQuantVars( s, pol )
+    case Neg( t )            => getWeakQuantVars( t, !pol )
+    case Top() | Bottom() | HOLAtom( _, _ ) =>
+      Seq()
   }
   /**
    * The quantified variables of each formula in the end-sequent.
    */
-  val quantVars = endSequent map getQuantVars
+  val quantVars = endSequent.map( getWeakQuantVars( _, pol = false ), getWeakQuantVars( _, pol = true ) )
 
   /**
    * Assigns each formula in the end-sequent a fresh function symbol name used to encode its instances.
