@@ -317,130 +317,62 @@ object Interpolate {
       else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
-    /*// equality rules
+    // equality rules
 
-    case EquationRight1Rule( p1, p2, s, a1, a2, pos, m ) => {
-      val a1F: FOLFormula = a1.formula.asInstanceOf[FOLFormula]
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpEqualityLeft( p1, a1, npart, ppart, true )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
+    case EqualityRightRule( subProof, eq, aux, pos ) => {
+      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
+      val auxFormula = subProof.endSequent( aux )
 
-      if ( npart.contains( m ) ) {
-        val ipl = Or( up1_I, And( a1F, up2_I ) )
+      println( " ### EqualityRightRule ### " )
+      println( "up_nproof: " + up_nproof )
+      println( "up_pproof: " + up_pproof )
+      println( "auxFormula: " + auxFormula )
+      println( "p.mainIndices: " + p.mainIndices( 0 ) )
+      println( "ax: " + LogicalAxiom( p.endSequent( eq ).asInstanceOf[FOLAtom] ) )
+      println( " ### end EqualityRightRule ### " )
+      var ipl = up_I
 
-        val eqr1 = EquationRight1Rule( Axiom( a1.formula ), up2_nproof, a1.formula, a2.formula, m.formula )
-        val andr1 = AndRightRule( Axiom( a1.formula ), eqr1, a1.formula, up2_I )
-        val cl1 = ContractionLeftRule( andr1, a1.formula )
-        val cut1 = CutRule( up1_nproof, cl1, a1.formula )
-        val np = OrRightRule( cut1, up1_I, And( a1.formula, up2_I ) )
+      if ( npart.contains( eq ) && npart.contains( aux ) ) ( EqualityRightRule( up_nproof, eq, auxFormula, pos ), up_pproof, up_I )
+      else if ( ppart.contains( eq ) && ppart.contains( aux ) ) ( up_nproof, EqualityRightRule( up_pproof, eq, auxFormula, pos ), up_I )
+      else if ( npart.contains( p.mainIndices( 0 ) ) ) {
+        ipl = Imp( p.endSequent( eq ), up_I )
 
-        val pp = OrLeftRule( up1_pproof, AndLeft2Rule( up2_pproof, a1.formula, up2_I ), up1_I, And( a1.formula, up2_I ) )
+        val up_nproof1 = WeakeningLeftRule( up_nproof, p.endSequent( eq ) )
+        val up_nproof2 = EqualityRightRule( up_nproof1, eq, auxFormula, pos )
+        val up_nproof3 = ImpRightRule( up_nproof2, p.endSequent( eq ), up_I )
 
-        ( np, pp, ipl )
-      } else if ( ppart.contains( m ) ) {
-        val ipl = Or( up1_I, And( a1F, up2_I ) )
+        val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eq ).asInstanceOf[FOLAtom] ), p.endSequent( eq ), up_pproof, up_I )
+        val up_pproof2 = ContractionLeftRule( up_pproof1, p.endSequent( eq ) )
 
-        val andr1 = AndRightRule( Axiom( a1.formula ), up2_nproof, a1.formula, up2_I )
-        val cut1 = CutRule( up1_nproof, andr1, a1.formula )
-        val np = OrRightRule( cut1, up1_I, And( a1.formula, up2_I ) )
+        ( up_nproof3, up_pproof2, ipl )
+      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
+        ipl = And( p.endSequent( eq ), up_I )
 
-        val eqr1 = EquationRight1Rule( Axiom( a1.formula ), up2_pproof, a1.formula, a2.formula, m.formula )
-        val andl1 = AndLeftRule( eqr1, a1.formula, up2_I )
-        val pp = OrLeftRule( up1_pproof, andl1, up1_I, And( a1.formula, up2_I ) )
+        val up_nproof1 = AndRightRule( LogicalAxiom( p.endSequent( eq ).asInstanceOf[FOLAtom] ), up_nproof, And( p.endSequent( eq ), up_I ) )
+        val up_nproof2 = ContractionLeftRule( up_nproof1, p.endSequent( eq ) )
 
-        ( np, pp, ipl )
+        val up_pproof1 = WeakeningLeftRule( up_pproof, p.endSequent( eq ) )
+        val up_pproof2 = EqualityRightRule( up_pproof1, eq, auxFormula, pos )
+        val up_pproof3 = AndLeftRule( up_pproof2, p.endSequent( eq ), up_I )
+
+        ( up_nproof2, up_pproof3, ipl )
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
-    case EquationRight2Rule( p1, p2, s, a1, a2, pos, m ) => {
-      val a1F: FOLFormula = a1.formula.asInstanceOf[FOLFormula]
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpEqualityLeft( p1, a1, npart, ppart, true )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
+    case EqualityLeftRule( subProof, eq, aux, pos ) => {
+      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
+      val auxFormula = subProof.endSequent( aux )
 
-      if ( npart.contains( m ) ) {
-        val ipl = Or( up1_I, And( a1F, up2_I ) )
+      println( " ### EqualityLeftRule ### " )
+      println( "up_nproof: " + up_nproof )
+      println( "up_pproof: " + up_pproof )
+      println( "auxFormula: " + auxFormula )
+      println( " ### end EqualityLeftRule ### " )
 
-        val eqr1 = EquationRight2Rule( Axiom( a1.formula ), up2_nproof, a1.formula, a2.formula, m.formula )
-        val andr1 = AndRightRule( Axiom( a1.formula ), eqr1, a1.formula, up2_I )
-        val cl1 = ContractionLeftRule( andr1, a1.formula )
-        val cut1 = CutRule( up1_nproof, cl1, a1.formula )
-        val np = OrRightRule( cut1, up1_I, And( a1.formula, up2_I ) )
-
-        val pp = OrLeftRule( up1_pproof, AndLeft2Rule( up2_pproof, a1.formula, up2_I ), up1_I, And( a1.formula, up2_I ) )
-
-        ( np, pp, ipl )
-      } else if ( ppart.contains( m ) ) {
-        val ipl = Or( up1_I, And( a1F, up2_I ) )
-
-        val andr1 = AndRightRule( Axiom( a1.formula ), up2_nproof, a1.formula, up2_I )
-        val cut1 = CutRule( up1_nproof, andr1, a1.formula )
-        val np = OrRightRule( cut1, up1_I, And( a1.formula, up2_I ) )
-
-        val eqr1 = EquationRight2Rule( Axiom( a1.formula ), up2_pproof, a1.formula, a2.formula, m.formula )
-        val andl1 = AndLeftRule( eqr1, a1.formula, up2_I )
-        val pp = OrLeftRule( up1_pproof, andl1, up1_I, And( a1.formula, up2_I ) )
-
-        ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
+      if ( npart.contains( p.mainIndices( 0 ) ) ) ( EqualityLeftRule( up_nproof, eq, auxFormula, pos ), up_pproof, up_I )
+      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, EqualityLeftRule( up_pproof, eq, auxFormula, pos ), up_I )
+      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
-
-    case EquationLeft1Rule( p1, p2, s, a1, a2, pos, m ) => {
-      val a1F: FOLFormula = a1.formula.asInstanceOf[FOLFormula]
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpEqualityLeft( p1, a1, npart, ppart, false )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
-
-      if ( npart.contains( m ) ) {
-        val ipl = And( up1_I, Imp( a1F, up2_I ) )
-
-        val eql1 = EquationLeft1Rule( Axiom( a1.formula ), up2_nproof, a1.formula, a2.formula, m.formula )
-        val impr1 = ImpRightRule( eql1, a1.formula, up2_I )
-        val np = AndRightRule( up1_nproof, impr1, up1_I, Imp( a1.formula, up2_I ) )
-
-        val impl1 = ImpLeftRule( Axiom( a1.formula ), up2_pproof, a1.formula, up2_I )
-        val cut1 = CutRule( up1_pproof, impl1, a1.formula )
-        val pp = AndLeftRule( cut1, up1_I, Imp( a1.formula, up2_I ) )
-
-        ( np, pp, ipl )
-      } else if ( ppart.contains( m ) ) {
-        val ipl = And( up1_I, up2_I )
-
-        val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
-
-        val eql1 = EquationLeft1Rule( up1_pproof, up2_pproof, a1.formula, a2.formula, m.formula )
-        val pp = AndLeftRule( eql1, up1_I, up2_I )
-
-        ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
-
-    case EquationLeft2Rule( p1, p2, s, a1, a2, pos, m ) => {
-      val a1F: FOLFormula = a1.formula.asInstanceOf[FOLFormula]
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpEqualityLeft( p1, a1, npart, ppart, false )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p2, npart, ppart )
-
-      if ( npart.contains( m ) ) {
-        val ipl = And( up1_I, Imp( a1F, up2_I ) )
-
-        val eql1 = EquationLeft2Rule( Axiom( a1.formula ), up2_nproof, a1.formula, a2.formula, m.formula )
-        val impr1 = ImpRightRule( eql1, a1.formula, up2_I )
-        val np = AndRightRule( up1_nproof, impr1, up1_I, Imp( a1.formula, up2_I ) )
-
-        val impl1 = ImpLeftRule( Axiom( a1.formula ), up2_pproof, a1.formula, up2_I )
-        val cut1 = CutRule( up1_pproof, impl1, a1.formula )
-        val pp = AndLeftRule( cut1, up1_I, Imp( a1.formula, up2_I ) )
-
-        ( np, pp, ipl )
-      } else if ( ppart.contains( m ) ) {
-        val ipl = And( up1_I, up2_I )
-
-        val np = AndRightRule( up1_nproof, up2_nproof, up1_I, up2_I )
-
-        val eql1 = EquationLeft2Rule( up1_pproof, up2_pproof, a1.formula, a2.formula, m.formula )
-        val pp = AndLeftRule( eql1, up1_I, up2_I )
-
-        ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }*/
-
     case _ => throw new InterpolationException( "Unknown inference rule of type: " + p.name.toString() + "." )
   }
 
