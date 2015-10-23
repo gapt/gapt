@@ -3,7 +3,7 @@ import at.logic.gapt.expr.fol.reduceHolToFol
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.grammars.RecSchemTemplate
+import at.logic.gapt.grammars.{minimizeRecursionScheme, Rule, RecursionScheme, RecSchemTemplate}
 import at.logic.gapt.proofs.expansionTrees.{InstanceTermEncoding, extractInstances}
 import at.logic.gapt.proofs.lkNew.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9
@@ -32,7 +32,7 @@ val cons = Const("cons", sk_a -> (list -> list))
 
 def mkList(i: Int) = (0 until i).foldRight[LambdaExpression](nil) { (j, l) => cons(Const(s"a$j", sk_a), l) }
 
-val instances = 0 to 3 map mkList
+val instances = 0 to 2 map mkList
 
 // Compute many-sorted expansion sequents
 val instanceProofs = instances map { inst =>
@@ -55,7 +55,7 @@ val instanceProofs = instances map { inst =>
 
 instanceProofs foreach { case (inst, es) =>
   println(s"Instances for x = $inst:")
-  extractInstances(es).map(identity, -_).elements foreach println
+  extractInstances(es).map(-_, identity).elements foreach println
   println()
 }
 
@@ -77,11 +77,18 @@ val template = RecSchemTemplate(A,
   G(nil, w) -> z)
 
 val targets = for ((inst, es) <- instanceProofs; term <- encoding encode es) yield A(inst) -> term
-val rs = template.findMinimalCover(targets.toSet)
-println(rs)
-println()
+val stableRS = template.stableRecSchem(targets.toSet)
+// FIXME: the class of rs w/o skolem symbols is not closed under the rewriting that stableTerms() expects :-/
+val stableRSWithoutSkolemSymbols =
+  RecursionScheme(stableRS.axiom, stableRS.nonTerminals,
+    stableRS.rules filterNot { case Rule(from, to) =>
+        constants(to) exists { _.exptype == sk_a }
+    })
+//println(stableRSWithoutSkolemSymbols)
+val rs = minimizeRecursionScheme( stableRSWithoutSkolemSymbols, targets, template.targetFilter )
+println(s"Minimized recursion scheme:\n$rs\n")
 
-val inst = mkList(10)
+val inst = mkList(8)
 val lang = Substitution(alpha -> inst)(encoding decodeToInstanceSequent rs.parametricLanguage(inst))
 lang.elements foreach println
 println(VeriT isValid reduceHolToFol(lang))
