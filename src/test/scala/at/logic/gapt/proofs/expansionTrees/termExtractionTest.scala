@@ -23,23 +23,6 @@ class TermExtractionTest extends Specification {
 
   val expSeq = ExpansionSequent( Seq( expTreeP ), Seq() )
 
-  "extractInstanceTerms" should {
-    "expansion trees" in {
-      val instanceTerms = extractInstanceTerms( expTreeP )
-      instanceTerms must contain( exactly(
-        instP -> Seq( FOLConst( "c" ).asInstanceOf[FOLTerm] ),
-        instP -> Seq( FOLConst( "d" ) )
-      ) )
-    }
-    "expansion sequents" in {
-      val instanceTerms = extractInstanceTerms( expSeq )
-      instanceTerms must contain( exactly(
-        ( instP -> Seq( FOLConst( "c" ).asInstanceOf[FOLTerm] ) ) -> true,
-        ( instP -> Seq( FOLConst( "d" ) ) ) -> true
-      ) )
-    }
-  }
-
   "extractInstances" in {
     extractInstances( expSeq ).antecedent must contain( exactly(
       FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ).asInstanceOf[HOLFormula],
@@ -55,8 +38,8 @@ class TermExtractionTest extends Specification {
       } must contain( exactly( Seq( FOLConst( "c" ).asInstanceOf[FOLTerm] ), Seq( FOLConst( "d" ) ) ) )
     }
     "decode correctly" in {
-      encoding.decode( encoding.encode( FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) -> true ) ) must_==
-        ( FOLAtom( "P", FOLConst( "c" ), FOLVar( "y" ) ) -> true )
+      encoding.decode( encoding.encode( FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) -> false ) ) must_==
+        ( FOLAtom( "P", FOLConst( "c" ), FOLVar( "y" ) ) -> false )
     }
   }
 }

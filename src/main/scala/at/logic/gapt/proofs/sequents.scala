@@ -97,10 +97,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   /**
    * Sequence of elements together with polarities of type Boolean signifying whether an element is in the antecedent or succedent.
    *
-   * FIXME: Make polarities consistent throughout the system (IMO: false = antecedent, true = succedent)
    * @return
    */
-  def polarizedElements: Seq[( A, Boolean )] = antecedent.map( _ -> true ) ++ succedent.map( _ -> false )
+  def polarizedElements: Seq[( A, Boolean )] = map( _ -> false, _ -> true ).elements
 
   /**
    * Returns true iff both cedents are empty.

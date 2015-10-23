@@ -7,27 +7,6 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lkNew.{ LKToExpansionProof, LKProof }
 
 /**
- * Extracts the instance terms used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.
- *
- * Each expansion tree is transformed into a list of pairs of its shallow formula and a tuple containing the terms
- * used to instantiate the outermost weak quantifier block.
- */
-object extractInstanceTerms {
-  def apply( expansionTree: ExpansionTree ): Seq[( FOLFormula, Seq[FOLTerm] )] =
-    compressQuantifiers( expansionTree ) match {
-      case METWeakQuantifier( formula, instanceLists ) =>
-        instanceLists map {
-          case ( child, instanceTerms ) if !child.containsWeakQuantifiers =>
-            ( formula.asInstanceOf[FOLFormula], instanceTerms.map( _.asInstanceOf[FOLTerm] ) )
-        }
-      case et if !et.containsWeakQuantifiers => Seq( et.toShallow.asInstanceOf[FOLFormula] -> List() )
-    }
-
-  def apply( expansionSequent: ExpansionSequent ): Seq[( ( FOLFormula, Seq[FOLTerm] ), Boolean )] =
-    expansionSequent.polarizedTrees flatMap { case ( et, pol ) => apply( et ).map( _ -> pol ) }
-}
-
-/**
  * Extracts the instances used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.
  *
  * Each expansion tree is transformed into a list of instances of its shallow formula.
@@ -80,7 +59,7 @@ case class InstanceTermEncoding( endSequent: HOLSequent ) {
   require( isFOLPrenexSigma1( endSequent ), s"$endSequent is not a prenex FOL Sigma_1 sequent" )
 
   /**
-   * Formula together with its polarity in a sequent, which is true if it is in the antecedent.
+   * Formula together with its polarity in a sequent, which is true if it is in the succedent.
    */
   type PolarizedFormula = ( FOLFormula, Boolean )
 
@@ -88,19 +67,19 @@ case class InstanceTermEncoding( endSequent: HOLSequent ) {
    * Assigns each formula in the end-sequent a fresh function symbol used to encode its instances.
    */
   protected def mkSym( esFormula: PolarizedFormula ) = esFormula match {
-    case ( f, true )  => s"{$f}"
-    case ( f, false ) => s"-{$f}"
+    case ( f, false ) => s"{$f}"
+    case ( f, true )  => s"-{$f}"
   }
 
   def getSymbol( esFormula: PolarizedFormula ) = esFormula match {
-    case ( All.Block( vars, _ ), true ) => FOLFunctionHead( mkSym( esFormula ), vars.size )
-    case ( Ex.Block( vars, _ ), false ) => FOLFunctionHead( mkSym( esFormula ), vars.size )
+    case ( All.Block( vars, _ ), false ) => FOLFunctionHead( mkSym( esFormula ), vars.size )
+    case ( Ex.Block( vars, _ ), true )   => FOLFunctionHead( mkSym( esFormula ), vars.size )
   }
 
   private def instanceTerms( instance: PolarizedFormula, esFormula: PolarizedFormula ) = ( instance, esFormula ) match {
-    case ( ( instf: FOLFormula, true ), ( All.Block( vars, esf ), true ) ) =>
+    case ( ( instf: FOLFormula, false ), ( All.Block( vars, esf ), false ) ) =>
       FOLMatchingAlgorithm.matchTerms( esf, instf ).map { subst => vars.map( subst.apply ) }
-    case ( ( instf: FOLFormula, false ), ( Ex.Block( vars, esf ), false ) ) =>
+    case ( ( instf: FOLFormula, true ), ( Ex.Block( vars, esf ), true ) ) =>
       FOLMatchingAlgorithm.matchTerms( esf, instf ).map { subst => vars.map( subst.apply ) }
     case _ => None
   }
@@ -165,12 +144,12 @@ case class InstanceTermEncoding( endSequent: HOLSequent ) {
       groupBy( _._1 ).toSeq.map {
         case ( ( esFormula, pol ), instances ) =>
           val vars = ( esFormula, pol ) match {
-            case ( All.Block( vs, _ ), true ) => vs
-            case ( Ex.Block( vs, _ ), false ) => vs
+            case ( All.Block( vs, _ ), false ) => vs
+            case ( Ex.Block( vs, _ ), true )   => vs
           }
-          formulaToExpansionTree( esFormula, instances.map( _._2 ).map { terms => FOLSubstitution( ( vars, terms ).zipped.toList ) }.toList, !pol ) -> pol
+          formulaToExpansionTree( esFormula, instances.map( _._2 ).map { terms => FOLSubstitution( ( vars, terms ).zipped.toList ) }.toList, pol ) -> pol
       }
-    ExpansionSequent( polExpTrees.filter( _._2 == true ).map( _._1 ).toList, polExpTrees.filter( _._2 == false ).map( _._1 ).toList )
+    ExpansionSequent( polExpTrees.filter( _._2 == false ).map( _._1 ).toList, polExpTrees.filter( _._2 == true ).map( _._1 ).toList )
   }
 }
 
