@@ -31,14 +31,14 @@ class TermExtractionTest extends Specification {
   }
 
   "TermInstanceEncoding" should {
-    val encoding = InstanceTermEncoding( endSequent )
+    val encoding = FOLInstanceTermEncoding( endSequent )
     "encode the instance terms as arguments" in {
       encoding.encode( expSeq ).map {
         case FOLFunction( _, args ) => args
       } must contain( exactly( Seq( FOLConst( "c" ).asInstanceOf[FOLTerm] ), Seq( FOLConst( "d" ) ) ) )
     }
     "decode correctly" in {
-      encoding.decode( encoding.encode( FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) -> false ) ) must_==
+      encoding.decode( encoding.encode( -FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) ) ) must_==
         ( FOLAtom( "P", FOLConst( "c" ), FOLVar( "y" ) ) -> false )
     }
   }

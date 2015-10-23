@@ -419,8 +419,8 @@ object Sequent {
 
   def apply[A]( polarizedElements: Seq[( A, Boolean )] ): Sequent[A] =
     Sequent(
-      polarizedElements.filter( _._2 == true ).map( _._1 ),
-      polarizedElements.filter( _._2 == false ).map( _._1 )
+      polarizedElements.filter( _._2 == false ).map( _._1 ),
+      polarizedElements.filter( _._2 == true ).map( _._1 )
     )
 
   def unapply[A]( f: Sequent[A] ): Option[( Seq[A], Seq[A] )] = Some( ( f.antecedent, f.succedent ) )

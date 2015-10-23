@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.grammars.{minimizeSipGrammar, stableSipGrammar, minimizeRecursionScheme, SipRecSchem}
 import at.logic.gapt.proofs.lkNew.LKToExpansionProof
 import at.logic.gapt.proofs.{Suc, Sequent, Ant}
-import at.logic.gapt.proofs.expansionTrees.{InstanceTermEncoding, toShallow, ExpansionSequent}
+import at.logic.gapt.proofs.expansionTrees.{FOLInstanceTermEncoding, toShallow, ExpansionSequent}
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
@@ -24,10 +24,10 @@ val endSequent = Sequent(
 val instanceProofs =
   (0 until 6).map { n => n -> removeEqAxioms(LKToExpansionProof(UniformAssociativity3ExampleProof(n))) }
 
-val termEncoding = InstanceTermEncoding(endSequent)
+val termEncoding = FOLInstanceTermEncoding(endSequent)
 var instanceLanguages = instanceProofs map {
   case (n, expSeq) =>
-    n -> termEncoding.encode(expSeq)
+    n -> termEncoding.encode(expSeq).map(_.asInstanceOf[FOLTerm])
 }
 
 // Ground the instance languages.

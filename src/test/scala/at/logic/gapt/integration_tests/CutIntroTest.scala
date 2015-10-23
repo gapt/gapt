@@ -4,7 +4,7 @@ import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.proofs.Ant
-import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
+import at.logic.gapt.proofs.expansionTrees.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lkNew.quantRulesNumber
 import at.logic.gapt.provers.basicProver.BasicProver
@@ -23,7 +23,7 @@ class CutIntroTest extends Specification {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val proof = LinearExampleProof( 4 )
 
-      val ( termset, _ ) = InstanceTermEncoding( proof )
+      val ( termset, _ ) = FOLInstanceTermEncoding( proof )
       val set = termset collect { case FOLFunction( _, List( arg ) ) => arg }
 
       CutIntroduction.one_cut_one_quantifier( proof, false ) must beSome

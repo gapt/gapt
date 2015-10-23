@@ -1,4 +1,5 @@
 import at.logic.gapt.examples.UniformAssociativity3ExampleProof
+import at.logic.gapt.expr.FOLTerm
 import at.logic.gapt.expr.hol.{toNNF, simplify, lcomp}
 import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, stableSipGrammar}
 import at.logic.gapt.proofs.{Suc, Ant, HOLSequent}
@@ -31,13 +32,13 @@ println(s"End-sequent of the sip: $endSequent")
 
 val nLine = sys.props("line.separator")
 
-val encoding = InstanceTermEncoding(endSequent)
+val encoding = FOLInstanceTermEncoding(endSequent)
 var instanceLanguages = instanceSequents.map { case (n, seq) =>
-  n -> encoding.encode(seq)
+  n -> encoding.encode(seq).map(_.asInstanceOf[FOLTerm])
 }
 // patch up missing case for n=0
 instanceLanguages = instanceLanguages ++
-  Seq(0 -> Set(encoding.encode(parseFormula("0+0=0") -> true)))
+  Seq(0 -> Set(encoding.encode(-parseFormula("0+0=0")).asInstanceOf[FOLTerm]))
 instanceLanguages foreach { case (n, l) =>
   println(s"Instance language for n=$n:$nLine${l.mkString(nLine)}" + nLine )
 }

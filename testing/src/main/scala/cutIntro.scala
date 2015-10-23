@@ -1,6 +1,5 @@
 package at.logic.gapt.testing
 
-import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
@@ -16,7 +15,7 @@ import at.logic.gapt.utils.glob
 import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
 
 import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.proofs.expansionTrees.{ InstanceTermEncoding, addSymmetry, toShallow }
+import at.logic.gapt.proofs.expansionTrees.{ FOLInstanceTermEncoding, addSymmetry, toShallow }
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -42,11 +41,7 @@ object testCutIntro extends App {
     case _ if fileName contains "/prover9/" =>
       val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fileName )
       metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
-      val expansionProof =
-        if ( isFOLPrenexSigma1( endSequent ) )
-          RobinsonToExpansionProof( resProof, endSequent )
-        else
-          RobinsonToExpansionProof( resProof )
+      val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
       val containsEquations = constants( toShallow( expansionProof ) ) exists {
         case EqC( _ ) => true
         case _        => false
@@ -101,15 +96,7 @@ object testCutIntro extends App {
             None
         }
 
-        parseResult flatMap {
-          case ( proof, hasEquality ) =>
-            if ( isFOLPrenexSigma1( toShallow( proof ) ) ) {
-              Some( proof -> hasEquality )
-            } else {
-              metrics.value( "status", "parsing_not_prenex_sigma1" )
-              None
-            }
-        } foreach {
+        parseResult foreach {
           case ( expansionProof, hasEquality ) =>
             metrics.value( "has_equality", hasEquality )
             try metrics.time( "cutintro" ) {
@@ -203,7 +190,7 @@ object findNonTrivialTSTPExamples extends App {
       println( fn )
       withTimeout( 60 seconds ) {
         val p = Prover9Importer.expansionProofFromFile( fn )
-        val terms = new InstanceTermEncoding( toShallow( p ) ).encode( p ).toSet
+        val terms = FOLInstanceTermEncoding( toShallow( p ) ).encode( p )
         val functions = terms map { case FOLFunction( f, _ ) => f }
 
         Success( TermSetStats( fn, terms.size, functions.size ) )
