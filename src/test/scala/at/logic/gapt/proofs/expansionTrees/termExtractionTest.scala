@@ -38,7 +38,7 @@ class TermExtractionTest extends Specification {
       } must contain( exactly( Seq( FOLConst( "c" ).asInstanceOf[FOLTerm] ), Seq( FOLConst( "d" ) ) ) )
     }
     "decode correctly" in {
-      encoding.decode( encoding.encode( -FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) ) ) must_==
+      encoding.decodeToPolarizedFormula( encoding.encode( -FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) ) ) must_==
         ( FOLAtom( "P", FOLConst( "c" ), FOLVar( "y" ) ) -> false )
     }
   }

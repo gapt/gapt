@@ -82,41 +82,59 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
   }
 
   /**
-   * Assigns each formula in the end-sequent a fresh function symbol used to encode its instances.
+   * The propositional matrices phi of the end-sequent.
    */
-  protected def mkSym( esFormula: HOLFormula ) = s"{$esFormula}"
+  val matrices = endSequent map { removeAllQuantifiers( _ ) }
 
-  // we cannot use variables() here as we require the correct order
-  private def quantVars( esFormula: HOLFormula ): Seq[Var] = esFormula match {
-    case All( x, t )                        => x +: quantVars( t )
-    case Ex( x, t )                         => x +: quantVars( t )
-    case And( t, s )                        => quantVars( t ) ++ quantVars( s )
-    case Or( t, s )                         => quantVars( t ) ++ quantVars( s )
-    case Imp( t, s )                        => quantVars( t ) ++ quantVars( s )
-    case Neg( t )                           => quantVars( t )
+  /**
+   * The propositional matrices of the end-sequent, where the formulas in the antecedent are negated.
+   */
+  val signedMatrices = matrices.map( -_, identity )
+
+  // we don't use variables() diff freeVariables() here as we would like the correct order
+  private def getQuantVars( esFormula: HOLFormula ): Seq[Var] = esFormula match {
+    case All( x, t )                        => x +: getQuantVars( t )
+    case Ex( x, t )                         => x +: getQuantVars( t )
+    case And( t, s )                        => getQuantVars( t ) ++ getQuantVars( s )
+    case Or( t, s )                         => getQuantVars( t ) ++ getQuantVars( s )
+    case Imp( t, s )                        => getQuantVars( t ) ++ getQuantVars( s )
+    case Neg( t )                           => getQuantVars( t )
     case Top() | Bottom() | HOLAtom( _, _ ) => Seq()
   }
+  /**
+   * The quantified variables of each formula in the end-sequent.
+   */
+  val quantVars = endSequent map getQuantVars
 
-  def getSymbol( esFormula: HOLFormula ) = {
-    val vars = quantVars( esFormula )
-    Const( mkSym( esFormula ), FunctionType( instanceTermType, vars map { _.exptype } ) )
+  /**
+   * Assigns each formula in the end-sequent a fresh function symbol name used to encode its instances.
+   */
+  protected def mkSym( idx: SequentIndex ) = idx match {
+    case Ant( i ) => s"-{${endSequent( idx )}_a$i"
+    case Suc( i ) => s"-{${endSequent( idx )}_s$i"
   }
 
-  private def instanceTerms( instance: HOLFormula, esFormula: HOLFormula ) =
-    syntacticMatching( removeAllQuantifiers( esFormula ), instance ) map { subst =>
+  /**
+   * The function symbols used to encode the instances of each formula in the end-sequent.
+   */
+  val symbols = for ( ( vars, idx ) <- quantVars.zipWithIndex )
+    yield Const( mkSym( idx ), FunctionType( instanceTermType, vars map { _.exptype } ) )
+
+  private def instanceTerms( signedInstance: HOLFormula, esFormula: SequentIndex ) =
+    syntacticMatching( signedMatrices( esFormula ), signedInstance ) map { subst =>
       esFormula -> quantVars( esFormula ).map( subst.apply )
     }
 
-  private def findInstance( instance: HOLFormula ): Option[( HOLFormula, Seq[LambdaExpression] )] =
-    endSequent.map( -_, identity ).elements.flatMap { instanceTerms( instance, _ ) }.headOption
+  private def findInstance( signedInstance: HOLFormula ): Option[( SequentIndex, Seq[LambdaExpression] )] =
+    endSequent.indices.flatMap { instanceTerms( signedInstance, _ ) }.headOption
 
-  def encodeOption( instance: HOLFormula ): Option[LambdaExpression] =
-    findInstance( instance ) map {
-      case ( esFormula, terms ) => getSymbol( esFormula )( terms: _* )
+  def encodeOption( signedInstance: HOLFormula ): Option[LambdaExpression] =
+    findInstance( signedInstance ) map {
+      case ( esFormula, terms ) => symbols( esFormula )( terms: _* )
     }
 
-  def encode( instance: HOLFormula ): LambdaExpression = encodeOption( instance ).getOrElse {
-    throw new IllegalArgumentException( s"Cannot find $instance in $endSequent" )
+  def encode( signedInstance: HOLFormula ): LambdaExpression = encodeOption( signedInstance ).getOrElse {
+    throw new IllegalArgumentException( s"Cannot find $signedInstance in $endSequent" )
   }
 
   /**
@@ -136,49 +154,35 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
   /**
    * Maps a function symbol to the index of its corresponding formula in the end-sequent.
    */
-  def findESIndex( sym: Const ): Option[SequentIndex] =
-    endSequent.zipWithIndex find {
-      case ( u, i @ Ant( _ ) ) => getSymbol( -u ) == sym
-      case ( u, i @ Suc( _ ) ) => getSymbol( u ) == sym
-    }
+  def findESIndex( sym: Const ): Option[SequentIndex] = symbols indexOfOption sym
 
   /**
    * Maps a function symbol to its corresponding formula in the end-sequent.
    */
   def findESFormula( sym: Const ): Option[HOLFormula] = findESIndex( sym ) map { endSequent( _ ) }
 
-  type PolarizedFormula = ( HOLFormula, Boolean )
+  def decodeOption( term: LambdaExpression ): Option[( SequentIndex, Substitution )] = term match {
+    case Apps( f: Const, args ) =>
+      findESIndex( f ) map { idx => idx -> Substitution( quantVars( idx ) zip args ) }
+    case _ => None
+  }
 
   /**
    * Decodes a term into its corresponding instance.
    *
    * The resulting instance can contain alpha in the inductive case.
    */
-  def decodeOption( term: LambdaExpression ): Option[PolarizedFormula] = term match {
-    case Apps( f: Const, args ) =>
-      findESIndex( f ) map { idx =>
-        Substitution( quantVars( endSequent( idx ) ) zip args )( removeAllQuantifiers( endSequent( idx ) ) ) -> idx.isSuc
-      }
-    case _ => None
-  }
+  def decodeToPolarizedFormula( term: LambdaExpression ): ( HOLFormula, Boolean ) =
+    decodeOption( term ) map { case ( idx, subst ) => subst( matrices( idx ) ) -> idx.isSuc } get
 
-  def decode( term: LambdaExpression ): PolarizedFormula = decodeOption( term ).get
-
-  def decode( terms: Iterable[LambdaExpression] ): Set[PolarizedFormula] = terms map decode toSet
-
-  def decodeToInstanceSequent( terms: Iterable[LambdaExpression] ): HOLSequent = Sequent( decode( terms ).toSeq )
+  def decodeToInstanceSequent( terms: Iterable[LambdaExpression] ): HOLSequent =
+    Sequent( terms map decodeToPolarizedFormula toSeq )
 
   def decodeToExpansionSequent( terms: Iterable[LambdaExpression] ): ExpansionSequent =
-    Sequent( terms.map { case Apps( f: Const, args ) => ( findESIndex( f ).get, args ) }.
-      groupBy( _._1 ).toSeq.map {
-        case ( idx, instances ) =>
-          formulaToExpansionTree(
-            endSequent( idx ),
-            instances map { _._2 }
-              map { terms => Substitution( quantVars( endSequent( idx ) ) zip terms ) } toList,
-            idx.isSuc
-          ) -> idx.isSuc
-      } )
+    Sequent( terms flatMap decodeOption groupBy { _._1 } map {
+      case ( idx, instances ) =>
+        formulaToExpansionTree( endSequent( idx ), instances map { _._2 } toList, idx.isSuc ) -> idx.isSuc
+    } toSeq )
 }
 
 object InstanceTermEncoding {
