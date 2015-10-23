@@ -151,6 +151,7 @@ object TermReplacement {
         apply( f, map ),
         instances map { case ( t, term ) => apply( t, map ) -> apply( term, map ) }
       )
+    case ETWeakening( f ) => ETWeakening( apply( f, map ) )
   }
 }
 
