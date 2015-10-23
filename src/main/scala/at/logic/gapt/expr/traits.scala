@@ -119,6 +119,7 @@ private[expr] object determineTraits {
   }
 
   private class Const_with_FOLQuantifier( s: SymbolA, t: Ty ) extends Const( s, t ) with FOLQuantifier
+  private class Const_with_LogicalConstant( s: SymbolA, t: Ty ) extends Const( s, t ) with LogicalConstant
   private class Const_with_PropConnective_with_PropFormula( s: SymbolA, t: Ty ) extends Const( s, t ) with PropConnective with PropFormula
   private class Const_with_FOLConst( s: SymbolA, t: Ty ) extends Const( s, t ) with FOLConst
   private class Const_with_PropAtom( s: SymbolA, t: Ty ) extends Const( s, t ) with PropAtom
@@ -129,6 +130,7 @@ private[expr] object determineTraits {
   private class Const_with_HOLPartialAtom( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with HOLPartialAtom
   def forConst( sym: SymbolA, exptype: Ty ): Const = ( sym, exptype ) match {
     case ForallC( Ti ) | ExistsC( Ti ) => new Const_with_FOLQuantifier( sym, exptype )
+    case ForallC( _ ) | ExistsC( _ )   => new Const_with_LogicalConstant( sym, exptype )
     case AndC() | OrC() | ImpC()       => new Const_with_PropConnective( sym, exptype, 2 )
     case NegC()                        => new Const_with_PropConnective( sym, exptype, 1 )
     case TopC() | BottomC()            => new Const_with_PropConnective_with_PropFormula( sym, exptype )

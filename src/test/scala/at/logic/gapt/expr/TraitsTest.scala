@@ -45,4 +45,12 @@ class TraitsTest extends Specification {
       App( f, App( Abs( FOLVar( "x" ), FOLVar( "x" ) ), FOLVar( "x" ) ) ) must not be anInstanceOf[FOLExpression]
     }
   }
+
+  "LogicalConstant" should {
+    "be on quantifiers" in {
+      ForallC( Ti ) must beAnInstanceOf[LogicalConstant]
+      ForallC( Ti -> Ti ) must beAnInstanceOf[LogicalConstant]
+      ExistsC( Ti -> Ti ) must beAnInstanceOf[LogicalConstant]
+    }
+  }
 }
