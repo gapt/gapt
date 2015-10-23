@@ -13,12 +13,12 @@ import at.logic.gapt.utils.logging.metrics
 import scala.collection.{ GenTraversable, mutable }
 
 object SameRootSymbol {
-  def unapply( terms: Seq[FOLTerm] ): Option[( String, List[List[FOLTerm]] )] =
+  def unapply( terms: Seq[LambdaExpression] ): Option[( Const, List[List[LambdaExpression]] )] =
     unapply( terms toList )
 
-  def unapply( terms: List[FOLTerm] ): Option[( String, List[List[FOLTerm]] )] = terms match {
-    case FOLFunction( s, as ) :: Nil => Some( ( s, as map ( List( _ ) ) ) )
-    case FOLFunction( s, as ) :: SameRootSymbol( t, bs ) if s == t =>
+  def unapply( terms: List[LambdaExpression] ): Option[( Const, List[List[LambdaExpression]] )] = terms match {
+    case Apps( s: Const, as ) :: Nil => Some( ( s, as map ( List( _ ) ) ) )
+    case Apps( s: Const, as ) :: SameRootSymbol( t, bs ) if s == t =>
       Some( ( s, ( as, bs ).zipped map ( _ :: _ ) ) )
     case _ => None
   }
@@ -26,18 +26,18 @@ object SameRootSymbol {
 
 private class antiUnifier {
   private var varIndex = 0
-  private val vars = mutable.Map[Seq[FOLTerm], FOLVar]()
-  private def getVar( terms: Seq[FOLTerm] ) =
-    vars.getOrElseUpdate( terms, { varIndex += 1; FOLVar( s"β$varIndex" ) } )
+  private val vars = mutable.Map[Seq[LambdaExpression], Var]()
+  private def getVar( terms: Seq[LambdaExpression] ) =
+    vars.getOrElseUpdate( terms, { varIndex += 1; Var( s"β$varIndex", terms.head.exptype ) } )
 
-  def apply( terms: Seq[FOLTerm] ): FOLTerm = terms match {
-    case SameRootSymbol( s, as ) => FOLFunction( s, as map apply )
+  def apply( terms: Seq[LambdaExpression] ): LambdaExpression = terms match {
+    case SameRootSymbol( s, as ) => s( as map apply: _* )
     case _                       => getVar( terms )
   }
 }
 
 object antiUnifier {
-  def apply( terms: Seq[FOLTerm] ): FOLTerm = new antiUnifier().apply( terms )
+  def apply( terms: Seq[LambdaExpression] ): LambdaExpression = new antiUnifier().apply( terms )
 }
 
 object termSize {
@@ -76,7 +76,7 @@ object normalForms {
     lang foreach { term => require( freeVariables( term ) isEmpty ) }
 
     val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ).
-      map( antiUnifier( _ ) ).toSet[FOLTerm]
+      map( antiUnifier( _ ).asInstanceOf[FOLTerm] ).toSet
     antiUnifiers flatMap { au => nfsSubsumedByAU( au, nonTerminals.toSet ) }
   }
 }
