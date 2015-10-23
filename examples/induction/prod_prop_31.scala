@@ -2,6 +2,7 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.grammars.RecSchemTemplate
 import at.logic.gapt.proofs.expansionTrees.extractInstances
 import at.logic.gapt.proofs.lkNew.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9
@@ -53,3 +54,17 @@ instanceProofs foreach { case (inst, es) =>
   extractInstances(es).map(identity, -_).elements foreach println
   println()
 }
+
+val A = Const("A", list -> To)
+val G = Const("G", list -> To)
+val x = Var("x", list)
+val y = Var("y", sk_a)
+val z = Var("z", To)
+
+val template = RecSchemTemplate(A,
+  A(x) -> G(x), A(x) -> z,
+  G(cons(y, x)) -> G(x),
+  G(cons(y, x)) -> z,
+  G(nil) -> z)
+
+println(template.constraints(A,G))
