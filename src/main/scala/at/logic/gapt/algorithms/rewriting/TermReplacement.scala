@@ -37,7 +37,7 @@ object TermReplacement {
       case App( s, t ) =>
         App( apply( s, map ), apply( t, map ) )
       case Abs( x, t ) =>
-        Abs( x, apply( t, map ) )
+        Abs( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
       case _ => term
     }
 
