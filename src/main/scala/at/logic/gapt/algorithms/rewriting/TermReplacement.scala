@@ -34,10 +34,21 @@ object TermReplacement {
   def apply( term: LambdaExpression, map: PartialFunction[LambdaExpression, LambdaExpression] ): LambdaExpression =
     term match {
       case _ if map isDefinedAt term => map( term )
+
+      // special case polymorphic constants so that we can do type-changing replacements
+      // but only if the user doesn't specify any replacement for the logical constants
+      case Eq( s, t ) if !( map isDefinedAt EqC( s.exptype ) ) =>
+        Eq( apply( s, map ), apply( t, map ) )
+      case All( x, t ) if !( map isDefinedAt ForallC( x.exptype ) ) =>
+        All( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
+      case Ex( x, t ) if !( map isDefinedAt ExistsC( x.exptype ) ) =>
+        Ex( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
+
       case App( s, t ) =>
         App( apply( s, map ), apply( t, map ) )
       case Abs( x, t ) =>
-        Abs( x, apply( t, map ) )
+        Abs( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
+
       case _ => term
     }
 
@@ -140,6 +151,7 @@ object TermReplacement {
         apply( f, map ),
         instances map { case ( t, term ) => apply( t, map ) -> apply( term, map ) }
       )
+    case ETWeakening( f ) => ETWeakening( apply( f, map ) )
   }
 }
 

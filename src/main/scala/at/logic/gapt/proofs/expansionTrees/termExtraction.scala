@@ -36,9 +36,9 @@ object extractInstanceTerms {
  * number of formulas in the antecedent/succedent.
  */
 object extractInstances {
-  def apply( expansionTree: ExpansionTree ): Set[FOLFormula] =
+  def apply( expansionTree: ExpansionTree ): Set[HOLFormula] =
     if ( !containsQuantifier( toShallow( expansionTree ) ) )
-      Set( toShallow( expansionTree ).asInstanceOf[FOLFormula] )
+      Set( toShallow( expansionTree ) )
     else expansionTree match {
       case ETWeakening( _ ) => Set()
       case ETWeakQuantifier( _, instances ) =>

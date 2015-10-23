@@ -1,6 +1,6 @@
 import at.logic.gapt.examples.UniformAssociativity3ExampleProof
 import at.logic.gapt.expr.hol.{toNNF, simplify, lcomp}
-import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, normalFormsSipGrammar}
+import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, stableSipGrammar}
 import at.logic.gapt.proofs.{Suc, Ant, HOLSequent}
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkNew.LKToExpansionProof
@@ -43,7 +43,7 @@ instanceLanguages foreach { case (n, l) =>
 }
 
 println(s"Covering grammar consisting of all normal forms:")
-val nfGrammar = time { normalFormsSipGrammar(instanceLanguages) }
+val nfGrammar = time { stableSipGrammar(instanceLanguages) }
 //println(nfGrammar)
 println(s"${nfGrammar.productions.size} productions.")
 

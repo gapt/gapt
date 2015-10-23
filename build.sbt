@@ -17,6 +17,10 @@ lazy val commonSettings = Seq(
   // scalaz-stream is not on maven.org
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
+  javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
+  fork := true,
+  fork in Test := true,
+
   sourcesInBase := false // people like to keep scripts lying around
 
 ) ++ defaultScalariformSettings :+
@@ -44,6 +48,7 @@ lazy val root = (project in file(".")).
 
     mainClass := Some("at.logic.cli.CLIMain"),
 
+    fork in console := true,
     initialCommands in console := IO.read((resourceDirectory in Compile).value / "gapt-cli-prelude.scala"),
 
     // Release stuff
@@ -86,6 +91,8 @@ lazy val root = (project in file(".")).
       archiveFile
     },
 
+    testForkedParallel in Test := true,
+
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.parboiled" %% "parboiled" % "2.1.0",
@@ -119,9 +126,7 @@ lazy val testing = (project in file("testing")).
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.11",
 
-    baseDirectory in run := file("."),
-    javaOptions ++= Seq("-Xmx2g", "-Xss20m"),
-    fork := true
+    baseDirectory in run := file(".")
   )
 
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
