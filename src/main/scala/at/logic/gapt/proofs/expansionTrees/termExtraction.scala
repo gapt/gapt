@@ -113,8 +113,8 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
    * Assigns each formula in the end-sequent a fresh function symbol name used to encode its instances.
    */
   protected def mkSym( idx: SequentIndex ) = idx match {
-    case Ant( i ) => s"-{${endSequent( idx )}_a$i"
-    case Suc( i ) => s"-{${endSequent( idx )}_s$i"
+    case Ant( i ) => s"-{${endSequent( idx )}}_a$i"
+    case Suc( i ) => s"{${endSequent( idx )}}_s$i"
   }
 
   /**
