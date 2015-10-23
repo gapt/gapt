@@ -404,9 +404,14 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
     RecursionScheme( axiom, nonTerminalsWithArities map { case ( n, i ) => FOLFunctionHead( n, i ) }, rules )
   }
 
-  def findMinimalCover( targets: Set[( FOLTerm, FOLTerm )], solver: MaxSATSolver ): RecursionScheme = {
+  def findMinimalCover( targets: Set[( FOLTerm, FOLTerm )], solver: MaxSATSolver = bestAvailableMaxSatSolver ): RecursionScheme = {
     minimizeRecursionScheme( stableRecSchem( targets ), targets toSeq, targetFilter, solver )
   }
+}
+
+object RecSchemTemplate {
+  def apply( axiom: Const, rules: ( LambdaExpression, LambdaExpression )* ): RecSchemTemplate =
+    RecSchemTemplate( axiom, rules toSet )
 }
 
 object recSchemToVTRATG {
