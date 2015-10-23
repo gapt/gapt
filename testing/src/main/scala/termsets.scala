@@ -65,7 +65,7 @@ object dumpTermsets extends App {
 
   println( "Prover9 proofs" )
   betterForeach( glob paths "testing/**/prover9/**/*.s.out" ) { p9File =>
-    val expansionProof = Prover9Importer expansionProofFromFile  p9File.toString
+    val expansionProof = Prover9Importer expansionProofFromFile p9File.toString
 
     writeTermset(
       outDir resolve s"p9-${p9File.getParent.getFileName}.termset",

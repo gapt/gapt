@@ -1087,6 +1087,116 @@ class LKNewInterpolationTest extends Specification {
       pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, pa :: Nil ) )
     }
 
+    "correctly interpolate a proof containing EqualityLeft with Neg( P(a) )" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityLeftRule( proof, aeqb, Ant( 1 ), pb )
+
+      val npart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+      val ppart = proof1.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Neg( pa ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, pa :: ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( pb :: aeqb :: ipl :: Nil, Nil ) )
+    }
+
+    "correctly interpolate a proof containing EqualityLeft with a=b → P(a)" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityLeftRule( proof, aeqb, Ant( 1 ), pb )
+
+      val npart = Seq( Ant( 0 ) )
+      val ppart = Seq( Ant( 1 ), Suc( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Imp( aeqb, pa ) )
+      nproof.endSequent must beEqualTo( HOLSequent( pb :: Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( aeqb :: ipl :: Nil, pa :: Nil ) )
+    }
+
+    "correctly interpolate a proof containing EqualityLeft with a=b ∧ Top" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityLeftRule( proof, aeqb, Ant( 1 ), pb )
+
+      val npart = Seq( Ant( 1 ) )
+      val ppart = Seq( Ant( 0 ), Suc( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( And( aeqb, Top() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( aeqb :: Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: pb :: Nil, pa :: Nil ) )
+    }
+
+    "correctly interpolate a proof containing EqualityLeft with a=b ∧ Neg( P(a) )" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityLeftRule( proof, aeqb, Ant( 1 ), pb )
+
+      val npart = Seq( Ant( 1 ), Suc( 0 ) )
+      val ppart = Seq( Ant( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( And( aeqb, Neg( pa ) ) )
+      nproof.endSequent must beEqualTo( HOLSequent( aeqb :: Nil, pa :: ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: pb :: Nil, Nil ) )
+    }
+
+    "correctly interpolate a proof containing EqualityLeft with a=b → Bottom" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityLeftRule( proof, aeqb, Ant( 1 ), pb )
+
+      val npart = Seq( Ant( 0 ), Suc( 0 ) )
+      val ppart = Seq( Ant( 1 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Imp( aeqb, Bottom() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( pb :: Nil, pa :: ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( aeqb :: ipl :: Nil, Nil ) )
+    }
+
     "correctly interpolate a proof containing EqualityRight with Bottom" in {
       val a = FOLConst( "a" )
       val b = FOLConst( "b" )
@@ -1217,6 +1327,50 @@ class LKNewInterpolationTest extends Specification {
       ipl must beEqualTo( And( aeqb, Top() ) )
       nproof.endSequent must beEqualTo( HOLSequent( aeqb :: Nil, ipl :: Nil ) )
       pproof.endSequent must beEqualTo( HOLSequent( ipl :: pa :: Nil, pb :: Nil ) )
+    }
+
+    "correctly interpolate a proof containing EqualityRight with Neg( P(a) )" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityRightRule( proof, aeqb, Suc( 0 ), pb )
+
+      val npart = Seq( Ant( 0 ), Suc( 0 ) )
+      val ppart = Seq( Ant( 1 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Neg( pa ) )
+      nproof.endSequent must beEqualTo( HOLSequent( aeqb :: Nil, ipl :: pb :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: pa :: Nil, Nil ) )
+    }
+
+    "correctly interpolate a proof containing EqualityRight with a=b → Bottom" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityRightRule( proof, aeqb, Suc( 0 ), pb )
+
+      val npart = Seq( Ant( 1 ), Suc( 0 ) )
+      val ppart = Seq( Ant( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof1, npart, ppart )
+
+      ipl must beEqualTo( Imp( aeqb, Bottom() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( pa :: Nil, pb :: ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( aeqb :: ipl :: Nil, Nil ) )
     }
   }
 }
