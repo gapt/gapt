@@ -288,7 +288,7 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
           val constArgs = canonicalArgs( to ).zipWithIndex filter {
             case ( a, i ) =>
               recCalls forall {
-                case ( FOLFunction( _, callerArgs ), FOLFunction( _, calleeArgs ) ) =>
+                case ( Apps( _, callerArgs ), Apps( _, calleeArgs ) ) =>
                   callerArgs( i ) == calleeArgs( i )
               }
           } map { _._1 }
@@ -296,7 +296,7 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
           val structRecArgs = canonicalArgs( to ).zipWithIndex filter {
             case ( a, i ) =>
               recCalls forall {
-                case ( FOLFunction( _, callerArgs ), FOLFunction( _, calleeArgs ) ) =>
+                case ( Apps( _, callerArgs ), Apps( _, calleeArgs ) ) =>
                   callerArgs( i ).find( calleeArgs( i ) ).nonEmpty
               }
           } map { _._1 }
@@ -379,7 +379,7 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
           foldLeft( Seq[Map[Var, LambdaExpression]]( Map() ) )( ( chosenValues, nextVar ) =>
             for (
               subst <- chosenValues;
-              st <- argumentStableTerms if freeVariables( st ) subsetOf allowedVars
+              st <- argumentStableTerms if st.exptype == nextVar.exptype && freeVariables( st ).subsetOf( allowedVars )
             ) yield subst + ( nextVar -> st ) ).
           map( s => Rule( from, Substitution( s )( to ) ) )
     }

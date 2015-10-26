@@ -328,13 +328,13 @@ object removeAllQuantifiers {
    * Removes all quantifiers from the logical level of a HOLFormula. Atoms are not changed.
    */
   def apply( f: HOLFormula ): HOLFormula = f match {
-    case HOLAtom( _, _ ) => f
-    case Neg( f1 )       => Neg( apply( f1 ) )
-    case Imp( f1, f2 )   => Imp( apply( f1 ), apply( f2 ) )
-    case And( f1, f2 )   => And( apply( f1 ), apply( f2 ) )
-    case Or( f1, f2 )    => Or( apply( f1 ), apply( f2 ) )
-    case Ex( x, f1 )     => apply( f1 )
-    case All( x, f1 )    => apply( f1 )
+    case HOLAtom( _, _ ) | Top() | Bottom() => f
+    case Neg( f1 )                          => Neg( apply( f1 ) )
+    case Imp( f1, f2 )                      => Imp( apply( f1 ), apply( f2 ) )
+    case And( f1, f2 )                      => And( apply( f1 ), apply( f2 ) )
+    case Or( f1, f2 )                       => Or( apply( f1 ), apply( f2 ) )
+    case Ex( x, f1 )                        => apply( f1 )
+    case All( x, f1 )                       => apply( f1 )
   }
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }

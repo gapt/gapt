@@ -1,31 +1,9 @@
 package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ isFOLPrenexSigma1, FOLSubstitution, FOLMatchingAlgorithm }
-import at.logic.gapt.expr.hol.{ containsQuantifier, instantiate, isPrenex }
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkNew.{ LKToExpansionProof, LKProof }
-
-/**
- * Extracts the instance terms used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.
- *
- * Each expansion tree is transformed into a list of pairs of its shallow formula and a tuple containing the terms
- * used to instantiate the outermost weak quantifier block.
- */
-object extractInstanceTerms {
-  def apply( expansionTree: ExpansionTree ): Seq[( FOLFormula, Seq[FOLTerm] )] =
-    compressQuantifiers( expansionTree ) match {
-      case METWeakQuantifier( formula, instanceLists ) =>
-        instanceLists map {
-          case ( child, instanceTerms ) if !child.containsWeakQuantifiers =>
-            ( formula.asInstanceOf[FOLFormula], instanceTerms.map( _.asInstanceOf[FOLTerm] ) )
-        }
-      case et if !et.containsWeakQuantifiers => Seq( et.toShallow.asInstanceOf[FOLFormula] -> List() )
-    }
-
-  def apply( expansionSequent: ExpansionSequent ): Seq[( ( FOLFormula, Seq[FOLTerm] ), Boolean )] =
-    expansionSequent.polarizedTrees flatMap { case ( et, pol ) => apply( et ).map( _ -> pol ) }
-}
 
 /**
  * Extracts the instances used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.
@@ -45,143 +23,197 @@ object extractInstances {
         instances flatMap { i => extractInstances( i._1 ) } toSet
       case ETStrongQuantifier( _, _, t ) => extractInstances( t )
       case ETSkolemQuantifier( _, _, t ) => extractInstances( t )
+      case ETAnd( t, s )                 => for ( ( ti, si ) <- apply( t, s ) ) yield ti & si
+      case ETOr( t, s )                  => for ( ( ti, si ) <- apply( t, s ) ) yield ti | si
+      case ETImp( t, s )                 => for ( ( ti, si ) <- apply( t, s ) ) yield ti --> si
+      case ETNeg( t )                    => for ( ti <- extractInstances( t ) ) yield -ti
     }
 
+  private def apply( a: ExpansionTree, b: ExpansionTree ): Set[( HOLFormula, HOLFormula )] = {
+    val ais = extractInstances( a )
+    val bis = extractInstances( b )
+    if ( ais.isEmpty && bis.isEmpty ) {
+      Set()
+    } else if ( ais.isEmpty ) {
+      val dummy = removeAllQuantifiers( toShallow( a ) )
+      for ( bi <- bis ) yield ( dummy, bi )
+    } else if ( bis.isEmpty ) {
+      val dummy = removeAllQuantifiers( toShallow( b ) )
+      for ( ai <- ais ) yield ( ai, dummy )
+    } else {
+      for ( ai <- ais; bi <- bis ) yield ( ai, bi )
+    }
+  }
+
   def apply( expansionSequent: ExpansionSequent ): HOLSequent =
-    HOLSequent(
-      expansionSequent.antecedent flatMap apply,
-      expansionSequent.succedent flatMap apply
-    )
+    expansionSequent flatMap apply
 
 }
 
 object groundTerms {
-  def apply( term: FOLTerm ): FOLTerm =
-    FOLSubstitution( freeVariables( term ).
-      map { c => FOLVar( c.name ) -> FOLConst( c.name ) }.toSeq )( term )
+  def apply( term: LambdaExpression ): LambdaExpression =
+    Substitution( freeVariables( term ) map { case v @ Var( name, ty ) => v -> Const( name, ty ) } )( term )
 
-  def apply( lang: Set[FOLTerm] ): Set[FOLTerm] = lang map apply
+  def apply( lang: Set[LambdaExpression] ): Set[LambdaExpression] = lang map apply
+
+  def apply( term: FOLTerm ): FOLTerm = apply( term.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLTerm]
+  def apply( lang: Set[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] = lang map apply
 }
 
 /**
- * Encodes instances of a prenex FOL Sigma_1 end-sequent as FOL terms.
+ * Encodes instances of an end-sequent as terms.
  *
- * In the case of cut-introduction, the end-sequent has no free variables and we're encoding a Herbrand sequent as a
+ * Only instances of weak quantifiers are recorded, instances of strong quantifiers or free variables are ignored.
+ *
+ * The end-sequent will be internally transformed into one which is in variable normal form.
+ *
+ * In the case of cut-introduction, the end-sequent has no free variables and no strong quantifiers and we're encoding a Herbrand sequent as a
  * set of terms.  A term r_i(t_1,...,t_n) encodes an instance of the formula "forall x_1 ... x_n, phi(x_1,...,x_n)"
  * using the instances (t_1,...,t_n).
  *
- * In the case of simple inductive proofs, the end-sequent contains one free variable (alpha).  Here, we consider
- * proofs of instance sequents, which are obtained by substituting a numeral for alpha.  Hence the formulas occuring
+ * In the case of inductive proofs, the end-sequent contains strong quantifiers variable (alpha).  Here, we consider
+ * proofs of instance sequents, which are obtained by e.g. substituting a numeral for alpha.  Hence the formulas occurring
  * in the end-sequents of instance proofs are substitution instances of [[endSequent]]; the encoded terms still only
  * capture the instances used in the instance proofs--i.e. not alpha.
  */
-case class InstanceTermEncoding( endSequent: HOLSequent ) {
+class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTermType: Ty ) {
 
-  require( isFOLPrenexSigma1( endSequent ), s"$endSequent is not a prenex FOL Sigma_1 sequent" )
+  endSequent.elements foreach { formula =>
+    require( isInVNF( formula ), s"$formula is not in variable normal form" )
+  }
 
   /**
-   * Formula together with its polarity in a sequent, which is true if it is in the antecedent.
+   * The propositional matrices phi of the end-sequent.
    */
-  type PolarizedFormula = ( FOLFormula, Boolean )
+  val matrices = endSequent map { removeAllQuantifiers( _ ) }
 
   /**
-   * Assigns each formula in the end-sequent a fresh function symbol used to encode its instances.
+   * The propositional matrices of the end-sequent, where the formulas in the antecedent are negated.
    */
-  protected def mkSym( esFormula: PolarizedFormula ) = esFormula match {
-    case ( f, true )  => s"{$f}"
-    case ( f, false ) => s"-{$f}"
+  val signedMatrices = matrices.map( -_, identity )
+
+  private def getWeakQuantVars( esFormula: HOLFormula, pol: Boolean ): Seq[Var] = esFormula match {
+    case All( x, t ) if !pol => x +: getWeakQuantVars( t, pol )
+    case Ex( x, t ) if pol   => x +: getWeakQuantVars( t, pol )
+    case All( x, t ) if pol  => getWeakQuantVars( t, pol )
+    case Ex( x, t ) if !pol  => getWeakQuantVars( t, pol )
+    case And( t, s )         => getWeakQuantVars( t, pol ) ++ getWeakQuantVars( s, pol )
+    case Or( t, s )          => getWeakQuantVars( t, pol ) ++ getWeakQuantVars( s, pol )
+    case Imp( t, s )         => getWeakQuantVars( t, !pol ) ++ getWeakQuantVars( s, pol )
+    case Neg( t )            => getWeakQuantVars( t, !pol )
+    case Top() | Bottom() | HOLAtom( _, _ ) =>
+      Seq()
+  }
+  /**
+   * The quantified variables of each formula in the end-sequent.
+   */
+  val quantVars = endSequent.map( getWeakQuantVars( _, pol = false ), getWeakQuantVars( _, pol = true ) )
+
+  /**
+   * Assigns each formula in the end-sequent a fresh function symbol name used to encode its instances.
+   */
+  protected def mkSym( idx: SequentIndex ) = idx match {
+    case Ant( i ) => s"-{${endSequent( idx )}}_a$i"
+    case Suc( i ) => s"{${endSequent( idx )}}_s$i"
   }
 
-  def getSymbol( esFormula: PolarizedFormula ) = esFormula match {
-    case ( All.Block( vars, _ ), true ) => FOLFunctionHead( mkSym( esFormula ), vars.size )
-    case ( Ex.Block( vars, _ ), false ) => FOLFunctionHead( mkSym( esFormula ), vars.size )
-  }
+  /**
+   * The function symbols used to encode the instances of each formula in the end-sequent.
+   */
+  val symbols = for ( ( vars, idx ) <- quantVars.zipWithIndex )
+    yield Const( mkSym( idx ), FunctionType( instanceTermType, vars map { _.exptype } ) )
 
-  private def instanceTerms( instance: PolarizedFormula, esFormula: PolarizedFormula ) = ( instance, esFormula ) match {
-    case ( ( instf: FOLFormula, true ), ( All.Block( vars, esf ), true ) ) =>
-      FOLMatchingAlgorithm.matchTerms( esf, instf ).map { subst => vars.map( subst.apply ) }
-    case ( ( instf: FOLFormula, false ), ( Ex.Block( vars, esf ), false ) ) =>
-      FOLMatchingAlgorithm.matchTerms( esf, instf ).map { subst => vars.map( subst.apply ) }
-    case _ => None
-  }
-
-  private def findESFormula( instance: PolarizedFormula ): Option[( PolarizedFormula, List[FOLTerm] )] =
-    endSequent.polarizedFormulas.map( _.asInstanceOf[PolarizedFormula] ).
-      flatMap { u => instanceTerms( instance, u ).map( u -> _ ) }.headOption
-
-  def encodeOption( instance: PolarizedFormula ): Option[FOLTerm] =
-    findESFormula( instance ) map {
-      case ( esFormula, terms ) => FOLFunction( mkSym( esFormula ), terms )
+  private def instanceTerms( signedInstance: HOLFormula, esFormula: SequentIndex ) =
+    syntacticMatching( signedMatrices( esFormula ), signedInstance ) map { subst =>
+      esFormula -> quantVars( esFormula ).map( subst.apply )
     }
 
-  def encode( instance: PolarizedFormula ): FOLTerm = encodeOption( instance ).getOrElse {
-    throw new IllegalArgumentException( s"Cannot find $instance in $endSequent" )
+  private def findInstance( signedInstance: HOLFormula ): Option[( SequentIndex, Seq[LambdaExpression] )] =
+    endSequent.indices.flatMap { instanceTerms( signedInstance, _ ) }.headOption
+
+  def encodeOption( signedInstance: HOLFormula ): Option[LambdaExpression] =
+    findInstance( signedInstance ) map {
+      case ( esFormula, terms ) => symbols( esFormula )( terms: _* )
+    }
+
+  def encode( signedInstance: HOLFormula ): LambdaExpression = encodeOption( signedInstance ).getOrElse {
+    throw new IllegalArgumentException( s"Cannot find $signedInstance in $endSequent" )
   }
 
   /**
    * Encodes a sequent consisting of instances of an instance sequent.
    */
-  def encode( instance: HOLSequent ): Set[FOLTerm] =
-    instance.polarizedFormulas.map { instf => encode( instf.asInstanceOf[PolarizedFormula] ) } toSet
+  def encode( instance: HOLSequent ): Set[LambdaExpression] =
+    instance.map( -_, identity ).elements map encode toSet
 
   /**
    * Encodes an expansion sequent (of an instance proof).
    *
    * The shallow formulas of the expansion sequents should be subsumed by formulas in the end-sequent.
    */
-  // TODO: actually try to match the shallow formulas, and not the instances.
-  def encode( instance: ExpansionSequent )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
+  def encode( instance: ExpansionSequent )( implicit dummyImplicit: DummyImplicit ): Set[LambdaExpression] =
     encode( extractInstances( instance ) )
+
+  /**
+   * Maps a function symbol to the index of its corresponding formula in the end-sequent.
+   */
+  def findESIndex( sym: Const ): Option[SequentIndex] = symbols indexOfOption sym
 
   /**
    * Maps a function symbol to its corresponding formula in the end-sequent.
    */
-  def findESFormula( sym: String ): Option[PolarizedFormula] =
-    endSequent.polarizedFormulas.map( _.asInstanceOf[PolarizedFormula] ).
-      find { u => mkSym( u ) == sym }
+  def findESFormula( sym: Const ): Option[HOLFormula] = findESIndex( sym ) map { endSequent( _ ) }
+
+  def decodeOption( term: LambdaExpression ): Option[( SequentIndex, Substitution )] = term match {
+    case Apps( f: Const, args ) =>
+      findESIndex( f ) map { idx => idx -> Substitution( quantVars( idx ) zip args ) }
+    case _ => None
+  }
 
   /**
    * Decodes a term into its corresponding instance.
    *
    * The resulting instance can contain alpha in the inductive case.
    */
-  def decodeOption( term: FOLTerm ): Option[PolarizedFormula] = term match {
-    case FOLFunction( f, args ) =>
-      findESFormula( f ).map {
-        case ( esFormula, pol ) =>
-          instantiate( esFormula, args ) -> pol
-      }
-  }
+  def decodeToPolarizedFormula( term: LambdaExpression ): ( HOLFormula, Boolean ) =
+    decodeOption( term ) map { case ( idx, subst ) => subst( matrices( idx ) ) -> idx.isSuc } get
 
-  def decode( term: FOLTerm ): PolarizedFormula = decodeOption( term ).get
+  def decodeToInstanceSequent( terms: Iterable[LambdaExpression] ): HOLSequent =
+    Sequent( terms map decodeToPolarizedFormula toSeq )
 
-  def decode( terms: Iterable[FOLTerm] ): Set[PolarizedFormula] =
-    terms map decode toSet
-
-  def decodeToFSequent( terms: Iterable[FOLTerm] ): HOLSequent = HOLSequent( decode( terms ).toSeq )
-
-  def decodeToExpansionSequent( terms: Iterable[FOLTerm] ): ExpansionSequent = {
-    val polExpTrees = terms.map { case FOLFunction( f, args ) => ( findESFormula( f ).get, args ) }.
-      groupBy( _._1 ).toSeq.map {
-        case ( ( esFormula, pol ), instances ) =>
-          val vars = ( esFormula, pol ) match {
-            case ( All.Block( vs, _ ), true ) => vs
-            case ( Ex.Block( vs, _ ), false ) => vs
-          }
-          formulaToExpansionTree( esFormula, instances.map( _._2 ).map { terms => FOLSubstitution( ( vars, terms ).zipped.toList ) }.toList, !pol ) -> pol
-      }
-    ExpansionSequent( polExpTrees.filter( _._2 == true ).map( _._1 ).toList, polExpTrees.filter( _._2 == false ).map( _._1 ).toList )
-  }
+  def decodeToExpansionSequent( terms: Iterable[LambdaExpression] ): ExpansionSequent =
+    Sequent( terms flatMap decodeOption groupBy { _._1 } map {
+      case ( idx, instances ) =>
+        formulaToExpansionTree( endSequent( idx ), instances map { _._2 } toList, idx.isSuc ) -> idx.isSuc
+    } toSeq )
 }
 
 object InstanceTermEncoding {
-  def apply( expansionSequent: ExpansionSequent ): ( Set[FOLTerm], InstanceTermEncoding ) = {
+  def apply( endSequent: HOLSequent, instanceTermType: Ty = TBase( "InstanceTermType" ) ): InstanceTermEncoding =
+    new InstanceTermEncoding( endSequent map { toVNF( _ ) }, instanceTermType )
+
+  def apply( expansionSequent: ExpansionSequent ): ( Set[LambdaExpression], InstanceTermEncoding ) = {
     val encoding = InstanceTermEncoding( toShallow( expansionSequent ) )
     encoding.encode( expansionSequent ) -> encoding
   }
 
-  def apply( lkProof: LKProof ): ( Set[FOLTerm], InstanceTermEncoding ) = {
+  def apply( lkProof: LKProof ): ( Set[LambdaExpression], InstanceTermEncoding ) = {
     val encoding = InstanceTermEncoding( lkProof.endSequent )
     encoding.encode( LKToExpansionProof( lkProof ) ) -> encoding
+  }
+}
+
+object FOLInstanceTermEncoding {
+  def apply( endSequent: HOLSequent ): InstanceTermEncoding =
+    InstanceTermEncoding( endSequent, Ti )
+
+  def apply( expansionSequent: ExpansionSequent ): ( Set[FOLTerm], InstanceTermEncoding ) = {
+    val encoding = FOLInstanceTermEncoding( toShallow( expansionSequent ) )
+    encoding.encode( expansionSequent ).map( _.asInstanceOf[FOLTerm] ) -> encoding
+  }
+
+  def apply( lkProof: LKProof ): ( Set[FOLTerm], InstanceTermEncoding ) = {
+    val encoding = FOLInstanceTermEncoding( lkProof.endSequent )
+    encoding.encode( LKToExpansionProof( lkProof ) ).map( _.asInstanceOf[FOLTerm] ) -> encoding
   }
 }

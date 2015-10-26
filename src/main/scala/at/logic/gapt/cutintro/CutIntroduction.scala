@@ -95,7 +95,7 @@ class MultiGrammar( val us: Map[FOLFormula, List[List[FOLTerm]]], val ss: List[(
 object simpleToMultiGrammar {
   def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): MultiGrammar = {
     val us = g.rightHandSides( g.axiomVect ).map( _.head ).
-      groupBy { case FOLFunction( f, _ ) => encoding.findESFormula( f ).get._1 }.
+      groupBy { case Apps( f: Const, _ ) => encoding.findESFormula( f ).get.asInstanceOf[FOLFormula] }.
       mapValues( _.map { case FOLFunction( _, as ) => as }.toList )
     val slist = g.nonTerminals.filter( _ != g.axiomVect ).
       map { a => a -> g.rightHandSides( a ).toList }.
@@ -226,8 +226,8 @@ object CutIntroduction extends Logger {
     if ( verbose ) println( s"End sequent: $endSequent" )
 
     /********** Term set Extraction **********/
-    val encoding = InstanceTermEncoding( endSequent )
-    val termset = groundTerms( encoding encode ep )
+    val encoding = FOLInstanceTermEncoding( endSequent )
+    val termset = groundTerms( encoding encode ep ) map { _.asInstanceOf[FOLTerm] }
 
     metrics.value( "termset", termset.size )
     metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )

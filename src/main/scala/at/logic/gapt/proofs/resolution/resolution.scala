@@ -131,7 +131,7 @@ object Factor {
         if ( countInOldConcl > countInNewConcl ) {
           val ( p_, occConn_ ) = Factor( p, p.conclusion.
             indicesWhere( _ == atom ).
-            filter( _.isAnt == pol ).
+            filter( _.isSuc == pol ).
             take( countInOldConcl - countInNewConcl + 1 ) )
           p = p_
           occConn = occConn_ * occConn

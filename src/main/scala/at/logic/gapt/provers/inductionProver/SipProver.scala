@@ -51,10 +51,10 @@ class SipProver(
     }
     require( inductionVariable == SimpleInductionProof.alpha ) // TODO: maybe relax this restriction
 
-    val termEncoding = InstanceTermEncoding( endSequent )
+    val termEncoding = FOLInstanceTermEncoding( endSequent )
     var instanceLanguages = instanceProofs map {
       case ( n, expSeq ) =>
-        n -> termEncoding.encode( expSeq )
+        n -> termEncoding.encode( expSeq ).map( _.asInstanceOf[FOLTerm] )
     }
 
     // Ground the instance languages.
@@ -73,7 +73,7 @@ class SipProver(
 
     if ( testInstances.forall { n =>
       val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
-        termEncoding.decodeToFSequent( grammar.instanceGrammar( n ).language )
+        termEncoding.decodeToInstanceSequent( grammar.instanceGrammar( n ).language )
       )
       val isQuasiTaut = quasiTautProver.isValid( generatedInstanceSequent )
       debug( s"[n=$n] Instance language is quasi-tautological: $isQuasiTaut" )

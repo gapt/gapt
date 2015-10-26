@@ -231,29 +231,20 @@ object Var {
   def apply( name: String, exptype: Ty ): Var = Var( StringSymbol( name ), exptype )
   def apply( sym: SymbolA, exptype: Ty ): Var = determineTraits.forVar( sym, exptype )
 
-  def unapply( e: LambdaExpression ) = e match {
-    case v: Var => Some( v.name, v.exptype )
-    case _      => None
-  }
+  def unapply( v: Var ) = Some( v.name, v.exptype )
 }
 object Const {
   def apply( name: String, exptype: Ty ): Const = Const( StringSymbol( name ), exptype )
   def apply( sym: SymbolA, exptype: Ty ): Const = determineTraits.forConst( sym, exptype )
 
-  def unapply( e: LambdaExpression ) = e match {
-    case c: Const => Some( c.name, c.exptype )
-    case _        => None
-  }
+  def unapply( c: Const ) = Some( c.name, c.exptype )
 }
 object App {
   def apply( f: LambdaExpression, a: LambdaExpression ) = determineTraits.forApp( f, a )
 
   def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression = Apps( function, arguments )
 
-  def unapply( e: LambdaExpression ) = e match {
-    case a: App => Some( ( a.function, a.arg ) )
-    case _      => None
-  }
+  def unapply( a: App ) = Some( a.function, a.arg )
 }
 object Apps {
   def apply( function: LambdaExpression, arguments: LambdaExpression* )( implicit dummyImplicit: DummyImplicit ): LambdaExpression =
@@ -278,9 +269,6 @@ object Abs {
   def apply( variables: Seq[Var], expression: LambdaExpression ): LambdaExpression =
     variables.foldRight( expression )( Abs( _, _ ) )
 
-  def unapply( e: LambdaExpression ) = e match {
-    case a: Abs => Some( ( a.variable, a.term ) )
-    case _      => None
-  }
+  def unapply( a: Abs ) = Some( a.variable, a.term )
 }
 

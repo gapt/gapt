@@ -296,8 +296,8 @@ class SimpleInductionProof(
   def toSipGrammar: SipGrammar = {
     import SipGrammar._
 
-    val termEncoding = InstanceTermEncoding( EndSequent )
-    val terms = termEncoding.encode( ExpSeq0 ) ++ termEncoding.encode( ExpSeq1 ) ++ termEncoding.encode( ExpSeq2 )
+    val termEncoding = FOLInstanceTermEncoding( EndSequent )
+    val terms = termEncoding.encode( ExpSeq0 ) ++ termEncoding.encode( ExpSeq1 ) ++ termEncoding.encode( ExpSeq2 ) map { _.asInstanceOf[FOLTerm] }
     val tauProductions = terms map { x => tau -> x }
     val gammaProductions = t map { ti => gamma -> ti }
     val gammaEndProductions = u map { ui => gammaEnd -> ui }

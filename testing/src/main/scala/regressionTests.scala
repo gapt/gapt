@@ -29,8 +29,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     RobinsonToExpansionProof( robinson, reconstructedEndSequent ) --? "RobinsonToExpansionProof" map { E2 =>
       VeriT.isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
-      if ( isFOLPrenexSigma1( reconstructedEndSequent ) )
-        VeriT.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
+      VeriT.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
     val p = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
@@ -69,15 +68,13 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
 
-    if ( isFOLPrenexSigma1( p.endSequent ) ) {
-      ( CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers = true ), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
+    ( CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers = true ), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
 
-        if ( !containsEqualityReasoning( q ) )
-          ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
-        CERES( lkNew2Old( q ) ) --? "CERES (cut-intro)"
+      if ( !containsEqualityReasoning( q ) )
+        ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
+      CERES( lkNew2Old( q ) ) --? "CERES (cut-intro)"
 
-        VeriT.isValid( extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem validity (cut-intro)"
-      }
+      VeriT.isValid( extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem validity (cut-intro)"
     }
 
     skolemize( p ) --? "skolemize"
