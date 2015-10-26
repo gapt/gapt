@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ Ant, OccConnector }
 
 object cleanStructuralRules {
   def apply( proof: LKProof ) = {
@@ -447,6 +448,401 @@ object cleanStructuralRules {
           weakAnt,
           weakSuc
         )
+  }
+
+  def apply2( proof: LKProof, reductive: Boolean = true ): ( LKProof, OccConnector[HOLFormula] ) = proof match {
+    case InitialSequent( sequent ) =>
+      ( proof, OccConnector( sequent ) )
+
+    case p @ WeakeningLeftRule( subProof, formula ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+      ( subProofNew, subConnector * p.getOccConnector.inv )
+
+    case p @ WeakeningRightRule( subProof, formula ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+      ( subProofNew, subConnector * p.getOccConnector.inv )
+
+    case p @ ContractionLeftRule( subProof, aux1, aux2 ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      ( subConnector.children( aux1 ), subConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = ContractionLeftRule( subProofNew, a1, a2 )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ ContractionRightRule( subProof, aux1, aux2 ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      ( subConnector.children( aux1 ), subConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = ContractionRightRule( subProofNew, a1, a2 )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val ( leftSubProofNew, leftSubConnector ) = apply2( leftSubProof, reductive )
+      val ( rightSubProofNew, rightSubConnector ) = apply2( rightSubProof, reductive )
+
+      ( leftSubConnector.children( aux1 ), rightSubConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = CutRule( leftSubProofNew, a1, rightSubProofNew, a2 )
+          ( proofNew,
+            ( proofNew.getLeftOccConnector * leftSubConnector * p.getLeftOccConnector.inv )
+            + ( proofNew.getRightOccConnector * rightSubConnector * p.getRightOccConnector.inv ) )
+
+        case ( Seq( a1 ), Seq() ) =>
+          if ( reductive )
+            ( rightSubProofNew, rightSubConnector * p.getRightOccConnector.inv )
+          else {
+            val proofNew_ = WeakeningLeftRule( rightSubProofNew, p.cutFormula )
+            val oc = proofNew_.getOccConnector
+            val proofNew = CutRule( leftSubProofNew, a1, proofNew_, proofNew_.mainIndices( 0 ) )
+            ( proofNew, ( proofNew.getLeftOccConnector * leftSubConnector * p.getLeftOccConnector.inv )
+              + ( proofNew.getRightOccConnector * oc * rightSubConnector * p.getRightOccConnector.inv ) )
+          }
+
+        case ( Seq(), Seq( a2 ) ) =>
+          if ( reductive )
+            ( leftSubProofNew, leftSubConnector * p.getLeftOccConnector.inv )
+          else {
+            val proofNew_ = WeakeningRightRule( leftSubProofNew, p.cutFormula )
+            val oc = proofNew_.getOccConnector
+            val proofNew = CutRule( leftSubProofNew, proofNew_.mainIndices( 0 ), proofNew_, a2 )
+            ( proofNew, ( proofNew.getLeftOccConnector * oc * leftSubConnector * p.getLeftOccConnector.inv )
+              + ( proofNew.getRightOccConnector * rightSubConnector * p.getRightOccConnector.inv ) )
+          }
+
+        case ( Seq(), Seq() ) =>
+          ( leftSubProofNew, leftSubConnector * p.getLeftOccConnector.inv )
+      }
+
+     /*case p @ InductionRule( cases, main ) =>
+      def isWeak(c: InductionCase): Boolean = {
+        val (proofNew, connector) = apply2(c.proof)
+        val weakHypos = for (h <- c.hypotheses) yield connector.children(h).isEmpty
+        weakHypos.forall(_ == true) && connector.children(c.conclusion).isEmpty
+      }
+
+      if (reductive) {
+
+      }
+      else {
+        val casesNew = for( c <- cases) yield {
+          val (subProofNew, subConnector) = apply2(c.proof)
+          val es = c.proof.endSequent
+          val weakHypos = c.hypotheses.filter(subConnector.children(_).isEmpty) map {es(_)}
+          val weakConclusion = Seq(c.conclusion).filter(subConnector.children(_).isEmpty) map {es(_)}
+
+
+        }
+      }
+*/
+
+    case p @ NegLeftRule( subProof, aux ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      subConnector.children( aux ) match {
+        case Seq( a ) =>
+          val proofNew = NegLeftRule( subProofNew, a )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ NegRightRule( subProof, aux ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      subConnector.children( aux ) match {
+        case Seq( a ) =>
+          val proofNew = NegRightRule( subProofNew, a )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ AndLeftRule( subProof, aux1, aux2 ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      ( subConnector.children( aux1 ), subConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = AndLeftRule( subProofNew, a1, a2 )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case ( Seq( a1 ), Seq() ) =>
+          val ( proofNew, occConnectorNew ) = AndLeftMacroRule.withOccConnector( subProofNew, a1, p.rightConjunct )
+          ( proofNew, occConnectorNew * subConnector * p.getOccConnector.inv )
+
+        case ( Seq(), Seq( a2 ) ) =>
+          val ( proofNew, occConnectorNew ) = AndLeftMacroRule.withOccConnector( subProofNew, p.leftConjunct, a2 )
+          ( proofNew, occConnectorNew * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val ( leftSubProofNew, leftSubConnector ) = apply2( leftSubProof, reductive )
+      val ( rightSubProofNew, rightSubConnector ) = apply2( rightSubProof, reductive )
+
+      ( leftSubConnector.children( aux1 ), rightSubConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = AndRightRule( leftSubProofNew, a1, rightSubProofNew, a2 )
+          ( proofNew,
+            ( proofNew.getLeftOccConnector * leftSubConnector * p.getLeftOccConnector.inv )
+            + ( proofNew.getRightOccConnector * rightSubConnector * p.getRightOccConnector.inv ) )
+
+        case ( Seq( a1 ), Seq() ) =>
+          if ( reductive )
+            ( rightSubProofNew, rightSubConnector * p.getRightOccConnector.inv )
+          else {
+            val proofNew_ = WeakeningRightRule( rightSubProofNew, p.rightConjunct )
+            val oc = proofNew_.getOccConnector
+            val proofNew = AndRightRule( leftSubProofNew, a1, proofNew_, proofNew_.mainIndices( 0 ) )
+            ( proofNew, ( proofNew.getLeftOccConnector * leftSubConnector * p.getLeftOccConnector.inv )
+              + ( proofNew.getRightOccConnector * oc * rightSubConnector * p.getRightOccConnector.inv ) )
+          }
+
+        case ( Seq(), Seq( a2 ) ) =>
+          if ( reductive )
+            ( leftSubProofNew, leftSubConnector * p.getLeftOccConnector.inv )
+          else {
+            val proofNew_ = WeakeningRightRule( leftSubProofNew, p.leftConjunct )
+            val oc = proofNew_.getOccConnector
+            val proofNew = AndRightRule( leftSubProofNew, proofNew_.mainIndices( 0 ), proofNew_, a2 )
+            ( proofNew, ( proofNew.getLeftOccConnector * oc * leftSubConnector * p.getLeftOccConnector.inv )
+              + ( proofNew.getRightOccConnector * rightSubConnector * p.getRightOccConnector.inv ) )
+          }
+
+        case ( Seq(), Seq() ) =>
+          ( leftSubProofNew, leftSubConnector * p.getLeftOccConnector.inv )
+      }
+
+    case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val ( leftSubProofNew, leftSubConnector ) = apply2( leftSubProof, reductive )
+      val ( rightSubProofNew, rightSubConnector ) = apply2( rightSubProof, reductive )
+
+      ( leftSubConnector.children( aux1 ), rightSubConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = OrLeftRule( leftSubProofNew, a1, rightSubProofNew, a2 )
+          ( proofNew,
+            ( proofNew.getLeftOccConnector * leftSubConnector * p.getLeftOccConnector.inv )
+            + ( proofNew.getRightOccConnector * rightSubConnector * p.getRightOccConnector.inv ) )
+
+        case ( Seq( a1 ), Seq() ) =>
+          if ( reductive )
+            ( rightSubProofNew, rightSubConnector * p.getRightOccConnector.inv )
+          else {
+            val proofNew_ = WeakeningLeftRule( rightSubProofNew, p.rightDisjunct )
+            val oc = proofNew_.getOccConnector
+            val proofNew = OrLeftRule( leftSubProofNew, a1, proofNew_, proofNew_.mainIndices( 0 ) )
+            ( proofNew, ( proofNew.getLeftOccConnector * leftSubConnector * p.getLeftOccConnector.inv )
+              + ( proofNew.getRightOccConnector * oc * rightSubConnector * p.getRightOccConnector.inv ) )
+          }
+
+        case ( Seq(), Seq( a2 ) ) =>
+          if ( reductive )
+            ( leftSubProofNew, leftSubConnector * p.getLeftOccConnector.inv )
+          else {
+            val proofNew_ = WeakeningLeftRule( leftSubProofNew, p.leftDisjunct )
+            val oc = proofNew_.getOccConnector
+            val proofNew = OrLeftRule( leftSubProofNew, proofNew_.mainIndices( 0 ), proofNew_, a2 )
+            ( proofNew, ( proofNew.getLeftOccConnector * oc * leftSubConnector * p.getLeftOccConnector.inv )
+              + ( proofNew.getRightOccConnector * rightSubConnector * p.getRightOccConnector.inv ) )
+          }
+
+        case ( Seq(), Seq() ) =>
+          ( leftSubProofNew, leftSubConnector * p.getLeftOccConnector.inv )
+      }
+
+    case p @ OrRightRule( subProof, aux1, aux2 ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      ( subConnector.children( aux1 ), subConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = OrRightRule( subProofNew, a1, a2 )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case ( Seq( a1 ), Seq() ) =>
+          val ( proofNew, occConnectorNew ) = OrRightMacroRule.withOccConnector( subProofNew, a1, p.rightDisjunct )
+          ( proofNew, occConnectorNew * subConnector * p.getOccConnector.inv )
+
+        case ( Seq(), Seq( a2 ) ) =>
+          val ( proofNew, occConnectorNew ) = OrRightMacroRule.withOccConnector( subProofNew, p.leftDisjunct, a2 )
+          ( proofNew, occConnectorNew * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val ( leftSubProofNew, leftSubConnector ) = apply2( leftSubProof, reductive )
+      val ( rightSubProofNew, rightSubConnector ) = apply2( rightSubProof, reductive )
+
+      ( leftSubConnector.children( aux1 ), rightSubConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = ImpLeftRule( leftSubProofNew, a1, rightSubProofNew, a2 )
+          ( proofNew,
+            ( proofNew.getLeftOccConnector * leftSubConnector * p.getLeftOccConnector.inv )
+            + ( proofNew.getRightOccConnector * rightSubConnector * p.getRightOccConnector.inv ) )
+
+        case ( Seq( a1 ), Seq() ) =>
+          if ( reductive )
+            ( rightSubProofNew, rightSubConnector * p.getRightOccConnector.inv )
+          else {
+            val proofNew_ = WeakeningLeftRule( rightSubProofNew, p.impConclusion )
+            val oc = proofNew_.getOccConnector
+            val proofNew = ImpLeftRule( leftSubProofNew, a1, proofNew_, proofNew_.mainIndices( 0 ) )
+            ( proofNew, ( proofNew.getLeftOccConnector * leftSubConnector * p.getLeftOccConnector.inv )
+              + ( proofNew.getRightOccConnector * oc * rightSubConnector * p.getRightOccConnector.inv ) )
+          }
+
+        case ( Seq(), Seq( a2 ) ) =>
+          if ( reductive )
+            ( leftSubProofNew, leftSubConnector * p.getLeftOccConnector.inv )
+          else {
+            val proofNew_ = WeakeningRightRule( leftSubProofNew, p.impPremise )
+            val oc = proofNew_.getOccConnector
+            val proofNew = ImpLeftRule( leftSubProofNew, proofNew_.mainIndices( 0 ), proofNew_, a2 )
+            ( proofNew, ( proofNew.getLeftOccConnector * oc * leftSubConnector * p.getLeftOccConnector.inv )
+              + ( proofNew.getRightOccConnector * rightSubConnector * p.getRightOccConnector.inv ) )
+          }
+
+        case ( Seq(), Seq() ) =>
+          ( leftSubProofNew, leftSubConnector * p.getLeftOccConnector.inv )
+      }
+
+    case p @ ImpRightRule( subProof, aux1, aux2 ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      ( subConnector.children( aux1 ), subConnector.children( aux2 ) ) match {
+        case ( Seq( a1 ), Seq( a2 ) ) =>
+          val proofNew = ImpRightRule( subProofNew, a1, a2 )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case ( Seq( a1 ), Seq() ) =>
+          val ( proofNew, occConnectorNew ) = ImpRightMacroRule.withOccConnector( subProofNew, a1, p.impConclusion )
+          ( proofNew, occConnectorNew * subConnector * p.getOccConnector.inv )
+
+        case ( Seq(), Seq( a2 ) ) =>
+          val ( proofNew, occConnectorNew ) = ImpRightMacroRule.withOccConnector( subProofNew, p.impPremise, a2 )
+          ( proofNew, occConnectorNew * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ ForallLeftRule( subProof, aux, f, term, v ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      subConnector.children( aux ) match {
+        case Seq( a ) =>
+          val proofNew = ForallLeftRule( subProofNew, a, f, term, v )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ ForallRightRule( subProof, aux, eigen, quant ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      subConnector.children( aux ) match {
+        case Seq( a ) =>
+          val proofNew = ForallRightRule( subProofNew, a, eigen, quant )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      subConnector.children( aux ) match {
+        case Seq( a ) =>
+          val proofNew = ExistsLeftRule( subProofNew, a, eigen, quant )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ ExistsRightRule( subProof, aux, f, term, v ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      subConnector.children( aux ) match {
+        case Seq( a ) =>
+          val proofNew = ExistsRightRule( subProofNew, a, f, term, v )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ EqualityLeftRule( subProof, eq, aux, pos ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      ( subConnector.children( eq ), subConnector.children( aux ) ) match {
+        case ( _, Seq() ) =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+
+        case ( Seq(), Seq( a ) ) =>
+          val ( proofNew, occConnectorNew ) = EqualityLeftMacroRule.withOccConnector( subProofNew, p.equation, a, pos )
+          ( proofNew, occConnectorNew * subConnector * p.getOccConnector.inv )
+
+        case ( Seq( e ), Seq( a ) ) =>
+          val proofNew = EqualityLeftRule( subProofNew, e, a, pos )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ EqualityRightRule( subProof, eq, aux, pos ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      ( subConnector.children( eq ), subConnector.children( aux ) ) match {
+        case ( _, Seq() ) =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+
+        case ( Seq(), Seq( a ) ) =>
+          val ( proofNew, occConnectorNew ) = EqualityRightMacroRule.withOccConnector( subProofNew, p.equation, a, pos )
+          ( proofNew, occConnectorNew * subConnector * p.getOccConnector.inv )
+
+        case ( Seq( e ), Seq( a ) ) =>
+          val proofNew = EqualityRightRule( subProofNew, e, a, pos )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ DefinitionLeftRule( subProof, aux, main ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      subConnector.children( aux ) match {
+        case Seq( a ) =>
+          val proofNew = DefinitionLeftRule( subProofNew, a, main )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ DefinitionRightRule( subProof, aux, main ) =>
+      val ( subProofNew, subConnector ) = apply2( subProof, reductive )
+
+      subConnector.children( aux ) match {
+        case Seq( a ) =>
+          val proofNew = DefinitionRightRule( subProofNew, a, main )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ =>
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
   }
 
 }
