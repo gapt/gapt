@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
+import at.logic.gapt.grammars.{ Rule, RecursionScheme }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkNew.{ LKToExpansionProof, LKProof }
 
@@ -178,6 +179,9 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
   def decodeToPolarizedFormula( term: LambdaExpression ): ( HOLFormula, Boolean ) =
     decodeOption( term ) map { case ( idx, subst ) => subst( matrices( idx ) ) -> idx.isSuc } get
 
+  def decodeToSignedFormula( term: LambdaExpression ): HOLFormula =
+    decodeOption( term ) map { case ( idx, subst ) => subst( signedMatrices( idx ) ) } get
+
   def decodeToInstanceSequent( terms: Iterable[LambdaExpression] ): HOLSequent =
     Sequent( terms map decodeToPolarizedFormula toSeq )
 
@@ -186,6 +190,28 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
       case ( idx, instances ) =>
         formulaToExpansionTree( endSequent( idx ), instances map { _._2 } toList, idx.isSuc ) -> idx.isSuc
     } toSeq )
+
+  def encode( recursionScheme: RecursionScheme ): RecursionScheme = {
+    val encodedNTs = recursionScheme.nonTerminals.map { case c @ Const( name, FunctionType( To, argTypes ) ) => c -> Const( name, FunctionType( instanceTermType, argTypes ) ) }.toMap
+    RecursionScheme( encodedNTs( recursionScheme.axiom ), encodedNTs.values.toSet,
+      recursionScheme.rules map {
+        case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if encodedNTs contains rhsNT =>
+          Rule( encodedNTs( lhsNT )( lhsArgs: _* ), encodedNTs( rhsNT )( rhsArgs: _* ) )
+        case Rule( Apps( lhsNT: Const, lhsArgs ), instance: HOLFormula ) =>
+          Rule( encodedNTs( lhsNT )( lhsArgs: _* ), encode( instance ) )
+      } )
+  }
+
+  def decode( recursionScheme: RecursionScheme ): RecursionScheme = {
+    val decodedNTs = recursionScheme.nonTerminals.map { case c @ Const( name, FunctionType( `instanceTermType`, argTypes ) ) => c -> Const( name, FunctionType( To, argTypes ) ) }.toMap
+    RecursionScheme( decodedNTs( recursionScheme.axiom ), decodedNTs.values.toSet,
+      recursionScheme.rules map {
+        case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if decodedNTs contains rhsNT =>
+          Rule( decodedNTs( lhsNT )( lhsArgs: _* ), decodedNTs( rhsNT )( rhsArgs: _* ) )
+        case Rule( Apps( lhsNT: Const, lhsArgs ), term ) =>
+          Rule( decodedNTs( lhsNT )( lhsArgs: _* ), decodeToSignedFormula( term ) )
+      } )
+  }
 }
 
 object InstanceTermEncoding {

@@ -59,12 +59,11 @@ instanceProofs foreach { case (inst, es) =>
   println()
 }
 
-val alpha = Var("alpha", list)
-val encoding = InstanceTermEncoding(sequent.map(identity, instantiate(_, alpha)))
+val x = Var("x", list)
+val encoding = InstanceTermEncoding(sequent.map(identity, instantiate(_, x)))
 
 val A = Const("A", list -> encoding.instanceTermType)
 val G = Const("G", list -> (list -> encoding.instanceTermType))
-val x = Var("x", list)
 val y = Var("y", sk_a)
 val w = Var("w", list)
 val w2 = Var("w2", list)
@@ -85,14 +84,16 @@ val stableRSWithoutSkolemSymbols =
     stableRS.rules filterNot { case Rule(from, to) =>
         constants(to) exists { _.exptype == sk_a }
     })
-//println(stableRSWithoutSkolemSymbols)
+println(stableRSWithoutSkolemSymbols)
 val rs = minimizeRecursionScheme( stableRSWithoutSkolemSymbols, targets, template.targetFilter )
 println(s"Minimized recursion scheme:\n$rs\n")
 
+println(encoding decode rs)
+
 val inst = mkList(8)
-val lang = Substitution(alpha -> inst)(encoding decodeToInstanceSequent rs.parametricLanguage(inst))
-lang.elements foreach println
-println(VeriT isValid reduceHolToFol(lang))
+val lang = encoding decode rs parametricLanguage inst map { _.asInstanceOf[HOLFormula] }
+lang foreach println
+println(VeriT isValid reduceHolToFol(Or(lang toSeq)))
 
 // qrev(x,w) = rev(x) ++ w
 
