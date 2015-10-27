@@ -1,6 +1,6 @@
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr.fol.reduceHolToFol
-import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.expr.hol.{CNFn, instantiate}
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.grammars._
@@ -103,6 +103,11 @@ println()
 
 val qbuf = qbufForRecSchem(logicalRS)
 println(s"QBUF:\n$qbuf\n")
+
+println(s"Canonical solution at G(${mkList(3)},w):")
+val G_ = logicalRS.nonTerminals.find(_.name == "G").get
+logicalRS generatedTerms G_(mkList(3),w) map { _.asInstanceOf[HOLFormula] } flatMap CNFn.toFClauseList foreach println
+println()
 
 val qrev = Const("qrev", list -> (list -> list))
 val solution = Abs(Seq(x,w), qrev(qrev(x,w),nil) === qrev(w,x))
