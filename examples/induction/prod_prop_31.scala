@@ -3,9 +3,9 @@ import at.logic.gapt.expr.fol.reduceHolToFol
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.grammars.{minimizeRecursionScheme, Rule, RecursionScheme, RecSchemTemplate}
+import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.expansionTrees.{InstanceTermEncoding, extractInstances}
-import at.logic.gapt.proofs.lkNew.LKToExpansionProof
+import at.logic.gapt.proofs.lkNew.{skolemize, LKToExpansionProof}
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.veriT.VeriT
 
@@ -71,7 +71,6 @@ val z = Var("z", encoding.instanceTermType)
 
 val template = RecSchemTemplate(A,
   A(x) -> G(x, w2), A(x) -> z,
-  G(x, w) -> z,
   G(cons(y, x), w) -> G(x, w2),
   G(cons(y, x), w) -> z,
   G(nil, w) -> z)
@@ -84,21 +83,31 @@ val stableRSWithoutSkolemSymbols =
     stableRS.rules filterNot { case Rule(from, to) =>
         constants(to) exists { _.exptype == sk_a }
     })
-println(stableRSWithoutSkolemSymbols)
-val rs = minimizeRecursionScheme( stableRSWithoutSkolemSymbols, targets, template.targetFilter )
+//println(stableRSWithoutSkolemSymbols)
+val rs = minimizeRecursionScheme(stableRSWithoutSkolemSymbols, targets, template.targetFilter,
+  weight = rule => expressionSize(rule.lhs === rule.rhs))
 println(s"Minimized recursion scheme:\n$rs\n")
 
-println(encoding decode rs)
+val logicalRS = encoding.decode(rs.copy(rules = rs.rules flatMap {
+  case r@Rule(lhs, rhs) if lhs == G(x, w) =>
+    Seq(r(Substitution(x -> cons(y,x))), r(Substitution(x -> nil)))
+  case r => Seq(r)
+}))
+println(s"Logical recursion scheme:\n$logicalRS\n")
 
 val inst = mkList(8)
-val lang = encoding decode rs parametricLanguage inst map { _.asInstanceOf[HOLFormula] }
-lang foreach println
+val lang = logicalRS parametricLanguage inst map { _.asInstanceOf[HOLFormula] }
+println(s"Validity for instance x = $inst:")
 println(VeriT isValid reduceHolToFol(Or(lang toSeq)))
+println()
 
-// qrev(x,w) = rev(x) ++ w
+val qbuf = qbufForRecSchem(logicalRS)
+println(s"QBUF:\n$qbuf\n")
 
-// qrev(qrev(x,w),nil) = qrev(w,x)
-
-// recursion scheme solvable with: qrev(qrev(x,w),nil)=qrev(w,x) & qrev(nil,x)=x
+val qrev = Const("qrev", list -> (list -> list))
+val solution = Abs(Seq(x,w), qrev(qrev(x,w),nil) === qrev(w,x))
+val formula = BetaReduction.betaNormalize(instantiate(qbuf, solution))
+println(s"Solution: $solution\n")
+println(VeriT isValid reduceHolToFol(skolemize(formula)))
 
 // TODO: find solution

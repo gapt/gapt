@@ -132,7 +132,8 @@ abstract class LambdaExpression {
     case HOLAtom( r, xs ) if xs.nonEmpty     => s"$r(${xs mkString ","})"
     case HOLFunction( f, xs ) if xs.nonEmpty => s"$f(${xs mkString ","})"
 
-    case Abs( x, t )                         => s"(λ$x.$t)"
+    case Abs( Var( x, Ti ), t )              => s"(λ$x.$t)"
+    case Abs( Var( x, ty ), t )              => s"(λ$x:$ty.$t)"
     case App( x, y )                         => s"($x $y)"
     case Var( x, t )                         => s"$x"
     case Const( x, t )                       => s"$x"

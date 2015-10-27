@@ -22,6 +22,12 @@ object skolemize {
     case All( x, f ) if inSuc  => skolemize( Ex( x, -f ), !inSuc, context, skolemSymbols ) match { case Neg( f_ ) => f_ }
   }
 
+  def apply( formula: HOLFormula, inSuc: Boolean ): HOLFormula =
+    apply( formula, inSuc, Seq(), new SkolemSymbolFactory().getSkolemSymbols )
+
+  def apply( formula: HOLFormula ): HOLFormula =
+    apply( formula, inSuc = true )
+
   private def maybeSkolemize( formula: HOLFormula, inSuc: Boolean, contextAndSymbols: Option[( Seq[LambdaExpression], Stream[SymbolA] )] ): HOLFormula =
     contextAndSymbols match {
       case Some( ( context, skolemSymbols ) ) => skolemize( formula, inSuc, context, skolemSymbols )

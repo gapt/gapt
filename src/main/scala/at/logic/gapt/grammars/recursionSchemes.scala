@@ -182,11 +182,12 @@ class RecSchemGenLangFormula(
 object minimizeRecursionScheme extends Logger {
   def apply( recSchem: RecursionScheme, targets: Traversable[( LambdaExpression, LambdaExpression )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
-             solver:       MaxSATSolver      = bestAvailableMaxSatSolver ) = {
+             solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
+             weight:       Rule => Int       = _ => 1 ) = {
     val formula = new RecSchemGenLangFormula( recSchem, targetFilter )
     val hard = formula( targets )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
-    val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> 1 }
+    val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = solver.solve( hard, soft ).get
     RecursionScheme( recSchem.axiom, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
   }
@@ -447,5 +448,24 @@ object recSchemToVTRATG {
         List( axiom ) -> List( subst( rhs ).asInstanceOf[FOLTerm] )
     }
     VectTratGrammar( axiom, nonTerminals, productions )
+  }
+}
+
+object qbufForRecSchem {
+  def apply( recSchem: RecursionScheme ): HOLFormula = {
+    def convert( term: LambdaExpression ): HOLFormula = term match {
+      case Apps( ax, _ ) if ax == recSchem.axiom => Bottom()
+      case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
+        HOLAtom( Var( s"X_$name", ty )( args: _* ) )
+      case formula => -formula
+    }
+
+    existsclosure( And( recSchem.rules groupBy { _.lhs } map {
+      case ( lhs, rules ) =>
+        All.Block(
+          freeVariables( lhs ) toSeq,
+          And( rules map { _.rhs } map convert toSeq ) --> convert( lhs )
+        )
+    } toSeq ) )
   }
 }

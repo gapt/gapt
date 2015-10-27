@@ -149,14 +149,14 @@ class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: M
       def unapply( formula: LambdaExpression ) = MonoidalBinaryPropConnectiveHelper.this.unapply( formula )
     }
 
-    def unapply( formula: LambdaExpression ): Some[List[LambdaExpression]] = formula match {
+    def unapply( formula: HOLFormula ): Some[List[HOLFormula]] = formula match {
       case Binary( nAry( as ), nAry( bs ) ) => Some( as ::: bs )
       case neutral()                        => Some( List() )
       case _                                => Some( List( formula ) )
     }
 
     def unapply( formula: FOLFormula ): Some[List[FOLFormula]] =
-      unapply( formula.asInstanceOf[LambdaExpression] ).asInstanceOf[Some[List[FOLFormula]]]
+      unapply( formula.asInstanceOf[HOLFormula] ).asInstanceOf[Some[List[FOLFormula]]]
   }
 }
 
