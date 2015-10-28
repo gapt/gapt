@@ -1609,19 +1609,21 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
 }
 
 /**
- * Case of an induction rule
+ * Proof that a given data type constructor c preserves a formula F:
  *
- *                                  (proof)
- * F(x_1), F(x_2), ..., F(x_n), Gamma :- Delta, F(c(x_1,...,x_n,y_1,...,y_n))
+ * <pre>
+ *                                  (π)
+ * F(x,,1,,), F(x,,2,,), ..., F(x,,n,,), Γ :- Δ, F(c(x,,1,,,...,x,,n,,,y,,1,,,...,y,,n,,))
+ * </pre>
  *
- * The variables x_i and y_i are eigenvariables; x_i are the eigenvariables of the same type as the inductive data
- * type, y_i are the other arguments of the constructor c.  They can come in any order in the constructor.
+ * The variables x,,i,, and y,,i,, are eigenvariables; x,,i,, are the eigenvariables of the same type as the inductive data
+ * type, y,,i,, are the other arguments of the constructor c.  They can come in any order in the constructor.
  *
  * @param proof  The LKProof ending in the sequent of this case.
  * @param constructor  The constructor c of the inductive data type that we're considering.
- * @param hypotheses  Indices of F(x_1), ..., F(x_n)
- * @param eigenVars  The eigenvariables of this case: x_1, ..., x_n, y_1, ..., y_n  (these need to correspond to the order in c)
- * @param conclusion  Index of F(c(x_1,...,x_n,y_1,...,y_n))
+ * @param hypotheses  Indices of F(x,,1,,), ..., F(x,,n,,)
+ * @param eigenVars  The eigenvariables of this case: x,,1,,, ..., x,,n,,, y,,1,,, ..., y,,n,,  (these need to correspond to the order in c)
+ * @param conclusion  Index of F(c(x,,1,,,...,x,,n,,,y,,1,,,...,y,,n,,))
  */
 case class InductionCase( proof: LKProof, constructor: Const,
                           hypotheses: Seq[SequentIndex], eigenVars: Seq[Var],
@@ -1640,11 +1642,20 @@ case class InductionCase( proof: LKProof, constructor: Const,
 }
 
 /**
- * Induction rule.
+ * An LKProof ending with an induction rule:
+ * <pre>
+ *   (π,,1,,)   (π,,2,,)           (π,,n,,)
+ * case 1      case 2     ...     case n
+ * -------------------------------------(ind)
+ * Γ :- Δ, ∀x: indTy, F(x)
+ * </pre>
  *
- * case_1      case_2     ...     case_n
- * -------------------------------------
- * Gamma :- Delta, forall x: indTy, F(x)
+ * This induction rule can handle inductive data types.
+ * The cases are proofs that the various type constructors preserve the formula we want to prove. They are provided via the
+ * [[InductionCase]] class.
+ *
+ * @param cases A sequence of proofs showing that each type constructor preserves the validity of the main formula.
+ * @param mainFormula The formula we want to prove via induction.
  */
 case class InductionRule( cases: Seq[InductionCase], mainFormula: HOLFormula ) extends CommonRule {
   val All( quant @ Var( _, indTy ), qfFormula ) = mainFormula
