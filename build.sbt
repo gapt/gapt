@@ -132,9 +132,9 @@ lazy val testing = (project in file("testing")).
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
 
 lazy val testDependencies = Seq(
-  "org.specs2" %% "specs2-core" % "3.6.4",
-  "org.specs2" %% "specs2-junit" % "3.6.4",  // needed for junitxml output
-  "org.specs2" %% "specs2-matcher" % "3.6.4")
+  "org.specs2" %% "specs2-core" % "3.6.5",
+  "org.specs2" %% "specs2-junit" % "3.6.5",  // needed for junitxml output
+  "org.specs2" %% "specs2-matcher" % "3.6.5")
 
 def oneJvmPerTest(tests: Seq[TestDefinition]) =
   tests map { test =>
