@@ -136,17 +136,9 @@ lazy val testDependencies = Seq(
   "org.specs2" %% "specs2-junit" % "3.6.5",  // needed for junitxml output
   "org.specs2" %% "specs2-matcher" % "3.6.5")
 
-def oneJvmPerTest(tests: Seq[TestDefinition]) =
-  tests map { test =>
-    new Tests.Group(
-      name = test.name,
-      tests = Seq(test),
-      runPolicy = Tests.SubProcess(ForkOptions()))
-  }
-
-def recursiveListFiles(f: File): List[File] =
+def recursiveListFiles(f: File): Seq[File] =
   if (f.isDirectory)
-    IO.listFiles(f).toList.flatMap(recursiveListFiles)
+    IO.listFiles(f).flatMap(recursiveListFiles)
   else
-    List(f)
+    Seq(f)
 
