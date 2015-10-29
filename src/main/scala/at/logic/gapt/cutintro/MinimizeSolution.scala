@@ -148,9 +148,9 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     val d = getD( grammar, cfs )
     trace( "d.us:" + d.us )
     trace( "d.ss:" + d.ss )
-    trace( "canon. sol. based on d: " + CutIntroduction.computeCanonicalSolutions( d ) )
+    trace( "canon. sol. based on d: " + CutIntroduction.computeCanonicalSolution( d ) )
 
-    ExtendedHerbrandSequent( d, CutIntroduction.computeCanonicalSolutions( d ) )
+    ExtendedHerbrandSequent( d, CutIntroduction.computeCanonicalSolution( d ) )
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation

@@ -267,7 +267,7 @@ object CutIntroduction extends Logger {
 
       val grammar = vtratgToSEHS( encoding, vtratGrammar )
 
-      val canonicalEHS = ExtendedHerbrandSequent( grammar, computeCanonicalSolutions( grammar ) )
+      val canonicalEHS = ExtendedHerbrandSequent( grammar, computeCanonicalSolution( grammar ) )
 
       val minimizedEHS = metrics.time( "minsol" ) { improveSolutionLK( canonicalEHS, prover, hasEquality ) }
 
@@ -338,49 +338,19 @@ object CutIntroduction extends Logger {
   }
 
   /**
-   * Computes the canonical solution with multiple quantifiers from a MultiGrammar,
-   * i.e. the list \forall x_1...x_n C_1, ...., \forall x_1 C_n.
+   * Computes the modified canonical solution, where instances of
+   * formulas in the end-sequent are introduced as late as possible.
    */
-  def computeCanonicalSolutions( g: SchematicExtendedHerbrandSequent ): List[FOLFormula] = {
-
-    //val termset = g.terms
-    val variables = g.ss.head._1
-
-    val instantiated_f = g.us.elements.foldRight( List[FOLFormula]() ) {
-      case ( ( formula, termlistlist ), acc ) => {
-        acc ++ termlistlist.foldLeft( List[FOLFormula]() ) {
-          case ( acc, termlist ) => {
-            val freeVars = freeVariables( termlist ).toList
-
-            // TODO: try to reverse the variable bindings
-            // in the construction of
-            if ( freeVars.intersect( variables ).nonEmpty ) {
-              val i_f = instantiate( formula, termlist )
-              val f = formula match {
-                case Ex( _, _ )  => Neg( i_f )
-                case All( _, _ ) => i_f
-              }
-              f :: acc
-            } else acc
-          }
-        }
-      }
-    }
-    val c1 = And( instantiated_f )
-
-    g.ss.foldLeft( List( c1 ) ) {
-      case ( cut_formulas, ( variables, termset ) ) =>
-        val ci = cut_formulas.head
-        val forms = termset.foldLeft( List[FOLFormula]() ) {
-          case ( acc, terms ) =>
-            assert( variables.length == terms.length, "Number of eigenvariables different from number of terms in computation of canonical solution" )
-            val subst = FOLSubstitution( variables.zip( terms ) )
-            subst( ci ) :: acc
-        }
-        val ci_quant = All.Block( variables, ci )
-        And( forms ) :: ci_quant :: cut_formulas.tail
-      // The last term set contains only constants, so we drop the formula generated with it.
-    }.tail.reverse
+  def computeCanonicalSolution( sehs: SchematicExtendedHerbrandSequent ): List[FOLFormula] = {
+    val eigenVarIdx = ( for ( ( evs, i ) <- sehs.eigenVariables.zipWithIndex; ev <- evs ) yield ev -> i ).toMap
+    val esInstances = for ( ( u, is ) <- sehs.us; i <- is ) yield instantiate( u, i )
+    val esInstancesPerCut = esInstances.map( identity, -_ ).elements.
+      groupBy { freeVariables( _ ).collect( eigenVarIdx ).union( Set( sehs.eigenVariables.size ) ).min }
+    lazy val canSol: Stream[FOLFormula] =
+      for ( ( evs, idx ) <- sehs.eigenVariables.zipWithIndex.toStream )
+        yield All.Block( evs, And( esInstancesPerCut.getOrElse( idx, Seq() ) ++
+        ( if ( idx == 0 ) Seq() else sehs.ss( idx - 1 )._2.map { instantiate( canSol( idx - 1 ), _ ) } ) ) )
+    canSol.toList
   }
 
   private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {

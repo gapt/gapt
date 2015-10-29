@@ -51,7 +51,7 @@ class CutIntroTest extends Specification {
 
       val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
       val grammar = new SchematicExtendedHerbrandSequent( us, ss )
-      val ehs = ExtendedHerbrandSequent( grammar, CutIntroduction.computeCanonicalSolutions( grammar ) )
+      val ehs = ExtendedHerbrandSequent( grammar, CutIntroduction.computeCanonicalSolution( grammar ) )
       val prover = BasicProver
       val result_new = MinimizeSolution( ehs, prover )
       val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
@@ -84,7 +84,7 @@ class CutIntroTest extends Specification {
 
       val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
       val grammar = new SchematicExtendedHerbrandSequent( us, ss )
-      val ehs = ExtendedHerbrandSequent( grammar, CutIntroduction.computeCanonicalSolutions( grammar ) )
+      val ehs = ExtendedHerbrandSequent( grammar, CutIntroduction.computeCanonicalSolution( grammar ) )
       val prover = BasicProver
       val result_new = improveSolutionLK( ehs, prover, hasEquality = false )
       val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
