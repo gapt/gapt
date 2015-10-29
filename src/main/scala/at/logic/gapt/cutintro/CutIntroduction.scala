@@ -86,9 +86,15 @@ case class SchematicExtendedHerbrandSequent( us: Sequent[( FOLFormula, List[List
   override def toString: String = {
     val out = new StringBuilder
     out append s"U:\n"
-    us.elements foreach { case ( f, inst ) => out append s"  $f -> $inst\n" }
+    for ( ( f, insts ) <- us ) {
+      out append s"  $f:\n"
+      for ( inst <- insts ) out append s"    $inst\n"
+    }
     out append s"S:\n"
-    ss foreach { case ( v, inst ) => out append s"  $v -> $inst\n" }
+    for ( ( v, insts ) <- ss ) {
+      out append s"  $v:\n"
+      for ( inst <- insts ) out append s"    $inst\n"
+    }
     out.result()
   }
 }

@@ -31,8 +31,8 @@ case class ExtendedHerbrandSequent( sehs: SchematicExtendedHerbrandSequent, cutF
 
   /** Instances of the quantified formulas in the end-sequent. */
   val inst = for (
-    ( u, instances ) <- sehs us;
-    instance <- instances if containsQuantifier( u )
+    ( u, instances ) <- sehs us; if containsQuantifier( u );
+    instance <- instances
   ) yield instantiate( u, instance )
 
   /** Instantiated (previously univ. quantified) formulas on the left. */
