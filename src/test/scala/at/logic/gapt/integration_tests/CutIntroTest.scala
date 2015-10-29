@@ -3,6 +3,7 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
+import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.proofs.{ Sequent, Ant }
 import at.logic.gapt.proofs.expansionTrees.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
@@ -41,7 +42,8 @@ class CutIntroTest extends Specification {
 
       val u1 = a1
       val u2 = fun( 1, a1 )
-      val us = ( f, List( List( u1 ), List( u2 ) ) ) +: Sequent()
+      val us = for ( f <- proof.endSequent )
+        yield f.asInstanceOf[FOLFormula] -> ( if ( containsQuantifier( f ) ) List( List( u1 ), List( u2 ) ) else List( List() ) )
       val s11 = a2
       val s12 = fun( 2, a2 )
       val s21 = zero
@@ -49,8 +51,7 @@ class CutIntroTest extends Specification {
 
       val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
       val grammar = new SchematicExtendedHerbrandSequent( us, ss )
-      val endSequent = proof.endSequent
-      val ehs = new ExtendedHerbrandSequent( endSequent, grammar )
+      val ehs = ExtendedHerbrandSequent( grammar, CutIntroduction.computeCanonicalSolutions( grammar ) )
       val prover = BasicProver
       val result_new = MinimizeSolution( ehs, prover )
       val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
@@ -61,7 +62,7 @@ class CutIntroTest extends Specification {
 
       result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
 
-      quantRulesNumber( r_proof.get ) must beEqualTo( grammar.size + ss.size )
+      quantRulesNumber( r_proof.get ) must_== grammar.size
     }
   }
 }

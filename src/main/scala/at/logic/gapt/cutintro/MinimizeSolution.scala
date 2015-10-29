@@ -23,13 +23,13 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
   // Solution simplification for n == 1 cuts, with equality.
   def applyEq( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val improvedSol = improveSolutionGen( ehs, prover, improveSolutionEq1 )
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.sehs, improvedSol )
+    ExtendedHerbrandSequent( ehs.sehs, improvedSol.toSeq )
   }
 
   // Solution simplification for n >= 1 cuts, without equality.
   def apply( ehs: ExtendedHerbrandSequent, prover: Prover ) = {
     val improvedSol = improveSolutionGen( ehs, prover, improveSolution1 )
-    new ExtendedHerbrandSequent( ehs.endSequent, ehs.sehs, improvedSol )
+    ExtendedHerbrandSequent( ehs.sehs, improvedSol.toSeq )
   }
 
   private def chooseSolution( list: List[FOLFormula] ) = list.sortWith( ( r1, r2 ) => numOfAtoms( r1 ) < numOfAtoms( r2 ) ).head
@@ -57,7 +57,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
         val cf = chooseSolution( improve1( is, prover ) )
         trace( "got improved cut-formula: " + cf )
 
-        val test_ehs = new ExtendedHerbrandSequent( is.endSequent, is.sehs, cf :: Nil )
+        val test_ehs = ExtendedHerbrandSequent( is.sehs, Seq( cf ) )
         assert( prover.isValid( test_ehs.getDeep ) )
         trace( "I_" + k + " with cf: " + test_ehs.getDeep )
 
@@ -91,14 +91,10 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     trace( "computing D for l = " + l )
 
     val myss = grammar.ss.reverse.take( n - l )
-    val us = getT( l, grammar )
+    val us = ( getIntermediaryContext( grammar, cfs ) map { _ -> List( List() ) } ) ++: getT( l, grammar )
     val p = grammar.ss( l - 1 )
     val ss = p :: Nil
-    val res = new SchematicExtendedHerbrandSequent( us, ss )
-
-    assert( res.language.elements.toMap == ( us ++ getT( l + 1, grammar ) ).elements.toMap ) // ??? --gebner
-
-    res
+    SchematicExtendedHerbrandSequent( us, ss )
   }
 
   private def getCutImpl( cf: FOLFormula, alpha: List[FOLVar], ts: List[List[FOLTerm]] ) = {
@@ -154,7 +150,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     trace( "d.ss:" + d.ss )
     trace( "canon. sol. based on d: " + CutIntroduction.computeCanonicalSolutions( d ) )
 
-    new ExtendedHerbrandSequent( es1 compose orig_es, d, CutIntroduction.computeCanonicalSolutions( d ) )
+    ExtendedHerbrandSequent( d, CutIntroduction.computeCanonicalSolutions( d ) )
   }
 
   // This algorithm improves the solution using forgetful resolution and forgetful paramodulation
@@ -369,7 +365,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
    */
   def isValidWith( ehs: ExtendedHerbrandSequent, prover: Prover, f: FOLFormula ): Boolean = {
     assert( ehs.sehs.ss.size == 1, "isValidWith: only simple grammars supported." )
-    val test_ehs = new ExtendedHerbrandSequent( ehs.endSequent, ehs.sehs, f :: Nil )
+    val test_ehs = ExtendedHerbrandSequent( ehs.sehs, Seq( f ) )
     prover.isValid( test_ehs.getDeep )
   }
 

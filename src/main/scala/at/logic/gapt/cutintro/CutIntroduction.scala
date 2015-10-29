@@ -261,7 +261,7 @@ object CutIntroduction extends Logger {
 
       val grammar = vtratgToSEHS( encoding, vtratGrammar )
 
-      val canonicalEHS = new ExtendedHerbrandSequent( endSequent, grammar, computeCanonicalSolutions( grammar ) )
+      val canonicalEHS = ExtendedHerbrandSequent( grammar, computeCanonicalSolutions( grammar ) )
 
       val minimizedEHS = metrics.time( "minsol" ) {
         if ( hasEquality && canonicalEHS.cutFormulas.size == 1 )
@@ -447,7 +447,7 @@ object CutIntroduction extends Logger {
     trace( "Uright : " + Uright )
 
     // define the A_i
-    val A: List[FOLFormula] = ( cutFormulas zip alphas ).map {
+    val A: List[FOLFormula] = ( cutFormulas.toList zip alphas ).map {
       case ( cf, ev ) => {
         trace( "computing A" )
         trace( "instantiating " + cf + " with " + ev )
