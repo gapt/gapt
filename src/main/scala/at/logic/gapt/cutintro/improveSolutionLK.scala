@@ -11,6 +11,11 @@ import scala.collection.mutable
 
 object improveSolutionLK {
 
+  /**
+   * Improves the cut-formulas in an EHS by performing forgetful resolution and paramodulation on them.
+   *
+   * Maintains the invariant that the cut-formulas can be realized in an LK proof.
+   */
   def apply( ehs: ExtendedHerbrandSequent, prover: Prover, hasEquality: Boolean ): ExtendedHerbrandSequent = {
     val qfCutFormulas = mutable.Seq( ( ehs.cutFormulas, ehs.sehs.eigenVariables ).zipped map { instantiate( _, _ ) }: _* )
 
@@ -29,6 +34,17 @@ object improveSolutionLK {
     ehs.copy( cutFormulas = ( ehs.sehs.eigenVariables, qfCutFormulas ).zipped map { All.Block( _, _ ) } )
   }
 
+  /**
+   * Improves a formula with regard to its logical complexity under the constraint that the following sequent is valid:
+   *
+   * instances(0)(formula) +: ... +: instances(n)(formula) +: context
+   *
+   * @param context  A sequent.
+   * @param start  Existing solution of the constraint.
+   * @param instances  List of substitutions, the intended usage are the instances of a cut-formula in an EHS.
+   * @param prover  Prover to check the validity of the constraint.
+   * @param hasEquality  If set to true, use forgetful paramodulation in addition to resolution.
+   */
   private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean ): FOLFormula = {
     val isSolution = mutable.Map[Set[FOLClause], Boolean]()
 
