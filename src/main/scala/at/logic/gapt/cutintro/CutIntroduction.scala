@@ -269,14 +269,7 @@ object CutIntroduction extends Logger {
 
       val canonicalEHS = ExtendedHerbrandSequent( grammar, computeCanonicalSolutions( grammar ) )
 
-      val minimizedEHS = metrics.time( "minsol" ) {
-        if ( hasEquality && canonicalEHS.cutFormulas.size == 1 )
-          MinimizeSolution.applyEq( canonicalEHS, prover )
-        else if ( !hasEquality )
-          MinimizeSolution.apply( canonicalEHS, prover )
-        else
-          canonicalEHS // TODO: minimize solution for multiple cuts with equality
-      }
+      val minimizedEHS = metrics.time( "minsol" ) { improveSolutionLK( canonicalEHS, prover, hasEquality ) }
 
       val lcompCanonicalSol = canonicalEHS.cutFormulas.map( lcomp( _ ) ).sum
       val lcompMinSol = minimizedEHS.cutFormulas.map( lcomp( _ ) ).sum
@@ -479,47 +472,19 @@ object CutIntroduction extends Logger {
     // define the CI_i
     val cutImplications = ( 0 to alphas.size - 1 ).map( i => getCutImpl( cutFormulas( i ), alphas( i ), grammar.ss( i )._2 ) )
 
-    // compute the A_i' via interpolation
-    // TODO: increase performance by feeding existing proofs to the
-    // interpolation algorithm?
-    val Aprime = ( 1 to alphas.size ).reverse.foldLeft( Nil: List[FOLFormula] ) {
-      case ( acc, i ) => {
-        trace( "A_" + i + ": " + A( i - 1 ) )
-        trace( "freeVariables( A( " + i + "  ) ): " + freeVariables( A( i - 1 ) ).toList )
-        trace( "alphas.drop( " + i + " ): " + alphas.drop( i - 1 ) )
-        // if A_i fulfills the variable condition, set A_i':= A_i
-        if ( freeVariables( A( i - 1 ) ) subsetOf alphas.drop( i - 1 ).flatMap( x => x ).toSet ) {
-          trace( "fulfills the variable condition" )
-          acc :+ A( i - 1 )
-        } else // otherwise, compute interpolant I and set A_':= And( A_i, I )
-        {
-          trace( "does not fulfill the variable condition" )
-          val allf = FU( 0 ) compose ( new HOLSequent( ehs.prop_l, ehs.prop_r ) )
-          val posf = FU( i - 1 ) compose ( new HOLSequent( ehs.prop_l, ehs.prop_r ) )
-          val negf = allf diff posf
-          val neg = negf compose ( new HOLSequent( cutImplications.take( i - 1 ), Nil ) )
-          val pos = posf compose ( new HOLSequent( AS( i - 1 ), acc ) )
-          val interpolant = ExtractInterpolant( neg, pos, prover )
-          val res = And( A( i - 1 ), interpolant )
-          val res2 = simplify( res )
-          acc :+ res2
-        }
-      }
-    }.reverse
-
-    val cutFormulasPrime = ( Aprime zip Aprime.indices ).map { case ( a, i ) => All.Block( alphas( i ), a ) }
+    val cutFormulasPrime = A.zipWithIndex.map { case ( a, i ) => All.Block( alphas( i ), a ) }
 
     // define A'_i[x \ S_i]
     val AprimeS = ( 0 to alphas.size - 1 ).map( i => grammar.ss( i )._2.map( s => instantiate( cutFormulasPrime( i ), s ) ) )
 
     // define L_1
-    val L1 = HOLSequent( ehs.antecedent ++ ehs.antecedent_alpha, Aprime ++ ehs.succedent ++ ehs.succedent_alpha )
+    val L1 = HOLSequent( ehs.antecedent ++ ehs.antecedent_alpha, A ++ ehs.succedent ++ ehs.succedent_alpha )
 
     trace( "L1: " + L1 )
 
     // define the R_i
     val R = ( 0 to alphas.size - 1 ).map( i =>
-      HOLSequent( AprimeS( i ).toSeq ++ ehs.prop_l, Aprime.drop( i + 1 ) ++ ehs.prop_r ).compose(
+      HOLSequent( AprimeS( i ).toSeq ++ ehs.prop_l, A.drop( i + 1 ) ++ ehs.prop_r ).compose(
         FU( i + 1 )
       ) )
 
@@ -546,12 +511,12 @@ object CutIntroduction extends Logger {
     // This is the recursive construction obtaining the final proof by combining the proofs
     // of L_1, R_1, ..., R_n with appropriate inference rules as in the paper.
     val proof = ( 0 to alphas.size - 1 ).foldLeft( Lproof_ )( ( lproof, i ) => {
-      val left = buildLeftPart( i, quantPart, Aprime, Uleft, Uright, alphas, cutFormulasPrime( i ), lproof )
+      val left = buildLeftPart( i, quantPart, A, Uleft, Uright, alphas, cutFormulasPrime( i ), lproof )
       val right = buildRightPart( Rproofs_( i ), cutFormulasPrime( i ), grammar.ss( i )._2 )
       val cut = CutRule( left, right, cutFormulasPrime( i ) )
       val cont1 = ContractionMacroRule( cut, FU( i + 1 ), false )
       val cont2 = ContractionMacroRule( cont1, HOLSequent( ehs.prop_l, ehs.prop_r ), false )
-      ContractionMacroRule( cont2, HOLSequent( Nil, Aprime.drop( i + 1 ) ), false )
+      ContractionMacroRule( cont2, HOLSequent( Nil, A.drop( i + 1 ) ), false )
     } )
 
     def finish( p: LKProof, fs: Seq[FOLFormula], instances: Seq[Seq[Seq[FOLTerm]]] ) =
