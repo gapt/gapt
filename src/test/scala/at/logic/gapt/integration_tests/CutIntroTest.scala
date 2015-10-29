@@ -3,7 +3,7 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.proofs.Ant
+import at.logic.gapt.proofs.{ Sequent, Ant }
 import at.logic.gapt.proofs.expansionTrees.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lkNew.quantRulesNumber
@@ -41,7 +41,7 @@ class CutIntroTest extends Specification {
 
       val u1 = a1
       val u2 = fun( 1, a1 )
-      val us = ( ( f, ( u1 :: Nil ) :: ( u2 :: Nil ) :: Nil ) :: Nil ).toMap
+      val us = ( f, List( List( u1 ), List( u2 ) ) ) +: Sequent()
       val s11 = a2
       val s12 = fun( 2, a2 )
       val s21 = zero

@@ -75,7 +75,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
   }
 
   // Computes T_l as in the definition of intermediary solution
-  private def getT( l: Int, grammar: SchematicExtendedHerbrandSequent ): Map[FOLFormula, List[List[FOLTerm]]] =
+  private def getT( l: Int, grammar: SchematicExtendedHerbrandSequent ): Sequent[( FOLFormula, List[List[FOLTerm]] )] =
     if ( l == 0 )
       grammar.us
     else
@@ -96,7 +96,7 @@ object MinimizeSolution extends at.logic.gapt.utils.logging.Logger {
     val ss = p :: Nil
     val res = new SchematicExtendedHerbrandSequent( us, ss )
 
-    assert( res.language == us ++ getT( l + 1, grammar ) )
+    assert( res.language.elements.toMap == ( us ++ getT( l + 1, grammar ) ).elements.toMap ) // ??? --gebner
 
     res
   }

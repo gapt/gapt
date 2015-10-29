@@ -39,18 +39,18 @@ class ExtendedHerbrandSequent( val endSequent: HOLSequent, val sehs: SchematicEx
   val quant_r: List[FOLFormula] = endSequent.succedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
 
   // Instantiated (previously univ. quantified) formulas on the left
-  val inst_l: List[FOLFormula] = sehs.us.keys.foldRight( List[FOLFormula]() ) {
-    case ( f, acc ) =>
+  val inst_l: List[FOLFormula] = sehs.us.elements.foldRight( List[FOLFormula]() ) {
+    case ( ( f, inst ), acc ) =>
       f match {
-        case All( _, _ ) => instantiate( f, sehs.us( f ) ).toList ++ acc
+        case All( _, _ ) => instantiate( f, inst ).toList ++ acc
         case _           => acc
       }
   }
   // Instantiated (previously ex. quantified) formulas on the right
-  val inst_r: List[FOLFormula] = sehs.us.keys.foldRight( List[FOLFormula]() ) {
-    case ( f, acc ) =>
+  val inst_r: List[FOLFormula] = sehs.us.elements.foldRight( List[FOLFormula]() ) {
+    case ( ( f, inst ), acc ) =>
       f match {
-        case Ex( _, _ ) => instantiate( f, sehs.us( f ) ).toList ++ acc
+        case Ex( _, _ ) => instantiate( f, inst ).toList ++ acc
         case _          => acc
       }
   }

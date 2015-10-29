@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, _ }
 import at.logic.gapt.proofs.lk.ExtractInterpolant
 import at.logic.gapt.proofs.lkNew._
@@ -56,14 +56,15 @@ object MaxSATMethod {
 /**
  * Represents a schematic extended Herbrand sequent.
  *
- * @param us  Instances of the original end-sequent.
+ * @param us  Formulas of the original end-sequent, together with their instances.
  * @param ss  Instances of the cut-implications.
  */
-case class SchematicExtendedHerbrandSequent( us: Map[FOLFormula, List[List[FOLTerm]]], ss: List[( List[FOLVar], List[List[FOLTerm]] )] ) {
+// TODO: make us quantifier-free
+case class SchematicExtendedHerbrandSequent( us: Sequent[( FOLFormula, List[List[FOLTerm]] )], ss: List[( List[FOLVar], List[List[FOLTerm]] )] ) {
   require( ss.forall { case ( vars, inst ) => inst.forall { case termlist => vars.length == termlist.length } } )
 
   /** Size of the grammar, i.e. |u| + |s| */
-  def size = ( us ++ ss ).map( _._2.size ).sum
+  def size = ( us.elements ++ ss ).map( _._2.size ).sum
 
   /** Eigenvariables that occur in the seHs. */
   def eigenVariables = ss.map( _._1 )
@@ -71,20 +72,21 @@ case class SchematicExtendedHerbrandSequent( us: Map[FOLFormula, List[List[FOLTe
   /** Number of eigenvariables that occur in this seHs. */
   def numVars = eigenVariables.length
 
-  def language = us mapValues { uInst =>
-    var instances = uInst
-    ss foreach {
-      case ( sVars, sInstances ) =>
-        instances = for ( instance <- instances; sInstance <- sInstances )
-          yield FOLSubstitution( sVars zip sInstance )( instance ).toList
-    }
-    instances
+  def language = us map {
+    case ( u, uInst ) =>
+      var instances = uInst
+      ss foreach {
+        case ( sVars, sInstances ) =>
+          instances = for ( instance <- instances; sInstance <- sInstances )
+            yield FOLSubstitution( sVars zip sInstance )( instance ).toList
+      }
+      u -> instances
   }
 
   override def toString: String = {
     val out = new StringBuilder
     out append s"U:\n"
-    us foreach { case ( f, inst ) => out append s"  $f -> $inst\n" }
+    us.elements foreach { case ( f, inst ) => out append s"  $f -> $inst\n" }
     out append s"S:\n"
     ss foreach { case ( v, inst ) => out append s"  $v -> $inst\n" }
     out.result()
@@ -93,9 +95,11 @@ case class SchematicExtendedHerbrandSequent( us: Map[FOLFormula, List[List[FOLTe
 
 object vtratgToSEHS {
   def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): SchematicExtendedHerbrandSequent = {
-    val us = g.rightHandSides( g.axiomVect ).map( _.head ).
-      groupBy { case Apps( f: Const, _ ) => encoding.findESFormula( f ).get.asInstanceOf[FOLFormula] }.
-      mapValues( _.map { case FOLFunction( _, as ) => as }.toList )
+    val us = encoding.endSequent zip encoding.symbols map {
+      case ( u: FOLFormula, sym ) =>
+        u -> g.rightHandSides( g.axiomVect ).map( _.head ).toList.
+          collect { case Apps( `sym`, args ) => args map { _.asInstanceOf[FOLTerm] } }
+    }
     val slist = g.nonTerminals.filter( _ != g.axiomVect ).
       map { a => a -> g.rightHandSides( a ).toList }.
       filter( _._2.nonEmpty ).toList
@@ -343,9 +347,8 @@ object CutIntroduction extends Logger {
     //val termset = g.terms
     val variables = g.ss.head._1
 
-    val instantiated_f = g.us.keys.foldRight( List[FOLFormula]() ) {
-      case ( formula, acc ) => {
-        val termlistlist = g.us( formula )
+    val instantiated_f = g.us.elements.foldRight( List[FOLFormula]() ) {
+      case ( ( formula, termlistlist ), acc ) => {
         acc ++ termlistlist.foldLeft( List[FOLFormula]() ) {
           case ( acc, termlist ) => {
             val freeVars = freeVariables( termlist ).toList
@@ -433,7 +436,7 @@ object CutIntroduction extends Logger {
 
     def getUs( fs: Seq[FOLFormula] ): Seq[Seq[Seq[Seq[FOLTerm]]]] =
       ( 0 to alphas.size ).map( i => fs.map( f => {
-        val termlistlist = grammar.us.getOrElse( f, List() )
+        val termlistlist = grammar.us.elements.find( _._1 == f ).map( _._2 ).getOrElse( List() )
         termlistlist.filter( termlist => freeVariables( termlist ).toList.intersect( alphas.take( i ).flatMap( x => x ) ).isEmpty )
       } ) )
 
