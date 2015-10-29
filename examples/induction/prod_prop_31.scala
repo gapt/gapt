@@ -101,8 +101,8 @@ println(s"Validity for instance x = $inst:")
 println(VeriT isValid reduceHolToFol(Or(lang toSeq)))
 println()
 
-val qbuf = qbufForRecSchem(logicalRS)
-println(s"QBUF:\n$qbuf\n")
+val qbup = qbupForRecSchem(logicalRS)
+println(s"QBUP:\n$qbup\n")
 
 println(s"Canonical solution at G(${mkList(3)},w):")
 val G_ = logicalRS.nonTerminals.find(_.name == "G").get
@@ -111,7 +111,7 @@ println()
 
 val qrev = Const("qrev", list -> (list -> list))
 val solution = Abs(Seq(x,w), qrev(qrev(x,w),nil) === qrev(w,x))
-val formula = BetaReduction.betaNormalize(instantiate(qbuf, solution))
+val formula = BetaReduction.betaNormalize(instantiate(qbup, solution))
 println(s"Solution: $solution\n")
 println(VeriT isValid reduceHolToFol(skolemize(formula)))
 

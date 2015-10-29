@@ -451,7 +451,7 @@ object recSchemToVTRATG {
   }
 }
 
-object qbufForRecSchem {
+object qbupForRecSchem {
   def apply( recSchem: RecursionScheme ): HOLFormula = {
     def convert( term: LambdaExpression ): HOLFormula = term match {
       case Apps( ax, _ ) if ax == recSchem.axiom => Bottom()
