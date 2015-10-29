@@ -22,9 +22,9 @@ import at.logic.gapt.utils.executionModels.searchAlgorithms.SetNode
 
 // NOTE: implemented for the one cut case.
 // NOTE2: seq should be prenex and skolemized 
-class ExtendedHerbrandSequent( val endSequent: HOLSequent, val grammar: MultiGrammar, cf: List[FOLFormula] = Nil ) {
+class ExtendedHerbrandSequent( val endSequent: HOLSequent, val sehs: SchematicExtendedHerbrandSequent, cf: List[FOLFormula] = Nil ) {
   // TODO: do we even want to allow cf == Nil?
-  val cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( grammar ) else cf
+  val cutFormulas = if ( cf == Nil ) CutIntroduction.computeCanonicalSolutions( sehs ) else cf
 
   // From ".map" on are lots of castings just to make the data structure right :-|
   // FormulaOccurrence to Formula to FOLFormula and Seq to List...
@@ -39,24 +39,24 @@ class ExtendedHerbrandSequent( val endSequent: HOLSequent, val grammar: MultiGra
   val quant_r: List[FOLFormula] = endSequent.succedent.filter( x => containsQuantifier( x.asInstanceOf[FOLFormula] ) ).map( x => x.asInstanceOf[FOLFormula] ).toList
 
   // Instantiated (previously univ. quantified) formulas on the left
-  val inst_l: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
+  val inst_l: List[FOLFormula] = sehs.us.keys.foldRight( List[FOLFormula]() ) {
     case ( f, acc ) =>
       f match {
-        case All( _, _ ) => instantiate( f, grammar.us( f ) ).toList ++ acc
+        case All( _, _ ) => instantiate( f, sehs.us( f ) ).toList ++ acc
         case _           => acc
       }
   }
   // Instantiated (previously ex. quantified) formulas on the right
-  val inst_r: List[FOLFormula] = grammar.us.keys.foldRight( List[FOLFormula]() ) {
+  val inst_r: List[FOLFormula] = sehs.us.keys.foldRight( List[FOLFormula]() ) {
     case ( f, acc ) =>
       f match {
-        case Ex( _, _ ) => instantiate( f, grammar.us( f ) ).toList ++ acc
+        case Ex( _, _ ) => instantiate( f, sehs.us( f ) ).toList ++ acc
         case _          => acc
       }
   }
 
   // Separating the formulas that contain/don't contain eigenvariables
-  def varFree( f: FOLFormula ) = freeVariables( f ).toList.intersect( grammar.eigenvariables ).isEmpty
+  def varFree( f: FOLFormula ) = freeVariables( f ).toList.intersect( sehs.eigenVariables ).isEmpty
   val antecedent = prop_l ++ inst_l.filter( varFree )
   val antecedent_alpha = inst_l.filter( x => !varFree( x ) )
   val succedent = prop_r ++ inst_r.filter( varFree )
@@ -70,7 +70,7 @@ class ExtendedHerbrandSequent( val endSequent: HOLSequent, val grammar: MultiGra
 
   def getDeep: HOLSequent = {
     val s1 = new HOLSequent( prop_l ++ inst_l, prop_r ++ inst_r )
-    val s2 = new HOLSequent( ( cutFormulas zip grammar.ss ).map { case ( cf, ( alpha, ts ) ) => getCutImpl( cf, alpha, ts ) }, Nil )
+    val s2 = new HOLSequent( ( cutFormulas zip sehs.ss ).map { case ( cf, ( alpha, ts ) ) => getCutImpl( cf, alpha, ts ) }, Nil )
     s1 compose s2
   }
 

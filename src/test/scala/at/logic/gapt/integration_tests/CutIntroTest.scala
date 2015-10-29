@@ -48,7 +48,7 @@ class CutIntroTest extends Specification {
       val s22 = fun( 4, zero )
 
       val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
-      val grammar = new MultiGrammar( us, ss )
+      val grammar = new SchematicExtendedHerbrandSequent( us, ss )
       val endSequent = proof.endSequent
       val ehs = new ExtendedHerbrandSequent( endSequent, grammar )
       val prover = BasicProver

@@ -5,7 +5,7 @@
 
 package at.logic.gapt.grammars
 
-import at.logic.gapt.cutintro.MultiGrammar
+import at.logic.gapt.cutintro.SchematicExtendedHerbrandSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars.Deltas._
 import at.logic.gapt.grammars.types._
@@ -619,7 +619,7 @@ class DeltaTableTest extends Specification {
       val ss = ( alpha1 :: alpha2 :: Nil, ( s11 :: s12 :: Nil ) :: ( s13 :: s14 :: Nil ) :: Nil ) ::
         ( ( alpha3 :: alpha4 :: Nil ), ( s21 :: s22 :: Nil ) :: ( s23 :: s24 :: Nil ) :: Nil ) :: Nil
 
-      val grammar = new MultiGrammar( us, ss )
+      val grammar = new SchematicExtendedHerbrandSequent( us, ss )
 
       val r1 = FOLFunction( f, a :: Nil )
       val r2 = FOLFunction( f, b :: Nil )
