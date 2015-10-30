@@ -5,7 +5,7 @@
 
 package at.logic.gapt.grammars
 
-import at.logic.gapt.cutintro.MultiGrammar
+import at.logic.gapt.cutintro.SchematicExtendedHerbrandSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars.Deltas._
 import at.logic.gapt.grammars.types._
@@ -581,59 +581,6 @@ class DeltaTableTest extends Specification {
         contains must beTrue
       }
     }*/
-  }
-
-  "MultiGrammar" should {
-    "compute the language in a simple case" in {
-
-      val x = FOLVar( "x" )
-      val y = FOLVar( "y" )
-      val form = All( x, All( y, FOLAtom( "P", x :: y :: Nil ) ) )
-
-      val f = "f"
-      val a = FOLConst( "a" )
-      val b = FOLConst( "b" )
-
-      val alpha1 = FOLVar( "α1" )
-      val alpha2 = FOLVar( "α2" )
-      val alpha3 = FOLVar( "α3" )
-      val alpha4 = FOLVar( "α4" )
-
-      val u1 = FOLFunction( f, alpha1 :: Nil )
-      val u2 = FOLFunction( f, alpha2 :: Nil )
-      val u3 = FOLFunction( f, alpha3 :: Nil )
-      val u4 = FOLFunction( f, alpha4 :: Nil )
-
-      val us = ( ( form, ( u1 :: u2 :: Nil ) :: ( u3 :: u4 :: Nil ) :: Nil ) :: Nil ).toMap
-
-      val s11 = FOLFunction( f, alpha3 :: Nil )
-      val s12 = FOLFunction( f, alpha4 :: Nil )
-      val s13 = FOLFunction( f, a :: Nil )
-      val s14 = FOLFunction( f, b :: Nil )
-
-      val s21 = a
-      val s22 = b
-      val s23 = FOLFunction( f, a :: Nil )
-      val s24 = FOLFunction( f, b :: Nil )
-
-      val ss = ( alpha1 :: alpha2 :: Nil, ( s11 :: s12 :: Nil ) :: ( s13 :: s14 :: Nil ) :: Nil ) ::
-        ( ( alpha3 :: alpha4 :: Nil ), ( s21 :: s22 :: Nil ) :: ( s23 :: s24 :: Nil ) :: Nil ) :: Nil
-
-      val grammar = new MultiGrammar( us, ss )
-
-      val r1 = FOLFunction( f, a :: Nil )
-      val r2 = FOLFunction( f, b :: Nil )
-      val r3 = FOLFunction( f, FOLFunction( f, a :: Nil ) :: Nil )
-      val r4 = FOLFunction( f, FOLFunction( f, b :: Nil ) :: Nil )
-      val r5 = FOLFunction( f, FOLFunction( f, FOLFunction( f, a :: Nil ) :: Nil ) :: Nil )
-      val r6 = FOLFunction( f, FOLFunction( f, FOLFunction( f, b :: Nil ) :: Nil ) :: Nil )
-
-      val result = ( ( form, ( r1 :: r2 :: Nil ) :: ( r3 :: r4 :: Nil ) :: ( r5 :: r6 :: Nil ) :: Nil ) :: Nil ).toMap
-
-      def asSets( m: Map[FOLFormula, List[List[FOLTerm]]] ): Map[FOLFormula, Set[List[FOLTerm]]] = m.map { case ( f, ts ) => ( f, ts.toSet ) }
-
-      asSets( grammar.language ) must beEqualTo( asSets( result ) )
-    }
   }
 
   /*

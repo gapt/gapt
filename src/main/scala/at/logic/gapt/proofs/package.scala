@@ -22,6 +22,11 @@ package object proofs {
     def toImplication: HOLFormula = Imp( And( sequent.antecedent.toList ), Or( sequent.succedent ) )
   }
 
+  implicit class RichFOLSequent( sequent: Sequent[FOLFormula] ) {
+    def toFormula = Or( sequent.map( -_, identity ).elements )
+    def toImplication = And( sequent.antecedent ) --> Or( sequent.succedent )
+  }
+
   object HOLSequent {
     def apply(): HOLSequent = Sequent()
     def apply( ant: Seq[HOLFormula], succ: Seq[HOLFormula] ): HOLSequent = Sequent( ant, succ )

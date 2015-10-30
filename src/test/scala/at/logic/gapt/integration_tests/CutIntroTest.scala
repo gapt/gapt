@@ -3,7 +3,8 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.proofs.Ant
+import at.logic.gapt.expr.hol.containsQuantifier
+import at.logic.gapt.proofs.{ Sequent, Ant }
 import at.logic.gapt.proofs.expansionTrees.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lkNew.quantRulesNumber
@@ -41,16 +42,16 @@ class CutIntroTest extends Specification {
 
       val u1 = a1
       val u2 = fun( 1, a1 )
-      val us = ( ( f, ( u1 :: Nil ) :: ( u2 :: Nil ) :: Nil ) :: Nil ).toMap
+      val us = for ( f <- proof.endSequent )
+        yield f.asInstanceOf[FOLFormula] -> ( if ( containsQuantifier( f ) ) List( List( u1 ), List( u2 ) ) else List( List() ) )
       val s11 = a2
       val s12 = fun( 2, a2 )
       val s21 = zero
       val s22 = fun( 4, zero )
 
       val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
-      val grammar = new MultiGrammar( us, ss )
-      val endSequent = proof.endSequent
-      val ehs = new ExtendedHerbrandSequent( endSequent, grammar )
+      val grammar = new SchematicExtendedHerbrandSequent( us, ss )
+      val ehs = ExtendedHerbrandSequent( grammar, CutIntroduction.computeCanonicalSolution( grammar ) )
       val prover = BasicProver
       val result_new = MinimizeSolution( ehs, prover )
       val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
@@ -61,7 +62,40 @@ class CutIntroTest extends Specification {
 
       result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
 
-      quantRulesNumber( r_proof.get ) must beEqualTo( grammar.size + ss.size )
+      quantRulesNumber( r_proof.get ) must_== grammar.size
+    }
+
+    "introduce two cuts into linear example proof with improveSolutionLK" in {
+      def fun( n: Int, t: FOLTerm ): FOLTerm = if ( n == 0 ) t else FOLFunction( "s", fun( n - 1, t ) :: Nil )
+      val proof = LinearExampleProof( 8 )
+      val f = proof.endSequent( Ant( 0 ) ).asInstanceOf[FOLFormula]
+      val a1 = FOLVar( "α_1" )
+      val a2 = FOLVar( "α_2" )
+      val zero = FOLConst( "0" )
+
+      val u1 = a1
+      val u2 = fun( 1, a1 )
+      val us = for ( f <- proof.endSequent )
+        yield f.asInstanceOf[FOLFormula] -> ( if ( containsQuantifier( f ) ) List( List( u1 ), List( u2 ) ) else List( List() ) )
+      val s11 = a2
+      val s12 = fun( 2, a2 )
+      val s21 = zero
+      val s22 = fun( 4, zero )
+
+      val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
+      val grammar = new SchematicExtendedHerbrandSequent( us, ss )
+      val ehs = ExtendedHerbrandSequent( grammar, CutIntroduction.computeCanonicalSolution( grammar ) )
+      val prover = BasicProver
+      val result_new = improveSolutionLK( ehs, prover, hasEquality = false )
+      val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
+
+      // expected result
+      val cf1 = All( a1, FOLAtom( "P", a1 ) --> FOLAtom( "P", fun( 2, a1 ) ) )
+      val cf2 = All( a2, FOLAtom( "P", a2 ) --> FOLAtom( "P", fun( 4, a2 ) ) )
+
+      result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
+
+      quantRulesNumber( r_proof.get ) must_== grammar.size
     }
   }
 }

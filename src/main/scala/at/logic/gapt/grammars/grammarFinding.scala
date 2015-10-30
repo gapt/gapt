@@ -109,6 +109,7 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
         possibleAssignments += ( lowestNTVectIdx -> lowestNTVect.map { pa.getOrElse( _, notASubTerm ) } )
         handledPAs += pa
       }
+    for ( ( ntv, i ) <- g.nonTerminals.zipWithIndex ) possibleAssignments += ( i -> ntv.map { _ => notASubTerm } )
     discoverAssignments( Map( g.axiom -> t ) )
 
     def Match( ntIdx: Int, t: List[FOLTerm], s: List[FOLTerm] ) =
@@ -125,7 +126,8 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
       }
 
     def Case( ntIdx: Int, t: List[FOLTerm] ) =
-      And( ( g.nonTerminals( ntIdx ), t ).zipped map valueOfNonTerminal ) --> Or( g.productions( g.nonTerminals( ntIdx ) ).toSeq map {
+      if ( t forall { _ == notASubTerm } ) Top()
+      else And( ( g.nonTerminals( ntIdx ), t ).zipped map valueOfNonTerminal ) --> Or( g.productions( g.nonTerminals( ntIdx ) ).toSeq map {
         case p @ ( _, s ) =>
           vectProductionIsIncluded( p ) & Match( ntIdx, t, s )
       } )
@@ -139,16 +141,8 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
       cs += simplify( Case( assignment._1, assignment._2 ) )
     }
 
-    val possibleSingleVariableAssignments = possibleAssignments flatMap {
-      case ( ntVectIdx, assg ) =>
-        g.nonTerminals( ntVectIdx ) zip assg
-    } groupBy { _._1 } mapValues { _ map { _._2 } }
-
-    for ( ( d, vs ) <- possibleSingleVariableAssignments )
-      if ( vs contains notASubTerm )
-        cs += exactly oneOf ( vs.toSeq map { valueOfNonTerminal( d, _ ) } )
-      else
-        cs += atMost oneOf ( vs.toSeq map { valueOfNonTerminal( d, _ ) } )
+    for ( ( i, assignments ) <- possibleAssignments groupBy { _._1 } )
+      cs += exactly oneOf ( assignments.toSeq map { assignment => And( ( g.nonTerminals( i ), assignment._2 ).zipped map valueOfNonTerminal ) } )
 
     And( cs.result() )
   }

@@ -1372,5 +1372,317 @@ class LKNewInterpolationTest extends Specification {
       nproof.endSequent must beEqualTo( HOLSequent( pa :: Nil, pb :: ipl :: Nil ) )
       pproof.endSequent must beEqualTo( HOLSequent( aeqb :: ipl :: Nil, Nil ) )
     }
+
+    "correctly interpolate a trivial atomic cut with Bottom ∨ P" in {
+      val p = FOLAtom( "p", Nil )
+
+      val axp = LogicalAxiom( p )
+      val proof = CutRule( axp, p, axp, p )
+
+      val npart = Seq( Ant( 0 ) )
+      val ppart = Seq( Suc( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof, npart, ppart )
+
+      ipl must beEqualTo( Or( Bottom(), p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, p :: Nil ) )
+    }
+
+    "correctly interpolate a trivial atomic cut (different partition) with Neg( p ) ∨ Bottom" in {
+      val p = FOLAtom( "p", Nil )
+
+      val axp = LogicalAxiom( p )
+      val proof = CutRule( axp, p, axp, p )
+
+      val npart = Seq( Suc( 0 ) )
+      val ppart = Seq( Ant( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof, npart, ppart )
+
+      ipl must beEqualTo( Or( Neg( p ), Bottom() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, p :: ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: p :: Nil, Nil ) )
+    }
+
+    "correctly interpolate a trivial atomic cut (yet another partition) with Bottom ∨ Bottom" in {
+      val p = FOLAtom( "p", Nil )
+
+      val axp = LogicalAxiom( p )
+      val proof = CutRule( axp, p, axp, p )
+
+      val npart = proof.endSequent.indices
+      val ppart = Seq[SequentIndex]()
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof, npart, ppart )
+
+      ipl must beEqualTo( Or( Bottom(), Bottom() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( p :: Nil, p :: ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Nil ) )
+    }
+
+    "correctly interpolate a trivial atomic cut (and another partition) with Top ∨ Top" in {
+      val p = FOLAtom( "p", Nil )
+
+      val axp = LogicalAxiom( p )
+      val proof = CutRule( axp, p, axp, p )
+
+      val npart = Seq[SequentIndex]()
+      val ppart = proof.endSequent.indices
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof, npart, ppart )
+
+      ipl must beEqualTo( And( Top(), Top() ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: p :: Nil, p :: Nil ) )
+    }
+
+    "correctly interpolate a small proof with a single atomic cut" in {
+      val p = FOLAtom( "p", Nil )
+      val q = FOLAtom( "q", Nil )
+      val r = FOLAtom( "r", Nil )
+
+      val axp = LogicalAxiom( p )
+      val axq = LogicalAxiom( q )
+      val axr = LogicalAxiom( r )
+      val proof = NegLeftRule( axq, q )
+      val proof1 = OrLeftRule( proof, q, axr, r )
+      val proof2 = ImpRightRule( proof1, Neg( q ), r )
+      val proof3 = ImpLeftRule( axp, p, proof2, Or( q, r ) )
+      val proof4 = WeakeningRightRule( proof3, p )
+      val proof5 = CutRule( proof4, axp, p )
+
+      val npart = proof5.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof5.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof5, npart, ppart )
+
+      ipl must beEqualTo( Or( Or( Bottom(), Or( q, r ) ), p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Imp( p, Or( q, r ) ) :: p :: Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Imp( Neg( q ), r ) :: p :: Nil ) )
+    }
+
+    "correctly interpolate another small proof with a single atomic cut" in {
+      val p = FOLAtom( "p", Nil )
+      val q = FOLAtom( "q", Nil )
+      val r = FOLAtom( "r", Nil )
+
+      val axp = LogicalAxiom( p )
+      val axq = LogicalAxiom( q )
+      val axr = LogicalAxiom( r )
+      val proof = NegLeftRule( axq, q )
+      val proof1 = OrLeftRule( proof, q, axr, r )
+      val proof2 = ImpRightRule( proof1, Neg( q ), r )
+      val proof3 = ImpLeftRule( axp, p, proof2, Or( q, r ) )
+      val proof4 = WeakeningRightRule( proof3, q )
+      val proof5 = WeakeningLeftRule( axp, q )
+      val proof6 = CutRule( proof4, proof5, q )
+
+      val npart = proof6.endSequent.indices.filter( ind => ind.isInstanceOf[Ant] )
+      val ppart = proof6.endSequent.indices.filter( ind => ind.isInstanceOf[Suc] )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof6, npart, ppart )
+
+      ipl must beEqualTo( Or( Or( Bottom(), Or( q, r ) ), p ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Imp( p, Or( q, r ) ) :: p :: p :: Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Imp( Neg( q ), r ) :: p :: Nil ) )
+    }
+
+    "correctly interpolate a proof with two atomic cuts" in {
+      val p = FOLAtom( "p", Nil )
+
+      val axp = LogicalAxiom( p )
+
+      val negp = Neg( p )
+      val nnegp = Neg( negp )
+
+      val proof = NegRightRule( axp, p )
+      val proof1 = NegLeftRule( proof, negp )
+      val proof2 = WeakeningRightRule( proof1, p )
+      val proof3 = ImpRightRule( proof2, nnegp, p )
+
+      val proof4 = NegLeftRule( axp, p )
+      val proof5 = WeakeningRightRule( proof4, p )
+      val proof6 = OrLeftRule( axp, p, proof5, negp )
+      val proof7 = ContractionRightRule( proof6, p )
+
+      val proof8 = WeakeningLeftRule( axp, nnegp )
+      val proof9 = ImpRightRule( proof8, nnegp, p )
+      val proof10 = CutRule( proof7, proof9, p )
+
+      val proof11 = CutRule( proof3, proof10, p )
+
+      val proof12 = ContractionRightRule( proof11, Imp( nnegp, p ) )
+
+      val npart = Seq( Ant( 0 ) )
+      val ppart = Seq( Suc( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof12, npart, ppart )
+
+      ipl must beEqualTo( Or( Top(), Or( Or( Bottom(), Bottom() ), p ) ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Or( p, Neg( p ) ) :: Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Imp( Neg( Neg( p ) ), p ) :: Nil ) )
+    }
+
+    "correctly interpolate a proof with two cuts and two equality right rules" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val axab = LogicalAxiom( aeqb )
+
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityRightRule( proof, aeqb, pa, pb )
+
+      val proof2 = CutRule( axab, proof1, aeqb )
+      val proof3 = ImpRightRule( proof2, pa, pb )
+
+      val proof4 = WeakeningLeftRule( axpb, aeqb )
+      val proof5 = EqualityRightRule( proof4, aeqb, pb, pa )
+
+      val proof6 = CutRule( axab, proof5, aeqb )
+      val proof7 = ImpRightRule( proof6, pb, pa )
+
+      val proof8 = AndRightRule( proof3, Imp( pa, pb ), proof7, Imp( pb, pa ) )
+      val proof9 = ContractionLeftRule( proof8, aeqb )
+      val proof10 = ImpRightRule( proof9, aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) )
+
+      val npart = Seq( Suc( 0 ) )
+      val ppart = Seq[SequentIndex]()
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof10, npart, ppart )
+
+      val Il = Or( Bottom(), Bottom() )
+      val Ir = Or( Bottom(), Bottom() )
+
+      ipl must beEqualTo( Or( Il, Ir ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, ipl :: Imp( aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Nil ) )
+    }
+
+    "correctly interpolate a proof with two cuts and two equality right rules (different partition)" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val axab = LogicalAxiom( aeqb )
+
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityRightRule( proof, aeqb, pa, pb )
+
+      val proof2 = CutRule( axab, proof1, aeqb )
+      val proof3 = ImpRightRule( proof2, pa, pb )
+
+      val proof4 = WeakeningLeftRule( axpb, aeqb )
+      val proof5 = EqualityRightRule( proof4, aeqb, pb, pa )
+
+      val proof6 = CutRule( axab, proof5, aeqb )
+      val proof7 = ImpRightRule( proof6, pb, pa )
+
+      val proof8 = AndRightRule( proof3, Imp( pa, pb ), proof7, Imp( pb, pa ) )
+      val proof9 = ContractionLeftRule( proof8, aeqb )
+      val proof10 = ImpRightRule( proof9, aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) )
+
+      val npart = Seq[SequentIndex]()
+      val ppart = Seq( Suc( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof10, npart, ppart )
+
+      val Il = And( Top(), Top() )
+      val Ir = And( Top(), Top() )
+
+      ipl must beEqualTo( And( Il, Ir ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Imp( aeqb, And( Imp( pa, pb ), Imp( pb, pa ) ) ) :: Nil ) )
+    }
+
+    "correctly interpolate a proof with two cuts and two equality left rules" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val axab = LogicalAxiom( aeqb )
+
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityLeftRule( proof, aeqb, pa, pb )
+
+      val proof2 = CutRule( axab, proof1, aeqb )
+      val proof3 = ImpRightRule( proof2, pb, pa )
+
+      val proof4 = WeakeningLeftRule( axpb, aeqb )
+      val proof5 = EqualityLeftRule( proof4, aeqb, pb, pa )
+
+      val proof6 = CutRule( axab, proof5, aeqb )
+      val proof7 = ImpRightRule( proof6, pa, pb )
+
+      val proof8 = AndRightRule( proof3, Imp( pb, pa ), proof7, Imp( pa, pb ) )
+      val proof9 = ContractionLeftRule( proof8, aeqb )
+      val proof10 = ImpRightRule( proof9, aeqb, And( Imp( pb, pa ), Imp( pa, pb ) ) )
+
+      val npart = Seq( Suc( 0 ) )
+      val ppart = Seq[SequentIndex]()
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof10, npart, ppart )
+
+      val Il = Or( Bottom(), Bottom() )
+      val Ir = Or( Bottom(), Bottom() )
+
+      ipl must beEqualTo( Or( Il, Ir ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, ipl :: Imp( aeqb, And( Imp( pb, pa ), Imp( pa, pb ) ) ) :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Nil ) )
+    }
+
+    "correctly interpolate a proof with two cuts and two equality left rules (different partition)" in {
+      val a = FOLConst( "a" )
+      val b = FOLConst( "b" )
+      val pa = FOLAtom( "P", List( a ) )
+      val pb = FOLAtom( "P", List( b ) )
+      val aeqb = Eq( a, b )
+
+      val axpa = LogicalAxiom( pa )
+      val axpb = LogicalAxiom( pb )
+      val axab = LogicalAxiom( aeqb )
+
+      val proof = WeakeningLeftRule( axpa, aeqb )
+      val proof1 = EqualityLeftRule( proof, aeqb, pa, pb )
+
+      val proof2 = CutRule( axab, proof1, aeqb )
+      val proof3 = ImpRightRule( proof2, pb, pa )
+
+      val proof4 = WeakeningLeftRule( axpb, aeqb )
+      val proof5 = EqualityLeftRule( proof4, aeqb, pb, pa )
+
+      val proof6 = CutRule( axab, proof5, aeqb )
+      val proof7 = ImpRightRule( proof6, pa, pb )
+
+      val proof8 = AndRightRule( proof3, Imp( pb, pa ), proof7, Imp( pa, pb ) )
+      val proof9 = ContractionLeftRule( proof8, aeqb )
+      val proof10 = ImpRightRule( proof9, aeqb, And( Imp( pb, pa ), Imp( pa, pb ) ) )
+
+      val npart = Seq[SequentIndex]()
+      val ppart = Seq( Suc( 0 ) )
+
+      val ( nproof, pproof, ipl ) = Interpolate( proof10, npart, ppart )
+
+      val Il = And( Top(), Top() )
+      val Ir = And( Top(), Top() )
+
+      ipl must beEqualTo( And( Il, Ir ) )
+      nproof.endSequent must beEqualTo( HOLSequent( Nil, ipl :: Nil ) )
+      pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Imp( aeqb, And( Imp( pb, pa ), Imp( pa, pb ) ) ) :: Nil ) )
+    }
+
   }
 }

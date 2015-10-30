@@ -414,6 +414,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
     case Suc( j ) =>
       Sequent( antecedent, succedent.take( j ) ++ Seq( el ) ++ succedent.drop( j ) )
   }
+
+  def foreach[U]( f: A => U ): Unit = elements foreach f
 }
 
 object Sequent {
