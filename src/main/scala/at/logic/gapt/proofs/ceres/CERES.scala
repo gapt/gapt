@@ -180,7 +180,7 @@ class CERES {
     val x = Var( StringSymbol( "x" ), Ti ).asInstanceOf[Var]
     val axiomseq = HOLSequent( Nil, List( Eq( x, x ) ) )
     //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
-    WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq compose es )
+    WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq ++ es )
   }
 
   def contractEndsequent( p: LKProof, es: HOLSequent ) = ContractionMacroRule( p, es, strict = false )

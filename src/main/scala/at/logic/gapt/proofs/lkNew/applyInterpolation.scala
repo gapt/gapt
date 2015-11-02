@@ -18,7 +18,7 @@ object ExtractInterpolant {
    * are valid.
    */
   def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): HOLFormula = {
-    val seq = negative compose positive
+    val seq = negative ++ positive
     val p = prover.getLKProof( seq ).get
 
     val npart = p.endSequent.filter { fo => negative.contains( fo ) }

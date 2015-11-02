@@ -21,7 +21,7 @@ object ExtractInterpolant {
    * are valid.
    */
   def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): FOLFormula = {
-    val seq = negative compose positive
+    val seq = negative ++ positive
     val p = lkNew2Old( prover.getLKProof( seq ).get )
     val es = p.root
     val npart = es.antecedent.filter( fo => negative.antecedent.contains( fo.formula ) ) ++
