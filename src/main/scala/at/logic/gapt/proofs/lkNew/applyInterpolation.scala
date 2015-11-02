@@ -47,18 +47,6 @@ object Interpolate {
    *         contains non-atomic cuts or if (npart,ppart) is not a partition of its
    *         end-sequent.
    */
-  /**
-   * @param p
-   * @param npart
-   * @param ppart
-   * @return
-   */
-  /**
-   * @param p
-   * @param npart
-   * @param ppart
-   * @return
-   */
   def apply( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ): ( LKProof, LKProof, HOLFormula ) = p match {
 
     // axioms
@@ -162,7 +150,7 @@ object Interpolate {
 
     case ContractionLeftRule( subProof, aux1, aux2 ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val formula = p.endSequent( aux1 )
+      val formula = p.mainFormulas( 0 )
 
       if ( npart.contains( p.mainIndices( 0 ) ) ) ( ContractionLeftRule( up_nproof, formula ), up_pproof, up_I )
       else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, ContractionLeftRule( up_pproof, formula ), up_I )
@@ -171,7 +159,7 @@ object Interpolate {
 
     case ContractionRightRule( subProof, aux1, aux2 ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val formula = p.endSequent( aux1 )
+      val formula = p.mainFormulas( 0 )
 
       if ( npart.contains( p.mainIndices( 0 ) ) ) ( ContractionRightRule( up_nproof, formula ), up_pproof, up_I )
       else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, ContractionRightRule( up_pproof, formula ), up_I )
