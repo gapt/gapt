@@ -291,6 +291,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def sizes = lengths
 
   def sorted[B >: A]( implicit ordering: Ordering[B] ) = new Sequent( antecedent.sorted( ordering ), succedent.sorted( ordering ) )
+  def sortBy[B]( f: A => B )( implicit ord: Ordering[B] ): Sequent[A] = sorted( ord on f )
 
   /**
    * Returns true iff the sequent contains some element in either cedent.

@@ -5,7 +5,7 @@ import at.logic.gapt.expr.{ FOLConst, Const }
 import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
-import at.logic.gapt.proofs.expansionTrees.{ replace, FOLInstanceTermEncoding$, ExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lkNew.LKProof
 
 abstract class ResolutionProver extends Prover {
@@ -27,10 +27,14 @@ abstract class ResolutionProver extends Prover {
   private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
     f( renamedSeq ) map { renamedProof =>
-      invertRenaming.foldLeft( renamedProof ) {
-        case ( partiallyRenamedProof, ( groundVariable, variable ) ) =>
-          partiallyRenamedProof.map( replace( groundVariable.asInstanceOf[FOLConst], variable, _ ) )
-      }
+      renamedProof map { TermReplacement( _, invertRenaming ) }
+    }
+  }
+
+  private def withGroundVariables3( seq: HOLSequent )( f: HOLSequent => Option[ResolutionProof] ): Option[ResolutionProof] = {
+    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
+    f( renamedSeq ) map { renamedProof =>
+      TermReplacement( renamedProof, invertRenaming )
     }
   }
 
@@ -42,10 +46,12 @@ abstract class ResolutionProver extends Prover {
     }
 
   override def isValid( seq: HOLSequent ): Boolean =
-    getRobinsonProof( groundFreeVariables( seq )._1 ).isDefined
+    getRobinsonProof( seq ).isDefined
 
   def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] =
-    getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
+    withGroundVariables3( seq ) { seq =>
+      getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
+    }
 
   def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 

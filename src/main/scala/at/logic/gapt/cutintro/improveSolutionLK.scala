@@ -3,7 +3,7 @@ package at.logic.gapt.cutintro
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFp, lcomp, instantiate }
-import at.logic.gapt.proofs.resolution.ForgetfulParamodulate
+import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve, ForgetfulParamodulate }
 import at.logic.gapt.proofs.{ RichFOLSequent, FOLClause, Sequent }
 import at.logic.gapt.provers.Prover
 
@@ -53,23 +53,17 @@ object improveSolutionLK {
         val condition = ( for ( inst <- instances; clause <- cnf ) yield inst( clause.toFormula ) ) ++: context
         if ( prover isValid condition ) {
           isSolution( cnf ) = true
-          for ( conseq <- forgetfulPropResolve( cnf ) ) checkSolution( conseq )
-          if ( hasEquality ) for ( conseq <- ForgetfulParamodulate( cnf.toList ) ) checkSolution( conseq.toSet )
+          forgetfulPropResolve( cnf ) foreach checkSolution
+          if ( hasEquality ) forgetfulPropParam( cnf ) foreach checkSolution
         } else {
           isSolution( cnf ) = false
         }
       }
 
-    checkSolution( CNFp.toClauseList( start ).toSet )
+    checkSolution( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
 
     val solutions = isSolution collect { case ( sol, true ) => sol } map { cnf => And( cnf map { _.toFormula } map { toImplications( _ ) } ) }
     solutions minBy { lcomp( _ ) }
   }
-
-  private def forgetfulPropResolve( cnf: Set[FOLClause] ) =
-    for (
-      clause1 <- cnf; clause2 <- cnf; if clause1 != clause2;
-      atom1 <- clause1.succedent; atom2 <- clause2.antecedent; if atom1 == atom2
-    ) yield cnf - clause1 - clause2 + ( clause1.removeFromSuccedent( atom1 ) ++ clause2.removeFromAntecedent( atom2 ) )
 
 }

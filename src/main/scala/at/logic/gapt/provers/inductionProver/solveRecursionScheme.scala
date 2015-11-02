@@ -7,6 +7,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.RecursionScheme
 import at.logic.gapt.proofs.lkNew.skolemize
 import at.logic.gapt.proofs.HOLClause
+import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, forgetfulPropParam }
 import at.logic.gapt.provers.veriT.VeriT
 
 import scala.collection.mutable
@@ -53,23 +54,10 @@ object hSolveQBUP {
         }
       }
 
-    checkSol( CNFp.toClauseList( start ).toSet )
+    checkSol( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
 
     isSolution collect { case ( sol, true ) => And( sol map { _.toFormula } ) } toSet
   }
-
-  private def forgetfulPropResolve( cnf: Set[HOLClause] ) =
-    for (
-      clause1 <- cnf; clause2 <- cnf; if clause1 != clause2;
-      atom1 <- clause1.succedent; atom2 <- clause2.antecedent; if atom1 == atom2
-    ) yield cnf - clause1 - clause2 + ( clause1.removeFromSuccedent( atom1 ) ++ clause2.removeFromAntecedent( atom2 ) )
-
-  private def forgetfulPropParam( cnf: Set[HOLClause] ) =
-    for (
-      clause1 <- cnf; clause2 <- cnf; if clause1 != clause2;
-      atom1 @ Eq( s, t ) <- clause1.succedent; ( atom2, atom2Idx ) <- clause2.zipWithIndex.elements;
-      pos2 <- LambdaPosition.getPositions( atom2 ) if atom2( pos2 ) == s || atom2( pos2 ) == t
-    ) yield cnf - clause1 - clause2 + ( clause1.removeFromSuccedent( atom1 ) ++ clause2.updated( atom2Idx, atom2.replace( pos2, if ( atom2( pos2 ) == s ) t else s ).asInstanceOf[HOLAtom] ) )
 
   def apply( qbupMatrix: HOLFormula, xInst: LambdaExpression, start: HOLFormula ): Option[LambdaExpression] = {
     val Apps( x: Var, xInstArgs ) = xInst
