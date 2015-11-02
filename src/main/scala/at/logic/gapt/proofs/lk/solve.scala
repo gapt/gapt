@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSeque
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lkNew.lkOld2New
 import at.logic.gapt.proofs.shlk._
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 
 /**
  * Bottom-up construction of sequent calculus proofs.
@@ -982,7 +982,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   }
 }
 
-class LKProver extends Prover {
+class LKProver extends OneShotProver {
   def getLKProof( seq: HOLSequent ): Option[lkNew.LKProof] = solve.solvePropositional( seq ) map { lkOld2New( _ ) }
 }
 

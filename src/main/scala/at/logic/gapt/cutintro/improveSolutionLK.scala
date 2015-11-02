@@ -52,27 +52,33 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    * @param hasEquality  If set to true, use forgetful paramodulation in addition to resolution.
    */
-  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula = {
-    val isSolution = mutable.Map[Set[FOLClause], Boolean]()
+  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula =
+    for ( session <- prover.startIncrementalSession() ) yield {
+      session declareSymbolsIn ( start, context toFormula )
+      session assert context.toNegFormula
 
-    def checkSolution( cnf: Set[FOLClause] ): Unit =
-      if ( !isSolution.contains( cnf ) ) {
-        val condition = ( for ( inst <- instances; clause <- cnf ) yield inst( clause.toFormula ) ) ++: context
-        if ( prover isValid condition ) {
-          isSolution( cnf ) = true
-          forgetfulPropResolve( cnf ) foreach checkSolution
-          if ( hasEquality ) forgetfulPropParam( cnf ) foreach checkSolution
-          if ( forgetOne ) for ( c <- cnf ) checkSolution( cnf - c )
-        } else {
-          isSolution( cnf ) = false
+      val isSolution = mutable.Map[Set[FOLClause], Boolean]()
+
+      def checkSolution( cnf: Set[FOLClause] ): Unit =
+        if ( !isSolution.contains( cnf ) ) {
+          if ( session withScope {
+            for ( inst <- instances; clause <- cnf ) session assert inst( clause.toFormula )
+            !session.checkSat()
+          } ) {
+            isSolution( cnf ) = true
+            forgetfulPropResolve( cnf ) foreach checkSolution
+            if ( hasEquality ) forgetfulPropParam( cnf ) foreach checkSolution
+            if ( forgetOne ) for ( c <- cnf ) checkSolution( cnf - c )
+          } else {
+            isSolution( cnf ) = false
+          }
         }
-      }
 
-    checkSolution( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
+      checkSolution( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
 
-    val solutions = isSolution collect { case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) ) }
-    solutions minBy { lcomp( _ ) }
-  }
+      val solutions = isSolution collect { case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) ) }
+      solutions minBy { lcomp( _ ) }
+    }
 
   /**
    * Improves a formula with regard to its logical complexity by taking backwards consequences under the constraint that the following sequent is valid:

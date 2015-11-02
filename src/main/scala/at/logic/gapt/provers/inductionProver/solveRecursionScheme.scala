@@ -8,6 +8,7 @@ import at.logic.gapt.grammars.RecursionScheme
 import at.logic.gapt.proofs.lkNew.skolemize
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, forgetfulPropParam }
+import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.veriT.VeriT
 
 import scala.collection.mutable
@@ -45,7 +46,7 @@ object hSolveQBUP {
     def checkSol( cnf: Set[HOLClause] ): Unit =
       if ( !isSolution.contains( cnf ) ) {
         val substCnfFormula = subst( And( cnf map { _.toFormula } ) )
-        if ( VeriT isValid reduceHolToFol( TermReplacement( cond, Map( Xinst -> substCnfFormula ) ) ) ) {
+        if ( VeriT isValid TermReplacement( cond, Map( Xinst -> substCnfFormula ) ) ) {
           isSolution( cnf ) = true
           forgetfulPropResolve( cnf ) foreach checkSol
           forgetfulPropParam( cnf ) foreach checkSol
@@ -80,7 +81,7 @@ object hSolveQBUP {
     conseqs foreach { conseq =>
       val genConseq = TermReplacement( conseq, matching.map.map( _.swap ) )
       val sol = Abs( xGenArgs, genConseq )
-      if ( VeriT isValid skolemize( reduceHolToFol( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) ) {
+      if ( Z3 isValid skolemize( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) {
         return Some( sol )
       }
     }

@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lkNew.LKProof
 
-abstract class ResolutionProver extends Prover {
+abstract class ResolutionProver extends OneShotProver {
 
   protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, Const], List[HOLClause] ) => Option[ResolutionProof] ): Option[ResolutionProof] = {
     val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf.toList )
