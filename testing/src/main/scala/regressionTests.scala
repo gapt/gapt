@@ -1,6 +1,6 @@
 package at.logic.gapt.testing
 
-import java.io.File
+import java.io.{ FileWriter, File }
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
@@ -124,22 +124,20 @@ object RegressionTests extends App {
 
   val total = testCases.length
   var started = 0
-  val results = testCases.par map { tc =>
+  val out = new FileWriter( "target/regression-test-results.xml" )
+  out write "<testsuite>\n"
+  testCases.par foreach { tc =>
     started += 1
     println( s"[${( 100 * started ) / total}%] $tc" )
-    try runOutOfProcess( Seq( "-Xmx1G", "-Xss30m" ) ) {
-      tc.run().toJUnitXml
+    try {
+      val res = runOutOfProcess( Seq( "-Xmx1G", "-Xss30m" ) ) { tc.run().toJUnitXml }
+      out.synchronized { XML.write( out, res, enc = "", xmlDecl = false, doctype = null ); out.flush() }
     } catch {
       case t: Throwable =>
         println( s"$tc failed:" )
         t.printStackTrace()
-        <testsuite/>
     }
   }
-
-  XML.save(
-    "target/regression-test-results.xml",
-    <testsuite> { results flatMap ( _.child ) toList } </testsuite>,
-    "UTF-8"
-  )
+  out write "</testsuite>\n"
+  out.close()
 }
