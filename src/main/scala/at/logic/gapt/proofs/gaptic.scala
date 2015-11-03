@@ -12,10 +12,14 @@ import scala.collection.mutable.ListBuffer
 class ProofState( initGoal: HOLSequent ) {
   var goal: HOLSequent = initGoal
   var subGoals: List[HOLSequent] = List( this.goal )
-  var proofSegment: LKProof = OpenAssumption( initGoal )
+  var proofSegment: LKProof = OpenAssumption( initGoal, "label" )
 
-  private def getSubGoal( i: Int ): HOLSequent = {
-    null
+  def getSubGoal( i: Int ): Option[HOLSequent] = {
+    ???
+  }
+
+  private def getSubGoalInternal( i: Int ): HOLSequent = {
+    ???
   }
 
   def displaySubGoal( i: Int ): String = {
@@ -24,11 +28,12 @@ class ProofState( initGoal: HOLSequent ) {
     "Some string " + sg
   }
 
-  def replaceSubGoal( i: Int ): Unit = {
+  private def replaceSubGoal( i: Int, segment: LKProof ): ProofState = {
     val sg = getSubGoal( i )
 
-    // replaces sub goal i
-    // modifies the state
+    // replaces sub goal i in a new proof state
+
+    ???
   }
 }
 
@@ -36,45 +41,73 @@ class ProofState( initGoal: HOLSequent ) {
  *
  * @param S
  */
-case class OpenAssumption( S: HOLSequent ) extends InitialSequent {
-  override def endSequent = S
+case class OpenAssumption( S: HOLSequent, label: String ) extends InitialSequent {
+  override def conclusion = S
 }
 
 /**
  *
  */
 abstract class Tactic {
-  def apply( goal: HOLSequent ): LKProof
+  def rule( goal: HOLSequent ): LKProof
+
+  final def apply( goal: HOLSequent, p: ProofState ): Option[ProofState] = {
+
+    try {
+      val segment = rule( goal )
+
+      println( segment )
+
+      ???
+    } catch {
+      case ex: Exception =>
+    }
+
+    None
+  }
+}
+/**
+ *
+ */
+abstract class Tactical {
+  def rule( goal: HOLSequent ): LKProof
+
+  final def apply( p: ProofState ): Option[ProofState] = {
+
+    //
+
+    None
+  }
 }
 
 /**
  *
  */
 object OrRightTactic extends Tactic {
-  def apply( goal: HOLSequent ) = {
 
-    val ms = ListBuffer[( Int, HOLFormula )]()
+  def rule( goal: HOLSequent ) = {
+    val indices =
+      for ( ( Or( _, _ ), index ) <- goal.zipWithIndex.succedent )
+        yield index
 
-    for ( i <- 0 until goal.succedent.length-1 ) {
-      goal.succedent( i ) match {
-        case Or( _, _ ) => ms += ( ( i, goal.succedent( i ) ) )
-      }
-    }
-
-    val ml = ms.toList
+    if ( indices.isEmpty )
+      throw new Exception( "No matching formula found (Or)." )
 
     // Select some formula!
-    val i = ml.head._1
-    val ( lhs, rhs ) = Or.unapply( ml.head._2 ) match {
-      case Some( ( a, b ) ) => ( a, b )
-      case None             => throw new RuntimeException( "Could not extract arguments from formula." )
-    }
+    val i = indices.head
 
-    goal.replaceAt( Suc( i ), lhs )
-    goal.insertAt( Suc( i + 1 ), rhs )
+    // Extract LHS/RHS
+    val Or( lhs, rhs ) = goal( i )
 
-    println( goal )
+    // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
+    val newGoal = goal.delete( i ) :+ lhs :+ rhs
 
-    null
+    // Indices of lhs and rhs
+    val lhsIndex = Suc( newGoal.succedent.length - 2 )
+    val rhsIndex = lhsIndex + 1
+
+    val premise = OpenAssumption( newGoal, "label" )
+
+    OrRightRule( premise, lhsIndex, rhsIndex )
   }
 }
