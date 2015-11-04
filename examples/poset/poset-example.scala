@@ -1,105 +1,72 @@
-import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.expr._
 import at.logic.gapt.cutintro.{MaxSATMethod, CutIntroduction}
 import at.logic.gapt.provers.maxsat.ExternalMaxSATSolver
-import at.logic.gapt.provers.sat.MiniSAT
 import at.logic.gapt.provers.veriT.VeriT
 
-val C = parseFormula( "(all x all y f(x,y) = f(y,x))" )
-val AS = parseFormula( "(all u all v ( f(u,v)=u -> ( f(v,u)=v -> u=v )))" )
+val f = FOLFunctionHead("f", 2)
+val Seq(u, v, w, x, y, z) = Seq("u", "v", "w", "x", "y", "z") map { FOLVar(_) }
+val Seq(a, b, c) = Seq("a", "b", "c") map { FOLConst(_) }
 
-val A = parseFormula( "(all x all y all z f(f(x,y),z) = f(x,f(y,z)))" )
-val Tpo = parseFormula( "(all x all y all z ( f(x,y)=x -> ( f(y,z)=y -> f(x,z)=x )))" )
+val C = All(x, All(y, f(x, y) === f(y, x)))
+val AS = All(u, All(v, (f(u, v) === u) --> ((f(v, u) === v) --> (u === v))))
 
-def trans = {
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
-  val z = FOLVar( "z" )
-  val x0 = FOLVar( "x_0" )
-  val y0 = FOLVar( "y_0" )
-  val z0 = FOLVar( "z_0" )
+val A = All(x, All(y, All(z, f(f(x, y), z) === f(x, f(y, z)))))
+val Tpo = All(x, All(y, All(z, (f(x, y) === x) --> ((f(y, z) === y) --> (f(x, z) === x)))))
 
-  val A0 = parseFormula( "f(f(x_0,y_0),z_0) = f(x_0,f(y_0,z_0))" )
-  val A1 = parseFormula( "(all z f(f(x_0,y_0),z) = f(x_0,f(y_0,z)))" )
-  val A2 = parseFormula( "(all y all z f(f(x_0,y),z) = f(x_0,f(y,z)))" )
-  val T0 = parseFormula( "f(x_0,y_0)=x_0 -> ( f(y_0,z_0)=y_0 -> f(x_0,z_0)=x_0 )" )
-  val T1 = parseFormula( "(all z ( f(x_0,y_0)=x_0 -> ( f(y_0,z)=y_0 -> f(x_0,z)=x_0 )))" )
-  val T2 = parseFormula( "(all y all z ( f(x_0,y)=x_0 -> ( f(y,z)=y -> f(x_0,z)=x_0 )))" )
-  val s = HOLSequent( List( A0 ), List( T0 ))
+val trans = {
+  val A0 = instantiate(A, Seq(u, v, w))
+  val T0 = instantiate(Tpo, Seq(u, v, w))
 
-  val E = VeriT.getExpansionSequent( s ).get
-  val Emin = minimalExpansionSequents( E, MiniSAT )
-  if ( Emin.size != 1 ) println( "WARNING: trans expansion sequent not minimal" )
+  val Some(e) = VeriT.getExpansionSequent(A0 +: Sequent() :+ T0)
 
-  val p0 = ExpansionProofToLK( E )
-  val p1 = ForallLeftRule( p0, A1, z0 )
-  val p2 = ForallLeftRule( p1, A2, y0 )
-  val p3 = ForallLeftRule( p2, A, x0 )
-  val p4 = ForallRightRule( p3, T1, z0 )
-  val p5 = ForallRightRule( p4, T2, y0 )
-  ForallRightRule( p5, Tpo, x0 )
+  (ProofBuilder
+    c ExpansionProofToLK(e)
+    u (ForallLeftBlock(_, A, Seq(u, v, w)))
+    u (ForallRightBlock(_, Tpo, Seq(u, v, w)))
+    qed)
 }
 
-def antisymm = {
-  val u0 = FOLVar( "u_0" )
-  val v0 = FOLVar( "v_0" )
+val antisymm = {
+  val C0 = instantiate(C, Seq(u, v))
+  val AS0 = instantiate(AS, Seq(u, v))
 
-  val C0 = parseFormula( "f(u_0,v_0) = f(v_0,u_0)" )
-  val AS0 = parseFormula( "f(u_0,v_0)=u_0 -> ( f(v_0,u_0)=v_0 -> u_0=v_0 )" )
-  val s = HOLSequent( List( C0 ), List( AS0 ))
+  val Some(e) = VeriT.getExpansionSequent(C0 +: Sequent() :+ AS0)
 
-  val E = VeriT.getExpansionSequent( s ).get
-  val Emin = minimalExpansionSequents( E, MiniSAT )
-  if ( Emin.size != 1 ) println( "WARNING: antisymm expansion sequent not minimal" )
-
-  val p0 = ExpansionProofToLK( E )
-  val p1 = ForallLeftRule( p0, parseFormula( "(all v f(u_0,v) = f(v,u_0) )" ), v0 )
-  val p2 = ForallLeftRule( p1, C, u0 )
-  val p3 = ForallRightRule( p2, parseFormula( "(all v ( f(u_0,v)=u_0 -> ( f(v,u_0)=v -> u_0=v )))" ), v0 )
-  ForallRightRule( p3, AS, u0 )
+  (ProofBuilder
+    c ExpansionProofToLK(e)
+    u (ForallLeftBlock(_, C, Seq(u, v)))
+    u (ForallRightBlock(_, AS, Seq(u, v)))
+    qed)
 }
 
-def lhs = {
-  ContractionMacroRule( AndRightRule( antisymm, AS, trans, Tpo ))
-}
+val lhs = ContractionMacroRule(AndRightRule(antisymm, AS, trans, Tpo))
 
-def rhs = {
-  val u = FOLVar( "u" )
-  val v = FOLVar( "v" )
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
-  val z = FOLVar( "z" )
-  val a = FOLConst( "a" )
-  val b = FOLConst( "b" )
-  val c = FOLConst( "c" )
+val rhs = {
+  //val AS1 = parseFormula( "( f(a,b)=a -> ( f(b,a)=b -> a=b ))" )
+  //val AS2 = parseFormula( "( f(b,c)=b -> ( f(c,b)=c -> b=c ))" )
+  val EAS = formulaToExpansionTree(AS, List(Substitution(u -> a, v -> b), Substitution(u -> b, v -> c)), false)
 
-  val s1 = FOLSubstitution( Map( (u,a), (v,b) ) ) //val AS1 = parseFormula( "( f(a,b)=a -> ( f(b,a)=b -> a=b ))" )
-  val s2 = FOLSubstitution( Map( (u,b), (v,c) ) ) //val AS2 = parseFormula( "( f(b,c)=b -> ( f(c,b)=c -> b=c ))" )
-  val EAS = formulaToExpansionTree( AS, s1::s2::Nil, false )
+  //val Tpo1 = parseFormula( "( f(b,c)=b -> ( f(c,a)=c -> f(b,a)=b ))" )
+  //val Tpo2 = parseFormula( "( f(c,a)=c -> ( f(a,b)=a -> f(c,b)=c ))" )
+  val ETpo = formulaToExpansionTree(Tpo, List(Substitution(x -> b, y -> c, z -> a), Substitution(x -> c, y -> a, z -> b)), false)
 
-  val t1 = FOLSubstitution( Map( (x,b), (y,c), (z,a) ) ) //val Tpo1 = parseFormula( "( f(b,c)=b -> ( f(c,a)=c -> f(b,a)=b ))" )
-  val t2 = FOLSubstitution( Map( (x,c), (y,a), (z,b) ) ) //val Tpo2 = parseFormula( "( f(c,a)=c -> ( f(a,b)=a -> f(c,b)=c ))" )
-  val ETpo = formulaToExpansionTree( Tpo, t1::t2::Nil, false )
+  val ETcut = ETAnd(EAS, ETpo)
+  val conc = ((f(a, b) === a) & (f(b, c) === b) & (f(c, a) === c)) --> ((a === b) & (b === c))
+  val Econc = formulaToExpansionTree(conc, true)
 
-  val ETcut = ETAnd( EAS, ETpo )
-  val conc = parseFormula( "( f(a,b)=a & f(b,c)=b & f(c,a)=c ) -> ( a=b & b=c )" )
-  val Econc = formulaToExpansionTree( conc, true )
-
-  val E = ExpansionSequent( ETcut::Nil, Econc::Nil )
-  ExpansionProofToLK( E )
+  ExpansionProofToLK(ETcut +: Sequent() :+ Econc)
 }
 
 // proof with cut
-def pwc = {
-  CutRule( lhs, rhs, And( AS, Tpo ))
-}
+val pwc = CutRule(lhs, rhs, And(AS, Tpo))
 
-val p = ReductiveCutElimination( pwc )
+val p = ReductiveCutElimination(pwc)
 val (terms, encoding) = FOLInstanceTermEncoding(p)
+println(terms)
 
 // This does not work, even running it for 2 days produces only a grammar of size 22.
 if (false) CutIntroduction.compressLKProof(p,
