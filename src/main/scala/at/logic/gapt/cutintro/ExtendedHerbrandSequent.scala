@@ -17,6 +17,12 @@ case class ExtendedHerbrandSequent( sehs: SchematicExtendedHerbrandSequent, cutF
   require( cutFormulas.size == sehs.ss.size )
   require( isFOLPrenexSigma1( endSequent ) )
 
+  cutFormulas zip sehs.ss foreach {
+    case ( All.Block( vs, f ), ( evs, _ ) ) =>
+      require( !containsQuantifier( f ) )
+      require( vs.size == evs.size )
+  }
+
   def endSequent = sehs.us map { _._1 }
 
   /** Purely propositional formulas of the end-sequent. */

@@ -63,6 +63,17 @@ object MaxSATMethod {
 case class SchematicExtendedHerbrandSequent( us: Sequent[( FOLFormula, List[List[FOLTerm]] )], ss: List[( List[FOLVar], List[List[FOLTerm]] )] ) {
   require( ss.forall { case ( vars, inst ) => inst.forall { case termlist => vars.length == termlist.length } } )
 
+  us.antecedent foreach {
+    case ( All.Block( vs, f ), insts ) =>
+      require( !containsQuantifier( f ) )
+      for ( i <- insts ) require( i.size == vs.size )
+  }
+  us.succedent foreach {
+    case ( Ex.Block( vs, f ), insts ) =>
+      require( !containsQuantifier( f ) )
+      for ( i <- insts ) require( i.size == vs.size )
+  }
+
   /** Size of the grammar, i.e. |u| + |s| */
   def size = ( us.elements ++ ss ).map( _._2.size ).sum
 
