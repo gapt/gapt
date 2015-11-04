@@ -13,7 +13,7 @@ Number of smallest grammars: 1
 Minimized cut formula: ∀α_0.∀α_1.∀α_2.(α_0=f(α_0,α_2)∨¬α_0=α_0∨¬α_1=f(α_1,α_2)∨¬α_0=f(α_0,α_1)∨¬f(f(α_0,α_1),α_2)=f(α_0,α_2))
 which is (almost) transitivity of the partial order x \leq y iff f(x,y)=x
 
-grammars(0) (minimal, size 32) is:
+grammars(0) (claimed to be minimal by generalised delta-table algorithm, size 32) is:
 
 {
 tuple1(a),
@@ -54,7 +54,7 @@ List(c, a, b)
 }
 
 
-grammars(1) (not minimal, size size 33) is:
+grammars(1) (size 33) is:
 
 {
 tuple1(a),
@@ -170,6 +170,6 @@ List(c, a, b)
 }
 
 (*) abstraction by one variable
-(**) abstracting using two variables - could have been obtained in grammars(1) already
+(**) abstraction using two variables - could have been obtained in grammars(1) already
 (***) abstraction using three variables - could have been obtained in grammars(0) already
 
