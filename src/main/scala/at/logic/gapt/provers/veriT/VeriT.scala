@@ -63,13 +63,7 @@ class VeriT extends Prover with ExternalProgram {
     }
   }
 
-  // VeriT proofs are parsed as Expansion Trees.
-  // At the moment there is no method implemented that 
-  // would generate an LK proof from an Expansion Tree.
-  override def getLKProof( s: HOLSequent ) =
-    throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
-  override def getLKProof( f: HOLFormula ) =
-    throw new Exception( "It is not possible to generate LK proofs from VeriT proofs at the moment." )
+  override def getLKProof( s: HOLSequent ) = getExpansionSequent( s ) map { ExpansionProofToLK( _ ) }
 
   val isInstalled: Boolean =
     try {

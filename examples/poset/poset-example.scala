@@ -17,31 +17,17 @@ val AS = All(u, All(v, (f(u, v) === u) --> ((f(v, u) === v) --> (u === v))))
 val A = All(x, All(y, All(z, f(f(x, y), z) === f(x, f(y, z)))))
 val Tpo = All(x, All(y, All(z, (f(x, y) === x) --> ((f(y, z) === y) --> (f(x, z) === x)))))
 
-val trans = {
-  val A0 = instantiate(A, Seq(u, v, w))
-  val T0 = instantiate(Tpo, Seq(u, v, w))
+val trans = (ProofBuilder
+  c VeriT.getLKProof(instantiate(A, Seq(u, v, w)) +: Sequent() :+ instantiate(Tpo, Seq(u, v, w))).get
+  u (ForallLeftBlock(_, A, Seq(u, v, w)))
+  u (ForallRightBlock(_, Tpo, Seq(u, v, w)))
+  qed)
 
-  val Some(e) = VeriT.getExpansionSequent(A0 +: Sequent() :+ T0)
-
-  (ProofBuilder
-    c ExpansionProofToLK(e)
-    u (ForallLeftBlock(_, A, Seq(u, v, w)))
-    u (ForallRightBlock(_, Tpo, Seq(u, v, w)))
-    qed)
-}
-
-val antisymm = {
-  val C0 = instantiate(C, Seq(u, v))
-  val AS0 = instantiate(AS, Seq(u, v))
-
-  val Some(e) = VeriT.getExpansionSequent(C0 +: Sequent() :+ AS0)
-
-  (ProofBuilder
-    c ExpansionProofToLK(e)
-    u (ForallLeftBlock(_, C, Seq(u, v)))
-    u (ForallRightBlock(_, AS, Seq(u, v)))
-    qed)
-}
+val antisymm = (ProofBuilder
+  c VeriT.getLKProof(instantiate(C, Seq(u, v)) +: Sequent() :+ instantiate(AS, Seq(u, v))).get
+  u (ForallLeftBlock(_, C, Seq(u, v)))
+  u (ForallRightBlock(_, AS, Seq(u, v)))
+  qed)
 
 val lhs = ContractionMacroRule(AndRightRule(antisymm, AS, trans, Tpo))
 
