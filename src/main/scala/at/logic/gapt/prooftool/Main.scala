@@ -8,7 +8,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ SequentProof, HOLSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.eliminateDefinitions
 import at.logic.gapt.proofs.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
@@ -362,7 +362,7 @@ object Main extends SimpleSwingApplication {
   }
 
   // Used for ViewResolutionProof menu
-  def loadResolutionProof( proof: ( String, Proof[_] ) ) {
+  def loadResolutionProof( proof: ( String, SequentProof[_, _] ) ) {
     body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     updateLauncher( proof._1, proof._2, defaultFontSize )
     body.cursor = java.awt.Cursor.getDefaultCursor

@@ -2,7 +2,6 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
-import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 

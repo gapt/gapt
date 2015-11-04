@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.lkNew.{ lkOld2New, lkNew2Old }
-import at.logic.gapt.proofs.resolution.{ resNew2Old, ResolutionProof, RobinsonToLK }
+import at.logic.gapt.proofs.resolution.{ RobinsonToLK, ResolutionProof }
 import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import at.logic.gapt.proofs.lk.applySubstitution
 import at.logic.gapt.expr._
