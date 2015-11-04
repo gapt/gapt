@@ -6,7 +6,6 @@ import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.resolutionOld
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Suc }
-import at.logic.gapt.provers.atp.SearchDerivation
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.Logger
@@ -142,21 +141,6 @@ object fixDerivation extends Logger {
     case _ => None
   }
 
-  def tryDeriveViaSearchDerivation( to: HOLClause, from: Seq[HOLClause] ) = {
-    val cls_sequent = HOLClause( to.negative.map( _.asInstanceOf[HOLFormula] ), to.positive.map( _.asInstanceOf[HOLFormula] ) )
-    SearchDerivation( from, cls_sequent, true ) flatMap { d =>
-      val ret = d.asInstanceOf[resolutionOld.robinson.RobinsonResolutionProof]
-      if ( ret.root.toHOLSequent != to ) {
-        //        val ret_seq = HOLClause( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) )
-        // FIXME: replace InitialClause(ret_seq) by ret in the following proof
-        // tryDeriveByFactor( to, ret_seq )
-        None
-      } else {
-        Some( resOld2New( ret ) )
-      }
-    }
-  }
-
   def tryDeriveViaResolution( to: HOLClause, from: Seq[HOLClause] ) =
     if ( Prover9 isInstalled )
       findDerivationViaResolution( to, from.map { seq => HOLClause( seq.antecedent, seq.succedent ) }.toSet, Prover9 )
@@ -171,7 +155,6 @@ object fixDerivation extends Logger {
       tryDeriveTrivial( cls, cs ).
         orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
         orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
-        // orElse( tryDeriveViaSearchDerivation( cls, cs ) ).  // runs easily out of memory
         orElse( tryDeriveViaResolution( cls, cs ) ).
         getOrElse {
           warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )

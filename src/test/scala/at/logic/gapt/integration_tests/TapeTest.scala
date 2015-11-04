@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lkNew
 import at.logic.gapt.proofs.lkNew.{ lkOld2New, lkNew2Old }
-import at.logic.gapt.proofs.resolution.RobinsonToLK
+import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, RobinsonToLK }
 import at.logic.gapt.proofs.resolutionOld._
 
 import at.logic.gapt.proofs.lk.base._
@@ -14,10 +14,6 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 
-import at.logic.gapt.provers.atp.Prover
-import at.logic.gapt.provers.atp.commands.Prover9InitCommand
-import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
-import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
 import at.logic.gapt.provers.prover9._
 
 import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
@@ -110,14 +106,7 @@ class TapeTest extends Specification {
       val s = StructCreators.extract( proof_sk )
       val cs = StandardClauseSet.transformStructToClauseSet( s )
 
-      object MyProver extends Prover[OccClause]
-
-      def getRefutation( ls: Iterable[HOLSequent] ): Boolean = MyProver.refute( Stream( SetTargetClause( HOLSequent( List(), List() ) ), Prover9InitCommand( ls ), SetStreamCommand() ) ).next must beLike {
-        case Some( a ) if a.asInstanceOf[ResolutionProof[OccClause]].root syntacticMultisetEquals ( HOLSequent( List(), List() ) ) => ok
-        case _ => ko
-      }
-
-      getRefutation( cs.map( _.toHOLSequent ) ) must beTrue
+      Prover9 getRobinsonProof cs.map( _.toHOLClause ) must beSome
     }
 
     "create an acnf of the tape proof via ground proof" in {

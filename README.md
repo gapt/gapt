@@ -19,7 +19,7 @@ See https://github.com/gapt/gapt/wiki/External-software for details.
 
 Compilation and running:
 * sbt assembly
-* The scripts cli.sh, gui.sh, atp.sh look for the assembled jar and start the
+* The scripts cli.sh, gui.sh look for the assembled jar and start the
    respective interface of gapt.
 
 See https://github.com/gapt/gapt/wiki/Compiling-and-running-from-source for
