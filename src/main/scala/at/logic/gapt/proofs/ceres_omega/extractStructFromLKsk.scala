@@ -49,6 +49,7 @@ object extractStructFromLKsk {
         apply( p.subProof1, p.occConnectors( 0 ).parents( isCutAncestor ).map( _ head ), cutFormulaPred ),
         apply( p.subProof2, p.occConnectors( 1 ).parents( isCutAncestor ).map( _ head ), cutFormulaPred ),
         Nil
+      )
   }
 
 }

@@ -1,8 +1,12 @@
 package at.logic.gapt.proofs.lkskNew
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import LKskProof._
+import at.logic.gapt.proofs.lkNew.LKRuleCreationException
+
+import scala.collection.mutable
 
 object LKskProof {
   type Label = Seq[LambdaExpression]
@@ -16,6 +20,49 @@ trait LKskProof extends SequentProof[LabelledFormula, LKskProof] with ContextRul
 
   protected def requireEq[T]( a: T, b: T ) =
     require( a == b, s"$a == $b" )
+
+  /**
+   * Checks whether indices are in the right place and premise is defined at all of them.
+   *
+   * @param premise The sequent to be checked.
+   * @param antecedentIndices Indices that should be in the antecedent.
+   * @param succedentIndices Indices that should be in the succedent.
+   */
+  protected def validateIndices( premise: LabelledSequent, antecedentIndices: Seq[SequentIndex], succedentIndices: Seq[SequentIndex] ): Unit = {
+    val antSet = mutable.HashSet[SequentIndex]()
+    val sucSet = mutable.HashSet[SequentIndex]()
+
+    for ( i <- antecedentIndices ) i match {
+      case Ant( _ ) =>
+
+        if ( !premise.isDefinedAt( i ) )
+          throw LKRuleCreationException( s"Sequent $premise is not defined at index $i." )
+
+        if ( antSet contains i )
+          throw LKRuleCreationException( s"Duplicate index $i for sequent $premise." )
+
+        antSet += i
+
+      case Suc( _ ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+    }
+
+    for ( i <- succedentIndices ) i match {
+      case Suc( _ ) =>
+
+        if ( !premise.isDefinedAt( i ) )
+          throw LKRuleCreationException( s"Sequent $premise is not defined at index $i." )
+
+        if ( sucSet contains i )
+          throw LKRuleCreationException( s"Duplicate index $i for sequent $premise." )
+
+        sucSet += i
+
+      case Ant( _ ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+    }
+  }
+
+  private def LKRuleCreationException( message: String ): LKRuleCreationException = new LKRuleCreationException( longName, message )
+
 }
 
 trait InitialSequent extends LKskProof {
@@ -23,8 +70,17 @@ trait InitialSequent extends LKskProof {
   def auxIndices = Seq()
 }
 
-case class Axiom( antLabel: Label, sucLabel: Label, atom: HOLAtom ) extends InitialSequent {
+case class Axiom( antLabel: Label, sucLabel: Label, atom: HOLFormula ) extends InitialSequent {
   def mainFormulaSequent = ( antLabel -> atom ) +: Sequent() :+ ( sucLabel -> atom )
+}
+
+case class EquationalAxiom( label: Label, atom: HOLAtom ) extends InitialSequent {
+  require(
+    atom match { case Eq( _, _ ) => true; case _ => false },
+    "An equational axiom needs to be constructed from an equation!"
+  )
+
+  def mainFormulaSequent = Sequent() :+ ( label -> atom )
 }
 
 case class Reflexivity( label: Label, term: LambdaExpression ) extends InitialSequent {
@@ -46,6 +102,7 @@ case class TheoryAxiom( sequent: Sequent[LabelledFormula] ) extends InitialSeque
 trait UnaryRule extends LKskProof {
   def subProof: LKskProof
   def immediateSubProofs = Seq( subProof )
+  def premise = subProof.conclusion
 }
 
 case class WeakeningLeft( subProof: LKskProof, weakLabelledFormula: LabelledFormula ) extends UnaryRule {
@@ -211,3 +268,4 @@ case class ExLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, eigen
   lazy val newFormulas = mainFormula +: Sequent()
   def auxIndices = Seq( Seq( aux ) )
 }
+

@@ -5,7 +5,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.proofs.ceres.clauseSets.SimplifyStruct
 import at.logic.gapt.proofs.lk.subsumedClausesRemovalHOL
-import at.logic.gapt.proofs.lkskNew.LKskProof.{LabelledSequent, Label}
+import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, Label }
 import at.logic.gapt.proofs.ceres_omega.clauseSets.StandardClauseSet
 
 import scala.collection.mutable
@@ -23,7 +23,7 @@ object CharacteristicSequentSet {
     prunes( l )
 
   def prunes( l: List[LabelledSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) = {
-    prunefs( l map (_.map( _._2 )) )
+    prunefs( l map ( _.map( _._2 ) ) )
   }
 
   def prunefs( l: List[HOLSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) = {

@@ -88,7 +88,7 @@ case class RalFactor( subProof: RalProof, idx1: SequentIndex, idx2: SequentIndex
   override def immediateSubProofs = Seq( subProof )
 }
 
-case class RalPara( subProof1: RalProof, equation: SequentIndex,
+case class RalPara( subProof1: RalProof, equation: Ant,
                     subProof2: RalProof, modulant: SequentIndex,
                     positions: Seq[LambdaPosition], leftToRight: Boolean ) extends RalProof {
   require( equation isSuc )

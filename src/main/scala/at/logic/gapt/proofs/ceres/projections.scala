@@ -157,8 +157,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   //implication does not weaken the second argument, we need two occs
   def handleUnaryRule[T]( proof: LKProof, p: LKProof, a1: SequentIndex, a2: SequentIndex,
-                       constructor: ( LKProof, SequentIndex, SequentIndex ) => LKProof,
-                       pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+                          constructor: ( LKProof, SequentIndex, SequentIndex ) => LKProof,
+                          pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {

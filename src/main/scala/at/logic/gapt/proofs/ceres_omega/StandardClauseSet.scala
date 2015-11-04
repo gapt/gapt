@@ -5,9 +5,8 @@
 
 package at.logic.gapt.proofs.ceres_omega.clauseSets
 
-
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.lkskNew.LKskProof.{LabelledFormula, LabelledSequent, Label}
+import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledFormula, LabelledSequent, Label }
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.logging.Logger
 import scala.annotation.tailrec
@@ -20,7 +19,6 @@ import at.logic.gapt.proofs.ceres._
  */
 object SimpleStandardClauseSet extends SimpleStandardClauseSet
 
-
 /**
  * Should calculate the same clause set as [[StandardClauseSet]], but without the intermediate representation of a
  * normalized struct. Does not work for Schema, for CERESomega only if all labels are empty (clauses are correct,
@@ -28,11 +26,11 @@ object SimpleStandardClauseSet extends SimpleStandardClauseSet
  */
 class SimpleStandardClauseSet {
   def apply( struct: Struct[Label] ): Set[LabelledSequent] = struct match {
-    case A( fo, label :: Nil )                     =>
-      val x : LabelledFormula = (label, fo)
+    case A( fo, label :: Nil ) =>
+      val x: LabelledFormula = ( label, fo )
       Set( Sequent( Nil, List( x ) ) )
-    case Dual( A( fo, label::Nil ) )             =>
-      val x : LabelledFormula = (label, fo)
+    case Dual( A( fo, label :: Nil ) ) =>
+      val x: LabelledFormula = ( label, fo )
       Set( Sequent( List( x ), Nil ) )
     case EmptyPlusJunction()            => Set()
     case EmptyTimesJunction()           => Set( Sequent( Nil, Nil ) )
@@ -54,7 +52,7 @@ class SimpleStandardClauseSet {
   }
 
   /* Like compose, but does not duplicate common terms */
-  private def delta_compose( fs1: LabelledSequent, fs2: LabelledSequent ) = Sequent (
+  private def delta_compose( fs1: LabelledSequent, fs2: LabelledSequent ) = Sequent(
     fs1.antecedent ++ fs2.antecedent.diff( fs1.antecedent ),
     fs1.succedent ++ fs2.succedent.diff( fs1.succedent )
   )
@@ -70,8 +68,8 @@ object StandardClauseSet extends Logger {
   override def loggerName = "CeresLogger"
 
   def normalize( struct: Struct[Label] ): Struct[Label] = struct match {
-    case s: A[Label]           => s
-    case s: Dual[Label]        => s
+    case s: A[Label]          => s
+    case s: Dual[Label]       => s
     case EmptyTimesJunction() => struct
     case EmptyPlusJunction()  => struct
     case Plus( s1, s2 )       => Plus( normalize( s1 ), normalize( s2 ) )
@@ -82,9 +80,9 @@ object StandardClauseSet extends Logger {
 
   @tailrec
   def transformCartesianProductToStruct[Data](
-                                               cp:  List[Tuple2[Struct[Data], Struct[Data]]],
-                                               acc: List[Struct[Data] => Struct[Data]]
-                                               ): Struct[Data] = cp match {
+    cp:  List[Tuple2[Struct[Data], Struct[Data]]],
+    acc: List[Struct[Data] => Struct[Data]]
+  ): Struct[Data] = cp match {
     case ( i, j ) :: Nil =>
       acc.reverse.foldLeft[Struct[Data]]( Times( i, j, Nil ) )( ( struct, fun ) => fun( struct ) )
     case ( i, j ) :: rest =>
@@ -164,8 +162,8 @@ object StandardClauseSet extends Logger {
       literals.foldLeft( List[LabelledFormula](), List[LabelledFormula]() )( ( pair, s ) => {
         val ( ns, ps ) = pair
         s match {
-          case Dual( A( f, label ::Nil ) ) => ( (label, f) :: ns, ps )
-          case A( f, label :: Nil )         => ( ns, (label, f) :: ps )
+          case Dual( A( f, label :: Nil ) ) => ( ( label, f ) :: ns, ps )
+          case A( f, label :: Nil )         => ( ns, ( label, f ) :: ps )
         }
       } )
 
