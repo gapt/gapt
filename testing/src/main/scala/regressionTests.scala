@@ -68,14 +68,15 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
 
-    ( CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers = true ), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
+    if ( isFOLPrenexSigma1( p.endSequent ) )
+      ( CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers = true ), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
 
-      if ( !containsEqualityReasoning( q ) )
-        ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
-      CERES( lkNew2Old( q ) ) --? "CERES (cut-intro)"
+        if ( !containsEqualityReasoning( q ) )
+          ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
+        CERES( lkNew2Old( q ) ) --? "CERES (cut-intro)"
 
-      VeriT.isValid( extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem validity (cut-intro)"
-    }
+        VeriT.isValid( extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem validity (cut-intro)"
+      }
 
     skolemize( p ) --? "skolemize"
   }
