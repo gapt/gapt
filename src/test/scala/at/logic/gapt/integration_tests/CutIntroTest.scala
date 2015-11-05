@@ -62,7 +62,7 @@ class CutIntroTest extends Specification {
 
       result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
 
-      quantRulesNumber( r_proof.get ) must_== grammar.size
+      quantRulesNumber( r_proof ) must_== grammar.size
     }
 
     "introduce two cuts into linear example proof with improveSolutionLK" in {
@@ -95,7 +95,7 @@ class CutIntroTest extends Specification {
 
       result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
 
-      quantRulesNumber( r_proof.get ) must_== grammar.size
+      quantRulesNumber( r_proof ) must_== grammar.size
     }
   }
 }
