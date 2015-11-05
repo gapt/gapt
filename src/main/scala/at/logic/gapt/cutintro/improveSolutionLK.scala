@@ -16,7 +16,9 @@ object improveSolutionLK {
    *
    * Maintains the invariant that the cut-formulas can be realized in an LK proof.
    */
-  def apply( ehs: ExtendedHerbrandSequent, prover: Prover, hasEquality: Boolean ): ExtendedHerbrandSequent = {
+  def apply( ehs: ExtendedHerbrandSequent, prover: Prover, hasEquality: Boolean,
+             forgetOne:    Boolean = false,
+             minimizeBack: Boolean = false ): ExtendedHerbrandSequent = {
     val qfCutFormulas = mutable.Seq( ( ehs.cutFormulas, ehs.sehs.eigenVariables ).zipped map { instantiate( _, _ ) }: _* )
 
     for ( i <- qfCutFormulas.indices.reverse ) {
@@ -28,14 +30,19 @@ object improveSolutionLK {
         case ( ev, instanceTerms ) =>
           for ( terms <- instanceTerms ) yield FOLSubstitution( ev zip terms )
       }
-      qfCutFormulas( i ) = improve( context, qfCutFormulas( i ), instances toSet, prover, hasEquality )
+      qfCutFormulas( i ) = improve( context, qfCutFormulas( i ), instances toSet, prover, hasEquality, forgetOne )
+    }
+
+    if ( minimizeBack && qfCutFormulas.size == 1 ) {
+      val context = ehs.prop ++ ehs.inst
+      qfCutFormulas( 0 ) = improveBack( context, qfCutFormulas( 0 ), prover )
     }
 
     ehs.copy( cutFormulas = ( ehs.sehs.eigenVariables, qfCutFormulas ).zipped map { All.Block( _, _ ) } )
   }
 
   /**
-   * Improves a formula with regard to its logical complexity under the constraint that the following sequent is valid:
+   * Improves a formula with regard to its logical complexity by taking consequences under the constraint that the following sequent is valid:
    *
    * instances(0)(formula) +: ... +: instances(n)(formula) +: context
    *
@@ -45,7 +52,7 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    * @param hasEquality  If set to true, use forgetful paramodulation in addition to resolution.
    */
-  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean ): FOLFormula = {
+  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula = {
     val isSolution = mutable.Map[Set[FOLClause], Boolean]()
 
     def checkSolution( cnf: Set[FOLClause] ): Unit =
@@ -55,6 +62,7 @@ object improveSolutionLK {
           isSolution( cnf ) = true
           forgetfulPropResolve( cnf ) foreach checkSolution
           if ( hasEquality ) forgetfulPropParam( cnf ) foreach checkSolution
+          if ( forgetOne ) for ( c <- cnf ) checkSolution( cnf - c )
         } else {
           isSolution( cnf ) = false
         }
@@ -64,6 +72,37 @@ object improveSolutionLK {
 
     val solutions = isSolution collect { case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) ) }
     solutions minBy { lcomp( _ ) }
+  }
+
+  /**
+   * Improves a formula with regard to its logical complexity by taking backwards consequences under the constraint that the following sequent is valid:
+   *
+   * context :+ formula
+   *
+   * @param context  A sequent.
+   * @param start  Existing solution of the constraint.
+   * @param prover  Prover to check the validity of the constraint.
+   */
+  private def improveBack( context: Sequent[FOLFormula], start: FOLFormula, prover: Prover ): FOLFormula =
+    simplify( And( CNFp.toClauseList( start ) map { improveBack( context, _, prover ).toImplication } ) )
+
+  private def improveBack( context: Sequent[FOLFormula], start: FOLClause, prover: Prover ): FOLClause = {
+    val isSolution = mutable.Map[FOLClause, Boolean]()
+
+    def checkSolution( clause: FOLClause ): Unit =
+      if ( !isSolution.contains( clause ) ) {
+        val condition = context :+ clause.toFormula
+        if ( prover isValid condition ) {
+          isSolution( clause ) = true
+          for ( a <- clause.indices ) checkSolution( clause delete a )
+        } else {
+          isSolution( clause ) = false
+        }
+      }
+
+    checkSolution( start )
+
+    isSolution collect { case ( clause, true ) => clause } minBy { _.size }
   }
 
 }
