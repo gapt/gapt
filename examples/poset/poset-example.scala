@@ -59,7 +59,7 @@ CutIntroduction.compressLKProof(p,
   method = new GrammarFindingMethod {
     override def findGrammars(lang: Set[FOLTerm]): Option[VectTratGrammar] = {
       Some(findMinimalVectGrammar(lang, Seq(3),
-        maxSATSolver = new ExternalMaxSATSolver("open-wbo", "-cpu-lim=302400", "-algorithm=1"),
+        maxSATSolver = new ExternalMaxSATSolver("open-wbo", "-cpu-lim=30", "-algorithm=1"),
         weight = _._1.size))
     }
 

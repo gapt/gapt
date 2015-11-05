@@ -1,0 +1,113 @@
+# Weighted MaxSAT approach
+
+Finds the following grammar of size 22 (within 30 seconds):
+
+Set(-{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(b,a),f(b,c),b), -{∀x.∀y.(x=y -> y=x)}_a1(c,b), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(b,a),f(f(b,c),a),f(b,f(c,a))), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(c,f(c,b),f(b,c)), -{∀x1.∀x2.∀y1.∀y2.((x1=y1 & x2=y2) -> f(x1,x2)=f(y1,y2))}_a2(b,f(c,a),b,c), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(b,a),f(b,f(c,a)),f(b,c)), -{∀x.∀y.(x=y -> y=x)}_a1(f(f(c,a),b),f(c,b)), -{∀x.x=x}_a3(b), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(b,f(a,b),a), -{∀x.∀y.f(x,y)=f(y,x)}_a5(b,c), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(b,f(b,a),f(a,b)), {(((f(a,b)=a & f(b,c)=b) & f(c,a)=c) -> (a=b & b=c))}_s0, -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(b,c,a), -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(c,a,b), -{∀x1.∀x2.∀y1.∀y2.((x1=y1 & x2=y2) -> f(x1,x2)=f(y1,y2))}_a2(c,f(a,b),c,a), -{∀x.∀y.(x=y -> y=x)}_a1(f(b,a),b), -{∀x1.∀x2.∀y1.∀y2.((x1=y1 & x2=y2) -> f(x1,x2)=f(y1,y2))}_a2(f(c,a),b,c,b), -{∀x.x=x}_a3(a), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(c,b),f(c,f(a,b)),f(c,a)), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(c,f(b,c),b), -{∀x.∀y.f(x,y)=f(y,x)}_a5(a,b), -{∀x1.∀x2.∀y1.∀y2.((x1=y1 & x2=y2) -> f(x1,x2)=f(y1,y2))}_a2(f(b,c),a,b,a), -{∀x.∀y.(x=y -> y=x)}_a1(f(b,c),f(c,b)), -{∀x.∀y.(x=y -> y=x)}_a1(f(a,b),f(b,a)), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(c,b),f(f(c,a),b),f(c,f(a,b))), -{∀x.∀y.(x=y -> y=x)}_a1(f(c,b),c), -{∀x.∀y.(x=y -> y=x)}_a1(f(f(b,c),a),f(b,a)), -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(c,b),f(c,a),c), -{∀x.x=x}_a3(c), -{∀x.∀y.(x=y -> y=x)}_a1(b,a))
+Total inferences in the input proof: 177
+Quantifier inferences in the input proof: 69
+End sequent: ∀x.∀y.∀z.((x=y & y=z) -> x=z), ∀x.∀y.(x=y -> y=x), ∀x1.∀x2.∀y1.∀y2.((x1=y1 & x2=y2) -> f(x1,x2)=f(y1,y2)), ∀x.x=x, ∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z)), ∀x.∀y.f(x,y)=f(y,x) :- (((f(a,b)=a & f(b,c)=b) & f(c,a)=c) -> (a=b & b=c))
+Size of term set: 30
+Smallest grammar of size 22:
+Axiom: (τ)
+Non-terminal vectors:
+  (τ)
+  (α_0_0, α_0_1, α_0_2)
+Productions:
+  τ -> -{∀x.x=x}_a3(α_0_2)
+
+  τ -> -{∀x.∀y.(x=y -> y=x)}_a1(f(f(α_0_2,α_0_0),α_0_1),f(α_0_2,α_0_1))
+
+  τ -> -{∀x.∀y.(x=y -> y=x)}_a1(f(α_0_0,α_0_1),α_0_0)
+
+  τ -> -{∀x.∀y.(x=y -> y=x)}_a1(f(α_0_1,α_0_2),f(α_0_2,α_0_1))
+
+  τ -> -{∀x.∀y.(x=y -> y=x)}_a1(α_0_2,α_0_1)
+
+  τ -> -{∀x.∀y.f(x,y)=f(y,x)}_a5(α_0_2,α_0_0)
+
+  τ -> -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(α_0_1,α_0_0),f(α_0_1,f(α_0_2,α_0_0)),f(α_0_1,α_0_2))
+
+  τ -> -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(α_0_1,α_0_0),f(α_0_1,α_0_2),α_0_1)
+
+  τ -> -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(f(α_0_2,α_0_1),f(f(α_0_2,α_0_0),α_0_1),f(α_0_2,f(α_0_0,α_0_1)))
+
+  τ -> -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(α_0_0,f(α_0_1,α_0_0),α_0_1)
+
+  τ -> -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(α_0_1,α_0_0,f(b,α_0_2))
+
+  τ -> -{∀x.∀y.∀z.((x=y & y=z) -> x=z)}_a0(α_0_2,f(α_0_2,α_0_1),f(α_0_1,α_0_2))
+
+  τ -> -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(c,a,b)
+
+  τ -> -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(α_0_2,α_0_0,α_0_1)
+
+  τ -> -{∀x1.∀x2.∀y1.∀y2.((x1=y1 & x2=y2) -> f(x1,x2)=f(y1,y2))}_a2(f(α_0_0,α_0_1),α_0_2,α_0_0,α_0_2)
+
+  τ -> -{∀x1.∀x2.∀y1.∀y2.((x1=y1 & x2=y2) -> f(x1,x2)=f(y1,y2))}_a2(α_0_1,f(α_0_2,α_0_0),α_0_1,α_0_2)
+
+  τ -> {(((f(a,b)=a & f(b,c)=b) & f(c,a)=c) -> (a=b & b=c))}_s0
+
+  α_0_0 -> a
+  α_0_1 -> b
+  α_0_2 -> c
+
+  α_0_0 -> b
+  α_0_1 -> a
+  α_0_2 -> f(c,a)
+
+  α_0_0 -> b
+  α_0_1 -> c
+  α_0_2 -> a
+
+  α_0_0 -> c
+  α_0_1 -> a
+  α_0_2 -> b
+
+  α_0_0 -> c
+  α_0_1 -> b
+  α_0_2 -> a
+
+
+# minimized solution
+
+(f(y,x)=y & x=f(y,x)) -> x=y
+f(f(z,x),y)=f(z,y) -> f(z,y)=f(z,f(x,y))
+(f(y,z)=f(z,y) & z=f(z,y)) -> z=f(y,z)
+(x=f(b,z) & y=x) -> y=f(b,z)
+(f(z,x)=z & f(y,z)=y & f(y,x)=f(y,f(z,x)) & y=y) -> f(y,x)=y
+z=y -> y=z
+f(x,y)=x -> x=f(x,y)
+(f(x,y)=x & z=z) -> f(f(x,y),z)=f(x,z)
+z=z
+f(z,x)=f(x,z)
+
+# minimized solution +forget-one
+
+(f(y,x)=y & x=f(y,x)) -> x=y
+f(f(z,x),y)=f(z,y) -> f(z,y)=f(z,f(x,y))
+(f(y,z)=f(z,y) & z=f(z,y)) -> z=f(y,z)
+(f(z,x)=z & f(y,z)=y & f(y,x)=f(y,f(z,x)) & y=y) -> f(y,x)=y
+z=y -> y=z
+f(x,y)=x -> x=f(x,y)
+(f(x,y)=x & z=z) -> f(f(x,y),z)=f(x,z)
+z=z
+f(z,x)=f(x,z)
+
+# minimized solution +forget-one +backwards-consequences
+
+anti-sym:
+(f(y,x)=y & x=f(y,x)) -> x=y
+
+transitivity:
+(f(z,x)=z & f(y,z)=y & f(y,x)=f(y,f(z,x)) & y=y) -> f(y,x)=y
+
+this might have simplified the transitivity if it had the right variables:
+z=z
+f(f(z,x),y)=f(z,y) -> f(z,y)=f(z,f(x,y))
+f(x,y)=x -> f(f(x,y),z)=f(x,z)
+
+other stuff:
+(f(y,z)=f(z,y) & z=f(z,y)) -> z=f(y,z)
+f(x,y)=x -> x=f(x,y)
+z=y -> y=z
+f(z,x)=f(x,z)
