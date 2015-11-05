@@ -107,9 +107,13 @@ object decompressQuantifiers {
 
   private def decompressWeak( f: HOLFormula, instances: Seq[( ExpansionTree, Seq[LambdaExpression] )] ): ExpansionTree = f match {
     case Ex( _, _ ) | All( _, _ ) =>
-      val groupedInstances = instances.groupBy( _._2.head ).toSeq
-      val newInstances = groupedInstances.map( p => ( p._1, decompressWeak( instantiate( f, p._1 ), p._2 ) ) ) // Result: newInstances is a list of elements of the form (t, E)
-      merge( ETWeakQuantifier( f, newInstances.map( p => ( p._2, p._1 ) ) ) )
+      val groupedInstances = instances.groupBy( _._2.head ).toSeq.map( p => ( p._1, p._2.map( q => ( q._1, q._2.tail ) ) ) )
+      val newInstances = for ( p <- groupedInstances ) yield {
+        val fNew = instantiate( f, p._1 )
+        val subDecompress = decompressWeak( fNew, p._2 )
+        ( p._1, subDecompress )
+      } // Result: newInstances is a list of elements of the form (t, E)
+      merge( ETWeakQuantifier( f, newInstances.map( _.swap ) ) )
 
     case _ => instances.head._1
   }
