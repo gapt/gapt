@@ -2,7 +2,7 @@ package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ CNFp, lcomp, instantiate }
+import at.logic.gapt.expr.hol.{ simplify, CNFp, lcomp, instantiate }
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.proofs.{ RichFOLSequent, FOLClause, Sequent }
 import at.logic.gapt.provers.Prover
@@ -62,7 +62,7 @@ object improveSolutionLK {
 
     checkSolution( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
 
-    val solutions = isSolution collect { case ( sol, true ) => sol } map { cnf => And( cnf map { _.toFormula } map { toImplications( _ ) } ) }
+    val solutions = isSolution collect { case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) ) }
     solutions minBy { lcomp( _ ) }
   }
 
