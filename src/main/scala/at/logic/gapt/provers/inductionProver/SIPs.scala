@@ -7,7 +7,7 @@ import at.logic.gapt.grammars.SipGrammar
 import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, ForgetfulResolve }
+import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, forgetfulPropParam }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.veriT.VeriT
@@ -372,22 +372,22 @@ object canonicalSolution {
 
 object findConseq extends Logger {
   import SimpleInductionProof._
-  type CNF = List[FOLClause]
+  type CNF = Set[FOLClause]
 
   def apply( S: SimpleInductionProof, n: Int, A: CNF, M: Set[CNF], forgetClauses: Boolean, prover: Prover ): Set[CNF] = {
     val num = Utils.numeral( n )
     val Gamma2n = FOLSubstitution( alpha, num )( S.Gamma2 )
 
     val newCNFs = if ( forgetClauses )
-      ForgetfulResolve( A ) union ForgetfulParamodulate( A ) union ForgetOne( A )
+      forgetfulPropResolve( A ) union forgetfulPropParam( A ) union ForgetOne( A )
     else
-      ForgetfulResolve( A ) union ForgetfulParamodulate( A )
+      forgetfulPropResolve( A ) union forgetfulPropParam( A )
 
     ( ( M + A ) /: newCNFs ) { ( acc: Set[CNF], F: CNF ) =>
       if ( acc contains F ) {
         acc
       } else {
-        val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( FOLClause.CNFtoFormula( F ) ) ) )
+        val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( And( F map { _.toFormula } ) ) ) )
         if ( prover.isValid( Fu ++: Gamma2n ) )
           apply( S, n, F, acc, forgetClauses, prover )
         else
@@ -397,12 +397,9 @@ object findConseq extends Logger {
   }
 
   def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false, prover: Prover = VeriT ): Set[CNF] =
-    apply( S, n, CNFp.toClauseList( A ), M, forgetClauses, prover )
+    apply( S, n, CNFp.toClauseList( A ).map { _.distinct.sortBy { _.hashCode } }.toSet, M, forgetClauses, prover )
 
-  def ForgetOne( A: CNF ) = A.indices map { i =>
-    val B = A.splitAt( i )
-    B._1 ++ B._2.tail
-  }
+  def ForgetOne( A: CNF ) = for ( a <- A ) yield A - a
 }
 
 object FindFormulaH extends Logger {
@@ -416,11 +413,11 @@ object FindFormulaH extends Logger {
   def apply( CSn: FOLFormula, S: SimpleInductionProof, n: Int, forgetClauses: Boolean, prover: Prover ): Option[FOLFormula] = {
     val num = Utils.numeral( n )
     debug( "Calling findConseq …" )
-    val M = findConseq( S, n, CSn, Set.empty[List[FOLClause]], forgetClauses, prover ).toList.sortBy( l => ( l map ( _.length ) ).sum )
+    val M = findConseq( S, n, CSn, Set[Set[FOLClause]](), forgetClauses, prover ).toList.sortBy( l => ( l map ( _.length ) ).sum )
     debug( s"FindConseq found ${M.size} consequences." )
 
     val proofs = M.view.flatMap { F =>
-      val C = FOLClause.CNFtoFormula( F )
+      val C = And( F map { _.toFormula } )
       val pos = C.find( num ).toSet // If I understand the paper correctly, an improvement can be made here
       val posSets = pos.subsets().toList.sortBy( _.size ).reverse
 

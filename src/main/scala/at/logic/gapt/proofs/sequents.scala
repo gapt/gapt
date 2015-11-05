@@ -474,19 +474,5 @@ object FOLClause {
     Clause( elements )
   }
 
-  /**
-   * transforms a list of clauses into the corresponding conjunction of disjunctions of literals.
-   */
-  def CNFtoFormula( cls: List[FOLClause] ): FOLFormula =
-    {
-      val nonEmptyClauses = cls.filter( c => c.negative.length > 0 || c.positive.length > 0 ).toList
-
-      if ( nonEmptyClauses.length == 0 ) { Top() }
-      else { And( nonEmptyClauses.map( c => Or( c.positive ++ c.negative.map( l => Neg( l ) ) ) ) ) }
-    }
-
-  //FIXME: Maybe find a better place for this
-  def NumberedCNFtoFormula( cls: List[Clause[( FOLAtom, Int )]] ) = CNFtoFormula( cls map { c => c map { p => p._1 } } )
-
   def unapply( clause: FOLClause ) = Some( clause.toTuple )
 }
