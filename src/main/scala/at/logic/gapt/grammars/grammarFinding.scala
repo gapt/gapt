@@ -238,12 +238,17 @@ object stableProofVectGrammar {
 }
 
 object minimizeVectGrammar {
-  def apply( g: VectTratGrammar, lang: Set[FOLTerm], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ): VectTratGrammar = {
+  def apply( g: VectTratGrammar, lang: Set[FOLTerm], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver,
+             weight: VectTratGrammar.Production => Int = _ => 1 ): VectTratGrammar = {
     val formula = new VectGrammarMinimizationFormula( g )
     val hard = metrics.time( "minform" ) { formula.coversLanguage( lang ) }
     metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
     val atomsInHard = atoms( hard )
-    val soft = g.productions map formula.vectProductionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
+    val soft = for {
+      p <- g.productions
+      atom = formula vectProductionIsIncluded p
+      if atomsInHard contains atom
+    } yield -atom -> weight( p )
     metrics.time( "maxsat" ) { maxSATSolver.solve( hard, soft ) } match {
       case Some( interp ) => VectTratGrammar( g.axiom, g.nonTerminals,
         g.productions filter { p => interp.interpret( formula.vectProductionIsIncluded( p ) ) } )
@@ -253,7 +258,8 @@ object minimizeVectGrammar {
 }
 
 object findMinimalVectGrammar {
-  def apply( lang: Set[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ) = {
+  def apply( lang: Set[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver,
+             weight: VectTratGrammar.Production => Int = _ => 1 ) = {
     val polynomialSizedCoveringGrammar = metrics.time( "stabgrammar" ) { stableProofVectGrammar( lang, aritiesOfNonTerminals ) }
     metrics.value( "stabgrammar", polynomialSizedCoveringGrammar.size )
     minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )

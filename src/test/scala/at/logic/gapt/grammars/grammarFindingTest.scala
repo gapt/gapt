@@ -200,6 +200,24 @@ class GrammarFindingTest extends Specification with SatMatchers {
     }
   }
 
+  "minimizeVectGrammar" should {
+    "take weighting into account" in {
+      val g = vtg(
+        Seq( "x", "y" ),
+        Seq( "x->f(c)" ),
+        Seq( "x->f(y)" ),
+        Seq( "y->c" )
+      )
+      val minG = minimizeVectGrammar( g, Set( "f(c)" ) map parseTerm,
+        weight = prod => if ( prod == List( parseProduction( "x->f(c)" ) ).unzip ) 3 else 1 )
+      minG must_== vtg(
+        Seq( "x", "y" ),
+        Seq( "x->f(y)" ),
+        Seq( "y->c" )
+      )
+    }
+  }
+
   "findMinimalGrammar" should {
     "find covering grammar of minimal size" in {
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" )
