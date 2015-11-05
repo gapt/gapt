@@ -1,9 +1,10 @@
 import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.grammars.{findMinimalVectGrammar, VectTratGrammar}
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.expr._
-import at.logic.gapt.cutintro.{MaxSATMethod, CutIntroduction}
+import at.logic.gapt.cutintro.{GrammarFindingMethod, MaxSATMethod, CutIntroduction}
 import at.logic.gapt.provers.maxsat.ExternalMaxSATSolver
 import at.logic.gapt.provers.veriT.VeriT
 
@@ -54,7 +55,14 @@ val p = ReductiveCutElimination(pwc)
 val (terms, encoding) = FOLInstanceTermEncoding(p)
 println(terms)
 
-// This does not work, even running it for 2 days produces only a grammar of size 22.
-if (false) CutIntroduction.compressLKProof(p,
-  method = MaxSATMethod(new ExternalMaxSATSolver("open-wbo", "-cpu-lim=30", "-algorithm=1"), 3),
+CutIntroduction.compressLKProof(p,
+  method = new GrammarFindingMethod {
+    override def findGrammars(lang: Set[FOLTerm]): Option[VectTratGrammar] = {
+      Some(findMinimalVectGrammar(lang, Seq(3),
+        maxSATSolver = new ExternalMaxSATSolver("open-wbo", "-cpu-lim=302400", "-algorithm=1"),
+        weight = _._1.size))
+    }
+
+    override def name = "wmaxsat_3"
+  },
   verbose = true)
