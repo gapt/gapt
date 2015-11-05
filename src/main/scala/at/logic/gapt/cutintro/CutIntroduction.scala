@@ -1,7 +1,7 @@
 package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.fol.{ isFOLPrenexSigma1, FOLSubstitution }
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs._
@@ -228,6 +228,10 @@ object CutIntroduction extends Logger {
     compressToLK( ep, hasEquality, method, verbose )
 
   def compressToEHS( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[ExtendedHerbrandSequent] = {
+    require(
+      isFOLPrenexSigma1( toShallow( ep ) ),
+      "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
+    )
 
     val prover = if ( hasEquality ) EquationalProver else BasicProver
 
