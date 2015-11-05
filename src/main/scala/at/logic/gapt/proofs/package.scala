@@ -8,7 +8,6 @@ package object proofs {
 
   implicit class RichFormulaSequent( val sequent: Sequent[HOLFormula] ) {
     def formulas = sequent.elements
-    def polarizedFormulas = sequent.polarizedElements
 
     /**
      * Interpretation of the sequent as a formula.
@@ -42,7 +41,5 @@ package object proofs {
   implicit class RichClause[+A]( val clause: Clause[A] ) {
     def negative = clause.antecedent
     def positive = clause.succedent
-
-    def literals = ( negative map { f => ( f, false ) } ) ++ ( positive map { f => ( f, true ) } )
   }
 }
