@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLSubstitution }
 import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.expr.hol.{ toNNF, lcomp, simplify }
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
+import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.utils.logging.Logger
 
 object SipGrammar {
@@ -124,7 +124,7 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
 }
 
 object minimizeSipGrammar extends Logger {
-  def apply( g: SipGrammar, langs: Seq[stableSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ): SipGrammar = {
+  def apply( g: SipGrammar, langs: Seq[stableSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
@@ -140,7 +140,7 @@ object minimizeSipGrammar extends Logger {
 }
 
 object findMinimalSipGrammar {
-  def apply( langs: Seq[stableSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
+  def apply( langs: Seq[stableSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ) = {
     val polynomialSizedCoveringGrammar = stableSipGrammar( langs )
     minimizeSipGrammar( polynomialSizedCoveringGrammar, langs, maxSATSolver )
   }

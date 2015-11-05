@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
 import at.logic.gapt.grammars.SipGrammar._
-import at.logic.gapt.provers.maxsat.MaxSat4j
 import org.specs2.mutable._
 
 class SipTests extends Specification {

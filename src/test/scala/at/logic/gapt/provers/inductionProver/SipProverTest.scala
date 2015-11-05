@@ -8,7 +8,6 @@ import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionSe
 import at.logic.gapt.proofs.lkNew.LKProver
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import SimpleInductionProof._
-import at.logic.gapt.provers.maxsat.MaxSat4j
 import at.logic.gapt.provers.sat.Sat4j
 import org.specs2.mutable._
 
@@ -33,8 +32,7 @@ class SipProverTest extends Specification {
 
     val sipProver = new SipProver(
       quasiTautProver = tautP,
-      solutionFinder = new HeuristicSolutionFinder( 1, prover = tautP ),
-      maxSATSolver = new MaxSat4j
+      solutionFinder = new HeuristicSolutionFinder( 1, prover = tautP )
     )
 
     val Some( sip ) = sipProver.getSimpleInductionProof( endSequent, ( 0 until 5 ).map { n => n -> instanceProof( n ) } )
