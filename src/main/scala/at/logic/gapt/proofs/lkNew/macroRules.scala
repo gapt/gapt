@@ -961,7 +961,7 @@ object WeakeningContractionMacroRule extends ConvenienceConstructor( "WeakeningC
         throw LKRuleCreationException( "Cannot erase formula occurrences." )
 
       if ( n > nCurrent ) {
-        val ( subProof_, subConnector_ ) = WeakeningLeftMacroRule.withOccConnector( acc._1, f, n - nCurrent )
+        val ( subProof_, subConnector_ ) = WeakeningLeftMacroRule.withOccConnector( acc._1, f, n )
         ( subProof_, subConnector_ * acc._2 )
       } else if ( n == nCurrent )
         acc
@@ -978,7 +978,7 @@ object WeakeningContractionMacroRule extends ConvenienceConstructor( "WeakeningC
         throw LKRuleCreationException( "Cannot erase formula occurrences." )
 
       if ( n > nCurrent ) {
-        val ( subProof_, subConnector_ ) = WeakeningRightMacroRule.withOccConnector( acc._1, f, n - nCurrent )
+        val ( subProof_, subConnector_ ) = WeakeningRightMacroRule.withOccConnector( acc._1, f, n )
         ( subProof_, subConnector_ * acc._2 )
       } else if ( n == nCurrent )
         acc

@@ -1420,4 +1420,13 @@ class LKNewTest extends Specification {
     }
   }
 
+  "weakening and contraction macro rules" should {
+    "reach a sequent" in {
+      val a = FOLAtom( "a" )
+
+      val desiredES = a +: a +: Sequent() :+ a :+ a
+      WeakeningContractionMacroRule( LogicalAxiom( a ), desiredES, strict = true ).endSequent must_== desiredES
+    }
+  }
+
 }
