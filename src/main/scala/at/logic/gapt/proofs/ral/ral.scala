@@ -7,7 +7,7 @@ import at.logic.gapt.proofs._
 import RalProof._
 
 object RalProof {
-  type Label = Set[LambdaExpression]
+  type Label = Seq[LambdaExpression]
 }
 
 trait RalProof extends SequentProof[( Label, HOLFormula ), RalProof] {
@@ -88,7 +88,7 @@ case class RalFactor( subProof: RalProof, idx1: SequentIndex, idx2: SequentIndex
   override def immediateSubProofs = Seq( subProof )
 }
 
-case class RalPara( subProof1: RalProof, equation: Ant,
+case class RalPara( subProof1: RalProof, equation: Suc,
                     subProof2: RalProof, modulant: SequentIndex,
                     positions: Seq[LambdaPosition], leftToRight: Boolean ) extends RalProof {
   require( equation isSuc )
@@ -154,7 +154,7 @@ case class RalAllT( subProof: RalProof, idx: SequentIndex, eigenVariable: Var ) 
   lazy val App( ForallC( _ ), sub ) = subProof.formulas( idx )
 
   override val newLabelledFormulas = Sequent() :+
-    ( subProof.labels( idx ) + eigenVariable ) ->
+    ( eigenVariable +: subProof.labels( idx ) ) ->
     BetaReduction.betaNormalize( App( sub, eigenVariable ).asInstanceOf[HOLFormula] )
 }
 
@@ -171,7 +171,7 @@ case class RalExF( subProof: RalProof, idx: SequentIndex, eigenVariable: Var ) e
   lazy val App( ExistsC( _ ), sub ) = subProof.formulas( idx )
 
   override val newLabelledFormulas =
-    ( ( subProof.labels( idx ) + eigenVariable ) ->
+    (( eigenVariable +: subProof.labels( idx )  ) ->
       BetaReduction.betaNormalize( App( sub, eigenVariable ).asInstanceOf[HOLFormula] ) ) +: Sequent()
 }
 
