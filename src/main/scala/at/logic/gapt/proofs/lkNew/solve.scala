@@ -79,7 +79,7 @@ object solve extends Logger {
     // of the second.
     if ( SolveUtils.isAxiom( seq ) ) {
       val ( f, rest ) = SolveUtils.getAxiomfromSeq( seq )
-      Some( Axiom( f :: Nil, f :: Nil ) )
+      Some( WeakeningMacroRule( Axiom( f :: Nil, f :: Nil ), f +: rest :+ f ) )
     } else if ( SolveUtils.findNonschematicAxiom( seq ).isDefined ) {
       val Some( ( f, g ) ) = SolveUtils.findNonschematicAxiom( seq )
       Some( AtomicExpansion( HOLSequent( f :: Nil, g :: Nil ) ) )
@@ -170,26 +170,17 @@ object solve extends Logger {
             proof )
       }
 
-      case And( f1, f2 ) =>
-        val p_ant = {
-          val antTmp = if ( rest.antecedent.contains( f1 ) ) rest.antecedent else f1 +: rest.antecedent
-          if ( antTmp.diff( Seq( f1 ) ).contains( f2 ) ) antTmp else f2 +: antTmp
-        }
+      case And( f1, f2 ) => {
+        val f1_opt = if ( rest.antecedent.contains( f1 ) ) Nil else f1 :: Nil
+        val f2_opt = if ( ( f1_opt ++ rest.antecedent ).contains( f2 ) ) Nil else f2 :: Nil
+        val p_ant = f1_opt ++ f2_opt ++ rest.antecedent
         val p_suc = rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        for ( proof <- prove( premise, nextProofStrategies( 0 ) ) ) yield {
-          val infer_on_f1 = proof.endSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 )
-          val infer_on_f2 = proof.endSequent.antecedent.contains( f2 ) && !rest.antecedent.contains( f2 )
-
-          if ( infer_on_f1 || infer_on_f2 ) { // need to infer main formula
-            val proof1 = if ( !infer_on_f1 ) WeakeningLeftRule( proof, f1 ) else proof
-            val proof2 = if ( !infer_on_f2 ) WeakeningLeftRule( proof1, f2 ) else proof1
-            AndLeftRule( proof2, f1, f2 )
-          } else {
-            proof
-          }
-        }
+        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
+          AndLeftMacroRule( proof, f1, f2 )
+        } )
+      }
 
       // Binary Rules
 
@@ -403,26 +394,17 @@ object solve extends Logger {
         } )
       }
 
-      case Or( f1, f2 ) =>
+      case Or( f1, f2 ) => {
+        val f1_opt = if ( rest.succedent.contains( f1 ) ) Nil else f1 :: Nil
+        val f2_opt = if ( ( f1_opt ++ rest.succedent ).contains( f2 ) ) Nil else f2 :: Nil
         val p_ant = rest.antecedent
-        val p_suc = {
-          val sucTmp = if ( rest.succedent.contains( f1 ) ) rest.succedent else f1 +: rest.succedent
-          if ( sucTmp.diff( Seq( f1 ) ).contains( f2 ) ) sucTmp else f2 +: sucTmp
-        }
+        val p_suc = f1_opt ++ f2_opt ++ rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        for ( proof <- prove( premise, nextProofStrategies( 0 ) ) ) yield {
-          val infer_on_f1 = proof.endSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 )
-          val infer_on_f2 = proof.endSequent.succedent.contains( f2 ) && !rest.succedent.contains( f2 )
-
-          if ( infer_on_f1 || infer_on_f2 ) { // need to infer main formula
-            val proof1 = if ( !infer_on_f1 ) WeakeningRightRule( proof, f1 ) else proof
-            val proof2 = if ( !infer_on_f2 ) WeakeningRightRule( proof1, f2 ) else proof1
-            OrRightRule( proof2, f1, f2 )
-          } else {
-            proof
-          }
-        }
+        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
+          OrRightMacroRule( proof, f1, f2 )
+        } )
+      }
 
       // Binary Rules
 
