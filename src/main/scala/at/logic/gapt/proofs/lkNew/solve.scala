@@ -79,7 +79,7 @@ object solve extends Logger {
     // of the second.
     if ( SolveUtils.isAxiom( seq ) ) {
       val ( f, rest ) = SolveUtils.getAxiomfromSeq( seq )
-      Some( WeakeningMacroRule( Axiom( f :: Nil, f :: Nil ), f +: rest :+ f ) )
+      Some( Axiom( f :: Nil, f :: Nil ) )
     } else if ( SolveUtils.findNonschematicAxiom( seq ).isDefined ) {
       val Some( ( f, g ) ) = SolveUtils.findNonschematicAxiom( seq )
       Some( AtomicExpansion( HOLSequent( f :: Nil, g :: Nil ) ) )
