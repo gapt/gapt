@@ -1,8 +1,10 @@
 package at.logic.gapt.cutintro
 
+import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ isFOLPrenexSigma1, FOLSubstitution }
 import at.logic.gapt.expr.hol._
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, _ }
@@ -15,6 +17,7 @@ import at.logic.gapt.provers.eqProver._
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.{ metrics, Logger }
+import at.logic.gapt.utils.runProcess
 
 class CutIntroException( msg: String ) extends Exception( msg )
 class CutIntroNonCoveringGrammarException( grammar: VectTratGrammar, term: FOLTerm )
@@ -51,6 +54,33 @@ case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extend
 object MaxSATMethod {
   def apply( nonTerminalLengths: Int* ): MaxSATMethod =
     MaxSATMethod( bestAvailableMaxSatSolver, nonTerminalLengths: _* )
+}
+
+case class ReforestMethod( command: Seq[String] = Seq( "reforest" ) ) extends GrammarFindingMethod {
+  def findRecSchem( lang: Set[FOLTerm] ): RecursionScheme = {
+    val renaming = for ( ( c, i ) <- constants( lang ).zipWithIndex ) yield c -> FOLFunctionHead( s"f$i", arity( c.exptype ) )
+
+    def toReforestInput( term: LambdaExpression ): String = term match {
+      case FOLFunction( f, Seq() ) => f
+      case FOLFunction( f, as )    => s"$f(${as map toReforestInput mkString ","})"
+    }
+
+    val input = lang map { TermReplacement( _, renaming.toMap[LambdaExpression, LambdaExpression] ) } map toReforestInput mkString "\n"
+    val output = runProcess( command, input )
+
+    import Prover9TermParserLadrStyle.parseTerm
+    val back = renaming.map { _.swap }.toMap[LambdaExpression, LambdaExpression]
+    val rules = output split "\n" map { line =>
+      val Array( lhs, rhs ) = line split "->"
+      Rule( parseTerm( lhs ), TermReplacement( parseTerm( rhs ), back ) )
+    }
+    RecursionScheme( FOLConst( "A0" ), rules toSet )
+  }
+
+  override def findGrammars( lang: Set[FOLTerm] ) =
+    Some( recSchemToVTRATG( findRecSchem( lang ) ) )
+
+  override def name = "reforest"
 }
 
 /**

@@ -52,6 +52,7 @@ object testCutIntro extends App {
   def getMethod( methodName: String ) = methodName match {
     case "1_dtable"    => DeltaTableMethod( manyQuantifiers = false )
     case "many_dtable" => DeltaTableMethod( manyQuantifiers = true )
+    case "reforest"    => ReforestMethod()
     case _ if methodName endsWith "_maxsat" =>
       val vectorSizes = methodName.dropRight( "_maxsat".length ).split( "_" ).map( _.toInt )
       MaxSATMethod( OpenWBO, vectorSizes: _* )
@@ -64,7 +65,7 @@ object testCutIntro extends App {
       glob( "testing/TSTP/leanCoP/**/*.s.out" ) ++
       Nil
 
-  lazy val methods = Seq( "1_dtable", "many_dtable", "1_maxsat", "1_1_maxsat", "2_maxsat", "2_2_maxsat" )
+  lazy val methods = Seq( "1_dtable", "many_dtable", "1_maxsat", "1_1_maxsat", "2_maxsat", "2_2_maxsat", "reforest" )
 
   lazy val experiments = for ( p <- proofs; m <- methods ) yield ( p, m )
 
