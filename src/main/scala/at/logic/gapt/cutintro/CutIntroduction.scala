@@ -58,7 +58,7 @@ object MaxSATMethod {
 
 case class ReforestMethod( command: Seq[String] = Seq( "reforest" ) ) extends GrammarFindingMethod {
   def findRecSchem( lang: Set[FOLTerm] ): RecursionScheme = {
-    val renaming = for ( ( c, i ) <- constants( lang ).zipWithIndex ) yield c -> FOLFunctionHead( s"f$i", arity( c.exptype ) )
+    val renaming = for ( ( c, i ) <- constants( lang ).zipWithIndex ) yield c -> FOLFunctionConst( s"f$i", arity( c.exptype ) )
 
     def toReforestInput( term: LambdaExpression ): String = term match {
       case FOLFunction( f, Seq() ) => f

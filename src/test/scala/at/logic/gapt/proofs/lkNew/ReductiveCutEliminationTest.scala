@@ -7,10 +7,8 @@ import org.specs2.mutable._
 
 class ReductiveCutEliminationTest extends Specification {
 
-  implicit def expr2atom( e: LambdaExpression ): HOLAtom = e.asInstanceOf[HOLAtom]
-
   "rank-reduction on strong quantifier rules" in {
-    val p = FOLAtomHead( "p", 1 )
+    val p = FOLAtomConst( "p", 1 )
     val q = FOLAtom( "q" )
     val x = FOLVar( "x" )
 

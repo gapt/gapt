@@ -16,15 +16,15 @@ class RecursionSchemeTest extends Specification with SatMatchers {
     "first-order" in {
       val Seq( x, y, y1, y2, y3, z ) = Seq( "x", "y", "y1", "y2", "y3", "z" ) map { FOLVar( _ ) }
       val Seq( c, d, e ) = Seq( "c", "d", "e" ) map { FOLConst( _ ) }
-      val q = FOLFunctionHead( "q", 1 )
-      val r = FOLFunctionHead( "r", 2 )
-      val f = FOLFunctionHead( "f", 2 )
-      val h = FOLFunctionHead( "h", 1 )
+      val q = FOLFunctionConst( "q", 1 )
+      val r = FOLFunctionConst( "r", 2 )
+      val f = FOLFunctionConst( "f", 2 )
+      val h = FOLFunctionConst( "h", 1 )
 
       val A = FOLConst( "A" )
 
       "work for non-terminals with higher arity" in {
-        val B = FOLFunctionHead( "B", 2 )
+        val B = FOLFunctionConst( "B", 2 )
         val rs = RecursionScheme(
           A,
           A -> B( c, d ),
@@ -36,7 +36,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
         doesNotCover( rs, r( d, d ) )
       }
       "undefined values" in {
-        val B = FOLFunctionHead( "B", 3 )
+        val B = FOLFunctionConst( "B", 3 )
         val rs = RecursionScheme(
           A,
           A -> B( c, d, d ), A -> B( d, c, e ),
@@ -47,8 +47,8 @@ class RecursionSchemeTest extends Specification with SatMatchers {
         doesNotCover( rs, r( d, d ) )
       }
       "not require unnecessary rules" in {
-        val B = FOLFunctionHead( "B", 1 )
-        val C = FOLFunctionHead( "C", 1 )
+        val B = FOLFunctionConst( "B", 1 )
+        val C = FOLFunctionConst( "C", 1 )
         val rs = RecursionScheme(
           A,
           A -> B( c ), A -> C( d ),
@@ -60,7 +60,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
         ( f( Set( A -> q( c ) ) ) & -f.ruleIncluded( Rule( A, C( d ) ) ) ) must beSat
       }
       "generate term with 2 rules" in {
-        val B = FOLFunctionHead( "B", 1 )
+        val B = FOLFunctionConst( "B", 1 )
         val rs = RecursionScheme( A, A -> B( c ), B( x ) -> h( x ) )
         covers( rs, h( c ) )
       }
@@ -70,18 +70,18 @@ class RecursionSchemeTest extends Specification with SatMatchers {
         ( formula( Set( A -> c ) ) & -formula.ruleIncluded( rs.rules.head ) ) must beUnsat
       }
       "do not derive terms from non-axioms" in {
-        val B = FOLFunctionHead( "B", 0 )
+        val B = FOLFunctionConst( "B", 0 )
         val rs = RecursionScheme( A, A -> c, B -> d )
         covers( rs, c )
         doesNotCover( rs, d )
       }
       "non-terminals without rules" in {
-        val B = FOLFunctionHead( "B", 2 )
-        val rs = RecursionScheme( A, Set( A, B ), A -> c )
+        val B = FOLFunctionConst( "B", 2 )
+        val rs = RecursionScheme( A, Set[Const]( A, B ), A -> c )
         covers( rs, c )
       }
       "unused non-terminals" in {
-        val B = FOLFunctionHead( "B", 2 )
+        val B = FOLFunctionConst( "B", 2 )
         val rs = RecursionScheme(
           A,
           B( y1, y2 ) -> f( y1, y2 ),
@@ -116,26 +116,26 @@ class RecursionSchemeTest extends Specification with SatMatchers {
   "templates" should {
     "minimize linear example" in {
       val o = FOLConst( "o" )
-      val s = FOLFunctionHead( "s", 1 )
-      val r = FOLFunctionHead( "r", 1 )
+      val s = FOLFunctionConst( "s", 1 )
+      val r = FOLFunctionConst( "r", 1 )
       val terms = 0 until ( 4 * 4 ) map { Stream.iterate[LambdaExpression]( o )( s( _ ) )( _ ) } map { r( _ ) }
 
       val A = FOLConst( "A" )
-      val B = FOLFunctionHead( "B", 1 )
+      val B = FOLFunctionConst( "B", 1 )
       val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
       val template = RecSchemTemplate( A, A -> y, A -> B( x ), B( x ) -> y )
-      val rs = template.findMinimalCover( terms map { A.asInstanceOf[FOLTerm] -> _.asInstanceOf[FOLTerm] } toSet )
+      val rs = template.findMinimalCover( terms map { A -> _ } toSet )
       covers( rs, terms: _* )
       rs.rules must haveSize( 4 + 4 )
     }
     "minimize two-sorted linear example" in {
       val o = FOLConst( "o" )
-      val s = FOLFunctionHead( "s", 1 )
-      val r = FOLAtomHead( "r", 1 )
+      val s = FOLFunctionConst( "s", 1 )
+      val r = FOLAtomConst( "r", 1 )
       val terms = 0 until ( 4 * 4 ) map { Stream.iterate[LambdaExpression]( o )( s( _ ) )( _ ) } map { r( _ ) }
 
-      val A = FOLAtomHead( "A", 0 )
-      val B = FOLAtomHead( "B", 1 )
+      val A = FOLAtomConst( "A", 0 )
+      val B = FOLAtomConst( "B", 1 )
       val x = FOLVar( "x" )
       val y = Var( "y", To )
       val template = RecSchemTemplate( A, A -> y, A -> B( x ), B( x ) -> y )

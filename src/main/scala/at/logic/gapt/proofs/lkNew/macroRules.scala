@@ -1432,7 +1432,7 @@ object NaturalNumberInductionRule extends ConvenienceConstructor( "NaturalNumber
     }
 
     val baseCase = InductionCase( leftSubProof, FOLConst( "0" ), Seq(), Seq(), aux1 )
-    val stepCase = InductionCase( rightSubProof, FOLFunctionHead( "s", 1 ), Seq( aux2 ), Seq( x ), aux3 )
+    val stepCase = InductionCase( rightSubProof, FOLFunctionConst( "s", 1 ), Seq( aux2 ), Seq( x ), aux3 )
 
     InductionRule( Seq( baseCase, stepCase ), mainFormula )
   }

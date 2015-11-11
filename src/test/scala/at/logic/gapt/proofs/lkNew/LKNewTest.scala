@@ -1394,7 +1394,7 @@ class LKNewTest extends Specification {
       println( InductionRule(
         Seq(
           InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
-          InductionCase( ax2, FOLFunctionHead( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+          InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
         ),
         All( x, Pxy )
       ) )

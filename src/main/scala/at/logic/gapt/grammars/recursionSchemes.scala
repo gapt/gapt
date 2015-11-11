@@ -194,7 +194,7 @@ object minimizeRecursionScheme extends Logger {
 }
 
 object SipRecSchem extends RecSchemTemplate(
-  FOLFunctionHead( "A", 1 ),
+  FOLFunctionConst( "A", 1 ),
   Set(
     FOLFunction( "A", FOLVar( "x" ) ) -> FOLVar( "t1" ),
     FOLFunction( "A", FOLVar( "x" ) ) ->

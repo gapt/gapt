@@ -81,7 +81,7 @@ object indexedOmegaVar {
 
 object foVar {
   def apply( name: String ) = FOLVar( name )
-  def unapply( t: SchemaExpression ) = FOLVar.unapply( t )
+  def unapply( t: FOLVar ) = FOLVar.unapply( t )
 }
 
 //indexed second-order variable of type: ind->i
@@ -96,7 +96,7 @@ object fo2Var {
 //first-order constant
 object foConst {
   def apply( name: String ) = FOLConst( name )
-  def unapply( t: SchemaExpression ) = FOLConst.unapply( t )
+  def unapply( t: FOLConst ) = FOLConst.unapply( t )
 }
 
 //first-order variable of type ω

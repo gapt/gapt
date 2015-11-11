@@ -8,6 +8,8 @@ import RalProof._
 
 object RalProof {
   type Label = Set[LambdaExpression]
+
+  def Label( instances: LambdaExpression* ) = Set( instances: _* )
 }
 
 trait RalProof extends SequentProof[( Label, HOLFormula ), RalProof] {

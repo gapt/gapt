@@ -11,7 +11,7 @@ val terms = (0 until N).map { i =>
 }.toSet
 
 val A = FOLConst("A")
-val B = FOLFunctionHead("B", 2)
+val B = FOLFunctionConst("B", 2)
 val Seq(x, y, z) = Seq("x", "y", "z") map { FOLVar(_) }
 val rst = RecSchemTemplate(A, Set(
   A -> B(x, y),

@@ -31,25 +31,13 @@ object FOLHeadType {
   }
 }
 
-private[expr] class FOLHead( ret: Ty ) {
-  def apply( sym: String, arity: Int ): Const =
-    Const( sym, FOLHeadType( ret, arity ) )
-  def unapply( e: LambdaExpression ): Option[( String, Int )] = e match {
-    case NonLogicalConstant( sym, FOLHeadType( `ret`, arity ) ) => Some( ( sym, arity ) )
-    case _ => None
-  }
-}
-
-object FOLAtomHead extends FOLHead( To )
-object FOLFunctionHead extends FOLHead( Ti )
-
 object FOLFunction {
   def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLTerm = FOLFunction( sym, args )
   def apply( sym: String, args: Seq[FOLTerm] ): FOLTerm =
-    Apps( FOLFunctionHead( sym, args.size ), args ).asInstanceOf[FOLTerm]
+    Apps( FOLFunctionConst( sym, args.size ), args ).asInstanceOf[FOLTerm]
 
-  def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( FOLFunctionHead( sym, _ ), args ) if e.isInstanceOf[FOLTerm] =>
+  def unapply( e: FOLTerm ): Option[( String, List[FOLTerm] )] = e match {
+    case Apps( FOLFunctionConst( sym, _ ), args ) =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
@@ -191,7 +179,7 @@ object Neg extends UnaryPropConnectiveHelper( NegC )
 
 class NullaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply(): PropFormula = c().asInstanceOf[PropFormula]
-  def unapply( formula: LambdaExpression ) = formula match {
+  def unapply( formula: PropFormula ) = formula match {
     case c() => true
     case _   => false
   }

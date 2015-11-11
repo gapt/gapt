@@ -6,9 +6,6 @@ import at.logic.gapt.proofs.lkNew._
 import org.specs2.mutable._
 
 class PCNFTest extends Specification {
-  implicit def expr2atom( expr: LambdaExpression ): HOLAtom = expr.asInstanceOf[HOLAtom]
-  implicit def sequent2hol( seq: Sequent[LambdaExpression] ): HOLSequent = seq map { _.asInstanceOf[HOLFormula] }
-
   def checkPCNF( sequent: HOLSequent, clause: HOLClause ) = {
     val projection = PCNF( sequent, clause )
     projection.endSequent isSubMultisetOf ( sequent ++ clause ) aka s"${projection.endSequent} isSubMultisetOf ($sequent ++ $clause)" must_== true
@@ -16,7 +13,7 @@ class PCNFTest extends Specification {
   }
 
   "PCNF" should {
-    val Seq( p, q, r, s ) = Seq( "P", "Q", "R", "S" ) map { FOLAtomHead( _, 1 ) }
+    val Seq( p, q, r, s ) = Seq( "P", "Q", "R", "S" ) map { FOLAtomConst( _, 1 ) }
     val a = FOLConst( "a" )
     "an atom Pa in the CNF(-s) where s is the sequent" in {
       "|- ¬Pa" in { checkPCNF( Sequent() :+ -p( a ), Clause() :+ p( a ) ) }

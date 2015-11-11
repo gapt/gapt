@@ -8,13 +8,13 @@ import at.logic.gapt.provers.prover9.Prover9
 
 object Pi2Pigeonhole {
   val zero = FOLConst( "0" )
-  val s = FOLFunctionHead( "s", 1 )
+  val s = FOLFunctionConst( "s", 1 )
   val one = s( zero )
 
-  val M = FOLFunctionHead( "M", 2 )
+  val M = FOLFunctionConst( "M", 2 )
 
-  val f = FOLFunctionHead( "f", 1 )
-  val lteq = FOLAtomHead( "<=", 2 )
+  val f = FOLFunctionConst( "f", 1 )
+  val lteq = FOLAtomConst( "<=", 2 )
 
   val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
 

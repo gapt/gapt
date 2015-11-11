@@ -7,7 +7,7 @@ import org.specs2.mutable._
 class LKskNewTest extends Specification {
   // Daniel's PhD thesis, p. 39
   "example 4.1.3" in {
-    val S = Const( "S", Ti -> To )
+    val S = FOLAtomConst( "S", 1 )
     val f = Const( "f", ( Ti -> To ) -> Ti )
     val x = FOLVar( "x" )
     val z = FOLVar( "z" )
@@ -17,7 +17,7 @@ class LKskNewTest extends Specification {
     val p1 = Axiom(
       Seq( Abs( x, -S( x ) ) ),
       Seq( Abs( x, -S( x ) ) ),
-      S( f( Abs( x, -S( x ) ) ) ).asInstanceOf[HOLAtom]
+      S( f( Abs( x, -S( x ) ) ) )
     )
     val p2 = NegLeft( p1, Suc( 0 ) )
     val p3 = NegRight( p2, Ant( 0 ) )

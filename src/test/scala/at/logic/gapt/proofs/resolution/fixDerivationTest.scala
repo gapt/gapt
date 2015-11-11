@@ -92,14 +92,10 @@ class FixDerivationTest extends Specification {
   }
 
   "mapInputClauses" should {
-    implicit def expr2atom( expr: LambdaExpression ): FOLAtom = expr.asInstanceOf[FOLAtom]
-    implicit def seq2cls[T <: LambdaExpression]( seq: Sequent[T] ): HOLClause = seq map { _.asInstanceOf[FOLAtom] }
-    implicit def sub2fol( sub: Substitution ): FOLSubstitution = FOLSubstitution( sub.map.asInstanceOf[Map[FOLVar, FOLTerm]] )
-
     "factor reordered clauses" in {
       val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
       val c = FOLConst( "c" )
-      val p = FOLAtomHead( "p", 1 )
+      val p = FOLAtomConst( "p", 1 )
 
       val p1 = InputClause( Clause() :+ p( x ) :+ p( y ) )
       val p2 = InputClause( p( c ) +: Clause() )

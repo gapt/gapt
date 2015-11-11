@@ -7,7 +7,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.cutintro.{GrammarFindingMethod, MaxSATMethod, CutIntroduction}
 import at.logic.gapt.provers.maxsat.ExternalMaxSATSolver
 
-val f = FOLFunctionHead("f", 2)
+val f = FOLFunctionConst("f", 2)
 val Seq(u, v, w, x, y, z) = Seq("u", "v", "w", "x", "y", "z") map { FOLVar(_) }
 val Seq(a, b, c) = Seq("a", "b", "c") map { FOLConst(_) }
 
