@@ -7,6 +7,8 @@ package at.logic.gapt.prooftool
  * Time: 12:12 PM
  */
 
+import javax.swing.WindowConstants
+
 import swing._
 import BorderPanel.Position
 
@@ -14,7 +16,7 @@ object TextAreaDialog extends Dialog {
   title = "ProofTool Text"
   modal = true
   location = new Point( Main.top.location.x + 200, Main.top.location.y + 100 )
-  peer.setDefaultCloseOperation( 2 ) //DISPOSE_ON_CLOSE
+  peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
 
   private var optionText: Option[String] = None
   private val titleLabel = new Label {

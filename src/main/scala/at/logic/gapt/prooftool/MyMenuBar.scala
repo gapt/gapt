@@ -87,12 +87,6 @@ class MyMenubar extends MenuBar {
         case EnableMenus  => enabled = true
       }
     }
-    contents += new Separator
-    contents += new MenuItem( Action( "Exit" ) { Main.fExit() } ) {
-      mnemonic = Key.X
-      peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_X, JActionEvent.CTRL_MASK ) )
-      border = customBorder
-    }
   }
   contents += new Menu( "Edit" ) {
     mnemonic = Key.E

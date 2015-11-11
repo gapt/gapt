@@ -19,7 +19,7 @@ import swing.Dialog.Message
 import swing.Swing.EmptyIcon
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 import javax.swing.filechooser.FileFilter
-import javax.swing.SwingUtilities
+import javax.swing.{ WindowConstants, SwingUtilities }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.proofs.TreeProof
 import at.logic.gapt.expr.hol._
@@ -66,7 +66,7 @@ object Main extends SimpleSwingApplication {
     top.maximize()
   }
 
-  lazy val top = new MainFrame {
+  lazy val top = new Frame {
     title = "ProofTool"
     menuBar = mBar
     contents = new BorderPanel {
@@ -74,6 +74,7 @@ object Main extends SimpleSwingApplication {
       layout( body ) = Position.Center
       // layout(new ProgressBar { indeterminate = true }) = Position.South
     }
+    peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
   }
 
   // Used for displaying things directly from Scala shell
@@ -282,11 +283,6 @@ object Main extends SimpleSwingApplication {
       }
     } else infoMessage( "There is nothing to export!" )
   }
-
-  // This function is changed to dispose for cli.
-  // When called from cli, sys.exit forces also cli to exit.
-  // The default close button still does sys.exit as it should do.
-  def fExit() { top.dispose() } //System.exit(0)
 
   def zoomIn() {
     val content = body.getContent

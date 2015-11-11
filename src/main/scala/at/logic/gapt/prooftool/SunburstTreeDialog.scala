@@ -7,6 +7,8 @@ package at.logic.gapt.prooftool
  * Time: 2:13 PM
  */
 
+import javax.swing.WindowConstants
+
 import scala.swing._
 import at.logic.gapt.proofs.proofs.TreeProof
 import scala.swing.event._
@@ -17,7 +19,7 @@ class SunburstTreeDialog[T]( name: String, proof: TreeProof[T] ) extends Frame {
   title = "Sunburst view of " + name
   //modal = false
   preferredSize = new Dimension( 700, 500 )
-  peer.setDefaultCloseOperation( 2 ) //DISPOSE_ON_CLOSE
+  peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
   menuBar = new MenuBar() {
     import javax.swing.KeyStroke
     import java.awt.event.{ KeyEvent, ActionEvent => JActionEvent }
