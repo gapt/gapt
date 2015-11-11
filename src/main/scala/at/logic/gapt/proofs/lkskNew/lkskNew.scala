@@ -231,8 +231,9 @@ case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, subs
   def auxIndices = Seq( Seq( aux ) )
 }
 
-// TODO: how to verify skolem symbols?
-
+/* TODO: how to verify skolem symbols?
+   They are quite flexible - the main restriction is that quantifiers cannot be contracted,
+   when they were introduced from different skolem symbols */
 case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )

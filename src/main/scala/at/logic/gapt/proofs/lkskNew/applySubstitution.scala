@@ -3,30 +3,33 @@ package at.logic.gapt.proofs.lkskNew
 import at.logic.gapt.expr._
 import BetaReduction._
 import at.logic.gapt.proofs.SequentIndex
-import at.logic.gapt.proofs.lkskNew.LKskProof.{Label, LabelledFormula}
+import at.logic.gapt.proofs.lkskNew.LKskProof.{ Label, LabelledFormula }
 
 object applySubstitution {
   /**
-    * Applies a substitution to an LKProof.
-    *
-    * @param substitution The substitution to be applied.
-    * @param preserveEigenvariables  If true, preserve eigenvariables and never change them.  If false (the default),
-    *                                treat eigenvariables as variables bound by their strong quantifier inferences and
-    *                                perform capture-avoiding substitution.
-    * @param proof The proof to apply the substitution to.
-    * @return The substituted proof.
-    */
+   * Applies a substitution to an LKProof.
+   *
+   * @param substitution The substitution to be applied.
+   * @param preserveEigenvariables  If true, preserve eigenvariables and never change them.  If false (the default),
+   *                                treat eigenvariables as variables bound by their strong quantifier inferences and
+   *                                perform capture-avoiding substitution.
+   * @param proof The proof to apply the substitution to.
+   * @return The substituted proof.
+   * @note The algorithm preserves the invariant that each substituted rule works on the same sequent indices as the
+   *       original rule. This is actively used in the CERES method, where the Sequent[Boolean] which characterizes
+   *       the cut-ancestors is not recomputed.
+   */
   def apply( substitution: Substitution, preserveEigenvariables: Boolean = false )( proof: LKskProof ): LKskProof = proof match {
     case Axiom( antlabel, suclabel, f ) =>
-      Axiom( bnsub(antlabel, substitution), bnsub(suclabel, substitution), bnsub(f, substitution))
+      Axiom( bnsub( antlabel, substitution ), bnsub( suclabel, substitution ), bnsub( f, substitution ) )
 
     case WeakeningLeft( subProof, f ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
-      WeakeningLeft( subProofNew, bnsub(f, substitution) )
+      WeakeningLeft( subProofNew, bnsub( f, substitution ) )
 
     case WeakeningRight( subProof, f ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
-      WeakeningRight( subProofNew, bnsub( f, substitution) )
+      WeakeningRight( subProofNew, bnsub( f, substitution ) )
 
     case ContractionLeft( subProof, aux1, aux2 ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
@@ -74,48 +77,44 @@ object applySubstitution {
 
     case p @ AllLeft( subProof, aux, f, term ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
-      val All( newV, newF ) = substitution( p.mainFormula )
-      AllLeft( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
+      val newF = substitution( p.mainFormula )
+      AllLeft( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ) )
 
-    case AllRight( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
+    case AllRight( subProof, aux, formula, eigen ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
       val renamedEigen = rename( eigen, substitution.range )
-      apply( substitution, preserveEigenvariables )( AllRight(
-        apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof ),
-        aux, renamedEigen, quant
-      ) )
+      val renamed_proof = apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof )
+      apply( substitution, preserveEigenvariables )( AllRight( renamed_proof, aux, bnsub( formula, substitution ), renamedEigen ) )
 
-    case p @ AllRight( subProof, aux, eigen, quant ) =>
-      val All( newQuant, _ ) = substitution( p.mainFormula )
-      AllRight( apply( Substitution( substitution.map - eigen ) )( subProof ), aux, eigen, newQuant )
+    case p @ AllRight( subProof, aux, formula, eigen ) =>
+      val renamed_main @ All( newQuant, _ ) = bnsub( p.mainFormula, substitution )
+      val renamed_proof = apply( Substitution( substitution.map - eigen ) )( subProof )
+      AllRight( renamed_proof, aux, renamed_main, newQuant )
 
-    case ExLeft( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
+    case ExLeft( subProof, aux, formula, eigen ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
       val renamedEigen = rename( eigen, substitution.range )
-      apply( substitution, preserveEigenvariables )( ExLeft(
-        apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof ),
-        aux, renamedEigen, quant
-      ) )
+      val renamed_proof = apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof )
+      apply( substitution, preserveEigenvariables )( ExLeft( renamed_proof, aux, bnsub( formula, substitution ), renamedEigen ) )
 
-    case p @ ExLeft( subProof, aux, eigen, quant ) =>
-      val Ex( newQuant, _ ) = substitution( p.mainFormula )
-      ExLeft( apply( Substitution( substitution.map - eigen ) )( subProof ), aux, eigen, newQuant )
+    case p @ ExLeft( subProof, aux, formula, eigen ) =>
+      val renamed_main @ Ex( newQuant, _ ) = bnsub( p.mainFormula, substitution )
+      ExLeft( apply( Substitution( substitution.map - eigen ) )( subProof ), aux, renamed_main, eigen )
 
-    case p @ ExRight( subProof, aux, f, term, v ) =>
+    case p @ ExRight( subProof, aux, f, term ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
-      val Ex( newV, newF ) = substitution( p.mainFormula )
-      ExRight( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
+      val newF = substitution( p.mainFormula )
+      ExRight( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ) )
 
-    case Equality( subProof, eq, aux, pos ) =>
+    case Equality( subProof, eq, aux, flipped, pos ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
-      Equality( subProofNew, eq, aux, pos )
-
+      Equality( subProofNew, eq, aux, flipped, pos )
 
     case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
   }
 
-  def bnsub(f : LambdaExpression, sub : Substitution) : LambdaExpression = betaNormalize(sub(f))
-  def bnsub(f : HOLFormula, sub : Substitution) : HOLFormula = betaNormalize(sub(f))
-  def bnsub(f : Label, sub : Substitution) : Label = f.map(bnsub(_,sub))
-  def bnsub( f : LabelledFormula, sub : Substitution) = ( bnsub(f._1, sub), bnsub(f._2, sub) )
+  def bnsub( f: LambdaExpression, sub: Substitution ): LambdaExpression = betaNormalize( sub( f ) )
+  def bnsub( f: HOLFormula, sub: Substitution ): HOLFormula = betaNormalize( sub( f ) )
+  def bnsub( f: Label, sub: Substitution ): Label = f.map( bnsub( _, sub ) )
+  def bnsub( f: LabelledFormula, sub: Substitution ): LabelledFormula = ( bnsub( f._1, sub ), bnsub( f._2, sub ) )
 }

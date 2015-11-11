@@ -171,7 +171,7 @@ case class RalExF( subProof: RalProof, idx: SequentIndex, eigenVariable: Var ) e
   lazy val App( ExistsC( _ ), sub ) = subProof.formulas( idx )
 
   override val newLabelledFormulas =
-    (( eigenVariable +: subProof.labels( idx )  ) ->
+    ( ( eigenVariable +: subProof.labels( idx ) ) ->
       BetaReduction.betaNormalize( App( sub, eigenVariable ).asInstanceOf[HOLFormula] ) ) +: Sequent()
 }
 

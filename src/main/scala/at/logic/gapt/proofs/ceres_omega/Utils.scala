@@ -77,7 +77,7 @@ object Pickrule {
    * @param old_aux The indices of the auxiliary formulas in the parents
    * @return a list of indices in new_parents where the formulas match old_aux
    */
-  def pickrule( p: LKskProof, old_parents: Seq[LKskProof], new_parents: Seq[(LKskProof, Sequent[Boolean])],
+  def pickrule( p: LKskProof, old_parents: Seq[LKskProof], new_parents: Seq[( LKskProof, Sequent[Boolean] )],
                 old_aux: List[SequentIndex] ): List[SequentIndex] = {
     //debug("Pick for rule: "+p.name)
     //TODO: adapt for additional exclusion list
