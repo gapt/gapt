@@ -1,7 +1,7 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol.FOLSubTerms
 import at.logic.gapt.expr.fol.thresholds._
 import at.logic.gapt.expr.hol.lcomp
 import at.logic.gapt.expr.hol.simplify
@@ -86,8 +86,8 @@ object stableTerms {
 class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
   import VectTratGrammar._
 
-  def vectProductionIsIncluded( p: Production ): FOLFormula = FOLAtom( s"$p" )
-  def valueOfNonTerminal( n: FOLVar, value: FOLTerm ): FOLFormula = FOLAtom( s"$n=$value" )
+  def vectProductionIsIncluded( p: Production ): FOLFormula = FOLAtom( "prodinc", p._1 ++ p._2 )
+  def valueOfNonTerminal( n: FOLVar, value: FOLTerm ): FOLFormula = FOLAtom( "ntval", n, value )
 
   def formula: FOLFormula = {
     val notASubTerm = rename( FOLConst( "⊥" ), constants( t ).toList )
@@ -111,16 +111,17 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
       }
     for ( ( ntv, i ) <- g.nonTerminals.zipWithIndex ) possibleAssignments += ( i -> ntv.map { _ => notASubTerm } )
     discoverAssignments( Map( g.axiom -> t ) )
+    val possibleValues = handledPAs.toSet.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
 
     def Match( ntIdx: Int, t: List[FOLTerm], s: List[FOLTerm] ) =
-      FOLMatchingAlgorithm.matchTerms( s zip t filter { _._2 != notASubTerm } ) match {
-        case Some( matching ) if matching isIdentity => Top()
+      syntacticMatching( s zip t filter { _._2 != notASubTerm } ) match {
         case Some( matching ) =>
           val lowestNTVectIdx = matching.folmap.keys.map( containingNTIdx ).min
           val equations = ( for ( i <- ( ntIdx + 1 ) to lowestNTVectIdx; nt <- g.nonTerminals( i ) ) yield nt -> notASubTerm ).toMap ++ matching.folmap
           And( equations.toSeq map {
-            case ( beta, r ) =>
+            case ( beta, r ) if possibleValues( beta ) contains r =>
               valueOfNonTerminal( beta, r )
+            case _ => Bottom()
           } )
         case None => Bottom()
       }
@@ -151,8 +152,8 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
 class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
   import VectTratGrammar._
 
-  def vectProductionIsIncluded( p: Production ) = FOLAtom( s"$p" )
-  def valueOfNonTerminal( t: FOLTerm, n: FOLVar, rest: FOLTerm ) = FOLAtom( s"$t:$n=$rest" )
+  def vectProductionIsIncluded( p: Production ) = FOLAtom( "prodinc", p._1 ++ p._2 )
+  def valueOfNonTerminal( t: FOLTerm, n: FOLVar, rest: FOLTerm ) = FOLAtom( "ntval", t, n, rest )
 
   def generatesTerm( t: FOLTerm ) = new TermGenerationFormula( g, t ) {
     override def vectProductionIsIncluded( p: Production ) =
@@ -165,7 +166,7 @@ class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
 }
 
 class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizationFormula( g toVectTratGrammar ) {
-  def productionIsIncluded( p: TratGrammar.Production ) = FOLAtom( s"p,$p" )
+  def productionIsIncluded( p: TratGrammar.Production ) = FOLAtom( "prodinc", p._1, p._2 )
   override def vectProductionIsIncluded( p: VectTratGrammar.Production ) = productionIsIncluded( p._1( 0 ), p._2( 0 ) )
 }
 

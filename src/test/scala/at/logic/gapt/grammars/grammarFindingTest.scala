@@ -190,6 +190,15 @@ class GrammarFindingTest extends Specification with SatMatchers {
       )
       doesNotCover( g, "f(c,d)" )
     }
+    "should not require impossible values" in {
+      val g = vtg(
+        Seq( "x", "y", "z" ),
+        Seq( "x->f(y,z)" ),
+        Seq( "y->z" ),
+        Seq( "z->a" )
+      )
+      doesNotCover( g, "f(b,a)" )
+    }
   }
 
   "minimizeGrammar" should {
