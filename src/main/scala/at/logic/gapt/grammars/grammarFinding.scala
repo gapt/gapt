@@ -116,9 +116,7 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
     def Match( ntIdx: Int, t: List[FOLTerm], s: List[FOLTerm] ) =
       syntacticMatching( s zip t filter { _._2 != notASubTerm } ) match {
         case Some( matching ) =>
-          val lowestNTVectIdx = matching.folmap.keys.map( containingNTIdx ).min
-          val equations = ( for ( i <- ( ntIdx + 1 ) to lowestNTVectIdx; nt <- g.nonTerminals( i ) ) yield nt -> notASubTerm ).toMap ++ matching.folmap
-          And( equations.toSeq map {
+          And( matching.folmap.toSeq map {
             case ( beta, r ) if possibleValues( beta ) contains r =>
               valueOfNonTerminal( beta, r )
             case _ => Bottom()
@@ -141,6 +139,9 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
     possibleAssignments foreach { assignment =>
       cs += simplify( Case( assignment._1, assignment._2 ) )
     }
+
+    for ( ( x, ts ) <- possibleValues )
+      cs += atMost oneOf (ts + notASubTerm).toSeq.map { valueOfNonTerminal( x, _ ) }
 
     for ( ( i, assignments ) <- possibleAssignments groupBy { _._1 } )
       cs += exactly oneOf ( assignments.toSeq map { assignment => And( ( g.nonTerminals( i ), assignment._2 ).zipped map valueOfNonTerminal ) } )

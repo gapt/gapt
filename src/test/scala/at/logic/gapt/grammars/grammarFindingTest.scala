@@ -199,6 +199,17 @@ class GrammarFindingTest extends Specification with SatMatchers {
       )
       doesNotCover( g, "f(b,a)" )
     }
+    "unique vector assignments" in {
+      val g = vtg(
+        Seq( "x", "y1,y2,y3" ),
+        Seq( "x->f(y1,y2)" ),
+        Seq( "x->f(y2,y1)" ),
+        Seq( "x->f(y2,y3)" ),
+        Seq( "y1->c", "y2->d", "y3->d" )
+      )
+      val formula = new TermGenerationFormula( g, parseTerm( "f(c,d)" ) )
+      formula.formula & -formula.vectProductionIsIncluded( List( parseProduction( "x->f(y1,y2)" ) ).unzip ) must beUnsat
+    }
   }
 
   "minimizeGrammar" should {
