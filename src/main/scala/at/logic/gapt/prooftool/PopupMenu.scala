@@ -7,11 +7,12 @@ package at.logic.gapt.prooftool
  * Time: 1:24 PM
  */
 
+import at.logic.gapt.proofs.DagProof
+import at.logic.gapt.proofs.lkNew.LKProof
+
 import swing.SequentialContainer.Wrapper
 import javax.swing.JPopupMenu
 import swing._
-import at.logic.gapt.proofs.proofs.TreeProof
-import at.logic.gapt.proofs.lk.base.LKProof
 import at.logic.gapt.expr._
 
 class PopupMenu extends Component with Wrapper {
@@ -23,20 +24,20 @@ class PopupMenu extends Component with Wrapper {
 object PopupMenu {
 
   // PopupMenu for LKProofs.
-  def apply( tproof: TreeProof[_], component: Component, x: Int, y: Int ) {
+  def apply[T <: DagProof[T]]( tproof: DagProof[T], component: Component, x: Int, y: Int ) {
     lazy val proof = tproof.asInstanceOf[LKProof]
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "View Subproof as Sunburst Tree" ) {
         Main.initSunburstDialog( "subproof " + proof.name, tproof )
       } )
       contents += new Separator
-      contents += new MenuItem( Action( "Apply Gentzen's Method (new)" ) { Main.newgentzen( proof ) } )
-      contents += new MenuItem( Action( "Apply Gentzen's Method" ) { Main.gentzen( proof ) } )
+      //      contents += new MenuItem( Action( "Apply Gentzen's Method (new)" ) { Main.newgentzen( proof ) } )
+      //      contents += new MenuItem( Action( "Apply Gentzen's Method" ) { Main.gentzen( proof ) } )
       contents += new Separator
       contents += new MenuItem( Action( "Save Subproof as..." ) { Main.fSave( ( proof.name, proof ) ) } )
       contents += new Separator
-      contents += new MenuItem( Action( "Show Proof Above" ) { ProofToolPublisher.publish( new ShowProof( tproof ) ) } )
-      contents += new MenuItem( Action( "Hide Proof Above" ) { ProofToolPublisher.publish( new HideProof( tproof ) ) } )
+      contents += new MenuItem( Action( "Show Proof Above" ) { ProofToolPublisher.publish( ShowProof( tproof ) ) } )
+      contents += new MenuItem( Action( "Hide Proof Above" ) { ProofToolPublisher.publish( HideProof( tproof ) ) } )
       contents += new Separator
       contents += new MenuItem( Action( "Split Proof" ) {
         Main.db.addProofs( ( proof.name, proof ) :: Nil )

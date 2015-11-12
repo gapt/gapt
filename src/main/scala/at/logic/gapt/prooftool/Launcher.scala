@@ -9,7 +9,7 @@ package at.logic.gapt.prooftool
 
 import java.awt.Font._
 import java.awt.event.{ MouseEvent, MouseMotionListener }
-import at.logic.gapt.proofs.SequentProof
+import at.logic.gapt.proofs.{ DagProof, SequentProof }
 
 import scala.swing._
 import event.{ MouseWheelMoved, MouseReleased, MouseDragged }
@@ -143,9 +143,9 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
 
   // returns the location of the end-sequent
   // of a proof
-  def getLocationOfProof[S]( proof: TreeProof[S] ) =
+  def getLocationOfProof( proof: SequentProof[_, _] ) =
     {
-      val dp = contents.head.asInstanceOf[DrawProof]
+      val dp = contents.head.asInstanceOf[DrawSequentProof[_, _]]
       dp.getLocationOfProof( proof )
     }
 }

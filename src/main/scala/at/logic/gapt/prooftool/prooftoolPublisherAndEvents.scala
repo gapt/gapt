@@ -7,9 +7,9 @@ package at.logic.gapt.prooftool
  * Time: 3:00:53 PM
  */
 
+import at.logic.gapt.proofs.DagProof
 import at.logic.gapt.proofs.lk.base.OccSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.proofs.TreeProof
 
 import scala.swing.event.Event
 import scala.swing.{ Color, Publisher }
@@ -26,9 +26,9 @@ case object ShowLeaf extends Event
 case object HideLeaf extends Event
 case object HideTree extends Event
 case object HideStructuralRules extends Event
-case class ShowAllRules( proof: TreeProof[_] ) extends Event
-case class HideProof( proof: TreeProof[_] ) extends Event
-case class ShowProof( proof: TreeProof[_] ) extends Event
+case class ShowAllRules[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
+case class HideProof[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
+case class ShowProof[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 
 case class ChangeSequentColor( seqList: OccSequent, color: Color, reset: Boolean ) extends Event
 case class ChangeFormulaColor( occurrences: Set[FormulaOccurrence], color: Color, reset: Boolean ) extends Event

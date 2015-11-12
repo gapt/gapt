@@ -1,20 +1,22 @@
 package at.logic.gapt.prooftool
 
+import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.proofs.SequentProof
+import at.logic.gapt.proofs.lkNew.{ ExistsRightRule, ForallLeftRule }
+
 import scala.swing._
-import at.logic.gapt.proofs.lk.base._
 import java.awt.Color
-import at.logic.gapt.proofs.lk.{ ExistsRightRule, ForallLeftRule }
 
 /**
  *
  * Created by marty on 3/26/14.
  */
 
-class DrawSingleSequentInference( var orientation: Orientation.Value ) extends ScrollPane {
+class DrawSingleSequentInference[F <: HOLFormula, T <: SequentProof[F, T]]( var orientation: Orientation.Value ) extends ScrollPane {
 
-  private var _p: Option[LKProof] = None
-  def p(): Option[LKProof] = _p
-  def p_=( np: Option[LKProof] ) = {
+  private var _p: Option[SequentProof[F, T]] = None
+  def p(): Option[SequentProof[F, T]] = _p
+  def p_=( np: Option[SequentProof[F, T]] ) = {
     this._p = np
     init()
     revalidate()
@@ -66,43 +68,22 @@ class DrawSingleSequentInference( var orientation: Orientation.Value ) extends S
     rule.contents += Swing.Glue
 
     auxiliaries.contents.clear()
-    val aux = p() match {
-      case Some( a: UnaryLKProof with AuxiliaryFormulas ) =>
-        val r = a.uProof.root
-        List( OccSequent( r.antecedent.filter( a.aux( 0 ).contains ), r.succedent.filter( a.aux( 0 ).contains ) ) )
-      case Some( a: BinaryLKProof with AuxiliaryFormulas ) =>
-        val r1 = a.uProof1.root
-        val r2 = a.uProof2.root
-        List(
-          OccSequent( r1.antecedent.filter( a.aux( 0 ).contains ), r1.succedent.filter( a.aux( 0 ).contains ) ),
-          OccSequent( r2.antecedent.filter( a.aux( 1 ).contains ), r2.succedent.filter( a.aux( 1 ).contains ) )
-        )
-
-      case _ =>
-        List()
-    }
-    aux.foreach( x => { auxiliaries.contents += DrawSequent( x, font, "" ) } )
+    val aux = for ( proof <- p().toList; ( auxIndices, premise ) <- proof.auxIndices zip proof.premises )
+      yield for ( ( f, i ) <- premise.zipWithIndex if auxIndices contains i ) yield f
+    for ( x <- aux ) auxiliaries.contents += DrawSequent( x, font, "" )
     auxiliaries.contents += Swing.Glue
 
     primaries.contents.clear()
-    val primary = p() match {
-      case Some( pf: PrincipalFormulas ) =>
-        val r = p().get.root
-        Some( OccSequent( r.antecedent.filter( pf.prin.contains ), r.succedent.filter( pf.prin.contains ) ) )
-      case Some( p: NullaryLKProof ) =>
-        Some( p.root )
-
-      case _ => None
-    }
-    if ( primary != None ) primaries.contents += DrawSequent( primary.get, font, "" )
+    val primary = for ( proof <- p() ) yield for ( ( f, i ) <- proof.conclusion.zipWithIndex if proof.mainIndices contains i ) yield f
+    for ( prim <- primary ) primaries.contents += DrawSequent( prim, font, "" )
     primaries.contents += Swing.Glue
 
     substitution.contents.clear()
     p() match {
-      case Some( ForallLeftRule( _, _, _, _, term ) ) =>
-        substitution.contents += LatexLabel( font, DrawSequent.formulaToLatexString( term ) )
-      case Some( ExistsRightRule( _, _, _, _, term ) ) =>
-        substitution.contents += LatexLabel( font, DrawSequent.formulaToLatexString( term ) )
+      case Some( proof: ForallLeftRule ) =>
+        substitution.contents += LatexLabel( font, DrawSequent.formulaToLatexString( proof.term ) )
+      case Some( proof: ExistsRightRule ) =>
+        substitution.contents += LatexLabel( font, DrawSequent.formulaToLatexString( proof.term ) )
       case _ =>
     }
     substitution.contents += Swing.Glue

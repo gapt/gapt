@@ -39,7 +39,7 @@ object DrawSequent {
   } else apply( seq, ft, None )
 
   //used by DrawClList to draw FSequents
-  def applyF( seq: HOLSequent, ft: Font, str: String ): FlowPanel = apply( fseq2seq( seq ), ft, str )
+  def apply( seq: HOLSequent, ft: Font, str: String )( implicit dummyImplicit: DummyImplicit ): FlowPanel = apply( fseq2seq( seq ), ft, str )
 
   //used by DrawProof
   def apply( seq: OccSequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]] ) = new FlowPanel {

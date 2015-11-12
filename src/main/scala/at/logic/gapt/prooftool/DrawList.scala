@@ -43,7 +43,7 @@ class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1
 
     def drawMember( x: Any ) = x match {
       case s: OccSequent                                  => DrawSequent( s, ft, str )
-      case fs: HOLSequent                                 => DrawSequent.applyF( fs, ft, str )
+      case fs: HOLSequent                                 => DrawSequent( fs, ft, str )
       case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
       case _ => new Label( x.toString ) {
         background = new Color( 255, 255, 255 )

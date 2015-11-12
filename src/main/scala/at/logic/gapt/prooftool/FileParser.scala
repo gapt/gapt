@@ -23,7 +23,7 @@ import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema.dbTRS
-import at.logic.gapt.proofs.{ SequentProof, HOLSequent }
+import at.logic.gapt.proofs.{ lkNew, SequentProof, HOLSequent }
 import at.logic.gapt.proofs.ceres.clauseSchema._
 import at.logic.gapt.proofs.lk.base.{ LKProof }
 import at.logic.gapt.proofs.proofs.{ Proof, TreeProof }
@@ -157,6 +157,8 @@ class FileParser {
         Main.errorMessage( "Could not load file: " + path + "!" + dnLine + Main.getExceptionString( err ) )
     }
   }
+
+  def addProofs( proofs: List[( String, lkNew.LKProof )] )( implicit dummyImplicit: DummyImplicit ) = ???
 
   def addProofs( proofs: List[( String, LKProof )] ) {
     proofdb = new ProofDatabase( proofdb.Definitions, proofdb.proofs ::: proofs, proofdb.axioms, proofdb.sequentLists )

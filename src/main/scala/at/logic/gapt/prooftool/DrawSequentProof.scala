@@ -33,7 +33,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   // But then since def is a function, size of tx1 cannot be calculated and lines are not drawn correctly.
   private var tx = tx1
   private def tx1 = {
-    val ds = DrawSequent.applyF(
+    val ds = DrawSequent(
       proof.conclusion map {
         case f: HOLFormula            => f
         case ( label, f: HOLFormula ) => f
@@ -57,10 +57,10 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
       Main.body.peer.dispatchEvent( e.peer )
-    case e: ShowProof if e.proof == proof =>
+    case e: ShowProof[_] if e.proof == proof =>
       drawLines = true
       layout.foreach( pair => pair._1.visible = true )
-    case e: HideProof if e.proof == proof =>
+    case e: HideProof[_] if e.proof == proof =>
       drawLines = false
       layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
   }
@@ -150,5 +150,15 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     //The user is dragging us, so scroll!
     val r = new Rectangle( e.getX, e.getY, 1, 1 )
     this.peer.scrollRectToVisible( r )
+  }
+
+  def getLocationOfProof( p: SequentProof[_, _] ): Option[Point] = {
+    if ( p == proof ) {
+      Some( new Point( location.x + bounds.width / 2, location.y + bounds.height ) )
+    } else {
+      contents.view.
+        collect { case dp: DrawSequentProof[_, _] => dp.getLocationOfProof( p ) }.
+        flatten.headOption
+    }
   }
 }
