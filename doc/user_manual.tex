@@ -740,27 +740,51 @@ via Scala-classes, which create the underlying data structure.
 
 \fxnote{update sequent calculus to new LK, describe higher-order LK directly here}
 
-The rules of first-order LK are listed below. Proof trees are constructed top-down, starting with axioms and with each rule introducing new inferences. The constructing functions do perform sporadic checks, but in general, these do not guarantee well-formed proofs and the burden of correctness lies upon the programmer using them. Due to the top-down construction, quantification and equational rules are {\em especially} brittle and the programmer must himself take care to replace only the desired terms in a formula. Specifically, the programmer must supply the result of the replacement (the \texttt{main}-argument), which is accepted by the rule constructors without question.
+The rules of LK are listed below. Proof trees are constructed top-down, starting with axioms and with each rule introducing new inferences. With the exception of the definition rules, the constructors of the rules only allow inferences that are actually valid. Note that the rules are presented here as if they always act upon the outermost formulas in the upper sequent, but this is only for convenience of presentation. The basic constructors actually require the user to specify on which concrete formulas the inference should be performed.
+
+Apart from those basic constructors, there is also a multitude of convenience constructors that facilitate easier proof construction. Moreover, there are so-called macro rules that reduce several inferences to a single command (e.g. introducing quantifier blocks). See the API documentation of the individual rules for details. 
 
 \subsubsection*{Axioms}
 
+\begin{multicols}{2}
 \begin{prooftree}
 \AxiomCm{}
-\RightLabelm{(\mt{Identity Axiom})}
-\UnaryInfCm{\Gamma, A \seq \Delta, A}
+\RightLabelm{(\mt{Logical axiom})}
+\UnaryInfCm{A \seq A}
 \end{prooftree}
 
 \begin{prooftree}
 \AxiomCm{}
-\RightLabelm{(\mt{Reflexivity Axiom})}
-\UnaryInfCm{\Gamma \seq \Delta, t = t}
+\RightLabelm{\mt{$\top$ axiom}}
+\UnaryInfCm{\seq \top}
 \end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{(\mt{Reflexivity axiom})}
+\UnaryInfCm{\seq t = t}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{$\bot$ axiom}}
+\UnaryInfCm{\bot \seq}
+\end{prooftree}
+\end{multicols}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{Theory axiom}}
+\UnaryInfCm{\Gamma \seq \Delta}
+\end{prooftree}
+
+Logical axioms and theory axioms may only contain atomic formulas.
 
 \subsubsection*{Cut}
 
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A}
-  \AxiomCm{\Sigma, A \seq \Pi}
+  \AxiomCm{A, \Sigma \seq \Pi}
   \RightLabelm{(\mt{cut})}
   \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
@@ -774,13 +798,13 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta}
   \RightLabelm{(\mt{w:l})}
-  \UnaryInfCm{\Gamma, A \seq \Delta}
+  \UnaryInfCm{A, \Gamma \seq \Delta}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma, A, A \seq \Delta}
+  \AxiomCm{A,A,\Gamma \seq \Delta}
   \RightLabelm{(\mt{c:l})}
-  \UnaryInfCm{\Gamma, A \seq \Delta}
+  \UnaryInfCm{A,\Gamma\seq \Delta}
   \end{prooftree}
   
   \subsubsection*{Right rules}
@@ -808,35 +832,29 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
   \subsubsection*{Left rules}
 
   \begin{prooftree}
-  \AxiomCm{\Gamma, A \seq \Delta}
-  \RightLabelm{(\land\mt{l}_1)}
-  \UnaryInfCm{\Gamma, A \land B \seq \Delta}
+  \AxiomCm{A,B,\Gamma \seq \Delta}
+  \RightLabelm{(\land\mt{:l})}
+  \UnaryInfCm{A \land B,\Gamma \seq \Delta}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma, B \seq \Delta}
-  \RightLabelm{(\land\mt{l}_2)}
-  \UnaryInfCm{\Gamma, A \land B \seq \Delta}
-  \end{prooftree}
-  
-  \begin{prooftree}
-  \AxiomCm{\Gamma, A \seq \Delta}
-  \AxiomCm{\Sigma, B \seq \Pi}
+  \AxiomCm{A, \Gamma \seq \Delta}
+  \AxiomCm{B, \Sigma \seq \Pi}
   \RightLabelm{(\lor\mt{:l})}
-  \BinaryInfCm{\Gamma, \Sigma, A \lor B \seq \Delta, \Pi}
+  \BinaryInfCm{A \lor B, \Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
   
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A}
   \RightLabelm{(\lnot\mt{:l})}
-  \UnaryInfCm{\Gamma, \neg A \seq \Delta}
+  \UnaryInfCm{\neg A, \Gamma \seq \Delta}
   \end{prooftree}
   
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A}
-  \AxiomCm{\Sigma, B \seq \Pi}
+  \AxiomCm{B, \Sigma \seq \Pi}
   \RightLabelm{(\impl\mt{:l})}
-  \BinaryInfCm{\Gamma, \Sigma, A \impl B \seq \Delta, \Pi}
+  \BinaryInfCm{A \impl B, \Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
 
   \subsubsection*{Right rules}
@@ -849,113 +867,139 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, A}
-  \RightLabelm{(\lor\mt{:r}_1)}
+  \AxiomCm{\Gamma \seq \Delta, A, B}
+  \RightLabelm{(\lor\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, A \lor B}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, B}
-  \RightLabelm{(\lor\mt{:r}_2)}
-  \UnaryInfCm{\Gamma \seq \Delta, A \lor B}
-  \end{prooftree}
-  
-  \begin{prooftree}
-  \AxiomCm{\Gamma, A\seq \Delta}
+  \AxiomCm{A, \Gamma\seq \Delta}
   \RightLabelm{(\lnot\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \neg A}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma, A \seq B, \Delta}
+  \AxiomCm{A, \Gamma \seq \Delta, B}
   \RightLabelm{(\impl\mt{:r})}
-  \UnaryInfCm{\Gamma \seq A \impl B, \Delta}
+  \UnaryInfCm{\Gamma \seq \Delta, A \impl B}
   \end{prooftree}
 
 \end{multicols}
 
-\subsubsection*{Quantification rules}
+\subsubsection*{Quantifier rules}
 
 \begin{multicols}{2}
 
   \subsubsection*{Left rules}
 
   \begin{prooftree}
-  \AxiomCm{\Gamma, A[t/x] \seq \Delta}
+  \AxiomCm{A[t/x], \Gamma \seq \Delta}
   \RightLabelm{(\forall\mt{:l})}
-  \UnaryInfCm{\Gamma, \forall x A \seq \Delta}
+  \UnaryInfCm{\forall x A, \Gamma \seq \Delta}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma, A[y/x] \seq \Delta}
+  \AxiomCm{ A[y/x], \Gamma \seq \Delta}
   \RightLabelm{(\exists\mt{:l})}
-  \UnaryInfCm{\Gamma, \exists x A \seq \Delta}
+  \UnaryInfCm{\exists x A, \Gamma \seq \Delta}
   \end{prooftree}
   
   \subsubsection*{Right rules}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq A[y/x] \Delta}
+  \AxiomCm{\Gamma \seq \Delta, A[y/x]}
   \RightLabelm{(\forall\mt{:r})}
-  \UnaryInfCm{\Gamma \seq \forall x A, \Delta}
+  \UnaryInfCm{\Gamma \seq \Delta, \forall x A}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq A[t/x] \Delta}
+  \AxiomCm{\Gamma \seq \Delta, A[t/x]}
   \RightLabelm{(\exists\mt{:r})}
-  \UnaryInfCm{\Gamma \seq \exists x A, \Delta}
+  \UnaryInfCm{\Gamma \seq \Delta, \exists x A}
   \end{prooftree}
 
 \end{multicols}
 
 The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
 
-\subsubsection*{Equational rules}
+\subsubsection*{Equality rules}
 
 \begin{multicols}{2}
 
   \subsubsection*{Left rules}
 
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, s=t}
-  \AxiomCm{\Sigma, A[T/s] \seq \Pi}
-  \RightLabelm{(\mt{=:l}_1)}
-  \BinaryInfCm{\Gamma, \Sigma, A[T/t] \seq \Delta, \Pi}
+  \AxiomCm{s = t, A[T/s], \Sigma \seq \Pi}
+  \RightLabelm{(\mt{=:l})}
+  \UnaryInfCm{s = t, A[T/t], \Sigma \seq \Pi}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, s=t}
-  \AxiomCm{\Sigma, A[T/t] \seq \Pi}
-  \RightLabelm{(\mt{=:l}_2)}
-  \BinaryInfCm{\Gamma, \Sigma, A[T/s] \seq \Delta, \Pi}
+  \AxiomCm{s = t, A[T/t], \Sigma \seq \Pi}
+  \RightLabelm{(\mt{=:l})}
+  \UnaryInfCm{s = t, A[T/s], \Sigma \seq \Pi}
   \end{prooftree}
   
   \subsubsection*{Right rules}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, s=t}
-  \AxiomCm{\Sigma \seq \Pi, A[T/s]}
-  \RightLabelm{(\mt{=:r}_1)}
-  \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[T/t]}
+  \AxiomCm{s = t, \Sigma \seq \Pi, A[T/s]}
+  \RightLabelm{(\mt{=:r})}
+  \UnaryInfCm{s = t, \Sigma \seq \Pi, A[T/t]}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, s=t}
-  \AxiomCm{\Sigma, \seq \Pi, A[T/t]}
-  \RightLabelm{(\mt{=:r}_2)}
-  \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[T/s]}
+  \AxiomCm{s = t, \Sigma \seq \Pi, A[T/t]}
+  \RightLabelm{(\mt{=:r})}
+  \UnaryInfCm{s = t, \Sigma \seq \Pi, A[T/s]}
   \end{prooftree}
-
+  
 \end{multicols}
+Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
+
+\subsubsection*{Definition rules}
+\begin{center}
+ \AxiomCm{A, \Gamma \seq \Delta}
+ \RightLabelm{(\mt{def:l})}
+ \UnaryInfCm{B, \Gamma \seq \Delta}
+ \DisplayProof
+ \AxiomCm{\Gamma \seq \Delta, A}
+ \RightLabelm{(\mt{def:r})}
+ \UnaryInfCm{\Gamma \seq \Delta, B}
+ \DisplayProof
+\end{center}
+These definition rules are extremely liberal, as they allow the replacement of any formula by any other formula.
 
 \subsubsection*{Induction}
-  Let $A$ be a formula in which $x$ occurs freely and $t$ a term.
+  The induction rule applies to arbitrary algebraic datatypes. Let $c_1,…,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],…,F[x_{k_i}], \Gamma_i \seq \Delta_i, F[c_i(x_1,…,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
   \begin{prooftree}
-    \AxiomCm{\Gamma \seq \Delta, A[x/0]}
-    \AxiomCm{\Sigma, A \seq \Pi, A[x/s(x)]}
+    \AxiomCm{(\pi_1)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_1}
+    \AxiomCm{(\pi_2)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_2}
+    \AxiomCm{\dots}
+    \AxiomCm{(\pi_n)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_n}
     \RightLabelm{(\mt{ind})}
-    \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[x/t]}
+    \QuaternaryInfC{$\Gamma \seq \Delta, \forall x F[x]$}
   \end{prooftree}
+  
+  In the case of the natural numbers, there are two constructors: $0$ of arity 0 and $s$ of arity 1. Consequently, the induction rule reduces to
+  
+  \begin{prooftree}
+    \AxiomCm{(\pi_1)}
+    \noLine
+    \UnaryInfCm{\Gamma_1 \seq \Delta_1, F[0]}
+    \AxiomCm{(\pi_2)}
+    \noLine
+    \UnaryInfCm{F[x], \Gamma_2 \seq \Delta_2, F[sx]}
+    \RightLabelm{(\mt{ind})}
+    \BinaryInfCm{\Gamma_1, \Gamma_2 \seq \Delta_1, \Delta_2, \forall x F[x]}
+  \end{prooftree}
+
 
 
 \subsection{LKsk}
