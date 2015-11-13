@@ -141,7 +141,7 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
     }
 
     for ( ( x, ts ) <- possibleValues )
-      cs += atMost oneOf (ts + notASubTerm).toSeq.map { valueOfNonTerminal( x, _ ) }
+      cs += atMost oneOf ( ts + notASubTerm ).toSeq.map { valueOfNonTerminal( x, _ ) }
 
     for ( ( i, assignments ) <- possibleAssignments groupBy { _._1 } )
       cs += exactly oneOf ( assignments.toSeq map { assignment => And( ( g.nonTerminals( i ), assignment._2 ).zipped map valueOfNonTerminal ) } )

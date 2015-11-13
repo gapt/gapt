@@ -174,15 +174,15 @@ object Interpolate {
       val up2_nFormulas = up2_nproof.endSequent.formulas
       val up1_pFormulas = up1_pproof.endSequent.formulas
       val up2_pFormulas = up2_pproof.endSequent.formulas
-      val cutFormula = leftSubProof.endSequent( aux1 )
+      val cutFormula = p.auxFormulas( 0 )( 0 )
 
-      if ( ( up1_nFormulas.contains( cutFormula ) || up2_nFormulas.contains( cutFormula ) ) ) {
+      if ( ( up1_nFormulas.contains( cutFormula ) && up2_nFormulas.contains( cutFormula ) ) ) {
         val ipl = Or( up1_I, up2_I )
         val np = OrRightRule( CutRule( up1_nproof, cutFormula, up2_nproof, cutFormula ), up1_I, up2_I )
         val pp = OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I )
 
         ( np, pp, ipl )
-      } else if ( ( up1_pFormulas.contains( cutFormula ) || up2_pFormulas.contains( cutFormula ) ) ) {
+      } else if ( ( up1_pFormulas.contains( cutFormula ) && up2_pFormulas.contains( cutFormula ) ) ) {
         val ipl = And( up1_I, up2_I )
         val np = AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I )
         val pp = AndLeftRule( CutRule( up1_pproof, cutFormula, up2_pproof, cutFormula ), up1_I, up2_I )
