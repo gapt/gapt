@@ -19,6 +19,7 @@
 \renewcommand{\lnot}{\neg}
 \renewcommand{\land}{\wedge}
 \renewcommand{\lor}{\vee}
+\newcommand{\sklabel}[2]{\langle#1\rangle^{#2}}
 
 %Commands for constructing proof trees with bussproofs. See the chapter on the LK system for examples.
 \newcommand{\UnaryInfCm}[1]{\UnaryInfC{$#1$}}
@@ -971,7 +972,7 @@ Each equation rule replaces exactly one occurrence of a term in its auxiliary fo
 These definition rules are extremely liberal, as they allow the replacement of any formula by any other formula.
 
 \subsubsection*{Induction}
-  The induction rule applies to arbitrary algebraic datatypes. Let $c_1,…,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],…,F[x_{k_i}], \Gamma_i \seq \Delta_i, F[c_i(x_1,…,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
+  The induction rule applies to arbitrary algebraic datatypes. Let $c_1,...,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],...,F[x_{k_i}], \Gamma_i \seq \Delta_i, F[c_i(x_1,...,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
   \begin{prooftree}
     \AxiomCm{(\pi_1)}
     \noLine
@@ -1007,6 +1008,233 @@ These definition rules are extremely liberal, as they allow the replacement of a
 \begin{meta}
  TODO: give brief description of LKsk
 \end{meta}
+
+LKsk operates on labelled formulas. A label $\ell$ is a finite list of terms, a labelled formula is a pair $(F, \ell)$, written as $\sklabel{F}{\ell}$. If $\ell$ is a label and $t$ a term, we write $\ell;t$ for the concatenation of $\ell$ and $t$.
+
+\subsubsection*{Axioms}
+
+\begin{multicols}{2}
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{(\mt{Logical axiom})}
+\UnaryInfCm{\sklabel{A}{\ell_1} \seq \sklabel{A}{\ell_2}}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{$\top$ axiom}}
+\UnaryInfCm{\seq \sklabel{\top}{\ell}}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{(\mt{Reflexivity axiom})}
+\UnaryInfCm{\seq \sklabel{t = t}{\ell}}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{$\bot$ axiom}}
+\UnaryInfCm{\sklabel{\bot}{\ell}\seq}
+\end{prooftree}
+\end{multicols}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{Theory axiom}}
+\UnaryInfCm{\sklabel{A_1}{\ell_1},...,\sklabel{A_m}{\ell_m} \seq \sklabel{B_1}{\ell'_1},...,\sklabel{B_n}{\ell'_n}}
+\end{prooftree}
+
+Logical axioms and theory axioms may only contain atomic formulas.
+
+\subsubsection*{Cut}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell_1}}
+  \AxiomCm{\sklabel{A}{\ell_2}, \Sigma \seq \Pi}
+  \RightLabelm{(\mt{cut})}
+  \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi}
+  \end{prooftree}
+  
+  Note that the labels of the cut formulas do not need to be equal.
+
+\subsubsection*{Structural rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Left rules}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta}
+  \RightLabelm{(\mt{w:l})}
+  \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell},\sklabel{A}{\ell},\Gamma \seq \Delta}
+  \RightLabelm{(\mt{c:l})}
+  \UnaryInfCm{\sklabel{A}{\ell},\Gamma\seq \Delta}
+  \end{prooftree}
+  
+  \subsubsection*{Right rules}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta}
+  \RightLabelm{(\mt{w:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}, \sklabel{A}{\ell}}
+  \RightLabelm{(\mt{c:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \end{prooftree}
+
+\end{multicols}
+
+\subsubsection*{Propositional rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Left rules}
+
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell},\sklabel{B}{\ell},\Gamma \seq \Delta}
+  \RightLabelm{(\land\mt{:l})}
+  \UnaryInfCm{\sklabel{A \land B}{\ell},\Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell}, \Gamma \seq \Delta}
+  \AxiomCm{\sklabel{B}{\ell}, \Sigma \seq \Pi}
+  \RightLabelm{(\lor\mt{:l})}
+  \BinaryInfCm{\sklabel{A \lor B}{\ell}, \Gamma, \Sigma \seq \Delta, \Pi}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \RightLabelm{(\lnot\mt{:l})}
+  \UnaryInfCm{\sklabel{\neg A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \AxiomCm{\sklabel{B}{\ell}, \Sigma \seq \Pi}
+  \RightLabelm{(\impl\mt{:l})}
+  \BinaryInfCm{\sklabel{A \impl B}{\ell}, \Gamma, \Sigma \seq \Delta, \Pi}
+  \end{prooftree}
+
+  \subsubsection*{Right rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \AxiomCm{\Sigma \seq \Pi, \sklabel{B}{\ell}}
+  \RightLabelm{(\land\mt{:r})}
+  \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, \sklabel{A \land B}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}, \sklabel{B}{\ell}}
+  \RightLabelm{(\lor\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A \lor B}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell}, \Gamma\seq \Delta}
+  \RightLabelm{(\lnot\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\neg A}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell}, \Gamma \seq \Delta, \sklabel{B}{\ell}}
+  \RightLabelm{(\impl\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A \impl B}{\ell}}
+  \end{prooftree}
+
+\end{multicols}
+
+\subsubsection*{Quantifier rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Left rules}
+  
+   \begin{prooftree}
+  \AxiomCm{\sklabel{A[t/x]}{\ell;t}, \Gamma \seq \Delta}
+  \RightLabelm{(\forall\mt{:l})}
+  \UnaryInfCm{\sklabel{\forall x A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{ \sklabel{A[y/x]}{\ell}, \Gamma \seq \Delta}
+  \RightLabelm{(\exists\mt{:l})}
+  \UnaryInfCm{\sklabel{\exists x A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{ \sklabel{A[f(\ell)/x]}{\ell}, \Gamma \seq \Delta}
+  \RightLabelm{(\exists^{sk}\mt{:l})}
+  \UnaryInfCm{\sklabel{\exists x A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \subsubsection*{Right rules}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A[y/x]}{\ell}}
+  \RightLabelm{(\forall\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\forall x A}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A[f(\ell)/x]}{\ell}}
+  \RightLabelm{(\forall^{sk}\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\forall x A}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A[t/x]}{\ell;t}}
+  \RightLabelm{(\exists\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\exists x A}{\ell}}
+  \end{prooftree}
+
+\end{multicols}
+
+The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
+
+\subsubsection*{Equality rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Left rules}
+
+  \begin{prooftree}
+  \AxiomCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/s]}{\ell_2}, \Sigma \seq \Pi}
+  \RightLabelm{(\mt{=:l})}
+  \UnaryInfCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/t]}{\ell_2}, \Sigma \seq \Pi}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/t]}{\ell_2}, \Sigma \seq \Pi}
+  \RightLabelm{(\mt{=:l})}
+  \UnaryInfCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/s]}{\ell_2}, \Sigma \seq \Pi}
+  \end{prooftree}
+  
+  \subsubsection*{Right rules}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/s]}{\ell_2}}
+  \RightLabelm{(\mt{=:r})}
+  \UnaryInfCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/t]}{\ell_2}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/t]}{\ell_2}}
+  \RightLabelm{(\mt{=:r})}
+  \UnaryInfCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi,\sklabel{A[T/s]}{\ell_2}}
+  \end{prooftree}
+  
+\end{multicols}
+Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
 
 \section{The Resolution Calculus}
 
