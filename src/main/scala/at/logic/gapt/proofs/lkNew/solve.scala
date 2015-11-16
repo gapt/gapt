@@ -177,9 +177,11 @@ object solve extends Logger {
         val p_suc = rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
-          AndLeftMacroRule( proof, f1, f2 )
-        } )
+        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+          if ( proof.endSequent.antecedent.contains( f1 ) || proof.endSequent.antecedent.contains( f2 ) )
+            AndLeftMacroRule( proof, f1, f2 )
+          else
+            proof )
       }
 
       // Binary Rules
@@ -401,9 +403,11 @@ object solve extends Logger {
         val p_suc = f1_opt ++ f2_opt ++ rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
-          OrRightMacroRule( proof, f1, f2 )
-        } )
+        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+          if ( proof.endSequent.succedent.contains( f1 ) || proof.endSequent.succedent.contains( f2 ) )
+            OrRightMacroRule( proof, f1, f2 )
+          else
+            proof )
       }
 
       // Binary Rules
