@@ -1290,9 +1290,162 @@ Each equation rule replaces exactly one occurrence of a term in its auxiliary fo
 \BinaryInfC{$C \lor l[t] \lor D$}
 \end{prooftree}
 
-\begin{meta}
-TODO: RAL
-\end{meta}
+\subsection{Ral}
+
+Ral operates on sequents of labelled formulas, just as LKsk.  A label $\ell$ is
+a finite set of terms, a labelled formula is a pair $(F, \ell)$, written as
+$\sklabel{F}{\ell}$. If $\ell$ is a label and $t$ a term, we write $\ell;t$ for
+the concatenation of $\ell$ and $t$.
+
+\begin{prooftree}
+  \AxiomCm{}
+  \RightLabel{RalInitial}
+  \UnaryInfCm{\Gamma \vdash \Delta}
+\end{prooftree}
+
+The substitution also substitutes the variables in the labels:
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta}
+  \RightLabel{RalSub}
+  \UnaryInfCm{\Gamma\sigma \vdash \Delta\sigma}
+\end{prooftree}
+
+The resolution rule does not require the labels to be equal:
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A}{\ell_1}, \dots, \sklabel{A}{\ell_m}}
+  \AxiomCm{\sklabel{A}{\ell_1}, \dots, \sklabel{A}{\ell_n}, \Sigma \vdash \Pi}
+  \RightLabel{RalCut}
+  \BinaryInfCm{\Gamma, \Sigma \vdash \Delta, \Pi}
+\end{prooftree}
+
+Factoring is restricted to atoms:
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{a}{\ell_1}{a},\sklabel{a}{\ell_2},\Gamma \vdash \Delta}
+  \RightLabel{RalFactor}
+  \UnaryInfCm{\sklabel{a}{\ell_1}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{a}{\ell_1},\sklabel{a}{\ell_2}}
+  \RightLabel{RalFactor}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{a}{\ell_1}}
+\end{prooftree}
+\end{multicols}
+
+Paramodulation can rewrite the equation in both directions, in a formula of the
+antecedent or the succedent---this is one of the four possibilities:
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{t=s}{\ell}}
+  \AxiomCm{\Sigma \vdash \Pi, \sklabel{A[t]}{\ell}}
+  \RightLabel{RalPara}
+  \BinaryInfCm{\Gamma, \Sigma \vdash \Delta, \sklabel{A[s]}{\ell}}
+\end{prooftree}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{\forall x\: A[x]}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalAllF}
+  \UnaryInfCm{\sklabel{A[s\ell]}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{\forall x\: A[x]}{\ell}}
+  \RightLabel{RalAllT}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A[\alpha]}{\ell;\alpha}}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{\exists x\: A[x]}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalExF}
+  \UnaryInfCm{\sklabel{A[\alpha]}{\ell;\alpha}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{\exists x\: A[x]}{\ell}}
+  \RightLabel{RalExT}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A[s\ell]}{\ell}}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{\top}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalTopF}
+  \UnaryInfCm{\Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{\bot}{\ell}}
+  \RightLabel{RalBottomT}
+  \UnaryInfCm{\Gamma \vdash \Delta}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{\neg A}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalNegF}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A}{\ell}}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{\neg A}{\ell}}
+  \RightLabel{RalNegT}
+  \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \land B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalAndF}
+  \UnaryInfCm{\sklabel{A}{\ell}, \sklabel{B}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A \land B}{\ell}}
+  \RightLabel{RalAndT1}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A}{\ell}}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A \land B}{\ell}}
+  \RightLabel{RalAndT2}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{B}{\ell}}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \lor B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalOrF1}
+  \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \lor B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalOrF2}
+  \UnaryInfCm{\sklabel{B}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A \lor B}{\ell}}
+  \RightLabel{RalOrT}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A}{\ell}, \sklabel{B}{\ell}}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \impl B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalImpF1}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A}{\ell}}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \impl B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalImpF2}
+  \UnaryInfCm{\sklabel{B}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A \impl B}{\ell}}
+  \RightLabel{RalImpT}
+  \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \vdash \Delta, \sklabel{B}{\ell}}
+\end{prooftree}
+\end{multicols}
 
 % \section{Command Reference}
 % 

@@ -185,6 +185,20 @@ case class RalExT( subProof: RalProof, idx: SequentIndex, skolemSymbol: SkolemSy
   override val newFormulas = Sequent() :+ BetaReduction.betaNormalize( App( sub, skolemTerm ).asInstanceOf[HOLFormula] )
 }
 
+case class RalTopF( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
+  require( idx isAnt )
+  require( subProof.formulas( idx ) == Top() )
+
+  override val newFormulas = Sequent()
+}
+
+case class RalBottomT( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
+  require( idx isSuc )
+  require( subProof.formulas( idx ) == Bottom() )
+
+  override val newFormulas = Sequent()
+}
+
 case class RalNegF( subProof: RalProof, idx: SequentIndex ) extends SimpleOneFormulaRule {
   require( idx isAnt )
   lazy val Neg( sub ) = subProof.formulas( idx )
