@@ -3,43 +3,22 @@
  */
 package at.logic.gapt.integration_tests
 
+import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.formats.xml.XMLParser._
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
-import at.logic.gapt.proofs.ceres.clauseSets.profile._
-import at.logic.gapt.proofs.ceres.extractStructFromLKsk
-import at.logic.gapt.proofs.ceres.projections.Projections
-import at.logic.gapt.proofs.ceres.struct.StructCreators
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk.{ deleteTautologies, LKToLKsk, getStatistics }
-import at.logic.gapt.proofs.lkNew.{ DefinitionElimination, skolemize, lkOld2New, lkNew2Old }
+import at.logic.gapt.proofs.ceres._
+import at.logic.gapt.proofs.lk.{ deleteTautologies }
+import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.provers.prover9._
 import java.io.File.separator
-import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
-import java.util.zip.GZIPInputStream
 import org.specs2.mutable._
+
+//NOTE: I removed the proof profile from this test
 
 class LatticeTest extends Specification {
   def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
-
-  def sequentToString( s: OccSequent ) = {
-    var ret = ""
-    s.antecedent.foreach( formula => ret += formula.toString + ", " )
-    ret += " :- "
-    s.succedent.foreach( formula => ret += formula.toString + ", " )
-    ret
-  }
-
-  def printStats( p: LKProof ) = {
-    val nLine = sys.props( "line.separator" )
-    val stats = getStatistics( p )
-    print( "unary: " + stats.unary + nLine )
-    print( "binary: " + stats.binary + nLine )
-    print( "cuts: " + stats.cuts + nLine )
-  }
 
   sequential
   "The system" should {
@@ -50,9 +29,9 @@ class LatticeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = DefinitionElimination( proofdb.Definitions, lkOld2New( proofdb.proofs.head._2 ) )
 
-      val proof_sk = at.logic.gapt.proofs.lkNew.LKToLKsk( proof )
-      val s = extractStructFromLKsk( proof_sk )
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent.asInstanceOf[HOLClause] ) )
+      val s = extractStruct( proof )
+      val css = CharacteristicClauseSet( s )
+      val cs = deleteTautologies( css )
       new Prover9Prover().getRobinsonProof( cs ) must beSome
     }
 
@@ -61,46 +40,16 @@ class LatticeTest extends Specification {
 
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
+      val proof = lkOld2New( proofdb.proofs.head._2 )
 
-      val proof_sk_new = skolemize( lkOld2New( proof ) )
-      val proof_sk = lkNew2Old( proof_sk_new )
-      val s = StructCreators.extract( proof_sk )
-
-      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toHOLSequent ) ).asInstanceOf[List[HOLClause]]
-
-      val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
-      val writer_prf = new java.io.FileWriter( "target" + separator + "lattice-prf.tptp" )
-      writer_prf.write( tptp_prf )
-      writer_prf.flush
-
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent ) ).asInstanceOf[List[HOLClause]]
-      val tptp = TPTPFOLExporter.tptp_problem( cs )
-      val writer = new java.io.FileWriter( "target" + separator + "lattice-cs.tptp" )
-      writer.write( tptp )
-      writer.flush
-
-      val prf_cs_intersect = prf.filter( seq => cs.contains( seq ) )
-
-      // refute it with prover9
-      new Prover9Prover().getRobinsonProof( prf ) match {
-        case None      => "" must beEqualTo( "refutation of proof profile failed" )
-        case Some( _ ) => true must beEqualTo( true )
-      }
-      new Prover9Prover().getRobinsonProof( cs ) match {
-        case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
-        case Some( _ ) => true must beEqualTo( true )
-      }
-
-      val projs = Projections( proof_sk )
-      val path = "target" + separator + "lattice-sk.xml"
-      saveXML(
-        Tuple2( "lattice-sk", proof_sk ) ::
-          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        // projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Tuple2( "cs", cs ) :: Tuple2( "prf", prf ) :: Tuple2( "cs_prf_intersection", prf_cs_intersect ) :: Nil, path
-      )
-      ( new java.io.File( path ) ).exists() must beEqualTo( true )
+      val acnf = CERES( proof )
+      ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
+      acnf.foreach( {
+        case CutRule( p1, a1, p2, a2 ) => isAtom( p1.endSequent( a1 ) ) must beTrue
+        case _                         => ()
+      } )
+      ok
     }
+
   }
 }

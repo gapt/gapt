@@ -19,21 +19,14 @@ import at.logic.gapt.proofs.lkNew.{ lkNew2Old, lkOld2New }
 import at.logic.gapt.proofs.resolutionOld._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriTProver
-import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
-import at.logic.gapt.proofs.ceres.clauseSets.profile._
-import at.logic.gapt.proofs.ceres.projections.Projections
-import at.logic.gapt.proofs.ceres.struct.{ StructCreators, structToExpressionTree }
-
-/* comment out until atp works again
-import at.logic.gapt.provers.atp.Prover
-import at.logic.gapt.provers.atp.commands._
-import at.logic.gapt.provers.atp.refinements.UnitRefinement
-*/
+import at.logic.gapt.proofs.ceres._
 
 import java.io.File.separator
 import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
 import org.specs2.mutable._
+
+//TODO: without elimination of schematic definitions (in the hlk sense), only the smallest instance works
 
 class PrimeProofTest extends Specification {
   def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
@@ -158,34 +151,18 @@ class PrimeProofTest extends Specification {
       }
 
       //val proof_sk = skolemize( regularize( proof )._1 )
-      val proof_sk = lkNew2Old( lkNew.skolemize( lkOld2New( proof ) ) )
+      val proof_sk = lkNew.skolemize( lkOld2New( proof ) )
       val s = StructCreators.extract( proof_sk )
 
-      // convert struct DAG to tree
-      structToExpressionTree( s )
-
-      val prf = deleteTautologies( proofProfile( s, proof_sk ) map ( _.toHOLClause ) ).asInstanceOf[List[HOLClause]]
-
-      val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
-      val writer_prf = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-prf.tptp" )
-      writer_prf.write( tptp_prf )
-      writer_prf.flush
-
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLClause ) ).asInstanceOf[List[HOLClause]]
-      val tptp = TPTPFOLExporter.tptp_problem( cs )
+      val cs = deleteTautologies( CharacteristicClauseSet( s ) )
+      val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
       val writer = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-cs.tptp" )
       writer.write( tptp )
       writer.flush
       val projs = Projections( proof_sk )
       val path = "target" + separator + "prime1-" + n + "-sk.xml"
 
-      val prf_cs_intersect = prf.filter( seq => cs.contains( seq ) )
-
       if ( refute ) {
-        new Prover9Prover().getRobinsonProof( prf ) match {
-          case None      => "" must beEqualTo( "refutation of proof profile failed" )
-          case Some( _ ) => true must beEqualTo( true )
-        }
         new Prover9Prover().getRobinsonProof( cs ) match {
           case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
           case Some( _ ) => true must beEqualTo( true )
@@ -193,10 +170,10 @@ class PrimeProofTest extends Specification {
       }
 
       saveXML(
-        Tuple2( "prime1-" + n + "-sk", proof_sk ) ::
-          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+        Tuple2( "prime1-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
+          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
         //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Tuple2( "cs", cs ) :: Tuple2( "prf", prf ) :: Tuple2( "cs_prf_intersection", prf_cs_intersect ) :: Nil, path
+        ( "cs", cs.toList ) :: Nil, path
       )
       ( new java.io.File( path ) ).exists() must beEqualTo( true )
     }
@@ -209,37 +186,23 @@ class PrimeProofTest extends Specification {
       val proof = proofdb.proofs.head._2
 
       //val proof_sk = skolemize( regularize( proof )._1 )
-      val proof_sk = lkNew2Old( lkNew.skolemize( lkOld2New( proof ) ) )
+      val proof_sk = lkNew.skolemize( lkOld2New( proof ) )
       val s = StructCreators.extract( proof_sk )
 
-      // convert struct DAG to tree
-      structToExpressionTree( s )
-
-      val prf = deleteTautologies( proofProfile( s, proof_sk ).map( _.toHOLSequent ) )
-
-      val tptp_prf = TPTPFOLExporter.tptp_problem( prf )
-      val writer_prf = new java.io.FileWriter( "target" + separator + "euclid-" + n + "-prf.tptp" )
-      writer_prf.write( tptp_prf )
-      writer_prf.flush
-
-      val cs = deleteTautologies( StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent ) )
-      val tptp = TPTPFOLExporter.tptp_problem( cs )
+      val cs = deleteTautologies( CharacteristicClauseSet( s ) )
+      val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
       val writer = new java.io.FileWriter( "target" + separator + "euclid-" + n + "-cs.tptp" )
       writer.write( tptp )
       writer.flush
       val projs = Projections( proof_sk )
       val path = "target" + separator + "euclid-" + n + "-sk.xml"
 
-      val prf_cs_intersect = prf.filter( seq => cs.contains( seq ) )
-
       //new Prover9Prover().getRobinsonProof( cs ) must beEqualTo( true )
-      //new Prover9Prover().getRobinsonProof( prf ) must beEqualTo( true )
 
       saveXML(
-        Tuple2( "euclid-" + n + "-sk", proof_sk ) ::
-          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Tuple2( "cs", cs ) :: Tuple2( "prf", prf ) :: Tuple2( "cs_prf_intersection", prf_cs_intersect ) :: Nil, path
+        Tuple2( "euclid-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
+          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
+        Tuple2( "cs", cs.toList ) :: Nil, path
       )
       ( new java.io.File( path ) ).exists() must beEqualTo( true )
     }

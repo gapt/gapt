@@ -22,10 +22,7 @@ import at.logic.gapt.proofs.lkNew.{ lkOld2New, lkNew2Old, ReductiveCutEliminatio
 import at.logic.gapt.provers.prover9.Prover9Prover
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.veriT.VeriTProver
-import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet
-import at.logic.gapt.proofs.ceres.clauseSets.profile._
-import at.logic.gapt.proofs.ceres.projections.Projections
-import at.logic.gapt.proofs.ceres.struct.StructCreators
+import at.logic.gapt.proofs.ceres._
 import java.util.zip.GZIPInputStream
 import java.io.File.separator
 import java.io.{ FileReader, FileInputStream, InputStreamReader }
@@ -88,15 +85,15 @@ class MiscTest extends Specification with ClasspathFileCopier {
     "extract projections and clause set from a skolemized proof" in {
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "test1p.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
+      val proof = lkOld2New( proofdb.proofs.head._2 )
       val projs = Projections( proof )
       val s = StructCreators.extract( proof )
-      val cs = StandardClauseSet.transformStructToClauseSet( s ).map( _.toHOLSequent )
-      val prf = deleteTautologies( proofProfile( s, proof ).map( _.toHOLSequent ) )
+      val cs = CharacteristicClauseSet( s )
       val path = "target" + separator + "test1p-out.xml"
-      saveXML( //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        Tuple2( "cs", cs ) :: Tuple2( "prf", prf ) :: Nil, path
+      val oldproofs_with_names = projs.toList.zipWithIndex.map( p => ( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) )
+      saveXML(
+        oldproofs_with_names,
+        ( "cs", cs.toList ) :: Nil, path
       )
       Success()
     }

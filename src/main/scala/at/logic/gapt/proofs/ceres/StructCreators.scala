@@ -3,9 +3,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.proofs.{ OccConnector, Sequent, SequentIndex, HOLSequent }
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ceres.clauseSets.StandardClauseSet._
 import at.logic.gapt.utils.logging.Logger
-import scala.collection.immutable.HashSet
 
 /**
  * Algorithms extracting structs from LK proofs, preparing them for gui code etc.
@@ -45,7 +43,7 @@ object StructCreators extends Logger {
   val nLine = sys.props( "line.separator" )
 
   def toFormula[Data]( s: Struct[Data] ): HOLFormula =
-    And( transformStructToClauseSet( s ) map ( _.toFormula ) )
+    And( CharacteristicClauseSet( s ).toSeq map ( _.toFormula ) )
 
   def extract[Data]( p: LKProof ): Struct[Data] =
     extract[Data]( p, p.endSequent.map( _ => false ) )( x => true )

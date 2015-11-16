@@ -212,7 +212,8 @@ case class Cut( subProof1: LKskProof, aux1: Suc, subProof2: LKskProof, aux2: Ant
   def mainFormulaSequent = Sequent()
 }
 
-case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+//quantifier rules working on end-sequent ancestors.
+case class AllSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
   val All( quantVar, formula ) = mainFormula
   val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
@@ -222,7 +223,7 @@ case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, subs
   def auxIndices = Seq( Seq( aux ) )
 }
 
-case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+case class ExSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
   val Ex( quantVar, formula ) = mainFormula
   val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
@@ -252,6 +253,7 @@ case class ExSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, sko
   def auxIndices = Seq( Seq( aux ) )
 }
 
+//quantifier rules working on cut-ancestors.
 case class AllRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, eigenVar: Var ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> eigenVar )( formula ) ) )
@@ -270,3 +272,21 @@ case class ExLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, eigen
   def auxIndices = Seq( Seq( aux ) )
 }
 
+case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+  val All( quantVar, formula ) = mainFormula
+  val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
+
+  val mainFormulaSequent = ( otherLabels -> mainFormula ) +: Sequent()
+
+  def auxIndices = Seq( Seq( aux ) )
+}
+
+case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+  val Ex( quantVar, formula ) = mainFormula
+  val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
+
+  val mainFormulaSequent = Sequent() :+ ( otherLabels -> mainFormula )
+  def auxIndices = Seq( Seq( aux ) )
+}

@@ -1,24 +1,17 @@
 
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
+import at.logic.gapt.proofs.{ Sequent, HOLSequent, HOLClause }
 import at.logic.gapt.proofs.lk.subsumption._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 
 object deleteTautologies {
-  def apply( sequents: List[HOLSequent] ): List[HOLSequent] =
+  def apply[T]( sequents: Seq[Sequent[T]] ): Seq[Sequent[T]] =
     sequents.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
 
-  def apply( clauses: List[HOLClause] )( implicit dummyImplicit: DummyImplicit ): List[HOLClause] =
-    clauses.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
-}
-
-object setNormalize {
-  def apply( sequents: List[HOLSequent] ): Set[HOLSequent] = sequents match {
-    case x :: rest => setNormalize( rest ) + x
-    case Nil       => Set[HOLSequent]()
-  }
+  def apply[T]( sequents: Set[Sequent[T]] ): Set[Sequent[T]] =
+    sequents.filter( s => !s.antecedent.exists( f => s.succedent.contains( f ) ) )
 }
 
 object subsumedClausesRemovalHOL {

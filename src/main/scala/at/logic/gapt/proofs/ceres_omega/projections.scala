@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.gapt.proofs.ceres_omega.projections
+package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._

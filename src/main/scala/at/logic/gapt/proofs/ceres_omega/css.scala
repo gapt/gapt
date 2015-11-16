@@ -2,11 +2,9 @@ package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.ceres.Struct
-import at.logic.gapt.proofs.ceres.clauseSets.SimplifyStruct
+import at.logic.gapt.proofs.ceres.{ SimplifyStruct, Struct }
 import at.logic.gapt.proofs.lk.subsumedClausesRemovalHOL
 import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, Label }
-import at.logic.gapt.proofs.ceres_omega.clauseSets.StandardClauseSet
 
 import scala.collection.mutable
 
@@ -14,9 +12,9 @@ import scala.collection.mutable
 
 object CharacteristicSequentSet {
   def apply( s: Struct[Label] ): ( List[LabelledSequent], List[HOLSequent], List[HOLSequent], FOLConstantsMap ) = {
-    val clauselist = StandardClauseSet.transformStructToClauseSet( SimplifyStruct( s ) )
-    val ( fcmap, fol, hol ) = apply( clauselist )
-    ( clauselist, fol, hol, fcmap )
+    val clauselist = StandardClauseSet( SimplifyStruct( s ) )
+    val ( fcmap, fol, hol ) = apply( clauselist.toList )
+    ( clauselist.toList, fol, hol, fcmap )
   }
 
   def apply( l: List[LabelledSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) =

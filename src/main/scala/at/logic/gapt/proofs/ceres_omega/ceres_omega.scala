@@ -1,12 +1,10 @@
 package at.logic.gapt.proofs.ceres_omega
 
-import at.logic.gapt.proofs.ceres_omega.projections.Projections
 import at.logic.gapt.proofs.lkskNew.LKskProof._
 import at.logic.gapt.proofs.lkskNew._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.{ SequentIndex, Suc, Ant, Sequent }
 import at.logic.gapt.proofs.ral._
 

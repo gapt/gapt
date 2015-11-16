@@ -75,6 +75,7 @@ object applySubstitution {
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
       ImpRight( subProofNew, aux1, aux2 )
 
+    //unskolemized quantifier rules
     case p @ AllLeft( subProof, aux, f, term ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
       val newF = substitution( p.mainFormula )
@@ -105,6 +106,26 @@ object applySubstitution {
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
       val newF = substitution( p.mainFormula )
       ExRight( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ) )
+
+    //skolemized quantifier rules
+    case p @ AllSkLeft( subProof, aux, f, term ) =>
+      val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
+      val newF = substitution( p.mainFormula )
+      AllSkLeft( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ) )
+
+    case p @ AllSkRight( subProof, aux, formula, skolemconst ) =>
+      val renamed_main = bnsub( p.mainFormula, substitution )
+      val renamed_proof = apply( substitution )( subProof )
+      AllSkRight( renamed_proof, aux, renamed_main, skolemconst )
+
+    case p @ ExSkLeft( subProof, aux, formula, skolemconst ) =>
+      val renamed_main = bnsub( p.mainFormula, substitution )
+      ExSkLeft( apply( Substitution( substitution.map ) )( subProof ), aux, renamed_main, skolemconst )
+
+    case p @ ExSkRight( subProof, aux, f, term ) =>
+      val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
+      val newF = substitution( p.mainFormula )
+      ExSkRight( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ) )
 
     case Equality( subProof, eq, aux, flipped, pos ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
