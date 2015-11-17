@@ -18,8 +18,10 @@ abstract class LambdaExpression {
 
   def hashCode: Int
   override def equals( a: Any ) = a match {
+    case a: AnyRef if this eq a => true
+    case e: LambdaExpression if e.hashCode != hashCode => false
     case e: LambdaExpression => this alphaEquals e
-    case _                   => false
+    case _ => false
   }
 
   // Syntactic equality
@@ -169,7 +171,7 @@ class Var private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpr
       case _                  => false
     }
 
-  override def hashCode = 41 * "Var".hashCode + exptype.hashCode
+  override val hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
 
 class Const private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpression {
@@ -184,7 +186,7 @@ class Const private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaEx
   private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ) =
     this syntaxEquals that
 
-  override def hashCode() = ( 41 * name.hashCode ) + exptype.hashCode
+  override val hashCode = ( 41 * name.hashCode ) + exptype.hashCode
 }
 
 class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpression ) extends LambdaExpression {
@@ -208,7 +210,7 @@ class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpress
     case _ => false
   }
 
-  override def hashCode() = ( 41 * function.hashCode ) + arg.hashCode
+  override val hashCode = ( 41 * function.hashCode ) + arg.hashCode
 }
 
 class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extends LambdaExpression {
@@ -225,7 +227,7 @@ class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extend
     case _ => false
   }
 
-  override def hashCode = 41 * "Abs".hashCode + term.hashCode
+  override val hashCode = 41 * "Abs".hashCode + term.hashCode
 }
 
 object Var {
