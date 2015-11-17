@@ -1,10 +1,9 @@
 package at.logic.gapt.provers.sat
 
-import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.expr.{ FOLFormula, HOLFormula }
-import at.logic.gapt.expr.fol.TseitinCNF
+import at.logic.gapt.expr.hol.structuralCNF
+import at.logic.gapt.expr.{ HOLAtomConst, HOLFormula }
 import at.logic.gapt.formats.dimacs.{ DIMACSEncoding, DIMACS }
-import at.logic.gapt.models.Interpretation
+import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.lkNew.LKProof
 import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import at.logic.gapt.provers.Prover
@@ -20,12 +19,18 @@ abstract class SATSolver extends Prover {
     }
   }
 
-  // FIXME: rewrite CNF transformation and support non-FOL clauses...
-  def solve( formula: HOLFormula ): Option[Interpretation] =
-    formula match {
-      case formula: FOLFormula => solve( TseitinCNF( formula.asInstanceOf[FOLFormula] ) )
-      case _                   => solve( CNFp.toClauseList( formula ) )
+  def solve( formula: HOLFormula ): Option[Interpretation] = {
+    val ( cnf, definitions ) = structuralCNF( formula )
+    solve( cnf ) map {
+      case i: MapBasedInterpretation =>
+        // remove abbreviations for subformulas
+        new MapBasedInterpretation( i.model.filterKeys {
+          case c: HOLAtomConst => !definitions.isDefinedAt( c )
+          case _               => true
+        } )
+      case i => i
     }
+  }
 
   def getLKProof( seq: HOLSequent ): Option[LKProof] = throw new UnsupportedOperationException
   override def isValid( f: HOLFormula ): Boolean = solve( -f ).isEmpty

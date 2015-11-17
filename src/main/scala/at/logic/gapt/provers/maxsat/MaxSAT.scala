@@ -1,6 +1,5 @@
 package at.logic.gapt.provers.maxsat
 
-import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
@@ -25,6 +24,7 @@ abstract class MaxSATSolver {
 
   def solve( hard: TraversableOnce[HOLClause], soft: TraversableOnce[( HOLClause, Int )] ): Option[Interpretation] = {
     val encoding = new DIMACSEncoding
+    println( s"MaxSATSolver: ${hard.size} hard clauses with ${hard.toSeq.map( _.size ).sum} literals and ${hard.flatMap( _.elements ).toSet.size} unique variables" )
     solve(
       encoding.encodeCNF( hard ),
       soft map { case ( clause, weight ) => encoding.encodeClause( clause ) -> weight } toSeq
@@ -41,7 +41,7 @@ abstract class MaxSATSolver {
    */
   def solve( hard: HOLFormula, soft: TraversableOnce[( HOLFormula, Int )] ): Option[Interpretation] = {
     solve(
-      metrics.time( "tseitin" ) { TseitinCNF( hard.asInstanceOf[FOLFormula] ) },
+      metrics.time( "tseitin" ) { structuralCNF( hard )._1 },
       soft.map( s => CNFp.toClauseList( s._1 ).map( f => ( f, s._2 ) ) ).flatten
     )
   }
