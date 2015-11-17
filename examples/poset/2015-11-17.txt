@@ -1,0 +1,87 @@
+2015-11-17
+
+Test with improved structural clausification code:
+
+
+Set(-{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(b,a),f(b,c),b), -{∀x.∀y.∀u.∀v.((x=y∧u=v)⊃f(x,u)=f(y,v))}_a1(f(b,c),b,a,a), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(b,f(c,b),c), -{∀x.∀y.f(x,y)=f(y,x)}_a5(b,c), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(a,f(a,b),f(b,a)), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(c,b),f(c,a),c), -{∀x.x=x}_a0(c), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(b,a),f(b,f(c,a)),f(b,c)), -{∀x.∀y.∀u.∀v.((x=y∧u=v)⊃f(x,u)=f(y,v))}_a1(b,b,f(c,a),c), -{∀x.x=x}_a0(b), {(((f(a,b)=a∧f(b,c)=b)∧f(c,a)=c)⊃(a=b∧b=c))}_s0, -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(b,c,a), -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(c,a,b), -{∀x.∀y.(x=y⊃y=x)}_a2(f(f(b,c),a),f(b,a)), -{∀x.∀y.∀u.∀v.((x=y∧u=v)⊃f(x,u)=f(y,v))}_a1(f(c,a),c,b,b), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(c,b),f(f(c,a),b),f(c,f(a,b))), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(a,f(b,a),b), -{∀x.∀y.f(x,y)=f(y,x)}_a5(a,b), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(c,b),f(c,f(a,b)),f(c,a)), -{∀x.∀y.(x=y⊃y=x)}_a2(f(f(c,a),b),f(c,b)), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(b,a),f(f(b,c),a),f(b,f(c,a))), -{∀x.x=x}_a0(a), -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(b,f(b,c),f(c,b)), -{∀x.∀y.(x=y⊃y=x)}_a2(f(b,c),b), -{∀x.∀y.(x=y⊃y=x)}_a2(f(a,b),a), -{∀x.∀y.∀u.∀v.((x=y∧u=v)⊃f(x,u)=f(y,v))}_a1(c,c,f(a,b),a))
+Total inferences in the input proof: 163
+Quantifier inferences in the input proof: 61
+End sequent: ∀x.x=x, ∀x.∀y.∀u.∀v.((x=y∧u=v)⊃f(x,u)=f(y,v)), ∀x.∀y.(x=y⊃y=x), ∀x.∀y.∀z.((x=y∧y=z)⊃x=z), ∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z)), ∀x.∀y.f(x,y)=f(y,x) :- (((f(a,b)=a∧f(b,c)=b)∧f(c,a)=c)⊃(a=b∧b=c))
+Size of term set: 26
+MaxSATSolver: 1 hard clauses with 1 literals and 1 unique variables
+MaxSATSolver: 10113 hard clauses with 39643 literals and 3999 unique variables
+Smallest grammar of size 18:
+Axiom: (τ)
+Non-terminal vectors:
+  (τ)
+  (α_0_0, α_0_1, α_0_2)
+Productions:
+  τ -> -{∀x.x=x}_a0(α_0_2)
+
+  τ -> -{∀x.∀y.(x=y⊃y=x)}_a2(f(α_0_2,α_0_0),α_0_2)
+
+  τ -> -{∀x.∀y.(x=y⊃y=x)}_a2(α_0_1,f(α_0_0,α_0_2))
+
+  τ -> -{∀x.∀y.f(x,y)=f(y,x)}_a5(α_0_2,α_0_0)
+
+  τ -> -{∀x.∀y.∀u.∀v.((x=y∧u=v)⊃f(x,u)=f(y,v))}_a1(f(α_0_0,α_0_2),α_0_0,α_0_1,α_0_1)
+
+  τ -> -{∀x.∀y.∀u.∀v.((x=y∧u=v)⊃f(x,u)=f(y,v))}_a1(α_0_0,α_0_0,f(α_0_2,α_0_1),α_0_2)
+
+  τ -> -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(b,a),f(b,c),b)
+
+  τ -> -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(c,b),f(c,α_0_2),α_0_0)
+
+  τ -> -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(α_0_0,α_0_1),f(f(α_0_0,α_0_2),α_0_1),f(α_0_0,f(α_0_2,α_0_1)))
+
+  τ -> -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(f(α_0_0,α_0_1),f(α_0_0,f(α_0_2,α_0_1)),f(α_0_0,α_0_2))
+
+  τ -> -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(α_0_2,f(α_0_0,α_0_2),α_0_0)
+
+  τ -> -{∀x.∀y.∀z.((x=y∧y=z)⊃x=z)}_a3(α_0_2,f(α_0_2,α_0_0),f(α_0_0,α_0_2))
+
+  τ -> -{∀x.∀y.∀z.f(f(x,y),z)=f(x,f(y,z))}_a4(α_0_0,α_0_2,α_0_1)
+
+  τ -> {(((f(a,b)=a∧f(b,c)=b)∧f(c,a)=c)⊃(a=b∧b=c))}_s0
+
+  α_0_0 -> b
+  α_0_1 -> a
+  α_0_2 -> c
+
+  α_0_0 -> b
+  α_0_1 -> f(f(b,c),a)
+  α_0_2 -> a
+
+  α_0_0 -> c
+  α_0_1 -> b
+  α_0_2 -> a
+
+  α_0_0 -> c
+  α_0_1 -> f(f(c,a),b)
+  α_0_2 -> b
+
+
+Size of the canonical solution: 58
+Size of the minimized solution: 34
+Minimized cut formulas:
+∀α_0_0.∀α_0_1.∀α_0_2.(((((((f(c,α_0_2)=α_0_0∧f(c,b)=f(c,α_0_2))⊃f(c,b)=α_0_0)∧((f(α_0_0,α_0_2)=α_0_0∧α_0_1=α_0_1)⊃f(f(α_0_0,α_0_2),α_0_1)=f(α_0_0,α_0_1)))∧(((f(α_0_2,α_0_1)=α_0_2∧f(α_0_0,α_0_1)=f(f(α_0_0,α_0_2),α_0_1))∧α_0_0=α_0_0)⊃f(α_0_0,α_0_1)=f(α_0_0,α_0_2)))∧((f(α_0_2,α_0_0)=α_0_2∧f(α_0_0,α_0_2)=α_0_0)⊃α_0_2=α_0_0))∧(α_0_1=f(α_0_0,α_0_2)⊃f(α_0_0,α_0_2)=α_0_1))∧α_0_2=α_0_2)
+Number of cuts introduced: 1
+Total inferences in the proof with cut(s): 6169
+Quantifier inferences in the proof with cut(s): 51
+
+
+
+
+The clauses of the CNF:
+
+anti-symmetry
+  (f(z,x)=z & f(x,z)=x) -> z=x
+
+almost transitivity:
+  (f(x,z)=x & y=y) -> f(f(x,z),y)=f(x,y)
+  (f(z,y)=z & f(x,y)=f(f(x,z),y) & x=x) -> f(x,y)=f(x,z)
+
+stuff that could have been useful for transitivity:
+  (f(c,z)=x & f(c,b)=f(c,z)) -> f(c,b)=x
+  y=f(x,z) -> f(x,z)=y
+  z=z
