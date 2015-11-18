@@ -127,9 +127,9 @@ object constants {
       case _: Var             =>
       case _: LogicalConstant =>
       case c: Const           => cs += c
-      case App( exp, arg )    =>
+      case App( exp, arg ) =>
         f( exp ); f( arg )
-      case Abs( v, exp )      => f( exp )
+      case Abs( v, exp ) => f( exp )
     }
     f( expression )
     cs.toSet
