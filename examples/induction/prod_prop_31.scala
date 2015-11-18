@@ -8,10 +8,13 @@ import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ InstanceTermEncoding, extractInstances }
 import at.logic.gapt.proofs.lk.{ ExtractInterpolant, LKToExpansionProof, skolemize }
+import at.logic.gapt.proofs.reduction.{PredicateReduction, ErasureReduction}
+import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.smtlib.Z3
+import at.logic.gapt.provers.spass.SPASS
 
 object prod_prop_31 extends Script {
   val tipProblem = TipSmtParser parse
@@ -47,28 +50,21 @@ object prod_prop_31 extends Script {
   // Compute many-sorted expansion sequents
   val instanceProofs = instances map { inst =>
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
-    if ( false ) {
-      val erasure = ( constants( instanceSequent ) ++ variables( instanceSequent ) ).zipWithIndex.flatMap {
-        case ( EqC( _ ), _ ) => None
-        case ( c @ NonLogicalConstant( name, FunctionType( To, argTypes ) ), i ) =>
-          Some( c -> FOLAtomConst( s"P_${name}_$i", argTypes.size ) )
-        case ( c @ NonLogicalConstant( name, FunctionType( _, argTypes ) ), i ) =>
-          Some( c -> FOLFunctionConst( s"f_${name}_$i", argTypes.size ) )
-        case ( v @ Var( name, TBase( ty ) ), i ) =>
-          Some( v -> FOLVar( s"x_${name}_${ty}_$i" ) )
-      }.
-        toMap[LambdaExpression, LambdaExpression]
-      val erasedInstanceSequent = instanceSequent map {
-        TermReplacement( _, erasure )
-      }
-      val Some( erasedProof ) = Prover9 getLKProof erasedInstanceSequent
-      val erasedExpansion = LKToExpansionProof( erasedProof ).expansionSequent
-      val reifiedExpansion = erasedExpansion map {
-        TermReplacement( _, erasure.map( _.swap ) )
-      }
+    if ( true ) {
+      val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
+      val reduction = PredicateReduction( constants( instanceSequent ) filter {
+        case EqC( _ ) | _: LogicalConstant => false
+        case _                             => true
+      } )
+      val erasedInstanceSequent = reduction forward instanceSequent
+      println( erasedInstanceSequent )
+      val Some( erasedProof ) = SPASS getRobinsonProof erasedInstanceSequent
+      val reifiedProof = reduction.back( erasedProof, instanceSequent )
+      val reifiedExpansion = RobinsonToExpansionProof( reifiedProof, instanceSequent )
       inst -> reifiedExpansion
+    } else {
+      inst -> Escargot.getExpansionProof( instanceSequent ).get
     }
-    inst -> Escargot.getExpansionProof( instanceSequent ).get
   }
 
   instanceProofs foreach {
