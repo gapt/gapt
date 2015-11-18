@@ -327,8 +327,11 @@ object CutIntroduction extends Logger {
       if ( verbose ) {
         println( s"Size of the canonical solution: $lcompCanonicalSol" )
         println( s"Size of the minimized solution: $lcompMinSol" )
-        println( "Minimized cut formulas:" )
-        minimizedEHS.cutFormulas foreach println
+        for ( ( cf, i ) <- minimizedEHS.cutFormulas.zipWithIndex ) {
+          println( s"CNF of minimized cut-formula number $i:" )
+          for ( clause <- CNFp toClauseList cf )
+            println( s"  $clause" )
+        }
       }
 
       val ehsSequent = minimizedEHS.getDeep
