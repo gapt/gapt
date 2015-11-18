@@ -169,6 +169,9 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
 
     proof match {
       // introductory rules
+      case LogicalAxiom( atom ) =>
+        AtomicExpansion( hol( rewrite )( atom ) )
+
       case InitialSequent( sequent ) =>
         debug( "Axiom!" )
         val sequentNew = sequent.map( f => hol( rewrite )( f ) )

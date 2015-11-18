@@ -90,7 +90,7 @@ object TermReplacement {
       case TopAxiom => TopAxiom
       case BottomAxiom => BottomAxiom
       case ReflexivityAxiom( term ) => ReflexivityAxiom( apply( term, repl ) )
-      case LogicalAxiom( atom ) => LogicalAxiom( apply( atom, repl ) )
+      case LogicalAxiom( atom ) => AtomicExpansion( apply( atom.asInstanceOf[HOLFormula], repl ) )
       case TheoryAxiom( clause ) => TheoryAxiom( clause map { apply( _, repl ) } )
 
       case WeakeningLeftRule( subProof, formula ) => WeakeningLeftRule( f( subProof ), apply( formula, repl ) )

@@ -1,6 +1,9 @@
 
 package at.logic.gapt.proofs.resolution
 
+import at.logic.gapt.expr.hol.structuralCNF
+import at.logic.gapt.expr.{ HOLAtomConst, LambdaExpression }
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs._
 
@@ -18,6 +21,36 @@ object RobinsonToLK {
   def apply( resolutionProof: ResolutionProof, endSequent: HOLSequent ): LKProof = {
     assert( resolutionProof.conclusion.isEmpty )
     apply( resolutionProof, endSequent, PCNF( endSequent, _ ) )
+  }
+
+  def apply( resolutionProof: ResolutionProof, endSequent: HOLSequent,
+             justifications: Map[HOLClause, structuralCNF.Justification],
+             definitions:    Map[HOLAtomConst, LambdaExpression] ): LKProof = {
+    require( resolutionProof.conclusion.isEmpty )
+
+    import structuralCNF.{ ProjectionFromEndSequent, Definition }
+
+    val projections = mutable.Map[HOLClause, LKProof]()
+
+    for ( ( clause, ProjectionFromEndSequent( proj, index ) ) <- justifications ) {
+      val projWithDef = ExpansionProofToLK( proj ++ clause.map( ETAtom ) )
+      projections( clause ) =
+        if ( index isAnt )
+          DefinitionLeftRule( projWithDef, toShallow( proj ).elements.head, endSequent( index ) )
+        else
+          DefinitionRightRule( projWithDef, toShallow( proj ).elements.head, endSequent( index ) )
+    }
+
+    for ( ( clause, Definition( i, expansion ) ) <- justifications ) {
+      val p = ExpansionProofToLK( clause.map( ETAtom ).updated( i, expansion ) )
+      if ( i isAnt )
+        projections( clause ) = DefinitionLeftRule( p, i, clause( i ) )
+      else
+        projections( clause ) = DefinitionRightRule( p, i, clause( i ) )
+    }
+
+    val proofWithDefs = apply( resolutionProof, endSequent, projections )
+    DefinitionElimination( definitions.toMap, proofWithDefs )
   }
 
   /**
