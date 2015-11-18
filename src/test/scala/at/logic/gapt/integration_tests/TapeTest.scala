@@ -42,6 +42,7 @@ class TapeTest extends Specification {
       val proof = lkOld2New( proofdb.proofs.head._2 )
 
       val proof_sk = skolemize( proof )
+      println( proof_sk )
       val s = StructCreators.extract( proof_sk )
 
       val cs = deleteTautologies( CharacteristicClauseSet( s ) )

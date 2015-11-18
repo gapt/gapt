@@ -68,6 +68,8 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   // the parsing of clauses (i.e. they assume associativity of |
   // and dislike parentheses), we only export clauses at the moment.
   def tptp( f: FOLFormula )( implicit s_map: Map[FOLVar, String] ): String = f match {
+    case Top()              => "$true"
+    case Bottom()           => "$false"
     case FOLAtom( x, args ) => handleAtom( x, args )
     case Or( x, y )         => tptp( x ) + " | " + tptp( y )
     case Neg( x )           => "~" + tptp( x )

@@ -74,13 +74,13 @@ We mark the ancestors of the occurence of the primary formula $F(t)$ red
 \CONTRR{\Gamma,\blue{s=t}}{\red{F(t)},\Delta}
 \end{prooftree}
 
-Alternative, if not restricted to tautology axioms:\\
-\begin{prooftree}
-
-\AX{}{\red{s=t}}
-\AX{\Gamma,\blue{s=t}}{\red{F(s)},\Delta}
-\EQR{\Gamma,\blue{s=t}}{\red{F(t)},\Delta}
-\end{prooftree}
+%Alternative, if not restricted to tautology axioms:\\
+%\begin{prooftree}
+%
+%\AX{}{\red{s=t}}
+%\AX{\Gamma,\blue{s=t}}{\red{F(s)},\Delta}
+%\EQR{\Gamma,\blue{s=t}}{\red{F(t)},\Delta}
+%\end{prooftree}
 
 \subsection{Inserting rule \ref{sec:unaryrule} into rule \ref{sec:binaryrule}}
 \begin{prooftree}
@@ -139,7 +139,7 @@ We differentiate on the cut-ancestorship of $\red{F(t)}$ and $\blue{s=t}$ in the
     $C_3 \cup \set{\lkproves \red{s=t}}$.
     Since
     \begin{prooftree}
-      \AX{}{s=t}
+      \AX{s=t}{s=t}
       \CONTINUEWITH{EQ_{s,t}}
     \end{prooftree}
 
@@ -153,12 +153,21 @@ We differentiate on the cut-ancestorship of $\red{F(t)}$ and $\blue{s=t}$ in the
   \begin{enumerate}
   \item If $\blue{s=t}$ is a cut-ancestor:
     \label{opt1}
+    Since $s=t$ is a cut-ancestor, it is not necessarily part of the end-sequent
+    (e.g. it might have been introduced by weakening or another equality
+    inference) and we will denote its occurence as $F_{s,t}$\footnote{it may be
+      not present at all if it comes from a weakening rule}. But the simulation
+    of the rule (\ref{sec:unaryrule}) artificially introduces a second $s=t$
+    which is later contracted. Instead, we can weaken first and skip the
+    contraction.\\
+
     Then $C_4=\set{\blue{s=t} \lkproves}$ and the new \ccs{} is
     $C_3 \times \set{\blue{s=t} \lkproves} $. Then we apply the following
     inference:\\
     \begin{prooftree}
-      \CONTINUEFROM{\proj_i}{\Lambda, s=t }{\Pi, F(s)}
-      \WEAKL{\Lambda, \blue{s=t}, s=t}{\Pi, F(s)}
+      \CONTINUEFROM{\proj_i}{\Lambda, F_{s,t} }{\Pi, F(s)}
+      \WEAKL{\Lambda, \blue{s=t}, F_{s,t}}{\Pi, F(s)}
+      \UEQR{\Lambda, \blue{s=t}, F_{s,t}}{\Pi, F(t)}
     \end{prooftree}
     to each $\proj_i \in Proj_n$.
   \item If $\blue{s=t}$ is an es-ancestor:

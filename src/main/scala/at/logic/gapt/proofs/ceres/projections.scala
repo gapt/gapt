@@ -21,7 +21,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val x = Var( "x", t )
 
     var count = 0
-    val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList ).asInstanceOf[Var]
+    val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList )
     val ax: LKProof = Axiom( Nil, List( Eq( x_, x_ ) ) )
     val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningLeftRule( p, f ) )
     val right = es.succedent.foldLeft( left )( ( p, f ) => WeakeningRightRule( p, f ) )
@@ -226,27 +226,55 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   def handleEqRule( proof: LKProof, p: LKProof, e: SequentIndex, a: SequentIndex,
                     pos: HOLPosition, constructor: ( LKProof, SequentIndex, SequentIndex, HOLPosition ) => LKProof,
-                    pred: HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ) = {
+                    pred: HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val new_cut_ancs = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
     val s1 = apply( p, new_cut_ancs, pred )
-    ( cut_ancs( proof.mainIndices( 0 ) ), cut_ancs( proof.mainIndices( 1 ) ) ) match {
+    /* distinguish on the cut-ancestorship of the equation (left component) and of the auxiliary formula (right component)
+       since the rule does not give direct access to the occurence of e in the conclusion, we look at the premise
+     */
+    val e_idx_conclusion = proof.occConnectors( 0 ).child( e )
+    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calulus!" )
+    ( cut_ancs( proof.mainIndices( 0 ) ), cut_ancs( e_idx_conclusion ) ) match {
       case ( true, true ) =>
+        println( "eq t t" )
         s1
-      case ( false, false ) =>
-        s1 map ( pm => {
-          val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( e, a ) )
-          constructor( p, a1_, a2_, pos )
-        } )
-
-      case ( false, true ) =>
+      case ( true, false ) =>
+        println( "eq t f" )
         val ef = p.endSequent( e )
         val ax = Axiom( List( ef ), List( ef ) )
         val main_e = proof.mainIndices( 0 )
         val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e && !cut_ancs( x._2 ) ).map( _._1 )
         val wax = weakenESAncs( es, Set( ax ) )
         s1 ++ wax
-      case ( true, false ) =>
-        s1
+      case ( false, true ) =>
+        println( "eq f t" )
+        s1 map ( pm => {
+          println( p.endSequent( e ) )
+          //we first pick our aux formula
+          val candidates = a match {
+            case Ant( _ ) => p.endSequent.zipWithIndex.antecedent
+            case Suc( _ ) => p.endSequent.zipWithIndex.succedent
+          }
+          val aux = pick( p, a, candidates )
+          //then add the weakening
+          val wproof = WeakeningLeftRule( p, p.endSequent( e ) )
+          //trace the aux formulas to the new rule
+          val conn = wproof.occConnectors( 0 )
+          val waux = conn.child( aux )
+          val weq = wproof.mainIndices( 0 )
+          require( waux != weq, "Aux formulas must be different!" )
+          //and apply it
+          val rule = constructor( wproof, weq, waux, pos )
+          rule
+        } )
+      case ( false, false ) =>
+        println( "eq f f" )
+        s1 map ( pm => {
+          println( p.endSequent( e ) )
+          val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( e, a ) )
+          constructor( p, a1_, a2_, pos )
+        } )
+
     }
   }
 
