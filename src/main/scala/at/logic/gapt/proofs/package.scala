@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 
 package object proofs {
 
+  type FOLSequent = Sequent[FOLFormula]
   type HOLSequent = Sequent[HOLFormula]
 
   implicit class RichFormulaSequent( val sequent: Sequent[HOLFormula] ) {
@@ -21,7 +22,7 @@ package object proofs {
     def toImplication: HOLFormula = Imp( And( sequent.antecedent.toList ), Or( sequent.succedent ) )
   }
 
-  implicit class RichFOLSequent( sequent: Sequent[FOLFormula] ) {
+  implicit class RichFOLSequent( sequent: FOLSequent ) {
     def toFormula = Or( sequent.map( -_, identity ).elements )
     def toImplication = And( sequent.antecedent ) --> Or( sequent.succedent )
   }

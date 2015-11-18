@@ -150,6 +150,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    */
   def isSubsetOf[B >: A]( other: Sequent[B] ) = ( this.distinct diff other.distinct ).isEmpty
 
+  def isTaut: Boolean = antecedent intersect succedent nonEmpty
+
   /**
    *
    * @return The sequent in tuple form.
