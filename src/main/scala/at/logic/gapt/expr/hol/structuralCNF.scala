@@ -66,7 +66,8 @@ object structuralCNF {
       seq.antecedent foreach left
       seq.succedent foreach right
 
-      if ( !trivial ) split( Sequent( ant.toSeq, suc.toSeq ) )
+      if ( !trivial && ant.intersect( suc ).isEmpty )
+        split( Sequent( ant.toSeq, suc.toSeq ) )
     }
 
     // Then we simplify the connectives which correspond to nested conjunctions, e.g. (:- a&b) turns into (:- a) and (:- b).
