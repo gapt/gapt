@@ -8,6 +8,8 @@ import scala.collection.mutable
 object structuralCNF {
 
   def apply( formula: HOLFormula ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) = {
+    require( freeVariables( formula ).isEmpty, "Formula contains free variables" )
+
     val cnf = mutable.Set[HOLClause]()
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
 
@@ -32,13 +34,8 @@ object structuralCNF {
       var trivial = false
 
       def left( f: HOLFormula ): Unit = f match {
-        case Ex( x, a ) =>
-          val eigen = rename( x, freeVars.toList )
-          freeVars += eigen
-          left( Substitution( x -> eigen )( a ) )
-        case All( x, a ) =>
-          val skolem = Const( skolemSyms.next, FunctionType( x.exptype, freeVars.toSeq map { _.exptype } ) )
-          left( Substitution( x -> skolem( freeVars.toSeq: _* ) )( a ) )
+        case All( x, a ) => right( Ex( x, -a ) )
+        case Ex( x, a )  => right( All( x, -a ) )
         case And( a, b ) =>
           left( a ); left( b )
         case Neg( a ) => right( a )
@@ -48,8 +45,14 @@ object structuralCNF {
       }
 
       def right( f: HOLFormula ): Unit = f match {
-        case All( x, a ) => left( Ex( x, -a ) )
-        case Ex( x, a )  => left( All( x, -a ) )
+        case All( x, a ) =>
+          val eigen = rename( x, freeVars.toList )
+          freeVars += eigen
+          right( Substitution( x -> eigen )( a ) )
+        case Ex( x, a ) =>
+          val fvs = freeVariables( f ).toSeq
+          val skolem = Const( skolemSyms.next, FunctionType( x.exptype, fvs map { _.exptype } ) )
+          right( Substitution( x -> skolem( fvs: _* ) )( a ) )
         case Or( a, b ) =>
           right( a ); right( b )
         case Imp( a, b ) =>
@@ -97,9 +100,7 @@ object structuralCNF {
     // both the abbreviated sequent, and (the necessary part of) the definition.
     def abbrev( seq: HOLSequent, i: SequentIndex ): Unit = {
       val f = seq( i )
-      val fvs =
-        if ( containsStrongQuantifier( f, i isSuc ) ) freeVariables( seq ).toSeq
-        else freeVariables( f ).toSeq
+      val fvs = freeVariables( f ).toSeq
       val const = defs.getOrElseUpdate(
         Abs( fvs, f ),
         HOLAtomConst( abbrevSyms.next(), fvs map { _.exptype }: _* )
