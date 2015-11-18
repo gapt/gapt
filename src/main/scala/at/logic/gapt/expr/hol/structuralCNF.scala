@@ -8,8 +8,6 @@ import scala.collection.mutable
 object structuralCNF {
 
   def apply( formula: HOLFormula ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) = {
-    require( freeVariables( formula ).isEmpty, "Formula contains free variables" )
-
     val cnf = mutable.Set[HOLClause]()
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
 
