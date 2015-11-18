@@ -5,9 +5,11 @@ import at.logic.gapt.proofs.lkNew._
 
 /**
  * Immutable object defining the current state of the proof in the tactics language.
- * @param initFormula
+ * @param initSequent
+ * @param currentGoalIndex
+ * @param proofSegment
  */
-class ProofState( val initFormula: HOLFormula, val currentGoalIndex: Int, val proofSegment: LKProof, val theoremName: String ) {
+case class ProofState( val initSequent: Sequent[( HOLFormula, String )], val currentGoalIndex: Int, val proofSegment: LKProof ) {
   val subGoals: Seq[OpenAssumption] =
     for ( OpenAssumption( s ) <- proofSegment.postOrder )
       yield OpenAssumption( s )
@@ -15,51 +17,17 @@ class ProofState( val initFormula: HOLFormula, val currentGoalIndex: Int, val pr
   require( currentGoalIndex >= 0 && currentGoalIndex <= subGoals.length )
 
   /**
+   *
    * Constructor with name of theorem and initial formula.
-   * @param initFormula
-   * @param initFormulaName
-   * @param theoremName
-   * @return
    */
-  def this( initFormula: HOLFormula, theoremName: String, initFormulaName: String ) = this( initFormula, 0, OpenAssumption( Sequent( Seq(), Seq( ( initFormula, initFormulaName ) ) ) ), theoremName )
-
-  /**
-   * Constructor with name of theorem, and default name for initial formula.
-   * @param initFormula
-   * @param theoremName
-   * @return
-   */
-  def this( initFormula: HOLFormula, theoremName: String ) = this( initFormula, theoremName, "x" )
-
-  /**
-   * Constructor with default name for theorem and initial formula.
-   * @param initFormula
-   * @return
-   */
-  def this( initFormula: HOLFormula ) = this( initFormula, "thm" )
+  def this( initSequent: Sequent[( HOLFormula, String )] ) = this( initSequent, 0, OpenAssumption( initSequent ) )
 
   /**
    * Returns the sub goal at a given index if it exists.
    * @param i
    * @return
    */
-  def getSubGoal( i: Int ): Option[OpenAssumption] = try {
-    val sg = getSubGoalInternal( i )
-    Some( sg )
-  } catch {
-    case ex: Exception => None
-  }
-
-  /**
-   * Returns sub goal at a given index. Throws an exception on fail.
-   * @param i
-   * @return
-   */
-  private def getSubGoalInternal( i: Int ): OpenAssumption = {
-    assert( i >= 0 && i < subGoals.length, "Sub goal index out of bounds" )
-
-    subGoals( i )
-  }
+  def getSubGoal( i: Int ): Option[OpenAssumption] = Some( subGoals( i ) )
 
   /**
    * Returns a string representation of a sub goal at a given index.
@@ -117,7 +85,7 @@ class ProofState( val initFormula: HOLFormula, val currentGoalIndex: Int, val pr
 
     val newSegment = f( proofSegment )
 
-    new ProofState( initFormula, currentGoalIndex, newSegment, theoremName )
+    new ProofState( initSequent, currentGoalIndex, newSegment )
   }
 }
 
@@ -126,135 +94,55 @@ class ProofState( val initFormula: HOLFormula, val currentGoalIndex: Int, val pr
  * @param s
  */
 case class OpenAssumption( s: Sequent[( HOLFormula, String )] ) extends InitialSequent {
-  override def conclusion = s.map( f => {
-    val ( h, _ ) = f;
-    h
-  } )
+  override def conclusion = s map { labelledFormula => labelledFormula._1 }
 }
 
-/**
- * Trait for tactic applied once to a sub goal.
- */
-abstract class Tactic
-
-/**
- * Tactics that takes no additional arguments
- */
-abstract class BasicTactic extends Tactic {
+trait Tactical {
   /**
-   * Abstract method to be implemented by any tactic returning the resulting proof segment after application.
-   * @param o
-   * @param label
+   *
+   * @param proofState
    * @return
    */
-  def rule( o: OpenAssumption, label: Option[String] ): LKProof
-
-  /**
-   * Defines the call pattern that is to be used by any subclass on application of tactic.
-   * @param goalIndex
-   * @param p
-   * @return
-   */
-  final def apply( goalIndex: Int, p: ProofState, label: Option[String] = None ): Option[ProofState] = try {
-    val o = p.subGoals( goalIndex )
-    val segment = rule( o, label )
-
-    Some( p.replaceSubGoal( goalIndex, segment ) )
-  } catch {
-    case lkc: LKRuleCreationException => throw lkc
-    case ex: Exception                => None
-  }
-
-  /**
-   * Alternative call pattern for tactic.
-   * @param p
-   * @return
-   */
-  final def apply( p: ProofState ): Option[ProofState] = apply( p.currentGoalIndex, p )
+  def apply( proofState: ProofState ): Option[ProofState]
 }
 
-/**
- * Tactics that require an additional variable for instantiation or quantification
- */
-abstract class InstantiationTactic extends Tactic {
+trait Tactic extends Tactical {
   /**
-   * Abstract method to be implemented by any tactic returning the resulting proof segment after application.
-   * @param o
-   * @param x
-   * @param label
+   *
+   * @param goal
    * @return
    */
-  def rule( o: OpenAssumption, x: Either[Var, LambdaExpression], label: Option[String] ): LKProof
-
-  /**
-   * Defines the call pattern that is to be used by any subclass on application of tactic.
-   * @param goalIndex
-   * @param p
-   * @param x
-   * @param label
-   * @return
-   */
-  final def apply( goalIndex: Int, p: ProofState, x: Either[Var, LambdaExpression], label: Option[String] = None ): Option[ProofState] = try {
-    val o = p.subGoals( goalIndex )
-    val segment = rule( o, x, label )
-
-    Some( p.replaceSubGoal( goalIndex, segment ) )
-  } catch {
-    case lkc: LKRuleCreationException => throw lkc
-    case ex: Exception                => None
-  }
-
-  /**
-   * Alternative call patterns for tactic.
-   */
-
-  final def apply( p: ProofState, eigenVariable: Var ): Option[ProofState] = apply( p.currentGoalIndex, p, Left( eigenVariable ) )
-
-  final def apply( p: ProofState, eigenVariable: Var, label: String ): Option[ProofState] = apply( p.currentGoalIndex, p, Left( eigenVariable ), Some( label ) )
-
-  final def apply( p: ProofState, term: LambdaExpression ): Option[ProofState] = apply( p.currentGoalIndex, p, Right( term ) )
-
-  final def apply( p: ProofState, term: LambdaExpression, label: String ): Option[ProofState] = apply( p.currentGoalIndex, p, Right( term ), Some( label ) )
-}
-
-/**
- * Abstract class for tactical applying tactics arbitrarily to a proof state.
- */
-abstract class Tactical {
+  def apply( goal: OpenAssumption ): Option[LKProof]
 
   /**
    *
-   * @param p
+   * @param proofState
    * @return
    */
-  final def apply( p: ProofState ): Option[ProofState] = {
-
-    //
-
-    None
+  override def apply( proofState: ProofState ): Option[ProofState] = {
+    val Some( goal ) = proofState.getSubGoal( proofState.currentGoalIndex )
+    val Some( proofSegment ) = this( goal )
+    val newState = proofState.replaceSubGoal( proofState.currentGoalIndex, proofSegment )
+    Some( newState )
   }
 }
 
-/**
- * Tactic for "OrRightRule"
- */
-object OrRightTactic extends BasicTactic {
+case class OrRightTactic( val requiredLabel: Option[String] = None ) extends Tactic {
 
   /**
    *
-   * @param o
-   * @return
+   * @param goal
    */
-  def rule( o: OpenAssumption, label: Option[String] ) = {
-    val goal = o.s
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
 
-    val indices = label match {
+    val indices = this.requiredLabel match {
       case None =>
-        for ( ( ( Or( _, _ ), _ ), index ) <- goal.zipWithIndex.succedent )
+        for ( ( ( Or( _, _ ), _ ), index ) <- goalSequent.zipWithIndex.succedent )
           yield index
 
-      case _ =>
-        for ( ( ( Or( _, _ ), label ), index ) <- goal.zipWithIndex.succedent )
+      case Some( label ) =>
+        for ( ( ( Or( _, _ ), `label` ), index ) <- goalSequent.zipWithIndex.succedent )
           yield index
     }
 
@@ -264,10 +152,10 @@ object OrRightTactic extends BasicTactic {
     val i = indices.head
 
     // Extract LHS/RHS
-    val ( Or( lhs, rhs ), existingLabel ) = goal( i )
+    val ( Or( lhs, rhs ), existingLabel ) = goalSequent( i )
 
     // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
-    val newGoal = goal.delete( i ) :+ ( lhs, existingLabel + "_1" ) :+ ( rhs, existingLabel + "_2" )
+    val newGoal = goalSequent.delete( i ) :+ ( lhs, existingLabel + "_1" ) :+ ( rhs, existingLabel + "_2" )
 
     // Indices of lhs and rhs
     val lhsIndex = Suc( newGoal.succedent.length - 2 )
@@ -275,31 +163,27 @@ object OrRightTactic extends BasicTactic {
 
     val premise = OpenAssumption( newGoal )
 
-    OrRightRule( premise, lhsIndex, rhsIndex )
+    Some( OrRightRule( premise, lhsIndex, rhsIndex ) )
   }
 
 }
 
-/**
- * Tactic for "ImpRightRule"
- */
-object ImpRightTactic extends BasicTactic {
+case class ImpRightTactic( val requiredLabel: Option[String] = None ) extends Tactic {
 
   /**
    *
-   * @param o
-   * @return
+   * @param goal
    */
-  def rule( o: OpenAssumption, label: Option[String] ) = {
-    val goal = o.s
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
 
-    val indices = label match {
+    val indices = this.requiredLabel match {
       case None =>
-        for ( ( ( Imp( _, _ ), _ ), index ) <- goal.zipWithIndex.succedent )
+        for ( ( ( Imp( _, _ ), _ ), index ) <- goalSequent.zipWithIndex.succedent )
           yield index
 
-      case _ =>
-        for ( ( ( Imp( _, _ ), label ), index ) <- goal.zipWithIndex.succedent )
+      case Some( label ) =>
+        for ( ( ( Imp( _, _ ), `label` ), index ) <- goalSequent.zipWithIndex.succedent )
           yield index
     }
 
@@ -309,10 +193,10 @@ object ImpRightTactic extends BasicTactic {
     val i = indices.head
 
     // Extract LHS/RHS
-    val ( Imp( lhs, rhs ), existingLabel ) = goal( i )
+    val ( Imp( lhs, rhs ), existingLabel ) = goalSequent( i )
 
     // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
-    val newGoal = goal.delete( i ).+:( lhs, existingLabel + "_1" ) :+ ( rhs, existingLabel + "_2" )
+    val newGoal = goalSequent.delete( i ).+:( lhs, existingLabel + "_1" ) :+ ( rhs, existingLabel + "_2" )
 
     // Indices of lhs and rhs
     val lhsIndex = Ant( 0 )
@@ -320,36 +204,27 @@ object ImpRightTactic extends BasicTactic {
 
     val premise = OpenAssumption( newGoal )
 
-    ImpRightRule( premise, lhsIndex, rhsIndex )
+    Some( ImpRightRule( premise, lhsIndex, rhsIndex ) )
   }
 
 }
 
-/**
- * Tactic for "ExistLeftRule"
- */
-object ExistsLeftTactic extends InstantiationTactic {
+case class ExistsLeftTactic( val eigenVariable: Var, val requiredLabel: Option[String] = None ) extends Tactic {
 
   /**
    *
-   * @param o
-   * @return
+   * @param goal
    */
-  def rule( o: OpenAssumption, x: Either[Var, LambdaExpression], label: Option[String] ) = {
-    val goal = o.s
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
 
-    val eigenVariable = x match {
-      case Left( y ) => y
-      case _         => throw new Exception( "Expected x to be of type Var" )
-    }
-
-    val indices = label match {
+    val indices = this.requiredLabel match {
       case None =>
-        for ( ( ( Ex( _, _ ), _ ), index ) <- goal.zipWithIndex.antecedent )
+        for ( ( ( Ex( _, _ ), _ ), index ) <- goalSequent.zipWithIndex.antecedent )
           yield index
 
-      case _ =>
-        for ( ( ( Ex( _, _ ), label ), index ) <- goal.zipWithIndex.antecedent )
+      case Some( label ) =>
+        for ( ( ( Ex( _, _ ), `label` ), index ) <- goalSequent.zipWithIndex.antecedent )
           yield index
     }
 
@@ -358,46 +233,37 @@ object ExistsLeftTactic extends InstantiationTactic {
     // Select some formula index!
     val i = indices.head
 
-    val ( quantifiedFormula, existingLabel ) = goal( i )
+    val ( quantifiedFormula, existingLabel ) = goalSequent( i )
     val Ex( v, fm ) = quantifiedFormula
 
     val auxFormula = Substitution( v, eigenVariable )( fm )
 
     // New goal with instance of fm instead of Exi(v, fm)
-    val newGoal = goal.delete( i ).+:( auxFormula, existingLabel )
+    val newGoal = goalSequent.delete( i ).+:( auxFormula, existingLabel )
 
     val premise = OpenAssumption( newGoal )
 
-    ExistsLeftRule( premise, quantifiedFormula )
+    Some( ExistsLeftRule( premise, quantifiedFormula ) )
   }
 
 }
 
-/**
- * Tactic for "ExistsRightRule"
- */
-object ExistsRightTactic extends InstantiationTactic {
+case class ExistsRightTactic( val term: LambdaExpression, val requiredLabel: Option[String] = None ) extends Tactic {
 
   /**
    *
-   * @param o
-   * @return
+   * @param goal
    */
-  def rule( o: OpenAssumption, x: Either[Var, LambdaExpression], label: Option[String] ) = {
-    val goal = o.s
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
 
-    val term = x match {
-      case Right( y ) => y
-      case _          => throw new Exception( "Expected x to be of type LambdaExpression" )
-    }
-
-    val indices = label match {
+    val indices = this.requiredLabel match {
       case None =>
-        for ( ( ( Ex( _, _ ), _ ), index ) <- goal.zipWithIndex.succedent )
+        for ( ( ( Ex( _, _ ), _ ), index ) <- goalSequent.zipWithIndex.succedent )
           yield index
 
-      case _ =>
-        for ( ( ( Ex( _, _ ), label ), index ) <- goal.zipWithIndex.succedent )
+      case Some( label ) =>
+        for ( ( ( Ex( _, _ ), `label` ), index ) <- goalSequent.zipWithIndex.succedent )
           yield index
     }
 
@@ -406,45 +272,40 @@ object ExistsRightTactic extends InstantiationTactic {
     // Select some formula index!
     val i = indices.head
 
-    val ( quantifiedFormula, existingLabel ) = goal( i )
+    val ( quantifiedFormula, existingLabel ) = goalSequent( i )
     val Ex( v, fm ) = quantifiedFormula
 
     val auxFormula = Substitution( v, term )( fm )
 
-    val newGoal = goal.insertAt( i, ( auxFormula, existingLabel + "_" + term ) )
+    val newGoal = goalSequent.insertAt( i, ( auxFormula, existingLabel + "_" + term ) )
 
     val premise = OpenAssumption( newGoal )
 
     val auxProofSegment = ExistsRightRule( premise, quantifiedFormula, term )
-    ContractionRightRule( auxProofSegment, quantifiedFormula )
+
+    Some( ContractionRightRule( auxProofSegment, quantifiedFormula ) )
   }
 }
 
 /**
  * Tactic for "ForallLeftRule"
  */
-object ForallLeftTactic extends InstantiationTactic {
+case class ForallLeftTactic( term: LambdaExpression, val requiredLabel: Option[String] = None ) extends Tactic {
 
   /**
    *
-   * @param o
-   * @return
+   * @param goal
    */
-  def rule( o: OpenAssumption, x: Either[Var, LambdaExpression], label: Option[String] ) = {
-    val goal = o.s
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
 
-    val term = x match {
-      case Right( y ) => y
-      case _          => throw new Exception( "Expected x to be of type LambdaExpression" )
-    }
-
-    val indices = label match {
+    val indices = this.requiredLabel match {
       case None =>
-        for ( ( ( All( _, _ ), _ ), index ) <- goal.zipWithIndex.antecedent )
+        for ( ( ( All( _, _ ), _ ), index ) <- goalSequent.zipWithIndex.antecedent )
           yield index
 
-      case _ =>
-        for ( ( ( All( _, _ ), label ), index ) <- goal.zipWithIndex.antecedent )
+      case Some( label ) =>
+        for ( ( ( All( _, _ ), `label` ), index ) <- goalSequent.zipWithIndex.antecedent )
           yield index
     }
 
@@ -453,17 +314,18 @@ object ForallLeftTactic extends InstantiationTactic {
     // Select some formula index!
     val i = indices.head
 
-    val ( quantifiedFormula, existingLabel ) = goal( i )
+    val ( quantifiedFormula, existingLabel ) = goalSequent( i )
     val All( v, fm ) = quantifiedFormula
 
     val auxFormula = Substitution( v, term )( fm )
 
-    val newGoal = goal.insertAt( i + 1, ( auxFormula, existingLabel + "_" + term ) )
+    val newGoal = goalSequent.insertAt( i + 1, ( auxFormula, existingLabel + "_" + term ) )
 
     val premise = OpenAssumption( newGoal )
 
     val auxProofSegment = ForallLeftRule( premise, quantifiedFormula, term )
-    ContractionLeftRule( auxProofSegment, quantifiedFormula )
+
+    Some( ContractionLeftRule( auxProofSegment, quantifiedFormula ) )
   }
 
 }
@@ -471,15 +333,24 @@ object ForallLeftTactic extends InstantiationTactic {
 /**
  * Tactic for "ForallRightRule"
  */
-object ForallRightTactic extends InstantiationTactic {
+case class ForallRightTactic( val requiredLabel: Option[String] = None ) extends Tactic {
 
   /**
    *
-   * @param o
-   * @return
+   * @param goal
    */
-  def rule( o: OpenAssumption, x: Either[Var, LambdaExpression], label: Option[String] ) = {
-    val goal = o.s
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
+
+    val indices = this.requiredLabel match {
+      case None =>
+        for ( ( ( All( _, _ ), _ ), index ) <- goalSequent.zipWithIndex.succedent )
+          yield index
+
+      case Some( label ) =>
+        for ( ( ( All( _, _ ), `label` ), index ) <- goalSequent.zipWithIndex.succedent )
+          yield index
+    }
 
     ???
   }
