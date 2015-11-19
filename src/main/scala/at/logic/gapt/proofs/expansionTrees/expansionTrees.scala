@@ -751,6 +751,9 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       //TODO: the f1 == f2 check is too strong if the proof contains contractions on paramodulated formulas. Find a better replacement.
       case ( ETAtom( f1 ), ETAtom( f2 ) ) /* if f1 == f2 */ => ( None, ETAtom( f1 ) )
 
+      case ( ETTop, ETTop )                                 => ( None, ETTop )
+      case ( ETBottom, ETBottom )                           => ( None, ETBottom )
+
       case ( ETStrongQuantifier( f1, v1, sel1 ), ETStrongQuantifier( f2, v2, sel2 ) ) if f1 == f2 =>
         trace( "encountered strong quantifier " + f1 + "; renaming " + v2 + " to " + v1 )
         return ( Some( Substitution( v2, v1 ) ), ETStrongQuantifier( f1, v1, ETMerge( sel1, sel2 ) ) )
