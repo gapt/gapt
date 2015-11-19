@@ -16,12 +16,8 @@ object RobinsonToExpansionProof {
       case ETTop    => ETTop
       case ETBottom => ETBottom
       case ETAtom( atom @ Apps( abbrev: HOLAtomConst, args ) ) if definitions isDefinedAt abbrev =>
-        // FIXME: check whether abbrev is used in both polarities
-        val expanded = DefinitionElimination( definitions.toMap[LambdaExpression, LambdaExpression], atom )
-        if ( containsQuantifierOnLogicalLevel( expanded ) )
-          ETWeakening( expanded )
-        else
-          formulaToExpansionTree( expanded, pol )
+        // The definitions that structuralCNF introduces are only ever used in one polarity.
+        ETWeakening( DefinitionElimination( definitions.toMap[LambdaExpression, LambdaExpression], atom ) )
       case ETAtom( _ )     => et
       case ETNeg( t1 )     => ETNeg( elimDefs( t1, !pol ) )
       case ETAnd( t1, t2 ) => ETAnd( elimDefs( t1, pol ), elimDefs( t2, pol ) )

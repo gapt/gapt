@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.thresholds
+import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr.hol.{ structuralCNF, existsclosure }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.proofs.Sequent
@@ -46,6 +46,22 @@ class RobinsonToExpansionProofTest extends Specification {
     val endSequent = thresholds.atMost.oneOf( as map { a => Ex( x, a( x ) ) } ) +: Sequent() :+ ( as( 0 )( c ) --> -as( 1 )( d ) )
 
     "extract expansion sequent" in {
+      val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true )
+      val Some( ref ) = Prover9 getRobinsonProof cnf
+      val expansion = RobinsonToExpansionProof( ref, endSequent, projs, defs )
+      toShallow( expansion ) isSubMultisetOf endSequent must_== true
+      val deep = toDeep( expansion )
+      VeriT isValid deep must_== true
+    }
+  }
+
+  "quantified definitions" should {
+    val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
+    val c = FOLConst( "c" )
+    val as = ( 0 to 2 ) map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
+    val endSequent = Sequent() :+ ( All( z, thresholds.exactly.oneOf( as ) ) <-> All( z, naive.exactly.oneOf( as ) ) )
+
+    "extract expansion sequent with skolem quantifiers" in {
       val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true )
       val Some( ref ) = Prover9 getRobinsonProof cnf
       val expansion = RobinsonToExpansionProof( ref, endSequent, projs, defs )
