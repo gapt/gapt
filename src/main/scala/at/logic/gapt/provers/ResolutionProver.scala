@@ -2,7 +2,7 @@ package at.logic.gapt.provers
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr.Const
-import at.logic.gapt.expr.hol.{ structuralCNF, CNFn }
+import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
@@ -58,7 +58,8 @@ abstract class ResolutionProver extends Prover {
 
   override def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
     withGroundVariables2( seq ) { seq =>
-      getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) ).map( RobinsonToExpansionProof( _, seq ) )
+      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true )
+      getRobinsonProof( cnf ).map( RobinsonToExpansionProof( _, seq, justs, defs ) )
     }
 
 }

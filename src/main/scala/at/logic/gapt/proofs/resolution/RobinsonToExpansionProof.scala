@@ -1,75 +1,111 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ CNFn, CNFp, univclosure }
+import at.logic.gapt.expr.hol.structuralCNF.{ ProjectionFromEndSequent, Definition, Justification }
+import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, CNFn, univclosure }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, formulaToExpansionTree }
+import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.lkNew.{ DefinitionElimination, LKToExpansionProof }
 
 import scala.collection.mutable
 
 object RobinsonToExpansionProof {
-  def apply( p: ResolutionProof, es: HOLSequent ): ExpansionSequent =
-    if ( !es.forall( isInVNF( _ ) ) ) {
-      val vnfES = es map { toVNF( _ ) }
-      apply( fixDerivation( p, vnfES ), vnfES )
-    } else {
-      val cnfMap: Map[HOLClause, Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )]] =
-        es.map(
-          ant => CNFp.toClauseList( ant ).map { ( _, false, ant ) },
-          suc => CNFn.toFClauseList( suc ).map { ( _, true, suc ) }
-        ).elements.flatten.groupBy( _._1 ).mapValues {
-            _ map {
-              case ( cnfClause, pol, formula ) =>
-                ( pol, formula,
-                  variables( formula ).map( v => v -> Const( "arbitrary", v.exptype ) ).toMap
-                  ++ variables( cnfClause ).map( v => v -> v ) )
-            } toSet
-          }
-      apply_( p, cnfMap )
+
+  def apply( p: ResolutionProof, es: HOLSequent, justifications: Map[HOLClause, Justification], definitions: Map[HOLAtomConst, LambdaExpression] ): ExpansionSequent = {
+    def elimDefs( et: ExpansionTree, pol: Boolean ): ExpansionTree = et match {
+      case ETTop    => ETTop
+      case ETBottom => ETBottom
+      case ETAtom( atom @ Apps( abbrev: HOLAtomConst, args ) ) if definitions isDefinedAt abbrev =>
+        // FIXME: check whether abbrev is used in both polarities
+        val expanded = DefinitionElimination( definitions.toMap[LambdaExpression, LambdaExpression], atom )
+        if ( containsQuantifierOnLogicalLevel( expanded ) )
+          ETWeakening( expanded )
+        else
+          formulaToExpansionTree( expanded, pol )
+      case ETAtom( _ )     => et
+      case ETNeg( t1 )     => ETNeg( elimDefs( t1, !pol ) )
+      case ETAnd( t1, t2 ) => ETAnd( elimDefs( t1, pol ), elimDefs( t2, pol ) )
+      case ETOr( t1, t2 )  => ETOr( elimDefs( t1, pol ), elimDefs( t2, pol ) )
+      case ETImp( t1, t2 ) => ETImp( elimDefs( t1, !pol ), elimDefs( t2, pol ) )
+      case ETStrongQuantifier( f, v, selection ) =>
+        ETStrongQuantifier( f, v, elimDefs( selection, pol ) )
+      case ETSkolemQuantifier( f, v, selection ) =>
+        ETSkolemQuantifier( f, v, elimDefs( selection, pol ) )
+      case ETWeakQuantifier( f, instances ) =>
+        ETWeakQuantifier.applyWithoutMerge( f, instances map { case ( t, term ) => elimDefs( t, pol ) -> term } )
+      case ETWeakening( f ) => ETWeakening( DefinitionElimination( definitions.toMap[LambdaExpression, LambdaExpression], f ) )
     }
+    def elimDefsES( es: ExpansionSequent ): ExpansionSequent =
+      es.map( elimDefs( _, false ), elimDefs( _, true ) )
+
+    def getESProj( justification: Justification ): ExpansionSequent = justification match {
+      case ProjectionFromEndSequent( projection, _ ) => projection
+      case Definition( _, _, prevJust )              => getESProj( prevJust )
+    }
+
+    apply_( p, clause => {
+      val proj = getESProj( justifications( clause ) )
+      val fvs = freeVariables( clause ).toSeq
+      Set( ( ( subst: Seq[LambdaExpression] ) => elimDefsES( substitute( Substitution( fvs zip subst ), proj ) ) ) -> fvs )
+    } )
+  }
+
+  def apply( p: ResolutionProof, es: HOLSequent ): ExpansionSequent = {
+    val justifications =
+      for {
+        ( f, i ) <- es.zipWithIndex.elements
+        fs = if ( i isAnt ) f +: Sequent() else Sequent() :+ f
+        clause <- CNFn.toFClauseList( fs.toFormula )
+        pcnf = PCNF( fs, clause )
+        exp = LKToExpansionProof( pcnf ) diff clause.map( ETAtom )
+        just = ProjectionFromEndSequent( exp, i )
+      } yield clause -> just
+    apply( p, es, justifications toMap, Map() )
+  }
 
   def apply( p: ResolutionProof ): ExpansionSequent =
-    apply_( p, clause => Set(
-      ( false,
-        univclosure( clause.toFormula ),
-        freeVariables( clause.toFormula ).map { v => v -> v }.toMap )
-    ) )
+    apply_( p, ( clause: HOLClause ) => {
+      val fvs = freeVariables( clause ).toSeq
+      val formula = univclosure( clause.toFormula )
+      Set( ( ( subst: Seq[LambdaExpression] ) =>
+        formulaToExpansionTree( formula, List( Substitution( fvs zip subst ) ), false ) +: Sequent() ) ->
+        fvs )
+    } )
 
-  private def apply_( p: ResolutionProof, instForIC: HOLClause => Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )] ): ExpansionSequent = {
+  private def apply_(
+    p:         ResolutionProof,
+    instForIC: HOLClause => Set[( Seq[LambdaExpression] => ExpansionSequent, Seq[LambdaExpression] )]
+  ): ExpansionSequent = {
     val inst = getInstances( p, instForIC )
 
-    // Expansion trees require instance terms not to contain the quantified variables.
-    // Hence we ground the instance substitutions here.
-    // FIXME: maybe just rename the variables?
-    val instSubsts = inst.map {
-      case ( pol, formula, subst ) =>
-        val ground = Substitution( freeVariables( subst.values ).map( v => v -> Const( "arbitrary", v.exptype ) ) )
-        ( pol, formula, Substitution( subst mapValues { ground( _ ) } ) )
+    var ant = mutable.Buffer[ExpansionTree]()
+    val suc = mutable.Buffer[ExpansionTree]()
+    for ( ( esTransf, instSubst ) <- inst ) {
+      val es = esTransf( instSubst )
+      ant ++= es.antecedent
+      suc ++= es.succedent
     }
 
-    Sequent(
-      instSubsts.filter( _._1 == false ).groupBy( _._2 ).map {
-      case ( formula, substs ) =>
-        formulaToExpansionTree( formula, substs.map( _._3 ).toList, false )
-    }.toSeq,
-      instSubsts.filter( _._1 == true ).groupBy( _._2 ).map {
-      case ( formula, substs ) =>
-        formulaToExpansionTree( formula, substs.map( _._3 ).toList, true )
-    }.toSeq
+    merge(
+      ant.groupBy { toShallow( _ ) }.values.map { _.reduce( ETMerge ) }.toSeq,
+      suc.groupBy { toShallow( _ ) }.values.map { _.reduce( ETMerge ) }.toSeq
     )
   }
 
-  private def getInstances( p: ResolutionProof, instForIC: HOLClause => Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )] ): Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )] = {
-    val substMap = mutable.Map[ResolutionProof, Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )]]()
+  private def getInstances[T](
+    p:         ResolutionProof,
+    instForIC: HOLClause => Set[( T, Seq[LambdaExpression] )]
+  ): Set[( T, Seq[LambdaExpression] )] = {
+    val substMap = mutable.Map[ResolutionProof, Set[( T, Seq[LambdaExpression] )]]()
 
-    def getInst( node: ResolutionProof ): Set[( Boolean, HOLFormula, Map[Var, LambdaExpression] )] =
+    def getInst( node: ResolutionProof ): Set[( T, Seq[LambdaExpression] )] =
       substMap.getOrElseUpdate( node, node match {
         case InputClause( clause ) =>
           instForIC( clause )
         case Instance( subProof, subst ) =>
           getInst( subProof ) map {
-            case ( pol, formula, instSubst ) =>
-              ( pol, formula, instSubst mapValues { subst( _ ) } )
+            case ( tag, instSubst ) =>
+              tag -> instSubst.map { subst( _ ) }
           }
         case _ => node.immediateSubProofs flatMap getInst toSet
       } )

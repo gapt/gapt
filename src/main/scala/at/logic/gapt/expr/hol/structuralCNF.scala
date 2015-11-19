@@ -10,7 +10,7 @@ object structuralCNF {
 
   sealed trait Justification
   case class ProjectionFromEndSequent( projection: ExpansionSequent, indexInES: SequentIndex ) extends Justification
-  case class Definition( index: SequentIndex, expansion: ExpansionTree ) extends Justification
+  case class Definition( newAtom: HOLAtom, expansion: ExpansionTree, prevJust: Justification ) extends Justification
 
   def apply( formula: HOLFormula ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) =
     apply( formula +: Sequent(), generateJustifications = false ) match { case ( cnf, _, defs ) => ( cnf, defs ) }
@@ -156,9 +156,11 @@ object structuralCNF {
       )
       val repl = const( fvs: _* )
       if ( i isAnt ) {
-        expand( Sequent( Seq( f ), Seq( repl ) ), es => Definition( es indexOf ETAtom( repl ), es( Ant( 0 ) ) ) )
+        expand( Sequent( Seq( f ), Seq( repl ) ), es => Definition( repl, es( Ant( 0 ) ),
+          backTrans( seq.map( ETWeakening ).updated( i, es( Ant( 0 ) ) ) ) ) )
       } else {
-        expand( Sequent( Seq( repl ), Seq( f ) ), es => Definition( es indexOf ETAtom( repl ), es( Suc( 0 ) ) ) )
+        expand( Sequent( Seq( repl ), Seq( f ) ), es => Definition( repl, es( Suc( 0 ) ),
+          backTrans( seq.map( ETWeakening ).updated( i, es( Suc( 0 ) ) ) ) ) )
       }
       split( seq.updated( i, repl ), es => backTrans( es.updated( i, ETAtom( repl ) ) ) )
     }

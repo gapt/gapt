@@ -41,13 +41,15 @@ object RobinsonToLK {
           DefinitionRightRule( projWithDef, toShallow( proj ).elements.head, endSequent( index ) )
     }
 
-    for ( ( clause, Definition( i, expansion ) ) <- justifications ) {
-      val p = ExpansionProofToLK( clause.map( ETAtom ).updated( i, expansion ) )
+    for {
+      ( clause, Definition( newAtom, expansion, _ ) ) <- justifications
+      i = clause indexOf newAtom
+      p = ExpansionProofToLK( clause.map( ETAtom ).updated( i, expansion ) )
+    } projections( clause ) =
       if ( i isAnt )
-        projections( clause ) = DefinitionLeftRule( p, i, clause( i ) )
+        DefinitionLeftRule( p, toShallow( expansion ), newAtom )
       else
-        projections( clause ) = DefinitionRightRule( p, i, clause( i ) )
-    }
+        DefinitionRightRule( p, toShallow( expansion ), newAtom )
 
     val proofWithDefs = apply( resolutionProof, endSequent, projections )
     DefinitionElimination( definitions.toMap, proofWithDefs )
