@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ NaiveIncompleteMatchingAlgorithm, containsQuantifier, HOLPosition }
 import at.logic.gapt.proofs.lkNew.solve
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.utils.ResultChecker
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base._
 import scala.annotation.tailrec
@@ -410,6 +411,8 @@ object toShallow {
     case ETImp( t1, t2 )               => Imp( toShallow( t1 ), toShallow( t2 ) )
     case ETWeakQuantifier( f, _ )      => f
     case ETStrongQuantifier( f, _, _ ) => f
+    case ETSkolemQuantifier( f, _, _ ) => f
+    case ETMerge( t, _ )               => toShallow( t )
   }
 
   def apply( ep: ExpansionSequent ): HOLSequent = {
@@ -673,7 +676,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       val ( subst1, res1 ) = detectAndMergeMergeNodes( t1, leftPolarity )
       subst1 match {
         case Some( s: Substitution ) => // found substitution, need to return right here
-          ( Some( s ), OpFactory( res1, t1 ) )
+          ( Some( s ), OpFactory( res1, t2 ) )
         case None => // no substitution, continue
           val ( subst2, res2 ) = detectAndMergeMergeNodes( t2, polarity )
           ( subst2, OpFactory( res1, res2 ) ) // might be Some(subst) or None
@@ -717,7 +720,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       case ETImp( t1, t2 )   => start_op2( t1, t2, ETImp( _, _ ), leftPolarity = !polarity ) // changes polarity
       case ETMerge( t1, t2 ) => doApplyMerge( t1, t2, polarity )
     }
-  }
+  } check { case ( _, res ) => require( toShallow( res ) == toShallow( tree ) ) }
 
   /**
    * Returns either a substitution in case we have to do a substitution at the highest level or the merged tree
