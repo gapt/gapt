@@ -42,7 +42,7 @@ abstract class ResolutionProver extends Prover {
     withGroundVariables( seq ) { seq =>
       val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true )
       getRobinsonProof( seq ) map { robinsonProof =>
-        RobinsonToLK( robinsonProof, seq, justs, defs )
+        RobinsonToLK( robinsonProof, seq, justs toMap, defs )
       }
     }
 

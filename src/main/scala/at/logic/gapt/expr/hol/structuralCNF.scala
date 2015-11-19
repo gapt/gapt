@@ -15,9 +15,9 @@ object structuralCNF {
   def apply( formula: HOLFormula ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) =
     apply( formula +: Sequent(), generateJustifications = false ) match { case ( cnf, _, defs ) => ( cnf, defs ) }
 
-  def apply( endSequent: HOLSequent, generateJustifications: Boolean ): ( Set[HOLClause], Map[HOLClause, Justification], Map[HOLAtomConst, LambdaExpression] ) = {
+  def apply( endSequent: HOLSequent, generateJustifications: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) = {
     val cnf = mutable.Set[HOLClause]()
-    val justifications = mutable.Map[HOLClause, Justification]()
+    val justifications = mutable.Set[( HOLClause, Justification )]()
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
 
     val symsInFormula = constants( endSequent ) map { _.name }
@@ -126,7 +126,7 @@ object structuralCNF {
           val clause = seq.map { _.asInstanceOf[HOLAtom] }
           cnf += clause
           if ( generateJustifications )
-            justifications( clause ) = backTrans( clause map ETAtom )
+            justifications += ( clause -> backTrans( clause map ETAtom ) )
       }
     }
 
@@ -165,7 +165,7 @@ object structuralCNF {
       split( seq.updated( i, repl ), es => backTrans( es.updated( i, ETAtom( repl ) ) ) )
     }
 
-    ( cnf.toSet, justifications.toMap, defs.map( _.swap ).toMap )
+    ( cnf.toSet, justifications.toSet, defs.map( _.swap ).toMap )
   }
 
 }

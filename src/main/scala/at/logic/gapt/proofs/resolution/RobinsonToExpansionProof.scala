@@ -11,7 +11,7 @@ import scala.collection.mutable
 
 object RobinsonToExpansionProof {
 
-  def apply( p: ResolutionProof, es: HOLSequent, justifications: Map[HOLClause, Justification], definitions: Map[HOLAtomConst, LambdaExpression] ): ExpansionSequent = {
+  def apply( p: ResolutionProof, es: HOLSequent, justifications: Set[( HOLClause, Justification )], definitions: Map[HOLAtomConst, LambdaExpression] ): ExpansionSequent = {
     def elimDefs( et: ExpansionTree, pol: Boolean ): ExpansionTree = et match {
       case ETTop    => ETTop
       case ETBottom => ETBottom
@@ -44,9 +44,11 @@ object RobinsonToExpansionProof {
     }
 
     apply_( p, clause => {
-      val proj = getESProj( justifications( clause ) )
       val fvs = freeVariables( clause ).toSeq
-      Set( ( ( subst: Seq[LambdaExpression] ) => elimDefsES( substitute( Substitution( fvs zip subst ), proj ) ) ) -> fvs )
+      for {
+        ( `clause`, just ) <- justifications
+        proj = getESProj( just )
+      } yield ( ( subst: Seq[LambdaExpression] ) => elimDefsES( substitute( Substitution( fvs zip subst ), proj ) ) ) -> fvs.asInstanceOf[Seq[LambdaExpression]]
     } )
   }
 
@@ -60,7 +62,7 @@ object RobinsonToExpansionProof {
         exp = LKToExpansionProof( pcnf ) diff clause.map( ETAtom )
         just = ProjectionFromEndSequent( exp, i )
       } yield clause -> just
-    apply( p, es, justifications toMap, Map() )
+    apply( p, es, justifications toSet, Map() )
   }
 
   def apply( p: ResolutionProof ): ExpansionSequent =
