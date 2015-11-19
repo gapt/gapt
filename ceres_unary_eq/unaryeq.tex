@@ -153,21 +153,19 @@ We differentiate on the cut-ancestorship of $\red{F(t)}$ and $\blue{s=t}$ in the
   \begin{enumerate}
   \item If $\blue{s=t}$ is a cut-ancestor:
     \label{opt1}
-    Since $s=t$ is a cut-ancestor, it is not necessarily part of the end-sequent
-    (e.g. it might have been introduced by weakening or another equality
-    inference) and we will denote its occurence as $F_{s,t}$\footnote{it may be
-      not present at all if it comes from a weakening rule}. But the simulation
-    of the rule (\ref{sec:unaryrule}) artificially introduces a second $s=t$
-    which is later contracted. Instead, we can weaken first and skip the
-    contraction.\\
+    If we look at the simulation in transformation \ref{sec:unaryrule}, we see
+    that the $eq:r$ rule needs to be applied but the $c:r$ does not, leading to
+    a proof of \SEQUENT{\Gamma, \Pi, s=t}{\Delta,\Lambda F(t)} where the
+    sub-sequent \SEQUENT{\Pi}{\Lambda} contains the literals of the
+    characteristic clause we are projecting to.
 
     Then $C_4=\set{\blue{s=t} \lkproves}$ and the new \ccs{} is
     $C_3 \times \set{\blue{s=t} \lkproves} $. Then we apply the following
     inference:\\
     \begin{prooftree}
-      \CONTINUEFROM{\proj_i}{\Lambda, F_{s,t} }{\Pi, F(s)}
-      \WEAKL{\Lambda, \blue{s=t}, F_{s,t}}{\Pi, F(s)}
-      \UEQR{\Lambda, \blue{s=t}, F_{s,t}}{\Pi, F(t)}
+      \CONTINUEFROM{\proj_i}{\Gamma, \Pi, F_{s,t} }{\Lambda, \Delta F(s)}
+      \WEAKL{\Gamma, \Pi, \blue{s=t}, F_{s,t}}{\Lambda, \Delta, F(s)}
+      \UEQR{\Gamma, \Pi, \blue{s=t}, F_{s,t}}{\Lambda,\Delta, F(t)}
     \end{prooftree}
     to each $\proj_i \in Proj_n$.
   \item If $\blue{s=t}$ is an es-ancestor:
@@ -183,11 +181,6 @@ We differentiate on the cut-ancestorship of $\red{F(t)}$ and $\blue{s=t}$ in the
   \end{enumerate}
 \end{enumerate}
 
-\section{Optimizations}
-In case \ref{opt1}, the projection contains two cut-ancestor instances of $s=t$.
-Since $\Gamma, s=t, s=t \lkproves \Delta$ is only refutable iff
-$\Gamma, s=t \lkproves \Delta$ is, we can set $Proj_{n+1} = Proj_n$ and
- $C_4' = C_3$.
 
 
 \end{document}
