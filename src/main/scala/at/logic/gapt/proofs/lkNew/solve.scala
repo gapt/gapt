@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET, ETWeakening }
+import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.utils.logging.Logger
 
@@ -806,8 +806,9 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       case BinaryExpansionTree( child1, child2 ) =>
         doVariablesAppearInStrongQuantifier( vars, child1 ) || doVariablesAppearInStrongQuantifier( vars, child2 )
       case UnaryExpansionTree( child1 ) => doVariablesAppearInStrongQuantifier( vars, child1 )
-      case AtomET( _ )                  => false
+      case ETAtom( _ )                  => false
       case ETWeakening( _ )             => false
+      case ETTop | ETBottom             => false
     }
   }
 
