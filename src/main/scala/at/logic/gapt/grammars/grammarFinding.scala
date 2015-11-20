@@ -264,6 +264,6 @@ object findMinimalVectGrammar {
              weight: VectTratGrammar.Production => Int = _ => 1 ) = {
     val polynomialSizedCoveringGrammar = metrics.time( "stabgrammar" ) { stableProofVectGrammar( lang, aritiesOfNonTerminals ) }
     metrics.value( "stabgrammar", polynomialSizedCoveringGrammar.size )
-    minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver )
+    minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver, weight )
   }
 }
