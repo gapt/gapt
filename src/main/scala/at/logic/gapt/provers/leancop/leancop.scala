@@ -8,13 +8,12 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lkNew.LKProof
-import at.logic.gapt.provers.renameConstantsToFi
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.{ OneShotProver, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.{ runProcess, withTempFile }
 
 object LeanCoP extends LeanCoP
-class LeanCoP extends Prover with ExternalProgram {
+class LeanCoP extends OneShotProver with ExternalProgram {
   val nLine = sys.props( "line.separator" )
 
   override def isValid( s: HOLSequent ): Boolean =

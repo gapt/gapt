@@ -6,9 +6,9 @@ import at.logic.gapt.formats.dimacs.{ DIMACSEncoding, DIMACS }
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
 import at.logic.gapt.proofs.lkNew.LKProof
 import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 
-abstract class SATSolver extends Prover {
+abstract class SATSolver extends OneShotProver {
 
   def solve( cnf: DIMACS.CNF ): Option[DIMACS.Model]
 

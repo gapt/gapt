@@ -30,6 +30,7 @@ import at.logic.gapt.provers.maxsat._
 import at.logic.gapt.provers.eprover._
 import at.logic.gapt.provers.veriT._
 import at.logic.gapt.provers.z3._
+import at.logic.gapt.provers.smtlib._
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.utils._
 import at.logic.gapt.cli.GPL.{apply => copying, printLicense => license}

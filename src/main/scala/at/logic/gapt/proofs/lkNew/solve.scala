@@ -6,7 +6,7 @@ import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET, ETWeakening }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.utils.logging.Logger
 
 /**
@@ -966,7 +966,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   }
 }
 
-object LKProver extends Prover {
+object LKProver extends OneShotProver {
   def getLKProof( seq: HOLSequent ): Option[LKProof] = solve.solvePropositional( seq )
 }
 

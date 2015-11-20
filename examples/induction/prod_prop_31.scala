@@ -1,5 +1,4 @@
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.expr.fol.reduceHolToFol
 import at.logic.gapt.expr.hol.{CNFp, removeAllQuantifiers, CNFn, instantiate}
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
@@ -8,7 +7,7 @@ import at.logic.gapt.proofs.expansionTrees.{InstanceTermEncoding, extractInstanc
 import at.logic.gapt.proofs.lkNew.{skolemize, LKToExpansionProof}
 import at.logic.gapt.provers.inductionProver.{hSolveQBUP, qbupForRecSchem}
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.smtlib.Z3
 
 val tipProblem = TipSmtParser parse """
   (declare-sort sk_a 0)
@@ -99,7 +98,7 @@ println(s"Logical recursion scheme:\n$logicalRS\n")
 val inst = mkList(8)
 val lang = logicalRS parametricLanguage inst map { _.asInstanceOf[HOLFormula] }
 println(s"Validity for instance x = $inst:")
-println(VeriT isValid reduceHolToFol(Or(lang toSeq)))
+println(Z3 isValid Or(lang toSeq))
 println()
 
 // FIXME: currently learns datatype from recursion scheme :-/
@@ -117,4 +116,4 @@ println()
 
 val formula = BetaReduction.betaNormalize(instantiate(qbup, solution))
 println(s"Solution: $solution\n")
-println(VeriT isValid reduceHolToFol(skolemize(formula)))
+println(Z3 isValid skolemize(formula))

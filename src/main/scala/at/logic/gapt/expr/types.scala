@@ -29,5 +29,15 @@ object arity {
   def apply( e: LambdaExpression ): Int = arity( e.exptype )
 }
 
+/**
+ * Base types occurring in a type.
+ */
+object baseTypes {
+  def apply( t: Ty ): Set[TBase] = t match {
+    case `->`( a, b ) => apply( a ) union apply( b )
+    case t: TBase     => Set( t )
+  }
+}
+
 object Ti extends TBase( "i" )
 object To extends TBase( "o" )

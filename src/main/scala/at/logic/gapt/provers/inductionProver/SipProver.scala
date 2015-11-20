@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lkNew.{ lkOld2New, LKProof }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.veriT.VeriT
@@ -27,7 +27,7 @@ class SipProver(
   quasiTautProver:           Prover         = VeriT,
   maxSATSolver:              MaxSATSolver   = bestAvailableMaxSatSolver
 )
-    extends Prover with Logger {
+    extends OneShotProver with Logger {
 
   val nLine = sys.props( "line.separator" )
 

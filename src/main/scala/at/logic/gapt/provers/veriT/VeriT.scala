@@ -11,12 +11,12 @@ import at.logic.gapt.provers._
 import at.logic.gapt.expr._
 
 object VeriT extends VeriT
-class VeriT extends Prover with ExternalProgram {
+class VeriT extends OneShotProver with ExternalProgram {
 
   override def isValid( s: HOLSequent ): Boolean = {
 
     // Generate the input file for veriT
-    val veritInput = SmtLibExporter( renameConstantsToFi( s )._1 )
+    val veritInput = SmtLibExporter( groundFreeVariables( s )._1 )._1
 
     val veritOutput = runProcess( Seq( "veriT" ), veritInput )
 
@@ -24,10 +24,10 @@ class VeriT extends Prover with ExternalProgram {
     VeriTParser.isUnsat( new StringReader( veritOutput ) )
   }
 
-  private def withRenamedConstants( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
-    val ( renamedSeq, _, invertRenaming ) = renameConstantsToFi( seq )
-    f( renamedSeq ) map { renamedExpSeq =>
-      renamedExpSeq map { TermReplacement( _, invertRenaming.toMap[LambdaExpression, LambdaExpression] ) }
+  private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
+    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
+    f( renamedSeq ) map { renamedProof =>
+      renamedProof map { TermReplacement( _, invertRenaming ) }
     }
   }
 
@@ -39,27 +39,25 @@ class VeriT extends Prover with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] = withRenamedConstants( s ) { s =>
-    val smtBenchmark = SmtLibExporter( s )
-
+  override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] = withGroundVariables2( s ) { s =>
+    val ( smtBenchmark, _, renaming ) = SmtLibExporter( s )
     val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
 
-    VeriTParser.getExpansionProof( new StringReader( output ) ) match {
-      case Some( exp_seq ) =>
-        val exp_seq_quant = new ExpansionSequent(
-          exp_seq.antecedent.filter( f => isQuantified( f ) ),
-          exp_seq.succedent.filter( f => isQuantified( f ) )
-        )
+    VeriTParser.getExpansionProof( new StringReader( output ) ) map { renamedExpansion =>
+      val undoRenaming: Map[LambdaExpression, LambdaExpression] = renaming map {
+        case ( from, to @ Const( smtName, FunctionType( To, argTypes ) ) ) => FOLAtomConst( smtName, argTypes.size ) -> from
+        case ( from, to @ Const( smtName, FunctionType( _, argTypes ) ) )  => FOLFunctionConst( smtName, argTypes.size ) -> from
+      }
+      val exp_seq = for ( et <- renamedExpansion ) yield TermReplacement( et, undoRenaming )
 
-        val ant_prop = s.antecedent.map( f => formulaToExpansionTree( f, false ) )
-        val suc_prop = s.succedent.map( f => formulaToExpansionTree( f, true ) )
+      val exp_seq_quant = exp_seq filter { isQuantified( _ ) }
 
-        val quasi_taut = new ExpansionSequent( exp_seq_quant.antecedent ++ ant_prop, exp_seq_quant.succedent ++ suc_prop )
-        val taut = addSymmetry( quasi_taut )
+      val prop = for ( ( f, idx ) <- s.zipWithIndex ) yield formulaToExpansionTree( f, idx.isSuc )
 
-        Some( taut )
+      val quasi_taut = exp_seq_quant ++ prop
+      val taut = addSymmetry( quasi_taut )
 
-      case None => None
+      taut
     }
   }
 
