@@ -23,10 +23,10 @@ object dumpTermsets extends App {
     simplifyNames( FOLInstanceTermEncoding( toShallow( e ) ) encode e map { _.asInstanceOf[FOLTerm] } )
 
   def simplifyNames( termset: Set[FOLTerm] ): Set[FOLTerm] = {
-    val renaming = constants( termset ).toSeq.sortBy( _.toString ).
-      zipWithIndex.map { case ( c: FOLTerm, i ) => c -> Const( s"f$i", c.exptype ).asInstanceOf[FOLTerm] }.
+    val renaming: Map[LambdaExpression, LambdaExpression] = constants( termset ).toSeq.sortBy( _.toString ).
+      zipWithIndex.map { case ( c, i ) => c -> Const( s"f$i", c.exptype ) }.
       toMap
-    termset.map( TermReplacement( _, renaming.toMap[FOLTerm, FOLTerm] ) )
+    termset.map( TermReplacement( _, renaming ).asInstanceOf[FOLTerm] )
   }
 
   def termToString( t: FOLTerm ): String = t match {
