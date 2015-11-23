@@ -53,7 +53,7 @@ object dumpTermsets extends App {
   }
 
   println( "Proof sequences" )
-  proofSequences foreach { proofSeq =>
+  betterForeach( proofSequences ) { proofSeq =>
     Stream.from( 1 ).map { i =>
       println( s"${proofSeq.name}($i)" )
       i -> termsetFromExpansionProof( LKToExpansionProof( proofSeq( i ) ) )
