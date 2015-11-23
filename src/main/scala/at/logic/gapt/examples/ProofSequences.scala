@@ -404,7 +404,11 @@ object SumOfOnesF2ExampleProof extends ProofSequence {
   def FSuccX( x: FOLTerm ) = Eq( FOLFunction( f, FOLFunction( s, x :: Nil ) :: Nil ), FOLFunction( p, FOLFunction( f, x :: Nil ) :: Utils.numeral( 1 ) :: Nil ) )
 
   //The starting axiom f(n) = n |- f(n) = n
-  def start( n: Int ) = Axiom( Eq( Fn( n ), Utils.numeral( n ) ) :: Trans :: Plus :: EqPlus :: FSucc :: Nil, Eq( Fn( n ), Utils.numeral( n ) ) :: Nil )
+  def start( n: Int ) =
+    WeakeningMacroRule(
+      LogicalAxiom( Fn( n ) === Utils.numeral( n ) ),
+      Eq( Fn( n ), Utils.numeral( n ) ) +: Trans +: Plus +: EqPlus +: FSucc +: Sequent() :+ Eq( Fn( n ), Utils.numeral( n ) )
+    )
 
   def apply( n: Int ) = RecProof( start( n ), n )
 
