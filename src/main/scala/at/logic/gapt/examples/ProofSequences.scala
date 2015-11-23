@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.expr.hol.{ univclosure, instantiate }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lkNew._
 
 trait ProofSequence {
@@ -488,7 +488,11 @@ object SumOfOnesFExampleProof extends ProofSequence {
   def FSuccX( x: FOLTerm ) = Eq( FOLFunction( f, FOLFunction( s, x :: Nil ) :: Nil ), FOLFunction( p, FOLFunction( f, x :: Nil ) :: Utils.numeral( 1 ) :: Nil ) )
 
   //The starting axiom f(n) = n |- f(n) = n
-  def start( n: Int ) = Axiom( Eq( Fn( n ), Utils.numeral( n ) ) :: Trans :: Plus :: CongSucc :: FSucc :: Nil, Eq( Fn( n ), Utils.numeral( n ) ) :: Nil )
+  def start( n: Int ) =
+    WeakeningMacroRule(
+      LogicalAxiom( Fn( n ) === Utils.numeral( n ) ),
+      Eq( Fn( n ), Utils.numeral( n ) ) +: Trans +: Plus +: CongSucc +: FSucc +: Sequent() :+ Eq( Fn( n ), Utils.numeral( n ) )
+    )
 
   def apply( n: Int ) = proof( n )
   def proof( n: Int ) = TermGenProof( EqChainProof( start( n ), n ), 0, n )
