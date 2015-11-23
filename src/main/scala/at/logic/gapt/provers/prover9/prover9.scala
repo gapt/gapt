@@ -83,9 +83,10 @@ class Prover9Prover( val extraCommands: ( Map[Const, Const] => Seq[String] ) = (
       } )( formula )
   private def toP9Input( clause: HOLClause ): String = toP9Input( renameVars( clause.toFormula ) )
   private def toP9Input( expr: LambdaExpression ): String = expr match {
+    case Top()                => "$T"
+    case Bottom()             => "$F"
     case Neg( a )             => s"-${toP9Input( a )}"
     case Or( a, b )           => s"${toP9Input( a )} | ${toP9Input( b )}"
-    case Bottom()             => "$F"
     case FOLAtom( f, as )     => toP9Input( f, as )
     case FOLFunction( f, as ) => toP9Input( f, as )
     case FOLVar( v )          => v

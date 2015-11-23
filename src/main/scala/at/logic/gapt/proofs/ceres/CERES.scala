@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
+import at.logic.gapt.proofs.lk.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
 import at.logic.gapt.proofs.HOLSequent
@@ -32,7 +33,7 @@ class CERES {
     val es = p.endSequent
     val proj = Projections( p, pred ) + CERES.refProjection( es )
 
-    val tapecl = CharacteristicClauseSet( StructCreators.extract( p, pred ) )
+    val tapecl = deleteTautologies( CharacteristicClauseSet( StructCreators.extract( p, pred ) ) )
     val prover = new Prover9Prover()
 
     prover.getRobinsonProof( tapecl ) match {
@@ -53,24 +54,22 @@ class CERES {
     RobinsonToLK( rp, endsequent, fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) )
   }
 
-  def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] ): ( HOLSequent => LKProof ) = {
+  def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( axfs: HOLSequent ): LKProof = {
     val nLine = sys.props( "line.separator" )
-
-    ( axfs: HOLSequent ) =>
-      {
-        projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.endSequent diff endsequent, axfs ) ) match {
-          case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
-            projections.map( _.endSequent ).mkString( "{" + nLine, "," + nLine, nLine + "}" ) )
-          case Some( proj ) =>
-            val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.endSequent diff endsequent, axfs )
-            val subproj = applySubstitution( sub )( proj )
-            require(
-              ( subproj.endSequent diff endsequent ).multiSetEquals( axfs ),
-              "Instance of projection with end-sequent " + subproj.endSequent + " is not equal to " + axfs + " x " + endsequent
-            )
-            subproj
-        }
-      }
+    println( s"end-sequent: $endsequent" )
+    println( s"looking for projection to $axfs" )
+    projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.endSequent diff endsequent, axfs ) ) match {
+      case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
+        projections.map( _.endSequent.diff( endsequent ) ).mkString( "{" + nLine, ";" + nLine, nLine + "}" ) )
+      case Some( proj ) =>
+        val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.endSequent diff endsequent, axfs )
+        val subproj = applySubstitution( sub )( proj )
+        require(
+          ( subproj.endSequent diff endsequent ).multiSetEquals( axfs ),
+          "Instance of projection with end-sequent " + subproj.endSequent + " is not equal to " + axfs + " x " + endsequent
+        )
+        subproj
+    }
   }
 
   def refProjection( es: HOLSequent ): LKProof = {

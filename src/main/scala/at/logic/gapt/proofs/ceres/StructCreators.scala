@@ -53,69 +53,106 @@ object StructCreators extends Logger {
   private def mapToUpperProof[Formula]( conn: OccConnector[Formula], cut_occs: Sequent[Boolean], default: Boolean ) =
     conn.parents( cut_occs ).map( _.headOption getOrElse default )
 
-  def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean] )( implicit pred: HOLFormula => Boolean ): Struct[Data] = p match {
-    case InitialSequent( so ) =>
-      handleAxiom( so, cut_occs )
+  def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean] )( implicit pred: HOLFormula => Boolean ): Struct[Data] = {
+    val cutanc_es = p.endSequent.zip( cut_occs ).filter( _._2 ).map( _._1 )
+    val es = p.endSequent
+    /*println( s"es: $es" )
+    println( s"ca: $cutanc_es" )
+    println()*/
+    p match {
+      case InitialSequent( so ) =>
+        handleAxiom( so, cut_occs )
 
-    case UnaryLKProof( _, upperProof ) =>
-      require(
-        p.mainIndices.size == 1,
-        "Error: Struct extraction only works for rules which have exactly one primary formula!"
-      )
-      val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
-      extract[Data]( upperProof, new_occs )
+      case EqualityLeftRule( upperProof, eq, aux, pos ) =>
+        val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
+        val struct = extract[Data]( upperProof, new_occs )
+        val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
+        ( cut_occs( p.mainIndices( 0 ) ), cut_occs( eq ) ) match {
+          case ( true, true ) =>
+            struct
+          case ( true, false ) =>
+            Plus( A( p.mainFormulas( 0 ), Nil ), struct )
+          case ( false, true ) =>
+            Times( Dual( A( p.mainFormulas( 0 ), Nil ) ), struct, Nil )
+          case ( false, false ) =>
+            struct
+        }
 
-    case rule @ CutRule( p1, aux1, p2, aux2 ) =>
-      if ( pred( rule.cutFormula ) ) {
-        val new_occs1 = mapToUpperProof( p.occConnectors( 0 ), cut_occs, true )
-        val new_occs2 = mapToUpperProof( p.occConnectors( 1 ), cut_occs, true )
-        Plus[Data](
-          extract[Data]( p1, new_occs1 ),
-          extract[Data]( p2, new_occs2 )
+      case EqualityRightRule( upperProof, eq, aux, pos ) =>
+        val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
+        val struct = extract[Data]( upperProof, new_occs )
+        val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
+        ( cut_occs( p.mainIndices( 0 ) ), cut_occs( eq ) ) match {
+          case ( true, true ) =>
+            struct
+          case ( true, false ) =>
+            Plus( A( p.mainFormulas( 0 ), Nil ), struct )
+          case ( false, true ) =>
+            Times( Dual( A( p.mainFormulas( 0 ), Nil ) ), struct, Nil )
+          case ( false, false ) =>
+            struct
+        }
+
+      case UnaryLKProof( _, upperProof ) =>
+        require(
+          p.mainIndices.size == 1,
+          "Error: Struct extraction only works for rules which have exactly one primary formula!"
         )
-      } else {
-        val new_occs1 = mapToUpperProof( p.occConnectors( 0 ), cut_occs, false )
-        val new_occs2 = mapToUpperProof( p.occConnectors( 1 ), cut_occs, false )
-        Times[Data](
-          extract[Data]( p1, new_occs1 ),
-          extract[Data]( p2, new_occs2 ), List()
-        )
-      }
+        val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
+        extract[Data]( upperProof, new_occs )
 
-    case BinaryLKProof( _, upperProofLeft, upperProofRight ) =>
-      require(
-        p.mainIndices.size == 1,
-        "Error: Struct extraction only works for rules which have exactly one primary formula! " + p
-      )
-      val new_occs1 = p.occConnectors( 0 ).parents( cut_occs ).map( _.head )
-      val new_occs2 = p.occConnectors( 1 ).parents( cut_occs ).map( _.head )
-      if ( cut_occs( p.mainIndices( 0 ) ) )
-        Plus[Data]( extract[Data]( upperProofLeft, new_occs1 ), extract[Data]( upperProofRight, new_occs2 ) )
-      else
-        Times[Data]( extract[Data]( upperProofLeft, new_occs1 ), extract[Data]( upperProofRight, new_occs2 ), List() )
-    case _ => throw new Exception( "Missing rule in StructCreators.extract: " + p.name )
+      case rule @ CutRule( p1, aux1, p2, aux2 ) =>
+        if ( pred( rule.cutFormula ) ) {
+          val new_occs1 = mapToUpperProof( p.occConnectors( 0 ), cut_occs, true )
+          val new_occs2 = mapToUpperProof( p.occConnectors( 1 ), cut_occs, true )
+          Plus[Data](
+            extract[Data]( p1, new_occs1 ),
+            extract[Data]( p2, new_occs2 )
+          )
+        } else {
+          val new_occs1 = mapToUpperProof( p.occConnectors( 0 ), cut_occs, false )
+          val new_occs2 = mapToUpperProof( p.occConnectors( 1 ), cut_occs, false )
+          Times[Data](
+            extract[Data]( p1, new_occs1 ),
+            extract[Data]( p2, new_occs2 ), List()
+          )
+        }
+
+      case BinaryLKProof( _, upperProofLeft, upperProofRight ) =>
+        require(
+          p.mainIndices.size == 1,
+          "Error: Struct extraction only works for rules which have exactly one primary formula! " + p
+        )
+        val new_occs1 = p.occConnectors( 0 ).parents( cut_occs ).map( _.head )
+        val new_occs2 = p.occConnectors( 1 ).parents( cut_occs ).map( _.head )
+        if ( cut_occs( p.mainIndices( 0 ) ) )
+          Plus[Data]( extract[Data]( upperProofLeft, new_occs1 ), extract[Data]( upperProofRight, new_occs2 ) )
+        else
+          Times[Data]( extract[Data]( upperProofLeft, new_occs1 ), extract[Data]( upperProofRight, new_occs2 ), List() )
+      case _ => throw new Exception( "Missing rule in StructCreators.extract: " + p.name )
+    }
   }
 
   def handleAxiom[Data]( so: HOLSequent, cut_occs: Sequent[Boolean] ): Struct[Data] = {
-    printf( "Axiom!" )
-    printf( cut_occs.toString )
+    //printf( "Axiom!" )
+    //printf( cut_occs.toString )
 
     val cutanc_seq: HOLSequent = so.zipWithIndex.filter( x => cut_occs( x._2 ) ).map( _._1 )
-    /* remove trivial tautologies */
-    val simplified_seq = HOLSequent(
-      cutanc_seq.antecedent.filterNot( cutanc_seq.succedent.contains ),
-      cutanc_seq.succedent.filterNot( cutanc_seq.antecedent.contains )
-    )
+    val tautology_projection = cutanc_seq.antecedent.exists( x => cutanc_seq.succedent.contains( x ) )
+    //if ( tautology_projection ) println( s"Could optimize $so ($cut_occs)" )
+    tautology_projection match { //left optimiziation out for the moment
+      case true =>
+        /* in the case of an axiom A :- A, if both occurrences of A are cut-ancestors, we need to return plus not times.
+         * treat an axiom of the form \Gamma, A :- A, \Delta as if \Gamma and \Delta were added by weakening */
+        EmptyPlusJunction()
+      case false =>
+        val cutAncInAntecedent = cutanc_seq.antecedent.map( x => Dual[Data]( A( x, Nil ) ) )
+        val cutAncInSuccedent = cutanc_seq.succedent.map( x => A[Data]( x ) )
+        val structs: Seq[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
 
-    val cutAncInAntecedent = simplified_seq.antecedent.map( x => Dual[Data]( A( x, Nil ) ) )
-    val cutAncInSuccedent = simplified_seq.succedent.map( x => A[Data]( x ) )
-    makeTimesJunction[Data]( cutAncInAntecedent ++ cutAncInSuccedent, Nil )
+        Times[Data]( structs, List[Data]() )
+    }
   }
 
-  def makeTimesJunction[T]( structs: Seq[Struct[T]], aux: List[T] ): Struct[T] = structs match {
-    case Nil        => EmptyTimesJunction()
-    case s1 :: Nil  => s1
-    case s1 :: tail => Times( s1, makeTimesJunction( tail, aux ), aux )
-  }
 }
 

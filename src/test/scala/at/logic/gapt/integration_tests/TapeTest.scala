@@ -1,30 +1,17 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
-import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.proofs.resolution.RobinsonToLK
-import at.logic.gapt.proofs.resolutionOld._
 
-import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
-import at.logic.gapt.formats.readers.XMLReaders._
 
-import at.logic.gapt.provers.atp.Prover
-import at.logic.gapt.provers.atp.commands.Prover9InitCommand
-import at.logic.gapt.provers.atp.commands.base.SetStreamCommand
-import at.logic.gapt.provers.atp.commands.sequents.SetTargetClause
 import at.logic.gapt.provers.prover9._
-
+import at.logic.gapt.formats.llkNew.LatexLLKExporter
 import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 
 import java.io.File.separator
-import java.io.{ IOException, FileInputStream, InputStreamReader }
-import java.util.zip.GZIPInputStream
 
 import org.specs2.mutable._
 
@@ -36,21 +23,36 @@ class TapeTest extends Specification {
 
     "parse, skolemize, extract and refute the css of the tape proof" in {
       checkForProverOrSkip
-
       val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = lkOld2New( proofdb.proofs.head._2 )
+      val proof_sk = skolemize( regularize( DefinitionElimination( proofdb.Definitions, proof ) ) )
+      println( LatexLLKExporter( proof_sk, true ) )
 
-      val proof_sk = skolemize( proof )
       println( proof_sk )
       val s = StructCreators.extract( proof_sk )
 
-      val cs = deleteTautologies( CharacteristicClauseSet( s ) )
+      //println( s"struct: $s" )
+      val cs_ = CharacteristicClauseSet( s )
+      println( cs_.size )
+      val cs = deleteTautologies( cs_ )
+      cs.map( x => println( s"Clause: $x" ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
+      println( s"tptp string:\n$tptp" )
       val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
       writer.write( tptp )
       writer.flush
       val projs = Projections( proof_sk )
+      cs.map( x => {
+        print( s"projection for clause $x " )
+        projs.exists( _.endSequent.diff( proof_sk.endSequent ) setEquals x ) match {
+          case true =>
+            println( " found!" );
+          case false =>
+            println( " not found!" )
+        }
+        //cs.asInstanceOf[Set[HOLSequent]].contains( pes ) must beTrue
+      } )
       val path = "target" + separator + "tape-sk.xml"
 
       new Prover9Prover().getRobinsonProof( cs ) match {
@@ -73,7 +75,7 @@ class TapeTest extends Specification {
       //get the proof
       val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       pdb.proofs.size must beEqualTo( 1 )
-      val proof = skolemize( lkOld2New( pdb.proofs.head._2 ) )
+      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions, lkOld2New( pdb.proofs.head._2 ) ) ) )
       val ancf = CERES( proof )
       ( ancf.endSequent multiSetEquals proof.endSequent ) must beTrue
 

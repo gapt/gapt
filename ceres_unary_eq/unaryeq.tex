@@ -163,9 +163,9 @@ We differentiate on the cut-ancestorship of $\red{F(t)}$ and $\blue{s=t}$ in the
     $C_3 \times \set{\blue{s=t} \lkproves} $. Then we apply the following
     inference:\\
     \begin{prooftree}
-      \CONTINUEFROM{\proj_i}{\Gamma, \Pi, F_{s,t} }{\Lambda, \Delta F(s)}
-      \WEAKL{\Gamma, \Pi, \blue{s=t}, F_{s,t}}{\Lambda, \Delta, F(s)}
-      \UEQR{\Gamma, \Pi, \blue{s=t}, F_{s,t}}{\Lambda,\Delta, F(t)}
+      \CONTINUEFROM{\proj_i}{\Gamma, \Pi }{\Lambda, \Delta F(s)}
+      \WEAKL{\Gamma, \Pi, \blue{s=t}}{\Lambda, \Delta, F(s)}
+      \UEQR{\Gamma, \Pi, \blue{s=t}}{\Lambda,\Delta, F(t)}
     \end{prooftree}
     to each $\proj_i \in Proj_n$.
   \item If $\blue{s=t}$ is an es-ancestor:

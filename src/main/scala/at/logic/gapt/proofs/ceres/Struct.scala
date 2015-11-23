@@ -44,10 +44,25 @@ trait Struct[Data] {
   def getData(): List[Data]
 }
 
-case class Times[Data]( val left: Struct[Data], val right: Struct[Data], val data: List[Data] ) extends Struct[Data] {
-  def apply[Data]( left: Struct[Data], right: Struct[Data] ): Times[Data] =
-    Times( left, right, Nil )
+object Times {
+  def apply[Data]( left: Struct[Data], right: Struct[Data], data: List[Data] ): Times[Data] =
+    new Times( left, right, data )
 
+  def apply[Data]( left: Struct[Data], right: Struct[Data] ): Times[Data] =
+    new Times( left, right, Nil )
+
+  //create a series of of times applications and add the same data to each
+  def apply[Data]( structs: Seq[Struct[Data]], aux: List[Data] ): Struct[Data] = structs match {
+    case Nil                       => EmptyTimesJunction()
+    case EmptyTimesJunction() :: l => apply( l, aux )
+    case s1 :: Nil                 => s1
+    case s1 :: tail                => apply( s1, apply( tail, aux ), aux )
+  }
+
+  def unapply[Data]( t: Times[Data] ) = Some( ( t.left, t.right, t.data ) )
+}
+
+class Times[Data]( val left: Struct[Data], val right: Struct[Data], val data: List[Data] ) extends Struct[Data] {
   override def toString(): String = "(" + left + " ⊗ " + right + ")"
   override def formula_equal( s: Struct[Data] ) = s match {
     case Times( x, y, aux ) => left.formula_equal( x ) && right.formula_equal( y ) &&

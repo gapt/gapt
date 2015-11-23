@@ -233,13 +233,13 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
        since the rule does not give direct access to the occurence of e in the conclusion, we look at the premise
      */
     val e_idx_conclusion = proof.occConnectors( 0 ).child( e )
-    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calulus!" )
+    //    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calculus!" )
     ( cut_ancs( proof.mainIndices( 0 ) ), cut_ancs( e_idx_conclusion ) ) match {
       case ( true, true ) =>
-        println( "eq t t" )
+        //println( "eq t t" )
         s1
       case ( true, false ) =>
-        println( "eq t f" )
+        //println( "eq t f" )
         val ef = p.endSequent( e )
         val ax = Axiom( List( ef ), List( ef ) )
         val main_e = proof.mainIndices( 0 )
@@ -247,9 +247,9 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         val wax = weakenESAncs( es, Set( ax ) )
         s1 ++ wax
       case ( false, true ) =>
-        println( "eq f t" )
+        //println( "eq f t" )
         s1 map ( pm => {
-          println( p.endSequent( e ) )
+          //println( p.endSequent( e ) )
           //we first pick our aux formula
           val candidates = a match {
             case Ant( _ ) => p.endSequent.zipWithIndex.antecedent
@@ -268,9 +268,9 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
           rule
         } )
       case ( false, false ) =>
-        println( "eq f f" )
+        //println( "eq f f" )
         s1 map ( pm => {
-          println( p.endSequent( e ) )
+          //println( p.endSequent( e ) )
           val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( e, a ) )
           constructor( p, a1_, a2_, pos )
         } )

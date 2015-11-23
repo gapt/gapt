@@ -37,6 +37,8 @@ class CharacteristicClauseSet[Data] {
     case _ => throw new Exception( "Unhandled case: " + struct )
   }
 
+  private def compose( fs1: HOLClause, fs2: HOLClause ) = fs1 ++ fs2
+
   /* Like compose, but does not duplicate common terms */
   private def delta_compose( fs1: HOLClause, fs2: HOLClause ) = HOLClause(
     fs1.antecedent ++ fs2.antecedent.diff( fs1.antecedent ),

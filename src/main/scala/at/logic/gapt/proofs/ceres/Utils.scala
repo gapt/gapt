@@ -162,7 +162,6 @@ object Pickrule {
         require( old_aux.size >= 2, p.name + " rule needs at least two old_aux formulas for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).succedent ), pick( old_parents( 1 ), old_aux( 1 ), s( 1 ).antecedent ) )
       case _: OrLeftRule =>
-        println( s"Picking Or Left $s" )
         require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
         require( old_aux.size >= 2, p.name + " rule needs at least two old_aux formulas for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ), pick( old_parents( 1 ), old_aux( 1 ), s( 1 ).antecedent ) )
