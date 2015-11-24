@@ -1,18 +1,21 @@
 package at.logic.gapt.testing
 
 import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
+import at.logic.gapt.formats.tptp.TptpProofParser
+import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
+import at.logic.gapt.utils.logging.MetricsCollector
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
-import java.nio.file.{ Paths, Files }
 import at.logic.gapt.examples._
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, simplifyResolutionProof, numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO
-import at.logic.gapt.provers.prover9.Prover9Importer
+import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
 import at.logic.gapt.utils.glob
-import at.logic.gapt.utils.logging.{ metrics, CollectMetrics }
+import at.logic.gapt.utils.logging.metrics
 
 import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.proofs.expansionTrees.{ FOLInstanceTermEncoding, addSymmetry, toShallow }
@@ -20,10 +23,39 @@ import at.logic.gapt.proofs.expansionTrees.{ FOLInstanceTermEncoding, addSymmetr
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
-import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.concurrent.forkjoin.ForkJoinPool
-import scala.util.{ Success, Failure, Random }
+import scala.io.Source
+import scala.util.{ Success, Failure }
+
+class MetricsPrinter extends MetricsCollector {
+  val data = mutable.Map[String, Any]()
+
+  def jsonify( v: Any ): JValue = v match {
+    case l: Long    => JInt( l )
+    case l: Int     => JInt( l )
+    case b: Boolean => JBool( b )
+    case l: Seq[_]  => JArray( l map jsonify toList )
+    case s          => JString( s toString )
+  }
+
+  override def time[T]( phase: String )( f: => T ): T = {
+    value( "phase", phase )
+
+    val beginTime = System.currentTimeMillis()
+    val result = f
+    val endTime = System.currentTimeMillis()
+
+    value( s"time_$phase", endTime - beginTime )
+
+    result
+  }
+
+  override def value( key: String, value: => Any ) = {
+    data( key ) = value
+    println( s"METRICS ${compact( render( JObject( key -> jsonify( data( key ) ) ) ) )}" )
+  }
+}
 
 object testCutIntro extends App {
 
@@ -36,17 +68,51 @@ object testCutIntro extends App {
       Some( LKToExpansionProof( p ) -> hasEquality )
     case _ if fileName endsWith ".proof_flat" =>
       VeriTParser.getExpansionProof( fileName ) map { ep => addSymmetry( ep ) -> false }
-    case _ if fileName contains "/leanCoP/" =>
-      LeanCoPParser.getExpansionProof( fileName ) map { _ -> true }
-    case _ if fileName contains "/prover9/" =>
-      val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( fileName )
-      metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
-      val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
-      val containsEquations = constants( toShallow( expansionProof ) ) exists {
-        case EqC( _ ) => true
-        case _        => false
+    case _ if fileName contains "/leanCoP" =>
+      LeanCoPParser.getExpansionProof(
+        new StringReader( extractFromTSTPCommentsIfNecessary( Source.fromFile( fileName ).mkString ) )
+      ) map { _ -> true }
+    case _ if fileName contains "/Prover9" =>
+      val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequent(
+        extractFromTSTPCommentsIfNecessary( Source.fromFile( fileName ).mkString )
+      )
+      Some( loadResolutionProof( resProof, endSequent ) )
+    case _ => // try tstp format
+      val tstpOutput = Source fromFile fileName mkString
+
+      metrics.value( "tstp_is_cnf_ref", tstpOutput contains "CNFRefutation" )
+
+      val ( endSequent, sketch ) = TptpProofParser parse tstpOutput
+      metrics.value( "tstp_sketch_size", sketch.subProofs.size )
+
+      RefutationSketchToRobinson( sketch, Prover9 ) map { resProof =>
+        loadResolutionProof( resProof, endSequent )
       }
-      Some( expansionProof -> containsEquations )
+  }
+
+  def extractFromTSTPCommentsIfNecessary( output: String ): String = {
+    val lines = output.split( "\n" )
+    if ( lines contains "%----ERROR: Could not form TPTP format derivation" )
+      lines.toSeq.
+        dropWhile( _ != "%----ORIGINAL SYSTEM OUTPUT" ).drop( 1 ).
+        takeWhile( !_.startsWith( "%-----" ) ).dropRight( 1 ).
+        map { _ substring 2 }.
+        dropWhile( _ startsWith "% " ).drop( 1 ).
+        filterNot( _ startsWith "% SZS" ).
+        filterNot( _ startsWith "\\n% SZS" ).
+        mkString( "", "\n", "\n" )
+    else
+      output
+  }
+
+  def loadResolutionProof( resProof: ResolutionProof, endSequent: HOLSequent ) = {
+    metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
+    val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
+    val containsEquations = constants( toShallow( expansionProof ) ) exists {
+      case EqC( _ ) => true
+      case _        => false
+    }
+    expansionProof -> containsEquations
   }
 
   def getMethod( methodName: String ) = methodName match {
@@ -58,127 +124,70 @@ object testCutIntro extends App {
       MaxSATMethod( OpenWBO, vectorSizes: _* )
   }
 
-  lazy val proofs =
-    ( for ( n <- 0 to 100; proofSequence <- proofSequences ) yield s"${proofSequence.name}($n)" ) ++
-      glob( "testing/TSTP/prover9/**/*.s.out" ) ++
-      glob( "testing/veriT-SMT-LIB/QF_UF/**/*.proof_flat" ) ++
-      glob( "testing/TSTP/leanCoP/**/*.s.out" ) ++
-      Nil
+  val Array( fileName: String, methodName: String ) = args
 
-  lazy val methods = Seq( "1_dtable", "many_dtable", "1_maxsat", "1_1_maxsat", "2_maxsat", "2_2_maxsat", "reforest" )
+  val metricsPrinter = new MetricsPrinter
+  metrics.current.value = metricsPrinter
+  metrics.value( "file", fileName )
+  metrics.value( "method", methodName )
 
-  lazy val experiments = for ( p <- proofs; m <- methods ) yield ( p, m )
+  metrics.time( "total" ) {
+    val parseResult = try metrics.time( "parse" ) {
+      loadProof( fileName ) orElse {
+        metrics.value( "status", "parsing_proof_not_found" )
+        None
+      }
+    } catch {
+      case e: Throwable =>
+        metrics.value( "status", e match {
+          case _: OutOfMemoryError   => "parsing_out_of_memory"
+          case _: StackOverflowError => "parsing_stack_overflow"
+          case _: Throwable          => "parsing_other_exception"
+        } )
+        throw e
+    }
 
-  def timeout = 60 seconds
-
-  def runExperiment( fileName: String, methodName: String ): JValue = {
-    val collectedMetrics = new CollectMetrics
-    withTimeout( timeout ) {
-      metrics.current.withValue( collectedMetrics ) {
-        metrics.value( "file", fileName )
-        metrics.value( "method", methodName )
-        val parseResult = try metrics.time( "parse" ) {
-          loadProof( fileName ) orElse {
-            metrics.value( "status", "parsing_proof_not_found" )
-            None
+    parseResult foreach {
+      case ( expansionProof, hasEquality ) =>
+        metrics.value( "has_equality", hasEquality )
+        try metrics.time( "cutintro" ) {
+          CutIntroduction.compressToLK( expansionProof, hasEquality, getMethod( methodName ), verbose = false ) match {
+            case Some( _ ) => metrics.value( "status", "ok" )
+            case None =>
+              if ( metricsPrinter.data( "termset_trivial" ) == true )
+                metrics.value( "status", "cutintro_termset_trivial" )
+              else
+                metrics.value( "status", "cutintro_uncompressible" )
           }
-        } catch {
-          case e: ThreadDeath =>
-            metrics.value( "status", "parsing_timeout" )
-            None
-          case e: OutOfMemoryError =>
-            metrics.value( "status", "parsing_out_of_memory" )
-            None
-          case e: StackOverflowError =>
-            metrics.value( "status", "parsing_stack_overflow" )
-            None
+        }
+        catch {
           case e: Throwable =>
-            metrics.value( "status", "parsing_other_exception" )
-            None
+            metrics.value( "status", e match {
+              case _: OutOfMemoryError                    => "cutintro_out_of_memory"
+              case _: StackOverflowError                  => "cutintro_stack_overflow"
+              case _: CutIntroEHSUnprovableException      => "cutintro_ehs_unprovable"
+              case _: CutIntroNonCoveringGrammarException => "cutintro_noncovering_grammar"
+              case _: LKRuleCreationException             => "lk_rule_creation_exception"
+              case _: Throwable                           => "cutintro_other_exception"
+            } )
+            throw e
         }
-
-        parseResult foreach {
-          case ( expansionProof, hasEquality ) =>
-            metrics.value( "has_equality", hasEquality )
-            try metrics.time( "cutintro" ) {
-              CutIntroduction.compressToLK( expansionProof, hasEquality, getMethod( methodName ), verbose = false ) match {
-                case Some( _ ) => metrics.value( "status", "ok" )
-                case None =>
-                  if ( collectedMetrics.data( "termset_trivial" ) == true )
-                    metrics.value( "status", "cutintro_termset_trivial" )
-                  else
-                    metrics.value( "status", "cutintro_uncompressible" )
-              }
-            }
-            catch {
-              case e: ThreadDeath =>
-                metrics.value( "status", "cutintro_timeout" )
-              case e: OutOfMemoryError =>
-                metrics.value( "status", "cutintro_out_of_memory" )
-              case e: StackOverflowError =>
-                metrics.value( "status", "cutintro_stack_overflow" )
-              case e: CutIntroEHSUnprovableException =>
-                metrics.value( "status", "cutintro_ehs_unprovable" )
-              case e: CutIntroNonCoveringGrammarException =>
-                metrics.value( "status", "cutintro_noncovering_grammar" )
-              case e: LKRuleCreationException =>
-                metrics.value( "status", "lk_rule_creation_exception" )
-              case e: Throwable =>
-                metrics.value( "status", "cutintro_other_exception" )
-            }
-        }
-      }
     }
-
-    val results = collectedMetrics.copy
-    results.data.getOrElseUpdate( "status", "cutintro_timeout" )
-    results.value( "phase", results.currentPhase )
-
-    def jsonify( v: Any ): JValue = v match {
-      case l: Long    => JInt( l )
-      case l: Int     => JInt( l )
-      case b: Boolean => JBool( b )
-      case l: Seq[_]  => JArray( l map jsonify toList )
-      case s          => JString( s toString )
-    }
-
-    JObject( results.data mapValues jsonify toList )
   }
+}
 
-  println( s"Running ${experiments.size} experiments." )
+object collectExperimentResults extends App {
+  val metricsLineRegex = """METRICS (.*)""".r
 
-  val partialResultsOut = new PrintWriter( "partial_results.json" )
-  var done = 0
+  def parseOut( fn: String ) =
+    JObject( Source.fromFile( fn ).getLines().collect {
+      case metricsLineRegex( json ) => parse( json )
+    }.collect {
+      case JObject( map ) => map
+    }.flatten.toList )
 
-  val parExperiments = Random.shuffle( experiments ).par
-  parExperiments.tasksupport = new ForkJoinTaskSupport( new ForkJoinPool( Runtime.getRuntime.availableProcessors / 2 ) )
-  val experimentResults = parExperiments flatMap {
-    case ( p, m ) =>
-      try {
-        done += 1
-        println( s"$done/${experiments.size}\t$p\t$m" )
-        val beginTime = System.currentTimeMillis()
-        val JObject( resultEntries ) =
-          parse( runOutOfProcess[String]( Seq( "-Xmx2G", "-Xss30m" ) ) { compact( render( runExperiment( p, m ) ) ) } )
-        val totalTime = System.currentTimeMillis() - beginTime
-        val result = JObject( resultEntries :+ ( "time_total" -> JInt( totalTime ) ) )
-        partialResultsOut.println( compact( render( result ) ) )
-        partialResultsOut.flush()
-        Some( result )
-      } catch {
-        case t: Throwable =>
-          println( s"$p $m failed" )
-          t.printStackTrace()
-          None
-      }
-  }
-
-  Files.write(
-    Paths.get( "results.json" ),
-    compact( render( JArray( experimentResults.toList ) ) ).getBytes
-  )
-
-  partialResultsOut.close()
+  val allResults = JArray( glob( "**/stdout" ) map parseOut toList )
+  print( compact( render( allResults ) ) )
 }
 
 object findNonTrivialTSTPExamples extends App {
