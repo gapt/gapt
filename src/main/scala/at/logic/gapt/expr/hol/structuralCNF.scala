@@ -16,6 +16,9 @@ object structuralCNF {
     apply( formula +: Sequent(), generateJustifications, propositional )
 
   def apply( endSequent: HOLSequent, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) = {
+    if ( !propositional )
+      require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
+
     val cnf = mutable.Set[HOLClause]()
     val justifications = mutable.Set[( HOLClause, Justification )]()
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
