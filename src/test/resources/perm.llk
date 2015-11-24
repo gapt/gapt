@@ -1,0 +1,34 @@
+\CONSTDEC{a,b,c}{i}
+\CONSTDEC{f}{i>i>i}
+\VARDEC{x,y,z}{i}
+\CONSTDEC{Shift, TheProof}{o}
+
+
+\AX{}{f(y,f(z,x)) = f(f(y,z),x)}
+
+\AX{}{f(f(y,z),x)=f(x,f(y,z))}
+\AX{}{f(x,f(y,z)) = f(x,f(y,z))}
+\EQR{}{f(x,f(y,z)) = f(f(y,z),x)}
+\EQR{}{f(x,f(y,z)) = f(y,f(z,x))}
+\ALLR{}{}{(\forall z f(x,f(y,z)) = f(y,f(z,x)))}
+\ALLR{}{}{(\forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}
+\ALLR{}{}{(\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}
+\CONTINUEWITH{Shift}
+
+\CONTINUEFROM{Shift}{}{(\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}
+
+\AX{(f(a,f(b,c)) = f(b,f(c,a)))}{(f(a,f(b,c)) = f(b,f(c,a)))}
+
+\AX{ f(b,f(c,a)) = f(c,f(a,b))}{f(b,f(c,a)) = f(c,f(a,b))}
+\AX{ }{f(c,f(a,b)) = f(c,f(a,b))}
+\EQR{ f(b,f(c,a)) = f(c,f(a,b))}{f(b,f(c,a)) = f(c,f(a,b))}
+\ALLL{}{ ( \forall z f(b,f(c,z)) = f(c,f(z,b)))}{f(b,f(c,a)) = f(c,f(a,b))}
+\ALLL{}{ (\forall y \forall z f(b,f(y,z)) = f(y,f(z,b)))}{f(b,f(c,a)) = f(c,f(a,b))}
+\ALLL{}{ (\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}{f(b,f(c,a)) = f(c,f(a,b))}
+\EQR{(f(a,f(b,c)) = f(b,f(c,a))), (\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}{f(a,f(b,c)) = f(c,f(a,b))}
+\ALLL{}{(\forall z f(a,f(b,z)) = f(b,f(z,a))), (\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}{f(a,f(b,c)) = f(c,f(a,b))}
+\ALLL{}{(\forall y \forall z f(a,f(y,z)) = f(y,f(z,a))), (\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}{f(a,f(b,c)) = f(c,f(a,b))}
+\ALLL{}{(\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x))), (\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}{f(a,f(b,c)) = f(c,f(a,b))}
+\CONTRL{(\forall x \forall y \forall z f(x,f(y,z)) = f(y,f(z,x)))}{f(a,f(b,c)) = f(c,f(a,b))}
+\CUT{}{f(a,f(b,c)) = f(c,f(a,b))}
+\CONTINUEWITH{TheProof}

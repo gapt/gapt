@@ -1,8 +1,6 @@
 package at.logic.gapt.integration_tests
 
-import java.io.IOException
-
-import at.logic.gapt.formats.llk.{ HybridLatexParser, HybridLatexExporter, toLLKString }
+import at.logic.gapt.formats.llk.{ HybridLatexParser, toLLKString }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.expr.hol._

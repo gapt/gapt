@@ -67,13 +67,14 @@ object StructCreators extends Logger {
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
         val struct = extract[Data]( upperProof, new_occs )
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
+        //println( "eql: " + p.endSequent( eq ) )
         ( cut_occs( p.mainIndices( 0 ) ), cut_occs( e_idx_conclusion ) ) match {
           case ( true, true ) =>
             struct
           case ( true, false ) =>
             Plus( A( p.mainFormulas( 0 ), Nil ), struct )
           case ( false, true ) =>
-            Times( Dual( A( p.mainFormulas( 0 ), Nil ) ), struct, Nil )
+            Times( Dual( A( p.endSequent( eq ), Nil ) ), struct, Nil )
           case ( false, false ) =>
             struct
         }
@@ -82,13 +83,14 @@ object StructCreators extends Logger {
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
         val struct = extract[Data]( upperProof, new_occs )
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
+        //println( "eqr: " + p.endSequent( eq ) )
         ( cut_occs( p.mainIndices( 0 ) ), cut_occs( e_idx_conclusion ) ) match {
           case ( true, true ) =>
             struct
           case ( true, false ) =>
             Plus( A( p.mainFormulas( 0 ), Nil ), struct )
           case ( false, true ) =>
-            Times( Dual( A( p.mainFormulas( 0 ), Nil ) ), struct, Nil )
+            Times( Dual( A( p.endSequent( eq ), Nil ) ), struct, Nil )
           case ( false, false ) =>
             struct
         }
@@ -140,8 +142,10 @@ object StructCreators extends Logger {
     val cutanc_seq: HOLSequent = so.zipWithIndex.filter( x => cut_occs( x._2 ) ).map( _._1 )
     val tautology_projection = cutanc_seq.antecedent.exists( x => cutanc_seq.succedent.contains( x ) )
     //if ( tautology_projection ) println( s"Could optimize $so ($cut_occs)" )
+    println( cutanc_seq )
     tautology_projection match {
       case true =>
+        println( "tautology " + cutanc_seq )
         /* in the case of an axiom A :- A, if both occurrences of A are cut-ancestors, we need to return plus not times.
          * treat an axiom of the form \Gamma, A :- A, \Delta as if \Gamma and \Delta were added by weakening */
         EmptyPlusJunction()
@@ -149,8 +153,8 @@ object StructCreators extends Logger {
         val cutAncInAntecedent = cutanc_seq.antecedent.map( x => Dual[Data]( A( x, Nil ) ) )
         val cutAncInSuccedent = cutanc_seq.succedent.map( x => A[Data]( x ) )
         val structs: Seq[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
-
-        Times[Data]( structs, List[Data]() )
+        val r = Times[Data]( structs, List[Data]() )
+        r
     }
   }
 
