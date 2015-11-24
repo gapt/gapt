@@ -213,6 +213,10 @@ case class ETMerge( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerge
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 }
+object ETMerge {
+  def apply( trees: Traversable[ExpansionTreeWithMerges] ): Option[ExpansionTreeWithMerges] =
+    trees reduceOption { ETMerge( _, _ ) }
+}
 
 protected[expansionTrees] class ETAnd( val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
   val node = None
@@ -526,11 +530,9 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
   /**
    * Perform substitution including propagation of merge nodes
    */
-  def apply( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTree = {
-    val etSubstituted = doApplySubstitution( s, et )
-    //merge(etSubstituted)
-    etSubstituted.asInstanceOf[ExpansionTree]
-  }
+  def apply( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = doApplySubstitution( s, et )
+
+  def apply( s: Substitution, et: ExpansionTree ): ExpansionTree = doApplySubstitution( s, et ).asInstanceOf[ExpansionTree]
 
   def apply( s: Substitution, es: ExpansionSequent ): ExpansionSequent =
     ExpansionSequent( es.antecedent.map( apply( s, _ ) ), es.succedent.map( apply( s, _ ) ) )

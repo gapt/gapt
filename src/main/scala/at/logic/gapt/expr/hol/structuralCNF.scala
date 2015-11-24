@@ -10,19 +10,19 @@ object structuralCNF {
 
   sealed trait Justification
   case class ProjectionFromEndSequent( projection: ExpansionSequent, indexInES: SequentIndex ) extends Justification
-  case class Definition( newAtom: HOLAtom, expansion: ExpansionTree, prevJust: Justification ) extends Justification
+  case class Definition( newAtom: HOLAtom, expansion: ExpansionTree ) extends Justification
 
-  def apply( formula: HOLFormula ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) =
-    apply( formula +: Sequent(), generateJustifications = false ) match { case ( cnf, _, defs ) => ( cnf, defs ) }
+  def apply( formula: HOLFormula, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) =
+    apply( formula +: Sequent(), generateJustifications, propositional )
 
-  def apply( endSequent: HOLSequent, generateJustifications: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) = {
+  def apply( endSequent: HOLSequent, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) = {
     val cnf = mutable.Set[HOLClause]()
     val justifications = mutable.Set[( HOLClause, Justification )]()
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
 
     val symsInFormula = constants( endSequent ) map { _.name }
     val skolemSyms = new SkolemSymbolFactory().getSkolemSymbols.map { _.toString() }.filter { s => !symsInFormula.contains( s ) }.iterator
-    val abbrevSyms = Stream.from( 0 ).map { i => s"X$i" }.filter { s => !symsInFormula.contains( s ) }.iterator
+    val abbrevSyms = Stream.from( 0 ).map { i => s"D$i" }.filter { s => !symsInFormula.contains( s ) }.iterator
 
     // We do a clausification similar to forward proof search in Ral.
     // (But we handle Skolemization more as an afterthought here.)
@@ -44,12 +44,12 @@ object structuralCNF {
       var trivial = false
 
       def left( f: HOLFormula ): ( ExpansionSequent => ExpansionTree ) = f match {
-        case Ex( x, a ) =>
+        case Ex( x, a ) if !propositional =>
           val eigen = rename( x, freeVars.toList )
           freeVars += eigen
           val fa = left( Substitution( x -> eigen )( a ) )
           es => ETWeakQuantifier( f, fa( es ) -> eigen ).asInstanceOf[ExpansionTree]
-        case All( x, a ) =>
+        case All( x, a ) if !propositional =>
           val fvs = freeVariables( f ).toSeq
           val skolem = Const( skolemSyms.next, FunctionType( x.exptype, fvs map { _.exptype } ) )
           val fa = left( Substitution( x -> skolem( fvs: _* ) )( a ) )
@@ -85,12 +85,12 @@ object structuralCNF {
       }
 
       def right( f: HOLFormula ): ( ExpansionSequent => ExpansionTree ) = f match {
-        case All( x, a ) =>
+        case All( x, a ) if !propositional =>
           val eigen = rename( x, freeVars.toList )
           freeVars += eigen
           val fa = right( Substitution( x -> eigen )( a ) )
           es => ETWeakQuantifier( f, fa( es ) -> eigen ).asInstanceOf[ExpansionTree]
-        case Ex( x, a ) =>
+        case Ex( x, a ) if !propositional =>
           val fvs = freeVariables( f ).toSeq
           val skolem = Const( skolemSyms.next, FunctionType( x.exptype, fvs map { _.exptype } ) )
           val fa = right( Substitution( x -> skolem( fvs: _* ) )( a ) )
@@ -171,18 +171,19 @@ object structuralCNF {
     // both the abbreviated sequent, and (the necessary part of) the definition.
     def abbrev( seq: HOLSequent, i: SequentIndex, backTrans: ExpansionSequent => Justification ): Unit = {
       val f = seq( i )
-      val fvs = freeVariables( f ).toSeq
+      val fvs = if ( propositional ) Seq() else freeVariables( f ).toSeq
+      val alreadyDefined = defs isDefinedAt Abs( fvs, f )
       val const = defs.getOrElseUpdate(
         Abs( fvs, f ),
         HOLAtomConst( abbrevSyms.next(), fvs map { _.exptype }: _* )
       )
       val repl = const( fvs: _* )
-      if ( i isAnt ) {
-        expand( Sequent( Seq( f ), Seq( repl ) ), es => Definition( repl, es( Ant( 0 ) ),
-          backTrans( seq.map( ETWeakening ).updated( i, es( Ant( 0 ) ) ) ) ) )
-      } else {
-        expand( Sequent( Seq( repl ), Seq( f ) ), es => Definition( repl, es( Suc( 0 ) ),
-          backTrans( seq.map( ETWeakening ).updated( i, es( Suc( 0 ) ) ) ) ) )
+      if ( !alreadyDefined ) {
+        if ( i isAnt ) {
+          expand( Sequent( Seq( f ), Seq( repl ) ), es => Definition( repl, es( Ant( 0 ) ) ) )
+        } else {
+          expand( Sequent( Seq( repl ), Seq( f ) ), es => Definition( repl, es( Suc( 0 ) ) ) )
+        }
       }
       split( seq.updated( i, repl ), es => backTrans( es.updated( i, ETAtom( repl ) ) ) )
     }

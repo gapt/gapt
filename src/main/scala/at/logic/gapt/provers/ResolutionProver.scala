@@ -40,7 +40,7 @@ abstract class ResolutionProver extends OneShotProver {
 
   override def getLKProof( seq: HOLSequent ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
-      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true )
+      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
       getRobinsonProof( seq ) map { robinsonProof =>
         RobinsonToLK( robinsonProof, seq, justs toMap, defs )
       }
@@ -51,14 +51,14 @@ abstract class ResolutionProver extends OneShotProver {
 
   def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] =
     withGroundVariables3( seq ) { seq =>
-      getRobinsonProof( structuralCNF( seq, generateJustifications = false )._1 )
+      getRobinsonProof( structuralCNF( seq, generateJustifications = false, propositional = false )._1 )
     }
 
   def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
   override def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
     withGroundVariables2( seq ) { seq =>
-      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true )
+      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
       getRobinsonProof( cnf ).map( RobinsonToExpansionProof( _, seq, justs, defs ) )
     }
 

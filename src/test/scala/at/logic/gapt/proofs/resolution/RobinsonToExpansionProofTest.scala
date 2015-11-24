@@ -46,7 +46,7 @@ class RobinsonToExpansionProofTest extends Specification {
     val endSequent = thresholds.atMost.oneOf( as map { a => Ex( x, a( x ) ) } ) +: Sequent() :+ ( as( 0 )( c ) --> -as( 1 )( d ) )
 
     "extract expansion sequent" in {
-      val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true )
+      val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true, propositional = false )
       val Some( ref ) = Prover9 getRobinsonProof cnf
       val expansion = RobinsonToExpansionProof( ref, endSequent, projs, defs )
       toShallow( expansion ) isSubMultisetOf endSequent must_== true
@@ -62,7 +62,7 @@ class RobinsonToExpansionProofTest extends Specification {
     val endSequent = Sequent() :+ ( All( z, thresholds.exactly.oneOf( as ) ) <-> All( z, naive.exactly.oneOf( as ) ) )
 
     "extract expansion sequent with skolem quantifiers" in {
-      val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true )
+      val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true, propositional = false )
       val Some( ref ) = Prover9 getRobinsonProof cnf
       val expansion = RobinsonToExpansionProof( ref, endSequent, projs, defs )
       toShallow( expansion ) isSubMultisetOf endSequent must_== true

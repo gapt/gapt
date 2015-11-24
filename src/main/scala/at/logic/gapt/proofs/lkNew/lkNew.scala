@@ -1761,6 +1761,14 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
   }
 }
 
+object DefinitionRule {
+  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula, isSuc: Boolean ): LKProof =
+    if ( isSuc )
+      DefinitionRightRule( subProof, auxFormula, mainFormula )
+    else
+      DefinitionLeftRule( subProof, auxFormula, mainFormula )
+}
+
 object consoleString {
   /**
    * Produces a console-readable string representation of the lowermost rule.

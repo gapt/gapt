@@ -30,26 +30,16 @@ object RobinsonToLK {
 
     import structuralCNF.{ ProjectionFromEndSequent, Definition }
 
-    val projections = mutable.Map[HOLClause, LKProof]()
+    val projections = justifications map {
+      case ( clause, ProjectionFromEndSequent( proj, index ) ) =>
+        val projWithDef = ExpansionProofToLK( proj ++ clause.map( ETAtom ) )
+        clause -> DefinitionRule( projWithDef, toShallow( proj ).elements.head, endSequent( index ), index isSuc )
 
-    for ( ( clause, ProjectionFromEndSequent( proj, index ) ) <- justifications ) {
-      val projWithDef = ExpansionProofToLK( proj ++ clause.map( ETAtom ) )
-      projections( clause ) =
-        if ( index isAnt )
-          DefinitionLeftRule( projWithDef, toShallow( proj ).elements.head, endSequent( index ) )
-        else
-          DefinitionRightRule( projWithDef, toShallow( proj ).elements.head, endSequent( index ) )
+      case ( clause, Definition( newAtom, expansion ) ) =>
+        val i = clause indexOf newAtom
+        val p = ExpansionProofToLK( clause.map( ETAtom ).updated( i, expansion ) )
+        clause -> DefinitionRule( p, toShallow( expansion ), newAtom, i isSuc )
     }
-
-    for {
-      ( clause, Definition( newAtom, expansion, _ ) ) <- justifications
-      i = clause indexOf newAtom
-      p = ExpansionProofToLK( clause.map( ETAtom ).updated( i, expansion ) )
-    } projections( clause ) =
-      if ( i isAnt )
-        DefinitionLeftRule( p, toShallow( expansion ), newAtom )
-      else
-        DefinitionRightRule( p, toShallow( expansion ), newAtom )
 
     val proofWithDefs = apply( resolutionProof, endSequent, projections )
     DefinitionElimination( definitions.toMap, proofWithDefs )
