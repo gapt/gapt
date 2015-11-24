@@ -759,20 +759,13 @@ object merge extends at.logic.gapt.utils.logging.Logger {
         return ( Some( Substitution( v2, v1 ) ), ETStrongQuantifier( f1, v1, ETMerge( sel1, sel2 ) ) )
 
       case ( ETSkolemQuantifier( f1, s1, sel1 ), ETSkolemQuantifier( f2, s2, sel2 ) ) if f1 == f2 =>
-        val sel2_ = if ( s1 != s2 ) {
-          //TODO: we need to replace s2 by s1 in sel2, otherwise the merge operation fails
-          //println(, "Can only merge Skolem Quantifier Nodes, if the skolem constants "+s1+" and "+s2+" are the same!")
-          trace( "Warning: merged skolem quantifiers are not equal - deep formula only valid modulo the equality " + s1 + " = " + s2 )
-          ( s1, s2 ) match {
-            case ( c: Const, d: Const ) =>
-              replace( d, c, sel2 )
-            case _ =>
-              throw new Exception( "I have skolem terms " + s1 + " and " + s2 + " which are no consts and don't know what to do now." )
-          }
-
-        } else sel2
-        //trace("encountered skolem quantifier "+f1+"; renaming "+v2+" to "+v1)
-        return ( Some( Substitution() ), ETSkolemQuantifier( f1, s1, ETMerge( sel1, sel2_ ) ) )
+        // FIXME: this is (and was) completely broken in the case of s1 != s2, should perform global replacement of skolem symbols
+        if ( s1 != s2 ) {
+          // just do enough not to fail
+          return doApplyMerge( replace( s2.asInstanceOf[Const], s1, tree1 ), replace( s2.asInstanceOf[Const], s1, tree2 ), polarity )
+        }
+        val ( subst, res ) = doApplyMerge( sel1, sel2, polarity )
+        ( subst, ETSkolemQuantifier( f1, s1, res ) )
 
       case ( ETWeakQuantifier( f1, children1 ), ETWeakQuantifier( f2, children2 ) ) if f1 == f2 => {
         val newTree = ETWeakQuantifier( f1, substitute.mergeWeakQuantifiers( None, children1 ++ children2 ) )
