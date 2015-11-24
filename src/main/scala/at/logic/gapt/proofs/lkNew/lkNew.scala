@@ -1014,7 +1014,7 @@ object ForallLeftRule extends RuleConvenienceObject( "ForallLeftRule" ) {
 
     mainFormula match {
       case All( v, subFormula ) =>
-        val auxFormula = Substitution( v, term )( subFormula )
+        val auxFormula = BetaReduction.betaNormalize( Substitution( v, term )( subFormula ) )
         val i = premise.antecedent indexOf auxFormula
 
         if ( i == -1 )
@@ -1229,7 +1229,7 @@ object ExistsRightRule extends RuleConvenienceObject( "ExistsRightRule" ) {
 
     mainFormula match {
       case Ex( v, subFormula ) =>
-        val auxFormula = Substitution( v, term )( subFormula )
+        val auxFormula = BetaReduction.betaNormalize( Substitution( v, term )( subFormula ) )
         val i = premise.succedent indexOf auxFormula
 
         if ( i == -1 )

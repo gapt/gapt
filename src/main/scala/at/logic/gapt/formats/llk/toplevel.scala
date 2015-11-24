@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.llk
 
 import at.logic.gapt.expr.{ LambdaExpression, HOLFormula }
-import at.logic.gapt.formats.hlk.HLKHOLParser
+import at.logic.gapt.formats.llkNew.LLKFormulaParser
 import at.logic.gapt.proofs.lk.base.LKProof
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 
@@ -47,7 +47,7 @@ object parseLLKExp {
     |Parse a higher-order expression in the LLK format.
   """.stripMargin
 
-  def apply( s: String ): LambdaExpression = { HLKHOLParser.parse( s ) }
+  def apply( s: String ): LambdaExpression = { LLKFormulaParser.parse( s ) }
 }
 
 object parseLLKFormula {
@@ -58,7 +58,7 @@ object parseLLKFormula {
   """.stripMargin
 
   def apply( s: String ) = {
-    val exp = HLKHOLParser.parse( s )
+    val exp = LLKFormulaParser.parse( s )
     require( exp.isInstanceOf[HOLFormula], "Expression is no HOL Formula!" )
     exp.asInstanceOf[HOLFormula]
   }

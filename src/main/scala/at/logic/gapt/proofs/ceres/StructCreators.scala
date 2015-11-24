@@ -67,7 +67,7 @@ object StructCreators extends Logger {
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
         val struct = extract[Data]( upperProof, new_occs )
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
-        ( cut_occs( p.mainIndices( 0 ) ), cut_occs( eq ) ) match {
+        ( cut_occs( p.mainIndices( 0 ) ), cut_occs( e_idx_conclusion ) ) match {
           case ( true, true ) =>
             struct
           case ( true, false ) =>
@@ -82,7 +82,7 @@ object StructCreators extends Logger {
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
         val struct = extract[Data]( upperProof, new_occs )
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
-        ( cut_occs( p.mainIndices( 0 ) ), cut_occs( eq ) ) match {
+        ( cut_occs( p.mainIndices( 0 ) ), cut_occs( e_idx_conclusion ) ) match {
           case ( true, true ) =>
             struct
           case ( true, false ) =>
@@ -140,7 +140,7 @@ object StructCreators extends Logger {
     val cutanc_seq: HOLSequent = so.zipWithIndex.filter( x => cut_occs( x._2 ) ).map( _._1 )
     val tautology_projection = cutanc_seq.antecedent.exists( x => cutanc_seq.succedent.contains( x ) )
     //if ( tautology_projection ) println( s"Could optimize $so ($cut_occs)" )
-    tautology_projection match { //left optimiziation out for the moment
+    tautology_projection match {
       case true =>
         /* in the case of an axiom A :- A, if both occurrences of A are cut-ancestors, we need to return plus not times.
          * treat an axiom of the form \Gamma, A :- A, \Delta as if \Gamma and \Delta were added by weakening */

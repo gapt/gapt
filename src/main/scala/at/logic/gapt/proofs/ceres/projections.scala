@@ -170,7 +170,6 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   def handleWeakeningRule( proof: LKProof, p: LKProof, m: HOLFormula,
                            constructor: ( LKProof, HOLFormula ) => LKProof,
                            pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
-    val maincutanc = cut_ancs( proof.mainIndices( 0 ) )
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => constructor( pm, m ) )
@@ -234,7 +233,12 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
      */
     val e_idx_conclusion = proof.occConnectors( 0 ).child( e )
     //    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calculus!" )
-    ( cut_ancs( proof.mainIndices( 0 ) ), cut_ancs( e_idx_conclusion ) ) match {
+    val aux_ca = cut_ancs( proof.mainIndices( 0 ) )
+    val eq_ca = cut_ancs( e_idx_conclusion )
+    val mainf = proof.endSequent( proof.mainIndices( 0 ) )
+    val eqf = proof.endSequent( e_idx_conclusion )
+    println( s"main formula: $mainf $aux_ca eq: $eqf $eq_ca" )
+    ( aux_ca, eq_ca ) match {
       case ( true, true ) =>
         //println( "eq t t" )
         s1

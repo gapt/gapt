@@ -27,12 +27,12 @@ class TapeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = lkOld2New( proofdb.proofs.head._2 )
       val proof_sk = skolemize( regularize( DefinitionElimination( proofdb.Definitions, proof ) ) )
-      println( LatexLLKExporter( proof_sk, true ) )
+      //println( LatexLLKExporter( proof_sk, true ) )
 
       println( proof_sk )
       val s = StructCreators.extract( proof_sk )
 
-      //println( s"struct: $s" )
+      println( s"struct: $s" )
       val cs_ = CharacteristicClauseSet( s )
       println( cs_.size )
       val cs = deleteTautologies( cs_ )
@@ -43,6 +43,8 @@ class TapeTest extends Specification {
       writer.write( tptp )
       writer.flush
       val projs = Projections( proof_sk )
+      //projs.toList.map( x => { println( x.endSequent diff proof_sk.endSequent ) } )
+      println( LatexLLKExporter( projs.toList( 0 ), true ) )
       cs.map( x => {
         print( s"projection for clause $x " )
         projs.exists( _.endSequent.diff( proof_sk.endSequent ) setEquals x ) match {

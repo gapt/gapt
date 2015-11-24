@@ -4,16 +4,14 @@ import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.simple._
 import at.logic.gapt.formats.prover9._
-import at.logic.gapt.formats.hlk._
 import at.logic.gapt.formats.xml._
 import XMLParser.XMLProofDatabaseParser
-import at.logic.gapt.formats.llk._
+import at.logic.gapt.formats.llkNew._
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.hoare._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.proofs.ceres.clauseSets._
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.lk.base.RichOccSequent
 import at.logic.gapt.cutintro._
