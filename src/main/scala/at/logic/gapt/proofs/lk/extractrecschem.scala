@@ -10,8 +10,8 @@ object extractRecSchem {
 
   def apply( p: LKProof ): RecursionScheme = {
     val symbols = p.endSequent.zipWithIndex map {
-      case ( All.Block( vars, matrix ), Ant( _ ) ) => Abs( vars, matrix )
-      case ( Ex.Block( vars, matrix ), Suc( _ ) )  => Abs( vars, Neg( matrix ) )
+      case ( All.Block( vars, matrix ), Ant( _ ) ) => Abs( vars, -matrix )
+      case ( Ex.Block( vars, matrix ), Suc( _ ) )  => Abs( vars, matrix )
     }
     val context = freeVariablesLK( p ).toList.sortBy( _.toString )
     val axiom = Const( "A", FunctionType( To, context.map( _.exptype ) ) )
@@ -61,7 +61,7 @@ object extractRecSchem {
   }
 
   def getRules( p: LKProof, axiom: LambdaExpression, symbols: Sequent[LambdaExpression], context: List[Var] ): Set[Rule] = p match {
-    case _: InitialSequent => symbols.elements map { sym => Rule( axiom, sym ) } toSet
+    case _: InitialSequent => symbols.elements filterNot { _ == Top() } map { sym => Rule( axiom, sym ) } toSet
     case WeakQuantifierRule( q, aux, _, term, v, pol ) =>
       val main = p.mainIndices.head
       val appSym = App( symbols( main ), term )
