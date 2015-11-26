@@ -33,6 +33,9 @@ object evalCodeSnippetsInLatex extends App {
 
       // don't open prooftool
       repl command "def prooftool(x: Any): Unit = ()"
+
+      // don't open help
+      repl command "def help(x: Any*): Unit = ()"
     }
 
     repl

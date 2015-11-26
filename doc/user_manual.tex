@@ -31,7 +31,7 @@
 % Normal text in math mode ("math text")
 \newcommand{\mt}[1]{\textnormal{#1}}
 % CLI-style names,words,... within normal text
-\newcommand{\cli}[1]{{\tt {#1}}}
+\newcommand{\cli}[1]{{\ttfamily {#1}}}
 
 % 
 % activate meta-comments only when working on the user manual
@@ -153,14 +153,6 @@ sequents, resolution proofs, sequent calculus proofs, expansion tree proofs
 and algorithms for e.g.\ unification, proof skolemization, cut elimination,
 cut elimination by resolution~\cite{Baaz00CutElimination}, cut introducton~\cite{Hetzl2012}, etc.
 
-This document describes the system from the perspective of a user who has
-downloaded a jar-file. For information on how to get started as a developer,
-please see the developer wiki at \url{https://github.com/gapt/gapt/wiki}.
-
-\begin{meta}
-Meta-comments about this user guide are printed like this.
-\end{meta}
-
 \section{System Requirements}
 \label{sec:sysreq}
 
@@ -184,122 +176,55 @@ are available.
 \item OpenWBO (\url{http://sat.inesc-id.pt/open-wbo/})
 \end{itemize}
 
-\section{Downloading and Running the System}
+\section{Downloading and Running}
 
-You can download a pre-packaged jar-file of the current version of GAPT
-at~\url{http://www.logic.at/gapt/downloads}. After extracting 
-the gapt-cli zip-file, you will find a shell script \texttt{cli.sh}.
+There are two ways you can obtain GAPT:
 
-Running this script
-\begin{lstlisting}[mathescape=false]
- ./cli.sh
+\begin{enumerate}
+
+\item {\bfseries The recommended way:}  You can download a package of the current
+version of GAPT at~\url{https://logic.at/gapt/downloads}.  After extracting
+the \texttt{tar.gz}-file, you will find a shell script \texttt{cli.sh}.
+
+Running this script will start the command line interface of GAPT:
+\begin{lstlisting}
+./cli.sh
 \end{lstlisting}
-will start the command line interface of GAPT.
 
-The command line interface of GAPT runs in an interactive Scala shell. This
-means that all functionality of Scala is available to you. In
-particular it is easy to write Scala scripts that use the functionality of GAPT.
+\item If you are adventurous, you can also download an unstable development
+  version from github:
+\begin{lstlisting}
+git clone https://github.com/gapt/gapt
+cd gapt
+sbt console
+\end{lstlisting}
 
-Here are some useful things you should know about the Scala shell.
+\end{enumerate}
 
-Scala uses both mutable and immutable variables. They are instantiated
-with the keywords \texttt{var} and \texttt{val}, respectively.
+The command line interface of GAPT is an interactive Scala shell.  This means
+that all functionality of Scala is available to you.  In particular it is easy
+to write Scala scripts that use the functionality of GAPT.
 
-If you want to assign the result of an expression to a variable, use
-\texttt{var v = expr}. If you just write the expression, the system will 
-automatically assign its value to a new variable.
-You can see its name and type before the description, like this:
+You don't need to know anything about Scala to try out the examples in this
+manual, but if you do want to learn more about Scala we recommend the book
+``Programming in Scala''\cite{odersky2008programming}.
+\fxnote{Is this really the book most of us have read?}
 
-With a variable name:
-
+Interactions with the Scala shell are typeset in the following way:
 \begin{clilisting}
-gapt> var i = 12
-i: Int = 12
+gapt> println("Hello, world!")
+Hello, world!
 
 \end{clilisting}
+Here, {\bfseries \cli{println("Hello, world!")}} is the user input, and \texttt{Hello,
+world!} is the output from the Scala shell.
 
-Without a variable name (in this case, the system created the variable \texttt{res12}):
-
+If you want to consult the in-depth API documentation of a function, you can
+use the \cli{help} command:
 \begin{clilisting}
-gapt> 12
-res0: Int = 12
+gapt> help(containsQuantifierOnLogicalLevel)
 
 \end{clilisting}
-
-To see the value and type of a variable, just type its name and press enter.
-
-Linked lists are implemented as the \texttt{List} type. The empty list is called \texttt{Nil}.
-Lists are constructed like this:
-\begin{clilisting}
-gapt> List(1,2,3,4)
-res1: List[Int] = List(1, 2, 3, 4)
-
-\end{clilisting}
-
-The ``cons'' operator \texttt{::} adds an item to the front of a list:
-\begin{clilisting}
-gapt> 0 :: List(1,2,3,4)
-res2: List[Int] = List(0, 1, 2, 3, 4)
-
-\end{clilisting}
-
-You can use the \texttt{head} and \texttt{tail} methods to return the first
-element and everything but the first element, respectively:
-
-\begin{clilisting}
-gapt> val l = List(1,2,3)
-l: List[Int] = List(1, 2, 3)
-
-gapt> l.head
-res3: Int = 1
-
-gapt> l.tail
-res4: List[Int] = List(2, 3)
-
-\end{clilisting}
-
-It is also possible to refer to an element of a list directly by its index. Indices are
-written in parentheses and begin at 0.
-
-\begin{clilisting}
-gapt> l(1)
-res5: Int = 2
-
-gapt> l(3)
-java.lang.IndexOutOfBoundsException: 3
-  at scala.collection.LinearSeqOptimized$class.apply(LinearSeqOptimized.scala:65)
-  at scala.collection.immutable.List.apply(List.scala:84)
-  ... 36 elided
-
-\end{clilisting}
-
-Unlike lists, tuples have a fixed length: While, for example, a list of integers may contain
-any number of elements, a pair of integers always contains exactly two. Tuples are created
-by enclosing their contents in parentheses:
-
-\begin{clilisting}
-gapt> val t = (1, 2, "hello")
-t: (Int, Int, String) = (1,2,hello)
-
-\end{clilisting}
-
-As you can see, the type of t is \texttt{(Int, Int, String)}, indicating that it contains
-exactly three elements, of which the first two are integers and the last is a string.
-
-The $i$-th element of a tuple is accessed with the method \texttt{\_i}, like this:
-
-\begin{clilisting}
-gapt> t._1
-res7: Int = 1
-
-gapt> t._3
-res8: String = hello
-
-\end{clilisting}
-
-To quit the interactive shell, just type \texttt{:quit} and press enter.
-
-\fxnote{TODO: explain help command}
 
 \section{File Input/Output}\label{sec.fileio}
 
@@ -326,7 +251,7 @@ returns a list of length 1 as shown by entering
 %
 \begin{clilisting}
 gapt> proofs.length
-res9: Int = 1
+res2: Int = 1
 
 \end{clilisting}
 %
@@ -335,7 +260,7 @@ entering
 %
 \begin{clilisting}
 gapt> proofs(0)._1
-res10: String = p
+res3: String = p
 
 \end{clilisting}
 %
@@ -446,13 +371,13 @@ iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
 \begin{clilisting}
 gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 2))
-res12: Boolean = true
+res5: Boolean = true
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{clilisting}
 gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 3))
-res13: Boolean = false
+res6: Boolean = false
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
@@ -483,19 +408,19 @@ gapt> val p3 = PigeonHolePrinciple.atom(3, 1)
 p3: at.logic.gapt.expr.FOLAtom = R(p_3,h_1)
 
 gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
-res14: Boolean = false
+res7: Boolean = false
 
 gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
-res15: Boolean = true
+res8: Boolean = true
 
 gapt> m.interpret(p3) // Is pigeon 3 in hole 1?
-res16: Boolean = false
+res9: Boolean = false
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
 gapt> m.interpret( And(p1, p2) )
-res17: Boolean = false
+res10: Boolean = false
 
 \end{clilisting}
 
@@ -511,17 +436,17 @@ gapt> val f = parseFormula("(a=b | a=c) & P(c) & P(b) -> P(a)")
 f: at.logic.gapt.expr.FOLFormula = (((a=b∨a=c)∧(P(c)∧P(b)))⊃P(a))
 
 gapt> VeriT isValid f
-res18: Boolean = true
+res11: Boolean = true
 
 \end{clilisting}
 
 GAPT also supports Z3 and CVC4 out of the box (if they are installed):
 \begin{clilisting}
 gapt> Z3 isValid f
-res19: Boolean = true
+res12: Boolean = true
 
 gapt> CVC4 isValid f
-res20: Boolean = true
+res13: Boolean = true
 
 \end{clilisting}
 
@@ -573,10 +498,10 @@ gapt> val sequent = existsclosure("p(0)" +: "p(x) -> p(s(x))" +: Sequent() :+ "p
 sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))
 
 gapt> Prover9 isValid sequent
-res22: Boolean = true
+res15: Boolean = true
 
 gapt> Prover9 getRobinsonProof sequent
-res23: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+res16: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p11]  :-     (Resolution(p10, Suc(0), p9, Ant(0)))
 [p10]  :- p(s(0))    (Resolution(p8, Suc(0), p7, Ant(0)))
 [p9] p(s(0)) :-     (Resolution(p6, Suc(0), p5, Ant(0)))
@@ -591,7 +516,7 @@ Some([p11]  :-     (Resolution(p10, Suc(0), p9, Ant(0)))
 )
 
 gapt> Prover9 getLKProof sequent
-res24: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res17: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p19] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p18, Ant(2), Ant(1)))
 [p18] p(0), ∀x.(p(x)⊃p(s(x))), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p17, Suc(0), p16, Ant(1)))
 [p17] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(0))    (CutRule(p15, Suc(0), p14, Ant(1)))
@@ -603,7 +528,7 @@ Some([p19] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p18
 [p11] p(0), p(0) :- p(0)    (WeakeningLeftRule(p7, p(0)))
 [p1...
 gapt> Prover9 getExpansionSequent sequent
-res25: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀x.(p(x)⊃p(s(x))), List((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
+res18: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀x.(p(x)⊃p(s(x))), List((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
 
 \end{clilisting}
 
@@ -611,7 +536,7 @@ All of the above works with E prover as well, we will just show
 \cli{getLKProof} as an example:
 \begin{clilisting}
 gapt> EProver getLKProof sequent
-res26: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res19: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p19] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p18, Suc(0), p17, Ant(1)))
 [p18] p(0) :- p(0)    (ContractionLeftRule(p16, Ant(0), Ant(1)))
 [p17] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p15, Ant(2), Ant(0)))
@@ -632,7 +557,7 @@ gapt> val strong = "(exists x all y P(x,y))" +: Sequent() :+ "(all y exists x P(
 strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLFormula] = ∃x.∀y.P(x,y) :- ∀y.∃x.P(x,y)
 
 gapt> Prover9 getExpansionSequent strong
-res27: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(SkolemQuantifier(∃x.∀y.P(x,y), s_{0}, WeakQuantifier(∀y.P(s_{0},y), List((Atom(P(s_{0},s_{2})),s_{2})))) :- SkolemQuantifier(∀y.∃x.P(x,y), s_{2}, WeakQuantifier(∃x.P(x,s_{2}), List((Atom(P(s_{0},s_{2})),s_{0})))))
+res20: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(SkolemQuantifier(∃x.∀y.P(x,y), s_{0}, WeakQuantifier(∀y.P(s_{0},y), List((Atom(P(s_{0},s_{2})),s_{2})))) :- SkolemQuantifier(∀y.∃x.P(x,y), s_{2}, WeakQuantifier(∃x.P(x,s_{2}), List((Atom(P(s_{0},s_{2})),s_{0})))))
 
 \end{clilisting}
 
@@ -640,7 +565,7 @@ The LeanCoP interface only supports the \cli{getExpansionSequent} method with
 exactly one formula in the succedent:
 \begin{clilisting}
 gapt> LeanCoP getExpansionSequent sequent
-res28: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀_4233.(p(_4233)⊃p(s(_4233))), ArrayBuffer((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
+res21: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀_4233.(p(_4233)⊃p(s(_4233))), ArrayBuffer((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
 
 \end{clilisting}
 
@@ -648,7 +573,7 @@ You can also export sequents in TPTP format if you want to pass them to other
 provers manually:
 \begin{clilisting}
 gapt> TPTPFOLExporter.tptp_proof_problem_split(sequent)
-res29: String =
+res22: String =
 "fof( formula0, axiom, 'p'('0') ).
 fof( formula1, axiom, (! [X0] : ( 'p'(X0) => 'p'('s'(X0)) )) ).
 fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
@@ -662,7 +587,7 @@ GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solve.solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solve.solvePropositional(parseFormula("a -> (b -> a&b)"))
-res30: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res23: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p5]  :- (a⊃(b⊃(a∧b)))    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a :- (b⊃(a∧b))    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a, b :- (a∧b)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
@@ -2005,7 +1930,7 @@ For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
 
 \begin{clilisting}
 gapt> parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
-res33: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+res26: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
 
 \end{clilisting}
 
@@ -2014,7 +1939,7 @@ class:
 
 \begin{clilisting}
 gapt> Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))")
-res34: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
+res27: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
 
 \end{clilisting}
 
