@@ -30,7 +30,7 @@ class LatticeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = DefinitionElimination( proofdb.Definitions, lkOld2New( proofdb.proofs.head._2 ) )
 
-      val s = extractStruct( proof )
+      val s = extractStruct( proof, CERES.skipEquations )
       val css = CharacteristicClauseSet( s )
       val cs = deleteTautologies( css )
       Prover9.getRobinsonProof( cs ) must beSome
@@ -43,7 +43,7 @@ class LatticeTest extends Specification {
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = lkOld2New( proofdb.proofs.head._2 )
 
-      val acnf = CERES( proof )
+      val acnf = CERES( proof, CERES.skipEquations )
       ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
       acnf.foreach( {
         case CutRule( p1, a1, p2, a2 ) => isAtom( p1.endSequent( a1 ) ) must beTrue

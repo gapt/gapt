@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.lkNew.LKProof
 object extractStruct {
   def apply( p: LKProof ): Struct[HOLFormula] =
     StructCreators.extract[HOLFormula]( p )
-  def extract[Data]( p: LKProof, predicate: HOLFormula => Boolean ): Struct[HOLFormula] =
+  def apply[Data]( p: LKProof, predicate: HOLFormula => Boolean ): Struct[HOLFormula] =
     StructCreators.extract[HOLFormula]( p, predicate )
 
 }

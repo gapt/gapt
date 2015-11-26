@@ -162,7 +162,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   // Apply weakenings to add the end-sequent ancestor of the other side to the projection.
   //TODO: this a duplication of some function lk
   def weakenESAncs( esancs: HOLSequent, s: Set[LKProof] ) = {
-    val wl = s.map( p => esancs.antecedent.foldLeft( p )( ( p, fo ) => WeakeningLeftRule( p, fo )  ) )
+    val wl = s.map( p => esancs.antecedent.foldLeft( p )( ( p, fo ) => WeakeningLeftRule( p, fo ) ) )
     wl.map( p => esancs.succedent.foldLeft( p )( ( p, fo ) => WeakeningRightRule( p, fo ) ) )
   }
 
@@ -194,8 +194,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
                            constructor: ( LKProof, HOLFormula ) => LKProof,
                            pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) { println( s"skipping w:l $m" ); s }
-    else s.map( pm => { println( s"doing w:l $m" ); constructor( pm, m ) } )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    else s.map( pm => constructor( pm, m ) )
   }
 
   def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, f: HOLFormula,
@@ -260,7 +260,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val eq_ca = cut_ancs( e_idx_conclusion )
     val mainf = proof.endSequent( proof.mainIndices( 0 ) )
     val eqf = proof.endSequent( e_idx_conclusion )
-    println( s"main formula: $mainf $aux_ca eq: $eqf $eq_ca" )
+    //println( s"main formula: $mainf $aux_ca eq: $eqf $eq_ca" )
     ( aux_ca, eq_ca ) match {
       case ( true, true ) =>
         //println( "eq t t" )
@@ -282,7 +282,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
             case Ant( _ ) => pm.endSequent.zipWithIndex.antecedent
             case Suc( _ ) => pm.endSequent.zipWithIndex.succedent
           }
-          val aux = pick( pm, a, candidates )
+          val aux = pick( p, a, candidates )
           //then add the weakening
           //println( "weakening: " + p.endSequent( e ) )
           val wproof = WeakeningLeftRule( pm, p.endSequent( e ) )

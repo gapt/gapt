@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.formats.llkNew.LLKExporter
+import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
@@ -12,7 +13,34 @@ import at.logic.gapt.provers.prover9.Prover9
 /**
  * This implementation of the CERES method does the proof reconstruction via Robinson2LK.
  */
-object CERES extends CERES
+object CERES extends CERES {
+  /**
+   * True if the formula is not an equation. Intended use: predicate argument of CERES.
+   * In case the only cuts on equations come from a translation of binary equation rules to unary ones,
+   * this should provide the same clause sets and projections as the binary rules.
+   */
+  def skipEquations( f: HOLFormula ): Boolean = f match { case Eq( _, _ ) => false; case _ => true }
+
+  /**
+   * True if the formula is propositional and does not contain free variables other than type i.
+   * Intended use: predicate argument of CERES.
+   * In case the only cuts on equations come from a translation of binary equation rules to unary ones,
+   * this should provide the same clause sets and projections as the binary rules.
+   */
+  def skipPropositional( f: HOLFormula ): Boolean = f match {
+    case Top()    => false
+    case Bottom() => false
+    case HOLAtom( HOLAtomConst( _, _ ), args ) =>
+      args.flatMap( freeVariables( _ ) ).exists( _.exptype != Ti )
+    case Neg( f )    => skipPropositional( f )
+    case And( l, r ) => skipPropositional( l ) || skipPropositional( r )
+    case Or( l, r )  => skipPropositional( l ) || skipPropositional( r )
+    case Imp( l, r ) => skipPropositional( l ) || skipPropositional( r )
+    case _           => true
+  }
+
+}
+
 class CERES {
   /**
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
@@ -32,23 +60,25 @@ class CERES {
    */
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
     val es = p.endSequent
-    val proj = Projections( p, pred ) + CERES.refProjection( es )
     val cs = CharacteristicClauseSet( StructCreators.extract( p, pred ) )
-    val cs_ = cs.asInstanceOf[Set[HOLSequent]]
-    var count = 0;
-    for ( p <- proj ) {
-      if ( !cs_.contains( p.endSequent diff es ) ) {
-        println( LLKExporter.generateProof( p, "Proj" + count, true ) )
-        println()
-        count = count + 1
-      }
-    }
 
     val tapecl = deleteTautologies( cs )
+    println( TPTPFOLExporter.tptp_problem( tapecl.toList ) )
 
     Prover9.getRobinsonProof( tapecl ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
+        val proj = Projections( p, pred ) + CERES.refProjection( es )
+        /*
+        val cs_ = cs.asInstanceOf[Set[HOLSequent]]
+        var count = 0;
+        for ( p <- proj ) {
+          if ( !cs_.contains( p.endSequent diff es ) ) {
+            println( LLKExporter.generateProof( p, "Proj" + count, true ) )
+            println()
+            count = count + 1
+          }
+        }*/
         apply( es, proj, rp )
     }
   }
@@ -66,8 +96,8 @@ class CERES {
 
   def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( axfs: HOLSequent ): LKProof = {
     val nLine = sys.props( "line.separator" )
-    println( s"end-sequent: $endsequent" )
-    println( s"looking for projection to $axfs" )
+    //println( s"end-sequent: $endsequent" )
+    //println( s"looking for projection to $axfs" )
     projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.endSequent diff endsequent, axfs ) ) match {
       case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
         projections.map( _.endSequent.diff( endsequent ) ).mkString( "{" + nLine, ";" + nLine, nLine + "}" ) )
