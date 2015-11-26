@@ -313,7 +313,7 @@ proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)] = List((p,CutRuleTy
 
 \end{clilisting}
 %
-returns a list of length 1 as shown by entering\fxnote{does not work}
+returns a list of length 1 as shown by entering
 %
 \begin{clilisting}
 gapt> proofs.length
@@ -333,9 +333,16 @@ res10: String = p
 and the proof itself by
 %
 \begin{clilisting}
-gapt> val proof = proofs(0)._2
-proof: at.logic.gapt.proofs.lk.base.LKProof = CutRuleType(∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y)))
-
+gapt> val proof = lkOld2New(proofs(0)._2)
+proof: at.logic.gapt.proofs.lkNew.LKProof =
+[p25] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (CutRule(p24, Suc(0), p23, Ant(0)))
+[p24] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∀x.∃y.(¬P(x,y)∨Q(x,y))    (ForallRightRule(p22, Suc(0), z, x))
+[p23] ∀x.∃y.(¬P(x,y)∨Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ForallLeftRule(p21, Ant(0), ∃y.(¬P(x,y)∨Q(x,y)), b, x))
+[p22] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃y.(¬P(z,y)∨Q(z,y))    (ExistsRightRule(p20, Suc(0), (¬P(z,y)∨Q(z,y)), a, y))
+[p21] ∃y.(¬P(b,y)∨Q(b,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ExistsLeftRule(p19, Ant(0), v, y))
+[p20] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- (¬P(z,a)∨Q(z,a))    (ForallLeftRule(p18, Ant(0), ∀y.(P(x,y)⊃Q(x,y)), z, x))
+[p19] (¬P(b,v)∨Q(b,v)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ExistsRightRule(p17, Suc(0), ∃y.(¬Q(x,y)⊃¬P(x,y)), b, x))
+[p18] ∀y.(P(z,y)⊃Q(z,y)) :- (...
 \end{clilisting}
 %
 You can then view this proof in the graphical user interface \texttt{prooftool} by 
@@ -528,52 +535,43 @@ basic one is a direct top-down proof-construction using the constructors
 of the inference rules. For example, continuing in the environment of
 Section~\ref{sec.entering_formulas}\fxnote{sections should be self-contained,
 Section~\ref{sec.entering_formulas} does not contain $F$}, suppose that we want to enter a
-proof of \texttt{F}. It is convenient to prepare the subformulas first\fxnote{do not use SimpleFOLParser}.
+proof of \texttt{F}. It is convenient to prepare the subformulas first.
 \begin{clilisting}
-gapt> val F1 = SimpleFOLParser( "Imp B And A B" )
+gapt> val A = FOLAtom("A")
+A: at.logic.gapt.expr.FOLAtom = A
+
+gapt> val B = FOLAtom("B")
+B: at.logic.gapt.expr.FOLAtom = B
+
+gapt> val F1 = B --> (A & B)
 F1: at.logic.gapt.expr.FOLFormula = (B⊃(A∧B))
 
-gapt> val F2 = SimpleFOLParser( "And A B" )
+gapt> val F2 = A & B
 F2: at.logic.gapt.expr.FOLFormula = (A∧B)
-
-gapt> val A = SimpleFOLParser( "A" )
-A: at.logic.gapt.expr.FOLFormula = A
-
-gapt> val B = SimpleFOLParser( "B" )
-B: at.logic.gapt.expr.FOLFormula = B
 
 \end{clilisting}
 %
 We start with the axioms:
 %
 \begin{clilisting}
-gapt> val p1 = Axiom( A::Nil, A::Nil )
-p1: at.logic.gapt.proofs.lkNew.InitialSequent =
+gapt> val p1 = LogicalAxiom(A)
+p1: at.logic.gapt.proofs.lkNew.LogicalAxiom =
 [p1] A :- A    (LogicalAxiom(A))
 
-gapt> val p2 = Axiom( B::Nil, B::Nil )
-p2: at.logic.gapt.proofs.lkNew.InitialSequent =
+gapt> val p2 = LogicalAxiom(B)
+p2: at.logic.gapt.proofs.lkNew.LogicalAxiom =
 [p1] B :- B    (LogicalAxiom(B))
 
 \end{clilisting}
 %
 These are joined by an $\land:\mathrm{right}$-inference. See Appendix~\ref{app:sequent_calculus}
-for the formal definition of the sequent calculus used in GAPT\fxnote{fails, see latex comment}.
-%
-% scala> val p3 = AndRightRule( p1, p2, A, B )
-% <console>:104: error: overloaded method value apply with alternatives:
-%   (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux1: at.logic.gapt.proofs.SequentIndex,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux2: at.logic.gapt.proofs.SequentIndex)at.logic.gapt.proofs.lkNew.AndRightRule <and>
-%   (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,leftConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,rightConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula)at.logic.gapt.proofs.lkNew.AndRightRule
-%  cannot be applied to (at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.expr.FOLFormula, at.logic.gapt.expr.FOLFormula)
-%        val p3 = AndRightRule( p1, p2, A, B )
+for the formal definition of the sequent calculus used in GAPT.
 \begin{clilisting}
-gapt> val p3 = AndRightRule( p1, p2, A, B )
-<console>:110: error: overloaded method value apply with alternatives:
-  (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux1: at.logic.gapt.proofs.SequentIndex,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux2: at.logic.gapt.proofs.SequentIndex)at.logic.gapt.proofs.lkNew.AndRightRule <and>
-  (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,leftConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,rightConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula)at.logic.gapt.proofs.lkNew.AndRightRule
- cannot be applied to (at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.expr.FOLFormula, at.logic.gapt.expr.FOLFormula)
-      val p3 = AndRightRule( p1, p2, A, B )
-               ^
+gapt> val p3 = AndRightRule( p1, A, p2, B )
+p3: at.logic.gapt.proofs.lkNew.AndRightRule =
+[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] A :- A    (LogicalAxiom(A))
+[p1] B :- B    (LogicalAxiom(B))
 
 \end{clilisting}
 %
@@ -581,26 +579,25 @@ To finish the proof it remains to apply two $\impl:\mathrm{right}$-inferences:
 %
 \begin{clilisting}
 gapt> val p4 = ImpRightRule( p3, B, F2 )
-<console>:109: error: overloaded method value apply with alternatives:
-  (subProof: at.logic.gapt.proofs.lkNew.LKProof,aux1: at.logic.gapt.proofs.SequentIndex,aux2: at.logic.gapt.proofs.SequentIndex)at.logic.gapt.proofs.lkNew.ImpRightRule <and>
-  (subProof: at.logic.gapt.proofs.lkNew.LKProof,impPremise: at.logic.gapt.proofs.lkNew.ImpRightRule.IndexOrFormula,impConclusion: at.logic.gapt.proofs.lkNew.ImpRightRule.IndexOrFormula)at.logic.gapt.proofs.lkNew.ImpRightRule
- cannot be applied to (at.logic.gapt.expr.FOLAtom, at.logic.gapt.expr.FOLFormula, at.logic.gapt.expr.FOLFormula)
-      val p4 = ImpRightRule( p3, B, F2 )
-               ^
+p4: at.logic.gapt.proofs.lkNew.ImpRightRule =
+[p4] A :- (B⊃(A∧B))    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] A :- A    (LogicalAxiom(A))
+[p1] B :- B    (LogicalAxiom(B))
 
 gapt> val p5 = ImpRightRule( p4, A, F1 )
-<console>:108: error: not found: value p4
-      val p5 = ImpRightRule( p4, A, F1 )
-                             ^
+p5: at.logic.gapt.proofs.lkNew.ImpRightRule =
+[p5]  :- (A⊃(B⊃(A∧B)))    (ImpRightRule(p4, Ant(0), Suc(0)))
+[p4] A :- (B⊃(A∧B))    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] A :- A    (LogicalAxiom(A))
+[p1] B :- B    (LogicalAxiom(B))
 
 \end{clilisting}
 %
 You can now view this proof by typing:
 \begin{clilisting}
 gapt> prooftool( p5 )
-<console>:108: error: not found: value p5
-      prooftool( p5 )
-                 ^
 
 \end{clilisting}
 
@@ -618,18 +615,30 @@ The GAPT-system contains an implementation of reductive cut-elimination
 with cuts (as in Section~\ref{sec.fileio}).
 %
 \begin{clilisting}
-gapt> val p = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs(0)._2
-p: at.logic.gapt.proofs.lk.base.LKProof = CutRuleType(∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y)))
-
+gapt> val p = lkOld2New(XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs(0)._2)
+p: at.logic.gapt.proofs.lkNew.LKProof =
+[p25] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (CutRule(p24, Suc(0), p23, Ant(0)))
+[p24] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∀x.∃y.(¬P(x,y)∨Q(x,y))    (ForallRightRule(p22, Suc(0), z, x))
+[p23] ∀x.∃y.(¬P(x,y)∨Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ForallLeftRule(p21, Ant(0), ∃y.(¬P(x,y)∨Q(x,y)), b, x))
+[p22] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃y.(¬P(z,y)∨Q(z,y))    (ExistsRightRule(p20, Suc(0), (¬P(z,y)∨Q(z,y)), a, y))
+[p21] ∃y.(¬P(b,y)∨Q(b,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ExistsLeftRule(p19, Ant(0), v, y))
+[p20] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- (¬P(z,a)∨Q(z,a))    (ForallLeftRule(p18, Ant(0), ∀y.(P(x,y)⊃Q(x,y)), z, x))
+[p19] (¬P(b,v)∨Q(b,v)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ExistsRightRule(p17, Suc(0), ∃y.(¬Q(x,y)⊃¬P(x,y)), b, x))
+[p18] ∀y.(P(z,y)⊃Q(z,y)) :- (¬P(z...
 \end{clilisting}
 %
-and then call the cut-elimination procedure\fxnote{fails: command not found}:
+and then call the cut-elimination procedure:
 \begin{clilisting}
-gapt> val q = ReductiveCutElim( p )
-<console>:107: error: not found: value ReductiveCutElim
-      val q = ReductiveCutElim( p )
-              ^
-
+gapt> val q = ReductiveCutElimination( p )
+q: at.logic.gapt.proofs.lkNew.LKProof =
+[p16] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ForallLeftRule(p15, Ant(0), ∀y.(P(x,y)⊃Q(x,y)), b, x))
+[p15] ∀y.(P(b,y)⊃Q(b,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ForallLeftRule(p14, Ant(0), (P(b,y)⊃Q(b,y)), a, y))
+[p14] (P(b,a)⊃Q(b,a)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ContractionRightRule(p13, Suc(0), Suc(1)))
+[p13] (P(b,a)⊃Q(b,a)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y)), ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ImpLeftRule(p12, Suc(0), p11, Ant(0)))
+[p12]  :- P(b,a), ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ExistsRightRule(p10, Suc(1), ∃y.(¬Q(x,y)⊃¬P(x,y)), b, x))
+[p11] Q(b,a) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ExistsRightRule(p9, Suc(0), ∃y.(¬Q(x,y)⊃¬P(x,y)), b, x))
+[p10]  :- P(b,a), ∃y.(¬Q(b,y)⊃¬P(b,y))    (ExistsRightRule(p8, Suc(1), (¬Q(b,y)⊃¬P(b,y)), a, y))
+[p9] Q(b,a) :- ∃y.(¬...
 \end{clilisting}
 
 
@@ -646,18 +655,23 @@ proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)] = List((the-proof,C
 gapt> val p = proofs(0)._2
 p: at.logic.gapt.proofs.lk.base.LKProof = CutRuleType(PRIME-DIV, REM, PRE, F[1] :- )
 
-gapt> val q = skolemize( p )
-<console>:108: error: overloaded method value apply with alternatives:
-  (proof: at.logic.gapt.proofs.lkNew.LKProof)at.logic.gapt.proofs.lkNew.LKProof <and>
-  (formula: at.logic.gapt.expr.HOLFormula)at.logic.gapt.expr.HOLFormula
- cannot be applied to (at.logic.gapt.proofs.lk.base.LKProof)
-      val q = skolemize( p )
-              ^
-
+gapt> val q = skolemize( lkOld2New(p) )
+q: at.logic.gapt.proofs.lkNew.LKProof =
+[p968] F[1], PRIME-DIV, PRE, REM :-     (CutRule(p967, Suc(0), p966, Ant(0)))
+[p967] F[1], PRIME-DIV, PRE, REM :- INF(set_1(1))    (CutRule(p965, Suc(0), p964, Ant(4)))
+[p966] INF(set_1(1)) :-     (DefinitionLeftRule(p963, Ant(0), INF(set_1(1))))
+[p965]  :- ¬empty(set_1(1))    (NegRightRule(p962, Ant(0)))
+[p964] F[1], PRIME-DIV, PRE, REM, ¬empty(set_1(1)) :- INF(set_1(1))    (CutRule(p961, Suc(0), p960, Ant(0)))
+[p963] ∀m.∃n.∈((m+(n+1)),set_1(1)) :-     (ForallLeftRule(p959, Ant(0), ∃n.∈((m+(n+1)),set_1(1)), 1, m))
+[p962] empty(set_1(1)) :-     (DefinitionLeftRule(p958, Ant(0), empty(set_1(1))))
+[p961] F[1], PRIME-DIV, PRE, REM :- O(set_1(1))    (CutRule(p957, Suc(0), p956, Ant(0)))
+[p960] O(set_1(1)), ¬empty(set_1(1)) :- INF(set_1(1))    (CutRule...
 \end{clilisting}
 
 
 \subsection{Interpolation}
+
+\fxwarning{Use a more reasonable example here.}
 
 The command \texttt{ExtractInterpolant} extracts an interpolant from a sequent calculus proof which may contain atomic cuts and/or equality rules. Currently, we allow only reflexivity axioms or axioms of the form $A \seq A$. The implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
 a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a 
@@ -668,34 +682,14 @@ and $\Gamma_2\seq\Delta_2$. For example, suppose pr is a proof of $p \lor q \seq
 by a single $\lor$-left inference (see Section~\ref{sec:entering_proofs} for how to construct
 such a proof), then you can compute an interpolant as follows:
 \begin{clilisting}
-gapt> val s = pr.root
-<console>:106: error: not found: value pr
-      val s = pr.root
-              ^
+gapt> val pr: LKProof = p3
+pr: at.logic.gapt.proofs.lkNew.LKProof =
+[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] A :- A    (LogicalAxiom(A))
+[p1] B :- B    (LogicalAxiom(B))
 
-gapt> val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
-<console>:106: error: not found: value s
-      val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
-                       ^
-<console>:106: error: not found: value s
-      val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
-                                          ^
-
-gapt> val ppart = Set( s.succedent( 1 ) )
-<console>:106: error: not found: value s
-      val ppart = Set( s.succedent( 1 ) )
-                       ^
-
-gapt> val I = ExtractInterpolant( pr, npart, ppart )
-<console>:106: error: not found: value pr
-      val I = ExtractInterpolant( pr, npart, ppart )
-                                  ^
-<console>:106: error: not found: value npart
-      val I = ExtractInterpolant( pr, npart, ppart )
-                                      ^
-<console>:106: error: not found: value ppart
-      val I = ExtractInterpolant( pr, npart, ppart )
-                                             ^
+gapt> val I = ExtractInterpolant(pr, Seq(Ant(0), Suc(0)), Seq(Ant(1)))
+I: at.logic.gapt.expr.HOLFormula = (⊥∨¬B)
 
 \end{clilisting}
 
@@ -709,7 +703,7 @@ in various ways and for viewing them in a comfortable way in the graphical user 
 
 An expansion tree contains the instances of the quantifiers for a formula. In order
 to represent an LK-proof we use {\em expansion sequents}, i.e.~sequents of expansion trees.
-We can obtain an expansion sequent for example by\fxnote{fails: extractExpansionSequent not found}:
+We can obtain an expansion sequent for example by:
 \begin{clilisting}
 gapt> val p = SquareEdgesExampleProof( 4 )
 p: at.logic.gapt.proofs.lkNew.LKProof =
@@ -719,18 +713,12 @@ p: at.logic.gapt.proofs.lkNew.LKProof =
 [p37] (P(0,0)⊃P(s(0),0)), P(0,0), ∀x.∀y.(P(x,y)⊃P(s(x),y)), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ImpLeftRule(p36, Suc(0), p35, Ant(1)))
 [p36] P(0,0) :- P(0,0)    (LogicalAxiom(P(0,0)))
 [p35] ∀x.∀y.(P(x,y)⊃P(s(x),y)), P...
-gapt> val E = extractExpansionSequent( p )
-<console>:107: error: not found: value extractExpansionSequent
-      val E = extractExpansionSequent( p )
-              ^
-
+gapt> val E = LKToExpansionProof( p )
+E: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.∀y.(P(x,y)⊃P(s(x),y)), List((WeakQuantifier(∀y.(P(0,y)⊃P(s(0),y)), List((Atom(P(0,0))⊃Atom(P(s(0),0)),0))),0), (WeakQuantifier(∀y.(P(s(0),y)⊃P(s(s(0)),y)), List((Atom(P(s(0),0))⊃Atom(P(s(s(0)),0)),0))),s(0)), (WeakQuantifier(∀y.(P(s(s(0)),y)⊃P(s(s(s(0))),y)), List((Atom(P(s(s(0)),0))⊃Atom(P(s(s(s(0))),0)),0))),s(s(0))), (WeakQuantifier(∀y.(P(s(s(s(0))),y)⊃P(s(s(s(s(0)))),y)), List((Atom(P(s(s(s(0))),0))⊃Atom(P(s(s(s(s(0)))),0)),0))),s(s(s(0)))))), Atom(P(0,0)), WeakQuantifier(∀x.∀y.(P(x,y)⊃P(x,s(y))), List((WeakQuantifier(∀y.(P(s(s(s(s(0)))),y)⊃P(s(s(s(s(0)))),s(y))), List((Atom(P(s(s(s(s(0)))),0))⊃Atom(P(s(s(s(s(0)))),s(0))),0), (Atom(P(s(s(s(s(0)))),s(0)))⊃Atom(P(s(s(s(s(0)))),s(s(0)))),s(0)), (Atom(P(s(s(s(s(...
 \end{clilisting}
 This expansion sequent can then be viewed in the graphical user interface by simply calling:
 \begin{clilisting}
 gapt> prooftool( E )
-<console>:108: error: not found: value E
-      prooftool( E )
-                 ^
 
 \end{clilisting}
 Prooftool is then intialized with displaying the end-sequent of \cli{p}, i.e.\ the shallow sequent
@@ -927,19 +915,19 @@ quantifer, one with $2$ quantifers.
 % uses a reduction to a MaxSAT problem and an external MaxSAT-solver for finding a
 % minimal grammar corresponding to a proof with an arbitrary number of cuts with one quantifier each.
 
-\section{Miscellaneous}
-
-The method \texttt{printProofStats: LKProof $\rightarrow$ Unit}
-takes a proof and prints some statistics about it. It is helpful
-for getting a first impression of a proof; use it for example as:
-
-\begin{clilisting}
-gapt> printPoofStats( p )
-<console>:108: error: not found: value printPoofStats
-      printPoofStats( p )
-      ^
-
-\end{clilisting}
+% \section{Miscellaneous}
+%
+% The method \texttt{printProofStats: LKProof $\rightarrow$ Unit}
+% takes a proof and prints some statistics about it. It is helpful
+% for getting a first impression of a proof; use it for example as:
+%
+% \begin{clilisting}
+% gapt> printPoofStats( p )
+% <console>:108: error: not found: value printPoofStats
+%       printPoofStats( p )
+%       ^
+%
+% \end{clilisting}
 
 \vfill
 \pagebreak
@@ -1876,7 +1864,7 @@ For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
 
 \begin{clilisting}
 gapt> parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
-res22: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+res21: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
 
 \end{clilisting}
 
@@ -1884,10 +1872,8 @@ The Prolog scheme can be parsed as well using the \texttt{Prover9TermParser}
 class:
 
 \begin{clilisting}
-gapt> Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))", false)
-<console>:107: error: too many arguments for method parseFormula: (s: String)at.logic.gapt.expr.FOLFormula
-      Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))", false)
-                                    ^
+gapt> Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))")
+res22: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
 
 \end{clilisting}
 

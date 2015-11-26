@@ -41,7 +41,7 @@ object evalCodeSnippetsInLatex extends App {
   var interp = mkInterp()
   var inCliListing = false
 
-  val cliInputLine = """gapt> (.*)""".r
+  val cliInputLine = """\s*gapt> (.*)""".r
 
   for ( line <- Source.fromFile( inFile ).getLines() )
     if ( inCliListing )
@@ -50,7 +50,7 @@ object evalCodeSnippetsInLatex extends App {
           println( line )
           inCliListing = false
         case line @ cliInputLine( command ) =>
-          println( line )
+          println( s"gapt> $command" )
           interp.command( command )
           println()
         case _ =>
