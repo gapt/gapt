@@ -1,3 +1,5 @@
+import java.io.ByteArrayOutputStream
+
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
@@ -91,6 +93,19 @@ lazy val root = (project in file(".")).
       archiveFile
     },
 
+    evalUserManual := {
+      val userManFn = "doc/user_manual.tex"
+      val out = new ByteArrayOutputStream
+      val exitVal = new Fork("java", Some("at.logic.gapt.testing.evalCodeSnippetsInLatex")).fork(ForkOptions(
+        outputStrategy = Some(CustomOutput(out)),
+        workingDirectory = Some(file(".")),
+        javaHome = javaHome.value,
+        runJVMOptions = javaOptions.value ++ Seq("-cp", Path.makeString(Attributed.data((fullClasspath in Test).value))),
+        connectInput = false),
+        Seq(userManFn)).exitValue()
+      if (exitVal == 0) IO.write(file(userManFn), out.toByteArray)
+    },
+
     testForkedParallel in Test := true,
 
     libraryDependencies ++= Seq(
@@ -130,6 +145,8 @@ lazy val testing = (project in file("testing")).
   )
 
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
+
+lazy val evalUserManual = TaskKey[Unit]("eval-user-manual", "Evaluates the snippets in the user manual.")
 
 lazy val testDependencies = Seq(
   "org.specs2" %% "specs2-core" % "3.6.5",
