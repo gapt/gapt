@@ -58,7 +58,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
     val recSchem = extractRecSchem( p )
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
 
-    Sat4j.isValid( lang ++: Sequent() ) must beTrue
+    Sat4j.isValid( Sequent() :++ lang ) must beTrue
   }
 
   "pi2 pigeonhole" in {
@@ -70,7 +70,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
 
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
 
-    p9.isValid( lang ++: Sequent() ) must beTrue
+    p9.isValid( Sequent() :++ lang ) must beTrue
   }
 
   "tape proof" in {
@@ -91,7 +91,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
         Sequent()
         map parseFormula
     )
-    p9.isValid( lang ++: additionalAxioms ) must beTrue
+    p9.isValid( additionalAxioms :++ lang ) must beTrue
 
     ok
   }
