@@ -33,14 +33,8 @@
 % CLI-style names,words,... within normal text
 \newcommand{\cli}[1]{{\ttfamily {#1}}}
 
-% 
-% activate meta-comments only when working on the user manual
-%
-\newenvironment{meta}{\color{red}}{\color{black}} % display meta-comments
-%\excludecomment{meta} % do not display meta-comments
-%
-% import package for fixme notes
 \usepackage[draft]{fixme}
+\fxsetup{inline,nomargin,marginclue,theme=color,index}
 
 \lstset{
   basicstyle=\ttfamily,
@@ -111,6 +105,8 @@
 \end{center}
 
 \end{titlepage}
+
+\listoffixmes
 
 \tableofcontents
 \vfill
@@ -676,19 +672,13 @@ for a detailed description.
 
 \section{Cut-Elimination by Resolution (CERES)}
 
-
 \subsection{First-Order Logic}
 
-\begin{meta}
-The ceres-functionality should be demonstrated by an short example
-\end{meta}
+\fxnote{The ceres-functionality should be demonstrated by an short example}
 
 \subsection{Higher-Order Logic}
 
-\begin{meta}
-TODO
-\end{meta}
-
+\fxnote{TODO}
 
 \section{Cut-Introduction}
 
@@ -1037,9 +1027,7 @@ These definition rules are extremely liberal, as they allow the replacement of a
 
 \subsection{LKsk}
   
-\begin{meta}
- TODO: give brief description of LKsk
-\end{meta}
+\fxnote{TODO: give brief description of LKsk}
 
 LKsk operates on labelled formulas. A label $\ell$ is a finite list of terms, a labelled formula is a pair $(F, \ell)$, written as $\sklabel{F}{\ell}$. If $\ell$ is a label and $t$ a term, we write $\ell;t$ for the concatenation of $\ell$ and $t$.
 
