@@ -52,6 +52,8 @@ class DIMACSEncoding {
       case l if l > 0 => decodeAtomOption( l ) map { _ -> true }
       case l if l < 0 => decodeAtomOption( -l ) map { _ -> false }
     } toMap )
+
+  override def toString = s"DIMACSEncoding(${atomMap.map( x => s"${x._1} -> ${x._2}" ).mkString( ", " )})"
 }
 
 object readDIMACS {
