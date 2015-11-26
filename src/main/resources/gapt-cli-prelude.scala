@@ -6,6 +6,7 @@ import at.logic.gapt.formats.simple._
 import at.logic.gapt.formats.prover9._
 import at.logic.gapt.formats.hlk._
 import at.logic.gapt.formats.tip._
+import at.logic.gapt.formats.tptp._
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.formats.xml._
 import XMLParser.XMLProofDatabaseParser
