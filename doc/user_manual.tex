@@ -275,44 +275,6 @@ gapt> prooftool( proof )
 In the folder \cli{../examples/simple} you can find a number of further simple
 examples that illustrate different aspects of GAPT.
 
-
-The command \texttt{saveXML} exports several proofs to an XML file.\fxnote{Fails (see latex comment)}
-% 
-% 
-% scala> val p = LinearExampleProof( 3 )
-% p: at.logic.gapt.proofs.lkNew.LKProof =
-% [p14] ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(0))))    (ContractionLeftRule(p13, Ant(0), Ant(2)))
-% [p13] ∀x.(P(x)⊃P(s(x))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ForallLeftRule(p12, Ant(0), (P(x)⊃P(s(x))), 0, x))
-% [p12] (P(0)⊃P(s(0))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ImpLeftRule(p11, Suc(0), p10, Ant(1)))
-% [p11] P(0) :- P(0)    (LogicalAxiom(P(0)))
-% [p10] ∀x.(P(x)⊃P(s(x))), P(s(0)) :- P(s(s(s(0))))    (ContractionLeftRule(p9, Ant(0), Ant(2)))
-% [p9] ∀x.(P(x)⊃P(s(x))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ForallLeftRule(p8, Ant(0), (P(x)⊃P(s(x))), s(0), x))
-% [p8] (P(s(0))⊃P(s(s(0)))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ImpLeftRule(p7, Suc(0), p6, Ant(1)))
-% [p7] P(s(0)) :- P(s(0))    (LogicalAxiom(P(s(0))))
-% [p6] ∀x.(P(...
-% scala> saveXML( p::Nil, "first proof"::Nil, "result.xml" )
-% <console>:102: error: overloaded method value apply with alternatives:
-%   (proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)],sequentlists: List[(String, List[at.logic.gapt.proofs.HOLSequent])],filename: String)Unit <and>
-%   (ls: List[at.logic.gapt.proofs.lk.base.LKProof],names: List[String],outputFile: String)(implicit dummyImplicit: DummyImplicit)Unit
-%  cannot be applied to (List[at.logic.gapt.proofs.lkNew.LKProof], List[String], String)
-%        saveXML( p::Nil, "first proof"::Nil, "result.xml" )
-% 
-% 
-The first argument is the list of proofs,
-the second is the list of the names of the proofs and the third is the name of
-the file that will be written. The file path can also be specified and it's
-relative to where the program is being executed.
-
-The code below exports the proofs in the variables $p1$ and $p2$ to the file
-\texttt{result.xml} with names ``First proof'' and ``Second proof'',
-respectively.
-\begin{lstlisting}
-gapt> saveXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
-\end{lstlisting}
-
-%\paragraph{\textbf{exportTPTP: List[Proof], List[String], String $\rightarrow$ Unit}}
-%{\color{red}TODO}
-
 \section{Entering Formulas}\label{sec.entering_formulas}
 You can enter formulas by parsing them with the prover9\cite{Prover9Input} parser:
 %
