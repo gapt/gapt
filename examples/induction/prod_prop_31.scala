@@ -1,5 +1,5 @@
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.expr.hol.{CNFp, removeAllQuantifiers, CNFn, instantiate}
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.grammars._
@@ -40,9 +40,9 @@ val instanceProofs = instances map { inst =>
   val erasure = (constants(instanceSequent) ++ variables(instanceSequent)).zipWithIndex.flatMap {
     case (EqC(_), _) => None
     case (c@NonLogicalConstant(name, FunctionType(To, argTypes)), i) =>
-      Some(c -> FOLAtomHead(s"P_${name}_$i", argTypes.size))
+      Some(c -> FOLAtomConst(s"P_${name}_$i", argTypes.size))
     case (c@NonLogicalConstant(name, FunctionType(_, argTypes)), i) =>
-      Some(c -> FOLFunctionHead(s"f_${name}_$i", argTypes.size))
+      Some(c -> FOLFunctionConst(s"f_${name}_$i", argTypes.size))
     case (v@Var(name, TBase(ty)), i) =>
       Some(v -> FOLVar(s"x_${name}_${ty}_$i"))
   }.toMap[LambdaExpression, LambdaExpression]
