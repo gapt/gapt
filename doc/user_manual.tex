@@ -303,7 +303,7 @@ gapt> val (cnf, _, _) = structuralCNF(PigeonHolePrinciple(3,3), generateJustific
 cnf: Set[at.logic.gapt.proofs.HOLClause] = Set(R(p_1,h_3) :- D0, D4 :- R(p_3,h_1), D0, D1, D2 :- D3, D4, D5, D6, D7, D8, D9, D10, R(p_2,h_3), R(p_2,h_1) :- D1, D9 :- R(p_1,h_3), D10 :- R(p_1,h_3), D6 :- R(p_1,h_2), D7 :- R(p_1,h_2), D0, D1, D2 :- D3, D4, D5, D6, D7, D8, D9, D10, R(p_3,h_3), D8 :- R(p_3,h_2), D5 :- R(p_2,h_1), R(p_3,h_1) :- D2, R(p_1,h_1) :- D0, R(p_1,h_2) :- D0, R(p_2,h_2) :- D1, D6 :- R(p_2,h_2), R(p_3,h_2) :- D2, D10 :- R(p_3,h_3), R(p_3,h_3) :- D2, D7 :- R(p_3,h_2), D3 :- R(p_1,h_1), D9 :- R(p_2,h_3), R(p_2,h_3) :- D1, D8 :- R(p_2,h_2), D5 :- R(p_3,h_1), D4 :- R(p_1,h_1), D3 :- R(p_2,h_1))
 
 gapt> val encoding = new DIMACSEncoding
-encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = at.logic.gapt.formats.dimacs.DIMACSEncoding@6debf1b8
+encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = at.logic.gapt.formats.dimacs.DIMACSEncoding@732bb49d
 
 gapt> writeDIMACS(encoding encodeCNF cnf)
 res7: String =
@@ -395,13 +395,13 @@ We can also extract instances for basic equality axioms (reflexivity, symmetry,
 and congruences) from veriT's proof output:
 \begin{clilisting}
 gapt> val Some(expansionSequent) = VeriT getExpansionSequent (Sequent() :+ f)
-expansionSequent: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.∀y.(x=y⊃y=x), ArrayBuffer((WeakQuantifier(∀y.(a=y⊃y=a), ArrayBuffer((Atom(a=b)⊃Atom(b=a),b), (Atom(a=c)⊃Atom(c=a),c))),a))), WeakQuantifier(∀x1.∀y1.((x1=y1∧f1(x1))⊃f1(y1)), ArrayBuffer((WeakQuantifier(∀y1.((c=y1∧f1(c))⊃f1(y1)), ArrayBuffer((Atom(c=a)∧Atom(f1(c))⊃Atom(f1(a)),a))),c), (WeakQuantifier(∀y1.((b=y1∧f1(b))⊃f1(y1)), ArrayBuffer((Atom(b=a)∧Atom(f1(b))⊃Atom(f1(a)),a))),b))) :- Atom(a=b)∨Atom(a=c)∧Atom(P(c))∧Atom(P(b))⊃Atom(P(a))
+expansionSequent: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.∀y.(x=y⊃y=x), ArrayBuffer((WeakQuantifier(∀y.(a=y⊃y=a), ArrayBuffer((Atom(a=b)⊃Atom(b=a),b), (Atom(a=c)⊃Atom(c=a),c))),a))), WeakQuantifier(∀x1.∀y1.((x1=y1∧P(x1))⊃P(y1)), ArrayBuffer((WeakQuantifier(∀y1.((c=y1∧P(c))⊃P(y1)), ArrayBuffer((Atom(c=a)∧Atom(P(c))⊃Atom(P(a)),a))),c), (WeakQuantifier(∀y1.((b=y1∧P(b))⊃P(y1)), ArrayBuffer((Atom(b=a)∧Atom(P(b))⊃Atom(P(a)),a))),b))) :- Atom(a=b)∨Atom(a=c)∧Atom(P(c))∧Atom(P(b))⊃Atom(P(a))
 
 gapt> extractInstances(expansionSequent) foreach println
 (a=b⊃b=a)
 (a=c⊃c=a)
-((c=a∧f1(c))⊃f1(a))
-((b=a∧f1(b))⊃f1(a))
+((c=a∧P(c))⊃P(a))
+((b=a∧P(b))⊃P(a))
 (((a=b∨a=c)∧(P(c)∧P(b)))⊃P(a))
 
 \end{clilisting}
