@@ -33,3 +33,4 @@ import at.logic.gapt.provers.smtlib._
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.utils._
 import at.logic.gapt.cli.GPL.{apply => copying, printLicense => license}
+import Prover9TermParserLadrStyle._

@@ -362,7 +362,7 @@ gapt> saveXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
 You can enter formulas by parsing them with the prover9\cite{Prover9Input} parser:
 %
 \begin{lstlisting}
-gapt> val H = Prover9TermParserLadrStyle.parseFormula( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
+gapt> val H = parseFormula( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
 \end{lstlisting}
 %
 The prover9 syntax was also extended to higher-order logic, where type declarations are added:
@@ -1605,7 +1605,7 @@ antecedent or the succedent---this is one of the four possibilities:
 
 \section{Formula Syntax}
 \label{app:formulasyntax}
-\subsection{Prover 9 parser (Prover9TermParserLadrStyle.parseFormula)}
+\subsection{Prover 9 parser (parseFormula)}
 
 The Prover9 parser interpretes names strings built over the alphabet
  $[\mathtt{a, \ldots, z, A ,\ldots, Z, 0, \ldots 9} ]$. Also the
@@ -1662,7 +1662,7 @@ For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
  is parsed as:
 
  \begin{lstlisting}
-gapt> Prover9TermParserLadrStyle.parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
+gapt> parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
 res0: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
  \end{lstlisting}
 
