@@ -484,10 +484,7 @@ Some([p5]  :- (a⊃(b⊃(a∧b)))    (ImpRightRule(p4, Ant(0), Suc(0)))
 
 There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
-of the inference rules. For example, continuing in the environment of
-Section~\ref{sec.entering_formulas}\fxnote{sections should be self-contained,
-Section~\ref{sec.entering_formulas} does not contain $F$}, suppose that we want to enter a
-proof of \texttt{F}. It is convenient to prepare the subformulas first.
+of the inference rules.
 \begin{clilisting}
 gapt> val A = FOLAtom("A")
 A: at.logic.gapt.expr.FOLAtom = A
@@ -556,7 +553,6 @@ gapt> prooftool( p5 )
 The system comes with a collection of example proof sequences in the file
 \cli{examples/ProofSequences.scala} which are generated in the above style.
 Have a look at this code for more complicated proof constructions.
-
 
 \section{Proof Theory}
 
