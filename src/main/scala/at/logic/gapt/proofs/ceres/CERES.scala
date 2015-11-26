@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
+import at.logic.gapt.formats.llkNew.LLKExporter
 import at.logic.gapt.proofs.lk.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
@@ -32,8 +33,18 @@ class CERES {
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
     val es = p.endSequent
     val proj = Projections( p, pred ) + CERES.refProjection( es )
+    val cs = CharacteristicClauseSet( StructCreators.extract( p, pred ) )
+    val cs_ = cs.asInstanceOf[Set[HOLSequent]]
+    var count = 0;
+    for ( p <- proj ) {
+      if ( !cs_.contains( p.endSequent diff es ) ) {
+        println( LLKExporter.generateProof( p, "Proj" + count, true ) )
+        println()
+        count = count + 1
+      }
+    }
 
-    val tapecl = deleteTautologies( CharacteristicClauseSet( StructCreators.extract( p, pred ) ) )
+    val tapecl = deleteTautologies( cs )
     val prover = new Prover9Prover()
 
     prover.getRobinsonProof( tapecl ) match {

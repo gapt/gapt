@@ -19,8 +19,6 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   def reflexivity_projection( proof: LKProof, t: TA = Ti ): LKProof = {
     val es = proof.endSequent
     val x = Var( "x", t )
-
-    var count = 0
     val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList )
     val ax: LKProof = Axiom( Nil, List( Eq( x_, x_ ) ) )
     val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningLeftRule( p, f ) )
@@ -36,8 +34,26 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     apply( proof, proof.endSequent.map( _ => false ), pred )
 
   def apply( proof: LKProof, cut_ancs: Sequent[Boolean], pred: HOLFormula => Boolean ): Set[LKProof] = {
+    //val es = proof.endSequent
+    val esanc = proof.endSequent.zipWithIndex.filterNot( x => cut_ancs( x._2 ) ).map( _._1 )
+    //println( proof.getClass )
+    //println( s"es:  $es" )
+    //println( s"ces: $ces" )
+    val rec = apply_( proof, cut_ancs, pred )
+    val cutanc_new = rec.map( _.endSequent )
+    //    println(s"esanc: $esanc")
+    println( "start " + proof.getClass )
+    println( " es    " + proof.endSequent )
+    println( " esanc " + esanc )
+    cutanc_new.map( println )
+    println( "end" )
+    rec
+  }
+
+  def apply_( proof: LKProof, cut_ancs: Sequent[Boolean], pred: HOLFormula => Boolean ): Set[LKProof] = {
     implicit val c_ancs = cut_ancs
-    proof.occConnectors
+    //proof.occConnectors
+
     try {
       val r: Set[LKProof] = proof match {
         /* Structural rules except cut */
@@ -139,7 +155,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   // Apply weakenings to add the end-sequent ancestor of the other side to the projection.
   //TODO: this a duplication of some function lk
   def weakenESAncs( esancs: HOLSequent, s: Set[LKProof] ) = {
-    val wl = s.map( p => esancs.antecedent.foldLeft( p )( ( p, fo ) => WeakeningLeftRule( p, fo ) ) )
+    val wl = s.map( p => esancs.antecedent.foldLeft( p )( ( p, fo ) => { println( s"esweak $fo" ); WeakeningLeftRule( p, fo ) } ) )
     wl.map( p => esancs.succedent.foldLeft( p )( ( p, fo ) => WeakeningRightRule( p, fo ) ) )
   }
 
@@ -171,8 +187,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
                            constructor: ( LKProof, HOLFormula ) => LKProof,
                            pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
-    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
-    else s.map( pm => constructor( pm, m ) )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) { println( s"skipping w:l $m" ); s }
+    else s.map( pm => { println( s"doing w:l $m" ); constructor( pm, m ) } )
   }
 
   def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, f: HOLFormula,
@@ -261,6 +277,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
           }
           val aux = pick( p, a, candidates )
           //then add the weakening
+          println( "weakening: " + p.endSequent( e ) )
           val wproof = WeakeningLeftRule( p, p.endSequent( e ) )
           //trace the aux formulas to the new rule
           val conn = wproof.occConnectors( 0 )
