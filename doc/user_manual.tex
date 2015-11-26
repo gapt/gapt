@@ -524,15 +524,15 @@ res17: Boolean = false
 \subsection{Built-In Tableaux Prover}
 
 GAPT contains a  built-in tableaux prover for propositional logic
-which can be called with the command \texttt{solve.solvePropositional}, for example as in\fxnote{do not use SimpleFOLParser}:
+which can be called with the command \texttt{solve.solvePropositional}, for example as in:
 \begin{clilisting}
-gapt> solve.solvePropositional( SimpleFOLParser( "Imp A Imp B And A B" ))
+gapt> solve.solvePropositional(parseFormula("a -> (b -> a&b)"))
 res18: Option[at.logic.gapt.proofs.lkNew.LKProof] =
-Some([p5]  :- (A⊃(B⊃(A∧B)))    (ImpRightRule(p4, Ant(0), Suc(0)))
-[p4] A :- (B⊃(A∧B))    (ImpRightRule(p3, Ant(1), Suc(0)))
-[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
-[p2] A :- A    (LogicalAxiom(A))
-[p1] B :- B    (LogicalAxiom(B))
+Some([p5]  :- (a⊃(b⊃(a∧b)))    (ImpRightRule(p4, Ant(0), Suc(0)))
+[p4] a :- (b⊃(a∧b))    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p3] a, b :- (a∧b)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] a :- a    (LogicalAxiom(a))
+[p1] b :- b    (LogicalAxiom(b))
 )
 
 \end{clilisting}
