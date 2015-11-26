@@ -503,9 +503,62 @@ res17: Boolean = false
 
 \subsection{SMT Solving}
 
-\fxnote{similar example as above for veriT}
+The SMT solver interface in GAPT supports validity queries for \verb,QF_UF,
+formulas.  For example we can check whether a quantifier-free formula is a
+quasi-tautology using veriT:
+\begin{clilisting}
+gapt> val f = parseFormula("(a=b | a=c) & P(c) & P(b) -> P(a)")
+f: at.logic.gapt.expr.FOLFormula = (((a=b∨a=c)∧(P(c)∧P(b)))⊃P(a))
 
-\fxnote{explain how to use SMT-LIB export -- reader will ask: how can I use my favourite SMT-solver}
+gapt> VeriT isValid f
+res18: Boolean = true
+
+\end{clilisting}
+
+GAPT also supports Z3 and CVC4 out of the box (if they are installed):
+\begin{clilisting}
+gapt> Z3 isValid f
+res19: Boolean = true
+
+gapt> CVC4 isValid f
+res20: Boolean = true
+
+\end{clilisting}
+
+You can export \verb,QF_UF, formulas (or sequents) as SMT-LIB benchmarks;
+note that we apply a drastic renaming to the constant symbols in order to
+support arbitrary (even Unicode) names in GAPT:
+\begin{clilisting}
+gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
+benchmark: String =
+"(set-logic QF_UF)
+(declare-sort t1 0)
+(declare-fun f1 (t1) Bool)
+(declare-fun f2 () t1)
+(declare-fun f3 () t1)
+(declare-fun f4 () t1)
+(assert (not (=> (and (or (= f4 f2) (= f4 f3)) (and (f1 f3) (f1 f2))) (f1 f4))))
+(check-sat)
+"
+typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t1)
+constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(a -> f4, P -> f1, b -> f2, c -> f3)
+
+\end{clilisting}
+
+We can also extract instances for basic equality axioms (reflexivity, symmetry,
+and congruences) from veriT's proof output:
+\begin{clilisting}
+gapt> val Some(expansionSequent) = VeriT getExpansionSequent (Sequent() :+ f)
+expansionSequent: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.∀y.(x=y⊃y=x), ArrayBuffer((WeakQuantifier(∀y.(a=y⊃y=a), ArrayBuffer((Atom(a=b)⊃Atom(b=a),b), (Atom(a=c)⊃Atom(c=a),c))),a))), WeakQuantifier(∀x1.∀y1.((x1=y1∧f1(x1))⊃f1(y1)), ArrayBuffer((WeakQuantifier(∀y1.((c=y1∧f1(c))⊃f1(y1)), ArrayBuffer((Atom(c=a)∧Atom(f1(c))⊃Atom(f1(a)),a))),c), (WeakQuantifier(∀y1.((b=y1∧f1(b))⊃f1(y1)), ArrayBuffer((Atom(b=a)∧Atom(f1(b))⊃Atom(f1(a)),a))),b))) :- Atom(a=b)∨Atom(a=c)∧Atom(P(c))∧Atom(P(b))⊃Atom(P(a))
+
+gapt> extractInstances(expansionSequent) foreach println
+(a=b⊃b=a)
+(a=c⊃c=a)
+((c=a∧f1(c))⊃f1(a))
+((b=a∧f1(b))⊃f1(a))
+(((a=b∨a=c)∧(P(c)∧P(b)))⊃P(a))
+
+\end{clilisting}
 
 \subsection{First-Order Theorem Proving}
 
@@ -527,7 +580,7 @@ GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solve.solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solve.solvePropositional(parseFormula("a -> (b -> a&b)"))
-res18: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res22: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p5]  :- (a⊃(b⊃(a∧b)))    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a :- (b⊃(a∧b))    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a, b :- (a∧b)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
@@ -1870,7 +1923,7 @@ For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
 
 \begin{clilisting}
 gapt> parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
-res21: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+res25: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
 
 \end{clilisting}
 
@@ -1879,7 +1932,7 @@ class:
 
 \begin{clilisting}
 gapt> Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))")
-res22: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
+res26: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
 
 \end{clilisting}
 
