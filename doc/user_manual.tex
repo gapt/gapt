@@ -19,6 +19,7 @@
 \renewcommand{\lnot}{\neg}
 \renewcommand{\land}{\wedge}
 \renewcommand{\lor}{\vee}
+\newcommand{\sklabel}[2]{\langle#1\rangle^{#2}}
 
 %Commands for constructing proof trees with bussproofs. See the chapter on the LK system for examples.
 \newcommand{\UnaryInfCm}[1]{\UnaryInfC{$#1$}}
@@ -34,8 +35,11 @@
 % 
 % activate meta-comments only when working on the user manual
 %
-%\newenvironment{meta}{\color{red}}{\color{black}} % display meta-comments
-\excludecomment{meta} % do not display meta-comments
+\newenvironment{meta}{\color{red}}{\color{black}} % display meta-comments
+%\excludecomment{meta} % do not display meta-comments
+%
+% import package for fixme notes
+\usepackage[draft]{fixme}
 
 \definecolor{LightGray}{rgb}{0.9,0.9,0.9}
 \lstset{
@@ -48,6 +52,7 @@
   extendedchars=true,
   literate={∧}{{\ensuremath{\land}}}1 {⊃}{{\ensuremath{\impl}}}1 {∨}{{\ensuremath{\lor}}}1 {¬}{{\ensuremath{\neg}}}1 {∀}{{\ensuremath{\forall}}}1 {∃}{{\ensuremath{\exists}}}1 {ο} {{\ensuremath{o}}}1 {ι}{{\ensuremath{\iota}}}1
 }
+\lstnewenvironment{clilisting}{}{}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{4pt}
@@ -74,7 +79,7 @@
 
 \vspace*{5mm}
 
-{\huge Generic Architecture for Proof Transformations}
+{\huge General Architecture for Proof Theory}
 
 \vspace*{20mm}
 
@@ -86,17 +91,17 @@
 
 \vspace*{20mm}
 
-{\Large
-% Whenever you contribute for this manual, include your name here
-% (alphabetically by last name) :)
-Stefan Hetzl - \texttt{stefan.hetzl@tuwien.ac.at}\\
-Bernhard Mallinger - \texttt{bernhard@logic.at}\\
-Giselle Reis - \texttt{giselle@logic.at}\\
-Janos Tapolczai - \texttt{e0825077@student.tuwien.ac.at}\\
-Daniel Weller - \texttt{weller@logic.at}
-}
+% {\Large
+% % Whenever you contribute for this manual, include your name here
+% % (alphabetically by last name) :)
+% Stefan Hetzl - \texttt{stefan.hetzl@tuwien.ac.at}\\
+% Bernhard Mallinger - \texttt{bernhard@logic.at}\\
+% Giselle Reis - \texttt{giselle@logic.at}\\
+% Janos Tapolczai - \texttt{e0825077@student.tuwien.ac.at}\\
+% Daniel Weller - \texttt{weller@logic.at}
+% }
 
-\vspace*{20mm}
+\vspace*{60mm}
 
 \hrule
 \end{center}
@@ -117,19 +122,19 @@ simple type theory.  Terms and formulas of first-order logic and schematic
 first-order logic are hence encoded as lambda terms, these form regular
 subsets.
 
-The focus of GAPT are proof transformations (in contrast to proof assistants
-whose focus is proof formalization and automated deduction systems whose focus
-is proof search). GAPT is used from a shell which provides access to the functionality
+The focus of GAPT are proof transformations (in contrast to proof assistants,
+whose focus is proof formalization, and automated deduction systems, whose focus
+is proof search). GAPT is used from a shell that provides access to the functionality
 in the system in a way that is inspired by computer algebra systems: the basic
 objects are formulas and (different kinds of) proofs which can be modified
-by calling GAPT-commands from the command-line. In addition, there
-is a graphical user interface which allows to view (and up to a certain extent:
-also to modify) proofs in a flexible and visually appealing way.
+by calling GAPT commands from the command line. In addition, there
+is a graphical user interface that allows the user to view (and—to a certain extent—
+modify) proofs in a flexible and visually appealing way.
 
 The current functionality of GAPT includes data structures for formulas,
 sequents, resolution proofs, sequent calculus proofs, expansion tree proofs
-and algorithms for e.g.\ unification, proof skolemization, cut-elimination,
-cut-elimination by resolution~\cite{Baaz00CutElimination}, cut-introducton~\cite{Hetzl2012}, etc.
+and algorithms for e.g.\ unification, proof skolemization, cut elimination,
+cut elimination by resolution~\cite{Baaz00CutElimination}, cut introducton~\cite{Hetzl2012}, etc.
 
 This document describes the system from the perspective of a user who has
 downloaded a jar-file. For information on how to get started as a developer,
@@ -142,8 +147,7 @@ Meta-comments about this user guide are printed like this.
 \section{System Requirements}
 \label{sec:sysreq}
 
-To run GAPT you need to have the Java runtime environment 1.6.0 or higher installed. We had
-problems with OpenJDK, but you can use it at your own risk.
+To run GAPT you need to have Java 7 (or higher) installed.
 
 GAPT contains interfaces to the following automated reasoning systems. Installing
 them is optional. If GAPT does not find the executables in the path, the
@@ -153,57 +157,132 @@ functionality of these systems will not be available.
 \item Prover9 (\url{http://www.cs.unm.edu/~mccune/mace4/download/}) - make sure
 the commands \texttt{prover9}, \texttt{prooftrans} and \texttt{tptp\_to\_ladr}
 are available.
+\item E theorem prover (\url{http://eprover.org/})
+\item LeanCoP (\url{http://leancop.de/})
 \item VeriT (\url{http://www.verit-solver.org/})
-\item Minisat (\url{http://minisat.se/})
+\item Z3 (\url{https://github.com/Z3Prover/z3})
+\item MiniSAT (\url{http://minisat.se/})
+\item Glucose (\url{http://www.labri.fr/perso/lsimon/glucose/})
+\item Sat4J (\url{http://sat4j.org/})
+\item OpenWBO (\url{http://sat.inesc-id.pt/open-wbo/})
 \end{itemize}
 
 \section{Downloading and Running the System}
 
 You can download a pre-packaged jar-file of the current version of GAPT
-at~\url{http://www.logic.at/gapt/downloads}. After having downloaded
-the gapt-cli zip-file you will find a shellscript \texttt{cli.sh}.
+at~\url{http://www.logic.at/gapt/downloads}. After extracting 
+the gapt-cli zip-file, you will find a shell script \texttt{cli.sh}.
 
 Running this script
 \begin{lstlisting}[mathescape=false]
  ./cli.sh
 \end{lstlisting}
-will start the command-line interface of GAPT.
+will start the command line interface of GAPT.
 
-The command-line interface of GAPT runs in an interactive Scala-shell. This
-has the consequence that all functionality of Scala is available to you. In
-particular it is easy to write Scala-scripts that use the functionality of GAPT.
+The command line interface of GAPT runs in an interactive Scala shell. This
+means that all functionality of Scala is available to you. In
+particular it is easy to write Scala scripts that use the functionality of GAPT.
 
 Here are some useful things you should know about the Scala shell.
 
-If you want to assign the result of a method to a variable, use: 
-\texttt{var v = method(args)}. Otherwise, the system will create a variable by 
-itself. You can see it's name and type before the description, like this:
+Scala uses both mutable and immutable variables. They are instantiated
+with the keywords \texttt{var} and \texttt{val}, respectively.
+
+If you want to assign the result of an expression to a variable, use
+\texttt{var v = expr}. If you just write the expression, the system will 
+automatically assign its value to a new variable.
+You can see its name and type before the description, like this:
 
 With a variable name:
 
-\begin{lstlisting}
+\begin{clilisting}
 gapt> var i = 12
 i: Int = 12
-\end{lstlisting}
+
+\end{clilisting}
 
 Without a variable name (in this case, the system created the variable \texttt{res12}):
 
-\begin{lstlisting}
+\begin{clilisting}
 gapt> 12
-res12: Int = 12
-\end{lstlisting}
+res0: Int = 12
 
-To see the value of a variable, just type it’s name and press enter.
+\end{clilisting}
 
-The elements of a list in Scala are indexed using parenthesis. So if \texttt{lst} 
-is a list, the first element is obtained by \texttt{lst(0)}. It is also possible 
-to use the methods \texttt{lst.head} (for the first element) and \texttt{lst.tail} 
-(for the rest of the list).
+To see the value and type of a variable, just type its name and press enter.
 
-The elements of a tuple \texttt{t} of size $n$ are accessed by the methods 
-\texttt{t.\_1}, \texttt{t.\_2}, … , \texttt{t.\_n}.
+Linked lists are implemented as the \texttt{List} type. The empty list is called \texttt{Nil}.
+Lists are constructed like this:
+\begin{clilisting}
+gapt> List(1,2,3,4)
+res1: List[Int] = List(1, 2, 3, 4)
+
+\end{clilisting}
+
+The ``cons'' operator \texttt{::} adds an item to the front of a list:
+\begin{clilisting}
+gapt> 0 :: List(1,2,3,4)
+res2: List[Int] = List(0, 1, 2, 3, 4)
+
+\end{clilisting}
+
+You can use the \texttt{head} and \texttt{tail} methods to return the first
+element and everything but the first element, respectively:
+
+\begin{clilisting}
+gapt> val l = List(1,2,3)
+l: List[Int] = List(1, 2, 3)
+
+gapt> l.head
+res3: Int = 1
+
+gapt> l.tail
+res4: List[Int] = List(2, 3)
+
+\end{clilisting}
+
+It is also possible to refer to an element of a list directly by its index. Indices are
+written in parentheses and begin at 0.
+
+\begin{clilisting}
+gapt> l(1)
+res5: Int = 2
+
+gapt> l(3)
+java.lang.IndexOutOfBoundsException: 3
+  at scala.collection.LinearSeqOptimized$class.apply(LinearSeqOptimized.scala:65)
+  at scala.collection.immutable.List.apply(List.scala:84)
+  ... 36 elided
+
+\end{clilisting}
+
+Unlike lists, tuples have a fixed length: While, for example, a list of integers may contain
+any number of elements, a pair of integers always contains exactly two. Tuples are created
+by enclosing their contents in parentheses:
+
+\begin{clilisting}
+gapt> val t = (1, 2, "hello")
+t: (Int, Int, String) = (1,2,hello)
+
+\end{clilisting}
+
+As you can see, the type of t is \texttt{(Int, Int, String)}, indicating that it contains
+exactly three elements, of which the first two are integers and the last is a string.
+
+The $i$-th element of a tuple is accessed with the method \texttt{\_i}, like this:
+
+\begin{clilisting}
+gapt> t._1
+res7: Int = 1
+
+gapt> t._3
+res8: String = hello
+
+\end{clilisting}
 
 To quit the interactive shell, just type \texttt{:quit} and press enter.
+
+\fxnote{TODO: explain help command}
 
 \section{File Input/Output}\label{sec.fileio}
 
@@ -213,48 +292,79 @@ proofs.
 \end{meta}
 
 This method \texttt{XMLProofDatabaseParser} will take as an argument a string that represents the path of a file
-containing a proofdatabase in the xml format (generated by HLK for example), and
+containing a proof database in the xml format (generated by HLK, for example) and
 will return a proof database containing a list 
 of pairs. It expects a file (the string of a proof will not work) and you can use 
-the relative path. On the list returned, each pair is composed of a string and 
+the relative path. In the list returned, each pair is composed of a string and 
 an object representing a proof within the system. The string is the name of the 
-proof defined on the xml file. For example:
+proof defined in the xml file. For example:
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val proofs = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs
-\end{lstlisting}
+proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)] = List((p,CutRuleType(∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y)))))
+
+\end{clilisting}
 %
-returns a list of length 1 as shown by entering
+returns a list of length 1 as shown by entering\fxnote{does not work}
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> proofs.length
-\end{lstlisting}
+res9: Int = 1
+
+\end{clilisting}
 %
 Its only element is \cli{proofs(0)}, the name of this proof can be obtained by
 entering
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> proofs(0)._1
-\end{lstlisting}
+res10: String = p
+
+\end{clilisting}
 %
 and the proof itself by
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val proof = proofs(0)._2
-\end{lstlisting}
+proof: at.logic.gapt.proofs.lk.base.LKProof = CutRuleType(∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y)))
+
+\end{clilisting}
 %
-You can then view this proof in the graphical user interface prooftool by 
+You can then view this proof in the graphical user interface \texttt{prooftool} by 
 entering
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> prooftool( proof )
-\end{lstlisting}
+
+\end{clilisting}
 %
 In the folder \cli{../examples/simple} you can find a number of further simple
 examples that illustrate different aspects of GAPT.
 
 
-The command \texttt{saveXML} Exports several proofs to an XML file. The first argument is the list of proofs,
+The command \texttt{saveXML} exports several proofs to an XML file.\fxnote{Fails (see latex comment)}
+% 
+% 
+% scala> val p = LinearExampleProof( 3 )
+% p: at.logic.gapt.proofs.lkNew.LKProof =
+% [p14] ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(0))))    (ContractionLeftRule(p13, Ant(0), Ant(2)))
+% [p13] ∀x.(P(x)⊃P(s(x))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ForallLeftRule(p12, Ant(0), (P(x)⊃P(s(x))), 0, x))
+% [p12] (P(0)⊃P(s(0))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ImpLeftRule(p11, Suc(0), p10, Ant(1)))
+% [p11] P(0) :- P(0)    (LogicalAxiom(P(0)))
+% [p10] ∀x.(P(x)⊃P(s(x))), P(s(0)) :- P(s(s(s(0))))    (ContractionLeftRule(p9, Ant(0), Ant(2)))
+% [p9] ∀x.(P(x)⊃P(s(x))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ForallLeftRule(p8, Ant(0), (P(x)⊃P(s(x))), s(0), x))
+% [p8] (P(s(0))⊃P(s(s(0)))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(0))))    (ImpLeftRule(p7, Suc(0), p6, Ant(1)))
+% [p7] P(s(0)) :- P(s(0))    (LogicalAxiom(P(s(0))))
+% [p6] ∀x.(P(...
+% scala> saveXML( p::Nil, "first proof"::Nil, "result.xml" )
+% <console>:102: error: overloaded method value apply with alternatives:
+%   (proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)],sequentlists: List[(String, List[at.logic.gapt.proofs.HOLSequent])],filename: String)Unit <and>
+%   (ls: List[at.logic.gapt.proofs.lk.base.LKProof],names: List[String],outputFile: String)(implicit dummyImplicit: DummyImplicit)Unit
+%  cannot be applied to (List[at.logic.gapt.proofs.lkNew.LKProof], List[String], String)
+%        saveXML( p::Nil, "first proof"::Nil, "result.xml" )
+% 
+% 
+The first argument is the list of proofs,
 the second is the list of the names of the proofs and the third is the name of
 the file that will be written. The file path can also be specified and it's
 relative to where the program is being executed.
@@ -270,50 +380,39 @@ gapt> saveXML(p1::p2::Nil, "First proof"::"Second proof"::Nil, "result.xml")
 %{\color{red}TODO}
 
 \section{Entering Formulas}\label{sec.entering_formulas}
+You can enter formulas by parsing them with the prover9\cite{Prover9Input} parser:
+%
+\begin{clilisting}
+gapt> val H = parseFormula( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
+H: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
 
-Formulas can be entered as strings which are parsed as follows:
-%
-\begin{lstlisting}
-gapt> val F = SimpleFOLParser( "Imp A Imp B And A B" )
-\end{lstlisting}
-%
-For a proper first-order formula consider for example:
-%
-\begin{lstlisting}
-gapt> val G = SimpleFOLParser( "Forall x Imp P(x,f(x)) Exists y P(x,y)" )
-\end{lstlisting}
-%
-Also prover9 syntax\cite{Prover9Input} is supported: 
-%
-\begin{lstlisting}
-gapt> val H = Prover9TermParserLadrStyle.parseFormula( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
-\end{lstlisting}
+\end{clilisting}
 %
 The prover9 syntax was also extended to higher-order logic, where type declarations are added:
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val I = HLKHOLParser.parseFormula ( "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))" )
-\end{lstlisting}
+I: at.logic.gapt.expr.HOLFormula = ∀x:o.(P(x,f(x))⊃∃y.P(x,y))
+
+\end{clilisting}
 
 Please refere to Appendix~\ref{app:formulasyntax} for a full description of the languages the parsers accept.
 
-\begin{meta}
-TODO: add the other parsers
-\end{meta}
-
-A collection of formula sequences can be found in the file \cli{examples/FormulaSequence.scala}.
+A collection of formula sequences can be found in the file \cli{examples/FormulaSequences.scala}.
 Have a look at this code to see how to compose formulas without the parser.
-You can generate instances of these formula sequences by entering e.g.
+You can generate instances of these formula sequences by entering, e.g.,
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val f = BussTautology( 5 )
-\end{lstlisting}
+f: at.logic.gapt.proofs.HOLSequent = ((((((c_1∨d_1)∧(c_2∨d_2))∧(c_3∨d_3))∧(c_4∨d_4))⊃c_5)∨(((((c_1∨d_1)∧(c_2∨d_2))∧(c_3∨d_3))∧(c_4∨d_4))⊃d_5)), (((((c_1∨d_1)∧(c_2∨d_2))∧(c_3∨d_3))⊃c_4)∨((((c_1∨d_1)∧(c_2∨d_2))∧(c_3∨d_3))⊃d_4)), ((((c_1∨d_1)∧(c_2∨d_2))⊃c_3)∨(((c_1∨d_1)∧(c_2∨d_2))⊃d_3)), (((c_1∨d_1)⊃c_2)∨((c_1∨d_1)⊃d_2)), (c_1∨d_1) :- c_5, d_5
+
+\end{clilisting}
 
 
 
 \section{Automated Deduction}
   
-\subsection{SAT Solving using MiniSAT}
+\subsection{SAT Solving}
 %
 The following shows an example session, using the MiniSAT solver
 to verify valdity and satisfiability, and query the thus obtained models.
@@ -321,102 +420,185 @@ Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, whi
 are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
 iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n$ holes, there
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
-\begin{lstlisting}
+\begin{clilisting}
 gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 2))
 res12: Boolean = true
-\end{lstlisting}
+
+\end{clilisting}
 shows that $\mathrm{PHP}_{3,2}$ is valid, and
-\begin{lstlisting}
+\begin{clilisting}
 gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 3))
 res13: Boolean = false
-\end{lstlisting}
+
+\end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
-\begin{lstlisting}
-gapt> val m = miniSATsolve(Neg(PigeonHolePrinciple(3, 3))).get
-\end{lstlisting}
+\begin{clilisting}
+gapt> val Some(m) = MiniSAT.solve(Neg(PigeonHolePrinciple(3, 3)))
+m: at.logic.gapt.models.Interpretation =
+R(p_1,h_1) -> false
+R(p_1,h_2) -> true
+R(p_1,h_3) -> false
+R(p_2,h_1) -> true
+R(p_2,h_2) -> false
+R(p_2,h_3) -> false
+R(p_3,h_1) -> false
+R(p_3,h_2) -> false
+R(p_3,h_3) -> true
+
+\end{clilisting}
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val p1 = PigeonHolePrinciple.atom(1, 1)
+p1: at.logic.gapt.expr.FOLAtom = R(p_1,h_1)
+
 gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
+p2: at.logic.gapt.expr.FOLAtom = R(p_2,h_1)
+
 gapt> val p3 = PigeonHolePrinciple.atom(3, 1)
+p3: at.logic.gapt.expr.FOLAtom = R(p_3,h_1)
+
 gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
+res14: Boolean = false
+
 gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
+res15: Boolean = true
+
 gapt> m.interpret(p3) // Is pigeon 3 in hole 1?
-\end{lstlisting}
+res16: Boolean = false
+
+\end{clilisting}
 We can also interpret quantifier-free formulas:
-\begin{lstlisting}
+\begin{clilisting}
 gapt> m.interpret( And(p1, p2) )
-\end{lstlisting}
+res17: Boolean = false
 
-\subsection{SMT Solving using VeriT}
+\end{clilisting}
 
+\fxnote{explain how to use DIMACS export -- reader will ask: how can I use my favourite SAT solver}
 
-\subsection{First-Order Resolution Proving using Prover9}
+\subsection{SMT Solving}
 
-\subsection{Built-In Resolution Prover}
+\fxnote{similar example as above for veriT}
 
-GAPT contains a built-in resultion prover that can be called with the command:
-\texttt{refuteFOL: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
-and with the command
-\texttt{refuteFOLI: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
-for interactive mode.
+\fxnote{explain how to use SMT-LIB export -- reader will ask: how can I use my favourite SMT-solver}
+
+\subsection{First-Order Theorem Proving}
+
+\fxnote{similar example as in SAT-case for prover9}
+
+\fxnote{explain how to use TPTP export -- reader will ask: how can I use my favourite resolution theorem prover}
+
+% \subsection{Built-In Resolution Prover}
+% 
+% GAPT contains a built-in resultion prover that can be called with the command:
+% \texttt{refuteFOL: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
+% and with the command
+% \texttt{refuteFOLI: Seq[Clause] $\rightarrow$ Option[ResolutionProof[Clause]]}
+% for interactive mode.
 
 \subsection{Built-In Tableaux Prover}
 
 GAPT contains a  built-in tableaux prover for propositional logic
-which can be called with the command \texttt{solve.solvePropositional}, for example as in:
-\begin{lstlisting}
+which can be called with the command \texttt{solve.solvePropositional}, for example as in\fxnote{do not use SimpleFOLParser}:
+\begin{clilisting}
 gapt> solve.solvePropositional( SimpleFOLParser( "Imp A Imp B And A B" ))
-\end{lstlisting}
+res18: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+Some([p5]  :- (A⊃(B⊃(A∧B)))    (ImpRightRule(p4, Ant(0), Suc(0)))
+[p4] A :- (B⊃(A∧B))    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] A :- A    (LogicalAxiom(A))
+[p1] B :- B    (LogicalAxiom(B))
+)
+
+\end{clilisting}
 
 \section{Entering Proofs}\label{sec:entering_proofs}
 
 There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
 of the inference rules. For example, continuing in the environment of
-Section~\ref{sec.entering_formulas}, suppose that we want to enter a
-proof of \texttt{F}. It is convenient to prepare the subformulas first.
-\begin{lstlisting}
+Section~\ref{sec.entering_formulas}\fxnote{sections should be self-contained,
+Section~\ref{sec.entering_formulas} does not contain $F$}, suppose that we want to enter a
+proof of \texttt{F}. It is convenient to prepare the subformulas first\fxnote{do not use SimpleFOLParser}.
+\begin{clilisting}
 gapt> val F1 = SimpleFOLParser( "Imp B And A B" )
+F1: at.logic.gapt.expr.FOLFormula = (B⊃(A∧B))
+
 gapt> val F2 = SimpleFOLParser( "And A B" )
+F2: at.logic.gapt.expr.FOLFormula = (A∧B)
+
 gapt> val A = SimpleFOLParser( "A" )
+A: at.logic.gapt.expr.FOLFormula = A
+
 gapt> val B = SimpleFOLParser( "B" )
-\end{lstlisting}
+B: at.logic.gapt.expr.FOLFormula = B
+
+\end{clilisting}
 %
 We start with the axioms:
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val p1 = Axiom( A::Nil, A::Nil )
+p1: at.logic.gapt.proofs.lkNew.InitialSequent =
+[p1] A :- A    (LogicalAxiom(A))
+
 gapt> val p2 = Axiom( B::Nil, B::Nil )
-\end{lstlisting}
+p2: at.logic.gapt.proofs.lkNew.InitialSequent =
+[p1] B :- B    (LogicalAxiom(B))
+
+\end{clilisting}
 %
 These are joined by an $\land:\mathrm{right}$-inference. See Appendix~\ref{app:sequent_calculus}
-for the formal definition of the sequent calculus used in GAPT.
+for the formal definition of the sequent calculus used in GAPT\fxnote{fails, see latex comment}.
 %
-\begin{lstlisting}
+% scala> val p3 = AndRightRule( p1, p2, A, B )
+% <console>:104: error: overloaded method value apply with alternatives:
+%   (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux1: at.logic.gapt.proofs.SequentIndex,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux2: at.logic.gapt.proofs.SequentIndex)at.logic.gapt.proofs.lkNew.AndRightRule <and>
+%   (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,leftConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,rightConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula)at.logic.gapt.proofs.lkNew.AndRightRule
+%  cannot be applied to (at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.expr.FOLFormula, at.logic.gapt.expr.FOLFormula)
+%        val p3 = AndRightRule( p1, p2, A, B )
+\begin{clilisting}
 gapt> val p3 = AndRightRule( p1, p2, A, B )
-\end{lstlisting}
+<console>:110: error: overloaded method value apply with alternatives:
+  (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux1: at.logic.gapt.proofs.SequentIndex,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,aux2: at.logic.gapt.proofs.SequentIndex)at.logic.gapt.proofs.lkNew.AndRightRule <and>
+  (leftSubProof: at.logic.gapt.proofs.lkNew.LKProof,leftConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula,rightSubProof: at.logic.gapt.proofs.lkNew.LKProof,rightConjunct: at.logic.gapt.proofs.lkNew.AndRightRule.IndexOrFormula)at.logic.gapt.proofs.lkNew.AndRightRule
+ cannot be applied to (at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.proofs.lkNew.InitialSequent, at.logic.gapt.expr.FOLFormula, at.logic.gapt.expr.FOLFormula)
+      val p3 = AndRightRule( p1, p2, A, B )
+               ^
+
+\end{clilisting}
 %
 To finish the proof it remains to apply two $\impl:\mathrm{right}$-inferences:
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val p4 = ImpRightRule( p3, B, F2 )
+<console>:109: error: overloaded method value apply with alternatives:
+  (subProof: at.logic.gapt.proofs.lkNew.LKProof,aux1: at.logic.gapt.proofs.SequentIndex,aux2: at.logic.gapt.proofs.SequentIndex)at.logic.gapt.proofs.lkNew.ImpRightRule <and>
+  (subProof: at.logic.gapt.proofs.lkNew.LKProof,impPremise: at.logic.gapt.proofs.lkNew.ImpRightRule.IndexOrFormula,impConclusion: at.logic.gapt.proofs.lkNew.ImpRightRule.IndexOrFormula)at.logic.gapt.proofs.lkNew.ImpRightRule
+ cannot be applied to (at.logic.gapt.expr.FOLAtom, at.logic.gapt.expr.FOLFormula, at.logic.gapt.expr.FOLFormula)
+      val p4 = ImpRightRule( p3, B, F2 )
+               ^
+
 gapt> val p5 = ImpRightRule( p4, A, F1 )
-\end{lstlisting}
+<console>:108: error: not found: value p4
+      val p5 = ImpRightRule( p4, A, F1 )
+                             ^
+
+\end{clilisting}
 %
 You can now view this proof by typing:
-\begin{lstlisting}
+\begin{clilisting}
 gapt> prooftool( p5 )
-\end{lstlisting}
+<console>:108: error: not found: value p5
+      prooftool( p5 )
+                 ^
+
+\end{clilisting}
 
 The system comes with a collection of example proof sequences in the file
 \cli{examples/ProofSequences.scala} which are generated in the above style.
 Have a look at this code for more complicated proof constructions.
-
-\begin{meta}
-TODO: mention shlk! and llk -- at least: give a short example for each
-\end{meta}
 
 
 \section{Proof Theory}
@@ -427,14 +609,20 @@ The GAPT-system contains an implementation of reductive cut-elimination
 \`{a} la Gentzen. It can be used as follows: first we load a proof p
 with cuts (as in Section~\ref{sec.fileio}).
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val p = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs(0)._2
-\end{lstlisting}
+p: at.logic.gapt.proofs.lk.base.LKProof = CutRuleType(∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y)))
+
+\end{clilisting}
 %
-and then call the cut-elimination procedure:
-\begin{lstlisting}
+and then call the cut-elimination procedure\fxnote{fails: command not found}:
+\begin{clilisting}
 gapt> val q = ReductiveCutElim( p )
-\end{lstlisting}
+<console>:107: error: not found: value ReductiveCutElim
+      val q = ReductiveCutElim( p )
+              ^
+
+\end{clilisting}
 
 
 \subsection{Skolemization}
@@ -443,11 +631,22 @@ Skolemization consists of replacing the variables bound by strong quantifiers in
 by new function symbols thus obtaining a validity-equivalent sequent. In the GAPT-system Skolemization
 is implemented for proofs and can be used, e.g.~as follows:
 %
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val proofs = XMLProofDatabaseParser( "examples/prime/ceres_xml/prime1-1.xml.gz" ).proofs
+proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)] = List((the-proof,CutRuleType(PRIME-DIV, REM, PRE, F[1] :- )))
+
 gapt> val p = proofs(0)._2
+p: at.logic.gapt.proofs.lk.base.LKProof = CutRuleType(PRIME-DIV, REM, PRE, F[1] :- )
+
 gapt> val q = skolemize( p )
-\end{lstlisting}
+<console>:108: error: overloaded method value apply with alternatives:
+  (proof: at.logic.gapt.proofs.lkNew.LKProof)at.logic.gapt.proofs.lkNew.LKProof <and>
+  (formula: at.logic.gapt.expr.HOLFormula)at.logic.gapt.expr.HOLFormula
+ cannot be applied to (at.logic.gapt.proofs.lk.base.LKProof)
+      val q = skolemize( p )
+              ^
+
+\end{clilisting}
 
 
 \subsection{Interpolation}
@@ -460,12 +659,37 @@ are provable and $I$ contains only such predicate symbols that appear in both, $
 and $\Gamma_2\seq\Delta_2$. For example, suppose pr is a proof of $p \lor q \seq p, q$
 by a single $\lor$-left inference (see Section~\ref{sec:entering_proofs} for how to construct
 such a proof), then you can compute an interpolant as follows:
-\begin{lstlisting}
+\begin{clilisting}
 gapt> val s = pr.root
+<console>:106: error: not found: value pr
+      val s = pr.root
+              ^
+
 gapt> val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
+<console>:106: error: not found: value s
+      val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
+                       ^
+<console>:106: error: not found: value s
+      val npart = Set( s.antecedent( 0 ), s.succedent( 0 ) )
+                                          ^
+
 gapt> val ppart = Set( s.succedent( 1 ) )
+<console>:106: error: not found: value s
+      val ppart = Set( s.succedent( 1 ) )
+                       ^
+
 gapt> val I = ExtractInterpolant( pr, npart, ppart )
-\end{lstlisting}
+<console>:106: error: not found: value pr
+      val I = ExtractInterpolant( pr, npart, ppart )
+                                  ^
+<console>:106: error: not found: value npart
+      val I = ExtractInterpolant( pr, npart, ppart )
+                                      ^
+<console>:106: error: not found: value ppart
+      val I = ExtractInterpolant( pr, npart, ppart )
+                                             ^
+
+\end{clilisting}
 
 \subsection{Expansion Trees}
 
@@ -477,16 +701,30 @@ in various ways and for viewing them in a comfortable way in the graphical user 
 
 An expansion tree contains the instances of the quantifiers for a formula. In order
 to represent an LK-proof we use {\em expansion sequents}, i.e.~sequents of expansion trees.
-
-Suppose we are in the command-line interface and have a value \cli{p} which is a cut-free \cli{LKProof}.
-We can then extract the expansion sequent of \cli{p} by:
-\begin{lstlisting}
+We can obtain an expansion sequent for example by\fxnote{fails: extractExpansionSequent not found}:
+\begin{clilisting}
+gapt> val p = SquareEdgesExampleProof( 4 )
+p: at.logic.gapt.proofs.lkNew.LKProof =
+[p40] ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(0,0), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ContractionLeftRule(p39, Ant(0), Ant(2)))
+[p39] ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(0,0), ∀x.∀y.(P(x,y)⊃P(s(x),y)), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ForallLeftRule(p38, Ant(0), ∀y.(P(x,y)⊃P(s(x),y)), 0, x))
+[p38] ∀y.(P(0,y)⊃P(s(0),y)), P(0,0), ∀x.∀y.(P(x,y)⊃P(s(x),y)), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ForallLeftRule(p37, Ant(0), (P(0,y)⊃P(s(0),y)), 0, y))
+[p37] (P(0,0)⊃P(s(0),0)), P(0,0), ∀x.∀y.(P(x,y)⊃P(s(x),y)), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ImpLeftRule(p36, Suc(0), p35, Ant(1)))
+[p36] P(0,0) :- P(0,0)    (LogicalAxiom(P(0,0)))
+[p35] ∀x.∀y.(P(x,y)⊃P(s(x),y)), P...
 gapt> val E = extractExpansionSequent( p )
-\end{lstlisting}
+<console>:107: error: not found: value extractExpansionSequent
+      val E = extractExpansionSequent( p )
+              ^
+
+\end{clilisting}
 This expansion sequent can then be viewed in the graphical user interface by simply calling:
-\begin{lstlisting}
+\begin{clilisting}
 gapt> prooftool( E )
-\end{lstlisting}
+<console>:108: error: not found: value E
+      prooftool( E )
+                 ^
+
+\end{clilisting}
 Prooftool is then intialized with displaying the end-sequent of \cli{p}, i.e.\ the shallow sequent
 of \cli{E}. The user can then selectively expand quantifiers by clicking on them, see~\cite{Hetzl13Understanding}
 for a detailed description.
@@ -498,15 +736,14 @@ for a detailed description.
 \subsection{First-Order Logic}
 
 \begin{meta}
-The ceres-functionality should be demonstrated by an example
-session using StructCreators.extract, StandardClauseSet.transformStructToClauseSet, prover9 etc.
+The ceres-functionality should be demonstrated by an short example
 \end{meta}
-
 
 \subsection{Higher-Order Logic}
 
-
-\subsection{Schematic First-Order Logic}
+\begin{meta}
+TODO
+\end{meta}
 
 
 \section{Cut-Introduction}
@@ -519,14 +756,63 @@ write his own proofs (see Section~\ref{sec:entering_proofs})
 and input them to the cut-introduction algorithm.
 
 Take an example proof:
-\begin{lstlisting}
-gapt> val p = LinearExampleProof(9)
-\end{lstlisting}
+\begin{clilisting}
+gapt> val p = LinearExampleProof( 9 )
+p: at.logic.gapt.proofs.lkNew.LKProof =
+[p38] ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p37, Ant(0), Ant(2)))
+[p37] ∀x.(P(x)⊃P(s(x))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p36, Ant(0), (P(x)⊃P(s(x))), 0, x))
+[p36] (P(0)⊃P(s(0))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(s(s(s(s(s(s(0))))))))))    (ImpLeftRule(p35, Suc(0), p34, Ant(1)))
+[p35] P(0) :- P(0)    (LogicalAxiom(P(0)))
+[p34] ∀x.(P(x)⊃P(s(x))), P(s(0)) :- P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p33, Ant(0), Ant(2)))
+[p33] ∀x.(P(x)⊃P(s(x))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p32, Ant(0), (P(x)⊃P(s(x))), s(0), x))
+[p32] (P(s(0))⊃P(s(s(0)))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(s(s(s(s(s(s(0))...
+\end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
-\begin{lstlisting}
-gapt> val q = CutIntroduction.compressLKProof(p,
-  DeltaTableMethod(manyQuantifiers=false), verbose=true)
-\end{lstlisting}
+\begin{clilisting}
+gapt> val q = CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers=false ), verbose=true )
+Total inferences in the input proof: 36
+Quantifier inferences in the input proof: 9
+End sequent: ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(s(s(s(s(s(s(0))))))))))
+Size of term set: 11
+Smallest grammar of size 8:
+Axiom: (τ)
+Non-terminal vectors:
+  (τ)
+  (α_0)
+Productions:
+  τ -> -{P(0)}_a1
+
+  τ -> -{∀x.(P(x)⊃P(s(x)))}_a0(s(s(s(s(s(s(α_0)))))))
+
+  τ -> -{∀x.(P(x)⊃P(s(x)))}_a0(s(s(s(α_0))))
+
+  τ -> -{∀x.(P(x)⊃P(s(x)))}_a0(α_0)
+
+  τ -> {P(s(s(s(s(s(s(s(s(s(0))))))))))}_s0
+
+  α_0 -> 0
+
+  α_0 -> s(0)
+
+  α_0 -> s(s(0))
+
+
+Size of the canonical solution: 12
+Size of the minimized solution: 12
+CNF of minimized cut-formula number 0:
+  P(s(s(s(s(s(s(α_0))))))) :- P(s(s(s(s(s(s(s(α_0))))))))
+  P(α_0) :- P(s(α_0))
+  P(s(s(s(α_0)))) :- P(s(s(s(s(α_0)))))
+Number of cuts introduced: 1
+Total inferences in the proof with cut(s): 153
+Quantifier inferences in the proof with cut(s): 7
+q: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+Some([p95] ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(s(s(s(s(s(s(0))))))))))    (CutRule(p94, Suc(0), p93, Ant(0)))
+[p94] ∀x.(P(x)⊃P(s(x))) :- ∀α_0.(((P(s(s(s(s(s(s(α_0)))))))⊃P(s(s(s(s(s(s(s(α_0)))))))))∧(P(α_0)⊃P(s(α_0))))∧(P(s(s(s(α_0))))⊃P(s(s(s(s(α_0)))))))    (ForallRightRule(p92, Suc(0), α_0, α_0))
+[p93] ∀α_0.(((P(s(s(s(s(s(s(α_0)))))))⊃P(s(s(s(s(s(s(s(α_0)))))))))∧(P(α_0)⊃P(s(α_0))))∧(P(s(s(s(α_0))))⊃P(s(s(s(s(α_0))))))), P(0) :- P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p91, Ant(1), Ant(0)))
+[p92] ∀x.(P(x)⊃P(s(x))) :- (((P(s(s(s(s(s(s(α_0)))))))⊃P(s(s(s(s(s(s(s(α_0)))))))))∧(P(α_0)⊃P(s(α_0))))∧(P(s(s(s(α_0))))⊃P(s(s(s(s(α_0)))))))    (ContractionLeftRule(p90, Ant(1), Ant(0)))
+[p91] ∀α_0.(((P(s(s(s(s(s(s(α_0)))))))⊃P(s(s(s(s...
+\end{clilisting}
 You can also try \texttt{DeltaTableMethod(manyQuantifiers=true)}, this will proceed as above but will
 compute a single cut with a block of quantifiers.  The method \texttt{MaxSATMethod(1,2)}
 uses a reduction to a MaxSAT problem and an external MaxSAT-solver for finding a
@@ -639,15 +925,13 @@ The method \texttt{printProofStats: LKProof $\rightarrow$ Unit}
 takes a proof and prints some statistics about it. It is helpful
 for getting a first impression of a proof; use it for example as:
 
-\begin{lstlisting}
+\begin{clilisting}
 gapt> printPoofStats( p )
-------------- Statistics ---------------
-Cuts: 1
-Number of quantifier inferences: 8
-Number of inferences: 19
-Quantifier complexity: 6
-----------------------------------------
-\end{lstlisting}
+<console>:108: error: not found: value printPoofStats
+      printPoofStats( p )
+      ^
+
+\end{clilisting}
 
 \vfill
 \pagebreak
@@ -658,29 +942,55 @@ Quantifier complexity: 6
 This section defines the rule systems used in GAPT. The rules can be constructed
 via Scala-classes, which create the underlying data structure.
 
-\subsection{First-order LK}
+\subsection{LK}
 
-The rules of first-order LK are listed below. Proof trees are constructed top-down, starting with axioms and with each rule introducing new inferences. The constructing functions do perform sporadic checks, but in general, these do not guarantee well-formed proofs and the burden of correctness lies upon the programmer using them. Due to the top-down construction, quantification and equational rules are {\em especially} brittle and the programmer must himself take care to replace only the desired terms in a formula. Specifically, the programmer must supply the result of the replacement (the \texttt{main}-argument), which is accepted by the rule constructors without question.
+\fxnote{update sequent calculus to new LK, describe higher-order LK directly here}
+
+The rules of LK are listed below. Proof trees are constructed top-down, starting with axioms and with each rule introducing new inferences. With the exception of the definition rules, the constructors of the rules only allow inferences that are actually valid. Note that the rules are presented here as if they always act upon the outermost formulas in the upper sequent, but this is only for convenience of presentation. The basic constructors actually require the user to specify on which concrete formulas the inference should be performed.
+
+Apart from those basic constructors, there is also a multitude of convenience constructors that facilitate easier proof construction. Moreover, there are so-called macro rules that reduce several inferences to a single command (e.g. introducing quantifier blocks). See the API documentation of the individual rules for details. 
 
 \subsubsection*{Axioms}
 
+\begin{multicols}{2}
 \begin{prooftree}
 \AxiomCm{}
-\RightLabelm{(\mt{Identity Axiom})}
-\UnaryInfCm{\Gamma, A \seq \Delta, A}
+\RightLabelm{(\mt{Logical axiom})}
+\UnaryInfCm{A \seq A}
 \end{prooftree}
 
 \begin{prooftree}
 \AxiomCm{}
-\RightLabelm{(\mt{Reflexivity Axiom})}
-\UnaryInfCm{\Gamma \seq \Delta, t = t}
+\RightLabelm{\mt{$\top$ axiom}}
+\UnaryInfCm{\seq \top}
 \end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{(\mt{Reflexivity axiom})}
+\UnaryInfCm{\seq t = t}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{$\bot$ axiom}}
+\UnaryInfCm{\bot \seq}
+\end{prooftree}
+\end{multicols}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{Theory axiom}}
+\UnaryInfCm{\Gamma \seq \Delta}
+\end{prooftree}
+
+Logical axioms and theory axioms may only contain atomic formulas.
 
 \subsubsection*{Cut}
 
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A}
-  \AxiomCm{\Sigma, A \seq \Pi}
+  \AxiomCm{A, \Sigma \seq \Pi}
   \RightLabelm{(\mt{cut})}
   \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
@@ -694,13 +1004,13 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta}
   \RightLabelm{(\mt{w:l})}
-  \UnaryInfCm{\Gamma, A \seq \Delta}
+  \UnaryInfCm{A, \Gamma \seq \Delta}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma, A, A \seq \Delta}
+  \AxiomCm{A,A,\Gamma \seq \Delta}
   \RightLabelm{(\mt{c:l})}
-  \UnaryInfCm{\Gamma, A \seq \Delta}
+  \UnaryInfCm{A,\Gamma\seq \Delta}
   \end{prooftree}
   
   \subsubsection*{Right rules}
@@ -728,35 +1038,29 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
   \subsubsection*{Left rules}
 
   \begin{prooftree}
-  \AxiomCm{\Gamma, A \seq \Delta}
-  \RightLabelm{(\land\mt{l}_1)}
-  \UnaryInfCm{\Gamma, A \land B \seq \Delta}
+  \AxiomCm{A,B,\Gamma \seq \Delta}
+  \RightLabelm{(\land\mt{:l})}
+  \UnaryInfCm{A \land B,\Gamma \seq \Delta}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma, B \seq \Delta}
-  \RightLabelm{(\land\mt{l}_2)}
-  \UnaryInfCm{\Gamma, A \land B \seq \Delta}
-  \end{prooftree}
-  
-  \begin{prooftree}
-  \AxiomCm{\Gamma, A \seq \Delta}
-  \AxiomCm{\Sigma, B \seq \Pi}
+  \AxiomCm{A, \Gamma \seq \Delta}
+  \AxiomCm{B, \Sigma \seq \Pi}
   \RightLabelm{(\lor\mt{:l})}
-  \BinaryInfCm{\Gamma, \Sigma, A \lor B \seq \Delta, \Pi}
+  \BinaryInfCm{A \lor B, \Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
   
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A}
   \RightLabelm{(\lnot\mt{:l})}
-  \UnaryInfCm{\Gamma, \neg A \seq \Delta}
+  \UnaryInfCm{\neg A, \Gamma \seq \Delta}
   \end{prooftree}
   
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A}
-  \AxiomCm{\Sigma, B \seq \Pi}
+  \AxiomCm{B, \Sigma \seq \Pi}
   \RightLabelm{(\impl\mt{:l})}
-  \BinaryInfCm{\Gamma, \Sigma, A \impl B \seq \Delta, \Pi}
+  \BinaryInfCm{A \impl B, \Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
 
   \subsubsection*{Right rules}
@@ -769,118 +1073,373 @@ The rules of first-order LK are listed below. Proof trees are constructed top-do
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, A}
-  \RightLabelm{(\lor\mt{:r}_1)}
+  \AxiomCm{\Gamma \seq \Delta, A, B}
+  \RightLabelm{(\lor\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, A \lor B}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, B}
-  \RightLabelm{(\lor\mt{:r}_2)}
-  \UnaryInfCm{\Gamma \seq \Delta, A \lor B}
-  \end{prooftree}
-  
-  \begin{prooftree}
-  \AxiomCm{\Gamma, A\seq \Delta}
+  \AxiomCm{A, \Gamma\seq \Delta}
   \RightLabelm{(\lnot\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \neg A}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma, A \seq B, \Delta}
+  \AxiomCm{A, \Gamma \seq \Delta, B}
   \RightLabelm{(\impl\mt{:r})}
-  \UnaryInfCm{\Gamma \seq A \impl B, \Delta}
+  \UnaryInfCm{\Gamma \seq \Delta, A \impl B}
   \end{prooftree}
 
 \end{multicols}
 
-\subsubsection*{Quantification rules}
+\subsubsection*{Quantifier rules}
 
 \begin{multicols}{2}
 
   \subsubsection*{Left rules}
 
   \begin{prooftree}
-  \AxiomCm{\Gamma, A[t/x] \seq \Delta}
+  \AxiomCm{A[t/x], \Gamma \seq \Delta}
   \RightLabelm{(\forall\mt{:l})}
-  \UnaryInfCm{\Gamma, \forall x A \seq \Delta}
+  \UnaryInfCm{\forall x A, \Gamma \seq \Delta}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma, A[y/x] \seq \Delta}
+  \AxiomCm{ A[y/x], \Gamma \seq \Delta}
   \RightLabelm{(\exists\mt{:l})}
-  \UnaryInfCm{\Gamma, \exists x A \seq \Delta}
+  \UnaryInfCm{\exists x A, \Gamma \seq \Delta}
   \end{prooftree}
   
   \subsubsection*{Right rules}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq A[y/x] \Delta}
+  \AxiomCm{\Gamma \seq \Delta, A[y/x]}
   \RightLabelm{(\forall\mt{:r})}
-  \UnaryInfCm{\Gamma \seq \forall x A, \Delta}
+  \UnaryInfCm{\Gamma \seq \Delta, \forall x A}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq A[t/x] \Delta}
+  \AxiomCm{\Gamma \seq \Delta, A[t/x]}
   \RightLabelm{(\exists\mt{:r})}
-  \UnaryInfCm{\Gamma \seq \exists x A, \Delta}
+  \UnaryInfCm{\Gamma \seq \Delta, \exists x A}
   \end{prooftree}
 
 \end{multicols}
 
 The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
 
-\subsubsection*{Equational rules}
+\subsubsection*{Equality rules}
 
 \begin{multicols}{2}
 
   \subsubsection*{Left rules}
 
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, s=t}
-  \AxiomCm{\Sigma, A[T/s] \seq \Pi}
-  \RightLabelm{(\mt{=:l}_1)}
-  \BinaryInfCm{\Gamma, \Sigma, A[T/t] \seq \Delta, \Pi}
+  \AxiomCm{s = t, A[T/s], \Sigma \seq \Pi}
+  \RightLabelm{(\mt{=:l})}
+  \UnaryInfCm{s = t, A[T/t], \Sigma \seq \Pi}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, s=t}
-  \AxiomCm{\Sigma, A[T/t] \seq \Pi}
-  \RightLabelm{(\mt{=:l}_2)}
-  \BinaryInfCm{\Gamma, \Sigma, A[T/s] \seq \Delta, \Pi}
+  \AxiomCm{s = t, A[T/t], \Sigma \seq \Pi}
+  \RightLabelm{(\mt{=:l})}
+  \UnaryInfCm{s = t, A[T/s], \Sigma \seq \Pi}
   \end{prooftree}
   
   \subsubsection*{Right rules}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, s=t}
-  \AxiomCm{\Sigma \seq \Pi, A[T/s]}
-  \RightLabelm{(\mt{=:r}_1)}
-  \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[T/t]}
+  \AxiomCm{s = t, \Sigma \seq \Pi, A[T/s]}
+  \RightLabelm{(\mt{=:r})}
+  \UnaryInfCm{s = t, \Sigma \seq \Pi, A[T/t]}
   \end{prooftree}
   
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \Delta, s=t}
-  \AxiomCm{\Sigma, \seq \Pi, A[T/t]}
-  \RightLabelm{(\mt{=:r}_2)}
-  \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[T/s]}
+  \AxiomCm{s = t, \Sigma \seq \Pi, A[T/t]}
+  \RightLabelm{(\mt{=:r})}
+  \UnaryInfCm{s = t, \Sigma \seq \Pi, A[T/s]}
+  \end{prooftree}
+  
+\end{multicols}
+Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
+
+\subsubsection*{Definition rules}
+\begin{center}
+ \AxiomCm{A, \Gamma \seq \Delta}
+ \RightLabelm{(\mt{def:l})}
+ \UnaryInfCm{B, \Gamma \seq \Delta}
+ \DisplayProof
+ \AxiomCm{\Gamma \seq \Delta, A}
+ \RightLabelm{(\mt{def:r})}
+ \UnaryInfCm{\Gamma \seq \Delta, B}
+ \DisplayProof
+\end{center}
+These definition rules are extremely liberal, as they allow the replacement of any formula by any other formula.
+
+\subsubsection*{Induction}
+  The induction rule applies to arbitrary algebraic datatypes. Let $c_1,...,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],...,F[x_{k_i}], \Gamma_i \seq \Delta_i, F[c_i(x_1,...,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
+  \begin{prooftree}
+    \AxiomCm{(\pi_1)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_1}
+    \AxiomCm{(\pi_2)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_2}
+    \AxiomCm{\dots}
+    \AxiomCm{(\pi_n)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_n}
+    \RightLabelm{(\mt{ind})}
+    \QuaternaryInfC{$\Gamma \seq \Delta, \forall x F[x]$}
+  \end{prooftree}
+  
+  In the case of the natural numbers, there are two constructors: $0$ of arity 0 and $s$ of arity 1. Consequently, the induction rule reduces to
+  
+  \begin{prooftree}
+    \AxiomCm{(\pi_1)}
+    \noLine
+    \UnaryInfCm{\Gamma_1 \seq \Delta_1, F[0]}
+    \AxiomCm{(\pi_2)}
+    \noLine
+    \UnaryInfCm{F[x], \Gamma_2 \seq \Delta_2, F[sx]}
+    \RightLabelm{(\mt{ind})}
+    \BinaryInfCm{\Gamma_1, \Gamma_2 \seq \Delta_1, \Delta_2, \forall x F[x]}
+  \end{prooftree}
+
+
+
+\subsection{LKsk}
+  
+\begin{meta}
+ TODO: give brief description of LKsk
+\end{meta}
+
+LKsk operates on labelled formulas. A label $\ell$ is a finite list of terms, a labelled formula is a pair $(F, \ell)$, written as $\sklabel{F}{\ell}$. If $\ell$ is a label and $t$ a term, we write $\ell;t$ for the concatenation of $\ell$ and $t$.
+
+\subsubsection*{Axioms}
+
+\begin{multicols}{2}
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{(\mt{Logical axiom})}
+\UnaryInfCm{\sklabel{A}{\ell_1} \seq \sklabel{A}{\ell_2}}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{$\top$ axiom}}
+\UnaryInfCm{\seq \sklabel{\top}{\ell}}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{(\mt{Reflexivity axiom})}
+\UnaryInfCm{\seq \sklabel{t = t}{\ell}}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{$\bot$ axiom}}
+\UnaryInfCm{\sklabel{\bot}{\ell}\seq}
+\end{prooftree}
+\end{multicols}
+
+\begin{prooftree}
+\AxiomCm{}
+\RightLabelm{\mt{Theory axiom}}
+\UnaryInfCm{\sklabel{A_1}{\ell_1},...,\sklabel{A_m}{\ell_m} \seq \sklabel{B_1}{\ell'_1},...,\sklabel{B_n}{\ell'_n}}
+\end{prooftree}
+
+Logical axioms and theory axioms may only contain atomic formulas.
+
+\subsubsection*{Cut}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell_1}}
+  \AxiomCm{\sklabel{A}{\ell_2}, \Sigma \seq \Pi}
+  \RightLabelm{(\mt{cut})}
+  \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi}
+  \end{prooftree}
+  
+  Note that the labels of the cut formulas do not need to be equal.
+
+\subsubsection*{Structural rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Left rules}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta}
+  \RightLabelm{(\mt{w:l})}
+  \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell},\sklabel{A}{\ell},\Gamma \seq \Delta}
+  \RightLabelm{(\mt{c:l})}
+  \UnaryInfCm{\sklabel{A}{\ell},\Gamma\seq \Delta}
+  \end{prooftree}
+  
+  \subsubsection*{Right rules}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta}
+  \RightLabelm{(\mt{w:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}, \sklabel{A}{\ell}}
+  \RightLabelm{(\mt{c:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
   \end{prooftree}
 
 \end{multicols}
 
-\subsubsection*{Induction}
-  Let $A$ be a formula in which $x$ occurs freely and $t$ a term.
+\subsubsection*{Propositional rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Left rules}
+
   \begin{prooftree}
-    \AxiomCm{\Gamma \seq \Delta, A[x/0]}
-    \AxiomCm{\Sigma, A \seq \Pi, A[x/s(x)]}
-    \RightLabelm{(\mt{ind})}
-    \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A[x/t]}
+  \AxiomCm{\sklabel{A}{\ell},\sklabel{B}{\ell},\Gamma \seq \Delta}
+  \RightLabelm{(\land\mt{:l})}
+  \UnaryInfCm{\sklabel{A \land B}{\ell},\Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell}, \Gamma \seq \Delta}
+  \AxiomCm{\sklabel{B}{\ell}, \Sigma \seq \Pi}
+  \RightLabelm{(\lor\mt{:l})}
+  \BinaryInfCm{\sklabel{A \lor B}{\ell}, \Gamma, \Sigma \seq \Delta, \Pi}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \RightLabelm{(\lnot\mt{:l})}
+  \UnaryInfCm{\sklabel{\neg A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \AxiomCm{\sklabel{B}{\ell}, \Sigma \seq \Pi}
+  \RightLabelm{(\impl\mt{:l})}
+  \BinaryInfCm{\sklabel{A \impl B}{\ell}, \Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
 
+  \subsubsection*{Right rules}
 
-\begin{meta}
- TODO: what about LKsk? higher order LK?
-\end{meta}
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
+  \AxiomCm{\Sigma \seq \Pi, \sklabel{B}{\ell}}
+  \RightLabelm{(\land\mt{:r})}
+  \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, \sklabel{A \land B}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}, \sklabel{B}{\ell}}
+  \RightLabelm{(\lor\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A \lor B}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell}, \Gamma\seq \Delta}
+  \RightLabelm{(\lnot\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\neg A}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{A}{\ell}, \Gamma \seq \Delta, \sklabel{B}{\ell}}
+  \RightLabelm{(\impl\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A \impl B}{\ell}}
+  \end{prooftree}
+
+\end{multicols}
+
+\subsubsection*{Quantifier rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Left rules}
+  
+   \begin{prooftree}
+  \AxiomCm{\sklabel{A[t/x]}{\ell;t}, \Gamma \seq \Delta}
+  \RightLabelm{(\forall\mt{:l})}
+  \UnaryInfCm{\sklabel{\forall x A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{ \sklabel{A[y/x]}{\ell}, \Gamma \seq \Delta}
+  \RightLabelm{(\exists\mt{:l})}
+  \UnaryInfCm{\sklabel{\exists x A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{ \sklabel{A[f(\ell)/x]}{\ell}, \Gamma \seq \Delta}
+  \RightLabelm{(\exists^{sk}\mt{:l})}
+  \UnaryInfCm{\sklabel{\exists x A}{\ell}, \Gamma \seq \Delta}
+  \end{prooftree}
+  
+  \subsubsection*{Right rules}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A[y/x]}{\ell}}
+  \RightLabelm{(\forall\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\forall x A}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A[f(\ell)/x]}{\ell}}
+  \RightLabelm{(\forall^{sk}\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\forall x A}{\ell}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, \sklabel{A[t/x]}{\ell;t}}
+  \RightLabelm{(\exists\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\exists x A}{\ell}}
+  \end{prooftree}
+
+\end{multicols}
+
+The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
+
+\subsubsection*{Equality rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Left rules}
+
+  \begin{prooftree}
+  \AxiomCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/s]}{\ell_2}, \Sigma \seq \Pi}
+  \RightLabelm{(\mt{=:l})}
+  \UnaryInfCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/t]}{\ell_2}, \Sigma \seq \Pi}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/t]}{\ell_2}, \Sigma \seq \Pi}
+  \RightLabelm{(\mt{=:l})}
+  \UnaryInfCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/s]}{\ell_2}, \Sigma \seq \Pi}
+  \end{prooftree}
+  
+  \subsubsection*{Right rules}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/s]}{\ell_2}}
+  \RightLabelm{(\mt{=:r})}
+  \UnaryInfCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/t]}{\ell_2}}
+  \end{prooftree}
+  
+  \begin{prooftree}
+  \AxiomCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/t]}{\ell_2}}
+  \RightLabelm{(\mt{=:r})}
+  \UnaryInfCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi,\sklabel{A[T/s]}{\ell_2}}
+  \end{prooftree}
+  
+\end{multicols}
+Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
 
 \section{The Resolution Calculus}
 
@@ -936,9 +1495,162 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 \BinaryInfC{$C \lor l[t] \lor D$}
 \end{prooftree}
 
-\begin{meta}
-TODO: RAL
-\end{meta}
+\subsection{Ral}
+
+Ral operates on sequents of labelled formulas, just as LKsk.  A label $\ell$ is
+a finite set of terms, a labelled formula is a pair $(F, \ell)$, written as
+$\sklabel{F}{\ell}$. If $\ell$ is a label and $t$ a term, we write $\ell;t$ for
+the concatenation of $\ell$ and $t$.
+
+\begin{prooftree}
+  \AxiomCm{}
+  \RightLabel{RalInitial}
+  \UnaryInfCm{\Gamma \vdash \Delta}
+\end{prooftree}
+
+The substitution also substitutes the variables in the labels:
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta}
+  \RightLabel{RalSub}
+  \UnaryInfCm{\Gamma\sigma \vdash \Delta\sigma}
+\end{prooftree}
+
+The resolution rule does not require the labels to be equal:
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A}{\ell_1}, \dots, \sklabel{A}{\ell_m}}
+  \AxiomCm{\sklabel{A}{\ell_1}, \dots, \sklabel{A}{\ell_n}, \Sigma \vdash \Pi}
+  \RightLabel{RalCut}
+  \BinaryInfCm{\Gamma, \Sigma \vdash \Delta, \Pi}
+\end{prooftree}
+
+Factoring is restricted to atoms:
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{a}{\ell_1}{a},\sklabel{a}{\ell_2},\Gamma \vdash \Delta}
+  \RightLabel{RalFactor}
+  \UnaryInfCm{\sklabel{a}{\ell_1}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{a}{\ell_1},\sklabel{a}{\ell_2}}
+  \RightLabel{RalFactor}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{a}{\ell_1}}
+\end{prooftree}
+\end{multicols}
+
+Paramodulation can rewrite the equation in both directions, in a formula of the
+antecedent or the succedent---this is one of the four possibilities:
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{t=s}{\ell}}
+  \AxiomCm{\Sigma \vdash \Pi, \sklabel{A[t]}{\ell}}
+  \RightLabel{RalPara}
+  \BinaryInfCm{\Gamma, \Sigma \vdash \Delta, \sklabel{A[s]}{\ell}}
+\end{prooftree}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{\forall x\: A[x]}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalAllF}
+  \UnaryInfCm{\sklabel{A[s\ell]}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{\forall x\: A[x]}{\ell}}
+  \RightLabel{RalAllT}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A[\alpha]}{\ell;\alpha}}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{\exists x\: A[x]}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalExF}
+  \UnaryInfCm{\sklabel{A[\alpha]}{\ell;\alpha}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{\exists x\: A[x]}{\ell}}
+  \RightLabel{RalExT}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A[s\ell]}{\ell}}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{\top}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalTopF}
+  \UnaryInfCm{\Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{\bot}{\ell}}
+  \RightLabel{RalBottomT}
+  \UnaryInfCm{\Gamma \vdash \Delta}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomCm{\sklabel{\neg A}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalNegF}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A}{\ell}}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{\neg A}{\ell}}
+  \RightLabel{RalNegT}
+  \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \land B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalAndF}
+  \UnaryInfCm{\sklabel{A}{\ell}, \sklabel{B}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A \land B}{\ell}}
+  \RightLabel{RalAndT1}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A}{\ell}}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A \land B}{\ell}}
+  \RightLabel{RalAndT2}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{B}{\ell}}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \lor B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalOrF1}
+  \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \lor B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalOrF2}
+  \UnaryInfCm{\sklabel{B}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A \lor B}{\ell}}
+  \RightLabel{RalOrT}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A}{\ell}, \sklabel{B}{\ell}}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \impl B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalImpF1}
+  \UnaryInfCm{\Gamma \vdash \Delta, \sklabel{A}{\ell}}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\sklabel{A \impl B}{\ell}, \Gamma \vdash \Delta}
+  \RightLabel{RalImpF2}
+  \UnaryInfCm{\sklabel{B}{\ell}, \Gamma \vdash \Delta}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomCm{\Gamma \vdash \Delta, \sklabel{A \impl B}{\ell}}
+  \RightLabel{RalImpT}
+  \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \vdash \Delta, \sklabel{B}{\ell}}
+\end{prooftree}
+\end{multicols}
 
 % \section{Command Reference}
 % 
@@ -1098,48 +1810,7 @@ TODO: RAL
 
 \section{Formula Syntax}
 \label{app:formulasyntax}
-
-\subsection{Simple FOL Parsing (SimpleFOLParser)}
-
-The simple FOL parser interpretes names strings built over the alphabet
- $[\mathtt{a, \ldots, z, A ,\ldots, Z, 0, \ldots 9,-,\_,\{,\} } ]$. Also the
- equality symbol $=$ is a name.
-
-Names starting with lower case letters from \texttt{a} to \texttt{t} are
- interpeted as constant symbols. Likewise, names starting with lower case
- letters from \texttt{u} to \texttt{z} are interpreted as variables.
- Function symbols start with a lower case letter and predicate symbols
- start with an upper case letter.
-
-Arguments are always seperated by commas and put in parenthesis. Terms are
- built from variable, constant symbols and function symbols applied
- to a number of arguments, which are terms. Likewise, atoms are
- predicate symbols, possibly with arguments which are again terms.
-
-For example, the following are terms:
-
- \begin{lstlisting}
-   "constant", "variable", "function(constant,variable)", "s_{21}"
- \end{lstlisting}
-
-And the following are atoms:
-
- \begin{lstlisting}
-   "P_1(alpha, beta(x))", "=(25,v)"
- \end{lstlisting}
-
-The logical connectives are called $\{\mathtt{And,Or,Neg,Imp,Forall,Exists}\}$
- and are written in prefix form.
-
-For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
- is parsed as:
-
- \begin{lstlisting}
-gapt> SimpleFOLParser("Forall x Imp P(x,f(x)) Exists y P(x,y)")
-res0: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
- \end{lstlisting}
-
-\subsection{Prover 9 parser (Prover9TermParserLadrStyle.parseFormula)}
+\subsection{Prover 9 parser (parseFormula)}
 
 The Prover9 parser interpretes names strings built over the alphabet
  $[\mathtt{a, \ldots, z, A ,\ldots, Z, 0, \ldots 9} ]$. Also the
@@ -1195,18 +1866,22 @@ Conjunction and disjunction are right-associative. Quantifiers always need to
 For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
  is parsed as:
 
- \begin{lstlisting}
-gapt> Prover9TermParserLadrStyle.parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
-res0: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
- \end{lstlisting}
+\begin{clilisting}
+gapt> parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
+res22: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+
+\end{clilisting}
 
 The Prolog scheme can be parsed as well using the \texttt{Prover9TermParser}
 class:
 
- \begin{lstlisting}
+\begin{clilisting}
 gapt> Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))", false)
-res0: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
- \end{lstlisting}
+<console>:107: error: too many arguments for method parseFormula: (s: String)at.logic.gapt.expr.FOLFormula
+      Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))", false)
+                                    ^
+
+\end{clilisting}
 
 
 

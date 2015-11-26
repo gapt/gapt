@@ -16,9 +16,8 @@ import java.io.File.separator
 import org.specs2.mutable._
 
 class TapeTest extends Specification {
-  def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
+  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
-  sequential
   "The system" should {
 
     "parse, skolemize, extract and refute the css of the tape proof" in {
@@ -57,7 +56,7 @@ class TapeTest extends Specification {
       } )
       val path = "target" + separator + "tape-sk.xml"
 
-      new Prover9Prover().getRobinsonProof( cs ) match {
+      Prover9.getRobinsonProof( cs ) match {
         case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
         case Some( _ ) => true must beEqualTo( true )
       }

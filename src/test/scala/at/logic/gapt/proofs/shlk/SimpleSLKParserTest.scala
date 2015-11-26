@@ -17,7 +17,6 @@ import org.specs2.mutable._
 class SimpleSLKParserTest extends Specification {
   "SimpleSLKParser" should {
 
-    sequential
     "parse correctly a SLK-proof" in {
       val var3 = SchemaAtom( Var( "x3", To ), Nil )
       val var4 = SchemaAtom( Var( "x4", To ), Nil )

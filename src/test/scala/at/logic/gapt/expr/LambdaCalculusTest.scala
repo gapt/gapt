@@ -150,7 +150,7 @@ class LambdaCalculusTest extends Specification {
       val l = List( t1, t2, t3, t4, t5, t6 )
       l.forall( x => l.forall( y => {
         if ( x == y )
-          x.hashCode() must_== y.hashCode()
+          x.hashCode must_== y.hashCode
         else
           true
       } ) )

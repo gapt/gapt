@@ -1,3 +1,5 @@
+import java.io.ByteArrayOutputStream
+
 import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOutputStream}
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
@@ -10,13 +12,16 @@ lazy val commonSettings = Seq(
   version := "1.11-SNAPSHOT",
 
   scalaVersion := "2.11.7",
-  scalacOptions in (Compile, doc) ++= Seq("-diagrams", "-implicits"),
   scalacOptions in Compile ++= Seq("-deprecation"),
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test),
 
   // scalaz-stream is not on maven.org
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
+
+  javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
+  fork := true,
+  fork in Test := true,
 
   sourcesInBase := false // people like to keep scripts lying around
 
@@ -34,8 +39,18 @@ lazy val root = (project in file(".")).
     name := "gapt",
     description := "General Architecture for Proofs",
 
+    scalacOptions in (Compile, doc) ++= Seq(
+      "-doc-title", "gapt",
+      "-doc-version", version.value,
+      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
+      "-sourcepath", baseDirectory.value.getAbsolutePath,
+      "-diagrams",
+      "-implicits"
+    ),
+
     mainClass := Some("at.logic.cli.CLIMain"),
 
+    fork in console := true,
     initialCommands in console := IO.read((resourceDirectory in Compile).value / "gapt-cli-prelude.scala"),
 
     // Release stuff
@@ -50,7 +65,7 @@ lazy val root = (project in file(".")).
       Process(List("latexmk", "-pdf", "user_manual.tex"), baseDir / "doc") !
 
       val filesToIncludeAsIs = List(
-        "COPYING", "cli.sh", "gui.sh", "atp.sh", "include.sh", "examples")
+        "COPYING", "cli.sh", "gui.sh", "include.sh", "examples")
       val entries = List((assembly.value, s"gapt-$version.jar")) ++
         filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDir / fn)}
           .map{f => (f, baseDir.toPath.relativize(f.toPath))} ++
@@ -77,6 +92,21 @@ lazy val root = (project in file(".")).
 
       archiveFile
     },
+
+    evalUserManual := {
+      val userManFn = "doc/user_manual.tex"
+      val out = new ByteArrayOutputStream
+      val exitVal = new Fork("java", Some("at.logic.gapt.testing.evalCodeSnippetsInLatex")).fork(ForkOptions(
+        outputStrategy = Some(CustomOutput(out)),
+        workingDirectory = Some(file(".")),
+        javaHome = javaHome.value,
+        runJVMOptions = javaOptions.value ++ Seq("-cp", Path.makeString(Attributed.data((fullClasspath in Test).value))),
+        connectInput = false),
+        Seq(userManFn)).exitValue()
+      if (exitVal == 0) IO.write(file(userManFn), out.toByteArray)
+    },
+
+    testForkedParallel in Test := true,
 
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
@@ -111,29 +141,21 @@ lazy val testing = (project in file("testing")).
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.11",
 
-    baseDirectory in run := file("."),
-    javaOptions ++= Seq("-Xmx2g", "-Xss20m"),
-    fork := true
+    baseDirectory in run := file(".")
   )
 
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
 
+lazy val evalUserManual = TaskKey[Unit]("eval-user-manual", "Evaluates the snippets in the user manual.")
+
 lazy val testDependencies = Seq(
-  "org.specs2" %% "specs2-core" % "3.6.4",
-  "org.specs2" %% "specs2-junit" % "3.6.4",  // needed for junitxml output
-  "org.specs2" %% "specs2-matcher" % "3.6.4")
+  "org.specs2" %% "specs2-core" % "3.6.5",
+  "org.specs2" %% "specs2-junit" % "3.6.5",  // needed for junitxml output
+  "org.specs2" %% "specs2-matcher" % "3.6.5")
 
-def oneJvmPerTest(tests: Seq[TestDefinition]) =
-  tests map { test =>
-    new Tests.Group(
-      name = test.name,
-      tests = Seq(test),
-      runPolicy = Tests.SubProcess(ForkOptions()))
-  }
-
-def recursiveListFiles(f: File): List[File] =
+def recursiveListFiles(f: File): Seq[File] =
   if (f.isDirectory)
-    IO.listFiles(f).toList.flatMap(recursiveListFiles)
+    IO.listFiles(f).flatMap(recursiveListFiles)
   else
-    List(f)
+    Seq(f)
 

@@ -18,9 +18,10 @@ import org.specs2.mutable._
 //NOTE: I removed the proof profile from this test
 
 class LatticeTest extends Specification {
-  def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
+  def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   sequential
+
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
       checkForProverOrSkip
@@ -32,7 +33,7 @@ class LatticeTest extends Specification {
       val s = extractStruct( proof )
       val css = CharacteristicClauseSet( s )
       val cs = deleteTautologies( css )
-      new Prover9Prover().getRobinsonProof( cs ) must beSome
+      Prover9.getRobinsonProof( cs ) must beSome
     }
 
     "parse and skolemize the lattice proof" in {

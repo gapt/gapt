@@ -4,24 +4,25 @@ import java.util.zip.GZIPInputStream
 
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ Numeral, Utils }
+import at.logic.gapt.expr.fol.{ reduceHolToFol, Numeral, Utils }
 import at.logic.gapt.expr.hol.{ existsclosure, instantiate }
 import at.logic.gapt.formats.readers.XMLReaders.XMLReader
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
-import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.proofs.{ Suc, Ant, Sequent, HOLSequent }
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
 
-class ExtractRecSchemTest extends Specification {
+class ExtractRecSchemTest extends Specification with SatMatchers {
   "simple" in {
-    val P = FOLAtomHead( "P", 1 )
+    val P = FOLAtomConst( "P", 1 )
     val c = FOLConst( "c" )
-    val f = FOLFunctionHead( "f", 1 )
+    val f = FOLFunctionConst( "f", 1 )
     val x = FOLVar( "x" )
     val y = FOLVar( "y" )
     val z = FOLVar( "z" )
@@ -61,7 +62,7 @@ class ExtractRecSchemTest extends Specification {
   }
 
   "pi2 pigeonhole" in {
-    val p9 = new Prover9Prover
+    val p9 = Prover9
     if ( !p9.isInstalled ) skipped
 
     val p = Pi2Pigeonhole()
@@ -78,7 +79,7 @@ class ExtractRecSchemTest extends Specification {
 
     val recSchem = extractRecSchem( proof )
 
-    val p9 = new Prover9Prover
+    val p9 = Prover9
     if ( !p9.isInstalled ) skipped
 
     val lang = recSchem.parametricLanguage( FOLConst( "n_0" ) ).map( _.asInstanceOf[HOLFormula] )
@@ -96,19 +97,19 @@ class ExtractRecSchemTest extends Specification {
   }
 
   "simple pi3" in {
-    val P = FOLAtomHead( "P", 3 )
+    val P = FOLAtomConst( "P", 3 )
     val Seq( c, d ) = Seq( "c", "d" ) map { FOLConst( _ ) }
     val Seq( x, y, z, w1, w2, w3 ) = Seq( "x", "y", "z", "w1", "w2", "w3" ) map { FOLVar( _ ) }
 
     val cutf = All( x, Ex( y, All( z, P( x, y, z ) ) ) )
 
-    var p1: LKProof = LogicalAxiom( P( w1, w1, w2 ).asInstanceOf[HOLAtom] )
+    var p1: LKProof = LogicalAxiom( P( w1, w1, w2 ) )
     p1 = ForallLeftBlock( p1, All( x, All( y, P( x, x, y ) ) ), Seq( w1, w2 ) )
     p1 = ForallRightRule( p1, instantiate( cutf, Seq( w1, w1 ) ), w2 )
     p1 = ExistsRightRule( p1, instantiate( cutf, w1 ), w1 )
     p1 = ForallRightRule( p1, cutf, w1 )
 
-    var p2: LKProof = LogicalAxiom( P( c, w3, d ).asInstanceOf[HOLAtom] )
+    var p2: LKProof = LogicalAxiom( P( c, w3, d ) )
     p2 = ExistsRightRule( p2, Ex( x, P( c, x, d ) ), w3 )
     p2 = ForallLeftRule( p2, instantiate( cutf, Seq( c, w3 ) ), d )
     p2 = ExistsLeftRule( p2, instantiate( cutf, c ), w3 )
@@ -129,6 +130,45 @@ class ExtractRecSchemTest extends Specification {
     Sat4j.isValid(
       recschem.language.map( _.asInstanceOf[FOLFormula] ).toSeq ++: HOLSequent()
     ) must_== true
+  }
+
+  "numeral induction" in {
+    val nat = TBase( "Nat" )
+    val o = Const( "Zero", nat )
+    val s = Const( "Suc", nat -> nat )
+
+    val witness = TBase( "Witness" )
+    val p = HOLAtomConst( "p", nat, witness )
+    val g = Const( "g", witness -> witness )
+    val c = Const( "c", witness )
+    val x = Var( "x", nat )
+    val y = Var( "y", witness )
+
+    val proof = ( ProofBuilder
+      c LogicalAxiom( p( o, y ) )
+      u ( ForallLeftRule( _, All( y, p( o, y ) ), y ) )
+      u ( ForallRightRule( _, All( y, p( o, y ) ) ) )
+
+      c LogicalAxiom( p( x, g( y ) ) )
+      c LogicalAxiom( p( s( x ), y ) )
+      b ( ImpLeftRule( _, Suc( 0 ), _, Ant( 0 ) ) )
+      u ( ForallLeftBlock( _, All( x, All( y, p( x, g( y ) ) --> p( s( x ), y ) ) ), Seq( x, y ) ) )
+      u ( ForallLeftRule( _, All( y, p( x, y ) ), g( y ) ) )
+      u ( ForallRightRule( _, All( y, p( s( x ), y ) ) ) )
+
+      b { ( base, step ) =>
+        val baseCase = InductionCase( base, o, Seq(), Seq(), Suc( 0 ) )
+        val stepCase = InductionCase( step, s, Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+        InductionRule( Seq( baseCase, stepCase ), All( x, All( y, p( x, y ) ) ) )
+      }
+
+      c LogicalAxiom( p( x, c ) )
+      u ( ForallLeftBlock( _, All( x, All( y, p( x, y ) ) ), Seq( x, c ) ) )
+
+      b ( CutRule( _, Suc( 0 ), _, Ant( 0 ) ) ) qed )
+
+    val recSchem = extractRecSchem( proof )
+    And( recSchem.parametricLanguage( s( s( o ) ) ).toSeq map { _.asInstanceOf[HOLFormula] } ) must beUnsat
   }
 }
 
@@ -182,7 +222,7 @@ class Pi2FactorialPOC extends Specification {
   }
 
   "languages should be tautologies" in {
-    val verit = new VeriTProver
+    val verit = VeriT
     Fragment.foreach( 0 to 7 ) { i =>
       s"n = $i" in {
         if ( !verit.isInstalled ) skipped

@@ -5,9 +5,10 @@ import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.expr.{ Eq, FOLConst, FOLFunction }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
+import at.logic.gapt.provers.prover9.Prover9
 import org.apache.log4j.{ Level, Logger }
 
 import scala.collection.immutable.HashMap
@@ -51,22 +52,9 @@ object RunOnProofSequence {
     "assoc" -> ( assocES, UniformAssociativity3ExampleProof.apply _ )
   )
 
-  def removeEqAxioms( eseq: ExpansionSequent ) = {
-    val eqaxioms = Sequent(
-      List(
-        "x = x",
-        "x = y -> y = x",
-        "(x = y & y = z) -> x = z",
-        "x = y -> (y = z -> x = z)",
-        "x = y -> s(x) = s(y)",
-        "x = y -> (u = v -> x+u = y+v)",
-        "x = z -> y + x = z + x", // congruence plus left
-        "(all x (all y (all z (y = z -> g(x, y) = g(x, z)))))", // congruence of g on the right
-        "x = y -> z*x = z*y"
-      ), // congruence of mult right
-      Nil
-    ) map { s => univclosure( parseFormula( s ) ) }
-
-    removeFromExpansionSequent( eseq, eqaxioms )
-  }
+  def removeEqAxioms( eseq: ExpansionSequent ) =
+    eseq.zipWithIndex filter {
+      case ( et, Ant( _ ) ) => !Prover9.isValid( toShallow( et ) )
+      case ( et, Suc( _ ) ) => !Prover9.isValid( -toShallow( et ) )
+    } map { _._1 }
 }

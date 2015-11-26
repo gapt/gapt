@@ -7,40 +7,9 @@ package at.logic.gapt.utils.dssupport
 
 object ListSupport {
 
-  /** Cartesian product of an arbitrary list of lists */
-  def product[T]( l: List[List[T]] ): List[List[T]] = l match {
-    case Nil    => List( Nil )
-    case h :: t => for ( eh <- h; et <- product( t ) ) yield eh :: et
-  }
-
-  /** Cartesian product of two lists */
-  def product[A, B]( xs: List[A], ys: List[B] ) = {
-    xs.flatMap( ( x ) => ys.map( ( y ) => ( x, y ) ) )
-  }
-
   /** all lists obtainable by concatenating one from s1 with one from s2 */
   def times[T]( s1: List[List[T]], s2: List[List[T]] ): List[List[T]] = {
     s1.flatMap( c1 => s2.map( c2 => c1 ++ c2 ) )
-  }
-
-  /**
-   * Performs a map with an accumulator.
-   * Useful for e.g. mapping a custom counter onto a collection.
-   *
-   * @param f The mapping function. Takes an accumulator and an element from the list and returns a tuple
-   *        of the new accumulator value and the mapped list element.
-   * @param init The initial accumulator value.
-   * @param list The list on which to perform the map.
-   * @return The mapped list and the final value of the accumulator.
-   */
-  def mapAccumL[Acc, X, Y]( f: ( Acc, X ) => ( Acc, Y ), init: Acc, list: List[X] ): ( Acc, List[Y] ) = list match {
-    case Nil => ( init, Nil )
-    case ( x :: xs ) => {
-      val ( new_acc, y ) = f( init, x )
-      val ( new_acc2, ys ) = mapAccumL( f, new_acc, xs )
-
-      ( new_acc2, y :: ys )
-    }
   }
 
   /**

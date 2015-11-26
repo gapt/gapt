@@ -28,7 +28,7 @@ case class ProjectionException( message: String, original_proof: LKProof, new_pr
 
 object Projections extends at.logic.gapt.utils.logging.Logger {
 
-  def reflexivity_projection( proof: LKProof, t: TA = Ti ): LKProof = {
+  def reflexivity_projection( proof: LKProof, t: Ty = Ti ): LKProof = {
     //TODO: in case of fol, fol equality is not used
     //TODO: lksk is not handled
     val es = proof.root.toHOLSequent
@@ -42,7 +42,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     right
   }
 
-  def lksk_reflexivity_projection( proof: LKProof, t: TA = Ti ): LKProof = {
+  def lksk_reflexivity_projection( proof: LKProof, t: Ty = Ti ): LKProof = {
 
     //TODO: in case of fol, fol equality is not used
     val es = proof.root.toHOLSequent

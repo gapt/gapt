@@ -4,17 +4,17 @@ import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 
 object Pi2Pigeonhole {
   val zero = FOLConst( "0" )
-  val s = FOLFunctionHead( "s", 1 )
+  val s = FOLFunctionConst( "s", 1 )
   val one = s( zero )
 
-  val M = FOLFunctionHead( "M", 2 )
+  val M = FOLFunctionConst( "M", 2 )
 
-  val f = FOLFunctionHead( "f", 1 )
-  val lteq = FOLAtomHead( "<=", 2 )
+  val f = FOLFunctionConst( "f", 1 )
+  val lteq = FOLAtomConst( "<=", 2 )
 
   val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
 
@@ -36,7 +36,7 @@ object Pi2Pigeonhole {
   val betahat = FOLVar( "β^" )
   val betahatprime = FOLVar( "β^'" )
 
-  def Delta_T_I_i( i: LambdaExpression, beta: Var, betaprime: Var, prover: Prover9Prover ): LKProof = {
+  def Delta_T_I_i( i: LambdaExpression, beta: Var, betaprime: Var, prover: Prover9 ): LKProof = {
     var Some( p ) = prover.getLKProof( I( i, zero, beta ) +:
       I( i, s( beta ), betaprime ) +:
       Delta :+
@@ -51,7 +51,7 @@ object Pi2Pigeonhole {
   }
 
   def apply(): LKProof = {
-    val prover = new Prover9Prover
+    val prover = Prover9
 
     var Some( p1 ) = prover.getLKProof( Gamma :+
       I( zero, alpha, M( alpha, alphahat ) ) :+

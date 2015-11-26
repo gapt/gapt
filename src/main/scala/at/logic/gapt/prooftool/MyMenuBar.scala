@@ -1,11 +1,8 @@
 package at.logic.gapt.prooftool
 
 import java.awt.Color
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.getCutsAsProofs
-import at.logic.gapt.proofs.lk.base.LKProof
-import at.logic.gapt.proofs.proofs.TreeProof
+import at.logic.gapt.proofs.DagProof
+import at.logic.gapt.proofs.lkNew.{ CutRule, LKProof }
 
 import scala.swing.event.Key
 import scala.swing._
@@ -87,12 +84,6 @@ class MyMenubar extends MenuBar {
         case EnableMenus  => enabled = true
       }
     }
-    contents += new Separator
-    contents += new MenuItem( Action( "Exit" ) { Main.fExit() } ) {
-      mnemonic = Key.X
-      peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_X, JActionEvent.CTRL_MASK ) )
-      border = customBorder
-    }
   }
   contents += new Menu( "Edit" ) {
     mnemonic = Key.E
@@ -139,7 +130,9 @@ class MyMenubar extends MenuBar {
       }
     }
     contents += new MenuItem( Action( "Show All Rules" ) {
-      ProofToolPublisher.publish( new ShowAllRules( Main.body.getContent.getData.get._2.asInstanceOf[TreeProof[_]] ) )
+      Main.body.getContent.getData.get._2 match {
+        case p: DagProof[a] => ProofToolPublisher.publish( ShowAllRules( p ) )
+      }
     } ) {
       border = customBorder
       enabled = false
@@ -238,7 +231,7 @@ class MyMenubar extends MenuBar {
       }
     }
     contents += new MenuItem( Action( "Find Cuts" ) {
-      Main.setSearchResult( getCutsAsProofs( Main.body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
+      Main.setSearchResult( Main.body.getContent.getData.get._2.asInstanceOf[LKProof].subProofs.collect { case c: CutRule => c }.toList )
     } ) {
       this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_C, JActionEvent.ALT_MASK ) )
       border = customBorder
@@ -334,7 +327,7 @@ class MyMenubar extends MenuBar {
     }
     contents += new MenuItem( Action( "Compute Projections" ) { Main.computeProjections() } ) { border = customBorder }
     contents += new Separator
-    contents += new MenuItem( Action( "Apply Gentzen's Method" ) { Main.gentzen( Main.body.getContent.getData.get._2.asInstanceOf[LKProof] ) } ) { border = customBorder }
+    contents += new MenuItem( Action( "Apply Gentzen's Method" ) { Main.gentzen( Main.body.getContent.getData.get._2.asInstanceOf[at.logic.gapt.proofs.lk.base.LKProof] ) } ) { border = customBorder }
     contents += new Separator
     contents += new MenuItem( Action( "Extract Expansion Tree" ) { Main.expansionTree() } ) { border = customBorder }
     contents += new Separator
@@ -401,88 +394,5 @@ class MyMenubar extends MenuBar {
       mnemonic = Key.A
       border = customBorder
     }
-  }
-  contents += new Menu( "Tests" ) {
-    mnemonic = Key.T
-    contents += new MenuItem( Action( "Non-Prenex Proof 1" ) {
-      val p = Var( "p", Ti -> To )
-      val a = Var( "a", Ti )
-      val b = Var( "b", Ti )
-      val q = Var( "q", Ti -> To )
-      val x = Var( "x", Ti )
-      val px = HOLAtom( p, x :: Nil ) // p(x)
-      val pa = HOLAtom( p, a :: Nil ) // p(a)
-      val pb = HOLAtom( p, b :: Nil ) // p(b)
-      val qa = HOLAtom( q, a :: Nil ) // q(a)
-      val substa = a // x -> a
-      val substb = b // x -> b
-      val all_px = All( x, px ) // forall x. p(x)
-
-      val axm1 = Axiom( pa :: Nil, pa :: Nil )
-      val axm2 = Axiom( pb :: Nil, pb :: Nil )
-      val all1 = ForallLeftRule( axm1, pa, all_px, substa )
-      val all2 = ForallLeftRule( axm2, pb, all_px, substb )
-      val andrght = AndRightRule( all1, all2, pa, pb )
-      val contr = ContractionLeftRule( andrght, all_px )
-      val andlft = AndLeft1Rule( contr, all_px, qa )
-
-      Main.updateLauncher( "Proof", andlft, Main.defaultFontSize )
-      ProofToolPublisher.publish( EnableMenus )
-    } ) { border = customBorder }
-    contents += new MenuItem( Action( "Non-Prenex Proof 2" ) {
-      val p = Var( "p", Ti -> To )
-      val a = Var( "a", Ti )
-      val b = Var( "b", Ti )
-      val q = Var( "q", Ti -> To )
-      val x = Var( "x", Ti )
-      val y = Var( "y", Ti )
-      val px = HOLAtom( p, x :: Nil ) // p(x)
-      val pa = HOLAtom( p, a :: Nil ) // p(a)
-      val pb = HOLAtom( p, b :: Nil ) // p(b)
-      val qy = HOLAtom( q, y :: Nil ) // q(a)
-      val substa = a // x -> a
-      val substb = b // x -> b
-      val ex_px = Ex( x, px ) // exists x. p(x)
-      val ex_qy = Ex( y, qy )
-
-      val axm1 = Axiom( pa :: Nil, pa :: Nil )
-      val axm2 = Axiom( pb :: Nil, pb :: Nil )
-      val exists1 = ExistsRightRule( axm1, pa, ex_px, substa )
-      val exists2 = ExistsRightRule( axm2, pb, ex_px, substb )
-      val orlft = OrLeftRule( exists1, exists2, pa, pb )
-      val contr = ContractionRightRule( orlft, ex_px )
-      val orrght = OrRight1Rule( contr, ex_px, ex_qy )
-
-      Main.updateLauncher( "Proof", orrght, Main.defaultFontSize )
-      ProofToolPublisher.publish( EnableMenus )
-    } ) { border = customBorder }
-    contents += new MenuItem( Action( "Nested Proof 1" ) {
-      val p = Var( "p", Ti -> To )
-      val a = Var( "a", Ti )
-      val b = Var( "b", Ti )
-      val q = Var( "q", Ti -> To )
-      val x = Var( "x", Ti )
-      val y = Var( "y", Ti )
-      val px = HOLAtom( p, x :: Nil ) // p(x)
-      val pa = HOLAtom( p, a :: Nil ) // p(a)
-      val pb = HOLAtom( p, b :: Nil ) // p(b)
-      val qa = HOLAtom( q, a :: Nil ) // q(a)
-      val qy = HOLAtom( q, y :: Nil ) // q(a)
-      val substa = a // x -> a
-      val substb = b // x -> b
-      val all_px = All( x, px ) // forall x. p(x)
-
-      val axm1 = Axiom( pa :: Nil, pa :: Nil )
-      val axm2 = Axiom( pb :: Nil, pb :: Nil )
-      val all1 = ForallLeftRule( axm1, pa, all_px, substa )
-      val all2 = ForallLeftRule( axm2, pb, all_px, substb )
-      val andrght = AndRightRule( all1, all2, pa, pb )
-      val contr = ContractionLeftRule( andrght, all_px )
-      val andlft = AndLeft1Rule( contr, all_px, qa )
-      val all3 = ForallLeftRule( andlft, And( all_px, qa ), All( y, And( all_px, qy ) ), a )
-
-      Main.updateLauncher( "Proof", all3, Main.defaultFontSize )
-      ProofToolPublisher.publish( EnableMenus )
-    } ) { border = customBorder }
   }
 }

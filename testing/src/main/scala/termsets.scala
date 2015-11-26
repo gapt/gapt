@@ -4,11 +4,9 @@ import java.nio.file._
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.examples.proofSequences
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
-import at.logic.gapt.proofs.expansionTrees.{ toShallow, InstanceTermEncoding, ExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.{ toShallow, FOLInstanceTermEncoding, ExpansionSequent }
 import at.logic.gapt.proofs.lkNew.LKToExpansionProof
-import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.executionModels.timeout.withTimeout
 import at.logic.gapt.utils.glob
@@ -22,13 +20,14 @@ object dumpTermsets extends App {
   Files createDirectories outDir
 
   def termsetFromExpansionProof( e: ExpansionSequent ): Set[FOLTerm] =
-    simplifyNames( new InstanceTermEncoding( toShallow( e ) ) encode e )
+    simplifyNames( FOLInstanceTermEncoding( toShallow( e ) ) encode e map { _.asInstanceOf[FOLTerm] } )
 
   def simplifyNames( termset: Set[FOLTerm] ): Set[FOLTerm] = {
-    val renaming = constants( termset ).toSeq.sortBy( _.toString ).
-      zipWithIndex.map { case ( c: FOLTerm, i ) => c -> Const( s"f$i", c.exptype ).asInstanceOf[FOLTerm] }.
-      toMap
-    termset.map( TermReplacement( _, renaming.toMap[FOLTerm, FOLTerm] ) )
+    val renaming: Map[LambdaExpression, LambdaExpression] =
+      ( constants( termset ).toSeq ++ freeVariables( termset ).toSeq ).sortBy( _.toString ).
+        zipWithIndex.map { case ( c, i ) => c -> Const( s"f$i", c.exptype ) }.
+        toMap
+    termset.map( TermReplacement( _, renaming ).asInstanceOf[FOLTerm] )
   }
 
   def termToString( t: FOLTerm ): String = t match {
@@ -55,7 +54,7 @@ object dumpTermsets extends App {
   }
 
   println( "Proof sequences" )
-  proofSequences foreach { proofSeq =>
+  betterForeach( proofSequences ) { proofSeq =>
     Stream.from( 1 ).map { i =>
       println( s"${proofSeq.name}($i)" )
       i -> termsetFromExpansionProof( LKToExpansionProof( proofSeq( i ) ) )
@@ -67,12 +66,7 @@ object dumpTermsets extends App {
 
   println( "Prover9 proofs" )
   betterForeach( glob paths "testing/**/prover9/**/*.s.out" ) { p9File =>
-    val ( resProof, endSequent ) = Prover9Importer robinsonProofWithReconstructedEndSequentFromFile p9File.toString
-    val expansionProof =
-      if ( isFOLPrenexSigma1( endSequent ) )
-        RobinsonToExpansionProof( resProof, endSequent )
-      else
-        RobinsonToExpansionProof( resProof )
+    val expansionProof = Prover9Importer expansionProofFromFile p9File.toString
 
     writeTermset(
       outDir resolve s"p9-${p9File.getParent.getFileName}.termset",

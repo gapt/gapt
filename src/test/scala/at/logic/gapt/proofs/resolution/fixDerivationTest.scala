@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.proofs._
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 
 class FixDerivationTest extends Specification {
@@ -92,14 +92,10 @@ class FixDerivationTest extends Specification {
   }
 
   "mapInputClauses" should {
-    implicit def expr2atom( expr: LambdaExpression ): FOLAtom = expr.asInstanceOf[FOLAtom]
-    implicit def seq2cls[T <: LambdaExpression]( seq: Sequent[T] ): HOLClause = seq map { _.asInstanceOf[FOLAtom] }
-    implicit def sub2fol( sub: Substitution ): FOLSubstitution = FOLSubstitution( sub.map.asInstanceOf[Map[FOLVar, FOLTerm]] )
-
     "factor reordered clauses" in {
       val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
       val c = FOLConst( "c" )
-      val p = FOLAtomHead( "p", 1 )
+      val p = FOLAtomConst( "p", 1 )
 
       val p1 = InputClause( Clause() :+ p( x ) :+ p( y ) )
       val p2 = InputClause( p( c ) +: Clause() )
@@ -115,7 +111,7 @@ class FixDerivationTest extends Specification {
 
   "findDerivationViaResolution" should {
     def check( a: HOLClause, bs: Set[HOLClause] ) = {
-      if ( !new Prover9Prover().isInstalled ) skipped
+      if ( !Prover9.isInstalled ) skipped
       findDerivationViaResolution( a, bs ) must beLike {
         case Some( p ) =>
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true

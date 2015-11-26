@@ -4,11 +4,11 @@ import at.logic.gapt.expr._
 
 package object proofs {
 
+  type FOLSequent = Sequent[FOLFormula]
   type HOLSequent = Sequent[HOLFormula]
 
   implicit class RichFormulaSequent( val sequent: Sequent[HOLFormula] ) {
     def formulas = sequent.elements
-    def polarizedFormulas = sequent.polarizedElements
 
     /**
      * Interpretation of the sequent as a formula.
@@ -20,6 +20,11 @@ package object proofs {
     def toNegFormula: HOLFormula = And( sequent.antecedent ++ sequent.succedent.map( Neg( _ ) ) )
 
     def toImplication: HOLFormula = Imp( And( sequent.antecedent.toList ), Or( sequent.succedent ) )
+  }
+
+  implicit class RichFOLSequent( sequent: FOLSequent ) {
+    def toFormula = Or( sequent.map( -_, identity ).elements )
+    def toImplication = And( sequent.antecedent ) --> Or( sequent.succedent )
   }
 
   object HOLSequent {
@@ -37,7 +42,5 @@ package object proofs {
   implicit class RichClause[+A]( val clause: Clause[A] ) {
     def negative = clause.antecedent
     def positive = clause.succedent
-
-    def literals = ( negative map { f => ( f, false ) } ) ++ ( positive map { f => ( f, true ) } )
   }
 }

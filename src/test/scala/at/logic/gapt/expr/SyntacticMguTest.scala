@@ -7,8 +7,8 @@ class SyntacticMguTest extends Specification {
   "not unify bound variables" in {
     val x = FOLVar( "x" )
     val y = FOLVar( "y" )
-    val f = FOLFunctionHead( "f", 2 )
-    val g = FOLFunctionHead( "g", 1 )
+    val f = FOLFunctionConst( "f", 2 )
+    val g = FOLFunctionConst( "g", 1 )
 
     syntacticMGU(
       Abs( x, Abs( y, f( x, y ) ) ),
@@ -23,7 +23,7 @@ class SyntacticMguTest extends Specification {
   "handle variables that are both bound and free" in {
     val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
     val f = Const( "f", Ti -> ( ( Ti -> Ti ) -> Ti ) )
-    val g = FOLFunctionHead( "g", 1 )
+    val g = FOLFunctionConst( "g", 1 )
     val c = FOLConst( "c" )
 
     syntacticMGU(

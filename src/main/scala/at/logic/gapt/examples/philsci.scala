@@ -1,6 +1,6 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.formats.simple.SimpleFOLParser
+import at.logic.gapt.expr.FOLAtom
 import at.logic.gapt.proofs.ceres.Projections
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base.LKProof
@@ -8,10 +8,9 @@ import at.logic.gapt.proofs.lkNew.lkOld2New
 
 object philsci {
   def apply(): ( LKProof, LKProof ) = {
-    //TODO: convert to new lk
-    val p1 = SimpleFOLParser( "B" )
-    val p2 = SimpleFOLParser( "A" )
-    val q = SimpleFOLParser( "C" )
+    val p1 = FOLAtom( "B" )
+    val p2 = FOLAtom( "A" )
+    val q = FOLAtom( "C" )
     val r1 = Axiom( p1 :: Nil, p1 :: Nil )
     val r1_ = Axiom( p1 :: Nil, p1 :: Nil )
     val r2 = Axiom( p2 :: Nil, p2 :: Nil )

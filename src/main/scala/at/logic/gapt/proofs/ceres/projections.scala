@@ -16,7 +16,7 @@ case class ProjectionException( message: String, original_proof: LKProof, new_pr
 
 object Projections extends at.logic.gapt.utils.logging.Logger {
 
-  def reflexivity_projection( proof: LKProof, t: TA = Ti ): LKProof = {
+  def reflexivity_projection( proof: LKProof, t: Ty = Ti ): LKProof = {
     val es = proof.endSequent
     val x = Var( "x", t )
     val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList )
@@ -34,19 +34,25 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     apply( proof, proof.endSequent.map( _ => false ), pred )
 
   def apply( proof: LKProof, cut_ancs: Sequent[Boolean], pred: HOLFormula => Boolean ): Set[LKProof] = {
-    //val es = proof.endSequent
-    val esanc = proof.endSequent.zipWithIndex.filterNot( x => cut_ancs( x._2 ) ).map( _._1 )
-    //println( proof.getClass )
-    //println( s"es:  $es" )
-    //println( s"ces: $ces" )
     val rec = apply_( proof, cut_ancs, pred )
+    /*
+    val esanc = proof.endSequent.zipWithIndex.filterNot( x => cut_ancs( x._2 ) ).map( _._1 )
     val cutanc_new = rec.map( _.endSequent )
     //    println(s"esanc: $esanc")
     println( "start " + proof.getClass )
+    if ( proof.mainIndices.size > 0 ) {
+      cut_ancs( proof.mainIndices( 0 ) ) match {
+        case true  => println( "Working on a cut-ancestor!" )
+        case false => println( "Working on a es-ancestor!" )
+      }
+    } else {
+      println( "No main formulas!" )
+    }
     println( " es    " + proof.endSequent )
     println( " esanc " + esanc )
     cutanc_new.map( println )
-    println( "end" )
+    println( "end\n" )
+    */
     rec
   }
 
@@ -96,6 +102,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
             handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs_left, new_cut_ancs_right )
           } else {
             /* this cut is skipped */
+            //println( "SKIPPING CUT" )
             val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, false )
             val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, false )
             require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
@@ -155,7 +162,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   // Apply weakenings to add the end-sequent ancestor of the other side to the projection.
   //TODO: this a duplication of some function lk
   def weakenESAncs( esancs: HOLSequent, s: Set[LKProof] ) = {
-    val wl = s.map( p => esancs.antecedent.foldLeft( p )( ( p, fo ) => { println( s"esweak $fo" ); WeakeningLeftRule( p, fo ) } ) )
+    val wl = s.map( p => esancs.antecedent.foldLeft( p )( ( p, fo ) => WeakeningLeftRule( p, fo )  ) )
     wl.map( p => esancs.succedent.foldLeft( p )( ( p, fo ) => WeakeningRightRule( p, fo ) ) )
   }
 
@@ -272,13 +279,13 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
           //println( p.endSequent( e ) )
           //we first pick our aux formula
           val candidates = a match {
-            case Ant( _ ) => p.endSequent.zipWithIndex.antecedent
-            case Suc( _ ) => p.endSequent.zipWithIndex.succedent
+            case Ant( _ ) => pm.endSequent.zipWithIndex.antecedent
+            case Suc( _ ) => pm.endSequent.zipWithIndex.succedent
           }
-          val aux = pick( p, a, candidates )
+          val aux = pick( pm, a, candidates )
           //then add the weakening
-          println( "weakening: " + p.endSequent( e ) )
-          val wproof = WeakeningLeftRule( p, p.endSequent( e ) )
+          //println( "weakening: " + p.endSequent( e ) )
+          val wproof = WeakeningLeftRule( pm, p.endSequent( e ) )
           //trace the aux formulas to the new rule
           val conn = wproof.occConnectors( 0 )
           val waux = conn.child( aux )

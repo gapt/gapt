@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.ceres_schema.struct._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.occurrences._
-import at.logic.gapt.expr.schema.IndexedPredicate
+import at.logic.gapt.expr.schema.{ Tindex, IndexedPredicate }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.resolutionOld.OccClause
 import at.logic.gapt.utils.logging.Logger

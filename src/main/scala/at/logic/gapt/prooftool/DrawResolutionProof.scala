@@ -59,10 +59,10 @@ class DrawResolutionProof( val proof: Proof[_], private val fSize: Int, private 
       Main.body.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
       Main.body.peer.dispatchEvent( e.peer )
-    case e: ShowProof if e.proof == proof =>
+    case e: ShowProof[_] if e.proof == proof =>
       drawLines = true
       layout.foreach( pair => pair._1.visible = true )
-    case e: HideProof if e.proof == proof =>
+    case e: HideProof[_] if e.proof == proof =>
       drawLines = false
       layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
   }

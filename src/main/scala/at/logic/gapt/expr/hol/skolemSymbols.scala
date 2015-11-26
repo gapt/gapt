@@ -7,10 +7,8 @@ package at.logic.gapt.expr.hol
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.streams.Definitions._
 
-trait TSkolemSymbol
-
 object TypeSynonyms {
-  type SkolemSymbol = SymbolA with TSkolemSymbol
+  type SkolemSymbol = StringSymbol
 }
 
 import at.logic.gapt.expr.hol.TypeSynonyms._
@@ -30,20 +28,11 @@ import at.logic.gapt.expr.hol.TypeSynonyms._
      the odd indices of s.
    */
 
-object SkolemSymbolFactory {
+class SkolemSymbolFactory {
   private def skolem_symbol_stream_from( n: Int ): Stream[SkolemSymbol] =
-    Stream.cons( new StringSymbol( "s_{" + n + "}" ) with TSkolemSymbol, skolem_symbol_stream_from( n + 1 ) )
+    Stream.cons( StringSymbol( "s_{" + n + "}" ), skolem_symbol_stream_from( n + 1 ) )
 
   private var skolem_symbol_stream = skolem_symbol_stream_from( 0 )
-
-  // This method resets the internal state of the factory.
-  // WARNING: uniqueness of Skolem Symbols is now not guaranteed anymore
-  // (since Skolem Symbols returned before the reset call may now
-  // be returned again)
-  //
-  // Hence, this function should only be used for testing.
-
-  def reset = { skolem_symbol_stream = skolem_symbol_stream_from( 0 ) }
 
   def getSkolemSymbols = {
     val stream = even( skolem_symbol_stream )

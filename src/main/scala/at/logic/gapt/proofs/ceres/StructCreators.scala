@@ -142,10 +142,10 @@ object StructCreators extends Logger {
     val cutanc_seq: HOLSequent = so.zipWithIndex.filter( x => cut_occs( x._2 ) ).map( _._1 )
     val tautology_projection = cutanc_seq.antecedent.exists( x => cutanc_seq.succedent.contains( x ) )
     //if ( tautology_projection ) println( s"Could optimize $so ($cut_occs)" )
-    println( cutanc_seq )
+    //println( cutanc_seq )
     tautology_projection match {
       case true =>
-        println( "tautology " + cutanc_seq )
+        //println( "tautology " + cutanc_seq )
         /* in the case of an axiom A :- A, if both occurrences of A are cut-ancestors, we need to return plus not times.
          * treat an axiom of the form \Gamma, A :- A, \Delta as if \Gamma and \Delta were added by weakening */
         EmptyPlusJunction()

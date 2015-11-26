@@ -1,6 +1,6 @@
 package at.logic.gapt.testing
 
-import java.io.File
+import java.io.{ FileWriter, File }
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
@@ -13,8 +13,8 @@ import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.provers.sat.MiniSAT
-import at.logic.gapt.provers.veriT.VeriTProver
-import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9Prover }
+import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9 }
 import at.logic.gapt.utils.glob
 import scala.concurrent.duration._
 import scala.util.Random
@@ -28,9 +28,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( f getAbsolutePath ) --- "import"
 
     RobinsonToExpansionProof( robinson, reconstructedEndSequent ) --? "RobinsonToExpansionProof" map { E2 =>
-      new VeriTProver().isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
-      if ( isFOLPrenexSigma1( reconstructedEndSequent ) )
-        new VeriTProver().isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
+      VeriT.isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
+      VeriT.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
     val p = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
@@ -45,7 +44,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     ( toShallow( E ) == p.endSequent ) !-- "shallow sequent of expansion proof"
 
-    val ip = new Prover9Prover().getLKProof( deep ).get --- "getLKProof( deep )"
+    val ip = Prover9.getLKProof( deep ).get --- "getLKProof( deep )"
     val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
     ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
     ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
@@ -55,11 +54,11 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
       ExpansionProofToLK( E ) --- "expansionProofToLKProof"
     }
-    new VeriTProver().isValid( deep ) !-- "verit validity"
+    VeriT.isValid( deep ) !-- "verit validity"
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
-        new VeriTProver().isValid( recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
+        VeriT.isValid( recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
       }
 
     // FIXME: extend to equality
@@ -69,16 +68,15 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
 
-    if ( isFOLPrenexSigma1( p.endSequent ) ) {
+    if ( isFOLPrenexSigma1( p.endSequent ) )
       ( CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers = true ), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
 
         if ( !containsEqualityReasoning( q ) )
           ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
         CERES( lkNew2Old( q ) ) --? "CERES (cut-intro)"
 
-        new VeriTProver().isValid( extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem validity (cut-intro)"
+        VeriT.isValid( extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem validity (cut-intro)"
       }
-    }
 
     skolemize( p ) --? "skolemize"
   }
@@ -91,7 +89,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val E = LeanCoPParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
 
     val deep = toDeep( E ) --- "toDeep"
-    new VeriTProver().isValid( deep.toFormula ) !-- "verit validity"
+    VeriT.isValid( deep.toFormula ) !-- "verit validity"
   }
 }
 
@@ -127,22 +125,20 @@ object RegressionTests extends App {
 
   val total = testCases.length
   var started = 0
-  val results = testCases.par map { tc =>
+  val out = new FileWriter( "target/regression-test-results.xml" )
+  out write "<testsuite>\n"
+  testCases.par foreach { tc =>
     started += 1
     println( s"[${( 100 * started ) / total}%] $tc" )
-    try runOutOfProcess( Seq( "-Xmx1G", "-Xss30m" ) ) {
-      tc.run().toJUnitXml
+    try {
+      val res = runOutOfProcess( Seq( "-Xmx1G", "-Xss30m" ) ) { tc.run().toJUnitXml }
+      out.synchronized { XML.write( out, res, enc = "", xmlDecl = false, doctype = null ); out.flush() }
     } catch {
       case t: Throwable =>
         println( s"$tc failed:" )
         t.printStackTrace()
-        <testsuite/>
     }
   }
-
-  XML.save(
-    "target/regression-test-results.xml",
-    <testsuite> { results flatMap ( _.child ) toList } </testsuite>,
-    "UTF-8"
-  )
+  out write "</testsuite>\n"
+  out.close()
 }

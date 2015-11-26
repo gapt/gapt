@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.expr._
 
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 
 /**
  * This implementation of the CERES method does the proof reconstruction via Robinson2LK.
@@ -45,9 +45,8 @@ class CERES {
     }
 
     val tapecl = deleteTautologies( cs )
-    val prover = new Prover9Prover()
 
-    prover.getRobinsonProof( tapecl ) match {
+    Prover9.getRobinsonProof( tapecl ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         apply( es, proj, rp )
@@ -88,7 +87,7 @@ class CERES {
     val x = Var( StringSymbol( "x" ), Ti ).asInstanceOf[Var]
     val axiomseq = HOLSequent( Nil, List( Eq( x, x ) ) )
     //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
-    WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq compose es )
+    WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq ++ es )
   }
 
 }

@@ -1,9 +1,10 @@
+import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{Utils, FOLSubstitution}
+import at.logic.gapt.expr.fol.{reduceHolToFol, Utils, FOLSubstitution}
 import at.logic.gapt.expr.hol.{instantiate, univclosure}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
-import at.logic.gapt.formats.tip.TipParser
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.proofs.{Sequent, HOLSequent}
 import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
 import at.logic.gapt.provers.inductionProver._
 import org.apache.log4j.{Level, Logger}
@@ -70,10 +71,10 @@ val linearES = HOLSequent(
 //
 // interesting failures:
 //   prod/prop_16.smt2
-lazy val tipES = TipParser.parse(Source.fromFile("/home/gebner/tip-benchs/benchmarks/isaplanner/prop_10.smt2").mkString) match {
-  // the Imp-stripping is a workaround for issue 340
-  case HOLSequent(theory, Seq(All(v, Imp(_, concl)))) =>
-    HOLSequent(theory, Seq(Substitution(v -> alpha)(concl)))
+lazy val tipES = reduceHolToFol(TipSmtParser.parseFile("/home/gebner/tip-benchs/benchmarks/isaplanner/prop_10.smt2").toSequent) match {
+  case Sequent(theory, Seq(All(v, concl))) =>
+    val repl = Map[LambdaExpression,LambdaExpression](FOLConst("Z") -> FOLConst("0"), FOLFunctionConst("S",1) -> FOLFunctionConst("s",1))
+    reduceHolToFol(Sequent(theory, Seq(Substitution(v -> alpha)(concl)))) map { TermReplacement(_, repl) }
 }
 
 val sumES = HOLSequent(
@@ -169,7 +170,7 @@ val minusES = HOLSequent(List(
     FOLSubstitution(FOLVar("x"),alpha)(parseFormula("0 - x = 0")))
     )
 
-val endSequent = twoPlusDefsES
+val endSequent = tipES
 
 println(s"Proving $endSequent")
 

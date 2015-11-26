@@ -34,10 +34,21 @@ object TermReplacement {
   def apply( term: LambdaExpression, map: PartialFunction[LambdaExpression, LambdaExpression] ): LambdaExpression =
     term match {
       case _ if map isDefinedAt term => map( term )
+
+      // special case polymorphic constants so that we can do type-changing replacements
+      // but only if the user doesn't specify any replacement for the logical constants
+      case Eq( s, t ) if !( map isDefinedAt EqC( s.exptype ) ) =>
+        Eq( apply( s, map ), apply( t, map ) )
+      case All( x, t ) if !( map isDefinedAt ForallC( x.exptype ) ) =>
+        All( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
+      case Ex( x, t ) if !( map isDefinedAt ExistsC( x.exptype ) ) =>
+        Ex( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
+
       case App( s, t ) =>
         App( apply( s, map ), apply( t, map ) )
       case Abs( x, t ) =>
-        Abs( x, apply( t, map ) )
+        Abs( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
+
       case _ => term
     }
 
@@ -79,7 +90,7 @@ object TermReplacement {
       case TopAxiom => TopAxiom
       case BottomAxiom => BottomAxiom
       case ReflexivityAxiom( term ) => ReflexivityAxiom( apply( term, repl ) )
-      case LogicalAxiom( atom ) => LogicalAxiom( apply( atom, repl ) )
+      case LogicalAxiom( atom ) => AtomicExpansion( apply( atom.asInstanceOf[HOLFormula], repl ) )
       case TheoryAxiom( clause ) => TheoryAxiom( clause map { apply( _, repl ) } )
 
       case WeakeningLeftRule( subProof, formula ) => WeakeningLeftRule( f( subProof ), apply( formula, repl ) )
@@ -111,8 +122,10 @@ object TermReplacement {
       case EqualityLeftRule( subProof, eq, aux, pos ) => EqualityLeftRule( f( subProof ), eq, aux, pos )
       case EqualityRightRule( subProof, eq, aux, pos ) => EqualityRightRule( f( subProof ), eq, aux, pos )
 
-      case InductionRule( leftSubProof, aux1, rightSubProof, aux2, aux3, term ) =>
-        InductionRule( f( leftSubProof ), aux1, f( rightSubProof ), aux2, aux3, apply( term, repl ).asInstanceOf[FOLTerm] )
+      case InductionRule( cases, main ) =>
+        InductionRule( cases map { c =>
+          c.copy( apply( c.proof, repl ), constructor = apply( c.constructor, repl ).asInstanceOf[Const] )
+        }, apply( main, repl ) )
 
       case DefinitionLeftRule( subProof, aux, main )  => DefinitionLeftRule( f( subProof ), aux, apply( main, repl ) )
       case DefinitionRightRule( subProof, aux, main ) => DefinitionRightRule( f( subProof ), aux, apply( main, repl ) )
@@ -138,6 +151,7 @@ object TermReplacement {
         apply( f, map ),
         instances map { case ( t, term ) => apply( t, map ) -> apply( term, map ) }
       )
+    case ETWeakening( f ) => ETWeakening( apply( f, map ) )
   }
 }
 

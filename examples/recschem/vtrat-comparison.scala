@@ -11,19 +11,19 @@ val terms = (0 until N).map { i =>
 }.toSet
 
 val A = FOLConst("A")
-val B = FOLFunctionHead("B", 2)
+val B = FOLFunctionConst("B", 2)
 val Seq(x, y, z) = Seq("x", "y", "z") map { FOLVar(_) }
 val rst = RecSchemTemplate(A, Set(
   A -> B(x, y),
   A -> z,
   B(x, y) -> z
 ))
-val targets = terms.map(A.asInstanceOf[FOLTerm] -> _)
-val nfRecSchem = rst.normalFormRecSchem(targets)
+val targets = terms.map(A -> _).toSet[(LambdaExpression,LambdaExpression)]
+val nfRecSchem = rst.stableRecSchem(targets)
 
 println(lcomp(simplify(toNNF((new RecSchemGenLangFormula(nfRecSchem))(targets)))))
 
-val nfG = normalFormsProofVectGrammar(terms, Seq(2))
+val nfG = stableProofVectGrammar(terms, Seq(2))
 println(lcomp(simplify(toNNF(new VectGrammarMinimizationFormula(nfG).coversLanguage(terms)))))
 
 val minimized = time {

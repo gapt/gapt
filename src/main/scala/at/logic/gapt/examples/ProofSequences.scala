@@ -3,8 +3,8 @@ package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.expr.hol.{ univclosure, instantiate }
-import at.logic.gapt.formats.simple.SimpleFOLParser
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lkNew._
 
 trait ProofSequence {
@@ -404,7 +404,11 @@ object SumOfOnesF2ExampleProof extends ProofSequence {
   def FSuccX( x: FOLTerm ) = Eq( FOLFunction( f, FOLFunction( s, x :: Nil ) :: Nil ), FOLFunction( p, FOLFunction( f, x :: Nil ) :: Utils.numeral( 1 ) :: Nil ) )
 
   //The starting axiom f(n) = n |- f(n) = n
-  def start( n: Int ) = Axiom( Eq( Fn( n ), Utils.numeral( n ) ) :: Trans :: Plus :: EqPlus :: FSucc :: Nil, Eq( Fn( n ), Utils.numeral( n ) ) :: Nil )
+  def start( n: Int ) =
+    WeakeningMacroRule(
+      LogicalAxiom( Fn( n ) === Utils.numeral( n ) ),
+      Eq( Fn( n ), Utils.numeral( n ) ) +: Trans +: Plus +: EqPlus +: FSucc +: Sequent() :+ Eq( Fn( n ), Utils.numeral( n ) )
+    )
 
   def apply( n: Int ) = RecProof( start( n ), n )
 
@@ -488,7 +492,11 @@ object SumOfOnesFExampleProof extends ProofSequence {
   def FSuccX( x: FOLTerm ) = Eq( FOLFunction( f, FOLFunction( s, x :: Nil ) :: Nil ), FOLFunction( p, FOLFunction( f, x :: Nil ) :: Utils.numeral( 1 ) :: Nil ) )
 
   //The starting axiom f(n) = n |- f(n) = n
-  def start( n: Int ) = Axiom( Eq( Fn( n ), Utils.numeral( n ) ) :: Trans :: Plus :: CongSucc :: FSucc :: Nil, Eq( Fn( n ), Utils.numeral( n ) ) :: Nil )
+  def start( n: Int ) =
+    WeakeningMacroRule(
+      LogicalAxiom( Fn( n ) === Utils.numeral( n ) ),
+      Eq( Fn( n ), Utils.numeral( n ) ) +: Trans +: Plus +: CongSucc +: FSucc +: Sequent() :+ Eq( Fn( n ), Utils.numeral( n ) )
+    )
 
   def apply( n: Int ) = proof( n )
   def proof( n: Int ) = TermGenProof( EqChainProof( start( n ), n ), 0, n )
@@ -1005,10 +1013,10 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
   def f2( arg1: FOLTerm, sym: String, arg2: FOLTerm ): FOLTerm = f2( sym, arg1, arg2 )
 
   val f_ax_1 = Eq( f1( f, Utils.numeral( 0 ) ), f1( s, Utils.numeral( 0 ) ) )
-  val f_ax_2 = SimpleFOLParser( "Forall x =(f(s(x)), *(s(x) , f(x)))" )
+  val f_ax_2 = Prover9TermParserLadrStyle.parseFormula( "(all x f(s(x)) = s(x) * f(x))" )
 
   val g_ax_1 = new AllQuantifiedConditionalAxiomHelper( y :: Nil, Nil, Eq( y, f2( g, Utils.numeral( 0 ), y ) ) )
-  val g_ax_2 = SimpleFOLParser( "Forall x Forall y =( g(s(x), y), g(x, *(y , s(x))) )" )
+  val g_ax_2 = Prover9TermParserLadrStyle.parseFormula( "(all x (all y g(s(x), y) = g(x, y * s(x))))" )
 
   val g_compat_2 = new AllQuantifiedConditionalAxiomHelper( x :: y :: z :: Nil, Eq( y, z ) :: Nil, Eq( f2( g, x, y ), f2( g, x, z ) ) )
 

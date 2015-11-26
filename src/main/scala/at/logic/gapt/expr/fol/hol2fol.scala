@@ -368,7 +368,7 @@ class undoReplaceAbstractions {
  * you can change them back.
  */
 object changeTypeIn {
-  type TypeMap = Map[String, TA]
+  type TypeMap = Map[String, Ty]
 
   /* TODO: this broken, since e.g. for (a b) q with type(q)=alpha, type(b)=beta then type(a)=beta > (alpha > gamma)
      we need to actually change the type of a when changing the type of q

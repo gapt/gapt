@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLSubstitution }
 import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.expr.hol.{ toNNF, lcomp, simplify }
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, MaxSat4j }
+import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.utils.logging.Logger
 
 object SipGrammar {
@@ -49,33 +49,33 @@ case class SipGrammar( productions: Set[SipGrammar.Production] ) {
       productions flatMap { p => instantiate( p, n ) } )
 }
 
-object normalFormsSipGrammar {
+object stableSipGrammar {
   type InstanceLanguage = ( Int, Set[FOLTerm] )
 
   def apply( instanceLanguages: Seq[InstanceLanguage] ) = {
     import SipGrammar._
 
     val allTerms = instanceLanguages.flatMap( _._2 )
-    val topLevelNFs = normalForms( allTerms, Seq( gamma, alpha, nu ) ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentNFs = normalForms(
+    val topLevelStableTerms = stableTerms( allTerms, Seq( gamma, alpha, nu ) ).filter( !_.isInstanceOf[FOLVar] )
+    val argumentStableTerms = stableTerms(
       FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
       Seq( gamma, alpha, nu )
     )
 
     val prods = Set.newBuilder[Production]
 
-    for ( nf <- topLevelNFs ) {
-      val fv = freeVariables( nf )
+    for ( st <- topLevelStableTerms ) {
+      val fv = freeVariables( st )
 
-      if ( !fv.contains( nu ) ) prods += tau -> FOLSubstitution( gamma -> beta )( nf )
-      prods += tau -> nf
+      if ( !fv.contains( nu ) ) prods += tau -> FOLSubstitution( gamma -> beta )( st )
+      prods += tau -> st
     }
 
-    for ( nf <- argumentNFs ) {
-      val fv = freeVariables( nf )
+    for ( st <- argumentStableTerms ) {
+      val fv = freeVariables( st )
 
-      prods += gamma -> nf
-      if ( !fv.contains( nu ) && !fv.contains( gamma ) ) prods += gammaEnd -> nf
+      prods += gamma -> st
+      if ( !fv.contains( nu ) && !fv.contains( gamma ) ) prods += gammaEnd -> st
     }
 
     SipGrammar( prods.result )
@@ -99,7 +99,7 @@ object atoms {
 case class SipGrammarMinimizationFormula( g: SipGrammar ) {
   def productionIsIncluded( p: SipGrammar.Production ) = FOLAtom( s"sp,$p" )
 
-  def coversLanguageFamily( langs: Seq[normalFormsSipGrammar.InstanceLanguage] ) = {
+  def coversLanguageFamily( langs: Seq[stableSipGrammar.InstanceLanguage] ) = {
     val cs = Seq.newBuilder[FOLFormula]
     langs foreach {
       case ( n, lang ) =>
@@ -124,7 +124,7 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
 }
 
 object minimizeSipGrammar extends Logger {
-  def apply( g: SipGrammar, langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ): SipGrammar = {
+  def apply( g: SipGrammar, langs: Seq[stableSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
@@ -140,8 +140,8 @@ object minimizeSipGrammar extends Logger {
 }
 
 object findMinimalSipGrammar {
-  def apply( langs: Seq[normalFormsSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = new MaxSat4j ) = {
-    val polynomialSizedCoveringGrammar = normalFormsSipGrammar( langs )
+  def apply( langs: Seq[stableSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ) = {
+    val polynomialSizedCoveringGrammar = stableSipGrammar( langs )
     minimizeSipGrammar( polynomialSizedCoveringGrammar, langs, maxSATSolver )
   }
 }

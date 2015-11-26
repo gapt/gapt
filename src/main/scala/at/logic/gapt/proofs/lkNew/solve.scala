@@ -5,8 +5,8 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET, ETWeakening }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.utils.logging.Logger
 
 /**
@@ -170,26 +170,19 @@ object solve extends Logger {
             proof )
       }
 
-      case And( f1, f2 ) =>
-        val p_ant = {
-          val antTmp = if ( rest.antecedent.contains( f1 ) ) rest.antecedent else f1 +: rest.antecedent
-          if ( antTmp.diff( Seq( f1 ) ).contains( f2 ) ) antTmp else f2 +: antTmp
-        }
+      case And( f1, f2 ) => {
+        val f1_opt = if ( rest.antecedent.contains( f1 ) ) Nil else f1 :: Nil
+        val f2_opt = if ( ( f1_opt ++ rest.antecedent ).contains( f2 ) ) Nil else f2 :: Nil
+        val p_ant = f1_opt ++ f2_opt ++ rest.antecedent
         val p_suc = rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        for ( proof <- prove( premise, nextProofStrategies( 0 ) ) ) yield {
-          val infer_on_f1 = proof.endSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 )
-          val infer_on_f2 = proof.endSequent.antecedent.contains( f2 ) && !rest.antecedent.contains( f2 )
-
-          if ( infer_on_f1 || infer_on_f2 ) { // need to infer main formula
-            val proof1 = if ( !infer_on_f1 ) WeakeningLeftRule( proof, f1 ) else proof
-            val proof2 = if ( !infer_on_f2 ) WeakeningLeftRule( proof1, f2 ) else proof1
-            AndLeftRule( proof2, f1, f2 )
-          } else {
-            proof
-          }
-        }
+        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+          if ( proof.endSequent.antecedent.contains( f1 ) || proof.endSequent.antecedent.contains( f2 ) )
+            AndLeftMacroRule( proof, f1, f2 )
+          else
+            proof )
+      }
 
       // Binary Rules
 
@@ -403,26 +396,19 @@ object solve extends Logger {
         } )
       }
 
-      case Or( f1, f2 ) =>
+      case Or( f1, f2 ) => {
+        val f1_opt = if ( rest.succedent.contains( f1 ) ) Nil else f1 :: Nil
+        val f2_opt = if ( ( f1_opt ++ rest.succedent ).contains( f2 ) ) Nil else f2 :: Nil
         val p_ant = rest.antecedent
-        val p_suc = {
-          val sucTmp = if ( rest.succedent.contains( f1 ) ) rest.succedent else f1 +: rest.succedent
-          if ( sucTmp.diff( Seq( f1 ) ).contains( f2 ) ) sucTmp else f2 +: sucTmp
-        }
+        val p_suc = f1_opt ++ f2_opt ++ rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        for ( proof <- prove( premise, nextProofStrategies( 0 ) ) ) yield {
-          val infer_on_f1 = proof.endSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 )
-          val infer_on_f2 = proof.endSequent.succedent.contains( f2 ) && !rest.succedent.contains( f2 )
-
-          if ( infer_on_f1 || infer_on_f2 ) { // need to infer main formula
-            val proof1 = if ( !infer_on_f1 ) WeakeningRightRule( proof, f1 ) else proof
-            val proof2 = if ( !infer_on_f2 ) WeakeningRightRule( proof1, f2 ) else proof1
-            OrRightRule( proof2, f1, f2 )
-          } else {
-            proof
-          }
-        }
+        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+          if ( proof.endSequent.succedent.contains( f1 ) || proof.endSequent.succedent.contains( f2 ) )
+            OrRightMacroRule( proof, f1, f2 )
+          else
+            proof )
+      }
 
       // Binary Rules
 
@@ -698,16 +684,15 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       case Neg( f1 ) =>
         trace( "found neg left; exp seq: " + expansionSequent + "; formula: " + formula )
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
-        val etSeq1 = expansionSequent.removeFromAntecedent( et ).addToSuccedent( et.asInstanceOf[UnaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
+        val etSeq1 = expansionSequent.removeFromAntecedent( et ) :+ et.asInstanceOf[UnaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree]
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Antecedent, None, List[ProofStrategy]( ps1 ) )
       case And( f1, f2 ) =>
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
         val etSeq =
-          expansionSequent
-            .removeFromAntecedent( et )
-            .addToAntecedent( et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
-            .addToAntecedent( et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
+          et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] +:
+            et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] +:
+            expansionSequent.removeFromAntecedent( et )
         val ps1 = new ExpansionTreeProofStrategy( etSeq )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Antecedent, None, List[ProofStrategy]( ps1 ) )
     } )
@@ -720,22 +705,23 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     } ).map( formula => formula match {
       case Neg( f1 ) =>
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = false ).get
-        val etSeq1 = expansionSequent.removeFromSuccedent( et ).addToAntecedent( et.asInstanceOf[UnaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
+        val etSeq1 = et.asInstanceOf[UnaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] +: expansionSequent.removeFromSuccedent( et )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Succedent, None, List[ProofStrategy]( ps1 ) )
       case Imp( f1, f2 ) =>
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = false ).get
-        val etSeq = expansionSequent
-          .replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
-          .addToAntecedent( et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
-          .asInstanceOf[ExpansionSequent]
+        val etSeq =
+          et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] +:
+            expansionSequent
+            .replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
+            .asInstanceOf[ExpansionSequent]
         val ps1 = new ExpansionTreeProofStrategy( etSeq )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Succedent, None, List[ProofStrategy]( ps1 ) )
       case Or( f1, f2 ) =>
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = false ).get
-        val etSeq = expansionSequent
+        val etSeq = ( expansionSequent
           .replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
-          .addToSuccedent( et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
+          :+ et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
           .asInstanceOf[ExpansionSequent]
         val ps1 = new ExpansionTreeProofStrategy( etSeq )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Succedent, None, List[ProofStrategy]( ps1 ) )
@@ -820,8 +806,9 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       case BinaryExpansionTree( child1, child2 ) =>
         doVariablesAppearInStrongQuantifier( vars, child1 ) || doVariablesAppearInStrongQuantifier( vars, child2 )
       case UnaryExpansionTree( child1 ) => doVariablesAppearInStrongQuantifier( vars, child1 )
-      case AtomET( _ )                  => false
+      case ETAtom( _ )                  => false
       case ETWeakening( _ )             => false
+      case ETTop | ETBottom             => false
     }
   }
 
@@ -856,7 +843,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
               val newEtSeq0 =
                 if ( newInstances.isEmpty ) { expansionSequent.removeFromAntecedent( et ) }
                 else { expansionSequent.replaceInAntecedent( et, ETWeakQuantifier.applyWithoutMerge( formula, newInstances ) ) }
-              val newEtSeq = newEtSeq0.addToAntecedent( instancePicked._1 ).asInstanceOf[ExpansionSequent]
+              val newEtSeq = ( instancePicked._1 +: newEtSeq0 ).asInstanceOf[ExpansionSequent]
               new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Antecedent, Some( instancePicked._2 ),
                 List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
             } )
@@ -879,7 +866,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
                   val newEtSeq0 =
                     if ( newInstances.isEmpty ) { expansionSequent.removeFromSuccedent( et ) }
                     else { expansionSequent.replaceInSuccedent( et, ETWeakQuantifier.applyWithoutMerge( formula, newInstances ) ) }
-                  val newEtSeq = newEtSeq0.addToSuccedent( instancePicked._1 ).asInstanceOf[ExpansionSequent]
+                  val newEtSeq = ( newEtSeq0 :+ instancePicked._1 ).asInstanceOf[ExpansionSequent]
                   new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Succedent, Some( instancePicked._2 ),
                     List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
                 } )
@@ -980,7 +967,7 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   }
 }
 
-class LKProver extends Prover {
+object LKProver extends OneShotProver {
   def getLKProof( seq: HOLSequent ): Option[LKProof] = solve.solvePropositional( seq )
 }
 

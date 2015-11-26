@@ -16,13 +16,13 @@ import at.logic.gapt.proofs.ceres_schema.clauseSets.StandardClauseSet
 import at.logic.gapt.proofs.ceres_schema.projections.Projections
 import at.logic.gapt.proofs.ceres_schema.struct.StructCreators
 import java.io.{ FileInputStream, InputStreamReader }
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 
 class acnfTest extends Specification {
   implicit val factory = defaultFormulaOccurrenceFactory
 
-  args( sequential = true, skipAll = !new Prover9Prover().isInstalled )
+  args( sequential = true, skipAll = !Prover9.isInstalled )
   "ACNFTest" should {
     "should create correctly the ACNF for journal_example.lks" in {
       skipped( "Error at: at.logic.gapt.proofs.algorithms.ceres.clauseSchema.ResDeductionToLKTree$.apply(clauseSchema.scala:659)" )
@@ -92,7 +92,7 @@ class acnfTest extends Specification {
 
       val cs = StandardClauseSet.transformStructToClauseSet( StructCreators.extract( es ) )
 
-      val rp = new Prover9Prover().getRobinsonProof( cs.toList.map( _.toHOLClause ) )
+      val rp = Prover9.getRobinsonProof( cs.toList.map( _.toHOLClause ) )
       rp must not beEmpty
 
       val proj = Projections( es )

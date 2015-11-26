@@ -253,6 +253,6 @@ private[expansionTrees] class Minimizer( val sequent: MultiExpansionSequent, val
           val instances = listComplements( inst ) //These two lines generate all expansion trees that result from removing an instance from tree.
           instances.map( i => METWeakQuantifier( f, i ) )
         } else Nil
-      } else inst.map( p => generateSuccessorTrees( p._1 ) ).flatten
+      } else inst.flatMap( p => generateSuccessorTrees( p._1 ) )
   }
 }

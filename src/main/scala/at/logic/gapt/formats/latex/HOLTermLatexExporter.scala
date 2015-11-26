@@ -46,7 +46,7 @@ trait HOLTermLatexExporter extends OutputExporter with HOLTermExporter {
     }
   }
 
-  protected def latexType( ta: TA ): String = ta match {
+  protected def latexType( ta: Ty ): String = ta match {
     case Ti           => "i"
     case To           => "o"
     case `->`( a, b ) => "(" + latexType( a ) + """ \rightarrow """ + latexType( b ) + ")"

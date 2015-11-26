@@ -19,7 +19,7 @@ Requirements:
  See https://github.com/gapt/gapt/wiki/External-software for details.
 
 Starting GAPT:
- The scripts cli.sh, gui.sh, and atp.sh start the command-line interface of
+ The scripts cli.sh, gui.sh start the command-line interface of
  GAPT, the graphical interface of GAPT and the automated theorem prover
  respectively.
 

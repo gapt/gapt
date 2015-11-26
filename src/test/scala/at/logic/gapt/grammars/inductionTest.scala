@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseTerm
 import at.logic.gapt.grammars.SipGrammar._
-import at.logic.gapt.provers.maxsat.MaxSat4j
 import org.specs2.mutable._
 
 class SipTests extends Specification {
@@ -33,7 +32,7 @@ class SipTests extends Specification {
     "not contain tau->gamma" in {
       val l = Set( "r(c)", "r(d)" ) map parseTerm
 
-      val g = normalFormsSipGrammar( Seq( 1 -> l ) )
+      val g = stableSipGrammar( Seq( 1 -> l ) )
       g.productions must not contain ( tau -> gamma )
     }
   }

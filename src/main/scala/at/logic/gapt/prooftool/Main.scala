@@ -8,8 +8,12 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lk.UnfoldException
+import at.logic.gapt.proofs.lk.base.OccSequent
+import at.logic.gapt.proofs.lk.base.RichOccSequent
+import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk
+import at.logic.gapt.proofs.{ Sequent, DagProof, SequentProof, HOLSequent }
 import at.logic.gapt.proofs.lksk.eliminateDefinitions
 import at.logic.gapt.proofs.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
 import com.itextpdf.awt.PdfGraphics2D
@@ -19,8 +23,7 @@ import swing.Dialog.Message
 import swing.Swing.EmptyIcon
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 import javax.swing.filechooser.FileFilter
-import javax.swing.SwingUtilities
-import at.logic.gapt.proofs.lk.base._
+import javax.swing.{ WindowConstants, SwingUtilities }
 import at.logic.gapt.proofs.proofs.TreeProof
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema.IntVar
@@ -66,7 +69,7 @@ object Main extends SimpleSwingApplication {
     top.maximize()
   }
 
-  lazy val top = new MainFrame {
+  lazy val top = new Frame {
     title = "ProofTool"
     menuBar = mBar
     contents = new BorderPanel {
@@ -74,6 +77,7 @@ object Main extends SimpleSwingApplication {
       layout( body ) = Position.Center
       // layout(new ProgressBar { indeterminate = true }) = Position.South
     }
+    peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
   }
 
   // Used for displaying things directly from Scala shell
@@ -95,23 +99,23 @@ object Main extends SimpleSwingApplication {
   def sunburstView() {
     body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     body.getContent.getData match {
-      case Some( ( name, proof: TreeProof[_] ) ) => initSunburstDialog( name, proof )
-      case _                                     => errorMessage( "Proof not found!" )
+      case Some( ( name, proof: DagProof[_] ) ) => initSunburstDialog( name, proof )
+      case _                                    => errorMessage( "Proof not found!" )
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def initSunburstDialog( name: String, proof: TreeProof[_] ) {
+  def initSunburstDialog[T <: DagProof[T]]( name: String, proof: DagProof[T] ) {
     val d = new SunburstTreeDialog( name, proof )
     d.pack()
     d.centerOnScreen()
     d.open()
   }
 
-  def displaySunburst[T]( name: String, proof: TreeProof[T] ) {
+  def displaySunburst[T <: DagProof[T]]( name: String, proof: DagProof[T] ) {
     showFrame()
     body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    loadProof( ( name, proof ) )
+    proof match { case proof: SequentProof[_, _] => loadProof( ( name, proof ) ) }
     initSunburstDialog( name, proof )
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -161,16 +165,16 @@ object Main extends SimpleSwingApplication {
           case proof: LKProof =>
             try {
               if ( result.endsWith( ".xml" ) || chooser.fileFilter.getDescription == ".xml" ) {
-                XMLExporter( result, pair._1, proof )
+                XMLExporter( result, pair._1, lkNew2Old( proof ) )
               } else if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
                 val filename = if ( result.endsWith( ".llk" ) ) result else result + ".llk"
                 val file = new JBufferedWriter( new JFileWriter( filename ) )
-                file.write( HybridLatexExporter( proof, escape_latex = true ) )
+                file.write( HybridLatexExporter( lkNew2Old( proof ), escape_latex = true ) )
                 file.close()
               } else if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
                 val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
                 val file = new JBufferedWriter( new JFileWriter( filename ) )
-                file.write( ProofToLatexExporter( proof ) )
+                file.write( ProofToLatexExporter( lkNew2Old( proof ) ) )
                 file.close()
               } else infoMessage( "Proofs cannot be saved in this format." )
             } catch { case e: Throwable => errorMessage( "Cannot save the proof! " + dnLine + getExceptionString( e ) ) }
@@ -178,7 +182,6 @@ object Main extends SimpleSwingApplication {
           case list: List[_] =>
             try {
               val ls = list.map {
-                case s: OccSequent  => s.toHOLSequent
                 case fs: HOLSequent => fs
                 case _              => throw new Exception( "Cannot save this kind of lists." )
               }
@@ -214,7 +217,7 @@ object Main extends SimpleSwingApplication {
           } else if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
             val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
             val file = new JBufferedWriter( new JFileWriter( filename ) )
-            file.write( ProofToLatexExporter( db.getProofs.map( pair => ( pair._1, pair._2.asInstanceOf[LKProof] ) ) ) )
+            file.write( ProofToLatexExporter( db.getProofs.map( pair => ( pair._1, lkNew2Old( pair._2.asInstanceOf[LKProof] ) ) ) ) )
             file.close()
           } else infoMessage( "Proofs cannot be saved in this format." )
         } catch {
@@ -283,11 +286,6 @@ object Main extends SimpleSwingApplication {
     } else infoMessage( "There is nothing to export!" )
   }
 
-  // This function is changed to dispose for cli.
-  // When called from cli, sys.exit forces also cli to exit.
-  // The default close button still does sys.exit as it should do.
-  def fExit() { top.dispose() } //System.exit(0)
-
   def zoomIn() {
     val content = body.getContent
     content.fontSize * 3 / 2 match {
@@ -312,16 +310,11 @@ object Main extends SimpleSwingApplication {
     if ( !input_str.isEmpty ) try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       body.getContent.contents.head match {
+        // FIXME
         case dp: DrawProof =>
           dp.search = input_str
           if ( dp.proof.root.isInstanceOf[OccSequent] )
             ProofToolPublisher.publish( ChangeFormulaColor( Search.inTreeProof( input_str, dp.proof ), Color.green, reset = true ) )
-          else dp.searchNotInLKProof()
-          dp.revalidate()
-        case dp: DrawResolutionProof =>
-          dp.search = input_str
-          if ( dp.proof.root.isInstanceOf[OccSequent] )
-            ProofToolPublisher.publish( ChangeFormulaColor( Search.inResolutionProof( input_str, dp.proof ), Color.green, reset = true ) )
           else dp.searchNotInLKProof()
           dp.revalidate()
         case dt: DrawTree =>
@@ -339,7 +332,7 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  def scrollToProof( proof: TreeProof[_] ) {
+  def scrollToProof( proof: SequentProof[_, _] ) {
     val launcher = body.getContent
     val pos = launcher.getLocationOfProof( proof ).get
     val centered = new Rectangle( pos.x - body.bounds.width / 2, pos.y - body.bounds.height, body.bounds.width, body.bounds.height )
@@ -361,8 +354,16 @@ object Main extends SimpleSwingApplication {
     resetCuts()
   }
 
+  // Used for ViewProof menu
+  def loadProof( proof: ( String, SequentProof[_, _] ) )( implicit dummyImplicit: DummyImplicit ) {
+    body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+    updateLauncher( proof._1, proof._2, defaultFontSize )
+    body.cursor = java.awt.Cursor.getDefaultCursor
+    resetCuts()
+  }
+
   // Used for ViewResolutionProof menu
-  def loadResolutionProof( proof: ( String, Proof[_] ) ) {
+  def loadResolutionProof( proof: ( String, SequentProof[_, _] ) ) {
     body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     updateLauncher( proof._1, proof._2, defaultFontSize )
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -503,8 +504,10 @@ object Main extends SimpleSwingApplication {
   def extractCutFormulas() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val list = cutformulaExtraction( body.getContent.getData.get._2.asInstanceOf[LKProof] )
-      db.addSeqList( "cutFormulaList ", list.map( x => x.toHOLSequent ) )
+      val list = body.getContent.getData.get._2.asInstanceOf[DagProof[_]].subProofs.toList collect {
+        case c: CutRule => Sequent() :+ c.cutFormula
+      }
+      db.addSeqList( "cutFormulaList ", list )
       updateLauncher( "Cut-formula List", list, 16 )
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
@@ -517,7 +520,7 @@ object Main extends SimpleSwingApplication {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val proof = body.getContent.getData.get
-      val proof_projs = Projections( proof._2.asInstanceOf[LKProof] ).filterNot( p =>
+      val proof_projs = Projections( proof._2.asInstanceOf[lk.base.LKProof] ).filterNot( p =>
         p.root.antecedent.exists( fo1 => p.root.succedent.exists( fo2 => fo1.formula == fo2.formula ) ) ).toList
       val proofs = proof_projs.map( p => ( proof._1 + "_prj_" + proof_projs.indexOf( p ), p ) )
       db.addProofs( proofs )
@@ -532,7 +535,7 @@ object Main extends SimpleSwingApplication {
   def computeClList() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val proof_sk = LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+      val proof_sk = lk.LKToLKsk( body.getContent.getData.get._2.asInstanceOf[lk.base.LKProof] )
       val s = StructCreators.extract( proof_sk )
       val csPre: List[OccSequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
 
@@ -597,7 +600,7 @@ object Main extends SimpleSwingApplication {
   def computeClListOnlyQuantifiedCuts() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val proof_sk = eliminateDefinitions( LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
+      val proof_sk = lk.eliminateDefinitions( lk.LKToLKsk( body.getContent.getData.get._2.asInstanceOf[lk.base.LKProof] ) )
       val s = StructCreators.extract( proof_sk, f => containsQuantifier( f ) )
       val csPre: List[OccSequent] = DeleteRedundantSequents( DeleteTautology( StandardClauseSet.transformStructToClauseSet( s ) ) )
       db.addSeqList( csPre.map( x => x.toHOLSequent ) )
@@ -612,7 +615,7 @@ object Main extends SimpleSwingApplication {
   def computeStruct() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val proof_sk = LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] )
+      val proof_sk = lk.LKToLKsk( body.getContent.getData.get._2.asInstanceOf[lk.base.LKProof] )
       val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk ) )
       db.addTermTree( s )
       updateLauncher( "Struct", s, defaultFontSize )
@@ -627,7 +630,7 @@ object Main extends SimpleSwingApplication {
   def computeStructOnlyQuantifiedCuts() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val proof_sk = eliminateDefinitions( LKToLKsk( body.getContent.getData.get._2.asInstanceOf[LKProof] ) )
+      val proof_sk = lk.eliminateDefinitions( lk.LKToLKsk( body.getContent.getData.get._2.asInstanceOf[lk.base.LKProof] ) )
       val s = structToExpressionTree.prunedTree( StructCreators.extract( proof_sk, f => containsQuantifier( f ) ) )
       db.addTermTree( s )
       updateLauncher( "Struct", s, defaultFontSize )
@@ -642,7 +645,7 @@ object Main extends SimpleSwingApplication {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val pair = body.getContent.getData.get
-      val new_proof = AtomicExpansion( DefinitionElimination( db.getDefinitions, pair._2.asInstanceOf[LKProof] ) )
+      val new_proof = lk.AtomicExpansion( DefinitionElimination( db.getDefinitions, pair._2.asInstanceOf[lk.base.LKProof] ) )
       db.addProofs( ( pair._1 + " without def rules", new_proof ) :: Nil )
       updateLauncher( pair._1 + " without Definitions", new_proof, 14 )
       body.cursor = java.awt.Cursor.getDefaultCursor
@@ -656,7 +659,7 @@ object Main extends SimpleSwingApplication {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val pair = body.getContent.getData.get
-      val new_proof = eliminateDefinitions( LKToLKsk( pair._2.asInstanceOf[LKProof] ) )
+      val new_proof = lk.eliminateDefinitions( lk.LKToLKsk( pair._2.asInstanceOf[lk.base.LKProof] ) )
       db.addProofs( ( pair._1 + " without def rules", new_proof ) :: Nil )
       updateLauncher( "Proof without Definitions", new_proof, 14 )
       body.cursor = java.awt.Cursor.getDefaultCursor
@@ -666,7 +669,9 @@ object Main extends SimpleSwingApplication {
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
-  def newgentzen( proof: LKProof ) {
+  def newgentzen( proof: lk.base.LKProof ) {
+    import lk._
+    import lk.base._
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val newSubproof = ReductiveCutElim( proof, true, { x => true }, { ( _, cut ) => cut == proof } )
@@ -678,7 +683,9 @@ object Main extends SimpleSwingApplication {
       // need to scroll after UI has finished updating
       // to get the correct coordinates.
       SwingUtilities.invokeLater( new Runnable() {
-        def run() { scrollToProof( newSubproof ) }
+        def run() {
+          // FIXME scrollToProof( newSubproof )
+        }
       } )
 
     } catch {
@@ -691,7 +698,9 @@ object Main extends SimpleSwingApplication {
     }
   }
 
-  def gentzen( proof: LKProof ) {
+  def gentzen( proof: lk.base.LKProof ) {
+    import lk._
+    import lk.base._
     try {
       val steps = questionMessage( "Do you want to see intermediary steps?" ) match {
         case Dialog.Result.Yes => true
@@ -727,8 +736,8 @@ object Main extends SimpleSwingApplication {
   def markCutAncestors() {
     body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     body.getContent.getData match {
-      case Some( ( _, proof: LKProof ) ) =>
-        ProofToolPublisher.publish( ChangeFormulaColor( getCutAncestors( proof ), Color.green, reset = false ) )
+      case Some( ( _, proof: lk.base.LKProof ) ) =>
+        ProofToolPublisher.publish( ChangeFormulaColor( lk.getCutAncestors( proof ), Color.green, reset = false ) )
       case _ => errorMessage( "LK proof not found!" )
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -738,8 +747,8 @@ object Main extends SimpleSwingApplication {
     body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     body.getContent.contents.head match {
       case dp: DrawProof => body.getContent.getData match {
-        case Some( ( name, proof: LKProof ) ) =>
-          dp.setVisibleOccurrences( Some( getAuxFormulas( proof ) ) )
+        case Some( ( name, proof: lk.base.LKProof ) ) =>
+          dp.setVisibleOccurrences( Some( lk.getAuxFormulas( proof ) ) )
           dp.revalidate()
         case _ => errorMessage( "This is not an LK proof!" )
       }

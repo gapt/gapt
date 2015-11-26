@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lkskNew
 import at.logic.gapt.proofs.lkNew
 import at.logic.gapt.proofs.lkskNew._
 
-object LKToLKsk {
+class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) {
   def apply( p: LKProof ): LKskProof = apply( p, p.conclusion map { _ => Seq() }, p.conclusion map { _ => false } )
 
   def apply( p: LKProof, labels: Sequent[Label], isCutAnc: Sequent[Boolean] ): LKskProof = {
@@ -94,12 +94,12 @@ object LKToLKsk {
 
       case p @ ForallRightRule( subProof, aux: Suc, eigen, quant ) if !isCutAnc( p.mainIndices.head ) =>
         val ls = labels( p.mainIndices.head )
-        val skolemSymbol = Const( SkolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
+        val skolemSymbol = Const( skolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
         val subProof_ = applySubstitution( Substitution( eigen -> skolemSymbol( ls: _* ) ) )( subProof )
         AllSkRight( apply( subProof_, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ) ), aux, p.mainFormula, skolemSymbol )
       case p @ ExistsLeftRule( subProof, aux: Ant, eigen, quant ) if !isCutAnc( p.mainIndices.head ) =>
         val ls = labels( p.mainIndices.head )
-        val skolemSymbol = Const( SkolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
+        val skolemSymbol = Const( skolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
         val subProof_ = applySubstitution( Substitution( eigen -> skolemSymbol( ls: _* ) ) )( subProof )
         ExSkLeft( apply( subProof_, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ) ), aux, p.mainFormula, skolemSymbol )
 
@@ -111,4 +111,8 @@ object LKToLKsk {
     require( res.labels == labels, s"${res.labels} == $labels" )
     res
   }
+}
+
+object LKToLKsk {
+  def apply( p: LKProof ): LKskProof = ( new LKToLKsk( new SkolemSymbolFactory ) )( p )
 }

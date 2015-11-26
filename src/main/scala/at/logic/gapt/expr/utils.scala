@@ -17,7 +17,7 @@ import scala.collection.mutable
  * Matches constants and variables, but nothing else.
  */
 object VarOrConst {
-  def unapply( e: LambdaExpression ): Option[( String, TA )] = e match {
+  def unapply( e: LambdaExpression ): Option[( String, Ty )] = e match {
     case Var( name, et )   => Some( ( name, et ) )
     case Const( name, et ) => Some( ( name, et ) )
     case _                 => None
@@ -26,44 +26,36 @@ object VarOrConst {
 
 /**
  * A lambda term is in variable-normal form (VNF) if different binders bind
- * different variables.
+ * different variables, and bound variables are disjoint from the free ones.
  */
 object isInVNF {
-  def apply( e: LambdaExpression ): Boolean = apply_( e )._1
+  def apply( e: LambdaExpression ): Boolean = {
+    val seen = mutable.Set[Var]()
+    seen ++= freeVariables( e )
 
-  private def apply_( e: LambdaExpression ): ( Boolean, Set[Var] ) = e match {
-    case Var( _, _ )   => ( true, Set() )
-    case Const( _, _ ) => ( true, Set() )
-    case App( exp, arg ) => {
-      val ih_exp = apply_( exp )
-      val ih_arg = apply_( arg )
-
-      val ok = ih_exp._1 && ih_arg._1 && ( ( ih_exp._2 intersect ih_arg._2 ) == Set() )
-      val vars = ih_exp._2 union ih_arg._2
-
-      ( ok, vars )
+    def check( e: LambdaExpression ): Boolean = e match {
+      case _: Var | _: Const              => true
+      case App( a, b )                    => check( a ) && check( b )
+      case Abs( v, a ) if seen contains v => false
+      case Abs( v, a )                    => seen += v; check( a )
     }
-    case Abs( v, exp ) => {
-      val ih = apply_( exp )
 
-      val ok = ih._1 && !ih._2.contains( v )
-      val vars = ih._2 + v
-
-      ( ok, vars )
-    }
+    check( e )
   }
 }
 
 /**
  * Transforms an expression into an alpha-equivalent expression in
- * variable-normal form, where no two binders bind the same variable.
+ * variable-normal form, where no two binders bind the same variable,
+ * and the bound variables are disjoint from the free ones.
  */
 object toVNF {
   def apply( e: LambdaExpression ): LambdaExpression = {
     val seen = mutable.Set[Var]()
 
     def makeDistinct( e: LambdaExpression ): LambdaExpression = e match {
-      case Var( _, _ )   => e
+      case v @ Var( _, _ ) =>
+        seen += v; v
       case Const( _, _ ) => e
       case App( a, b )   => App( makeDistinct( a ), makeDistinct( b ) )
       case Abs( v, a ) if seen contains v =>
@@ -97,11 +89,8 @@ object variables {
   def apply( s: Sequent[FOLFormula] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Set[FOLVar] = s.elements flatMap apply toSet
   def apply( s: OccSequent )( implicit dummy: DummyImplicit ): Set[Var] = apply( s.toHOLSequent )
   def apply( p: LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
-  def apply( p: lkNew.LKProof ): Set[Var] = p match {
-    case lkNew.InitialSequent( sequent )                             => apply( sequent )
-    case lkNew.UnaryLKProof( sequent, subProof )                     => apply( sequent ) ++ apply( subProof )
-    case lkNew.BinaryLKProof( sequent, leftSubProof, rightSubProof ) => apply( sequent ) ++ apply( leftSubProof ) ++ apply( rightSubProof )
-  }
+  def apply[Expr <: LambdaExpression, Proof <: SequentProof[Expr, Proof]]( p: SequentProof[Expr, Proof] ): Set[Var] =
+    p.subProofs flatMap { _.conclusion.elements } flatMap { variables( _ ) }
 }
 
 /**
@@ -132,12 +121,18 @@ object freeVariables {
  * Returns the set of non-logical constants occuring in the given argument.
  */
 object constants {
-  def apply( e: LambdaExpression ): Set[Const] = e match {
-    case _: Var             => Set()
-    case _: LogicalConstant => Set()
-    case c: Const           => Set( c )
-    case App( exp, arg )    => constants( exp ) union constants( arg )
-    case Abs( v, exp )      => constants( exp )
+  def apply( expression: LambdaExpression ): Set[Const] = {
+    val cs = mutable.Set[Const]()
+    def f( e: LambdaExpression ): Unit = e match {
+      case _: Var             =>
+      case _: LogicalConstant =>
+      case c: Const           => cs += c
+      case App( exp, arg ) =>
+        f( exp ); f( arg )
+      case Abs( v, exp ) => f( exp )
+    }
+    f( expression )
+    cs.toSet
   }
 
   def apply( es: GenTraversable[LambdaExpression] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }

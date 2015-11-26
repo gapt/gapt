@@ -313,10 +313,6 @@ object IvyParser extends Logger {
     case LAtom( name ) =>
       val rname = rewrite_name( name )
       FOLVar( rname )
-    //the proof might contain the constant nil which is parsed to an empty LList. in this case the empty list
-    //corresponds to a constant
-    case LList( LList() ) =>
-      FOLConst( "nil" )
     case LFun( name, args @ _* ) =>
       val rname = rewrite_name( name )
       FOLFunction( rname, args.map( parse_term( _ ) ) )

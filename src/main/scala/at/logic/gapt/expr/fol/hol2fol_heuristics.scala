@@ -2,7 +2,7 @@ package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
-import at.logic.gapt.expr.{ TA, Ti, To }
+import at.logic.gapt.expr.{ Ty, Ti, To }
 import at.logic.gapt.utils.logging.Logger
 
 /**
@@ -40,7 +40,7 @@ object undoHol2Fol extends Logger {
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
     abssymbol_map: Map[String, LambdaExpression],
-    expected_type: Option[TA]
+    expected_type: Option[Ty]
   ): LambdaExpression = {
     e match {
       // --------------- logical structure ------------------------

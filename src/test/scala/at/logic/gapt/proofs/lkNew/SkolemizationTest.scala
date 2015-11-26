@@ -6,7 +6,6 @@ import org.specs2.mutable._
 
 class SkolemizationTest extends Specification {
 
-  sequential
   "Skolemization" should {
     val x = Var( "x", Ti )
     val y = Var( "y", Ti )
@@ -15,22 +14,23 @@ class SkolemizationTest extends Specification {
     val s1 = StringSymbol( "s_{2}" )
     val s2 = StringSymbol( "s_{4}" )
     val s3 = StringSymbol( "s_{6}" )
-    SkolemSymbolFactory.reset
-    val stream = SkolemSymbolFactory.getSkolemSymbols
     val p = Const( "P", Ti -> To )
     val r = Const( "R", Ti -> ( Ti -> To ) )
 
     "leave a formula with only weak quantifiers untouched" in {
+      val stream = new SkolemSymbolFactory().getSkolemSymbols
       skolemize( f, false, Seq(), stream ) must beEqualTo( f )
     }
 
     "introduce correctly a Skolem constant" in {
+      val stream = new SkolemSymbolFactory().getSkolemSymbols
       val skfun = Const( stream.head, Ti )
       val skf = HOLAtom( p, skfun :: Nil )
       skolemize( f, true, Seq(), stream ) must beEqualTo( skf )
     }
 
     "handle a binary formula correctly" in {
+      val stream = new SkolemSymbolFactory().getSkolemSymbols
       val y = Var( StringSymbol( "y" ), Ti )
       val rxy = HOLAtom( r, x :: y :: Nil )
       val f2 = Imp( f, All( x, Ex( y, rxy ) ) )
@@ -52,7 +52,7 @@ class SkolemizationTest extends Specification {
     }
 
     "handle a simple proof correctly" in {
-      val s5 = StringSymbol( "s_{3}" )
+      val s5 = StringSymbol( "s_{1}" )
       val cs5 = Const( s5, Ti )
       val alpha = Var( StringSymbol( "α" ), Ti )
       val Palpha = HOLAtom( p, alpha :: Nil )
@@ -117,8 +117,6 @@ class SkolemizationTest extends Specification {
       val allxRxs0x = All( x, HOLAtom( r, List( x, App( fs0, x ) ) ) )
       val sr2 = ForallLeftRule( sr1, allxRxs0x, s1c )
       val proof_sk = sr2
-
-      SkolemSymbolFactory.reset
 
       skolemize( proof ) must_== proof_sk
     }

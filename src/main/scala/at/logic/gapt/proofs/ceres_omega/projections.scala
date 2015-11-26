@@ -16,7 +16,7 @@ case class ProjectionException( message: String, original_proof: LKskProof, new_
   extends Exception( message, nested ) {}
 
 object Projections extends at.logic.gapt.utils.logging.Logger {
-  def reflexivity_projection( es: LabelledSequent, t: TA = Ti, label: Label ): ( LKskProof, Sequent[Boolean] ) = {
+  def reflexivity_projection( es: LabelledSequent, t: Ty = Ti, label: Label ): ( LKskProof, Sequent[Boolean] ) = {
     // create a fresh variable to create x = x
     val ( es_ant, es_succ ) = es.map( _._2 ).toTuple
     val es_formulas = es_ant ++ es_succ

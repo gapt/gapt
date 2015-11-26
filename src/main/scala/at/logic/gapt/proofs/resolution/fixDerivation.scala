@@ -4,11 +4,9 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.resolutionOld
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Suc }
-import at.logic.gapt.provers.atp.SearchDerivation
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
-import at.logic.gapt.provers.prover9.Prover9Prover
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.immutable.HashMap
@@ -142,25 +140,9 @@ object fixDerivation extends Logger {
     case _ => None
   }
 
-  def tryDeriveViaSearchDerivation( to: HOLClause, from: Seq[HOLClause] ) = {
-    val cls_sequent = HOLClause( to.negative.map( _.asInstanceOf[HOLFormula] ), to.positive.map( _.asInstanceOf[HOLFormula] ) )
-    SearchDerivation( from, cls_sequent, true ) flatMap { d =>
-      val ret = d.asInstanceOf[resolutionOld.robinson.RobinsonResolutionProof]
-      if ( ret.root.toHOLSequent != to ) {
-        //        val ret_seq = HOLClause( ret.root.antecedent.map( _.formula ), ret.root.succedent.map( _.formula ) )
-        // FIXME: replace InitialClause(ret_seq) by ret in the following proof
-        // tryDeriveByFactor( to, ret_seq )
-        None
-      } else {
-        Some( resOld2New( ret ) )
-      }
-    }
-  }
-
-  private val prover9 = new Prover9Prover
   def tryDeriveViaResolution( to: HOLClause, from: Seq[HOLClause] ) =
-    if ( prover9 isInstalled )
-      findDerivationViaResolution( to, from.map { seq => HOLClause( seq.antecedent, seq.succedent ) }.toSet )
+    if ( Prover9 isInstalled )
+      findDerivationViaResolution( to, from.map { seq => HOLClause( seq.antecedent, seq.succedent ) }.toSet, Prover9 )
     else
       None
 
@@ -172,7 +154,6 @@ object fixDerivation extends Logger {
       tryDeriveTrivial( cls, cs ).
         orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
         orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
-        // orElse( tryDeriveViaSearchDerivation( cls, cs ) ).  // runs easily out of memory
         orElse( tryDeriveViaResolution( cls, cs ) ).
         getOrElse {
           warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
@@ -230,7 +211,7 @@ object findDerivationViaResolution {
    * @param prover Prover to obtain a resolution refutation of the consequence bs |= a from.
    * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
    */
-  def apply( a: HOLClause, bs: Set[HOLClause], prover: ResolutionProver = new Prover9Prover ): Option[ResolutionProof] = {
+  def apply( a: HOLClause, bs: Set[HOLClause], prover: ResolutionProver = Prover9 ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
       ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet

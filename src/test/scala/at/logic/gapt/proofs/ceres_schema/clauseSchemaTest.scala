@@ -26,7 +26,7 @@ class clauseSchemaTest extends Specification {
       val non = nonVarSclause( Q0 :: Nil, List.empty[SchemaFormula] )
       val map = Map[sClauseVar, sClause]() + Tuple2( X.asInstanceOf[sClauseVar], non )
       val l = Ti :: To :: Tindex :: Nil
-      l.foldLeft( To.asInstanceOf[TA] )( ( x, t ) => x -> t )
+      l.foldLeft( To.asInstanceOf[Ty] )( ( x, t ) => x -> t )
 
       ok
     }

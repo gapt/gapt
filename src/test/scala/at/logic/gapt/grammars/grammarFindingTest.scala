@@ -9,6 +9,30 @@ import org.specs2.specification.core.Fragments
 
 class GrammarFindingTest extends Specification with SatMatchers {
 
+  "antiUnifier" should {
+    "compute au of first-order terms" in {
+      val c = FOLConst( "c" )
+      val d = FOLConst( "d" )
+      val au = antiUnifier( Seq( FOLFunction( "f", c, c ), FOLFunction( "f", d, d ) ) )
+      val x = FOLVar( "x" )
+      Abs( freeVariables( au ).toSeq, au ) must_== Abs( x, FOLFunction( "f", x, x ) )
+    }
+    "compute au of many-sorted terms" in {
+      val data = TBase( "Data" )
+      val tree = TBase( "Tree" )
+      val node = Const( "Node", data -> ( tree -> ( tree -> tree ) ) )
+
+      val a = Const( "a", data )
+      val t = Const( "t", tree )
+      val s = Const( "s", tree )
+
+      val au = antiUnifier( Seq( node( a, t, t ), node( a, s, s ) ) )
+
+      val x = Var( "x", tree )
+      Abs( freeVariables( au ).toSeq, au ) must_== Abs( x, node( a, x, x ) )
+    }
+  }
+
   "VectTratGrammar" should {
     "not accept cyclic grammars" in {
       vtg( Seq( "x" ), Seq( "x->x" ) ) must throwA[IllegalArgumentException]
@@ -50,28 +74,42 @@ class GrammarFindingTest extends Specification with SatMatchers {
 
   "normalForms" should {
     "find strong normal forms" in {
-      val nfs = normalForms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
+      val nfs = stableTerms( Seq( "f(c)", "f(d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs must beEqualTo( Set( "f(c)", "f(d)", "f(x)", "x" ) map parseTerm )
     }
     "not find half-weak normal forms" in {
-      val nfs = normalForms( Seq( "r(c,f(c))", "r(d,f(d))" ) map parseTerm, Seq( FOLVar( "x" ) ) )
+      val nfs = stableTerms( Seq( "r(c,f(c))", "r(d,f(d))" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs must beEqualTo( Set( "x", "r(x,f(x))", "r(c,f(c))", "r(d,f(d))" ) map parseTerm )
     }
     "not introduce equations between non-terminals" in {
-      val nfs = normalForms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
+      val nfs = stableTerms( Seq( "f(c,c)", "f(d,d)" ) map parseTerm, Seq( FOLVar( "x" ) ) )
       nfs must beEqualTo( Set( "f(x,x)", "f(c,c)", "f(d,d)", "x" ) map parseTerm )
     }
     "not fall prey to replacements bug" in {
       val l = Seq( "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
       val nfs = Set( "x", "tuple2(x)", "tuple2(x + x)", "tuple2(0 + 0)", "tuple2(s(0) + s(0))" )
-      normalForms( l map parseTerm, Seq( FOLVar( "x" ) ) ) must beEqualTo( nfs map parseTerm )
+      stableTerms( l map parseTerm, Seq( FOLVar( "x" ) ) ) must beEqualTo( nfs map parseTerm )
     }
   }
 
   "nfsSubsumedByAU" should {
     "r(x, f(x)) with variables y,z" in {
-      nfsSubsumedByAU( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
+      stsSubsumedByAU( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
         Set( "y", "z", "r(y, f(y))", "r(z, f(z))" ).map( parseTerm )
+    }
+    "many-sorted stable terms" in {
+      val Seq( a, b, c, d ) = Seq( "A", "B", "C", "D" ) map { TBase( _ ) }
+      val r = Const( "r", a -> ( b -> c ) )
+      val f = Const( "f", a -> b )
+      val x = Var( "x", a )
+
+      val ya1 = Var( "ya1", a )
+      val ya2 = Var( "ya2", a )
+      val yb = Var( "yb", b )
+      val yc = Var( "yc", c )
+      val yd = Var( "yd", d )
+      stsSubsumedByAU( r( x, f( x ) ), Set( ya1, ya2, yb, yc, yd ) ) must_==
+        Set( yc, r( ya1, f( ya1 ) ), r( ya2, f( ya2 ) ) )
     }
   }
 
@@ -79,10 +117,10 @@ class GrammarFindingTest extends Specification with SatMatchers {
     "not contain tau->alpha" in {
       val l = Set( "r(c)", "r(d)" ) map parseTerm
 
-      val g = normalFormsProofGrammar( l, 1 )
+      val g = stableProofGrammar( l, 1 )
       g.productions must not contain ( g.axiom -> g.nonTerminals( 1 ) )
 
-      val vg = normalFormsProofVectGrammar( l, Seq( 1 ) )
+      val vg = stableProofVectGrammar( l, Seq( 1 ) )
       vg.productions must not contain ( List( vg.axiom ) -> vg.nonTerminals( 1 ) )
     }
   }
@@ -134,7 +172,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
     }
     "generate term if only tau-productions are allowed" in {
       val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
-      val g = normalFormsProofGrammar( l toSet, 4 )
+      val g = stableProofGrammar( l toSet, 4 )
       val formula = new GrammarMinimizationFormula( g )
       val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) must beSat
@@ -152,6 +190,26 @@ class GrammarFindingTest extends Specification with SatMatchers {
       )
       doesNotCover( g, "f(c,d)" )
     }
+    "should not require impossible values" in {
+      val g = vtg(
+        Seq( "x", "y", "z" ),
+        Seq( "x->f(y,z)" ),
+        Seq( "y->z" ),
+        Seq( "z->a" )
+      )
+      doesNotCover( g, "f(b,a)" )
+    }
+    "unique vector assignments" in {
+      val g = vtg(
+        Seq( "x", "y1,y2,y3" ),
+        Seq( "x->f(y1,y2)" ),
+        Seq( "x->f(y2,y1)" ),
+        Seq( "x->f(y2,y3)" ),
+        Seq( "y1->c", "y2->d", "y3->d" )
+      )
+      val formula = new TermGenerationFormula( g, parseTerm( "f(c,d)" ) )
+      formula.formula & -formula.vectProductionIsIncluded( List( parseProduction( "x->f(y1,y2)" ) ).unzip ) must beUnsat
+    }
   }
 
   "minimizeGrammar" should {
@@ -159,6 +217,24 @@ class GrammarFindingTest extends Specification with SatMatchers {
       val g = tg( "x->c", "x->d" )
       val minG = minimizeGrammar( g, Set( "c" ) map parseTerm )
       minG.productions must beEqualTo( Seq( "x->c" ) map parseProduction )
+    }
+  }
+
+  "minimizeVectGrammar" should {
+    "take weighting into account" in {
+      val g = vtg(
+        Seq( "x", "y" ),
+        Seq( "x->f(c)" ),
+        Seq( "x->f(y)" ),
+        Seq( "y->c" )
+      )
+      val minG = minimizeVectGrammar( g, Set( "f(c)" ) map parseTerm,
+        weight = prod => if ( prod == List( parseProduction( "x->f(c)" ) ).unzip ) 3 else 1 )
+      minG must_== vtg(
+        Seq( "x", "y" ),
+        Seq( "x->f(y)" ),
+        Seq( "y->c" )
+      )
     }
   }
 

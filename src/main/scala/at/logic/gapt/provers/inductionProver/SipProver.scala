@@ -8,10 +8,10 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lkNew.{ lkOld2New, LKProof }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
-import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.utils.logging.Logger
 
 trait SolutionFinder {
@@ -20,14 +20,14 @@ trait SolutionFinder {
 
 class SipProver(
   solutionFinder:            SolutionFinder = new HeuristicSolutionFinder( 1 ),
-  instanceProver:            Prover         = new Prover9Prover(),
+  instanceProver:            Prover         = Prover9,
   instances:                 Seq[Int]       = 0 until 3,
   testInstances:             Seq[Int]       = 0 until 15,
   minimizeInstanceLanguages: Boolean        = false,
-  quasiTautProver:           Prover         = new VeriTProver,
+  quasiTautProver:           Prover         = VeriT,
   maxSATSolver:              MaxSATSolver   = bestAvailableMaxSatSolver
 )
-    extends Prover with Logger {
+    extends OneShotProver with Logger {
 
   val nLine = sys.props( "line.separator" )
 
@@ -51,10 +51,10 @@ class SipProver(
     }
     require( inductionVariable == SimpleInductionProof.alpha ) // TODO: maybe relax this restriction
 
-    val termEncoding = InstanceTermEncoding( endSequent )
+    val termEncoding = FOLInstanceTermEncoding( endSequent )
     var instanceLanguages = instanceProofs map {
       case ( n, expSeq ) =>
-        n -> termEncoding.encode( expSeq )
+        n -> termEncoding.encode( expSeq ).map( _.asInstanceOf[FOLTerm] )
     }
 
     // Ground the instance languages.
@@ -73,7 +73,7 @@ class SipProver(
 
     if ( testInstances.forall { n =>
       val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
-        termEncoding.decodeToFSequent( grammar.instanceGrammar( n ).language )
+        termEncoding.decodeToInstanceSequent( grammar.instanceGrammar( n ).language )
       )
       val isQuasiTaut = quasiTautProver.isValid( generatedInstanceSequent )
       debug( s"[n=$n] Instance language is quasi-tautological: $isQuasiTaut" )

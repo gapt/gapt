@@ -43,7 +43,7 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
       ds.reactions += {
         case e: MouseEntered => ds.contents.foreach( x => x.foreground = blue )
         case e: MouseExited => ds.contents.foreach( x => x.foreground = black )
-        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu( proof, this, e.point.x, e.point.y )
+        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => //PopupMenu( proof, this, e.point.x, e.point.y )
       }
       ds
     case _ => new Label( proof.root.toString ) {
@@ -73,14 +73,14 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
           dp.border = Swing.EmptyBorder( 0, 0, 3, 0 )
         case _ =>
       }
-    case e: ShowAllRules if e.proof == proof =>
+    case e: ShowAllRules[_] if e.proof == proof =>
       drawLines = true
       initialize()
       revalidate()
-    case e: ShowProof if e.proof == proof =>
+    case e: ShowProof[_] if e.proof == proof =>
       drawLines = true
       layout.foreach( pair => pair._1.visible = true )
-    case e: HideProof if e.proof == proof =>
+    case e: HideProof[_] if e.proof == proof =>
       drawLines = false
       layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
   }

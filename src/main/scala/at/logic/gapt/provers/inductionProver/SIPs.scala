@@ -7,10 +7,10 @@ import at.logic.gapt.grammars.SipGrammar
 import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.proofs.resolution.{ ForgetfulParamodulate, ForgetfulResolve }
+import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, forgetfulPropParam }
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.provers.prover9.Prover9Prover
-import at.logic.gapt.provers.veriT.VeriTProver
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
@@ -39,7 +39,7 @@ class SimpleInductionProof(
   val Gamma1 = extractInstances( ExpSeq1 )
   val Gamma2 = extractInstances( ExpSeq2 )
 
-  val EndSequent = ( toShallow( ExpSeq0 ) union toShallow( ExpSeq1 ) union toShallow( ExpSeq2 ) ).distinct
+  val EndSequent = ( toShallow( ExpSeq0 ) ++ toShallow( ExpSeq1 ) ++ toShallow( ExpSeq2 ) ).distinct
 
   require( freeVariables( Gamma0 ) subsetOf Set( alpha, beta ), "Gamma0 should contain only α, β, but freeVariables(Gamma0) = " + freeVariables( Gamma0 ).toString() )
   require( freeVariables( Gamma1 ) subsetOf Set( alpha, nu, gamma ), "Gamma1 should contain only α, ν, γ, but freeVariables(Gamma1) = " + freeVariables( Gamma1 ).toString() )
@@ -96,7 +96,7 @@ class SimpleInductionProof(
    * @return True if the induction formula is in fact a solution.
    */
   def isSolved( prover: Prover ): Boolean = prover.isValid( Sequent0 ) && prover.isValid( Sequent1 ) && prover.isValid( Sequent2 )
-  def isSolved: Boolean = isSolved( new VeriTProver )
+  def isSolved: Boolean = isSolved( VeriT )
 
   /**
    * TODO: Find a better name for this
@@ -156,18 +156,20 @@ class SimpleInductionProof(
       } else
         conclusion1
     )
+    val x = FOLVar( "x" )
+    val conclusion3 = ForallLeftRule( conclusion2, All( x, Fprime( alpha, x ) ), alpha )
 
     // Combining the proofs
-    val inductionProof = ContractionMacroRule( InductionRule(
+    val inductionProof = ContractionMacroRule( NaturalNumberInductionRule(
       inductionBase2,
       Fprime( alpha, zero ),
       inductionStep3,
       Fprime( alpha, nu ),
       Fprime( alpha, snu ),
-      alpha
+      All( x, Fprime( alpha, x ) )
     ) )
 
-    cleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusion2, Fprime( alpha, alpha ) ) ) )
+    cleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusion3, All( x, Fprime( alpha, x ) ) ) ) )
   }
 
   /**
@@ -189,7 +191,7 @@ class SimpleInductionProof(
    *
    * @return The LKProof represented by this object
    */
-  def toLKProof: LKProof = toLKProof( new Prover9Prover )
+  def toLKProof: LKProof = toLKProof( Prover9 )
 
   /**
    * Computes the nth instance proof. Uses prover9 to compute the subproofs.
@@ -197,7 +199,7 @@ class SimpleInductionProof(
    * @param n A natural number
    * @return The nth instance of this sip.
    */
-  def toInstanceLKProof( n: Int, rename: Boolean ): LKProof = toInstanceLKProof( n, new Prover9Prover(), rename )
+  def toInstanceLKProof( n: Int, rename: Boolean ): LKProof = toInstanceLKProof( n, Prover9, rename )
 
   /**
    * Computes the nth instance proof,
@@ -294,8 +296,8 @@ class SimpleInductionProof(
   def toSipGrammar: SipGrammar = {
     import SipGrammar._
 
-    val termEncoding = InstanceTermEncoding( EndSequent )
-    val terms = termEncoding.encode( ExpSeq0 ) ++ termEncoding.encode( ExpSeq1 ) ++ termEncoding.encode( ExpSeq2 )
+    val termEncoding = FOLInstanceTermEncoding( EndSequent )
+    val terms = termEncoding.encode( ExpSeq0 ) ++ termEncoding.encode( ExpSeq1 ) ++ termEncoding.encode( ExpSeq2 ) map { _.asInstanceOf[FOLTerm] }
     val tauProductions = terms map { x => tau -> x }
     val gammaProductions = t map { ti => gamma -> ti }
     val gammaEndProductions = u map { ui => gammaEnd -> ui }
@@ -370,22 +372,22 @@ object canonicalSolution {
 
 object findConseq extends Logger {
   import SimpleInductionProof._
-  type CNF = List[FOLClause]
+  type CNF = Set[FOLClause]
 
   def apply( S: SimpleInductionProof, n: Int, A: CNF, M: Set[CNF], forgetClauses: Boolean, prover: Prover ): Set[CNF] = {
     val num = Utils.numeral( n )
     val Gamma2n = FOLSubstitution( alpha, num )( S.Gamma2 )
 
     val newCNFs = if ( forgetClauses )
-      ForgetfulResolve( A ) union ForgetfulParamodulate( A ) union ForgetOne( A )
+      forgetfulPropResolve( A ) union forgetfulPropParam( A ) union ForgetOne( A )
     else
-      ForgetfulResolve( A ) union ForgetfulParamodulate( A )
+      forgetfulPropResolve( A ) union forgetfulPropParam( A )
 
     ( ( M + A ) /: newCNFs ) { ( acc: Set[CNF], F: CNF ) =>
       if ( acc contains F ) {
         acc
       } else {
-        val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( FOLClause.CNFtoFormula( F ) ) ) )
+        val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( And( F map { _.toFormula } ) ) ) )
         if ( prover.isValid( Fu ++: Gamma2n ) )
           apply( S, n, F, acc, forgetClauses, prover )
         else
@@ -394,19 +396,16 @@ object findConseq extends Logger {
     }
   }
 
-  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false, prover: Prover = new VeriTProver ): Set[CNF] =
-    apply( S, n, CNFp.toClauseList( A ), M, forgetClauses, prover )
+  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false, prover: Prover = VeriT ): Set[CNF] =
+    apply( S, n, CNFp.toClauseList( A ).map { _.distinct.sortBy { _.hashCode } }.toSet, M, forgetClauses, prover )
 
-  def ForgetOne( A: CNF ) = A.indices map { i =>
-    val B = A.splitAt( i )
-    B._1 ++ B._2.tail
-  }
+  def ForgetOne( A: CNF ) = for ( a <- A ) yield A - a
 }
 
 object FindFormulaH extends Logger {
   import SimpleInductionProof._
 
-  def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false, prover: Prover = new VeriTProver ): Option[FOLFormula] = {
+  def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false, prover: Prover = VeriT ): Option[FOLFormula] = {
     val CSn = canonicalSolution( S, n )
     apply( CSn, S, n, forgetClauses, prover )
   }
@@ -414,11 +413,11 @@ object FindFormulaH extends Logger {
   def apply( CSn: FOLFormula, S: SimpleInductionProof, n: Int, forgetClauses: Boolean, prover: Prover ): Option[FOLFormula] = {
     val num = Utils.numeral( n )
     debug( "Calling findConseq …" )
-    val M = findConseq( S, n, CSn, Set.empty[List[FOLClause]], forgetClauses, prover ).toList.sortBy( l => ( l map ( _.length ) ).sum )
+    val M = findConseq( S, n, CSn, Set[Set[FOLClause]](), forgetClauses, prover ).toList.sortBy( l => ( l map ( _.length ) ).sum )
     debug( s"FindConseq found ${M.size} consequences." )
 
     val proofs = M.view.flatMap { F =>
-      val C = FOLClause.CNFtoFormula( F )
+      val C = And( F map { _.toFormula } )
       val pos = C.find( num ).toSet // If I understand the paper correctly, an improvement can be made here
       val posSets = pos.subsets().toList.sortBy( _.size ).reverse
 
@@ -435,7 +434,7 @@ object FindFormulaH extends Logger {
   }
 }
 
-class HeuristicSolutionFinder( n: Int, forgetClauses: Boolean = false, prover: Prover = new VeriTProver ) extends SolutionFinder {
+class HeuristicSolutionFinder( n: Int, forgetClauses: Boolean = false, prover: Prover = VeriT ) extends SolutionFinder {
   override def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula] =
     FindFormulaH( schematicSIP, n, forgetClauses, prover )
 }

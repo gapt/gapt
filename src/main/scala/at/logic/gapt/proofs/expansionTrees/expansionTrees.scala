@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ NaiveIncompleteMatchingAlgorithm, containsQuantifier, HOLPosition }
 import at.logic.gapt.proofs.lkNew.solve
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.utils.ResultChecker
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.lk.base._
 import scala.annotation.tailrec
@@ -212,6 +213,10 @@ case class ETMerge( left: ExpansionTreeWithMerges, right: ExpansionTreeWithMerge
   val node = None
   lazy val children = List( Tuple2( left, None ), Tuple2( right, None ) )
 }
+object ETMerge {
+  def apply( trees: Traversable[ExpansionTreeWithMerges] ): Option[ExpansionTreeWithMerges] =
+    trees reduceOption { ETMerge( _, _ ) }
+}
 
 protected[expansionTrees] class ETAnd( val left: ExpansionTreeWithMerges, val right: ExpansionTreeWithMerges ) extends BinaryExpansionTree {
   val node = None
@@ -410,6 +415,8 @@ object toShallow {
     case ETImp( t1, t2 )               => Imp( toShallow( t1 ), toShallow( t2 ) )
     case ETWeakQuantifier( f, _ )      => f
     case ETStrongQuantifier( f, _, _ ) => f
+    case ETSkolemQuantifier( f, _, _ ) => f
+    case ETMerge( t, _ )               => toShallow( t )
   }
 
   def apply( ep: ExpansionSequent ): HOLSequent = {
@@ -438,10 +445,10 @@ object getETOfFormula {
   }
 
   private def getFromExpansionTreeList( ets: Seq[ExpansionTree], f: HOLFormula ): Option[ExpansionTree] = ets match {
-    case head :: tail =>
+    case head +: tail =>
       if ( toShallow( head ) == f ) Some( head )
       else getFromExpansionTreeList( tail, f )
-    case Nil => None
+    case Seq() => None
   }
 }
 
@@ -523,11 +530,9 @@ object substitute extends at.logic.gapt.utils.logging.Logger {
   /**
    * Perform substitution including propagation of merge nodes
    */
-  def apply( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTree = {
-    val etSubstituted = doApplySubstitution( s, et )
-    //merge(etSubstituted)
-    etSubstituted.asInstanceOf[ExpansionTree]
-  }
+  def apply( s: Substitution, et: ExpansionTreeWithMerges ): ExpansionTreeWithMerges = doApplySubstitution( s, et )
+
+  def apply( s: Substitution, et: ExpansionTree ): ExpansionTree = doApplySubstitution( s, et ).asInstanceOf[ExpansionTree]
 
   def apply( s: Substitution, es: ExpansionSequent ): ExpansionSequent =
     ExpansionSequent( es.antecedent.map( apply( s, _ ) ), es.succedent.map( apply( s, _ ) ) )
@@ -673,7 +678,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       val ( subst1, res1 ) = detectAndMergeMergeNodes( t1, leftPolarity )
       subst1 match {
         case Some( s: Substitution ) => // found substitution, need to return right here
-          ( Some( s ), OpFactory( res1, t1 ) )
+          ( Some( s ), OpFactory( res1, t2 ) )
         case None => // no substitution, continue
           val ( subst2, res2 ) = detectAndMergeMergeNodes( t2, polarity )
           ( subst2, OpFactory( res1, res2 ) ) // might be Some(subst) or None
@@ -717,7 +722,7 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       case ETImp( t1, t2 )   => start_op2( t1, t2, ETImp( _, _ ), leftPolarity = !polarity ) // changes polarity
       case ETMerge( t1, t2 ) => doApplyMerge( t1, t2, polarity )
     }
-  }
+  } check { case ( _, res ) => require( toShallow( res ) == toShallow( tree ) ) }
 
   /**
    * Returns either a substitution in case we have to do a substitution at the highest level or the merged tree
@@ -748,25 +753,21 @@ object merge extends at.logic.gapt.utils.logging.Logger {
       //TODO: the f1 == f2 check is too strong if the proof contains contractions on paramodulated formulas. Find a better replacement.
       case ( ETAtom( f1 ), ETAtom( f2 ) ) /* if f1 == f2 */ => ( None, ETAtom( f1 ) )
 
+      case ( ETTop, ETTop )                                 => ( None, ETTop )
+      case ( ETBottom, ETBottom )                           => ( None, ETBottom )
+
       case ( ETStrongQuantifier( f1, v1, sel1 ), ETStrongQuantifier( f2, v2, sel2 ) ) if f1 == f2 =>
         trace( "encountered strong quantifier " + f1 + "; renaming " + v2 + " to " + v1 )
         return ( Some( Substitution( v2, v1 ) ), ETStrongQuantifier( f1, v1, ETMerge( sel1, sel2 ) ) )
 
       case ( ETSkolemQuantifier( f1, s1, sel1 ), ETSkolemQuantifier( f2, s2, sel2 ) ) if f1 == f2 =>
-        val sel2_ = if ( s1 != s2 ) {
-          //TODO: we need to replace s2 by s1 in sel2, otherwise the merge operation fails
-          //println(, "Can only merge Skolem Quantifier Nodes, if the skolem constants "+s1+" and "+s2+" are the same!")
-          trace( "Warning: merged skolem quantifiers are not equal - deep formula only valid modulo the equality " + s1 + " = " + s2 )
-          ( s1, s2 ) match {
-            case ( c: Const, d: Const ) =>
-              replace( d, c, sel2 )
-            case _ =>
-              throw new Exception( "I have skolem terms " + s1 + " and " + s2 + " which are no consts and don't know what to do now." )
-          }
-
-        } else sel2
-        //trace("encountered skolem quantifier "+f1+"; renaming "+v2+" to "+v1)
-        return ( Some( Substitution() ), ETSkolemQuantifier( f1, s1, ETMerge( sel1, sel2_ ) ) )
+        // FIXME: this is (and was) completely broken in the case of s1 != s2, should perform global replacement of skolem symbols
+        if ( s1 != s2 ) {
+          // just do enough not to fail
+          return doApplyMerge( replace( s2.asInstanceOf[Const], s1, tree1 ), replace( s2.asInstanceOf[Const], s1, tree2 ), polarity )
+        }
+        val ( subst, res ) = doApplyMerge( sel1, sel2, polarity )
+        ( subst, ETSkolemQuantifier( f1, s1, res ) )
 
       case ( ETWeakQuantifier( f1, children1 ), ETWeakQuantifier( f2, children2 ) ) if f1 == f2 => {
         val newTree = ETWeakQuantifier( f1, substitute.mergeWeakQuantifiers( None, children1 ++ children2 ) )

@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLSubstitution, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol.{ FOLPosition, FOLSubstitution, FOLMatchingAlgorithm }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 
@@ -320,7 +320,7 @@ case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: Seq
 
 }
 
-object ContractionLeftRule extends RuleConvenienceObject( "ContractionLeftRule" ) {
+object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule" ) {
   /**
    * Convenience constructor for c:l that, given a formula to contract on the left, will automatically pick the first two occurrences of that formula.
    *
@@ -368,7 +368,7 @@ case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: Se
 
 }
 
-object ContractionRightRule extends RuleConvenienceObject( "ContractionRightRule" ) {
+object ContractionRightRule extends ConvenienceConstructor( "ContractionRightRule" ) {
   /**
    * Convenience constructor for c:r that, given a formula to contract on the right, will automatically pick the first two occurrences of that formula.
    *
@@ -456,7 +456,7 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
   override def mainFormulaSequent = Sequent()
 }
 
-object CutRule extends RuleConvenienceObject( "CutRule" ) {
+object CutRule extends ConvenienceConstructor( "CutRule" ) {
 
   /**
    * Convenience constructor for cut.
@@ -523,7 +523,7 @@ case class NegLeftRule( subProof: LKProof, aux: SequentIndex )
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object NegLeftRule extends RuleConvenienceObject( "NegLeftRule" ) {
+object NegLeftRule extends ConvenienceConstructor( "NegLeftRule" ) {
   /**
    * Convenience constructor that automatically uses the first occurrence of supplied aux formula.
    *
@@ -564,7 +564,7 @@ case class NegRightRule( subProof: LKProof, aux: SequentIndex )
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object NegRightRule extends RuleConvenienceObject( "NegRightRule" ) {
+object NegRightRule extends ConvenienceConstructor( "NegRightRule" ) {
   /**
    * Convenience constructor that automatically uses the first occurrence of supplied aux formula.
    *
@@ -609,7 +609,7 @@ case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object AndLeftRule extends RuleConvenienceObject( "AndLeftRule" ) {
+object AndLeftRule extends ConvenienceConstructor( "AndLeftRule" ) {
 
   /**
    * Convenience constructor for ∧:l.
@@ -674,7 +674,7 @@ case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProo
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object AndRightRule extends RuleConvenienceObject( "AndRightRule" ) {
+object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
 
   /**
    * Convenience constructor for ∧:r.
@@ -742,7 +742,7 @@ case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof:
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object OrLeftRule extends RuleConvenienceObject( "OrLeftRule" ) {
+object OrLeftRule extends ConvenienceConstructor( "OrLeftRule" ) {
 
   /**
    * Convenience constructor for ∨:l.
@@ -807,7 +807,7 @@ case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInde
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object OrRightRule extends RuleConvenienceObject( "OrRightRule" ) {
+object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
 
   /**
    * Convenience constructor for ∨:r.
@@ -871,7 +871,7 @@ case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object ImpLeftRule extends RuleConvenienceObject( "ImpLeftRule" ) {
+object ImpLeftRule extends ConvenienceConstructor( "ImpLeftRule" ) {
 
   /**
    * Convenience constructor for →:l.
@@ -936,7 +936,7 @@ case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentInd
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object ImpRightRule extends RuleConvenienceObject( "ImpRightRule" ) {
+object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
 
   /**
    * Convenience constructor for →:r.
@@ -1000,7 +1000,7 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, 
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object ForallLeftRule extends RuleConvenienceObject( "ForallLeftRule" ) {
+object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
   /**
    * Convenience constructor for ∀:l that, given a main formula and a term, will try to construct an inference with that instantiation.
    *
@@ -1066,7 +1066,12 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   if ( freeVariables( context ) contains eigenVariable )
     throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
 
-  val mainFormula = All( quantifiedVariable, BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) ) )
+  val subFormula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+
+  if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
+    throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = ${BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )}, but is $auxFormula." )
+
+  val mainFormula = All( quantifiedVariable, subFormula )
 
   override def name = "∀:r"
 
@@ -1075,7 +1080,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object ForallRightRule extends RuleConvenienceObject( "ForallRightRule" ) {
+object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
 
   /**
    * Convenience constructor for ∀:r that, given a main formula and an eigenvariable, will try to construct an inference with that instantiation.
@@ -1138,7 +1143,12 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   if ( freeVariables( context ) contains eigenVariable )
     throw LKRuleCreationException( s"Eigenvariable condition is violated: $context contains $eigenVariable" )
 
-  val mainFormula = Ex( quantifiedVariable, BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) ) )
+  val subFormula = BetaReduction.betaNormalize( Substitution( eigenVariable, quantifiedVariable )( auxFormula ) )
+
+  if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
+    throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = ${BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )}, but is $auxFormula." )
+
+  val mainFormula = Ex( quantifiedVariable, subFormula )
 
   override def name = "∃:l"
 
@@ -1147,7 +1157,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object ExistsLeftRule extends RuleConvenienceObject( "ExistsLeftRule" ) {
+object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
 
   /**
    * Convenience constructor for ∃:l that, given a main formula and an eigenvariable, will try to construct an inference with that instantiation.
@@ -1214,7 +1224,7 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula,
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object ExistsRightRule extends RuleConvenienceObject( "ExistsRightRule" ) {
+object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
 
   /**
    * Convenience constructor for ∃:r that, given a main formula and a term, will try to construct an inference with that instantiation.
@@ -1331,7 +1341,7 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
- * @param pos The position of the term to be replaced within A. FIXME: I think it would be convenient to allow FOLPositions here.
+ * @param pos The position of the term to be replaced within A.
  */
 case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition )
     extends EqualityRule {
@@ -1343,7 +1353,7 @@ case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
-object EqualityLeftRule extends RuleConvenienceObject( "EqualityLeftRule" ) {
+object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
 
   /**
    * Convenience constructor for eq:l.
@@ -1363,6 +1373,32 @@ object EqualityLeftRule extends RuleConvenienceObject( "EqualityLeftRule" ) {
 
     EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), pos )
 
+  }
+
+  /**
+   * Convenience constructor for eq:l.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param eqFormula The index of the equation or the equation itself.
+   * @param auxFormula The index of the auxiliary formula or the formula itself.
+   * @param pos The position of the term to be replaced within A.
+   * @return
+   */
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: FOLPosition ): EqualityLeftRule = {
+    val premise = subProof.endSequent
+
+    val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
+
+    val aF = premise( Ant( indices( 1 ) ) ) match {
+      case f: FOLFormula =>
+        f
+      case _ =>
+        throw LKRuleCreationException( s"Proposed aux formula ${premise( Ant( indices( 1 ) ) )} is not FOL." )
+    }
+
+    EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), FOLPosition.toHOLPosition( aF )( pos ) )
   }
 
   /**
@@ -1446,7 +1482,7 @@ object EqualityLeftRule extends RuleConvenienceObject( "EqualityLeftRule" ) {
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
- * @param pos The position of the term to be replaced within A. FIXME: I think it would be convenient to allow FOLPositions here.
+ * @param pos The position of the term to be replaced within A.
  */
 case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, pos: HOLPosition )
     extends EqualityRule {
@@ -1458,7 +1494,7 @@ case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentI
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object EqualityRightRule extends RuleConvenienceObject( "EqualityRightRule" ) {
+object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
 
   /**
    * Convenience constructor for eq:r.
@@ -1477,6 +1513,33 @@ object EqualityRightRule extends RuleConvenienceObject( "EqualityRightRule" ) {
     val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
 
     EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), pos )
+
+  }
+
+  /**
+   * Convenience constructor for eq:r.
+   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param eqFormula The index of the equation or the equation itself.
+   * @param auxFormula The index of the auxiliary formula or the formula itself.
+   * @param pos The position of the term to be replaced within A.
+   * @return
+   */
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: FOLPosition ): EqualityRightRule = {
+    val premise = subProof.endSequent
+
+    val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
+
+    val aF = premise( Suc( indicesSuc( 0 ) ) ) match {
+      case f: FOLFormula =>
+        f
+      case _ =>
+        throw LKRuleCreationException( s"Proposed aux formula ${premise( Suc( indicesSuc( 0 ) ) )} is not FOL." )
+    }
+
+    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), FOLPosition.toHOLPosition( aF )( pos ) )
 
   }
 
@@ -1546,105 +1609,74 @@ object EqualityRightRule extends RuleConvenienceObject( "EqualityRightRule" ) {
 }
 
 /**
- * An LKProof ending with an induction rule:
+ * Proof that a given data type constructor c preserves a formula F:
  *
  * <pre>
- *      (π1)                (π2)
- *  Γ :- Δ, A[0]    A[x], Π :- Λ, A[sx]
- * ------------------------------------ind
- *           Γ, Π :- Δ, Λ, A[t]
+ *                                  (π)
+ * F(x,,1,,), F(x,,2,,), ..., F(x,,n,,), Γ :- Δ, F(c(x,,1,,,...,x,,n,,,y,,1,,,...,y,,n,,))
  * </pre>
- * Note that there is an eigenvariable condition on x, i.e. x must not occur freely in Π :- Λ.
  *
- * @param leftSubProof The subproof π,,1,,
- * @param aux1 The index of A[0].
- * @param rightSubProof The subproof π,,2,,
- * @param aux2 The index of A[x].
- * @param aux3 The index of A[sx].
- * @param term The term t in the conclusion.
+ * The variables x,,i,, and y,,i,, are eigenvariables; x,,i,, are the eigenvariables of the same type as the inductive data
+ * type, y,,i,, are the other arguments of the constructor c.  They can come in any order in the constructor.
+ *
+ * @param proof  The LKProof ending in the sequent of this case.
+ * @param constructor  The constructor c of the inductive data type that we're considering.
+ * @param hypotheses  Indices of F(x,,1,,), ..., F(x,,n,,)
+ * @param eigenVars  The eigenvariables of this case: x,,1,,, ..., x,,n,,, y,,1,,, ..., y,,n,,  (these need to correspond to the order in c)
+ * @param conclusion  Index of F(c(x,,1,,,...,x,,n,,,y,,1,,,...,y,,n,,))
  */
-case class InductionRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex, aux3: SequentIndex, term: FOLTerm )
-    extends BinaryLKProof with CommonRule with Eigenvariable {
-  validateIndices( leftPremise, Seq(), Seq( aux1 ) )
-  validateIndices( rightPremise, Seq( aux2 ), Seq( aux3 ) )
+case class InductionCase( proof: LKProof, constructor: Const,
+                          hypotheses: Seq[SequentIndex], eigenVars: Seq[Var],
+                          conclusion: SequentIndex ) {
+  val FunctionType( indTy, fieldTypes ) = constructor.exptype
+  require( fieldTypes == eigenVars.map( _.exptype ) )
 
-  private val zero = FOLConst( "0" )
-  private def s( t: FOLTerm ) = FOLFunction( "s", List( t ) )
+  val hypVars = eigenVars filter { _.exptype == indTy }
+  require( hypotheses.size == hypVars.size )
 
-  override def name = "ind"
-
-  // FIXME: Is there a better way than type casting?
-  val ( aZero, aX, aSx ) = ( leftPremise( aux1 ).asInstanceOf[FOLFormula], rightPremise( aux2 ).asInstanceOf[FOLFormula], rightPremise( aux3 ).asInstanceOf[FOLFormula] )
-
-  // Find a FOLSubstitution for A[x] and A[0], if possible.
-  val sub1 = FOLMatchingAlgorithm.matchTerms( aX, aZero ) match {
-    case Some( s ) => s
-    case None      => throw LKRuleCreationException( s"Formula $aX can't be matched to formula $aZero." )
+  hypotheses foreach { hyp =>
+    require( hyp.isAnt && proof.endSequent.isDefinedAt( hyp ) )
   }
 
-  // Find a substitution for A[x] and A[Sx], if possible.
-  val sub2 = FOLMatchingAlgorithm.matchTerms( aX, aSx ) match {
-    case Some( s ) => s
-    case None      => throw LKRuleCreationException( s"Formula $aX can't be matched to formula $aSx." )
-  }
-
-  val x = ( sub1.folmap ++ sub2.folmap ).collect { case ( v, e ) if v != e => v }.headOption.getOrElse {
-    throw LKRuleCreationException( "Cannot determine induction variable." )
-  }
-
-  override val eigenVariable = x
-
-  // Some safety checks
-  if ( ( sub1.domain.toSet - x ).exists( v => sub1( v ) != v ) )
-    throw LKRuleCreationException( s"Formula " + aX + " can't be matched to formula " + aZero + " by substituting a single variable." )
-
-  if ( ( sub2.domain.toSet - x ).exists( v => sub1( v ) != v ) )
-    throw LKRuleCreationException( s"Formula " + aX + " can't be matched to formula " + aSx + " by substituting a single variable." )
-
-  val sX = s( x )
-
-  if ( sub1( x ) != zero )
-    throw LKRuleCreationException( s"$sub1 doesn't replace $x by 0." )
-
-  if ( sub2( x ) != sX )
-    throw LKRuleCreationException( s"$sub2 doesn't replace $x by $sX." )
-
-  // Test the eigenvariable condition
-  if ( ( rightPremise.delete( aux2 ).antecedent ++ rightPremise.delete( aux3 ).succedent ) map ( _.asInstanceOf[FOLFormula] ) flatMap freeVariables.apply contains x )
-    throw LKRuleCreationException( s"Eigenvariable condition not satisified for sequent $rightPremise and variable $x." )
-
-  // Construct the main formula
-  val mainSub = FOLSubstitution( x, term )
-  val mainFormula = mainSub( aX )
-
-  def auxIndices = Seq( Seq( aux1 ), Seq( aux2, aux3 ) )
-
-  override def mainFormulaSequent = Sequent() :+ mainFormula
+  require( conclusion.isSuc && proof.endSequent.isDefinedAt( conclusion ) )
 }
 
-object InductionRule extends RuleConvenienceObject( "InductionRule" ) {
-
-  /**
-   * Convenience constructor for ind.
-   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-   * will attempt to find an appropriate index on its own.
-   *
-   * @param leftSubProof The left subproof.
-   * @param inductionBase The index of the induction base (A[0]) or the induction base itself.
-   * @param rightSubProof The right subproof.
-   * @param inductionHypo The index of the induction hypothesis (A[x]) or the induction hypothesis itself.
-   * @param inductionStep The index of the induction step (A[sx]) or the induction step itself.
-   * @param term The term in the conclusion.
-   * @return
-   */
-  def apply( leftSubProof: LKProof, inductionBase: IndexOrFormula, rightSubProof: LKProof, inductionHypo: IndexOrFormula, inductionStep: IndexOrFormula, term: FOLTerm ): InductionRule = {
-    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
-
-    val ( _, indicesLeftSuc ) = findAndValidate( leftPremise )( Seq(), Seq( inductionBase ) )
-    val ( indicesRightAnt, indicesRightSuc ) = findAndValidate( rightPremise )( Seq( inductionHypo ), Seq( inductionStep ) )
-
-    InductionRule( leftSubProof, Suc( indicesLeftSuc.head ), rightSubProof, Ant( indicesRightAnt.head ), Suc( indicesRightSuc.head ), term )
+/**
+ * An LKProof ending with an induction rule:
+ * <pre>
+ *   (π,,1,,)   (π,,2,,)           (π,,n,,)
+ * case 1      case 2     ...     case n
+ * -------------------------------------(ind)
+ * Γ :- Δ, ∀x: indTy, F(x)
+ * </pre>
+ *
+ * This induction rule can handle inductive data types.
+ * The cases are proofs that the various type constructors preserve the formula we want to prove. They are provided via the
+ * [[InductionCase]] class.
+ *
+ * @param cases A sequence of proofs showing that each type constructor preserves the validity of the main formula.
+ * @param mainFormula The formula we want to prove via induction.
+ */
+case class InductionRule( cases: Seq[InductionCase], mainFormula: HOLFormula ) extends CommonRule {
+  val All( quant @ Var( _, indTy ), qfFormula ) = mainFormula
+  cases foreach { c =>
+    require( c.indTy == indTy )
+    ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, eigen ) =>
+      require( c.proof.endSequent( hyp ) == Substitution( quant -> eigen )( qfFormula ) )
+    }
+    require( c.proof.endSequent( c.conclusion ) == Substitution( quant -> c.constructor( c.eigenVars: _* ) )( qfFormula ) )
   }
+  require( freeVariables( contexts.flatMap( _.elements ) :+ mainFormula ) intersect cases.flatMap( _.eigenVars ).toSet isEmpty )
+
+  override protected def mainFormulaSequent = Sequent() :+ mainFormula
+  override def auxIndices: Seq[Seq[SequentIndex]] = cases map { c => c.hypotheses :+ c.conclusion }
+  override def immediateSubProofs: Seq[LKProof] = cases map { _.proof }
+
+  private lazy val product = cases.flatMap { _.productIterator } :+ mainFormula
+  override def productArity = product.size
+  override def productElement( n: Int ) = product( n )
+
+  override def name = "ind"
 }
 
 /**
@@ -1670,7 +1702,7 @@ case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: HOLFo
   override def mainFormulaSequent = main +: Sequent()
 }
 
-object DefinitionLeftRule extends RuleConvenienceObject( "DefinitionLeftRule" ) {
+object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" ) {
 
   /**
    * Convenience constructor for d:l that, given an aux and main formula, will attempt to infer the main formula.
@@ -1711,7 +1743,7 @@ case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, main: HOLF
   override def mainFormulaSequent = Sequent() :+ main
 }
 
-object DefinitionRightRule extends RuleConvenienceObject( "DefinitionRightRule" ) {
+object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule" ) {
 
   /**
    * Convenience constructor for d:r that, given an aux and main formula, will attempt to infer the main formula.
@@ -1727,6 +1759,14 @@ object DefinitionRightRule extends RuleConvenienceObject( "DefinitionRightRule" 
 
     DefinitionRightRule( subProof, Suc( indices( 0 ) ), mainFormula )
   }
+}
+
+object DefinitionRule {
+  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula, isSuc: Boolean ): LKProof =
+    if ( isSuc )
+      DefinitionRightRule( subProof, auxFormula, mainFormula )
+    else
+      DefinitionLeftRule( subProof, auxFormula, mainFormula )
 }
 
 object consoleString {
@@ -1784,7 +1824,7 @@ object consoleString {
  *
  * @param longName The long name of the rule.
  */
-class RuleConvenienceObject( val longName: String ) {
+class ConvenienceConstructor( val longName: String ) {
   type IndexOrFormula = Either[SequentIndex, HOLFormula]
 
   /**

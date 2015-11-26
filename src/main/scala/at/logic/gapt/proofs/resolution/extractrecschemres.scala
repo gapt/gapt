@@ -9,14 +9,14 @@ import at.logic.gapt.proofs.expansionTrees.InstanceTermEncoding
 object extractRecSchemFromResProof {
   def apply( p: ResolutionProof ): ( RecursionScheme, InstanceTermEncoding ) = {
     val endSequent = existsclosure( inputClauses( p ).map( _.toFormula ) ++: Sequent() )
-    val encoding = new InstanceTermEncoding( endSequent )
+    val encoding = InstanceTermEncoding( endSequent )
     apply(
       p,
-      clause => encoding.encodeOption( clause.toFormula.asInstanceOf[FOLFormula] -> true )
+      clause => encoding.encodeOption( -clause.toFormula )
     ) -> encoding
   }
 
-  def apply( root: ResolutionProof, clauseTerm: HOLClause => Option[FOLTerm] ): RecursionScheme = {
+  def apply( root: ResolutionProof, clauseTerm: HOLClause => Option[LambdaExpression] ): RecursionScheme = {
     val nodeMap = root.dagLikePostOrder.reverse.zipWithIndex.map {
       case ( p, i ) =>
         val fvs = freeVariables( p.conclusion ).toSeq

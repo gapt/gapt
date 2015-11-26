@@ -24,7 +24,7 @@ object skolemize extends Logger {
       val inst_map = fos.foldLeft( new HashMap[FormulaOccurrence, List[LambdaExpression]]() )( ( m, fo ) => m + ( fo -> Nil ) )
 
       // TODO: make this a parameter?
-      var cur_stream = SkolemSymbolFactory.getSkolemSymbols
+      var cur_stream = new SkolemSymbolFactory().getSkolemSymbols
       // val nLine = sys.props("line.separator")
       //println(nLine + nLine + nLine + cur_stream+" , "+cur_stream.tail+" , "+cur_stream.tail.tail+" , "+cur_stream.tail.tail.tail)
 
@@ -46,13 +46,13 @@ object skolemize extends Logger {
   def apply( fs: HOLSequent ): HOLSequent = HOLSequent( fs.antecedent.map( apply( _, 0 ) ), fs.succedent.map( apply( _, 1 ) ) )
 
   /* formula skolemization -- polarity 0 is negative and polarity 1 is positive */
-  def apply( f: HOLFormula, pol: Int ): HOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
+  def apply( f: HOLFormula, pol: Int ): HOLFormula = apply( f, pol, new SkolemSymbolFactory().getSkolemSymbols )
 
   /* formula skolemization -- symbols provides the skolem symbols to introduce */
   def apply( f: HOLFormula, pol: Int, symbols: Stream[SymbolA] ): HOLFormula = skolemize( f, pol, symbols )
 
   /* formula skolemization -- polarity 0 is negative and polarity 1 is positive */
-  def apply( f: FOLFormula, pol: Int ): FOLFormula = apply( f, pol, SkolemSymbolFactory.getSkolemSymbols )
+  def apply( f: FOLFormula, pol: Int ): FOLFormula = apply( f, pol, new SkolemSymbolFactory().getSkolemSymbols )
 
   /* formula skolemization -- symbols provides the skolem symbols to introduce */
   def apply( f: FOLFormula, pol: Int, symbols: Stream[SymbolA] ): FOLFormula = skolemize( f, pol, symbols ).asInstanceOf[FOLFormula]

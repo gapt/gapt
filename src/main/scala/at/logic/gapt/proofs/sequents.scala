@@ -97,10 +97,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   /**
    * Sequence of elements together with polarities of type Boolean signifying whether an element is in the antecedent or succedent.
    *
-   * FIXME: Make polarities consistent throughout the system (IMO: false = antecedent, true = succedent)
    * @return
    */
-  def polarizedElements: Seq[( A, Boolean )] = antecedent.map( _ -> true ) ++ succedent.map( _ -> false )
+  def polarizedElements: Seq[( A, Boolean )] = map( _ -> false, _ -> true ).elements
 
   /**
    * Returns true iff both cedents are empty.
@@ -125,14 +124,16 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def intersect[B >: A]( other: Sequent[B] ) = new Sequent( antecedent intersect other.antecedent, succedent intersect other.succedent )
 
   /**
-   * Computes the union of two sequents.
+   * Concatenate two sequents.  This is equivalent to ++.
    *
    * @param other
    * @return
    */
-  def union[B >: A]( other: Sequent[B] ) = new Sequent( antecedent union other.antecedent, succedent union other.succedent )
+  @deprecated( "Beware: this is the same as ++.", "2015-10-23" )
+  def union[B >: A]( other: Sequent[B] ) = this ++ other
 
-  def compose[B >: A]( other: Sequent[B] ) = new Sequent( antecedent ++ other.antecedent, succedent ++ other.succedent )
+  @deprecated( "Use ++ instead.", "2015-10-23" )
+  def compose[B >: A]( other: Sequent[B] ) = this ++ other
 
   /**
    * Removes duplicate formulas from both cedents.
@@ -149,6 +150,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    */
   def isSubsetOf[B >: A]( other: Sequent[B] ) = ( this.distinct diff other.distinct ).isEmpty
 
+  def isTaut: Boolean = antecedent intersect succedent nonEmpty
+
   /**
    *
    * @return The sequent in tuple form.
@@ -161,7 +164,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
-  def addToAntecedent[B >: A]( e: B ): Sequent[B] = new Sequent( e +: antecedent, succedent )
+  @deprecated( "Use +: instead.", "2015-10-23" )
+  def addToAntecedent[B >: A]( e: B ): Sequent[B] = e +: this
 
   /**
    * Adds an element to the antecedent. New elements are always outermost, i.e. on the very left.
@@ -169,7 +173,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
-  def +:[B >: A]( e: B ) = addToAntecedent( e )
+  def +:[B >: A]( e: B ) = new Sequent( e +: antecedent, succedent )
 
   /**
    * Adds a sequent of elements to the antecedent. New elements are always outermost, i.e. on the very left.
@@ -177,7 +181,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param es A collection of elements of type B > A.
    * @return The sequent with es added to the antecedent.
    */
-  def ++:[B >: A]( es: GenTraversable[B] ): Sequent[B] = ( es :\ this.asInstanceOf[Sequent[B]] )( ( e, acc ) => acc.addToAntecedent( e ) )
+  def ++:[B >: A]( es: GenTraversable[B] ): Sequent[B] = es.foldRight[Sequent[B]]( this )( _ +: _ )
 
   /**
    * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
@@ -185,7 +189,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the succedent
    */
-  def addToSuccedent[B >: A]( e: B ): Sequent[B] = new Sequent( antecedent, succedent :+ e )
+  @deprecated( "Use :+ instead.", "2015-10-23" )
+  def addToSuccedent[B >: A]( e: B ): Sequent[B] = this :+ e
 
   /**
    * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
@@ -193,7 +198,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the succedent
    */
-  def :+[B >: A]( e: B ) = addToSuccedent( e )
+  def :+[B >: A]( e: B ) = new Sequent( antecedent, succedent :+ e )
 
   /**
    * Adds a sequence of elements to the succedent. New elements are always outermost, i.e. on the very right.
@@ -201,9 +206,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param es A collection of elements of type B > A.
    * @return The sequent with es added to the succedent.
    */
-  def :++[B >: A]( es: GenTraversable[B] ): Sequent[B] = ( this.asInstanceOf[Sequent[B]] /: es )( ( acc, e ) => acc.addToSuccedent( e ) )
+  def :++[B >: A]( es: GenTraversable[B] ): Sequent[B] = es.foldLeft[Sequent[B]]( this )( _ :+ _ )
 
-  def ++[B >: A]( that: Sequent[B] ) = this union that
+  def ++[B >: A]( that: Sequent[B] ) = new Sequent( this.antecedent ++ that.antecedent, this.succedent ++ that.succedent )
 
   def removeFromAntecedent[B]( e: B ) = new Sequent( antecedent filterNot ( _ == e ), succedent )
 
@@ -288,6 +293,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def sizes = lengths
 
   def sorted[B >: A]( implicit ordering: Ordering[B] ) = new Sequent( antecedent.sorted( ordering ), succedent.sorted( ordering ) )
+  def sortBy[B]( f: A => B )( implicit ord: Ordering[B] ): Sequent[A] = sorted( ord on f )
 
   /**
    * Returns true iff the sequent contains some element in either cedent.
@@ -392,6 +398,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def indexOfOption[B >: A]( elem: B ): Option[SequentIndex] = find( _ == elem )
   def indexOf[B >: A]( elem: B ): SequentIndex = indexOfOption( elem ) get
 
+  def indexOfInAnt[B >: A]( elem: B ): SequentIndex = Ant( antecedent indexOf elem )
+  def indexOfInSuc[B >: A]( elem: B ): SequentIndex = Suc( succedent indexOf elem )
+
   def swapped: Sequent[A] = Sequent( succedent, antecedent )
 
   def forall( p: A => Boolean ): Boolean = antecedent.forall( p ) && succedent.forall( p )
@@ -408,6 +417,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
     case Suc( j ) =>
       Sequent( antecedent, succedent.take( j ) ++ Seq( el ) ++ succedent.drop( j ) )
   }
+
+  def foreach[U]( f: A => U ): Unit = elements foreach f
 }
 
 object Sequent {
@@ -417,8 +428,8 @@ object Sequent {
 
   def apply[A]( polarizedElements: Seq[( A, Boolean )] ): Sequent[A] =
     Sequent(
-      polarizedElements.filter( _._2 == true ).map( _._1 ),
-      polarizedElements.filter( _._2 == false ).map( _._1 )
+      polarizedElements.filter( _._2 == false ).map( _._1 ),
+      polarizedElements.filter( _._2 == true ).map( _._1 )
     )
 
   def unapply[A]( f: Sequent[A] ): Option[( Seq[A], Seq[A] )] = Some( ( f.antecedent, f.succedent ) )
@@ -440,7 +451,7 @@ object HOLClause {
   }
 
   def apply( negative: Seq[HOLFormula], positive: Seq[HOLFormula] )( implicit dummyImplicit: DummyImplicit ): HOLClause = {
-    HOLClause( negative map { _.asInstanceOf[FOLAtom] }, positive map { _.asInstanceOf[FOLAtom] } )
+    HOLClause( negative map { _.asInstanceOf[HOLAtom] }, positive map { _.asInstanceOf[HOLAtom] } )
   }
 
   def apply( elements: Seq[( HOLAtom, Boolean )] ): HOLClause = {
@@ -464,17 +475,6 @@ object FOLClause {
   def apply( elements: Seq[( FOLAtom, Boolean )] ): FOLClause = {
     Clause( elements )
   }
-
-  def CNFtoFormula( cls: List[FOLClause] ): FOLFormula =
-    {
-      val nonEmptyClauses = cls.filter( c => c.negative.length > 0 || c.positive.length > 0 ).toList
-
-      if ( nonEmptyClauses.length == 0 ) { Top() }
-      else { And( nonEmptyClauses.map( c => Or( c.positive ++ c.negative.map( l => Neg( l ) ) ) ) ) }
-    }
-
-  //FIXME: Maybe find a better place for this
-  def NumberedCNFtoFormula( cls: List[Clause[( FOLAtom, Int )]] ) = CNFtoFormula( cls map { c => c map { p => p._1 } } )
 
   def unapply( clause: FOLClause ) = Some( clause.toTuple )
 }

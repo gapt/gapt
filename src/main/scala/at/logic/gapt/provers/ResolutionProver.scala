@@ -1,14 +1,14 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.expr.{ FOLConst, Const }
-import at.logic.gapt.expr.hol.CNFn
+import at.logic.gapt.expr.Const
+import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
-import at.logic.gapt.proofs.expansionTrees.{ replace, InstanceTermEncoding, ExpansionSequent }
+import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lkNew.LKProof
 
-abstract class ResolutionProver extends Prover {
+abstract class ResolutionProver extends OneShotProver {
 
   protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, Const], List[HOLClause] ) => Option[ResolutionProof] ): Option[ResolutionProof] = {
     val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf.toList )
@@ -27,31 +27,39 @@ abstract class ResolutionProver extends Prover {
   private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
     f( renamedSeq ) map { renamedProof =>
-      invertRenaming.foldLeft( renamedProof ) {
-        case ( partiallyRenamedProof, ( groundVariable, variable ) ) =>
-          partiallyRenamedProof.map( replace( groundVariable.asInstanceOf[FOLConst], variable, _ ) )
-      }
+      renamedProof map { TermReplacement( _, invertRenaming ) }
+    }
+  }
+
+  private def withGroundVariables3( seq: HOLSequent )( f: HOLSequent => Option[ResolutionProof] ): Option[ResolutionProof] = {
+    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
+    f( renamedSeq ) map { renamedProof =>
+      TermReplacement( renamedProof, invertRenaming )
     }
   }
 
   override def getLKProof( seq: HOLSequent ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
+      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
       getRobinsonProof( seq ) map { robinsonProof =>
-        RobinsonToLK( robinsonProof, seq )
+        RobinsonToLK( robinsonProof, seq, justs toMap, defs )
       }
     }
 
   override def isValid( seq: HOLSequent ): Boolean =
-    getRobinsonProof( groundFreeVariables( seq )._1 ).isDefined
+    getRobinsonProof( seq ).isDefined
 
   def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] =
-    getRobinsonProof( CNFn.toFClauseList( seq.toFormula ) )
+    withGroundVariables3( seq ) { seq =>
+      getRobinsonProof( structuralCNF( seq, generateJustifications = false, propositional = false )._1 )
+    }
 
   def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
   override def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
     withGroundVariables2( seq ) { seq =>
-      getRobinsonProof( seq ).map( RobinsonToExpansionProof( _, seq ) )
+      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
+      getRobinsonProof( cnf ).map( RobinsonToExpansionProof( _, seq, justs, defs ) )
     }
 
 }

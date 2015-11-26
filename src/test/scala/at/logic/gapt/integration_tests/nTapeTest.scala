@@ -19,14 +19,10 @@ import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETS
 import org.specs2.mutable._
 
 class nTapeTest extends Specification with ClasspathFileCopier {
-  def checkForProverOrSkip = new Prover9Prover().isInstalled must beTrue.orSkip
-
   def show( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
   def show_detail( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
 
   def f( e: LambdaExpression ): String = toLLKString( e )
-
-  //sequential //skolemization is not thread safe - it shouldnt't make problems here, but in case there are issues, please uncomment
 
   class Robinson2RalAndUndoHOL2Fol(
       sig_vars:   Map[String, List[Var]],
@@ -71,7 +67,9 @@ class nTapeTest extends Specification with ClasspathFileCopier {
 
   //prints the interesting terms from the expansion sequent
   def printStatistics( et: ExpansionSequent ) = {
-    val indet = decompose( ( et.antecedent( 1 ) ) )( 2 )
+    val conjuncts = decompose( et.antecedent( 1 ) )
+    // FIXME: use a less fragile method to find the induction formula...
+    val indet = conjuncts( 19 )
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
       case ETWeakQuantifier( _, List(
         ( inst1, et1 ),
@@ -154,7 +152,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     folcl.map( x => show_detail( x.toString ) )
 
     show( "Refuting clause set" )
-    new Prover9Prover().getRobinsonProof( folcl ) match {
+    Prover9.getRobinsonProof( folcl ) match {
       case None =>
         Some( "could not refute clause set" )
       case Some( rp ) =>
@@ -186,11 +184,10 @@ class nTapeTest extends Specification with ClasspathFileCopier {
 
   }
 
-  sequential
+  args( skipAll = !Prover9.isInstalled )
   "The higher-order tape proof" should {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
       //skipped("works but takes a bit time")
-      checkForProverOrSkip
       doCutelim( tempCopyOfClasspathFile( "tape3.llk" ) ) match {
         case Some( error ) => ko( error )
         case None          => ok
@@ -199,7 +196,6 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     }
 
     "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
-      checkForProverOrSkip
       doCutelim( tempCopyOfClasspathFile( "tape3ex.llk" ) ) match {
         case Some( error ) => ko( error )
         case None          => ok

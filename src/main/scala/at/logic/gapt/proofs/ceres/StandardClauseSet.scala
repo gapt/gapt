@@ -10,7 +10,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.utils.logging.Logger
 import scala.annotation.tailrec
 import scala.util.control.TailCalls._
-import at.logic.gapt.proofs.ceres._
 
 /**
  * Calculates the characteristic clause set

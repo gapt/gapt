@@ -1,51 +1,38 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.formats.simple.{ BinaryRuleType, UnaryRuleType, NullaryRuleType }
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lkskNew.{ WeakeningRight, WeakeningLeft }
+import at.logic.gapt.proofs.{ SequentProof, DagProof, HOLSequent }
 
 import scala.swing.{ Action, BorderPanel }
-import at.logic.gapt.proofs.proofs.TreeProof
 import ch.randelshofer.tree._
-import at.logic.gapt.utils.ds.trees.{ BinaryTree, UnaryTree, LeafTree }
 import javax.swing.event.ChangeListener
 import java.awt.Color
-import at.logic.gapt.formats.llk.HybridLatexExporter.fsequentString
-import at.logic.gapt.proofs.lksk.{ ExistsSkLeftRuleType, ForallSkRightRuleType, ExistsSkRightRuleType, ForallSkLeftRuleType }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base._
 
-/**
- *
- * Created by marty on 3/18/14.
- */
-
-/* Wapper from gapt proofs to TreeViz trees */
-case class ProofNode[T]( proof: TreeProof[T] ) extends TreeNode {
-  import collection.convert.wrapAsJava.seqAsJavaList
-  val children: java.util.List[TreeNode] = proof match {
-    case LeafTree( v )           => List[TreeNode]()
-    case UnaryTree( v, parent )  => List( ProofNode( parent.asInstanceOf[TreeProof[T]] ) )
-    case BinaryTree( v, p1, p2 ) => List( p1, p2 ).map( x => ProofNode( x.asInstanceOf[TreeProof[T]] ) )
-  }
+/** Wrapper from gapt proofs to TreeViz trees */
+case class ProofNode[T <: DagProof[T]]( proof: DagProof[T] ) extends TreeNode {
+  import scala.collection.JavaConversions._
+  val children: java.util.List[TreeNode] = proof.immediateSubProofs map { ProofNode( _ ) }
 
   val getAllowsChildren = !children.isEmpty
 
 }
 
-class ProofNodeInfo[T] extends NodeInfo {
+class ProofNodeInfo[T <: DagProof[T]] extends NodeInfo {
   var root: Option[ProofNode[T]] = None
   var weighter: Option[Weighter] = None
   val colorizer = new ProofColorizer
-  private var actions = Map[TreeProof[T], Array[Action]]()
+  private var actions = Map[DagProof[T], Array[Action]]()
 
-  def genShowAction( x: TreeProof[T] ) = new Action( "Show node in LK Viewer" ) {
+  def genShowAction( x: DagProof[T] ) = new Action( "Show node in LK Viewer" ) {
     def apply() = {
       root match {
         case Some( node ) =>
-          Main.scrollToProof( x )
+          Main.scrollToProof( x.asInstanceOf[SequentProof[_, _]] )
           try {
+            // FIXME
             ProofToolPublisher.publish(
-              ChangeSequentColor( x.asInstanceOf[LKProof].root, new Color( 0, 255, 255 ), reset = true )
+              ChangeSequentColor( ???, new Color( 0, 255, 255 ), reset = true )
             )
           } catch { case _: Throwable => }
         case None =>
@@ -53,14 +40,14 @@ class ProofNodeInfo[T] extends NodeInfo {
     }
   }
 
-  def genShowSubtreeAction( x: TreeProof[T] ) = new Action( "Focus on subproof" ) {
+  def genShowSubtreeAction( x: DagProof[T] ) = new Action( "Focus on subproof" ) {
     def apply() = {
       root match {
         case Some( node ) =>
           Main.body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
           Main.body.getContent.getData match {
-            case Some( ( name, proof: TreeProof[_] ) ) => Main.initSunburstDialog( name, x )
-            case _                                     => Main.errorMessage( "Proof not found!" )
+            case Some( ( name, proof: DagProof[_] ) ) => Main.initSunburstDialog( name, x )
+            case _                                    => Main.errorMessage( "Proof not found!" )
           }
           Main.body.cursor = java.awt.Cursor.getDefaultCursor
         case None =>
@@ -73,65 +60,44 @@ class ProofNodeInfo[T] extends NodeInfo {
       this.root = Some( p )
       this.weighter = Some( new ProofWeighter() )
       this.weighter.get.init( this.root.get )
-      this.actions = Map[TreeProof[T], Array[Action]]()
+      this.actions = Map[DagProof[T], Array[Action]]()
 
     case _ =>
       throw new Exception( "ProofNodeInfo only accepts ProofNodes as tree!" )
   }
 
   def getName( path: TreePath2[TreeNode] ) = path.getLastPathComponent match {
-    case ProofNode( p: TreeProof[_] ) =>
+    case ProofNode( p: DagProof[_] ) =>
       p.name
   }
 
   def getColor( path: TreePath2[TreeNode] ) = {
     import Rainbow._
-    val rule = path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.rule
-    if ( rule == CutRuleType ) {
-      green
-    } else if ( rule == InitialRuleType || rule == WeakeningLeftRuleType || rule == WeakeningRightRuleType || rule == ContractionLeftRuleType || rule == ContractionRightRuleType ) {
-      Color.LIGHT_GRAY
-    } else if ( rule == AndLeft1RuleType || rule == AndLeft2RuleType || rule == OrRight1RuleType || rule == OrRight2RuleType || rule == ImpRightRuleType || rule == NegLeftRuleType || rule == NegRightRuleType ) {
-      orange
-    } else if ( rule == AndRightRuleType || rule == OrLeftRuleType || rule == ImpLeftRuleType ) {
-      yellow
-    } else if ( rule == ForallLeftRuleType || rule == ExistsRightRuleType || rule == ForallSkLeftRuleType || rule == ExistsSkRightRuleType ) {
-      blue
-    } else if ( rule == ForallRightRuleType || rule == ExistsLeftRuleType || rule == ForallSkRightRuleType || rule == ExistsSkLeftRuleType ) {
-      red
-    } else if ( rule == EquationLeft1RuleType || rule == EquationLeft2RuleType || rule == EquationRight1RuleType || rule == EquationRight2RuleType ) {
-      violet
-    } else {
-      Color.MAGENTA
+    path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof match {
+      case _: CutRule => green
+      case _: InitialSequent | _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule => Color.LIGHT_GRAY
+      case _: AndLeftRule | _: OrRightRule | _: ImpRightRule | _: NegLeftRule | _: NegRightRule => orange
+      case _: AndRightRule | _: OrLeftRule | _: ImpLeftRule => yellow
+      case WeakQuantifierRule( _, _, _, _, _, _ ) => blue
+      case StrongQuantifierRule( _, _, _, _, _ ) => red
+      case _: EqualityRule => violet
+      case _ => Color.MAGENTA
     }
   }
 
-  def getWeight( path: TreePath2[TreeNode] ) = {
-    1
-  }
+  def getWeight( path: TreePath2[TreeNode] ) = 1
 
-  def getCumulatedWeight( path: TreePath2[TreeNode] ) = {
-    path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.size()
-  }
+  def getCumulatedWeight( path: TreePath2[TreeNode] ) =
+    path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.treeSize.toLong
 
-  def getWeightFormatted( path: TreePath2[TreeNode] ) = {
-    getWeight( path ).toString
-  }
+  def getWeightFormatted( path: TreePath2[TreeNode] ) = getWeight( path ).toString
 
   val sequentNameCache = collection.mutable.Map[HOLSequent, String]()
-  def getTooltip( path: TreePath2[TreeNode] ) = {
-    val es = path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.root
-    es match {
-      case s: OccSequent =>
-        val fs = s.toHOLSequent
-        if ( !( sequentNameCache contains fs ) )
-          sequentNameCache( fs ) = fsequentString( s.toHOLSequent, escape_latex = false )
-        sequentNameCache( fs )
-
-      case _ => es.toString
+  def getTooltip( path: TreePath2[TreeNode] ) =
+    path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof match {
+      case p: SequentProof[_, _] => p.conclusion.toString
+      case p                     => s"${p.productPrefix}(${p.productIterator mkString ", "})"
     }
-
-  }
 
   def getActions( path: TreePath2[TreeNode] ) = {
     val node = path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof
@@ -173,7 +139,7 @@ object Rainbow {
   val violet = new Color( 148, 0, 211 )
 }
 
-class ProofWeighter[T] extends Weighter {
+class ProofWeighter[T <: DagProof[T]] extends Weighter {
   var root: Option[ProofNode[T]] = None
   var histogram: Option[Array[Int]] = None
 
@@ -204,20 +170,4 @@ class ProofWeighter[T] extends Weighter {
 
 class ProofColorizer extends Colorizer {
   def get( w: Float ) = new Color( 255 * w, 255 * w, 255 * w )
-}
-
-// Comment from Mikheil: for what this class is used???
-class FormulaBox[V]( var inference: TreeProof[V] ) extends BorderPanel {
-  inference match {
-    case a: AuxiliaryFormulas =>
-      if ( inference.rule == NullaryRuleType ) {
-      } else if ( inference.rule == UnaryRuleType ) {
-        a.aux
-      } else if ( inference.rule == BinaryRuleType ) {
-
-      } else {
-
-      }
-
-  }
 }

@@ -7,6 +7,8 @@ package at.logic.gapt.prooftool
  * Time: 2:32:34 PM
  */
 
+import javax.swing.WindowConstants
+
 import scala.swing._
 import event._
 import java.awt.Point
@@ -19,7 +21,7 @@ object About {
     modal = true
     location = new Point( Main.top.location.x + 100, Main.top.location.y + 100 )
     //setLocationRelativeTo(Main.mBar)
-    peer.setDefaultCloseOperation( 2 ) //DISPOSE_ON_CLOSE
+    peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
 
     defaultButton = new Button( Action( "OK" ) { dispose() } ) {
       //  border = Swing.MatteBorder(0,140,0,0, background)

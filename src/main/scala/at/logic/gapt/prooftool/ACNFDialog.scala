@@ -10,14 +10,14 @@ package at.logic.gapt.prooftool
 import swing._
 import java.awt.Point
 import swing.GridBagPanel.Fill
-import javax.swing.SpinnerNumberModel
+import javax.swing.{ WindowConstants, SpinnerNumberModel }
 
 object ACNFDialog extends Dialog {
   title = "ACNF Dialog"
   resizable = false
   modal = true
   location = new Point( Main.top.location.x + 200, Main.top.location.y + 100 )
-  peer.setDefaultCloseOperation( 2 ) //DISPOSE_ON_CLOSE
+  peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
 
   def apply( proofs: Seq[String], refutations: Seq[String] ): Option[( String, String, Int )] = {
     var optionResult: Option[( String, String, Int )] = None

@@ -7,17 +7,20 @@ package at.logic.gapt.prooftool
  * Time: 2:13 PM
  */
 
+import javax.swing.WindowConstants
+
+import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.proofs.{ SequentProof, DagProof }
+
 import scala.swing._
-import at.logic.gapt.proofs.proofs.TreeProof
 import scala.swing.event._
-import at.logic.gapt.proofs.lk.base.LKProof
 import java.awt.Color
 
-class SunburstTreeDialog[T]( name: String, proof: TreeProof[T] ) extends Frame {
+class SunburstTreeDialog[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends Frame {
   title = "Sunburst view of " + name
   //modal = false
   preferredSize = new Dimension( 700, 500 )
-  peer.setDefaultCloseOperation( 2 ) //DISPOSE_ON_CLOSE
+  peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
   menuBar = new MenuBar() {
     import javax.swing.KeyStroke
     import java.awt.event.{ KeyEvent, ActionEvent => JActionEvent }
@@ -57,9 +60,9 @@ class SunburstTreeDialog[T]( name: String, proof: TreeProof[T] ) extends Frame {
     sunView.setToolTipEnabled( true )
     sunView.reactions += {
       case NodeSelectedEvent( null ) =>
-        info.p_=( Some( model.root.asInstanceOf[ProofNode[T]].proof.asInstanceOf[LKProof] ) )
+        info.p_=( Some( model.root.asInstanceOf[ProofNode[T]].proof.asInstanceOf[SequentProof[Nothing, Nothing]] ) )
       case NodeSelectedEvent( p: ProofNode[_] ) =>
-        info.p_=( Some( p.proof.asInstanceOf[LKProof] ) )
+        info.p_=( Some( p.proof.asInstanceOf[SequentProof[Nothing, Nothing]] ) )
     }
     sunView.setSelectedNode( null )
 

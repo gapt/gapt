@@ -21,35 +21,23 @@ object HOLFunction {
 }
 
 object FOLHeadType {
-  def apply( ret: TA, arity: Int ): TA = arity match {
+  def apply( ret: Ty, arity: Int ): Ty = arity match {
     case 0 => ret
     case n => Ti -> FOLHeadType( ret, n - 1 )
   }
-  def unapply( t: TA ): Option[( TA, Int )] = t match {
+  def unapply( t: Ty ): Option[( Ty, Int )] = t match {
     case Ti -> FOLHeadType( t, n ) => Some( ( t, n + 1 ) )
     case _                         => Some( ( t, 0 ) )
   }
 }
 
-private[expr] class FOLHead( ret: TA ) {
-  def apply( sym: String, arity: Int ): Const =
-    Const( sym, FOLHeadType( ret, arity ) )
-  def unapply( e: LambdaExpression ): Option[( String, Int )] = e match {
-    case NonLogicalConstant( sym, FOLHeadType( `ret`, arity ) ) => Some( ( sym, arity ) )
-    case _ => None
-  }
-}
-
-object FOLAtomHead extends FOLHead( To )
-object FOLFunctionHead extends FOLHead( Ti )
-
 object FOLFunction {
   def apply( sym: String, args: FOLTerm* )( implicit dummyImplicit: DummyImplicit ): FOLTerm = FOLFunction( sym, args )
   def apply( sym: String, args: Seq[FOLTerm] ): FOLTerm =
-    Apps( FOLFunctionHead( sym, args.size ), args ).asInstanceOf[FOLTerm]
+    Apps( FOLFunctionConst( sym, args.size ), args ).asInstanceOf[FOLTerm]
 
-  def unapply( e: LambdaExpression ): Option[( String, List[FOLTerm] )] = e match {
-    case Apps( FOLFunctionHead( sym, _ ), args ) if e.isInstanceOf[FOLTerm] =>
+  def unapply( e: FOLTerm ): Option[( String, List[FOLTerm] )] = e match {
+    case Apps( FOLFunctionConst( sym, _ ), args ) =>
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
@@ -128,8 +116,8 @@ class BinaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
 }
 
 class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: MonomorphicLogicalC ) extends BinaryPropConnectiveHelper( c ) {
-  def apply( fs: Seq[HOLFormula] ): HOLFormula = nAry( fs: _* )
-  def apply( fs: Seq[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = nAry( fs: _* )
+  def apply( fs: TraversableOnce[HOLFormula] ): HOLFormula = nAry( fs.toSeq: _* )
+  def apply( fs: TraversableOnce[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = nAry( fs.toSeq: _* )
 
   def leftAssociative( fs: LambdaExpression* ): HOLFormula =
     fs.reduceLeftOption( super.apply ).getOrElse( neutral() ).asInstanceOf[HOLFormula]
@@ -149,14 +137,14 @@ class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: M
       def unapply( formula: LambdaExpression ) = MonoidalBinaryPropConnectiveHelper.this.unapply( formula )
     }
 
-    def unapply( formula: LambdaExpression ): Some[List[LambdaExpression]] = formula match {
+    def unapply( formula: HOLFormula ): Some[List[HOLFormula]] = formula match {
       case Binary( nAry( as ), nAry( bs ) ) => Some( as ::: bs )
       case neutral()                        => Some( List() )
       case _                                => Some( List( formula ) )
     }
 
     def unapply( formula: FOLFormula ): Some[List[FOLFormula]] =
-      unapply( formula.asInstanceOf[LambdaExpression] ).asInstanceOf[Some[List[FOLFormula]]]
+      unapply( formula.asInstanceOf[HOLFormula] ).asInstanceOf[Some[List[FOLFormula]]]
   }
 }
 
@@ -191,7 +179,7 @@ object Neg extends UnaryPropConnectiveHelper( NegC )
 
 class NullaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply(): PropFormula = c().asInstanceOf[PropFormula]
-  def unapply( formula: LambdaExpression ) = formula match {
+  def unapply( formula: PropFormula ) = formula match {
     case c() => true
     case _   => false
   }

@@ -18,7 +18,6 @@ import org.specs2.mutable._
 class sFOparserCNTTest extends Specification {
   "sFOparserCNT" should {
 
-    sequential
     "parse correctly David's proof " in {
       skipped( "has eigenvariable condition errors" )
 

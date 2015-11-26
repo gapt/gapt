@@ -103,8 +103,8 @@ class hol2folTest extends Specification {
         )
       )
 
-      val hterm1 = changeTypeIn( fterm1, Map[String, TA]( ( "q_1", Ti -> Ti ) ) )
-      val hterm2 = changeTypeIn( fterm2, Map[String, TA]( ( "q_1", Ti -> Ti ) ) )
+      val hterm1 = changeTypeIn( fterm1, Map[String, Ty]( ( "q_1", Ti -> Ti ) ) )
+      val hterm2 = changeTypeIn( fterm2, Map[String, Ty]( ( "q_1", Ti -> Ti ) ) )
       ok
     }
   }

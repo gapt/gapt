@@ -99,7 +99,7 @@ import at.logic.gapt.proofs.lk.LKToLKsk
       val folcl = reduceHolToFol(folcl_)
 
       show("Refuting clause set")
-      val Some(rp) = new Prover9Prover().getRobinsonProof(folcl.map(_.asInstanceOf[FOLClause]))
+      val Some(rp) = Prover9.getRobinsonProof(folcl.map(_.asInstanceOf[FOLClause]))
 
       show("Getting formulas")
       val proofformulas = selp.nodes.flatMap(_.asInstanceOf[LKProof].root.toHOLSequent.formulas  ).toList.distinct

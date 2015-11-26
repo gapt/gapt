@@ -175,13 +175,6 @@ object lkNew2Old {
       val mainOcc = proofOld.getDescendantInLowerSequent( proofOld_.prin.head ).get
       testCorrectness( proofOld, proof, sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) :+ mainOcc )
 
-    case InductionRule( leftSubProof, aux1, rightSubProof, aux2, aux3, term ) =>
-      val ( leftSubProofOld, leftSequent ) = apply_( leftSubProof )
-      val ( rightSubProofOld, rightSequent ) = apply_( rightSubProof )
-      val proofOld = lk.InductionRule( leftSubProofOld, rightSubProofOld, leftSequent( aux1 ), rightSequent( aux2 ), rightSequent( aux3 ), term )
-
-      testCorrectness( proofOld, proof, leftSequent.delete( aux1 ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux2, aux3 ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) :+ proofOld.prin.head )
-
     case DefinitionLeftRule( subProof, aux, main ) =>
       val ( subProofOld, sequent ) = apply_( subProof )
       val proofOld = lk.DefinitionLeftRule( subProofOld, sequent( aux ), main )
@@ -430,14 +423,6 @@ object lkOld2New {
       val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, pos.head )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) :+ mainOcc )
-
-    case lk.InductionRule( leftSubProof, rightSubProof, endSequent, aux1Occ, aux2Occ, aux3Occ, mainOcc, term ) =>
-      val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
-      val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
-      val ( aux1, aux2, aux3 ) = ( leftSequent indexOf aux1Occ, rightSequent indexOf aux2Occ, rightSequent indexOf aux3Occ )
-      val proofNew = InductionRule( leftSubProofNew, aux1, rightSubProofNew, aux2, aux3, term )
-
-      testCorrectness( proof, proofNew, ( leftSequent.delete( aux1 ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux2, aux3 ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) :+ mainOcc )
 
     case lk.DefinitionLeftRule( subProof, endSequent, auxOcc, mainOcc ) =>
       val ( subProofNew, sequent ) = apply_( subProof )
