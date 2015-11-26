@@ -11,6 +11,7 @@
 \usepackage{bussproofs}
 \usepackage{comment}
 \usepackage{hyperref}
+\usepackage{lmodern}
 
 \renewcommand{\familydefault}{\sfdefault} % change to sans serif font
 
@@ -53,8 +54,10 @@
   inputencoding=utf8,
   extendedchars=true,
   columns=fullflexible,
-  morecomment=[l][\bf]{gapt> },
+  morecomment=[l][\bfseries]{gapt> },
   literate=%
+    {⊥}{{\ensuremath{\bot}}}1%
+    {⊤}{{\ensuremath{\top}}}1%
     {∧}{{\ensuremath{\land}}}1%
     {⊃}{{\ensuremath{\impl}}}1%
     {∨}{{\ensuremath{\lor}}}1%
@@ -64,6 +67,7 @@
     {ι}{{\ensuremath{\iota}}}1%
     {α}{{\ensuremath{\alpha}}}1%
     {τ}{{\ensuremath{\tau}}}1%
+    {∈}{{\ensuremath{\in}}}1%
   }
 \lstnewenvironment{clilisting}{}{}
 
