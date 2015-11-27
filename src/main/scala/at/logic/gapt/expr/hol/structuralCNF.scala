@@ -144,7 +144,7 @@ object structuralCNF {
         case ( Or( a, b ), i: Ant )  => i
         case ( Imp( a, b ), i: Ant ) => i
       } match {
-        case splits if splits.size > 1 =>
+        case splits if splits.size > 1 || ( splits.size == 1 && seq.size > 3 ) =>
           abbrev( seq, splits.head, backTrans )
         case Seq( i ) => splitAt( seq, i, backTrans )
         case Seq() =>
