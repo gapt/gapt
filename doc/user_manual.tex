@@ -63,7 +63,24 @@
     {τ}{{\ensuremath{\tau}}}1%
     {∈}{{\ensuremath{\in}}}1%
   }
-\lstnewenvironment{clilisting}{}{}
+
+% = clilisting environment
+%
+% This environment contains CLI interactions which are automatically evaluated
+% using "sbt evalUserManual".
+%
+% Usage:
+%
+% \begin{clilisting}
+% gapt> true
+% res1: Boolean = true
+% \end{clilisting}
+%
+% \begin{clilisting}[someCondition]
+% gapt> this will only be executed if someCondition returns true
+% \end{clilisting}
+%
+\lstnewenvironment{clilisting}[1][]{}{}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{4pt}
@@ -248,20 +265,20 @@ Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, whi
 are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
 iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n$ holes, there
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
-\begin{clilisting}
+\begin{clilisting}[MiniSAT.isInstalled]
 gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 2))
 res2: Boolean = true
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,2}$ is valid, and
-\begin{clilisting}
+\begin{clilisting}[MiniSAT.isInstalled]
 gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 3))
 res3: Boolean = false
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
-\begin{clilisting}
+\begin{clilisting}[MiniSAT.isInstalled]
 gapt> val Some(m) = MiniSAT.solve(Neg(PigeonHolePrinciple(3, 3)))
 m: at.logic.gapt.models.Interpretation =
 R(p_1,h_1) -> false
@@ -276,7 +293,7 @@ R(p_3,h_3) -> true
 
 \end{clilisting}
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
-\begin{clilisting}
+\begin{clilisting}[MiniSAT.isInstalled]
 gapt> val p1 = PigeonHolePrinciple.atom(1, 1)
 p1: at.logic.gapt.expr.FOLAtom = R(p_1,h_1)
 
@@ -291,7 +308,7 @@ res5: Boolean = true
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
-\begin{clilisting}
+\begin{clilisting}[MiniSAT.isInstalled]
 gapt> m.interpret( And(p1, p2) )
 res6: Boolean = false
 
@@ -341,13 +358,16 @@ quasi-tautology using veriT:
 gapt> val f = parseFormula("(a=b | a=c) & P(c) & P(b) -> P(a)")
 f: at.logic.gapt.expr.FOLFormula = (((a=b∨a=c)∧(P(c)∧P(b)))⊃P(a))
 
+\end{clilisting}
+
+\begin{clilisting}[VeriT.isInstalled]
 gapt> VeriT isValid f
 res9: Boolean = true
 
 \end{clilisting}
 
 GAPT also supports Z3 and CVC4 out of the box (if they are installed):
-\begin{clilisting}
+\begin{clilisting}[Z3.isInstalled && CVC4.isInstalled]
 gapt> Z3 isValid f
 res10: Boolean = true
 
@@ -378,7 +398,7 @@ constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(a
 
 We can also extract instances for basic equality axioms (reflexivity, symmetry,
 and congruences) from veriT's proof output:
-\begin{clilisting}
+\begin{clilisting}[VeriT.isInstalled]
 gapt> val Some(expansionSequent) = VeriT getExpansionSequent (Sequent() :+ f)
 expansionSequent: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.∀y.(x=y⊃y=x), ArrayBuffer((WeakQuantifier(∀y.(a=y⊃y=a), ArrayBuffer((Atom(a=b)⊃Atom(b=a),b), (Atom(a=c)⊃Atom(c=a),c))),a))), WeakQuantifier(∀x1.∀y1.((x1=y1∧P(x1))⊃P(y1)), ArrayBuffer((WeakQuantifier(∀y1.((c=y1∧P(c))⊃P(y1)), ArrayBuffer((Atom(c=a)∧Atom(P(c))⊃Atom(P(a)),a))),c), (WeakQuantifier(∀y1.((b=y1∧P(b))⊃P(y1)), ArrayBuffer((Atom(b=a)∧Atom(P(b))⊃Atom(P(a)),a))),b))) :- Atom(a=b)∨Atom(a=c)∧Atom(P(c))∧Atom(P(b))⊃Atom(P(a))
 
@@ -403,6 +423,9 @@ Here is how you can get all of these kinds of proofs using Prover9:
 gapt> val sequent = existsclosure("p(0)" +: "p(x) -> p(s(x))" +: Sequent() :+ "p(s(s(0)))" map parseFormula)
 sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))
 
+\end{clilisting}
+
+\begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 isValid sequent
 res13: Boolean = true
 
@@ -440,7 +463,7 @@ res16: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(
 
 All of the above works with E prover as well, we will just show
 \cli{getLKProof} as an example:
-\begin{clilisting}
+\begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
 res17: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p19] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p18, Suc(0), p17, Ant(1)))
@@ -458,7 +481,7 @@ Some([p19] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p18, Suc(0), p1
 Note that \cli{getLKProof} only works for sequents without strong quantifiers
 (i.e.\ sequents that are already Skolemized); however \cli{getExpansionSequent}
 will happily return expansion sequents with Skolem quantifiers in that case:
-\begin{clilisting}
+\begin{clilisting}[Prover9.isInstalled]
 gapt> val strong = "(exists x all y P(x,y))" +: Sequent() :+ "(all y exists x P(x,y))" map parseFormula
 strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLFormula] = ∃x.∀y.P(x,y) :- ∀y.∃x.P(x,y)
 
@@ -469,7 +492,7 @@ res18: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Skole
 
 The LeanCoP interface only supports the \cli{getExpansionSequent} method with
 exactly one formula in the succedent:
-\begin{clilisting}
+\begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionSequent sequent
 res19: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀_4233.(p(_4233)⊃p(s(_4233))), ArrayBuffer((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
 
