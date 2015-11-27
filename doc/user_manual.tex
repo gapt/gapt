@@ -499,8 +499,8 @@ res18: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Skole
 The LeanCoP interface only supports the \cli{getExpansionSequent} method with
 exactly one formula in the succedent:
 \begin{clilisting}[LeanCoP.isInstalled]
-gapt> LeanCoP getExpansionSequent sequent
-res19: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀_4233.(p(_4233)⊃p(s(_4233))), ArrayBuffer((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
+gapt> LeanCoP getExpansionSequent sequent map {toDeep(_)}
+res19: Option[at.logic.gapt.proofs.HOLSequent] = Some(p(0), ((p(0)⊃p(s(0)))∧(p(s(0))⊃p(s(s(0))))) :- p(s(s(0))))
 
 \end{clilisting}
 
