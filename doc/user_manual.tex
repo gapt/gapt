@@ -814,12 +814,9 @@ quantifer, one with $2$ quantifers.
 \pagebreak
 \begin{appendix}
 
-\section{The Sequent Calculus}\label{app:sequent_calculus}
+\section{Proof systems}
 
-This section defines the rule systems used in GAPT. The rules can be constructed
-via Scala-classes, which create the underlying data structure.
-
-\subsection{LK}
+\subsection{LK}\label{app:sequent_calculus}
 
 \fxnote{update sequent calculus to new LK, describe higher-order LK directly here}
 
@@ -1083,7 +1080,59 @@ These definition rules are extremely liberal, as they allow the replacement of a
     \BinaryInfCm{\Gamma_1, \Gamma_2 \seq \Delta_1, \Delta_2, \forall x F[x]}
   \end{prooftree}
 
+\subsection{Resolution}
 
+\subsection*{Initial clauses}
+
+\begin{prooftree}
+\AxiomC{}\RightLabel{InputClause}
+\UnaryInfC{$C$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}\RightLabel{ReflexivityClause}
+\UnaryInfC{$t=t$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}\RightLabel{TautologyClause}
+\UnaryInfC{$a \lor \neg a$}
+\end{prooftree}
+
+\subsection*{Structural rules}
+
+\begin{prooftree}
+\AxiomC{$a \lor a \lor C$}\RightLabel{Factor}
+\UnaryInfC{$a \lor C$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$C$}\RightLabel{Instance}
+\UnaryInfC{$C \sigma$}
+\end{prooftree}
+
+\subsection*{Logical rules}
+
+\begin{prooftree}
+\AxiomC{$C \lor a$}
+\AxiomC{$\neg a \lor D$}
+\RightLabel{Resolution}
+\BinaryInfC{$C \lor D$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$C \lor t=s$}
+\AxiomC{$l[t] \lor D$}
+\RightLabel{Paramodulation}
+\BinaryInfC{$C \lor l[s] \lor D$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$C \lor t=s$}
+\AxiomC{$l[s] \lor D$}
+\RightLabel{Paramodulation}
+\BinaryInfC{$C \lor l[t] \lor D$}
+\end{prooftree}
 
 \subsection{LKsk}
   
@@ -1316,60 +1365,6 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 \end{multicols}
 Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
 
-\section{The Resolution Calculus}
-
-\subsection*{Initial clauses}
-
-\begin{prooftree}
-\AxiomC{}\RightLabel{InputClause}
-\UnaryInfC{$C$}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{}\RightLabel{ReflexivityClause}
-\UnaryInfC{$t=t$}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{}\RightLabel{TautologyClause}
-\UnaryInfC{$a \lor \neg a$}
-\end{prooftree}
-
-\subsection*{Structural rules}
-
-\begin{prooftree}
-\AxiomC{$a \lor a \lor C$}\RightLabel{Factor}
-\UnaryInfC{$a \lor C$}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{$C$}\RightLabel{Instance}
-\UnaryInfC{$C \sigma$}
-\end{prooftree}
-
-\subsection*{Logical rules}
-
-\begin{prooftree}
-\AxiomC{$C \lor a$}
-\AxiomC{$\neg a \lor D$}
-\RightLabel{Resolution}
-\BinaryInfC{$C \lor D$}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{$C \lor t=s$}
-\AxiomC{$l[t] \lor D$}
-\RightLabel{Paramodulation}
-\BinaryInfC{$C \lor l[s] \lor D$}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{$C \lor t=s$}
-\AxiomC{$l[s] \lor D$}
-\RightLabel{Paramodulation}
-\BinaryInfC{$C \lor l[t] \lor D$}
-\end{prooftree}
-
 \subsection{Ral}
 
 Ral operates on sequents of labelled formulas, just as LKsk.  A label $\ell$ is
@@ -1526,6 +1521,8 @@ antecedent or the succedent---this is one of the four possibilities:
   \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \vdash \Delta, \sklabel{B}{\ell}}
 \end{prooftree}
 \end{multicols}
+
+\fxnote{Expansion trees?}
 
 \section{Formula Syntax}
 \label{app:formulasyntax}
