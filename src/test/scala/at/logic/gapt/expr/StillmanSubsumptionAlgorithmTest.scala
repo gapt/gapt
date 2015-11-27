@@ -76,7 +76,6 @@ class StillmanSubsumptionAlgorithmFOLTest extends Specification {
         StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
       }
       "P(x) | Q(x,y) and P(a) | Q(a,y) | R(x)" in {
-        skipped( "I am failing failing :( Please check me!" )
         val c1 = HOLSequent( Nil, Px :: Qxy :: Nil )
         val c2 = HOLSequent( Nil, Pa :: Qay :: Rx :: Nil )
         StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
@@ -156,13 +155,11 @@ class StillmanSubsumptionAlgorithmHOLTest extends Specification {
         StillmanSubsumptionAlgorithmHOL.subsumes( c1, c2 ) must beEqualTo( true )
       }
       "P(x:i,x:i) and P(f(q:(i->o),z:i,a:i):i,f(q:(i->o),z:i,a:i):i) | -Q(f(b:i):(i->i))" in {
-        skipped( "I am failing failing :( Please check me!" )
         val c1 = HOLSequent( Nil, Pxx :: Nil )
         val c2 = HOLSequent( Qf1b :: Nil, Pf2qza :: Nil )
         StillmanSubsumptionAlgorithmHOL.subsumes( c1, c2 ) must beEqualTo( true )
       }
       "P(x:i) and P(a:i) | Q(x:i)" in {
-        skipped( "I am failing failing :( Please check me!" )
         val c1 = HOLSequent( Nil, Px :: Nil )
         val c2 = HOLSequent( Nil, Pa :: Qx :: Nil )
         StillmanSubsumptionAlgorithmHOL.subsumes( c1, c2 ) must beEqualTo( true )
