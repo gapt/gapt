@@ -297,44 +297,29 @@ res6: Boolean = false
 
 \end{clilisting}
 
-We can also convert $\mathrm{PHP}_{3,3}$ into DIMACS format:
+We can also convert $\neg\mathrm{PHP}_{3,3}$ into DIMACS format:
 \begin{clilisting}
-gapt> val (cnf, _, _) = structuralCNF(PigeonHolePrinciple(3,3), generateJustifications=false, propositional=true)
-cnf: Set[at.logic.gapt.proofs.HOLClause] = Set(R(p_1,h_3) :- D0, D4 :- R(p_3,h_1), D0, D1, D2 :- D3, D4, D5, D6, D7, D8, D9, D10, R(p_2,h_3), R(p_2,h_1) :- D1, D9 :- R(p_1,h_3), D10 :- R(p_1,h_3), D6 :- R(p_1,h_2), D7 :- R(p_1,h_2), D0, D1, D2 :- D3, D4, D5, D6, D7, D8, D9, D10, R(p_3,h_3), D8 :- R(p_3,h_2), D5 :- R(p_2,h_1), R(p_3,h_1) :- D2, R(p_1,h_1) :- D0, R(p_1,h_2) :- D0, R(p_2,h_2) :- D1, D6 :- R(p_2,h_2), R(p_3,h_2) :- D2, D10 :- R(p_3,h_3), R(p_3,h_3) :- D2, D7 :- R(p_3,h_2), D3 :- R(p_1,h_1), D9 :- R(p_2,h_3), R(p_2,h_3) :- D1, D8 :- R(p_2,h_2), D5 :- R(p_3,h_1), D4 :- R(p_1,h_1), D3 :- R(p_2,h_1))
+gapt> val (cnf, _, _) = structuralCNF(-PigeonHolePrinciple(3,3), generateJustifications=false, propositional=true)
+cnf: Set[at.logic.gapt.proofs.HOLClause] = Set( :- R(p_3,h_1), R(p_3,h_2), R(p_3,h_3), R(p_3,h_2), R(p_2,h_2) :- , R(p_2,h_3), R(p_1,h_3) :- , R(p_3,h_3), R(p_2,h_3) :- ,  :- R(p_2,h_1), R(p_2,h_2), R(p_2,h_3), R(p_3,h_3), R(p_1,h_3) :- , R(p_2,h_1), R(p_1,h_1) :- , R(p_3,h_2), R(p_1,h_2) :- , R(p_3,h_1), R(p_1,h_1) :- , R(p_3,h_1), R(p_2,h_1) :- , R(p_2,h_2), R(p_1,h_2) :- ,  :- R(p_1,h_1), R(p_1,h_2), R(p_1,h_3))
 
 gapt> val encoding = new DIMACSEncoding
 encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 
 gapt> writeDIMACS(encoding encodeCNF cnf)
 res7: String =
-"p cnf 20 27
--1 2 0
--3 4 0
--2 -5 -6 7 3 8 9 10 11 12 13 14 0
--15 5 0
--12 1 0
--13 1 0
--9 16 0
--10 16 0
--2 -5 -6 7 3 8 9 10 11 12 13 17 0
--11 18 0
--8 15 0
--4 6 0
--19 2 0
--16 2 0
--20 5 0
--9 20 0
--18 6 0
--13 17 0
--17 6 0
--10 18 0
--7 19 0
--12 14 0
--14 5 0
--11 20 0
--8 4 0
--3 19 0
--7 15 0
+"p cnf 9 12
+1 2 3 0
+-2 -4 0
+-5 -6 0
+-3 -5 0
+7 4 5 0
+-3 -6 0
+-7 -8 0
+-2 -9 0
+-1 -8 0
+-1 -7 0
+-4 -9 0
+8 9 6 0
 "
 
 \end{clilisting}
@@ -343,7 +328,7 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res8: at.logic.gapt.expr.HOLAtom = R(p_1,h_3)
+res8: at.logic.gapt.expr.HOLAtom = R(p_3,h_1)
 
 \end{clilisting}
 
