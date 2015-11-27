@@ -259,41 +259,41 @@ f: at.logic.gapt.proofs.HOLSequent = ((((((c_1∨d_1)∧(c_2∨d_2))∧(c_3∨d_
   
 \subsection{SAT Solving}
 %
-The following shows an example session, using the MiniSAT solver
+The following shows an example session, using the Sat4j SAT solver
 to verify valdity and satisfiability, and query the thus obtained models.
 Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, which states that if $m$ pigeons
 are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
 iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n$ holes, there
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
-\begin{clilisting}[MiniSAT.isInstalled]
-gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 2))
+\begin{clilisting}
+gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
 res2: Boolean = true
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,2}$ is valid, and
-\begin{clilisting}[MiniSAT.isInstalled]
-gapt> MiniSAT.isValid(PigeonHolePrinciple(3, 3))
+\begin{clilisting}
+gapt> Sat4j isValid PigeonHolePrinciple(3, 3)
 res3: Boolean = false
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
-\begin{clilisting}[MiniSAT.isInstalled]
-gapt> val Some(m) = MiniSAT.solve(Neg(PigeonHolePrinciple(3, 3)))
+\begin{clilisting}
+gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3)
 m: at.logic.gapt.models.Interpretation =
 R(p_1,h_1) -> false
-R(p_1,h_2) -> true
-R(p_1,h_3) -> false
+R(p_1,h_2) -> false
+R(p_1,h_3) -> true
 R(p_2,h_1) -> true
 R(p_2,h_2) -> false
 R(p_2,h_3) -> false
 R(p_3,h_1) -> false
-R(p_3,h_2) -> false
-R(p_3,h_3) -> true
+R(p_3,h_2) -> true
+R(p_3,h_3) -> false
 
 \end{clilisting}
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
-\begin{clilisting}[MiniSAT.isInstalled]
+\begin{clilisting}
 gapt> val p1 = PigeonHolePrinciple.atom(1, 1)
 p1: at.logic.gapt.expr.FOLAtom = R(p_1,h_1)
 
@@ -308,7 +308,7 @@ res5: Boolean = true
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
-\begin{clilisting}[MiniSAT.isInstalled]
+\begin{clilisting}
 gapt> m.interpret( And(p1, p2) )
 res6: Boolean = false
 
