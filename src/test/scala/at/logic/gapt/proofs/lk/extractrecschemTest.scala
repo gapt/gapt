@@ -181,7 +181,7 @@ class Pi2FactorialPOC extends Specification {
   val O = Const( "0", Ti )
   val s = Const( "s", Ti -> Ti )
   val plus = Const( "+", Ti -> ( Ti -> Ti ) )
-  val times = Const( "+", Ti -> ( Ti -> Ti ) )
+  val times = Const( "*", Ti -> ( Ti -> Ti ) )
   val g = Const( "g", Ti -> ( Ti -> Ti ) )
   val f = Const( "f", Ti -> Ti )
 
