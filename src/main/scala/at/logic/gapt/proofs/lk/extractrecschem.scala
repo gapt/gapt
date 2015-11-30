@@ -61,7 +61,7 @@ object extractRecSchem {
   }
 
   def getRules( p: LKProof, axiom: LambdaExpression, symbols: Sequent[LambdaExpression], context: List[Var] ): Set[Rule] = p match {
-    case _: InitialSequent => symbols.elements filterNot { _ == Top() } map { sym => Rule( axiom, sym ) } toSet
+    case _: InitialSequent => symbols.elements filterNot { _ == Bottom() } map { sym => Rule( axiom, sym ) } toSet
     case WeakQuantifierRule( q, aux, _, term, v, pol ) =>
       val main = p.mainIndices.head
       val appSym = App( symbols( main ), term )
@@ -72,7 +72,7 @@ object extractRecSchem {
           val expCpsSym = Apps( cpsSym, eigenvars )
           expCpsSym.exptype match {
             case To =>
-              getRules( q, expCpsSym, p.occConnectors.head.parents( symbols ).updated( aux, Seq( Top() ) ).map( _.head ), eigenvars ++ context ) +
+              getRules( q, expCpsSym, p.occConnectors.head.parents( symbols ).updated( aux, Seq( Bottom() ) ).map( _.head ), eigenvars ++ context ) +
                 Rule( axiom, App( appSym, cpsSym ) )
             case nextCpsType -> To =>
               val nextCpsSym = Var( mkFreshVar(), nextCpsType )
@@ -92,7 +92,7 @@ object extractRecSchem {
       val eigenvars = findEigenVars( aux1, q1 )
       val hypSym = Apps( symbol, eigenvars )
       val rules1 = hypSym.exptype match {
-        case To => getRules( q1, hypSym, occConn1.parents( symbols ).map( _.headOption.getOrElse( Top() ) ), eigenvars ++ context )
+        case To => getRules( q1, hypSym, occConn1.parents( symbols ).map( _.headOption.getOrElse( Bottom() ) ), eigenvars ++ context )
         case introType -> To =>
           val introSym = Var( mkFreshVar(), introType )
           val fullHypSym = App( hypSym, introSym )
@@ -112,7 +112,7 @@ object extractRecSchem {
         ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, hypVar ) =>
           caseSymbols = caseSymbols.updated( hyp, symbol( hypVar ) )
         }
-        caseSymbols = caseSymbols.updated( c.conclusion, Top() ) // FIXME: pi2-induction
+        caseSymbols = caseSymbols.updated( c.conclusion, Bottom() ) // FIXME: pi2-induction
 
         getRules( c.proof, caseAxiom, caseSymbols, context ++ c.eigenVars )
       }
@@ -121,7 +121,7 @@ object extractRecSchem {
     case _ =>
       ( for (
         ( q, occConn ) <- p.immediateSubProofs zip p.occConnectors;
-        rule <- getRules( q, axiom, occConn.parents( symbols ).map( _.headOption.getOrElse( Top() ) ), context )
+        rule <- getRules( q, axiom, occConn.parents( symbols ).map( _.headOption.getOrElse( Bottom() ) ), context )
       ) yield rule ).toSet
   }
 }
