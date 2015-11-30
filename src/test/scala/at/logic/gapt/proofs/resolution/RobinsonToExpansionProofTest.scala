@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.expr.hol.{ structuralCNF, existsclosure }
+import at.logic.gapt.expr.hol.{ CNFn, structuralCNF, existsclosure }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansionTrees.{ toDeep, toShallow }
@@ -37,6 +37,17 @@ class RobinsonToExpansionProofTest extends Specification {
       val deep = toDeep( expansion )
       VeriT isValid deep must_== true
     }
+  }
+
+  "tautological clauses with naive CNF" in {
+    val p = FOLAtom( "p" )
+    val endSequent = Sequent() :+ ( ( p --> -( -p ) ) & ( -( -p ) --> p ) )
+    val cnf = CNFn.toFClauseList( endSequent.toFormula )
+    val Some( robinson ) = Prover9 getRobinsonProof cnf
+    val expansion = RobinsonToExpansionProof( robinson, endSequent )
+    toShallow( expansion ) isSubMultisetOf endSequent must_== true
+    val deep = toDeep( expansion )
+    VeriT isValid deep must_== true
   }
 
   "complicated formula with structural CNF" should {

@@ -64,7 +64,7 @@ object RobinsonToExpansionProof {
         fs = if ( i isAnt ) f +: Sequent() else Sequent() :+ f
         clause <- CNFn.toFClauseList( fs.toFormula )
         pcnf = PCNF( fs, clause )
-        exp = LKToExpansionProof( pcnf ) diff clause.map( ETAtom )
+        exp = for ( ( e, ei ) <- LKToExpansionProof( pcnf ).zipWithIndex if ei sameSideAs i if toShallow( e ) == f ) yield e
         just = ProjectionFromEndSequent( exp, i )
       } yield clause -> just
     apply( p, es, justifications toSet, Map() )
