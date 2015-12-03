@@ -27,34 +27,12 @@ case class ExtendedHerbrandSequent( sehs: SchematicExtendedHerbrandSequent, cutF
 
   /** Purely propositional formulas of the end-sequent. */
   val prop = endSequent filterNot { containsQuantifier( _ ) }
-  /** Quantified formulas of the end-sequent. */
-  val quant = endSequent filter { containsQuantifier( _ ) }
-
-  def prop_l = prop.antecedent
-  def prop_r = prop.succedent
-  def quant_l = quant.antecedent
-  def quant_r = quant.succedent
 
   /** Instances of the quantified formulas in the end-sequent. */
   val inst = for (
     ( u, instances ) <- sehs us; if containsQuantifier( u );
     instance <- instances
   ) yield instantiate( u, instance )
-
-  /** Instantiated (previously univ. quantified) formulas on the left. */
-  def inst_l = inst.antecedent
-  /** Instantiated (previously ex. quantified) formulas on the right. */
-  def inst_r = inst.succedent
-
-  // Separating the formulas that contain/don't contain eigenvariables
-  private def isVarFree( f: FOLFormula ) = freeVariables( f ) intersect sehs.eigenVariables.flatten.toSet isEmpty
-  val varFree = prop ++ inst filter isVarFree
-  val alpha = prop ++ inst filterNot isVarFree
-
-  val antecedent = varFree.antecedent
-  val antecedent_alpha = alpha.antecedent
-  val succedent = varFree.succedent
-  val succedent_alpha = alpha.succedent
 
   val cutImplications = for ( ( ( eigenVar, cutImplInst ), cutFormula ) <- sehs.ss zip cutFormulas )
     yield instantiate( cutFormula, eigenVar ) --> And( cutImplInst map { instantiate( cutFormula, _ ) } )
