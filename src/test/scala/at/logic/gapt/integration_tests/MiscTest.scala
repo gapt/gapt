@@ -56,8 +56,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     "perform cut introduction on an example proof" in {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val p = LinearExampleProof( 7 )
-      CutIntroduction.one_cut_one_quantifier( p, false )
-      Success()
+      CutIntroduction.compressLKProof( p, method = DeltaTableMethod( manyQuantifiers = false ), verbose = false ) must beSome
     }
 
     "skolemize a simple proof" in {
@@ -103,7 +102,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val p = LinearExampleProof( 4 )
-      val Some( pi ) = CutIntroduction.one_cut_one_quantifier( p, false )
+      val Some( pi ) = CutIntroduction.compressLKProof( p, method = DeltaTableMethod( manyQuantifiers = false ), verbose = false )
       val pe = ReductiveCutElimination( pi )
 
       ReductiveCutElimination.isCutFree( p ) must beEqualTo( true )
@@ -116,7 +115,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
 
       val testFilePath = tempCopyOfClasspathFile( "SYN726-1.out" )
       val p1 = Prover9Importer.lkProofFromFile( testFilePath )
-      val Some( p2 ) = CutIntroduction.one_cut_many_quantifiers( p1, false )
+      val Some( p2 ) = CutIntroduction.compressLKProof( p1, method = DeltaTableMethod( manyQuantifiers = true ), verbose = false )
       val p3 = ReductiveCutElimination( p2 )
 
       ReductiveCutElimination.isCutFree( p2 ) must beEqualTo( false )

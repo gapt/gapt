@@ -27,7 +27,11 @@ class CutIntroTest extends Specification {
       val ( termset, _ ) = FOLInstanceTermEncoding( proof )
       val set = termset collect { case FOLFunction( _, List( arg ) ) => arg }
 
-      CutIntroduction.one_cut_one_quantifier( proof, false ) must beSome
+      CutIntroduction.compressLKProof(
+        proof,
+        method = DeltaTableMethod( manyQuantifiers = false ),
+        verbose = false
+      ) must beSome
 
       set must contain( exactly( LinearExampleTermset( 4 ): _* ) )
     }
