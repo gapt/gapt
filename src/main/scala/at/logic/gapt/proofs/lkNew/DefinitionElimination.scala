@@ -50,16 +50,6 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
     eliminate_in_proof( x => BetaReduction.betaNormalize( replaceAll_in( edmap, x ) ), p )
   }
 
-  def fixedpoint_val[A]( f: ( A => A ), l: A ): A = {
-    val r = f( l )
-    if ( r == l ) r else fixedpoint_val( f, r )
-  }
-
-  def fixedpoint_seq[A]( f: ( A => A ), l: Seq[A] ): Seq[A] = {
-    val r = l map f
-    if ( r == l ) r else fixedpoint_seq( f, r )
-  }
-
   /**
    * Converts a function of type LambdaExpression => LambdaExpression to type HOLFormula => HOLFormula.
    *
@@ -114,43 +104,6 @@ class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
       dmap
     else expand_dmap( ndmap )
   }
-
-  private def eliminate_from_( defs: ProcessedDefinitionsMap, f: HOLFormula ): HOLFormula = {
-    f match {
-      case Neg( f1 )     => Neg( eliminate_from_( defs, f1 ) )
-      case All( q, f1 )  => All( q, eliminate_from_( defs, f1 ) )
-      case Ex( q, f1 )   => Ex( q, eliminate_from_( defs, f1 ) )
-      case And( f1, f2 ) => And( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case Imp( f1, f2 ) => Imp( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case Or( f1, f2 )  => Or( eliminate_from_( defs, f1 ), eliminate_from_( defs, f2 ) )
-      case HOLAtom( e, args ) =>
-        val sym = e match {
-          case v: Var   => v.sym
-          case c: Const => c.sym
-        }
-
-        defs.get( sym ) match {
-          case Some( ( definition_args, defined_formula ) ) =>
-            if ( args.length != definition_args.length ) {
-              println( "Warning: ignoring definition replacement because argument numbers dont match!" )
-              f
-            } else {
-              //we need to insert the correct values for the free variables in the definition
-              //the casting is needed since we cannot make a map covariant
-              //val pairs = (definition_args zip args)  filter ((x:(LambdaExpression, LambdaExpression) ) => x._1.isInstanceOf[Var])
-              val pairs = definition_args zip args
-              val sub = Substitution( pairs )
-              println( "Substitution:" )
-              println( sub )
-              sub.apply( defined_formula ).asInstanceOf[HOLFormula]
-            }
-          case _ => f
-        }
-      case _ => println( "Warning: unhandled case in definition elimination!" ); f
-    }
-  }
-
-  private val emptymap = Map[SequentIndex, SequentIndex]() //this will be passed to some functions
 
   def eliminate_in_proof( rewrite: ( LambdaExpression => LambdaExpression ), proof: LKProof ): LKProof =
     eliminate_in_proof_( rewrite, proof )
