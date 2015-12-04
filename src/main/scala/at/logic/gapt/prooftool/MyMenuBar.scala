@@ -117,31 +117,7 @@ class MyMenubar extends MenuBar {
       }
     }
     contents += new Separator
-    contents += new MenuItem( Action( "Hide Structural Rules" ) {
-      //  warningMessage("This feature is under development and might not work properly!")
-      ProofToolPublisher.publish( HideStructuralRules )
-    } ) {
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded   => this.enabled = true
-        case UnLoaded => this.enabled = false
-      }
-    }
-    contents += new MenuItem( Action( "Show All Rules" ) {
-      Main.body.getContent.getData.get._2 match {
-        case p: DagProof[a] => ProofToolPublisher.publish( ShowAllRules( p ) )
-      }
-    } ) {
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded   => this.enabled = true
-        case UnLoaded => this.enabled = false
-      }
-    }
+
     contents += new Separator
     contents += new MenuItem( Action( "Hide All Formulas" ) { Main.hideAllFormulas() } ) {
       border = customBorder
@@ -152,34 +128,9 @@ class MyMenubar extends MenuBar {
         case UnLoaded => this.enabled = false
       }
     }
-    contents += new MenuItem( Action( "Hide Sequent Contexts" ) { Main.hideSequentContext() } ) {
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded   => this.enabled = true
-        case UnLoaded => this.enabled = false
-      }
-    }
-    contents += new MenuItem( Action( "Show All Formulas" ) { Main.showAllFormulas() } ) {
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded   => this.enabled = true
-        case UnLoaded => this.enabled = false
-      }
-    }
+
     contents += new Separator
-    contents += new MenuItem( Action( "Mark Cut-Ancestors" ) { Main.markCutAncestors() } ) {
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded   => this.enabled = true
-        case UnLoaded => this.enabled = false
-      }
-    }
+
     contents += new MenuItem( Action( "Mark Ω-Ancestors" ) { Main.markOmegaAncestors() } ) {
       border = customBorder
       enabled = false
@@ -220,6 +171,63 @@ class MyMenubar extends MenuBar {
       this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_DOWN, JActionEvent.ALT_MASK ) )
       border = customBorder
     }
+
+    contents += new Separator()
+
+    contents += new CheckMenuItem( "Hide structural rules" ) { outer =>
+      border = customBorder
+      enabled = false
+      listenTo( ProofToolPublisher )
+      reactions += {
+        case Loaded   => this.enabled = true
+        case UnLoaded => this.enabled = false
+      }
+
+      action = Action( "Hide structural rules" ) {
+        if ( outer.selected )
+          ProofToolPublisher.publish( HideStructuralRules )
+        else
+          Main.body.getContent.getData.get._2 match {
+            case p: DagProof[a] => ProofToolPublisher.publish( ShowAllRules( p ) )
+          }
+      }
+    }
+
+    contents += new CheckMenuItem( "Hide sequent contexts" ) { outer =>
+      border = customBorder
+      enabled = false
+      listenTo( ProofToolPublisher )
+      reactions += {
+        case Loaded   => this.enabled = true
+        case UnLoaded => this.enabled = false
+      }
+
+      action = Action( "Hide sequent contexts" ) {
+        if ( outer.selected )
+          Main.hideSequentContext()
+        else
+          Main.showAllFormulas()
+      }
+    }
+
+    contents += new CheckMenuItem( "Mark cut ancestors" ) { outer =>
+      border = customBorder
+      enabled = false
+      listenTo( ProofToolPublisher )
+      reactions += {
+        case Loaded   => this.enabled = true
+        case UnLoaded => this.enabled = false
+      }
+
+      action = Action( "Mark cut ancestors" ) {
+        if ( outer.selected )
+          Main.markCutAncestors()
+        else
+          Main.removeMarking()
+      }
+    }
+
+    contents += new Separator()
     contents += new MenuItem( Action( "Jump To End-sequent" ) { Main.scrollToProof( Main.body.getContent.getData.get._2.asInstanceOf[LKProof] ) } ) {
       this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_ENTER, JActionEvent.ALT_MASK ) )
       border = customBorder

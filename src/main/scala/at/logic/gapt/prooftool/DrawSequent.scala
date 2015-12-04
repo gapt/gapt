@@ -8,7 +8,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.expr.hol.toPrettyString
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
@@ -25,56 +25,32 @@ import at.logic.gapt.utils.latex.nameToLatexString
 import collection.mutable
 
 object DrawSequent {
-  implicit val factory = defaultFormulaOccurrenceFactory
-  implicit def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Seq[FormulaOccurrence]() )
-  implicit def fseq2seq( s: HOLSequent ) = s map fo2occ
-
+  def apply[T <: HOLFormula]( sequent: Sequent[T], visibility: Sequent[Boolean], colors: Sequent[Color], ft: Font ) = new DrawSequent( sequent, visibility, colors, ft )
   //used by DrawClList
-  def apply( seq: OccSequent, ft: Font, str: String ): FlowPanel = if ( !str.isEmpty ) {
-    val set: Set[FormulaOccurrence] = ( seq.antecedent.filter( fo => formulaToLatexString( fo.formula ).contains( str ) ) ++
-      seq.succedent.filter( fo => formulaToLatexString( fo.formula ).contains( str ) ) ).toSet
-    val fp = apply( seq, ft, None ) // first create FlowPanel to pass the event
-    ProofToolPublisher.publish( ChangeFormulaColor( set, Color.green, reset = false ) )
-    fp
-  } else apply( seq, ft, None )
+  def apply( seq: OccSequent, ft: Font, str: String ): DrawSequent[HOLFormula] = apply( seq.toHOLSequent, ft, str )
 
   //used by DrawClList to draw FSequents
-  def apply( seq: HOLSequent, ft: Font, str: String )( implicit dummyImplicit: DummyImplicit ): FlowPanel = apply( fseq2seq( seq ), ft, str )
-
-  //used by DrawProof
-  def apply( seq: OccSequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]] ) = new FlowPanel {
-    opaque = false // Necessary to draw the proof properly
-    hGap = 0 // no gap between components
-
-    listenTo( ProofToolPublisher )
-    reactions += {
-      // since panel is not opaque, it cannot have a background color,
-      case ChangeSequentColor( s, color, reset ) => // so change background of each component.
-        if ( s == seq ) contents.foreach( c => c.background = color )
-        else if ( reset ) contents.foreach( c => c.background = Color.white )
-    }
-
-    private var first = true
-    for ( f <- seq.antecedent ) {
-      if ( vis_occ == None || vis_occ.get.contains( f ) ) {
-        if ( !first ) contents += LatexLabel( ft, ",", null )
-        else first = false
-        contents += formulaToLabel( f, ft )
-      }
-    }
-    contents += LatexLabel( ft, "\\vdash", null ) // \u22a2
-    first = true
-    for ( f <- seq.succedent ) {
-      if ( vis_occ == None || vis_occ.get.contains( f ) ) {
-        if ( !first ) contents += LatexLabel( ft, ",", null )
-        else first = false
-        contents += formulaToLabel( f, ft )
-      }
-    }
+  def apply( seq: HOLSequent, ft: Font, str: String )( implicit dummyImplicit: DummyImplicit ): DrawSequent[HOLFormula] = {
+    val visibility = if ( str.isEmpty )
+      seq map { _ => true }
+    else
+      seq map { f => formulaToLatexString( f ) contains str }
+    val colors = seq map { _ => Color.white }
+    DrawSequent( seq, visibility, colors, ft )
   }
 
-  def formulaToLabel( f: HOLFormula, ft: Font ): LatexLabel = LatexLabel( ft, formulaToLatexString( f ), fo2occ( f ) )
-  def formulaToLabel( fo: FormulaOccurrence, ft: Font ): LatexLabel = LatexLabel( ft, formulaToLatexString( fo.formula ), fo )
+  //used by DrawProof
+  def apply( seq: OccSequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]] ): DrawSequent[HOLFormula] = {
+    val visibility = vis_occ match {
+      case None        => seq map { fo => true }
+      case Some( set ) => seq map { fo => set contains fo }
+    }
+    val colors = seq map { fo => Color.white }
+    DrawSequent( seq.toHOLSequent, visibility, colors, ft )
+  }
+
+  def formulaToLabel( f: HOLFormula, ft: Font ): LatexLabel = LatexLabel( ft, formulaToLatexString( f ) )
+  def formulaToLabel( fo: FormulaOccurrence, ft: Font ): LatexLabel = LatexLabel( ft, formulaToLatexString( fo.formula ) )
 
   // this method is used by DrawTree when drawing projections.
   // also by ProofToLatexExporter.
@@ -208,6 +184,46 @@ object DrawSequent {
       else parent_name + { if ( n > 1 ) "^{" + n.toString + "}" else "" } + "(" + formulaToLatexString( t ) + ")"
     case _ => parent_name + { if ( n > 1 ) "^{" + n.toString + "}" else "" } + "(" + formulaToLatexString( t ) + ")"
   }
+
+}
+
+class DrawSequent[T <: HOLFormula](
+    val sequent:    Sequent[T],
+    val visibility: Sequent[Boolean],
+    val colors:     Sequent[Color],
+    val ft:         Font
+) extends FlowPanel {
+  import DrawSequent._
+  opaque = false // Necessary to draw the proof properly
+  hGap = 0 // no gap between components
+
+  listenTo( ProofToolPublisher )
+  reactions += {
+    // since panel is not opaque, it cannot have a background color,
+    case ChangeSequentColor( s, color, reset ) => // so change background of each component.
+      if ( s == sequent ) contents.foreach( c => c.background = color )
+      else if ( reset ) contents.foreach( c => c.background = Color.white )
+  }
+
+  private var first = true
+  for ( ( f, v, c ) <- zip3( sequent, visibility, colors ).antecedent ) {
+    if ( v ) {
+      if ( !first ) contents += LatexLabel( ft, "," )
+      else first = false
+      contents += LatexLabel( ft, formulaToLatexString( f ), c )
+    }
+  }
+  contents += LatexLabel( ft, "\\vdash" ) // \u22a2
+  first = true
+  for ( ( f, v, c ) <- zip3( sequent, visibility, colors ).succedent ) {
+    if ( v ) {
+      if ( !first ) contents += LatexLabel( ft, "," )
+      else first = false
+      contents += LatexLabel( ft, formulaToLatexString( f ), c )
+    }
+  }
+
+  private def zip3[A, B, C]( seq1: Sequent[A], seq2: Sequent[B], seq3: Sequent[C] ): Sequent[( A, B, C )] = ( ( seq1 zip seq2 ) zip seq3 ) map { x => ( x._1._1, x._1._2, x._2 ) }
 }
 
 object LatexLabel {
@@ -215,9 +231,7 @@ object LatexLabel {
 
   def clearCache() = this.synchronized( cache.clear() )
 
-  def apply( font: Font, latexText: String ): LatexLabel = apply( font, latexText, null )
-
-  def apply( font: Font, latexText: String, fo: FormulaOccurrence ): LatexLabel = {
+  def apply( font: Font, latexText: String, color: Color = Color.white ): LatexLabel = {
     val key = ( latexText, font )
     this.synchronized( {
       val icon = cache.getOrElseUpdate( key, {
@@ -235,14 +249,14 @@ object LatexLabel {
         myicon.paintIcon( null, g2, 0, 0 )
         myicon
       } )
-      new LatexLabel( font, latexText, icon, fo )
+      new LatexLabel( font, latexText, icon, color )
     } )
   }
 }
 
-class LatexLabel( val ft: Font, val latexText: String, val myicon: TeXIcon, fo: FormulaOccurrence )
+class LatexLabel( val ft: Font, val latexText: String, val myicon: TeXIcon, var color: Color )
     extends Label( "", myicon, Alignment.Center ) {
-  background = Color.white
+  background = color
   foreground = Color.black
   font = ft
   opaque = true
@@ -279,8 +293,8 @@ class LatexLabel( val ft: Font, val latexText: String, val myicon: TeXIcon, fo: 
       }
       d.location = locationOnScreen
       d.open()
-    case ChangeFormulaColor( set, color, reset ) =>
+    /*case ChangeFormulaColor( set, color, reset ) =>
       if ( set.contains( fo ) ) background = color
-      else if ( reset ) background = Color.white
+      else if ( reset ) background = Color.white*/
   }
 }
