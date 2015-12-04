@@ -42,7 +42,7 @@ object RobinsonToLK {
     }
 
     val proofWithDefs = apply( resolutionProof, endSequent, projections )
-    DefinitionElimination( definitions.toMap, proofWithDefs )
+    DefinitionElimination( definitions.toMap )( proofWithDefs )
   }
 
   /**

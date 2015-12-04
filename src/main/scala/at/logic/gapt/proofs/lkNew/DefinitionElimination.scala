@@ -1,288 +1,114 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
-import at.logic.gapt.proofs._
 
-import scala.App
+object DefinitionElimination {
+  def apply( dmap: Map[LambdaExpression, LambdaExpression] ): DefinitionElimination =
+    new DefinitionElimination( dmap )
+}
+class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
+  private val requiresMatching = dmap.keys exists { !_.isInstanceOf[Const] }
 
-/**
- * Created by sebastian on 10/12/15.
- */
-object DefinitionElimination extends DefinitionElimination
-class DefinitionElimination extends at.logic.gapt.utils.logging.Logger {
-  type DefinitionsMap = Map[LambdaExpression, LambdaExpression]
-  type ProcessedDefinitionsMap = Map[SymbolA, ( List[Var], HOLFormula )]
+  def apply( e: LambdaExpression ): LambdaExpression = BetaReduction.betaNormalize( replace( e ) )
+  def apply( f: HOLFormula ): HOLFormula = apply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 
-  /**
-   * Eliminates definitions in a HOLFormula.
-   *
-   * @param dmap A DefinitionsMap.
-   * @param f A HOLFormula.
-   * @return f with all definitions in dmap eliminated.
-   */
-  def apply( dmap: DefinitionsMap, f: HOLFormula ): HOLFormula = {
-    val edmap = expand_dmap( dmap )
-    BetaReduction.betaNormalize( replaceAll_informula( edmap, f ) )
-  }
-
-  /**
-   * Eliminates definitions in a LambdaExpression.
-   *
-   * @param dmap A DefinitionsMap.
-   * @param f A LambdaExpression.
-   * @return f with all definitions in dmap eliminated.
-   */
-  def apply( dmap: DefinitionsMap, f: LambdaExpression ): LambdaExpression = {
-    val edmap = expand_dmap( dmap )
-    BetaReduction.betaNormalize( replaceAll_in( edmap, f ) )
-  }
-
-  /**
-   * Eliminates definitions in an LKProof.
-   *
-   * @param dmap A DefinitionsMap.
-   * @param p An LKProof.
-   * @return p with all definitions in dmap eliminated.
-   */
-  def apply( dmap: DefinitionsMap, p: LKProof ): LKProof = {
-    val edmap = expand_dmap( dmap )
-    eliminate_in_proof( x => BetaReduction.betaNormalize( replaceAll_in( edmap, x ) ), p )
-  }
-
-  /**
-   * Converts a function of type LambdaExpression => LambdaExpression to type HOLFormula => HOLFormula.
-   *
-   * @param f
-   * @return
-   */
-  private def hol( f: LambdaExpression => LambdaExpression ): HOLFormula => HOLFormula = e => f( e ).asInstanceOf[HOLFormula]
-
-  def replaceAll_informula( dmap: DefinitionsMap, e: HOLFormula ): HOLFormula = replaceAll_in( dmap, e ).asInstanceOf[HOLFormula]
-
-  def replaceAll_in( dmap: DefinitionsMap, e: LambdaExpression ): LambdaExpression = {
-    e match {
-      case Const( _, _ ) => try_to_match( dmap, e )
-      case Var( _, _ )   => try_to_match( dmap, e )
-      case Neg( s )      => Neg( replaceAll_informula( dmap, s ) )
-      case And( s, t )   => And( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case Or( s, t )    => Or( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case Imp( s, t )   => Imp( replaceAll_informula( dmap, s ), replaceAll_informula( dmap, t ) )
-      case All( x, t )   => All( x, replaceAll_informula( dmap, t ) )
-      case Ex( x, t )    => Ex( x, replaceAll_informula( dmap, t ) )
-      case App( s, t ) =>
-        val fullmatch = try_to_match( dmap, e )
-        if ( fullmatch == e )
-          try_to_match( dmap, App( replaceAll_in( dmap, s ), replaceAll_in( dmap, t ) ).asInstanceOf[LambdaExpression] )
-        else
-          replaceAll_in( dmap, fullmatch )
-      case Abs( x, t ) => Abs( x, replaceAll_in( dmap, t ) ).asInstanceOf[LambdaExpression]
-    }
-  }
-
-  def try_to_matchformula( dmap: DefinitionsMap, e: LambdaExpression ) = try_to_match( dmap, e ).asInstanceOf[HOLFormula]
-
-  def try_to_match( dmap: DefinitionsMap, e: LambdaExpression ): LambdaExpression = {
-    dmap.keys.foldLeft( e )( ( v, key ) => {
-      //      println("matching " + v + " against " + key)
-      NaiveIncompleteMatchingAlgorithm.matchTerm( key, v, Set() ) match {
-        case None => v
-        case Some( sub ) =>
-          val r = sub( dmap( key ) )
-          //          println("YES! "+sub)
-          r
-      }
-    } )
-  }
-
-  def expand_dmap( dmap: DefinitionsMap ): DefinitionsMap = {
-    val ndmap = dmap map ( x => {
-      ( x._1, replaceAll_in( dmap, x._2 ) )
+  private def replace( e: LambdaExpression ): LambdaExpression =
+    replaceTopLevel( e ) map replace getOrElse ( e match {
+      case App( a, b ) => App( replace( a ), replace( b ) )
+      case Abs( v, t ) => Abs( v, replace( t ) )
+      case _           => e
     } )
 
-    if ( ndmap == dmap )
-      dmap
-    else expand_dmap( ndmap )
-  }
+  private def replaceTopLevel( e: LambdaExpression ): Option[LambdaExpression] =
+    if ( requiresMatching )
+      ( for {
+        ( l, r ) <- dmap.view
+        subst <- syntacticMatching( l, e )
+      } yield subst( r ) ) headOption
+    else
+      dmap get e
 
-  def eliminate_in_proof( rewrite: ( LambdaExpression => LambdaExpression ), proof: LKProof ): LKProof =
-    eliminate_in_proof_( rewrite, proof )
+  def apply( proof: LKProof ): LKProof = proof match {
+    // introductory rules
+    case LogicalAxiom( atom )     => AtomicExpansion( apply( atom ) )
 
-  /**
-   * Applies a function of type LambdaExpression => LambdaExpression to an LKProof.
-   *
-   * The only case where anything really happens is with definition rules.
-   *
-   * @param rewrite A function of type LambdaExpression => LambdaExpression.
-   * @param proof An LKProof.
-   * @return The result of applying rewrite everywhere in proof.
-   */
-  def eliminate_in_proof_( rewrite: ( LambdaExpression => LambdaExpression ), proof: LKProof ): LKProof = {
-    def recCall( proof: LKProof ) = eliminate_in_proof_( rewrite, proof )
+    case TopAxiom                 => TopAxiom
+    case BottomAxiom              => BottomAxiom
 
-    proof match {
-      // introductory rules
-      case LogicalAxiom( atom ) =>
-        AtomicExpansion( hol( rewrite )( atom ) )
+    case ReflexivityAxiom( term ) => ReflexivityAxiom( apply( term ) )
 
-      case InitialSequent( sequent ) =>
-        debug( "Axiom!" )
-        val sequentNew = sequent.map( f => hol( rewrite )( f ) )
-        val proofNew = Axiom( sequentNew )
+    case TheoryAxiom( axiom )     => TheoryAxiom( axiom map apply map { _.asInstanceOf[HOLAtom] } )
 
-        proofNew
+    //structural rules
+    case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      CutRule( apply( leftSubProof ), aux1, apply( rightSubProof ), aux2 )
 
-      //structural rules
-      case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        debug( "Cut!" )
-        val leftSubProofNew = recCall( leftSubProof )
-        val rightSubProofNew = recCall( rightSubProof )
-        debug( "aux:  " + aux1 + " and " + aux2 )
+    case WeakeningLeftRule( subProof, main ) =>
+      WeakeningLeftRule( apply( subProof ), apply( main ) )
 
-        val proofNew = CutRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
-        proofNew
+    case WeakeningRightRule( subProof, main ) =>
+      WeakeningRightRule( apply( subProof ), apply( main ) )
 
-      case WeakeningLeftRule( subProof, main ) =>
-        debug( "Weakening Left!" )
-        val subProofNew = recCall( subProof )
-        val proofNew = WeakeningLeftRule( subProofNew, hol( rewrite )( main ) )
+    case ContractionLeftRule( subProof, aux1, aux2 ) =>
+      ContractionLeftRule( apply( subProof ), aux1, aux2 )
 
-        proofNew
+    case ContractionRightRule( subProof, aux1, aux2 ) =>
+      ContractionRightRule( apply( subProof ), aux1, aux2 )
 
-      case WeakeningRightRule( subProof, main ) =>
-        debug( "Weakening Right!" )
-        val subProofNew = eliminate_in_proof_( rewrite, subProof )
-        val proofNew = WeakeningRightRule( subProofNew, hol( rewrite )( main ) )
+    //logical rules
+    case NegLeftRule( subProof, aux ) =>
+      NegLeftRule( apply( subProof ), aux )
 
-        proofNew
+    case NegRightRule( subProof, aux ) =>
+      NegRightRule( apply( subProof ), aux )
 
-      case ContractionLeftRule( subProof, aux1, aux2 ) =>
-        debug( "Contraction Left!" )
-        val subProofNew = recCall( subProof )
+    case AndLeftRule( subProof, aux1, aux2 ) =>
+      AndLeftRule( apply( subProof ), aux1, aux2 )
 
-        ContractionLeftRule( subProofNew, aux1, aux2 )
+    case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      AndRightRule( apply( leftSubProof ), aux1, apply( rightSubProof ), aux2 )
 
-      case ContractionRightRule( subProof, aux1, aux2 ) =>
-        debug( "Contraction Right!" )
-        val subProofNew = recCall( subProof )
+    case OrRightRule( subProof, aux1, aux2 ) =>
+      OrRightRule( apply( subProof ), aux1, aux2 )
 
-        ContractionRightRule( subProofNew, aux1, aux2 )
+    case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      OrLeftRule( apply( leftSubProof ), aux1, apply( rightSubProof ), aux2 )
 
-      //logical rules
-      case NegLeftRule( subProof, aux ) =>
-        debug( "Negation Left!" )
-        val subProofNew = recCall( subProof )
+    case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      ImpLeftRule( apply( leftSubProof ), aux1, apply( rightSubProof ), aux2 )
 
-        NegLeftRule( subProofNew, aux )
+    case ImpRightRule( subProof, aux1, aux2 ) =>
+      ImpRightRule( apply( subProof ), aux1, aux2 )
 
-      case NegRightRule( subProof, aux ) =>
-        debug( "Negation Right!" )
-        val subProofNew = recCall( subProof )
+    //quantfication rules
+    case ForallLeftRule( subProof, aux, f, term, quant ) =>
+      ForallLeftRule( apply( subProof ), aux, apply( f ), apply( term ), quant )
 
-        NegRightRule( subProofNew, aux )
+    case ExistsRightRule( subProof, aux, f, term, quant ) =>
+      ExistsRightRule( apply( subProof ), aux, apply( f ), apply( term ), quant )
 
-      case AndLeftRule( subProof, aux1, aux2 ) =>
-        debug( "And Left!" )
-        val subProofNew = recCall( subProof )
+    case ExistsLeftRule( subProof, aux, eigen, quant ) =>
+      ExistsLeftRule( apply( subProof ), aux, eigen, quant )
 
-        AndLeftRule( subProofNew, aux1, aux2 )
+    case ForallRightRule( subProof, aux, eigen, quant ) =>
+      ForallRightRule( apply( subProof ), aux, eigen, quant )
 
-      case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        debug( "And Right!" )
-        val leftSubProofNew = recCall( leftSubProof )
-        val rightSubProofNew = recCall( rightSubProof )
-        debug( "aux:  " + aux1 + " and " + aux2 )
+    //equational rules
+    case proof @ EqualityLeftRule( subProof, eq, aux, pos ) =>
+      EqualityLeftRule( apply( subProof ), eq, aux, apply( proof.mainFormula ) )
 
-        val proofNew = AndRightRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
-        proofNew
+    case proof @ EqualityRightRule( subProof, eq, aux, pos ) =>
+      EqualityRightRule( apply( subProof ), eq, aux, apply( proof.mainFormula ) )
 
-      case OrRightRule( subProof, aux1, aux2 ) =>
-        debug( "Or Right!" )
-        val subProofNew = recCall( subProof )
-
-        OrRightRule( subProofNew, aux1, aux2 )
-
-      case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        debug( "Or Left!" )
-        val leftSubProofNew = recCall( leftSubProof )
-        val rightSubProofNew = recCall( rightSubProof )
-        debug( "aux:  " + aux1 + " and " + aux2 )
-
-        val proofNew = OrLeftRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
-        proofNew
-
-      case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        debug( "Imp Left!" )
-        val leftSubProofNew = recCall( leftSubProof )
-        val rightSubProofNew = recCall( rightSubProof )
-        debug( "aux:  " + aux1 + " and " + aux2 )
-
-        val proofNew = ImpLeftRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
-        proofNew
-
-      case ImpRightRule( subProof, aux1, aux2 ) =>
-        debug( "Imp Right!" )
-        val subProofNew = recCall( subProof )
-
-        ImpRightRule( subProofNew, aux1, aux2 )
-
-      //quantfication rules
-      case ForallLeftRule( subProof, aux, f, term, quant ) =>
-        debug( "Forall Left" )
-        val subProofNew = recCall( subProof )
-
-        ForallLeftRule( subProofNew, aux, hol( rewrite )( f ), rewrite( term ), rewrite( quant ).asInstanceOf[Var] )
-
-      case ForallRightRule( subProof, aux, eigen, quant ) =>
-        debug( "Forall Right!" )
-        val subProofNew = recCall( subProof )
-
-        ForallRightRule( subProofNew, aux, eigen, rewrite( quant ).asInstanceOf[Var] )
-
-      case ExistsLeftRule( subProof, aux, eigen, quant ) =>
-        debug( "Exists Left!" )
-        val subProofNew = recCall( subProof )
-
-        ExistsLeftRule( subProofNew, aux, eigen, rewrite( quant ).asInstanceOf[Var] )
-
-      case ExistsRightRule( subProof, aux, f, term, quant ) =>
-        debug( "Exists Right!" )
-        val subProofNew = recCall( subProof )
-
-        ExistsRightRule( subProofNew, aux, hol( rewrite )( f ), rewrite( term ), rewrite( quant ).asInstanceOf[Var] )
-
-      //equational rules
-      case EqualityLeftRule( subProof, eq, aux, pos ) =>
-        debug( "Equation Left!" )
-        val subProofNew = recCall( subProof )
-        val mainNew = hol( rewrite )( proof.mainFormulas.head )
-
-        EqualityLeftRule( subProofNew, eq, aux, mainNew )
-
-      case EqualityRightRule( subProof, eq, aux, pos ) =>
-        debug( "Equation Right!" )
-        val subProofNew = recCall( subProof )
-        val mainNew = hol( rewrite )( proof.mainFormulas.head )
-
-        EqualityRightRule( subProofNew, eq, aux, mainNew )
-
-      /* The cases for definition rules employ a trick: The removal of the rule would change the order of the end
+    /* The cases for definition rules employ a trick: The removal of the rule would change the order of the end
         sequent. We use exchange macro rules to artificially replicate the movement of formulas that the definition
          rule would have performed.*/
 
-      case DefinitionLeftRule( subProof, aux, main ) =>
-        debug( "Def Left!" )
-        val subProofNew = recCall( subProof )
+    case DefinitionLeftRule( subProof, aux, main ) =>
+      ExchangeLeftMacroRule( apply( subProof ), aux )
 
-        ExchangeLeftMacroRule( subProofNew, aux )
-
-      case DefinitionRightRule( subProof, aux, main ) =>
-        debug( "Def Right!" )
-        val subProofNew = recCall( subProof )
-
-        ExchangeRightMacroRule( subProofNew, aux )
-
-    }
+    case DefinitionRightRule( subProof, aux, main ) =>
+      ExchangeRightMacroRule( apply( subProof ), aux )
 
   }
 }

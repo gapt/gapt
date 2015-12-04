@@ -47,7 +47,7 @@ class LatticeTest extends Specification {
 
       val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) )
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = DefinitionElimination( proofdb.Definitions, lkOld2New( proofdb.proofs.head._2 ) )
+      val proof = DefinitionElimination( proofdb.Definitions )( lkOld2New( proofdb.proofs.head._2 ) )
 
       val proof_sk = at.logic.gapt.proofs.lkNew.LKToLKsk( proof )
       val s = extractStructFromLKsk( proof_sk )
