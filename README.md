@@ -17,14 +17,15 @@ One of the many features GAPT supports is an implementation of [Hebrand's
 theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem).  Here is how can
 automatically generate a Herbrand sequent in GAPT:
 ```scala
-Prover9 getExpansionSequent existsclosure("p(c) | p(d)" +: Sequent() :+ "p(x)" map parseFormula) map {extractInstances(_)}
+val firstOrderSequent = existsclosure("p(c) | p(d)" +: Sequent() :+ "p(x)" map parseFormula)
+Prover9 getExpansionSequent firstOrderSequent map { extractInstances(_) }
 ```
-which returns the following Herbrand sequent
+which returns the following Herbrand sequent:
 ```
 Some((p(c)∨p(d)) :- p(c), p(d))
 ```
 
-There are many more example in the [user
+There are many more examples in the [user
 manual](http://logic.at/gapt/downloads/gapt-user-manual.pdf), and you can look
 into the [API documentation](http://logic.at/gapt/api/) for reference as well.
 
