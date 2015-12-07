@@ -9,6 +9,7 @@ proofs, GAPT concentrates on the transformation and further processing of
 proofs.
 
 Website: https://logic.at/gapt
+
 Contact: gapt@logic.at
 
 ### Example
