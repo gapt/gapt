@@ -6,10 +6,18 @@ import scalariform.formatter.preferences._
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
-  organizationHomepage := Some(url("https://gapt.github.io/")),
-  licenses += ("GNU GPL v3", url("http://www.gnu.org/licenses/gpl.html")),
+  homepage := Some(url("https://logic.at/gapt/")),
+  organizationHomepage := homepage.value,
+  licenses += ("GPL-3.0" -> url("http://www.gnu.org/licenses/gpl-3.0.html")),
   startYear := Some(2008),
   version := "1.11-SNAPSHOT",
+
+  bintrayOrganization := Some("gapt"),
+  scmInfo := Some(ScmInfo(
+    browseUrl = url("https://github.com/gapt/gapt"),
+    connection = "scm:git:https://github.com/gapt/gapt.git",
+    devConnection = Some("scm:git:git@github.com:gapt/gapt.git")
+  )),
 
   scalaVersion := "2.11.7",
   scalacOptions in Compile ++= Seq("-deprecation"),
