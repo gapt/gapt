@@ -72,7 +72,7 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
       setWindowContent( p, c )
       Some( s )
     case proof: SequentProof[_, _] =>
-      layout( new DrawSequentProof( proof, fSize, None, "" ) ) = c
+      layout( new DrawSequentProof( proof, fSize, hideContexts = false, Set(), markCutAncestors = false, Set(), "" ) ) = c
       ProofToolPublisher.publish( Loaded )
       StructPublisher.publish( UnLoaded )
       None

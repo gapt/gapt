@@ -19,12 +19,13 @@ object RobinsonToExpansionProof {
     // Here, we can perform merges locally since we don't have strong quantifier nodes and all
     // skolem constants are consistent.
 
+    val defElim = DefinitionElimination( definitions.toMap )
     val defAtomExpansion = mutable.Map[( HOLAtom, Boolean ), ExpansionTreeWithMerges]()
     def elimDefs( et: ExpansionTreeWithMerges, pol: Boolean ): ExpansionTreeWithMerges = et match {
       case ETTop    => ETTop
       case ETBottom => ETBottom
       case ETAtom( atom @ Apps( abbrev: HOLAtomConst, args ) ) if definitions isDefinedAt abbrev =>
-        lazy val shallow = DefinitionElimination( definitions.toMap[LambdaExpression, LambdaExpression], atom )
+        lazy val shallow = defElim( atom )
         defAtomExpansion.getOrElseUpdate(
           atom -> pol,
           merge( ETMerge( for {
@@ -44,7 +45,7 @@ object RobinsonToExpansionProof {
         ETSkolemQuantifier( f, v, elimDefs( selection, pol ) )
       case ETWeakQuantifier( f, instances ) =>
         ETWeakQuantifier( f, instances map { case ( t, term ) => elimDefs( t, pol ) -> term } )
-      case ETWeakening( f ) => ETWeakening( DefinitionElimination( definitions.toMap[LambdaExpression, LambdaExpression], f ) )
+      case ETWeakening( f ) => ETWeakening( defElim( f ) )
     }
 
     for ( ( formula, idx ) <- es.zipWithIndex ) yield merge( ETMerge(
@@ -64,7 +65,7 @@ object RobinsonToExpansionProof {
         fs = if ( i isAnt ) f +: Sequent() else Sequent() :+ f
         clause <- CNFn.toFClauseList( fs.toFormula )
         pcnf = PCNF( fs, clause )
-        exp = LKToExpansionProof( pcnf ) diff clause.map( ETAtom )
+        exp = for ( ( e, ei ) <- LKToExpansionProof( pcnf ).zipWithIndex if ei sameSideAs i if toShallow( e ) == f ) yield e
         just = ProjectionFromEndSequent( exp, i )
       } yield clause -> just
     apply( p, es, justifications toSet, Map() )

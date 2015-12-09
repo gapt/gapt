@@ -23,6 +23,7 @@ doc/*.toc
 doc/*.fdb_latexmk
 doc/*.fls
 doc/*.out
+doc/*.lox
 doc/*.synctex.gz
 doc/auto
 doc/_region_.*

@@ -37,14 +37,14 @@ class LKToLKskTest extends Specification {
 
   "lattice proof" in {
     val pdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val lk = DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proofs.head._2 ) ) )
+    val lk = DefinitionElimination( pdb.Definitions )( regularize( lkOld2New( pdb.proofs.head._2 ) ) )
     val lksk = LKToLKsk( lk )
     lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }
 
   "tape proof" in {
     val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val lk = DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) )
+    val lk = DefinitionElimination( pdb.Definitions )( regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) )
     val lksk = LKToLKsk( lk )
     lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }

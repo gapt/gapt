@@ -58,7 +58,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
     val recSchem = extractRecSchem( p )
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
 
-    Sat4j.isValid( lang ++: Sequent() ) must beTrue
+    Sat4j.isValid( Sequent() :++ lang ) must beTrue
   }
 
   "pi2 pigeonhole" in {
@@ -70,12 +70,12 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
 
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
 
-    p9.isValid( lang ++: Sequent() ) must beTrue
+    p9.isValid( Sequent() :++ lang ) must beTrue
   }
 
   "tape proof" in {
     val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val proof = DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) )
+    val proof = DefinitionElimination( pdb.Definitions )( regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) )
 
     val recSchem = extractRecSchem( proof )
 
@@ -91,7 +91,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
         Sequent()
         map parseFormula
     )
-    p9.isValid( lang ++: additionalAxioms ) must beTrue
+    p9.isValid( additionalAxioms :++ lang ) must beTrue
 
     ok
   }
@@ -181,7 +181,7 @@ class Pi2FactorialPOC extends Specification {
   val O = Const( "0", Ti )
   val s = Const( "s", Ti -> Ti )
   val plus = Const( "+", Ti -> ( Ti -> Ti ) )
-  val times = Const( "+", Ti -> ( Ti -> Ti ) )
+  val times = Const( "*", Ti -> ( Ti -> Ti ) )
   val g = Const( "g", Ti -> ( Ti -> Ti ) )
   val f = Const( "f", Ti -> Ti )
 

@@ -735,10 +735,32 @@ object Main extends SimpleSwingApplication {
 
   def markCutAncestors() {
     body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    body.getContent.getData match {
-      case Some( ( _, proof: lk.base.LKProof ) ) =>
-        ProofToolPublisher.publish( ChangeFormulaColor( lk.getCutAncestors( proof ), Color.green, reset = false ) )
-      case _ => errorMessage( "LK proof not found!" )
+    body.getContent.contents.head match {
+      case dp: DrawProof => body.getContent.getData match {
+        case Some( ( _, proof: lk.base.LKProof ) ) =>
+          ProofToolPublisher.publish( ChangeFormulaColor( lk.getCutAncestors( proof ), Color.green, reset = false ) )
+        case _ => errorMessage( "LK proof not found!" )
+      }
+      case dsp: DrawSequentProof[_, _] =>
+        dsp.markCutAncestors = true
+        dsp.initialize()
+        dsp.revalidate()
+    }
+    body.cursor = java.awt.Cursor.getDefaultCursor
+  }
+
+  def removeMarking(): Unit = {
+    body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+    body.getContent.contents.head match {
+      case dp: DrawProof => body.getContent.getData match {
+        case Some( ( _, proof: lk.base.LKProof ) ) =>
+          ProofToolPublisher.publish( ChangeFormulaColor( Set(), Color.white, reset = true ) )
+        case _ => errorMessage( "LK proof not found!" )
+      }
+      case dsp: DrawSequentProof[_, _] =>
+        dsp.markCutAncestors = false
+        dsp.initialize()
+        dsp.revalidate()
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -750,8 +772,12 @@ object Main extends SimpleSwingApplication {
         case Some( ( name, proof: lk.base.LKProof ) ) =>
           dp.setVisibleOccurrences( Some( lk.getAuxFormulas( proof ) ) )
           dp.revalidate()
-        case _ => errorMessage( "This is not an LK proof!" )
+        case _ => errorMessage( "This is not an LK proof! 1" )
       }
+      case dsp: DrawSequentProof[_, _] =>
+        dsp.hideContexts = true
+        dsp.initialize()
+        dsp.revalidate()
       case _ => errorMessage( "LK proof not found!" )
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -764,8 +790,9 @@ object Main extends SimpleSwingApplication {
         case Some( ( name, proof: LKProof ) ) =>
           dp.setVisibleOccurrences( Some( Set() ) )
           dp.revalidate()
-        case _ => errorMessage( "This is not an LK proof!" )
+        case _ => errorMessage( "This is not an LK proof! 2" )
       }
+
       case _ => errorMessage( "LK proof not found!" )
     }
     body.cursor = java.awt.Cursor.getDefaultCursor
@@ -778,8 +805,12 @@ object Main extends SimpleSwingApplication {
         case Some( ( name, proof: LKProof ) ) =>
           dp.setVisibleOccurrences( None )
           dp.revalidate()
-        case _ => errorMessage( "This is not an LK proof!" )
+        case _ => errorMessage( "This is not an LK proof! 3" )
       }
+      case dsp: DrawSequentProof[_, _] =>
+        dsp.hideContexts = false
+        dsp.initialize()
+        dsp.revalidate()
       case _ => errorMessage( "LK proof not found!" )
     }
     body.cursor = java.awt.Cursor.getDefaultCursor

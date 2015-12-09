@@ -48,7 +48,6 @@ class definition_eliminationTest extends Specification {
 
     val i13 = Axiom( eqxt :: Nil, eqxt :: Nil )
     val i14 = EquationLeft1Rule( i13, i12, i13.root.succedent( 0 ), i12.root.antecedent( 1 ), And( at, All( x, qx ) ) )
-    getoccids( i14, Nil ) map println
 
     val def1 = ( ax, All( y, pxy ) )
     val def2 = ( bx, And( qx, ax ) )
@@ -71,47 +70,23 @@ class definition_eliminationTest extends Specification {
 
   }
 
-  /**
-   * The following tests are all commented out for the same reason. One of the
-   * definitions used for them is the following:
-   *
-   * A(x) -> \forall x. P(x, y)
-   *
-   * Which seems ok in principle. The problem happens when the
-   * NaiveIncompleteMatchingAlgorithm is run. It sees that these are two
-   * applications (of A to x and of forall to P(x,y)) and recursively calls
-   * itself. When it gets to the variable x, it tries to create a substitution
-   * x <- P(x, y)
-   *
-   * But the substitution cannot be created, since the requirement that both
-   * things need to have the same type fails. In this case, x has type i and
-   * P(x,y) has type (i -> o).
-   *
-   */
-
   "Definition elimination" should {
     "work on formulas" in {
-      skipped( "Failing on HOL matching" )
       val f = And( proof1.ax, Or( FOLAtom( proof1.a, proof1.t :: Nil ), proof1.bx ) )
       val f_ = DefinitionElimination( proof1.dmap, f )
-      println( f_ )
       val correct_f = And( proof1.allypxy, Or( proof1.allypty, And( proof1.qx, proof1.allypxy ) ) )
       f_ mustEqual ( correct_f )
     }
 
     "work on a simple proof" in {
-      skipped( "Failing on HOL matching" )
       import proof1._
       val elp = DefinitionElimination( dmap, i12 )
-      println( elp )
       val expected = HOLSequent( List( All( x, All( y, pxy ) ), And( All( y, pxy ), All( x, qx ) ) ), List( Ex( x, And( qx, All( y, pxy ) ) ) ) )
       expected must beSyntacticFSequentEqual( elp.root.toHOLSequent )
     }
 
     "work on a simple proof with equality" in {
-      skipped( "Failing on HOL matching" )
       val elp = DefinitionElimination( proof1.dmap, proof1.i14 )
-      println( elp )
       ok
     }
 

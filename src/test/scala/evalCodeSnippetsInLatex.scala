@@ -4,6 +4,7 @@ import at.logic.gapt.cli.CLIMain
 
 import scala.io.Source
 import scala.reflect
+import scala.sys.process
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter._
 
@@ -33,6 +34,9 @@ object evalCodeSnippetsInLatex extends App {
 
       // don't open prooftool
       repl command "def prooftool(x: Any): Unit = ()"
+
+      // don't open help
+      repl command "def help(x: Any*): Unit = ()"
     }
 
     repl
@@ -40,27 +44,56 @@ object evalCodeSnippetsInLatex extends App {
 
   var interp = mkInterp()
   var inCliListing = false
+  var isSkipped = false
 
-  val cliInputLine = """gapt> (.*)""".r
+  class ResultHolder( var result: Any )
+  def evalCodeInInterp( code: String ): Any = {
+    val resultHolder = new ResultHolder( null )
+    val varName = "$evalCodeSnippetsInLatex_result"
+    interp beSilentDuring {
+      interp.bind( varName, resultHolder )
+      interp interpret s"$varName.result = ($code)"
+    }
+    resultHolder.result
+  }
+
+  val cliInputLine = """\s*gapt> (.*)""".r
+  val beginCliListing = """\\begin\{clilisting\}(?:\[(.*)\])?""".r
+  val endCliListing = """\end{clilisting}"""
+  val resLine = """res\d+: .*""".r
 
   for ( line <- Source.fromFile( inFile ).getLines() )
-    if ( inCliListing )
+    if ( inCliListing && isSkipped ) {
+      println( line )
       line match {
-        case """\end{clilisting}""" =>
+        case `endCliListing` =>
+          inCliListing = false
+        case resLine() =>
+          // increment res123 counter
+          interp beSilentDuring { interp command "true" }
+        case _ =>
+      }
+    } else if ( inCliListing && !isSkipped ) {
+      line match {
+        case `endCliListing` =>
           println( line )
           inCliListing = false
         case line @ cliInputLine( command ) =>
-          println( line )
+          println( s"gapt> $command" )
           interp.command( command )
           println()
         case _ =>
       }
-    else
+    } else {
       line match {
-        case """\begin{clilisting}""" =>
+        case beginCliListing( condition ) =>
           println( line )
           inCliListing = true
+          isSkipped = condition != null && evalCodeInInterp( condition ) != true
+          if ( isSkipped )
+            process.stderr println s"Skipping snippet because condition failed: $condition"
         case _ => println( line )
       }
+    }
 
 }

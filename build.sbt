@@ -4,12 +4,21 @@ import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOut
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 
+val Version = "1.11-SNAPSHOT"
+
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
-  organizationHomepage := Some(url("https://gapt.github.io/")),
-  licenses += ("GNU GPL v3", url("http://www.gnu.org/licenses/gpl.html")),
+  homepage := Some(url("https://logic.at/gapt/")),
+  organizationHomepage := homepage.value,
+  licenses += ("GPL-3.0" -> url("http://www.gnu.org/licenses/gpl-3.0.html")),
   startYear := Some(2008),
-  version := "1.11-SNAPSHOT",
+  version := Version,
+
+  scmInfo := Some(ScmInfo(
+    browseUrl = url("https://github.com/gapt/gapt"),
+    connection = "scm:git:https://github.com/gapt/gapt.git",
+    devConnection = Some("scm:git:git@github.com:gapt/gapt.git")
+  )),
 
   scalaVersion := "2.11.7",
   scalacOptions in Compile ++= Seq("-deprecation"),
@@ -32,8 +41,26 @@ lazy val commonSettings = Seq(
     .setPreference(DoubleIndentClassDeclaration, true)
     .setPreference(SpaceInsideParentheses, true))
 
+lazy val publishSettings =
+  if (Version endsWith "-SNAPSHOT") {
+    Seq(
+      bintrayReleaseOnPublish := false,
+      publishTo := Some("Artifactory Realm" at "http://oss.jfrog.org/artifactory/oss-snapshot-local/"),
+      credentials := {
+        Credentials.loadCredentials(bintrayCredentialsFile.value) match {
+          case Right(bintrayCreds) =>
+            Seq(Credentials("Artifactory Realm", "oss.jfrog.org", bintrayCreds.userName, bintrayCreds.passwd))
+          case Left(error) => Seq()
+        }
+      }
+    )
+  } else {
+    Seq(bintrayOrganization := Some("gapt"))
+  }
+
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
+  settings(publishSettings: _*).
   disablePlugins(JUnitXmlReportPlugin).
   settings(
     name := "gapt",
@@ -111,11 +138,11 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.parboiled" %% "parboiled" % "2.1.0",
-      "org.scalaz" %% "scalaz-core" % "7.1.4",
+      "org.scalaz" %% "scalaz-core" % "7.1.5",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
-      "org.slf4j" % "slf4j-api" % "1.7.12",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.12",
+      "org.slf4j" % "slf4j-api" % "1.7.13",
+      "org.slf4j" % "slf4j-log4j12" % "1.7.13",
       "xml-resolver" % "xml-resolver" % "1.2",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"),
@@ -125,7 +152,7 @@ lazy val root = (project in file(".")).
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "jline" % "jline" % "2.13",
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
-      "com.itextpdf" % "itextpdf" % "5.5.7",
+      "com.itextpdf" % "itextpdf" % "5.5.8",
       "org.scilab.forge" % "jlatexmath" % "1.0.2")
   )
 
@@ -149,9 +176,9 @@ lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ba
 lazy val evalUserManual = TaskKey[Unit]("eval-user-manual", "Evaluates the snippets in the user manual.")
 
 lazy val testDependencies = Seq(
-  "org.specs2" %% "specs2-core" % "3.6.5",
-  "org.specs2" %% "specs2-junit" % "3.6.5",  // needed for junitxml output
-  "org.specs2" %% "specs2-matcher" % "3.6.5")
+  "org.specs2" %% "specs2-core" % "3.6.6",
+  "org.specs2" %% "specs2-junit" % "3.6.6",  // needed for junitxml output
+  "org.specs2" %% "specs2-matcher" % "3.6.6")
 
 def recursiveListFiles(f: File): Seq[File] =
   if (f.isDirectory)

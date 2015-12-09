@@ -58,7 +58,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
-        VeriT.isValid( recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem language validity"
+        VeriT.isValid( Sequent() :++ recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem language validity"
       }
 
     // FIXME: extend to equality
@@ -75,7 +75,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
           ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
         CERES( lkNew2Old( q ) ) --? "CERES (cut-intro)"
 
-        VeriT.isValid( extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ++: Sequent() ) !-- "extractRecSchem validity (cut-intro)"
+        VeriT.isValid( Sequent() :++ extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem validity (cut-intro)"
       }
 
     skolemize( p ) --? "skolemize"
