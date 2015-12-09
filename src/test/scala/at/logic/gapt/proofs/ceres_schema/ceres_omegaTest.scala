@@ -20,7 +20,7 @@ class ceres_omegaTest extends Specification with ClasspathFileCopier {
 
   def prepareProof( file: String, proofname: String ) = {
     val p = HybridLatexParser( tempCopyOfClasspathFile( file ) )
-    val elp = AtomicExpansion( DefinitionElimination( p.Definitions, regularize( lkOld2New( p.proof( proofname ) ) ) ) )
+    val elp = AtomicExpansion( DefinitionElimination( p.Definitions )( regularize( lkOld2New( p.proof( proofname ) ) ) ) )
     val selp = LKToLKsk( elp )
     val struct = extractStructFromLKsk( selp )
     val ls = StandardClauseSet( struct )

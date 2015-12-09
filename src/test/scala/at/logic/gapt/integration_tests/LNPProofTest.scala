@@ -1,7 +1,7 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
-import at.logic.gapt.proofs.ceres_omega._
+import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.lk.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.formats.latex.SequentsListLatexExporter
@@ -14,6 +14,7 @@ import at.logic.gapt.proofs.ceres.CharacteristicClauseSet
 import java.util.zip.GZIPInputStream
 import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import java.io.File.separator
+import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 import org.specs2.execute.Success
 
@@ -35,8 +36,8 @@ class LNPProofTest extends Specification {
       val proof = lkOld2New( proofs.head._2 )
       //printStats( proof )
 
-      val proof_sk = LKToLKsk( proof )
-      val s = extractStructFromLKsk( proof_sk )
+      val proof_sk = skolemize( regularize( proof ) )
+      val s = extractStruct( proof_sk )
 
       val cs = CharacteristicClauseSet( s )
       val css = deleteTautologies( cs )
@@ -51,8 +52,16 @@ class LNPProofTest extends Specification {
         ),
         "target" + separator + "lnp-cs.xml"
       )
+      Prover9.getRobinsonProof( css ) match {
+        case Some( rp ) =>
+          val proj = Projections( proof_sk )
+          val acnf = CERES( proof_sk.endSequent, proj, rp )
+          ( acnf.endSequent multiSetEquals proof_sk.endSequent ) must beTrue
+        case None =>
+          ko( "could not refute css!" )
+      }
       // specs2 require a least one Result, see org.specs2.specification.Example 
-      Success()
+      ok( "No errors" )
     }
   }
 }

@@ -131,7 +131,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     val tokens = HybridLatexParser.parseFile( filename )
     val pdb = HybridLatexParser.createLKProof( tokens )
     show( "Eliminating definitions, expanding tautological axioms" )
-    val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions, regularize( lkOld2New( pdb.proof( "TAPEPROOF" ) ) ) ) )
+    val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( lkOld2New( pdb.proof( "TAPEPROOF" ) ) ) ) )
     show( "Skolemizing" )
     val selp = LKToLKsk( elp )
 
