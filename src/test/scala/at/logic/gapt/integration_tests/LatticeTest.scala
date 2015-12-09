@@ -36,14 +36,32 @@ class LatticeTest extends Specification {
       Prover9.getRobinsonProof( cs ) must beSome
     }
 
-    "parse and skolemize the lattice proof" in {
+    "parse, skolemize and apply CERES to the lattice proof" in {
+      //      skipped( "doesn't work yet" )
       checkForProverOrSkip
 
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = lkOld2New( proofdb.proofs.head._2 )
 
-      val acnf = CERES( proof, CERES.skipEquations )
+      val acnf = CERES( skolemize( proof ), CERES.skipNothing )
+      ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
+      acnf.foreach( {
+        case CutRule( p1, a1, p2, a2 ) => isAtom( p1.endSequent( a1 ) ) must beTrue
+        case _                         => ()
+      } )
+      ok
+    }
+
+    "parse, skolemize and apply CERES to the lattice proof, skipping equational inferences" in {
+      //      skipped( "doesn't work yet" )
+      checkForProverOrSkip
+
+      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
+      proofdb.proofs.size must beEqualTo( 1 )
+      val proof = lkOld2New( proofdb.proofs.head._2 )
+
+      val acnf = CERES( skolemize( proof ), CERES.skipEquations )
       ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
       acnf.foreach( {
         case CutRule( p1, a1, p2, a2 ) => isAtom( p1.endSequent( a1 ) ) must beTrue

@@ -85,17 +85,20 @@ object RobinsonToLK {
         )
       case p @ Paramodulation( p1, eq, p2, lit @ Ant( _ ), poss, dir ) =>
         ContractionMacroRule(
-          ParamodulationLeftRule( f( p1 ), p1.conclusion( eq ), f( p2 ), p2.conclusion( lit ), p.rewrittenAtom ),
+          ParamodulationLeftRule( f( p1 ), p1.conclusion( eq ),
+            f( p2 ), p2.conclusion( lit ), p.rewrittenAtom ),
           endSequent ++ p.conclusion, strict = false
         )
       case p @ Paramodulation( p1, eq, p2, lit @ Suc( _ ), poss, dir ) =>
         ContractionMacroRule(
-          ParamodulationRightRule( f( p1 ), p1.conclusion( eq ), f( p2 ), p2.conclusion( lit ), p.rewrittenAtom ),
+          ParamodulationRightRule( f( p1 ), p1.conclusion( eq ),
+            f( p2 ), p2.conclusion( lit ), p.rewrittenAtom ),
           endSequent ++ p.conclusion, strict = false
         )
     } )
-
-    WeakeningContractionMacroRule( f( resolutionDerivation ), endSequent )
+    val rproof = f( resolutionDerivation )
+    println( s"endSequent: $endSequent\n$rproof\n" )
+    WeakeningContractionMacroRule( rproof, endSequent )
   }
 
 }

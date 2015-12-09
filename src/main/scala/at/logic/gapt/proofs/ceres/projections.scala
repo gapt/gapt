@@ -111,8 +111,10 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
             val s2 = apply( p2, new_cut_ancs_right, pred )
             s1.foldLeft( Set.empty[LKProof] )( ( s, pm1 ) =>
               s ++ s2.map( pm2 => {
+                require( p1.conclusion( a1 ) == p2.conclusion( a2 ), "Original cut formulas must be equal!" )
                 val List( aux1, aux2 ) = pickrule( proof, List( p1, p2 ), List( pm1, pm2 ), List( a1, a2 ) )
-                CutRule( p1, aux1, p2, aux2 )
+                require( pm1.conclusion( aux1 ) == pm2.conclusion( aux2 ), "New cut formulas must be equal!" )
+                CutRule( pm1, aux1, pm2, aux2 )
               } ) )
           }
         case _ => throw new Exception( "No such a rule in Projections.apply" )

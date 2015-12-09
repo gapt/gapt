@@ -1,0 +1,21 @@
+\CONSTDEC{s,t}{i}
+\CONSTDEC{P}{i>o}
+\CONSTDEC{Proof1,Proof2,Proof3}{o}
+
+\AX{s=t}{s=t}
+\AX{P(s)}{P(s)}
+\EQR{s=t, P(s)}{P(t)}
+\CONTINUEWITH{Proof1}
+
+\AX{}{s=t}
+\AX{P(s)}{P(s)}
+\EQR{P(s)}{P(t)}
+\CONTINUEWITH{Proof2}
+
+\CONTINUEFROM{Proof1}{s=t, P(s)}{P(t)}
+
+\AX{P(t)}{P(t)}
+\AX{P(t)}{P(t)}
+\ANDR{P(t)}{P(t) \land P(t)}
+\CUT{s=t, P(s)}{P(t) \land P(t)}
+\CONTINUEWITH{Proof3}

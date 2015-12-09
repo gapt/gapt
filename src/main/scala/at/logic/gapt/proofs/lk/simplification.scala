@@ -15,15 +15,15 @@ object deleteTautologies {
 
 object subsumedClausesRemovalHOL {
   val alg = StillmanSubsumptionAlgorithmHOL
-  def apply( sequents: List[HOLSequent] ): List[HOLSequent] = sequents.foldLeft( List[HOLSequent]() )( ( ls, el ) => forward( el, backward( el, ls ) ) )
-  private def forward( el: HOLSequent, ls: List[HOLSequent] ) = if ( ls.exists( x => alg.subsumes( x, el ) ) ) ls else ( el :: ls )
-  private def backward( el: HOLSequent, ls: List[HOLSequent] ) = ls.filterNot( x => alg.subsumes( el, x ) )
+  def apply[T <: HOLFormula]( sequents: List[Sequent[T]] ): List[Sequent[T]] = sequents.foldLeft( List[Sequent[T]]() )( ( ls, el ) => forward( el, backward( el, ls ) ) )
+  private def forward[T <: HOLFormula]( el: Sequent[T], ls: List[Sequent[T]] ) = if ( ls.exists( x => alg.subsumes( x, el ) ) ) ls else ( el :: ls )
+  private def backward[T <: HOLFormula]( el: Sequent[T], ls: List[Sequent[T]] ) = ls.filterNot( x => alg.subsumes( el, x ) )
 }
 object subsumedClausesRemoval {
   val alg = StillmanSubsumptionAlgorithmFOL
-  def apply( sequents: List[HOLSequent] ): List[HOLSequent] = sequents.foldLeft( List[HOLSequent]() )( ( ls, el ) => forward( el, backward( el, ls ) ) )
-  private def forward( el: HOLSequent, ls: List[HOLSequent] ) = if ( ls.exists( x => alg.subsumes( x, el ) ) ) ls else ( el :: ls )
-  private def backward( el: HOLSequent, ls: List[HOLSequent] ) = ls.filterNot( x => alg.subsumes( el, x ) )
+  def apply[T <: HOLFormula]( sequents: List[Sequent[T]] ): List[Sequent[T]] = sequents.foldLeft( List[Sequent[T]]() )( ( ls, el ) => forward( el, backward( el, ls ) ) )
+  private def forward[T <: HOLFormula]( el: Sequent[T], ls: List[Sequent[T]] ) = if ( ls.exists( x => alg.subsumes( x, el ) ) ) ls else ( el :: ls )
+  private def backward[T <: HOLFormula]( el: Sequent[T], ls: List[Sequent[T]] ) = ls.filterNot( x => alg.subsumes( el, x ) )
 }
 
 // for any positive unit clause, we try to match it with all negative "ground" literals of the other clauses, if there is a match we remove the literal.

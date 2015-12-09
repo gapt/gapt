@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.formats.llkNew.LLKExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.proofs.lk.deleteTautologies
+import at.logic.gapt.proofs.lk.{ subsumedClausesRemoval, deleteTautologies }
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
 import at.logic.gapt.proofs.HOLSequent
@@ -14,6 +14,8 @@ import at.logic.gapt.provers.prover9.Prover9
  * This implementation of the CERES method does the proof reconstruction via Robinson2LK.
  */
 object CERES extends CERES {
+  def skipNothing( f: HOLFormula ): Boolean = true
+
   /**
    * True if the formula is not an equation. Intended use: predicate argument of CERES.
    * In case the only cuts on equations come from a translation of binary equation rules to unary ones,
@@ -48,7 +50,7 @@ class CERES {
    *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof ): LKProof = apply( p, x => true )
+  def apply( p: LKProof ): LKProof = apply( p, CERES.skipNothing )
 
   /**
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
@@ -61,24 +63,27 @@ class CERES {
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
     val es = p.endSequent
     val cs = CharacteristicClauseSet( StructCreators.extract( p, pred ) )
+    val proj = Projections( p, pred ) + CERES.refProjection( es )
+    /*
+    val cs_ = cs.asInstanceOf[Set[HOLSequent]]
+    var count = 0;
+    for ( p <- proj ) {
+      if ( !cs_.contains( p.endSequent diff es ) ) {
+        println( LLKExporter.generateProof( p, "Proj" + count, true ) )
+        println()
+        count = count + 1
+      }
+    }*/
 
-    val tapecl = deleteTautologies( cs )
-    println( TPTPFOLExporter.tptp_problem( tapecl.toList ) )
+    val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
+    //println( TPTPFOLExporter.tptp_problem( tapecl.toList ) )
+    println( "original css size: " + cs.size )
+    println( "after subsumption:" + tapecl.size )
 
     Prover9.getRobinsonProof( tapecl ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
-        val proj = Projections( p, pred ) + CERES.refProjection( es )
-        /*
-        val cs_ = cs.asInstanceOf[Set[HOLSequent]]
-        var count = 0;
-        for ( p <- proj ) {
-          if ( !cs_.contains( p.endSequent diff es ) ) {
-            println( LLKExporter.generateProof( p, "Proj" + count, true ) )
-            println()
-            count = count + 1
-          }
-        }*/
+        println( s"refutation:\n$rp" )
         apply( es, proj, rp )
     }
   }
@@ -104,9 +109,28 @@ class CERES {
       case Some( proj ) =>
         val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.endSequent diff endsequent, axfs )
         val subproj = applySubstitution( sub )( proj )
+        val duplicates = ( subproj.endSequent diff endsequent ) diff axfs
+        println( s"duplicates: $duplicates" )
+        println( subproj.endSequent )
+        val cleft = duplicates.antecedent.foldLeft( subproj )( ( p, el ) => {
+          require(
+            p.endSequent.antecedent.filter( _ == el ).size >= 2,
+            s"Could not contract formula $el in proof $p. Can not match projection $subproj to clause $axfs."
+          )
+          ContractionLeftRule( p, el )
+        } )
+        val cright = duplicates.succedent.foldLeft( cleft )( ( p, el ) => {
+          require(
+            p.endSequent.succedent.filter( _ == el ).size >= 2,
+            s"Could not contract formula $el in proof $p. Can not match projection $subproj to clause $axfs."
+          )
+          ContractionRightRule( p, el )
+
+        } )
         require(
-          ( subproj.endSequent diff endsequent ).multiSetEquals( axfs ),
-          "Instance of projection with end-sequent " + subproj.endSequent + " is not equal to " + axfs + " x " + endsequent
+          ( cright.endSequent diff endsequent ).multiSetEquals( axfs ),
+          "Instance of projection with end-sequent " + subproj.endSequent + " is not equal to "
+            + axfs + " x " + endsequent
         )
         subproj
     }
