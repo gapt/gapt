@@ -47,8 +47,11 @@ lazy val publishSettings =
       bintrayReleaseOnPublish := false,
       publishTo := Some("Artifactory Realm" at "http://oss.jfrog.org/artifactory/oss-snapshot-local/"),
       credentials := {
-        val Right(bintrayCreds) = Credentials loadCredentials bintrayCredentialsFile.value
-        Seq(Credentials("Artifactory Realm", "oss.jfrog.org", bintrayCreds.userName, bintrayCreds.passwd))
+        Credentials.loadCredentials(bintrayCredentialsFile.value) match {
+          case Right(bintrayCreds) =>
+            Seq(Credentials("Artifactory Realm", "oss.jfrog.org", bintrayCreds.userName, bintrayCreds.passwd))
+          case Left(error) => Seq()
+        }
       }
     )
   } else {
