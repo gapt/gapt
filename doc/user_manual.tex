@@ -174,6 +174,7 @@ are available.
 \item Glucose (\url{http://www.labri.fr/perso/lsimon/glucose/})
 \item Sat4J (\url{http://sat4j.org/})
 \item OpenWBO (\url{http://sat.inesc-id.pt/open-wbo/})
+\item \fxnote{CVC4}
 \end{itemize}
 
 \section{Downloading and Running}
@@ -198,6 +199,8 @@ git clone https://github.com/gapt/gapt
 cd gapt
 sbt console
 \end{lstlisting}
+
+\item \fxnote{as library via jcenter}
 
 \end{enumerate}
 
@@ -351,6 +354,8 @@ res8: at.logic.gapt.expr.HOLAtom = R(p_3,h_1)
 
 \end{clilisting}
 
+\fxnote{Glucose, MiniSAT support; how to call other SAT solvers}
+
 \subsection{MaxSAT}
 
 \fxnote{TODO: MaxSAT example}
@@ -487,6 +492,7 @@ Some([p19] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p18, Suc(0), p1
 Note that \cli{getLKProof} only works for sequents without strong quantifiers
 (i.e.\ sequents that are already Skolemized); however \cli{getExpansionSequent}
 will happily return expansion sequents with Skolem quantifiers in that case:
+\fxnote{the automatic line break here is just wrong}
 \begin{clilisting}[Prover9.isInstalled]
 gapt> val strong = "(exists x all y P(x,y))" +: Sequent() :+ "(all y exists x P(x,y))" map parseFormula
 strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLFormula] = ∃x.∀y.P(x,y) :- ∀y.∃x.P(x,y)
