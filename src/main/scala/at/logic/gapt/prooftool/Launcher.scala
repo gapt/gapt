@@ -9,6 +9,7 @@ package at.logic.gapt.prooftool
 
 import java.awt.Font._
 import java.awt.event.{ MouseEvent, MouseMotionListener }
+import at.logic.gapt.proofs.lkNew.LKProof
 import at.logic.gapt.proofs.{ DagProof, SequentProof }
 
 import scala.swing._
@@ -71,6 +72,13 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
     case ( s: String, p: AnyRef ) =>
       setWindowContent( p, c )
       Some( s )
+    case proof: LKProof =>
+      layout( new DrawSequentProof( proof, fSize, hideContexts = false, Set(), markCutAncestors = false, Set(), "" ) ) = c
+      Main.lkProof = Some( proof )
+      Main.currentlyViewing = Some( LKPROOF )
+      ProofToolPublisher.publish( Loaded )
+      StructPublisher.publish( UnLoaded )
+      None
     case proof: SequentProof[_, _] =>
       layout( new DrawSequentProof( proof, fSize, hideContexts = false, Set(), markCutAncestors = false, Set(), "" ) ) = c
       ProofToolPublisher.publish( Loaded )
@@ -117,6 +125,8 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
 */
     case expSequent: ExpansionSequent =>
       layout( new DrawExpansionSequent( expSequent, fSize ) ) = c
+      Main.expansionProof = Some( expSequent )
+      Main.currentlyViewing = Some( EXPANSIONPROOF )
       ProofToolPublisher.publish( UnLoaded )
       StructPublisher.publish( UnLoaded )
       None
