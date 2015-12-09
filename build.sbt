@@ -21,7 +21,7 @@ lazy val commonSettings = Seq(
   )),
 
   scalaVersion := "2.11.7",
-  scalacOptions in Compile ++= Seq("-deprecation"),
+  scalacOptions in Compile ++= Seq("-deprecation", "-language:postfixOps", "-language:implicitConversions", "-feature"),
   testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
   libraryDependencies ++= testDependencies map(_ % Test),
 
