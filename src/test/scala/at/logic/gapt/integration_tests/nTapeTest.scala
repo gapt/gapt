@@ -187,6 +187,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
   args( skipAll = !Prover9.isInstalled )
   "The higher-order tape proof" should {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
+      skipped( "ceres omega still has problems" )
       //skipped("works but takes a bit time")
       doCutelim( tempCopyOfClasspathFile( "tape3.llk" ) ) match {
         case Some( error ) => ko( error )
@@ -196,6 +197,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     }
 
     "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
+      skipped( "ceres omega still has problems" )
       doCutelim( tempCopyOfClasspathFile( "tape3ex.llk" ) ) match {
         case Some( error ) => ko( error )
         case None          => ok

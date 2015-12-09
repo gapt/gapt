@@ -77,13 +77,13 @@ class CERES {
 
     val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
     //println( TPTPFOLExporter.tptp_problem( tapecl.toList ) )
-    println( "original css size: " + cs.size )
-    println( "after subsumption:" + tapecl.size )
+    //println( "original css size: " + cs.size )
+    //println( "after subsumption:" + tapecl.size )
 
     Prover9.getRobinsonProof( tapecl ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
-        println( s"refutation:\n$rp" )
+        //println( s"refutation:\n$rp" )
         apply( es, proj, rp )
     }
   }
@@ -110,8 +110,8 @@ class CERES {
         val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.endSequent diff endsequent, axfs )
         val subproj = applySubstitution( sub )( proj )
         val duplicates = ( subproj.endSequent diff endsequent ) diff axfs
-        println( s"duplicates: $duplicates" )
-        println( subproj.endSequent )
+        //println( s"duplicates: $duplicates" )
+        //println( subproj.endSequent )
         val cleft = duplicates.antecedent.foldLeft( subproj )( ( p, el ) => {
           require(
             p.endSequent.antecedent.filter( _ == el ).size >= 2,

@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lkNew
 
-import at.logic.gapt.expr.Eq
+import at.logic.gapt.expr.{ HOLAtom, Eq }
 import at.logic.gapt.proofs.{ Sequent, Suc, Ant, SequentIndex }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.utils.logging.Logger
@@ -21,7 +21,9 @@ object LKToExpansionProof extends Logger {
   def apply( proof: LKProof ): ExpansionSequent = proof match {
 
     // Axioms
-    case LogicalAxiom( atom )                    => Sequent( Seq( ETAtom( atom ) ), Seq( ETAtom( atom ) ) )
+    case LogicalAxiom( atom: HOLAtom )           => Sequent( Seq( ETAtom( atom ) ), Seq( ETAtom( atom ) ) )
+
+    case LogicalAxiom( formula )                 => apply( AtomicExpansion( formula ) )
 
     case ReflexivityAxiom( s )                   => Sequent( Seq(), Seq( ETAtom( Eq( s, s ) ) ) )
 

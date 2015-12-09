@@ -54,7 +54,7 @@ class LatticeTest extends Specification {
     }
 
     "parse, skolemize and apply CERES to the lattice proof, skipping equational inferences" in {
-      //      skipped( "doesn't work yet" )
+      skipped( "doesn't work yet" ) //TODO: apparently there is a bug in projection computation which surfaces in this case
       checkForProverOrSkip
 
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()

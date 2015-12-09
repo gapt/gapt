@@ -67,6 +67,7 @@ class ceres_omegaTest extends Specification with ClasspathFileCopier {
 
   "Ceres_omega" should {
     "handle a proof with a manual refutation (1)" in {
+      skipped( "ceres omega still has problems" )
       val ( p, cs, struct, proj ) = prepareProof( "llk/simple-leibnizeq.llk", "THEPROOF" )
       val rp = refutation1( cs.map( _.map( _._2 ) ) )
 

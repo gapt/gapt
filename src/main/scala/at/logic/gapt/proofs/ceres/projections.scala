@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.{ containsStrongQuantifier, HOLPosition }
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lkNew._
