@@ -48,9 +48,7 @@ println
 
 (0 until 10) foreach { i =>
   val instanceLang = minimized.parametricLanguage(Numeral(i))
-  val instanceSeq = FOLSubstitution(FOLVar("x") -> Numeral(i))(termEncoding.decodeToFSequent(instanceLang map {
-    _.asInstanceOf[FOLTerm]
-  }))
+  val instanceSeq = FOLSubstitution(FOLVar("x") -> Numeral(i))(termEncoding decodeToInstanceSequent instanceLang)
   val isCovered = instanceLanguages.find(_._1 == i).map(_._2.toSet subsetOf instanceLang)
   val isTaut = VeriT.isValid(instanceSeq)
   println(s"$i: tautology=$isTaut covers=$isCovered")

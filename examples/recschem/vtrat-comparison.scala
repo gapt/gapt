@@ -13,11 +13,11 @@ val terms = (0 until N).map { i =>
 val A = FOLConst("A")
 val B = FOLFunctionConst("B", 2)
 val Seq(x, y, z) = Seq("x", "y", "z") map { FOLVar(_) }
-val rst = RecSchemTemplate(A, Set(
+val rst = RecSchemTemplate(A,
   A -> B(x, y),
   A -> z,
   B(x, y) -> z
-))
+)
 val targets = terms.map(A -> _).toSet[(LambdaExpression,LambdaExpression)]
 val nfRecSchem = rst.stableRecSchem(targets)
 
