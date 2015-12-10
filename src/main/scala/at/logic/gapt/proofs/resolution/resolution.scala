@@ -147,10 +147,8 @@ object Factor {
 
 object MguFactor {
   def apply( subProof: ResolutionProof, literal1: SequentIndex, literal2: SequentIndex ): Factor = {
-    val Some( ( mgu1, mgu2 ) ) = syntacticMGU.twoSubstitutions(
-      subProof.conclusion( literal1 ), subProof.conclusion( literal2 )
-    )
-    Factor( Instance( subProof, mgu1 ), literal1, literal2 )
+    val Some( mgu ) = syntacticMGU( subProof.conclusion( literal1 ), subProof.conclusion( literal2 ) )
+    Factor( Instance( subProof, mgu ), literal1, literal2 )
   }
 }
 
