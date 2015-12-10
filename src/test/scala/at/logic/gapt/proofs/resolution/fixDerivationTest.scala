@@ -110,13 +110,13 @@ class FixDerivationTest extends Specification {
   }
 
   "findDerivationViaResolution" should {
-    def check( a: HOLClause, bs: Set[HOLClause] ) = {
+    def check( a: HOLClause, bs: Set[_ <: HOLClause] ) = {
       if ( !Prover9.isInstalled ) skipped
       findDerivationViaResolution( a, bs ) must beLike {
         case Some( p ) =>
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true
           foreach( inputClauses( p ) ) { inputClause =>
-            bs must contain( inputClause )
+            bs.toSet[HOLClause] must contain( inputClause )
           }
       }
     }

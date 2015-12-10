@@ -5,6 +5,7 @@ import at.logic.gapt.expr._
 package object proofs {
 
   type FOLSequent = Sequent[FOLFormula]
+  val HOLSequent = Sequent
   type HOLSequent = Sequent[HOLFormula]
 
   implicit class RichFormulaSequent( val sequent: Sequent[HOLFormula] ) {
@@ -27,16 +28,12 @@ package object proofs {
     def toImplication = And( sequent.antecedent ) --> Or( sequent.succedent )
   }
 
-  object HOLSequent {
-    def apply(): HOLSequent = Sequent()
-    def apply( ant: Seq[HOLFormula], succ: Seq[HOLFormula] ): HOLSequent = Sequent( ant, succ )
-    def apply( polarizedElements: Seq[( HOLFormula, Boolean )] ): HOLSequent = Sequent( polarizedElements )
-    def unapply( f: HOLSequent ): Option[( Seq[HOLFormula], Seq[HOLFormula] )] = Some( ( f.antecedent, f.succedent ) )
-  }
-
+  val Clause = Sequent
   type Clause[+A] = Sequent[A]
 
+  val HOLClause = Sequent
   type HOLClause = Clause[HOLAtom]
+  val FOLClause = Sequent
   type FOLClause = Clause[FOLAtom]
 
   implicit class RichClause[+A]( val clause: Clause[A] ) {

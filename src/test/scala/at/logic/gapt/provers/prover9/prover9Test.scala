@@ -60,7 +60,7 @@ class Prover9Test extends Specification {
     "handle exit code 2" in {
       val cnf = List( HOLClause( Seq(), Seq() ), HOLClause( Seq( FOLAtom( "a" ) ), Seq() ) )
       Prover9.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) => inputClauses( p ) must contain( atMost( cnf.toSet ) )
+        case Some( p ) => inputClauses( p ) must contain( atMost( cnf.toSet[HOLClause] ) )
       }
     }
   }

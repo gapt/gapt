@@ -434,39 +434,3 @@ object Sequent {
 
   def unapply[A]( f: Sequent[A] ): Option[( Seq[A], Seq[A] )] = Some( ( f.antecedent, f.succedent ) )
 }
-
-object Clause {
-  def apply[A](): Clause[A] = new Clause( Seq(), Seq() )
-  def apply[A]( negative: Seq[A], positive: Seq[A] ) = new Clause( negative, positive )
-  def apply[A]( elements: Seq[( A, Boolean )] ) = new Clause( elements.filterNot( _._2 ).map( _._1 ), elements.filter( _._2 ).map( _._1 ) )
-
-  def unapply[A]( clause: Clause[A] ) = Some( ( clause.negative, clause.positive ) )
-}
-
-object HOLClause {
-  def apply(): HOLClause = Clause()
-
-  def apply( negative: Seq[HOLAtom], positive: Seq[HOLAtom] ): HOLClause = {
-    Clause( negative, positive )
-  }
-
-  def apply( elements: Seq[( HOLAtom, Boolean )] ): HOLClause = {
-    Clause( elements )
-  }
-
-  def unapply( clause: HOLClause ) = Some( clause.toTuple )
-}
-
-object FOLClause {
-  def apply(): FOLClause = Clause()
-
-  def apply( negative: Seq[FOLAtom], positive: Seq[FOLAtom] ): FOLClause = {
-    Clause( negative, positive )
-  }
-
-  def apply( elements: Seq[( FOLAtom, Boolean )] ): FOLClause = {
-    Clause( elements )
-  }
-
-  def unapply( clause: FOLClause ) = Some( clause.toTuple )
-}
