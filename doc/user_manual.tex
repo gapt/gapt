@@ -181,7 +181,7 @@ functionality of these systems will not be available.
 
 \section{Downloading and Running}
 
-There are two ways you can obtain GAPT:
+There are three ways you can obtain GAPT:
 
 \begin{enumerate}
 
@@ -202,7 +202,12 @@ cd gapt
 sbt console
 \end{lstlisting}
 
-\item \fxnote{as library via jcenter}
+\item If you like GAPT and want to use it as a library in your Scala project,
+  it is available as a Maven artificat on JCenter.  All you need to do is add
+  one line to your \verb,build.sbt,:
+\begin{lstlisting}
+libraryDependencies += "at.logic.gapt" %% "gapt" % "1.10"
+\end{lstlisting}
 
 \end{enumerate}
 
