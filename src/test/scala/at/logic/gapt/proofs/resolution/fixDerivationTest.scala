@@ -128,10 +128,11 @@ class FixDerivationTest extends Specification {
     }
 
     "-p(x)|f(x,y)=y, p(a) := f(a,z)=z" in {
-      val a = HOLClause( Seq(), Seq( parseFormula( "f(a,z)=z" ) ) )
+      def parseAtom( s: String ) = parseFormula( s ).asInstanceOf[HOLAtom]
+      val a = Clause() :+ parseAtom( "f(a,z)=z" )
       val bs = Set(
-        HOLClause( Seq( parseFormula( "p(x)" ) ), Seq( parseFormula( "f(x,y)=y" ) ) ),
-        HOLClause( Seq(), Seq( parseFormula( "p(a)" ) ) )
+        parseAtom( "p(x)" ) +: Clause() :+ parseAtom( "f(x,y)=y" ),
+        Clause() :+ parseAtom( "p(a)" )
       )
       check( a, bs )
     }

@@ -3,8 +3,7 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFn
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Suc }
+import at.logic.gapt.proofs.{ Clause, HOLClause, HOLSequent, Suc }
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.Logger
@@ -218,8 +217,11 @@ object findDerivationViaResolution {
     )
 
     val groundingSubst = Substitution( grounding )
-    val negatedClausesA = a.negative.map { f => HOLClause( Seq(), Seq( groundingSubst( f ) ) ) } ++
-      a.positive.map { f => HOLClause( Seq( groundingSubst( f ) ), Seq() ) }
+    val negatedClausesA = a.
+      map( groundingSubst( _ ) ).
+      map( _.asInstanceOf[HOLAtom] ).
+      map( Clause() :+ _, _ +: Clause() ).
+      elements
 
     prover.getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
       val tautologified = tautologifyInitialUnitClauses( refutation, negatedClausesA.toSet )
