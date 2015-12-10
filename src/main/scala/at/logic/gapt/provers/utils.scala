@@ -32,8 +32,8 @@ object groundFreeVariables {
   def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( Var, Const )] = {
     val varList = vars.toList
     ( varList, getRenaming( varList.map( _.sym ), consts.map( _.sym ).toList ) ).zipped.map {
-      case ( v: FOLVar, cs ) =>
-        v -> FOLConst( cs.toString )
+      case ( v, cs ) =>
+        v -> Const( cs.toString, v.exptype )
     }
   }
 
