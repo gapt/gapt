@@ -275,7 +275,8 @@ to verify valdity and satisfiability, and query the thus obtained models.
 Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, which states that if $m$ pigeons
 are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
 iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n$ holes, there
-is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
+is no hole containing two pigeons. This is satisfiable iff $m\leq n$.\footnote{%
+  In Scala, \cli{Sat4j isValid formula} is syntactical sugar for \cli{Sat4j.isValid(formula)}.}
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
 res2: Boolean = true
