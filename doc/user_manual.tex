@@ -360,7 +360,28 @@ res8: at.logic.gapt.expr.HOLAtom = R(p_3,h_1)
 
 \end{clilisting}
 
-\fxnote{Glucose, MiniSAT support; how to call other SAT solvers}
+GAPT also supports other SAT solvers such as MiniSAT or Glucose out of the box:
+\begin{clilisting}[MiniSAT.isInstalled]
+gapt> MiniSAT isValid PigeonHolePrinciple(3,2)
+res9: Boolean = true
+
+\end{clilisting}
+\begin{clilisting}[Glucose.isInstalled]
+gapt> Glucose isValid PigeonHolePrinciple(3,2)
+res10: Boolean = true
+
+\end{clilisting}
+
+If you have another DIMACS-compliant solver installed or want to pass extra
+options to the SAT solver, you can pass a custom command to GAPT as well:
+\begin{clilisting}[MiniSAT.isInstalled]
+gapt> val solver = new ExternalSATSolver("minisat", "-no-pre")
+solver: at.logic.gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-no-pre")
+
+gapt> solver isValid PigeonHolePrinciple(3,2)
+res11: Boolean = true
+
+\end{clilisting}
 
 \subsection{MaxSAT}
 
@@ -379,7 +400,7 @@ f: at.logic.gapt.expr.FOLFormula = (((a=b∨a=c)∧(P(c)∧P(b)))⊃P(a))
 
 \begin{clilisting}[VeriT.isInstalled]
 gapt> VeriT isValid f
-res9: Boolean = true
+res12: Boolean = true
 
 \end{clilisting}
 
@@ -444,10 +465,10 @@ sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(
 
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 isValid sequent
-res13: Boolean = true
+res16: Boolean = true
 
 gapt> Prover9 getRobinsonProof sequent
-res14: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+res17: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p11]  :-     (Resolution(p10, Suc(0), p9, Ant(0)))
 [p10]  :- p(s(0))    (Resolution(p8, Suc(0), p7, Ant(0)))
 [p9] p(s(0)) :-     (Resolution(p6, Suc(0), p5, Ant(0)))
@@ -462,7 +483,7 @@ Some([p11]  :-     (Resolution(p10, Suc(0), p9, Ant(0)))
 )
 
 gapt> Prover9 getLKProof sequent
-res15: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res18: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p19] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p18, Ant(2), Ant(1)))
 [p18] p(0), ∀x.(p(x)⊃p(s(x))), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p17, Suc(0), p16, Ant(1)))
 [p17] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(0))    (CutRule(p15, Suc(0), p14, Ant(1)))
@@ -474,7 +495,7 @@ Some([p19] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p18
 [p11] p(0), p(0) :- p(0)    (WeakeningLeftRule(p7, p(0)))
 [p1...
 gapt> Prover9 getExpansionSequent sequent
-res16: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀x.(p(x)⊃p(s(x))), List((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
+res19: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀x.(p(x)⊃p(s(x))), List((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
 
 \end{clilisting}
 
@@ -482,7 +503,7 @@ All of the above works with E prover as well, we will just show
 \cli{getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
-res17: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res20: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p19] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p18, Suc(0), p17, Ant(1)))
 [p18] p(0) :- p(0)    (ContractionLeftRule(p16, Ant(0), Ant(1)))
 [p17] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p15, Ant(2), Ant(0)))
@@ -504,7 +525,7 @@ gapt> val strong = "(exists x all y P(x,y))" +: Sequent() :+ "(all y exists x P(
 strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLFormula] = ∃x.∀y.P(x,y) :- ∀y.∃x.P(x,y)
 
 gapt> Prover9 getExpansionSequent strong
-res18: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(SkolemQuantifier(∃x.∀y.P(x,y), s_{0}, WeakQuantifier(∀y.P(s_{0},y), List((Atom(P(s_{0},s_{2})),s_{2})))) :- SkolemQuantifier(∀y.∃x.P(x,y), s_{2}, WeakQuantifier(∃x.P(x,s_{2}), List((Atom(P(s_{0},s_{2})),s_{0})))))
+res21: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(SkolemQuantifier(∃x.∀y.P(x,y), s_{0}, WeakQuantifier(∀y.P(s_{0},y), List((Atom(P(s_{0},s_{2})),s_{2})))) :- SkolemQuantifier(∀y.∃x.P(x,y), s_{2}, WeakQuantifier(∃x.P(x,s_{2}), List((Atom(P(s_{0},s_{2})),s_{0})))))
 
 \end{clilisting}
 
@@ -512,7 +533,7 @@ The LeanCoP interface only supports the \cli{getExpansionSequent} method with
 exactly one formula in the succedent:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionSequent sequent map {toDeep(_)}
-res19: Option[at.logic.gapt.proofs.HOLSequent] = Some(p(0), ((p(0)⊃p(s(0)))∧(p(s(0))⊃p(s(s(0))))) :- p(s(s(0))))
+res22: Option[at.logic.gapt.proofs.HOLSequent] = Some(p(0), ((p(0)⊃p(s(0)))∧(p(s(0))⊃p(s(s(0))))) :- p(s(s(0))))
 
 \end{clilisting}
 
@@ -520,7 +541,7 @@ You can also export sequents in TPTP format if you want to pass them to other
 provers manually:
 \begin{clilisting}
 gapt> TPTPFOLExporter.tptp_proof_problem_split(sequent)
-res20: String =
+res23: String =
 "fof( formula0, axiom, 'p'('0') ).
 fof( formula1, axiom, (! [X0] : ( 'p'(X0) => 'p'('s'(X0)) )) ).
 fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
@@ -534,7 +555,7 @@ GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solve.solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solve.solvePropositional(parseFormula("a -> (b -> a&b)"))
-res21: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res24: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p5]  :- (a⊃(b⊃(a∧b)))    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a :- (b⊃(a∧b))    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a, b :- (a∧b)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
@@ -1596,7 +1617,7 @@ For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
 
 \begin{clilisting}
 gapt> parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
-res24: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+res27: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
 
 \end{clilisting}
 
@@ -1605,7 +1626,7 @@ class:
 
 \begin{clilisting}
 gapt> Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))")
-res25: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
+res28: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
 
 \end{clilisting}
 
@@ -1629,7 +1650,7 @@ returns a list of length 1 as shown by entering
 %
 \begin{clilisting}
 gapt> proofs.length
-res26: Int = 1
+res29: Int = 1
 
 \end{clilisting}
 %
@@ -1638,7 +1659,7 @@ entering
 %
 \begin{clilisting}
 gapt> proofs(0)._1
-res27: String = p
+res30: String = p
 
 \end{clilisting}
 %
