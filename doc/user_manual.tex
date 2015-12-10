@@ -1189,8 +1189,9 @@ These definition rules are extremely liberal, as they allow the replacement of a
 \end{prooftree}
 
 \subsection{LKsk}
-  
-\fxnote{TODO: give brief description of LKsk}
+
+LKsk is a sequent calculus used in the CERES method for higher-order logic, see
+\cite{Weller2010CERES} for an overview of both the calculus and the method.
 
 LKsk operates on labelled formulas. A label $\ell$ is a finite list of terms, a labelled formula is a pair $(F, \ell)$, written as $\sklabel{F}{\ell}$. If $\ell$ is a label and $t$ a term, we write $\ell;t$ for the concatenation of $\ell$ and $t$.
 
@@ -1420,6 +1421,9 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
 Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
 
 \subsection{Ral}
+
+Ral is a higher-order resolution calculus used in the CERES method for
+higher-order logic, see again \cite{Weller2010CERES} for details.
 
 Ral operates on sequents of labelled formulas, just as LKsk.  A label $\ell$ is
 a finite set of terms, a labelled formula is a pair $(F, \ell)$, written as
