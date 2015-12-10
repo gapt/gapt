@@ -441,7 +441,7 @@ You can export \verb,QF_UF, formulas (or sequents) as SMT-LIB benchmarks;
 note that we apply a drastic renaming to the constant symbols in order to
 support arbitrary (even Unicode) names in GAPT:
 \begin{clilisting}
-gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
+gapt> val (benchmark, typeRenaming, constantRenaming) =                                 SmtLibExporter(Sequent() :+ f)
 benchmark: String =
 "(set-logic QF_UF)
 (declare-sort t1 0)
@@ -481,7 +481,7 @@ LeanCoP interface only supports expansion sequent extraction.
 
 Here is how you can get all of these kinds of proofs using Prover9:
 \begin{clilisting}
-gapt> val sequent = existsclosure("p(0)" +: "p(x) -> p(s(x))" +: Sequent() :+ "p(s(s(0)))" map parseFormula)
+gapt> val sequent = existsclosure("p(0)" +: "p(x) -> p(s(x))" +: Sequent()                                 :+ "p(s(s(0)))" map parseFormula)
 sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))
 
 \end{clilisting}
@@ -542,9 +542,8 @@ Some([p19] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p18, Suc(0), p1
 Note that \cli{getLKProof} only works for sequents without strong quantifiers
 (i.e.\ sequents that are already Skolemized); however \cli{getExpansionSequent}
 will happily return expansion sequents with Skolem quantifiers in that case:
-\fxnote{the automatic line break here is just wrong}
 \begin{clilisting}[Prover9.isInstalled]
-gapt> val strong = "(exists x all y P(x,y))" +: Sequent() :+ "(all y exists x P(x,y))" map parseFormula
+gapt> val strong = ("(exists x all y P(x,y))" +: Sequent()                                     :+ "(all y exists x P(x,y))" map parseFormula)
 strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLFormula] = ∃x.∀y.P(x,y) :- ∀y.∃x.P(x,y)
 
 gapt> Prover9 getExpansionSequent strong
@@ -816,7 +815,7 @@ p: at.logic.gapt.proofs.lkNew.LKProof =
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
-gapt> val q = CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers=false ), verbose=true )
+gapt> val q = CutIntroduction.compressLKProof( p,                                   DeltaTableMethod( manyQuantifiers=false ), verbose=true )
 Total inferences in the input proof: 16
 Quantifier inferences in the input proof: 4
 End sequent: ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(s(0)))))
