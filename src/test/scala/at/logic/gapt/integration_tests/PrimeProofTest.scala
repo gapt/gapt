@@ -1,8 +1,10 @@
 
 package at.logic.gapt.integration_tests
 
+import at.logic.gapt.expr.Top
 import at.logic.gapt.expr.hol.containsStrongQuantifier
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
+import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
@@ -174,7 +176,6 @@ class PrimeProofTest extends Specification {
       val path = "target" + separator + "euclid-" + n + "-sk.xml"
 
       //new Prover9Prover().getRobinsonProof( cs ) must beEqualTo( true )
-
       saveXML(
         Tuple2( "euclid-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
           projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),

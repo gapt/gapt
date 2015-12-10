@@ -97,7 +97,6 @@ object RobinsonToLK {
         )
     } )
     val rproof = f( resolutionDerivation )
-    println( s"endSequent: $endSequent\n$rproof\n" )
     WeakeningContractionMacroRule( rproof, endSequent )
   }
 

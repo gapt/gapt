@@ -73,7 +73,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
         if ( !containsEqualityReasoning( q ) )
           ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
-        CERES( lkNew2Old( q ) ) --? "CERES (cut-intro)"
+        CERES( q ) --? "CERES (cut-intro)"
 
         VeriT.isValid( Sequent() :++ extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem validity (cut-intro)"
       }
