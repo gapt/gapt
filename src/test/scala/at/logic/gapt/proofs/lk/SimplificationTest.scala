@@ -52,7 +52,7 @@ class SimplificationTest extends Specification {
 
     "correctly set-normalize a list of Sequents" in {
       val list = s1 :: s2 :: s2 :: s1 :: s2 :: s3 :: s1 :: s2 :: s4 :: s3 :: s2 :: s1 :: s2 :: s3 :: Nil
-      val set = setNormalize( list )
+      val set = list.toSet
       set.size must beEqualTo( 4 )
     }
 

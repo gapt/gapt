@@ -1,12 +1,17 @@
 package at.logic.gapt.proofs.lkskNew
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import LKskProof._
+import at.logic.gapt.proofs.lkNew.LKRuleCreationException
+
+import scala.collection.mutable
 
 object LKskProof {
   type Label = Seq[LambdaExpression]
   type LabelledFormula = ( Label, HOLFormula )
+  type LabelledSequent = Sequent[LabelledFormula]
 }
 
 trait LKskProof extends SequentProof[LabelledFormula, LKskProof] with ContextRule[LabelledFormula, LKskProof] {
@@ -15,6 +20,49 @@ trait LKskProof extends SequentProof[LabelledFormula, LKskProof] with ContextRul
 
   protected def requireEq[T]( a: T, b: T ) =
     require( a == b, s"$a == $b" )
+
+  /**
+   * Checks whether indices are in the right place and premise is defined at all of them.
+   *
+   * @param premise The sequent to be checked.
+   * @param antecedentIndices Indices that should be in the antecedent.
+   * @param succedentIndices Indices that should be in the succedent.
+   */
+  protected def validateIndices( premise: LabelledSequent, antecedentIndices: Seq[SequentIndex], succedentIndices: Seq[SequentIndex] ): Unit = {
+    val antSet = mutable.HashSet[SequentIndex]()
+    val sucSet = mutable.HashSet[SequentIndex]()
+
+    for ( i <- antecedentIndices ) i match {
+      case Ant( _ ) =>
+
+        if ( !premise.isDefinedAt( i ) )
+          throw LKRuleCreationException( s"Sequent $premise is not defined at index $i." )
+
+        if ( antSet contains i )
+          throw LKRuleCreationException( s"Duplicate index $i for sequent $premise." )
+
+        antSet += i
+
+      case Suc( _ ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+    }
+
+    for ( i <- succedentIndices ) i match {
+      case Suc( _ ) =>
+
+        if ( !premise.isDefinedAt( i ) )
+          throw LKRuleCreationException( s"Sequent $premise is not defined at index $i." )
+
+        if ( sucSet contains i )
+          throw LKRuleCreationException( s"Duplicate index $i for sequent $premise." )
+
+        sucSet += i
+
+      case Ant( _ ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+    }
+  }
+
+  private def LKRuleCreationException( message: String ): LKRuleCreationException = new LKRuleCreationException( longName, message )
+
 }
 
 trait InitialSequent extends LKskProof {
@@ -22,8 +70,17 @@ trait InitialSequent extends LKskProof {
   def auxIndices = Seq()
 }
 
-case class Axiom( antLabel: Label, sucLabel: Label, atom: HOLAtom ) extends InitialSequent {
+case class Axiom( antLabel: Label, sucLabel: Label, atom: HOLFormula ) extends InitialSequent {
   def mainFormulaSequent = ( antLabel -> atom ) +: Sequent() :+ ( sucLabel -> atom )
+}
+
+case class EquationalAxiom( label: Label, atom: HOLAtom ) extends InitialSequent {
+  require(
+    atom match { case Eq( _, _ ) => true; case _ => false },
+    "An equational axiom needs to be constructed from an equation!"
+  )
+
+  def mainFormulaSequent = Sequent() :+ ( label -> atom )
 }
 
 case class Reflexivity( label: Label, term: LambdaExpression ) extends InitialSequent {
@@ -45,6 +102,7 @@ case class TheoryAxiom( sequent: Sequent[LabelledFormula] ) extends InitialSeque
 trait UnaryRule extends LKskProof {
   def subProof: LKskProof
   def immediateSubProofs = Seq( subProof )
+  def premise = subProof.conclusion
 }
 
 case class WeakeningLeft( subProof: LKskProof, weakLabelledFormula: LabelledFormula ) extends UnaryRule {
@@ -154,7 +212,8 @@ case class Cut( subProof1: LKskProof, aux1: Suc, subProof2: LKskProof, aux2: Ant
   def mainFormulaSequent = Sequent()
 }
 
-case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+//quantifier rules working on end-sequent ancestors.
+case class AllSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
   val All( quantVar, formula ) = mainFormula
   val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
@@ -164,7 +223,7 @@ case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, subs
   def auxIndices = Seq( Seq( aux ) )
 }
 
-case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+case class ExSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
   val Ex( quantVar, formula ) = mainFormula
   val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
@@ -173,8 +232,9 @@ case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, subs
   def auxIndices = Seq( Seq( aux ) )
 }
 
-// TODO: how to verify skolem symbols?
-
+/* TODO: how to verify skolem symbols?
+   They are quite flexible - the main restriction is that quantifiers cannot be contracted,
+   when they were introduced from different skolem symbols */
 case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
@@ -193,6 +253,7 @@ case class ExSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, sko
   def auxIndices = Seq( Seq( aux ) )
 }
 
+//quantifier rules working on cut-ancestors.
 case class AllRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, eigenVar: Var ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> eigenVar )( formula ) ) )
@@ -208,5 +269,24 @@ case class ExLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, eigen
   require( !( freeVariables( contexts.flatMap( _.elements ).map( _._2 ) ) contains eigenVar ) )
 
   lazy val newFormulas = mainFormula +: Sequent()
+  def auxIndices = Seq( Seq( aux ) )
+}
+
+case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+  val All( quantVar, formula ) = mainFormula
+  val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
+
+  val mainFormulaSequent = ( otherLabels -> mainFormula ) +: Sequent()
+
+  def auxIndices = Seq( Seq( aux ) )
+}
+
+case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+  val Ex( quantVar, formula ) = mainFormula
+  val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
+  requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
+
+  val mainFormulaSequent = Sequent() :+ ( otherLabels -> mainFormula )
   def auxIndices = Seq( Seq( aux ) )
 }

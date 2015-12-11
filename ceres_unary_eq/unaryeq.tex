@@ -1,6 +1,6 @@
 \documentclass[a4paper]{article}
 
-\usepackage{xcolor}
+\usepackage[usenames,dvipsnames,svgnames]{xcolor}
 \usepackage{llk}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -24,54 +24,79 @@
 }
 
 \newcommand{\ccs}[0]{\ensuremath{\mathcal{C}\mathcal{S}}}
+\newcommand{\proj}[0]{\ensuremath{\mathcal{P}}}
 \newcommand{\set}[1]{\ensuremath{\{#1\}}}
 \newcommand{\SEQUL}{\RL{=:ul}}
 \newcommand{\SEQUR}{\RL{=:ur}}
 \newcommand{\UEQR}[2]{\SEQUR \UI{#1}{#2}}
 \newcommand{\UEQL}[2]{\SEQUL \UI{#1}{#2}}
 
+\newcommand{\red}[1]{\textcolor{BrickRed}{#1}}
+\newcommand{\blue}[1]{\textcolor{MidnightBlue}{#1}}
+
+\setlength\parindent{0pt}
+
 \begin{document}
 \section{Rules}
+We mark the ancestors of the occurence of the primary formula $F(t)$ red
+ and we mark the ancestors of the occurence of the primary formula $s=t$ blue.
 
+\subsection{Unary eq rule}
+\begin{prooftree}
+\AX{\Gamma, \blue{s=t}}{\red{F(s)}, \Delta}
+\UEQR{\Gamma, \blue{s=t}}{\red{F(t)}, \Delta}
+\end{prooftree}
 
-Binary eq rule:\\
+\subsection{Binary eq rule}
+\begin{prooftree}
+\AX{\Gamma_1}{\red{s=t}, \Delta_1}
+\AX{\Gamma_2}{\red{F(s)}, \Delta_2}
+\EQR{\Gamma_1, \Gamma_2}{\red{F(t)}, \Delta_1,\Delta_2}
+\end{prooftree}
+
+\subsection{Binary rule by Unary rule}
+\label{sec:binaryrule}
 \begin{prooftree}
 \AX{\Gamma_1}{s=t, \Delta_1}
-\AX{\Gamma_2}{F(s), \Delta_2}
-\EQR{\Gamma_1, \Gamma_2}{F(t), \Delta_1,\Delta_2}
+\AX{\Gamma_2}{ \red{F(s)}, \Delta_2}
+\WEAKL{\Gamma_2,\red{s=t}}{ \red{F(s)}, \Delta_2}
+\UEQR{\Gamma_2,\red{s=t}}{ \red{F(t)}, \Delta_2}
+\CUT{\Gamma_1,\Gamma_2}{\red{F(t)}, \Delta_1,\Delta_2}
 \end{prooftree}
 
-Unary translation:\\
+\subsection{Unary rule by Binary rule}
+\label{sec:unaryrule}
 \begin{prooftree}
+
+\AX{\blue{s=t}}{\red{s=t}}
+\AX{\Gamma,\blue{s=t}}{\red{F(s)},\Delta}
+\EQR{\Gamma,\blue{s=t},\blue{s=t}}{\red{F(t)},\Delta}
+\CONTRR{\Gamma,\blue{s=t}}{\red{F(t)},\Delta}
+\end{prooftree}
+
+%Alternative, if not restricted to tautology axioms:\\
+%\begin{prooftree}
+%
+%\AX{}{\red{s=t}}
+%\AX{\Gamma,\blue{s=t}}{\red{F(s)},\Delta}
+%\EQR{\Gamma,\blue{s=t}}{\red{F(t)},\Delta}
+%\end{prooftree}
+
+\subsection{Inserting rule \ref{sec:unaryrule} into rule \ref{sec:binaryrule}}
+\begin{prooftree}
+
 \AX{\Gamma_1}{s=t, \Delta_1}
-\AX{\Gamma_2}{ F(s), \Delta_2}
-\WEAKL{\Gamma_2,s=t}{ F(s), \Delta_2}
-\UEQR{\Gamma_2,s=t}{ F(t), \Delta_2}
-\CUT{\Gamma_1,\Gamma_2}{F(t), \Delta_1,\Delta_2}
+\AX{s=t}{\red{s=t}}
+\AX{\Gamma_2}{ \red{F(s)}, \Delta_2}
+\WEAKL{\Gamma_2,s=t}{ \red{F(s)}, \Delta_2}
+
+\EQR{\Gamma_2,s=t,\red{s=t}}{\red{F(t)},\Delta_2}
+\CONTRR{\Gamma_2,s=t}{\red{F(t)},\Delta_2}
+
+\CUT{\Gamma_1,\Gamma_2}{\red{F(t)}, \Delta_1,\Delta_2}
 \end{prooftree}
 
-Binary back-translation:\\
-\begin{prooftree}
-
-\AX{s=t}{s=t}
-\AX{\Gamma,s=t}{F(s),\Delta}
-\EQR{\Gamma,s=t}{F(t),\Delta}
-\end{prooftree}
-
-Inserting back-translation into unary translation:
-\begin{prooftree}
-
-\AX{\Gamma_1}{s=t, \Delta_1}
-\AX{s=t}{s=t}
-\AX{\Gamma_2}{ F(s), \Delta_2}
-\WEAKL{\Gamma_2,s=t}{ F(s), \Delta_2}
-
-\EQR{\Gamma_2,s=t}{F(t),\Delta_2}
-
-\CUT{\Gamma_1,\Gamma_2}{F(t), \Delta_1,\Delta_2}
-\end{prooftree}
-
-
+\subsection{Abbreviations}
 \begin{tabular}{ll}
 $\pi_1:$ & proof of \SEQUENT{\Gamma, s=t}{ \Delta}\\
 $\pi_2:$ & proof of \SEQUENT{\Gamma}{F(t), \Delta}\\
@@ -79,32 +104,82 @@ $\pi_3:$ & proof of \SEQUENT{\Gamma,s=t}{F(s), \Delta}\\
 $\pi_4:$ & proof of \SEQUENT{s=t}{s=t}\\
 $S_i$ & struct of $\pi_i$\\
 $C_i$ & \ccs{} of struct $S_i$ \\
-$P_i$ & projection of $\pi_i$ \\
+$\proj_i$ & projection of $\pi_i$ \\
+$P_i$ & end-sequent of $\proj_i$ \\
+$S:$  & end-sequent \\
+$Proj_n$ & set of projections after $n$ inferences\\
 \end{tabular}
-\\[2mm]
-\noindent
-%Binary Struct:
-%$S_1 \times S_2$ if $F(s)$ is not a cut-ancestor, $S_1 \cup S_2$ otherwise
-%
-%\noindent
-%Unary Struct:
-%$S_1 \cup S_2$
 
 
-\section{Proposed \ccs{} semantics of $=:ur$}
-Remark: In the axiom $s=t \lkproves s=t $, the succedent formula is never a cut-ancestor. If the antecedent $s=t$ is a cut-ancestor, the corresponding clause set $C_4$ is $\set{s=t \lkproves}$, otherwise $C_4$ is $\set{\lkproves}$.\\
+\section{Proposed \ccs{} and Projection semantics of $=:ur$}
+We use the simulation of the unary rule by the binary rule to be able to use the
+ extraction methods. Since $CERES_\omega$ has only axiom rules of the form
+ $F \lkproves F$, we consider the first version of rule $\ref{sec:unaryrule}$.\\
 
-\begin{itemize}
-\item if $F(t)$ is a cut-ancestor: Then the stuct is $S_3 \oplus S_4$ and therefore the \ccs{} is $C_3 \cup C_4$.
-  \begin{itemize}
-  \item If $s=t$ is a cut-ancestor: Then $C_4={s=t \lkproves}$ and the new \ccs{} is $C_3 \cup \set{s=t \lkproves} $
-  \item If $s=t$ is an es-ancestor: Then $C_4={ \lkproves}$ and the new \ccs{} is $C_3 \cup \set{\lkproves} $
-  \end{itemize}
- 
-\item if $F(t)$ is an end-sequent ancestor: Then the stuct is $S_3 \otimes S_4$ and therefore the \ccs{} is $C_3 \times C_4$.
-  \item If $s=t$ is a cut-ancestor: Then $C_4={s=t \lkproves}$ and the new \ccs{} is $C_3 \times \set{s=t \lkproves} $
-  \item If $s=t$ is an es-ancestor: Then $C_4={ \lkproves}$ and the new \ccs{} is $C_3 \times \set{\lkproves} = C_3$
-\end{itemize}
+Remark: In the axiom $\blue{s=t} \lkproves \red{s=t} $, the succedent formula is
+ a cut-ancestor iff $\red{F(t)}$ is.
+% If the antecedent $s=t$ is a cut-ancestor, the
+% corresponding clause set $C_4$ is $\set{s=t \lkproves}$, otherwise $C_4$ is
+% $\set{\lkproves}$.\\
+
+We differentiate on the cut-ancestorship of $\red{F(t)}$ and $\blue{s=t}$ in the
+ end-sequent of rule \ref{sec:unaryrule}.
+
+\begin{enumerate}
+\item if $F(t)$ is a cut-ancestor:
+ Then the struct is $S_3 \oplus S_4$ and therefore the \ccs{} is $C_3 \cup C_4$.
+  \begin{enumerate}
+  \item If $\blue{s=t}$ is a cut-ancestor:
+    Then $C_4=\set{}$ and the new \ccs{} is
+    $C_3 \cup \set{} = C_3 $.
+    The projections are unchanged, i.e. $Proj_{n+1} = Proj_n$.
+
+  \item If $\blue{s=t}$ is an es-ancestor:
+    Then $C_4=\set{ \lkproves \red{s=t}}$ and the new \ccs{} is
+    $C_3 \cup \set{\lkproves \red{s=t}}$.
+    Since
+    \begin{prooftree}
+      \AX{s=t}{s=t}
+      \CONTINUEWITH{EQ_{s,t}}
+    \end{prooftree}
+
+    is an LK axiom, we can add it to the set
+    of projections i.e. $Proj_{n+1} = Proj_n \cup EQ_{s,t}$
+  \end{enumerate}
+
+\item if $F(t)$ is an end-sequent ancestor:
+  Then the struct is $S_3 \otimes S_4$ and therefore the \ccs{} is
+  $C_3 \times C_4$.
+  \begin{enumerate}
+  \item If $\blue{s=t}$ is a cut-ancestor:
+    \label{opt1}
+    If we look at the simulation in transformation \ref{sec:unaryrule}, we see
+    that the $eq:r$ rule needs to be applied but the $c:r$ does not, leading to
+    a proof of \SEQUENT{\Gamma, \Pi, s=t}{\Delta,\Lambda F(t)} where the
+    sub-sequent \SEQUENT{\Pi}{\Lambda} contains the literals of the
+    characteristic clause we are projecting to.
+
+    Then $C_4=\set{\blue{s=t} \lkproves}$ and the new \ccs{} is
+    $C_3 \times \set{\blue{s=t} \lkproves} $. Then we apply the following
+    inference:\\
+    \begin{prooftree}
+      \CONTINUEFROM{\proj_i}{\Gamma, \Pi }{\Lambda, \Delta F(s)}
+      \WEAKL{\Gamma, \Pi, \blue{s=t}}{\Lambda, \Delta, F(s)}
+      \UEQR{\Gamma, \Pi, \blue{s=t}}{\Lambda,\Delta, F(t)}
+    \end{prooftree}
+    to each $\proj_i \in Proj_n$.
+  \item If $\blue{s=t}$ is an es-ancestor:
+    Then $C_4=\set{ \lkproves}$ and the new \ccs{} is
+    $C_3 \times \set{\lkproves} = C_3$.
+    The equation rule is repeated, i.e. we infer
+    \begin{prooftree}
+      \CONTINUEFROM{\proj_i}{\Gamma, s=t}{F(s), \Delta}
+      \UEQR{\Gamma, s=t}{F(t), \Delta}
+      \CONTINUEWITH{\proj_i'}
+    \end{prooftree}
+    for $\proj_i \in Proj_n, \proj_i' \in Proj_{n+1}$.
+  \end{enumerate}
+\end{enumerate}
 
 
 

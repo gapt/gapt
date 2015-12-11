@@ -3,26 +3,13 @@
  *
  */
 
-package at.logic.gapt.proofs.ceres.projections
+package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.occurrences._
+import at.logic.gapt.expr.hol.{ containsStrongQuantifier, HOLPosition }
+import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base._
-import scala.collection.immutable.HashSet
-import at.logic.gapt.proofs.lksk.{
-  ExistsSkLeftRule,
-  ForallSkRightRule,
-  ExistsSkRightRule,
-  ForallSkLeftRule,
-  WeakeningLeftRule => WeakeningSkLeftRule,
-  WeakeningRightRule => WeakeningSkRightRule,
-  Axiom => AxiomSk,
-  LabelledFormulaOccurrence
-}
-import at.logic.gapt.proofs.lksk.TypeSynonyms._
+import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.ceres.Pickrule._
 
 case class ProjectionException( message: String, original_proof: LKProof, new_proofs: List[LKProof], nested: Exception )
   extends Exception( message, nested ) {}
@@ -30,103 +17,105 @@ case class ProjectionException( message: String, original_proof: LKProof, new_pr
 object Projections extends at.logic.gapt.utils.logging.Logger {
 
   def reflexivity_projection( proof: LKProof, t: Ty = Ti ): LKProof = {
-    //TODO: in case of fol, fol equality is not used
-    //TODO: lksk is not handled
-    val es = proof.root.toHOLSequent
+    val es = proof.endSequent
     val x = Var( "x", t )
-
-    var count = 0
-    val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList ).asInstanceOf[Var]
+    val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList )
     val ax: LKProof = Axiom( Nil, List( Eq( x_, x_ ) ) )
     val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningLeftRule( p, f ) )
     val right = es.succedent.foldLeft( left )( ( p, f ) => WeakeningRightRule( p, f ) )
     right
   }
 
-  def lksk_reflexivity_projection( proof: LKProof, t: Ty = Ti ): LKProof = {
-
-    //TODO: in case of fol, fol equality is not used
-    val es = proof.root.toHOLSequent
-    val x = Var( "x", t )
-
-    var count = 0
-    val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList ).asInstanceOf[Var]
-    val ( ax, _ ) = AxiomSk.createDefault(
-      HOLSequent( Nil, List( Eq( x_, x_ ) ) ),
-      ( List(), List( EmptyLabel() ) )
-    )
-    require( ax.root.occurrences.size == 1, "Couldn't create reflexivity!" )
-    val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningSkLeftRule.createDefault( p, f, EmptyLabel() ) )
-    val right = es.succedent.foldLeft( left )( ( p, f ) => WeakeningSkRightRule.createDefault( p, f, EmptyLabel() ) )
-    require( right.root.occurrences.size == es.formulas.size + 1, "Size of end-sequent is wrong!" )
-    right
-  }
-
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ): Set[LKProof] =
-    apply( proof, Set.empty[FormulaOccurrence], x => true )
+    apply( proof, proof.endSequent.map( _ => false ), x => true )
+
   def apply( proof: LKProof, pred: HOLFormula => Boolean ): Set[LKProof] =
-    apply( proof, Set.empty[FormulaOccurrence], pred )
+    apply( proof, proof.endSequent.map( _ => false ), pred )
 
-  def apply( proof: LKProof, cut_ancs: Set[FormulaOccurrence], pred: HOLFormula => Boolean ): Set[LKProof] = {
+  def apply( proof: LKProof, cut_ancs: Sequent[Boolean], pred: HOLFormula => Boolean ): Set[LKProof] = {
+    val rec = apply_( proof, cut_ancs, pred )
+    /*
+    val esanc = proof.endSequent.zipWithIndex.filterNot( x => cut_ancs( x._2 ) ).map( _._1 )
+    val cutanc_new = rec.map( _.endSequent )
+    //    println(s"esanc: $esanc")
+    println( "start " + proof.getClass )
+    if ( proof.mainIndices.size > 0 ) {
+      cut_ancs( proof.mainIndices( 0 ) ) match {
+        case true  => println( "Working on a cut-ancestor!" )
+        case false => println( "Working on a es-ancestor!" )
+      }
+    } else {
+      println( "No main formulas!" )
+    }
+    println( " es    " + proof.endSequent )
+    println( " esanc " + esanc )
+    cutanc_new.map( println )
+    println( "end\n" )
+    */
+    rec
+  }
+
+  def apply_( proof: LKProof, cut_ancs: Sequent[Boolean], pred: HOLFormula => Boolean ): Set[LKProof] = {
     implicit val c_ancs = cut_ancs
+    //proof.occConnectors
+
     try {
-      //debug( "working on rule " + proof.rule )
-
       val r: Set[LKProof] = proof match {
-        case Axiom( s )                              => Set( Axiom( s ) )
+        /* Structural rules except cut */
+        case InitialSequent( s )                    => Set( Axiom( s ) )
 
-        case ExistsSkLeftRule( p, _, a, m, v )       => handleLKSKStrongQuantRule( proof, p, a, m, v, ExistsSkLeftRule.apply, pred )
-        case ForallSkRightRule( p, _, a, m, v )      => handleLKSKStrongQuantRule( proof, p, a, m, v, ForallSkRightRule.apply, pred )
-        case ExistsSkRightRule( p, _, a, m, t )      => handleLKSKWeakQuantRule( proof, p, a, m, t, ExistsSkRightRule.apply, pred )
-        case ForallSkLeftRule( p, _, a, m, t )       => handleLKSKWeakQuantRule( proof, p, a, m, t, ForallSkLeftRule.apply, pred )
-        case WeakeningSkLeftRule( p, _, m )          => handleLKSKWeakeningRule( proof, p, m, WeakeningSkLeftRule.createDefault, pred )
-        case WeakeningSkRightRule( p, _, m )         => handleLKSKWeakeningRule( proof, p, m, WeakeningSkRightRule.createDefault, pred )
+        case ContractionLeftRule( p, a1, a2 )       => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply, pred )
+        case ContractionRightRule( p, a1, a2 )      => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply, pred )
+        case WeakeningLeftRule( p, m )              => handleWeakeningRule( proof, p, m, WeakeningLeftRule.apply, pred )
+        case WeakeningRightRule( p, m )             => handleWeakeningRule( proof, p, m, WeakeningRightRule.apply, pred )
 
-        case ForallRightRule( p, _, a, m, v )        => handleStrongQuantRule( proof, p, a, m, v, ForallRightRule.apply, pred )
-        case ExistsLeftRule( p, _, a, m, v )         => handleStrongQuantRule( proof, p, a, m, v, ExistsLeftRule.apply, pred )
-        case AndRightRule( p1, p2, _, a1, a2, m )    => handleBinaryRule( proof, p1, p2, a1, a2, m, AndRightRule.apply, pred )
-        case OrLeftRule( p1, p2, _, a1, a2, m )      => handleBinaryRule( proof, p1, p2, a1, a2, m, OrLeftRule.apply, pred )
-        case ImpLeftRule( p1, p2, _, a1, a2, m )     => handleBinaryRule( proof, p1, p2, a1, a2, m, ImpLeftRule.apply, pred )
-        case ForallLeftRule( p, _, a, m, t )         => handleWeakQuantRule( proof, p, a, m, t, ForallLeftRule.apply, pred )
-        case ExistsRightRule( p, _, a, m, t )        => handleWeakQuantRule( proof, p, a, m, t, ExistsRightRule.apply, pred )
-        case NegLeftRule( p, _, a, m )               => handleNegRule( proof, p, a, m, NegLeftRule.apply, pred )
-        case NegRightRule( p, _, a, m )              => handleNegRule( proof, p, a, m, NegRightRule.apply, pred )
-        case ContractionLeftRule( p, _, a1, a2, m )  => handleContractionRule( proof, p, a1, a2, m, ContractionLeftRule.apply, pred )
-        case ContractionRightRule( p, _, a1, a2, m ) => handleContractionRule( proof, p, a1, a2, m, ContractionRightRule.apply, pred )
-        case OrRight1Rule( p, _, a, m ) => handleUnaryRule( proof, p, a,
-          m.formula match { case Or( _, w ) => w }, m, OrRight1Rule.apply, pred )
-        case OrRight2Rule( p, _, a, m ) => handleUnaryRule( proof, p,
-          a, m.formula match { case Or( w, _ ) => w }, m, flipargs( OrRight2Rule.apply ), pred )
-        case AndLeft1Rule( p, _, a, m ) => handleUnaryRule( proof, p, a,
-          m.formula match { case And( _, w ) => w }, m, AndLeft1Rule.apply, pred )
-        case AndLeft2Rule( p, _, a, m ) => handleUnaryRule( proof, p,
-          a, m.formula match { case And( w, _ ) => w }, m, flipargs( AndLeft2Rule.apply ), pred )
-        case ImpRightRule( p, _, a1, a2, m )             => handleUnaryImpRule( proof, p, a1, a2, m, ImpRightRule.apply, pred )
-        case WeakeningLeftRule( p, _, m )                => handleWeakeningRule( proof, p, m, WeakeningLeftRule.apply, pred )
-        case WeakeningRightRule( p, _, m )               => handleWeakeningRule( proof, p, m, WeakeningRightRule.apply, pred )
-        case DefinitionLeftRule( p, _, a, m )            => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply, pred )
-        case DefinitionRightRule( p, _, a, m )           => handleDefRule( proof, p, a, m, DefinitionRightRule.apply, pred )
-        case EquationLeft1Rule( p1, p2, _, e, a, _, m )  => handleEqRule( proof, p1, p2, e, a, m, EquationLeftMacroRule.apply, pred )
-        case EquationLeft2Rule( p1, p2, _, e, a, _, m )  => handleEqRule( proof, p1, p2, e, a, m, EquationLeftMacroRule.apply, pred )
-        case EquationRight1Rule( p1, p2, _, e, a, _, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationRightMacroRule.apply, pred )
-        case EquationRight2Rule( p1, p2, _, e, a, _, m ) => handleEqRule( proof, p1, p2, e, a, m, EquationRightMacroRule.apply, pred )
-        case CutRule( p1, p2, _, a1, a2 ) =>
-          if ( pred( a1.formula ) ) {
-            val new_cut_ancs = copySetToAncestor( cut_ancs )
-            val s1 = apply( p1, new_cut_ancs + a1, pred )
-            val s2 = apply( p2, new_cut_ancs + a2, pred )
-            handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs + a1 + a2 )
+        /* Logical rules */
+        case AndRightRule( p1, a1, p2, a2 )         => handleBinaryRule( proof, p1, p2, a1, a2, AndRightRule.apply, pred )
+        case OrLeftRule( p1, a1, p2, a2 )           => handleBinaryRule( proof, p1, p2, a1, a2, OrLeftRule.apply, pred )
+        case ImpLeftRule( p1, a1, p2, a2 )          => handleBinaryRule( proof, p1, p2, a1, a2, ImpLeftRule.apply, pred )
+        case NegLeftRule( p, a )                    => handleNegRule( proof, p, a, NegLeftRule.apply, pred )
+        case NegRightRule( p, a )                   => handleNegRule( proof, p, a, NegRightRule.apply, pred )
+        case OrRightRule( p, a1, a2 )               => handleUnaryRule( proof, p, a1, a2, OrRightRule.apply, pred )
+        case AndLeftRule( p, a1, a2 )               => handleUnaryRule( proof, p, a1, a2, AndLeftRule.apply, pred )
+        case ImpRightRule( p, a1, a2 )              => handleUnaryRule( proof, p, a1, a2, ImpRightRule.apply, pred )
+
+        /* quantifier rules  */
+        case ForallRightRule( p, a, eigenv, qvar )  => handleStrongQuantRule( proof, p, ForallRightRule.apply, pred )
+        case ExistsLeftRule( p, a, eigenvar, qvar ) => handleStrongQuantRule( proof, p, ExistsLeftRule.apply, pred )
+        case ForallLeftRule( p, a, f, t, v )        => handleWeakQuantRule( proof, p, a, f, t, v, ForallLeftRule.apply, pred )
+        case ExistsRightRule( p, a, f, t, v )       => handleWeakQuantRule( proof, p, a, f, t, v, ExistsRightRule.apply, pred )
+
+        case DefinitionLeftRule( p, a, m )          => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply, pred )
+        case DefinitionRightRule( p, a, m )         => handleDefRule( proof, p, a, m, DefinitionRightRule.apply, pred )
+        case EqualityLeftRule( p1, e, a, pos )      => handleEqRule( proof, p1, e, a, pos, EqualityLeftRule.apply, pred )
+        case EqualityRightRule( p1, e, a, pos )     => handleEqRule( proof, p1, e, a, pos, EqualityRightRule.apply, pred )
+        case rule @ CutRule( p1, a1, p2, a2 ) =>
+          if ( pred( rule.cutFormula ) ) {
+            /* this cut is taken into account */
+            val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, true )
+            val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, true )
+            require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
+            require( new_cut_ancs_right.size == p2.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
+            val s1 = apply( p1, new_cut_ancs_left, pred )
+            val s2 = apply( p2, new_cut_ancs_right, pred )
+            handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs_left, new_cut_ancs_right )
           } else {
-            val new_cut_ancs = copySetToAncestor( cut_ancs )
-            val s1 = apply( p1, new_cut_ancs, pred )
-            val s2 = apply( p2, new_cut_ancs, pred )
-            s1.foldLeft( Set.empty[LKProof] )( ( s, p1 ) =>
-              s ++ s2.map( p2 =>
-                {
-                  val List( aux1, aux2 ) = pickrule( proof, List( p1.root, p2.root ), List( a1, a2 ) )
-                  CutRule( p1, p2, aux1, aux2 )
-                } ) )
+            /* this cut is skipped */
+            //println( "SKIPPING CUT" )
+            val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, false )
+            val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, false )
+            require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
+            require( new_cut_ancs_right.size == p2.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
+            val s1 = apply( p1, new_cut_ancs_left, pred )
+            val s2 = apply( p2, new_cut_ancs_right, pred )
+            s1.foldLeft( Set.empty[LKProof] )( ( s, pm1 ) =>
+              s ++ s2.map( pm2 => {
+                require( p1.conclusion( a1 ) == p2.conclusion( a2 ), "Original cut formulas must be equal!" )
+                val List( aux1, aux2 ) = pickrule( proof, List( p1, p2 ), List( pm1, pm2 ), List( a1, a2 ) )
+                require( pm1.conclusion( aux1 ) == pm2.conclusion( aux2 ), "New cut formulas must be equal!" )
+                CutRule( pm1, aux1, pm2, aux2 )
+              } ) )
           }
         case _ => throw new Exception( "No such a rule in Projections.apply" )
       }
@@ -141,434 +130,190 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     }
   }
 
-  //flips parameters of unary object constructors s.t. they have the same signature
-  def flipargs[A, B, C, D]( f: ( A, B, C ) => D ): ( ( A, C, B ) => D ) = ( a: A, c: C, b: B ) => f( a, b, c )
-
-  //picks one occurrences from the candidates s.t. formula and skolem label (if it exists) are identical
-  def pick( aux: FormulaOccurrence, candidates: Seq[FormulaOccurrence] ): FormulaOccurrence = pick1( aux, candidates )._1
-
-  def pick1( aux: FormulaOccurrence, candidates: Seq[FormulaOccurrence] ): ( FormulaOccurrence, Seq[FormulaOccurrence] ) = {
-    val pred = aux match {
-      case a: LabelledFormulaOccurrence =>
-        ( x: FormulaOccurrence ) => x.isInstanceOf[LabelledFormulaOccurrence] &&
-          x.formula == a.formula &&
-          x.asInstanceOf[LabelledFormulaOccurrence].skolem_label == a.skolem_label
-      case _ =>
-        ( x: FormulaOccurrence ) => x.formula == aux.formula
-    }
-    try {
-      partitionFirst( pred, candidates )
-    } catch {
-      case e: Exception => throw new Exception( "Can not find suitable occurrence for " + aux + " in " + candidates.mkString( "{", ",", "}" ), e )
-    }
+  /* finds the cut ancestor sequent in the parent connected with the occurrence connector */
+  def copySetToAncestor( connector: OccConnector[HOLFormula], s: Sequent[Boolean] ) = {
+    connector.parents( s ).map( _.head )
   }
 
-  //picks 2 occurrences from the same list s.t. ac1 != ac2, where formulas and skolem label agree
-  def pick2( aux1: FormulaOccurrence, aux2: FormulaOccurrence, candidates: Seq[FormulaOccurrence] ) = {
-    //debug("Picking "+aux1+" and "+aux2+" from "+candidates.mkString("{",",","}"))
-    val ( ac1, candidates2 ) = pick1( aux1, candidates )
-    require( !candidates2.contains( ac1 ), "Occurrence of " + ac1 + " may not be contained in " + candidates2 )
-    val ( ac2, _ ) = pick1( aux2, candidates2 )
-    require( ac1 != ac2, "Need to pick different occurrences!" )
-    List( ac1, ac2 )
-  }
+  /* traces the ancestor relationship to infer cut-formulas in the parent proof. if a formula does not have parents,
+     use default */
+  private def mapToUpperProof[Formula]( conn: OccConnector[Formula], cut_occs: Sequent[Boolean], default: Boolean ) =
+    conn.parents( cut_occs ).map( _.headOption getOrElse default )
 
-  def pickrule( p: LKProof, s: List[OccSequent], aux: List[FormulaOccurrence] ): List[FormulaOccurrence] = {
-    //debug("Pick for rule: "+p.name)
-    p.rule match {
-      //Unary rules
-      case WeakeningLeftRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ) )
-      case WeakeningRightRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ) )
-      case ContractionLeftRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        pick2( aux( 0 ), aux( 1 ), s( 0 ).antecedent )
-      case ContractionRightRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        pick2( aux( 0 ), aux( 1 ), s( 0 ).succedent )
-
-      case NegLeftRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ) )
-      case NegRightRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ) )
-      case AndLeft1RuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ) )
-      case AndLeft2RuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ) )
-      case OrRight1RuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ) )
-      case OrRight2RuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ) )
-      case ImpRightRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ), pick( aux( 1 ), s( 0 ).succedent ) )
-      case DefinitionLeftRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ) )
-      case DefinitionRightRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ) )
-
-      case ForallLeftRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ) )
-      case ForallRightRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ) )
-      case ExistsLeftRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ) )
-      case ExistsRightRuleType =>
-        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
-        require( aux.nonEmpty, p.name + " rule needs at least one aux formula for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ) )
-
-      //TODO: lksk rules
-
-      //Binary rules
-      case CutRuleType =>
-        require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ), pick( aux( 1 ), s( 1 ).antecedent ) )
-      case OrLeftRuleType =>
-        require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).antecedent ), pick( aux( 1 ), s( 1 ).antecedent ) )
-      case AndRightRuleType =>
-        require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ), pick( aux( 1 ), s( 1 ).succedent ) )
-      case ImpLeftRuleType =>
-        require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ), pick( aux( 1 ), s( 1 ).antecedent ) )
-      case EquationLeft1RuleType =>
-        require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ), pick( aux( 1 ), s( 1 ).antecedent ) )
-      case EquationLeft2RuleType =>
-        require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ), pick( aux( 1 ), s( 1 ).antecedent ) )
-      case EquationRight1RuleType =>
-        require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ), pick( aux( 1 ), s( 1 ).succedent ) )
-      case EquationRight2RuleType =>
-        require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )
-        require( aux.size >= 2, p.name + " rule needs at least two aux formulas for lookup!" )
-        List( pick( aux( 0 ), s( 0 ).succedent ), pick( aux( 1 ), s( 1 ).succedent ) )
-    }
-
-  }
-
-  private def partitionFirst[A]( pred: A => Boolean, s: Seq[A] ): ( A, Seq[A] ) = {
-    if ( s.isEmpty ) throw new Exception( "No fitting formula found!" )
-    else if ( pred( s.head ) ) ( s.head, s.tail )
-    else {
-      val ( e, rs ) = partitionFirst( pred, s.tail )
-      ( e, s.head +: rs )
-    }
-
-  }
-
-  def handleBinaryESAnc( proof: LKProof with AuxiliaryFormulas, parent1: LKProof, parent2: LKProof, s1: Set[LKProof], s2: Set[LKProof],
-                         constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof ) =
+  def handleBinaryESAnc( proof: LKProof, parent1: LKProof, parent2: LKProof, s1: Set[LKProof], s2: Set[LKProof],
+                         constructor: ( LKProof, SequentIndex, LKProof, SequentIndex ) => LKProof ) =
     s1.foldLeft( Set.empty[LKProof] )( ( s, p1 ) =>
-      s ++ s2.map( p2 => //try
-        {
-          val List( a1, a2 ) = pickrule( proof, List( p1.root, p2.root ), List( proof.aux( 0 )( 0 ), proof.aux( 1 )( 0 ) ) )
-          constructor( p1, p2, a1, a2 )
-          //      } catch {
-          //        case e:Exception => throw ProjectionException("binary end-sequent ancestor rule failed: ", proof, p1::p2::Nil, e)
-        } ) )
+      s ++ s2.map( p2 => {
+        val List( a1, a2 ) = pickrule( proof, List( parent1, parent2 ), List( p1, p2 ), List( proof.auxIndices( 0 )( 0 ), proof.auxIndices( 1 )( 0 ) ) )
+        constructor( p1, a1, p2, a2 )
+      } ) )
 
-  def getESAncs( proof: LKProof, cut_ancs: Set[FormulaOccurrence] ) =
-    (
-      proof.root.antecedent.filter( fo => !cut_ancs.contains( fo ) ),
-      proof.root.succedent.filter( fo => !cut_ancs.contains( fo ) )
-    )
+  def getESAncs( proof: LKProof, cut_ancs: Sequent[Boolean] ): HOLSequent =
+    //use cut_ancs as characteristic function to filter the the cut-ancestors from the current sequent
+    ( proof.endSequent zip cut_ancs ).filterNot( _._2 ).map( _._1 )
 
   // Handles the case of a binary rule operating on a cut-ancestor.
-  def handleBinaryCutAnc( proof: LKProof, p1: LKProof, p2: LKProof, s1: Set[LKProof], s2: Set[LKProof], cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
-    val new_p1 = weakenESAncs( getESAncs( p2, cut_ancs ), s1 )
-    val new_p2 = weakenESAncs( getESAncs( p1, cut_ancs ), s2 )
+  def handleBinaryCutAnc( proof: LKProof, p1: LKProof, p2: LKProof,
+                          s1: Set[LKProof], s2: Set[LKProof],
+                          cut_ancs1: Sequent[Boolean], cut_ancs2: Sequent[Boolean] ): Set[LKProof] = {
+    val new_p1 = weakenESAncs( getESAncs( p2, cut_ancs2 ), s1 )
+    val new_p2 = weakenESAncs( getESAncs( p1, cut_ancs1 ), s2 )
     new_p1 ++ new_p2
   }
 
   // Apply weakenings to add the end-sequent ancestor of the other side to the projection.
-  def weakenESAncs( esancs: Tuple2[Seq[FormulaOccurrence], Seq[FormulaOccurrence]], s: Set[LKProof] ) = {
-    val wl = s.map( p => esancs._1.foldLeft( p )( ( p, fo ) => fo match {
-      case locc: LabelledFormulaOccurrence =>
-        //in lksk we must add the correct label
-        WeakeningSkLeftRule.createDefault( p, locc.formula, locc.skolem_label )
-      case _ =>
-        WeakeningLeftRule( p, fo.formula )
-    } ) )
-    wl.map( p => esancs._2.foldLeft( p )( ( p, fo ) => fo match {
-      case locc: LabelledFormulaOccurrence =>
-        //in lksk we must add the correct label
-        WeakeningSkRightRule.createDefault( p, locc.formula, locc.skolem_label )
-      case _ =>
-        WeakeningRightRule( p, fo.formula )
-    } ) )
+  //TODO: this a duplication of some function lk
+  def weakenESAncs( esancs: HOLSequent, s: Set[LKProof] ) = {
+    val wl = s.map( p => esancs.antecedent.foldLeft( p )( ( p, fo ) => WeakeningLeftRule( p, fo ) ) )
+    wl.map( p => esancs.succedent.foldLeft( p )( ( p, fo ) => WeakeningRightRule( p, fo ) ) )
   }
 
-  def handleContractionRule( proof: LKProof, p: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: FormulaOccurrence,
-                             constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof,
-                             pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
-    {
-      val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-      if ( cut_ancs.contains( m ) ) s
-      else s.map( pm => {
-        val List( a1_, a2_ ) = pickrule( proof, List( pm.root ), List( a1, a2 ) )
-        constructor( pm, a1_, a2_ )
-      } )
-    }
-
-  def handleUnaryRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, w: HOLFormula, m: FormulaOccurrence,
-                       constructor: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof,
-                       pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
-    {
-      val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-      if ( cut_ancs.contains( m ) ) s
-      else s.map( pm => {
-        val List( a_ ) = pickrule( proof, List( pm.root ), List( a ) )
-        constructor( pm, a_, w )
-      } )
-    }
-
-  //implication does not weaken the second argument, we need two occs
-  def handleUnaryImpRule( proof: LKProof, p: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, m: FormulaOccurrence,
-                          constructor: ( LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof,
-                          pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
-    {
-      val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-      if ( cut_ancs.contains( m ) ) s
-      else s.map( pm => {
-        val List( a1_, a2_ ) = pickrule( proof, List( pm.root ), List( a1, a2 ) )
-        constructor( pm, a1_, a2_ )
-      } )
-    }
-
-  def handleWeakeningRule( proof: LKProof, p: LKProof, m: FormulaOccurrence,
-                           constructor: ( LKProof, HOLFormula ) => LKProof with PrincipalFormulas,
-                           pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
-    {
-      val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-      if ( cut_ancs.contains( m ) ) s
-      else s.map( pm => constructor( pm, m.formula ) )
-    }
-
-  def handleLKSKWeakeningRule( proof: LKProof, p: LKProof, m: LabelledFormulaOccurrence,
-                               constructor: ( LKProof, HOLFormula, Label ) => LKProof with PrincipalFormulas,
-                               pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
-    {
-      val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-      if ( cut_ancs.contains( m ) ) s
-      else {
-        s.map( pm => constructor( pm, m.formula, m.skolem_label ) )
-      }
-    }
-
-  def handleDefRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
-                     constructor: ( LKProof, FormulaOccurrence, HOLFormula ) => LKProof,
-                     pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
-    {
-      val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-      if ( cut_ancs.contains( m ) ) s
-      else s.map( pm => {
-        val List( a_ ) = pickrule( proof, List( pm.root ), List( a ) )
-        constructor( pm, a_, m.formula )
-      } )
-    }
-
-  def handleNegRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence,
-                     constructor: ( LKProof, FormulaOccurrence ) => LKProof,
-                     pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] =
-    {
-      val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-      if ( cut_ancs.contains( m ) ) s
-      else s.map( pm => {
-        val List( a_ ) = pickrule( proof, List( pm.root ), List( a ) )
-        constructor( pm, a_ )
-      } )
-    }
-
-  def handleWeakQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, t: LambdaExpression,
-                           constructor: ( LKProof, FormulaOccurrence, HOLFormula, LambdaExpression ) => LKProof,
-                           pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
-    val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-    if ( cut_ancs.contains( m ) ) s
+  def handleContractionRule( proof: LKProof, p: LKProof,
+                             a1: SequentIndex, a2: SequentIndex,
+                             constructor: ( LKProof, SequentIndex, SequentIndex ) => LKProof,
+                             pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
-      val List( a_ ) = pickrule( proof, List( pm.root ), List( a ) )
-      constructor( pm, a_, m.formula, t )
+      val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( a1, a2 ) )
+      constructor( pm, a1_, a2_ )
     } )
   }
 
-  def handleLKSKWeakQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: LabelledFormulaOccurrence, t: LambdaExpression,
-                               constructor: ( LKProof, LabelledFormulaOccurrence, HOLFormula, LambdaExpression, Boolean ) => LKProof,
-                               pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
-    val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-    if ( cut_ancs.contains( m ) ) s
-    else {
-      require( p.root.occurrences.contains( a ), "Error projecting a lksk Weak Quantifier rule! Auxiliary formula not contained in parent!" )
-      val in_antecedent = p.root.antecedent.contains( a )
-
-      val set = s.map( pm => {
-        //TODO: check label
-        val r = if ( in_antecedent ) {
-          pm.root.antecedent.find( lo => lo.formula == a.formula )
-        } else {
-          pm.root.succedent.find( lo => lo.formula == a.formula )
-        }
-
-        val label_removed = m.skolem_label.diff( a.skolem_label ).nonEmpty || a.skolem_label.diff( m.skolem_label ).nonEmpty
-        //if (label_removed) println("label was removed ")//+a.skolem_label.diff(m.skolem_label).mkString(","))
-        //else println("keeping label!"+m.skolem_label.mkString(","))
-
-        r match {
-          case Some( auxf ) =>
-            constructor( pm, auxf.asInstanceOf[LabelledFormulaOccurrence], m.formula, t, label_removed )
-          case _ =>
-            throw new Exception( "Error projecting a lksk Weak Quantifier rule! Could not find auxformula in projection parent!" )
-        }
-      } )
-      set
-    }
+  //implication does not weaken the second argument, we need two occs
+  def handleUnaryRule[T]( proof: LKProof, p: LKProof, a1: SequentIndex, a2: SequentIndex,
+                          constructor: ( LKProof, SequentIndex, SequentIndex ) => LKProof,
+                          pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    else s.map( pm => {
+      val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( a1, a2 ) )
+      constructor( pm, a1_, a2_ )
+    } )
   }
 
-  def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence,
-                        m: FormulaOccurrence, constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence ) => LKProof,
-                        pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ) = {
-    val new_cut_ancs = copySetToAncestor( cut_ancs )
-    val s1 = apply( p1, new_cut_ancs, pred )
-    val s2 = apply( p2, new_cut_ancs, pred )
+  def handleWeakeningRule( proof: LKProof, p: LKProof, m: HOLFormula,
+                           constructor: ( LKProof, HOLFormula ) => LKProof,
+                           pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    else s.map( pm => constructor( pm, m ) )
+  }
+
+  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, f: HOLFormula,
+                     constructor: ( LKProof, SequentIndex, HOLFormula ) => LKProof,
+                     pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    else s.map( pm => {
+      val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
+      constructor( pm, a_, f )
+    } )
+  }
+
+  def handleNegRule( proof: LKProof, p: LKProof, a: SequentIndex,
+                     constructor: ( LKProof, SequentIndex ) => LKProof,
+                     pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    else s.map( pm => {
+      val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
+      constructor( pm, a_ )
+    } )
+  }
+
+  def handleWeakQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, f: HOLFormula, t: LambdaExpression, qvar: Var,
+                           constructor: ( LKProof, SequentIndex, HOLFormula, LambdaExpression, Var ) => LKProof,
+                           pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    else s.map( pm => {
+      val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
+      constructor( pm, a_, f, t, qvar )
+    } )
+  }
+
+  def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: SequentIndex, a2: SequentIndex,
+                        constructor: ( LKProof, SequentIndex, LKProof, SequentIndex ) => LKProof,
+                        pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ) = {
+    val new_cut_ancs1 = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
+    val new_cut_ancs2 = copySetToAncestor( proof.occConnectors( 1 ), cut_ancs )
+    val s1 = apply( p1, new_cut_ancs1, pred )
+    val s2 = apply( p2, new_cut_ancs2, pred )
     // val nLine = sys.props("line.separator")
     //println("Binary rule on:"+nLine+s1.map(_.root)+nLine+s2.map(_.root))
-    if ( cut_ancs.contains( m ) )
-      handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) )
+      handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs1, new_cut_ancs2 )
     else
-      handleBinaryESAnc( proof.asInstanceOf[LKProof with AuxiliaryFormulas], p1, p2, s1, s2, constructor )
+      handleBinaryESAnc( proof, p1, p2, s1, s2, constructor )
   }
 
-  def handleEqRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence,
-                    m: FormulaOccurrence, constructor: ( LKProof, LKProof, FormulaOccurrence, FormulaOccurrence, HOLFormula ) => LKProof,
-                    pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ) = {
-    val new_cut_ancs = copySetToAncestor( cut_ancs )
-    val s1 = apply( p1, new_cut_ancs, pred )
-    val s2 = apply( p2, new_cut_ancs, pred )
-    if ( cut_ancs.contains( m ) )
-      handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs )
-    else
-      s1.foldLeft( Set.empty[LKProof] )( ( s, p1 ) =>
-        s ++ s2.map( p2 => {
-          val List( a1_, a2_ ) = pickrule( proof, List( p1.root, p2.root ), List( a1, a2 ) )
-          constructor( p1, p2, a1_, a2_, m.formula )
-        } ) )
-  }
+  def handleEqRule( proof: LKProof, p: LKProof, e: SequentIndex, a: SequentIndex,
+                    pos: HOLPosition, constructor: ( LKProof, SequentIndex, SequentIndex, HOLPosition ) => LKProof,
+                    pred: HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val new_cut_ancs = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
+    val s1 = apply( p, new_cut_ancs, pred )
+    /* distinguish on the cut-ancestorship of the equation (left component) and of the auxiliary formula (right component)
+       since the rule does not give direct access to the occurence of e in the conclusion, we look at the premise
+     */
+    val e_idx_conclusion = proof.occConnectors( 0 ).child( e )
+    //    require( cut_ancs( e_idx_conclusion ) == true, "This is not a proof from the old calculus!" )
+    val aux_ca = cut_ancs( proof.mainIndices( 0 ) )
+    val eq_ca = cut_ancs( e_idx_conclusion )
+    val mainf = proof.endSequent( proof.mainIndices( 0 ) )
+    val eqf = proof.endSequent( e_idx_conclusion )
+    //println( s"main formula: $mainf $aux_ca eq: $eqf $eq_ca" )
+    ( aux_ca, eq_ca ) match {
+      case ( true, true ) =>
+        //println( "eq t t" )
+        s1
+      case ( true, false ) =>
+        //println( "eq t f" )
+        val ef = p.endSequent( e )
+        val ax = Axiom( List( ef ), List( ef ) )
+        val main_e = proof.mainIndices( 0 )
+        val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e && !cut_ancs( x._2 ) ).map( _._1 )
+        val wax = weakenESAncs( es, Set( ax ) )
+        s1 ++ wax
+      case ( false, true ) =>
+        //println( "eq f t" )
+        s1 map ( pm => {
+          //println( p.endSequent( e ) )
+          //we first pick our aux formula
+          val candidates = a match {
+            case Ant( _ ) => pm.endSequent.zipWithIndex.antecedent
+            case Suc( _ ) => pm.endSequent.zipWithIndex.succedent
+          }
+          val aux = pick( p, a, candidates )
+          //then add the weakening
+          //println( "weakening: " + p.endSequent( e ) )
+          val wproof = WeakeningLeftRule( pm, p.endSequent( e ) )
+          //trace the aux formulas to the new rule
+          val conn = wproof.occConnectors( 0 )
+          val waux = conn.child( aux )
+          val weq = wproof.mainIndices( 0 )
+          require( waux != weq, "Aux formulas must be different!" )
+          //and apply it
+          val rule = constructor( wproof, weq, waux, pos )
+          rule
+        } )
+      case ( false, false ) =>
+        //println( "eq f f" )
+        s1 map ( pm => {
+          //println( p.endSequent( e ) )
+          val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( e, a ) )
+          constructor( p, a1_, a2_, pos )
+        } )
 
-  def handleStrongQuantRule( proof: LKProof, p: LKProof, a: FormulaOccurrence, m: FormulaOccurrence, v: Var,
-                             constructor: ( LKProof, HOLFormula, HOLFormula, Var ) => LKProof, pred: HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
-    val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-    if ( cut_ancs.contains( m ) ) s
-    else throw new Exception( "The proof is not skolemized!" ) // s.map( p => constructor( p, a, m.formula, v ) )
-  }
-
-  def handleLKSKStrongQuantRule( proof: LKProof, p: LKProof, a: LabelledFormulaOccurrence, m: LabelledFormulaOccurrence, skolemterm: LambdaExpression,
-                                 constructor: ( LKProof, LabelledFormulaOccurrence, HOLFormula, LambdaExpression ) => LKProof,
-                                 pred:        HOLFormula => Boolean )( implicit cut_ancs: Set[FormulaOccurrence] ): Set[LKProof] = {
-    val s = apply( p, copySetToAncestor( cut_ancs ), pred )
-    if ( cut_ancs.contains( m ) ) s
-    else {
-      require( p.root.occurrences.contains( a ), "Error projecting a lksk Weak Quantifier rule! Auxiliary formula not contained in parent!" )
-      val in_antecedent = p.root.antecedent.contains( a )
-
-      val set = s.map( pm => {
-        //TODO: check label
-        val r = if ( in_antecedent ) {
-          pm.root.antecedent.find( lo => lo.formula == a.formula )
-        } else {
-          pm.root.succedent.find( lo => lo.formula == a.formula )
-        }
-
-        r match {
-          case Some( auxf ) =>
-            constructor( pm, auxf.asInstanceOf[LabelledFormulaOccurrence], m.formula, skolemterm )
-          case _ =>
-            throw new Exception( "Error projecting a lksk Weak Quantifier rule! Could not find auxformula in projection parent!" )
-        }
-      } )
-      set
     }
   }
 
-  def copySetToAncestor( set: Set[FormulaOccurrence] ) =
-    set.foldLeft( Set[FormulaOccurrence]() )( ( s, fo ) => s ++ fo.parents )
-}
-
-object DeleteTautology {
-  def apply( l: List[OccSequent] ): List[OccSequent] = {
-    l.filter( seq => {
-      seq.antecedent.toList.map( fo => fo.formula ).intersect( seq.succedent.toList.map( fo => fo.formula ) ) == List[OccSequent]()
-    } ).map( seq1 => DeleteReduntantFOfromSequent( seq1 ) )
-  }
-}
-
-object DeleteReduntantFOfromSequent {
-  def apply( s: OccSequent ): OccSequent = {
-    val setant = s.antecedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
-    val setsucc = s.succedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
-    OccSequent( setant.map( f => factory.createFormulaOccurrence( f, Nil ) ), setsucc.map( f => factory.createFormulaOccurrence( f, Nil ) ) )
-  }
-}
-
-object DeleteRedundantSequents {
-  private def member( seq: OccSequent, l: List[OccSequent] ): Boolean = {
-    l match {
-      case seq1 :: ls =>
-        if ( seq.antecedent.toList.map( fo => fo.formula ).toSet == seq1.antecedent.toList.map( fo => fo.formula ).toSet &&
-          seq.succedent.toList.map( fo => fo.formula ).toSet == seq1.succedent.toList.map( fo => fo.formula ).toSet ) true
-        else member( seq, ls )
-      case _ => false
-    }
-  }
-
-  def apply( l: List[OccSequent] ): List[OccSequent] = {
-    l match {
-      case x :: ls =>
-        val new_ls = apply( ls )
-        if ( member( x, new_ls ) )
-          new_ls
-        else
-          x :: new_ls
-      case _ => List[OccSequent]()
-    }
+  def handleStrongQuantRule( proof: LKProof, p: LKProof,
+                             constructor: ( LKProof, SequentIndex, Var, Var ) => LKProof,
+                             pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    else throw new Exception( "The proof is not skolemized!" )
   }
 }
 

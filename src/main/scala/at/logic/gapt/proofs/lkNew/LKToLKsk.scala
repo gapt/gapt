@@ -71,12 +71,22 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) {
           p.eq.asInstanceOf[Ant], p.aux, p.leftToRight, lambdaPos
         )
 
-      case p @ ForallLeftRule( subProof, aux: Ant, formula, term, v ) =>
+      case p @ ForallLeftRule( subProof, aux: Ant, formula, term, v ) if !isCutAnc( p.mainIndices.head ) =>
+        AllSkLeft(
+          apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ) ),
+          aux, All( v, formula ), term
+        )
+      case p @ ExistsRightRule( subProof, aux: Suc, formula, term, v ) if !isCutAnc( p.mainIndices.head ) =>
+        ExSkRight(
+          apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ) ),
+          aux, Ex( v, formula ), term
+        )
+      case p @ ForallLeftRule( subProof, aux: Ant, formula, term, v ) if isCutAnc( p.mainIndices.head ) =>
         AllLeft(
           apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ) ),
           aux, All( v, formula ), term
         )
-      case p @ ExistsRightRule( subProof, aux: Suc, formula, term, v ) =>
+      case p @ ExistsRightRule( subProof, aux: Suc, formula, term, v ) if isCutAnc( p.mainIndices.head ) =>
         ExRight(
           apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ) ),
           aux, Ex( v, formula ), term

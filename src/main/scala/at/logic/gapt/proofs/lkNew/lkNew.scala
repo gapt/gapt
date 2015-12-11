@@ -239,7 +239,7 @@ case object BottomAxiom extends InitialSequent {
  *
  * @param A The atom A.
  */
-case class LogicalAxiom( A: HOLAtom ) extends InitialSequent {
+case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
   override def conclusion = HOLSequent( Seq( A ), Seq( A ) )
   def mainFormula = A
 }
@@ -260,7 +260,7 @@ case class ReflexivityAxiom( s: LambdaExpression ) extends InitialSequent {
 }
 
 /**
- * Convenience object for constructiong Axioms.
+ * Convenience object for constructing Axioms.
  *
  */
 object Axiom {
@@ -271,7 +271,7 @@ object Axiom {
    * @return An axiom of the appropriate type, depending on sequent.
    */
   def apply( sequent: HOLSequent ): InitialSequent = sequent match {
-    case Sequent( Seq( f: HOLAtom ), Seq( g: HOLAtom ) ) if f == g => LogicalAxiom( f )
+    case Sequent( Seq( f ), Seq( g ) ) if f == g => LogicalAxiom( f )
     case Sequent( Seq(), Seq( Top() ) ) => TopAxiom
     case Sequent( Seq( Bottom() ), Seq() ) => BottomAxiom
     case Sequent( Seq(), Seq( Eq( s: LambdaExpression, t: LambdaExpression ) ) ) if s == t => ReflexivityAxiom( s )
@@ -1014,7 +1014,7 @@ object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
 
     mainFormula match {
       case All( v, subFormula ) =>
-        val auxFormula = Substitution( v, term )( subFormula )
+        val auxFormula = BetaReduction.betaNormalize( Substitution( v, term )( subFormula ) )
         val i = premise.antecedent indexOf auxFormula
 
         if ( i == -1 )
@@ -1239,7 +1239,7 @@ object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
 
     mainFormula match {
       case Ex( v, subFormula ) =>
-        val auxFormula = Substitution( v, term )( subFormula )
+        val auxFormula = BetaReduction.betaNormalize( Substitution( v, term )( subFormula ) )
         val i = premise.succedent indexOf auxFormula
 
         if ( i == -1 )

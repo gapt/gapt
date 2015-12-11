@@ -26,7 +26,8 @@ class RalProofTest extends Specification {
     val p6 = RalCut( p5, Seq( Suc( 0 ) ), p4, Seq( Ant( 0 ) ) )
     val p7 = RalSub( p3, Substitution( x0 -> f( g( Y0 ) ) ) )
     val p8 = RalCut( p6, Seq( Suc( 0 ) ), p7, Seq( Ant( 0 ) ) )
-    val p9 = RalInitial( ( Label( Y0 ) -> Y0( f( f( g( Y0 ) ) ) ) ) +: Sequent() )
+    val formula: HOLFormula = Y0( f( f( g( Y0 ) ) ) )
+    val p9 = RalInitial( ( Label( Y0 ) -> formula ) +: Sequent() )
     val p10 = RalCut( p8, Seq( Suc( 0 ) ), p9, Seq( Ant( 0 ) ) )
     p10.conclusion must_== Clause()
   }

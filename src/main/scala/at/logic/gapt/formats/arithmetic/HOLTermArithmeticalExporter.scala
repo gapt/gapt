@@ -11,8 +11,8 @@ import at.logic.gapt.expr.schema.{ BigOr, BigAnd }
 
 // FIXME: bad import, we don't want to import
 // something from transformations here.
-import at.logic.gapt.proofs.ceres.struct.ClauseSetSymbol
-import at.logic.gapt.proofs.ceres.struct.TypeSynonyms.CutConfiguration
+import at.logic.gapt.proofs.ceres_schema.struct.ClauseSetSymbol
+import at.logic.gapt.proofs.ceres_schema.struct.TypeSynonyms.CutConfiguration
 
 trait HOLTermArithmeticalExporter extends OutputExporter with HOLTermExporter {
   def exportFunction( t: LambdaExpression ): Unit = t match {

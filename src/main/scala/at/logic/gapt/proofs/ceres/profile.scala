@@ -1,3 +1,5 @@
+/* commented out since the algorithm relies on ancestor information in formula occurrences which are traced via the
+   removed formula occurrences. 
 package at.logic.gapt.proofs.ceres.clauseSets.profile
 
 import at.logic.gapt.proofs.lk.base._
@@ -150,3 +152,4 @@ object printCutAncs {
     getCutAncestors( p ).foreach( fo => println( fo.formula.toString ) )
   }
 }
+*/ 
