@@ -355,13 +355,13 @@ is no hole containing two pigeons. This is satisfiable iff $m\leq n$.\footnote{%
   In Scala, \cli{Sat4j isValid formula} is syntactical sugar for \cli{Sat4j.isValid(formula)}.}
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
-res2: Boolean = true
+res3: Boolean = true
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 3)
-res3: Boolean = false
+res4: Boolean = false
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
@@ -389,16 +389,16 @@ gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2,h_1)
 
 gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
-res4: Boolean = false
+res5: Boolean = false
 
 gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
-res5: Boolean = true
+res6: Boolean = true
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
 gapt> m.interpret( And(p1, p2) )
-res6: Boolean = false
+res7: Boolean = false
 
 \end{clilisting}
 
@@ -411,7 +411,7 @@ gapt> val encoding = new DIMACSEncoding
 encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 
 gapt> writeDIMACS(encoding encodeCNF cnf)
-res7: String =
+res8: String =
 "p cnf 9 12
 1 2 3 0
 -2 -4 0
@@ -433,19 +433,19 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res8: at.logic.gapt.expr.HOLAtom = R(p_3,h_1)
+res9: at.logic.gapt.expr.HOLAtom = R(p_3,h_1)
 
 \end{clilisting}
 
 GAPT also supports other SAT solvers such as MiniSAT or Glucose out of the box:
 \begin{clilisting}[MiniSAT.isInstalled]
 gapt> MiniSAT isValid PigeonHolePrinciple(3,2)
-res9: Boolean = true
+res10: Boolean = true
 
 \end{clilisting}
 \begin{clilisting}[Glucose.isInstalled]
 gapt> Glucose isValid PigeonHolePrinciple(3,2)
-res10: Boolean = true
+res11: Boolean = true
 
 \end{clilisting}
 
@@ -456,7 +456,7 @@ gapt> val solver = new ExternalSATSolver("minisat", "-no-pre")
 solver: at.logic.gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-no-pre")
 
 gapt> solver isValid PigeonHolePrinciple(3,2)
-res11: Boolean = true
+res12: Boolean = true
 
 \end{clilisting}
 
@@ -477,7 +477,7 @@ b: at.logic.gapt.expr.FOLAtom = b
 c: at.logic.gapt.expr.FOLAtom = c
 
 gapt> MaxSat4j.solve(hard = a|b|c, soft = Seq(-a -> 4, -b -> 3))
-res12: Option[at.logic.gapt.models.Interpretation] =
+res13: Option[at.logic.gapt.models.Interpretation] =
 Some(a -> false
 b -> false
 c -> true)
@@ -500,17 +500,17 @@ f: at.logic.gapt.expr.FOLFormula = (((a=b∨a=c)∧(P(c)∧P(b)))⊃P(a))
 
 \begin{clilisting}[VeriT.isInstalled]
 gapt> VeriT isValid f
-res13: Boolean = true
+res14: Boolean = true
 
 \end{clilisting}
 
 GAPT also supports Z3 and CVC4 out of the box (if they are installed):
 \begin{clilisting}[Z3.isInstalled && CVC4.isInstalled]
 gapt> Z3 isValid f
-res10: Boolean = true
+res15: Boolean = true
 
 gapt> CVC4 isValid f
-res11: Boolean = true
+res16: Boolean = true
 
 \end{clilisting}
 
@@ -565,10 +565,10 @@ sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(
 
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 isValid sequent
-res17: Boolean = true
+res18: Boolean = true
 
 gapt> Prover9 getRobinsonProof sequent
-res18: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+res19: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p11]  :-     (Resolution(p10, Suc(0), p9, Ant(0)))
 [p10]  :- p(s(0))    (Resolution(p8, Suc(0), p7, Ant(0)))
 [p9] p(s(0)) :-     (Resolution(p6, Suc(0), p5, Ant(0)))
@@ -583,7 +583,7 @@ Some([p11]  :-     (Resolution(p10, Suc(0), p9, Ant(0)))
 )
 
 gapt> Prover9 getLKProof sequent
-res19: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res20: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p19] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p18, Ant(2), Ant(1)))
 [p18] p(0), ∀x.(p(x)⊃p(s(x))), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p17, Suc(0), p16, Ant(1)))
 [p17] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(0))    (CutRule(p15, Suc(0), p14, Ant(1)))
@@ -595,7 +595,7 @@ Some([p19] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p18
 [p11] p(0), p(0) :- p(0)    (WeakeningLeftRule(p7, p(0)))
 [p1...
 gapt> Prover9 getExpansionSequent sequent
-res20: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀x.(p(x)⊃p(s(x))), List((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
+res21: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀x.(p(x)⊃p(s(x))), List((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
 
 \end{clilisting}
 
@@ -603,7 +603,7 @@ All of the above works with E prover as well, we will just show
 \cli{getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
-res21: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res22: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p19] p(0), ∀x.(p(x)⊃p(s(x))) :- p(s(s(0)))    (CutRule(p18, Suc(0), p17, Ant(1)))
 [p18] p(0) :- p(0)    (ContractionLeftRule(p16, Ant(0), Ant(1)))
 [p17] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p15, Ant(2), Ant(0)))
@@ -624,7 +624,7 @@ gapt> val strong = ("(exists x all y P(x,y))" +: Sequent()                      
 strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLFormula] = ∃x.∀y.P(x,y) :- ∀y.∃x.P(x,y)
 
 gapt> Prover9 getExpansionSequent strong
-res22: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(SkolemQuantifier(∃x.∀y.P(x,y), s_{0}, WeakQuantifier(∀y.P(s_{0},y), List((Atom(P(s_{0},s_{2})),s_{2})))) :- SkolemQuantifier(∀y.∃x.P(x,y), s_{2}, WeakQuantifier(∃x.P(x,s_{2}), List((Atom(P(s_{0},s_{2})),s_{0})))))
+res23: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(SkolemQuantifier(∃x.∀y.P(x,y), s_{0}, WeakQuantifier(∀y.P(s_{0},y), List((Atom(P(s_{0},s_{2})),s_{2})))) :- SkolemQuantifier(∀y.∃x.P(x,y), s_{2}, WeakQuantifier(∃x.P(x,s_{2}), List((Atom(P(s_{0},s_{2})),s_{0})))))
 
 \end{clilisting}
 
@@ -632,7 +632,7 @@ The LeanCoP interface only supports the \cli{getExpansionSequent} method with
 exactly one formula in the succedent:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionSequent sequent map {toDeep(_)}
-res23: Option[at.logic.gapt.proofs.HOLSequent] = Some(p(0), ((p(0)⊃p(s(0)))∧(p(s(0))⊃p(s(s(0))))) :- p(s(s(0))))
+res24: Option[at.logic.gapt.proofs.HOLSequent] = Some(p(0), ((p(0)⊃p(s(0)))∧(p(s(0))⊃p(s(s(0))))) :- p(s(s(0))))
 
 \end{clilisting}
 
@@ -640,7 +640,7 @@ You can also export sequents in TPTP format if you want to pass them to other
 provers manually:
 \begin{clilisting}
 gapt> TPTPFOLExporter.tptp_proof_problem_split(sequent)
-res24: String =
+res25: String =
 "fof( formula0, axiom, 'p'('0') ).
 fof( formula1, axiom, (! [X0] : ( 'p'(X0) => 'p'('s'(X0)) )) ).
 fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
@@ -654,7 +654,7 @@ GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solve.solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solve.solvePropositional(parseFormula("a -> (b -> a&b)"))
-res25: Option[at.logic.gapt.proofs.lkNew.LKProof] =
+res26: Option[at.logic.gapt.proofs.lkNew.LKProof] =
 Some([p5]  :- (a⊃(b⊃(a∧b)))    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a :- (b⊃(a∧b))    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a, b :- (a∧b)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
