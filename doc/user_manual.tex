@@ -1,3 +1,4 @@
+% vim:spell spelllang=en:
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 %\usepackage{fullpage}
@@ -151,9 +152,10 @@ is a graphical user interface that allows the user to view (and—to a certain e
 modify) proofs in a flexible and visually appealing way.
 
 The current functionality of GAPT includes data structures for formulas,
-sequents, resolution proofs, sequent calculus proofs, expansion tree proofs
-and algorithms for e.g.\ unification, proof skolemization, cut elimination,
-cut elimination by resolution~\cite{Baaz00CutElimination}, cut introducton~\cite{Hetzl2012}, etc.
+sequents, resolution proofs, sequent calculus proofs, expansion tree proofs and
+algorithms for e.g.\ unification, proof Skolemization, cut-elimination, cut
+elimination by resolution~\cite{Baaz00CutElimination},
+cut-introduction~\cite{Hetzl2012}, etc.
 
 \section{Download and execution}
 
@@ -179,7 +181,7 @@ sbt console
 \end{lstlisting}
 
 \item If you like GAPT and want to use it as a library in your Scala project,
-  it is available as a Maven artificat on JCenter.  All you need to do is add
+  it is available as a Maven artifact on JCenter.  All you need to do is add
   one line to your \verb,build.sbt,:
 \begin{lstlisting}
 libraryDependencies += "at.logic.gapt" %% "gapt" % "1.10"
@@ -218,7 +220,7 @@ To run GAPT you need to have Java 7 (or higher) installed.
 
 GAPT contains interfaces to the following automated reasoning systems. Installing
 them is optional. If GAPT does not find the executables in the path, the
-functionality of these systems will not be available. 
+functionality of these systems will not be available.
 
 \begin{itemize}
 \item Prover9 (\url{http://www.cs.unm.edu/~mccune/mace4/download/}) - make sure
@@ -259,7 +261,7 @@ I: at.logic.gapt.expr.HOLFormula = ∀x:o.(P(x,f(x))⊃∃y.P(x,y))
 
 \end{clilisting}
 
-Please refere to Appendix~\ref{app:formulasyntax} for a full description of the languages the parsers accept.
+Please refer to Appendix~\ref{app:formulasyntax} for a full description of the languages the parsers accept.
 
 A collection of formula sequences can be found in the file \cli{examples/FormulaSequences.scala}.
 Have a look at this code to see how to compose formulas without the parser.
@@ -350,7 +352,7 @@ Have a look at this code for more complicated proof constructions.
 \subsection{SAT solver interface}
 %
 The following shows an example session, using the Sat4j SAT solver
-to verify valdity and satisfiability, and query the thus obtained models.
+to verify validity and satisfiability, and query the thus obtained models.
 Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, which states that if $m$ pigeons
 are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
 iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n$ holes, there
@@ -468,7 +470,7 @@ res12: Boolean = true
 The MaxSAT interface supports generating optimal solutions for weighted partial
 MaxSAT instances: these consist of a list of hard clauses, which must be
 satisfied in the solution; and a list of weighted soft clauses, where weight of
-the satisified soft clauses must be maximized.  See \cite{Argelich2008First}
+the satisfied soft clauses must be maximized.  See \cite{Argelich2008First}
 for an overview.
 
 Let us solve a simple example using the MaxSAT solver from SAT4J:
@@ -671,7 +673,7 @@ Some([p5]  :- (a⊃(b⊃(a∧b)))    (ImpRightRule(p4, Ant(0), Suc(0)))
 \subsection{Cut-elimination (Gentzen's method)}
 
 The GAPT-system contains an implementation of reductive cut-elimination
-\`{a} la Gentzen. It can be used as follows: first we load a proof p
+\`{a} la Gentzen. It can be used as follows: first we load a proof $p$
 with cuts (as in Appendix~\ref{sec.fileio}).
 %
 \begin{clilisting}
@@ -734,7 +736,7 @@ q: at.logic.gapt.proofs.lkNew.LKProof =
 \fxwarning{Use a more reasonable example here.}
 
 The command \texttt{ExtractInterpolant} extracts an interpolant from a sequent calculus proof which may contain atomic cuts and/or equality rules. Currently, we allow only reflexivity axioms or axioms of the form $A \seq A$. The implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
-a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a 
+a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a
 ``negative part'' $\Gamma_1\seq\Delta_1$ and a ``positive part'' $\Gamma_2 \seq \Delta_2$.
 It returns a formula $I$ s.t.\ $\Gamma_1\seq\Delta_1, I$ and $I,\Gamma_2\seq\Delta_2$
 are provable and $I$ contains only such predicate symbols that appear in both, $\Gamma_1\seq\Delta_1$
@@ -781,10 +783,10 @@ This expansion sequent can then be viewed in the graphical user interface by sim
 gapt> prooftool( E )
 
 \end{clilisting}
-Prooftool is then intialized with displaying the end-sequent of \cli{p}, i.e.\ the shallow sequent
-of \cli{E}. The user can then selectively expand quantifiers by clicking on them, see~\cite{Hetzl13Understanding}
-for a detailed description.
 
+A window then opens that displays the end-sequent of \cli{p}, i.e.\ the shallow
+sequent of \cli{E}.  You can then selectively expand quantifiers by clicking on
+them, see~\cite{Hetzl13Understanding} for a detailed description.
 
 \subsection{Cut-elimination by resolution (CERES)}
 
@@ -858,7 +860,7 @@ You can also try \texttt{DeltaTableMethod(manyQuantifiers=true)}, this will proc
 compute a single cut with a block of quantifiers.  The method \texttt{MaxSATMethod(1,2)}
 uses a reduction to a MaxSAT problem and an external MaxSAT-solver for finding a
 minimal grammar corresponding to a proof with a cut with two cuts, one with $1$
-quantifer, one with $2$ quantifers.
+quantifier, one with $2$ quantifiers.
 
 \subsection{Tree grammars}
 
@@ -874,7 +876,7 @@ quantifer, one with $2$ quantifers.
 
 The rules of LK are listed below. Proof trees are constructed top-down, starting with axioms and with each rule introducing new inferences. With the exception of the definition rules, the constructors of the rules only allow inferences that are actually valid. Note that the rules are presented here as if they always act upon the outermost formulas in the upper sequent, but this is only for convenience of presentation. The basic constructors actually require the user to specify on which concrete formulas the inference should be performed.
 
-Apart from those basic constructors, there is also a multitude of convenience constructors that facilitate easier proof construction. Moreover, there are so-called macro rules that reduce several inferences to a single command (e.g. introducing quantifier blocks). See the API documentation of the individual rules for details. 
+Apart from those basic constructors, there is also a multitude of convenience constructors that facilitate easier proof construction. Moreover, there are so-called macro rules that reduce several inferences to a single command (e.g. introducing quantifier blocks). See the API documentation of the individual rules for details.
 
 \subsubsection*{Axioms}
 
@@ -926,27 +928,27 @@ Logical axioms and theory axioms may only contain atomic formulas.
 \begin{multicols}{2}
 
   \subsubsection*{Left rules}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta}
   \RightLabelm{(\mt{w:l})}
   \UnaryInfCm{A, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{A,A,\Gamma \seq \Delta}
   \RightLabelm{(\mt{c:l})}
   \UnaryInfCm{A,\Gamma\seq \Delta}
   \end{prooftree}
-  
+
   \subsubsection*{Right rules}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta}
   \RightLabelm{(\mt{w:r})}
   \UnaryInfCm{\Gamma \seq \Delta, A}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A, A}
   \RightLabelm{(\mt{c:r})}
@@ -968,20 +970,20 @@ Logical axioms and theory axioms may only contain atomic formulas.
   \RightLabelm{(\land\mt{:l})}
   \UnaryInfCm{A \land B,\Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{A, \Gamma \seq \Delta}
   \AxiomCm{B, \Sigma \seq \Pi}
   \RightLabelm{(\lor\mt{:l})}
   \BinaryInfCm{A \lor B, \Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A}
   \RightLabelm{(\lnot\mt{:l})}
   \UnaryInfCm{\neg A, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A}
   \AxiomCm{B, \Sigma \seq \Pi}
@@ -997,19 +999,19 @@ Logical axioms and theory axioms may only contain atomic formulas.
   \RightLabelm{(\land\mt{:r})}
   \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, A \land B}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A, B}
   \RightLabelm{(\lor\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, A \lor B}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{A, \Gamma\seq \Delta}
   \RightLabelm{(\lnot\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \neg A}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{A, \Gamma \seq \Delta, B}
   \RightLabelm{(\impl\mt{:r})}
@@ -1029,21 +1031,21 @@ Logical axioms and theory axioms may only contain atomic formulas.
   \RightLabelm{(\forall\mt{:l})}
   \UnaryInfCm{\forall x A, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
-  \AxiomCm{ A[y/x], \Gamma \seq \Delta}
+  \AxiomCm{A[y/x], \Gamma \seq \Delta}
   \RightLabelm{(\exists\mt{:l})}
   \UnaryInfCm{\exists x A, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \subsubsection*{Right rules}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A[y/x]}
   \RightLabelm{(\forall\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \forall x A}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A[t/x]}
   \RightLabelm{(\exists\mt{:r})}
@@ -1052,7 +1054,7 @@ Logical axioms and theory axioms may only contain atomic formulas.
 
 \end{multicols}
 
-The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
+The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e.\ it must not contain free occurrences of variables bound in $A$.
 
 \subsubsection*{Equality rules}
 
@@ -1065,27 +1067,27 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
   \RightLabelm{(\mt{=:l})}
   \UnaryInfCm{s = t, A[T/t], \Sigma \seq \Pi}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{s = t, A[T/t], \Sigma \seq \Pi}
   \RightLabelm{(\mt{=:l})}
   \UnaryInfCm{s = t, A[T/s], \Sigma \seq \Pi}
   \end{prooftree}
-  
+
   \subsubsection*{Right rules}
-  
+
   \begin{prooftree}
   \AxiomCm{s = t, \Sigma \seq \Pi, A[T/s]}
   \RightLabelm{(\mt{=:r})}
   \UnaryInfCm{s = t, \Sigma \seq \Pi, A[T/t]}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{s = t, \Sigma \seq \Pi, A[T/t]}
   \RightLabelm{(\mt{=:r})}
   \UnaryInfCm{s = t, \Sigma \seq \Pi, A[T/s]}
   \end{prooftree}
-  
+
 \end{multicols}
 Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
 
@@ -1103,7 +1105,7 @@ Each equation rule replaces exactly one occurrence of a term in its auxiliary fo
 These definition rules are extremely liberal, as they allow the replacement of any formula by any other formula.
 
 \subsubsection*{Induction}
-  The induction rule applies to arbitrary algebraic datatypes. Let $c_1,...,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],...,F[x_{k_i}], \Gamma_i \seq \Delta_i, F[c_i(x_1,...,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
+The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],\dots,F[x_{k_i}], \Gamma_i \seq \Delta_i, F[c_i(x_1,\dots,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
   \begin{prooftree}
     \AxiomCm{(\pi_1)}
     \noLine
@@ -1118,9 +1120,9 @@ These definition rules are extremely liberal, as they allow the replacement of a
     \RightLabelm{(\mt{ind})}
     \QuaternaryInfC{$\Gamma \seq \Delta, \forall x F[x]$}
   \end{prooftree}
-  
+
   In the case of the natural numbers, there are two constructors: $0$ of arity 0 and $s$ of arity 1. Consequently, the induction rule reduces to
-  
+
   \begin{prooftree}
     \AxiomCm{(\pi_1)}
     \noLine
@@ -1224,7 +1226,7 @@ LKsk operates on labelled formulas. A label $\ell$ is a finite list of terms, a 
 \begin{prooftree}
 \AxiomCm{}
 \RightLabelm{\mt{Theory axiom}}
-\UnaryInfCm{\sklabel{A_1}{\ell_1},...,\sklabel{A_m}{\ell_m} \seq \sklabel{B_1}{\ell'_1},...,\sklabel{B_n}{\ell'_n}}
+\UnaryInfCm{\sklabel{A_1}{\ell_1},\dots,\sklabel{A_m}{\ell_m} \seq \sklabel{B_1}{\ell'_1},\dots,\sklabel{B_n}{\ell'_n}}
 \end{prooftree}
 
 Logical axioms and theory axioms may only contain atomic formulas.
@@ -1237,7 +1239,7 @@ Logical axioms and theory axioms may only contain atomic formulas.
   \RightLabelm{(\mt{cut})}
   \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
-  
+
   Note that the labels of the cut formulas do not need to be equal.
 
 \subsubsection*{Structural rules}
@@ -1245,27 +1247,27 @@ Logical axioms and theory axioms may only contain atomic formulas.
 \begin{multicols}{2}
 
   \subsubsection*{Left rules}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta}
   \RightLabelm{(\mt{w:l})}
   \UnaryInfCm{\sklabel{A}{\ell}, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\sklabel{A}{\ell},\sklabel{A}{\ell},\Gamma \seq \Delta}
   \RightLabelm{(\mt{c:l})}
   \UnaryInfCm{\sklabel{A}{\ell},\Gamma\seq \Delta}
   \end{prooftree}
-  
+
   \subsubsection*{Right rules}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta}
   \RightLabelm{(\mt{w:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}, \sklabel{A}{\ell}}
   \RightLabelm{(\mt{c:r})}
@@ -1285,20 +1287,20 @@ Logical axioms and theory axioms may only contain atomic formulas.
   \RightLabelm{(\land\mt{:l})}
   \UnaryInfCm{\sklabel{A \land B}{\ell},\Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\sklabel{A}{\ell}, \Gamma \seq \Delta}
   \AxiomCm{\sklabel{B}{\ell}, \Sigma \seq \Pi}
   \RightLabelm{(\lor\mt{:l})}
   \BinaryInfCm{\sklabel{A \lor B}{\ell}, \Gamma, \Sigma \seq \Delta, \Pi}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
   \RightLabelm{(\lnot\mt{:l})}
   \UnaryInfCm{\sklabel{\neg A}{\ell}, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}}
   \AxiomCm{\sklabel{B}{\ell}, \Sigma \seq \Pi}
@@ -1314,19 +1316,19 @@ Logical axioms and theory axioms may only contain atomic formulas.
   \RightLabelm{(\land\mt{:r})}
   \BinaryInfCm{\Gamma, \Sigma \seq \Delta, \Pi, \sklabel{A \land B}{\ell}}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, \sklabel{A}{\ell}, \sklabel{B}{\ell}}
   \RightLabelm{(\lor\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \sklabel{A \lor B}{\ell}}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\sklabel{A}{\ell}, \Gamma\seq \Delta}
   \RightLabelm{(\lnot\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\neg A}{\ell}}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\sklabel{A}{\ell}, \Gamma \seq \Delta, \sklabel{B}{\ell}}
   \RightLabelm{(\impl\mt{:r})}
@@ -1340,39 +1342,39 @@ Logical axioms and theory axioms may only contain atomic formulas.
 \begin{multicols}{2}
 
   \subsubsection*{Left rules}
-  
+
    \begin{prooftree}
   \AxiomCm{\sklabel{A[t/x]}{\ell;t}, \Gamma \seq \Delta}
   \RightLabelm{(\forall\mt{:l})}
   \UnaryInfCm{\sklabel{\forall x A}{\ell}, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
-  \AxiomCm{ \sklabel{A[y/x]}{\ell}, \Gamma \seq \Delta}
+  \AxiomCm{\sklabel{A[y/x]}{\ell}, \Gamma \seq \Delta}
   \RightLabelm{(\exists\mt{:l})}
   \UnaryInfCm{\sklabel{\exists x A}{\ell}, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \begin{prooftree}
-  \AxiomCm{ \sklabel{A[f(\ell)/x]}{\ell}, \Gamma \seq \Delta}
+  \AxiomCm{\sklabel{A[f(\ell)/x]}{\ell}, \Gamma \seq \Delta}
   \RightLabelm{(\exists^{sk}\mt{:l})}
   \UnaryInfCm{\sklabel{\exists x A}{\ell}, \Gamma \seq \Delta}
   \end{prooftree}
-  
+
   \subsubsection*{Right rules}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, \sklabel{A[y/x]}{\ell}}
   \RightLabelm{(\forall\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\forall x A}{\ell}}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, \sklabel{A[f(\ell)/x]}{\ell}}
   \RightLabelm{(\forall^{sk}\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \sklabel{\forall x A}{\ell}}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, \sklabel{A[t/x]}{\ell;t}}
   \RightLabelm{(\exists\mt{:r})}
@@ -1381,7 +1383,7 @@ Logical axioms and theory axioms may only contain atomic formulas.
 
 \end{multicols}
 
-The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e. it must not contain free occurrences of variables bound in $A$.
+The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e.\ it must not contain free occurrences of variables bound in $A$.
 
 \subsubsection*{Equality rules}
 
@@ -1394,27 +1396,27 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
   \RightLabelm{(\mt{=:l})}
   \UnaryInfCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/t]}{\ell_2}, \Sigma \seq \Pi}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/t]}{\ell_2}, \Sigma \seq \Pi}
   \RightLabelm{(\mt{=:l})}
   \UnaryInfCm{\sklabel{s = t}{\ell_1}, \sklabel{A[T/s]}{\ell_2}, \Sigma \seq \Pi}
   \end{prooftree}
-  
+
   \subsubsection*{Right rules}
-  
+
   \begin{prooftree}
   \AxiomCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/s]}{\ell_2}}
   \RightLabelm{(\mt{=:r})}
   \UnaryInfCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/t]}{\ell_2}}
   \end{prooftree}
-  
+
   \begin{prooftree}
   \AxiomCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi, \sklabel{A[T/t]}{\ell_2}}
   \RightLabelm{(\mt{=:r})}
   \UnaryInfCm{\sklabel{s = t}{\ell_1}, \Sigma \seq \Pi,\sklabel{A[T/s]}{\ell_2}}
   \end{prooftree}
-  
+
 \end{multicols}
 Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
 
@@ -1583,7 +1585,7 @@ antecedent or the succedent---this is one of the four possibilities:
 \section{Prover9 term parser (parseFormula)}
 \label{app:formulasyntax}
 
-The Prover9 parser interpretes names strings built over the alphabet
+The Prover9 parser interprets names strings built over the alphabet
  $[\mathtt{a, \ldots, z, A ,\ldots, Z, 0, \ldots 9} ]$. Also the
  equality symbol $=$ and the arithmetic operators $\{\mathtt{+,-,*,/}\}$
  are names.
@@ -1594,18 +1596,18 @@ Since prover 9 has two naming schemes, we describe both of them. The default
 \subsubsection{LADR naming scheme (default)}
 
 Names starting with lower case letters from \texttt{u} to \texttt{z} are
- interpeted as variable symbols. Every name starting with a different letter
- is interpeted as a constant/function/predicate symbol, depending on the
+ interpreted as variable symbols. Every name starting with a different letter
+ is interpreted as a constant/function/predicate symbol, depending on the
  position in the term.
 
 \subsubsection{Prolog naming scheme}
 Names starting with upper case letters from \texttt{A} to \texttt{Z} are
- interpeted as variable symbols. Every name starting with a different letter
- is interpeted as a constant/function, depending on the
+ interpreted as variable symbols. Every name starting with a different letter
+ is interpreted as a constant/function, depending on the
  position in the term. Predicates start with a lower or an upper case letter.
 
 \subsubsection{Terms and Formulas}
-Arguments are always seperated by commas and put in parenthesis. Terms are
+Arguments are always separated by commas and put in parenthesis. Terms are
  built from variable, constant symbols and function symbols applied
  to a number of arguments, which are terms. Likewise, atoms are
  predicate symbols, possibly with arguments which are again terms. The
@@ -1629,7 +1631,7 @@ The logical connectives are called $\{\mathtt{\&,|,->,all,exists}\}$ where
  disjunction and implication are written in infix form.
 
 Conjunction and disjunction are right-associative. Quantifiers always need to
- be enclosed in parenthesis but a series of quantfiers doesn't need parenthesis
+ be enclosed in parenthesis but a series of quantifiers doesn't need parenthesis
  in between. The binding order is (from strongest to weakest):
  $\mathtt{\neg,\forall,\exists,\land\lor,\rightarrow}$.
 
@@ -1655,12 +1657,12 @@ res29: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
 \section{XML proof parser}\label{sec.fileio}
 
 This method \texttt{XMLProofDatabaseParser} will take as an argument a string that represents the path of a file
-containing a proof database in the xml format (generated by HLK, for example) and
-will return a proof database containing a list 
-of pairs. It expects a file (the string of a proof will not work) and you can use 
-the relative path. In the list returned, each pair is composed of a string and 
-an object representing a proof within the system. The string is the name of the 
-proof defined in the xml file. For example:
+containing a proof database in the XML format (generated by HLK, for example) and
+will return a proof database containing a list
+of pairs. It expects a file (the string of a proof will not work) and you can use
+the relative path. In the list returned, each pair is composed of a string and
+an object representing a proof within the system. The string is the name of the
+proof defined in the XML file. For example:
 %
 \begin{clilisting}
 gapt> val proofs = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs
@@ -1700,7 +1702,7 @@ proof: at.logic.gapt.proofs.lkNew.LKProof =
 [p18] ∀y.(P(z,y)⊃Q(z,y)) :- (...
 \end{clilisting}
 %
-You can then view this proof in the graphical user interface \texttt{prooftool} by 
+You can then view this proof in the graphical user interface \texttt{prooftool} by
 entering
 %
 \begin{clilisting}
