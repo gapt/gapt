@@ -18,7 +18,7 @@ doc/*.aux
 doc/*.bbl
 doc/*.blg
 doc/*.log
-doc/*.pdf
+doc/user_manual.pdf
 doc/*.toc
 doc/*.fdb_latexmk
 doc/*.fls

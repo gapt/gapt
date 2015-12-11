@@ -24,7 +24,7 @@ object TseitinCNF {
 class TseitinCNF {
 
   // add already known subformulas
-  val subformulaMap = mutable.Map[FOLFormula, FOLFormula]()
+  val subformulaMap = mutable.Map[FOLFormula, FOLAtom]()
 
   val hc = "x"
   var fsyms = Set[String]()
@@ -64,8 +64,8 @@ class TseitinCNF {
    */
   private var auxCounter: Int = 0
   @tailrec
-  private def addIfNotExists( f: FOLFormula ): FOLFormula = f match {
-    case FOLAtom( h, args ) => f
+  private def addIfNotExists( f: FOLFormula ): FOLAtom = f match {
+    case f @ FOLAtom( h, args ) => f
     case _ =>
       if ( subformulaMap.isDefinedAt( f ) ) {
         subformulaMap( f )
@@ -90,8 +90,8 @@ class TseitinCNF {
    * @return a Tuple2, where 1st is the prop. variable representing f and 2nd is a clause
    *         containing all the equivalences required for the representation of f by 1st.
    */
-  def processFormula( f: FOLFormula ): Tuple2[FOLFormula, List[FOLClause]] = f match {
-    case FOLAtom( _, _ ) => ( f, List() )
+  def processFormula( f: FOLFormula ): Tuple2[FOLAtom, List[FOLClause]] = f match {
+    case f @ FOLAtom( _, _ ) => ( f, List() )
 
     case Top() =>
       val x = addIfNotExists( f )

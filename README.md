@@ -1,3 +1,6 @@
+<!---
+vim:spell spelllang=en:
+-->
 ## GAPT: General Architecture for Proof Theory
 [![Build Status](https://travis-ci.org/gapt/gapt.svg?branch=master)](https://travis-ci.org/gapt/gapt) [![Coverage Status](https://coveralls.io/repos/gapt/gapt/badge.svg?branch=master)](https://coveralls.io/r/gapt/gapt?branch=master)
 
@@ -14,7 +17,7 @@ Contact: gapt@logic.at
 
 ### Example
 
-One of the many features GAPT supports is an implementation of [Hebrand's
+One of the many features GAPT supports is an implementation of [Herbrand's
 theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem).  Here is how can
 automatically generate a Herbrand sequent in GAPT:
 ```scala

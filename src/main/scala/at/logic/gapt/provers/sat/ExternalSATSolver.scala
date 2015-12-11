@@ -25,6 +25,9 @@ class ExternalSATSolver( val command: String* ) extends SATSolver with ExternalP
 
   override val isInstalled: Boolean =
     try solve( Top() ).isDefined catch { case _: IOException => false }
+
+  override def toString =
+    s"ExternalSATSolver(${command map { '"' + _ + '"' } mkString ", "})"
 }
 
 object MiniSAT extends ExternalSATSolver( "minisat" )

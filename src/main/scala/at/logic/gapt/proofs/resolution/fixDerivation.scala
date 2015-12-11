@@ -3,8 +3,7 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFn
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Suc }
+import at.logic.gapt.proofs.{ Clause, HOLClause, HOLSequent, Suc }
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.Logger
@@ -211,15 +210,18 @@ object findDerivationViaResolution {
    * @param prover Prover to obtain a resolution refutation of the consequence bs |= a from.
    * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
    */
-  def apply( a: HOLClause, bs: Set[HOLClause], prover: ResolutionProver = Prover9 ): Option[ResolutionProof] = {
+  def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = Prover9 ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
       ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet
     )
 
     val groundingSubst = Substitution( grounding )
-    val negatedClausesA = a.negative.map { f => HOLClause( Seq(), Seq( groundingSubst( f ) ) ) } ++
-      a.positive.map { f => HOLClause( Seq( groundingSubst( f ) ), Seq() ) }
+    val negatedClausesA = a.
+      map( groundingSubst( _ ) ).
+      map( _.asInstanceOf[HOLAtom] ).
+      map( Clause() :+ _, _ +: Clause() ).
+      elements
 
     prover.getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
       val tautologified = tautologifyInitialUnitClauses( refutation, negatedClausesA.toSet )
