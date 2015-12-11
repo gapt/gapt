@@ -110,13 +110,13 @@ class FixDerivationTest extends Specification {
   }
 
   "findDerivationViaResolution" should {
-    def check( a: HOLClause, bs: Set[HOLClause] ) = {
+    def check( a: HOLClause, bs: Set[_ <: HOLClause] ) = {
       if ( !Prover9.isInstalled ) skipped
       findDerivationViaResolution( a, bs ) must beLike {
         case Some( p ) =>
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true
           foreach( inputClauses( p ) ) { inputClause =>
-            bs must contain( inputClause )
+            bs.toSet[HOLClause] must contain( inputClause )
           }
       }
     }
@@ -128,10 +128,11 @@ class FixDerivationTest extends Specification {
     }
 
     "-p(x)|f(x,y)=y, p(a) := f(a,z)=z" in {
-      val a = HOLClause( Seq(), Seq( parseFormula( "f(a,z)=z" ) ) )
+      def parseAtom( s: String ) = parseFormula( s ).asInstanceOf[HOLAtom]
+      val a = Clause() :+ parseAtom( "f(a,z)=z" )
       val bs = Set(
-        HOLClause( Seq( parseFormula( "p(x)" ) ), Seq( parseFormula( "f(x,y)=y" ) ) ),
-        HOLClause( Seq(), Seq( parseFormula( "p(a)" ) ) )
+        parseAtom( "p(x)" ) +: Clause() :+ parseAtom( "f(x,y)=y" ),
+        Clause() :+ parseAtom( "p(a)" )
       )
       check( a, bs )
     }
