@@ -137,10 +137,6 @@
 \section{Introduction}
 
 GAPT is a generic architecture for proof transformations implemented in Scala.
-Formulas, terms, and other expressions are are represented as lambda terms in
-simple type theory.  Terms and formulas of first-order logic and schematic
-first-order logic are hence encoded as lambda terms, these form regular
-subsets.
 
 The focus of GAPT are proof transformations (in contrast to proof assistants,
 whose focus is proof formalization, and automated deduction systems, whose focus
@@ -237,7 +233,13 @@ functionality of these systems will not be available.
 
 \section{Data structures}
 
-\subsection{Entering formulas}\label{sec.entering_formulas}
+\subsection{Formulas}
+
+Formulas, terms, and other expressions are are represented as lambda terms in
+simple type theory.  Terms and formulas of first-order logic and schematic
+first-order logic are hence encoded as lambda terms, these form regular
+subsets.
+
 You can enter formulas by parsing them with the prover9\cite{Prover9Input} parser:
 %
 \begin{clilisting}
@@ -266,7 +268,7 @@ f: at.logic.gapt.proofs.HOLSequent = ((((((c_1∨d_1)∧(c_2∨d_2))∧(c_3∨d_
 
 \end{clilisting}
 
-\subsection{Entering proofs}\label{sec:entering_proofs}
+\subsection{Proofs}\label{sec:entering_proofs}
 
 There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
