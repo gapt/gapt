@@ -271,7 +271,7 @@ object Axiom {
    * @return An axiom of the appropriate type, depending on sequent.
    */
   def apply( sequent: HOLSequent ): InitialSequent = sequent match {
-    case Sequent( Seq( f: HOLFormula ), Seq( g: HOLFormula ) ) if f == g => LogicalAxiom( f )
+    case Sequent( Seq( f ), Seq( g ) ) if f == g => LogicalAxiom( f )
     case Sequent( Seq(), Seq( Top() ) ) => TopAxiom
     case Sequent( Seq( Bottom() ), Seq() ) => BottomAxiom
     case Sequent( Seq(), Seq( Eq( s: LambdaExpression, t: LambdaExpression ) ) ) if s == t => ReflexivityAxiom( s )

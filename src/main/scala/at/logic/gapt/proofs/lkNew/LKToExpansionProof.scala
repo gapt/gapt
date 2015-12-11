@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lkNew
 
+import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.expr.{ HOLAtom, Eq }
 import at.logic.gapt.proofs.{ Sequent, Suc, Ant, SequentIndex }
 import at.logic.gapt.proofs.expansionTrees._
@@ -21,9 +22,14 @@ object LKToExpansionProof extends Logger {
   def apply( proof: LKProof ): ExpansionSequent = proof match {
 
     // Axioms
-    case LogicalAxiom( atom: HOLAtom )           => Sequent( Seq( ETAtom( atom ) ), Seq( ETAtom( atom ) ) )
+    case LogicalAxiom( atom: HOLAtom ) => Sequent( Seq( ETAtom( atom ) ), Seq( ETAtom( atom ) ) )
 
-    case LogicalAxiom( formula )                 => apply( AtomicExpansion( formula ) )
+    case LogicalAxiom( formula ) if !containsQuantifier( formula ) =>
+      apply( AtomicExpansion( formula ) ) //
+
+    case LogicalAxiom( formula ) =>
+      //TODO: find a better solution (perhaps atomic expansion + regularize as a preprocessing step?)
+      throw new Exception( s"Encountered a non-atomic axiom with quantifiers. Please use axiom expansion and regularize." )
 
     case ReflexivityAxiom( s )                   => Sequent( Seq(), Seq( ETAtom( Eq( s, s ) ) ) )
 
