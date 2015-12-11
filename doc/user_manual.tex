@@ -156,29 +156,6 @@ sequents, resolution proofs, sequent calculus proofs, expansion tree proofs
 and algorithms for e.g.\ unification, proof skolemization, cut elimination,
 cut elimination by resolution~\cite{Baaz00CutElimination}, cut introducton~\cite{Hetzl2012}, etc.
 
-\section{System requirements}
-\label{sec:sysreq}
-
-To run GAPT you need to have Java 7 (or higher) installed.
-
-GAPT contains interfaces to the following automated reasoning systems. Installing
-them is optional. If GAPT does not find the executables in the path, the
-functionality of these systems will not be available. 
-
-\begin{itemize}
-\item Prover9 (\url{http://www.cs.unm.edu/~mccune/mace4/download/}) - make sure
-  the commands \texttt{prover9} and \texttt{prooftrans} are available.
-\item E theorem prover (\url{http://eprover.org/})
-\item LeanCoP (\url{http://leancop.de/})
-\item VeriT (\url{http://www.verit-solver.org/})
-\item Z3 (\url{https://github.com/Z3Prover/z3})
-\item MiniSAT (\url{http://minisat.se/})
-\item Glucose (\url{http://www.labri.fr/perso/lsimon/glucose/})
-\item Sat4J (\url{http://sat4j.org/})
-\item OpenWBO (\url{http://sat.inesc-id.pt/open-wbo/})
-\item CVC4 (\url{http://cvc4.cs.nyu.edu/web/})
-\end{itemize}
-
 \section{Download and execution}
 
 There are three ways you can obtain GAPT:
@@ -235,7 +212,32 @@ gapt> help(containsQuantifierOnLogicalLevel)
 
 \end{clilisting}
 
-\section{Entering formulas}\label{sec.entering_formulas}
+\subsection{System requirements}
+\label{sec:sysreq}
+
+To run GAPT you need to have Java 7 (or higher) installed.
+
+GAPT contains interfaces to the following automated reasoning systems. Installing
+them is optional. If GAPT does not find the executables in the path, the
+functionality of these systems will not be available. 
+
+\begin{itemize}
+\item Prover9 (\url{http://www.cs.unm.edu/~mccune/mace4/download/}) - make sure
+  the commands \texttt{prover9} and \texttt{prooftrans} are available.
+\item E theorem prover (\url{http://eprover.org/})
+\item LeanCoP (\url{http://leancop.de/})
+\item VeriT (\url{http://www.verit-solver.org/})
+\item Z3 (\url{https://github.com/Z3Prover/z3})
+\item MiniSAT (\url{http://minisat.se/})
+\item Glucose (\url{http://www.labri.fr/perso/lsimon/glucose/})
+\item Sat4J (\url{http://sat4j.org/})
+\item OpenWBO (\url{http://sat.inesc-id.pt/open-wbo/})
+\item CVC4 (\url{http://cvc4.cs.nyu.edu/web/})
+\end{itemize}
+
+\section{Data structures}
+
+\subsection{Entering formulas}\label{sec.entering_formulas}
 You can enter formulas by parsing them with the prover9\cite{Prover9Input} parser:
 %
 \begin{clilisting}
@@ -264,9 +266,81 @@ f: at.logic.gapt.proofs.HOLSequent = ((((((c_1∨d_1)∧(c_2∨d_2))∧(c_3∨d_
 
 \end{clilisting}
 
+\subsection{Entering proofs}\label{sec:entering_proofs}
 
+There are various possibilities for entering proofs into the system. The most
+basic one is a direct top-down proof-construction using the constructors
+of the inference rules.
+\begin{clilisting}
+gapt> val A = FOLAtom("A")
+A: at.logic.gapt.expr.FOLAtom = A
 
-\section{Automated deduction}
+gapt> val B = FOLAtom("B")
+B: at.logic.gapt.expr.FOLAtom = B
+
+gapt> val F1 = B --> (A & B)
+F1: at.logic.gapt.expr.FOLFormula = (B⊃(A∧B))
+
+gapt> val F2 = A & B
+F2: at.logic.gapt.expr.FOLFormula = (A∧B)
+
+\end{clilisting}
+%
+We start with the axioms:
+%
+\begin{clilisting}
+gapt> val p1 = LogicalAxiom(A)
+p1: at.logic.gapt.proofs.lkNew.LogicalAxiom =
+[p1] A :- A    (LogicalAxiom(A))
+
+gapt> val p2 = LogicalAxiom(B)
+p2: at.logic.gapt.proofs.lkNew.LogicalAxiom =
+[p1] B :- B    (LogicalAxiom(B))
+
+\end{clilisting}
+%
+These are joined by an $\land:\mathrm{right}$-inference. See Appendix~\ref{app:sequent_calculus}
+for the formal definition of the sequent calculus used in GAPT.
+\begin{clilisting}
+gapt> val p3 = AndRightRule( p1, A, p2, B )
+p3: at.logic.gapt.proofs.lkNew.AndRightRule =
+[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] A :- A    (LogicalAxiom(A))
+[p1] B :- B    (LogicalAxiom(B))
+
+\end{clilisting}
+%
+To finish the proof it remains to apply two $\impl:\mathrm{right}$-inferences:
+%
+\begin{clilisting}
+gapt> val p4 = ImpRightRule( p3, B, F2 )
+p4: at.logic.gapt.proofs.lkNew.ImpRightRule =
+[p4] A :- (B⊃(A∧B))    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] A :- A    (LogicalAxiom(A))
+[p1] B :- B    (LogicalAxiom(B))
+
+gapt> val p5 = ImpRightRule( p4, A, F1 )
+p5: at.logic.gapt.proofs.lkNew.ImpRightRule =
+[p5]  :- (A⊃(B⊃(A∧B)))    (ImpRightRule(p4, Ant(0), Suc(0)))
+[p4] A :- (B⊃(A∧B))    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
+[p2] A :- A    (LogicalAxiom(A))
+[p1] B :- B    (LogicalAxiom(B))
+
+\end{clilisting}
+%
+You can now view this proof by typing:
+\begin{clilisting}
+gapt> prooftool( p5 )
+
+\end{clilisting}
+
+The system comes with a collection of example proof sequences in the file
+\cli{examples/ProofSequences.scala} which are generated in the above style.
+Have a look at this code for more complicated proof constructions.
+
+\section{Feature walkthrough}
 
 \subsection{SAT solver interface}
 %
@@ -588,81 +662,6 @@ Some([p5]  :- (a⊃(b⊃(a∧b)))    (ImpRightRule(p4, Ant(0), Suc(0)))
 
 \end{clilisting}
 
-\section{Entering proofs}\label{sec:entering_proofs}
-
-There are various possibilities for entering proofs into the system. The most
-basic one is a direct top-down proof-construction using the constructors
-of the inference rules.
-\begin{clilisting}
-gapt> val A = FOLAtom("A")
-A: at.logic.gapt.expr.FOLAtom = A
-
-gapt> val B = FOLAtom("B")
-B: at.logic.gapt.expr.FOLAtom = B
-
-gapt> val F1 = B --> (A & B)
-F1: at.logic.gapt.expr.FOLFormula = (B⊃(A∧B))
-
-gapt> val F2 = A & B
-F2: at.logic.gapt.expr.FOLFormula = (A∧B)
-
-\end{clilisting}
-%
-We start with the axioms:
-%
-\begin{clilisting}
-gapt> val p1 = LogicalAxiom(A)
-p1: at.logic.gapt.proofs.lkNew.LogicalAxiom =
-[p1] A :- A    (LogicalAxiom(A))
-
-gapt> val p2 = LogicalAxiom(B)
-p2: at.logic.gapt.proofs.lkNew.LogicalAxiom =
-[p1] B :- B    (LogicalAxiom(B))
-
-\end{clilisting}
-%
-These are joined by an $\land:\mathrm{right}$-inference. See Appendix~\ref{app:sequent_calculus}
-for the formal definition of the sequent calculus used in GAPT.
-\begin{clilisting}
-gapt> val p3 = AndRightRule( p1, A, p2, B )
-p3: at.logic.gapt.proofs.lkNew.AndRightRule =
-[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
-[p2] A :- A    (LogicalAxiom(A))
-[p1] B :- B    (LogicalAxiom(B))
-
-\end{clilisting}
-%
-To finish the proof it remains to apply two $\impl:\mathrm{right}$-inferences:
-%
-\begin{clilisting}
-gapt> val p4 = ImpRightRule( p3, B, F2 )
-p4: at.logic.gapt.proofs.lkNew.ImpRightRule =
-[p4] A :- (B⊃(A∧B))    (ImpRightRule(p3, Ant(1), Suc(0)))
-[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
-[p2] A :- A    (LogicalAxiom(A))
-[p1] B :- B    (LogicalAxiom(B))
-
-gapt> val p5 = ImpRightRule( p4, A, F1 )
-p5: at.logic.gapt.proofs.lkNew.ImpRightRule =
-[p5]  :- (A⊃(B⊃(A∧B)))    (ImpRightRule(p4, Ant(0), Suc(0)))
-[p4] A :- (B⊃(A∧B))    (ImpRightRule(p3, Ant(1), Suc(0)))
-[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
-[p2] A :- A    (LogicalAxiom(A))
-[p1] B :- B    (LogicalAxiom(B))
-
-\end{clilisting}
-%
-You can now view this proof by typing:
-\begin{clilisting}
-gapt> prooftool( p5 )
-
-\end{clilisting}
-
-The system comes with a collection of example proof sequences in the file
-\cli{examples/ProofSequences.scala} which are generated in the above style.
-Have a look at this code for more complicated proof constructions.
-
-\section{Proof theory}
 
 \subsection{Cut-elimination (Gentzen's method)}
 
@@ -782,11 +781,11 @@ of \cli{E}. The user can then selectively expand quantifiers by clicking on them
 for a detailed description.
 
 
-\section{Cut-elimination by resolution (CERES)}
+\subsection{Cut-elimination by resolution (CERES)}
 
 \fxnote{Short example for first and higher-order CERES.}
 
-\section{Cut-introduction}
+\subsection{Cut-introduction}
 
 The cut-introduction algorithm as described in~\cite{Hetzl2012,Hetzl14Algorithmic,Hetzl14Introducing} is
 implemented in GAPT for introducing $\Pi_1$-cuts into a sequent calculus
@@ -856,7 +855,7 @@ uses a reduction to a MaxSAT problem and an external MaxSAT-solver for finding a
 minimal grammar corresponding to a proof with a cut with two cuts, one with $1$
 quantifer, one with $2$ quantifers.
 
-\section{Tree grammars}
+\subsection{Tree grammars}
 
 \fxnote{Give grammar minimization example}
 
