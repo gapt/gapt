@@ -173,7 +173,9 @@ object CutIntroduction extends Logger {
     val prover = if ( hasEquality ) EquationalProver else BasicProver
 
     val herbrandSequent = extractInstances( ep )
-    val Some( herbrandSequentResolutionProof ) = Prover9.getRobinsonProof( herbrandSequent )
+    val herbrandSequentResolutionProof = Prover9 getRobinsonProof herbrandSequent getOrElse {
+      throw new CutIntroEHSUnprovableException( "Cannot prove Herbrand sequent using Prover9." )
+    }
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
     metrics.value( "hs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
@@ -242,7 +244,9 @@ object CutIntroduction extends Logger {
       }
 
       val ehsSequent = minimizedEHS.getDeep
-      val Some( ehsResolutionProof ) = Prover9.getRobinsonProof( ehsSequent )
+      val ehsResolutionProof = Prover9 getRobinsonProof ehsSequent getOrElse {
+        throw new CutIntroEHSUnprovableException( "Cannot prove extended Herbrand sequent using Prover9." )
+      }
       metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
       metrics.value( "ehs_scomp", expressionSize( ehsSequent.toFormula ) )
       metrics.value( "ehs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( ehsResolutionProof ) ) )
