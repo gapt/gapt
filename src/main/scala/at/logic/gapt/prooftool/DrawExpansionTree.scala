@@ -73,8 +73,8 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
     opaque = false
 
     expTree match {
-      case METAtom( f ) =>
-        val lbl = DrawSequent.formulaToLabel( f, ft )
+      case METAtom( _ ) | METTop | METBottom | METWeakening( _ ) =>
+        val lbl = DrawSequent.formulaToLabel( expTree.toShallow, ft )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
         contents += lbl
       case METNeg( t ) =>

@@ -8,7 +8,7 @@ while getopts "hm:" FLAG; do
     *)
       echo "GAPT Command Line Interface"
       echo ""
-      echo "usage: cli.sh [-h] [-m MEM]"
+      echo "usage: gapt.sh [-h] [-m MEM]"
       echo ""
       echo "   -m : give MEM amount of memory to the java virtual machine (default: 2g)"
       exit 1

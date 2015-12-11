@@ -10,8 +10,6 @@ object CLIMain {
   val welcomeMessage = """
     *************************************
     *    Welcome to the GAPT shell!     *
-    *                                   *
-    *  See help for a list of commands. *
     *************************************
 
  Copyright (C) 2009-2015  GAPT developers
@@ -39,7 +37,7 @@ object CLIMain {
           println( "done." )
         }
 
-        // If invoked as ./cli.sh script.scala,
+        // If invoked as ./gapt.sh script.scala,
         // then load script.scala and exit.
         if ( args.length >= 1 ) {
           withFile( args( 0 ) ) { f => interpretAllFrom( f ) }

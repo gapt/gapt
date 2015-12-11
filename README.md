@@ -41,7 +41,7 @@ need to have Java installed to run them:
 wget https://logic.at/gapt/downloads/gapt-1.10.tar.gz
 tar xf gapt-1.10.tar.gz
 cd gapt-1.10
-./cli.sh
+./gapt.sh
 ```
 This will drop you into a scala REPL with GAPT pre-loaded.
 
@@ -52,7 +52,7 @@ libraryDependencies += "at.logic.gapt" %% "gapt" % "1.10"
 ```
 
 If you want to use the unstable git version of GAPT, you can use `sbt
-console`--this will drop you into the same environment as `./cli.sh` in the
+console`--this will drop you into the same environment as `./gapt.sh` in the
 binary distribution.
 
 See [the wiki](https://github.com/gapt/gapt/wiki/Compiling-and-running-from-source)

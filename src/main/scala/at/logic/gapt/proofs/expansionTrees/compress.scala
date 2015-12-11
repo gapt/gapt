@@ -16,6 +16,8 @@ object compressQuantifiers {
    * @return The corresponding MultiExpansionTree.
    */
   def apply( tree: ExpansionTree ): MultiExpansionTree = tree match {
+    case ETTop                     => METTop
+    case ETBottom                  => METBottom
     case ETAtom( f )               => METAtom( f )
     case ETWeakening( f )          => METWeakening( f )
     case ETNeg( t1 )               => METNeg( compressQuantifiers( t1 ) )
@@ -68,6 +70,8 @@ object decompressQuantifiers {
    * @return The corresponding ExpansionTree.
    */
   def apply( tree: MultiExpansionTree ): ExpansionTree = tree match {
+    case METTop            => ETTop
+    case METBottom         => ETBottom
     case METAtom( f )      => ETAtom( f )
     case METWeakening( f ) => ETWeakening( f )
     case METNeg( t1 )      => ETNeg( decompressQuantifiers( t1 ) )

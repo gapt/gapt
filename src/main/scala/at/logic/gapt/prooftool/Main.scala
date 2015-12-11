@@ -47,7 +47,7 @@ import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
-object Main extends SimpleSwingApplication {
+object Main extends Reactor {
   val nLine = sys.props( "line.separator" )
   val dnLine = nLine + nLine
   var DEBUG = false
@@ -62,12 +62,6 @@ object Main extends SimpleSwingApplication {
   def currentlyViewing_=( v: ViewingObject ) = {
     currentlyViewing_ = v
     ProofToolPublisher.publish( Loaded( v ) )
-  }
-
-  override def startup( args: Array[String] ) {
-    showFrame()
-    if ( args.length >= 1 ) loadProof( args( 0 ), defaultFontSize )
-    else ProofToolPublisher.publish( DisableMenus )
   }
 
   def showFrame() {
