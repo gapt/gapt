@@ -49,8 +49,11 @@ class MyMenubar extends MenuBar {
       enabled = false
       listenTo( ProofToolPublisher )
       reactions += {
-        case Loaded   => enabled = true
-        case UnLoaded => enabled = false
+        case Loaded( viewing ) =>
+          enabled = viewing match {
+            case LKPROOF( _ ) => true
+            case _            => false
+          }
       }
     }
     contents += new MenuItem( Action( "Save all as..." ) { Main.fSaveAll() } ) {
@@ -114,8 +117,11 @@ class MyMenubar extends MenuBar {
       enabled = false
       listenTo( ProofToolPublisher )
       reactions += {
-        case Loaded   => this.enabled = true
-        case UnLoaded => this.enabled = false
+        case Loaded( viewing ) =>
+          enabled = viewing match {
+            case LKPROOF( _ ) => true
+            case _            => false
+          }
       }
 
       action = Action( "Hide structural rules" ) {
@@ -134,8 +140,11 @@ class MyMenubar extends MenuBar {
       enabled = false
       listenTo( ProofToolPublisher )
       reactions += {
-        case Loaded   => this.enabled = true
-        case UnLoaded => this.enabled = false
+        case Loaded( viewing ) =>
+          enabled = viewing match {
+            case LKPROOF( _ ) => true
+            case _            => false
+          }
       }
 
       action = Action( "Hide sequent contexts" ) {
@@ -152,8 +161,11 @@ class MyMenubar extends MenuBar {
       enabled = false
       listenTo( ProofToolPublisher )
       reactions += {
-        case Loaded   => this.enabled = true
-        case UnLoaded => this.enabled = false
+        case Loaded( viewing ) =>
+          enabled = viewing match {
+            case LKPROOF( _ ) => true
+            case _            => false
+          }
       }
 
       action = Action( "Mark cut ancestors" ) {
@@ -173,8 +185,11 @@ class MyMenubar extends MenuBar {
       enabled = false
       listenTo( ProofToolPublisher )
       reactions += {
-        case Loaded   => enabled = false
-        case UnLoaded => enabled = true
+        case Loaded( viewing ) =>
+          enabled = viewing match {
+            case EXPANSIONSEQUENT( _ ) => true
+            case _                     => false
+          }
       }
     }
 
@@ -185,8 +200,11 @@ class MyMenubar extends MenuBar {
       enabled = false
       listenTo( ProofToolPublisher )
       reactions += {
-        case Loaded   => enabled = true
-        case UnLoaded => enabled = false
+        case Loaded( viewing ) =>
+          enabled = viewing match {
+            case LKPROOF( _ ) => true
+            case _            => false
+          }
       }
     }
 
@@ -197,10 +215,12 @@ class MyMenubar extends MenuBar {
       enabled = false
       listenTo( ProofToolPublisher )
       reactions += {
-        case Loaded   => enabled = true
-        case UnLoaded => enabled = false
+        case Loaded( viewing ) =>
+          enabled = viewing match {
+            case LKPROOF( _ ) => true
+            case _            => false
+          }
       }
-
     }
   }
 

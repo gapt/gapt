@@ -57,7 +57,7 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
           mylabel.background = new Color( 0, 255, 0 )
         } else mylabel.opaque = false
         mylabel.border = bd
-        mylabel.listenTo( mouse.clicks, StructPublisher )
+        mylabel.listenTo( mouse.clicks, ProofToolPublisher )
         mylabel.reactions += {
           case ShowLeaf =>
             if ( mylabel.myicon != null ) {
@@ -100,7 +100,7 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
         }
         layout( mylabel ) = Position.North
         layout( new DrawTree( utree.t, fSize, str ) {
-          listenTo( mylabel, StructPublisher )
+          listenTo( mylabel, ProofToolPublisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
@@ -119,7 +119,7 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
           }
           border = bd
           font = ft
-          listenTo( mouse.clicks, StructPublisher )
+          listenTo( mouse.clicks, ProofToolPublisher )
           reactions += {
             case ShowLeaf =>
               text = tx
@@ -138,14 +138,14 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
         }
         layout( label ) = Position.North
         layout( new DrawTree( btree.t1, fSize, str ) {
-          listenTo( label, StructPublisher )
+          listenTo( label, ProofToolPublisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
           }
         } ) = Position.West
         layout( new DrawTree( btree.t2, fSize, str ) {
-          listenTo( label, StructPublisher )
+          listenTo( label, ProofToolPublisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
@@ -156,7 +156,7 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
         if ( !str.isEmpty && tx.contains( str ) ) mylabel.background = new Color( 0, 255, 0 )
         else mylabel.opaque = false
         mylabel.border = bd
-        mylabel.listenTo( mouse.clicks, StructPublisher )
+        mylabel.listenTo( mouse.clicks, ProofToolPublisher )
         mylabel.reactions += {
           case ShowLeaf =>
             mylabel.icon = mylabel.myicon

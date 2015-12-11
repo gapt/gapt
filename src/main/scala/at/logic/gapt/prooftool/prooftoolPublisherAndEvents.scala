@@ -15,11 +15,9 @@ import scala.swing.event.Event
 import scala.swing.{ Color, Publisher }
 
 object ProofToolPublisher extends Publisher
-object StructPublisher extends Publisher
 
 case object ProofDbChanged extends Event
-case object Loaded extends Event
-case object UnLoaded extends Event
+case class Loaded( viewing: ViewingObject ) extends Event
 case object DisableMenus extends Event
 case object EnableMenus extends Event
 case object ShowLeaf extends Event

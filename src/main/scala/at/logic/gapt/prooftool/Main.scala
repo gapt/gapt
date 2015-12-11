@@ -55,9 +55,14 @@ object Main extends SimpleSwingApplication {
   val db = new FileParser
   val defaultFontSize = 12
   var launcher_history = List[( String, AnyRef, Int )]()
-  var lkProof: Option[LKProof] = None
-  var expansionProof: Option[ExpansionSequent] = None
-  var currentlyViewing: Option[ViewingObject] = None
+  private[this] var currentlyViewing_ : ViewingObject = NOTHING
+
+  def currentlyViewing = currentlyViewing_
+
+  def currentlyViewing_=( v: ViewingObject ) = {
+    currentlyViewing_ = v
+    ProofToolPublisher.publish( Loaded( v ) )
+  }
 
   override def startup( args: Array[String] ) {
     showFrame()
@@ -468,38 +473,29 @@ object Main extends SimpleSwingApplication {
   def expansionTree() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      expansionProof match {
-        case None =>
-          lkProof match {
-            case Some( p ) =>
-              val et = LKToExpansionProof( p )
-              expansionProof = Some( et )
-              updateLauncher( "Expansion Tree", et, 14 )
-            case None =>
-              errorMessage( "Neither LK proof nor expansion proof found!" )
-          }
-        case Some( et ) => updateLauncher( "Expansion Tree", et, 14 )
+      currentlyViewing match {
+        case LKPROOF( p ) =>
+          val et = LKToExpansionProof( p )
+          updateLauncher( "Expansion Tree", et, 14 )
+        case _ =>
+          errorMessage( "No LK proof loaded" )
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
-        errorMessage( "Cannot extract Expansion Tree!" + dnLine + getExceptionString( e ) )
+        errorMessage( "Cannot extract expansion tree!" + dnLine + getExceptionString( e ) )
     }
   }
 
   def lkproof() {
     try {
       body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      lkProof match {
-        case None =>
-          expansionProof match {
-            case Some( et ) =>
-              val p = ExpansionProofToLK( et )
-              updateLauncher( "LK proof", p, 14 )
-            case None =>
-              errorMessage( "Neither LK proof nor expansion proof found!" )
-          }
-        case Some( p ) => updateLauncher( "LK proof", p, 14 )
+      Main.currentlyViewing match {
+        case EXPANSIONSEQUENT( et ) =>
+          val p = ExpansionProofToLK( et )
+          updateLauncher( "LK proof", p, 14 )
+        case _ =>
+          errorMessage( "No expansion sequent loaded" )
       }
       body.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
@@ -981,6 +977,11 @@ object prooftool {
 
 sealed trait ViewingObject
 
-case object LKPROOF extends ViewingObject
-case object EXPANSIONPROOF extends ViewingObject
-case object OTHER extends ViewingObject
+case class LKPROOF( p: LKProof ) extends ViewingObject
+case class SEQUENTPROOF[F, T <: SequentProof[F, T]]( p: SequentProof[F, T] ) extends ViewingObject
+case class TREEPROOF[T]( p: TreeProof[T] ) extends ViewingObject
+case class PROOF[T]( p: Proof[T] ) extends ViewingObject
+case class EXPANSIONSEQUENT( es: ExpansionSequent ) extends ViewingObject
+case class TREE[T]( t: Tree[T] ) extends ViewingObject
+case class LIST[T]( l: List[T] ) extends ViewingObject
+case object NOTHING extends ViewingObject

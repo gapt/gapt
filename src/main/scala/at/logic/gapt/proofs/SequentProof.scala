@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs
 
-trait SequentProof[Formula, This <: SequentProof[Formula, This]] extends DagProof[This] { self: This =>
+trait SequentProof[+Formula, This <: SequentProof[Formula, This]] extends DagProof[This] { self: This =>
   /**
    * A list of SequentIndices denoting the main formula(s) of the rule.
    */

@@ -131,7 +131,7 @@ class SunburstTreeDialog[T <: DagProof[T]]( name: String, proof: DagProof[T] ) e
           model.getInfo.asInstanceOf[ProofNodeInfo[T]].genShowAction( sel_node.getNode.asInstanceOf[ProofNode[T]].proof ).apply()
         }
         sunView.repaintView()
-      case Loaded | UnLoaded => dispose()
+      case Loaded( _ ) => dispose()
     }
   }
 

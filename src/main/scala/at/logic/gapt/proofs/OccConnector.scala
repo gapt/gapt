@@ -12,7 +12,7 @@ package at.logic.gapt.proofs
  *                       is the list of indices of the parents of i in upperSequent.
  * @tparam A The type of sequents that this connects.
  */
-case class OccConnector[A]( lowerSequent: Sequent[A], upperSequent: Sequent[A], parentsSequent: Sequent[Seq[SequentIndex]] ) {
+case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A], parentsSequent: Sequent[Seq[SequentIndex]] ) {
   require( parentsSequent.sizes == lowerSequent.sizes )
   require( parentsSequent.elements.flatten.toSet subsetOf upperSequent.indices.toSet )
 

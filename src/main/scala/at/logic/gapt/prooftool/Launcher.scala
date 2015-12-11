@@ -74,61 +74,41 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
       Some( s )
     case proof: LKProof =>
       layout( new DrawSequentProof( proof, fSize, hideContexts = false, Set(), markCutAncestors = false, Set(), "" ) ) = c
-      Main.lkProof = Some( proof )
-      Main.currentlyViewing = Some( LKPROOF )
-      ProofToolPublisher.publish( Loaded )
-      StructPublisher.publish( UnLoaded )
+      Main.currentlyViewing = LKPROOF( proof )
       None
     case proof: SequentProof[_, _] =>
       layout( new DrawSequentProof( proof, fSize, hideContexts = false, Set(), markCutAncestors = false, Set(), "" ) ) = c
-      ProofToolPublisher.publish( Loaded )
-      StructPublisher.publish( UnLoaded )
+      Main.currentlyViewing = SEQUENTPROOF( proof )
       None
     case proof: TreeProof[_] =>
       layout( new DrawProof( proof, fSize, None, "" ) ) = c
-      ProofToolPublisher.publish( Loaded )
-      StructPublisher.publish( UnLoaded )
+      Main.currentlyViewing = TREEPROOF( proof )
       None
     case resProof: Proof[_] =>
       layout( new DrawResolutionProof( resProof, fSize, None, "" ) ) = c
-      ProofToolPublisher.publish( UnLoaded )
-      StructPublisher.publish( UnLoaded )
+      Main.currentlyViewing = PROOF( resProof )
       None
     case tree: Tree[_] =>
       layout( new DrawTree( tree, fSize, "" ) ) = c
-      ProofToolPublisher.publish( UnLoaded )
-      StructPublisher.publish( Loaded )
+      Main.currentlyViewing = TREE( tree )
       None
     case list: List[_] =>
       layout( new DrawList( list, fSize ) ) = c
-      ProofToolPublisher.publish( UnLoaded )
-      StructPublisher.publish( UnLoaded )
+      Main.currentlyViewing = LIST( list )
       None
     case set: Set[_] => // use the case for lists for sets, too
-      layout( new DrawList( set.toList, fSize ) ) = c
-      ProofToolPublisher.publish( UnLoaded )
-      StructPublisher.publish( UnLoaded )
+      val list = set.toList
+      layout( new DrawList( list, fSize ) ) = c
+      Main.currentlyViewing = LIST( list )
       None
     case formula: HOLFormula => // use the case for lists for single formulas, too
-      layout( new DrawList( formula :: Nil, fSize ) ) = c
-      ProofToolPublisher.publish( UnLoaded )
-      StructPublisher.publish( UnLoaded )
+      val list = formula :: Nil
+      layout( new DrawList( list, fSize ) ) = c
+      Main.currentlyViewing = LIST( list )
       None
-    /*
- * do we need (vertical) display of sequents in prooftool?
- *
-    case fSequent: FSequent =>
-      layout(new DrawHerbrandSequent[Formula]((fSequent.antecedent,fSequent.succedent), fSize)) = c
-      ProofToolPublisher.publish(UnLoaded)
-      StructPublisher.publish(UnLoaded)
-      None
-*/
     case expSequent: ExpansionSequent =>
       layout( new DrawExpansionSequent( expSequent, fSize ) ) = c
-      Main.expansionProof = Some( expSequent )
-      Main.currentlyViewing = Some( EXPANSIONPROOF )
-      ProofToolPublisher.publish( UnLoaded )
-      StructPublisher.publish( UnLoaded )
+      Main.currentlyViewing = EXPANSIONSEQUENT( expSequent )
       None
     case struct: Struct =>
       setWindowContent( structToExpressionTree.prunedTree( struct ), c )
@@ -137,8 +117,7 @@ class Launcher( private val option: Option[( String, AnyRef )], private val fSiz
       layout( new Label( "Cannot match the " + option.get._2.getClass.toString + " : " + option.get._2 ) {
         font = new Font( SANS_SERIF, BOLD, 16 )
       } ) = c
-      ProofToolPublisher.publish( UnLoaded )
-      StructPublisher.publish( UnLoaded )
+      Main.currentlyViewing = NOTHING
       None
   }
 
