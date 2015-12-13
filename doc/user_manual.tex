@@ -119,9 +119,11 @@
 
 \vspace*{20mm}
 
-{\Huge User Manual}
+{\Huge User manual}
 
-\vspace*{20mm}
+\vspace*{10mm}
+{\Large Version 1.11-SNAPSHOT}
+\vspace*{10mm}
 
 {\Large \today}
 
@@ -256,7 +258,7 @@ H: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
 The prover9 syntax was also extended to higher-order logic, where type declarations are added:
 %
 \begin{clilisting}
-gapt> val I = HLKHOLParser.parseFormula ( "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))" )
+gapt> val I = parseLLKFormula ( "var P:o>i>o; const f:o>i; var x:o; var y:i; (all x (P(x,f(x))) -> (exists y P(x,y)))" )
 I: at.logic.gapt.expr.HOLFormula = ∀x:o.(P(x,f(x))⊃∃y.P(x,y))
 
 \end{clilisting}
@@ -457,8 +459,8 @@ res11: Boolean = true
 If you have another DIMACS-compliant solver installed or want to pass extra
 options to the SAT solver, you can pass a custom command to GAPT as well:
 \begin{clilisting}[MiniSAT.isInstalled]
-gapt> val solver = new ExternalSATSolver("minisat", "-no-pre")
-solver: at.logic.gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-no-pre")
+gapt> val solver = new ExternalSATSolver("minisat", "-mem-lim=1024")
+solver: at.logic.gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-mem-lim=1024")
 
 gapt> solver isValid PigeonHolePrinciple(3,2)
 res12: Boolean = true
