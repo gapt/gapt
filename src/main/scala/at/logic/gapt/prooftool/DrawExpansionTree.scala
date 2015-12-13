@@ -24,7 +24,7 @@ object ExpansionTreeState extends Enumeration {
   val Close, Open, Expand = Value
 }
 
-class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) with Logger {
+class DrawExpansionTree( main: PTMain[_], val expansionTree: MultiExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) with Logger {
 
   import ExpansionTreeState._
   override def loggerName = "DrawExpTreeLogger"
@@ -74,7 +74,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
 
     expTree match {
       case METAtom( _ ) | METTop | METBottom | METWeakening( _ ) =>
-        val lbl = DrawSequent.formulaToLabel( expTree.toShallow, ft )
+        val lbl = DrawSequent.formulaToLabel( main, expTree.toShallow, ft )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
         contents += lbl
       case METNeg( t ) =>
@@ -160,7 +160,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
         if ( state.get( formula ) == Some( Expand ) ) {
           // We first consider the case that the top-level quantifier is expanded.
           if ( subtrees != Nil ) {
-            val lbl = LatexLabel( ft, getMatrixSymbol( formula ) )
+            val lbl = LatexLabel( main, ft, getMatrixSymbol( formula ) )
             lbl.reactions += {
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close( formula )
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -174,7 +174,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
           }
         } else {
           // The current tree is either open or closed.
-          val lbl = LatexLabel( ft, quantifiers )
+          val lbl = LatexLabel( main, ft, quantifiers )
           val subF = expTree.getSubformula
 
           if ( allow ) lbl.reactions += {
@@ -201,7 +201,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
 
         if ( state.get( formula ) == Some( Expand ) ) {
           if ( subtrees != Nil ) {
-            val lbl = LatexLabel( ft, getMatrixSymbol( formula ) )
+            val lbl = LatexLabel( main, ft, getMatrixSymbol( formula ) )
             lbl.reactions += {
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close( formula )
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -214,7 +214,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
             contents += drawFormula( sel.toShallow )
           }
         } else {
-          val lbl = LatexLabel( ft, quantifiers )
+          val lbl = LatexLabel( main, ft, quantifiers )
           val subF = expTree.getSubformula
 
           if ( allow ) lbl.reactions += {
@@ -241,7 +241,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
 
         if ( state.get( formula ) == Some( Expand ) ) {
           if ( subtrees != Nil ) {
-            val lbl = LatexLabel( ft, getMatrixSymbol( formula ) )
+            val lbl = LatexLabel( main, ft, getMatrixSymbol( formula ) )
             lbl.reactions += {
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close( formula )
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -254,7 +254,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
             contents += drawFormula( sel.toShallow )
           }
         } else {
-          val lbl = LatexLabel( ft, quantifiers )
+          val lbl = LatexLabel( main, ft, quantifiers )
           val subF = expTree.getSubformula
 
           if ( allow ) lbl.reactions += {
@@ -276,7 +276,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
 
       case METWeakening( f ) =>
         //not really tested
-        val lbl = DrawSequent.formulaToLabel( f, ft )
+        val lbl = DrawSequent.formulaToLabel( main, f, ft )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
         contents += lbl
 
@@ -341,7 +341,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
     border = Swing.EmptyBorder( 0, ft.getSize, 0, ft.getSize )
 
     list.foreach( et => {
-      val bp = new DrawExpansionTree( et, ft )
+      val bp = new DrawExpansionTree( main, et, ft )
       bp.border = Swing.EmptyBorder( 3 )
       contents += bp
     } )
@@ -462,7 +462,7 @@ class DrawExpansionTree( val expansionTree: MultiExpansionTree, private val ft: 
         contents += label( "(\\forall " + DrawSequent.formulaToLatexString( v ) + ")", ft )
         contents += drawFormula( f )
       case _ =>
-        val lbl = DrawSequent.formulaToLabel( formula, ft )
+        val lbl = DrawSequent.formulaToLabel( main, formula, ft )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks )
         contents += lbl
     }

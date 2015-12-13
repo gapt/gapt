@@ -20,7 +20,7 @@ import at.logic.gapt.proofs.ceres_schema.PStructToExpressionTree.{ PWeakC, PTime
 import at.logic.gapt.proofs.lk.base.OccSequent
 import java.awt.event.{ MouseMotionListener, MouseEvent }
 
-class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: String ) extends BorderPanel with MouseMotionListener {
+class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, private var str: String ) extends BorderPanel with MouseMotionListener {
   background = new Color( 255, 255, 255 )
   opaque = false
 
@@ -46,7 +46,7 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
     tree match {
       case utree: UnaryTree[_] =>
         val mylabel = utree.vertex match {
-          case PWeakC( _ ) => LatexLabel( ft, tx )
+          case PWeakC( _ ) => LatexLabel( main, ft, tx )
           case _ => new Label( tx ) {
             font = ft
             val myicon = icon
@@ -57,7 +57,7 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
           mylabel.background = new Color( 0, 255, 0 )
         } else mylabel.opaque = false
         mylabel.border = bd
-        mylabel.listenTo( mouse.clicks, ProofToolPublisher )
+        mylabel.listenTo( mouse.clicks, main.publisher )
         mylabel.reactions += {
           case ShowLeaf =>
             if ( mylabel.myicon != null ) {
@@ -99,8 +99,8 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
             }
         }
         layout( mylabel ) = Position.North
-        layout( new DrawTree( utree.t, fSize, str ) {
-          listenTo( mylabel, ProofToolPublisher )
+        layout( new DrawTree( main, utree.t, fSize, str ) {
+          listenTo( mylabel, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
@@ -119,7 +119,7 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
           }
           border = bd
           font = ft
-          listenTo( mouse.clicks, ProofToolPublisher )
+          listenTo( mouse.clicks, main.publisher )
           reactions += {
             case ShowLeaf =>
               text = tx
@@ -137,26 +137,26 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
           }
         }
         layout( label ) = Position.North
-        layout( new DrawTree( btree.t1, fSize, str ) {
-          listenTo( label, ProofToolPublisher )
+        layout( new DrawTree( main, btree.t1, fSize, str ) {
+          listenTo( label, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
           }
         } ) = Position.West
-        layout( new DrawTree( btree.t2, fSize, str ) {
-          listenTo( label, ProofToolPublisher )
+        layout( new DrawTree( main, btree.t2, fSize, str ) {
+          listenTo( label, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
           }
         } ) = Position.East
       case ltree: LeafTree[_] =>
-        val mylabel = LatexLabel( ft, tx )
+        val mylabel = LatexLabel( main, ft, tx )
         if ( !str.isEmpty && tx.contains( str ) ) mylabel.background = new Color( 0, 255, 0 )
         else mylabel.opaque = false
         mylabel.border = bd
-        mylabel.listenTo( mouse.clicks, ProofToolPublisher )
+        mylabel.listenTo( mouse.clicks, main.publisher )
         mylabel.reactions += {
           case ShowLeaf =>
             mylabel.icon = mylabel.myicon
@@ -210,11 +210,11 @@ class DrawTree( val tree: Tree[_], private val fSize: Int, private var str: Stri
   listenTo( mouse.moves, mouse.clicks, mouse.wheel )
   reactions += {
     case e: MouseDragged =>
-      Main.body.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
+      main.scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
     case e: MouseReleased =>
-      Main.body.cursor = java.awt.Cursor.getDefaultCursor
+      main.scrollPane.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
-      Main.body.peer.dispatchEvent( e.peer )
+      main.scrollPane.peer.dispatchEvent( e.peer )
   }
 
   this.peer.setAutoscrolls( true )

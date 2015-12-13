@@ -24,25 +24,25 @@ class PopupMenu extends Component with Wrapper {
 object PopupMenu {
 
   // PopupMenu for LKProofs.
-  def apply[T <: DagProof[T]]( tproof: DagProof[T], component: Component, x: Int, y: Int ) {
+  def apply[T <: DagProof[T]]( main: DagProofViewer[T], tproof: DagProof[T], component: Component, x: Int, y: Int ) {
     lazy val proof = tproof.asInstanceOf[LKProof]
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "View Subproof as Sunburst Tree" ) {
-        Main.initSunburstDialog( "subproof " + proof.name, tproof )
+        main.initSunburstDialog( "subproof " + proof.name, tproof )
       } )
       contents += new Separator
       //      contents += new MenuItem( Action( "Apply Gentzen's Method (new)" ) { Main.newgentzen( proof ) } )
       //      contents += new MenuItem( Action( "Apply Gentzen's Method" ) { Main.gentzen( proof ) } )
       contents += new Separator
-      contents += new MenuItem( Action( "Save Subproof as..." ) { Main.fSave( ( proof.name, proof ) ) } )
+      contents += new MenuItem( Action( "Save Subproof as..." ) { /*main.fSave( ( proof.name, proof ) )*/ } )
       contents += new Separator
-      contents += new MenuItem( Action( "Show Proof Above" ) { ProofToolPublisher.publish( ShowProof( tproof ) ) } )
-      contents += new MenuItem( Action( "Hide Proof Above" ) { ProofToolPublisher.publish( HideProof( tproof ) ) } )
+      contents += new MenuItem( Action( "Show Proof Above" ) { main.publisher.publish( ShowProof( tproof ) ) } )
+      contents += new MenuItem( Action( "Hide Proof Above" ) { main.publisher.publish( HideProof( tproof ) ) } )
       contents += new Separator
       contents += new MenuItem( Action( "Split Proof" ) {
-        Main.db.addProofs( ( proof.name, proof ) :: Nil )
-        Main.loadProof( proof )
-        ProofToolPublisher.publish( ProofDbChanged )
+        main.db.addProofs( ( proof.name, proof ) :: Nil )
+        //main.loadProof( proof )
+        main.publisher.publish( ProofDbChanged )
       } )
     }
     popupMenu.show( component, x, y )
@@ -59,7 +59,7 @@ object PopupMenu {
   }
 
   // PopupMenu for the title label of either cedent
-  def apply( ced: CedentPanel, x: Int, y: Int ) {
+  def apply( main: ExpansionSequentViewer, ced: CedentPanel, x: Int, y: Int ) {
     val popupMenu = new PopupMenu {
       val trees = ced.treeList.drawnTrees
       contents += new MenuItem( Action( "Close all" ) { trees.foreach( det => det.close( det.expansionTree.toShallow ) ) } )
@@ -72,7 +72,7 @@ object PopupMenu {
 
       contents += new MenuItem( Action( "Expand all" ) { trees.foreach( det => expandRecursive( det, det.expansionTree.toShallow ) ) } )
       contents += new MenuItem( Action( "Reset" ) {
-        ced.treeList = new TreeListPanel( ced.cedent, ced.ft )
+        ced.treeList = new TreeListPanel( main, ced.cedent, ced.ft )
         ced.scrollPane.contents = ced.treeList
         ced.revalidate()
       } )

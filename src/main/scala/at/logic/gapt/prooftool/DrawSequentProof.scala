@@ -13,6 +13,7 @@ import scala.swing._
 import scala.swing.event._
 
 class DrawSequentProof[F, T <: SequentProof[F, T]](
+    val main:               SequentProofViewer[F, T],
     val proof:              SequentProof[F, T],
     private val fSize:      Int,
     var hideContexts:       Boolean,
@@ -41,6 +42,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     val visibleFormulas = if ( hideContexts ) proof.mainIndices.toSet ++ auxIndices else proof.conclusion.indices.toSet
     val colors = proof.conclusion.indicesSequent map { i => if ( markCutAncestors && cutAncestorIndices.contains( i ) ) Color.green else Color.white }
     val ds = DrawSequent(
+      main,
       proof.conclusion map {
         case f: HOLFormula            => f
         case ( label, f: HOLFormula ) => f
@@ -49,7 +51,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       colors,
       ft
     )
-    ds.listenTo( mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher )
+    ds.listenTo( mouse.moves, mouse.clicks, mouse.wheel, main.publisher )
     ds.reactions += {
       case e: MouseEntered => ds.contents.foreach( x => x.foreground = blue )
       case e: MouseExited  => ds.contents.foreach( x => x.foreground = black )
@@ -59,14 +61,14 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     ds
   }
 
-  listenTo( mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher )
+  listenTo( mouse.moves, mouse.clicks, mouse.wheel, main.publisher )
   reactions += {
     case e: MouseDragged =>
-      Main.body.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
+      main.scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
     case e: MouseReleased =>
-      Main.body.cursor = java.awt.Cursor.getDefaultCursor
+      main.scrollPane.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
-      Main.body.peer.dispatchEvent( e.peer )
+      main.scrollPane.peer.dispatchEvent( e.peer )
     case e: ShowProof[_] if e.proof == proof =>
       drawLines = true
       layout.foreach( pair => pair._1.visible = true )
@@ -75,21 +77,9 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof match {
-        case _: WeakeningLeftRule | _: WeakeningRightRule =>
+        case _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule =>
           drawLines = false
           tx.visible = false
-        case cl: ContractionLeftRule =>
-          val subProof = cl.subProof
-          if ( !subProof.isInstanceOf[WeakeningLeftRule] && !subProof.isInstanceOf[WeakeningRightRule] ) drawLines = false
-          val dp = layout.find( _._2 == Position.Center ).get._1.asInstanceOf[DrawSequentProof[F, T]]
-          dp.tx.visible = false
-          dp.border = Swing.EmptyBorder( 0, 0, 3, 0 )
-        case cr: ContractionRightRule =>
-          val subProof = cr.subProof
-          if ( !subProof.isInstanceOf[WeakeningLeftRule] && !subProof.isInstanceOf[WeakeningRightRule] ) drawLines = false
-          val dp = layout.find( _._2 == Position.Center ).get._1.asInstanceOf[DrawSequentProof[F, T]]
-          dp.tx.visible = false
-          dp.border = Swing.EmptyBorder( 0, 0, 3, 0 )
         case _ =>
       }
     case e: ShowAllRules[_] if e.proof == proof =>
@@ -106,7 +96,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       case Seq( uProof: SequentProof[_, _] ) =>
         val cutAncestorIndicesNew = cutAncestorIndices flatMap { proof.occConnectors.head.parents }
         border = bd
-        layout( new DrawSequentProof( uProof, fSize, hideContexts, proof.auxIndices.head.toSet, markCutAncestors, cutAncestorIndicesNew, str ) ) = Position.Center
+        layout( new DrawSequentProof( main, uProof, fSize, hideContexts, proof.auxIndices.head.toSet, markCutAncestors, cutAncestorIndicesNew, str ) ) = Position.Center
         layout( tx ) = Position.South
       case Seq( uProof1, uProof2 ) =>
         val ( cutAncestorIndicesLeft, cutAncestorIndicesRight ) = proof match {
@@ -116,8 +106,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
             ( cutAncestorIndices.flatMap( proof.occConnectors.head.parents ), cutAncestorIndices.flatMap( proof.occConnectors.tail.head.parents ) )
         }
         border = bd
-        layout( new DrawSequentProof( uProof1, fSize, hideContexts, proof.auxIndices.head.toSet, markCutAncestors, cutAncestorIndicesLeft, str ) ) = Position.West
-        layout( new DrawSequentProof( uProof2, fSize, hideContexts, proof.auxIndices.tail.head.toSet, markCutAncestors, cutAncestorIndicesRight, str ) ) = Position.East
+        layout( new DrawSequentProof( main, uProof1, fSize, hideContexts, proof.auxIndices.head.toSet, markCutAncestors, cutAncestorIndicesLeft, str ) ) = Position.West
+        layout( new DrawSequentProof( main, uProof2, fSize, hideContexts, proof.auxIndices.tail.head.toSet, markCutAncestors, cutAncestorIndicesRight, str ) ) = Position.East
         layout( tx ) = Position.South
       case Seq() =>
         tx.border = Swing.EmptyBorder( 0, fSize, 0, fSize )

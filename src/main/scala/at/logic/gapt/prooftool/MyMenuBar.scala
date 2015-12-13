@@ -1,6 +1,8 @@
 package at.logic.gapt.prooftool
 
 import java.awt.Color
+import java.awt.event.{ ActionEvent, KeyEvent }
+import javax.swing.KeyStroke
 import at.logic.gapt.proofs.DagProof
 import at.logic.gapt.proofs.lkNew.{ CutRule, LKProof }
 
@@ -11,226 +13,111 @@ import scala.swing._
  * Created by marty on 10/14/14.
  * The Menubar has not too much logic and mainly calls the Main object to perform tasks.
  */
-class MyMenubar extends MenuBar {
-  import javax.swing.KeyStroke
-  import java.awt.event.{ KeyEvent, ActionEvent => JActionEvent }
-
-  val history_menu = new Menu( "History" ) {
-    mnemonic = Key.I
-  }
-
-  def updateHistoryMenu( history: List[( String, AnyRef, Int )] ) = {
-    history_menu.contents.clear()
-    history_menu.contents += new MenuItem( Action( "Clear History" ) {
-      Main.clearLauncherHistory()
-    } )
-    history_menu.contents += new Separator
-    for ( ( name, obj, size ) <- history )
-      history_menu.contents += new MenuItem(
-        Action( name + " (" + size + ")" ) {
-          Main.updateLauncher( name, obj, size )
-        }
-      )
-  }
-
+class PTMenuBar( main: PTMain[_] ) extends MenuBar {
   focusable = true
-  val customBorder = Swing.EmptyBorder( 5, 3, 5, 3 )
-  contents += new Menu( "File" ) {
+
+  contents += fileMenu
+  contents += viewMenu
+  //contents += historyMenu
+  contents += helpMenu
+
+  def fileMenu = new Menu( "File" ) {
     mnemonic = Key.F
-    contents += new MenuItem( Action( "Open..." ) { Main.fOpen() } ) {
-      mnemonic = Key.O
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_O, JActionEvent.CTRL_MASK ) )
-      border = customBorder
-    }
-    contents += new MenuItem( Action( "Save as..." ) { Main.fSave( Main.body.getContent.getData.get ) } ) {
-      mnemonic = Key.S
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_S, JActionEvent.CTRL_MASK ) )
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded( viewing ) =>
-          enabled = viewing match {
-            case LKPROOF( _ ) => true
-            case _            => false
-          }
-      }
-    }
-    contents += new MenuItem( Action( "Save all as..." ) { Main.fSaveAll() } ) {
+    /*contents += new PTMenuItem(main, canBeDisabled = false, Action( "Open..." ) {
+    main.fOpen()
+  } ) {
+    mnemonic = Key.O
+    this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_O, ActionEvent.CTRL_MASK ) )
+
+  }*/
+
+    contents += new PTMenuItem( main, canBeDisabled = true, Action( "Save all as..." ) {
+      main.fSaveAll()
+    } ) {
       mnemonic = Key.A
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_A, JActionEvent.CTRL_MASK ) )
-      border = customBorder
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case DisableMenus => enabled = false
-        case EnableMenus  => enabled = true
-      }
+      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_A, ActionEvent.CTRL_MASK ) )
     }
     contents += new Separator
-    contents += new MenuItem( Action( "Export to PDF" ) { Main.fExportPdf( Main.body.getContent.contents.headOption ) } ) {
+
+    contents += new PTMenuItem( main, canBeDisabled = true, Action( "Export to PDF" ) {
+      main.fExportPdf( main.mainComponent )
+    } ) {
       mnemonic = Key.D
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_D, JActionEvent.CTRL_MASK ) )
-      border = customBorder
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case DisableMenus => enabled = false
-        case EnableMenus  => enabled = true
-      }
+      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_D, ActionEvent.CTRL_MASK ) )
     }
-    contents += new MenuItem( Action( "Export to PNG" ) { Main.fExportPng( Main.body.getContent.contents.headOption ) } ) {
+    contents += new PTMenuItem( main, canBeDisabled = true, Action( "Export to PNG" ) {
+      main.fExportPng( main.mainComponent )
+    } ) {
       mnemonic = Key.N
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_N, JActionEvent.CTRL_MASK ) )
-      border = customBorder
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case DisableMenus => enabled = false
-        case EnableMenus  => enabled = true
-      }
+      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_N, ActionEvent.CTRL_MASK ) )
     }
   }
 
-  contents += new Menu( "View" ) {
+  def viewMenu = new Menu( "View" ) {
     mnemonic = Key.V
-    listenTo( ProofToolPublisher )
+    listenTo( main.publisher )
     reactions += {
       case DisableMenus => enabled = false
       case EnableMenus  => enabled = true
     }
     contents += new MenuItem( Action( "Zoom In" ) {
-      Main.zoomIn()
+      main.zoomIn()
     } ) {
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_UP, JActionEvent.ALT_MASK ) )
-      border = customBorder
+      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_UP, ActionEvent.ALT_MASK ) )
+
     }
     contents += new MenuItem( Action( "Zoom Out" ) {
-      Main.zoomOut()
+      main.zoomOut()
     } ) {
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_DOWN, JActionEvent.ALT_MASK ) )
-      border = customBorder
-    }
+      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_DOWN, ActionEvent.ALT_MASK ) )
 
-    contents += new Separator()
-
-    contents += new CheckMenuItem( "Hide structural rules" ) {
-      outer =>
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded( viewing ) =>
-          enabled = viewing match {
-            case LKPROOF( _ ) => true
-            case _            => false
-          }
-      }
-
-      action = Action( "Hide structural rules" ) {
-        if ( outer.selected )
-          ProofToolPublisher.publish( HideStructuralRules )
-        else
-          Main.body.getContent.getData.get._2 match {
-            case p: DagProof[a] => ProofToolPublisher.publish( ShowAllRules( p ) )
-          }
-      }
-    }
-
-    contents += new CheckMenuItem( "Hide sequent contexts" ) {
-      outer =>
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded( viewing ) =>
-          enabled = viewing match {
-            case LKPROOF( _ ) => true
-            case _            => false
-          }
-      }
-
-      action = Action( "Hide sequent contexts" ) {
-        if ( outer.selected )
-          Main.hideSequentContext()
-        else
-          Main.showAllFormulas()
-      }
-    }
-
-    contents += new CheckMenuItem( "Mark cut ancestors" ) {
-      outer =>
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded( viewing ) =>
-          enabled = viewing match {
-            case LKPROOF( _ ) => true
-            case _            => false
-          }
-      }
-
-      action = Action( "Mark cut ancestors" ) {
-        if ( outer.selected )
-          Main.markCutAncestors()
-        else
-          Main.removeMarking()
-      }
-    }
-
-    contents += new Separator()
-
-    contents += new MenuItem( Action( "View LK proof" ) {
-      Main.lkproof()
-    } ) {
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded( viewing ) =>
-          enabled = viewing match {
-            case EXPANSIONSEQUENT( _ ) => true
-            case _                     => false
-          }
-      }
-    }
-
-    contents += new MenuItem( Action( "View expansion proof" ) {
-      Main.expansionTree()
-    } ) {
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded( viewing ) =>
-          enabled = viewing match {
-            case LKPROOF( _ ) => true
-            case _            => false
-          }
-      }
-    }
-
-    contents += new MenuItem( Action( "Sunburst View" ) {
-      Main.sunburstView()
-    } ) {
-      border = customBorder
-      enabled = false
-      listenTo( ProofToolPublisher )
-      reactions += {
-        case Loaded( viewing ) =>
-          enabled = viewing match {
-            case LKPROOF( _ ) => true
-            case _            => false
-          }
-      }
     }
   }
 
-  contents += history_menu
-
-  contents += new Menu( "Help" ) {
+  def helpMenu = new Menu( "Help" ) {
     mnemonic = Key.H
-    contents += new MenuItem( Action( "About" ) { About() } ) {
+    contents += new MenuItem( Action( "About" ) { new About( main ).apply() } ) {
       mnemonic = Key.A
-      border = customBorder
+
     }
   }
+}
+
+/*class HistoryMenu(main: PTMain[_]) extends Menu("History") {
+  mnemonic = Key.I
+  def update( history: List[( String, AnyRef, Int )] ) = {
+    contents.clear()
+    contents += new MenuItem( Action( "Clear History" ) {
+      main.clearLauncherHistory()
+    } )
+    contents += new Separator
+    for ( ( name, obj, size ) <- history )
+      contents += new MenuItem(
+        Action( name + " (" + size + ")" ) {
+          main.updateLauncher( name, obj, size )
+        }
+      )
+  }
+}*/
+
+class PTMenuItem( main: PTMain[_], canBeDisabled: Boolean, action: Action ) extends MenuItem( action ) {
+  border = Swing.EmptyBorder( 5, 3, 5, 3 )
+  listenTo( main.publisher )
+
+  if ( canBeDisabled )
+    reactions += {
+      case DisableMenus => enabled = false
+      case EnableMenus  => enabled = true
+    }
+}
+
+class PTCheckMenuItem( main: PTMain[_], canBeDisabled: Boolean, title0: String ) extends CheckMenuItem( title0 ) {
+  border = Swing.EmptyBorder( 5, 3, 5, 3 )
+  listenTo( main.publisher )
+
+  if ( canBeDisabled )
+    reactions += {
+      case DisableMenus => enabled = false
+      case EnableMenus  => enabled = true
+    }
 }

@@ -12,7 +12,7 @@ import java.awt.Color
  * Created by marty on 3/26/14.
  */
 
-class DrawSingleSequentInference[F <: HOLFormula, T <: SequentProof[F, T]]( var orientation: Orientation.Value ) extends ScrollPane {
+class DrawSingleSequentInference[F <: HOLFormula, T <: SequentProof[F, T]]( main: PTMain[_], var orientation: Orientation.Value ) extends ScrollPane {
 
   private var _p: Option[SequentProof[F, T]] = None
   def p(): Option[SequentProof[F, T]] = _p
@@ -64,26 +64,26 @@ class DrawSingleSequentInference[F <: HOLFormula, T <: SequentProof[F, T]]( var 
 
   def init() {
     rule.contents.clear()
-    if ( p() != None ) rule.contents += LatexLabel( font, p().get.name )
+    if ( p() != None ) rule.contents += LatexLabel( main, font, p().get.name )
     rule.contents += Swing.Glue
 
     auxiliaries.contents.clear()
     val aux = for ( proof <- p().toList; ( auxIndices, premise ) <- proof.auxIndices zip proof.premises )
       yield for ( ( f, i ) <- premise.zipWithIndex if auxIndices contains i ) yield f
-    for ( x <- aux ) auxiliaries.contents += DrawSequent( x, font, "" )
+    for ( x <- aux ) auxiliaries.contents += DrawSequent( main, x, font, "" )
     auxiliaries.contents += Swing.Glue
 
     primaries.contents.clear()
     val primary = for ( proof <- p() ) yield for ( ( f, i ) <- proof.conclusion.zipWithIndex if proof.mainIndices contains i ) yield f
-    for ( prim <- primary ) primaries.contents += DrawSequent( prim, font, "" )
+    for ( prim <- primary ) primaries.contents += DrawSequent( main, prim, font, "" )
     primaries.contents += Swing.Glue
 
     substitution.contents.clear()
     p() match {
       case Some( proof: ForallLeftRule ) =>
-        substitution.contents += LatexLabel( font, DrawSequent.formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, font, DrawSequent.formulaToLatexString( proof.term ) )
       case Some( proof: ExistsRightRule ) =>
-        substitution.contents += LatexLabel( font, DrawSequent.formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, font, DrawSequent.formulaToLatexString( proof.term ) )
       case _ =>
     }
     substitution.contents += Swing.Glue
