@@ -15,9 +15,9 @@ import at.logic.gapt.expr._
 import swing.{ FlowPanel, GridPanel, Label }
 
 class DrawList(
-  main:         ListViewer,
-  val list:     List[Any],
-  val fontSize: Int
+    main:         ListViewer,
+    val list:     List[Any],
+    val fontSize: Int
 ) extends GridPanel( 0, 1 ) {
   background = new Color( 255, 255, 255 )
   private var str: String = ""

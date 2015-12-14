@@ -18,29 +18,10 @@ import scala.swing.event.Key
 /**
  * Created by sebastian on 12/13/15.
  */
-class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer[List[HOLSequent]]( name, list ) { outer =>
+class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer[List[HOLSequent]]( name, list ) with Savable[List[HOLSequent]] {
   override type MainComponentType = DrawList
   override def createMainComponent( fSize: Int ) = new DrawList( this, list, fSize )
-
-  override val mBar = new PTMenuBar( this ) {
-    contents += new Menu( "File" ) {
-      mnemonic = Key.F
-      contents += new PTMenuItem( outer, canBeDisabled = false, Action( "Save as..." ) {
-        outer.fSave( this.name, outer.content )
-      } ) {
-        mnemonic = Key.S
-        this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_S, ActionEvent.CTRL_MASK ) )
-      }
-
-      contents ++= Seq( new Separator(), exportToPDFButton, exportToPNGButton )
-    }
-
-    contents += new Menu( "View" ) {
-      mnemonic = Key.V
-
-      contents ++= Seq( zoomInButton, zoomOutButton )
-    }
-  }
+  override def fileMenuContents = Seq( saveAsButton, new Separator() ) ++ super.fileMenuContents
 
   def fSave( name: String, list: List[HOLSequent] ) {
     chooser.fileFilter = chooser.acceptAllFileFilter
@@ -72,5 +53,8 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer
       case _ =>
     }
   }
+
+  // Menu buttons
+  val saveAsButton = MenuButtons.saveAsButton( this )
 
 }

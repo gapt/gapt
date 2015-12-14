@@ -22,56 +22,10 @@ class TreeProofViewer[T]( name: String, proof: TreeProof[T] ) extends ProofToolV
 
 }
 
-class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name, proof ) { main =>
+class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name, proof ) with Savable[LKProof] with ContainsLKProof {
 
-  override val mBar = new PTMenuBar( this ) {
-
-    contents += new Menu( "File" ) {
-      mnemonic = Key.F
-      contents ++= Seq( exportToPDFButton, exportToPNGButton )
-    }
-
-    contents += new Menu( "View" ) {
-      mnemonic = Key.V
-
-      contents ++= Seq( zoomInButton, zoomOutButton, new Separator() )
-
-      contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide structural rules" ) {
-        outer =>
-
-        action = Action( "Hide structural rules" ) {
-          if ( outer.selected )
-            main.publisher.publish( HideStructuralRules )
-          else
-            main.publisher.publish( ShowAllRulesOld( main.content ) )
-        }
-      }
-
-      contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide sequent contexts" ) {
-        outer =>
-
-        action = Action( "Hide sequent contexts" ) {
-          if ( outer.selected )
-            main.hideSequentContext()
-          else
-            main.showAllFormulas()
-        }
-      }
-
-      contents += new PTCheckMenuItem( main, canBeDisabled = false, "Mark cut ancestors" ) {
-        outer =>
-
-        action = Action( "Mark cut ancestors" ) {
-          if ( outer.selected )
-            main.markCutAncestors()
-          else
-            main.removeMarking()
-        }
-      }
-    }
-
-    contents += helpMenu
-  }
+  override def fileMenuContents = Seq( saveAsButton, new Separator() ) ++ super.fileMenuContents
+  override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton )
 
   def fSave( name: String, proof: LKProof ) {
     chooser.fileFilter = chooser.acceptAllFileFilter
@@ -99,6 +53,10 @@ class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name,
       case _ =>
     }
   }
+
+  def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
+  def showAllRules(): Unit = publisher.publish( ShowAllRulesOld( content ) )
+
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     publisher.publish( ChangeFormulaColor( getCutAncestors( proof ), Color.green, reset = false ) )
@@ -129,4 +87,13 @@ class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name,
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
+
+  // New menu buttons
+  val saveAsButton = MenuButtons.saveAsButton[LKProof]( this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
+
+  val hideStructuralRulesButton = MenuButtons.hideStructuralRulesButton( this )
+
+  val hideContextsButton = MenuButtons.hideContextsButton( this )
+
+  val markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
 }

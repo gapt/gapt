@@ -7,6 +7,8 @@
 
 package at.logic.gapt.prooftool
 
+import java.awt.event.{ ActionEvent, KeyEvent }
+
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionProofToLK, ExpansionSequent }
 import at.logic.gapt.proofs.lk.UnfoldException
@@ -20,11 +22,12 @@ import at.logic.gapt.proofs.shlk.{ applySchemaSubstitution2, applySchemaSubstitu
 import com.itextpdf.awt.PdfGraphics2D
 import scala.swing._
 import BorderPanel._
+import scala.swing.event.Key
 import swing.Dialog.Message
 import swing.Swing.EmptyIcon
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 import javax.swing.filechooser.FileFilter
-import javax.swing.{ WindowConstants, SwingUtilities }
+import javax.swing.{ KeyStroke, WindowConstants, SwingUtilities }
 import at.logic.gapt.proofs.proofs.TreeProof
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema.IntVar
@@ -81,7 +84,7 @@ object ProofToolViewer {
   }*/
 
 }
-abstract class ProofToolViewer[T]( val name: String, val content: T ) extends Reactor {
+abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends Reactor {
   type MainComponentType <: Component
   val nLine = sys.props( "line.separator" )
   val dnLine = nLine + nLine
@@ -90,7 +93,19 @@ abstract class ProofToolViewer[T]( val name: String, val content: T ) extends Re
   var currentFontSize = defaultFontSize
   var launcher_history = List[( String, AnyRef, Int )]()
   val publisher = new ProofToolPublisher
-  val mBar = new PTMenuBar( this )
+  val mBar = new MenuBar {
+    focusable = true
+
+    contents += new Menu( "File" ) {
+      mnemonic = Key.F
+      contents ++= fileMenuContents
+    }
+
+    contents += new Menu( "View" ) {
+      mnemonic = Key.V
+      contents ++= viewMenuContents
+    }
+  }
 
   val scrollPane = new PTScrollPane
   val db = new FileParser( this )
@@ -731,6 +746,20 @@ abstract class ProofToolViewer[T]( val name: String, val content: T ) extends Re
     border = Swing.EmptyBorder(0,0,0,0)
   }
   */
+
+  // Menus and menu items
+
+  protected val exportToPDFButton = MenuButtons.exportToPDFButton( this )
+
+  protected val exportToPNGButton = MenuButtons.exportToPNGButton( this )
+
+  protected val zoomInButton = MenuButtons.zoomInButton( this )
+
+  protected val zoomOutButton = MenuButtons.zoomOutButton( this )
+
+  def fileMenuContents: Seq[Component] = Seq( exportToPDFButton, exportToPNGButton )
+  def viewMenuContents: Seq[Component] = Seq( zoomInButton, zoomOutButton )
+
 }
 
 object prooftool {

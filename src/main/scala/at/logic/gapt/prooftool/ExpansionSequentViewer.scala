@@ -13,7 +13,7 @@ class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends Proof
 
   override def createMainComponent( fSize: Int ) = new DrawExpansionSequent( this, es, fSize )
 
-  override val mBar = new ESMenuBar( this )
+  override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), viewLKProofButton )
 
   def lkproof() {
     try {
@@ -28,25 +28,8 @@ class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends Proof
     }
   }
 
-}
-
-class ESMenuBar( main: ExpansionSequentViewer ) extends PTMenuBar( main ) {
-
-  contents += new Menu( "File" ) {
-    mnemonic = Key.F
-
-    contents ++= Seq( exportToPDFButton, exportToPNGButton )
-  }
-
-  contents += new Menu( "View" ) {
-    mnemonic = Key.V
-
-    contents ++= Seq( zoomInButton, zoomOutButton, new Separator() )
-
-    contents += new MenuItem( Action( "View LK proof" ) {
-      main.lkproof()
-    } )
-  }
-
-  contents += helpMenu
+  // New menu button
+  val viewLKProofButton = new MenuItem( Action( "View LK proof" ) {
+    lkproof()
+  } )
 }

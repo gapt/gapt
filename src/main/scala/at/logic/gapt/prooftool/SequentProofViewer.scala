@@ -73,9 +73,10 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: T ) e
   }
 }
 
-class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof ) {
+class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof ) with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
-  override val mBar = new LKMenuBar( this )
+  override def fileMenuContents = Seq( saveAsButton, new Separator() ) ++ super.fileMenuContents
+  override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton, sunburstViewButton )
 
   def expansionTree() {
     try {
@@ -91,7 +92,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
 
   }
 
-  def fSave( name: String, proof: LKProof ) {
+  override def fSave( name: String, proof: LKProof ) {
     chooser.fileFilter = chooser.acceptAllFileFilter
     chooser.showSaveDialog( mBar ) match {
       case FileChooser.Result.Approve =>
@@ -118,6 +119,9 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
     }
   }
 
+  def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
+  def showAllRules(): Unit = publisher.publish( ShowAllRules( content ) )
+
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     mainComponent.markCutAncestors = true
@@ -132,73 +136,21 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
-}
 
-class LKMenuBar( main: LKProofViewer ) extends PTMenuBar( main ) {
+  // New menu buttons
+  val saveAsButton = MenuButtons.saveAsButton[LKProof]( this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
 
-  contents += new Menu( "File" ) {
-    mnemonic = Key.F
-    contents += new PTMenuItem( main, canBeDisabled = false, Action( "Save as..." ) {
-      main.fSave( main.name, main.content )
-    } ) {
-      mnemonic = Key.S
-      this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_S, ActionEvent.CTRL_MASK ) )
-    }
-    contents += new Separator()
+  val hideStructuralRulesButton = MenuButtons.hideStructuralRulesButton( this )
 
-    contents += exportToPDFButton
-    contents += exportToPNGButton
+  val hideContextsButton = MenuButtons.hideContextsButton( this )
 
-  }
+  val markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
 
-  contents += new Menu( "View" ) {
-    mnemonic = Key.V
-    contents += zoomInButton
-    contents += zoomOutButton
-    contents += new Separator()
+  val viewExpansionProofButton = new MenuItem( Action( "View expansion proof" ) {
+    expansionTree()
+  } )
 
-    contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide structural rules" ) {
-      outer =>
-
-      action = Action( "Hide structural rules" ) {
-        if ( outer.selected )
-          main.publisher.publish( HideStructuralRules )
-        else
-          main.publisher.publish( ShowAllRules( main.content ) )
-      }
-    }
-
-    contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide sequent contexts" ) {
-      outer =>
-
-      action = Action( "Hide sequent contexts" ) {
-        if ( outer.selected )
-          main.hideSequentContext()
-        else
-          main.showAllFormulas()
-      }
-    }
-
-    contents += new PTCheckMenuItem( main, canBeDisabled = false, "Mark cut ancestors" ) {
-      outer =>
-
-      action = Action( "Mark cut ancestors" ) {
-        if ( outer.selected )
-          main.markCutAncestors()
-        else
-          main.removeMarking()
-      }
-    }
-
-    contents += new Separator()
-    contents += new PTMenuItem( main, canBeDisabled = false, Action( "View expansion proof" ) {
-      main.expansionTree()
-    } )
-
-    contents += new PTMenuItem( main, canBeDisabled = false, Action( "Sunburst View" ) {
-      main.sunburstView()
-    } )
-  }
-
-  contents += helpMenu
+  val sunburstViewButton = new MenuItem( Action( "Sunburst View" ) {
+    sunburstView()
+  } )
 }
