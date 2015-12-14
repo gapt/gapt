@@ -872,24 +872,23 @@ $\Pi_1$-cuts\cite{Hetzl14Algorithmic}.  GAPT contains an implementation of
 these tree grammars, and given a finite tree language (a set of terms), is
 automatically able to find a (V)TRATG that covers this language:
 
-\begin{clilisting}
-gapt> val lang = 0 until 18 map { Numeral(_) }
-lang: scala.collection.immutable.IndexedSeq[at.logic.gapt.expr.FOLTerm] = Vector(0, s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))))
+\begin{clilisting}[OpenWBO.isInstalled]
+gapt> val lang = 1 to 18 map { Numeral(_) }
+lang: scala.collection.immutable.IndexedSeq[at.logic.gapt.expr.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
 
 gapt> val grammar = findMinimalGrammar(lang, 2)
 grammar: at.logic.gapt.grammars.TratGrammar =
 Axiom: τ
 Non-terminals: τ, α_1, α_2
 Productions:
-  τ -> 0
-  τ -> s(s(s(s(s(s(s(s(s(s(s(s(α_1))))))))))))
-  τ -> s(s(s(s(s(s(α_1))))))
+  τ -> s(s(s(s(α_1))))
   τ -> s(α_1)
-  α_1 -> s(s(s(α_2)))
+  α_1 -> s(s(α_2))
+  α_1 -> s(α_2)
   α_1 -> α_2
   α_2 -> 0
-  α_2 -> s(0)
-  α_2 -> s(s(0))
+  α_2 -> s(s(s(s(s(s(0))))))
+  α_2 -> s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))
 
 gapt> lang.toSet subsetOf grammar.language
 res28: Boolean = true
@@ -897,15 +896,15 @@ res28: Boolean = true
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
-\begin{clilisting}
-gapt> minimizeGrammar(grammar, Set(0,6,12) map {Numeral(_)})
+\begin{clilisting}[OpenWBO.isInstalled]
+gapt> minimizeGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
 res29: at.logic.gapt.grammars.TratGrammar =
 Axiom: τ
 Non-terminals: τ, α_1, α_2
 Productions:
-  τ -> 0
-  τ -> s(s(s(s(s(s(s(s(s(s(s(s(α_1))))))))))))
-  τ -> s(s(s(s(s(s(α_1))))))
+  τ -> s(s(s(s(α_1))))
+  τ -> s(α_1)
+  α_1 -> s(α_2)
   α_1 -> α_2
   α_2 -> 0
 
