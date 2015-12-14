@@ -18,7 +18,7 @@ import scala.swing.event.Key
 /**
  * Created by sebastian on 12/13/15.
  */
-class ListViewer( name: String, list: List[HOLSequent] ) extends PTMain[List[HOLSequent]]( name, list ) { outer =>
+class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer[List[HOLSequent]]( name, list ) { outer =>
   override type MainComponentType = DrawList
   override def createMainComponent( fSize: Int ) = new DrawList( this, list, fSize )
 

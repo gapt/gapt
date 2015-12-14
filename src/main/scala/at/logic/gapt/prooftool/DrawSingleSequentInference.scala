@@ -12,7 +12,7 @@ import java.awt.Color
  * Created by marty on 3/26/14.
  */
 
-class DrawSingleSequentInference[F <: HOLFormula, T <: SequentProof[F, T]]( main: PTMain[_], var orientation: Orientation.Value ) extends ScrollPane {
+class DrawSingleSequentInference[F <: HOLFormula, T <: SequentProof[F, T]]( main: ProofToolViewer[_], var orientation: Orientation.Value ) extends ScrollPane {
 
   private var _p: Option[SequentProof[F, T]] = None
   def p(): Option[SequentProof[F, T]] = _p

@@ -21,7 +21,7 @@ import scala.swing.event.Key
 /**
  * Created by sebastian on 12/11/15.
  */
-abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends PTMain[DagProof[T]]( name, proof ) {
+abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends ProofToolViewer[DagProof[T]]( name, proof ) {
   override val content = proof
   def sunburstView() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )

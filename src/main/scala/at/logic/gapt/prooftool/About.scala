@@ -13,7 +13,7 @@ import scala.swing._
 import event._
 import java.awt.Point
 
-class About( main: PTMain[_] ) {
+class About( main: ProofToolViewer[_] ) {
   val nLine = sys.props( "line.separator" )
   private lazy val d = new Dialog {
     title = "About Prooftool"
@@ -38,7 +38,7 @@ class About( main: PTMain[_] ) {
       val img = {
         val path = "icons/tu.gif"
         try {
-          new ImageIcon( PTMain.getClass.getClassLoader.getResource( path ) )
+          new ImageIcon( ProofToolViewer.getClass.getClassLoader.getResource( path ) )
         } catch {
           case e: Exception =>
             main.errorMessage( "Couldn't load image: " + path + nLine + nLine + main.getExceptionString( e ) )
@@ -66,7 +66,7 @@ class About( main: PTMain[_] ) {
       c.grid = ( 1, 2 )
       layout( new Label( "Vendor:" ) { horizontalAlignment = Alignment.Right } ) = c
       c.grid = ( 2, 0 )
-      layout( new Label( PTMain.getClass.getPackage.getImplementationVersion ) { horizontalAlignment = Alignment.Left } ) = c
+      layout( new Label( ProofToolViewer.getClass.getPackage.getImplementationVersion ) { horizontalAlignment = Alignment.Left } ) = c
       c.grid = ( 2, 1 )
       layout( new Label( "Mikheil Rukhaia" ) { horizontalAlignment = Alignment.Left } ) = c
       c.grid = ( 2, 2 )

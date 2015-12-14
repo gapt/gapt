@@ -24,7 +24,7 @@ object ExpansionTreeState extends Enumeration {
   val Close, Open, Expand = Value
 }
 
-class DrawExpansionTree( main: PTMain[_], val expansionTree: MultiExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) with Logger {
+class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) with Logger {
 
   import ExpansionTreeState._
   override def loggerName = "DrawExpTreeLogger"

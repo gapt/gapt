@@ -13,7 +13,7 @@ import scala.swing._
  * Created by marty on 10/14/14.
  * The Menubar has not too much logic and mainly calls the Main object to perform tasks.
  */
-class PTMenuBar( main: PTMain[_] ) extends MenuBar {
+class PTMenuBar( main: ProofToolViewer[_] ) extends MenuBar {
   focusable = true
 
   val exportToPDFButton = new PTMenuItem( main, canBeDisabled = true, Action( "Export to PDF" ) {
@@ -71,7 +71,7 @@ class PTMenuBar( main: PTMain[_] ) extends MenuBar {
   }
 }*/
 
-class PTMenuItem( main: PTMain[_], canBeDisabled: Boolean, action: Action ) extends MenuItem( action ) {
+class PTMenuItem( main: ProofToolViewer[_], canBeDisabled: Boolean, action: Action ) extends MenuItem( action ) {
   border = Swing.EmptyBorder( 5, 3, 5, 3 )
   listenTo( main.publisher )
 
@@ -82,7 +82,7 @@ class PTMenuItem( main: PTMain[_], canBeDisabled: Boolean, action: Action ) exte
     }
 }
 
-class PTCheckMenuItem( main: PTMain[_], canBeDisabled: Boolean, title0: String ) extends CheckMenuItem( title0 ) {
+class PTCheckMenuItem( main: ProofToolViewer[_], canBeDisabled: Boolean, title0: String ) extends CheckMenuItem( title0 ) {
   border = Swing.EmptyBorder( 5, 3, 5, 3 )
   listenTo( main.publisher )
 

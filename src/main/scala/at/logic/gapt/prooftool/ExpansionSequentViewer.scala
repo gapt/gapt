@@ -8,7 +8,7 @@ import scala.swing.{ Separator, Menu, Action, MenuItem }
 /**
  * Created by sebastian on 12/13/15.
  */
-class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends PTMain[ExpansionSequent]( name, es ) {
+class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends ProofToolViewer[ExpansionSequent]( name, es ) {
   override type MainComponentType = DrawExpansionSequent
 
   override def createMainComponent( fSize: Int ) = new DrawExpansionSequent( this, es, fSize )

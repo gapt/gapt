@@ -47,14 +47,14 @@ import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
-object PTMain {
+object ProofToolViewer {
   // Used for displaying things directly from Scala shell
   def display( name: String, obj: AnyRef ) {
     val mainWindow = obj match {
       case p: LKProof             => new LKProofViewer( name, p )
       case es: ExpansionSequent   => new ExpansionSequentViewer( name, es )
       case p: TreeProof[_]        => new TreeProofViewer( name, p )
-      case p: Proof[a]            => new ResolutionProofViewer[a]( name, p )
+      case p: Proof[_]            => new ResolutionProofViewer( name, p )
       case list: List[HOLSequent] => new ListViewer( name, list )
       case seq: HOLSequent        => new ListViewer( name, List( seq ) )
       case set: Set[HOLSequent]   => new ListViewer( name, set.toList )
@@ -81,7 +81,7 @@ object PTMain {
   }*/
 
 }
-abstract class PTMain[T]( val name: String, val content: T ) extends Reactor {
+abstract class ProofToolViewer[T]( val name: String, val content: T ) extends Reactor {
   type MainComponentType <: Component
   val nLine = sys.props( "line.separator" )
   val dnLine = nLine + nLine
@@ -123,7 +123,7 @@ abstract class PTMain[T]( val name: String, val content: T ) extends Reactor {
 
   def resizeContent( fSize: Int ): Unit = {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    mainComponent = createMainComponent( defaultFontSize )
+    mainComponent = createMainComponent( fSize )
     contentPanel_ = new PTContentPanel( this, name, mainComponent, fSize )
     scrollPane.contentPanel = contentPanel_
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
@@ -215,14 +215,18 @@ abstract class PTMain[T]( val name: String, val content: T ) extends Reactor {
   def zoomIn() {
     currentFontSize * 3 / 2 match {
       case j: Int if j > 72 =>
-      case j: Int           => resizeContent( j )
+      case j: Int =>
+        currentFontSize = j
+        resizeContent( j )
     }
   }
 
   def zoomOut() {
     currentFontSize / 3 * 2 match {
       case j: Int if j < 1 =>
-      case j: Int          => resizeContent( j )
+      case j: Int =>
+        currentFontSize = j
+        resizeContent( j )
     }
   }
   /*
@@ -730,5 +734,5 @@ abstract class PTMain[T]( val name: String, val content: T ) extends Reactor {
 }
 
 object prooftool {
-  def apply( x: AnyRef ) = PTMain.display( "From CLI", x )
+  def apply( x: AnyRef ) = ProofToolViewer.display( "From CLI", x )
 }

@@ -32,7 +32,7 @@ import at.logic.gapt.utils.ds.trees.{ BinaryTree, LeafTree, Tree }
 
 import scala.swing.Dialog
 
-class FileParser( main: PTMain[_] ) {
+class FileParser( main: ProofToolViewer[_] ) {
 
   def fileStreamReader( f: String ) = new InputStreamReader( new FileInputStream( f ), "UTF8" )
 

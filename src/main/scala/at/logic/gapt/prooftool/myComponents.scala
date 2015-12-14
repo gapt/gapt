@@ -34,7 +34,7 @@ class PTScrollPane extends ScrollPane {
 }
 
 class PTContentPanel(
-    val main:          PTMain[_],
+    val main:          ProofToolViewer[_],
     val str:           String,
     val content:       Component,
     private val fSize: Int
