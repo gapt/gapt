@@ -39,25 +39,25 @@ class DrawExpansionSequent( val main: ExpansionSequentViewer, val expSequent: Ex
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   preferredSize = calculateOptimalSize
   dividerLocation =
-    if ( expSequent.antecedent.isEmpty )
+    /*if ( expSequent.antecedent.isEmpty )
       preferredSize.width / 5
     else if ( expSequent.succedent.isEmpty )
       preferredSize.width * 4 / 5
-    else
-      preferredSize.width / 2
+    else*/
+    preferredSize.width / 2
 
-  listenTo( main.top )
+  listenTo( main.scrollPane )
   reactions += {
-    case UIElementResized( main.top ) =>
+    case UIElementResized( main.scrollPane ) =>
       preferredSize = calculateOptimalSize
       revalidate()
   }
 
   def calculateOptimalSize = {
-    val width = main.top.size.width
-    val height = main.top.size.height
+    val width = main.scrollPane.size.width
+    val height = main.scrollPane.size.height
     if ( width > 100 && height > 200 )
-      new Dimension( main.top.size.width - 70, main.top.size.height - 150 )
+      new Dimension( width - 70, height - 150 )
     else new Dimension( width, height )
   }
 

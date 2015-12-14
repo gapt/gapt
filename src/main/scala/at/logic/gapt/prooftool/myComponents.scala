@@ -15,18 +15,18 @@ import java.awt.event.{ MouseEvent, MouseMotionListener, FocusAdapter }
 import java.awt.Font._
 
 // This component is used in Launcher
-class PTScrollPane( private var contentPanel_ :PTContentPanel ) extends ScrollPane {
+class PTScrollPane extends ScrollPane {
   background = new Color( 255, 255, 255 )
 
   peer.getVerticalScrollBar.setUnitIncrement( 20 )
   peer.getHorizontalScrollBar.setUnitIncrement( 20 )
 
-  contents = contentPanel
+  private var contentPanel_ : Option[PTContentPanel] = None
 
-  def contentPanel = contentPanel_
+  def contentPanel = contentPanel_.get
 
   def contentPanel_=( cp: PTContentPanel ) = {
-    contentPanel_ = cp
+    contentPanel_ = Some( cp )
     contents = cp
   }
   //  def content_=(c : Component) { viewportView = c }
@@ -34,10 +34,10 @@ class PTScrollPane( private var contentPanel_ :PTContentPanel ) extends ScrollPa
 }
 
 class PTContentPanel(
-  val main:          PTMain[_],
-  val str:           String,
-  val content:       Component,
-  private val fSize: Int
+    val main:          PTMain[_],
+    val str:           String,
+    val content:       Component,
+    private val fSize: Int
 ) extends GridBagPanel with MouseMotionListener {
   val c = new Constraints
   c.grid = ( 0, 0 )

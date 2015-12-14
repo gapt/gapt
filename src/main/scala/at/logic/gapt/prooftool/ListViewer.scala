@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lkNew.{ lkNew2Old, LKProof }
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 
-import scala.swing.{ FileChooser, Action }
+import scala.swing.{ Separator, Menu, FileChooser, Action }
 import scala.swing.event.Key
 
 /**
@@ -23,15 +23,22 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends PTMain[List[HOL
   override def createMainComponent( fSize: Int ) = new DrawList( this, list, fSize )
 
   override val mBar = new PTMenuBar( this ) {
-    override def fileMenu = {
-      val fileMenu_ = super.fileMenu
-      fileMenu_.contents += new PTMenuItem( outer, canBeDisabled = false, Action( "Save as..." ) {
+    contents += new Menu( "File" ) {
+      mnemonic = Key.F
+      contents += new PTMenuItem( outer, canBeDisabled = false, Action( "Save as..." ) {
         outer.fSave( this.name, outer.content )
       } ) {
         mnemonic = Key.S
         this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_S, ActionEvent.CTRL_MASK ) )
       }
-      fileMenu_
+
+      contents ++= Seq( new Separator(), exportToPDFButton, exportToPNGButton )
+    }
+
+    contents += new Menu( "View" ) {
+      mnemonic = Key.V
+
+      contents ++= Seq( zoomInButton, zoomOutButton )
     }
   }
 

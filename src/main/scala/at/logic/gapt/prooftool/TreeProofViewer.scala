@@ -10,7 +10,8 @@ import at.logic.gapt.proofs.lk.{ getAuxFormulas, getCutAncestors }
 import at.logic.gapt.proofs.proofs.TreeProof
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 
-import scala.swing.{ FileChooser, Action, Separator }
+import scala.swing.event.Key
+import scala.swing.{ Menu, FileChooser, Action, Separator }
 
 /**
  * Created by sebastian on 12/13/15.
@@ -24,11 +25,18 @@ class TreeProofViewer[T]( name: String, proof: TreeProof[T] ) extends PTMain[Tre
 class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name, proof ) { main =>
 
   override val mBar = new PTMenuBar( this ) {
-    override def viewMenu = {
-      val viewMenu_ = super.viewMenu
-      viewMenu_.contents += new Separator()
 
-      viewMenu_.contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide structural rules" ) {
+    contents += new Menu( "File" ) {
+      mnemonic = Key.F
+      contents ++= Seq( exportToPDFButton, exportToPNGButton )
+    }
+
+    contents += new Menu( "View" ) {
+      mnemonic = Key.V
+
+      contents ++= Seq( zoomInButton, zoomOutButton, new Separator() )
+
+      contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide structural rules" ) {
         outer =>
 
         action = Action( "Hide structural rules" ) {
@@ -39,7 +47,7 @@ class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name,
         }
       }
 
-      viewMenu_.contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide sequent contexts" ) {
+      contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide sequent contexts" ) {
         outer =>
 
         action = Action( "Hide sequent contexts" ) {
@@ -50,7 +58,7 @@ class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name,
         }
       }
 
-      viewMenu_.contents += new PTCheckMenuItem( main, canBeDisabled = false, "Mark cut ancestors" ) {
+      contents += new PTCheckMenuItem( main, canBeDisabled = false, "Mark cut ancestors" ) {
         outer =>
 
         action = Action( "Mark cut ancestors" ) {
@@ -60,8 +68,9 @@ class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name,
             main.removeMarking()
         }
       }
-      viewMenu_
     }
+
+    contents += helpMenu
   }
 
   def fSave( name: String, proof: LKProof ) {

@@ -135,21 +135,29 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
 }
 
 class LKMenuBar( main: LKProofViewer ) extends PTMenuBar( main ) {
-  override def fileMenu = {
-    val fileMenu_ = super.fileMenu
-    fileMenu_.contents += new PTMenuItem( main, canBeDisabled = false, Action( "Save as..." ) {
+
+  contents += new Menu( "File" ) {
+    mnemonic = Key.F
+    contents += new PTMenuItem( main, canBeDisabled = false, Action( "Save as..." ) {
       main.fSave( main.name, main.content )
     } ) {
       mnemonic = Key.S
       this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_S, ActionEvent.CTRL_MASK ) )
     }
-    fileMenu_
-  }
-  override def viewMenu = {
-    val viewMenu_ = super.viewMenu
-    viewMenu_.contents += new Separator()
+    contents += new Separator()
 
-    viewMenu_.contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide structural rules" ) {
+    contents += exportToPDFButton
+    contents += exportToPNGButton
+
+  }
+
+  contents += new Menu( "View" ) {
+    mnemonic = Key.V
+    contents += zoomInButton
+    contents += zoomOutButton
+    contents += new Separator()
+
+    contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide structural rules" ) {
       outer =>
 
       action = Action( "Hide structural rules" ) {
@@ -160,7 +168,7 @@ class LKMenuBar( main: LKProofViewer ) extends PTMenuBar( main ) {
       }
     }
 
-    viewMenu_.contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide sequent contexts" ) {
+    contents += new PTCheckMenuItem( main, canBeDisabled = false, "Hide sequent contexts" ) {
       outer =>
 
       action = Action( "Hide sequent contexts" ) {
@@ -171,7 +179,7 @@ class LKMenuBar( main: LKProofViewer ) extends PTMenuBar( main ) {
       }
     }
 
-    viewMenu_.contents += new PTCheckMenuItem( main, canBeDisabled = false, "Mark cut ancestors" ) {
+    contents += new PTCheckMenuItem( main, canBeDisabled = false, "Mark cut ancestors" ) {
       outer =>
 
       action = Action( "Mark cut ancestors" ) {
@@ -182,15 +190,15 @@ class LKMenuBar( main: LKProofViewer ) extends PTMenuBar( main ) {
       }
     }
 
-    viewMenu_.contents += new Separator()
-    viewMenu_.contents += new PTMenuItem( main, canBeDisabled = false, Action( "View expansion proof" ) {
+    contents += new Separator()
+    contents += new PTMenuItem( main, canBeDisabled = false, Action( "View expansion proof" ) {
       main.expansionTree()
     } )
 
-    viewMenu_.contents += new PTMenuItem( main, canBeDisabled = false, Action( "Sunburst View" ) {
+    contents += new PTMenuItem( main, canBeDisabled = false, Action( "Sunburst View" ) {
       main.sunburstView()
     } )
-
-    viewMenu_
   }
+
+  contents += helpMenu
 }

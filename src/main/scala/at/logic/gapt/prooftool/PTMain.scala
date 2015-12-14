@@ -92,10 +92,7 @@ abstract class PTMain[T]( val name: String, val content: T ) extends Reactor {
   val publisher = new ProofToolPublisher
   val mBar = new PTMenuBar( this )
 
-  var mainComponent = createMainComponent( defaultFontSize )
-  protected var contentPanel_ = new PTContentPanel( this, name, mainComponent, defaultFontSize )
-  val scrollPane = new PTScrollPane( contentPanel )
-  def contentPanel = contentPanel_
+  val scrollPane = new PTScrollPane
   val db = new FileParser( this )
 
   def showFrame() {
@@ -116,6 +113,11 @@ abstract class PTMain[T]( val name: String, val content: T ) extends Reactor {
     }
     peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
   }
+
+  var mainComponent = createMainComponent( defaultFontSize )
+  protected var contentPanel_ = new PTContentPanel( this, name, mainComponent, defaultFontSize )
+  scrollPane.contentPanel = contentPanel_
+  def contentPanel = contentPanel_
 
   def createMainComponent( fSize: Int ): MainComponentType
 
