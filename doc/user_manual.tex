@@ -866,7 +866,50 @@ quantifier, one with $2$ quantifiers.
 
 \subsection{Tree grammars}
 
-\fxnote{Give grammar minimization example}
+VTRATGs and TRATGs (vectorial totally rigid acyclic tree grammars) are types of
+tree grammars that have an intimate connection to proofs with
+$\Pi_1$-cuts\cite{Hetzl14Algorithmic}.  GAPT contains an implementation of
+these tree grammars, and given a finite tree language (a set of terms), is
+automatically able to find a (V)TRATG that covers this language:
+
+\begin{clilisting}
+gapt> val lang = 0 until 18 map { Numeral(_) }
+lang: scala.collection.immutable.IndexedSeq[at.logic.gapt.expr.FOLTerm] = Vector(0, s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))))
+
+gapt> val grammar = findMinimalGrammar(lang, 2)
+grammar: at.logic.gapt.grammars.TratGrammar =
+Axiom: τ
+Non-terminals: τ, α_1, α_2
+Productions:
+  τ -> 0
+  τ -> s(s(s(s(s(s(s(s(s(s(s(s(α_1))))))))))))
+  τ -> s(s(s(s(s(s(α_1))))))
+  τ -> s(α_1)
+  α_1 -> s(s(s(α_2)))
+  α_1 -> α_2
+  α_2 -> 0
+  α_2 -> s(0)
+  α_2 -> s(s(0))
+
+gapt> lang.toSet subsetOf grammar.language
+res28: Boolean = true
+
+\end{clilisting}
+
+You can also find minimal sub-grammars that still generate certain terms:
+\begin{clilisting}
+gapt> minimizeGrammar(grammar, Set(0,6,12) map {Numeral(_)})
+res29: at.logic.gapt.grammars.TratGrammar =
+Axiom: τ
+Non-terminals: τ, α_1, α_2
+Productions:
+  τ -> 0
+  τ -> s(s(s(s(s(s(s(s(s(s(s(s(α_1))))))))))))
+  τ -> s(s(s(s(s(s(α_1))))))
+  α_1 -> α_2
+  α_2 -> 0
+
+\end{clilisting}
 
 \vfill
 \pagebreak
@@ -1643,7 +1686,7 @@ For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
 
 \begin{clilisting}
 gapt> parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
-res28: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+res30: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
 
 \end{clilisting}
 
@@ -1652,7 +1695,7 @@ class:
 
 \begin{clilisting}
 gapt> Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))")
-res29: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
+res31: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
 
 \end{clilisting}
 
@@ -1676,7 +1719,7 @@ returns a list of length 1 as shown by entering
 %
 \begin{clilisting}
 gapt> proofs.length
-res30: Int = 1
+res32: Int = 1
 
 \end{clilisting}
 %
@@ -1685,7 +1728,7 @@ entering
 %
 \begin{clilisting}
 gapt> proofs(0)._1
-res31: String = p
+res33: String = p
 
 \end{clilisting}
 %
