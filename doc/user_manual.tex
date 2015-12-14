@@ -735,25 +735,66 @@ q: at.logic.gapt.proofs.lkNew.LKProof =
 
 \subsection{Interpolation}
 
-\fxwarning{Use a more reasonable example here.}
+\fxnote{For space reasons, I have decided to use a rather simple example.}
 
-The command \texttt{ExtractInterpolant} extracts an interpolant from a sequent calculus proof which may contain atomic cuts and/or equality rules. Currently, we allow only reflexivity axioms or axioms of the form $A \seq A$. The implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
+The command \texttt{ExtractInterpolant} extracts an interpolant from a sequent calculus proof which may contain atomic cuts and/or equality rules. Currently, we allow only reflexivity axioms, and axioms of the form $A \seq A$; $\bot \seq$, or $\seq \top$. The implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
 a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a
 ``negative part'' $\Gamma_1\seq\Delta_1$ and a ``positive part'' $\Gamma_2 \seq \Delta_2$.
 It returns a formula $I$ s.t.\ $\Gamma_1\seq\Delta_1, I$ and $I,\Gamma_2\seq\Delta_2$
 are provable and $I$ contains only such predicate symbols that appear in both, $\Gamma_1\seq\Delta_1$
-and $\Gamma_2\seq\Delta_2$. For example, suppose pr is a proof of $p \lor q \seq p, q$
-by a single $\lor$-left inference (see Section~\ref{sec:entering_proofs} for how to construct
-such a proof), then you can compute an interpolant as follows:
+and $\Gamma_2\seq\Delta_2$. For instance, suppose pr is the following proof:
+\begin{center}
+	\begin{prooftree}
+		\AxiomCm{P(a) \seq P(a)}
+		\RightLabelm{(\mt{w:l})}
+		\UnaryInfCm{a=b, P(a) \seq P(a)}
+		\RightLabelm{\mt{=:r}}
+		\UnaryInfCm{a=b, P(a) \seq P(b)}
+	\end{prooftree}
+\end{center}
+First, we construct the proof pr:
 \begin{clilisting}
-gapt> val pr: LKProof = p3
-pr: at.logic.gapt.proofs.lkNew.LKProof =
-[p3] A, B :- (A∧B)    (AndRightRule(p2, Suc(0), p1, Suc(0)))
-[p2] A :- A    (LogicalAxiom(A))
-[p1] B :- B    (LogicalAxiom(B))
+gapt> val ca = FOLConst( "a" )
+ca: at.logic.gapt.expr.FOLConst = a
 
-gapt> val I = ExtractInterpolant(pr, Seq(Ant(0), Suc(0)), Seq(Ant(1)))
-I: at.logic.gapt.expr.HOLFormula = (⊥∨¬B)
+gapt> val cb = FOLConst( "b" )
+cb: at.logic.gapt.expr.FOLConst = b
+
+gapt> val pa = FOLAtom( "P", List( ca ) )
+pa: at.logic.gapt.expr.FOLAtom = P(a)
+
+gapt> val pb = FOLAtom( "P", List( cb ) )
+pb: at.logic.gapt.expr.FOLAtom = P(b)
+
+gapt> val aeqb = Eq( ca, cb )
+aeqb: at.logic.gapt.expr.FOLAtom = a=b
+
+gapt> val axpa = LogicalAxiom( pa )
+axpa: at.logic.gapt.proofs.lkNew.LogicalAxiom =
+[p1] P(a) :- P(a)    (LogicalAxiom(P(a)))
+
+gapt> val axpb = LogicalAxiom( pb )
+axpb: at.logic.gapt.proofs.lkNew.LogicalAxiom =
+[p1] P(b) :- P(b)    (LogicalAxiom(P(b)))
+
+gapt> val proof = WeakeningLeftRule( axpa, aeqb )
+proof: at.logic.gapt.proofs.lkNew.WeakeningLeftRule =
+[p2] a=b, P(a) :- P(a)    (WeakeningLeftRule(p1, a=b))
+[p1] P(a) :- P(a)    (LogicalAxiom(P(a)))
+
+gapt> val pr = EqualityRightRule( proof, aeqb, Suc( 0 ), pb )
+pr: at.logic.gapt.proofs.lkNew.EqualityRightRule =
+[p3] a=b, P(a) :- P(b)    (EqualityRightRule(p2, Ant(0), Suc(0), [2]))
+[p2] a=b, P(a) :- P(a)    (WeakeningLeftRule(p1, a=b))
+[p1] P(a) :- P(a)    (LogicalAxiom(P(a)))
+
+\end{clilisting}
+In order to apply interpolation, we need to specify a partition of the end-sequent into $\Gamma_1 \seq \Delta_1$ and $\Gamma_2 \seq \Delta_2$, i.e. into the negative (npart) and positive (ppart) part, respectively. In this case, we set $\Delta_1 = \{ P(b) \}$, $\Gamma_2 = \{ a=b, P(a) \}$ and $\Gamma_1 = \Delta_2 = \emptyset$.
+
+Then we can call \texttt{ExtractInterpolant( pr, npart, ppart )}, which returns the interpolant $I = (a=b \impl \lnot P(a))$ of pr:
+\begin{clilisting}
+gapt> val I = ExtractInterpolant( pr, Seq( Suc( 0 ) ), Seq( Ant( 0 ), Ant( 1 ) ) )
+I: at.logic.gapt.expr.HOLFormula = (a=b⊃¬P(a))
 
 \end{clilisting}
 
