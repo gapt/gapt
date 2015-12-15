@@ -852,7 +852,7 @@ them, see~\cite{Hetzl13Understanding} for a detailed description.
 
 \fxnote{Short example for first and higher-order CERES.}
 
-\subsection{Cut-introduction}
+\subsection{Cut-introduction}\label{sec.cut-introduction}
 
 The cut-introduction algorithm as described in~\cite{Hetzl2012,Hetzl14Algorithmic,Hetzl14Introducing} is
 implemented in GAPT for introducing $\Pi_1$-cuts into a sequent calculus
@@ -923,11 +923,13 @@ quantifier, one with $2$ quantifiers.
 
 \subsection{Tree grammars}
 
-VTRATGs and TRATGs (vectorial totally rigid acyclic tree grammars) are types of
-tree grammars that have an intimate connection to proofs with
-$\Pi_1$-cuts\cite{Hetzl14Algorithmic}.  GAPT contains an implementation of
-these tree grammars, and given a finite tree language (a set of terms), is
-automatically able to find a (V)TRATG that covers this language:
+The cut-introduction method described in Section~\ref{sec.cut-introduction} is
+based on the use of certain tree grammars for representing Herbrand-disjunctions.
+These are totally rigid acyclic tree grammars (TRATGs) and vectorial TRATGs (VTRATGs).
+As shown in~\cite{Hetzl14Algorithmic}, these grammars are intimately related to
+the structure of proofs with cuts.  GAPT contains an implementation of
+these tree grammars, and given a finite tree language (i.e., a set of terms), is
+able to automatically find a (V)TRATG that covers this language:
 
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> val lang = 1 to 18 map { Numeral(_) }
@@ -1694,20 +1696,20 @@ The Prover9 parser interprets names strings built over the alphabet
 Since prover 9 has two naming schemes, we describe both of them. The default
  is the native LADR scheme.
 
-\subsubsection{LADR naming scheme (default)}
+\subsection{LADR naming scheme (default)}
 
 Names starting with lower case letters from \texttt{u} to \texttt{z} are
  interpreted as variable symbols. Every name starting with a different letter
  is interpreted as a constant/function/predicate symbol, depending on the
  position in the term.
 
-\subsubsection{Prolog naming scheme}
+\subsection{Prolog naming scheme}
 Names starting with upper case letters from \texttt{A} to \texttt{Z} are
  interpreted as variable symbols. Every name starting with a different letter
  is interpreted as a constant/function, depending on the
  position in the term. Predicates start with a lower or an upper case letter.
 
-\subsubsection{Terms and Formulas}
+\subsection{Terms and Formulas}
 Arguments are always separated by commas and put in parenthesis. Terms are
  built from variable, constant symbols and function symbols applied
  to a number of arguments, which are terms. Likewise, atoms are
