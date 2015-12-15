@@ -8,6 +8,12 @@ import scala.swing.{ Separator, Menu, Action, MenuItem }
 /**
  * Created by sebastian on 12/13/15.
  */
+
+/**
+ * ProofToolViewer for expansion sequents.
+ * @param name The name to be displayed at the top.
+ * @param es The expansion sequent to be displayed.
+ */
 class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends ProofToolViewer[ExpansionSequent]( name, es ) {
   override type MainComponentType = DrawExpansionSequent
 
@@ -29,7 +35,7 @@ class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends Proof
   }
 
   // New menu button
-  val viewLKProofButton = new MenuItem( Action( "View LK proof" ) {
+  def viewLKProofButton = new MenuItem( Action( "View LK proof" ) {
     lkproof()
   } )
 }

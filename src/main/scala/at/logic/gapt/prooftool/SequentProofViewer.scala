@@ -21,8 +21,19 @@ import scala.swing.event.Key
 /**
  * Created by sebastian on 12/11/15.
  */
+
+/**
+ * A ProofToolViewer for dag proofs.
+ * @param name The name to be displayed at the top.
+ * @param proof The proof to be displayed.
+ * @tparam T The type of dag proof..
+ */
 abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends ProofToolViewer[DagProof[T]]( name, proof ) {
   override val content = proof
+
+  /**
+   * Displays the dag proof in sunburst form.
+   */
   def sunburstView() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     initSunburstDialog( name, content )
@@ -45,7 +56,14 @@ abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T
   }*/
 }
 
-class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: T ) extends DagProofViewer[T]( name, proof ) {
+/**
+ * A ProofToolViewer for sequent proofs. Used for LKsk and RAL proofs.
+ * @param name The name to be displayed at the top.
+ * @param proof The proof to be displayed.
+ * @tparam F
+ * @tparam T The type of sequent proof.
+ */
+class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: SequentProof[F, T] ) extends DagProofViewer[T]( name, proof ) {
   override type MainComponentType = DrawSequentProof[F, T]
   override def createMainComponent( fSize: Int ) = new DrawSequentProof(
     this,
@@ -73,11 +91,19 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: T ) e
   }
 }
 
+/**
+ * A ProofToolViewer for LK proofs.
+ * @param name The name to be displayed at the top.
+ * @param proof The proof to be displayed.
+ */
 class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof ) with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
   override def fileMenuContents = Seq( saveAsButton, new Separator() ) ++ super.fileMenuContents
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton, sunburstViewButton )
 
+  /**
+   * Displays the expansion proof of proof in a new window.
+   */
   def expansionTree() {
     try {
       scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )

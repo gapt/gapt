@@ -51,10 +51,15 @@ import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
 object ProofToolViewer {
-  // Used for displaying things directly from Scala shell
+  /**
+   * Displays various objects in prooftool. Creates an instance of the appropriate viewer.
+   * @param name The title to be displayed.
+   * @param obj The object to be displayed.
+   */
   def display( name: String, obj: AnyRef ) {
     val mainWindow = obj match {
       case p: LKProof             => new LKProofViewer( name, p )
+      case p: SequentProof[a, b]  => new SequentProofViewer[a, b]( name, p )
       case es: ExpansionSequent   => new ExpansionSequentViewer( name, es )
       case p: TreeProof[_]        => new TreeProofViewer( name, p )
       case p: Proof[_]            => new ResolutionProofViewer( name, p )
@@ -84,8 +89,15 @@ object ProofToolViewer {
   }*/
 
 }
+
+/**
+ * The main window of the ProofTool application.
+ * @param name The name to be displayed at the top.
+ * @param content The object to be displayed.
+ * @tparam T The type of content.
+ */
 abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends Reactor {
-  type MainComponentType <: Component
+  type MainComponentType <: Component // The type of the mainComponent object (e.g., DrawSequentProof in the case of LK proofs).
   val nLine = sys.props( "line.separator" )
   val dnLine = nLine + nLine
   var DEBUG = false
@@ -134,8 +146,14 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   scrollPane.contentPanel = contentPanel_
   def contentPanel = contentPanel_
 
+  // Function that creates the main component from the content object, e.g., put an LKProof in a DrawSequentProof object.
+  // Subclasses need to implement this!
   def createMainComponent( fSize: Int ): MainComponentType
 
+  /**
+   * Resizes the content to a new font size.
+   * @param fSize The new font size.
+   */
   def resizeContent( fSize: Int ): Unit = {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     mainComponent = createMainComponent( fSize )
@@ -174,6 +192,10 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     }
   }
 
+  /**
+   * Exports a component as a pdf.
+   * @param component The component to be exported.
+   */
   def fExportPdf( component: Component ) {
     chooser.fileFilter = chooser.peer.getChoosableFileFilters.find( f => f.getDescription == ".pdf" ).get
     chooser.showSaveDialog( mBar ) match {
@@ -204,6 +226,10 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     }
   }
 
+  /**
+   * Exports a component as a PNG.
+   * @param component The component to be exported.
+   */
   def fExportPng( component: Component ) {
     chooser.fileFilter = chooser.peer.getChoosableFileFilters.find( f => f.getDescription == ".png" ).get
     chooser.showSaveDialog( mBar ) match {
@@ -227,6 +253,9 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     }
   }
 
+  /**
+   * Zooms in by multiplying font size by 3/2.
+   */
   def zoomIn() {
     currentFontSize * 3 / 2 match {
       case j: Int if j > 72 =>
@@ -236,6 +265,9 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     }
   }
 
+  /**
+   * Zooms out by multiplying font size by 2/3.
+   */
   def zoomOut() {
     currentFontSize / 3 * 2 match {
       case j: Int if j < 1 =>
@@ -694,18 +726,34 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     Dialog.showInput[String]( scrollPane, message, "ProofTool Input", Dialog.Message.Plain, EmptyIcon, values,
       if ( values.isEmpty ) "" else values.head )
 
+  /**
+   * Displays an info message.
+   * @param info The text of the message.
+   */
   def infoMessage( info: String ) {
     Dialog.showMessage( scrollPane, info, "ProofTool Information" )
   }
 
+  /**
+   * Displays a warning message.
+   * @param warning The text of the message.
+   */
   def warningMessage( warning: String ) {
     Dialog.showMessage( scrollPane, warning, "ProofTool Warning", Dialog.Message.Warning )
   }
 
+  /**
+   * Displays an error message.
+   * @param error The text of the message.
+   */
   def errorMessage( error: String ) {
     Dialog.showMessage( scrollPane, error, "ProofTool Error", Dialog.Message.Error )
   }
 
+  /**
+   * Displays a question.
+   * @param question The text of the question.
+   */
   def questionMessage( question: String ) =
     Dialog.showConfirmation( scrollPane, question, "ProofTool Question", Dialog.Options.YesNo, Message.Question )
 
@@ -757,11 +805,24 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   protected def zoomOutButton = MenuButtons.zoomOutButton( this )
 
+  /**
+   *
+   * @return The contents of the "File" menu.
+   */
   def fileMenuContents: Seq[Component] = Seq( exportToPDFButton, exportToPNGButton )
+
+  /**
+   *
+   * @return The contents of the "View" menu.
+   */
   def viewMenuContents: Seq[Component] = Seq( zoomInButton, zoomOutButton )
 
 }
 
 object prooftool {
+  /**
+   * Starts prooftool from the cli.
+   * @param x The object to be displayed.
+   */
   def apply( x: AnyRef ) = ProofToolViewer.display( "From CLI", x )
 }

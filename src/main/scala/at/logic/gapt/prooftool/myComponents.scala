@@ -14,7 +14,9 @@ import scala.swing.event.{ MouseWheelMoved, MouseReleased, MouseDragged, ValueCh
 import java.awt.event.{ MouseEvent, MouseMotionListener, FocusAdapter }
 import java.awt.Font._
 
-// This component is used in Launcher
+/**
+ * The main scrollpane used in ProofTool
+ */
 class PTScrollPane extends ScrollPane {
   background = new Color( 255, 255, 255 )
 
@@ -33,6 +35,13 @@ class PTScrollPane extends ScrollPane {
   //  def content = viewportView.get.asInstanceOf[Launcher]
 }
 
+/**
+ * The panel containing the actual content of a ProofTool window.
+ * @param main The main window that this belongs to.
+ * @param str
+ * @param content An object that displays some content, e.g., a DrawSequentProof
+ * @param fSize Font size.
+ */
 class PTContentPanel(
     val main:          ProofToolViewer[_],
     val str:           String,
