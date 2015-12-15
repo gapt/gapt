@@ -735,8 +735,6 @@ q: at.logic.gapt.proofs.lkNew.LKProof =
 
 \subsection{Interpolation}
 
-\fxnote{For space reasons, I have decided to use a rather simple example.}
-
 The command \texttt{ExtractInterpolant} extracts an interpolant from a sequent calculus proof which may contain atomic cuts and/or equality rules. Currently, we allow only reflexivity axioms, and axioms of the form $A \seq A$; $\bot \seq$, or $\seq \top$. The implementation is based on Lemma 6.5 of~\cite{Takeuti87Proof}. The method expects
 a proof p and an arbitrary partition of the end-sequent $\Gamma \seq \Delta$ of p into a
 ``negative part'' $\Gamma_1\seq\Delta_1$ and a ``positive part'' $\Gamma_2 \seq \Delta_2$.
