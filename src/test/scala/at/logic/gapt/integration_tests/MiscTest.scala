@@ -3,30 +3,21 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
-import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.cutintro._
 import at.logic.gapt.formats.llk.HybridLatexParser
-import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep => ETtoDeep, ExpansionProofToLK }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk
-import at.logic.gapt.proofs.lkNew
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.formats.prover9.Prover9TermParser
-import at.logic.gapt.proofs.lkNew.{ lkOld2New, lkNew2Old, ReductiveCutElimination }
+import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9 }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.proofs.ceres._
-import java.util.zip.GZIPInputStream
 import java.io.File.separator
-import java.io.{ FileReader, FileInputStream, InputStreamReader }
-import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.execute.Success
 import org.specs2.mutable._
@@ -61,7 +52,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk2.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
-      val proof_sk = lkNew.skolemize( lkOld2New( proof ) )
+      val proof_sk = skolemize( proof )
       Success()
     }
 
@@ -69,7 +60,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk3.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
-      val proof_sk = lkNew.skolemize( lkOld2New( proof ) )
+      val proof_sk = skolemize( proof )
       Success()
     }
 
@@ -77,14 +68,14 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk4.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
-      val proof_sk = lkNew.skolemize( lkOld2New( proof ) )
+      val proof_sk = skolemize( proof )
       Success()
     }
 
     "extract projections and clause set from a skolemized proof" in {
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "test1p.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = lkOld2New( proofdb.proofs.head._2 )
+      val proof = proofdb.proofs.head._2
       val projs = Projections( proof )
       val s = StructCreators.extract( proof )
       val cs = CharacteristicClauseSet( s )
@@ -121,16 +112,17 @@ class MiscTest extends Specification with ClasspathFileCopier {
     }
 
     "extract expansion tree from tape proof" in {
+      skipped( "definition elimination violates equality rules, see https://github.com/gapt/gapt/issues/452" )
       val tokens = HybridLatexParser.parseFile( tempCopyOfClasspathFile( "tape3.llk" ) )
       val db = HybridLatexParser.createLKProof( tokens )
       // I have no idea why, but this makes the code get the correct proof
       val proofs = db.proofs.filter( _._1.toString == "TAPEPROOF" )
       val ( _, p ) :: _ = proofs
-      val elp = AtomicExpansion( DefinitionElimination( db.Definitions, p ) )
-      val reg = lk.regularize( elp )
+      val elp = AtomicExpansion( DefinitionElimination( db.Definitions )( p ) )
+      val reg = regularize( elp )
       val lksk_proof = LKToLKsk( reg )
       // TODO
-      val et = lk.LKToExpansionProof( reg ) // must throwA[IllegalArgumentException] // currently contains problematic definitions
+      val et = LKToExpansionProof( reg ) // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
     }
 
@@ -142,11 +134,11 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val AllxPx = All( x, Px )
 
       // test with 1 weak & 1 strong
-      val p1 = lk.Axiom( Py :: Nil, Py :: Nil )
-      val p2 = ForallLeftRule( p1, Py, AllxPx, y )
-      val p3 = ForallRightRule( p2, Py, AllxPx, y )
+      val p1 = Axiom( Py :: Nil, Py :: Nil )
+      val p2 = ForallLeftRule( p1, AllxPx, y )
+      val p3 = ForallRightRule( p2, AllxPx, y )
 
-      val etSeq = lk.LKToExpansionProof( p3 )
+      val etSeq = LKToExpansionProof( p3 )
 
       val proof = ExpansionProofToLK( etSeq ) // must not throw exception
       ok
@@ -155,7 +147,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
     "construct proof with expansion sequent extracted from proof (2/2)" in {
       val proof = LinearExampleProof( 4 )
 
-      val proofPrime = ExpansionProofToLK( lkNew.LKToExpansionProof( proof ) ) // must not throw exception
+      val proofPrime = ExpansionProofToLK( LKToExpansionProof( proof ) ) // must not throw exception
       ok
     }
 
@@ -208,7 +200,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
       val lkproof = Prover9Importer.lkProofFromFile( testFilePath )
-      val expseq = lkNew.LKToExpansionProof( lkproof )
+      val expseq = LKToExpansionProof( lkproof )
       val deep = ETtoDeep( expseq )
 
       Sat4j.isValid( deep ) must beTrue
@@ -224,7 +216,7 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val testFilePath = tempCopyOfClasspathFile( "ALG004-1.out" )
 
       val lkProof = Prover9Importer.lkProofFromFile( testFilePath )
-      val expansionSequent = lkNew.LKToExpansionProof( lkProof )
+      val expansionSequent = LKToExpansionProof( lkProof )
       val deep = ETtoDeep( expansionSequent )
 
       VeriT.isValid( deep ) must beTrue
@@ -236,17 +228,17 @@ class MiscTest extends Specification with ClasspathFileCopier {
       val testFilePath = tempCopyOfClasspathFile( "PUZ002-1.out" )
 
       val lkproof1 = Prover9Importer.lkProofFromFile( testFilePath )
-      val expseq = lkNew.LKToExpansionProof( lkproof1 )
+      val expseq = LKToExpansionProof( lkproof1 )
       val deep = ETtoDeep( expseq )
 
-      lkNew.solve.solvePropositional( deep ).isDefined must beTrue
+      solve.solvePropositional( deep ).isDefined must beTrue
     }
 
     "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val testFilePath = tempCopyOfClasspathFile( "NUM484+3.out" )
       val lkproof1 = Prover9Importer.lkProofFromFile( testFilePath )
-      val expseq = lkNew.LKToExpansionProof( lkproof1 )
+      val expseq = LKToExpansionProof( lkproof1 )
       val deep = ETtoDeep( expseq )
       success( "everything worked fine" )
     }

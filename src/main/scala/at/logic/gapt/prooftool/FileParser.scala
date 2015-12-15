@@ -57,29 +57,29 @@ class FileParser {
     proofs = ( new XMLReader( input ) with SimpleXMLProofParser ).getNamedTrees()
   }
 
-  def lksFileReader( input: InputStreamReader ) {
-    resolutionProofSchemaDB.clear
-    proofs = Nil
-    termTrees = Nil
-    val ps = sFOParser.parseProofs( input ) // constructs dbTRS as a side effect.
-    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
-    //  val start = System.currentTimeMillis()
-    proofdb = new ProofDatabase( defs, ps, Nil, Nil )
-    //  val end = System.currentTimeMillis()
-    //  println("parsing took " + (end - start).toString)
-  }
-
-  def lksCNTFileReader( input: InputStreamReader ) {
-    resolutionProofSchemaDB.clear
-    proofs = Nil
-    termTrees = Nil
-    val ps = SCHOLParser.parseProofs( input ) // constructs dbTRS as a side effect.
-    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
-    //  val start = System.currentTimeMillis()
-    proofdb = new ProofDatabase( defs, ps, Nil, Nil )
-    //  val end = System.currentTimeMillis()
-    //  println("parsing took " + (end - start).toString)
-  }
+  //  def lksFileReader( input: InputStreamReader ) {
+  //    resolutionProofSchemaDB.clear
+  //    proofs = Nil
+  //    termTrees = Nil
+  //    val ps = sFOParser.parseProofs( input ) // constructs dbTRS as a side effect.
+  //    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
+  //    //  val start = System.currentTimeMillis()
+  //    proofdb = new ProofDatabase( defs, ps, Nil, Nil )
+  //    //  val end = System.currentTimeMillis()
+  //    //  println("parsing took " + (end - start).toString)
+  //  }
+  //
+  //  def lksCNTFileReader( input: InputStreamReader ) {
+  //    resolutionProofSchemaDB.clear
+  //    proofs = Nil
+  //    termTrees = Nil
+  //    val ps = SCHOLParser.parseProofs( input ) // constructs dbTRS as a side effect.
+  //    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
+  //    //  val start = System.currentTimeMillis()
+  //    proofdb = new ProofDatabase( defs, ps, Nil, Nil )
+  //    //  val end = System.currentTimeMillis()
+  //    //  println("parsing took " + (end - start).toString)
+  //  }
 
   def rsFileReader( input: InputStreamReader ) {
     ParseResSchema( input ) // constructs resolutionProofSchemaDB and dbTRS as a side effect.
@@ -125,9 +125,9 @@ class FileParser {
     val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
     try {
       if ( path.endsWith( ".llk" ) ) llkFileReader( path )
-      else if ( path.endsWith( ".lksc" ) ) lksCNTFileReader( fileStreamReader( path ) )
-      else if ( path.endsWith( ".lks" ) ) lksFileReader( fileStreamReader( path ) )
-      else if ( path.endsWith( ".lks.gz" ) ) lksFileReader( gzFileStreamReader( path ) )
+      //      else if ( path.endsWith( ".lksc" ) ) lksCNTFileReader( fileStreamReader( path ) )
+      //      else if ( path.endsWith( ".lks" ) ) lksFileReader( fileStreamReader( path ) )
+      //      else if ( path.endsWith( ".lks.gz" ) ) lksFileReader( gzFileStreamReader( path ) )
       else if ( path.endsWith( ".rs" ) ) rsFileReader( fileStreamReader( path ) )
       else if ( path.endsWith( ".rs.gz" ) ) rsFileReader( gzFileStreamReader( path ) )
       else if ( path.endsWith( ".xml" ) ) try {
@@ -158,9 +158,7 @@ class FileParser {
     }
   }
 
-  def addProofs( proofs: List[( String, lkNew.LKProof )] )( implicit dummyImplicit: DummyImplicit ) = ???
-
-  def addProofs( proofs: List[( String, LKProof )] ) {
+  def addProofs( proofs: List[( String, lkNew.LKProof )] ) {
     proofdb = new ProofDatabase( proofdb.Definitions, proofdb.proofs ::: proofs, proofdb.axioms, proofdb.sequentLists )
   }
 

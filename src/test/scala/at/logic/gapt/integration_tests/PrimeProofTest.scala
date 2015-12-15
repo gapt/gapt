@@ -114,7 +114,7 @@ class PrimeProofTest extends Specification {
 
       val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "prime1-" + n + ".xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = lkOld2New( proofdb.proofs.head._2 )
+      val proof = proofdb.proofs.head._2
 
       if ( false ) { // run this code as soon as issue 260 is fixed:
         if ( VeriT.isInstalled ) {
@@ -161,7 +161,7 @@ class PrimeProofTest extends Specification {
 
       val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "euclid-" + n + ".xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = lkOld2New( proofdb.proofs.head._2 )
+      val proof = proofdb.proofs.head._2
       //      val deproof = DefinitionElimination( proofdb.Definitions )( proof )
 
       val proof_sk = skolemize( regularize( AtomicExpansion( proof ) ) )

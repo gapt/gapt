@@ -20,7 +20,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkNew
 import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkNew.lkOld2New
 import at.logic.gapt.proofs.occurrences._
 
 import scala.Predef._
@@ -29,12 +31,12 @@ import scala.xml._
 
 class ProofDatabase(
     val Definitions:  Map[LambdaExpression, LambdaExpression],
-    val proofs:       List[Tuple2[String, LKProof]],
+    val proofs:       List[( String, lkNew.LKProof )],
     val axioms:       List[HOLSequent],
     val sequentLists: List[Tuple2[String, List[HOLSequent]]]
 ) {
   //Does a proof lookup by name
-  def proof( name: String ): LKProof = {
+  def proof( name: String ): lkNew.LKProof = {
     val ps = proofs.filter( _._1 == name )
     require( ps.nonEmpty, "Could not find proof " + name + " in proof database!" )
     if ( ps.size > 1 ) println( "Warning: Proof " + name + " occurs more than once in proof database!" )
@@ -348,7 +350,10 @@ object XMLParser {
         ).toMap ++ ( pdb \ "definitionlist" \ "formuladef" ).map( n => ( new NodeReader( n ) with XMLDefinitionParser ).getNameFormulaDefinition() ).toList.map(
             c => ( HOLAtom( Const( c._1, FunctionType( To, ( c._2 )._1.map( _.exptype ) ) ), ( c._2 )._1 ), ( c._2 )._2 )
           ).toMap ++ ( pdb \ "definitionlist" \ "indirecttermdef" ).map( n => ( new NodeReader( n ) with XMLDefinitionParser ).getIndirectDefinition() ).toMap.asInstanceOf[Map[LambdaExpression, LambdaExpression]],
-        ( pdb \ "proof" ).map( n => ( new NodeReader( n ) with XMLProofParser ).getNamedProof() ).toList,
+        ( pdb \ "proof" ).map { n =>
+          val ( name, p ) = ( new NodeReader( n ) with XMLProofParser ).getNamedProof()
+          name -> lkOld2New( p )
+        }.toList,
         ( new NodeReader( ( pdb \ "axiomset" ).head ) with XMLSequentParser ).getAxiomSet(),
         ( pdb \ "sequentlist" ).map( n => ( new NodeReader( n ) with XMLSequentParser ).getNamedSequentList() ).toList
       )

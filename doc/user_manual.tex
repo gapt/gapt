@@ -676,7 +676,7 @@ The GAPT-system contains an implementation of reductive cut-elimination
 with cuts (as in Appendix~\ref{sec.fileio}).
 %
 \begin{clilisting}
-gapt> val p = lkOld2New(XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs(0)._2)
+gapt> val p = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs(0)._2
 p: at.logic.gapt.proofs.lkNew.LKProof =
 [p25] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (CutRule(p13, Suc(0), p24, Ant(0)))
 [p24] ∀x.∃y.(¬P(x,y)∨Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ForallLeftRule(p23, Ant(0), ∃y.(¬P(x,y)∨Q(x,y)), b, x))
@@ -712,12 +712,28 @@ is implemented for proofs and can be used, e.g.~as follows:
 %
 \begin{clilisting}
 gapt> val proofs = XMLProofDatabaseParser( "examples/prime/ceres_xml/prime1-1.xml.gz" ).proofs
-proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)] = List((the-proof,CutRuleType(PRIME-DIV, REM, PRE, F[1] :- )))
-
+proofs: List[(String, at.logic.gapt.proofs.lkNew.LKProof)] =
+List((the-proof,[p1003] F[1], PRIME-DIV, PRE, REM :-     (CutRule(p997, Suc(0), p1002, Ant(0)))
+[p1002] INF(set_1(1)) :-     (DefinitionLeftRule(p1001, Ant(0), INF(set_1(1))))
+[p1001] ∀m.∃n.∈((m+(n+1)),set_1(1)) :-     (ForallLeftRule(p1000, Ant(0), ∃n.∈((m+(n+1)),set_1(1)), 1, m))
+[p1000] ∃n.∈((1+(n+1)),set_1(1)) :-     (ExistsLeftRule(p999, Ant(0), l_0, n))
+[p999] ∈((1+(l_0+1)),set_1(1)) :-     (DefinitionLeftRule(p998, Ant(0), ∈((1+(l_0+1)),set_1(1))))
+[p998] (1+(l_0+1))=1 :-     (TheoryAxiom((1+(l_0+1))=1 :- ))
+[p997] F[1], PRIME-DIV, PRE, REM :- INF(set_1(1))    (CutRule(p6, Suc(0), p996, Ant(4)))
+[p996] F[1], PRIME-DIV, PRE, REM, ¬empty(set_1(1)) :- INF(set_1(1))    (CutRule(p908, Suc(0), p995, Ant(0)))
+[p995] O(set_1(1)...
 gapt> val p = proofs(0)._2
-p: at.logic.gapt.proofs.lk.base.LKProof = CutRuleType(PRIME-DIV, REM, PRE, F[1] :- )
-
-gapt> val q = skolemize( lkOld2New(p) )
+p: at.logic.gapt.proofs.lkNew.LKProof =
+[p1003] F[1], PRIME-DIV, PRE, REM :-     (CutRule(p997, Suc(0), p1002, Ant(0)))
+[p1002] INF(set_1(1)) :-     (DefinitionLeftRule(p1001, Ant(0), INF(set_1(1))))
+[p1001] ∀m.∃n.∈((m+(n+1)),set_1(1)) :-     (ForallLeftRule(p1000, Ant(0), ∃n.∈((m+(n+1)),set_1(1)), 1, m))
+[p1000] ∃n.∈((1+(n+1)),set_1(1)) :-     (ExistsLeftRule(p999, Ant(0), l_0, n))
+[p999] ∈((1+(l_0+1)),set_1(1)) :-     (DefinitionLeftRule(p998, Ant(0), ∈((1+(l_0+1)),set_1(1))))
+[p998] (1+(l_0+1))=1 :-     (TheoryAxiom((1+(l_0+1))=1 :- ))
+[p997] F[1], PRIME-DIV, PRE, REM :- INF(set_1(1))    (CutRule(p6, Suc(0), p996, Ant(4)))
+[p996] F[1], PRIME-DIV, PRE, REM, ¬empty(set_1(1)) :- INF(set_1(1))    (CutRule(p908, Suc(0), p995, Ant(0)))
+[p995] O(set_1(1)), ¬empty(set_1(1)) :- INF(set_1(1)) ...
+gapt> val q = skolemize( p )
 q: at.logic.gapt.proofs.lkNew.LKProof =
 [p968] F[1], PRIME-DIV, PRE, REM :-     (CutRule(p962, Suc(0), p967, Ant(0)))
 [p967] INF(set_1(1)) :-     (DefinitionLeftRule(p966, Ant(0), INF(set_1(1))))
@@ -1745,8 +1761,15 @@ proof defined in the XML file. For example:
 %
 \begin{clilisting}
 gapt> val proofs = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs
-proofs: List[(String, at.logic.gapt.proofs.lk.base.LKProof)] = List((p,CutRuleType(∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y)))))
-
+proofs: List[(String, at.logic.gapt.proofs.lkNew.LKProof)] =
+List((p,[p25] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (CutRule(p13, Suc(0), p24, Ant(0)))
+[p24] ∀x.∃y.(¬P(x,y)∨Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ForallLeftRule(p23, Ant(0), ∃y.(¬P(x,y)∨Q(x,y)), b, x))
+[p23] ∃y.(¬P(b,y)∨Q(b,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ExistsLeftRule(p22, Ant(0), v, y))
+[p22] (¬P(b,v)∨Q(b,v)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ExistsRightRule(p21, Suc(0), ∃y.(¬Q(x,y)⊃¬P(x,y)), b, x))
+[p21] (¬P(b,v)∨Q(b,v)) :- ∃y.(¬Q(b,y)⊃¬P(b,y))    (ExistsRightRule(p20, Suc(0), (¬Q(b,y)⊃¬P(b,y)), v, y))
+[p20] (¬P(b,v)∨Q(b,v)) :- (¬Q(b,v)⊃¬P(b,v))    (ImpRightRule(p19, Ant(1), Suc(0)))
+[p19] (¬P(b,v)∨Q(b,v)), ¬Q(b,v) :- ¬P(b,v)    (OrLeftRule(p16, Ant(0), p18, Ant(1)))
+[p18] ¬Q(b,v), Q(b,v) :-     (NegLeftRul...
 \end{clilisting}
 %
 returns a list of length 1 as shown by entering
@@ -1769,7 +1792,7 @@ res33: String = p
 and the proof itself by
 %
 \begin{clilisting}
-gapt> val proof = lkOld2New(proofs(0)._2)
+gapt> val proof = proofs(0)._2
 proof: at.logic.gapt.proofs.lkNew.LKProof =
 [p25] ∀x.∀y.(P(x,y)⊃Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (CutRule(p13, Suc(0), p24, Ant(0)))
 [p24] ∀x.∃y.(¬P(x,y)∨Q(x,y)) :- ∃x.∃y.(¬Q(x,y)⊃¬P(x,y))    (ForallLeftRule(p23, Ant(0), ∃y.(¬P(x,y)∨Q(x,y)), b, x))

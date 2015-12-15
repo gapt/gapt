@@ -26,7 +26,7 @@ class TapeTest extends Specification {
       checkForProverOrSkip
       val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = lkOld2New( proofdb.proofs.head._2 )
+      val proof = proofdb.proofs.head._2
       val proof_sk = skolemize( regularize( DefinitionElimination( proofdb.Definitions )( proof ) ) )
       //println( LatexLLKExporter( proof_sk, true ) )
 
@@ -79,7 +79,7 @@ class TapeTest extends Specification {
       //get the proof
       val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       pdb.proofs.size must beEqualTo( 1 )
-      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( lkOld2New( pdb.proofs.head._2 ) ) ) )
+      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
       val ancf = CERES( proof )
       ( ancf.endSequent multiSetEquals proof.endSequent ) must beTrue
 
@@ -92,7 +92,7 @@ class TapeTest extends Specification {
       //get the proof
       val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       pdb.proofs.size must beEqualTo( 1 )
-      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( lkOld2New( pdb.proofs.head._2 ) ) ) )
+      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
       val acnf = CERES( proof, CERES.skipEquations )
       ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
 
@@ -105,7 +105,7 @@ class TapeTest extends Specification {
       //get the proof
       val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       pdb.proofs.size must beEqualTo( 1 )
-      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( lkOld2New( pdb.proofs.head._2 ) ) ) )
+      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
       val acnf = CERES( proof, CERES.skipEquations )
       val eqacnf = CERES( acnf, { case Eq( _, _ ) => true; case FOLAtom( _, _ ) => false; case _ => true } )
       ( eqacnf.endSequent multiSetEquals proof.endSequent ) must beTrue

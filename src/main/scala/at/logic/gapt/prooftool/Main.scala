@@ -168,7 +168,7 @@ object Main extends Reactor {
           case proof: LKProof =>
             try {
               if ( result.endsWith( ".xml" ) || chooser.fileFilter.getDescription == ".xml" ) {
-                XMLExporter( result, pair._1, lkNew2Old( proof ) )
+                XMLExporter( result, pair._1, proof )
               } else if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
                 val filename = if ( result.endsWith( ".llk" ) ) result else result + ".llk"
                 val file = new JBufferedWriter( new JFileWriter( filename ) )
@@ -547,7 +547,7 @@ object Main extends Reactor {
       val proof = body.getContent.getData.get
       val proof_projs = Projections( proof._2.asInstanceOf[lk.base.LKProof] ).filterNot( p =>
         p.root.antecedent.exists( fo1 => p.root.succedent.exists( fo2 => fo1.formula == fo2.formula ) ) ).toList
-      val proofs = proof_projs.map( p => ( proof._1 + "_prj_" + proof_projs.indexOf( p ), p ) )
+      val proofs = proof_projs.map( p => ( proof._1 + "_prj_" + proof_projs.indexOf( p ), lkOld2New( p ) ) )
       db.addProofs( proofs )
       updateLauncher( proofs.head._1, proofs.head._2, defaultFontSize )
       body.cursor = java.awt.Cursor.getDefaultCursor
@@ -666,86 +666,86 @@ object Main extends Reactor {
     } finally ProofToolPublisher.publish( ProofDbChanged )
   }
 
-  def eliminateDefsLK() {
-    try {
-      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val pair = body.getContent.getData.get
-      val new_proof = lk.AtomicExpansion( DefinitionElimination( db.getDefinitions, pair._2.asInstanceOf[lk.base.LKProof] ) )
-      db.addProofs( ( pair._1 + " without def rules", new_proof ) :: Nil )
-      updateLauncher( pair._1 + " without Definitions", new_proof, 14 )
-      body.cursor = java.awt.Cursor.getDefaultCursor
-    } catch {
-      case e: Throwable =>
-        errorMessage( "Couldn't eliminate definitions!" + dnLine + getExceptionString( e ) )
-    } finally ProofToolPublisher.publish( ProofDbChanged )
-  }
+  //  def eliminateDefsLK() {
+  //    try {
+  //      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+  //      val pair = body.getContent.getData.get
+  //      val new_proof = lk.AtomicExpansion( DefinitionElimination( db.getDefinitions, pair._2.asInstanceOf[lk.base.LKProof] ) )
+  //      db.addProofs( ( pair._1 + " without def rules", new_proof ) :: Nil )
+  //      updateLauncher( pair._1 + " without Definitions", new_proof, 14 )
+  //      body.cursor = java.awt.Cursor.getDefaultCursor
+  //    } catch {
+  //      case e: Throwable =>
+  //        errorMessage( "Couldn't eliminate definitions!" + dnLine + getExceptionString( e ) )
+  //    } finally ProofToolPublisher.publish( ProofDbChanged )
+  //  }
+  //
+  //  def eliminateDefsLKsk() {
+  //    try {
+  //      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+  //      val pair = body.getContent.getData.get
+  //      val new_proof = lk.eliminateDefinitions( lk.LKToLKsk( pair._2.asInstanceOf[lk.base.LKProof] ) )
+  //      db.addProofs( ( pair._1 + " without def rules", new_proof ) :: Nil )
+  //      updateLauncher( "Proof without Definitions", new_proof, 14 )
+  //      body.cursor = java.awt.Cursor.getDefaultCursor
+  //    } catch {
+  //      case e: Throwable =>
+  //        errorMessage( "Couldn't eliminate definitions!" + dnLine + getExceptionString( e ) )
+  //    } finally ProofToolPublisher.publish( ProofDbChanged )
+  //  }
 
-  def eliminateDefsLKsk() {
-    try {
-      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val pair = body.getContent.getData.get
-      val new_proof = lk.eliminateDefinitions( lk.LKToLKsk( pair._2.asInstanceOf[lk.base.LKProof] ) )
-      db.addProofs( ( pair._1 + " without def rules", new_proof ) :: Nil )
-      updateLauncher( "Proof without Definitions", new_proof, 14 )
-      body.cursor = java.awt.Cursor.getDefaultCursor
-    } catch {
-      case e: Throwable =>
-        errorMessage( "Couldn't eliminate definitions!" + dnLine + getExceptionString( e ) )
-    } finally ProofToolPublisher.publish( ProofDbChanged )
-  }
+  //  def newgentzen( proof: lk.base.LKProof ) {
+  //    import lk._
+  //    import lk.base._
+  //    try {
+  //      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+  //      val newSubproof = ReductiveCutElim( proof, true, { x => true }, { ( _, cut ) => cut == proof } )
+  //      val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
+  //      val newProof = replaceSubproof( oldProof, proof, newSubproof )
+  //      //if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
+  //      loadProof( ( "Gentzen Result:", newProof ) )
+  //
+  //      // need to scroll after UI has finished updating
+  //      // to get the correct coordinates.
+  //      SwingUtilities.invokeLater( new Runnable() {
+  //        def run() {
+  //          // FIXME scrollToProof( newSubproof )
+  //        }
+  //      } )
+  //
+  //    } catch {
+  //      case e: Throwable =>
+  //        errorMessage( "Couldn't eliminate all cuts!" + dnLine + getExceptionString( e ) )
+  //    } finally {
+  //      db.addProofs( ReductiveCutElim.proofs.map( x => ( x.name, x ) ) )
+  //      body.cursor = java.awt.Cursor.getDefaultCursor
+  //      ProofToolPublisher.publish( ProofDbChanged )
+  //    }
+  //  }
 
-  def newgentzen( proof: lk.base.LKProof ) {
-    import lk._
-    import lk.base._
-    try {
-      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val newSubproof = ReductiveCutElim( proof, true, { x => true }, { ( _, cut ) => cut == proof } )
-      val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
-      val newProof = replaceSubproof( oldProof, proof, newSubproof )
-      //if (newProof != newSubproof) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: (newProof::Nil)
-      loadProof( ( "Gentzen Result:", newProof ) )
-
-      // need to scroll after UI has finished updating
-      // to get the correct coordinates.
-      SwingUtilities.invokeLater( new Runnable() {
-        def run() {
-          // FIXME scrollToProof( newSubproof )
-        }
-      } )
-
-    } catch {
-      case e: Throwable =>
-        errorMessage( "Couldn't eliminate all cuts!" + dnLine + getExceptionString( e ) )
-    } finally {
-      db.addProofs( ReductiveCutElim.proofs.map( x => ( x.name, x ) ) )
-      body.cursor = java.awt.Cursor.getDefaultCursor
-      ProofToolPublisher.publish( ProofDbChanged )
-    }
-  }
-
-  def gentzen( proof: lk.base.LKProof ) {
-    import lk._
-    import lk.base._
-    try {
-      val steps = questionMessage( "Do you want to see intermediary steps?" ) match {
-        case Dialog.Result.Yes => true
-        case _                 => false
-      }
-      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val newSubproof = ReductiveCutElim.eliminateAllByUppermost( proof, steps )
-      val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
-      val newProof = replaceSubproof( oldProof, proof, newSubproof )
-      if ( newProof != newSubproof ) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: ( newProof :: Nil )
-      updateLauncher( "Gentzen Result:", newProof, 14 )
-    } catch {
-      case e: Throwable =>
-        errorMessage( "Couldn't eliminate all cuts!" + dnLine + getExceptionString( e ) )
-    } finally {
-      db.addProofs( ReductiveCutElim.proofs.map( x => ( x.name, x ) ) )
-      body.cursor = java.awt.Cursor.getDefaultCursor
-      ProofToolPublisher.publish( ProofDbChanged )
-    }
-  }
+  //  def gentzen( proof: lk.base.LKProof ) {
+  //    import lk._
+  //    import lk.base._
+  //    try {
+  //      val steps = questionMessage( "Do you want to see intermediary steps?" ) match {
+  //        case Dialog.Result.Yes => true
+  //        case _                 => false
+  //      }
+  //      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+  //      val newSubproof = ReductiveCutElim.eliminateAllByUppermost( proof, steps )
+  //      val oldProof = body.getContent.getData.get._2.asInstanceOf[LKProof]
+  //      val newProof = replaceSubproof( oldProof, proof, newSubproof )
+  //      if ( newProof != newSubproof ) ReductiveCutElim.proofs = ReductiveCutElim.proofs ::: ( newProof :: Nil )
+  //      updateLauncher( "Gentzen Result:", newProof, 14 )
+  //    } catch {
+  //      case e: Throwable =>
+  //        errorMessage( "Couldn't eliminate all cuts!" + dnLine + getExceptionString( e ) )
+  //    } finally {
+  //      db.addProofs( ReductiveCutElim.proofs.map( x => ( x.name, x ) ) )
+  //      body.cursor = java.awt.Cursor.getDefaultCursor
+  //      ProofToolPublisher.publish( ProofDbChanged )
+  //    }
+  //  }
 
   //TODO: Must calculate omega ancestors, currently it marks nothing
   def markOmegaAncestors() {
@@ -841,71 +841,71 @@ object Main extends Reactor {
     body.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def computeInstance() {
-    val input = inputMessage( "Please enter number of the instance:", Seq() ) match {
-      case Some( str ) => str.replaceAll( """[a-z,A-Z]*""", "" )
-      case _           => ""
-    }
-    if ( !input.isEmpty ) try {
-      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val number = if ( input.size > 10 ) input.dropRight( 10 ).toInt else input.toInt
-      body.getContent.getData.get match {
-        case ( name: String, p: LKProof ) =>
-          val proof = try { // This is a hack! In the future these two functions should be merged.
-            applySchemaSubstitution2( name, number, List() )
-          } catch {
-            case e: UnfoldException => applySchemaSubstitution( name, number )
-          }
-          db.addProofs( ( name + "↓" + number, proof ) :: Nil )
-          updateLauncher( name + "↓" + number, proof, defaultFontSize )
-        case ( name: String, pt: Tree[_] ) if db.getTermTrees.exists( p => name == p._1 && p._2 == db.TermType.ProjectionTerm ) =>
-          val ( term, list ) = UnfoldProjectionTerm( name, number )
-          val gterm_name = name.replace( "_step", "" ).replace( "_base", "" ) + "↓" + number
-          db.addTermTree( gterm_name, term )
-          db.addProofs( list )
-          updateLauncher( gterm_name, term, defaultFontSize )
-          infoMessage( "The proof projections, corresponding to this term, are also computed." + nLine +
-            "They can be found in the View Proof menu!" )
-        case ( name: String, pt: Tree[_] ) if db.getTermTrees.exists( p => name == p._1 && p._2 == db.TermType.ClauseTerm ) => errorMessage( "Not yet implemented!" )
-        case ( name: String, pt: Tree[_] ) if db.getTermTrees.exists( p => name == p._1 && p._2 == db.TermType.ResolutionTerm ) =>
-          val proof = InstantiateResSchema( name, number )
-          db.addProofs( proof :: Nil )
-          updateLauncher( proof._1, proof._2, defaultFontSize )
-        case _ => errorMessage( "Cannot instantiate the object!" )
-      }
-      body.cursor = java.awt.Cursor.getDefaultCursor
-      ProofToolPublisher.publish( ProofDbChanged )
-    } catch {
-      case e: Throwable =>
-        errorMessage( "Could not construct the instance!" + dnLine + getExceptionString( e ) )
-    }
-  }
+  //  def computeInstance() {
+  //    val input = inputMessage( "Please enter number of the instance:", Seq() ) match {
+  //      case Some( str ) => str.replaceAll( """[a-z,A-Z]*""", "" )
+  //      case _           => ""
+  //    }
+  //    if ( !input.isEmpty ) try {
+  //      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+  //      val number = if ( input.size > 10 ) input.dropRight( 10 ).toInt else input.toInt
+  //      body.getContent.getData.get match {
+  //        case ( name: String, p: LKProof ) =>
+  //          val proof = try { // This is a hack! In the future these two functions should be merged.
+  //            applySchemaSubstitution2( name, number, List() )
+  //          } catch {
+  //            case e: UnfoldException => applySchemaSubstitution( name, number )
+  //          }
+  //          db.addProofs( ( name + "↓" + number, proof ) :: Nil )
+  //          updateLauncher( name + "↓" + number, proof, defaultFontSize )
+  //        case ( name: String, pt: Tree[_] ) if db.getTermTrees.exists( p => name == p._1 && p._2 == db.TermType.ProjectionTerm ) =>
+  //          val ( term, list ) = UnfoldProjectionTerm( name, number )
+  //          val gterm_name = name.replace( "_step", "" ).replace( "_base", "" ) + "↓" + number
+  //          db.addTermTree( gterm_name, term )
+  //          db.addProofs( list )
+  //          updateLauncher( gterm_name, term, defaultFontSize )
+  //          infoMessage( "The proof projections, corresponding to this term, are also computed." + nLine +
+  //            "They can be found in the View Proof menu!" )
+  //        case ( name: String, pt: Tree[_] ) if db.getTermTrees.exists( p => name == p._1 && p._2 == db.TermType.ClauseTerm ) => errorMessage( "Not yet implemented!" )
+  //        case ( name: String, pt: Tree[_] ) if db.getTermTrees.exists( p => name == p._1 && p._2 == db.TermType.ResolutionTerm ) =>
+  //          val proof = InstantiateResSchema( name, number )
+  //          db.addProofs( proof :: Nil )
+  //          updateLauncher( proof._1, proof._2, defaultFontSize )
+  //        case _ => errorMessage( "Cannot instantiate the object!" )
+  //      }
+  //      body.cursor = java.awt.Cursor.getDefaultCursor
+  //      ProofToolPublisher.publish( ProofDbChanged )
+  //    } catch {
+  //      case e: Throwable =>
+  //        errorMessage( "Could not construct the instance!" + dnLine + getExceptionString( e ) )
+  //    }
+  //  }
 
-  def computeACNF() {
-    if ( SchemaProofDB.proofs.isEmpty )
-      warningMessage( "Proof schema is missing!" )
-    else if ( resolutionProofSchemaDB.map.isEmpty ) {
-      warningMessage( "Please specify the resolution refutation schema!" )
-      specifyResolutionSchema()
-    } else try {
-      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val result = ACNFDialog(
-        SchemaProofDB.proofs.map( pair => pair._1 ).toSeq.reverse,
-        resolutionProofSchemaDB.map.map( pair => pair._1 ).toSeq.reverse
-      )
-      if ( result != None ) {
-        val input = result.get
-        val proof = ACNF( input._1, input._2, input._3 )
-        db.addProofs( ( input._1 + "↓" + input._3 + "_acnf", proof ) :: Nil )
-        updateLauncher( input._1 + "↓" + input._3 + "_acnf", proof, defaultFontSize )
-      }
-      body.cursor = java.awt.Cursor.getDefaultCursor
-      ProofToolPublisher.publish( ProofDbChanged )
-    } catch {
-      case e: Throwable =>
-        errorMessage( "Could not construct the ACNF!" + dnLine + getExceptionString( e ) )
-    }
-  }
+  //  def computeACNF() {
+  //    if ( SchemaProofDB.proofs.isEmpty )
+  //      warningMessage( "Proof schema is missing!" )
+  //    else if ( resolutionProofSchemaDB.map.isEmpty ) {
+  //      warningMessage( "Please specify the resolution refutation schema!" )
+  //      specifyResolutionSchema()
+  //    } else try {
+  //      body.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+  //      val result = ACNFDialog(
+  //        SchemaProofDB.proofs.map( pair => pair._1 ).toSeq.reverse,
+  //        resolutionProofSchemaDB.map.map( pair => pair._1 ).toSeq.reverse
+  //      )
+  //      if ( result != None ) {
+  //        val input = result.get
+  //        val proof = ACNF( input._1, input._2, input._3 )
+  //        db.addProofs( ( input._1 + "↓" + input._3 + "_acnf", proof ) :: Nil )
+  //        updateLauncher( input._1 + "↓" + input._3 + "_acnf", proof, defaultFontSize )
+  //      }
+  //      body.cursor = java.awt.Cursor.getDefaultCursor
+  //      ProofToolPublisher.publish( ProofDbChanged )
+  //    } catch {
+  //      case e: Throwable =>
+  //        errorMessage( "Could not construct the ACNF!" + dnLine + getExceptionString( e ) )
+  //    }
+  //  }
 
   def inputMessage( message: String, values: Seq[String] ) =
     Dialog.showInput[String]( body, message, "ProofTool Input", Dialog.Message.Plain, EmptyIcon, values,

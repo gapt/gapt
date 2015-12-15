@@ -2,11 +2,9 @@ package at.logic.gapt.formats.llkNew
 
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llkNew.ast.LambdaAST
-import at.logic.gapt.formats.llkNew.{ ast, DeclarationParser }
 import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lkNew.{ lkNew2Old, LKProof }
-import at.logic.gapt.proofs.lk.base.{ LKProof => OldLKProof }
+import at.logic.gapt.proofs.lkNew.LKProof
 import java.io.FileReader
 import scala.collection.immutable.PagedSeq
 import scala.util.parsing.input.PagedSeqReader
@@ -20,16 +18,16 @@ case class ExtendedProofDatabase(
   eaxioms:      Map[HOLFormula, HOLFormula],
   edefinitions: Map[LambdaExpression, LambdaExpression]
 )
-    extends ProofDatabase( Map(), Nil, Nil, Nil ) {
-  override val proofs: List[( String, OldLKProof )] = eproofs.map( x =>
-    x._1 match {
-      case HOLAtom( Const( sym, _ ), _ ) => ( sym.toString, lkNew2Old( x._2 ) )
-      case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, lkNew2Old( x._2 ) )
-    } ).toList
-  override val Definitions: Map[LambdaExpression, LambdaExpression] = edefinitions
-  override val axioms: List[HOLSequent] = eaxioms.values.toList map ( x => HOLSequent( Nil, x :: Nil ) )
-  override val sequentLists: List[( String, List[HOLSequent] )] = Nil
-}
+    extends ProofDatabase(
+      proofs = eproofs.map( x =>
+      x._1 match {
+        case HOLAtom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
+        case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
+      } ).toList,
+      Definitions = edefinitions,
+      axioms = eaxioms.values.toList map ( x => HOLSequent( Nil, x :: Nil ) ),
+      sequentLists = Nil
+    )
 
 /**
  * The abstract class for tokens of an llk proof. TTokens represent type declarations, ATokens represent axiom

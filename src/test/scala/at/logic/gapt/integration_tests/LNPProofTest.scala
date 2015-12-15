@@ -26,7 +26,7 @@ class LNPProofTest extends Specification {
       val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "lnp.xml" ) )
       val proofs = pdb.proofs
       proofs.size must beEqualTo( 1 )
-      val proof = lkOld2New( proofs.head._2 )
+      val proof = proofs.head._2
       //printStats( proof )
 
       val proof_sk = LKToLKsk( regularize( DefinitionElimination( pdb.Definitions )( proof ) ) )

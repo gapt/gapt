@@ -2,7 +2,7 @@
 package at.logic.gapt.formats.expr.xml
 
 import at.logic.gapt.formats.xml.XMLParser
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ SequentMatchers, HOLSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.occurrences.factory
@@ -24,7 +24,7 @@ import org.xml.sax.helpers.XMLReaderFactory
 import scala.io.{ BufferedSource, Source }
 import scala.xml.SAXParseException
 
-class XMLParserTest extends Specification {
+class XMLParserTest extends Specification with SequentMatchers {
 
   implicit def fo2occ( f: HOLFormula ) = factory.createFormulaOccurrence( f, Nil )
   implicit def fseq2seq( s: HOLSequent ) = s map fo2occ
@@ -471,19 +471,19 @@ class XMLParserTest extends Specification {
       val proofs = ( new XMLReader( getClass.getResourceAsStream( "/xml/test3.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase().proofs
 
       proofs.size must beEqualTo( 1 )
-      proofs.head._2.root must beSyntacticMultisetEqual(
+      proofs.head._2.endSequent must beMultiSetEqual(
         OccSequent( Nil, pc( "A" ) :: pc( "C" ) :: pc( "F" ) ::
-          fo2occ( And( pcf( "B" ), pcf( "E" ) ) ) ::
-          fo2occ( Or( pcf( "D" ), pcf( "G" ) ) ) :: Nil )
+        fo2occ( And( pcf( "B" ), pcf( "E" ) ) ) ::
+        fo2occ( Or( pcf( "D" ), pcf( "G" ) ) ) :: Nil ).toHOLSequent
       )
     }
     "parse correctly a proof with two orr1 rules and two permr rules from a file" in {
       val proofs = ( new XMLReader( getClass.getResourceAsStream( "/xml/test2.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase().proofs
 
       proofs.size must beEqualTo( 1 )
-      proofs.head._2.root must beSyntacticMultisetEqual(
+      proofs.head._2.endSequent must beMultiSetEqual(
         OccSequent( Nil, fo2occ( Or( pcf( "A" ), pcf( "C" ) ) ) ::
-          fo2occ( Or( pcf( "B" ), pcf( "D" ) ) ) :: Nil )
+        fo2occ( Or( pcf( "B" ), pcf( "D" ) ) ) :: Nil ).toHOLSequent
       )
     }
     "parse correctly an involved proof from a file" in {
@@ -503,7 +503,7 @@ class XMLParserTest extends Specification {
       )
 
       proofs.size must beEqualTo( 1 )
-      proofs.head._2.root must beSyntacticMultisetEqual( OccSequent( f1 :: Nil, f2 :: Nil ) )
+      proofs.head._2.endSequent must beMultiSetEqual( OccSequent( f1 :: Nil, f2 :: Nil ).toHOLSequent )
     }
 
     "parse correctly a sequentlist from a gzipped file" in {

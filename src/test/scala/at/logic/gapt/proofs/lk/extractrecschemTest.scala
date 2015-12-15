@@ -74,8 +74,8 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "tape proof" in {
-    val pdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
-    val proof = DefinitionElimination( pdb.Definitions )( regularize( lkOld2New( pdb.proof( "the-proof" ) ) ) )
+    val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), enable_compression = true )
+    val proof = DefinitionElimination( pdb.Definitions )( regularize( pdb proof "the-proof" ) )
 
     val recSchem = extractRecSchem( proof )
 
