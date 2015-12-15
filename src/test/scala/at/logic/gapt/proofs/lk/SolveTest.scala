@@ -4,14 +4,14 @@ import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.proofs.{ SequentMatchers, Sequent, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lkNew.{ BottomAxiom, TopAxiom }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import org.specs2.mutable._
 
-class SolveTest extends Specification {
+class SolveTest extends Specification with SequentMatchers {
   implicit val factory = defaultFormulaOccurrenceFactory
   "SolveTest" should {
     "solve the sequents" in {
@@ -105,7 +105,7 @@ class SolveTest extends Specification {
       val fs = HOLSequent( ind :: Nil, ind :: Nil )
       val proof = AtomicExpansion( fs )
       //check if the derived end-sequent is correct
-      proof.root.toHOLSequent must beSyntacticFSequentEqual( fs )
+      proof.root.toHOLSequent must beMultiSetEqual( fs )
 
       //check if three different eigenvariables were introduced and nothing more
       /* FIXME: replace toFormula.symbols call with call to getVars from utils
@@ -135,7 +135,7 @@ class SolveTest extends Specification {
       val fs = HOLSequent( List( HOLAtom( P, x :: Nil ), formula ), List( formula, HOLAtom( P, y :: Nil ) ) )
       val proof = AtomicExpansion( fs )
       //check if the derived end-sequent is correct
-      proof.root.toHOLSequent must beSyntacticFSequentEqual( fs )
+      proof.root.toHOLSequent must beMultiSetEqual( fs )
 
       //check if two different eigenvariables were introduced and nothing more
       /* FIXME: replace toFormula.symbols call with call to getVars from utils

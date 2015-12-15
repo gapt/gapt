@@ -2,6 +2,7 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.expr.{ FOLAtom, Eq }
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
+import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.proofs.lk.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
 
@@ -16,7 +17,7 @@ import java.io.File.separator
 
 import org.specs2.mutable._
 
-class TapeTest extends Specification {
+class TapeTest extends Specification with SequentMatchers {
   def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   "The system" should {
@@ -81,7 +82,7 @@ class TapeTest extends Specification {
       pdb.proofs.size must beEqualTo( 1 )
       val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
       val ancf = CERES( proof )
-      ( ancf.endSequent multiSetEquals proof.endSequent ) must beTrue
+      ancf.endSequent must beMultiSetEqual( proof.endSequent )
 
     }
 
@@ -94,8 +95,7 @@ class TapeTest extends Specification {
       pdb.proofs.size must beEqualTo( 1 )
       val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
       val acnf = CERES( proof, CERES.skipEquations )
-      ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
-
+      acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
 
     "apply the full CERES method and skip cuts on equations, then cut-eliminate cuts of equations" in {
@@ -108,7 +108,7 @@ class TapeTest extends Specification {
       val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
       val acnf = CERES( proof, CERES.skipEquations )
       val eqacnf = CERES( acnf, { case Eq( _, _ ) => true; case FOLAtom( _, _ ) => false; case _ => true } )
-      ( eqacnf.endSequent multiSetEquals proof.endSequent ) must beTrue
+      eqacnf.endSequent must beMultiSetEqual( proof.endSequent )
 
     }
 

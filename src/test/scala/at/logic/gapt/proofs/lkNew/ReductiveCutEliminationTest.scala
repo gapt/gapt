@@ -1,11 +1,10 @@
 package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.beSyntacticFSequentEqual
-import at.logic.gapt.proofs.{ Suc, Ant }
+import at.logic.gapt.proofs.{ SequentMatchers, Suc, Ant }
 import org.specs2.mutable._
 
-class ReductiveCutEliminationTest extends Specification {
+class ReductiveCutEliminationTest extends Specification with SequentMatchers {
 
   "rank-reduction on strong quantifier rules" in {
     val p = FOLAtomConst( "p", 1 )
@@ -27,7 +26,7 @@ class ReductiveCutEliminationTest extends Specification {
 
     val proof_ = ReductiveCutElimination( proof )
 
-    proof_.endSequent must beSyntacticFSequentEqual( proof.endSequent )
+    proof_.endSequent must beMultiSetEqual( proof.endSequent )
   }
 
 }

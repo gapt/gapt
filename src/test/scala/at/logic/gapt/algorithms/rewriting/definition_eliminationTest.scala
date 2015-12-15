@@ -1,6 +1,6 @@
 package at.logic.gapt.algorithms.rewriting
 
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ SequentMatchers, HOLSequent }
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.proofs.NullaryProof
 
-class definition_eliminationTest extends Specification {
+class definition_eliminationTest extends Specification with SequentMatchers {
   object proof1 {
     val List( alphasym, betasym, xsym, ysym ) = List( "\\alpha", "\\beta", "x", "y" )
     val List( p, q, a, b, tsym ) = List( "P", "Q", "A", "B", "t" )
@@ -82,7 +82,7 @@ class definition_eliminationTest extends Specification {
       import proof1._
       val elp = DefinitionElimination( dmap, i12 )
       val expected = HOLSequent( List( All( x, All( y, pxy ) ), And( All( y, pxy ), All( x, qx ) ) ), List( Ex( x, And( qx, All( y, pxy ) ) ) ) )
-      expected must beSyntacticFSequentEqual( elp.root.toHOLSequent )
+      expected must beMultiSetEqual( elp.root.toHOLSequent )
     }
 
     "work on a simple proof with equality" in {

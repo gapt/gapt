@@ -7,7 +7,7 @@ import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.formats.xml.XMLParser._
-import at.logic.gapt.proofs.HOLClause
+import at.logic.gapt.proofs.{ SequentMatchers, HOLClause }
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.lk.{ deleteTautologies }
 import at.logic.gapt.proofs.lkNew._
@@ -17,7 +17,7 @@ import org.specs2.mutable._
 
 //NOTE: I removed the proof profile from this test
 
-class LatticeTest extends Specification {
+class LatticeTest extends Specification with SequentMatchers {
   def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
   sequential
@@ -45,7 +45,7 @@ class LatticeTest extends Specification {
       val proof = proofdb.proofs.head._2
 
       val acnf = CERES( skolemize( proof ), CERES.skipNothing )
-      ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
+      acnf.endSequent must beMultiSetEqual( proof.endSequent )
       for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok
     }
@@ -59,7 +59,7 @@ class LatticeTest extends Specification {
       val proof = proofdb.proofs.head._2
 
       val acnf = CERES( skolemize( proof ), CERES.skipEquations )
-      ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
+      acnf.endSequent must beMultiSetEqual( proof.endSequent )
       for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok
     }
