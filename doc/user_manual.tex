@@ -197,7 +197,7 @@ to write Scala scripts that use the functionality of GAPT.
 
 You don't need to know anything about Scala to try out the examples in this
 manual, but if you do want to learn more about Scala we recommend the book
-``Programming in Scala''\cite{odersky2008programming}.
+``Programming in Scala''~\cite{odersky2008programming}.
 
 Interactions with the Scala shell are typeset in the following way:
 \begin{clilisting}
@@ -247,7 +247,7 @@ simple type theory.  Terms and formulas of first-order logic and schematic
 first-order logic are hence encoded as lambda terms, these form regular
 subsets.
 
-You can enter formulas by parsing them with the prover9\cite{Prover9Input} parser:
+You can enter formulas by parsing them with the prover9~\cite{Prover9Input} parser:
 %
 \begin{clilisting}
 gapt> val H = parseFormula( "(all x (P(x,f(x)) -> (exists y P(x,y))))" )
@@ -359,7 +359,7 @@ Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, whi
 are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
 iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n$ holes, there
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.\footnote{%
-  In Scala, \cli{Sat4j isValid formula} is syntactical sugar for \cli{Sat4j.isValid(formula)}.}
+  In Scala, \cli{Sat4j isValid formula} is syntactic sugar for \cli{Sat4j.isValid(formula)}.}
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
 res3: Boolean = true
