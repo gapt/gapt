@@ -5,7 +5,6 @@ import at.logic.gapt.expr.hol.{ NaiveIncompleteMatchingAlgorithm, containsQuanti
 import at.logic.gapt.proofs.lkNew.solve
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.utils.ds.trees._
-import at.logic.gapt.proofs.lk.base._
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 import scala.collection.immutable.HashMap

@@ -3,7 +3,6 @@ package at.logic.gapt.formats.tptp
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.base.LKProof
 
 /**
  * Created by marty on 12/10/13.

@@ -1,7 +1,6 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ FOLClause, HOLSequent }
-import at.logic.gapt.proofs.lk.base._
 
 /*
  * Creates the n-th formula of a sequence where distributivity-based

@@ -7,7 +7,6 @@ import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.{ BinaryExpansionTree, ExpansionSequent, ExpansionTree, ETStrongQuantifier, UnaryExpansionTree, ETWeakQuantifier, getETOfFormula, toShallow, ETAtom => AtomET, ETWeakening }
 import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lkNew.lkOld2New
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 

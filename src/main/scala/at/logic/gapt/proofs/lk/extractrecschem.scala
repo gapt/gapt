@@ -6,8 +6,6 @@ import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.{ Suc, Ant, SequentIndex, Sequent }
 
 object extractRecSchem {
-  def apply( p: at.logic.gapt.proofs.lk.base.LKProof ): RecursionScheme = apply( lkOld2New( p ) )
-
   def apply( p: LKProof ): RecursionScheme = {
     val symbols = p.endSequent.zipWithIndex map {
       case ( All.Block( vars, matrix ), Ant( _ ) ) => Abs( vars, -matrix )
