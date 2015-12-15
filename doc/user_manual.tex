@@ -711,39 +711,45 @@ by new function symbols thus obtaining a validity-equivalent sequent. In the GAP
 is implemented for proofs and can be used, e.g.~as follows:
 %
 \begin{clilisting}
-gapt> val proofs = XMLProofDatabaseParser( "examples/prime/ceres_xml/prime1-1.xml.gz" ).proofs
-proofs: List[(String, at.logic.gapt.proofs.lkNew.LKProof)] =
-List((the-proof,[p1003] F[1], PRIME-DIV, PRE, REM :-     (CutRule(p997, Suc(0), p1002, Ant(0)))
-[p1002] INF(set_1(1)) :-     (DefinitionLeftRule(p1001, Ant(0), INF(set_1(1))))
-[p1001] ∀m.∃n.∈((m+(n+1)),set_1(1)) :-     (ForallLeftRule(p1000, Ant(0), ∃n.∈((m+(n+1)),set_1(1)), 1, m))
-[p1000] ∃n.∈((1+(n+1)),set_1(1)) :-     (ExistsLeftRule(p999, Ant(0), l_0, n))
-[p999] ∈((1+(l_0+1)),set_1(1)) :-     (DefinitionLeftRule(p998, Ant(0), ∈((1+(l_0+1)),set_1(1))))
-[p998] (1+(l_0+1))=1 :-     (TheoryAxiom((1+(l_0+1))=1 :- ))
-[p997] F[1], PRIME-DIV, PRE, REM :- INF(set_1(1))    (CutRule(p6, Suc(0), p996, Ant(4)))
-[p996] F[1], PRIME-DIV, PRE, REM, ¬empty(set_1(1)) :- INF(set_1(1))    (CutRule(p908, Suc(0), p995, Ant(0)))
-[p995] O(set_1(1)...
-gapt> val p = proofs(0)._2
+gapt> val Seq(x, y) = Seq("x", "y") map {FOLVar(_)}
+x: at.logic.gapt.expr.FOLVar = x
+y: at.logic.gapt.expr.FOLVar = y
+
+gapt> val Pxy = FOLAtom("P", x, y)
+Pxy: at.logic.gapt.expr.FOLAtom = P(x,y)
+
+gapt> var p: LKProof = LogicalAxiom(Pxy)
 p: at.logic.gapt.proofs.lkNew.LKProof =
-[p1003] F[1], PRIME-DIV, PRE, REM :-     (CutRule(p997, Suc(0), p1002, Ant(0)))
-[p1002] INF(set_1(1)) :-     (DefinitionLeftRule(p1001, Ant(0), INF(set_1(1))))
-[p1001] ∀m.∃n.∈((m+(n+1)),set_1(1)) :-     (ForallLeftRule(p1000, Ant(0), ∃n.∈((m+(n+1)),set_1(1)), 1, m))
-[p1000] ∃n.∈((1+(n+1)),set_1(1)) :-     (ExistsLeftRule(p999, Ant(0), l_0, n))
-[p999] ∈((1+(l_0+1)),set_1(1)) :-     (DefinitionLeftRule(p998, Ant(0), ∈((1+(l_0+1)),set_1(1))))
-[p998] (1+(l_0+1))=1 :-     (TheoryAxiom((1+(l_0+1))=1 :- ))
-[p997] F[1], PRIME-DIV, PRE, REM :- INF(set_1(1))    (CutRule(p6, Suc(0), p996, Ant(4)))
-[p996] F[1], PRIME-DIV, PRE, REM, ¬empty(set_1(1)) :- INF(set_1(1))    (CutRule(p908, Suc(0), p995, Ant(0)))
-[p995] O(set_1(1)), ¬empty(set_1(1)) :- INF(set_1(1)) ...
-gapt> val q = skolemize( p )
+[p1] P(x,y) :- P(x,y)    (LogicalAxiom(P(x,y)))
+
+gapt> p = ExistsRightRule(p, Ex(x, Pxy), x)
+p: at.logic.gapt.proofs.lkNew.LKProof = [p2] P(x,y) :- ∃x.P(x,y)    (ExistsRightRule(p1, Suc(0), P(x,y), x, x))
+[p1] P(x,y) :- P(x,y)    (LogicalAxiom(P(x,y)))
+
+gapt> p = ForallLeftRule(p, All(y, Pxy), y)
+p: at.logic.gapt.proofs.lkNew.LKProof = [p3] ∀y.P(x,y) :- ∃x.P(x,y)    (ForallLeftRule(p2, Ant(0), P(x,y), y, y))
+[p2] P(x,y) :- ∃x.P(x,y)    (ExistsRightRule(p1, Suc(0), P(x,y), x, x))
+[p1] P(x,y) :- P(x,y)    (LogicalAxiom(P(x,y)))
+
+gapt> p = ForallRightRule(p, All(y, Ex(x, Pxy)), y)
+p: at.logic.gapt.proofs.lkNew.LKProof = [p4] ∀y.P(x,y) :- ∀y.∃x.P(x,y)    (ForallRightRule(p3, Suc(0), y, y))
+[p3] ∀y.P(x,y) :- ∃x.P(x,y)    (ForallLeftRule(p2, Ant(0), P(x,y), y, y))
+[p2] P(x,y) :- ∃x.P(x,y)    (ExistsRightRule(p1, Suc(0), P(x,y), x, x))
+[p1] P(x,y) :- P(x,y)    (LogicalAxiom(P(x,y)))
+
+gapt> p = ExistsLeftRule(p, Ex(x, All(y, Pxy)), x)
+p: at.logic.gapt.proofs.lkNew.LKProof = [p5] ∃x.∀y.P(x,y) :- ∀y.∃x.P(x,y)    (ExistsLeftRule(p4, Ant(0), x, x))
+[p4] ∀y.P(x,y) :- ∀y.∃x.P(x,y)    (ForallRightRule(p3, Suc(0), y, y))
+[p3] ∀y.P(x,y) :- ∃x.P(x,y)    (ForallLeftRule(p2, Ant(0), P(x,y), y, y))
+[p2] P(x,y) :- ∃x.P(x,y)    (ExistsRightRule(p1, Suc(0), P(x,y), x, x))
+[p1] P(x,y) :- P(x,y)    (LogicalAxiom(P(x,y)))
+
+gapt> val q = skolemize(p)
 q: at.logic.gapt.proofs.lkNew.LKProof =
-[p968] F[1], PRIME-DIV, PRE, REM :-     (CutRule(p962, Suc(0), p967, Ant(0)))
-[p967] INF(set_1(1)) :-     (DefinitionLeftRule(p966, Ant(0), INF(set_1(1))))
-[p966] ∀m.∃n.∈((m+(n+1)),set_1(1)) :-     (ForallLeftRule(p965, Ant(0), ∃n.∈((m+(n+1)),set_1(1)), 1, m))
-[p965] ∃n.∈((1+(n+1)),set_1(1)) :-     (ExistsLeftRule(p964, Ant(0), l_0, n))
-[p964] ∈((1+(l_0+1)),set_1(1)) :-     (DefinitionLeftRule(p963, Ant(0), ∈((1+(l_0+1)),set_1(1))))
-[p963] (1+(l_0+1))=1 :-     (TheoryAxiom((1+(l_0+1))=1 :- ))
-[p962] F[1], PRIME-DIV, PRE, REM :- INF(set_1(1))    (CutRule(p6, Suc(0), p961, Ant(4)))
-[p961] F[1], PRIME-DIV, PRE, REM, ¬empty(set_1(1)) :- INF(set_1(1))    (CutRule(p873, Suc(0), p960, Ant(0)))
-[p960] O(set_1(1)), ¬empty(set_1(1)) :- INF(set_1(1))    (Cut...
+[p3] ∀y.P(s_{0},y) :- ∃x.P(x,s_{1})    (ForallLeftRule(p2, Ant(0), P(s_{0},y), s_{1}, y))
+[p2] P(s_{0},s_{1}) :- ∃x.P(x,s_{1})    (ExistsRightRule(p1, Suc(0), P(x,s_{1}), s_{0}, x))
+[p1] P(s_{0},s_{1}) :- P(s_{0},s_{1})    (LogicalAxiom(P(s_{0},s_{1})))
+
 \end{clilisting}
 
 
