@@ -5,14 +5,13 @@
 
 package at.logic.gapt.proofs.ceres_schema.clauseSets
 
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Clause, HOLSequent }
 import at.logic.gapt.proofs.ceres_schema.struct._
 import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.expr.schema.{ Tindex, IndexedPredicate }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolutionOld.OccClause
 import at.logic.gapt.utils.logging.Logger
 import scala.annotation.tailrec
 import scala.util.control.TailCalls._
@@ -179,7 +178,7 @@ object StandardClauseSet extends Logger {
 
   private def isDual( s: Struct ): Boolean = s match { case x: Dual => true; case _ => false }
 
-  private def clausifyTimesJunctions( struct: Struct ): OccClause = {
+  private def clausifyTimesJunctions( struct: Struct ): Clause[FormulaOccurrence] = {
     val literals = getLiterals( struct )
     val ( negative, positive ) = literals.partition( x => isDual( x ) )
     val negativeFO: Seq[FormulaOccurrence] = negative.map( x => x.asInstanceOf[Dual].sub.asInstanceOf[A].fo ) // extracting the formula occurrences from the negative literal structs
@@ -187,7 +186,7 @@ object StandardClauseSet extends Logger {
     OccSequent( negativeFO, positiveFO )
   }
 
-  def clausify( struct: Struct ): List[OccClause] = {
+  def clausify( struct: Struct ): List[Clause[FormulaOccurrence]] = {
     val timesJunctions = getTimesJunctions( struct )
     timesJunctions.map( x => clausifyTimesJunctions( x ) )
   }
