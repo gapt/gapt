@@ -591,6 +591,9 @@ object merge extends at.logic.gapt.utils.logging.Logger {
     main( tree, polarity = true )._1
   }
 
+  def apply( expansionSequent: Sequent[ExpansionTreeWithMerges] ): ExpansionSequent =
+    apply( expansionSequent.toTuple )
+
   // Reduces all MergeNodes in the sequent
   def apply( etSeq: ( Seq[ExpansionTreeWithMerges], Seq[ExpansionTreeWithMerges] ) ): ExpansionSequent = {
     val ( antecedent, succedent ) = etSeq
