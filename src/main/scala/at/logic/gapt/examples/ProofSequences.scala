@@ -13,11 +13,13 @@ trait ProofSequence {
   def name = getClass.getSimpleName.replace( "$", "" )
 }
 
-// Functions to construct cut-free FOL LK proofs of the sequents
-//
-// P(0), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
-//
-// where n is an Integer parameter >= 0.
+/**
+ * Functions to construct cut-free FOL LK proofs of the sequents
+ *
+ * P(0), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
+ *
+ * where n is an Integer parameter >= 0.
+ */
 object LinearExampleProof extends ProofSequence {
   val s = "s"
   val p = "P"
@@ -25,7 +27,7 @@ object LinearExampleProof extends ProofSequence {
 
   def apply( n: Int ) = proof( 0, n )
 
-  // returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
+  /** returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0)) */
   def proof( k: Int, n: Int ): LKProof =
     {
       val x = FOLVar( "x" )
@@ -43,13 +45,15 @@ object LinearExampleProof extends ProofSequence {
     }
 }
 
-// Functions to construct cut-free FOL LK proofs of the sequents
-//
-// P(0,0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
-//
-// where n is an Integer parameter >= 0.
-//
-// The proofs constructed here go along the diagonal of P, i.e. one X-step, then one Y-step, etc.
+/**
+ * Functions to construct cut-free FOL LK proofs of the sequents
+ *
+ * P(0,0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
+ *
+ * where n is an Integer parameter >= 0.
+ *
+ * The proofs constructed here go along the diagonal of P, i.e. one X-step, then one Y-step, etc.
+ */
 object SquareDiagonalExampleProof extends ProofSequence {
   val s = "s"
   val p = "P"
@@ -57,7 +61,7 @@ object SquareDiagonalExampleProof extends ProofSequence {
 
   def apply( n: Int ) = proof( 0, n )
 
-  // returns LKProof with end-sequent  P(s^k(0),s^k(0)), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y . P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
+  /** returns LKProof with end-sequent  P(s^k(0),s^k(0)), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y . P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0)) */
   def proof( k: Int, n: Int ): LKProof =
     {
       val x = FOLVar( "x" )
@@ -95,13 +99,15 @@ object SquareDiagonalExampleProof extends ProofSequence {
     }
 }
 
-// Functions to construct cut-free FOL LK proofs of the sequents
-//
-// P(0,0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
-//
-// where n is an Integer parameter >= 0.
-//
-// The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed
+/**
+ * Functions to construct cut-free FOL LK proofs of the sequents
+ *
+ * P(0,0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
+ *
+ * where n is an Integer parameter >= 0.
+ *
+ * The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed
+ */
 object SquareEdgesExampleProof extends ProofSequence {
   val s = "s"
   val p = "P"
@@ -118,7 +124,7 @@ object SquareEdgesExampleProof extends ProofSequence {
 
   def apply( n: Int ) = proof( 0, n )
 
-  // returns LKProof with end-sequent  P(s^k(0),0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
+  /** returns LKProof with end-sequent  P(s^k(0),0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0)) */
   def proof( k: Int, n: Int ): LKProof =
     {
       if ( k == n ) {
@@ -145,7 +151,7 @@ object SquareEdgesExampleProof extends ProofSequence {
       }
     }
 
-  // returns LKProof with end-sequent  P(s^n(0),s^k(0)), \ALL y . P(s^n(0),y) -> P(s^n(0),s(y)) :- P(s^n(0),s^n(0))
+  /** returns LKProof with end-sequent  P(s^n(0),s^k(0)), \ALL y . P(s^n(0),y) -> P(s^n(0),s(y)) :- P(s^n(0),s^n(0)) */
   def upper_proof( k: Int, n: Int ): LKProof =
     {
       if ( k == n ) // leaf proof
@@ -162,14 +168,16 @@ object SquareEdgesExampleProof extends ProofSequence {
     }
 }
 
-// Functions to construct cut-free FOL LK proofs of the sequents
-//
-// P(a,b), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sx(y)) :- P(sx^n(a),sy^n(b))
-//
-// where n is an Integer parameter >= 0.
-//
-// The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed,
-// but unlike SquareEdgesExampleProof, different functions are used for the X- and the Y-directions.
+/**
+ * Functions to construct cut-free FOL LK proofs of the sequents
+ *
+ * P(a,b), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sx(y)) :- P(sx^n(a),sy^n(b))
+ *
+ * where n is an Integer parameter >= 0.
+ *
+ * The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed,
+ * but unlike SquareEdgesExampleProof, different functions are used for the X- and the Y-directions.
+ */
 object SquareEdges2DimExampleProof extends ProofSequence {
   //separate sucessor for the x- and y-directions
   val sx = "s_x"
@@ -196,7 +204,7 @@ object SquareEdges2DimExampleProof extends ProofSequence {
 
   def apply( n: Int ) = proof( 0, n )
 
-  // returns LKProof with end-sequent  P(sx^k(a),0), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sy(y)) :- P(sx^n(a),sy^n(b))
+  /** returns LKProof with end-sequent  P(sx^k(a),0), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sy(y)) :- P(sx^n(a),sy^n(b)) */
   def proof( k: Int, n: Int ): LKProof =
     {
       if ( k == n ) {
@@ -223,8 +231,7 @@ object SquareEdges2DimExampleProof extends ProofSequence {
       }
     }
 
-  // returns LKProof with end-sequent  P(s^n(0),s^k(0)), \ALL y . P(s^n(0),y) -> P(s^n(0),s(y)) :- P(s^n(0),s^n(0))
-  //Conjecture: this is the part that goes in the Y-direction.
+  /** returns LKProof with end-sequent  P(s^n(0),s^k(0)), \ALL y . P(s^n(0),y) -> P(s^n(0),s(y)) :- P(s^n(0),s^n(0)) */
   def upper_proof( k: Int, n: Int ): LKProof =
     {
       if ( k == n ) // leaf proof
@@ -253,11 +260,17 @@ object SquareEdges2DimExampleProof extends ProofSequence {
     }
 }
 
-// Functions to construct the straightforward cut-free FOL LK proofs of the sequents
-//
-// P(s^n(0),0), \ALL x \ALL y . P(s(x),y) -> P(x,s(y)) :- P(0,s^n(0))
-//
-// where n is an Integer parameter >= 0.
+/**
+ * Functions to construct the straightforward cut-free FOL LK proofs of the sequents
+ *
+ * P(s^n(0),0), \ALL x \ALL y . P(s(x),y) -> P(x,s(y)) :- P(0,s^n(0))
+ *
+ * where n is an Integer parameter >= 0.
+ *
+ * This sequent is shown to have no cut-free proof which can be compressed by a
+ * single cut with a single quantifier in S. Eberhard, S. Hetzl: On the
+ * compressibility of finite languages and formal proofs, submitted, 2015.
+ */
 object SumExampleProof extends ProofSequence {
   val s = "s"
   val p = "P"
@@ -271,7 +284,7 @@ object SumExampleProof extends ProofSequence {
 
   def apply( n: Int ) = proof( 0, n )
 
-  // returns LKProof with end-sequent  P(s^{n-k}(0),s^k(0)), \ALL x \ALL y. P(s(x),y) -> P(x,s(y)) :- P(0,s^n(0))
+  /** returns LKProof with end-sequent  P(s^{n-k}(0),s^k(0)), \ALL x \ALL y. P(s(x),y) -> P(x,s(y)) :- P(0,s^n(0)) */
   def proof( k: Int, n: Int ): LKProof =
     {
       if ( k == n ) // leaf proof
@@ -301,11 +314,13 @@ object SumExampleProof extends ProofSequence {
     }
 }
 
-// Functions to construct cut-free FOL LK proofs of the sequents
-//
-// Refl, Trans, \ALL x. f(x) = x :- f^n(a) = a
-//
-// where n is an Integer parameter >= 0.
+/**
+ * Functions to construct cut-free FOL LK proofs of the sequents
+ *
+ * Refl, Trans, \ALL x. f(x) = x :- f^n(a) = a
+ *
+ * where n is an Integer parameter >= 0.
+ */
 object LinearEqExampleProof extends ProofSequence {
   val a = "a"
   val f = "f"
@@ -320,7 +335,7 @@ object LinearEqExampleProof extends ProofSequence {
 
   def apply( n: Int ) = proof( n )
 
-  // returns LKProof with end-sequent  Refl, Trans, \ALL x. f(x) = x :- f^k(a) = a
+  /** returns LKProof with end-sequent  Refl, Trans, \ALL x. f(x) = x :- f^k(a) = a */
   def proof( k: Int ): LKProof = {
     if ( k == 0 ) // leaf proof
     {
@@ -505,10 +520,8 @@ object SumOfOnesFExampleProof extends ProofSequence {
    * Generates a sequent containing, in addition to the formulas in the bottommost sequent of s1,
    * the chain of equations f(n) = s(f(n-1)),...,f(1)=s(f(0)), f(0) = 0.s
    * The generates proof employs only the axiom of transitivity and (x=y -> s(x) = s(y)))
-   *
-   * TODO should be private - but scala shell does not allow access modifiers when :loading a file
    */
-  def EqChainProof( s1: LKProof, n: Int ): LKProof = {
+  private def EqChainProof( s1: LKProof, n: Int ): LKProof = {
     if ( n <= 0 ) { s1 }
     else {
       val tr = TransRule( Fn( n ), Utils.iterateTerm( Fn( n - 1 ), s, 1 ), Utils.numeral( n ), s1 )
@@ -532,10 +545,8 @@ object SumOfOnesFExampleProof extends ProofSequence {
    * Given a proof s1, produced by EqChainProof, generates a proof that
    * eliminates the chains of equasions and proves the final sequent
    * FZero, FSucc, TR, Plus |- f(n) = n.
-   *
-   * TODO should be private - but scala shell does not allow access modifiers when :loading a file
    */
-  def TermGenProof( s1: LKProof, n: Int, targetN: Int ): LKProof = {
+  private def TermGenProof( s1: LKProof, n: Int, targetN: Int ): LKProof = {
     if ( n >= targetN ) { s1 }
     else {
 
@@ -556,11 +567,13 @@ object SumOfOnesFExampleProof extends ProofSequence {
 
 }
 
-// Functions to construct cut-free FOL LK proofs of the sequents
-//
-// Refl, Trans, CongSuc, ABase, ASuc, :- sum( n ) = s^n(0)
-//
-// where n is an Integer parameter >= 0.
+/**
+ * Functions to construct cut-free FOL LK proofs of the sequents
+ *
+ * Refl, Trans, CongSuc, ABase, ASuc, :- sum( n ) = s^n(0)
+ *
+ * where n is an Integer parameter >= 0.
+ */
 object SumOfOnesExampleProof extends ProofSequence {
   val s = "s"
   val zero = "0"
@@ -582,8 +595,7 @@ object SumOfOnesExampleProof extends ProofSequence {
 
   def apply( n: Int ) = proof( n )
 
-  // TODO should be private - but scala shell does not allow access modifiers when :loading a file
-  def proof( k: Int ): LKProof = {
+  private def proof( k: Int ): LKProof = {
     if ( k == 0 ) {
       val zero_eq_zero = Eq( Utils.numeral( 0 ), Utils.numeral( 0 ) )
       val p1 = ForallLeftRule( LogicalAxiom( zero_eq_zero ), Refl, Utils.numeral( 0 ) )
@@ -646,9 +658,8 @@ object SumOfOnesExampleProof extends ProofSequence {
     }
   }
 
-  // constructs proof of: Trans, CongSuc, ASuc, ABase :- sum( k + 1 ) = s( sum( k ) )
-  // TODO should be private - but scala shell does not allow access modifiers when :loading a file
-  def aux_proof( k: Int ): LKProof = {
+  /** constructs proof of: Trans, CongSuc, ASuc, ABase :- sum( k + 1 ) = s( sum( k ) ) */
+  private def aux_proof( k: Int ): LKProof = {
     /// atoms
     val ssumkp0_eq_ssumk = Eq( FOLFunction( s, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) :: Nil ), FOLFunction( s, sum( k ) :: Nil ) )
     val sumkp1_eq_ssumk = Eq( sum( k + 1 ), FOLFunction( s, sum( k ) :: Nil ) )
@@ -699,8 +710,7 @@ object SumOfOnesExampleProof extends ProofSequence {
   }
 
   // the term (.((1 + 1) + 1 ) + ... + 1 ), k must be at least 1
-  // TODO should be private - but scala shell does not allow access modifiers when :loading a file
-  def sum( k: Int ): FOLTerm = {
+  private def sum( k: Int ): FOLTerm = {
     if ( k == 1 ) Utils.numeral( 1 )
     else FOLFunction( p, sum( k - 1 ) :: Utils.numeral( 1 ) :: Nil )
   }

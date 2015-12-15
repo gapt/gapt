@@ -2,7 +2,7 @@ package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ FOLClause, HOLSequent }
 
-/*
+/**
  * Creates the n-th formula of a sequence where distributivity-based
  * algorithm produces only exponential CNFs.
  */
@@ -19,7 +19,7 @@ object PQPairs {
   def q( i: Int ) = FOLAtom( "q_" + i, Nil )
 }
 
-/*
+/**
  * Given n >= 2 creates an unsatisfiable first-order clause set based on a
  * statement about the permutations in S_n.
  */
@@ -43,7 +43,7 @@ object Permutations {
     Ctransp :: Crot :: Goalpos :: Goalneg :: Nil
   }
 
-  /*
+  /**
    * return the set of constants which occur in the n-th clause set
    */
   def constants( n: Int ): Set[FOLTerm] = List.range( 1, n + 1 ).map( c( _ ) ).toSet
@@ -52,7 +52,7 @@ object Permutations {
   private def c( i: Int ) = FOLConst( "c_" + i )
 }
 
-/*
+/**
  * Creates the n-th tautology of a sequence that has only exponential-size cut-free proofs
  *
  * This sequence is taken from: S. Buss. "Weak Formal Systems and Connections to
@@ -72,7 +72,7 @@ object BussTautology {
   def Ant( i: Int ): List[FOLFormula] = if ( i == 0 ) Nil else Or( A( i ), B( i ) ) :: Ant( i - 1 )
 }
 
-/*
+/**
  * Constructs a formula representing the pigeon hole principle. More precisely:
  * PigeonHolePrinciple( p, h ) states that if p pigeons are put into h holes
  * then there is a hole which contains two pigeons. PigeonHolePrinciple( p, h )
@@ -84,10 +84,10 @@ object PigeonHolePrinciple {
   // The binary relation symbol.
   val rel = "R"
 
-  /*
+  /**
    * @param ps the number of pigeons
    * @param hs the number of holes
-   **/
+   */
   def apply( ps: Int, hs: Int ) = {
     assert( ps > 1 )
     Imp(
