@@ -749,13 +749,13 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   // Menus and menu items
 
-  protected val exportToPDFButton = MenuButtons.exportToPDFButton( this )
+  protected def exportToPDFButton = MenuButtons.exportToPDFButton( this )
 
-  protected val exportToPNGButton = MenuButtons.exportToPNGButton( this )
+  protected def exportToPNGButton = MenuButtons.exportToPNGButton( this )
 
-  protected val zoomInButton = MenuButtons.zoomInButton( this )
+  protected def zoomInButton = MenuButtons.zoomInButton( this )
 
-  protected val zoomOutButton = MenuButtons.zoomOutButton( this )
+  protected def zoomOutButton = MenuButtons.zoomOutButton( this )
 
   def fileMenuContents: Seq[Component] = Seq( exportToPDFButton, exportToPNGButton )
   def viewMenuContents: Seq[Component] = Seq( zoomInButton, zoomOutButton )

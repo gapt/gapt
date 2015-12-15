@@ -89,11 +89,11 @@ class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name,
   }
 
   // New menu buttons
-  val saveAsButton = MenuButtons.saveAsButton[LKProof]( this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
+  def saveAsButton = MenuButtons.saveAsButton[LKProof]( this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
 
-  val hideStructuralRulesButton = MenuButtons.hideStructuralRulesButton( this )
+  def hideStructuralRulesButton = MenuButtons.hideStructuralRulesButton( this )
 
-  val hideContextsButton = MenuButtons.hideContextsButton( this )
+  def hideContextsButton = MenuButtons.hideContextsButton( this )
 
-  val markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
+  def markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
 }

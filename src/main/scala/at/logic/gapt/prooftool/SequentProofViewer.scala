@@ -138,19 +138,19 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
   }
 
   // New menu buttons
-  val saveAsButton = MenuButtons.saveAsButton[LKProof]( this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
+  def saveAsButton = MenuButtons.saveAsButton[LKProof]( this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
 
-  val hideStructuralRulesButton = MenuButtons.hideStructuralRulesButton( this )
+  def hideStructuralRulesButton = MenuButtons.hideStructuralRulesButton( this )
 
-  val hideContextsButton = MenuButtons.hideContextsButton( this )
+  def hideContextsButton = MenuButtons.hideContextsButton( this )
 
-  val markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
+  def markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
 
-  val viewExpansionProofButton = new MenuItem( Action( "View expansion proof" ) {
+  def viewExpansionProofButton = new MenuItem( Action( "View expansion proof" ) {
     expansionTree()
   } )
 
-  val sunburstViewButton = new MenuItem( Action( "Sunburst View" ) {
+  def sunburstViewButton = new MenuItem( Action( "Sunburst View" ) {
     sunburstView()
   } )
 }
