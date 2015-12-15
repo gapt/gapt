@@ -8,55 +8,55 @@ import at.logic.gapt.proofs.lkNew.LKProof
  *
  * @param initialSequent
  */
-case class Lemma( initialSequent: Sequent[(String, HOLFormula)], showOutput: Boolean = true ) {
-	private var proofState = ProofState( 0, OpenAssumption( initialSequent ) )
+case class Lemma( initialSequent: Sequent[( String, HOLFormula )], showOutput: Boolean = true ) {
+  private var proofState = ProofState( 0, OpenAssumption( initialSequent ) )
 
-	if ( showOutput )
-		printSubGoals( )
+  if ( showOutput )
+    printSubGoals()
 
-	/**
-	 *
-	 * @param t
-	 */
-	def use( t: Tactical ) = t( proofState ) match {
-		case Some( newProofState ) =>
-			// Replace proof state
-			proofState = newProofState
+  /**
+   *
+   * @param t
+   */
+  def use( t: Tactical ) = t( proofState ) match {
+    case Some( newProofState ) =>
+      // Replace proof state
+      proofState = newProofState
 
-			// Print new sub goals
-			if ( showOutput )
-				printSubGoals( )
-		case None                  =>
-			// Tactic failure
-			throw new TacticFailureException( "Failed to apply tactic " + t + " to proof state " + proofState )
-	}
+      // Print new sub goals
+      if ( showOutput )
+        printSubGoals()
+    case None =>
+      // Tactic failure
+      throw new TacticFailureException( "Failed to apply tactic " + t + " to proof state " + proofState )
+  }
 
-	/**
-	 *
-	 * @return
-	 */
-	def qed( ): LKProof = {
-		if ( proofState.subGoals.isEmpty ) {
-			// Done
-			proofState.proofSegment
-		} else {
-			// Failure
-			throw new QedFailureException( "Proof not completed. There are still " + proofState.subGoals.length + " unproved sub goals." )
-		}
-	}
+  /**
+   *
+   * @return
+   */
+  def qed(): LKProof = {
+    if ( proofState.subGoals.isEmpty ) {
+      // Done
+      proofState.proofSegment
+    } else {
+      // Failure
+      throw new QedFailureException( "Proof not completed. There are still " + proofState.subGoals.length + " unproved sub goals." )
+    }
+  }
 
-	/**
-	 *
-	 */
-	private def printSubGoals( ) = {
-		if (proofState.subGoals.isEmpty)
-			println("No current sub goals!")
-		else {
-			println( "Current sub goals:" )
-			for ( i <- proofState.subGoals.indices )
-				println( s"$i: ${proofState.displaySubGoal( ( i ) )}" )
-		}
-	}
+  /**
+   *
+   */
+  private def printSubGoals() = {
+    if ( proofState.subGoals.isEmpty )
+      println( "No current sub goals!" )
+    else {
+      println( "Current sub goals:" )
+      for ( i <- proofState.subGoals.indices )
+        println( s"$i: ${proofState.displaySubGoal( ( i ) )}" )
+    }
+  }
 }
 
 class TacticFailureException( s: String ) extends Throwable
