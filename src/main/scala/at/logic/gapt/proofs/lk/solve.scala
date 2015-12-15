@@ -982,10 +982,6 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   }
 }
 
-class LKProver extends OneShotProver {
-  def getLKProof( seq: HOLSequent ): Option[lkNew.LKProof] = solve.solvePropositional( seq ) map { lkOld2New( _ ) }
-}
-
 object AtomicExpansion {
 
   /*  === implements algorithm from Lemma 4.1.1 in Methods of Cut-Elimination === */
