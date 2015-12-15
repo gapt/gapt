@@ -2,9 +2,9 @@ package at.logic.gapt.formats.llkNew
 
 import at.logic.gapt.formats.llkNew.ast.LambdaAST
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
-import at.logic.gapt.proofs.lk.base.RichOccSequent
+
+import scala.io.Source
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,7 +13,7 @@ import at.logic.gapt.proofs.lk.base.RichOccSequent
  * Time: 3:02 PM
  * To change this template use File | Settings | File Templates.
  */
-class LLKTest extends Specification with ClasspathFileCopier {
+class LLKTest extends Specification {
   val p1 =
     """\AX{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }
       |\AX{ NOCC(h_1,\alpha,\sigma)}{NOCC(h_1,\alpha,\sigma)}
@@ -37,6 +37,9 @@ class LLKTest extends Specification with ClasspathFileCopier {
         ko( "Error at " + input.pos + ": " + msg )
     }
   }
+
+  def llkFromClasspath( filename: String ) =
+    LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream filename ).mkString )
 
   "Hybrid Latex-GAPT" should {
     "correctly handle latex macros in formulas (1)" in {
@@ -111,32 +114,28 @@ class LLKTest extends Specification with ClasspathFileCopier {
     }
 
     "load the simple example from file and parse it" in {
-      val r = LLKProofParser.parseFile( tempCopyOfClasspathFile( "simple.llk" ) )
-      val p = LLKProofParser.createLKProof( r )
+      val p = llkFromClasspath( "simple.llk" )
       //println(p)
 
       ok
     }
 
     "load the commutativity of + proof from file and parse it" in {
-      val r = LLKProofParser.parseFile( tempCopyOfClasspathFile( "komm.llk" ) )
-      val p = LLKProofParser.createLKProof( r )
+      val p = llkFromClasspath( "komm.llk" )
       ( p.proof( "THEPROOF" ) ) must not throwAn () //exception
 
       ok
     }
 
     "load the 3-2 pigeon hole example from file and parse it" in {
-      val r = LLKProofParser.parseFile( tempCopyOfClasspathFile( "pigeon32.llk" ) )
-      val p = LLKProofParser.createLKProof( r )
+      val p = llkFromClasspath( "pigeon32.llk" )
       ( p.proof( "PROOF" ) ) must not throwAn () //exception
 
       ok
     }
 
     "load the tape3 proof from file" in {
-      val r = LLKProofParser.parseFile( tempCopyOfClasspathFile( "tape3.llk" ) )
-      val p = LLKProofParser.createLKProof( r )
+      val p = llkFromClasspath( "tape3.llk" )
       p.proofs.length must be_>( 0 )
       p.Definitions.toList.length must be_>( 0 )
       p.axioms.length must be_>( 0 )

@@ -1,9 +1,10 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.formats.llk.{ HybridLatexParser, toLLKString }
+import at.logic.gapt.formats.llk.toLLKString
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.expr.hol._
+import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.resolution.RobinsonToRal
@@ -12,13 +13,13 @@ import at.logic.gapt.provers.prover9._
 
 import at.logic.gapt.proofs.ceres_omega._
 
-import at.logic.gapt.proofs.lksk.LKskToExpansionProof
-import at.logic.gapt.utils.testing.ClasspathFileCopier
 import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent }
 
 import org.specs2.mutable._
 
-class nTapeTest extends Specification with ClasspathFileCopier {
+import scala.io.Source
+
+class nTapeTest extends Specification {
   def show( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
   def show_detail( s: String ) = Unit //println( "+++++++++ " + s + " ++++++++++" )
 
@@ -128,8 +129,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
    */
   def doCutelim( filename: String ): Option[String] = {
     show( "Loading file" )
-    val tokens = HybridLatexParser.parseFile( filename )
-    val pdb = HybridLatexParser.createLKProof( tokens )
+    val pdb = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream filename ).mkString )
     show( "Eliminating definitions, expanding tautological axioms" )
     val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "TAPEPROOF" ) ) )
     show( "Skolemizing" )
@@ -186,7 +186,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
       skipped( "ceres omega still has problems" )
       //skipped("works but takes a bit time")
-      doCutelim( tempCopyOfClasspathFile( "tape3.llk" ) ) match {
+      doCutelim( "tape3.llk" ) match {
         case Some( error ) => ko( error )
         case None          => ok
       }
@@ -195,7 +195,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
 
     "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
       skipped( "ceres omega still has problems" )
-      doCutelim( tempCopyOfClasspathFile( "tape3ex.llk" ) ) match {
+      doCutelim( "tape3ex.llk" ) match {
         case Some( error ) => ko( error )
         case None          => ok
       }

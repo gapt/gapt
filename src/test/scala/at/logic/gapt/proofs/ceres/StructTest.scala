@@ -4,24 +4,19 @@ import at.logic.gapt.formats.llkNew._
 import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lkNew.LKProof
-import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 
 import scala.collection.Set
+import scala.io.Source
 
 /**
  * Created by marty on 11/24/15.
  */
-class StructTest extends Specification with ClasspathFileCopier {
+class StructTest extends Specification {
   "Struct extraction" should {
     "work for the permutation proof" in {
-      val filename = tempCopyOfClasspathFile( "perm.llk" )
-      //workaround until .proof returns a new LKProof again (after the xml conversion)
-      val proof: LKProof = loadLLK( filename ).eproofs.find( _._1.toString == "TheProof" ) match {
-        case None             => throw new Exception( "could not find the proof in proof db!" )
-        case Some( ( _, p ) ) => p
-      }
+      val proof: LKProof = LLKProofParser.parseString( Source fromInputStream getClass.getClassLoader.getResourceAsStream( "perm.llk" ) mkString ).proof( "TheProof" )
       val struct = extractStruct( proof )
       val cs = CharacteristicClauseSet( struct )
       println( coloredStructString( struct ) )

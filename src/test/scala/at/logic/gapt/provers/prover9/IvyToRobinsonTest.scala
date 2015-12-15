@@ -3,18 +3,19 @@ package at.logic.gapt.formats.ivy
 import org.specs2.matcher.MatchResult
 import org.specs2.specification.core.Fragments
 
-import at.logic.gapt.utils.testing.ClasspathFileCopier
 import conversion.IvyToRobinson
 import org.specs2.mutable._
 import at.logic.gapt.formats.lisp.{ LList, SExpressionParser }
 
+import scala.io.Source
+
 /**
  * Test for the Ivy interface.
  */
-class IvyToRobinsonTest extends Specification with ClasspathFileCopier {
+class IvyToRobinsonTest extends Specification {
 
   def parse( file: String ): MatchResult[Any] = {
-    val result = SExpressionParser( tempCopyOfClasspathFile( file ) )
+    val result = SExpressionParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream file ).mkString )
     result must not beEmpty
     val proof = result.head
     proof match {

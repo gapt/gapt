@@ -8,7 +8,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.formats.shlk_parsing.{ SHLK, sFOParser }
 import at.logic.gapt.utils.ds.trees.BinaryTree
-import at.logic.gapt.utils.testing.ClasspathFileCopier
 import clauseSchema.ParseResSchema._
 import clauseSchema._
 import java.io.File.separator
@@ -17,7 +16,7 @@ import java.io.{ FileInputStream, InputStreamReader }
 import org.specs2.execute.Success
 import org.specs2.mutable._
 
-class ProjectionTermTest extends Specification with ClasspathFileCopier {
+class ProjectionTermTest extends Specification {
   implicit val factory = defaultFormulaOccurrenceFactory
 
   sequential

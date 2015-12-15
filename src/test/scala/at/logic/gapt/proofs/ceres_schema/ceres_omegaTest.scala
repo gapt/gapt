@@ -2,24 +2,26 @@ package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llk.HybridLatexParser
+import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.proofs.ceres_omega._
 import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent }
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
 
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ral._
+
+import scala.io.Source
 
 //TODO: Fix the test!
 
 /**
  * Created by marty on 6/18/15.
  */
-class ceres_omegaTest extends Specification with ClasspathFileCopier {
+class ceres_omegaTest extends Specification {
 
   def prepareProof( file: String, proofname: String ) = {
-    val p = HybridLatexParser( tempCopyOfClasspathFile( file ) )
+    val p = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream file ).mkString )
     val elp = AtomicExpansion( DefinitionElimination( p.Definitions )( regularize( p.proof( proofname ) ) ) )
     val selp = LKToLKsk( elp )
     val struct = extractStructFromLKsk( selp )

@@ -144,6 +144,8 @@ trait LatexReplacementParser extends DeclarationParser {
 
 object LLKProofParser extends LLKProofParser {
   def apply( fileName: String ): ExtendedProofDatabase = createLKProof( parseFile( fileName ) )
+
+  def parseString( string: String ): ExtendedProofDatabase = createLKProof( parse( string ) )
 }
 
 class LLKProofParser extends DeclarationParser with LatexReplacementParser with TokenToLKConverter {

@@ -1,16 +1,18 @@
 package at.logic.gapt.formats.ivy
 
-import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
 import at.logic.gapt.formats.lisp._
 import java.io.File.separator
+import scala.io.Source
 import scala.util.{ Success, Failure }
-import util.parsing.input.Reader
 
 /**
  * Test for the Ivy interface.
  */
-class IvyTest extends Specification with ClasspathFileCopier {
+class IvyTest extends Specification {
+  def parseClasspathFile( filename: String ) =
+    SExpressionParser parseString Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( filename ) ).mkString
+
   "The Ivy Parser " should {
     " parse an empty list " in {
       SExpressionParser.tryParseString( "()" ) must_== Success( List( LList() ) )
@@ -81,7 +83,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the test file simple.ivy " in {
-      val result = SExpressionParser( tempCopyOfClasspathFile( "simple.ivy" ) )
+      val result = ( parseClasspathFile( "simple.ivy" ) )
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -101,7 +103,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the test file instantiations.ivy " in {
-      val result = SExpressionParser( tempCopyOfClasspathFile( "instantiations.ivy" ) )
+      val result = ( parseClasspathFile( "instantiations.ivy" ) )
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -126,7 +128,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the test file flip.ivy " in {
-      val result = SExpressionParser( tempCopyOfClasspathFile( "flip.ivy" ) )
+      val result = ( parseClasspathFile( "flip.ivy" ) )
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -149,7 +151,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the test file resulution.ivy " in {
-      val result = SExpressionParser( tempCopyOfClasspathFile( "resolution.ivy" ) )
+      val result = ( parseClasspathFile( "resolution.ivy" ) )
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -165,7 +167,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the test files factor.ivy and factor2.ivy " in {
-      val result = SExpressionParser( tempCopyOfClasspathFile( "factor.ivy" ) )
+      val result = ( parseClasspathFile( "factor.ivy" ) )
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -177,7 +179,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
           "The proof in factor.ivy must have some inferences" must beEqualTo( "failed" )
       }
 
-      val result2 = SExpressionParser( tempCopyOfClasspathFile( "factor2.ivy" ) )
+      val result2 = ( parseClasspathFile( "factor2.ivy" ) )
       result2 must not beEmpty
       val proof2 = result2.head
       proof2 match {
@@ -192,7 +194,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the test file manyliterals.ivy " in {
-      val result = SExpressionParser( tempCopyOfClasspathFile( "manyliterals.ivy" ) )
+      val result = ( parseClasspathFile( "manyliterals.ivy" ) )
       result must not beEmpty
       val proof = result.head
       proof match {
@@ -208,13 +210,13 @@ class IvyTest extends Specification with ClasspathFileCopier {
     }
 
     " parse the test file simple2.ivy " in {
-      val result = SExpressionParser( tempCopyOfClasspathFile( "simple2.ivy" ) )
+      val result = ( parseClasspathFile( "simple2.ivy" ) )
       ok
     }
   }
 
   " parse the test file prime1-0sk.ivy (clause set of the 0 instance of the prime proof) " in {
-    val result = SExpressionParser( tempCopyOfClasspathFile( "prime1-0sk.ivy" ) )
+    val result = ( parseClasspathFile( "prime1-0sk.ivy" ) )
     result must not beEmpty
     val proof = result.head
     proof match {
@@ -230,7 +232,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
   }
 
   " parse the test file GRA014+1.ivy " in {
-    val result = SExpressionParser( tempCopyOfClasspathFile( "GRA014+1.ivy" ) )
+    val result = ( parseClasspathFile( "GRA014+1.ivy" ) )
     result must not beEmpty
     val proof = result.head
     proof match {
@@ -246,7 +248,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
   }
 
   " parse the test file GEO037-2.ivy " in {
-    val result = SExpressionParser( tempCopyOfClasspathFile( "GEO037-2.ivy" ) )
+    val result = ( parseClasspathFile( "GEO037-2.ivy" ) )
     result must not beEmpty
     val proof = result.head
     proof match {
@@ -262,7 +264,7 @@ class IvyTest extends Specification with ClasspathFileCopier {
   }
 
   " parse the test file issue221.ivy " in {
-    val result = SExpressionParser( tempCopyOfClasspathFile( "issue221.ivy" ) )
+    val result = ( parseClasspathFile( "issue221.ivy" ) )
     result must not beEmpty
     val proof = result.head
     proof match {

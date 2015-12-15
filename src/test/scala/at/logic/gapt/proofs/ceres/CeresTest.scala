@@ -1,28 +1,20 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.formats.llkNew._
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.proofs.{ SequentMatchers, HOLSequent }
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.testing.ClasspathFileCopier
 import org.specs2.mutable._
 
-import scala.collection.Set
+import scala.io.Source
 
 /**
  * Created by marty on 11/24/15.
  */
-class CeresTest extends Specification with ClasspathFileCopier with SequentMatchers {
+class CeresTest extends Specification with SequentMatchers {
   def checkForProverOrSkip = Prover9.isInstalled must beTrue.orSkip
 
-  def load( file: String, pname: String ) = {
-    val filename = tempCopyOfClasspathFile( file )
-    loadLLK( filename ).eproofs.find( _._1.toString == pname ) match {
-      case None             => throw new Exception( "could not find the proof in proof db!" )
-      case Some( ( _, p ) ) => p
-    }
-  }
+  def load( file: String, pname: String ) =
+    LLKProofParser.parseString( Source fromInputStream getClass.getClassLoader.getResourceAsStream( file ) mkString ).proof( pname )
 
   "Struct extraction" should {
     "work for the permutation proof" in {
