@@ -43,7 +43,6 @@ import at.logic.gapt.proofs.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
-import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
