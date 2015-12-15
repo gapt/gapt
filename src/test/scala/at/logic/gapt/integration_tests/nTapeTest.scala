@@ -157,10 +157,7 @@ class nTapeTest extends Specification with ClasspathFileCopier {
         Some( "could not refute clause set" )
       case Some( rp ) =>
         show( "Getting formulas" )
-        val proofformulas = selp.dagLikeBreadthFirst.flatMap( x => {
-          val ( ant, suc ) = x.formulas.toTuple
-          ant ++ suc
-        } ).toSet
+        val proofformulas = for ( p <- selp.subProofs; f <- p.formulas.elements ) yield f
 
         show( "Extracting signature from " + proofformulas.size + " formulas" )
         val ( sigc, sigv ) = undoHol2Fol.getSignature( proofformulas.toList )

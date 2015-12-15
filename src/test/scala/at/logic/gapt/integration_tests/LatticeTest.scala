@@ -46,10 +46,7 @@ class LatticeTest extends Specification {
 
       val acnf = CERES( skolemize( proof ), CERES.skipNothing )
       ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
-      acnf.foreach( {
-        case CutRule( p1, a1, p2, a2 ) => isAtom( p1.endSequent( a1 ) ) must beTrue
-        case _                         => ()
-      } )
+      for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok
     }
 
@@ -63,10 +60,7 @@ class LatticeTest extends Specification {
 
       val acnf = CERES( skolemize( proof ), CERES.skipEquations )
       ( acnf.endSequent multiSetEquals proof.endSequent ) must beTrue
-      acnf.foreach( {
-        case CutRule( p1, a1, p2, a2 ) => isAtom( p1.endSequent( a1 ) ) must beTrue
-        case _                         => ()
-      } )
+      for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok
     }
 

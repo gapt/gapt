@@ -17,7 +17,7 @@ object extractRecSchemFromResProof {
   }
 
   def apply( root: ResolutionProof, clauseTerm: HOLClause => Option[LambdaExpression] ): RecursionScheme = {
-    val nodeMap = root.dagLikePostOrder.reverse.zipWithIndex.map {
+    val nodeMap = root.dagLike.postOrder.reverse.zipWithIndex.map {
       case ( p, i ) =>
         val fvs = freeVariables( p.conclusion ).toSeq
         val nonTerminal = Const( s"B$i", FunctionType( Ti, fvs.map( _.exptype ) ) )

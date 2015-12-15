@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lkNew
 
 object quantRulesNumber {
   def apply( p: LKProof ): Int =
-    p.postOrder count {
+    p.treeLike.postOrder count {
       case StrongQuantifierRule( _, _, _, _, _ )  => true
       case WeakQuantifierRule( _, _, _, _, _, _ ) => true
       case _                                      => false
@@ -11,7 +11,7 @@ object quantRulesNumber {
 
 object weakQuantRulesNumber {
   def apply( p: LKProof ): Int =
-    p.postOrder count {
+    p.treeLike.postOrder count {
       case WeakQuantifierRule( _, _, _, _, _, _ ) => true
       case _                                      => false
     }
@@ -19,12 +19,12 @@ object weakQuantRulesNumber {
 
 object cutsNumber {
   def apply( p: LKProof ): Int =
-    p.postOrder count {
+    p.treeLike.postOrder count {
       case CutRule( _, _, _, _ ) => true
       case _                     => false
     }
 }
 
 object rulesNumber {
-  def apply( p: LKProof ): Int = p.postOrder.size
+  def apply( p: LKProof ): Int = p.treeLike.size.toInt
 }

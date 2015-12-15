@@ -35,7 +35,7 @@ object isRegular {
    * @return true iff proof is regular.
    */
   def apply( proof: LKProof ): Boolean = {
-    val eigenVars = proof.postOrder.collect( { case Eigenvariable( v ) => v } )
+    val eigenVars = for ( Eigenvariable( v ) <- proof.treeLike.postOrder ) yield v
     eigenVars == eigenVars.distinct
   }
 }

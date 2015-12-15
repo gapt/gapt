@@ -9,7 +9,7 @@ object simplifyResolutionProof {
   def apply( proof: ResolutionProof ): ResolutionProof = {
     val simplified = mutable.Map[HOLClause, ResolutionProof]()
 
-    proof dagLikeForeach { p =>
+    proof.dagLike foreach { p =>
       val q = p match {
         case _: InitialClause => Factor( p )._1
         case Instance( p1, subst1 ) => simplified( p1.conclusion ) match {

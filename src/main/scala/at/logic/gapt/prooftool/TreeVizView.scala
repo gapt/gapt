@@ -88,7 +88,7 @@ class ProofNodeInfo[T <: DagProof[T]] extends NodeInfo {
   def getWeight( path: TreePath2[TreeNode] ) = 1
 
   def getCumulatedWeight( path: TreePath2[TreeNode] ) =
-    path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.treeSize.toLong
+    path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof.treeLike.size.toLong
 
   def getWeightFormatted( path: TreePath2[TreeNode] ) = getWeight( path ).toString
 

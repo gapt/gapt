@@ -83,7 +83,7 @@ class LLKExporter( val expandTex: Boolean ) {
   }
 
   def getTypes( p: LKProof, vacc: Map[String, Ty], cacc: Map[String, Ty] ): ( Map[String, Ty], Map[String, Ty] ) = {
-    val formulas = p.dagLikeBreadthFirst.flatMap( _.endSequent.formulas ).toSet
+    val formulas = for ( subProof <- p.subProofs; formula <- subProof.endSequent.elements ) yield formula
     formulas.foldLeft( ( vacc, cacc ) )( ( map, f ) =>
       getTypes( f, map._1, map._2 ) )
   }
