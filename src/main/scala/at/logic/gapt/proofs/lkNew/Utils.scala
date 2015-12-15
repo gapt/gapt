@@ -51,7 +51,7 @@ object regularize {
    * @param proof An LKProof.
    * @return A regular LKProof.
    */
-  def apply( proof: LKProof ) = apply_( proof, variables( proof ) )._1
+  def apply( proof: LKProof ) = apply_( proof, freeVariablesLK( proof ) )._1
 
   /**
    * Renames at least the eigenvariables contains in blacklist so that proof becomes regular.
@@ -149,24 +149,18 @@ object regularize {
       ( ForallLeftRule( subProofNew, aux, f, term, v ), blacklistNew )
 
     case ForallRightRule( subProof, aux, eigen, quant ) =>
+      val eigenNew = rename( eigen, blacklist.toList )
+      val ( subProofNew_, blacklistNew ) = apply_( subProof, blacklist + eigenNew )
 
-      val ( subProofNew_, blacklistNew ) = apply_( subProof, blacklist + eigen )
-
-      if ( blacklistNew contains eigen ) {
-        val eigenNew = rename( eigen, blacklistNew.toList )
-        val subProofNew = applySubstitution( Substitution( eigen, eigenNew ) )( subProofNew_ )
-        ( ForallRightRule( subProofNew, aux, eigenNew, quant ), blacklistNew + eigenNew )
-      } else ( ForallRightRule( subProofNew_, aux, eigen, quant ), blacklistNew + eigen )
+      val subProofNew = applySubstitution( Substitution( eigen, eigenNew ) )( subProofNew_ )
+      ( ForallRightRule( subProofNew, aux, eigenNew, quant ), blacklistNew )
 
     case ExistsLeftRule( subProof, aux, eigen, quant ) =>
+      val eigenNew = rename( eigen, blacklist.toList )
+      val ( subProofNew_, blacklistNew ) = apply_( subProof, blacklist + eigenNew )
 
-      val ( subProofNew_, blacklistNew ) = apply_( subProof, blacklist + eigen )
-
-      if ( blacklistNew contains eigen ) {
-        val eigenNew = rename( eigen, blacklistNew.toList )
-        val subProofNew = applySubstitution( Substitution( eigen, eigenNew ) )( subProofNew_ )
-        ( ExistsLeftRule( subProofNew, aux, eigenNew, quant ), blacklistNew + eigenNew )
-      } else ( ExistsLeftRule( subProofNew_, aux, eigen, quant ), blacklistNew + eigen )
+      val subProofNew = applySubstitution( Substitution( eigen, eigenNew ) )( subProofNew_ )
+      ( ExistsLeftRule( subProofNew, aux, eigenNew, quant ), blacklistNew )
 
     case ExistsRightRule( subProof, aux, f, term, v ) =>
       val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
