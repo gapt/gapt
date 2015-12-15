@@ -5,7 +5,6 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.{ Clause, HOLClause, Suc, Ant }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.ResultChecker
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import scala.collection.mutable
 
@@ -81,9 +80,7 @@ object IvyToRobinson {
       case NewSymbol( id, exp, lit, new_symbol, replacement_term, clause, parent ) =>
         // insert a new axiom, will be later removed
         InputClause( clause )
-    } ) check { res =>
-      require( res.conclusion multiSetEquals p.conclusion )
-    }
+    } ) ensuring { res => res.conclusion multiSetEquals p.conclusion }
 
     val proof = convert( ivy )
 
