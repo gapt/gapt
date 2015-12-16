@@ -27,42 +27,44 @@ private[prooftool] class SwitchEvent( val from: Int, val to: Int ) extends Event
 
 /**
  * This class takes care of drawing an ExpansionSequent.
+ * @param main: The main window that this belongs to.
  * @param expSequent The expansion sequent to be displayed
  * @param fSize The font size.
  */
-class DrawExpansionSequent( val expSequent: ExpansionSequent, private val fSize: Int ) extends SplitPane( Orientation.Vertical ) with DrawExpSeqLogger {
+class DrawExpansionSequent( val main: ExpansionSequentViewer, val expSequent: ExpansionSequent,
+                            private val fSize: Int ) extends SplitPane( Orientation.Vertical ) with DrawExpSeqLogger {
 
   //Code for window geometry and appearance
   background = new Color( 255, 255, 255 )
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   preferredSize = calculateOptimalSize
   dividerLocation =
-    if ( expSequent.antecedent.isEmpty )
+    /*if ( expSequent.antecedent.isEmpty )
       preferredSize.width / 5
     else if ( expSequent.succedent.isEmpty )
       preferredSize.width * 4 / 5
-    else
-      preferredSize.width / 2
+    else*/
+    preferredSize.width / 2
 
-  listenTo( Main.top )
+  listenTo( main.scrollPane )
   reactions += {
-    case UIElementResized( Main.top ) =>
+    case UIElementResized( main.scrollPane ) =>
       preferredSize = calculateOptimalSize
       revalidate()
   }
 
   def calculateOptimalSize = {
-    val width = Main.top.size.width
-    val height = Main.top.size.height
+    val width = main.scrollPane.size.width
+    val height = main.scrollPane.size.height
     if ( width > 100 && height > 200 )
-      new Dimension( Main.top.size.width - 70, Main.top.size.height - 150 )
+      new Dimension( width - 70, height - 150 )
     else new Dimension( width, height )
   }
 
   //Code for contents
   val mExpSequent = compressQuantifiers( expSequent ) //The input sequent is converted to MultiExpansionTrees
-  val antecedentPanel: CedentPanel = new CedentPanel( mExpSequent.antecedent, "Antecedent", ft )
-  val succedentPanel: CedentPanel = new CedentPanel( mExpSequent.succedent, "Succedent", ft )
+  val antecedentPanel: CedentPanel = new CedentPanel( main, mExpSequent.antecedent, "Antecedent", ft )
+  val succedentPanel: CedentPanel = new CedentPanel( main, mExpSequent.succedent, "Succedent", ft )
   leftComponent = antecedentPanel
   rightComponent = succedentPanel
 }
@@ -73,7 +75,7 @@ class DrawExpansionSequent( val expSequent: ExpansionSequent, private val fSize:
  * @param title The title to be displayed at the top
  * @param ft The font to be used
  */
-class CedentPanel( val cedent: Seq[MultiExpansionTree], val title: String, val ft: Font ) extends BoxPanel( Orientation.Vertical ) with DrawExpSeqLogger {
+class CedentPanel( main: ExpansionSequentViewer, val cedent: Seq[MultiExpansionTree], val title: String, val ft: Font ) extends BoxPanel( Orientation.Vertical ) with DrawExpSeqLogger {
 
   //Code for the title label
   val titleLabel = new Label( title ) {
@@ -85,12 +87,12 @@ class CedentPanel( val cedent: Seq[MultiExpansionTree], val title: String, val f
       case e: MouseEntered => foreground = Color.blue
       case e: MouseExited  => foreground = Color.black
       case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-        PopupMenu( CedentPanel.this, e.point.x, e.point.y ) //This brings up the menu that lets the user close/open/expand all trees on this side
+        PopupMenu( main, CedentPanel.this, e.point.x, e.point.y ) //This brings up the menu that lets the user close/open/expand all trees on this side
     }
   }
 
   //Code for the expansion tree list
-  var treeList = new TreeListPanel( cedent, ft ) //treeList is the panel that contains the list of trees. It's contained in a ScrollPane.
+  var treeList = new TreeListPanel( main, cedent, ft ) //treeList is the panel that contains the list of trees. It's contained in a ScrollPane.
   val scrollPane = new ScrollPane {
     peer.getVerticalScrollBar.setUnitIncrement( 20 )
     peer.getHorizontalScrollBar.setUnitIncrement( 20 )
@@ -108,7 +110,7 @@ class CedentPanel( val cedent: Seq[MultiExpansionTree], val title: String, val f
  * @param trees The list of trees to be displayed
  * @param ft The font
  */
-class TreeListPanel( trees: Seq[MultiExpansionTree], ft: Font ) extends BoxPanel( Orientation.Vertical ) with DrawExpSeqLogger {
+class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[MultiExpansionTree], ft: Font ) extends BoxPanel( Orientation.Vertical ) with DrawExpSeqLogger {
   background = new Color( 255, 255, 255 )
 
   val n = trees.length
@@ -118,7 +120,7 @@ class TreeListPanel( trees: Seq[MultiExpansionTree], ft: Font ) extends BoxPanel
 
   val drawnTrees = new Array[DrawExpansionTree]( n ) // Draw all the trees. This is a mutable array so we can reorder the drawn trees.
   for ( i <- 0 to n - 1 )
-    drawnTrees( i ) = new DrawExpansionTree( trees( i ), ft )
+    drawnTrees( i ) = new DrawExpansionTree( main, trees( i ), ft )
 
   drawLines()
 

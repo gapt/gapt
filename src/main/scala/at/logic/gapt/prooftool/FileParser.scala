@@ -32,7 +32,7 @@ import at.logic.gapt.utils.ds.trees.{ BinaryTree, LeafTree, Tree }
 
 import scala.swing.Dialog
 
-class FileParser {
+class FileParser( main: ProofToolViewer[_] ) {
 
   def fileStreamReader( f: String ) = new InputStreamReader( new FileInputStream( f ), "UTF8" )
 
@@ -134,7 +134,7 @@ class FileParser {
         ceresFileReader( new FileInputStream( path ) )
       } catch {
         case pe: ParsingException =>
-          Main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
+          main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
             case Dialog.Result.Yes => stabFileReader( new FileInputStream( path ) )
             case _                 =>
           }
@@ -143,18 +143,18 @@ class FileParser {
         ceresFileReader( new GZIPInputStream( new FileInputStream( path ) ) )
       } catch {
         case pe: ParsingException =>
-          Main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
+          main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
             case Dialog.Result.Yes => stabFileReader( new GZIPInputStream( new FileInputStream( path ) ) )
             case _                 =>
           }
       }
       else if ( path.endsWith( ".ivy" ) ) ivyFileReader( path )
       //  else if (path.endsWith(".ivy.gz")) ivyFileReader(path) // This will be added later
-      else Main.warningMessage( "Can not recognize file extension: " + path.substring( path.lastIndexOf( "." ) ) )
-      ProofToolPublisher.publish( ProofDbChanged )
+      else main.warningMessage( "Can not recognize file extension: " + path.substring( path.lastIndexOf( "." ) ) )
+      main.publisher.publish( ProofDbChanged )
     } catch {
       case err: Throwable =>
-        Main.errorMessage( "Could not load file: " + path + "!" + dnLine + Main.getExceptionString( err ) )
+        main.errorMessage( "Could not load file: " + path + "!" + dnLine + main.getExceptionString( err ) )
     }
   }
 

@@ -14,7 +14,11 @@ import at.logic.gapt.proofs.lk.base._
 import at.logic.gapt.expr._
 import swing.{ FlowPanel, GridPanel, Label }
 
-class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1 ) {
+class DrawList(
+    main:         ListViewer,
+    val list:     List[Any],
+    val fontSize: Int
+) extends GridPanel( 0, 1 ) {
   background = new Color( 255, 255, 255 )
   private var str: String = ""
   initialize()
@@ -42,8 +46,8 @@ class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1
     }
 
     def drawMember( x: Any ) = x match {
-      case s: OccSequent                                  => DrawSequent( s, ft, str )
-      case fs: HOLSequent                                 => DrawSequent( fs, ft, str )
+      case s: OccSequent                                  => DrawSequent( main, s, ft, str )
+      case fs: HOLSequent                                 => DrawSequent( main, fs, ft, str )
       case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
       case _ => new Label( x.toString ) {
         background = new Color( 255, 255, 255 )
@@ -68,6 +72,6 @@ class DrawList( val list: List[Any], val fontSize: Int ) extends GridPanel( 0, 1
     contents += new Label( " := " ) { font = ft }
     contents += label2
 
-    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( ft, DrawSequent.formulaToLatexString( e ) )
+    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( main, ft, DrawSequent.formulaToLatexString( e ) )
   }
 }

@@ -16,7 +16,7 @@ import scala.swing._
 import scala.swing.event._
 import java.awt.Color
 
-class SunburstTreeDialog[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends Frame {
+class SunburstTreeDialog[T <: DagProof[T]]( val mainWindow: DagProofViewer[T], name: String, proof: DagProof[T] ) extends Frame {
   title = "Sunburst view of " + name
   //modal = false
   preferredSize = new Dimension( 700, 500 )
@@ -29,14 +29,14 @@ class SunburstTreeDialog[T <: DagProof[T]]( name: String, proof: DagProof[T] ) e
     contents += new Label( "Export as:" ) { border = Swing.EmptyBorder( 5 ) }
     // contents += new Menu("Export") {
     //   mnemonic = Key.E
-    contents += new MenuItem( Action( "PDF" ) { Main.fExportPdf( Some( main ) ) } ) {
+    contents += new MenuItem( Action( "PDF" ) { mainWindow.fExportPdf( main ) } ) {
       mnemonic = Key.D
       this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_D, JActionEvent.CTRL_MASK ) )
       border = customBorder
       preferredSize = new Dimension( 50, 20 )
     }
     contents += new Separator
-    contents += new MenuItem( Action( "PNG" ) { Main.fExportPng( Some( main ) ) } ) {
+    contents += new MenuItem( Action( "PNG" ) { mainWindow.fExportPng( main ) } ) {
       mnemonic = Key.N
       this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_N, JActionEvent.CTRL_MASK ) )
       border = customBorder
@@ -55,7 +55,7 @@ class SunburstTreeDialog[T <: DagProof[T]]( name: String, proof: DagProof[T] ) e
     val model = new ReactiveSunburstModel( new ProofNode[T]( proof ), new ProofNodeInfo[T]() )
     val sunView = model.getView()
     // inference information
-    val info = new DrawSingleSequentInference( Orientation.Vertical )
+    val info = new DrawSingleSequentInference( mainWindow, Orientation.Vertical )
 
     sunView.setToolTipEnabled( true )
     sunView.reactions += {
@@ -69,9 +69,9 @@ class SunburstTreeDialog[T <: DagProof[T]]( name: String, proof: DagProof[T] ) e
     leftComponent = Component.wrap( sunView )
     rightComponent = info
 
-    listenTo( keys, SunburstTreeDialog.this, Main.top, ProofToolPublisher )
-    reactions += {
-      case WindowClosing( Main.top ) => dispose()
+    listenTo( keys, SunburstTreeDialog.this, mainWindow.top, mainWindow.publisher )
+    /*reactions += {
+      case WindowClosing( mainWindow.top ) => dispose()
       case UIElementResized( source ) =>
         preferredSize = SunburstTreeDialog.this.size
         if ( preferredSize.width > preferredSize.height ) {
@@ -132,12 +132,12 @@ class SunburstTreeDialog[T <: DagProof[T]]( name: String, proof: DagProof[T] ) e
         }
         sunView.repaintView()
       case Loaded( _ ) => dispose()
-    }
+    }*/
   }
 
   contents = main
 
   override def closeOperation() {
-    ProofToolPublisher.publish( ChangeSequentColor( null, null, reset = true ) )
+    mainWindow.publisher.publish( ChangeSequentColor( null, null, reset = true ) )
   }
 }

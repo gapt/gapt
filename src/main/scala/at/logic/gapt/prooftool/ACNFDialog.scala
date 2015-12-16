@@ -1,3 +1,4 @@
+/*
 package at.logic.gapt.prooftool
 
 /**
@@ -16,7 +17,7 @@ object ACNFDialog extends Dialog {
   title = "ACNF Dialog"
   resizable = false
   modal = true
-  location = new Point( Main.top.location.x + 200, Main.top.location.y + 100 )
+  location = new Point( PTMain.top.location.x + 200, PTMain.top.location.y + 100 )
   peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
 
   def apply( proofs: Seq[String], refutations: Seq[String] ): Option[( String, String, Int )] = {
@@ -63,3 +64,4 @@ object ACNFDialog extends Dialog {
     optionResult
   }
 }
+*/

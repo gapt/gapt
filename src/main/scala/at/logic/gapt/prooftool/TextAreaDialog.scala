@@ -15,7 +15,8 @@ import BorderPanel.Position
 object TextAreaDialog extends Dialog {
   title = "ProofTool Text"
   modal = true
-  location = new Point( Main.top.location.x + 200, Main.top.location.y + 100 )
+  //location = new Point( PTMain.top.location.x + 200, PTMain.top.location.y + 100 )
+  location = new Point( 200, 100 )
   peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
 
   private var optionText: Option[String] = None

@@ -13,13 +13,13 @@ import scala.swing._
 import event._
 import java.awt.Point
 
-object About {
+class About( main: ProofToolViewer[_] ) {
   val nLine = sys.props( "line.separator" )
   private lazy val d = new Dialog {
     title = "About Prooftool"
     resizable = false
     modal = true
-    location = new Point( Main.top.location.x + 100, Main.top.location.y + 100 )
+    location = new Point( main.top.location.x + 100, main.top.location.y + 100 )
     //setLocationRelativeTo(Main.mBar)
     peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
 
@@ -38,10 +38,10 @@ object About {
       val img = {
         val path = "icons/tu.gif"
         try {
-          new ImageIcon( Main.getClass.getClassLoader.getResource( path ) )
+          new ImageIcon( ProofToolViewer.getClass.getClassLoader.getResource( path ) )
         } catch {
           case e: Exception =>
-            Main.errorMessage( "Couldn't load image: " + path + nLine + nLine + Main.getExceptionString( e ) )
+            main.errorMessage( "Couldn't load image: " + path + nLine + nLine + main.getExceptionString( e ) )
             Swing.EmptyIcon
         }
       }
@@ -66,7 +66,7 @@ object About {
       c.grid = ( 1, 2 )
       layout( new Label( "Vendor:" ) { horizontalAlignment = Alignment.Right } ) = c
       c.grid = ( 2, 0 )
-      layout( new Label( Main.getClass.getPackage.getImplementationVersion ) { horizontalAlignment = Alignment.Left } ) = c
+      layout( new Label( ProofToolViewer.getClass.getPackage.getImplementationVersion ) { horizontalAlignment = Alignment.Left } ) = c
       c.grid = ( 2, 1 )
       layout( new Label( "Mikheil Rukhaia" ) { horizontalAlignment = Alignment.Left } ) = c
       c.grid = ( 2, 2 )

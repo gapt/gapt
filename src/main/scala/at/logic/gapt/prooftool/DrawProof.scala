@@ -19,7 +19,13 @@ import java.awt.RenderingHints
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
-class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var visible_occurrences: Option[Set[FormulaOccurrence]], private var str: String )
+class DrawProof[T](
+  val main:                        TreeProofViewer[T],
+  val proof:                       TreeProof[T],
+  private val fSize:               Int,
+  private var visible_occurrences: Option[Set[FormulaOccurrence]],
+  private var str:                 String
+)
     extends BorderPanel with MouseMotionListener {
   private val blue = new Color( 0, 0, 255 )
   private val black = new Color( 0, 0, 0 )
@@ -38,8 +44,8 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
   private var tx = tx1
   private def tx1 = proof.root match {
     case so: OccSequent =>
-      val ds = DrawSequent( so, ft, visible_occurrences )
-      ds.listenTo( mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher )
+      val ds = DrawSequent( main, so, ft, visible_occurrences )
+      ds.listenTo( mouse.moves, mouse.clicks, mouse.wheel, main.publisher )
       ds.reactions += {
         case e: MouseEntered => ds.contents.foreach( x => x.foreground = blue )
         case e: MouseExited => ds.contents.foreach( x => x.foreground = black )
@@ -52,28 +58,22 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
     }
   }
 
-  listenTo( mouse.moves, mouse.clicks, mouse.wheel, ProofToolPublisher )
+  listenTo( mouse.moves, mouse.clicks, mouse.wheel, main.publisher )
   reactions += {
     case e: MouseDragged =>
-      Main.body.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
+      main.scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
     case e: MouseReleased =>
-      Main.body.cursor = java.awt.Cursor.getDefaultCursor
+      main.scrollPane.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
-      Main.body.peer.dispatchEvent( e.peer )
+      main.scrollPane.peer.dispatchEvent( e.peer )
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof.rule match {
-        case WeakeningLeftRuleType | WeakeningRightRuleType =>
+        case WeakeningLeftRuleType | WeakeningRightRuleType | ContractionLeftRuleType | ContractionRightRuleType =>
           drawLines = false
           tx.visible = false
-        case ContractionLeftRuleType | ContractionRightRuleType =>
-          val rule = proof.asInstanceOf[UnaryTreeProof[_]].uProof.rule
-          if ( rule != WeakeningLeftRuleType && rule != WeakeningRightRuleType ) drawLines = false
-          val dp = layout.find( _._2 == Position.Center ).get._1.asInstanceOf[DrawProof]
-          dp.tx.visible = false
-          dp.border = Swing.EmptyBorder( 0, 0, 3, 0 )
         case _ =>
       }
-    case e: ShowAllRules[_] if e.proof == proof =>
+    case e: ShowAllRulesOld[_] if e.proof == proof =>
       drawLines = true
       initialize()
       revalidate()
@@ -99,12 +99,12 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
     proof match {
       case p: UnaryTreeProof[_] =>
         border = bd
-        layout( new DrawProof( p.uProof.asInstanceOf[TreeProof[_]], fSize, visible_occurrences, str ) ) = Position.Center
+        layout( new DrawProof( main, p.uProof.asInstanceOf[TreeProof[T]], fSize, visible_occurrences, str ) ) = Position.Center
         layout( tx ) = Position.South
       case p: BinaryTreeProof[_] =>
         border = bd
-        layout( new DrawProof( p.uProof1.asInstanceOf[TreeProof[_]], fSize, visible_occurrences, str ) ) = Position.West
-        layout( new DrawProof( p.uProof2.asInstanceOf[TreeProof[_]], fSize, visible_occurrences, str ) ) = Position.East
+        layout( new DrawProof( main, p.uProof1.asInstanceOf[TreeProof[T]], fSize, visible_occurrences, str ) ) = Position.West
+        layout( new DrawProof( main, p.uProof2.asInstanceOf[TreeProof[T]], fSize, visible_occurrences, str ) ) = Position.East
         layout( tx ) = Position.South
       case p: NullaryTreeProof[_] => p match {
         case SchemaProofLinkRule( _, link, indices ) =>
@@ -112,7 +112,7 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
             background = white
             opaque = false
             border = Swing.EmptyBorder( 0, fSize, 0, fSize )
-            val pLink = LatexLabel( ft, "(\\textbf{" + link + "}" + indices.foldRight( "" )( ( i, rez ) => ", " + DrawSequent.formulaToLatexString( i ) + rez ) + ")", null )
+            val pLink = LatexLabel( main, ft, "(\\textbf{" + link + "}" + indices.foldRight( "" )( ( i, rez ) => ", " + DrawSequent.formulaToLatexString( i ) + rez ) + ")", null )
             pLink.xLayoutAlignment = 0.5
             pLink.opaque = false
             pLink.border = Swing.EmptyBorder( 0, 0, 5, 0 )
@@ -158,7 +158,7 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
 
     if ( drawLines ) proof match {
       case p: UnaryTreeProof[_] =>
-        val center = this.layout.find( x => x._2 == Position.Center ).get._1.asInstanceOf[DrawProof]
+        val center = this.layout.find( x => x._2 == Position.Center ).get._1.asInstanceOf[DrawProof[T]]
         val width = center.size.width + fSize * 4
         val height = center.size.height
         val seqLength = max( center.getSequentWidth( g ), getSequentWidth( g ) )
@@ -166,16 +166,16 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
         g.drawLine( ( width - seqLength ) / 2, height, ( width + seqLength ) / 2, height )
         g.drawString( p.name, ( fSize / 4 + width + seqLength ) / 2, height + metrics.getMaxDescent )
       case p: BinaryTreeProof[_] =>
-        val left = this.layout.find( x => x._2 == Position.West ).get._1.asInstanceOf[DrawProof]
+        val left = this.layout.find( x => x._2 == Position.West ).get._1.asInstanceOf[DrawProof[T]]
         val leftWidth = left.size.width + fSize * 4
-        val right = this.layout.find( x => x._2 == Position.East ).get._1.asInstanceOf[DrawProof]
+        val right = this.layout.find( x => x._2 == Position.East ).get._1.asInstanceOf[DrawProof[T]]
         val rightWidth = right.size.width
         val height = max( left.size.height, right.size.height )
         val leftSeqLength = left.getSequentWidth( g )
         val rightSeqLength = right.getSequentWidth( g )
         val lineLength = right.location.x + ( rightWidth + rightSeqLength ) / 2
 
-        if ( Main.DEBUG ) { // draw bounding box around children for debugging
+        if ( main.DEBUG ) { // draw bounding box around children for debugging
           g.setColor( new Color( 200, 200, 50 ) )
           g.drawRect( left.location.x, left.location.y, left.size.width - 1, left.size.height )
           g.setColor( new Color( 200, 50, 200 ) )
@@ -208,7 +208,7 @@ class DrawProof( val proof: TreeProof[_], private val fSize: Int, private var vi
       Some( newloc )
     } else contents.foldLeft[Option[Point]]( None )( ( res, dp ) =>
       if ( res == None ) dp match {
-        case x: DrawProof =>
+        case x: DrawProof[_] =>
           x.getLocationOfProof( p ) match {
             case Some( loc ) => // need to translate
               val newloc = new Point( loc.x + location.x, loc.y + location.y )
