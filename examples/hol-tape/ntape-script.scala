@@ -25,8 +25,8 @@ import at.logic.gapt.expr.fol.undoHol2Fol
 import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.proofs.FOLClause
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk.{AtomicExpansion, regularize}
+import at.logic.gapt.proofs.lkOld.base._
+import at.logic.gapt.proofs.lkOld.{AtomicExpansion, regularize}
 import at.logic.gapt.proofs.lksk.sequentToLabelledSequent
 import at.logic.gapt.proofs.resolution.RobinsonToRal
 
@@ -37,7 +37,7 @@ import at.logic.gapt.proofs.ceres.struct.StructCreators
 
 import at.logic.gapt.proofs.ceres.ceres_omega
 import at.logic.gapt.proofs.lksk.LKskToExpansionProof
-import at.logic.gapt.proofs.lk.LKToLKsk
+import at.logic.gapt.proofs.lkOld.LKToLKsk
 
  val nLine = sys.props("line.separator")
 

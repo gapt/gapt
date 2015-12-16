@@ -1,5 +1,5 @@
 import java.io.{FileWriter, File}
-import at.logic.gapt.proofs.lk.base.LKRuleCreationException
+import at.logic.gapt.proofs.lkOld.base.LKRuleCreationException
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.executionModels.timeout._
 

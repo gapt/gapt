@@ -10,7 +10,7 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.proofs.lk.deleteTautologies
+import at.logic.gapt.proofs.lkOld.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriT

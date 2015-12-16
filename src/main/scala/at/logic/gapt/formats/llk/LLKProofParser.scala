@@ -5,7 +5,7 @@ import at.logic.gapt.formats.llkNew.ast.LambdaAST
 import at.logic.gapt.formats.llkNew.{ ast, DeclarationParser }
 import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.proofs.{ lkNew, HOLSequent }
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkOld.base.LKProof
 import java.io.FileReader
 import at.logic.gapt.proofs.lkNew.lkOld2New
 

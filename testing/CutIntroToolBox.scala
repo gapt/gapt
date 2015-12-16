@@ -4,7 +4,7 @@
  * scala> :load testing/CutIntroToolBox.scala
  **********/
 
-import at.logic.gapt.proofs.lk.algorithms.cutIntroduction._
+import at.logic.gapt.proofs.lkOld.algorithms.cutIntroduction._
 
 // TODO: is it possible to define strictSubsetOf on the level of a scala Set locally for this file only?
 

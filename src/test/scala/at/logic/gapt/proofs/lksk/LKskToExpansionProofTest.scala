@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.{ ETAtom, ETNeg, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp, ETWeakening }
-import at.logic.gapt.proofs.lk.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, _ }
+import at.logic.gapt.proofs.lkOld.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, _ }
 import org.specs2.mutable._
 
 /**

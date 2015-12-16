@@ -2,8 +2,8 @@ package at.logic.gapt.formats.llk
 
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld._
+import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.lksk.{ ForallSkRightRule, ForallSkLeftRule, ExistsSkRightRule, ExistsSkLeftRule, LabelledOccSequent }
 import at.logic.gapt.proofs.ral.{ RalCut, RalProof, RalInitial }
 

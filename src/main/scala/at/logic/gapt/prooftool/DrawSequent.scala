@@ -9,7 +9,7 @@ package at.logic.gapt.prooftool
 
 import at.logic.gapt.expr.hol.toPrettyString
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.ceres_schema.struct.ClauseSetSymbol

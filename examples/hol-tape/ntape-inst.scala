@@ -27,8 +27,8 @@ import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.formats.tptp.TPTPHOLExporter
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.base.HOLSequentOrdering
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld.base.HOLSequentOrdering
+import at.logic.gapt.proofs.lkOld._
 
 import at.logic.gapt.proofs.ceres.clauseSets._
 import at.logic.gapt.proofs.ceres.struct.StructCreators

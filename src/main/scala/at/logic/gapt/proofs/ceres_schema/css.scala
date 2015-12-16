@@ -4,8 +4,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.ceres_schema.clauseSets.{ SimplifyStruct, StandardClauseSet }
 import at.logic.gapt.proofs.ceres_schema.struct.Struct
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk.subsumedClausesRemoval
+import at.logic.gapt.proofs.lkOld.base._
+import at.logic.gapt.proofs.lkOld.subsumedClausesRemoval
 
 import scala.collection.mutable
 

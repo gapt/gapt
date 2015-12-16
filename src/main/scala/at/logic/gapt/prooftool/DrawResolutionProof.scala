@@ -12,7 +12,7 @@ import BorderPanel._
 import event._
 import java.awt.Font._
 import java.awt.event.{ MouseMotionListener, MouseEvent }
-import at.logic.gapt.proofs.lk.base.OccSequent
+import at.logic.gapt.proofs.lkOld.base.OccSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import java.awt.RenderingHints
 import at.logic.gapt.proofs.proofs.{ NullaryProof, BinaryProof, UnaryProof, Proof }

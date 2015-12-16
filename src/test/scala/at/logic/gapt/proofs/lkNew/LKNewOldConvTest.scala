@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lkNew
 
 import at.logic.gapt.proofs.{ SequentMatchers, HOLSequent }
 import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld.base._
 import org.specs2.mutable._
 
 import scala.io.Source

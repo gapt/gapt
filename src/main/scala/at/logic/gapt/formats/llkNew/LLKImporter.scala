@@ -11,7 +11,7 @@ import at.logic.gapt.utils.logging.Logger
 import at.logic.gapt.proofs.lkNew._
 import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
-import at.logic.gapt.proofs.lk.EquationVerifier._
+import at.logic.gapt.proofs.lkOld.EquationVerifier._
 
 object LLKFormatter {
   /* formats a sequent */

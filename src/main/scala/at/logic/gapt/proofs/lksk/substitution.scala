@@ -4,14 +4,14 @@ import at.logic.gapt.expr.BetaReduction.{ betaNormalize => normalize }
 import at.logic.gapt.expr.Substitution
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.{ ProofTransformationUtils, applySubstitution => LKapplySubstitution }
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk.{ BinaryLKProof, UnaryLKProof }
+import at.logic.gapt.proofs.lkOld.{ ProofTransformationUtils, applySubstitution => LKapplySubstitution }
+import at.logic.gapt.proofs.lkOld.base._
+import at.logic.gapt.proofs.lkOld.{ BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
 object applySubstitution extends at.logic.gapt.utils.logging.Logger {
-  import at.logic.gapt.proofs.lk.ProofTransformationUtils.computeMap
+  import at.logic.gapt.proofs.lkOld.ProofTransformationUtils.computeMap
 
   def toLabelledSequent( so: OccSequent ) = new LabelledOccSequent(
     so.antecedent.map( fo => fo.asInstanceOf[LabelledFormulaOccurrence] ),

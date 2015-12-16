@@ -7,7 +7,7 @@ import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import java.io.InputStreamReader
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld.base._
 import collection.mutable.{ Map => MMap }
 import at.logic.gapt.proofs.shlk._
 import scala.Tuple4
@@ -16,7 +16,7 @@ import scala.Tuple2
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ To, FunctionType, Ti }
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld._
 
 object SHLK {
   val nLine = sys.props( "line.separator" )

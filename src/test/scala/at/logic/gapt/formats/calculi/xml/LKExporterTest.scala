@@ -10,7 +10,7 @@ import org.specs2.mutable._
 
 import scala.xml.Utility.trim
 
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.To

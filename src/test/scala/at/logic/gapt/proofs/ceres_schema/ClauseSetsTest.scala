@@ -2,8 +2,8 @@
 package at.logic.gapt.proofs.ceres_schema.clauseSets
 
 import at.logic.gapt.proofs.ceres_schema.projections.{ DeleteRedundantSequents, DeleteTautology }
-import at.logic.gapt.proofs.lk.getCutAncestors
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld.getCutAncestors
+import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.expr._

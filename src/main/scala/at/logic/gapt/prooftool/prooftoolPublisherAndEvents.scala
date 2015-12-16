@@ -8,7 +8,7 @@ package at.logic.gapt.prooftool
  */
 
 import at.logic.gapt.proofs.DagProof
-import at.logic.gapt.proofs.lk.base.OccSequent
+import at.logic.gapt.proofs.lkOld.base.OccSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.proofs.TreeProof
 

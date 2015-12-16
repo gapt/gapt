@@ -10,7 +10,7 @@ import org.specs2.mutable._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.{ OrLeftRule, Axiom => LKAxiom, _ }
+import at.logic.gapt.proofs.lkOld.{ OrLeftRule, Axiom => LKAxiom, _ }
 import TypeSynonyms._
 import at.logic.gapt.proofs.occurrences.FOFactory
 

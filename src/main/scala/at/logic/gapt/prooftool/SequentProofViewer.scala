@@ -127,7 +127,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
         // val pair = body.getContent.getData.get
         try {
           if ( result.endsWith( ".xml" ) || chooser.fileFilter.getDescription == ".xml" ) {
-            XMLExporter( result, name, lkNew2Old( proof ) )
+            XMLExporter( result, name, proof )
           } else if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
             val filename = if ( result.endsWith( ".llk" ) ) result else result + ".llk"
             val file = new JBufferedWriter( new JFileWriter( filename ) )

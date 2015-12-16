@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.shlk
 
-import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
-import at.logic.gapt.proofs.lk.{ Axiom, BinaryLKProof, UnaryLKProof }
+import at.logic.gapt.proofs.lkOld.base.{ LKProof, OccSequent }
+import at.logic.gapt.proofs.lkOld.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.shlk._
 
 object printSchemaProof {

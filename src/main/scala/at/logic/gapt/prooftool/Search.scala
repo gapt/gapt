@@ -8,7 +8,7 @@ package at.logic.gapt.prooftool
  */
 
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
-import at.logic.gapt.proofs.lk.base.{ OccSequent, BinaryLKProof, UnaryLKProof, NullaryLKProof }
+import at.logic.gapt.proofs.lkOld.base.{ OccSequent, BinaryLKProof, UnaryLKProof, NullaryLKProof }
 import at.logic.gapt.proofs.proofs.{ BinaryProof, UnaryProof, Proof, NullaryProof, TreeProof }
 
 object Search {

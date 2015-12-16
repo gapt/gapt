@@ -19,9 +19,9 @@ import at.logic.gapt.formats.readers.XMLReaders.{ XMLReader, NodeReader }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lkNew
-import at.logic.gapt.proofs.lk.base.LKProof
+import at.logic.gapt.proofs.lkOld.base.LKProof
 import at.logic.gapt.proofs.lkNew.lkOld2New
 import at.logic.gapt.proofs.occurrences._
 

@@ -3,8 +3,8 @@ package at.logic.gapt.formats.expr.xml
 
 import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.proofs.{ SequentMatchers, HOLSequent }
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld._
+import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.occurrences.factory
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._

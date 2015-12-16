@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.ceres_schema.clauseSchema
 
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld._
+import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.gapt.proofs.shlk.AndEquivalenceRule1._
 import at.logic.gapt.proofs.shlk._

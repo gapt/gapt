@@ -1,9 +1,9 @@
 package at.logic.gapt.proofs.ceres_schema.ACNF
 
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.applySubstitution
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld._
+import at.logic.gapt.proofs.lkOld.applySubstitution
+import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.lkNew.lkNew2Old
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution.RobinsonToLK

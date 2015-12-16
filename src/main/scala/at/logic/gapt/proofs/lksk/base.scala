@@ -8,7 +8,7 @@ package at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.base.OccSequent
+import at.logic.gapt.proofs.lkOld.base.OccSequent
 import at.logic.gapt.proofs.occurrences._
 import BetaReduction.betaNormalize
 

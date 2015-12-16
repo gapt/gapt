@@ -13,8 +13,8 @@ import org.specs2.mutable._
 import scala.xml._
 
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld._
+import at.logic.gapt.proofs.lkOld.base._
 import java.util.zip.GZIPInputStream
 import java.io.{ FileReader, FileInputStream, InputStreamReader }
 import java.io.File.separator

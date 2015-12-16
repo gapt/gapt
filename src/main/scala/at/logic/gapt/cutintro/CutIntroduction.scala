@@ -8,7 +8,7 @@ import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, _ }
-import at.logic.gapt.proofs.lk.ExtractInterpolant
+import at.logic.gapt.proofs.lkOld.ExtractInterpolant
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
 import at.logic.gapt.provers.Prover

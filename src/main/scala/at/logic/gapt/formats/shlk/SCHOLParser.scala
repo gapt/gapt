@@ -1,9 +1,9 @@
 package at.logic.gapt.formats.shlk
 
 import at.logic.gapt.formats.simple.TypeParsers
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.solve
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld._
+import at.logic.gapt.proofs.lkOld.solve
+import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.proofs.shlk.getName
 

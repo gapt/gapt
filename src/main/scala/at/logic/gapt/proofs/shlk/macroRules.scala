@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.shlk
 
-import at.logic.gapt.proofs.lk.base.{ LKRuleCreationException, LKProof }
+import at.logic.gapt.proofs.lkOld.base.{ LKRuleCreationException, LKProof }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema._

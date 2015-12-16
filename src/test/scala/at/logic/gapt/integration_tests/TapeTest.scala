@@ -3,7 +3,7 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.expr.{ FOLAtom, Eq }
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.proofs.SequentMatchers
-import at.logic.gapt.proofs.lk.deleteTautologies
+import at.logic.gapt.proofs.lkOld.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
 
 import at.logic.gapt.formats.tptp.TPTPFOLExporter

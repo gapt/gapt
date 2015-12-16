@@ -1,21 +1,21 @@
 package at.logic.gapt.formats.llk
 
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.{ applySubstitution, AtomicExpansion, solve }
+import at.logic.gapt.proofs.lkOld.{ applySubstitution, AtomicExpansion, solve }
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledOccSequent }
 import at.logic.gapt.formats.llkNew.{ ast, DeclarationParser, LLKFormulaParser }
 import at.logic.gapt.formats.llkNew.ast.LambdaAST
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld.base._
+import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.EquationVerifier._
+import at.logic.gapt.proofs.lkOld.EquationVerifier._
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.utils.logging.Logger
 import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import at.logic.gapt.formats.llk._
-import at.logic.gapt.proofs.lk.EquationVerifier.EqualModuloEquality
+import at.logic.gapt.proofs.lkOld.EquationVerifier.EqualModuloEquality
 
 object LLKFormatter {
   /* formats a sequent */

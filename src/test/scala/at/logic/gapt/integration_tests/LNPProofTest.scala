@@ -2,7 +2,7 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.proofs.ceres_omega._
-import at.logic.gapt.proofs.lk.deleteTautologies
+import at.logic.gapt.proofs.lkOld.deleteTautologies
 import at.logic.gapt.proofs.lkNew._
 import at.logic.gapt.formats.latex.SequentsListLatexExporter
 import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter

@@ -1,5 +1,5 @@
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld._
 
 object inductionExamples {
 

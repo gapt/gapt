@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.ceres_schema.clauseSets.profile
 
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld.base._
+import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lksk.{ LabelledOccSequent, LabelledFormulaOccurrence, UnaryLKskProof }
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.ceres_schema.clauseSets.StandardClauseSet._

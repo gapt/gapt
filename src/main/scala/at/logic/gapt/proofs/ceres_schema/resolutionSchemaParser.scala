@@ -4,7 +4,7 @@ package at.logic.gapt.proofs.ceres_schema.clauseSchema
 
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.simple.TypeParsers
-import at.logic.gapt.proofs.lk.base.{ OccSequent, LKProof }
+import at.logic.gapt.proofs.lkOld.base.{ OccSequent, LKProof }
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema._

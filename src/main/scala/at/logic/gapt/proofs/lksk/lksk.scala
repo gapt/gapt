@@ -9,8 +9,8 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.ds.trees._
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk.{ InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType, Axiom => LKAxiom, _ }
+import at.logic.gapt.proofs.lkOld.base._
+import at.logic.gapt.proofs.lkOld.{ InitialRuleType, WeakeningLeftRuleType, WeakeningRightRuleType, Axiom => LKAxiom, _ }
 import TypeSynonyms._
 
 // lksk proofs

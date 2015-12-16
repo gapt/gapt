@@ -14,9 +14,9 @@ import java.awt.Font._
 import at.logic.gapt.proofs.proofs._
 import java.awt.event.{ MouseMotionListener, MouseEvent }
 import at.logic.gapt.proofs.shlk.SchemaProofLinkRule
-import at.logic.gapt.proofs.lk.base.OccSequent
+import at.logic.gapt.proofs.lkOld.base.OccSequent
 import java.awt.RenderingHints
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
 class DrawProof[T](

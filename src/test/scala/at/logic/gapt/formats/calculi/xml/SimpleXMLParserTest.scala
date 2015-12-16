@@ -11,8 +11,8 @@ import scala.xml._
 
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld._
+import at.logic.gapt.proofs.lkOld.base._
 
 class SimpleXMLParserTest extends Specification {
   "parse correctly a simple tree" in {

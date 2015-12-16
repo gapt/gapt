@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lksk
 
-import at.logic.gapt.proofs.lk.base.{ LKProof, NullaryLKProof }
-import at.logic.gapt.proofs.lk.{ BinaryLKProof, UnaryLKProof }
+import at.logic.gapt.proofs.lkOld.base.{ LKProof, NullaryLKProof }
+import at.logic.gapt.proofs.lkOld.{ BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.proofs.RuleTypeA
 
 /**

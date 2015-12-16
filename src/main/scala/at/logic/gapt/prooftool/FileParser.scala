@@ -25,7 +25,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema.dbTRS
 import at.logic.gapt.proofs.{ lkNew, SequentProof, HOLSequent }
 import at.logic.gapt.proofs.ceres_schema.clauseSchema._
-import at.logic.gapt.proofs.lk.base.{ LKProof }
+import at.logic.gapt.proofs.lkOld.base.{ LKProof }
 import at.logic.gapt.proofs.proofs.{ Proof, TreeProof }
 import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.utils.ds.trees.{ BinaryTree, LeafTree, Tree }

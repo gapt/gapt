@@ -2,13 +2,13 @@ package at.logic.gapt.formats.shlk_parsing
 
 import at.logic.gapt.formats.simple.TypeParsers
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.solve
+import at.logic.gapt.proofs.lkOld.solve
 
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import java.io.InputStreamReader
 import at.logic.gapt.expr.schema._
-import at.logic.gapt.proofs.lk.base._
+import at.logic.gapt.proofs.lkOld.base._
 import collection.mutable.{ Map => MMap }
 import at.logic.gapt.proofs.shlk._
 import scala.Tuple4
@@ -16,7 +16,7 @@ import at.logic.gapt.expr.schema.IntZero
 import scala.Tuple2
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import scala.Tuple4
 import at.logic.gapt.expr.schema.IntZero

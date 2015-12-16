@@ -3,8 +3,8 @@ package at.logic.gapt.formats.latex
 import at.logic.gapt.expr.{ FOLConst, LambdaExpression }
 import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.proofs.lk.base._
-import at.logic.gapt.proofs.lk.getTypeInformation
+import at.logic.gapt.proofs.lkOld.base._
+import at.logic.gapt.proofs.lkOld.getTypeInformation
 import at.logic.gapt.proofs.lksk.LabelledOccSequent
 
 // TODO: Martin - please clean this up.

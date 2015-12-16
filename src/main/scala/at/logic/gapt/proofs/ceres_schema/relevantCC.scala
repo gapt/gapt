@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.ceres_schema
 
-import at.logic.gapt.proofs.lk.{ getAncestors, getCutAncestors }
-import at.logic.gapt.proofs.lk.base.{ LKProof, OccSequent }
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkOld.{ getAncestors, getCutAncestors }
+import at.logic.gapt.proofs.lkOld.base.{ LKProof, OccSequent }
+import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr.fol.Utils

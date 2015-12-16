@@ -11,11 +11,11 @@ import java.awt.event.{ ActionEvent, KeyEvent }
 
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionProofToLK, ExpansionSequent }
-import at.logic.gapt.proofs.lk.UnfoldException
-import at.logic.gapt.proofs.lk.base.OccSequent
-import at.logic.gapt.proofs.lk.base.RichOccSequent
+import at.logic.gapt.proofs.lkOld.UnfoldException
+import at.logic.gapt.proofs.lkOld.base.OccSequent
+import at.logic.gapt.proofs.lkOld.base.RichOccSequent
 import at.logic.gapt.proofs.lkNew._
-import at.logic.gapt.proofs.lk
+import at.logic.gapt.proofs.lkOld
 import at.logic.gapt.proofs.{ Sequent, DagProof, SequentProof, HOLSequent }
 import at.logic.gapt.proofs.lksk.eliminateDefinitions
 import at.logic.gapt.proofs.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
@@ -46,7 +46,6 @@ import at.logic.gapt.proofs.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
-import at.logic.gapt.algorithms.rewriting.DefinitionElimination
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
@@ -61,7 +60,7 @@ object ProofToolViewer {
       case p: LKProof             => new LKProofViewer( name, p ).showFrame()
       case p: SequentProof[a, b]  => new SequentProofViewer[a, b]( name, p ).showFrame()
       case es: ExpansionSequent   => new ExpansionSequentViewer( name, es ).showFrame()
-      case p: lk.base.LKProof     => new OldLKViewer( name, p ).showFrame()
+      case p: lkOld.base.LKProof  => new OldLKViewer( name, p ).showFrame()
       case p: TreeProof[_]        => new TreeProofViewer( name, p ).showFrame()
       case p: Proof[_]            => new ResolutionProofViewer( name, p ).showFrame()
       case list: List[HOLSequent] => new ListViewer( name, list ).showFrame()
