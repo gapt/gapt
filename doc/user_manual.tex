@@ -870,10 +870,10 @@ For instance, the example proof \texttt{Pi2Pigeonhole} formalizes
  $\forall x \forall y (x \leq M(x,y) \land M(x,y) \leq y \impl x \leq y)$ in its
  skolemized form.
 
-We can extract the cut formulas using the $cutFormulas$ command and find two
+We can extract the cut formulas using the \texttt{cutFormulas} command and find two
  cuts on quantified formulas: $\forall x \exists y (x \leq y \land f(y) = 0)$
  and $\forall x \exists y (x \leq y \land f(y) = s(0))$. This corresponds to a
- case dinction for each of the two holes which may contain the collision.
+ case distinction for each of the two holes which may contain the collision.
 The actual simplification is performed using the \texttt{CERES} command. Please note
  that the input proof must be regular and have a skolemized end-sequent. The
  commands \texttt{regularize} and \texttt{skolemize} provide this functionality,
