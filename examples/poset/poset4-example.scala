@@ -135,7 +135,7 @@ CutIntroduction.compressToLK(p, hasEquality = false,
   method = new GrammarFindingMethod {
     override def findGrammars(lang: Set[FOLTerm]): Option[VectTratGrammar] = {
       Some(findMinimalVectGrammar(lang, Seq(3),
-        maxSATSolver = new ExternalMaxSATSolver("open-wbo", "-cpu-lim=10000", "-algorithm=1") {
+        maxSATSolver = new ExternalMaxSATSolver("open-wbo", "-cpu-lim=7000", "-algorithm=1") {
           override def runProgram(dimacsInput: String): String = {
             val output = super.runProgram(dimacsInput)
             println(output)
