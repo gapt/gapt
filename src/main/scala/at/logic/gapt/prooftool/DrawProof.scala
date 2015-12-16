@@ -68,15 +68,9 @@ class DrawProof[T](
       main.scrollPane.peer.dispatchEvent( e.peer )
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof.rule match {
-        case WeakeningLeftRuleType | WeakeningRightRuleType =>
+        case WeakeningLeftRuleType | WeakeningRightRuleType | ContractionLeftRuleType | ContractionRightRuleType =>
           drawLines = false
           tx.visible = false
-        case ContractionLeftRuleType | ContractionRightRuleType =>
-          val rule = proof.asInstanceOf[UnaryTreeProof[_]].uProof.rule
-          if ( rule != WeakeningLeftRuleType && rule != WeakeningRightRuleType ) drawLines = false
-          val dp = layout.find( _._2 == Position.Center ).get._1.asInstanceOf[DrawProof[T]]
-          dp.tx.visible = false
-          dp.border = Swing.EmptyBorder( 0, 0, 3, 0 )
         case _ =>
       }
     case e: ShowAllRulesOld[_] if e.proof == proof =>

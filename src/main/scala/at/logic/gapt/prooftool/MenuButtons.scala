@@ -18,6 +18,19 @@ object MenuButtons {
   /**
    *
    * @param main An instance of ProoftoolViewer
+   * @return A menu button that calls main's fOpen function.
+   */
+  def openButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Open ..." ) {
+    main.fOpen()
+
+  } ) {
+    mnemonic = Key.O
+    this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_O, ActionEvent.CTRL_MASK ) )
+  }
+
+  /**
+   *
+   * @param main An instance of ProoftoolViewer
    * @return A menu button that calls main's exportToPDF function.
    */
   def exportToPDFButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Export to PDF" ) {

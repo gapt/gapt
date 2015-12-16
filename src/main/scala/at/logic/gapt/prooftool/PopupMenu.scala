@@ -39,11 +39,6 @@ object PopupMenu {
       contents += new MenuItem( Action( "Show Proof Above" ) { main.publisher.publish( ShowProof( tproof ) ) } )
       contents += new MenuItem( Action( "Hide Proof Above" ) { main.publisher.publish( HideProof( tproof ) ) } )
       contents += new Separator
-      contents += new MenuItem( Action( "Split Proof" ) {
-        main.db.addProofs( ( proof.name, proof ) :: Nil )
-        //main.loadProof( proof )
-        main.publisher.publish( ProofDbChanged )
-      } )
     }
     popupMenu.show( component, x, y )
   }

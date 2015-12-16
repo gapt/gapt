@@ -21,7 +21,7 @@ import scala.swing.event.Key
 class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer[List[HOLSequent]]( name, list ) with Savable[List[HOLSequent]] {
   override type MainComponentType = DrawList
   override def createMainComponent( fSize: Int ) = new DrawList( this, list, fSize )
-  override def fileMenuContents = Seq( saveAsButton, new Separator() ) ++ super.fileMenuContents
+  override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
 
   def fSave( name: String, list: List[HOLSequent] ) {
     chooser.fileFilter = chooser.acceptAllFileFilter

@@ -98,7 +98,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
  */
 class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof ) with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
-  override def fileMenuContents = Seq( saveAsButton, new Separator() ) ++ super.fileMenuContents
+  override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton, sunburstViewButton )
 
   /**

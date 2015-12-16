@@ -24,7 +24,7 @@ class TreeProofViewer[T]( name: String, proof: TreeProof[T] ) extends ProofToolV
 
 class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name, proof ) with Savable[LKProof] with ContainsLKProof {
 
-  override def fileMenuContents = Seq( saveAsButton, new Separator() ) ++ super.fileMenuContents
+  override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton )
 
   def fSave( name: String, proof: LKProof ) {
