@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.lkNew
+package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr.{ StringSymbol, _ }

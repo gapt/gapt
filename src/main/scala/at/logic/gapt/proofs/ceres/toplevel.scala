@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.lk.LKProof
 
 /**
  * Created by marty on 10/27/15.

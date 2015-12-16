@@ -3,7 +3,7 @@ import at.logic.gapt.formats.hoare.ProgramParser
 import at.logic.gapt.proofs.expansionTrees.{compressQuantifiers, METWeakQuantifier}
 import at.logic.gapt.proofs.hoare.{ForLoop, SimpleLoopProblem}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
-import at.logic.gapt.proofs.lkNew.LKToExpansionProof
+import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9
 
 val p = ProgramParser.parseProgram("for y < z do x := s(x) od")

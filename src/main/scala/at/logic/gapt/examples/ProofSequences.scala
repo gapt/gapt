@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.expr.hol.{ univclosure, instantiate }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 
 trait ProofSequence {
   def apply( n: Int ): LKProof

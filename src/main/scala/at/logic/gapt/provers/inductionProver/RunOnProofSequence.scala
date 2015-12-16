@@ -4,7 +4,7 @@ import at.logic.gapt.examples._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.expr.{ Eq, FOLConst, FOLFunction }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.provers.inductionProver.SimpleInductionProof._

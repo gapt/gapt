@@ -4,7 +4,7 @@ import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.expr.{ HOLAtomConst, HOLFormula }
 import at.logic.gapt.formats.dimacs.{ DIMACSEncoding, DIMACS }
 import at.logic.gapt.models.{ MapBasedInterpretation, Interpretation }
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 

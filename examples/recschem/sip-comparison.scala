@@ -3,7 +3,7 @@ import at.logic.gapt.expr.fol.{Numeral, FOLSubstitution}
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.grammars.{minimizeSipGrammar, stableSipGrammar, minimizeRecursionScheme, SipRecSchem}
-import at.logic.gapt.proofs.lkNew.LKToExpansionProof
+import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.{Suc, Sequent, Ant}
 import at.logic.gapt.proofs.expansionTrees.{FOLInstanceTermEncoding, toShallow, ExpansionSequent}
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver

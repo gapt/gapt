@@ -3,8 +3,8 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkOld.base._
-import at.logic.gapt.proofs.lkNew.LKProof
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.occurrences._
 
 /**

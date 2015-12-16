@@ -8,7 +8,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.expr.hol.{ containsStrongQuantifier, HOLPosition }
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.ceres.Pickrule._
 
 case class ProjectionException( message: String, original_proof: LKProof, new_proofs: List[LKProof], nested: Exception )

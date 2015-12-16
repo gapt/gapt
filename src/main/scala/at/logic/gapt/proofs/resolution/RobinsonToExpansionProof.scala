@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol.structuralCNF.{ ProjectionFromEndSequent, Definiti
 import at.logic.gapt.expr.hol.{ CNFn, univclosure }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lkNew.{ DefinitionElimination, LKToExpansionProof }
+import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
 
 import scala.collection.mutable
 

@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.lkNew
+package at.logic.gapt.proofs.lk
 
 /**
  * Created by sebastian on 8/15/15.

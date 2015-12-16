@@ -2,7 +2,7 @@ package at.logic.gapt.formats.llkNew
 
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 
 object LatexLLKExporter extends LLKExporter( true )
 object LLKExporter extends LLKExporter( false )

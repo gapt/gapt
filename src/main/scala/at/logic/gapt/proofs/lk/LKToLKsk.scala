@@ -1,11 +1,11 @@
-package at.logic.gapt.proofs.lkNew
+package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, SkolemSymbolFactory }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkskNew.LKskProof._
 import at.logic.gapt.proofs.lkskNew
-import at.logic.gapt.proofs.lkNew
+import at.logic.gapt.proofs.lk
 import at.logic.gapt.proofs.lkskNew._
 
 class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) {
@@ -17,7 +17,7 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) {
       case ReflexivityAxiom( term ) => Reflexivity( labels( Suc( 0 ) ), term )
       case TopAxiom                 => TopRight( labels( Suc( 0 ) ) )
       case BottomAxiom              => BottomLeft( labels( Ant( 0 ) ) )
-      case lkNew.TheoryAxiom( seq ) => lkskNew.TheoryAxiom( labels zip seq )
+      case lk.TheoryAxiom( seq )    => lkskNew.TheoryAxiom( labels zip seq )
 
       case p @ ContractionLeftRule( subProof, aux1: Ant, aux2: Ant ) =>
         ContractionLeft( apply( subProof, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ) ), aux1, aux2 )

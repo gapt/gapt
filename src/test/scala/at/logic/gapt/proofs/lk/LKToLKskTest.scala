@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.lkNew
+package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr.{ All, FOLVar, FOLAtom }

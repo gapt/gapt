@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.{ Rule, RecursionScheme }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lkNew.{ LKToExpansionProof, LKProof }
+import at.logic.gapt.proofs.lk.{ LKToExpansionProof, LKProof }
 
 /**
  * Extracts the instances used in a prenex FOL Pi_1 expansion tree / Sigma_1 expansion sequent.

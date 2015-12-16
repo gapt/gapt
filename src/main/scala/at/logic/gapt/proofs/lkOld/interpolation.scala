@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.lkOld._
-import at.logic.gapt.proofs.lkNew.lkNew2Old
+import at.logic.gapt.proofs.lk.lkNew2Old
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.expr.To

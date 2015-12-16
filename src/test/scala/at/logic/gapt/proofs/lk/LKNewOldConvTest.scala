@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.lkNew
+package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs.{ SequentMatchers, HOLSequent }
 import at.logic.gapt.provers.prover9.Prover9Importer

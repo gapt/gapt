@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.utils.logging.Logger
-import at.logic.gapt.proofs.{ HOLSequent, resolution, lkNew }
+import at.logic.gapt.proofs.{ HOLSequent, resolution, lk }
 
 import scala.collection.mutable
 
@@ -83,8 +83,8 @@ object TermReplacement {
     f( proof )
   }
 
-  def apply( proof: lkNew.LKProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): lkNew.LKProof = {
-    import lkNew._
+  def apply( proof: lk.LKProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): lk.LKProof = {
+    import lk._
 
     def f( p: LKProof ): LKProof = p match {
       case TopAxiom => TopAxiom

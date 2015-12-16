@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lkOld
 
 import at.logic.gapt.examples.LinearExampleProof
-import at.logic.gapt.proofs.lkNew.lkNew2Old
+import at.logic.gapt.proofs.lk.lkNew2Old
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils

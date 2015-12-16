@@ -20,9 +20,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lkOld._
-import at.logic.gapt.proofs.lkNew
+import at.logic.gapt.proofs.lk
 import at.logic.gapt.proofs.lkOld.base.LKProof
-import at.logic.gapt.proofs.lkNew.lkOld2New
+import at.logic.gapt.proofs.lk.lkOld2New
 import at.logic.gapt.proofs.occurrences._
 
 import scala.Predef._
@@ -31,12 +31,12 @@ import scala.xml._
 
 class ProofDatabase(
     val Definitions:  Map[LambdaExpression, LambdaExpression],
-    val proofs:       List[( String, lkNew.LKProof )],
+    val proofs:       List[( String, lk.LKProof )],
     val axioms:       List[HOLSequent],
     val sequentLists: List[Tuple2[String, List[HOLSequent]]]
 ) {
   //Does a proof lookup by name
-  def proof( name: String ): lkNew.LKProof = {
+  def proof( name: String ): lk.LKProof = {
     val ps = proofs.filter( _._1 == name )
     require( ps.nonEmpty, "Could not find proof " + name + " in proof database!" )
     if ( ps.size > 1 ) println( "Warning: Proof " + name + " occurs more than once in proof database!" )

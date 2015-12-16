@@ -2,7 +2,7 @@ package at.logic.gapt.prooftool
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.SequentProof
-import at.logic.gapt.proofs.lkNew.{ ExistsRightRule, ForallLeftRule }
+import at.logic.gapt.proofs.lk.{ ExistsRightRule, ForallLeftRule }
 
 import scala.swing._
 import java.awt.Color

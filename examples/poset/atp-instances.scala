@@ -3,7 +3,7 @@ import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.grammars.{findMinimalVectGrammar, VectTratGrammar}
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
 import at.logic.gapt.cutintro.{ReforestMethod, GrammarFindingMethod, MaxSATMethod, CutIntroduction}
 import at.logic.gapt.provers.eprover.EProver

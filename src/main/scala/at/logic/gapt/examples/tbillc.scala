@@ -3,7 +3,7 @@ package at.logic.gapt.examples
 import at.logic.gapt.expr.FOLAtom
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Suc, Ant }
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 
 /**
  * This is an example used in the talk[1] at TbiLLC 2013. It generates a (cut-free) LK proof where the extracted

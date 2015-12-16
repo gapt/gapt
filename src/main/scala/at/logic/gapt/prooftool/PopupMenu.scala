@@ -8,7 +8,7 @@ package at.logic.gapt.prooftool
  */
 
 import at.logic.gapt.proofs.DagProof
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.lk.LKProof
 
 import swing.SequentialContainer.Wrapper
 import javax.swing.JPopupMenu

@@ -6,7 +6,7 @@ import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.lk.LKProof
 
 abstract class ResolutionProver extends OneShotProver {
 

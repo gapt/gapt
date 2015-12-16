@@ -2,8 +2,8 @@ package at.logic.gapt.formats.xml
 
 import at.logic.gapt.formats.ExportingException
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lkNew.lkNew2Old
-import at.logic.gapt.proofs.{ lkNew, HOLSequent }
+import at.logic.gapt.proofs.lk.lkNew2Old
+import at.logic.gapt.proofs.{ lk, HOLSequent }
 import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lkOld.base._
 
@@ -12,7 +12,7 @@ import scala.xml.dtd._
 
 object XMLExporter {
 
-  def apply( path: String, proofName: String, proof: lkNew.LKProof ): Unit =
+  def apply( path: String, proofName: String, proof: lk.LKProof ): Unit =
     apply( path, new ProofDatabase(
       Map[LambdaExpression, LambdaExpression](),
       List( ( proofName, proof ) ),

@@ -9,7 +9,7 @@ import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import java.io._
 import at.logic.gapt.examples._
 import at.logic.gapt.formats.veriT.VeriTParser
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, simplifyResolutionProof, numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO

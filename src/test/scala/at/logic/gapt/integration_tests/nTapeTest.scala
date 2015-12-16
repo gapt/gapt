@@ -6,7 +6,7 @@ import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._

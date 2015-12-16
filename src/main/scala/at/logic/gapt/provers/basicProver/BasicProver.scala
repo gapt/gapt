@@ -2,7 +2,7 @@
 package at.logic.gapt.provers.basicProver
 
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 

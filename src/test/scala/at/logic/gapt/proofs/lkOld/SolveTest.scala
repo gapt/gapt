@@ -7,7 +7,7 @@ import at.logic.gapt.expr.schema._
 import at.logic.gapt.proofs.{ SequentMatchers, Sequent, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkOld.base._
-import at.logic.gapt.proofs.lkNew.{ BottomAxiom, TopAxiom }
+import at.logic.gapt.proofs.lk.{ BottomAxiom, TopAxiom }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import org.specs2.mutable._
 

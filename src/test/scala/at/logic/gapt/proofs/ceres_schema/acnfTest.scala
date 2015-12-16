@@ -4,7 +4,7 @@ import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lkOld.applySubstitution
 import at.logic.gapt.proofs.lkOld.base._
-import at.logic.gapt.proofs.lkNew.lkNew2Old
+import at.logic.gapt.proofs.lk.lkNew2Old
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution.RobinsonToLK
 import at.logic.gapt.expr.fol.FOLSubstitution

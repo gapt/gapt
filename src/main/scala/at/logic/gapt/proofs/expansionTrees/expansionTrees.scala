@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.expansionTrees
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ NaiveIncompleteMatchingAlgorithm, containsQuantifier, HOLPosition }
-import at.logic.gapt.proofs.lkNew.solve
+import at.logic.gapt.proofs.lk.solve
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.utils.ds.trees._
 import scala.annotation.tailrec
@@ -431,7 +431,7 @@ object ExpansionProofToLK {
    * @param ep an expansion sequent whose deep sequent is a propositional tautology
    * @return an LKProof of the shallow sequent of ep
    */
-  def apply( ep: ExpansionSequent ): at.logic.gapt.proofs.lkNew.LKProof = solve.expansionProofToLKProof( ep ).get
+  def apply( ep: ExpansionSequent ): at.logic.gapt.proofs.lk.LKProof = solve.expansionProofToLKProof( ep ).get
 }
 
 /**

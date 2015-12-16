@@ -6,7 +6,7 @@ import at.logic.gapt.examples.proofSequences
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.proofs.expansionTrees.{ toShallow, FOLInstanceTermEncoding, ExpansionSequent }
-import at.logic.gapt.proofs.lkNew.LKToExpansionProof
+import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.executionModels.timeout.withTimeout
 import at.logic.gapt.utils.glob

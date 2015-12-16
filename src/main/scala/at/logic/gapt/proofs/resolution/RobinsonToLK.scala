@@ -4,7 +4,7 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.expr.{ HOLAtomConst, LambdaExpression }
 import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable

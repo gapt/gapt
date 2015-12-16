@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.reduceHolToFol
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.RecursionScheme
-import at.logic.gapt.proofs.lkNew.skolemize
+import at.logic.gapt.proofs.lk.skolemize
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, forgetfulPropParam }
 import at.logic.gapt.provers.smtlib.Z3

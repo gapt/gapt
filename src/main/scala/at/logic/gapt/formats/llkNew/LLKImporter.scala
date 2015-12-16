@@ -8,7 +8,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.utils.logging.Logger
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import org.slf4j.LoggerFactory
 import scala.annotation.tailrec
 import at.logic.gapt.proofs.lkOld.EquationVerifier._
@@ -798,7 +798,7 @@ trait TokenToLKConverter extends Logger {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val rightproof :: leftproof :: stack = current_proof
 
-    val auxsequent = ( leftproof.endSequent compose rightproof.endSequent ) diff fs
+    val auxsequent = ( leftproof.endSequent ++ rightproof.endSequent ) diff fs
     require( auxsequent.antecedent.size == 1 && auxsequent.succedent.size == 1, "Need exactly one formula in the antecedent and in the succedent of the parents!" + f( auxsequent ) )
     require( auxsequent.antecedent( 0 ) == auxsequent.succedent( 0 ), "Cut formula right (" + auxsequent.antecedent( 0 ) + ") is not equal to cut formula left (" + auxsequent.succedent( 0 ) + ")" )
     val cutformula = auxsequent.antecedent( 0 )
@@ -888,7 +888,7 @@ trait TokenToLKConverter extends Logger {
     val Eq( s, t ) = auxf
 
     val auxsequent = oldproof.endSequent diff fs
-    val mainsequent = fs diff ( oldproof.endSequent compose axioms_prove_sequent )
+    val mainsequent = fs diff ( oldproof.endSequent ++ axioms_prove_sequent )
     require( mainsequent.formulas.size == 1, "Exactly one main formula required, not " + f( mainsequent ) )
     require( auxsequent.formulas.size == 1, "Excatly one auxiliary formula needed in parent, not " + f( auxsequent ) )
     val newproof = auxsequent match {
@@ -923,7 +923,7 @@ trait TokenToLKConverter extends Logger {
     //require(auxterm.isDefined, "Error creating an stantiate axiom rule: Need instantiation annotation!")
     //val auxf = c(LLKFormulaParser.ASTtoHOL(naming, auxterm.get))
     val auxsequent = oldproof.endSequent diff fs
-    val mainsequent = fs diff ( oldproof.endSequent compose axioms_prove_sequent )
+    val mainsequent = fs diff ( oldproof.endSequent ++ axioms_prove_sequent )
 
     require(
       mainsequent.formulas.size == 0,
@@ -1177,7 +1177,7 @@ trait TokenToLKConverter extends Logger {
    *                   sequent with auxiliary and uncontracted formulas,
    *                   context sequent) */
   def filterContext( fs_old1: HOLSequent, fs_old2: HOLSequent, fs_new: HOLSequent ): ( HOLSequent, HOLSequent, HOLSequent ) =
-    filterContext( fs_old1 compose fs_old2, fs_new )
+    filterContext( fs_old1 ++ fs_old2, fs_new )
 
   /* removes univarsal quantifiers from f and returns the list of quantified variables together
    * with the stripped formula */
@@ -1232,7 +1232,7 @@ trait TokenToLKConverter extends Logger {
         ( c( sub( axiom ) ), ForallLeftRule( uproof, c( sub( axiom ) ), sub.map( v ) ) )
       case f if normalize( sub( f ) ) syntaxEquals instance =>
         ( instance, axiomproof )
-      case _ => throw new Exception( "Implementation error! Could not decompose " + f( axiom ) + " subterm=" + sub( axiom ) + " need=" + f( instance ) )
+      case _ => throw new Exception( "Implementation error! Could not de++ " + f( axiom ) + " subterm=" + sub( axiom ) + " need=" + f( instance ) )
     }
   }
 }

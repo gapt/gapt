@@ -14,7 +14,7 @@ import at.logic.gapt.proofs.expansionTrees.{ ExpansionProofToLK, ExpansionSequen
 import at.logic.gapt.proofs.lkOld.UnfoldException
 import at.logic.gapt.proofs.lkOld.base.OccSequent
 import at.logic.gapt.proofs.lkOld.base.RichOccSequent
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lkOld
 import at.logic.gapt.proofs.{ Sequent, DagProof, SequentProof, HOLSequent }
 import at.logic.gapt.proofs.lksk.eliminateDefinitions

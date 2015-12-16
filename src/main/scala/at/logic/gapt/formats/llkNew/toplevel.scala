@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.llkNew
 
 import at.logic.gapt.expr.{ LambdaExpression, HOLFormula }
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.lk.LKProof
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 
 /**

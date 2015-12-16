@@ -7,7 +7,7 @@ import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.xml.XMLExporter
 import at.logic.gapt.proofs.lkOld.base.LKProof
 import at.logic.gapt.proofs.lkOld.{ getAuxFormulas, getCutAncestors }
-import at.logic.gapt.proofs.lkNew.lkOld2New
+import at.logic.gapt.proofs.lk.lkOld2New
 import at.logic.gapt.proofs.proofs.TreeProof
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 

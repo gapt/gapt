@@ -9,7 +9,7 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lkNew.{ lkNew2Old, LKProof }
+import at.logic.gapt.proofs.lk.{ lkNew2Old, LKProof }
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 
 import scala.swing.{ Separator, Menu, FileChooser, Action }

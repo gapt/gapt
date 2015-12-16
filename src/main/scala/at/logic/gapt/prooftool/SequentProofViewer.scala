@@ -13,7 +13,7 @@ import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lkNew.{ lkNew2Old, LKToExpansionProof, LKProof }
+import at.logic.gapt.proofs.lk.{ lkNew2Old, LKToExpansionProof, LKProof }
 
 import scala.swing._
 import scala.swing.event.Key

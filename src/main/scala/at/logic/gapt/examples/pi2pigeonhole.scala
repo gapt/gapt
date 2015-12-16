@@ -3,7 +3,7 @@ package at.logic.gapt.examples
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.prover9.Prover9
 
 object Pi2Pigeonhole {

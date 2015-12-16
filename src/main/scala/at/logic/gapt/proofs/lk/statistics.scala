@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.lkNew
+package at.logic.gapt.proofs.lk
 
 object quantRulesNumber {
   def apply( p: LKProof ): Int =

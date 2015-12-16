@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.formats.llkNew._
 import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.lk.LKProof
 import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 

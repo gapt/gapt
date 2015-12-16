@@ -5,7 +5,7 @@ import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.proofs.ceres_omega._
 import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent }
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import org.specs2.mutable._
 
 import at.logic.gapt.proofs.lksk._

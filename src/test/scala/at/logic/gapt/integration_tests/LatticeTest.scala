@@ -10,7 +10,7 @@ import at.logic.gapt.formats.xml.XMLParser._
 import at.logic.gapt.proofs.{ SequentMatchers, HOLClause }
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.lkOld.{ deleteTautologies }
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.prover9._
 import java.io.File.separator
 import org.specs2.mutable._

@@ -1,6 +1,6 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lkskNew.{ WeakeningRight, WeakeningLeft }
 import at.logic.gapt.proofs.{ SequentProof, DagProof, HOLSequent }
 

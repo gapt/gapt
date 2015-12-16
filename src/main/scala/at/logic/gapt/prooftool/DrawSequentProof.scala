@@ -5,7 +5,7 @@ import java.awt.{ Color, RenderingHints }
 import java.awt.event.{ MouseEvent, MouseMotionListener }
 
 import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ SequentIndex, SequentProof }
 
 import scala.swing.BorderPanel._

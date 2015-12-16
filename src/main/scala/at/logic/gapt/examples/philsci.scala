@@ -3,7 +3,7 @@ package at.logic.gapt.examples
 import at.logic.gapt.expr.FOLAtom
 import at.logic.gapt.proofs.{ Suc, Ant }
 import at.logic.gapt.proofs.ceres.Projections
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 
 object philsci {
   def apply(): ( LKProof, LKProof ) = {

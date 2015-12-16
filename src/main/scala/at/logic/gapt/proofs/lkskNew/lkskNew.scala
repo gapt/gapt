@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import LKskProof._
-import at.logic.gapt.proofs.lkNew.LKRuleCreationException
+import at.logic.gapt.proofs.lk.LKRuleCreationException
 
 import scala.collection.mutable
 

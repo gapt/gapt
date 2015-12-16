@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.{ Sequent, Suc, Ant }
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionSequent }
-import at.logic.gapt.proofs.lkNew.LKProver
+import at.logic.gapt.proofs.lk.LKProver
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import SimpleInductionProof._
 import at.logic.gapt.provers.sat.Sat4j
