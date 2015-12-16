@@ -848,9 +848,65 @@ A window then opens that displays the end-sequent of \cli{p}, i.e.\ the shallow
 sequent of \cli{E}.  You can then selectively expand quantifiers by clicking on
 them, see~\cite{Hetzl13Understanding} for a detailed description.
 
-\subsection{Cut-elimination by resolution (CERES)}
+\subsection{Cut-elimination by resolution (CERES)}\label{sec:ceres}
 
-\fxnote{Short example for first and higher-order CERES.}
+Cut-elimination by resolution (CERES) is a method which simplifies the cut
+ formulas in a proof: a proof with arbitrary cut-formulas is transformed
+ into a proof with atomic cuts. Since Expansion Proofs can be extracted
+ directly from a proof with quantifier-free cut-formulas, we can skip
+ the elimination of atomic cuts which has a worst time complexity
+ exponential in the size of the proof.
+
+For instance, the example proof \texttt{Pi2Pigeonhole} formalizes
+ the fact that given an aviary with two holes and an infinite number
+ of pigeons, one hole has to house at least two pigeons. The pigeons and
+ the holes are represented by numerals in unary notation with zero $0$ and
+ successor $s$. The function symbol $f$ maps pigeons to holes, which allows us
+ to state the mapping of pigeons to holes as
+ $\forall x (f(x) = 0 \lor f(x) = s(0))$. The actual statement to prove is then
+ $\exists x \exists y (s(x) \leq y \land f(x) = f(y))$. In order to prove it
+ we also need to axiomatize $\leq$ with
+ $\forall x \forall y (s(x) \leq y \impl x \leq y)$ and transitivity
+ $\forall x \forall y (x \leq M(x,y) \land M(x,y) \leq y \impl x \leq y)$ in its
+ skolemized form.
+
+We can extract the cut formulas using the $cutFormulas$ command and find two
+ cuts on quantified formulas: $\forall x \exists y (x \leq y \land f(y) = 0)$
+ and $\forall x \exists y (x \leq y \land f(y) = s(0))$. This corresponds to a
+ case dinction for each of the two holes which may contain the collision.
+The actual simplification is performed using the \texttt{CERES} command. Please note
+ that the input proof must be regular and have a skolemized end-sequent. The
+ commands \texttt{regularize} and \texttt{skolemize} provide this functionality,
+ if necessary.
+
+\begin{clilisting}[CERES.isInstalled]
+gapt> //view the input proof in prooftool
+
+gapt> prooftool(Pi2Pigeonhole())
+
+gapt> //view the cut formulas in prooftool
+
+gapt> prooftool( cutFormulas(Pi2Pigeonhole()) )
+
+gapt> //view the cut formulas in prooftool
+
+gapt> val acnf = CERES(Pi2Pigeonhole())
+acnf: at.logic.gapt.proofs.lkNew.LKProof =
+[p486] ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.∀y.(<=(s(x),y)⊃<=(x,y)) :- ∃x.∃y.(<=(s(x),y)∧f(x)=f(y))    (ContractionRightRule(p485, Suc(1), Suc(0)))
+[p485] ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.∀y.(<=(s(x),y)⊃<=(x,y)) :- ∃x.∃y.(<=(s(x),y)∧f(x)=f(y)), ∃x.∃y.(<=(s(x),y)∧f(x)=f(y))    (ContractionLeftRule(p484, Ant(3), Ant(2)))
+[p484] ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.∀y.(<=(s(x),y)⊃<=(x,y)), ∀x.(f(x)=0∨f(x)=s(0)), ∀x.(f(x)=0∨f(x)=s(0)) :- ∃x.∃y.(<=(s(x),y)∧f(x)=f(y)), ∃x.∃y.(<=(s(x),y)∧f(x)=f(y))    (ContractionLeftRule(p483, Ant(4), Ant(2)))
+[p483] ∀x.∀y.(<=(s(x),y)⊃<=(x,y)), ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))) :- ∃x.∃...
+gapt> //view the proof with atomic cuts in prooftool
+
+gapt> prooftool(acnf)
+
+gapt> //extract and view the expansion proof
+
+gapt> val et = LKToExpansionProof(CERES(Pi2Pigeonhole()))
+et: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.(f(x)=0∨f(x)=s(0)), List((Atom(f(M(v100,s(M(v100,v101))))=0)∨Atom(f(M(v100,s(M(v100,v101))))=s(0)),M(v100,s(M(v100,v101)))), (Atom(f(M(v100,v101))=0)∨Atom(f(M(v100,v101))=s(0)),M(v100,v101)), (Atom(f(M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101))))=0)∨Atom(f(M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101))))=s(0)),M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101)))), (Atom(f(M(v100,s(M(s(M(v100,v101)),v1))))=0)∨Atom(f(M(v100,s(M(s(M(v100,v101)),v1))))=s(0)),M(v100,s(M(s(M(v100,v101)),v1)))), (Atom(f(M(s(M(v100,v101)),v1))=0)∨Atom(f(M(s(M(v100,v101)),v1))=s(0)),M(s(M(v100,v101)),v1)), (Atom(f(M(s(M(v100,s(M(s(M(v100,v101)),v1)))),s(M(s(M(v100,v101)),v1))))=0)∨Atom(f(M(s(M(v100,s(M(s(M(v100,v101)),v1)))),s(M(s(M(v100,v101)),...
+gapt> prooftool(et)
+
+\end{clilisting}
 
 \subsection{Cut-introduction}\label{sec.cut-introduction}
 

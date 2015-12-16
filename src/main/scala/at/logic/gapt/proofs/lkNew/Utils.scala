@@ -27,6 +27,15 @@ object freeVariablesLK {
   }
 }
 
+object cutFormulas {
+  def apply( proof: LKProof ) = proof.treeLike.postOrder.flatMap(
+    {
+      case CutRule( p, o, _, _ ) => List( p.conclusion( o ) )
+      case _                     => List()
+    }
+  ).toSet
+}
+
 object isRegular {
   /**
    * Tests for regularity by checking whether all eigenvariables are distinct.
