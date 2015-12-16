@@ -170,7 +170,7 @@ case class ImpRight( subProof: LKskProof, aux1: Ant, aux2: Suc ) extends UnaryRu
   def auxIndices = Seq( Seq( aux1, aux2 ) )
 }
 
-case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRight: Boolean, pos: LambdaPosition ) extends UnaryRule with SameLabel {
+case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRight: Boolean, pos: Seq[LambdaPosition] ) extends UnaryRule with SameLabel {
   require( eq != aux )
 
   lazy val ( s, t ) = subProof.formulas( eq ) match {

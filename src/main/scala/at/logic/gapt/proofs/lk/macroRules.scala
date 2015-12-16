@@ -183,10 +183,10 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
    * @param subProof The subproof.
    * @param equation Index of the equation or the equation itself.
    * @param auxFormula Index of the aux formula or the formula itself.
-   * @param pos The position of the term to be replaced within the aux formula.
+   * @param pos The positions of the term to be replaced within the aux formula.
    * @return
    */
-  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: HOLPosition ): EqualityLeftRule = withOccConnector( subProof, equation, auxFormula, pos )._1
+  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): EqualityLeftRule = withOccConnector( subProof, equation, auxFormula, pos )._1
 
   /**
    * Like EqualityLeftRule, but the equation need not exist in the premise. If it doesn't, it will automatically be added via weakening.
@@ -195,10 +195,10 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
    * @param subProof The subproof.
    * @param equation Index of the equation or the equation itself.
    * @param auxFormula Index of the aux formula or the formula itself.
-   * @param pos The position of the term to be replaced within the aux formula.
+   * @param pos The positions of the term to be replaced within the aux formula.
    * @return An LKProof and an OccConnector connecting its end sequent with the end sequent of subProof.
    */
-  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: HOLPosition ): ( EqualityLeftRule, OccConnector[HOLFormula] ) = {
+  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): ( EqualityLeftRule, OccConnector[HOLFormula] ) = {
     val ( _, indices, _, _ ) = findIndicesOrFormulasInPremise( subProof.endSequent )( Seq( equation, auxFormula ), Seq() )
 
     ( indices( 0 ), indices( 1 ) ) match {
@@ -228,10 +228,10 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
    * @param subProof The subproof.
    * @param equation Index of the equation or the equation itself.
    * @param auxFormula Index of the aux formula or the formula itself.
-   * @param pos The position of the term to be replaced within the aux formula.
+   * @param pos The positions of the term to be replaced within the aux formula.
    * @return
    */
-  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: HOLPosition ): EqualityRightRule = withOccConnector( subProof, equation, auxFormula, pos )._1
+  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): EqualityRightRule = withOccConnector( subProof, equation, auxFormula, pos )._1
 
   /**
    * Like EqualityRightRule, but the equation need not exist in the premise. If it doesn't, it will automatically be added via weakening.
@@ -240,10 +240,10 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
    * @param subProof The subproof.
    * @param equation Index of the equation or the equation itself.
    * @param auxFormula Index of the aux formula or the formula itself.
-   * @param pos The position of the term to be replaced within the aux formula.
+   * @param pos The positions of the term to be replaced within the aux formula.
    * @return An LKProof and an OccConnector connecting its end sequent with the end sequent of subProof.
    */
-  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: HOLPosition ): ( EqualityRightRule, OccConnector[HOLFormula] ) = {
+  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): ( EqualityRightRule, OccConnector[HOLFormula] ) = {
     val ( _, indicesAnt, _, indicesSuc ) = findIndicesOrFormulasInPremise( subProof.endSequent )( Seq( equation ), Seq( auxFormula ) )
 
     ( indicesAnt( 0 ), indicesSuc( 0 ) ) match {
@@ -1052,7 +1052,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
    * @param eq The index of the equation or the equation itself.
    * @param rightSubProof The right subproof π2.
    * @param aux The index of the aux formula or the aux formula itself.
-   * @param pos The position of the term to be replaced within A.
+   * @param pos The positions of the term to be replaced within A.
    * @return
    */
   def apply(
@@ -1060,7 +1060,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    pos:           HOLPosition
+    pos:           Seq[HOLPosition]
   ): LKProof = {
 
     val eqFormula = eq match {
@@ -1110,7 +1110,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
    * @param eq The index of the equation or the equation itself.
    * @param rightSubProof The right subproof π2.
    * @param aux The index of the aux formula or the aux formula itself.
-   * @param pos The position of the term to be replaced within A.
+   * @param pos The positions of the term to be replaced within A.
    * @return
    */
   def apply(
@@ -1118,8 +1118,8 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    pos:           FOLPosition
-  ): LKProof = {
+    pos:           Seq[FOLPosition]
+  )( implicit dummyImplicit: DummyImplicit ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
@@ -1230,7 +1230,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
    * @param eq The index of the equation or the equation itself.
    * @param rightSubProof The right subproof π2.
    * @param aux The index of the aux formula or the aux formula itself.
-   * @param pos The position of the term to be replaced within A.
+   * @param pos The positions of the term to be replaced within A.
    * @return
    */
   def apply(
@@ -1238,7 +1238,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    pos:           HOLPosition
+    pos:           Seq[HOLPosition]
   ): LKProof = {
 
     val eqFormula = eq match {
@@ -1282,7 +1282,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
    * @param eq The index of the equation or the equation itself.
    * @param rightSubProof The right subproof π2.
    * @param aux The index of the aux formula or the aux formula itself.
-   * @param pos The position of the term to be replaced within A.
+   * @param pos The positions of the term to be replaced within A.
    * @return
    */
   def apply(
@@ -1290,8 +1290,8 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    pos:           FOLPosition
-  ): LKProof = {
+    pos:           Seq[FOLPosition]
+  )( implicit dummyImplicit: DummyImplicit ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
