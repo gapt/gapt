@@ -83,8 +83,8 @@ val lhs = (ProofBuilder
   qed)
 
 val conc =
-  And.nAry(f(a, b) === a, f(b, c) === b, f(c, d) === c, f(d, a) === d) -->
-  And.nAry(a === b, b === c, c === d)
+  (And.nAry(f(a, b) === a, f(b, c) === b, f(c, d) === c, f(d, a) === d) -->
+  And.nAry(a === b, b === c, c === d))
 
 val rhs = (ProofBuilder
   c solve.solvePropositional(
