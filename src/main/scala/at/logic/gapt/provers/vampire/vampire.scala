@@ -21,7 +21,10 @@ class Vampire extends ResolutionProver with ExternalProgram {
       case ( renaming, cnf ) =>
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = toTPTP( labelledCNF )
-        val output = runProcess.withTempInputFile( Seq( "vampire", "-p", "tptp" ), tptpIn ).split( "\n" )
+        val output = runProcess.withTempInputFile( Seq(
+          "vampire", "-p", "tptp",
+          "--splitting", "off"
+        ), tptpIn ).split( "\n" )
         if ( output.head startsWith "Refutation" ) {
           val sketch = TptpProofParser.parse( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) )._2
           RefutationSketchToRobinson( sketch, backgroundProver ) map { resProof =>

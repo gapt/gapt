@@ -1,5 +1,6 @@
 package at.logic.gapt.provers.vampire
 
+import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.resolution.inputClauses
 import at.logic.gapt.proofs.{ HOLClause, Sequent, SequentMatchers, HOLSequent }
@@ -110,6 +111,13 @@ class VampireTest extends Specification with SequentMatchers {
       Vampire.getRobinsonProof( cnf ) must beLike {
         case Some( p ) => inputClauses( p ) must contain( atMost( cnf.toSet[HOLClause] ) )
       }
+    }
+
+    "large cnf" in {
+      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
+      val as = ( 0 to 2 ) map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
+      val endSequent = Sequent() :+ ( All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as ) )
+      Vampire getRobinsonProof endSequent must beSome
     }
   }
 
