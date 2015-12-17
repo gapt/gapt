@@ -396,7 +396,7 @@ object lkOld2New {
       val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
       val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
       val ( eq, aux ) = ( leftSequent indexOf eqOcc, rightSequent indexOf auxOcc )
-      val proofNew = ParamodulationLeftRule( leftSubProofNew, eq, rightSubProofNew, aux, pos.head )
+      val proofNew = ParamodulationLeftRule( leftSubProofNew, eq, rightSubProofNew, aux, pos )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ Sequent( Seq( mainOcc ), Seq() ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) )
 
@@ -404,7 +404,7 @@ object lkOld2New {
       val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
       val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
       val ( eq, aux ) = ( leftSequent indexOf eqOcc, rightSequent indexOf auxOcc )
-      val proofNew = ParamodulationLeftRule( leftSubProofNew, eq, rightSubProofNew, aux, pos.head )
+      val proofNew = ParamodulationLeftRule( leftSubProofNew, eq, rightSubProofNew, aux, pos )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ Sequent( Seq( mainOcc ), Seq() ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) )
 
@@ -412,7 +412,7 @@ object lkOld2New {
       val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
       val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
       val ( eq, aux ) = ( leftSequent indexOf eqOcc, rightSequent indexOf auxOcc )
-      val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, pos.head )
+      val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, pos )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) :+ mainOcc )
 
@@ -420,7 +420,7 @@ object lkOld2New {
       val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
       val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
       val ( eq, aux ) = ( leftSequent indexOf eqOcc, rightSequent indexOf auxOcc )
-      val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, pos.head )
+      val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, pos )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) :+ mainOcc )
 

@@ -1298,10 +1298,6 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
 
   require( positions.nonEmpty, "Replacement at zero positions is not supported at this time." )
 
-  for ( ( p1, p2 ) <- pairs( positions ) ) {
-    require( !p1.isPrefixOf( p2 ), s"Position $p1 is a prefix of position $p2." )
-  }
-
   aux match {
     case Ant( _ ) => validateIndices( premise, Seq( eq, aux ), Seq() )
     case Suc( _ ) => validateIndices( premise, Seq( eq ), Seq( aux ) )
@@ -1461,12 +1457,12 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
           val sToT = tMain intersect sAux
 
           if ( tToS.isEmpty ) {
-            val mainNew = sToT.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, t ) }
+            val mainNew = auxFormula.replace( sToT, t )
             if ( mainNew == mainFormula ) {
               EqualityLeftRule( subProof, eq, aux, sToT )
             } else throw LKRuleCreationException( "Replacement should yield " + mainFormula + " but is " + mainNew + "." )
           } else if ( sToT.isEmpty ) {
-            val mainNew = tToS.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, s ) }
+            val mainNew = auxFormula.replace( tToS, s )
             if ( mainNew == mainFormula ) {
               EqualityLeftRule( subProof, eq, aux, tToS )
             } else throw LKRuleCreationException( "Replacement should yield " + mainFormula + " but is " + mainNew + "." )
@@ -1601,12 +1597,12 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
           val sToT = tMain intersect sAux
 
           if ( tToS.isEmpty ) {
-            val mainNew = sToT.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, t ) }
+            val mainNew = auxFormula.replace( sToT, t )
             if ( mainNew == mainFormula ) {
               EqualityRightRule( subProof, eq, aux, sToT )
             } else throw LKRuleCreationException( "Replacement should yield " + mainFormula + " but is " + mainNew + "." )
           } else if ( sToT.isEmpty ) {
-            val mainNew = tToS.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, s ) }
+            val mainNew = auxFormula.replace( tToS, s )
             if ( mainNew == mainFormula ) {
               EqualityRightRule( subProof, eq, aux, tToS )
             } else throw LKRuleCreationException( "Replacement should yield " + mainFormula + " but is " + mainNew + "." )

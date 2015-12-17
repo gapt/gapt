@@ -510,24 +510,17 @@ class LKTest extends Specification {
     val ax5 = Axiom( List( Qtt ), List( Qtt ) )
 
     "refuse first auxiliary formulas that are not equations" in {
-      EquationLeft1Rule( ax3, ax2, ax3.root.succedent.head, ax2.root.antecedent.head, HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EquationLeft2Rule( ax3, ax2, ax3.root.succedent.head, ax2.root.antecedent.head, HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EquationRight1Rule( ax3, ax2, ax3.root.succedent.head, ax2.root.succedent.head, HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EquationRight2Rule( ax3, ax2, ax3.root.succedent.head, ax2.root.succedent.head, HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
+      EquationLeft1Rule( ax3, ax2, ax3.root.succedent.head, ax2.root.antecedent.head, Seq( HOLPosition( 2 ) ) ) must throwAn[LKRuleCreationException]
+      EquationLeft2Rule( ax3, ax2, ax3.root.succedent.head, ax2.root.antecedent.head, Seq( HOLPosition( 2 ) ) ) must throwAn[LKRuleCreationException]
+      EquationRight1Rule( ax3, ax2, ax3.root.succedent.head, ax2.root.succedent.head, Seq( HOLPosition( 2 ) ) ) must throwAn[LKRuleCreationException]
+      EquationRight2Rule( ax3, ax2, ax3.root.succedent.head, ax2.root.succedent.head, Seq( HOLPosition( 2 ) ) ) must throwAn[LKRuleCreationException]
     }
 
     "refuse when the wrong term is at the target position" in {
-      EquationLeft1Rule( ax1, ax3, ax1.root.succedent.head, ax3.root.antecedent.head, HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EquationLeft2Rule( ax1, ax2, ax1.root.succedent.head, ax2.root.antecedent.head, HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EquationRight1Rule( ax1, ax3, ax1.root.succedent.head, ax3.root.succedent.head, HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-      EquationRight2Rule( ax1, ax2, ax1.root.succedent.head, ax2.root.succedent.head, HOLPosition( 2 ) ) must throwAn[LKRuleCreationException]
-    }
-
-    "refuse when auxiliary formula cannot be transformed to main formula in one step" in {
-      EquationLeft1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, Qtt ) must throwAn[LKRuleCreationException]
-      EquationLeft2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, Qss ) must throwAn[LKRuleCreationException]
-      EquationRight1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, Qtt ) must throwAn[LKRuleCreationException]
-      EquationRight2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, Qss ) must throwAn[LKRuleCreationException]
+      EquationLeft1Rule( ax1, ax3, ax1.root.succedent.head, ax3.root.antecedent.head, Seq( HOLPosition( 2 ) ) ) must throwAn[LKRuleCreationException]
+      EquationLeft2Rule( ax1, ax2, ax1.root.succedent.head, ax2.root.antecedent.head, Seq( HOLPosition( 2 ) ) ) must throwAn[LKRuleCreationException]
+      EquationRight1Rule( ax1, ax3, ax1.root.succedent.head, ax3.root.succedent.head, Seq( HOLPosition( 2 ) ) ) must throwAn[LKRuleCreationException]
+      EquationRight2Rule( ax1, ax2, ax1.root.succedent.head, ax2.root.succedent.head, Seq( HOLPosition( 2 ) ) ) must throwAn[LKRuleCreationException]
     }
 
     "correctly perform replacements" in {
@@ -544,16 +537,16 @@ class LKTest extends Specification {
       val sequent7 = HOLSequent( List( est, Qtt ), List( Qts ) )
       val sequent8 = HOLSequent( List( est, Qtt ), List( Qst ) )
 
-      EquationLeft1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent1 )
+      EquationLeft1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, Seq( HOLPosition( 2 ) ) ).root.toHOLSequent must beEqualTo( sequent1 )
       EquationLeft1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.antecedent.head, Qts ).root.toHOLSequent must beEqualTo( sequent2 )
 
-      EquationLeft2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent3 )
+      EquationLeft2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, Seq( HOLPosition( 2 ) ) ).root.toHOLSequent must beEqualTo( sequent3 )
       EquationLeft2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.antecedent.head, Qst ).root.toHOLSequent must beEqualTo( sequent4 )
 
-      EquationRight1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent5 )
+      EquationRight1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, Seq( HOLPosition( 2 ) ) ).root.toHOLSequent must beEqualTo( sequent5 )
       EquationRight1Rule( ax1, ax4, ax1.root.succedent.head, ax4.root.succedent.head, Qts ).root.toHOLSequent must beEqualTo( sequent6 )
 
-      EquationRight2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent7 )
+      EquationRight2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, Seq( HOLPosition( 2 ) ) ).root.toHOLSequent must beEqualTo( sequent7 )
       EquationRight2Rule( ax1, ax5, ax1.root.succedent.head, ax5.root.succedent.head, Qst ).root.toHOLSequent must beEqualTo( sequent8 )
     }
   }
@@ -644,11 +637,11 @@ class LKTest extends Specification {
       EquationRightRule( ax1, ax2, eq, ax2.root.succedent.head, Pt ).root.toHOLSequent must beEqualTo( sequent1 )
       EquationRightRule( ax1, ax3, eq, ax3.root.succedent.head, Ps ).root.toHOLSequent must beEqualTo( sequent2 )
 
-      EquationLeftRule( ax1, ax3, eq, ax3.root.antecedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent1 )
-      EquationLeftRule( ax1, ax2, eq, ax2.root.antecedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent2 )
+      EquationLeftRule( ax1, ax3, eq, ax3.root.antecedent.head, Seq( HOLPosition( 2 ) ) ).root.toHOLSequent must beEqualTo( sequent1 )
+      EquationLeftRule( ax1, ax2, eq, ax2.root.antecedent.head, Seq( HOLPosition( 2 ) ) ).root.toHOLSequent must beEqualTo( sequent2 )
 
-      EquationRightRule( ax1, ax2, eq, ax2.root.succedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent1 )
-      EquationRightRule( ax1, ax3, eq, ax3.root.succedent.head, HOLPosition( 2 ) ).root.toHOLSequent must beEqualTo( sequent2 )
+      EquationRightRule( ax1, ax2, eq, ax2.root.succedent.head, Seq( HOLPosition( 2 ) ) ).root.toHOLSequent must beEqualTo( sequent1 )
+      EquationRightRule( ax1, ax3, eq, ax3.root.succedent.head, Seq( HOLPosition( 2 ) ) ).root.toHOLSequent must beEqualTo( sequent2 )
     }
 
     "perform correctly if there is only one replacement to be made" in {

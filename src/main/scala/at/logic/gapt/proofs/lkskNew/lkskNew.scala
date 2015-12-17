@@ -176,8 +176,9 @@ case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRigh
   lazy val ( s, t ) = subProof.formulas( eq ) match {
     case Eq( s_, t_ ) => if ( leftToRight ) s_ -> t_ else t_ -> s_
   }
-  require( subProof.formulas( aux )( pos ) == s )
-  lazy val mainFormula = subProof.formulas( aux ).replace( pos, t ).asInstanceOf[HOLFormula]
+  for ( p <- pos )
+    require( subProof.formulas( aux )( p ) == s )
+  lazy val mainFormula = pos.foldLeft( subProof.formulas( aux ) ) { ( acc, p ) => acc.replace( p, t ).asInstanceOf[HOLFormula] }
 
   lazy val newFormulas = if ( aux isAnt ) mainFormula +: Sequent() else Sequent() :+ mainFormula
 

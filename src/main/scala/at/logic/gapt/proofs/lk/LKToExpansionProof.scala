@@ -105,13 +105,13 @@ object LKToExpansionProof {
     case EqualityLeftRule( subProof, eq, aux, pos ) =>
       val ( subTree, subSequent ) = extract( subProof ).focus( aux )
       val repTerm = proof.mainFormulas.head( pos.head )
-      val newTree = merge( pos.foldLeft(subTree){(acc, p) => replaceAtHOLPosition(acc, p, repTerm)})
+      val newTree = merge( pos.foldLeft( subTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) } )
       newTree +: subSequent
 
     case EqualityRightRule( subProof, eq, aux, pos ) =>
       val ( subTree, subSequent ) = extract( subProof ).focus( aux )
       val repTerm = proof.mainFormulas.head( pos.head )
-      val newTree = merge( pos.foldLeft(subTree){(acc, p) => replaceAtHOLPosition(acc, p, repTerm)} )
+      val newTree = merge( pos.foldLeft( subTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) } )
       subSequent :+ newTree
   }
 }

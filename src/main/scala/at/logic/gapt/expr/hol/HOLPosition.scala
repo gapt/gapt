@@ -1,6 +1,7 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
+import at.logic.gapt.utils.dssupport.ListSupport.pairs
 
 object HOLPosition {
   def apply( list: List[Int] ) = new HOLPosition( list )
@@ -44,6 +45,11 @@ object HOLPosition {
    */
   def replace( exp: LambdaExpression, pos: HOLPosition, repTerm: LambdaExpression ): LambdaExpression = LambdaPosition.replace( exp, toLambdaPosition( exp )( pos ), repTerm )
 
+  def replace( exp: LambdaExpression, positions: Seq[HOLPosition], repTerm: LambdaExpression ): LambdaExpression = {
+    for ( ( p1, p2 ) <- pairs( positions ) )
+      require( !p1.isPrefixOf( p2 ), "Positions must not be prefixes of one another." )
+    positions.foldLeft( exp ) { ( acc, p ) => replace( acc, p, repTerm ) }
+  }
   /**
    * Compares to LambdaExpressions and returns the list of outermost positions where they differ.
    *

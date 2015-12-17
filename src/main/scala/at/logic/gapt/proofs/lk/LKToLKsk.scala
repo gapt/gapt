@@ -65,7 +65,7 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) {
         )
 
       case p: EqualityRule =>
-        val lambdaPos = HOLPosition.toLambdaPosition( p.auxFormula )( p.positions )
+        val lambdaPos = p.positions map { HOLPosition.toLambdaPosition( p.auxFormula ) }
         Equality(
           apply( p.subProof, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ) ),
           p.eq.asInstanceOf[Ant], p.aux, p.leftToRight, lambdaPos

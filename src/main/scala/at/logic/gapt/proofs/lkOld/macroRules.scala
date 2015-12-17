@@ -6,7 +6,7 @@ package at.logic.gapt.proofs.lkOld
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ isPrenex, instantiate, HOLPosition }
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.occurrences._
@@ -309,15 +309,17 @@ object EquationLeftRule extends EquationRuleLogger {
    * @param pos A position such that A(pos) = s or A(pos) = t
    * @return A proof ending with either an [[EquationLeft1Rule]] or an [[EquationLeft2Rule]] according to which replacement is sensible.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val eq = eqocc.formula
+
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `s` ) => EquationLeft1Rule( s1, s2, term1oc, term2oc, pos )
@@ -325,10 +327,10 @@ object EquationLeftRule extends EquationRuleLogger {
           case Some( `t` ) => EquationLeft2Rule( s1, s2, term1oc, term2oc, pos )
 
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -382,19 +384,17 @@ object EquationLeftRule extends EquationRuleLogger {
           trace( "tToS = " + tToS )
           trace( "sToT = " + sToT )
 
-          if ( sToT.length == 1 && tToS.length == 0 ) {
-            val p = sToT.head
-            val mainNew = HOLPosition.replace( aux, p, t )
+          if ( tToS.isEmpty ) {
+            val mainNew = HOLPosition.replace( aux, sToT, t )
             if ( mainNew == main ) {
-              EquationLeft1Rule( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-          } else if ( tToS.length == 1 && sToT.length == 0 ) {
-            val p = tToS.head
-            val mainNew = HOLPosition.replace( aux, p, s )
+              EquationLeft1Rule( s1, s2, term1oc, term2oc, sToT )
+            } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+          } else if ( sToT.isEmpty ) {
+            val mainNew = HOLPosition.replace( aux, tToS, s )
             if ( mainNew == main ) {
-              EquationLeft2Rule( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position." + nLine + " Eq: " + eqocc.formula )
+              EquationLeft2Rule( s1, s2, term1oc, term2oc, tToS )
+            } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+          } else throw new LKRuleCreationException( "Cannot perform replacements in both directions." )
         }
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
     }
@@ -446,19 +446,17 @@ object EquationLeftRule extends EquationRuleLogger {
           trace( "tToS = " + tToS )
           trace( "sToT = " + sToT )
 
-          if ( sToT.length == 1 && tToS.length == 0 ) {
-            val p = sToT.head
-            val mainNew = HOLPosition.replace( aux, p, t )
+          if ( tToS.isEmpty ) {
+            val mainNew = HOLPosition.replace( aux, sToT, t )
             if ( mainNew == main ) {
-              EquationLeft1Rule( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-          } else if ( tToS.length == 1 && sToT.length == 0 ) {
-            val p = tToS.head
-            val mainNew = HOLPosition.replace( aux, p, s )
+              EquationLeft1Rule( s1, s2, term1oc, term2oc, sToT )
+            } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+          } else if ( sToT.isEmpty ) {
+            val mainNew = HOLPosition.replace( aux, tToS, s )
             if ( mainNew == main ) {
-              EquationLeft2Rule( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position." + nLine + " Eq: " + eqocc.formula )
+              EquationLeft2Rule( s1, s2, term1oc, term2oc, tToS )
+            } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+          } else throw new LKRuleCreationException( "Cannot perform replacements in both directions." )
         }
 
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
@@ -474,7 +472,7 @@ object EquationLeftRule extends EquationRuleLogger {
    * @param pos A position such that A(pos) = s or A(pos) = t
    * @return A proof ending with either an [[EquationLeft1Rule]] or an [[EquationLeft2Rule]] according to which replacement is sensible.
    */
-  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): OccSequent = {
+  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): OccSequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val eq = eqocc.formula
 
@@ -482,7 +480,7 @@ object EquationLeftRule extends EquationRuleLogger {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `s` ) => EquationLeft1Rule( s1, s2, term1oc, term2oc, pos )
@@ -490,10 +488,10 @@ object EquationLeftRule extends EquationRuleLogger {
           case Some( `t` ) => EquationLeft2Rule( s1, s2, term1oc, term2oc, pos )
 
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -555,7 +553,7 @@ object EquationRightRule extends EquationRuleLogger {
    * @param pos A position such that A(pos) = s or A(pos) = t
    * @return A proof ending with either an [[EquationRight1Rule]] or an [[EquationRight2Rule]] according to which replacement is sensible.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val eq = eqocc.formula
 
@@ -563,7 +561,7 @@ object EquationRightRule extends EquationRuleLogger {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `s` ) => EquationRight1Rule( s1, s2, term1oc, term2oc, pos )
@@ -571,10 +569,10 @@ object EquationRightRule extends EquationRuleLogger {
           case Some( `t` ) => EquationRight2Rule( s1, s2, term1oc, term2oc, pos )
 
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -628,19 +626,17 @@ object EquationRightRule extends EquationRuleLogger {
           trace( "tToS = " + tToS )
           trace( "sToT = " + sToT )
 
-          if ( sToT.length == 1 && tToS.length == 0 ) {
-            val p = sToT.head
-            val mainNew = HOLPosition.replace( aux, p, t )
+          if ( tToS.isEmpty ) {
+            val mainNew = HOLPosition.replace( aux, sToT, t )
             if ( mainNew == main ) {
-              EquationRight1Rule( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-          } else if ( tToS.length == 1 && sToT.length == 0 ) {
-            val p = tToS.head
-            val mainNew = HOLPosition.replace( aux, p, s )
+              EquationRight1Rule( s1, s2, term1oc, term2oc, sToT )
+            } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+          } else if ( sToT.isEmpty ) {
+            val mainNew = HOLPosition.replace( aux, tToS, s )
             if ( mainNew == main ) {
-              EquationRight2Rule( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position." + nLine + " Eq: " + eqocc.formula )
+              EquationRight2Rule( s1, s2, term1oc, term2oc, tToS )
+            } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+          } else throw new LKRuleCreationException( "Cannot perform replacements in both directions." )
         }
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
     }
@@ -692,19 +688,17 @@ object EquationRightRule extends EquationRuleLogger {
           trace( "tToS = " + tToS )
           trace( "sToT = " + sToT )
 
-          if ( sToT.length == 1 && tToS.length == 0 ) {
-            val p = sToT.head
-            val mainNew = HOLPosition.replace( aux, p, t )
+          if ( tToS.isEmpty ) {
+            val mainNew = HOLPosition.replace( aux, sToT, t )
             if ( mainNew == main ) {
-              EquationRight1Rule( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-          } else if ( tToS.length == 1 && sToT.length == 0 ) {
-            val p = tToS.head
-            val mainNew = HOLPosition.replace( aux, p, s )
+              EquationRight1Rule( s1, s2, term1oc, term2oc, sToT )
+            } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+          } else if ( sToT.isEmpty ) {
+            val mainNew = HOLPosition.replace( aux, tToS, s )
             if ( mainNew == main ) {
-              EquationRight2Rule( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Formulas " + aux + " and " + main + " don't differ in exactly one position." + nLine + " Eq: " + eqocc.formula )
+              EquationRight2Rule( s1, s2, term1oc, term2oc, tToS )
+            } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+          } else throw new LKRuleCreationException( "Cannot perform replacements in both directions." )
         }
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an equation." )
     }
@@ -719,7 +713,7 @@ object EquationRightRule extends EquationRuleLogger {
    * @param pos A position such that A(pos) = s or A(pos) = t
    * @return A proof ending with either an [[EquationRight1Rule]] or an [[EquationRight2Rule]] according to which replacement is sensible.
    */
-  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): OccSequent = {
+  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): OccSequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val eq = eqocc.formula
 
@@ -727,7 +721,7 @@ object EquationRightRule extends EquationRuleLogger {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `s` ) => EquationRight1Rule( s1, s2, term1oc, term2oc, pos )
@@ -735,10 +729,10 @@ object EquationRightRule extends EquationRuleLogger {
           case Some( `t` ) => EquationRight2Rule( s1, s2, term1oc, term2oc, pos )
 
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -800,7 +794,7 @@ object EquationLeftMacroRule extends EquationRuleLogger {
    * @param tPos List of positions of terms that should be replaced by t.
    * @return A new proof whose main formula is A with every p in sPos replaced by s and every p in tPos replaced by t.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, sPos: Seq[HOLPosition], tPos: Seq[HOLPosition] ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, sPos: Seq[HOLPosition], tPos: Seq[HOLPosition] ): LKProof = {
     val ( eqocc, auxocc ) = ( s1.root.succedent.find( _ == term1oc ), s2.root.antecedent.find( _ == term2oc ) ) match {
       case ( Some( e ), Some( a ) ) => ( e, a )
       case _                        => throw new LKRuleCreationException( "Auxiliary formulas not found." )
@@ -811,73 +805,30 @@ object EquationLeftMacroRule extends EquationRuleLogger {
 
     eq match {
       case Eq( s, t ) =>
-        trace( "Eq: " + s + " = " + t + "." )
 
         // Filter out those positions where no terms need to be replaced.
         val ( sPosActive, tPosActive ) = ( sPos filter { aux.get( _ ) match { case Some( `t` ) => true; case _ => false } },
           tPos filter { aux.get( _ ) match { case Some( `s` ) => true; case _ => false } } )
-        val n = sPosActive.length + tPosActive.length
 
-        trace( "" + n + " replacements to make." )
-
-        n match {
-          case 0 => throw new Exception( "This should never happen." )
-          case 1 =>
-            EquationLeftRule( s1, s2, term1oc, term2oc, ( sPosActive ++ tPosActive ).head )
+        val ( s1New, s2New, term1ocNew, term2ocNew ) = sPosActive match {
+          case Seq() =>
+            ( s1, s2, term1oc, term2oc )
           case _ =>
+            val subProof = EquationLeftRule( s1, s2, term1oc, term2oc, sPosActive )
+            val auxNew = subProof.getDescendantInLowerSequent( term2oc ).get
+            val ax = Axiom( Eq( s, t ) )
+            val eq = ax.root( Suc( 0 ) )
+            ( ax, subProof, eq, auxNew )
+        }
+        tPosActive match {
+          case Seq() => s2New
 
-            // Initialize the proof currently being worked on and its auxiliary formula.
-            var currentProofR = s2
-            var currentAux = term2oc
-
-            // Save newly created equations in a list so we can later contract them.
-            val equations = new ListBuffer[FormulaOccurrence]
-
-            // Iterate over the s-positions
-            for ( p <- sPosActive ) aux.get( p ) match {
-              case Some( `s` ) => trace( "s found at s-position " + p + ", nothing to do." )
-              case Some( `t` ) =>
-
-                // Generate a new instance of s = t :- s = t and save the formula in the antecedent in the equations list.
-                val currentProofL = Axiom( List( eq ), List( eq ) )
-                equations += currentProofL.root.antecedent.head
-                val currentEq = currentProofL.root.succedent.head
-
-                // Create a subproof that replaces the term at p.
-                currentProofR = EquationLeftRule( currentProofL, currentProofR, currentEq, currentAux, p )
-
-                // The new auxiliary formula is the principal formula of the previous step.
-                currentAux = currentProofR.asInstanceOf[PrincipalFormulas].prin( 0 )
-
-              case _ => throw new LKRuleCreationException( "Position " + p + " in formula " + aux + " does not contain term " + s + " or " + t + "." )
-            }
-
-            // Iterate over the t-positions. For comments see the previous loop.
-            for ( p <- tPosActive ) aux.get( p ) match {
-              case Some( `s` ) =>
-
-                val currentProofL = Axiom( List( eq ), List( eq ) )
-                equations += currentProofL.root.antecedent.head
-                val currentEq = currentProofL.root.succedent.head
-
-                currentProofR = EquationLeftRule( currentProofL, currentProofR, currentEq, currentAux, p )
-
-                currentAux = currentProofR.asInstanceOf[PrincipalFormulas].prin( 0 )
-
-              case Some( `t` ) => trace( "t found at t-position " + p + ", nothing to do." )
-              case _           => throw new LKRuleCreationException( "Position " + p + " in formula " + aux + " does not contain term " + s + " or " + t + "." )
-            }
-
-            trace( "" + n + " replacements made." )
-
-            // Find the descendants of the saved equations in the current end sequent.
-            val equationDescendants = equations.toList map { currentProofR.getDescendantInLowerSequent } map { _.get }
-
-            // Contract the equations.
-            currentProofR = ContractionLeftMacroRule( currentProofR, equationDescendants )
-
-            // Finally, remove the remaining occurrence of s = t with a cut.
-            CutRule( s1, currentProofR, eqocc, currentProofR.asInstanceOf[PrincipalFormulas].prin( 0 ) )
+          case _ =>
+            val subProof2 = EquationLeftRule( s1New, s2New, term1ocNew, term2ocNew, tPosActive )
+            if ( sPosActive.nonEmpty && tPosActive.nonEmpty ) {
+              val Seq( eq1, eq2 ) = Seq( term1ocNew, term1oc ) map { subProof2.getDescendantInLowerSequent( _ ).get }
+              ContractionLeftRule( subProof2, eq1, eq2 )
+            } else subProof2
         }
       case _ => throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
     }
@@ -893,7 +844,7 @@ object EquationLeftMacroRule extends EquationRuleLogger {
    * @param main The proposed main formula.
    * @return A new proof with principal formula main. Eq rules will be used according to the replacements that need to be made.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): LKProof = {
     val ( eqocc, auxocc ) = ( s1.root.succedent.find( _ == term1oc ), s2.root.antecedent.find( _ == term2oc ) ) match {
       case ( Some( e ), Some( a ) ) => ( e, a )
       case _                        => throw new LKRuleCreationException( "Auxiliary formulas not found." )
@@ -950,7 +901,7 @@ object EquationRightMacroRule extends EquationRuleLogger {
    * @param tPos List of positions of terms that should be replaced by t.
    * @return A new proof whose main formula is A with every p in sPos replaced by s and every p in tPos replaced by t.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, sPos: Seq[HOLPosition], tPos: Seq[HOLPosition] ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, sPos: Seq[HOLPosition], tPos: Seq[HOLPosition] ): LKProof = {
     // Detailed comments can be found in the corresponding apply method for EquationLeftBulkRule!
     val ( eqocc, auxocc ) = ( s1.root.succedent.find( _ == term1oc ), s2.root.succedent.find( _ == term2oc ) ) match {
       case ( Some( e ), Some( a ) ) => ( e, a )
@@ -965,52 +916,25 @@ object EquationRightMacroRule extends EquationRuleLogger {
         trace( "Eq: " + s + " = " + t + "." )
         val ( sPosActive, tPosActive ) = ( sPos filter { aux.get( _ ) match { case Some( `t` ) => true; case _ => false } },
           tPos filter { aux.get( _ ) match { case Some( `s` ) => true; case _ => false } } )
-        val n = sPosActive.length + tPosActive.length
-        trace( "" + n + " replacements to make." )
-
-        n match {
-          case 0 => throw new Exception( "This should never happen." )
-          case 1 =>
-            EquationRightRule( s1, s2, term1oc, term2oc, ( sPosActive ++ tPosActive ).head )
+        val ( s1New, s2New, term1ocNew, term2ocNew ) = sPosActive match {
+          case Seq() =>
+            ( s1, s2, term1oc, term2oc )
           case _ =>
+            val subProof = EquationRightRule( s1, s2, term1oc, term2oc, sPosActive )
+            val auxNew = subProof.getDescendantInLowerSequent( term2oc ).get
+            val ax = Axiom( Eq( s, t ) )
+            val eq = ax.root( Suc( 0 ) )
+            ( ax, subProof, eq, auxNew )
+        }
+        tPosActive match {
+          case Seq() => s2New
 
-            var currentProofR = s2
-            var currentAux = term2oc
-
-            val equations = new ListBuffer[FormulaOccurrence]
-
-            for ( p <- sPosActive ) aux.get( p ) match {
-              case Some( `s` ) => trace( "s found at s-position " + p + ", nothing to do." )
-              case Some( `t` ) =>
-                val currentProofL = Axiom( List( eq ), List( eq ) )
-                equations += currentProofL.root.antecedent.head
-                val currentEq = currentProofL.root.succedent.head
-
-                currentProofR = EquationRightRule( currentProofL, currentProofR, currentEq, currentAux, p )
-                currentAux = currentProofR.asInstanceOf[PrincipalFormulas].prin( 0 )
-
-              case _ => throw new LKRuleCreationException( "Position " + p + " in formula " + aux + " does not contain term " + s + " or " + t + "." )
-            }
-
-            for ( p <- tPosActive ) aux.get( p ) match {
-              case Some( `s` ) =>
-                val currentProofL = Axiom( List( eq ), List( eq ) )
-                equations += currentProofL.root.antecedent.head
-                val currentEq = currentProofL.root.succedent.head
-
-                currentProofR = EquationRightRule( currentProofL, currentProofR, currentEq, currentAux, p )
-                currentAux = currentProofR.asInstanceOf[PrincipalFormulas].prin( 0 )
-
-              case Some( `t` ) => trace( "t found at t-position " + p + ", nothing to do." )
-              case _           => throw new LKRuleCreationException( "Position " + p + " in formula " + aux + " does not contain term " + s + " or " + t + "." )
-            }
-
-            trace( "" + n + " replacements made." )
-
-            val equationDescendants = equations.toList map { currentProofR.getDescendantInLowerSequent } map { _.get }
-            currentProofR = ContractionLeftMacroRule( currentProofR, equationDescendants )
-
-            CutRule( s1, currentProofR, eqocc, currentProofR.asInstanceOf[PrincipalFormulas].prin( 0 ) )
+          case _ =>
+            val subProof2 = EquationRightRule( s1New, s2New, term1ocNew, term2ocNew, tPosActive )
+            if ( sPosActive.nonEmpty && tPosActive.nonEmpty ) {
+              val Seq( eq1, eq2 ) = Seq( term1ocNew, term1oc ) map { subProof2.getDescendantInLowerSequent( _ ).get }
+              ContractionLeftRule( subProof2, eq1, eq2 )
+            } else subProof2
         }
       case _ => throw new LKRuleCreationException( "Formula occurrence " + eqocc + " is not an equation." )
     }
@@ -1026,7 +950,7 @@ object EquationRightMacroRule extends EquationRuleLogger {
    * @param main The proposed main formula.
    * @return A new proof with principal formula main. Eq rules will be used according to the replacements that need to be made.
    */
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, main: HOLFormula ): LKProof = {
     val ( eqocc, auxocc ) = ( s1.root.succedent.find( _ == term1oc ), s2.root.succedent.find( _ == term2oc ) ) match {
       case ( Some( e ), Some( a ) ) => ( e, a )
       case _                        => throw new LKRuleCreationException( "Auxiliary formulas not found." )
@@ -1425,149 +1349,5 @@ object proofFromInstances {
         throw new UnsupportedOperationException( "This case is not handled at this time." )
       case _ => s1
     }
-  }
-}
-
-/**
- * Maybe there is a better place for this?
- *
- */
-object applyRecursive {
-
-  /**
-   * Recursively applies a function f to a proof.
-   *
-   * In the case of an axiom p, the result is just f(p).
-   *
-   * In the case of a unary proof p with subproof u, this means that it recursively applies f to u, giving u', and then computes f(p(u')).
-   * Binary proofs work analogously.
-   *
-   * Caveat: It might mess up the ancestor relation on formula occurrences, so be careful.
-   *
-   * @param f A function of type LKProof => LKProof
-   * @param proof An LKProof
-   * @return
-   */
-  def apply( f: LKProof => LKProof )( proof: LKProof ): LKProof = proof match {
-
-    case Axiom( _ ) => f( proof )
-
-    // Unary rules
-    case WeakeningLeftRule( up, _, p1 ) =>
-      f( WeakeningLeftRule( applyRecursive( f )( up ), p1.formula ) )
-
-    case WeakeningRightRule( up, r, p1 ) =>
-      f( WeakeningRightRule( applyRecursive( f )( up ), p1.formula ) )
-
-    case ContractionLeftRule( up, r, a1, _, _ ) =>
-      val subProof = applyRecursive( f )( up )
-      f( ContractionLeftRule( subProof, a1.formula ) )
-
-    case ContractionRightRule( up, r, a1, _, _ ) =>
-      val subProof = applyRecursive( f )( up )
-      f( ContractionRightRule( subProof, a1.formula ) )
-
-    case AndLeft1Rule( up, _, a, p ) =>
-      val subProof = applyRecursive( f )( up )
-      f( AndLeft1Rule( subProof, a.formula, p.formula ) )
-
-    case AndLeft2Rule( up, _, a, p ) =>
-      val subProof = applyRecursive( f )( up )
-      f( AndLeft2Rule( subProof, p.formula, a.formula ) )
-
-    case OrRight1Rule( up, r, a, p ) =>
-      val subProof = applyRecursive( f )( up )
-      f( OrRight1Rule( subProof, a.formula, p.formula ) )
-
-    case OrRight2Rule( up, r, a, p ) =>
-      val subProof = applyRecursive( f )( up )
-      f( OrRight2Rule( subProof, p.formula, a.formula ) )
-
-    case ImpRightRule( up, _, a1, a2, _ ) =>
-      val subProof = applyRecursive( f )( up )
-      f( ImpRightRule( subProof, a1.formula, a2.formula ) )
-
-    case NegLeftRule( up, _, a, _ ) =>
-      val subProof = applyRecursive( f )( up )
-      f( NegLeftRule( subProof, a.formula ) )
-
-    case NegRightRule( up, _, a, _ ) =>
-      val subProof = applyRecursive( f )( up )
-      f( NegRightRule( subProof, a.formula ) )
-
-    case ForallLeftRule( up, _, a, p, t ) =>
-      val subProof = applyRecursive( f )( up )
-      f( ForallLeftRule( subProof, a.formula, p.formula, t ) )
-
-    case ExistsRightRule( up, _, a, p, t ) =>
-      val subProof = applyRecursive( f )( up )
-      f( ExistsRightRule( subProof, a.formula, p.formula, t ) )
-
-    case ForallRightRule( up, _, a, p, v ) =>
-      val subProof = applyRecursive( f )( up )
-      f( ForallRightRule( subProof, a.formula, p.formula, v ) )
-
-    case ExistsLeftRule( up, r, a, p, v ) =>
-      val subProof = applyRecursive( f )( up )
-      f( ExistsLeftRule( subProof, a.formula, p.formula, v ) )
-
-    case DefinitionLeftRule( up, _, a, p ) =>
-      val subProof = applyRecursive( f )( up )
-      f( DefinitionLeftRule( subProof, a.formula, p.formula ) )
-
-    case DefinitionRightRule( up, _, a, p ) =>
-      val subProof = applyRecursive( f )( up )
-      f( DefinitionRightRule( subProof, a.formula, p.formula ) )
-
-    // Binary rules
-    case CutRule( up1, up2, _, a1, a2 ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      f( CutRule( subProof1, subProof2, a1.formula ) )
-
-    case AndRightRule( up1, up2, _, a1, a2, _ ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      f( AndRightRule( subProof1, subProof2, a1.formula, a2.formula ) )
-
-    case OrLeftRule( up1, up2, r, a1, a2, _ ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      f( OrLeftRule( subProof1, subProof2, a1.formula, a2.formula ) )
-
-    case ImpLeftRule( up1, up2, r, a1, a2, _ ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      f( ImpLeftRule( subProof1, subProof2, a1.formula, a2.formula ) )
-
-    // TODO: change equation rules
-    case EquationLeft1Rule( up1, up2, _, a1, a2, pos, _ ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      val ( a1New, a2New ) = ( subProof1.root.succedent.find( _ =^= a1 ), subProof2.root.antecedent.find( _ =^= a2 ) )
-      if ( a1New.isEmpty || a2New.isEmpty )
-        throw new LKRuleCreationException( "Couldn't find descendants of " + a1 + " and " + a2 + "." )
-      f( EquationLeft1Rule( subProof1, subProof2, a1New.get, a2New.get, pos( 0 ) ) )
-
-    case EquationLeft2Rule( up1, up2, _, a1, a2, pos, _ ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      val ( a1New, a2New ) = ( subProof1.root.succedent.find( _ =^= a1 ), subProof2.root.antecedent.find( _ =^= a2 ) )
-      if ( a1New.isEmpty || a2New.isEmpty )
-        throw new LKRuleCreationException( "Couldn't find descendants of " + a1 + " and " + a2 + "." )
-      f( EquationLeft2Rule( subProof1, subProof2, a1New.get, a2New.get, pos( 0 ) ) )
-
-    case EquationRight1Rule( up1, up2, _, a1, a2, pos, _ ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      val ( a1New, a2New ) = ( subProof1.root.succedent.find( _ =^= a1 ), subProof2.root.succedent.find( _ =^= a2 ) )
-      if ( a1New.isEmpty || a2New.isEmpty )
-        throw new LKRuleCreationException( "Couldn't find descendants of " + a1 + " and " + a2 + "." )
-      f( EquationRight1Rule( subProof1, subProof2, a1New.get, a2New.get, pos( 0 ) ) )
-
-    case EquationRight2Rule( up1, up2, _, a1, a2, pos, _ ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      val ( a1New, a2New ) = ( subProof1.root.succedent.find( _ =^= a1 ), subProof2.root.succedent.find( _ =^= a2 ) )
-      if ( a1New.isEmpty || a2New.isEmpty )
-        throw new LKRuleCreationException( "Couldn't find descendants of " + a1 + " and " + a2 + "." )
-      f( EquationRight2Rule( subProof1, subProof2, a1New.get, a2New.get, pos( 0 ) ) )
-
-    case InductionRule( up1, up2, _, a1, a2, a3, _, term ) =>
-      val ( subProof1, subProof2 ) = ( apply( f )( up1 ), apply( f )( up2 ) )
-      f( InductionRule( subProof1, subProof2, a1.formula.asInstanceOf[FOLFormula], a2.formula.asInstanceOf[FOLFormula], a3.formula.asInstanceOf[FOLFormula], term ) )
-
   }
 }

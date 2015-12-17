@@ -1071,8 +1071,6 @@ Apart from those basic constructors, there is also a multitude of convenience co
 \UnaryInfCm{\Gamma \seq \Delta}
 \end{prooftree}
 
-Logical axioms and theory axioms may only contain atomic formulas.
-
 \subsubsection*{Cut}
 
   \begin{prooftree}
@@ -1388,8 +1386,6 @@ LKsk operates on labelled formulas. A label $\ell$ is a finite list of terms, a 
 \UnaryInfCm{\sklabel{A_1}{\ell_1},\dots,\sklabel{A_m}{\ell_m} \seq \sklabel{B_1}{\ell'_1},\dots,\sklabel{B_n}{\ell'_n}}
 \end{prooftree}
 
-Logical axioms and theory axioms may only contain atomic formulas.
-
 \subsubsection*{Cut}
 
   \begin{prooftree}
@@ -1577,7 +1573,7 @@ The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ 
   \end{prooftree}
 
 \end{multicols}
-Each equation rule replaces exactly one occurrence of a term in its auxiliary formula.
+Each equation rule replaces an arbitrary number of occurrences of $T$.
 
 \subsection{Ral}
 
