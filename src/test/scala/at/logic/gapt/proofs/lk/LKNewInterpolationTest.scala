@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.formats.prover9.Prover9TermParser.parseFormula
 import at.logic.gapt.provers.eqProver.EquationalProver
 
-class LKNewInterpolationTest extends Specification {
+class LKNewInterpolationTest extends Specification with SequentMatchers {
   "applyInterpolation" should {
 
     "correctly interpolate a logical axiom with top" in {
@@ -1681,6 +1681,30 @@ class LKNewInterpolationTest extends Specification {
       ipl must beEqualTo( And( Il, Ir ) )
       nproof.endSequent must beEqualTo( HOLSequent( Nil, ipl :: Nil ) )
       pproof.endSequent must beEqualTo( HOLSequent( ipl :: Nil, Imp( aeqb, And( Imp( pb, pa ), Imp( pa, pb ) ) ) :: Nil ) )
+    }
+
+    "correctly interpolate a proof with weak quantifiers" in {
+      val c = FOLConst( "c" )
+      val x = FOLVar( "x" )
+      val p = FOLAtomConst( "p", 1 )
+
+      val proof = ( ProofBuilder
+        c LogicalAxiom( p( c ) )
+        u ( ForallLeftRule( _, All( x, p( x ) ), c ) )
+        u ( ExistsRightRule( _, Ex( x, p( x ) ), c ) ) qed )
+
+      "forall in negative part" in {
+        val ( negProof, posProof, interpolant ) = Interpolate( proof, Seq( Ant( 0 ) ), Seq( Suc( 0 ) ) )
+        interpolant must_== p( c )
+        negProof.endSequent must beMultiSetEqual( All( x, p( x ) ) +: Sequent() :+ interpolant )
+        posProof.endSequent must beMultiSetEqual( interpolant +: Sequent() :+ Ex( x, p( x ) ) )
+      }
+      "exists in negative part" in {
+        val ( negProof, posProof, interpolant ) = Interpolate( proof, Seq( Suc( 0 ) ), Seq( Ant( 0 ) ) )
+        interpolant must_== -p( c )
+        negProof.endSequent must beMultiSetEqual( Sequent() :+ Ex( x, p( x ) ) :+ interpolant )
+        posProof.endSequent must beMultiSetEqual( interpolant +: All( x, p( x ) ) +: Sequent() )
+      }
     }
 
   }

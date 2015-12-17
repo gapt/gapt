@@ -9,6 +9,9 @@ import at.logic.gapt.expr.To
 class InterpolationException( msg: String ) extends Exception( msg )
 
 object ExtractInterpolant {
+  def apply( p: LKProof, isPositive: Sequent[Boolean] ) =
+    Interpolate( p, isPositive indicesWhere { _ == false }, isPositive indicesWhere { _ == true } )
+
   def apply( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = Interpolate( p, npart, ppart )._3
 
   /**
@@ -371,6 +374,25 @@ object Interpolate {
         ( up_nproof2, up_pproof3, ipl )
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
+
+    case p @ ForallLeftRule( subProof, aux, main, term, quantVar ) =>
+      val ( nproof, pproof, interpolant ) = apply( subProof, npart map p.getOccConnector.parent, ppart map p.getOccConnector.parent )
+
+      if ( npart contains p.mainIndices( 0 ) ) {
+        ( ForallLeftRule( nproof, p.mainFormula, term ), pproof, interpolant )
+      } else {
+        ( nproof, ForallLeftRule( pproof, p.mainFormula, term ), interpolant )
+      }
+
+    case p @ ExistsRightRule( subProof, aux, main, term, quantVar ) =>
+      val ( nproof, pproof, interpolant ) = apply( subProof, npart map p.getOccConnector.parent, ppart map p.getOccConnector.parent )
+
+      if ( npart contains p.mainIndices( 0 ) ) {
+        ( ExistsRightRule( nproof, p.mainFormula, term ), pproof, interpolant )
+      } else {
+        ( nproof, ExistsRightRule( pproof, p.mainFormula, term ), interpolant )
+      }
+
     case _ => throw new InterpolationException( "Unknown inference rule of type: " + p.name.toString() + "." )
   }
 
