@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.gaptic
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.lkNew._
+import at.logic.gapt.proofs.lk._
 
 /**
  * Immutable object defining the current state of the proof in the tactics language.
@@ -13,7 +13,7 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
   val initSegment = proofSegment.endSequent
 
   val subGoals: Seq[OpenAssumption] =
-    for ( OpenAssumption( s ) <- proofSegment.postOrder )
+    for ( OpenAssumption( s ) <- proofSegment.treeLike.postOrder )
       yield OpenAssumption( s )
 
   require( currentGoalIndex >= 0 && currentGoalIndex <= subGoals.length )

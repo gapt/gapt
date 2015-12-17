@@ -2,14 +2,14 @@ package at.logic.gapt.proofs.gaptic
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.lkNew.LKProof
+import at.logic.gapt.proofs.lk._
 
 /**
  *
- * @param initialSequent
+ * @param initGoal
  */
-case class Lemma( initialSequent: Sequent[( String, HOLFormula )], showOutput: Boolean = true ) {
-  private var proofState = ProofState( 0, OpenAssumption( initialSequent ) )
+case class Lemma( initGoal: Sequent[( String, HOLFormula )], showOutput: Boolean = true ) {
+  private var proofState = ProofState( 0, OpenAssumption( initGoal ) )
 
   if ( showOutput )
     printSubGoals()
