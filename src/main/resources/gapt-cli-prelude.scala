@@ -26,6 +26,7 @@ import at.logic.gapt.provers.inductionProver._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.maxsat._
 import at.logic.gapt.provers.eprover._
+import at.logic.gapt.provers.vampire._
 import at.logic.gapt.provers.veriT._
 import at.logic.gapt.provers.smtlib._
 import at.logic.gapt.prooftool.prooftool
