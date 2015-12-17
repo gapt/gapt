@@ -73,5 +73,17 @@ object ListSupport {
     ( for ( i <- List.range( 1, n + 1 ) ) yield genLists( s, 0, i ) ).foldLeft( List[List[A]]() )( ( prevLists, l ) => prevLists ++ l )
   }
 
+  /**
+   *
+   * @param xs A list.
+   * @tparam A The type of list elements.
+   * @return A list containing all ordered pairs of elements of xs, excluding the diagonal.
+   */
+  def pairs[A]( xs: Seq[A] ): Seq[( A, A )] = xs match {
+    case Seq() => Seq()
+    case y +: ys =>
+      ( ys map { ( _, y ) } ) ++ ( ys map { ( y, _ ) } ) ++ pairs( ys )
+  }
+
 }
 

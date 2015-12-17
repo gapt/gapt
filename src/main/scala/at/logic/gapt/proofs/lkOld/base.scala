@@ -91,7 +91,7 @@ trait Eigenvariable {
 }
 
 trait TermPositions {
-  def termPos: List[HOLPosition]
+  def termPos: Seq[HOLPosition]
 }
 
 // method for creating the context of the lower sequent. Essentially creating nre occurrences

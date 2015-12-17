@@ -190,7 +190,7 @@ class ceres_omega {
         ( fa( lkparent2.conclusion.map( _ => true ) ), fs( ca2 ) ) match {
           case ( Some( eqidx ), _ ) =>
             val modulant = findAuxInAntecedent( parent2.conclusion( p2occ ), lkparent2.conclusion, Seq( eqidx ), ca2 )
-            val rule = Equality( lkparent2, eqidx, modulant, flipped, pos )
+            val rule = Equality( lkparent2, eqidx, modulant, flipped, Seq( pos ) )
             val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
             contractEndsequent( ( rule, nca ), es )
           case ( _, Some( eqidx ) ) =>
@@ -201,7 +201,7 @@ class ceres_omega {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of WeakeningLeft!" )
             }
-            val rule = Equality( wlkparent2, weqidx, modulant, flipped, pos )
+            val rule = Equality( wlkparent2, weqidx, modulant, flipped, Seq( pos ) )
             val nc2 = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
             val ruleeqidx = rule.mainIndices( 1 ) match {
               case a @ Ant( _ ) => a
@@ -231,7 +231,7 @@ class ceres_omega {
         ( fa( lkparent2.conclusion.map( _ => true ) ), fs( ca2 ) ) match {
           case ( Some( eqidx ), _ ) =>
             val modulant = findAuxInSuccedent( parent2.conclusion( p2occ ), lkparent2.conclusion, Seq( eqidx ), ca2 )
-            val rule = Equality( lkparent2, eqidx, modulant, flipped, pos )
+            val rule = Equality( lkparent2, eqidx, modulant, flipped, Seq( pos ) )
             val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
             contractEndsequent( ( rule, nca ), es )
           case ( _, Some( eqidx ) ) =>
@@ -242,7 +242,7 @@ class ceres_omega {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of WeakeningLeft!" )
             }
-            val rule = Equality( wlkparent2, weqidx, modulant, flipped, pos )
+            val rule = Equality( wlkparent2, weqidx, modulant, flipped, Seq( pos ) )
             val nc2 = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
             val ruleeqidx = rule.mainIndices( 1 ) match {
               case a @ Ant( _ ) => a

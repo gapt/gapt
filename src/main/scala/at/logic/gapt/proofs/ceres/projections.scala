@@ -249,7 +249,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   }
 
   def handleEqRule( proof: LKProof, p: LKProof, e: SequentIndex, a: SequentIndex,
-                    pos: HOLPosition, constructor: ( LKProof, SequentIndex, SequentIndex, HOLPosition ) => LKProof,
+                    pos: Seq[HOLPosition], constructor: ( LKProof, SequentIndex, SequentIndex, Seq[HOLPosition] ) => LKProof,
                     pred: HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val new_cut_ancs = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
     val s1 = apply( p, new_cut_ancs, pred )

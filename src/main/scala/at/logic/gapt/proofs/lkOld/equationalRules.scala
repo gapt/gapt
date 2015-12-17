@@ -120,7 +120,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
           if ( sAux.isEmpty )
             throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
-          apply( s1, s2, term1oc, term2oc, sAux.head )
+          apply( s1, s2, term1oc, term2oc, sAux )
         } else if ( ( s == t ) && ( main != aux ) ) {
           throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
@@ -137,31 +137,30 @@ object EquationLeft1Rule extends EquationRuleLogger {
           val posList = sAux intersect tMain
           trace( "posList = " + posList )
 
-          if ( posList.length == 1 ) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace( aux, p, t )
-            if ( mainNew == main ) {
-              apply( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
+          val mainNew = HOLPosition.replace( aux, posList, t )
+          if ( mainNew == main ) {
+            apply( s1, s2, term1oc, term2oc, posList )
+          } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
         }
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val eq = eqocc.formula
+
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `s` ) =>
-            val prin = HOLPosition.replace( aux, pos, t ).asInstanceOf[HOLFormula]
+            val prin = aux.replace( pos, t ).asInstanceOf[HOLFormula]
             val prinOcc = eqocc.factory.createFormulaOccurrence( prin, List( eqocc, auxocc ) )
             val ant1 = createContext( s1.root.antecedent )
             val ant2 = createContext( s2.root.antecedent.filterNot( _ == auxocc ) )
@@ -177,7 +176,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
 
               def prin = prinOcc :: Nil
 
-              def termPos = List( pos )
+              def termPos = pos
 
               override def name = "e:l1"
             }
@@ -237,7 +236,7 @@ object EquationLeft1Rule extends EquationRuleLogger {
           if ( sAux.isEmpty )
             throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
-          apply( s1, s2, term1oc, term2oc, sAux.head )
+          apply( s1, s2, term1oc, term2oc, sAux )
         } else if ( s == t && main != aux ) {
           throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
@@ -254,27 +253,26 @@ object EquationLeft1Rule extends EquationRuleLogger {
           val posList = sAux intersect tMain
           trace( "posList = " + posList )
 
-          if ( posList.length == 1 ) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace( aux, p, t )
-            if ( mainNew == main ) {
-              apply( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
+          val mainNew = HOLPosition.replace( aux, posList, t )
+          if ( mainNew == main ) {
+            apply( s1, s2, term1oc, term2oc, posList )
+          } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
         }
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
-  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): OccSequent = {
+  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): OccSequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val eq = eqocc.formula
+
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `s` ) =>
@@ -289,10 +287,10 @@ object EquationLeft1Rule extends EquationRuleLogger {
 
             OccSequent( antecedent, succedent )
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -379,7 +377,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
           if ( sAux.isEmpty )
             throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
-          apply( s1, s2, term1oc, term2oc, sAux.head )
+          apply( s1, s2, term1oc, term2oc, sAux )
         } else if ( s == t && main != aux ) {
           throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
@@ -396,28 +394,26 @@ object EquationLeft2Rule extends EquationRuleLogger {
           val posList = tAux intersect sMain
           trace( "posList = " + posList )
 
-          if ( posList.length == 1 ) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace( aux, p, s )
-            if ( mainNew == main ) {
-              apply( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
+          val mainNew = HOLPosition.replace( aux, posList, s )
+          if ( mainNew == main ) {
+            apply( s1, s2, term1oc, term2oc, posList )
+          } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
         }
 
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val eq = eqocc.formula
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `t` ) =>
@@ -437,16 +433,16 @@ object EquationLeft2Rule extends EquationRuleLogger {
 
               def prin = prinOcc :: Nil
 
-              def termPos = List( pos )
+              def termPos = pos
 
               override def name = "e:l2"
             }
 
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -480,7 +476,7 @@ object EquationLeft2Rule extends EquationRuleLogger {
           if ( sAux.isEmpty )
             throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
-          apply( s1, s2, term1oc, term2oc, sAux.head )
+          apply( s1, s2, term1oc, term2oc, sAux )
         } else if ( s == t && main != aux ) {
           throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
@@ -497,28 +493,27 @@ object EquationLeft2Rule extends EquationRuleLogger {
           val posList = tAux intersect sMain
           trace( "posList = " + posList )
 
-          if ( posList.length == 1 ) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace( aux, p, s )
-            if ( mainNew == main ) {
-              apply( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
+          val mainNew = HOLPosition.replace( aux, posList, s )
+          if ( mainNew == main ) {
+            apply( s1, s2, term1oc, term2oc, posList )
+          } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
         }
 
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
-  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): OccSequent = {
+  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): OccSequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val eq = eqocc.formula
+
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `t` ) =>
@@ -533,10 +528,10 @@ object EquationLeft2Rule extends EquationRuleLogger {
 
             OccSequent( antecedent, succedent )
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -623,7 +618,7 @@ object EquationRight1Rule extends EquationRuleLogger {
           if ( sAux.isEmpty )
             throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
-          apply( s1, s2, term1oc, term2oc, sAux.head )
+          apply( s1, s2, term1oc, term2oc, sAux )
         } else if ( ( s == t ) && ( main != aux ) ) {
           throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
@@ -640,28 +635,28 @@ object EquationRight1Rule extends EquationRuleLogger {
           val posList = sAux intersect tMain
           trace( "posList = " + posList )
 
-          if ( posList.length == 1 ) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace( aux, p, t )
-            if ( mainNew == main ) {
-              apply( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
+          val mainNew = HOLPosition.replace( aux, posList, t )
+          if ( mainNew == main ) {
+            apply( s1, s2, term1oc, term2oc, posList )
+          } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
+
         }
 
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val eq = eqocc.formula
+
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `s` ) =>
@@ -681,16 +676,16 @@ object EquationRight1Rule extends EquationRuleLogger {
 
               def prin = prinOcc :: Nil
 
-              def termPos = List( pos )
+              def termPos = pos
 
               override def name = "e:r1"
             }
 
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -741,7 +736,7 @@ object EquationRight1Rule extends EquationRuleLogger {
           if ( sAux.isEmpty )
             throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
-          apply( s1, s2, term1oc, term2oc, sAux.head )
+          apply( s1, s2, term1oc, term2oc, sAux )
         } else if ( ( s == t ) && ( main != aux ) ) {
           throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
@@ -758,28 +753,27 @@ object EquationRight1Rule extends EquationRuleLogger {
           val posList = sAux intersect tMain
           trace( "posList = " + posList )
 
-          if ( posList.length == 1 ) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace( aux, p, t )
-            if ( mainNew == main ) {
-              apply( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + t + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
+          val mainNew = HOLPosition.replace( aux, posList, t )
+          if ( mainNew == main ) {
+            apply( s1, s2, term1oc, term2oc, posList )
+          } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
         }
 
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
-  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): OccSequent = {
+  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): OccSequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val eq = eqocc.formula
+
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `s` ) =>
@@ -794,10 +788,10 @@ object EquationRight1Rule extends EquationRuleLogger {
 
             OccSequent( antecedent, succedent )
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -884,7 +878,7 @@ object EquationRight2Rule extends EquationRuleLogger {
           if ( sAux.isEmpty )
             throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
-          apply( s1, s2, term1oc, term2oc, sAux.head )
+          apply( s1, s2, term1oc, term2oc, sAux )
         } else if ( ( s == t ) && ( main != aux ) ) {
           throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
@@ -901,28 +895,27 @@ object EquationRight2Rule extends EquationRuleLogger {
           val posList = tAux intersect sMain
           trace( "posList = " + posList )
 
-          if ( posList.length == 1 ) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace( aux, p, s )
-            if ( mainNew == main ) {
-              apply( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
+          val mainNew = HOLPosition.replace( aux, posList, s )
+          if ( mainNew == main ) {
+            apply( s1, s2, term1oc, term2oc, posList )
+          } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
         }
 
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
-  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
+  def apply( s1: LKProof, s2: LKProof, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): BinaryTree[OccSequent] with BinaryLKProof with AuxiliaryFormulas with PrincipalFormulas with TermPositions = {
     val ( eqocc, auxocc ) = getTerms( s1.root, s2.root, term1oc, term2oc )
     val eq = eqocc.formula
+
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `t` ) =>
@@ -942,16 +935,16 @@ object EquationRight2Rule extends EquationRuleLogger {
 
               def prin = prinOcc :: Nil
 
-              def termPos = List( pos )
+              def termPos = pos
 
               override def name = "e:r2"
             }
 
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new LKRuleCreationException( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new LKRuleCreationException( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
@@ -985,7 +978,7 @@ object EquationRight2Rule extends EquationRuleLogger {
           if ( sAux.isEmpty )
             throw new LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + aux + "." )
 
-          apply( s1, s2, term1oc, term2oc, sAux.head )
+          apply( s1, s2, term1oc, term2oc, sAux )
         } else if ( ( s == t ) && ( main != aux ) ) {
           throw new LKRuleCreationException( "Eq is trivial, but aux formula " + aux + " and main formula " + main + "differ." )
         } else if ( s != t && aux == main ) {
@@ -1002,28 +995,27 @@ object EquationRight2Rule extends EquationRuleLogger {
           val posList = tAux intersect sMain
           trace( "posList = " + posList )
 
-          if ( posList.length == 1 ) {
-            val p = posList.head
-            val mainNew = HOLPosition.replace( aux, p, s )
-            if ( mainNew == main ) {
-              apply( s1, s2, term1oc, term2oc, p )
-            } else throw new LKRuleCreationException( "Replacement (" + aux + ", " + p + ", " + s + ") should yield " + main + " but is " + mainNew + "." )
-          } else throw new LKRuleCreationException( "Position list " + posList + " is not valid." )
+          val mainNew = HOLPosition.replace( aux, posList, s )
+          if ( mainNew == main ) {
+            apply( s1, s2, term1oc, term2oc, posList )
+          } else throw new LKRuleCreationException( "Replacement should yield " + main + " but is " + mainNew + "." )
         }
 
       case _ => throw new LKRuleCreationException( "Formula " + eq + " is not an Eq." )
     }
   }
 
-  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: HOLPosition ): OccSequent = {
+  def apply( s1: OccSequent, s2: OccSequent, term1oc: FormulaOccurrence, term2oc: FormulaOccurrence, pos: Seq[HOLPosition] ): OccSequent = {
     val ( eqocc, auxocc ) = getTerms( s1, s2, term1oc, term2oc )
     val eq = eqocc.formula
+
+    require( pos.nonEmpty )
 
     eq match {
       case Eq( s, t ) =>
         trace( "Eq: " + s + " = " + t + "." )
         val aux = auxocc.formula
-        val term = aux.get( pos )
+        val term = aux.get( pos.head )
 
         term match {
           case Some( `t` ) =>
@@ -1038,10 +1030,10 @@ object EquationRight2Rule extends EquationRuleLogger {
 
             OccSequent( antecedent, succedent )
           case Some( x ) =>
-            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos + "." )
+            throw new LKRuleCreationException( "Wrong term " + x + " in auxiliary formula " + aux + " at position " + pos.head + "." )
 
           case None =>
-            throw new Exception( "Position " + pos + " is not well-defined for formula " + aux + "." )
+            throw new Exception( "Position " + pos.head + " is not well-defined for formula " + aux + "." )
         }
 
       case _ =>
