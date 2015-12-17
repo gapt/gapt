@@ -1,106 +1,68 @@
-/**
- * Interface to the Vampire first-order theorem prover.
- */
-
 package at.logic.gapt.provers.vampire
 
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
+import java.io.IOException
 
-import java.io._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.expr._
+import at.logic.gapt.formats.tptp.TptpProofParser
+import at.logic.gapt.proofs.resolution.{ fixDerivation, ResolutionProof }
+import at.logic.gapt.proofs.{ HOLClause, FOLClause }
+import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
+import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.utils.traits.ExternalProgram
+import at.logic.gapt.utils.runProcess
 
-import scala.io.Source
+object Vampire extends Vampire
+class Vampire extends ResolutionProver with ExternalProgram {
+  val backgroundProver = Prover9
 
-class VampireException( msg: String ) extends Exception( msg )
-
-object Vampire extends Logger {
-
-  def writeProblem( named_sequents: List[Tuple2[String, HOLSequent]], file_name: String ) =
-    {
-      val tptp = TPTPFOLExporter.tptp_problem_named( named_sequents )
-      val writer = new FileWriter( file_name )
-      writer.write( tptp )
-      writer.flush
+  override def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
+    withRenamedConstants( seq ) {
+      case ( renaming, cnf ) =>
+        val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
+        val tptpIn = toTPTP( labelledCNF )
+        val output = runProcess.withTempInputFile( Seq( "vampire", "-p", "tptp" ), tptpIn ).split( "\n" )
+        if ( output.head startsWith "Refutation" ) {
+          val sketch = TptpProofParser.parse( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) )._2
+          RefutationSketchToRobinson( sketch, backgroundProver ) map { resProof =>
+            fixDerivation( resProof, seq.toSeq )
+          }
+        } else None
     }
 
-  // TODO: this does not really belong here, refactor?
-  // executes "prog" and feeds the contents of the file at
-  // path "in" to its standard input.
-  private def exec( in: String ): ( Int, String ) = {
-    if ( !vampireBinaryName.isDefined )
-      throw new VampireException( "Unable to determine vampire's binary name for your OS!" )
-    val prog = vampireBinaryName.get
-    val p = Runtime.getRuntime.exec( prog )
-
-    val out = new OutputStreamWriter( p.getOutputStream )
-    out.write( Source.fromInputStream( new FileInputStream( in ) ).mkString )
-    out.close
-
-    val str = Source.fromInputStream( p.getInputStream ).mkString
-    p.waitFor
-    ( p.exitValue, str )
+  private def toTPTP( formula: LambdaExpression ): String = formula match {
+    case Bottom()                  => "$false"
+    case Or( a, b )                => s"${toTPTP( a )} | ${toTPTP( b )}"
+    case Eq( a, b )                => s"${toTPTP( a )}=${toTPTP( b )}"
+    case Neg( Eq( a, b ) )         => s"${toTPTP( a )}!=${toTPTP( b )}"
+    case Neg( atom )               => s"~${toTPTP( atom )}"
+    case FOLAtom( name, Seq() )    => name
+    case FOLAtom( name, args )     => s"$name(${args map toTPTP mkString ","})"
+    case FOLVar( name )            => name
+    case FOLConst( name )          => name
+    case FOLFunction( name, args ) => s"$name(${args map toTPTP mkString ","})"
   }
 
-  def writeToFile( str: String, file: String ) = {
-    val out = new FileWriter( file )
-    out.write( str )
-    out.close
-  }
+  def renameVars( formula: LambdaExpression ): LambdaExpression =
+    Substitution( freeVariables( formula ).
+      toSeq.zipWithIndex.map {
+        case ( v, i ) => v -> FOLVar( s"X$i" )
+      } )( formula )
+  private def toTPTP( clause: FOLClause ): String =
+    toTPTP( renameVars( clause.toFormula ) )
 
-  def refute( input_file: String, output_file: String ): ( Int, String ) = {
-    val ret = exec( input_file )
-    writeToFile( ret._2, output_file )
-    ret
-  }
+  private def toTPTP( cnf: Map[String, FOLClause] ): String =
+    cnf.map {
+      case ( label, clause ) =>
+        s"cnf($label, axiom, ${toTPTP( clause )})."
+    }.mkString( sys.props( "line.separator" ) )
 
-  def refuteNamed( named_sequents: List[Tuple2[String, HOLSequent]], input_file: String, output_file: String ): Boolean =
-    {
-      writeProblem( named_sequents, input_file )
-
-      val ret = refute( input_file, output_file )
-      ret._1 match {
-        case 0 if ret._2.startsWith( "Refutation found" ) => true
-        case 0 if ret._2.startsWith( "Satisfiable" ) => false
-        case _ => throw new VampireException( "There was a problem executing vampire!" )
-      }
-    }
-
-  def refute( sequents: List[HOLSequent], input_file: String, output_file: String ): Boolean =
-    refuteNamed( sequents.zipWithIndex.map( p => ( "sequent" + p._2, p._1 ) ), input_file, output_file )
-
-  def refute( sequents: List[HOLSequent] ): Boolean = {
-    val in_file = File.createTempFile( "gapt-vampire", ".tptp", null )
-    val out_file = File.createTempFile( "gapt-vampire", "vampire", null )
-    in_file.deleteOnExit()
-    out_file.deleteOnExit()
-    val ret = refute( sequents, in_file.getAbsolutePath, out_file.getAbsolutePath )
-    in_file.delete
-    out_file.delete
-    ret
-  }
-
-  val vampireBinaryName: Option[String] = {
-    val osName = System.getProperty( "os.name" ).toLowerCase()
-    val osArch = System.getProperty( "os.arch" )
-    osName match {
-      case osName if osName.contains( "mac" ) => Some( "vampire_mac" )
-      case osName if osName.contains( "linux" ) && osArch.contains( "64" ) => Some( "vampire_lin64" )
-      case osName if osName.contains( "linux" ) && osArch.contains( "32" ) => Some( "vampire_lin32" )
-      case _ => None
-    }
-  }
-
-  def isInstalled(): Boolean = {
-    val box = List()
-    try {
-      Vampire.refute( box )
+  override val isInstalled: Boolean = backgroundProver.isInstalled &&
+    ( try {
+      runProcess( Seq( "vampire", "--version" ) )
+      true
     } catch {
-      case e: IOException =>
-        warn( e.getMessage )
-        return false
-    }
-    return true
-  }
-
+      case ex: IOException => false
+    } )
 }
+

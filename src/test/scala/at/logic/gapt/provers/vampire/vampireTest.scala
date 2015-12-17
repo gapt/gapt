@@ -1,25 +1,23 @@
-/*
- * Tests for the prover9 interface.
-**/
-
 package at.logic.gapt.provers.vampire
 
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.proofs.resolution.inputClauses
+import at.logic.gapt.proofs.{ HOLClause, Sequent, SequentMatchers, HOLSequent }
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
 
-class VampireTest extends Specification {
+class VampireTest extends Specification with SequentMatchers {
 
-  args( skipAll = !Vampire.isInstalled() )
+  args( skipAll = !Vampire.isInstalled )
 
   "The Vampire interface" should {
     "refute { :- P; P :- }" in {
       val p = FOLAtom( "P", Nil )
       val s1 = HOLSequent( Nil, p :: Nil )
       val s2 = HOLSequent( p :: Nil, Nil )
-      val result: Boolean = Vampire.refute( s1 :: s2 :: Nil )
-      result must beEqualTo( true )
+      Vampire getRobinsonProof ( s1 :: s2 :: Nil ) must beSome
     }
   }
 
@@ -51,8 +49,7 @@ class VampireTest extends Specification {
       val s2 = HOLSequent( Nil, List( k ) )
       val s3 = HOLSequent( Nil, List( s ) )
       val t1 = HOLSequent( List( skk_i ), Nil )
-      val result: Boolean = Vampire.refute( List( s1, s2, s3, t1 ) )
-      result must beEqualTo( true )
+      Vampire getRobinsonProof List( s1, s2, s3, t1 ) must beSome
     }
   }
 
@@ -60,8 +57,59 @@ class VampireTest extends Specification {
     "not refute { :- P; Q :- }" in {
       val s1 = HOLSequent( Nil, List( FOLAtom( "P", Nil ) ) )
       val t1 = HOLSequent( List( FOLAtom( "Q", Nil ) ), Nil )
-      val result: Boolean = Vampire.refute( List( s1, t1 ) )
-      result must beEqualTo( false )
+      Vampire getRobinsonProof List( s1, t1 ) must beNone
+    }
+  }
+
+  "Vampire" should {
+    "prove identity" in {
+      val k = FOLConst( "k" )
+      val s = HOLSequent( Seq(), Seq( Eq( k, k ) ) )
+      Vampire.getLKProof( s ) must beLike {
+        case Some( p ) => p.endSequent must beMultiSetEqual( s )
+      }
+    }
+
+    "prove { A or B :- -(-A and -B)  }" in {
+      val Seq( a, b ) = Seq( "A", "B" ).map( FOLAtom( _ ) )
+      val s = HOLSequent( Seq( Or( a, b ) ), Seq( Neg( And( Neg( a ), Neg( b ) ) ) ) )
+      Vampire.getLKProof( s ) must beLike {
+        case Some( p ) => p.endSequent must beMultiSetEqual( s )
+      }
+    }
+
+    "handle quantified antecedents" in {
+      val seq = HOLSequent(
+        Seq( "0+x=x", "s(x)+y=s(x+y)" ).map( s => univclosure( parseFormula( s ) ) ),
+        Seq( parseFormula( "s(0)+s(s(0)) = s(s(s(0)))" ) )
+      )
+      Vampire.getLKProof( seq ) must beLike {
+        case Some( p ) => p.endSequent must beMultiSetEqual( seq )
+      }
+    }
+
+    "prove top" in { Vampire.getLKProof( HOLSequent( Seq(), Seq( Top() ) ) ) must beSome }
+    "not prove bottom" in { Vampire.getLKProof( HOLSequent( Seq(), Seq( Bottom() ) ) ) must beNone }
+    "not refute top" in { Vampire.getLKProof( HOLSequent( Seq( Top() ), Seq() ) ) must beNone }
+    "refute bottom" in { Vampire.getLKProof( HOLSequent( Seq( Bottom() ), Seq() ) ) must beSome }
+
+    "ground sequents" in {
+      val seq = HOLSequent( Seq( parseFormula( "x=y" ) ), Seq( parseFormula( "y=x" ) ) )
+      Vampire.getLKProof( seq ) must beLike {
+        case Some( p ) => p.endSequent must beMultiSetEqual( seq )
+      }
+    }
+
+    "treat variables in sequents as constants" in {
+      val seq = "P(x)" +: Sequent() :+ "P(c)" map parseFormula
+      Vampire.getExpansionSequent( seq ) must beNone
+    }
+
+    "handle weird sequents" in {
+      val cnf = List( HOLClause( Seq(), Seq() ), HOLClause( Seq( FOLAtom( "a" ) ), Seq() ) )
+      Vampire.getRobinsonProof( cnf ) must beLike {
+        case Some( p ) => inputClauses( p ) must contain( atMost( cnf.toSet[HOLClause] ) )
+      }
     }
   }
 
