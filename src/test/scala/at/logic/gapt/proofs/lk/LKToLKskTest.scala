@@ -52,13 +52,11 @@ class LKToLKskTest extends Specification {
     }
 
     "2 copies tape proof" in {
-      skipped( "definition elimination violates equality rules, see https://github.com/gapt/gapt/issues/452" )
       val lk = load( "tape3.llk" )
       val lksk = LKToLKsk( lk )
       lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
     }
     "1 copy tape proof" in {
-      skipped( "definition elimination violates equality rules, see https://github.com/gapt/gapt/issues/452" )
       val lk = load( "tape3ex.llk" )
       val lksk = LKToLKsk( lk )
       lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )

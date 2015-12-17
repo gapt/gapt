@@ -114,7 +114,6 @@ class MiscTest extends Specification {
     }
 
     "extract expansion tree from tape proof" in {
-      skipped( "definition elimination violates equality rules, see https://github.com/gapt/gapt/issues/452" )
       val db = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream "tape3.llk" ).mkString )
       // I have no idea why, but this makes the code get the correct proof
       val p = db.proof( "TAPEPROOF" )
