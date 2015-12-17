@@ -802,7 +802,7 @@ proof: at.logic.gapt.proofs.lk.WeakeningLeftRule =
 
 gapt> val pr = EqualityRightRule( proof, aeqb, Suc( 0 ), pb )
 pr: at.logic.gapt.proofs.lk.EqualityRightRule =
-[p3] a=b, P(a) :- P(b)    (EqualityRightRule(p2, Ant(0), Suc(0), [2]))
+[p3] a=b, P(a) :- P(b)    (EqualityRightRule(p2, Ant(0), Suc(0), List([2])))
 [p2] a=b, P(a) :- P(a)    (WeakeningLeftRule(p1, a=b))
 [p1] P(a) :- P(a)    (LogicalAxiom(P(a)))
 
