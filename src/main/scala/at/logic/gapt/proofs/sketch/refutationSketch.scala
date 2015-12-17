@@ -11,17 +11,43 @@ import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable
 import scalaz._, Scalaz._
 
+/**
+ * Intermediate data structure intendend for the proof replay in the TPTP proof import.
+ *
+ * A refutation sketch is a list of clauses, where each clause is either an axiom (that occurs in the CNF of the
+ * original end-sequent) or is a first-order consequence of previous ones.
+ *
+ * These two cases are modelled as [[SketchAxiom]] and [[SketchInference]].
+ */
 trait RefutationSketch extends SequentProof[FOLAtom, RefutationSketch] {
   override def occConnectors = immediateSubProofs map { p => OccConnector( conclusion, p.conclusion, p.conclusion map { _ => Seq() } ) }
   override def mainIndices = Seq()
   override def auxIndices = immediateSubProofs map { _ => Seq() }
 }
 
+/**
+ * Axiom in a refutation sketch.
+ *
+ * The clause [[axiom]] occurs as a clause in the CNF of the end-sequent we're proving.
+ *
+ * @param axiom  Clause of the CNF.
+ */
 case class SketchAxiom( axiom: FOLClause ) extends RefutationSketch {
   override def conclusion = axiom
   override def immediateSubProofs: Seq[RefutationSketch] = Seq()
 }
 
+/**
+ * Inference in a refutation sketch.
+ *
+ * The clause [[from]] should be a first-order consequence of the conclusions of [[from]].
+ *
+ * This rule corresponds to a line in a TPTP proof which just indicates the previous lines from which it follows,
+ * but does not specify the precise inference rule employed.
+ *
+ * @param conclusion  Conclusion of the inference.
+ * @param from  Premises of the inference.
+ */
 case class SketchInference( conclusion: FOLClause, from: Seq[RefutationSketch] ) extends RefutationSketch {
   override def immediateSubProofs = from
 
@@ -30,6 +56,16 @@ case class SketchInference( conclusion: FOLClause, from: Seq[RefutationSketch] )
 }
 
 object RefutationSketchToRobinson extends Logger {
+  /**
+   * Converts a refutation sketch to a resolution proof.
+   *
+   * Each [[SketchInference]] is replaced by a resolution derivation that is obtained
+   * using the provided resolution prover.
+   *
+   * @param sketch  Refutation sketch to convert.
+   * @param prover  Resolution prover used to reconstruct the inferences.
+   * @return  <code>Some(proof)</code> if all inferences could be reconstructed, <code>None</code> otherwise.
+   */
   def apply( sketch: RefutationSketch, prover: ResolutionProver ): Option[ResolutionProof] = {
     val memo = mutable.Map[RefutationSketch, Option[ResolutionProof]]()
     def solve( s: RefutationSketch ): Option[ResolutionProof] = memo.getOrElseUpdate( s, s match {
