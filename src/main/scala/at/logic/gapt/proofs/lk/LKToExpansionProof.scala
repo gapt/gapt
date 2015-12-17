@@ -87,7 +87,7 @@ object LKToExpansionProof {
     // Quantifier rules
     case ForallLeftRule( subProof, aux, _, t, _ ) =>
       val ( subTree, subSequent ) = extract( subProof ).focus( aux )
-      merge( ETWeakQuantifier( proof.mainFormulas.head, Seq( subTree -> t ) ) ) +: subSequent
+      ETWeakQuantifier( proof.mainFormulas.head, Seq( subTree -> t ) ) +: subSequent
 
     case ForallRightRule( subProof, aux, eigen, _ ) =>
       val ( subTree, subSequent ) = extract( subProof ).focus( aux )
@@ -99,19 +99,19 @@ object LKToExpansionProof {
 
     case ExistsRightRule( subProof, aux, _, t, _ ) =>
       val ( subTree, subSequent ) = extract( subProof ).focus( aux )
-      subSequent :+ merge( ETWeakQuantifier( proof.mainFormulas.head, Seq( subTree -> t ) ) )
+      subSequent :+ ETWeakQuantifier( proof.mainFormulas.head, Seq( subTree -> t ) )
 
     // Equality rules
     case EqualityLeftRule( subProof, eq, aux, pos ) =>
       val ( subTree, subSequent ) = extract( subProof ).focus( aux )
       val repTerm = proof.mainFormulas.head( pos )
-      val newTree = merge( replaceAtHOLPosition( subTree, pos, repTerm ) )
+      val newTree = replaceAtHOLPosition( subTree, pos, repTerm )
       newTree +: subSequent
 
     case EqualityRightRule( subProof, eq, aux, pos ) =>
       val ( subTree, subSequent ) = extract( subProof ).focus( aux )
       val repTerm = proof.mainFormulas.head( pos )
-      val newTree = merge( replaceAtHOLPosition( subTree, pos, repTerm ) )
+      val newTree = replaceAtHOLPosition( subTree, pos, repTerm )
       subSequent :+ newTree
   }
 }
