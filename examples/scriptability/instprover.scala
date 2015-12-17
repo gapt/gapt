@@ -34,7 +34,7 @@ while (Sat4j solve (done ++ todo) isDefined) {
     (atom2,index2) <- next.zipWithIndex.elements
     if !index1.sameSideAs(index2)
     (mgu1, mgu2) <- syntacticMGU.twoSided(atom1,atom2).toSeq
-    newClause <- Seq(literal1.map(mgu1(_)), next.map(mgu1(_)))
+    newClause <- Seq(literal1.map(mgu1(_)), next.map(mgu2(_)))
   } yield newClause.asInstanceOf[HOLClause])
   done += next
 }
