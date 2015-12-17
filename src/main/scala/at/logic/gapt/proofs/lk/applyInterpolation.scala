@@ -323,14 +323,14 @@ object Interpolate {
         val up_nproof2 = EqualityRightRule( up_nproof1, eq, auxFormula, pos )
         val up_nproof3 = ImpRightRule( up_nproof2, p.endSequent( eqIndex ), up_I )
 
-        val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eqIndex ).asInstanceOf[FOLAtom] ), p.endSequent( eqIndex ), up_pproof, up_I )
+        val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eqIndex ) ), p.endSequent( eqIndex ), up_pproof, up_I )
         val up_pproof2 = ContractionLeftRule( up_pproof1, p.endSequent( eqIndex ) )
 
         ( up_nproof3, up_pproof2, ipl )
       } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
         ipl = And( p.endSequent( eqIndex ), up_I )
 
-        val up_nproof1 = AndRightRule( LogicalAxiom( p.endSequent( eqIndex ).asInstanceOf[FOLAtom] ), up_nproof, And( p.endSequent( eqIndex ), up_I ) )
+        val up_nproof1 = AndRightRule( LogicalAxiom( p.endSequent( eqIndex ) ), up_nproof, And( p.endSequent( eqIndex ), up_I ) )
         val up_nproof2 = ContractionLeftRule( up_nproof1, p.endSequent( eqIndex ) )
 
         val up_pproof1 = WeakeningLeftRule( up_pproof, p.endSequent( eqIndex ) )
@@ -357,14 +357,14 @@ object Interpolate {
         val up_nproof2 = EqualityLeftRule( up_nproof1, eq, auxFormula, pos )
         val up_nproof3 = ImpRightRule( up_nproof2, p.endSequent( eqIndex ), up_I )
 
-        val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eqIndex ).asInstanceOf[FOLAtom] ), p.endSequent( eqIndex ), up_pproof, up_I )
+        val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eqIndex ) ), p.endSequent( eqIndex ), up_pproof, up_I )
         val up_pproof2 = ContractionLeftRule( up_pproof1, p.endSequent( eqIndex ) )
 
         ( up_nproof3, up_pproof2, ipl )
       } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
         ipl = And( p.endSequent( eqIndex ), up_I )
 
-        val up_nproof1 = AndRightRule( LogicalAxiom( p.endSequent( eqIndex ).asInstanceOf[FOLAtom] ), up_nproof, And( p.endSequent( eqIndex ), up_I ) )
+        val up_nproof1 = AndRightRule( LogicalAxiom( p.endSequent( eqIndex ) ), up_nproof, And( p.endSequent( eqIndex ), up_I ) )
         val up_nproof2 = ContractionLeftRule( up_nproof1, p.endSequent( eqIndex ) )
 
         val up_pproof1 = WeakeningLeftRule( up_pproof, p.endSequent( eqIndex ) )

@@ -30,7 +30,7 @@ class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpressi
 
   def apply( proof: LKProof ): LKProof = proof match {
     // introductory rules
-    case LogicalAxiom( atom )     => AtomicExpansion( apply( atom ) )
+    case LogicalAxiom( atom )     => LogicalAxiom( apply( atom ) )
 
     case TopAxiom                 => TopAxiom
     case BottomAxiom              => BottomAxiom
