@@ -55,8 +55,8 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
 
   def ST( ls1: Seq[LambdaExpression], ls2: Seq[LambdaExpression], sub: Substitution, restrictedDomain: List[Var] ): Option[Substitution] =
     ls1 match {
-      case Nil => Some( sub ) // first list is exhausted
-      case x :: ls =>
+      case Seq() => Some( sub ) // first list is exhausted
+      case Seq( x, ls @ _* ) =>
         val sx = sub( x );
         //TODO: the original algorithm uses backtracking, this does not. check if this implementation is incomplete
         val nsubs = ls2.flatMap( t =>
