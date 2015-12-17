@@ -9,7 +9,8 @@ package at.logic.gapt.prooftool
 
 import java.awt.{ Font, Color }
 import Font._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.occurrences.FormulaOccurrence
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
 import swing.{ FlowPanel, GridPanel, Label }
@@ -46,8 +47,11 @@ class DrawList(
     }
 
     def drawMember( x: Any ) = x match {
-      case s: OccSequent                                  => DrawSequent( main, s, ft, str )
-      case fs: HOLSequent                                 => DrawSequent( main, fs, ft, str )
+      case s: Sequent[t] if s.nonEmpty =>
+        s.elements.head match {
+          case _: FormulaOccurrence => DrawSequent( main, s.asInstanceOf[OccSequent], ft, str )
+          case _: HOLFormula        => DrawSequent( main, s.asInstanceOf[HOLSequent], ft, str )
+        }
       case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
       case _ => new Label( x.toString ) {
         background = new Color( 255, 255, 255 )

@@ -55,6 +55,6 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer
   }
 
   // Menu buttons
-  val saveAsButton = MenuButtons.saveAsButton( this )
+  def saveAsButton = MenuButtons.saveAsButton( this )
 
 }
