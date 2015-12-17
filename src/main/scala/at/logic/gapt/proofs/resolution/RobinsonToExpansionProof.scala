@@ -13,9 +13,31 @@ object RobinsonToExpansionProof {
 
   def apply( p: ResolutionProof, es: HOLSequent,
              justifications: Set[( HOLClause, Justification )],
-             definitions:    Map[HOLAtomConst, LambdaExpression] ): ExpansionSequent = {
-    val substs = getSubsts( p )
+             definitions:    Map[HOLAtomConst, LambdaExpression] ): ExpansionSequent =
+    expansionProofFromInstances( groundInstancesFromResolutionProof( p ), es, justifications, definitions )
 
+  def apply( p: ResolutionProof, es: HOLSequent ): ExpansionSequent = {
+    val justifications =
+      for {
+        ( f, i ) <- es.zipWithIndex.elements
+        fs = if ( i isAnt ) f +: Sequent() else Sequent() :+ f
+        clause <- CNFn.toFClauseList( fs.toFormula )
+        pcnf = PCNF( fs, clause )
+        exp = for ( ( e, ei ) <- LKToExpansionProof( pcnf ).zipWithIndex if ei sameSideAs i if toShallow( e ) == f ) yield e
+        just = ProjectionFromEndSequent( exp, i )
+      } yield clause -> just
+    apply( p, es, justifications toSet, Map() )
+  }
+
+  def apply( p: ResolutionProof ): ExpansionSequent =
+    ( for ( ( clause, substs ) <- groundInstancesFromResolutionProof( p ) )
+      yield formulaToExpansionTree( univclosure( clause.toFormula ), substs.toList, pos = false ) ) ++: Sequent()
+}
+
+object expansionProofFromInstances {
+  def apply( substs: Map[HOLClause, Set[Substitution]], es: HOLSequent,
+             justifications: Set[( HOLClause, Justification )],
+             definitions:    Map[HOLAtomConst, LambdaExpression] ): ExpansionSequent = {
     // Here, we can perform merges locally since we don't have strong quantifier nodes and all
     // skolem constants are consistent.
 
@@ -57,25 +79,11 @@ object RobinsonToExpansionProof {
       } yield substitute( subst, proj )
     ) getOrElse ETWeakening( formula ) )
   }
+}
 
-  def apply( p: ResolutionProof, es: HOLSequent ): ExpansionSequent = {
-    val justifications =
-      for {
-        ( f, i ) <- es.zipWithIndex.elements
-        fs = if ( i isAnt ) f +: Sequent() else Sequent() :+ f
-        clause <- CNFn.toFClauseList( fs.toFormula )
-        pcnf = PCNF( fs, clause )
-        exp = for ( ( e, ei ) <- LKToExpansionProof( pcnf ).zipWithIndex if ei sameSideAs i if toShallow( e ) == f ) yield e
-        just = ProjectionFromEndSequent( exp, i )
-      } yield clause -> just
-    apply( p, es, justifications toSet, Map() )
-  }
+object groundInstancesFromResolutionProof {
 
-  def apply( p: ResolutionProof ): ExpansionSequent =
-    ( for ( ( clause, substs ) <- getSubsts( p ) )
-      yield formulaToExpansionTree( univclosure( clause.toFormula ), substs.toList, pos = false ) ) ++: Sequent()
-
-  private def getSubsts( p: ResolutionProof ): Map[HOLClause, Set[Substitution]] = {
+  def apply( p: ResolutionProof ): Map[HOLClause, Set[Substitution]] = {
     val substMap = mutable.Map[ResolutionProof, Set[( HOLClause, Map[Var, LambdaExpression] )]]()
 
     def getInst( node: ResolutionProof ): Set[( HOLClause, Map[Var, LambdaExpression] )] =
@@ -92,4 +100,5 @@ object RobinsonToExpansionProof {
 
     getInst( p ).groupBy { _._1 }.mapValues { _.map { _._2 }.map { Substitution( _ ) } }
   }
+
 }
