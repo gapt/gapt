@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 import org.specs2.mutable._
 
-class ResolutionToLKTest extends Specification {
+class ResolutionToLKTest extends Specification with SequentMatchers {
 
   object UNSproof {
     val v0 = FOLVar( "v0" )
@@ -227,6 +227,19 @@ class ResolutionToLKTest extends Specification {
         r.succedent.size mustEqual ( 1 )
         r.succedent( 0 ) mustEqual ( UNSproofVariant.c3 )
       }
+    }
+
+    "transform rewriting at multiple positions" in {
+      val Seq( a, b ) = Seq( "a", "b" ) map { FOLConst( _ ) }
+      val p = FOLAtomConst( "p", 2 )
+      val proof = RobinsonToLK(
+        Paramodulation(
+          InputClause( Clause() :+ ( a === b ) ), Suc( 0 ),
+          InputClause( Clause() :+ p( a, a ) ), Suc( 0 ),
+          p( b, b )
+        )
+      )
+      proof.endSequent must beMultiSetEqual( Sequent() :+ p( b, b ) )
     }
   }
 }
