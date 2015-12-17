@@ -189,7 +189,7 @@ case class Resolution( subProof1: ResolutionProof, literal1: SequentIndex,
 object MguResolution {
   def apply( subProof1: ResolutionProof, literal1: Suc,
              subProof2: ResolutionProof, literal2: Ant ): Resolution = {
-    val Some( ( mgu1, mgu2 ) ) = syntacticMGU.twoSubstitutions(
+    val Some( ( mgu1, mgu2 ) ) = syntacticMGU.twoSided(
       subProof1.conclusion( literal1 ), subProof2.conclusion( literal2 )
     )
     Resolution(
