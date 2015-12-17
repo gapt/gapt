@@ -587,7 +587,7 @@ case class ImpLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
 }
 
 /**
- * Companion object for ImpRightTactic
+ * Companion object for ImpLeftTactic
  */
 object ImpLeftTactic {
   def apply( applyToLabel: String ) = new ImpLeftTactic( Some( applyToLabel ) )
