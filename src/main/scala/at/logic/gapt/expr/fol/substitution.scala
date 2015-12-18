@@ -16,7 +16,7 @@ class FOLSubstitution( val folmap: Map[FOLVar, FOLTerm] ) extends Substitution( 
   def apply( t: FOLExpression ): FOLExpression = super.apply( t ).asInstanceOf[FOLExpression]
   def apply( t: FOLAtom ): FOLAtom = super.apply( t ).asInstanceOf[FOLAtom]
   def apply( v: Seq[FOLTerm] ): Seq[FOLTerm] = v map apply
-  def apply( c: FOLClause ): FOLClause = c map apply
+  def apply( c: FOLClause )( implicit dummyImplicit: DummyImplicit ): FOLClause = c map apply
 
   def compose( sub: FOLSubstitution ): FOLSubstitution = FOLSubstitution( folmap ++ sub.folmap.map( x => ( x._1, apply( x._2 ) ) ) )
 }
