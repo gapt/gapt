@@ -1735,7 +1735,40 @@ antecedent or the succedent---this is one of the four possibilities:
 \end{prooftree}
 \end{multicols}
 
-\fxnote{Expansion trees?}
+\subsection{Expansion trees}
+
+Expansion trees are a compact representation of quantifier inferences in
+cut-free proofs.  They have originally been introduced
+in~\cite{Miller87Compact}.  GAPT contains an extension by Skolem and weakening
+nodes.
+
+\begin{tabular}{r l}
+
+  \cli{ETAtom} & $A$ \quad (where $A$ is a HOL atom) \\
+\cli{ETWeakening} & $\varphi$ \quad (where $\varphi$ is a formula) \\
+\cli{ETTop} & $\top$ \\
+\cli{ETBottom} & $\bot$ \\
+\cli{ETNeg} & $\neg E$ \\
+\cli{ETAnd} & $E_1 \land E_2$ \\
+\cli{ETOr} & $E_1 \lor E_2$ \\
+\cli{ETImp} & $E_1 \impl E_2$ \\
+
+\cli{ETWeakQuantifier} &
+$Q x \varphi
++^{t_1} \varphi[t_1/x]
+\cdots
++^{t_n} \varphi[t_n/x]
+$ \quad (where $Q$ is a quantifier and $t_i$ terms) \\
+
+\cli{ETStrongQuantifier} &
+$Q x \varphi +^\alpha \varphi[\alpha/x]$
+\quad (where $Q$ is a quantifier and $\alpha$ an eigenvariable) \\
+
+\cli{ETSkolemQuantifier} &
+$Q x \varphi +^s \varphi[s(\dots)/x]$
+\quad (where $Q$ is a quantifier and $s$ a Skolem symbol) \\
+
+\end{tabular}
 
 \section{Prover9 term parser (parseFormula)}
 \label{app:formulasyntax}
