@@ -158,7 +158,7 @@ case class NegLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       val newGoal = ( goalSequent delete i ) :+ ( existingLabel, e )
       val premise = OpenAssumption( newGoal )
 
-      NegLeftRule( premise, Suc( newGoal.length - 1 ) )
+      NegLeftRule( premise, Suc( newGoal.succedent.length - 1 ) )
     }
   }
 }
@@ -849,3 +849,4 @@ case class ForallRightTactic( eigenVariable: Var, applyToLabel: Option[String] =
 object ForallRightTactic {
   def apply( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( eigenVariable, Some( applyToLabel ) )
 }
+

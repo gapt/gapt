@@ -34,6 +34,6 @@ val p_right = new Lemma( Sequent(
   use(WeakeningRightTactic( "R1" ))
   use(ImpRightTactic( "R2" ))
   use(NegRightTactic( "R2_2" ))
-  // fails currently: use(NegLeftTactic( "R2_1" ))
+  use(NegLeftTactic( "R2_1" ))
 } qed
 
