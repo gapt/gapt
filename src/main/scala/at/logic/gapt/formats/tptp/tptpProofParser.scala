@@ -10,7 +10,7 @@ import scala.collection.mutable
 class TptpProofParser extends TPTPParser {
   type StepList = Seq[( String, ( String, String, FOLFormula, List[GeneralTerm] ) )]
 
-  def comment: Parser[Unit] = """[#%](.*)\n""".r ^^ { _ => () }
+  def comment: Parser[Unit] = """[#%](.*)(\n|\r\n)""".r ^^ { _ => () }
 
   def step: Parser[( String, ( String, String, FOLFormula, List[GeneralTerm] ) )] = ( "cnf" | "fof" ) ~ "(" ~ name ~ "," ~ name ~ "," ~ formula ~ ( "," ~> general_term ).* ~ ")." ^^ {
     case lang ~ _ ~ num ~ _ ~ name ~ _ ~ clause ~ just ~ _ =>
