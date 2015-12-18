@@ -35,9 +35,9 @@ object RobinsonToExpansionProof {
 }
 
 object expansionProofFromInstances {
-  def apply( substs: Map[HOLClause, Set[Substitution]], es: HOLSequent,
-             justifications: Set[( HOLClause, Justification )],
-             definitions:    Map[HOLAtomConst, LambdaExpression] ): ExpansionSequent = {
+  def apply[S <: Substitution]( substs: Map[HOLClause, Set[S]], es: HOLSequent,
+                                justifications: Set[( HOLClause, Justification )],
+                                definitions:    Map[HOLAtomConst, LambdaExpression] ): ExpansionSequent = {
     // Here, we can perform merges locally since we don't have strong quantifier nodes and all
     // skolem constants are consistent.
 

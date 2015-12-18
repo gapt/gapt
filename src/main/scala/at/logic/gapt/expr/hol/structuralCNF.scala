@@ -15,6 +15,11 @@ object structuralCNF {
   def apply( formula: HOLFormula, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) =
     apply( formula +: Sequent(), generateJustifications, propositional )
 
+  def apply( endSequent: FOLSequent, generateJustifications: Boolean, propositional: Boolean )( implicit dummyImplicit: DummyImplicit ): ( Set[FOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) = {
+    val ( cnf, justifications, definitions ) = apply( endSequent.asInstanceOf[HOLSequent], generateJustifications, propositional )
+    ( cnf.map { _.asInstanceOf[FOLClause] }, justifications, definitions )
+  }
+
   def apply( endSequent: HOLSequent, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
