@@ -17,9 +17,11 @@ val p_left = new Lemma( Sequent(
   use(ForallLeftTactic( parseTerm( "a" ), "L2", "L1" ))
   use(OrRightTactic( "C1" ))
   use(ImpLeftTactic( "L2" ))
-  use(NegRightTactic( "C1_1" ))
-  use(LogicalAxiomTactic( parseFormula( "P(z,a)" )))
-  use(LogicalAxiomTactic( parseFormula( "Q(z,a)" )))
+
+    use(NegRightTactic( "C1_1" ))
+    use(LogicalAxiomTactic( parseFormula( "P(z,a)" )))
+
+    use(LogicalAxiomTactic( parseFormula( "Q(z,a)" )))
 } qed
 
 val p_right = new Lemma( Sequent(
@@ -35,5 +37,11 @@ val p_right = new Lemma( Sequent(
   use(ImpRightTactic( "R2" ))
   use(NegRightTactic( "R2_2" ))
   use(NegLeftTactic( "R2_1" ))
+  use(OrLeftTactic( "C1" ))
+
+    use(NegLeftTactic( "C1" ))
+    use(LogicalAxiomTactic( parseFormula( "P(b,v)" )))
+
+    use(LogicalAxiomTactic( parseFormula( "Q(b,v)" )))
 } qed
 
