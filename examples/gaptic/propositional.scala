@@ -20,3 +20,9 @@ val lemma = new Lemma(
 	use(LogicalAxiomTactic(A))
 	use(LogicalAxiomTactic(B))
 } qed
+
+val cuttest = new Lemma(
+	Sequent(Seq("a1" -> And(A,B), "a2" -> Imp(B,A)), Seq("s1" -> Or(B,A), "s2" -> Neg(And(B,A))))
+) {
+	use(CutTactic(Imp(FOLAtom("C"), Bottom()), "cfm"))
+}

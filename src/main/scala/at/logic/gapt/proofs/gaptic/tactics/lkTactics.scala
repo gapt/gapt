@@ -850,3 +850,23 @@ object ForallRightTactic {
   def apply( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( eigenVariable, Some( applyToLabel ) )
 }
 
+/**
+ * CutRule tactic
+ * @param cutFormula
+ */
+case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic {
+  /**
+   *
+   * @param goal
+   */
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
+
+    val leftPremise = OpenAssumption( goalSequent.:+( cutLabel, cutFormula ) )
+    val rightPremise = OpenAssumption( goalSequent.+:( cutLabel, cutFormula ) )
+
+    val auxProof = CutRule( leftPremise, Suc( leftPremise.s.succedent.length - 1 ), rightPremise, Ant( 0 ) )
+    Some( ContractionMacroRule( auxProof ) )
+  }
+}
+
