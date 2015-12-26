@@ -11,10 +11,6 @@ import at.logic.gapt.proofs.lk._
  */
 case class LogicalAxiomTactic( a: HOLFormula ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.conclusion
 
@@ -37,12 +33,8 @@ case class LogicalAxiomTactic( a: HOLFormula ) extends Tactic {
 /**
  * TopAxiom tactic
  */
-case class TopAxiomTactic() extends Tactic {
+case object TopAxiomTactic extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.conclusion
 
@@ -64,12 +56,8 @@ case class TopAxiomTactic() extends Tactic {
 /**
  * BottomAxiom tactic
  */
-case class BottomAxiomTactic() extends Tactic {
+case object BottomAxiomTactic extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.conclusion
 
@@ -91,12 +79,8 @@ case class BottomAxiomTactic() extends Tactic {
 /**
  * ReflexivityAxiom tactic
  */
-case class ReflexivityAxiomTactic() extends Tactic {
+case object ReflexivityAxiomTactic extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.conclusion
 
@@ -118,17 +102,13 @@ case class ReflexivityAxiomTactic() extends Tactic {
 /**
  * Tactic for identification of (all) axioms
  */
-case class AxiomTactic() extends Tactic {
+case object AxiomTactic extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = goal.conclusion match {
     case Sequent( Seq( f: HOLAtom ), Seq( g: HOLAtom ) ) if f == g => LogicalAxiomTactic( f )( goal )
-    case Sequent( Seq(), Seq( Top() ) ) => TopAxiomTactic()( goal )
-    case Sequent( Seq( Bottom() ), Seq() ) => BottomAxiomTactic()( goal )
-    case Sequent( Seq(), Seq( Eq( s: LambdaExpression, t: LambdaExpression ) ) ) if s == t => ReflexivityAxiomTactic()( goal )
+    case Sequent( Seq(), Seq( Top() ) ) => TopAxiomTactic( goal )
+    case Sequent( Seq( Bottom() ), Seq() ) => BottomAxiomTactic( goal )
+    case Sequent( Seq(), Seq( Eq( s: LambdaExpression, t: LambdaExpression ) ) ) if s == t => ReflexivityAxiomTactic( goal )
     case _ => None
   }
 
@@ -191,7 +171,7 @@ case class NegRightTactic( applyToLabel: Option[String] = None ) extends Tactic 
     for ( i <- indices.headOption ) yield {
       val ( existingLabel, Neg( e ) ) = goalSequent( i )
 
-      val newGoal = ( goalSequent delete i ).+:( existingLabel, e )
+      val newGoal = ( existingLabel, e ) +: ( goalSequent delete i )
       val premise = OpenAssumption( newGoal )
 
       NegRightRule( premise, Ant( 0 ) )
@@ -212,10 +192,6 @@ object NegRightTactic {
  */
 case class WeakeningLeftTactic( applyToLabel: String ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -244,10 +220,6 @@ case class WeakeningLeftTactic( applyToLabel: String ) extends Tactic {
  */
 case class WeakeningRightTactic( applyToLabel: String ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -276,10 +248,6 @@ case class WeakeningRightTactic( applyToLabel: String ) extends Tactic {
  */
 case class ContractionLeftTactic( applyToLabel: String ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -312,10 +280,6 @@ case class ContractionLeftTactic( applyToLabel: String ) extends Tactic {
  */
 case class ContractionRightTactic( applyToLabel: String ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -348,10 +312,6 @@ case class ContractionRightTactic( applyToLabel: String ) extends Tactic {
  */
 case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -372,7 +332,7 @@ case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       val ( existingLabel, And( lhs, rhs ) ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
-      val newGoal = goalSequent.delete( i ).+:( existingLabel + "_2" -> rhs ).+:( existingLabel + "_1" -> lhs )
+      val newGoal = ( existingLabel + "_1" -> lhs ) +: ( existingLabel + "_2" -> rhs ) +: goalSequent.delete( i )
 
       // Indices of lhs and rhs
       val lhsIndex = Ant( 0 )
@@ -398,10 +358,7 @@ object AndLeftTactic {
  * @param applyToLabel
  */
 case class AndRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
-  /**
-   *
-   * @param goal
-   */
+
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -448,10 +405,7 @@ object AndRightTactic {
  * @param applyToLabel
  */
 case class OrLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
-  /**
-   *
-   * @param goal
-   */
+
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -471,8 +425,8 @@ case class OrLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       val ( existingLabel, Or( lhs, rhs ) ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
-      val newGoalLeft = goalSequent.delete( i ).+:( existingLabel -> lhs )
-      val newGoalRight = goalSequent.delete( i ).+:( existingLabel -> rhs )
+      val newGoalLeft = ( existingLabel -> lhs ) +: goalSequent.delete( i )
+      val newGoalRight = ( existingLabel -> rhs ) +: goalSequent.delete( i )
 
       val premiseLeft = OpenAssumption( newGoalLeft )
       val premiseRight = OpenAssumption( newGoalRight )
@@ -499,10 +453,6 @@ object OrLeftTactic {
  */
 case class OrRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -548,10 +498,7 @@ object OrRightTactic {
  * @param applyToLabel
  */
 case class ImpLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
-  /**
-   *
-   * @param goal
-   */
+
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -571,8 +518,8 @@ case class ImpLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       val ( existingLabel, Imp( lhs, rhs ) ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
-      val newGoalLeft = goalSequent.delete( i ).:+( existingLabel -> lhs )
-      val newGoalRight = goalSequent.delete( i ).+:( existingLabel -> rhs )
+      val newGoalLeft = goalSequent.delete( i ) :+ ( existingLabel -> lhs )
+      val newGoalRight = ( existingLabel -> rhs ) +: goalSequent.delete( i )
 
       val premiseLeft = OpenAssumption( newGoalLeft )
       val premiseRight = OpenAssumption( newGoalRight )
@@ -599,10 +546,6 @@ object ImpLeftTactic {
  */
 case class ImpRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -622,7 +565,7 @@ case class ImpRightTactic( applyToLabel: Option[String] = None ) extends Tactic 
       val ( existingLabel, Imp( lhs, rhs ) ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
-      val newGoal = goalSequent.delete( i ).+:( existingLabel + "_1" -> lhs ).:+( existingLabel + "_2" -> rhs )
+      val newGoal = ( existingLabel + "_1" -> lhs ) +: goalSequent.delete( i ) :+ ( existingLabel + "_2" -> rhs )
 
       // Indices of lhs and rhs
       val lhsIndex = Ant( 0 )
@@ -650,10 +593,6 @@ object ImpRightTactic {
  */
 case class ExistsLeftTactic( eigenVariable: Var, applyToLabel: Option[String] = None ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     if ( !( freeVariables( goal.conclusion ) contains eigenVariable ) ) {
       val goalSequent = goal.s
@@ -676,7 +615,7 @@ case class ExistsLeftTactic( eigenVariable: Var, applyToLabel: Option[String] = 
         val auxFormula = Substitution( v, eigenVariable )( fm )
 
         // New goal with instance of fm instead of Exi(v, fm)
-        val newGoal = goalSequent.delete( i ).+:( existingLabel -> auxFormula )
+        val newGoal = ( existingLabel -> auxFormula ) +: goalSequent.delete( i )
 
         val premise = OpenAssumption( newGoal )
 
@@ -702,10 +641,6 @@ object ExistsLeftTactic {
  */
 case class ExistsRightTactic( term: LambdaExpression, instantiationLabel: String, applyToLabel: Option[String] = None ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -754,10 +689,6 @@ object ExistsRightTactic {
  */
 case class ForallLeftTactic( term: LambdaExpression, instantiationLabel: String, applyToLabel: Option[String] = None ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -805,10 +736,6 @@ object ForallLeftTactic {
  */
 case class ForallRightTactic( eigenVariable: Var, applyToLabel: Option[String] = None ) extends Tactic {
 
-  /**
-   *
-   * @param goal
-   */
   override def apply( goal: OpenAssumption ) = {
     if ( !( freeVariables( goal.conclusion ) contains eigenVariable ) ) {
       val goalSequent = goal.s
@@ -855,15 +782,12 @@ object ForallRightTactic {
  * @param cutFormula
  */
 case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic {
-  /**
-   *
-   * @param goal
-   */
+
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
-    val leftPremise = OpenAssumption( goalSequent.:+( cutLabel, cutFormula ) )
-    val rightPremise = OpenAssumption( goalSequent.+:( cutLabel, cutFormula ) )
+    val leftPremise = OpenAssumption( goalSequent :+ ( cutLabel, cutFormula ) )
+    val rightPremise = OpenAssumption( ( cutLabel, cutFormula ) +: goalSequent )
 
     val auxProof = CutRule( leftPremise, Suc( leftPremise.s.succedent.length - 1 ), rightPremise, Ant( 0 ) )
     Some( ContractionMacroRule( auxProof ) )

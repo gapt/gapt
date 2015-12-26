@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lk._
  *
  * @param initGoal
  */
-case class Lemma( initGoal: Sequent[( String, HOLFormula )], showOutput: Boolean = true ) {
+class Lemma( initGoal: Sequent[( String, HOLFormula )], showOutput: Boolean = true ) {
   private var proofState = ProofState( 0, OpenAssumption( initGoal ) )
 
   if ( showOutput )
@@ -35,7 +35,7 @@ case class Lemma( initGoal: Sequent[( String, HOLFormula )], showOutput: Boolean
    *
    * @return
    */
-  def qed(): LKProof = {
+  def qed: LKProof = {
     if ( proofState.subGoals.isEmpty ) {
       // Done
       proofState.proofSegment
