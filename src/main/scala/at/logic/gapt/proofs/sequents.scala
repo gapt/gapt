@@ -418,7 +418,10 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
       Sequent( antecedent, succedent.take( j ) ++ Seq( el ) ++ succedent.drop( j ) )
   }
 
-  def foreach[U]( f: A => U ): Unit = elements foreach f
+  def foreach[U]( f: A => U ): Unit = {
+    antecedent foreach f
+    succedent foreach f
+  }
 
   def withFilter( p: A => Boolean ): Sequent[A] = filter( p )
 }
