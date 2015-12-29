@@ -93,24 +93,28 @@ object variables {
  * Returns the set of free variables in the given argument.
  */
 object freeVariables {
-  def apply( e: LambdaExpression ): Set[Var] = apply_( e, Set() )
+  def apply( e: LambdaExpression ): Set[Var] = freeVariables( Some( e ) )
 
-  def apply( e: FOLExpression ): Set[FOLVar] = apply( e.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
-
-  def apply( es: GenTraversable[LambdaExpression] ): Set[Var] = ( Set.empty[Var] /: es ) { ( acc, e ) => acc union apply( e ) }
-
-  def apply( es: GenTraversable[FOLExpression] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = ( Set.empty[FOLVar] /: es ) { ( acc, e ) => acc union apply( e ) }
-
-  def apply( seq: HOLSequent ): Set[Var] = apply( seq.antecedent ++ seq.succedent )
-
-  def apply( seq: Sequent[FOLFormula] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = apply( seq.elements )
-
-  private def apply_( e: LambdaExpression, boundvars: Set[Var] ): Set[Var] = e match {
-    case v: Var          => if ( !boundvars.contains( v ) ) Set( v ) else Set()
-    case Const( _, _ )   => Set()
-    case App( exp, arg ) => apply_( exp, boundvars ) ++ apply_( arg, boundvars )
-    case Abs( v, exp )   => apply_( exp, boundvars + v )
+  def apply( es: TraversableOnce[LambdaExpression] ): Set[Var] = {
+    val fvs = Set.newBuilder[Var]
+    def f( e: LambdaExpression ): Unit = e match {
+      case v: Var => fvs += v
+      case App( a, b ) =>
+        f( a )
+        f( b )
+      case Abs( x, a ) => fvs ++= freeVariables( a ) - x
+      case _           =>
+    }
+    es foreach f
+    fvs.result()
   }
+
+  def apply( seq: HOLSequent ): Set[Var] = apply( seq.elements )
+
+  def apply( e: FOLExpression ): Set[FOLVar] = apply( Some( e ) )
+  def apply( es: TraversableOnce[FOLExpression] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] =
+    freeVariables( es.asInstanceOf[TraversableOnce[LambdaExpression]] ).asInstanceOf[Set[FOLVar]]
+  def apply( seq: FOLSequent )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = apply( seq.elements )
 }
 
 /**
