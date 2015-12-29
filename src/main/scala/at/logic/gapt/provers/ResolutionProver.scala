@@ -1,10 +1,10 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.expr.Const
+import at.logic.gapt.expr.{ HOLFormula, Const }
 import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
+import at.logic.gapt.proofs.{ Sequent, HOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.LKProof
 
@@ -49,6 +49,7 @@ abstract class ResolutionProver extends OneShotProver {
   override def isValid( seq: HOLSequent ): Boolean =
     getRobinsonProof( seq ).isDefined
 
+  def getRobinsonProof( formula: HOLFormula ): Option[ResolutionProof] = getRobinsonProof( Sequent() :+ formula )
   def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] =
     withGroundVariables3( seq ) { seq =>
       getRobinsonProof( structuralCNF( seq, generateJustifications = false, propositional = false )._1 )
