@@ -1,7 +1,5 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr._
-
 import scala.collection.GenTraversable
 
 sealed abstract class SequentIndex extends Ordered[SequentIndex] {
