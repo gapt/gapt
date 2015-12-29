@@ -264,3 +264,19 @@ object Paramodulation {
         throw new IllegalArgumentException( s"Can't rewrite ${subProof2.conclusion( literal )} into $newAtom using ${subProof1.conclusion( equation )}" )
       }
 }
+
+object Flip {
+  def apply( subProof: ResolutionProof, equation: SequentIndex ): ResolutionProof = {
+    val Eq( s, t ) = subProof.conclusion( equation )
+    if ( equation isSuc ) {
+      Paramodulation( subProof, equation,
+        ReflexivityClause( s ), Suc( 0 ), Eq( t, s ) )
+    } else {
+      Resolution(
+        Paramodulation( TautologyClause( Eq( t, s ) ), Suc( 0 ),
+          ReflexivityClause( s ), Suc( 0 ), Eq( s, t ) ), Suc( 0 ),
+        subProof, equation
+      )
+    }
+  }
+}
