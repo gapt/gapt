@@ -6,6 +6,7 @@ import at.logic.gapt.proofs.{ OccConnector, SequentProof, FOLClause }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.{ mapInputClauses, findDerivationViaResolution }
 import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
@@ -66,23 +67,16 @@ object RefutationSketchToRobinson extends Logger {
    * @param prover  Resolution prover used to reconstruct the inferences.
    * @return  <code>Some(proof)</code> if all inferences could be reconstructed, <code>None</code> otherwise.
    */
-  def apply( sketch: RefutationSketch, prover: ResolutionProver ): Option[ResolutionProof] = {
+  def apply( sketch: RefutationSketch, prover: ResolutionProver = Escargot ): Option[ResolutionProof] = {
     val memo = mutable.Map[RefutationSketch, Option[ResolutionProof]]()
     def solve( s: RefutationSketch ): Option[ResolutionProof] = memo.getOrElseUpdate( s, s match {
       case SketchAxiom( axiom ) => Some( InputClause( axiom ) )
       case SketchInference( conclusion, from ) =>
         debug( s"Proving $conclusion" )
         from.toList traverse solve flatMap { solvedFrom =>
-          findDerivationViaResolution( conclusion, solvedFrom.map( _.conclusion ).toSet, prover ) map { deriv =>
-            val filledInDeriv = mapInputClauses( deriv ) { other =>
-              solvedFrom.view.flatMap {
-                case prevStep =>
-                  // the prover9 interface and hence findDerivationViaResolution doesn't use the variables from the passed CNF...
-                  FOLMatchingAlgorithm.matchTerms( prevStep.conclusion.toFormula.asInstanceOf[FOLFormula], other.toFormula.asInstanceOf[FOLFormula] ) map { subst =>
-                    Instance( prevStep, subst )
-                  }
-              }.head
-            }
+          val solvedFromMap = solvedFrom.map { p => p.conclusion -> p }.toMap
+          findDerivationViaResolution( conclusion, solvedFromMap.keySet, prover ) map { deriv =>
+            val filledInDeriv = mapInputClauses( deriv )( solvedFromMap )
             require( filledInDeriv.conclusion isSubMultisetOf conclusion )
             filledInDeriv
           } orElse {

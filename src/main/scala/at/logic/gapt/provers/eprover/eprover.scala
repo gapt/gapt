@@ -8,14 +8,11 @@ import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ HOLClause, FOLClause }
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.{ runProcess, withTempFile }
 
 object EProver extends EProver
 class EProver extends ResolutionProver with ExternalProgram {
-  val backgroundProver = Prover9
-
   override def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( seq ) {
       case ( renaming, cnf ) =>
@@ -23,7 +20,7 @@ class EProver extends ResolutionProver with ExternalProgram {
         val tptpIn = toTPTP( labelledCNF )
         val output = runProcess.withTempInputFile( Seq( "eproof", "--tptp3-format" ), tptpIn )
         if ( output.split( "\n" ).contains( "# SZS status Unsatisfiable" ) )
-          RefutationSketchToRobinson( TptpProofParser.parse( output, labelledCNF mapValues { Seq( _ ) } ), backgroundProver )
+          RefutationSketchToRobinson( TptpProofParser.parse( output, labelledCNF mapValues { Seq( _ ) } ) )
         else None
     }
 
@@ -54,11 +51,11 @@ class EProver extends ResolutionProver with ExternalProgram {
         s"cnf($label, axiom, ${toTPTP( clause )})."
     }.mkString( sys.props( "line.separator" ) )
 
-  override val isInstalled: Boolean = backgroundProver.isInstalled &&
-    ( try {
+  override val isInstalled: Boolean =
+    try {
       runProcess( Seq( "eproof", "--version" ) )
       true
     } catch {
       case ex: IOException => false
-    } )
+    }
 }

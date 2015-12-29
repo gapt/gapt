@@ -4,8 +4,7 @@ import at.logic.gapt.proofs.Clause
 import at.logic.gapt.proofs.expansionTrees.toDeep
 import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
-import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
 
@@ -26,9 +25,7 @@ class TptpProofParserTest extends Specification {
       val ( endSequent, sketch ) = TptpProofParser.parse( load( fn ) )
       sketch.conclusion must_== Clause()
 
-      if ( !Prover9.isInstalled || !VeriT.isInstalled ) skipped
-
-      val Some( robinson ) = RefutationSketchToRobinson( sketch, Prover9 )
+      val Some( robinson ) = RefutationSketchToRobinson( sketch )
       robinson.conclusion must_== Clause()
 
       // not converting that one to LK because it takes too long
@@ -36,7 +33,7 @@ class TptpProofParserTest extends Specification {
         RobinsonToLK( robinson, endSequent )
 
       val expansion = RobinsonToExpansionProof( robinson, endSequent )
-      VeriT.isValid( toDeep( expansion ) ) must_== true
+      Escargot isValid toDeep( expansion ) must_== true
     }
   }
 }

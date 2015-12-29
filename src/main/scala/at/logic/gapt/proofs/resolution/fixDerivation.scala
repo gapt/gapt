@@ -4,8 +4,8 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs.{ Clause, HOLClause, HOLSequent, Suc }
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
-import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.immutable.HashMap
@@ -140,10 +140,7 @@ object fixDerivation extends Logger {
   }
 
   def tryDeriveViaResolution( to: HOLClause, from: Seq[HOLClause] ) =
-    if ( Prover9 isInstalled )
-      findDerivationViaResolution( to, from.map { seq => HOLClause( seq.antecedent, seq.succedent ) }.toSet, Prover9 )
-    else
-      None
+    findDerivationViaResolution( to, from.toSet, Escargot )
 
   private def findFirstSome[A, B]( seq: Seq[A] )( f: A => Option[B] ): Option[B] =
     seq.view.flatMap( f( _ ) ).headOption
@@ -210,7 +207,7 @@ object findDerivationViaResolution {
    * @param prover Prover to obtain a resolution refutation of the consequence bs |= a from.
    * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
    */
-  def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = Prover9 ): Option[ResolutionProof] = {
+  def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = Escargot ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
       ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet
@@ -231,7 +228,7 @@ object findDerivationViaResolution {
       val derivation = TermReplacement( tautologified, nonOverbindingUnground.toMap[LambdaExpression, LambdaExpression] )
       val derivationInOrigVars = Instance( derivation, Substitution( toUnusedVars.map( _.swap ) ) )
 
-      Factor( derivationInOrigVars )._1
+      simplifyResolutionProof( Factor( derivationInOrigVars )._1 )
     }
   }
 }

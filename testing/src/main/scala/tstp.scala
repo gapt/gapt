@@ -2,7 +2,6 @@ package at.logic.gapt.testing
 
 import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
-import at.logic.gapt.provers.prover9.Prover9
 
 import scala.io.Source
 
@@ -17,7 +16,7 @@ object testTstpImport extends App {
   val ( endSequent, sketch ) = TptpProofParser parse tstpOutput
   println( s"SKETCH_SIZE ${sketch.subProofs.size}" )
 
-  val resolution = RefutationSketchToRobinson( sketch, Prover9 ) getOrElse {
+  val resolution = RefutationSketchToRobinson( sketch ) getOrElse {
     println( "FAIL_SKETCH_CONVERSION" )
     sys exit 1
   }

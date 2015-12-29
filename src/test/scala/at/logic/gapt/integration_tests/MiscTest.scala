@@ -27,7 +27,6 @@ import scala.io.Source
 
 class MiscTest extends Specification {
 
-  sequential
   "The system" should {
     /*
 //    "parse, skolemize, extract clause set for a simple induction proof" in {
@@ -46,7 +45,6 @@ class MiscTest extends Specification {
 //    */
 
     "perform cut introduction on an example proof" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val p = LinearExampleProof( 7 )
       CutIntroduction.compressLKProof( p, method = DeltaTableMethod( manyQuantifiers = false ), verbose = false ) must beSome
     }
@@ -92,7 +90,6 @@ class MiscTest extends Specification {
     }
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val p = LinearExampleProof( 4 )
       val Some( pi ) = CutIntroduction.compressLKProof( p, method = DeltaTableMethod( manyQuantifiers = false ), verbose = false )
       val pe = ReductiveCutElimination( pi )

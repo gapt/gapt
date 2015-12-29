@@ -14,6 +14,7 @@ import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolu
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.{ metrics, Logger }
@@ -171,10 +172,11 @@ object CutIntroduction extends Logger {
     )
 
     val prover = if ( hasEquality ) EquationalProver else BasicProver
+    val resProver = if ( Prover9 isInstalled ) Prover9 else Escargot
 
     val herbrandSequent = extractInstances( ep )
-    val herbrandSequentResolutionProof = Prover9 getRobinsonProof herbrandSequent getOrElse {
-      throw new CutIntroEHSUnprovableException( "Cannot prove Herbrand sequent using Prover9." )
+    val herbrandSequentResolutionProof = resProver getRobinsonProof herbrandSequent getOrElse {
+      throw new CutIntroEHSUnprovableException( s"Cannot prove Herbrand sequent using ${resProver.getClass.getSimpleName}." )
     }
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
@@ -244,8 +246,8 @@ object CutIntroduction extends Logger {
       }
 
       val ehsSequent = minimizedEHS.getDeep
-      val ehsResolutionProof = Prover9 getRobinsonProof ehsSequent getOrElse {
-        throw new CutIntroEHSUnprovableException( "Cannot prove extended Herbrand sequent using Prover9." )
+      val ehsResolutionProof = resProver getRobinsonProof ehsSequent getOrElse {
+        throw new CutIntroEHSUnprovableException( s"Cannot prove extended Herbrand sequent using ${resProver.getClass.getSimpleName}." )
       }
       metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
       metrics.value( "ehs_scomp", expressionSize( ehsSequent.toFormula ) )

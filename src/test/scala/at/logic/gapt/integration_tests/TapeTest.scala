@@ -107,7 +107,7 @@ class TapeTest extends Specification with SequentMatchers {
       pdb.proofs.size must beEqualTo( 1 )
       val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
       val acnf = CERES( proof, CERES.skipEquations )
-      val eqacnf = CERES( acnf, { case Eq( _, _ ) => true; case FOLAtom( _, _ ) => false; case _ => true } )
+      val eqacnf = CERES( acnf, _ match { case Eq( _, _ ) => true; case FOLAtom( _, _ ) => false; case _ => true } )
       eqacnf.endSequent must beMultiSetEqual( proof.endSequent )
 
     }

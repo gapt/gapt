@@ -4,7 +4,6 @@ import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr.{ All, FOLVar, FOLAtom }
 import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
-import at.logic.gapt.provers.prover9.Prover9
 
 import org.specs2.mutable._
 
@@ -24,8 +23,6 @@ class LKToLKskTest extends Specification {
   }
 
   "pigeonhole" in {
-    if ( !Prover9.isInstalled ) skipped
-
     LKToLKsk( Pi2Pigeonhole() )
     ok
   }

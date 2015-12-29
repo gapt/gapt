@@ -3,14 +3,12 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.examples.Pi2Pigeonhole
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
-import at.logic.gapt.expr.hol.{ existsclosure, instantiate }
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.{ Ant, HOLSequent, Sequent, Suc }
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
@@ -59,15 +57,12 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "pi2 pigeonhole" in {
-    val p9 = Prover9
-    if ( !p9.isInstalled ) skipped
-
     val p = Pi2Pigeonhole()
     val recSchem = extractRecSchem( p )
 
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
 
-    p9.isValid( Sequent() :++ lang ) must beTrue
+    Escargot isValid ( Sequent() :++ lang ) must beTrue
   }
 
   "tape proof" in {
@@ -75,22 +70,12 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
     val proof = DefinitionElimination( pdb.Definitions )( regularize( pdb proof "the-proof" ) )
 
     val recSchem = extractRecSchem( proof )
-
-    val p9 = Prover9
-    if ( !p9.isInstalled ) skipped
-
     val lang = recSchem.parametricLanguage( FOLConst( "n_0" ) ).map( _.asInstanceOf[HOLFormula] )
-    // the following formulas are not present in the end-sequent...
-    val additionalAxioms = existsclosure(
-      "x+(y+z) = (x+y)+z" +:
-        "x+y = y+x" +:
-        "x != x+(y+1)" +:
-        Sequent()
-        map parseFormula
-    )
-    p9.isValid( additionalAxioms :++ lang ) must beTrue
+    Escargot isValid ( Sequent() :++ lang ) must_== true
 
-    ok
+    val recSchemWithEq = extractRecSchem( proof, includeEqTheory = true )
+    val langWithEq = recSchemWithEq.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] )
+    Or( langWithEq ) must beValid
   }
 
   "simple pi3" in {
@@ -124,9 +109,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
       // println( s"$name: $ty" )
     }
 
-    Sat4j.isValid(
-      recschem.language.map( _.asInstanceOf[FOLFormula] ).toSeq ++: HOLSequent()
-    ) must_== true
+    Or( recschem.language.map( _.asInstanceOf[FOLFormula] ) ) must beValid
   }
 
   "numeral induction" in {
@@ -165,7 +148,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
       b ( CutRule( _, Suc( 0 ), _, Ant( 0 ) ) ) qed )
 
     val recSchem = extractRecSchem( proof )
-    And( recSchem.parametricLanguage( s( s( o ) ) ).toSeq map { _.asInstanceOf[HOLFormula] } ) must beUnsat
+    Or( recSchem.parametricLanguage( s( s( o ) ) ) map { _.asInstanceOf[HOLFormula] } ) must beValid
   }
 }
 
@@ -219,11 +202,9 @@ class Pi2FactorialPOC extends Specification {
   }
 
   "languages should be tautologies" in {
-    val verit = VeriT
     Fragment.foreach( 0 to 7 ) { i =>
       s"n = $i" in {
-        if ( !verit.isInstalled ) skipped
-        verit.isValid( lang( i ) ++: Sequent() ) must beTrue
+        Escargot isValid ( lang( i ) ++: Sequent() ) must beTrue
       }
     }
   }

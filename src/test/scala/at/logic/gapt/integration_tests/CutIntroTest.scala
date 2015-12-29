@@ -3,13 +3,14 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.expr.hol.containsQuantifier
+import at.logic.gapt.expr.hol.{ lcomp, containsQuantifier }
 import at.logic.gapt.proofs.{ Sequent, Ant }
 import at.logic.gapt.proofs.expansionTrees.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.lk.quantRulesNumber
+import at.logic.gapt.proofs.lk.{ CutRule, quantRulesNumber }
 import at.logic.gapt.provers.basicProver.BasicProver
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.maxsat.MaxSat4j
 import org.specs2.mutable._
 
 class CutIntroTest extends Specification {
@@ -21,7 +22,6 @@ class CutIntroTest extends Specification {
 
   "CutIntroduction" should {
     "extract and decompose the termset of the linear example proof (n = 4)" in {
-      if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val proof = LinearExampleProof( 4 )
 
       val ( termset, _ ) = FOLInstanceTermEncoding( proof )
@@ -34,6 +34,20 @@ class CutIntroTest extends Specification {
       ) must beSome
 
       set must contain( exactly( LinearExampleTermset( 4 ): _* ) )
+    }
+
+    "linear equality example" in {
+      val f = FOLFunctionConst( "f", 1 )
+      val x = FOLVar( "x" )
+      val c = FOLConst( "c" )
+
+      val Some( p ) = Escargot getLKProof ( All( x, f( x ) === x ) +: Sequent() :+ ( f( f( f( f( f( f( f( f( f( c ) ) ) ) ) ) ) ) ) === c ) )
+      val Some( q ) = CutIntroduction.compressLKProof( p, MaxSATMethod( MaxSat4j, 1 ), verbose = false )
+      val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
+      cutFormulas must contain( atMost(
+        All( x, f( f( f( x ) ) ) === x ),
+        All( x, x === f( f( f( x ) ) ) )
+      ) )
     }
 
     "introduce two cuts into linear example proof with improveSolutionLK" in {

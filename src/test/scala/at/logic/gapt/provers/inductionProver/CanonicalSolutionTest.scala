@@ -3,7 +3,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionSequent }
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.Sat4j
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
@@ -42,8 +42,7 @@ class CanonicalSolutionTest extends Specification {
         Sat4j.isValid( imp ) must beTrue
       }
       "be provable from the background theory" in {
-        if ( !Prover9.isInstalled ) skipped
-        Prover9.isValid( HOLSequent( Seq( f0, f1 ), Seq( C_i ) ) ) must beTrue
+        Escargot isValid ( HOLSequent( Seq( f0, f1 ), Seq( C_i ) ) ) must beTrue
       }
     }
   }

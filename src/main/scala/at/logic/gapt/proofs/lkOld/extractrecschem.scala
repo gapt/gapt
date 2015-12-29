@@ -6,17 +6,28 @@ import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.{ Suc, Ant, SequentIndex, Sequent }
 
 object extractRecSchem {
-  def apply( p: LKProof ): RecursionScheme = {
+  def apply(
+    p:                   LKProof,
+    includeTheoryAxioms: Boolean = true,
+    includeEqTheory:     Boolean = false
+  ): RecursionScheme = {
     val symbols = p.endSequent.zipWithIndex map {
       case ( All.Block( vars, matrix ), Ant( _ ) ) => Abs( vars, -matrix )
       case ( Ex.Block( vars, matrix ), Suc( _ ) )  => Abs( vars, matrix )
     }
     val context = freeVariablesLK( p ).toList.sortBy( _.toString )
     val axiom = Const( "A", FunctionType( To, context.map( _.exptype ) ) )
-    RecursionScheme( axiom, getRules( regularize( moveStrongQuantifierRulesDown( p ) ), axiom( context: _* ), symbols, context ) map {
-      case Rule( lhs, rhs ) => Rule( lhs, BetaReduction.betaNormalize( rhs ) )
-    } )
+    RecursionScheme( axiom, new extractRecSchem( includeTheoryAxioms, includeEqTheory ).
+      getRules(
+        regularize( moveStrongQuantifierRulesDown( p ) ),
+        axiom( context: _* ), symbols, context
+      ) map {
+          case Rule( lhs, rhs ) => Rule( lhs, BetaReduction.betaNormalize( rhs ) )
+        } )
   }
+}
+
+private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory: Boolean ) {
 
   def symbolTypeP( f: HOLFormula ): Ty = f match {
     case All( v, g )                   => v.exptype -> symbolTypeP( g )
@@ -58,8 +69,13 @@ object extractRecSchem {
     case _ => Nil
   }
 
+  private def allRules( symbols: Sequent[LambdaExpression], axiom: LambdaExpression ) =
+    symbols.elements filterNot { _ == Bottom() } map { sym => Rule( axiom, sym ) } toSet
+
   def getRules( p: LKProof, axiom: LambdaExpression, symbols: Sequent[LambdaExpression], context: List[Var] ): Set[Rule] = p match {
-    case _: InitialSequent => symbols.elements filterNot { _ == Bottom() } map { sym => Rule( axiom, sym ) } toSet
+    case ReflexivityAxiom( term ) if includeEqTheory            => allRules( symbols, axiom ) + Rule( axiom, term !== term )
+    case TheoryAxiom( sequent ) if includeTheoryAxioms          => allRules( symbols, axiom ) + Rule( axiom, sequent toNegFormula )
+    case _: LogicalAxiom | _: ReflexivityAxiom | _: TheoryAxiom => allRules( symbols, axiom )
     case WeakQuantifierRule( q, aux, _, term, v, pol ) =>
       val main = p.mainIndices.head
       val appSym = App( symbols( main ), term )
@@ -116,6 +132,12 @@ object extractRecSchem {
       }
 
       caseRules.toSet
+    case p: EqualityLeftRule if includeEqTheory =>
+      getRules( p.subProof, axiom, p.getOccConnector parent symbols, context ) +
+        Rule( axiom, ( p.equation & p.mainFormula ) --> p.auxFormula )
+    case p: EqualityRightRule if includeEqTheory =>
+      getRules( p.subProof, axiom, p.getOccConnector parent symbols, context ) +
+        Rule( axiom, ( p.equation & p.auxFormula ) --> p.mainFormula )
     case _ =>
       ( for (
         ( q, occConn ) <- p.immediateSubProofs zip p.occConnectors;
