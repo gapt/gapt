@@ -8,6 +8,7 @@ import at.logic.gapt.proofs.lk._
 
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
+import at.logic.gapt.provers.escargot.Escargot
 
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.formats.llkNew.LatexLLKExporter
@@ -87,14 +88,10 @@ class TapeTest extends Specification with SequentMatchers {
     }
 
     "apply the full CERES method and skip cuts on equations" in {
-      //      skipped( "doesnt work right now" )
-      checkForProverOrSkip
-
-      //get the proof
       val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
       pdb.proofs.size must beEqualTo( 1 )
       val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
-      val acnf = CERES( proof, CERES.skipEquations )
+      val acnf = CERES( proof, CERES.skipEquations, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
 

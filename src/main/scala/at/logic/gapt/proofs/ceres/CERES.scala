@@ -7,6 +7,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.expr._
+import at.logic.gapt.provers.ResolutionProver
 
 import at.logic.gapt.provers.prover9.Prover9
 
@@ -14,14 +15,14 @@ import at.logic.gapt.provers.prover9.Prover9
  * This implementation of the CERES method does the proof reconstruction via Robinson2LK.
  */
 object CERES extends CERES {
-  def skipNothing( f: HOLFormula ): Boolean = true
+  def skipNothing: HOLFormula => Boolean = _ => true
 
   /**
    * True if the formula is not an equation. Intended use: predicate argument of CERES.
    * In case the only cuts on equations come from a translation of binary equation rules to unary ones,
    * this should provide the same clause sets and projections as the binary rules.
    */
-  def skipEquations( f: HOLFormula ): Boolean = f match { case Eq( _, _ ) => false; case _ => true }
+  def skipEquations: HOLFormula => Boolean = { case Eq( _, _ ) => false; case _ => true }
 
   /**
    * True if the formula is propositional and does not contain free variables other than type i.
@@ -29,7 +30,7 @@ object CERES extends CERES {
    * In case the only cuts on equations come from a translation of binary equation rules to unary ones,
    * this should provide the same clause sets and projections as the binary rules.
    */
-  def skipPropositional( f: HOLFormula ): Boolean = f match {
+  def skipPropositional: HOLFormula => Boolean = {
     case Top()    => false
     case Bottom() => false
     case HOLAtom( HOLAtomConst( _, _ ), args ) =>
@@ -46,21 +47,25 @@ object CERES extends CERES {
 class CERES {
   /**
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   *
    * @param p a first-order LKProof (structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
    *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof ): LKProof = apply( p, CERES.skipNothing )
+  def apply( p: LKProof ): LKProof = apply( p, Prover9 )
+  def apply( p: LKProof, prover: ResolutionProver ): LKProof = apply( p, CERES.skipNothing, prover )
 
   /**
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   *
    * @param p a first-order LKProof without strong quantifiers in the end-sequent
    *          (i.e. structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
    * @param pred a predicate to specify which cut formulas to eliminate
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = {
+  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Prover9 )
+  def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = {
     val es = p.endSequent
     val cs = CharacteristicClauseSet( StructCreators.extract( p, pred ) )
     val proj = Projections( p, pred ) + CERES.refProjection( es )
@@ -80,7 +85,7 @@ class CERES {
     //println( "original css size: " + cs.size )
     //println( "after subsumption:" + tapecl.size )
 
-    Prover9.getRobinsonProof( tapecl ) match {
+    prover.getRobinsonProof( tapecl ) match {
       case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
       case Some( rp ) =>
         //println( s"refutation:\n$rp" )
@@ -90,6 +95,7 @@ class CERES {
 
   /**
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   *
    * @param endsequent The end-sequent of the original proof
    * @param proj The projections of the original proof
    * @param rp A resolution refutation

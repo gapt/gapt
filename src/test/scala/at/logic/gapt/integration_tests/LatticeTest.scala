@@ -11,6 +11,7 @@ import at.logic.gapt.proofs.{ SequentMatchers, HOLClause }
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.lkOld.{ deleteTautologies }
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9._
 import java.io.File.separator
 import org.specs2.mutable._
@@ -24,8 +25,6 @@ class LatticeTest extends Specification with SequentMatchers {
 
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
-      checkForProverOrSkip
-
       val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) )
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = DefinitionElimination( proofdb.Definitions )( proofdb.proofs.head._2 )
@@ -33,7 +32,7 @@ class LatticeTest extends Specification with SequentMatchers {
       val s = extractStruct( proof, CERES.skipEquations )
       val css = CharacteristicClauseSet( s )
       val cs = deleteTautologies( css )
-      Prover9.getRobinsonProof( cs ) must beSome
+      Escargot.getRobinsonProof( cs ) must beSome
     }
 
     "parse, skolemize and apply CERES to the lattice proof" in {
