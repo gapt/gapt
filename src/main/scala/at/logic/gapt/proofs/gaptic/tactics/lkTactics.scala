@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.gaptic.{ OpenAssumption, Tactic }
+import at.logic.gapt.proofs.gaptic.{ FreshVariable, OpenAssumption, Tactic }
 import at.logic.gapt.proofs.lk._
 
 /**
@@ -591,38 +591,48 @@ object ImpRightTactic {
  * @param eigenVariable
  * @param applyToLabel
  */
-case class ExistsLeftTactic( eigenVariable: Var, applyToLabel: Option[String] = None ) extends Tactic {
+case class ExistsLeftTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends Tactic {
 
   override def apply( goal: OpenAssumption ) = {
-    if ( !( freeVariables( goal.conclusion ) contains eigenVariable ) ) {
-      val goalSequent = goal.s
+    val goalSequent = goal.s
 
-      val indices = applyToLabel match {
-        case None =>
-          for ( ( ( _, Ex( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-            yield index
+    val indices = applyToLabel match {
+      case None =>
+        for ( ( ( _, Ex( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
+          yield index
 
-        case Some( label ) =>
-          for ( ( ( `label`, Ex( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-            yield index
-      }
+      case Some( label ) =>
+        for ( ( ( `label`, Ex( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
+          yield index
+    }
 
-      // Select some formula index!
-      for ( i <- indices.headOption ) yield {
+    // Select some formula index!
+    indices.headOption match {
+      case None =>
+        None
+      case Some( i ) =>
         val ( existingLabel, quantifiedFormula ) = goalSequent( i )
         val Ex( v, fm ) = quantifiedFormula
 
-        val auxFormula = Substitution( v, eigenVariable )( fm )
+        val ev = eigenVariable match {
+          case Some( x ) => x
+          case None =>
+            FreshVariable( goal, v )
+        }
 
-        // New goal with instance of fm instead of Exi(v, fm)
-        val newGoal = ( existingLabel -> auxFormula ) +: goalSequent.delete( i )
+        if ( freeVariables( goal.conclusion ) contains ev )
+          None
+        else {
+          val auxFormula = Substitution( v, ev )( fm )
 
-        val premise = OpenAssumption( newGoal )
+          // New goal with instance of fm instead of Exi(v, fm)
+          val newGoal = ( existingLabel -> auxFormula ) +: goalSequent.delete( i )
 
-        ExistsLeftRule( premise, quantifiedFormula, eigenVariable )
-      }
-    } else
-      None
+          val premise = OpenAssumption( newGoal )
+
+          Some( ExistsLeftRule( premise, quantifiedFormula, ev ) )
+        }
+    }
   }
 
 }
@@ -631,7 +641,11 @@ case class ExistsLeftTactic( eigenVariable: Var, applyToLabel: Option[String] = 
  * Companion object for ExistsLeftTactic
  */
 object ExistsLeftTactic {
-  def apply( eigenVariable: Var, applyToLabel: String ) = new ExistsLeftTactic( eigenVariable, Some( applyToLabel ) )
+  def apply( eigenVariable: Var, applyToLabel: String ) = new ExistsLeftTactic( Some( eigenVariable ), Some( applyToLabel ) )
+
+  def apply( eigenVariable: Var ) = new ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
+
+  def apply( applyToLabel: String ) = new ExistsLeftTactic( applyToLabel = Some( applyToLabel ) )
 }
 
 /**
@@ -734,47 +748,60 @@ object ForallLeftTactic {
  * ForallRightRule tactic
  * @param applyToLabel
  */
-case class ForallRightTactic( eigenVariable: Var, applyToLabel: Option[String] = None ) extends Tactic {
+case class ForallRightTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends Tactic {
 
   override def apply( goal: OpenAssumption ) = {
-    if ( !( freeVariables( goal.conclusion ) contains eigenVariable ) ) {
-      val goalSequent = goal.s
+    val goalSequent = goal.s
 
-      val indices = applyToLabel match {
-        case None =>
-          for ( ( ( _, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-            yield index
+    val indices = applyToLabel match {
+      case None =>
+        for ( ( ( _, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
+          yield index
 
-        case Some( label ) =>
-          for ( ( ( `label`, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-            yield index
-      }
+      case Some( label ) =>
+        for ( ( ( `label`, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
+          yield index
+    }
 
-      // Select some formula index!
-      for ( i <- indices.headOption ) yield {
+    // Select some formula index!
+    indices.headOption match {
+      case None =>
+        None
+      case Some( i ) =>
         val ( existingLabel, quantifiedFormula ) = goalSequent( i )
         val All( v, fm ) = quantifiedFormula
 
-        val auxFormula = Substitution( v, eigenVariable )( fm )
+        val ev = eigenVariable match {
+          case Some( x ) => x
+          case None =>
+            FreshVariable( goal, v )
+        }
 
-        // New goal with instance of fm instead of Exi(v, fm)
-        val newGoal = goalSequent.delete( i ) :+ ( existingLabel -> auxFormula )
+        if ( freeVariables( goal.conclusion ) contains ev )
+          None
+        else {
+          val auxFormula = Substitution( v, ev )( fm )
 
-        val premise = OpenAssumption( newGoal )
+          // New goal with instance of fm instead of Exi(v, fm)
+          val newGoal = goalSequent.delete( i ) :+ ( existingLabel -> auxFormula )
 
-        ForallRightRule( premise, quantifiedFormula, eigenVariable )
-      }
-    } else
-      None
+          val premise = OpenAssumption( newGoal )
+
+          Some( ForallRightRule( premise, quantifiedFormula, ev ) )
+        }
+    }
   }
-
 }
 
 /**
  * Companion object for ForallRightTactic
  */
 object ForallRightTactic {
-  def apply( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( eigenVariable, Some( applyToLabel ) )
+  def apply( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( Some( eigenVariable ), Some( applyToLabel ) )
+
+  def apply( eigenVariable: Var ) = new ForallRightTactic( eigenVariable = Some( eigenVariable ) )
+
+  def apply( applyToLabel: String ) = new ForallRightTactic( applyToLabel = Some( applyToLabel ) )
 }
 
 /**

@@ -139,3 +139,41 @@ trait Tactic extends Tactical {
     } yield proofState.replaceSubGoal( proofState currentGoalIndex, proofSegment )
   }
 }
+
+/**
+ * Object that wraps helper function to generate eigen variable that is fresh (in OpenAssumption sub goal).
+ */
+object FreshVariable {
+  /**
+   * Actual helper function for a fresh variable.
+   * @param subGoal
+   * @param quantifiedVariable
+   * @return
+   */
+  def apply( subGoal: OpenAssumption, quantifiedVariable: Var ): Var = {
+    val varName = quantifiedVariable.name
+    val regex = f"$varName%s_([0-9]+)".r
+
+    // Get integer subscripts (i.e 1, 2, 3 for x_1, x_2, x_3)
+    val usedVariableSubscripts = {
+      for ( Var( s, _ ) <- freeVariables( subGoal.conclusion ); m <- regex findFirstMatchIn s )
+        yield Integer parseInt ( m group 1 )
+    }.toList.sorted
+
+    def f( s: Seq[Int] ): Int = s match {
+      case h1 :: ( h2 :: t ) if ( h2 > h1 + 1 ) => h1 + 1
+      case h1 :: ( h2 :: t )                    => f( h2 :: t )
+      case h :: t if t.length == 0              => h + 1
+    }
+
+    val subscript =
+      usedVariableSubscripts.headOption match {
+        case None                   => 0
+        case Some( min ) if min > 0 => 0
+        case _                      => f( usedVariableSubscripts )
+      }
+
+    FOLVar( f"$quantifiedVariable%s_$subscript%d" )
+  }
+
+}
