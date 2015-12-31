@@ -25,25 +25,23 @@ class LatticeTest extends Specification with SequentMatchers {
 
   "The system" should {
     "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
+      // FIXME: this doesn't use LKsk
       val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) )
       proofdb.proofs.size must beEqualTo( 1 )
-      val proof = DefinitionElimination( proofdb.Definitions )( proofdb.proofs.head._2 )
+      val proof = skolemize( DefinitionElimination( proofdb.Definitions )( proofdb.proofs.head._2 ) )
 
       val s = extractStruct( proof, CERES.skipEquations )
       val css = CharacteristicClauseSet( s )
-      val cs = deleteTautologies( css )
-      Escargot.getRobinsonProof( cs ) must beSome
+      // FIXME: css seems to be wrong... it contains y ^ x = y
+      Escargot getRobinsonProof css must beSome
     }
 
     "parse, skolemize and apply CERES to the lattice proof" in {
-      //      skipped( "doesn't work yet" )
-      checkForProverOrSkip
-
       val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
       proofdb.proofs.size must beEqualTo( 1 )
       val proof = proofdb.proofs.head._2
 
-      val acnf = CERES( skolemize( proof ), CERES.skipNothing )
+      val acnf = CERES( skolemize( proof ), CERES.skipNothing, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
       for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok

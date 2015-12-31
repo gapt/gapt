@@ -9,38 +9,40 @@ import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable
 
 trait TermOrdering {
-  def lt( e1: LambdaExpression, e2: LambdaExpression ): Boolean
+  def lt( e1: LambdaExpression, e2: LambdaExpression ): Boolean = lt( e1, e2, treatVarsAsConsts = false )
+  def lt( e1: LambdaExpression, e2: LambdaExpression, treatVarsAsConsts: Boolean ): Boolean
 }
 
-case class LPO( precedence: Seq[Const], typeOrder: Set[( Ty, Ty )] ) extends TermOrdering {
+case class LPO( precedence: Seq[Const] = Seq(), typeOrder: Set[( Ty, Ty )] = Set() ) extends TermOrdering {
   val precIdx: Map[Const, Int] = precedence.zipWithIndex.toMap
 
-  def lt( e1: LambdaExpression, e2: LambdaExpression ): Boolean = {
+  def lt( e1: LambdaExpression, e2: LambdaExpression, treatVarsAsConsts: Boolean ): Boolean = {
     val memo = mutable.Map[( LambdaExpression, LambdaExpression ), Boolean]()
 
+    def precLt( h1: LambdaExpression, h2: LambdaExpression ) =
+      ( h1, h2 ) match {
+        case ( c1: Const, c2: Const )                  => precIdx.getOrElse( c1, -1 ) < precIdx.getOrElse( c2, -1 )
+        case ( _: Var, _: Const ) if treatVarsAsConsts => true
+        case ( v1: Var, v2: Var ) if treatVarsAsConsts => v1.toString < v2.toString
+        case _                                         => false
+      }
+
     def memoLt( e1: LambdaExpression, e2: LambdaExpression ): Boolean =
-      memo.getOrElseUpdate( ( e1, e2 ), e2 match {
-        case _ if typeOrder( e1.exptype, e2.exptype ) => true
-        case Apps( c2: Const, as2 ) =>
-          if ( as2 contains e1 ) return true
-          if ( as2 exists { memoLt( e1, _ ) } ) return true
-          e1 match {
-            case Apps( c1: Const, as1 ) =>
-              ( precIdx get c1, precIdx get c2 ) match {
-                case ( Some( i1 ), Some( i2 ) ) if i1 < i2 => as1.forall { memoLt( _, e2 ) }
-                case _ if c1 == c2 =>
-                  def lex( as1: List[LambdaExpression], as2: List[LambdaExpression] ): Boolean =
-                    ( as1, as2 ) match {
-                      case ( a1 :: as1_, a2 :: as2_ ) if a1 == a2 => lex( as1_, as2_ )
-                      case ( a1 :: as1_, a2 :: as2_ ) if memoLt( a1, a2 ) => as1_ forall { memoLt( _, e2 ) }
-                      case _ => false
-                    }
-                  lex( as1, as2 )
-                case _ => false
-              }
-            case _ => false
-          }
-        case _ => false
+      memo.getOrElseUpdate( ( e1, e2 ), typeOrder( e1.exptype, e2.exptype ) || {
+        val Apps( c1, as1 ) = e1
+        val Apps( c2, as2 ) = e2
+        if ( as2 contains e1 ) true
+        else if ( as2 exists { memoLt( e1, _ ) } ) true
+        else if ( precLt( c1, c2 ) ) as1.forall { memoLt( _, e2 ) }
+        else if ( c1 == c2 ) {
+          def lex( as1: List[LambdaExpression], as2: List[LambdaExpression] ): Boolean =
+            ( as1, as2 ) match {
+              case ( a1 :: as1_, a2 :: as2_ ) if a1 == a2 => lex( as1_, as2_ )
+              case ( a1 :: as1_, a2 :: as2_ ) if memoLt( a1, a2 ) => as1_ forall { memoLt( _, e2 ) }
+              case _ => false
+            }
+          lex( as1, as2 )
+        } else false
       } )
 
     memoLt( e1, e2 )
@@ -51,32 +53,35 @@ case class KBO( precedence: Seq[Const], constWeights: Map[Const, Int] = Map() ) 
   val precIdx: Map[Const, Int] = precedence.zipWithIndex.toMap
   val varWeight = ( constWeights.filterKeys { arity( _ ) == 1 }.values.toSet + 1 ).min
 
-  def lt( e1: LambdaExpression, e2: LambdaExpression ): Boolean = {
+  def lt( e1: LambdaExpression, e2: LambdaExpression, treatVarsAsConsts: Boolean ): Boolean = {
     val w1 = weight( e1 )
     val w2 = weight( e2 )
 
     if ( w1 > w2 ) return false
-    if ( occs( e1 ) diff occs( e2 ) nonEmpty ) return false
+    if ( !treatVarsAsConsts ) if ( occs( e1 ) diff occs( e2 ) nonEmpty ) return false
 
     if ( w1 < w2 ) return true
 
-    ( e1, e2 ) match {
-      case ( Apps( c1: Const, as1 ), Apps( c2: Const, as2 ) ) =>
-        def lex( as1: List[LambdaExpression], as2: List[LambdaExpression] ): Boolean =
-          ( as1, as2 ) match {
-            case ( a1 :: as1_, a2 :: as2_ ) if a1 == a2 => lex( as1_, as2_ )
-            case ( a1 :: as1_, a2 :: as2_ ) if lt( a1, a2 ) => true
-            case _ => false
-          }
+    val Apps( c1, as1 ) = e1
+    val Apps( c2, as2 ) = e2
 
-        ( precIdx get c1, precIdx get c2 ) match {
-          case ( ( Some( i1 ), Some( i2 ) ) ) if i1 < i2 => true
-          case _ if c1 == c2                             => lex( as1, as2 )
-          case _                                         => false
-        }
+    def lex( as1: List[LambdaExpression], as2: List[LambdaExpression] ): Boolean =
+      ( as1, as2 ) match {
+        case ( a1 :: as1_, a2 :: as2_ ) if a1 == a2 => lex( as1_, as2_ )
+        case ( a1 :: as1_, a2 :: as2_ ) if lt( a1, a2, treatVarsAsConsts ) => true
+        case _ => false
+      }
 
-      case _ => false
+    val precLt = ( c1, c2 ) match {
+      case ( c1: Const, c2: Const )                  => precIdx.getOrElse( c1, -1 ) < precIdx.getOrElse( c2, -1 )
+      case ( _: Var, _: Const ) if treatVarsAsConsts => true
+      case ( v1: Var, v2: Var ) if treatVarsAsConsts => v1.toString < v2.toString
+      case _                                         => false
     }
+
+    if ( precLt ) true
+    else if ( c1 == c2 ) lex( as1, as2 )
+    else false
   }
 
   def occs( expr: LambdaExpression ): Seq[Var] = {
@@ -99,7 +104,7 @@ case class KBO( precedence: Seq[Const], constWeights: Map[Const, Int] = Map() ) 
 }
 
 class EscargotLoop extends Logger {
-  var termOrdering: TermOrdering = _
+  var termOrdering: TermOrdering = LPO()
   var hasEquality = true
 
   private var clsIdx = 0
@@ -116,18 +121,17 @@ class EscargotLoop extends Logger {
 
     val weight = clause.elements.map { expressionSize( _ ) }.sum
 
-    override def toString = s"[$index] $clause   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "})"
+    override def toString = s"[$index] $clause   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
     override def hashCode = index
   }
 
   var newlyDerived = mutable.Set[Cls]()
   val usable = mutable.Set[Cls]()
   val workedOff = mutable.Set[Cls]()
-  val demodulators = mutable.Set[Cls]()
 
   def preprocessing() = {
     deleteDuplicates()
-    if ( hasEquality ) simplifyNew()
+    if ( hasEquality ) unitRewriteNew()
     tautologyDeletion()
     if ( hasEquality ) equalityResolution()
     if ( hasEquality ) reflexivityDeletion()
@@ -139,6 +143,30 @@ class EscargotLoop extends Logger {
   def deleteDuplicates() =
     for ( ( _, group ) <- newlyDerived groupBy { _.clause } )
       newlyDerived --= group.tail
+
+  def unitRewriteNew() =
+    newlyDerived = newlyDerived map { cls =>
+      var p = cls.proof
+
+      var didRewrite = true
+      while ( didRewrite ) {
+        didRewrite = false
+        for ( existing <- workedOff; newP <- unitRewriting( existing, p ) ) {
+          p = newP
+          didRewrite = true
+        }
+      }
+
+      val toFlip = p.conclusion filter {
+        case Eq( t, s ) => termOrdering.lt( s, t )
+        case _          => false
+      }
+      for ( e <- toFlip ) p = Flip( p, p.conclusion indexOf e )
+
+      if ( p != cls.proof )
+        new Cls( p )
+      else cls
+    }
 
   def factorClauses() =
     newlyDerived = newlyDerived map { cls =>
@@ -162,52 +190,35 @@ class EscargotLoop extends Logger {
         Resolution( ReflexivityClause( t ), Suc( 0 ), proof, proof.conclusion.indexOfInAnt( t === t ) ) ) )
     }
 
-  def collectDemodulator( cls: Cls ) =
-    cls.clause match {
-      case Sequent( Seq(), Seq( Eq( t, s ) ) ) if termOrdering.lt( s, t ) =>
-        debug( s"demodulator: $t -> $s" )
-        demodulators += cls
-        simplify()
-      case Sequent( Seq(), Seq( Eq( s, t ) ) ) if termOrdering.lt( s, t ) =>
-        debug( s"demodulator: $s -> $t" )
-        val newCls = new Cls( Flip( cls.proof, Suc( 0 ) ) )
-        workedOff -= cls
-        workedOff += newCls
-        demodulators += newCls
-        simplify()
-      case _ => ()
-    }
-
-  def simplify(): Unit =
-    for {
-      store <- Seq( newlyDerived, usable, workedOff )
-      cls <- store
-      if !demodulators.contains( cls )
-      if simplify( cls )
-    } store -= cls
-
-  def simplifyNew(): Unit =
-    for ( cls <- newlyDerived if simplify( cls ) ) newlyDerived -= cls
-
-  def simplify( cls: Cls ): Boolean = {
-    def doSimp( p: ResolutionProof, didAlreadySimplify: Boolean ): Boolean = {
+  def canonize( expr: LambdaExpression ) = {
+    var e = expr
+    var didRewrite = true
+    while ( didRewrite ) {
+      didRewrite = false
       for {
-        i <- p.conclusion.indices; pos <- LambdaPosition getPositions p.conclusion( i )
-        t_ = p.conclusion( i )( pos )
-        demod <- demodulators; Eq( t, s ) <- demod.clause
-        subst <- syntacticMatching( t, t_ )
-      } return doSimp( Paramodulation(
-        Instance( demod.proof, subst ), Suc( 0 ),
-        p, i,
-        Seq( pos ), leftToRight = true
-      ), didAlreadySimplify = true )
-
-      if ( didAlreadySimplify ) newlyDerived += new Cls( p )
-      didAlreadySimplify
+        existing <- workedOff
+        if !didRewrite
+        if existing.clause.sizes == ( 0, 1 )
+        Eq( t, s ) <- existing.clause
+        ( t_, s_ ) <- Seq( t -> s, s -> t )
+        if !didRewrite
+        pos <- LambdaPosition getPositions e
+        if !didRewrite
+        subst <- syntacticMatching( t_, e( pos ) )
+        if termOrdering.lt( subst( s_ ), e( pos ), treatVarsAsConsts = true )
+      } {
+        e = e.replace( pos, subst( s_ ) )
+        didRewrite = true
+      }
     }
-
-    doSimp( cls.proof, didAlreadySimplify = false )
+    e
   }
+
+  def isReflModE( cls: Cls ) =
+    cls.clause.succedent exists {
+      case Eq( t, s ) => canonize( t ) == canonize( s )
+      case _          => false
+    }
 
   def clauseProcessing() = {
     usable ++= newlyDerived
@@ -235,8 +246,12 @@ class EscargotLoop extends Logger {
       _ <- clauseSubsumption( given.clause, existing.clause )
     } workedOff -= existing
 
-  def inferenceComputation( given: Cls ) = {
-    if ( hasEquality ) collectDemodulator( given )
+  def inferenceComputation( given: Cls ): Unit = {
+    if ( hasEquality ) {
+      unitRewriting( given )
+      if ( !workedOff.contains( given ) )
+        return
+    }
 
     orderedResolution( given )
     if ( hasEquality ) orderedParamodulation( given )
@@ -312,6 +327,50 @@ class EscargotLoop extends Logger {
     } newlyDerived += new Cls( Paramodulation( p1__, i1, p2__, i2, Seq( pos2 ), leftToRight ) )
   }
 
+  def unitRewriting( given: Cls ): Unit = {
+    for ( existing <- workedOff if existing != given if unitRewriting( existing, given ) ) {
+      workedOff -= given
+      return
+    }
+    for ( existing <- workedOff if existing != given if unitRewriting( given, existing ) )
+      workedOff -= existing
+  }
+
+  def unitRewriting( c1: Cls, c2: Cls ): Boolean =
+    unitRewriting( c1, c2.proof ) match {
+      case Some( p ) =>
+        newlyDerived += new Cls( p )
+        true
+      case _ => false
+    }
+
+  def unitRewriting( c1: Cls, p2: ResolutionProof ): Option[ResolutionProof] =
+    c1.clause match {
+      case Sequent( Seq(), Seq( Eq( t, s ) ) ) =>
+        var p = p2
+        var didRewrite = true
+        while ( didRewrite ) {
+          didRewrite = false
+          for {
+            ( a, i ) <- p.conclusion.zipWithIndex
+            pos <- LambdaPosition getPositions a
+            if !didRewrite
+            subterm = a( pos )
+            ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
+            if !didRewrite
+            if !t_.isInstanceOf[Var]
+            subst <- syntacticMatching( t_, subterm )
+            if termOrdering.lt( subst( s_ ), subterm )
+          } {
+            p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
+              p, i, Seq( pos ), leftToRight )
+            didRewrite = true
+          }
+        }
+        if ( p != p2 ) Some( p ) else None
+      case _ => None
+    }
+
   def isSubsumedByWorkedOff( given: Cls ) =
     workedOff exists { cls => clauseSubsumption( cls.clause, given.clause ) isDefined }
 
@@ -319,14 +378,21 @@ class EscargotLoop extends Logger {
     preprocessing()
 
     clauseProcessing()
+
+    var iterNum = 1
     while ( usable.nonEmpty ) {
       for ( cls <- usable if cls.clause.isEmpty )
         return Some( cls.proof )
 
-      val given = usable.minBy { _.weight }
+      val given =
+        if ( iterNum % 2 != 0 )
+          usable minBy { _.weight }
+        else
+          usable minBy { _.index }
+
       usable -= given
 
-      if ( !isSubsumedByWorkedOff( given ) ) {
+      if ( !isSubsumedByWorkedOff( given ) && !( hasEquality && isReflModE( given ) ) ) {
         backwardSubsumption( given )
         workedOff += given
 
@@ -337,6 +403,10 @@ class EscargotLoop extends Logger {
         forwardSubsumption()
 
         clauseProcessing()
+
+        // TODO: check workedOff for isReflModE
+
+        iterNum += 1
       }
     }
 

@@ -19,10 +19,8 @@ class CeresTest extends Specification with SequentMatchers {
 
   "Struct extraction" should {
     "work for the permutation proof" in {
-      checkForProverOrSkip
-
       val proof = load( "perm.llk", "TheProof" )
-      val acnf = CERES( proof )
+      val acnf = CERES( proof, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
 

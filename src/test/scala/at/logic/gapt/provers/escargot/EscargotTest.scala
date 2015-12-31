@@ -30,7 +30,7 @@ class EscargotTest extends Specification {
 
   "buss taut" in { Escargot getRobinsonProof BussTautology( 4 ) must beSome }
   "php" in { Escargot getRobinsonProof PigeonHolePrinciple( 3, 2 ) must beSome }
-  "perms" in { Escargot getRobinsonProof Permutations( 3 ) must beSome }
+  "perms" in { Escargot getRobinsonProof Permutations( 5 ) must beSome }
 
   "los" in {
     test(
@@ -73,4 +73,39 @@ class EscargotTest extends Specification {
   }
 
   "demodulator vs unification" in { test( "f(u) != 0", "0 = f(a)" ) must beSome }
+
+  "ac" in {
+    test(
+      "x+(y+z) = (x+y)+z",
+      "x+y = y+x",
+      "(a+(b+c))+(d+e) != (c+(d+(a+e)))+b"
+    ) must beSome
+  }
+
+  "sat ac" in {
+    test(
+      "x+(y+z) = (x+y)+z",
+      "x+y = y+x",
+      "(a+(b+c))+(d+e) != (b+(d+(a+e)))+b"
+    ) must beNone
+  }
+
+  "two factorials" in {
+    test(
+      "x*(y*z) = (x*y)*z",
+      "x*y = y*x",
+      "f1(0) = s(0) & f1(s(x)) = s(x) * f1(x)",
+      "f2(0) = s(0) & f2(s(x)) = f2(x) * s(x)",
+      "f1(s(s(s(s(0))))) != f2(s(s(s(s(0)))))"
+    ) must beSome
+  }
+
+  "group inverses" in {
+    test(
+      "x*(y*z) = (x*y)*z",
+      "1*x = x",
+      "i(x)*x = 1",
+      "a*i(a) != 1"
+    ) must beSome
+  }
 }
