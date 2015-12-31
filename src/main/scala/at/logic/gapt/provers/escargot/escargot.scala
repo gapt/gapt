@@ -107,9 +107,7 @@ class EscargotLoop extends Logger {
   var termOrdering: TermOrdering = LPO()
   var hasEquality = true
 
-  private var clsIdx = 0
-  class Cls( val proof: ResolutionProof ) {
-    val index = { clsIdx += 1; clsIdx }
+  class Cls( val proof: ResolutionProof, val index: Int ) {
     def clause = proof.conclusion
 
     val maximal = for {
@@ -125,6 +123,12 @@ class EscargotLoop extends Logger {
     override def hashCode = index
   }
 
+  private var clsIdx = 0
+  def InputCls( clause: HOLClause ): Cls = { clsIdx += 1; new Cls( InputClause( clause ), clsIdx ) }
+  def SimpCls( parent: Cls, newProof: ResolutionProof ): Cls = new Cls( newProof, parent.index )
+  def DerivedCls( parent: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
+  def DerivedCls( parent1: Cls, parent2: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
+
   var newlyDerived = mutable.Set[Cls]()
   val usable = mutable.Set[Cls]()
   val workedOff = mutable.Set[Cls]()
@@ -132,6 +136,7 @@ class EscargotLoop extends Logger {
   def preprocessing() = {
     deleteDuplicates()
     if ( hasEquality ) unitRewriteNew()
+    if ( hasEquality ) orderEquations()
     tautologyDeletion()
     if ( hasEquality ) equalityResolution()
     if ( hasEquality ) reflexivityDeletion()
@@ -145,36 +150,23 @@ class EscargotLoop extends Logger {
       newlyDerived --= group.tail
 
   def unitRewriteNew() =
+    for ( cls <- newlyDerived if unitRewriting( workedOff, cls ) )
+      newlyDerived -= cls
+
+  def orderEquations() =
     newlyDerived = newlyDerived map { cls =>
-      var p = cls.proof
-
-      var didRewrite = true
-      while ( didRewrite ) {
-        didRewrite = false
-        for ( existing <- workedOff; newP <- unitRewriting( existing, p ) ) {
-          p = newP
-          didRewrite = true
-        }
-      }
-
-      val toFlip = p.conclusion filter {
+      val toFlip = cls.clause filter {
         case Eq( t, s ) => termOrdering.lt( s, t )
         case _          => false
       }
+      var p = cls.proof
       for ( e <- toFlip ) p = Flip( p, p.conclusion indexOf e )
-
-      if ( p != cls.proof )
-        new Cls( p )
-      else cls
+      SimpCls( cls, p )
     }
 
   def factorClauses() =
     newlyDerived = newlyDerived map { cls =>
-      val factored = Factor( cls.proof )._1
-      if ( factored.conclusion == cls.proof.conclusion )
-        cls
-      else
-        new Cls( Factor( cls.proof )._1 )
+      SimpCls( cls, Factor( cls.proof )._1 )
     }
 
   def tautologyDeletion() =
@@ -186,7 +178,7 @@ class EscargotLoop extends Logger {
   def equalityResolution() =
     newlyDerived = newlyDerived map { cls =>
       val refls = cls.clause.antecedent collect { case Eq( t, t_ ) if t == t_ => t }
-      new Cls( refls.foldRight( cls.proof )( ( t, proof ) =>
+      SimpCls( cls, refls.foldRight( cls.proof )( ( t, proof ) =>
         Resolution( ReflexivityClause( t ), Suc( 0 ), proof, proof.conclusion.indexOfInAnt( t === t ) ) ) )
     }
 
@@ -264,14 +256,14 @@ class EscargotLoop extends Logger {
       i <- given.maximal; j <- given.maximal
       if i < j && i.sameSideAs( j )
       mgu <- syntacticMGU( given.clause( i ), given.clause( j ) )
-    } newlyDerived += new Cls( Instance( given.proof, mgu ) )
+    } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
 
   def unifyingEqualityResolution( given: Cls ): Unit =
     for {
       i <- given.maximal if i.isAnt
       Eq( t, s ) <- Some( given.clause( i ) )
       mgu <- syntacticMGU( t, s )
-    } newlyDerived += new Cls( Instance( given.proof, mgu ) )
+    } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
 
   def orderedResolution( given: Cls ): Unit =
     for ( existing <- workedOff ) {
@@ -292,7 +284,7 @@ class EscargotLoop extends Logger {
       if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt( mgu( p2_.conclusion( i2 ) ), mgu( p2_.conclusion( i2_ ) ) ) }
       ( p1__, conn1 ) = Factor( Instance( c1.proof, mgu ) )
       ( p2__, conn2 ) = Factor( Instance( p2_, mgu ) )
-    } newlyDerived += new Cls( Resolution( p2__, conn2 child i2, p1__, conn1 child i1 ) )
+    } newlyDerived += DerivedCls( c1, c2, Resolution( p2__, conn2 child i2, p1__, conn1 child i1 ) )
   }
 
   def orderedParamodulation( given: Cls ): Unit =
@@ -324,79 +316,94 @@ class EscargotLoop extends Logger {
       if isReductive( mgu( a2 ), i2, pos2 )
       p1__ = Instance( c1.proof, mgu )
       p2__ = Instance( p2_, mgu )
-    } newlyDerived += new Cls( Paramodulation( p1__, i1, p2__, i2, Seq( pos2 ), leftToRight ) )
+    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, Seq( pos2 ), leftToRight ) )
   }
 
   def unitRewriting( given: Cls ): Unit = {
-    for ( existing <- workedOff if existing != given if unitRewriting( existing, given ) ) {
+    if ( unitRewriting( workedOff - given, given ) )
       workedOff -= given
-      return
-    }
-    for ( existing <- workedOff if existing != given if unitRewriting( given, existing ) )
-      workedOff -= existing
+    else
+      for ( existing <- workedOff if existing != given if unitRewriting( Some( given ), existing ) )
+        workedOff -= existing
   }
 
-  def unitRewriting( c1: Cls, c2: Cls ): Boolean =
-    unitRewriting( c1, c2.proof ) match {
-      case Some( p ) =>
-        newlyDerived += new Cls( p )
-        true
-      case _ => false
+  def unitRewriting( cs: Traversable[Cls], c2: Cls ): Boolean = {
+    val eqs = for {
+      c <- cs
+      Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
+      ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
+      if !t_.isInstanceOf[Var]
+      if !termOrdering.lt( t_, s_ )
+    } yield ( t_, s_, c, leftToRight )
+    if ( eqs isEmpty ) return false
+
+    var p = c2.proof
+    for ( i <- p.conclusion.indices ) {
+      var didRewrite = true
+      while ( didRewrite ) {
+        didRewrite = false
+        for {
+          pos <- LambdaPosition getPositions p.conclusion( i ) if !didRewrite
+          subterm = p.conclusion( i )( pos )
+          ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
+          subst <- syntacticMatching( t_, subterm )
+          if termOrdering.lt( subst( s_ ), subterm )
+        } {
+          p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
+            p, i, Seq( pos ), leftToRight )
+          didRewrite = true
+        }
+      }
     }
 
-  def unitRewriting( c1: Cls, p2: ResolutionProof ): Option[ResolutionProof] =
-    c1.clause match {
-      case Sequent( Seq(), Seq( Eq( t, s ) ) ) =>
-        var p = p2
-        var didRewrite = true
-        while ( didRewrite ) {
-          didRewrite = false
-          for {
-            ( a, i ) <- p.conclusion.zipWithIndex
-            pos <- LambdaPosition getPositions a
-            if !didRewrite
-            subterm = a( pos )
-            ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
-            if !didRewrite
-            if !t_.isInstanceOf[Var]
-            subst <- syntacticMatching( t_, subterm )
-            if termOrdering.lt( subst( s_ ), subterm )
-          } {
-            p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
-              p, i, Seq( pos ), leftToRight )
-            didRewrite = true
-          }
-        }
-        if ( p != p2 ) Some( p ) else None
-      case _ => None
+    if ( p != c2.proof ) {
+      newlyDerived += SimpCls( c2, p )
+      true
+    } else {
+      false
     }
+  }
 
   def isSubsumedByWorkedOff( given: Cls ) =
     workedOff exists { cls => clauseSubsumption( cls.clause, given.clause ) isDefined }
+
+  var strategy = 0
+  def choose(): Cls = {
+    strategy = ( strategy + 1 ) % 6
+    if ( strategy < 1 ) usable minBy { _.index }
+    else if ( strategy < 3 ) {
+      val pos = usable filter { _.clause.antecedent.isEmpty }
+      if ( pos isEmpty ) choose()
+      else pos minBy { cls => ( cls.weight, cls.index ) }
+    } else if ( strategy < 5 ) {
+      val nonPos = usable filter { _.clause.antecedent.nonEmpty }
+      if ( nonPos isEmpty ) choose()
+      else nonPos minBy { cls => ( cls.weight, cls.index ) }
+    } else {
+      usable minBy { cls => ( cls.weight, cls.index ) }
+    }
+  }
 
   def loop(): Option[ResolutionProof] = {
     preprocessing()
 
     clauseProcessing()
 
-    var iterNum = 1
     while ( usable.nonEmpty ) {
       for ( cls <- usable if cls.clause.isEmpty )
         return Some( cls.proof )
 
-      val given =
-        if ( iterNum % 2 != 0 )
-          usable minBy { _.weight }
-        else
-          usable minBy { _.index }
-
+      val given = choose()
       usable -= given
 
-      if ( !isSubsumedByWorkedOff( given ) && !( hasEquality && isReflModE( given ) ) ) {
+      val shouldDiscard = isSubsumedByWorkedOff( given ) || ( hasEquality && isReflModE( given ) )
+
+      debug( s"[wo=${workedOff.size},us=${usable.size}] ${if ( shouldDiscard ) "discarded" else "kept"}: $given" )
+
+      if ( !shouldDiscard ) {
         backwardSubsumption( given )
         workedOff += given
 
-        debug( s"[wo=${workedOff.size},us=${usable.size}] given: $given" )
         inferenceComputation( given )
 
         preprocessing()
@@ -405,8 +412,6 @@ class EscargotLoop extends Logger {
         clauseProcessing()
 
         // TODO: check workedOff for isReflModE
-
-        iterNum += 1
       }
     }
 
@@ -435,7 +440,7 @@ class Escargot extends ResolutionProver {
     val loop = new EscargotLoop
     loop.hasEquality = cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
     loop.termOrdering = Escargot.lpoHeuristic( cnf )
-    loop.newlyDerived ++= cnf.map { cls => new loop.Cls( InputClause( cls ) ) }
+    loop.newlyDerived ++= cnf.map { loop.InputCls }
     loop.loop()
   }
 }
