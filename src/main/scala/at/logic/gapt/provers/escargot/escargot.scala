@@ -182,22 +182,27 @@ class EscargotLoop extends Logger {
         Resolution( ReflexivityClause( t ), Suc( 0 ), proof, proof.conclusion.indexOfInAnt( t === t ) ) ) )
     }
 
-  def canonize( expr: LambdaExpression ) = {
+  def canonize( expr: LambdaExpression ): LambdaExpression = {
+    val eqs = for {
+      c <- workedOff
+      Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
+      if syntacticMatching( t, s ).isDefined
+      if syntacticMatching( s, t ).isDefined
+      ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
+      if !termOrdering.lt( t_, s_ )
+    } yield ( t_, s_, c, leftToRight )
+    if ( eqs isEmpty ) return expr
+
     var e = expr
     var didRewrite = true
     while ( didRewrite ) {
       didRewrite = false
       for {
-        existing <- workedOff
-        if !didRewrite
-        if existing.clause.sizes == ( 0, 1 )
-        Eq( t, s ) <- existing.clause
-        ( t_, s_ ) <- Seq( t -> s, s -> t )
-        if !didRewrite
-        pos <- LambdaPosition getPositions e
-        if !didRewrite
-        subst <- syntacticMatching( t_, e( pos ) )
-        if termOrdering.lt( subst( s_ ), e( pos ), treatVarsAsConsts = true )
+        pos <- LambdaPosition getPositions e if !didRewrite
+        subterm = e( pos )
+        ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
+        subst <- syntacticMatching( t_, subterm )
+        if termOrdering.lt( subst( s_ ), subterm, treatVarsAsConsts = true )
       } {
         e = e.replace( pos, subst( s_ ) )
         didRewrite = true
