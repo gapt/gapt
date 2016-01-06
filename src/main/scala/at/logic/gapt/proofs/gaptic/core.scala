@@ -29,7 +29,8 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
    * @param i
    * @return
    */
-  def getSubGoal( i: Int ): Option[OpenAssumption] = Option( subGoals( i ) )
+  def getSubGoal( i: Int ): Option[OpenAssumption] =
+    if ( subGoals isDefinedAt i ) Some( subGoals( i ) ) else None
 
   /**
    * Returns a string representation of a sub goal at a given index.
@@ -117,6 +118,26 @@ trait Tactical {
    * @return
    */
   def apply( proofState: ProofState ): Option[ProofState]
+
+  def orElse( t2: Tactical ): Tactical = {
+    val t1 = this
+
+    new Tactical {
+      /**
+       * Returns result of first tactical, if there is any,
+       * else it returns the result of the second tactical,
+       * with the possibility of no result from either.
+       * @param proofState
+       * @return
+       */
+      override def apply( proofState: ProofState ): Option[ProofState] = {
+        t1( proofState ) match {
+          case None => t2( proofState )
+          case x    => x
+        }
+      }
+    }
+  }
 }
 
 trait Tactic extends Tactical {
@@ -137,6 +158,26 @@ trait Tactic extends Tactical {
       goal <- proofState getSubGoal proofState.currentGoalIndex
       proofSegment <- this( goal )
     } yield proofState.replaceSubGoal( proofState currentGoalIndex, proofSegment )
+  }
+
+  def orElse( t2: Tactic ): Tactic = {
+    val t1 = this
+
+    new Tactic {
+      /**
+       * Returns result of first tactic, if there is any,
+       * else it returns the result of the second tactic,
+       * with the possibility of no result from either.
+       * @param goal
+       * @return
+       */
+      override def apply( goal: OpenAssumption ): Option[LKProof] = {
+        t1( goal ) match {
+          case None => t2( goal )
+          case x    => x
+        }
+      }
+    }
   }
 }
 

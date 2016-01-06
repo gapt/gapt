@@ -4,11 +4,9 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{parseFormula, parseTerm}
 import at.logic.gapt.proofs.gaptic.tactics._
 
-/* Test: Or right */
 val A = FOLAtom("A")
 val B = FOLAtom("B")
 
-/* Test: Lemma */
 val lemma = new Lemma(
 	Sequent(Seq("initAnt" -> Imp(A, B)), Seq("initSuc" -> Or(And(A,B), Neg(A))))
 ) {
@@ -21,8 +19,39 @@ val lemma = new Lemma(
 	use(LogicalAxiomTactic(B))
 } qed
 
-val cuttest = new Lemma(
+val lemma2 = new Lemma(
+	Sequent(Seq("initAnt" -> Imp(A, B)), Seq("initSuc" -> Or(And(A,B), Neg(A))))
+) {
+	use(OrRightTactic("initSuc"))
+	use(NegRightTactic("initSuc_2"))
+	use(AndRightTactic("initSuc_1"))
+	use(AxiomTactic)
+	use(ImpLeftTactic("initAnt"))
+	use(AxiomTactic)
+	use(AxiomTactic)
+} qed
+
+val cutTest = new Lemma(
 	Sequent(Seq("a1" -> And(A,B), "a2" -> Imp(B,A)), Seq("s1" -> Or(B,A), "s2" -> Neg(And(B,A))))
 ) {
 	use(CutTactic(Imp(FOLAtom("C"), Bottom()), "cfm"))
 }
+
+val direct = new Lemma(
+	Sequent(Seq("A" -> A, "B" -> B), Seq("B" -> B))
+) {
+	use(AxiomTactic)
+} qed
+
+val fail1 = new Lemma(
+	Sequent(Seq("A" -> A), Seq("B" -> B))
+) {
+	use(AxiomTactic)
+} qed
+
+val fail2 = new Lemma(
+	Sequent(Seq("A" -> A, "B" -> B), Seq("B" -> B))
+) {
+	use(AxiomTactic)
+	use(AxiomTactic)
+} qed

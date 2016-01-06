@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.gaptic.{ FreshVariable, OpenAssumption, Tactic }
+import at.logic.gapt.proofs.gaptic.{ Tactic, FreshVariable, OpenAssumption }
 import at.logic.gapt.proofs.lk._
 
 /**
@@ -104,12 +104,16 @@ case object ReflexivityAxiomTactic extends Tactic {
  */
 case object AxiomTactic extends Tactic {
 
-  override def apply( goal: OpenAssumption ) = goal.conclusion match {
-    case Sequent( Seq( f: HOLAtom ), Seq( g: HOLAtom ) ) if f == g => LogicalAxiomTactic( f )( goal )
-    case Sequent( Seq(), Seq( Top() ) ) => TopAxiomTactic( goal )
-    case Sequent( Seq( Bottom() ), Seq() ) => BottomAxiomTactic( goal )
-    case Sequent( Seq(), Seq( Eq( s: LambdaExpression, t: LambdaExpression ) ) ) if s == t => ReflexivityAxiomTactic( goal )
-    case _ => None
+  override def apply( goal: OpenAssumption ) = {
+    val x = TopAxiomTactic orElse BottomAxiomTactic orElse ReflexivityAxiomTactic
+
+    x( goal ) match {
+      case None =>
+        goal.conclusion.antecedent.view.flatMap {
+          a => LogicalAxiomTactic( a )( goal )
+        }.headOption
+      case y => y
+    }
   }
 
 }
