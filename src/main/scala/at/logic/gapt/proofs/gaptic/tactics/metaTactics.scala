@@ -21,7 +21,6 @@ case class RepeatTactic( tact: Tactical ) extends Tactical {
       }
     }
 
-    // "Fail" if the tactic(al) did not get applied at least once
-		Option( currentState )
+    Option( currentState )
   }
 }
