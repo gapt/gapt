@@ -87,7 +87,7 @@ object testCutIntro extends App {
 
       RefutationSketchToRobinson( sketch ) map { resProof =>
         loadResolutionProof( resProof, endSequent )
-      }
+      } toOption
   }
 
   def extractFromTSTPCommentsIfNecessary( output: String ): String = {

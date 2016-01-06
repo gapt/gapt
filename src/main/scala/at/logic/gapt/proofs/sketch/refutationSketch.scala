@@ -1,13 +1,11 @@
 package at.logic.gapt.proofs.sketch
 
-import at.logic.gapt.expr.{ FOLAtom, FOLFormula }
-import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
+import at.logic.gapt.expr.FOLAtom
 import at.logic.gapt.proofs.{ OccConnector, SequentProof, FOLClause }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.{ mapInputClauses, findDerivationViaResolution }
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
 import scalaz._, Scalaz._
@@ -56,7 +54,9 @@ case class SketchInference( conclusion: FOLClause, from: Seq[RefutationSketch] )
   override def productElement( n: Int ) = if ( n == 0 ) conclusion else from( n - 1 )
 }
 
-object RefutationSketchToRobinson extends Logger {
+case class UnprovableSketchInference( inference: SketchInference )
+
+object RefutationSketchToRobinson {
   /**
    * Converts a refutation sketch to a resolution proof.
    *
@@ -67,23 +67,20 @@ object RefutationSketchToRobinson extends Logger {
    * @param prover  Resolution prover used to reconstruct the inferences.
    * @return  <code>Some(proof)</code> if all inferences could be reconstructed, <code>None</code> otherwise.
    */
-  def apply( sketch: RefutationSketch, prover: ResolutionProver = Escargot ): Option[ResolutionProof] = {
-    val memo = mutable.Map[RefutationSketch, Option[ResolutionProof]]()
-    def solve( s: RefutationSketch ): Option[ResolutionProof] = memo.getOrElseUpdate( s, s match {
-      case SketchAxiom( axiom ) => Some( InputClause( axiom ) )
-      case SketchInference( conclusion, from ) =>
-        debug( s"Proving $conclusion" )
-        from.toList traverse solve flatMap { solvedFrom =>
-          val solvedFromMap = solvedFrom.map { p => p.conclusion -> p }.toMap
-          findDerivationViaResolution( conclusion, solvedFromMap.keySet, prover ) map { deriv =>
-            val filledInDeriv = mapInputClauses( deriv )( solvedFromMap )
-            require( filledInDeriv.conclusion isSubMultisetOf conclusion )
-            filledInDeriv
-          } orElse {
-            warn( s"Could not derive $conclusion" )
-            None
-          }
-        }
+  def apply( sketch: RefutationSketch, prover: ResolutionProver = Escargot ): ValidationNel[UnprovableSketchInference, ResolutionProof] = {
+    type ErrorOr[X] = ValidationNel[UnprovableSketchInference, X]
+    val memo = mutable.Map[RefutationSketch, ErrorOr[ResolutionProof]]()
+    def solve( s: RefutationSketch ): ErrorOr[ResolutionProof] = memo.getOrElseUpdate( s, s match {
+      case SketchAxiom( axiom ) => Success( InputClause( axiom ) )
+      case s @ SketchInference( conclusion, from ) =>
+        import Validation.FlatMap._
+        for {
+          solvedFrom <- Applicative[ErrorOr].traverse( from.toList )( solve )
+          solvedFromMap = solvedFrom.map { p => p.conclusion -> p }.toMap
+          deriv <- findDerivationViaResolution( s.conclusion, solvedFromMap.keySet, prover ).
+            map { _.success }.
+            getOrElse { UnprovableSketchInference( s ).failureNel }
+        } yield mapInputClauses( deriv )( solvedFromMap )
     } )
     solve( sketch ) map { simplifyResolutionProof( _ ) }
   }

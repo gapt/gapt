@@ -24,7 +24,7 @@ class Vampire extends ResolutionProver with ExternalProgram {
         ), tptpIn ).split( "\n" )
         if ( output.head startsWith "Refutation" ) {
           val sketch = TptpProofParser.parse( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) )._2
-          RefutationSketchToRobinson( sketch ) map { fixDerivation( _, cnf.toSeq ) }
+          RefutationSketchToRobinson( sketch ) map { fixDerivation( _, cnf.toSeq ) } toOption
         } else None
     }
 

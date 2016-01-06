@@ -7,6 +7,7 @@ import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
+import scalaz._
 
 import scala.io.Source
 
@@ -25,7 +26,7 @@ class TptpProofParserTest extends Specification {
       val ( endSequent, sketch ) = TptpProofParser.parse( load( fn ) )
       sketch.conclusion must_== Clause()
 
-      val Some( robinson ) = RefutationSketchToRobinson( sketch )
+      val Success( robinson ) = RefutationSketchToRobinson( sketch )
       robinson.conclusion must_== Clause()
 
       // not converting that one to LK because it takes too long

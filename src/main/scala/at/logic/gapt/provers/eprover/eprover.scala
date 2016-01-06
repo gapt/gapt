@@ -20,7 +20,7 @@ class EProver extends ResolutionProver with ExternalProgram {
         val tptpIn = toTPTP( labelledCNF )
         val output = runProcess.withTempInputFile( Seq( "eproof", "--tptp3-format" ), tptpIn )
         if ( output.split( "\n" ).contains( "# SZS status Unsatisfiable" ) )
-          RefutationSketchToRobinson( TptpProofParser.parse( output, labelledCNF mapValues { Seq( _ ) } ) )
+          RefutationSketchToRobinson( TptpProofParser.parse( output, labelledCNF mapValues { Seq( _ ) } ) ).toOption
         else None
     }
 
