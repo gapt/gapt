@@ -37,6 +37,7 @@ class CutIntroTest extends Specification {
     }
 
     "linear equality example" in {
+      skipped( "actually has herbrand complexity 2... better examples welcome" )
       val f = FOLFunctionConst( "f", 1 )
       val x = FOLVar( "x" )
       val c = FOLConst( "c" )

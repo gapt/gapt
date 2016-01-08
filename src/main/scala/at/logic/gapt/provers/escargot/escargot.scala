@@ -198,13 +198,13 @@ class EscargotLoop extends Logger {
     while ( didRewrite ) {
       didRewrite = false
       for {
-        pos <- LambdaPosition getPositions e if !didRewrite
-        subterm = e( pos )
+        ( subterm, pos ) <- LambdaPosition getPositions e groupBy { e( _ ) } if !didRewrite
+        if !subterm.isInstanceOf[Var]
         ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
         subst <- syntacticMatching( t_, subterm )
         if termOrdering.lt( subst( s_ ), subterm, treatVarsAsConsts = true )
       } {
-        e = e.replace( pos, subst( s_ ) )
+        for ( p <- pos ) e = e.replace( p, subst( s_ ) )
         didRewrite = true
       }
     }
@@ -315,13 +315,14 @@ class EscargotLoop extends Logger {
       ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) ) if !termOrdering.lt( t_, s_ )
       i2 <- if ( c2.selected.nonEmpty ) c2.selected else c2.maximal
       a2 = p2_.conclusion( i2 )
-      pos2 <- LambdaPosition.getPositions( a2 ) if !a2( pos2 ).isInstanceOf[Var]
-      mgu <- syntacticMGU( t_, a2( pos2 ) )
+      ( st2, pos2 ) <- LambdaPosition getPositions a2 groupBy { a2( _ ) }
+      if !st2.isInstanceOf[Var]
+      mgu <- syntacticMGU( t_, st2 )
       if !termOrdering.lt( mgu( t_ ), mgu( s_ ) )
-      if isReductive( mgu( a2 ), i2, pos2 )
+      pos2_ = pos2 filter { isReductive( mgu( a2 ), i2, _ ) } if pos2_.nonEmpty
       p1__ = Instance( c1.proof, mgu )
       p2__ = Instance( p2_, mgu )
-    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, Seq( pos2 ), leftToRight ) )
+    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, pos2_.toSeq, leftToRight ) )
   }
 
   def unitRewriting( given: Cls ): Unit = {
@@ -343,19 +344,20 @@ class EscargotLoop extends Logger {
     if ( eqs isEmpty ) return false
 
     var p = c2.proof
+    // Depends on the implementation detail that Paramodulation does not change indices.
     for ( i <- p.conclusion.indices ) {
       var didRewrite = true
       while ( didRewrite ) {
         didRewrite = false
         for {
-          pos <- LambdaPosition getPositions p.conclusion( i ) if !didRewrite
-          subterm = p.conclusion( i )( pos )
+          ( subterm, pos ) <- LambdaPosition getPositions p.conclusion( i ) groupBy { p.conclusion( i )( _ ) } if !didRewrite
+          if !subterm.isInstanceOf[Var]
           ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
           subst <- syntacticMatching( t_, subterm )
           if termOrdering.lt( subst( s_ ), subterm )
         } {
           p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
-            p, i, Seq( pos ), leftToRight )
+            p, i, pos.toSeq, leftToRight )
           didRewrite = true
         }
       }
