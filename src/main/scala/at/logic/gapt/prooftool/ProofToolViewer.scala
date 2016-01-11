@@ -49,13 +49,13 @@ import java.awt.Color
 import at.logic.gapt.formats.llk.HybridLatexExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
-object ProofToolViewer {
+object prooftool {
   /**
    * Displays various objects in prooftool. Creates an instance of the appropriate viewer.
-   * @param name The title to be displayed.
    * @param obj The object to be displayed.
+   * @param name The title to be displayed.
    */
-  def display( name: String, obj: AnyRef ) {
+  def apply( obj: AnyRef, name: String = "prooftool" ): Unit =
     obj match {
       case p: LKProof             => new LKProofViewer( name, p ).showFrame()
       case p: SequentProof[a, b]  => new SequentProofViewer[a, b]( name, p ).showFrame()
@@ -68,12 +68,11 @@ object ProofToolViewer {
       case set: Set[HOLSequent]   => new ListViewer( name, set.toList ).showFrame()
       case tree: Tree[a]          => new TreeViewer[a]( name, tree ).showFrame()
       case db: ProofDatabase =>
-        for ( p <- db.proofs )
-          display( p._1, p._2 )
+        for ( ( pName, p ) <- db.proofs )
+          prooftool( p, pName )
 
       case _ => throw new IllegalArgumentException( s"Objects of type ${obj.getClass} can't be displayed." )
     }
-  }
 }
 
 /**
@@ -154,21 +153,13 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     chooser.fileFilter = chooser.acceptAllFileFilter
     chooser.showOpenDialog( mBar ) match {
       case FileChooser.Result.Approve =>
-        def display = ( ProofToolViewer.display _ ).tupled
         scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
         val parser = new FileParser( this )
         parser.parseFile( chooser.selectedFile.getPath )
-        for ( p <- parser.getProofs )
-          display( p )
-
-        for ( l <- parser.getSequentLists )
-          display( l )
-
-        for ( t <- parser.getTermTrees )
-          display( ( t._1, t._3 ) )
-
-        for ( p <- parser.getResolutionProofs )
-          display( p )
+        for ( ( name, p ) <- parser.getProofs ) prooftool( p, name )
+        for ( ( name, s ) <- parser.getSequentLists ) prooftool( s, name )
+        for ( ( name, _, t ) <- parser.getTermTrees ) prooftool( t, name )
+        for ( ( name, p ) <- parser.getResolutionProofs ) prooftool( p, name )
 
         scrollPane.cursor = java.awt.Cursor.getDefaultCursor
         publisher.publish( EnableMenus )
@@ -366,12 +357,4 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    */
   def viewMenuContents: Seq[Component] = Seq( zoomInButton, zoomOutButton )
 
-}
-
-object prooftool {
-  /**
-   * Starts prooftool from the cli.
-   * @param x The object to be displayed.
-   */
-  def apply( x: AnyRef ) = ProofToolViewer.display( "From CLI", x )
 }
