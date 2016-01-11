@@ -188,15 +188,25 @@ case class Resolution( subProof1: ResolutionProof, literal1: SequentIndex,
 
 object MguResolution {
   def apply( subProof1: ResolutionProof, literal1: Suc,
-             subProof2: ResolutionProof, literal2: Ant ): Resolution = {
-    val Some( ( mgu1, mgu2 ) ) = syntacticMGU.twoSided(
-      subProof1.conclusion( literal1 ), subProof2.conclusion( literal2 )
-    )
-    Resolution(
-      Instance( subProof1, mgu1 ), literal1,
-      Instance( subProof2, mgu2 ), literal2
-    )
-  }
+             subProof2: ResolutionProof, literal2: Ant ): Resolution =
+    if ( freeVariables( subProof1.conclusion ) intersect freeVariables( subProof2.conclusion ) nonEmpty ) {
+      val renaming = Substitution( rename(
+        freeVariables( subProof1.conclusion ),
+        freeVariables( subProof2.conclusion )
+      ) )
+      MguResolution(
+        Instance( subProof1, renaming ), literal1,
+        subProof2, literal2
+      )
+    } else {
+      val Some( mgu ) = syntacticMGU(
+        subProof1.conclusion( literal1 ), subProof2.conclusion( literal2 )
+      )
+      Resolution(
+        Instance( subProof1, mgu ), literal1,
+        Instance( subProof2, mgu ), literal2
+      )
+    }
 }
 
 /**

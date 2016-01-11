@@ -1,3 +1,4 @@
+import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol.{structuralCNF, univclosure}
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
@@ -31,12 +32,13 @@ val todo = mutable.Queue[FOLClause](cnf.toSeq: _*)
 while (Sat4j solve (done ++ todo) isDefined) {
   val next = todo.dequeue()
   if (!done.contains(next)) for {
-    clause1 <- done
+    clause2 <- done
+    clause1 = FOLSubstitution(rename(freeVariables(next), freeVariables(clause2)))(next)
     (atom1,index1) <- clause1.zipWithIndex.elements
-    (atom2,index2) <- next.zipWithIndex.elements
-    if !index1.sameSideAs(index2)
-    (mgu1, mgu2) <- syntacticMGU.twoSided(atom1, atom2)
-  } { todo += mgu1(clause1); todo += mgu2(next) }
+    (atom2,index2) <- clause2.zipWithIndex.elements
+    if !index2.sameSideAs(index1)
+    mgu <- syntacticMGU(atom1, atom2)
+  } todo ++= Seq(mgu(clause1), mgu(clause2))
   done += next
 }
 

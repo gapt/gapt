@@ -41,18 +41,4 @@ object syntacticMGU {
       FOLSubstitution( subst.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
     }
   def apply( a: FOLExpression, b: FOLExpression ): Option[FOLSubstitution] = apply( List( a -> b ) )
-
-  def twoSided( a: LambdaExpression, b: LambdaExpression ): Option[( Substitution, Substitution )] = {
-    val renaming = Substitution( rename( freeVariables( a ), freeVariables( b ) ) )
-    syntacticMGU( a, renaming( b ) ) map { mgu => ( mgu, mgu compose renaming ) }
-  }
-
-  def twoSided( a: FOLExpression, b: FOLExpression ): Option[( FOLSubstitution, FOLSubstitution )] =
-    twoSided( a.asInstanceOf[LambdaExpression], b ) map {
-      case ( substA, substB ) =>
-        (
-          FOLSubstitution( substA.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } ),
-          FOLSubstitution( substB.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
-        )
-    }
 }
