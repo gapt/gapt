@@ -28,6 +28,8 @@ object CLIMain {
 
     new SystemProperties += ( "scala.shell.prompt" -> ( sys.props( "line.separator" ) + "gapt> " ) )
 
+    class AbortReplException extends Exception
+
     val repl = new ILoop {
       override def printWelcome = {
         println( welcomeMessage )
@@ -41,11 +43,12 @@ object CLIMain {
         // then load script.scala and exit.
         if ( args.length >= 1 ) {
           withFile( args( 0 ) ) { f => interpretAllFrom( f ) }
-          sys.exit( 0 )
+          throw new AbortReplException
         }
       }
     }
 
-    repl process settings
+    try repl process settings
+    catch { case _: AbortReplException => }
   }
 }
