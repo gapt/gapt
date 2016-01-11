@@ -65,6 +65,7 @@
     {∃}{{\ensuremath{\exists}}}1%
     {ι}{{\ensuremath{\iota}}}1%
     {α}{{\ensuremath{\alpha}}}1%
+    {β}{{\ensuremath{\beta}}}1%
     {τ}{{\ensuremath{\tau}}}1%
     {∈}{{\ensuremath{\in}}}1%
   }
@@ -881,30 +882,22 @@ The actual simplification is performed using the \texttt{CERES} command. Please 
  commands \texttt{regularize} and \texttt{skolemize} provide this functionality,
  if necessary.
 
-\begin{clilisting}[CERES.isInstalled]
-gapt> //view the input proof in prooftool
-
+\begin{clilisting}[Prover9.isInstalled]
 gapt> prooftool(Pi2Pigeonhole())
 
-gapt> //view the cut formulas in prooftool
-
-gapt> prooftool( cutFormulas(Pi2Pigeonhole()) )
-
-gapt> //view the cut formulas in prooftool
+gapt> cutFormulas(Pi2Pigeonhole()) filter {containsQuantifier(_)} foreach println
+∀x.∃y.(<=(x,y)∧f(y)=s(0))
+∀x.∃y.(<=(x,y)∧f(y)=0)
 
 gapt> val acnf = CERES(Pi2Pigeonhole())
-acnf: at.logic.gapt.proofs.lkNew.LKProof =
+acnf: at.logic.gapt.proofs.lk.LKProof =
 [p486] ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.∀y.(<=(s(x),y)⊃<=(x,y)) :- ∃x.∃y.(<=(s(x),y)∧f(x)=f(y))    (ContractionRightRule(p485, Suc(1), Suc(0)))
 [p485] ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.∀y.(<=(s(x),y)⊃<=(x,y)) :- ∃x.∃y.(<=(s(x),y)∧f(x)=f(y)), ∃x.∃y.(<=(s(x),y)∧f(x)=f(y))    (ContractionLeftRule(p484, Ant(3), Ant(2)))
 [p484] ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.∀y.(<=(s(x),y)⊃<=(x,y)), ∀x.(f(x)=0∨f(x)=s(0)), ∀x.(f(x)=0∨f(x)=s(0)) :- ∃x.∃y.(<=(s(x),y)∧f(x)=f(y)), ∃x.∃y.(<=(s(x),y)∧f(x)=f(y))    (ContractionLeftRule(p483, Ant(4), Ant(2)))
-[p483] ∀x.∀y.(<=(s(x),y)⊃<=(x,y)), ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))) :- ∃x.∃...
-gapt> //view the proof with atomic cuts in prooftool
-
+[p483] ∀x.∀y.(<=(s(x),y)⊃<=(x,y)), ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))), ∀x.(f(x)=0∨f(x)=s(0)), ∀x.∀y.(<=(x,M(x,y))∧<=(y,M(x,y))) :- ∃x.∃y.(...
 gapt> prooftool(acnf)
 
-gapt> //extract and view the expansion proof
-
-gapt> val et = LKToExpansionProof(CERES(Pi2Pigeonhole()))
+gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.(f(x)=0∨f(x)=s(0)), List((Atom(f(M(v100,s(M(v100,v101))))=0)∨Atom(f(M(v100,s(M(v100,v101))))=s(0)),M(v100,s(M(v100,v101)))), (Atom(f(M(v100,v101))=0)∨Atom(f(M(v100,v101))=s(0)),M(v100,v101)), (Atom(f(M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101))))=0)∨Atom(f(M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101))))=s(0)),M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101)))), (Atom(f(M(v100,s(M(s(M(v100,v101)),v1))))=0)∨Atom(f(M(v100,s(M(s(M(v100,v101)),v1))))=s(0)),M(v100,s(M(s(M(v100,v101)),v1)))), (Atom(f(M(s(M(v100,v101)),v1))=0)∨Atom(f(M(s(M(v100,v101)),v1))=s(0)),M(s(M(v100,v101)),v1)), (Atom(f(M(s(M(v100,s(M(s(M(v100,v101)),v1)))),s(M(s(M(v100,v101)),v1))))=0)∨Atom(f(M(s(M(v100,s(M(s(M(v100,v101)),v1)))),s(M(s(M(v100,v101)),...
 gapt> prooftool(et)
 
@@ -1008,14 +1001,14 @@ Productions:
   α_2 -> s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))
 
 gapt> lang.toSet subsetOf grammar.language
-res28: Boolean = true
+res32: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
-res29: at.logic.gapt.grammars.TratGrammar =
+res33: at.logic.gapt.grammars.TratGrammar =
 Axiom: τ
 Non-terminals: τ, α_1, α_2
 Productions:
@@ -1831,7 +1824,7 @@ For example, the formula $\forall x (P(x,f(x)) \rightarrow \exists y P(x,y))$
 
 \begin{clilisting}
 gapt> parseFormula("(all x (P(x,f(x)) -> (exists y P(x,y))))")
-res30: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
+res34: at.logic.gapt.expr.FOLFormula = ∀x.(P(x,f(x))⊃∃y.P(x,y))
 
 \end{clilisting}
 
@@ -1840,7 +1833,7 @@ class:
 
 \begin{clilisting}
 gapt> Prover9TermParser.parseFormula("(all X (P(X,f(X)) -> (exists Y P(X,Y))))")
-res31: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
+res35: at.logic.gapt.expr.FOLFormula = ∀X.(P(X,f(X))⊃∃Y.P(X,Y))
 
 \end{clilisting}
 
@@ -1871,7 +1864,7 @@ returns a list of length 1 as shown by entering
 %
 \begin{clilisting}
 gapt> proofs.length
-res32: Int = 1
+res36: Int = 1
 
 \end{clilisting}
 %
@@ -1880,7 +1873,7 @@ entering
 %
 \begin{clilisting}
 gapt> proofs(0)._1
-res33: String = p
+res37: String = p
 
 \end{clilisting}
 %
