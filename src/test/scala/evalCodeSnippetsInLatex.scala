@@ -60,7 +60,7 @@ object evalCodeSnippetsInLatex extends App {
   val cliInputLine = """\s*gapt> (.*)""".r
   val beginCliListing = """\\begin\{clilisting\}(?:\[(.*)\])?""".r
   val endCliListing = """\end{clilisting}"""
-  val resLine = """res\d+: .*""".r
+  val assignment = """val\s+\w+\s+=.*""".r
 
   for ( line <- Source.fromFile( inFile ).getLines() )
     if ( inCliListing && isSkipped ) {
@@ -68,7 +68,8 @@ object evalCodeSnippetsInLatex extends App {
       line match {
         case `endCliListing` =>
           inCliListing = false
-        case resLine() =>
+        case cliInputLine( assignment() ) =>
+        case cliInputLine( _ ) =>
           // increment res123 counter
           interp beSilentDuring { interp command "true" }
         case _ =>
