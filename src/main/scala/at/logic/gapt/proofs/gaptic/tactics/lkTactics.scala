@@ -2,32 +2,45 @@ package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.gaptic.{ Tactic, FreshVariable, OpenAssumption }
+import at.logic.gapt.proofs.gaptic.{ OpenAssumption, Tactic }
 import at.logic.gapt.proofs.lk._
 
 /**
  * LogicalAxiom tactic
- * @param a
+ * @param b
  */
-case class LogicalAxiomTactic( a: HOLFormula ) extends Tactic {
+case class LogicalAxiomTactic( b: Option[HOLFormula] = None ) extends Tactic {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.conclusion
 
-    val indices =
-      for {
-        ( `a`, indexAnt ) <- goalSequent.zipWithIndex.succedent
-        ( `a`, indexSuc ) <- goalSequent.zipWithIndex.antecedent
-      } yield ( indexAnt, indexSuc )
+    val indices = b match {
+      case Some( a ) =>
+        for {
+          ( `a`, indexAnt ) <- goalSequent.zipWithIndex.succedent
+          ( `a`, indexSuc ) <- goalSequent.zipWithIndex.antecedent
+        } yield ( indexAnt, indexSuc )
 
-    for ( _ <- indices.headOption ) yield {
+      case None =>
+        for {
+          ( a1, indexAnt ) <- goalSequent.zipWithIndex.succedent
+          ( a2, indexSuc ) <- goalSequent.zipWithIndex.antecedent if a1 == a2
+        } yield ( indexAnt, indexSuc )
+    }
 
-      val ax = LogicalAxiom( a )
+    for ( ( i, _ ) <- indices.headOption ) yield {
+      val ax = LogicalAxiom( goalSequent( i ) )
 
       WeakeningMacroRule( ax, goalSequent )
     }
   }
+}
 
+/**
+ * Companion object for LogicalAxiomTactic
+ */
+object LogicalAxiomTactic {
+  def apply( a: HOLFormula ) = new LogicalAxiomTactic( Option( a ) )
 }
 
 /**
@@ -105,15 +118,8 @@ case object ReflexivityAxiomTactic extends Tactic {
 case object AxiomTactic extends Tactic {
 
   override def apply( goal: OpenAssumption ) = {
-    val x = TopAxiomTactic orElse BottomAxiomTactic orElse ReflexivityAxiomTactic
-
-    x( goal ) match {
-      case None =>
-        goal.conclusion.antecedent.view.flatMap {
-          a => LogicalAxiomTactic( a )( goal )
-        }.headOption
-      case y => y
-    }
+    val x = TopAxiomTactic orElse BottomAxiomTactic orElse ReflexivityAxiomTactic orElse LogicalAxiomTactic()
+    x( goal )
   }
 
 }
@@ -621,7 +627,7 @@ case class ExistsLeftTactic( eigenVariable: Option[Var] = None, applyToLabel: Op
         val ev = eigenVariable match {
           case Some( x ) => x
           case None =>
-            FreshVariable( goal, v )
+            rename( v, freeVariables( goal.conclusion ).toList )
         }
 
         if ( freeVariables( goal.conclusion ) contains ev )
@@ -778,7 +784,7 @@ case class ForallRightTactic( eigenVariable: Option[Var] = None, applyToLabel: O
         val ev = eigenVariable match {
           case Some( x ) => x
           case None =>
-            FreshVariable( goal, v )
+            rename( v, freeVariables( goal.conclusion ).toList )
         }
 
         if ( freeVariables( goal.conclusion ) contains ev )
