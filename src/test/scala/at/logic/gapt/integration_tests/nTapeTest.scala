@@ -164,7 +164,10 @@ class nTapeTest extends Specification {
 
         show( "Converting to Ral" )
 
-        val myconverter = Robinson2RalAndUndoHOL2Fol( sigv.map( x => ( x._1, x._2.toList ) ), sigc.map( x => ( x._1, x._2.toList ) ), cmap )
+        val myconverter = Robinson2RalAndUndoHOL2Fol(
+          sigv.map( x => ( x._1, x._2.toList ) ),
+          sigc.map( x => ( x._1, x._2.toList ) ), cmap
+        )
         val ralp = myconverter( rp )
         show( "Creating acnf" )
         val ( acnf, endclause ) = ceres_omega( proj, ralp, selp.conclusion, struct )

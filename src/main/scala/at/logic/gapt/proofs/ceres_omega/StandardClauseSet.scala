@@ -21,9 +21,13 @@ object StandardClauseSet extends StandardClauseSet
  */
 class StandardClauseSet {
   def apply( struct: Struct[Label] ): Set[LabelledSequent] = struct match {
+    case A( Top(), _ )    => Set()
+    case A( Bottom(), _ ) => Set( Sequent( Nil, Nil ) )
     case A( fo, label :: Nil ) =>
       val x: LabelledFormula = ( label, fo )
       Set( Sequent( Nil, List( x ) ) )
+    case Dual( A( Top(), _ ) )    => Set( Sequent( Nil, Nil ) )
+    case Dual( A( Bottom(), _ ) ) => Set()
     case Dual( A( fo, label :: Nil ) ) =>
       val x: LabelledFormula = ( label, fo )
       Set( Sequent( List( x ), Nil ) )

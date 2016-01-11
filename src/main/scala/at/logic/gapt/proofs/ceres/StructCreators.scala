@@ -88,9 +88,9 @@ object StructCreators extends Logger {
           case ( true, true ) =>
             struct
           case ( true, false ) =>
-            Plus( A( p.mainFormulas( 0 ), Nil ), struct )
+            Plus( A( p.endSequent( e_idx_conclusion ), Nil ), struct )
           case ( false, true ) =>
-            Times( Dual( A( p.endSequent( eq ), Nil ) ), struct, Nil )
+            Times( Dual( A( p.endSequent( e_idx_conclusion ), Nil ) ), struct, Nil )
           case ( false, false ) =>
             struct
         }

@@ -13,7 +13,7 @@ import scala.math.max
 
 /**
  * The superclass for all struct elements: atom, negated atom, junction, times and the neutral elememts for the latter
- * two. For details refer to Bruno Woltzenlogel-Oaleo's PhD Thesis.
+ * two. For details refer to Bruno Woltzenlogel-Paleo's PhD Thesis.
  * @tparam Data the extraction algorithms for lksk and schema need to pass a list of additional data to the struct
  */
 trait Struct[Data] {

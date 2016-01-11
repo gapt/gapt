@@ -140,16 +140,36 @@ object Pickrule {
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).succedent ) )
-      /*
-      case _: EqualityLeft =>
+
+      case _: AllSkLeft =>
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ) )
-      case _: EqualityRight =>
+      case _: AllSkRight =>
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).succedent ) )
-*/
+      case _: ExSkLeft =>
+        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
+        require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
+        List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ) )
+      case _: ExSkRight =>
+        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
+        require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
+        List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).succedent ) )
+
+      case Equality( _, _, a @ Ant( _ ), _, _ ) =>
+        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
+        require( old_aux.size >= 2, p.name + " rule needs at least two old_aux formulas for lookup!" )
+        pick2( old_parents( 0 ), old_aux( 0 ), old_aux( 1 ), s( 0 ).antecedent )
+      case Equality( _, _, Suc( _ ), _, _ ) =>
+        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
+        require( old_aux.size >= 2, p.name + " rule needs at least two old_aux formulas for lookup!" )
+        List(
+          pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ),
+          pick( old_parents( 0 ), old_aux( 1 ), s( 0 ).succedent )
+        )
+
       //Binary rules
       case _: Cut =>
         require( s.size >= 2, "Binary rule needs at least two sequents for lookup!" )

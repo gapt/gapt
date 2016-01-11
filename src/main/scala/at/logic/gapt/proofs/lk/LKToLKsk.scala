@@ -94,6 +94,16 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) {
 
       case p @ ForallRightRule( subProof, aux: Suc, eigen, quant ) if !isCutAnc( p.mainIndices.head ) =>
         val ls = labels( p.mainIndices.head )
+        //TODO: this is wrong, skolem constants need to agree when the main formulas are contracted e.g.
+        /**
+         * \Gamma :- P(s(q)), \Delta                               \Gamma :- P(s(q)), \Delta
+         * --------------------------------- all:l                 --------------------------------- all:l
+         * \Gamma :- \forall x P(x), \Delta                        \Gamma :- \forall x P(x), \Delta
+         * ----------------------------------------------------------------------------------------- X:l
+         *      \Gamma' :- \forall x P(x), \forall x P(x), \Delta
+         *      ------------------------------------------------- c:r
+         *      \Gamma' :- \forall x P(x), \Delta
+         */
         val skolemSymbol = Const( skolemSymbolFactory.getSkolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
         val subProof_ = applySubstitution( Substitution( eigen -> skolemSymbol( ls: _* ) ) )( subProof )
         AllSkRight( apply( subProof_, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ) ), aux, p.mainFormula, skolemSymbol )

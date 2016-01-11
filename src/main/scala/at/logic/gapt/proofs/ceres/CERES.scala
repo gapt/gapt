@@ -38,7 +38,8 @@ object CERES extends CERES {
     case And( l, r ) => skipPropositional( l ) || skipPropositional( r )
     case Or( l, r )  => skipPropositional( l ) || skipPropositional( r )
     case Imp( l, r ) => skipPropositional( l ) || skipPropositional( r )
-    case _           => true
+    case All( _, _ ) => true
+    case Ex( _, _ )  => true
   }
 
 }

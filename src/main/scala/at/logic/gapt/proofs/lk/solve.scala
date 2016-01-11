@@ -1005,6 +1005,7 @@ object AtomicExpansion {
   }
 
   def expandProof( p: LKProof ): LKProof = p match {
+    case ReflexivityAxiom( eq ) => p
     case InitialSequent( seq @ Sequent( antd, succd ) ) =>
       val tautology_formulas = for ( a <- antd; s <- succd; if a == s && !isAtom( a ) ) yield { a }
       if ( tautology_formulas.nonEmpty ) {

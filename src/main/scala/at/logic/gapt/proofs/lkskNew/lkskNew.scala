@@ -74,6 +74,7 @@ case class Axiom( antLabel: Label, sucLabel: Label, atom: HOLFormula ) extends I
   def mainFormulaSequent = ( antLabel -> atom ) +: Sequent() :+ ( sucLabel -> atom )
 }
 
+/*
 case class EquationalAxiom( label: Label, atom: HOLAtom ) extends InitialSequent {
   require(
     atom match { case Eq( _, _ ) => true; case _ => false },
@@ -82,6 +83,7 @@ case class EquationalAxiom( label: Label, atom: HOLAtom ) extends InitialSequent
 
   def mainFormulaSequent = Sequent() :+ ( label -> atom )
 }
+*/
 
 case class Reflexivity( label: Label, term: LambdaExpression ) extends InitialSequent {
   def mainFormulaSequent = Sequent() :+ ( label -> Eq( term, term ) )

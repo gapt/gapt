@@ -85,7 +85,7 @@ class ceres_omega {
                   p.conclusion.zipWithIndex.antecedent.find( x => x._1 == occ && x._2 != idx1 && ca( x._2 ) ) match {
                     case Some( ( _, idx2 @ Ant( _ ) ) ) =>
                       val rule = ContractionLeft( p, idx1, idx2 )
-                      val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), pair, false )
+                      val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), pair, false )
                       ( rule, nca )
                     case None => throw new Exception( "Could not find an element to contract for " + occ + " in " + root )
                   }
@@ -99,7 +99,7 @@ class ceres_omega {
                   p.conclusion.zipWithIndex.succedent.find( x => x._1 == occ && x._2 != idx1 && ca( x._2 ) ) match {
                     case Some( ( _, idx2 @ Suc( _ ) ) ) =>
                       val rule = ContractionRight( p, idx1, idx2 )
-                      val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), pair, false )
+                      val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), pair, false )
                       ( rule, nca )
                     case None => throw new Exception( "Could not find an element to contract for " + occ + " in " + root )
                   }
@@ -129,7 +129,7 @@ class ceres_omega {
           val a1 = findAuxInSuccedent( cut_lformula, proof.conclusion, Seq(), ca )
           val a2 = findAuxInSuccedent( cut_lformula, proof.conclusion, Seq( a1 ), ca )
           val rule = ContractionRight( proof, a1, a2 )
-          val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), pair, false )
+          val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), pair, false )
           ( rule, nca )
         } )
         val cright = p2occs.foldLeft( ( lkparent2, ca2 ) )( ( pair, _ ) => {
@@ -137,7 +137,7 @@ class ceres_omega {
           val a1 = findAuxInAntecedent( cut_lformula, proof.conclusion, Seq(), ca )
           val a2 = findAuxInAntecedent( cut_lformula, proof.conclusion, Seq( a1 ), ca )
           val rule = ContractionLeft( proof, a1, a2 )
-          val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), pair, false )
+          val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), pair, false )
           ( rule, nca )
         } )
 
@@ -145,7 +145,7 @@ class ceres_omega {
         val cutfright = findAuxInAntecedent( cut_lformula, cright._1.conclusion, Seq(), cright._2 )
 
         val rule = Cut( cleft._1, cutfleft, cright._1, cutfright )
-        val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), rule.occConnectors( 1 ), cleft, cright, false )
+        val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rule.occConnectors( 1 ), cleft, cright, false )
         contractEndsequent( ( rule, nca ), es )
 
       case RalFactor( parent, contr @ Ant( _ ), aux ) =>
@@ -157,7 +157,7 @@ class ceres_omega {
         val c1 = findAuxInAntecedent( clformula, lkparent.conclusion, Seq(), ca )
         val c2 = findAuxInAntecedent( clformula, lkparent.conclusion, Seq( c1 ), ca )
         val rule = ContractionLeft( lkparent, c1, c2 )
-        val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( lkparent, ca ), false )
+        val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent, ca ), false )
         ( rule, nca )
 
       case RalFactor( parent, contr @ Suc( _ ), aux ) =>
@@ -169,7 +169,7 @@ class ceres_omega {
         val c1 = findAuxInSuccedent( clformula, lkparent.conclusion, Seq(), ca )
         val c2 = findAuxInSuccedent( clformula, lkparent.conclusion, Seq( c1 ), ca )
         val rule = ContractionRight( lkparent, c1, c2 )
-        val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( lkparent, ca ), false )
+        val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent, ca ), false )
         ( rule, nca )
 
       case RalPara( _, _, _, _, pos, _ ) if pos.size != 1 =>
@@ -191,24 +191,24 @@ class ceres_omega {
           case ( Some( eqidx ), _ ) =>
             val modulant = findAuxInAntecedent( parent2.conclusion( p2occ ), lkparent2.conclusion, Seq( eqidx ), ca2 )
             val rule = Equality( lkparent2, eqidx, modulant, flipped, Seq( pos ) )
-            val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
+            val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
             contractEndsequent( ( rule, nca ), es )
           case ( _, Some( eqidx ) ) =>
             val wlkparent2 = WeakeningLeft( lkparent2, lkparent1.conclusion( eqidx ) )
-            val nca = Projections.calculate_child_cut_ecs( wlkparent2.occConnectors( 0 ), ( lkparent2, ca2 ), true )
+            val nca = Projections.calculate_child_cut_ecs( wlkparent2, wlkparent2.occConnectors( 0 ), ( lkparent2, ca2 ), true )
             val modulant = findAuxInAntecedent( parent2.conclusion( p2occ ), wlkparent2.conclusion, Seq( eqidx ), nca )
             val weqidx = wlkparent2.mainIndices( 0 ) match {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of WeakeningLeft!" )
             }
             val rule = Equality( wlkparent2, weqidx, modulant, flipped, Seq( pos ) )
-            val nc2 = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
+            val nc2 = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
             val ruleeqidx = rule.mainIndices( 1 ) match {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of Equation (left)!" )
             }
             val cutrule = Cut( lkparent1, eqidx, rule, ruleeqidx )
-            val cnca = Projections.calculate_child_cut_ecs( cutrule.occConnectors( 0 ), cutrule.occConnectors( 1 ),
+            val cnca = Projections.calculate_child_cut_ecs( cutrule, cutrule.occConnectors( 0 ), cutrule.occConnectors( 1 ),
               ( lkparent1, ca1 ), ( wlkparent2, nca ), false )
 
             contractEndsequent( ( cutrule, cnca ), es )
@@ -232,24 +232,24 @@ class ceres_omega {
           case ( Some( eqidx ), _ ) =>
             val modulant = findAuxInSuccedent( parent2.conclusion( p2occ ), lkparent2.conclusion, Seq( eqidx ), ca2 )
             val rule = Equality( lkparent2, eqidx, modulant, flipped, Seq( pos ) )
-            val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
+            val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
             contractEndsequent( ( rule, nca ), es )
           case ( _, Some( eqidx ) ) =>
             val wlkparent2 = WeakeningRight( lkparent2, lkparent1.conclusion( eqidx ) )
-            val nca = Projections.calculate_child_cut_ecs( wlkparent2.occConnectors( 0 ), ( lkparent2, ca2 ), true )
+            val nca = Projections.calculate_child_cut_ecs( wlkparent2, wlkparent2.occConnectors( 0 ), ( lkparent2, ca2 ), true )
             val modulant = findAuxInSuccedent( parent2.conclusion( p2occ ), wlkparent2.conclusion, Seq( eqidx ), nca )
             val weqidx = wlkparent2.mainIndices( 0 ) match {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of WeakeningLeft!" )
             }
             val rule = Equality( wlkparent2, weqidx, modulant, flipped, Seq( pos ) )
-            val nc2 = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
+            val nc2 = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
             val ruleeqidx = rule.mainIndices( 1 ) match {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of Equation (left)!" )
             }
             val cutrule = Cut( lkparent1, eqidx, rule, ruleeqidx )
-            val cnca = Projections.calculate_child_cut_ecs( cutrule.occConnectors( 0 ), cutrule.occConnectors( 1 ),
+            val cnca = Projections.calculate_child_cut_ecs( cutrule, cutrule.occConnectors( 0 ), cutrule.occConnectors( 1 ),
               ( lkparent1, ca1 ), ( wlkparent2, nca ), false )
 
             contractEndsequent( ( cutrule, cnca ), es )
@@ -306,7 +306,7 @@ class ceres_omega {
       val a1 = findAuxInAntecedent( fo, proof.conclusion, Seq(), ca )
       val a2 = findAuxInAntecedent( fo, proof.conclusion, Seq( a1 ), ca )
       val rule = ContractionLeft( proof, a1, a2 )
-      val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), rp, false )
+      val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rp, false )
       ( rule, nca )
     } )
     val contr_right = es.succedent.foldLeft( p )( ( rp, fo ) => {
@@ -314,7 +314,7 @@ class ceres_omega {
       val a1 = findAuxInSuccedent( fo, proof.conclusion, Seq(), ca )
       val a2 = findAuxInSuccedent( fo, proof.conclusion, Seq( a1 ), ca )
       val rule = ContractionRight( proof, a1, a2 )
-      val nca = Projections.calculate_child_cut_ecs( rule.occConnectors( 0 ), rp, false )
+      val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rp, false )
       ( rule, nca )
     } )
     contr_right

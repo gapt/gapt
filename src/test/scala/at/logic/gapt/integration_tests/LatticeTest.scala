@@ -23,7 +23,7 @@ class LatticeTest extends Specification with SequentMatchers {
   sequential
 
   "The system" should {
-    "parse, transform to LKsk, and extract the clause set for the lattice proof" in {
+    "parse, skolemize, and extract the clause set for the lattice proof" in {
       checkForProverOrSkip
 
       val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) )
