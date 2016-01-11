@@ -350,6 +350,17 @@ gapt> prooftool( p5 )
 The system comes with a collection of example proof sequences in the file
 \cli{examples/ProofSequences.scala} which are generated in the above style.
 Have a look at this code for more complicated proof constructions.
+You can generate instances of these proof sequences by entering, e.g.,
+%
+\begin{clilisting}
+gapt> val p = SumExampleProof( 5 )
+p: at.logic.gapt.proofs.lk.LKProof =
+[p27] ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(s(0))))),0) :- P(0,s(s(s(s(s(0))))))    (ContractionLeftRule(p26, Ant(0), Ant(2)))
+[p26] ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(s(0))))),0), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))) :- P(0,s(s(s(s(s(0))))))    (ForallLeftRule(p25, Ant(0), ∀y.(P(s(x),y)⊃P(x,s(y))), s(s(s(s(0)))), x))
+[p25] ∀y.(P(s(s(s(s(s(0))))),y)⊃P(s(s(s(s(0)))),s(y))), P(s(s(s(s(s(0))))),0), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))) :- P(0,s(s(s(s(s(0))))))    (ForallLeftRule(p24, Ant(0), (P(s(s(s(s(s(0))))),y)⊃P(s(s(s(s(0)))),s(y))), 0, y))
+[p24] (P(s(s(s(s(s(0))))),0)⊃P(s(s(s(s(0)))),s(0))), P(s(s(s(s(s(0))))),0), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))) :- P(0,s(s(s(s(s(0))))))    (ImpLeftRule(p1, Suc(0), p23, Ant(1)))
+[p23] ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(0)))),s(0)...
+\end{clilisting}
 
 \section{Feature walkthrough}
 
@@ -360,14 +371,13 @@ to verify validity and satisfiability, and query the thus obtained models.
 Consider the {\em pigeon hole principle for $(m, n)$, $\mathrm{PHP}_{m,n}$}, which states that if $m$ pigeons
 are put into $n$ holes, then there is a hole which contains two pigeons. It is valid
 iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n$ holes, there
-is no hole containing two pigeons. This is satisfiable iff $m\leq n$.\footnote{%
-  In Scala, \cli{Sat4j isValid formula} is syntactic sugar for \cli{Sat4j.isValid(formula)}.}
+is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
 res3: Boolean = true
 
 \end{clilisting}
-shows that $\mathrm{PHP}_{3,2}$ is valid, and
+shows\footnote{In Scala, \cli{Sat4j isValid formula} is syntactic sugar for \cli{Sat4j.isValid(formula)}.} that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 3)
 res4: Boolean = false
