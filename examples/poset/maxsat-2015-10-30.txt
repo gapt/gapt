@@ -35,7 +35,7 @@ scala> :load poset-experiment.scala
 Loading poset-experiment.scala...
 import java.nio.file.{Paths, Files, Path}
 import at.logic.gapt.algorithms.rewriting.NameReplacement
-import at.logic.gapt.expr.fol.FOLSubstitution
+import at.logic.gapt.expr.FOLSubstitution
 import at.logic.gapt.grammars.{findMinimalVectGrammar, findMinimalGrammar}
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansionTrees._

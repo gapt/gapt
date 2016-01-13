@@ -1,6 +1,5 @@
 package at.logic.gapt.grammars
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
 
 object VectTratGrammar {
   type NonTerminalVect = List[FOLVar]
@@ -37,7 +36,7 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
       val P_a = productions( a )
       if ( P_a.nonEmpty )
         lang = P_a.flatMap { p =>
-          lang.map( FOLSubstitution( p.zipped ).apply )
+          FOLSubstitution( p.zipped )( lang )
         }
     }
     lang filter ( freeVariables( _ ).isEmpty )

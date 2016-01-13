@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.inductionProver
 
-import at.logic.gapt.expr.FOLVar
-import at.logic.gapt.expr.fol.{ Utils, FOLSubstitution }
+import at.logic.gapt.expr.{ FOLSubstitution, FOLVar }
+import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.{ Sequent, Suc, Ant }
 import at.logic.gapt.proofs.expansionTrees.{ formulaToExpansionTree, ExpansionSequent }
@@ -16,7 +16,7 @@ class SipProverTest extends Specification {
   "linear example from provided instance proofs" in {
     val endSequent = ( "P(0)" +: "P(x) -> P(s(x))" +: Sequent() :+ "P(x)" ).
       map( parseFormula ).
-      map( univclosure( _ ), FOLSubstitution( FOLVar( "x" ) -> alpha ).apply )
+      map( univclosure( _ ), FOLSubstitution( FOLVar( "x" ) -> alpha )( _ ) )
 
     def instanceProof( n: Int ): ExpansionSequent = {
       val instP0 = formulaToExpansionTree( endSequent( Ant( 0 ) ), false )

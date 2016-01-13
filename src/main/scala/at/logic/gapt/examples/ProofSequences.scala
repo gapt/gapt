@@ -1,7 +1,7 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
+import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol.{ univclosure, instantiate }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }

@@ -7,7 +7,6 @@ import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.lk.lkNew2Old
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.resolution.RobinsonToLK
-import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.formats.shlk_parsing.sFOParser

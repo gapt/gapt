@@ -1,7 +1,6 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.expr.{ FOLConst, FOLVar }
+import at.logic.gapt.expr.{ FOLSubstitution, FOLConst, FOLVar }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lkOld.base.LKProof

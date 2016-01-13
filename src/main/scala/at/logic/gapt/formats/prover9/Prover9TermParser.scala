@@ -4,10 +4,8 @@ import at.logic.gapt.proofs.HOLSequent
 
 import util.parsing.combinator.JavaTokenParsers
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
 import scala.util.parsing.combinator.PackratParsers
 import scala.collection.immutable.HashSet
-import at.logic.gapt.expr.StringSymbol
 
 /**
  * Parser for first order formulas in the prover 9 format.

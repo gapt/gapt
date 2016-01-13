@@ -1,6 +1,5 @@
 package at.logic.gapt.cutintro
 
-import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ simplify, CNFp, lcomp, instantiate }
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
